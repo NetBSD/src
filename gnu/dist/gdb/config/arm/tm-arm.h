@@ -1,5 +1,5 @@
-/* Definitions to make GDB target for an ARM under RISCiX (4.3bsd).
-   Copyright 1986, 1987, 1989, 1991, 1993 Free Software Foundation, Inc.
+/* Definitions to make GDB target for an ARM
+   Copyright 1986, 1987, 1989, 1991, 1993, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -17,13 +17,34 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#ifdef __STDC__		/* Forward decls for prototypes */
+struct type;
+struct value;
+#endif
+
 #define TARGET_BYTE_ORDER_SELECTABLE
 
 /* IEEE format floating point */
 
 #define IEEE_FLOAT
 
-#define ADDR_BITS_REMOVE(val) ((val) &  0x03fffffc)
+/* FIXME: may need a floatformat_ieee_double_bigbyte_littleword format for
+   BIG_ENDIAN use. -fnf */
+
+#define TARGET_DOUBLE_FORMAT (target_byte_order == BIG_ENDIAN \
+			      ? &floatformat_ieee_double_big \
+			      : &floatformat_ieee_double_littlebyte_bigword)
+
+/* When reading symbols, we need to zap the low bit of the address, which
+   may be set to 1 for Thumb functions.  */
+
+#define SMASH_TEXT_ADDRESS(addr) ((addr) &= ~0x1)
+
+/* Remove useless bits from addresses in a running program.  */
+
+CORE_ADDR arm_addr_bits_remove PARAMS ((CORE_ADDR));
+
+#define ADDR_BITS_REMOVE(val) (arm_addr_bits_remove (val))
 
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
@@ -33,14 +54,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Advance PC across any function entry prologue instructions
    to reach some "real" code.  */
 
-#define SKIP_PROLOGUE(pc) pc = skip_prologue(pc)
+extern CORE_ADDR arm_skip_prologue PARAMS ((CORE_ADDR pc));
+
+#define SKIP_PROLOGUE(pc) { pc = arm_skip_prologue (pc); }
 
 /* Immediately after a function call, return the saved pc.
    Can't always go through the frames for this because on some machines
    the new frame is not set up until the new function executes
    some instructions.  */
 
-#define SAVED_PC_AFTER_CALL(frame) (ADDR_BITS_REMOVE (read_register (LR_REGNUM)))
+#define SAVED_PC_AFTER_CALL(frame) arm_saved_pc_after_call (frame)
+struct frame_info;
+extern CORE_ADDR arm_saved_pc_after_call PARAMS ((struct frame_info *));
 
 /* I don't know the real values for these.  */
 #define TARGET_UPAGES UPAGES
@@ -61,7 +86,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    this is the same size as a handle - otherwise remote-rdp will
    have to change. */
 
-#define BREAKPOINT {0x00,0x00,0x18,0xef} /* BKPT_SWI from <sys/ptrace.h> */
+#define ARM_BREAKPOINT {0x00,0x00,0x18,0xef} /* BKPT_SWI from <sys/ptrace.h> */
+#define THUMB_BREAKPOINT {0x18,0xdf}	/* swi 24 */
+
+/* The following macro has been superseded by BREAKPOINT_FOR_PC, but
+   is defined merely to keep mem-break.c happy.  */
+#define BREAKPOINT ARM_BREAKPOINT
+
+/* BREAKPOINT_FROM_PC uses the program counter value to determine whether a
+   16- or 32-bit breakpoint should be used.  It returns a pointer
+   to a string of bytes that encode a breakpoint instruction, stores
+   the length of the string to *lenptr, and adjusts the pc (if necessary) to
+   point to the actual memory location where the breakpoint should be
+   inserted.  */
+
+unsigned char * arm_breakpoint_from_pc PARAMS ((CORE_ADDR * pcptr, int * lenptr));
+#define BREAKPOINT_FROM_PC(pcptr, lenptr) arm_breakpoint_from_pc (pcptr, lenptr)
 
 /* Amount PC must be decremented by after a breakpoint.
    This is often the number of bytes in BREAKPOINT
@@ -131,32 +171,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    to be actual register numbers as far as the user is concerned
    but do serve to get the desired values when passed to read_register.  */
 
+#define A1_REGNUM 0		/* first integer-like argument */
+#define A4_REGNUM 3		/* last integer-like argument */
 #define AP_REGNUM 11
 #define FP_REGNUM 11		/* Contains address of executing stack frame */
 #define SP_REGNUM 13		/* Contains address of top of stack */
 #define LR_REGNUM 14		/* address to return to from a function call */
 #define PC_REGNUM 15		/* Contains program counter */
 #define F0_REGNUM 16		/* first floating point register */
+#define F3_REGNUM 19		/* last floating point argument register */
 #define F7_REGNUM 23		/* last floating point register */
 #define FPS_REGNUM 24		/* floating point status register */
 #define PS_REGNUM 25		/* Contains processor status */
 
-#define INST_EQ		0x00000000
-#define INST_NE		0x10000000
-#define INST_CS		0x20000000
-#define INST_CC		0x30000000
-#define INST_MI		0x40000000
-#define INST_PL		0x50000000
-#define INST_VS		0x60000000
-#define INST_VC		0x70000000
-#define INST_HI		0x80000000
-#define INST_LS		0x90000000
-#define INST_GE		0xa0000000
-#define INST_LT		0xb0000000
-#define INST_GT		0xc0000000
-#define INST_LE		0xd0000000
-#define INST_AL		0xe0000000
-#define INST_NV		0xf0000000
+#define THUMB_FP_REGNUM 7	/* R7 is frame register on Thumb */
+
+#define ARM_NUM_ARG_REGS 	4
+#define ARM_LAST_ARG_REGNUM 	A4_REGNUM
+#define ARM_NUM_FP_ARG_REGS 	4
+#define ARM_LAST_FP_ARG_REGNUM	F3_REGNUM
+
+/* Instruction condition field values.  */
+#define INST_EQ		0x0
+#define INST_NE		0x1
+#define INST_CS		0x2
+#define INST_CC		0x3
+#define INST_MI		0x4
+#define INST_PL		0x5
+#define INST_VS		0x6
+#define INST_VC		0x7
+#define INST_HI		0x8
+#define INST_LS		0x9
+#define INST_GE		0xa
+#define INST_LT		0xb
+#define INST_GT		0xc
+#define INST_LE		0xd
+#define INST_AL		0xe
+#define INST_NV		0xf
 
 #define FLAG_N		0x80000000
 #define FLAG_Z		0x40000000
@@ -204,7 +255,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define REGISTER_CONVERT_TO_VIRTUAL(REGNUM,TYPE,FROM,TO) \
 { \
   double val; \
-  convert_from_extended ((FROM), &val); \
+  convert_from_extended ((FROM), & val); \
   store_floating ((TO), TYPE_LENGTH (TYPE), val); \
 }
 
@@ -238,7 +289,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define EXTRACT_RETURN_VALUE(TYPE,REGBUF,VALBUF) \
   if (TYPE_CODE (TYPE) == TYPE_CODE_FLT)				\
-    convert_from_extended(REGBUF + REGISTER_BYTE (F0_REGNUM), VALBUF);	\
+    convert_from_extended (REGBUF + REGISTER_BYTE (F0_REGNUM), VALBUF);	\
   else									\
     memcpy (VALBUF, REGBUF, TYPE_LENGTH (TYPE))
 
@@ -248,7 +299,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define STORE_RETURN_VALUE(TYPE,VALBUF) \
   if (TYPE_CODE (TYPE) == TYPE_CODE_FLT) {				\
     char _buf[MAX_REGISTER_RAW_SIZE];					\
-    convert_to_extended(VALBUF, _buf); 					\
+    convert_to_extended (VALBUF, _buf); 					\
     write_register_bytes (REGISTER_BYTE (F0_REGNUM), _buf, MAX_REGISTER_RAW_SIZE); \
   } else								\
     write_register_bytes (0, VALBUF, TYPE_LENGTH (TYPE))
@@ -265,6 +316,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define VARIABLES_INSIDE_BLOCK(desc, gcc_p) (!(gcc_p))
 
 
+/* Define other aspects of the stack frame. 
+   We keep the offsets of all saved registers, 'cause we need 'em a lot!
+   We also keep the current size of the stack frame, and the offset of
+   the frame pointer from the stack pointer (for frameless functions, and
+   when we're still in the prologue of a function with a frame) */
+
+#define EXTRA_FRAME_INFO  	\
+  struct frame_saved_regs fsr;	\
+  int framesize;		\
+  int frameoffset;		\
+  int framereg;
+
+extern void arm_init_extra_frame_info PARAMS ((struct frame_info *fi));
+#define INIT_EXTRA_FRAME_INFO(fromleaf, fi) arm_init_extra_frame_info (fi)
+
+/* Return the frame address.  On ARM, it is R11; on Thumb it is R7.  */
+CORE_ADDR arm_target_read_fp PARAMS ((void));
+#define TARGET_READ_FP() arm_target_read_fp ()
+
 /* Describe the pointer in each stack frame to the previous stack frame
    (its caller).  */
 
@@ -274,15 +344,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    However, if FRAME_CHAIN_VALID returns zero,
    it means the given frame is the outermost one and has no caller.  */
 
-/* In the case of the ARM, the frame's nominal address is the FP value,
-   and 12 bytes before comes the saved previous FP value as a 4-byte word.  */
+#define FRAME_CHAIN(thisframe) (CORE_ADDR) arm_frame_chain (thisframe)
+extern CORE_ADDR arm_frame_chain PARAMS ((struct frame_info *));
 
 #define LOWEST_PC 0x20  /* the first 0x20 bytes are the trap vectors. */
-
-#define FRAME_CHAIN(thisframe)  \
-  ((thisframe)->pc >= LOWEST_PC ?    \
-   read_memory_integer ((thisframe)->frame - 12, 4) :\
-   0)
 
 #define FRAME_CHAIN_VALID(chain, thisframe) \
   (chain != 0 && (FRAME_SAVED_PC (thisframe) >= LOWEST_PC))
@@ -304,8 +369,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Saved Pc.  */
 
-#define FRAME_SAVED_PC(FRAME) \
-  ADDR_BITS_REMOVE (read_memory_integer ((FRAME)->frame - 4, 4))
+#define FRAME_SAVED_PC(FRAME)	arm_frame_saved_pc (FRAME)
+extern CORE_ADDR arm_frame_saved_pc PARAMS ((struct frame_info *));
 
 #define FRAME_ARGS_ADDRESS(fi) (fi->frame)
 
@@ -326,6 +391,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    ways in the stack frame.  sp is even more special:
    the address we return for it IS the sp for the next frame.  */
 
+struct frame_saved_regs;
+struct frame_info;
+void frame_find_saved_regs PARAMS((struct frame_info *fi,
+				   struct frame_saved_regs *fsr));
 
 #define FRAME_FIND_SAVED_REGS(frame_info, frame_saved_regs) \
  arm_frame_find_saved_regs (frame_info, &(frame_saved_regs));
@@ -333,79 +402,59 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Things needed for making the inferior call functions.  */
 
+#define PUSH_ARGUMENTS(nargs, args, sp, struct_return, struct_addr) \
+    sp = arm_push_arguments ((nargs), (args), (sp), (struct_return), (struct_addr))
+extern CORE_ADDR
+arm_push_arguments PARAMS ((int, struct value **, CORE_ADDR, int, CORE_ADDR));
+
 /* Push an empty stack frame, to record the current PC, etc.  */
 
-#define PUSH_DUMMY_FRAME \
-{								\
-    register CORE_ADDR sp = read_register (SP_REGNUM);		\
-    register int regnum;					\
-    /* opcode for ldmdb fp,{v1-v6,fp,ip,lr,pc}^ */		\
-    sp = push_word(sp, 0xe92dbf0); /* dummy return_data_save ins */ \
-    /* push a pointer to the dummy instruction minus 12 */	\
-    sp = push_word(sp, read_register (SP_REGNUM) - 16);		\
-    sp = push_word(sp, read_register (PS_REGNUM));		\
-    sp = push_word(sp, read_register (SP_REGNUM));		\
-    sp = push_word(sp, read_register (FP_REGNUM));		\
-    for (regnum = 9; regnum >= 4; regnum --)			\
-	sp = push_word(sp, read_register (regnum));		\
-    write_register (FP_REGNUM, read_register (SP_REGNUM) - 8);	\
-    write_register (SP_REGNUM, sp); }
+void arm_push_dummy_frame PARAMS ((void));
+
+#define PUSH_DUMMY_FRAME arm_push_dummy_frame ()
 
 /* Discard from the stack the innermost frame, restoring all registers.  */
 
-#define POP_FRAME \
-{									\
-    register CORE_ADDR fp = read_register (FP_REGNUM);			\
-    register unsigned long return_data_save =				\
-	read_memory_integer ( (read_memory_integer (fp, 4) &		\
-			       0x03fffffc)  - 12, 4);			\
-    register int regnum;						\
-    write_register (PS_REGNUM, read_memory_integer (fp - 4, 4));	\
-    write_register (PC_REGNUM, read_register (PS_REGNUM) & 0x03fffffc);	\
-    write_register (SP_REGNUM, read_memory_integer (fp - 8, 4));	\
-    write_register (FP_REGNUM, read_memory_integer (fp - 12, 4));	\
-    fp -= 12;								\
-    for (regnum = 9; regnum >= 4; regnum--)				\
-	if (return_data_save & (1<<regnum)) {				\
-	    fp -= 4;							\
-	    write_register (regnum, read_memory_integer(fp, 4));	\
-	}								\
-    flush_cached_frames ();						\
-}
+void arm_pop_frame PARAMS ((void));
+
+#define POP_FRAME arm_pop_frame ()
 
 /* This sequence of words is the instructions
 
-     ldmia	sp!,{a1-a4}
-     mov 	lk,pc
-     bl		*+8
+     mov 	lr,pc
+     mov	pc,r4
      swi	bkpt_swi
 
-   Note this is 16 bytes.  */
+   Note this is 12 bytes.  */
 
-#define CALL_DUMMY {0xe8bd000f, 0xe1a0e00f, 0xeb000000, 0xef180000}
+#define CALL_DUMMY {0xe1a0e00f, 0xe1a0f004, 0xef180000}
 
 #define CALL_DUMMY_START_OFFSET 0  /* Start execution at beginning of dummy */
+
+#define CALL_DUMMY_BREAKPOINT_OFFSET arm_call_dummy_breakpoint_offset()
+extern int arm_call_dummy_breakpoint_offset PARAMS ((void));
 
 /* Insert the specified number of args and function address
    into a call sequence of the above form stored at DUMMYNAME.  */
 
 #define FIX_CALL_DUMMY(dummyname, pc, fun, nargs, args, type, gcc_p) \
-{										\
-    register enum type_code code = TYPE_CODE (type);				\
-    register nargs_in_registers, struct_return = 0;				\
-    /* fix the load-arguments mask to move the first 4 or less arguments	\
-       into a1-a4 but make sure the structure return address in a1 is		\
-       not disturbed if the function is returning a structure */		\
-    if ((code == TYPE_CODE_STRUCT ||						\
-	 code == TYPE_CODE_UNION ||						\
-	 code == TYPE_CODE_ARRAY) &&						\
-	TYPE_LENGTH (type) > 4) {						\
-	nargs_in_registers = min(nargs + 1, 4);					\
-	struct_return = 1;							\
-    } else									\
-	nargs_in_registers = min(nargs, 4);					\
-    *(char *) dummyname = (1 << nargs_in_registers) - 1 - struct_return;	\
-    *(int *)((char *) dummyname + 8) =						\
-	(((fun - (pc + 16)) / 4) & 0x00ffffff) | 0xeb000000; }
+   arm_fix_call_dummy (dummyname, pc, fun, nargs, args, type, gcc_p)
+
+void arm_fix_call_dummy PARAMS ((char *dummy, CORE_ADDR pc, CORE_ADDR fun,
+				 int nargs, struct value **args,
+				 struct type *type, int gcc_p));
 
 CORE_ADDR arm_get_next_pc PARAMS ((CORE_ADDR));
+
+/* Functions for dealing with Thumb call thunks.  */
+#define IN_SOLIB_CALL_TRAMPOLINE(pc, name)	arm_in_call_stub (pc, name)
+#define SKIP_TRAMPOLINE_CODE(pc)		arm_skip_stub (pc)
+extern int arm_in_call_stub PARAMS ((CORE_ADDR pc,  char *name));
+extern CORE_ADDR arm_skip_stub PARAMS ((CORE_ADDR pc));
+
+/* Function to determine whether MEMADDR is in a Thumb function.  */
+extern int arm_pc_is_thumb PARAMS ((bfd_vma memaddr));
+
+/* Function to determine whether MEMADDR is in a call dummy called from
+   a Thumb function.  */
+extern int arm_pc_is_thumb_dummy PARAMS ((bfd_vma memaddr));

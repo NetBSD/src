@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <sys/itimer.h>
 #include <sys/file.h>
 #include <sys/proc.h>
-#include "thread.h"
+#include "gdbthread.h"
 
 /* This is the amount to subtract from u.u_ar0 to get the offset in
    the core file of the register values.  */

@@ -1,8 +1,7 @@
 /* Target-vector operations for controlling win32 child processes, for GDB.
-   Copyright 1995, 1996
-   Free Software Foundation, Inc.
-
+   Copyright 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
+
    This file is part of GDB.
 
    This program is free software; you can redistribute it and/or modify
@@ -17,9 +16,12 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
 
 /* by Steve Chamberlain, sac@cygnus.com */
+
+/* We assume we're being built with and will be used for cygwin32.  */
 
 #include "defs.h"
 #include "frame.h"		/* required by inferior.h */
@@ -31,14 +33,22 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdlib.h>
+
+#ifdef _MSC_VER
+#include "windefs.h"
+#else /* other WIN32 compiler */
 #include <windows.h>
+#endif
+
 #include "buildsym.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "gdb_string.h"
-#include "thread.h"
+#include "gdbthread.h"
 #include "gdbcmd.h"
 #include <sys/param.h>
+#include <unistd.h>
 
 #define CHECK(x) 	check (x, __FILE__,__LINE__)
 #define DEBUG_EXEC(x)	if (debug_exec)		printf x
@@ -48,6 +58,8 @@
 
 /* Forward declaration */
 extern struct target_ops child_ops;
+
+static void child_stop PARAMS ((void));
 
 /* The most recently read context. Inspect ContextFlags to see what 
    bits are valid. */
@@ -68,7 +80,6 @@ static int event_count = 0;
 /* User options. */
 static int new_console = 0;
 static int new_group = 0;
-static int dos_path_style = 0;
 static int debug_exec = 0;		/* show execution */
 static int debug_events = 0;		/* show events from kernel */
 static int debug_memory = 0;		/* show target memory accesses */
@@ -92,7 +103,6 @@ struct regmappings
     char *incontext;
     int mask;
   };
-
 
 static const struct regmappings  mappings[] =
 {
@@ -169,7 +179,6 @@ static const struct regmappings  mappings[] =
   {(char *) &context.Fpr30, CONTEXT_FLOATING_POINT},
   {(char *) &context.Fpr31, CONTEXT_FLOATING_POINT},
 
-
   {(char *) &context.Iar, CONTEXT_CONTROL},
   {(char *) &context.Msr, CONTEXT_CONTROL},
   {(char *) &context.Cr,  CONTEXT_INTEGER},
@@ -206,7 +215,6 @@ static const struct regmappings  mappings[] =
 #endif
 };
 
-
 /* This vector maps the target's idea of an exception (extracted
    from the DEBUG_EVENT structure) to GDB's idea. */
 
@@ -215,7 +223,6 @@ struct xlate_exception
     int them;
     enum target_signal us;
   };
-
 
 static const struct xlate_exception
   xlate[] =
@@ -226,7 +233,6 @@ static const struct xlate_exception
   {DBG_CONTROL_C, TARGET_SIGNAL_INT},
   {EXCEPTION_SINGLE_STEP, TARGET_SIGNAL_TRAP},
   {-1, -1}};
-
 
 static void 
 check (BOOL ok, const char *file, int line)
@@ -266,7 +272,6 @@ child_store_inferior_registers (int r)
 
 /* Wait for child to do something.  Return pid of child, or -1 in case
    of error; store status through argument pointer OURSTATUS.  */
-
 
 static int
 handle_load_dll (char *eventp)
@@ -326,8 +331,8 @@ handle_load_dll (char *eventp)
 			     &done);
 	}
 
-
-      dos_path_to_unix_path (dll_name, unix_dll_name);
+      /* FIXME: Can we delete this call?  */
+      cygwin32_conv_to_posix_path (dll_name, unix_dll_name);
 
       /* FIXME!! It would be nice to define one symbol which pointed to the 
          front of the dll if we can't find any symbols. */
@@ -349,7 +354,6 @@ handle_load_dll (char *eventp)
  	      return 1;
  	    }
  	}
- 
 
       context.ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
       GetThreadContext (current_thread, &context);
@@ -371,7 +375,7 @@ handle_load_dll (char *eventp)
 }
 
 
-static void
+static int
 handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
 {
   int i;
@@ -407,6 +411,12 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
       ourstatus->value.sig = TARGET_SIGNAL_TRAP;
       break;
     default:
+      /* This may be a structured exception handling exception.  In
+         that case, we want to let the program try to handle it, and
+         only break if we see the exception a second time.  */
+      if (event->u.Exception.dwFirstChance)
+	return 0;
+
       printf_unfiltered ("gdb: unknown target exception 0x%08x at 0x%08x\n",
 			 event->u.Exception.ExceptionRecord.ExceptionCode,
 			 event->u.Exception.ExceptionRecord.ExceptionAddress);
@@ -416,6 +426,7 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
   context.ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
   GetThreadContext (current_thread, &context);
   exception_count++;
+  return 1;
 }
 
 static int
@@ -432,11 +443,14 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
       DEBUG_EVENT event;
       BOOL t = WaitForDebugEvent (&event, INFINITE);
       char *p;
+      DWORD continue_status;
 
       event_count++;
 
       current_thread_id = event.dwThreadId;
       current_process_id = event.dwProcessId;
+
+      continue_status = DBG_CONTINUE;
 
       switch (event.dwDebugEventCode)
 	{
@@ -486,8 +500,10 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
 			event.dwProcessId, event.dwThreadId,
 			"EXCEPTION_DEBUG_EVENT"));
-	  handle_exception (&event, ourstatus);
-	  return current_process_id;
+	  if (handle_exception (&event, ourstatus))
+	    return current_process_id;
+	  continue_status = DBG_EXCEPTION_NOT_HANDLED;
+	  break;
 
 	case OUTPUT_DEBUG_STRING_EVENT: /* message from the kernel */
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
@@ -512,10 +528,9 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 		     current_process_id, current_thread_id));
       CHECK (ContinueDebugEvent (current_process_id,
 				 current_thread_id,
-				 DBG_CONTINUE));
+				 continue_status));
     }
 }
-
 
 /* Attach to process PID, then initialize for debugging it.  */
 
@@ -535,7 +550,6 @@ child_attach (args, from_tty)
 
   if (!ok)
     error ("Can't attach to process.");
-
 
   exception_count = 0;
   event_count = 0;
@@ -558,7 +572,6 @@ child_attach (args, from_tty)
   push_target (&child_ops);
 }
 
-
 static void
 child_detach (args, from_tty)
      char *args;
@@ -576,7 +589,6 @@ child_detach (args, from_tty)
   inferior_pid = 0;
   unpush_target (&child_ops);
 }
-
 
 /* Print status information about what we're accessing.  */
 
@@ -596,138 +608,6 @@ child_open (arg, from_tty)
 {
   error ("Use the \"run\" command to start a Unix child process.");
 }
-
-
-/* Convert a unix-style set-of-paths (a colon-separated list of directory
-   paths with forward slashes) into the dos style (semicolon-separated 
-   list with backward slashes), simultaneously undoing any translations
-   performed by the mount table. */
-
-static char *buf = NULL;
-static int blen = 2000;
-
-static char *
-unix_paths_to_dos_paths(char *newenv)
-{
-  int ei;
-  char *src;
-
-  if (buf == 0)
-    buf = (char *) malloc(blen);
-
-  if (newenv == 0 || *newenv == 0 ||
-     (src = strchr(newenv, '=')) == 0)	/* find the equals sign */
-    return 0;
-
-  src++;				/* now skip past it */
-
-  if (src[0] == '/' ||			/* is this a unix style path? */
-     (src[0] == '.' && src[1] == '/') ||
-     (src[0] == '.' && src[1] == '.' && src[2] == '/'))
-    { /* we accept that we will fail on a relative path like 'foo/mumble' */
-      /* Found an env name, turn from unix style into dos style */
-      int len = src - newenv;
-      char *dir = buf + len;
-
-      memcpy(buf, newenv, len);
-      /* Split out the colons */
-      while (1)
-	{
-	  char *tok = strchr (src, ':');
-	  int doff = dir - buf;
-
-	  if (doff + MAX_PATH > blen) 
-	    {
-	      blen *= 2;
-	      buf = (char *) realloc((void *) buf, blen);
-	      dir = buf + doff;
-	    }
-	  if (tok)
-	    {
-	      *tok = 0;
-	            cygwin32_unix_path_to_dos_path_keep_rel (src, dir);
-	      *tok = ':';
-	      dir += strlen(dir);
-	      src = tok + 1;
-	      *dir++ = ';';
-	    }
-	  else
-	    {
-      cygwin32_unix_path_to_dos_path_keep_rel (src, dir);
-	      dir += strlen(dir);
-	      *dir++ = 0;
-	      break;
-	    }
-	}
-      return buf;
-    }
-  return 0;
-}
-
-/* Convert a dos-style set-of-paths (a semicolon-separated list with
-   backward slashes) into the dos style (colon-separated list of
-   directory paths with forward slashes), simultaneously undoing any
-   translations performed by the mount table. */
-
-static char *
-dos_paths_to_unix_paths(char *newenv)
-{
-  int ei;
-  char *src;
-
-  if (buf == 0)
-    buf = (char *) malloc(blen);
-
-  if (newenv == 0 || *newenv == 0 ||
-     (src = strchr(newenv, '=')) == 0)	/* find the equals sign */
-    return 0;
-
-  src++;				/* now skip past it */
-
-  if (src[0] == '\\' ||		/* is this a dos style path? */
-     (isalpha(src[0]) && src[1] == ':' && src[2] == '\\') ||
-     (src[0] == '.' && src[1] == '\\') ||
-     (src[0] == '.' && src[1] == '.' && src[2] == '\\'))
-    { /* we accept that we will fail on a relative path like 'foo\mumble' */
-      /* Found an env name, turn from dos style into unix style */
-      int len = src - newenv;
-      char *dir = buf + len;
-
-      memcpy(buf, newenv, len);
-      /* Split out the colons */
-      while (1)
-	{
-	  char *tok = strchr (src, ';');
-	  int doff = dir - buf;
-	  
-	  if (doff + MAX_PATH > blen) 
-	    {
-	      blen *= 2;
-	      buf = (char *) realloc((void *) buf, blen);
-	      dir = buf + doff;
-	    }
-	  if (tok)
-	    {
-	      *tok = 0;
-	         cygwin32_dos_path_to_unix_path_keep_rel (src, dir);
-	      *tok = ';';
-	      dir += strlen(dir);
-	      src = tok + 1;
-	      *dir++ = ':';
-	    }
-	  else
-	    {
-	         cygwin32_dos_path_to_unix_path_keep_rel (src, dir);
-	      dir += strlen(dir);
-	      *dir++ = 0;
-	      break;
-	    }
-	}
-      return buf;
-    }
-  return 0;
-}
-
 
 /* Start an inferior win32 child process and sets inferior_pid to its pid.
    EXEC_FILE is the file to run.
@@ -761,7 +641,7 @@ child_create_inferior (exec_file, allargs, env)
   memset (&si, 0, sizeof (si));
   si.cb = sizeof (si);
 
-  unix_path_to_dos_path (exec_file, real_path);
+  cygwin32_conv_to_win32_path (exec_file, real_path);
 
   flags = DEBUG_ONLY_THIS_PROCESS; 
 
@@ -778,46 +658,78 @@ child_create_inferior (exec_file, allargs, env)
   strcat (args, " ");
   strcat (args, allargs);
 
-#if 0
-  /* get total size for env strings */
-  for (envlen = 0, i = 0; env[i] && *env[i]; i++)
-    envlen += strlen(env[i]) + 1;       
-#else
-  /* get total size for env strings */
-  for (envlen = 0, i = 0; env[i] && *env[i]; i++)
-    {
-#if 0
-      winenv = 0;
-#else
-      winenv = unix_paths_to_dos_paths(env[i]);
-#endif
-      envlen += winenv ? strlen(winenv) + 1 : strlen(env[i]) + 1;
-    }
-#endif
+  /* Prepare the environment vars for CreateProcess.  */
+  {
+    /* This code use to assume all env vars were file names and would
+       translate them all to win32 style.  That obviously doesn't work in the
+       general case.  The current rule is that we only translate PATH.
+       We need to handle PATH because we're about to call CreateProcess and
+       it uses PATH to find DLL's.  Fortunately PATH has a well-defined value
+       in both posix and win32 environments.  cygwin.dll will change it back
+       to posix style if necessary.  */
 
-  winenv = alloca(2 * envlen + 1);	/* allocate new buffer */
+    static const char *conv_path_names[] =
+      {
+	"PATH=",
+	0
+      };
 
-  /* copy env strings into new buffer */
-  for (temp = winenv, i = 0; env[i] && *env[i];     i++) 
-    {
-#if 0
-      char *p = 0;
-#else
-      char *p = unix_paths_to_dos_paths(env[i]);
-#endif
-      strcpy(temp, p ? p : env[i]);
-      temp += strlen(temp) + 1;
-    }
-#if 0
-  /* copy env strings into new buffer */
-  for (temp = winenv, i = 0; env[i] && *env[i];     i++) 
-    {
-      strcpy(temp, env[i]);
-      temp += strlen(temp) + 1;
-    }
-#endif
+    /* CreateProcess takes the environment list as a null terminated set of
+       strings (i.e. two nulls terminate the list).  */
 
-  *temp = 0;			/* final nil string to terminate new env */
+    /* Get total size for env strings.  */
+    for (envlen = 0, i = 0; env[i] && *env[i]; i++)
+      {
+	int j, len;
+
+	for (j = 0; conv_path_names[j]; j++)
+	  {
+	    len = strlen (conv_path_names[j]);
+	    if (strncmp (conv_path_names[j], env[i], len) == 0)
+	      {
+		if (cygwin32_posix_path_list_p (env[i] + len))
+		  envlen += len
+		    + cygwin32_posix_to_win32_path_list_buf_size (env[i] + len);
+		else
+		  envlen += strlen (env[i]) + 1;
+		break;
+	      }
+	  }
+	if (conv_path_names[j] == NULL)
+	  envlen += strlen (env[i]) + 1;
+      }
+
+    winenv = alloca (envlen + 1);
+
+    /* Copy env strings into new buffer.  */
+    for (temp = winenv, i = 0; env[i] && *env[i]; i++) 
+      {
+	int j, len;
+
+	for (j = 0; conv_path_names[j]; j++)
+	  {
+	    len = strlen (conv_path_names[j]);
+	    if (strncmp (conv_path_names[j], env[i], len) == 0)
+	      {
+		if (cygwin32_posix_path_list_p (env[i] + len))
+		  {
+		    memcpy (temp, env[i], len);
+		    cygwin32_posix_to_win32_path_list (env[i] + len, temp + len);
+		  }
+		else
+		  strcpy (temp, env[i]);
+		break;
+	      }
+	  }
+	if (conv_path_names[j] == NULL)
+	  strcpy (temp, env[i]);
+
+	temp += strlen (temp) + 1;
+      }
+
+    /* Final nil string to terminate new env.  */
+    *temp = 0;
+  }
 
   ret = CreateProcess (0,
 		       args, 	/* command line */
@@ -856,15 +768,17 @@ child_create_inferior (exec_file, allargs, env)
 static void
 child_mourn_inferior ()
 {
+  (void) ContinueDebugEvent (current_process_id,
+			     current_thread_id,
+			     DBG_CONTINUE);
   unpush_target (&child_ops);
   generic_mourn_inferior ();
 }
 
-
 /* Send a SIGINT to the process group.  This acts just like the user typed a
    ^C on the controlling terminal. */
 
-void
+static void
 child_stop ()
 {
   DEBUG_EVENTS (("gdb: GenerateConsoleCtrlEvent (CTRLC_EVENT, 0)\n"));
@@ -897,6 +811,22 @@ void
 child_kill_inferior (void)
 {
   CHECK (TerminateProcess (current_process, 0));
+  
+  for (;;)
+    {
+      DEBUG_EVENT event;
+      if (!ContinueDebugEvent (current_process_id,
+			       current_thread_id,
+			       DBG_CONTINUE))
+	break;
+      if (!WaitForDebugEvent (&event, INFINITE))
+	break;
+      current_thread_id = event.dwThreadId;
+      current_process_id = event.dwProcessId;
+      if (event.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+	break;
+    }
+
   CHECK (CloseHandle (current_process));
   CHECK (CloseHandle (current_thread));
   target_mourn_inferior();	/* or just child_mourn_inferior? */
@@ -1000,41 +930,6 @@ struct target_ops child_ops =
   OPS_MAGIC			/* to_magic */
 };
 
-#include "environ.h"
-
-static void
-set_pathstyle_dos(args, from_tty, c)
-     char *args;
-     int from_tty;
-     struct cmd_list_element *c;
-{
-  char **vector = environ_vector(inferior_environ);
-  char *thisvar;
-  int dos = *(int *) c->var;
-
-  if (info_verbose)
-    printf_unfiltered ("Change dos_path_style to %s\n", dos ? "true":"false");
-
-  while (vector && *vector) 
-    {
-      if (dos)
-	thisvar = unix_paths_to_dos_paths(*vector);
-      else
-	thisvar = dos_paths_to_unix_paths(*vector);
-
-      if (thisvar) 
-	{
-	  if (info_verbose)
-	    printf_unfiltered ("Change %s\nto %s\n", *vector, thisvar);
-	  free(*vector);
-	  *vector = xmalloc(strlen(thisvar) + 1);
-	  strcpy(*vector, thisvar);
-	}
-      vector++;
-    }
-}
-
-
 void
 _initialize_inftarg ()
 {
@@ -1053,15 +948,6 @@ _initialize_inftarg ()
 		  "Set creation of new group when creating child process.",
 		  &setlist),
      &showlist);
-
-  add_show_from_set
-    (c = add_set_cmd ("dos-path-style", class_support, var_boolean,
-		      (char *) &dos_path_style,
-		      "Set whether paths in child's environment are shown in dos style.",
-		  &setlist),
-     &showlist);
-
-  c->function.sfunc = set_pathstyle_dos;
 
   add_show_from_set
     (add_set_cmd ("debugexec", class_support, var_boolean,

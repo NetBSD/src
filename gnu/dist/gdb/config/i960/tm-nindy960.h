@@ -95,3 +95,7 @@ nindy_frame_chain_valid();		/* See nindy-tdep.c */
  */
 
 #define DECR_PC_AFTER_BREAK 0
+
+#undef REGISTER_CONVERT_TO_VIRTUAL
+#undef REGISTER_CONVERT_TO_RAW
+#undef REGISTER_CONVERTIBLE

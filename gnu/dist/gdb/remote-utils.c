@@ -69,6 +69,9 @@ struct _sr_settings sr_settings = {
 
 struct gr_settings *gr_settings = NULL;
 
+static void usage PARAMS ((char *, char *));
+static void sr_com PARAMS ((char *, int));
+
 static void
 usage(proto, junk)
      char *proto;
@@ -380,7 +383,7 @@ sr_get_hex_word ()
    prompt from the remote is seen.
    FIXME: Can't handle commands that take input.  */
 
-void
+static void
 sr_com (args, fromtty)
      char *args;
      int fromtty;

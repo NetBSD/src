@@ -62,10 +62,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #undef  STACK_END_ADDR
 #define STACK_END_ADDR USRSTACK
 
-/* Don't output r?? names for registers, since they
- * can't be used as reg names anyway
- */
-#define NUMERIC_REG_NAMES
-
 /* Output registers in tabular format */
 #define TABULAR_REGISTER_OUTPUT

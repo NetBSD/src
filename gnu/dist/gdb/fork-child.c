@@ -1,5 +1,5 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB.
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "wait.h"
 #include "gdbcore.h"
 #include "terminal.h"
-#include "thread.h"
+#include "gdbthread.h"
 
 #include <signal.h>
 #ifdef HAVE_UNISTD_H
@@ -52,7 +52,7 @@ fork_inferior (exec_file, allargs, env, traceme_fun, init_trace_fun,
      char *allargs;
      char **env;
      void (*traceme_fun) PARAMS ((void));
-     void (*init_trace_fun) PARAMS ((int));
+     int (*init_trace_fun) PARAMS ((int));
      char *shell_file;
 {
   int pid;
@@ -233,7 +233,9 @@ fork_inferior (exec_file, allargs, env, traceme_fun, init_trace_fun,
 
   /* Now that we have a child process, make it our target, and
      initialize anything target-vector-specific that needs initializing.  */
-  (*init_trace_fun)(pid);
+
+  /* Note that pid may be modified by this function.  */
+  inferior_pid = pid = (*init_trace_fun)(pid);
 
   /* We are now in the child process of interest, having exec'd the
      correct program, and are poised at the first instruction of the

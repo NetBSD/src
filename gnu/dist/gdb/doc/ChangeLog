@@ -1,3 +1,136 @@
+Fri Apr 24 15:28:03 1998  Jason Molenda  (crash@bugshack.cygnus.com)
+
+	* Makefile.in (TEXIDIR): Don't use ../../texinfo's stuff.
+	(install): run install-info.
+	(install-info): Look for pregenerated info files in $(srcdir).
+
+Tue Apr 21 18:09:56 1998  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* gdb.texinfo (EDITION, DATE): Update and change to use ordinals
+	for the edition instead of confusing GDB-version-like numbers.
+
+Thu Apr  2 16:52:44 1998  Jason Molenda  (crash@bugshack.cygnus.com)
+
+	* LRS: Reformat a bit to keep text under 80 columns.
+
+Thu Apr  2 16:10:36 1998  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* gdb.texinfo: Add some credits, mention bug monitor.
+	* remote.texi: Mention mips monitor targets.
+	* gdbint.texinfo: Describe SP_REGNUM, STEP_SKIPS_DELAY.
+	
+Mon Feb  2 17:13:03 1998  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* gdbint.texinfo: Remove obsolete mentions of pinsn.c and opcode.h
+ 	files, finish sorting of host vs target vs native macros, describe
+ 	some more of them.
+
+Tue Jan 13 16:44:50 1998  Fred Fish  <fnf@cygnus.com>
+
+	* gdbint.texinfo (Host Conditionals): Document change from
+	using NO_MMALLOC to it's inverse, USE_MMALLOC.
+
+Mon Nov 24 13:55:21 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* gdbint.texinfo (Host Conditionals): Document
+ 	PRINTF_HAS_LONG_DOUBLE, SCANF_HAS_LONG_DOUBLE, HAVE_LONG_DOUBLE.
+
+Fri Jul  4 14:52:31 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gdbint.texinfo (Host Conditionals): Add CRLF_SOURCE_LINES.
+	Document LSEEK_NOT_LINEAR.
+
+Tue Mar 25 14:44:09 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.texinfo (Stab Section Basics): Make it clear that only
+	some versions of the GNU linker remove the leading N_UNDF symbol.
+
+Thu Feb 27 17:45:19 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.texinfo (String Field): Document type number pairs here,
+	instead of in the Sun specific section.
+	(Include Files): The GNU linker supports the N_BINCL
+	optimization.  Clarify the N_BINCL value, and what it is used
+	for.
+	(Procedures): Document N_FUN with an empty string to mark the end
+	of a function.
+	(Typedefs): Mention that Sun compilers may use N_GSYM for a type.
+	(Sun Differences): Remove this node, as the information is now
+	elsewhere in the main document.
+	(Stab Section Basics): Mention that the GNU linker may optimize
+	stabs and remove the leading N_UNDF symbol.
+
+Mon Dec  9 12:23:32 1996  Roland Pesch  <roland@wrs.com>
+
+	* gdb.texinfo, refcard.tex: Restore author credit
+
+Wed Oct  2 22:01:36 1996  Fred Fish  <fnf@fishfood.ninemoons.com>
+
+	* gdbint.texinfo (SIGTRAMP_START, SIGTRAMP_END): Update
+	documentation to account for START and END macros taking
+	one arg.
+
+Thu Aug 22 17:59:03 1996  Fred Fish  <fnf@cygnus.com>
+
+	From: Eberhard Mattes <mattes@azu.informatik.uni-stuttgart.de>
+	* gdb.texinfo (Frames): Fix typo.
+
+Tue Jul 23 10:06:20 1996  Fred Fish  <fnf@cygnus.com>
+
+	* gdbint.texinfo (NO_SINGLE_STEP): Document that single_step takes
+	a target_signal as arg type, not a pid.
+
+Fri Jul 12 11:10:05 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* gdb.texinfo:  Document `set assembly-language'.
+
+Thu Jul 11 13:50:28 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* remote.texi: Update list of stubs in the GDB distribution.
+
+Fri Jul  5 15:38:54 1996  Fred Fish  <fnf@cygnus.com>
+
+	* gdbint.texinfo (NO_MMCHECK): Renamed from NO_MMALLOC_CHECK.
+  	Also document that some systems can use mmalloc but must define
+ 	this if their C runtime allocates memory that is later freed.
+	(MMCHECK_FORCE): Document new macro.
+	
+Fri Jun 28 22:17:10 1996  Dawn Perchik  <dawn@cygnus.com>
+
+	* remote.texi: Add documentation for target Sparclet.
+
+Mon Jun 24 18:12:22 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (srcdir, VPATH, prefix, infodir, INSTALL, 
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf set values.
+	* configure.in: Rewritten for autoconf.
+	* configure: New.
+
+Mon Jun 17 10:43:41 1996  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (DVIPS): New define, set to dvips.
+	(dvi): Add stabs.dvi.
+	(ps): New target.
+	(all-doc): Depend on info, dvi, and ps targets.
+	(STAGESTUFF): Add *.ps and *.dvi files.
+	(clean-info, clean-dvi): Remove.
+	(mostlyclean): Does not depend upon clean-info or clean-dvi,
+	rules completely rewritten.
+	(maintainer-clean): Remove clean-info and clean-dvi
+	dependencies and put their actions in the rules.
+	(gdb.ps): New target
+	(gdb.dvi, gdbgui.dvi, gdbint.dvi, stabs.dvi): Remove 
+	intermediate TeX files, whether they have 2 or 3 character
+	extensions.
+	(gdbint.ps): Add target and rules.
+	(gdb-internals): Delete unused target.
+	(Makefile): Depends upon config.status also.
+
+Sat Mar 30 15:46:58 1996  Fred Fish  <fnf@cygnus.com>
+
+	* gdbint.texinfo (CC_HAS_LONG_LONG): Clarify when/how this is
+	set.
+
 Sat Mar 16 15:10:20 1996  Fred Fish  <fnf@cygnus.com>
 
 	From Peter Schauer <Peter.Schauer@Regent.E-Technik.TU-Muenchen.DE>
@@ -26,6 +159,11 @@ Fri Dec  8 21:08:44 1995  Fred Fish  <fnf@cygnus.com>
 
 	* gdbint.texinfo (Releases): Change gdb.tar.Z to gdb.tar.gz.
 	Fix typo.
+
+Fri Dec  1 11:07:50 1995  Fred Fish  <fnf@cygnus.com>
+
+	* gdbint.texinfo (Releases): Make "gdb.tar.gz" rather than
+	"gdb.tar.Z".
 
 Wed Sep 20 13:14:10 1995  Ian Lance Taylor  <ian@cygnus.com>
 

@@ -52,7 +52,7 @@ extern char *strsignal PARAMS ((int));
 
 #include "progress.h"
 
-#ifndef NO_MMALLOC
+#ifdef USE_MMALLOC
 #include "mmalloc.h"
 #endif
 
@@ -67,8 +67,12 @@ extern char *strsignal PARAMS ((int));
 
 typedef bfd_vma CORE_ADDR;
 
+#ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef max
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 /* Gdb does *lots* of string compares.  Use macros to speed them up by
    avoiding function calls if the first characters are not the same. */
@@ -90,11 +94,17 @@ extern int sevenbit_strings;
 
 extern void quit PARAMS ((void));
 
+#ifdef QUIT
+/* do twice to force compiler warning */
+#define QUIT_FIXME "FIXME"
+#define QUIT_FIXME "ignoring redefinition of QUIT"
+#else
 #define QUIT { \
   if (quit_flag) quit (); \
   if (interactive_hook) interactive_hook (); \
   PROGRESS (1); \
 }
+#endif
 
 /* Command classes are top-level categories into which commands are broken
    down for "help" purposes.  
@@ -108,7 +118,7 @@ enum command_class
   all_classes = -2, all_commands = -1,
   /* Classes of commands */
   no_class = -1, class_run = 0, class_vars, class_stack,
-  class_files, class_support, class_info, class_breakpoint,
+  class_files, class_support, class_info, class_breakpoint, class_trace,
   class_alias, class_obscure, class_user, class_maintenance,
   class_pseudo
 };
@@ -124,6 +134,7 @@ enum language
    language_auto,		/* Placeholder for automatic setting */
    language_c, 			/* C */
    language_cplus, 		/* C++ */
+   language_java,		/* Java */
    language_chill,		/* Chill */
    language_fortran,		/* Fortran */
    language_m2,			/* Modula-2 */
@@ -207,6 +218,8 @@ extern char *chill_demangle PARAMS ((const char *));
 
 /* From utils.c */
 
+extern void notice_quit PARAMS ((void));
+
 extern int strcmp_iw PARAMS ((const char *, const char *));
 
 extern char *safe_strerror PARAMS ((int));
@@ -218,8 +231,12 @@ extern void init_malloc PARAMS ((void *));
 extern void request_quit PARAMS ((int));
 
 extern void do_cleanups PARAMS ((struct cleanup *));
+extern void do_final_cleanups PARAMS ((struct cleanup *));
+extern void do_my_cleanups PARAMS ((struct cleanup **, struct cleanup *));
 
 extern void discard_cleanups PARAMS ((struct cleanup *));
+extern void discard_final_cleanups PARAMS ((struct cleanup *));
+extern void discard_my_cleanups PARAMS ((struct cleanup **, struct cleanup *));
 
 /* The bare make_cleanup function is one of those rare beasts that
    takes almost any type of function as the first arg and anything that
@@ -235,19 +252,32 @@ make_cleanup PARAMS ((void (*function) (void *), void *));
    wrong.  */
 
 extern struct cleanup *make_cleanup ();
+extern struct cleanup *
+make_final_cleanup PARAMS ((void (*function) (void *), void *));
+extern struct cleanup *
+make_my_cleanup PARAMS ((struct cleanup **, void (*function) (void *), void *));
 
 extern struct cleanup *save_cleanups PARAMS ((void));
+extern struct cleanup *save_final_cleanups PARAMS ((void));
+extern struct cleanup *save_my_cleanups PARAMS ((struct cleanup **));
 
 extern void restore_cleanups PARAMS ((struct cleanup *));
+extern void restore_final_cleanups PARAMS ((struct cleanup *));
+extern void restore_my_cleanups PARAMS ((struct cleanup **, struct cleanup *));
 
 extern void free_current_contents PARAMS ((char **));
 
-extern void null_cleanup PARAMS ((char **));
+extern void null_cleanup PARAMS ((PTR));
 
 extern int myread PARAMS ((int, char *, int));
 
 extern int query PARAMS((char *, ...))
      ATTR_FORMAT(printf, 1, 2);
+
+/* From demangle.c */
+
+extern void set_demangling_style PARAMS ((char *));
+
 
 /* Annotation stuff.  */
 
@@ -278,6 +308,8 @@ extern int putchar_unfiltered PARAMS ((int c));
 extern void puts_filtered PARAMS ((const char *));
 
 extern void puts_unfiltered PARAMS ((const char *));
+
+extern void puts_debug PARAMS ((char *prefix, char *string, char *suffix));
 
 extern void vprintf_filtered PARAMS ((const char *, va_list))
      ATTR_FORMAT(printf, 1, 0);
@@ -319,10 +351,20 @@ extern void gdb_printchar PARAMS ((int, GDB_FILE *, int));
 
 extern void gdb_print_address PARAMS ((void *, GDB_FILE *));
 
+typedef bfd_vma t_addr;
+typedef bfd_vma t_reg;
+extern char* paddr PARAMS ((t_addr addr));
+
+extern char* preg PARAMS ((t_reg reg));
+
+extern char* paddr_nz PARAMS ((t_addr addr));
+
+extern char* preg_nz PARAMS ((t_reg reg));
+
 extern void fprintf_symbol_filtered PARAMS ((GDB_FILE *, char *,
 					     enum language, int));
 
-extern void perror_with_name PARAMS ((char *));
+extern NORETURN void perror_with_name PARAMS ((char *)) ATTR_NORETURN;
 
 extern void print_sys_errmsg PARAMS ((char *, int));
 
@@ -413,7 +455,7 @@ struct command_line
   struct command_line **body_list;
 };
 
-extern struct command_line *read_command_lines PARAMS ((void));
+extern struct command_line *read_command_lines PARAMS ((char *, int));
 
 extern void free_command_lines PARAMS ((struct command_line **));
 
@@ -462,22 +504,20 @@ enum val_prettyprint
 #include "fopen-same.h"
 #endif
 
+/* Microsoft C can't deal with const pointers */
+
+#ifdef _MSC_VER
+#define CONST_PTR
+#else
+#define CONST_PTR const
+#endif
+
 /*
- * Allow things in gdb to be declared "const".  If compiling ANSI, it
- * just works.  If compiling with gcc but non-ansi, redefine to __const__.
- * If non-ansi, non-gcc, then eliminate "const" entirely, making those
+ * Allow things in gdb to be declared "volatile".  If compiling ANSI, it
+ * just works.  If compiling with gcc but non-ansi, redefine to __volatile__.
+ * If non-ansi, non-gcc, then eliminate "volatile" entirely, making those
  * objects be read-write rather than read-only.
  */
-
-#ifndef const
-#ifndef __STDC__
-# ifdef __GNUC__
-#  define const __const__
-# else
-#  define const /*nothing*/
-# endif /* GNUC */
-#endif /* STDC */
-#endif /* const */
 
 #ifndef volatile
 #ifndef __STDC__
@@ -489,7 +529,8 @@ enum val_prettyprint
 #endif /* STDC */
 #endif /* volatile */
 
-/* Defaults for system-wide constants (if not defined by xm.h, we fake it).  */
+/* Defaults for system-wide constants (if not defined by xm.h, we fake it).
+   FIXME: Assumes 2's complement arithmetic */
 
 #if !defined (UINT_MAX)
 #define	UINT_MAX ((unsigned int)(~0))		/* 0xFFFFFFFF for 32-bits */
@@ -500,7 +541,7 @@ enum val_prettyprint
 #endif
 
 #if !defined (INT_MIN)
-#define INT_MIN (-INT_MAX - 1)			/* 0x80000000 for 32-bits */
+#define INT_MIN ((int)((int) ~0 ^ INT_MAX))	/* 0x80000000 for 32-bits */
 #endif
 
 #if !defined (ULONG_MAX)
@@ -511,45 +552,35 @@ enum val_prettyprint
 #define	LONG_MAX ((long)(ULONG_MAX >> 1))	/* 0x7FFFFFFF for 32-bits */
 #endif
 
+#ifndef LONGEST
+
 #ifdef BFD64
 
 /* This is to make sure that LONGEST is at least as big as CORE_ADDR.  */
 
 #define LONGEST BFD_HOST_64_BIT
+#define ULONGEST BFD_HOST_U_64_BIT
 
 #else /* No BFD64 */
 
-/* If all compilers for this host support "long long" and we want to
-   use it for LONGEST (the performance hit is about 10% on a testsuite
-   run based on one DECstation test), then the xm.h file can define
-   CC_HAS_LONG_LONG.
-
-   Using GCC 1.39 on BSDI with long long causes about 700 new
-   testsuite failures.  Using long long for LONGEST on the DECstation
-   causes 3 new FAILs in the testsuite and many heuristic fencepost
-   warnings.  These are not investigated, but a first guess would be
-   that the BSDI problems are GCC bugs in long long support and the
-   latter are GDB bugs.  */
-
-#ifndef CC_HAS_LONG_LONG
-#  if defined (__GNUC__) && defined (FORCE_LONG_LONG)
-#    define CC_HAS_LONG_LONG 1
-#  endif
-#endif
-
-/* LONGEST should not be a typedef, because "unsigned LONGEST" needs to work.
-   CC_HAS_LONG_LONG is defined if the host compiler supports "long long"
-   variables and we wish to make use of that support.  */
-
-#ifndef LONGEST
 #  ifdef CC_HAS_LONG_LONG
 #    define LONGEST long long
+#    define ULONGEST unsigned long long
 #  else
-#    define LONGEST long
+/* BFD_HOST_64_BIT is defined for some hosts that don't have long long
+   (e.g. i386-windows) so try it.  */
+#    ifdef BFD_HOST_64_BIT
+#      define LONGEST BFD_HOST_64_BIT
+#      define ULONGEST BFD_HOST_U_64_BIT
+#    else
+#      define LONGEST long
+#      define ULONGEST unsigned long
+#    endif
 #  endif
-#endif
 
 #endif /* No BFD64 */
+
+#endif /* ! LONGEST */
 
 /* Convert a LONGEST to an int.  This is used in contexts (e.g. number of
    arguments to a function, number in a value history, register number, etc.)
@@ -568,9 +599,15 @@ extern char *strsave PARAMS ((const char *));
 
 extern char *mstrsave PARAMS ((void *, const char *));
 
+#ifdef _MSC_VER /* FIXME; was long, but this causes compile errors in msvc if already defined */
+extern PTR xmmalloc PARAMS ((PTR, size_t));
+
+extern PTR xmrealloc PARAMS ((PTR, PTR, size_t));
+#else
 extern PTR xmmalloc PARAMS ((PTR, long));
 
 extern PTR xmrealloc PARAMS ((PTR, PTR, long));
+#endif
 
 extern int parse_escape PARAMS ((char **));
 
@@ -588,7 +625,7 @@ extern char *quit_pre_print;
 
 extern char *warning_pre_print;
 
-extern NORETURN void error PARAMS((char *, ...)) ATTR_NORETURN;
+extern NORETURN void error PARAMS((const char *, ...)) ATTR_NORETURN;
 
 extern void error_begin PARAMS ((void));
 
@@ -618,7 +655,7 @@ catch_errors PARAMS ((int (*) (char *), void *, char *, return_mask));
 
 extern void warning_begin PARAMS ((void));
 
-extern void warning PARAMS ((char *, ...))
+extern void warning PARAMS ((const char *, ...))
      ATTR_FORMAT(printf, 1, 2);
 
 /* Global functions from other, non-gdb GNU thingies.
@@ -631,9 +668,23 @@ extern char *getenv PARAMS ((const char *));
 
 /* From other system libraries */
 
-#ifdef __STDC__
+#ifdef HAVE_STDDEF_H
 #include <stddef.h>
+#endif
+
+#ifdef HAVE_STDLIB_H
+#if defined(_MSC_VER) && !defined(__cplusplus)
+/* msvc defines these in stdlib.h for c code */
+#undef min
+#undef max
+#endif
 #include <stdlib.h>
+#endif
+#ifndef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef max
+#define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
 
@@ -643,46 +694,28 @@ extern char *getenv PARAMS ((const char *));
    somewhere. */
 
 #ifndef FCLOSE_PROVIDED
-extern int fclose ();
+extern int fclose PARAMS ((FILE *));
 #endif
 
 #ifndef atof
-extern double atof ();
+extern double atof PARAMS ((const char *));	/* X3.159-1989  4.10.1.1 */
 #endif
 
 #ifndef MALLOC_INCOMPATIBLE
 
+#ifdef NEED_DECLARATION_MALLOC
 extern PTR malloc ();
+#endif
 
+#ifdef NEED_DECLARATION_REALLOC
 extern PTR realloc ();
+#endif
 
+#ifdef NEED_DECLARATION_FREE
 extern void free ();
+#endif
 
 #endif /* MALLOC_INCOMPATIBLE */
-
-#ifndef __WIN32__
-
-#ifndef strchr
-extern char *strchr ();
-#endif
-
-#ifndef strrchr
-extern char *strrchr ();
-#endif
-
-#ifndef strstr
-extern char *strstr ();
-#endif
-
-#ifndef strtok
-extern char *strtok ();
-#endif
-
-#ifndef strerror
-extern char *strerror ();
-#endif
-
-#endif	/* !__WIN32__ */
 
 /* Various possibilities for alloca.  */
 #ifndef alloca
@@ -727,9 +760,20 @@ extern char *strerror ();
 #undef TARGET_BYTE_ORDER
 #define TARGET_BYTE_ORDER target_byte_order
 extern int target_byte_order;
+/* Nonzero when target_byte_order auto-detected */
+extern int target_byte_order_auto;
 #endif
 
 extern void set_endian_from_file PARAMS ((bfd *));
+
+/* The target architecture can be set at run-time. */
+extern int target_architecture_auto;
+extern const bfd_arch_info_type *target_architecture;
+extern void set_architecture_from_file PARAMS ((bfd *));
+/* Notify target of a change to the selected architecture. Zero return
+   status indicates that the target did not like the change. */
+extern int (*target_architecture_hook) PARAMS ((const bfd_arch_info_type *ap)); 
+extern void set_architecture_from_arch_mach PARAMS ((enum bfd_architecture arch, unsigned long mach));
 
 /* Number of bits in a char or unsigned char for the target machine.
    Just like CHAR_BIT in <limits.h> but describes the target machine.  */
@@ -814,7 +858,7 @@ extern void set_endian_from_file PARAMS ((bfd *));
 
 extern LONGEST extract_signed_integer PARAMS ((void *, int));
 
-extern unsigned LONGEST extract_unsigned_integer PARAMS ((void *, int));
+extern ULONGEST extract_unsigned_integer PARAMS ((void *, int));
 
 extern int extract_long_unsigned_integer PARAMS ((void *, int, LONGEST *));
 
@@ -822,9 +866,74 @@ extern CORE_ADDR extract_address PARAMS ((void *, int));
 
 extern void store_signed_integer PARAMS ((void *, int, LONGEST));
 
-extern void store_unsigned_integer PARAMS ((void *, int, unsigned LONGEST));
+extern void store_unsigned_integer PARAMS ((void *, int, ULONGEST));
 
 extern void store_address PARAMS ((void *, int, CORE_ADDR));
+
+/* Setup definitions for host and target floating point formats.  We need to
+   consider the format for `float', `double', and `long double' for both target
+   and host.  We need to do this so that we know what kind of conversions need
+   to be done when converting target numbers to and from the hosts DOUBLEST
+   data type.  */
+
+/* This is used to indicate that we don't know the format of the floating point
+   number.  Typically, this is useful for native ports, where the actual format
+   is irrelevant, since no conversions will be taking place.  */
+
+extern const struct floatformat floatformat_unknown;
+
+#if HOST_BYTE_ORDER == BIG_ENDIAN
+#  ifndef HOST_FLOAT_FORMAT
+#    define HOST_FLOAT_FORMAT &floatformat_ieee_single_big
+#  endif
+#  ifndef HOST_DOUBLE_FORMAT
+#    define HOST_DOUBLE_FORMAT &floatformat_ieee_double_big
+#  endif
+#else				/* LITTLE_ENDIAN */
+#  ifndef HOST_FLOAT_FORMAT
+#    define HOST_FLOAT_FORMAT &floatformat_ieee_single_little
+#  endif
+#  ifndef HOST_DOUBLE_FORMAT
+#    define HOST_DOUBLE_FORMAT &floatformat_ieee_double_little
+#  endif
+#endif
+
+#ifndef HOST_LONG_DOUBLE_FORMAT
+#define HOST_LONG_DOUBLE_FORMAT &floatformat_unknown
+#endif
+
+#ifndef TARGET_BYTE_ORDER_SELECTABLE
+#  if TARGET_BYTE_ORDER == BIG_ENDIAN
+#    ifndef TARGET_FLOAT_FORMAT
+#      define TARGET_FLOAT_FORMAT &floatformat_ieee_single_big
+#    endif
+#    ifndef TARGET_DOUBLE_FORMAT
+#      define TARGET_DOUBLE_FORMAT &floatformat_ieee_double_big
+#    endif
+#  else /* LITTLE_ENDIAN */
+#    ifndef TARGET_FLOAT_FORMAT
+#      define TARGET_FLOAT_FORMAT &floatformat_ieee_single_little
+#    endif
+#    ifndef TARGET_DOUBLE_FORMAT
+#      define TARGET_DOUBLE_FORMAT &floatformat_ieee_double_little
+#    endif
+#  endif
+#else				/* TARGET_BYTE_ORDER_SELECTABLE */
+#  ifndef TARGET_FLOAT_FORMAT
+#    define TARGET_FLOAT_FORMAT (target_byte_order == BIG_ENDIAN \
+				 ? &floatformat_ieee_single_big \
+				 : &floatformat_ieee_single_little)
+#  endif
+#  ifndef TARGET_DOUBLE_FORMAT
+#    define TARGET_DOUBLE_FORMAT (target_byte_order == BIG_ENDIAN \
+				  ? &floatformat_ieee_double_big \
+				  : &floatformat_ieee_double_little)
+#  endif
+#endif
+
+#ifndef TARGET_LONG_DOUBLE_FORMAT
+#  define TARGET_LONG_DOUBLE_FORMAT &floatformat_unknown
+#endif
 
 /* Use `long double' if the host compiler supports it.  (Note that this is not
    necessarily any longer than `double'.  On SunOS/gcc, it's the same as
@@ -835,13 +944,16 @@ extern void store_address PARAMS ((void *, int, CORE_ADDR));
    host's `long double'.  In general, we'll probably reduce the precision of
    any such values and print a warning.  */
 
-
 #ifdef HAVE_LONG_DOUBLE
 typedef long double DOUBLEST;
 #else
 typedef double DOUBLEST;
 #endif
 
+extern void floatformat_to_doublest PARAMS ((const struct floatformat *,
+					     char *, DOUBLEST *));
+extern void floatformat_from_doublest PARAMS ((const struct floatformat *,
+					       DOUBLEST *, char *));
 extern DOUBLEST extract_floating PARAMS ((void *, int));
 
 extern void store_floating PARAMS ((void *, int, DOUBLEST));
@@ -863,7 +975,7 @@ extern void store_floating PARAMS ((void *, int, DOUBLEST));
 
 extern CORE_ADDR push_bytes PARAMS ((CORE_ADDR, char *, int));
 
-extern CORE_ADDR push_word PARAMS ((CORE_ADDR, unsigned LONGEST));
+extern CORE_ADDR push_word PARAMS ((CORE_ADDR, ULONGEST));
 
 /* Some parts of gdb might be considered optional, in the sense that they
    are not essential for being able to build a working, usable debugger
@@ -896,6 +1008,7 @@ extern void dis_asm_print_address PARAMS ((bfd_vma addr,
 					   disassemble_info *info));
 
 extern int (*tm_print_insn) PARAMS ((bfd_vma, disassemble_info*));
+extern disassemble_info tm_print_insn_info;
 
 /* Hooks for alternate command interfaces.  */
 
@@ -904,14 +1017,14 @@ struct target_waitstatus;
 struct cmd_list_element;
 #endif
 
-extern void (*init_ui_hook) PARAMS ((void));
+extern void (*init_ui_hook) PARAMS ((char *argv0));
 extern void (*command_loop_hook) PARAMS ((void));
 extern void (*fputs_unfiltered_hook) PARAMS ((const char *linebuffer,
 					      FILE *stream));
 extern void (*print_frame_info_listing_hook) PARAMS ((struct symtab *s,
 						      int line, int stopline,
 						      int noerror));
-extern int (*query_hook) PARAMS (());
+extern int (*query_hook) PARAMS ((const char *, va_list));
 extern void (*flush_hook) PARAMS ((FILE *stream));
 extern void (*create_breakpoint_hook) PARAMS ((struct breakpoint *b));
 extern void (*delete_breakpoint_hook) PARAMS ((struct breakpoint *bpt));
@@ -919,6 +1032,9 @@ extern void (*modify_breakpoint_hook) PARAMS ((struct breakpoint *bpt));
 extern void (*target_output_hook) PARAMS ((char *));
 extern void (*interactive_hook) PARAMS ((void));
 extern void (*registers_changed_hook) PARAMS ((void));
+extern void (*readline_begin_hook) PARAMS ((char *, ...));
+extern char * (*readline_hook) PARAMS ((char *));
+extern void (*readline_end_hook) PARAMS ((void));
 
 extern int (*target_wait_hook) PARAMS ((int pid,
 					struct target_waitstatus *status));
@@ -926,7 +1042,7 @@ extern int (*target_wait_hook) PARAMS ((int pid,
 extern void (*call_command_hook) PARAMS ((struct cmd_list_element *c,
 					  char *cmd, int from_tty));
 
-extern NORETURN void (*error_hook) PARAMS (()) ATTR_NORETURN;
+extern NORETURN void (*error_hook) PARAMS ((void)) ATTR_NORETURN;
 
 
 
@@ -943,7 +1059,7 @@ extern int use_windows;
 #endif
 
 #ifndef SLASH_P
-#if defined(__GO32__)||defined(__WIN32__)
+#if defined(__GO32__)||defined(_WIN32)
 #define SLASH_P(X) ((X)=='\\')
 #else
 #define SLASH_P(X) ((X)=='/')
@@ -951,7 +1067,7 @@ extern int use_windows;
 #endif
 
 #ifndef SLASH_CHAR
-#if defined(__GO32__)||defined(__WIN32__)
+#if defined(__GO32__)||defined(_WIN32)
 #define SLASH_CHAR '\\'
 #else
 #define SLASH_CHAR '/'
@@ -959,7 +1075,7 @@ extern int use_windows;
 #endif
 
 #ifndef SLASH_STRING
-#if defined(__GO32__)||defined(__WIN32__)
+#if defined(__GO32__)||defined(_WIN32)
 #define SLASH_STRING "\\"
 #else
 #define SLASH_STRING "/"
@@ -968,6 +1084,15 @@ extern int use_windows;
 
 #ifndef ROOTED_P
 #define ROOTED_P(X) (SLASH_P((X)[0]))
+#endif
+
+/* On some systems, PIDGET is defined to extract the inferior pid from
+   an internal pid that has the thread id and pid in seperate bit
+   fields.  If not defined, then just use the entire internal pid as
+   the actual pid. */
+
+#ifndef PIDGET
+#define PIDGET(pid) (pid)
 #endif
 
 #endif /* #ifndef DEFS_H */

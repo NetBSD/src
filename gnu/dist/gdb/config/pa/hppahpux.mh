@@ -1,6 +1,9 @@
 # Host: Hewlett-Packard PA-RISC machine, running HPUX
 
-TERMCAP = -lcurses
+# Some versions of HPUX (10.10 for example) have a libcurses.a that contains a broken
+# select(), which if linked into gdb ahead of libc, will cause gdb to core dump on 
+# startup.  As a workaround, always link libc first when using libcurses.
+TERMCAP = -lc -lcurses
 
 XM_FILE= xm-hppah.h
 XDEPFILES= ser-tcp.o

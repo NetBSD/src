@@ -36,6 +36,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <sys/file.h>
 #include "gdb_stat.h"
 
+static void fetch_core_registers PARAMS ((char *, unsigned, int, CORE_ADDR));
+
 /* Assumes support for AMD's Binary Compatibility Standard
    for ptrace().  If you define ULTRA3, the ultra3 extensions to
    ptrace() are used allowing the reading of more than one register
@@ -242,7 +244,11 @@ fetch_register (regno)
  */
 
 static void
-fetch_core_registers ()
+fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
+     char *core_reg_sect;	/* Unused in this version */
+     unsigned core_reg_size;	/* Unused in this version */
+     int which;			/* Unused in this version */
+     CORE_ADDR reg_addr;	/* Unused in this version */
 {
   register int regno;
   int	val;
@@ -275,10 +281,10 @@ fetch_core_registers ()
  * available to the user is specified in 'regno', then an address that
  * will cause ptrace() to fail is returned.
  */
-unsigned int 
+CORE_ADDR
 register_addr (regno,blockend)
-     unsigned int	regno;
-     char		*blockend;
+     int	regno;
+     CORE_ADDR	blockend;
 {
   if ((regno >= LR0_REGNUM) && (regno < LR0_REGNUM + 128)) {
     return(offsetof(struct ptrace_user,pt_lr[regno-LR0_REGNUM]));

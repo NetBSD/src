@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
 #include <signal.h>
-#include <sys/param.h>
 #include "gdb_string.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -31,6 +30,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdbcore.h"
 #include "target.h"
 #include "language.h"
+#include "symfile.h"
+
+/* Functions exported for general use: */
+
+void nofp_registers_info PARAMS ((char *, int));
+
+void all_registers_info PARAMS ((char *, int));
+
+void registers_info PARAMS ((char *, int));
+
+/* Local functions: */
 
 static void continue_command PARAMS ((char *, int));
 
@@ -48,13 +58,9 @@ static void float_info PARAMS ((char *, int));
 
 static void detach_command PARAMS ((char *, int));
 
-static void nofp_registers_info PARAMS ((char *, int));
-
-static void all_registers_info PARAMS ((char *, int));
-
-static void registers_info PARAMS ((char *, int));
-
+#if !defined (DO_REGISTERS_INFO)
 static void do_registers_info PARAMS ((int, int));
+#endif
 
 static void unset_environment_command PARAMS ((char *, int));
 
@@ -81,6 +87,10 @@ static void next_command PARAMS ((char *, int));
 static void step_command PARAMS ((char *, int));
 
 static void run_command PARAMS ((char *, int));
+
+#ifdef CALL_DUMMY_BREAKPOINT_OFFSET
+static void breakpoint_auto_delete_contents PARAMS ((PTR));
+#endif
 
 #define ERROR_NO_INFERIOR \
    if (!target_has_execution) error ("The program is not being run.");
@@ -187,7 +197,7 @@ run_command (args, from_tty)
 
   dont_repeat ();
 
-  if (inferior_pid)
+  if (inferior_pid != 0 && target_has_execution)
     {
       if (
 	  !query ("The program being debugged has been started already.\n\
@@ -199,6 +209,8 @@ Start it from the beginning? "))
   clear_breakpoint_hit_counts ();
 
   exec_file = (char *) get_exec_file (0);
+
+  do_run_cleanups (NULL);
 
   /* The exec file is re-read every time we do a generic_mourn_inferior, so
      we just have to worry about the symbol file.  */
@@ -437,6 +449,21 @@ jump_command (arg, from_tty)
 	}
     }
 
+  if (sfn != NULL) 
+    {
+      fixup_symbol_section (sfn, 0);
+      if (section_is_overlay (SYMBOL_BFD_SECTION (sfn)) && 
+	  !section_is_mapped (SYMBOL_BFD_SECTION (sfn)))
+	{
+	  if (!query ("WARNING!!!  Destination is in unmapped overlay!  Jump anyway? "))
+	    {
+	      error ("Not confirmed.");
+	      /* NOTREACHED */
+	    }
+	}
+    }
+
+
   addr = sal.pc;
 
   if (from_tty)
@@ -500,12 +527,17 @@ signal_command (signum_exp, from_tty)
 
 /* Call breakpoint_auto_delete on the current contents of the bpstat
    pointed to by arg (which is really a bpstat *).  */
-void
+
+#ifdef CALL_DUMMY_BREAKPOINT_OFFSET
+
+static void
 breakpoint_auto_delete_contents (arg)
      PTR arg;
 {
   breakpoint_auto_delete (*(bpstat *)arg);
 }
+
+#endif	/* CALL_DUMMY_BREAKPOINT_OFFSET */
 
 /* Execute a "stack dummy", a piece of code stored in the stack
    by the debugger to be executed in the inferior.
@@ -546,13 +578,13 @@ run_stack_dummy (addr, buffer)
     struct breakpoint *bpt;
     struct symtab_and_line sal;
 
+    INIT_SAL (&sal);	/* initialize to zeroes */
 #if CALL_DUMMY_LOCATION != AT_ENTRY_POINT
     sal.pc = addr - CALL_DUMMY_START_OFFSET + CALL_DUMMY_BREAKPOINT_OFFSET;
 #else
     sal.pc = CALL_DUMMY_ADDRESS ();
 #endif
-    sal.symtab = NULL;
-    sal.line = 0;
+    sal.section = find_pc_overlay (sal.pc);
 
     /* Set up a FRAME for the dummy frame so we can pass it to
        set_momentary_breakpoint.  We need to give the breakpoint a
@@ -1019,7 +1051,11 @@ do_registers_info (regnum, fpregs)
 
 	  printf_filtered ("\t(raw 0x");
 	  for (j = 0; j < REGISTER_RAW_SIZE (i); j++)
-	    printf_filtered ("%02x", (unsigned char)raw_buffer[j]);
+	    {
+	      register int idx = TARGET_BYTE_ORDER == BIG_ENDIAN ? j
+		: REGISTER_RAW_SIZE (i) - 1 - j;
+	      printf_filtered ("%02x", (unsigned char)raw_buffer[idx]);
+	    }
 	  printf_filtered (")");
 	}
 
@@ -1037,10 +1073,10 @@ do_registers_info (regnum, fpregs)
       /* Else print as integer in hex and in decimal.  */
       else
 	{
-	  val_print (REGISTER_VIRTUAL_TYPE (i), raw_buffer, 0,
+	  val_print (REGISTER_VIRTUAL_TYPE (i), virtual_buffer, 0,
 		     gdb_stdout, 'x', 1, 0, Val_pretty_default);
 	  printf_filtered ("\t");
-	  val_print (REGISTER_VIRTUAL_TYPE (i), raw_buffer, 0,
+	  val_print (REGISTER_VIRTUAL_TYPE (i), virtual_buffer, 0,
 		     gdb_stdout,   0, 1, 0, Val_pretty_default);
 	}
 
@@ -1055,7 +1091,7 @@ do_registers_info (regnum, fpregs)
 }
 #endif /* no DO_REGISTERS_INFO.  */
 
-static void
+void
 registers_info (addr_exp, fpregs)
      char *addr_exp;
      int fpregs;
@@ -1100,7 +1136,7 @@ found:
     } while (*addr_exp != '\0');
 }
 
-static void
+void
 all_registers_info (addr_exp, from_tty)
      char *addr_exp;
      int from_tty;
@@ -1108,13 +1144,14 @@ all_registers_info (addr_exp, from_tty)
   registers_info (addr_exp, 1);
 }
 
-static void
+void
 nofp_registers_info (addr_exp, from_tty)
      char *addr_exp;
      int from_tty;
 {
   registers_info (addr_exp, 0);
 }
+
 
 /*
  * TODO:
@@ -1137,7 +1174,9 @@ attach_command (args, from_tty)
      char *args;
      int from_tty;
 {
+#ifdef SOLIB_ADD
   extern int auto_solib_add;
+#endif
 
   dont_repeat ();			/* Not for the faint of heart */
 
@@ -1236,7 +1275,7 @@ _initialize_infcmd ()
   add_show_from_set
     (add_set_cmd ("args", class_run, var_string_noescape, (char *)&inferior_args,
 		  
-"Set arguments to give program being debugged when it is started.\n\
+"Set argument list to give program being debugged when it is started.\n\
 Follow this command with any number of args, to be passed to the program.",
 		  &setlist),
      &showlist);

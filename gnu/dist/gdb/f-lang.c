@@ -45,6 +45,47 @@ struct type *builtin_type_f_complex_s16;
 struct type *builtin_type_f_complex_s32;
 struct type *builtin_type_f_void;
 
+/* Following is dubious stuff that had been in the xcoff reader. */
+
+struct saved_fcn
+{
+  long                         line_offset;  /* Line offset for function */ 
+  struct saved_fcn             *next;      
+}; 
+
+
+struct saved_bf_symnum 
+{
+  long       symnum_fcn;  /* Symnum of function (i.e. .function directive) */
+  long       symnum_bf;   /* Symnum of .bf for this function */ 
+  struct saved_bf_symnum *next;  
+}; 
+
+typedef struct saved_fcn           SAVED_FUNCTION, *SAVED_FUNCTION_PTR; 
+typedef struct saved_bf_symnum     SAVED_BF, *SAVED_BF_PTR; 
+
+/* Local functions */
+
+#if 0
+static void clear_function_list PARAMS ((void));
+static long get_bf_for_fcn PARAMS ((long));
+static void clear_bf_list PARAMS ((void));
+static void patch_all_commons_by_name PARAMS ((char *, CORE_ADDR, int));
+static SAVED_F77_COMMON_PTR find_first_common_named PARAMS ((char *));
+static void add_common_entry PARAMS ((struct symbol *));
+static void add_common_block PARAMS ((char *, CORE_ADDR, int, char *));
+static SAVED_FUNCTION *allocate_saved_function_node PARAMS ((void));
+static SAVED_BF_PTR allocate_saved_bf_node PARAMS ((void));
+static COMMON_ENTRY_PTR allocate_common_entry_node PARAMS ((void));
+static SAVED_F77_COMMON_PTR allocate_saved_f77_common_node PARAMS ((void));
+static void patch_common_entries PARAMS ((SAVED_F77_COMMON_PTR, CORE_ADDR, int));
+#endif
+
+static struct type *f_create_fundamental_type PARAMS ((struct objfile *, int));
+static void f_printstr PARAMS ((FILE *, char *, unsigned int, int));
+static void f_printchar PARAMS ((int, FILE *));
+static void emit_char PARAMS ((int, FILE *, int));
+
 /* Print the character C on STREAM as part of the contents of a literal
    string whose delimiter is QUOTER.  Note that that format for printing
    characters and strings is language specific.
@@ -393,7 +434,7 @@ static const struct op_print f_op_print_tab[] = {
   { NULL,    0, 0, 0 }
 };
 
-struct type ** const (f_builtin_types[]) = 
+struct type ** CONST_PTR (f_builtin_types[]) = 
 {
   &builtin_type_f_character,
   &builtin_type_f_logical,
@@ -413,7 +454,10 @@ struct type ** const (f_builtin_types[]) =
   0
 };
 
-int c_value_print();
+/* This is declared in c-lang.h but it is silly to import that file for what
+   is already just a hack. */
+extern int
+c_value_print PARAMS ((struct value *, GDB_FILE *, int, enum val_prettyprint));
 
 const struct language_defn f_language_defn = {
   "fortran",
@@ -523,27 +567,9 @@ _initialize_f_language ()
   add_language (&f_language_defn);
 }
 
-/* Following is dubious stuff that had been in the xcoff reader. */
-
-struct saved_fcn
-{
-  long                         line_offset;  /* Line offset for function */ 
-  struct saved_fcn             *next;      
-}; 
-
-
-struct saved_bf_symnum 
-{
-  long       symnum_fcn;  /* Symnum of function (i.e. .function directive) */
-  long       symnum_bf;   /* Symnum of .bf for this function */ 
-  struct saved_bf_symnum *next;  
-}; 
-
-typedef struct saved_fcn           SAVED_FUNCTION, *SAVED_FUNCTION_PTR; 
-typedef struct saved_bf_symnum     SAVED_BF, *SAVED_BF_PTR; 
-
-
-SAVED_BF_PTR allocate_saved_bf_node()
+#if 0
+static SAVED_BF_PTR
+allocate_saved_bf_node()
 {
   SAVED_BF_PTR new;
   
@@ -551,7 +577,8 @@ SAVED_BF_PTR allocate_saved_bf_node()
   return(new);
 }
 
-SAVED_FUNCTION *allocate_saved_function_node()
+static SAVED_FUNCTION *
+allocate_saved_function_node()
 {
   SAVED_FUNCTION *new;
   
@@ -559,7 +586,7 @@ SAVED_FUNCTION *allocate_saved_function_node()
   return(new);
 }
 
-SAVED_F77_COMMON_PTR allocate_saved_f77_common_node()
+static SAVED_F77_COMMON_PTR allocate_saved_f77_common_node()
 {
   SAVED_F77_COMMON_PTR new;
   
@@ -567,41 +594,38 @@ SAVED_F77_COMMON_PTR allocate_saved_f77_common_node()
   return(new);
 }
 
-COMMON_ENTRY_PTR allocate_common_entry_node()
+static COMMON_ENTRY_PTR allocate_common_entry_node()
 {
   COMMON_ENTRY_PTR new;
   
   new = (COMMON_ENTRY_PTR) xmalloc (sizeof (COMMON_ENTRY));
   return(new);
 }
-
+#endif
 
 SAVED_F77_COMMON_PTR head_common_list=NULL;     /* Ptr to 1st saved COMMON  */
 SAVED_F77_COMMON_PTR tail_common_list=NULL;     /* Ptr to last saved COMMON  */
 SAVED_F77_COMMON_PTR current_common=NULL;       /* Ptr to current COMMON */
 
+#if 0
 static SAVED_BF_PTR saved_bf_list=NULL;          /* Ptr to (.bf,function) 
                                                     list*/
-#if 0
 static SAVED_BF_PTR saved_bf_list_end=NULL;      /* Ptr to above list's end */
-#endif
 static SAVED_BF_PTR current_head_bf_list=NULL;   /* Current head of above list
 						  */
 
-#if 0
 static SAVED_BF_PTR tmp_bf_ptr;                  /* Generic temporary for use 
                                                     in macros */ 
-#endif
 
 /* The following function simply enters a given common block onto 
    the global common block chain */
 
-void add_common_block(name,offset,secnum,func_stab)
+static void
+add_common_block(name,offset,secnum,func_stab)
      char *name;
      CORE_ADDR offset;
      int secnum;
      char *func_stab;
-     
 {
   SAVED_F77_COMMON_PTR tmp;
   char *c,*local_copy_func_stab; 
@@ -662,14 +686,15 @@ void add_common_block(name,offset,secnum,func_stab)
       tail_common_list->next = tmp; 
       tail_common_list = tmp;
     }
-  
 }
-
+#endif
 
 /* The following function simply enters a given common entry onto 
    the "current_common" block that has been saved away. */ 
 
-void add_common_entry(entry_sym_ptr)
+#if 0
+static void
+add_common_entry(entry_sym_ptr)
      struct symbol *entry_sym_ptr; 
 {
   COMMON_ENTRY_PTR tmp;
@@ -700,13 +725,14 @@ void add_common_entry(entry_sym_ptr)
 	  current_common->end_of_entries = tmp; 
 	}
     }
-  
-  
 }
+#endif
 
 /* This routine finds the first encountred COMMON block named "name" */ 
 
-SAVED_F77_COMMON_PTR find_first_common_named(name)
+#if 0
+static SAVED_F77_COMMON_PTR
+find_first_common_named(name)
      char *name; 
 {
   
@@ -723,6 +749,7 @@ SAVED_F77_COMMON_PTR find_first_common_named(name)
     }
   return(NULL); 
 }
+#endif
 
 /* This routine finds the first encountred COMMON block named "name" 
    that belongs to function funcname */ 
@@ -747,14 +774,14 @@ SAVED_F77_COMMON_PTR find_common_for_function(name, funcname)
 }
 
 
-
+#if 0
 
 /* The following function is called to patch up the offsets 
    for the statics contained in the COMMON block named
    "name."  */ 
 
-
-void patch_common_entries (blk, offset, secnum)
+static void
+patch_common_entries (blk, offset, secnum)
      SAVED_F77_COMMON_PTR blk;
      CORE_ADDR offset;
      int secnum;
@@ -775,15 +802,14 @@ void patch_common_entries (blk, offset, secnum)
   blk->secnum = secnum; 
 }
 
-
 /* Patch all commons named "name" that need patching.Since COMMON
    blocks occur with relative infrequency, we simply do a linear scan on
    the name.  Eventually, the best way to do this will be a
    hashed-lookup.  Secnum is the section number for the .bss section
    (which is where common data lives). */
 
-
-void patch_all_commons_by_name (name, offset, secnum)
+static void
+patch_all_commons_by_name (name, offset, secnum)
      char *name;
      CORE_ADDR offset;
      int secnum;
@@ -812,12 +838,8 @@ void patch_all_commons_by_name (name, offset, secnum)
       
       tmp = tmp->next;
     }   
-  
 }
-
-
-
-
+#endif
 
 /* This macro adds the symbol-number for the start of the function 
    (the symbol number of the .bf) referenced by symnum_fcn to a 
@@ -856,7 +878,8 @@ else \
 
 /* This function frees the entire (.bf,function) list */ 
 
-void 
+#if 0
+static void 
   clear_bf_list()
 {
   
@@ -871,10 +894,13 @@ void
     }
   saved_bf_list = NULL;
 }
+#endif
 
 int global_remote_debug;
 
-long
+#if 0
+
+static long
 get_bf_for_fcn (the_function)
      long the_function;
 {
@@ -924,11 +950,10 @@ get_bf_for_fcn (the_function)
 }
 
 static SAVED_FUNCTION_PTR saved_function_list=NULL; 
-#if 0	/* Currently unused */
 static SAVED_FUNCTION_PTR saved_function_list_end=NULL; 
-#endif
 
-void clear_function_list()
+static void
+clear_function_list()
 {
   SAVED_FUNCTION_PTR tmp = saved_function_list;
   SAVED_FUNCTION_PTR next = NULL; 
@@ -942,3 +967,5 @@ void clear_function_list()
   
   saved_function_list = NULL;
 }
+#endif
+

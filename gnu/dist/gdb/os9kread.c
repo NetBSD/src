@@ -42,10 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "obstack.h"
-#include <sys/param.h>
-#ifndef	NO_SYS_FILE
-#include <sys/file.h>
-#endif
 #include "gdb_stat.h"
 #include <ctype.h>
 #include "symtab.h"
@@ -125,6 +121,10 @@ static struct complaint lbrac_mismatch_complaint =
 #endif
 
 /* Local function prototypes */
+
+static void
+read_minimal_symbols PARAMS ((struct objfile *, struct section_offsets *));
+
 static void
 os9k_read_ofile_symtab PARAMS ((struct partial_symtab *));
 
@@ -228,9 +228,7 @@ record_minimal_symbol (name, address, type, objfile, section_offsets)
           ms_type = mst_unknown; break;
   }
 
-  prim_record_minimal_symbol
-    (obsavestring (name, strlen(name), &objfile->symbol_obstack),
-     address, ms_type, objfile);
+  prim_record_minimal_symbol (name, address, ms_type, objfile);
 }
 
 /* read and process .stb file and store in minimal symbol table */
@@ -334,7 +332,7 @@ os9k_symfile_read (objfile, section_offsets, mainline)
     objfile->static_psymbols.size == 0)
     init_psymbol_list (objfile, DBX_SYMCOUNT (objfile));
 
-  pending_blocks = 0;
+  free_pending_blocks ();
   back_to = make_cleanup (really_free_pendings, 0);
 
   make_cleanup (discard_minimal_symbols, 0);
@@ -402,7 +400,7 @@ os9k_symfile_init (objfile)
   objfile->auxf1 = minfile;
 
   /* Allocate struct to keep track of the symfile */
-  objfile->sym_stab_info = (PTR)
+  objfile->sym_stab_info = (struct dbx_symfile_info *)
     xmmalloc (objfile -> md, sizeof (struct dbx_symfile_info));
   DBX_SYMFILE_INFO (objfile)->stab_section_info = NULL;
 
@@ -1005,7 +1003,7 @@ os9k_end_psymtab (pst, include_list, num_includes, capping_symbol_cnt,
      CORE_ADDR capping_text;
      struct partial_symtab **dependency_list;
      int number_dependencies;
-/*     struct partial_symbol *capping_global, *capping_static;*/
+     /* struct partial_symbol *capping_global, *capping_static; */
 {
   int i;
   struct partial_symtab *p1;
@@ -1162,22 +1160,10 @@ os9k_end_psymtab (pst, include_list, num_includes, capping_symbol_cnt,
    && pst->n_static_syms == 0) {
     /* Throw away this psymtab, it's empty.  We can't deallocate it, since
        it is on the obstack, but we can forget to chain it on the list.  */
-    struct partial_symtab *prev_pst;
-
-    /* First, snip it out of the psymtab chain */
-
-    if (pst->objfile->psymtabs == pst)
-      pst->objfile->psymtabs = pst->next;
-    else
-      for (prev_pst = pst->objfile->psymtabs; prev_pst; prev_pst = pst->next)
-	if (prev_pst->next == pst)
-	  prev_pst->next = pst->next;
-
-    /* Next, put it on a free list for recycling */
-    pst->next = pst->objfile->free_psymtabs;
-    pst->objfile->free_psymtabs = pst;
-
     /* Indicate that psymtab was thrown away.  */
+
+    discard_psymtab (pst);
+
     pst = (struct partial_symtab *)NULL;
   }
   return pst;
@@ -1572,6 +1558,7 @@ os9k_process_one_symbol (type, desc, valu, name, section_offsets, objfile)
 		start_stabs ();
 		os9k_stabs = 1;
 		start_symtab (n, dirn, valu);
+		record_debugformat ("OS9");
 	      } else {
 		push_subfile();
 		start_subfile (n, dirn!=NULL ? dirn : current_subfile->dirname);
@@ -1617,30 +1604,7 @@ os9k_process_one_symbol (type, desc, valu, name, section_offsets, objfile)
     }
   previous_stab_code = type;
 }
-
-/* Parse the user's idea of an offset for dynamic linking, into our idea
-   of how to represent it for fast symbol reading.  */
 
-static struct section_offsets *
-os9k_symfile_offsets (objfile, addr)
-     struct objfile *objfile;
-     CORE_ADDR addr;
-{
-  struct section_offsets *section_offsets;
-  int i;
-
-  objfile->num_sections = SECT_OFF_MAX;
-  section_offsets = (struct section_offsets *)
-    obstack_alloc (&objfile -> psymbol_obstack,
-		   sizeof (struct section_offsets)
-		   + sizeof (section_offsets->offsets) * (SECT_OFF_MAX-1));
-
-  for (i = 0; i < SECT_OFF_MAX; i++)
-    ANOFFSET (section_offsets, i) = addr;
-  
-  return section_offsets;
-}
-
 static struct sym_fns os9k_sym_fns =
 {
   bfd_target_os9k_flavour,
@@ -1648,7 +1612,8 @@ static struct sym_fns os9k_sym_fns =
   os9k_symfile_init,	/* sym_init: read initial info, setup for sym_read() */
   os9k_symfile_read,	/* sym_read: read a symbol file into symtab */
   os9k_symfile_finish,	/* sym_finish: finished with file, cleanup */
-  os9k_symfile_offsets,	/* sym_offsets: parse user's offsets to internal form*/
+  default_symfile_offsets,
+			/* sym_offsets: parse user's offsets to internal form*/
   NULL			/* next: pointer to next struct sym_fns */
 };
 

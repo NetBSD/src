@@ -1,6 +1,6 @@
 /* Variables that describe the inferior process running under GDB:
    Where it is, why it stopped, and how to step it.
-   Copyright 1986, 1989, 1992 Free Software Foundation, Inc.
+   Copyright 1986, 1989, 1992, 1996, 1998 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -50,7 +50,6 @@ struct inferior_status {
   int stop_after_trap;
   int stop_soon_quietly;
   CORE_ADDR selected_frame_address;
-  int selected_level;
   char stop_registers[REGISTER_BYTES];
 
   /* These are here because if call_function_by_hand has written some
@@ -58,6 +57,7 @@ struct inferior_status {
      any registers.  */
   char registers[REGISTER_BYTES];
 
+  int selected_level;
   int breakpoint_proceeded;
   int restore_stack_info;
   int proceed_to_finish;
@@ -122,6 +122,8 @@ extern CORE_ADDR read_pc_pid PARAMS ((int));
 
 extern void write_pc PARAMS ((CORE_ADDR));
 
+extern void write_pc_pid PARAMS ((CORE_ADDR, int));
+
 extern CORE_ADDR read_sp PARAMS ((void));
 
 extern void write_sp PARAMS ((CORE_ADDR));
@@ -161,6 +163,8 @@ extern void terminal_inferior PARAMS ((void));
 
 extern void terminal_init_inferior PARAMS ((void));
 
+extern void terminal_init_inferior_with_pgrp PARAMS ((int pgrp));
+
 /* From infptrace.c */
 
 extern int attach PARAMS ((int));
@@ -179,11 +183,15 @@ extern int call_ptrace PARAMS ((int, int, PTRACE_ARG3_TYPE, int));
 
 extern int proc_iterate_over_mappings PARAMS ((int (*) (int, CORE_ADDR)));
 
+extern int procfs_first_available PARAMS ((void));
+
+extern int procfs_get_pid_fd PARAMS ((int));
+
 /* From fork-child.c */
 
 extern void fork_inferior PARAMS ((char *, char *, char **,
 				   void (*) (void),
-				   void (*) (int), char *));
+				   int (*) (int), char *));
 
 extern void startup_inferior PARAMS ((int));
 
@@ -312,8 +320,8 @@ extern int attach_flag;
 #if !defined (IN_SIGTRAMP)
 #  if defined (SIGTRAMP_START)
 #    define IN_SIGTRAMP(pc, name) \
-       ((pc) >= SIGTRAMP_START   \
-        && (pc) < SIGTRAMP_END \
+       ((pc) >= SIGTRAMP_START(pc)   \
+        && (pc) < SIGTRAMP_END(pc) \
         )
 #  else
 #    define IN_SIGTRAMP(pc, name) \

@@ -30,11 +30,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "annotate.h"
 #include "gdb_string.h"
 #include "c-lang.h"
+#include "target.h"
 
 int vtblprint;			/* Controls printing of vtbl's */
 int objectprint;		/* Controls looking up an object's derived type
 				   using what we find in its vtables.  */
-static int static_field_print;	/* Controls printing of static fields. */
+int static_field_print;	/* Controls printing of static fields. */
 
 static struct obstack dont_print_vb_obstack;
 static struct obstack dont_print_statmem_obstack;
@@ -86,6 +87,8 @@ cp_print_class_method (valaddr, type, stream)
 	      QUIT;
 	      if (TYPE_FN_FIELD_VOFFSET (f, j) == offset)
 		{
+		  if (TYPE_FN_FIELD_STUB (f, j))
+		    check_stub_method (domain, i, j);
 		  kind = "virtual ";
 		  goto common;
 		}
@@ -120,21 +123,19 @@ cp_print_class_method (valaddr, type, stream)
   common:
   if (i < len)
     {
+      char *demangled_name;
+
       fprintf_filtered (stream, "&");
-      c_type_print_varspec_prefix (TYPE_FN_FIELD_TYPE (f, j), stream, 0, 0);
-      fprintf_unfiltered (stream, kind);
-      if (TYPE_FN_FIELD_PHYSNAME (f, j)[0] == '_'
-	  && is_cplus_marker (TYPE_FN_FIELD_PHYSNAME (f, j)[1]))
-	{
-	  cp_type_print_method_args (TYPE_FN_FIELD_ARGS (f, j) + 1, "~",
-				     TYPE_FN_FIELDLIST_NAME (domain, i),
-				     0, stream);
-	}
+      fprintf_filtered (stream, kind);
+      demangled_name = cplus_demangle (TYPE_FN_FIELD_PHYSNAME (f, j),
+				       DMGL_ANSI | DMGL_PARAMS);
+      if (demangled_name == NULL)
+	fprintf_filtered (stream, "<badly mangled name %s>",
+			  TYPE_FN_FIELD_PHYSNAME (f, j));
       else
 	{
-	  cp_type_print_method_args (TYPE_FN_FIELD_ARGS (f, j), "",
-				     TYPE_FN_FIELDLIST_NAME (domain, i),
-				     0, stream);
+	  fputs_filtered (demangled_name, stream);
+	  free (demangled_name);
 	}
     }
   else
@@ -332,26 +333,20 @@ cp_print_value_fields (type, valaddr, address, stream, format, recurse, pretty,
 		}
 	      else if (TYPE_FIELD_STATIC (type, i))
 		{
-		  value_ptr v;
-		  char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, i);
-		  struct symbol *sym =
-		      lookup_symbol (phys_name, 0, VAR_NAMESPACE, 0, NULL);
-		  if (sym == NULL)
+		  value_ptr v = value_static_field (type, i);
+		  if (v == NULL)
 		    fputs_filtered ("<optimized out>", stream);
 		  else
-		    {
-		      v = value_at (TYPE_FIELD_TYPE (type, i),
-				    (CORE_ADDR)SYMBOL_BLOCK_VALUE (sym));
-		      cp_print_static_field (TYPE_FIELD_TYPE (type, i), v,
-					     stream, format, recurse + 1,
-					     pretty);
-		    }
+		    cp_print_static_field (TYPE_FIELD_TYPE (type, i), v,
+					   stream, format, recurse + 1,
+					   pretty);
 		}
 	      else
 		{
 	           val_print (TYPE_FIELD_TYPE (type, i), 
 			      valaddr + TYPE_FIELD_BITPOS (type, i) / 8,
-			      0, stream, format, 0, recurse + 1, pretty);
+			      address + TYPE_FIELD_BITPOS (type, i) / 8,
+			      stream, format, 0, recurse + 1, pretty);
 		}
 	    }
 	  annotate_field_end ();
@@ -409,6 +404,7 @@ cp_print_value (type, valaddr, address, stream, format, recurse, pretty,
       int boffset;
       struct type *baseclass = check_typedef (TYPE_BASECLASS (type, i));
       char *basename = TYPE_NAME (baseclass);
+      char *base_valaddr;
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
 	{
@@ -437,10 +433,25 @@ cp_print_value (type, valaddr, address, stream, format, recurse, pretty,
 	 baseclass name.  */
       fputs_filtered (basename ? basename : "", stream);
       fputs_filtered ("> = ", stream);
+
+      /* The virtual base class pointer might have been clobbered by the
+	 user program. Make sure that it still points to a valid memory
+	 location.  */
+
+      if (boffset != -1 && (boffset < 0 || boffset >= TYPE_LENGTH (type)))
+	{
+	  base_valaddr = (char *) alloca (TYPE_LENGTH (baseclass));
+	  if (target_read_memory (address + boffset, base_valaddr,
+				  TYPE_LENGTH (baseclass)) != 0)
+	    boffset = -1;
+	}
+      else
+	base_valaddr = valaddr + boffset;
+
       if (boffset == -1)
 	fprintf_filtered (stream, "<invalid address>");
       else
-	cp_print_value_fields (baseclass, valaddr + boffset, address + boffset,
+	cp_print_value_fields (baseclass, base_valaddr, address + boffset,
 			       stream, format, recurse, pretty,
 			       (struct type **) obstack_base (&dont_print_vb_obstack),
 			       0);

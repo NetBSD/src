@@ -786,6 +786,7 @@ ninGo( step_flag )
  * ninMemGet:
  *	Read a string of bytes from NINDY's address space (960 memory).
  ******************************************************************************/
+int
 ninMemGet(ninaddr, hostaddr, len)
      long ninaddr;	/* Source address, in the 960 memory space	*/
      unsigned char *hostaddr;	/* Destination address, in our memory space */
@@ -793,6 +794,7 @@ ninMemGet(ninaddr, hostaddr, len)
 {
 	unsigned char buf[BUFSIZE+20];
 	int cnt;		/* Number of bytes in next transfer	*/
+	int origlen = len;
 
 	if ( old_nindy ){
 		OninMemGet(ninaddr, hostaddr, len);
@@ -812,6 +814,7 @@ ninMemGet(ninaddr, hostaddr, len)
 		ninaddr += cnt;
 		hostaddr += cnt;
 	}
+	return origlen;
 }
 
 
@@ -819,6 +822,7 @@ ninMemGet(ninaddr, hostaddr, len)
  * ninMemPut:
  *	Write a string of bytes into NINDY's address space (960 memory).
  ******************************************************************************/
+int
 ninMemPut( ninaddr, hostaddr, len )
      long ninaddr;	/* Destination address, in NINDY memory space	*/
      unsigned char *hostaddr;	/* Source address, in our memory space	*/
@@ -826,6 +830,7 @@ ninMemPut( ninaddr, hostaddr, len )
 {
 	unsigned char buf[BUFSIZE+20];
 	int cnt;		/* Number of bytes in next transfer	*/
+	int origlen = len;
 
 	if ( old_nindy ){
 		OninMemPut( ninaddr, hostaddr, len );
@@ -842,6 +847,7 @@ ninMemPut( ninaddr, hostaddr, len )
 		ninaddr += cnt;
 		hostaddr += cnt;
 	}
+	return origlen;
 }
 
 /******************************************************************************

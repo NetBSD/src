@@ -1,6 +1,6 @@
 /* Common things used by the various *gnu-nat.c files
 
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -46,13 +46,16 @@ struct proc
   int cur_sc;			/* Implemented suspend count.  */
   int run_sc;			/* Default sc when the program is running. */
   int pause_sc;			/* Default sc when gdb has control. */
-  int resume_sc;		/* Sc resulting form the last resume. */
+  int resume_sc;		/* Sc resulting from the last resume. */
+  int detach_sc;		/* SC to leave around when detaching
+				   from program. */
 
   thread_state_data_t state;	/* Registers, &c. */
   int state_valid : 1;		/* True if STATE is up to date. */
   int state_changed : 1;
 
   int aborted : 1;		/* True if thread_abort has been called.  */
+  int dead : 1;			/* We happen to know it's actually dead. */
 
   /* Bit mask of registers fetched by gdb.  This is used when we re-fetch
      STATE after aborting the thread, to detect that gdb may have out-of-date

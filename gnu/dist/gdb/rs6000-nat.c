@@ -1,5 +1,5 @@
 /* IBM RS/6000 native-dependent code for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1994, 1995, 1996
+   Copyright 1986, 1987, 1989, 1991, 1992, 1994, 1995, 1996, 1997
 	     Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -52,10 +52,25 @@ extern struct vmap * map_vmap PARAMS ((bfd *bf, bfd *arch));
 extern struct target_ops exec_ops;
 
 static void
-exec_one_dummy_insn PARAMS ((void));
+vmap_exec PARAMS ((void));
 
-extern void
-add_text_to_loadinfo PARAMS ((CORE_ADDR textaddr, CORE_ADDR dataaddr));
+static void
+vmap_ldinfo PARAMS ((struct ld_info *));
+
+static struct vmap *
+add_vmap PARAMS ((struct ld_info *));
+
+static int
+objfile_symbol_add PARAMS ((char *));
+
+static void
+vmap_symtab PARAMS ((struct vmap *));
+
+static void
+fetch_core_registers PARAMS ((char *, unsigned int, int, CORE_ADDR));
+
+static void
+exec_one_dummy_insn PARAMS ((void));
 
 extern void
 fixup_breakpoints PARAMS ((CORE_ADDR low, CORE_ADDR high, CORE_ADDR delta));
@@ -230,7 +245,7 @@ exec_one_dummy_insn ()
 #define	DUMMY_INSN_ADDR	(TEXT_SEGMENT_BASE)+0x200
 
   char shadow_contents[BREAKPOINT_MAX];	/* Stash old bkpt addr contents */
-  unsigned int status, pid;
+  int status, pid;
   CORE_ADDR prev_pc;
 
   /* We plant one dummy breakpoint into DUMMY_INSN_ADDR address. We assume that
@@ -265,7 +280,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
-     unsigned int reg_addr;	/* Unused in this version */
+     CORE_ADDR reg_addr;	/* Unused in this version */
 {
   /* fetch GPRs and special registers from the first register section
      in core bfd. */
@@ -298,9 +313,6 @@ vmap_symtab (vp)
      register struct vmap *vp;
 {
   register struct objfile *objfile;
-  CORE_ADDR text_delta;
-  CORE_ADDR data_delta;
-  CORE_ADDR bss_delta;
   struct section_offsets *new_offsets;
   int i;
   
@@ -322,17 +334,11 @@ vmap_symtab (vp)
   for (i = 0; i < objfile->num_sections; ++i)
     ANOFFSET (new_offsets, i) = ANOFFSET (objfile->section_offsets, i);
   
-  text_delta =
-    vp->tstart - ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT);
-  ANOFFSET (new_offsets, SECT_OFF_TEXT) = vp->tstart;
-
-  data_delta =
-    vp->dstart - ANOFFSET (objfile->section_offsets, SECT_OFF_DATA);
-  ANOFFSET (new_offsets, SECT_OFF_DATA) = vp->dstart;
-  
-  bss_delta =
-    vp->dstart - ANOFFSET (objfile->section_offsets, SECT_OFF_BSS);
-  ANOFFSET (new_offsets, SECT_OFF_BSS) = vp->dstart;
+  /* The symbols in the object file are linked to the VMA of the section,
+     relocate them VMA relative.  */
+  ANOFFSET (new_offsets, SECT_OFF_TEXT) = vp->tstart - vp->tvma;
+  ANOFFSET (new_offsets, SECT_OFF_DATA) = vp->dstart - vp->dvma;
+  ANOFFSET (new_offsets, SECT_OFF_BSS) = vp->dstart - vp->dvma;
 
   objfile_relocate (objfile, new_offsets);
 }
@@ -402,7 +408,7 @@ add_vmap (ldi)
 	  bfd_close (abfd);
 	  /* FIXME -- should be error */
 	  warning ("\"%s\": member \"%s\" missing.", abfd->filename, mem);
-	  return;
+	  return 0;
 	}
 
       if (!bfd_check_format(last, bfd_object))
@@ -447,7 +453,7 @@ vmap_ldinfo (ldi)
   struct stat ii, vi;
   register struct vmap *vp;
   int got_one, retried;
-  int got_exec_file;
+  int got_exec_file = 0;
 
   /* For each *ldi, see if we have a corresponding *vp.
      If so, update the mapping, and symbol table.
@@ -502,25 +508,15 @@ vmap_ldinfo (ldi)
 	vp->dstart = (CORE_ADDR) ldi->ldinfo_dataorg;
 	vp->dend   = vp->dstart + ldi->ldinfo_datasize;
 
-	if (vp->tadj)
-	  {
-	    vp->tstart += vp->tadj;
-	    vp->tend   += vp->tadj;
-	  }
+	/* The run time loader maps the file header in addition to the text
+	   section and returns a pointer to the header in ldinfo_textorg.
+	   Adjust the text start address to point to the real start address
+	   of the text section.  */
+	vp->tstart += vp->toffs;
 
 	/* The objfile is only NULL for the exec file.  */
 	if (vp->objfile == NULL)
 	  got_exec_file = 1;
-
-#ifdef DONT_RELOCATE_SYMFILE_OBJFILE
-	if (vp->objfile == symfile_objfile
-	    || vp->objfile == NULL)
-	  {
-	    ldi->ldinfo_dataorg = 0;
-	    vp->dstart = (CORE_ADDR) 0;
-	    vp->dend = ldi->ldinfo_datasize;
-	  }
-#endif
 
 	/* relocate symbol table(s). */
 	vmap_symtab (vp);
@@ -586,13 +582,18 @@ vmap_exec ()
     {
       if (STREQ(".text", exec_ops.to_sections[i].the_bfd_section->name))
 	{
-	  exec_ops.to_sections[i].addr += vmap->tstart;
-	  exec_ops.to_sections[i].endaddr += vmap->tstart;
+	  exec_ops.to_sections[i].addr += vmap->tstart - vmap->tvma;
+	  exec_ops.to_sections[i].endaddr += vmap->tstart - vmap->tvma;
 	}
       else if (STREQ(".data", exec_ops.to_sections[i].the_bfd_section->name))
 	{
-	  exec_ops.to_sections[i].addr += vmap->dstart;
-	  exec_ops.to_sections[i].endaddr += vmap->dstart;
+	  exec_ops.to_sections[i].addr += vmap->dstart - vmap->dvma;
+	  exec_ops.to_sections[i].endaddr += vmap->dstart - vmap->dvma;
+	}
+      else if (STREQ(".bss", exec_ops.to_sections[i].the_bfd_section->name))
+	{
+	  exec_ops.to_sections[i].addr += vmap->dstart - vmap->dvma;
+	  exec_ops.to_sections[i].endaddr += vmap->dstart - vmap->dvma;
 	}
     }
 }
@@ -619,24 +620,11 @@ xcoff_relocate_symtab (pid)
 
   errno = 0;
   ptrace (PT_LDINFO, pid, (PTRACE_ARG3_TYPE) ldi,
-	  MAX_LOAD_SEGS * sizeof(*ldi), ldi);
+	  MAX_LOAD_SEGS * sizeof(*ldi), (int *) ldi);
   if (errno)
     perror_with_name ("ptrace ldinfo");
 
   vmap_ldinfo (ldi);
-
-  do {
-    /* We are allowed to assume CORE_ADDR == pointer.  This code is
-       native only.  */
-    add_text_to_loadinfo ((CORE_ADDR) ldi->ldinfo_textorg,
-			  (CORE_ADDR) ldi->ldinfo_dataorg);
-  } while (ldi->ldinfo_next
-	   && (ldi = (void *) (ldi->ldinfo_next + (char *) ldi)));
-
-#if 0
-  /* Now that we've jumbled things around, re-sort them.  */
-  sort_minimal_symbols ();
-#endif
 
   /* relocate the exec and core sections as well. */
   vmap_exec ();
@@ -729,19 +717,11 @@ xcoff_relocate_core (target)
       vp->dstart = (CORE_ADDR) ldip->ldinfo_dataorg;
       vp->dend = vp->dstart + ldip->ldinfo_datasize;
 
-#ifdef DONT_RELOCATE_SYMFILE_OBJFILE
-      if (vp == vmap)
-	{
-	  vp->dstart = (CORE_ADDR) 0;
-	  vp->dend = ldip->ldinfo_datasize;
-	}
-#endif
-
-      if (vp->tadj != 0)
-	{
-	  vp->tstart += vp->tadj;
-	  vp->tend += vp->tadj;
-	}
+      /* The run time loader maps the file header in addition to the text
+	 section and returns a pointer to the header in ldinfo_textorg.
+	 Adjust the text start address to point to the real start address
+	 of the text section.  */
+      vp->tstart += vp->toffs;
 
       /* Unless this is the exec file,
 	 add our sections to the section table for the core target.  */
@@ -771,28 +751,19 @@ xcoff_relocate_core (target)
 	    }
 	  stp = target->to_sections_end - 2;
 
-	  /* "Why do we add bfd_section_vma?", I hear you cry.
-	     Well, the start of the section in the file is actually
-	     that far into the section as the struct vmap understands it.
-	     So for text sections, bfd_section_vma tends to be 0x200,
-	     and if vp->tstart is 0xd0002000, then the first byte of
-	     the text section on disk corresponds to address 0xd0002200.  */
 	  stp->bfd = vp->bfd;
 	  stp->the_bfd_section = bfd_get_section_by_name (stp->bfd, ".text");
-	  stp->addr = bfd_section_vma (stp->bfd, stp->the_bfd_section) + vp->tstart;
-	  stp->endaddr = bfd_section_vma (stp->bfd, stp->the_bfd_section) + vp->tend;
+	  stp->addr = vp->tstart;
+	  stp->endaddr = vp->tend;
 	  stp++;
 	  
 	  stp->bfd = vp->bfd;
 	  stp->the_bfd_section = bfd_get_section_by_name (stp->bfd, ".data");
-	  stp->addr = bfd_section_vma (stp->bfd, stp->the_bfd_section) + vp->dstart;
-	  stp->endaddr = bfd_section_vma (stp->bfd, stp->the_bfd_section) + vp->dend;
+	  stp->addr = vp->dstart;
+	  stp->endaddr = vp->dend;
 	}
 
       vmap_symtab (vp);
-
-      add_text_to_loadinfo ((CORE_ADDR)ldip->ldinfo_textorg,
-			    (CORE_ADDR)ldip->ldinfo_dataorg);
     } while (ldip->ldinfo_next != 0);
   vmap_exec ();
   breakpoint_re_set ();
@@ -804,7 +775,30 @@ kernel_u_size ()
 {
   return (sizeof (struct user));
 }
+
+/* Under AIX, we have to pass the correct TOC pointer to a function
+   when calling functions in the inferior.
+   We try to find the relative toc offset of the objfile containing PC
+   and add the current load address of the data segment from the vmap.  */
 
+static CORE_ADDR
+find_toc_address (pc)
+     CORE_ADDR pc;
+{
+  struct vmap *vp;
+
+  for (vp = vmap; vp; vp = vp->nxt)
+    {
+      if (pc >= vp->tstart && pc < vp->tend)
+	{
+	  /* vp->objfile is only NULL for the exec file.  */
+	  return vp->dstart + get_toc_offset (vp->objfile == NULL
+					      ? symfile_objfile
+					      : vp->objfile);
+	}
+    }
+  error ("Unable to find TOC entry for pc 0x%x\n", pc);
+}
 
 /* Register that we are able to handle rs6000 core file formats. */
 
@@ -818,5 +812,13 @@ static struct core_fns rs6000_core_fns =
 void
 _initialize_core_rs6000 ()
 {
+  /* Initialize hook in rs6000-tdep.c for determining the TOC address when
+     calling functions in the inferior.  */
+  find_toc_address_hook = &find_toc_address;
+
+  /* For native configurations, where this module is included, inform
+     the xcoffsolib module where it can find the function for symbol table
+     relocation at runtime. */
+  xcoff_relocate_symtab_hook = &xcoff_relocate_symtab;
   add_core_fns (&rs6000_core_fns);
 }

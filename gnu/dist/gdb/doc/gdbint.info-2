@@ -1,0 +1,1320 @@
+This is Info file gdbint.info, produced by Makeinfo version 1.68 from
+the input file ../../../devo/gdb/doc/gdbint.texinfo.
+
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1998 Free Software
+Foundation, Inc.  Contributed by Cygnus Support.  Written by John
+Gilmore.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy or distribute modified versions of this
+manual under the terms of the GPL (for which purpose this text may be
+regarded as a program in the language TeX).
+
+
+File: gdbint.info,  Node: Remote Stubs,  Next: Longjmp Support,  Prev: Frames,  Up: Top
+
+Remote Stubs
+************
+
+   GDB's file `remote.c' talks a serial protocol to code that runs in
+the target system.  GDB provides several sample "stubs" that can be
+integrated into target programs or operating systems for this purpose;
+they are named `*-stub.c'.
+
+   The GDB user's manual describes how to put such a stub into your
+target code.  What follows is a discussion of integrating the SPARC stub
+into a complicated operating system (rather than a simple program), by
+Stu Grossman, the author of this stub.
+
+   The trap handling code in the stub assumes the following upon entry
+to trap_low:
+
+  1. %l1 and %l2 contain pc and npc respectively at the time of the trap
+
+  2. traps are disabled
+
+  3. you are in the correct trap window
+
+   As long as your trap handler can guarantee those conditions, then
+there is no reason why you shouldn't be able to `share' traps with the
+stub.  The stub has no requirement that it be jumped to directly from
+the hardware trap vector.  That is why it calls `exceptionHandler()',
+which is provided by the external environment.  For instance, this
+could setup the hardware traps to actually execute code which calls the
+stub first, and then transfers to its own trap handler.
+
+   For the most point, there probably won't be much of an issue with
+`sharing' traps, as the traps we use are usually not used by the
+kernel, and often indicate unrecoverable error conditions.  Anyway,
+this is all controlled by a table, and is trivial to modify.  The most
+important trap for us is for `ta 1'.  Without that, we can't single
+step or do breakpoints.  Everything else is unnecessary for the proper
+operation of the debugger/stub.
+
+   From reading the stub, it's probably not obvious how breakpoints
+work.  They are simply done by deposit/examine operations from GDB.
+
+
+File: gdbint.info,  Node: Longjmp Support,  Next: Coding Style,  Prev: Remote Stubs,  Up: Top
+
+Longjmp Support
+***************
+
+   GDB has support for figuring out that the target is doing a
+`longjmp' and for stopping at the target of the jump, if we are
+stepping.  This is done with a few specialized internal breakpoints,
+which are visible in the `maint info breakpoint' command.
+
+   To make this work, you need to define a macro called
+`GET_LONGJMP_TARGET', which will examine the `jmp_buf' structure and
+extract the longjmp target address.  Since `jmp_buf' is target
+specific, you will need to define it in the appropriate `tm-xxx.h'
+file.  Look in `tm-sun4os4.h' and `sparc-tdep.c' for examples of how to
+do this.
+
+
+File: gdbint.info,  Node: Coding Style,  Next: Clean Design,  Prev: Longjmp Support,  Up: Top
+
+Coding Style
+************
+
+   GDB is generally written using the GNU coding standards, as
+described in `standards.texi', which is available for anonymous FTP
+from GNU archive sites.  There are some additional considerations for
+GDB maintainers that reflect the unique environment and style of GDB
+maintenance.  If you follow these guidelines, GDB will be more
+consistent and easier to maintain.
+
+   GDB's policy on the use of prototypes is that prototypes are used to
+*declare* functions but never to *define* them.  Simple macros are used
+in the declarations, so that a non-ANSI compiler can compile GDB
+without trouble.  The simple macro calls are used like this:
+
+     extern int
+     memory_remove_breakpoint PARAMS ((CORE_ADDR, char *));
+
+   Note the double parentheses around the parameter types.  This allows
+an arbitrary number of parameters to be described, without freaking out
+the C preprocessor.  When the function has no parameters, it should be
+described like:
+
+     void
+     noprocess PARAMS ((void));
+
+   The `PARAMS' macro expands to its argument in ANSI C, or to a simple
+`()' in traditional C.
+
+   All external functions should have a `PARAMS' declaration in a
+header file that callers include.  All static functions should have such
+a declaration near the top of their source file.
+
+   We don't have a gcc option that will properly check that these rules
+have been followed, but it's GDB policy, and we periodically check it
+using the tools available (plus manual labor), and clean up any
+remnants.
+
+
+File: gdbint.info,  Node: Clean Design,  Next: Submitting Patches,  Prev: Coding Style,  Up: Top
+
+Clean Design
+************
+
+   In addition to getting the syntax right, there's the little question
+of semantics.  Some things are done in certain ways in GDB because long
+experience has shown that the more obvious ways caused various kinds of
+trouble.  In particular:
+
+*
+     You can't assume the byte order of anything that comes from a
+     target (including VALUEs, object files, and instructions).  Such
+     things must be byte-swapped using `SWAP_TARGET_AND_HOST' in GDB,
+     or one of the swap routines defined in `bfd.h', such as
+     `bfd_get_32'.
+
+*
+     You can't assume that you know what interface is being used to
+     talk to the target system.  All references to the target must go
+     through the current `target_ops' vector.
+
+*
+     You can't assume that the host and target machines are the same
+     machine (except in the "native" support modules).  In particular,
+     you can't assume that the target machine's header files will be
+     available on the host machine.  Target code must bring along its
+     own header files - written from scratch or explicitly donated by
+     their owner, to avoid copyright problems.
+
+*
+     Insertion of new `#ifdef''s will be frowned upon.  It's much better
+     to write the code portably than to conditionalize it for various
+     systems.
+
+*
+     New `#ifdef''s which test for specific compilers or manufacturers
+     or operating systems are unacceptable.  All `#ifdef''s should test
+     for features.  The information about which configurations contain
+     which features should be segregated into the configuration files.
+     Experience has proven far too often that a feature unique to one
+     particular system often creeps into other systems; and that a
+     conditional based on some predefined macro for your current system
+     will become worthless over time, as new versions of your system
+     come out that behave differently with regard to this feature.
+
+*
+     Adding code that handles specific architectures, operating
+     systems, target interfaces, or hosts, is not acceptable in generic
+     code.  If a hook is needed at that point, invent a generic hook
+     and define it for your configuration, with something like:
+
+          #ifdef	WRANGLE_SIGNALS
+             WRANGLE_SIGNALS (signo);
+          #endif
+
+     In your host, target, or native configuration file, as appropriate,
+     define `WRANGLE_SIGNALS' to do the machine-dependent thing.  Take
+     a bit of care in defining the hook, so that it can be used by other
+     ports in the future, if they need a hook in the same place.
+
+     If the hook is not defined, the code should do whatever "most"
+     machines want.  Using `#ifdef', as above, is the preferred way to
+     do this, but sometimes that gets convoluted, in which case use
+
+          #ifndef SPECIAL_FOO_HANDLING
+          #define SPECIAL_FOO_HANDLING(pc, sp) (0)
+          #endif
+
+     where the macro is used or in an appropriate header file.
+
+     Whether to include a "small" hook, a hook around the exact pieces
+     of code which are system-dependent, or whether to replace a whole
+     function with a hook depends on the case.  A good example of this
+     dilemma can be found in `get_saved_register'.  All machines that
+     GDB 2.8 ran on just needed the `FRAME_FIND_SAVED_REGS' hook to
+     find the saved registers.  Then the SPARC and Pyramid came along,
+     and `HAVE_REGISTER_WINDOWS' and `REGISTER_IN_WINDOW_P' were
+     introduced.  Then the 29k and 88k required the `GET_SAVED_REGISTER'
+     hook.  The first three are examples of small hooks; the latter
+     replaces a whole function.  In this specific case, it is useful to
+     have both kinds; it would be a bad idea to replace all the uses of
+     the small hooks with `GET_SAVED_REGISTER', since that would result
+     in much duplicated code.  Other times, duplicating a few lines of
+     code here or there is much cleaner than introducing a large number
+     of small hooks.
+
+     Another way to generalize GDB along a particular interface is with
+     an attribute struct.  For example, GDB has been generalized to
+     handle multiple kinds of remote interfaces - not by #ifdef's
+     everywhere, but by defining the "target_ops" structure and having
+     a current target (as well as a stack of targets below it, for
+     memory references).  Whenever something needs to be done that
+     depends on which remote interface we are using, a flag in the
+     current target_ops structure is tested (e.g.  `target_has_stack'),
+     or a function is called through a pointer in the current
+     target_ops structure.  In this way, when a new remote interface is
+     added, only one module needs to be touched - the one that actually
+     implements the new remote interface.  Other examples of
+     attribute-structs are BFD access to multiple kinds of object file
+     formats, or GDB's access to multiple source languages.
+
+     Please avoid duplicating code.  For example, in GDB 3.x all the
+     code interfacing between `ptrace' and the rest of GDB was
+     duplicated in `*-dep.c', and so changing something was very
+     painful.  In GDB 4.x, these have all been consolidated into
+     `infptrace.c'.  `infptrace.c' can deal with variations between
+     systems the same way any system-independent file would (hooks, #if
+     defined, etc.), and machines which are radically different don't
+     need to use infptrace.c at all.
+
+*
+     *Do* write code that doesn't depend on the sizes of C data types,
+     the format of the host's floating point numbers, the alignment of
+     anything, or the order of evaluation of expressions.  In short,
+     follow good programming practices for writing portable C code.
+
+
+File: gdbint.info,  Node: Submitting Patches,  Next: Host Conditionals,  Prev: Clean Design,  Up: Top
+
+Submitting Patches
+******************
+
+   Thanks for thinking of offering your changes back to the community of
+GDB users.  In general we like to get well designed enhancements.
+Thanks also for checking in advance about the best way to transfer the
+changes.
+
+   The two main problems with getting your patches in are,
+
+*
+     The GDB maintainers will only install "cleanly designed" patches.
+     You may not always agree on what is clean design.  *note Coding
+     Style::., *note Clean Design::..
+
+*
+     If the maintainers don't have time to put the patch in when it
+     arrives, or if there is any question about a patch, it goes into a
+     large queue with everyone else's patches and bug reports.
+
+   I don't know how to get past these problems except by continuing to
+try.
+
+   There are two issues here - technical and legal.
+
+   The legal issue is that to incorporate substantial changes requires a
+copyright assignment from you and/or your employer, granting ownership
+of the changes to the Free Software Foundation.  You can get the
+standard document for doing this by sending mail to
+`gnu@prep.ai.mit.edu' and asking for it.  I recommend that people write
+in "All programs owned by the Free Software Foundation" as "NAME OF
+PROGRAM", so that changes in many programs (not just GDB, but GAS,
+Emacs, GCC, etc) can be contributed with only one piece of legalese
+pushed through the bureacracy and filed with the FSF.  I can't start
+merging changes until this paperwork is received by the FSF (their
+rules, which I follow since I maintain it for them).
+
+   Technically, the easiest way to receive changes is to receive each
+feature as a small context diff or unidiff, suitable for "patch".  Each
+message sent to me should include the changes to C code and header
+files for a single feature, plus ChangeLog entries for each directory
+where files were modified, and diffs for any changes needed to the
+manuals (gdb/doc/gdb.texi or gdb/doc/gdbint.texi).  If there are a lot
+of changes for a single feature, they can be split down into multiple
+messages.
+
+   In this way, if I read and like the feature, I can add it to the
+sources with a single patch command, do some testing, and check it in.
+If you leave out the ChangeLog, I have to write one.  If you leave out
+the doc, I have to puzzle out what needs documenting.  Etc.
+
+   The reason to send each change in a separate message is that I will
+not install some of the changes.  They'll be returned to you with
+questions or comments.  If I'm doing my job, my message back to you
+will say what you have to fix in order to make the change acceptable.
+The reason to have separate messages for separate features is so that
+other changes (which I *am* willing to accept) can be installed while
+one or more changes are being reworked.  If multiple features are sent
+in a single message, I tend to not put in the effort to sort out the
+acceptable changes from the unacceptable, so none of the features get
+installed until all are acceptable.
+
+   If this sounds painful or authoritarian, well, it is.  But I get a
+lot of bug reports and a lot of patches, and most of them don't get
+installed because I don't have the time to finish the job that the bug
+reporter or the contributor could have done.  Patches that arrive
+complete, working, and well designed, tend to get installed on the day
+they arrive.  The others go into a queue and get installed if and when
+I scan back over the queue - which can literally take months sometimes.
+It's in both our interests to make patch installation easy - you get
+your changes installed, and I make some forward progress on GDB in a
+normal 12-hour day (instead of them having to wait until I have a
+14-hour or 16-hour day to spend cleaning up patches before I can
+install them).
+
+   Please send patches to `bug-gdb@prep.ai.mit.edu', if they are less
+than about 25,000 characters.  If longer than that, either make them
+available somehow (e.g. anonymous FTP), and announce it on `bug-gdb',
+or send them directly to the GDB maintainers at
+`gdb-patches@cygnus.com'.
+
+
+File: gdbint.info,  Node: Host Conditionals,  Next: Target Conditionals,  Prev: Submitting Patches,  Up: Top
+
+Host Conditionals
+*****************
+
+   When GDB is configured and compiled, various macros are defined or
+left undefined, to control compilation based on the attributes of the
+host system.  These macros and their meanings (or if the meaning is not
+documented here, then one of the source files where they are used is
+indicated) are:
+
+`GDBINIT_FILENAME'
+     The default name of GDB's initialization file (normally
+     `.gdbinit').
+
+`MEM_FNS_DECLARED'
+     Your host config file defines this if it includes declarations of
+     `memcpy' and `memset'.  Define this to avoid conflicts between the
+     native include files and the declarations in `defs.h'.
+
+`NO_SYS_FILE'
+     Define this if your system does not have a `<sys/file.h>'.
+
+`SIGWINCH_HANDLER'
+     If your host defines `SIGWINCH', you can define this to be the
+     name of a function to be called if `SIGWINCH' is received.
+
+`SIGWINCH_HANDLER_BODY'
+     Define this to expand into code that will define the function
+     named by the expansion of `SIGWINCH_HANDLER'.
+
+`ALIGN_STACK_ON_STARTUP'
+     Define this if your system is of a sort that will crash in
+     `tgetent' if the stack happens not to be longword-aligned when
+     `main' is called.  This is a rare situation, but is known to occur
+     on several different types of systems.
+
+`CRLF_SOURCE_FILES'
+     Define this if host files use `\r\n' rather than `\n' as a line
+     terminator.  This will cause source file listings to omit `\r'
+     characters when printing.  It must be possible to open files in
+     binary mode using `O_BINARY' or, for fopen, `"rb"'.
+
+`DEFAULT_PROMPT'
+     The default value of the prompt string (normally `"(gdb) "').
+
+`DEV_TTY'
+     The name of the generic TTY device, defaults to `"/dev/tty"'.
+
+`FCLOSE_PROVIDED'
+     Define this if the system declares `fclose' in the headers
+     included in `defs.h'.  This isn't needed unless your compiler is
+     unusually anal.
+
+`FOPEN_RB'
+     Define this if binary files are opened the same way as text files.
+
+`GETENV_PROVIDED'
+     Define this if the system declares `getenv' in its headers
+     included in `defs.h'. This isn't needed unless your compiler is
+     unusually anal.
+
+`HAVE_MMAP'
+     In some cases, use the system call `mmap' for reading symbol
+     tables.  For some machines this allows for sharing and quick
+     updates.
+
+`HAVE_SIGSETMASK'
+     Define this if the host system has job control, but does not
+     define `sigsetmask()'.  Currently, this is only true of the
+     RS/6000.
+
+`HAVE_TERMIO'
+     Define this if the host system has `termio.h'.
+
+`HOST_BYTE_ORDER'
+     The ordering of bytes in the host.  This must be defined to be
+     either `BIG_ENDIAN' or `LITTLE_ENDIAN'.
+
+`INT_MAX'
+
+`INT_MIN'
+
+`LONG_MAX'
+
+`UINT_MAX'
+
+`ULONG_MAX'
+     Values for host-side constants.
+
+`ISATTY'
+     Substitute for isatty, if not available.
+
+`KERNEL_U_ADDR'
+     Define this to the address of the `u' structure (the "user struct",
+     also known as the "u-page") in kernel virtual memory.  GDB needs
+     to know this so that it can subtract this address from absolute
+     addresses in the upage, that are obtained via ptrace or from core
+     files.  On systems that don't need this value, set it to zero.
+
+`KERNEL_U_ADDR_BSD'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using Berkeley-style `nlist' on the kernel's image in
+     the root directory.
+
+`KERNEL_U_ADDR_HPUX'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using HP-style `nlist' on the kernel's image in the
+     root directory.
+
+`LONGEST'
+     This is the longest integer type available on the host.  If not
+     defined, it will default to `long long' or `long', depending on
+     `CC_HAS_LONG_LONG'.
+
+`CC_HAS_LONG_LONG'
+     Define this if the host C compiler supports "long long".  This is
+     set by the configure script.
+
+`PRINTF_HAS_LONG_LONG'
+     Define this if the host can handle printing of long long integers
+     via the printf format directive "ll". This is set by the configure
+     script.
+
+`HAVE_LONG_DOUBLE'
+     Define this if the host C compiler supports "long double".  This
+     is set by the configure script.
+
+`PRINTF_HAS_LONG_DOUBLE'
+     Define this if the host can handle printing of long double
+     float-point numbers via the printf format directive "Lg". This is
+     set by the configure script.
+
+`SCANF_HAS_LONG_DOUBLE'
+     Define this if the host can handle the parsing of long double
+     float-point numbers via the scanf format directive directive "Lg".
+     This is set by the configure script.
+
+`LSEEK_NOT_LINEAR'
+     Define this if `lseek (n)' does not necessarily move to byte number
+     `n' in the file.  This is only used when reading source files.  It
+     is normally faster to define `CRLF_SOURCE_FILES' when possible.
+
+`L_SET'
+     This macro is used as the argument to lseek (or, most commonly,
+     bfd_seek).  FIXME, should be replaced by SEEK_SET instead, which
+     is the POSIX equivalent.
+
+`MAINTENANCE_CMDS'
+     If the value of this is 1, then a number of optional maintenance
+     commands are compiled in.
+
+`MALLOC_INCOMPATIBLE'
+     Define this if the system's prototype for `malloc' differs from the
+     ANSI definition.
+
+`MMAP_BASE_ADDRESS'
+     When using HAVE_MMAP, the first mapping should go at this address.
+
+`MMAP_INCREMENT'
+     when using HAVE_MMAP, this is the increment between mappings.
+
+`NEED_POSIX_SETPGID'
+     Define this to use the POSIX version of `setpgid' to determine
+     whether job control is available.
+
+`NORETURN'
+     If defined, this should be one or more tokens, such as `volatile',
+     that can be used in both the declaration and definition of
+     functions to indicate that they never return.  The default is
+     already set correctly if compiling with GCC.  This will almost
+     never need to be defined.
+
+`ATTR_NORETURN'
+     If defined, this should be one or more tokens, such as
+     `__attribute__ ((noreturn))', that can be used in the declarations
+     of functions to indicate that they never return.  The default is
+     already set correctly if compiling with GCC.  This will almost
+     never need to be defined.
+
+`USE_MMALLOC'
+     GDB will use the `mmalloc' library for memory allocation for symbol
+     reading if this symbol is defined.  Be careful defining it since
+     there are systems on which `mmalloc' does not work for some
+     reason.  One example is the DECstation, where its RPC library
+     can't cope with our redefinition of `malloc' to call `mmalloc'.
+     When defining `USE_MMALLOC', you will also have to set `MMALLOC'
+     in the Makefile, to point to the mmalloc library.  This define is
+     set when you configure with -with-mmalloc.
+
+`NO_MMCHECK'
+     Define this if you are using `mmalloc', but don't want the overhead
+     of checking the heap with `mmcheck'.  Note that on some systems,
+     the C runtime makes calls to malloc prior to calling `main', and if
+     `free' is ever called with these pointers after calling `mmcheck'
+     to enable checking, a memory corruption abort is certain to occur.
+     These systems can still use mmalloc, but must define NO_MMCHECK.
+
+`MMCHECK_FORCE'
+     Define this to 1 if the C runtime allocates memory prior to
+     `mmcheck' being called, but that memory is never freed so we don't
+     have to worry about it triggering a memory corruption abort.  The
+     default is 0, which means that `mmcheck' will only install the
+     heap checking functions if there has not yet been any memory
+     allocation calls, and if it fails to install the functions, gdb
+     will issue a warning.  This is currently defined if you configure
+     using -with-mmalloc.
+
+`NO_SIGINTERRUPT'
+     Define this to indicate that siginterrupt() is not available.
+
+`R_OK'
+     Define if this is not in a system .h file.
+
+`SEEK_CUR'
+
+`SEEK_SET'
+     Define these to appropriate value for the system lseek(), if not
+     already defined.
+
+`STOP_SIGNAL'
+     This is the signal for stopping GDB.  Defaults to SIGTSTP.  (Only
+     redefined for the Convex.)
+
+`USE_O_NOCTTY'
+     ???
+
+`USG'
+     Means that System V (prior to SVR4) include files are in use.
+     (FIXME:  This symbol is abused in `infrun.c', `regex.c',
+     `remote-nindy.c', and `utils.c' for other things, at the moment.)
+
+`lint'
+     Define this to help lint in some stupid way.
+
+`volatile'
+     Define this to override the defaults of `__volatile__' or `/**/'.
+
+   Platform-specific host conditionals.
+
+`ALTOS_AS'
+     xm-altos.h
+
+`MOTOROLA'
+     xm-altos.h
+
+`NBPG'
+     altos-xdep.c
+
+`DELTA88'
+     m88k-xdep.c
+
+`DGUX'
+     m88k-xdep.c
+
+`F_OK'
+     xm-ultra3.h
+
+`UPAGES'
+     altos-xdep.c
+
+   Regex conditionals.
+
+`C_ALLOCA'
+     regex.c
+
+`NFAILURES'
+     regex.c
+
+`RE_NREGS'
+     regex.h
+
+`SIGN_EXTEND_CHAR'
+     regex.c
+
+`SWITCH_ENUM_BUG'
+     regex.c
+
+`SYNTAX_TABLE'
+     regex.c
+
+`Sword'
+     regex.c
+
+`sparc'
+     regex.c
+
+
+File: gdbint.info,  Node: Target Conditionals,  Next: Native Conditionals,  Prev: Host Conditionals,  Up: Top
+
+Target Conditionals
+*******************
+
+   When GDB is configured and compiled, various macros are defined or
+left undefined, to control compilation based on the attributes of the
+target system.  These macros and their meanings are:
+
+`ADDITIONAL_OPTIONS'
+
+`ADDITIONAL_OPTION_CASES'
+
+`ADDITIONAL_OPTION_HANDLER'
+
+`ADDITIONAL_OPTION_HELP'
+     These are a set of macros that allow the addition of additional
+     command line options to GDB.  They are currently used only for the
+     unsupported i960 Nindy target, and should not be used in any other
+     configuration.
+
+`ADDR_BITS_REMOVE (addr)'
+     If a raw machine address includes any bits that are not really part
+     of the address, then define this macro to expand into an expression
+     that zeros those bits in ADDR.  For example, the two low-order
+     bits of a Motorola 88K address may be used by some kernels for
+     their own purposes, since addresses must always be 4-byte aligned,
+     and so are of no use for addressing.  Those bits should be
+     filtered out with an expression such as `((addr) & ~3)'.
+
+`BEFORE_MAIN_LOOP_HOOK'
+     Define this to expand into any code that you want to execute before
+     the main loop starts.  Although this is not, strictly speaking, a
+     target conditional, that is how it is currently being used.  Note
+     that if a configuration were to define it one way for a host and a
+     different way for the target, GDB will probably not compile, let
+     alone run correctly.
+
+`BELIEVE_PCC_PROMOTION'
+     coffread.c
+
+`BELIEVE_PCC_PROMOTION_TYPE'
+     stabsread.c
+
+`BITS_BIG_ENDIAN'
+     Define this if the numbering of bits in the targets does *not*
+     match the endianness of the target byte order.  A value of 1 means
+     that the bits are numbered in a big-endian order, 0 means
+     little-endian.
+
+`BREAKPOINT'
+     This is the character array initializer for the bit pattern to put
+     into memory where a breakpoint is set.  Although it's common to
+     use a trap instruction for a breakpoint, it's not required; for
+     instance, the bit pattern could be an invalid instruction.  The
+     breakpoint must be no longer than the shortest instruction of the
+     architecture.
+
+`BIG_BREAKPOINT'
+
+`LITTLE_BREAKPOINT'
+     Similar to BREAKPOINT, but used for bi-endian targets.
+
+`CALL_DUMMY'
+     valops.c
+
+`CALL_DUMMY_LOCATION'
+     inferior.h
+
+`CALL_DUMMY_STACK_ADJUST'
+     valops.c
+
+`CANNOT_FETCH_REGISTER (regno)'
+     A C expression that should be nonzero if REGNO cannot be fetched
+     from an inferior process.  This is only relevant if
+     `FETCH_INFERIOR_REGISTERS' is not defined.
+
+`CANNOT_STORE_REGISTER (regno)'
+     A C expression that should be nonzero if REGNO should not be
+     written to the target.  This is often the case for program
+     counters, status words, and other special registers.  If this is
+     not defined, GDB will assume that all registers may be written.
+
+`CHILL_PRODUCER'
+
+`GCC_PRODUCER'
+
+`GPLUS_PRODUCER'
+
+`LCC_PRODUCER'
+     If defined, these are the producer strings in a DWARF 1 file.  All
+     of these have reasonable defaults already.
+
+`DO_DEFERRED_STORES'
+
+`CLEAR_DEFERRED_STORES'
+     Define this to execute any deferred stores of registers into the
+     inferior, and to cancel any deferred stores.
+
+     Currently only implemented correctly for native Sparc
+     configurations?
+
+`CPLUS_MARKER'
+     Define this to expand into the character that G++ uses to
+     distinguish compiler-generated identifiers from
+     programmer-specified identifiers.  By default, this expands into
+     `'$''.  Most System V targets should define this to `'.''.
+
+`DBX_PARM_SYMBOL_CLASS'
+     Hook for the `SYMBOL_CLASS' of a parameter when decoding DBX symbol
+     information.  In the i960, parameters can be stored as locals or as
+     args, depending on the type of the debug record.
+
+`DECR_PC_AFTER_BREAK'
+     Define this to be the amount by which to decrement the PC after
+     the program encounters a breakpoint.  This is often the number of
+     bytes in BREAKPOINT, though not always.  For most targets this
+     value will be 0.
+
+`DECR_PC_AFTER_HW_BREAK'
+     Similarly, for hardware breakpoints.
+
+`DISABLE_UNSETTABLE_BREAK addr'
+     If defined, this should evaluate to 1 if ADDR is in a shared
+     library in which breakpoints cannot be set and so should be
+     disabled.
+
+`DO_REGISTERS_INFO'
+     If defined, use this to print the value of a register or all
+     registers.
+
+`END_OF_TEXT_DEFAULT'
+     This is an expression that should designate the end of the text
+     section (? FIXME ?)
+
+`EXTRACT_RETURN_VALUE'
+     tm-m68k.h
+
+`EXTRACT_STRUCT_VALUE_ADDRESS'
+     values.c
+
+`EXTRA_FRAME_INFO'
+     If defined, this must be a list of slots that may be inserted into
+     the `frame_info' structure defined in `frame.h'.
+
+`EXTRA_SYMTAB_INFO'
+     If defined, this must be a list of slots that may be inserted into
+     the `symtab' structure defined in `symtab.h'.
+
+`FLOAT_INFO'
+     If defined, then the `info float' command will print information
+     about the processor's floating point unit.
+
+`FP_REGNUM'
+     The number of the frame pointer register.
+
+`FRAMELESS_FUNCTION_INVOCATION'
+     blockframe.c
+
+`FRAME_ARGS_ADDRESS_CORRECT'
+     stack.c
+
+`FRAME_CHAIN'
+     Given FRAME, return a pointer to the calling frame.
+
+`FRAME_CHAIN_COMBINE'
+     blockframe.c
+
+`FRAME_CHAIN_VALID'
+     frame.h
+
+`FRAME_CHAIN_VALID_ALTERNATE'
+     frame.h
+
+`FRAME_FIND_SAVED_REGS'
+     stack.c
+
+`FRAME_NUM_ARGS (val, fi)'
+     For the frame described by fi, set val to the number of arguments
+     that are being passed.
+
+`FRAME_SPECIFICATION_DYADIC'
+     stack.c
+
+`FRAME_SAVED_PC'
+     Given FRAME, return the pc saved there.  That is, the return
+     address.
+
+`FUNCTION_EPILOGUE_SIZE'
+     For some COFF targets, the `x_sym.x_misc.x_fsize' field of the
+     function end symbol is 0.  For such targets, you must define
+     `FUNCTION_EPILOGUE_SIZE' to expand into the standard size of a
+     function's epilogue.
+
+`GCC_COMPILED_FLAG_SYMBOL'
+
+`GCC2_COMPILED_FLAG_SYMBOL'
+     If defined, these are the names of the symbols that GDB will look
+     for to detect that GCC compiled the file.  The default symbols are
+     `gcc_compiled.' and `gcc2_compiled.', respectively. (Currently
+     only defined for the Delta 68.)
+
+`GDB_TARGET_IS_HPPA'
+     This determines whether horrible kludge code in dbxread.c and
+     partial-stab.h is used to mangle multiple-symbol-table files from
+     HPPA's.  This should all be ripped out, and a scheme like
+     elfread.c used.
+
+`GDB_TARGET_IS_MACH386'
+     mach386-xdep.c
+
+`GDB_TARGET_IS_SUN3'
+     a68v-xdep.c
+
+`GDB_TARGET_IS_SUN386'
+     sun386-xdep.c
+
+`GET_LONGJMP_TARGET'
+     For most machines, this is a target-dependent parameter.  On the
+     DECstation and the Iris, this is a native-dependent parameter,
+     since <setjmp.h> is needed to define it.
+
+     This macro determines the target PC address that longjmp() will
+     jump to, assuming that we have just stopped at a longjmp
+     breakpoint.  It takes a CORE_ADDR * as argument, and stores the
+     target PC value through this pointer.  It examines the current
+     state of the machine as needed.
+
+`GET_SAVED_REGISTER'
+     Define this if you need to supply your own definition for the
+     function `get_saved_register'.  Currently this is only done for
+     the a29k.
+
+`GR64_REGNUM'
+     Very a29k-specific.
+
+`HAVE_REGISTER_WINDOWS'
+     Define this if the target has register windows.
+
+`REGISTER_IN_WINDOW_P regnum'
+     Define this to be an expression that is 1 is the given register is
+     in the window.
+
+`IBM6000_TARGET'
+     Shows that we are configured for an IBM RS/6000 target.  This
+     conditional should be eliminated (FIXME) and replaced by
+     feature-specific macros.  It was introduced in haste and we are
+     repenting at leisure.
+
+`IEEE_FLOAT'
+     Define this if the target system uses IEEE-format floating point
+     numbers.
+
+`IGNORE_SYMBOL type'
+     This seems to be no longer used.
+
+`INIT_EXTRA_FRAME_INFO (fromleaf, fci)'
+     If defined, this should be a C expression or statement that fills
+     in the `EXTRA_FRAME_INFO' slots of the given frame FCI.
+
+`INIT_EXTRA_SYMTAB_INFO'
+     symfile.c
+
+`INIT_FRAME_PC (fromleaf, prev)'
+     This is a C statement that sets the pc of the frame pointed to by
+     PREV.  [By default...]
+
+`INNER_THAN'
+     Define this to be either `<' if the target's stack grows downward
+     in memory, or `>' is the stack grows upwards.
+
+`IN_SIGTRAMP (pc name)'
+     Define this to return true if the given pc and/or name indicates
+     that the current function is a sigtramp.
+
+`SIGTRAMP_START (pc)'
+
+`SIGTRAMP_END (pc)'
+     Define these to be the start and end address of the sigtramp for
+     the given pc.  On machines where the address is just a compile
+     time constant, the macro expansion will typically just ignore the
+     supplied pc.
+
+`IN_SOLIB_TRAMPOLINE pc name'
+     Define this to evaluate to nonzero if the program is stopped in
+     the trampoline that connects to a shared library.
+
+`IS_TRAPPED_INTERNALVAR name'
+     This is an ugly hook to allow the specification of special actions
+     that should occur as a side-effect of setting the value of a
+     variable internal to GDB.  Currently only used by the h8500.  Note
+     that this could be either a host or target conditional.
+
+`KERNEL_DEBUGGING'
+     tm-ultra3.h
+
+`MIPSEL'
+     mips-tdep.c
+
+`NEED_TEXT_START_END'
+     Define this if GDB should determine the start and end addresses of
+     the text section.  (Seems dubious.)
+
+`KERNEL_DEBUGGING'
+
+`NO_HIF_SUPPORT'
+     (Specific to the a29k.)
+
+`NO_SINGLE_STEP'
+     Define this if the target does not support single-stepping.  If
+     this is defined, you must supply, in `*-tdep.c', the function
+     `single_step', which takes a target_signal as argument and returns
+     nothing.  It must insert breakpoints at each possible destinations
+     of the next instruction.  See `sparc-tdep.c' and `rs6000-tdep.c'
+     for examples.
+
+`PCC_SOL_BROKEN'
+     (Used only in the Convex target.)
+
+`PC_IN_CALL_DUMMY'
+     inferior.h
+
+`PC_LOAD_SEGMENT'
+     If defined, print information about the load segment for the
+     program counter.  (Defined only for the RS/6000.)
+
+`PC_REGNUM'
+     If the program counter is kept in a register, then define this
+     macro to be the number of that register.  This need be defined
+     only if `TARGET_WRITE_PC' is not defined.
+
+`NPC_REGNUM'
+     The number of the "next program counter" register, if defined.
+
+`NNPC_REGNUM'
+     The number of the "next next program counter" register, if defined.
+     Currently, this is only defined for the Motorola 88K.
+
+`PRINT_REGISTER_HOOK (regno)'
+     If defined, this must be a function that prints the contents of the
+     given register to standard output.
+
+`PRINT_TYPELESS_INTEGER'
+     This is an obscure substitute for `print_longest' that seems to
+     have been defined for the Convex target.
+
+`PROCESS_LINENUMBER_HOOK'
+     A hook defined for XCOFF reading.
+
+`PROLOGUE_FIRSTLINE_OVERLAP'
+     (Only used in unsupported Convex configuration.)
+
+`PS_REGNUM'
+     If defined, this is the number of the processor status register.
+     (This definition is only used in generic code when parsing "$ps".)
+
+`POP_FRAME'
+     Used in `call_function_by_hand' to remove an artificial stack
+     frame.
+
+`PUSH_ARGUMENTS (nargs, args, sp, struct_return, struct_addr)'
+     Define this to push arguments onto the stack for inferior function
+     call.
+
+`PUSH_DUMMY_FRAME'
+     Used in `call_function_by_hand' to create an artificial stack
+     frame.
+
+`REGISTER_BYTES'
+     The total amount of space needed to store GDB's copy of the
+     machine's register state.
+
+`REGISTER_NAMES'
+     Define this to expand into an initializer of an array of strings.
+     Each string is the name of a register.  [more detail]
+
+`REG_STRUCT_HAS_ADDR (gcc_p, type)'
+     Define this to return 1 if the given type will be passed by pointer
+     rather than directly.
+
+`SDB_REG_TO_REGNUM'
+     Define this to convert sdb register numbers into GDB regnums.  If
+     not defined, no conversion will be done.
+
+`SHIFT_INST_REGS'
+     (Only used for m88k targets.)
+
+`SKIP_PROLOGUE'
+     A C statement that advances the PC across any function entry
+     prologue instructions so as to reach "real" code.
+
+`SKIP_PROLOGUE_FRAMELESS_P'
+     A C statement that should behave similarly, but that can stop as
+     soon as the function is known to have a frame.  If not defined,
+     `SKIP_PROLOGUE' will be used instead.
+
+`SKIP_TRAMPOLINE_CODE (pc)'
+     If the target machine has trampoline code that sits between callers
+     and the functions being called, then define this macro to return a
+     new PC that is at the start of the real function.
+
+`SP_REGNUM'
+     Define this to be the number of the register that serves as the
+     stack pointer.
+
+`STAB_REG_TO_REGNUM'
+     Define this to convert stab register numbers (as gotten from `r'
+     declarations) into GDB regnums.  If not defined, no conversion
+     will be done.
+
+`STACK_ALIGN (addr)'
+     Define this to adjust the address to the alignment required for the
+     processor's stack.
+
+`STEP_SKIPS_DELAY (addr)'
+     Define this to return true if the address is of an instruction
+     with a delay slot.  If a breakpoint has been placed in the
+     instruction's delay slot, GDB will single-step over that
+     instruction before resuming normally.  Currently only defined for
+     the Mips.
+
+`STORE_RETURN_VALUE (type, valbuf)'
+     A C expression that stores a function return value of type TYPE,
+     where VALBUF is the address of the value to be stored.
+
+`SUN_FIXED_LBRAC_BUG'
+     (Used only for Sun-3 and Sun-4 targets.)
+
+`SYMBOL_RELOADING_DEFAULT'
+     The default value of the `symbol-reloading' variable.  (Never
+     defined in current sources.)
+
+`TARGET_BYTE_ORDER'
+     The ordering of bytes in the target.  This must be defined to be
+     either `BIG_ENDIAN' or `LITTLE_ENDIAN'.
+
+`TARGET_CHAR_BIT'
+     Number of bits in a char; defaults to 8.
+
+`TARGET_COMPLEX_BIT'
+     Number of bits in a complex number; defaults to `2 *
+     TARGET_FLOAT_BIT'.
+
+`TARGET_DOUBLE_BIT'
+     Number of bits in a double float; defaults to `8 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_DOUBLE_COMPLEX_BIT'
+     Number of bits in a double complex; defaults to `2 *
+     TARGET_DOUBLE_BIT'.
+
+`TARGET_FLOAT_BIT'
+     Number of bits in a float; defaults to `4 * TARGET_CHAR_BIT'.
+
+`TARGET_INT_BIT'
+     Number of bits in an integer; defaults to `4 * TARGET_CHAR_BIT'.
+
+`TARGET_LONG_BIT'
+     Number of bits in a long integer; defaults to `4 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_LONG_DOUBLE_BIT'
+     Number of bits in a long double float; defaults to `2 *
+     TARGET_DOUBLE_BIT'.
+
+`TARGET_LONG_LONG_BIT'
+     Number of bits in a long long integer; defaults to `2 *
+     TARGET_LONG_BIT'.
+
+`TARGET_PTR_BIT'
+     Number of bits in a pointer; defaults to `TARGET_INT_BIT'.
+
+`TARGET_SHORT_BIT'
+     Number of bits in a short integer; defaults to `2 *
+     TARGET_CHAR_BIT'.
+
+`TARGET_READ_PC'
+
+`TARGET_WRITE_PC (val, pid)'
+
+`TARGET_READ_SP'
+
+`TARGET_WRITE_SP'
+
+`TARGET_READ_FP'
+
+`TARGET_WRITE_FP'
+     These change the behavior of `read_pc', `write_pc', `read_sp',
+     `write_sp', `read_fp' and `write_fp'.  For most targets, these may
+     be left undefined.  GDB will call the read and write register
+     functions with the relevant `_REGNUM' argument.
+
+     These macros are useful when a target keeps one of these registers
+     in a hard to get at place;  for example, part in a segment
+     register and part in an ordinary register.
+
+`USE_STRUCT_CONVENTION (gcc_p, type)'
+     If defined, this must be an expression that is nonzero if a value
+     of the given TYPE being returned from a function must have space
+     allocated for it on the stack.  GCC_P is true if the function
+     being considered is known to have been compiled by GCC; this is
+     helpful for systems where GCC is known to use different calling
+     convention than other compilers.
+
+`VARIABLES_INSIDE_BLOCK (desc, gcc_p)'
+     For dbx-style debugging information, if the compiler puts variable
+     declarations inside LBRAC/RBRAC blocks, this should be defined to
+     be nonzero.  DESC is the value of `n_desc' from the `N_RBRAC'
+     symbol, and GCC_P is true if GDB has noticed the presence of
+     either the `GCC_COMPILED_SYMBOL' or the `GCC2_COMPILED_SYMBOL'.
+     By default, this is 0.
+
+`OS9K_VARIABLES_INSIDE_BLOCK (desc, gcc_p)'
+     Similarly, for OS/9000.  Defaults to 1.
+
+`WRS_ORIG'
+     remote-vx.c
+
+`test'
+     (Define this to enable testing code in regex.c.)
+
+   Motorola M68K target conditionals.
+
+`BPT_VECTOR'
+     Define this to be the 4-bit location of the breakpoint trap vector.
+     If not defined, it will default to `0xf'.
+
+`REMOTE_BPT_VECTOR'
+     Defaults to `1'.
+
+
+File: gdbint.info,  Node: Native Conditionals,  Next: Obsolete Conditionals,  Prev: Target Conditionals,  Up: Top
+
+Native Conditionals
+*******************
+
+   When GDB is configured and compiled, various macros are defined or
+left undefined, to control compilation when the host and target systems
+are the same.  These macros should be defined (or left undefined) in
+`nm-SYSTEM.h'.
+
+`ATTACH_DETACH'
+     If defined, then GDB will include support for the `attach' and
+     `detach' commands.
+
+`CHILD_PREPARE_TO_STORE'
+     If the machine stores all registers at once in the child process,
+     then define this to ensure that all values are correct.  This
+     usually entails a read from the child.
+
+     [Note that this is incorrectly defined in `xm-SYSTEM.h' files
+     currently.]
+
+`FETCH_INFERIOR_REGISTERS'
+     Define this if the native-dependent code will provide its own
+     routines `fetch_inferior_registers' and `store_inferior_registers'
+     in `HOST-nat.c'.  If this symbol is *not* defined, and
+     `infptrace.c' is included in this configuration, the default
+     routines in `infptrace.c' are used for these functions.
+
+`FILES_INFO_HOOK'
+     (Only defined for Convex.)
+
+`FP0_REGNUM'
+     This macro is normally defined to be the number of the first
+     floating point register, if the machine has such registers.  As
+     such, it would appear only in target-specific code.  However,
+     /proc support uses this to decide whether floats are in use on
+     this target.
+
+`GET_LONGJMP_TARGET'
+     For most machines, this is a target-dependent parameter.  On the
+     DECstation and the Iris, this is a native-dependent parameter,
+     since <setjmp.h> is needed to define it.
+
+     This macro determines the target PC address that longjmp() will
+     jump to, assuming that we have just stopped at a longjmp
+     breakpoint.  It takes a CORE_ADDR * as argument, and stores the
+     target PC value through this pointer.  It examines the current
+     state of the machine as needed.
+
+`ONE_PROCESS_WRITETEXT'
+     Define this to be able to, when a breakpoint insertion fails, warn
+     the user that another process may be running with the same
+     executable.
+
+`PROC_NAME_FMT'
+     Defines the format for the name of a `/proc' device.  Should be
+     defined in `nm.h' *only* in order to override the default
+     definition in `procfs.c'.
+
+`PTRACE_FP_BUG'
+     mach386-xdep.c
+
+`PTRACE_ARG3_TYPE'
+     The type of the third argument to the `ptrace' system call, if it
+     exists and is different from `int'.
+
+`REGISTER_U_ADDR'
+     Defines the offset of the registers in the "u area"; *note Host::..
+
+`SHELL_COMMAND_CONCAT'
+     If defined, is a string to prefix on the shell command used to
+     start the inferior.
+
+`SHELL_FILE'
+     If defined, this is the name of the shell to use to run the
+     inferior.  Defaults to `"/bin/sh"'.
+
+`SOLIB_ADD (filename, from_tty, targ)'
+     Define this to expand into an expression that will cause the
+     symbols in FILENAME to be added to GDB's symbol table.
+
+`SOLIB_CREATE_INFERIOR_HOOK'
+     Define this to expand into any shared-library-relocation code that
+     you want to be run just after the child process has been forked.
+
+`START_INFERIOR_TRAPS_EXPECTED'
+     When starting an inferior, GDB normally expects to trap twice;
+     once when the shell execs, and once when the program itself execs.
+     If the actual number of traps is something other than 2, then
+     define this macro to expand into the number expected.
+
+`SVR4_SHARED_LIBS'
+     Define this to indicate that SVR4-style shared libraries are in
+     use.
+
+`USE_PROC_FS'
+     This determines whether small routines in `*-tdep.c', which
+     translate register values between GDB's internal representation
+     and the /proc representation, are compiled.
+
+`U_REGS_OFFSET'
+     This is the offset of the registers in the upage.  It need only be
+     defined if the generic ptrace register access routines in
+     `infptrace.c' are being used (that is, `infptrace.c' is configured
+     in, and `FETCH_INFERIOR_REGISTERS' is not defined).  If the
+     default value from `infptrace.c' is good enough, leave it
+     undefined.
+
+     The default value means that u.u_ar0 *points to* the location of
+     the registers.  I'm guessing that `#define U_REGS_OFFSET 0' means
+     that u.u_ar0 *is* the location of the registers.
+
+`CLEAR_SOLIB'
+     objfiles.c
+
+`DEBUG_PTRACE'
+     Define this to debug ptrace calls.
+
+
+File: gdbint.info,  Node: Obsolete Conditionals,  Next: XCOFF,  Prev: Native Conditionals,  Up: Top
+
+Obsolete Conditionals
+*********************
+
+   Fragments of old code in GDB sometimes reference or set the following
+configuration macros.  They should not be used by new code, and old
+uses should be removed as those parts of the debugger are otherwise
+touched.
+
+`STACK_END_ADDR'
+     This macro used to define where the end of the stack appeared, for
+     use in interpreting core file formats that don't record this
+     address in the core file itself.  This information is now
+     configured in BFD, and GDB gets the info portably from there.  The
+     values in GDB's configuration files should be moved into BFD
+     configuration files (if needed there), and deleted from all of
+     GDB's config files.
+
+     Any `FOO-xdep.c' file that references STACK_END_ADDR is so old
+     that it has never been converted to use BFD.  Now that's old!
+
+`PYRAMID_CONTROL_FRAME_DEBUGGING'
+     pyr-xdep.c
+
+`PYRAMID_CORE'
+     pyr-xdep.c
+
+`PYRAMID_PTRACE'
+     pyr-xdep.c
+
+`REG_STACK_SEGMENT'
+     exec.c
+
+
+File: gdbint.info,  Node: XCOFF,  Prev: Obsolete Conditionals,  Up: Top
+
+The XCOFF Object File Format
+****************************
+
+   The IBM RS/6000 running AIX uses an object file format called xcoff.
+The COFF sections, symbols, and line numbers are used, but debugging
+symbols are dbx-style stabs whose strings are located in the `.debug'
+section (rather than the string table).  For more information, *Note
+Top: (stabs)Top, and search for XCOFF.
+
+   The shared library scheme has a nice clean interface for figuring out
+what shared libraries are in use, but the catch is that everything which
+refers to addresses (symbol tables and breakpoints at least) needs to be
+relocated for both shared libraries and the main executable.  At least
+using the standard mechanism this can only be done once the program has
+been run (or the core file has been read).
+
+

@@ -1,0 +1,1314 @@
+This is Info file ./gdb.info, produced by Makeinfo version 1.68 from
+the input file gdb.texinfo.
+
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+   This file documents the GNU debugger GDB.
+
+   This is the Fifth Edition, April 1998, of `Debugging with GDB: the
+GNU Source-Level Debugger' for GDB Version .
+
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+1997, 1998 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gdb.info,  Node: Hitachi Remote,  Next: MIPS Remote,  Prev: ST2000 Remote,  Up: Remote
+
+GDB and Hitachi microprocessors
+-------------------------------
+
+   GDB needs to know these things to talk to your Hitachi SH, H8/300,
+or H8/500:
+
+  1. that you want to use `target hms', the remote debugging interface
+     for Hitachi microprocessors, or `target e7000', the in-circuit
+     emulator for the Hitachi SH and the Hitachi 300H.  (`target hms' is
+     the default when GDB is configured specifically for the Hitachi SH,
+     H8/300, or H8/500.)
+
+  2. what serial device connects your host to your Hitachi board (the
+     first serial device available on your host is the default).
+
+  3. what speed to use over the serial device.
+
+* Menu:
+
+* Hitachi Boards::      Connecting to Hitachi boards.
+* Hitachi ICE::         Using the E7000 In-Circuit Emulator.
+* Hitachi Special::     Special GDB commands for Hitachi micros.
+
+
+File: gdb.info,  Node: Hitachi Boards,  Next: Hitachi ICE,  Up: Hitachi Remote
+
+Connecting to Hitachi boards
+............................
+
+   Use the special `gdb' command `device PORT' if you need to
+explicitly set the serial device.  The default PORT is the first
+available port on your host.  This is only necessary on Unix hosts,
+where it is typically something like `/dev/ttya'.
+
+   `gdb' has another special command to set the communications speed:
+`speed BPS'.  This command also is only used from Unix hosts; on DOS
+hosts, set the line speed as usual from outside GDB with the DOS `mode'
+command (for instance, `mode com2:9600,n,8,1,p' for a 9600 bps
+connection).
+
+   The `device' and `speed' commands are available only when you use a
+Unix host to debug your Hitachi microprocessor programs.  If you use a
+DOS host, GDB depends on an auxiliary terminate-and-stay-resident
+program called `asynctsr' to communicate with the development board
+through a PC serial port.  You must also use the DOS `mode' command to
+set up the serial port on the DOS side.
+
+
+File: gdb.info,  Node: Hitachi ICE,  Next: Hitachi Special,  Prev: Hitachi Boards,  Up: Hitachi Remote
+
+Using the E7000 in-circuit emulator
+...................................
+
+   You can use the E7000 in-circuit emulator to develop code for either
+the Hitachi SH or the H8/300H.  Use one of these forms of the `target
+e7000' command to connect GDB to your E7000:
+
+`target e7000 PORT SPEED'
+     Use this form if your E7000 is connected to a serial port.  The
+     PORT argument identifies what serial port to use (for example,
+     `com2').  The third argument is the line speed in bits per second
+     (for example, `9600').
+
+`target e7000 HOSTNAME'
+     If your E7000 is installed as a host on a TCP/IP network, you can
+     just specify its hostname; GDB uses `telnet' to connect.
+
+
+File: gdb.info,  Node: Hitachi Special,  Prev: Hitachi ICE,  Up: Hitachi Remote
+
+Special GDB commands for Hitachi micros
+.......................................
+
+   Some GDB commands are available only on the H8/300 or the H8/500
+configurations:
+
+`set machine h8300'
+`set machine h8300h'
+     Condition GDB for one of the two variants of the H8/300
+     architecture with `set machine'.  You can use `show machine' to
+     check which variant is currently in effect.
+
+`set memory MOD'
+`show memory'
+     Specify which H8/500 memory model (MOD) you are using with `set
+     memory'; check which memory model is in effect with `show memory'.
+     The accepted values for MOD are `small', `big', `medium', and
+     `compact'.
+
+
+File: gdb.info,  Node: MIPS Remote,  Next: Sparclet Remote,  Prev: Hitachi Remote,  Up: Remote
+
+GDB and remote MIPS boards
+--------------------------
+
+   GDB can use the MIPS remote debugging protocol to talk to a MIPS
+board attached to a serial line.  This is available when you configure
+GDB with `--target=mips-idt-ecoff'.
+
+   Use these GDB commands to specify the connection to your target
+board:
+
+`target mips PORT'
+     To run a program on the board, start up `gdb' with the name of
+     your program as the argument.  To connect to the board, use the
+     command `target mips PORT', where PORT is the name of the serial
+     port connected to the board.  If the program has not already been
+     downloaded to the board, you may use the `load' command to
+     download it.  You can then use all the usual GDB commands.
+
+     For example, this sequence connects to the target board through a
+     serial port, and loads and runs a program called PROG through the
+     debugger:
+
+          host$ gdb PROG
+          GDB is free software and ...
+          (gdb) target mips /dev/ttyb
+          (gdb) load PROG
+          (gdb) run
+
+`target mips HOSTNAME:PORTNUMBER'
+     On some GDB host configurations, you can specify a TCP connection
+     (for instance, to a serial line managed by a terminal
+     concentrator) instead of a serial port, using the syntax
+     `HOSTNAME:PORTNUMBER'.
+
+`target pmon PORT'
+
+`target ddb PORT'
+
+`target lsi PORT'
+GDB also supports these special commands for MIPS targets:
+
+`set processor ARGS'
+`show processor'
+     Use the `set processor' command to set the type of MIPS processor
+     when you want to access processor-type-specific registers.  For
+     example, `set processor R3041' tells GDB to use the CPO registers
+     appropriate for the 3041 chip.  Use the `show processor' command
+     to see what MIPS processor GDB is using.  Use the `info reg'
+     command to see what registers GDB is using.
+
+`set mipsfpu double'
+`set mipsfpu single'
+`set mipsfpu none'
+`show mipsfpu'
+     If your target board does not support the MIPS floating point
+     coprocessor, you should use the command `set mipsfpu none' (if you
+     need this, you may wish to put the command in your .gdbinit file).
+     This tells GDB how to find the return value of functions which
+     return floating point values.  It also allows GDB to avoid saving
+     the floating point registers when calling functions on the board.
+     If you are using a floating point coprocessor with only single
+     precision floating point support, as on the R4650 processor, use
+     the command `set mipsfpu single'.  The default double precision
+     floating point coprocessor may be selected using `set mipsfpu
+     double'.
+
+     In previous versions the only choices were double precision or no
+     floating point, so `set mipsfpu on' will select double precision
+     and `set mipsfpu off' will select no floating point.
+
+     As usual, you can inquire about the `mipsfpu' variable with `show
+     mipsfpu'.
+
+`set remotedebug N'
+`show remotedebug'
+     You can see some debugging information about communications with
+     the board by setting the `remotedebug' variable.  If you set it to
+     `1' using `set remotedebug 1', every packet is displayed.  If you
+     set it to `2', every character is displayed.  You can check the
+     current value at any time with the command `show remotedebug'.
+
+`set timeout SECONDS'
+`set retransmit-timeout SECONDS'
+`show timeout'
+`show retransmit-timeout'
+     You can control the timeout used while waiting for a packet, in
+     the MIPS remote protocol, with the `set timeout SECONDS' command.
+     The default is 5 seconds.  Similarly, you can control the timeout
+     used while waiting for an acknowledgement of a packet with the `set
+     retransmit-timeout SECONDS' command.  The default is 3 seconds.
+     You can inspect both values with `show timeout' and `show
+     retransmit-timeout'.  (These commands are *only* available when
+     GDB is configured for `--target=mips-idt-ecoff'.)
+
+     The timeout set by `set timeout' does not apply when GDB is
+     waiting for your program to stop.  In that case, GDB waits forever
+     because it has no way of knowing how long the program is going to
+     run before stopping.
+
+
+File: gdb.info,  Node: Simulator,  Prev: Sparclet Remote,  Up: Remote
+
+Simulated CPU target
+--------------------
+
+   For some configurations, GDB includes a CPU simulator that you can
+use instead of a hardware CPU to debug your programs.  Currently, a
+simulator is available when GDB is configured to debug Zilog Z8000 or
+Hitachi microprocessor targets.
+
+   For the Z8000 family, `target sim' simulates either the Z8002 (the
+unsegmented variant of the Z8000 architecture) or the Z8001 (the
+segmented variant).  The simulator recognizes which architecture is
+appropriate by inspecting the object code.
+
+`target sim'
+     Debug programs on a simulated CPU (which CPU depends on the GDB
+     configuration)
+
+After specifying this target, you can debug programs for the simulated
+CPU in the same style as programs for your host computer; use the
+`file' command to load a new program image, the `run' command to run
+your program, and so on.
+
+   As well as making available all the usual machine registers (see
+`info reg'), this debugging target provides three additional items of
+information as specially named registers:
+
+`cycles'
+     Counts clock-ticks in the simulator.
+
+`insts'
+     Counts instructions run in the simulator.
+
+`time'
+     Execution time in 60ths of a second.
+
+   You can refer to these values in GDB expressions with the usual
+conventions; for example, `b fputc if $cycles>5000' sets a conditional
+breakpoint that suspends only after at least 5000 simulated clock ticks.
+
+
+File: gdb.info,  Node: Controlling GDB,  Next: Sequences,  Prev: Targets,  Up: Top
+
+Controlling GDB
+***************
+
+   You can alter the way GDB interacts with you by using the `set'
+command.  For commands controlling how GDB displays data, *note Print
+settings: Print Settings.; other settings are described here.
+
+* Menu:
+
+* Prompt::                      Prompt
+* Editing::                     Command editing
+* History::                     Command history
+* Screen Size::                 Screen size
+* Numbers::                     Numbers
+* Messages/Warnings::           Optional warnings and messages
+
+
+File: gdb.info,  Node: Prompt,  Next: Editing,  Up: Controlling GDB
+
+Prompt
+======
+
+   GDB indicates its readiness to read a command by printing a string
+called the "prompt".  This string is normally `(gdb)'.  You can change
+the prompt string with the `set prompt' command.  For instance, when
+debugging GDB with GDB, it is useful to change the prompt in one of the
+GDB sessions so that you can always tell which one you are talking to.
+
+   *Note:*  `set prompt' no longer adds a space for you after the
+prompt you set.  This allows you to set a prompt which ends in a space
+or a prompt that does not.
+
+`set prompt NEWPROMPT'
+     Directs GDB to use NEWPROMPT as its prompt string henceforth.
+
+`show prompt'
+     Prints a line of the form: `Gdb's prompt is: YOUR-PROMPT'
+
+
+File: gdb.info,  Node: Editing,  Next: History,  Prev: Prompt,  Up: Controlling GDB
+
+Command editing
+===============
+
+   GDB reads its input commands via the "readline" interface.  This GNU
+library provides consistent behavior for programs which provide a
+command line interface to the user.  Advantages are GNU Emacs-style or
+"vi"-style inline editing of commands, `csh'-like history substitution,
+and a storage and recall of command history across debugging sessions.
+
+   You may control the behavior of command line editing in GDB with the
+command `set'.
+
+`set editing'
+`set editing on'
+     Enable command line editing (enabled by default).
+
+`set editing off'
+     Disable command line editing.
+
+`show editing'
+     Show whether command line editing is enabled.
+
+
+File: gdb.info,  Node: History,  Next: Screen Size,  Prev: Editing,  Up: Controlling GDB
+
+Command history
+===============
+
+   GDB can keep track of the commands you type during your debugging
+sessions, so that you can be certain of precisely what happened.  Use
+these commands to manage the GDB command history facility.
+
+`set history filename FNAME'
+     Set the name of the GDB command history file to FNAME.  This is
+     the file where GDB reads an initial command history list, and
+     where it writes the command history from this session when it
+     exits.  You can access this list through history expansion or
+     through the history command editing characters listed below.  This
+     file defaults to the value of the environment variable
+     `GDBHISTFILE', or to `./.gdb_history' if this variable is not set.
+
+`set history save'
+`set history save on'
+     Record command history in a file, whose name may be specified with
+     the `set history filename' command.  By default, this option is
+     disabled.
+
+`set history save off'
+     Stop recording command history in a file.
+
+`set history size SIZE'
+     Set the number of commands which GDB keeps in its history list.
+     This defaults to the value of the environment variable `HISTSIZE',
+     or to 256 if this variable is not set.
+
+   History expansion assigns special meaning to the character `!'.
+
+   Since `!' is also the logical not operator in C, history expansion
+is off by default. If you decide to enable history expansion with the
+`set history expansion on' command, you may sometimes need to follow
+`!' (when it is used as logical not, in an expression) with a space or
+a tab to prevent it from being expanded.  The readline history
+facilities do not attempt substitution on the strings `!=' and `!(',
+even when history expansion is enabled.
+
+   The commands to control history expansion are:
+
+`set history expansion on'
+`set history expansion'
+     Enable history expansion.  History expansion is off by default.
+
+`set history expansion off'
+     Disable history expansion.
+
+     The readline code comes with more complete documentation of
+     editing and history expansion features.  Users unfamiliar with GNU
+     Emacs or `vi' may wish to read it.
+
+`show history'
+`show history filename'
+`show history save'
+`show history size'
+`show history expansion'
+     These commands display the state of the GDB history parameters.
+     `show history' by itself displays all four states.
+
+`show commands'
+     Display the last ten commands in the command history.
+
+`show commands N'
+     Print ten commands centered on command number N.
+
+`show commands +'
+     Print ten commands just after the commands last printed.
+
+
+File: gdb.info,  Node: Screen Size,  Next: Numbers,  Prev: History,  Up: Controlling GDB
+
+Screen size
+===========
+
+   Certain commands to GDB may produce large amounts of information
+output to the screen.  To help you read all of it, GDB pauses and asks
+you for input at the end of each page of output.  Type <RET> when you
+want to continue the output, or `q' to discard the remaining output.
+Also, the screen width setting determines when to wrap lines of output.
+Depending on what is being printed, GDB tries to break the line at a
+readable place, rather than simply letting it overflow onto the
+following line.
+
+   Normally GDB knows the size of the screen from the termcap data base
+together with the value of the `TERM' environment variable and the
+`stty rows' and `stty cols' settings. If this is not correct, you can
+override it with the `set height' and `set width' commands:
+
+`set height LPP'
+`show height'
+`set width CPL'
+`show width'
+     These `set' commands specify a screen height of LPP lines and a
+     screen width of CPL characters.  The associated `show' commands
+     display the current settings.
+
+     If you specify a height of zero lines, GDB does not pause during
+     output no matter how long the output is.  This is useful if output
+     is to a file or to an editor buffer.
+
+     Likewise, you can specify `set width 0' to prevent GDB from
+     wrapping its output.
+
+
+File: gdb.info,  Node: Numbers,  Next: Messages/Warnings,  Prev: Screen Size,  Up: Controlling GDB
+
+Numbers
+=======
+
+   You can always enter numbers in octal, decimal, or hexadecimal in
+GDB by the usual conventions: octal numbers begin with `0', decimal
+numbers end with `.', and hexadecimal numbers begin with `0x'.  Numbers
+that begin with none of these are, by default, entered in base 10;
+likewise, the default display for numbers--when no particular format is
+specified--is base 10.  You can change the default base for both input
+and output with the `set radix' command.
+
+`set input-radix BASE'
+     Set the default base for numeric input.  Supported choices for
+     BASE are decimal 8, 10, or 16.  BASE must itself be specified
+     either unambiguously or using the current default radix; for
+     example, any of
+
+          set radix 012
+          set radix 10.
+          set radix 0xa
+
+     sets the base to decimal.  On the other hand, `set radix 10'
+     leaves the radix unchanged no matter what it was.
+
+`set output-radix BASE'
+     Set the default base for numeric display.  Supported choices for
+     BASE are decimal 8, 10, or 16.  BASE must itself be specified
+     either unambiguously or using the current default radix.
+
+`show input-radix'
+     Display the current default base for numeric input.
+
+`show output-radix'
+     Display the current default base for numeric display.
+
+
+File: gdb.info,  Node: Messages/Warnings,  Prev: Numbers,  Up: Controlling GDB
+
+Optional warnings and messages
+==============================
+
+   By default, GDB is silent about its inner workings.  If you are
+running on a slow machine, you may want to use the `set verbose'
+command.  This makes GDB tell you when it does a lengthy internal
+operation, so you will not think it has crashed.
+
+   Currently, the messages controlled by `set verbose' are those which
+announce that the symbol table for a source file is being read; see
+`symbol-file' in *Note Commands to specify files: Files.
+
+`set verbose on'
+     Enables GDB output of certain informational messages.
+
+`set verbose off'
+     Disables GDB output of certain informational messages.
+
+`show verbose'
+     Displays whether `set verbose' is on or off.
+
+   By default, if GDB encounters bugs in the symbol table of an object
+file, it is silent; but if you are debugging a compiler, you may find
+this information useful (*note Errors reading symbol files: Symbol
+Errors.).
+
+`set complaints LIMIT'
+     Permits GDB to output LIMIT complaints about each type of unusual
+     symbols before becoming silent about the problem.  Set LIMIT to
+     zero to suppress all complaints; set it to a large number to
+     prevent complaints from being suppressed.
+
+`show complaints'
+     Displays how many symbol complaints GDB is permitted to produce.
+
+   By default, GDB is cautious, and asks what sometimes seems to be a
+lot of stupid questions to confirm certain commands.  For example, if
+you try to run a program which is already running:
+
+     (gdb) run
+     The program being debugged has been started already.
+     Start it from the beginning? (y or n)
+
+   If you are willing to unflinchingly face the consequences of your own
+commands, you can disable this "feature":
+
+`set confirm off'
+     Disables confirmation requests.
+
+`set confirm on'
+     Enables confirmation requests (the default).
+
+`show confirm'
+     Displays state of confirmation requests.
+
+
+File: gdb.info,  Node: Sequences,  Next: Emacs,  Prev: Controlling GDB,  Up: Top
+
+Canned Sequences of Commands
+****************************
+
+   Aside from breakpoint commands (*note Breakpoint command lists:
+Break Commands.), GDB provides two ways to store sequences of commands
+for execution as a unit: user-defined commands and command files.
+
+* Menu:
+
+* Define::                      User-defined commands
+* Hooks::			User-defined command hooks
+* Command Files::               Command files
+* Output::                      Commands for controlled output
+
+
+File: gdb.info,  Node: Define,  Next: Hooks,  Up: Sequences
+
+User-defined commands
+=====================
+
+   A "user-defined command" is a sequence of GDB commands to which you
+assign a new name as a command.  This is done with the `define'
+command.  User commands may accept up to 10 arguments separated by
+whitespace.  Arguments are accessed within the user command via
+$ARG0...$ARG9.  A trivial example:
+
+     define adder
+       print $arg0 + $arg1 + $arg2
+
+To execute the command use:
+
+     adder 1 2 3
+
+This defines the command `adder', which prints the sum of its three
+arguments.  Note the arguments are text substitutions, so they may
+reference variables, use complex expressions, or even perform inferior
+functions calls.
+
+`define COMMANDNAME'
+     Define a command named COMMANDNAME.  If there is already a command
+     by that name, you are asked to confirm that you want to redefine
+     it.
+
+     The definition of the command is made up of other GDB command
+     lines, which are given following the `define' command.  The end of
+     these commands is marked by a line containing `end'.
+
+`if'
+     Takes a single argument, which is an expression to evaluate.  It
+     is followed by a series of commands that are executed only if the
+     expression is true (nonzero).  There can then optionally be a line
+     `else', followed by a series of commands that are only executed if
+     the expression was false.  The end of the list is marked by a line
+     containing `end'.
+
+`while'
+     The syntax is similar to `if': the command takes a single argument,
+     which is an expression to evaluate, and must be followed by the
+     commands to execute, one per line, terminated by an `end'.  The
+     commands are executed repeatedly as long as the expression
+     evaluates to true.
+
+`document COMMANDNAME'
+     Document the user-defined command COMMANDNAME, so that it can be
+     accessed by `help'.  The command COMMANDNAME must already be
+     defined.  This command reads lines of documentation just as
+     `define' reads the lines of the command definition, ending with
+     `end'.  After the `document' command is finished, `help' on command
+     COMMANDNAME displays the documentation you have written.
+
+     You may use the `document' command again to change the
+     documentation of a command.  Redefining the command with `define'
+     does not change the documentation.
+
+`help user-defined'
+     List all user-defined commands, with the first line of the
+     documentation (if any) for each.
+
+`show user'
+`show user COMMANDNAME'
+     Display the GDB commands used to define COMMANDNAME (but not its
+     documentation).  If no COMMANDNAME is given, display the
+     definitions for all user-defined commands.
+
+   When user-defined commands are executed, the commands of the
+definition are not printed.  An error in any command stops execution of
+the user-defined command.
+
+   If used interactively, commands that would ask for confirmation
+proceed without asking when used inside a user-defined command.  Many
+GDB commands that normally print messages to say what they are doing
+omit the messages when used in a user-defined command.
+
+
+File: gdb.info,  Node: Hooks,  Next: Command Files,  Prev: Define,  Up: Sequences
+
+User-defined command hooks
+==========================
+
+   You may define *hooks*, which are a special kind of user-defined
+command.  Whenever you run the command `foo', if the user-defined
+command `hook-foo' exists, it is executed (with no arguments) before
+that command.
+
+   In addition, a pseudo-command, `stop' exists.  Defining
+(`hook-stop') makes the associated commands execute every time
+execution stops in your program: before breakpoint commands are run,
+displays are printed, or the stack frame is printed.
+
+   For example, to ignore `SIGALRM' signals while single-stepping, but
+treat them normally during normal execution, you could define:
+
+     define hook-stop
+     handle SIGALRM nopass
+     end
+     
+     define hook-run
+     handle SIGALRM pass
+     end
+     
+     define hook-continue
+     handle SIGLARM pass
+     end
+
+   You can define a hook for any single-word command in GDB, but not
+for command aliases; you should define a hook for the basic command
+name, e.g.  `backtrace' rather than `bt'.  If an error occurs during
+the execution of your hook, execution of GDB commands stops and GDB
+issues a prompt (before the command that you actually typed had a
+chance to run).
+
+   If you try to define a hook which does not match any known command,
+you get a warning from the `define' command.
+
+
+File: gdb.info,  Node: Command Files,  Next: Output,  Prev: Hooks,  Up: Sequences
+
+Command files
+=============
+
+   A command file for GDB is a file of lines that are GDB commands.
+Comments (lines starting with `#') may also be included.  An empty line
+in a command file does nothing; it does not mean to repeat the last
+command, as it would from the terminal.
+
+   When you start GDB, it automatically executes commands from its
+"init files".  These are files named `.gdbinit'.  GDB reads the init
+file (if any) in your home directory, then processes command line
+options and operands, and then reads the init file (if any) in the
+current working directory.  This is so the init file in your home
+directory can set options (such as `set complaints') which affect the
+processing of the command line options and operands.  The init files
+are not executed if you use the `-nx' option; *note Choosing modes:
+Mode Options..
+
+   On some configurations of GDB, the init file is known by a different
+name (these are typically environments where a specialized form of GDB
+may need to coexist with other forms, hence a different name for the
+specialized version's init file).  These are the environments with
+special init file names:
+
+   * VxWorks (Wind River Systems real-time OS): `.vxgdbinit'
+
+   * OS68K (Enea Data Systems real-time OS): `.os68gdbinit'
+
+   * ES-1800 (Ericsson Telecom AB M68000 emulator): `.esgdbinit'
+
+   You can also request the execution of a command file with the
+`source' command:
+
+`source FILENAME'
+     Execute the command file FILENAME.
+
+   The lines in a command file are executed sequentially.  They are not
+printed as they are executed.  An error in any command terminates
+execution of the command file.
+
+   Commands that would ask for confirmation if used interactively
+proceed without asking when used in a command file.  Many GDB commands
+that normally print messages to say what they are doing omit the
+messages when called from command files.
+
+
+File: gdb.info,  Node: Output,  Prev: Command Files,  Up: Sequences
+
+Commands for controlled output
+==============================
+
+   During the execution of a command file or a user-defined command,
+normal GDB output is suppressed; the only output that appears is what is
+explicitly printed by the commands in the definition.  This section
+describes three commands useful for generating exactly the output you
+want.
+
+`echo TEXT'
+     Print TEXT.  Nonprinting characters can be included in TEXT using
+     C escape sequences, such as `\n' to print a newline.  *No newline
+     is printed unless you specify one.* In addition to the standard C
+     escape sequences, a backslash followed by a space stands for a
+     space.  This is useful for displaying a string with spaces at the
+     beginning or the end, since leading and trailing spaces are
+     otherwise trimmed from all arguments.  To print ` and foo = ', use
+     the command `echo \ and foo = \ '.
+
+     A backslash at the end of TEXT can be used, as in C, to continue
+     the command onto subsequent lines.  For example,
+
+          echo This is some text\n\
+          which is continued\n\
+          onto several lines.\n
+
+     produces the same output as
+
+          echo This is some text\n
+          echo which is continued\n
+          echo onto several lines.\n
+
+`output EXPRESSION'
+     Print the value of EXPRESSION and nothing but that value: no
+     newlines, no `$NN = '.  The value is not entered in the value
+     history either.  *Note Expressions: Expressions, for more
+     information on expressions.
+
+`output/FMT EXPRESSION'
+     Print the value of EXPRESSION in format FMT.  You can use the same
+     formats as for `print'.  *Note Output formats: Output Formats, for
+     more information.
+
+`printf STRING, EXPRESSIONS...'
+     Print the values of the EXPRESSIONS under the control of STRING.
+     The EXPRESSIONS are separated by commas and may be either numbers
+     or pointers.  Their values are printed as specified by STRING,
+     exactly as if your program were to execute the C subroutine
+
+          printf (STRING, EXPRESSIONS...);
+
+     For example, you can print two values in hex like this:
+
+          printf "foo, bar-foo = 0x%x, 0x%x\n", foo, bar-foo
+
+     The only backslash-escape sequences that you can use in the format
+     string are the simple ones that consist of backslash followed by a
+     letter.
+
+
+File: gdb.info,  Node: Emacs,  Next: GDB Bugs,  Prev: Sequences,  Up: Top
+
+Using GDB under GNU Emacs
+*************************
+
+   A special interface allows you to use GNU Emacs to view (and edit)
+the source files for the program you are debugging with GDB.
+
+   To use this interface, use the command `M-x gdb' in Emacs.  Give the
+executable file you want to debug as an argument.  This command starts
+GDB as a subprocess of Emacs, with input and output through a newly
+created Emacs buffer.
+
+   Using GDB under Emacs is just like using GDB normally except for two
+things:
+
+   * All "terminal" input and output goes through the Emacs buffer.
+
+   This applies both to GDB commands and their output, and to the input
+and output done by the program you are debugging.
+
+   This is useful because it means that you can copy the text of
+previous commands and input them again; you can even use parts of the
+output in this way.
+
+   All the facilities of Emacs' Shell mode are available for interacting
+with your program.  In particular, you can send signals the usual
+way--for example, `C-c C-c' for an interrupt, `C-c C-z' for a stop.
+
+   * GDB displays source code through Emacs.
+
+   Each time GDB displays a stack frame, Emacs automatically finds the
+source file for that frame and puts an arrow (`=>') at the left margin
+of the current line.  Emacs uses a separate buffer for source display,
+and splits the screen to show both your GDB session and the source.
+
+   Explicit GDB `list' or search commands still produce output as
+usual, but you probably have no reason to use them from Emacs.
+
+     *Warning:* If the directory where your program resides is not your
+     current directory, it can be easy to confuse Emacs about the
+     location of the source files, in which case the auxiliary display
+     buffer does not appear to show your source.  GDB can find programs
+     by searching your environment's `PATH' variable, so the GDB input
+     and output session proceeds normally; but Emacs does not get
+     enough information back from GDB to locate the source files in
+     this situation.  To avoid this problem, either start GDB mode from
+     the directory where your program resides, or specify an absolute
+     file name when prompted for the `M-x gdb' argument.
+
+     A similar confusion can result if you use the GDB `file' command to
+     switch to debugging a program in some other location, from an
+     existing GDB buffer in Emacs.
+
+   By default, `M-x gdb' calls the program called `gdb'.  If you need
+to call GDB by a different name (for example, if you keep several
+configurations around, with different names) you can set the Emacs
+variable `gdb-command-name'; for example,
+
+     (setq gdb-command-name "mygdb")
+
+(preceded by `ESC ESC', or typed in the `*scratch*' buffer, or in your
+`.emacs' file) makes Emacs call the program named "`mygdb'" instead.
+
+   In the GDB I/O buffer, you can use these special Emacs commands in
+addition to the standard Shell mode commands:
+
+`C-h m'
+     Describe the features of Emacs' GDB Mode.
+
+`M-s'
+     Execute to another source line, like the GDB `step' command; also
+     update the display window to show the current file and location.
+
+`M-n'
+     Execute to next source line in this function, skipping all function
+     calls, like the GDB `next' command.  Then update the display window
+     to show the current file and location.
+
+`M-i'
+     Execute one instruction, like the GDB `stepi' command; update
+     display window accordingly.
+
+`M-x gdb-nexti'
+     Execute to next instruction, using the GDB `nexti' command; update
+     display window accordingly.
+
+`C-c C-f'
+     Execute until exit from the selected stack frame, like the GDB
+     `finish' command.
+
+`M-c'
+     Continue execution of your program, like the GDB `continue'
+     command.
+
+     *Warning:* In Emacs v19, this command is `C-c C-p'.
+
+`M-u'
+     Go up the number of frames indicated by the numeric argument
+     (*note Numeric Arguments: (Emacs)Arguments.), like the GDB `up'
+     command.
+
+     *Warning:* In Emacs v19, this command is `C-c C-u'.
+
+`M-d'
+     Go down the number of frames indicated by the numeric argument,
+     like the GDB `down' command.
+
+     *Warning:* In Emacs v19, this command is `C-c C-d'.
+
+`C-x &'
+     Read the number where the cursor is positioned, and insert it at
+     the end of the GDB I/O buffer.  For example, if you wish to
+     disassemble code around an address that was displayed earlier,
+     type `disassemble'; then move the cursor to the address display,
+     and pick up the argument for `disassemble' by typing `C-x &'.
+
+     You can customize this further by defining elements of the list
+     `gdb-print-command'; once it is defined, you can format or
+     otherwise process numbers picked up by `C-x &' before they are
+     inserted.  A numeric argument to `C-x &' indicates that you wish
+     special formatting, and also acts as an index to pick an element
+     of the list.  If the list element is a string, the number to be
+     inserted is formatted using the Emacs function `format'; otherwise
+     the number is passed as an argument to the corresponding list
+     element.
+
+   In any source file, the Emacs command `C-x SPC' (`gdb-break') tells
+GDB to set a breakpoint on the source line point is on.
+
+   If you accidentally delete the source-display buffer, an easy way to
+get it back is to type the command `f' in the GDB buffer, to request a
+frame display; when you run under Emacs, this recreates the source
+buffer if necessary to show you the context of the current frame.
+
+   The source files displayed in Emacs are in ordinary Emacs buffers
+which are visiting the source files in the usual way.  You can edit the
+files with these buffers if you wish; but keep in mind that GDB
+communicates with Emacs in terms of line numbers.  If you add or delete
+lines from the text, the line numbers that GDB knows cease to
+correspond properly with the code.
+
+
+File: gdb.info,  Node: GDB Bugs,  Next: Command Line Editing,  Prev: Emacs,  Up: Top
+
+Reporting Bugs in GDB
+*********************
+
+   Your bug reports play an essential role in making GDB reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of GDB work
+better.  Bug reports are your contribution to the maintenance of GDB.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+
+
+File: gdb.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: GDB Bugs
+
+Have you found a bug?
+=====================
+
+   If you are not sure whether you have found a bug, here are some
+guidelines:
+
+   * If the debugger gets a fatal signal, for any input whatever, that
+     is a GDB bug.  Reliable debuggers never crash.
+
+   * If GDB produces an error message for valid input, that is a bug.
+
+   * If GDB does not produce an error message for invalid input, that
+     is a bug.  However, you should note that your idea of "invalid
+     input" might be our idea of "an extension" or "support for
+     traditional practice".
+
+   * If you are an experienced user of debugging tools, your suggestions
+     for improvement of GDB are welcome in any case.
+
+
+File: gdb.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: GDB Bugs
+
+How to report bugs
+==================
+
+   A number of companies and individuals offer support for GNU products.
+If you obtained GDB from a support organization, we recommend you
+contact that organization first.
+
+   You can find contact information for many support companies and
+individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
+
+   In any event, we also recommend that you send bug reports for GDB to
+one of these addresses:
+
+     bug-gdb@prep.ai.mit.edu
+     {ucbvax|mit-eddie|uunet}!prep.ai.mit.edu!bug-gdb
+
+   *Do not send bug reports to `info-gdb', or to `help-gdb', or to any
+newsgroups.* Most users of GDB do not want to receive bug reports.
+Those that do have arranged to receive `bug-gdb'.
+
+   The mailing list `bug-gdb' has a newsgroup `gnu.gdb.bug' which
+serves as a repeater.  The mailing list and the newsgroup carry exactly
+the same messages.  Often people think of posting bug reports to the
+newsgroup instead of mailing them.  This appears to work, but it has one
+problem which can be crucial: a newsgroup posting often lacks a mail
+path back to the sender.  Thus, if we need to ask for more information,
+we may be unable to reach you.  For this reason, it is better to send
+bug reports to the mailing list.
+
+   As a last resort, send bug reports on paper to:
+
+     GNU Debugger Bugs
+     Free Software Foundation Inc.
+     59 Temple Place - Suite 330
+     Boston, MA 02111-1307
+     USA
+
+   The fundamental principle of reporting bugs usefully is this:
+*report all the facts*.  If you are not sure whether to state a fact or
+leave it out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of the variable you use in an example does not
+matter.  Well, probably it does not, but one cannot be sure.  Perhaps
+the bug is a stray memory reference which happens to fetch from the
+location where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the debugger into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug if it is new to us.  Therefore, always write your bug reports on
+the assumption that the bug has not been reported previously.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  Those bug reports are useless, and we urge everyone to *refuse
+to respond to them* except to chide the sender to report bugs properly.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of GDB.  GDB announces it if you start with no
+     arguments; you can also print it at any time using `show version'.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of GDB.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * What compiler (and its version) was used to compile GDB--e.g.
+     "gcc-2.0".
+
+   * What compiler (and its version) was used to compile the program you
+     are debugging--e.g.  "gcc-2.0".
+
+   * The command arguments you gave the compiler to compile your
+     example and observe the bug.  For example, did you use `-O'?  To
+     guarantee you will not omit something important, list them all.  A
+     copy of the Makefile (or the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input script, and all necessary source files, that will
+     reproduce the bug.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that GDB gets a fatal signal, then we will
+     certainly notice it.  But if the bug is incorrect output, we might
+     not notice unless it is glaringly wrong.  You might as well not
+     give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as, your copy of GDB is out of synch, or you have encountered
+     a bug in the C library on your system.  (This has happened!)  Your
+     copy might crash and ours would not.  If you told us to expect a
+     crash, then when ours fails to crash, we would know that the bug
+     was not happening for us.  If you had not told us to expect a
+     crash, then we would not be able to draw any conclusion from our
+     observations.
+
+   * If you wish to suggest changes to the GDB source, send us context
+     diffs.  If you even discuss something in the GDB source, refer to
+     it by context, not by line number.
+
+     The line numbers in our development sources will not match those
+     in your sources.  Your line numbers would convey no useful
+     information to us.
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report *instead*
+     of the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems
+     with your patch and decide to fix the problem another way, or we
+     might not understand it at all.
+
+     Sometimes with a program as complicated as GDB it is very hard to
+     construct an example that will make the program follow a certain
+     path through the code.  If you do not send us the example, we will
+     not be able to construct one, so we will not be able to verify
+     that the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+
+
+File: gdb.info,  Node: Command Line Editing,  Next: Using History Interactively,  Prev: GDB Bugs,  Up: Top
+
+Command Line Editing
+********************
+
+   This text describes GNU's command line editing interface.
+
+* Menu:
+
+* Introduction and Notation::	Notation used in this text.
+* Readline Interaction::	The minimum set of commands for editing a line.
+* Readline Init File::		Customizing Readline from a user's view.
+
+
+File: gdb.info,  Node: Introduction and Notation,  Next: Readline Interaction,  Up: Command Line Editing
+
+Introduction to Line Editing
+============================
+
+   The following paragraphs describe the notation we use to represent
+keystrokes.
+
+   The text <C-k> is read as `Control-K' and describes the character
+produced when the Control key is depressed and the <k> key is struck.
+
+   The text <M-k> is read as `Meta-K' and describes the character
+produced when the meta key (if you have one) is depressed, and the <k>
+key is struck.  If you do not have a meta key, the identical keystroke
+can be generated by typing <ESC> first, and then typing <k>.  Either
+process is known as "metafying" the <k> key.
+
+   The text <M-C-k> is read as `Meta-Control-k' and describes the
+character produced by "metafying" <C-k>.
+
+   In addition, several keys have their own names.  Specifically,
+<DEL>, <ESC>, <LFD>, <SPC>, <RET>, and <TAB> all stand for themselves
+when seen in this text, or in an init file (*note Readline Init
+File::., for more info).
+
+
+File: gdb.info,  Node: Readline Interaction,  Next: Readline Init File,  Prev: Introduction and Notation,  Up: Command Line Editing
+
+Readline Interaction
+====================
+
+   Often during an interactive session you type in a long line of text,
+only to notice that the first word on the line is misspelled.  The
+Readline library gives you a set of commands for manipulating the text
+as you type it in, allowing you to just fix your typo, and not forcing
+you to retype the majority of the line.  Using these editing commands,
+you move the cursor to the place that needs correction, and delete or
+insert the text of the corrections.  Then, when you are satisfied with
+the line, you simply press <RET>.  You do not have to be at the end of
+the line to press <RET>; the entire line is accepted regardless of the
+location of the cursor within the line.
+
+* Menu:
+
+* Readline Bare Essentials::	The least you need to know about Readline.
+* Readline Movement Commands::	Moving about the input line.
+* Readline Killing Commands::	How to delete text, and how to get it back!
+* Readline Arguments::		Giving numeric arguments to commands.
+
+
+File: gdb.info,  Node: Readline Bare Essentials,  Next: Readline Movement Commands,  Up: Readline Interaction
+
+Readline Bare Essentials
+------------------------
+
+   In order to enter characters into the line, simply type them.  The
+typed character appears where the cursor was, and then the cursor moves
+one space to the right.  If you mistype a character, you can use <DEL>
+to back up, and delete the mistyped character.
+
+   Sometimes you may miss typing a character that you wanted to type,
+and not notice your error until you have typed several other
+characters.  In that case, you can type <C-b> to move the cursor to the
+left, and then correct your mistake.  Aftwerwards, you can move the
+cursor to the right with <C-f>.
+
+   When you add text in the middle of a line, you will notice that
+characters to the right of the cursor get `pushed over' to make room
+for the text that you have inserted.  Likewise, when you delete text
+behind the cursor, characters to the right of the cursor get `pulled
+back' to fill in the blank space created by the removal of the text.  A
+list of the basic bare essentials for editing the text of an input line
+follows.
+
+<C-b>
+     Move back one character.
+
+<C-f>
+     Move forward one character.
+
+<DEL>
+     Delete the character to the left of the cursor.
+
+<C-d>
+     Delete the character underneath the cursor.
+
+Printing characters
+     Insert itself into the line at the cursor.
+
+<C-_>
+     Undo the last thing that you did.  You can undo all the way back
+     to an empty line.
+
+
+File: gdb.info,  Node: Readline Movement Commands,  Next: Readline Killing Commands,  Prev: Readline Bare Essentials,  Up: Readline Interaction
+
+Readline Movement Commands
+--------------------------
+
+   The above table describes the most basic possible keystrokes that
+you need in order to do editing of the input line.  For your
+convenience, many other commands have been added in addition to <C-b>,
+<C-f>, <C-d>, and <DEL>.  Here are some commands for moving more rapidly
+about the line.
+
+<C-a>
+     Move to the start of the line.
+
+<C-e>
+     Move to the end of the line.
+
+<M-f>
+     Move forward a word.
+
+<M-b>
+     Move backward a word.
+
+<C-l>
+     Clear the screen, reprinting the current line at the top.
+
+   Notice how <C-f> moves forward a character, while <M-f> moves
+forward a word.  It is a loose convention that control keystrokes
+operate on characters while meta keystrokes operate on words.
+
+
+File: gdb.info,  Node: Readline Killing Commands,  Next: Readline Arguments,  Prev: Readline Movement Commands,  Up: Readline Interaction
+
+Readline Killing Commands
+-------------------------
+
+   "Killing" text means to delete the text from the line, but to save
+it away for later use, usually by "yanking" it back into the line.  If
+the description for a command says that it `kills' text, then you can
+be sure that you can get the text back in a different (or the same)
+place later.
+
+   Here is the list of commands for killing text.
+
+<C-k>
+     Kill the text from the current cursor position to the end of the
+     line.
+
+<M-d>
+     Kill from the cursor to the end of the current word, or if between
+     words, to the end of the next word.
+
+<M-DEL>
+     Kill from the cursor to the start of the previous word, or if
+     between words, to the start of the previous word.
+
+<C-w>
+     Kill from the cursor to the previous whitespace.  This is
+     different than <M-DEL> because the word boundaries differ.
+
+   And, here is how to "yank" the text back into the line.
+
+<C-y>
+     Yank the most recently killed text back into the buffer at the
+     cursor.
+
+<M-y>
+     Rotate the kill-ring, and yank the new top.  You can only do this
+     if the prior command is <C-y> or <M-y>.
+
+   When you use a kill command, the text is saved in a "kill-ring".
+Any number of consecutive kills save all of the killed text together, so
+that when you yank it back, you get it in one clean sweep.  The kill
+ring is not line specific; the text that you killed on a previously
+typed line is available to be yanked back later, when you are typing
+another line.
+

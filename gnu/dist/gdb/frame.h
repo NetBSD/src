@@ -20,6 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #if !defined (FRAME_H)
 #define FRAME_H 1
 
+/* Describe the saved registers of a frame.  */
+
+struct frame_saved_regs
+  {
+
+    /* For each register, address of where it was saved on entry to
+       the frame, or zero if it was not saved on entry to this frame.
+       This includes special registers such as pc and fp saved in
+       special ways in the stack frame.  The SP_REGNUM is even more
+       special, the address here is the sp for the next frame, not the
+       address where the sp was saved.  */
+
+    CORE_ADDR regs[NUM_REGS];
+  };
+
 /* We keep a cache of stack frames, each of which is a "struct
    frame_info".  The innermost one gets allocated (in
    wait_for_inferior) each time the inferior stops; current_frame
@@ -67,20 +82,19 @@ struct frame_info
    struct frame_info *next, *prev;
   };
 
-/* Describe the saved registers of a frame.  */
+/* Dummy frame.  This saves the processor state just prior to setting up the
+   inferior function call.  On most targets, the registers are saved on the
+   target stack, but that really slows down function calls.  */
 
-struct frame_saved_regs
-  {
+struct dummy_frame
+{
+  struct dummy_frame *next;
 
-    /* For each register, address of where it was saved on entry to
-       the frame, or zero if it was not saved on entry to this frame.
-       This includes special registers such as pc and fp saved in
-       special ways in the stack frame.  The SP_REGNUM is even more
-       special, the address here is the sp for the next frame, not the
-       address where the sp was saved.  */
-
-    CORE_ADDR regs[NUM_REGS];
-  };
+  CORE_ADDR pc;
+  CORE_ADDR fp;
+  CORE_ADDR sp;
+  char regs[REGISTER_BYTES];
+};
 
 /* Return the frame address from FR.  Except in the machine-dependent
    *FRAME* macros, a frame address has no defined meaning other than
@@ -170,6 +184,8 @@ extern CORE_ADDR get_pc_function_start PARAMS ((CORE_ADDR));
 
 extern struct block * block_for_pc PARAMS ((CORE_ADDR));
 
+extern struct block * block_for_pc_sect PARAMS ((CORE_ADDR, asection *));
+
 extern int frameless_look_for_prologue PARAMS ((struct frame_info *));
 
 extern void print_frame_args PARAMS ((struct symbol *, struct frame_info *,
@@ -192,5 +208,25 @@ extern struct frame_info *block_innermost_frame PARAMS ((struct block *));
 extern struct frame_info *find_frame_addr_in_frame_chain PARAMS ((CORE_ADDR));
 
 extern CORE_ADDR sigtramp_saved_pc PARAMS ((struct frame_info *));
+
+extern int       generic_frame_chain_valid   PARAMS ((CORE_ADDR, 
+						      struct frame_info *));
+extern CORE_ADDR generic_read_register_dummy PARAMS ((CORE_ADDR pc, 
+						      CORE_ADDR fp, 
+						      int));
+extern void      generic_push_dummy_frame    PARAMS ((void));
+extern void      generic_pop_dummy_frame     PARAMS ((void));
+
+extern int       generic_pc_in_call_dummy    PARAMS ((CORE_ADDR pc, 
+						      CORE_ADDR fp));
+extern char *    generic_find_dummy_frame    PARAMS ((CORE_ADDR pc, 
+						      CORE_ADDR fp));
+
+#ifdef __GNUC__
+/* Some native compilers, even ones that are supposed to be ANSI and for which __STDC__
+   is true, complain about forward decls of enums. */
+enum lval_type;
+extern void	 generic_get_saved_register  PARAMS ((char *, int *, CORE_ADDR *, struct frame_info *, int, enum lval_type *));
+#endif
 
 #endif /* !defined (FRAME_H)  */

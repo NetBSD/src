@@ -28,6 +28,7 @@
 @c
 @c SPARC target:
 @set SPARC
+@set SPARCLET
 @c
 @c AMD 29000 target:
 @set AMD29K

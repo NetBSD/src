@@ -106,11 +106,12 @@ extern CORE_ADDR sparc_pc_adjust PARAMS ((CORE_ADDR));
 
 #define INNER_THAN <
 
-/* Stack has strict alignment.  */
+/* Stack must be aligned on 64-bit boundaries when synthesizing
+   function calls. */
 
-#define STACK_ALIGN(ADDR) (((ADDR)+7)&-8)
+#define STACK_ALIGN(ADDR) (((ADDR) + 7) & -8)
 
-/* Sequence of bytes for breakpoint instruction.  */
+/* Sequence of bytes for breakpoint instruction (ta 1). */
 
 #define BREAKPOINT {0x91, 0xd0, 0x20, 0x01}
 
@@ -247,7 +248,9 @@ extern CORE_ADDR sparc_pc_adjust PARAMS ((CORE_ADDR));
    subroutine will return.  This is called from call_function. */
 
 #define STORE_STRUCT_RETURN(ADDR, SP) \
-  { target_write_memory ((SP)+(16*4), (char *)&(ADDR), 4); }
+  { char val[4]; \
+    store_unsigned_integer (val, 4, (ADDR)); \
+    write_memory ((SP)+(16*4), val, 4); }
 
 /* Extract from an array REGBUF containing the (raw) register state
    a function return value of type TYPE, and copy that, in virtual format,
@@ -336,6 +339,10 @@ sparc_extract_struct_value_address PARAMS ((char [REGISTER_BYTES]));
    have been stashed (the frame is of variable size, so their location
    is not fixed), it's convenient to record them in the frame info.  */
 
+#ifdef __STDC__
+struct frame_info;
+#endif
+
 #define EXTRA_FRAME_INFO  \
   CORE_ADDR bottom;  \
   int flat;  \
@@ -348,7 +355,7 @@ sparc_extract_struct_value_address PARAMS ((char [REGISTER_BYTES]));
 
 #define INIT_EXTRA_FRAME_INFO(fromleaf, fci) \
   sparc_init_extra_frame_info (fromleaf, fci)
-extern void sparc_init_extra_frame_info ();
+extern void sparc_init_extra_frame_info PARAMS((int, struct frame_info *));
 
 #define	PRINT_EXTRA_FRAME_INFO(fi) \
   { \
@@ -356,10 +363,6 @@ extern void sparc_init_extra_frame_info ();
       printf_filtered (" flat, pc saved at 0x%x, fp saved at 0x%x\n", \
                        (fi)->pc_addr, (fi)->fp_addr); \
   }
-
-#ifdef __STDC__
-struct frame_info;
-#endif
 
 #define FRAME_CHAIN(thisframe) (sparc_frame_chain (thisframe))
 extern CORE_ADDR sparc_frame_chain PARAMS ((struct frame_info *));
@@ -390,7 +393,7 @@ extern CORE_ADDR sparc_frame_chain PARAMS ((struct frame_info *));
 /* Where is the PC for a specific frame */
 
 #define FRAME_SAVED_PC(FRAME) sparc_frame_saved_pc (FRAME)
-extern CORE_ADDR sparc_frame_saved_pc ();
+extern CORE_ADDR sparc_frame_saved_pc PARAMS ((struct frame_info *));
 
 /* If the argument is on the stack, it will be here.  */
 #define FRAME_ARGS_ADDRESS(fi) ((fi)->frame)
@@ -478,7 +481,7 @@ extern CORE_ADDR sparc_frame_saved_pc ();
 #define PUSH_DUMMY_FRAME	sparc_push_dummy_frame ()
 #define POP_FRAME	sparc_pop_frame ()
 
-void sparc_push_dummy_frame (), sparc_pop_frame ();
+void sparc_push_dummy_frame PARAMS ((void)), sparc_pop_frame PARAMS ((void));
 /* This sequence of words is the instructions
 
    save %sp,-0x140,%sp
@@ -582,7 +585,8 @@ arguments.  */
 #define FIX_CALL_DUMMY(dummyname, pc, fun, nargs, args, type, gcc_p)	\
 {									\
   store_unsigned_integer (dummyname + 168, 4,				\
-			  0x40000000 | ((fun - (pc + 168)) >> 2));	\
+			  (0x40000000					\
+			   | (((fun - (pc + 168)) >> 2) & 0x3fffffff))); \
   if (!gcc_p								\
       && (TYPE_CODE (type) == TYPE_CODE_STRUCT				\
 	  || TYPE_CODE (type) == TYPE_CODE_UNION))			\
@@ -598,7 +602,6 @@ arguments.  */
 /* Sparc has no reliable single step ptrace call */
 
 #define NO_SINGLE_STEP 1
-extern void single_step PARAMS ((int));
 
 /* We need more arguments in a frame specification for the
    "frame" or "info frame" command.  */
@@ -641,3 +644,7 @@ extern int deferred_stores;
    passed as doubles and then converted in the callee. */
 
 #define COERCE_FLOAT_TO_DOUBLE 1
+
+/* Select the sparc disassembler */
+
+#define TM_PRINT_INSN_MACH bfd_mach_sparc

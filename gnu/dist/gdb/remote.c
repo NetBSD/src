@@ -1,5 +1,5 @@
 /* Remote target communications for serial-line targets in custom GDB protocol
-   Copyright 1988, 1991, 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1988, 1991, 1992, 1993, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -97,10 +97,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 					If AA..AA is omitted,
 					resume at same address.
 
-	continue with	Csig;AA		Continue with signal sig (hex signal
-	signal				number).
+	continue with	Csig;AA..AA	Continue with signal sig (hex signal
+	signal				number).  If ;AA..AA is omitted, resume
+					at same address.
 
-	step with	Ssig;AA		Like 'C' but step not continue.
+	step with	Ssig;AA..AA	Like 'C' but step not continue.
 	signal
 
 	last signal     ?               Reply the current reason for stopping.
@@ -188,7 +189,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdbcmd.h"
 #include "objfiles.h"
 #include "gdb-stabs.h"
-#include "thread.h"
+#include "gdbthread.h"
 
 #include "dcache.h"
 
@@ -242,10 +243,6 @@ static void extended_remote_create_inferior PARAMS ((char *, char *, char **));
 
 static void remote_mourn_1 PARAMS ((struct target_ops *));
 
-static void getpkt PARAMS ((char *buf, int forever));
-
-static int putpkt PARAMS ((char *buf));
-
 static void remote_send PARAMS ((char *buf));
 
 static int readchar PARAMS ((int timeout));
@@ -256,8 +253,6 @@ static void remote_kill PARAMS ((void));
 
 static int tohex PARAMS ((int nib));
 
-static int fromhex PARAMS ((int a));
-
 static void remote_detach PARAMS ((char *args, int from_tty));
 
 static void remote_interrupt PARAMS ((int signo));
@@ -266,15 +261,129 @@ static void remote_interrupt_twice PARAMS ((int signo));
 
 static void interrupt_query PARAMS ((void));
 
-extern struct target_ops remote_ops;	/* Forward decl */
-extern struct target_ops extended_remote_ops;	/* Forward decl */
+static void set_thread PARAMS ((int, int));
+
+static int remote_thread_alive PARAMS ((int));
+
+static void get_offsets PARAMS ((void));
+
+static int read_frame PARAMS ((char *));
+
+static int remote_insert_breakpoint PARAMS ((CORE_ADDR, char *));
+
+static int remote_remove_breakpoint PARAMS ((CORE_ADDR, char *));
+
+static int hexnumlen PARAMS ((ULONGEST num));
+
+/* exported functions */
+
+extern int fromhex PARAMS ((int a));
+extern void getpkt PARAMS ((char *buf, int forever));
+extern int putpkt PARAMS ((char *buf));
+
+/* Define the target subroutine names */
+
+static struct target_ops remote_ops =
+{
+  "remote",			/* to_shortname */
+  "Remote serial target in gdb-specific protocol",	/* to_longname */
+  "Use a remote computer via a serial line, using a gdb-specific protocol.\n\
+Specify the serial device it is connected to (e.g. /dev/ttya).",  /* to_doc */
+  remote_open,			/* to_open */
+  remote_close,			/* to_close */
+  NULL,				/* to_attach */
+  remote_detach,		/* to_detach */
+  remote_resume,		/* to_resume */
+  remote_wait,			/* to_wait */
+  remote_fetch_registers,	/* to_fetch_registers */
+  remote_store_registers,	/* to_store_registers */
+  remote_prepare_to_store,	/* to_prepare_to_store */
+  remote_xfer_memory,		/* to_xfer_memory */
+  remote_files_info,		/* to_files_info */
+  remote_insert_breakpoint,	/* to_insert_breakpoint */
+  remote_remove_breakpoint,	/* to_remove_breakpoint */
+  NULL,				/* to_terminal_init */
+  NULL,				/* to_terminal_inferior */
+  NULL,				/* to_terminal_ours_for_output */
+  NULL,				/* to_terminal_ours */
+  NULL,				/* to_terminal_info */
+  remote_kill,			/* to_kill */
+  generic_load,			/* to_load */
+  NULL,				/* to_lookup_symbol */
+  NULL,				/* to_create_inferior */
+  remote_mourn,			/* to_mourn_inferior */
+  0,				/* to_can_run */
+  0,				/* to_notice_signals */
+  remote_thread_alive,		/* to_thread_alive */
+  0,				/* to_stop */
+  process_stratum,		/* to_stratum */
+  NULL,				/* to_next */
+  1,				/* to_has_all_memory */
+  1,				/* to_has_memory */
+  1,				/* to_has_stack */
+  1,				/* to_has_registers */
+  1,				/* to_has_execution */
+  NULL,				/* sections */
+  NULL,				/* sections_end */
+  OPS_MAGIC			/* to_magic */
+};
+
+static struct target_ops extended_remote_ops =
+{
+  "extended-remote",			/* to_shortname */
+  "Extended remote serial target in gdb-specific protocol",/* to_longname */
+  "Use a remote computer via a serial line, using a gdb-specific protocol.\n\
+Specify the serial device it is connected to (e.g. /dev/ttya).",  /* to_doc */
+  extended_remote_open,			/* to_open */
+  remote_close,			/* to_close */
+  NULL,				/* to_attach */
+  remote_detach,		/* to_detach */
+  remote_resume,		/* to_resume */
+  remote_wait,			/* to_wait */
+  remote_fetch_registers,	/* to_fetch_registers */
+  remote_store_registers,	/* to_store_registers */
+  remote_prepare_to_store,	/* to_prepare_to_store */
+  remote_xfer_memory,		/* to_xfer_memory */
+  remote_files_info,		/* to_files_info */
+
+  remote_insert_breakpoint,	/* to_insert_breakpoint */
+  remote_remove_breakpoint,	/* to_remove_breakpoint */
+
+  NULL,				/* to_terminal_init */
+  NULL,				/* to_terminal_inferior */
+  NULL,				/* to_terminal_ours_for_output */
+  NULL,				/* to_terminal_ours */
+  NULL,				/* to_terminal_info */
+  remote_kill,			/* to_kill */
+  generic_load,			/* to_load */
+  NULL,				/* to_lookup_symbol */
+  extended_remote_create_inferior,/* to_create_inferior */
+  extended_remote_mourn,	/* to_mourn_inferior */
+  0,				/* to_can_run */
+  0,				/* to_notice_signals */
+  remote_thread_alive,		/* to_thread_alive */
+  0,				/* to_stop */
+  process_stratum,		/* to_stratum */
+  NULL,				/* to_next */
+  1,				/* to_has_all_memory */
+  1,				/* to_has_memory */
+  1,				/* to_has_stack */
+  1,				/* to_has_registers */
+  1,				/* to_has_execution */
+  NULL,				/* sections */
+  NULL,				/* sections_end */
+  OPS_MAGIC			/* to_magic */
+};
+
 
 /* This was 5 seconds, which is a long time to sit and wait.
    Unless this is going though some terminal server or multiplexer or
    other form of hairy serial connection, I would think 2 seconds would
    be plenty.  */
 
-static int remote_timeout = 2;
+/* Changed to allow option to set timeout value.
+   was static int remote_timeout = 2; */
+extern int remote_timeout;
 
 /* This variable chooses whether to send a ^C or a break when the user
    requests program interruption.  Although ^C is usually what remote
@@ -286,7 +395,7 @@ static int remote_break;
 /* Descriptor for I/O to remote machine.  Initialize it to NULL so that
    remote_open knows that we don't have a file open when the program
    starts.  */
-serial_t remote_desc = NULL;
+static serial_t remote_desc = NULL;
 
 /* Having this larger than 400 causes us to be incompatible with m68k-stub.c
    and i386-stub.c.  Normally, no one would notice because it only matters
@@ -308,9 +417,29 @@ serial_t remote_desc = NULL;
 #define	PBUFSIZ	(REGISTER_BYTES * 2 + 32)
 #endif
 
+/* This variable sets the number of bytes to be written to the target
+   in a single packet.  Normally PBUFSIZ is satisfactory, but some
+   targets need smaller values (perhaps because the receiving end
+   is slow).  */
+
+static int remote_write_size = PBUFSIZ;
+
+/* This is the size (in chars) of the first response to the `g' command.  This
+   is used to limit the size of the memory read and write commands to prevent
+   stub buffers from overflowing.  The size does not include headers and
+   trailers, it is only the payload size. */
+
+static int remote_register_buf_size = 0;
+
 /* Should we try the 'P' request?  If this is set to one when the stub
    doesn't support 'P', the only consequence is some unnecessary traffic.  */
 static int stub_supports_P = 1;
+
+/* These are pointers to hook functions that may be set in order to
+   modify resume/wait behavior for a particular architecture.  */
+
+void (*target_resume_hook) PARAMS ((void));
+void (*target_wait_loop_hook) PARAMS ((void));
 
 
 /* These are the threads which we last sent to the remote system.  -1 for all
@@ -400,8 +529,8 @@ remote_close (quitting)
 static void
 get_offsets ()
 {
-  char buf[PBUFSIZ];
-  int nvals;
+  char buf[PBUFSIZ], *ptr;
+  int lose;
   CORE_ADDR text_addr, data_addr, bss_addr;
   struct section_offsets *offs;
 
@@ -418,9 +547,43 @@ get_offsets ()
       return;
     }
 
-  nvals = sscanf (buf, "Text=%lx;Data=%lx;Bss=%lx", &text_addr, &data_addr,
-		  &bss_addr);
-  if (nvals != 3)
+  /* Pick up each field in turn.  This used to be done with scanf, but
+     scanf will make trouble if CORE_ADDR size doesn't match
+     conversion directives correctly.  The following code will work
+     with any size of CORE_ADDR.  */
+  text_addr = data_addr = bss_addr = 0;
+  ptr = buf;
+  lose = 0;
+
+  if (strncmp (ptr, "Text=", 5) == 0)
+    {
+      ptr += 5;
+      /* Don't use strtol, could lose on big values.  */
+      while (*ptr && *ptr != ';')
+	text_addr = (text_addr << 4) + fromhex (*ptr++);
+    }
+  else
+    lose = 1;
+
+  if (!lose && strncmp (ptr, ";Data=", 6) == 0)
+    {
+      ptr += 6;
+      while (*ptr && *ptr != ';')
+	data_addr = (data_addr << 4) + fromhex (*ptr++);
+    }
+  else
+    lose = 1;
+
+  if (!lose && strncmp (ptr, ";Bss=", 5) == 0)
+    {
+      ptr += 5;
+      while (*ptr && *ptr != ';')
+	bss_addr = (bss_addr << 4) + fromhex (*ptr++);
+    }
+  else
+    lose = 1;
+
+  if (lose)
     error ("Malformed response to offset query, %s", buf);
 
   if (symfile_objfile == NULL)
@@ -596,7 +759,7 @@ remote_detach (args, from_tty)
 
 /* Convert hex digit A to a number.  */
 
-static int
+int
 fromhex (a)
      int a;
 {
@@ -604,6 +767,8 @@ fromhex (a)
     return a - '0';
   else if (a >= 'a' && a <= 'f')
     return a - 'a' + 10;
+  else if (a >= 'A' && a <= 'F')
+    return a - 'A' + 10;
   else 
     error ("Reply contains invalid hex digit %d", a);
 }
@@ -641,6 +806,11 @@ remote_resume (pid, step, siggnal)
 
   last_sent_signal = siggnal;
   last_sent_step = step;
+
+  /* A hook for when we need to do something at the last moment before
+     resumption.  */
+  if (target_resume_hook)
+    (*target_resume_hook) ();
 
   if (siggnal != TARGET_SIGNAL_0)
     {
@@ -709,6 +879,25 @@ Give up (and stop debugging it)? "))
 /* If nonzero, ignore the next kill.  */
 int kill_kludge;
 
+void
+remote_console_output (msg)
+     char *msg;
+{
+  char *p;
+
+  for (p = msg; *p; p +=2) 
+    {
+      char tb[2];
+      char c = fromhex (p[0]) * 16 + fromhex (p[1]);
+      tb[0] = c;
+      tb[1] = 0;
+      if (target_output_hook)
+	target_output_hook (tb);
+      else 
+	fputs_filtered (tb, gdb_stdout);
+    }
+}
+
 /* Wait until the remote machine stops, then return,
    storing status in STATUS just as `wait' would.
    Returns "pid" (though it's not clear what, if anything, that
@@ -733,6 +922,11 @@ remote_wait (pid, status)
       getpkt ((char *) buf, 1);
       signal (SIGINT, ofunc);
 
+      /* This is a hook for when we need to do something (perhaps the
+	 collection of trace data) every time the target stops.  */
+      if (target_wait_loop_hook)
+	(*target_wait_loop_hook) ();
+
       switch (buf[0])
 	{
 	case 'E':		/* Error of some sort */
@@ -750,7 +944,6 @@ remote_wait (pid, status)
 		n... = register number
 		r... = register contents
 		*/
-
 	    p = &buf[3];	/* after Txx */
 
 	    while (*p)
@@ -824,17 +1017,7 @@ Packet: '%s'\n",
 
 	  goto got_status;
 	case 'O':		/* Console output */
- 	  for (p = buf + 1; *p; p +=2) 
- 	    {
- 	      char tb[2];
- 	      char c = fromhex (p[0]) * 16 + fromhex (p[1]);
- 	      tb[0] = c;
- 	      tb[1] = 0;
- 	      if (target_output_hook)
- 		target_output_hook (tb);
- 	      else 
- 		fputs_filtered (tb, gdb_stdout);
- 	    }
+	  remote_console_output (buf + 1);
 	  continue;
 	case '\0':
 	  if (last_sent_signal != TARGET_SIGNAL_0)
@@ -893,6 +1076,9 @@ remote_fetch_registers (regno)
 
   sprintf (buf, "g");
   remote_send (buf);
+
+  if (remote_register_buf_size == 0)
+    remote_register_buf_size = strlen (buf);
 
   /* Unimplemented registers read as all bits zero.  */
   memset (regs, 0, REGISTER_BYTES);
@@ -1047,6 +1233,21 @@ remote_store_word (addr, word)
 #endif	/* 0 (unused?) */
 
 
+
+/* Return the number of hex digits in num.  */
+
+static int
+hexnumlen (num)
+     ULONGEST num;
+{
+  int i;
+
+  for (i = 0; num != 0; i++)
+    num >>= 4;
+
+  return max (i, 1);
+}
+
 /* Write memory data directly to the remote machine.
    This does not inform the data cache; the data cache uses this.
    MEMADDR is the address in the remote memory space.
@@ -1061,23 +1262,31 @@ remote_write_bytes (memaddr, myaddr, len)
      char *myaddr;
      int len;
 {
-  char buf[PBUFSIZ];
-  int i;
-  char *p;
-  int done;
+  int max_buf_size;		/* Max size of packet output buffer */
+  int origlen;
+
   /* Chop the transfer down if necessary */
 
-  done = 0;
-  while (done < len)
+  max_buf_size = min (remote_write_size, PBUFSIZ);
+  if (remote_register_buf_size != 0)
+    max_buf_size = min (max_buf_size, remote_register_buf_size);
+
+  /* Subtract header overhead from max payload size -  $M<memaddr>,<len>:#nn */
+  max_buf_size -= 2 + hexnumlen (memaddr + len - 1) + 1 + hexnumlen (len) + 4;
+
+  origlen = len;
+  while (len > 0)
     {
-      int todo = len - done;
-      int cando = PBUFSIZ /2 - 32; /* number of bytes that will fit. */
-      if (todo > cando)
-	todo = cando;
+      char buf[PBUFSIZ];
+      char *p;
+      int todo;
+      int i;
+
+      todo = min (len, max_buf_size / 2); /* num bytes that will fit */
 
       /* FIXME-32x64: Need a version of print_address_numeric which puts the
 	 result in a buffer like sprintf.  */
-      sprintf (buf, "M%lx,%x:", (unsigned long) memaddr + done, todo);
+      sprintf (buf, "M%lx,%x:", (unsigned long) memaddr, todo);
 
       /* We send target system values byte by byte, in increasing byte addresses,
 	 each byte encoded as two hex characters.  */
@@ -1085,8 +1294,8 @@ remote_write_bytes (memaddr, myaddr, len)
       p = buf + strlen (buf);
       for (i = 0; i < todo; i++)
 	{
-	  *p++ = tohex ((myaddr[i + done] >> 4) & 0xf);
-	  *p++ = tohex (myaddr[i + done] & 0xf);
+	  *p++ = tohex ((myaddr[i] >> 4) & 0xf);
+	  *p++ = tohex (myaddr[i] & 0xf);
 	}
       *p = '\0';
 
@@ -1102,9 +1311,11 @@ remote_write_bytes (memaddr, myaddr, len)
 	  errno = EIO;
 	  return 0;
 	}
-      done += todo;
+      myaddr += todo;
+      memaddr += todo;
+      len -= todo;
     }
-  return len;
+  return origlen;
 }
 
 /* Read memory data directly from the remote machine.
@@ -1121,28 +1332,28 @@ remote_read_bytes (memaddr, myaddr, len)
      char *myaddr;
      int len;
 {
-  char buf[PBUFSIZ];
-  int i;
-  char *p;
-  int done;
-  /* Chop transfer down if neccessary */
+  int max_buf_size;		/* Max size of packet output buffer */
+  int origlen;
 
-#if 0
-  /* FIXME: This is wrong for larger packets */
-  if (len > PBUFSIZ / 2 - 1)
-    abort ();
-#endif
-  done = 0;
-  while (done < len)
+  /* Chop the transfer down if necessary */
+
+  max_buf_size = min (remote_write_size, PBUFSIZ);
+  if (remote_register_buf_size != 0)
+    max_buf_size = min (max_buf_size, remote_register_buf_size);
+
+  origlen = len;
+  while (len > 0)
     {
-      int todo = len - done;
-      int cando = PBUFSIZ / 2 - 32; /* number of bytes that will fit. */
-      if (todo > cando)
-	todo = cando;
+      char buf[PBUFSIZ];
+      char *p;
+      int todo;
+      int i;
+
+      todo = min (len, max_buf_size / 2); /* num bytes that will fit */
 
       /* FIXME-32x64: Need a version of print_address_numeric which puts the
 	 result in a buffer like sprintf.  */
-      sprintf (buf, "m%lx,%x", (unsigned long) memaddr + done, todo);
+      sprintf (buf, "m%lx,%x", (unsigned long) memaddr, todo);
       putpkt (buf);
       getpkt (buf, 0);
 
@@ -1165,13 +1376,15 @@ remote_read_bytes (memaddr, myaddr, len)
 	  if (p[0] == 0 || p[1] == 0)
 	    /* Reply is short.  This means that we were able to read only part
 	       of what we wanted to.  */
-	    return i + done;
-	  myaddr[i + done] = fromhex (p[0]) * 16 + fromhex (p[1]);
+	    return i + (origlen - len);
+	  myaddr[i] = fromhex (p[0]) * 16 + fromhex (p[1]);
 	  p += 2;
 	}
-      done += todo;
+      myaddr += todo;
+      memaddr += todo;
+      len -= todo;
     }
-  return len;
+  return origlen;
 }
 
 /* Read or write LEN bytes from inferior memory at MEMADDR, transferring
@@ -1316,7 +1529,7 @@ remote_send (buf)
 /* Send a packet to the remote machine, with error checking.
    The data of the packet is in BUF.  */
 
-static int
+int
 putpkt (buf)
      char *buf;
 {
@@ -1524,7 +1737,7 @@ read_frame (buf)
    If FOREVER, wait forever rather than timing out; this is used
    while the target is executing user code.  */
 
-static void
+void
 getpkt (buf, forever)
      char *buf;
      int forever;
@@ -1587,7 +1800,7 @@ getpkt (buf, forever)
       if (val == 1)
 	{
 	  if (remote_debug)
-	    fprintf_unfiltered (gdb_stderr, "Packet received: %s\n", buf);
+	    fprintf_unfiltered (gdb_stdout, "Packet received: %s\n", buf);
 	  SERIAL_WRITE (remote_desc, "+", 1);
 	  return;
 	}
@@ -1684,19 +1897,33 @@ extended_remote_create_inferior (exec_file, args, env)
 }
 
 
+/* On some machines, e.g. 68k, we may use a different breakpoint instruction
+   than other targets; in those use REMOTE_BREAKPOINT instead of just
+   BREAKPOINT.  Also, bi-endian targets may define LITTLE_REMOTE_BREAKPOINT
+   and BIG_REMOTE_BREAKPOINT.  If none of these are defined, we just call
+   the standard routines that are in mem-break.c.  */
+
+/* FIXME, these ought to be done in a more dynamic fashion.  For instance,
+   the choice of breakpoint instruction affects target program design and
+   vice versa, and by making it user-tweakable, the special code here
+   goes away and we need fewer special GDB configurations.  */
+
+#if defined (LITTLE_REMOTE_BREAKPOINT) && defined (BIG_REMOTE_BREAKPOINT) && !defined(REMOTE_BREAKPOINT)
+#define REMOTE_BREAKPOINT
+#endif
+
 #ifdef REMOTE_BREAKPOINT
 
-/* On some machines, e.g. 68k, we may use a different breakpoint instruction
-   than other targets.  */
-static unsigned char break_insn[] = REMOTE_BREAKPOINT;
+/* If the target isn't bi-endian, just pretend it is.  */
+#if !defined (LITTLE_REMOTE_BREAKPOINT) && !defined (BIG_REMOTE_BREAKPOINT)
+#define LITTLE_REMOTE_BREAKPOINT REMOTE_BREAKPOINT
+#define BIG_REMOTE_BREAKPOINT REMOTE_BREAKPOINT
+#endif
 
-#else /* No REMOTE_BREAKPOINT.  */
+static unsigned char big_break_insn[] = BIG_REMOTE_BREAKPOINT;
+static unsigned char little_break_insn[] = LITTLE_REMOTE_BREAKPOINT;
 
-/* Same old breakpoint instruction.  This code does nothing different
-   than mem-break.c.  */
-static unsigned char break_insn[] = BREAKPOINT;
-
-#endif /* No REMOTE_BREAKPOINT.  */
+#endif /* REMOTE_BREAKPOINT */
 
 /* Insert a breakpoint on targets that don't have any better breakpoint
    support.  We read the contents of the target location and stash it,
@@ -1711,14 +1938,25 @@ remote_insert_breakpoint (addr, contents_cache)
      CORE_ADDR addr;
      char *contents_cache;
 {
+#ifdef REMOTE_BREAKPOINT
   int val;
 
-  val = target_read_memory (addr, contents_cache, sizeof break_insn);
+  val = target_read_memory (addr, contents_cache, sizeof big_break_insn);
 
   if (val == 0)
-    val = target_write_memory (addr, (char *)break_insn, sizeof break_insn);
+    {
+      if (TARGET_BYTE_ORDER == BIG_ENDIAN)
+	val = target_write_memory (addr, (char *) big_break_insn,
+				   sizeof big_break_insn);
+      else
+	val = target_write_memory (addr, (char *) little_break_insn,
+				   sizeof little_break_insn);
+    }
 
   return val;
+#else
+  return memory_insert_breakpoint (addr, contents_cache);
+#endif /* REMOTE_BREAKPOINT */
 }
 
 static int
@@ -1726,100 +1964,32 @@ remote_remove_breakpoint (addr, contents_cache)
      CORE_ADDR addr;
      char *contents_cache;
 {
-  return target_write_memory (addr, contents_cache, sizeof break_insn);
+#ifdef REMOTE_BREAKPOINT
+  return target_write_memory (addr, contents_cache, sizeof big_break_insn);
+#else
+  return memory_remove_breakpoint (addr, contents_cache);
+#endif /* REMOTE_BREAKPOINT */
 }
-
-/* Define the target subroutine names */
 
-struct target_ops remote_ops = {
-  "remote",			/* to_shortname */
-  "Remote serial target in gdb-specific protocol",	/* to_longname */
-  "Use a remote computer via a serial line, using a gdb-specific protocol.\n\
-Specify the serial device it is connected to (e.g. /dev/ttya).",  /* to_doc */
-  remote_open,			/* to_open */
-  remote_close,			/* to_close */
-  NULL,				/* to_attach */
-  remote_detach,		/* to_detach */
-  remote_resume,		/* to_resume */
-  remote_wait,			/* to_wait */
-  remote_fetch_registers,	/* to_fetch_registers */
-  remote_store_registers,	/* to_store_registers */
-  remote_prepare_to_store,	/* to_prepare_to_store */
-  remote_xfer_memory,		/* to_xfer_memory */
-  remote_files_info,		/* to_files_info */
-  remote_insert_breakpoint,	/* to_insert_breakpoint */
-  remote_remove_breakpoint,	/* to_remove_breakpoint */
-  NULL,				/* to_terminal_init */
-  NULL,				/* to_terminal_inferior */
-  NULL,				/* to_terminal_ours_for_output */
-  NULL,				/* to_terminal_ours */
-  NULL,				/* to_terminal_info */
-  remote_kill,			/* to_kill */
-  generic_load,			/* to_load */
-  NULL,				/* to_lookup_symbol */
-  NULL,				/* to_create_inferior */
-  remote_mourn,			/* to_mourn_inferior */
-  0,				/* to_can_run */
-  0,				/* to_notice_signals */
-  remote_thread_alive,		/* to_thread_alive */
-  0,				/* to_stop */
-  process_stratum,		/* to_stratum */
-  NULL,				/* to_next */
-  1,				/* to_has_all_memory */
-  1,				/* to_has_memory */
-  1,				/* to_has_stack */
-  1,				/* to_has_registers */
-  1,				/* to_has_execution */
-  NULL,				/* sections */
-  NULL,				/* sections_end */
-  OPS_MAGIC			/* to_magic */
-};
+/* Some targets are only capable of doing downloads, and afterwards they switch
+   to the remote serial protocol.  This function provides a clean way to get
+   from the download target to the remote target.  It's basically just a
+   wrapper so that we don't have to expose any of the internal workings of
+   remote.c.
 
-struct target_ops extended_remote_ops = {
-  "extended-remote",			/* to_shortname */
-  "Extended remote serial target in gdb-specific protocol",/* to_longname */
-  "Use a remote computer via a serial line, using a gdb-specific protocol.\n\
-Specify the serial device it is connected to (e.g. /dev/ttya).",  /* to_doc */
-  extended_remote_open,			/* to_open */
-  remote_close,			/* to_close */
-  NULL,				/* to_attach */
-  remote_detach,		/* to_detach */
-  remote_resume,		/* to_resume */
-  remote_wait,			/* to_wait */
-  remote_fetch_registers,	/* to_fetch_registers */
-  remote_store_registers,	/* to_store_registers */
-  remote_prepare_to_store,	/* to_prepare_to_store */
-  remote_xfer_memory,		/* to_xfer_memory */
-  remote_files_info,		/* to_files_info */
+   Prior to calling this routine, you should shutdown the current target code,
+   else you will get the "A program is being debugged already..." message.
+   Usually a call to pop_target() suffices.
+*/
 
-  remote_insert_breakpoint,	/* to_insert_breakpoint */
-  remote_remove_breakpoint,	/* to_remove_breakpoint */
-
-  NULL,				/* to_terminal_init */
-  NULL,				/* to_terminal_inferior */
-  NULL,				/* to_terminal_ours_for_output */
-  NULL,				/* to_terminal_ours */
-  NULL,				/* to_terminal_info */
-  remote_kill,			/* to_kill */
-  generic_load,			/* to_load */
-  NULL,				/* to_lookup_symbol */
-  extended_remote_create_inferior,/* to_create_inferior */
-  extended_remote_mourn,	/* to_mourn_inferior */
-  0,				/* to_can_run */
-  0,				/* to_notice_signals */
-  remote_thread_alive,		/* to_thread_alive */
-  0,				/* to_stop */
-  process_stratum,		/* to_stratum */
-  NULL,				/* to_next */
-  1,				/* to_has_all_memory */
-  1,				/* to_has_memory */
-  1,				/* to_has_stack */
-  1,				/* to_has_registers */
-  1,				/* to_has_execution */
-  NULL,				/* sections */
-  NULL,				/* sections_end */
-  OPS_MAGIC			/* to_magic */
-};
+void
+push_remote_target (name, from_tty)
+     char *name;
+     int from_tty;
+{
+  printf_filtered ("Switching to remote protocol\n");
+  remote_open (name, from_tty);
+}
 
 void
 _initialize_remote ()
@@ -1835,5 +2005,10 @@ _initialize_remote ()
   add_show_from_set (add_set_cmd ("remotebreak", no_class,
 				  var_integer, (char *)&remote_break,
 				  "Set whether to send break if interrupted.\n", &setlist),
+		     &showlist);
+
+  add_show_from_set (add_set_cmd ("remotewritesize", no_class,
+				  var_integer, (char *)&remote_write_size,
+				  "Set the maximum number of bytes in each memory write packet.\n", &setlist),
 		     &showlist);
 }
