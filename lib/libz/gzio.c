@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* $Id: gzio.c,v 1.2 1996/09/12 19:09:00 gwr Exp $ */
+/* $Id: gzio.c,v 1.3 1996/09/12 19:50:28 gwr Exp $ */
 
 #include <stdio.h>
 
@@ -106,11 +106,15 @@ local gzFile gz_open (path, mode, fd)
     if (s->mode == '\0') return destroy(s), (gzFile)Z_NULL;
     
     if (s->mode == 'w') {
+#ifdef	NO_DEFLATE
+		err = Z_STREAM_ERROR;
+#else	/* NO_DEFLATE */
         err = deflateInit2(&(s->stream), level,
                            Z_DEFLATED, -MAX_WBITS, DEF_MEM_LEVEL, 0);
         /* windowBits is passed < 0 to suppress zlib header */
 
         s->stream.next_out = s->outbuf = (Byte*)ALLOC(Z_BUFSIZE);
+#endif	/* NO_DEFLATE */
 
         if (err != Z_OK || s->outbuf == Z_NULL) {
             return destroy(s), (gzFile)Z_NULL;
@@ -261,7 +265,11 @@ local int destroy (s)
 
     if (s->stream.state != NULL) {
        if (s->mode == 'w') {
+#ifdef	NO_DEFLATE
+		   err = Z_STREAM_ERROR;
+#else	/* NO_DEFLATE */
            err = deflateEnd(&(s->stream));
+#endif	/* NO_DEFLATE */
        } else if (s->mode == 'r') {
            err = inflateEnd(&(s->stream));
        }
@@ -366,6 +374,9 @@ int gzwrite (file, buf, len)
     const voidp buf;
     unsigned len;
 {
+#ifdef	NO_DEFLATE
+	return Z_STREAM_ERROR;
+#else	/* NO_DEFLATE */
     gz_stream *s = (gz_stream*)file;
 
     if (s == NULL || s->mode != 'w') return Z_STREAM_ERROR;
@@ -390,6 +401,7 @@ int gzwrite (file, buf, len)
     s->crc = crc32(s->crc, buf, len);
 
     return (int)(len - s->stream.avail_in);
+#endif	/* NO_DEFLATE */
 }
 
 /* ===========================================================================
@@ -402,6 +414,9 @@ int gzflush (file, flush)
     gzFile file;
     int flush;
 {
+#ifdef	NO_DEFLATE
+	return Z_STREAM_ERROR;
+#else	/* NO_DEFLATE */
     uInt len;
     int done = 0;
     gz_stream *s = (gz_stream*)file;
@@ -433,6 +448,7 @@ int gzflush (file, flush)
     }
     fflush(s->file);
     return  s->z_err == Z_STREAM_END ? Z_OK : s->z_err;
+#endif	/* NO_DEFLATE */
 }
 
 /* ===========================================================================
