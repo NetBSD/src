@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.2.1 2002/08/06 00:26:59 lukem Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.2.2 2002/11/24 22:21:45 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd March 12, 2001
+.Dd August 15, 2002
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -207,6 +207,10 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
+.It Fl u
+If the package that's being installed is already installed, either
+in the same or a different version, an update is performed.
+See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -262,7 +266,9 @@ This is prepared by moving an existing
 file aside (if it exists), and by running
 .Xr pkg_delete 1
 on the installed package. Installation then procedes as if the package
-was not installed.
+was not installed, and restores the
+.Pa +REQUIRED_BY 
+file afterwards.
 .It
 A check is made to determine if the package conflicts (from
 .Cm @pkgcfl
