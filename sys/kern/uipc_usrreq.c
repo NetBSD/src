@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.20 1996/05/23 16:03:45 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.21 1996/05/23 16:41:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -132,6 +132,8 @@ uipc_usrreq(so, req, m, nam, control, p)
 		return (EOPNOTSUPP);
 
 	if (req != PRU_SEND && control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
 		error = EOPNOTSUPP;
 		goto release;
 	}
@@ -223,20 +225,19 @@ uipc_usrreq(so, req, m, nam, control, p)
 		case SOCK_DGRAM: {
 			if (nam) {
 				if ((so->so_state & SS_ISCONNECTED) != 0) {
-					m_freem(m);
 					error = EISCONN;
-					break;
+					goto die;
 				}
 				error = unp_connect(so, nam, p);
 				if (error) {
+					m_freem(control);
 					m_freem(m);
 					break;
 				}
 			} else {
 				if ((so->so_state & SS_ISCONNECTED) == 0) {
-					m_freem(m);
 					error = ENOTCONN;
-					break;
+					goto die;
 				}
 			}
 			error = unp_output(m, control, unp);
@@ -248,10 +249,6 @@ uipc_usrreq(so, req, m, nam, control, p)
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
-			if (so->so_state & SS_CANTSENDMORE) {
-				error = EPIPE;
-				break;
-			}
 			if (unp->unp_conn == 0)
 				panic("uipc 3");
 			so2 = unp->unp_conn->unp_socket;
@@ -261,8 +258,8 @@ uipc_usrreq(so, req, m, nam, control, p)
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(rcv, m, control))
-					control = 0;
+				if (sbappendcontrol(rcv, m, control) == 0)
+					m_freem(control);
 			} else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
@@ -271,7 +268,6 @@ uipc_usrreq(so, req, m, nam, control, p)
 			snd->sb_hiwat -= rcv->sb_cc - unp->unp_conn->unp_cc;
 			unp->unp_conn->unp_cc = rcv->sb_cc;
 			sorwakeup(so2);
-			m = 0;
 #undef snd
 #undef rcv
 			break;
