@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_vm86.c,v 1.4 1998/02/25 21:24:57 perry Exp $	*/
+/*	$NetBSD: i386_vm86.c,v 1.5 1998/09/17 05:15:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <machine/signal.h>
+#include <sys/signal.h>
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
@@ -50,4 +50,3 @@ i386_vm86(vmcp)
 
 	return sysarch(I386_VM86, (void *)vmcp);
 }
-
