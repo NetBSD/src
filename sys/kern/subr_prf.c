@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.93 2003/08/07 16:31:53 agc Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.94 2004/03/23 13:22:04 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.93 2003/08/07 16:31:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.94 2004/03/23 13:22:04 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -108,7 +108,7 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
  * local prototypes
  */
 
-static void	 putchar __P((int, int, struct tty *));
+static void	 putchar(int, int, struct tty *);
 
 
 /*
@@ -135,8 +135,8 @@ int	dumponpanic = DUMP_ON_PANIC;
  * [e.g. to a "virtual console"].
  */
 
-void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
-void (*v_flush) __P((void)) = cnflush;	/* start with cnflush (normal cons) */
+void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
+void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
 
 
 /*

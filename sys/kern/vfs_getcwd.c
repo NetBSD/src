@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.24 2004/02/17 01:45:34 enami Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.24 2004/02/17 01:45:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.24 2004/02/17 01:45:34 enami Exp $"
 #include <sys/syscallargs.h>
 
 static int
-getcwd_scandir __P((struct vnode **, struct vnode **,
-    char **, char *, struct proc *));
+getcwd_scandir(struct vnode **, struct vnode **,
+    char **, char *, struct proc *);
 static int
-getcwd_getcache __P((struct vnode **, struct vnode **,
-    char **, char *));
+getcwd_getcache(struct vnode **, struct vnode **,
+    char **, char *);
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN + 1) + 4)
 
