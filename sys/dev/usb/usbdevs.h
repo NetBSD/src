@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.10 1998/12/21 15:45:20 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.11 1998/12/21 17:22:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.10 1998/12/21 15:42:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.11 1998/12/21 17:18:29 augustss Exp 
  */
 
 /*
@@ -143,7 +143,7 @@
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
 
 /* ADS products */
-#define	USB_PRODUCT_ADS_0x0008	Ethernet		/* adapter */
+#define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
 
 /* PLX products */
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
