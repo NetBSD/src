@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 1997/01/31 23:01:23 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -579,7 +579,7 @@ identifycpu()
 #ifndef HP330
 	case HP_330:
 #endif
-#if !defined(HP360) && !defined(HP370)
+#if !defined(HP340) && !defined(HP360) && !defined(HP370)
 	case HP_340:
 	case HP_360:
 	case HP_370:
