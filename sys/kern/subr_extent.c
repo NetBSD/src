@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.30 2000/05/24 02:22:36 jhawk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.31 2000/06/06 17:32:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,12 @@ splhigh()			(1)
 #define	\
 splx(s)				((void)(s))
 
+#define	\
+simple_lock_init(l)		((void)(l))
+#define	\
+simple_lock(l)			((void)(l))
+#define	\
+simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
