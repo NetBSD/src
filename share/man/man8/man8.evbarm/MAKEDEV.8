@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.12 2003/03/29 06:24:25 ichiro Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.13 2003/03/30 17:23:39 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,6 +257,9 @@ Coda file system device
 . It Ar wsmux#
 Wscons event multiplexor, see
 .Xr \&wsmux 4
+. It Ar pci#
+PCI bus access devices, see
+.Xr \&pci 4
 . It Ar systrace
 Syscall tracer, see
 .Xr \&systrace 4
@@ -267,9 +270,6 @@ System Monitoring hardware
 . It Ar dmoverio
 Hardware-assisted data movers, see
 .Xr \&dmoverio 4
-. It Ar pci#
-PCI bus access devices, see
-.Xr \&pci 4
 . El
 .El
 .Sh FILES
