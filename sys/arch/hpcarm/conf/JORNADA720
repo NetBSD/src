@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.3 2001/02/24 12:52:02 toshii Exp $
+#	$NetBSD: JORNADA720,v 1.4 2001/05/23 16:52:34 toshii Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 # estimated number of users
 maxusers	32
@@ -106,6 +106,8 @@ options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 
+options 	NFS_BOOT_DHCP
+
 # Development and Debugging options
 
 #options	BOOT_DUMP	# Enable memorydump at boot
@@ -135,6 +137,35 @@ sacom*  at saip? addr 0xd000d000 size 0x24	intr 17
 #OS Timer
 saost*  at saip? addr 0x90000000 size 0x20
 
+# SA1111 companion chip
+sacc0	at saip? addr 0x40000000 size 0x2000
+
+# PCMCIA bus support
+sacpcic*	at sacc?
+pcmcia*		at sacpcic?
+
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
+# PCMCIA IDE controllers and disks
+wdc*	at pcmcia? function ?
+wd*	at wdc?
+
+# PCMCIA network interfaces
+#an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+#awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+#ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+#sm*	at pcmcia? function ?		# Megahertz Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
 
 # RTC device via IIC bus
 #rtc*	at iic? addr 0xa0
