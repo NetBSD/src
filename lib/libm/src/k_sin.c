@@ -1,4 +1,3 @@
-
 /* @(#)k_sin.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: k_sin.c,v 1.3 1994/02/18 02:26:01 jtc Exp $";
+#endif
 
 /* __kernel_sin( x, y, iy)
  * kernel sin function on [-pi/4, pi/4], pi/4 ~ 0.7854

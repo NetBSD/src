@@ -1,4 +1,3 @@
-
 /* @(#)s_cbrt.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -9,8 +8,11 @@
  * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_cbrt.c,v 1.3 1994/02/18 02:26:15 jtc Exp $";
+#endif
 
 #include <math.h>
 

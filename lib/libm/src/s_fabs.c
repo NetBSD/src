@@ -1,4 +1,3 @@
-
 /* @(#)s_fabs.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_fabs.c,v 1.3 1994/02/18 02:26:27 jtc Exp $";
+#endif
 
 /*
  * fabs(x) returns the absolute value of x.

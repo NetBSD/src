@@ -1,4 +1,3 @@
-
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_nextafter.c,v 1.3 1994/02/18 02:26:51 jtc Exp $";
+#endif
 
 /* IEEE functions
  *	nextafter(x,y)

@@ -1,4 +1,3 @@
-
 /* @(#)w_gamma_r.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: w_gamma_r.c,v 1.3 1994/02/18 02:27:30 jtc Exp $";
+#endif
 
 /* 
  * wrapper double gamma_r(double x, int *signgamp)
