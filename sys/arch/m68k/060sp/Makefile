@@ -1,5 +1,5 @@
 #
-# $NetBSD: Makefile,v 1.2 1996/05/20 13:31:40 is Exp $
+# $NetBSD: Makefile,v 1.3 1996/12/31 22:44:13 veego Exp $
 #
 AS		= as -m68060
 LD		= ld
@@ -10,7 +10,7 @@ LD		= ld
 	sh ${.CURDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 
 060sp.o: netbsd.S inetbsd.S fnetbsd.S isp.S fpsp.S copyright.S
-	$(AS) -o ${.TARGET} netbsd.S
+	$(AS) -o ${.TARGET} -I${.CURDIR} ${.CURDIR}/netbsd.S
 
 clean:
 	rm -f 060sp.o isp.S fpsp.S
