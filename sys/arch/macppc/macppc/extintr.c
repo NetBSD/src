@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.41 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: extintr.c,v 1.42 2004/03/24 19:42:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.41 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.42 2004/03/24 19:42:53 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -726,7 +726,11 @@ again:
 		splsoftserial();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTSERIAL);
+#else
 		softserial();
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -734,14 +738,22 @@ again:
 		goto again;
 	}
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		int pisr;
+#endif
 		ci->ci_ipending &= ~(1 << SIR_NET);
 		splsoftnet();
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		pisr = netisr;
 		netisr = 0;
+#endif
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTNET);
+#else
 		softnet(pisr);
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -753,7 +765,11 @@ again:
 		splsoftclock();
 		mtmsr(emsr);
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr__run(IPL_SOFTCLOCK);
+#else
 		softclock(NULL);
+#endif
 		KERNEL_UNLOCK();
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
