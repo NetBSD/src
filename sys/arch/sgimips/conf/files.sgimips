@@ -1,10 +1,8 @@
-#	$NetBSD: files.sgimips,v 1.35 2004/01/19 00:12:31 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.36 2004/01/19 03:26:14 sekiya Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
-
-defflag	opt_machtypes.h		IP1X IP2X IP32
 
 device mainbus {[addr = -1]}
 attach mainbus at root
