@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.2 2003/05/25 21:27:41 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.3 2004/03/23 08:31:42 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -43,8 +43,8 @@
  * international characters, now subsumed into this file.
  */
 
-#include "magic.h"
 #include "file.h"
+#include "magic.h"
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
@@ -57,9 +57,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.38 2003/05/23 21:31:58 christos Exp")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.40 2003/11/20 00:25:39 christos Exp")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.2 2003/05/25 21:27:41 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.3 2004/03/23 08:31:42 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -176,8 +176,10 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 		while (ISSPC(*tp))
 			++tp;	/* skip leading whitespace */
 		if ((tp[0] == '\\' && tp[1] == '\"') ||
-		    (isascii(tp[0]) && isalnum(tp[0]) &&
-		     isascii(tp[1]) && isalnum(tp[1]) &&
+		    (isascii((unsigned char)tp[0]) &&
+		     isalnum((unsigned char)tp[0]) &&
+		     isascii((unsigned char)tp[1]) &&
+		     isalnum((unsigned char)tp[1]) &&
 		     ISSPC(tp[2]))) {
 			subtype_mime = "text/troff";
 			subtype = "troff or preprocessor input";

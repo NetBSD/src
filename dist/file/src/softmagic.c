@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.4 2003/10/27 16:14:25 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.5 2004/03/23 08:31:45 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -47,9 +47,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: softmagic.c,v 1.63 2003/10/15 01:51:24 christos Exp")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.65 2004/03/09 18:49:58 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.4 2003/10/27 16:14:25 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.5 2004/03/23 08:31:45 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -139,7 +139,7 @@ match(struct magic_set *ms, struct magic *magic, uint32_t nmagic,
 			 * main entry didn't match,
 			 * flush its continuations
 			 */
-			while (magindex < nmagic &&
+			while (magindex < nmagic - 1 &&
 			       magic[magindex + 1].cont_level != 0)
 			       magindex++;
 			continue;
@@ -1118,6 +1118,7 @@ mcheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 			return -1;
 		} else {
 			rc = regexec(&rx, p->buf, 0, 0, 0);
+			regfree(&rx);
 			free(p->buf);
 			return !rc;
 		}
