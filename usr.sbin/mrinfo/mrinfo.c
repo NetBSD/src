@@ -61,12 +61,13 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mrinfo.c,v 1.1 1995/06/01 05:19:13 mycroft Exp $";
+    "@(#) $Id: mrinfo.c,v 1.2 1995/06/07 17:38:35 cgd Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
 #endif
 
+#include <string.h>
 #include <netdb.h>
 #include <sys/time.h>
 #include "defs.h"

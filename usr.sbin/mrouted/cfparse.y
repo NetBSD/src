@@ -4,9 +4,10 @@
  *
  * Written by Bill Fenner, NRL, 1994
  *
- * $Id: cfparse.y,v 1.1 1995/06/01 02:25:48 mycroft Exp $
+ * $Id: cfparse.y,v 1.2 1995/06/07 17:39:37 cgd Exp $
  */
 #include <stdio.h>
+#include <string.h>
 #include <varargs.h>
 #include "defs.h"
 
