@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.67 2002/12/19 10:38:28 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.68 2003/01/01 08:24:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -965,8 +965,10 @@ viking_pcache_flush_page(pa, invalidate_only)
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
  *
- * We don't do cross calls if we're cold or we're accepting them
+ * We don't do cross calls if we're cold or we're not accepting them
  * ourselves (CPUFLG_READY).
+ *
+ * XXX SUN4D
  */
 
 void
