@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/04/12 02:19:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/04/14 03:16:13 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -18,15 +18,10 @@ KERN=		${KERNDIR}/netbsd.INSTALL.gz
 CLEANFILES+=	netbsd ${BOOT} ${FSTMP}
 
 
-DISKTYPE=	floppy
-
 realall: netbsd ${BOOT}
 	${PAX} -wvf ${FSTMP} ${BOOT} netbsd
 	@echo
 	@echo Making disk number one
-	rm -rf empty
-	mkdir -m 755 empty
-	${MAKEFS} -s ${DISKSIZE}b ${IMAGE1}.tmp empty
 	dd bs=8k seek=1 count=$$((${DISKSIZE} / 16 - 1)) \
 	    if=${FSTMP} of=${IMAGE1}.tmp
 	@echo "installing new bootblocks"
@@ -93,7 +88,6 @@ release: check_RELEASEDIR
 
 clean cleandir distclean:
 	rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
-	rm -rf empty
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
