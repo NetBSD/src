@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.5 2000/05/06 00:46:19 soren Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.6 2000/05/09 17:05:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -249,6 +249,7 @@ siop_pci_attach(parent, self, aux)
 			&sc->siop.sc_raddr, NULL) != 0) {
 			printf("%s: unable to map device registers\n",
 			    sc->siop.sc_dev.dv_xname);
+			return;
 		}
 	}
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
