@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.8 1999/01/22 02:38:05 thorpej Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.9 1999/07/25 09:36:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.8 1999/01/22 02:38:05 thorpej Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.9 1999/07/25 09:36:02 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -348,7 +348,6 @@ get_local_ordernum(domain, map, lordernum)
 	k.dsize = YP_LAST_LEN;
 
 	v = ypdb_fetch(db, k);
-	ypdb_close(db);
 
 	if (v.dptr == NULL)
 		*lordernum = 0;
@@ -357,6 +356,7 @@ get_local_ordernum(domain, map, lordernum)
 		order[v.dsize] = '\0';
 		*lordernum = (u_int)atoi((char *)&order);
 	}
+	ypdb_close(db);
 
  out:
 	if ((status == YPPUSH_NOMAP) || (status == YPPUSH_DBM)) {
