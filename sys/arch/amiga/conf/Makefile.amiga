@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.79 1999/01/15 23:21:25 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.80 1999/01/15 23:37:05 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -44,8 +44,7 @@ AMIGA=	$S/arch/amiga
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Damiga -DFPCOPROC
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Damiga -DFPCOPROC
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
