@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.40 2003/08/19 09:09:15 itojun Exp $
+#	$KAME: Makefile.in,v 1.43 2004/06/17 02:42:53 itojun Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -32,6 +32,10 @@ OBJS=	main.o session.o isakmp.o handler.o \
 	proposal.o sainfo.o cfparse.o cftoken.o strnames.o \
 	vmbuf.o plog.o logger.o schedule.o str2val.o misc.o sockmisc.o \
 	safefile.o backupsa.o @LIBOBJS@ @CRYPTOBJS@ @DEBUGRMOBJS@
+
+EAYTESTOBJS= eaytest.o crypto_openssl_test.o misc.o vmbuf.o str2val.o \
+	@CRYPTOBJS@ @DEBUGRMOBJS@
+
 # under samples
 CONF=	psk.txt racoon.conf
 
@@ -40,26 +44,19 @@ all: $(PROG)
 racoon: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-racoonctl: kmpstat.o misc_noplog.o vmbuf.o str2val.o
-	$(CC) $(LDFLAGS) -o $@ kmpstat.o misc_noplog.o vmbuf.o str2val.o \
+racoonctl: kmpstat.o misc.o vmbuf.o str2val.o
+	$(CC) $(LDFLAGS) -o $@ kmpstat.o misc.o vmbuf.o str2val.o \
 		$(LIBS) @DEBUGRMOBJS@
 
 pfkey: dummy.o
 	$(CC) $(LDFLAGS) -o $@ dummy.o
 
-eaytest: eaytest.o crypto_openssl_test.o misc_noplog.o vmbuf.o str2val.o
-	$(CC) $(LDFLAGS) -o $@ eaytest.o crypto_openssl_test.o misc_noplog.o \
-		vmbuf.o str2val.o $(LIBS) @CRYPTOBJS@ @DEBUGRMOBJS@
+eaytest: $(EAYTESTOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(EAYTESTOBJS) $(LIBS)
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c
 	$(CC) $(CFLAGS) -DEAYDEBUG -o crypto_openssl_test.o -c crypto_openssl.c
-misc_noplog.o: misc.c
-	$(CC) -DNOUSE_PLOG -o misc_noplog.o -c misc.c
-
-# extra
-print-isakmp.o:	$(srcdir)/../tcpdump/print-isakmp.c
-	$(CC) $(CFLAGS) -c $(srcdir)/../tcpdump/$*.c
 
 # missing/*.c
 strdup.o:	$(srcdir)/missing/strdup.c

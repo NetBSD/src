@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.57 2002/01/21 08:45:54 sakane Exp $	*/
+/*	$KAME: handler.c,v 1.59 2004/04/12 03:57:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: handler.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: handler.c,v 1.2.2.1 2004/06/17 12:38:09 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: handler.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
 #include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
-#include "gssapi.h"
+#include "auth_gssapi.h"
 #endif
 
 static LIST_HEAD(_ph1tree_, ph1handle) ph1tree;
@@ -426,7 +426,7 @@ newph2()
 	if (iph2 == NULL)
 		return NULL;
 
-	iph2->status = PHASE1ST_SPAWN;
+	iph2->status = PHASE2ST_SPAWN;
 
 	return iph2;
 }

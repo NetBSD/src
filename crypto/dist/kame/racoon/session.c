@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.31 2002/11/20 02:06:18 itojun Exp $	*/
+/*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: session.c,v 1.3 2003/11/04 04:30:38 itojun Exp $");
+__RCSID("$NetBSD: session.c,v 1.3.2.1 2004/06/17 12:38:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
