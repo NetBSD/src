@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.40 2002/07/21 15:32:19 hannken Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.41 2002/07/23 14:00:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.40 2002/07/21 15:32:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.41 2002/07/23 14:00:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -659,6 +659,7 @@ struct bufq_disksort {
 struct bufq_prio {
 	TAILQ_HEAD(, buf) bq_read, bq_write; /* actual list of buffers */
 	struct buf *bq_write_next;	/* next request in bq_write */
+	struct buf *bq_next;		/* current request */
 	int bq_read_burst;		/* # of consecutive reads */
 };
 
@@ -881,37 +882,45 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 	struct buf *bp;
 
 	/*
-	 * If at least one list is empty, select the other.
+	 * If no current request, get next from the lists.
 	 */
-
-	if (TAILQ_FIRST(&prio->bq_read) == NULL) {
-		bp = prio->bq_write_next;
-		prio->bq_read_burst = 0;
-	} else if (prio->bq_write_next == NULL) {
-		bp = TAILQ_FIRST(&prio->bq_read);
-		prio->bq_read_burst = 0;
-	} else {
+	if (prio->bq_next == NULL) {
 		/*
-		 * Both list have requests.  Select the read list up
-		 * to PRIO_READ_BURST times, then select the write
-		 * list PRIO_WRITE_REQ times.
+		 * If at least one list is empty, select the other.
 		 */
 
-		if (prio->bq_read_burst++ < PRIO_READ_BURST)
-			bp = TAILQ_FIRST(&prio->bq_read);
-		else if (prio->bq_read_burst < PRIO_READ_BURST + PRIO_WRITE_REQ)
-			bp = prio->bq_write_next;
-		else {
-			bp = TAILQ_FIRST(&prio->bq_read);
+		if (TAILQ_FIRST(&prio->bq_read) == NULL) {
+			prio->bq_next = prio->bq_write_next;
 			prio->bq_read_burst = 0;
+		} else if (prio->bq_write_next == NULL) {
+			prio->bq_next = TAILQ_FIRST(&prio->bq_read);
+			prio->bq_read_burst = 0;
+		} else {
+			/*
+			 * Both list have requests.  Select the read list up
+			 * to PRIO_READ_BURST times, then select the write
+			 * list PRIO_WRITE_REQ times.
+			 */
+	
+			if (prio->bq_read_burst++ < PRIO_READ_BURST)
+				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
+			else if (prio->bq_read_burst <
+				     PRIO_READ_BURST + PRIO_WRITE_REQ)
+				prio->bq_next = prio->bq_write_next;
+			else {
+				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
+				prio->bq_read_burst = 0;
+			}
 		}
 	}
 
-	if (bp != NULL && remove) {
-		if ((bp->b_flags & B_READ) == B_READ)
-			TAILQ_REMOVE(&prio->bq_read, bp, b_actq);
+	bp = prio->bq_next;
+
+	if (prio->bq_next != NULL && remove) {
+		if ((prio->bq_next->b_flags & B_READ) == B_READ)
+			TAILQ_REMOVE(&prio->bq_read, prio->bq_next, b_actq);
 		else {
-			TAILQ_REMOVE(&prio->bq_write, bp, b_actq);
+			TAILQ_REMOVE(&prio->bq_write, prio->bq_next, b_actq);
 			/*
 			 * Advance the write pointer.
 			 */
@@ -921,6 +930,8 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 				prio->bq_write_next =
 				    TAILQ_FIRST(&prio->bq_write);
 		}
+
+		prio->bq_next = NULL;
 	}
 
 	return(bp);
