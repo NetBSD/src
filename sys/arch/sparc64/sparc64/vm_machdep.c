@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 2001/04/24 04:31:13 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -273,8 +273,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
        	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc)
+		if (p1 == fpproc) {
 			savefpstate(p1->p_md.md_fpstate);
+			fpproc = NULL;
+		}
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
@@ -389,8 +391,10 @@ cpu_coredump(p, vp, cred, chdr)
 
 	md_core.md_tf = *p->p_md.md_tf;
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
+		if (p == fpproc) {
 			savefpstate(p->p_md.md_fpstate);
+			fpproc = NULL;
+		}
 		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 
