@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.10 1999/01/22 14:14:32 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.11 1999/05/03 16:30:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -41,6 +41,10 @@
 #include <machine/ansi.h>
 
 typedef _BSD_VA_LIST_	va_list;
+
+#ifdef __lint__
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#endif
 
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
