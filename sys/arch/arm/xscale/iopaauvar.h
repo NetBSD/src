@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaauvar.h,v 1.1 2002/08/02 00:35:48 thorpej Exp $	*/
+/*	$NetBSD: iopaauvar.h,v 1.2 2002/08/02 06:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 
 #include <dev/dmover/dmovervar.h>
 
-#define	AAU_MAX_INPUTS		1
+#define	AAU_MAX_INPUTS		4
 
 /*
  * Due to the way the AAU's descriptors work, the DMA segments for
@@ -50,7 +50,6 @@
  *
  * We could easily shrink this to any power of two.
  */
-#define	AAU_IO_ALIGNMENT	4096
 #define	AAU_IO_BOUNDARY		4096
 
 struct iopaau_softc {
@@ -84,7 +83,7 @@ int	iopaau_func_zero_setup(struct iopaau_softc *,
 	    struct dmover_request *);
 int	iopaau_func_fill8_setup(struct iopaau_softc *,
 	    struct dmover_request *);
-int	iopaau_func_copy_setup(struct iopaau_softc *,
+int	iopaau_func_xor_1_4_setup(struct iopaau_softc *,
 	    struct dmover_request *);
 
 void	iopaau_desc_4_free(struct iopaau_softc *, void *);
