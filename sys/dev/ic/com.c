@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.218 2003/09/01 16:44:03 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.219 2003/09/03 13:05:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.218 2003/09/01 16:44:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.219 2003/09/03 13:05:50 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1184,7 +1184,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.assert_timestamp);
 #else
-		sc->sc_ppsassert = -1
+		sc->sc_ppsassert = -1;
 		sc->sc_ppsclear = 0;
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.clear_timestamp);
