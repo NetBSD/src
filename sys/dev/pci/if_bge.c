@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.4 2002/06/27 22:10:11 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.5 2002/06/27 22:31:30 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -427,6 +427,7 @@ bge_miibus_readreg(dev, phy, reg)
 		val = CSR_READ_4(sc, BGE_MI_COMM);
 		if (!(val & BGE_MICOMM_BUSY))
 			break;
+		delay(2);
 	}
 
 	if (i == BGE_TIMEOUT) {
@@ -456,6 +457,7 @@ bge_miibus_writereg(dev, phy, reg, val)
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		if (!(CSR_READ_4(sc, BGE_MI_COMM) & BGE_MICOMM_BUSY))
 			break;
+		delay(2);
 	}
 
 	if (i == BGE_TIMEOUT) {
