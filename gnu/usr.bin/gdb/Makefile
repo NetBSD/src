@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39.2.1 2000/08/16 22:54:54 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.39.2.2 2001/04/22 17:45:48 he Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -7,8 +7,9 @@
 ELF_PLEASE=
 .endif
 
-PROG=		gdb
 MAN=		gdb.1
+.if (${MACHINE_ARCH} != "sparc64")
+PROG=		gdb
 SRCS=		main.c ${COMMON_SRCS} annotate.c inflow.c gnu-regex.c
 OBJS=		init.o
 DPSRCS=		nm.h tm.h
@@ -98,14 +99,16 @@ TDEPFILES.sparc64=	sparc-tdep.c
 NATDEPFILES.vax=	vaxnbsd-nat.c
 TDEPFILES.vax=		vax-tdep.c
 
-DIST=		${.CURDIR}/../../dist
 BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} -s print-objdir
+.endif
+DIST=		${.CURDIR}/../../dist
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/doc
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
 
+.if (${MACHINE_ARCH} != "sparc64")
 init.o: ${OBJS:Ninit.o} Makefile
 	@-rm -f init.c
 	NM=${NM} sh ${.CURDIR}/mkinit.sh ${OBJS:Ninit.o} >init.c
@@ -122,3 +125,4 @@ nm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/nm-nbsd.h
 tm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/tm-nbsd.h
 	@-rm -f $@
 	cp $> $@
+.endif
