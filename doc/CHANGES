@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.77 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.78 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -7,7 +7,7 @@ or see the mailing list archives.  For more information, send a message
 containing just the word `help' to `majordomo@netbsd.org'.]
 
 
-Changes from NetBSD 1.6 to NetBSD 1.7:
+Changes from NetBSD 1.6 to NetBSD 2.0:
 	libcrypt: support bcrypt password entries.  can be chosen with
 		"blowfish" keyword in passwd.conf.  from openbsd
 		[itojun 20020524]
