@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.1 2001/01/30 23:26:47 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.2 2001/01/31 16:02:38 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1266,6 +1266,7 @@ retry:
 			break;
 		}
 		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
+		packet->buffer[0] = MIX_CN_CIN(cable_number, 0x04);
 		packet->buffer[3] = in;
 		packet->state = PS_EXCL_0;
 		break;
