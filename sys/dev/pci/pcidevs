@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.580 2003/09/26 07:45:15 matt Exp $
+$NetBSD: pcidevs,v 1.581 2003/10/08 21:15:33 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1382,6 +1382,8 @@ product HIFN 7751	0x0005	7751
 product HIFN 6500	0x0006	6500
 product HIFN 7811	0x0007	7811
 product HIFN 7951	0x0012	7951
+product HIFN 7955	0x0020	7954/7955
+product HIFN 7956	0x001d	7956
 product HIFN 78XX	0x0014	7814/7851/7854
 product HIFN 8065	0x0016	8065
 product HIFN 8165	0x0017	8165
