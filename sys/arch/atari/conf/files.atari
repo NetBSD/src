@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.22 1996/09/25 15:15:29 leo Exp $
+#	$NetBSD: files.atari,v 1.23 1996/10/04 07:12:39 leo Exp $
 #
 
 maxpartitions 16
@@ -58,7 +58,7 @@ define	grfb {}
 
 device	grfbus: grfb
 attach	grfbus at mainbus
-file	arch/atari/dev/grf.c		grfcc | grfet
+file	arch/atari/dev/grf.c
 
 device	grfcc {}
 attach	grfcc at grfb
@@ -70,9 +70,10 @@ file	arch/atari/dev/grfabs_fal.c	grfcc
 device	grfet {}
 attach	grfet at grfb
 file	arch/atari/dev/ite_et.c		grfet needs-count
+file	arch/atari/dev/grfabs_et.c	grfet
 
 device	ite
-attach	ite at grfcc
+attach	ite at grfcc,grfet 
 file	arch/atari/dev/ite.c		ite needs-flag
 file	arch/atari/dev/kbdmap.c		ite
 file	arch/atari/dev/font_8x8.c	ite
@@ -80,10 +81,20 @@ file	arch/atari/dev/font_8x16.c	ite
 
 
 pseudo-device	view
-file	arch/atari/dev/view.c		view | grfcc needs-count
+file	arch/atari/dev/view.c		view | grfcc | grfet needs-count
 
 pseudo-device	mouse
 file	arch/atari/dev/ms.c		mouse needs-count
+
+#
+# PCI-devices
+#
+file	arch/atari/pci/pci_machdep.c	pci | grfet
+
+device	pcibus
+attach	pcibus at mainbus
+
+include "../../../dev/pci/files.pci"
 
 #
 # XXX: Some scsi-devices must be at fixed major#
