@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.398 2000/09/13 15:00:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.399 2000/09/15 03:41:18 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -868,21 +868,24 @@ identifycpu()
 		int iterations, j;
 		u_int8_t desc;
 
-		do {
-			do_cpuid(2, descs);
-			iterations = descs[0] & 0xff;
-
+		do_cpuid(2, descs);
+		iterations = descs[0] & 0xff;
+		while (iterations-- > 0) {
 			for (i = 0; i < 4; i++) {
 				if (descs[i] & 0x80000000)
 					continue;
 				for (j = 0; j < 4; j++) {
+					if (i == 0 && j == 0)
+						continue;
 					desc = (descs[i] >> (j * 8)) & 0xff;
 					cai = i386_cache_info_lookup(desc);
 					if (cai != NULL)
 						*cai->cai_var = cai;
 				}
 			}
-		} while (--iterations != 0);
+
+			do_cpuid(2, descs);
+		}
 	}
 
 	/*
