@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/03/20 17:05:53 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/30 06:55:17 thorpej Exp $
 #
 #	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
@@ -7,8 +7,7 @@ KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL
 
-INSTALLATION_DIRS+=	installation/kernel \
-			installation/misc
+INSTALLATION_DIRS+=	installation/instkernel
 
 # Build the release notes and boot floppies and install them
 snap_md_post:
@@ -18,5 +17,5 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/shark && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernel '*.gz'
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'
+	sh ../distrib/sets/makesums -t \
+	    ${RELEASEDIR}/installation/instkernel '*.gz'
