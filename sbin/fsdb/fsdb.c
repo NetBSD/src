@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.27 2004/01/03 19:57:42 dbj Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.28 2004/01/04 00:13:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.27 2004/01/03 19:57:42 dbj Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.28 2004/01/04 00:13:00 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ ino_t   curinum;
 static void
 usage()
 {
-	errx(1, "usage: %s [-d] [-n] [-F] -f <fsname>", getprogname());
+	errx(1, "usage: %s [-dFn] -f <fsname>", getprogname());
 }
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
