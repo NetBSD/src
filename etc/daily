@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.61 2004/05/28 03:55:30 martin Exp $
+#	$NetBSD: daily,v 1.62 2004/09/28 15:03:58 erh Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -79,9 +79,11 @@ TMP=daily.$$
 TMP2=daily2.$$
 
 if checkyesno find_core; then
-	find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
-		-o -fstype null \
-		-o -fstype kernfs -o -fstype procfs \) -prune -o \
+	# Turn "foo !bar bax" into "-fstype foo -o ! -fstype bar -o -fstype bax"
+	ignfstypes=`echo $find_core_ignore_fstypes | \
+		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
+		    -e's/^-o //'`
+	find / \( $ignfstypes \) -prune -o \
 		-name 'lost+found' -prune -o \
 		\( -name '*.core' -o -name 'core' \) -type f -print > $TMP
 #		\( -name '[#,]*' -o -name '.#*' -o -name a.out \
