@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.17 2000/04/04 21:47:17 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.17.4.1 2000/06/30 16:27:38 simonb Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -426,10 +426,11 @@ struct mmo {
  *
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
-int
+paddr_t
 tcxmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
@@ -480,7 +481,7 @@ tcxmmap(dev, off, prot)
 					   BUS_SPACE_MAP_LINEAR, &bh))
 				return (-1);
 
-			return ((int)bh);
+			return ((paddr_t)bh);
 		}
 	}
 	return (-1);	/* not a user-map offset */

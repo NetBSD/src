@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.125 2000/05/02 00:00:00 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.125.4.1 2000/06/30 16:27:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -109,7 +109,7 @@ int	audio_read __P((struct audio_softc *, struct uio *, int));
 int	audio_write __P((struct audio_softc *, struct uio *, int));
 int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 int	audio_poll __P((struct audio_softc *, int, struct proc *));
-int	audio_mmap __P((struct audio_softc *, int, int));
+paddr_t	audio_mmap __P((struct audio_softc *, off_t, int));
 
 int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	mixer_close __P((struct audio_softc *, int, int, struct proc *));
@@ -756,14 +756,15 @@ audiopoll(dev, events, p)
 	return (error);
 }
 
-int
+paddr_t
 audiommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
-	int error;
+	paddr_t error;
 
 	if (sc->sc_dying)
 		return (-1);
@@ -1798,16 +1799,17 @@ audio_poll(sc, events, p)
 	return (revents);
 }
 
-int
+paddr_t
 audio_mmap(sc, off, prot)
 	struct audio_softc *sc;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb;
 	int s;
 
-	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", off, prot));
 
 	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;

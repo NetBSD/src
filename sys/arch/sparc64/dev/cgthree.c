@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.7 1999/06/05 21:58:17 eeh Exp $ */
+/*	$NetBSD: cgthree.c,v 1.7.12.1 2000/06/30 16:27:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -427,10 +427,11 @@ cgthreeloadcmap(sc, start, ncolors)
  * As well, mapping at an offset of 0x04000000 causes the cg3 to be
  * mapped in flat mode without the cg4 emulation.
  */
-int
+paddr_t
 cgthreemmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 #define START		(128*1024 + 128*1024)
@@ -446,7 +447,7 @@ cgthreemmap(dev, off, prot)
 		off -= START;
 	else
 		off = 0;
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
+	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was

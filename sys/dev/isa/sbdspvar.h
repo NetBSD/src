@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.48 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.48.4.1 2000/06/30 16:27:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -240,7 +240,7 @@ int	sbdsp_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 void 	*sb_malloc __P((void *, int, size_t, int, int));
 void	sb_free __P((void *, void *, int));
 size_t	sb_round_buffersize __P((void *, int, size_t));
-int	sb_mappage __P((void *, void *, int, int));
+paddr_t	sb_mappage __P((void *, void *, off_t, int));
 
 int	sbdsp_get_props __P((void *));
 

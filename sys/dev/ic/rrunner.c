@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.16 2000/06/08 22:43:15 cgd Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.16.2.1 2000/06/30 16:27:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ void esh_fpstop __P((struct tty *tp, int rw));
 int esh_fppoll __P((dev_t dev, int events, struct proc *p));
 
 #ifdef MORE_DONE
-int esh_fpmmap __P((dev_t, int, int));
+paddr_t esh_fpmmap __P((dev_t, off_t, int));
 #endif
 
 /* General routines, not externally visable */

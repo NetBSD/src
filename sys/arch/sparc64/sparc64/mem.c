@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 2000/06/19 23:30:36 eeh Exp $ */
+/*	$NetBSD: mem.c,v 1.11.2.1 2000/06/30 16:27:42 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -264,10 +264,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
         dev_t dev;
-        int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

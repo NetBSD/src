@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.5 2000/05/21 15:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.5.4.1 2000/06/30 16:27:51 simonb Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
 
@@ -1236,13 +1236,6 @@ static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 #define bktr_ioctl      bktrioctl
 #define bktr_mmap       bktrmmap
 
-int bktr_open __P((dev_t, int, int, struct proc *));
-int bktr_close __P((dev_t, int, int, struct proc *));
-int bktr_read __P((dev_t, struct uio *, int));
-int bktr_write __P((dev_t, struct uio *, int));
-int bktr_ioctl __P((dev_t, ioctl_cmd_t, caddr_t, int, struct proc*));
-int bktr_mmap __P((dev_t, int, int));
-
 vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
                                  vm_offset_t, vm_offset_t);
 
@@ -1663,8 +1656,8 @@ bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr)
 /*
  * 
  */
-int
-bktr_mmap(dev_t dev, int offset, int nprot)
+paddr_t
+bktr_mmap(dev_t dev, off_t offset, int nprot)
 {
 	int		unit;
 	bktr_ptr_t	bktr;
