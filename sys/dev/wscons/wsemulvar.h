@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.2 1998/04/17 00:17:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,10 @@ struct wsemul_ops {
 	void	(*output) __P((void *cookie, const u_char *data, u_int count));
 	void	(*detach) __P((void *cookie, u_int *crow, u_int *ccol));
 };
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_wsemul.h"
+#endif
 
 #ifndef WSEMUL_NO_DUMB
 extern const struct wsemul_ops wsemul_dumb_ops;
