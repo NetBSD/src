@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1.1.1 1995/10/08 23:08:47 gwr Exp $
+# $NetBSD: Makefile,v 1.2 1995/10/13 18:10:31 gwr Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 PROG=	ifconfig
 NOMAN=	
 
-SRCDIR=/usr/src/sbin/ifconfig
+SRCDIR= ${BSDSRCDIR}/sbin/ifconfig
 CFLAGS+= -DINET_ONLY -I${SRCDIR}
 
 .PATH:  ${SRCDIR}

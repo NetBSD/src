@@ -5,7 +5,6 @@ Subject: New ramdisk, tiny shell, etc.
 
 As part of my efforts to build a RAM-disk root kernel for the
 sun3 port, I've developed some things that others may want:
-(Also, please see my questions at the end.)
 
 New RAM-disk: [ see sys/dev/ramdisk.c ]
 
@@ -34,7 +33,7 @@ init_s:  (built with -DLETS_GET_SMALL)
 
 libhack:   small implementation of some libc functions
   * Needs only /etc/passwd (not pwd.db, spwd.db)
-  * Reduces size of an m68k crunched binary about 64K
+  * Reduces size of an m68k crunched binary by about 64K
 
 x_dd:  built with -DNO_CONV (no conv=* options)
 
