@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.98 2003/10/19 02:11:29 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.99 2003/10/19 03:00:55 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -11,18 +11,27 @@ MAKEVERBOSE?=	2
 _MKMSG=		@\#
 _MKCMD=		@
 _MKSHMSG=	: echo
-_MKSHCMD=	:
+_MKSHECHO=	: echo
 .elif ${MAKEVERBOSE} == 1
 _MKMSG=		@echo '   '
 _MKCMD=		@
 _MKSHMSG=	echo '   '
-_MKSHCMD=	:
+_MKSHECHO=	echo
 .else	# MAKEVERBOSE == 2 ?
 _MKMSG=		@echo '\#  '
 _MKCMD=	
 _MKSHMSG=	echo '\#  '
-_MKSHCMD=
+_MKSHECHO=	echo
 .endif
+_MKMSGBUILD=	${_MKMSG} "  build  ${.TARGET}"
+_MKMSGCREATE=	${_MKMSG} " create  ${.TARGET}"
+_MKMSGCOMPILE=	${_MKMSG} "compile  ${.TARGET}"
+_MKMSGFORMAT=	${_MKMSG} " format  ${.TARGET}"
+_MKMSGINSTALL=	${_MKMSG} "install  ${.TARGET}"
+_MKMSGLINK=	${_MKMSG} "   link  ${.TARGET}"
+_MKMSGLINK.m=	${_MKMSG} "   link "
+_MKMSGLEX=	${_MKMSG} "    lex  ${.TARGET}"
+_MKMSGYACC=	${_MKMSG} "   yacc  ${.TARGET}"
 
 .if defined(WARNS)
 .if ${WARNS} > 0
@@ -157,15 +166,15 @@ TOOL_ZIC?=		zic
 
 # C
 .c:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .c.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .c.ln:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[IDU]*} -i ${.IMPSRC}
 
@@ -173,11 +182,11 @@ TOOL_ZIC?=		zic
 # (Defined here rather than in <sys.mk> because `.m' is not just
 #  used for Objective C source)
 .m:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .m.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.m} ${.IMPSRC}
 
@@ -185,7 +194,7 @@ TOOL_ZIC?=		zic
 # The intermediate step is necessary for Sun CC, which objects to calling
 # object files anything but *.o
 .c.lo:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${.IMPSRC}
 	${_MKCMD}\
@@ -193,19 +202,19 @@ TOOL_ZIC?=		zic
 
 # Assembly
 .s:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINK.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .s.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .S:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${LINK.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .S.o:
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGCOMPILE}
 	${_MKCMD}\
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
@@ -215,7 +224,7 @@ LFLAGS+=	-P${LPREFIX}
 
 .l.o: # remove to force use of .l.c->.c.o transforms
 .l:
-	${_MKMSG} "    lex  ${.TARGET}"
+	${_MKMSGLEX}
 	${_MKCMD}\
 	${LEX.l} -o${.TARGET:R}.${LPREFIX}.c ${.IMPSRC}
 	${_MKCMD}\
@@ -223,7 +232,7 @@ LFLAGS+=	-P${LPREFIX}
 	${_MKCMD}\
 	rm -f ${.TARGET:R}.${LPREFIX}.c
 .l.c:
-	${_MKMSG} "    lex  ${.TARGET}"
+	${_MKMSGLEX}
 	${_MKCMD}\
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 
@@ -232,7 +241,7 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
 .y.o: # remove to force use of .y.c->.c.o transforms
 .y:
-	${_MKMSG} "   yacc  ${.TARGET}"
+	${_MKMSGYACC}
 	${_MKCMD}\
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${_MKCMD}\
@@ -240,7 +249,7 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 	${_MKCMD}\
 	rm -f ${.TARGET:R}.tab.[ch]
 .y.c:
-	${_MKMSG} "   yacc  ${.TARGET}"
+	${_MKMSGYACC}
 	${_MKCMD}\
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
 
