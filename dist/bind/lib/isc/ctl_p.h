@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_p.h,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ctl_p.h,v 1.1.1.2 2002/06/20 10:30:35 itojun Exp $	*/
 
 struct ctl_buf {
 	char *			text;
@@ -6,7 +6,11 @@ struct ctl_buf {
 };
 
 #define	MAX_LINELEN		990	/* Like SMTP. */
+#ifndef NO_SOCKADDR_UN
+#define MAX_NTOP			PATH_MAX
+#else
 #define	MAX_NTOP		(sizeof "[255.255.255.255].65535")
+#endif
 
 #define	allocated_p(Buf) ((Buf).text != NULL)
 #define	buffer_init(Buf) ((Buf).text = 0, (Buf.used) = 0)
