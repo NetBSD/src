@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.80 2003/06/27 18:42:11 heas Exp $	*/
+/*	$NetBSD: main.c,v 1.81 2003/07/02 16:47:53 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,7 @@ static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
+static	void	usage(void);
 static	void	dependopts(void);
 static	void	do_depend(struct nvlist *);
 static	void	stop(void);
@@ -158,7 +159,7 @@ main(int argc, char **argv)
 			(void)fputs(
 			    "-g is obsolete (use makeoptions DEBUG=\"-g\")\n",
 			    stderr);
-			goto usage;
+			usage();
 
 		case 'p':
 			/*
@@ -192,18 +193,14 @@ main(int argc, char **argv)
 
 		case '?':
 		default:
-			goto usage;
+			usage();
 		}
 	}
 
 	argc -= optind;
 	argv += optind;
 	if (argc > 1) {
- usage:
-		(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] "
-		    "[sysname]\n", stderr);
-		(void)fputs("       config -x [kernel-file]\n", stderr);
-		exit(1);
+		usage();
 	}
 
 	if (xflag && (builddir != NULL || srcdir != NULL || Pflag || pflag ||
@@ -394,8 +391,18 @@ main(int argc, char **argv)
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
 	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident())
 		stop();
+	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);
+}
+
+static void
+usage(void)
+{
+	(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] "
+		"[sysname]\n", stderr);
+	(void)fputs("       config -x [kernel-file]\n", stderr);
+	exit(1);
 }
 
 /*
