@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.5 1999/12/22 14:38:12 kleink Exp $	*/
+/*	$NetBSD: menu.h,v 1.6 2000/03/10 09:06:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -168,10 +168,10 @@ char *menu_userptr __P((MENU *));
 WINDOW *menu_win __P((MENU *));
 MENU *new_menu __P((ITEM **));
 int post_menu __P((MENU *));
-int set_menu_back __P((MENU *, attr_t));
-int set_menu_fore __P((MENU *, attr_t));
+int set_menu_back __P((MENU *, int));
+int set_menu_fore __P((MENU *, int));
 int set_menu_format __P((MENU *, int, int));
-int set_menu_grey __P((MENU *, attr_t));
+int set_menu_grey __P((MENU *, int));
 int set_menu_init __P((MENU *, Menu_Hook));
 int set_menu_items __P((MENU *, ITEM **));
 int set_menu_mark __P((MENU *, char *));
