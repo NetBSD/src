@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.4 2003/10/24 09:48:08 pk Exp $	*/
+/*	$NetBSD: mmu.c,v 1.4.2.1 2005/03/16 12:04:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -97,7 +97,9 @@ int mmu_init(void)
  * Limited functionality wrt. MMU resource management.
  */
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
-#define	setsegmap(va, pmeg)	stba(va, ASI_SEGMAP, pmeg)
+#define	setsegmap(va, pmeg)	(CPU_ISSUN4C \
+					? stba(va, ASI_SEGMAP, pmeg) \
+					: stha(va, ASI_SEGMAP, pmeg))
 
 int pmap_map4(vaddr_t va, paddr_t pa, psize_t size)
 {
