@@ -83,7 +83,7 @@ distrib-dirs:
 	       ${DESTDIR}/var/tmp
 	chmod 755 ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
 		  ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/preserve \
-		  ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool \
+		  ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool
 	chmod 1777 ${DESTDIR}/var/tmp
 	-mkdir ${DESTDIR}/var/cron/tabs
 	chmod 700 ${DESTDIR}/var/cron/tabs
