@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.13 1997/01/28 04:55:18 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.14 1997/07/28 18:07:24 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -61,6 +61,7 @@
 #include <machine/mouse.h>
 
 #include "quadmouse.h"
+#include "locators.h"
 
 #define TIMER1_COUNT 40000		/* 50Hz */
 
@@ -105,8 +106,12 @@ quadmouseprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-/*	struct mainbus_attach_args *mb = aux;*/
+	struct mainbus_attach_args *mb = aux;
 	int id;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 /* Make sure we have an IOMD we understand */
     

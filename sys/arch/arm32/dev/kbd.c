@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.17 1997/03/26 22:42:31 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18 1997/07/28 18:07:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -67,9 +67,10 @@
 #include <machine/kbd.h>
 #include <machine/conf.h>
 #include <arm32/mainbus/mainbus.h>
+
 #include "vt.h"
 #include "kbd.h"
-
+#include "locators.h"
 
 /* Define the key_struct structure */
 
@@ -664,7 +665,12 @@ kbdprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	struct mainbus_attach_args *mb = aux;
 	int id;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 /* Make sure we have an IOMD we understand */
     

@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.9 1997/01/28 04:55:15 mark Exp $ */
+/* $NetBSD: beep.c,v 1.10 1997/07/28 18:07:03 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -70,6 +70,7 @@
 #endif
 
 #include "beep.h"
+#include "locators.h"
 
 struct beep_softc {
 	struct device sc_device;
@@ -109,8 +110,12 @@ beepprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-/*	struct mainbus_attach_args *mb = aux;*/
+	struct mainbus_attach_args *mb = aux;
 	int id;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 /* Make sure we have an IOMD we understand */
 

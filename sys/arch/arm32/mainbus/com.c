@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.16 1997/01/26 02:16:44 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.17 1997/07/28 18:07:06 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -70,7 +70,7 @@
 #define	com_lcr	com_cfcr
 
 #include "com.h"
-
+#include "locators.h"
 
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
@@ -304,6 +304,10 @@ comprobe(parent, match, aux)
 	int iobase;
 	int rv = 1;
 	struct mainbus_attach_args *mb = aux;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 	iot = mb->mb_iot;
 	iobase = mb->mb_iobase;

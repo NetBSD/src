@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.10 1997/01/28 04:55:17 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.11 1997/07/28 18:07:22 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -66,6 +66,8 @@
 #include <machine/iomd.h>
 #include <machine/mouse.h>
 #include <arm32/mainbus/mainbus.h>
+
+#include "locators.h"
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
@@ -184,7 +186,12 @@ pmsprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	/*struct mainbus_attach_args *mb = aux;*/
+	struct mainbus_attach_args *mb = aux;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
+
 	return(pmsinit());
 }
 
