@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.15 1997/09/29 01:41:32 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.16 1997/12/05 19:41:49 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -804,6 +804,8 @@ ispscsicmd(xs)
 	} _u;
 #define	reqp	_u._reqp
 #define	t2reqp	_u._t2reqp
+#define	UZSIZE	max(sizeof (ispreq_t), sizeof (ispreqt2_t))
+
 	int s, i;
 
 	isp = xs->sc_link->adapter_softc;
@@ -856,7 +858,7 @@ ispscsicmd(xs)
 		iptr = (iptr + 1) & (RQUEST_QUEUE_LEN(isp) - 1);
 	}
 
-	bzero((void *) reqp, sizeof (_u));
+	bzero((void *) reqp, UZSIZE);
 	reqp->req_header.rqs_entry_count = 1;
 	if (isp->isp_type & ISP_HA_FC) {
 		reqp->req_header.rqs_entry_type = RQSTYPE_T2RQS;
@@ -888,7 +890,7 @@ ispscsicmd(xs)
 		 */
 		xs->resid = 0;
 		/*
-		 * The QL2100 always requires some kind of tag.
+		 * Fibre Channel always requires some kind of tag.
 		 */
 		if (xs->flags & SCSI_POLL) {
 			t2reqp->req_flags = REQFLAG_STAG;
@@ -1025,6 +1027,9 @@ isp_intr(arg)
 			break;
 		case ASYNC_LOOP_DOWN:
 			printf("%s: Loop DOWN\n", isp->isp_name);
+			break;
+		case ASYNC_LOOP_RESET:
+			printf("%s: Loop RESET\n", isp->isp_name);
 			break;
 		default:
 			printf("%s: async %x\n", isp->isp_name, mbox0);
