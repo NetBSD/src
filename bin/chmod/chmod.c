@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
+/*	$NetBSD: chmod.c,v 1.13 1997/06/26 23:21:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: chmod.c,v 1.13 1997/06/26 23:21:33 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,6 +74,8 @@ main(argc, argv)
 	int oct, omode;
 	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *ep, *mode;
+
+	setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = fflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRXfgorstuwx")) != -1)

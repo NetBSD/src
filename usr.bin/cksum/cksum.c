@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.8 1997/01/30 01:10:34 thorpej Exp $	*/
+/*	$NetBSD: cksum.c,v 1.9 1997/06/26 23:24:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: cksum.c,v 1.8 1997/01/30 01:10:34 thorpej Exp $";
+static char rcsid[] = "$NetBSD: cksum.c,v 1.9 1997/06/26 23:24:01 kleink Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: cksum.c,v 1.8 1997/01/30 01:10:34 thorpej Exp $"
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <md5.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,6 +82,8 @@ main(argc, argv)
 	extern char *__progname;
 
 	dosum = domd5 = pflag = nomd5stdin = 0;
+
+	setlocale(LC_ALL, "");
 
 	if (!strcmp(__progname, "md5"))
 		domd5 = 1;
