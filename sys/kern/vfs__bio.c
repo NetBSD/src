@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: vfs__bio.c,v 1.4 1993/06/22 02:33:21 glass Exp $
+ *	$Id: vfs__bio.c,v 1.5 1993/07/04 04:01:38 cgd Exp $
  */
 
 #include "param.h"
@@ -592,7 +592,7 @@ biowait(bp)
  * others biowait()'ing for it will notice when they are
  * woken up from sleep().
  */
-int
+void
 biodone(bp)
 	register struct buf *bp;
 {
