@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 1999/04/07 06:07:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -295,26 +295,31 @@ cpu_coredump(p, vp, cred, chdr)
  * and size must be a multiple of CLSIZE.
  */
 void
-pagemove(fptr, tptr, len)
-	caddr_t fptr, tptr;
+pagemove(from, to, len)
+	caddr_t from, to;
 	size_t len;
 {
-	struct pmap *kpmap;
-	vm_offset_t fva, tva, pa;
+	struct pmap *kpmap = vm_map_pmap(kernel_map);
+	vm_prot_t prot = VM_PROT_READ|VM_PROT_WRITE;
+	vaddr_t fva = (vaddr_t)from;
+	vaddr_t tva = (vaddr_t)to;
+	paddr_t pa;
 
-	fva = (vm_offset_t)fptr;
-	tva = (vm_offset_t)tptr;
-#ifdef DIAGNOSTIC
-	if (len & PGOFSET || fva & PGOFSET || tva & PGOFSET)
+#ifdef DEBUG
+	if (len & CLOFSET)
 		panic("pagemove");
 #endif
-
-	kpmap = vm_map_pmap(kernel_map);
 	while (len > 0) {
-		/* this does the cache flush work itself */
+		pa = pmap_extract(kpmap, fva);
+#ifdef DEBUG
+		if (pa == 0)
+			panic("pagemove 2");
+		if (pmap_extract(kpmap, tva) != 0)
+			panic("pagemove 3");
+#endif
+		/* pmap_remove does the necessary cache flush.*/
 		pmap_remove(kpmap, fva, fva + NBPG);
-		pmap_enter(kpmap, tva, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_enter(kpmap, tva, pa, prot, 1, prot);
 		fva += NBPG;
 		tva += NBPG;
 		len -= NBPG;
