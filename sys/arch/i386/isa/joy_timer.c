@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:40 jdolecek Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.2 2002/08/13 02:17:45 itojun Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.2 2002/08/13 02:17:45 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:40 jdolecek Exp $
 
 #include <dev/ic/joyvar.h>
 
-#include <i386/isa/timerreg.h>		/* XXX XXX XXX */
+#include <dev/ic/i8253reg.h>
 
 int
 joy_get_tick()
