@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.5 2002/02/13 08:18:41 ross Exp $
+.\"	$NetBSD: fork1.9,v 1.6 2002/07/11 10:45:58 pooka Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ The
 .Ar flags
 argument controls the semantics of the fork operation, and is made up of
 the bitwise-OR of the following values:
-.Bl -tag -width FORK_SHAREVM
+.Bl -tag -width FORK_SHAREFILES
 .It FORK_PPWAIT
 The parent process will sleep until the child process successfully calls
 .Xr execve 2
@@ -72,6 +72,15 @@ or abnormally).
 The child process will share the parent's virtual address space.  If this
 flag is not specified, the child will get a copy-on-write snapshot of the
 parent's address space.
+.It FORK_SHARECWD
+The child process will share the parent's current directory, root directory,
+and file creation mask.
+.It FORK_SHAREFILES
+The child process will share the parent's file descriptors.
+.It FORK_SHARESIGS
+The child process will share the parent's signal actions.
+.It FORK_NOWAIT
+The child process will at creation time be inherited by the init process.
 .El
 .Pp
 A
