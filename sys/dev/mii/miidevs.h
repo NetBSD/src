@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.10 2000/01/13 20:16:49 augustss Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.11 2000/05/08 13:26:05 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.10 2000/01/13 20:16:08 augustss Exp 
+ *	NetBSD: miidevs,v 1.11 2000/05/08 13:23:21 augustss Exp 
  */
 
 /*-
@@ -98,7 +98,11 @@
 #define	MII_MODEL_xxAMD_79C873	0x0000
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
 #define	MII_MODEL_AMD_79c973phy	0x0036
-#define	MII_STR_AMD_79c973phy	"Am79c973 internal PHY"
+#define	MII_STR_AMD_79c973phy	"Am79C973 internal PHY"
+#define	MII_MODEL_AMD_79c901	0x0037
+#define	MII_STR_AMD_79c901	"Am79C901 10 PHY"
+#define	MII_MODEL_AMD_79c901home	0x0039
+#define	MII_STR_AMD_79c901home	"Am79C901 HomePHY"
 
 /* Broadcom PHYs */
 #define	MII_MODEL_BROADCOM_BCM5201	0x0021
