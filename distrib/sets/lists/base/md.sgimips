@@ -1,0 +1,3 @@
+# $NetBSD: md.sgimips,v 1.1 2001/11/21 22:00:34 soren Exp $
+./usr/mdec/boot			base-sysutil-bin
+./usr/mdec/sgivol               base-sysutil-bin
