@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.17 1998/07/26 12:03:09 mycroft Exp $	*/
+/*	$NetBSD: fsck.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.17 1998/07/26 12:03:09 mycroft Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -164,8 +164,7 @@ main(argc, argv)
 
 
 	for (; argc--; argv++) {
-		char *spec;
-		const char *type;
+		const char *spec, *type;
 
 		if ((fs = getfsfile(*argv)) == NULL &&
 		    (fs = getfsspec(*argv)) == NULL) {
