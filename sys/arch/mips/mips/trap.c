@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.115 1999/11/18 06:47:49 jun Exp $	*/
+/*	$NetBSD: trap.c,v 1.116 1999/12/05 03:31:11 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 1999/11/18 06:47:49 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 1999/12/05 03:31:11 shin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -564,7 +564,7 @@ trap(status, cause, vaddr, opc, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
