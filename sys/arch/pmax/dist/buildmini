@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: buildmini,v 1.4 1994/10/26 21:09:29 cgd Exp $
+#	$NetBSD: buildmini,v 1.5 1994/11/23 18:13:58 dean Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 #	@(#)buildmini	7.3 (Berkeley) 6/10/93
 #
 
-dist=/sys/pmax/dist
+dist=/sys/arch/pmax/dist
 miniroot=rz1b
 minimnt=/tmp/mini
 
