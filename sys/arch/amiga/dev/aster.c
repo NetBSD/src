@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.9 2001/01/26 21:49:04 is Exp $ */
+/*	$NetBSD: aster.c,v 1.10 2001/01/28 21:43:38 is Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ asterattach(parent, self, auxp)
 		cardname = "Master II";
 		supa.supio_name = "isic13";
 	} else if (zap->manid == 2189 && zap->prodid == 3) {
-		cardname = "board";
+		cardname = "link";
 		supa.supio_name = "isic@B";
 	} else /* if (zap->manid == 4626 && zap->prodid == 5 &&
 		    zap->serno == 0) */{
