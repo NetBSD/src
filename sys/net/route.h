@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.11 1997/04/02 21:17:29 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.12 1998/04/29 03:41:49 kml Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -104,6 +104,7 @@ struct rtentry {
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
+	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 };
 
 /*
@@ -228,6 +229,29 @@ struct route_cb {
 	int	any_count;
 };
 
+/* 
+ * This structure, and the prototypes for the rt_timer_{init,remove_all,
+ * add,timer} functions all used with the kind permission of BSDI.
+ * These allow functions to be called for routes at specific times.
+ */
+
+struct rttimer {
+        CIRCLEQ_ENTRY(rttimer)	rtt_next;
+        LIST_ENTRY(rttimer) 	rtt_link; /* Multiple timers on single route */
+	struct rttimer_queue	*rtt_queue;
+        struct rtentry  	*rtt_rt;  /* Back pointer to the route */
+        void            	(*rtt_func) __P((struct rtentry *, 
+						 struct rttimer *));
+        time_t          	rtt_time; /* When this timer was registered */
+};
+
+struct rttimer_queue {
+	long				rtq_timeout;
+	CIRCLEQ_HEAD(, rttimer)		rtq_head;
+	LIST_ENTRY(rttimer_queue)	rtq_link;
+};    
+
+
 #ifdef _KERNEL
 #define	RTFREE(rt) \
 	if ((rt)->rt_refcnt <= 1) \
@@ -253,6 +277,16 @@ void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
 int	 rt_setgate __P((struct rtentry *,
 	    struct sockaddr *, struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
+int      rt_timer_add __P((struct rtentry *,
+             void(*)(struct rtentry *, struct rttimer *),
+	     struct rttimer_queue *));
+void	 rt_timer_init __P((void));
+struct rttimer_queue *
+	 rt_timer_queue_create __P((u_int));
+void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
+void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
+void	 rt_timer_remove_all __P((struct rtentry *));
+void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
 struct rtentry *
