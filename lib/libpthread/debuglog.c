@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.1.2.2 2001/07/24 21:26:58 nathanw Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.1.2.3 2001/07/31 00:15:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,15 +85,7 @@ main(int argc, char *argv[])
 	if (argc != 0)
 		usage();
 
-	debugbuf = pthread__debuglog_init();
-
-	if (initialize) {
-		/* Initialize */
-		debugbuf->msg_magic = BUF_MAGIC;
-		debugbuf->msg_bufw = 0;
-		debugbuf->msg_bufr = 0;
-		debugbuf->msg_bufs = PTHREAD__DEBUG_SHMSIZE;
-	}
+	debugbuf = pthread__debuglog_init(initialize);
 
 	pthread__debuglog_read(follow);
 	
@@ -115,7 +107,7 @@ pthread__debuglog_read(int follow)
 			printf("%.*s", writep - readp, 
 			    &debugbuf->msg_bufc[readp]);
 		} else if (readp > writep) {
-			printf("%.*s", debugbuf->msg_bufs - readp, 
+			printf("%.*s", (int)debugbuf->msg_bufs - readp, 
 			    &debugbuf->msg_bufc[readp]);
 			printf("%.*s", writep, &debugbuf->msg_bufc[0]);
 		}
