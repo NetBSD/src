@@ -3,7 +3,7 @@
  * The Berkeley Software Design Inc. software License Agreement specifies
  * the terms and conditions for redistribution.
  *
- *	BSDI $Id: isavar.h,v 1.2 1993/10/06 12:09:25 mycroft Exp $
+ *	BSDI $Id: isavar.h,v 1.3 1993/10/16 05:25:21 mycroft Exp $
  */
 
 /*
@@ -59,6 +59,7 @@ struct intrhand {
 } *intrhand[16];
 
 void intr_establish __P((int intr, struct intrhand *, enum devclass));
+void isa_establish __P((struct isadev *, struct device *));
 
 /*
  * software conventions
