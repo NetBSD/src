@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.2 1997/03/31 20:36:38 jonathan Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.3 1997/03/31 20:52:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and 
@@ -156,7 +156,7 @@ le_isapnp_match(parent, match, aux)
 	    if(!strcmp(ipa->ipa_devlogic, *card_name++))
 		return(1);
 
-	return (1);
+	return (0);
 }
 
 void
