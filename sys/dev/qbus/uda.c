@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.40 2001/04/29 12:32:18 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.41 2001/06/10 18:41:27 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -248,8 +248,8 @@ udago(struct device *usc, struct mscp_xi *mxi)
 	 */
 	if (sc->sc_inq == 0) {
 		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_data,
-		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+		    bp->b_data, bp->b_bcount, 
+		    (bp->b_flags & B_PHYS ? bp->b_proc : 0), BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
 			return;
