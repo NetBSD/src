@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.21 1993/07/06 00:42:43 deraadt Exp $
+ *	$Id: wd.c,v 1.22 1993/07/07 01:05:42 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -75,7 +75,7 @@
 #include "vm/vm.h"
 
 #ifndef WDCNDELAY
-#define WDCNDELAY	100000	/* delay = 25us; so 2.5s for a controller state change */
+#define WDCNDELAY	200000	/* delay = 25us; so 5s for a controller state change */
 #endif
 #define WDCDELAY	25
 
