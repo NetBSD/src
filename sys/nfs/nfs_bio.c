@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.117 2004/05/23 05:53:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.117 2004/05/23 05:53:01 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -930,11 +930,15 @@ nfs_doio_read(bp, uiop)
 	case VDIR:
 		nfsstats.readdir_bios++;
 		uiop->uio_offset = bp->b_dcookie;
+#ifndef NFS_V2_ONLY
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, uiop, curproc->p_ucred);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
+#else
+		nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
+#endif
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
 			error = nfs_readdirrpc(vp, uiop, curproc->p_ucred);
 		if (!error) {
@@ -967,7 +971,11 @@ nfs_doio_write(bp, uiop)
 	boolean_t stalewriteverf = FALSE;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct vm_page *pgs[npages];
+#ifndef NFS_V2_ONLY
 	boolean_t needcommit = TRUE; /* need only COMMIT RPC */
+#else
+	boolean_t needcommit = FALSE; /* need only COMMIT RPC */
+#endif
 	boolean_t pageprotected;
 	struct uvm_object *uobj = &vp->v_uobj;
 	int error;
@@ -979,7 +987,9 @@ nfs_doio_write(bp, uiop)
 		iomode = NFSV3WRITE_FILESYNC;
 	}
 
+#ifndef NFS_V2_ONLY
 again:
+#endif
 	lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
 
 	for (i = 0; i < npages; i++) {
@@ -1028,7 +1038,7 @@ again:
 	 * Send the data to the server if necessary,
 	 * otherwise just send a commit rpc.
 	 */
-
+#ifndef NFS_V2_ONLY
 	if (needcommit) {
 
 		/*
@@ -1088,11 +1098,13 @@ again:
 		}
 		return error;
 	}
+#endif
 	off = uiop->uio_offset;
 	cnt = bp->b_bcount;
 	uiop->uio_rw = UIO_WRITE;
 	nfsstats.write_bios++;
 	error = nfs_writerpc(vp, uiop, &iomode, pageprotected, &stalewriteverf);
+#ifndef NFS_V2_ONLY
 	if (!error && iomode == NFSV3WRITE_UNSTABLE) {
 		/*
 		 * we need to commit pages later.
@@ -1126,7 +1138,9 @@ again:
 			simple_unlock(&uobj->vmobjlock);
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-	} else if (!error) {
+	} else
+#endif
+	if (!error) {
 		/*
 		 * pages are now on stable storage.
 		 */
