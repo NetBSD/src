@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.15 2001/07/08 22:30:15 kim Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.16 2001/12/24 00:10:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,10 +100,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		break;
 	case SNDCTL_DSP_SYNC:
-	case SNDCTL_DSP_POST:
 		retval = ioctl(fd, AUDIO_DRAIN, 0);
 		if (retval < 0)
 			return retval;
+		break;
+	case SNDCTL_DSP_POST:
+		/* This call is merely advisory, and may be a nop. */
 		break;
 	case SNDCTL_DSP_SPEED:
 		AUDIO_INITINFO(&tmpinfo);
