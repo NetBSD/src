@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
+/*	$NetBSD: reverse.c,v 1.7 1997/10/19 23:45:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $";
+__RCSID("$NetBSD: reverse.c,v 1.7 1997/10/19 23:45:10 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,6 +102,8 @@ reverse(fp, style, off, sbp)
 		case REVERSE:
 			r_buf(fp);
 			break;
+		default:
+			break;
 		}
 }
 
@@ -110,13 +113,13 @@ reverse(fp, style, off, sbp)
 static void
 r_reg(fp, style, off, sbp)
 	FILE *fp;
-	register enum STYLE style;
+	enum STYLE style;
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
-	register int llen;
-	register char *p;
+	off_t size;
+	int llen;
+	char *p;
 	char *start;
 
 	if (!(size = sbp->st_size))
@@ -174,12 +177,13 @@ static void
 r_buf(fp)
 	FILE *fp;
 {
-	register BF *mark, *tl, *tr;
-	register int ch, len, llen;
-	register char *p;
+	BF *mark, *tl, *tr;
+	int ch, len, llen;
+	char *p;
 	off_t enomem;
 
 #define	BSZ	(128 * 1024)
+	tl =  NULL;
 	for (mark = NULL, enomem = 0;;) {
 		/*
 		 * Allocate a new block and link it into place in a doubly
@@ -223,7 +227,7 @@ r_buf(fp)
 
 	if (enomem) {
 		(void)fprintf(stderr,
-		    "tail: warning: %ld bytes discarded\n", enomem);
+		    "tail: warning: %qd bytes discarded\n", (long long)enomem);
 		rval = 1;
 	}
 

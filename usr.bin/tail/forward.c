@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
+/*	$NetBSD: forward.c,v 1.8 1997/10/19 23:45:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $";
+__RCSID("$NetBSD: forward.c,v 1.8 1997/10/19 23:45:08 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -88,7 +89,7 @@ forward(fp, style, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register int ch;
+	int ch;
 	struct timeval second;
 
 	switch(style) {
@@ -160,6 +161,8 @@ forward(fp, style, off, sbp)
 		} else
 			lines(fp, off);
 		break;
+	default:
+		break;
 	}
 
 	for (;;) {
@@ -195,8 +198,8 @@ rlines(fp, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register off_t size;
-	register char *p;
+	off_t size;
+	char *p;
 	char *start;
 
 	if (!(size = sbp->st_size))
