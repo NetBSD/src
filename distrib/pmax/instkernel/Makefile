@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/04/16 16:08:28 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 1999/04/27 01:34:49 simonb Exp $
 
 
 IMAGE=		diskimage
@@ -19,7 +19,7 @@ VND_DEV=	/dev/${VND}
 VND_RDEV=	/dev/r${VND}
 MOUNT_POINT?=	/mnt
 
-all:	netbsd.gz ${IMAGE}
+all:	netbsd.gz ${IMAGE}.gz
 
 netbsd.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd
@@ -30,7 +30,7 @@ netbsd.gz: ${KERN} ${RAMDISK}
 	rm -f netbsd.gz
 	gzip -9 netbsd
 
-${IMAGE}: netbsd.gz ${DESTDIR}/usr/mdec/boot
+${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
 	${PRELABEL}
@@ -44,6 +44,7 @@ ${IMAGE}: netbsd.gz ${DESTDIR}/usr/mdec/boot
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
+	gzip -9 ${IMAGE}
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
