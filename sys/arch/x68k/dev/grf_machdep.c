@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.6 1996/12/09 16:12:19 oki Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.7 1997/01/19 06:37:47 oki Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -234,7 +234,12 @@ grfinit(dp, unit)
 {
 	struct grf_softc *gp = dp;
 	register struct grfsw *gsw;
-	caddr_t addr = (void *)(unit < 1 ? IODEVbase->tvram : IODEVbase->gvram);
+	caddr_t addr;
+
+	if (unit == 0)
+		addr = (caddr_t)IODEVbase->tvram;
+	else
+		addr = (caddr_t)IODEVbase->gvram;
 
 	gsw = &grfsw[unit];
 	if (gsw < &grfsw[ngrfsw] && (*gsw->gd_init)(gp, addr)) {
