@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2001/04/12 06:07:42 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.97 2001/04/22 17:22:58 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -304,6 +304,17 @@ pmap_bootstrap()
 }
 
 /*
+ * Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
+}
+
+/*
  * Let the VM system do early memory allocation from the direct-mapped
  * physical memory instead.
  */
@@ -335,10 +346,6 @@ pmap_steal_memory(size, vstartp, vendp)
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
-	if (vstartp)
-		*vstartp = virtual_avail;
-	if (vendp)
-		*vendp = virtual_end;
 	bzero((caddr_t)v, size);
 	return v;
 }

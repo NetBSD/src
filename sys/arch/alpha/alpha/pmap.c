@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.162 2001/04/22 00:34:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.163 2001/04/22 17:22:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2001/04/22 00:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2001/04/22 17:22:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,6 +1064,19 @@ pmap_uses_prom_console(void)
 #endif _PMAP_MAY_USE_PROM_CONSOLE
 
 /*
+ * pmap_virtual_space:		[ INTERFACE ]
+ *
+ *	Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = round_page(virtual_avail);
+	*vendp = VM_MAX_KERNEL_ADDRESS;		/* we use pmap_growkernel */
+}
+
+/*
  * pmap_steal_memory:		[ INTERFACE ]
  *
  *	Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
@@ -1080,6 +1093,9 @@ pmap_uses_prom_console(void)
  *
  *	Note that this memory will never be freed, and in essence it is wired
  *	down.
+ *
+ *	We must adjust *vstartp and/or *vendp iff we use address space
+ *	from the kernel virtual address range defined by pmap_virtual_space().
  *
  *	Note: no locking is necessary in this function.
  */
@@ -1141,15 +1157,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
-
-		/*
-		 * Fill these in for the caller; we don't modify them,
-		 * but the upper layers still want to know.
-		 */
-		if (vstartp)
-			*vstartp = round_page(virtual_avail);
-		if (vendp)
-			*vendp = VM_MAX_KERNEL_ADDRESS;
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
 		memset((caddr_t)va, 0, size);

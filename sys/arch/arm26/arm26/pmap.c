@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.21 2001/04/22 00:34:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.22 2001/04/22 17:22:57 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2001/04/22 00:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2001/04/22 17:22:57 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -192,8 +192,6 @@ static void pv_release(pmap_t pmap, int ppn, int lpn);
 static caddr_t pmap_find(paddr_t);
 
 static void pmap_update_page(int);
-
-void pmap_virtual_space(vaddr_t *, vaddr_t *);
 
 /*
  * No-one else wanted to take responsibility for the MEMC control register,
@@ -283,8 +281,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			break;
 		}
 	}
-
-	pmap_virtual_space(vstartp, vendp);
 
 	return addr;
 }
