@@ -1,3 +1,4 @@
+/*	$NetBSD: krpc.h,v 1.2 1994/10/26 02:53:36 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 
