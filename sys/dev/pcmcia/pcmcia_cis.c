@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.20 2000/10/17 10:13:46 haya Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21 2001/02/10 23:22:10 martin Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -158,6 +158,7 @@ pcmcia_scan_cis(dev, fct, arg)
 		while (1) {
 			/* get the tuple code */
 
+			DELAY(1000);
 			tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
 
 			/* two special-case tuples */
@@ -181,6 +182,7 @@ pcmcia_scan_cis(dev, fct, arg)
 			}
 			/* now all the normal tuples */
 
+			DELAY(1250);
 			tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr + 1);
 			switch (tuple.code) {
 			case PCMCIA_CISTPL_LONGLINK_A:
@@ -217,7 +219,9 @@ pcmcia_scan_cis(dev, fct, arg)
 
 					*((u_int16_t *) & offset) =
 					    pcmcia_tuple_read_2(&tuple, 0);
+					DELAY(500);
 					length = pcmcia_tuple_read_2(&tuple, 2);
+					DELAY(500);
 					cksum = pcmcia_tuple_read_1(&tuple, 4);
 
 					addr = tuple.ptr + offset;
