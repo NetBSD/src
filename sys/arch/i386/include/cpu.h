@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.73 2001/08/01 19:50:49 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.74 2001/08/02 21:04:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -180,6 +180,8 @@ extern char cpu_vendor[];
 extern int cpuid_level;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
+
+extern int cpu_use_fxsave;
 
 /* machdep.c */
 void	delay __P((int));
