@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.8 1999/02/11 13:25:42 tv Exp $
+#	$NetBSD: bsd.files.mk,v 1.8.4.1 1999/08/10 00:43:35 mcr Exp $
 
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
@@ -31,8 +31,13 @@ ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: .MADE
 
 .PRECIOUS: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
 ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${FILESOWN_${F}} \
-		-g ${FILESGRP_${F}} -m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
+.if ${MORTALINSTALL} != "no"
+	${INSTALL} ${PRESERVE} ${COPY} \
+		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
+.else
+	${INSTALL} ${PRESERVE} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
+		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
+.endif
 .endfor
 .endif
 
