@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.81 1994/01/20 19:58:52 ws Exp $
+ *	$Id: machdep.c,v 1.82 1994/01/20 21:22:06 ws Exp $
  */
 
 #include <stddef.h>
@@ -396,7 +396,7 @@ sendsig(catcher, sig, mask, code)
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
-	register struct sigframe *fp;
+	struct sigframe *fp, frame;
 	struct sigacts *ps = p->p_sigacts;
 	int oonstack;
 	extern char sigcode[], esigcode[];
@@ -404,11 +404,7 @@ sendsig(catcher, sig, mask, code)
 	tf = (struct trapframe *)p->p_regs;
 	oonstack = ps->ps_onstack;
 	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
+	 * Allocate space for the signal handler context.
 	 */
 	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(ps->ps_sigsp
@@ -418,10 +414,35 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)(tf->tf_esp - sizeof(struct sigframe));
 	}
 
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void)grow(p, (unsigned)fp);
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	frame.sf_signum = sig;
+	frame.sf_code = code;
+	frame.sf_scp = &fp->sf_sc;
+	frame.sf_handler = catcher;
 
-	if (useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	frame.sf_sc.sc_onstack = oonstack;
+	frame.sf_sc.sc_mask = mask;
+	frame.sf_sc.sc_ebp = tf->tf_ebp;
+	frame.sf_sc.sc_esp = tf->tf_esp;
+	frame.sf_sc.sc_eip = tf->tf_eip;
+	frame.sf_sc.sc_efl = tf->tf_eflags;
+	frame.sf_sc.sc_eax = tf->tf_eax;
+	frame.sf_sc.sc_ebx = tf->tf_ebx;
+	frame.sf_sc.sc_ecx = tf->tf_ecx;
+	frame.sf_sc.sc_edx = tf->tf_edx;
+	frame.sf_sc.sc_esi = tf->tf_esi;
+	frame.sf_sc.sc_edi = tf->tf_edi;
+	frame.sf_sc.sc_cs = tf->tf_cs;
+	frame.sf_sc.sc_ds = tf->tf_ds;
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_ss = tf->tf_ss;
+
+	if (copyout(&frame,fp,sizeof(frame)) < 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -434,34 +455,6 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, SIGILL);
 		return;
 	}
-
-	/*
-	 * Build the argument list for the signal handler.
-	 */
-	fp->sf_signum = sig;
-	fp->sf_code = code;
-	fp->sf_scp = &fp->sf_sc;
-	fp->sf_handler = catcher;
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	fp->sf_sc.sc_onstack = oonstack;
-	fp->sf_sc.sc_mask = mask;
-	fp->sf_sc.sc_ebp = tf->tf_ebp;
-	fp->sf_sc.sc_esp = tf->tf_esp;
-	fp->sf_sc.sc_eip = tf->tf_eip;
-	fp->sf_sc.sc_efl = tf->tf_eflags;
-	fp->sf_sc.sc_eax = tf->tf_eax;
-	fp->sf_sc.sc_ebx = tf->tf_ebx;
-	fp->sf_sc.sc_ecx = tf->tf_ecx;
-	fp->sf_sc.sc_edx = tf->tf_edx;
-	fp->sf_sc.sc_esi = tf->tf_esi;
-	fp->sf_sc.sc_edi = tf->tf_edi;
-	fp->sf_sc.sc_cs = tf->tf_cs;
-	fp->sf_sc.sc_ds = tf->tf_ds;
-	fp->sf_sc.sc_es = tf->tf_es;
-	fp->sf_sc.sc_ss = tf->tf_ss;
 
 	/*
 	 * Build context to run handler in.
@@ -494,7 +487,7 @@ sigreturn(p, uap, retval)
 	struct sigreturn_args *uap;
 	int *retval;
 {
-	register struct sigcontext *scp;
+	struct sigcontext *scp, context;
 	register struct sigframe *fp;
 	register struct trapframe *tf;
 	int eflags;
@@ -513,10 +506,10 @@ sigreturn(p, uap, retval)
 	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
 		return(EFAULT);
 
-	if (useracc((caddr_t)scp, sizeof(*scp), 0) == 0)
+	if (copyin((caddr_t)scp, &context, sizeof(*scp)) < 0)
 		return(EFAULT);
 
-	eflags = scp->sc_efl;
+	eflags = context.sc_efl;
 	if ((eflags & PSL_USERCLR) != 0 ||
 	    (eflags & PSL_USERSET) != PSL_USERSET ||
 	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
@@ -536,12 +529,12 @@ sigreturn(p, uap, retval)
 #define null_sel(sel) \
 	(!ISLDT(sel) && IDXSEL(sel) == 0)
 
-	if ((scp->sc_cs&0xffff != _ucodesel && !valid_ldt_sel(scp->sc_cs)) ||
-	    (scp->sc_ss&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ss)) ||
-	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
-	     !null_sel(scp->sc_ds)) ||
-	    (scp->sc_es&0xffff != _udatasel && !valid_ldt_sel(scp->sc_es) &&
-	     !null_sel(scp->sc_es))) {
+	if ((context.sc_cs&0xffff != _ucodesel && !valid_ldt_sel(context.sc_cs)) ||
+	    (context.sc_ss&0xffff != _udatasel && !valid_ldt_sel(context.sc_ss)) ||
+	    (context.sc_ds&0xffff != _udatasel && !valid_ldt_sel(context.sc_ds) &&
+	     !null_sel(context.sc_ds)) ||
+	    (context.sc_es&0xffff != _udatasel && !valid_ldt_sel(context.sc_es) &&
+	     !null_sel(context.sc_es))) {
 		trapsignal(p, SIGBUS, T_PROTFLT);
 		return(EINVAL);
 	}
@@ -550,27 +543,27 @@ sigreturn(p, uap, retval)
 #undef valid_ldt_sel
 #undef null_sel
 
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
-	p->p_sigmask = scp->sc_mask &~
+	p->p_sigacts->ps_onstack = context.sc_onstack & 01;
+	p->p_sigmask = context.sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
 
 	/*
 	 * Restore signal context.
 	 */
-	tf->tf_ebp = scp->sc_ebp;
-	tf->tf_esp = scp->sc_esp;
-	tf->tf_eip = scp->sc_eip;
+	tf->tf_ebp = context.sc_ebp;
+	tf->tf_esp = context.sc_esp;
+	tf->tf_eip = context.sc_eip;
 	tf->tf_eflags = eflags;
-	tf->tf_eax = scp->sc_eax;
-	tf->tf_ebx = scp->sc_ebx;
-	tf->tf_ecx = scp->sc_ecx;
-	tf->tf_edx = scp->sc_edx;
-	tf->tf_esi = scp->sc_esi;
-	tf->tf_edi = scp->sc_edi;
-	tf->tf_cs = scp->sc_cs;
-	tf->tf_ds = scp->sc_ds;
-	tf->tf_es = scp->sc_es;
-	tf->tf_ss = scp->sc_ss;
+	tf->tf_eax = context.sc_eax;
+	tf->tf_ebx = context.sc_ebx;
+	tf->tf_ecx = context.sc_ecx;
+	tf->tf_edx = context.sc_edx;
+	tf->tf_esi = context.sc_esi;
+	tf->tf_edi = context.sc_edi;
+	tf->tf_cs = context.sc_cs;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_es = context.sc_es;
+	tf->tf_ss = context.sc_ss;
 
 	return(EJUSTRETURN);
 }

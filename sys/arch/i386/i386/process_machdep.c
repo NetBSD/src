@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp $
+ *	$Id: process_machdep.c,v 1.3 1994/01/20 21:22:08 ws Exp $
  */
 
 /*
@@ -87,9 +87,6 @@ process_read_regs(p, regs)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
-		return (EIO);
-
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
 	tp = ptr;
@@ -120,9 +117,6 @@ process_write_regs(p, regs)
 	struct trapframe *tp;
 	int eflags;
 
-	if ((p->p_flag & SLOAD) == 0)
-		return (EIO);
-
 	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
 	tp = ptr;
 
@@ -151,20 +145,20 @@ process_write_regs(p, regs)
 }
 
 int
-process_sstep(p)
+process_sstep(p, sstep)
 	struct proc *p;
 {
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
-		return (EIO);
-
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
 	tp = ptr;
-	tp->tf_eflags |= PSL_T;
-
+	if (sstep)
+		tp->tf_eflags |= PSL_T;
+	else
+		tp->tf_eflags &= ~PSL_T;
+	
 	return (0);
 }
 
@@ -182,9 +176,6 @@ process_set_pc(p, addr)
 {
 	void *ptr;
 	struct trapframe *tp;
-
-	if ((p->p_flag & SLOAD) == 0)
-		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
 
