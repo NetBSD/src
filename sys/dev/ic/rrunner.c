@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.39 2003/06/29 22:30:13 fvdl Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.40 2003/09/26 22:25:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39 2003/06/29 22:30:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.40 2003/09/26 22:25:21 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39 2003/06/29 22:30:13 fvdl Exp $");
 #define ESH_PRINTF
 */
 
-/* Autoconfig defintion of driver back-end */
+/* Autoconfig definition of driver back-end */
 extern struct cfdriver esh_cd;
 
 struct esh_softc *esh_softc_debug[22];  /* for gdb */
