@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.51 2002/03/21 00:16:15 eeh Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.52 2002/05/17 19:06:24 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.51 2002/03/21 00:16:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.52 2002/05/17 19:06:24 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,10 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 	    NULL, (cansleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) |
 	    BUS_DMA_STREAMING) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
-		return (CMD_COMPLETE);
+		if (error == EAGAIN || error == ENOMEM)
+			return (CMD_EAGAIN);
+		else
+			return (CMD_COMPLETE);
 	}
 
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, xs->datalen,
