@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.10 1999/09/04 18:56:01 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.11 1999/09/04 22:12:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1427,7 +1427,7 @@ ntfs_writentvattr_plain(
 
 	*initp = 0;
 
-	if (vap->va_flag & NTFS_AF_INRUN == 0) {
+	if ((vap->va_flag & NTFS_AF_INRUN) == 0) {
 		printf("ntfs_writevattr_plain: CAN'T WRITE RES. ATTRIBUTE\n");
 		return ENOTTY;
 	}
