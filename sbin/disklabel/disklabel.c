@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.7 1993/08/07 07:46:42 cgd Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.8 1993/10/13 06:26:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -363,7 +363,7 @@ writelabel(f, boot, lp)
 	register int i;
 	int flag;
 #ifdef	__386BSD__
-	off_t lbl_off; struct partition *pp = lp->d_partitions;
+	off_t lbl_off; struct partition *pp = &lp->d_partitions[2];
 #endif
 
 	lp->d_magic = DISKMAGIC;
