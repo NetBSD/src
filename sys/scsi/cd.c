@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.85 1996/03/26 20:32:06 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.86 1996/03/26 22:22:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -189,6 +189,10 @@ cdattach(parent, self, aux)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
+#if !defined(i386)
+	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
+#endif
+  
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
