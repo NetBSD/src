@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.17 2000/10/10 20:24:52 is Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.18 2001/02/04 21:29:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.17 2000/10/10 20:24:52 is Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.18 2001/02/04 21:29:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,6 @@ extern char *__progname;	/* from crt0.o */
 int main __P((int, char *[]));
 static void usage __P((void));
 static int cmdloop __P((void));
-static int helpfn __P((int, char *[]));
 static char *prompt __P((EditLine *));
 static int scannames __P((struct inodesc *));
 static int dolookup __P((char *));
