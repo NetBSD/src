@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2001/06/13 12:34:24 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2001/07/07 23:13:26 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,6 +33,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_execfmt.h"
 #include "opt_machtypes.h"
 
@@ -69,7 +70,7 @@
 #include <machine/arcs.h>
 #include <mips/locore.h>
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -132,6 +133,11 @@ void * cpu_intr_establish(int, int, int (*)(void *), void *);
 
 void	mach_init(int, char **, char **);
 void	unconfigured_system_type(int);
+
+#ifdef KGDB
+void zs_kgdb_init(void);
+void kgdb_connect(int);
+#endif
 
 extern int 	atoi(char *);	/* For parsing IP (archictecture) number */
 extern void	arcsinit(void);
@@ -241,12 +247,19 @@ mach_init(argc, argv, envp)
 #endif
 	}
 
+#if defined(KGDB) || defined(DDB)
 	/* Set up DDB hook to turn off watchdog on entry */
 	db_trap_callback = ddb_trap_hook;
 
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef KGDB
+	zs_kgdb_init();			/* XXX */
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 #endif
 
 	root = ARCS->GetChild(NULL);
@@ -691,6 +704,8 @@ void unconfigured_system_type(int ipnum)
 	panic("Kernel not configured for current hardware!");
 }
 
+#if defined(DDB) || defined(KGDB)
+
 void ddb_trap_hook(int where)
 {
 	switch (where) {
@@ -724,3 +739,5 @@ void ddb_trap_hook(int where)
 	    break;
 	}
 }
+
+#endif
