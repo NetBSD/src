@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.5 1997/09/26 21:18:07 gwr Exp $
+# $NetBSD: Makefile,v 1.6 1997/09/29 15:30:46 gwr Exp $
 
-# PROG=	gdb # No, this needs custom rules.
-# Use <bsd.prog.mk> somehow?
-PROGNAME=gdb
+PROG=	gdb
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -40,36 +38,37 @@ INCLS+= -I$(dist)/include
 # KERNEL_DEBUG no longer used.  See ADDITIONAL_OPTIONS*
 DEFS= -DNO_MMALLOC
 
-CPPFLAGS= $(INCLS) $(DEFS)
+CFLAGS+= $(INCLS) $(DEFS)
 
 .include "_$(TARGET_ARCH).mk"
 
 # Any NetBSD: (i386 m68k ns32k sparc vax)
-NDEP_CMN?= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o
-XDEP_FILES= ser-tcp.o ser-unix.o
-REMOTE_OBS = remote.o dcache.o remote-utils.o
+NDEP_CMN?= infptrace.c inftarg.c fork-child.c corelow.c kcore-nbsd.c
+XDEP_FILES= ser-tcp.c ser-unix.c
+REMOTE_SRCS = remote.c dcache.c remote-utils.c
 
 DEPFILES = $(TDEP_FILES) $(XDEP_FILES) \
- $(NDEP_CMN) $(NDEP_FILES) $(REMOTE_OBS)
+ $(NDEP_CMN) $(NDEP_FILES) $(REMOTE_SRCS)
 
-YYOBJ= c-exp.tab.o f-exp.tab.o m2-exp.tab.o
+YYSRCS= c-exp.tab.c f-exp.tab.c m2-exp.tab.c
 
 # This exists only for easy comparison with the GNU Makefile.
-COMMON_OBS = version.o blockframe.o breakpoint.o findvar.o stack.o thread.o \
-	source.o values.o eval.o valops.o valarith.o valprint.o printcmd.o \
-	symtab.o symfile.o symmisc.o infcmd.o infrun.o command.o \
-	expprint.o environ.o gdbtypes.o copying.o $(DEPFILES) \
-	mem-break.o target.o parse.o language.o $(YYOBJ) buildsym.o \
-	exec.o bcache.o objfiles.o minsyms.o maint.o demangle.o \
-	dbxread.o coffread.o elfread.o \
-	dwarfread.o mipsread.o stabsread.o corefile.o \
-	c-lang.o ch-exp.o ch-lang.o f-lang.o m2-lang.o \
-	scm-exp.o scm-lang.o scm-valprint.o complaints.o typeprint.o \
-	c-typeprint.o ch-typeprint.o f-typeprint.o m2-typeprint.o \
-	c-valprint.o cp-valprint.o ch-valprint.o f-valprint.o m2-valprint.o \
-	nlmread.o serial.o mdebugread.o os9kread.o top.o utils.o callback.o
+COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
+	source.c values.c eval.c valops.c valarith.c valprint.c printcmd.c \
+	symtab.c symfile.c symmisc.c infcmd.c infrun.c command.c \
+	expprint.c environ.c gdbtypes.c copying.c $(DEPFILES) \
+	mem-break.c target.c parse.c language.c $(YYSRCS) buildsym.c \
+	exec.c bcache.c objfiles.c minsyms.c maint.c demangle.c \
+	dbxread.c coffread.c elfread.c \
+	dwarfread.c mipsread.c stabsread.c corefile.c \
+	c-lang.c ch-exp.c ch-lang.c f-lang.c m2-lang.c \
+	scm-exp.c scm-lang.c scm-valprint.c complaints.c typeprint.c \
+	c-typeprint.c ch-typeprint.c f-typeprint.c m2-typeprint.c \
+	c-valprint.c cp-valprint.c ch-valprint.c f-valprint.c m2-valprint.c \
+	nlmread.c serial.c mdebugread.c os9kread.c top.c utils.c callback.c
 
-OBJS =	main.o $(COMMON_OBS) annotate.o inflow.o gnu-regex.o
+SRCS=	main.c $(COMMON_SRCS) annotate.c inflow.c gnu-regex.c
+OBJS=	init.o
 
 LDADD+= $(LIBREADLINE)
 DPADD+= $(LIBREADLINE)
@@ -83,33 +82,26 @@ DPADD+= $(LIBKVM)
 LDADD+= -ltermcap
 DPADD+= $(LIBTERMCAP)
 
-# Note custom rules - did NOT set PROG
-CLEANFILES+= gdb
-all: gdb
+DPSRCS+= nm.h tm.h
 
 .include <bsd.prog.mk>
-
-.NOPATH: ${OBJS}
 
 # Note: this rule does something similar to the gcc "collect" program,
 # by scanning all the objects for initialization functions, collecting
 # them all into the generated init.c file, which is called by main.
-CLEANFILES+= init.c init.o
-gdb : $(OBJS) $(DPADD)
+CLEANFILES+= init.c
+init.o : $(OBJS:S/init.o//)
 	-rm -f init.c
-	sh $(.CURDIR)/mkinit.sh $(OBJS) > init.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c init.c
-	$(CC) -o $@ $(OBJS) init.o $(LDADD)
+	sh $(.CURDIR)/mkinit.sh $(OBJS:S/init.o//) > init.c
+	${COMPILE.c} init.c
 
 # Need these headers before any objects.
 $(OBJS) : nm.h tm.h xm.h
 
-DPSRCS+= nm.h
 nm.h : $(srcdir)/$(NM_FILE)
 	-rm -f $@
 	cp -p $(srcdir)/$(NM_FILE) $@
 
-DPSRCS+= tm.h
 tm.h : $(srcdir)/$(TM_FILE)
 	-rm -f $@
 	cp -p $(srcdir)/$(TM_FILE) $@
@@ -120,26 +112,5 @@ version.o : version.c
 	  -DTARGET_NAME=\"$(TARGET_ARCH)-netbsd\" \
 	  -c $(.IMPSRC)
 
-# YACC rules for YYOBJS?
-
-cleandepend:
-	-rm -f .depend ${DPSRCS}
-
-depend: .depend
-.depend: ${DPSRCS} ${OBJS:.o=.c}
-	${CC} -MM $(CPPFLAGS) ${.ALLSRC:M*.c} > .depend.tmp
-	-mv -f .depend.tmp $@
-
-proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
-.endif
-.if !defined(BUILD)
-${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
-.endif
-
-.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
-${DESTDIR}${BINDIR}/${PROGNAME}: ${PROGNAME}
-	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} \
-	    -m ${BINMODE} ${.ALLSRC} ${.TARGET}
-
+# YACC rules for YYSRCS?  Our yacc did not work for me, so
+# this makefile uses the FSF-provided YYSRCS for now.
