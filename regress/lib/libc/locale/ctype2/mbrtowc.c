@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtowc.c,v 1.2 2002/09/12 12:50:04 minoura Exp $	*/
+/*	$NetBSD: mbrtowc.c,v 1.3 2004/02/27 15:14:58 itojun Exp $	*/
 
 /*
  * test code for mbrtowc
@@ -40,13 +40,13 @@ int test_mbrtowc(char const *text)
 	stp = 0;
 #endif
 
-	for (n = 0; n<10; n++) {
-		wbuf[n] = malloc(sizeof(wchar_t)*WBSIZE);
+	for (n = 0; n < 10; n++) {
+		wbuf[n] = malloc(sizeof(wchar_t) * WBSIZE);
 		assert(wbuf[n]);
-		memset(wbuf[n], 0xff, sizeof(wchar_t)*WBSIZE);
+		memset(wbuf[n], 0xff, sizeof(wchar_t) * WBSIZE);
 	}
 
-	for (n = 9; n>0; n--) {
+	for (n = 9; n > 0; n--) {
 		int m;
 		char const *src = text;
 		assert(mbsinit(stp));
@@ -120,4 +120,3 @@ main(int argc, char**argv)
 	
 	return EXIT_FAILURE;
 }
-
