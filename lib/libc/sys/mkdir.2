@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)mkdir.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: mkdir.2,v 1.7 1994/04/22 00:13:37 jtc Exp $
+.\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 10, 1991
+.Dd December 11, 1993
 .Dt MKDIR 2
 .Os BSD 4.2
 .Sh NAME
@@ -82,21 +83,11 @@ The named file resides on a read-only file system.
 .It Bq Er EEXIST
 The named file exists.
 .It Bq Er ENOSPC
-The directory in which the entry for the new directory is being placed
-cannot be extended because there is no space left on the file
-system containing the directory.
-.It Bq Er ENOSPC
-The new directory cannot be created because there
-there is no space left on the file
-system that will contain the directory.
+The new directory cannot be created because there is no space left
+on the file system that will contain the directory.
 .It Bq Er ENOSPC
 There are no free inodes on the file system on which the
 directory is being created.
-.It Bq Er EDQUOT
-The directory in which the entry for the new directory
-is being placed cannot be extended because the
-user's quota of disk blocks on the file system
-containing the directory has been exhausted.
 .It Bq Er EDQUOT
 The new directory cannot be created because the user's
 quota of disk blocks on the file system that will

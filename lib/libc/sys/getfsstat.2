@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: getfsstat.2,v 1.5 1995/02/27 12:32:47 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,17 +31,17 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)getfsstat.2	6.6 (Berkeley) 7/23/91
-.\"	$Id: getfsstat.2,v 1.4 1993/11/29 19:45:02 jtc Exp $
+.\"	@(#)getfsstat.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd July 23, 1991
+.Dd June 9, 1993
 .Dt GETFSSTAT 2
 .Os
 .Sh NAME
 .Nm getfsstat
 .Nd get list of all mounted filesystems
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
+.Fd #include <sys/ucred.h>
 .Fd #include <sys/mount.h>
 .Ft int
 .Fn getfsstat "struct statfs *buf" "long bufsize" "int flags"
@@ -58,8 +60,8 @@ typedef quad fsid_t;
 struct statfs {
     short   f_type;	/* type of filesystem (see below) */
     short   f_flags;	/* copy of mount flags */
-    long    f_fsize;	/* fundamental filesystem block size */
-    long    f_bsize;	/* optimal transfer block size */
+    long    f_bsize;	/* fundamental filesystem block size */
+    long    f_iosize;	/* optimal transfer block size */
     long    f_blocks;	/* total data blocks in filesystem */
     long    f_bfree;	/* free blocks in fs */
     long    f_bavail;	/* free blocks avail to non-superuser */
@@ -132,5 +134,4 @@ error occurred while reading from or writing to the filesystem.
 .Sh HISTORY
 The
 .Fn getfsstat
-function call is
-.Ud .
+function first appeared in 4.4BSD.

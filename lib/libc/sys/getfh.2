@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: getfh.2,v 1.6 1995/02/27 12:32:44 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)getfh.2	6.4 (Berkeley) 7/23/91
-.\"	$Id: getfh.2,v 1.5 1994/04/22 00:13:35 jtc Exp $
+.\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd July 23, 1991
+.Dd June 9, 1993
 .Dt GETFH 2
 .Os
 .Sh NAME
@@ -42,7 +43,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/mount.h>
 .Ft int
-.Fn getfh "char *path" "struct fhandle_t *fhp"
+.Fn getfh "char *path" "fhandle_t *fhp"
 .Sh DESCRIPTION
 .Fn Getfh
 returns a file handle for the specified file or directory
@@ -93,5 +94,5 @@ error occurred while reading from or writing to the file system.
 .Sh HISTORY
 The
 .Fn getfh
-function call is
-.Ud .
+function
+first appeared in 4.4BSD.

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: mprotect.2,v 1.5 1995/02/27 12:34:56 cgd Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)mprotect.2	6.1 (Berkeley) 5/27/91
-.\"	$Id: mprotect.2,v 1.4 1993/12/15 18:08:16 jtc Exp $
+.\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 27, 1991
+.Dd June 9, 1993
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -44,9 +45,10 @@
 .Ft int
 .Fn mprotect "caddr_t addr" "int len" "int prot"
 .Sh DESCRIPTION
-The 
-.Nm mprotect
-system call changes the specified pages to have protection 
+The
+.Fn mprotect
+system call
+changes the specified pages to have protection
 .Fa prot .
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
@@ -54,4 +56,8 @@ the granularity of protection changes may be as large as an entire region.
 .Xr madvise 2 , 
 .Xr mincore 2 , 
 .Xr msync 2 ,
-.Xr munmap 2 ,
+.Xr munmap 2
+.Sh HISTORY
+The
+.Fn mprotect
+function first appeared in 4.4BSD.

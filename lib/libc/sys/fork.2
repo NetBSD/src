@@ -1,5 +1,7 @@
-.\" Copyright (c) 1980, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: fork.2,v 1.6 1995/02/27 12:32:36 cgd Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,12 +31,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: fork.2,v 1.5 1993/11/29 21:25:07 jtc Exp $
+.\"	@(#)fork.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
+.Dd June 4, 1993
 .Dt FORK 2
-.Os BSD 4.0
+.Os BSD 4
 .Sh NAME
 .Nm fork
 .Nd create a new process
@@ -105,6 +106,6 @@ There is insufficient swap space for the new process.
 .Xr wait 2
 .Sh HISTORY
 A
-.Fn fork
-function call appeared in 
+.Fn fork 2
+function call appeared in
 .At v6 .
