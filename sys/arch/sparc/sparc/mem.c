@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2003/07/25 07:25:31 pk Exp $ */
+/*	$NetBSD: mem.c,v 1.36 2003/07/28 07:05:56 pk Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35 2003/07/25 07:25:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36 2003/07/28 07:05:56 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -126,7 +126,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(pa), prot, PMAP_WIRED);
+			    trunc_page(pa), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
