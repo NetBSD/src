@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.55 1999/03/24 19:03:10 mellon Exp $
+#	$NetBSD: netstart,v 1.55.2.1 2000/01/31 19:34:37 he Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -34,7 +34,7 @@ fi
 
 # Flush all routes just to make sure it is clean
 if checkyesno flushroutes; then
-	route flush
+	route -n flush
 fi
 
 # Enable, flush and install packet filter rules before configuring interfaces.
