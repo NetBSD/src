@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.15 1997/09/16 13:08:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
+static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos Exp $";
+__RCSID("$NetBSD: quotacheck.c,v 1.15 1997/09/16 13:08:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,13 @@ static char rcsid[] = "$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ffs/fs.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <fstab.h>
 #include <pwd.h>
@@ -69,7 +71,6 @@ static char rcsid[] = "$NetBSD: quotacheck.c,v 1.14 1996/09/28 19:20:44 christos
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "fsutil.h"
 
@@ -538,7 +539,7 @@ addid(id, type, name)
 	if (id > highid[type])
 		highid[type] = id;
 	if (name)
-		memcpy(fup->fu_name, name, len + 1);
+		memmove(fup->fu_name, name, len + 1);
 	else
 		(void)sprintf(fup->fu_name, "%lu", id);
 	return (fup);
