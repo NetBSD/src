@@ -530,6 +530,18 @@ aix*)
   ])
   CONFIG_LDFLAGS="${CONFIG_LDFLAGS} ${gdb_cv_bigtoc}"
   ;;
+netbsd*)
+  AC_MSG_CHECKING(for NetBSD thread debugging library)
+  if test -f /usr/include/pthread_dbg.h ; then
+     AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_THREAD_DB_LIB)
+     CONFIG_OBS="${CONFIG_OBS} nbsd-thread.o"
+     CONFIG_SRCS="${CONFIG_SRCS} nbsd-thread.c"
+     CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -lpthread_dbg"
+  else
+     AC_MSG_RESULT(no)
+  fi
+  ;;
 esac
 
 
