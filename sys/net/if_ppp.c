@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.10 1994/05/24 02:33:56 cgd Exp $ */
+/* $Id: if_ppp.c,v 1.11 1994/05/29 23:44:23 paulus Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -1367,16 +1367,15 @@ pppinput(c, tp)
 	return;
     }
 
-    if (c == PPP_ESCAPE) {
-	sc->sc_flags |= SC_ESCAPED;
-	return;
-    }
     if (c < 0x20 && (sc->sc_rasyncmap & (1 << c)))
 	return;
 
     if (sc->sc_flags & SC_ESCAPED) {
 	sc->sc_flags &= ~SC_ESCAPED;
 	c ^= PPP_TRANS;
+    } else if (c == PPP_ESCAPE) {
+	sc->sc_flags |= SC_ESCAPED;
+	return;
     }
 
     /*
