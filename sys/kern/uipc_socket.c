@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.18 1995/04/22 19:43:04 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.19 1995/05/23 00:19:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -919,7 +919,7 @@ sosetopt(so, level, optname, m0)
 				goto bad;
 			}
 			tv = mtod(m, struct timeval *);
-			if (tv->tv_sec > SHRT_MAX / hz - hz) {
+			if (tv->tv_sec * hz + tv->tv_usec / tick > SHRT_MAX) {
 				error = EDOM;
 				goto bad;
 			}
