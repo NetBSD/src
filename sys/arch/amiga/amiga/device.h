@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: device.h,v 1.2 1994/05/16 04:50:43 chopps Exp $
+ *	$Id: device.h,v 1.3 1994/05/16 04:52:43 chopps Exp $
  */
 #ifndef _AMIGA_DEVICE_H_
 #define _AMIGA_DEVICE_H_
@@ -48,6 +48,6 @@ int amiga_realconfig;
 
 
 #define getsoftc(cdnam, unit) \
-    (unit >= cdnam.cd_ndevs ? NULL : cdnam.cd_devs[unit])
+    ((unit) >= (cdnam).cd_ndevs ? NULL : (cdnam).cd_devs[unit])
 
 #endif /* _AMIGA_DEVICE_H_ */
