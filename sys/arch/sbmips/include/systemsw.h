@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.1 2002/03/06 02:13:49 simonb Exp $ */
+/* $NetBSD: systemsw.h,v 1.2 2002/03/06 07:35:13 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -43,6 +43,7 @@ struct systemsw {
 	void	(*s_cpu_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
 	void	(*s_cpu_setsoftintr)(void);
 	void	(*s_microtime)(struct timeval *);
+	uint32_t (*s_clkread)(void);
 	void	(*s_delay)(u_long);
 
 	void	*s_clock_arg;
