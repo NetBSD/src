@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2002/12/02 13:31:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2003/01/03 15:34:40 lukem Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -14,38 +14,37 @@ MD_INSTALLATION_DIRS=	installation/miniroot	\
 			installation/floppy
 INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
+
+INSTALLATION_SYMLINKS=	\
+		tape/tapefile1.gz	../bootfs/netbsd.ram.aout.gz	\
+		tape/tapefile2		../bootfs/instfs.tgz		\
+		floppy/disk1.gz		../bootfs/boot.fs.gz		\
+		floppy/disk2		../bootfs/instfs.tgz		\
+		netboot/rootfs.tgz	../bootfs/instfs.tgz
+
 #
 # Install miniroot images and auxiliary scripts to the release tree
 #
 snap_md_post:
 	# install boot image in netboot directory
-	cp -p ${DESTDIR}/usr/mdec/boot.net ${RELEASEDIR}/installation/netboot
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot.net \
+	    ${RELEASEDIR}/${MACHINE}/installation/netboot
 
 	# install links to boot and installation utilities for various media
-	rm -f ${RELEASEDIR}/installation/tape/tapefile1.gz
-	rm -f ${RELEASEDIR}/installation/tape/tapefile2
-	rm -f ${RELEASEDIR}/installation/floppy/disk1.gz
-	rm -f ${RELEASEDIR}/installation/floppy/disk2
-	rm -f ${RELEASEDIR}/installation/netboot/rootfs.tgz
-	ln -s ../bootfs/netbsd.ram.aout.gz \
-			${RELEASEDIR}/installation/tape/tapefile1.gz
-	ln -s ../bootfs/instfs.tgz \
-			${RELEASEDIR}/installation/tape/tapefile2
-	ln -s ../bootfs/boot.fs.gz \
-			${RELEASEDIR}/installation/floppy/disk1.gz
-	ln -s ../bootfs/instfs.tgz \
-			${RELEASEDIR}/installation/floppy/disk2
-	ln -s ../bootfs/instfs.tgz \
-			${RELEASEDIR}/installation/netboot/rootfs.tgz
+.for linkdst linksrc in ${INSTALLATION_SYMLINKS} 
+	rm -f ${RELEASEDIR}/${MACHINE}/installation/${linkdst}
+	ln -s ${linksrc} ${RELEASEDIR}/${MACHINE}/installation/${linkdst}
+.endfor
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	${MAKESUMS} -t ${RELEASEDIR}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
 .endfor
 
 CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc/bootfs && ${PRINTOBJDIR}
 CDBOOTIMAGE=	${CDBOOTIMAGEDIR}/boot.fs
 
 iso-image_md_post:
-	mksunbootcd ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
-		${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}
+	mksunbootcd \
+	    ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso \
+	    ${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}

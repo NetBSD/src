@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/07/22 04:42:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/01/03 15:34:31 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,7 +15,8 @@ RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 all: ${ARCHIVE}
 
 release: check_RELEASEDIR .WAIT ${ARCHIVE}
-	mv -f ${ARCHIVE} ${RELEASEDIR}/installation/misc/
+	${RELEASE_INSTALL} ${ARCHIVE} \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc/
 
 ${ARCHIVE}: tmp/BtNetBSD
 	cd tmp && tar cZf ${.OBJDIR}/${ARCHIVE} BtNetBSD

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/12/02 13:31:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2003/01/03 15:34:37 lukem Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
@@ -11,4 +11,4 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
 
 snap_md_post:
-#	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot '*.gz'
+#	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/miniroot '*.gz'

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2001/09/22 03:34:18 tv Exp $
+# $NetBSD: Makefile,v 1.25 2003/01/03 15:34:42 lukem Exp $
 
 PROG = netboot
 
@@ -30,11 +30,6 @@ ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.sym
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: ${PROG}
-	cp ${PROG} ${RELEASEDIR}/installation/netboot
-.endif
+release: check_RELEASEDIR .WAIT ${PROG}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${PROG} \
+	    ${RELEASEDIR}/${MACHINE}/installation/netboot
