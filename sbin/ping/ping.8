@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.7 1995/03/18 14:59:14 cgd Exp $
+.\"	$NetBSD: ping.8,v 1.8 1995/07/27 23:49:07 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,10 @@ packets to network hosts
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
+.Op Fl S Ar ifaddr
 .Op Fl s Ar packetsize
 .Op Fl t Ar ttl
+.Op Fl t Ar maxwait
 .Ar host
 .Sh DESCRIPTION
 .Nm Ping
@@ -141,6 +143,9 @@ If the host is not on a directly-attached network, an error is returned.
 This option can be used to ping a local host through an interface
 that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
+.It Fl S Ar ifaddr
+Specify the interface to transmit from on machines with multiple
+interfaces. For unicast pings.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.  
 The default is 56, which translates into 64
@@ -166,6 +171,9 @@ Disable the loopback, so the transmitting host doesn't see the ICMP
 requests.
 .It Fl t Ar ttl
 Use the specified time-to-live.
+.It Fl w Ar maxwait
+Specifies the number of seconds to wait for a response to a packet
+before transmitting the next one.  The default is 10.
 .El
 .Pp
 When using
