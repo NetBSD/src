@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)show.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: show.c,v 1.8 1994/12/05 19:07:56 cgd Exp $";
+static char *rcsid = "$Id: show.c,v 1.9 1995/01/23 06:33:09 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,6 +70,9 @@ shtree(n, ind, pfx, fp)
 {
 	struct nodelist *lp;
 	char *s;
+
+	if (n == NULL)
+		return;
 
 	indent(ind, pfx, fp);
 	switch(n->type) {
@@ -178,10 +181,15 @@ sharg(arg, fp)
 			putc('$', fp);
 			putc('{', fp);
 			subtype = *++p;
+			if (subtype == VSLENGTH)
+				putc('#', fp);
+
 			while (*p != '=')
 				putc(*p++, fp);
+
 			if (subtype & VSNUL)
 				putc(':', fp);
+
 			switch (subtype & VSTYPE) {
 			case VSNORMAL:
 				putc('}', fp);
@@ -197,6 +205,22 @@ sharg(arg, fp)
 				break;
 			case VSASSIGN:
 				putc('=', fp);
+				break;
+			case VSTRIMLEFT:
+				putc('#', fp);
+				break;
+			case VSTRIMLEFTMAX:
+				putc('#', fp);
+				putc('#', fp);
+				break;
+			case VSTRIMRIGHT:
+				putc('%', fp);
+				break;
+			case VSTRIMRIGHTMAX:
+				putc('%', fp);
+				putc('%', fp);
+				break;
+			case VSLENGTH:
 				break;
 			default:
 				printf("<subtype %d>", subtype);
