@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.48 1996/10/12 00:50:11 cgd Exp $	*/
+/*	$NetBSD: kvm.c,v 1.49 1996/11/09 23:44:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.48 1996/10/12 00:50:11 cgd Exp $";
+static char *rcsid = "$NetBSD: kvm.c,v 1.49 1996/11/09 23:44:53 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -514,9 +514,9 @@ off_t	dump_off;
 	/*
 	 * Now that we have a valid header, enable translations.
 	 */
-	_kvm_initvtop(kd);
-
-	return(hdr_size);
+	if (_kvm_initvtop(kd) == 0)
+		/* Success */
+		return (hdr_size);
 
 fail:
 	if (kd->kcore_hdr != NULL) {
