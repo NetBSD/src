@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2002/04/27 19:29:09 shiba Exp $	*/
+/*	$NetBSD: machdep.c,v 1.273 2002/05/21 07:05:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,6 +375,8 @@ consinit(void)
 void
 cpu_startup(void)
 {
+	extern char *start;
+	extern char *etext;
 	caddr_t v;
 	unsigned i;
 	int vers;
@@ -484,6 +486,19 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 *
+	 * XXX I'd like this to be m68k_trunc_page(&kernel_text) instead
+	 * XXX of the reference to &start, but we have to keep the
+	 * XXX interrupt vectors and such writable for the Mac toolbox.
+	 */
+	if (uvm_map_protect(kernel_map,
+	    m68k_trunc_page(&start + (NBPG - 1)), m68k_round_page(&etext),
+	    (UVM_PROT_READ | UVM_PROT_EXEC), TRUE) != 0)
+		panic("can't protect kernel text");
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -2019,15 +2034,19 @@ struct intvid_info_t {
 	u_long	fblen;
 } intvid_info[] = {
 	{ MACH_MACCLASSICII,	0x009f9a80,	0x0,		21888 },
-	{ MACH_MACPB140,	0xfee00000,	0x0,		32 * 1024 },
-	{ MACH_MACPB145,	0xfee00000,	0x0,		32 * 1024 },
-	{ MACH_MACPB170,	0xfee00000,	0x0,		32 * 1024 },
+	{ MACH_MACPB140,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB145,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB170,	0xfee08000,	0x0,		32 * 1024 },
 	{ MACH_MACPB150,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACPB160,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB165,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB180,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB210,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACPB230,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB250,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB270,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280C,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACIICI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACIISI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACCCLASSIC,	0x50f40000,	0x0,		512 * 1024 },
