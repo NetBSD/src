@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.5 1995/09/04 19:41:41 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.6 1996/03/10 11:42:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -32,6 +32,8 @@
 
 #ifndef _GRFABS_REG_H
 #define _GRFABS_REG_H
+
+#include <atari/dev/grfabs_fal.h>
 
 struct point {
     long	x;
@@ -161,17 +163,27 @@ struct grfabs_sw {
 	void	 (*remove_view) __P((view_t *));
 	int 	 (*use_colormap) __P((view_t *, colormap_t *));
 };
-	
+
 /* display mode */
 struct display_mode {
     LIST_ENTRY(display_mode)	link;
     u_char			*name;		/* logical name for mode. */
     dimen_t			size;		/* screen size		  */
     u_char			depth;		/* screen depth		  */
-    u_short			vm_reg;		/* video mode register	  */
+    union {
+	u_short			tt_reg;		/* video mode register tt */
+	struct {
+	    u_short		fal_mode;	/* falcon mode		  */
+	    struct videl	*fal_regs;	/* videl register values  */
+	} fal_vid;
+    } video_mode;
     struct grfabs_sw		*grfabs_funcs;	/* hardware switch table  */
     view_t			*current_view;	/* view displaying me	  */
 };
+
+#define vm_reg		video_mode.tt_reg
+#define vm_mode		video_mode.fal_vid.fal_mode
+#define vm_regs		video_mode.fal_vid.fal_regs
 
 /*
  * Definition of available graphic mode list.
