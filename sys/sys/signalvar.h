@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.25 2000/11/05 15:37:10 jdolecek Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.26 2000/11/15 21:13:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -69,6 +69,7 @@ struct	sigacts {
  * get signal action for process and signal; currently only for current process
  */
 #define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
+#define	SIGACTION_PS(ps, sig)	(ps->ps_sigact[(sig)])
 
 /*
  * Determine signal that should be delivered to process p, the current

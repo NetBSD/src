@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.414 2000/11/14 22:55:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.415 2000/11/15 21:13:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1138,7 +1138,7 @@ sendsig(catcher, sig, mask, code)
 	/* Do we need to jump onto the signal stack? */
 	onstack =
 	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (SIGACTION_PS(psp, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
