@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.35 2001/11/18 15:47:36 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.36 2001/11/18 15:57:23 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2001/11/18 15:47:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2001/11/18 15:57:23 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -856,10 +856,8 @@ pmap_clear_modify(struct vm_page *page)
 	if (rv) {
 		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
 			if (pv->pv_pmap == pmap_kernel() &&
-			    (pv->pv_prot & VM_PROT_WRITE)) {
-				printf("clear_modify on k-writable page\n");
+			    (pv->pv_prot & VM_PROT_WRITE))
 				return rv;
-			}
 		pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
 		pmap_update_page(ppn);
 	}
