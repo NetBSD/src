@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.5 1999/12/03 22:48:22 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.6 2000/02/05 22:22:41 veego Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.5 1999/12/03 22:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.6 2000/02/05 22:22:41 veego Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.5 1999/12/03 22:48:22 thorpej Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
 
 /* Write this to Pyxis General Purpose Output to turn off the power. */
 #define	DEC_550_PYXIS_GPO_POWERDOWN	0x00000400
@@ -70,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.5 1999/12/03 22:48:22 thorpej Exp $");
 #define CONSPEED TTYDEF_SPEED
 #endif
 static int comcnrate = CONSPEED;
+
+#define	DR_VERBOSE(f) while (0)
 
 void dec_550_init __P((void));
 static void dec_550_cons_init __P((void));
@@ -157,8 +160,8 @@ dec_550_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found, initted, scsiboot, netboot;
-	static struct device *pcidev, *scsidev;
+	static int found, initted, scsiboot, ideboot, netboot;
+	static struct device *pcidev, *scsipidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
@@ -170,10 +173,15 @@ dec_550_device_register(dev, aux)
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
 		netboot = (strcmp(b->protocol, "BOOTP") == 0);
-#if 0
-		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
-#endif
-		initted =1;
+		/*
+		 * Add an extra check to boot from ide drives:
+		 * Newer SRM firmware use the protocol identifier IDE,
+		 * older SRM firmware use the protocol identifier SCSI.
+		 */
+		ideboot = (strcmp(b->protocol, "IDE") == 0);
+		DR_VERBOSE(printf("scsiboot = %d, ideboot = %d, netboot = %d\n",
+		    scsiboot, ideboot, netboot));
+		initted = 1;
 	}
 
 	if (pcidev == NULL) {
@@ -186,14 +194,13 @@ dec_550_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-#if 0
-			printf("\npcidev = %s\n", pcidev->dv_xname);
-#endif
+			DR_VERBOSE(printf("\npcidev = %s\n",
+			    pcidev->dv_xname));
 			return;
 		}
 	}
 
-	if (scsiboot && (scsidev == NULL)) {
+	if ((ideboot || scsiboot) && (scsipidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -204,10 +211,9 @@ dec_550_device_register(dev, aux)
 
 			/* XXX function? */
 	
-			scsidev = dev;
-#if 0
-			printf("\nscsidev = %s\n", scsidev->dv_xname);
-#endif
+			scsipidev = dev;
+			DR_VERBOSE(printf("\nscsipidev = %s\n",
+			    scsipidev->dv_xname));
 			return;
 		}
 	}
@@ -218,7 +224,7 @@ dec_550_device_register(dev, aux)
 	     !strcmp(cd->cd_name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != scsidev)
+		if (parent->dv_parent != scsipidev)
 			return;
 
 		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
@@ -242,9 +248,34 @@ dec_550_device_register(dev, aux)
 
 		/* we've found it! */
 		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+		DR_VERBOSE(printf("\nbooted_device = %s\n",
+		    booted_device->dv_xname));
+		found = 1;
+	}
+
+	/*
+	 * Support to boot from IDE drives.
+	 */
+	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+		struct ata_atapi_attach *aa_link = aux;
+		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
+			return;
+		} else {
+			if (parent != scsipidev)
+				return;
+		}
+		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",
+		    aa_link->aa_drv_data->drive, aa_link->aa_channel));
+		DR_VERBOSE(printf("Bootdev info: unit: %d, channel: %d\n",
+		    b->unit, b->channel));
+		if (b->unit != aa_link->aa_drv_data->drive ||
+		    b->channel != aa_link->aa_channel)
+			return;
+
+		/* we've found it! */
+		booted_device = dev;
+		DR_VERBOSE(printf("booted_device = %s\n",
+		    booted_device->dv_xname));
 		found = 1;
 	}
 
@@ -260,9 +291,8 @@ dec_550_device_register(dev, aux)
 			/* XXX function? */
 	
 			booted_device = dev;
-#if 0
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+			DR_VERBOSE(printf("\nbooted_device = %s\n",
+			    booted_device->dv_xname));
 			found = 1;
 			return;
 		}
