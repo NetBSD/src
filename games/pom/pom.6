@@ -1,4 +1,4 @@
-.\"	$NetBSD: pom.6,v 1.5 1997/10/10 16:46:56 lukem Exp $
+.\"	$NetBSD: pom.6,v 1.6 1998/06/13 01:09:22 jeremy Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,21 @@
 .Nd display the phase of the moon
 .Sh SYNOPSIS
 .Nm
+.Op Ar secs
 .Sh DESCRIPTION
 The
 .Nm
 utility displays the current phase of the moon.
 Useful for selecting software completion target dates and predicting 
 managerial behavior.
+.Pp
+.Bl -tag -width secs
+.It Ar secs
+Display the phase of the moon for the date represented by
+.Ar secs
+seconds past the Epoch
+(Midnight, January 1, 1970 GMT).
+If
+.Ar secs
+is unspecified, the current time is used.
+.El
