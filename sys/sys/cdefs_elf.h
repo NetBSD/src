@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.14 2003/01/18 09:53:17 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.15 2003/07/30 00:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,10 +89,10 @@
 
 #if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .text")
+	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .previous")
 #else
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm__(".section _sec ; .asciz _str ; .text")
+	__asm__(".section _sec ; .asciz _str ; .previous")
 #endif
 
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
