@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.76 2002/05/31 09:54:52 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.77 2002/05/31 13:34:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.76 2002/05/31 09:54:52 haya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.77 2002/05/31 13:34:03 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1245,7 +1245,7 @@ pccbb_power(ct, command)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
-	u_int32_t status, sock_ctrl;
+	u_int32_t status, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
 
@@ -1355,6 +1355,16 @@ pccbb_power(ct, command)
 		}
 #endif
 		return 0;
+	}
+
+	if (sc->sc_chipset == CB_TOPIC97) {
+		reg_ctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL);
+		reg_ctrl &= ~TOPIC97_REG_CTRL_TESTMODE;
+		if ((command & CARDBUS_VCCMASK) == CARDBUS_VCC_0V)
+			reg_ctrl &= ~TOPIC97_REG_CTRL_CLKRUN_ENA;
+		else
+			reg_ctrl |= TOPIC97_REG_CTRL_CLKRUN_ENA;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL, reg_ctrl);
 	}
 
 	/*
