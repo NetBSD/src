@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.37 2000/05/02 08:17:51 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.38 2000/07/27 18:43:30 mason Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -64,7 +64,7 @@ case $i in
 all)
 	sh $0 minimal fd 
 	sh $0 raid0 raid1 raid2 raid3
-	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	sh $0 pty0 pty1 pty2 pty3 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 fb0 fb1 fb2
@@ -83,7 +83,7 @@ minimal)
 	sh $0 std
 	sh $0 rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
 	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh $0 md0 dz0 zs0
+	sh $0 md0 dz0 zs0 pty0
 	;;
 
 std)
