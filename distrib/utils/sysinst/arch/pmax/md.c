@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.28 1999/04/11 22:40:27 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.29 1999/04/16 15:42:32 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,12 +143,12 @@ int	md_post_disklabel (void)
  *
  * On pmax, we take this opportuinty to update the bootblocks.
  */
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
 	/* XXX boot blocks ... */
 	if (target_already_root()) {
 		/* /usr is empty and we must already have bootblocks?*/
-		return;
+		return 0;
 	}
 	
 	printf (msg_string(MSG_dobootblks), diskdev);
