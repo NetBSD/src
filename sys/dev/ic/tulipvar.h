@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.36.4.1 2000/08/09 14:39:05 castor Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.36.4.2 2000/10/17 21:44:15 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,14 @@
 #ifndef _DEV_IC_TULIPVAR_H_
 #define	_DEV_IC_TULIPVAR_H_
 
+#include "rnd.h"
+ 
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 /*
  * Misc. definitions for the Digital Semiconductor ``Tulip'' (21x4x)
@@ -439,6 +445,10 @@ struct tulip_softc {
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
+
+#if NRND > 0
+	rndsource_element_t sc_rnd_source; /* random source */
+#endif
 };
 #endif
 
