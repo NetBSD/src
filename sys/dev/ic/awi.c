@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.6 1999/11/08 15:45:00 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.7 1999/11/08 15:56:16 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1280,6 +1280,7 @@ awi_dump_rxchain (sc, what, descr)
 							if (m1 == NULL) {
 								m_freem(top);
 								top = NULL;
+								break;
 							}
 							m->m_next = m1;
 							m = m1;
