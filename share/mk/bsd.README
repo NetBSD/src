@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.147 2004/03/09 19:08:17 skrll Exp $
+#	$NetBSD: bsd.README,v 1.148 2004/03/18 02:00:00 jmc Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -541,6 +541,14 @@ BUILDSYMLINKS	List of two word items:
 		For each lnsrc item, create a symlink named lntgt.
 		The lntgt symlinks are removed by the cleandir target.
 
+UUDECODE_FILES	List of files which are stored as <file>.uue in the source
+		tree. Each one will be decoded with ${TOOL_UUDECODE}.
+		The source files have a `.uue' suffix, the generated files do 
+		not.
+		
+		*NOTE: These files are simply decoded, with no install or other
+		       rule applying implicitly except being added to the clean
+		       target.
 
 =-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
 
