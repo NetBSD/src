@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.12 1994/02/19 02:43:53 mycroft Exp $
+ *	$Id: lpt_isa.c,v 1.13 1994/02/19 03:36:12 mycroft Exp $
  */
 
 /*
@@ -119,9 +119,13 @@ struct isa_driver lptdriver = {
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
+#ifndef DIAGNOSTIC
+#define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
+#else
 #define	NOT_READY()	notready(inb(iobase + lpt_status), sc)
-
 static int notready __P((u_char, struct lpt_softc *));
+#endif
+
 static void lptout __P((struct lpt_softc *));
 static int pushbytes __P((struct lpt_softc *));
 
@@ -325,6 +329,7 @@ lptopen(dev, flag)
 	return 0;
 }
 
+#ifdef DIAGNOSTIC
 int
 notready(status, sc)
 	u_char status;
@@ -341,6 +346,7 @@ notready(status, sc)
 
 	return status & LPS_MASK;
 }
+#endif
 
 void
 lptout(sc)
@@ -348,22 +354,12 @@ lptout(sc)
 {
 	int s;
 
-	if ((sc->sc_state & LPT_OPEN) == 0)
-		return;
 	if (sc->sc_flags & LPT_NOINTR)
 		return;
 
-	/*
-	 * Avoid possible hangs do to missed interrupts.
-	 */
-	if (sc->sc_count) {
-		s = spltty();
-		lptintr(sc->sc_dev.dv_unit);
-		splx(s);
-	} else {
-		sc->sc_state &= ~LPT_OBUSY;
-		wakeup((caddr_t)sc);
-	}
+	s = spltty();
+	lptintr(sc->sc_dev.dv_unit);
+	splx(s);
 
 	timeout((timeout_t)lptout, (caddr_t)sc, STEP);
 }
@@ -489,28 +485,24 @@ lptintr(unit)
 {
 	struct lpt_softc *sc = &lpt_softc[unit];
 	u_short iobase = sc->sc_iobase;
-	u_char control = sc->sc_control;
 
+#if 0
 	if ((sc->sc_state & LPT_OPEN) == 0)
 		return 0;
+#endif
 
 	/* is printer online and ready for output */
 	if (NOT_READY())
 		return 0;
 
 	if (sc->sc_count) {
+		u_char control = sc->sc_control;
 		/* send char */
+		outb(iobase + lpt_data, *sc->sc_cp++);
+		outb(iobase + lpt_control, control | LPC_STROBE);
+		sc->sc_count--;
+		outb(iobase + lpt_control, control);
 		sc->sc_state |= LPT_OBUSY;
-#if 0
-		while (sc->sc_count && !NOT_READY()) {
-#endif
-			outb(iobase + lpt_data, *sc->sc_cp++);
-			outb(iobase + lpt_control, control | LPC_STROBE);
-			sc->sc_count--;
-			outb(iobase + lpt_control, control);
-#if 0
-		}
-#endif
 	} else
 		sc->sc_state &= ~LPT_OBUSY;
 
