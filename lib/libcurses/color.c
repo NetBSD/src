@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.3 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.4 2000/04/15 22:53:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -400,27 +400,24 @@ __change_pair(short pair)
 					if ((win->lines[y]->line[x].attr &
 					    __COLOR) == COLOR_PAIR(pair)) {
 						if (!(win->lines[y]->flags &
-						    __ISDIRTY)) {
+						    __ISDIRTY))
 							win->lines[y]->flags |=
 							    __ISDIRTY;
+						/*
+						 * firstchp/lastchp are shared
+						 * between parent window and
+						 * sub-window.
+						 */
+						if (*win->lines[y]->firstchp >
+						    x)
 							*win->lines[y]->firstchp
 							    = x;
+						if (*win->lines[y]->lastchp < x)
 							*win->lines[y]->lastchp
 							    = x;
-						} else {
-							if (*win->lines[y]->
-							    firstchp > x)
-								*win->lines[y]->
-								    firstchp =
-								    x;
-							if (*win->lines[y]->
-							    lastchp < x)
-								*win->lines[y]->
-								    lastchp = x;
-						}
 					}
 #ifdef DEBUG
-				if ((win->lines[y]->flags & __ISDIRTY)
+				if ((win->lines[y]->flags & __ISDIRTY))
 					__CTRACE("__change_pair: first = %d, last = %d\n", *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
 			}
