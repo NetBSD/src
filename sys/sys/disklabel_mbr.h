@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.9 2002/09/28 00:56:25 dbj Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.10 2003/04/30 10:29:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -42,12 +42,38 @@
 
 /* MBR ("Master Boot Record"; DOS) partition table -- located in boot block */
 #define	MBR_BBSECTOR	0		/* MBR relative sector # */
+#define	MBR_BOOTSELOFF	404		/* offset of mbr_bootsel */
 #define	MBR_PARTOFF	446		/* offset of MBR partition table */
 #define	MBR_MAGICOFF	510		/* offset of magic number */
 #define	MBR_MAGIC	0xaa55		/* MBR magic number */
 #define	NMBRPART	4
 
+/*
+ * Each entry in the boot select table is a nul-terminated string
+ * of 8 bytes (not including the 0). A zero-length string
+ * (ie if the first char is 0) indicates an unused entry.
+ */
+#define	PARTNAMESIZE	8		/* for bootselect menu */
+
+#define	DEFAULT_BOOTDIR		"/usr/mdec"
+#define	DEFAULT_BOOTCODE	"mbr"
+#define	DEFAULT_BOOTSELCODE	"mbr_bootsel"
+#define	DEFAULT_BOOTEXTCODE	"mbr_ext"
+
+/* flags for mbr_bootsel */
+#define	BFL_SELACTIVE	0x01	/* Bootselector active (or code present) */
+#define	BFL_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
+#define	BFL_READ_LBA	0x04	/* Force LBA reads - even for low numbers */
+#define	BFL_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
+#define	BFL_NEWMBR	0x80	/* New code: menu user 1..9 for ptns */
+
+/* Scan values for the various keys we use, as returned by the BIOS */
+#define	SCAN_ENTER	0x1c
+#define	SCAN_F1		0x3b
+#define	SCAN_1		0x2
+
 #ifndef __ASSEMBLER__
+typedef struct mbr_partition mbr_partition_t;
 struct mbr_partition {
 	u_int8_t	mbrp_flag;	/* bootstrap flags */
 	u_int8_t	mbrp_shd;	/* starting head */
@@ -60,6 +86,23 @@ struct mbr_partition {
 	u_int32_t	mbrp_start;	/* absolute starting sector number */
 	u_int32_t	mbrp_size;	/* partition size in sectors */
 };
+
+typedef struct mbr_bootsel mbr_bootsel_t;
+struct mbr_bootsel {
+	uint8_t		mbrb_defkey;
+	uint8_t		mbrb_flags;
+	uint16_t	mbrb_timeo;
+	char		mbrb_nametab[NMBRPART][PARTNAMESIZE + 1];
+	uint16_t	mbrb_magic;
+};
+
+typedef struct mbr_sector mbr_sector_t;
+struct mbr_sector {
+	uint8_t		mbr_bootinst[MBR_BOOTSELOFF];
+	mbr_bootsel_t	mbr_bootsel;
+	mbr_partition_t	mbr_parts[NMBRPART];
+	uint16_t	mbr_signature;
+} __attribute__((__packed__));
 #endif
 
 /* Known MBR flags: */
