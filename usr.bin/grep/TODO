@@ -1,12 +1,10 @@
 
-$NetBSD: TODO,v 1.1.1.1 2004/01/02 15:00:27 cjep Exp $
+$NetBSD: TODO,v 1.2 2004/05/05 14:34:55 cjep Exp $
 
 Hopefully this program can become a full drop-in replacement for 
 GNU grep.
 
 1. Add functionality and maybe change flags to match GNU grep. 
-  * --line-buffered
-
   * --include,--exclude
 	possibly use code from pax for this.
 
