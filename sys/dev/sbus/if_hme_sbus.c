@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.3 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.4 2000/06/25 01:05:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ hmeattach_sbus(parent, self, aux)
 	sc->sc_burst =  (burst & SBUS_BURST_32) ? 32 :
 			(burst & SBUS_BURST_16) ? 16 : 0;
 
+	sc->sc_pci = 0; /* XXXXX should all be done in bus_dma. */
 	hme_config(sc);
 
 	/* Establish interrupt handler */
