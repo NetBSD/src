@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.8 2000/05/08 21:57:56 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.9 2000/05/09 10:15:17 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -476,7 +476,7 @@ plumvideo_ioctl(v, cmd, data, flag, p)
 
 		cmap_work_free(r, g, b, rgb);
 
-		return (EINVAL);
+		return (0);
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
@@ -678,6 +678,7 @@ __plumvideo_clut_access(sc, palette_func)
 	/* change palette mode to Display */
 	val |= PLUM_VIDEO_PLGMD_MODE_DISPLAY;
 	bus_space_write_4(regt, regh, PLUM_VIDEO_PLGMD_REG, val);
+
 	/* palette access enable */
 	val |= PLUM_VIDEO_PLGMD_PALETTE_ENABLE;
 	bus_space_write_4(regt, regh, PLUM_VIDEO_PLGMD_REG, val);
