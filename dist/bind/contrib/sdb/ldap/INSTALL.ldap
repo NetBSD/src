@@ -1,0 +1,59 @@
+This is the INSTALL file for 0.9. See
+http://www.venaas.no/ldap/bind-sdb/ for updates or other information.
+
+BUILDING
+
+You need the source for BIND 9.1.0 or newer (for zone transfers you
+will need at least 9.1.1rc3 due to a bug). Basically you need to follow
+the instructions in doc/misc/sdb, if my instructions doesn't make sense,
+please have a look at that as well.
+
+Copy ldapdb.c to bin/named and ldapdb.h to bin/named/include in the
+source tree.
+
+Next alter bin/named/Makefile.in. Add ldapdb.@O@ to DBDRIVER_OBJS and
+ldapdb.c to DBDRIVER_SRCS. You also need to add something like
+-I/usr/local/include to DBDRIVER_INCLUDES and
+-L/usr/local/lib -lldap -llber -lresolv to DBDRIVER_LIBS
+depending on what LDAP library you have and where you installed it.
+
+Finally you need to edit bin/named/main.c. Below where it says
+"#include "xxdb.h"", add the line "#include <ldapdb.h>". Below where
+it says "xxdb_init();" add the line "ldapdb_init();", and finally
+below where it says "xxdb_clear();", add "ldapdb_clear();".
+
+Now you should hopefully be able to build it. If you get an error
+message about ldap_memfree() not being defined, you're probably
+using an LDAP library with the interface defined in RFC 1823. To
+build, uncomment the #define RFC1823API line near the top of ldapdb.c.
+
+
+CONFIGURING
+
+Before you do any configuring of LDAP stuff, please try to configure
+and start bind as usual to see if things work.
+
+To do anything useful, you need to store a zone in some LDAP server.
+From this release on, you must use a schema called dNSZone. Note that
+it relies on some attribute definitions in the Cosine schema, so that
+must be included as well. The Cosine schema probably comes with your
+LDAP server. You can find dNSZone and further details on how to store
+the data in your LDAP server at
+http://www.venaas.no/ldap/bind-sdb/
+
+For an example, have a look at my venaas.com zone. Try a subtree search
+for objectClass=* at
+ldap ldap://129.241.20.67/dc=venaas,dc=com,o=DNS,dc=venaas,dc=no
+
+To use it with BIND, I've added the following to named.conf:
+zone "venaas.com" {
+        type master;
+        database "ldap ldap://129.241.20.67/dc=venaas,dc=com,o=DNS,dc=venaas,dc=no 172800";
+};
+
+When doing lookups BIND will do a sub-tree search below the base in the
+URL. The number 172800 is the TTL which will be used for all entries that
+haven't got the dNSTTL attribute. It is also possible to add an filter to
+the URL, say ldap://host/base???(o=internal)
+
+Stig Venaas <venaas@uninett.no> 2002-04-17
