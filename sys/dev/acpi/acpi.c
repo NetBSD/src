@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.45 2003/10/30 19:33:24 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.46 2003/10/30 20:29:54 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.45 2003/10/30 19:33:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.46 2003/10/30 20:29:54 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -767,13 +767,9 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	buf.Pointer = &param;
 	buf.Length = sizeof(param);
 
-	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
-	if (rv == AE_OK) {
-		if (param.Type == ACPI_TYPE_INTEGER)
-			*valp = param.Integer.Value;
-		else
-			rv = AE_TYPE;
-	}
+	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_INTEGER);
+	if (rv == AE_OK)
+		*valp = param.Integer.Value;
 
 	return (rv);
 }
@@ -796,27 +792,18 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 	buf.Pointer = NULL;
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
-	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
-	param = (ACPI_OBJECT *)buf.Pointer;
-	if (rv == AE_OK && param) {
-		if (param->Type == ACPI_TYPE_STRING) {
-			char *ptr = param->String.Pointer;
-			size_t len;
-			while (*ptr++)
-				continue;
-			len = ptr - param->String.Pointer;
-			if ((*stringp = AcpiOsAllocate(len)) == NULL) {
-				rv = AE_NO_MEMORY;
-				goto done;
-			}
-			(void)memcpy(*stringp, param->String.Pointer, len);
-			goto done;
-		}
-		rv = AE_TYPE;
+	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
+	if (rv == AE_OK) {
+		param = buf.Pointer;
+		char *ptr = param->String.Pointer;
+		size_t len = param->String.Length;
+		if ((*stringp = AcpiOsAllocate(len)) == NULL)
+			rv = AE_NO_MEMORY;
+		else
+			(void)memcpy(*stringp, ptr, len);
+		AcpiOsFree(param);
 	}
-done:
-	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+
 	return (rv);
 }
 
