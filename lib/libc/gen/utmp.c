@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.1 2002/07/27 23:57:39 christos Exp $	 */
+/*	$NetBSD: utmp.c,v 1.2 2002/07/28 20:46:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmp.c,v 1.1 2002/07/27 23:57:39 christos Exp $");
+__RCSID("$NetBSD: utmp.c,v 1.2 2002/07/28 20:46:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -51,21 +51,20 @@ static FILE *ut;
 void
 setutent(void)
 {
-	if (ut != NULL)
-		(void)fclose(ut);
-	ut = fopen(_PATH_UTMP, "r");
+	if (ut == NULL)
+		return;
+	(void)fseeko(ut, (off_t)0, SEEK_SET);
 }
 
 struct utmp *
 getutent(void)
 {
-	if (ut == NULL)
-		return NULL;
-	while (fread(&utmp, sizeof(utmp), 1, ut) == 1) {
-		if (utmp.ut_name[0] == '\0')
-			continue;
-		return &utmp;
+	if (ut == NULL) {
+		if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
+			return NULL;
 	}
+	if (fread(&utmp, sizeof(utmp), 1, ut) == 1)
+		return &utmp;
 	return NULL;
 }
 
