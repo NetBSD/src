@@ -1,9 +1,9 @@
-#	$NetBSD: JORNADA690,v 1.7 2001/03/15 17:30:55 uch Exp $
+#	$NetBSD: JORNADA690,v 1.8 2001/07/08 17:02:36 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
 
-include "arch/hpcsh/conf/std.hpcsh.el"
+include "arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
