@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.28 1996/02/09 21:32:10 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.29 1996/02/10 00:33:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -738,7 +738,7 @@ cd9660_link(v)
 }
 
 int
-cd9660_symlink(ap)
+cd9660_symlink(v)
 	void *v;
 {
 	struct vop_symlink_args /* {
