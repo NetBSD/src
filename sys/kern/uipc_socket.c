@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.32 1998/03/01 02:22:34 fvdl Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.33 1998/04/25 17:35:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -83,6 +83,8 @@ socreate(dom, aso, type, proto)
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
 	so->so_proto = prp;
+	so->so_send = sosend;
+	so->so_receive = soreceive;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
 	if (error) {
