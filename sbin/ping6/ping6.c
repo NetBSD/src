@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $	*/
+/*	$NetBSD: ping6.c,v 1.9 1999/12/13 15:26:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.9 1999/12/13 15:26:00 itojun Exp $");
 #endif
 #endif
 
@@ -99,6 +99,13 @@ __RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
  *	More statistics could always be gathered.
  *	This program has to run SUID to ROOT to access the ICMP socket.
  */
+/*
+ * NOTE:
+ * USE_SIN6_SCOPE_ID assumes that sin6_scope_id has the same semantics
+ * as IPV6_PKTINFO.  Some objects it (sin6_scope_id specifies *link* while
+ * IPV6_PKTINFO specifies *interface*.  Link is defined as collection of
+ * network attached to 1 or more interfaces)
+ */
 
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -114,7 +121,6 @@ __RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#include <netinet6/ah.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -129,6 +135,7 @@ __RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
 #include <unistd.h>
 
 #ifdef IPSEC
+#include <netinet6/ah.h>
 #include <netinet6/ipsec.h>
 #endif
 
@@ -159,7 +166,7 @@ __RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
 #define	F_VERBOSE	0x0100
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-#define	F_POLICY	0x4000
+#define	F_POLICY	0x0400
 #else
 #define F_AUTHHDR	0x0200
 #define F_ENCRYPT	0x0400
@@ -168,6 +175,7 @@ __RCSID("$NetBSD: ping6.c,v 1.8 1999/12/05 18:14:11 jdolecek Exp $");
 #define F_NODEADDR	0x0800
 #define F_FQDN		0x1000
 #define F_INTERFACE	0x2000
+#define F_SRCADDR	0x4000
 u_int options;
 
 #define IN6LEN		sizeof(struct in6_addr)
@@ -195,6 +203,7 @@ char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
+struct in6_addr srcaddr;
 
 /* counters */
 long npackets;			/* max packets to transmit */
@@ -228,7 +237,7 @@ void	 onalrm __P((int));
 void	 oninfo __P((int));
 void	 onint __P((int));
 void	 pinger __P((void));
-char	*pr_addr __P((struct in6_addr *));
+char	*pr_addr __P((struct sockaddr_in6 *));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
 void	 pr_nodeaddr __P((struct icmp6_nodeinfo *, int));
@@ -257,6 +266,8 @@ main(argc, argv)
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
 	int sockbufsize = 0;
+	int usepktinfo = 0;
+	struct in6_pktinfo *pktinfo = NULL;
 #ifdef IPSEC_POLICY_IPSEC
 	char *policy = NULL;
 #endif
@@ -268,41 +279,43 @@ main(argc, argv)
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 #ifndef IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrs:vwW")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrS:s:vwW")) != EOF)
 #else
 #ifdef IPSEC_POLICY_IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrs:vwWP:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrS:s:vwWP:")) != EOF)
 #else
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrs:vwWAE")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRrS:s:vwWAE")) != EOF)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 		switch(ch) {
 		 case 'a':
 		 {
-			 u_char *cp;
+			 char *cp;
 
 			 options |= F_NODEADDR;
 			 datalen = 2048; /* XXX: enough? */
 			 for (cp = optarg; *cp != '\0'; cp++) {
 				 switch(*cp) {
-				  case 'a':
-				  case 'A':
-					  naflags |= NI_NODEADDR_FLAG_ALL;
-					  break;
-				  case 'l':
-				  case 'L':
-					  naflags |= NI_NODEADDR_FLAG_LINKLOCAL;
-					  break;
-				  case 's':
-				  case 'S':
-					  naflags |= NI_NODEADDR_FLAG_SITELOCAL;
-					  break;
-				  case 'g':
-				  case 'G':
-					  naflags |= NI_NODEADDR_FLAG_GLOBAL;
-					  break;
-				  default:
-					  usage();
+				 case 'a':
+					 naflags |= NI_NODEADDR_FLAG_ALL;
+					 break;
+				 case 'l':
+				 case 'L':
+					 naflags |= NI_NODEADDR_FLAG_LINKLOCAL;
+					 break;
+				 case 's':
+				 case 'S':
+					 naflags |= NI_NODEADDR_FLAG_SITELOCAL;
+					 break;
+				 case 'g':
+				 case 'G':
+					 naflags |= NI_NODEADDR_FLAG_GLOBAL;
+					 break;
+				 case 'A': /* experimental. not in the spec */
+					 naflags |= NI_NODEADDR_FLAG_ANYCAST;
+					 break;
+				 default:
+					 usage();
 				 }
 			 }
 			 break;
@@ -341,6 +354,9 @@ main(argc, argv)
 		case 'I':
 			ifname = optarg;
 			options |= F_INTERFACE;
+#ifndef USE_SIN6_SCOPE_ID
+			usepktinfo++;
+#endif
 			break;
 		case 'i':		/* wait between sending packets */
 			interval = strtol(optarg, &e, 10);
@@ -366,6 +382,13 @@ main(argc, argv)
 			break;
 		case 'R':
 			options |= F_RROUTE;
+			break;
+		case 'S':
+			/* XXX: use getaddrinfo? */
+			if (inet_pton(AF_INET6, optarg, (void *)&srcaddr) != 1)
+				errx(1, "invalid IPv6 address: %s", optarg);
+			options |= F_SRCADDR;
+			usepktinfo++;
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, &e, 10);
@@ -449,8 +472,9 @@ main(argc, argv)
 
 	ident = getpid() & 0xFFFF;
 
-	if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
-	  err(1, "socket");
+	if ((s = socket(res->ai_family, res->ai_socktype,
+			res->ai_protocol)) < 0)
+		err(1, "socket");
 
 	hold = 1;
 
@@ -529,11 +553,9 @@ main(argc, argv)
 	if (options & F_RROUTE)
 		errx(1, "record route not available in this implementation");
 
-	/* Outgoing interface */
-#ifndef SIN6_IFINDEX
-	if (options & F_INTERFACE)
+	/* Specify the outgoing interface and/or the source address */
+	if (usepktinfo)
 		ip6optlen += CMSG_SPACE(sizeof(struct in6_pktinfo));
-#endif
 
 	if (hoplimit != -1)
 		ip6optlen += CMSG_SPACE(sizeof(int));
@@ -546,24 +568,30 @@ main(argc, argv)
 		smsghdr.msg_controllen = ip6optlen;
 		scmsgp = (struct cmsghdr *)scmsg;
 	}
-	if (options & F_INTERFACE) {
-#ifndef SIN6_IFINDEX
-		struct in6_pktinfo *pktinfo =
-			(struct in6_pktinfo *)(CMSG_DATA(scmsgp));
-
-		if ((pktinfo->ipi6_ifindex = if_nametoindex(ifname)) == 0)
-			errx(1, "%s: invalid interface name", ifname);
-		bzero(&pktinfo->ipi6_addr, sizeof(struct in6_addr));
+	if (usepktinfo) {
+		pktinfo = (struct in6_pktinfo *)(CMSG_DATA(scmsgp));
+		memset(pktinfo, 0, sizeof(*pktinfo));
 		scmsgp->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
 		scmsgp->cmsg_level = IPPROTO_IPV6;
 		scmsgp->cmsg_type = IPV6_PKTINFO;
-
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
+	}
+
+	/* set the outgoing interface */
+	if (ifname) {
+#ifndef USE_SIN6_SCOPE_ID
+		/* pktinfo must have already been allocated */
+		if ((pktinfo->ipi6_ifindex = if_nametoindex(ifname)) == 0)
+			    errx(1, "%s: invalid interface name", ifname);
 #else
-		if ((dst.sin6_ifindex = if_nametoindex(ifname)) == 0)
+		if ((dst.sin6_scope_id = if_nametoindex(ifname)) == 0)
 			errx(1, "%s: invalid interface name", ifname);
 #endif
 	}
+	/* set the source address */
+	if (options & F_SRCADDR)/* pktinfo must be valid */
+		pktinfo->ipi6_addr = srcaddr;
+
 	if (hoplimit != -1) {
 		scmsgp->cmsg_len = CMSG_LEN(sizeof(int));
 		scmsgp->cmsg_level = IPPROTO_IPV6;
@@ -612,15 +640,16 @@ main(argc, argv)
 		src.sin6_family = AF_INET6;
 		src.sin6_addr = dst.sin6_addr;
 		src.sin6_port = ntohs(DUMMY_PORT);
+		src.sin6_scope_id = dst.sin6_scope_id;
 
-#ifndef SIN6_IFINDEX
+#ifndef USE_SIN6_SCOPE_ID
 		if (setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTOPTIONS,
 			       (void *)smsghdr.msg_control,
 			       smsghdr.msg_controllen)) {
-			err(1, "UDP setsockopt");
+			err(1, "UDP setsockopt(IPV6_PKTOPTIONS)");
 		}
 #else
-		src.sin6_ifindex = dst.sin6_ifindex;
+		src.sin6_scope_id = dst.sin6_scope_id;
 #endif
 				
 		if (connect(dummy, (struct sockaddr *)&src, len) < 0)
@@ -658,7 +687,7 @@ main(argc, argv)
 #endif
 
 	optval = 1;
-#ifndef SIN6_IFINDEX
+#ifndef USE_SIN6_SCOPE_ID
 	setsockopt(s, IPPROTO_IPV6, IPV6_PKTINFO, &optval, sizeof(optval));
 #endif
 	setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, &optval, sizeof(optval));
@@ -778,10 +807,11 @@ pinger()
 	icp = (struct icmp6_hdr *)outpack;
 	icp->icmp6_code = 0;
 	icp->icmp6_cksum = 0;
-	icp->icmp6_seq = ntransmitted++;
-	icp->icmp6_id = ident;			/* ID */
+	icp->icmp6_seq = ntransmitted++;		/* htons later */
+	icp->icmp6_id = htons(ident);			/* ID */
 
 	CLR(icp->icmp6_seq % mx_dup_ck);
+	icp->icmp6_seq = htons(icp->icmp6_seq);
 
 	if (options & F_FQDN) {
 		icp->icmp6_type = ICMP6_NI_QUERY;
@@ -885,12 +915,14 @@ pr_pack(buf, cc, mhdr)
 			fprintf(stderr, "header chain: type=0x%x\n", nh);
 
 		switch (nh) {
+#ifdef IPSEC
 		case IPPROTO_AH:
 			ah = (struct ah *)(buf + off);
 			off += sizeof(struct ah);
 			off += (ah->ah_len << 2);
 			nh = ah->ah_nxt;
 			break;
+#endif
 
 		 case IPPROTO_HOPOPTS:
 			ip6e = (struct ip6_ext *)(buf + off);
@@ -927,7 +959,9 @@ pr_pack(buf, cc, mhdr)
 	}
 
 	if (icp->icmp6_type == ICMP6_ECHO_REPLY) {
-		if (icp->icmp6_id != ident)
+		/* XXX the following line overwrites the original packet */
+		icp->icmp6_seq = ntohs(icp->icmp6_seq);
+		if (ntohs(icp->icmp6_id) != ident)
 			return;			/* It was not our ECHO */
 		++nreceived;
 		if (timing) {
@@ -958,7 +992,7 @@ pr_pack(buf, cc, mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s, icmp_seq=%u", cc,
-				     pr_addr(&from->sin6_addr),
+				     pr_addr(from),
 				     icp->icmp6_seq);
 			(void)printf(" hlim=%d", hoplim);
 			if (timing)
@@ -979,7 +1013,7 @@ pr_pack(buf, cc, mhdr)
 		struct icmp6_nodeinfo *ni = (struct icmp6_nodeinfo *)(buf + off);
 
 		(void)printf("%d bytes from %s: ", cc,
-			     pr_addr(&from->sin6_addr));
+			     pr_addr(from));
 
 		switch(ntohs(ni->ni_qtype)) {
 		 case NI_QTYPE_NOOP:
@@ -1048,7 +1082,7 @@ pr_pack(buf, cc, mhdr)
 		if (!(options & F_VERBOSE))
 			return;
 		(void)printf("%d bytes from %s: ", cc,
-			     pr_addr(&from->sin6_addr));
+			     pr_addr(from));
 		pr_icmph(icp, end);
 	}
 
@@ -1216,8 +1250,8 @@ pr_icmph(icp, end)
 			(void)printf("Destination Administratively "
 				     "Unreachable\n");
 			break;
-		case ICMP6_DST_UNREACH_NOTNEIGHBOR:
-			(void)printf("Destination Unreachable Notneighbor\n");
+		case ICMP6_DST_UNREACH_BEYONDSCOPE:
+			(void)printf("Destination Unreachable Beyond Scope\n");
 			break;
 		case ICMP6_DST_UNREACH_ADDR:
 			(void)printf("Destination Host Unreachable\n");
@@ -1360,22 +1394,19 @@ pr_iph(ip6)
  */
 char *
 pr_addr(addr)
-	struct in6_addr *addr;
+	struct sockaddr_in6 *addr;
 {
 	static char buf[MAXHOSTNAMELEN];
-	struct sockaddr_in6 sin6;	
 	int flag = 0;
 
 	if (options & F_NUMERIC)
 		flag |= NI_NUMERICHOST;
-	
-	bzero(&sin6, sizeof(sin6));
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_addr = *addr;
+#ifdef KAME_SCOPEID
+	flag |= NI_WITHSCOPEID;
+#endif
 
-	getnameinfo((struct sockaddr *)&sin6, sizeof(sin6),
-		    buf, sizeof(buf), NULL, 0, flag);
+	getnameinfo((struct sockaddr *)addr, addr->sin6_len, buf, sizeof(buf),
+		NULL, 0, flag);
 
 	return (buf);
 }
@@ -1401,8 +1432,8 @@ pr_retip(ip6, end)
 
 	nh = ip6->ip6_nxt;
 	cp += hlen;
-	while(end - cp >= 8) {
-		switch(nh) {
+	while (end - cp >= 8) {
+		switch (nh) {
 		 case IPPROTO_HOPOPTS:
 			 printf("HBH ");
 			 hlen = (((struct ip6_hbh *)cp)->ip6h_len+1) << 3;
@@ -1423,11 +1454,13 @@ pr_retip(ip6, end)
 			 hlen = (((struct ip6_rthdr *)cp)->ip6r_len+1) << 3;
 			 nh = ((struct ip6_rthdr *)cp)->ip6r_nxt;
 			 break;
+#ifdef IPSEC
 		 case IPPROTO_AH:
 			 printf("AH ");
 			 hlen = (((struct ah *)cp)->ah_len+2) << 2;
 			 nh = ((struct ah *)cp)->ah_nxt;
 			 break;
+#endif
 		 case IPPROTO_ICMPV6:
 			 printf("ICMP6: type = %d, code = %d\n",
 				*cp, *(cp + 1));
@@ -1508,8 +1541,8 @@ usage()
 		      "AE"
 #endif
 #endif		      
-		      "] [-a [alsg]] [-b sockbufsiz] [-c count]\n\
-	     [-I interface] [-i wait] [-l preload] [-p pattern] [-s packetsize]\n\
-             [-h hoplimit] host [hosts...]\n");
+		      "] [-a [alsg]] [-b sockbufsiz] [-c count] [-I interface]\n\
+             [-i wait] [-l preload] [-p pattern] [-S sourceaddr]\n\
+             [-s packetsize] [-h hoplimit] host [hosts...]\n");
 	exit(1);
 }
