@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.47 1999/12/03 21:43:20 ragge Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.48 2000/02/01 19:37:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -403,6 +403,17 @@ free(addr, type)
 #endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
+#endif
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Ensure that we're free'ing something that we could
+	 * have allocated in the first place.  That is, check
+	 * to see that the address is within kmem_map.
+	 */
+	if ((vaddr_t)addr < kmem_map->header.start ||
+	    (vaddr_t)addr >= kmem_map->header.end)
+		panic("free: addr %p not within kmem_map", addr);
 #endif
 
 	kup = btokup(addr);
