@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.16 2004/03/23 21:53:34 jdc Exp $
+.\"	$NetBSD: curses_input.3,v 1.17 2004/03/26 22:18:15 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -239,13 +239,13 @@ before getting the input from the designated window.
 The functions
 .Fn getstr ,
 .Fn wgetstr ,
-.Fn mvgetstr
+.Fn mvgetstr ,
 and
 .Fn mvwgetstr
 are similar to
 .Fn getnstr ,
 .Fn wgetnstr ,
-.Fn mvgetnstr
+.Fn mvgetnstr ,
 and
 .Fn mvwgetnstr ,
 respectively, excepting that there is no limit on the number of characters
@@ -376,7 +376,7 @@ depending on system resources.
 The functions
 .Fn getch ,
 .Fn wgetch ,
-.Fn mvgetch
+.Fn mvgetch ,
 and
 .Fn mvwgetch
 will return the value of the key pressed or
@@ -384,7 +384,7 @@ will return the value of the key pressed or
 in the case of an error or a timeout.
 Additionally, if
 .Fn keypad TRUE
-has been called on a window, then they may return one of the following values:
+has been called on a window, then it may return one of the following values:
 .Pp
 .Bl -column "Termcap entry" "getch Return Value" "Key Function" -offset indent
 .It Sy "Termcap entry" Ta Sy "getch Return Value" Ta Sy "Key Function"
@@ -415,16 +415,16 @@ has been called on a window, then they may return one of the following values:
 .It \&%h Ta KEY_SREPLACE Ta Shift Replace
 .It \&%i Ta KEY_SRIGHT Ta Shift Right Arrow
 .It \&%j Ta KEY_SRSUME Ta Shift Resume
-.It \&&0 Ta KEY_SCANCEL Ta Shift Cancel
-.It \&&1 Ta KEY_REFERENCE Ta Reference
-.It \&&2 Ta KEY_REFRESH Ta Refresh
-.It \&&3 Ta KEY_REPLACE Ta Replace
-.It \&&4 Ta KEY_RESTART Ta Restart
-.It \&&5 Ta KEY_RESUME Ta Resume
-.It \&&6 Ta KEY_SAVE Ta Save
-.It \&&7 Ta KEY_SUSPEND Ta Suspend
-.It \&&8 Ta KEY_UNDO Ta Undo
-.It \&&9 Ta KEY_SBEG Ta Shift Begin
+.It \&\*[Am]0 Ta KEY_SCANCEL Ta Shift Cancel
+.It \&\*[Am]1 Ta KEY_REFERENCE Ta Reference
+.It \&\*[Am]2 Ta KEY_REFRESH Ta Refresh
+.It \&\*[Am]3 Ta KEY_REPLACE Ta Replace
+.It \&\*[Am]4 Ta KEY_RESTART Ta Restart
+.It \&\*[Am]5 Ta KEY_RESUME Ta Resume
+.It \&\*[Am]6 Ta KEY_SAVE Ta Save
+.It \&\*[Am]7 Ta KEY_SUSPEND Ta Suspend
+.It \&\*[Am]8 Ta KEY_UNDO Ta Undo
+.It \&\*[Am]9 Ta KEY_SBEG Ta Shift Begin
 .It \&*0 Ta KEY_SFIND Ta Shift Find
 .It \&*1 Ta KEY_SCOMMAND Ta Shift Command
 .It \&*2 Ta KEY_SCOPY Ta Shift Copy
