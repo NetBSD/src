@@ -520,7 +520,7 @@ get_addr(hostname, af, res0, pai, port0)
 	int port0;
 {
 #ifdef USE_GETIPNODEBY
-	return get_addr0(hostname, af, res, pai, port0);
+	return get_addr0(hostname, af, res0, pai, port0);
 #else
 	int i, error, ekeep;
 	struct addrinfo *cur;
