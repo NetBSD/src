@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(argc, argv)
 	int ch, top, rval;
 	long port;
 	struct passwd *pw = NULL;
-	char *cp, homedir[MAXPATHLEN];
+	char *cp, *ep, homedir[MAXPATHLEN];
 	int dumbterm;
 
 	sp = getservbyname("ftp", "tcp");
@@ -87,6 +87,23 @@ main(argc, argv)
 		httpport = htons(HTTP_PORT);	/* good fallback */
 	else
 		httpport = sp->s_port;
+	gateport = 0;
+	cp = getenv("FTPSERVERPORT");
+	if (cp != NULL) {
+		port = strtol(cp, &ep, 10);
+		if (port < 1 || port > 0xffff || *ep != '\0')
+			warnx("bad FTPSERVERPORT port number: %s (ignored)",
+			    cp);
+		else
+			gateport = htons(port);
+	}
+	if (gateport == 0) {
+		sp = getservbyname("ftpgate", "tcp");
+		if (sp == 0)
+			gateport = htons(GATE_PORT);
+		else
+			gateport = sp->s_port;
+	}
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
@@ -94,6 +111,7 @@ main(argc, argv)
 	preserve = 1;
 	verbose = 0;
 	progress = 0;
+	gatemode = 0;
 #ifndef SMALL
 	editing = 0;
 	el = NULL;
@@ -106,6 +124,19 @@ main(argc, argv)
 	cp = (cp == NULL) ? argv[0] : cp + 1;
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
+	else if (strcmp(cp, "gate-ftp") == 0)
+		gatemode = 1;
+
+	gateserver = getenv("FTPSERVER");
+	if (gateserver == NULL || *gateserver == '\0')
+		gateserver = GATE_SERVER;
+	if (gatemode) {
+		if (*gateserver == '\0') {
+			warnx(
+"Neither $FTPSERVER nor GATE_SERVER is defined; disabling gate-ftp");
+			gatemode = 0;
+		}
+	}
 
 	cp = getenv("TERM");
 	if (cp == NULL || strcmp(cp, "dumb") == 0)
@@ -157,8 +188,8 @@ main(argc, argv)
 			break;
 
 		case 'P':
-			port = strtol(optarg, &cp, 10);
-			if (port < 1 || port > 0xffff || *cp != '\0')
+			port = strtol(optarg, &ep, 10);
+			if (port < 1 || port > 0xffff || *ep != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
 				ftpport = htons(port);

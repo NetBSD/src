@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -85,7 +85,10 @@ setpeer(argc, argv)
 		code = -1;
 		return;
 	}
-	port = ftpport;
+	if (gatemode)
+		port = gateport;
+	else
+		port = ftpport;
 	if (argc > 2) {
 		char *ep;
 		long nport;
@@ -99,9 +102,24 @@ setpeer(argc, argv)
 		}
 		port = htons(nport);
 	}
-	host = hookup(argv[1], port);
+
+	if (gatemode) {
+		if (gateserver == NULL || *gateserver == '\0')
+			errx(1, "gateserver not defined (shouldn't happen)");
+		host = hookup(gateserver, port);
+	} else
+		host = hookup(argv[1], port);
+
 	if (host) {
 		int overbose;
+
+		if (gatemode) {
+			if (command("PASSERVE %s", argv[1]) != COMPLETE)
+				return;
+			if (verbose)
+				printf("Connected via pass-through server %s\n",
+				    gateserver);
+		}
 
 		connected = 1;
 		/*
@@ -352,7 +370,7 @@ remglob(argv, doswitch, errbuf)
                 if (doswitch)
                         pswitch(!proxy);
                 for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest("NLST", temp, *argv, mode, 0);
+                        recvrequest("NLST", temp, *argv, mode, 0, 0);
 		if ((code / 100) != COMPLETE) {
 			if (errbuf != NULL)
 				*errbuf = reply_string;
@@ -433,7 +451,10 @@ globulize(cpp)
 		globfree(&gl);
 		return (0);
 	}
-	*cpp = strdup(gl.gl_pathv[0]);	/* XXX - wasted memory */
+		/* XXX: caller should check if *cpp changed, and
+		 *	free(*cpp) if that is the case
+		 */
+	*cpp = strdup(gl.gl_pathv[0]);
 	globfree(&gl);
 	return (1);
 }
