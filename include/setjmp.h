@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.16 1999/01/14 09:05:46 castor Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.17 1999/01/15 03:43:56 castor Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,16 +47,16 @@
 
 #include <machine/setjmp.h>
 
-#ifndef __JB_ATTRIBUTES
-#define __JB_ATTRIBUTES	/**/
+#ifndef _JB_ATTRIBUTES
+#define _JB_ATTRIBUTES	/**/
 #else
 #endif
 
 #ifndef _ANSI_SOURCE
-typedef long sigjmp_buf[_JBLEN + 1] __JB_ATTRIBUTES;
+typedef long sigjmp_buf[_JBLEN + 1] _JB_ATTRIBUTES;
 #endif /* not ANSI */
 
-typedef long jmp_buf[_JBLEN] __JB_ATTRIBUTES;
+typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 
 #include <sys/cdefs.h>
 
