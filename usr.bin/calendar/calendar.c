@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: calendar.c,v 1.31 2004/11/29 17:03:43 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.31 2004/11/29 17:03:43 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,8 @@ __RCSID("$NetBSD: calendar.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 
 static unsigned short lookahead = 1, weekend = 2;
-static char *fname = "calendar", *datestr = NULL;
+static char *fname = NULL, *datestr = NULL;
+static char *defaultnames[] = {"calendar", ".calendar", "/etc/calendar", NULL};
 static struct passwd *pw;
 static int doall;
 static char path[MAXPATHLEN + 1];
@@ -325,17 +326,32 @@ static FILE *
 opencal(void)
 {
 	int fd, pdes[2];
+	char **name;
 
 	/* open up calendar file as stdin */
-	if (!freopen(fname, "rf", stdin)) {
+	if (fname == NULL) {
+		for (name = defaultnames; *name != NULL; name++) {
+			if (!freopen(*name, "rf", stdin))
+				continue;
+			else
+				break;
+		}
+		if (*name == NULL) {
+			if (doall)
+				return (NULL);
+			err(1, "Cannot open calendar file");
+		}
+	} else if (!freopen(fname, "rf", stdin)) {
 		if (doall)
 			return (NULL);
 		err(1, "Cannot open `%s'", fname);
 	}
+
 	if (pipe(pdes) < 0) {
 		warn("Cannot open pipe");
 		return (NULL);
 	}
+
 	switch (fork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
@@ -353,6 +369,7 @@ opencal(void)
 		err(1, "Cannot exec `%s'", _PATH_CPP);
 		/*NOTREACHED*/
 	}
+
 	/* parent -- set stdin to pipe output */
 	(void)dup2(pdes[0], STDIN_FILENO);
 	(void)close(pdes[0]);
