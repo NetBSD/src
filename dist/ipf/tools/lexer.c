@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.2 2004/05/09 03:53:23 christos Exp $	*/
+/*	$NetBSD: lexer.c,v 1.3 2004/05/22 17:59:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -431,6 +431,7 @@ nextchar:
 		} while (isdigit(n));
 		yyunputc(n);
 		rval = YY_NUMBER;
+		yyvarnext = 0;
 		goto done;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.5 2004/05/22 17:19:25 christos Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.6 2004/05/22 17:59:37 christos Exp $	*/
 
 %{
 #include "ipf.h"
@@ -886,7 +886,7 @@ poollist:
 			  bcopy(&($4.m), &($$->al_i6mask), sizeof($4.m)); }
 	;
 
-port:	IPFY_PORT			{ yyexpectaddr = 0; }
+port:	IPFY_PORT			{ yyexpectaddr = 0; yyvarnext = 1; }
 	;
 
 portcomp:
