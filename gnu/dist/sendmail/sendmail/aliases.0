@@ -5,7 +5,7 @@ ALIASES(5)                                             ALIASES(5)
 
 
 NNAAMMEE
-       aalliiaasseess - aliases file for sendmail
+       aliases - aliases file for sendmail
 
 SSYYNNOOPPSSIISS
        aalliiaasseess
@@ -61,7 +61,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                   Date: 2000/07/18 07:23:02                 1
+                   Date: 2000/12/14 23:08:15                 1
 
 
 
@@ -127,6 +127,6 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/07/18 07:23:02                 2
+                   Date: 2000/12/14 23:08:15                 2
 
 

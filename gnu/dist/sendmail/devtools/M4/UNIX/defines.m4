@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31.4.2 2000/08/23 04:06:10 gshapiro Exp
+#	Id: defines.m4,v 8.31.4.4 2000/12/20 21:21:39 gshapiro Exp
 #
 divert(0)dnl
 
@@ -74,6 +74,12 @@ SBINDIR=ifdef(`confSBINDIR', `confSBINDIR', `/usr/sbin')
 
 # location of "libexec" binaries (usually /usr/libexec or /usr/etc)
 EBINDIR=ifdef(`confEBINDIR', `confEBINDIR', `/usr/libexec')
+
+# where to install include files (usually /usr/include)
+INCLUDEDIR=ifdef(`confINCLUDEDIR', `confINCLUDEDIR', `/usr/include')
+
+# where to install library files (usually /usr/lib)
+LIBDIR=ifdef(`confLIBDIR', `confLIBDIR', `/usr/lib')
 
 # additional .c files needed
 SRCADD= ifdef(`confSRCADD', `confSRCADD')

@@ -5,10 +5,10 @@ VACATION(1)                                           VACATION(1)
 
 
 NNAAMMEE
-       vvaaccaattiioonn - return ``I am not here'' indication
+       vacation - return ``I am not here'' indication
 
 SSYYNNOOPPSSIISS
-       vvaaccaattiioonn  --ii  [--rr  _i_n_t_e_r_v_a_l]  [--xx] vvaaccaattiioonn [--aa _a_l_i_a_s] [--ff
+       vvaaccaattiioonn  [--ii]  [--II]  [--rr  _i_n_t_e_r_v_a_l]  [--xx]  [--aa _a_l_i_a_s] [--ff
        _d_a_t_a_b_a_s_e] [--mm _m_e_s_s_a_g_e] [--ss _a_d_d_r_e_s_s] [--tt _t_i_m_e] [--zz] _l_o_g_i_n
 
 DDEESSCCRRIIPPTTIIOONN
@@ -37,6 +37,8 @@ DDEESSCCRRIIPPTTIIOONN
        --ii     Initialize the vacation database files.  It  should
               be used before you modify your _._f_o_r_w_a_r_d file.
 
+       --II     Same as --ii (for backwards compatibility).
+
        --mm _f_i_l_e_n_a_m_e
               Use  _f_i_l_e_n_a_m_e  as  name  of the file containing the
               message to send instead of _~_/_._v_a_c_a_t_i_o_n_._m_s_g.  Unless
@@ -49,19 +51,17 @@ DDEESSCCRRIIPPTTIIOONN
               will never send more than one reply.
 
        --ss _a_d_d_r_e_s_s
-              Use _a_d_d_r_e_s_s instead of the sender  address  in  the
-              _F_r_o_m line to determine the reply address.
+              Use _a_d_d_r_e_s_s instead of the incoming message  sender
+              address  on  the _F_r_o_m line as the recipient for the
+              vacation message.
 
        --tt _t_i_m_e
               Ignored,  available  only  for  compatibility  with
               Sun's vacation program.
 
-       --xx     reads an exclusion list from stdin (one address per
-              line).   Mails  coming  from  an  address  in  this
 
 
-
-                   Date: 2000/03/17 07:32:50                 1
+                   Date: 2000/12/29 18:12:23                 1
 
 
 
@@ -70,19 +70,22 @@ DDEESSCCRRIIPPTTIIOONN
 VACATION(1)                                           VACATION(1)
 
 
-              exclusion list won't get a reply by  vvaaccaattiioonn.   It
-              is possible to exclude complete domains by specify-
-              ing ``@domain'' as element of the exclusion list.
+       --xx     reads an exclusion list from stdin (one address per
+              line).  Mails coming from an address in this exclu-
+              sion  list  won't  get  a reply by vvaaccaattiioonn.  It is
+              possible to exclude complete domains by  specifying
+              ``@domain'' as element of the exclusion list.
 
-       --zz     Set the sender of the vacation  message  to  ``<>''
-              instead  of  the  user.  This probably violates the
-              RFCs since vacation messages are not required by  a
+       --zz     Set  the  sender  of the vacation message to ``<>''
+              instead of the user.  This  probably  violates  the
+              RFCs  since vacation messages are not required by a
               standards-track RFC to have a null reverse-path.
 
        No message will be sent unless _l_o_g_i_n (or an _a_l_i_a_s supplied
-       using the --aa option) is part  of  either  the  ``To:''  or
-       ``Cc:''   headers   of   the   mail.    No  messages  from
-       ``???-REQUEST'', ``Postmaster'', ``UUCP'', ``MAILER'',  or
+       using  the  --aa  option)  is  part of either the ``To:'' or
+       ``Cc:''  headers  of   the   mail.    No   messages   from
+       ``???-REQUEST'',       ``???-RELAY'',       ``???-OWNER'',
+       ``OWNER-???'', ``Postmaster'',  ``UUCP'',  ``MAILER'',  or
        ``MAILER-DAEMON''  will be replied to (where these strings
        are case insensitive) nor is  a  notification  sent  if  a
        ``Precedence:  bulk''  or  ``Precedence:  junk''  line  is
@@ -113,12 +116,25 @@ VACATION(1)                                           VACATION(1)
        system log file, using syslog(8).
 
 FFIILLEESS
-       ~/.vacation.db    database file
+       ~/.vacation.db    default database file
 
-       ~/.vacation.msg   message to send
+       ~/.vacation.msg   default message to send
 
 SSEEEE AALLSSOO
        sendmail(8), syslog(8)
+
+
+
+
+
+                   Date: 2000/12/29 18:12:23                 2
+
+
+
+
+
+VACATION(1)                                           VACATION(1)
+
 
 HHIISSTTOORRYY
        The vvaaccaattiioonn command appeared in 4.3BSD.
@@ -127,6 +143,56 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/03/17 07:32:50                 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2000/12/29 18:12:23                 3
 
 

@@ -16,8 +16,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@horsey.gshapiro.net on Thu Sep 28 11:11:28 PDT 2000
-##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.1/cf/cf
+##### built by gshapiro@horsey.gshapiro.net on Fri Dec 29 22:30:59 PST 2000
+##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.2/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -38,7 +38,7 @@
 
 
 
-#####  Id: proto.m4,v 8.446.2.5.2.29 2000/09/15 04:45:14 gshapiro Exp  #####
+#####  Id: proto.m4,v 8.446.2.5.2.38 2000/12/28 03:37:28 ca Exp  #####
 
 
 # level 9 config file format
@@ -118,7 +118,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.11.1
+DZ8.11.2
 
 
 ###############
@@ -309,7 +309,7 @@ O TimeZoneSpec=
 #O MaxDaemonChildren=12
 
 # maximum number of new connections per second
-#O ConnectionRateThrottle=3
+#O ConnectionRateThrottle=0
 
 # work recipient factor
 #O RecipientFactor=30000
@@ -527,6 +527,7 @@ R$* : $* [ $* ]		$: $1 : $2 [ $3 ] <@>		remark if leading colon
 R$* : $* <@>		$: $2				strip colon if marked
 R$* <@>			$: $1				unmark
 R$* ;			   $1				strip trailing semi
+R$* < $+ :; > $*	$@ $2 :; <@>			catch <list:;>
 R$* < $* ; >		   $1 < $2 >			bogus bracketed semi
 
 # null input now results from list:; syntax
@@ -603,6 +604,7 @@ R$* < @ $+ . . UUCP . > $*	$@ $1 < @ $2 . > $3
 # hostnames ending in class P are always canonical
 R$* < @ $* $=P > $*		$: $1 < @ $2 $3 . > $4
 R$* < @ $* $~P > $*		$: $&{daemon_flags} $| $1 < @ $2 $3 > $4
+R$* CC $* $| $* < @ $+.$+ > $*	$: $3 < @ $4.$5 . > $6
 R$* CC $* $| $*			$: $3
 # pass to name server to make hostname canonical
 R$* $| $* < @ $* > $*		$: $2 < @ $[ $3 $] > $4
@@ -619,6 +621,7 @@ R$* < @ $* . . > $*		$1 < @ $2 . > $3
 ##################################################
 Sfinal=4
 
+R$+ :; <@>		$@ $1 :				handle <list:;>
 R$* <@>			$@				handle <> and list:;
 
 # strip trailing dot off possibly canonical name

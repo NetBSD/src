@@ -1,5 +1,6 @@
-#	Id: SunOS.5.8,v 8.6.16.1 2000/08/07 17:51:34 gshapiro Exp
+#	Id: SunOS.5.8,v 8.6.16.3 2000/12/14 01:04:46 rand Exp
 define(`confCC', `gcc')
+define(`confLDOPTS_SO', `-G')
 define(`confBEFORE', `sysexits.h')
 define(`confMAPDEF', `-DNDBM -DNIS -DNISPLUS -DMAP_REGEX -DLDAPMAP')
 define(`confENVDEF', `-DSOLARIS=20800 -DNETINET6')
@@ -17,3 +18,25 @@ sysexits.h:
 		ln -s /usr/include/sysexits.h; \
 	fi
 POPDIVERT
+
+
+
+ifelse(confBLDVARIANT, `DEBUG',
+dnl Debug build
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl Optimized build
+confBLDVARIANT, `OPTIMIZED',
+`
+	define(`confOPTIMIZE',`-O')
+',
+dnl Purify build
+confBLDVARIANT, `PURIFY',
+`
+	define(`confOPTIMIZE',`-g')
+',
+dnl default
+`
+	define(`confOPTIMIZE',`-O')
+')
