@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.21 2000/07/05 22:26:53 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.22 2000/08/01 23:55:13 mjacob Exp $ */
 /* release_6_5_99 */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
@@ -80,6 +80,9 @@
 /* Bless me! Chip designers have putzed it again! */
 #define	ISP1080_DMA_REGS_OFF		0x60
 #define	DMA_REGS_OFF			0x00	/* same as BIU block */
+
+#define	SBUS_REGSIZE			0x450
+#define	PCI_REGSIZE			0x100
 
 /*
  * NB:	The *_BLOCK definitions have no specific hardware meaning.
