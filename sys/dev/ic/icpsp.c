@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.7 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.7 2003/05/13 15:42:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ struct icpsp_softc {
 	struct	scsipi_adapter sc_adapter;
 	struct	scsipi_channel sc_channel;
 	int	sc_busno;
+	int	sc_openings;
 };
 
 void	icpsp_attach(struct device *, struct device *, void *);
@@ -78,8 +79,14 @@ int	icpsp_match(struct device *, struct cfdata *, void *);
 void	icpsp_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
 			     void *);
 
+void	icpsp_adjqparam(struct device *, int);
+
 CFATTACH_DECL(icpsp, sizeof(struct icpsp_softc),
     icpsp_match, icpsp_attach, NULL, NULL);
+
+static const struct icp_servicecb icpsp_servicecb = {
+	icpsp_adjqparam,
+};
 
 int
 icpsp_match(struct device *parent, struct cfdata *match, void *aux)
@@ -103,7 +110,10 @@ icpsp_attach(struct device *parent, struct device *self, void *aux)
 	icp = (struct icp_softc *)parent;
 
 	sc->sc_busno = icpa->icpa_unit - ICPA_UNIT_SCSI;
+	sc->sc_openings = icp->icp_openings;
 	printf(": physical SCSI channel %d\n", sc->sc_busno);
+
+	icp_register_servicecb(icp, icpa->icpa_unit, &icpsp_servicecb);
 
 	sc->sc_adapter.adapt_dev = &sc->sc_dv;
 	sc->sc_adapter.adapt_nchannels = 1;
@@ -319,4 +329,16 @@ icpsp_intr(struct icp_ccb *ic)
 		icp_ccb_unmap(icp, ic);
 	icp_ccb_free(icp, ic);
 	scsipi_done(xs);
+}
+
+void
+icpsp_adjqparam(struct device *dv, int openings)
+{
+	struct icpsp_softc *sc = (struct icpsp_softc *) dv;
+	int s;
+
+	s = splbio();
+	sc->sc_adapter.adapt_openings += openings - sc->sc_openings;
+	sc->sc_openings = openings;
+	splx(s);
 }

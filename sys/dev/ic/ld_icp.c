@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.7 2003/06/07 23:37:25 thorpej Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.7 2003/06/07 23:37:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -72,6 +72,7 @@ struct ld_icp_softc {
 };
 
 void	ld_icp_attach(struct device *, struct device *, void *);
+int	ld_icp_detach(struct device *, int);
 int	ld_icp_dobio(struct ld_icp_softc *, void *, int, int, int,
 		     struct buf *);
 int	ld_icp_dump(struct ld_softc *, void *, int, int);
@@ -80,8 +81,14 @@ void	ld_icp_intr(struct icp_ccb *);
 int	ld_icp_match(struct device *, struct cfdata *, void *);
 int	ld_icp_start(struct ld_softc *, struct buf *);
 
+void	ld_icp_adjqparam(struct device *, int);
+
 CFATTACH_DECL(ld_icp, sizeof(struct ld_icp_softc),
-    ld_icp_match, ld_icp_attach, NULL, NULL);
+    ld_icp_match, ld_icp_attach, ld_icp_detach, NULL);
+
+static const struct icp_servicecb ld_icp_servicecb = {
+	ld_icp_adjqparam,
+};
 
 int
 ld_icp_match(struct device *parent, struct cfdata *match, void *aux)
@@ -110,6 +117,8 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 	icp = (struct icp_softc *)parent;
 	icpa = aux;
 	cd = &icp->icp_cdr[icpa->icpa_unit];
+
+	icp_register_servicecb(icp, icpa->icpa_unit, &ld_icp_servicecb);
 
 	sc->sc_hwunit = icpa->icpa_unit;
 	ld->sc_maxxfer = ICP_MAX_XFER;
@@ -167,6 +176,18 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 
  out:
 	ldattach(ld);
+}
+
+int
+ld_icp_detach(struct device *dv, int flags)
+{
+	int rv;
+
+	if ((rv = ldbegindetach((struct ld_softc *)dv, flags)) != 0)
+		return (rv);
+	ldenddetach((struct ld_softc *) dv);
+
+	return (0);
 }
 
 int
@@ -314,4 +335,11 @@ ld_icp_intr(struct icp_ccb *ic)
 	icp_ccb_unmap(icp, ic);
 	icp_ccb_free(icp, ic);
 	lddone(&sc->sc_ld, bp);
+}
+
+void
+ld_icp_adjqparam(struct device *dv, int openings)
+{
+
+	ldadjqparam((struct ld_softc *) dv, openings);
 }
