@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.7 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.8 2000/02/22 03:39:47 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,16 +125,18 @@ struct raidcinfo {
 
 /* XXX probably belongs in a different .h file. */
 typedef struct RF_AutoConfig_s {
-	char devname[56]; 
-	dev_t dev;
-	struct vnode *vp;
-	RF_ComponentLabel_t *clabel;
-	struct RF_AutoConfig_s *next;
-	/* 	LIST_ENTRY(RF_AutoConfig_s) component_list; */
+	char devname[56];       /* the name of this component */
+	dev_t dev;              /* the device for this component */
+	struct vnode *vp;       /* Mr. Vnode Pointer */
+	RF_ComponentLabel_t *clabel;  /* the label */
+	struct RF_AutoConfig_s *next; /* the next autoconfig structure 
+				         in this set. */
 } RF_AutoConfig_t;
 
 typedef struct RF_ConfigSet_s {
-	struct RF_AutoConfig_s *ac;
+	struct RF_AutoConfig_s *ac; /* all of the autoconfig structures for
+				       this config set. */
+	int rootable;               /* Set to 1 if this set can be root */
 	struct RF_ConfigSet_s *next;
 } RF_ConfigSet_t;
 
