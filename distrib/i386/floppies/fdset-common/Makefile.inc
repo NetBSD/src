@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/01/19 16:40:12 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/01/24 17:52:26 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -27,7 +27,7 @@ BLOCK8K?=	179
 
 CLEANFILES+=	netbsd.ram.gz netbsd boot ustar.tmp
 
-all:	netbsd boot
+realall:	netbsd boot
 	@echo Making disk number one
 	tar cvf ${FSTMP} boot netbsd
 	@ echo ''
