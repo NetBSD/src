@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.114 2003/04/02 10:39:23 fvdl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.115 2003/07/07 13:05:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.114 2003/04/02 10:39:23 fvdl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.115 2003/07/07 13:05:46 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -297,10 +297,6 @@ main(int argc, char *argv[])
 	 * partition, if present.
 	 */
 	dosdp = readmbr(f);
-	if (dosdp) {
-		dosdp->mbrp_start = le32toh(dosdp->mbrp_start);
-		dosdp->mbrp_size = le32toh(dosdp->mbrp_size);
-	}
 #endif	/* USE_MBR */
 
 #ifdef USE_ACORN
@@ -646,52 +642,88 @@ static struct mbr_partition *
 readmbr(int f)
 {
 	struct mbr_partition *dp;
-	static char	 mbr[DEV_BSIZE];
-	u_int16_t	*mbrmagicp;
-	int		 part;
+	mbr_sector_t mbr;
+	int part;
+	uint ext_base, next_ext;
+	static mbr_partition_t netbsd_part;
 
-	dp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
-	if (lseek(f, (off_t)MBR_BBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(f, mbr, sizeof(mbr)) != sizeof(mbr)) {
-		warn("can't read master boot record");
-		return (0);
-	}
-
-#if !defined(__i386__) && !defined(__x86_64__)
-	/* avoid alignment error */
-	memcpy(mbr, &mbr[MBR_PARTOFF], NMBRPART * sizeof(*dp));
-	dp = (struct mbr_partition *)mbr;
-#endif	/* ! __i386__ */
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
 	 * partition table to find NetBSD/i386 partition, and obtain
 	 * disklabel from there.
 	 */
-	/* Check if table is valid. */
-	mbrmagicp = (u_int16_t *)(&mbr[MBR_MAGICOFF]);
-	if (*mbrmagicp != le16toh(MBR_MAGIC))
-		return (0);
-	/* Find NetBSD partition. */
-	for (part = 0; part < NMBRPART; part++) {
-		if (dp[part].mbrp_typ == MBR_PTYPE_NETBSD)
-			return (&dp[part]);
-	}
+
+	ext_base = 0;
+	next_ext = 0;
+	for (;;) {
+		next_ext += ext_base;
+		if (pread(f, &mbr, sizeof mbr, ext_base * (off_t)DEV_BSIZE)
+		    != sizeof(mbr)) {
+			warn("Can't read master boot record %d", next_ext);
+			return 0;
+		}
+
+		/* Check if table is valid. */
+		if (mbr.mbr_signature != htole16(MBR_MAGIC)) {
+			warnx("Invalid signature in mbr record %d", next_ext);
+			return 0;
+		}
+
+		dp = &mbr.mbr_parts[0];
+#if defined(_no_longer_needed) && !defined(__i386__) && !defined(__x86_64__)
+		/* avoid alignment error */
+		memcpy(mbr, dp, NMBRPART * sizeof(*dp));
+		dp = (struct mbr_partition *)mbr;
+#endif	/* ! __i386__ */
+		next_ext = 0;
+
+		/* Find NetBSD partition. */
+		for (part = 0; part < NMBRPART; dp++, part++) {
+			dp->mbrp_start = le32toh(dp->mbrp_start);
+			dp->mbrp_size = le32toh(dp->mbrp_size);
+			switch (dp->mbrp_typ) {
+			case MBR_PTYPE_NETBSD:
+				netbsd_part = *dp;
+				break;
+			case MBR_PTYPE_EXT:
+			case MBR_PTYPE_EXT_LBA:
+			case MBR_PTYPE_EXT_LNX:
+				next_ext = dp->mbrp_start;
+				continue;
 #ifdef COMPAT_386BSD_MBRPART
-	/* didn't find it -- look for 386BSD partition */
-	for (part = 0; part < NMBRPART; part++) {
-		if (dp[part].mbrp_typ == MBR_PTYPE_386BSD) {
-			warnx("old BSD partition ID!");
-			return (&dp[part]);
+			case MBR_PTYPE_386BSD:
+				if (ext_base == 0)
+					netbsd_part = *dp;
+				continue;
+#endif	/* COMPAT_386BSD_MBRPART */
+			default:
+				continue;
+			}
+			break;
+		}
+		if (part < NMBRPART)
+			/* We found a netbsd partition */
+			break;
+		if (next_ext == 0)
+			/* No more extended partitions */
+			break;
+		if (ext_base == 0) {
+			ext_base = next_ext;
+			next_ext = 0;
 		}
 	}
-#endif	/* COMPAT_386BSD_MBRPART */
 
-	/*
-	 * Table doesn't contain a partition for us. Keep a flag
-	 * remembering us to warn before it is destroyed.
-	 */
-	mbrpt_nobsd = 1;
-	return (0);
+	if (netbsd_part.mbrp_typ == 0) {
+		/*
+		 * Table doesn't contain a partition for us. Keep a flag
+		 * remembering us to warn before it is destroyed.
+		 */
+		mbrpt_nobsd = 1;
+		return 0;
+	}
+
+	netbsd_part.mbrp_start += ext_base;
+	return &netbsd_part;
 }
 #endif	/* USE_MBR */
 
