@@ -558,6 +558,7 @@ extern const bfd_target m68ksysvcoff_vec;
 extern const bfd_target m68k4knetbsd_vec;
 extern const bfd_target m88kbcs_vec;
 extern const bfd_target m88kmach3_vec;
+extern const bfd_target mipselnetbsd_vec;
 extern const bfd_target newsos3_vec;
 extern const bfd_target nlm32_i386_vec;
 extern const bfd_target nlm32_sparc_vec;

@@ -174,6 +174,7 @@ netbsd_choose_reloc_size (abfd)
 {
   switch (bfd_get_arch (abfd))
     {
+    case bfd_arch_mips:
     case bfd_arch_sparc:
       obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;
       break;
