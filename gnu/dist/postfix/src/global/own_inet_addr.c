@@ -111,6 +111,14 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 			  VAR_INET_INTERFACES, host);
 	myfree(hosts);
 
+	/*
+	 * Weed out duplicate IP addresses. Duplicates happen when the same
+	 * IP address is listed under multiple hostnames. If we don't weed
+	 * out duplicates, Postfix can suddenly stop working after the DNS is
+	 * changed.
+	 */
+	inet_addr_list_uniq(addr_list);
+
 	inet_addr_list_init(&local_addrs);
 	inet_addr_list_init(&local_masks);
 	if (inet_addr_local(&local_addrs, &local_masks) == 0)
