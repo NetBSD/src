@@ -1,3 +1,5 @@
+/*	$NetBSD: search.h,v 1.5 1995/02/27 13:22:58 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

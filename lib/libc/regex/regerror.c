@@ -1,3 +1,5 @@
+/*	$NetBSD: regerror.c,v 1.4 1995/02/27 13:29:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +40,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
+#else
+static char rcsid[] = "$NetBSD: regerror.c,v 1.4 1995/02/27 13:29:20 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
