@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 2002/07/17 04:55:57 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.197 2002/07/17 15:57:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1057,8 +1057,8 @@ caddr_t addr;
 	int res;
 	int s;
 
-	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
+	if (CPU_ISSUN4M || CPU_ISSUN4D) {
+		printf("warning: ldcontrolb called on sun4m/sun4d\n");
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.10 2001/12/04 00:05:07 darrenr Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.11 2002/07/17 15:57:12 thorpej Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -371,8 +371,8 @@ kgdb_acc(va, len)
 		return (0);
 
 	for (; va < eva; va += NBPG) {
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
+#if defined(SUN4M) || defined(SUN4D)
+		if (CPU_HAS_SRMMU) {
 			pte = getpte4m(va);
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				return (0);
