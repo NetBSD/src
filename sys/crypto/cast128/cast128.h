@@ -1,5 +1,5 @@
-/*	$NetBSD: cast128.h,v 1.1.1.1 2000/06/14 19:45:34 thorpej Exp $	*/
-/*	$KAME: cast128.h,v 1.4 2000/06/14 10:41:16 itojun Exp $	*/
+/*	$NetBSD: cast128.h,v 1.2 2000/08/31 06:59:17 itojun Exp $	*/
+/*	$KAME: cast128.h,v 1.5 2000/08/31 06:57:56 itojun Exp $	*/
 
 /*
  * heavily modified by Tomomi Suzuki <suzuki@grelot.elec.ryukoku.ac.jp>
@@ -40,7 +40,6 @@
 #define RFC2144_CAST_128_H
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
 
 
 #define	CAST128_ENCRYPT	1
@@ -56,6 +55,7 @@ extern void cast128_encrypt_round12 __P((u_int8_t *, const u_int8_t *,
 					u_int32_t *));
 extern void cast128_decrypt_round12 __P((u_int8_t *, const u_int8_t *,
 					u_int32_t *));
+struct mbuf;
 extern int cast128_cbc_process __P((struct mbuf *, size_t, size_t,
 				u_int32_t *, u_int8_t *, size_t, int));
 
