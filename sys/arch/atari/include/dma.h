@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.2 1995/03/26 07:24:35 leo Exp $	*/
+/*	$NetBSD: dma.h,v 1.3 1995/04/22 22:18:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -41,11 +41,11 @@
 #define	DMA	((struct dma *)AD_DMA)
 
 struct dma {
-	volatile short	dma_gap[2];	/* reserved			*/
-	volatile short	dma_data;	/* controller data path		*/
-	volatile short	dma_mode;	/* mode register		*/
-	volatile char	dma_addr[6];	/* base address H/M/L		*/
-	volatile short	dma_drvmode;	/* floppy density settings	*/
+	volatile short	  dma_gap[2];	/* reserved			*/
+	volatile u_short  dma_data;	/* controller data path		*/
+	volatile u_short  dma_mode;	/* mode register		*/
+	volatile u_char   dma_addr[6];	/* base address H/M/L		*/
+	volatile u_short  dma_drvmode;	/* floppy density settings	*/
 };
 
 #define	dma_nsec      dma_data		/* sector count			*/
@@ -54,15 +54,16 @@ struct dma {
 /*
  * Mode register bits
  */
-/*		0x0001		*//* not used				*/
-#define	A0	0x0002		/* signal A0 to fdc/hdc			*/
-#define	A1	0x0004		/* signal A1 to fdc/hdc			*/
-#define	HDC	0x0008		/* must be on if accessing hdc		*/
-#define	SCREG	0x0010		/* access sector count register		*/
-/*		0x0020		*//* reserved				*/
-#define	NODMA	0x0040		/* no DMA (yet)				*/
-#define	FDC	0x0080		/* must be on if accessing fdc		*/
-#define	WRBIT	0x0100		/* write to fdc/hdc via dma_data	*/
+/*			0x0001		*//* not used			*/
+#define	DMA_A0		0x0002		/* signal A0 to fdc/hdc		*/
+#define	DMA_A1		0x0004		/* signal A1 to fdc/hdc		*/
+#define	DMA_HDC		0x0008		/* must be on if accessing hdc	*/
+#define	DMA_SCREG	0x0010		/* access sector count register	*/
+/*			0x0020		*//* reserved			*/
+#define	DMA_NODMA	0x0040		/* no DMA (yet)			*/
+#define	DMA_FDC		0x0080		/* must be on if accessing fdc	*/
+#define	DMA_WRBIT	0x0100		/* write to fdc/hdc via dma_data*/
+#define	DMA_SCSI	0x0088		/* select 5380 chip		*/
 
 /*
  * Status register bits
@@ -85,4 +86,13 @@ struct dma {
  */
 #define	FDC_HDSET	1	/* Set FDC for High density		*/
 #define	FDC_HDSIG	2	/* Signal HD present to drive		*/
+
+#ifdef _KERNEL
+int  st_dmagrab __P((void (*)(), void (*)(), void *, int));
+void st_dmafree __P((void));
+int  st_dmawanted __P((void));
+void st_dmaaddr __P((caddr_t));
+void st_dmacomm __P((int, int));
+#endif /* _KERNEL	*/
+
 #endif /* _MACHINE_DMA_H */
