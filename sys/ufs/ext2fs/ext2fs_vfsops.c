@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.24.4.2 1999/08/02 22:56:41 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.24.4.3 1999/08/06 12:55:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -600,6 +600,8 @@ ext2fs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_EXT2FS);
 	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
+	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
 	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -609,6 +611,7 @@ ext2fs_mountfs(devvp, mp, p)
 	ump->um_seqinc = 1; /* no frags */
 	devvp->v_specflags |= SI_MOUNTEDON;
 	return (0);
+
 out:
 	if (bp)
 		brelse(bp);
@@ -916,6 +919,7 @@ ext2fs_vget(mp, ino, vpp)
 			ip->i_flag |= IN_MODIFIED;
 	}
 
+	vp->v_uvm.u_size = ip->i_e2fs_size;
 	*vpp = vp;
 	return (0);
 }
