@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_bus_mem.c,v 1.2.4.1 1996/06/10 00:05:19 cgd Exp $	*/
+/*	$NetBSD: cia_bus_mem.c,v 1.2.4.2 1996/06/13 18:15:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -40,9 +40,11 @@
 
 #define	CHIP		cia
 
-/* Dense memory */
-#define	CHIP_D_MEM_BASE(v)	CIA_PCI_DENSE
-#define	CHIP_D_MEM_MASK(v)	0xffffffff
+/* Dense region 1 */
+#define	CHIP_D_MEM_W1_START(v)	0x00000000
+#define	CHIP_D_MEM_W1_END(v)	0xffffffff
+#define	CHIP_D_MEM_W1_BASE(v)	CIA_PCI_DENSE
+#define	CHIP_D_MEM_W1_MASK(v)	0xffffffff
 
 /* Sparse region 1 */
 #define	CHIP_S_MEM_W1_START(v)						\
