@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.85 1997/09/11 23:02:32 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.86 1997/12/31 07:47:44 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -224,7 +224,7 @@ sys_execve(p, v, retval)
 	size_t len;
 	char *stack;
 	struct ps_strings arginfo;
-	struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
 	extern struct emul emul_netbsd;
@@ -357,20 +357,15 @@ sys_execve(p, v, retval)
 	/* adjust "active stack depth" for process VSZ */
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
 
-	/* Unmap old program */
-	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
-#ifdef sparc
-	kill_user_windows(p);		/* before stack addresses go away */
-#endif
-	/* Kill shared memory and unmap old program */
-#ifdef SYSVSHM
-	if (vm->vm_shm)
-		shmexit(p);
-#endif
-	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
-		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	/*
+	 * Do whatever is necessary to prepare the address space
+	 * for remapping.  Note that this might replace the current
+	 * vmspace with another!
+	 */
+	vmspace_exec(p);
 
 	/* Now map address space */
+	vm = p->p_vmspace;
 	vm->vm_taddr = (char *) pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
 	vm->vm_daddr = (char *) pack.ep_daddr;
