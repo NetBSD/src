@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.7 2001/11/08 15:33:15 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.7 2001/11/08 15:33:15 christos Exp $");
+__RCSID("$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -191,7 +191,7 @@ read_shstring_table(int fd, Elf_Ehdr *ehdr)
 static char *
 read_string_table(int fd, struct elf_section *head, int *strtablen)
 {
-	char *string_table;
+	char *string_table=NULL;
 
 	while (head) {
 		if ((strcmp(head->name, ".strtab") == 0 )
