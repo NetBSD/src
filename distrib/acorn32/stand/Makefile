@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/03/20 02:55:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2004/03/31 08:06:28 tron Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,18 +21,18 @@ release: check_RELEASEDIR .WAIT ${ARCHIVE}
 ${ARCHIVE}: tmp/BtNetBSD
 	cd tmp && tar cZf ${.OBJDIR}/${ARCHIVE} BtNetBSD
 
-UUDECODE_FILES=unixfs_res Sprite Banner Sprites Sprites22 MemFix
+UUDECODE_FILES=unixfs_res Sprite banner Sprites Sprites22 MemFix
 
 UUDECODE_FILES_RENAME_unixfs_res=tmp/BtNetBSD/!BtNetBSD/native/unixfs_res
 UUDECODE_FILES_RENAME_Sprite=tmp/BtNetBSD/!BtNetBSD/src/Banner/Sprite
-UUDECODE_FILES_RENAME_Banner=tmp/BtNetBSD/!BtNetBSD/Banner
+UUDECODE_FILES_RENAME_banner=tmp/BtNetBSD/!BtNetBSD/Banner
 UUDECODE_FILES_RENAME_Sprites=tmp/BtNetBSD/!BtNetBSD/!Sprites
 UUDECODE_FILES_RENAME_Sprites22=tmp/BtNetBSD/!BtNetBSD/!Sprites22
 UUDECODE_FILES_RENAME_MemFix=tmp/BtNetBSD/!BtNetBSD/MemFix
 
+.PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD
 .PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD/native 
 .PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD/src/Banner
-.PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD
 
 ${UUDECODE_FILES}: setup_tmp
 
