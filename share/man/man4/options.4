@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.148 2001/09/22 05:38:30 chs Exp $
+.\"	$NetBSD: options.4,v 1.149 2001/09/22 08:43:28 chs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -585,7 +585,8 @@ for details.
 Includes code for the Coda file system.
 Coda is a distributed file system like NFS and AFS.  It is
 freely available, like NFS, but it functions much like AFS in being a
-"stateful" file system.  Both Coda and AFS cache files on your local
+.Dq stateful
+file system.  Both Coda and AFS cache files on your local
 machine to improve performance.  Then Coda goes a step further than AFS
 by letting you access the cached files when there is no available
 network, viz. disconnected laptops and network outages.  In Coda, both
@@ -933,8 +934,8 @@ the
 driver,
 and much of the networking code.
 .It Cd options MAXUPRC=integer
-Sets the
-.Em RLIMIT_NPROC
+Sets the soft
+.Dv RLIMIT_NPROC
 resource limit, which specifies the maximum number of simultaneous
 processes a user is permitted to run, for process 0;
 this value is inherited by its child processes.
@@ -1412,6 +1413,46 @@ These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available
 .Tn RAM .
+.It Cd options MAXTSIZ=bytes
+Sets the maximum size limit of a process' text segment. See
+.Pa /usr/include/machine/vmparam.h
+for the port-specific default.
+.It Cd options DFLDSIZ=bytes
+Sets the default size limit of a process' data segment, the value that
+will be returned as the soft limit for
+.Dv RLIMIT_DATA
+(as returned by
+.Xr getrlimit 2 ).
+See
+.Pa /usr/include/machine/vmparam.h
+for the port-specific default.
+.It Cd options MAXDSIZ=bytes
+Sets the maximum size limit of a process' data segment, the value that
+will be returned as the hard limit for
+.Dv RLIMIT_DATA
+(as returned by
+.Xr getrlimit 2 ).
+See
+.Pa /usr/include/machine/vmparam.h
+for the port-specific default.
+.It Cd options DFLSSIZ=bytes
+Sets the default size limit of a process' stack segment, the value that
+will be returned as the soft limit for
+.Dv RLIMIT_STACK
+(as returned by
+.Xr getrlimit 2 ).
+See
+.Pa /usr/include/machine/vmparam.h
+for the port-specific default.
+.It Cd options MAXSSIZ=bytes
+Sets the maximum size limit of a process' stack segment, the value that
+will be returned as the hard limit for
+.Dv RLIMIT_STACK
+(as returned by
+.Xr getrlimit 2 ).
+See
+.Pa /usr/include/machine/vmparam.h
+for the port-specific default.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
