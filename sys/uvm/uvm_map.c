@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.63 1999/07/07 21:51:35 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.64 1999/07/17 21:35:49 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1918,10 +1918,11 @@ uvm_map_advice(map, start, end, new_advice)
  */
 
 int
-uvm_map_pageable(map, start, end, new_pageable, islocked)
+uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	vm_map_t map;
 	vaddr_t start, end;
-	boolean_t new_pageable, islocked;
+	boolean_t new_pageable;
+	int lockflags;
 {
 	vm_map_entry_t entry, start_entry, failed_entry;
 	int rv;
@@ -1937,8 +1938,9 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 		panic("uvm_map_pageable: map %p not pageable", map);
 #endif
 
-	if (islocked == FALSE)
+	if ((lockflags & UVM_LK_ENTER) == 0)
 		vm_map_lock(map);
+
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	/* 
@@ -1950,7 +1952,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 	 */
 
 	if (uvm_map_lookup_entry(map, start, &start_entry) == FALSE) {
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 	 
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
 		return (KERN_INVALID_ADDRESS);
@@ -1972,7 +1975,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 			    (entry->end < end &&
 			     (entry->next == &map->header ||
 			      entry->next->start > entry->end))) {
-				vm_map_unlock(map);
+				if ((lockflags & UVM_LK_EXIT) == 0)
+					vm_map_unlock(map);
 				UVMHIST_LOG(maphist,
 				    "<- done (INVALID UNWIRE ARG)",0,0,0,0);
 				return (KERN_INVALID_ARGUMENT);
@@ -1992,7 +1996,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
 		return(KERN_SUCCESS);
 
@@ -2060,7 +2065,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				entry->wired_count--;
 				entry = entry->prev;
 			}
-			vm_map_unlock(map);
+			if ((lockflags & UVM_LK_EXIT) == 0)
+				vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID WIRE)",0,0,0,0);
 			return (KERN_INVALID_ARGUMENT);
 		}
@@ -2128,15 +2134,24 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 		UVMHIST_LOG(maphist, "<- done (RV=%d)", rv,0,0,0);
 		return(rv);
 	}
 
 	/* We are holding a read lock here. */
-	vm_map_unbusy(map);
-	vm_map_unlock_read(map);
-	
+	if ((lockflags & UVM_LK_EXIT) == 0) {
+		vm_map_unbusy(map);
+		vm_map_unlock_read(map);
+	} else {
+		/*
+		 * Get back to an exclusive (write) lock.
+		 */
+		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+	}
+
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
 	return(KERN_SUCCESS);
 }
