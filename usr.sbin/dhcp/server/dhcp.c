@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.4 1999/02/19 22:39:06 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.5 1999/02/24 04:14:34 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -538,8 +538,6 @@ void nak_lease (packet, cip)
 	result = send_packet (packet -> interface,
 			      packet, &raw, outgoing.packet_length,
 			      from, &to, (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
 }
 
 void ack_lease (packet, lease, offer, when)
@@ -1191,8 +1189,6 @@ void dhcp_reply (lease)
 					      (struct packet *)0,
 					      &raw, packet_length,
 					      raw.siaddr, &to, &hto);
-			if (result < 0)
-				warn ("send_fallback: %m");
 
 			free_lease_state (state, "dhcp_reply fallback 1");
 			lease -> state = (struct lease_state *)0;
@@ -1213,8 +1209,6 @@ void dhcp_reply (lease)
 					      (struct packet *)0,
 					      &raw, packet_length,
 					      raw.siaddr, &to, &hto);
-			if (result < 0)
-				warn ("send_fallback: %m");
 			free_lease_state (state, "dhcp_reply fallback 1");
 			lease -> state = (struct lease_state *)0;
 			return;
@@ -1230,8 +1224,6 @@ void dhcp_reply (lease)
 	result = send_packet (state -> ip,
 			      (struct packet *)0, &raw, packet_length,
 			      from, &to, &hto);
-	if (result < 0)
-		warn ("sendpkt: %m");
 
 	free_lease_state (state, "dhcp_reply");
 	lease -> state = (struct lease_state *)0;
@@ -1381,7 +1373,7 @@ struct lease *find_lease (packet, share, ours)
 		    ip_lease -> uid_len ==  packet -> options [i].len &&
 		    !memcmp (packet -> options [i].data,
 			     ip_lease -> uid, ip_lease -> uid_len)) {
-			if (uid_lease -> ends > cur_time)
+			if (uid_lease && uid_lease -> ends > cur_time)
 				warn ("client %s has duplicate leases on %s",
 				      print_hw_addr (packet -> raw -> htype,
 						     packet -> raw -> hlen,
@@ -1451,17 +1443,20 @@ struct lease *find_lease (packet, share, ours)
 	/* Now eliminate leases that are on the wrong network... */
 	if (ip_lease &&
 	    (share != ip_lease -> shared_network)) {
-		release_lease (ip_lease);
+		if (packet -> packet_type == DHCPREQUEST)
+			release_lease (ip_lease);
 		ip_lease = (struct lease *)0;
 	}
 	if (uid_lease &&
 	    (share != uid_lease -> shared_network)) {
-		release_lease (uid_lease);
+		if (packet -> packet_type == DHCPREQUEST)
+			release_lease (uid_lease);
 		uid_lease = (struct lease *)0;
 	}
 	if (hw_lease &&
 	    (share != hw_lease -> shared_network)) {
-		release_lease (hw_lease);
+		if (packet -> packet_type == DHCPREQUEST)
+			release_lease (hw_lease);
 		hw_lease = (struct lease *)0;
 	}
 

@@ -42,13 +42,13 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.4 1999/02/19 22:39:06 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.5 1999/02/24 04:14:35 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl14 ";
+static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl15 ";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -205,7 +205,7 @@ int main (argc, argv, envp)
 	db_startup ();
 
 	/* Discover all the network interfaces and initialize them. */
-	discover_interfaces (1);
+	discover_interfaces (DISCOVER_SERVER);
 
 	/* Initialize icmp support... */
 	icmp_startup (1, lease_pinged);
