@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.7 2003/07/21 00:54:43 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.8 2003/08/11 16:33:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -45,6 +45,7 @@ int	uvm_swap_alloc(int *, boolean_t);
 void	uvm_swap_free(int, int);
 void	uvm_swap_markbad(int, int);
 void	uvm_swap_stats(int, struct swapent *, int, register_t *);
+boolean_t	uvm_swapisfull(void);
 
 #endif /* _KERNEL */
 

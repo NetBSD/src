@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.52 2003/08/11 16:33:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.52 2003/08/11 16:33:32 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -608,8 +608,7 @@ uvmpd_scan_inactive(pglst)
 			 * the inactive queue.
 			 */
 
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (uvmexp.swpgonly == uvmexp.swpages) {
+			if (uvm_swapisfull()) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
 				simple_unlock(slock);
@@ -790,8 +789,8 @@ uvmpd_scan(void)
 
 	swap_shortage = 0;
 	if (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.swpginuse == uvmexp.swpages &&
-	    uvmexp.swpgonly < uvmexp.swpages &&
+	    uvmexp.swpginuse >= uvmexp.swpgavail &&
+	    !uvm_swapisfull() &&
 	    pages_freed == 0) {
 		swap_shortage = uvmexp.freetarg - uvmexp.free;
 	}
