@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.13 2002/02/11 10:57:57 wiz Exp $	*/
+/*	$NetBSD: cpio.c,v 1.13.2.1 2004/04/07 06:57:26 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.13 2002/02/11 10:57:57 wiz Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.13.2.1 2004/04/07 06:57:26 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,7 +967,7 @@ bcpio_endrd(void)
  * bcpio_wr()
  *	copy the data in the ARCHD to buffer in old binary cpio format
  *	There is a real chance of field overflow with this critter. So we
- *	always check the conversion is ok. nobody in his their right mind
+ *	always check the conversion is ok. nobody in their right mind
  *	should write an archive in this format...
  * Return
  *	0 if file has data to be written after the header, 1 if file has NO
