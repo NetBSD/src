@@ -1,5 +1,5 @@
 #
-# $NetBSD: inetbsd.S,v 1.2 1996/05/15 21:16:44 is Exp $
+# $NetBSD: inetbsd.S,v 1.3 1997/07/28 19:01:13 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -122,8 +122,8 @@ real_chk_end:
 # 
 	.global	_060_real_divbyzero
 _060_real_divbyzero:
-	tstb	sp@		|# is tracing enabled?
-	bpls	real_divbyzero_end		|# no
+	tstb	sp@			|# is tracing enabled?
+	bpls	real_divbyzero_end	|# no
 
 #
 #	 DIVBYZERO FRAME	   TRACE FRAME
