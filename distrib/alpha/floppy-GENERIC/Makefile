@@ -1,68 +1,53 @@
-#	$NetBSD: Makefile,v 1.15 2002/05/02 18:02:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/05/04 01:40:06 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
-MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
-MDEC?=		${DESTDIR}/usr/mdec
-KERNEL?=	${KERNOBJDIR}/GENERIC/netbsd
-STRIP?=		strip
-
-GZKERNEL=	netbsd
-IMAGE=		GENERIC.fs
-
-DISKTYPE=	floppy
-
-# Some reasonable values for the -i parameter to newfs are:
+# Stuff an arbitrary kernel onto a ustarfs boot floppy set.
 #
-#   6144	1147k, 189 inodes free
-#  16384	1159k,  93 inodes free
-# 204800	1167k,  29 inodes free
-INO_BYTES?=	6144
+# Optional variables available:
+#	FLOPPYKERNEL	Path to kernel to stuff onto the floppy.
+#			[ ${KERNOBJDIR}/GENERIC/netbsd ]
+#
+#	FLOPPYBASE	Basename of floppies (written as "${FLOPPYBASE}N.fs")
+#			[ "generic" ]
+#
+#	FLOPPYSIZE	Size of a floppy.  [ 2880 ]
+#
+#	FLOPPYMAX	Maximum number of floppies allowed in the set.  [1]
+#
+FLOPPYKERNEL?=	${KERNOBJDIR}/GENERIC/netbsd
+FLOPPYBASE?=	generic
+FLOPPYMAX?=	1
 
-CLEANFILES+=	${IMAGE} ${GZKERNEL}
+FLOPPY_RELEASEDIR?=	installation/misc
 
-all: GENERIC.fs
+.if defined(FLOPPYSIZE) && (${FLOPPYSIZE} != 2880)
+FLOPPYMETAFILE!=printf "tapelabel USTAR.volsize.%o" ${FLOPPYSIZE}
+.else
+FLOPPYSIZE=	2880
+.endif
 
-GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
-	@echo Creating tar image
-	${PAX} -wvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
-	@echo Creating vn image
-	dd if=/dev/zero of=${.TARGET}.tmp count=2880
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${.TARGET}.tmp
-	dd bs=8k seek=1 if=ustar.tmp of=${VND_CDEV}
-	disklabel -rw ${VND} ${DISKTYPE}
-	${MDEC}/installboot.old -b 17 -v	\
-		${MDEC}/boot ${MDEC}/bootxx.old ${VND_CRDEV}
-	vnconfig -u ${VND}
-	mv ${.TARGET}.tmp ${.TARGET}
+FLOPPYFILES=	boot ${FLOPPYMETAFILE} netbsd
 
-${GZKERNEL}: ${KERNEL}
-	cp ${KERNEL} ${.TARGET}
-	${STRIP} ${.TARGET}
-	gzip -9f ${.TARGET}
-	mv ${.TARGET}.gz ${.TARGET}
+MDEC=		${DESTDIR}/usr/mdec
+KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
+FLOPPY_BOOT=	${MDEC}/ustarboot
+FLOPPYINSTBOOT=\
+	"${INSTALLBOOT} -m ${MACHINE} -t raw -v -b 17 @IMAGE@ ${FLOPPY_BOOT}"
 
-unconfig:
-	-vnconfig -u ${VND}
+netbsd: ${FLOPPYKERNEL}
+	@echo "Copying stripped and gzipped ${.ALLSRC} to ${.TARGET}"
+	@rm -f ${.TARGET} ${.TARGET}.tmp
+	cp ${.ALLSRC} ${.TARGET}.tmp
+	${STRIP} ${.TARGET}.tmp
+	gzip -9f ${.TARGET}.tmp
+	mv ${.TARGET}.tmp.gz ${.TARGET}
 
-disk: all
-	dd if=GENERIC.fs bs=18k of=/dev/rfd0a
+CLEANFILES+=	netbsd netbsd.tmp netbsd.tmp.gz
 
-clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} ${GZKERNEL} ${GZKERNEL}.gz *.tmp
-
-# nothing to do here
-depend includes lint regress tags:
-
-release: check_RELEASEDIR .WAIT GENERIC.fs
-	${RELEASE_INSTALL} GENERIC.fs ${RELEASEDIR}/installation/misc
+.include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 
 .include <bsd.prog.mk>
