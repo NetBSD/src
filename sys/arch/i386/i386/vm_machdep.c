@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.25 1994/06/16 01:07:32 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.26 1994/06/17 22:20:49 mycroft Exp $
  */
 
 /*
@@ -373,30 +373,28 @@ vmapbuf(bp)
 	register struct buf *bp;
 {
 	register int npf;
-	register caddr_t addr;
-	register long flags = bp->b_flags;
-	struct proc *p;
-	int off;
-	vm_offset_t kva;
+	vm_offset_t addr, off, kva;
 	register vm_offset_t pa;
+	struct pmap *fpmap, *tpmap;
 
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_data;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
+	addr = (vm_offset_t)(bp->b_saveaddr = bp->b_data);
+	off = addr & PAGE_MASK;
+	addr = trunc_page(addr);
+	npf = btoc(round_page(off + bp->b_bufsize));
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_data = (caddr_t) (kva + off);
-	while (npf--) {
-		pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)addr);
+	bp->b_data = (caddr_t)(kva + off);
+	fpmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	tpmap = vm_map_pmap(phys_map);
+	do {
+		pa = pmap_extract(fpmap, (vm_offset_t)addr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		pmap_enter(tpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
-	}
+	} while (--npf);
 }
 
 /*
@@ -406,15 +404,13 @@ vmapbuf(bp)
 vunmapbuf(bp)
 	register struct buf *bp;
 {
-	register int npf;
-	register caddr_t addr = bp->b_data;
-	vm_offset_t kva;
+	register vm_offset_t addr;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+	addr = (vm_offset_t)bp->b_data;
+	kmem_free_wakeup(phys_map, trunc_page(addr),
+	   round_page((addr & PAGE_MASK) + bp->b_bufsize));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
