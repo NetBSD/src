@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.369 2001/10/16 08:15:01 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.370 2001/10/24 00:14:47 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp 
+ *	NetBSD: pcidevs,v 1.365 2001/10/24 00:13:41 thorpej Exp 
  */
 
 /*
@@ -1203,10 +1203,12 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82452	0x1000		/* i82452 Gigabit Ethernet */
-#define	PCI_PRODUCT_INTEL_82453_FIBER	0x1001		/* i82453 Gigabit Ethernet (1000BASE-X) */
-#define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* i82453-SC Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82452 Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82543_FIBER	0x1001		/* i82453 Gigabit Ethernet (1000BASE-X) */
+#define	PCI_PRODUCT_INTEL_82543_SC	0x1003		/* i82453-SC Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543_COPPER	0x1004		/* i82543 Gigabit Ethernet (1000BASE-T) */
+#define	PCI_PRODUCT_INTEL_82544_XT	0x1008		/* i82544 Gigabit Ethernet (1000BASE-T) */
+#define	PCI_PRODUCT_INTEL_82544_XF	0x1009		/* i82544 Gigabit Ethernet (1000BASE-X) */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
