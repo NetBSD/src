@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.24 2001/05/26 22:13:09 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.25 2001/06/18 03:33:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_kgdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
@@ -203,9 +204,9 @@ paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
@@ -1575,8 +1576,8 @@ sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_gs = tf->tf_gs;
+		frame.sf_sc.sc_fs = tf->tf_fs;
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;
@@ -1623,8 +1624,8 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	__asm("movl %w0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
@@ -2083,8 +2084,8 @@ setregs(p, pack, stack)
 	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
-	__asm("movl %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	__asm("movl %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;

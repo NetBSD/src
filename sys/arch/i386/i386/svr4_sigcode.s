@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.4.4 2001/05/23 03:13:38 sommerfeld Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.4.5 2001/06/18 03:33:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_multiprocessor.h"
 #endif
@@ -170,15 +170,7 @@ NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SVR4_UC_FS(%eax),%ecx
-	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p) 
 	pushl	%eax			# junk to fake return address
 	movl	$SVR4_SYS_context,%eax

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.24 2001/05/26 22:13:10 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.25 2001/06/18 03:33:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 
@@ -391,9 +391,6 @@ int	isa_nmi __P((void));
 /* vm86.c */
 void	vm86_gpfault __P((struct proc *, int));
 #endif /* VM86 */
-
-/* trap.c */
-void	child_return __P((void *));
 
 /* consinit.c */
 void kgdb_port_init __P((void));
