@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.6 2003/10/29 17:51:33 fvdl Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.6.2.1 2004/05/30 07:18:59 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -249,7 +249,8 @@ init_transport(struct netconfig *nconf)
 	 * XXX - using RPC library internal functions.
 	 */
 	if ((fd = __rpc_nconf2fd(nconf)) < 0) {
-		syslog(LOG_ERR, "cannot create socket for %s", nconf->nc_netid);
+		int non_fatal = errno == EPROTONOSUPPORT;
+		syslog(non_fatal?LOG_DEBUG:LOG_ERR, "cannot create socket for %s", nconf->nc_netid);
 		return (1);
 	}
 
