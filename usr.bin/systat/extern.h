@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2003/01/20 18:24:03 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2003/08/03 11:56:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -156,7 +156,7 @@ void	 netstat_reset(char *);
 void	 netstat_show(char *);
 void	 netstat_tcp(char *);
 void	 netstat_udp(char *);
-void	 nlisterr(struct nlist []);
+void	 nlisterr(struct nlist []) __attribute__((__noreturn__));
 WINDOW	*openbufcache(void);
 WINDOW	*openicmp(void);
 WINDOW	*openiostat(void);
