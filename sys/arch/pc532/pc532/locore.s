@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 2000/05/31 05:06:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 2000/07/14 08:21:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -82,7 +82,7 @@ ASENTRY(start)
 	movd	r0,tos			/* push length */
 	movqd	0,tos			/* push zero */
 	addr	r1,tos			/* push address */
-	bsr	_C_LABEL(memset)		/* zero the bss segment */
+	bsr	_C_LABEL(memset)	/* zero the bss segment */
 
 	/*
 	 * The boot program provides us a magic in r3,
