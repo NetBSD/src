@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.193 2004/04/17 23:35:37 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.194 2004/04/20 16:52:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.193 2004/04/17 23:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.194 2004/04/20 16:52:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -232,6 +232,8 @@ int	tcp_log_refused;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
+static int tcp_ackdrop_ppslim_count = 0;
+static struct timeval tcp_ackdrop_ppslim_last;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -1884,28 +1886,32 @@ after_listen:
 	 *    CLOSING, LAST_ACK, TIME_WAIT STATES
 	 *	Close the tcb.
 	 */
-	if (tiflags&TH_RST) switch (tp->t_state) {
+	if (tiflags & TH_RST) {
+		if (th->th_seq != tp->last_ack_sent)
+			goto dropafterack_ratelim;
 
-	case TCPS_SYN_RECEIVED:
-		so->so_error = ECONNREFUSED;
-		goto close;
+		switch (tp->t_state) {
+		case TCPS_SYN_RECEIVED:
+			so->so_error = ECONNREFUSED;
+			goto close;
 
-	case TCPS_ESTABLISHED:
-	case TCPS_FIN_WAIT_1:
-	case TCPS_FIN_WAIT_2:
-	case TCPS_CLOSE_WAIT:
-		so->so_error = ECONNRESET;
-	close:
-		tp->t_state = TCPS_CLOSED;
-		tcpstat.tcps_drops++;
-		tp = tcp_close(tp);
-		goto drop;
+		case TCPS_ESTABLISHED:
+		case TCPS_FIN_WAIT_1:
+		case TCPS_FIN_WAIT_2:
+		case TCPS_CLOSE_WAIT:
+			so->so_error = ECONNRESET;
+		close:
+			tp->t_state = TCPS_CLOSED;
+			tcpstat.tcps_drops++;
+			tp = tcp_close(tp);
+			goto drop;
 
-	case TCPS_CLOSING:
-	case TCPS_LAST_ACK:
-	case TCPS_TIME_WAIT:
-		tp = tcp_close(tp);
-		goto drop;
+		case TCPS_CLOSING:
+		case TCPS_LAST_ACK:
+		case TCPS_TIME_WAIT:
+			tp = tcp_close(tp);
+			goto drop;
+		}
 	}
 
 	/*
@@ -1917,7 +1923,7 @@ after_listen:
 	 * the same state.
 	 */
 	if (tiflags & TH_SYN)
-		goto dropafterack;
+		goto dropafterack_ratelim;
 
 	/*
 	 * If the ACK bit is off we drop the segment and return.
@@ -2040,6 +2046,15 @@ after_listen:
 					(void) tcp_output(tp);
 					goto drop;
 				}
+			} else if (tlen) {
+				tp->t_dupacks = 0;	/*XXX*/
+				/* drop very old ACKs unless th_seq matches */
+				if (th->th_seq != tp->rcv_nxt &&
+				    SEQ_LT(th->th_ack,
+				    tp->snd_una - tp->max_sndwnd)) {
+					goto drop;
+				}
+				break;
 			} else
 				tp->t_dupacks = 0;
 			break;
@@ -2424,6 +2439,20 @@ dropafterack:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
+	goto dropafterack2;
+
+dropafterack_ratelim:
+	/*
+	 * We may want to rate-limit ACKs against SYN/RST attack.
+	 */
+	if (ppsratecheck(&tcp_ackdrop_ppslim_last, &tcp_ackdrop_ppslim_count,
+	    tcp_ackdrop_ppslim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
+	/* ...fall into dropafterack2... */
+
+dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
