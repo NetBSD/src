@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.22 2004/02/16 07:37:06 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.23 2004/03/13 22:40:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -601,6 +601,7 @@ struct x86_boot_params {
 	uint32_t	bp_consdev;
 	uint32_t	bp_conspeed;
 	uint8_t		bp_password[16];	/* md5 hash of password */
+	char		bp_keymap[16];	/* keyboard traslation map */
 };
 
 #endif	/* !defined(__ASSEMBLER__) */				/* } */
