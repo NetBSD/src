@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.69 2004/01/20 15:29:35 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.69 2004/01/20 15:29:35 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -583,8 +583,12 @@ readappleufs()
  * Detect byte order. Return 0 if valid magic found, -1 otherwise.
  */
 static int
-detect_byteorder(struct fs *fs)
+detect_byteorder(struct fs *fs, int sblockoff)
 {
+	if (sblockoff == SBLOCK_UFS2 && (fs->fs_magic == FS_UFS1_MAGIC ||
+	    fs->fs_magic == bswap32(FS_UFS1_MAGIC)))
+		/* Likely to be the first alternate of a fs with 64k blocks */
+		return -1;
 	if (fs->fs_magic == FS_UFS1_MAGIC || fs->fs_magic == FS_UFS2_MAGIC) {
 		if (endian == 0 || BYTE_ORDER == endian) {
 			needswap = 0;
@@ -630,7 +634,7 @@ readsb(listerr)
 		    (long)SBLOCKSIZE) != 0)
 			return (0);
 		fs = sblk.b_un.b_fs;
-		if (detect_byteorder(fs) < 0) {
+		if (detect_byteorder(fs, -1) < 0) {
 			badsb(listerr, "MAGIC NUMBER WRONG");
 			return (0);
 		}
@@ -641,7 +645,7 @@ readsb(listerr)
 			    super, (long)SBLOCKSIZE) != 0)
 				continue;
 			fs = sblk.b_un.b_fs;
-			if (detect_byteorder(fs) == 0)
+			if (detect_byteorder(fs, sblock_try[i]) == 0)
 				break;
 		}
 		if (sblock_try[i] == -1) {
