@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.11 1997/10/15 05:13:31 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.12 1997/11/18 11:27:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -89,6 +89,7 @@ sb_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "CTL0044") && /* SB AWE64 Gold */
 	    strcmp(ipa->ipa_devlogic, "CTL0045") && /* SB AWE64 Value */
 	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
+	    strcmp(ipa->ipa_devlogic, "@@@0001") && /* ALS100 */
 	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
 	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
 	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */
@@ -120,8 +121,14 @@ sb_isapnp_attach(parent, self, aux)
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
-	sc->sc_drq16 = ipa->ipa_drq[1].num;
-
+        if (ipa->ipa_ndrq > 1) {
+        	/* Some cards have the 16 bit drq first */
+        	if (sc->sc_drq8 >= 4) {
+                	sc->sc_drq16 = sc->sc_drq8;
+                        sc->sc_drq8 = ipa->ipa_drq[1].num;
+                } else
+                	sc->sc_drq16 = ipa->ipa_drq[1].num;
+        }
 	/*
 	 * isapnp is a child if isa, and we needs isa for the dma
 	 * routines
