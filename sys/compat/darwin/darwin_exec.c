@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.33 2003/12/24 22:53:59 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.34 2003/12/27 22:06:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.33 2003/12/24 22:53:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.34 2003/12/27 22:06:19 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -303,6 +303,7 @@ darwin_e_proc_init(p, vmspace)
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	ded->ded_fakepid = 0;
 	ded->ded_wsdev = NODEV;
+	ded->ded_vramoffset = NULL;
 
 	/* Initalize the mach_emuldata part of darwin_emuldata */
 	mach_e_proc_init(p, vmspace);
