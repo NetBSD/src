@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.25 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.25.2.1 2004/06/22 07:28:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.25 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.25.2.1 2004/06/22 07:28:35 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,7 @@ __weak_alias(pwcache_userdb,_pwcache_userdb)
 __weak_alias(pwcache_groupdb,_pwcache_groupdb)
 #endif
 
-#if !HAVE_PWCACHE_USERDB
+#if !HAVE_PWCACHE_USERDB || HAVE_NBTOOL_CONFIG_H
 #include "pwcache.h"
 
 /*
