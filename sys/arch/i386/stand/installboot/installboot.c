@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.13 1999/01/29 18:43:11 christos Exp $	 */
+/* $NetBSD: installboot.c,v 1.14 1999/01/30 17:45:42 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -77,7 +77,13 @@ struct fraglist *fraglist;
 
 struct nlist nl[] = {
 #define X_fraglist	0
+#ifdef __ELF__
+	{{"fraglist"}},
+#define SYM_TYPE N_EXT
+#else
 	{{"_fraglist"}},
+#define SYM_TYPE (N_TEXT|N_EXT)
+#endif
 	{{NULL}}
 };
 
@@ -103,8 +109,9 @@ loadprotoblocks(fname, size)
 	}
 	/* Validate symbol types (global text!). */
 	for (nlp = nl; nlp->n_un.n_name; nlp++) {
-		if (nlp->n_type != (N_TEXT | N_EXT)) {
-			warnx("nlist: %s: wrong type", nlp->n_un.n_name);
+		if (nlp->n_type != SYM_TYPE) {
+			warnx("nlist: %s: wrong type %d", nlp->n_un.n_name,
+			    nlp->n_type);
 			return NULL;
 		}
 	}
@@ -129,7 +136,7 @@ loadprotoblocks(fname, size)
 	}
 	if (verbose) {
 		(void) fprintf(stderr, "%s: entry point %#lx\n", fname,
-			       marks[MARK_START]);
+			       marks[MARK_ENTRY]);
 		(void) fprintf(stderr, "proto bootblock size %ld\n",
 			       (long)*size);
 		(void) fprintf(stderr, "room for %d filesystem blocks"
