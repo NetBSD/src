@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1995/04/23 07:58:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.14 1997/03/24 19:54:35 perry Exp $
 
 PROG=	ld
 SRCS=	ld.c symbol.c lib.c shlib.c warnings.c etc.c rrs.c xbits.c md.c
@@ -11,7 +11,10 @@ SUBDIR=	ldconfig ldd
 
 .PATH: $(.CURDIR)/$(MACHINE_ARCH)
 
-.include <bsd.prog.mk>
+.include <bsd.own.mk>	# for NOPIC definition
+
 .if !defined(NOPIC)
 SUBDIR+= rtld
 .endif
+
+.include <bsd.prog.mk>
