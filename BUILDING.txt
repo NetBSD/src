@@ -279,7 +279,7 @@ CONFIGURATION
                     Default: Unset.
 
      NODISTRIBDIRS  If set, avoids the ``make distrib-dirs'' phase of a full
-                    build.  This skips running mtree(1) on DESTDIR, useful on
+                    build.  This skips running mtree(8) on DESTDIR, useful on
                     systems where building as an unprivileged user, or where
                     it is known that the system-wide mtree files have not
                     changed.
@@ -441,11 +441,11 @@ BUILDING
 SEE ALSO
      make(1), hier(7), release(7)
 
-BUGS
-     Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
-
 HISTORY
      The USE_NEW_TOOLCHAIN based build scheme was introduced in the ``NetBSD-
      current'' development sources between NetBSD 1.5 and NetBSD 1.6.
+
+BUGS
+     Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
 NetBSD                         October 29, 2001                              7

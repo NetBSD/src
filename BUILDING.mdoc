@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.3 2001/10/30 14:40:24 tv Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.4 2001/10/30 16:22:40 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ Discrepancies between this documentation and the current reality of
 implementation are noted specially, as with the note below:
 .Pp
 .Em Note :
-This document applies only to platforms which use the new toolchain as  
+This document applies only to platforms which use the new toolchain as
 indicated by the setting of
 .Sy USE_NEW_TOOLCHAIN
 in
@@ -74,7 +74,7 @@ continue building traditionally, using the notes specified in the file
 .Sh REQUIREMENTS
 .
 .Nx
-is designed to be buildable on most POSIX-compliant host systems.  
+is designed to be buildable on most POSIX-compliant host systems.
 The basic build procedure is the same whether compiling
 .Em natively
 (on the same
@@ -94,9 +94,9 @@ is not required); all other tools are created as part of the
 build process.
 .Pp
 .Bd -ragged -offset indent
-.Em Note : 
+.Em Note :
 A couple host toolchain components are not yet available in the tools
-directory.  Also, some tools use non-POSIX, non-ANSI C extensions 
+directory.  Also, some tools use non-POSIX, non-ANSI C extensions
 and need to be standardized.  As a result, cross-compiling from
 systems other than
 .Nx
@@ -117,7 +117,7 @@ This document (in plaintext).
 .It Sy Makefile
 The main Makefile for
 .Nx ;
-should only be run for native builds with an appropriately up-to-date 
+should only be run for native builds with an appropriately up-to-date
 version of
 .Nx
 .Xr make 1 .
@@ -165,7 +165,7 @@ determining out-of-date status.
 .It Sy bin/ ... usr.sbin/
 Sources to the
 .Nx
-userland (non-kernel) programs.  If any of these directories are 
+userland (non-kernel) programs.  If any of these directories are
 missing, they will be skipped during the build.
 .El
 .
@@ -207,7 +207,7 @@ Unset.
 ..
 Several variables control the behavior of
 .Nx
-builds.  Unless otherwise specified, these variables may be set in 
+builds.  Unless otherwise specified, these variables may be set in
 either the process environment or the
 .Xr make 1
 configuration file specified by
@@ -245,14 +245,14 @@ configuration file.
 .
 .It Sy MKCATPAGES
 .YorN
-Indicates whether preformatted plaintext manual pages will be created 
+Indicates whether preformatted plaintext manual pages will be created
 during a build.
 .DFLTy
 .
 .It Sy MKCRYPTO
 .YorN
-Indicates whether cryptographic code will be included in a build; 
-provided for the benefit of countries that do not allow strong 
+Indicates whether cryptographic code will be included in a build;
+provided for the benefit of countries that do not allow strong
 cryptography.  Will not affect use of the standard low-security password
 encryption system,
 .Xr crypt 3 .
@@ -268,7 +268,7 @@ will be installed during a build.
 .It Sy MKINFO
 .YorN
 Indicates whether GNU Info files, used for the documentation for
-most of the compilation tools, will be created and installed during a 
+most of the compilation tools, will be created and installed during a
 build.
 .DFLTy
 .
@@ -278,7 +278,7 @@ Indicates whether
 .Xr lint 1
 will be run against portions of the
 .Nx
-source code during the build, and whether lint libraries will be 
+source code during the build, and whether lint libraries will be
 installed into
 .Sy /usr/libdata/lint .
 .DFLTy
@@ -351,7 +351,7 @@ unconditionally.
 .DFLTy
 .
 .It Sy TOOLDIR
-Directory to hold the host tools, once built.  This directory should be 
+Directory to hold the host tools, once built.  This directory should be
 unique to a given host system and
 .Nx
 source tree.  (However, multiple targets may share the same
@@ -364,8 +364,8 @@ is
 .It Sy UPDATE
 If set, then all install operations intended to write to
 .Sy DESTDIR
-will compare file timestamps before installing, and skip the install 
-phase if the destination files are up-to-date.  This also has 
+will compare file timestamps before installing, and skip the install
+phase if the destination files are up-to-date.  This also has
 implications on full builds (see next subsection).
 .DFLTu
 .
@@ -387,13 +387,13 @@ version-specific for that tool.
 .It Sy never
 Do not use the tools from
 .Sy TOOLDIR ,
-even when building native tool components.  This is similar to the 
+even when building native tool components.  This is similar to the
 traditional
 .Nx
 build method, but does
 .Em not
-verify that the compilation tools in use are up-to-date enough in order 
-to build the tree successfully.  This may cause build or runtime 
+verify that the compilation tools in use are up-to-date enough in order
+to build the tree successfully.  This may cause build or runtime
 problems when building the whole
 .Nx
 source tree.
@@ -409,12 +409,12 @@ otherwise (to preserve traditional semantics of the
 .Xr make 1
 include files).
 .Pp
-.Em Note : 
+.Em Note :
 Currently, the
 .Dq no
 option functions similarly to the
 .Dq never
-option.  Proper checks will be added in the near future to add the 
+option.  Proper checks will be added in the near future to add the
 described functionality for version-specific tool components.
 .
 .El
@@ -437,7 +437,7 @@ pass) at the start of a build.
 .DFLTy
 .
 .It Sy MKTOOLS
-Indicates whether the host tools will be built and installed 
+Indicates whether the host tools will be built and installed
 automatically if they are out-of-date.
 .Bl -tag -width "never"
 .It Sy yes
@@ -460,8 +460,8 @@ source tree build method, but is not typically required for host tools.
 .It Sy NBUILDJOBS
 If set, specifies the number of parallel
 .Xr make 1
-processes that should be run simultaneously.  This can speed up builds 
-on SMP machines, or machines with much more CPU power than I/O 
+processes that should be run simultaneously.  This can speed up builds
+on SMP machines, or machines with much more CPU power than I/O
 availability.  This should be used
 .Em instead
 of the
@@ -474,8 +474,8 @@ in order to ensure proper ordering of build components.
 .It Sy NOCLEANDIR
 If set, avoids the
 .Dq make cleandir
-phase of a full build.  This has the effect of allowing only changed 
-files in a source tree to be recompiled.  This can speed up builds when 
+phase of a full build.  This has the effect of allowing only changed
+files in a source tree to be recompiled.  This can speed up builds when
 updating only a few files in the tree.
 .DFLTu
 .
@@ -483,10 +483,10 @@ updating only a few files in the tree.
 If set, avoids the
 .Dq make distrib-dirs
 phase of a full build.  This skips running
-.Xr mtree 1
+.Xr mtree 8
 on
 .Sy DESTDIR ,
-useful on systems where building as an unprivileged user, or where it is 
+useful on systems where building as an unprivileged user, or where it is
 known that the system-wide mtree files have not changed.
 .DFLTu
 .
@@ -495,8 +495,8 @@ If set, avoids the
 .Dq make includes
 phase of a full build.  This has the effect of preventing
 .Xr make 1
-from thinking that some programs are out-of-date simply because the 
-system include files have changed.  However, this option should not be 
+from thinking that some programs are out-of-date simply because the
+system include files have changed.  However, this option should not be
 used when updating the entire
 .Nx
 source tree arbitrarily; it is suggested to use
@@ -530,7 +530,7 @@ builds are listed here.
 .Bl -tag -width "var=value"
 .
 .It Sy -m Em dir
-Specify the default directory for searching for system Makefile 
+Specify the default directory for searching for system Makefile
 segments, mainly the
 .Aq bsd.*.mk
 files.  When building any full
@@ -546,7 +546,7 @@ actually execute them.  This will still cause recursion to take place.
 .
 .It Sy -v Em var
 Print
-.Xr make 1 's
+.Xr make 1 Ns 's
 idea of the value of
 .Em var .
 Does not build any targets.
@@ -586,10 +586,10 @@ Remove program and library object code files.
 .It Sy cleandir
 Same as
 .Sy clean ,
-but also remove preformatted documentation, dependency files generated 
+but also remove preformatted documentation, dependency files generated
 by
 .Dq make depend ,
-and any other files known to be created at build time. 
+and any other files known to be created at build time.
 .Dq make distclean
 may be used as a synonym, for familiarity with a similar well-known
 convention.
@@ -597,7 +597,7 @@ convention.
 .It Sy depend
 Create dependency files
 .Sy ( .depend )
-containing more detailed information about the dependencies of source 
+containing more detailed information about the dependencies of source
 code on header files.  Allows programs to be recompiled automatically
 when a dependency changes.
 .
@@ -613,7 +613,7 @@ phase can participate in
 parallelism.
 .
 .It Sy includes
-Build and install system header files.  Typically needed before any 
+Build and install system header files.  Typically needed before any
 system libraries or programs can be built.
 .
 .It Sy install
@@ -623,11 +623,11 @@ Install programs, libraries, and documentation into
 .It Sy lint
 Run
 .Xr lint 1
-against the C source code, where appropriate, and generate 
+against the C source code, where appropriate, and generate
 system-installed lint libraries.
 .
 .It Sy obj
-Create object directories to be used for built files, instead of 
+Create object directories to be used for built files, instead of
 building directly in the source tree.
 .
 .It Sy tags
@@ -676,26 +676,26 @@ Runs the compiled regression tests on the local host.
 .
 .Ss The \*qbuild.sh\*q script
 .
-This script file is a Bourne shell script designed to build the 
+This script file is a Bourne shell script designed to build the
 entire
 .Nx
 system on any host with a Bourne shell in
 .Sy /bin/sh ,
-including many that are not POSIX compliant.  Note that if a host 
+including many that are not POSIX compliant.  Note that if a host
 system's
 .Sy /bin/sh
 is unusually old and broken, the Korn Shell
 .Sy ( /bin/ksh ) ,
 if available, may be a usable alternative.
 .Pp
-All cross-compile builds, and most native builds, of the entire system 
+All cross-compile builds, and most native builds, of the entire system
 should make use of
 .Sy build.sh
 rather than just running
 .Dq make .
 This way, the
 .Xr make 1
-program will be bootstrapped properly, in case the host system has an 
+program will be bootstrapped properly, in case the host system has an
 older or incompatible
 .Dq make
 program.
@@ -704,7 +704,7 @@ When compiling the entire system via
 .Sy build.sh ,
 many
 .Xr make 1
-variables are set for you in order to help encapsulate the build 
+variables are set for you in order to help encapsulate the build
 process.  In particular, both
 .Sy USETOOLS
 and
@@ -725,7 +725,7 @@ are required in order for
 to function, and thus they cannot be set in the configuration file
 specified by
 .Sy MAKECONF .
-They may be set either in the process environment, or via command line 
+They may be set either in the process environment, or via command line
 options to
 .Sy build.sh .
 .Pp
@@ -806,7 +806,7 @@ a
 .Sy nbmake-MACHINE
 script will be created in
 .Sy TOOLDIR/bin
-upon the first build to assist in building subtrees on a cross-compile 
+upon the first build to assist in building subtrees on a cross-compile
 host.
 .Pp
 .Sy nbmake-MACHINE
@@ -829,19 +829,19 @@ or called with an absolute path.
 .Xr hier 7 ,
 .Xr release 7
 .
-.Sh BUGS
-.
-Many platforms are not yet using the
-.Sy USE_NEW_TOOLCHAIN
-system.
-.
 .Sh HISTORY
 .
 The
 .Sy USE_NEW_TOOLCHAIN
 based build scheme was introduced in the
-.Dq NetBSD-current
+.Dq Nx Ns -current
 development sources between
 .Nx 1.5
 and
-.Nx 1.6.
+.Nx 1.6 .
+.
+.Sh BUGS
+.
+Many platforms are not yet using the
+.Sy USE_NEW_TOOLCHAIN
+system.
