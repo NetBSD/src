@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.4 1999/03/14 22:10:46 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.4.2.1 1999/09/27 05:04:41 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,6 +66,19 @@ rf_RewriteParity(raidPtr)
 	int rc;
 	RF_PhysDiskAddr_t pda;
 	RF_SectorNum_t i;
+
+	if (raidPtr->Layout.map->faultsTolerated == 0) {
+		/* There isn't any parity. Call it "okay." */
+		return (RF_PARITY_OKAY);
+	}
+	if (raidPtr->status[0] != rf_rs_optimal) {
+		/*
+		 * We're in degraded mode.  Don't try to verify parity now! 
+		 * XXX: this should be a "we don't want to", not a 
+		 * "we can't" error. 
+		 */
+		return (RF_PARITY_COULD_NOT_VERIFY);
+	}
 
 	pda.startSector = 0;
 	pda.numSector = raidPtr->Layout.sectorsPerStripeUnit;
