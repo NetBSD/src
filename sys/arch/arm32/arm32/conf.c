@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1996/09/08 00:11:51 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1996/09/08 00:40:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -271,7 +271,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tape_init(NST,st),	   	/* 25: SCSI tape */
 	cdev_disk_init(NCD,cd),	    	/* 26: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),	 	/* 27: SCSI autochanger */
-	cdev_ch_init(NUK,uk),	 	/* 28: SCSI unknown */
+	cdev_uk_init(NUK,uk),	 	/* 28: SCSI unknown */
 	cdev_scanner_init(NSS,ss),	/* 29: SCSI scanner */
 	cdev_lkm_dummy(),		/* 30: */
 	cdev_lkm_dummy(),		/* 31: */
