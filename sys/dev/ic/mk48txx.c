@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.5 2000/11/11 11:03:31 pk Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.6 2000/11/11 11:59:42 pk Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,7 @@
 struct mk48txx {
 	bus_space_tag_t	mk_bt;		/* bus tag & handle */
 	bus_space_handle_t mk_bh;	/* */
-	u_int		mk_nvramsz;	/* Size of NVRAM on the chip */
+	bus_size_t	mk_nvramsz;	/* Size of NVRAM on the chip */
 	bus_size_t	mk_clkoffset;	/* Offset in NVRAM to clock bits */
 	u_int		mk_year0;	/* What year is represented on the system
 					   by the chip's year counter at 0 */
@@ -67,7 +67,7 @@ int mk48txx_auto_century_adjust = 1;
 
 struct {
 	const char *name;
-	int nvramsz;
+	bus_size_t nvramsz;
 	bus_size_t clkoff;
 	int flags;
 #define MK48TXX_EXT_REGISTERS	1	/* Has extended register set */
@@ -86,8 +86,8 @@ mk48txx_attach(bt, bh, model, year0)
 {
 	todr_chip_handle_t handle;
 	struct mk48txx *mk;
-	int sz, nvramsz;
-	bus_size_t clkoff;
+	bus_size_t nvramsz, clkoff;
+	int sz;
 	int i;
 
 	printf(": %s", model);
@@ -243,7 +243,7 @@ mk48txx_setcal(handle, v)
 int
 mk48txx_get_nvram_size(handle, vp)
 	todr_chip_handle_t handle;
-	u_int *vp;
+	bus_size_t *vp;
 {
 	struct mk48txx *mk = handle->cookie;
 	*vp = mk->mk_nvramsz;
