@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.12 2004/12/02 09:50:42 xtraeme Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.13 2004/12/02 14:33:31 xtraeme Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -301,6 +301,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 # Mainboard devices
 com* 		at acpi?		# Serial communications interface
 fdc* 		at acpi?		# Floppy disk controller
+joy*		at acpi?		# Joystick/Game port
 lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
