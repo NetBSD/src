@@ -1,4 +1,31 @@
-/*	$NetBSD: asic.h,v 1.5 1995/04/28 04:44:21 jonathan Exp $	*/
+/*	$NetBSD: asic.h,v 1.6 1995/08/29 11:52:00 jonathan Exp $	*/
+
+/* 
+ * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Author: Jonathan Stone
+ *
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,55 +66,33 @@
  *	@(#)asic.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
- * Mach Operating System
- * Copyright (c) 1991,1990,1989 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
- */
-/*
- * HISTORY
- * Log:	asic.h,v
- * Revision 2.2  92/03/02  18:33:32  rpd
- * 	Created, from the DEC specs:
- * 	"IO Controller ASIC Functional Specifications"
- * 	Workstation Systems Engineering, Palo Alto, CA. Feb 1, 1991.
- * 	[92/01/17            af]
- * 
- */
-/*
- *	File: asic.h
- * 	Author: Alessandro Forin, Carnegie Mellon University
- *	Date:	1/92
- *
- *	Definitions specific to the IO Controller ASIC, used
- *	on 3min and MAXine motherboards.
- */
-
 #ifndef	MIPS_ASIC_H
 #define	MIPS_ASIC_H 1
 
 /*
- * Slot definitions
+ * Slot definitions.
+ *
+ * The IOASIC is memory-mapped into a turbochannel slot as the "system"
+ * pseudo-slot pseudo-slot, containing on-the-baseboard devices for
+ * turbochannel Decstations and  Alphas.  Regardless of the size
+ * of the host turbochannel slots, the IO ASIC provides up to  sixteen
+ * fixed-size  256 Kbyte subslots. (or 512 Kbytes on alphas?)
+ *
+ * Slot 0 is always system ROM, with a Turbochannel ROM ident string.
+ * Slot 1 is always the ASIC's own registers.
+ *
+ * Lance ethernet (and dma registers), SCC serial chip, ASC scsi chip
+ * (and DMA registers for all those), and a real-time clock are
+ * present on all IO asic machines.  Other slots number vary by machine
+ * (pmax or alpha) and model of machine.
+ *
+ * The Decstation/xx (MAXINE) and all(?) Alphas have an audio/ISDN chip.
+ *
+ * The MAXINE has only one SCC serial chip, but  has a  DTOP "desktop bus"
+ * device. All other  IOASIC machines have two SCCs.
+ *
+ * The MAXINE also a floppy-disk controller, and a free-running
+ * clock with 1-microsecond resolution.
  */
 
 #define	ASIC_SLOT_0_START	0x000000
@@ -109,7 +114,7 @@
 #define	ASIC_SLOTS_END		0x3fffff
 
 /*
- *  Register offsets (slot 1)
+ *  ASIC register offsets (slot 1)
  */
 
 #define	ASIC_SCSI_DMAPTR	ASIC_SLOT_1_START+0x000
@@ -118,6 +123,7 @@
 #define	ASIC_SCC_T1_DMAPTR	ASIC_SLOT_1_START+0x030
 #define	ASIC_SCC_R1_DMAPTR	ASIC_SLOT_1_START+0x040
 #define	ASIC_SCC_T2_DMAPTR	ASIC_SLOT_1_START+0x050
+
 #define	ASIC_SCC_R2_DMAPTR	ASIC_SLOT_1_START+0x060
 #define	ASIC_FLOPPY_DMAPTR	ASIC_SLOT_1_START+0x070
 #define	ASIC_ISDN_X_DMAPTR	ASIC_SLOT_1_START+0x080
@@ -144,13 +150,18 @@
 #define	ASIC_SCSI_SDR1		ASIC_SLOT_1_START+0x1d0
 #define	ASIC_CTR		ASIC_SLOT_1_START+0x1e0 /*5k/240,alpha only*/
 
-/* system Status and Control register (SSR) */
+/*
+ * System Status and Control register (SSR) bit definitions.
+ * (The SSR is the IO ASIC register named ASIC_CSR above).
+ */
 
 #define ASIC_CSR_DMAEN_T1	0x80000000	/* rw */
 #define ASIC_CSR_DMAEN_R1	0x40000000	/* rw */
 #define ASIC_CSR_DMAEN_T2	0x20000000	/* rw */
 #define ASIC_CSR_DMAEN_R2	0x10000000	/* rw */
-#define ASIC_CSR_xxx		0x0f800000	/* reserved */
+#define	ASIC_CSR_FASTMODE	0x08000000	/* rw */ /*Alpha asic only*/
+#define ASIC_CSR_xxx		0x07800000	/* reserved */
+#define ASIC_CSR_DS_xxx		0x0f800000	/* reserved */
 #define ASIC_CSR_FLOPPY_DIR	0x00400000	/* rw */
 #define ASIC_CSR_DMAEN_FLOPPY	0x00200000	/* rw */
 #define ASIC_CSR_DMAEN_ISDN_T	0x00100000	/* rw */
@@ -158,9 +169,45 @@
 #define ASIC_CSR_SCSI_DIR	0x00040000	/* rw */
 #define ASIC_CSR_DMAEN_SCSI	0x00020000	/* rw */
 #define ASIC_CSR_DMAEN_LANCE	0x00010000	/* rw */
-/* low 16 bits are rw gp outputs */
 
-/* system Interrupt register (and interrupt mask register) */
+/*
+ * The low-order 16 bits of SSR are general-purpose bits
+ * with model-dependent meaning.
+ * The following  are common on all three IOASIC Decstations,
+ * (except perhaps TXDIS_1 and TXDIS_2 on xine?), and apparently on Alphas,
+ * also.
+ */
+#define ASIC_CSR_DIAGDN		0x00008000	/* rw */	/* (all) */
+#define ASIC_CSR_TXDIS_2	0x00004000	/* rw */ 	/* kmin,kn03 */
+#define ASIC_CSR_TXDIS_1	0x00002000	/* rw */	/* kmin,kn03 */
+#define ASIC_CSR_SCC_ENABLE	0x00000800	/* rw */	/* (all) */
+#define ASIC_CSR_RTC_ENABLE	0x00000400	/* rw */	/* (all) */
+#define ASIC_CSR_SCSI_ENABLE	0x00000200	/* rw */	/* (all) */
+#define ASIC_CSR_LANCE_ENABLE	0x00000100	/* rw */	/* (all) */
+
+
+/* kn03-specific SRR bit definitions: common bitfields above, plus: */
+#define KN03_CSR_LEDS		0x000000ff	/* rw */	/* kn03 */
+
+
+/* kmin-specific SSR bit definitions: common bitfields above, plus: */
+#define KMIN_CSR_LEDS		0x000000ff	/* rw */
+
+
+/* xine-specific SSR bit definitions: common bitfields above, plus: */
+#define XINE_CSR_ISDN_ENABLE	0x00001000	/* rw */
+#define XINE_CSR_FLOPPY_ENABLE	0x00000080	/* rw */
+#define XINE_CSR_VDAC_ENABLE	0x00000040	/* rw */
+#define XINE_CSR_DTOP_ENABLE	0x00000020	/* rw */
+#define XINE_CSR_LED		0x00000001	/* rw */
+
+
+
+/*
+ * System Interrupt Register (and interrupt mask register).
+ * The defines above call the SIR ASIC_INTR,  and the SIRM is called
+ * ASIC_IMSK.
+ */
 
 #define	ASIC_INTR_T1_PAGE_END	0x80000000	/* rz */
 #define	ASIC_INTR_T1_READ_E	0x40000000	/* rz */
@@ -178,7 +225,77 @@
 #define	ASIC_INTR_SCSI_OVRUN	0x00040000	/* rz */
 #define	ASIC_INTR_SCSI_READ_E	0x00020000	/* rz */
 #define	ASIC_INTR_LANCE_READ_E	0x00010000	/* rz */
-/* low 16 are gp interrupts */
+
+/*
+ * SIR and SIRM low-order bits.
+
+ * The low-order 16 bits of SIR and SIRM are general-purpose bits
+ * with model-dependent meaning.
+ * The following four bits  of the SIRM have the same meaning on
+ * all three IOASIC Decstations and apparently on Alphas too.
+ * 
+ * the MAXINE (decstation 5000/xx) is weird; see below.
+ */
+
+#define	ASIC_INTR_NVR_JUMPER	0x00004000	/* ro */
+#define	ASIC_INTR_NRMOD_JUMPER	0x00000400	/* ro */
+#define	ASIC_INTR_SCSI		0x00000200	/* ro */
+#define	ASIC_INTR_LANCE		0x00000100	/* ro */
+
+/* The following are valid for both kmin and kn03. */
+
+#define	KMIN_INTR_SCC_1		0x00000080	/* ro */	/* kmin,kn03*/
+#define	KMIN_INTR_SCC_0		0x00000040	/* ro */
+
+#define	KMIN_INTR_CLOCK		0x00000020	/* ro */
+#define	KMIN_INTR_PSWARN	0x00000010	/* ro */
+#define	KMIN_INTR_SCSI_FIFO	0x00000004	/* ro */
+#define	KMIN_INTR_PBNC		0x00000002	/* ro */
+#define	KMIN_INTR_PBNO		0x00000001	/* ro */
+#define	KMIN_INTR_ASIC		0xff0f0004
+
+/* kmin-specific SIR/SIRM definitions */
+#define	KMIN_INTR_TIMEOUT	0x00001000	/* ro */
+#define	KMIN_IM0		0xff0f13f0	/* all good ones enabled */
+
+
+/* kn03-specific SIR/SIRM definitions */
+#define	KN03_INTR_TC_2		0x00002000	/* ro */
+#define	KN03_INTR_TC_1		0x00001000	/* ro */
+#define	KN03_INTR_TC_0		0x00000800	/* ro */
+#define	KN03_IM0		0xff0f3bf0	/* all good ones enabled */
+
+/*
+ * SIR/SIRM  low-order bit definitions for the MAXINE.
+ * The MAXINE has so many onboard devices that  it
+ * has very little in common with the kmin and kn03 --
+ * just the two jumpers and the SCSI and LANCE interrupt bits.
+ * (is the clock-interrupt-enable bit _really_ different)?
+ */
+
+#define	XINE_INTR_xxxx		0x00002808	/* ro */
+#define	XINE_INTR_FLOPPY	0x00008000	/* ro */
+/*#define	XINE_INTR_NVR_JUMPER	0x00004000	/* ro */
+#define	XINE_INTR_POWERUP	0x00002000	/* ro */
+#define	XINE_INTR_TC_0		0x00001000	/* ro */
+#define	XINE_INTR_ISDN		0x00000800	/* ro */
+/*#define	XINE_INTR_NRMOD_JUMPER	0x00000400	/* ro */
+/*#define	XINE_INTR_SCSI		0x00000200	/* ro */
+/*#define	XINE_INTR_LANCE		0x00000100	/* ro */
+#define	XINE_INTR_FLOPPY_HDS	0x00000080	/* ro */
+#define	XINE_INTR_SCC_0		0x00000040	/* ro */
+#define	XINE_INTR_TC_1		0x00000020	/* ro */
+#define	XINE_INTR_FLOPPY_XDS	0x00000010	/* ro */
+#define	XINE_INTR_VINT		0x00000008	/* ro */
+#define	XINE_INTR_N_VINT	0x00000004	/* ro */
+#define	XINE_INTR_DTOP_TX	0x00000002	/* ro */
+#define	XINE_INTR_DTOP_RX	0x00000001	/* ro */
+#define	XINE_INTR_DTOP		0x00000003
+#define	XINE_INTR_ASIC		0xffff0000
+#define	XINE_IM0		0xffff9b6b	/* all good ones enabled */
+
+
+
 
 /* DMA pointer registers (SCSI, Comm, ...) */
 
@@ -203,7 +320,9 @@
 #define	ASIC_DECODE_CHIP_SELECT	0x0000000f
 
 /*
- * Asic register addresses at offset from base.
+ * The Asic is mapped at different addresses on each model.
+ * The following macros define ASIC register addresses as a function
+ * of the base address of the ASIC.
  */
 #define	ASIC_REG_SCSI_DMAPTR(base)	((base) + ASIC_SCSI_DMAPTR)
 #define	ASIC_REG_SCSI_DMANPTR(base)	((base) + ASIC_SCSI_NEXTPTR)
@@ -242,4 +361,21 @@
  */
 #define	ASIC_SYS_ETHER_ADDRESS(base)	((base) + ASIC_SLOT_2_START)
 #define	ASIC_SYS_LANCE(base)		((base) + ASIC_SLOT_3_START)
+
+
+#ifdef _KERNEL
+#define	ASIC_SLOT_LANCE		0	/* ASIC slots for interrupt lookup. */
+#define	ASIC_SLOT_SCC0		1
+#define	ASIC_SLOT_SCC1		2
+#define	ASIC_SLOT_RTC		3
+#define	ASIC_SLOT_ISDN		4	/* Only on Alphas and MAXINE */
+
+
+#ifdef alpha
+#define	ASIC_MAX_NSLOTS		5	/* clock + 2 scc + lance + isdn */
+caddr_t asic_base;
+#endif
+
+#endif /* _KERNEL*/
+
 #endif	/* MIPS_ASIC_H */
