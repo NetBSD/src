@@ -1,28 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/17 01:20:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2000/06/19 19:39:09 thorpej Exp $
 
-LIB=	des
-
-#.if (${MACHINE_ARCH} == "i386")
-#DES_ENC= asm/dx86-elf.cpp asm/yx86-elf.cpp
-#.else
-DES_ENC= des_enc.c fcrypt_b.c
-#.endif
-
-SRCS=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
-	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
-	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
-	qud_cksm.c rand_key.c read_pwd.c rpc_enc.c  set_key.c  \
-	$(DES_ENC) read2pwd.c \
-	fcrypt.c xcbc_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c supp.c ede_cbcm_enc.c
-
-CPPFLAGS+=	-D_POSIX_SOURCE -I. -I${.CURDIR}
-CPPFLAGS+=      -I${DIST}/openssl/crypto/des -I${DIST}/openssl/crypto
-
-DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/openssl/crypto/des ${DIST}/openssl/crypto ${DIST}/openssl
-
-INCS=	des.h 
-INCSDIR=/usr/include
+.BEGIN:
+.if !make(print-shlib-major) && !make(print-shlib-minor)
+	@echo "This is a dummy directory; don't build in here."
+	@false
+.endif
 
 .include <bsd.lib.mk>
