@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 1997/01/11 06:47:50 lukem Exp $	*/
+/*	$NetBSD: common.c,v 1.3 1997/01/14 04:17:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: common.c,v 1.2 1997/01/11 06:47:50 lukem Exp $";
+static char rcsid[] = "$NetBSD: common.c,v 1.3 1997/01/14 04:17:22 lukem Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -657,9 +657,7 @@ ed_redisplay(el, c)
     EditLine *el;
     int c;
 {
-    re_clear_lines(el);
-    re_clear_display(el);
-    return CC_REFRESH;
+    return CC_REDISPLAY;
 }
 
 
