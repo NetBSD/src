@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.26 2000/06/19 23:19:20 fvdl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.27 2000/06/26 21:53:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.26 2000/06/19 23:19:20 fvdl Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.27 2000/06/26 21:53:34 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -691,7 +691,7 @@ tryagain:
 			}
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror(
-				    "mount_nfs: rpcbind on server:");
+				    "mount_nfs: rpcbind on server");
 		} else {
 			pertry.tv_sec = 10;
 			pertry.tv_usec = 0;
