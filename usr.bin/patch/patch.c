@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.6 1998/02/22 13:33:49 christos Exp $	*/
+/*	$NetBSD: patch.c,v 1.7 1998/11/06 22:40:13 christos Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.6 1998/02/22 13:33:49 christos Exp $");
+__RCSID("$NetBSD: patch.c,v 1.7 1998/11/06 22:40:13 christos Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -308,7 +308,7 @@ char **argv;
 		Strcpy(rejname, outname);
 #ifndef FLEXFILENAMES
 		{
-		    char *s = rindex(rejname,'/');
+		    char *s = strrchr(rejname,'/');
 
 		    if (!s)
 			s = rejname;
@@ -498,7 +498,7 @@ get_some_switches()
 	    	do_defines = TRUE;
 		if (!*++s)
 		    s = nextarg();
-		if (!isalpha(*s) && '_' != *s)
+		if (!isalpha((unsigned char)*s) && '_' != *s)
 		    fatal1("argument to -D is not an identifier\n");
 		Sprintf(if_defined, "#ifdef %s\n", s);
 		Sprintf(not_defined, "#ifndef %s\n", s);
@@ -894,12 +894,12 @@ Reg2 char *b;
 Reg3 int len;
 {
     while (len) {
-	if (isspace(*b)) {		/* whitespace (or \n) to match? */
-	    if (!isspace(*a))		/* no corresponding whitespace? */
+	if (isspace((unsigned char)*b)) {/* whitespace (or \n) to match? */
+	    if (!isspace((unsigned char)*a))/* no corresponding whitespace? */
 		return FALSE;
-	    while (len && isspace(*b) && *b != '\n')
+	    while (len && isspace((unsigned char)*b) && *b != '\n')
 		b++,len--;		/* skip pattern whitespace */
-	    while (isspace(*a) && *a != '\n')
+	    while (isspace((unsigned char)*a) && *a != '\n')
 		a++;			/* skip target whitespace */
 	    if (*a == '\n' || *b == '\n')
 		return (*a == *b);	/* should end in sync */

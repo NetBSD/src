@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.5 1998/02/22 13:33:50 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1998/11/06 22:40:13 christos Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.5 1998/02/22 13:33:50 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.6 1998/11/06 22:40:13 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -78,7 +78,7 @@ char *from, *to;
 	while (stat(bakname, &filestat) == 0 &&
 		to_device == filestat.st_dev && to_inode == filestat.st_ino) {
 	    /* Skip initial non-lowercase chars.  */
-	    for (s=simplename; *s && !islower(*s); s++) ;
+	    for (s=simplename; *s && !islower((unsigned char)*s); s++) ;
 	    if (*s)
 		*s = toupper(*s);
 	    else
@@ -449,7 +449,7 @@ int assume_exists;
 
     if (!at)
 	return Nullch;
-    while (isspace(*at))
+    while (isspace((unsigned char)*at))
 	at++;
 #ifdef DEBUGGING
     if (debug & 128)
@@ -460,7 +460,7 @@ int assume_exists;
     name = fullname = t = savestr(at);
 
     /* Strip off up to `sleading' leading slashes and null terminate.  */
-    for (; *t && !isspace(*t); t++)
+    for (; *t && !isspace((unsigned char)*t); t++)
 	if (*t == '/')
 	    if (--sleading >= 0)
 		name = t+1;

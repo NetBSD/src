@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.5 1998/02/22 13:33:48 christos Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.6 1998/11/06 22:40:13 christos Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.5 1998/02/22 13:33:48 christos Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.6 1998/11/06 22:40:13 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: backupfile.c,v 1.5 1998/02/22 13:33:48 christos Exp $");
 #ifndef isascii
 #define ISDIGIT(c) (isdigit ((unsigned char) (c)))
 #else
-#define ISDIGIT(c) (isascii (c) && isdigit (c))
+#define ISDIGIT(c) (isascii (c) && isdigit ((unsigned char)c))
 #endif
 
 #if defined (HAVE_UNISTD_H)
@@ -220,7 +220,7 @@ basename (name)
 {
   char *base;
 
-  base = rindex (name, '/');
+  base = strrchr (name, '/');
   return base ? base + 1 : name;
 }
 
@@ -237,7 +237,7 @@ dirname (path)
   char *slash;
   int length;    /* Length of result, not including NUL. */
 
-  slash = rindex (path, '/');
+  slash = strrchr (path, '/');
   if (slash == 0)
 	{
 	  /* File is in the current directory.  */

@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.4 1998/02/22 13:33:49 christos Exp $	*/
+/*	$NetBSD: inp.c,v 1.5 1998/11/06 22:40:13 christos Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.4 1998/02/22 13:33:49 christos Exp $");
+__RCSID("$NetBSD: inp.c,v 1.5 1998/11/06 22:40:13 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -348,11 +348,11 @@ char *string;
     if (revision == Nullch)
 	return TRUE;
     patlen = strlen(revision);
-    if (strnEQ(string,revision,patlen) && isspace(string[patlen]))
+    if (strnEQ(string,revision,patlen) && isspace((unsigned char)string[patlen]))
 	return TRUE;
     for (s = string; *s; s++) {
-	if (isspace(*s) && strnEQ(s+1, revision, patlen) && 
-		isspace(s[patlen+1] )) {
+	if (isspace((unsigned char)*s) && strnEQ(s+1, revision, patlen) && 
+		isspace((unsigned char)s[patlen+1] )) {
 	    return TRUE;
 	}
     }
