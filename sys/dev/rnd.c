@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.12 1999/01/27 10:41:00 mrg Exp $	*/
+/*	$NetBSD: rnd.c,v 1.13 1999/02/28 17:19:13 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/malloc.h>
-#include <sys/md5.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/rnd.h>
 #include <sys/vnode.h>
+#include <sys/pool.h>
 
 #ifdef RND_DEBUG
 #define DPRINTF(l,x)      if (rnd_debug & (l)) printf x
@@ -81,19 +81,27 @@ int     rnd_debug = 0;
  */
 #define RND_TEMP_BUFFER_SIZE	128
 
-typedef struct _rnd_event_t {
+/*
+ * This is a little bit of state information attached to each device that we
+ * collect entropy from.  This is simply a collection buffer, and when it
+ * is full it will be "detached" from the source and added to the entropy
+ * pool after entropy is distilled as much as possible.
+ */
+#define RND_SAMPLE_COUNT	64	/* collect N samples, then compress */
+typedef struct _rnd_sample_t {
+	SIMPLEQ_ENTRY(_rnd_sample_t)	next;
 	rndsource_t    *source;
-	u_int32_t	val;
-	u_int32_t	timestamp;
-} rnd_event_t;
+	int		cursor;
+	int		entropy;
+	u_int32_t	ts[RND_SAMPLE_COUNT];
+	u_int32_t	values[RND_SAMPLE_COUNT];
+} rnd_sample_t;
 
 /*
  * the event queue.  Fields are altered at an interrupt level.
  */
-volatile int		rnd_head;
-volatile int		rnd_tail;
-volatile int		rnd_timeout_pending;
-volatile rnd_event_t	rnd_events[RND_EVENTQSIZE];
+volatile int			rnd_timeout_pending;
+SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
 
 /*
  * our select/poll queue
@@ -107,30 +115,25 @@ struct selinfo rnd_selq;
 volatile u_int32_t  rnd_status;
 
 /*
+ * Memory pool.
+ */
+struct pool rnd_mempool;
+
+/*
  * our random pool.  This is defined here rather than using the general
  * purpose one defined in rndpool.c
  */
 rndpool_t   rnd_pool;
 
 /*
- * This is used for devices that pass a NULL source pointer into the
- * rnd_add_*() functions.  The user never sees this source, and cannot
- * modify it.
- */
-static rndsource_t rnd_source_no_estimate = {
-	{ 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	0, 0, 0, 0,
-	(RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN)
-};
-
-/*
  * This source is used to easily "remove" queue entries when the source
  * which actually generated the events is going away.
  */
 static rndsource_t rnd_source_no_collect = {
-	{ 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 'N', 'o', 'C', 'o', 'l', 'l', 'e', 'c', 't', 0, 0, 0, 0, 0, 0, 0 },
 	0, 0, 0, 0,
-	(RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN)
+	(RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN),
+	NULL
 };
 
 void	rndattach __P((int));
@@ -186,8 +189,8 @@ rnd_wakeup_readers()
 
 /*
  * Use the timing of the event to estimate the entropy gathered.
- * Note that right now we will return either one or two, depending on
- * if all the differentials (first, second, and third) are non-zero.
+ * If all the differentials (first, second, and third) are non-zero, return
+ * non-zero.  If any of these are zero, return zero.
  */
 static inline u_int32_t
 rnd_estimate_entropy(rs, t)
@@ -227,10 +230,7 @@ rnd_estimate_entropy(rs, t)
 
 	/*
 	 * If any delta is 0, we got no entropy.  If all are non-zero, we
-	 * got one bit.
-	 *
-	 * XXX This is probably too conservative, but better that than
-	 * too liberal.
+	 * might have something.
 	 */
 	if (delta == 0 || delta2 == 0 || delta3 == 0)
 		return 0;
@@ -252,6 +252,28 @@ rndattach(num)
 {
 
 	rnd_init();
+}
+
+void
+rnd_init(void)
+{
+
+	if (rnd_ready)
+		return;
+
+	LIST_INIT(&rnd_sources);
+	SIMPLEQ_INIT(&rnd_samples);
+
+	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
+		  0, NULL, NULL, NULL);
+
+	rndpool_init(&rnd_pool);
+
+	rnd_ready = 1;
+
+#ifdef RND_VERBOSE
+	printf("Random device ready\n");
+#endif
 }
 
 int
@@ -456,39 +478,6 @@ rndioctl(dev, cmd, addr, flag, p)
 
 		break;
 
-	case RNDGETPOOL:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (ret);
-
-		s = splsoftclock();
-		ret = copyout(rndpool_get_pool(&rnd_pool),
-			      addr, rndpool_get_poolsize());
-		splx(s);
-
-		break;
-
-	case RNDADDTOENTCNT:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (ret);
-
-		s = splsoftclock();
-		rndpool_increment_entropy_count(&rnd_pool, *(u_int32_t *)addr);
-		rnd_wakeup_readers();
-		splx(s);
-
-		break;
-
-	case RNDSETENTCNT:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (ret);
-
-		s = splsoftclock();
-		rndpool_set_entropy_count(&rnd_pool, *(u_int32_t *)addr);
-		rnd_wakeup_readers();
-		splx(s);
-
-		break;
-
 	case RNDGETSRCNUM:
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
@@ -566,9 +555,9 @@ rndioctl(dev, cmd, addr, flag, p)
 		 */
 		if (rctl->type != 0xff) {
 			while (rse != NULL) {
-				if ((rse->data.tyfl & 0xff) == rctl->type) {
-					rse->data.tyfl &= ~rctl->mask;
-					rse->data.tyfl |= (rctl->flags
+				if (rse->data.type == rctl->type) {
+					rse->data.flags &= ~rctl->mask;
+					rse->data.flags |= (rctl->flags
 							   & rctl->mask);
 				}
 				rse = rse->list.le_next;
@@ -582,8 +571,8 @@ rndioctl(dev, cmd, addr, flag, p)
 		 */
 		while (rse != NULL) {
 			if (strncmp(rse->data.name, rctl->name, 16) == 0) {
-				rse->data.tyfl &= ~rctl->mask;
-				rse->data.tyfl |= (rctl->flags & rctl->mask);
+				rse->data.flags &= ~rctl->mask;
+				rse->data.flags |= (rctl->flags & rctl->mask);
 
 				return 0;
 			}
@@ -660,48 +649,79 @@ rndpoll(dev, events, p)
 	return (revents);
 }
 
-/*
- * initialize the data for the random generator.
- */
-void
-rnd_init(void)
+static rnd_sample_t *
+rnd_sample_allocate(rndsource_t *source)
 {
-	if (rnd_ready)
-		return;
+	rnd_sample_t *c;
 
-	LIST_INIT(&rnd_sources);
+	c = pool_get(&rnd_mempool, M_WAITOK);
+	if (c == NULL)
+		return (NULL);
 
-	rnd_head = 0;
-	rnd_tail = 0;
+	c->source = source;
+	c->cursor = 0;
+	c->entropy = 0;
 
-	rndpool_init(&rnd_pool);
+	return (c);
+}
 
-	rnd_ready = 1;
+/*
+ * don't want on allocation.  to be used in an interrupt context.
+ */
+static rnd_sample_t *
+rnd_sample_allocate_isr(rndsource_t *source)
+{
+	rnd_sample_t *c;
 
-#ifdef RND_VERBOSE
-	printf("Random device ready\n");
-#endif
+	c = pool_get(&rnd_mempool, 0);
+	if (c == NULL)
+		return (NULL);
+
+	c->source = source;
+	c->cursor = 0;
+	c->entropy = 0;
+
+	return (c);
+}
+
+static void
+rnd_sample_free(rnd_sample_t *c)
+{
+	memset(c, 0, sizeof(rnd_sample_t));
+	pool_put(&rnd_mempool, c);
 }
 
 /*
  * add a source to our list of sources
  */
 void
-rnd_attach_source(rs, name, tyfl)
+rnd_attach_source(rs, name, type, flags)
 	rndsource_element_t *rs;
 	char *name;
-	u_int32_t tyfl;
+	u_int32_t type;
+	u_int32_t flags;
 {
+	u_int32_t ts;
+
+	ts = rnd_timestamp();
+
 	strcpy(rs->data.name, name);
+	rs->data.last_time = ts;
+	rs->data.last_delta = 0;
+	rs->data.last_delta2 = 0;
+	rs->data.total = 0;
 
 	/*
 	 * force network devices to not collect any entropy by
 	 * default
 	 */
-	if ((tyfl & 0x00ff) == RND_TYPE_NET)
-		tyfl |= RND_FLAG_NO_ESTIMATE;
+	if (type == RND_TYPE_NET)
+		flags |= RND_FLAG_NO_ESTIMATE;
 
-	rs->data.tyfl = tyfl;
+	rs->data.type = type;
+	rs->data.flags = flags;
+
+	rs->data.state = rnd_sample_allocate(&rs->data);
 
 	LIST_INSERT_HEAD(&rnd_sources, rs, list);
 
@@ -717,24 +737,31 @@ void
 rnd_detach_source(rs)
 	rndsource_element_t *rs;
 {
-	int	     elem;
-	volatile rnd_event_t *ev;
-	int          s;
+	rnd_sample_t   *sample;
+	rndsource_t    *source;
+	int		s;
 
 	s = splhigh();
 
 	LIST_REMOVE(rs, list);
 
-	/*
-	 * If there are events queued up, "remove" them from the event queue
-	 */
-	elem = rnd_tail;
+	source = &rs->data;
 
-	while (elem != rnd_head) {
-		ev = &rnd_events[elem];
-		if (ev->source == &rs->data)
-			ev->source = &rnd_source_no_collect;
-		elem = (elem + 1) & (RND_EVENTQSIZE - 1);
+	if (source->state) {
+		rnd_sample_free(source->state);
+		source->state = NULL;
+	}
+
+	/*
+	 * If there are samples queued up "remove" them from the sample queue
+	 * by setting the source to the no-collect pseudosource.
+	 */
+	sample = SIMPLEQ_FIRST(&rnd_samples);
+	while (sample != NULL) {
+		if (sample->source == source)
+			sample->source = &rnd_source_no_collect;
+
+		sample = SIMPLEQ_NEXT(sample, next);
 	}
 
 	splx(s);
@@ -751,53 +778,58 @@ rnd_add_uint32(rs, val)
 	u_int32_t val;
 {
 	rndsource_t    *rst;
-	volatile rnd_event_t    *ev;
 	int		s;
-	int		nexthead;
+	rnd_sample_t   *state;
+	u_int32_t	ts;
 
-	s = splhigh();
-
-	/*
-	 * check for full ring.  If the queue is full and we have not
-	 * already scheduled a timeout, do so here.
-	 */
-	nexthead = (rnd_head + 1) & (RND_EVENTQSIZE - 1);
-	if (nexthead == rnd_tail) {
-		if (rnd_timeout_pending == 0) {
-			rnd_timeout_pending = 1;
-			timeout(rnd_timeout, NULL, 1);
-		}
-		splx(s);
-		return;
-	}
-
-	/*
-	 * If the source is null, we don't want to estimate, but we will
-	 * collect.  Point to our internal source definition for this.
-	 */
 	if (rs == NULL)
-		rst = &rnd_source_no_estimate;
-	else
-		rst = &rs->data;
+		return;
+
+	rst = &rs->data;
 
 	/*
 	 * If we are not collecting any data at all, just return.
 	 */
-	if (rst->tyfl & RND_FLAG_NO_COLLECT) {
-		splx(s);
+	if (rst->flags & RND_FLAG_NO_COLLECT)
 		return;
+
+	/*
+	 * If the sample buffer is NULL, try to allocate one here.  If this
+	 * fails, drop this sample.
+	 */
+	state = rst->state;
+	if (state == NULL) {
+		state = rnd_sample_allocate_isr(rst);
+		if (state == NULL)
+			return;
+		rst->state = state;
 	}
 
 	/*
-	 * Otherwise, queue it up for later addition, and schedule a
-	 * timeout to process it.  Since we are at splhigh, this is
-	 * an atomic operation...
+	 * Pick the timestamp.  If we are estimating entropy on this source,
+	 * calculate differentials.
 	 */
-	ev = &rnd_events[rnd_head];
-	ev->source = rst;
-	ev->val = val;
-	ev->timestamp = rnd_timestamp();
-	rnd_head = nexthead;
+	ts = rnd_timestamp();
+	if ((rst->flags & RND_FLAG_NO_ESTIMATE) == 0)
+		state->entropy += rnd_estimate_entropy(rst, ts);
+
+	state->ts[state->cursor] = ts;
+	state->values[state->cursor] = val;
+	state->cursor++;
+
+	/*
+	 * If the state arrays are not full, we're done.
+	 */
+	if (state->cursor < RND_SAMPLE_COUNT)
+		return;
+
+	/*
+	 * State arrays are full.  Queue the state on the processing queue,
+	 * and if the timeout isn't going, make it go.
+	 */
+	s = splhigh();
+	SIMPLEQ_INSERT_HEAD(&rnd_samples, state, next);
+	rst->state = NULL;
 
 	if (rnd_timeout_pending == 0) {
 		rnd_timeout_pending = 1;
@@ -805,6 +837,13 @@ rnd_add_uint32(rs, val)
 	}
 
 	splx(s);
+
+	/*
+	 * To get here we have to have queued the state up, and therefore
+	 * we need a new state buffer.  If we can, allocate one now.  Note
+	 * that NULL pointers are not checked for here.
+	 */
+	rst->state = rnd_sample_allocate_isr(rst);
 }
 
 /*
@@ -815,109 +854,48 @@ static void
 rnd_timeout(arg)
 	void *arg;
 {
-	u_int32_t	entropy;
-	volatile rnd_event_t    *ev;
+	rnd_sample_t   *sample;
+	rndsource_t    *source;
 
 	rnd_timeout_pending = 0;
 
-	/*
-	 * check for empty queue
-	 */
-	if (rnd_head == rnd_tail)
-		return;
+	sample = SIMPLEQ_FIRST(&rnd_samples);
+	while (sample != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rnd_samples, sample, next);
 
-	/*
-	 * Run through the event queue, processing events.
-	 */
-	while (rnd_head != rnd_tail) {
-		ev = &rnd_events[rnd_tail];
+		source = sample->source;
 
 		/*
 		 * We repeat this check here, since it is possible the source
 		 * was disabled before we were called, but after the entry
 		 * was queued.
 		 */
-		if ((ev->source->tyfl & RND_FLAG_NO_COLLECT) == 0) {
-			rndpool_add_uint32(&rnd_pool, ev->val, 0);
+		if ((source->flags & RND_FLAG_NO_COLLECT)
+		    == RND_FLAG_NO_COLLECT)
+			goto loop;
 
-			/*
-			 * If we are not estimating entropy from this source,
-			 * assume zero.  We still add the timestamp, just
-			 * don't bother calculating the estimation.
-			 */
-			if (ev->source->tyfl & RND_FLAG_NO_ESTIMATE)
-				entropy = 0;
-			else
-				entropy = rnd_estimate_entropy(ev->source,
-							       ev->timestamp);
+		rndpool_add_data(&rnd_pool, sample->values,
+				 RND_SAMPLE_COUNT * 4, 0);
 
-			rndpool_add_uint32(&rnd_pool, ev->timestamp, entropy);
-			ev->source->total += entropy;
-		}
-		rnd_tail = (rnd_tail + 1) & (RND_EVENTQSIZE - 1);
+		if ((source->flags & RND_FLAG_NO_ESTIMATE) == 0)
+			rndpool_add_data(&rnd_pool, sample->ts,
+					 RND_SAMPLE_COUNT * 4,
+					 sample->entropy);
+		else
+			rndpool_add_data(&rnd_pool, sample->ts,
+					 RND_SAMPLE_COUNT * 4, 0);
+
+		source->total += sample->entropy;
+
+	loop:
+		rnd_sample_free(sample);
+		sample = SIMPLEQ_FIRST(&rnd_samples);
 	}
 
 	/*
 	 * wake up any potential readers waiting.
 	 */
 	rnd_wakeup_readers();
-}
-
-void
-rnd_add_data(rs, p, len, entropy)
-	rndsource_element_t *rs;
-	void *p;
-	u_int32_t len;
-	u_int32_t entropy;
-{
-	rndsource_t    *rst;
-	int		s;
-	u_int32_t	t;
-
-	/*
-	 * if the caller is trying to add more entropy than can possibly
-	 * be in the buffer we are passed, ignore the whole thing.
-	 */
-	if (entropy > len * 8)
-		return;
-
-	s = splsoftclock();
-
-	/*
-	 * If the source is null, we don't want to estimate, but we will
-	 * collect.
-	 */
-	if (rs == NULL)
-		rst = &rnd_source_no_estimate;
-	else
-		rst = &rs->data;
-
-	/*
-	 * If we are not collecting any data at all, just return.
-	 */
-	if (rst->tyfl & RND_FLAG_NO_COLLECT) {
-		splx(s);
-		return;
-	}
-
-	rndpool_add_data(&rnd_pool, p, len, entropy);
-
-	/*
-	 * If we are not estimating timing entropy from this source, add
-	 * the timestamp and assume zero entropy from timing info.
-	 */
-	t = rnd_timestamp();
-	if (rst->tyfl & RND_FLAG_NO_ESTIMATE)
-		entropy = 0;
-	else
-		entropy = rnd_estimate_entropy(rst, t);
-
-	rndpool_add_uint32(&rnd_pool, t, entropy);
-	rst->total += entropy;
-
-	rnd_wakeup_readers();
-
-	splx(s);
 }
 
 int
