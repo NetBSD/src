@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.22 2003/06/16 21:09:47 grant Exp $
+$NetBSD: pcidevs,v 1.428.2.23 2003/06/19 11:20:09 grant Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -831,6 +831,8 @@ product APPLE GMAC3		0x0032	GMAC Ethernet
 product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
 product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
 product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
+product APPLE KAUAI		0x003b	Kauai ATA Controller
+product APPLE INTREPID		0x003e	MAC-IO I/O Controller (Intrepid)
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
