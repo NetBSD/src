@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.85 2003/11/01 10:16:28 tron Exp $
+#	$NetBSD: termcap.src,v 1.86 2003/12/02 20:40:00 tron Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1934,7 +1934,7 @@ color_xterm|cx|cx100|color_xterm color terminal emulator for X:\
 xterm-color|nxterm|generic color xterm:\
 	:am:bs:km:mi:ms:xn:\
 	:NC@:\
-	:Co#8:NC#3:pa#64:Sb=\E[4%dm:Sf=\E[3%dm:op=\E[m:
+	:Co#8:NC#3:pa#64:Sb=\E[4%dm:Sf=\E[3%dm:op=\E[m:\
 	:tc=xterm-r6:
 
 # From: Mark Olesen & Thomas Dickey <dickey@clark.net> 13 Jul 1996
