@@ -1,0 +1,71 @@
+#	$Id: WARPED,v 1.1 1995/10/20 21:24:37 jtc Exp $
+#
+#	WARPED - ftp/sup.netbsd.org server machine
+#
+# ASUS 486 PC/I-SP3G motherboard with built in PCI NCRc810 SCSI controller,
+# 2 Serial/1 parallel ports, and an Intel Saturn PCI chipset w/ 256k cache.
+# Also: Adaptec PCI 2940 SCSI, DEC 21040 PCI Ethernet, Mach 64 PCI 2M Video,
+# Intel Pentium Overdrive, 40M RAM, 2 Maxtor 1.2G Magik, Conner 2G tape.
+
+machine		i386		# architecture, used by config; REQUIRED
+
+options		I586_CPU	# 83MHz P24T
+
+options		DUMMY_NOPS	# speed hack; recommended
+options		UCONSOLE
+options		MACHINE_NONCONTIG
+
+maxusers	64		# estimated number of users
+options		TIMEZONE=480	# time zone to adjust RTC time by
+options		DST=1		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
+
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		COMPAT_43	# and 4.3BSD
+options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+options		FFS		# UFS
+options		MFS		# memory file system
+
+options		FIFO		# FIFOs; RECOMMENDED
+
+options		INET		# IP + ICMP + TCP + UDP
+
+config		netbsd	root on sd0a swap on sd0b and sd1b
+options         NMBCLUSTERS=2048
+
+isa0	at root
+pci0	at root
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+
+pc0	at isa? port 0x60 irq 1		# generic PC console device
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+
+fdc0    at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
+fd*     at fdc? drive ?
+
+ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
+ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+scsibus* at ncr?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+
+de*	at pci? bus ? dev ?
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 4		# packet filter
+pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	ccd	4		# concatenated disk devices
