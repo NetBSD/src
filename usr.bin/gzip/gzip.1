@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.12 2004/01/02 02:55:26 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.13 2004/01/02 03:01:13 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2003, 2004 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 1, 2004
+.Dd January 2, 2004
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -160,16 +160,16 @@ program.
 This option turns on verbose mode, which prints the compression
 ratio for each file compressed.
 .El
-.Sh SEE ALSO
-.Xr fts 3 ,
-.Xr zlib 3
 .Sh ENVIRONMENT
 If the environment variable
 .Ev GZIP
 is set, it is parsed as a white-space separated list of options
-handled before any options on the command line.  Options on the
-command line will override anything in
+handled before any options on the command line.
+Options on the command line will override anything in
 .Ev GZIP .
+.Sh SEE ALSO
+.Xr fts 3 ,
+.Xr zlib 3
 .Sh HISTORY
 The
 .Nm
