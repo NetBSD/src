@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.62 2002/05/18 15:44:18 jdolecek Exp $
+$NetBSD: UPDATING,v 1.63 2002/05/19 00:54:35 enami Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -18,7 +18,7 @@ Recent changes:
 
 	and the following to /etc/master.passwd (via vipw):
 
-	sshd:*:16:16::0:0:sshd privsep:/var/empty:/sbin/nologin
+	sshd:*:16:16::0:0:& pseudo-user:/var/chroot/sshd:/sbin/nologin
 	
 	also /var/chroot/sshd directory needs to be present (digged as a part of
 	build process).
