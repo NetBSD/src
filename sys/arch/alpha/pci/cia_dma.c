@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.12 1998/06/23 02:31:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.12 1998/06/23 02:31:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ cia_dma_init(ccp)
 	 */
 	alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
 	    CIA_SGMAP_MAPPED_BASE, 0, CIA_SGMAP_MAPPED_SIZE,
-	    sizeof(u_int64_t), NULL, (32*1024*1024));
+	    sizeof(u_int64_t), NULL, (32*1024));
 
 	/*
 	 * Set up window 0 as an 8MB SGMAP-mapped window
@@ -210,7 +210,7 @@ cia_dma_init(ccp)
 		alpha_sgmap_init(t, &cia_pyxis_bug_sgmap,
 		    "pyxis_bug_sgmap", CIA_PYXIS_BUG_BASE, 0,
 		    CIA_PYXIS_BUG_SIZE, sizeof(u_int64_t), NULL,
-		    (32*1024*1024));
+		    (32*1024));
 
 		REGVAL(CIA_PCI_W2BASE) = CIA_PYXIS_BUG_BASE |
 		    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
