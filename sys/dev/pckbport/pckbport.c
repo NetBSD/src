@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
+/* $NetBSD: pckbport.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,23 +82,23 @@ struct pckbport_slotdata {
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
-static void pckbport_init_slotdata __P((struct pckbport_slotdata *));
-static int pckbport_submatch __P((struct device *, struct cfdata *, void *));
-static int pckbportprint __P((void *, const char *));
+static void pckbport_init_slotdata(struct pckbport_slotdata *);
+static int pckbport_submatch(struct device *, struct cfdata *, void *);
+static int pckbportprint(void *, const char *);
 
 static struct pckbport_slotdata pckbport_cons_slotdata;
 
-static int pckbport_poll_data1 __P((pckbport_tag_t, pckbport_slot_t));
-static int pckbport_send_devcmd __P((struct pckbport_tag *, pckbport_slot_t,
-				  u_char));
-static void pckbport_poll_cmd1 __P((struct pckbport_tag *, pckbport_slot_t,
-				 struct pckbport_devcmd *));
+static int pckbport_poll_data1(pckbport_tag_t, pckbport_slot_t);
+static int pckbport_send_devcmd(struct pckbport_tag *, pckbport_slot_t,
+				  u_char);
+static void pckbport_poll_cmd1(struct pckbport_tag *, pckbport_slot_t,
+				 struct pckbport_devcmd *);
 
-static void pckbport_cleanqueue __P((struct pckbport_slotdata *));
-static void pckbport_cleanup __P((void *));
-static int pckbport_cmdresponse __P((struct pckbport_tag *, pckbport_slot_t,
-					u_char));
-static void pckbport_start __P((struct pckbport_tag *, pckbport_slot_t));
+static void pckbport_cleanqueue(struct pckbport_slotdata *);
+static void pckbport_cleanup(void *);
+static int pckbport_cmdresponse(struct pckbport_tag *, pckbport_slot_t,
+					u_char);
+static void pckbport_start(struct pckbport_tag *, pckbport_slot_t);
 
 static const char * const pckbport_slot_names[] = { "kbd", "aux" };
 
@@ -110,36 +110,28 @@ static struct pckbport_tag pckbport_cntag;
 #define	KBD_DELAY	DELAY(8)
 
 static int
-pckbport_poll_data1(t, slot)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
+pckbport_poll_data1(pckbport_tag_t t, pckbport_slot_t slot)
 {
 
 	return t->t_ops->t_poll_data1(t->t_cookie, slot);
 }
 
 static int
-pckbport_send_devcmd(t, slot, val)
-	struct pckbport_tag *t;
-	pckbport_slot_t slot;
-	u_char val;
+pckbport_send_devcmd(struct pckbport_tag *t, pckbport_slot_t slot, u_char val)
 {
 
 	return t->t_ops->t_send_devcmd(t->t_cookie, slot, val);
 }
 
 static int
-pckbport_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pckbport_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 
 	if (cf->cf_loc[PCKBPORTCF_SLOT] != PCKBPORTCF_SLOT_DEFAULT &&
 	    cf->cf_loc[PCKBPORTCF_SLOT] != pa->pa_slot)
-		return (0);
-	return (config_match(parent, cf, aux));
+		return 0;
+	return config_match(parent, cf, aux);
 }
 
 pckbport_tag_t
@@ -158,10 +150,8 @@ pckbport_attach(void *cookie, struct pckbport_accessops const *ops)
 }
 
 struct device *
-pckbport_attach_slot(dev, t, slot)
-	struct device *dev;
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
+pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
+    pckbport_slot_t slot)
 {
 	struct pckbport_attach_args pa;
 	void *sdata;
@@ -176,7 +166,7 @@ pckbport_attach_slot(dev, t, slot)
 		    M_DEVBUF, M_NOWAIT);
 		if (sdata == NULL) {
 			printf("%s: no memory\n", dev->dv_xname);
-			return (0);
+			return 0;
 		}
 		t->t_slotdata[slot] = sdata;
 		pckbport_init_slotdata(t->t_slotdata[slot]);
@@ -190,60 +180,55 @@ pckbport_attach_slot(dev, t, slot)
 		t->t_slotdata[slot] = NULL;
 	}
 
-	return (found);
+	return found;
 }
 
 int
-pckbportprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+pckbportprint(void *aux, const char *pnp)
 {
 	struct pckbport_attach_args *pa = aux;
 
 	if (!pnp)
 		aprint_normal(" (%s slot)", pckbport_slot_names[pa->pa_slot]);
-	return (QUIET);
+	return QUIET;
 }
 
 void
-pckbport_init_slotdata(q)
-	struct pckbport_slotdata *q;
+pckbport_init_slotdata(struct pckbport_slotdata *q)
 {
 	int i;
+
 	TAILQ_INIT(&q->cmdqueue);
 	TAILQ_INIT(&q->freequeue);
 
-	for (i = 0; i < NCMD; i++) {
+	for (i = 0; i < NCMD; i++)
 		TAILQ_INSERT_TAIL(&q->freequeue, &(q->cmds[i]), next);
-	}
+
 	q->polling = 0;
 }
 
 void
-pckbport_flush(t, slot)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
+pckbport_flush(pckbport_tag_t t, pckbport_slot_t slot)
 {
 
-	(void) pckbport_poll_data1(t, slot);
+	(void)pckbport_poll_data1(t, slot);
 }
 
 int
-pckbport_poll_data(t, slot)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
+pckbport_poll_data(pckbport_tag_t t, pckbport_slot_t slot)
 {
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	int c;
 
 	c = pckbport_poll_data1(t, slot);
-	if (c != -1 && q && CMD_IN_QUEUE(q)) {
-		/* we jumped into a running command - try to
-		 deliver the response */
+	if (c != -1 && q && CMD_IN_QUEUE(q))
+		/*
+		 * we jumped into a running command - try to deliver
+		 * the response
+		 */
 		if (pckbport_cmdresponse(t, slot, c))
-			return (-1);
-	}
-	return (c);
+			return -1;
+	return c;
 }
 
 /*
@@ -251,30 +236,21 @@ pckbport_poll_data(t, slot)
  * return nonzero on success
  */
 int
-pckbport_xt_translation(t, slot, on)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	int on;
+pckbport_xt_translation(pckbport_tag_t t, pckbport_slot_t slot,	int on)
 {
 
 	return t->t_ops->t_xt_translation(t->t_cookie, slot, on);
 }
 
 void
-pckbport_slot_enable(t, slot, on)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	int on;
+pckbport_slot_enable(pckbport_tag_t t, pckbport_slot_t slot, int on)
 {
 
 	t->t_ops->t_slot_enable(t->t_cookie, slot, on);
 }
 
 void
-pckbport_set_poll(t, slot, on)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	int on;
+pckbport_set_poll(pckbport_tag_t t, pckbport_slot_t slot, int on)
 {
 
 	t->t_slotdata[slot]->polling = on;
@@ -286,10 +262,8 @@ pckbport_set_poll(t, slot, on)
  * to be called at spltty()
  */
 static void
-pckbport_poll_cmd1(t, slot, cmd)
-	struct pckbport_tag *t;
-	pckbport_slot_t slot;
-	struct pckbport_devcmd *cmd;
+pckbport_poll_cmd1(struct pckbport_tag *t, pckbport_slot_t slot,
+    struct pckbport_devcmd *cmd)
 {
 	int i, c = 0;
 
@@ -358,13 +332,8 @@ pckbport_poll_cmd1(t, slot, cmd)
 
 /* for use in autoconfiguration */
 int
-pckbport_poll_cmd(t, slot, cmd, len, responselen, respbuf, slow)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	u_char *cmd;
-	int len, responselen;
-	u_char *respbuf;
-	int slow;
+pckbport_poll_cmd(pckbport_tag_t t, pckbport_slot_t slot, u_char *cmd, int len,
+    int responselen, u_char *respbuf, int slow)
 {
 	struct pckbport_devcmd nc;
 
@@ -382,15 +351,14 @@ pckbport_poll_cmd(t, slot, cmd, len, responselen, respbuf, slow)
 	if (nc.status == 0 && respbuf)
 		memcpy(respbuf, nc.response, responselen);
 
-	return (nc.status);
+	return nc.status;
 }
 
 /*
  * Clean up a command queue, throw away everything.
  */
 void
-pckbport_cleanqueue(q)
-	struct pckbport_slotdata *q;
+pckbport_cleanqueue(struct pckbport_slotdata *q)
 {
 	struct pckbport_devcmd *cmd;
 #ifdef PCKBPORTDEBUG
@@ -414,8 +382,7 @@ pckbport_cleanqueue(q)
  * XXX could be less invasive.
  */
 void
-pckbport_cleanup(self)
-	void *self;
+pckbport_cleanup(void *self)
 {
 	struct pckbport_tag *t = self;
 	int s;
@@ -446,9 +413,7 @@ pckbport_cleanup(self)
  * to be called at spltty()
  */
 void
-pckbport_start(t, slot)
-	struct pckbport_tag *t;
-	pckbport_slot_t slot;
+pckbport_start(struct pckbport_tag *t, pckbport_slot_t slot)
 {
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	struct pckbport_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -484,26 +449,24 @@ pckbport_start(t, slot)
  * to be called at spltty()
  */
 int
-pckbport_cmdresponse(t, slot, data)
-	struct pckbport_tag *t;
-	pckbport_slot_t slot;
-	u_char data;
+pckbport_cmdresponse(struct pckbport_tag *t, pckbport_slot_t slot, u_char data)
 {
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	struct pckbport_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
+
 #ifdef DIAGNOSTIC
 	if (!cmd)
 		panic("pckbport_cmdresponse: no active command");
 #endif
 	if (cmd->cmdidx < cmd->cmdlen) {
 		if (data != KBC_DEVCMD_ACK && data != KBC_DEVCMD_RESEND)
-			return (0);
+			return 0;
 
 		if (data == KBC_DEVCMD_RESEND) {
-			if (cmd->retries++ < 5) {
+			if (cmd->retries++ < 5)
 				/* try again last command */
 				goto restart;
-			} else {
+			else {
 #ifdef PCKBPORTDEBUG
 				printf("pckbport: cmd failed\n");
 #endif
@@ -514,16 +477,16 @@ pckbport_cmdresponse(t, slot, data)
 			if (++cmd->cmdidx < cmd->cmdlen)
 				goto restart;
 			if (cmd->responselen)
-				return (1);
+				return 1;
 			/* else dequeue */
 		}
 	} else if (cmd->responseidx < cmd->responselen) {
 		cmd->response[cmd->responseidx++] = data;
 		if (cmd->responseidx < cmd->responselen)
-			return (1);
+			return 1;
 		/* else dequeue */
 	} else
-		return (0);
+		return 0;
 
 	/* dequeue: */
 	TAILQ_REMOVE(&q->cmdqueue, cmd, next);
@@ -534,37 +497,32 @@ pckbport_cmdresponse(t, slot, data)
 		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 	}
 	if (!CMD_IN_QUEUE(q))
-		return (1);
+		return 1;
 restart:
 	pckbport_start(t, slot);
-	return (1);
+	return 1;
 }
 
 /*
  * Put command into the device's command queue, return zero or errno.
  */
 int
-pckbport_enqueue_cmd(t, slot, cmd, len, responselen, sync, respbuf)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	u_char *cmd;
-	int len, responselen, sync;
-	u_char *respbuf;
+pckbport_enqueue_cmd(pckbport_tag_t t, pckbport_slot_t slot, u_char *cmd,
+    int len, int responselen, int sync, u_char *respbuf)
 {
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	struct pckbport_devcmd *nc;
 	int s, isactive, res = 0;
 
 	if ((len > 4) || (responselen > 4))
-		return (EINVAL);
+		return EINVAL;
 	s = spltty();
 	nc = TAILQ_FIRST(&q->freequeue);
-	if (nc) {
+	if (nc)
 		TAILQ_REMOVE(&q->freequeue, nc, next);
-	}
 	splx(s);
 	if (!nc)
-		return (ENOMEM);
+		return ENOMEM;
 
 	memset(nc, 0, sizeof(*nc));
 	memcpy(nc->cmd, cmd, len);
@@ -574,14 +532,13 @@ pckbport_enqueue_cmd(t, slot, cmd, len, responselen, sync, respbuf)
 
 	s = spltty();
 
-	if (q->polling && sync) {
+	if (q->polling && sync)
 		/*
 		 * XXX We should poll until the queue is empty.
 		 * But we don't come here normally, so make
 		 * it simple and throw away everything.
 		 */
 		pckbport_cleanqueue(q);
-	}
 
 	isactive = CMD_IN_QUEUE(q);
 	TAILQ_INSERT_TAIL(&q->cmdqueue, nc, next);
@@ -607,16 +564,12 @@ pckbport_enqueue_cmd(t, slot, cmd, len, responselen, sync, respbuf)
 
 	splx(s);
 
-	return (res);
+	return res;
 }
 
 void
-pckbport_set_inputhandler(t, slot, func, arg, name)
-	pckbport_tag_t t;
-	pckbport_slot_t slot;
-	pckbport_inputfcn func;
-	void *arg;
-	char *name;
+pckbport_set_inputhandler(pckbport_tag_t t, pckbport_slot_t slot,
+    pckbport_inputfcn func, void *arg, char *name)
 {
 
 	if (slot >= PCKBPORT_NSLOTS)

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
+/* $NetBSD: pckbd.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,17 +127,17 @@ struct pckbd_softc {
 #endif
 };
 
-static int pckbd_is_console __P((pckbport_tag_t, pckbport_slot_t));
+static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
 
-int pckbdprobe __P((struct device *, struct cfdata *, void *));
-void pckbdattach __P((struct device *, struct device *, void *));
+int pckbdprobe(struct device *, struct cfdata *, void *);
+void pckbdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pckbd, sizeof(struct pckbd_softc),
     pckbdprobe, pckbdattach, NULL, NULL);
 
-int	pckbd_enable __P((void *, int));
-void	pckbd_set_leds __P((void *, int));
-int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	pckbd_enable(void *, int);
+void	pckbd_set_leds(void *, int);
+int	pckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops pckbd_accessops = {
 	pckbd_enable,
@@ -145,9 +145,9 @@ const struct wskbd_accessops pckbd_accessops = {
 	pckbd_ioctl,
 };
 
-void	pckbd_cngetc __P((void *, u_int *, int *));
-void	pckbd_cnpollc __P((void *, int));
-void	pckbd_cnbell __P((void *, u_int, u_int, u_int));
+void	pckbd_cngetc(void *, u_int *, int *);
+void	pckbd_cnpollc(void *, int);
+void	pckbd_cnbell(void *, u_int, u_int, u_int);
 
 const struct wskbd_consops pckbd_consops = {
 	pckbd_cngetc,
@@ -168,30 +168,27 @@ const struct wskbd_mapdata pckbd_keymapdata = {
  * Hackish support for a bell on the PC Keyboard; when a suitable feeper
  * is found, it attaches itself into the pckbd driver here.
  */
-void	(*pckbd_bell_fn) __P((void *, u_int, u_int, u_int, int));
+void	(*pckbd_bell_fn)(void *, u_int, u_int, u_int, int);
 void	*pckbd_bell_fn_arg;
 
-void	pckbd_bell __P((u_int, u_int, u_int, int));
+void	pckbd_bell(u_int, u_int, u_int, int);
 
-int	pckbd_set_xtscancode __P((pckbport_tag_t, pckbport_slot_t));
-int	pckbd_init __P((struct pckbd_internal *, pckbport_tag_t, pckbport_slot_t,
-			int));
-void	pckbd_input __P((void *, int));
+int	pckbd_set_xtscancode(pckbport_tag_t, pckbport_slot_t);
+int	pckbd_init(struct pckbd_internal *, pckbport_tag_t, pckbport_slot_t,
+			int);
+void	pckbd_input(void *, int);
 
-static int	pckbd_decode __P((struct pckbd_internal *, int,
-				  u_int *, int *));
-static int	pckbd_led_encode __P((int));
-static int	pckbd_led_decode __P((int));
+static int	pckbd_decode(struct pckbd_internal *, int, u_int *, int *);
+static int	pckbd_led_encode(int);
+static int	pckbd_led_decode(int);
 
 struct pckbd_internal pckbd_consdata;
 
 int
-pckbd_set_xtscancode(kbctag, kbcslot)
-	pckbport_tag_t kbctag;
-	pckbport_slot_t kbcslot;
+pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 {
-	u_char cmd[2];
 	int res;
+	u_char cmd[2];
 
 	/*
 	 * Some keyboard/8042 combinations do not seem to work if the keyboard
@@ -237,31 +234,26 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 			printf("pckbd: error setting scanset 1\n");
 #endif
 	}
-	return (res);
+	return res;
 }
 
 static int
-pckbd_is_console(tag, slot)
-	pckbport_tag_t tag;
-	pckbport_slot_t slot;
+pckbd_is_console(pckbport_tag_t tag, pckbport_slot_t slot)
 {
-	return (pckbd_consdata.t_isconsole &&
-		(tag == pckbd_consdata.t_kbctag) &&
-		(slot == pckbd_consdata.t_kbcslot));
+
+	return pckbd_consdata.t_isconsole &&
+	    tag == pckbd_consdata.t_kbctag && slot == pckbd_consdata.t_kbcslot;
 }
 
 /*
  * these are both bad jokes
  */
 int
-pckbdprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
-	u_char cmd[1], resp[1];
 	int res;
+	u_char cmd[1], resp[1];
 
 	/*
 	 * XXX There are rumours that a keyboard can be connected
@@ -271,7 +263,7 @@ pckbdprobe(parent, cf, aux)
 	 */
 	if ((pa->pa_slot != PCKBPORT_KBD_SLOT) &&
 	    (cf->cf_loc[PCKBPORTCF_SLOT] == PCKBPORTCF_SLOT_DEFAULT))
-		return (0);
+		return 0;
 
 	/* Flush any garbage. */
 	pckbport_flush(pa->pa_tag, pa->pa_slot);
@@ -288,11 +280,11 @@ pckbdprobe(parent, cf, aux)
 		 * Let the probe succeed if the keyboard is used
 		 * as console input - it can be connected later.
 		 */
-		return (pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0);
+		return pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0;
 	}
 	if (resp[0] != KBR_RSTDONE) {
 		printf("pckbdprobe: reset response 0x%x\n", resp[0]);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -303,20 +295,18 @@ pckbdprobe(parent, cf, aux)
 	pckbport_flush(pa->pa_tag, pa->pa_slot);
 
 	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot))
-		return (0);
+		return 0;
 
-	return (2);
+	return 2;
 }
 
 void
-pckbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbd_softc *sc = (void *)self;
 	struct pckbport_attach_args *pa = aux;
-	int isconsole;
 	struct wskbddev_attach_args a;
+	int isconsole;
 	u_char cmd[1];
 
 	printf("\n");
@@ -366,20 +356,18 @@ pckbdattach(parent, self, aux)
 }
 
 int
-pckbd_enable(v, on)
-	void *v;
-	int on;
+pckbd_enable(void *v, int on)
 {
 	struct pckbd_softc *sc = v;
-	u_char cmd[1];
 	int res;
+	u_char cmd[1];
 
 	if (on) {
 		if (sc->sc_enabled) {
 #ifdef DIAGNOSTIC
 			printf("pckbd_enable: bad enable\n");
 #endif
-			return (EBUSY);
+			return EBUSY;
 		}
 
 		pckbport_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
@@ -395,19 +383,19 @@ pckbd_enable(v, on)
 		res = pckbd_set_xtscancode(sc->id->t_kbctag,
 					   sc->id->t_kbcslot);
 		if (res)
-			return (res);
+			return res;
 
 		sc->sc_enabled = 1;
 	} else {
 		if (sc->id->t_isconsole)
-			return (EBUSY);
+			return EBUSY;
 
 		cmd[0] = KBC_DISABLE;
 		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 1, 0, 1, 0);
 		if (res) {
 			printf("pckbd_disable: command error\n");
-			return (res);
+			return res;
 		}
 
 		pckbport_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 0);
@@ -415,24 +403,20 @@ pckbd_enable(v, on)
 		sc->sc_enabled = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
-pckbd_decode(id, datain, type, dataout)
-	struct pckbd_internal *id;
-	int datain;
-	u_int *type;
-	int *dataout;
+pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 {
 	int key;
 
 	if (datain == KBR_EXTENDED0) {
 		id->t_extended0 = 1;
-		return(0);
+		return 0;
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
-		return(0);
+		return 0;
 	}
 
  	/* map extended keys to (unused) codes 128-254 */
@@ -445,7 +429,7 @@ pckbd_decode(id, datain, type, dataout)
 	 */
 	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
 		id->t_extended1 = 1;
-		return(0);
+		return 0;
 	} else if (id->t_extended1 == 1 &&
 		   (datain == 0x45 || datain == 0xc5)) {
 		id->t_extended1 = 0;
@@ -460,34 +444,31 @@ pckbd_decode(id, datain, type, dataout)
 	} else {
 		/* Always ignore typematic keys */
 		if (key == id->t_lastchar)
-			return(0);
+			return 0;
 		id->t_lastchar = key;
 		*type = WSCONS_EVENT_KEY_DOWN;
 	}
 
 	*dataout = key;
-	return(1);
+	return 1;
 }
 
 int
-pckbd_init(t, kbctag, kbcslot, console)
-	struct pckbd_internal *t;
-	pckbport_tag_t kbctag;
-	pckbport_slot_t kbcslot;
-	int console;
+pckbd_init(struct pckbd_internal *t, pckbport_tag_t kbctag,
+    pckbport_slot_t kbcslot, int console)
 {
+
 	memset(t, 0, sizeof(struct pckbd_internal));
 
 	t->t_isconsole = console;
 	t->t_kbctag = kbctag;
 	t->t_kbcslot = kbcslot;
 
-	return (pckbd_set_xtscancode(kbctag, kbcslot));
+	return pckbd_set_xtscancode(kbctag, kbcslot);
 }
 
 static int
-pckbd_led_encode(led)
-	int led;
+pckbd_led_encode(int led)
 {
 	int res;
 
@@ -499,12 +480,11 @@ pckbd_led_encode(led)
 		res |= 0x02;
 	if (led & WSKBD_LED_CAPS)
 		res |= 0x04;
-	return(res);
+	return res;
 }
 
 static int
-pckbd_led_decode(led)
-	int led;
+pckbd_led_decode(int led)
 {
 	int res;
 
@@ -515,13 +495,11 @@ pckbd_led_decode(led)
 		res |= WSKBD_LED_NUM;
 	if (led & 0x04)
 		res |= WSKBD_LED_CAPS;
-	return(res);
+	return res;
 }
 
 void
-pckbd_set_leds(v, leds)
-	void *v;
-	int leds;
+pckbd_set_leds(void *v, int leds)
 {
 	struct pckbd_softc *sc = v;
 	u_char cmd[2];
@@ -530,7 +508,7 @@ pckbd_set_leds(v, leds)
 	cmd[1] = pckbd_led_encode(leds);
 	sc->sc_ledstate = cmd[1];
 
-	(void) pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+	(void)pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 				 cmd, 2, 0, 0, 0);
 }
 
@@ -539,9 +517,7 @@ pckbd_set_leds(v, leds)
  * the console processor wants to give us a character.
  */
 void
-pckbd_input(vsc, data)
-	void *vsc;
-	int data;
+pckbd_input(void *vsc, int data)
 {
 	struct pckbd_softc *sc = vsc;
 	int key;
@@ -559,33 +535,30 @@ pckbd_input(vsc, data)
 }
 
 int
-pckbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pckbd_softc *sc = v;
 
 	switch (cmd) {
-	    case WSKBDIO_GTYPE:
+	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_PC_XT;
 		return 0;
-	    case WSKBDIO_SETLEDS: {
-		u_char cmd[2];
+	case WSKBDIO_SETLEDS:
+	{
 		int res;
+		u_char cmd[2];
+
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
 		sc->sc_ledstate = cmd[1];
 		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 2, 0, 1, 0);
-		return (res);
-		}
-	    case WSKBDIO_GETLEDS:
+		return res;
+	}
+	case WSKBDIO_GETLEDS:
 		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
-		return (0);
-	    case WSKBDIO_COMPLEXBELL:
+		return 0;
+	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
 		/*
 		 * Keyboard can't beep directly; we have an
@@ -593,20 +566,18 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		 */
 		pckbd_bell(d->pitch, d->period, d->volume, 0);
 #undef d
-		return (0);
+		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	    case WSKBDIO_SETMODE:
+	case WSKBDIO_SETMODE:
 		sc->rawkbd = (*(int *)data == WSKBD_RAW);
-		return (0);
+		return 0;
 #endif
 	}
 	return EPASSTHROUGH;
 }
 
 void
-pckbd_bell(pitch, period, volume, poll)
-	u_int pitch, period, volume;
-	int poll;
+pckbd_bell(u_int pitch, u_int period, u_int volume, int poll)
 {
 
 	if (pckbd_bell_fn != NULL)
@@ -615,9 +586,7 @@ pckbd_bell(pitch, period, volume, poll)
 }
 
 void
-pckbd_hookup_bell(fn, arg)
-	void (*fn) __P((void *, u_int, u_int, u_int, int));
-	void *arg;
+pckbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
 {
 
 	if (pckbd_bell_fn == NULL) {
@@ -627,17 +596,15 @@ pckbd_hookup_bell(fn, arg)
 }
 
 int
-pckbd_cnattach(kbctag, kbcslot)
-	pckbport_tag_t kbctag;
-	int kbcslot;
+pckbd_cnattach(pckbport_tag_t kbctag, int kbcslot)
 {
-	u_char cmd[1];
 	int res;
+	u_char cmd[1];
 
 	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
 #if 0 /* we allow the console to be attached if no keyboard is present */
 	if (res)
-		return (res);
+		return res;
 #endif
 
 	/* Just to be sure. */
@@ -646,20 +613,17 @@ pckbd_cnattach(kbctag, kbcslot)
 
 #if 0
 	if (res)
-		return (res);
+		return res;
 #endif
 
 	wskbd_cnattach(&pckbd_consops, &pckbd_consdata, &pckbd_keymapdata);
 
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
 void
-pckbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+pckbd_cngetc(void *v, u_int *type, int *data)
 {
         struct pckbd_internal *t = v;
 	int val;
@@ -672,9 +636,7 @@ pckbd_cngetc(v, type, data)
 }
 
 void
-pckbd_cnpollc(v, on)
-	void *v;
-        int on;
+pckbd_cnpollc(void *v, int on)
 {
 	struct pckbd_internal *t = v;
 
@@ -682,9 +644,7 @@ pckbd_cnpollc(v, on)
 }
 
 void
-pckbd_cnbell(v, pitch, period, volume)
-	void *v;
-	u_int pitch, period, volume;
+pckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 
 	pckbd_bell(pitch, period, volume, 1);

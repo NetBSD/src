@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -45,7 +45,7 @@ typedef int pckbport_slot_t;
 #define	PCKBPORT_AUX_SLOT	1
 #define	PCKBPORT_NSLOTS	2
 
-typedef void (*pckbport_inputfcn) __P((void *, int));
+typedef void (*pckbport_inputfcn)(void *, int);
 
 struct pckbport_accessops {
 	/* Functions to be provided by controller driver (eg pckbc) */
@@ -85,29 +85,29 @@ extern struct pckbport_tag pckbport_consdata;
 extern int pckbport_console_attached;
 
 /* Calls from pckbd etc */
-void pckbport_set_inputhandler __P((pckbport_tag_t, pckbport_slot_t,
-				 pckbport_inputfcn, void *, char *));
+void pckbport_set_inputhandler(pckbport_tag_t, pckbport_slot_t,
+				 pckbport_inputfcn, void *, char *);
 
-void pckbport_flush __P((pckbport_tag_t, pckbport_slot_t));
-int pckbport_poll_cmd __P((pckbport_tag_t, pckbport_slot_t, u_char *, int,
-			int, u_char *, int));
-int pckbport_enqueue_cmd __P((pckbport_tag_t, pckbport_slot_t, u_char *, int,
-			   int, int, u_char *));
-int pckbport_poll_data __P((pckbport_tag_t, pckbport_slot_t));
-void pckbport_set_poll __P((pckbport_tag_t, pckbport_slot_t, int));
-int pckbport_xt_translation __P((pckbport_tag_t, pckbport_slot_t, int));
-void pckbport_slot_enable __P((pckbport_tag_t, pckbport_slot_t, int));
+void pckbport_flush(pckbport_tag_t, pckbport_slot_t);
+int pckbport_poll_cmd(pckbport_tag_t, pckbport_slot_t, u_char *, int,
+			int, u_char *, int);
+int pckbport_enqueue_cmd(pckbport_tag_t, pckbport_slot_t, u_char *, int,
+			   int, int, u_char *);
+int pckbport_poll_data(pckbport_tag_t, pckbport_slot_t);
+void pckbport_set_poll(pckbport_tag_t, pckbport_slot_t, int);
+int pckbport_xt_translation(pckbport_tag_t, pckbport_slot_t, int);
+void pckbport_slot_enable(pckbport_tag_t, pckbport_slot_t, int);
 
 /* calls from pckbc etc */
-int pckbport_cnattach __P((void *, struct pckbport_accessops const *,
-			      pckbport_slot_t));
-pckbport_tag_t pckbport_attach __P((void *,
-				       struct pckbport_accessops const *));
-struct device *pckbport_attach_slot __P((struct device *, pckbport_tag_t,
-					    pckbport_slot_t));
-void pckbportintr __P((pckbport_tag_t, pckbport_slot_t, int));
+int pckbport_cnattach(void *, struct pckbport_accessops const *,
+			      pckbport_slot_t);
+pckbport_tag_t pckbport_attach(void *,
+				       struct pckbport_accessops const *);
+struct device *pckbport_attach_slot(struct device *, pckbport_tag_t,
+					    pckbport_slot_t);
+void pckbportintr(pckbport_tag_t, pckbport_slot_t, int);
 
 /* md hook for use without mi wscons */
-int pckbport_machdep_cnattach __P((pckbport_tag_t, pckbport_slot_t));
+int pckbport_machdep_cnattach(pckbport_tag_t, pckbport_slot_t);
 
 #endif /* _DEV_PCKBPORT_PCKBPORTVAR_H_ */

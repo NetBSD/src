@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
+/* $NetBSD: pms.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,23 +87,23 @@ struct pms_softc {		/* driver status information */
 	struct proc *sc_event_thread;
 };
 
-int pmsprobe __P((struct device *, struct cfdata *, void *));
-void pmsattach __P((struct device *, struct device *, void *));
-void pmsinput __P((void *, int));
+int pmsprobe(struct device *, struct cfdata *, void *);
+void pmsattach(struct device *, struct device *, void *);
+void pmsinput(void *, int);
 
 CFATTACH_DECL(pms, sizeof(struct pms_softc),
     pmsprobe, pmsattach, NULL, NULL);
 
-static int	pms_protocol __P((pckbport_tag_t, pckbport_slot_t));
-static void	do_enable __P((struct pms_softc *));
-static void	do_disable __P((struct pms_softc *));
-static void	pms_reset_thread __P((void*));
-static void	pms_spawn_reset_thread __P((void*));
-int	pms_enable __P((void *));
-int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	pms_disable __P((void *));
+static int	pms_protocol(pckbport_tag_t, pckbport_slot_t);
+static void	do_enable(struct pms_softc *);
+static void	do_disable(struct pms_softc *);
+static void	pms_reset_thread(void*);
+static void	pms_spawn_reset_thread(void*);
+int	pms_enable(void *);
+int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	pms_disable(void *);
 #ifndef PMS_DISABLE_POWERHOOK
-void	pms_power __P((int, void *));
+void	pms_power(int, void *);
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 const struct wsmouse_accessops pms_accessops = {
@@ -113,9 +113,7 @@ const struct wsmouse_accessops pms_accessops = {
 };
 
 static int
-pms_protocol(tag, slot)
-	pckbport_tag_t tag;
-	pckbport_slot_t slot;
+pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 {
 	u_char cmd[2], resp[1];
 	int i, j, res;
@@ -148,17 +146,14 @@ pms_protocol(tag, slot)
 }
 
 int
-pmsprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
 	int res;
 
 	if (pa->pa_slot != PCKBPORT_AUX_SLOT)
-		return (0);
+		return 0;
 
 	/* Flush any garbage. */
 	pckbport_flush(pa->pa_tag, pa->pa_slot);
@@ -170,11 +165,11 @@ pmsprobe(parent, match, aux)
 #ifdef DEBUG
 		printf("pmsprobe: reset error %d\n", res);
 #endif
-		return (0);
+		return 0;
 	}
 	if (resp[0] != PMS_RSTDONE) {
 		printf("pmsprobe: reset response 0x%x\n", resp[0]);
-		return (0);
+		return 0;
 	}
 
 	/* get type number (0 = mouse) */
@@ -182,16 +177,14 @@ pmsprobe(parent, match, aux)
 #ifdef DEBUG
 		printf("pmsprobe: type 0x%x\n", resp[1]);
 #endif
-		return (0);
+		return 0;
 	}
 
-	return (10);
+	return 10;
 }
 
 void
-pmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pms_softc *sc = (void *)self;
 	struct pckbport_attach_args *pa = aux;
@@ -250,8 +243,7 @@ pmsattach(parent, self, aux)
 }
 
 static void
-do_enable(sc)
-	struct pms_softc *sc;
+do_enable(struct pms_softc *sc)
 {
 	u_char cmd[1];
 	int res;
@@ -298,8 +290,7 @@ do_enable(sc)
 }
 
 static void
-do_disable(sc)
-	struct pms_softc *sc;
+do_disable(struct pms_softc *sc)
 {
 	u_char cmd[1];
 	int res;
@@ -313,8 +304,7 @@ do_disable(sc)
 }
 
 int
-pms_enable(v)
-	void *v;
+pms_enable(void *v)
 {
 	struct pms_softc *sc = v;
 	int s;
@@ -332,8 +322,7 @@ pms_enable(v)
 }
 
 void
-pms_disable(v)
-	void *v;
+pms_disable(void *v)
 {
 	struct pms_softc *sc = v;
 	int s;
@@ -347,9 +336,7 @@ pms_disable(v)
 
 #ifndef PMS_DISABLE_POWERHOOK
 void
-pms_power(why, v)
-	int why;
-	void *v;
+pms_power(int why, void *v)
 {
 	struct pms_softc *sc = v;
 
@@ -377,12 +364,7 @@ pms_power(why, v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];
@@ -412,14 +394,13 @@ pms_ioctl(v, cmd, data, flag, p)
 		break;
 		
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (0);
+	return 0;
 }
 
 static void
-pms_spawn_reset_thread(arg)
-	void *arg;
+pms_spawn_reset_thread(void *arg)
 {
 	struct pms_softc *sc = arg;
 
@@ -428,8 +409,7 @@ pms_spawn_reset_thread(arg)
 }
 
 static void
-pms_reset_thread(arg)
-	void *arg;
+pms_reset_thread(void *arg)
 {
 	struct pms_softc *sc = arg;
 	u_char cmd[1], resp[2];
@@ -494,9 +474,7 @@ pms_reset_thread(arg)
 #define PMS_5BUTMASK 0x20
 
 void
-pmsinput(vsc, data)
-	void *vsc;
-	int data;
+pmsinput(void *vsc, int data)
 {
 	struct pms_softc *sc = vsc;
 	u_int changed;
@@ -542,9 +520,9 @@ pmsinput(vsc, data)
 
 	if (sc->inputstate == 0) {
 		/*
-		 * Some devices (seen on trackballs anytime, and on some mice shortly after
-		 * reset) output garbage bytes between packets.
-		 * Just ignore them.
+		 * Some devices (seen on trackballs anytime, and on
+		 * some mice shortly after reset) output garbage bytes
+		 * between packets.  Just ignore them.
 		 */
 		if ((data & 0xc0) != 0)
 			return;	/* not in sync yet, discard input */
