@@ -1,5 +1,5 @@
-#	$NetBSD: files.arc,v 1.15 2000/01/26 12:48:45 soda Exp $
-#	$OpenBSD: files.arc,v 1.15 1997/05/18 13:45:24 pefo Exp $
+#	$NetBSD: files.arc,v 1.16 2000/02/22 11:25:59 soda Exp $
+#	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -15,11 +15,7 @@ file	arch/arc/arc/disksubr.c
 file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c
-#file	arch/arc/arc/pmap.c
-#file	arch/arc/arc/sys_machdep.c
-#file	arch/arc/arc/trap.c
 file	arch/arc/arc/arc_trap.c
-#file	arch/arc/arc/vm_machdep.c
 
 file	arch/arc/arc/arcbios.c
 
@@ -72,7 +68,7 @@ file	arch/arc/pci/pbcpcibus.c	pbcpcibr
 #	Ethernet chip on PICA bus
 device	sn: ifnet, ether, arp
 attach	sn at pica
-file	arch/arc/dev/if_sn.c		sn	needs-count
+file	arch/arc/dev/if_sn.c		sn
 
 #	Use machine independent SCSI driver routines
 include	"dev/scsipi/files.scsipi"
@@ -82,7 +78,7 @@ major	{cd = 3}
 #	Symbios 53C94 SCSI interface driver on PICA bus
 device	asc: scsi
 attach	asc at pica
-file	arch/arc/dev/asc.c		asc	needs-count
+file	arch/arc/dev/asc.c		asc
 
 #	Floppy disk controller on PICA bus
 device	fdc {drive = -1}
@@ -119,13 +115,17 @@ file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
 #	BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device	btl: scsi
 attach	btl at isa
-file	arch/arc/dti/btl.c		btl needs-count
+file	arch/arc/dti/btl.c		btl
 
 #	NS16450/16550 Serial line driver
 attach	com at pica with com_pica
 attach	com at algor with com_algor
 file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 
+# Game adapter (joystick)
+device	joy
+attach	joy at isa
+file	arch/arc/isa/joy.c		joy needs-flag
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
@@ -154,7 +154,7 @@ file	arch/arc/pci/pci_vga.c		pcivga
 #
 # Specials.
 #
-# memory disk for boot tape
+# memory disk for installation
 file arch/arc/dev/md_root.c		memory_disk_hooks
 major {md = 8}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.2 2000/01/23 21:01:55 soda Exp $	*/
+/*	$NetBSD: btl.c,v 1.3 2000/02/22 11:26:01 soda Exp $	*/
 
 #undef BTDIAG
 #define integrate
@@ -102,8 +102,6 @@ struct bt_mbx {
 	struct bt_mbx_out *tmbo;	/* Target Mail Box out */
 	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
-
-extern int cputype;  /* XXX */
 
 #define KVTOPHYS(x)	((cputype == DESKSTATION_TYNE) ? \
 	(((int)(x) & 0x7fffff) | 0x800000) : ((int)(x)))

@@ -1,5 +1,5 @@
-/*	$NetBSD: picabus.c,v 1.9 2000/01/23 21:02:00 soda Exp $	*/
-/*	$OpenBSD: picabus.c,v 1.7 1997/05/24 18:36:26 pefo Exp $	*/
+/*	$NetBSD: picabus.c,v 1.10 2000/02/22 11:26:04 soda Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -69,7 +70,6 @@ int	pica_matchname __P((struct confargs *, char *));
 int	pica_iointr __P((unsigned int, struct clockframe *));
 int	pica_clkintr __P((unsigned int, struct clockframe *));
 
-extern int cputype;
 intr_handler_t pica_clock_handler;
 
 /*
@@ -311,7 +311,7 @@ int
 pica_intrnull(val)
 	void *val;
 {
-	panic("uncaught PICA intr for slot %p\n", val);
+	panic("uncaught PICA intr for slot %p", val);
 }
 
 /*

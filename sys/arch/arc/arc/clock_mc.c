@@ -1,5 +1,5 @@
-/*	$NetBSD: clock_mc.c,v 1.5 2000/01/23 21:01:50 soda Exp $	*/
-/*	$OpenBSD: clock_mc.c,v 1.7 1997/04/19 17:19:40 pefo Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.6 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
 /*
@@ -63,14 +63,13 @@
 #include <machine/isa_machdep.h>
 #include <arc/isa/timerreg.h>
 
-extern u_int	cputype;
 extern int	cpu_int_mask;
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
 static void	mcclock_init_pica __P((struct clock_softc *csc));
 static void	mcclock_init_tyne __P((struct clock_softc *csc));
-static void	mcclock_init_p4032 __P((struct clock_softc *csc));
+static void	mcclock_init_algor __P((struct clock_softc *csc));
 static void	mcclock_get __P((struct clock_softc *csc, time_t base,
 		    struct tod_time *ct));
 static void	mcclock_set __P((struct clock_softc *csc,
@@ -99,11 +98,11 @@ static void	mc_write_tyne __P((struct clock_softc *csc, u_int reg,
 static u_int	mc_read_tyne __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_tyne = { mc_write_tyne, mc_read_tyne };
 
-/* Algorithmics P4032 clock access code */
-static void	mc_write_p4032 __P((struct clock_softc *csc, u_int reg,
+/* Algorithmics clock access code */
+static void	mc_write_algor __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
-static u_int	mc_read_p4032 __P((struct clock_softc *csc, u_int reg));
-static struct mcclockdata mcclockdata_p4032 = { mc_write_p4032, mc_read_p4032 };
+static u_int	mc_read_algor __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_algor = { mc_write_algor, mc_read_algor };
 
 void
 mcclock_attach(parent, self, aux)
@@ -135,8 +134,9 @@ mcclock_attach(parent, self, aux)
 		break;
 
 	case ALGOR_P4032:
-		csc->sc_init = mcclock_init_p4032;
-		csc->sc_data = &mcclockdata_p4032;
+	case ALGOR_P5064:
+		csc->sc_init = mcclock_init_algor;
+		csc->sc_data = &mcclockdata_algor;
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY|MC_REGB_24HR|MC_REGB_SQWE);
 		break;
 
@@ -167,7 +167,7 @@ mcclock_init_tyne(csc)
 }
 
 static void
-mcclock_init_p4032(csc)
+mcclock_init_algor(csc)
 	struct clock_softc *csc;
 {
 	int s;
@@ -205,8 +205,10 @@ mcclock_get(csc, base, ct)
 	ct->day = regs[MC_DOM];
 	ct->mon = regs[MC_MONTH];
 	ct->year = regs[MC_YEAR];
-	if(cputype == ALGOR_P4032)
+	if (cputype == ALGOR_P4032 ||
+	    cputype == ALGOR_P5064) {
 		ct->year -= 80;
+	}
 }
 
 /*
@@ -230,10 +232,12 @@ printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs
 	regs[MC_DOW] = ct->dow;
 	regs[MC_DOM] = ct->day;
 	regs[MC_MONTH] = ct->mon;
-	if(cputype == ALGOR_P4032)
+	if (cputype == ALGOR_P4032 ||
+	    cputype == ALGOR_P5064) {
 		regs[MC_YEAR] = ct->year + 80;
-	else
+	} else {
 		regs[MC_YEAR] = ct->year;
+	}
 
 	MC146818_PUTTOD(csc, &regs);
 	MC146818_GETTOD(csc, &regs);
@@ -288,22 +292,38 @@ mc_read_tyne(csc, reg)
 }
 
 static void
-mc_write_p4032(csc, reg, datum)
+mc_write_algor(csc, reg, datum)
 	struct clock_softc *csc;
 	u_int reg, datum;
 {
-	outb(P4032_CLOCK, reg);
-	outb(P4032_CLOCK+4, datum);
+	switch (cputype) {
+	case ALGOR_P4032:
+		outb(P4032_CLOCK, reg);
+		outb(P4032_CLOCK+4, datum);
+		break;
+	default:
+		outb(P5064_CLOCK, reg);
+		outb(P5064_CLOCK+1, datum);
+		break;
+	}
 }
 
 static u_int
-mc_read_p4032(csc, reg)
+mc_read_algor(csc, reg)
 	struct clock_softc *csc;
 	u_int reg;
 {
 	int i;
 
-	outb(P4032_CLOCK, reg);
-	i = inb(P4032_CLOCK+4) & 0xff;
+	switch (cputype) {
+	case ALGOR_P4032:
+		outb(P4032_CLOCK, reg);
+		i = inb(P4032_CLOCK+4) & 0xff;
+		break;
+	default:
+		outb(P5064_CLOCK, reg);
+		i = inb(P5064_CLOCK+1) & 0xff;
+		break;
+	}
 	return(i);
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: arcbios.h,v 1.2 2000/01/23 21:01:50 soda Exp $	*/
-/*	$OpenBSD: arcbios.h,v 1.4 1997/05/01 15:13:30 pefo Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.3 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
@@ -139,6 +139,7 @@ typedef enum arc_status
 	arc_EROFS,			/* Read-only file system     */
 } arc_status_t;
 
+#ifdef arc
 typedef enum {
 	ExeceptionBlock,
 	SystemParameterBlock,
@@ -149,6 +150,19 @@ typedef enum {
 	FirmwarePermanent,
 	FreeContigous
 } MEMORYTYPE;
+#endif
+#ifdef sgi /* note: SGI's systems have different order of types. */
+  typedef enum {
+	ExeceptionBlock,
+	SystemParameterBlock,
+	FreeContigous,
+	FreeMemory,
+	BadMemory,
+	LoadedProgram,
+	FirmwareTemporary,
+	FirmwarePermanent,
+  } MEMORYTYPE;
+#endif
 
 typedef struct arc_mem {
 	MEMORYTYPE	Type;		/* Memory chunk type */
@@ -238,9 +252,14 @@ typedef struct arc_calls
 	arc_mem_t *(*get_memory_descriptor)( /* GetMemoryDescriptor 19 */
 		arc_mem_t *);		/* MemoryDescriptor */
 
+#ifdef arc
 	void (*signal)(			/* Signal 20 */
 		u_int32_t,		/* Signal number */
 /**/		caddr_t);		/* Handler */
+#endif
+#ifdef sgi
+	void *unused;
+#endif
 
 	arc_time_t *(*get_time)(void);	/* GetTime 21 */
 
@@ -297,12 +316,15 @@ typedef struct arc_calls
 
 	void (*flush_all_caches)(void);	/* FlushAllCaches 35 */
 
+	/* note: the followings don't exist on SGI */
+#ifdef arc
 	arc_status_t (*test_unicode)(	/* TestUnicodeCharacter 36 */
 		u_int32_t,		/* FileId */
 		u_int16_t);		/* UnicodeCharacter */
 
 	arc_dsp_stat_t *(*get_display_status)( /* GetDisplayStatus 37 */
 		u_int32_t);		/* FileId */
+#endif
 } arc_calls_t;
 
 #define ARC_PARAM_BLK_MAGIC	0x53435241
@@ -339,5 +361,6 @@ int bios_ident __P((void));
 void bios_init_console __P((void));
 int bios_configure_memory __P((int *, phys_ram_seg_t *, int *));
 void bios_save_info __P((void));
+#ifdef arc
 void bios_display_info __P((int *, int *, int *, int *));
-int bios_load_miniroot __P((char *, caddr_t));
+#endif
