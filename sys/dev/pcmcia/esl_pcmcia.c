@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.2 2001/09/29 19:06:32 augustss Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.3 2001/09/29 19:30:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -48,7 +48,7 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/pcmcia/eslreg.h>
+#include <dev/isa/essreg.h>
 #include <dev/pcmcia/eslvar.h>
 
 static const struct esl_pcmcia_product {
@@ -99,7 +99,7 @@ esl_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 
 	for (i = 0; i < ESL_NDEVS; i++)
 		if (esl_pcmcia_product_lookup(pa->card, pa->pf->number, i))
-			return(2); 
+			return (2); 
 
 	return (0);
 }
@@ -196,14 +196,14 @@ esl_pcmcia_detach(struct device *self, int flags)
 
 	if (esc->sc_io_window == -1)
 		/* Nothing to detach */
-		return(0);
+		return (0);
 
 	if (esc->sc_opldev != NULL)
 		config_detach(esc->sc_opldev, flags);
 	if (esc->sc_audiodev != NULL)
 		rv = config_detach(esc->sc_audiodev, flags);
 	if (rv)
-		return(rv);
+		return (rv);
 
 	/* unmap i/o window and i/o space */
 	pcmcia_io_unmap(esc->sc_pf, esc->sc_io_window);
@@ -228,12 +228,12 @@ esl_pcmcia_enable(struct esl_pcmcia_softc *sc)
 	if (pcmcia_function_enable(sc->sc_pf))
 		goto fail_2;
 
-	return(0);
+	return (0);
 
 fail_2:
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 fail_1:
-	return(1);
+	return (1);
 }
 
 void
