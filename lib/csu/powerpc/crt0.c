@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1997/04/16 19:38:23 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 1997/04/16 20:50:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,6 +32,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef ECOFF_COMPAT
+#undef DYNAMIC
+#endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -68,8 +72,10 @@ char	**environ;
 char	*__progname = "";
 struct ps_strings *__ps_strings = PS_STRINGS;
 
+#ifndef ECOFF_COMPAT
 extern void	__init __P((void));
 extern void	__fini __P((void));
+#endif /* ECOFF_COMPAT */
 
 #ifdef DYNAMIC
 void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
@@ -77,11 +83,12 @@ void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 const Obj_Entry *__mainprog_obj;
 
 /*
- * Arrange for _DYNAMIC to exist weakly at address zero.  That way,
+ * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
+ * as being at address zero, unless something else defines it).  That way,
  * if we happen to be compiling without -static but with without any
  * shared libs present, things will still work.
  */
-asm(".weak _DYNAMIC; _DYNAMIC = 0");
+asm(".weak _DYNAMIC");
 extern int _DYNAMIC;
 #endif /* DYNAMIC */
 
@@ -127,8 +134,10 @@ __start(argc, argv, envp, obj, cleanup, ps_strings)
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
+#ifndef ECOFF_COMPAT
 	atexit(__fini);
 	__init();
+#endif /* ECOFF_COMPAT */
 
 	exit(main(argc, argv, environ));
 }
