@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)print.c	5.9 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.5 1993/06/01 02:33:35 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.6 1993/06/02 22:02:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -357,8 +357,9 @@ vsize(k, v)
 #ifndef NEWVM
 	    pgtok(k->ki_p->p_dsize + k->ki_p->p_ssize + k->ki_e->e_xsize));
 #else /* NEWVM */
-	    pgtok(k->ki_e->e_vm.vm_dsize + k->ki_e->e_vm.vm_ssize +
-		k->ki_e->e_vm.vm_tsize));
+	    (k->ki_p->p_stat == SZOMB ? 0 :
+		pgtok(k->ki_e->e_vm.vm_dsize + k->ki_e->e_vm.vm_ssize +
+		      k->ki_e->e_vm.vm_tsize)));
 #endif /* NEWVM */
 }
 
@@ -372,7 +373,8 @@ rssize(k, v)
 	    (k->ki_e->e_xrssize / k->ki_e->e_xccount) : 0)));
 #else /* NEWVM */
 	/* XXX don't have info about shared */
-	(void) printf("%*d", v->width, pgtok(k->ki_e->e_vm.vm_rssize));
+	(void) printf("%*d", v->width, (k->ki_p->p_stat == SZOMB ? 0 :
+		      pgtok(k->ki_e->e_vm.vm_rssize)));
 #endif /* NEWVM */
 }
 
@@ -439,7 +441,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_time == 0 || (p->p_flag & SLOAD) == 0)
+	if (p->p_time == 0 || (p->p_stat & SZOMB) || (p->p_flag & SLOAD) == 0)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
@@ -472,7 +474,7 @@ getpmem(k)
 
 	p = k->ki_p;
 	e = k->ki_e;
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & SLOAD) == 0 || (p->p_stat == SZOMB))
 		return (0.0);
 #ifndef NEWVM
 	szptudot = UPAGES + clrnd(ctopt(p->p_dsize + p->p_ssize + e->e_xsize));
