@@ -56,7 +56,7 @@
 >>18	leshort		6		Intel 80486,
 >>18	leshort		7		Intel 80860,
 # "officially" big endian, but binutils bfd only emits magic #8 for MIPS.
->>18	leshort		8		MIPS R3000_LE,
+>>18	leshort		8		MIPS R3000_LE [bfd bug],
 >>18	leshort		9		Amdahl - invalid byte order,
 >>18	leshort		10		MIPS R3000_LE,
 >>18	leshort		11		RS6000 - invalid byte order,

@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.20 2000/09/22 16:34:59 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.21 2000/11/23 23:21:15 pooka Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.32 2000/05/14 22:58:53 christos Exp 
+ * @(#)Id: file.h,v 1.34 2000/11/13 00:30:49 christos Exp 
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -123,7 +123,6 @@ extern int   tryit		__P((unsigned char *, int, int));
 extern int   zmagic		__P((unsigned char *, int));
 extern void  ckfprintf		__P((FILE *, const char *, ...));
 extern uint32 signextend	__P((struct magic *, unsigned int32));
-extern int internatmagic	__P((unsigned char *, int));
 extern void tryelf		__P((int, unsigned char *, int));
 
 extern char *progname;		/* the program name 			*/
@@ -160,7 +159,7 @@ static const char *rcsid(const char *p) { \
 	return rcsid(p = id); \
 }
 #else
-#define FILE_RCSID(id) static char *rcsid[] = id;
+#define FILE_RCSID(id) static char rcsid[] = id;
 #endif
 
 #endif /* __file_h__ */
