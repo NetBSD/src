@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: subr.c,v 1.3 2003/04/04 08:05:37 jdolecek Exp $");
+__RCSID("$NetBSD: subr.c,v 1.4 2003/04/11 17:31:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -175,10 +175,8 @@ smb_open_rcfile(void)
 		free(fn);
 	}
 	error = rc_merge(SMB_CFG_FILE, &smb_rc);
-	if (smb_rc == NULL) {
-		printf("Warning: no cfg file(s) found.\n");
+	if (smb_rc == NULL)
 		return ENOENT;
-	}
 	return 0;
 }
 
