@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.13 2001/11/27 04:10:24 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.14 2002/02/10 16:23:34 bjh21 Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -592,10 +592,10 @@ parse_int:
 		intptr = (int *) &options->log_level;
 		arg = strdelim(&s);
 		value = log_level_number(arg);
-		if (value == (LogLevel) - 1)
+		if (value == SYSLOG_LEVEL_NOT_SET)
 			fatal("%.200s line %d: unsupported log level '%s'",
 			      filename, linenum, arg ? arg : "<NONE>");
-		if (*activep && (LogLevel) * intptr == -1)
+		if (*activep && (LogLevel) *intptr == SYSLOG_LEVEL_NOT_SET)
 			*intptr = (LogLevel) value;
 		break;
 
@@ -795,7 +795,7 @@ initialize_options(Options * options)
 	options->num_local_forwards = 0;
 	options->num_remote_forwards = 0;
 	options->clear_forwardings = -1;
-	options->log_level = (LogLevel) - 1;
+	options->log_level = SYSLOG_LEVEL_NOT_SET;
 	options->preferred_authentications = NULL;
 	options->bind_address = NULL;
 	options->smartcard_device = NULL;
@@ -914,7 +914,7 @@ fill_default_options(Options * options)
 		options->system_hostfile2 = _PATH_SSH_SYSTEM_HOSTFILE2;
 	if (options->user_hostfile2 == NULL)
 		options->user_hostfile2 = _PATH_SSH_USER_HOSTFILE2;
-	if (options->log_level == (LogLevel) - 1)
+	if (options->log_level == SYSLOG_LEVEL_NOT_SET)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->clear_forwardings == 1)
 		clear_forwardings(options);
