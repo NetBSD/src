@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.8 1996/07/14 04:20:22 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.9 1996/08/20 23:00:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -143,16 +143,19 @@ main(argc, argv)
 	off("PH_LINK", struct prochd, ph_link);
 	off("PH_RLINK", struct prochd, ph_rlink);
 
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	/* offsets needed by cpu_switch(), et al., to switch mappings. */
 	off("VM_PMAP_STPTE", struct vmspace, vm_pmap.pm_stpte);
 	def("USTP_OFFSET", kvtol1pte(VM_MIN_ADDRESS) * sizeof(pt_entry_t));
-#endif /* OLD_PMAP */
+#else /* NEW_PMAP */
+	off("VM_PMAP", struct vmspace, vm_pmap);
+#endif /* NEW_PMAP */
 
 	/* Important offsets into the user struct & associated constants */
 	def("UPAGES", UPAGES);
 	off("U_PCB", struct user, u_pcb);
-	off("U_PCB_HW_KSP", struct user, u_pcb.pcb_hw.apcb_ksp);
+	off("U_PCB_HWPCB", struct user, u_pcb.pcb_hw);
+	off("U_PCB_HWPCB_KSP", struct user, u_pcb.pcb_hw.apcb_ksp);
 	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context[0]);
 	off("U_PCB_ONFAULT", struct user, u_pcb.pcb_onfault);
 	off("U_PCB_ACCESSADDR", struct user, u_pcb.pcb_accessaddr);
