@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.10 2004/01/18 08:40:40 yamt Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.11 2004/09/23 16:44:26 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: textdomain.c,v 1.10 2004/01/18 08:40:40 yamt Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.11 2004/09/23 16:44:26 tshiozak Exp $");
 
 #include <sys/param.h>
 
@@ -98,7 +98,7 @@ bindtextdomain(domainname, dirname)
 		if (p)
 			return (p->path);
 		else
-			return _PATH_TEXTDOMAIN;
+			return (char *)__UNCONST(_PATH_TEXTDOMAIN);
 	}
 
 	strlcpy(p->path, dirname, sizeof(p->path));
