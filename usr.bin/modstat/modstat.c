@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.15 2000/07/07 15:13:25 itojun Exp $	*/
+/*	$NetBSD: modstat.c,v 1.16 2000/12/10 11:52:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.15 2000/07/07 15:13:25 itojun Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.16 2000/12/10 11:52:09 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
@@ -68,14 +68,16 @@ usage()
 	exit(1);
 }
 
-static char *type_names[] = {
+static const char *type_names[] = {
 	"SYSCALL",
 	"VFS",
 	"DEV",
 	"STRMOD",
 	"EXEC",
+	"COMPAT",
 	"MISC"
 };
+static int tn_nentries = sizeof(type_names) / sizeof(char *);
 
 #define POINTERSIZE ((int)(2 * sizeof(void*)))
 
@@ -109,7 +111,7 @@ dostat(devfd, modnum, modname)
 	 * Decode this stat buffer...
 	 */
 	printf("%-7s %3d %3ld %0*lx %04lx %0*lx %3ld %s\n",
-	    type_names[sbuf.type],
+	    (sbuf.type < tn_nentries) ? type_names[sbuf.type] : "(UNKNOWN)", 
 	    sbuf.id,		/* module id */
 	    (long)sbuf.offset,	/* offset into modtype struct */
 	    POINTERSIZE,
