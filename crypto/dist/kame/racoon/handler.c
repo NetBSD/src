@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.43 2001/02/06 16:28:16 thorpej Exp $	*/
+/*	$KAME: handler.c,v 1.45 2001/03/06 20:41:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -207,10 +207,10 @@ delph1(iph1)
 
 	VPTRINIT(iph1->authstr);
 
-	if (iph1->sce)
-		SCHED_KILL(iph1->sce);
-	if (iph1->scr)
-		SCHED_KILL(iph1->scr);
+	sched_scrub_param(iph1);
+	iph1->sce = NULL;
+	iph1->scr = NULL;
+
 	VPTRINIT(iph1->sendbuf);
 
 	flush_recvedpkt(iph1->rlist);
@@ -408,14 +408,16 @@ getph2bysaidx(src, dst, proto_id, spi)
 		if (iph2->proposal == NULL && iph2->approval == NULL)
 			continue;
 		if (iph2->approval != NULL) {
-			for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
+			for (pr = iph2->approval->head; pr != NULL;
+			     pr = pr->next) {
 				if (proto_id != pr->proto_id)
 					break;
 				if (spi == pr->spi || spi == pr->spi_p)
 					return iph2;
 			}
 		} else if (iph2->proposal != NULL) {
-			for (pr = iph2->proposal->head; pr != NULL; pr = pr->next) {
+			for (pr = iph2->proposal->head; pr != NULL;
+			     pr = pr->next) {
 				if (proto_id != pr->proto_id)
 					break;
 				if (spi == pr->spi)
@@ -454,10 +456,10 @@ void
 initph2(iph2)
 	struct ph2handle *iph2;
 {
-	if (iph2->sce)
-		SCHED_KILL(iph2->sce);
-	if (iph2->scr)
-		SCHED_KILL(iph2->scr);
+
+	sched_scrub_param(iph2);
+	iph2->sce = NULL;
+	iph2->scr = NULL;
 
 	VPTRINIT(iph2->sendbuf);
 
@@ -574,6 +576,44 @@ flushph2()
 		unbindph12(p);
 		remph2(p);
 		delph2(p);
+	}
+}
+
+/*
+ * Delete all Phase 2 handlers for this src/dst/proto.  This
+ * is used during INITIAL-CONTACT processing (so no need to
+ * send a message to the peer).
+ */
+void
+deleteallph2(src, dst, proto_id)
+	struct sockaddr *src, *dst;
+	u_int proto_id;
+{
+	struct ph2handle *iph2, *next;
+	struct saproto *pr;
+
+	for (iph2 = LIST_FIRST(&ph2tree); iph2 != NULL; iph2 = next) {
+		next = LIST_NEXT(iph2, chain);
+		if (iph2->proposal == NULL && iph2->approval == NULL)
+			continue;
+		if (iph2->approval != NULL) {
+			for (pr = iph2->approval->head; pr != NULL;
+			     pr = pr->next) {
+				if (proto_id == pr->proto_id)
+					goto zap_it;
+			}
+		} else if (iph2->proposal != NULL) {
+			for (pr = iph2->proposal->head; pr != NULL;
+			     pr = pr->next) {
+				if (proto_id == pr->proto_id)
+					goto zap_it;
+			}
+		}
+		continue;
+ zap_it:
+		unbindph12(iph2);
+		remph2(iph2);
+		delph2(iph2);
 	}
 }
 
