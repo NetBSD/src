@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.9 2004/10/19 13:39:51 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.10 2004/10/19 13:51:57 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,6 +97,7 @@ but each part must be prefixed by its page name
 flag to
 .Xr usbhidctl 1
 to see the page name).
+Spaces in the item name by underscores.
 .Pp
 The value is simply a numeric value.
 When the item reports this value
@@ -120,15 +121,15 @@ of Philips USB speakers with the HID controls on the speakers.
 .Bd -literal -offset indent
 # Configuration for various Philips USB speakers
 Consumer:Consumer_Control.Consumer:Volume_Up			   1
-	mixerctl -f $1 -n -w fea8-i7-master++
+	mixerctl -f $1 -n -w outputs.master++
 Consumer:Consumer_Control.Consumer:Volume_Down			   1
-	mixerctl -f $1 -n -w fea8-i7-master--
+	mixerctl -f $1 -n -w outputs.master--
 Consumer:Consumer_Control.Consumer:Mute				   1
-	mixerctl -f $1 -n -w fea8-i7-mute++
+	mixerctl -f $1 -n -w outputs.mute++
 Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Up   1
-	mixerctl -f $1 -n -w fea8-i7-bass++
+	mixerctl -f $1 -n -w outputs.bass++
 Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down 1
-	mixerctl -f $1 -n -w fea8-i7-bass--
+	mixerctl -f $1 -n -w outputs.bass--
 .Ed
 .Pp
 A sample invocation using this configuration would be
