@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24 1999/03/30 10:10:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -272,11 +272,13 @@ syscall(frame, code)
 	else
 		callp += code;
 
+#ifdef VERBOSE_ARM32
 	/* Is the syscal valid ? */
 	if (callp->sy_call == sys_nosys) {
 		printf("syscall: nosys code=%d lr=%08x proc=%08x pid=%d %s\n",
 		    code, frame->tf_pc, (u_int)p, p->p_pid, p->p_comm);
 	}
+#endif
 
 	argsize = callp->sy_argsize;
 	if (argsize > (regparams * sizeof(int)))
