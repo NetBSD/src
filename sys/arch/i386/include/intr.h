@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2002/10/01 19:08:51 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.28 2002/10/05 21:25:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #define	IPL_AUDIO	0xc0	/* audio */
 #define	IPL_CLOCK	0xd0	/* clock */
 #define	IPL_HIGH	0xd0	/* everything */
-#define	IPL_SERIAL	0xe0	/* serial */
+#define	IPL_SERIAL	0xd0	/* serial */
 #define IPL_IPI		0xe0	/* inter-processor interrupts */
 #define	NIPL		16
 
@@ -176,7 +176,7 @@ spllower(int ncpl)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 #define	splsched()	splhigh()
-#define spllock() 	splraise(IPL_SERIAL) /* XXX XXX XXX XXX */
+#define spllock() 	splhigh()
 #define	splx(x)		spllower(x)
 
 /*
@@ -207,7 +207,7 @@ softintr(register int sir)
 #ifdef MULTIPROCESSOR
 struct cpu_info;
 
-void i386_send_ipi (struct cpu_info *, int);
+int i386_send_ipi (struct cpu_info *, int);
 void i386_broadcast_ipi (int);
 void i386_multicast_ipi (int, int);
 void i386_ipi_handler (void);
