@@ -32,8 +32,8 @@
  * from: Id: nls.c,v 1.10 2002/07/22 08:33:59 bp Exp 
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/iconv.h>
 #include <sys/sysctl.h>
 #include <ctype.h>
 #ifndef APPLE
@@ -69,7 +69,7 @@ nls_setlocale(const char *name)
 	int i;
 
 	if (setlocale(LC_CTYPE, name) == NULL) {
-		warnx("can't set locale '%s'\n", name);
+		warnx("can't set locale '%s'", name);
 		return EINVAL;
 	}
 	for (i = 0; i < 256; i++) {
@@ -93,8 +93,8 @@ nls_setrecode(const char *local, const char *external)
 		iconv_loaded++;
 		iconv_lib = dlopen("libiconv.so", RTLD_LAZY | RTLD_GLOBAL);
 		if (iconv_lib == NULL) {
-			warn("Unable to load iconv library: %s\n", dlerror());
-			iconv_loaded++;
+			warnx("Unable to load iconv library: %s", dlerror());
+			iconv_loaded--;
 			return ENOENT;
 		}
 		my_iconv_open = dlsym(iconv_lib, "iconv_open");
