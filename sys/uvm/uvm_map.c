@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.178 2005/01/03 19:46:22 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.179 2005/01/12 09:34:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.178 2005/01/03 19:46:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.179 2005/01/12 09:34:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4286,6 +4286,9 @@ uvm_mapent_reserve(struct vm_map *map, struct uvm_mapent_reservation *umr,
 {
 
 	umr->umr_nentries = 0;
+
+	if ((flags & UVM_FLAG_QUANTUM) != 0)
+		return 0;
 
 	if (!VM_MAP_USE_KMAPENT(map))
 		return 0;

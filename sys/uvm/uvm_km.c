@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.74 2005/01/05 00:58:57 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.75 2005/01/12 09:34:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.74 2005/01/05 00:58:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.75 2005/01/12 09:34:35 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -223,7 +223,7 @@ km_vacache_free(struct pool *pp, void *v)
 	}
 #endif
 	map = KM_VACACHE_POOL_TO_MAP(pp);
-	uvm_unmap(map, va, va + size);
+	uvm_unmap1(map, va, va + size, UVM_FLAG_QUANTUM);
 }
 
 /*
@@ -583,7 +583,8 @@ uvm_km_kmemalloc1(map, obj, size, align, prefer, flags)
 			if ((flags & UVM_KMF_NOWAIT) ||
 			    ((flags & UVM_KMF_CANFAIL) && uvm_swapisfull())) {
 				/* free everything! */
-				uvm_unmap(map, kva, kva + size);
+				uvm_unmap1(map, kva, kva + size,
+				    UVM_FLAG_QUANTUM);
 				return (0);
 			} else {
 				uvm_wait("km_getwait2");	/* sleep here */
@@ -624,7 +625,8 @@ uvm_km_free(map, addr, size)
 	vaddr_t addr;
 	vsize_t size;
 {
-	uvm_unmap(map, trunc_page(addr), round_page(addr+size));
+	uvm_unmap1(map, trunc_page(addr), round_page(addr+size),
+	    UVM_FLAG_QUANTUM);
 }
 
 /*
