@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.3 1995/10/09 02:41:28 chopps Exp $
+#	$Id: install.sh,v 1.3.6.1 1996/07/14 19:44:06 is Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -37,7 +37,7 @@
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT==echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {

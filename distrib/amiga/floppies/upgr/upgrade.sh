@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.2 1995/10/09 02:41:35 chopps Exp $
+#	$Id: upgrade.sh,v 1.2.6.1 1996/07/14 19:44:09 is Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -36,7 +36,7 @@
 
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 
 getresp() {
 	read resp
