@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.3 1995/11/03 04:47:03 briggs Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.4 1995/11/05 00:35:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,6 +47,8 @@ static int fpu_emul_fmovm __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_arith __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
+static int test_cc __P((struct fpemu *fe, int pred));
+static struct fpn *fpu_cmp __P((struct fpemu *fe));
 
 #if !defined(DL_DEFAULT)
 #  if defined(DEBUG_WITH_FPU)
@@ -56,11 +58,11 @@ static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
 #  endif
 #endif
 
-int debug_level;
+int fpu_debug_level;
 static int global_debug_level = DL_DEFAULT;
 
 #define DUMP_INSN(insn)							\
-if (debug_level & DL_DUMPINSN) {					\
+if (fpu_debug_level & DL_DUMPINSN) {					\
     printf("  fpu_emulate: insn={adv=%d,siz=%d,op=%04x,w1=%04x}\n",	\
 	   (insn)->is_advance, (insn)->is_datasize,			\
 	   (insn)->is_opcode, (insn)->is_word1);			\
@@ -70,9 +72,6 @@ if (debug_level & DL_DUMPINSN) {					\
 /* mock fpframe for FPE - it's never overwritten by the real fpframe */
 struct fpframe mockfpf;
 #endif
-
-static struct instruction insn;
-static struct fpemu fe;
 
 /*
  * Emulate a floating-point instruction.
@@ -84,12 +83,14 @@ fpu_emulate(frame, fpf)
      struct frame *frame;
      struct fpframe *fpf;
 {
+    static struct instruction insn;
+    static struct fpemu fe;
     int word, optype, sig;
     int i;
     u_int *pt;
 
 #ifdef DEBUG
-    /* initialize insn.is_data to tell it is *not* initialized */
+    /* initialize insn.is_datasize to tell it is *not* initialized */
     insn.is_datasize = -1;
 #endif
     fe.fe_frame = frame;
@@ -104,13 +105,13 @@ fpu_emulate(frame, fpf)
 #endif
 
 #ifdef DEBUG
-    if ((debug_level = (fe.fe_fpcr >> 16) & 0x0000ffff) == 0) {
+    if ((fpu_debug_level = (fe.fe_fpcr >> 16) & 0x0000ffff) == 0) {
 	/* set the default */
-	debug_level = global_debug_level;
+	fpu_debug_level = global_debug_level;
     }
 #endif
 
-    if (debug_level & DL_VERBOSE) {
+    if (fpu_debug_level & DL_VERBOSE) {
 	printf("ENTERING fpu_emulate: FPSR=%08x, FPCR=%08x\n",
 	       fe.fe_fpsr, fe.fe_fpcr);
     }
@@ -166,48 +167,48 @@ fpu_emulate(frame, fpf)
     if (optype == 0x0000) {
 	/* type=0: generic */
 	if ((word & 0xc000) == 0xc000) {
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fmovm FPr\n");
 	    sig = fpu_emul_fmovm(&fe, &insn);
 	} else if ((word & 0xc000) == 0x8000) {
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fmovm FPcr\n");
 	    sig = fpu_emul_fmovmcr(&fe, &insn);
 	} else if ((word & 0xe000) == 0x6000) {
 	    /* fstore = fmove FPn,mem */
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fmove to mem\n");
 	    sig = fpu_emul_fstore(&fe, &insn);
 	} else if ((word & 0xfc00) == 0x5c00) {
 	    /* fmovecr */
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fmovecr\n");
 	    sig = fpu_emul_fmovecr(&fe, &insn);
 	} else if ((word & 0xa07f) == 0x26) {
 	    /* fscale */
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulate: fscale\n");
 	    sig = fpu_emul_fscale(&fe, &insn);
 	} else {
-	    if (debug_level & DL_INSN)
+	    if (fpu_debug_level & DL_INSN)
 		printf("  fpu_emulte: other type0\n");
 	    /* all other type0 insns are arithmetic */
 	    sig = fpu_emul_arith(&fe, &insn);
 	}
 	if (sig == 0) {
-	    if (debug_level & DL_VERBOSE)
+	    if (fpu_debug_level & DL_VERBOSE)
 		printf("  fpu_emulate: type 0 returned 0\n");
 	    sig = fpu_upd_excp(&fe);
 	}
     } else if (optype == 0x0080 || optype == 0x00C0) {
 	/* type=2 or 3: fbcc, short or long disp. */
-	if (debug_level & DL_INSN)
+	if (fpu_debug_level & DL_INSN)
 	    printf("  fpu_emulate: fbcc %s\n",
 		   (optype & 0x40) ? "long" : "short");
 	sig = fpu_emul_brcc(&fe, &insn);
     } else if (optype == 0x0040) {
 	/* type=1: fdbcc, fscc, ftrapcc */
-	if (debug_level & DL_INSN)
+	if (fpu_debug_level & DL_INSN)
 	    printf("  fpu_emulate: type1\n");
 	sig = fpu_emul_type1(&fe, &insn);
     } else {
@@ -234,7 +235,7 @@ fpu_emulate(frame, fpf)
     }
 #endif
 
-    if (debug_level & DL_VERBOSE)
+    if (fpu_debug_level & DL_VERBOSE)
 	printf("EXITING fpu_emulate: w/FPSR=%08x, FPCR=%08x\n",
 	       fe.fe_fpsr, fe.fe_fpcr);
 
@@ -282,47 +283,47 @@ fpu_upd_fpsr(fe, fp)
 {
     u_int fpsr;
 
-    if (debug_level & DL_RESULT)
+    if (fpu_debug_level & DL_RESULT)
 	printf("  fpu_upd_fpsr: previous fpsr=%08x\n", fe->fe_fpsr);
 
     /* clear all condition code */
     fpsr = fe->fe_fpsr & ~FPSR_CCB;
 
-    if (debug_level & DL_RESULT)
+    if (fpu_debug_level & DL_RESULT)
 	printf("  fpu_upd_fpsr: result is a ");
 
     if (fp->fp_sign) {
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("negative ");
 	fpsr |= FPSR_NEG;
     } else {
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("positive ");
     }
 
     switch (fp->fp_class) {
     case FPC_SNAN:
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("signaling NAN\n");
 	fpsr |= (FPSR_NAN | FPSR_SNAN);
 	break;
     case FPC_QNAN:
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("quiet NAN\n");
 	fpsr |= FPSR_NAN;
 	break;
     case FPC_ZERO:
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("Zero\n");
 	fpsr |= FPSR_ZERO;
 	break;
     case FPC_INF:
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("Inf\n");
 	fpsr |= FPSR_INF;
 	break;
     default:
-	if (debug_level & DL_RESULT)
+	if (fpu_debug_level & DL_RESULT)
 	    printf("Number\n");
 	/* anything else is treated as if it is a number */
 	break;
@@ -330,7 +331,7 @@ fpu_upd_fpsr(fe, fp)
 
     fe->fe_fpsr = fe->fe_fpframe->fpf_fpsr = fpsr;
 
-    if (debug_level & DL_RESULT)
+    if (fpu_debug_level & DL_RESULT)
 	printf("  fpu_upd_fpsr: new fpsr=%08x\n", fe->fe_fpframe->fpf_fpsr);
 
     return fpsr;
@@ -488,14 +489,14 @@ fpu_emul_fmovm(fe, insn)
 	    if (fpu_to_mem) {
 		sig = fpu_store_ea(frame, insn, &insn->is_ea0,
 				   (char*)&fpregs[regnum * 3]);
-		if (debug_level & DL_RESULT)
+		if (fpu_debug_level & DL_RESULT)
 		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) saved\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 			   fpregs[regnum * 3 + 2]);
 	    } else {		/* mem to fpu */
 		sig = fpu_load_ea(frame, insn, &insn->is_ea0,
 				  (char*)&fpregs[regnum * 3]);
-		if (debug_level & DL_RESULT)
+		if (fpu_debug_level & DL_RESULT)
 		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) loaded\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 			   fpregs[regnum * 3 + 2]);
@@ -578,7 +579,7 @@ fpu_emul_arith(fe, insn)
 
     DUMP_INSN(insn);
 
-    if (debug_level & DL_ARITH) {
+    if (fpu_debug_level & DL_ARITH) {
 	printf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
 	       fe->fe_fpsr, fe->fe_fpcr);
     }
@@ -588,7 +589,7 @@ fpu_emul_arith(fe, insn)
     regnum = (word1 >> 7) & 7;
 
     /* fetch a source operand : may not be used */
-    if (debug_level & DL_ARITH) {
+    if (fpu_debug_level & DL_ARITH) {
 	printf("  fpu_emul_arith: dst/src FP%d=%08x,%08x,%08x\n",
 	       regnum, fpregs[regnum*3], fpregs[regnum*3+1],
 	       fpregs[regnum*3+2]);
@@ -599,7 +600,7 @@ fpu_emul_arith(fe, insn)
 
     /* get the other operand which is always the source */
     if ((word1 & 0x4000) == 0) {
-	if (debug_level & DL_ARITH) {
+	if (fpu_debug_level & DL_ARITH) {
 	    printf("  fpu_emul_arith: FP%d op FP%d => FP%d\n",
 		   format, regnum, regnum);
 	    printf("  fpu_emul_arith: src opr FP%d=%08x,%08x,%08x\n",
@@ -628,7 +629,7 @@ fpu_emul_arith(fe, insn)
 	/* Get effective address. (modreg=opcode&077) */
 	sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
 	if (sig) {
-	    if (debug_level & DL_ARITH) {
+	    if (fpu_debug_level & DL_ARITH) {
 		printf("  fpu_emul_arith: error in fpu_decode_ea\n");
 	    }
 	    return sig;
@@ -636,7 +637,7 @@ fpu_emul_arith(fe, insn)
 
 	DUMP_INSN(insn);
 
-	if (debug_level & DL_ARITH) {
+	if (fpu_debug_level & DL_ARITH) {
 	    printf("  fpu_emul_arith: addr mode = ");
 	    flags = insn->is_ea0.ea_flags;
 	    regname = (insn->is_ea0.ea_regnum & 8) ? 'a' : 'd';
@@ -669,7 +670,7 @@ fpu_emul_arith(fe, insn)
 	    } else {
 		printf("%c%d@\n", regname, insn->is_ea0.ea_regnum & 7);
 	    }
-	} /* if (debug_level & DL_ARITH) */
+	} /* if (fpu_debug_level & DL_ARITH) */
 
 	fpu_load_ea(frame, insn, &insn->is_ea0, (char*)buf);
 	if (format == FTYPE_WRD) {
@@ -687,7 +688,7 @@ fpu_emul_arith(fe, insn)
 	    }
 	    format = FTYPE_LNG;
 	}
-	if (debug_level & DL_ARITH) {
+	if (fpu_debug_level & DL_ARITH) {
 	    printf("  fpu_emul_arith: src = %08x %08x %08x, siz = %d\n",
 		   buf[0], buf[1], buf[2], insn->is_datasize);
 	}
@@ -873,26 +874,26 @@ fpu_emul_arith(fe, insn)
 
     if (!discard_result && sig == 0) {
 	fpu_implode(fe, res, FTYPE_EXT, &fpregs[regnum * 3]);
-	if (debug_level & DL_ARITH) {
+	if (fpu_debug_level & DL_ARITH) {
 	    printf("  fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
 		   fpregs[regnum*3], fpregs[regnum*3+1],
 		   fpregs[regnum*3+2], regnum);
 	}
-    } else if (sig == 0 && debug_level & DL_ARITH) {
+    } else if (sig == 0 && fpu_debug_level & DL_ARITH) {
 	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
 	printf("  fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x,%08x) discarded\n",
 	       class_name[res->fp_class + 2],
 	       res->fp_sign ? '-' : '+', res->fp_exp,
 	       res->fp_mant[0], res->fp_mant[1],
 	       res->fp_mant[2], res->fp_mant[3]);
-    } else if (debug_level & DL_ARITH) {
+    } else if (fpu_debug_level & DL_ARITH) {
 	printf("  fpu_emul_arith: received signal %d\n", sig);
     }
 
     /* update fpsr according to the result of operation */
     fpu_upd_fpsr(fe, res);
 
-    if (debug_level & DL_ARITH) {
+    if (fpu_debug_level & DL_ARITH) {
 	printf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
 	       fe->fe_fpsr, fe->fe_fpcr);
     }
@@ -917,12 +918,12 @@ test_cc(fe, pred)
     fpsr = fe->fe_fpsr;
     invert = 0;
     fpsr &= ~FPSR_EXCP;		/* clear all exceptions */
-    if (debug_level & DL_TESTCC) {
+    if (fpu_debug_level & DL_TESTCC) {
 	printf("  test_cc: fpsr=0x%08x\n", fpsr);
     }
     pred &= 0x3f;		/* lowest 6 bits */
 
-    if (debug_level & DL_TESTCC) {
+    if (fpu_debug_level & DL_TESTCC) {
 	printf("  test_cc: ");
     }
 
@@ -934,14 +935,14 @@ test_cc(fe, pred)
 	pred &= 017;		/* lower 4 bits */
     } else {
 	/* IEEE aware tests */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("IEEE ");
 	}
 	sig_bsun = 0;
     }
 
     if (pred >= 010) {
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("Not ");
 	}
 	/* predicate is "NOT ..." */
@@ -950,51 +951,51 @@ test_cc(fe, pred)
     }
     switch (pred) {
     case 0:			/* (Signaling) False */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("False");
 	}
 	result = 0;
 	break;
     case 1:			/* (Signaling) Equal */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("Equal");
 	}
 	result = -((fpsr & FPSR_ZERO) == FPSR_ZERO);
 	break;
     case 2:			/* Greater Than */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("GT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == 0);
 	break;
     case 3:			/* Greater or Equal */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("GE");
 	}
 	result = -((fpsr & FPSR_ZERO) ||
 		   (fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
 	break;
     case 4:			/* Less Than */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("LT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == FPSR_NEG);
 	break;
     case 5:			/* Less or Equal */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("LE");
 	}
 	result = -((fpsr & FPSR_ZERO) ||
 		   ((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
 	break;
     case 6:			/* Greater or Less than */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("GLT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO)) == 0);
 	break;
     case 7:			/* Greater, Less or Equal */
-	if (debug_level & DL_TESTCC) {
+	if (fpu_debug_level & DL_TESTCC) {
 	    printf("GLE");
 	}
 	result = -((fpsr & FPSR_NAN) == 0);
@@ -1005,7 +1006,7 @@ test_cc(fe, pred)
     }
     result ^= invert;		/* if the predicate is "NOT ...", then
 				   invert the result */
-    if (debug_level & DL_TESTCC) {
+    if (fpu_debug_level & DL_TESTCC) {
 	printf(" => %s (%d)\n", result ? "true" : "false", result);
     }
     /* if it's an IEEE unaware test and NAN is set, BSUN is set */
@@ -1167,7 +1168,7 @@ fpu_emul_brcc(fe, insn)
     } else if (sig) {
 	return SIGILL;		/* got a signal */
     }
-    if (debug_level & DL_BRANCH) {
+    if (fpu_debug_level & DL_BRANCH) {
 	printf("  fpu_emul_brcc: %s insn @ %x (%x+%x) (disp=%x)\n",
 	       (sig == -1) ? "BRANCH to" : "NEXT",
 	       frame->f_pc + insn->is_advance, frame->f_pc, insn->is_advance,
