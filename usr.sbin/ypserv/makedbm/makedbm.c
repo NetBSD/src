@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.10 1997/11/13 18:35:57 thorpej Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.11 1998/06/01 14:05:35 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.10 1997/11/13 18:35:57 thorpej Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.11 1998/06/01 14:05:35 kleink Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: makedbm.c,v 1.10 1997/11/13 18:35:57 thorpej Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
