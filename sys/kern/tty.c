@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.162 2004/02/22 17:51:25 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.163 2004/03/05 07:27:22 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.162 2004/02/22 17:51:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.163 2004/03/05 07:27:22 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1165,9 +1165,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 	case TIOCSTAT:			/* get load avg stats */
+		s = spltty();
 		TTY_LOCK(tp);
 		ttyinfo(tp);
 		TTY_UNLOCK(tp);
+		splx(s);
 		break;
 	case TIOCSWINSZ:		/* set window size */
 		if (memcmp((caddr_t)&tp->t_winsize, data,
@@ -1763,9 +1765,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
+				s = spltty();
 				TTY_LOCK(tp);
 				error = ttysleep(tp, &lbolt,
 				    TTIPRI | PCATCH | PNORELOCK, ttybg, 0);
+				splx(s);
 				if (error)
 					break;
 				goto loop;
