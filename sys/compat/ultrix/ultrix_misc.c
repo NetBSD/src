@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.30 1997/04/06 23:26:53 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.31 1997/04/26 02:00:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -647,8 +647,7 @@ ultrix_sys_shmsys(p, v, retval)
 	default:
 		return (EINVAL);
 	}
-}
-#endif	/* SYSVSHM */
-
+#else
 	return (EOPNOTSUPP);
+#endif	/* SYSVSHM */
 }
