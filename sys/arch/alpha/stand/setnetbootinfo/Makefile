@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 1997/01/18 00:50:29 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1997/01/20 22:31:09 cgd Exp $
 
 .PATH:	${.CURDIR}/..
 
 PROG=	setnetbootinfo
 BINDIR=	/usr/mdec
 
-NOMAN=	not yet
-MAN=	setnetbootaddr.8
+MAN=	setnetbootinfo.8
 MANSUBDIR=/alpha
 
 CFLAGS+= -g
