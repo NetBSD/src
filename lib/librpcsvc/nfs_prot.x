@@ -32,7 +32,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nfs_prot.x 1.2 87/10/12 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: nfs_prot.x,v 1.5 2003/05/08 13:32:00 yamt Exp $");
+%__RCSID("$NetBSD: nfs_prot.x,v 1.6 2003/09/21 15:35:46 yamt Exp $");
 %#endif /* not lint */
 #endif
 
@@ -303,23 +303,19 @@ const NFS3_COOKIEVERFSIZE = 8;	/* size of a cookie verifier for READDIR */
 const NFS3_CREATEVERFSIZE = 8;	/* size of the verifier used for CREATE */
 const NFS3_WRITEVERFSIZE = 8;	/* size of the verifier used for WRITE */
 
-typedef u_int64_t uint64; /* XXX */
-typedef int64_t int64; /* XXX */
-typedef unsigned long uint32;
-typedef long int32;
 typedef string filename3<>;
 typedef string nfspath3<>;
-typedef uint64 fileid3;
-typedef uint64 cookie3;
+typedef u_int64_t fileid3;
+typedef u_int64_t cookie3;
 typedef opaque cookieverf3[NFS3_COOKIEVERFSIZE];
 typedef opaque createverf3[NFS3_CREATEVERFSIZE];
 typedef opaque writeverf3[NFS3_WRITEVERFSIZE];
-typedef uint32 uid3;
-typedef uint32 gid3;
-typedef uint64 size3;
-typedef uint64 offset3;
-typedef uint32 mode3;
-typedef uint32 count3;
+typedef u_int32_t uid3;
+typedef u_int32_t gid3;
+typedef u_int64_t size3;
+typedef u_int64_t offset3;
+typedef u_int32_t mode3;
+typedef u_int32_t count3;
 
 /*
  * Error status (v3)
@@ -370,8 +366,8 @@ enum ftype3 {
 };
 
 struct specdata3 {
-	uint32	specdata1;
-	uint32	specdata2;
+	u_int32_t	specdata1;
+	u_int32_t	specdata2;
 };
 
 /*
@@ -385,8 +381,8 @@ struct nfs_fh3 {
  * Timeval (v3)
  */
 struct nfstime3 {
-	uint32	seconds;
-	uint32	nseconds;
+	u_int32_t	seconds;
+	u_int32_t	nseconds;
 };
 
 
@@ -396,13 +392,13 @@ struct nfstime3 {
 struct fattr3 {
 	ftype3	type;		/* file type */
 	mode3	mode;		/* protection mode bits */
-	uint32	nlink;		/* # hard links */
+	u_int32_t	nlink;		/* # hard links */
 	uid3	uid;		/* owner user id */
 	gid3	gid;		/* owner group id */
 	size3	size;		/* file size in bytes */
 	size3	used;		/* prefered block size */
 	specdata3 rdev;		/* special device # */
-	uint64 fsid;		/* device # */
+	u_int64_t fsid;		/* device # */
 	fileid3	fileid;		/* inode # */
 	nfstime3 atime;		/* time of last access */
 	nfstime3 mtime;		/* time of last modification */
@@ -594,12 +590,12 @@ const ACCESS3_EXECUTE	= 0x0020;
 
 struct ACCESS3args {
 	nfs_fh3		object;
-	uint32		access;
+	u_int32_t		access;
 };
 
 struct ACCESS3resok {
 	post_op_attr	obj_attributes;
-	uint32		access;
+	u_int32_t		access;
 };
 
 struct ACCESS3resfail {
@@ -1024,7 +1020,7 @@ struct FSSTAT3resok {
 	size3		tfiles;
 	size3		ffiles;
 	size3		afiles;
-	uint32		invarsec;
+	u_int32_t		invarsec;
 };
 
 struct FSSTAT3resfail {
@@ -1052,16 +1048,16 @@ struct FSINFO3args {
 
 struct FSINFO3resok {
 	post_op_attr	obj_attributes;
-	uint32		rtmax;
-	uint32		rtpref;
-	uint32		rtmult;
-	uint32		wtmax;
-	uint32		wtpref;
-	uint32		wtmult;
-	uint32		dtpref;
+	u_int32_t		rtmax;
+	u_int32_t		rtpref;
+	u_int32_t		rtmult;
+	u_int32_t		wtmax;
+	u_int32_t		wtpref;
+	u_int32_t		wtmult;
+	u_int32_t		dtpref;
 	size3		maxfilesize;
 	nfstime3	time_delta;
-	uint32		properties;
+	u_int32_t		properties;
 };
 
 struct FSINFO3resfail {
@@ -1084,8 +1080,8 @@ struct PATHCONF3args {
 
 struct PATHCONF3resok {
 	post_op_attr	obj_attributes;
-	uint32		linkmax;
-	uint32		name_max;
+	u_int32_t		linkmax;
+	u_int32_t		name_max;
 	bool		no_trunc;
 	bool		chown_restricted;
 	bool		case_insensitive;
