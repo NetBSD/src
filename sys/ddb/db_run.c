@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_run.c,v 1.2.4.1 1993/11/14 22:48:39 mycroft Exp $
+ * $Id: db_run.c,v 1.2.4.2 1994/01/22 14:25:04 briggs Exp $
  *
  * HISTORY
  * $Log: db_run.c,v $
- * Revision 1.2.4.1  1993/11/14 22:48:39  mycroft
+ * Revision 1.2.4.2  1994/01/22 14:25:04  briggs
+ * Get rid of explicit reference to i386 register.
+ *
+ * Revision 1.2.4.1  1993/11/14  22:48:39  mycroft
  * Canonicalize all #includes.
  *
  * Revision 1.2  1993/05/20  03:39:28  cgd
@@ -147,7 +150,7 @@ db_stop_at_pc(is_breakpoint)
 		return (TRUE);	/* stop here */
 	    }
 	} else if (*is_breakpoint) {
-		ddb_regs.tf_eip += 1;
+		FIXUP_PC_AFTER_BREAK
 	}
 		
 	*is_breakpoint = FALSE;
