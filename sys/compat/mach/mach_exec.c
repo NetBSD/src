@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.22 2003/01/01 15:18:25 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.23 2003/01/02 12:46:06 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.22 2003/01/01 15:18:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.23 2003/01/02 12:46:06 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,13 @@ mach_e_proc_init(p, vmspace)
 	med->med_p = 0;
 
 	LIST_INIT(&med->med_right);
-	med->med_nextright = 0x60b;
+	/* 
+	 * For debugging purpose, it's convenient to have each process 
+	 * using distinct port names, so we prefix the first port name
+	 * by the PID. Darwin does not do that, but we can remove it 
+	 * when we want, it will not hurt.
+	 */
+	med->med_nextright = p->p_pid << 16;
 
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
@@ -261,7 +267,7 @@ mach_e_proc_exit(p)
 
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
-		mach_right_put_exclocked(mr);
+		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
 	if (--med->med_bootstrap->mp_refcount == 0)

@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_message.h,v 1.12 2002/12/30 18:44:33 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.13 2003/01/02 12:46:07 manu Exp $	 */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -223,11 +223,12 @@ struct mach_message {
 	TAILQ_ENTRY(mach_message) mm_list;
 					/* List of pending messages */
 	struct mach_port *mm_port;	/* The port on which msg is queued */
+	struct proc *mm_p;		/* The process that sent it */
 };
 
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *, 
-    size_t, struct mach_port *);
+    size_t, struct mach_port *, struct proc *);
 void mach_message_put(struct mach_message *);
 void mach_message_put_shlocked(struct mach_message *);
 void mach_message_put_exclocked(struct mach_message *);
