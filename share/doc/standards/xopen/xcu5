@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.5 1999/06/01 18:24:10 ross Exp $
+.\" $NetBSD: xcu5,v 1.6 1999/06/01 19:53:51 jwise Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
@@ -716,5 +716,177 @@ or
 .
 .\" ---- sum ----
 .Ss sum - print checksum and block count of a file (LEGACY)
+.unfinished
+.
+.\" ---- tabs ----
+.Ss tabs - set terminal tabs
+.unfinished
+.
+.\" ---- tail ----
+.Ss tail - copy the last part of a file
+.unfinished
+.
+.\" ---- talk ----
+.Ss talk - talk to another user
+.unfinished
+.
+.\" ---- tar ----
+.Ss tar - file archiver (LEGACY)
+.unfinished
+.
+.\" ---- tee ----
+.Ss tee - duplicate standard input
+.unfinished
+.
+.\" ---- test ----
+.Ss test - evaluate expression
+.unfinished
+.
+.\" ---- time ----
+.Ss time - time a simple command
+.unfinished
+.
+.\" ---- touch ----
+.Ss touch - change file access and modification times
+.unfinished
+.
+.\" ---- tput ----
+.Ss tput - change terminal characteristics
+.unfinished
+.
+.\" ---- tr ----
+.Ss tr - translate characters
+.unfinished
+.
+.\" ---- true ----
+.Ss true - return true value
+.unfinished
+.
+.\" ---- tsort ----
+.Ss tsort - topological sort
+.unfinished
+.
+.\" ---- tty ----
+.Ss tty - return user's terminal name
+.unfinished
+.
+.\" ---- type ----
+.Ss type - write a description of command type
+.unfinished
+.
+.\" ---- ulimit ----
+.Ss ulimit - set or report file size limit
+.unfinished
+.
+.\" ---- umask ----
+.Ss umask - get or set the file mode creation mask
+.unfinished
+.
+.\" ---- unalias ----
+.Ss unalias - remove alias definitions
+.unfinished
+.
+.\" ---- uname ----
+.Ss uname - return system name
+.unfinished
+.
+.\" ---- uncompress ----
+.Ss uncompress - expand compressed data
+.unfinished
+.
+.\" ---- unexpand ----
+.Ss unexpand - convert spaces to tabs
+.unfinished
+.
+.\" ---- unget ----
+.Ss unget - undo a previous get of an SCCS file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- uniq ----
+.Ss uniq - report or filter out repeated lines in a file
+.unfinished
+.
+.\" ---- unlink ----
+.Ss unlink - call the unlink() function
+.unfinished
+.
+.\" ---- unpack ----
+.Ss unpack - expand files (LEGACY)
+.unfinished
+.
+.\" ---- uucp ----
+.Ss uucp - system-to-system copy
+.unfinished
+.
+.\" ---- uudecode ----
+.Ss uudecode - decode a binary file
+.unfinished
+.
+.\" ---- uuencode ----
+.Ss uuencode - encode a binary file
+.unfinished
+.
+.\" ---- uulog ----
+.Ss uulog - query system-to-system transaction log (LEGACY)
+.unfinished
+.
+.\" ---- uuname ----
+.Ss uuname - list names of other known uucp systems (LEGACY)
+.unfinished
+.
+.\" ---- uupick ----
+.Ss uupick - receive public system-to-system file copies (LEGACY)
+.unfinished
+.
+.\" ---- uustat ----
+.Ss uustat - uucp status inquiry and job control
+.unfinished
+.
+.\" ---- uuto ----
+.Ss uuto - send public system-to-system file copies (LEGACY)
+.unfinished
+.
+.\" ---- uux ----
+.Ss uux - remote command execution
+.unfinished
+.
+.\" ---- val ----
+.Ss val - validate SCCS files (DEVELOPMENT)
+.unfinished
+.
+.\" ---- vi ----
+.Ss vi - screen-oriented (visual) display editor
+.unfinished
+.
+.\" ---- wait ----
+.Ss wait - await process completion
+.unfinished
+.
+.\" ---- wc ----
+.Ss wc - word, line and byte or character count
+.unfinished
+.
+.\" ---- what ----
+.Ss what - identify SCCS files (DEVELOPMENT)
+.unfinished
+.
+.\" ---- who ----
+.Ss who - display who is on the system
+.unfinished
+.
+.\" ---- write ----
+.Ss write - write to another user
+.unfinished
+.
+.\" ---- xargs ----
+.Ss xargs - construct argument lists and invoke utility
+.unfinished
+.
+.\" ---- yacc ----
+.Ss yacc - yet another compiler compiler (DEVELOPMENT)
+.unfinished
+.
+.\" ---- zcat ----
+.Ss zcat - expand and concatenate data
 .unfinished
 .
