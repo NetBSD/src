@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.14 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
-	int s, tryidx, idx, pgflidx, end, error, free_list;
+	int s, tryidx, idx, pgflidx, end, error, free_list, color;
 	vm_page_t m;
 	u_long pagemask;
 #ifdef DEBUG
@@ -197,10 +197,11 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	while (idx < end) {
 		m = &pgs[idx];
 		free_list = uvm_page_lookup_freelist(m);
+		color = VM_PGCOLOR_BUCKET(m);
 		pgflidx = (m->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef DEBUG
 		for (tp = TAILQ_FIRST(&uvm.page_free[
-			free_list].pgfl_queues[pgflidx]);
+			free_list].pgfl_buckets[color].pgfl_queues[pgflidx]);
 		     tp != NULL;
 		     tp = TAILQ_NEXT(tp, pageq)) {
 			if (tp == m)
@@ -209,8 +210,8 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		if (tp == NULL)
 			panic("uvm_pglistalloc: page not on freelist");
 #endif
-		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_queues[pgflidx],
-		    m, pageq);
+		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_buckets[
+		    color].pgfl_queues[pgflidx], m, pageq);
 		uvmexp.free--;
 		if (m->flags & PG_ZERO)
 			uvmexp.zeropages--;
@@ -265,8 +266,8 @@ uvm_pglistfree(list)
 		TAILQ_REMOVE(list, m, pageq);
 		m->pqflags = PQ_FREE;
 		TAILQ_INSERT_TAIL(&uvm.page_free[
-		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
-		    m, pageq);
+		    uvm_page_lookup_freelist(m)].pgfl_buckets[
+		    VM_PGCOLOR_BUCKET(m)].pgfl_queues[PGFL_UNKNOWN], m, pageq);
 		uvmexp.free++;
 		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 			uvm.page_idle_zero = vm_page_zero_enable;
