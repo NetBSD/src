@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.40 2002/10/01 19:06:39 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.41 2002/10/21 13:55:07 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ cursor motion
 .Nm cc
 .Op Ar flags
 .Ar files
-.Fl lcurses ltermcap
+.Fl lcurses
 .Op Ar libraries
 .Sh DESCRIPTION
 These routines give the user a method of updating screens with reasonable
@@ -80,389 +80,197 @@ must be called before any of the other routines that deal with color are used.
 .An Ken Arnold
 .Sh FUNCTIONS
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
-.It addch(ch)	add a character to
-.Em stdscr
-.It addstr(str)	add a string to
-.Em stdscr
-.It addnstr(str,len)	add no more than len chars of string to
-.Em stdscr
-.It assume_default_colors(f, b)	set default foreground and background colors
-.It attron(attribute)	turn on attribute modes
-.It attroff(attribute)	turn off attribute modes
-.It attrset(attribute)	set attribute modes
-.It beep()	sound the terminal bell
-.It bkgd(ch)	set background rendition for
-.Em stdscr
-and applies this rendition to
-.Em stdscr
-.It bkgdset(ch)	set background rendition for
-.Em stdscr
-.It border(ls,rs,ts,bs,tl,tr,bl,br)	draw a border around
-.Em stdscr
-.It box(win,vert,hor)	draw a box around a window
-.It can_change_colors()	check if terminal can change colors
-.It cbreak()	set cbreak mode
-.It clear()	clear
-.Em stdscr
-.It clearok(win,boolf)	set clear flag for
-.Em win
-.It clrtobot()	clear to bottom on
-.Em stdscr
-.It clrtoeol()	clear to end of line on
-.Em stdscr
-.It color_content(c, r, g, b)	get rgb values of color
-.It copywin(srcwin, dstwin, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay)
- Copy rectangle from
-.Em srcwin
-to
-.Em dstwin .
-If overlay is true then copy is nondestructive.
-.It curs_set(vis)	change cursor visibility, 0 is invisible, 1 is
-normal, 2 is high visibility.
-Returns previous value on success.
-.It delay_output(ms)	pause output for
-.Em ms
-milliseconds using terminal pad character.
-.It def_prog_mode()	define program (in curses) terminal modes
-.It def_shell_mode()	define shell (not in curses) terminal modes
-.It delch()	delete a character
-.It deleteln()	delete a line
-.It delscreen(screen)	free all associated storage and destroy
-.Em screen .
-.It delwin(win)	delete
-.Em win
-.It derwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
-relative to
-.Em win .
-.It doupdate()	make current screen look like virtual screen
-.It dupwin(win)	duplicate
-.Em win
-.It echo()	set echo mode
-.It endwin()	end window modes
-.It erase()	erase
-.Em stdscr
-.It erasechar()	Return the terminal erase character
-.It flash()	flash the terminal screen
-.It flushinp()	flush terminal input
-.It flushok(win,boolf)	set flush-on-refresh flag for
-.Em win
-.It fullname(termbuf,name)	get full name from
-.Em termbuf
-.It getattrs(win)	get attributes for
-.Em win
-.It getbkgd(win)	get background rendition for
-.Em win
-.It getcap(name)	get terminal capability
-.Em name
-.It getch()	get a char through
-.Em stdscr
-.It getcury(win)	get current y position on
-.Em win
-.It getcurx(win)	get current x position on
-.Em win
-.It getbegy(win)	get start y position of
-.Em win
-.It getbegx(win)	get start x position of
-.Em win
-.It getmaxy(win)	get maximum y position on
-.Em win
-.It getmaxx(win)	get maximum x position on
-.Em win
-.It getnstr(str, len)	get a string of maximun len characters through
-.Em stdscr
-.It getpary(win)	get start y position of subwindow
-.Em win
-relative to parent.
-.It getparx(win)	get start x position of subwindow
-.Em win
-relative to parent.
-.It getparyx(win, y, x)	set y and x to position of subwindow
-.Em win
-relative to parent.
-.It getstr(str)	get a string through
-.Em stdscr
-.It gettmode()	get tty modes
-.It getyx(win,y,x)	get (y,x) co-ordinates
-.It has_colors()	check if terminal has colors
-.It has_ic()	check if terminal has insert/delete character
-.It has_il()	check if terminal has insert/delete line
-.It hline(ch, count)	draw a horizontal line of character ch.
-.It idcok(win,boolf)	set insert/delete char flags for
-.Em win
-.It idlok(win,boolf)	set insert/deleteln flags for
-.Em win
-.It inch()	get char at current (y,x) co-ordinates
-.It inchnstr(chstr, n)	get an array of characters from
-.Em stdscr
-.It inchstr(chstr)	get an array of characters from
-.Em stdscr
-.It innstr(str, n)	get a string of characters from
-.Em stdscr
-.It init_color(c, r, g, b)	set rgb values of color
-.It init_pair(p, f, b)	set foreground and background colors of pair
-.It initscr()	initialize screens
-.It insch(c)	insert a char
-.It insdelln(n)	insert/delete n lines on
-.Em stdstr
-.It insertln()	insert a line
-.It instr(str)	get a string of characters from
-.Em stdscr
-.It intrflush(win,boolf)	set flush on interrupt terminal mode
-.It is_linetouched(win, line)	check if line has been modified since
-last refresh.
-.It is_wintouched(win)	Check if window has been modified since last
-refresh.
-.It isendwin()	check if endwin() or wrefresh() was called latest
-.It keypad(win,boolf)	set keypad flag for
-.Em win
-.It killchar()	Return the terminal kill character.
-.It leaveok(win,boolf)	set leave flag for
-.Em win
-.It longname(termbuf,name)	get long name from
-.Em termbuf
-.It meta(win,boolf)	turn terminal meta mode on and off.  Note
-.Em win
-is always ignored.
-.It move(y,x)	move to (y,x) on
-.Em stdscr
-.It mvcur(lasty,lastx,newy,newx)	actually move cursor
-.It mvderwin(win, y, x)		move window to (y,x) within parent window.
-.It mvgetnstr(str, len)	move to
-.Em y ,
-.Em x
-and get a string of maximun n characters through
-.Em stdscr
-.It mvgetstr(str, n)	move to
-.Em y ,
-.Em x
-and get a string through
-.Em stdscr
-.It mvhline(y, x, ch, count)	move to
-.Em y ,
-.Em x
-and draw a horizontal line of character
-.Em ch
-for
-.Em count
-characters.
-.It mvvline(y, x, ch, count)	move to
-.Em y ,
-.Em x
-and draw a vertical line of character
-.Em ch
-for
-.Em count
-characters.
-.It mvwgetnstr(str, len)	move to
-.Em y ,
-.Em x
-and get a string of maximun n characters through
-.Em win
-.It mvwgetstr(str, n)	move to
-.Em y ,
-.Em x
-and get a string through
-.Em win
-.It mvwhline(win, y, x, ch, count)	move to
-.Em y ,
-.Em x
-and draw a horizontal line of character
-.Em ch
-for
-.Em count
-characters on window
-.Em win .
-.It mvwvline(win, y, x, ch, count)	move to
-.Em y ,
-.Em x
-and draw a vertical line of character
-.Em ch
-for
-.Em count
-characters on window
-.Em win .
-.It napms(ms)	sleep for
-.Em ms
-milliseconds.
-.It newterm(type, outfd, infd)		Initialises the curses subsystem
-for a multi-terminal application.
-Type is the type of terminal, if this is NULL then $TERM is used.
-The infd and outfd are the input and output file streams.
-.It newwin(lines,cols,begin_y,begin_x)\ 	create a new window
-.It nl()	set newline mapping
-.It nocbreak()	unset cbreak mode
-.It nodelay(win,boolf)	unset blocking reads for
-.Em win
-.It noecho()	unset echo mode
-.It nonl()	unset newline mapping
-.It noraw()	unset raw mode
-.It notimeout(win, boolf)	unset infinite timeout on keypad assembly for
-.Em win
-.It overlay(win1,win2)	overlay win1 on win2
-.It overwrite(win1,win2)	overwrite win1 on top of win2
-.It pair_content(p, r, g, b)	get foreground and
-background colors of pair
-.It printw(fmt,arg1,arg2,...)	printf on
-.Em stdscr
-.It raw()	set raw mode
-.It refresh()	make current screen look like
-.Em stdscr
-.It reset_prog_mode()	restore program (in curses) terminal modes
-.It reset_shell_mode()	restore shell (not in curses) terminal modes
-.It resetty()	reset tty flags to stored value
-.It resizeterm(lines,cols)	resize the curses terminal, application must
-redraw the screen contents after this call
-.It savetty()	stored current tty flags
-.It scanw(fmt,arg1,arg2,...)	scanf through
-.Em stdscr
-.It scrl(n)	scroll
-.Em stdscr
-n lines
-.It scroll(win)	scroll
-.Em win
-one line
-.It scrollok(win,boolf)	set scroll flag for
-.Em win
-.It setscrreg(top, bottom)	set scrolling region on
-.Em stdscr
-.It set_term(screen)	sets the curses screen to the given one.
-Returns the previous screen.
-.It setterm(name)	set term variables for name
-.It standend()	end standout mode
-.It standout()	start standout mode
-.It start_color()	initialise color
-.It subwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
-.It timeout(delay)	set blocking or non-blocking read for
-.Em stdscr
-.It touchline(win,y,sx,ex)	mark line
-.Em y
-.Em sx
-through
-.Em sy
-as changed
-.It touchoverlap(win1,win2)	mark overlap of
-.Em win1
-on
-.Em win2
-as changed
-.It touchwin(win)	\*(lqchange\*(rq all of
-.Em win
-.It unctrl(ch)	printable version of
-.Em ch
-.It underend()	end underscore mode
-.It underscore()	start underscore mode
-.It ungetch(ch)		Put character back onto input queue.
-.It untouchwin(win)	Make window appear not to have been modified.
-.It use_default_colors	use terminal's default foreground and background colors
-.It vline(ch, count)	Draw a vertical line of character
-.Em ch .
-.It waddch(win,ch)	add char to
-.Em win
-.It waddstr(win,str)	add string to
-.Em win
-.It wattron(win,attribute)	turn on attribute modes for
-.Em win
-.It wattroff(win,attribute)	turn off attribute modes for
-.Em win
-.It wattrset(win,attribute)	set attribute modes for
-.Em win
-.It wbkgd(win, ch)	set background rendition for
-.Em win
-and apply this rendition to
-.Em win
-.It wbkgdset(win, ch)	set background rendition for
-.Em win
-.It wborder(win,ls,rs,ts,bs,tl,tr,bl,br)	draw a border around
-.Em win
-.It wclear(win)	clear
-.Em win
-.It wclrtobot(win)	clear to bottom of
-.Em win
-.It wclrtoeol(win)	clear to end of line on
-.Em win
-.It wdelch(win)	delete char from
-.Em win
-.It wdeleteln(win)	delete line from
-.Em win
-.It werase(win)	erase
-.Em win
-.It wgetch(win)	get a char through
-.Em win
-.It wgetnstr(win, str, len)	get a string of maximun n characters through
-.Em win
-.It wgetstr(win, str)	get a string through
-.Em win
-.It whline(win, ch, count)	Draw a horizontal line of character
-.Em ch
-on window
-.Em win .
-.It winch(win)	get char at current (y,x) in
-.Em win
-.It winchnstr(win, chstr, n)	get an array of characters from
-.Em win
-.It winchstr(win, chstr)	get an array of characters from
-.Em win
-.It winnstr(win, str, n)	get a string of characters from
-.Em win
-.It winsch(win,c)	insert char into
-.Em win
-.It winsdelln(win,n)	insert/delete n lines on
-.Em win
-.It winsertln(win)	insert line into
-.Em win
-.It winstr(win,str)	get a string of characters from
-.Em win
-.It wmove(win,y,x)	set current (y,x) co-ordinates on
-.Em win
-.It wnoutrefresh(win)	add
-.Em win
-to virtual screen
-.It wprintw(win,fmt,arg1,arg2,...)\ 	printf on
-.Em win
-.It wrefresh(win)	make screen look like
-.Em win
-.It wresize(win,lines,cols)	resize
-.Em win
-.It wscanw(win,fmt,arg1,arg2,...)\ 	scanf through
-.Em win
-.It wscrl(win,n)	scroll
-.Em win
-n lines
-.It wsetscrreg(win, top, bottom)	set scrolling region on
-.Em win
-.It wstandend(win)	end standout mode on
-.Em win
-.It wstandout(win)	start standout mode on
-.Em win
-.It wtimeout(win,delay)	set blocking or non-blocking read for
-.Em win
-.It wtouchln(win, line, n, changed)	If
-.Em changed
-is 1 then touch
-.Em n
-lines starting at
-.Em line
-in window
-.Em win .
-If
-.Em changed
-is 0 then untouch
-.Em n
-lines starting at
-.Em line
-in window
-.Em win
-.It wunderend(win)	end underscore mode on
-.Em win
-.It wunderscore(win)	start underscore mode on
-.Em win
-.It wvline(win, ch, count)	Draw a vertical line of character
-.Em ch
-on window
-.Em win .
+.It Sy "Function Name" Ta Sy "Manual Page Name"
+.It addch Ta Xr curses_addch 3
+.It addstr Ta Xr curses_addstr 3
+.It addnstr Ta Xr curses_addstr 3
+.It assume_default_colors Ta Xr curses_default_colors 3
+.It attron Ta Xr curses_attributes 3
+.It attroff Ta Xr curses_attributes 3
+.It attrset Ta Xr curses_attributes 3
+.It beep Ta Xr curses_tty 3
+.It bkgd Ta Xr curses_background 3
+.It bkgdset Ta Xr curses_background 3
+.It border Ta Xr curses_border 3
+.It box Ta Xr curses_border 3
+.It can_change_colors Ta Xr curses_color 3
+.It cbreak Ta Xr curses_tty 3
+.It clear Ta Xr curses_clear 3
+.It clearok Ta Xr curses_clear 3
+.It clrtobot Ta Xr curses_clear 3
+.It clrtoeol Ta Xr curses_clear 3
+.It color_content Ta Xr curses_color 3
+.It copywin Ta Xr curses_window 3
+.It curs_set Ta Xr curses_tty 3
+.It delay_output Ta Xr curses_tty 3
+.It def_prog_mode Ta Xr curses_tty 3
+.It def_shell_mode Ta Xr curses_tty 3
+.It delch Ta Xr curses_delch 3
+.It deleteln Ta Xr curses_deleteln 3
+.It delscreen Ta Xr curses_screen 3
+.It delwin Ta Xr curses_window 3
+.It derwin Ta Xr curses_window 3
+.It doupdate Ta Xr curses_refresh 3
+.It dupwin Ta Xr curses_window 3
+.It echo Ta Xr curses_tty 3
+.It endwin Ta Xr curses_screen 3
+.It erase Ta Xr curses_clear 3
+.It erasechar Ta Xr curses_tty 3
+.It flash Ta Xr curses_tty 3
+.It flushinp Ta Xr curses_tty 3
+.It flushok Ta Xr curses_refresh 3
+.It fullname Ta Xr curses_termcap 3
+.It getattrs Ta Xr curses_attributes 3
+.It getbkgd Ta Xr curses_background 3
+.It getcap Ta Xr curses_termcap 3
+.It getch Ta Xr curses_input 3
+.It getcury Ta Xr curses_cursor 3
+.It getcurx Ta Xr curses_cursor 3
+.It getbegy Ta Xr curses_cursor 3
+.It getbegx Ta Xr curses_cursor 3
+.It getmaxy Ta Xr curses_cursor 3
+.It getmaxx Ta Xr curses_cursor 3
+.It getnstr Ta Xr curses_input 3
+.It getpary Ta Xr curses_cursor 3
+.It getparx Ta Xr curses_cursor 3
+.It getparyx Ta Xr curses_cursor 3
+.It getstr Ta Xr curses_input 3
+.It gettmode Ta Xr curses_tty 3
+.It getyx Ta Xr curses_cursor 3
+.It has_colors Ta Xr curses_color 3
+.It has_ic Ta Xr curses_tty 3
+.It has_il Ta Xr curses_tty 3
+.It hline Ta Xr curses_line 3
+.It idcok Ta Xr curses_tty 3
+.It idlok Ta Xr curses_tty 3
+.It inch Ta Xr curses_inch 3
+.It inchnstr Ta Xr curses_inch 3
+.It inchstr Ta Xr curses_inch 3
+.It innstr Ta Xr curses_inch 3
+.It init_color Ta Xr curses_color 3
+.It init_pair Ta Xr curses_color 3
+.It initscr Ta Xr curses_screen 3
+.It insch Ta Xr curses_insertch 3
+.It insdelln Ta Xr curses_insdelln 3
+.It insertln Ta Xr curses_insertln 3
+.It instr Ta Xr curses_inch 3
+.It intrflush Ta Xr curses_tty 3
+.It is_linetouched Ta Xr curses_touch 3
+.It is_wintouched Ta Xr curses_touch 3
+.It isendwin Ta Xr curses_screen 3
+.It keypad Ta Xr curses_input 3
+.It killchar Ta Xr curses_tty 3
+.It leaveok Ta Xr curses_tty 3
+.It longname Ta Xr curses_termcap 3
+.It meta Ta Xr curses_tty 3
+.It move Ta Xr curses_cursor 3
+.It mvaddch Ta Xr curses_addch 3
+.It mvaddstr Ta Xr curses_addstr 3
+.It mvaddnstr Ta Xr curses_addstr 3
+.It mvcur Ta Xr curses_cursor 3
+.It mvderwin Ta Xr curses_window 3
+.It mvgetnstr Ta Xr curses_input 3
+.It mvgetstr Ta Xr curses_input 3
+.It mvhline Ta Xr curses_line 3
+.It mvvline Ta Xr curses_line 3
+.It mvwaddch Ta Xr curses_addch 3
+.It mvwaddstr Ta Xr curses_addstr 3
+.It mvwaddnstr Ta Xr curses_addstr 3
+.It mvwgetnstr Ta Xr curses_input 3
+.It mvwgetstr Ta Xr curses_input 3
+.It mvwhline Ta Xr curses_line 3
+.It mvwvline Ta Xr curses_line 3
+.It napms Ta Xr curses_tty 3
+.It newterm Ta Xr curses_screen 3
+.It newwin Ta Xr curses_window 3
+.It \&nl Ta Xr curses_tty 3
+.It nocbreak Ta Xr curses_tty 3
+.It nodelay Ta Xr curses_input 3
+.It noecho Ta Xr curses_tty 3
+.It nonl Ta Xr curses_tty 3
+.It noraw Ta Xr curses_tty 3
+.It notimeout Ta Xr curses_input 3
+.It overlay Ta Xr curses_window 3
+.It overwrite Ta Xr curses_window 3
+.It pair_content Ta Xr curses_color 3
+.It printw Ta Xr curses_print 3
+.It raw Ta Xr curses_tty 3
+.It refresh Ta Xr curses_refresh 3
+.It reset_prog_mode Ta Xr curses_tty 3
+.It reset_shell_mode Ta Xr curses_tty 3
+.It resetty Ta Xr curses_tty 3
+.It resizeterm Ta Xr curses_screen 3
+.It savetty Ta Xr curses_tty 3
+.It scanw Ta Xr curses_scanw 3
+.It scrl Ta Xr curses_scroll 3
+.It scroll Ta Xr curses_scroll 3
+.It scrollok Ta Xr curses_scroll 3
+.It setscrreg Ta Xr curses_scroll 3
+.It set_term Ta Xr curses_screen 3
+.It setterm Ta Xr curses_screen 3
+.It standend Ta Xr curses_standout 3
+.It standout Ta Xr curses_standout 3
+.It start_color Ta Xr curses_color 3
+.It subwin Ta Xr curses_window 3
+.It timeout Ta Xr curses_input 3
+.It touchline Ta Xr curses_touch 3
+.It touchoverlap Ta Xr curses_touch 3
+.It touchwin Ta Xr curses_touch 3
+.It unctrl Ta Xr curses_print 3
+.It underend Ta Xr curses_underscore 3
+.It underscore Ta Xr curses_underscore 3
+.It ungetch Ta Xr curses_input 3
+.It untouchwin Ta Xr curses_touch 3
+.It use_default_colors Ta Xr curses_default_colors 3
+.It vline Ta Xr curses_line 3
+.It waddch Ta Xr curses_addch 3
+.It waddstr Ta Xr curses_addstr 3
+.It waddnstr Ta Xr curses_addstr 3
+.It wattron Ta Xr curses_attributes 3
+.It wattroff Ta Xr curses_attributes 3
+.It wattrset Ta Xr curses_attributes 3
+.It wbkgd Ta Xr curses_background 3
+.It wbkgdset Ta Xr curses_background 3
+.It wborder Ta Xr curses_border 3
+.It wclear Ta Xr curses_clear 3
+.It wclrtobot Ta Xr curses_clear 3
+.It wclrtoeol Ta Xr curses_clear 3
+.It wdelch Ta Xr curses_delch 3
+.It wdeleteln Ta Xr curses_deleteln 3
+.It werase Ta Xr curses_clear 3
+.It wgetch Ta Xr curses_input 3
+.It wgetnstr Ta Xr curses_input 3
+.It wgetstr Ta Xr curses_input 3
+.It whline Ta Xr curses_line 3
+.It winch Ta Xr curses_inch 3
+.It winchnstr Ta Xr curses_inch 3
+.It winchstr Ta Xr curses_inch 3
+.It winnstr Ta Xr curses_inch 3
+.It winsch Ta Xr curses_insertch 3
+.It winsdelln Ta Xr curses_insdelln 3
+.It winsertln Ta Xr curses_insertln 3
+.It winstr Ta Xr curses_inch 3
+.It wmove Ta Xr curses_cursor 3
+.It wnoutrefresh Ta Xr curses_refresh 3
+.It wprintw Ta Xr curses_print 3
+.It wrefresh Ta Xr curses_refresh 3
+.It wresize Ta Xr curses_window 3
+.It wscanw Ta Xr curses_scanw 3
+.It wscrl Ta Xr curses_scroll 3
+.It wsetscrreg Ta Xr curses_scroll 3
+.It wstandend Ta Xr curses_standout 3
+.It wstandout Ta Xr curses_standout 3
+.It wtimeout Ta Xr curses_input 3
+.It wtouchln Ta Xr curses_touch 3
+.It wunderend Ta Xr curses_underscore 3
+.It wunderscore Ta Xr curses_underscore 3
+.It wvline Ta Xr curses_line 3
 .El
-.Sh HISTORY
+.Sh STANDARDS
 The
-.Nm
-package appeared in
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
 .Bx 4.0 .
