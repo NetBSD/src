@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/04/01 13:31:23 he Exp $
+#	$NetBSD: Makefile,v 1.19 2003/04/01 14:27:44 he Exp $
 
 LIB=	sa
 
@@ -21,8 +21,7 @@ INCL=	-I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 SRCS=	consio.S diskio.c
 
 # from lib/libkern
-SRCS+=	ashldi3.c ashrdi3.c divdi3.c moddi3.c qdivrem.c \
-	bzero.c strcmp.c strlen.c
+SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exec.c files.c getfile.c gets.c globals.c panic.c \
