@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.18 1997/09/23 21:15:08 fair Exp $	*/
+/*	$NetBSD: make.h,v 1.19 1998/05/21 17:19:46 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -54,7 +54,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#if !defined(MAKE_BOOTSTRAP) && defined(BSD4_4)
+#ifdef BSD4_4
 # include <sys/cdefs.h>
 #else
 # ifndef __P
