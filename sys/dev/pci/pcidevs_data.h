@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.535 2003/06/08 13:21:06 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.536 2003/06/13 07:15:01 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.536 2003/06/08 13:19:27 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.537 2003/06/13 07:14:18 kent Exp 
  */
 
 /*
@@ -4466,6 +4466,72 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801DB/DBM USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SATA,
+	    0,
+	    "Intel",
+	    "82801EB Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_0,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SMB,
+	    0,
+	    "Intel",
+	    "82801EB/ER SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_1,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
+	    0,
+	    "Intel",
+	    "82801EB/ER AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_MOD,
+	    0,
+	    "Intel",
+	    "82801EB/ER AC'97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_2,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_IDE,
+	    0,
+	    "Intel",
+	    "82801EB/ER IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_EHCI,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3,
+	    0,
+	    "Intel",
+	    "82801EB/ER USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801ER_SATA,
+	    0,
+	    "Intel",
+	    "82801ER Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
