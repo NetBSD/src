@@ -2571,8 +2571,8 @@ setph1attr(sa, buf)
 		attrlen += sizeof(struct isakmp_data);
 		attrlen += sa->gssid->l;
 		if (buf) {
-			plog(LLV_DEBUG, LOCATION, NULL, "gss id attr: len %d,
-			    val '%s'\n", sa->gssid->l, sa->gssid->v);
+			plog(LLV_DEBUG, LOCATION, NULL, "gss id attr: len %d, "
+			    "val '%s'\n", sa->gssid->l, sa->gssid->v);
 			p = isakmp_set_attr_v(p, OAKLEY_ATTR_GSS_ID,
 				(caddr_t)sa->gssid->v, 
 				sa->gssid->l);
@@ -2889,7 +2889,7 @@ ipsecdoi_checkalgtypes(proto_id, enc, auth, comp)
 			"invalid ipsec protocol %d\n", proto_id);
 		return -1;
 	}
-#undef TMPALGTYPE2STR(n)
+#undef TMPALGTYPE2STR
 	return 0;
 }
 
