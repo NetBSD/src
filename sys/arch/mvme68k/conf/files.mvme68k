@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.28 1999/07/09 02:32:31 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.29 1999/09/18 09:42:46 scw Exp $
 
 # config file for mvme68k
 
@@ -79,9 +79,9 @@ file arch/mvme68k/dev/vme_two.c			vmetwo
 
 include "dev/scsipi/files.scsipi"
 
-major { sd = 7 }
+major { sd = 4 }
+major { cd = 8 }
 major { md = 9 }
-major { cd = 18 }
 
 # WD33C93 SCSI ...
 define sbic
