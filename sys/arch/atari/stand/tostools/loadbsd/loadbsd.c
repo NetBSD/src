@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.7 1995/05/28 10:56:16 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.8 1995/08/29 20:35:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$Revision: 1.7 $";
+char version[] = "$Revision: 1.8 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -118,7 +118,7 @@ char	**argv;
 			kparam.ttmem_size = atoi(optarg);
 			break;
 		case 'v':
-			fprintf(stderr,"%s\r\n", version);
+			fprintf(stdout,"%s\r\n", version);
 			break;
 		case 'h':
 			help();
@@ -192,18 +192,18 @@ char	**argv;
 	}
 
 	if(d_flag) {
-	    fprintf(stderr, "\r\nKernel info:\r\n");
-	    fprintf(stderr, "Kernel loadaddr\t: 0x%08x\r\n", kparam.kp);
-	    fprintf(stderr, "Kernel size\t: %10d bytes\r\n", kparam.ksize);
-	    fprintf(stderr, "Kernel entry\t: 0x%08x\r\n", kparam.entry);
-	    fprintf(stderr, "Kernel esym\t: 0x%08x\r\n", kparam.esym_loc);
+	    fprintf(stdout, "\r\nKernel info:\r\n");
+	    fprintf(stdout, "Kernel loadaddr\t: 0x%08x\r\n", kparam.kp);
+	    fprintf(stdout, "Kernel size\t: %10d bytes\r\n", kparam.ksize);
+	    fprintf(stdout, "Kernel entry\t: 0x%08x\r\n", kparam.entry);
+	    fprintf(stdout, "Kernel esym\t: 0x%08x\r\n", kparam.esym_loc);
 	}
 
 	if(!t_flag)
 		start_kernel();
 		/* NOT REACHED */
 
-	fprintf(stderr, "Kernel '%s' was loaded OK\r\n", kname);
+	fprintf(stdout, "Kernel '%s' was loaded OK\r\n", kname);
 	do_exit(0);
 }
 
@@ -245,7 +245,7 @@ void get_sys_info()
 	}
 
 	/*
-	 * Scan cookiejar for cpu/fpu types
+	 * Scan cookiejar for cpu types
 	 */
 	jar = *ADDR_P_COOKIE;
 	if(jar != NULL) {
@@ -271,38 +271,20 @@ void get_sys_info()
 						error("Unknown CPU-type");
 				}
 			}
-			if(jar[0] == 0x5f465055) { /* _FPU	*/
-				switch(jar[1]) {
-					case 0x20000:
-					case 0x40000:
-						kparam.cputype |= ATARI_68881;
-						break;
-					case 0x60000:
-						kparam.cputype |= ATARI_68882;
-						break;
-					case 0x80000:
-						kparam.cputype |= ATARI_FPU40;
-						break;
-					default:
-						error("Unknown FPU-type");
-				}
-			}
 			jar = &jar[2];
 		} while(jar[-2]);
 	}
 	if(!(kparam.cputype & ATARI_ANYCPU))
 		error("Cannot determine CPU-type");
-	if(!(kparam.cputype & ATARI_ANYFPU))
-		error("Cannot determine FPU-type");
 
 	Super(stck);
 
 	if(d_flag) {
-	    fprintf(stderr, "Machine info:\r\n");
-	    fprintf(stderr, "ST-RAM size\t: %10d bytes\r\n", kparam.stmem_size);
-	    fprintf(stderr, "TT-RAM size\t: %10d bytes\r\n", kparam.ttmem_size);
-	    fprintf(stderr, "TT-RAM start\t: 0x%08x\r\n", kparam.ttmem_start);
-	    fprintf(stderr, "Cpu-type\t: 0x%08x\r\n", kparam.cputype);
+	    fprintf(stdout, "Machine info:\r\n");
+	    fprintf(stdout, "ST-RAM size\t: %10d bytes\r\n", kparam.stmem_size);
+	    fprintf(stdout, "TT-RAM size\t: %10d bytes\r\n", kparam.ttmem_size);
+	    fprintf(stdout, "TT-RAM start\t: 0x%08x\r\n", kparam.ttmem_start);
+	    fprintf(stdout, "Cpu-type\t: 0x%08x\r\n", kparam.cputype);
 	}
 }
 
@@ -312,16 +294,16 @@ void error(char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	fprintf(stderr, "%s: ", Progname);
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\r\n");
+	fprintf(stdout, "%s: ", Progname);
+	vfprintf(stdout, fmt, ap);
+	fprintf(stdout, "\r\n");
 	do_exit(1);
 	/*NOTREACHED*/
 }
 
 void help()
 {
-	fprintf(stderr, "\r
+	fprintf(stdout, "\r
 NetBSD loader for the Atari-TT\r
 \r
 Usage: %s [-abdhstvD] [-S <stram-size>] [kernel]\r
@@ -345,16 +327,16 @@ Description of options:\r
 
 void usage()
 {
-	fprintf(stderr, "Usage: %s [-abdhtv] [kernel]\r\n", Progname);
+	fprintf(stdout, "Usage: %s [-abdhtv] [kernel]\r\n", Progname);
 	do_exit(1);
 }
 
 void do_exit(code)
 int	code;
 {
-	fprintf(stderr, "\r\nHit <return> to continue...");
+	fprintf(stdout, "\r\nHit <return> to continue...");
 	(void)getchar();
-	fprintf(stderr, "\r\n");
+	fprintf(stdout, "\r\n");
 	exit(code);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.4 1995/05/28 10:56:20 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.5 1995/08/29 20:35:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -63,16 +63,12 @@
 #define	ATARI_68020	(1<<2)		/* 68020 CPU			*/
 #define	ATARI_68030	(1<<3)		/* 68030 CPU			*/
 #define	ATARI_68040	(1<<4)		/* 68040 CPU			*/
-#define	ATARI_68881	(1<<8)		/* 68881 or 68882 FPU		*/
-#define	ATARI_68882	(1<<9)		/* 68882 FPU			*/
-#define	ATARI_FPU40	(1<<10)		/* 68040 FPU			*/
 #define	ATARI_TT	(1L<<11)	/* This is a TT030		*/
 #define	ATARI_FALCON	(1L<<12)	/* This is a Falcon		*/
 
 #define	ATARI_CLKBROKEN	(1<<16)		/* GEMDOS has faulty year base	*/
 
 #define	ATARI_ANYCPU	(0x1f)
-#define	ATARI_ANYFPU	(0x300)
 
 /*
  * Definitions for boothowto
