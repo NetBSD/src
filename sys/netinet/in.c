@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.54 2000/02/25 08:51:35 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.55 2000/03/06 19:33:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -364,7 +364,7 @@ in_control(so, cmd, data, ifp, p)
 		if (cmd == SIOCDIFADDR) {
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
-#ifdef COMPAT_43
+#if 1 /*def COMPAT_43*/
 			if (ifra->ifra_addr.sin_family == AF_UNSPEC)
 				ifra->ifra_addr.sin_family = AF_INET;
 #endif
