@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.45 2002/12/26 13:37:21 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.46 2002/12/28 14:39:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.45 2002/12/26 13:37:21 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.46 2002/12/28 14:39:10 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -419,7 +419,7 @@ WRITE(void *v)
 			flags &= ~B_CLRBUF;
 
 #ifdef LFS_READWRITE
-		error = lfs_reserve(fs, vp,
+		error = lfs_reserve(fs, vp, NULL,
 		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
@@ -453,7 +453,7 @@ WRITE(void *v)
 		}
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp);
-		lfs_reserve(fs, vp,
+		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		need_unreserve = FALSE;
 #else
@@ -469,7 +469,7 @@ WRITE(void *v)
 	}
 #ifdef LFS_READWRITE
 	if (need_unreserve) {
-		lfs_reserve(fs, vp,
+		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 	}
 #endif
