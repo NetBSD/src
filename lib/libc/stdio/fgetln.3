@@ -1,10 +1,6 @@
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
-.\" This code is derived from software contributed to Berkeley by
-.\" Chris Torek and the American National Standards Committee X3,
-.\" on Information Processing Systems.
-.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -33,119 +29,95 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)fgets.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)fgetln.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd June 4, 1993
-.Dt FGETS 3
+.Dd April 19, 1994
+.Dt FGETLN 3
 .Os
 .Sh NAME
-.Nm fgets ,
-.Nm gets
+.Nm fgetln
 .Nd get a line from a stream
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft char *
-.Fn fgets "char *str" "size_t size" "FILE *stream"
-.Ft char *
-.Fn gets "char *str"
+.Fn fgetln "FILE *stream" "size_t *len"
 .Sh DESCRIPTION
 The
-.Fn fgets
+.Fn fgetln
 function
-reads at most one less than the number of characters specified by
-.Xr size
-from the given
-.Fa stream
-and stores them in the string
-.Fa str .
-Reading stops when a newline character is found,
-at end-of-file or error.
-The newline, if any, is retained.
-In any case a
-.Ql \e0
-character is appended to end the string.
-.Pp
-The
-.Fn gets
-function
-is equivalent to
-.Fn fgets
-with an infinite
-.Xr size
-and a
-.Fa stream
-of
-.Em stdin ,
-except that the newline character (if any) is not stored in the string.
-It is the caller's responsibility to ensure that the input line,
-if any, is sufficiently short to fit in the string.
+returns a pointer to the next line from the stream referenced by
+.Fa stream .
+This line is
+.Em not
+a C string as it does not end with a terminating
+.Dv NUL
+character.
+The length of the line, including the final newline,
+is stored in the memory location to which
+.Fa len
+points.
+(Note, however, that if the line is the last
+in a file that does not end in a newline,
+the returned text will not contain a newline.)
 .Sh RETURN VALUES
-.Pp
-Upon successful completion,
-.Fn fgets
-and 
-.Fn gets
-return
-a pointer to the string.
-If end-of-file or an error occurs before any characters are read, 
-they return
-.Dv NULL.
+Upon successful completion a pointer is returned;
+this pointer becomes invalid after the next
+.Tn I/O
+operation on
+.Fa stream
+(whether successful or not)
+or as soon as the stream is closed.
+Otherwise,
+.Dv NULL
+is returned.
 The
-.Fn fgets
-and
-functions
-.Fn gets
-do not distinguish between end-of-file and error, and callers must use
+.Fn fgetln
+function
+does not distinguish between end-of-file and error; the routines
 .Xr feof 3
 and
 .Xr ferror 3
+must be used
 to determine which occurred.
+If an error occurs, the global variable
+.Va errno
+is set to indicate the error.
+The end-of-file condition is remembered, even on a terminal, and all
+subsequent attempts to read will return
+.Dv NULL
+until the condition is
+cleared with
+.Xr clearerr 3 .
+.Pp
+The text to which the returned pointer points may be modified,
+provided that no changes are made beyond the returned size.
+These changes are lost as soon as the pointer becomes invalid.
 .Sh ERRORS
 .Bl -tag -width [EBADF]
 .It Bq Er EBADF
-The given
+The argument
 .Fa stream
-is not a readable stream.
+is not a stream open for reading.
 .El
 .Pp
-The function
-.Fn fgets
+The
+.Fn fgetln
+function
 may also fail and set
 .Va errno
 for any of the errors specified for the routines
 .Xr fflush 3 ,
-.Xr fstat 2 ,
+.Xr malloc 3 ,
 .Xr read 2 ,
+.Xr stat 2 ,
 or
-.Xr malloc 3 .
-.Pp
-The function
-.Fn gets
-may also fail and set
-.Va errno
-for any of the errors specified for the routine
-.Xr getchar 3 .
+.Xr realloc 3 .
 .Sh SEE ALSO
-.Xr feof 3 ,
 .Xr ferror 3 ,
-.Xr fgetline 3
-.Sh STANDARDS
-The functions
-.Fn fgets
-and
-.Fn gets
-conform to
-.St -ansiC .
-.Sh BUGS
-Since it is usually impossible to ensure that the next input line
-is less than some arbitrary length, and because overflowing the
-input buffer is almost invariably a security violation, programs
-should
-.Em NEVER
-use
-.Fn gets .
+.Xr fgets 3 ,
+.Xr fopen 3 ,
+.Xr putc 3
+.Sh HISTORY
 The
-.Fn gets
-function
-exists purely to conform to
-.St -ansiC .
+.Fn fgetln
+function first appeared in 4.4BSD.

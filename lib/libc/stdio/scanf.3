@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek and the American National Standards Committee X3,
@@ -33,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)scanf.3	6.11 (Berkeley) 6/29/91
+.\"     @(#)scanf.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd June 29, 1991
+.Dd December 11, 1993
 .Dt SCANF 3
 .Os
 .Sh NAME
@@ -228,7 +228,7 @@ Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
 .Em unsigned int .
 .It Cm x
-Matches an optionally a signed hexadecimal integer;
+Matches an optionally signed hexadecimal integer;
 the next pointer must be a pointer to
 .Em unsigned int .
 .It Cm X
@@ -393,6 +393,7 @@ the number of conversions which were successfully completed is returned.
 .Sh SEE ALSO
 .Xr strtol 3 ,
 .Xr strtoul 3 ,
+.Xr strtod 3 ,
 .Xr getc 3 ,
 .Xr printf 3
 .Sh STANDARDS
@@ -418,3 +419,12 @@ and
 conversions is unfortunate.
 .Pp
 All of the backwards compatibility formats will be removed in the future.
+.Pp
+Numerical strings are truncated to 512 characters; for example,
+.Cm %f
+and
+.Cm %d
+are implicitly
+.Cm %512f
+and
+.Cm %512d .

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)local.h	5.2 (Berkeley) 2/5/91
+ *	@(#)local.h	8.2 (Berkeley) 1/2/94
  */
 
 /*
@@ -52,6 +52,7 @@ void	__sinit __P((void));
 void	_cleanup __P((void));
 void	(*__cleanup) __P((void));
 void	__smakebuf __P((FILE *));
+int	__swhatbuf __P((FILE *, size_t *, int *));
 int	_fwalk __P((int (*)(FILE *)));
 int	__swsetup __P((FILE *));
 int	__sflags __P((const char *, int *));
@@ -77,7 +78,7 @@ extern int __sdidinit;
 }
 
 /*
- * test for an fgetline() buffer.
+ * test for an fgetln() buffer.
  */
 #define	HASLB(fp) ((fp)->_lb._base != NULL)
 #define	FREELB(fp) { \
