@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_driver.c,v 1.13 2001/01/18 20:28:28 jdolecek Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.14 2001/06/02 17:29:46 kristerw Exp $	*/
 
 #include "tp_states.h"
 
@@ -460,8 +460,8 @@ _Xebec_action(a, e, p)
 		}
 #ifdef TPPT
 		if (tp_traceflags[D_XPD]) {
-			tptrace(TPPTmisc, "XPD tpdu accepted Xrcvnxt,
-				e_seq datalen m_len\n", p->tp_Xrcvnxt,
+			tptrace(TPPTmisc, "XPD tpdu accepted Xrcvnxt, "
+				"e_seq datalen m_len\n", p->tp_Xrcvnxt,
 				e->ev_union.EV_XPD_TPDU.e_seq,
 				e->ev_union.EV_XPD_TPDU.e_datalen,
 				e->ev_union.EV_XPD_TPDU.e_data->m_len);
@@ -725,8 +725,8 @@ _Xebec_action(a, e, p)
 	case 0x31:
 #ifdef TPPT
 		if (tp_traceflags[D_ACKRECV])
-			tptrace(TPPTmisc, "BOGUS ACK fcc_present,
-				tp_r_subseq e_subseq",
+			tptrace(TPPTmisc,
+				"BOGUS ACK fcc_present, tp_r_subseq e_subseq",
 				e->ev_union.EV_AK_TPDU.e_fcc_present,
 				p->tp_r_subseq,
 				e->ev_union.EV_AK_TPDU.e_subseq, 0);
