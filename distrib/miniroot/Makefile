@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.28 2000/04/16 21:27:00 pk Exp $
+#	$NetBSD: Makefile,v 1.29 2000/05/02 06:45:24 sjg Exp $
 
+.include "../../Makefile.inc"
 .include <bsd.own.mk>
+.include <bsd.kernobj.mk>
 
 REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
 
@@ -48,6 +50,7 @@ all: ${CBIN}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    sh ${.CURDIR}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -80,7 +83,7 @@ release: ${IMAGE}
 		> ${RELEASEDIR}/installation/miniroot/miniroot.fs.gz
 	${.CURDIR}/../sets/makesums \
 		-t ${RELEASEDIR}/installation/miniroot miniroot.fs
-		
+
 .endif	# RELEASEDIR check
 .endif	# DESTDIR check
 
