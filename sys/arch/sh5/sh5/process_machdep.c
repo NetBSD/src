@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 2002/10/24 13:58:48 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.8 2002/10/31 14:20:39 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_caller.r7 = (register_t)(long)p->p_psstr;
 
 	/* Align the stack as required by the SH-5 ABI */
-	tf->tf_caller.r15 = (register_t) (sstack & ~0xf);
+	tf->tf_caller.r15 = tf->tf_caller.r14 = (register_t) (sstack & ~0xf);
 
 	/* Give the new process a clean set of FP regs */
 	memset(&p->p_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
