@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.5 1999/03/31 18:14:27 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6 1999/06/03 20:14:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,17 +44,17 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.5 1999/03/31 18:14:27 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.6 1999/06/03 20:14:58 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
+	.globl	_end
 	.globl	CURBRK
 
 	.data
-CURBRK:	.long	_C_LABEL(end)
+CURBRK:	.long	_end
 	.text
 
 ENTRY(sbrk)
