@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2000/08/03 14:49:19 dmcmahill Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2000/10/17 13:27:19 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -37,7 +37,7 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
 #RELOC=		20000
-RELOC=		6c0000
+RELOC=		600000
 COPTS=		-Os
 
 ENTRY=		_start
