@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.40 2000/12/30 15:03:23 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.41 2000/12/30 15:32:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.40 2000/12/30 15:03:23 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.41 2000/12/30 15:32:19 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -634,7 +634,7 @@ single_user(void)
 			/* nuke \n */
 			char *p;
 
-			if ((p = strchr(altshell, '\n')) == NULL)
+			if ((p = strchr(altshell, '\n')) != NULL)
 				*p = '\0';
 		}
 
