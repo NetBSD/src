@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.113.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.113.2.3 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.113.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.113.2.3 2005/01/09 08:42:45 kent Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -923,9 +923,11 @@ sbdsp_speaker_ctl(addr, newstate)
 }
 
 int
-sbdsp_round_blocksize(addr, blk)
+sbdsp_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return blk & -4;	/* round to biggest sample size */
 }

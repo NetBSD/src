@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.8.2.1 2005/01/03 16:47:12 kent Exp $	*/
+/*	$NetBSD: am7930var.h,v 1.8.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 struct am7930_softc;
 
@@ -72,7 +72,7 @@ int	am7930_set_params __P((void *, int, int, audio_params_t *,
 			    audio_params_t *, stream_filter_list_t *,
 			    stream_filter_list_t *));
 int	am7930_commit_settings __P((void *));
-int	am7930_round_blocksize __P((void *, int));
+int	am7930_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	am7930_halt_output __P((void *));
 int	am7930_halt_input __P((void *));
 int	am7930_getdev __P((void *, struct audio_device *));

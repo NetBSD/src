@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.26.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.26.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -140,12 +140,10 @@ static struct cmpci_dmanode * cmpci_find_dmamem __P((struct cmpci_softc *,
 /*
  * interface to machine independent layer
  */
-static int cmpci_open __P((void *, int));
-static void cmpci_close __P((void *));
 static int cmpci_query_encoding __P((void *, struct audio_encoding *));
 static int cmpci_set_params __P((void *, int, int, audio_params_t *,
 	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
-static int cmpci_round_blocksize __P((void *, int));
+static int cmpci_round_blocksize __P((void *, int, int, const audio_params_t *));
 static int cmpci_halt_output __P((void *));
 static int cmpci_halt_input __P((void *));
 static int cmpci_getdev __P((void *, struct audio_device *));
@@ -163,8 +161,8 @@ static int cmpci_trigger_input __P((void *, void *, void *, int,
 	void (*)(void *), void *, const audio_params_t *));
 
 static const struct audio_hw_if cmpci_hw_if = {
-	cmpci_open,		/* open */
-	cmpci_close,		/* close */
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	cmpci_query_encoding,	/* query_encoding */
 	cmpci_set_params,	/* set_params */
@@ -603,22 +601,6 @@ cmpci_intr(handle)
 	return 1;
 }
 
-
-/* open/close */
-static int
-cmpci_open(handle, flags)
-	void *handle;
-	int flags;
-{
-	return 0;
-}
-
-static void
-cmpci_close(handle)
-	void *handle;
-{
-}
-
 static int
 cmpci_query_encoding(handle, fp)
 	void *handle;
@@ -762,9 +744,11 @@ cmpci_set_params(handle, setmode, usemode, play, rec, pfil, rfil)
 
 /* ARGSUSED */
 static int
-cmpci_round_blocksize(handle, block)
+cmpci_round_blocksize(handle, block, mode, param)
 	void *handle;
 	int block;
+	int mode;
+	const audio_params_t *param;
 {
 	return (block & -4);
 }

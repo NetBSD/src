@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.18.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.18.2.3 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.18.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.18.2.3 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1009,7 +1009,8 @@ ad1848_get_rec_port(struct ad1848_softc *sc)
 }
 
 int
-ad1848_round_blocksize(void *addr, int blk)
+ad1848_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 
 	/* Round to a multiple of the biggest sample size. */

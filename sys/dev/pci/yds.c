@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.25.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: yds.c,v 1.25.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.25.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.25.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include "mpu.h"
 
@@ -154,7 +154,7 @@ void	yds_close(void *);
 int	yds_query_encoding(void *, struct audio_encoding *);
 int	yds_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 		       stream_filter_list_t *, stream_filter_list_t *);
-int	yds_round_blocksize(void *, int);
+int	yds_round_blocksize(void *, int, int, const audio_params_t *);
 int	yds_trigger_output(void *, void *, void *, int, void (*)(void *),
 			   void *, const audio_params_t *);
 int	yds_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -1188,7 +1188,7 @@ yds_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-yds_round_blocksize(void *addr, int blk)
+yds_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 	/*
 	 * Block size must be bigger than a frame.

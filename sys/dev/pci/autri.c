@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.22.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: autri.c,v 1.22.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.22.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.22.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include "midi.h"
 
@@ -122,11 +122,10 @@ CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
 int	autri_open(void *, int);
-void	autri_close(void *);
 int	autri_query_encoding(void *, struct audio_encoding *);
 int	autri_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 			 stream_filter_list_t *, stream_filter_list_t *);
-int	autri_round_blocksize(void *, int);
+int	autri_round_blocksize(void *, int, int, const audio_params_t *);
 int	autri_trigger_output(void *, void *, void *, int, void (*)(void *),
 			     void *, const audio_params_t *);
 int	autri_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -146,8 +145,8 @@ int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
 int     autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
 
 static const struct audio_hw_if autri_hw_if = {
-        autri_open,
-	autri_close,
+	autri_open,
+	NULL,			/* close */
 	NULL,			/* drain */
 	autri_query_encoding,
 	autri_set_params,
@@ -889,12 +888,6 @@ autri_open(void *addr, int flags)
         return 0;
 }
 
-void
-autri_close(void *addr)
-{
-	DPRINTF(("autri_close()\n"));
-}
-
 int
 autri_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -973,7 +966,8 @@ autri_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-autri_round_blocksize(void *addr, int block)
+autri_round_blocksize(void *addr, int block,
+		      int mode, const audio_params_t *param)
 {
 	return (block & -4);
 }

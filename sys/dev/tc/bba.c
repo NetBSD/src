@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.22.2.2 2005/01/05 03:31:37 kent Exp $ */
+/* $NetBSD: bba.c,v 1.22.2.3 2005/01/09 08:42:46 kent Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.22.2.2 2005/01/05 03:31:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.22.2.3 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ struct am7930_glue bba_glue = {
  * Define our interface to the higher level audio driver.
  */
 
-int	bba_round_blocksize __P((void *, int));
+int	bba_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	bba_halt_output __P((void *));
 int	bba_halt_input __P((void *));
 int	bba_getdev __P((void *, struct audio_device *));
@@ -711,9 +711,11 @@ bba_output_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 
 
 int
-bba_round_blocksize(addr, blk)
+bba_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return (IOASIC_DMA_BLOCKSIZE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.64.2.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: ess.c,v 1.64.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.64.2.1 2005/01/03 06:37:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.64.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ int	ess_query_encoding __P((void *, struct audio_encoding *));
 int	ess_set_params __P((void *, int, int, audio_params_t *,
 	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
 
-int	ess_round_blocksize __P((void *, int));
+int	ess_round_blocksize __P((void *, int, int, const audio_params_t *));
 
 int	ess_audio1_trigger_output __P((void *, void *, void *, int,
 	    void (*)(void *), void *, const audio_params_t *));
@@ -1648,9 +1648,11 @@ ess_audio2_poll(addr)
 }
 
 int
-ess_round_blocksize(addr, blk)
+ess_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return (blk & -8);	/* round for max DMA size */
 }

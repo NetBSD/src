@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.92.2.1 2005/01/02 20:03:40 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.92.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.92.2.1 2005/01/02 20:03:40 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.92.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ Static int	uaudio_query_encoding(void *, struct audio_encoding *);
 Static int	uaudio_set_params
 	(void *, int, int, struct audio_params *, struct audio_params *,
 	 stream_filter_list_t *, stream_filter_list_t *);
-Static int	uaudio_round_blocksize(void *, int);
+Static int	uaudio_round_blocksize(void *, int, int, const audio_params_t *);
 Static int	uaudio_trigger_output
 	(void *, void *, void *, int, void (*)(void *), void *,
 	 const audio_params_t *);
@@ -2190,7 +2190,8 @@ uaudio_getdev(void *addr, struct audio_device *retp)
  * Make sure the block size is large enough to hold all outstanding transfers.
  */
 Static int
-uaudio_round_blocksize(void *addr, int blk)
+uaudio_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 	struct uaudio_softc *sc = addr;
 	int bpf;

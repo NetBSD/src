@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.21.2.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: aria.c,v 1.21.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.21.2.1 2005/01/03 06:37:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.21.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ void	aria_prometheus_kludge __P((struct isa_attach_args *,
 				    bus_space_handle_t));
 
 int	aria_query_encoding __P((void *, struct audio_encoding *));
-int	aria_round_blocksize __P((void *, int));
+int	aria_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	aria_speaker_ctl __P((void *, int));
 int	aria_commit_settings __P((void *));
 int	aria_set_params __P((void *, int, int, audio_params_t *,
@@ -588,9 +588,11 @@ aria_query_encoding(addr, fp)
  */
 
 int
-aria_round_blocksize(addr, blk)
+aria_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	int i;
 #if 0 /* XXX -- this is being a tad bit of a problem... */

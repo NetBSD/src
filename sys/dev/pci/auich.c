@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.82.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.82.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.82.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.82.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,13 +246,11 @@ static int	auich_intr(void *);
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
     auich_match, auich_attach, auich_detach, auich_activate);
 
-static int	auich_open(void *, int);
-static void	auich_close(void *);
 static int	auich_query_encoding(void *, struct audio_encoding *);
 static int	auich_set_params(void *, int, int, audio_params_t *,
 		    audio_params_t *, stream_filter_list_t *,
 		    stream_filter_list_t *);
-static int	auich_round_blocksize(void *, int);
+static int	auich_round_blocksize(void *, int, int, const audio_params_t *);
 static int	auich_halt_output(void *);
 static int	auich_halt_input(void *);
 static int	auich_getdev(void *, struct audio_device *);
@@ -287,8 +285,8 @@ static int	auich_write_codec(void *, u_int8_t, u_int16_t);
 static int	auich_reset_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
-	auich_open,
-	auich_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	auich_query_encoding,
 	auich_set_params,
@@ -760,17 +758,6 @@ auich_reset_codec(void *v)
 }
 
 static int
-auich_open(void *v, int flags)
-{
-	return 0;
-}
-
-static void
-auich_close(void *v)
-{
-}
-
-static int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auich_softc *sc;
@@ -855,7 +842,7 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-auich_round_blocksize(void *v, int blk)
+auich_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
 {
 
 	return (blk & ~0x3f);		/* keep good alignment */

@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.25.2.1 2005/01/02 20:03:11 kent Exp $ */
+/*      $NetBSD: sv.c,v 1.25.2.2 2005/01/09 08:42:46 kent Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.25.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.25.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,11 +148,10 @@ int	sv_allocmem __P((struct sv_softc *, size_t, size_t, int, struct sv_dma *));
 int	sv_freemem __P((struct sv_softc *, struct sv_dma *));
 
 int	sv_open __P((void *, int));
-void	sv_close __P((void *));
 int	sv_query_encoding __P((void *, struct audio_encoding *));
 int	sv_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
 	    stream_filter_list_t *, stream_filter_list_t *));
-int	sv_round_blocksize __P((void *, int));
+int	sv_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	sv_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 	    void *, const audio_params_t *));
 int	sv_trigger_input __P((void *, void *, void *, int, void (*)(void *),
@@ -175,7 +174,7 @@ void    sv_dumpregs __P((struct sv_softc *sc));
 
 const struct audio_hw_if sv_hw_if = {
 	sv_open,
-	sv_close,
+	NULL,			/* close */
 	NULL,
 	sv_query_encoding,
 	sv_set_params,
@@ -621,15 +620,6 @@ sv_open(addr, flags)
 	return (0);
 }
 
-/*
- * Close function is called at splaudio().
- */
-void
-sv_close(addr)
-	void *addr;
-{
-}
-
 int
 sv_query_encoding(addr, fp)
 	void *addr;
@@ -806,9 +796,11 @@ sv_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 }
 
 int
-sv_round_blocksize(addr, blk)
+sv_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return (blk & -32);	/* keep good alignment */
 }

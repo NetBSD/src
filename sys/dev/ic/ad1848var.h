@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.10.10.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.10.10.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ int	ad1848_query_encoding __P((void *, struct audio_encoding *));
 int	ad1848_set_params __P((void *, int, int, audio_params_t *,
 			       audio_params_t *, stream_filter_list_t *,
 			       stream_filter_list_t *));
-int	ad1848_round_blocksize __P((void *, int));
+int	ad1848_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	ad1848_commit_settings __P((void *));
 int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
 int	ad1848_get_rec_port __P((struct ad1848_softc *));

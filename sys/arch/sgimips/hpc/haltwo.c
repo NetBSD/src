@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.4.2.1 2005/01/03 16:45:18 kent Exp $ */
+/* $NetBSD: haltwo.c,v 1.4.2.2 2005/01/09 08:42:45 kent Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.4.2.1 2005/01/03 16:45:18 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.4.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.4.2.1 2005/01/03 16:45:18 kent Exp $");
 #define DPRINTF(x)
 #endif
 
-static int haltwo_open(void *, int);
-static void haltwo_close(void *);
 static int haltwo_query_encoding(void *, struct audio_encoding *);
 static int haltwo_set_params(void *, int, int, audio_params_t *,
 	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-static int haltwo_round_blocksize(void *, int);
+static int haltwo_round_blocksize(void *, int, int, const audio_params_t *);
 static int haltwo_halt_output(void *);
 static int haltwo_halt_input(void *);
 static int haltwo_getdev(void *, struct audio_device *);
@@ -78,8 +76,8 @@ static int haltwo_trigger_input(void *, void *, void *, int, void (*)(void *),
 	void *, const audio_params_t *);
 
 static const struct audio_hw_if haltwo_hw_if = {
-	haltwo_open,
-	haltwo_close,
+	NULL, /* open */
+	NULL, /* close */
 	NULL, /* drain */
 	haltwo_query_encoding,
 	haltwo_set_params,
@@ -362,20 +360,6 @@ haltwo_intr(void *v)
 }
 
 static int
-haltwo_open(void *v, int flags)
-{
-
-	DPRINTF(("haltwo_open flags = %x\n", flags));
-
-	return (0);
-}
-
-static void
-haltwo_close(void *v)
-{
-}
-
-static int
 haltwo_query_encoding(void *v, struct audio_encoding *e)
 {
 
@@ -487,7 +471,8 @@ haltwo_set_params(void *v, int setmode, int usemode,
 }
 
 static int
-haltwo_round_blocksize(void *v,int blocksize)
+haltwo_round_blocksize(void *v, int blocksize,
+		       int mode, const audio_params_t *param)
 {
 
 	/* XXX Make this smarter and support DMA descriptor chaining XXX */

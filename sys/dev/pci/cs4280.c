@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.32.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.32.2.3 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.32.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.32.2.3 2005/01/09 08:42:46 kent Exp $");
 
 #include "midi.h"
 
@@ -125,8 +125,8 @@ int  cs4280_checkimage(struct cs428x_softc *, u_int32_t *, u_int32_t, u_int32_t)
 #endif
 
 const struct audio_hw_if cs4280_hw_if = {
-	cs428x_open,
-	cs428x_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,
 	cs4280_query_encoding,
 	cs4280_set_params,

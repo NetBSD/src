@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.21.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.21.2.3 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21.2.3 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ int      cs4281_init(struct cs428x_softc *, int);
 void cs4281_power(int, void *);
 
 const struct audio_hw_if cs4281_hw_if = {
-	cs428x_open,
-	cs428x_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,
 	cs4281_query_encoding,
 	cs4281_set_params,

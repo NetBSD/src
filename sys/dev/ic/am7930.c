@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.45.2.1 2005/01/03 16:47:12 kent Exp $	*/
+/*	$NetBSD: am7930.c,v 1.45.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.45.2.1 2005/01/03 16:47:12 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.45.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -291,9 +291,11 @@ am7930_query_encoding(addr, fp)
 
 
 int
-am7930_round_blocksize(addr, blk)
+am7930_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return(blk);
 }

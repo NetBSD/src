@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.12.2.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.12.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ int     iw_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
 			   stream_filter_list_t *, stream_filter_list_t *));
 
 	/* Hardware may have some say in the blocksize to choose */
-int     iw_round_blocksize __P((void *, int));
+int     iw_round_blocksize __P((void *, int, int, const audio_params_t *));
 
 int     iw_commit_settings __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.27 2005/01/08 18:34:09 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.28 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.27 2005/01/08 18:34:09 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.28 2005/01/09 08:42:45 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -133,7 +133,8 @@ void	audio_calc_blksize(struct audio_softc *, int);
 void	audio_fill_silence(struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
-void	audio_init_ringbuffer(struct audio_softc *, struct audio_ringbuffer *);
+void	audio_init_ringbuffer(struct audio_softc *, struct audio_ringbuffer *,
+			      int, const struct audio_params *);
 int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
 static __inline int audio_sleep_timo(int *, char *, int);
@@ -264,8 +265,6 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
-	    hwp->open == 0 ||
-	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
 	    hwp->set_params == 0 ||
 	    (hwp->start_output == 0 && hwp->trigger_output == 0) ||
@@ -1066,7 +1065,8 @@ audiommap(dev_t dev, off_t off, int prot)
  * Audio driver
  */
 void
-audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
+audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
+		      int mode, const struct audio_params *param)
 {
 	int nblks;
 	int blksize = rp->blksize;
@@ -1078,7 +1078,8 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 	ROUNDSIZE(blksize);
 	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
 	if (sc->hw_if->round_blocksize)
-		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize);
+		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
+						     mode, param);
 	if (blksize <= 0)
 		panic("audio_init_ringbuffer: blksize");
 	nblks = rp->s.bufsize / blksize;
@@ -1105,7 +1106,7 @@ audio_initbufs(struct audio_softc *sc)
 	int error;
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
-	audio_init_ringbuffer(sc, &sc->sc_rr);
+	audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD, &sc->sc_rparams);
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
 		error = hw->init_input(sc->hw_hdl, sc->sc_rr.s.start,
 				       sc->sc_rr.s.end - sc->sc_rr.s.start);
@@ -1113,7 +1114,7 @@ audio_initbufs(struct audio_softc *sc)
 			return error;
 	}
 
-	audio_init_ringbuffer(sc, &sc->sc_pr);
+	audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY, &sc->sc_pparams);
 	sc->sc_sil_count = 0;
 	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
 		error = hw->init_output(sc->hw_hdl, sc->sc_pr.s.start,
@@ -1219,9 +1220,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
 		return EBUSY;
 
-	error = hw->open(sc->hw_hdl, flags);
-	if (error)
-		return error;
+	if (hw->open != NULL) {
+		error = hw->open(sc->hw_hdl, flags);
+		if (error)
+			return error;
+	}
 
 	sc->sc_async_audio = 0;
 	sc->sc_rchan = 0;
@@ -1285,7 +1288,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	return 0;
 
 bad:
-	hw->close(sc->hw_hdl);
+	if (hw->close != NULL)
+		hw->close(sc->hw_hdl);
 	sc->sc_open = 0;
 	sc->sc_mode = 0;
 	sc->sc_full_duplex = 0;
@@ -1428,7 +1432,8 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 		sc->sc_pbus = FALSE;
 	}
 
-	hw->close(sc->hw_hdl);
+	if (hw->close != NULL)
+		hw->close(sc->hw_hdl);
 
 	if (flags & FREAD) {
 		sc->sc_open &= ~AUOPEN_READ;
