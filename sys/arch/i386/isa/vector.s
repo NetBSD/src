@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.30 1996/01/07 02:02:28 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.31 1996/01/07 03:59:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -111,7 +111,7 @@
  * XXX
  * The interrupt frame is set up to look like a trap frame.  This may be a
  * waste.  The only handler which needs a frame is the clock handler, and it
- * only needs a few bits.  doreti() needs a trap frame for handling ASTs, but
+ * only needs a few bits.  Xdoreti() needs a trap frame for handling ASTs, but
  * it could easily convert the frame on demand.
  *
  * The direct costs of setting up a trap frame are two pushl's (error code and
@@ -199,7 +199,7 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
  * interrupt.  On a system with level-triggered interrupts, we could terminate
  * immediately when one of them returns 1; but this is a PC.
  *
- * On exit, we jump to doreti, to process soft interrupts and ASTs.
+ * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 #define	INTR(irq_num, icu, enable_icus) \
 IDTVEC(recurse/**/irq_num)						;\
@@ -303,7 +303,7 @@ IDTVEC(fast)
 	.long   _Xfast13, _Xfast14, _Xfast15
 
 /*
- * These tables are used by doreti() and spllower().
+ * These tables are used by Xdoreti() and Xspllower().
  */
 /* resume points for suspended interrupts */
 IDTVEC(resume)
