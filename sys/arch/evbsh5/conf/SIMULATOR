@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.8 2002/12/06 10:06:27 scw Exp $
+#	$NetBSD: SIMULATOR,v 1.8.8.1 2004/07/15 20:18:18 he Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -10,11 +10,12 @@ include 	"arch/evbsh5/conf/std.evbsh5.el"
 maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	SH5_SIM
 options 	KERNEL_IPT_SIZE=0x8000
 options 	SH5_CPU_SPEED=10
 
-#ident		"SIMULATOR-$Revision: 1.8 $"
+#ident		"SIMULATOR-$Revision: 1.8.8.1 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
