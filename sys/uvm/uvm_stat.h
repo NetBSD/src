@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.29 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.29.2.1 2004/05/09 08:55:42 jdc Exp $	*/
 
 /*
  *
@@ -46,55 +46,6 @@
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
  */
-
-/*
- * counters  [XXX: maybe replace event counters with this]
- */
-
-#define UVMCNT_MASK	0xf			/* rest are private */
-#define UVMCNT_CNT	0			/* normal counter */
-#define UVMCNT_DEV	1			/* device event counter */
-
-struct uvm_cnt {
-	int c;					/* the value */
-	int t;					/* type */
-	struct uvm_cnt *next;			/* global list of cnts */
-	char *name;				/* counter name */
-	void *p;				/* private data */
-};
-
-#ifdef _KERNEL
-
-extern struct uvm_cnt *uvm_cnt_head;
-
-/*
- * counter operations.  assume spl is set ok.
- */
-
-#define UVMCNT_INIT(CNT,TYP,VAL,NAM,PRIV) \
-do { \
-	CNT.c = VAL; \
-	CNT.t = TYP; \
-	CNT.next = uvm_cnt_head; \
-	uvm_cnt_head = &CNT; \
-	CNT.name = NAM; \
-	CNT.p = PRIV; \
-} while (/*CONSTCOND*/ 0)
-
-#define UVMCNT_SET(C,V) \
-do { \
-	(C).c = (V); \
-} while (/*CONSTCOND*/ 0)
-
-#define UVMCNT_ADD(C,V) \
-do { \
-	(C).c += (V); \
-} while (/*CONSTCOND*/ 0)
-
-#define UVMCNT_INCR(C) UVMCNT_ADD(C,1)
-#define UVMCNT_DECR(C) UVMCNT_ADD(C,-1)
-
-#endif /* _KERNEL */
 
 /*
  * history/tracing
