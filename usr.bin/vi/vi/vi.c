@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.12 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: vi.c,v 1.13 2002/04/15 08:31:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vi.c	10.57 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: vi.c,v 1.12 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: vi.c,v 1.13 2002/04/15 08:31:42 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -991,6 +991,7 @@ v_init(sp)
 	 * line in the middle, otherwise, it won't work and we'll end up with
 	 * the line at the top.
 	 */
+	F_CLR(sp, SC_SCR_TOP);
 	F_SET(sp, SC_SCR_REFORMAT | SC_SCR_CENTER);
 
 	/* Invalidate the cursor. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: exf.c,v 1.10 2002/04/15 08:31:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: exf.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: exf.c,v 1.10 2002/04/15 08:31:43 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -420,6 +420,9 @@ file_init(sp, frp, rcv_name, flags)
 
 	/* Redraw the screen from scratch, schedule a welcome message. */
 	F_SET(sp, SC_SCR_REFORMAT | SC_STATUS);
+
+	if (frp->lno == OOBLNO)
+		F_SET(sp, SC_SCR_TOP);
 
 	return (0);
 
