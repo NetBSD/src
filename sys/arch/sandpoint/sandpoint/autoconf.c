@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2001/08/26 02:47:38 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2001/08/30 02:08:44 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include <sys/device.h>
 
 #include <powerpc/mpc6xx/pte.h>
-#include <machine/intr.h>
 
 struct device *booted_device;
 int booted_partition;

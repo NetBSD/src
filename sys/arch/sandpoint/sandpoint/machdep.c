@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/08/26 02:47:38 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2001/08/30 02:08:45 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -199,8 +199,10 @@ initppc(startkernel, endkernel, args, btinfo)
 	{	/* XXX AKB */
 		extern u_long ticks_per_sec, ns_per_tick;
 
-		ticks_per_sec = 66000000;	/* 66 MHz */
-		ticks_per_sec /= 4;	/* 4 cycles per DEC tick on 603 */
+		ticks_per_sec = 100000000;	/* 100 MHz */
+		/* ticks_per_sec = 66000000;	* 66 MHz */
+		ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
+		cpu_timebase = ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2001/02/05 19:22:25 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2001/08/30 02:08:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -39,6 +39,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include "opt_openpic.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -444,6 +447,14 @@ openpic_init(unsigned char *base)
 	x = openpic_read(OPENPIC_CONFIG);
 	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
 	openpic_write(OPENPIC_CONFIG, x);
+
+#ifdef OPENPIC_SERIAL_MODE
+	x = openpic_read(OPENPIC_ICR);
+	x &= ~OPENPIC_ICR_SERIAL_RATIO_MASK;
+	x |= 4 << OPENPIC_ICR_SERIAL_RATIO_SHIFT;
+	x |= OPENPIC_ICR_SERIAL_MODE;
+	openpic_write(OPENPIC_ICR, x);
+#endif
 
 	/* send all interrupts to cpu 0 */
 	for (irq = 0; irq < ICU_LEN; irq++)

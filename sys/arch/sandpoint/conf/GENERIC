@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.10 2001/08/26 02:47:37 matt Exp $
+#	$NetBSD: GENERIC,v 1.11 2001/08/30 02:08:42 briggs Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -22,7 +22,10 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-options 	NEWPMAP
+#options 	NEWPMAP
+#options 	PMAPCHECK
+#options 	PMAPDEBUG
+options 	OPENPIC_SERIAL_MODE
 
 options 	COMPAT_43
 options 	COMPAT_09
@@ -99,6 +102,11 @@ vga*	at pci? dev ? function ?
 
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+options 	TLP_MATCH_21040
+options 	TLP_MATCH_21041
+options 	TLP_MATCH_21140
+options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 
 ukphy*	at mii? phy ?			# generic unknown PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs

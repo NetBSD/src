@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2001/02/08 20:27:25 briggs Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2001/08/30 02:08:44 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/openpicreg.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
