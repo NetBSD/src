@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1996/02/13 22:38:25 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.29 1996/02/16 22:12:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -414,7 +414,9 @@ clk_wenable(onoff)
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
 	if (prot)
-		pmap_changeprot(pmap_kernel(), (vm_offset_t)clockreg, prot, 1);
+		pmap_changeprot(pmap_kernel(),
+				(vm_offset_t)clockreg & ~(NBPG-1),
+				prot, 1);
 }
 
 /*
@@ -447,8 +449,9 @@ myetheraddr(cp)
  * (if we calculated a limit, we might overshoot, and precision
  * is irrelevant here---we want less object code).
  */
+void
 delay(n)
-	volatile register int n;
+	volatile register unsigned int n;
 {
 	register int c, t;
 
@@ -491,6 +494,7 @@ delay(n)
  *
  * The frequencies of these clocks must be an even number of microseconds.
  */
+void
 cpu_initclocks()
 {
 	register int statint, minint;
@@ -645,6 +649,7 @@ statintr(cap)
 const short dayyr[12] =
     { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
+int
 chiptotime(sec, min, hour, day, mon, year)
 	register int sec, min, hour, day, mon, year;
 {
@@ -680,6 +685,7 @@ struct chiptime {
 	int	year;
 };
 
+int
 timetochip(c)
 	register struct chiptime *c;
 {
@@ -728,6 +734,7 @@ timetochip(c)
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
+void
 inittodr(base)
 	time_t base;
 {
@@ -793,6 +800,7 @@ forward:
  * and when rebooting.  Do nothing if the time is not yet known, e.g.,
  * when crashing during autoconfig.
  */
+void
 resettodr()
 {
 	register struct clockreg *cl;
