@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.10 2000/04/28 03:34:00 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.11 2000/04/28 03:37:55 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,6 +64,7 @@ echo preparing directory $d
 rm -rf $d
 mkdir -p $d
 mkdir -p $d/man
+mkdir -p $d/doc
 
 ### Copy the files and directories
 cd $r/src
@@ -75,8 +76,8 @@ pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
 pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 nsupdate.8 $d/man
 cd $r/doc
-pax -rvw bog $d
-cd $d/bog
+pax -rvw bog $d/doc
+cd $d/doc/bog
 make clean
 
 ### Remove lib/bsd, lib/cylink and lib/dnssafe
@@ -125,7 +126,7 @@ echo ".\\\"" >>/tmp/bind2m$$
 	)
 done
 
-find $d/bog -type f -print | while read m; do
+find $d/doc/bog -type f -print | while read m; do
 	sed 1q < $m | grep -q '\$NetBSD' || (
 echo ".\\\"     \$NetBSD\$" >/tmp/bind2m$$
 echo ".\\\"" >>/tmp/bind2m$$
