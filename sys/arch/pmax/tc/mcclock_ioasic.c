@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.3 1997/07/22 07:51:39 jonathan Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.3.2.1 1997/08/23 07:11:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.3 1997/07/22 07:51:39 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.3.2.1 1997/08/23 07:11:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,6 @@ const struct mcclock_busfns mcclock_ioasic_busfns = {
 	mcclock_ioasic_write, mcclock_ioasic_read,
 };
 
-volatile struct chiptime *Mach_clock_addr; /* XXX glue for pmax heritage */
 
 int
 mcclock_ioasic_match(parent, match, aux)
@@ -101,7 +100,6 @@ mcclock_ioasic_match(parent, match, aux)
 	}
 	if (strcmp("mc146818", name))
 		return (0);
-	Mach_clock_addr = (struct chiptime *)MIPS_PHYS_TO_KSEG1(addr);
 	return (1);
 #undef	CFMATCH
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.7.4.1 1997/07/30 07:05:37 marc Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.7.4.2 1997/08/23 07:13:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -116,16 +116,12 @@ ep_isapnp_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
-	u_short conn = 0;
 
 	printf("\n");
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 	sc->bustype = EP_BUS_ISA;
-
-	GO_WINDOW(0);
-	conn = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W0_CONFIG_CTRL);
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);

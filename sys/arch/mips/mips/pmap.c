@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1997/07/29 01:41:46 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.1 1997/08/23 07:11:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -510,6 +510,21 @@ pmap_reference(pmap)
 		simple_unlock(&pmap->pm_lock);
 	}
 }
+
+/*
+ *	Make a new pmap (vmspace) active for the given process.
+ */
+void
+pmap_activate(register struct proc *p)
+{
+        p->p_addr->u_pcb.pcb_segtab =
+            p->p_vmspace->vm_map.pmap->pm_segtab;
+        if (p == curproc) {
+                register int tlbpid = pmap_alloc_tlbpid(p);
+                MachSetPID(tlbpid);
+        }
+}
+
 
 /*
  *	Remove the given range of addresses from the specified map.

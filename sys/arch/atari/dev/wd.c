@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5 1997/07/17 03:16:42 jtk Exp $	*/
+/*	$NetBSD: wd.c,v 1.5.2.1 1997/08/23 07:08:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -65,6 +65,8 @@
 #include <atari/dev/ym2149reg.h>
 #include <atari/dev/wdreg.h>
 #include <atari/dev/wdvar.h>
+
+#include "locators.h"
 
 static int wdresethack = 1;		/* Leftover from arm32		 */
 

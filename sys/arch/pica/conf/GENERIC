@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1997/01/31 01:58:17 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.6.8.1 1997/08/23 07:11:31 thorpej Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -48,6 +48,8 @@ file-system 	FDESC		# user file descriptor filesystem
 options		FIFO		# POSIX fifo support (in all filesystems)
 options		QUOTA		# FFS quotas
 options		NFSSERVER	# Sun NFS-compatible filesystem (server)
+
+#options	SCSIVERBOSE	# Verbose SCSI errors
 
 # Networking options
 options		INET		# Internet protocols

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.32 1997/06/02 20:40:57 leo Exp $
+#	$NetBSD: GENERIC,v 1.32.4.1 1997/08/23 07:08:28 thorpej Exp $
 #
 # Generic atari
 #
@@ -86,6 +86,7 @@ options	SYSVSEM			# System V semaphores
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
+#options	SCSIVERBOSE		# Verbose SCSI errors
 
 #
 # Atari specific options
@@ -135,7 +136,7 @@ fd1	at fdc0 unit 1		# external floppy drive
 ser0	at mainbus0		# Serial support through 68901 (modem1)
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer
 
 ch*	at scsibus? target ? lun ?	# SCSI changer
 ss*	at scsibus? target ? lun ?	# SCSI scanner

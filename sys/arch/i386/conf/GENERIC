@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86.2.1 1997/07/30 07:36:07 marc Exp $
+#	$NetBSD: GENERIC,v 1.86.2.2 1997/08/23 07:08:49 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -26,6 +26,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	DDB		# in-kernel debugger
+#options 	KGDB		# remote debugger
+#options	"KGDB_DEVNAME=\"com0\"",KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -85,10 +87,11 @@ options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 config		netbsd	root on ? type ?
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+#options	"CONSDEVNAME=\"com0\"",CONSPEED=9600
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
+#options	SCSIVERBOSE	# Verbose SCSI errors
 
 mainbus0 at root
 
@@ -103,14 +106,16 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at mainbus0			# all other ISA
+isapnp0	at isa?				# ISA Plug-and-Play
 
-apm0	at mainbus0			# Advanced power management
+#apm0	at mainbus0			# Advanced power management
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+#options 	COM_HAYESP		# adds Hayes ESP serial board support
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
@@ -123,7 +128,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at rtfps? slave ?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #cy*	at pci? dev ? function ?	# Cyclades serial cards
-  
+
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
@@ -192,9 +197,11 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isapnp?
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -205,15 +212,22 @@ fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+audio*	at sp0
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb*	at isapnp?
+audio*	at sb?
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+audio*	at wss0
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+audio*	at pas0
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+audio*	at gus0
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+joy*	at isapnp?
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
@@ -229,12 +243,6 @@ ep*	at pcmcia? function ?
 ed*	at pcmcia? function ?
 com*	at pcmcia? function ?
 
-# PnP bus and devices should be declared last 
-isapnp0	at isa? 
-ep*	at isapnp?
-sb*	at isapnp?
-joy*	at isapnp?
-
 include	"arch/i386/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
@@ -242,7 +250,7 @@ pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	ipfilter		# IP filter
 
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.16 1997/07/25 23:08:15 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.16.2.1 1997/08/23 07:09:50 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -42,9 +42,9 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include "adbvar.h"
-#include "itevar.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
+#include <mac68k/dev/itevar.h>
 
 /*
  * Function declarations.

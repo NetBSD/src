@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp 
+ *	NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp 
  */
 
 /*
@@ -344,6 +344,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ALG2302",
 	},
 	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 617",
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
 	    0,
 	    "BusLogic",
@@ -674,6 +680,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SmartCache/Raid",
 	},
 	{
+	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
+	    0,
+	    "Dolphin Interconnect Solutions",
+	    "PCI-SCI Bridge",
+	},
+	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
 	    0,
 	    "Emulex",
@@ -932,10 +944,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82430VX (Triton VX) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
+	    0,
+	    "Intel",
+	    "82439TX (Triton TX) Host Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB,
 	    0,
 	    "Intel",
 	    "82371AB PIIX4 ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABIDE,
+	    0,
+	    "Intel",
+	    "82371AB IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABUSB,
+	    0,
+	    "Intel",
+	    "82371AB USB Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371ABPM,
+	    0,
+	    "Intel",
+	    "82371AB Power Management / SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
@@ -1613,7 +1649,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA Technologies",
-	    "VT82C505 (\"Pluto\")",
+	    "VT82C505 (Pluto)",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C561,
@@ -1628,22 +1664,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C576 3V",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
 	    0,
 	    "VIA Technologies",
-	    "VT82C570M (\"Apollo\") Host-PCI Bridge",
+	    "VT82C570M (Apollo) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570MV,
 	    0,
 	    "VIA Technologies",
-	    "VT82C570M (\"Apollo\") PCI-ISA Bridge",
+	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416MV,
 	    0,
 	    "VIA Technologies",
 	    "VT82C416MV",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    0,
+	    "VIA Technologies",
+	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/07/28 19:40:44 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.1 1997/08/23 07:11:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,8 @@
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <mips/locore.h>		/* wbflush() */
+#include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
+
 #ifdef DDB
 #include <mips/db_machdep.h>
 #endif
@@ -208,7 +210,7 @@ int	(*Mach_splimp)__P((void)) = splhigh;
 int	(*Mach_splclock)__P((void)) = splhigh;
 int	(*Mach_splstatclock)__P((void)) = splhigh;
 
-extern	volatile struct chiptime *Mach_clock_addr;
+volatile struct chiptime *mcclock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 
 int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
@@ -225,7 +227,7 @@ static	void asic_init __P((int isa_maxine));
 #endif
 extern	int	atoi __P((const char *cp));
 int	initcpu __P((void));
-#ifdef DS5000_240
+#if defined(DS5000_240) || defined(DS5000_25)
 static	u_long	clkread __P((void));	/* get usec-resolution clock */
 #endif
 void	dumpsys __P((void));		/* do a dump */
@@ -244,6 +246,8 @@ void	kn02_enable_intr __P ((u_int slotno,
 #ifdef DS5000_100
 void	kmin_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			     intr_arg_t sc, int onoff));
+void kmin_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
+			       int clockmask));
 #endif /*DS5000_100*/
 
 #ifdef DS5000_25
@@ -253,7 +257,6 @@ void	xine_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 
 #ifdef DS5000_240
 u_long	kn03_tc3_imask;
-extern	u_long latched_cycle_cnt;
 void	kn03_tc_reset __P((void));		/* XXX unused? */
 void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			       intr_arg_t sc, int onoff));
@@ -285,7 +288,6 @@ struct	proc nullproc;		/* for use by switch_exit() */
 
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -506,8 +508,10 @@ mach_init(argc, argv, code, cv)
 		Mach_splclock = cpu_spl3;
 		Mach_splstatclock = cpu_spl3;
 
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
+
 		strcpy(cpu_model, "3100");
 		break;
 #endif /* DS3100 */
@@ -527,7 +531,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = Mach_spl2;
 		Mach_splclock = Mach_spl3;
 		Mach_splstatclock = Mach_spl3;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "5100");
 		break;
@@ -559,10 +563,11 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = Mach_spl0;
 		Mach_splclock = cpu_spl1;
 		Mach_splstatclock = cpu_spl1;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 
 		}
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 		strcpy(cpu_model, "5000/200");
 		break;
 #endif /* DS5000_200 */
@@ -592,9 +597,9 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = splhigh;
 		Mach_splclock = splhigh;
 		Mach_splstatclock = splhigh;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
-
+		kmin_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
 		/*
 		 * Initialize interrupts.
@@ -607,7 +612,7 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
-		strcpy(cpu_model, (CPUISMIPS3)? "5000/150": "5000/1xx");
+		sprintf(cpu_model, "5000/1%d", cpu_mhz);
 
 		/*
 		 * The kmin memory hardware seems to wrap  memory addresses
@@ -652,8 +657,9 @@ mach_init(argc, argv, code, cv)
 		 */
 		Mach_splclock = cpu_spl3;
 		Mach_splstatclock = cpu_spl3;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 		/*
 		 * Initialize interrupts.
@@ -665,7 +671,7 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
-		strcpy(cpu_model, (CPUISMIPS3) ? "5000/50": "5000/25");
+		sprintf(cpu_model, "5000/%d", cpu_mhz);
 
 		break;
 #endif /*DS5000_25*/
@@ -697,8 +703,9 @@ mach_init(argc, argv, code, cv)
 		 */
 		Mach_splclock = cpu_spl1;
 		Mach_splstatclock = cpu_spl1;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
+		mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 		asic_init(0);
 		/*
@@ -714,7 +721,7 @@ mach_init(argc, argv, code, cv)
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
-		strcpy(cpu_model, (CPUISMIPS3) ? "5000/260" : "5000/240");
+		sprintf(cpu_model, "5000/2%d", cpu_mhz);
 		break;
 #endif /* DS5000_240 */
 
@@ -1177,12 +1184,13 @@ haltsys:
  * the current microsecond offset from time-of-day.
  */
 
-#ifndef DS5000_240
+#if !defined(DS5000_240) && !defined(DS5000_25)
 # define clkread() (0)
 #else
 
 /*
  * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
+ * [Or free-running microsecond counter on Maxine.]
  */
 u_long latched_cycle_cnt;
 
@@ -1191,22 +1199,32 @@ u_long latched_cycle_cnt;
  * to interpolate micro-seconds since the  last RTC clock tick.
  * The interpolation base is the copy of the bus cycle-counter taken
  * by the RTC interrupt handler.
- * XXX on XINE, use the microsecond free-running counter.
+ * On XINE, use the microsecond free-running counter.
  *
  */
 static inline u_long
 clkread()
 {
 
+#ifdef DS5000_240
 	register u_long usec, cycles;	/* really 32 bits? */
+#endif
 
-	/* only support 5k/240 TC bus counter */
-	if (pmax_boardtype != DS_3MAXPLUS) {
+#ifdef DS5000_25
+	if (pmax_boardtype == DS_MAXINE)
+		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
+		    latched_cycle_cnt);
+	else
+#endif
+#ifdef DS5000_240
+	if (pmax_boardtype == DS_3MAXPLUS)
+		/* 5k/240 TC bus counter */
+		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
+	else
+#endif
 		return (0);
-	}
 
-	cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
-
+#ifdef DS5000_240
 	/* Compute difference in cycle count from last hardclock() to now */
 #if 1
 	/* my code, using u_ints */
@@ -1235,6 +1253,7 @@ clkread()
 	}
 #endif /*CLOCK_DEBUG*/
 	return usec;
+#endif /*DS5000_240*/
 }
 
 #if 0
@@ -1244,7 +1263,7 @@ microset()
 		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 }
 #endif
-#endif /*DS5000_240*/
+#endif /*DS5000_240 || DS5000_25*/
 
 
 /*
@@ -1316,10 +1335,10 @@ initcpu()
 	 */
 #if 1 /*XXX*/
 	/* disable clock interrupts (until startrtclock()) */
-	if (Mach_clock_addr) {
-	c = Mach_clock_addr;
-	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	i = c->regc;
+	if (mcclock_addr) {
+		c = mcclock_addr;
+		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
+		i = c->regc;
 	}
 	return (i);
 #endif
@@ -1564,6 +1583,35 @@ kmin_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+
+/*
+ * Count instructions between 4ms mcclock interrupt requests,
+ * using the ioasic clock-interrupt-pending bit to determine
+ * when clock ticks occur.  
+ * Set up iosiac to allow only clock interrupts, then
+ * call 
+ */
+void
+kmin_mcclock_cpuspeed(mcclock_addr, clockmask)
+	volatile struct chiptime *mcclock_addr;
+	int clockmask;
+{
+	register volatile u_int * ioasic_intrmaskp =
+		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
+
+	register int saved_imask = *ioasic_intrmaskp;
+
+	/* Allow only clock interrupts through ioasic. */
+	*ioasic_intrmaskp = KMIN_INTR_CLOCK;
+	wbflush();
+     
+	mc_cpuspeed(mcclock_addr, clockmask);
+
+	*ioasic_intrmaskp = saved_imask;
+	wbflush();
+}
+
+
 #endif /*DS5000_100*/
 
 

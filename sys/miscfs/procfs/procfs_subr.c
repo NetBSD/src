@@ -1,6 +1,7 @@
-/*	$NetBSD: procfs_subr.c,v 1.19 1997/06/25 11:32:15 mycroft Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.19.4.1 1997/08/23 07:14:15 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,6 +53,8 @@
 
 static struct pfsnode *pfshead;
 static int pfsvplock;
+
+#define	ISSET(t, f)	((t) & (f))
 
 /*
  * allocate a pfsnode/vnode pair.  the vnode is

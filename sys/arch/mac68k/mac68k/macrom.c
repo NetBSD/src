@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.36 1997/07/10 18:00:40 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.36.2.1 1997/08/23 07:10:51 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -62,8 +62,8 @@
 #include <machine/frame.h>
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include <arch/mac68k/dev/adbvar.h>
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
 
 	/* trap modifiers (put it macrom.h) */
 #define TRAP_TOOLBOX(a)	((a) & 0x800)

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.11.2.1 1997/07/30 07:05:27 marc Exp $	*/
+/*	$NetBSD: comvar.h,v 1.11.2.2 1997/08/23 07:13:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,10 +31,22 @@
  */
 
 extern int comconsaddr;
-extern int comconsattached;
 extern bus_space_tag_t comconstag;
 extern bus_space_handle_t comconsioh;
+extern int comconsrate;
 extern tcflag_t comconscflag;
+int comcngetc __P((dev_t));
+void comcnputc __P((dev_t, int));
+void comcnpollc __P((dev_t, int));
+extern int comconsattached;
+
+#ifdef KGDB
+extern int com_kgdb_addr;
+extern bus_space_tag_t com_kgdb_iot;
+extern bus_space_handle_t com_kgdb_ioh;
+extern int com_kgdb_getc __P((void*));
+extern void com_kgdb_putc __P((void*, int));
+#endif
 
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01

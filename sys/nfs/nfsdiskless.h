@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.11 1997/05/27 23:37:43 gwr Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.11.4.1 1997/08/23 07:14:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -58,7 +58,9 @@ struct nfs_dlmount {
 struct nfs_diskless {
 	struct sockaddr_in nd_boot; 	/* Address of boot server */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
+#if 0
 	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
+#endif
 };
 
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.6 1997/05/28 00:07:47 augustss Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.6.4.1 1997/08/23 07:12:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,16 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Convert 8-bit mu-law to 16 bit unsigned linear. */
+extern void mulaw_to_ulinear16 __P((void *, u_char *buf, int cnt));
 /* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
 extern void mulaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
 extern void ulinear8_to_mulaw __P((void *, u_char *buf, int cnt));
+/* Convert 8-bit a-law to 16 bit unsigned linear. */
+extern void alaw_to_ulinear16 __P((void *, u_char *buf, int cnt));
 /* Convert 8-bit a-law to/from 8 bit unsigned linear. */
 extern void alaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
 extern void ulinear8_to_alaw __P((void *, u_char *buf, int cnt));
-/* Convert between signed and unsigned. */
-extern void change_sign8 __P((void *, u_char *buf, int cnt));
-extern void change_sign16 __P((void *, u_char *buf, int cnt));
-/* Convert between little and big endian. */
-extern void swap_bytes __P((void *, u_char *buf, int cnt));
-extern void swap_bytes_change_sign16 __P((void *, u_char *buf, int cnt));
-extern void change_sign16_swap_bytes __P((void *, u_char *buf, int cnt));

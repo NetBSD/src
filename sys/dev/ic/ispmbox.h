@@ -1,4 +1,4 @@
-/*	$NetBSD: ispmbox.h,v 1.2 1997/03/12 21:06:57 cgd Exp $	*/
+/*	$NetBSD: ispmbox.h,v 1.2.4.1 1997/08/23 07:12:57 thorpej Exp $	*/
 
 /*
  * Mailbox and Command Definitions for for Qlogic ISP SCSI adapters.
@@ -95,6 +95,7 @@
 #define MBOX_SET_ACTIVE_NEG_STATE	0x0035
 #define MBOX_SET_ASYNC_DATA_SETUP_TIME	0x0036
 #define MBOX_SET_SBUS_CONTROL_PARAMS	0x0037
+#define		MBOX_SET_PCI_PARAMETERS	0x0037
 #define MBOX_SET_TARGET_PARAMS		0x0038
 #define MBOX_SET_DEV_QUEUE_PARAMS	0x0039
 					/*  3a */
@@ -107,10 +108,26 @@
 #define	MBOX_WRITE_FOUR_RAM_WORDS	0x0041
 #define	MBOX_EXEC_BIOS_IOCB		0x0042
 
+/* These are for the ISP2100 FC cards */
+#define	MBOX_GET_LOOP_ID		0x0020
+#define	MBOX_EXEC_COMMAND_IOCB_A64	0x0054
+#define	MBOX_GET_FW_STATE		0x0069
+#define	MBOX_INIT_FIRMWARE		0x60
+#define	MBOX_GET_INIT_CONTROL_BLOCK	0x61
+#define	MBOX_INIT_LIP			0x62
+#define	MBOX_GET_FC_AL_POSITION_MAP	0x63
+#define	MBOX_GET_PORT_DB		0x64
+#define	MBOX_CLEAR_ACA			0x65
+#define	MBOX_TARGET_RESET		0x66
+#define	MBOX_CLEAR_TASK_SET		0x67
+#define	MBOX_ABORT_TASK_SET		0x68
+
+#define	ISP2100_SET_PCI_PARAM		0x00ff
+
 #define	MBOX_BUSY			0x04
 
 typedef struct {
-	u_int16_t param[6];
+	u_int16_t param[8];
 } mbreg_t;
 
 /*
@@ -141,12 +158,16 @@ typedef struct {
 #define	RQSFLAG_FULL		0x02
 #define	RQSFLAG_BADHEADER	0x04
 #define	RQSFLAG_BADPACKET	0x08
+
 /* RQS entry_type definitions */
 #define	RQSTYPE_REQUEST		1
 #define	RQSTYPE_DATASEG		2
 #define	RQSTYPE_RESPONSE	3
 #define	RQSTYPE_MARKER		4
 #define	RQSTYPE_CMDONLY		5
+#define	RQSTYPE_T2RQS		17
+#define	RQSTYPE_T3RQS		25
+#define	RQSTYPE_T1DSEG		10
 
 
 #define	ISP_RQDSEG	4
@@ -169,6 +190,26 @@ typedef struct {
 	u_int8_t	req_cdb[12];
 	ispds_t		req_dataseg[ISP_RQDSEG];
 } ispreq_t;
+
+#define	ISP_RQDSEG_T2	3
+typedef struct {
+	isphdr_t	req_header;
+	u_int32_t	req_handle;
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	req_target;
+	u_int8_t	req_lun_trn;
+#else
+	u_int8_t	req_lun_trn;
+	u_int8_t	req_target;
+#endif
+	u_int16_t	_res1;
+	u_int32_t	req_flags;
+	u_int16_t	req_time;
+	u_int16_t	req_seg_count;
+	u_int32_t	req_cdb[4];
+	u_int32_t	req_totalcnt;
+	ispds_t		req_dataseg[ISP_RQDSEG_T2];
+} ispreqt2_t;
 
 /* req_flag values */
 #define	REQFLAG_NODISCON	0x0001
@@ -223,7 +264,7 @@ typedef struct {
 	u_int8_t	req_modifier;
 	u_int8_t	_res2;
 #endif
-} ipsmarkreq_t;
+} ispmarkreq_t;
 
 #define SYNC_DEVICE	0
 #define SYNC_TARGET	1
@@ -243,6 +284,18 @@ typedef struct {
 	u_int8_t	req_sense_data[32];
 } ispstatusreq_t;
 
+/* 
+ * For Qlogic 2100, the high order byte of SCSI status has
+ * additional meaning.
+ */
+#define	RQCS_RU	0x800	/* Residual Under */
+#define	RQCS_RO	0x400	/* Residual Over */
+#define	RQCS_SV	0x200	/* Sense Length Valid */
+#define	RQCS_RV	0x100	/* Residual Valid */
+
+/* 
+ * Completion Status Codes.
+ */
 #define RQCS_COMPLETE			0x0000
 #define RQCS_INCOMPLETE			0x0001
 #define RQCS_DMA_ERROR			0x0002
@@ -265,8 +318,15 @@ typedef struct {
 #define RQCS_ID_MSG_FAILED		0x0013
 #define RQCS_UNEXP_BUS_FREE		0x0014
 #define RQCS_DATA_UNDERRUN		0x0015
+/* 2100 Only Completion Codes */
+#define	RQCS_PORT_UNAVAILABLE		0x0028
+#define	RQCS_PORT_LOGGED_OUT		0x0029
+#define	RQCS_PORT_CHANGED		0x002A
+#define	RQCS_PORT_BUSY			0x002B
 
-
+/*
+ * State Flags (not applicable to 2100)
+ */
 #define RQSF_GOT_BUS			0x0100
 #define RQSF_GOT_TARGET			0x0200
 #define RQSF_SENT_CDB			0x0400
@@ -274,6 +334,9 @@ typedef struct {
 #define RQSF_GOT_STATUS			0x1000
 #define RQSF_GOT_SENSE			0x2000
 
+/*
+ * Status Flags (not applicable to 2100)
+ */
 #define RQSTF_DISCONNECT		0x0001
 #define RQSTF_SYNCHRONOUS		0x0002
 #define RQSTF_PARITY_ERROR		0x0004
@@ -282,5 +345,47 @@ typedef struct {
 #define RQSTF_ABORTED			0x0020
 #define RQSTF_TIMEOUT			0x0040
 #define RQSTF_NEGOTIATION		0x0080
+
+/*
+ * FC (ISP2100) specific data structures
+ */
+
+/*
+ * Initialization Control Block
+ */
+typedef struct {
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	_reserved0;
+	u_int8_t	icb_version;
+#else
+	u_int8_t	icb_version;
+	u_int8_t	_reserved0;
+#endif
+        u_int16_t	icb_fwoptions;
+        u_int16_t	icb_maxfrmlen;
+	u_int16_t	icb_maxalloc;
+	u_int16_t	icb_execthrottle;
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	icb_retry_delay;
+	u_int8_t	icb_retry_count;
+#else
+	u_int8_t	icb_retry_count;
+	u_int8_t	icb_retry_delay;
+#endif
+        u_int16_t	icb_nodename[4];
+	u_int16_t	icb_hardaddr;
+        u_int16_t	_reserved1[5];
+	u_int16_t	icb_rqstout;
+	u_int16_t	icb_rspnsin;
+        u_int16_t	icb_rqstqlen;
+        u_int16_t	icb_rsltqlen;
+        u_int16_t	icb_rqstaddr[4];
+        u_int16_t	icb_respaddr[4];
+} isp_icb_t;
+
+#define	ICB_DFLT_FRMLEN	1024
+#define	MAKE_NODE_NAME(isp, icbp) \
+	(icbp)->icb_nodename[0] = 0, (icbp)->icb_nodename[1] = 0x5355,\
+	(icbp)->icb_nodename[2] = 0x4E57, (icbp)->icb_nodename[3] = 0
 
 #endif	/* _ISPMBOX_H */

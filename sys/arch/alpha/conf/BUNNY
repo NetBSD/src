@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.16 1997/04/06 23:03:04 cgd Exp $
+# $NetBSD: BUNNY,v 1.16.4.1 1997/08/23 07:06:32 thorpej Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -83,6 +83,7 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#audio*	at	wss?
 
 # SCSI bus support
 scsibus* at	ncr?

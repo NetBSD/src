@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.7 1997/05/11 19:11:30 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.7.4.1 1997/08/23 07:10:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 	struct grfbus_softc *sc;
 	nubus_slot *sp;
 	int (*g_mode) __P((struct grf_softc *, int, void *));
-	caddr_t (*g_phys) __P((struct grf_softc *, vm_offset_t));
+	caddr_t (*g_phys) __P((struct grf_softc *));
 {
 	struct grfmode *gm = &sc->curr_mode;
 	struct grfbus_attach_args ga;
@@ -68,7 +68,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 	ga.ga_grfmode = gm;
 	ga.ga_slot = sp;
 	ga.ga_tag = sc->sc_tag;
-	ga.ga_handle = sc->sc_tag;
+	ga.ga_handle = sc->sc_handle;
 	ga.ga_mode = g_mode;
 	ga.ga_phys = g_phys;
 	(void)config_found(&sc->sc_dev, &ga, grfbusprint);

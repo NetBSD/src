@@ -88,8 +88,8 @@
 #if NVT > 0
 
 #define EXTERN			/* allocate mem */
-
 #include "pcvt_hdr.h"		/* global include */
+#include "pcvt_cons.h"		/* NetBSD only */
 
 #ifdef NOTDEF
 unsigned	__debug = 0; /*0xffe */;

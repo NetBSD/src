@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.12 1997/07/27 23:06:05 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.12.2.1 1997/08/23 07:12:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -39,7 +39,7 @@
  * Initial/default block duration is both configurable and patchable.
  */
 #ifndef AUDIO_BLK_MS
-#define AUDIO_BLK_MS	20	/* 20 ms */
+#define AUDIO_BLK_MS	50	/* 50 ms */
 #endif
 
 #ifndef AU_RING_SIZE
@@ -74,8 +74,10 @@ struct audio_ringbuffer {
  * Software state, per audio device.
  */
 struct audio_softc {
+	struct	device dev;
 	void	*hw_hdl;	/* Hardware driver handle */
 	struct	audio_hw_if *hw_if; /* Hardware interface */
+	struct	device *sc_dev;	/* Hardware device struct */
 	u_char	sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02
@@ -83,7 +85,11 @@ struct audio_softc {
 
 	struct	selinfo sc_wsel; /* write selector */
 	struct	selinfo sc_rsel; /* read selector */
-	struct	proc *sc_async;	/* process who wants SIGIO */
+	struct	proc *sc_async_audio;	/* process who wants audio SIGIO */
+	struct	mixer_asyncs {
+		struct mixer_asyncs *next;
+		struct proc *proc;
+	} *sc_async_mixer;  /* processes who want mixer SIGIO */
 
 	/* Sleep channels for reading and writing. */
 	int	sc_rchan;
@@ -92,6 +98,8 @@ struct audio_softc {
 	/* Ring buffers, separate for record and play. */
 	struct	audio_ringbuffer sc_rr; /* Record ring */
 	struct	audio_ringbuffer sc_pr; /* Play ring */
+
+	u_char	sc_blkset;	/* Blocksize has been set */
 
 	u_char	*sc_sil_start;	/* start of silence in buffer */
 	int	sc_sil_count;	/* # of silence bytes */

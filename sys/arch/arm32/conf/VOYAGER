@@ -172,6 +172,7 @@ beep0	at mainbus? base 0x00000000
 
 # Audio device
 vidcaudio0	at mainbus? base 0x00000000
+audio*		at vidcaudio0
 
 # IIC bus device
 iic0	at mainbus?

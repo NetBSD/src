@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 1997/02/28 07:49:19 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.33.4.1 1997/08/23 07:10:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,8 +91,8 @@
 #include <sys/gprof.h>
 #endif
 
-#include "pram.h"
-#include "clockreg.h"
+#include <mac68k/mac68k/pram.h>
+#include <mac68k/mac68k/clockreg.h>
 #include <machine/viareg.h>
 
 void	rtclock_intr __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.16 1997/07/28 20:56:10 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.16.2.1 1997/08/23 07:12:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -47,13 +47,14 @@ struct audio_params {
 	u_int	channels;			/* mono(1), stereo(2) */
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)__P((void *, u_char *, int));
+	int	factor;				/* coding space change */
 };
 
 /* The default audio mode: 8 kHz mono ulaw */
 extern struct audio_params audio_default;
 
 struct audio_hw_if {
-	int	(*open)__P((dev_t, int));	/* open hardware */
+	int	(*open)__P((void *, int));	/* open hardware */
 	void	(*close)__P((void *));		/* close hardware */
 	int	(*drain)__P((void *));		/* Optional: drain buffers */
 	
@@ -119,24 +120,27 @@ struct audio_hw_if {
 	unsigned long (*round_buffersize)__P((void *, unsigned long));
 	int	(*mappage)__P((void *, void *, int, int));
 
-	int props; /* device properties */
+	int 	(*get_props)__P((void *)); /* device properties */
 };
 
-/* Register / deregister hardware driver */
-extern int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-extern int	audio_hardware_detach __P((struct audio_hw_if *, void *));
+struct midi_hw_if;
+
+/* Attach the MI driver(s) to the MD driver. */
+extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
 #define AUDIO_DEVICE		0x80
+#define AUDIOCTL_DEVICE		0xc0
 #define MIXER_DEVICE		0x10
-
-#define ISDEVAUDIO(x)		((minor(x)&0xf0) == AUDIO_DEVICE)
-#define ISDEVSOUND(x)		((minor(x)&0xf0) == SOUND_DEVICE)
-#define ISDEVMIXER(x)		((minor(x)&0xf0) == MIXER_DEVICE)
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
+
+#define ISDEVSOUND(x)		(AUDIODEV(minor(x)) == SOUND_DEVICE)
+#define ISDEVAUDIO(x)		(AUDIODEV(minor(x)) == AUDIO_DEVICE)
+#define ISDEVAUDIOCTL(x)	(AUDIODEV(minor(x)) == AUDIOCTL_DEVICE)
+#define ISDEVMIXER(x)		(AUDIODEV(minor(x)) == MIXER_DEVICE)
 
 #ifndef __i386__
 #define splaudio splbio		/* XXX */

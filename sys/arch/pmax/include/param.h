@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 1997/07/07 03:54:25 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.21.2.1 1997/08/23 07:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include <mips/mips_param.h>
 
 /*
- * Machine dependent constants for DEC Station 3100.
+ * Machine dependent constants for mips-based DECstations.
  */
 
 #define	_MACHINE	pmax
@@ -67,13 +67,6 @@
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
-
-/*
- * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
- * 	 UPAGES, UADDR, USPACE defined in mips_param.h.
- */
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 
 /*
@@ -101,10 +94,3 @@
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
-
-#ifdef _KERNEL
-#ifndef _LOCORE
-extern int cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
-#endif
-#endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: madreg.h,v 1.2 1997/04/06 00:35:19 augustss Exp $	*/
+/*	$NetBSD: madreg.h,v 1.2.4.1 1997/08/23 07:13:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Lennart Augustsson
  * Copyright (c) 1995 Hannu Savolainen
@@ -88,3 +88,12 @@
 
 #define M_PASSWD_928	0xe2
 #define M_PASSWD_929	0xe3
+
+/* Regions of I/O space that the MAD occupies besides
+   WSS emulation and MAD_BASE.  Talk about waste. */
+#define MAD_REG1 0x220
+#define MAD_LEN1 16
+#define MAD_REG2 0x380
+#define MAD_LEN2 2
+#define MAD_REG3 0x388
+#define MAD_LEN3 4

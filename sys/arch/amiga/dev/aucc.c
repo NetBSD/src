@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.15 1997/07/28 20:56:05 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.15.2.1 1997/08/23 07:07:26 thorpej Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -166,7 +166,7 @@ unsigned char ulaw_to_lin[] = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int	aucc_open __P((dev_t, int));
+int	aucc_open __P((void *, int));
 void	aucc_close __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
@@ -191,6 +191,7 @@ int	aucc_query_devinfo __P((void *, mixer_devinfo_t *));
 void	aucc_encode __P((int, int, int, u_char *, u_short **));
 int	aucc_set_params __P((void *, int, struct audio_params *,
 	    struct audio_params *));
+int	aucc_get_props __P((void *));
 
 struct audio_hw_if sa_hw_if = {
 	aucc_open,
@@ -222,7 +223,7 @@ struct audio_hw_if sa_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	0
+	aucc_get_props,
 };
 
 /* autoconfig routines */
@@ -261,9 +262,7 @@ auccattach(parent, self, args)
 		return;
 	}
 
-	if (audio_hardware_attach(&sa_hw_if, sc) != 0)
-		printf("audio: could not attach to audio pseudo-device driver\n");
-	/* XXX: no way to return error, if init fails */
+	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
 }
 
 
@@ -311,20 +310,15 @@ init_aucc(sc)
 }
 
 int
-aucc_open(dev, flags)
-	dev_t dev;
+aucc_open(addr, flags)
+	void *addr;
 	int flags;
 {
-	register struct aucc_softc *sc;
-	int unit = AUDIOUNIT(dev);
-	register int i;
+	struct aucc_softc *sc = addr;
+	int i;
 
-	DPRINTF(("sa_open: unit %d\n",unit));
+	DPRINTF(("sa_open: unit %p\n",sc));
 
-	if (unit >= aucc_cd.cd_ndevs)
-		return (ENODEV);
-	if ((sc = aucc_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
@@ -806,6 +800,13 @@ aucc_get_port(addr, cp)
 	return 0;
 }
 
+
+int
+aucc_get_props(addr)
+	void *addr;
+{
+	return 0;
+}
 
 int
 aucc_query_devinfo(addr, dip)

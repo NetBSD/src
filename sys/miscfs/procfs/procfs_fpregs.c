@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.4 1995/08/13 09:06:05 mycroft Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.4.14.1 1997/08/23 07:14:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -61,6 +61,9 @@ procfs_dofpregs(curp, p, pfs, uio)
 	struct fpreg r;
 	char *kv;
 	int kl;
+
+	if ((error = procfs_checkioperm(curp, p)) != 0)
+		return (error);
 
 	kl = sizeof(r);
 	kv = (char *) &r;

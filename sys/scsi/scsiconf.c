@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.84 1997/07/17 00:46:50 perry Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.84.2.1 1997/08/23 07:14:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -408,6 +408,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
+	{{T_DIRECT, T_REMOV,
+	 "MPL     ", "MC-DISK-        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -447,12 +449,14 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST19171FC       ", ""},     SDEV_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
-	/* Letting the motor run kills floppy drives and disks quit fast. */
+	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
 
@@ -463,6 +467,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "CALIPER ", "CP150           ", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "SONY    ", "GY-10C          ", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09"}, SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
@@ -486,6 +492,12 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNCWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
+
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
+
+	{{T_PROCESSOR, T_FIXED,
+	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
 };
 
 /*

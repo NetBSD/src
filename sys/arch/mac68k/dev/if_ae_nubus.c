@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.18 1997/05/11 19:11:33 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.18.4.1 1997/08/23 07:10:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -58,11 +58,11 @@
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
-#include <arch/mac68k/dev/if_aevar.h>
-#include <arch/mac68k/dev/if_aereg.h>
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/if_aevar.h>
+#include <mac68k/dev/if_aereg.h>
 
 static int	ae_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	ae_nubus_attach __P((struct device *, struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.37 1997/07/23 07:17:52 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.37.2.1 1997/08/23 07:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,11 +78,10 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#include "../mac68k/macrom.h"
-
-#include "nubus.h"
-#include "itevar.h"
-#include "grfvar.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/itevar.h>
+#include <mac68k/dev/grfvar.h>
 
 #include "6x10.h"
 #define CHARWIDTH	6

@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.3 1997/06/13 17:49:25 drochner Exp $	*/
+/*	$NetBSD: libi386.h,v 1.3.4.1 1997/08/23 07:09:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,13 @@ int netbsd_opt __P((char));
 
 void delay __P((int));
 int getbasemem __P((void));
-int getextmem __P((void));
+int getextmemx __P((void));
+int getextmem1 __P((void));
+#ifdef CONSERVATIVE_MEMDETECT
+#define getextmem() getextmem1()
+#else
+#define getextmem() getextmemx()
+#endif
 void reboot __P((void));
 void gateA20 __P((void));
 

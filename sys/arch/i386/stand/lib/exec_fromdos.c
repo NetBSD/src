@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_fromdos.c,v 1.1 1997/06/13 17:49:24 drochner Exp $	 */
+/*	$NetBSD: exec_fromdos.c,v 1.1.4.1 1997/08/23 07:09:37 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -135,8 +135,8 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 
 	extmem = getextmem();
 
-#if XMS
-	if ((extmem == 0) && (extmem = checkxms())) {
+#ifdef XMS
+	if ((getextmem1() == 0) && (extmem = checkxms())) {
 	        u_long kernsize;
 
 		/* Approximate a size for the temporary buffer needed.

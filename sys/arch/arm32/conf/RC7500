@@ -168,6 +168,7 @@ lpt0    at mainbus? base 0x002109e0 irq 0
 # RC7500 companded audio device
 #
 #vidcaudio0	at mainbus? base 0x00000000
+#audio*		at vidcaudio0
 
 # Crude sound device
 #beep0	at mainbus? base 0x00000000 irq 31

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.27 1997/06/25 11:00:32 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.27.4.1 1997/08/23 07:11:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -710,11 +710,12 @@ rzdone(unit, error, resid, status)
 			sc->sc_sense.sense[0] = 0x70;
 			sc->sc_sense.sense[2] = SCSI_CLASS7_NO_SENSE;
 		} else if (!(sc->sc_flags & RZF_NOERR)) {
+			ScsiClass7Sense *sp;
+			sp = (ScsiClass7Sense *)sc->sc_sense.sense;
 			printf("rz%d: ", unit);
-			scsiPrintSense((ScsiClass7Sense *)sc->sc_sense.sense,
-				sizeof(sc->sc_sense.sense) - resid);
-			if (sc->sc_sense.sense[0] == 0x70 &&
-			    sc->sc_sense.sense[2] == SCSI_CLASS7_RECOVERABLE) {
+			scsiPrintSense(sp, sizeof(sc->sc_sense.sense) - resid);
+			if (sp->error7 == 0x70 &&
+			    sp->key == SCSI_CLASS7_RECOVERABLE) {
 				/* Recoverable error - clear error status */
 				bp->b_flags &= ~B_ERROR;
 				bp->b_error = 0;

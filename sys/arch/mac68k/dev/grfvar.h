@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.17 1997/07/26 08:28:20 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.17.2.1 1997/08/23 07:10:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,8 +79,8 @@ struct grf_softc {
 	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
 	int	(*sc_mode) __P((struct grf_softc *, int, void *));
-					/* map virtual addr to physical addr */
-	caddr_t	(*sc_phys) __P((struct grf_softc *, vm_offset_t));
+					/* find framebuffer physical addr */
+	caddr_t	(*sc_phys) __P((struct grf_softc *));
 };
 
 /*
@@ -93,7 +93,7 @@ struct grfbus_attach_args {
 	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
 	int	(*ga_mode) __P((struct grf_softc *, int, void *));
-	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
+	caddr_t	(*ga_phys) __P((struct grf_softc *));
 };
 
 typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vm_offset_t addr));
@@ -159,5 +159,5 @@ int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
 
 void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *),
-	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
+	    caddr_t (*)(struct grf_softc *)));
 int	grfbusprint __P((void *, const char *));

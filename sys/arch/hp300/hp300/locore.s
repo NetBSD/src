@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 1997/07/14 19:18:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75.2.1 1997/08/23 07:08:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -602,7 +602,7 @@ Lbe1stpg:
 Lberr40:
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
-	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
+	movl	sp@(FR_HW+8+20),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
 	/* NOTREACHED */
@@ -677,9 +677,11 @@ Lbe10a:
 	jeq	Lmightnotbemerr		| no -> wp check
 	btst	#7,d1			| is it MMU table berr?
 	jne	Lisberr1		| yes, needs not be fast.
+#endif /* M68K_MMU_MOTOROLA */
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+#if defined(M68K_MMU_MOTOROLA)
 Lmightnotbemerr:
 	btst	#3,d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error

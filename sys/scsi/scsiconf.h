@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.36 1997/07/07 22:45:37 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.36.2.1 1997/08/23 07:14:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -304,6 +304,9 @@ int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t, int, struct p
 void sc_print_addr __P((struct scsi_link *));
 
 void show_scsi_xs __P((struct scsi_xfer *));
+#ifdef	SCSIVERBOSE
+void scsi_print_sense __P((struct scsi_xfer *, int));
+#endif
 void show_scsi_cmd __P((struct scsi_xfer *));
 void show_mem __P((u_char *, int));
 int scsi_probe_busses __P((int, int, int));

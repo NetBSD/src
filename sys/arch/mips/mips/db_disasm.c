@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1 1997/07/07 03:54:37 jonathan Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.1.2.1 1997/08/23 07:11:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,16 +41,17 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
-
+#include <sys/param.h>
 
 #include <machine/reg.h>
 #include <machine/cpu.h>
 #include <mips/mips_opcode.h>
-#include <machine/param.h>
+/*#include <machine/param.h>*/
 #include <mips/db_machdep.h>
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
 
 static char *op_name[64] = {
 /* 0 */ "spec", "bcond","j",	"jal",	"beq",	"bne",	"blez", "bgtz",
@@ -126,7 +127,7 @@ static char *c0_reg[32] = {
 	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
 };
 
-
+void print_addr(long);
 
 /*
  * Disassemble instruction at 'loc'.  'altfmt' specifies an
@@ -161,20 +162,20 @@ db_disasm_insn(insn, loc, altfmt)
 
 	i.word = insn;
 
-		switch (i.JType.op) {
-		case OP_SPECIAL:
+	switch (i.JType.op) {
+	case OP_SPECIAL:
 		if (i.word == 0) {
 			db_printf("nop");
 			break;
 		}
 		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rs]);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rs]);
 			break;
 		}
 		db_printf("%s", spec_name[i.RType.func]);
-			switch (i.RType.func) {
+		switch (i.RType.func) {
 		case OP_SLL:
 		case OP_SRL:
 		case OP_SRA:
@@ -186,9 +187,9 @@ db_disasm_insn(insn, loc, altfmt)
 		case OP_DSRL32:
 		case OP_DSRA32:
 			db_printf("\t%s,%s,%d",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rt],
-				i.RType.shamt);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rt],
+			    i.RType.shamt);
 			break;
 
 		case OP_SLLV:
@@ -198,9 +199,9 @@ db_disasm_insn(insn, loc, altfmt)
 		case OP_DSRLV:
 		case OP_DSRAV:
 			db_printf("\t%s,%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rt],
-				reg_name[i.RType.rs]);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rt],
+			    reg_name[i.RType.rs]);
 			break;
 
 		case OP_MFHI:
@@ -208,8 +209,8 @@ db_disasm_insn(insn, loc, altfmt)
 			db_printf("\t%s", reg_name[i.RType.rd]);
 			break;
 
-			case OP_JR:
-			case OP_JALR:
+		case OP_JR:
+		case OP_JALR:
 			/* FALLTHROUGH */
 		case OP_MTLO:
 		case OP_MTHI:
@@ -225,38 +226,38 @@ db_disasm_insn(insn, loc, altfmt)
 		case OP_DDIV:
 		case OP_DDIVU:
 			db_printf("\t%s,%s",
-				reg_name[i.RType.rs],
-				reg_name[i.RType.rt]);
-				break;
+			    reg_name[i.RType.rs],
+			    reg_name[i.RType.rt]);
+			break;
 
 
-			case OP_SYSCALL:
+		case OP_SYSCALL:
 		case OP_SYNC:
 			break;
 
-			case OP_BREAK:
+		case OP_BREAK:
 			db_printf("\t%d", (i.RType.rs << 5) | i.RType.rt);
 			break;
 
 		default:
 			db_printf("\t%s,%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rs],
-				reg_name[i.RType.rt]);
-			};
-			break;
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rs],
+			    reg_name[i.RType.rt]);
+		}
+		break;
 
-		case OP_BCOND:
+	case OP_BCOND:
 		db_printf("%s\t%s,", bcond_name[i.IType.rt],
-			reg_name[i.IType.rs]);
+		    reg_name[i.IType.rs]);
 		goto pr_displ;
 
-		case OP_BLEZ:
+	case OP_BLEZ:
 	case OP_BLEZL:
-		case OP_BGTZ:
+	case OP_BGTZ:
 	case OP_BGTZL:
 		db_printf("%s\t%s,", op_name[i.IType.op],
-			reg_name[i.IType.rs]);
+		    reg_name[i.IType.rs]);
 		goto pr_displ;
 
 	case OP_BEQ:
@@ -269,101 +270,100 @@ db_disasm_insn(insn, loc, altfmt)
 	case OP_BNE:
 	case OP_BNEL:
 		db_printf("%s\t%s,%s,", op_name[i.IType.op],
-			reg_name[i.IType.rs],
-			reg_name[i.IType.rt]);
+		    reg_name[i.IType.rs],
+		    reg_name[i.IType.rt]);
 	pr_displ:
-		db_printf("0x%08lx", loc + 4 + ((short)i.IType.imm << 2));
-			break;
+		print_addr(loc + 4 + ((short)i.IType.imm << 2));
+		break;
 
-		case OP_COP0:
-			switch (i.RType.rs) {
-			case OP_BCx:
-			case OP_BCy:
+	case OP_COP0:
+		switch (i.RType.rs) {
+		case OP_BCx:
+		case OP_BCy:
 
 			db_printf("bc0%c\t",
-				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
 			db_printf("mtc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
 			break;
 
 		case OP_DMT:
 			db_printf("dmtc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
-				break;
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
+			break;
 
 		case OP_MF:
 			db_printf("mfc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
-				break;
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
+			break;
 
 		case OP_DMF:
 			db_printf("dmfc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
-				break;
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
+			break;
 
 		default:
 			db_printf("%s", c0_opname[i.FRType.func]);
-		};
-				break;
+		}
+		break;
 
 	case OP_COP1:
 		switch (i.RType.rs) {
 		case OP_BCx:
 		case OP_BCy:
 			db_printf("bc1%c\t",
-				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
 			db_printf("mtc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
-				break;
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
 
 		case OP_MF:
 			db_printf("mfc1\t%s,f%d",
-
-				reg_name[i.RType.rt],
-				i.RType.rd);
-				break;
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
 
 		case OP_CT:
 			db_printf("ctc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
-				break;
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
 
 		case OP_CF:
 			db_printf("cfc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
-				break;
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
 
 		default:
 			db_printf("%s.%s\tf%d,f%d,f%d",
-				cop1_name[i.FRType.func],
-				fmt_name[i.FRType.fmt],
-				i.FRType.fd, i.FRType.fs, i.FRType.ft);
-		};
-				break;
+			    cop1_name[i.FRType.func],
+			    fmt_name[i.FRType.fmt],
+			    i.FRType.fd, i.FRType.fs, i.FRType.ft);
+		}
+		break;
 
 	case OP_J:
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
-		db_printf("0x%8lx",(loc & 0xF0000000) | (i.JType.target << 2));
+		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
 		break;
 
 	case OP_LWC1:
 	case OP_SWC1:
 		db_printf("%s\tf%d,", op_name[i.IType.op],
-			i.IType.rt);
+		    i.IType.rt);
 		goto loadstore;
 
 	case OP_LB:
@@ -378,50 +378,75 @@ db_disasm_insn(insn, loc, altfmt)
 	case OP_SW:
 	case OP_SD:
 		db_printf("%s\t%s,", op_name[i.IType.op],
-			reg_name[i.IType.rt]);
+		    reg_name[i.IType.rt]);
 	loadstore:
 		db_printf("%d(%s)", (short)i.IType.imm,
-			reg_name[i.IType.rs]);
-				break;
+		    reg_name[i.IType.rs]);
+		break;
 
 	case OP_ORI:
 	case OP_XORI:
 		if (i.IType.rs == 0) {
 			db_printf("li\t%s,0x%x",
-				reg_name[i.IType.rt],
-				i.IType.imm);
+			    reg_name[i.IType.rt],
+			    i.IType.imm);
 			break;
-			}
+		}
 		/* FALLTHROUGH */
 	case OP_ANDI:
 		db_printf("%s\t%s,%s,0x%x", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			reg_name[i.IType.rs],
-			i.IType.imm);
+		    reg_name[i.IType.rt],
+		    reg_name[i.IType.rs],
+		    i.IType.imm);
 		break;
 
 	case OP_LUI:
 		db_printf("%s\t%s,0x%x", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			i.IType.imm);
-			break;
+		    reg_name[i.IType.rt],
+		    i.IType.imm);
+		break;
 
-		case OP_ADDI:
+	case OP_ADDI:
 	case OP_DADDI:
-		case OP_ADDIU:
+	case OP_ADDIU:
 	case OP_DADDIU:
 		if (i.IType.rs == 0) {
 			db_printf("li\t%s,%d",
-				reg_name[i.IType.rt],
-				(short)i.IType.imm);
-				break;
-	}
+			    reg_name[i.IType.rt],
+			    (short)i.IType.imm);
+			break;
+		}
 		/* FALLTHROUGH */
 	default:
 		db_printf("%s\t%s,%s,%d", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			reg_name[i.IType.rs],
-			(short)i.IType.imm);
+		    reg_name[i.IType.rt],
+		    reg_name[i.IType.rs],
+		    (short)i.IType.imm);
 	}
+	db_printf("\n");
 	return (loc + 4);
+}
+
+void
+print_addr(loc)
+	long loc;
+{
+	db_expr_t diff;
+	db_sym_t sym;
+	char *symname;
+
+	diff = INT_MAX;
+	symname = NULL;
+	sym = db_search_symbol(loc, DB_STGY_ANY, &diff);
+	db_symbol_values(sym, &symname, 0);
+
+	if (symname) {
+		if (diff == 0)
+			db_printf("%s", symname);
+		else
+			db_printf("<%s+%lx>", symname, diff);
+		db_printf("\t[addr:0x%08lx]", loc);
+	} else {
+		db_printf("0x%08lx", loc);
+	}
 }

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp $
+$NetBSD: pcidevs,v 1.31.2.1 1997/08/23 07:14:00 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -586,6 +586,9 @@ product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 
+/* Bit3 products */
+product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
 product BUSLOGIC MULTIMASTER	0x1040	MultiMaster
@@ -668,6 +671,9 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/Raid
 
+/* Dolphin products */
+product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
@@ -730,7 +736,11 @@ product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
 product INTEL 82430VX	0x7030	82430VX (Triton VX) Host Bridge
+product INTEL 82439TX	0x7100	82439TX (Triton TX) Host Bridge
 product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
+product INTEL 82371ABIDE	0x7111	82371AB IDE Controller
+product INTEL 82371ABUSB	0x7112	82371AB USB Interface
+product INTEL 82371ABPM	0x7113	82371AB Power Management / SMBus Controller
 product INTEL PCI450_PB	0x84c4	450 PCIset (Orion) Host-PCI bridge
 product INTEL PCI450_MC	0x84c5	450 PCIset (Orion) Memory Controller
 
@@ -798,6 +808,7 @@ product PROMISE DC5030	0x5300	DC5030
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
 product QLOGIC ISP1022	0x1022	ISP1022
+product QLOGIC ISP2100	0x2100	ISP2100
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
@@ -909,12 +920,14 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products */
-product VIATECH VT82C505	0x0505	VT82C505 (\"Pluto\") 
+product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
-product VIATECH	VT82C570M	0x1000	VT82C570M (\"Apollo\") Host-PCI Bridge
-product VIATECH VT82C570MV	0x1006	VT82C570M (\"Apollo\") PCI-ISA Bridge
+product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
+product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
+product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
+product VIATECH VT82C595	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_6000B	0x0001	GDT 6000b
