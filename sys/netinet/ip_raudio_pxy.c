@@ -1,7 +1,10 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.5 2000/05/11 19:46:06 veego Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.5.4.1 2002/02/09 16:56:32 he Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.5.4.1 2002/02/09 16:56:32 he Exp $");
 
 /*
- * Id: ip_raudio_pxy.c,v 1.7.2.1 2000/05/06 11:19:33 darrenr Exp
+ * Id: ip_raudio_pxy.c,v 1.7.2.8 2002/01/13 04:58:29 darrenr Exp
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -64,8 +67,8 @@ nat_t *nat;
 	raudio_t *rap = aps->aps_data;
 	unsigned char membuf[512 + 1], *s;
 	u_short id = 0;
-	tcphdr_t *tcp;
 	int off, dlen;
+	tcphdr_t *tcp;
 	int len = 0;
 	mb_t *m;
 #if	SOLARIS
@@ -80,7 +83,7 @@ nat_t *nat;
 		return 0;
 
 	tcp = (tcphdr_t *)fin->fin_dp;
-	off = (ip->ip_hl << 2) + (tcp->th_off << 2);
+	off = fin->fin_hlen + (tcp->th_off << 2);
 	bzero(membuf, sizeof(membuf));
 #if	SOLARIS
 	m = fin->fin_qfm;
@@ -88,14 +91,16 @@ nat_t *nat;
 	dlen = msgdsize(m) - off;
 	if (dlen <= 0)
 		return 0;
-	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	dlen = MIN(sizeof(membuf), dlen);
+	copyout_mblk(m, off, dlen, (char *)membuf);
 #else
 	m = *(mb_t **)fin->fin_mp;
 
 	dlen = mbufchainlen(m) - off;
 	if (dlen <= 0)
 		return 0;
-	m_copydata(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	dlen = MIN(sizeof(membuf), dlen);
+	m_copydata(m, off, dlen, (char *)membuf);
 #endif
 	/*
 	 * In all the startup parsing, ensure that we don't go outside
@@ -172,9 +177,9 @@ nat_t *nat;
 	unsigned char membuf[IPF_MAXPORTLEN + 1], *s;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	raudio_t *rap = aps->aps_data;
+	int off, dlen, slen, clen;
 	struct in_addr swa, swb;
-	u_int a1, a2, a3, a4;
-	int off, dlen, slen;
+	int a1, a2, a3, a4;
 	u_short sp, dp;
 	fr_info_t fi;
 	tcp_seq seq;
@@ -194,7 +199,7 @@ nat_t *nat;
 		return 0;
 
 	tcp = (tcphdr_t *)fin->fin_dp;
-	off = (ip->ip_hl << 2) + (tcp->th_off << 2);
+	off = fin->fin_hlen + (tcp->th_off << 2);
 	m = *(mb_t **)fin->fin_mp;
 
 #if	SOLARIS
@@ -204,13 +209,15 @@ nat_t *nat;
 	if (dlen <= 0)
 		return 0;
 	bzero(membuf, sizeof(membuf));
-	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	clen = MIN(sizeof(membuf), dlen);
+	copyout_mblk(m, off, clen, (char *)membuf);
 #else
 	dlen = mbufchainlen(m) - off;
 	if (dlen <= 0)
 		return 0;
 	bzero(membuf, sizeof(membuf));
-	m_copydata(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	clen = MIN(sizeof(membuf), dlen);
+	m_copydata(m, off, clen, (char *)membuf);
 #endif
 
 	seq = ntohl(tcp->th_seq);
@@ -219,7 +226,7 @@ nat_t *nat;
 	 * We only care for the first 19 bytes coming back from the server.
 	 */
 	if (rap->rap_sseq == 0) {
-		s = (u_char *)memstr("PNA", (char *)membuf, 3, dlen);
+		s = (u_char *)memstr("PNA", (char *)membuf, 3, clen);
 		if (s == NULL)
 			return 0;
 		a1 = s - membuf;
@@ -267,6 +274,7 @@ nat_t *nat;
 	tcp2->th_off = 5;
 	fi.fin_dp = (char *)tcp2;
 	fi.fin_fr = &raudiofr;
+	fi.fin_dlen = sizeof(*tcp2);
 	tcp2->th_win = htons(8192);
 	slen = ip->ip_len;
 	ip->ip_len = fin->fin_hlen + sizeof(*tcp);
@@ -279,11 +287,14 @@ nat_t *nat;
 		tcp2->th_dport = htons(dp);
 		fi.fin_data[0] = dp;
 		fi.fin_data[1] = sp;
-		ipn = nat_new(nat->nat_ptr, ip, &fi, 
+		fi.fin_out = 0;
+		ipn = nat_new(&fi, ip, nat->nat_ptr, NULL,
 			      IPN_UDP | (sp ? 0 : FI_W_SPORT), NAT_OUTBOUND);
 		if (ipn != NULL) {
 			ipn->nat_age = fr_defnatage;
-			(void) fr_addstate(ip, &fi, sp ? 0 : FI_W_SPORT);
+			(void) fr_addstate(ip, &fi, NULL,
+					   FI_IGNOREPKT|FI_NORULE|
+					   (sp ? 0 : FI_W_SPORT));
 		}
 	}
 
@@ -293,11 +304,13 @@ nat_t *nat;
 		tcp2->th_dport = 0; /* XXX - don't specify remote port */
 		fi.fin_data[0] = sp;
 		fi.fin_data[1] = 0;
-		ipn = nat_new(nat->nat_ptr, ip, &fi, IPN_UDP|FI_W_DPORT,
+		fi.fin_out = 1;
+		ipn = nat_new(&fi, ip, nat->nat_ptr, NULL, IPN_UDP|FI_W_DPORT,
 			      NAT_OUTBOUND);
 		if (ipn != NULL) {
 			ipn->nat_age = fr_defnatage;
-			(void) fr_addstate(ip, &fi, FI_W_DPORT);
+			(void) fr_addstate(ip, &fi, NULL,
+					   FI_W_DPORT|FI_IGNOREPKT|FI_NORULE);
 		}
 	}
 
