@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.2 1999/08/17 15:05:15 kleink Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.3 2000/01/17 07:21:54 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.2 1999/08/17 15:05:15 kleink Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.3 2000/01/17 07:21:54 bgrayson Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -130,7 +130,10 @@ portal_rfilter(pcr, key, v, kso, fdp)
 	 * is equivalent to
 	 *   bogus1 rfilter bogus1/ cmd1 %s
 	 */
-	if (strlen(v[3]) == 0)
+	/*
+	 * v[3] could be NULL, or could point to "".
+	 */
+	if (!v[3] || strlen(v[3]) == 0)
 	  v[3] = "%s";	/* Handle above assumption. */
 	path = key;
 	/* Strip out stripkey if it matches leading part of key. */
