@@ -18,7 +18,6 @@
 ./usr/include/machine/pmap3x.h
 ./usr/include/machine/pte3.h
 ./usr/include/machine/pte3x.h
-./usr/include/machine/sun_disklabel.h
 ./usr/include/machine/vmparam3.h
 ./usr/include/machine/vmparam3x.h
 ./usr/include/machine/vuid_event.h
