@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_single.h,v 1.2 1997/11/05 03:57:52 thorpej Exp $	*/
+/*	$NetBSD: asm_single.h,v 1.3 1998/07/25 09:24:17 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -43,16 +43,16 @@
 #define single_inst_bset_b(var, bit)	\
 	__asm__ __volatile ("orb %0,%1" : : "di" ((u_char)bit), "g" (var))
 #define single_inst_bclr_b(var, bit)	\
-	__asm__ __volatile ("andb %0,%1" : : "di" ((u_char)~(bit)), "g" (var));
+	__asm__ __volatile ("andb %0,%1" : : "di" ((u_char)~(bit)), "g" (var))
 
 #define single_inst_bset_w(var, bit)	\
 	__asm__ __volatile ("orw %0,%1" : : "di" ((u_short)bit), "g" (var))
 #define single_inst_bclr_w(var, bit)	\
-	__asm__ __volatile ("andw %0,%1" : : "di" ((u_short)~(bit)), "g" (var));
+	__asm__ __volatile ("andw %0,%1" : : "di" ((u_short)~(bit)), "g" (var))
 
 #define single_inst_bset_l(var, bit)	\
 	__asm__ __volatile ("orl %0,%1" : : "di" ((u_long)bit), "g" (var))
 #define single_inst_bclr_l(var, bit)	\
-	__asm__ __volatile ("andl %0,%1" : : "di" ((u_long)~(bit)), "g" (var));
+	__asm__ __volatile ("andl %0,%1" : : "di" ((u_long)~(bit)), "g" (var))
 
 #endif /* _M68K_ASM_SINGLE_H */
