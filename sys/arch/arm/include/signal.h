@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 2003/11/25 23:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -124,29 +124,6 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 #endif
-
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_spsr = (uc)->uc_mcontext.__gregs[_REG_CPSR];		\
-	memcpy(&(sc)->sc_r0, (uc)->uc_mcontext.__gregs,			\
-	    15 * sizeof(unsigned int));					\
-	(sc)->sc_svc_lr = 0;		/* XXX */			\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_CPSR] = (sc)->sc_spsr;		\
-	memcpy((uc)->uc_mcontext.__gregs, &(sc)->sc_r0,			\
-	    15 * sizeof(unsigned int));					\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_pc;		\
-} while (/*CONSTCOND*/0)
 
 #endif /* !_LOCORE */
 
