@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2001/02/05 04:16:52 itojun Exp $
+# $NetBSD: GENERIC,v 1.183 2001/03/30 14:47:48 minoura Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.183 $"
 
 maxusers 32
 
@@ -247,15 +247,19 @@ tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
+yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
+audio*	at	yds?
 
 opl*	at	eso?
 #opl*	at	sv?
+opl*	at	yds?
 
 mpu*	at	eso?
+mpu*	at	yds?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
