@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.6.24.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6.24.2 2000/03/13 19:09:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -349,6 +349,9 @@ _vme_pcc_intmap(vsc, level, vector, handlep)
 	int level, vector;
 	vme_intr_handle_t *handlep;
 {
+	if ( level < 0x80 )
+		return EINVAL;
+
 	/* This is rather gross */
 	*handlep = (void *)(int)((level << 8) | vector);
 
@@ -373,6 +376,10 @@ _vme_pcc_intr_establish(vsc, handle, prior, func, arg)
 	isrlink_vectored(func, arg, level, vector);
 	sc->sc_irqref[level]++;
 
+	/*
+	 * There had better not be another VMEbus master responding
+	 * to this interrupt level...
+	 */
 	vme1_reg_write(sc, VME1REG_IRQEN,
 	    vme1_reg_read(sc, VME1REG_IRQEN) | VME1_IRQ_VME(level));
 }
