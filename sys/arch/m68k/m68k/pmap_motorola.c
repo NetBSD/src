@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.12.4.3 2005/02/18 14:38:29 chs Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.12.4.4 2005/02/23 07:48:23 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.3 2005/02/18 14:38:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.4 2005/02/23 07:48:23 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -373,27 +373,6 @@ pmap_init()
 	 */
 	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
 	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
-
-	/*
-	 * Now that kernel map has been allocated, we can mark as
-	 * unavailable regions which we have mapped in pmap_bootstrap().
-	 */
-
-	pmap_init_md();
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
-
-		panic("pmap_init: bogons in the VM system!");
-	}
 
 	PMAP_DPRINTF(PDB_INIT,
 	    ("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
