@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.42 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.43 2001/10/04 17:31:01 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -720,9 +720,6 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return (0);
 }
-
-extern int fail_row, fail_col, fail_time;
-extern int delayed_recon;
 
 int 
 rf_FailDisk(
