@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MP,v 1.3 2003/01/07 18:55:36 fvdl Exp $
+#	$NetBSD: GENERIC.MP,v 1.4 2003/03/05 10:28:00 grant Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #
@@ -16,6 +16,6 @@ options 	APM_NO_IDLE
 #options	DEBUG
 options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enable)
+				# (acpi at mainbus must also be enabled)
 
 ioapic*		at mainbus? apid ?
