@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.34 1996/10/13 02:59:44 christos Exp $ */
+/*	$NetBSD: dma.c,v 1.35 1996/11/13 06:13:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -394,18 +394,20 @@ int
 espdmaintr(sc)
 	struct dma_softc *sc;
 {
+	char bits[64];
 	int trans, resid;
 	u_long csr;
 	csr = DMACSR(sc);
 
-	ESP_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
-		 DMADDR(sc), csr, DMACSRBITS));
+	ESP_DMA(("%s: intr: addr %p, csr %s\n", sc->sc_dev.dv_xname,
+		 DMADDR(sc), bitmask_snprintf(csr, DMACSRBITS, bits,
+		 sizeof(bits))));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			csr, DMACSRBITS);
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
 		return 0;
 	}
 
@@ -510,6 +512,7 @@ int
 ledmaintr(sc)
 	struct dma_softc *sc;
 {
+	char bits[64];
 	u_long csr;
 
 	csr = DMACSR(sc);
@@ -518,8 +521,8 @@ ledmaintr(sc)
 		printf("Lance DMA error, see your doctor!\n");
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			(u_int)csr, DMACSRBITS);
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
 	}
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.28 1996/10/13 03:00:09 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.29 1996/11/13 06:13:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -328,6 +328,7 @@ si_attach(parent, self, args)
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
 	struct bootpath *bp;
+	char bits[64];
 	int i;
 
 	/* Pull in the options flags. */
@@ -457,8 +458,9 @@ si_attach(parent, self, args)
 	}
 	printf(" pri %d\n", ra->ra_intr[0].int_pri);
 	if (sc->sc_options) {
-		printf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
-			sc->sc_options, SI_OPTIONS_BITS);
+		printf("%s: options=%s\n", ncr_sc->sc_dev.dv_xname,
+			bitmask_snprintf(sc->sc_options, SI_OPTIONS_BITS,
+			    bits, sizeof(bits)));
 	}
 #ifdef	DEBUG
 	if (si_debug)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 1996/10/13 03:06:42 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1996/11/13 06:22:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -311,10 +311,13 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (mmudebug && mmutype == MMU_68040) {
 #ifdef M68060
 		if (machineid & AMIGA_68060) {
-			if (--donomore == 0 || mmudebug & 1)
-				printf ("68060 access error: pc %x, code %b,"
+			if (--donomore == 0 || mmudebug & 1) {
+				char bits[64];
+				printf ("68060 access error: pc %x, code %s,"
 				     " ea %x\n", fp->f_pc, 
-				     code, FSLW_STRING, v);
+				     bitmask_snprintf(code, FSLW_STRING,
+				     bits, sizeof(bits)), v);
+			}
 			if (p == oldp && v == oldv && code == oldcode)
 				panic("Identical fault backtoback!");
 			if (donomore == 0) 
