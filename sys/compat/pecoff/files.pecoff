@@ -1,0 +1,4 @@
+#	$NetBSD: files.pecoff,v 1.1 2000/06/04 16:29:25 mycroft Exp $
+#
+
+#file	compat/pecoff/pecoff_exec.c	compat_pecoff
