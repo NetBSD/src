@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.15 1995/03/25 22:28:30 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.16 1995/03/26 15:52:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,10 +75,10 @@
 #include <mman.h>
 
 #include "ite.h"
-/* #if NITE == 0 */
+#if NITE == 0
 #define	iteon(u,f)
 #define	iteoff(u,f)
-/* #endif */
+#endif
 
 int	grfprobe();
 int	macvideo_init(), macvideo_mode();
