@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.26 2001/01/03 14:32:40 mjl Exp $	*/
+/* $NetBSD: cat.c,v 1.27 2001/07/29 22:40:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,18 +47,18 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.26 2001/01/03 14:32:40 mjl Exp $");
+__RCSID("$NetBSD: cat.c,v 1.27 2001/07/29 22:40:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <locale.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,14 +89,14 @@ main(int argc, char *argv[])
 		case 'e':
 			eflag = vflag = 1;	/* -e implies -v */
 			break;
+		case 'f':
+			fflag = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			break;
 		case 's':
 			sflag = 1;
-			break;
-		case 'f':
-			fflag = 1;
 			break;
 		case 't':
 			tflag = vflag = 1;	/* -t implies -v */
