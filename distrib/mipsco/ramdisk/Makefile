@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/10/13 06:16:13 jmc Exp $
+#	$NetBSD: Makefile,v 1.7 2001/11/04 06:18:26 wdk Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=	${.CURDIR}/../miniroot
@@ -82,4 +82,3 @@ clean cleandir distclean:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
-.include <bsd.depall.mk>
