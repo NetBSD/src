@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.10 2001/05/28 06:43:20 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.11 2002/04/15 17:05:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,7 +33,9 @@
 #ifndef _MACHINE_IOMAP_H
 #define _MACHINE_IOMAP_H
 
+#ifdef _KERNEL_OPT
 #include "opt_mbtype.h"
+#endif
 /*
  * Atari TT hardware:
  * I/O Address maps
