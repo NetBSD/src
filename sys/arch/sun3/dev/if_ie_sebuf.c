@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.9 2002/10/02 16:02:26 thorpej Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.10 2003/07/15 03:36:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,10 @@
  * Machine-dependent glue for the Intel Ethernet (ie) driver,
  * as found on the Sun3/E SCSI/Ethernet board.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.10 2003/07/15 03:36:15 lukem Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>

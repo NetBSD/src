@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.4 2003/06/23 11:01:36 martin Exp $	*/
+/*	$NetBSD: altivec.c,v 1.5 2003/07/15 02:54:45 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.5 2003/07/15 02:54:45 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

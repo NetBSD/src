@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4 2003/06/23 13:06:55 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 2003/07/15 02:54:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.6 2003/01/18 06:37:06 thorpej Exp $	*/
+/*	$NetBSD: profile.c,v 1.7 2003/07/15 03:36:04 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  * The fiq based profiler.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.7 2003/07/15 03:36:04 lukem Exp $");
 
 #include "profiler.h"
 

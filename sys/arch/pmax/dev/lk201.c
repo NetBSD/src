@@ -1,9 +1,12 @@
-/*	$NetBSD: lk201.c,v 1.20 2002/09/27 15:36:35 provos Exp $	*/
+/*	$NetBSD: lk201.c,v 1.21 2003/07/15 02:54:39 lukem Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
  * functions for the keyboard and mouse.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lk201.c,v 1.21 2003/07/15 02:54:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

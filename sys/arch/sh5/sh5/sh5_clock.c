@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.4 2003/04/20 21:26:46 scw Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.5 2003/07/15 03:36:00 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,6 +77,9 @@
  *
  *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.5 2003/07/15 03:36:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

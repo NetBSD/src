@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.4 2002/10/02 04:11:36 thorpej Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.5 2003/07/15 02:54:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -124,6 +124,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.5 2003/07/15 02:54:41 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

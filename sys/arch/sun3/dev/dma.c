@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.13 2002/10/02 16:02:25 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.14 2003/07/15 03:36:14 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.14 2003/07/15 03:36:14 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

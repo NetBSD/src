@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.2 2002/10/05 17:01:51 chs Exp $	*/
+/*	$NetBSD: hat.c,v 1.3 2003/07/15 03:36:03 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,6 +40,10 @@
  *
  * Created      : 19/05/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.3 2003/07/15 03:36:03 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

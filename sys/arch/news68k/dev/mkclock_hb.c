@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.5 2002/12/20 16:23:47 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

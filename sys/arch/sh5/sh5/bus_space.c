@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2002/10/24 13:56:45 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2003/07/15 03:35:59 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -75,6 +75,9 @@
  * Implementation of bus_space for sh5.
  * Derived from the mvme68k bus_space implementation.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2003/07/15 03:35:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

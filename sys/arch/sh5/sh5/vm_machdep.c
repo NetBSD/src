@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2003/01/19 19:49:57 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2003/07/15 03:36:01 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,6 +60,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2003/07/15 03:36:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.9 2001/09/05 14:18:10 tsutsui Exp $	*/
+/*	$NetBSD: idprom.c,v 1.10 2003/07/15 03:36:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Machine ID PROM - system type and serial number
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.10 2003/07/15 03:36:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

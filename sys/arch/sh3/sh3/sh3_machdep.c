@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.48 2003/04/11 22:02:33 nathanw Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.49 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.49 2003/07/15 03:35:58 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"

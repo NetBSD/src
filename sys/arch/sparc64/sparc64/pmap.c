@@ -1,6 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2003/05/17 01:38:40 nakayama Exp $	*/
-#undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
-#define	HWREF
+/*	$NetBSD: pmap.c,v 1.142 2003/07/15 03:36:09 lukem Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,6 +24,12 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2003/07/15 03:36:09 lukem Exp $");
+
+#undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
+#define	HWREF
 
 #include "opt_ddb.h"
 

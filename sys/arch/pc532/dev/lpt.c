@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.38 2002/10/23 09:11:43 jdolecek Exp $	*/
+/*	$NetBSD: lpt.c,v 1.39 2003/07/15 02:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -58,6 +58,10 @@
  * This driver is based on the i386 lpt driver and
  * some IP code from Poul-Henning Kamp.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.39 2003/07/15 02:54:32 lukem Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>

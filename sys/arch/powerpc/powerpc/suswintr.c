@@ -1,4 +1,4 @@
-/*	$NetBSD: suswintr.c,v 1.2 2000/06/09 14:05:48 kleink Exp $	*/
+/*	$NetBSD: suswintr.c,v 1.3 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.3 2003/07/15 02:54:48 lukem Exp $");
 
 #include <sys/systm.h>
 

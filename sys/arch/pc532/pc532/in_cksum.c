@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.8 1998/08/15 10:18:17 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.9 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  * from tahoe:	in_cksum.c	1.2	86/01/05
  *	@(#)in_cksum.c	1.3 (Berkeley) 1/19/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2003/07/15 02:54:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

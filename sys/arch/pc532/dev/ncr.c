@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.48 2002/10/02 04:18:56 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.49 2003/07/15 02:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.49 2003/07/15 02:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.16 2003/06/29 22:28:59 fvdl Exp $	*/
+/*	$NetBSD: pcons.c,v 1.17 2003/07/15 03:36:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -32,6 +32,9 @@
  * Default console driver.  Uses the PROM or whatever
  * driver(s) are appropriate.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.17 2003/07/15 03:36:06 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,7 @@
-/*	$NetBSD: cpu_ofbus.c,v 1.4 2002/10/02 15:52:37 thorpej Exp $	*/
+/*	$NetBSD: cpu_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

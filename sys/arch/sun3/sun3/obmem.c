@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.18 2002/10/02 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.19 2003/07/15 03:36:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * On-board MEMory (OBMEM)
  * Used by frame buffers...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.19 2003/07/15 03:36:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

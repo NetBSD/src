@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.15 2003/04/01 15:31:12 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.16 2003/07/15 03:36:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * cache flush operations specific to the Sun3 custom MMU
  * all are done using writes to control space
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.16 2003/07/15 03:36:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

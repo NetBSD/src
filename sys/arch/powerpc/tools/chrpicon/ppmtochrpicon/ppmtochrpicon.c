@@ -1,4 +1,4 @@
-/*	$NetBSD: ppmtochrpicon.c,v 1.2 2001/08/20 12:20:06 wiz Exp $	*/
+/*	$NetBSD: ppmtochrpicon.c,v 1.3 2003/07/15 02:54:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@
  *
  * It then produces a PPM file on stdout containing the boot icon's image.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ppmtochrpicon.c,v 1.3 2003/07/15 02:54:50 lukem Exp $");
 
 #include <stdlib.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307.c,v 1.2 2003/01/06 13:05:06 wiz Exp $	*/
+/*	$NetBSD: ns87307.c,v 1.3 2003/07/15 03:36:03 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -55,6 +55,9 @@
 **
 **--
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.3 2003/07/15 03:36:03 lukem Exp $");
 
 #include "opt_ddb.h"
 

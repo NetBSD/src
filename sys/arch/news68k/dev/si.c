@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.12 2003/04/19 16:43:59 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.13 2003/07/15 02:59:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  *
  * This code is based on arch/vax/vsa/ncr.c and sun3/dev/si.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13 2003/07/15 02:59:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: chrpicontoppm.c,v 1.1.1.1 1999/11/19 00:43:20 lonhyn Exp $	*/
+/*	$NetBSD: chrpicontoppm.c,v 1.2 2003/07/15 02:54:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
  *
  * It then produces a CHRP style boot icon file on stdout.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: chrpicontoppm.c,v 1.2 2003/07/15 02:54:49 lukem Exp $");
 
 #include <stdlib.h>
 

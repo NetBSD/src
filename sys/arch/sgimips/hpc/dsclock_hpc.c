@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.7 2003/01/19 22:20:44 rafal Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.8 2003/07/15 03:35:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.8 2003/07/15 03:35:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

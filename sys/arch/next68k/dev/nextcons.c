@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.5 2002/09/11 07:06:16 mycroft Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.6 2003/07/15 02:59:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.6 2003/07/15 02:59:31 lukem Exp $");
 
 #include <sys/cdefs.h>
 

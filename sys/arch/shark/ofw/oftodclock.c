@@ -1,4 +1,4 @@
-/*	$NetBSD: oftodclock.c,v 1.2 2002/10/05 17:01:50 chs Exp $	*/
+/*	$NetBSD: oftodclock.c,v 1.3 2003/07/15 03:36:02 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,6 +38,9 @@
  *      inittodr()
  *      resettodr()
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oftodclock.c,v 1.3 2003/07/15 03:36:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

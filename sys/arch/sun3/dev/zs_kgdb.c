@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.17 2003/03/30 01:20:13 kristerw Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.18 2003/07/15 03:36:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  *   (gdb) set remotebaud 19200
  *   (gdb) target remote /dev/ttyb
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.18 2003/07/15 03:36:16 lukem Exp $");
 
 #include "opt_kgdb.h"
 

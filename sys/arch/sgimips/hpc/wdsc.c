@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.10 2002/10/02 04:09:16 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.11 2003/07/15 03:35:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.11 2003/07/15 03:35:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8 2003/04/10 16:07:15 scw Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.9 2003/07/15 02:54:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.9 2003/07/15 02:54:45 lukem Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"

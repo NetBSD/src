@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.10 2002/12/26 22:25:12 pooka Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.11 2003/07/15 03:35:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,6 +35,9 @@
 /*
  * MACE MAC-110 ethernet driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.11 2003/07/15 03:35:51 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
