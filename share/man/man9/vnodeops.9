@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.4 2001/10/26 03:48:41 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.5 2001/10/26 06:24:08 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -636,7 +636,7 @@ do I/O as atomic unit
 .It IO_APPEND
 append write to end
 .It IO_SYNC
-do I/O asynchronously
+do I/O synchronously
 .It IO_NODELOCKED
 underlying node already locked
 .It IO_NDELAY
@@ -687,7 +687,7 @@ Most file systems do not supply a function for
 .Fn VOP_IOCTL .
 This function implments the
 .Xr ioctl 2
-sustem call.
+system call.
 .It Fn VOP_FCNTL "vp" "command" "data" "fflag" "cred" "p"
 Perform file control.  The argument
 .Fa vp
@@ -716,7 +716,7 @@ that may have occurred for the file.  The argument
 .Fa events
 is a set of flags as specified by
 .Xr poll 2 .
-The the operation is successful zero is returned, otherwise an
+If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn VOP_REVOKE "vp" "flags"
 Eliminate all activity associated with the vnode
@@ -745,7 +745,7 @@ returned.
 .Pp
 Most file systems do not supply a function for
 .Fn VOP_MMAP .
-This function implemtns the
+This function implements the
 .Xr mmap 2
 system call.
 .It Fn VOP_FSYNC "vp" "cred" "flags" "offlo" "offhi" "p"
@@ -756,9 +756,15 @@ is the locked vnode of the file for flush.  The argument
 is the caller's credentials and
 .Fa p
 the calling process.  The argument
-.Fa waitfor
-specifies whether the function should wait for I/O to complete before
-returning.  Valid values are either MNT_WAIT or MNT_NOWAIT.  If the
+.Fa flags
+is a set of flags. If FSYNC_WAIT is specified in
+.Fa flags ,
+the function should wait for I/O to complete before returning.
+The argument
+.Fa offlo
+and
+.Fa offhi
+specify the range of file to flush. If the
 operation is successful zero is returned, otherwise an appropriate
 error code is returned.
 .Pp
@@ -923,7 +929,7 @@ The directory contents are read into struct dirent structures.  If the
 operation is successful zero is returned, otherwise an appropriate
 error code is returned.
 .Pp
-The directory should be locked on entry and will remain unlocked on
+The directory should be locked on entry and will remain locked on
 return.
 .Pp
 If
@@ -1009,9 +1015,6 @@ is a set of
 .Xr lockmgr 9
 flags.  If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-.Fn VOP_UNLOCK
-is used to serialise access to the file system such as to present two
-writes to the same file from happening at the same time.
 .Fn VOP_UNLOCK
 is used to serialise access to the file system such as to present two
 writes to the same file from happening at the same time.
@@ -1268,7 +1271,7 @@ and
 specifies the range of VM pages to write.  There seems to be some
 confusion in the code whether
 .Fa offset
-ans
+and
 .Fa len
 specify the start and length of the VM pages for the start and end of
 the VM pages.  The argument
