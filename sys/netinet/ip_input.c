@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.74 1998/11/13 03:24:22 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.75 1998/12/18 21:35:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -164,7 +164,59 @@ struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
 u_int16_t	ip_id;
 int	ip_defttl;
+
 struct ipqhead ipq;
+int	ipq_locked;
+
+static __inline int ipq_lock_try __P((void));
+static __inline void ipq_unlock __P((void));
+
+static __inline int
+ipq_lock_try()
+{
+	int s;
+
+	s = splimp();
+	if (ipq_locked) {
+		splx(s);
+		return (0);
+	}
+	ipq_locked = 1;
+	splx(s);
+	return (1);
+}
+
+static __inline void
+ipq_unlock()
+{
+	int s;
+
+	s = splimp();
+	ipq_locked = 0;
+	splx(s);
+}
+
+#ifdef DIAGNOSTIC
+#define	IPQ_LOCK()							\
+do {									\
+	if (ipq_lock_try() == 0) {					\
+		printf("%s:%d: ipq already locked\n", __FILE__, __LINE__); \
+		panic("ipq_lock");					\
+	}								\
+} while (0)
+#define	IPQ_LOCK_CHECK()						\
+do {									\
+	if (ipq_locked == 0) {						\
+		printf("%s:%d: ipq lock not held\n", __FILE__, __LINE__); \
+		panic("ipq lock check");				\
+	}								\
+} while (0)
+#else
+#define	IPQ_LOCK()		(void) ipq_lock_try()
+#define	IPQ_LOCK_CHECK()	/* nothing */
+#endif
+
+#define	IPQ_UNLOCK()		ipq_unlock()
 
 struct pool ipqent_pool;
 
@@ -466,6 +518,7 @@ ours:
 		 * Look for queue of fragments
 		 * of this datagram.
 		 */
+		IPQ_LOCK();
 		for (fp = ipq.lh_first; fp != NULL; fp = fp->ipq_q.le_next)
 			if (ip->ip_id == fp->ipq_id &&
 			    in_hosteq(ip->ip_src, fp->ipq_src) &&
@@ -489,6 +542,7 @@ found:
 		         */
 			if (ip->ip_len == 0 || (ip->ip_len & 0x7) != 0) {
 				ipstat.ips_badfrags++;
+				IPQ_UNLOCK();
 				goto bad;
 			}
 		}
@@ -504,20 +558,24 @@ found:
 			ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
 			if (ipqe == NULL) {
 				ipstat.ips_rcvmemdrop++;
+				IPQ_UNLOCK();
 				goto bad;
 			}
 			ipqe->ipqe_mff = mff;
 			ipqe->ipqe_m = m;
 			ipqe->ipqe_ip = ip;
 			m = ip_reass(ipqe, fp);
-			if (m == 0)
+			if (m == 0) {
+				IPQ_UNLOCK();
 				goto next;
+			}
 			ipstat.ips_reassembled++;
 			ip = mtod(m, struct ip *);
 			hlen = ip->ip_hl << 2;
 		} else
 			if (fp)
 				ip_freef(fp);
+		IPQ_UNLOCK();
 	} else
 		ip->ip_len -= hlen;
 
@@ -549,6 +607,8 @@ ip_reass(ipqe, fp)
 	struct mbuf *t;
 	int hlen = ipqe->ipqe_ip->ip_hl << 2;
 	int i, next;
+
+	IPQ_LOCK_CHECK();
 
 	/*
 	 * Presence of header sizes in mbufs
@@ -704,6 +764,8 @@ ip_freef(fp)
 {
 	register struct ipqent *q, *p;
 
+	IPQ_LOCK_CHECK();
+
 	for (q = fp->ipq_fragq.lh_first; q != NULL; q = p) {
 		p = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
@@ -725,6 +787,7 @@ ip_slowtimo()
 	register struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
+	IPQ_LOCK();
 	for (fp = ipq.lh_first; fp != NULL; fp = nfp) {
 		nfp = fp->ipq_q.le_next;
 		if (--fp->ipq_ttl == 0) {
@@ -732,6 +795,7 @@ ip_slowtimo()
 			ip_freef(fp);
 		}
 	}
+	IPQ_UNLOCK();
 #ifdef GATEWAY
 	ipflow_slowtimo();
 #endif
@@ -745,10 +809,19 @@ void
 ip_drain()
 {
 
+	/*
+	 * We may be called from a device's interrupt context.  If
+	 * the ipq is already busy, just bail out now.
+	 */
+	if (ipq_lock_try() == 0)
+		return;
+
 	while (ipq.lh_first != NULL) {
 		ipstat.ips_fragdropped++;
 		ip_freef(ipq.lh_first);
 	}
+
+	IPQ_UNLOCK();
 }
 
 /*
