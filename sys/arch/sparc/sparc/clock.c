@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1994/12/16 22:16:58 deraadt Exp $ */
+/*	$NetBSD: clock.c,v 1.16 1994/12/17 05:40:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,12 +67,7 @@
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
-#include <sparc/sparc/intersil7170.h>
 #include <sparc/sparc/cache.h>
-
-#ifdef SUN4
-extern struct idprom idprom;
-#endif
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -86,6 +81,11 @@ extern struct idprom idprom;
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
+
+#if defined(SUN4)
+#include <sparc/sparc/intersil7170.h>
+extern struct idprom idprom;
+
 static int oldclk = 0;
 volatile struct intersil7170 *i7;
 
@@ -106,8 +106,6 @@ volatile struct intersil7170 *i7;
 /*
  * OCLOCK support: 4/100's and 4/200's have the old clock.  
  */
-
-
 static long oclk_get_secs __P((void));
 static void oclk_get_dt __P((struct date_time *));
 static void dt_to_gmt __P((struct date_time *, long *));
@@ -120,6 +118,7 @@ static void oclockattach __P((struct device *, struct device *, void *));
 struct cfdriver oclockcd =
     { NULL, "oclock", oclockmatch, oclockattach, DV_DULL,
 	sizeof(struct device) };
+#endif
 
 static int clockmatch __P((struct device *, void *, void *));
 static void clockattach __P((struct device *, struct device *, void *));
@@ -144,7 +143,7 @@ oclockmatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
-#ifdef SUN4
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		if (idprom.id_machine == SUN4_100 || idprom.id_machine == SUN4_200)
 			return (strcmp(oclockcd.cd_name, ca->ca_ra.ra_name) == 0);
@@ -154,9 +153,7 @@ oclockmatch(parent, vcf, aux)
 	return (0); /* only sun4 has oclock */
 }
 
-/*
- * old clock attach, must be SUN4
- */
+#if defined(SUN4)
 
 /* ARGSUSED */
 static void
@@ -188,6 +185,7 @@ oclockattach(parent, self, aux)
 	h |= idp->id_hostid[2];
 	hostid = h;
 }
+#endif /* SUN4 */
 
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
@@ -201,7 +199,7 @@ clockmatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
-#ifdef SUN4
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		if (idprom.id_machine == SUN4_300 || idprom.id_machine == SUN4_400)
 			return (strcmp(clockcd.cd_name, ca->ca_ra.ra_name) == 0);
@@ -283,7 +281,7 @@ timermatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
-#ifdef SUN4
+#if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
 		if (idprom.id_machine == SUN4_300 || idprom.id_machine == SUN4_400)
 			return (strcmp("timer", ca->ca_ra.ra_name) == 0);
@@ -371,6 +369,7 @@ delay(n)
 {
 	register int c, t;
 
+#if defined(SUN4)
 	if (oldclk) {
 		volatile register int lcv;
 
@@ -388,6 +387,7 @@ delay(n)
 		}
 		return (0);
 	}
+#endif /* SUN4 */
 
 	if (timerok==0)
 		return (0);
@@ -412,6 +412,7 @@ cpu_initclocks()
 {
 	register int statint, minint;
 
+#if defined(SUN4)
 	if (oldclk) {
 		int dummy;
 		profhz = hz = 100;
@@ -431,6 +432,7 @@ cpu_initclocks()
 
 		return (0);
 	}
+#endif /* SUN4 */
 
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -478,14 +480,17 @@ clockintr(cap)
 	volatile register int discard;
 	extern int rom_console_input;
 
+#if defined(SUN4)
 	if (oldclk) {
 		discard = intersil_clear(i7);
 		ienab_bic(IE_L10);  /* clear interrupt */
 		ienab_bis(IE_L10);  /* enable interrupt */
-	} else {
-		/* read the limit register to clear the interrupt */
-		discard = TIMERREG->t_c10.t_limit;
+		goto forward;
 	}
+#endif
+	/* read the limit register to clear the interrupt */
+	discard = TIMERREG->t_c10.t_limit;
+forward:
 	hardclock((struct clockframe *)cap);
 	if (rom_console_input && cnrom())
 		setsoftint();
@@ -503,10 +508,12 @@ statintr(cap)
 	volatile register int discard;
 	register u_long newint, r, var;
 
+#if defined(SUN4)
 	if (oldclk) {
 		panic("oldclk statintr");
 		return (1);
 	}
+#endif
 
 	/* read the limit register to clear the interrupt */
 	discard = TIMERREG->t_c14.t_limit;
@@ -645,21 +652,25 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
+#if defined(SUN4)
 	if (oldclk) {
 		time.tv_sec = oclk_get_secs();
-	} else {
-		clk_wenable(1);
-		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-		sec = cl->cl_sec;
-		min = cl->cl_min;
-		hour = cl->cl_hour;
-		day = cl->cl_mday;
-		mon = cl->cl_month;
-		year = cl->cl_year;
-		cl->cl_csr &= ~CLK_READ;	/* time wears on */
-		clk_wenable(0);
-		time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
+		goto forward;
 	}
+#endif
+	clk_wenable(1);
+	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
+	sec = cl->cl_sec;
+	min = cl->cl_min;
+	hour = cl->cl_hour;
+	day = cl->cl_mday;
+	mon = cl->cl_month;
+	year = cl->cl_year;
+	cl->cl_csr &= ~CLK_READ;	/* time wears on */
+	clk_wenable(0);
+	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
+
+forward:
 	if (time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
@@ -693,12 +704,14 @@ resettodr()
 	register struct clockreg *cl;
 	struct chiptime c;
 
+#if defined(SUN4)
 	if (oldclk) {
 		if (!time.tv_sec || i7 == NULL)
 			return;
 		oclk_set_secs(time.tv_sec);
 		return;
 	}
+#endif
 
 	if (!time.tv_sec || (cl = clockreg) == NULL)
 		return;
@@ -716,10 +729,10 @@ resettodr()
 	clk_wenable(0);
 }
 
+#if defined(SUN4)
 /*
  * Now routines to get and set clock as POSIX time.
  */
-
 static long
 oclk_get_secs()
 {
@@ -905,6 +918,7 @@ dt_to_gmt(dt, tp)
 out:
         *tp = tmp;
 }
+#endif /* SUN4 */
 
 /*
  * Return the best possible estimate of the time in the timeval
@@ -922,8 +936,10 @@ microtime(tvp)
 	int s; 
 	static struct timeval lasttime;
 
+#if defined(SUN4)
 	if (!oldclk)
 		return (lo_microtime());
+#endif
 	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec;
