@@ -1,11 +1,11 @@
-/* $NetBSD: zconf.h,v 1.3 1998/11/01 21:28:51 tron Exp $ */
+/* $NetBSD: zconf.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) Id */
+/* @(#) $Id: zconf.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -137,11 +137,11 @@
 
                         /* Type declarations */
 
-#ifndef OF /* function prototypes */
+#ifndef __P /* function prototypes */
 #  ifdef STDC
-#    define OF(args)  args
+#    define __P(args)  args
 #  else
-#    define OF(args)  ()
+#    define __P(args)  ()
 #  endif
 #endif
 
@@ -242,7 +242,7 @@ typedef uLong FAR uLongf;
    typedef Byte     *voidp;
 #endif
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H)
 #  include <sys/types.h> /* for off_t */
 #  include <unistd.h>    /* for SEEK_* and off_t */
 #  define z_off_t  off_t
