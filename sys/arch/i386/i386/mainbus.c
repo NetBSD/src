@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.43 2002/12/28 06:14:08 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.44 2002/12/28 17:11:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.43 2002/12/28 06:14:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.44 2002/12/28 17:11:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.43 2002/12/28 06:14:08 jmcneill Exp $"
 #include "pci.h"
 #include "eisa.h"
 #include "isa.h"
+#include "isadma.h"
 #include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
@@ -186,6 +187,13 @@ mainbus_attach(parent, self, aux)
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
 	pci_mode = pci_mode_detect();
+#endif
+
+#if NISADMA > 0 && (NACPCI > 0 || NPNPBIOS > 0)
+	/*
+	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
+	 */
+	isa_dmainit(sc->sc_ic, I386_BUS_SPACE_IO, &isa_bus_dma_tag, self);
 #endif
 
 #if NACPI > 0
