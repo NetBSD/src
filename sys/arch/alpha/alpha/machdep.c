@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1996/11/13 21:13:08 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1996/11/16 23:07:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1353,8 +1353,10 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	struct trapframe *tfp = p->p_md.md_tf;
-	int i;
 	extern struct proc *fpcurproc;
+#ifdef DEBUG
+	int i;
+#endif
 
 #ifdef DEBUG
 	/*
