@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.392 2001/11/02 05:21:47 tv Exp $
+#	$NetBSD: mi,v 1.393 2001/11/05 15:05:55 hubertf Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1972,6 +1972,7 @@
 ./usr/share/man/cat3/jn.0	comp-c-catman
 ./usr/share/man/cat3/jnf.0	comp-c-catman
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
+./usr/share/man/cat3/kafs.0	comp-c-catman
 ./usr/share/man/cat3/kerberos.0	comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
@@ -4308,6 +4309,7 @@
 ./usr/share/man/man3/jn.3		comp-c-man
 ./usr/share/man/man3/jnf.3		comp-c-man
 ./usr/share/man/man3/jrand48.3		comp-c-man
+./usr/share/man/man3/kafs.3		comp-c-man
 ./usr/share/man/man3/kerberos.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
