@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.4 1999/03/14 14:19:06 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.4.2.1 1999/04/06 15:29:33 tsubai Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,6 @@ menu md_distcustom, x=30, y=3, exit, title " Sélection des composants";
 	option  "X11 base et clients",	 action { toggle_getit (8); };
 	option  "X11 polices",		 action { toggle_getit (9); };
 	option  "X11 serveurs",		 action { toggle_getit (10); };
-	option  "X11 clients contribués", action { toggle_getit (10); };
-	option  "X11 développement",	 action { toggle_getit (11); };
+	option  "X11 clients contribués", action { toggle_getit (11); };
+	option  "X11 développement",	 action { toggle_getit (12); };
 
