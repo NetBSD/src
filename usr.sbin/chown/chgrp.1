@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.16 2003/08/07 11:25:14 agc Exp $
+.\"	$NetBSD: chgrp.1,v 1.17 2003/09/25 10:30:10 dsl Exp $
 .\"
-.Dd January 18, 2003
+.Dd September 25, 2003
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -110,8 +110,11 @@ The
 .Ar group
 operand can be either a group name from the group database,
 or a numeric group ID.
-If a group name is also a numeric group ID, the operand is used as a
-group name.
+Since it is valid to have a group name that is numeric (and
+doesn't have the numeric ID that matches its name) the name lookup
+is always done first.
+Preceeding the ID with a ``#'' character will force it to be taken
+as a number.
 .Pp
 The user invoking
 .Nm
@@ -147,5 +150,6 @@ utility is expected to be POSIX 1003.2 compatible.
 .Pp
 The
 .Fl v
-option is an extension to
+option and the use of ``#'' to force a numeric group ID
+are extensions to
 .St -p1003.2 .

@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.18 2003/08/07 11:25:14 agc Exp $
+.\"	$NetBSD: chown.8,v 1.19 2003/09/25 10:30:10 dsl Exp $
 .\"
-.Dd January 18, 2003
+.Dd September 25, 2003
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -114,14 +114,15 @@ operand is specified, it must be preceded by a colon (``:'') character.
 .Pp
 The
 .Ar owner
-may be either a numeric user ID or a user name.
-If a user name is also a numeric user ID, the operand is used as a
-user name.
+may be either a user name or a numeric user ID.
 The
 .Ar group
-may be either a numeric group ID or a group name.
-If a group name is also a numeric group ID, the operand is used as a
-group name.
+may be either a group name or a numeric group ID.
+Since it is valid to have a user or group name that is numeric (and
+doesn't have the numeric ID that matches its name) the name lookup
+is always done first.
+Preceeding an ID with a ``#'' character will force it to be taken
+as a number.
 .Pp
 The ownership of a file may only be altered by a super-user for
 obvious security reasons.
@@ -155,5 +156,6 @@ command is expected to be POSIX 1003.2 compliant.
 .Pp
 The
 .Fl v
-option is an extension to
+option and the use of ``#'' to force a numeric lookup
+are extensions to
 .St -p1003.2 .
