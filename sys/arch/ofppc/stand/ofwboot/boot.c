@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2000/09/24 12:32:37 jdolecek Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2001/01/17 15:37:06 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -253,8 +253,7 @@ aout_exec(fd, hdr, entryp, esymp)
 	u_int32_t *entryp;
 	void **esymp;
 {
-	void *addr;
-	int n, *paddr;
+	int n, *addr;
 
 	/* Display the load address (entry point) for a.out. */
 	printf("Booting %s @ 0x%lx\n", opened_name, hdr->a_entry);
@@ -265,53 +264,49 @@ aout_exec(fd, hdr, entryp, esymp)
 	 * the firmware.
 	 */
 	n = hdr->a_text + hdr->a_data + hdr->a_bss + hdr->a_syms + sizeof(int);
-	if ((paddr = OF_claim(addr, n, 0)) == (int *)-1)
-		panic("cannot claim memory");
 
 	/* Load text. */
 	lseek(fd, N_TXTOFF(*hdr), SEEK_SET);
 	printf("%lu", hdr->a_text);
-	if (read(fd, paddr, hdr->a_text) != hdr->a_text) {
+	if (read(fd, addr, hdr->a_text) != hdr->a_text) {
 		printf("read text: %s\n", strerror(errno));
 		return (1);
 	}
-	__syncicache((void *)paddr, hdr->a_text);
+	__syncicache((void *)addr, hdr->a_text);
 
 	/* Load data. */
 	printf("+%lu", hdr->a_data);
-	if (read(fd, (void *)paddr + hdr->a_text, hdr->a_data) != hdr->a_data) {
+	if (read(fd, (char *)addr + hdr->a_text, hdr->a_data) != hdr->a_data) {
 		printf("read data: %s\n", strerror(errno));
 		return (1);
 	}
 
 	/* Zero BSS. */
 	printf("+%lu", hdr->a_bss);
-	bzero((void *)paddr + hdr->a_text + hdr->a_data, hdr->a_bss);
+	bzero((char *)addr + hdr->a_text + hdr->a_data, hdr->a_bss);
 
 	/* Symbols. */
-	*esymp = paddr;
-	paddr = (int *)((void *)paddr + hdr->a_text + hdr->a_data + hdr->a_bss);
-	*paddr++ = hdr->a_syms;
+	*esymp = addr;
+	addr = (int *)((char *)addr + hdr->a_text + hdr->a_data + hdr->a_bss);
+	*addr++ = hdr->a_syms;
 	if (hdr->a_syms) {
 		printf(" [%lu", hdr->a_syms);
-		if (read(fd, paddr, hdr->a_syms) != hdr->a_syms) {
+		if (read(fd, addr, hdr->a_syms) != hdr->a_syms) {
 			printf("read symbols: %s\n", strerror(errno));
 			return (1);
 		}
-		paddr = (int *)((void *)paddr + hdr->a_syms);
+		addr = (int *)((char *)addr + hdr->a_syms);
 		if (read(fd, &n, sizeof(int)) != sizeof(int)) {
 			printf("read symbols: %s\n", strerror(errno));
 			return (1);
 		}
-		if (OF_claim((void *)paddr, n + sizeof(int), 0) == (void *)-1)
-			panic("cannot claim memory");
-		*paddr++ = n;
-		if (read(fd, paddr, n - sizeof(int)) != n - sizeof(int)) {
+		*addr++ = n;
+		if (read(fd, addr, n - sizeof(int)) != n - sizeof(int)) {
 			printf("read symbols: %s\n", strerror(errno));
 			return (1);
 		}
 		printf("+%d]", n - sizeof(int));
-		*esymp = paddr + (n - sizeof(int));
+		*esymp = addr + (n - sizeof(int));
 	}
 
 	*entryp = hdr->a_entry;
@@ -355,9 +350,6 @@ elf_exec(fd, elf, entryp, esymp)
 		printf("%s%lu@0x%lx", first ? "" : "+", phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, phdr.p_offset, SEEK_SET);
-		if (OF_claim((void *)phdr.p_vaddr, phdr.p_memsz, 0) ==
-		    (void *)-1)
-			panic("cannot claim memory");
 		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
 			printf("read segment: %s\n", strerror(errno));
@@ -402,11 +394,7 @@ elf_exec(fd, elf, entryp, esymp)
 	}
 	shp = addr;
 
-	/*
-	 * Reserve memory for the symbols.
-	 */
-	if ((addr = OF_claim(0, size, NBPG)) == (void *)-1)
-		panic("no space for symbol table");
+	panic("no space for symbol table");
 
 	/*
 	 * Copy the headers.
