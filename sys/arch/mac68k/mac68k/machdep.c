@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 1997/02/14 06:10:53 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1446,13 +1446,11 @@ getenvvars(flag, buf)
 	/*
          * For now, we assume that the boot device is off the first controller.
          */
-	if (bootdev == 0) {
-		bootdev = (root_scsi_id << 16) | 4;
-	}
+	if (bootdev == 0)
+		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
 
-	if (boothowto == 0) {
+	if (boothowto == 0)
 		boothowto = getenv("SINGLE_USER");
-	}
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
