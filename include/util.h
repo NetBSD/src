@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19.2.6 2002/08/27 23:52:36 nathanw Exp $	*/
+/*	$NetBSD: util.h,v 1.19.2.7 2002/09/20 22:01:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -100,6 +100,7 @@ int		pw_mkdb(const char *, int);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		secure_path(const char *);
+int		snprintb(char *, size_t, const char *, uint64_t);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);
