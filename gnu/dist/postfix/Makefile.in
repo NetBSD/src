@@ -11,9 +11,9 @@ default: update
 makefiles Makefiles:
 	set -e; for i in $(DIRS); do \
 	 (set -e; echo "[$$i]"; cd $$i; rm -f Makefile; \
-	 $(MAKE) -f Makefile.in Makefile MAKELEVEL=); \
+	 $(MAKE) -f Makefile.in Makefile MAKELEVEL=) || exit 1; \
 	done;
-	rm -f Makefile; (set -e; $(SHELL) makedefs; cat Makefile.in) >Makefile
+	rm -f Makefile; (set -e; $(SHELL) makedefs && cat Makefile.in) >Makefile
 
 update printfck:
 	set -e; for i in $(DIRS); do \

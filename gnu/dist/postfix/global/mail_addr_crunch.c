@@ -88,6 +88,7 @@ ARGV   *mail_addr_crunch(const char *string, const char *extension)
 		vstring_strcat(canon_addr, extension);
 	    } else {
 		VSTRING_SPACE(canon_addr, extlen + 1);
+		ratsign = strrchr(STR(canon_addr), '@');
 		memmove(ratsign + extlen, ratsign, strlen(ratsign) + 1);
 		memcpy(ratsign, extension, extlen);
 		VSTRING_SKIP(canon_addr);

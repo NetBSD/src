@@ -102,11 +102,21 @@
 #include <recipient_list.h>
 #include <bounce.h>
 #include <defer.h>
+#include <abounce.h>
 #include <rec_type.h>
 
 /* Application-specific. */
 
 #include "qmgr.h"
+
+ /*
+  * A bunch of call-back routines.
+  */
+static void qmgr_active_done_2_bounce_flush(int, char *);
+static void qmgr_active_done_2_generic(QMGR_MESSAGE *);
+static void qmgr_active_done_3_defer_flush(int, char *);
+static void qmgr_active_done_3_defer_warn(int, char *);
+static void qmgr_active_done_3_generic(QMGR_MESSAGE *);
 
 /* qmgr_active_corrupt - move corrupted file out of the way */
 
@@ -235,8 +245,6 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
 {
     char   *myname = "qmgr_active_done";
     struct stat st;
-    const char *path;
-    int     delay;
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, message->queue_id);
@@ -255,6 +263,9 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
      * Don't bounce when the bounce log is empty. The bounce process obviously
      * failed, and the delivery agent will have requested that the message be
      * deferred.
+     * 
+     * Bounces are sent asynchronously to avoid stalling while the cleanup
+     * daemon waits for the qmgr to accept the "new mail" trigger.
      */
     if (stat(mail_queue_path((VSTRING *) 0, MAIL_QUEUE_BOUNCE, message->queue_id), &st) == 0) {
 	if (st.st_size == 0) {
@@ -264,12 +275,42 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
 	} else {
 	    if (msg_verbose)
 		msg_info("%s: bounce %s", myname, message->queue_id);
-	    message->flags |= bounce_flush(BOUNCE_FLAG_KEEP,
-					   message->queue_name,
-					   message->queue_id,
-					   message->errors_to);
+	    abounce_flush(BOUNCE_FLAG_KEEP,
+			  message->queue_name,
+			  message->queue_id,
+			  message->errors_to,
+			  qmgr_active_done_2_bounce_flush,
+			  (char *) message);
+	    return;
 	}
     }
+
+    /*
+     * Asynchronous processing does not reach this point.
+     */
+    qmgr_active_done_2_generic(message);
+}
+
+/* qmgr_active_done_2_bounce_flush - process abounce_flush() status */
+
+static void qmgr_active_done_2_bounce_flush(int status, char *context)
+{
+    QMGR_MESSAGE *message = (QMGR_MESSAGE *) context;
+
+    /*
+     * Process abounce_flush() status and continue processing.
+     */
+    message->flags |= status;
+    qmgr_active_done_2_generic(message);
+}
+
+/* qmgr_active_done_2_generic - continue processing */
+
+static void qmgr_active_done_2_generic(QMGR_MESSAGE *message)
+{
+    char   *myname = "qmgr_active_done_2_generic";
+    const char *path;
+    struct stat st;
 
     /*
      * A delivery agent marks a queue file as corrupt by changing its
@@ -304,6 +345,9 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
     /*
      * If we get to this point we have tried all recipients for this message.
      * If the message is too old, try to bounce it.
+     * 
+     * Bounces are sent asynchronously to avoid stalling while the cleanup
+     * daemon waits for the qmgr to accept the "new mail" trigger.
      */
 #define HOUR	3600
 #define DAY	86400
@@ -312,22 +356,66 @@ void    qmgr_active_done(QMGR_MESSAGE *message)
 	if (event_time() > message->arrival_time + var_max_queue_time * DAY) {
 	    if (msg_verbose)
 		msg_info("%s: too old, bouncing %s", myname, message->queue_id);
-	    message->flags = defer_flush(BOUNCE_FLAG_KEEP,
-					 message->queue_name,
-					 message->queue_id,
-					 message->errors_to);
+	    adefer_flush(BOUNCE_FLAG_KEEP,
+			 message->queue_name,
+			 message->queue_id,
+			 message->errors_to,
+			 qmgr_active_done_3_defer_flush,
+			 (char *) message);
+	    return;
 	} else if (message->warn_time > 0
 		   && event_time() > message->warn_time) {
 	    if (msg_verbose)
 		msg_info("%s: sending defer warning for %s", myname, message->queue_id);
-	    if (defer_warn(BOUNCE_FLAG_KEEP,
-			   message->queue_name,
-			   message->queue_id,
-			   message->errors_to) == 0) {
-		qmgr_message_update_warn(message);
-	    }
+	    adefer_warn(BOUNCE_FLAG_KEEP,
+			message->queue_name,
+			message->queue_id,
+			message->errors_to,
+			qmgr_active_done_3_defer_warn,
+			(char *) message);
+	    return;
 	}
     }
+
+    /*
+     * Asynchronous processing does not reach this point.
+     */
+    qmgr_active_done_3_generic(message);
+}
+
+/* qmgr_active_done_3_defer_warn - continue after adefer_warn() completion */
+
+static void qmgr_active_done_3_defer_warn(int status, char *context)
+{
+    QMGR_MESSAGE *message = (QMGR_MESSAGE *) context;
+
+    /*
+     * Process adefer_warn() completion status and continue processing.
+     */
+    if (status == 0)
+	qmgr_message_update_warn(message);
+    qmgr_active_done_3_generic(message);
+}
+
+/* qmgr_active_done_3_defer_flush - continue after adefer_flush() completion */
+
+static void qmgr_active_done_3_defer_flush(int status, char *context)
+{
+    QMGR_MESSAGE *message = (QMGR_MESSAGE *) context;
+
+    /*
+     * Process adefer_flush() status and continue processing.
+     */
+    message->flags = status;
+    qmgr_active_done_3_generic(message);
+}
+
+/* qmgr_active_done_3_generic - continue processing */
+
+static void qmgr_active_done_3_generic(QMGR_MESSAGE *message)
+{
+    char   *myname = "qmgr_active_done_3_generic";
+    int     delay;
 
     /*
      * Some recipients need to be tried again. Move the queue file time

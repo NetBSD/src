@@ -109,6 +109,7 @@
 #include <msg.h>
 #include <valid_hostname.h>
 #include <stringops.h>
+#include <valid_hostname.h>
 
 /* DNS library. */
 
@@ -429,6 +430,16 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
     DNS_REPLY reply;
     int     count;
     int     status;
+
+    /*
+     * The Linux resolver misbehaves when given an invalid domain name.
+     */
+    if (!valid_hostname(name)) {
+	if (why)
+	    vstring_sprintf(why, "Name service error for %s: invalid name",
+			    name);
+	return (DNS_NOTFOUND);
+    }
 
     /*
      * Perform the lookup. Follow CNAME chains, but only up to a
