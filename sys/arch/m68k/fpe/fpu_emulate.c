@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.6 1996/05/15 07:31:55 leo Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.7 1996/10/04 18:07:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -445,7 +445,7 @@ fpu_emul_fmovm(fe, insn)
     int word1, sig;
     int reglist, regmask, regnum;
     int fpu_to_mem, order;
-    int w1_post_incr;		/* XXX - FP regs order? */
+    int w1_post_incr;
     int *fpregs;
 
     insn->is_advance = 4;
@@ -487,7 +487,10 @@ fpu_emul_fmovm(fe, insn)
     }
 
     while ((0 <= regnum) && (regnum < 8)) {
-	regmask = 1 << regnum;
+	if (w1_post_incr)
+	    regmask = 0x80 >> regnum;
+	else
+	    regmask = 1 << regnum;
 	if (regmask & reglist) {
 	    if (fpu_to_mem) {
 		sig = fpu_store_ea(frame, insn, &insn->is_ea0,
