@@ -1,5 +1,7 @@
-.\" Copyright (c) 1980, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: tip.1,v 1.7 1994/12/08 09:31:05 jtc Exp $
+.\"
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)tip.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: tip.1,v 1.6 1994/09/19 12:26:18 mycroft Exp $
+.\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd July 27, 1991
+.Dd April 18, 1994
 .Dt TIP 1
 .Os BSD 4
 .Sh NAME
@@ -127,7 +128,7 @@ defaults to the ``from'' file name if it isn't specified.
 The remote host
 executes the command string ``cat 'from';echo ^A'' to send the file to
 .Nm tip  .
-.It Ic \&~
+.It Ic \&~|
 Pipe the output from a remote command to a local
 .Ux
 process.
@@ -141,6 +142,19 @@ process to the remote host.
 The command string sent to the local
 .Ux
 system is processed by the shell.
+.It Ic \&~C
+Fork a child process on the local system to perform special protocols
+such as \s-1XMODEM\s+1.  The child program will be run with the following
+somewhat unusual arrangement of file descriptors:
+.nf
+.in +1i
+0 <-> local tty in
+1 <-> local tty out
+2 <-> local tty out
+3 <-> remote tty in
+4 <-> remote tty out
+.in -1i
+.fi
 .It Ic \&~#
 Send a
 .Dv BREAK
@@ -204,7 +218,7 @@ remote machine.
 guards against multiple users connecting to a remote system
 by opening modems and terminal lines with exclusive access,
 and by honoring the locking protocol used by
-.Xr uucp 1 .
+.Xr uucico 8 .
 .Pp
 During file transfers
 .Nm tip
@@ -239,7 +253,7 @@ Bizcomp 1031 and 1032 integral call unit/modems.
 maintains a set of
 .Ar variables
 which control its operation.
-Some of these variable are read-only to normal users (root is allowed
+Some of these variables are read-only to normal users (root is allowed
 to change anything of interest).  Variables may be displayed
 and set through the ``s'' escape.  The syntax for variables is patterned
 after
@@ -287,7 +301,7 @@ to wait for a connection to be established; abbreviated
 waiting for the echo of the last character transmitted; default is
 .Ar off  .
 .It Ar eofread
-(str) The set of characters which signify and end-of-transmission
+(str) The set of characters which signify an end-of-transmission
 during a ~< file transfer command; abbreviated
 .Ar eofr  .
 .It Ar eofwrite
@@ -320,7 +334,7 @@ writes when receiving files; abbreviated
 (str) The name of the host to which you are connected; abbreviated
 .Ar ho  .
 .It Ar prompt
-(char) The character which indicates and end-of-line on the remote
+(char) The character which indicates an end-of-line on the remote
 host; abbreviated
 .Ar pr  ;
 default value is `\en'.  This value is used to synchronize during
@@ -436,4 +450,4 @@ appeared command in
 .Bx 4.2 .
 .Sh BUGS
 The full set of variables is undocumented and should, probably, be
-paired down.
+pared down.
