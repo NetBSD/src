@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.23.2.3 2001/11/14 19:14:00 nathanw Exp $ */
+/*	$NetBSD: kdb.c,v 1.23.2.4 2002/03/28 16:30:32 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.23.2.3 2001/11/14 19:14:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.23.2.4 2002/03/28 16:30:32 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -263,8 +263,13 @@ kdbgo(usc, mxi)
 		 * mapped by the first PTE page and led the system handle
 		 * the rest of the data.
 		 */
-		pcb = &bp->b_proc->p_addr->u_pcb;
-		mapaddr = (u_int32_t)uvtopte(addr, pcb);
+		if (addr & 0x40000000)
+			mapaddr = (u_int32_t)&bp->b_proc->p_vmspace->vm_map.
+			    pmap->pm_p1br[addr & ~0x4000000];
+		else
+			mapaddr = (u_int32_t)&bp->b_proc->p_vmspace->vm_map.
+			    pmap->pm_p0br[addr];
+
 		eaddr = (u_int32_t)uvtopte(addr + (bp->b_bcount - 1), pcb);
 		if (trunc_page(mapaddr) != trunc_page(eaddr)) {
 			mp->mscp_seq.seq_bytecount =
