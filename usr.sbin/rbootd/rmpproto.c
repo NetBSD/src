@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.3 1995/08/21 17:05:22 thorpej Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.4 1995/09/12 07:13:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rmpproto.c,v 1.3 1995/08/21 17:05:22 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rmpproto.c,v 1.4 1995/09/12 07:13:12 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -468,7 +468,7 @@ SendReadRepl(rconn)
 	 *  Read data directly into reply packet.
 	 */
 	if ((size = read(oldconn->bootfd, &rpl->r_rrpl.rmp_data,
-	                 (int) req->r_rrq.rmp_size)) <= 0) {
+	                 (int) ntohs(req->r_rrq.rmp_size))) <= 0) {
 		if (size < 0) {
 			syslog(LOG_ERR, "SendReadRepl: read: %m (%s)",
 			       EnetStr(rconn));
@@ -573,13 +573,14 @@ SendPacket(rconn)
 	 */
 	bcopy((char *)&rconn->rmp.hp_hdr.saddr[0],
 	      (char *)&rconn->rmp.hp_hdr.daddr[0], RMP_ADDRLEN);
-	rconn->rmp.hp_hdr.len = rconn->rmplen - sizeof(struct hp_hdr);
+	rconn->rmp.hp_hdr.len = htons(ntohs(rconn->rmplen)
+					- sizeof(struct hp_hdr));
 
 	/*
 	 *  Reverse 802.2/HP Extended Source & Destination Access Pts.
 	 */
-	rconn->rmp.hp_llc.dxsap = HPEXT_SXSAP;
-	rconn->rmp.hp_llc.sxsap = HPEXT_DXSAP;
+	rconn->rmp.hp_llc.dxsap = htons(HPEXT_SXSAP);
+	rconn->rmp.hp_llc.sxsap = htons(HPEXT_DXSAP);
 
 	/*
 	 *  Last time this connection was active.
