@@ -1,7 +1,7 @@
-/* $NetBSD: rm.c,v 1.31 2002/11/05 04:49:05 enami Exp $ */
+/* $NetBSD: rm.c,v 1.32 2003/02/12 19:27:22 jrf Exp $ */
 
 /*-
- * Copyright (c) 1990, 1993, 1994
+ * Copyright (c) 1990, 1993, 1994, 2003
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.31 2002/11/05 04:49:05 enami Exp $");
+__RCSID("$NetBSD: rm.c,v 1.32 2003/02/12 19:27:22 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: rm.c,v 1.31 2002/11/05 04:49:05 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int dflag, eval, fflag, iflag, Pflag ,stdin_ok, Wflag;
+int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
 
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRrW")) != -1)
+	while ((ch = getopt(argc, argv, "dfiPRrvW")) != -1)
 		switch (ch) {
 		case 'd':
 			dflag = 1;
@@ -115,6 +115,9 @@ main(int argc, char *argv[])
 		case 'R':
 		case 'r':			/* Compatibility. */
 			rflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		case 'W':
 			Wflag = 1;
@@ -149,7 +152,7 @@ rm_tree(char **argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	int flags, needstat;
+	int flags, needstat, rval;
 
 	/*
 	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
@@ -216,6 +219,7 @@ rm_tree(char **argv)
 				continue;
 		}
 
+		rval = 0;
 		/*
 		 * If we can't read or search the directory, may still be
 		 * able to remove it.  Don't print out the un{read,search}able
@@ -224,26 +228,31 @@ rm_tree(char **argv)
 		switch (p->fts_info) {
 		case FTS_DP:
 		case FTS_DNR:
-			if (!rmdir(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			rval = rmdir(p->fts_accpath);
+			if (rval != 0 && fflag && errno == ENOENT)
 				continue;
 			break;
 
 		case FTS_W:
-			if (!undelete(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			rval = undelete(p->fts_accpath);
+			if (rval != 0 && fflag && errno == ENOENT) 
 				continue;
 			break;
 
 		default:
 			if (Pflag)
 				rm_overwrite(p->fts_accpath, NULL);
-			if (!unlink(p->fts_accpath) ||
-			    (fflag && NONEXISTENT(errno)))
+			rval = unlink(p->fts_accpath);
+			if (rval != 0 && fflag && NONEXISTENT(errno))
 				continue;
+			break;
 		}
-		warn("%s", p->fts_path);
 		eval = 1;
+		if (rval != 0) {
+			warn("%s", p->fts_path);
+			eval = 1;
+		} else if (vflag) 
+			(void)printf("%s\n", p->fts_path);
 	}
 	if (errno)
 		err(1, "fts_read");
@@ -298,6 +307,8 @@ rm_file(char **argv)
 			warn("%s", f);
 			eval = 1;
 		}
+		if (vflag && rval == 0)
+			(void)printf("%s\n", f);
 	}
 }
 
@@ -430,7 +441,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrW] file ...\n",
+	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrvW] file ...\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
