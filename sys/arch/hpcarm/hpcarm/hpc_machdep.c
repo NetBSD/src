@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.49 2002/07/19 19:15:50 ichiro Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.50 2002/07/30 16:16:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -686,6 +686,7 @@ initarm(argc, argv, bi)
 #endif
 
 	/* Boot strap pmap telling it where the kernel page table is */
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 
