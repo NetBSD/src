@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.29.4.1 1997/02/19 04:46:51 rat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -191,7 +191,7 @@ again:
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
-	p2->p_flag = P_INMEM;
+	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
