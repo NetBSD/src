@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.7 1996/02/28 00:44:01 thorpej Exp $
+#	$NetBSD: install.sh,v 1.7.4.1 1996/06/09 22:32:47 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.1A
+VERSION=1.2
 export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
