@@ -2736,7 +2736,7 @@ barrier_align (barrier_or_label)
 	 investigation.  Skip to the insn before it.  */
       prev = prev_real_insn (prev);
 
-      for (slot = 2, credit = 1 << (CACHE_LOG - 2) + 2;
+      for (slot = 2, credit = (1 << (CACHE_LOG - 2)) + 2;
 	   credit >= 0 && prev && GET_CODE (prev) == INSN;
 	   prev = prev_real_insn (prev))
 	{
