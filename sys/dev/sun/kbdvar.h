@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.9 2002/10/03 16:13:26 uwe Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.10 2002/10/21 15:36:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ struct kbd_softc {
 	struct device k_dev;	/* required first: base device */
 
 	/* middle layer methods */
-	struct kbd_ops *k_ops;
+	const struct kbd_ops *k_ops;
 
 	/* state of the upper layer */
 	int k_evmode;		/* set if we should produce events */
@@ -57,32 +57,33 @@ struct kbd_softc {
 	/* ACSII translation state */
 	struct kbd_state k_state;
 
-	/* Console hooks */
+	/* console hooks */
 	int k_isconsole;
 	struct cons_channel *k_cc;
+
+	/* autorepeat for console input */
+	int k_repeat_start; 	/* initial delay */
+	int k_repeat_step;  	/* inter-char delay */
+	int k_repeatsym;	/* repeating symbol */
+	int k_repeating;	/* callout is active (use callout_active?) */
+	struct callout k_repeat_ch;
 };
 
-/* 
+
+/*
  * Downcalls to the middle layer.
- * NB: iocsled has user context to care about,
- *     setleds can be called from interrupt handler.
  */
 struct kbd_ops {
 	int (*open)(struct kbd_softc *);
 	int (*close)(struct kbd_softc *);
-	int (*docmd)(struct kbd_softc *, int, int);	/* KIOCCMD */
-	int (*setleds)(struct kbd_softc *, int, int);	/* KIOCSLED */
+	int (*docmd)(struct kbd_softc *, int, int);
+	int (*setleds)(struct kbd_softc *, int, int);
 };
-
-
-/* Callbacks for middle layer to feed us keyboard input */
-extern int	kbd_input_keysym(struct kbd_softc *, int);	/* console */
-extern void	kbd_input_event(struct kbd_softc *, int);	/* events  */
 
 
 /*
  * kbd console input channel interface.
- * XXX - does not belong in this header; but for now, kbd is the only user..
+ * XXX - does not belong in this header; but for now, kbd is the only user...
  */
 struct cons_channel {
 	/* XXX: only used by PROM console, probably belongs to kd.c */
@@ -97,16 +98,28 @@ struct cons_channel {
 	int (*cc_iclose)(struct cons_channel *); /* close underlying device */
 
 	/*
-	 * Callback provided by the console driver.  Underlying driver
+	 * Callback provided by the console driver.  Keyboard driver
 	 * calls it to pass input character up as console input.
 	 */
 	void (*cc_upstream)(int);
 };
 
-/* upper layer callbacks that lower layer passes to console driver */
-extern int kbd_cc_open(struct cons_channel *);
-extern int kbd_cc_close(struct cons_channel *);
 
-/* Special hook to attach the keyboard driver to the console */
+/*
+ * Allocate and link up console channel.
+ * Should be called by the lower layer during attachment.
+ */
+extern struct cons_channel *kbd_cc_alloc(struct kbd_softc *);
+
+/*
+ * Feed sun make/break code as keyboard input to the upper layer.
+ * Should be called by the middle layer.
+ */
+extern void kbd_input(struct kbd_softc *, int);
+
+/*
+ * Special hook to attach the keyboard driver to the console.
+ * XXX: this should be hidden in kbd_cc_alloc().
+ */
 struct consdev;
 extern void cons_attach_input(struct cons_channel *, struct consdev *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.32 2002/10/03 16:13:25 uwe Exp $	*/
+/*	$NetBSD: kbd.c,v 1.33 2002/10/21 15:36:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32 2002/10/03 16:13:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2002/10/21 15:36:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32 2002/10/03 16:13:25 uwe Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
@@ -68,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.32 2002/10/03 16:13:25 uwe Exp $");
 #include <sys/poll.h>
 #include <sys/file.h>
 
-#include <machine/vuid_event.h>
-#include <machine/kbd.h>
-#include <machine/kbio.h>
+#include <dev/sun/kbd_reg.h>
+#include <dev/sun/kbio.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
@@ -99,10 +100,22 @@ static int kbd_oldkeymap(struct kbd_state *ks,
 			 u_long cmd, struct okiockey *okio);
 #endif
 
-/* console input helpers */
-static void kbd_input_string(struct kbd_softc *, char *);
-static void kbd_input_funckey(struct kbd_softc *, int);
-static void kbd_update_leds(struct kbd_softc *);
+
+/* callbacks for console driver */
+static int kbd_cc_open(struct cons_channel *);
+static int kbd_cc_close(struct cons_channel *);
+
+/* console input */
+static void	kbd_input_console(struct kbd_softc *, int);
+static void	kbd_repeat(void *);
+static int	kbd_input_keysym(struct kbd_softc *, int);
+static void	kbd_input_string(struct kbd_softc *, char *);
+static void	kbd_input_funckey(struct kbd_softc *, int);
+static void	kbd_update_leds(struct kbd_softc *);
+
+/* firm events input */
+static void	kbd_input_event(struct kbd_softc *, int);
+
 
 
 /****************************************************************
@@ -132,10 +145,23 @@ kbdopen(dev, flags, mode, p)
 	if (k == NULL)
 		return (ENXIO);
 
+	/*
+	 * NB: wscons support: while we can track if wskbd has called
+	 * enable(), we can't tell if that's for console input or for
+	 * events input, so we should probably just let the open to
+	 * always succeed regardless (e.g. Xsun opening /dev/kbd).
+	 */
+
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
 		return (EBUSY);
 	k->k_events.ev_io = p;
+
+	/* stop pending autorepeat of console input */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
 
 	/* open actual underlying device */
 	if (k->k_ops != NULL && k->k_ops->open != NULL)
@@ -387,61 +413,213 @@ kbd_oldkeymap(ks, cmd, kio)
 #endif /* KIOCGETKEY */
 
 
+
 /****************************************************************
- *  Callbacks we supply to console driver
+ *  Keyboard input - called by middle layer at spltty().
  ****************************************************************/
 
-/*
- * Open/close routines called upon opening /dev/console
- * if we serve console input.
- */
-int
+void
+kbd_input(k, code)
+	struct kbd_softc *k;
+	int code;
+{
+	/*
+	 * TODO: wscons support: check if attached wskbd has called
+	 * enable() and pass input to wskbd_input() if it has.  But
+	 * check for k_evmode first(!) - see the comment in kbdopen().
+	 */
+
+	/*
+	 * If /dev/kbd is not connected in event mode, 
+	 * translate and send upstream (to console).
+	 */
+	if (!k->k_evmode) {
+		kbd_input_console(k, code);
+		return;
+	}
+
+	/*
+	 * XXX: is this still true?
+	 * IDLEs confuse the MIT X11R4 server badly, so we must drop them.
+	 * This is bad as it means the server will not automatically resync
+	 * on all-up IDLEs, but I did not drop them before, and the server
+	 * goes crazy when it comes time to blank the screen....
+	 */
+	if (code == KBD_IDLE)
+		return;
+
+	/*
+	 * Keyboard is generating firm events.  Turn this keystroke
+	 * into an event and put it in the queue.
+	 */
+	kbd_input_event(k, code);
+}
+
+
+
+/****************************************************************
+ *  Open/close routines called upon opening /dev/console
+ *  if we serve console input.
+ ****************************************************************/
+
+struct cons_channel *
+kbd_cc_alloc(k)
+	struct kbd_softc *k;
+{
+	struct cons_channel *cc;
+
+	if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+		return (NULL);
+
+	/* our callbacks for the console driver */
+	cc->cc_dev = k;
+	cc->cc_iopen = kbd_cc_open;
+	cc->cc_iclose = kbd_cc_close;
+
+	/* will be provided by the console driver so that we can feed input */
+	cc->cc_upstream = NULL;
+
+	/*
+	 * TODO: clean up cons_attach_input() vs kd_attach_input() in
+	 * lower layers and move that code here.
+	 */
+
+	k->k_cc = cc;
+	return (cc);
+}
+
+
+static int
 kbd_cc_open(cc)
 	struct cons_channel *cc;
 {
 	struct kbd_softc *k;
+	int ret;
 
 	if (cc == NULL)
-	    return (0);
+		return (0);
 
 	k = (struct kbd_softc *)cc->cc_dev;
-	if (k != NULL && k->k_ops != NULL && k->k_ops->open != NULL)
-		return ((*k->k_ops->open)(k));
-	else
+	if (k == NULL)
 		return (0);
+
+	if (k->k_ops != NULL && k->k_ops->open != NULL)
+		ret = (*k->k_ops->open)(k);
+	else
+		ret = 0;
+
+	/* XXX: verify that callout is not active? */
+	k->k_repeat_start = hz/2;
+	k->k_repeat_step = hz/20;
+	callout_init(&k->k_repeat_ch);
+
+	return (ret);
 }
 
 
-int
+static int
 kbd_cc_close(cc)
 	struct cons_channel *cc;
 {
 	struct kbd_softc *k;
+	int ret;
 
 	if (cc == NULL)
-	    return (0);
+		return (0);
 
 	k = (struct kbd_softc *)cc->cc_dev;
-	if (k != NULL && k->k_ops != NULL && k->k_ops->close != NULL)
-		return ((*k->k_ops->close)(k));
-	else
+	if (k == NULL)
 		return (0);
+
+	if (k->k_ops != NULL && k->k_ops->close != NULL)
+		ret = (*k->k_ops->close)(k);
+	else
+		ret = 0;
+
+	/* stop any pending auto-repeat */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
+
+	return (ret);
 }
+
 
 
 /****************************************************************
  *  Console input - called by middle layer at spltty().
  ****************************************************************/
 
+static void
+kbd_input_console(k, code)
+	struct kbd_softc *k;
+	int code;
+{
+	struct kbd_state *ks= &k->k_state;
+	int keysym;
+
+	/* any input stops auto-repeat (i.e. key release) */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
+
+	keysym = kbd_code_to_keysym(ks, code);
+
+	/* pass to console */
+	if (kbd_input_keysym(k, keysym)) {
+		log(LOG_WARNING, "%s: code=0x%x with mod=0x%x"
+		    " produced unexpected keysym 0x%x\n",
+		    k->k_dev.dv_xname,
+		    code, ks->kbd_modbits, keysym);
+		return;		/* no point in auto-repeat here */
+	}
+
+	if (KEYSYM_NOREPEAT(keysym))
+		return;
+
+	/* setup for auto-repeat after initial delay */
+	k->k_repeating = 1;
+	k->k_repeatsym = keysym;
+	callout_reset(&k->k_repeat_ch, k->k_repeat_start,
+		      kbd_repeat, k);
+}
+
+
 /*
- * Entry point for the middle layer to supply keysym as console input.
- * Convert keysym to character(s) and pass them up to cons_channel's
- * upstream hook.
+ * This is the autorepeat callout function scheduled by kbd_input() above.
+ * Called at splsoftclock().
+ */
+static void
+kbd_repeat(arg)
+	void *arg;
+{
+	struct kbd_softc *k = (struct kbd_softc *)arg;
+	int s;
+
+	s = spltty();
+	if (k->k_repeating && k->k_repeatsym >= 0) {
+		/* feed typematic keysym to the console */
+		(void)kbd_input_keysym(k, k->k_repeatsym);
+
+		/* reschedule next repeat */
+		callout_reset(&k->k_repeat_ch, k->k_repeat_step,
+			      kbd_repeat, k);
+	}
+	splx(s);
+}
+
+
+
+/*
+ * Supply keysym as console input.  Convert keysym to character(s) and
+ * pass them up to cons_channel's upstream hook.
  *
  * Return zero on success, else the keysym that we could not handle
  * (so that the caller may complain).
  */
-int
+static int
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
 	int keysym;
@@ -567,16 +745,15 @@ kbd_update_leds(k)
  ****************************************************************/
 
 /*
- * Entry point for the middle layer to supply raw keystrokes when
- * keyboard is open (i.e. is in event mode).
+ * Supply raw keystrokes when keyboard is open in firm event mode.
  *
  * Turn the keystroke into an event and put it in the queue.
  * If the queue is full, the keystroke is lost (sorry!).
  */
-void
-kbd_input_event(k, c)
+static void
+kbd_input_event(k, code)
 	struct kbd_softc *k;
-	int c;
+	int code;
 {
 	struct firm_event *fe;
 	int put;
@@ -596,12 +773,14 @@ kbd_input_event(k, c)
 		    k->k_dev.dv_xname);
 		return;
 	}
-	fe->id = KEY_CODE(c);
-	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
+
+	fe->id = KEY_CODE(code);
+	fe->value = KEY_UP(code) ? VKEY_UP : VKEY_DOWN;
 	fe->time = time;
 	k->k_events.ev_put = put;
 	EV_WAKEUP(&k->k_events);
 }
+
 
 
 /****************************************************************
@@ -695,6 +874,10 @@ void
 kbd_bell(on)
 	int on;
 {
-	/* XXX: stub out for now */
-	return;
+	struct kbd_softc *k = kbd_cd.cd_devs[0]; /* XXX: hardcoded minor */
+
+	if (k == NULL || k->k_ops == NULL || k->k_ops->docmd == NULL)
+		return;
+
+	(void)(*k->k_ops->docmd)(k, on ? KBD_CMD_BELL : KBD_CMD_NOBELL, 0);
 }

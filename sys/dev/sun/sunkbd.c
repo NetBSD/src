@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.13 2002/10/03 16:13:26 uwe Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.14 2002/10/21 15:36:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.13 2002/10/03 16:13:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.14 2002/10/21 15:36:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.13 2002/10/03 16:13:26 uwe Exp $");
 #include <dev/sun/kbdsunvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
 
-#include "kbd.h"
-#if NKBD > 0
 
 /****************************************************************
  * Interface to the lower layer (ttycc)
@@ -145,21 +143,18 @@ sunkbd_attach(parent, self, aux)
 	k->k_priv = tp;
 	tp->t_sc = (void *)k;
 
-	/* provide upper layer with a link to the middle layer */
-	k->k_kbd.k_ops = &kbd_ops_sun;
-
-	/* provide middle layer with a link to the lower layer (i.e. us) */
+	/* provide our middle layer with a link to the lower layer (i.e. us) */
 	k->k_deviopen = sunkbdiopen;
 	k->k_deviclose = NULL;
 	k->k_write_data = sunkbd_write_data;
 
-	if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+	/* provide upper layer with a link to our middle layer */
+	k->k_kbd.k_ops = &kbd_ops_sun;
+
+	/* alloc console input channel */
+	if ((cc = kbd_cc_alloc(&k->k_kbd)) == NULL)
 		return;
 
-	cc->cc_dev = self;
-	cc->cc_iopen = kbd_cc_open;
-	cc->cc_iclose = kbd_cc_close;
-	cc->cc_upstream = NULL;
 	if (args->kmta_consdev) {
 		char magic[4];
 
@@ -185,18 +180,11 @@ sunkbd_attach(parent, self, aux)
 
 		kd_attach_input(cc);
 	}
-	k->k_kbd.k_cc = cc;
 
 	printf("\n");
 
-	callout_init(&k->k_repeat_ch);
-
 	/* Do this before any calls to kbd_rint(). */
 	kbd_xlate_init(&k->k_kbd.k_state);
-
-	/* XXX - Do this in open? */
-	k->k_repeat_start = hz/2;
-	k->k_repeat_step = hz/20;
 
 	/* Magic sequence. */
 	k->k_magic1 = KBD_L1;
@@ -325,5 +313,3 @@ sunkbd_write_data(k, c)
 	ttstart(tp);
 	splx(s);
 }
-
-#endif
