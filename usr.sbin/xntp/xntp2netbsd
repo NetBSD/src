@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.12 1998/03/06 18:17:16 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.13 1998/05/02 15:28:32 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -606,7 +606,7 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* #undef UDP_BACKWARDS_SETOWN */
 
 /* must we have a CTTY for fsetown? */
-/* #undef USE_FSETOWNCTTY */
+#define USE_FSETOWNCTTY 1
 
 /* can we use SIGIO for tcp and udp IO? */
 #define HAVE_SIGNALED_IO 1
