@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.12 1998/08/25 20:59:39 ross Exp $	*/
+/*	$NetBSD: expand.c,v 1.13 1998/12/19 20:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.12 1998/08/25 20:59:39 ross Exp $");
+__RCSID("$NetBSD: expand.c,v 1.13 1998/12/19 20:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
-	struct direct *dp;
+	struct dirent *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);

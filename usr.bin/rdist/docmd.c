@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.17 1997/10/24 06:47:31 scottr Exp $	*/
+/*	$NetBSD: docmd.c,v 1.18 1998/12/19 20:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.17 1997/10/24 06:47:31 scottr Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.18 1998/12/19 20:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: docmd.c,v 1.17 1997/10/24 06:47:31 scottr Exp $");
 #include <netdb.h>
 #include <regex.h>
 #include <setjmp.h>
+#include <fcntl.h>
 
 #include "defs.h"
 
@@ -497,7 +498,7 @@ rcmptime(st)
 	struct stat *st;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *cp;
 	char *otp;
 	int len;
