@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.43 1999/02/07 13:14:07 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.44 1999/02/07 13:15:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.43 1999/02/07 13:14:07 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.44 1999/02/07 13:15:12 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1204,6 +1204,7 @@ ftpvis(dst, dstlen, src, srclen)
 		case ' ':
 		case '\t':
 		case '\r':
+		case '\n':
 		case '"':
 			dst[di++] = '\\';
 			if (di >= dstlen)
