@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.91 2002/01/03 18:57:09 augustss Exp $
+#	$NetBSD: DEVNAMES,v 1.92 2002/01/06 16:06:36 jmcneill Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -296,6 +296,7 @@ es			amigappc
 es			arm32
 esc			arm32		Attribute
 esh			MI		
+esa			MI
 esl			MI		
 esm			MI		
 eso			MI		
