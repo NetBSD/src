@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.15.4.3 1999/07/04 01:42:27 chs Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.15.4.4 1999/07/31 18:40:02 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.17 1999/06/21 02:28:46 sommerfeld Exp 
+ *	NetBSD: vnode_if.src,v 1.16.4.3 1999/07/04 01:42:26 chs Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.18 1998/09/13 14:44:34 christos Exp 
  */
@@ -906,30 +906,27 @@ struct vop_balloc_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	off_t a_offset;
-	int a_size;
+	off_t a_length;
 	struct ucred *a_cred;
 	int a_flags;
-	struct buf **a_bpp;
 };
 extern struct vnodeop_desc vop_balloc_desc;
-static __inline int VOP_BALLOC __P((struct vnode *, off_t, int, 
-    struct ucred *, int, struct buf **)) __attribute__((__unused__));
-static __inline int VOP_BALLOC(vp, offset, size, cred, flags, bpp)
+static __inline int VOP_BALLOC __P((struct vnode *, off_t, off_t, 
+    struct ucred *, int)) __attribute__((__unused__));
+static __inline int VOP_BALLOC(vp, offset, length, cred, flags)
 	struct vnode *vp;
 	off_t offset;
-	int size;
+	off_t length;
 	struct ucred *cred;
 	int flags;
-	struct buf **bpp;
 {
 	struct vop_balloc_args a;
 	a.a_desc = VDESC(vop_balloc);
 	a.a_vp = vp;
 	a.a_offset = offset;
-	a.a_size = size;
+	a.a_length = length;
 	a.a_cred = cred;
 	a.a_flags = flags;
-	a.a_bpp = bpp;
 	return (VCALL(vp, VOFFSET(vop_balloc), &a));
 }
 
