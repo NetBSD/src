@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.65 2005/03/09 05:07:19 atatat Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.66 2005/03/10 05:43:28 atatat Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.65 2005/03/09 05:07:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.66 2005/03/10 05:43:28 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -454,7 +454,7 @@ SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "pcblist",
+		       CTLTYPE_NODE, "pcblist",
 		       SYSCTL_DESCR("UDP protocol control block list"),
 		       sysctl_inpcblist, 0, &udbtable, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, CTL_CREATE,

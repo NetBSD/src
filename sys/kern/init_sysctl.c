@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.34 2005/03/09 05:02:17 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.35 2005/03/10 05:43:31 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.34 2005/03/09 05:02:17 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.35 2005/03/10 05:43:31 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -723,7 +723,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_DRIVERS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "file2",
+		       CTLTYPE_NODE, "file2",
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
