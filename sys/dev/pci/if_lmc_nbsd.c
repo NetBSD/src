@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.12 2001/08/27 17:47:35 eeh Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.13 2001/08/27 22:17:29 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -482,7 +482,7 @@ lmc_busdma_init(
 	error = lmc_busdma_allocmem(sc, sizeof(lmc_desc_t) * LMC_RXDESCS,
 				      &sc->lmc_rxdescmap,
 				      &sc->lmc_rxdescs);
-printf("rxdesc: pa %x va %p\n",sc->lmc_rxdescmap->dm_segs[0].ds_addr,sc->lmc_rxdescs);
+printf("rxdesc: pa %x va %p\n",(unsigned int)sc->lmc_rxdescmap->dm_segs[0].ds_addr,sc->lmc_rxdescs);
     }
 
     /*
