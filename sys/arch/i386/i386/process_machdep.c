@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.7 2002/06/20 03:39:12 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.8 2002/06/21 20:29:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.7 2002/06/20 03:39:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.8 2002/06/21 20:29:24 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -516,7 +516,7 @@ process_machdep_doxmmregs(curp, l, uio)
 	char *kv;
 	int kl;
 
-	if ((error = procfs_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
