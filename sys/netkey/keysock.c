@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.34 2004/05/31 11:40:40 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.35 2004/06/01 02:01:14 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.34 2004/05/31 11:40:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.35 2004/06/01 02:01:14 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -240,8 +240,10 @@ key_sendup0(rp, m, promisc, canwait)
 			kp->kp_queue = NULL;
 		} else
 			m->m_nextpkt = NULL;	/* just for safety */
-	} else
-		m->m_nextpkt = NULL;	/* just for safety */
+	} else {
+		/* NOTE: kp_queue is !NULL */
+		m->m_nextpkt = NULL;
+	}
 
 	for (; m && error == 0; m = n) {
 		n = m->m_nextpkt;
@@ -254,8 +256,8 @@ key_sendup0(rp, m, promisc, canwait)
 				m = m_pullup(m, sizeof(struct sadb_msg));
 			if (!m) {
 				pfkeystat.in_nomem++;
-				kp->kp_queue = n;
-				return ENOBUFS;
+				error = ENOBUFS;
+				goto recovery;
 			}
 			m->m_pkthdr.len += sizeof(*pmsg);
 
@@ -272,9 +274,7 @@ key_sendup0(rp, m, promisc, canwait)
 		if (canwait &&
 		    sbspace(&rp->rcb_socket->so_rcv) < m->m_pkthdr.len) {
 			error = EAGAIN;
-			kp->kp_queue = m;
-			m->m_nextpkt = n;
-			break;
+			goto recovery;
 		}
 
 		m->m_nextpkt = NULL;
@@ -282,14 +282,32 @@ key_sendup0(rp, m, promisc, canwait)
 		if (!sbappendaddr(&rp->rcb_socket->so_rcv,
 		    (struct sockaddr *)&key_src, m, NULL)) {
 			pfkeystat.in_nomem++;
-			kp->kp_queue = m;
-			m->m_nextpkt = n;
 			error = ENOBUFS;
-			break;
+			goto recovery;
 		} else
 			error = 0;
 	}
-	return error;
+	return (error);
+
+recovery:
+	if (kp->kp_queue) {
+		/*
+		 * insert m to the head of queue, as normally mbuf on the queue
+		 * is less important than others.
+		 */
+		m->m_nextpkt = kp->kp_queue;
+		kp->kp_queue = m;
+	} else {
+		/* recover the queue */
+		if (!m) {
+			/* first ENOBUFS case */
+			kp->kp_queue = n;
+		} else {
+			kp->kp_queue = m;
+			m->m_nextpkt = n;
+		}
+	}
+	return (error);
 }
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
