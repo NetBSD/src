@@ -1,5 +1,4 @@
-/*	$Id: hpc_machdep.c,v 1.1 2001/02/23 03:48:11 ichiro Exp $ */
-/*	$NetBSD: hpc_machdep.c,v 1.1 2001/02/23 03:48:11 ichiro Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.2 2001/02/23 04:31:18 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
