@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.35 2001/01/04 03:53:09 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.36 2001/01/04 05:25:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1196,8 +1196,10 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_INVAL);
 	}
+#if 0
 	if (sc->sc_chan.dir == (OUT | IN))
 		sc->sc_props |= AUDIO_PROP_FULLDUPLEX;
+#endif
 	return (USBD_NORMAL_COMPLETION);
 }
 
