@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.12 1993/10/18 08:35:34 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.13 1993/10/27 05:37:13 mycroft Exp $
  */
 
 /*
@@ -110,6 +110,9 @@ struct lpt_softc {
 };
 
 static int lptprobe __P((struct device *, struct cfdata *, void *));
+#if 0 /* XXX */
+static void lptforceintr __P((void *));
+#endif
 static void lptattach __P((struct device *, struct device *, void *));
 static int lptintr __P((void *));
 
@@ -189,27 +192,35 @@ lptprobe(parent, cf, aux)
 	for (;;) {
 		data = 0x55;				/* Alternating zeros */
 		if (!lpt_port_test(port, data, mask))
-			return 0;
+			{printf("mask %x data %x failed\n", mask, data);
+			return 0;}
 
 		data = 0xaa;				/* Alternating ones */
 		if (!lpt_port_test(port, data, mask))
-			return 0;
+			{printf("mask %x data %x failed\n", mask, data);
+			return 0;}
 
 		for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 			data = ~(1 << i);
 			if (!lpt_port_test(port, data, mask))
-				return 0;
+				{printf("mask %x data %x failed\n", mask, data);
+				return 0;}
 		}
 
 		for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 			data = (1 << i);
 			if (!lpt_port_test(port, data, mask))
-				return 0;
+				{printf("mask %x data %x failed\n", mask, data);
+				return 0;}
 		}
 
 		if (port == iobase + lpt_data) {
 			port = iobase + lpt_control;
+#if 1 /* XXX */
+			mask = 0x04;
+#else
 			mask = 0x1e;
+#endif
 		} else
 			break;
 	}
@@ -217,7 +228,11 @@ lptprobe(parent, cf, aux)
 	outb(iobase + lpt_control, 0);
 
 	if (ia->ia_irq == IRQUNK)
+#if 0 /* XXX */
+		ia->ia_irq = isa_discoverintr(lptforceintr, aux);
+#else
 		ia->ia_irq = IRQNONE;
+#endif
 	/* okay if we don't have an irq; will force polling */
 
 	ia->ia_iosize = LPT_NPORTS;
@@ -225,6 +240,20 @@ lptprobe(parent, cf, aux)
 	ia->ia_msize = 0;
 	return 1;
 }
+
+#if 0 /* XXX */
+static void
+lptforceintr(aux)
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
+
+	outb(iobase + lpt_control, LPC_IENABLE);
+	delay(100);
+	outb(iobase + lpt_control, 0);
+}
+#endif
 
 static void
 lptattach(parent, self, aux)
