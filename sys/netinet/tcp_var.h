@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.31 1997/12/17 06:06:41 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.32 1997/12/31 03:31:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -67,6 +67,7 @@ struct tcpcb {
 
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
+	LIST_ENTRY(tcpcb) t_delack;	/* delayed ACK queue */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC783, Dec. 1981, page 21.
@@ -130,6 +131,30 @@ struct tcpcb {
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 };
+
+/*
+ * Queue for delayed ACK processing.
+ */
+LIST_HEAD(tcp_delack_head, tcpcb);
+#ifdef _KERNEL
+extern struct tcp_delack_head tcp_delacks;
+
+#define	TCP_SET_DELACK(tp) \
+do { \
+	if (((tp)->t_flags & TF_DELACK) == 0) { \
+		(tp)->t_flags |= TF_DELACK; \
+		LIST_INSERT_HEAD(&tcp_delacks, (tp), t_delack); \
+	} \
+} while (0)
+
+#define	TCP_CLEAR_DELACK(tp) \
+do { \
+	if ((tp)->t_flags & TF_DELACK) { \
+		(tp)->t_flags &= ~TF_DELACK; \
+		LIST_REMOVE((tp), t_delack); \
+	} \
+} while (0)
+#endif /* _KERNEL */
 
 /*
  * Handy way of passing around TCP option info.
