@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.41 1998/08/04 04:03:14 perry Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.42 1999/01/22 07:57:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -220,6 +220,9 @@ again:
 
 /*
  * General routine to allocate a hash table.
+ * Allocate enough memory to hold at least `elements' list-head pointers.
+ * Return a pointer to the allocated space and set *hashmask to a pattern
+ * suitable for masking a value to use as an index into the returned array.
  */
 void *
 hashinit(elements, type, flags, hashmask)
@@ -232,7 +235,7 @@ hashinit(elements, type, flags, hashmask)
 
 	if (elements <= 0)
 		panic("hashinit: bad cnt");
-	for (hashsize = 1; hashsize <= elements; hashsize <<= 1)
+	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
 	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
 	for (i = 0; i < hashsize; i++)
