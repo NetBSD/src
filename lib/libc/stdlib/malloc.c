@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.36.2.2 2001/10/08 20:21:13 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.36.2.3 2002/01/01 09:12:56 wdk Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ int utrace __P((const char *, void *, size_t));
 
 #include <pthread.h>
 extern int __isthreaded;
-static pt_spin_t thread_lock = __SIMPLELOCK_UNLOCKED;
+static pthread_spin_t thread_lock = __SIMPLELOCK_UNLOCKED;
 #define THREAD_LOCK()	if (__isthreaded) pthread_spinlock(pthread_self(), &thread_lock);
 #define THREAD_UNLOCK()	if (__isthreaded) pthread_spinunlock(pthread_self(), &thread_lock);
 #endif /* __NetBSD__ */
