@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.2 2002/01/24 08:21:41 martti Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.3 2002/04/09 02:32:55 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -42,8 +42,10 @@
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sbpf.c,v 2.1.4.2 2001/09/30 04:04:28 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: sbpf.c,v 2.1.4.2 2001/09/30 04:04:28 darrenr Exp";
 #endif
 
 /*
