@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.1.1.1 1995/03/26 07:12:05 leo Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.2 1995/04/30 12:00:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,10 @@
  *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
  */
 
-#ifndef _MACHINE_MPTR_H_
-#define _MACHINE_MPTR_H_
+#ifndef _MACHINE_MTPR_H_
+#define _MACHINE_MTPR_H_
+
+#ifdef _KERNEL
 
 /*
  * simulated software interrupt register
@@ -51,11 +53,16 @@
 
 extern unsigned char ssir;
 
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
+#define SIR_NET		0x1	/* call netintr()		*/
+#define SIR_CLOCK	0x2	/* call softclock()		*/
+#define	SIR_CBACK	0x4	/* walk the sicallback-chain	*/
 
 #define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
 
-#endif /* !_MACHINE_MPTR_H_ */
+#define setsoftnet()	(ssir |= SIR_NET)
+#define setsoftclock()	(ssir |= SIR_CLOCK)
+#define setsoftcback()	(ssir |= SIR_CBACK)
+
+#endif /* _KERNEL */
+
+#endif /* !_MACHINE_MTPR_H_ */
