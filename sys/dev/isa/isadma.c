@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.22 1997/03/21 00:00:21 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.23 1997/03/21 02:17:11 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,14 +41,29 @@ int	isa_dmarangecheck	__P((vm_offset_t, u_long, int));
 caddr_t	isa_allocphysmem	__P((caddr_t, unsigned, void (*)(void)));
 void	isa_freephysmem		__P((caddr_t, unsigned));
 
-/*
- * isa_dmacascade(): program 8237 DMA controller channel to accept
- * external dma control by a board.
- */
-void
-isa_dmacascade(chan)
+inline void
+isa_dmaunmask(chan)
 	int chan;
 {
+	int ochan = chan & 3;
+
+#ifdef ISADMA_DEBUG
+	if (chan < 0 || chan > 7)
+		panic("isa_dmacascade: impossible request"); 
+#endif
+
+	/* set dma channel mode, and set dma channel mode */
+	if ((chan & 4) == 0)
+		outb(DMA1_SMSK, ochan | DMA37SM_CLEAR);
+	else
+		outb(DMA2_SMSK, ochan | DMA37SM_CLEAR);
+}
+
+inline void
+isa_dmamask(chan)
+	int chan;
+{
+	int ochan = chan & 3;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
@@ -57,14 +72,36 @@ isa_dmacascade(chan)
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
-		outb(DMA1_MODE, chan | DMA37MD_CASCADE);
-		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
+		outb(DMA1_SMSK, ochan | DMA37SM_SET);
+		outb(DMA1_FFC, 0);
 	} else {
-		chan &= 3;
-
-		outb(DMA2_MODE, chan | DMA37MD_CASCADE);
-		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
+		outb(DMA2_SMSK, ochan | DMA37SM_SET);
+		outb(DMA2_FFC, 0);
 	}
+}
+
+/*
+ * isa_dmacascade(): program 8237 DMA controller channel to accept
+ * external dma control by a board.
+ */
+void
+isa_dmacascade(chan)
+	int chan;
+{
+	int ochan = chan & 3;
+
+#ifdef ISADMA_DEBUG
+	if (chan < 0 || chan > 7)
+		panic("isa_dmacascade: impossible request"); 
+#endif
+
+	/* set dma channel mode, and set dma channel mode */
+	if ((chan & 4) == 0)
+		outb(DMA1_MODE, ochan | DMA37MD_CASCADE);
+	else
+		outb(DMA2_MODE, ochan | DMA37MD_CASCADE);
+
+	isa_dmaunmask(chan);
 }
 
 /*
@@ -81,6 +118,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 	vm_offset_t phys;
 	int waport;
 	caddr_t newaddr;
+	int ochan = chan & 3;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7 ||
@@ -106,43 +144,29 @@ isa_dmastart(flags, addr, nbytes, chan)
 	/* translate to physical */
 	phys = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 
+	isa_dmamask(chan);
 	dma_finished &= ~(1 << chan);
 
 	if ((chan & 4) == 0) {
-		/*
-		 * Program one of DMA channels 0..3.  These are
-		 * byte mode channels.
-		 */
-		/* set dma channel mode, and reset address ff */
-		outb(DMA1_MODE, chan | dmamode[flags]);
-		outb(DMA1_FFC, 0);
+		/* set dma channel mode */
+		outb(DMA1_MODE, ochan | dmamode[flags]);
 
 		/* send start address */
-		waport = DMA1_CHN(chan);
-		outb(dmapageport[0][chan], phys>>16);
+		waport = DMA1_CHN(ochan);
+		outb(dmapageport[0][ochan], phys>>16);
 		outb(waport, phys);
 		outb(waport, phys>>8);
 
 		/* send count */
 		outb(waport + 1, --nbytes);
 		outb(waport + 1, nbytes>>8);
-
-		/* unmask channel */
-		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
 	} else {
-		chan &= 3;
-
-		/*
-		 * Program one of DMA channels 4..7.  These are
-		 * word mode channels.
-		 */
-		/* set dma channel mode, and reset address ff */
-		outb(DMA2_MODE, chan | dmamode[flags]);
-		outb(DMA2_FFC, 0);
+		/* set dma channel mode */
+		outb(DMA2_MODE, ochan | dmamode[flags]);
 
 		/* send start address */
-		waport = DMA2_CHN(chan);
-		outb(dmapageport[1][chan], phys>>16);
+		waport = DMA2_CHN(ochan);
+		outb(dmapageport[1][ochan], phys>>16);
 		phys >>= 1;
 		outb(waport, phys);
 		outb(waport, phys>>8);
@@ -151,10 +175,9 @@ isa_dmastart(flags, addr, nbytes, chan)
 		nbytes >>= 1;
 		outb(waport + 2, --nbytes);
 		outb(waport + 2, nbytes>>8);
-
-		/* unmask channel */
-		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
 	}
+
+	isa_dmaunmask(chan);
 }
 
 void
@@ -167,16 +190,9 @@ isa_dmaabort(chan)
 		panic("isa_dmaabort: impossible request");
 #endif
 
+	isa_dmamask(chan);
+
 	bounced[chan] = 0;
-
-	/* mask channel */
-	if ((chan & 4) == 0) {
-		outb(DMA1_SMSK, chan | DMA37SM_SET);
-	} else {
-		chan &= 3;
-
-		outb(DMA2_SMSK, chan | DMA37SM_SET);
-	}
 }
 
 vm_size_t
@@ -185,48 +201,32 @@ isa_dmacount(chan)
 {
 	int waport;
 	vm_size_t nbytes;
+	int ochan = chan & 3;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isa_dmafinished: impossible request");
 #endif
 
-	/* check that the terminal count was reached */
-	if ((chan & 4) == 0) {
-		/* mask channel */
-		outb(DMA1_SMSK, chan | DMA37SM_SET);
-		outb(DMA1_FFC, 0);
+	isa_dmamask(chan);
 
-		if (!isa_dmafinished(chan)) {
-			/* read count */
-			waport = DMA1_CHN(chan);
+	/* check that the terminal count was reached */
+	if (!isa_dmafinished(chan)) {
+		/* read count */
+		if ((chan & 4) == 0) {
+			waport = DMA1_CHN(ochan);
 			nbytes = inb(waport + 1) + 1;
 			nbytes += inb(waport + 1) << 8;
-		} else
-			nbytes = 0;
-
-		/* unmask channel */
-		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
-	} else {
-		chan &= 3;
-
-		/* mask channel */
-		outb(DMA2_SMSK, chan | DMA37SM_SET);
-		outb(DMA2_FFC, 0);
-
-		if (!isa_dmafinished(chan | 4)) {
-			/* read count */
-			waport = DMA2_CHN(chan);
+		} else {
+			waport = DMA2_CHN(ochan);
 			nbytes = inb(waport + 2) + 1;
 			nbytes += inb(waport + 2) << 8;
 			nbytes <<= 1;
-		} else
-			nbytes = 0;
+		}
+	} else
+		nbytes = 0;
 
-		/* unmask channel */
-		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
-	}
-
+	isa_dmaunmask(chan);
 	return (nbytes);
 }
 
@@ -262,17 +262,10 @@ isa_dmadone(flags, addr, nbytes, chan)
 		panic("isa_dmadone: impossible request");
 #endif
 
+	isa_dmamask(chan);
+
 	if (!isa_dmafinished(chan))
 		printf("isa_dmadone: channel %d not finished\n", chan);
-
-	/* mask channel */
-	if ((chan & 4) == 0) {
-		outb(DMA1_SMSK, chan | DMA37SM_SET);
-	} else {
-		chan &= 3;
-
-		outb(DMA2_SMSK, chan | DMA37SM_SET);
-	}
 
 	/* copy bounce buffer on read */
 	if (bounced[chan]) {
