@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.10 2002/10/06 12:37:59 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.11 2002/10/06 18:28:48 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.10 2002/10/06 12:37:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.11 2002/10/06 18:28:48 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ extern char const hydra_hatchcode[], hydra_ehatchcode[];
 extern struct cpu_info cpu_info_store;
 
 static struct hydra_softc *the_hydra;
-static struct cpu_info *cpu_info_array[8] = {&cpu_info_store};
+struct cpu_info *cpu_info[CPU_MAXNUM] = {&cpu_info_store};
 
 static int
 hydra_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -323,8 +323,9 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 		panic("cpu_hydra_attach: uvm_fault_wire failed: %d", error);
 
 	/* Set up a struct cpu_info for this CPU */
-	cpu_info_array[slave | HYDRA_ID_ISSLAVE] = &cpu->sc_cpuinfo;
+	cpu_info[slave | HYDRA_ID_ISSLAVE] = &cpu->sc_cpuinfo;
 	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
+	cpu->sc_cpuinfo.ci_cpunum = slave | HYDRA_ID_ISSLAVE;
 
 	/* Copy hatch code to boot page, and set up arguments */
 	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
@@ -403,10 +404,13 @@ cpu_number(void)
 	return 0;
 }
 
-struct cpu_info *
-curcpu(void)
+cpuid_t
+cpu_next(cpuid_t cpunum)
 {
 
-	return cpu_info_array[cpu_number()];
+	do
+		cpunum++;
+	while (cpunum < CPU_MAXNUM && cpu_info[cpunum] == NULL);
+	return cpunum;
 }
 #endif
