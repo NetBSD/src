@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.6.5 2005/01/19 17:33:37 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6.6.6 2005/02/12 22:30:23 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.5 2005/01/19 17:33:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.6 2005/02/12 22:30:23 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -4057,6 +4057,222 @@ out:
 	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	XENPRINTK(("pmap_enter: %d\n", error));
+	return error;
+}
+
+/*
+ * pmap_remap_pages: change an existing mapping to new machine pages
+ *
+ * => must be done "now" ... no lazy-evaluation
+ * => we set pmap => pv_head locking
+ */
+
+int
+pmap_remap_pages(pmap, va, pa, npages, flags, dom)
+	struct pmap *pmap;
+	vaddr_t va;
+	paddr_t pa;
+	int npages;
+	int flags;
+	int dom;
+{
+	pt_entry_t *ptes, opte, npte;
+	pt_entry_t *maptp;
+	struct vm_page *ptp, *pg;
+	struct vm_page_md *mdpg;
+	struct pv_head *old_pvh;
+	struct pv_entry *pve = NULL; /* XXX gcc */
+	int error;
+
+	XENPRINTK(("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n",
+	    pmap, (void *)va, (void *)pa, npages, flags, dom));
+	//printf("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n", pmap, (void *)va, (void *)pa, npages, flags, dom);
+
+	if (npages != 1)
+		panic("pmap_remap_pages: not yet");
+
+#ifdef DIAGNOSTIC
+	/* sanity check: totally out of range? */
+	if (va >= VM_MAX_KERNEL_ADDRESS)
+		panic("pmap_remap_pages: too big");
+
+	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
+		panic("pmap_remap_pages: trying to map over PDP/APDP!");
+
+	/* sanity check: kernel PTPs should already have been pre-allocated */
+	if (va >= VM_MIN_KERNEL_ADDRESS &&
+	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
+		panic("pmap_remap_pages: missing kernel PTP!");
+#endif
+
+	npte = pa | PG_V;
+	/* XENPRINTK(("npte %p\n", npte)); */
+	//printf("npte 0x%x\n", npte);
+
+	/* it is always a wired mapping */
+	npte |= PG_W;
+
+	if (va < VM_MAXUSER_ADDRESS)
+		npte |= PG_u;
+	else if (va < VM_MAX_ADDRESS)
+		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+	if (pmap == pmap_kernel())
+		npte |= pmap_pg_g;
+
+	/* get lock */
+	PMAP_MAP_TO_HEAD_LOCK();
+
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
+	if (pmap == pmap_kernel()) {
+		ptp = NULL;
+	} else {
+		ptp = pmap_get_ptp(pmap, pdei(va));
+		if (ptp == NULL) {
+			if (flags & PMAP_CANFAIL) {
+				error = ENOMEM;
+				goto out;
+			}
+			panic("pmap_remap_pages: get ptp failed");
+		}
+	}
+
+	/*
+	 * Get first view on old PTE 
+	 * on SMP the PTE might gain PG_U and PG_M flags
+	 * before we zap it later
+	 */
+	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
+	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
+		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
+	XENPRINTF(("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x "
+	    "count %ld\n", pa, va, opte, npte,
+	    pmap->pm_stats.wired_count));
+	//printf("npte %p opte %p ptes %p idx %03x\n", (void *)npte, (void *)opte, ptes, x86_btop(va));
+	//printf("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x count %ld\n", pa, va, opte, npte, pmap->pm_stats.wired_count);
+#if 0
+	npte |= (opte & (PG_M | PG_RW));
+#else
+	npte |= (PG_M | PG_RW);
+#endif
+
+	/*
+	 * is there currently a valid mapping at our VA and does it
+	 * map to the same MA as the one we want to map ?
+	 */
+	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == pa)) {
+		/*
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
+		 */
+		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+
+		//printf("pmap_remap_pages opte == pa");
+		/* zap! */
+		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+		error = xpq_update_foreing(maptp, npte, dom);
+
+		/*
+		 * The protection bits should not have changed
+		 */
+		if ((npte & PG_RW)
+		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW)))
+			panic("pmap_remap_pages protection changed\n");
+		/*
+		 * Might be cached in the TLB as being writable
+		 * if this is on the PVLIST, sync R/M bit
+		 */
+		KDASSERT((opte & PG_PVLIST) == 0);
+		goto shootdown_now;
+	}
+		
+	/* 
+	 * no managed mapping for pages mapped through pmap_remap_pages.
+	 */
+
+	/*
+	 * is there currently a valid mapping at our VA?
+	 */
+
+	if (pmap_valid_entry(opte)) {
+		/*
+		 * changing PAs: we must remove the old one first
+		 */
+
+		/*
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
+		 */
+		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+
+		if (opte & PG_PVLIST) {
+			opte = xpmap_mtop(opte);
+			KDASSERT((opte & PG_FRAME) !=
+			    (KERNTEXTOFF - KERNBASE_LOCORE));
+
+			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+#ifdef DIAGNOSTIC
+			if (pg == NULL)
+				panic("pmap_remap_pages: PG_PVLIST mapping with "
+				      "unmanaged page "
+				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
+#endif
+			mdpg = &pg->mdpage;
+			old_pvh = &mdpg->mp_pvhead;
+
+			/* NULL new_pvh since page will not be managed */
+			pmap_lock_pvhs(old_pvh, NULL);
+
+			//printf("pmap change pa");
+			/* zap! */
+			opte = pte_get_ma(&ptes[x86_btop(va)]);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(va)]);
+			error = xpq_update_foreing(maptp, npte, dom);
+
+			pve = pmap_remove_pv(old_pvh, pmap, va);
+			KASSERT(pve != 0);
+			mdpg->mp_attrs |= opte;
+
+			pmap_free_pv(pmap, pve);
+			simple_unlock(&old_pvh->pvh_lock);
+
+			goto shootdown_test;
+		}
+	} else {
+		pmap->pm_stats.resident_count++;
+		pmap->pm_stats.wired_count++;
+		if (ptp)
+			ptp->wire_count++;
+	}
+
+	//printf("pmap initial setup");
+	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+	error = xpq_update_foreing(maptp, npte, dom);
+
+shootdown_test:
+	/* Update page attributes if needed */
+	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+#if defined(MULTIPROCESSOR)
+		int32_t cpumask = 0;
+#endif
+shootdown_now:
+#if defined(MULTIPROCESSOR)
+		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
+		pmap_tlb_shootnow(cpumask);
+#else
+		/* Don't bother deferring in the single CPU case. */
+		if (pmap_is_curpmap(pmap))
+			pmap_update_pg(va);
+#endif
+	}
+
+out:
+	pmap_unmap_ptes(pmap);
+	PMAP_MAP_TO_HEAD_UNLOCK();
+
+	//printf("pmap_remap_pages: %d\n", error);
 	return error;
 }
 
