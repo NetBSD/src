@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.9 2000/10/11 14:46:13 is Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.10 2003/07/14 09:35:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.9 2000/10/11 14:46:13 is Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.10 2003/07/14 09:35:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,11 +114,11 @@ main(argc, argv)
 		perror(argv[0]), exit(1);
 	inithash();
 	argc--, argv++;
-	strcpy(name, argv[0]);
+	strlcpy(name, argv[0], sizeof(name));
 	np = name + strlen(name);
 	argc--, argv++;
 	do {
-		strcpy(np, argv[0]);
+		strlcpy(np, argv[0], sizeof(name) - (np - name));
 		if (freopen(name, "w", stdout) == NULL)
 			perror(name), exit(1);
 		if (freopen(argv[0], "r", stdin) == NULL)

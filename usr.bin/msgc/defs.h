@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 2002/01/29 10:20:35 tv Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 2003/07/14 09:34:00 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,24 +73,23 @@ EXTERN id_rec *root INIT(NULL);
 /* Prototypes. */
 
 /* From util.c */
-void yyerror (const char *, ...);
-void buff_add_ch (char);
-char *buff_copy (void); 
+void yyerror(const char *, ...);
+void buff_add_ch(char);
+char *buff_copy(void); 
 
 /* From avl.c */
-id_rec *find_id (id_rec *tree, char *id);
-int insert_id (id_rec **root, id_rec *new_id);
+id_rec *find_id(id_rec *, char *);
+int insert_id(id_rec **, id_rec *);
 
 /* from scan.l */
-int yylex (void);
+int yylex(void);
 
 /* from parse.y */
-int yyparse (void);
+int yyparse(void);
 
 /* Vars not defined in main.c */
 extern FILE *yyin;
 
 /* from mdb.c */
-void define_msg (char *, char *);
-void write_msg_file (void);
-
+void define_msg(char *, char *);
+void write_msg_file(void);
