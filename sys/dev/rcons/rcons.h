@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.1 1995/09/17 19:56:36 pk Exp $ */
+/*	$NetBSD: rcons.h,v 1.2 1995/10/04 23:57:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <dev/rcons/raster.h>
 
 struct rconsole {
 	/* Raster console emulator state */
