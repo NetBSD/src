@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.11 2003/08/07 11:14:42 agc Exp $	*/
+/*	$NetBSD: vars.c,v 1.12 2003/10/31 01:25:54 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.11 2003/08/07 11:14:42 agc Exp $");
+__RCSID("$NetBSD: vars.c,v 1.12 2003/10/31 01:25:54 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ assign(char name[], char values[])
 	vp = lookup(name);
 	if (vp == NULL) {
 		vp = (struct var *) calloc(1, sizeof *vp);
+		if (vp == NULL)
+			errx(1, "Out of memory");
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
 		variables[h] = vp;
