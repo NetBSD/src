@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.1 1999/01/15 13:31:19 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2 1999/02/01 21:32:35 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_4.S,v 1.1 1999/01/15 13:31:19 bouyer Exp $")
+	RCSID("$NetBSD: byte_swap_4.S,v 1.2 1999/02/01 21:32:35 matthias Exp $")
 #endif
 
 KENTRY(__bswap32, 4)
@@ -45,5 +45,5 @@ KENTRY(__bswap32, 4)
 	rotd	16,r0
 	rotw	8,r0
 	ret	ARGS
-ALTENTRY(ntohl, __bswap32)
-ALTENTRY(htonl, __bswap32)
+ALTENTRY(ntohl,__bswap32)
+ALTENTRY(htonl,__bswap32)
