@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.100 2002/03/16 16:56:06 martin Exp $	*/
+/*	$NetBSD: conf.h,v 1.101 2002/04/23 06:48:46 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -416,6 +416,7 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, write, ioctl, poll */
 #define cdev_vc_nb_init(c,n)	cdev__ocrwip_init(c,n)
+#define cdev_irix_usema_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, read, write, ioctl, stop, poll */
 #define	cdev_esh_init(c,n)	cdev__ocrwisp_init(c,n)
