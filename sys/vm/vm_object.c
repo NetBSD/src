@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.49 1997/09/07 21:19:41 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.50 1997/09/08 21:23:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -314,8 +314,10 @@ vm_object_deallocate(object)
 			    temp->shadowers_list.le_next == NULL) {
 				if (!vm_object_lock_try(temp))
 					return;
+				temp->ref_count++;
 				vm_object_collapse(temp);
 				vm_object_unlock(temp);
+				vm_object_deallocate(temp);
 			}
 			return;
 		}
@@ -1322,17 +1324,10 @@ RetryRename:
 			    paged_offset);
 			if (backing_page == NULL) {
 #if 0 /* XXXXX FIXME */
-				/*
-				 * XXX - We keep `object' locked here..
-				 * Can we do that?
-				 * Think about the implications of multiple
-				 * simultaneous calls to collapse the same
-				 * object, if we decide to unlock.
-				 */
 				vm_object_unlock(backing_object);
-				/*vm_object_unlock(object);*/
+				vm_object_unlock(object);
 				VM_WAIT;
-				/*vm_object_lock(object);*/
+				vm_object_lock(object);
 				vm_object_lock(backing_object);
 				goto RetryRename;
 #else
@@ -1342,6 +1337,7 @@ RetryRename:
 
 			vm_object_paging_begin(backing_object);
 			vm_object_unlock(backing_object);
+			vm_object_unlock(object);
 
 			/*
 			 * Call the pager to retrieve the data, if any.
@@ -1351,6 +1347,7 @@ RetryRename:
 			rv = vm_pager_get(backing_object->pager, backing_page,
 			    TRUE);
 
+			vm_object_lock(object);
 			vm_object_lock(backing_object);
 			vm_object_paging_end(backing_object);
 
