@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.11 1994/07/21 22:05:49 deraadt Exp $
+ * $Id: kbd.c,v 1.12 1994/08/25 20:57:38 deraadt Exp $
  */
 
 /*
@@ -260,9 +260,11 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 	k->k_open = iopen;
 	k->k_close = iclose;
 
-	cp = getpropstring(optionsnode, "keyboard-click?");
-	if (cp && strcmp(cp, "true") == 0)
-		k->k_state.kbd_click = 1;
+	if (cputyp != CPU_SUN4) {
+		cp = getpropstring(optionsnode, "keyboard-click?");
+		if (cp && strcmp(cp, "true") == 0)
+			k->k_state.kbd_click = 1;
+	}
 }
 
 /*
