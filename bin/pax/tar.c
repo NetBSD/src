@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47 2004/01/30 20:46:12 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.1 2004/04/19 03:35:55 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47 2004/01/30 20:46:12 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.1 2004/04/19 03:35:55 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1253,16 +1253,26 @@ name_split(char *name, int len)
 	return(start);
 }
 
-/* convert a glob into a RE, and add it to the list */
+/*
+ * convert a glob into a RE, and add it to the list.  we convert to
+ * four different RE's (because we're using BRE's and can't use |
+ * alternation :-() with this padding:
+ *	.*\/ and $
+ *	.*\/ and \/.*
+ *	^ and $
+ *	^ and \/.*
+ */
 static int
 tar_gnutar_exclude_one(const char *line, size_t len)
 {
-	char sbuf[MAXPATHLEN * 2 + 1 + 5];
+	/* 2* buffer len + 5 prefix + 5 postfix + null subst + nul */
+	char sbuf[MAXPATHLEN * 2 + 4 + 4 + 5 + 1];
 	int i, j;
 
 	if (line[len - 1] == '\n')
 		len--;
-	for (i = 0, j = 2; i < len; i++) {
+	strncpy(sbuf, ".*" "\\/", 4);
+	for (i = 0, j = 4; i < len; i++) {
 		/*
 		 * convert glob to regexp, escaping everything
 		 */
@@ -1275,11 +1285,18 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 			sbuf[j++] = '\\';
 		sbuf[j++] = line[i];
 	}
-	sbuf[0] = sbuf[j + 1] = sbuf[j + 2] = '/';
-	sbuf[1] = '^';
-	sbuf[j] = '$';
-	sbuf[j + 3] = '\0';
+	strncpy(&sbuf[j], "$", 2);
 	if (rep_add(sbuf) < 0)
+		return (-1);
+	strncpy(&sbuf[j], "\\/.*", 5);
+	if (rep_add(sbuf) < 0)
+		return (-1);
+
+	sbuf[3] = '^';
+	if (rep_add(sbuf+3) < 0)
+		return (-1);
+	strncpy(&sbuf[j], "$", 2);
+	if (rep_add(sbuf+3) < 0)
 		return (-1);
 
 	return (0);
