@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.68 2002/09/17 07:29:46 junyoung Exp $	 */
+/*	$NetBSD: reloc.c,v 1.69 2002/09/23 23:56:47 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -79,8 +79,7 @@ _rtld_do_copy_relocation(dstobj, rela)
 	Obj_Entry      *srcobj;
 
 	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next)
-		if ((srcsym = _rtld_symlook_obj(name, hash, srcobj,
-		    false)) != NULL)
+		if ((srcsym = _rtld_symlook_obj(name, hash, srcobj)) != NULL)
 			break;
 
 	if (srcobj == NULL) {
@@ -236,6 +235,7 @@ _rtld_relocate_objects(first, bind_now, self)
 				return -1;
 			}
 		}
+dbg(("a\n"));
 		if (_rtld_relocate_nonplt_objects(obj, self) < 0)
 			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
@@ -246,6 +246,7 @@ _rtld_relocate_objects(first, bind_now, self)
 				return -1;
 			}
 		}
+dbg(("b\n"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
 #if defined(__i386__)
@@ -268,6 +269,7 @@ _rtld_relocate_objects(first, bind_now, self)
 		obj->dlclose = _rtld_dlclose;
 		obj->dladdr = _rtld_dladdr;
 
+dbg(("c\n"));
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL)
 			_rtld_setup_pltgot(obj);
