@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.197 2003/04/01 02:18:52 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.198 2003/05/08 18:13:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2003/04/01 02:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2003/05/08 18:13:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ u_long		kernel_pmap_store[PMAP_SIZEOF(ALPHA_MAXPROCS) / sizeof(u_long)];
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
-static vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+static vaddr_t	pmap_max_kva;	/* VA of last mappable page */
 
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
@@ -365,7 +365,7 @@ struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	  lock is held.
  *
  *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
- *	  and the virtual_end variable.
+ *	  and the pmap_max_kva variable.
  *
  *	  There is a lock ordering constraint for pmap_growkernel_slock.
  *	  pmap_growkernel() acquires the locks in the following order:
@@ -830,12 +830,19 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
-	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
+	pmap_max_kva = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
+
+	/*
+	 * Define the boundaries of the managed kernel virtual address
+	 * space.
+	 */
+	virtual_avail = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
+	virtual_end = VM_MAX_KERNEL_ADDRESS;	/* we use pmap_growkernel */
 
 #if 0
 	printf("avail_start = 0x%lx\n", avail_start);
 	printf("avail_end = 0x%lx\n", avail_end);
-	printf("virtual_end = 0x%lx\n", virtual_end);
+	printf("pmap_max_kva = 0x%lx\n", pmap_max_kva);
 #endif
 
 	/*
@@ -1010,19 +1017,6 @@ pmap_uses_prom_console(void)
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 /*
- * pmap_virtual_space:		[ INTERFACE ]
- *
- *	Define the initial bounds of the kernel virtual address space.
- */
-void
-pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
-{
-
-	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = VM_MAX_KERNEL_ADDRESS;		/* we use pmap_growkernel */
-}
-
-/*
  * pmap_steal_memory:		[ INTERFACE ]
  *
  *	Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
@@ -1040,13 +1034,10 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
  *	Note that this memory will never be freed, and in essence it is wired
  *	down.
  *
- *	We must adjust *vstartp and/or *vendp iff we use address space
- *	from the kernel virtual address range defined by pmap_virtual_space().
- *
  *	Note: no locking is necessary in this function.
  */
 vaddr_t
-pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
+pmap_steal_memory(vsize_t size)
 {
 	int bank, npgs, x;
 	vaddr_t va;
@@ -3141,12 +3132,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	vaddr_t va;
 	int l1idx;
 
-	if (maxkvaddr <= virtual_end)
+	if (maxkvaddr <= pmap_max_kva)
 		goto out;		/* we are OK */
 
 	simple_lock(&pmap_growkernel_slock);
 
-	va = virtual_end;
+	va = pmap_max_kva;
 
 	while (va < maxkvaddr) {
 		/*
@@ -3216,12 +3207,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	/* Invalidate the L1 PT cache. */
 	pool_cache_invalidate(&pmap_l1pt_cache);
 
-	virtual_end = va;
+	pmap_max_kva = va;
 
 	simple_unlock(&pmap_growkernel_slock);
 
  out:
-	return (virtual_end);
+	return (pmap_max_kva);
 
  die:
 	panic("pmap_growkernel: out of memory");

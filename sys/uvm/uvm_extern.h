@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.78 2003/05/03 19:01:06 wiz Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.79 2003/05/08 18:13:27 thorpej Exp $	*/
 
 /*
  *
@@ -502,6 +502,16 @@ extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
 extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
+
+/*
+ * these variables define the boundaries of the managed kernel virtual
+ * address space.  they are initialized by machine-dependent code during
+ * bootstrap.  note that before kernel virtual memory is initialized,
+ * some address space might be "stolen" during bootstrap.  anything that
+ * steals address space must update these variables accordingly.
+ */
+extern vaddr_t virtual_avail;
+extern vaddr_t virtual_end;
 
 /*
  * macros
