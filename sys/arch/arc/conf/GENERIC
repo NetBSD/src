@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 2000/06/14 22:02:19 veego Exp $
+#	$NetBSD: GENERIC,v 1.33 2000/06/17 07:29:07 soda Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.32 $"
+#ident		"GENERIC-$Revision: 1.33 $"
 
 maxusers	32		# estimated number of users
 
@@ -122,8 +122,10 @@ cpu*		at mainbus0
 
 pica*		at mainbus0	# ACER Pica systems local bus.
 aclock0 	at pica?
-pc0		at pica?
-opms0		at pica?
+#pc0		at pica?
+#opms0		at pica?
+vga0		at pica?	# Jazz localbus VGA
+pckbc0		at pica?	# PC keyboard controller
 com0		at pica?
 com1		at pica?
 lpt0		at pica?
@@ -135,6 +137,9 @@ fd*		at fdc? drive ?
 asc0		at pica?
 scsibus* 	at asc?
 
+#siop0		at pica?
+#scsibus* 	at siop?
+
 #### ISA bus devices
 
 isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
@@ -144,6 +149,8 @@ isa*		at isabr?
 aclock0 	at isa? port 0x70 irq 0
 
 pc0		at isa? port 0x60 irq 1		# generic PC console device
+#vga0		at isa?
+#pckbc0		at isa?				# PC keyboard controller
 com0		at isa? port 0x3f8 irq 4
 com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 4
@@ -241,7 +248,6 @@ wd*		at pciide? channel ? drive ? flags 0x0000
 atapibus*	at pciide? channel ?
 
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
-wsdisplay*	at tga?
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 scsibus*	at ahc?
 
@@ -275,6 +281,17 @@ uk*		at scsibus? target ? lun ?
 cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+#### Workstation Console attachments
+
+wsdisplay*	at vga?
+wsdisplay*	at tga?
+pckbd*		at pckbc?	# PC keyboard (kbd port)
+wskbd*		at pckbd?
+pms*		at pckbc?	# PS/2-style mouse (aux port)
+wsmouse*	at pms?
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
+#wsmouse*	at pmsi?
 
 #### Pseudo devices
 
