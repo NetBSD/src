@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.5 2000/03/23 07:03:25 thorpej Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.6 2000/05/02 12:43:16 itojun Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -45,6 +45,7 @@ struct slcp {
 };
 
 #define IDX_IPCP 1		/* idx into state table */
+#define IDX_IPV6CP 2		/* idx into state table */
 
 struct sipcp {
 	u_long	opts;		/* IPCP options to send (bitfield) */
@@ -52,6 +53,10 @@ struct sipcp {
 #define IPCP_HISADDR_SEEN 1	/* have seen his address already */
 #define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
 #define IPCP_MYADDR_SEEN  4	/* have seen his address already */
+#ifdef notdef
+#define IPV6CP_MYIFID_DYN   2	/* my ifid is dynamically assigned */
+#endif
+#define IPV6CP_MYIFID_SEEN  4	/* have seen his ifid already */
 };
 
 #define AUTHNAMELEN	32
@@ -68,8 +73,8 @@ struct sauth {
 	u_char	challenge[AUTHKEYLEN];	/* random challenge */
 };
 
-#define IDX_PAP		2
-#define IDX_CHAP	3
+#define IDX_PAP		3
+#define IDX_CHAP	4
 
 #define IDX_COUNT (IDX_CHAP + 1) /* bump this when adding cp's! */
 
@@ -92,8 +97,8 @@ struct sppp {
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
 	u_short pp_alivecnt;    /* keepalive packets counter */
 	u_short pp_loopcnt;     /* loopback detection counter */
-	u_long  pp_seq;         /* local sequence number */
-	u_long  pp_rseq;        /* remote sequence number */
+	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
+	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
 	enum ppp_phase pp_phase;	/* phase we're currently in */
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
@@ -109,6 +114,7 @@ struct sppp {
 #endif
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
+	struct sipcp ipv6cp;		/* IPv6CP params */
 	struct sauth myauth;		/* auth params, i'm peer */
 	struct sauth hisauth;		/* auth params, i'm authenticator */
 	/*
