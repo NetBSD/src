@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_log.c,v 1.5 1994/04/12 19:41:48 deraadt Exp $
+ *	from: @(#)subr_log.c	8.1 (Berkeley) 6/10/93
+ *	$Id: subr_log.c,v 1.6 1994/05/19 08:13:44 cgd Exp $
  */
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/ioctl.h>
 #include <sys/msgbuf.h>
 #include <sys/file.h>
-#include <sys/select.h>
 
 #define LOG_RDPRI	(PZERO + 1)
 
@@ -54,7 +53,7 @@
 
 struct logsoftc {
 	int	sc_state;		/* see above for possibilities */
-	struct selinfo sc_selp;		/* process waiting on select call */
+	struct	selinfo sc_selp;	/* process waiting on select call */
 	int	sc_pgid;		/* process/group for async I/O */
 } logsoftc;
 
@@ -91,14 +90,14 @@ logopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-logclose(dev, flag)
+logclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 {
+
 	log_open = 0;
 	logsoftc.sc_state = 0;
-	bzero(&logsoftc.sc_selp, sizeof(logsoftc.sc_selp));
-	return 0;
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -133,7 +132,7 @@ logread(dev, uio, flag)
 		l = mbp->msg_bufx - mbp->msg_bufr;
 		if (l < 0)
 			l = MSG_BSIZE - mbp->msg_bufr;
-		l = MIN(l, uio->uio_resid);
+		l = min(l, uio->uio_resid);
 		if (l == 0)
 			break;
 		error = uiomove((caddr_t)&mbp->msg_bufc[mbp->msg_bufr],
