@@ -36,7 +36,7 @@ extern char **dupargv PARAMS ((char **)) ATTRIBUTE_MALLOC;
    across different systems, sometimes as "char *" and sometimes as
    "const char *" */
 
-#if defined (__GNU_LIBRARY__ ) || defined (__linux__) || defined (__FreeBSD__) || defined (__OpenBSD__) || defined (__CYGWIN__) || defined (__CYGWIN32__)
+#if defined (__GNU_LIBRARY__ ) || defined (__linux__) || defined (__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__) || defined (__CYGWIN__) || defined (__CYGWIN32__)
 extern char *basename PARAMS ((const char *));
 #else
 extern char *basename ();
