@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)set.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: set.c,v 1.5 1994/09/21 00:11:16 mycroft Exp $";
+static char *rcsid = "$Id: set.c,v 1.6 1995/01/15 09:47:38 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -663,9 +663,6 @@ exportpath(val)
 			       "Warning: ridiculously long PATH truncated\n");
 		break;
 	    }
-	    if ((**val != '/' || **val == '\0') && (euid == 0 || uid == 0)) 
-		    (void) fprintf(csherr,
-		    "Warning: exported path contains relative components.\n");
 	    (void) Strcat(exppath, *val++);
 	    if (*val == 0 || eq(*val, STRRparen))
 		break;
