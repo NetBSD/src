@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsyncs.c,v 1.1.1.1 2004/03/28 08:56:35 martti Exp $	*/
+/*	$NetBSD: ipsyncs.c,v 1.1.1.2 2005/02/08 06:53:24 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.5 2003/09/04 18:40:43 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.5.2.1 2004/10/31 18:46:44 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
@@ -23,26 +23,71 @@ static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.5 2003/09/04 18:40:43 darrenr
 #include <fcntl.h>
 #include <strings.h>
 #include <unistd.h>
+#include <syslog.h>
+#include <errno.h>
+#include <signal.h>
 
 #include "netinet/ip_compat.h"
 #include "netinet/ip_fil.h"
-
+#include "netinet/ip_state.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ip_sync.h"
 
 int	main __P((int, char *[]));
 
+int	terminate = 0;
+
+void usage(const char *progname) {
+	fprintf(stderr,
+		"Usage: %s <destination IP> <destination port> [remote IP]\n",
+		progname);
+}
+
+static void handleterm(int sig)
+{
+	terminate = sig;
+
+}
+
+#define BUFFERLEN 1400
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
-	int fd, nfd, lfd, i, n, slen;
-	struct sockaddr_in sin, san;
-	struct in_addr in;
-	char buff[1400];
+	int nfd = -1 , lfd = -1; 
+	int n1, n2, n3, magic, len, inbuf;
+	struct sockaddr_in sin;
+	struct sockaddr_in in;
+	char buff[BUFFERLEN];
+	synclogent_t *sl;
+	syncupdent_t *su;
+	synchdr_t *sh;
+	char *progname;
+	
+	progname = strrchr(argv[0], '/');
+	if (progname) {
+		progname++;
+	} else {
+		progname = argv[0];
+	}
+	
+	if (argc < 2) {
+		usage(progname);
+		exit(1);
+	}
 
-	fd = open(IPSYNC_NAME, O_WRONLY);
-	if (fd == -1) {
-		perror("open");
+#if 0
+       	signal(SIGHUP, handleterm);
+       	signal(SIGINT, handleterm);
+       	signal(SIGTERM, handleterm);
+#endif
+
+	openlog(progname, LOG_PID, LOG_SECURITY);
+       
+	lfd = open(IPSYNC_NAME, O_WRONLY);
+	if (lfd == -1) {
+		syslog(LOG_ERR, "Opening %s :%m", IPSYNC_NAME);
 		exit(1);
 	}
 
@@ -54,55 +99,174 @@ char *argv[];
 		sin.sin_port = htons(atoi(argv[2]));
 	else
 		sin.sin_port = htons(43434);
-	if (argc > 3)
-		in.s_addr = inet_addr(argv[3]);
+	if (argc > 3) 
+		in.sin_addr.s_addr = inet_addr(argv[3]);
 	else
-		in.s_addr = 0;
+		in.sin_addr.s_addr = 0;
+	in.sin_port = 0;
 
-	lfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (lfd == -1) {
-		perror("socket");
-		exit(1);
-	}
-
-	n = 1;
-	setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n));
-
-	if (bind(lfd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
-		perror("bind");
-		exit(1);
-	}
-
-	listen(lfd, 1);
-
-	do {
-		slen = sizeof(san);
-		nfd = accept(lfd, (struct sockaddr *)&san, &slen);
-		if (nfd == -1) {
-			perror("accept");
-			continue;
-		}
-		n = 1;
-		setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n));
-
-		printf("Connection from %s\n", inet_ntoa(san.sin_addr));
-
-		if (in.s_addr && (in.s_addr != san.sin_addr.s_addr)) {
+	while(1) {
+	
+		if (lfd != -1)
+			close(lfd);
+		if (nfd != -1)
 			close(nfd);
-			continue;
+
+		lfd = open(IPSYNC_NAME, O_WRONLY);
+		if (lfd == -1) {
+			syslog(LOG_ERR, "Opening %s :%m", IPSYNC_NAME);
+			goto tryagain;
+		}
+		
+		nfd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (nfd == -1) {
+			syslog(LOG_ERR, "Socket :%m");
+			goto tryagain;
 		}
 
-		while ((n = read(nfd, buff, sizeof(buff))) > 0) {
-			i = write(fd, buff, n);
-			if (i != n) {
-				perror("write");
-				exit(1);
+	        n1 = 1;
+                setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &n1, sizeof(n1));
+
+		if (bind(nfd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+			syslog(LOG_ERR, "Bind: %m");
+			goto tryagain;
+		}
+
+		syslog(LOG_INFO, "Established connection to %s",
+		       inet_ntoa(sin.sin_addr));
+	
+		inbuf = 0;	
+		while (1) {
+
+
+			/* 
+			 * XXX currently we do not check the source address
+			 * of a datagram, this can be a security risk
+			 */
+			n1 = read(nfd, buff+inbuf, BUFFERLEN-inbuf);
+		
+			printf("header : %d bytes read (header = %d bytes)\n",
+			       n1, sizeof(*sh));
+	
+			if (n1 < 0) {
+				syslog(LOG_ERR, "Read error (header): %m");
+				goto tryagain;
+			}
+
+			if (n1 == 0) {
+				/* XXX can this happen??? */
+				syslog(LOG_ERR,
+				       "Read error (header) : No data");
+				sleep(1);
+				continue;
+			}
+			
+			inbuf += n1;		
+
+moreinbuf:
+			if (inbuf < sizeof(*sh)) {
+				continue; /* need more data */
+			}
+
+			sh = (synchdr_t *)buff;
+			len = ntohl(sh->sm_len);
+			magic = ntohl(sh->sm_magic);		
+
+			if (magic != SYNHDRMAGIC) {
+				syslog(LOG_ERR, "Invalid header magic %x",
+				       magic);
+				goto tryagain;
+			}
+
+#define IPSYNC_DEBUG
+#ifdef IPSYNC_DEBUG
+			printf("v:%d p:%d len:%d magic:%x", sh->sm_v,
+			       sh->sm_p, len, magic);
+
+			if (sh->sm_cmd == SMC_CREATE)
+				printf(" cmd:CREATE");
+			else if (sh->sm_cmd == SMC_UPDATE)
+				printf(" cmd:UPDATE");
+			else
+				printf(" cmd:Unknown(%d)", sh->sm_cmd);
+
+			if (sh->sm_table == SMC_NAT)
+				printf(" table:NAT");
+			else if (sh->sm_table == SMC_STATE)
+				printf(" table:STATE");
+			else
+				printf(" table:Unknown(%d)", sh->sm_table);
+
+			printf(" num:%d\n", (u_32_t)ntohl(sh->sm_num));
+#endif			
+			
+			if (inbuf < sizeof(*sh) + len) {
+				continue; /* need more data */
+				goto tryagain;
+			}
+
+#ifdef IPSYNC_DEBUG
+			if (sh->sm_cmd == SMC_CREATE) {
+				sl = (synclogent_t *)buff;
+
+			} else if (sh->sm_cmd == SMC_UPDATE) {
+				su = (syncupdent_t *)buff;
+				if (sh->sm_p == IPPROTO_TCP) {
+					printf(" TCP Update: age %lu state %d/%d\n", 
+					       su->sup_tcp.stu_age,
+					       su->sup_tcp.stu_state[0], 
+					       su->sup_tcp.stu_state[1]);
+				}
+			} else {
+				printf("Unknown command\n");
+			}
+#endif
+
+			n2 = sizeof(*sh) + len;
+			n3 = write(lfd, buff, n2);
+			if (n3 <= 0) {
+				syslog(LOG_ERR, "Write error: %m");
+				goto tryagain;
+			}
+
+			
+			if (n3 != n2) {
+				syslog(LOG_ERR, "Incomplete write (%d/%d)",
+				       n3, n2);
+				goto tryagain;
+			}
+
+			/* signal received? */
+			if (terminate)
+				break;
+
+			/* move buffer to the front,we might need to make
+			 * this more efficient, by using a rolling pointer
+			 * over the buffer and only copying it, when
+			 * we are reaching the end 
+			 */
+			inbuf -= n2;
+			if (inbuf) {
+				bcopy(buff+n2, buff, inbuf);
+				printf("More data in buffer\n");
+				goto moreinbuf;
 			}
 		}
+
+		if (terminate)
+			break;
+tryagain:
+		sleep(1);
+	}
+
+
+	/* terminate */
+	if (lfd != -1)
+		close(lfd);
+	if (nfd != -1)
 		close(nfd);
-	} while (1);
 
-	close(lfd);
+	syslog(LOG_ERR, "signal %d received, exiting...", terminate);
 
-	exit(0);
+	exit(1);
 }

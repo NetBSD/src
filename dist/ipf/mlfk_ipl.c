@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.6 2004/07/23 05:34:04 martti Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.7 2005/02/08 06:53:02 martti Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -27,7 +27,11 @@
 #include <netinet/ip_auth.h>
 #include <netinet/ip_frag.h>
 
+#if __FreeBSD_version >= 502116
+static struct cdev *ipf_devs[IPL_LOGSIZE];
+#else
 static dev_t ipf_devs[IPL_LOGSIZE];
+#endif
 
 static int sysctl_ipf_int ( SYSCTL_HANDLER_ARGS );
 static int ipf_modload(void);
@@ -57,14 +61,14 @@ SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_tcpclosed, CTLFLAG_RWO,
 	   &fr_tcpclosed, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_udptimeout, CTLFLAG_RWO,
 	   &fr_udptimeout, 0, "");
+SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_udpacktimeout, CTLFLAG_RWO,
+	   &fr_udpacktimeout, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_icmptimeout, CTLFLAG_RWO,
 	   &fr_icmptimeout, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_defnatage, CTLFLAG_RWO,
 	   &fr_defnatage, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_ipfrttl, CTLFLAG_RW,
 	   &fr_ipfrttl, 0, "");
-SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_unreach, CTLFLAG_RW,
-	   &fr_unreach, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_running, CTLFLAG_RD,
 	   &fr_running, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_statesize, CTLFLAG_RWO,
@@ -91,6 +95,10 @@ SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_minttl, CTLFLAG_RW, &fr_minttl, 0, "");
 #define CDEV_MAJOR 79
 #if __FreeBSD_version >= 501000
 static struct cdevsw ipl_cdevsw = {
+#if __FreeBSD_version >= 502103
+	.d_version =	D_VERSION,
+	.d_flags =	0,	/* D_NEEDGIANT - Should be SMP safe */
+#endif
 	.d_open =	iplopen,
 	.d_close =	iplclose,
 	.d_read =	iplread,
@@ -103,7 +111,7 @@ static struct cdevsw ipl_cdevsw = {
 	/* open */	iplopen,
 	/* close */	iplclose,
 	/* read */	iplread,
-	/* write */	nowrite,
+	/* write */	iplwrite,
 	/* ioctl */	iplioctl,
 	/* poll */	nopoll,
 	/* mmap */	nommap,
@@ -121,7 +129,7 @@ static struct cdevsw ipl_cdevsw = {
 #endif
 
 static char *ipf_devfiles[] = {	IPL_NAME, IPNAT_NAME, IPSTATE_NAME, IPAUTH_NAME,
-				IPSCAN_NAME, IPSYNC_NAME, IPLOOKUP_NAME, NULL };
+				IPSYNC_NAME, IPSCAN_NAME, IPLOOKUP_NAME, NULL };
 
 
 static int

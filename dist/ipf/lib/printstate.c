@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.2 2005/02/08 06:53:17 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -18,6 +18,7 @@ int opts;
 u_long now;
 {
 	ipstate_t ips;
+	synclist_t ipsync;
 
 	if (kmemcpy((char *)&ips, (u_long)sp, sizeof(ips)))
 		return NULL;
@@ -56,8 +57,8 @@ u_long now;
 		 || ips.is_p == IPPROTO_ICMPV6
 #endif
 		)
-		PRINTF(" id %hu seq %hu type %d\n", ntohs(ips.is_icmp.ici_id),
-			ntohs(ips.is_icmp.ici_seq), ips.is_icmp.ici_type);
+		PRINTF(" id %hu seq %hu type %d\n", ips.is_icmp.ici_id,
+			ips.is_icmp.ici_seq, ips.is_icmp.ici_type);
 
 #ifdef        USE_QUAD_T
 	PRINTF("\tforward: pkts in %qd bytes in %qd pkts out %qd bytes out %qd\n\tbackward: pkts in %qd bytes in %qd pkts out %qd bytes out %qd\n",
@@ -129,8 +130,11 @@ u_long now;
 	if (ips.is_pass & FR_KEEPFRAG)
 		PRINTF(" keep frags");
 	/* a given; no? */
-	if (ips.is_pass & FR_KEEPSTATE)
+	if (ips.is_pass & FR_KEEPSTATE) {
 		PRINTF(" keep state");
+		if (ips.is_pass & FR_STATESYNC)	
+			PRINTF(" ( sync )");
+	}
 	PRINTF("\tIPv%d", ips.is_v);
 	PRINTF("\n");
 
@@ -161,6 +165,22 @@ u_long now;
 	if (opts & OPT_DEBUG)
 		PRINTF("/%p", ips.is_ifp[3]);
 	PRINTF("]\n");
+
+	if (ips.is_sync != NULL) {
+
+		if (kmemcpy((char *)&ipsync, (u_long)ips.is_sync, sizeof(ipsync))) {
+	
+			PRINTF("\tSync status: status could not be retrieved\n");
+			return NULL;
+		}
+
+		PRINTF("\tSync status: idx %d num %d v %d pr %d rev %d\n",
+			ipsync.sl_idx, ipsync.sl_num, ipsync.sl_v,
+			ipsync.sl_p, ipsync.sl_rev);
+		
+	} else {
+		PRINTF("\tSync status: not synchronized\n");
+	}
 
 	return ips.is_next;
 }
