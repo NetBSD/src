@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.7 1993/09/10 18:57:44 jtc Exp $";
+static char rcsid[] = "$Id: rmdir.c,v 1.8 1993/09/10 19:07:05 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -103,29 +103,24 @@ rmdirp (path)
 {
 	char *slash;
 
-	/* point slash at last slash */
-	slash = strrchr (path, '/');
-
-	while (slash != NULL) {
-		if (rmdir (path) < 0) {
-			warn ("%s", path);
-			return -1;
+	for (;;) {
+		slash = strrchr (path, '/');
+		if (slash == NULL) {
+			return 0;
 		}
 
 		/* skip trailing slash characters */
 		while (slash > path && *slash == '/')
 			slash--;
-
 		*++slash = '\0';
-		slash = strrchr (path, '/');
+
+		if (rmdir (path) < 0) {
+			warn ("%s", path);
+			return -1;
+		}
 	}
 
-	if (rmdir (path) < 0) {
-		warn ("%s", path);
-		return -1;
-	}
-
-	return 0;
+	/* NOTREACHED */
 }
 
 static void
