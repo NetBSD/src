@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.23 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: proc.h,v 1.24 2004/01/14 11:29:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -62,7 +62,6 @@ struct mdproc {
 #endif /* _I386_PROC_H_ */
 
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
 
 /* kernel stack params */
