@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.9 2002/12/28 08:04:28 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.10 2002/12/28 08:45:31 matt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -41,6 +41,10 @@ file	dev/acpi/com_acpi.c		com_acpi
 # Parallel interface
 attach	lpt at acpi with lpt_acpi
 file	dev/acpi/lpt_acpi.c		lpt_acpi
+
+# Keyboard controller
+attach	pckbc at acpi with pckbc_acpi
+file	dev/acpi/pckbc_acpi.c		pckbc_acpi
 
 # NeoMagic 256AV audio with CS4232 codec
 attach	wss at acpi with wss_acpi
