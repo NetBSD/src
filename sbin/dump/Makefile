@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.12 (Berkeley) 3/7/91
 #
-#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.4 1993/04/08 13:53:28 cgd Exp $
+#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.5 1993/04/18 18:39:26 mycroft Exp $
 
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates
@@ -25,7 +25,7 @@ CLEANFILES=dumprmain.o dumprtape.o dumprmt.o rdump
 all: rdump
 
 rdump: ${ROBJS} ${LIBC}
-	${CC} -o ${.TARGET} ${CFLAGS} ${ROBJS}
+	${CC} ${STRIP} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${ROBJS} ${LDADD}
 
 dumprmain.o: dumpmain.o
 	${CC} -c -DRDUMP ${CFLAGS} ${.CURDIR}/dumpmain.c -o ${.TARGET}
