@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c558.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
+/*	$NetBSD: opti82c558.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -173,7 +173,8 @@ opti82c558_get_intr(v, clink, irqp)
 
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, VIPER_CFG_PIRQ);
 	val = VIPER_PIRQ(reg, clink);
-	*irqp = (val == VIPER_PIRQ_NONE) ? 0xff : viper_pirq_decode[val];
+	*irqp = (val == VIPER_PIRQ_NONE) ?
+	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : viper_pirq_decode[val];
 
 	return (0);
 }
