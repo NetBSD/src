@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:20 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2003/02/19 02:09:46 mrg Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.15 2001/11/29 32:21:02 thorpej Exp */
 
@@ -57,6 +57,7 @@ menu editfsparts, y=12, exit;
 	option "Zmien h", action { editpart = H;}, sub menu edfspart;
 	option "Ustaw nowy przydzial rozmiarow", action { reask_sizemult(dlcylsize); };
  
+/* don't forget to update md.c if these change numbers */
 menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",		 action { toggle_getit (0); };
