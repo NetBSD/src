@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.175 2003/11/02 16:26:10 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.176 2003/11/02 16:30:55 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.175 2003/11/02 16:26:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.176 2003/11/02 16:30:55 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1163,135 +1163,132 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		}
 	}
 
-	{ /* XXXcl wrong indent to keep diff small */
-		if (p->p_stat == SACTIVE) {
+	if (p->p_stat == SACTIVE) {
 
-			if (l != NULL && (p->p_flag & P_TRACED))
-				goto run;
+		if (l != NULL && (p->p_flag & P_TRACED))
+			goto run;
 			     
-			/*
-			 * If SIGCONT is default (or ignored) and process is
-			 * asleep, we are finished; the process should not
-			 * be awakened.
-			 */
-			if ((prop & SA_CONT) && action == SIG_DFL) {
-				sigdelset(&p->p_sigctx.ps_siglist, signum);
-				goto done;
-			}
+		/*
+		 * If SIGCONT is default (or ignored) and process is
+		 * asleep, we are finished; the process should not
+		 * be awakened.
+		 */
+		if ((prop & SA_CONT) && action == SIG_DFL) {
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
+			goto done;
+		}
 
+		/*
+		 * When a sleeping process receives a stop
+		 * signal, process immediately if possible.
+		 */
+		if ((prop & SA_STOP) && action == SIG_DFL) {
 			/*
-			 * When a sleeping process receives a stop
-			 * signal, process immediately if possible.
+			 * If a child holding parent blocked,
+			 * stopping could cause deadlock.
 			 */
-			if ((prop & SA_STOP) && action == SIG_DFL) {
-				/*
-				 * If a child holding parent blocked,
-				 * stopping could cause deadlock.
-				 */
-				if (p->p_flag & P_PPWAIT) {
-					goto out;
-				}
-				sigdelset(&p->p_sigctx.ps_siglist, signum);
-				p->p_xstat = signum;
-				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
-					/*
-					 * XXXSMP: recursive call; don't lock
-					 * the second time around.
-					 */
-					child_psignal(p, 0);
-				}
-				proc_stop(p);	/* XXXSMP: recurse? */
-				goto done;
-			}
-
-			if (l == NULL) {
-				/*
-				 * Special case: SIGKILL of a process
-				 * which is entirely composed of
-				 * suspended LWPs should succeed. We
-				 * make this happen by unsuspending one of
-				 * them.
-				 */
-				if (allsusp && (signum == SIGKILL))
-					lwp_continue(suspended);
-				goto done;
-			}
-			/*
-			 * All other (caught or default) signals
-			 * cause the process to run.
-			 */
-			goto runfast;
-			/*NOTREACHED*/
-		} else if (p->p_stat == SSTOP) {
-			/* Process is stopped */
-			/*
-			 * If traced process is already stopped,
-			 * then no further action is necessary.
-			 */
-			if (p->p_flag & P_TRACED)
-				goto done;
-
-			/*
-			 * Kill signal always sets processes running,
-			 * if possible.
-			 */
-			if (signum == SIGKILL) {
-				l = proc_unstop(p);
-				if (l)
-					goto runfast;
-				goto done;
-			}
-			
-			if (prop & SA_CONT) {
-				/*
-				 * If SIGCONT is default (or ignored),
-				 * we continue the process but don't
-				 * leave the signal in ps_siglist, as
-				 * it has no further action.  If
-				 * SIGCONT is held, we continue the
-				 * process and leave the signal in
-				 * ps_siglist.  If the process catches
-				 * SIGCONT, let it handle the signal
-				 * itself.  If it isn't waiting on an
-				 * event, then it goes back to run
-				 * state.  Otherwise, process goes
-				 * back to sleep state.  
-				 */
-				if (action == SIG_DFL)
-					sigdelset(&p->p_sigctx.ps_siglist, 
-					    signum);
-				l = proc_unstop(p);
-				if (l && (action == SIG_CATCH))
-					goto runfast;
+			if (p->p_flag & P_PPWAIT) {
 				goto out;
 			}
-
-			if (prop & SA_STOP) {
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
+			p->p_xstat = signum;
+			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
 				/*
-				 * Already stopped, don't need to stop again.
-				 * (If we did the shell could get confused.)
+				 * XXXSMP: recursive call; don't lock
+				 * the second time around.
 				 */
-				sigdelset(&p->p_sigctx.ps_siglist, signum);
-				goto done;
+				child_psignal(p, 0);
 			}
-
-			/*
-			 * If a lwp is sleeping interruptibly, then
-			 * wake it up; it will run until the kernel
-			 * boundary, where it will stop in issignal(),
-			 * since p->p_stat is still SSTOP. When the
-			 * process is continued, it will be made
-			 * runnable and can look at the signal.
-			 */
-			if (l)
-				goto run;
-			goto out;
-		} else {
-			/* Else what? */
-			panic("psignal: Invalid process state %d.",
-				p->p_stat);
+			proc_stop(p);	/* XXXSMP: recurse? */
+			goto done;
 		}
-	} /* XXXcl change indent after commit */
+
+		if (l == NULL) {
+			/*
+			 * Special case: SIGKILL of a process
+			 * which is entirely composed of
+			 * suspended LWPs should succeed. We
+			 * make this happen by unsuspending one of
+			 * them.
+			 */
+			if (allsusp && (signum == SIGKILL))
+				lwp_continue(suspended);
+			goto done;
+		}
+		/*
+		 * All other (caught or default) signals
+		 * cause the process to run.
+		 */
+		goto runfast;
+		/*NOTREACHED*/
+	} else if (p->p_stat == SSTOP) {
+		/* Process is stopped */
+		/*
+		 * If traced process is already stopped,
+		 * then no further action is necessary.
+		 */
+		if (p->p_flag & P_TRACED)
+			goto done;
+
+		/*
+		 * Kill signal always sets processes running,
+		 * if possible.
+		 */
+		if (signum == SIGKILL) {
+			l = proc_unstop(p);
+			if (l)
+				goto runfast;
+			goto done;
+		}
+			
+		if (prop & SA_CONT) {
+			/*
+			 * If SIGCONT is default (or ignored),
+			 * we continue the process but don't
+			 * leave the signal in ps_siglist, as
+			 * it has no further action.  If
+			 * SIGCONT is held, we continue the
+			 * process and leave the signal in
+			 * ps_siglist.  If the process catches
+			 * SIGCONT, let it handle the signal
+			 * itself.  If it isn't waiting on an
+			 * event, then it goes back to run
+			 * state.  Otherwise, process goes
+			 * back to sleep state.  
+			 */
+			if (action == SIG_DFL)
+				sigdelset(&p->p_sigctx.ps_siglist, 
+				    signum);
+			l = proc_unstop(p);
+			if (l && (action == SIG_CATCH))
+				goto runfast;
+			goto out;
+		}
+
+		if (prop & SA_STOP) {
+			/*
+			 * Already stopped, don't need to stop again.
+			 * (If we did the shell could get confused.)
+			 */
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
+			goto done;
+		}
+
+		/*
+		 * If a lwp is sleeping interruptibly, then
+		 * wake it up; it will run until the kernel
+		 * boundary, where it will stop in issignal(),
+		 * since p->p_stat is still SSTOP. When the
+		 * process is continued, it will be made
+		 * runnable and can look at the signal.
+		 */
+		if (l)
+			goto run;
+		goto out;
+	} else {
+		/* Else what? */
+		panic("psignal: Invalid process state %d.", p->p_stat);
+	}
 	/*NOTREACHED*/
 
  runfast:
