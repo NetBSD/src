@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.3 2003/10/27 16:22:36 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.4 2003/10/27 16:26:51 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -77,7 +77,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.85 2003/10/09 16:29:53 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.3 2003/10/27 16:22:36 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.4 2003/10/27 16:26:51 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	int c;
 	int action = 0, didsomefiles = 0, errflg = 0;
 	int flags = 0;
-	char *mime, *home, *usermagic;
+	char *home, *usermagic;
 	struct stat sb;
 #define OPTSTRING	"bcCdf:F:ikLm:nNprsvz"
 #ifdef HAVE_GETOPT_LONG
