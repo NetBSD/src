@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.113 2004/03/24 17:40:02 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.114 2004/03/25 00:23:49 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1047,7 +1047,7 @@ struct sysctlnode0 {
  * padding makes alignment magically "work" for 32/64 compatibility at
  * the expense of making things bigger on 32 bit platforms.
  */
-#if defined(LP64) || (BYTE_ORDER == LITTLE_ENDIAN)
+#if defined(_LP64) || (BYTE_ORDER == LITTLE_ENDIAN)
 #define __sysc_pad(type) union { uint64_t __sysc_upad; \
 	struct { type __sysc_sdatum; } __sysc_ustr; }
 #else
