@@ -1,4 +1,4 @@
-/*	$NetBSD: biosgetrtc.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: biosgetrtc.S,v 1.4 2003/05/12 14:33:49 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -33,9 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
 
 ENTRY(biosgetrtc)
 	pushl	%ebp
