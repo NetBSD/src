@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1999/12/16 04:49:33 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 1999/12/16 06:16:16 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,7 +77,6 @@ void	 closetcp __P ((WINDOW *));
 int	 cmdiostat __P((char *, char *));
 int	 cmdkre __P((char *, char *));
 int	 cmdnetstat __P((char *, char *));
-struct	 mode *lookup __P((char *));
 void	 command __P((char *));
 void	 die __P((int));
 void	 display __P((int));
@@ -95,6 +94,7 @@ void	 fetchpigs __P((void));
 void	 fetchswap __P((void));
 void	 fetchtcp __P((void));
 void	 global_help __P((char *args));
+void	 global_interval __P((char *args));
 void	 global_load __P((char *args));
 void	 global_quit __P((char *args));
 void	 global_stop __P((char *args));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.9 1999/12/16 04:02:22 jwise Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.10 1999/12/16 06:16:16 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.9 1999/12/16 04:02:22 jwise Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.10 1999/12/16 06:16:16 jwise Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -87,11 +87,13 @@ struct	mode modes[] = {
 struct  mode *curmode = &modes[0];
 
 struct	command global_commands[] = {
-	{ "help",	global_help,	"show help"},
-	{ "load",	global_load,	"show system load averages"},
-	{ "quit",	global_quit,	"exit systat"},
+	{ "help",	global_help,		"show help"},
+	{ "interval",	global_interval,	"set update interval"},
+	{ "load",	global_load,		"show system load averages"},
+	{ "quit",	global_quit,		"exit systat"},
 	/* until prefix matching works, handle the same special case */
-	{ "q",		global_quit,	"exit systat"},
-	{ "stop",	global_stop,	"stop updating display"},
+	{ "q",		global_quit,		"exit systat"},
+	{ "start",	global_interval,	"restart updating display"},
+	{ "stop",	global_stop,		"stop updating display"},
 	{ 0 }
 };
