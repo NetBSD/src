@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $ */
+/* $NetBSD: loadfile.c,v 1.4 1997/06/20 07:06:43 cjs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,7 +149,7 @@ coff_exec(fd, coff, entryp)
 	/* Zero out bss. */
 	if (coff->a.bsize != 0) {
 		(void)printf("+%lu", coff->a.bsize);
-		bzero(coff->a.bss_start, coff->a.bsize);
+		bzero((void *)coff->a.bss_start, coff->a.bsize);
 	}
 
 	ffp_save = coff->a.text_start + coff->a.tsize;
@@ -201,7 +201,7 @@ elf_exec(fd, elf, entryp)
 		/* Zero out bss. */
 		if (phdr.p_filesz < phdr.p_memsz) {
 			(void)printf("+%lu", phdr.p_memsz - phdr.p_filesz);
-			bzero(phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)(phdr.p_vaddr + phdr.p_filesz),
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
