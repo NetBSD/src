@@ -1,7 +1,7 @@
-/* $NetBSD: s3c2410reg.h,v 1.5 2004/02/12 03:47:29 bsh Exp $ */
+/* $NetBSD: s3c2410reg.h,v 1.6 2004/02/12 03:52:46 bsh Exp $ */
 
 /*
- * Copyright (c) 2003  Genetec corporation.  All rights reserved.
+ * Copyright (c) 2003, 2004  Genetec corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -152,6 +152,7 @@
 #define	 PCON_INPUT	0	/* Input port */
 #define	 PCON_OUTPUT	1	/* Output port */
 #define	 PCON_ALTFUN	2	/* Alternate function */
+#define	 PCON_ALTFUN2	3	/* Alternate function */
 #define	GPIO_PADAT	0x04	/* port A data */
 #define	GPIO_PBCON	0x10
 #define	GPIO_PBDAT	0x14
@@ -183,6 +184,9 @@
 #define	GPIO_GSTATUS0	0xac	/* external pin status */
 #define	GPIO_GSTATUS1	0xb0	/* external pin status */
 
+#define	GPIO_SET_FUNC(v,port,func)	\
+		(((v) & ~(3<<(2*(port))))|((func)<<(2*(port))))
+
 #define	 EXTINTR_LOW	 0x00
 #define	 EXTINTR_HIGH	 0x01
 #define	 EXTINTR_FALLING 0x02
@@ -191,5 +195,35 @@
 
 /* SD interface */
 /* XXX */
+
+/* ADC */
+/* XXX: ADCCON register is common to both S3C2410 and S3C2400,
+ *      but other registers are different.
+ */
+#define	ADC_ADCCON	0x00
+#define	 ADCCON_ENABLE_START	(1<<0)
+#define	 ADCCON_READ_START	(1<<1)
+#define	 ADCCON_STDBM    	(1<<2)
+#define	 ADCCON_SEL_MUX_SHIFT	3
+#define	 ADCCON_SEL_MUX_MASK	(0x7<<ADCCON_SEL_MUX_SHIFT)
+#define	 ADCCON_PRSCVL_SHIFT	6
+#define	 ADCCON_PRSCVL_MASK	(0xff<<ADCCON_PRSCVL_SHIFT)
+#define	 ADCCON_PRSCEN  	(1<<14)
+#define	 ADCCON_ECFLG   	(1<<15)
+
+#define	ADC_ADCTSC 	0x04
+#define	 ADCTSC_XY_PST   	0x03
+#define	 ADCTSC_AUTO_PST    	(1<<2)
+#define	 ADCTSC_PULL_UP		(1<<3)
+#define	 ADCTSC_XP_SEN		(1<<4)
+#define	 ADCTSC_XM_SEN		(1<<5)
+#define	 ADCTSC_YP_SEN		(1<<6)
+#define	 ADCTSC_YM_SEN		(1<<7)
+#define	 ADCTSC_UD_SEN		(1<<8)
+#define	ADC_ADCDLY	0x08
+#define	ADC_ADCDAT0	0x0c
+#define	ADC_ADCDAT1	0x10
+
+#define	ADCDAT_DATAMASK  	0x3ff
 
 #endif /* _ARM_S3C2XX0_S3C2410REG_H_ */
