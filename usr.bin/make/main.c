@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -419,6 +419,9 @@ chdir_verify_path(path, obpath)
 {
 	struct stat sb;
 
+	if (strchr(path, '$') != 0) {
+		path = Var_Subst(NULL, path, VAR_GLOBAL, 0);
+	}
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		if (chdir(path)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
@@ -547,6 +550,15 @@ main(argc, argv)
 	}
 
 	/*
+	 * Just in case MAKEOBJDIR wants us to do something tricky.
+	 */
+	Var_Init();		/* Initialize the lists of variables for
+				 * parsing arguments */
+	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
+	Var_Set("MACHINE", machine, VAR_GLOBAL);
+	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
+
+	/*
 	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
 	 * exists, change into it and build there.  (If a .${MACHINE} suffix
 	 * exists, use that directory instead).
@@ -624,9 +636,6 @@ main(argc, argv)
 	Dir_Init(curdir != objdir ? curdir : NULL);
 	Parse_Init();		/* Need to initialize the paths of #include
 				 * directories */
-	Var_Init();		/* As well as the lists of variables for
-				 * parsing arguments */
-	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
 	/*
@@ -639,8 +648,6 @@ main(argc, argv)
 	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
-	Var_Set("MACHINE", machine, VAR_GLOBAL);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
