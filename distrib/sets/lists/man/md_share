@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.82 2000/02/27 17:20:02 augustss Exp $
+# $NetBSD: md_share,v 1.83 2000/03/07 20:55:06 veego Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -19,11 +19,6 @@
 ./usr/share/man/cat1/x68k/loadkmap.0
 ./usr/share/man/cat1/x68k/palette.0
 ./usr/share/man/cat1/x68k/tvctrl.0
-./usr/share/man/cat3/atari/ahdi_buildlabel.0
-./usr/share/man/cat3/atari/ahdi_checklabel.0
-./usr/share/man/cat3/atari/ahdi_readlabel.0
-./usr/share/man/cat3/atari/ahdi_writedisktab.0
-./usr/share/man/cat3/atari/ahdi_writelabel.0
 ./usr/share/man/cat3/i386/keycap.0
 ./usr/share/man/cat4/amiga/afsc.0
 ./usr/share/man/cat4/amiga/ahsc.0
@@ -75,7 +70,6 @@
 ./usr/share/man/cat4/arm32/ptsc.0
 ./usr/share/man/cat4/arm32/quadmouse.0
 ./usr/share/man/cat4/arm32/wd.0
-./usr/share/man/cat4/atari/ahdi.0
 ./usr/share/man/cat4/atari/et.0
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/intro.0
@@ -360,11 +354,6 @@
 ./usr/share/man/man1/x68k/loadkmap.1
 ./usr/share/man/man1/x68k/palette.1
 ./usr/share/man/man1/x68k/tvctrl.1
-./usr/share/man/man3/atari/ahdi_buildlabel.3
-./usr/share/man/man3/atari/ahdi_checklabel.3
-./usr/share/man/man3/atari/ahdi_readlabel.3
-./usr/share/man/man3/atari/ahdi_writedisktab.3
-./usr/share/man/man3/atari/ahdi_writelabel.3
 ./usr/share/man/man3/i386/keycap.3
 ./usr/share/man/man4/amiga/afsc.4
 ./usr/share/man/man4/amiga/ahsc.4
@@ -416,7 +405,6 @@
 ./usr/share/man/man4/arm32/ptsc.4
 ./usr/share/man/man4/arm32/quadmouse.4
 ./usr/share/man/man4/arm32/wd.4
-./usr/share/man/man4/atari/ahdi.4
 ./usr/share/man/man4/atari/et.4
 ./usr/share/man/man4/atari/floppy.4
 ./usr/share/man/man4/atari/intro.4

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.60 2000/02/05 20:54:12 jdc Exp $
+#	$NetBSD: bsd.README,v 1.61 2000/03/07 20:55:05 veego Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -354,7 +354,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		The following libraries are predefined for DPADD:
 
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
-		LIBAHDI?=	${DESTDIR}/usr/lib/libahdi.a
 		LIBC?=		${DESTDIR}/usr/lib/libc.a
 		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
 		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
