@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.17 1998/12/19 02:23:46 thorpej Exp $	*/
+/*	$NetBSD: chpass.c,v 1.18 1999/02/08 22:21:44 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.17 1998/12/19 02:23:46 thorpej Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.18 1999/02/08 22:21:44 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,10 @@ main(argc, argv)
 			if (pw == NULL)
 				errx(1, "unknown user: uid %u\n", uid);
 		}
+
+		/* Make a copy for later verification */
+		old_pw = *pw;
+		old_pw.pw_gecos = strdup(old_pw.pw_gecos);
 	}
 
 	if (op == NEWSH) {
@@ -224,10 +228,6 @@ main(argc, argv)
 		if (!pw_scan(arg, pw, NULL))
 			exit(1);
 	}
-
-	/* Make a copy for later verification */
-	old_pw = *pw;
-	old_pw.pw_gecos = strdup(old_pw.pw_gecos);
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
@@ -276,7 +276,7 @@ main(argc, argv)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Copy the passwd file to the lock file, updating pw. */
-	pw_copy(pfd, tfd, pw, &old_pw);
+	pw_copy(pfd, tfd, pw, (op == LOADENTRY) ? NULL : &old_pw);
 
 	/* Now finish the passwd file update. */
 	if (pw_mkdb() < 0)
