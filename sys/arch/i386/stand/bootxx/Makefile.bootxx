@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.10 2003/10/08 18:51:50 dsl Exp $
+# $NetBSD: Makefile.bootxx,v 1.11 2003/10/09 10:29:39 dsl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -37,8 +37,6 @@ CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
 CPPFLAGS+= -DBOOTXX_SECTORS=${BOOTXX_SECTORS}
 CPPFLAGS+= -DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+= -DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
-# Magic number also known by usr.sbin/installboot/arch/i386.c
-CPPFLAGS+= -DX86_BOOT_MAGIC_1="('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)"
 CPPFLAGS+= -DXXfs_open=${FS}_open
 CPPFLAGS+= -DXXfs_close=${FS}_close
 CPPFLAGS+= -DXXfs_read=${FS}_read

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.2 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.3 2003/10/09 10:29:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -54,12 +54,12 @@
 	.code16
 ENTRY(bootxx)
 	jmp	1f
-	.align	4
+	.balign	4
 ENTRY(bootxx_magic)
 	.long	X86_BOOT_MAGIC_1	/* checked by installboot & pbr code */
 bootparams:				/* space for patchable variables */
 	.long	1f - bootparams		/* length of this data area */
-#include "boot_params.S"
+#include <boot_params.S>
 	.space	4 * 4			/* some spare */
 
 1:	call	gdt_fixup

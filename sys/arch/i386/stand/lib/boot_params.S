@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_params.S,v 1.1 2003/04/16 22:17:44 dsl Exp $	*/
+/*	$NetBSD: boot_params.S,v 1.1 2003/10/09 10:29:39 dsl Exp $	*/
 
 /* Default boot parameters */
 

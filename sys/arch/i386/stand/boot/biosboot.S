@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.2 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.3 2003/10/09 10:29:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,12 +55,12 @@
 	.code16
 ENTRY(boot_start)
 	jmp	boot_start_1
-	.align	4
+	.balign	4
 ENTRY(boot_magic)
 	.long	X86_BOOT_MAGIC_2	/* checked for by bootxx code */
 ENTRY(boot_params)
 	.long	boot_start_1 - boot_params
-#include "../bootxx/boot_params.S"
+#include <boot_params.S>
 	. = boot_start + 0x80		/* space for patchable variables */
 boot_start_1:
 
