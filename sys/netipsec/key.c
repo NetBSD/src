@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.13 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: key.c,v 1.14 2004/04/27 23:57:19 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.13 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.14 2004/04/27 23:57:19 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1730,6 +1730,32 @@ key_spdadd(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+
+#if defined(__NetBSD__) && defined(INET6)
+	/*
+	 * On NetBSD, FAST_IPSEC and INET6 can be configured together,
+	 * but FAST_IPSEC does not protect IPv6 traffic.
+	 * Rather than silently leaking IPv6 traffic for which IPsec
+	 * is configured, forbid  specifying IPsec for IPv6 traffic.
+	 *
+	 * (On FreeBSD, both FAST_IPSEC and INET6 gives a compile-time error.)
+	 */
+	if (((const struct sockaddr *)(src0 + 1))->sa_family == AF_INET6 ||
+	    ((const struct sockaddr *)(dst0 + 1))->sa_family == AF_INET6) {
+		static int v6_warned = 0;
+
+		if (v6_warned == 0) {
+			printf("key_spdadd: FAST_IPSEC does not support IPv6.");
+			printf("Check syslog for more per-SPD warnings.\n");
+			v6_warned++;
+		}
+		log(LOG_WARNING,
+		    "FAST_IPSEC does not support PF_INET6 SPDs. "
+		    "Request refused.\n");
+
+		return EOPNOTSUPP;	/* EPROTOTYPE?  EAFNOSUPPORT? */
+	}
+#endif /* __NetBSD__ && INET6 */
 
 	/* make secindex */
 	/* XXX boundary check against sa_len */
