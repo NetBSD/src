@@ -8,7 +8,7 @@ ifeq ($(CC),gcc)
 DEFS=
 CFLAGS=/include=([],[-.bfd],[.config],[-.include],[-])$(DEFS)
 LFLAGS=
-LIBS=,GNU:[000000]libgcc/lib,sys$$library:vaxcrtl.olb/lib,GNU:[000000]crt0.obj
+LIBS=,GNU_CC_LIBRARY:libgcc/lib,sys$$library:vaxcrtl.olb/lib,GNU_CC_LIBRARY:crt0.obj
 else
 DEFS=/define=("table_size_of_flonum_powers_of_ten"="tabsiz_flonum_powers_of_ten",\
 "_bfd_generic_get_section_contents_in_window"="_bfd_generic_get_win_section_cont",\
@@ -16,11 +16,11 @@ DEFS=/define=("table_size_of_flonum_powers_of_ten"="tabsiz_flonum_powers_of_ten"
 CFLAGS=/noopt/debug/include=([],[-.bfd],[.config],[-.include],[-])$(DEFS)\
 /warnings=disable=(missingreturn,implicitfunc,ptrmismatch,undefescap,longextern,duptypespec)
 LFLAGS=
-LIBS=
+LIBS=,sys$$library:vaxcrtl.olb/lib
 endif
 
 OBJS=targ-cpu.obj,obj-format.obj,atof-targ.obj,app.obj,as.obj,atof-generic.obj,\
-  bignum-copy.obj,cond.obj,expr.obj,flonum-konst.obj,flonum-copy.obj,\
+  bignum-copy.obj,cond.obj,depend.obj,expr.obj,flonum-konst.obj,flonum-copy.obj,\
   flonum-mult.obj,frags.obj,hash.obj,input-file.obj,input-scrub.obj,\
   literal.obj,messages.obj,output-file.obj,read.obj,subsegs.obj,symbols.obj,\
   write.obj,listing.obj,ecoff.obj,stabs.obj,sb.obj,macro.obj

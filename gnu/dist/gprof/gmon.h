@@ -37,7 +37,9 @@
 
 struct raw_phdr
   {
-#ifdef TARGET_alpha
+    /* FIXME: Checking a host compiler define means that we can't use
+       a cross gprof to the alpha.  */
+#ifdef __alpha__
     char low_pc[8];		/* base pc address of sample buffer */
     char high_pc[8];		/* max pc address of sampled buffer */
 #else
@@ -46,6 +48,8 @@ struct raw_phdr
 #endif
     char ncnt[4];		/* size of sample buffer (plus this header) */
 
+    /* FIXME: Checking host compiler defines here means that we can't
+       use a cross gprof alpha OSF.  */
 #if defined (__alpha__) && defined (__osf__)
     /*
      * DEC's OSF v3.0 uses 4 bytes of padding to bring the header to
@@ -116,7 +120,9 @@ struct tostruct
  */
 struct raw_arc
   {
-#ifdef TARGET_alpha
+    /* FIXME: Checking a host compiler define means that we can't use
+       a cross gprof to the alpha.  */
+#ifdef __alpha__
     char from_pc[8];
     char self_pc[8];
     char count[8];

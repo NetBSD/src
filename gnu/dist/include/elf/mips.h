@@ -330,7 +330,7 @@ extern void bfd_mips_elf32_swap_reginfo_out
 /* This value is used for a mips16 .text symbol.  */
 #define STO_MIPS16		0xf0
 
-/* The 64-bit MIPS ELF ABI uses an usual reloc format.  Each
+/* The 64-bit MIPS ELF ABI uses an unusual reloc format.  Each
    relocation entry specifies up to three actual relocations, all at
    the same address.  The first relocation which required a symbol
    uses the symbol in the r_sym field.  The second relocation which

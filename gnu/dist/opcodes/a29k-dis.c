@@ -1,5 +1,5 @@
 /* Instruction printing code for the AMD 29000
-   Copyright (C) 1990 Free Software Foundation, Inc.
+   Copyright (C) 1990, 93, 94, 95, 1998 Free Software Foundation, Inc.
    Contributed by Cygnus Support.  Written by Jim Kingdon.
 
 This file is part of GDB.
@@ -119,7 +119,7 @@ find_bytes_little (insn, insn0, insn8, insn16, insn24)
   *insn0 = insn[0];
 }
 
-typedef (*find_byte_func_type)
+typedef void (*find_byte_func_type)
      PARAMS ((char *, unsigned char *, unsigned char *,
 	      unsigned char *, unsigned char *));
 

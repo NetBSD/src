@@ -731,7 +731,7 @@ gldppcmacos_read_file (filename, import)
 	      obstack_free (o, obstack_base (o));
 	    }
 	  else if (*s == '(')
-	    einfo ("%F%s%d: #! ([member]) is not supported in import files",
+	    einfo ("%F%s%d: #! ([member]) is not supported in import files\n",
 		   filename, lineno);
 	  else
 	    {

@@ -186,68 +186,73 @@ parse_reg (src, mode, reg)
      int *mode;
      int *reg;
 {
-  if (src[0] == 'r')
+  char *end;
+  int len;
+
+  /* Cribbed from get_symbol_end().  */
+  if (!is_name_beginner (*src) || *src == '\001')
+    return 0;
+  end = src+1;
+  while (is_part_of_name (*end) || *end == '\001')
+    end++;
+  len = end - src;
+
+  if (len == 2 && src[0] == 'r')
     {
       if (src[1] >= '0' && src[1] <= '7')
 	{
 	  *mode = RN;
 	  *reg = (src[1] - '0');
-	  return 2;
+	  return len;
 	}
     }
-
-  if (src[0] == 's' && src[1] == 'p')
+  if (len == 2 && src[0] == 's' && src[1] == 'p')
     {
       *mode = RN;
       *reg = 7;
-      return 2;
+      return len;
     }
-  if (src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
+  if (len == 3 && src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
     {
       *mode = CRB;
       *reg = 1;
-      return 3;
+      return len;
     }
-  if (src[0] == 's' && src[1] == 'r')
+  if (len == 2 && src[0] == 's' && src[1] == 'r')
     {
       *mode = CRW;
       *reg = 0;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'b' && src[1] == 'r')
+  if (len == 2 && src[0] == 'b' && src[1] == 'r')
     {
       *mode = CRB;
       *reg = 3;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'e' && src[1] == 'p')
+  if (len == 2 && src[0] == 'e' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 4;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'd' && src[1] == 'p')
+  if (len == 2 && src[0] == 'd' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 5;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 't' && src[1] == 'p')
+  if (len == 2 && src[0] == 't' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 7;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'f' && src[1] == 'p')
+  if (len == 2 && src[0] == 'f' && src[1] == 'p')
     {
       *mode = RN;
       *reg = 6;
-      return 2;
+      return len;
     }
   return 0;
 }

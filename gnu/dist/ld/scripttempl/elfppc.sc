@@ -15,7 +15,6 @@
 #		.data section.
 #	OTHER_BSS_SYMBOLS - symbols that appear at the start of the
 #		.bss section besides __bss_start.
-#	DATA_PLT - .plt should be in data segment, not text segment.
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -53,6 +52,9 @@ SECTIONS
   .hash		${RELOCATING-0} : { *(.hash)		}
   .dynsym	${RELOCATING-0} : { *(.dynsym)		}
   .dynstr	${RELOCATING-0} : { *(.dynstr)		}
+  .gnu.version ${RELOCATING-0} : { *(.gnu.version)      }
+  .gnu.version_d ${RELOCATING-0} : { *(.gnu.version_d)  }
+  .gnu.version_r ${RELOCATING-0} : { *(.gnu.version_r)  }
   .rela.text   ${RELOCATING-0} :
     { *(.rela.text) *(.rela.gnu.linkonce.t*) }
   .rela.data   ${RELOCATING-0} :
@@ -68,11 +70,10 @@ SECTIONS
   .rela.fini	${RELOCATING-0} : { *(.rela.fini)	}
   .rela.bss	${RELOCATING-0} : { *(.rela.bss)	}
   .rela.plt	${RELOCATING-0} : { *(.rela.plt)	}
-  .rela.sdata	${RELOCATING-0} : { *(.rela.sdata2)	}
-  .rela.sbss	${RELOCATING-0} : { *(.rela.sbss2)	}
+  .rela.sdata	${RELOCATING-0} : { *(.rela.sdata)	}
+  .rela.sbss	${RELOCATING-0} : { *(.rela.sbss)	}
   .rela.sdata2	${RELOCATING-0} : { *(.rela.sdata2)	}
   .rela.sbss2	${RELOCATING-0} : { *(.rela.sbss2)	}
-  ${DATA_PLT-${PLT}}
   .text    ${RELOCATING-0} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
@@ -147,7 +148,6 @@ SECTIONS
   ${CREATE_SHLIB+${SBSS2}}
 		${RELOCATING+PROVIDE (_GOT_END_ = .);}
 
-  ${DATA_PLT+${PLT}}
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
@@ -159,8 +159,10 @@ SECTIONS
     ${RELOCATING+PROVIDE (__sbss_start = .);}
     *(.sbss)
     *(.scommon)
+    *(.dynsbss)
     ${RELOCATING+PROVIDE (__sbss_end = .);}
   }
+  ${PLT}
   .bss     ${RELOCATING-0} :
   {
    ${RELOCATING+${OTHER_BSS_SYMBOLS}}

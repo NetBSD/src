@@ -3,18 +3,14 @@
 #include "core.h"
 #include "symtab.h"
 
-#ifndef MIN_INSN_SIZE
-/* If not defined in MACHINE_H, assume smallest instruction is 1 byte
-   long.  THis is safe but may be needlessly slow on machines where
-   all instructions are longer.  */
-#define MIN_INSN_SIZE 1
-#endif
-
 bfd *core_bfd;
 int core_num_syms;
 asymbol **core_syms;
 asection *core_text_sect;
 PTR core_text_space;
+
+int min_insn_size;
+int offset_to_code;
 
 /* For mapping symbols to specific .o files during file ordering.  */
 struct function_map {
@@ -23,7 +19,13 @@ struct function_map {
 };
 
 struct function_map *symbol_map;
-int symbol_map_count;
+unsigned int symbol_map_count;
+
+extern void i386_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void alpha_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void vax_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void tahoe_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void sparc_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
 static void
 DEFUN (read_function_mappings, (filename), const char *filename)
@@ -160,6 +162,24 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
       done (1);
     }
 
+  min_insn_size = 1;
+  offset_to_code = 0;
+
+  switch (bfd_get_arch (core_bfd))
+    {
+    case bfd_arch_vax:
+    case bfd_arch_tahoe:
+      offset_to_code = 2;
+      break;
+
+    case bfd_arch_alpha:
+      min_insn_size = 4;
+      break;
+
+    default:
+      break;
+    }
+
   if (function_mapping_file)
     read_function_mappings (function_mapping_file);
 }
@@ -192,6 +212,41 @@ DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
     }
 }
 
+
+void
+DEFUN (find_call, (parent, p_lowpc, p_highpc),
+       Sym * parent AND bfd_vma p_lowpc AND bfd_vma p_highpc)
+{
+  switch (bfd_get_arch (core_bfd))
+    {
+    case bfd_arch_i386:
+      i386_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+    case bfd_arch_alpha:
+      alpha_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+    case bfd_arch_vax:
+      vax_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+    case bfd_arch_sparc:
+      sparc_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+    case bfd_arch_tahoe:
+      tahoe_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+    default:
+      fprintf (stderr, "%s: -c not supported on architecture %s\n",
+	       whoami, bfd_printable_name(core_bfd));
+
+      /* Don't give the error more than once.  */
+      ignore_direct_calls = FALSE;
+    }
+}
 
 /*
  * Return class of symbol SYM.  The returned class can be any of:
@@ -229,6 +284,13 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
   if (i == 'T')
     {
       return i;			/* it's a global symbol */
+    }
+
+  if (i == 'W')
+    {
+      /* Treat weak symbols as text symbols.  FIXME: a weak symbol may
+         also be a data symbol.  */
+      return 'T';
     }
 
   if (i != 't')
@@ -334,7 +396,8 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 {
   bfd_vma min_vma = ~0, max_vma = 0;
   int class;
-  long i, j, found, skip;
+  long i, found, skip;
+  unsigned int j;
 
   /* pass 1 - determine upper bound on number of function names: */
   symtab.len = 0;
@@ -422,15 +485,8 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 	  symtab.limit->mapped = 0;
 	}
 
-#ifdef __osf__
-      /*
-       * Suppress symbols that are not function names.  This is
-       * useful to suppress code-labels and aliases.
-       *
-       * This is known to be useful under DEC's OSF/1.  Under SunOS 4.x,
-       * labels do not appear in the symbol table info, so this isn't
-       * necessary.
-       */
+      /* Lookup filename and line number, if we can */
+
       {
 	const char *filename, *func_name;
 	
@@ -438,6 +494,18 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 			  &symtab.limit->line_num))
 	  {
 	    symtab.limit->file = source_file_lookup_path (filename);
+
+	    /* FIXME: Checking __osf__ here does not work with a cross
+               gprof.  */
+#ifdef __osf__
+	    /*
+	     * Suppress symbols that are not function names.  This is
+	     * useful to suppress code-labels and aliases.
+	     *
+	     * This is known to be useful under DEC's OSF/1.  Under SunOS 4.x,
+	     * labels do not appear in the symbol table info, so this isn't
+	     * necessary.
+	     */
 
 	    if (strcmp (symtab.limit->name, func_name) != 0)
 	      {
@@ -451,9 +519,9 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 			     symtab.limit->name, func_name));
 		continue;
 	      }
+#endif
 	  }
       }
-#endif
 
       symtab.limit->is_func = TRUE;
       symtab.limit->is_bb_head = TRUE;
@@ -509,10 +577,10 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 {
   char prev_name[PATH_MAX], prev_filename[PATH_MAX];
   bfd_vma vma, min_vma = ~0, max_vma = 0;
-  bfd_vma offset, prev_offset, min_dist;
+  bfd_vma offset;
   Sym *prev, dummy, *sentinel, *sym;
   const char *filename;
-  int prev_line_num, i;
+  int prev_line_num;
   Sym_Table ltab;
   /*
    * Create symbols for functions as usual.  This is necessary in
@@ -530,18 +598,13 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
    * it is time to create a new symbol.
    *
    * Of course, this is rather slow and it would be better if
-   * bfd would provide an iterator for enumerating all line
-   * infos, but for now, we try to speed up the second pass
-   * by determining what the minimum code distance between two
-   * lines is.
+   * bfd would provide an iterator for enumerating all line infos
    */
   prev_name[0] = '\0';
   ltab.len = 0;
-  min_dist = core_text_sect->_raw_size;
-  prev_offset = -min_dist;
   prev_filename[0] = '\0';
   prev_line_num = 0;
-  for (offset = 0; offset < core_text_sect->_raw_size; offset += MIN_INSN_SIZE)
+  for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
     {
       vma = core_text_sect->vma + offset;
       if (!get_src_info (vma, &filename, &dummy.name, &dummy.line_num)
@@ -557,17 +620,9 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
       strcpy (prev_name, dummy.name);
       strcpy (prev_filename, filename);
 
-      if (offset - prev_offset < min_dist)
-	{
-	  min_dist = offset - prev_offset;
-	}
-      prev_offset = offset;
-
       min_vma = MIN (vma, min_vma);
       max_vma = MAX (vma, max_vma);
     }
-
-  DBG (AOUTDEBUG, printf ("[core_create_line_syms] min_dist=%lx\n", min_dist));
 
   /* make room for function symbols, too: */
   ltab.len += symtab.len;
@@ -576,8 +631,25 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 
   /* pass 2 - create symbols: */
 
+  /* We now set is_static as we go along, rather than by running
+     through the symbol table at the end.
+
+     The old way called symtab_finalize before the is_static pass,
+     causing a problem since symtab_finalize uses is_static as part of
+     its address conflict resolution algorithm.  Since global symbols
+     were prefered over static symbols, and all line symbols were
+     global at that point, static function names that conflicted with
+     their own line numbers (static, but labeled as global) were
+     rejected in favor of the line num.
+
+     This was not the desired functionality.  We always want to keep
+     our function symbols and discard any conflicting line symbols.
+     Perhaps symtab_finalize should be modified to make this
+     distinction as well, but the current fix works and the code is a
+     lot cleaner now.  */
+
   prev = 0;
-  for (offset = 0; offset < core_text_sect->_raw_size; offset += min_dist)
+  for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
     {
       sym_init (ltab.limit);
       if (!get_src_info (core_text_sect->vma + offset, &filename,
@@ -594,6 +666,23 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
       ltab.limit->file = source_file_lookup_path (filename);
 
       ltab.limit->addr = core_text_sect->vma + offset;
+
+      /* Set is_static based on the enclosing function, using either:
+       * 1) the previous symbol, if it's from the same function, or
+       * 2) a symtab lookup
+       */
+
+      if (prev && ltab.limit->file == prev->file &&
+	  strcmp (ltab.limit->name, prev->name) == 0)
+	{
+	  ltab.limit->is_static = prev->is_static;
+	}
+      else
+	{
+	  sym = sym_lookup(&symtab, ltab.limit->addr);
+	  ltab.limit->is_static = sym->is_static;
+	}
+
       prev = ltab.limit;
 
       /*
@@ -607,7 +696,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 	}
 
       DBG (AOUTDEBUG, printf ("[core_create_line_syms] %d %s 0x%lx\n",
-			      ltab.len, ltab.limit->name,
+			      ltab.limit - ltab.base, ltab.limit->name,
 			      ltab.limit->addr));
       ++ltab.limit;
     }
@@ -631,11 +720,11 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   memcpy (ltab.limit, symtab.base, symtab.len * sizeof (Sym));
   ltab.limit += symtab.len;
 
-  if (ltab.limit - ltab.base != ltab.len)
+  if ((unsigned int) (ltab.limit - ltab.base) != ltab.len)
     {
       fprintf (stderr,
-	       "%s: somebody miscounted: ltab.len=%ld instead of %d\n",
-	       whoami, (long) (ltab.limit - ltab.base), ltab.len);
+	       "%s: somebody miscounted: ltab.len=%d instead of %ld\n",
+	       whoami, ltab.len, (long) (ltab.limit - ltab.base));
       done (1);
     }
 
@@ -644,22 +733,5 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   symtab_finalize (&ltab);
   free (symtab.base);
   symtab = ltab;
-
-  /* now go through all core symbols and set is_static accordingly: */
-
-  for (i = 0; i < core_num_syms; ++i)
-    {
-      if (core_sym_class (core_syms[i]) == 't')
-	{
-	  sym = sym_lookup (&symtab, core_syms[i]->value
-			    + core_syms[i]->section->vma);
-	  do
-	    {
-	      sym++->is_static = TRUE;
-	    }
-	  while (sym->file == sym[-1].file &&
-		 strcmp (sym->name, sym[-1].name) == 0);
-	}
-    }
 
 }

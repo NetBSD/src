@@ -1,6 +1,6 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
 
-   Copyright (C) 1996, 1997 Free Software Foundation.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -35,7 +35,12 @@ const char FLT_CHARS[] = "dD";
 
 int Optimizing = 0;
 
-#define AT_WORD (-1)
+#define AT_WORD_P(X) ((X)->X_op == O_right_shift \
+		      && (X)->X_op_symbol != NULL \
+		      && (X)->X_op_symbol->sy_value.X_op == O_constant \
+		      && (X)->X_op_symbol->sy_value.X_add_number == AT_WORD_RIGHT_SHIFT)
+#define AT_WORD_RIGHT_SHIFT 2
+
 
 /* fixups */
 #define MAX_INSN_FIXUPS (5)
@@ -58,6 +63,9 @@ typedef struct _fixups
 static Fixups FixUps[2];
 static Fixups *fixups;
 
+/* True if instruction swapping warnings should be inhibited.  */
+static unsigned char flag_warn_suppress_instructionswap; /* --nowarnswap */
+
 /* local functions */
 static int reg_name_search PARAMS ((char *name));
 static int register_name PARAMS ((expressionS *expressionP));
@@ -79,6 +87,8 @@ static int parallel_ok PARAMS ((struct d10v_opcode *opcode1, unsigned long insn1
 				int exec_type));
 
 struct option md_longopts[] = {
+#define OPTION_NOWARNSWAP (OPTION_MD_BASE)
+  {"nowarnswap", no_argument, NULL, OPTION_NOWARNSWAP},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof(md_longopts);       
@@ -217,6 +227,9 @@ md_parse_option (c, arg)
     case 'O':
       /* Optimize. Will attempt to parallelize operations */
       Optimizing = 1;
+      break;
+    case OPTION_NOWARNSWAP:
+      flag_warn_suppress_instructionswap = 1;
       break;
     default:
       return 0;
@@ -425,18 +438,39 @@ get_operands (exp)
 	  expression (&exp[numops]);
 	}
 
-      if (!strncasecmp (input_line_pointer, "@word", 5))
+      if (strncasecmp (input_line_pointer, "@word", 5) == 0)
 	{
+	  input_line_pointer += 5;
 	  if (exp[numops].X_op == O_register)
 	    {
-	      /* if it looked like a register name but was followed by "@word" */
-	      /* then it was really a symbol, so change it to one */
+	      /* if it looked like a register name but was followed by
+                 "@word" then it was really a symbol, so change it to
+                 one */
 	      exp[numops].X_op = O_symbol;
 	      exp[numops].X_add_symbol = symbol_find_or_make ((char *)exp[numops].X_op_symbol);
-	      exp[numops].X_op_symbol = NULL;
 	    }
-	  exp[numops].X_add_number = AT_WORD;
-	  input_line_pointer += 5;
+
+	  /* check for identifier@word+constant */
+	  if (*input_line_pointer == '-' || *input_line_pointer == '+')
+	  {
+	    char *orig_line = input_line_pointer;
+	    expressionS new_exp;
+	    expression (&new_exp);
+	    exp[numops].X_add_number = new_exp.X_add_number;
+	  }
+
+	  /* convert expr into a right shift by AT_WORD_RIGHT_SHIFT */
+	  {
+	    expressionS new_exp;
+	    memset (&new_exp, 0, sizeof new_exp);
+	    new_exp.X_add_number = AT_WORD_RIGHT_SHIFT;
+	    new_exp.X_op = O_constant;
+	    new_exp.X_unsigned = 1;
+	    exp[numops].X_op_symbol = make_expr_symbol (&new_exp);
+	    exp[numops].X_op = O_right_shift;
+	  }
+
+	  know (AT_WORD_P (&exp[numops]));
 	}
       
       if (exp[numops].X_op == O_illegal) 
@@ -501,7 +535,7 @@ build_insn (opcode, opers, insn)
      unsigned long insn;
 {
   int i, bits, shift, flags, format;
-  unsigned int number;
+  unsigned long number;
   
   /* the insn argument is only used for the DIVS kludge */
   if (insn)
@@ -533,13 +567,22 @@ build_insn (opcode, opers, insn)
 	  if (fixups->fc >= MAX_INSN_FIXUPS)
 	    as_fatal ("too many fixups");
 
-	  if (opers[i].X_op == O_symbol && number == AT_WORD)
+	  if (AT_WORD_P (&opers[i]))
 	    {
-	      number = opers[i].X_add_number = 0;
+	      /* Reconize XXX>>1+N aka XXX@word+N as special (AT_WORD) */
 	      fixups->fix[fixups->fc].reloc = BFD_RELOC_D10V_18;
-	    } else
-	      fixups->fix[fixups->fc].reloc = 
-		get_reloc((struct d10v_operand *)&d10v_operands[opcode->operands[i]]);
+	      opers[i].X_op = O_symbol;
+	      opers[i].X_op_symbol = NULL; /* Should free it */
+	      /* number is left shifted by AT_WORD_RIGHT_SHIFT so
+                 that, it is aligned with the symbol's value.  Later,
+                 BFD_RELOC_D10V_18 will right shift (symbol_value +
+                 X_add_number). */
+	      number <<= AT_WORD_RIGHT_SHIFT;
+	      opers[i].X_add_number = number;
+	    }
+	  else
+	    fixups->fix[fixups->fc].reloc = 
+	      get_reloc((struct d10v_operand *)&d10v_operands[opcode->operands[i]]);
 
 	  if (fixups->fix[fixups->fc].reloc == BFD_RELOC_16 || 
 	      fixups->fix[fixups->fc].reloc == BFD_RELOC_D10V_18)
@@ -673,10 +716,10 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
   if ( (opcode1->format & LONG_OPCODE) || (opcode2->format & LONG_OPCODE))
     as_fatal ("Long instructions may not be combined.");
 
-  if(opcode1->exec_type & BRANCH_LINK && opcode2->exec_type != PARONLY)
+  if(opcode1->exec_type & BRANCH_LINK && exec_type == 0)
     {
-      /* subroutines must be called from 32-bit boundaries */
-      /* so the return address will be correct */
+      /* Instructions paired with a subroutine call are executed before the
+	 subroutine, so don't do these pairings unless explicitly requested.  */
       write_1_short (opcode1, insn1, fx->next);
       return (1);
     }
@@ -717,14 +760,16 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
 	{
 	  if (opcode2->unit == IU)
 	    as_fatal ("Two IU instructions may not be executed in parallel");
-	  as_warn ("Swapping instruction order");
+          if (!flag_warn_suppress_instructionswap)
+	    as_warn ("Swapping instruction order");
  	  insn = FM00 | (insn2 << 15) | insn1;
 	}
       else if (opcode2->unit == MU)
 	{
 	  if (opcode1->unit == MU)
 	    as_fatal ("Two MU instructions may not be executed in parallel");
-	  as_warn ("Swapping instruction order");
+          if (!flag_warn_suppress_instructionswap)
+	    as_warn ("Swapping instruction order");
 	  insn = FM00 | (insn2 << 15) | insn1;
 	}
       else
@@ -807,15 +852,20 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
   if (exec_type == 0 && (op1->exec_type & BRANCH) != 0)
     return 0;
 
-  /* The idea here is to create two sets of bitmasks (mod and used) */
-  /* which indicate which registers are modified or used by each instruction. */
-  /* The operation can only be done in parallel if instruction 1 and instruction 2 */
-  /* modify different registers, and neither instruction modifies any registers */
-  /* the other is using.  Accesses to control registers, PSW, and memory are treated */
-  /* as accesses to a single register.  So if both instructions write memory or one */
-  /* instruction writes memory and the other reads, then they cannot be done in parallel. */
-  /* Likewise, if one instruction mucks with the psw and the other reads the PSW */
-  /* (which includes C, F0, and F1), then they cannot operate safely in parallel. */
+  /* The idea here is to create two sets of bitmasks (mod and used)
+     which indicate which registers are modified or used by each
+     instruction.  The operation can only be done in parallel if
+     instruction 1 and instruction 2 modify different registers, and
+     the first instruction does not modify registers that the second
+     is using (The second instruction can modify registers that the
+     first is using as they are only written back after the first
+     instruction has completed).  Accesses to control registers, PSW,
+     and memory are treated as accesses to a single register.  So if
+     both instructions write memory or if the first instruction writes
+     memory and the second reads, then they cannot be done in
+     parallel.  Likewise, if the first instruction mucks with the psw
+     and the second reads the PSW (which includes C, F0, and F1), then
+     they cannot operate safely in parallel. */
 
   /* the bitmasks (mod and used) look like this (bit 31 = MSB) */
   /* r0-r15	  0-15  */
@@ -848,7 +898,7 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
 	  if (flags & OPERAND_REG)
 	    {
 	      regno = (ins >> shift) & mask;
-	      if (flags & OPERAND_ACC)     
+	      if (flags & (OPERAND_ACC0|OPERAND_ACC1))
 		regno += 16;
 	      else if (flags & OPERAND_CONTROL)	/* mvtc or mvfc */
 		{ 
@@ -857,7 +907,7 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
 		  else
 		    regno = 18; 
 		}
-	      else if (flags & OPERAND_FLAG)  
+	      else if (flags & (OPERAND_FFLAG|OPERAND_CFLAG))
 		regno = 19;
 	      
 	      if ( flags & OPERAND_DEST )
@@ -871,7 +921,19 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
 		  used[j] |= 1 << regno ;
 		  if (flags & OPERAND_EVEN)
 		    used[j] |= 1 << (regno + 1);
+
+		  /* Auto inc/dec also modifies the register.  */
+		  if (op->operands[i+1] != 0
+		      && (d10v_operands[op->operands[i+1]].flags
+			  & (OPERAND_PLUS | OPERAND_MINUS)) != 0)
+		    mod[j] |= 1 << regno;
 		}
+	    }
+	  else if (flags & OPERAND_ATMINUS)
+	    {
+	      /* SP implicitly used/modified */
+	      mod[j] |= 1 << 15;
+	      used[j] |= 1 << 15;
 	    }
 	}
       if (op->exec_type & RMEM)
@@ -885,7 +947,7 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
       else if (op->exec_type & WCAR)
 	mod[j] |= 1 << 19;
     }
-  if ((mod[0] & mod[1]) == 0 && (mod[0] & used[1]) == 0 && (mod[1] & used[0]) == 0)
+  if ((mod[0] & mod[1]) == 0 && (mod[0] & used[1]) == 0)
     return 1;
   return 0;
 }
@@ -1068,6 +1130,7 @@ find_opcode (opcode, myops)
   if (opcode->format == OPCODE_FAKE)
     {
       int opnum = opcode->operands[0];
+      int flags;
 			 
       if (myops[opnum].X_op == O_register)
 	{
@@ -1077,11 +1140,30 @@ find_opcode (opcode, myops)
 	  myops[opnum].X_op_symbol = NULL;
 	}
 
+      next_opcode=opcode+1;
+
+      /* If the first operand is supposed to be a register, make sure
+	 we got a valid one.  */
+      flags = d10v_operands[next_opcode->operands[0]].flags;
+      if (flags & OPERAND_REG)
+	{
+	  int X_op = myops[0].X_op;
+	  int num = myops[0].X_add_number;
+
+	  if (X_op != O_register
+	      || (num & ~flags
+		  & (OPERAND_GPR | OPERAND_ACC0 | OPERAND_ACC1
+		     | OPERAND_FFLAG | OPERAND_CFLAG | OPERAND_CONTROL)))
+	    {
+	      as_bad ("bad opcode or operands");
+	      return 0;
+	    }
+	}
+
       if (myops[opnum].X_op == O_constant || (myops[opnum].X_op == O_symbol &&
 	  S_IS_DEFINED(myops[opnum].X_add_symbol) &&
 	  (S_GET_SEGMENT(myops[opnum].X_add_symbol) == now_seg)))
 	{
-	  next_opcode=opcode+1;
 	  for (i=0; opcode->operands[i+1]; i++)
 	    {
 	      int bits = d10v_operands[next_opcode->operands[opnum]].bits;
@@ -1108,7 +1190,7 @@ find_opcode (opcode, myops)
 		  else
 		    value = S_GET_VALUE(myops[opnum].X_add_symbol);
 
-		  if (myops[opnum].X_add_number == AT_WORD)
+		  if (AT_WORD_P (&myops[opnum]))
 		    {
 		      if (bits > 4)
 			{
@@ -1152,10 +1234,11 @@ find_opcode (opcode, myops)
 	      
 	      if (flags & OPERAND_REG)
 		{
-		  if ((X_op != O_register) ||
-		      ((flags & OPERAND_ACC) != (num & OPERAND_ACC)) ||
-		      ((flags & OPERAND_FLAG) != (num & OPERAND_FLAG)) ||
-		      ((flags & OPERAND_CONTROL) != (num & OPERAND_CONTROL)))
+		  if ((X_op != O_register)
+		      || (num & ~flags
+			  & (OPERAND_GPR | OPERAND_ACC0 | OPERAND_ACC1
+			     | OPERAND_FFLAG | OPERAND_CFLAG
+			     | OPERAND_CONTROL)))
 		    {
 		      match=0;
 		      break;
@@ -1325,7 +1408,7 @@ md_apply_fix3 (fixp, valuep, seg)
     case BFD_RELOC_D10V_18_PCREL:
     case BFD_RELOC_D10V_18:
       /* instruction addresses are always right-shifted by 2 */
-      value >>= 2;
+      value >>= AT_WORD_RIGHT_SHIFT;
       if (fixp->fx_size == 2)
 	bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
       else

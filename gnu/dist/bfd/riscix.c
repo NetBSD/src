@@ -1,5 +1,5 @@
 /* BFD back-end for RISC iX (Acorn, arm) binaries.
-   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    
 This file is part of BFD, the Binary File Descriptor library.
@@ -220,7 +220,7 @@ riscix_fix_pcrel_26 (abfd, reloc_entry, symbol, data, input_section,
   /* Check for overflow */
   if (relocation & 0x02000000)
     {
-      if ((relocation & ~0x03ffffff) != ~0x03ffffff)
+      if ((relocation & ~ (bfd_vma) 0x03ffffff) != ~ (bfd_vma) 0x03ffffff)
 	flag = bfd_reloc_overflow;
     }
   else if (relocation & ~0x03ffffff)

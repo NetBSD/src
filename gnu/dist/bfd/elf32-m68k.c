@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright 1993, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,6 +38,8 @@ static boolean elf_m68k_check_relocs
 	   const Elf_Internal_Rela *));
 static boolean elf_m68k_adjust_dynamic_symbol
   PARAMS ((struct bfd_link_info *, struct elf_link_hash_entry *));
+static boolean elf_m68k_adjust_dynindx
+  PARAMS ((struct elf_link_hash_entry *, PTR));
 static boolean elf_m68k_size_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
 static boolean elf_m68k_relocate_section
@@ -82,19 +84,19 @@ static reloc_howto_type howto_table[] = {
   HOWTO(R_68K_32,         0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_32",        false, 0, 0xffffffff,false),
   HOWTO(R_68K_16,         0, 1,16, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_16",        false, 0, 0x0000ffff,false),
   HOWTO(R_68K_8,          0, 0, 8, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_8",         false, 0, 0x000000ff,false),
-  HOWTO(R_68K_PC32,       0, 2,32, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PC32",      false, 0, 0xffffffff,true),
+  HOWTO(R_68K_PC32,       0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_PC32",      false, 0, 0xffffffff,true),
   HOWTO(R_68K_PC16,       0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PC16",      false, 0, 0x0000ffff,true),
   HOWTO(R_68K_PC8,        0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PC8",       false, 0, 0x000000ff,true),
-  HOWTO(R_68K_GOT32,      0, 2,32, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT32",     false, 0, 0xffffffff,true),
+  HOWTO(R_68K_GOT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_GOT32",     false, 0, 0xffffffff,true),
   HOWTO(R_68K_GOT16,      0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT16",     false, 0, 0x0000ffff,true),
   HOWTO(R_68K_GOT8,       0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT8",      false, 0, 0x000000ff,true),
-  HOWTO(R_68K_GOT32O,     0, 2,32, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT32O",    false, 0, 0xffffffff,false),
+  HOWTO(R_68K_GOT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_GOT32O",    false, 0, 0xffffffff,false),
   HOWTO(R_68K_GOT16O,     0, 1,16, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT16O",    false, 0, 0x0000ffff,false),
   HOWTO(R_68K_GOT8O,      0, 0, 8, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_GOT8O",     false, 0, 0x000000ff,false),
-  HOWTO(R_68K_PLT32,      0, 2,32, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT32",     false, 0, 0xffffffff,true),
+  HOWTO(R_68K_PLT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_PLT32",     false, 0, 0xffffffff,true),
   HOWTO(R_68K_PLT16,      0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT16",     false, 0, 0x0000ffff,true),
   HOWTO(R_68K_PLT8,       0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT8",      false, 0, 0x000000ff,true),
-  HOWTO(R_68K_PLT32O,     0, 2,32, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT32O",    false, 0, 0xffffffff,false),
+  HOWTO(R_68K_PLT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_68K_PLT32O",    false, 0, 0xffffffff,false),
   HOWTO(R_68K_PLT16O,     0, 1,16, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT16O",    false, 0, 0x0000ffff,false),
   HOWTO(R_68K_PLT8O,      0, 0, 8, false,0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_68K_PLT8O",     false, 0, 0x000000ff,false),
   HOWTO(R_68K_COPY,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_68K_COPY",      false, 0, 0xffffffff,false),
@@ -911,7 +913,8 @@ elf_m68k_size_dynamic_sections (output_bfd, info)
 						  s->output_section);
 		  target = bfd_get_section_by_name (output_bfd, outname + 5);
 		  if (target != NULL
-		      && (target->flags & SEC_READONLY) != 0)
+		      && (target->flags & SEC_READONLY) != 0
+		      && (target->flags & SEC_ALLOC) != 0)
 		    reltext = true;
 		}
 
@@ -984,6 +987,51 @@ elf_m68k_size_dynamic_sections (output_bfd, info)
 	}
     }
 
+  /* If we are generating a shared library, we generate a section
+     symbol for each output section for which we might need to copy
+     relocs.  These are local symbols, which means that they must come
+     first in the dynamic symbol table.  That means we must increment
+     the dynamic symbol index of every other dynamic symbol.  */
+  if (info->shared)
+    {
+      int c;
+
+      c = 0;
+      for (s = output_bfd->sections; s != NULL; s = s->next)
+	{
+	  if ((s->flags & SEC_LINKER_CREATED) != 0
+	      || (s->flags & SEC_ALLOC) == 0)
+	    continue;
+
+	  elf_section_data (s)->dynindx = c + 1;
+
+	  /* These symbols will have no names, so we don't need to
+             fiddle with dynstr_index.  */
+
+	  ++c;
+	}
+
+      elf_link_hash_traverse (elf_hash_table (info),
+			      elf_m68k_adjust_dynindx,
+			      (PTR) &c);
+      elf_hash_table (info)->dynsymcount += c;
+    }
+
+  return true;
+}
+
+/* Increment the index of a dynamic symbol by a given amount.  Called
+   via elf_link_hash_traverse.  */
+
+static boolean
+elf_m68k_adjust_dynindx (h, cparg)
+     struct elf_link_hash_entry *h;
+     PTR cparg;
+{
+  int *cp = (int *) cparg;
+
+  if (h->dynindx != -1)
+    h->dynindx += *cp;
   return true;
 }
 
@@ -1125,11 +1173,11 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 				      "_GLOBAL_OFFSET_TABLE_") != 0))
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && (! info->shared
-			  || ! info->symbolic
+			  || (! info->symbolic && h->dynindx != -1)
 			  || (h->elf_link_hash_flags
 			      & ELF_LINK_HASH_DEF_REGULAR) == 0))
 		  || (info->shared
-		      && (! info->symbolic
+		      && ((! info->symbolic && h->dynindx != -1)
 			  || (h->elf_link_hash_flags
 			      & ELF_LINK_HASH_DEF_REGULAR) == 0)
 		      && (input_section->flags & SEC_ALLOC) != 0
@@ -1197,16 +1245,17 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 
 		if (!elf_hash_table (info)->dynamic_sections_created
 		    || (info->shared
-			&& info->symbolic
+			&& (info->symbolic || h->dynindx == -1)
 			&& (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
 		  {
 		    /* This is actually a static link, or it is a
 		       -Bsymbolic link and the symbol is defined
-		       locally.  We must initialize this entry in the
-		       global offset table.  Since the offset must
-		       always be a multiple of 4, we use the least
-		       significant bit to record whether we have
-		       initialized it already.
+		       locally, or the symbol was forced to be local
+		       because of a version file..  We must initialize
+		       this entry in the global offset table.  Since
+		       the offset must always be a multiple of 4, we
+		       use the least significant bit to record whether
+		       we have initialized it already.
 
 		       When doing a dynamic link, we create a .rela.got
 		       relocation entry to initialize the value.  This
@@ -1309,7 +1358,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_68K_PLT32O:
 	  /* Relocation is the offset of the entry for this symbol in
 	     the procedure linkage table.  */
-	  BFD_ASSERT (h != NULL && h->plt_offset == (bfd_vma) -1);
+	  BFD_ASSERT (h != NULL && h->plt_offset != (bfd_vma) -1);
 
 	  if (splt == NULL)
 	    {
@@ -1441,8 +1490,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 
 			  osec = sec->output_section;
 			  indx = elf_section_data (osec)->dynindx;
-			  if (indx == 0)
-			    abort ();
+			  BFD_ASSERT (indx > 0);
 			}
 
 		      relocate = false;
@@ -1607,8 +1655,6 @@ elf_m68k_finish_dynamic_symbol (output_bfd, info, h, sym)
       /* This symbol has an entry in the global offset table.  Set it
 	 up.  */
 
-      BFD_ASSERT (h->dynindx != -1);
-
       sgot = bfd_get_section_by_name (dynobj, ".got");
       srela = bfd_get_section_by_name (dynobj, ".rela.got");
       BFD_ASSERT (sgot != NULL && srela != NULL);
@@ -1618,16 +1664,18 @@ elf_m68k_finish_dynamic_symbol (output_bfd, info, h, sym)
 		       + (h->got_offset &~ 1));
 
       /* If this is a -Bsymbolic link, and the symbol is defined
-	 locally, we just want to emit a RELATIVE reloc.  The entry in
-	 the global offset table will already have been initialized in
-	 the relocate_section function.  */
+	 locally, we just want to emit a RELATIVE reloc.  Likewise if
+	 the symbol was forced to be local because of a version file.
+	 The entry in the global offset table will already have been
+	 initialized in the relocate_section function.  */
       if (info->shared
-	  && info->symbolic
+	  && (info->symbolic || h->dynindx == -1)
 	  && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
 	{
 	  rela.r_info = ELF32_R_INFO (0, R_68K_RELATIVE);
-	  rela.r_addend = bfd_get_32 (output_bfd,
-				      sgot->contents + (h->got_offset & ~1));
+	  rela.r_addend = bfd_get_signed_32 (output_bfd,
+					     (sgot->contents
+					      + (h->got_offset & ~1)));
 	}
       else
 	{
@@ -1794,6 +1842,50 @@ elf_m68k_finish_dynamic_sections (output_bfd, info)
     }
 
   elf_section_data (sgot->output_section)->this_hdr.sh_entsize = 4;
+
+  if (info->shared)
+    {
+      asection *sdynsym;
+      asection *s;
+      Elf_Internal_Sym sym;
+      int c;
+
+      /* Set up the section symbols for the output sections.  */
+
+      sdynsym = bfd_get_section_by_name (dynobj, ".dynsym");
+      BFD_ASSERT (sdynsym != NULL);
+
+      sym.st_size = 0;
+      sym.st_name = 0;
+      sym.st_info = ELF_ST_INFO (STB_LOCAL, STT_SECTION);
+      sym.st_other = 0;
+
+      c = 0;
+      for (s = output_bfd->sections; s != NULL; s = s->next)
+	{
+	  int indx;
+
+	  if (elf_section_data (s)->dynindx == 0)
+	    continue;
+
+	  sym.st_value = s->vma;
+
+	  indx = elf_section_data (s)->this_idx;
+	  BFD_ASSERT (indx > 0);
+	  sym.st_shndx = indx;
+
+	  bfd_elf32_swap_symbol_out (output_bfd, &sym,
+				     (PTR) (((Elf32_External_Sym *)
+					     sdynsym->contents)
+					    + elf_section_data (s)->dynindx));
+
+	  ++c;
+	}
+
+      /* Set the sh_info field of the output .dynsym section to the
+         index of the first global symbol.  */
+      elf_section_data (sdynsym->output_section)->this_hdr.sh_info = c + 1;
+    }
 
   return true;
 }

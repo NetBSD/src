@@ -1,10 +1,242 @@
-Tue May 13 10:43:11 1997  Ian Lance Taylor  <ian@cygnus.com>
+Mon Apr 27 13:45:35 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Set version number to 2.9.1.
+	* configure: Rebuild.
+
+Tue Apr  7 12:43:37 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	From hjl@lucon.org <H.J. Lu>:
+	* Makefile.am (diststuff): New target.
+	* Makefile.in: Rebuild.
+
+Mon Mar 30 16:13:20 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Set version number to 2.9.
+	* configure: Rebuild.
+
+Sat Mar 28 23:09:08 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	Fix some gcc -Wall warnings:
+	* cg_arcs.c (num_cycles): Change to unsigned int.
+	(numarcs): Likewise.
+	(arc_add): Change maxarcs to unsigned int.
+	(cg_assemble): Change index to unsigned int.
+	* cg_arcs.h (num_cycles, numarcs): Update declarations.
+	* cg_print.c (cg_print): Change index to unsigned int.
+	(cg_print_index): Change index, nnames, todo, i, and j to unsigned
+	int.
+	(cg_print_file_ordering): Change symbol_count and index2 to
+	unsigned int.
+	* core.c (symbol_map_count): Change to unsigned int.
+	(core_create_function_syms): Change j to unsigned int.
+	(core_create_line_syms): Add cast to avoid warning.
+	* hist.c (hist_assign_samples): Change j to unsigned int.
+	(hist_print): Change index to unsigned i nt.  Add cast to avoid
+	warning.
+	* sym_ids.c (parse_spec): Add casts to avoid warning.
+	* symtab.c (symtab_finalize): Change j to unsigned int.
+	(sym_lookup): Update printf format strings.
+	* symtab.h (Sym_Table): Change len to unsigned int.
+	* tahoe.c (tahoe_reladdr): Add casts to avoid warnings.
+
+Tue Mar 24 19:00:11 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	Add --demangle and --no-demangle options:
+	* gprof.h (demangle): Declare.
+	* gprof.c (demangle): New global variable.
+	(OPTION_DEMANGLE, OPTION_NO_DEMANGLE): Define.
+	(long_options): Add "demangle" and "no-demangle".
+	(usage): Mention --demangle and --no-demangle.
+	(main): Handle OPTION_DEMANGLE and OPTION_NO_DEMANGLE.
+	* utils.c (print_name_only): Only demangle symbol name if demangle
+	is true.
+	* gprof.texi (Output Options): Document new options.
+
+Fri Mar 20 19:21:56 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in: Rebuild with automake 1.2e.
+	* aclocal.m4, configure: Rebuild with libtool 1.2.
+
+Thu Feb 12 14:36:05 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gprof.c (usage): Update bug-gnu-utils address.
+
+Sat Feb  7 15:43:12 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure, aclocal.m4: Rebuild with new libtool.
+
+Fri Feb  6 12:02:28 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* alpha.c (alpha_Instruction): Use int, not signed.
+
+Fri Feb  6 02:00:19 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* core.c (core_init): Adding missing "break".
+
+Thu Feb  5 12:49:37 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure, Makefile.in, aclocal.m4: Rebuild with new libtool.
+
+Tue Feb  3 14:25:25 1998  Brent Baccala  <baccala@freesoft.org>
+
+	* bbconv.pl: New file.
+	* Makefile.am (EXTRA_DIST): Add bbconv.pl.
+	* Makefile.in: Rebuild.
+
+	* gprof.texi: Extensive additions to document all arguments and
+	output formats.
+
+	* symtab.c (symtab_finalize): Prefer function symbols over line
+	symbols.
+	(dbg_sym_lookup): Correct debugging messages.
+
+	* gprof.c (main): --sum implies --line.
+
+	* cg_print.c (cg_print): When doing line by line profiling, don't
+	use a non-function as a main listing item.
+
+	* call_graph.c (cg_tally): When using line by line profiling, use
+ 	the function symbol as the child.
+
+	* symtab.h (NBBS): Define.
+	(Sym): Add bb_addr and bb_calls fields.
+	* basic_blocks.c (bb_read_rec): Save multiple basic blocks per
+	symbol.
+	(bb_write_blocks): Adjust for multiple basic blocks per symbol.
+	(print_exec_counts): Don't check whether a symbol is the start of
+	a basic block.  Print all basic blocks for a symbol.
+	(annotate_with_count): Rewrite to print all basic block counts and
+	to pay attention to width argument.
+	(print_annotated_source): Don't check whether symbol is the start
+	of a basic block.
+
+	Make it possible to build a cross gprof, although a few cases are
+	still not handled:
+	* configure.in: Don't set MY_TARGET.
+	* gprof.h: Don't include MACHINE_H.  Don't define FOPEN_RB or
+	FOPEN_WB; just get them from sysdep.h.
+	* core.h (min_insn_size, offset_to_code): Declare.
+	* core.c (MIN_INSN_SIZE): Don't define.
+	(min_insn_size, offset_to_code): New variables.
+	(core_init): Initialize min_insn_size and offset_to_code.
+	(find_call): New function.
+	(core_create_line_syms): Don't use min_dist.  Set is_static in
+	pass 2.
+	* hist.c (UNITS_TO_CODE): Define.
+	* gprof.c (default_excluded_list): Add "__mcount_internal".
+	* gmon.h: Change TARGET_alpha to __alpha__.
+	* hertz.h: Ifdef MACH, define hertz as HZ.
+	* alpha.c (alpha_Instruction): Rename from Instruction.  Change
+	all references.
+	(alpha_find_call): Rename from find_call.
+	* alpha.h: Remove.
+	* dummy.c, dummy.h: Remove.
+	* i386.c (i386_iscall): Rename from iscall.  Change all
+	references.  Check for call instruction, not jump or lcall.
+	(i386_find_call): Rename from find_call.  Correct for VMA.
+	Correct call destination computation.  Don't dereference symbol if
+	it is NULL.
+	* i386.h: Remove.
+	* ns532.c, ns532.h: Remove.
+	* sparc.c (CALL): Define.
+	(sparc_find_call): Rename from find_call.
+	* sparc.h: Remove.
+	* tahoe.c: Include cg_arcs.h, core.h, hist.h, and symtab.h.  Don't
+	include time_host.h.
+	(CALLF, PC): Define.
+	(enum tahoe_opermodes, tahoe_operandenum): Define.  Rename all
+	references to opermodes or operandenum to these.
+	(tahoe_operandmode): Rename from operandmode.  Call abort if
+	switch does not return.
+	(tahoe_operandname): Rename from operandname.  Call abort if
+	switch does not return.
+	(tahoe_operandlength): Rename from operandlength.  Call abort if
+	switch does not return.
+	(tahoe_reladdr): Rename from reladdr.
+	(tahoe_find_call): Rename from find_call.  Use core_text_space
+	rather than textspace.
+	* tahoe.h: Remove.
+	* vax.c (CALLS, PC): Define.
+	(enum opermodes, operandenum, struct modebyte): Define.
+	(vax_operandmode): Rename from operandmode.  Call abort if switch
+	does not return.
+	(vax_operandname): Rename from operandname.  Call abort if switch
+	does not return.
+	(vax_operandlength): Rename from operandlength.  Call abort if
+	switch does not return.
+	(vax_reladdr): Rename from reladdr.
+	(vax_find_call): Rename from find_call.
+	* vax.h: Remove.
+	* Makefile.am (AUTOMAKE_OPTIONS): Set to cygnus.
+	(MY_TARGET): Remove.
+	(INCLUDES): Remove -DTARGET_$(MY_TARGET) and -DMACHINE_H=
+	\"$(MY_TARGET).h\".
+	(gprof_SOURCES): Add i386.c, alpha.c, vax.c, tahoe.c, sparc.c.
+	(gprof_DEPENDENCIES): Remove $(MY_TARGET).o.
+	(gprof_LDADD): Likewise.
+	(noinst_HEADERS): Remove alpha.h, i386.h, ns532.h, sparc.h,
+	tahoe.h, vax.h, dummy.h.
+	(EXTRA_DIST): Remove alpha.c, i386.c, ns532.c, sparc.c, tahoe.c,
+	vax.c, dummy.c.
+	($(OBJECTS)): Don't depend upon $(MY_TARGET).h.
+	($(MY_TARGET).o): Remove target.
+	(i386.o, alpha.o, vax.o, tahoe.o, sparc.o): New targets.
+	* configure, Makefile.in, aclocal.m4: Rebuild.
+
+Mon Dec 29 14:17:08 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* core.c (core_sym_class): Treat weak symbols as text symbols.
+	From Dean Gaudet <dgaudet@arctic.org>.
+
+Wed Sep 24 11:35:43 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* aclocal.m4: Rebuild with new libtool.
+	* Makefile.in: Rebuild with current automake.
+	* configure: Rebuild.
+
+Sat Aug  9 16:25:01 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Change version number to 2.8.2.  Call
+	AM_PROG_LIBTOOL.  Remove shared library handling; now handled by
+	libtool.  Add AM_CONFIG_HEADER.  Change AC_PROG_INSTALL to
+	AM_PROG_INSTALL.  Add AM_EXEEXT.
+	* Makefile.am (LINK): Remove.
+	(gprof_LDFLAGS): Remove
+	(gprof_DEPENDENCIES): Change libbfd.a to libbfd.la.
+	(gprof_LDADD): Likewise.
+	($(OBJECTS)): Depend upon gconfig.h and ../bfd/config.h.
+	* gprof.h: Undefine PACKAGE and VERSION after including BFD
+	sysdep.h file, then include new gconfig.h file.
+	* gprof.c (VERSION): Don't define.
+	* acconfig.h: New file.
+	* stamp-h.in: New file.
+	* gconfig.in: New file, created by autoheader.
+	* Makefile.in, configure, aclocal.m4: Rebuild.
+
+Sat Jun 28 23:20:42 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* aclocal.m4, configure, Makefile.in: Rebuild with automake 1.2.
+
+Mon Jun 16 15:31:39 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.am (INCLUDES): Add -DDEBUG.
+	* Makefile.in: Rebuild.
+
+Tue Apr 15 14:19:30 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	Change to use automake:
+	* Makefile.am: New file.
+	* configure.in: Run AM_INIT_AUTOMAKE, AM_MAINTAINER_MODE, and
+	AM_CYGWIN32.
+	* aclocal.m4: New file, created by aclocal.
+	* Makefile.in: Replace with file created by automake --cygnus.
+	* configure: Rebuild.
+
+Thu Apr  3 13:21:25 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gprof.c (VERSION): Define as "2.8.1".
 
-Thu Apr  3 18:55:05 1997  Ian Lance Taylor  <ian@cygnus.com>
-
-	* gprof.c (VERSION): Define as "2.8".
+	* Branched binutils 2.8.
 
 Thu Mar 27 17:15:23 1997  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -415,7 +647,7 @@ Sun Feb  5 16:19:46 1995  David Mosberger-Tang  <davidm@piston.cs.arizona.edu>
 	filename printed in the call-graph function index; line-level
 	profiling should still work, but requires some patience
 
-	* cg_print.c (cg_print_index): sanitized printing of index when
+	* cg_print.c (cg_print_index): sanitised printing of index when
 	using FSF-style output; in particular, output width is now controlled
 	via option --width and the function tries hard to keep columns
 	aligned even in the presence of (occasional) long names

@@ -159,7 +159,7 @@ get_vms_time_string ()
   } Descriptor;
   Descriptor.Size = 17;
   Descriptor.Ptr = tbuf;
-  sys$asctim (0, &Descriptor, 0, 0);
+  SYS$ASCTIM (0, &Descriptor, 0, 0);
 #endif /* not VMS */
 
 #if EVAX_DEBUG
@@ -202,12 +202,9 @@ _bfd_evax_write_emh (abfd)
 
       char *fname, *fout, *fptr;
 
-      fname = strdup (bfd_get_filename (abfd));
-      if (fname == 0)
-	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return -1;
-	}
+      fptr = bfd_get_filename (abfd);
+      fname = (char *) alloca (strlen (fptr) + 1);
+      strcpy (fname, fptr);
       fout = strrchr (fname, ']');
       if (fout == 0)
 	fout = strchr (fname, ':');
@@ -234,7 +231,6 @@ _bfd_evax_write_emh (abfd)
 	    *fptr = 0;
 	}
       _bfd_evax_output_counted (abfd, fout);
-      free (fname);
     }
   else
     _bfd_evax_output_counted (abfd, "NONAME");
@@ -273,7 +269,7 @@ _bfd_evax_write_emh (abfd)
 	      continue;
 	    }
 
-	  _bfd_evax_output_dump (abfd, (char *)symbol->name, strlen (symbol->name));
+	  _bfd_evax_output_dump (abfd, (unsigned char *)symbol->name, strlen (symbol->name));
 	  if (had_case)
 	    break;
 	  had_file = 1;
@@ -281,7 +277,7 @@ _bfd_evax_write_emh (abfd)
     }
 
   if (symnum == abfd->symcount)
-    _bfd_evax_output_dump (abfd, "noname", 6);
+    _bfd_evax_output_dump (abfd, (unsigned char *)"noname", 6);
 
   _bfd_evax_output_flush (abfd);
 

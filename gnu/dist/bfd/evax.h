@@ -195,7 +195,8 @@ extern int _bfd_evax_write_edbg PARAMS ((bfd *abfd));
 #define EOBJ_S_C_SUBTYP 4
 #define EOBJ_S_C_MAXRECSIZ 8192   /*Maximum legal record size         */
 #define EOBJ_S_C_STRLVL 2         /*Structure level                   */
-#define EOBJ_S_C_SYMSIZ 64        /*Maxymum symbol length             */
+#define EOBJ_S_C_SYMSIZ 64        /*Maximum symbol length		*/
+#define EOBJ_S_C_SECSIZ 31	  /*Maximum section name length		*/
 #define EOBJ_S_C_STOREPLIM -1     /*Maximum repeat count on store commands  */
 #define EOBJ_S_C_PSCALILIM 16     /*Maximum p-sect alignment          */
 
@@ -278,7 +279,7 @@ struct location_struct {
 };
 #define LOCATION_SAVE_SIZE 32
 
-#define EVAX_SECTION_COUNT 32
+#define EVAX_SECTION_COUNT 1024
 
 struct evax_private_data_struct {
   boolean fixup_done;			/* Flag to indicate if all
@@ -377,6 +378,6 @@ extern void _bfd_evax_output_counted PARAMS ((bfd *abfd, char *value));
 extern void _bfd_evax_output_dump PARAMS ((bfd *abfd, unsigned char *data,
 					   int length));
 extern void _bfd_evax_output_fill PARAMS ((bfd *abfd, int value, int length));
-extern char *_bfd_evax_length_hash_symbol PARAMS ((bfd *abfd, const char *in));
+extern char *_bfd_evax_length_hash_symbol PARAMS ((bfd *abfd, const char *in, int maxlen));
 
 #endif /* EVAX_H */

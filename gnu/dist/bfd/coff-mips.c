@@ -1,5 +1,6 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -1312,7 +1313,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
   for (i = 0; ext_rel < ext_rel_end; ext_rel++, i++)
     {
       struct internal_reloc int_rel;
-      boolean use_lo;
+      boolean use_lo = false;
       bfd_vma addend;
       reloc_howto_type *howto;
       struct ecoff_link_hash_entry *h = NULL;

@@ -45,6 +45,10 @@ static boolean coff_i960_adjust_symndx
 	   struct internal_reloc *, boolean *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (3)
+#define COFF_ALIGN_IN_SECTION_HEADER 1
+
+#define GET_SCNHDR_ALIGN bfd_h_get_32
+#define PUT_SCNHDR_ALIGN bfd_h_put_32
 
 /* The i960 does not support an MMU, so COFF_PAGE_SIZE can be
    arbitrarily small.  */

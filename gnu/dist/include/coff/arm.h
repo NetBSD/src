@@ -1,5 +1,6 @@
 /*** coff information for the ARM */
 
+#define COFFARM 1
 
 /********************** FILE HEADER **********************/
 
@@ -18,17 +19,52 @@ struct external_filehdr {
  *	F_EXEC		file is executable (no unresolved external references)
  *	F_LNNO		line numbers stripped from file
  *	F_LSYMS		local symbols stripped from file
+ *      F_INTERWORK     file supports switching between ARM and Thumb instruction sets
+ *      F_INTERWORK_SET the F_INTERWORK bit is valid
+ *	F_APCS_FLOAT	code passes float arguments in float registers
+ *	F_PIC		code is reentrant/position-independent
  *	F_AR32WR	file has byte ordering of an AR32WR machine (e.g. vax)
+ *	F_APCS_26	file uses 26 bit ARM Procedure Calling Standard
+ *	F_APCS_SET	the F_APCS_26, F_APCS_FLOAT and F_PIC bits have been initialised
  */
 
 #define F_RELFLG	(0x0001)
 #define F_EXEC		(0x0002)
 #define F_LNNO		(0x0004)
 #define F_LSYMS		(0x0008)
+#define F_INTERWORK	(0x0010)
+#define F_INTERWORK_SET	(0x0020)
+#define F_APCS_FLOAT	(0x0040)
+#undef  F_AR16WR
+#define F_PIC		(0x0080)
+#define	F_AR32WR	(0x0100)
+#define F_APCS_26	(0x0400)
+#define F_APCS_SET	(0x0800)
 
+/* Bits stored in flags filed of the internal_f structure */
 
+#define F_INTERWORK	(0x0010)
+#define F_APCS26	(0x1000)
+#define F_ARM_ARCHITECTURE_MASK	(0xe000)
+#define F_ARM_2		(0x2000)
+#define F_ARM_2a	(0x4000)
+#define F_ARM_3		(0x6000)
+#define F_ARM_3M	(0x8000)
+#define F_ARM_4		(0xa000)
+#define F_ARM_4T	(0xc000)
+#define F_APCS_FLOAT	(0x0040)
+#define F_PIC		(0x0080)
 
-#define	ARMMAGIC	0xa00  /* I just made these up */
+/*
+ * ARMMAGIC ought to encoded the procesor type,
+ * but it is too late to change it now, instead
+ * the flags field of the internal_f structure
+ * is used as shown above.
+ *
+ * XXX - NC 5/6/97
+ */
+
+#define	ARMMAGIC	0xa00  /* I just made this up */ 
 
 #define ARMBADMAG(x) (((x).f_magic != ARMMAGIC))
 
@@ -148,7 +184,7 @@ struct external_syment
 #define N_TMASK		(0x30)
 #define N_BTSHFT	(4)
 #define N_TSHIFT	(2)
-  
+
 union external_auxent {
 	struct {
 		char x_tagndx[4];	/* str, un, or enum tag indx */

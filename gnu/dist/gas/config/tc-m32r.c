@@ -1,5 +1,5 @@
 /* tc-m32r.c -- Assembler for the Mitsubishi M32R.
-   Copyright (C) 1996, 1997 Free Software Foundation.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,11 +22,29 @@
 #include <ctype.h>
 #include "as.h"
 #include "subsegs.h"     
+#include "symcat.h"
 #include "cgen-opc.h"
 
-/* Non-null if last insn was a 16 bit insn on a 32 bit boundary
-   (i.e. was the first of two 16 bit insns).  */
-static const struct cgen_insn *prev_insn = NULL;
+/* Structure to hold all of the different components describing an individual instruction.  */
+typedef struct
+{
+  const CGEN_INSN *	insn;
+  const CGEN_INSN *	orig_insn;
+  CGEN_FIELDS		fields;
+#ifdef CGEN_INT_INSN
+  cgen_insn_t       	buffer [CGEN_MAX_INSN_SIZE / sizeof (cgen_insn_t)];
+#else
+  char                  buffer [CGEN_MAX_INSN_SIZE];
+#endif
+  char *		addr;
+  fragS *		frag;
+  int                   indices [MAX_OPERAND_INSTANCES];
+}
+m32r_insn;
+
+/* prev_insn.insn is non-null if last insn was a 16 bit insn on a 32 bit
+   boundary (i.e. was the first of two 16 bit insns).  */
+static m32r_insn	prev_insn;
 
 /* Non-zero if we've seen a relaxable insn since the last 32 bit
    alignment request.  */
@@ -40,18 +58,19 @@ static int m32r_relax;
 
 /* If non-NULL, pointer to cpu description file to read.
    This allows runtime additions to the assembler.  */
-static char *m32r_cpu_desc;
+static char * m32r_cpu_desc;
+
 
 /* stuff for .scomm symbols.  */
-static segT sbss_section;
+static segT     sbss_section;
 static asection scom_section;
-static asymbol scom_symbol;
+static asymbol  scom_symbol;
 
-const char comment_chars[] = ";";
-const char line_comment_chars[] = "#";
+const char comment_chars[]        = ";";
+const char line_comment_chars[]   = "#";
 const char line_separator_chars[] = "";
-const char EXP_CHARS[] = "eE";
-const char FLT_CHARS[] = "dD";
+const char EXP_CHARS[]            = "eE";
+const char FLT_CHARS[]            = "dD";
 
 /* Relocations against symbols are done in two
    parts, with a HI relocation and a LO relocation.  Each relocation
@@ -66,40 +85,43 @@ const char FLT_CHARS[] = "dD";
 
 struct m32r_hi_fixup
 {
-  /* Next HI fixup.  */
-  struct m32r_hi_fixup *next;
-  /* This fixup.  */
-  fixS *fixp;
-  /* The section this fixup is in.  */
-  segT seg;
+  struct m32r_hi_fixup * next;  /* Next HI fixup.  */
+  fixS *                 fixp;  /* This fixup.  */
+  segT                   seg;   /* The section this fixup is in.  */
+
 };
 
 /* The list of unmatched HI relocs.  */
 
-static struct m32r_hi_fixup *m32r_hi_fixup_list;
+static struct m32r_hi_fixup * m32r_hi_fixup_list;
 
-static void m32r_record_hi16 PARAMS ((int, fixS *, segT seg));
 
-const char *md_shortopts = "";
+
+#define M32R_SHORTOPTS ""
+const char * md_shortopts = M32R_SHORTOPTS;
 
-struct option md_longopts[] = {
+struct option md_longopts[] =
+{
+
 #if 0 /* not supported yet */
-#define OPTION_RELAX  (OPTION_MD_BASE)
+#define OPTION_RELAX  (OPTION_MD_BASE + 3)
   {"relax", no_argument, NULL, OPTION_RELAX},
-#define OPTION_CPU_DESC (OPTION_MD_BASE + 1)
+#define OPTION_CPU_DESC (OPTION_MD_BASE + 4)
   {"cpu-desc", required_argument, NULL, OPTION_CPU_DESC},
 #endif
+
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);       
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
-     int c;
-     char *arg;
+     int    c;
+     char * arg;
 {
   switch (c)
     {
+      
 #if 0 /* not supported yet */
     case OPTION_RELAX:
       m32r_relax = 1;
@@ -116,16 +138,14 @@ md_parse_option (c, arg)
 
 void
 md_show_usage (stream)
-  FILE *stream;
+  FILE * stream;
 {
-  fprintf (stream, "M32R options:\n");
+
 #if 0
   fprintf (stream, "\
 --relax			create linker relaxable code\n");
   fprintf (stream, "\
 --cpu-desc		provide runtime cpu description file\n");
-#else
-  fprintf (stream, "[none]\n");
 #endif
 } 
 
@@ -156,17 +176,17 @@ const pseudo_typeS md_pseudo_table[] =
 
 int
 m32r_do_align (n, fill, len, max)
-     int n;
-     const char *fill;
-     int len;
-     int max;
+     int          n;
+     const char * fill;
+     int          len;
+     int          max;
 {
-  if ((fill == NULL || (*fill == 0 && len == 1))
+  if ((fill == NULL || (* fill == 0 && len == 1))
       && (now_seg->flags & SEC_CODE) != 0
       /* Only do this special handling if aligning to at least a
 	 4 byte boundary.  */
       && n > 1
-      /* Only do this special handling if we're allowed to emit at
+     /* Only do this special handling if we're allowed to emit at
 	 least two bytes.  */
       && (max == 0 || max > 1))
     {
@@ -185,7 +205,8 @@ m32r_do_align (n, fill, len, max)
 	 nops.  */
       if (n > 2)
 	{
-	  static const unsigned char multi_nop_pattern[] = { 0x70, 0x00, 0xf0, 0x00 };
+	  static const unsigned char multi_nop_pattern[] =
+	  { 0x70, 0x00, 0xf0, 0x00 };
 	  frag_align_pattern (n, multi_nop_pattern, sizeof multi_nop_pattern,
 			      max ? max - 2 : 0);
 	}
@@ -199,7 +220,7 @@ static void
 assemble_nop (opcode)
      int opcode;
 {
-  char *f = frag_more (2);
+  char * f = frag_more (2);
   md_number_to_chars (f, opcode, 2);
 }
 
@@ -217,7 +238,7 @@ fill_insn (ignore)
      int ignore;
 {
   (void) m32r_do_align (2, NULL, 0, 0);
-  prev_insn = NULL;
+  prev_insn.insn = NULL;
   seen_relaxable_p = 0;
 }
 
@@ -230,17 +251,18 @@ int
 m32r_fill_insn (done)
      int done;
 {
-  segT seg;
-  subsegT subseg;
-
   if (prev_seg != NULL)
     {
-      seg = now_seg;
-      subseg = now_subseg;
+      segT    seg    = now_seg;
+      subsegT subseg = now_subseg;
+
       subseg_set (prev_seg, prev_subseg);
+      
       fill_insn (0);
+      
       subseg_set (seg, subseg);
     }
+  
   return 1;
 }
 
@@ -248,22 +270,24 @@ void
 md_begin ()
 {
   flagword applicable;
-  segT seg;
-  subsegT subseg;
+  segT     seg;
+  subsegT  subseg;
 
   /* Initialize the `cgen' interface.  */
 
   /* This is a callback from cgen to gas to parse operands.  */
   cgen_parse_operand_fn = cgen_parse_operand;
+  
   /* Set the machine number and endian.  */
   CGEN_SYM (init_asm) (0 /* mach number */,
-		       target_big_endian ? CGEN_ENDIAN_BIG : CGEN_ENDIAN_LITTLE);
+		       target_big_endian ?
+		       CGEN_ENDIAN_BIG : CGEN_ENDIAN_LITTLE);
 
 #if 0 /* not supported yet */
   /* If a runtime cpu description file was provided, parse it.  */
   if (m32r_cpu_desc != NULL)
     {
-      const char *errmsg;
+      const char * errmsg;
 
       errmsg = cgen_read_cpu_file (m32r_cpu_desc);
       if (errmsg != NULL)
@@ -272,15 +296,17 @@ md_begin ()
 #endif
 
   /* Save the current subseg so we can restore it [it's the default one and
-     we don't want the initial section to be .sbss.  */
-  seg = now_seg;
+     we don't want the initial section to be .sbss].  */
+  seg    = now_seg;
   subseg = now_subseg;
 
   /* The sbss section is for local .scomm symbols.  */
   sbss_section = subseg_new (".sbss", 0);
+  
   /* This is copied from perform_an_assembly_pass.  */
   applicable = bfd_applicable_section_flags (stdoutput);
   bfd_set_section_flags (stdoutput, sbss_section, applicable & SEC_ALLOC);
+  
 #if 0 /* What does this do? [see perform_an_assembly_pass]  */
   seg_info (bss_section)->bss = 1;
 #endif
@@ -289,73 +315,99 @@ md_begin ()
 
   /* We must construct a fake section similar to bfd_com_section
      but with the name .scommon.  */
-  scom_section = bfd_com_section;
-  scom_section.name = ".scommon";
-  scom_section.output_section = &scom_section;
-  scom_section.symbol = &scom_symbol;
-  scom_section.symbol_ptr_ptr = &scom_section.symbol;
-  scom_symbol = *bfd_com_section.symbol;
-  scom_symbol.name = ".scommon";
-  scom_symbol.section = &scom_section;
+  scom_section                = bfd_com_section;
+  scom_section.name           = ".scommon";
+  scom_section.output_section = & scom_section;
+  scom_section.symbol         = & scom_symbol;
+  scom_section.symbol_ptr_ptr = & scom_section.symbol;
+  scom_symbol                 = * bfd_com_section.symbol;
+  scom_symbol.name            = ".scommon";
+  scom_symbol.section         = & scom_section;
+
 }
+
+
 
 void
 md_assemble (str)
-     char *str;
+     char * str;
 {
-#ifdef CGEN_INT_INSN
-  cgen_insn_t buffer[CGEN_MAX_INSN_SIZE / sizeof (cgen_insn_t)];
-#else
-  char buffer[CGEN_MAX_INSN_SIZE];
-#endif
-  struct cgen_fields fields;
-  const struct cgen_insn *insn;
-  char *errmsg;
+  m32r_insn insn;
+  char *    errmsg;
+  char *    str2 = NULL;
 
   /* Initialize GAS's cgen interface for a new instruction.  */
   cgen_asm_init_parse ();
 
-  insn = CGEN_SYM (assemble_insn) (str, &fields, buffer, &errmsg);
-  if (!insn)
+  
+  insn.insn = CGEN_SYM (assemble_insn) (str, & insn.fields, insn.buffer, & errmsg);
+  if (!insn.insn)
     {
       as_bad (errmsg);
       return;
     }
 
-  if (CGEN_INSN_BITSIZE (insn) == 32)
+  
+  if (CGEN_INSN_BITSIZE (insn.insn) == 32)
     {
       /* 32 bit insns must live on 32 bit boundaries.  */
-      /* FIXME: If calling fill_insn too many times turns us into a memory
-	 pig, can we call assemble_nop instead of !seen_relaxable_p?  */
-      if (prev_insn || seen_relaxable_p)
-	fill_insn (0);
-      cgen_asm_finish_insn (insn, buffer, CGEN_FIELDS_BITSIZE (&fields));
+      if (prev_insn.insn || seen_relaxable_p)
+	{
+	  /* ??? If calling fill_insn too many times turns us into a memory
+	     pig, can we call assemble_nop instead of !seen_relaxable_p?  */
+	  fill_insn (0);
+	}
+      
+      (void) cgen_asm_finish_insn (insn.insn, insn.buffer,
+				   CGEN_FIELDS_BITSIZE (& insn.fields));
     }
   else
     {
-      /* Keep track of whether we've seen a pair of 16 bit insns.
-	 PREV_INSN is NULL when we're on a 32 bit boundary.  */
-      if (prev_insn)
-	prev_insn = NULL;
-      else
-	prev_insn = insn;
-      cgen_asm_finish_insn (insn, buffer, CGEN_FIELDS_BITSIZE (&fields));
+      
+      if (CGEN_INSN_BITSIZE (insn.insn) != 16)
+	abort();
+      
+      /* Get the indices of the operands of the instruction.  */
+      insn.insn = m32r_cgen_get_insn_operands (insn.insn,
+					       bfd_getb16 ((char *) insn.buffer),
+					       16,
+					       insn.indices);
+      if (insn.insn == NULL)
+	as_fatal ("internal error: m32r_cgen_get_insn_operands failed");
 
+      /* Keep track of whether we've seen a pair of 16 bit insns.
+	 prev_insn.insn is NULL when we're on a 32 bit boundary.  */
+      if (prev_insn.insn)
+	{
+	  
+	  prev_insn.insn = NULL;
+	}
+      else
+	{
+	  prev_insn = insn;
+	}
+
+      /* Record the frag that might be used by this insn.  */
+      insn.frag = frag_now;
+      insn.addr = cgen_asm_finish_insn (insn.insn, insn.buffer,
+				   CGEN_FIELDS_BITSIZE (& insn.fields));
+
+      
       /* If the insn needs the following one to be on a 32 bit boundary
 	 (e.g. subroutine calls), fill this insn's slot.  */
-      if (prev_insn
-	  && CGEN_INSN_ATTR (insn, CGEN_INSN_FILL_SLOT) != 0)
+      if (prev_insn.insn != NULL
+	  && CGEN_INSN_ATTR (insn.insn, CGEN_INSN_FILL_SLOT) != 0)
 	fill_insn (0);
+
+      /* If this is a relaxable insn (can be replaced with a larger version)
+	 mark the fact so that we can emit an alignment directive for a
+	 following 32 bit insn if we see one.   */
+      if (CGEN_INSN_ATTR (insn.insn, CGEN_INSN_RELAXABLE) != 0)
+	seen_relaxable_p = 1;
     }
 
-  /* If this is a relaxable insn (can be replaced with a larger version)
-     mark the fact so that we can emit an alignment directive for a following
-     32 bit insn if we see one.   */
-  if (CGEN_INSN_ATTR (insn, CGEN_INSN_RELAXABLE) != 0)
-    seen_relaxable_p = 1;
-
   /* Set these so m32r_fill_insn can use them.  */
-  prev_seg = now_seg;
+  prev_seg    = now_seg;
   prev_subseg = now_subseg;
 }
 
@@ -364,18 +416,18 @@ md_assemble (str)
 
 void 
 md_operand (expressionP)
-     expressionS *expressionP;
+     expressionS * expressionP;
 {
-  if (*input_line_pointer == '#')
+  if (* input_line_pointer == '#')
     {
-      input_line_pointer++;
+      input_line_pointer ++;
       expression (expressionP);
     }
 }
 
 valueT
 md_section_align (segment, size)
-     segT segment;
+     segT   segment;
      valueT size;
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
@@ -384,7 +436,7 @@ md_section_align (segment, size)
 
 symbolS *
 md_undefined_symbol (name)
-  char *name;
+  char * name;
 {
   return 0;
 }
@@ -400,29 +452,29 @@ static void
 m32r_scomm (ignore)
      int ignore;
 {
-  register char *name;
-  register char c;
-  register char *p;
-  offsetT size;
-  register symbolS *symbolP;
-  offsetT align;
-  int align2;
+  register char *    name;
+  register char      c;
+  register char *    p;
+  offsetT            size;
+  register symbolS * symbolP;
+  offsetT            align;
+  int                align2;
 
   name = input_line_pointer;
   c = get_symbol_end ();
 
   /* just after name is now '\0' */
   p = input_line_pointer;
-  *p = c;
+  * p = c;
   SKIP_WHITESPACE ();
-  if (*input_line_pointer != ',')
+  if (* input_line_pointer != ',')
     {
       as_bad ("Expected comma after symbol-name: rest of line ignored.");
       ignore_rest_of_line ();
       return;
     }
 
-  input_line_pointer++;		/* skip ',' */
+  input_line_pointer ++;		/* skip ',' */
   if ((size = get_absolute_expression ()) < 0)
     {
       as_warn (".SCOMMon length (%ld.) <0! Ignored.", (long) size);
@@ -431,11 +483,11 @@ m32r_scomm (ignore)
     }
 
   /* The third argument to .scomm is the alignment.  */
-  if (*input_line_pointer != ',')
+  if (* input_line_pointer != ',')
     align = 8;
   else
     {
-      ++input_line_pointer;
+      ++ input_line_pointer;
       align = get_absolute_expression ();
       if (align <= 0)
 	{
@@ -446,7 +498,7 @@ m32r_scomm (ignore)
   /* Convert to a power of 2 alignment.  */
   if (align)
     {
-      for (align2 = 0; (align & 1) == 0; align >>= 1, ++align2)
+      for (align2 = 0; (align & 1) == 0; align >>= 1, ++ align2)
 	continue;
       if (align != 1)
 	{
@@ -458,9 +510,9 @@ m32r_scomm (ignore)
   else
     align2 = 0;
 
-  *p = 0;
+  * p = 0;
   symbolP = symbol_find_or_make (name);
-  *p = c;
+  * p = c;
 
   if (S_IS_DEFINED (symbolP))
     {
@@ -483,20 +535,24 @@ m32r_scomm (ignore)
 
   if (symbolP->local)
     {
-      segT old_sec = now_seg;
-      int old_subsec = now_subseg;
-      char *pfrag;
+      segT   old_sec    = now_seg;
+      int    old_subsec = now_subseg;
+      char * pfrag;
 
       record_alignment (sbss_section, align2);
       subseg_set (sbss_section, 0);
+      
       if (align2)
 	frag_align (align2, 0, 0);
+      
       if (S_GET_SEGMENT (symbolP) == sbss_section)
 	symbolP->sy_frag->fr_symbol = 0;
+      
       symbolP->sy_frag = frag_now;
+      
       pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
 			(char *) 0);
-      *pfrag = 0;
+      * pfrag = 0;
       S_SET_SIZE (symbolP, size);
       S_SET_SEGMENT (symbolP, sbss_section);
       S_CLEAR_EXTERNAL (symbolP);
@@ -507,7 +563,7 @@ m32r_scomm (ignore)
       S_SET_VALUE (symbolP, (valueT) size);
       S_SET_ALIGN (symbolP, align2);
       S_SET_EXTERNAL (symbolP);
-      S_SET_SEGMENT (symbolP, &scom_section);
+      S_SET_SEGMENT (symbolP, & scom_section);
     }
 
   demand_empty_rest_of_line ();
@@ -545,8 +601,8 @@ const relax_typeS md_relax_table[] =
 
 long
 m32r_relax_frag (fragP, stretch)
-     fragS *fragP;
-     long stretch;
+     fragS * fragP;
+     long    stretch;
 {
   /* Address of branch insn.  */
   long address = fragP->fr_address + fragP->fr_fix - 2;
@@ -597,11 +653,11 @@ m32r_relax_frag (fragP, stretch)
 
 int
 md_estimate_size_before_relax (fragP, segment)
-     fragS *fragP;
-     segT segment;
+     fragS * fragP;
+     segT    segment;
 {
-  int old_fr_fix = fragP->fr_fix;
-  char *opcode = fragP->fr_opcode;
+  int    old_fr_fix = fragP->fr_fix;
+  char * opcode = fragP->fr_opcode;
 
   /* The only thing we have to handle here are symbols outside of the
      current segment.  They may be undefined or in a different segment in
@@ -634,7 +690,28 @@ md_estimate_size_before_relax (fragP, segment)
       /* Mark this fragment as finished.  */
       frag_wane (fragP);
 #else
-      return 2;
+      {
+	const CGEN_INSN * insn;
+	int               i;
+
+	/* Update the recorded insn.
+	   Fortunately we don't have to look very far.
+	   FIXME: Change this to record in the instruction the next higher
+	   relaxable insn to use.  */
+	for (i = 0, insn = fragP->fr_cgen.insn; i < 4; i++, insn++)
+	  {
+	    if ((strcmp (CGEN_INSN_MNEMONIC (insn),
+			 CGEN_INSN_MNEMONIC (fragP->fr_cgen.insn))
+		 == 0)
+		&& CGEN_INSN_ATTR (insn, CGEN_INSN_RELAX))
+	      break;
+	  }
+	if (i == 4)
+	  abort ();
+
+	fragP->fr_cgen.insn = insn;
+	return 2;
+      }
 #endif
     }
 
@@ -650,12 +727,16 @@ md_estimate_size_before_relax (fragP, segment)
 
 void
 md_convert_frag (abfd, sec, fragP)
-  bfd *abfd;
-  segT sec;
-  fragS *fragP;
+  bfd *   abfd;
+  segT    sec;
+  fragS * fragP;
 {
-  char *opcode, *displacement;
-  int target_address, opcode_address, extension, addend;
+  char * opcode;
+  char * displacement;
+  int    target_address;
+  int    opcode_address;
+  int    extension;
+  int    addend;
 
   opcode = fragP->fr_opcode;
 
@@ -666,19 +747,19 @@ md_convert_frag (abfd, sec, fragP)
     {
     case 1 :
       extension = 0;
-      displacement = &opcode[1];
+      displacement = & opcode[1];
       break;
     case 2 :
       opcode[0] |= 0x80;
       extension = 2;
-      displacement = &opcode[1];
+      displacement = & opcode[1];
       break;
     case 3 :
       opcode[2] = opcode[0] | 0x80;
       md_number_to_chars (opcode, PAR_NOP_INSN, 2);
       opcode_address += 2;
       extension = 4;
-      displacement = &opcode[3];
+      displacement = & opcode[3];
       break;
     default :
       abort ();
@@ -705,19 +786,19 @@ md_convert_frag (abfd, sec, fragP)
   if (S_GET_SEGMENT (fragP->fr_symbol) != sec)
     {
       assert (fragP->fr_subtype != 1);
-      assert (fragP->fr_targ.cgen.insn != 0);
+      assert (fragP->fr_cgen.insn != 0);
       cgen_record_fixup (fragP,
 			 /* Offset of branch insn in frag.  */
 			 fragP->fr_fix + extension - 4,
-			 fragP->fr_targ.cgen.insn,
+			 fragP->fr_cgen.insn,
 			 4 /*length*/,
 			 /* FIXME: quick hack */
 #if 0
-			 CGEN_OPERAND_ENTRY (fragP->fr_targ.cgen.opindex),
+			 CGEN_OPERAND_ENTRY (fragP->fr_cgen.opindex),
 #else
 			 CGEN_OPERAND_ENTRY (M32R_OPERAND_DISP24),
 #endif
-			 fragP->fr_targ.cgen.opinfo,
+			 fragP->fr_cgen.opinfo,
 			 fragP->fr_symbol, fragP->fr_offset);
     }
 
@@ -736,8 +817,8 @@ md_convert_frag (abfd, sec, fragP)
 
 long
 md_pcrel_from_section (fixP, sec)
-     fixS *fixP;
-     segT sec;
+     fixS * fixP;
+     segT   sec;
 {
   if (fixP->fx_addsy != (symbolS *) NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
@@ -757,9 +838,9 @@ md_pcrel_from_section (fixP, sec)
 
 bfd_reloc_code_real_type
 CGEN_SYM (lookup_reloc) (insn, operand, fixP)
-     const struct cgen_insn *insn;
-     const struct cgen_operand *operand;
-     fixS *fixP;
+     const CGEN_INSN *    insn;
+     const CGEN_OPERAND * operand;
+     fixS *               fixP;
 {
   switch (CGEN_OPERAND_TYPE (operand))
     {
@@ -778,21 +859,43 @@ CGEN_SYM (lookup_reloc) (insn, operand, fixP)
   return BFD_RELOC_NONE;
 }
 
+/* Record a HI16 reloc for later matching with its LO16 cousin.  */
+
+static void
+m32r_record_hi16 (reloc_type, fixP, seg)
+     int    reloc_type;
+     fixS * fixP;
+     segT   seg;
+{
+  struct m32r_hi_fixup * hi_fixup;
+
+  assert (reloc_type == BFD_RELOC_M32R_HI16_SLO
+	  || reloc_type == BFD_RELOC_M32R_HI16_ULO);
+
+  hi_fixup = ((struct m32r_hi_fixup *)
+	      xmalloc (sizeof (struct m32r_hi_fixup)));
+  hi_fixup->fixp = fixP;
+  hi_fixup->seg  = now_seg;
+  hi_fixup->next = m32r_hi_fixup_list;
+  
+  m32r_hi_fixup_list = hi_fixup;
+}
+
 /* Called while parsing an instruction to create a fixup.
    We need to check for HI16 relocs and queue them up for later sorting.  */
 
 fixS *
 m32r_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
-     fragS *frag;
-     int where;
-     const struct cgen_insn *insn;
-     int length;
-     const struct cgen_operand *operand;
-     int opinfo;
-     expressionS *exp;
+     fragS *              frag;
+     int                  where;
+     const CGEN_INSN *    insn;
+     int                  length;
+     const CGEN_OPERAND * operand;
+     int                  opinfo;
+     expressionS *        exp;
 {
-  fixS *fixP = cgen_record_fixup_exp (frag, where, insn, length,
-				      operand, opinfo, exp);
+  fixS * fixP = cgen_record_fixup_exp (frag, where, insn, length,
+		 		      operand, opinfo, exp);
 
   switch (CGEN_OPERAND_TYPE (operand))
     {
@@ -807,27 +910,6 @@ m32r_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
   return fixP;
 }
 
-/* Record a HI16 reloc for later matching with its LO16 cousin.  */
-
-static void
-m32r_record_hi16 (reloc_type, fixP, seg)
-     int reloc_type;
-     fixS *fixP;
-     segT seg;
-{
-  struct m32r_hi_fixup *hi_fixup;
-
-  assert (reloc_type == BFD_RELOC_M32R_HI16_SLO
-	  || reloc_type == BFD_RELOC_M32R_HI16_ULO);
-
-  hi_fixup = ((struct m32r_hi_fixup *)
-	      xmalloc (sizeof (struct m32r_hi_fixup)));
-  hi_fixup->fixp = fixP;
-  hi_fixup->seg = now_seg;
-  hi_fixup->next = m32r_hi_fixup_list;
-  m32r_hi_fixup_list = hi_fixup;
-}
-
 /* Return BFD reloc type from opinfo field in a fixS.
    It's tricky using fx_r_type in m32r_frob_file because the values
    are BFD_RELOC_UNUSED + operand number.  */
@@ -840,12 +922,12 @@ m32r_record_hi16 (reloc_type, fixP, seg)
 void
 m32r_frob_file ()
 {
-  struct m32r_hi_fixup *l;
+  struct m32r_hi_fixup * l;
 
   for (l = m32r_hi_fixup_list; l != NULL; l = l->next)
     {
-      segment_info_type *seginfo;
-      int pass;
+      segment_info_type * seginfo;
+      int                 pass;
 
       assert (FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_M32R_HI16_SLO
 	      || FX_OPINFO_R_TYPE (l->fixp) == BFD_RELOC_M32R_HI16_ULO);
@@ -865,7 +947,8 @@ m32r_frob_file ()
       seginfo = seg_info (l->seg);
       for (pass = 0; pass < 2; pass++)
 	{
-	  fixS *f, *prev;
+	  fixS * f;
+	  fixS * prev;
 
 	  prev = NULL;
 	  for (f = seginfo->fix_root; f != NULL; f = f->fx_next)
@@ -881,15 +964,15 @@ m32r_frob_file ()
 		      || prev->fx_addsy != f->fx_addsy
 		      || prev->fx_offset !=  f->fx_offset))
 		{
-		  fixS **pf;
+		  fixS ** pf;
 
 		  /* Move l->fixp before f.  */
 		  for (pf = &seginfo->fix_root;
-		       *pf != l->fixp;
-		       pf = &(*pf)->fx_next)
-		    assert (*pf != NULL);
+		       * pf != l->fixp;
+		       pf = & (* pf)->fx_next)
+		    assert (* pf != NULL);
 
-		  *pf = l->fixp->fx_next;
+		  * pf = l->fixp->fx_next;
 
 		  l->fixp->fx_next = f;
 		  if (prev == NULL)
@@ -919,7 +1002,7 @@ m32r_frob_file ()
 
 int
 m32r_force_relocation (fix)
-     fixS *fix;
+     fixS * fix;
 {
   if (! m32r_relax)
     return 0;
@@ -932,9 +1015,9 @@ m32r_force_relocation (fix)
 
 void
 md_number_to_chars (buf, val, n)
-     char *buf;
+     char * buf;
      valueT val;
-     int n;
+     int    n;
 {
   if (target_big_endian)
     number_to_chars_bigendian (buf, val, n);
@@ -956,11 +1039,12 @@ md_atof (type, litP, sizeP)
      char *litP;
      int *sizeP;
 {
-  int i,prec;
-  LITTLENUM_TYPE words[MAX_LITTLENUMS];
-  LITTLENUM_TYPE *wordP;
-  char *t;
-  char *atof_ieee ();
+  int              i;
+  int              prec;
+  LITTLENUM_TYPE   words [MAX_LITTLENUMS];
+  LITTLENUM_TYPE * wordP;
+  char *           t;
+  char *           atof_ieee ();
 
   switch (type)
     {
@@ -981,20 +1065,21 @@ md_atof (type, litP, sizeP)
    /* FIXME: Some targets allow other format chars for bigger sizes here.  */
 
     default:
-      *sizeP = 0;
+      * sizeP = 0;
       return "Bad call to md_atof()";
     }
 
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
     input_line_pointer = t;
-  *sizeP = prec * sizeof (LITTLENUM_TYPE);
+  * sizeP = prec * sizeof (LITTLENUM_TYPE);
 
   if (target_big_endian)
     {
       for (i = 0; i < prec; i++)
 	{
-	  md_number_to_chars (litP, (valueT) words[i], sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, (valueT) words[i],
+			      sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
@@ -1002,10 +1087,22 @@ md_atof (type, litP, sizeP)
     {
       for (i = prec - 1; i >= 0; i--)
 	{
-	  md_number_to_chars (litP, (valueT) words[i], sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, (valueT) words[i],
+			      sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
      
   return 0;
+}
+
+void
+m32r_elf_section_change_hook ()
+{
+  /* If we have reached the end of a section and we have just emitted a
+     16 bit insn, then emit a nop to make sure that the section ends on
+     a 32 bit boundary.  */
+  
+  if (prev_insn.insn || seen_relaxable_p)
+    (void) m32r_fill_insn (0);
 }

@@ -101,7 +101,7 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
       spec = colon + 1;
       if (strlen (spec))
 	{
-	  if (isdigit (spec[0]))
+	  if (isdigit ((unsigned char) spec[0]))
 	    {
 	      sym->line_num = atoi (spec);
 	    }
@@ -122,7 +122,7 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 	      sym->file = &non_existent_file;
 	    }
 	}
-      else if (isdigit (*spec))
+      else if (isdigit ((unsigned char) *spec))
 	{
 	  sym->line_num = atoi (spec);
 	}

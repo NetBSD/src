@@ -1,5 +1,5 @@
-This is Info file as.info, produced by Makeinfo-1.64 from the input
-file ./as.texinfo.
+This is Info file as.info, produced by Makeinfo version 1.68 from the
+input file as.texinfo.
 
 START-INFO-DIR-ENTRY
 * As: (as).                     The GNU assembler.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -22,6 +22,112 @@ permission notice identical to this one.
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
 versions.
+
+
+File: as.info,  Node: Secs Background,  Next: Ld Sections,  Up: Sections
+
+Background
+==========
+
+   Roughly, a section is a range of addresses, with no gaps; all data
+"in" those addresses is treated the same for some particular purpose.
+For example there may be a "read only" section.
+
+   The linker `ld' reads many object files (partial programs) and
+combines their contents to form a runnable program.  When `as' emits an
+object file, the partial program is assumed to start at address 0.
+`ld' assigns the final addresses for the partial program, so that
+different partial programs do not overlap.  This is actually an
+oversimplification, but it suffices to explain how `as' uses sections.
+
+   `ld' moves blocks of bytes of your program to their run-time
+addresses.  These blocks slide to their run-time addresses as rigid
+units; their length does not change and neither does the order of bytes
+within them.  Such a rigid unit is called a *section*.  Assigning
+run-time addresses to sections is called "relocation".  It includes the
+task of adjusting mentions of object-file addresses so they refer to
+the proper run-time addresses.  For the H8/300 and H8/500, and for the
+Hitachi SH, `as' pads sections if needed to ensure they end on a word
+(sixteen bit) boundary.
+
+   An object file written by `as' has at least three sections, any of
+which may be empty.  These are named "text", "data" and "bss" sections.
+
+   When it generates COFF output, `as' can also generate whatever other
+named sections you specify using the `.section' directive (*note
+`.section': Section.).  If you do not use any directives that place
+output in the `.text' or `.data' sections, these sections still exist,
+but are empty.
+
+   When `as' generates SOM or ELF output for the HPPA, `as' can also
+generate whatever other named sections you specify using the `.space'
+and `.subspace' directives.  See `HP9000 Series 800 Assembly Language
+Reference Manual' (HP 92432-90001) for details on the `.space' and
+`.subspace' assembler directives.
+
+   Additionally, `as' uses different names for the standard text, data,
+and bss sections when generating SOM output.  Program text is placed
+into the `$CODE$' section, data into `$DATA$', and BSS into `$BSS$'.
+
+   Within the object file, the text section starts at address `0', the
+data section follows, and the bss section follows the data section.
+
+   When generating either SOM or ELF output files on the HPPA, the text
+section starts at address `0', the data section at address `0x4000000',
+and the bss section follows the data section.
+
+   To let `ld' know which data changes when the sections are relocated,
+and how to change that data, `as' also writes to the object file
+details of the relocation needed.  To perform relocation `ld' must
+know, each time an address in the object file is mentioned:
+   * Where in the object file is the beginning of this reference to an
+     address?
+
+   * How long (in bytes) is this reference?
+
+   * Which section does the address refer to?  What is the numeric
+     value of
+          (ADDRESS) - (START-ADDRESS OF SECTION)?
+
+   * Is the reference to an address "Program-Counter relative"?
+
+   In fact, every address `as' ever uses is expressed as
+     (SECTION) + (OFFSET INTO SECTION)
+
+Further, most expressions `as' computes have this section-relative
+nature.  (For some object formats, such as SOM for the HPPA, some
+expressions are symbol-relative instead.)
+
+   In this manual we use the notation {SECNAME N} to mean "offset N
+into section SECNAME."
+
+   Apart from text, data and bss sections you need to know about the
+"absolute" section.  When `ld' mixes partial programs, addresses in the
+absolute section remain unchanged.  For example, address `{absolute 0}'
+is "relocated" to run-time address 0 by `ld'.  Although the linker
+never arranges two partial programs' data sections with overlapping
+addresses after linking, *by definition* their absolute sections must
+overlap.  Address `{absolute 239}' in one part of a program is always
+the same address when the program is running as address `{absolute
+239}' in any other part of the program.
+
+   The idea of sections is extended to the "undefined" section.  Any
+address whose section is unknown at assembly time is by definition
+rendered {undefined U}--where U is filled in later.  Since numbers are
+always defined, the only way to generate an undefined address is to
+mention an undefined symbol.  A reference to a named common block would
+be such a symbol: its value is unknown at assembly time so it has
+section *undefined*.
+
+   By analogy the word *section* is used to describe groups of sections
+in the linked program.  `ld' puts all partial programs' text sections
+in contiguous addresses in the linked program.  It is customary to
+refer to the *text section* of a program, meaning all the addresses of
+all partial programs' text sections.  Likewise for data and bss
+sections.
+
+   Some sections are manipulated by `ld'; others are invented for use
+of `as' and have no meaning except during assembly.
 
 
 File: as.info,  Node: Ld Sections,  Next: As Sections,  Prev: Secs Background,  Up: Sections
@@ -134,10 +240,10 @@ goes in subsection number zero.
 
    Subsections appear in your object file in numeric order, lowest
 numbered to highest.  (All this to be compatible with other people's
-assemblers.) The object file contains no representation of subsections;
-`ld' and other programs that manipulate object files see no trace of
-them.  They just see all your text subsections as a text section, and
-all your data subsections as a data section.
+assemblers.)  The object file contains no representation of
+subsections; `ld' and other programs that manipulate object files see
+no trace of them.  They just see all your text subsections as a text
+section, and all your data subsections as a data section.
 
    To specify which subsection you want subsequent statements assembled
 into, use a numeric argument to specify it, in a `.text EXPRESSION' or
@@ -298,7 +404,7 @@ parts:
      If the label is written `0:' then the digit is `0'.  If the label
      is written `1:' then the digit is `1'.  And so on up through `9:'.
 
-``C-A''
+`C-A'
      This unusual character is included so you do not accidentally
      invent a symbol of the same name.  The character has ASCII value
      `\001'.
@@ -308,8 +414,8 @@ parts:
      `0:' gets the number `1'; The 15th `0:' gets the number `15';
      *etc.*.  Likewise for the other labels `1:' through `9:'.
 
-   For instance, the first `1:' is named `L1`C-A'1', the 44th `3:' is
-named `L3`C-A'44'.
+   For instance, the first `1:' is named `L1C-A1', the 44th `3:' is
+named `L3C-A44'.
 
 
 File: as.info,  Node: Dot,  Next: Symbol Attributes,  Prev: Symbol Names,  Up: Symbols
@@ -692,7 +798,6 @@ Dependencies::.
 * Sbttl::                       `.sbttl "SUBHEADING"'
 
 * Scl::                         `.scl CLASS'
-
 * Section::                     `.section NAME, SUBSECTION'
 
 * Set::                         `.set SYMBOL, EXPRESSION'
@@ -702,6 +807,7 @@ Dependencies::.
 * Size::                        `.size'
 
 * Skip::                        `.skip SIZE , FILL'
+* Sleb128::			`.sleb128 EXPRESSIONS'
 * Space::                       `.space SIZE , FILL'
 
 * Stab::                        `.stabd, .stabn, .stabs'
@@ -718,6 +824,7 @@ Dependencies::.
 * Type::                        `.type INT'
 * Val::                         `.val ADDR'
 
+* Uleb128::                     `.uleb128 EXPRESSIONS'
 * Word::                        `.word EXPRESSIONS'
 * Deprecated::                  Deprecated Directives
 
@@ -924,7 +1031,7 @@ File: as.info,  Node: Desc,  Next: Dim,  Prev: Def,  Up: Pseudo Ops
 ==============================
 
    This directive sets the descriptor of the symbol (*note Symbol
-Attributes::.) to the low 16 bits of an absolute expression.
+Attributes::.)  to the low 16 bits of an absolute expression.
 
    The `.desc' directive is not available when `as' is configured for
 COFF output; it is only for `a.out' or `b.out' object format.  For the
@@ -1258,174 +1365,4 @@ File: as.info,  Node: Lflags,  Next: Line,  Prev: Lcomm,  Up: Pseudo Ops
 
    `as' accepts this directive, for compatibility with other
 assemblers, but ignores it.
-
-
-File: as.info,  Node: Line,  Next: Ln,  Prev: Lflags,  Up: Pseudo Ops
-
-`.line LINE-NUMBER'
-===================
-
-   Change the logical line number.  LINE-NUMBER must be an absolute
-expression.  The next line has that logical line number.  Therefore any
-other statements on the current line (after a statement separator
-character) are reported as on logical line number LINE-NUMBER - 1.  One
-day `as' will no longer support this directive: it is recognized only
-for compatibility with existing assembler programs.
-
-   *Warning:* In the AMD29K configuration of as, this command is not
-available; use the synonym `.ln' in that context.
-
-   Even though this is a directive associated with the `a.out' or
-`b.out' object-code formats, `as' still recognizes it when producing
-COFF output, and treats `.line' as though it were the COFF `.ln' *if*
-it is found outside a `.def'/`.endef' pair.
-
-   Inside a `.def', `.line' is, instead, one of the directives used by
-compilers to generate auxiliary symbol information for debugging.
-
-
-File: as.info,  Node: Linkonce,  Next: List,  Prev: Ln,  Up: Pseudo Ops
-
-`.linkonce [TYPE]'
-==================
-
-   Mark the current section so that the linker only includes a single
-copy of it.  This may be used to include the same section in several
-different object files, but ensure that the linker will only include it
-once in the final output file.  The `.linkonce' pseudo-op must be used
-for each instance of the section.  Duplicate sections are detected
-based on the section name, so it should be unique.
-
-   This directive is only supported by a few object file formats; as of
-this writing, the only object file format which supports it is the
-Portable Executable format used on Windows NT.
-
-   The TYPE argument is optional.  If specified, it must be one of the
-following strings.  For example:
-     .linkonce same_size
-   Not all types may be supported on all object file formats.
-
-`discard'
-     Silently discard duplicate sections.  This is the default.
-
-`one_only'
-     Warn if there are duplicate sections, but still keep only one copy.
-
-`same_size'
-     Warn if any of the duplicates have different sizes.
-
-`same_contents'
-     Warn if any of the duplicates do not have exactly the same
-     contents.
-
-
-File: as.info,  Node: Ln,  Next: Linkonce,  Prev: Line,  Up: Pseudo Ops
-
-`.ln LINE-NUMBER'
-=================
-
-   `.ln' is a synonym for `.line'.
-
-
-File: as.info,  Node: MRI,  Next: Nolist,  Prev: Macro,  Up: Pseudo Ops
-
-`.mri VAL'
-==========
-
-   If VAL is non-zero, this tells `as' to enter MRI mode.  If VAL is
-zero, this tells `as' to exit MRI mode.  This change affects code
-assembled until the next `.mri' directive, or until the end of the
-file.  *Note MRI mode: M.
-
-
-File: as.info,  Node: List,  Next: Long,  Prev: Linkonce,  Up: Pseudo Ops
-
-`.list'
-=======
-
-   Control (in conjunction with the `.nolist' directive) whether or not
-assembly listings are generated.  These two directives maintain an
-internal counter (which is zero initially).   `.list' increments the
-counter, and `.nolist' decrements it.  Assembly listings are generated
-whenever the counter is greater than zero.
-
-   By default, listings are disabled.  When you enable them (with the
-`-a' command line option; *note Command-Line Options: Invoking.), the
-initial value of the listing counter is one.
-
-
-File: as.info,  Node: Long,  Next: Macro,  Prev: List,  Up: Pseudo Ops
-
-`.long EXPRESSIONS'
-===================
-
-   `.long' is the same as `.int', *note `.int': Int..
-
-
-File: as.info,  Node: Macro,  Next: MRI,  Prev: Long,  Up: Pseudo Ops
-
-`.macro'
-========
-
-   The commands `.macro' and `.endm' allow you to define macros that
-generate assembly output.  For example, this definition specifies a
-macro `sum' that puts a sequence of numbers into memory:
-
-             .macro  sum from=0, to=5
-             .long   \from
-             .if     \to-\from
-             sum     "(\from+1)",\to
-             .endif
-             .endm
-
-With that definition, `SUM 0,5' is equivalent to this assembly input:
-
-             .long   0
-             .long   1
-             .long   2
-             .long   3
-             .long   4
-             .long   5
-
-`.macro MACNAME'
-`.macro MACNAME MACARGS ...'
-     Begin the definition of a macro called MACNAME.  If your macro
-     definition requires arguments, specify their names after the macro
-     name, separated by commas or spaces.  You can supply a default
-     value for any macro argument by following the name with `=DEFLT'.
-     For example, these are all valid `.macro' statements:
-
-    `.macro comm'
-          Begin the definition of a macro called `comm', which takes no
-          arguments.
-
-    `.macro plus1 p, p1'
-    `.macro plus1 p p1'
-          Either statement begins the definition of a macro called
-          `plus1', which takes two arguments; within the macro
-          definition, write `\p' or `\p1' to evaluate the arguments.
-
-    `.macro reserve_str p1=0 p2'
-          Begin the definition of a macro called `reserve_str', with two
-          arguments.  The first argument has a default value, but not
-          the second.  After the definition is complete, you can call
-          the macro either as `reserve_str A,B' (with `\p1' evaluating
-          to A and `\p2' evaluating to B), or as `reserve_str ,B' (with
-          `\p1' evaluating as the default, in this case `0', and `\p2'
-          evaluating to B).
-
-     When you call a macro, you can specify the argument values either
-     by position, or by keyword.  For example, `sum 9,17' is equivalent
-     to `sum to=17, from=9'.
-
-`.endm'
-     Mark the end of a macro definition.
-
-`.exitm'
-     Exit early from the current macro definition.
-
-`\@'
-     `as' maintains a counter of how many macros it has executed in
-     this pseudo-variable; you can copy that number to your output with
-     `\@', but *only within a macro definition*.
 

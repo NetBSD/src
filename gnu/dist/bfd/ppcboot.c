@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -143,7 +143,7 @@ ppcboot_object_p (abfd)
   struct stat statbuf;
   asection *sec;
   ppcboot_hdr_t hdr;
-  int i;
+  size_t i;
   ppcboot_data_t *tdata;
 
   BFD_ASSERT (sizeof (ppcboot_hdr_t) == 1024);
@@ -161,7 +161,7 @@ ppcboot_object_p (abfd)
       return NULL;
     }
 
-  if (statbuf.st_size < sizeof (ppcboot_hdr_t))
+  if ((size_t) statbuf.st_size < sizeof (ppcboot_hdr_t))
     {
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
@@ -270,7 +270,7 @@ mangle_name (abfd, suffix)
 
   /* Change any non-alphanumeric characters to underscores.  */
   for (p = buf; *p; p++)
-    if (! isalnum (*p))
+    if (! isalnum ((unsigned char) *p))
       *p = '_';
 
   return buf;

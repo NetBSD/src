@@ -1,5 +1,5 @@
-This is Info file ld.info, produced by Makeinfo-1.64 from the input
-file ./ld.texinfo.
+This is Info file ld.info, produced by Makeinfo version 1.68 from the
+input file ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU linker LD.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -25,51 +25,51 @@ versions.
 
 
 Indirect:
-ld.info-1: 873
-ld.info-2: 48399
-ld.info-3: 92804
-ld.info-4: 125270
+ld.info-1: 885
+ld.info-2: 50016
+ld.info-3: 95553
+ld.info-4: 128011
 
 Tag Table:
 (Indirect)
-Node: Top873
-Node: Overview1379
-Node: Invocation2492
-Node: Options2900
-Node: Environment39693
-Node: Commands40639
-Node: Scripts41986
-Node: Expressions43084
-Node: Integers44059
-Node: Symbols44899
-Node: Location Counter45645
-Node: Operators46793
-Node: Evaluation47704
-Node: Assignment48399
-Node: Arithmetic Functions51928
-Node: Semicolons55846
-Node: MEMORY56293
-Node: SECTIONS58842
-Node: Section Definition60461
-Node: Section Placement62387
-Node: Section Data Expressions68567
-Node: Section Options72429
-Node: Overlays76539
-Node: PHDRS80325
-Node: Entry Point85147
-Node: Version Script86688
-Node: Option Commands92804
-Node: Machine Dependent99991
-Node: H8/300100411
-Node: i960101207
-Node: BFD102875
-Node: BFD outline104329
-Node: BFD information loss105614
-Node: Canonical format108122
-Node: Reporting Bugs112468
-Node: Bug Criteria113161
-Node: Bug Reporting113855
-Node: MRI120654
-Node: Index125270
+Node: Top885
+Node: Overview1391
+Node: Invocation2504
+Node: Options2912
+Node: Environment40868
+Node: Commands42256
+Node: Scripts43603
+Node: Expressions44701
+Node: Integers45676
+Node: Symbols46516
+Node: Location Counter47262
+Node: Operators48410
+Node: Evaluation49321
+Node: Assignment50016
+Node: Arithmetic Functions53547
+Node: Semicolons57465
+Node: MEMORY57914
+Node: SECTIONS61097
+Node: Section Definition62716
+Node: Section Placement64712
+Node: Section Data Expressions70869
+Node: Section Options74977
+Node: Overlays79288
+Node: PHDRS83074
+Node: Entry Point87896
+Node: Version Script89437
+Node: Option Commands95553
+Node: Machine Dependent102740
+Node: H8/300103160
+Node: i960103956
+Node: BFD105624
+Node: BFD outline107078
+Node: BFD information loss108363
+Node: Canonical format110871
+Node: Reporting Bugs115217
+Node: Bug Criteria115910
+Node: Bug Reporting116604
+Node: MRI123395
+Node: Index128011
 
 End Tag Table

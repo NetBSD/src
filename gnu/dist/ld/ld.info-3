@@ -1,5 +1,5 @@
-This is Info file ld.info, produced by Makeinfo-1.64 from the input
-file ./ld.texinfo.
+This is Info file ld.info, produced by Makeinfo version 1.68 from the
+input file ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU linker LD.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -500,7 +500,7 @@ recommend you contact that organization first.
 individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
 
    In any event, we also recommend that you send bug reports for `ld'
-to `bug-gnu-utils@prep.ai.mit.edu'.
+to `bug-gnu-utils@gnu.org'.
 
    The fundamental principle of reporting bugs usefully is this:
 *report all the facts*.  If you are not sure whether to state a fact or

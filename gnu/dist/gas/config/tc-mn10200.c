@@ -55,20 +55,20 @@ const char FLT_CHARS[] = "dD";
 
 const relax_typeS md_relax_table[] = {
   /* bCC relaxing */
-  {0x7f, -0x80, 2, 1},
-  {0x7fff, -0x8000, 5, 2},
-  {0x7fffff, -0x800000, 7, 0},
+  {0x81, -0x7e, 2, 1},
+  {0x8004, -0x7ffb, 5, 2},
+  {0x800006, -0x7ffff9, 7, 0},
   /* bCCx relaxing */
-  {0x7f, -0x80, 3, 4},
-  {0x7fff, -0x8000, 6, 5},
-  {0x7fffff, -0x800000, 8, 0},
+  {0x81, -0x7e, 3, 4},
+  {0x8004, -0x7ffb, 6, 5},
+  {0x800006, -0x7ffff9, 8, 0},
   /* jsr relaxing */
-  {0x7fff, -0x8000, 3, 7},
-  {0x7fffff, -0x8000000, 5, 0},
+  {0x8004, -0x7ffb, 3, 7},
+  {0x800006, -0x7ffff9, 5, 0},
   /* jmp relaxing */
-  {0x7f, -0x80, 2, 9},
-  {0x7fff, -0x8000, 3, 10},
-  {0x7fffff, -0x8000000, 5, 0},
+  {0x81, -0x7e, 2, 9},
+  {0x8004, -0x7ffb, 3, 10},
+  {0x800006, -0x7ffff9, 5, 0},
 
 };
 /* local functions */
@@ -385,7 +385,7 @@ md_convert_frag (abfd, sec, fragP)
   if (fragP->fr_subtype == 0)
     {
       fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 2;
     }
@@ -433,16 +433,16 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 2] = 0xfc;
       fix_new (fragP, fragP->fr_fix + 3, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -490,24 +490,24 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 2] = 0xf4;
       fragP->fr_literal[offset + 3] = 0xe0;
       fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 7;
     }
   else if (fragP->fr_subtype == 3)
     {
       fix_new (fragP, fragP->fr_fix + 2, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -578,16 +578,16 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 3] = 0xfc;
       fix_new (fragP, fragP->fr_fix + 4, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 6;
     }
@@ -658,24 +658,24 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 3] = 0xf4;
       fragP->fr_literal[offset + 4] = 0xe0;
       fix_new (fragP, fragP->fr_fix + 5, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 8;
     }
   else if (fragP->fr_subtype == 6)
     {
       fix_new (fragP, fragP->fr_fix + 1, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -686,7 +686,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = 0xe1;
 
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -694,7 +694,7 @@ md_convert_frag (abfd, sec, fragP)
     {
       fragP->fr_literal[fragP->fr_fix] = 0xea;
       fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 2;
     }
@@ -704,7 +704,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = 0xfc;
 
       fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -715,7 +715,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = 0xe0;
 
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -1135,6 +1135,11 @@ keep_going:
 				  &fixups[i].exp, 
 				  reloc_howto->pc_relative,
 				  fixups[i].reloc);
+
+	      /* PC-relative offsets are from the first byte of the next
+		 instruction, not from the start of the current instruction.  */
+	      if (reloc_howto->pc_relative)
+		fixP->fx_offset += size;
 	    }
 	  else
 	    {
@@ -1188,8 +1193,11 @@ keep_going:
 	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
 				  reloc_size, &fixups[i].exp, pcrel,
 				  ((bfd_reloc_code_real_type) reloc));
+
+	      /* PC-relative offsets are from the first byte of the next
+		 instruction, not from the start of the current instruction.  */
 	      if (pcrel)
-		fixP->fx_offset += offset;
+		fixP->fx_offset += size;
 	    }
 	}
     }

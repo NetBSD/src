@@ -71,11 +71,11 @@ if (m32r_do_align (n, fill, len, max)) goto l
 extern int cgen_md_apply_fix3 ();
 #define md_apply_fix3 cgen_md_apply_fix3
 
-#define md_init_frag(fragP) \
+#define TC_FRAG_INIT(fragP) \
 do { \
-  (fragP)->fr_targ.cgen.insn = 0; \
-  (fragP)->fr_targ.cgen.opindex = 0; \
-  (fragP)->fr_targ.cgen.opinfo = 0; \
+  (fragP)->fr_cgen.insn = 0; \
+  (fragP)->fr_cgen.opindex = 0; \
+  (fragP)->fr_cgen.opinfo = 0; \
 } while (0);
 
 /* After creating a fixup for an instruction operand, we need to check for
@@ -110,3 +110,7 @@ int m32r_fill_insn PARAMS ((int));
 #define ELF_TC_SPECIAL_SECTIONS \
   { ".sdata",		SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE }, \
   { ".sbss",		SHT_NOBITS,	SHF_ALLOC + SHF_WRITE },
+
+#define md_cleanup                 m32r_elf_section_change_hook
+#define md_elf_section_change_hook m32r_elf_section_change_hook
+extern void m32r_elf_section_change_hook ();    

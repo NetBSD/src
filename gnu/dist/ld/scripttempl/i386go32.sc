@@ -1,45 +1,40 @@
-# Linker script for i386 go32 COFF.
-# stolen from ian
-test -z "$ENTRY" && ENTRY=_start
-# These are substituted in as variables in order to get '}' in a shell
-# conditional expansion.
-INIT='.init : { *(.init) }'
-FINI='.fini : { *(.fini) }'
+# Linker script for i386 go32 (DJGPP)
+
+test -z "$ENTRY" && ENTRY=start
+EXE=${CONSTRUCTING+${RELOCATING+-exe}}
 cat <<EOF
-OUTPUT_FORMAT("${OUTPUT_FORMAT}")
-${LIB_SEARCH_DIRS}
+OUTPUT_FORMAT("${OUTPUT_FORMAT}${EXE}")
 
 ENTRY(${ENTRY})
 
 SECTIONS
 {
-  .text ${RELOCATING+ 0x10a8} : {
-    ${RELOCATING+ *(.init)}
+  .text ${RELOCATING+ ${TARGET_PAGE_SIZE}+SIZEOF_HEADERS} : {
     *(.text)
-    ${RELOCATING+ *(.fini)}
-    ${RELOCATING+ etext  =  .};
+    *(.const*)
+    *(.ro*)
+    ${RELOCATING+etext  =  . ; _etext = .};
+    ${RELOCATING+. = ALIGN(${SEGMENT_SIZE});}
   }
-  .data ALIGN (0x1000) : {
-    *(.data .data2)
-	*(.ctor)
-	*(.dtor)
-    ${RELOCATING+ _edata  =  .};
+  .data ${RELOCATING+ ${DATA_ALIGNMENT}} : {
+    ${RELOCATING+djgpp_first_ctor = . ;
+    *(.ctor)
+    djgpp_last_ctor = . ;}
+    ${RELOCATING+djgpp_first_dtor = . ;
+    *(.dtor)
+    djgpp_last_dtor = . ;}
+    *(.data)
+    ${RELOCATING+ edata  =  . ; _edata = .};
+    ${RELOCATING+ . = ALIGN(${SEGMENT_SIZE});}
   }
+  ${CONSTRUCTING+${RELOCATING-.ctor : { *(.ctor) }}}
+  ${CONSTRUCTING+${RELOCATING-.dtor : { *(.dtor) }}}
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   { 					
     *(.bss)
     *(COMMON)
-    ${RELOCATING+ end = .};
-  }
-  ${RELOCATING- ${INIT}}
-  ${RELOCATING- ${FINI}}
-  .stab  0 ${RELOCATING+(NOLOAD)} : 
-  {
-    [ .stab ]
-  }
-  .stabstr  0 ${RELOCATING+(NOLOAD)} :
-  {
-    [ .stabstr ]
+    ${RELOCATING+ end = . ; _end = .};
+    ${RELOCATING+ . = ALIGN(${SEGMENT_SIZE});}
   }
 }
 EOF

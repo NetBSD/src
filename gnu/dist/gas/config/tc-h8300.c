@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Hitachi H8/300
-   Copyright (C) 1991, 1992 Free Software Foundation.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 /*
@@ -25,6 +26,7 @@
 
 #include <stdio.h>
 #include "as.h"
+#include "subsegs.h"
 #include "bfd.h"
 #define DEFINE_TABLE
 #define h8_opcodes ops
@@ -196,8 +198,8 @@ struct h8_op
   @WREG+
   @-WREG
   #const
-
-  */
+  ccr
+*/
 
 /* try and parse a reg name, returns number of chars consumed */
 int
@@ -208,72 +210,84 @@ parse_reg (src, mode, reg, direction)
      int direction;
 
 {
-  if (src[0] == 's' && src[1] == 'p')
+  char *end;
+  int len;
+
+  /* Cribbed from get_symbol_end().  */
+  if (!is_name_beginner (*src) || *src == '\001')
+    return 0;
+  end = src+1;
+  while (is_part_of_name (*end) || *end == '\001')
+    end++;
+  len = end - src;
+
+  if (len == 2 && src[0] == 's' && src[1] == 'p')
     {
       *mode = PSIZE | REG | direction;
       *reg = 7;
-      return 2;
+      return len;
     }
-  if (src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
+  if (len == 3 && src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
     {
       *mode = CCR;
       *reg = 0;
-      return 3;
+      return len;
     }
-  if (src[0] == 'e' && src[1] == 'x' && src[2] == 'r')
+  if (len == 3 && src[0] == 'e' && src[1] == 'x' && src[2] == 'r')
     {
       *mode = EXR;
       *reg = 0;
-      return 3;
+      return len;
     }
-  if (src[0] == 'f' && src[1] == 'p')
+  if (len == 2 && src[0] == 'f' && src[1] == 'p')
     {
       *mode = PSIZE | REG | direction;
       *reg = 6;
-      return 2;
+      return len;
     }
-  if (src[0] == 'e'
-      && src[1] == 'r'
+  if (len == 3 && src[0] == 'e' && src[1] == 'r'
       && src[2] >= '0' && src[2] <= '7')
     {
       *mode = L_32 | REG | direction;
       *reg = src[2] - '0';
       if (!Hmode)
 	as_warn ("Reg not valid for H8/300");
-
-      return 3;
+      return len;
     }
-  if (src[0] == 'e'
-      && src[1] >= '0' && src[1] <= '7')
+  if (len == 2 && src[0] == 'e' && src[1] >= '0' && src[1] <= '7')
     {
       *mode = L_16 | REG | direction;
       *reg = src[1] - '0' + 8;
       if (!Hmode)
 	as_warn ("Reg not valid for H8/300");
-      return 2;
+      return len;
     }
 
   if (src[0] == 'r')
     {
       if (src[1] >= '0' && src[1] <= '7')
 	{
-	  if (src[2] == 'l')
+	  if (len == 3 && src[2] == 'l')
 	    {
 	      *mode = L_8 | REG | direction;
 	      *reg = (src[1] - '0') + 8;
-	      return 3;
+	      return len;
 	    }
-	  if (src[2] == 'h')
+	  if (len == 3 && src[2] == 'h')
 	    {
 	      *mode = L_8 | REG | direction;
 	      *reg = (src[1] - '0');
-	      return 3;
+	      return len;
 	    }
-	  *mode = L_16 | REG | direction;
-	  *reg = (src[1] - '0');
-	  return 2;
+	  if (len == 2)
+	    {
+	      *mode = L_16 | REG | direction;
+	      *reg = (src[1] - '0');
+	      return len;
+	    }
 	}
     }
+
   return 0;
 }
 
@@ -1565,7 +1579,24 @@ tc_reloc_mangle (fix_ptr, intr, base)
   intr->r_offset = fix_ptr->fx_offset;
 
   if (symbol_ptr)
-    intr->r_symndx = symbol_ptr->sy_number;
+    {
+      if (symbol_ptr->sy_number != -1)
+	intr->r_symndx = symbol_ptr->sy_number;
+      else
+	{
+	  symbolS *segsym;
+
+	  /* This case arises when a reference is made to `.'.  */
+	  segsym = seg_info (S_GET_SEGMENT (symbol_ptr))->dot;
+	  if (segsym == NULL)
+	    intr->r_symndx = -1;
+	  else
+	    {
+	      intr->r_symndx = segsym->sy_number;
+	      intr->r_offset += S_GET_VALUE (symbol_ptr);
+	    }
+	}
+    }
   else
     intr->r_symndx = -1;
 

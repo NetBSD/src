@@ -1,5 +1,5 @@
-This is Info file ld.info, produced by Makeinfo-1.64 from the input
-file ./ld.texinfo.
+This is Info file ld.info, produced by Makeinfo version 1.68 from the
+input file ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU linker LD.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -179,7 +179,7 @@ accepted.
      expect as a default input format the most usual format on each
      machine.  INPUT-FORMAT is a text string, the name of a particular
      format supported by the BFD libraries.  (You can list the
-     available binary formats with `objdump -i'.) *Note BFD::.
+     available binary formats with `objdump -i'.)  *Note BFD::.
 
      You may want to use this option if you are linking files with an
      unusual binary format.  You can also use `-b' to switch formats
@@ -221,9 +221,17 @@ accepted.
 `-E'
 `--export-dynamic'
      When creating a dynamically linked executable, add all symbols to
-     the dynamic symbol table.  Normally, the dynamic symbol table
-     contains only symbols which are used by a dynamic object.  This
-     option is needed for some uses of `dlopen'.
+     the dynamic symbol table.  The dynamic symbol table is the set of
+     symbols which are visible from dynamic objects at run time.
+
+     If you do not use this option, the dynamic symbol table will
+     normally contain only those symbols which are referenced by some
+     dynamic object mentioned in the link.
+
+     If you use `dlopen' to load a dynamic object which needs to refer
+     back to the symbols defined by the program, rather than some other
+     dynamic object, then you will probably need to use this option when
+     linking the program itself.
 
 `-f'
 `--auxiliary NAME'
@@ -354,14 +362,25 @@ accepted.
 
 `-mEMULATION'
      Emulate the EMULATION linker.  You can list the available
-     emulations with the `--verbose' or `-V' options.  The default
-     depends on how your `ld' was configured.
+     emulations with the `--verbose' or `-V' options.
+
+     If the `-m' option is not used, the emulation is taken from the
+     `LDEMULATION' environment variable, if that is defined.
+
+     Otherwise, the default emulation depends upon how the linker was
+     configured.
 
 `-M'
 `--print-map'
-     Print (to the standard output) a link map--diagnostic information
-     about where symbols are mapped by `ld', and information on global
-     common storage allocation.
+     Print a link map to the standard output.  A link map provides
+     information about the link, including the following:
+
+        * Where object files and symbols are mapped into memory.
+
+        * How common symbols are allocated.
+
+        * All archive members included in the link, with a mention of
+          the symbol which caused the archive member to be brought in.
 
 `-n'
 `--nmagic'
@@ -538,7 +557,7 @@ accepted.
      expressions, consider using the linker command language from a
      script (*note Assignment: Symbol Definitions: Assignment.).
      *Note:*  there should be no white space between SYMBOL, the equals
-     sign ("="), and EXPRESSION.
+     sign ("<=>"), and EXPRESSION.
 
 `--dynamic-linker FILE'
      Set the name of the dynamic linker.  This is only meaningful when
@@ -566,9 +585,8 @@ accepted.
      and exit.
 
 `-Map MAPFILE'
-     Print to the file MAPFILE a link map--diagnostic information about
-     where symbols are mapped by `ld', and information on global common
-     storage allocation.
+     Print a link map to the file MAPFILE.  See the description of the
+     `-M' option, above.
 
 `--no-keep-memory'
      `ld' normally optimizes for speed over memory usage by caching the
@@ -576,6 +594,15 @@ accepted.
      instead optimize for memory usage, by rereading the symbol tables
      as necessary.  This may be required if `ld' runs out of memory
      space while linking a large executable.
+
+`--no-warn-mismatch'
+     Normally `ld' will give an error if you try to link together input
+     files that are mismatched for some reason, perhaps because they
+     have been compiled for different processors or for different
+     endiannesses.  This option tells `ld' that it should silently
+     permit such possible errors.  This option should only be used with
+     care, in cases when you have taken some special action that
+     ensures that the linker errors are inappropriate.
 
 `--no-whole-archive'
      Turn off the effect of the `--whole-archive' option for subsequent
@@ -912,8 +939,8 @@ File: ld.info,  Node: Environment,  Prev: Options,  Up: Invocation
 Environment Variables
 =====================
 
-   You can change the behavior of `ld' with the environment variable
-`GNUTARGET'.
+   You can change the behavior of `ld' with the environment variables
+`GNUTARGET' and `LDEMULATION'.
 
    `GNUTARGET' determines the input-file object format if you don't use
 `-b' (or its synonym `--format').  Its value should be one of the BFD
@@ -926,6 +953,14 @@ that the magic number used to specify object-file formats is unique.
 However, the configuration procedure for BFD on each system places the
 conventional format for that system first in the search-list, so
 ambiguities are resolved in favor of convention.
+
+   `LDEMULATION' determines the default emulation if you don't use the
+`-m' option.  The emulation can affect various aspects of linker
+behaviour, particularly the default linker script.  You can list the
+available emulations with the `--verbose' or `-V' options.  If the `-m'
+option is not used, and the `LDEMULATION' environment variable is not
+defined, the default emulation depends upon how the linker was
+configured.
 
 
 File: ld.info,  Node: Commands,  Next: Machine Dependent,  Prev: Invocation,  Up: Top

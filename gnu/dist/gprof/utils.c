@@ -42,10 +42,13 @@ DEFUN (print_name_only, (self), Sym * self)
 	    {
 	      name++;
 	    }
-	  demangled = cplus_demangle (name, DMGL_ANSI | DMGL_PARAMS);
-	  if (demangled)
+	  if (demangle)
 	    {
-	      name = demangled;
+	      demangled = cplus_demangle (name, DMGL_ANSI | DMGL_PARAMS);
+	      if (demangled)
+		{
+		  name = demangled;
+		}
 	    }
 	}
       printf ("%s", name);

@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990, 91, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 94, 95, 96, 1998 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -69,6 +69,9 @@ _bfd_ns32k_get_displacement(buffer, offset, size)
       value = (value << 8) | (0xff & *buffer++);
       value = (value << 8) | (0xff & *buffer);
       break;
+    default:
+      abort ();
+      return 0;
     }
   return value;
 }

@@ -1,5 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright (C) 1989, 90-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90-96, 97, 1998 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -32,31 +32,15 @@ struct frag;
 
 #define TARGET_ARCH bfd_arch_sparc
 
-#ifdef OBJ_AOUT
-#ifdef TE_NetBSD
-#define TARGET_FORMAT "a.out-sparc-netbsd"
-#else
+extern const char *sparc_target_format PARAMS ((void));
+#define TARGET_FORMAT sparc_target_format ()
+
 #ifdef TE_SPARCAOUT
-extern int target_big_endian;
-#define TARGET_FORMAT (target_big_endian ? "a.out-sunos-big" : "a.out-sparc-little")
 /* Bi-endian support may eventually be unconditional, but until things are
    working well it's only provided for targets that need it.  */
 #define SPARC_BIENDIAN
-#else
-#define TARGET_FORMAT "a.out-sunos-big"
 #endif
-#endif
-#endif
-#ifdef OBJ_BOUT
-#define TARGET_FORMAT "b.out.big"
-#endif
-#ifdef OBJ_ELF
-#ifdef SPARC_ARCH64
-#define TARGET_FORMAT "elf64-sparc"
-#else
-#define TARGET_FORMAT "elf32-sparc"
-#endif
-#endif
+
 #define WORKING_DOT_WORD
 
 #define md_convert_frag(b,s,f)		{as_fatal ("sparc convert_frag\n");}
@@ -68,6 +52,17 @@ extern int target_big_endian;
 #define LISTING_HEADER "SPARC GAS "
 
 extern int sparc_pic_code;
+
+#define md_do_align(n, fill, len, max, around)				\
+if ((n) && (n) <= 10 && !need_pass_2 && !(fill)				\
+    && now_seg != data_section && now_seg != bss_section)		\
+  {									\
+    char *p;								\
+    p = frag_var (rs_align_code, 1024, 1, (relax_substateT) 1024,	\
+                  (symbolS *) 0, (offsetT) (n), (char *) 0);		\
+    *p = 0x00;								\
+    goto around;							\
+  }
 
 /* We require .word, et. al., to be aligned correctly.  */
 #define md_cons_align(nbytes) sparc_cons_align (nbytes)
@@ -119,14 +114,16 @@ extern void sparc_handle_align PARAMS ((struct frag *));
    relocations against sections.  This is required for the dynamic
    linker to operate properly.  When generating PIC, we need to keep
    any non PC relative reloc.  */
-#define tc_fix_adjustable(FIX)				\
-  (! S_IS_EXTERNAL ((FIX)->fx_addsy)			\
-   && ! S_IS_WEAK ((FIX)->fx_addsy)			\
-   && (! sparc_pic_code					\
-       || (FIX)->fx_pcrel				\
-       || ((FIX)->fx_subsy != NULL			\
-	   && (S_GET_SEGMENT ((FIX)->fx_subsy)		\
-	       == S_GET_SEGMENT ((FIX)->fx_addsy)))))
+#define tc_fix_adjustable(FIX)						\
+  (! S_IS_EXTERNAL ((FIX)->fx_addsy)					\
+   && ! S_IS_WEAK ((FIX)->fx_addsy)					\
+   && (! sparc_pic_code							\
+       || (FIX)->fx_pcrel						\
+       || ((FIX)->fx_subsy != NULL					\
+	   && (S_GET_SEGMENT ((FIX)->fx_subsy)				\
+	       == S_GET_SEGMENT ((FIX)->fx_addsy)))			\
+       || strchr (S_GET_NAME ((FIX)->fx_addsy), '\001') != NULL		\
+       || strchr (S_GET_NAME ((FIX)->fx_addsy), '\002') != NULL))
 #endif
 
 #ifdef OBJ_AOUT
@@ -138,6 +135,9 @@ extern void sparc_handle_align PARAMS ((struct frag *));
    || (FIX)->fx_r_type == BFD_RELOC_16 \
    || (FIX)->fx_r_type == BFD_RELOC_32)
 #endif
+
+#define elf_tc_final_processing sparc_elf_final_processing
+extern void sparc_elf_final_processing PARAMS ((void));
 
 #define md_operand(x)
 

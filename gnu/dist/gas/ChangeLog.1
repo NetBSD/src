@@ -1443,7 +1443,6 @@ Fri Jul 14 19:54:28 1995  Ian Lance Taylor  <ian@cygnus.com>
 	(md_pcrel_from): Don't add in size for an external symbol when
 	PIC.
 
-
 Thu Jul 13 21:16:43 1995  Jeff Law  (law@snake.cs.utah.edu)
 
 	* config/tc-hppa.h (UNDEFINED_DIFFERENCE_OK): Define for SOM.
@@ -1838,7 +1837,6 @@ Thu Jun  8 19:33:02 1995  Pat Rankin  (rankin@eql.caltech.edu)
 	replace third loop with pointer to last list element determined
 	in first loop.
 
-
 Tue Jun  6 13:53:06 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 
 	* config/tc-sparc.c (sparc_ip): Handle defined absolute symbols as
@@ -1934,7 +1932,6 @@ Mon May 22 20:03:23 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	(select_emulation_mode): Set emulation_name.  Don't change argv.
 	(parse_args): Handle --emulation; complain if the supplied name
 	isn't what select_emulation_name came up with.
-
 
 Sun May 21 21:36:17 1995  Jeff Law  (law@snake.cs.utah.edu)
 
@@ -2399,7 +2396,6 @@ Mon May  1 15:59:56 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	* config/obj-ecoff.h (OUTPUT_FLAVOR): Define.
 	* config/obj-elf.h (OUTPUT_FLAVOR): Define.
 
-
 Thu Apr 27 20:07:33 1995  Doug Evans  <dje@canuck.cygnus.com>
 
 	* Makefile.in (RUNTEST): Use one in srcdir if present.
@@ -2515,7 +2511,6 @@ Wed Apr 12 12:20:19 1995  Stan Shebs  <shebs@andros.cygnus.com>
 	* mpw-config.in: New file, MPW version of configure.in.
 	* mpw-make.in: New file, MPW version of Makefile.in.
 
-
 Tue Apr 11 01:42:36 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 
 	* configure.in: Require at least autoconf 2.3, because earlier
@@ -2613,7 +2608,6 @@ Mon Apr 10 15:57:42 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 
 	* doc/as.texinfo (m68k): Recommend using `%' with registers as the
 	normal case, instead of the exceptional case.
-
 
 Thu Mar 30 14:38:47 1995  H.J. Lu (hjl@nynexst.com)
 
@@ -2730,7 +2724,6 @@ Wed Mar  8 02:57:53 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	after main opcode table.
 	(md_apply_fix_2, case 4): Recode setting of lower_limit to avoid
 	gcc warning.
-
 
 Tue Mar  7 16:07:10 1995  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -2908,12 +2901,10 @@ Mon Feb 13 14:44:32 1995  Ian Lance Taylor  <ian@cygnus.com>
 	fixup_segment.  This was previously corrected, if the reloc was
 	changed to be against a section symbol, in tc_gen_reloc.
 
-
 Fri Feb 10 14:04:04 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* config/tc-i386.c (tc_i386_fix_adjustable): Use S_IS_EXTERN
 	rather than !S_IS_LOCAL.
-
 
 Thu Feb  9 18:16:34 1995  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -3354,7 +3345,6 @@ Tue Dec 20 13:40:36 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
 
 	* config/obj-coff.h: Include bfd/libcoff.h, not libcoff.h.
 
-
 Mon Dec 19 16:53:36 1994  Ian Lance Taylor  <ian@sanguine.cygnus.com>
 
 	* config/tc-mips.c (load_register): Rewrite to handle O_big 64 bit
@@ -3380,7 +3370,6 @@ Mon Dec 19 14:15:07 1994  Jeff Law  (law@snake.cs.utah.edu)
 	(pa_procend): Likewise.
 	(hppa_fix_adjustable): Only reject 32bit relocations for SOM.
 	(elf_hppa_final_processing): Simplify.
-
 
 Mon Dec 19 13:49:07 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
 
@@ -3476,7 +3465,6 @@ Thu Dec  8 17:48:25 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	(mips-sony-bsd*): Use ecoff.
 	(mips-*-gnu*): New target, using aout format, from Roland McGrath.
 	* configure: Regenerated.
-
 
 Tue Nov 29 13:58:10 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
 

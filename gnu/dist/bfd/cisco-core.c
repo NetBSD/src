@@ -24,6 +24,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* core_file_failing_signal returns a host signal (this probably should
    be fixed).  */
 #include <signal.h>
+
+/* for MSVC builds */
+#ifndef SIGTRAP
+# define SIGTRAP 5
+#endif
+#ifndef SIGEMT
+# define SIGEMT 6
+#endif
+#ifndef SIGBUS
+# define SIGBUS 10
+#endif
 
 #define CRASH_INFO (0xffc)
 #define CRASH_MAGIC 0xdead1234

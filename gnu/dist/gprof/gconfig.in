@@ -1,0 +1,13 @@
+/* gconfig.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if you need to in order for stat and other things to work.  */
+#undef _POSIX_SOURCE
+
+/* Name of package.  */
+#undef PACKAGE
+
+/* Version of package.  */
+#undef VERSION
+
+/* Whether this system uses the BSD 4.4 gmon.out format.  */
+#undef BSD44_FORMAT

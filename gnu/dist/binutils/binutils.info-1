@@ -1,5 +1,5 @@
-This is Info file binutils.info, produced by Makeinfo-1.64 from the
-input file ./binutils.texi.
+This is Info file binutils.info, produced by Makeinfo version 1.68 from
+the input file binutils.texi.
 
 START-INFO-DIR-ENTRY
 * Binutils: (binutils).         The GNU binary utilities "ar", "objcopy",
@@ -7,7 +7,7 @@ START-INFO-DIR-ENTRY
                                 "strings", "strip", and "ranlib".
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -30,7 +30,7 @@ Introduction
 ************
 
    This brief manual contains preliminary documentation for the GNU
-binary utilities (collectively version 2.8.1):
+binary utilities (collectively version 2.9.1):
 
 * Menu:
 
@@ -45,6 +45,7 @@ binary utilities (collectively version 2.8.1):
 * c++filt::			Filter to demangle encoded C++ symbols
 * addr2line::			Convert addresses to file and line
 * nlmconv::                     Converts object code into an NLM
+* windres::			Manipulate Windows resources
 * Selecting The Target System:: How these utilities determine the target.
 * Reporting Bugs::              Reporting Bugs
 * Index::                       Index
@@ -154,8 +155,8 @@ of the following, but you must specify only one of them:
      are printed.
 
 `q'
-     *Quick append*; add the files MEMBER... to the end of ARCHIVE,
-     without checking for replacement.
+     *Quick append*; Historically, add the files MEMBER... to the end of
+     ARCHIVE, without checking for replacement.
 
      The modifiers `a', `b', and `i' do *not* affect this operation;
      new members are always placed at the end of the archive.
@@ -165,6 +166,9 @@ of the following, but you must specify only one of them:
      Since the point of this operation is speed, the archive's symbol
      table index is not updated, even if it already existed; you can
      use `ar s' or `ranlib' explicitly to update the symbol table index.
+
+     However, too many different systems assume quick append rebuilds
+     the index, so GNU ar implements `q' as a synonym for `r'.
 
 `r'
      Insert the files MEMBER... into ARCHIVE (with *replacement*). This
@@ -254,6 +258,13 @@ to specify variations on an operation's behavior:
      one, even if no other change is made to the archive.  You may use
      this modifier flag either with any operation, or alone.  Running
      `ar s' on an archive is equivalent to running `ranlib' on it.
+
+`S'
+     Do not generate an archive symbol table.  This can speed up
+     building a large library in several steps.  The resulting archive
+     can not be used with the linker.  In order to build a symbol
+     table, you must omit the `S' modifier on the last execution of
+     `ar', or you must run `ranlib' on the archive.
 
 `u'
      Normally, `ar r'... inserts all files listed into the archive.  If
@@ -629,6 +640,8 @@ objcopy
              [ -S | --strip-all ]  [ -g | --strip-debug ]
              [ -K SYMBOLNAME | --keep-symbol=SYMBOLNAME ]
              [ -N SYMBOLNAME | --strip-symbol=SYMBOLNAME ]
+             [ -L SYMBOLNAME | --localize-symbol=SYMBOLNAME ]
+             [ -W SYMBOLNAME | --weaken-symbol=SYMBOLNAME ]
              [ -x | --discard-all ]  [ -X | --discard-locals ]
              [ -b BYTE | --byte=BYTE ]
              [ -i INTERLEAVE | --interleave=INTERLEAVE ]
@@ -721,8 +734,17 @@ information which is not needed by the binary file.
 `-N SYMBOLNAME'
 `--strip-symbol=SYMBOLNAME'
      Do not copy symbol SYMBOLNAME from the source file.  This option
-     may be given more than once, and may be combined with strip options
-     other than `-K'.
+     may be given more than once.
+
+`-L SYMBOLNAME'
+`--localize-symbol=SYMBOLNAME'
+     Make symbol SYMBOLNAME local to the file, so that it is not
+     visible externally.  This option may be given more than once.
+
+`-W SYMBOLNAME'
+`--weaken-symbol=SYMBOLNAME'
+     Make symbol SYMBOLNAME weak. This option may be given more than
+     once.
 
 `-x'
 `--discard-all'
@@ -758,15 +780,15 @@ information which is not needed by the binary file.
      the conversion process can be time consuming.
 
 `--gap-fill VAL'
-     Fill gaps between sections with VAL.  This is done by increasing
+     Fill gaps between sections with VAL.  This operation applies to
+     the *load address* (LMA) of the sections.  It is done by increasing
      the size of the section with the lower address, and filling in the
      extra space created with VAL.
 
 `--pad-to ADDRESS'
-     Pad the output file up to the virtual address ADDRESS.  This is
-     done by increasing the size of the last section.  The extra space
-     is filled in with the value specified by `--gap-fill' (default
-     zero).
+     Pad the output file up to the load address ADDRESS.  This is done
+     by increasing the size of the last section.  The extra space is
+     filled in with the value specified by `--gap-fill' (default zero).
 
 `--set-start VAL'
      Set the address of the new file to VAL.  Not all object file
@@ -804,8 +826,12 @@ information which is not needed by the binary file.
 `--set-section-flags SECTION=FLAGS'
      Set the flags for the named section.  The FLAGS argument is a
      comma separated string of flag names.  The recognized names are
-     `alloc', `load', `readonly', `code', `data', and `rom'.  Not all
-     flags are meaningful for all object file formats.
+     `alloc', `contents', `load', `readonly', `code', `data', and
+     `rom'.  You can set the `contents' flag for a section which does
+     not have contents, but it is not meaningful to clear the
+     `contents' flag of a section which does have contents-just remove
+     the section instead.  Not all flags are meaningful for all object
+     file formats.
 
 `--add-section SECTIONNAME=FILENAME'
      Add a new section named SECTIONNAME while copying the file.  The
@@ -1115,14 +1141,15 @@ size
      size [ -A | -B | --format=COMPATIBILITY ]
           [ --help ]  [ -d | -o | -x | --radix=NUMBER ]
           [ --target=BFDNAME ]  [ -V | --version ]
-          OBJFILE...
+          [ OBJFILE... ]
 
    The GNU `size' utility lists the section sizes--and the total
 size--for each of the object or archive files OBJFILE in its argument
 list.  By default, one line of output is generated for each object file
 or each module in an archive.
 
-   OBJFILE... are the object files to be examined.
+   OBJFILE... are the object files to be examined.  If none are
+specified, the file `a.out' will be used.
 
    The command line options have the following meanings:
 
@@ -1251,7 +1278,7 @@ File: binutils.info,  Node: strip,  Next: c++filt,  Prev: strings,  Up: Top
 strip
 *****
 
-     strip [ -F BFDNAME | --target=BFDNAME | --target=BFDNAME ]
+     strip [ -F BFDNAME | --target=BFDNAME ]
            [ -I BFDNAME | --input-target=BFDNAME ]
            [ -O BFDNAME | --output-target=BFDNAME ]
            [ -s | --strip-all ] [ -S | -g | --strip-debug ]

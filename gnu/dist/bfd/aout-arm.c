@@ -1,5 +1,5 @@
 /* BFD back-end for raw ARM a.out binaries.
-   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    
 This file is part of BFD, the Binary File Descriptor library.
@@ -284,7 +284,7 @@ MY(fix_pcrel_26) (abfd, reloc_entry, symbol, data, input_section,
   /* Check for overflow */
   if (relocation & 0x02000000)
     {
-      if ((relocation & ~0x03ffffff) != ~0x03ffffff)
+      if ((relocation & ~ (bfd_vma) 0x03ffffff) != ~ (bfd_vma) 0x03ffffff)
 	flag = bfd_reloc_overflow;
     }
   else if (relocation & ~0x03ffffff)
@@ -476,7 +476,7 @@ const bfd_target aout_arm_little_vec =
   (HAS_RELOC | EXEC_P |         /* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   AR_PAD_CHAR,                  /* ar_pad_char */
   15,                           /* ar_max_namelen */
@@ -515,7 +515,7 @@ const bfd_target aout_arm_big_vec =
   (HAS_RELOC | EXEC_P |         /* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   AR_PAD_CHAR,                  /* ar_pad_char */
   15,                           /* ar_max_namelen */

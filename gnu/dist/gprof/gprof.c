@@ -30,8 +30,6 @@
 #include "source.h"
 #include "sym_ids.h"
 
-#define VERSION "2.8.1"
-
 const char *whoami;
 const char *function_mapping_file;
 const char *a_out_name = A_OUTNAME;
@@ -44,6 +42,7 @@ int debug_level = 0;
 int output_style = 0;
 int output_width = 80;
 bool bsd_style_output = FALSE;
+bool demangle = TRUE;
 bool discard_underscores = TRUE;
 bool ignore_direct_calls = FALSE;
 bool ignore_static_funcs = FALSE;
@@ -69,10 +68,17 @@ bfd *abfd;
  */
 static char *default_excluded_list[] =
 {
-  "_gprof_mcount", "mcount", "_mcount", "__mcount", "__mcleanup",
+  "_gprof_mcount", "mcount", "_mcount", "__mcount", "__mcount_internal",
+  "__mcleanup",
   "<locore>", "<hicore>",
   0
 };
+
+/* Codes used for the long options with no short synonyms.  150 isn't
+   special; it's just an arbitrary non-ASCII char value.  */
+
+#define OPTION_DEMANGLE		(150)
+#define OPTION_NO_DEMANGLE	(OPTION_DEMANGLE + 1)
 
 static struct option long_options[] =
 {
@@ -98,6 +104,8 @@ static struct option long_options[] =
     /* various options to affect output: */
 
   {"all-lines", no_argument, 0, 'x'},
+  {"demangle", no_argument, 0, OPTION_DEMANGLE},
+  {"no-demangle", no_argument, 0, OPTION_NO_DEMANGLE},
   {"directory-path", required_argument, 0, 'I'},
   {"display-unused-functions", no_argument, 0, 'z'},
   {"min-count", required_argument, 0, 'm'},
@@ -145,10 +153,11 @@ Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
 	[--no-static] [--print-path] [--separate-files]\n\
 	[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n\
 	[--version] [--width=n] [--ignore-non-functions]\n\
+	[--demangle] [--no-demangle]\n\
 	[image-file] [profile-file...]\n",
 	   whoami);
   if (status == 0)
-    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
+    fprintf (stream, "Report bugs to bug-gnu-utils@gnu.org\n");
   done (status);
 }
 
@@ -405,6 +414,12 @@ This program is free software.  This program has absolutely no warranty.\n");
 	    }
 	  user_specified |= STYLE_ANNOTATED_SOURCE;
 	  break;
+	case OPTION_DEMANGLE:
+	  demangle = TRUE;
+	  break;
+	case OPTION_NO_DEMANGLE:
+	  demangle = FALSE;
+	  break;
 	default:
 	  usage (stderr, 1);
 	}
@@ -418,6 +433,12 @@ This program is free software.  This program has absolutely no warranty.\n");
 %s: Only one of --function-ordering and --file-ordering may be specified.\n",
 	       whoami);
       done (1);
+    }
+
+  /* --sum implies --line, otherwise we'd lose b-b counts in gmon.sum */
+  if (output_style & STYLE_SUMMARY_FILE)
+    {
+      line_granularity = 1;
     }
 
   /* append value of GPROF_PATH to source search list if set: */

@@ -24,6 +24,7 @@ Programming'' in the same work.
 * MIPS Object:: 	ECOFF object code
 * MIPS Stabs::  	Directives for debugging information
 * MIPS ISA::    	Directives to override the ISA level
+* MIPS autoextend::	Directives for extending MIPS 16 bit instructions
 * MIPS insn::		Directive to mark data as an instruction
 * MIPS option stack::	Directives to save and restore options
 @end menu
@@ -183,6 +184,21 @@ in which it will assemble instructions for the MIPS 16 processor.  Use
 @samp{.set nomips16} to return to normal 32 bit mode.
 
 Traditional @sc{mips} assemblers do not support this directive.  
+
+@node MIPS autoextend
+@section Directives for extending MIPS 16 bit instructions
+
+@kindex @code{.set autoextend}
+@kindex @code{.set noautoextend}
+By default, MIPS 16 instructions are automatically extended to 32 bits
+when necessary.  The directive @samp{.set noautoextend} will turn this
+off.  When @samp{.set noautoextend} is in effect, any 32 bit instruction
+must be explicitly extended with the @samp{.e} modifier (e.g.,
+@samp{li.e $4,1000}).  The directive @samp{.set autoextend} may be used
+to once again automatically extend instructions when necessary.
+
+This directive is only meaningful when in MIPS 16 mode.  Traditional
+@sc{mips} assemblers do not support this directive.
 
 @node MIPS insn
 @section Directive to mark data as an instruction

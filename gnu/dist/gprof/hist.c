@@ -12,6 +12,8 @@
 #include "sym_ids.h"
 #include "utils.h"
 
+#define UNITS_TO_CODE (offset_to_code / sizeof(UNIT))
+
 static void scale_and_align_entries PARAMS ((void));
 
 /* declarations of automatically generated functions to output blurbs: */
@@ -279,7 +281,8 @@ DEFUN_VOID (hist_assign_samples)
   bfd_vma bin_low_pc, bin_high_pc;
   bfd_vma sym_low_pc, sym_high_pc;
   bfd_vma overlap, addr;
-  int bin_count, i, j;
+  int bin_count, i;
+  unsigned int j;
   double time, credit;
 
   /* read samples and assign to symbols: */
@@ -490,7 +493,8 @@ void
 DEFUN_VOID (hist_print)
 {
   Sym **time_sorted_syms, *top_dog, *sym;
-  int index, log_scale;
+  unsigned int index;
+  int log_scale;
   double top_time, time;
   bfd_vma addr;
 
@@ -557,7 +561,8 @@ DEFUN_VOID (hist_print)
 	{
 	  top_time /= hz;
 	  while (SItab[log_scale].scale * top_time < 1000.0
-		 && log_scale < sizeof (SItab) / sizeof (SItab[0]) - 1)
+		 && ((size_t) log_scale
+		     < sizeof (SItab) / sizeof (SItab[0]) - 1))
 	    {
 	      ++log_scale;
 	    }

@@ -497,7 +497,7 @@ DEFUN (print_line, (np), Sym * np)
 void
 DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
 {
-  int index;
+  unsigned int index;
   Sym *parent;
 
   if (print_descriptions && bsd_style_output)
@@ -513,7 +513,8 @@ DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
       if ((ignore_zeros && parent->ncalls == 0
 	   && parent->cg.self_calls == 0 && parent->cg.prop.self == 0
 	   && parent->cg.prop.child == 0)
-	  || !parent->cg.print_flag)
+	  || !parent->cg.print_flag
+	  || (line_granularity && ! parent->is_func))
 	{
 	  continue;
 	}
@@ -556,7 +557,9 @@ DEFUN (cmp_name, (left, right), const PTR left AND const PTR right)
 void
 DEFUN_VOID (cg_print_index)
 {
-  int index, nnames, todo, i, j, col, starting_col;
+  unsigned int index;
+  unsigned int nnames, todo, i, j;
+  int col, starting_col;
   Sym **name_sorted_syms, *sym;
   const char *filename;
   char buf[20];
@@ -1219,7 +1222,7 @@ DEFUN_VOID (cg_print_file_ordering)
   unsigned long scratch_arc_count, index;
   Arc **scratch_arcs;
   extern struct function_map *symbol_map;
-  extern int symbol_map_count;
+  extern unsigned int symbol_map_count;
   char *last;
 
   scratch_arc_count = 0;
@@ -1247,7 +1250,7 @@ DEFUN_VOID (cg_print_file_ordering)
   last = NULL;
   for (index = 0; index < symbol_map_count; index++)
     {
-      int index2;
+      unsigned int index2;
 
       /* Don't bother searching if this symbol is the
 	 same as the previous one.  */
