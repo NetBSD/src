@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2002/10/02 05:06:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2002/12/13 18:52:56 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -47,6 +47,7 @@
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
+#include <m68k/cacheops.h>
 
 #include <cesfic/cesfic/isr.h>
 
@@ -141,6 +142,7 @@ mainbus_map(physaddr, size, cacheable, virtaddr)
 			*pte &= ~PG_CCB;
 		}
 	}
+	TBIAS();
 
 	return (0);
 }
