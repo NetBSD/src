@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.8 1996/03/08 21:52:50 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.9 1996/09/16 06:49:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -96,24 +96,17 @@ u_long gra_def_color16[16] = {
  * Initialize list of posible video modes.
  */
 int
-grfabs_probe()
+grfabs_probe(probe_fun)
+grf_probe_t	probe_fun;
 {
 	static int	inited = 0;
 
-	if (inited)
-		return (1);	/* Has to be done only once */
-	inited++;
+	if (!inited) {
+		LIST_INIT(&modes);
+		inited = 1;
+	}
+	(*probe_fun)(&modes);
 
-	LIST_INIT(&modes);
-
-#ifdef FALCON_VIDEO
-	if (machineid & ATARI_FALCON)
-		falcon_probe_video(&modes);
-#endif /* FALCON_VIDEO */
-#ifdef TT_VIDEO
-	if (machineid & ATARI_TT)
-		tt_probe_video(&modes);
-#endif /* TT_VIDEO */
 	return ((modes.lh_first == NULL) ? 0 : 1);
 }
 
