@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
- *	$Id: swapnfs.c,v 1.4 1994/01/18 01:35:15 brezak Exp $
+ *	$Id: swapnfs.c,v 1.5 1994/03/01 08:00:02 glass Exp $
  */
 
 /*
@@ -150,13 +150,13 @@ int nfs_hack_mountroot()
     strcpy(nfs_diskless.swap_hostnam, diskless_swap_hostnam);
     strcpy(nfs_diskless.root_hostnam, diskless_root_hostnam);
     nfs_diskless.swap_args.addr = &nfs_diskless.swap_saddr;
-    nfs_diskless.swap_args.fh = nfs_diskless.swap_fh;
+    nfs_diskless.swap_args.fh = (nfsv2fh_t *) nfs_diskless.swap_fh;
     nfs_diskless.swap_args.sotype = SOCK_DGRAM;
     nfs_diskless.swap_args.timeo = 10;
     nfs_diskless.swap_args.retrans = 100;
     nfs_diskless.swap_args.hostname = nfs_diskless.swap_hostnam;
     nfs_diskless.root_args.addr = &nfs_diskless.root_saddr;
-    nfs_diskless.root_args.fh = nfs_diskless.root_fh;
+    nfs_diskless.root_args.fh = (nfsv2fh_t *) nfs_diskless.root_fh;
     nfs_diskless.root_args.sotype = SOCK_DGRAM;
     nfs_diskless.root_args.timeo = 10;
     nfs_diskless.root_args.retrans = 100;
