@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.18 2002/09/04 02:39:01 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.19 2002/09/04 02:43:09 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1353,3 +1353,6 @@ lib/libc/net/gethnamaddr.c			1.48
 
 sys/dev/pckbc/wskbdmap_mfii.c			1.24
   Correct spannish mapping. Fix kern/15509 by Julio Merino <juli@merino.net>.
+
+crypto/dist/openssl/apps/progs.h		1.3
+  more NO_xx cleanup.  can't catch these by openssl-unifdef.pl
