@@ -24,12 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: dbsym.c,v 1.11 1997/10/17 05:47:30 lukem Exp $
+ *	$NetBSD: dbsym.c,v 1.12 1997/10/18 08:13:06 lukem Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.11 1997/10/17 05:47:30 lukem Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.12 1997/10/18 08:13:06 lukem Exp $");
 #endif
 
 /* Copy the symbol table into the space reserved for it. */
@@ -127,8 +127,7 @@ main(argc,argv)
 				   fd, data_off);
 	if ((long)dataseg == -1) {
 		printf("%s: can not map data seg\n", file);
-		perror(file);
-		exit(1);
+		err(1, "%s", file);
 	}
 	dataseg += data_pgoff;
 	symbols = dataseg + head.a_data;
