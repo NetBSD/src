@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.74 2002/11/20 04:36:43 jschauma Exp $
+$NetBSD: UPDATING,v 1.75 2002/11/21 18:05:59 thorpej Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,36 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20021121:
+	A bug related to how ARM ELF objects were tagged has been
+	corrected.
+
+	NetBSD ARM ELF uses the soft-VFP floating point model by
+	default.  However, the assembler lacked support for marking
+	objects as using the VFP floating point format, and the
+	compiler was no properly passing the flag indicating "soft-VFP"
+	to the assembler.
+
+	Unfortunately, this means that the linker will now consider
+	old (i.e. not marked "softvfp") NetBSD ARM ELF objects to be
+	incompatible with new (properly marked) objects.
+
+	The problem will only manifest itself if you attempt to compile
+	a new program using the fixed toolchain, and link that program
+	against old libraries which do not have the proper "softvfp"
+	markings.  ALL OF YOUR EXISTING BINARIES AND SHARED LIBRARIES
+	WILL CONTINUE TO WORK PROPERLY.
+
+	The only work-around for the problem is to recompile all of
+	the libraries on the system.  The easiest way to do this for
+	system libraries is to install a binary snapshot; there are
+	generally available on releng.netbsd.org.  Any packages you
+	have installed which supply libraries will have to be recompiled
+	if you wish to link new programs against those libraries.
+
+	If you have questions about this matter, please contact
+	port-arm@netbsd.org.
 
 20021011:
 	Systrace has been improved to support privilege elevation.
