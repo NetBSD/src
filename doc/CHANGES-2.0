@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.544 2004/11/29 06:10:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.545 2004/11/29 06:12:34 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8130,3 +8130,8 @@ sys/arch/amiga/dev/isic_supio.c			1.14
 
 	Typo in structure name
 	[is, ticket #996]
+
+share/i18n/csmapper/JIS/UCS%JISX0201-KANA.src	1.4
+
+	Fix unicode 0xFF80 page mapping. PR#28325
+	[cjs, ticket #997]
