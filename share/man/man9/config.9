@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.13 2003/04/06 18:22:56 wiz Exp $
+.\"     $NetBSD: config.9,v 1.14 2003/06/25 07:08:26 heas Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 6, 2002
+.Dd June 25, 2003
 .Dt CONFIG 9
 .Os
 .Sh NAME
@@ -155,9 +155,8 @@ This statement permits ``options FOO'' for FOO (i.e, without a value)
 in the machine description file.
 .Xr config 8
 will generate an error if a value is given.
-If the filename field is not specified, the options are defined on
-the command line invocation of
-.Xr make 1 .
+If the filename field is not specified, it will be constructed based upon
+the lower-case of the option name, ``opt_foo.h'' for example.
 The
 .Em option
 is case-sensitive.
@@ -170,9 +169,8 @@ This statement permits ``options FOO=bar'' or ``option FOO="\\"com\\""''
 in the machine description file.
 .Xr config 8
 will generate an error if a value is not given.
-If the filename field is not specified, the options are defined on
-the command line invocation of
-.Xr make 1 .
+If the filename field is not specified, it will be constructed based upon
+the lower-case of the option name, ``opt_foo.h'' for example.
 The
 .Em option
 is case-sensitive.
@@ -188,9 +186,8 @@ does not perform any checking of whether ``options FOO'' takes a
 value.
 Therefore, the use of the defopt statement is deprecated in
 favour of the defflag and defparam statements.
-If the filename field is not specified, the options are defined on
-the command line invocation of
-.Xr make 1 .
+If the filename field is not specified, it will be constructed based upon
+the lower-case of the option name, ``opt_foo.h'' for example.
 The
 .Em option
 is case-sensitive.
