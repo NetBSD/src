@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_libc.c,v 1.2 1997/10/13 21:28:53 mark Exp $	*/
+/*	$NetBSD: fplib_libc.c,v 1.2.4.1 1999/07/01 19:44:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/types.h>
+#include "environment.h"
 #include "softfloat.h"
 
 void sfp_setround __P((int rnd_dir));
