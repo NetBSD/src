@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 1997/10/19 02:34:10 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.7 1997/10/19 02:34:10 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ addfile(name)
 			continue;
 		}
 		*p = '\0';
-		for (p = buf; *p && isspace(*p); ++p);
+		for (p = buf; *p && isspace((unsigned char)*p); ++p);
 		if (!*p || *p == '#')
 			continue;
 		add(p);
@@ -105,7 +105,7 @@ add(fmt)
 	/* take the format string and break it up into format units */
 	for (p = fmt;;) {
 		/* skip leading white space */
-		for (; isspace(*p); ++p);
+		for (; isspace((unsigned char)*p); ++p);
 		if (!*p)
 			break;
 
@@ -116,29 +116,29 @@ add(fmt)
 		tfu->reps = 1;
 
 		/* if leading digit, repetition count */
-		if (isdigit(*p)) {
-			for (savep = p; isdigit(*p); ++p);
-			if (!isspace(*p) && *p != '/')
+		if (isdigit((unsigned char)*p)) {
+			for (savep = p; isdigit((unsigned char)*p); ++p);
+			if (!isspace((unsigned char)*p) && *p != '/')
 				badfmt(fmt);
 			/* may overwrite either white space or slash */
 			tfu->reps = atoi(savep);
 			tfu->flags = F_SETREP;
 			/* skip trailing white space */
-			for (++p; isspace(*p); ++p);
+			for (++p; isspace((unsigned char)*p); ++p);
 		}
 
 		/* skip slash and trailing white space */
 		if (*p == '/')
-			while (isspace(*++p));
+			while (isspace((unsigned char)*++p));
 
 		/* byte count */
-		if (isdigit(*p)) {
-			for (savep = p; isdigit(*p); ++p);
-			if (!isspace(*p))
+		if (isdigit((unsigned char)*p)) {
+			for (savep = p; isdigit((unsigned char)*p); ++p);
+			if (!isspace((unsigned char)*p))
 				badfmt(fmt);
 			tfu->bcnt = atoi(savep);
 			/* skip trailing white space */
-			for (++p; isspace(*p); ++p);
+			for (++p; isspace((unsigned char)*p); ++p);
 		}
 
 		/* format */
@@ -181,9 +181,9 @@ size(fs)
 			 * case it's a %s format.
 			 */
 			while (strchr(spec + 1, *++fmt));
-			if (*fmt == '.' && isdigit(*++fmt)) {
+			if (*fmt == '.' && isdigit((unsigned char)*++fmt)) {
 				prec = atoi(fmt);
-				while (isdigit(*++fmt));
+				while (isdigit((unsigned char)*++fmt));
 			}
 			switch(*fmt) {
 			case 'c':
@@ -258,10 +258,12 @@ rewrite(fs)
 			} else {
 				/* Skip any special chars, field width. */
 				while (strchr(spec + 1, *++p1));
-				if (*p1 == '.' && isdigit(*++p1)) {
+				if (*p1 == '.' &&
+				    isdigit((unsigned char)*++p1)) {
 					sokay = USEPREC;
 					prec = atoi(p1);
-					while (isdigit(*++p1));
+					while (isdigit((unsigned char)*++p1))
+						continue;
 				} else
 					sokay = NOTOKAY;
 			}
@@ -432,7 +434,7 @@ isint2:					switch(fu->bcnt) {
 				if (!pr->nextpr)
 					break;
 			for (p1 = pr->fmt, p2 = NULL; *p1; ++p1)
-				p2 = isspace(*p1) ? p1 : NULL;
+				p2 = isspace((unsigned char)*p1) ? p1 : NULL;
 			if (p2)
 				pr->nospace = p2;
 		}
