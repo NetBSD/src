@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2001/06/13 06:02:00 simonb Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 2002/03/13 19:28:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,20 +35,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "pci.h"
+#include "opt_pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
 
+#define _GALAXY_BUS_DMA_PRIVATE
+#include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/walnut.h>
+
+#include <powerpc/ibm4xx/ibm405gp.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciconf.h>
 
 static int	pchbmatch(struct device *, struct cfdata *, void *);
 static void	pchbattach(struct device *, struct device *, void *);
+static int	phcbprint(void *, const char *);
 
 struct cfattach pchb_ca = {
 	sizeof(struct device), pchbmatch, pchbattach
@@ -59,16 +70,30 @@ int pcifound = 0;
 static int
 pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct mainbus_attach_args *mba = (struct mainbus_attach_args *)aux;
+	/* XXX chipset tag unused by walnut, so just pass 0 */
+	pci_chipset_tag_t pc = 0;
+	pcitag_t tag; 
+	int class, id;
+
+	/* match only pchb devices */
+	if (strcmp(mba->mb_name, cf->cf_driver->cd_name) != 0)
+		return 0;
+
+	pci_machdep_init();
+	tag = pci_make_tag(pc, 0, 0, 0);
+
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	/*
 	 * Match all known PCI host chipsets.
 	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
-		switch (PCI_VENDOR(pa->pa_id)) {
+	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_HOST) {
+		switch (PCI_VENDOR(id)) {
 		case PCI_VENDOR_IBM:
-			switch (PCI_PRODUCT(pa->pa_id)) {
+			switch (PCI_PRODUCT(id)) {
 			case PCI_PRODUCT_IBM_405GP:
 				return (!pcifound);
 			}
@@ -81,8 +106,26 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+/*	struct mainbus_attach_args *mba = (struct mainbus_attach_args *)aux; */
+	struct pcibus_attach_args pba;
 	char devinfo[256];
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
+#ifdef PCI_CONFIGURE_VERBOSE
+	extern int pci_conf_debug;
+
+	pci_conf_debug = 1;
+#endif
+#endif
+	pci_chipset_tag_t pc = 0;
+	pcitag_t tag; 
+	int class, id;
+
+	pci_machdep_init();
+	tag = pci_make_tag(pc, 0, 0, 0);
+
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	printf("\n");
 	pcifound++;
@@ -92,7 +135,71 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 * possibly chipset-specific.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(id, class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
-	    PCI_REVISION(pa->pa_class));
+	    PCI_REVISION(class));
+
+	pci_machdep_init(); /* Redundant... */
+	galaxy_setup_pci();
+#ifdef PCI_CONFIGURE_VERBOSE
+	galaxy_show_pci_map();
+#endif
+
+#ifdef PCI_NETBSD_CONFIGURE
+	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
+	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT);
+	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
+	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
+	extent_destroy(memext);
+#endif /* PCI_NETBSD_CONFIGURE */
+
+#ifdef PCI_CONFIGURE_VERBOSE
+	printf("running config_found PCI\n");
+#endif
+	pba.pba_busname = "pci";
+	/* IO window located @ e8000000 and maps to 0-0xffff */
+	pba.pba_iot = galaxy_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
+	/* PCI memory window is directly mapped */
+	pba.pba_memt = galaxy_make_bus_space_tag(0, 0);
+	pba.pba_dmat = &galaxy_default_bus_dma_tag;
+	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	config_found(self, &pba, phcbprint);
 }
+
+
+static int
+phcbprint(void *aux, const char *p)
+{
+
+	if (p == NULL)
+		return (UNCONF);
+	return (QUIET);
+}
+
+#if 0
+static void
+scan_pci_bus(void)
+{
+	pcitag_t tag;
+	int i, x;
+
+	for (i=0;i<32;i++){
+		tag = pci_make_tag(0, 0, i, 0);
+		x = pci_conf_read(0, tag, 0);
+		printf("%d tag=%08x : %08x\n", i, tag, x);
+#if 0
+		if (PCI_VENDOR(x) == PCI_VENDOR_INTEL
+		    && PCI_PRODUCT(x) == PCI_PRODUCT_INTEL_80960_RP) {
+			/* Do not configure PCI bus analyzer */
+			continue;
+		}
+		x = pci_conf_read(0, tag, PCI_COMMAND_STATUS_REG);
+		x |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(0, tag, PCI_COMMAND_STATUS_REG, x);
+#endif
+	}
+}
+#endif
