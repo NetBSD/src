@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/12/12 12:24:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/06/20 11:43:09 itojun Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -34,7 +34,7 @@ SRCS+=	herror.c res_debug.c res_data.c res_comp.c res_init.c \
 SRCS+=	tree.c base64.c bitncmp.c assertions.c memcluster.c \
 	logging.c heap.c ctl_p.c ctl_srvr.c ctl_clnt.c \
 	eventlib.c ev_connects.c ev_files.c ev_timers.c \
-	ev_streams.c ev_waits.c movefile.c
+	ev_streams.c ev_waits.c hex.c movefile.c
 # ${BIND_DIST_DIR}/lib/inet
 #SRCS+=	inet_addr.c
 SRCS+=	nsap_addr.c inet_ntop.c inet_pton.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.1.1.2 2002/06/20 10:30:40 itojun Exp $	*/
+/*	$NetBSD: herror.c,v 1.2 2002/06/20 11:43:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
