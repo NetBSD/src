@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.19 2000/08/21 14:11:07 ad Exp $
+$NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -78,7 +78,7 @@ product ATT 2408	EATA SCSI controller
 /* BusLogic products */
 product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
-product BUS 6301	Et763E Ethernet
+product BUS 6301	Bt763E Ethernet
 
 /* Compaq products */
 product	CPQ 4001	IDA array controller
