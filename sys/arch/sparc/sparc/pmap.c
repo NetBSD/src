@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.20 1994/11/02 23:18:25 deraadt Exp $
+ * $Id: pmap.c,v 1.21 1994/11/14 06:09:30 deraadt Exp $
  */
 
 /*
@@ -1815,12 +1815,8 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 			}
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
 				i = ptoa(HWTOSW(tpte & PG_PFNUM));
-				if (managed(i)) {
-					if (tpte & PG_W)
-						pm->pm_stats.wired_count--;
-					pm->pm_stats.resident_count--;
+				if (managed(i))
 					pv_unlink(pvhead(i), pm, va);
-				}
 			}
 			nleft--;
 			*pte = 0;
@@ -2458,7 +2454,6 @@ curproc->p_comm, curproc->p_pid, va);*/
 			/*
 			 * Increment counters
 			 */
-			pm->pm_stats.resident_count++;
 			if (wired)
 				pm->pm_stats.wired_count++;
 		}
@@ -2832,4 +2827,20 @@ ok:
 
 	pmap_enter(pm, va, pa, prot, wired);
 	return (0);
+}
+
+int
+pmap_count_ptes(pm)
+	register struct pmap *pm;
+{
+	register int idx, total;
+
+	if (pm == kernel_pmap)
+		idx = NKSEG;
+	else
+		idx = NUSEG;
+	for (total = 0; idx;)
+		total += pm->pm_npte[--idx];
+	pm->pm_stats.resident_count = total;
+	return (total);
 }
