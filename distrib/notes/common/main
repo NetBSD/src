@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.157 2002/02/23 19:36:16 he Exp $
+.\"	$NetBSD: main,v 1.158 2002/02/27 12:21:36 shiba Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1665,6 +1665,7 @@ them, and would like to mentioned, tell us!)
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
+.It Ta Takeshi Shibagaki Ta Mt shiba@netbsd.org
 .
 .El
 .
