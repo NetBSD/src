@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.45 2000/11/22 03:48:34 itojun Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.46 2000/11/27 17:21:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -235,14 +235,6 @@ const struct execsw execsw[] = {
 #endif /* EXEC_ELF32 */
 #ifdef EXEC_ELF64
 	/* 64bit ELF bins */
-#ifdef COMPAT_NETBSD32
-	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
-	  { elf_probe_func: ELF64NAME2(netbsd32,probe)},
-	  &emul_netbsd32, 0,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
-	  elf64_copyargs, setregs }, /* NetBSD32 64bit ELF bins */
-	  /* This one should go first so it matches instead of netbsd */
-#endif
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
 	  { elf_probe_func: ELF64NAME2(netbsd,probe) },
 	  &emul_netbsd, 0,
