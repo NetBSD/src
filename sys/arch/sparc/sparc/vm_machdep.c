@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1996/05/16 15:57:31 abrown Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.28 1996/08/02 13:44:48 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -355,6 +355,7 @@ cpu_fork(p1, p2)
 	 */
 
 	write_user_windows();
+	opcb->pcb_psr = getpsr();
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
 		if (p1 == fpproc)
