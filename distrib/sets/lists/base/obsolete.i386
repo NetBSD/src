@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.i386,v 1.13 2003/05/15 19:10:00 wiz Exp $
+# $NetBSD: obsolete.i386,v 1.14 2003/07/26 08:43:02 dsl Exp $
 ./dev/lms0
 ./dev/mms0
 ./dev/pms0
@@ -12,11 +12,19 @@
 ./dev/vga
 ./usr/bin/fontedit
 ./usr/bin/vttest
+./usr/mdec/biosboot.sym
+./usr/mdec/biosboot_com0.sym
+./usr/mdec/biosboot_com0_115200.sym
+./usr/mdec/biosboot_com0_38400.sym
+./usr/mdec/biosboot_com0_57600.sym
+./usr/mdec/biosboot_com0_9600.sym
 ./usr/mdec/biosboot_ps2.sym
+./usr/mdec/biosboot_resetvideo.sym
 ./usr/mdec/bootfd
 ./usr/mdec/bootsd
 ./usr/mdec/bootwd
 ./usr/mdec/fdboot
+./usr/mdec/installboot
 ./usr/mdec/sdboot
 ./usr/mdec/wdboot
 ./usr/share/pcvt

@@ -1,3 +1,10 @@
-# $NetBSD: obsolete.amd64,v 1.1 2003/05/15 19:10:00 wiz Exp $
+# $NetBSD: obsolete.amd64,v 1.2 2003/07/26 08:43:02 dsl Exp $
 ./dev/lms0
 ./dev/mms0
+./usr/mdec/biosboot.sym
+./usr/mdec/biosboot_com0.sym
+./usr/mdec/biosboot_com0_115200.sym
+./usr/mdec/biosboot_com0_38400.sym
+./usr/mdec/biosboot_com0_57600.sym
+./usr/mdec/biosboot_com0_9600.sym
+./usr/mdec/installboot
