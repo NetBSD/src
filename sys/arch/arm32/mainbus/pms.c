@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6 1996/10/15 21:06:51 mark Exp $ */
+/* $NetBSD: pms.c,v 1.7 1996/10/29 23:28:12 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -90,6 +90,7 @@ struct pms_softc {		/* driver status information */
 	u_int sc_state;	/* mouse driver state */
 #define	PMS_OPEN	0x01	/* device is open */
 #define	PMS_ASLP	0x02	/* waiting for mouse data */
+	int sc_mode;
 	u_int sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 	int boundx, boundy, bounda, boundb;	/* Bounding box.  x,y is bottom left */
@@ -316,6 +317,7 @@ pmsopen(dev, flag, mode, p)
 		return ENOMEM;
 
 	sc->sc_proc = p;
+	sc->sc_mode = MOUSEMODE_ABS;
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
@@ -441,6 +443,27 @@ pmsioctl(dev, cmd, addr, flag, p)
 		pmsputbuffer(sc, &buffer);
 #endif
 		break;
+	}
+	case MOUSEIOC_SETMODE:
+	{
+		struct mousebufrec buffer;
+		int s;
+
+#ifdef MOUSE_IOC_ACK
+		s = spltty();
+#endif
+		sc->sc_mode = *(int *)addr;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		if (sc->sc_q.c_cc > 0)
+			printf("pms: setting mode with non empty buffer (%d)\n", sc->sc_q.c_cc);
+		pmsputbuffer(sc, &buffer);
+		(void)splx(s);
+#endif
+		return 0;
 	}
 	case MOUSEIOC_SETORIGIN:
 	{
@@ -615,6 +638,11 @@ pmsintr(arg)
 			sc->lastx = sc->sc_x;
 			sc->lasty = sc->sc_y;
 			sc->lastb = b;
+
+			if(sc->sc_mode == MOUSEMODE_REL) {
+				sc->origx = sc->origy = 0;
+				sc->sc_x = sc->sc_y = 0;
+			}
 
 			selwakeup(&sc->sc_rsel);
 			if (sc->sc_state & PMS_ASLP) {
