@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 1999/04/12 20:38:18 pk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2000/05/25 19:57:32 jhawk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -115,7 +115,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			name = "?";
 
 		db_printf("%s(", name);
-		db_printsym(pc, DB_STGY_PROC);
+		db_printsym(pc, DB_STGY_PROC, db_printf);
 		db_printf(")");
 		db_printf("\n");
 
