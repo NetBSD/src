@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.17 1997/01/22 07:09:07 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,8 +38,8 @@
  *	@(#)cdefs.h	8.7 (Berkeley) 1/21/94
  */
 
-#ifndef	_CDEFS_H_
-#define	_CDEFS_H_
+#ifndef	_SYS_CDEFS_H_
+#define	_SYS_CDEFS_H_
 
 #include <machine/cdefs.h>
 
@@ -129,4 +129,4 @@
 #define	__pure
 #endif
 
-#endif /* !_CDEFS_H_ */
+#endif /* !_SYS_CDEFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.10 1996/04/09 20:55:49 cgd Exp $	*/
+/*	$NetBSD: user.h,v 1.11 1997/01/22 07:09:30 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)user.h	8.2 (Berkeley) 9/23/93
  */
+
+#ifndef _SYS_USER_H_
+#define _SYS_USER_H_
 
 #include <machine/pcb.h>
 #ifndef _KERNEL
@@ -91,3 +94,5 @@ struct	user {
 #define	u_sig	U_sig
 #define	u_code	U_code
 #endif /* _KERNEL */
+
+#endif /* !_SYS_USER_H_ */

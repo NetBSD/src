@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.10 1995/03/26 20:23:56 jtc Exp $	*/
+/*	$NetBSD: callout.h,v 1.11 1997/01/22 07:09:06 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)callout.h	8.2 (Berkeley) 1/21/94
  */
+#ifndef _SYS_CALLOUT_H_
+#define _SYS_CALLOUT_H_
 
 struct callout {
 	struct	callout *c_next;		/* next callout in queue */
@@ -51,3 +53,5 @@ struct callout {
 struct	callout *callfree, *callout, calltodo;
 int	ncallout;
 #endif
+
+#endif /* !_SYS_CALLOUT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsio.h,v 1.7 1996/04/09 20:55:50 cgd Exp $	*/
+/*	$NetBSD: vsio.h,v 1.8 1997/01/22 07:09:35 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)vsio.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_VSIO_H_
+#define _SYS_VSIO_H_
 
  /****************************************************************************
  *									    *
@@ -153,3 +156,5 @@ typedef struct _vsIoAddr {
 	vsBox	 mbox;			/* atomic read/write */
 } vsIoAddr;
 typedef vsIoAddr *vsIoAddrAddr;
+
+#endif /* !_SYS_VSIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.44 1997/01/07 11:35:24 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.45 1997/01/22 07:09:08 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)conf.h	8.3 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_CONF_H_
+#define _SYS_CONF_H_
 
 /*
  * Definitions of device driver entry switches
@@ -140,7 +143,7 @@ extern struct bdevsw bdevsw[];
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
 
-#endif
+#endif /* _KERNEL */
 
 /*
  * Character device switch table
@@ -320,7 +323,7 @@ extern struct cdevsw cdevsw[];
 extern char devopn[], devio[], devwait[], devin[], devout[];
 extern char devioc[], devcls[];
 
-#endif
+#endif /* _KERNEL */
 
 /*
  * Line discipline switch table
@@ -424,4 +427,6 @@ cdev_decl(ipl);
 #endif
 cdev_decl(svr4_net);
 
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_CONF_H_ */

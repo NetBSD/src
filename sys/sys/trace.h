@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.7 1995/03/26 20:24:56 jtc Exp $	*/
+/*	$NetBSD: trace.h,v 1.8 1997/01/22 07:09:27 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)trace.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_TRACE_H_
+#define _SYS_TRACE_H_
 
 /*
  * File system buffer tracing points; all trace <pack(dev, size), bn>
@@ -114,5 +117,7 @@ char	traceflags[TR_NFLAGS];
 }
 #else
 #define	trace(a,b,c)
-#endif
-#endif
+#endif /* TRACE */
+#endif /* _KERNEL */
+
+#endif /* !_SYS_TRACE_H_ */

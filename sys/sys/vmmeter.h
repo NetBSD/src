@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.10 1997/01/22 07:09:33 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)vmmeter.h	8.2 (Berkeley) 7/10/94
  */
+
+#ifndef _SYS_VMMETER_H_
+#define _SYS_VMMETER_H_
 
 /*
  * System wide statistics counters.
@@ -146,4 +149,6 @@ int	rres;
 
 u_int rectime;		/* accumulator for reclaim times */
 u_int pgintime;		/* accumulator for page in times */
-#endif
+#endif /* PGINPROF */
+
+#endif /* !_SYS_VMMETER_H_ */

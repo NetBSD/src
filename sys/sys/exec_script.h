@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.h,v 1.6 1995/03/26 20:24:11 jtc Exp $	*/
+/*	$NetBSD: exec_script.h,v 1.7 1997/01/22 07:09:15 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_EXEC_SCRIPT_H_
+#define _SYS_EXEC_SCRIPT_H_
+
 #define	EXEC_SCRIPT_MAGIC	"#!"
 #define	EXEC_SCRIPT_MAGICLEN	2
 
@@ -39,3 +42,5 @@
 int	exec_script_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* _KERNEL */
+
+#endif /* !_SYS_EXEC_SCRIPT_H_ */

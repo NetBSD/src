@@ -1,5 +1,4 @@
-
-/*	$NetBSD: mount.h,v 1.50 1996/12/22 10:10:38 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.51 1997/01/22 07:09:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -35,6 +34,9 @@
  *
  *	@(#)mount.h	8.15 (Berkeley) 7/14/94
  */
+
+#ifndef _SYS_MOUNT_H_
+#define _SYS_MOUNT_H_
 
 #ifndef _KERNEL
 #include <sys/ucred.h>
@@ -436,3 +438,5 @@ int	unmount __P((const char *, int));
 __END_DECLS
 
 #endif /* _KERNEL */
+
+#endif /* !_SYS_MOUNT_H_ */

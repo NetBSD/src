@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.12 1996/05/28 23:23:04 pk Exp $	*/
+/*	$NetBSD: un.h,v 1.13 1997/01/22 07:09:28 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)un.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_UN_H_
+#define _SYS_UN_H_
 
 /*
  * Definitions for UNIX IPC domain.
@@ -72,3 +75,5 @@ void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif /* _KERNEL */
+
+#endif /* !_SYS_UN_H_ */

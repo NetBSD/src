@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.34 1996/10/25 21:22:10 cgd Exp $	*/
+/*	$NetBSD: tty.h,v 1.35 1997/01/22 07:09:28 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)tty.h	8.6 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_TTY_H_
+#define _SYS_TTY_H_
 
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
@@ -269,4 +272,6 @@ void	clfree __P((struct clist *));
 int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif
 
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_TTY_H_ */

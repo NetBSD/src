@@ -1,4 +1,4 @@
-/*	$NetBSD: vcmd.h,v 1.6 1994/06/29 06:46:14 cgd Exp $	*/
+/*	$NetBSD: vcmd.h,v 1.7 1997/01/22 07:09:32 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)vcmd.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_VCMD_H_
+#define _SYS_VCMD_H_
+
 #include <sys/ioctl.h>
 
 #define	VPRINT		0100
@@ -43,3 +46,5 @@
 
 #define	VGETSTATE	_IOR('v', 0, int)
 #define	VSETSTATE	_IOW('v', 1, int)
+
+#endif /* !_SYS_VCMD_H_ */

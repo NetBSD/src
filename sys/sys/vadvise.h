@@ -1,4 +1,4 @@
-/*	$NetBSD: vadvise.h,v 1.6 1994/06/29 06:46:12 cgd Exp $	*/
+/*	$NetBSD: vadvise.h,v 1.7 1997/01/22 07:09:31 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)vadvise.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_VADVISE_H_
+#define _SYS_VADVISE_H_
+
 /*
  * Parameters to vadvise() to tell system of particular paging
  * behaviour:
@@ -49,3 +52,5 @@
 #define	VA_ANOM		1
 #define	VA_SEQL		2
 #define	VA_FLUSH 	3
+
+#endif /* !_SYS_VADVISE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.4 1994/10/29 08:20:14 cgd Exp $	*/
+/*	$NetBSD: core.h,v 1.5 1997/01/22 07:09:09 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_CORE_H_
+#define _SYS_CORE_H_
 
 #define COREMAGIC	0507
 #define CORESEGMAGIC	0510
@@ -85,3 +88,5 @@ struct coreseg {
 	u_long	c_addr;			/* Virtual address of segment */
 	u_long	c_size;			/* Size of this segment */
 };
+
+#endif /* !_SYS_CORE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clist.h,v 1.7 1995/03/26 20:23:57 jtc Exp $	*/
+/*	$NetBSD: clist.h,v 1.8 1997/01/22 07:09:07 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,6 +35,9 @@
  *	@(#)clist.h	8.1 (Berkeley) 6/4/93
  */
 
+#ifndef _SYS_CLIST_H_
+#define _SYS_CLIST_H_
+
 struct cblock {
 	struct cblock *c_next;		/* next cblock in queue */
 	char c_quote[CBQSIZE];		/* quoted characters */
@@ -45,3 +48,5 @@ struct cblock {
 extern	struct cblock *cfree, *cfreelist;
 extern	int cfreecount, nclist;
 #endif
+
+#endif /* !_SYS_CLIST_H_ */

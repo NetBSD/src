@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
+/*	$NetBSD: acct.h,v 1.17 1997/01/22 07:09:04 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,6 +40,9 @@
  *	@(#)acct.h	8.3 (Berkeley) 7/10/94
  */
 
+#ifndef _SYS_ACCT_H_
+#define _SYS_ACCT_H_
+
 /*
  * Accounting structures; these use a comp_t type which is a 3 bits base 8
  * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
@@ -78,3 +81,5 @@ struct vnode	*acctp;
 
 int	acct_process __P((struct proc *p));
 #endif
+
+#endif /* !_SYS_ACCT_H_ */

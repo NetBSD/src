@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.7 1996/05/23 16:04:24 mycroft Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.8 1997/01/22 07:09:29 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)unpcb.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_UNPCB_H_
+#define _SYS_UNPCB_H_
 
 /*
  * Protocol control block for an active
@@ -73,3 +76,5 @@ struct	unpcb {
 };
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
+
+#endif /* !_SYS_UNPCB_H_ */

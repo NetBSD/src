@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.23 1997/01/11 05:17:18 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.24 1997/01/22 07:09:24 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)socketvar.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_SOCKETVAR_H_
+#define _SYS_SOCKETVAR_H_
 
 #include <sys/select.h>			/* for struct selinfo */
 
@@ -277,9 +280,5 @@ int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
 		    register_t *));
 
 #endif /* _KERNEL */
-/*###282 [cc] macro `__P' used with too many (33) args%%%*/
-/*###283 [cc] macro `__P' used with too many (34) args%%%*/
-/*###284 [cc] macro `__P' used with too many (10) args%%%*/
-/*###285 [cc] macro `__P' used with too many (15) args%%%*/
-/*###286 [cc] macro `__P' used with too many (22) args%%%*/
-/*###289 [cc] empty #if expression%%%*/
+
+#endif /* !_SYS_SOCKETVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.17 1996/10/08 13:10:31 cgd Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.18 1997/01/22 07:09:14 mikel Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_EXEC_AOUT_H_
+#define _SYS_EXEC_AOUT_H_
 
 #ifndef N_PAGSIZ
 #define	N_PAGSIZ(ex)	(__LDPGSZ)
@@ -193,3 +196,5 @@ int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
 int cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* _KERNEL */
+
+#endif /* !_SYS_EXEC_AOUT_H_ */
