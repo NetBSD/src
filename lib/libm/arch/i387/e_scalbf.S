@@ -5,10 +5,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_scalbf.S,v 1.1 1996/07/03 16:50:24 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: e_scalbf.S,v 1.2 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(__ieee754_scalbf)
-	flds	8(%esp)
-	flds	4(%esp)
+	XMM_TWO_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_TWO
+	flds	ARG_FLOAT_ONE
 	fscale
+	XMM_FLOAT_EPILOGUE
 	ret

@@ -5,14 +5,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_remainderf.S,v 1.2 1995/05/08 23:49:47 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: e_remainderf.S,v 1.3 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(__ieee754_remainderf)
-	flds	8(%esp)
-	flds	4(%esp)
+	XMM_TWO_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_TWO
+	flds	ARG_FLOAT_ONE
 1:	fprem1
 	fstsw	%ax
-	sahf
-	jp	1b
-	fstpl	%st(1)
+	btw	$2,%ax
+	jc	1b
+	fstp	%st(1)
+	XMM_FLOAT_EPILOGUE
 	ret

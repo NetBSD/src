@@ -5,14 +5,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_expf.S,v 1.3 2000/09/26 07:28:24 kleink Exp $")
+#include "abi.h"
+
+
+RCSID("$NetBSD: e_expf.S,v 1.4 2001/06/19 00:26:30 fvdl Exp $")
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_expf)
-	flds	4(%esp)
+	XMM_ONE_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_ONE
 	fldl2e
 	fmulp				/* x * log2(e) */
-	fldl	%st(0)
+	fld	%st(0)
 	frndint				/* int(x * log2(e)) */
 	fsubr	%st(0),%st(1)		/* fract(x * log2(e)) */
 	fxch
@@ -20,5 +24,6 @@ ENTRY(__ieee754_expf)
 	fld1
 	faddp				/* 2^(fract(x * log2(e))) */
 	fscale				/* e^x */
-	fstpl	%st(1)
+	fstp	%st(1)
+	XMM_FLOAT_EPILOGUE
 	ret
