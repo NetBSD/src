@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.4 1998/12/16 12:48:46 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.5 2000/01/18 13:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,8 @@
 
 /*
  * Registers definitions for VIA technologies's Apollo controllers (VT82V580VO,
- * VT82C586A and VT82C586B). Available from http://www.via.com.br/
+ * VT82C586A and VT82C586B). Available from http://www.via.com.tw/ or
+ * http://www.viatech.com/
  */
 
 /* misc. configuration registers */
