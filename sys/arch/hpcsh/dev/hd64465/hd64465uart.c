@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.3 2002/03/03 14:34:36 uch Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.4 2002/03/28 15:27:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #include <machine/debug.h>
 
 #include <hpcsh/dev/hd64465/hd64465var.h>
+#include <hpcsh/dev/hd64465/hd64465intcreg.h>
 #include <hpcsh/dev/hd64465/hd64465uartvar.h>
 #include <hpcsh/dev/hd64465/hd64465uartreg.h>
 
@@ -185,7 +186,7 @@ hd64465uart_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(csc);
 
 	/* register interrupt handler */
-	hd64465_intr_establish(HD64465_IRQ_UART, IST_EDGE, IPL_TTY,
+	hd64465_intr_establish(HD64465_UART, IST_LEVEL, IPL_TTY,
 	    comintr, self);
 }
 

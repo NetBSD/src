@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.9 2002/03/03 14:34:36 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.10 2002/03/28 15:27:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
-#include <hpcsh/dev/hd64461/hd64461intcvar.h>
+#include <hpcsh/dev/hd64461/hd64461intcreg.h>
 #include <hpcsh/dev/hd64461/hd64461uartvar.h>
 #include <hpcsh/dev/hd64461/hd64461uartreg.h>
 
@@ -194,7 +194,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(csc);
 
-	hd64461_intr_establish(HD64461_IRQ_UART, IST_LEVEL, IPL_TTY,
+	hd6446x_intr_establish(HD64461_INTC_UART, IST_LEVEL, IPL_TTY,
 	    comintr, self);
 }
 
