@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/09/02 22:16:58 wiz Exp $
+#	$NetBSD: Makefile,v 1.4 2003/01/17 15:32:25 wiz Exp $
 
 FILES=		texi2dvi
 FILESMODE=	${BINMODE}
@@ -6,4 +6,4 @@ MAN=		texi2dvi.1
 
 .include <bsd.prog.mk>
 
-.PATH: ${DIST}/texinfo/util ${DIST}/texinfo/doc
+.PATH: ${IDIST}/util ${IDIST}/doc

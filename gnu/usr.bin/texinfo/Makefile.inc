@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/09/19 03:09:43 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2003/01/17 15:32:23 wiz Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -6,8 +6,9 @@ __MAKEFILE_INC_INCLUDED__=1
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/gnu/dist
+IDIST=		${DIST}/texinfo
 
-CPPFLAGS+=	-I${.CURDIR}/../common -I${DIST}/texinfo/lib \
+CPPFLAGS+=	-I${.CURDIR}/../common -I${IDIST}/lib \
 		-DLOCALEDIR=\"/usr/share/locale\" -DHAVE_CONFIG_H
 
 DPADD+=		${LIBCOMMONDIR}/libcommon.a
