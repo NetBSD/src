@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.15.4.1 1999/06/21 01:47:19 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.15.4.2 1999/08/09 00:05:55 chs Exp $	*/
 
 /*
  *
@@ -69,16 +69,13 @@ static simple_lock_data_t udv_lock;
  */
 
 static void		udv_init __P((void));
-struct uvm_object 	*udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
 static void             udv_reference __P((struct uvm_object *));
 static void             udv_detach __P((struct uvm_object *));
 static int		udv_fault __P((struct uvm_faultinfo *, vaddr_t,
 				       vm_page_t *, int, int, vm_fault_t,
 				       vm_prot_t, int));
-static boolean_t        udv_flush __P((struct uvm_object *, vaddr_t, 
-					 vaddr_t, int));
-static int		udv_asyncget __P((struct uvm_object *, vaddr_t,
-					    int));
+static boolean_t        udv_flush __P((struct uvm_object *, voff_t, voff_t,
+				       int));
 static int		udv_put __P((struct uvm_object *, vm_page_t *,
 					int, boolean_t));
 
@@ -93,7 +90,6 @@ struct uvm_pagerops uvm_deviceops = {
 	udv_fault,
 	udv_flush,
 	NULL,		/* no get function since we have udv_fault */
-	udv_asyncget,
 	udv_put,
 	NULL,		/* no cluster function */
 	NULL,		/* no put cluster function */
@@ -375,7 +371,7 @@ udv_detach(uobj)
 
 static boolean_t udv_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	int flags;
 {
 
@@ -410,7 +406,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-	vaddr_t curr_offset, curr_va;
+	vaddr_t curr_va;
+	int curr_offset;
 	paddr_t paddr;
 	int lcv, retval, mdpgno;
 	dev_t device;
@@ -450,7 +447,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 * addresses in a submap must match the main map, this is ok.
 	 */
 	/* udv offset = (offset from start of entry) + entry's offset */
-	curr_offset = (vaddr - entry->start) + entry->offset;	
+	curr_offset = (int)((vaddr - entry->start) + entry->offset);
 	/* pmap va = vaddr (virtual address of pps[0]) */
 	curr_va = vaddr;
 	
@@ -467,7 +464,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		mdpgno = (*mapfn)(device, (int)curr_offset, access_type);
+		mdpgno = (*mapfn)(device, curr_offset, access_type);
 		if (mdpgno == -1) {
 			retval = VM_PAGER_ERROR;
 			break;
@@ -483,23 +480,6 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	return(retval);
-}
-
-/*
- * udv_asyncget: start async I/O to bring pages into ram
- *
- * => caller must lock object(???XXX: see if this is best)
- * => a no-op for devices
- */
-
-static int
-udv_asyncget(uobj, offset, npages)
-	struct uvm_object *uobj;
-	vaddr_t offset;
-	int npages;
-{
-
-	return(KERN_SUCCESS);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.18.2.1.2.4 1999/08/02 23:16:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.18.2.1.2.5 1999/08/09 00:05:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -124,7 +124,7 @@
 
 struct uao_swhash_elt {
 	LIST_ENTRY(uao_swhash_elt) list;	/* the hash list */
-	vaddr_t tag;			/* our 'tag' */
+	voff_t tag;				/* our 'tag' */
 	int count;				/* our number of active slots */
 	int slots[UAO_SWHASH_CLUSTER_SIZE];	/* the slots */
 };
@@ -175,16 +175,14 @@ struct pool uvm_aobj_pool;
 
 static struct uao_swhash_elt	*uao_find_swhash_elt __P((struct uvm_aobj *,
 							  int, boolean_t));
-static int			 uao_find_swslot __P((struct uvm_aobj *, 
-						      int));
-static boolean_t		 uao_flush __P((struct uvm_object *, 
-						vaddr_t, vaddr_t, 
-						int));
+static int			 uao_find_swslot __P((struct uvm_aobj *, int));
+static boolean_t		 uao_flush __P((struct uvm_object *,
+						voff_t, voff_t, int));
 static void			 uao_free __P((struct uvm_aobj *));
-static int			 uao_get __P((struct uvm_object *, vaddr_t,
-					      vm_page_t *, int *, int, 
+static int			 uao_get __P((struct uvm_object *, voff_t,
+					      vm_page_t *, int *, int,
 					      vm_prot_t, int, int));
-static boolean_t		 uao_releasepg __P((struct vm_page *, 
+static boolean_t		 uao_releasepg __P((struct vm_page *,
 						    struct vm_page **));
 
 /*
@@ -200,7 +198,6 @@ struct uvm_pagerops aobj_pager = {
 	NULL,			/* fault */
 	uao_flush,		/* flush */
 	uao_get,		/* get */
-	NULL,			/* asyncget */
 	NULL,			/* put (done by pagedaemon) */
 	NULL,			/* cluster */
 	NULL,			/* mk_pcluster */
@@ -240,7 +237,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 {
 	struct uao_swhash *swhash;
 	struct uao_swhash_elt *elt;
-	int page_tag;
+	voff_t page_tag;
 
 	swhash = UAO_SWHASH_HASH(aobj, pageidx); /* first hash to get bucket */
 	page_tag = UAO_SWHASH_ELT_TAG(pageidx);	/* tag to search for */
@@ -790,13 +787,13 @@ uao_detach_locked(uobj)
 boolean_t
 uao_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	int flags;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
 	struct vm_page *pp, *ppnext;
 	boolean_t retval, by_list;
-	vaddr_t curoff;
+	voff_t curoff;
 	UVMHIST_FUNC("uao_flush"); UVMHIST_CALLED(maphist);
 
 	curoff = 0;	/* XXX: shut up gcc */
@@ -952,14 +949,14 @@ uao_flush(uobj, start, stop, flags)
 static int
 uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	struct vm_page **pps;
 	int *npagesp;
 	int centeridx, advice, flags;
 	vm_prot_t access_type;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	vaddr_t current_offset;
+	voff_t current_offset;
 	vm_page_t ptmp;
 	int lcv, gotpages, maxpages, swslot, rv;
 	boolean_t done;

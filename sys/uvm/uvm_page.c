@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.4 1999/07/31 18:57:31 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.5 1999/08/09 00:05:56 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -835,7 +835,7 @@ uvm_page_physdump()
 struct vm_page *
 uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct uvm_object *obj;
-	vaddr_t off;
+	voff_t off;
 	int flags;
 	struct vm_anon *anon;
 	int strat, free_list;
@@ -966,7 +966,7 @@ void
 uvm_pagerealloc(pg, newobj, newoff)
 	struct vm_page *pg;
 	struct uvm_object *newobj;
-	vaddr_t newoff;
+	voff_t newoff;
 {
 	/*
 	 * remove it from the old object

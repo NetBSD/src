@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36.2.1.2.4 1999/08/02 23:16:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36.2.1.2.5 1999/08/09 00:05:55 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -502,7 +502,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 	vaddr_t *startp;	/* IN/OUT */
 	vsize_t size;
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
+	voff_t uoffset;
 	uvm_flag_t flags;
 {
 	vm_map_entry_t prev_entry, new_entry;
@@ -831,7 +831,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 	vsize_t length;
 	vaddr_t *result; /* OUT */
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
+	voff_t uoffset;
 	boolean_t fixed;
 {
 	vm_map_entry_t entry, next, tmp;
