@@ -24,12 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: dbsym.c,v 1.12 1997/10/18 08:13:06 lukem Exp $
+ *	$NetBSD: dbsym.c,v 1.12.2.1 1997/10/26 21:10:29 mellon Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.12 1997/10/18 08:13:06 lukem Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.12.2.1 1997/10/26 21:10:29 mellon Exp $");
 #endif
 
 /* Copy the symbol table into the space reserved for it. */
@@ -166,11 +166,7 @@ main(argc,argv)
 	*ip++ = head.a_syms;
 	memcpy((char*)ip, symbols, head.a_syms + strtab_len);
 
-	msync(dataseg - data_pgoff, file_len - data_off
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg - data_pgoff, file_len - data_off, 0);
 
 #ifdef	DEBUG
 	printf("...done\n");
