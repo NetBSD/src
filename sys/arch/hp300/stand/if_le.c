@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1995/08/05 16:47:43 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1995/09/02 05:04:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -529,9 +529,11 @@ le_put(desc, pkt, len)
 	volatile struct lereg0 *ler0 = sc->sc_r0;
 	volatile struct lereg1 *ler1 = sc->sc_r1;
 	volatile struct mds *cdm;
-	int timo = 100000, i;
-	register int stat;
-	
+	int timo, i, stat;
+
+ le_put_loop:
+	timo = 100000;
+
 #ifdef LE_DEBUG
 	if (le_debug)
 		printf("le%d: le_put called. next_td=%d\n", unit, sc->sc_next_td);
@@ -574,6 +576,12 @@ le_put(desc, pkt, len)
 				unit, stat);
 			if (stat & LE_SERR)
 				le_error(unit, "le_put(timeout)", stat);
+			if (stat & LE_INIT) {
+				printf("le%d: reset and retry packet\n");
+				lewrcsr(sc, 0, LE_TINT);	/* sanity */
+				le_init();
+				goto le_put_loop;
+			}
 			break;
 		}
 		stat = lerdcsr(sc, 0);
