@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.8 2001/04/05 11:37:18 sato Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.9 2001/04/09 16:05:53 sato Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -420,11 +420,11 @@ static u_int8_t sigmarion_jp_keytrans[] = {
 static const keysym_t sigmarion_cmdmap[] = {
 /*	pos      command		normal		shifted		*/
 	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
-	KC(64),  KS_Cmd_Screen1,	KS_f6,		KS_f1,
-	KC(65),  KS_Cmd_Screen2,	KS_f7,		KS_f2,
-	KC(66),  KS_Cmd_Screen3,	KS_f8,		KS_f3,
-	KC(67),  KS_Cmd_Screen4,	KS_f9,		KS_f4,
-	KC(68),  KS_Cmd_Screen5,	KS_f10,		KS_f5,
+	KC(64),  KS_Cmd_Screen0,	KS_f6,		KS_f1,
+	KC(65),  KS_Cmd_Screen1,	KS_f7,		KS_f2,
+	KC(66),  KS_Cmd_Screen2,	KS_f8,		KS_f3,
+	KC(67),  KS_Cmd_Screen3,	KS_f9,		KS_f4,
+	KC(68),  KS_Cmd_Screen4,	KS_f10,		KS_f5,
 	KC(27),  KS_Cmd_BrightnessUp,	KS_bracketleft,	KS_braceleft,
 	KC(43),  KS_Cmd_BrightnessDown,	KS_bracketright,KS_braceright,
 	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
