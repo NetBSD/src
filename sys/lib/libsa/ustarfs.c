@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.12 1999/09/20 11:58:15 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.13 1999/11/11 20:23:17 thorpej Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -62,11 +62,6 @@
  * XXX LIBSA_FS_SINGLECOMPONENT
  */
 
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 #include "stand.h"
 #include "ustarfs.h"
 

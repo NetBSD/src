@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.12 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: netif.c,v 1.13 1999/11/11 20:23:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -35,11 +35,6 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/mount.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

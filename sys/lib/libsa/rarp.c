@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.16 1997/07/07 15:52:52 drochner Exp $	*/
+/*	$NetBSD: rarp.c,v 1.17 1999/11/11 20:23:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -45,12 +45,6 @@
 #include <netinet/in.h>
 
 #include <netinet/in_systm.h>
-
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include "stand.h"
 #include "net.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.1 1999/04/01 05:12:20 simonb Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.2 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,8 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <lib/libkern/libkern.h>
+#include "stand.h"
 
 #undef bcmp			/* in case of LIBSA_USE_MEMCMP */
 

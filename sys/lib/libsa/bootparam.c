@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.11 1997/06/26 19:11:32 drochner Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.12 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -41,12 +41,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include "rpcv2.h"
 
