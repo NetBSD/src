@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 1997/04/14 21:05:13 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.40 1997/04/18 19:51:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -257,45 +257,41 @@ void
 cache_print(sc)
 	struct cpu_softc *sc;
 {
+	struct cacheinfo *ci = &sc->cacheinfo;
 	char *sep;
 
+	printf("%s:", sc->dv.dv_xname);
+
 	sep = " ";
-	if (sc->cacheinfo.c_split) {
-		printf("%s:%s", sc->dv.dv_xname, 
-		       (sc->cacheinfo.c_physical ? " physical" : ""));
-		if (sc->cacheinfo.ic_totalsize > 0) {
+	if (ci->c_split) {
+		printf("%s", (ci->c_physical ? " physical" : ""));
+		if (ci->ic_totalsize > 0) {
 			printf("%s%dK instruction (%d b/l)", sep,
-			       sc->cacheinfo.ic_totalsize/1024,
-			       sc->cacheinfo.ic_linesize);
+			       ci->ic_totalsize/1024, ci->ic_linesize);
 			sep = ", ";
 		}
-		if (sc->cacheinfo.dc_totalsize > 0) {
+		if (ci->dc_totalsize > 0) {
 			printf("%s%dK data (%d b/l)", sep,
-			       sc->cacheinfo.dc_totalsize/1024,
-			       sc->cacheinfo.dc_linesize);
+			       ci->dc_totalsize/1024, ci->dc_linesize);
 			sep = ", ";
 		}
 		printf(" ");
-	} else if (sc->cacheinfo.c_physical) {
+	} else if (ci->c_physical) {
 		/* combined, physical */
-		printf("%s: physical %dK combined cache (%d bytes/line) ",
-		       sc->dv.dv_xname,
-		       sc->cacheinfo.c_totalsize/1024,
-		       sc->cacheinfo.c_linesize);
+		printf(" physical %dK combined cache (%d bytes/line) ",
+		       ci->c_totalsize/1024, ci->c_linesize);
 	} else {
 		/* combined, virtual */
-		printf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
-		    sc->dv.dv_xname, sc->cacheinfo.c_totalsize,
-		    (sc->cacheinfo.c_vactype == VAC_WRITETHROUGH) 
-		    ? "through" : "back",
-		    sc->cacheinfo.c_linesize,
-		    sc->cacheinfo.c_hwflush ? 'h' : 's');
+		printf(" %d byte write-%s, %d bytes/line, %cw flush ",
+		       ci->c_totalsize,
+		       (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
+		       ci->c_linesize,
+		       ci->c_hwflush ? 'h' : 's');
 	}
 
-	if (sc->cacheinfo.ec_totalsize > 0) {
+	if (ci->ec_totalsize > 0) {
 		printf(", %dK external (%d b/l)",
-		       sc->cacheinfo.ec_totalsize/1024,
-		       sc->cacheinfo.ec_linesize);
+		       ci->ec_totalsize/1024, ci->ec_linesize);
 	}
 }
 
@@ -372,15 +368,17 @@ getcacheinfo_sun4(sc, node)
 	struct cpu_softc *sc;
 	int	node;
 {
+	struct cacheinfo *ci = &sc->cacheinfo;
+
 	switch (sc->cpu_type) {
 	case CPUTYP_4_100:
-		sc->cacheinfo.c_vactype = VAC_NONE;
-		sc->cacheinfo.c_totalsize = 0;
-		sc->cacheinfo.c_hwflush = 0;
-		sc->cacheinfo.c_linesize = 0;
-		sc->cacheinfo.c_l2linesize = 0;
-		sc->cacheinfo.c_split = 0;
-		sc->cacheinfo.c_nlines = 0;
+		ci->c_vactype = VAC_NONE;
+		ci->c_totalsize = 0;
+		ci->c_hwflush = 0;
+		ci->c_linesize = 0;
+		ci->c_l2linesize = 0;
+		ci->c_split = 0;
+		ci->c_nlines = 0;
 
 		/* Override cache flush functions */
 		sc->cache_flush = noop_cache_flush;
@@ -390,35 +388,32 @@ getcacheinfo_sun4(sc, node)
 		sc->vcache_flush_context = noop_vcache_flush_context;
 		break;
 	case CPUTYP_4_200:
-		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
-		sc->cacheinfo.c_totalsize = 128*1024;
-		sc->cacheinfo.c_hwflush = 0;
-		sc->cacheinfo.c_linesize = 16;
-		sc->cacheinfo.c_l2linesize = 4;
-		sc->cacheinfo.c_split = 0;
-		sc->cacheinfo.c_nlines =
-			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
+		ci->c_vactype = VAC_WRITEBACK;
+		ci->c_totalsize = 128*1024;
+		ci->c_hwflush = 0;
+		ci->c_linesize = 16;
+		ci->c_l2linesize = 4;
+		ci->c_split = 0;
+		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
 		break;
 	case CPUTYP_4_300:
-		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
-		sc->cacheinfo.c_totalsize = 128*1024;
-		sc->cacheinfo.c_hwflush = 0;
-		sc->cacheinfo.c_linesize = 16;
-		sc->cacheinfo.c_l2linesize = 4;
-		sc->cacheinfo.c_split = 0;
-		sc->cacheinfo.c_nlines =
-			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
+		ci->c_vactype = VAC_WRITEBACK;
+		ci->c_totalsize = 128*1024;
+		ci->c_hwflush = 0;
+		ci->c_linesize = 16;
+		ci->c_l2linesize = 4;
+		ci->c_split = 0;
+		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 		break;
 	case CPUTYP_4_400:
-		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
-		sc->cacheinfo.c_totalsize = 128 * 1024;
-		sc->cacheinfo.c_hwflush = 0;
-		sc->cacheinfo.c_linesize = 32;
-		sc->cacheinfo.c_l2linesize = 5;
-		sc->cacheinfo.c_split = 0;
-		sc->cacheinfo.c_nlines =
-			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
+		ci->c_vactype = VAC_WRITEBACK;
+		ci->c_totalsize = 128 * 1024;
+		ci->c_hwflush = 0;
+		ci->c_linesize = 32;
+		ci->c_l2linesize = 5;
+		ci->c_split = 0;
+		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
 		break;
 	}
 }
@@ -510,6 +505,7 @@ getcacheinfo_sun4c(sc, node)
 	struct cpu_softc *sc;
 	int node;
 {
+	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
 
 	if (node == 0)
@@ -517,26 +513,26 @@ getcacheinfo_sun4c(sc, node)
 		return;
 
 	/* Sun4c's have only virtually-addressed caches */
-	sc->cacheinfo.c_physical = 0; 
-	sc->cacheinfo.c_totalsize = getpropint(node, "vac-size", 65536);
+	ci->c_physical = 0; 
+	ci->c_totalsize = getpropint(node, "vac-size", 65536);
 	/*
 	 * Note: vac-hwflush is spelled with an underscore
 	 * on the 4/75s.
 	 */
-	sc->cacheinfo.c_hwflush =
+	ci->c_hwflush =
 		getpropint(node, "vac_hwflush", 0) |
 		getpropint(node, "vac-hwflush", 0);
 
-	sc->cacheinfo.c_linesize = l = getpropint(node, "vac-linesize", 16);
+	ci->c_linesize = l = getpropint(node, "vac-linesize", 16);
 	for (i = 0; (1 << i) < l; i++)
 		/* void */;
 	if ((1 << i) != l)
 		panic("bad cache line size %d", l);
-	sc->cacheinfo.c_l2linesize = i;
-	sc->cacheinfo.c_associativity = 1;
-	sc->cacheinfo.c_nlines = sc->cacheinfo.c_totalsize << i;
+	ci->c_l2linesize = i;
+	ci->c_associativity = 1;
+	ci->c_nlines = ci->c_totalsize << i;
 
-	sc->cacheinfo.c_vactype = VAC_WRITETHROUGH;
+	ci->c_vactype = VAC_WRITETHROUGH;
 
 	/*
 	 * Machines with "buserr-type" 1 have a bug in the cache
@@ -562,9 +558,10 @@ sun4_hotfix(sc)
 #if defined(SUN4M)
 void
 getcacheinfo_obp(sc, node)
-	struct cpu_softc *sc;
+	struct	cpu_softc *sc;
 	int	node;
 {
+	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
 
 	if (node == 0)
@@ -574,94 +571,79 @@ getcacheinfo_obp(sc, node)
 	/*
 	 * Determine the Sun4m cache organization
 	 */
-
-	sc->cacheinfo.c_physical = node_has_property(node, "cache-physical?");
-	if (sc->cacheinfo.c_physical == 0 &&
-	    sc->cacheinfo.c_vactype == VAC_NONE)
-		sc->cacheinfo.c_vactype = VAC_WRITETHROUGH; /*???*/
+	ci->c_physical = node_has_property(node, "cache-physical?");
+	if (ci->c_physical == 0 &&
+	    ci->c_vactype == VAC_NONE)
+		ci->c_vactype = VAC_WRITETHROUGH; /*???*/
 
 	if (getpropint(node, "ncaches", 1) == 2)
-		sc->cacheinfo.c_split = 1;
+		ci->c_split = 1;
 	else
-		sc->cacheinfo.c_split = 0;
+		ci->c_split = 0;
 
 	/* hwflush is used only by sun4/4c code */
-	sc->cacheinfo.c_hwflush = 0; 
+	ci->c_hwflush = 0; 
 
 	if (node_has_property(node, "icache-nlines") &&
 	    node_has_property(node, "dcache-nlines") &&
-	    sc->cacheinfo.c_split) {
+	    ci->c_split) {
 		/* Harvard architecture: get I and D cache sizes */
-		sc->cacheinfo.ic_nlines = getpropint(node, "icache-nlines", 0);
-		sc->cacheinfo.ic_linesize = l =
+		ci->ic_nlines = getpropint(node, "icache-nlines", 0);
+		ci->ic_linesize = l =
 			getpropint(node, "icache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad icache line size %d", l);
-		sc->cacheinfo.ic_l2linesize = i;
-		sc->cacheinfo.ic_associativity =
+		ci->ic_l2linesize = i;
+		ci->ic_associativity =
 			getpropint(node, "icache-associativity", 1);
-		sc->cacheinfo.ic_totalsize = l *
-			sc->cacheinfo.ic_nlines *
-			sc->cacheinfo.ic_associativity;
+		ci->ic_totalsize = l * ci->ic_nlines * ci->ic_associativity;
 	
-		sc->cacheinfo.dc_nlines = getpropint(node, "dcache-nlines", 0);
-		sc->cacheinfo.dc_linesize = l =
+		ci->dc_nlines = getpropint(node, "dcache-nlines", 0);
+		ci->dc_linesize = l =
 			getpropint(node, "dcache-line-size",0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad dcache line size %d", l);
-		sc->cacheinfo.dc_l2linesize = i;
-		sc->cacheinfo.dc_associativity =
+		ci->dc_l2linesize = i;
+		ci->dc_associativity =
 			getpropint(node, "dcache-associativity", 1);
-		sc->cacheinfo.dc_totalsize = l *
-			sc->cacheinfo.dc_nlines *
-			sc->cacheinfo.dc_associativity;
+		ci->dc_totalsize = l * ci->dc_nlines * ci->dc_associativity;
 
-		sc->cacheinfo.c_l2linesize =
-			min(sc->cacheinfo.ic_l2linesize,
-			    sc->cacheinfo.dc_l2linesize);
-		sc->cacheinfo.c_linesize =
-			min(sc->cacheinfo.ic_linesize,
-			    sc->cacheinfo.dc_linesize);
-		sc->cacheinfo.c_totalsize =
-			sc->cacheinfo.ic_totalsize +
-			sc->cacheinfo.dc_totalsize;
+		ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
+		ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
+		ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
 	} else {
 		/* unified I/D cache */
-		sc->cacheinfo.c_nlines = getpropint(node, "cache-nlines", 128);
-		sc->cacheinfo.c_linesize = l = 
+		ci->c_nlines = getpropint(node, "cache-nlines", 128);
+		ci->c_linesize = l = 
 			getpropint(node, "cache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad cache line size %d", l);
-		sc->cacheinfo.c_l2linesize = i;
-		sc->cacheinfo.c_totalsize = l *
-			sc->cacheinfo.c_nlines *
+		ci->c_l2linesize = i;
+		ci->c_totalsize = l *
+			ci->c_nlines *
 			getpropint(node, "cache-associativity", 1);
 	}
 	
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
-		sc->cacheinfo.ec_nlines =
-			getpropint(node, "ecache-nlines", 32768);
-		sc->cacheinfo.ec_linesize = l =
-			getpropint(node, "ecache-line-size", 0);
+		ci->ec_nlines = getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
-		sc->cacheinfo.ec_l2linesize = i;
-		sc->cacheinfo.ec_associativity =
+		ci->ec_l2linesize = i;
+		ci->ec_associativity =
 			getpropint(node, "ecache-associativity", 1);
-		sc->cacheinfo.ec_totalsize = l *
-			sc->cacheinfo.ec_nlines *
-			sc->cacheinfo.ec_associativity;
+		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
 	}
-	if (sc->cacheinfo.c_totalsize == 0)
+	if (ci->c_totalsize == 0)
 		printf("warning: couldn't identify cache\n");
 }
 
@@ -823,14 +805,8 @@ viking_mmu_enable()
 {
 	int pcr;
 
-	/*
-	 * Before enabling the MMU, flush the data cache so the
-	 * in-memory MMU page tables are up-to-date.
-	 */
-	sta(0x80000000, ASI_DCACHECLR, 0);      /* Unlock */
-	sta(0, ASI_DCACHECLR, 0);
-
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
 	if (cpuinfo.mxcc)
 		pcr |= VIKING_PCR_TC;
 	else
@@ -1064,7 +1040,7 @@ getcpuinfo(sc, node)
 				 * Try to find it in the OpenPROM root...
 				 */     
 				sc->hz = getpropint(findroot(),
-							"clock-frequency", 0);
+						    "clock-frequency", 0);
 			}
 		}
 
