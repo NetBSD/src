@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.33 2003/04/02 10:39:47 fvdl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.34 2003/04/02 22:50:52 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.33 2003/04/02 10:39:47 fvdl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.34 2003/04/02 22:50:52 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,8 +191,8 @@ found:
 		afs.fs_old_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	t = afs.fs_time;
-	printf("location%lld\tmagic\t%x\ttime\t%s", sblock_try[i], afs.fs_magic,
-	    ctime(&t));
+	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock_try[i],
+	    afs.fs_magic, ctime(&t));
 	i = 0;
 	if (printold && afs.fs_old_postblformat != FS_42POSTBLFMT) {
 		i++;
@@ -217,7 +217,7 @@ found:
 	    (long long)afs.fs_cstotal.cs_nifree,
 	    (long long)afs.fs_cstotal.cs_nffree);
 	printf("ncg\t%d\tsize\t%lld\tblocks\t%lld\n",
-	    afs.fs_ncg, afs.fs_size, afs.fs_dsize);
+	    afs.fs_ncg, (long long)afs.fs_size, (long long)afs.fs_dsize);
 	if (printold)
 		printf("ncyl\t%d\n", afs.fs_old_ncyl);
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
