@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.5 1994/07/03 09:52:21 mycroft Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.5.2.1 1994/08/19 11:37:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -226,6 +226,7 @@ isofntrans(infn, infnlen, outfn, outfnlen, original, assoc)
 	if (assoc) {
 		*outfn++ = ASSOCCHAR;
 		fnidx++;
+		infnlen++;
 	}
 	for (; fnidx < infnlen; fnidx++) {
 		char c = *infn++;
