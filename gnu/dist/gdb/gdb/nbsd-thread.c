@@ -268,7 +268,7 @@ nbsd_thread_resume (ptid_t ptid, int step, enum target_signal signo)
      list. */
   if (GET_PID (ptid) != -1)
     {
-      int i, val;
+      int val;
 
       val = td_thr_iter (main_ta, thread_resume_suspend_cb, &ptid);
       if (val != 0)
@@ -303,7 +303,7 @@ nbsd_thread_unsuspend(void)
 static ptid_t
 find_active_thread (void)
 {
-  int val, lwp;
+  int val;
   td_thread_t *thread;
   td_thread_info_t ti;
   struct ptrace_lwpinfo pl;
@@ -487,7 +487,6 @@ nbsd_pid_to_str (ptid_t ptid)
 {
   static char buf[100];
   td_thread_t *th;
-  int retval;
   char name[32];
 
   if ((GET_THREAD(ptid) == 0) &&
@@ -818,8 +817,6 @@ nbsd_thread_examine_all_cmd (char *args, int from_tty)
 static void
 nbsd_thread_examine_cmd (char *exp, int from_tty)
 {
-  struct expression *expr;
-  struct value *val;
   CORE_ADDR addr;
   td_thread_t *th;
   int ret;
@@ -850,8 +847,6 @@ nbsd_thread_examine_cmd (char *exp, int from_tty)
 static void
 nbsd_thread_sync_cmd (char *exp, int from_tty)
 {
-  struct expression *expr;
-  struct value *val;
   CORE_ADDR addr;
   td_sync_t *ts;
   td_sync_info_t tsi;
@@ -982,8 +977,6 @@ static void
 nbsd_core_open (char *filename, int from_tty)
 {
   int val;
-  td_thread_t *thread;
-  td_thread_info_t ti;
 
   nbsd_thread_core = 1;
 
