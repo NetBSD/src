@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.43 2003/01/18 09:18:06 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.44 2003/02/03 22:27:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.43 2003/01/18 09:18:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.44 2003/02/03 22:27:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,12 +112,11 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 			return (0);
 	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
-	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0) {
+	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
 		lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 		return (error);
 	}
-	vp = *vpp;
 
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
@@ -151,8 +150,11 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
 			struct file *fp;
 			struct vnode *vxp;
+
+			/* XXX can procfs_getfp() ever fail here? */
 			if ((error = procfs_getfp(pfs, &fp)) != 0)
-				return error;
+				goto bad;
+
 			pfs->pfs_mode = S_IRUSR|S_IWUSR;
 			switch (fp->f_type) {
 			case DTYPE_VNODE:
@@ -167,7 +169,8 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			case DTYPE_KQUEUE:
 			case DTYPE_MISC:
-				return EOPNOTSUPP;
+				error = EOPNOTSUPP;
+				goto bad;
 			default:
 				panic("unknown file type %d\n", fp->f_type);
 			}
@@ -213,6 +216,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	uvm_vnp_setsize(vp, 0);
 	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 
+	*vpp = vp;
+	return (0);
+
+ bad:
+	FREE(pfs, M_TEMP);
+	ungetnewvnode(vp);
 	return (error);
 }
 
