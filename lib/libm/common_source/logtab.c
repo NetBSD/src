@@ -33,13 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: logtab.c,v 1.1 1993/08/14 19:21:41 mycroft Exp $";
+static char rcsid[] = "$Id: logtab.c,v 1.2 1993/08/14 19:31:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <math.h>
 #include <errno.h>
 
-#include "mathimpl.h"
 #include "log.h"
 
 /* Table-driven natural logarithm.

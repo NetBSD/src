@@ -29,12 +29,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)log.c	5.10 (Berkeley) 1/10/93
+ *	$Id: log.h,v 1.2 1993/08/14 19:31:26 mycroft Exp $
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: log.h,v 1.1 1993/08/14 19:21:39 mycroft Exp $";
-#endif /* not lint */
 
 #include <math.h>
 #include <errno.h>
