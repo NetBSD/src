@@ -1,4 +1,4 @@
-.\"	$NetBSD: date.1,v 1.30 2002/02/08 01:21:56 ross Exp $
+.\"	$NetBSD: date.1,v 1.31 2002/09/25 15:18:38 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,8 +98,8 @@ The format string may contain any of the conversion specifications described
 in the
 .Xr strftime 3
 manual page, as well as any arbitrary text.
-A \*[Lt]newline\*[Gt] character is always output after the characters specified by
-the format string.
+A \*[Lt]newline\*[Gt] character is always output after the characters
+specified by the format string.
 The format string for the default display is:
 .Bd -literal -offset indent
 %a %b %e %H:%M:%S %Z %Y
@@ -113,7 +113,8 @@ The canonical representation for setting the date and time is:
 .It Ar cc
 The first two digits of the year (the century).
 .It Ar yy
-The second two digits of the year.  If
+The second two digits of the year.
+If
 .Ar yy
 is specified, but
 .Ar cc
@@ -121,7 +122,8 @@ is not, a value for
 .Ar yy
 between 69 and 99 results in a
 .Ar cc
-value of 19.  Otherwise, a
+value of 19.
+Otherwise, a
 .Ar cc
 value of 20 is used.
 .It Ar mm

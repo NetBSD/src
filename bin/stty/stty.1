@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.24 2002/02/08 01:22:01 ross Exp $
+.\"	$NetBSD: stty.1,v 1.25 2002/09/25 15:18:43 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,8 +74,8 @@ in the traditional
 .It Fl f
 Open and use the terminal named by
 .Ar file
-rather than using standard input.  The file is opened
-using the
+rather than using standard input.
+The file is opened using the
 .Dv O_NONBLOCK
 flag of
 .Fn open ,
@@ -94,7 +94,8 @@ The following arguments are available to set the terminal
 characteristics:
 .Ss Control Modes
 Control mode flags affect hardware characteristics associated with the
-terminal.  This corresponds to the c_cflag in the termios structure.
+terminal.
+This corresponds to the c_cflag in the termios structure.
 .Bl -tag -width Fl
 .It Cm parenb Pq Fl parenb
 Enable (disable) parity generation
@@ -216,11 +217,13 @@ to restart output.
 .It Cm imaxbel Pq Fl imaxbel
 The system imposes a limit of
 .Dv MAX_INPUT
-(currently 255) characters in the input queue.  If
+(currently 255) characters in the input queue.
+If
 .Cm imaxbel
 is set and the input queue limit has been reached,
 subsequent input causes the system to send an ASCII BEL
-character to the output queue (the terminal beeps at you).  Otherwise,
+character to the output queue (the terminal beeps at you).
+Otherwise,
 if
 .Cm imaxbel
 is unset and the input queue is full, the next input character causes
@@ -321,19 +324,21 @@ is disabled.
 .It Cm echoctl Pq Fl echoctl
 If
 .Cm echoctl
-is set, echo control characters as ^X.  Otherwise control characters
-echo as themselves.
+is set, echo control characters as ^X.
+Otherwise control characters echo as themselves.
 .It Cm echoprt Pq Fl echoprt
-For printing terminals. If set, echo erased characters backwards within ``\\''
-and ``/''.  Otherwise, disable this feature.
+For printing terminals.
+If set, echo erased characters backwards within ``\\''
+and ``/''.
+Otherwise, disable this feature.
 .It Cm noflsh Pq Fl noflsh
 Disable (enable) flush after
 .Dv INTR , QUIT , SUSP .
 .It Cm tostop Pq Fl tostop
 Send (do not send)
 .Dv SIGTTOU
-for background output.  This causes background jobs to stop if they attempt
-terminal output.
+for background output.
+This causes background jobs to stop if they attempt terminal output.
 .It Cm altwerase Pq Fl altwerase
 Use (do not use) an alternative word erase algorithm when processing
 .Dv WERASE
@@ -346,9 +351,9 @@ erased with simply an
 .Dv ERASE
 character.)
 .It Cm mdmbuf Pq Fl mdmbuf
-If set, flow control output based on condition of Carrier Detect.  Otherwise
-writes return an error if Carrier Detect is low (and Carrier is not being
-ignored with the
+If set, flow control output based on condition of Carrier Detect.
+Otherwise writes return an error if Carrier Detect is low (and Carrier
+is not being ignored with the
 .Dv CLOCAL
 flag.)
 .It Cm flusho Pq Fl flusho
@@ -411,14 +416,12 @@ Non-Canonical mode input processing
 .Ss Combination Modes
 .Bl -tag -width Fl
 .It Ar saved settings
-Set the current terminal
-characteristics to the saved settings
+Set the current terminal characteristics to the saved settings
 produced by the
 .Fl g
 option.
 .It Cm evenp No or Cm parity
-Enable parenb and cs7; disable
-parodd.
+Enable parenb and cs7; disable parodd.
 .It Cm oddp
 Enable parenb, cs7, and parodd.
 .It Fl parity , evenp ,  oddp
@@ -432,8 +435,7 @@ Reset
 .Dv ERASE
 and
 .Dv KILL
-characters
-back to system defaults.
+characters back to system defaults.
 .It Cm sane
 Resets all modes to reasonable values for interactive terminal use.
 .It Cm tty
@@ -445,7 +447,8 @@ Set (disable) all modes suitable for a CRT display device.
 Enable (disable) the system generated status line associated with
 processing a
 .Dv STATUS
-character (usually set to ^T).  The status line consists of the
+character (usually set to ^T).
+The status line consists of the
 system load average, the current command name, its process ID, the
 event the process is waiting on (or the status of the process), the user
 and system times, percent cpu, and current memory usage.
@@ -477,9 +480,10 @@ performed by either the terminal hardware or by the remote side connected
 to a pty.
 .It Cm raw Pq Fl raw
 If set, change the modes of the terminal so that no input or output processing
-is performed. If unset, change the modes of the terminal to some reasonable
-state that performs input and output processing.  Note that since the
-terminal driver no longer has a single
+is performed.
+If unset, change the modes of the terminal to some reasonable
+state that performs input and output processing.
+Note that since the terminal driver no longer has a single
 .Dv RAW
 bit, it is not possible to intuit what flags were set prior to setting
 .Cm raw .
@@ -595,7 +599,8 @@ The
 .Nm
 utility is expected to be
 .St -p1003.2
-compatible.  The flags
+compatible.
+The flags
 .Fl e
 and
 .Fl f

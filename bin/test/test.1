@@ -1,4 +1,4 @@
-.\"	$NetBSD: test.1,v 1.17 2002/02/08 01:22:01 ross Exp $
+.\"	$NetBSD: test.1,v 1.18 2002/09/25 15:18:44 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,7 +154,8 @@ True if
 .Ar file
 exists and is a symbolic link.
 This operator is retained for compatibility with previous versions of
-this program. Do not rely on its existence; use
+this program.
+Do not rely on its existence; use
 .Fl h
 instead.
 .It Fl O Ar file
@@ -284,13 +285,13 @@ operator.
 .Sh GRAMMAR AMBIGUITY
 The
 .Nm test
-grammar is inherently ambiguous.  In order to assure a degree of consistency,
-the cases described in
+grammar is inherently ambiguous.
+In order to assure a degree of consistency, the cases described in
 .St -p1003.2
 section 4.62.4,
 are evaluated consistently according to the rules specified in the
-standards document.  All other cases are subject to the ambiguity in the
-command semantics.
+standards document.
+All other cases are subject to the ambiguity in the command semantics.
 .Sh EXIT STATUS
 The
 .Nm test

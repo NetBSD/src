@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.27 2002/07/03 01:27:23 enami Exp $
+.\"	$NetBSD: cat.1,v 1.28 2002/09/25 15:18:36 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,7 +85,8 @@ This lock is set using
 .Xr fcntl 2
 with the
 .Dv F_SETLKW
-command. If the output file is already locked,
+command.
+If the output file is already locked,
 .Nm
 will block until the lock is acquired.
 .It Fl n

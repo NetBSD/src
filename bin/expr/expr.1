@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.20 2002/02/19 21:14:45 pooka Exp $
+.\"	$NetBSD: expr.1,v 1.21 2002/09/25 15:18:39 wiz Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -55,7 +55,8 @@ operator matches
 .Ar expr1
 against
 .Ar expr2 ,
-which must be a regular expression.  The regular expression is anchored
+which must be a regular expression.
+The regular expression is anchored
 to the beginning of  the string with an implicit
 .Dq ^ .
 .Pp
@@ -142,7 +143,8 @@ by
 This implementation of
 .Nm
 internally uses 64 bit represenation of integers and checks for
-over- and underflows. It also treats / (division mark) and
+over- and underflows.
+It also treats / (division mark) and
 option '--' correctly depending upon context.
 .Pp
 .Nm
@@ -150,7 +152,8 @@ on other systems (including
 .Nx
 up to and including
 .Nx 1.5 )
-might be not so graceful. Arithmetic results might be arbitrarily
+might be not so graceful.
+Arithmetic results might be arbitrarily
 limited on such systems, most commonly to 32 bit quantities.
 This means such
 .Nm
@@ -179,7 +182,8 @@ Some
 .Nm
 implementations don't recognize it at all, others
 might ignore it even in cases where doing so results in syntax
-error. There should be same result for both following examples,
+error.
+There should be same result for both following examples,
 but it might not always be:
 .Bl -enum -compact -offset indent
 .It
