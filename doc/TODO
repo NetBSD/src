@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.9 2003/09/05 14:52:26 simonb Exp $
+#	$NetBSD: TODO,v 1.10 2003/09/24 06:27:54 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -65,7 +65,6 @@ This is a list of suggested smaller projects (in no particular order):
 + autoconf version of nawk, for use in non-NetBSD pkgsrc
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
   any memory leakage
-+ someone investigate time taken to boot
 + implement POSIX async IO
 + help in implementing various things in pkgsrc
 + simplify some of the quirks in our build system
