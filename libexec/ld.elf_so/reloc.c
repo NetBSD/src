@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.22 1999/10/28 23:58:21 simonb Exp $	 */
+/*	$NetBSD: reloc.c,v 1.23 1999/11/07 00:21:13 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -150,7 +150,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 #ifndef __sparc__
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
-	const Obj_Entry *obj;
+	Obj_Entry *obj;
 	const Elf_RelA *rela;
 	bool dodebug;
 {
@@ -378,7 +378,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
-	const Obj_Entry *obj;
+	Obj_Entry *obj;
 	const Elf_RelA *rela;
 	caddr_t *addrp;
 	bool bind_now;
@@ -435,7 +435,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 caddr_t
 _rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
+	Obj_Entry *obj;
 	Elf_Word reloff;
 {
 	const Elf_RelA *rela;

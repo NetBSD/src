@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.5 1999/10/25 13:57:12 kleink Exp $	 */
+/*	$NetBSD: headers.c,v 1.6 1999/11/07 00:21:12 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -258,11 +258,12 @@ _rtld_digest_phdr(phdr, phnum, entry)
 	int phnum;
 	caddr_t entry;
 {
-	Obj_Entry      *obj = CNEW(Obj_Entry);
+	Obj_Entry      *obj;
 	const Elf_Phdr *phlimit = phdr + phnum;
 	const Elf_Phdr *ph;
 	int             nsegs = 0;
 
+	obj = _rtld_obj_new();
 	for (ph = phdr; ph < phlimit; ++ph) {
 		switch (ph->p_type) {
 
@@ -270,6 +271,10 @@ _rtld_digest_phdr(phdr, phnum, entry)
 			assert((const Elf_Phdr *) ph->p_vaddr == phdr);
 			obj->phdr = (const Elf_Phdr *) ph->p_vaddr;
 			obj->phsize = ph->p_memsz;
+			break;
+
+		case PT_INTERP:
+			obj->interp = (const char *) ph->p_vaddr;
 			break;
 
 		case PT_LOAD:
