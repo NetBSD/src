@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.43 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.44 1999/09/02 18:11:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -748,53 +748,56 @@ uhci_remove_bulk(sc, sqh)
 }
 
 int
-uhci_intr(p)
-	void *p;
+uhci_intr(arg)
+	void *arg;
 {
-	uhci_softc_t *sc = p;
-	int status, ret;
+	uhci_softc_t *sc = arg;
+	int status;
+	int ack;
 	uhci_intr_info_t *ii;
 
 	sc->sc_intrs++;
+
 #if defined(USB_DEBUG)
-	if (uhcidebug > 9) {
-		printf("uhci_intr %p\n", sc);
+	if (uhcidebug > 15) {
+		DPRINTF(("%s: uhci_intr\n", USBDEVNAME(sc->sc_bus.bdev)));
 		uhci_dumpregs(sc);
 	}
 #endif
-	status = UREAD2(sc, UHCI_STS);
-#if defined(DIAGNOSTIC) && !defined(__OpenBSD__)
+
+#if defined(DIAGNOSTIC) && defined(__NetBSD__)
 	if (sc->sc_suspend != PWR_RESUME)
 		printf("uhci_intr: suspended sts=0x%x\n", status);
 #endif
-	ret = 0;
-	if (status & UHCI_STS_USBINT) {
-		UWRITE2(sc, UHCI_STS, UHCI_STS_USBINT); /* acknowledge */
-		ret = 1;
-	}
-	if (status & UHCI_STS_USBEI) {
-		UWRITE2(sc, UHCI_STS, UHCI_STS_USBEI); /* acknowledge */
-		ret = 1;
-	}
+
+	status = UREAD2(sc, UHCI_STS);
+	ack = 0;
+	if (status & UHCI_STS_USBINT)
+		ack |= UHCI_STS_USBINT;
+	if (status & UHCI_STS_USBEI)
+		ack |= UHCI_STS_USBEI;
 	if (status & UHCI_STS_RD) {
-		UWRITE2(sc, UHCI_STS, UHCI_STS_RD); /* acknowledge */
-		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
-		ret = 1;
+		ack |= UHCI_STS_RD;
+		printf("%s: resume detect\n",
+			USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HSE) {
-		UWRITE2(sc, UHCI_STS, UHCI_STS_HSE); /* acknowledge */
-		printf("%s: Host System Error\n", USBDEVNAME(sc->sc_bus.bdev));
-		ret = 1;
+		ack |= UHCI_STS_HSE;
+		printf("%s: host controller process error\n", USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HCPE) {
-		UWRITE2(sc, UHCI_STS, UHCI_STS_HCPE); /* acknowledge */
-		printf("%s: Host System Error\n", USBDEVNAME(sc->sc_bus.bdev));
-		ret = 1;
+		ack |= UHCI_STS_HCPE;
+		printf("%s: host system error\n", USBDEVNAME(sc->sc_bus.bdev));
 	}
-	if (status & UHCI_STS_HCH)
-		printf("%s: controller halted\n", USBDEVNAME(sc->sc_bus.bdev));
-	if (!ret)
-		return 0;
+	if (status & UHCI_STS_HCH) {
+		/* no acknowledge needed */
+		printf("%s: host controller halted\n", USBDEVNAME(sc->sc_bus.bdev));
+	}
+
+	if (ack)	/* acknowledge the ints */
+		UWRITE2(sc, UHCI_STS, ack);
+	else	/* nothing to acknowledge */
+		return (0);
 
 	/*
 	 * Interrupts on UHCI really suck.  When the host controller
@@ -811,7 +814,8 @@ uhci_intr(p)
 		uhci_check_intr(sc, ii);
 
 	DPRINTFN(10, ("uhci_intr: exit\n"));
-	return 1;
+
+	return (1);
 }
 
 /* Check for an interrupt. */
