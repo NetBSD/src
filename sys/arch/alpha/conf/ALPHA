@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.191 2004/02/13 10:05:49 wiz Exp $
+# $NetBSD: ALPHA,v 1.192 2004/04/29 07:13:03 fair Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.191 $"
+ident		"ALPHA-$Revision: 1.192 $"
 
 maxusers 32
 
@@ -452,21 +452,7 @@ com*	at puc? port ?			# 16x50s on "universal" comm boards
 lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # SCSI bus support
-scsibus* at	adv?
-scsibus* at	adw?
-scsibus* at	aha?
-scsibus* at	ahb?
-scsibus* at	ahc?
-scsibus* at	aic?
-scsibus* at	asc?
-scsibus* at	bha?
-scsibus* at	dpt?
-scsibus* at	iha?
-scsibus* at	isp?
-scsibus* at	siop?
-scsibus* at	esiop?
-scsibus* at	pcscp?
-scsibus* at	uha?
+scsibus* at	scsi?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
