@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.9 1998/02/25 21:41:55 perry Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.9.8.1 1999/04/30 15:08:57 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,13 +29,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 1998/02/25 21:41:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.8.1 1999/04/30 15:08:57 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <machine/sysarch.h>
 
 int
 sys_sysarch(p, v, retval)
@@ -43,12 +44,22 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
 	} */ *uap = v;
-#endif
+	int error = 0;
 
-	return (ENOSYS);
+	switch(SCARG(uap, op)) {
+	    case ALPHA_FPGETMASK:
+	    case ALPHA_FPSETMASK:
+	    case ALPHA_FPSETSTICKY:
+		/* XXX kernel Magick required here */
+		break;
+	    default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
 }
