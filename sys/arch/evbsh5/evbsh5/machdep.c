@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2002/10/04 09:24:53 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2002/10/05 11:01:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -354,6 +354,13 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 void
 cpu_reboot(int how, char *bootstr)
 {
+
+	sh5_reboot(how, bootstr);
+
+#if NSYSFPGA > 0
+	sysfpga_sreset();
+#endif
+
 	for (;;)
 		;
 }
