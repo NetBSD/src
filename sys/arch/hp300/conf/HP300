@@ -1,3 +1,4 @@
+#	@(#)HP300	8.2 (Berkeley) 4/22/94
 #
 # PICASSO (HP300)
 #
@@ -8,35 +9,38 @@ cpu		"HP340"
 cpu		"HP350"
 cpu		"HP360"
 cpu		"HP370"
+cpu		"HP380"
 ident		PICASSO
 
 timezone	8 dst
 maxusers	16
 
 # Standard options
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		FFS
 options		QUOTA
-options		INET
-options		MFS,NFS,FIFO
+options		INET,MULTICAST,MROUTING
+options		FFS,MFS,NFSCLIENT,NFSSERVER,LFS,FIFO
+options		PROCFS,UNION,KERNFS,FDESC,PORTAL,NULLFS,UMAPFS
+options		"CD9660"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		CLUSTERED_PAGEOUT
 
 # Options for all HP machines
-#options		SYSVSHM
-options		COMPAT_HPUX
+options		SYSVSHM
+options		COMPAT_HPUX,COMPAT_OHPUX
+options		COMPAT_NOLABEL
+options		MAPPEDCOPY
 
 # Options specific to this host.
 options		DEBUG,DIAGNOSTIC
 options		PANICBUTTON
 options		KTRACE
-options		"BUFPAGES=900"
-options		"NKMEMCLUSTERS=256"
-options		"HILVID=1"
-options		PROFTIMER,"PRF_INTERVAL=500"
-#options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
+options		"NKMEMCLUSTERS=512"
+options		KGDB,"KGDBDEV=15*256+0","KGDBRATE=19200"
+options		HPFPLIB
 
-config		netbsd root on sd0 swap on sd0d and rd0d
+config		netbsd root on sd0 swap on sd0b and rd0b
 config		vgnetbsd root on sd0 swap on sd0d and sd1d and sd2d
 config		rdnetbsd root on rd0 swap on rd0b and rd1b
 config		gennetbsd swap generic
@@ -73,7 +77,7 @@ device		le0	at scode?
 device		le1	at scode?
 device		dca0	at scode9 flags 1
 device		dcm0	at scode? flags 0xe
-device		dcm1	at scode? flags 0xe
+device		dcm1	at scode? flags 0x0
 device		dcm2	at scode? flags 0xe
 device		dcm3	at scode? flags 0xe
 
@@ -83,9 +87,7 @@ device		grf2	at scode?
 
 pseudo-device	sl	4
 pseudo-device	bpfilter 16
-pseudo-device	ite
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-
-pseudo-device	vn	4
+pseudo-device	ite
