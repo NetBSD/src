@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.71 2000/05/02 07:22:26 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.72 2000/05/02 07:23:56 augustss Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	64
 
@@ -157,8 +157,8 @@ mcclock* at	ibus0 addr ?		# DS1287 RTC
 dc*	at	ibus0 addr ?		# DC7085 quad line serial device
 
 # TURBOchannel devices
-bba*	at	tc? slot ? offset ?	# ??? Am7930 at Maxine
-audio*	at	bba?
+#bba*	at	tc? slot ? offset ?	# ??? Am7930 at MAXINE
+#audio*	at	bba?
 mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
 #tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
