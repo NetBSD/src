@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: ffs.S,v 1.5 2001/05/13 20:02:13 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.4 2000/07/18 22:39:25 eeh Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.5 2001/05/13 20:02:13 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,6 @@ ENTRY(ffs)
  */
 ENTRY(ffs)
 #ifdef PIC
-	PIC_PROLOGUE(%o1, %o2)
 	PICCY_SET(_C_LABEL(__ffstab), %o2, %o3)
 #else
 	set	_C_LABEL(__ffstab), %o2
