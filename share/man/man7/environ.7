@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.17 2003/05/26 10:18:41 lukem Exp $
+.\"	$NetBSD: environ.7,v 1.18 2003/07/20 08:13:52 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd May 26, 2003
+.Dd July 20, 2003
 .Dt ENVIRON 7
 .Os
 .Sh NAME
@@ -94,6 +94,42 @@ A user's login directory, set by
 .Xr login 1
 from the password file
 .Xr passwd 5 .
+.It Ev LANG
+Default for all NLS categories.
+Only used if
+.Ev LC_ALL
+or the environment variable for a particular NLS category
+is not provided
+.Ev ( LC_COLLATE ,
+.Ev LC_CTYPE ,
+.Ev LC_MESSAGES ,
+.Ev LC_MONETARY ,
+.Ev LC_NUMERIC ,
+or
+.Ev LC_TIME ) .
+.It Ev LC_ALL
+Override for all NLS categories.
+If set, overrides the values of
+.Ev LC_COLLATE ,
+.Ev LC_CTYPE ,
+.Ev LC_MESSAGES ,
+.Ev LC_MONETARY ,
+.Ev LC_NUMERIC ,
+and
+.Ev LC_TIME .
+.It Ev LC_COLLATE
+NLS string-collation order information.
+.It Ev LC_CTYPE
+NLS character classification, case conversion, and other character attributes.
+.It Ev LC_MESSAGES
+NLS format for affirmative and negative responses.
+.It Ev LC_MONETARY
+NLS rules and symbols for formatting monetary numeric information.
+.It Ev LC_NUMERIC
+NLS rules and symbols for formatting nonmonetary numeric information.
+.It Ev LC_TIME
+NLS rules and symbols for formatting time and date information.
+
 .It Ev LIBC_DIAGASSERT
 Control how the
 .Fn _DIAGASSERT
@@ -244,6 +280,7 @@ unless you know what you are doing.
 .Xr termcap 3 ,
 .Xr audio 4 ,
 .Xr termcap 5 ,
+.Xr nls 7 ,
 .Xr dump 8
 .Sh HISTORY
 The
