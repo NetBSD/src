@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.27 2004/08/28 17:37:00 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.28 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.27 2004/08/28 17:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.28 2005/01/02 12:03:12 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -315,26 +315,26 @@ dio_intr_disestablish(void *arg)
 /*
  * DIO specific bus_space(9) support functions.
  */
-static u_int8_t dio_bus_space_read_oddbyte_1(bus_space_tag_t,
+static uint8_t dio_bus_space_read_oddbyte_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t);
 static void dio_bus_space_write_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, u_int8_t);
+    bus_space_handle_t, bus_size_t, uint8_t);
 
 static void dio_bus_space_read_multi_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+    bus_space_handle_t, bus_size_t, uint8_t *, bus_size_t);
 static void dio_bus_space_write_multi_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+    bus_space_handle_t, bus_size_t, const uint8_t *, bus_size_t);
 
 static void dio_bus_space_read_region_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+    bus_space_handle_t, bus_size_t, uint8_t *, bus_size_t);
 static void dio_bus_space_write_region_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+    bus_space_handle_t, bus_size_t, const uint8_t *, bus_size_t);
 
 static void dio_bus_space_set_multi_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+    bus_space_handle_t, bus_size_t, uint8_t, bus_size_t);
 
 static void dio_bus_space_set_region_oddbyte_1(bus_space_tag_t,
-    bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+    bus_space_handle_t, bus_size_t, uint8_t, bus_size_t);
 
 /*
  * dio_set_bus_space_oddbyte():
@@ -360,25 +360,25 @@ dio_set_bus_space_oddbyte(bus_space_tag_t bst)
 	bst->bssr1 = dio_bus_space_set_region_oddbyte_1;
 }
 
-static u_int8_t
+static uint8_t
 dio_bus_space_read_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t offset)
 {
 
-	return *(volatile u_int8_t *)(bsh + (offset << 1) + 1);
+	return *(volatile uint8_t *)(bsh + (offset << 1) + 1);
 }
 
 static void 
 dio_bus_space_write_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, u_int8_t val)
+    bus_size_t offset, uint8_t val)
 {
 
-	*(volatile u_int8_t *)(bsh + (offset << 1) + 1) = val;
+	*(volatile uint8_t *)(bsh + (offset << 1) + 1) = val;
 }
 
 static void
 dio_bus_space_read_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, u_int8_t *addr, bus_size_t len)
+    bus_size_t offset, uint8_t *addr, bus_size_t len)
 {
 
 	__asm __volatile (
@@ -395,7 +395,7 @@ dio_bus_space_read_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static void
 dio_bus_space_write_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, const u_int8_t *addr, bus_size_t len)
+    bus_size_t offset, const uint8_t *addr, bus_size_t len)
 {
 
 	__asm __volatile (
@@ -412,7 +412,7 @@ dio_bus_space_write_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static void
 dio_bus_space_read_region_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, u_int8_t *addr, bus_size_t len)
+    bus_size_t offset, uint8_t *addr, bus_size_t len)
 {
 	__asm __volatile (
 	"	movl	%0,%%a0		;\n"
@@ -429,7 +429,7 @@ dio_bus_space_read_region_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static void
 dio_bus_space_write_region_oddbyte_1(bus_space_tag_t bst,
-    bus_space_handle_t bsh, bus_size_t offset, const u_int8_t *addr,
+    bus_space_handle_t bsh, bus_size_t offset, const uint8_t *addr,
     bus_size_t len)
 {
 
@@ -448,7 +448,7 @@ dio_bus_space_write_region_oddbyte_1(bus_space_tag_t bst,
 
 static void
 dio_bus_space_set_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, u_int8_t val, bus_size_t count)
+    bus_size_t offset, uint8_t val, bus_size_t count)
 {
 	__asm __volatile (
 	"	movl	%0,%%a0		;\n"
@@ -464,7 +464,7 @@ dio_bus_space_set_multi_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static void
 dio_bus_space_set_region_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t offset, u_int8_t val, bus_size_t count)
+    bus_size_t offset, uint8_t val, bus_size_t count)
 {
 
 	__asm __volatile (

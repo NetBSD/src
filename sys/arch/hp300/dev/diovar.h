@@ -1,4 +1,4 @@
-/*	$NetBSD: diovar.h,v 1.10 2004/08/28 17:37:00 thorpej Exp $	*/
+/*	$NetBSD: diovar.h,v 1.11 2005/01/02 12:03:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@ struct dio_attach_args {
 	int	da_addr;		/* device address */
 	int	da_size;		/* size of address space */
 	int	da_ipl;			/* interrupt priority level */
-	u_int8_t da_id;			/* primary device id */
-	u_int8_t da_secid;		/* secondary device id */
+	uint8_t da_id;			/* primary device id */
+	uint8_t da_secid;		/* secondary device id */
 };
 
 /*
@@ -60,8 +60,8 @@ struct dio_attach_args {
  * the size of a DIO device (not all use one select code).
  */
 struct dio_devdata {
-	u_int8_t dd_id;			/* primary device id */
-	u_int8_t dd_secid;		/* secondary device id */
+	uint8_t dd_id;			/* primary device id */
+	uint8_t dd_secid;		/* secondary device id */
 	int	dd_nscode;		/* number of select codes */
 };
 
@@ -70,8 +70,8 @@ struct dio_devdata {
  * a textual description of a device.
  */
 struct dio_devdesc {
-	u_int8_t dd_id;			/* primary device id */
-	u_int8_t dd_secid;		/* secondary device id */
+	uint8_t dd_id;			/* primary device id */
+	uint8_t dd_secid;		/* secondary device id */
 	const char *dd_desc;		/* description */
 };
 
