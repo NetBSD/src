@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.15 2002/05/02 22:47:09 rjs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.15.6.1 2002/10/19 14:04:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.15 2002/05/02 22:47:09 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.15.6.1 2002/10/19 14:04:36 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -225,11 +225,13 @@ undefinedinstruction(trapframe_t *frame)
 	} else
 		fault_code = 0;
 
+	KERNEL_PROC_LOCK(p);
 	/* OK this is were we do something about the instruction. */
 	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
 	    if (uh->uh_handler(fault_pc, fault_instruction, frame,
 			       fault_code) == 0)
 		    break;
+	KERNEL_PROC_UNLOCK(p);
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
@@ -262,7 +264,9 @@ undefinedinstruction(trapframe_t *frame)
 #endif
 		}
 
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, fault_instruction);
+		KERNEL_PROC_UNLOCK(p);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
