@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.3 2000/12/04 07:04:37 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.4 2001/05/07 14:00:22 kleink Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	type = MLD6_LISTENER_QUERY;
-	while ((ch = getopt(argc, argv, "d")) != EOF) {
+	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
 		case 'd':
 			type = MLD6_LISTENER_DONE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvcsif.c,v 1.2 1999/07/11 17:35:07 itojun Exp $	*/
+/*	$NetBSD: pvcsif.c,v 1.3 2001/05/07 14:00:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	strncpy(ifr.ifr_name, argv[1], IFNAMSIZ-1);
 
 	optind = 2;
-	while ((ch = getopt(argc, argv, "s")) != EOF) {
+	while ((ch = getopt(argc, argv, "s")) != -1) {
 		switch (ch) {
 		case 's':
 			shell_mode = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.5 2001/04/06 11:13:51 wiz Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.6 2001/05/07 14:00:22 kleink Exp $	*/
 /*	$KAME: rip6query.c,v 1.9 2000/12/19 23:54:01 itojun Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ main(argc, argv)
 	char pbuf[10];
 	struct addrinfo hints, *res;
 
-	while ((c = getopt(argc, argv, "I:")) != EOF) {
+	while ((c = getopt(argc, argv, "I:")) != -1) {
 		switch (c) {
 		case 'I':
 			ifidx = if_nametoindex(optarg);

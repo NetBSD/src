@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.14 2001/03/21 15:28:29 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.15 2001/05/07 14:00:22 kleink Exp $	*/
 /*	$KAME: ndp.c,v 1.62 2001/03/21 15:26:32 itojun Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ main(argc, argv)
 
 	pid = getpid();
 	thiszone = gmt2local(0);
-	while ((ch = getopt(argc, argv, "acndfIilprstA:HPR")) != EOF)
+	while ((ch = getopt(argc, argv, "acndfIilprstA:HPR")) != -1)
 		switch ((char)ch) {
 		case 'a':
 			aflag = 1;
