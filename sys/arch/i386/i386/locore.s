@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.237 2001/05/16 04:18:52 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.238 2001/05/16 05:01:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -778,91 +778,6 @@ ENTRY(fillw)
 	rep
 	stosw
 	popl	%edi
-	ret
-
-/*
- * XXX Note: bcopyb doesn't seem to be used *anywhere*. Why does it exist?
- * -- Perry Metzger, May 7, 2001
- */
-/*
- * bcopyb(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, one byte at a time.
- */
-/* LINTSTUB: Func: void bcopyb(caddr_t from, caddr_t to, size_t len) */
-ENTRY(bcopyb)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
-/*
- * XXX Note: bcopyw doesn't seem to be used *anywhere*. Why does it exist?
- * -- Perry Metzger, May 7, 2001
- */
-/*
- * bcopyw(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, two bytes at a time.
- */
-/* LINTSTUB: Func: void bcopyw(caddr_t from, caddr_t to, size_t len) */
-ENTRY(bcopyw)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	shrl	$1,%ecx			# copy by 16-bit words
-	rep
-	movsw
-	adc	%ecx,%ecx		# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$1,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 16-bit words
-	shrl	$1,%ecx
-	decl	%esi
-	decl	%edi
-	rep
-	movsw
-	popl	%edi
-	popl	%esi
-	cld
 	ret
 
 /*
