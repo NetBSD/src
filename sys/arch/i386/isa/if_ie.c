@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.3 1994/02/15 20:56:51 mycroft Exp $
+ *	$Id: if_ie.c,v 1.4 1994/02/16 19:04:41 mycroft Exp $
  */
 
 /*
@@ -149,6 +149,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <i386/isa/ic/i82586.h>
 #include <i386/isa/if_ieatt.h>
 #include <i386/isa/if_ie507.h>
+#include <i386/isa/elink.h>
 
 static struct mbuf *last_not_for_us;
 
@@ -197,6 +198,7 @@ enum ie_hardware {
 	IE_STARLAN10,
 	IE_EN100,
 	IE_SLFIBER,
+	IE_3C507,
 	IE_UNKNOWN
 };
 
@@ -204,6 +206,7 @@ const char *ie_hardware_names[] = {
 	"StarLAN 10",
 	"EN100",
 	"StarLAN Fiber",
+	"3C507",
 	"Unknown"
 };
 
@@ -264,7 +267,7 @@ static void sl_chan_attn __P((struct ie_softc *));
 void iereset __P((struct ie_softc *));
 static void ie_readframe __P((struct ie_softc *sc, int bufno));
 static void ie_drop_packet_buffer __P((struct ie_softc *sc));
-static void slel_read_ether __P((struct ie_softc *));
+static void slel_get_address __P((struct ie_softc *));
 static void find_ie_mem_size __P((struct ie_softc *));
 static int command_and_wait __P((struct ie_softc *sc, int command,
     void volatile *pcmd, int));
@@ -388,6 +391,8 @@ sl_probe(isa_dev, sc)
 	
 	default:
 		/* Anything else is not recognized or cannot be used. */
+		printf("%s: unknown AT&T board type code %d\n",
+		    sc->sc_dev.dv_xname, sc->hard_type);
 		return 0;
 	}
 
@@ -398,28 +403,24 @@ sl_probe(isa_dev, sc)
 	 */
 	find_ie_mem_size(sc);
 
-	if (!sc->sc_msize)
-		return 0;
-
-	isa_dev->id_msize = sc->sc_msize;
-
-	switch(sc->hard_type) {
-	case IE_EN100:
-	case IE_STARLAN10:
-	case IE_SLFIBER:
-		break;
-	
-	default:
-		printf("%s: unknown AT&T board type code %d\n",
-		    sc->sc_dev.dv_xname, sc->hard_type);
+	if (!sc->sc_msize) {
+		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
-	
+
+	if (!isa_dev->id_msize)
+		isa_dev->id_msize = sc->sc_msize;
+	else if (isa_dev->id_msize != sc->sc_msize) {
+		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
+		    sc->sc_dev.dv_xname, isa_dev->id_msize, sc->sc_msize);
+		return 0;
+	}
+
 	sc->reset_586 = sl_reset_586;
 	sc->chan_attn = sl_chan_attn;
-	slel_read_ether(sc);
+	slel_get_address(sc);
 
-	return 1;
+	return 16;
 }
 
 int
@@ -427,13 +428,84 @@ el_probe(isa_dev, sc)
 	struct isa_device *isa_dev;
 	struct ie_softc *sc;
 {
-	return 0;
+	u_char c;
+	int i;
+	u_char signature[] = "*3COM*";
+
+	sc->sc_iobase = isa_dev->id_iobase;
+	sc->sc_maddr = isa_dev->id_maddr;
+
+	/* Reset and put card in CONFIG state without changing address. */
+	elink_reset();
+	outb(ELINK_ID_PORT, 0x00);
+	elink_idseq(ELINK_507_POLY);
+	elink_idseq(ELINK_507_POLY);
+	outb(ELINK_ID_PORT, 0xff);
+
+	c = inb(PORT + IE507_MADDR);
+	if (c & 0x20) {
+		printf("%s: can't map 3C507 RAM in high memory\n",
+		    sc->sc_dev.dv_xname);
+		return 0;
+	}
+
+	/* go to RUN state */
+	outb(ELINK_ID_PORT, 0x00);
+	elink_idseq(ELINK_507_POLY);
+	outb(ELINK_ID_PORT, 0x00);
+
+	outb(PORT + IE507_CTRL, EL_CTRL_NRST);
+
+	for (i = 0; i < 6; i++)
+		if (inb(PORT + i) != signature[i])
+			return 0;
+	
+	c = inb(PORT + IE507_IRQ) & 0x0f;
+
+	if (isa_dev->id_irq != (1 << c)) {
+		printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
+		    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1, c);
+		return 0;
+	}
+
+	c = (inb(PORT + IE507_MADDR) & 0x1c) + 0xc0;
+
+	if (kvtop(isa_dev->id_maddr) != ((int)c << 12)) {
+		printf("%s: kernel configured maddr %x doesn't match board configured maddr %x\n",
+		    sc->sc_dev.dv_xname, kvtop(isa_dev->id_maddr),
+		    (int)c << 12);
+		return 0;
+	}
+
+	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
+
+	sc->hard_type = IE_3C507;
+
+	/*
+	 * Divine memory size on-board the card.
+	 */
+	find_ie_mem_size(sc);
+
+	if (!sc->sc_msize) {
+		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
+		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
+		return 0;
+	}
+
+	if (!isa_dev->id_msize)
+		isa_dev->id_msize = sc->sc_msize;
+	else if (isa_dev->id_msize != sc->sc_msize) {
+		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
+		    sc->sc_dev.dv_xname, isa_dev->id_msize, sc->sc_msize);
+		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
+		return 0;
+	}
 
 	sc->reset_586 = el_reset_586;
 	sc->chan_attn = el_chan_attn;
-	slel_read_ether(sc);
+	slel_get_address(sc);
 
-	return 1;
+	return 16;
 }
 
 /*
@@ -1351,9 +1423,10 @@ el_reset_586(sc)
 	struct ie_softc *sc;
 {
 
-	bic(PORT + IE507_CONTROL, EL_CTRL_ONLINE);
-	DELAY(200);
-	bis(PORT + IE507_CONTROL, EL_CTRL_ONLINE);
+	outb(PORT + IE507_CTRL, EL_CTRL_RESET);
+	DELAY(100);
+	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
+	DELAY(100);
 }
 
 void
@@ -1381,7 +1454,7 @@ sl_chan_attn(sc)
 }
 
 void
-slel_read_ether(sc)
+slel_get_address(sc)
 	struct ie_softc *sc;
 {
 	u_char *addr = sc->sc_arpcom.ac_enaddr;
