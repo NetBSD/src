@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.18 1998/05/21 13:06:24 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.19 1998/11/30 22:27:32 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -548,9 +548,15 @@ rxattach(parent, self, aux)
 
 	dl->d_secsize = DEV_BSIZE;
 	dl->d_nsectors = mp->mscp_guse.guse_nspt;
-	dl->d_ntracks = mp->mscp_guse.guse_ngpc;
+	dl->d_ntracks = mp->mscp_guse.guse_ngpc * mp->mscp_guse.guse_group;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
 	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
+#ifdef DEBUG
+	printf("%s: nspt %d group %d ngpc %d rct %d nrpt %d nrct %d\n",
+	    self->dv_xname, mp->mscp_guse.guse_nspt, mp->mscp_guse.guse_group,
+	    mp->mscp_guse.guse_ngpc, mp->mscp_guse.guse_rctsize,
+	    mp->mscp_guse.guse_nrpt, mp->mscp_guse.guse_nrct);
+#endif
 }
 
 /* 
