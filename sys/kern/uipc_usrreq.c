@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.16 1996/02/04 02:18:00 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.17 1996/02/04 20:32:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -350,7 +350,7 @@ unp_attach(so)
 	return (0);
 }
 
-int
+void
 unp_detach(unp)
 	register struct unpcb *unp;
 {
