@@ -1,5 +1,5 @@
-/*	$NetBSD: usb_quirks.c,v 1.41 2002/08/26 21:34:28 uwe Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.42 2003/01/02 04:19:00 imp Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.41 2002/08/26 21:34:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.42 2003/01/02 04:19:00 imp Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
  	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
+ { USB_VENDOR_SANYO, USB_PRODUCT_SANYO_SCP4900,
+ 	0x000, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U,
 						    0x000, { UQ_NO_STRINGS }},
@@ -91,6 +93,7 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_HP, USB_PRODUCT_HP_815C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_810C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_830C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
 
  { 0, 0, 0, { 0 } }
 };
