@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.23 1998/06/05 18:18:37 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.24 1998/06/24 01:20:43 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -71,7 +71,7 @@ struct rpb {
 #define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
 #define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
-#define	ST_DEC_1000A		27		/* "Noritake" (?) */
+#define	ST_DEC_1000A		27		/* "Noritake" (PCI/EISA)*/
 #define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
 #define	ST_DEC_550		30		/* "Miata" (PCI/ISA) */
 #define	ST_DEC_EV56_PBP		32		/* "Takara" (?) */
@@ -203,6 +203,9 @@ struct rpb {
 	u_int64_t	rpb_tbhint[8];		/* 149: TB hint block */
 };
 
+#define	LOCATE_PCS(h,cpunumber) ((struct pcs *)	\
+	((char *)(h) + (h)->rpb_pcs_off + ((cpunumber) * (h)->rpb_pcs_size)))
+
 /*
  * PCS: Per-CPU information.
  */
@@ -258,9 +261,6 @@ struct pcs {
 
 	u_int64_t	pcs_proc_type;		/*  B0: processor type */
 
-#define	PCS_PROC_MAJOR		0x00000000ffffffff
-#define	PCS_PROC_MAJORSHIFT	0
-
 #define	PCS_PROC_EV3		1			/* EV3 */
 #define	PCS_PROC_EV4		2			/* EV4: 21064 */
 #define	PCS_PROC_SIMULATION	3			/* Simulation */
@@ -271,8 +271,8 @@ struct pcs {
 #define	PCS_PROC_EV6		8			/* EV6: 21264 */
 #define	PCS_PROC_PCA56		9			/* PCA256: 21164PC */
 
-#define	PCS_PROC_MINOR		0xffffffff00000000
-#define	PCS_PROC_MINORSHIFT	32
+#define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
+#define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)
 
 	/* Minor number interpretation is processor specific.  See cpu.c. */
 
