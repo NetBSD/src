@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 2002/03/10 19:56:47 lukem Exp $
+#	$NetBSD: INSTALL,v 1.21 2002/03/28 05:42:16 matt Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -137,7 +137,6 @@ hp*		at mba? drive?	# RM/RP disk drives
 
 # Devices on internal MicroVAX bus
 uba0		at ibus?	# Q-Bus adapter
-dz0		at ibus?	# VAX 4000/105A serial lines
 #asc0		at ibus?	# VAX 4000/105A SCSI ctlr
 
 # Disk controllers at Unibus
@@ -189,14 +188,14 @@ ze0		at ibus0		# SGEC on-board ethernet
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
 dz0		at vsbus0 csr 0x200a0000# DC-367
-dz0		at vsbus0 csr 0x25000000# VS4000/90
+dz0		at vsbus0 csr 0x25000000# VS4000/90 and VAX 4000/10x serial lines
 dl0		at uba? csr 0176500	# DL-11
 
 # VAXstation graphics support
 #qd0		at uba? csr 0177400
 smg0		at vsbus0 csr 0x200f0000# Small monochrome display ctlr.
 wsdisplay0	at smg0			# display device driver.
-lkc0		at dz0			# Keyboard LK201
+lkkbd0		at dz0 line 0		# Keyboard LK201
 
 pseudo-device	loop	1
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
