@@ -1,4 +1,3 @@
-
 /*
  *============================================================================
  *
@@ -894,7 +893,7 @@ NLEAF(mips3_TLBInvalidException)
 	dsll	k0, k0, 34			# get rid of "wired" bit
 	dsrl	k0, k0, 34
 	dmtc0	k0, MACH_COP_0_TLB_LO0		# load PTE entry
-	and	k0, k0, PG_V			# check for valid entry
+	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	beq	k0, zero, mips3_KernGenException	# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
@@ -922,7 +921,7 @@ KernTLBIOdd:
 	dsll	k0, k0, 34			# get rid of wired bit
 	dsrl	k0, k0, 34
 	dmtc0	k0, MACH_COP_0_TLB_LO1		# save PTE entry
-	and	k0, k0, PG_V			# check for valid entry
+	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	beq	k0, zero, mips3_KernGenException	# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
@@ -1261,7 +1260,7 @@ LEAF(mips3_TLBFlushAddr)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	nop
-	li	v0, (PG_HVPN | PG_ASID)
+	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0			# Make shure valid hi value.
 	dmfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
 	dmtc0	a0, MACH_COP_0_TLB_HI		# look for addr & PID
@@ -1313,11 +1312,11 @@ LEAF(mips3_TLBUpdate)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	and	t1, a0, 0x1000			# t1 = Even/Odd flag
-	li	v0, (PG_HVPN | PG_ASID)
+	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0
 	dmfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
 	dmtc0	a0, MACH_COP_0_TLB_HI		# Init high reg
-	and	a2, a1, PG_G			# Copy global bit
+	and	a2, a1, MIPS3_PG_G		# Copy global bit
 	nop
 	nop
 	tlbp					# Probe for the entry.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1997/06/16 09:50:37 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1997/06/16 23:41:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,13 +86,15 @@ cpu_fork(p1, p2)
 #ifdef MIPS3
 	mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
 #endif
-	for (i = 0, pte = kvtopte(p2->p_addr); i < UPAGES; i++, pte++)
-#ifdef MIPS3
-		p2->p_md.md_upte[i] = pte->pt_entry & ~(PG_G | PG_RO | PG_WIRED);
-#else
-		p2->p_md.md_upte[i] = pte->pt_entry &~ PG_G;
-#endif
-
+	/* XXX save pte mask outside loop ? */
+	for (i = 0, pte = kvtopte(p2->p_addr); i < UPAGES; i++, pte++) {
+		if (CPUISMIPS3)
+			p2->p_md.md_upte[i] = pte->pt_entry &
+		            ~(MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED);
+		else
+			p2->p_md.md_upte[i] = pte->pt_entry &~ MIPS1_PG_G;
+	}
+	
 	pcb = &p2->p_addr->u_pcb;
 	if (p1 == fpcurproc)
 		savefpregs(p1);
@@ -132,11 +134,11 @@ cpu_swapin(p)
 	 */
 	pte = kvtopte(up);
 	for (i = 0; i < UPAGES; i++) {
-#ifdef MIPS3
-		p->p_md.md_upte[i] = pte->pt_entry & ~(PG_G | PG_RO | PG_WIRED);
-#else
-		p->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
-#endif
+		if (CPUISMIPS3)
+			p->p_md.md_upte[i] = pte->pt_entry &
+			    ~(MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED);
+		else
+			p->p_md.md_upte[i] = pte->pt_entry & ~MIPS1_PG_G;
 		pte++;
 	}
 }
@@ -241,11 +243,11 @@ pagemove(from, to, size)
 		MachTLBFlushAddr((vm_offset_t)from);
 		MachTLBUpdate((vm_offset_t)to, fpte->pt_entry);
 		*tpte = *fpte;
-#ifdef MIPS3
-		fpte->pt_entry = PG_NV | PG_G;
-#else
-		fpte->pt_entry = PG_NV;
-#endif
+		if (CPUISMIPS3)
+			fpte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
+		else
+			fpte->pt_entry = MIPS1_PG_NV;
+
 		fpte++; tpte++;
 		size -= PAGE_SIZE;
 		from += PAGE_SIZE;
@@ -269,6 +271,7 @@ vmapbuf(bp, len)
 	vm_offset_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
 	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+	register u_int pt_mask;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -283,9 +286,11 @@ vmapbuf(bp, len)
 	 */
 	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
 	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
+	pt_mask = (CPUISMIPS3) ? (MIPS3_PG_V|MIPS3_PG_G|MIPS3_PG_M) :
+				 (MIPS1_PG_V|MIPS1_PG_G|MIPS1_PG_M);
 	do {
 		/* XXX should mark them PG_WIRED? */
-		tpte->pt_entry = fpte->pt_entry | PG_V | PG_G | PG_M;
+		tpte->pt_entry = fpte->pt_entry | pt_mask;
 		MachTLBUpdate(taddr, tpte->pt_entry);
 		tpte++, fpte++, taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -357,7 +362,7 @@ kvtophys(vm_offset_t kva)
 			printf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
 		}
-		if ((pte->pt_entry & PG_V) == 0) {
+		if (!mips_pg_v(pte->pt_entry)) {
 			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
 		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);

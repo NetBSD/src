@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.29 1997/06/16 05:37:37 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.30 1997/06/16 23:41:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
+
 
 #define TRAP_FRAME_SIZE	(4 * 38 + 4 * 4 + 4 + 4)
 #define TRAP_RA_OFFSET	(TRAP_FRAME_SIZE - 4)
@@ -802,7 +803,7 @@ NLEAF(mips1_TLBMissException)
 	lw	k0, 0(k1)			# get PTE entry
 	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
 	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
-	and	k0, k0, PG_V			# check for valid entry
+	and	k0, k0, MIPS1_PG_V		# check for valid entry
 	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
 	nop
 	tlbwr					# update TLB

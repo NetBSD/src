@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.10 1997/06/16 05:37:40 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.11 1997/06/16 23:41:52 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,6 +15,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 
 #include <mips/cpu.h>		/* declaration of of cpu_id */
 #include <mips/locore.h>
@@ -175,35 +176,53 @@ mips3_vector_init()
  * call locore cache and TLB management functions, based on the kind
  * of CPU the kernel is running on.
  */
-void mips_vector_init()
+void
+mips_vector_init()
 {
+
+
+#ifdef notyet
 	register caddr_t v;
 	extern char edata[], end[];
 
 	/* clear the BSS segment */
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
+#endif
+	int i;
 
-	/* Work out what kind of CPU and FPU are present. */
-	switch(cpu_id.cpu.cp_imp) {
+	(void) &i;		/* shut off gcc unused-variable warnings */
 
-#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+
+	switch (cpu_id.cpu.cp_imp) {
+#ifdef MIPS1
 	case MIPS_R2000:
 	case MIPS_R3000:
-	  	mips1_vector_init();
+		cpu_arch = 1;
+		mips1_TLBFlush();
+		for (i = 0; i < VMMACH_MIPS_3K_FIRST_RAND_ENTRY; ++i)
+			mips1_TLBWriteIndexed(i, MACH_CACHED_MEMORY_ADDR, 0);
+		mips1_vector_init();
 		break;
-#endif /* MIPS1 */
-
-
-#ifdef MIPS3		/* r4000 family (mips-III cpu) */
+#endif
+#ifdef MIPS3
 	case MIPS_R4000:
-	  	mips3_vector_init();
+		cpu_arch = 3;
+		mips3_SetWIRED(0);
+		mips3_TLBFlush();
+		mips3_SetWIRED(VMMACH_WIRED_ENTRIES);
+		mips3_vector_init();
 		break;
-#endif /* MIPS3 */
+#endif
 
 	default:
-		panic("Unconfigured or unsupported MIPS cpu\n");
-
+		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		cpu_reboot(RB_HALT, NULL);
 	}
 }
 

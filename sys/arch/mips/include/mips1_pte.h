@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.9 1997/06/15 17:24:24 mhitch Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.10 1997/06/16 23:41:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #ifndef _LOCORE
-struct pte {
+struct mips1_pte {
 #if BYTE_ORDER == BIG_ENDIAN
 unsigned int	pg_pfnum:20,		/* HW: core page frame number or 0 */
 		pg_n:1,			/* HW: non-cacheable bit */
@@ -71,38 +71,28 @@ unsigned int	pg_prot:2,		/* SW: access control */
 		pg_pfnum:20;		/* HW: core page frame number or 0 */
 #endif
 };
-
-typedef union pt_entry {
-	unsigned int	pt_entry;	/* for copying, etc. */
-	struct pte	pt_pte;		/* for getting to bits by name */
-} pt_entry_t;	/* Mach page table entry */
 #endif /* _LOCORE */
 
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
+#define	MIPS1_PG_PROT	0x00000003
+#define MIPS1_PG_RW	0x00000000
+#define MIPS1_PG_RO	0x00000001
+#define MIPS1_PG_WIRED	0x00000002
+#define	MIPS1_PG_G	0x00000100
+#define	MIPS1_PG_V	0x00000200
+#define	MIPS1_PG_NV	0x00000000
+#define	MIPS1_PG_M	0x00000400
+#define	MIPS1_PG_N	0x00000800
+#define	MIPS1_PG_FRAME	0xfffff000
+#define MIPS1_PG_SHIFT	12
+#define	MIPS1_PG_PFNUM(x) (((x) & MIPS1_PG_FRAME) >> MIPS1_PG_SHIFT)
 
-#define	PG_PROT		0x00000003
-#define PG_RW		0x00000000
-#define PG_RO		0x00000001
-#define PG_WIRED	0x00000002
-#define	PG_G		0x00000100
-#define	PG_V		0x00000200
-#define	PG_NV		0x00000000
-#define	PG_M		0x00000400
-#define	PG_N		0x00000800
-#define	PG_FRAME	0xfffff000
-#define PG_SHIFT	12
-#define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
+#define	MIPS1_PG_ROPAGE	MIPS1_PG_V	/* ??? MIPS1_PG_RO */
+#define	MIPS1_PG_RWPAGE	MIPS1_PG_M
+#define	MIPS1_PG_CWPAGE	0
+#define	MIPS1_PG_IOPAGE	(MIPS1_PG_M | MIPS1_PG_N)
 
-#define PG_ROPAGE	PG_V		/* ??? PG_RO */
-#define PG_RWPAGE	PG_M
-#define PG_CWPAGE	0
-#define PG_IOPAGE	(PG_M | PG_N)	/* ??? */
+#define	mips1_pfn_to_vad(x)	((x) & MIPS1_PG_FRAME)
+#define	mips1_vad_to_pfn(x)	(x)
 
-#define pfn_to_vad(x) ((x) & PG_FRAME)
-#define vad_to_pfn(x) (x)
-
-#define PTE_TO_PADDR(pte) ((unsigned)(pte) & PG_FRAME)
-#define PAGE_IS_RDONLY(pte,va) ((pte) & PG_RO)
-
-/* User virtual to pte page entry */
-#define uvtopte(adr) (((adr) >> PGSHIFT) & (NPTEPG -1))
+#define	MIPS1_PTE_TO_PADDR(pte) ((unsigned)(pte) & MIPS1_PG_FRAME)
+#define MIPS1_PAGE_IS_RDONLY(pte,va) ((pte) & MIPS1_PG_RO)

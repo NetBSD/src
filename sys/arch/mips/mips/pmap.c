@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1997/06/16 00:16:08 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 1997/06/16 23:41:53 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -163,10 +163,6 @@ pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 
 
-#ifdef MIPS3
-extern MachHitFlushDCache __P((vm_offset_t, int));
-#endif
-
 /* Forward function declarations */
 int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
 int	pmap_alloc_tlbpid __P((register struct proc *p));
@@ -180,11 +176,12 @@ void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
 vm_page_t vm_page_alloc1 __P((void));
 void vm_page_free1 __P((vm_page_t));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+
 #ifdef MIPS3
-int pmap_is_page_ro __P((pmap_t, vm_offset_t, int));
 void pmap_page_cache __P((vm_offset_t, int));
 void mips_dump_segtab __P((struct proc *));
 #endif
+int pmap_is_page_ro __P((pmap_t, vm_offset_t, int));
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -255,7 +252,7 @@ pmap_bootstrap(firstaddr)
 	 * they will produce a global bit to store in the tlb.
 	 */
 	for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
-		spte->pt_entry = PG_G;
+		spte->pt_entry = MIPS3_PG_G;
 #endif
 }
 
@@ -539,9 +536,9 @@ pmap_remove(pmap, sva, eva)
 		pte = kvtopte(sva);
 		for (; sva < eva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
-			if (!(entry & PG_V))
+			if (!mips_pg_v(entry))
 				continue;
-			if (entry & PG_WIRED)
+			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
@@ -552,15 +549,17 @@ pmap_remove(pmap, sva, eva)
 #ifdef ATTR
 			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
 #endif
-#ifndef MIPS3
-			pte->pt_entry = PG_NV;
-#endif
+
+
+			if (CPUISMIPS3)
+				/* See above about G bit */
+				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
+			else
+				pte->pt_entry = MIPS1_PG_NV;
+
 			/*
 			 * Flush the TLB for the given address.
 			 */
-#ifdef MIPS3
-			pte->pt_entry = PG_NV | PG_G; /* See above about G bit */
-#endif
 			MachTLBFlushAddr(sva);
 #ifdef DEBUG
 			remove_stats.flushes++;
@@ -592,9 +591,9 @@ pmap_remove(pmap, sva, eva)
 		pte += uvtopte(sva);
 		for (; sva < nssva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
-			if (!(entry & PG_V))
+			if (!mips_pg_v(entry))
 				continue;
-			if (entry & PG_WIRED)
+			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
@@ -605,7 +604,7 @@ pmap_remove(pmap, sva, eva)
 #ifdef ATTR
 			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
 #endif
-			pte->pt_entry = PG_NV;
+			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
 			 */
@@ -713,11 +712,7 @@ pmap_protect(pmap, sva, eva, prot)
 		return;
 	}
 
-#ifdef MIPS3
-	p = (prot & VM_PROT_WRITE) ? PG_M : PG_RO;
-#else
-	p = (prot & VM_PROT_WRITE) ? PG_RW : PG_RO;
-#endif
+	p = (prot & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
 
 	if (!pmap->pm_segtab) {
 		/*
@@ -735,9 +730,10 @@ pmap_protect(pmap, sva, eva, prot)
 		pte = kvtopte(sva);
 		for (; sva < eva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
-			if (!(entry & PG_V))
+			if (!mips_pg_v(entry))
 				continue;
-			entry = (entry & ~(PG_M | PG_RO)) | p;
+			entry = (entry & ~(mips_pg_m_bit() |
+			    mips_pg_ro_bit())) | p;
 			pte->pt_entry = entry;
 			/*
 			 * Update the TLB if the given address is in the cache.
@@ -769,9 +765,10 @@ pmap_protect(pmap, sva, eva, prot)
 		pte += (sva >> PGSHIFT) & (NPTEPG - 1);
 		for (; sva < nssva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
-			if (!(entry & PG_V))
+			if (!mips_pg_v(entry))
 				continue;
-			entry = (entry & ~(PG_M | PG_RO)) | p;
+			entry = (entry & ~(mips_pg_m_bit() |
+			    mips_pg_ro_bit())) | p;
 			pte->pt_entry = entry;
 			/*
 			 * Update the TLB if the given address is in the cache.
@@ -783,7 +780,6 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
-#ifdef MIPS3	/* r4000,r4400,r4600 */
 /*
  *	Return RO protection of page.
  */
@@ -793,9 +789,10 @@ pmap_is_page_ro(pmap, va, entry)
 	vm_offset_t va;
 	int         entry;
 {
-	return(entry & PG_RO);
+	return (entry & mips_pg_ro_bit());
 }
 
+#ifdef MIPS3
 /*
  *	pmap_page_cache:
  *
@@ -818,7 +815,7 @@ pmap_page_cache(pa,mode)
 	if (!IS_VM_PHYSADDR(pa))
 		return;
 
-	newmode = mode & PV_UNCACHED ? PG_UNCACHED : PG_CACHED;
+	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pa_to_pvh(pa);
 	s = splimp();
 	while (pv) {
@@ -829,22 +826,27 @@ pmap_page_cache(pa,mode)
 		 */
 			pte = kvtopte(pv->pv_va);
 			entry = pte->pt_entry;
-			if (entry & PG_V) {
-				entry = (entry & ~PG_CACHEMODE) | newmode;
+			if (entry & MIPS3_PG_V) {
+				entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
 				pte->pt_entry = entry;
 				MachTLBUpdate(pv->pv_va, entry);
 			}
 		}
 		else {
-			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) != NULL) {
+			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))
+			    != NULL) {
 				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
 				entry = pte->pt_entry;
-				if (entry & PG_V) {
-					entry = (entry & ~PG_CACHEMODE) | newmode;
+				if (entry & MIPS3_PG_V) {
+					entry = (entry & ~MIPS3_PG_CACHEMODE)
+					    | newmode;
 					pte->pt_entry = entry;
-					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
-						MachTLBUpdate(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
-							VMMACH_TLB_PID_SHIFT), entry);
+					if (pv->pv_pmap->pm_tlbgen ==
+					    tlbpid_gen)
+						MachTLBUpdate(pv->pv_va |
+						    (pv->pv_pmap->pm_tlbpid <<
+						    VMMACH_TLB_PID_SHIFT),
+						    entry);
 				}
 			}
 		}
@@ -909,11 +911,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	if (IS_VM_PHYSADDR(pa)) {
 		if (!(prot & VM_PROT_WRITE))
-#ifdef MIPS3
-			npte = PG_ROPAGE;
-#else
-			npte = PG_RO;
-#endif
+			npte = mips_pg_ropage_bit();
 		else {
 			mem = PHYS_TO_VM_PAGE(pa);
 			if ((int)va < 0) {
@@ -921,7 +919,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
-				npte = PG_RWPAGE;
+				npte = mips_pg_rwpage_bit();
 				mem->flags &= ~PG_CLEAN;
 			} else
 #ifdef ATTR
@@ -930,9 +928,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 #else
 				if (!(mem->flags & PG_CLEAN))
 #endif
-					npte = PG_RWPAGE;
+					npte = mips_pg_rwpage_bit();
 			else
-					npte = PG_CWPAGE;
+					npte = mips_pg_cwpage_bit();
 				}
 #ifdef DEBUG
 		enter_stats.managed++;
@@ -950,11 +948,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef DEBUG
 		enter_stats.unmanaged++;
 #endif
-#ifdef MIPS3
-		npte = (prot & VM_PROT_WRITE) ? (PG_IOPAGE & ~PG_G) : (PG_IOPAGE& ~(PG_G | PG_M));
-#else
-		npte = (prot & VM_PROT_WRITE) ? (PG_M | PG_N) : (PG_RO | PG_N);
-#endif
+		if (CPUISMIPS3) {
+			npte = (prot & VM_PROT_WRITE) ?
+			    (MIPS3_PG_IOPAGE & ~MIPS3_PG_G) :
+			    (MIPS3_PG_IOPAGE & ~(MIPS3_PG_G | MIPS3_PG_M));
+		} else  {
+			npte = (prot & VM_PROT_WRITE) ?
+			    (MIPS1_PG_M | MIPS1_PG_N) :
+			    (MIPS1_PG_RO | MIPS1_PG_N);
+		}
 	}
 
 	/*
@@ -974,22 +976,28 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap->pm_segtab) {
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
-#ifdef MIPS3
-		npte |= vad_to_pfn(pa) | PG_ROPAGE | PG_G;
-#else
-		npte |= vad_to_pfn(pa) | PG_V | PG_G;
-#endif
+
+		/*
+		 * XXX more thought... what does ROPAGE mean here? 
+		 * is it correc to set all the ROPAGE bits for mips3,
+		 * but just the valid (and not read-only) bit on mips1?
+		 */
+		if (CPUISMIPS3)
+			npte |= vad_to_pfn(pa) | MIPS3_PG_ROPAGE | MIPS3_PG_G;
+		else
+			npte |= vad_to_pfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
+
 		if (wired) {
 			pmap->pm_stats.wired_count += mipspagesperpage;
-			npte |= PG_WIRED;
+			npte |= mips_pg_wired_bit();
 		}
 		i = mipspagesperpage;
 		do {
-			if (!(pte->pt_entry & PG_V)) {
+			if (!mips_pg_v(pte->pt_entry)) {
 				pmap->pm_stats.resident_count++;
 			} else {
 #ifdef DIAGNOSTIC
-				if (pte->pt_entry & PG_WIRED)
+				if (mips_pg_wired(pte->pt_entry))
 					panic("pmap_enter: kernel wired");
 #endif
 			}
@@ -1026,14 +1034,14 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Assume uniform modified and referenced status for all
 	 * MIPS pages in a MACH page.
 	 */
-#ifdef MIPS3
-	npte |= vad_to_pfn(pa);
-#else
-	npte |= vad_to_pfn(pa) | PG_V;
-#endif
+	if (CPUISMIPS3)
+		npte |= vad_to_pfn(pa);
+	else
+		npte |= vad_to_pfn(pa) | MIPS1_PG_V;
+
 	if (wired) {
 		pmap->pm_stats.wired_count += mipspagesperpage;
-		npte |= PG_WIRED;
+		npte |= mips_pg_wired_bit();
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER) {
@@ -1089,7 +1097,7 @@ pmap_change_wiring(pmap, va, wired)
 	if (pmap == NULL)
 		return;
 
-	p = wired ? PG_WIRED : 0;
+	p = wired ? mips_pg_wired_bit() : 0;
 
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
@@ -1108,13 +1116,14 @@ pmap_change_wiring(pmap, va, wired)
 	}
 
 	i = mipspagesperpage;
-	if (!(pte->pt_entry & PG_WIRED) && p)
+	if (!mips_pg_wired(pte->pt_entry) && p)
 		pmap->pm_stats.wired_count += i;
-	else if ((pte->pt_entry & PG_WIRED) && !p)
+	else if (mips_pg_wired(pte->pt_entry) && !p)
 		pmap->pm_stats.wired_count -= i;
 	do {
-		if (pte->pt_entry & PG_V)
-			pte->pt_entry = (pte->pt_entry & ~PG_WIRED) | p;
+		if (mips_pg_v(pte->pt_entry))
+			pte->pt_entry =
+			    (pte->pt_entry & ~mips_pg_wired_bit()) | p;
 		pte++;
 	} while (--i != 0);
 }
@@ -1521,13 +1530,13 @@ pmap_enter_pv(pmap, va, pa)
 					if((npv->pv_va & machCacheAliasMask) != (va & machCacheAliasMask)) {
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
-						*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
+						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 						break;
 					}
 				}
 			}
 			else {
-				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
+				*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 			}
 #endif
 		/*
@@ -1554,7 +1563,7 @@ pmap_enter_pv(pmap, va, pa)
 					} else
 						entry = 0;
 				}
-				if (!(entry & PG_V) ||
+				if (!mips_pg_v(entry) ||
 				    pfn_to_vad(entry) != pa)
 					printf(
 		"pmap_enter: found va %lx pa %lx in pv_table but != %x\n",
