@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 1999/03/25 17:49:43 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 1999/03/26 04:29:21 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -46,5 +46,12 @@ struct netbsd32_sigcontext {
 	int	sc_g1;			/* %g1 to restore */
 	int	sc_o0;			/* %o0 to restore */
 };
+
+void netbsd32_setregs __P((struct proc *p, struct exec_package *pack, u_long stack));
+int compat_netbsd32_sigreturn __P((struct proc *p, void *v, register_t *retval));
+void netbsd32_sendsig __P((sig_t catcher, int sig, int mask, u_long code));
+
+extern char netbsd32_esigcode[], netbsd32_sigcode[];
+
 
 #endif /* _MACHINE_NETBSD32_H_ */

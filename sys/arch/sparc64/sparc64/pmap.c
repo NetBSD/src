@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1999/03/24 05:51:13 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1999/03/26 04:29:23 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -2251,8 +2251,8 @@ pmap_dumpmmu(dump, blkno)
 	register daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 {
-	kcore_seg_t	*ksegp;
-	cpu_kcore_hdr_t	*kcpup;
+	kcore_seg_t	*kseg;
+	cpu_kcore_hdr_t	*kcpu;
 	phys_ram_seg_t	memseg;
 	register int	error = 0;
 	register int	i, memsegoffset, segmapoffset;
@@ -2281,26 +2281,26 @@ pmap_dumpmmu(dump, blkno)
 	ep = &buffer[sizeof(buffer) / sizeof(buffer[0])];
 
 	/* Fill in MI segment header */
-	ksegp = (kcore_seg_t *)bp;
-	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	ksegp->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+	kseg = (kcore_seg_t *)bp;
+	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
-	kcpup = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
-	kcpup->cputype = CPU_SUN4U;
-	kcpup->kernbase = KERNBASE;
-	kcpup->kphys = (paddr_t)ksegp;
-	kcpup->nmemseg = memsize;
-	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
-	kcpup->nsegmap = STSZ;
-	kcpup->segmapoffset = segmapoffset =
+	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
+	kcpu->cputype = CPU_SUN4U;
+	kcpu->kernbase = KERNBASE;
+	kcpu->kphys = (paddr_t)ksegp;
+	kcpu->nmemseg = memsize;
+	kcpu->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
+	kcpu->nsegmap = STSZ;
+	kcpu->segmapoffset = segmapoffset =
 		memsegoffset + memsize * sizeof(phys_ram_seg_t);
 
-	kcpup->npmeg = 0; 
-	kcpup->pmegoffset = 0; /* We don't do this. */
+	kcpu->npmeg = 0; 
+	kcpu->pmegoffset = 0; /* We don't do this. */
 
 	/* Note: we have assumed everything fits in buffer[] so far... */
-	bp = (int *)((long)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
+	bp = (int *)((long)kcpu + ALIGN(sizeof(cpu_kcore_hdr_t)));
 
 	for (i = 0; i < memsize; i++) {
 		memseg.start = mem[i].start;

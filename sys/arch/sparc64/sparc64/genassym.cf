@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 1999/03/22 06:45:15 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.11 1999/03/26 04:29:22 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,15 +140,9 @@ define	PM_PHYS		offsetof(struct pmap, pm_physaddr)
 
 
 # interrupt/fault metering
-ifdef UVM
 define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
-else
-define	V_SWTCH		offsetof(struct vmmeter, v_swtch)
-define	V_INTR		offsetof(struct vmmeter, v_intr)
-define	V_FAULTS	offsetof(struct vmmeter, v_faults)
-endif
 
 # CPU info structure
 #define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
