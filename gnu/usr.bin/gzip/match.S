@@ -9,7 +9,7 @@
  * Kristoffer Eriksson <ske@pkmab.se>
  */
  
-/* $Id: match.S,v 1.6 1993/12/08 21:31:59 mycroft Exp $ */
+/* $Id: match.S,v 1.7 1999/11/10 16:54:10 thorpej Exp $ */
 
 /* Preprocess with -DNO_UNDERLINE if your C compiler does not prefix
  * external symbols with an underline character '_'.
@@ -221,7 +221,11 @@ maxmatch:
 #  else
 #    define imm(data)		\#data
 #  endif
-#  define reg(register)		register
+#  if defined(__NetBSD__)
+#    define reg(register)	%register
+#  else
+#    define reg(register)	register
+#  endif
 
 #  define blos			bcss
 #  if defined(sun) || defined(mc68k) || defined(__NetBSD__)
