@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.8 1998/12/09 12:42:49 christos Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.8.14.1 2004/04/06 05:43:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.8 1998/12/09 12:42:49 christos Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.8.14.1 2004/04/06 05:43:18 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,18 +184,12 @@ newbuf(hashp, addr, prev_bp)
 	 */
 	if (hashp->nbufs || (bp->flags & BUF_PIN)) {
 		/* Allocate a new one */
-		if ((bp = (BUFHEAD *)malloc(sizeof(BUFHEAD))) == NULL)
+		if ((bp = (BUFHEAD *)calloc(1, sizeof(BUFHEAD))) == NULL)
 			return (NULL);
-#ifdef PURIFY
-		memset(bp, 0xff, sizeof(BUFHEAD));
-#endif
-		if ((bp->page = (char *)malloc((size_t)hashp->BSIZE)) == NULL) {
+		if ((bp->page = calloc(1, (size_t)hashp->BSIZE)) == NULL) {
 			free(bp);
 			return (NULL);
 		}
-#ifdef PURIFY
-		memset(bp->page, 0xff, hashp->BSIZE);
-#endif
 		if (hashp->nbufs)
 			hashp->nbufs--;
 	} else {
