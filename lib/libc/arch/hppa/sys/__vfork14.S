@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #include <sys/errno.h>
 #include "SYS.h"
 
-	.import errno, data
-
 ENTRY(__vfork14, 0)
 	/*
 	 * NB: __vfork14 is a tricky syscall.  We can't save
@@ -61,18 +59,14 @@ ENTRY(__vfork14, 0)
 	 * syscall entry code in locore.S has been modified 
 	 * to do just this for the t4 register.
 	 */
-	.import	errno, data
+	.import	__cerror, code
+
 	copy	%rp, %t4
 	ldil	L%SYSCALLGATE, %r1
 	ble	4(%sr7, %r1)
 	ldi	SYS___vfork14, %t1
+	comb,<>	%r0, %t1, __cerror
 	copy	%t4, %rp
-	comb,=,n %r0, %t1, __vfork14$noerr
-	__SYSCALL_ERRNO
-	ldi	-1, %ret0
-	bv	%r0(%rp)
-	ldi	-1, %ret1
-__vfork14$noerr:
 	addi	-1, %ret1, %ret1
 	bv	%r0(%rp)
 	and	%ret0, %ret1, %ret0
