@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 1998/09/20 03:37:29 mark Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 1999/03/23 21:29:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -599,6 +599,8 @@ bs_c_1_proto(f);		\
 bs_c_2_proto(f);		\
 bs_c_4_proto(f);		\
 bs_c_8_proto(f);
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /* Bus Space DMA macros */
 

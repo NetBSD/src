@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1999/01/06 04:18:53 nisimura Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1999/03/23 21:29:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -474,6 +474,8 @@ __PMAX_copy_region(4)
 
 #undef __PB_TYPENAME_PREFIX
 #undef __PB_TYPENAME
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Flags used in various bus DMA methods.

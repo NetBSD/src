@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1999/03/16 16:30:21 minoura Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1999/03/23 21:29:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -641,6 +641,7 @@ _bus_space_copy_region_4(t, sbsh, soffset, dbsh, doffset, count)
 	}
 }
 
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * DMA segment

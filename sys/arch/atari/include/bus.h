@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 1999/01/08 09:25:33 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 1999/03/23 21:29:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -493,6 +493,8 @@ struct atari_bus_space {
 	__abs_copy(4, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 	__abs_copy(8, (t), (h1), (o1), (h2), (o2), (c))
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Flags used in various bus DMA methods.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 1998/10/03 21:24:00 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 1999/03/23 21:29:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,8 +91,11 @@
 	}								\
 	(void) 0;							\
 })
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) __BUS_SPACE_ALIGNED_ADDRESS(p, t)
 #else
 #define	__BUS_SPACE_ADDRESS_SANITY(p,t,d)	(void) 0
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* BUS_SPACE_DEBUG */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1998/11/08 21:09:27 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1999/03/23 21:29:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -263,11 +263,12 @@ bus_space_write_region_stream_1(t, h, o, a, c)
 
 #define bus_space_write_region_stream_2(t, h, o, p, c) \
 	((t)->absm->bswrs2)((t), (h), (o), (p), (c))
-	
+
 #define bus_space_set_region_2(t, h, o, v, c) \
 	((t)->absm->bssr2)((t), (h), (o), (v), (c))
 
 #define bus_space_copy_region_2(t, srch, srco, dsth, dsto, c) \
 	((t)->absm->bscr2)((t), (srch), (srco), (dsth), (dsto), (c))
-	
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* _AMIGA_BUS_H_ */

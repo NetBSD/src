@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1998/01/11 21:26:04 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1999/03/23 21:29:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -593,5 +593,7 @@ __HP300_copy_region_N(4)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 #endif /* _HP300_BUS_H_ */

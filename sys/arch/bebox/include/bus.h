@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 1998/10/03 21:24:00 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.18 1999/03/23 21:29:04 drochner Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -924,6 +924,8 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 #endif
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Bus DMA methods.
