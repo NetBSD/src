@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.160 2002/01/30 12:49:42 is Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.161 2002/02/01 22:04:02 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.161 2002/01/30 12:49:23 is Exp 
+ *	NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -742,7 +742,7 @@
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
 #define	PCMCIA_CIS_LANTECH_FASTNETTX	{ "ASIX", "AX88190", NULL, NULL }
 #define	PCMCIA_PRODUCT_LANTECH_FASTNETTX	-1
-#define	PCMCIA_STR_LANTECH_FASTNETTX	"Lantex Fastnet/TX"
+#define	PCMCIA_STR_LANTECH_FASTNETTX	"Lantech Fastnet/TX"
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
