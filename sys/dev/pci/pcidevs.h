@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702 2005/03/16 07:01:07 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.703 2005/03/19 10:28:12 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.702 2005/03/19 10:27:52 tron Exp
  */
 
 /*
@@ -797,6 +797,7 @@
 #define	PCI_PRODUCT_ADP2_ASR2200S	0x0285		/* ASR-2200S */
 #define	PCI_PRODUCT_ADP2_ASR2120S	0x0286		/* ASR-2120S */
 #define	PCI_PRODUCT_ADP2_ASR2200S_SUB2M	0x0287		/* ASR-2200S */
+#define	PCI_PRODUCT_ADP2_ASR2410SA	0x0290		/* ASR-2410SA */
 #define	PCI_PRODUCT_ADP2_AAR2810SA	0x0292		/* AAR-2810SA */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
 #define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
