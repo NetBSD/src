@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.8 2001/11/12 23:56:02 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.9 2001/11/13 23:10:23 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -184,7 +184,7 @@ distrib/sun3/common/rd.services			1.2
 sys/dev/pci/bktr/bktr_os.c			1.21
 
   Check unit count correctly (correct fencepost error)
-  on device open.
+  on device open.  Fixes PR#14289.
 
 distrib/sets/lists/comp/mi			patch
 distrib/sets/lists/man/mi			patch
@@ -401,3 +401,50 @@ usr.bin/ftp/fetch.c				1.127
 
   If in a proxied environment and no_proxy is true, use fetch_ftp()
   to fetch FTP type URLs.
+
+sys/net/route.c					1.48
+
+  Avoid memory leak on RTM_DELETE.
+
+sys/dev/scsipi/scsiconf.c			1.162 via patch
+
+  Add a ``no tagged queueing'' for an old Micropolis drive.  Fixes
+  PR#14256.
+
+sys/dev/pci/if_tl.c				1.40
+share/man/man4/tl.4				1.12
+
+  Fix media support for Compaq Deskpro 4000.  Fixes PR#13244.
+
+sys/dev/pci/if_ti.c				1.26
+
+  When setting/changing an address, do not call ti_init() if the
+  interface is already up.  This allows netatalk to start when
+  using this interface.
+
+sys/dev/pci/pciide.c				1.121
+
+  Disable UDMA only for SiS controllers which are really buggy,
+  not all the ones with revision 0xd0.
+
+sys/dev/pci/pciide.c				1.123
+sys/dev/pci/pciide_hpt_reg.h			1.4
+
+  Support HPT-370A controllers.  Fixes PR#13540.
+
+usr.sbin/repquota/repquota.c			1.18
+
+  Fix int underflow for large quota.  Fixes PR#12383.
+
+usr.sbin/repquota/repquota.c			1.19
+
+  Properly display quotas with more than 99999 inodes.
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.8
+
+  Fix a memory leak: when unlocking, make sure we release the memory
+  associated with the lock being removed.
+
+usr.bin/rs/rs.c					1.7
+
+  Avoid segmentation fault if ``-z'' option is used.  Fixes PR#14338.
