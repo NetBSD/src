@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.9 2003/07/27 14:18:27 itojun Exp $
+#	$NetBSD: majors.sparc,v 1.10 2003/08/08 17:03:14 rafal Exp $
 #
 # Device majors for sparc
 #
@@ -28,7 +28,7 @@ device-major	fb		char 22			fb
 device-major	ccd		char 23  block 9	ccd
 device-major	filedesc	char 24
 device-major	ipl		char 25			ipfilter
-
+# sparc64: device-major	wd	char 26  block 12	wd
 device-major	bwtwo		char 27			bwtwo
 
 device-major	kbd		char 29			kbd
@@ -65,6 +65,15 @@ device-major	isdnctl		char 73			isdnctl
 device-major	isdnbchan	char 74			isdnbchan
 device-major	isdntrc		char 75			isdntrc
 device-major	isdntel		char 76			isdntel
+# sparc64: device-major	sabtty	char 77			sabtty
+# sparc64: device-major	usb	char 78			usb
+# sparc64: device-major	uhid	char 79			uhid
+# sparc64: device-major	ulpt	char 80			ulpt
+# sparc64: device-major	ugen	char 81			ugen
+# sparc64: device-major	ucom	char 82			ucom
+# sparc64: device-major	urio	char 83			urio
+# sparc64: device-major	uscanner char 84		uscanner
+# sparc64: device-major	radio	char 85			radio
 
 device-major	wsdisplay	char 90			wsdisplay
 device-major	wskbd		char 91			wskbd
