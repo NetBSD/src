@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.12 2000/02/17 17:06:17 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.13 2000/03/17 06:11:55 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -112,8 +112,10 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (sa == NULL)
 		return ENI_NOSOCKET;
 
+#ifdef BSD4_4
 	if (sa->sa_len != salen)
 		return ENI_SALEN;
+#endif
 	
 	family = sa->sa_family;
 	for (i = 0; afdl[i].a_af; i++)
