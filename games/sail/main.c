@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2001/01/01 22:33:01 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2001/01/04 01:56:28 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2001/01/01 22:33:01 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2001/01/04 01:56:28 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,16 +83,13 @@ main(int argc, char **argv)
 	else
 		mode = MODE_PLAYER;
 
-	while ((a = getopt(argc, argv, "dsDxlb")) != -1)
+	while ((a = getopt(argc, argv, "dsxlb")) != -1)
 		switch (a) {
 		case 'd':
 			mode = MODE_DRIVER;
 			break;
 		case 's':
 			mode = MODE_LOGGER;
-			break;
-		case 'D':
-			debug++;
 			break;
 		case 'x':
 			randomize++;
