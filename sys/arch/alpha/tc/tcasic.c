@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.17.2.1 1997/06/03 23:31:57 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.17.2.2 1997/06/06 02:41:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.17.2.1 1997/06/03 23:31:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.17.2.2 1997/06/06 02:41:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,8 @@ tcasicattach(parent, self, aux)
 		intr_setup = tc_3000_500_intr_setup;
 		iointr = tc_3000_500_iointr;
 
+		tc_dma_get_tag_func = tc_dma_get_tag_3000_500;
+
 		tba.tba_busname = "tc";
 		tba.tba_speed = TC_SPEED_25_MHZ;
 		tba.tba_nslots = tc_3000_500_nslots;
@@ -116,6 +118,9 @@ tcasicattach(parent, self, aux)
 		}
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
+
+		/* Do 3000/500-specific DMA setup now. */
+		tc_dma_init_3000_500(tc_3000_500_nslots);
 		break;
 #endif /* DEC_3000_500 */
 
@@ -124,6 +129,8 @@ tcasicattach(parent, self, aux)
 
 		intr_setup = tc_3000_300_intr_setup;
 		iointr = tc_3000_300_iointr;
+
+		tc_dma_get_tag_func = tc_dma_get_tag_3000_300;
 
 		tba.tba_busname = "tc";
 		tba.tba_speed = TC_SPEED_12_5_MHZ;
@@ -142,7 +149,7 @@ tcasicattach(parent, self, aux)
 
 	tba.tba_memt = tc_bus_mem_init(NULL);
 	
-	tc_dma_init(tba.tba_nslots);
+	tc_dma_init();
 
 	(*intr_setup)();
 	set_iointr(iointr);
