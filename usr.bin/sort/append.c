@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.12 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.13 2004/02/15 11:52:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.12 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.13 2004/02/15 11:52:12 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	struct field *ftbl;
 {
 	u_char *wts, *wts1;
-	int n, odepth;
+	int n, odepth = depth;
 	const u_char **cpos, **ppos, **lastkey;
 	const u_char *cend, *pend, *start;
 	const struct recheader *crec, *prec;
@@ -120,7 +120,6 @@ append(keylist, nelem, depth, fp, put, ftbl)
 			wts1 = Rascii;
 		else if (ftbl[0].flags & F)
 			wts1 = ascii;
-		odepth = depth;
 	}
 	lastkey = keylist + nelem;
 	depth += sizeof(TRECHEADER);
