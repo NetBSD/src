@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.133 2002/09/30 05:38:13 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.134 2003/04/12 01:07:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.133 2002/09/30 05:38:13 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.134 2003/04/12 01:07:43 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ int	newaddr = -1;
 int	conflicting = 0;
 int	nsellength = 1;
 int	af;
-int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag;
+int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -419,8 +419,8 @@ main(argc, argv)
 	int ch;
 
 	/* Parse command-line options */
-	aflag = mflag = vflag = 0;
-	while ((ch = getopt(argc, argv, "AabCdlmsuv"
+	aflag = mflag = vflag = zflag = 0;
+	while ((ch = getopt(argc, argv, "AabCdlmsuvz"
 #ifdef INET6
 					"L"
 #endif
@@ -438,7 +438,6 @@ main(argc, argv)
 			bflag = 1;
 			break;
 			
-
 		case 'C':
 			Cflag = 1;
 			break;
@@ -473,6 +472,10 @@ main(argc, argv)
 			vflag = 1;
 			break;
 
+		case 'z':
+			zflag = 1;
+			break;
+
 			
 		default:
 			usage();
@@ -491,7 +494,7 @@ main(argc, argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if ((lflag || Cflag) && (aflag || mflag || vflag || argc))
+	if ((lflag || Cflag) && (aflag || mflag || vflag || argc || zflag))
 		usage();
 #ifdef INET6
 	if ((lflag || Cflag) && Lflag)
@@ -2114,12 +2117,14 @@ status(sdl)
 	free(media_list);
 
  iface_stats:
-	if (!vflag)
+	if (!vflag && !zflag)
 		goto proto_status;
 
 	(void) strncpy(ifdr.ifdr_name, name, sizeof(ifdr.ifdr_name));
 
-	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifdr) != -1) {
+	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, (caddr_t)&ifdr) == -1) {
+		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
+	} else {
 		struct if_data * const ifi = &ifdr.ifdr_data;
 #define	PLURAL(n)	((n) == 1 ? "" : "s")
 		printf("\tinput: %llu packet%s, %llu byte%s",
@@ -2963,9 +2968,9 @@ usage()
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage: %s [ -m ] [ -v ]"
+	    "usage: %s [-m] [-v] [-z] "
 #ifdef INET6
-		"[ -L ] "
+		"[-L] "
 #endif
 		"interface\n"
 		"\t[ af [ address [ dest_addr ] ] [ netmask mask ] [ prefixlen n ]\n"
@@ -2981,8 +2986,8 @@ usage()
 		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
 		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [ -m ] [ -d ] [ -u ] [ -v ] [ af ]\n"
-		"       %s -l [ -b ] [ -d ] [ -u ] [ -s ]\n"
+		"       %s -a [-b] [-m] [-d] [-u] [-v] [-z] [ af ]\n"
+		"       %s -l [-b] [-d] [-u] [-s]\n"
 		"       %s -C\n"
 		"       %s interface create\n"
 		"       %s interface destroy\n",
