@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.18 1998/05/05 20:51:06 kleink Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.19 1998/05/09 15:05:50 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1940,7 +1940,8 @@ uvm_map_inherit(map, start, end, new_inheritance)
  * => XXXCDC: check this and try and clean it up.
  */
 
-int uvm_map_pageable(map, start, end, new_pageable)
+int
+uvm_map_pageable(map, start, end, new_pageable)
 	vm_map_t map;
 	vm_offset_t start, end;
 	boolean_t new_pageable;
