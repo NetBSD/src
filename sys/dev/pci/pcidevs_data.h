@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.502 2003/01/24 17:47:18 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.503 2003/02/01 16:58:36 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.501 2003/01/24 17:46:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.502 2003/02/01 16:58:01 matt Exp 
  */
 
 /*
@@ -5078,6 +5078,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Newbridge Microsystems / Tundra Semiconductor",
 	    "Universe VME bridge",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L826A,
+	    0,
+	    "Newbridge Microsystems / Tundra Semiconductor",
+	    "QSpan II PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8260,
+	    0,
+	    "Newbridge Microsystems / Tundra Semiconductor",
+	    "PowerSpan PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8261,
+	    0,
+	    "Newbridge Microsystems / Tundra Semiconductor",
+	    "PowerSpan II PCI bridge",
 	},
 	{
 	    PCI_VENDOR_NATIONALINST, PCI_PRODUCT_NATIONALINST_MXI3,

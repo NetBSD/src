@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.504 2003/01/24 17:47:17 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.505 2003/02/01 16:58:35 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.501 2003/01/24 17:46:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.502 2003/02/01 16:58:01 matt Exp 
  */
 
 /*
@@ -1697,6 +1697,9 @@
 
 /* Newbridge / Tundra products */
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
+#define	PCI_PRODUCT_NEWBRIDGE_CA91L826A	0x0826		/* QSpan II PCI bridge */
+#define	PCI_PRODUCT_NEWBRIDGE_CA91L8260	0x8260		/* PowerSpan PCI bridge */
+#define	PCI_PRODUCT_NEWBRIDGE_CA91L8261	0x8261		/* PowerSpan II PCI bridge */
 
 /* National Instruments products */
 #define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI extender */
