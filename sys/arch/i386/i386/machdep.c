@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.39 2002/06/25 15:44:52 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.40 2002/08/19 01:22:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.39 2002/06/25 15:44:52 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.40 2002/08/19 01:22:29 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -579,10 +579,9 @@ i386_proc0_tss_ldt_init()
 	struct pcb *pcb;
 	int x;
 
-	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
+	gdt_init();
 
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
 
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
@@ -593,7 +592,8 @@ i386_proc0_tss_ldt_init()
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	proc0.p_md.md_tss_sel = tss_alloc(pcb);
 
@@ -1964,16 +1964,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 
@@ -1991,7 +1992,22 @@ sendsig(catcher, sig, mask, code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
@@ -2055,7 +2071,9 @@ sendsig(catcher, sig, mask, code)
 
 	/*
 	 * Build context to run handler in.  We invoke the handler
-	 * directly, only returning via the trampoline.
+	 * directly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
 	 */
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
@@ -2198,12 +2216,10 @@ haltsys:
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if 0
 #if NACPI > 0
 		delay(500000);
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
-#endif
 #endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
@@ -2749,7 +2765,7 @@ initgdt(union descriptor *tgdt)
 
 void
 init386(first_avail)
-	vaddr_t first_avail;
+	paddr_t first_avail;
 {
 	union descriptor *tgdt;
 	extern void consinit __P((void));

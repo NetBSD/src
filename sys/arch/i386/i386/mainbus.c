@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29.2.8 2002/05/18 17:27:32 sommerfeld Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.2.9 2002/08/19 01:22:31 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.2.8 2002/05/18 17:27:32 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.2.9 2002/08/19 01:22:31 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.2.8 2002/05/18 17:27:32 sommerfeld 
 #include "pnpbios.h"
 #include "mpbios.h"
 #include "acpi.h"
+#include "vesabios.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -73,6 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.2.8 2002/05/18 17:27:32 sommerfeld 
 
 #if NMCA > 0
 #include <dev/mca/mcavar.h>
+#endif
+
+#if NVESABIOS > 0
+#include <arch/i386/bios/vesabios.h>
 #endif
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
@@ -102,6 +107,9 @@ union mainbus_attach_args {
 	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
+#endif
+#if NVESABIOS > 0
+	struct vesabios_attach_args mba_vba;
 #endif
 };
 
@@ -166,6 +174,13 @@ mainbus_attach(parent, self, aux)
 		
 		config_found(self, &caa, mainbus_print);
 	}
+
+#if NVESABIOS > 0
+	if (vbeprobe()) {
+		mba.mba_vba.vaa_busname = "vesabios";
+		config_found(self, &mba.mba_vba, mainbus_print);
+	}
+#endif
 
 #if NPCI > 0
 	/*

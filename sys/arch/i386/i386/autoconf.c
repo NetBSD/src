@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.11 2002/01/28 04:21:37 sommerfeld Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.12 2002/08/19 01:22:25 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,14 +41,14 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time and initializes the vba 
+ * Configure() is called at boot time and initializes the vba
  * device tables and the memory controller monitoring.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.11 2002/01/28 04:21:37 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.12 2002/08/19 01:22:25 sommerfeld Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -66,10 +66,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.11 2002/01/28 04:21:37 sommerfel
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/gdt.h>
+#include <machine/pcb.h>
 #include <machine/bootinfo.h>
 
 #include "ioapic.h"
@@ -98,6 +101,11 @@ extern int i386_ndisks;
 #include <i386/pci/pcibios.h>
 #endif
 
+#include "opt_kvm86.h"
+#ifdef KVM86
+#include <machine/kvm86.h>
+#endif
+
 struct device *booted_device;
 int booted_partition;
 
@@ -117,6 +125,12 @@ cpu_configure()
 	pcibios_init();
 #endif
 
+	/* kvm86 needs a TSS */
+	i386_proc0_tss_ldt_init();
+#ifdef KVM86
+	kvm86_init();
+#endif
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
@@ -127,17 +141,14 @@ cpu_configure()
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
-
-	spl0();
-
-	gdt_init();
-
+	/* resync cr0 after FPU configuration */
+	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
+	/* propagate this to the idle pcb's. */
 	cpu_init_idle_pcbs();
 #endif
 
-	/* Set up proc0's TSS and LDT (after the FPU is configured). */
-	i386_proc0_tss_ldt_init();
+	spl0();
 
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();
