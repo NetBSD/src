@@ -4,6 +4,6 @@ DEVICE=		dvi
 FONTS=		R I B BI CW MI S EX H
 FONTFILES=	$(FONTS) DESC eqnchar
 
-clean cleandir:
+clean cleandir obj:
 
 .include "../Makefile.dev"
