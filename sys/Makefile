@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1997/06/26 19:27:40 drochner Exp $
+#	$NetBSD: Makefile,v 1.23 1997/11/15 01:09:15 thorpej Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -19,6 +19,11 @@ LDIRS=	dev isofs net netatalk netinet netccitt netiso netns netnatm nfs miscfs \
 # don't want copies
 .include <bsd.own.mk>
 SYS_INCLUDE?=	copies
+
+# If DESTDIR is set, we're probably building a release, so force "copies".
+.if defined(DESTDIR) && (${DESTDIR} != "/" && !empty(DESTDIR))
+SYS_INCLUDE=	copies
+.endif
 
 .PHONY:	includes
 includes: ${SYS_INCLUDE}
