@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.2 2001/02/11 12:15:30 blymn Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.3 2001/02/16 03:28:24 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -150,6 +150,9 @@ ipv6_check_field(FIELD *field, char *args)
 				goto FAIL;
 			
 			p++;
+			if (*p == '\0')
+				break;
+			
 			if (!isxdigit(*p))
 				goto FAIL;
 			vals[i] = strtoul(p, NULL, 16);
