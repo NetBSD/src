@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.11 2001/04/25 03:31:23 thorpej Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.12 2001/07/06 18:01:26 mcr Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -111,14 +111,19 @@ rbus_pccbb_parent_io(pa)
 	struct extent *ex;
 	bus_addr_t start;
 	bus_size_t size;
+	rbus_tag_t ret;
 #ifdef PCIBIOS_ADDR_FIXUP
 	ex = pciaddr.extent_port;
 #else
 	extern struct extent *ioport_ex;
 	ex = ioport_ex;
 #endif
-	start =  0x2000;
-	size =  0x1000;
+	start = 0x4000;
+	size  = 0x2000;
 
-	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
+	ret = rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
+	if(ret == NULL) {
+	  panic("failed to alloc I/O space");
+	}
+	return ret;
 }
