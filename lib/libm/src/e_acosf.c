@@ -8,23 +8,23 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_acosf.c,v 1.6 1997/10/09 11:28:26 lukem Exp $");
+__RCSID("$NetBSD: e_acosf.c,v 1.7 1999/07/02 15:37:38 simonb Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
 #ifdef __STDC__
-static const float 
+static const float
 #else
-static float 
+static float
 #endif
 one =  1.0000000000e+00, /* 0x3F800000 */
 pi =  3.1415925026e+00, /* 0x40490fda */

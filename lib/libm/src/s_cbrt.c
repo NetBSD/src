@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cbrt.c,v 1.9 1997/10/09 11:31:07 lukem Exp $");
+__RCSID("$NetBSD: s_cbrt.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -41,9 +41,9 @@ F =  1.60714285714285720630e+00, /* 45/28     = 0x3FF9B6DB, 0x6DB6DB6E */
 G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 
 #ifdef __STDC__
-	double cbrt(double x) 
+	double cbrt(double x)
 #else
-	double cbrt(x) 
+	double cbrt(x)
 	double x;
 #endif
 {
@@ -57,7 +57,7 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 	hx  ^=sign;
 	if(hx>=0x7ff00000) return(x+x); /* cbrt(NaN,INF) is itself */
 	GET_LOW_WORD(low,x);
-	if((hx|low)==0) 
+	if((hx|low)==0)
 	    return(x);		/* cbrt(0) is itself */
 
 	SET_HIGH_WORD(x,hx);	/* x <- |x| */
@@ -73,9 +73,9 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
     /* new cbrt to 23 bits, may be implemented in single precision */
 	r=t*t/x;
 	s=C+r*t;
-	t*=G+F/(s+E+D/s);	
+	t*=G+F/(s+E+D/s);
 
-    /* chopped to 20 bits and make it larger than cbrt(x) */ 
+    /* chopped to 20 bits and make it larger than cbrt(x) */
 	GET_HIGH_WORD(high,t);
 	INSERT_WORDS(t,high+0x00000001,0);
 

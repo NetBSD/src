@@ -5,19 +5,19 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_acosh.c,v 1.10 1997/10/09 11:28:31 lukem Exp $");
+__RCSID("$NetBSD: e_acosh.c,v 1.11 1999/07/02 15:37:38 simonb Exp $");
 #endif
 
 /* __ieee754_acosh(x)
  * Method :
- *	Based on 
+ *	Based on
  *		acosh(x) = log [ x + sqrt(x*x-1) ]
  *	we have
  *		acosh(x) := log(x)+ln2,	if x is large; else
@@ -33,9 +33,9 @@ __RCSID("$NetBSD: e_acosh.c,v 1.10 1997/10/09 11:28:31 lukem Exp $");
 #include "math_private.h"
 
 #ifdef __STDC__
-static const double 
+static const double
 #else
-static double 
+static double
 #endif
 one	= 1.0,
 ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
@@ -46,7 +46,7 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 	double __ieee754_acosh(x)
 	double x;
 #endif
-{	
+{
 	double t;
 	int32_t hx;
 	u_int32_t lx;
@@ -56,7 +56,7 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 	} else if(hx >=0x41b00000) {	/* x > 2**28 */
 	    if(hx >=0x7ff00000) {	/* x is inf of NaN */
 	        return x+x;
-	    } else 
+	    } else
 		return __ieee754_log(x)+ln2;	/* acosh(huge)=log(2x) */
 	} else if(((hx-0x3ff00000)|lx)==0) {
 	    return 0.0;			/* acosh(1) = 0 */

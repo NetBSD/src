@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,16 +38,16 @@
  * ATAN2(Y,X)
  * RETURN ARG (X+iY)
  * VAX D FORMAT (56 BITS PRECISION)
- * CODED IN VAX ASSEMBLY LANGUAGE BY K.C. NG, 4/16/85; 
+ * CODED IN VAX ASSEMBLY LANGUAGE BY K.C. NG, 4/16/85;
  *
- *	
+ *
  * Method :
  *	1. Reduce y to positive by atan2(y,x)=-atan2(-y,x).
- *	2. Reduce x to positive by (if x and y are unexceptional): 
+ *	2. Reduce x to positive by (if x and y are unexceptional):
  *		ARG (x+iy) = arctan(y/x)   	   ... if x > 0,
  *		ARG (x+iy) = pi - arctan[y/(-x)]   ... if x < 0,
- *	3. According to the integer k=4t+0.25 truncated , t=y/x, the argument 
- *	   is further reduced to one of the following intervals and the 
+ *	3. According to the integer k=4t+0.25 truncated , t=y/x, the argument
+ *	   is further reduced to one of the following intervals and the
  *	   arctangent of y/x is evaluated by the corresponding formula:
  *
  *          [0,7/16]	   atan(y/x) = t - t^3*(a1+t^2*(a2+...(a10+t^2*a11)...)
@@ -71,7 +71,7 @@
  *	ARG( (anything but,0,NaN, and INF),+-INF ) is +-PI/2;
  *
  * Accuracy:
- *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded. 
+ *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded.
  */
 
 	.text
@@ -91,7 +91,7 @@ _atan2 :
 	subl2	$8,sp
 	bicw3	$0x7fff,r2,-4(fp)	# copy y sign bit to -4(fp)
 	bicw3	$0x7fff,r4,-8(fp)	# copy x sign bit to -8(fp)
-	cmpd	r4,$0x4080		# x = 1.0 ?	
+	cmpd	r4,$0x4080		# x = 1.0 ?
 	bneq	xnot1
 	movq	r2,r0
 	bicw2	$0x8000,r0		# t = |y|
@@ -119,32 +119,32 @@ begin:
 	cvtrfl	r10,r10			# [8*t] rounded to int
 	ashl	$-1,r10,r10		# [8*t]/2
 	casel	r10,$0,$4
-L1:	
+L1:
 	.word	L20-L1
 	.word	L20-L1
 	.word	L30-L1
 	.word	L40-L1
 	.word	L40-L1
-L10:	
+L10:
 	movq	$0xb4d9940f985e407b,r6	# Hi=.98279372324732906796d0
 	movq	$0x21b1879a3bc2a2fc,r8	# Lo=-.17092002525602665777d-17
 	subd3	r4,r2,r0		# y-x
 	addw2	$0x80,r0		# 2(y-x)
 	subd2	r4,r0			# 2(y-x)-x
-	addw2	$0x80,r4		# 2x	
+	addw2	$0x80,r4		# 2x
 	movq	r2,r10
 	addw2	$0x80,r10		# 2y
 	addd2	r10,r2			# 3y
 	addd2	r4,r2			# 3y+2x
 	divd2	r2,r0			# (2y-3x)/(2x+3y)
 	brw	L60
-L20:	
+L20:
 	cmpw	r0,$0x3280		# t : 2**(-28)
 	jlss	L80
 	clrq	r6			# Hi=r6=0, Lo=r8=0
 	clrq	r8
 	brw	L60
-L30:	
+L30:
 	movq	$0xda7b2b0d63383fed,r6	# Hi=.46364760900080611433d0
 	movq	$0xf0ea17b2bf912295,r8	# Lo=.10147340032515978826d-17
 	movq	r2,r0
@@ -154,7 +154,7 @@ L30:
 	addd2	r2,r4			# 2x+y
 	divd2	r4,r0 			# (2y-x)/(2x+y)
 	brb	L60
-L50:	
+L50:
 	movq	$0x68c2a2210fda40c9,r6	# Hi=1.5707963267948966135d1
 	movq	$0x06e0145c26332326,r8	# Lo=.22517417741562176079d-17
 	cmpw	r0,$0x5100		# y : 2**57
@@ -162,13 +162,13 @@ L50:
 	divd3	r2,r4,r0
 	bisw2	$0x8000,r0 		# -x/y
 	brb	L60
-L40:	
+L40:
 	movq	$0x68c2a2210fda4049,r6	# Hi=.78539816339744830676d0
 	movq	$0x06e0145c263322a6,r8	# Lo=.11258708870781088040d-17
 	subd3	r4,r2,r0		# y-x
 	addd2	r4,r2			# y+x
 	divd2	r2,r0			# (y-x)/(y+x)
-L60:	
+L60:
 	movq	r0,r10
 	muld2	r0,r0
 	polyd	r0,$12,ptable
@@ -176,12 +176,12 @@ L60:
 	subd2	r0,r8
 	addd3	r8,r10,r0
 	addd2	r6,r0
-L80:	
+L80:
 	movw	-8(fp),r2
 	bneq	pim
 	bisw2	-4(fp),r0		# return sign(y)*r0
 	ret
-L90:					# x >= 2**25 
+L90:					# x >= 2**25
 	movq	r6,r0
 	brb	L80
 pim:
@@ -189,7 +189,7 @@ pim:
 	bisw2	-4(fp),r0
 	ret
 yeq0:
-	movw	-8(fp),r2		
+	movw	-8(fp),r2
 	beql	zero			# if sign(x)=1 return pi
 	movq	$0x68c2a2210fda4149,r0	# pi=3.1415926535897932270d1
 	ret

@@ -5,17 +5,17 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_remainder.c,v 1.7 1997/10/09 11:35:53 lukem Exp $");
+__RCSID("$NetBSD: w_remainder.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
 #endif
 
-/* 
+/*
  * wrapper remainder(x,p)
  */
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: w_remainder.c,v 1.7 1997/10/09 11:35:53 lukem Exp $");
 	double z;
 	z = __ieee754_remainder(x,y);
 	if(_LIB_VERSION == _IEEE_ || isnan(y)) return z;
-	if(y==0.0) 
+	if(y==0.0)
 	    return __kernel_standard(x,y,28); /* remainder(x,0) */
 	else
 	    return z;

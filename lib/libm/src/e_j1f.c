@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j1f.c,v 1.5 1997/10/09 11:29:16 lukem Exp $");
+__RCSID("$NetBSD: e_j1f.c,v 1.6 1999/07/02 15:37:39 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -28,9 +28,9 @@ static float ponef(), qonef();
 #endif
 
 #ifdef __STDC__
-static const float 
+static const float
 #else
-static float 
+static float
 #endif
 huge    = 1e30,
 one	= 1.0,
@@ -54,9 +54,9 @@ static float zero    = 0.0;
 #endif
 
 #ifdef __STDC__
-	float __ieee754_j1f(float x) 
+	float __ieee754_j1f(float x)
 #else
-	float __ieee754_j1f(x) 
+	float __ieee754_j1f(x)
 	float x;
 #endif
 {
@@ -123,9 +123,9 @@ static float V0[5] = {
 };
 
 #ifdef __STDC__
-	float __ieee754_y1f(float x) 
+	float __ieee754_y1f(float x)
 #else
-	float __ieee754_y1f(x) 
+	float __ieee754_y1f(x)
 	float x;
 #endif
 {
@@ -135,7 +135,7 @@ static float V0[5] = {
 	GET_FLOAT_WORD(hx,x);
         ix = 0x7fffffff&hx;
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-	if(ix>=0x7f800000) return  one/(x+x*x); 
+	if(ix>=0x7f800000) return  one/(x+x*x);
         if(ix==0) return -one/zero;
         if(hx<0) return zero/zero;
         if(ix >= 0x40000000) {  /* |x| >= 2.0 */
@@ -165,10 +165,10 @@ static float V0[5] = {
                     z = invsqrtpi*(u*ss+v*cc)/sqrtf(x);
                 }
                 return z;
-        } 
+        }
         if(ix<=0x24800000) {    /* x < 2**-54 */
             return(-tpi/x);
-        } 
+        }
         z = x*x;
         u = U0[0]+z*(U0[1]+z*(U0[2]+z*(U0[3]+z*U0[4])));
         v = one+z*(V0[0]+z*(V0[1]+z*(V0[2]+z*(V0[3]+z*V0[4]))));
@@ -308,7 +308,7 @@ static float ps2[5] = {
         s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
         return one+ r/s;
 }
-		
+
 
 /* For x >= 8, the asymptotic expansions of qone is
  *	3/8 s - 105/1024 s^3 - ..., where s = 1/x.

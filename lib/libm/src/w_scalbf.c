@@ -8,19 +8,19 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_scalbf.c,v 1.4 1997/10/09 11:36:04 lukem Exp $");
+__RCSID("$NetBSD: w_scalbf.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
 #endif
 
 /*
  * wrapper scalbf(float x, float fn) is provide for
- * passing various standard test suite. One 
+ * passing various standard test suite. One
  * should use scalbn() instead.
  */
 
@@ -57,10 +57,10 @@ __RCSID("$NetBSD: w_scalbf.c,v 1.4 1997/10/09 11:36:04 lukem Exp $");
 	if(z==(float)0.0&&z!=x) {
 	    /* scalbf underflow */
 	    return (float)__kernel_standard((double)x,(double)fn,133);
-	} 
+	}
 #ifndef _SCALB_INT
 	if(!finitef(fn)) errno = ERANGE;
 #endif
 	return z;
-#endif 
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.9 1998/07/26 21:58:46 mycroft Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.10 1999/07/02 15:45:23 simonb Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -94,7 +94,7 @@ skeychallenge(mp,name, ss, sslen)
 		return -1;
 	}
 	return -1;	/* Can't happen */
-}	
+}
 
 /* Find an entry in the One-time Password database.
  * Return codes:
@@ -251,7 +251,7 @@ skeyverify(mp,response)
 		mp->logname,mp->n,mp->seed, mp->val, tbuf);
 
 	fclose(mp->keyfile);
-	
+
 	setpriority(PRIO_PROCESS, 0, 0);
 	return 0;
 }
@@ -263,16 +263,16 @@ skeyverify(mp,response)
  * Returns: 1 user doesnt exist, -1 fle error, 0 user exists.
  *
  */
- 
+
 int
 skey_haskey (username)
 	const char *username;
 {
 	struct skey skey;
- 
+
 	return (skeylookup (&skey, username));
 }
- 
+
 /*
  * skey_keyinfo ()
  *
@@ -294,7 +294,7 @@ skey_keyinfo (username)
 
 	return str;
 }
- 
+
 /*
  * skey_passcheck ()
  *
@@ -304,7 +304,7 @@ skey_keyinfo (username)
  * Returns: 0 success, -1 failure
  *
  */
- 
+
 int
 skey_passcheck (username, passwd)
 	const char *username;
@@ -332,7 +332,7 @@ skey_passcheck (username, passwd)
  * Returns: 0 success, -1 failure
  *
  */
- 
+
 int
 skey_authenticate (username)
 	const char *username;

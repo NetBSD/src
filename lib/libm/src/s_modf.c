@@ -5,18 +5,18 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modf.c,v 1.9 1997/10/09 11:32:56 lukem Exp $");
+__RCSID("$NetBSD: s_modf.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 /*
- * modf(double x, double *iptr) 
+ * modf(double x, double *iptr)
  * return fraction part of x, and return x's integral part in *iptr.
  * Method:
  *	Bit twiddling.

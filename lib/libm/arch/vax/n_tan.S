@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
+/*	$NetBSD: n_tan.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +34,11 @@
  *	@(#)tan.s	8.1 (Berkeley) 6/4/93
  */
 
-/*  This is the implementation of Peter Tang's double precision  
+/*  This is the implementation of Peter Tang's double precision
  *  tangent for the VAX using Bob Corbett's argument reduction.
- *  
+ *
  *  Notes:
- *       under 1,024,000 random arguments testing on [0,2*pi] 
+ *       under 1,024,000 random arguments testing on [0,2*pi]
  *       tan() observed maximum error = 2.15 ulps
  *
  * double tan(arg)

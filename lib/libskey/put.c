@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.6 1998/07/26 21:58:46 mycroft Exp $	*/
+/*	$NetBSD: put.c,v 1.7 1999/07/02 15:45:23 simonb Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -2133,9 +2133,9 @@ int
   strncpy (input, e, sizeof (input));
   memset (b, 0, sizeof (b));
   memset (out, 0, 8);
-  for (i = 0, p = 0; i < 6; i++, p += 11) 
+  for (i = 0, p = 0; i < 6; i++, p += 11)
   {
-    if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL) 
+    if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL)
       return -1;
 
     l = strlen (word);
@@ -2153,7 +2153,7 @@ int
     }
     standard (word);
 
-    if ((v = wsrch (word, low, high)) < 0) 
+    if ((v = wsrch (word, low, high)) < 0)
        return 0;
 
     insert (b, v, p, 11);
@@ -2163,7 +2163,7 @@ int
   for (p = 0, i = 0; i < 64; i += 2)
     p += extract (b, i, 2);
 
-  if ((p & 3) != extract (b, 64, 2)) 
+  if ((p & 3) != extract (b, 64, 2))
      return -2;
 
   memcpy (out, b, 8);

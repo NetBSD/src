@@ -8,7 +8,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rquota.x,v 1.3 1997/10/09 14:21:24 lukem Exp $");
+%__RCSID("$NetBSD: rquota.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
 %#endif /* not lint */
 #endif
 
@@ -33,7 +33,7 @@ struct rquota {
 	unsigned int rq_curfiles;	/* current # allocated files */
 	unsigned int rq_btimeleft;	/* time left for excessive disk use */
 	unsigned int rq_ftimeleft;	/* time left for excessive files */
-};	
+};
 
 enum gqr_status {
 	Q_OK = 1,		/* quota returned */

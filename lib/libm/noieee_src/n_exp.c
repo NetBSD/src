@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.4 1998/11/08 19:29:34 ragge Exp $ */
+/*      $NetBSD: n_exp.c,v 1.5 1999/07/02 15:37:36 simonb Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,21 +41,21 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
 /* EXP(X)
  * RETURN THE EXPONENTIAL OF X
  * DOUBLE PRECISION (IEEE 53 bits, VAX D FORMAT 56 BITS)
- * CODED IN C BY K.C. NG, 1/19/85; 
+ * CODED IN C BY K.C. NG, 1/19/85;
  * REVISED BY K.C. NG on 2/6/85, 2/15/85, 3/7/85, 3/24/85, 4/16/85, 6/14/86.
  *
  * Required system supported functions:
- *	scalb(x,n)	
- *	copysign(x,y)	
+ *	scalb(x,n)
+ *	copysign(x,y)
  *	finite(x)
  *
  * Method:
- *	1. Argument Reduction: given the input x, find r and integer k such 
+ *	1. Argument Reduction: given the input x, find r and integer k such
  *	   that
- *	                   x = k*ln2 + r,  |r| <= 0.5*ln2 .  
+ *	                   x = k*ln2 + r,  |r| <= 0.5*ln2 .
  *	   r will be represented as r := z+c for better accuracy.
  *
- *	2. Compute exp(r) by 
+ *	2. Compute exp(r) by
  *
  *		exp(r) = 1 + r + r*R1/(2-R1),
  *	   where
@@ -146,7 +146,7 @@ double x;
 		}
 		/* end of x > lntiny */
 
-		else 
+		else
 		     /* exp(-big#) underflows to zero */
 		     if(finite(x))  return(scalb(1.0,-5000));
 
@@ -155,7 +155,7 @@ double x;
 	}
 	/* end of x < lnhuge */
 
-	else 
+	else
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
 	    return( finite(x) ?  scalb(1.0,5000)  : x);
 }
@@ -191,7 +191,7 @@ double x, c;
 		}
 		/* end of x > lntiny */
 
-		else 
+		else
 		     /* exp(-big#) underflows to zero */
 		     if(finite(x))  return(scalb(1.0,-5000));
 
@@ -200,7 +200,7 @@ double x, c;
 	}
 	/* end of x < lnhuge */
 
-	else 
+	else
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
 	    return( finite(x) ?  scalb(1.0,5000)  : x);
 }

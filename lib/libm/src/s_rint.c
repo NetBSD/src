@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rint.c,v 1.9 1997/10/09 11:33:10 lukem Exp $");
+__RCSID("$NetBSD: s_rint.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 /*
@@ -31,7 +31,7 @@ __RCSID("$NetBSD: s_rint.c,v 1.9 1997/10/09 11:33:10 lukem Exp $");
 #ifdef __STDC__
 static const double
 #else
-static double 
+static double
 #endif
 TWO52[2]={
   4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
@@ -52,7 +52,7 @@ TWO52[2]={
 	sx = (i0>>31)&1;
 	j0 = ((i0>>20)&0x7ff)-0x3ff;
 	if(j0<20) {
-	    if(j0<0) { 	
+	    if(j0<0) {
 		if(((i0&0x7fffffff)|i1)==0) return x;
 		i1 |= (i0&0x0fffff);
 		i0 &= 0xfffe0000;

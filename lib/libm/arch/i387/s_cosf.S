@@ -5,10 +5,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_cosf.S,v 1.3 1995/05/08 23:55:16 jtc Exp $")
+RCSID("$NetBSD: s_cosf.S,v 1.4 1999/07/02 15:37:34 simonb Exp $")
 
 /* A float's domain isn't large enough to require argument reduction. */
 ENTRY(cosf)
 	flds	4(%esp)
 	fcos
-	ret	
+	ret

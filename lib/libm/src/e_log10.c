@@ -5,38 +5,38 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_log10.c,v 1.10 1997/10/09 11:29:32 lukem Exp $");
+__RCSID("$NetBSD: e_log10.c,v 1.11 1999/07/02 15:37:40 simonb Exp $");
 #endif
 
 /* __ieee754_log10(x)
  * Return the base 10 logarithm of x
- * 
+ *
  * Method :
  *	Let log10_2hi = leading 40 bits of log10(2) and
  *	    log10_2lo = log10(2) - log10_2hi,
  *	    ivln10   = 1/log(10) rounded.
  *	Then
- *		n = ilogb(x), 
+ *		n = ilogb(x),
  *		if(n<0)  n = n+1;
  *		x = scalbn(x,-n);
  *		log10(x) := n*log10_2hi + (n*log10_2lo + ivln10*log(x))
  *
  * Note 1:
- *	To guarantee log10(10**n)=n, where 10**n is normal, the rounding 
+ *	To guarantee log10(10**n)=n, where 10**n is normal, the rounding
  *	mode must set to Round-to-Nearest.
  * Note 2:
  *	[1/log(10)] rounded to 53 bits has error  .198   ulps;
  *	log10 is monotonic at all binary break points.
  *
  * Special cases:
- *	log10(x) is NaN with signal if x < 0; 
+ *	log10(x) is NaN with signal if x < 0;
  *	log10(+INF) is +INF with no signal; log10(0) is -INF with signal;
  *	log10(NaN) is that NaN with no signal;
  *	log10(10**N) = N  for N=0,1,...,22.

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.2 1998/08/22 12:49:09 ragge Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.3 1999/07/02 15:37:37 simonb Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ double x;
 }
 
 double
-cos(x) 
+cos(x)
 double x;
 {
 	double a,c,z,s = 1.0;
@@ -87,7 +87,7 @@ double x;
 		}
 		else {			/* ... in [PI/4,3PI/4] */
 			a = PIo2-a;
-			return a+a*sin__S(a*a);	/* rtn. S(PI/2-|x|) */ 
+			return a+a*sin__S(a*a);	/* rtn. S(PI/2-|x|) */
 		}
 	}
 	if (a < small) {

@@ -5,23 +5,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -36,7 +36,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rex.x 1.3 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rex.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rex.x,v 1.3 1997/10/09 14:21:22 lukem Exp $");
+%__RCSID("$NetBSD: rex.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
 %#endif /* not lint */
 #endif
 
@@ -49,7 +49,7 @@ typedef string rexstring<1024>;
 const SIGINT = 2;	/* interrupt */
 
 /*
- * Values for rst_flags, below 
+ * Values for rst_flags, below
  */
 const REX_INTERACTIVE = 1;	/* interactive mode */
 
@@ -205,7 +205,7 @@ program REXPROG {
 		/*
 		 * Start remote execution
 		 */
-		rex_result 
+		rex_result
 		REXPROC_START(rex_start) = 1;
 
 		/*

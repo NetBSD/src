@@ -8,17 +8,17 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_expf.c,v 1.4 1997/10/09 11:34:39 lukem Exp $");
+__RCSID("$NetBSD: w_expf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
-/* 
+/*
  * wrapper expf(x)
  */
 
@@ -53,7 +53,7 @@ u_threshold= -1.0397208405e+02;  /* 0xc2cff1b5 */
 	    else if(x<u_threshold)
 	        /* exp underflow */
 	        return (float)__kernel_standard((double)x,(double)x,107);
-	} 
+	}
 	return z;
 #endif
 }

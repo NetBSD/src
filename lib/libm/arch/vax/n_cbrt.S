@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
  * double cbrt(double arg)
  * W. Kahan, 10/13/80. revised 1/13/84 for keeping sign symmetry
  * error check by E LeBlanc, 8/18/82
- * Revised and tested by K.C. Ng, 5/2/85  
+ * Revised and tested by K.C. Ng, 5/2/85
  * Max error less than 0.667 ulps (unit in the last places)
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.c,v 1.2 1998/08/22 12:49:09 ragge Exp $	*/
+/*	$NetBSD: n_tan.c,v 1.3 1999/07/02 15:37:37 simonb Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)tan.c	8.1 (Berkeley) 6/4/93";
 #include "mathimpl.h"
 #include "trig.h"
 double
-tan(x) 
+tan(x)
 double x;
 {
 	double a,z,ss,cc,c;

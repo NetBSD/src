@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tanh.c,v 1.8 1997/10/09 11:33:41 lukem Exp $");
+__RCSID("$NetBSD: s_tanh.c,v 1.9 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 /* Tanh(x)
@@ -63,7 +63,7 @@ static double one=1.0, two=2.0, tiny = 1.0e-300;
 	ix = jx&0x7fffffff;
 
     /* x is INF or NaN */
-	if(ix>=0x7ff00000) { 
+	if(ix>=0x7ff00000) {
 	    if (jx>=0) return one/x+one;    /* tanh(+-inf)=+-1 */
 	    else       return one/x-one;    /* tanh(NaN) = NaN */
 	}

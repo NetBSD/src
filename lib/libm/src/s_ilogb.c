@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogb.c,v 1.10 1997/10/09 11:32:13 lukem Exp $");
+__RCSID("$NetBSD: s_ilogb.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
 #endif
 
 /* ilogb(double x)
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: s_ilogb.c,v 1.10 1997/10/09 11:32:13 lukem Exp $");
 	hx &= 0x7fffffff;
 	if(hx<0x00100000) {
 	    GET_LOW_WORD(lx,x);
-	    if((hx|lx)==0) 
+	    if((hx|lx)==0)
 		return 0x80000001;	/* ilogb(0) = 0x80000001 */
 	    else			/* subnormal x */
 		if(hx==0) {

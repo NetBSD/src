@@ -1,4 +1,4 @@
-/*      $NetBSD: n_infnan.S,v 1.2 1998/10/31 02:06:02 matt Exp $ */
+/*      $NetBSD: n_infnan.S,v 1.3 1999/07/02 15:37:35 simonb Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ _sccsid:
  *	     := -ERANGE if result is -INF
  *
  * The Reserved Operand Fault is generated inside of this routine.
- */	
+ */
 	.set	EDOM,33
 	.set	ERANGE,34
 	.text

@@ -13,7 +13,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: nlm_prot.x,v 1.3 1997/10/09 14:21:22 lukem Exp $");
+%__RCSID("$NetBSD: nlm_prot.x,v 1.4 1999/07/02 15:44:13 simonb Exp $");
 %#endif /* not lint */
 #endif
 
@@ -76,20 +76,20 @@ struct nlm_lockargs {
 };
 
 struct nlm_cancargs {
-	netobj cookie;		
+	netobj cookie;
 	bool block;
 	bool exclusive;
 	struct nlm_lock alock;
 };
 
 struct nlm_testargs {
-	netobj cookie;		
+	netobj cookie;
 	bool exclusive;
 	struct nlm_lock alock;
 };
 
 struct nlm_unlockargs {
-	netobj cookie;		
+	netobj cookie;
 	struct nlm_lock alock;
 };
 
