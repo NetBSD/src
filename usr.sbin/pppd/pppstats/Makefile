@@ -1,8 +1,9 @@
-#	$Id: Makefile,v 1.3 1993/11/28 23:36:43 paulus Exp $
+#	$Id: Makefile,v 1.4 1994/01/28 00:56:02 cgd Exp $
 
 PROG=	pppstats
 SRCS=	pppstats.c
-LDADD=	-lutil
+LDADD=	-lkvm
+DPADD=	${LIBKVM}
 NOMAN=	noman
 BINMODE=2555
 BINGRP=	kmem
