@@ -3,7 +3,7 @@
 #
 
 # Pull in standard `install' config
-include 	"arch/sgimips/conf/GENERIC32_IP22"
+include 	"arch/sgimips/conf/GENERIC32_IP2x"
 
 # Enable the hooks used for initializing the root memory-disk.
 options         MEMORY_DISK_HOOKS
