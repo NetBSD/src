@@ -277,3 +277,10 @@ bound violations.  Also, fix directory lease eviction in NQNFS.
 
 [ kernel/nfs ] Attempting to make a cross-device link into NFS would
 panic the client.  Fix this.
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Mondo patch 2:
+
+[ cron ] Fix possible buffer overflow, from Rick Byers <rickb@iaw.on.ca>,
+PR #3293.
