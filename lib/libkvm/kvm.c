@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.74 2002/09/17 19:38:26 drochner Exp $	*/
+/*	$NetBSD: kvm.c,v 1.75 2002/09/17 19:50:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.74 2002/09/17 19:38:26 drochner Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.75 2002/09/17 19:50:48 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -723,17 +723,13 @@ kvm_dbopen(kd)
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
-	int fd, flags;
+	int fd;
 
 	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
 		return (-1);
 	if ((fd = (*kd->db->fd)(kd->db)) >= 0) {
-		if ((flags = fcntl(fd, F_GETFL, 0)) == -1) {
-		       (*kd->db->close)(kd->db);
-		       return (-1);
-		}
-		if (fcntl(fd, F_SETFL, flags | 1) == -1) {
+		if (fcntl(fd, F_SETFD, (void *)1) == -1) {
 		       (*kd->db->close)(kd->db);
 		       return (-1);
 		}
