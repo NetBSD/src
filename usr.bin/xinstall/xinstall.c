@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.36 1999/06/26 00:41:39 thorpej Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.37 1999/07/06 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.36 1999/06/26 00:41:39 thorpej Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.37 1999/07/06 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,6 +386,7 @@ install(from_name, to_name, fset, flags)
 			*ptr = '\0';
 			dir = to_name;
 		} else {
+			c = '\0';	/* pacify gcc */
 			dir = tmpl;
 			*dir = '\0';
 		}
@@ -396,6 +397,7 @@ install(from_name, to_name, fset, flags)
 		to_name = tmpl;
 
 	} else {
+		oto_name = NULL;	/* pacify gcc */
 		if (dobackup)
 			backup(to_name);
 		else
@@ -468,8 +470,15 @@ install(from_name, to_name, fset, flags)
 	if (dopreserve) {
 		struct timeval tv[2];
 
+#ifdef BSD4_4
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
+#else
+		tv[0].tv_sec = from_sb.st_atime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = from_sb.st_mtime;
+		tv[1].tv_usec = 0;
+#endif
 		if (futimes(to_fd, tv) == -1)
 			warn("%s: futimes", to_name);
 	}
