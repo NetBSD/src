@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2003/03/26 14:46:33 scw Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2003/04/28 23:16:24 bjh21 Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,10 +39,11 @@
 #define	_SH5_TYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sh5/int_types.h>
 
 /* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.20 2003/04/19 21:30:30 christos Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.21 2003/04/28 23:16:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,8 @@
 
 #include <sys/featuretest.h>
 
-#if !defined(_ANSI_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
 #ifndef CHILD_MAX
 #define	CHILD_MAX		  160	/* max simultaneous processes */
@@ -70,18 +71,18 @@
 /*
  * IEEE Std 1003.1c-95, adopted in X/Open CAE Specification Issue 5 Version 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
 #define	LOGIN_NAME_MAX		   17	/* max login name length incl. NUL */
 #endif
 
 /*
  * X/Open CAE Specification Issue 5 Version 2
  */
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	IOV_MAX			 1024	/* max # of iovec's for readv(2) etc. */
 #define	NZERO			   20	/* default "nice" */
-#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #endif /* !_ANSI_SOURCE */
 

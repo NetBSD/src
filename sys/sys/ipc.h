@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.24 2002/08/07 23:39:24 soren Exp $	*/
+/*	$NetBSD: ipc.h,v 1.25 2003/04/28 23:16:28 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #ifndef _SYS_IPC_H_
 #define _SYS_IPC_H_
 
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
 struct ipc_perm {
@@ -70,7 +71,7 @@ struct ipc_perm {
 	key_t		_key;	/* user specified msg/sem/shm key */
 };
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* Warning: 64-bit structure padding is needed here */
 struct ipc_perm_sysctl {
 	u_int64_t	_key;
@@ -82,7 +83,7 @@ struct ipc_perm_sysctl {
 	int16_t		_seq;
 	int16_t		pad;
 };
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 /*
@@ -121,7 +122,7 @@ struct ipc_perm14 {
  * The first of these is used by ipcs(1), and so is defined outside the
  * kernel as well.
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.23 2003/02/25 23:12:06 perseant Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.24 2003/04/28 23:16:28 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -52,9 +52,9 @@
 #ifndef _KERNEL
 #include <sys/featuretest.h>
 #include <sys/types.h>
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <sys/stat.h>
-#endif /* !_POSIX_C_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 #endif /* !_KERNEL */
 
 /*
@@ -78,24 +78,23 @@
  * FREAD and FWRITE are excluded from the #ifdef _KERNEL so that TIOCFLUSH,
  * which was documented to use FREAD/FWRITE, continues to work.
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	FREAD		0x00000001
 #define	FWRITE		0x00000002
 #endif
 #define	O_NONBLOCK	0x00000004	/* no delay */
 #define	O_APPEND	0x00000008	/* set append mode */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	O_SHLOCK	0x00000010	/* open with shared file lock */
 #define	O_EXLOCK	0x00000020	/* open with exclusive file lock */
 #define	O_ASYNC		0x00000040	/* signal pgrp when data ready */
 #endif
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 199309L || \
+#if (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 #define	O_SYNC		0x00000080	/* synchronous writes */
 #endif
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	O_NOFOLLOW	0x00000100	/* don't follow symlinks on the last */
 					/* path component */
 #endif
@@ -103,13 +102,13 @@
 #define	O_TRUNC		0x00000400	/* truncate to zero length */
 #define	O_EXCL		0x00000800	/* error if already exists */
 
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500
+#if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
 #define	O_DSYNC		0x00010000	/* write: I/O data completion */
 #define	O_RSYNC		0x00020000	/* read: I/O completion as for write */
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	O_ALT_IO	0x00040000	/* use alternate i/o semantics */
 #endif
 
@@ -141,7 +140,7 @@
  * and by fcntl.  We retain the F* names for the kernel f_flags field
  * and for backward compatibility for fcntl.
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	FAPPEND		O_APPEND	/* kernel/compat */
 #define	FASYNC		O_ASYNC		/* kernel/compat */
 #define	O_FSYNC		O_SYNC		/* compat */
@@ -166,7 +165,7 @@
 #define	F_SETFD		2		/* set file descriptor flags */
 #define	F_GETFL		3		/* get file status flags */
 #define	F_SETFL		4		/* set file status flags */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	F_GETOWN	5		/* get SIGIO/SIGURG proc/pgrp */
 #define F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
 #endif
@@ -188,7 +187,7 @@
 #endif
 
 /* Constants for fcntl's passed to the underlying fs - like ioctl's. */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	F_PARAM_MASK	0xfff
 #define	F_PARAM_LEN(x)	(((x) >> 16) & F_PARAM_MASK)
 #define	F_PARAM_MAX	4095
@@ -222,7 +221,7 @@
 #define	_FCNW_FSPRIV(f, c, t)	_FCN_FSPRIV(F_FSOUT,   (f), (c), (int)sizeof(t))
 #define	_FCNRW_FSPRIV(f, c, t)	_FCN_FSPRIV(F_FSINOUT, (f), (c), (int)sizeof(t))
 
-#endif /* neither POSIX nor _XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 /*
  * Advisory file segment locking data type -
@@ -237,7 +236,7 @@ struct flock {
 };
 
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* lock operations for flock(2) */
 #define	LOCK_SH		0x01		/* shared file lock */
 #define	LOCK_EX		0x02		/* exclusive file lock */
@@ -263,9 +262,9 @@ __BEGIN_DECLS
 int	open __P((const char *, int, ...));
 int	creat __P((const char *, mode_t));
 int	fcntl __P((int, int, ...));
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	flock __P((int, int));
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* !_KERNEL */
 

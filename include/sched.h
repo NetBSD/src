@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.2 2003/01/18 18:05:05 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.3 2003/04/28 23:16:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _SCHED_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/sched.h>
 
 /* Required by POSIX 1003.1, section 13.1, lines 12-13. */
@@ -66,8 +67,7 @@ int	sched_rr_get_interval(pid_t pid, struct timespec *interval);
 int	sched_yield(void);
 __END_DECLS
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
-    !defined(_ANSI_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 /*
  * Stuff that for historical reasons is in <sched.h>, but not defined
@@ -79,6 +79,6 @@ pid_t	 clone __P((int (*)(void *), void *, int, void *));
 pid_t	__clone __P((int (*)(void *), void *, int, void *));
 __END_DECLS
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #endif /* _SCHED_H_ */

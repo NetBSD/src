@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.30 2003/04/10 21:35:20 atatat Exp $	*/
+/*	$NetBSD: mman.h,v 1.31 2003/04/28 23:16:28 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -130,7 +130,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MCL_CURRENT	0x01	/* lock all pages currently mapped */
 #define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Advice to madvise
  */
@@ -170,7 +170,7 @@ int	mlock __P((const void *, size_t));
 int	munlock __P((const void *, size_t));
 int	mlockall __P((int));
 int	munlockall __P((void));
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	madvise __P((void *, size_t, int));
 int	mincore __P((void *, size_t, char *));
 int	minherit __P((void *, size_t, int));
