@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.2 2002/11/20 23:54:39 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.3 2002/11/21 19:53:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.2 2002/11/20 23:54:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.3 2002/11/21 19:53:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ int
 exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
+	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
 	char **cpp, *dp, *sp, *progname;
 	size_t len;
@@ -116,7 +117,8 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 
 	*stackp -= 16;
 
-	macho_hdr = (struct exec_macho_object_header *)0x1000; /* XXX */
+	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
+	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
 	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0)
 		return error;
 	*stackp += sizeof(macho_hdr);
@@ -127,15 +129,14 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
 		return error;
 
-	dp = (char *) (cpp + argc + envc + 4 + pack->ep_es->es_arglen);
-	sp = argp;
+	dp = (char *) (cpp + argc + envc + 4);
 
-	progname = dp;
-	if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	if ((error = copyoutstr(emea->filename, dp, ARG_MAX, &len)) != 0)
 		return error;
+	progname = dp;
 	dp += len;
 
-
+	sp = argp;
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 	for (; --argc >= 0; sp += len, dp += len)
 		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
@@ -162,25 +163,9 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 
 	*stackp = (char *)cpp;
 
-	if ((error = copyoutstr(pack->ep_emul_arg, 
-	    *stackp, MAXPATHLEN, &len)) != 0)
-		return error;
-	*stackp += len + 1;
-
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, MAXPATHLEN);
+	free(pack->ep_emul_arg, M_EXEC);
 	pack->ep_emul_arg = NULL;
-
-	len = len % sizeof(nullp);
-	if (len) {
-		if ((error = copyout(&nullp, *stackp, len)) != 0)
-			return error;
-		*stackp += len;
-	}
-
-	if ((error = copyout(&nullp, *stackp, sizeof(nullp))) != 0) 
-		return error;
-	*stackp += sizeof(nullp);
 
 	return 0;
 }
