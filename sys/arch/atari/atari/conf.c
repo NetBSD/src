@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1997/06/02 20:40:40 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1997/08/02 10:04:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -106,7 +106,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,poll), dev_init(c,n,mmap) }
 
 /* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
+#define	cdev_lp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
 	(dev_type_read((*))) enodev, dev_init(c,n,write), \
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
@@ -134,7 +134,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ipfilter.h"
 #include "ite.h"
 #include "kbd.h"
-#include "lpt.h"
+#include "lp.h"
 #include "mouse.h"
 #include "pty.h"
 #include "ser.h"
@@ -157,7 +157,7 @@ cdev_decl(ipl);
 cdev_decl(ite);
 cdev_decl(kbd);
 cdev_decl(log);
-cdev_decl(lpt);
+cdev_decl(lp);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -211,7 +211,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
-	cdev_lpt_init(NLPT, lpt),	/* 29: Centronics */
+	cdev_lp_init(NLP, lp),		/* 29: Centronics */
 	cdev_ch_init(NCH,ch),		/* 30: SCSI autochanger	*/
 	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
