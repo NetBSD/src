@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.8 1999/09/19 21:31:35 is Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.9 1999/12/13 15:17:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,7 +45,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
 #endif 
 #include <sys/syslog.h>
@@ -64,6 +64,8 @@
 #include <netinet6/nd6.h>
 #include <netinet6/icmp6.h>
 
+#include <net/net_osdep.h>
+
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 #if 0
@@ -73,11 +75,12 @@ extern	struct timeval time;
 struct dadq;
 static struct dadq *nd6_dad_find __P((struct ifaddr *));
 static void nd6_dad_timer __P((struct ifaddr *));
+static void nd6_dad_ns_output __P((struct dadq *, struct ifaddr *));
 static void nd6_dad_ns_input __P((struct ifaddr *));
 static void nd6_dad_na_input __P((struct ifaddr *));
 
-/* ignore NS in DAD - specwise incorrect, */
-int dad_ignore_ns = 0;
+static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
+static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 
 /*
  * Input an Neighbor Solicitation Message.
@@ -218,7 +221,7 @@ nd6_ns_input(m, off, icmp6len)
 		 */
 		return;
 	}
-	myaddr6 = IFA_IN6(ifa);
+	myaddr6 = *IFA_IN6(ifa);
 	anycast = ((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST;
 	tentative = ((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE;
 	if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DUPLICATED)
@@ -322,6 +325,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	struct ip6_moptions im6o;
 	int icmp6len;
 	caddr_t mac;
+	struct ifnet *outif = NULL;
 	
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
@@ -459,9 +463,15 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
 #ifdef IPSEC
+#ifndef __OpenBSD__ /*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
+#endif
 #endif /*IPSEC*/
-	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o);
+	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o, &outif);
+	if (outif) {
+		icmp6_ifstat_inc(outif, ifs6_out_msg);
+		icmp6_ifstat_inc(outif, ifs6_out_neighborsolicit);
+	}
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 }
 
@@ -588,7 +598,7 @@ nd6_na_input(m, off, icmp6len)
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			if (ln->ln_expire)
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 				ln->ln_expire = time.tv_sec +
 #else
 				ln->ln_expire = time_second +
@@ -661,7 +671,7 @@ nd6_na_input(m, off, icmp6len)
 			if (is_solicited) {
 				ln->ln_state = ND6_LLINFO_REACHABLE;
 				if (ln->ln_expire) {
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 					ln->ln_expire = time.tv_sec +
 #else
 					ln->ln_expire = time_second +
@@ -685,7 +695,11 @@ nd6_na_input(m, off, icmp6len)
 			int s;
 
 			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+#ifdef __NetBSD__
 			s = splsoftnet();
+#else
+			s = splnet();
+#endif
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
@@ -706,7 +720,12 @@ nd6_na_input(m, off, icmp6len)
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
 	if (ln->ln_hold) {
+#ifdef OLDIP6OUTPUT
 		(*ifp->if_output)(ifp, ln->ln_hold, rt_key(rt), rt);
+#else
+		nd6_output(ifp, ln->ln_hold,
+			   (struct sockaddr_in6 *)rt_key(rt), rt);
+#endif 
 		ln->ln_hold = 0;
 	}
 }
@@ -734,6 +753,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 	struct ip6_moptions im6o;
 	int icmp6len;
 	caddr_t mac;
+	struct ifnet *outif = NULL;
 	
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
@@ -812,9 +832,15 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 		in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
 #ifdef IPSEC
+#ifndef __OpenBSD__ /*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
+#endif
 #endif /*IPSEC*/
-	ip6_output(m, NULL, NULL, 0, &im6o);
+	ip6_output(m, NULL, NULL, 0, &im6o, &outif);
+	if (outif) {
+		icmp6_ifstat_inc(outif, ifs6_out_msg);
+		icmp6_ifstat_inc(outif, ifs6_out_neighboradvert);
+	}
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 }
 
@@ -842,6 +868,7 @@ struct dadq {
 	TAILQ_ENTRY(dadq) dad_list;
 	struct ifaddr *dad_ifa;
 	int dad_count;		/* max NS to send */
+	int dad_ns_tcount;	/* # of trials to send NS */
 	int dad_ns_ocount;	/* NS sent so far */
 	int dad_ns_icount;
 	int dad_na_icount;
@@ -892,7 +919,7 @@ nd6_dad_start(ifa, tick)
 		printf("nd6_dad_start: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
 	if (ia->ia6_flags & IN6_IFF_ANYCAST) {
@@ -917,14 +944,14 @@ nd6_dad_start(ifa, tick)
 		printf("nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
 	bzero(dp, sizeof(*dp));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	/* XXXJRT This is probably a purely debugging message. */
-	printf("%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
+	printf("%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
 	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 	/*
@@ -937,11 +964,9 @@ nd6_dad_start(ifa, tick)
 	ifa->ifa_refcnt++;	/*just for safety*/
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
-	dp->dad_ns_ocount = 0;
+	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	if (!tick) {
-		dp->dad_ns_ocount++;
-		nd6_ns_output(ifa->ifa_ifp, NULL, &ia->ia_addr.sin6_addr,
-			NULL, 1);
+		nd6_dad_ns_output(dp, ifa);
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		dp->dad_timer =
 #endif
@@ -971,7 +996,11 @@ nd6_dad_timer(ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
+#ifdef __NetBSD__
 	s = splsoftnet();	/*XXX*/
+#else
+	s = splnet();		/*XXX*/
+#endif
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -987,14 +1016,26 @@ nd6_dad_timer(ifa)
 		printf("nd6_dad_timer: called with duplicated address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
 	if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
 		printf("nd6_dad_timer: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
+			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+		goto done;
+	}
+
+	/* timeouted with IFF_{RUNNING,UP} check */
+	if (dp->dad_ns_tcount > dad_maxtry) {
+		printf("%s: could not run DAD, driver problem?\n",
+		    if_name(ifa->ifa_ifp));
+
+		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+		free(dp, M_IP6NDP);
+		dp = NULL;
+		ifa->ifa_refcnt--;
 		goto done;
 	}
 
@@ -1003,9 +1044,7 @@ nd6_dad_timer(ifa)
 		/*
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
-		dp->dad_ns_ocount++;
-		nd6_ns_output(ifa->ifa_ifp, NULL, &ia->ia_addr.sin6_addr,
-			NULL, 1);
+		nd6_dad_ns_output(dp, ifa);
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		dp->dad_timer =
 #endif
@@ -1045,7 +1084,7 @@ nd6_dad_timer(ifa)
 				log(LOG_INFO, "DAD questionable for %s(%s): "
 					"network card loops back multicast?\n",
 					ip6_sprintf(&ia->ia_addr.sin6_addr),
-					ifa->ifa_ifp->if_xname);
+					if_name(ifa->ifa_ifp));
 				/* XXX consider it a duplicate or not? */
 				/* duplicate++; */
 			} else {
@@ -1071,7 +1110,7 @@ nd6_dad_timer(ifa)
 
 			/* XXXJRT This is probably a purely debugging message */
 			printf("%s: DAD complete for %s - no duplicates "
-			    "found\n", ifa->ifa_ifp->if_xname,
+			    "found\n", if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
@@ -1099,7 +1138,7 @@ nd6_dad_duplicated(ifa)
 	}
 
 	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: %d NS, "
-	    "%d NA\n", ifa->ifa_ifp->if_xname,
+	    "%d NA\n", if_name(ifa->ifa_ifp),
 	    ip6_sprintf(&ia->ia_addr.sin6_addr),
 	    dp->dad_ns_icount, dp->dad_na_icount);
 
@@ -1113,10 +1152,9 @@ nd6_dad_duplicated(ifa)
 #endif
 		);
 
-	/* XXXJRT This is probably a purely debugging message. */
 	printf("%s: DAD complete for %s - duplicate found\n",
-	    ifa->ifa_ifp->if_xname, ip6_sprintf(&ia->ia_addr.sin6_addr));
-	printf("%s: manual intervention required\n", ifa->ifa_ifp->if_xname);
+	    if_name(ifa->ifa_ifp), ip6_sprintf(&ia->ia_addr.sin6_addr));
+	printf("%s: manual intervention required\n", if_name(ifa->ifa_ifp));
 
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
@@ -1124,7 +1162,33 @@ nd6_dad_duplicated(ifa)
 	ifa->ifa_refcnt--;
 }
 
-void
+static void
+nd6_dad_ns_output(dp, ifa)
+	struct dadq *dp;
+	struct ifaddr *ifa;
+{
+	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
+	struct ifnet *ifp = ifa->ifa_ifp;
+
+	dp->dad_ns_tcount++;
+	if ((ifp->if_flags & IFF_UP) == 0) {
+#if 0
+		printf("%s: interface down?\n", if_name(ifp));
+#endif
+		return;
+	}
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+#if 0
+		printf("%s: interface not running?\n", if_name(ifp));
+#endif
+		return;
+	}
+
+	dp->dad_ns_ocount++;
+	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
+}
+
+static void
 nd6_dad_ns_input(ifa)
 	struct ifaddr *ifa;
 {
@@ -1153,7 +1217,7 @@ nd6_dad_ns_input(ifa)
 	if (dad_ignore_ns) {
 		log(LOG_INFO, "nd6_dad_ns_input: ignoring DAD NS packet for "
 		    "address %s(%s)\n", ip6_sprintf(taddr6),
-		    ifa->ifa_ifp->if_xname);
+		    if_name(ifa->ifa_ifp));
 		return;
 	}
 
@@ -1179,7 +1243,7 @@ nd6_dad_ns_input(ifa)
 	}
 }
 
-void
+static void
 nd6_dad_na_input(ifa)
 	struct ifaddr *ifa;
 {

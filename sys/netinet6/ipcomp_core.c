@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.4 1999/11/05 14:56:26 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.5 1999/12/13 15:17:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -69,27 +69,12 @@ static int deflate_policy = Z_DEFAULT_COMPRESSION;
 static int deflate_window = 12;		/* 2^12 = 4Kbytes */
 static int deflate_memlevel = MAX_MEM_LEVEL; 
 
-#if 1
 struct ipcomp_algorithm ipcomp_algorithms[] = {
 	{ NULL, NULL, -1 },
 	{ NULL, NULL, -1 },
 	{ deflate_compress, deflate_decompress, 90 },
 	{ NULL, NULL, 90 },
 };
-#else
-struct ipcomp_algorithm ipcomp_algorithms_dummy[] = {
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ deflate_compress, deflate_decompress, 90 },
-	{ NULL, NULL, 90 },
-};
-struct ipcomp_algorithm ipcomp_algorithms[] = {
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-	{ NULL, NULL, -1 },
-};
-#endif
 
 #ifdef __NetBSD__
 #define ovbcopy	bcopy

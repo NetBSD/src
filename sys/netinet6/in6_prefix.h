@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_prefix.h,v 1.2 1999/12/13 15:17:22 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998 and 1999 WIDE Project.
  * All rights reserved.

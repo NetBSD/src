@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.h,v 1.4 1999/09/19 21:31:34 is Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.5 1999/12/13 15:17:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,7 +33,6 @@
 #define _NETINET6_IN6_IFATTACH_H_
 
 #ifdef _KERNEL
-extern struct in6_addr **in6_iflladdr;
 extern int found_first_ifid;
 
 int in6_ifattach_getifid __P((struct ifnet *));
