@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.2 1996/05/21 15:32:28 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -65,8 +65,6 @@ struct kbd_softc {
 	struct evvar k_events; /* event queue state */
 } kbd_softc;
 
-void	kbdattach __P((int));
-
 /*
  * Called from main() during pseudo-device setup.  If this keyboard is
  * the console, this is our chance to open the underlying serial port and
@@ -83,7 +81,7 @@ kbdattach(kbd)
 #define KEY_UP(c)    ((c) & 0x80)
 
 void
-kbdenable ()
+kbdenable()
 {
 	int s = spltty();
 
@@ -114,8 +112,6 @@ kbdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int s, error;
-
 	if (kbd_softc.k_events.ev_io)
 		return (EBUSY);
 	kbd_softc.k_events.ev_io = p;
@@ -241,7 +237,7 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-int
+void
 kbdintr()
 {
 	u_char c, in;
@@ -276,6 +272,7 @@ kbdintr()
 	EV_WAKEUP(&k->k_events);
 }
 
+void
 kbdsoftint()
 {
 	int s = splhigh();
@@ -287,7 +284,7 @@ kbdsoftint()
 	splx(s);
 }
 
-int
+void
 kbd_bell(mode)
 	int mode;
 {
@@ -319,6 +316,7 @@ kbdgetcn()
 	return c;
 }
 
+void
 kbd_setLED()
 {
 	while(!(mfp.tsr & MFP_TSR_BE)) ;

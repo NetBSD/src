@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.2 1996/05/21 15:32:38 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -85,7 +85,7 @@ static struct opm_voice vtab[NBELL];
 
 #define UNIT(x)		minor(x)
 
-int
+void
 bellattach(num)
 	int num;
 {

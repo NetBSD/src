@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 1996/05/05 12:17:23 oki Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1996/05/21 15:33:30 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,13 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
+#endif
+
+#ifdef M68040
+#ifdef DEBUG
+static void dumpssw __P((u_short));
+static void dumpwb __P((int, u_short, u_int, u_int));
+#endif
 #endif
 
 char	*trap_type[] = {
@@ -210,6 +217,7 @@ again:
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
@@ -538,7 +546,7 @@ copyfault:
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -571,7 +579,7 @@ copyfault:
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -607,6 +615,7 @@ char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
+int
 writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
@@ -853,6 +862,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
+static void
 dumpssw(ssw)
 	register u_short ssw;
 {
@@ -879,6 +889,7 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
+static void
 dumpwb(num, s, a, d)
 	int num;
 	u_short s;
@@ -895,7 +906,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif
@@ -904,6 +915,7 @@ dumpwb(num, s, a, d)
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 1996/05/05 12:17:25 oki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 1996/05/21 15:33:20 oki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <machine/pte.h>
 #include <x68k/x68k/iodevice.h>
@@ -63,6 +64,10 @@ extern vm_size_t mem_size, avail_remaining;
 extern int protection_codes[];
 #ifdef HAVEVAC
 extern int pmap_aliasmask;
+#endif
+
+#ifdef MACHINE_NONCONTIG
+static void setmemrange __P((void));
 #endif
 
 /*
@@ -153,7 +158,7 @@ pmap_bootstrap(nextpa, firstpa)
 #ifdef MACHINE_NONCONTIG
 	setmemrange();
 	if (nextpa > high[0]) {
-		printf("Failure in BSD boot.  nextpa=0x%x, high[0]=0x%x.\n",
+		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
 		panic("You're hosed!\n");
 	}
@@ -540,6 +545,7 @@ int i;
 }
 
 #ifdef MACHINE_NONCONTIG
+static void
 setmemrange()
 {
 	u_long p;

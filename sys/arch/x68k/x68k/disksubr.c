@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 1996/05/21 15:33:01 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -237,6 +237,7 @@ done:
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -352,7 +353,8 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
-	if (error = biowait(bp))
+	error = biowait(bp);
+	if (error)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));

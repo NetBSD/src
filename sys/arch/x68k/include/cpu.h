@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1996/05/21 15:32:53 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,6 +159,56 @@ extern unsigned char ssir;
 #ifdef _KERNEL
 extern int machineid, mmutype;
 extern char *intiolimit;
+
+/* autoconf.c */
+void	configure __P((void));
+
+/* machdep.c */
+void	dumpconf __P((void));
+void	dumpsys __P((void));
+
+/* locore.s */
+struct pcb;
+struct fpframe;
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
+u_long	getdfc __P((void));
+u_long	getsfc __P((void));
+void	loadustp __P((int));
+void	m68881_save __P((struct fpframe *));
+void	m68881_restore __P((struct fpframe *));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+#if defined(M68040) || defined(M68060)
+void	DCFA __P((void));
+void	DCFP __P((vm_offset_t));
+void	DCFL __P((vm_offset_t));
+void	DCPL __P((vm_offset_t));
+void	DCPP __P((vm_offset_t));
+void	ICPL __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+#endif
+
+/* sys_machdep.c */
+int	cachectl __P((int, caddr_t, int));
+int	dma_cachectl __P((caddr_t, int));
+
+/* vm_machdep.c */
+int	kvtop __P((caddr_t));
+
+#ifdef GENERIC
+/* swapgeneric.c */
+void	setconf __P((void));
+#endif /* GENERIC */
+
 #endif
 
 /* physical memory sections */

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: par.c,v 1.2 1996/05/21 15:32:42 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <x68k/x68k/iodevice.h>
 #include <x68k/dev/parioctl.h>
@@ -128,10 +129,11 @@ parattach(pdp, dp, aux)
 	register struct par_softc *sc = (struct par_softc *)dp;
 	
 	sc->sc_flags = PARF_ALIVE;
-	printf(": parallel port (write only, interrupt)\n", dp->dv_unit);
+	printf(": parallel port (write only, interrupt)\n");
 	ioctlr.intr &= (~PRTI_EN);
 }
 
+int
 paropen(dev, flags)
 	dev_t dev;
 	int flags;
@@ -159,6 +161,7 @@ paropen(dev, flags)
 	return(0);
 }
 
+int
 parclose(dev, flags)
 	dev_t dev;
 	int flags;
@@ -174,7 +177,7 @@ parclose(dev, flags)
 	ioctlr.intr &= (~PRTI_EN);
 	splx(s);
 
-	return(0);
+	return (0);
 }
 
 void
@@ -203,6 +206,7 @@ partimo(unit)
 	wakeup(sc);
 }
 
+int
 parwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
@@ -215,6 +219,7 @@ parwrite(dev, uio)
 	return (parrw(dev, uio));
 }
 
+int
 parrw(dev, uio)
 	dev_t dev;
 	register struct uio *uio;
@@ -414,7 +419,7 @@ int partimeout_pending;
 int parsend_pending;
 
 void
-parintr (arg)
+parintr(arg)
 	void *arg;
 {
 	int s, mask;
@@ -484,7 +489,7 @@ parsendch (ch)
 			}
 		}
 	
-	if (! error) {
+	if (!error) {
 #ifdef DEBUG
 		if (pardebug & PDB_INTERRUPT)
 			printf ("#%d", ch);
