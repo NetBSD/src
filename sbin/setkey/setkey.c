@@ -1,5 +1,5 @@
-/*	$NetBSD: setkey.c,v 1.1 2000/06/13 15:15:27 itojun Exp $	*/
-/*	$KAME: setkey.c,v 1.14 2000/06/10 06:47:09 sakane Exp $	*/
+/*	$NetBSD: setkey.c,v 1.2 2000/10/03 21:48:33 itojun Exp $	*/
+/*	$KAME: setkey.c,v 1.15 2000/08/31 06:09:27 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -199,7 +199,7 @@ get_supported()
 	if (f_debug)
 		return 0;
 
-	if (pfkey_send_register(so, PF_UNSPEC) < 0)
+	if (pfkey_send_register(so, SADB_SATYPE_UNSPEC) < 0)
 		return -1;
 
 	if (pfkey_recv_register(so) < 0)
