@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.13 2001/05/25 04:06:12 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.14 2001/05/26 21:27:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -54,8 +54,7 @@
  */
 
 static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t,
-			       vm_page_t *, int, int, vm_fault_t, vm_prot_t,
-			       int));
+		    struct vm_page **, int, int, vm_fault_t, vm_prot_t, int));
 static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
 
 /*
@@ -199,7 +198,7 @@ int
 ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
 	vaddr_t ign1;
-	vm_page_t *ign2;
+	struct vm_page **ign2;
 	int ign3, ign4;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;

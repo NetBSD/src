@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2001/04/24 04:31:11 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.180 2001/05/26 21:27:15 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ cpu_startup()
 #else /* MSGBUFSIZE */
 	{
 	struct pglist mlist;
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va0, va;
 
 	/*
@@ -1560,7 +1560,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	paddr_t pa;
 	bus_addr_t dva;
 	bus_size_t sgsize;
@@ -1678,7 +1678,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 	struct pglist *mlist;
 

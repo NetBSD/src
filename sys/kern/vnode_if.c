@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.34 2001/05/07 08:48:07 lukem Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.35 2001/05/26 21:27:18 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -1614,7 +1614,7 @@ int
 VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
 	struct vnode *vp;
 	voff_t offset;
-	vm_page_t *m;
+	struct vm_page **m;
 	int *count;
 	int centeridx;
 	vm_prot_t access_type;
@@ -1654,7 +1654,7 @@ const struct vnodeop_desc vop_putpages_desc = {
 int
 VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	struct vnode *vp;
-	vm_page_t *m;
+	struct vm_page **m;
 	int count;
 	int flags;
 	int *rtvals;

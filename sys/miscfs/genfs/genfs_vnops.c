@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.32 2001/03/10 22:46:45 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.33 2001/05/26 21:27:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -431,7 +431,7 @@ genfs_getpages(v)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int *a_count;
 		int a_centeridx;
 		vm_prot_t a_access_type;

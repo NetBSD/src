@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2001/04/22 23:42:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2001/05/26 21:27:13 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,7 +103,7 @@ void pmap_release __P((pmap_t));
 struct po_page;
 struct po_page_info {
 	LIST_ENTRY(po_page) pgi_list;
-	vm_page_t pgi_page;
+	struct vm_page *pgi_page;
 	LIST_HEAD(po_freelist, pte_ovfl) pgi_freelist;
 	int pgi_nfree;
 };
@@ -812,7 +812,7 @@ poalloc()
 {
 	struct po_page *pop;
 	struct pte_ovfl *po;
-	vm_page_t mem;
+	struct vm_page *mem;
 	int i;
 
 	if (!pmap_initialized)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2001/05/09 19:46:22 kleink Exp $ */
+/*	$NetBSD: machdep.c,v 1.105 2001/05/26 21:27:15 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1423,7 +1423,7 @@ _bus_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	int i;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist *mlist;
 	paddr_t pa;
 
@@ -1465,7 +1465,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	int i;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist *mlist;
 
 	/*
