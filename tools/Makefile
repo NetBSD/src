@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2003/12/10 05:19:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.79 2003/12/11 00:29:33 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -42,6 +42,10 @@ SUBDIR+=	autoconf gettext
 
 .if ${MACHINE} == ibmnws
 SUBDIR+=	ibmnws-ncdcs
+.endif
+
+.if ${MACHINE} == macpcc
+SUBDIR+=	macppc-fixcoff
 .endif
 
 .if ${MACHINE} == prep
