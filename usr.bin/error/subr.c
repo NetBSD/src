@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.12 2003/07/14 09:41:27 itojun Exp $	*/
+/*	$NetBSD: subr.c,v 1.13 2003/07/14 11:09:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.12 2003/07/14 09:41:27 itojun Exp $");
+__RCSID("$NetBSD: subr.c,v 1.13 2003/07/14 11:09:19 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -80,15 +80,6 @@ Calloc(int nelements, int size)
 	if ( (back = (char *)calloc(nelements, size)) == NULL)
 		errx(1, "Ran out of memory.");
 	return(back);
-}
-
-char *
-strsave(char *instring)
-{
-	char	*outstring;
-
-	outstring = strdup(instring);
-	return(outstring);
 }
 
 /*
@@ -189,10 +180,10 @@ persperdexplode(char *string, char **r_perd, char **r_pers)
 			continue;
 		if (*cp == '('){
 			string[length - 1] = '\0';	/* clobber the ) */
-			*r_perd = strsave(cp+1);
+			*r_perd = strdup(cp+1);
 			string[length - 1] = ')';
 			*cp = '\0';			/* clobber the ( */
-			*r_pers = strsave(string);
+			*r_pers = strdup(string);
 			*cp = '(';
 			return(TRUE);
 		} 
@@ -220,10 +211,10 @@ qpersperdexplode(char *string, char **r_perd, char **r_pers)
 			continue;
 		if (*cp == '(' && *(cp - 1) == '"'){
 			string[length - 1] = '\0';
-			*r_perd = strsave(cp+1);
+			*r_perd = strdup(cp+1);
 			string[length - 1] = ')';
 			*(cp - 1) = '\0';		/* clobber the " */
-			*r_pers = strsave(string + 1);
+			*r_pers = strdup(string + 1);
 			*(cp - 1) = '"';
 			return(TRUE);
 		} 

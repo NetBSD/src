@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.7 2002/05/26 22:41:20 wiz Exp $	*/
+/*	$NetBSD: error.h,v 1.8 2003/07/14 11:09:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -241,7 +241,6 @@ void	printerrors(boolean, int, Eptr []);
 char   *plural(int);
 boolean	qpersperdexplode(char *, char **, char **);
 int	settotouch(char *);
-char   *strsave(char *);
 char   *substitute(char *, char, char);
 void	text(Eptr, boolean);
 boolean	touchfiles(int, Eptr **, int *, char ***);

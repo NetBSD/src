@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.9 2002/05/26 22:41:21 wiz Exp $	*/
+/*	$NetBSD: pi.c,v 1.10 2003/07/14 11:09:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.9 2002/05/26 22:41:21 wiz Exp $");
+__RCSID("$NetBSD: pi.c,v 1.10 2003/07/14 11:09:19 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -252,12 +252,12 @@ pi(void)
 		(void)substitute(wordv[2], '^', '|');
 		longpiptr = position(wordv[2],'|') > (6+8);
 		nwordv = wordvsplice(longpiptr ? 2 : 4, wordc, wordv+1);
-		nwordv[0] = strsave(currentfilename);
-		nwordv[1] = strsave(c_linenumber);
+		nwordv[0] = strdup(currentfilename);
+		nwordv[1] = strdup(c_linenumber);
 		if (!longpiptr){
 			nwordv[2] = "pascal errortype";
 			nwordv[3] = wordv[1];
-			nwordv[4] = strsave("%%%\n");
+			nwordv[4] = strdup("%%%\n");
 			if (strlen(nwordv[5]) > (8-2))	/* this is the pointer */
 				nwordv[5] += (8-2);	/* bump over 6 characters */
 		}
@@ -278,7 +278,7 @@ pi(void)
 		 */
 		language = INPI;
 		nwordv = wordvsplice(1, wordc, wordv + 1);
-		nwordv[0] = strsave(currentfilename);
+		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = wordv[2];
 		nwordv[2] = wordv[1];
 		c_linenumber = wordv[2];
@@ -322,7 +322,7 @@ pi(void)
 			for (wordindex = undefined ? 5 : 6; wordindex <= wordc;
 			    wordindex++){
 				nwordv = wordvsplice(2, undefined ? 2 : 3, wordv+1);
-				nwordv[0] = strsave(currentfilename);
+				nwordv[0] = strdup(currentfilename);
 				nwordv[1] = wordv[wordindex];
 				if (wordindex != wordc)
 					erroradd(undefined ? 4 : 5, nwordv,
@@ -334,10 +334,10 @@ pi(void)
 		}
 
 		nwordv = wordvsplice(1+3, wordc, wordv+1);
-		nwordv[0] = strsave(currentfilename);
-		nwordv[1] = strsave(c_header[0]);
-		nwordv[2] = strsave(c_header[1]);
-		nwordv[3] = strsave(c_header[2]);
+		nwordv[0] = strdup(currentfilename);
+		nwordv[1] = strdup(c_header[0]);
+		nwordv[2] = strdup(c_header[1]);
+		nwordv[3] = strdup(c_header[2]);
 		wordv = nwordv - 1;
 		wordc += 1 + 3;
 		return(C_THISFILE);
@@ -350,8 +350,8 @@ pi(void)
 		 */
 		language = INPI;
 		nwordv = wordvsplice(1, wordc, wordv+1);
-		nwordv[0] = strsave(currentfilename);
-		nwordv[1] = strsave(c_linenumber);
+		nwordv[0] = strdup(currentfilename);
+		nwordv[1] = strdup(c_linenumber);
 		wordv = nwordv - 1;
 		wordc += 1;
 		return(C_TRUE);
@@ -364,7 +364,7 @@ pi(void)
 		 *	Have message that tells us we have changed files
 		 */
 		language = INPI;
-		currentfilename = strsave(wordv[6]);
+		currentfilename = strdup(wordv[6]);
 		clob_last(currentfilename, '\0');
 		return(C_SYNC);
 	}
@@ -402,7 +402,7 @@ pi(void)
 	){
 		language = INPI;
 		nwordv = wordvsplice(2, wordc, wordv+1);
-		nwordv[0] = strsave(currentfilename);
+		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = structured ? wordv [5] : wordv[wordc];
 		wordc += 2;
 		wordv = nwordv - 1;
