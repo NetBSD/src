@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe1.c,v 1.3 2002/02/21 07:38:21 itojun Exp $	*/
+/*	$NetBSD: pipe1.c,v 1.4 2003/02/10 12:17:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <poll.h>
 #include <sched.h>
 #include <signal.h>
+#include <sys/errno.h>
 #include <sys/wait.h>
 
 /*
@@ -47,6 +48,7 @@
  */
 
 pid_t pid;
+int nsiginfo = 0;
 
 /*
  * This is used for both parent and child. Handle parent's SIGALRM,
@@ -55,8 +57,12 @@ pid_t pid;
 void
 sighand(int sig)
 {
-	if (sig == SIGALRM)
+	if (sig == SIGALRM) {
 		kill(pid, SIGINFO);
+	}
+	if (sig == SIGINFO) {
+		nsiginfo++;
+	}
 }
 
 int
@@ -65,6 +71,19 @@ main()
 	int pp[2], st;
 	ssize_t sz, todo, done;
 	char *f;
+	sigset_t sigset, osigset, emptysigset;
+
+	/* Initialise signal masks */
+	if (sigemptyset(&emptysigset) != 0)
+		err(1, "sigemptyset1");
+	if (sigemptyset(&sigset) != 0)
+		err(1, "sigemptyset2");
+	if (sigaddset(&sigset, SIGINFO) != 0)
+		err(1, "sigaddset");
+
+	/* Register signal handlers for both read and writer */
+	signal(SIGINFO, sighand);
+	signal(SIGALRM, sighand);
 
 	todo = 2 * 1024 * 1024;
 	f = (char *) malloc(todo);
@@ -74,7 +93,6 @@ main()
 	switch((pid = fork())) {
 	case 0: /* child */
 		close(pp[1]);
-		signal(SIGINFO, sighand);
 
 		/* Do inital write. This should succeed, make
 		 * the other side do partial write and wait for us to pick
@@ -83,7 +101,14 @@ main()
 		done = read(pp[0], f, 128 * 1024);
 
 		/* Wait until parent is alarmed and awakens us */
-		pause();
+		if (sigprocmask(SIG_BLOCK, &sigset, &osigset) != 0)
+			err(1, "sigprocmask1");
+		while (nsiginfo == 0) {
+			if (sigsuspend(&emptysigset) != -1 || errno != EINTR)
+				err(1, "sigsuspend");
+		}
+		if (sigprocmask(SIG_SETMASK, &osigset, NULL) != 0)
+			err(1, "sigprocmask2");
 
 		/* Read all what parent wants to give us */
 		while((sz = read(pp[0], f, 1024 * 1024)) > 0)
@@ -103,7 +128,6 @@ main()
 		/* NOTREACHED */
 
 	default:
-		signal(SIGALRM, sighand);
 		close(pp[0]);
 
 		/*
@@ -119,7 +143,7 @@ main()
 		 */
 		while(todo > 0 && ((sz = write(pp[1], f, todo)) > 0))
 			todo -= sz;
-		
+
 		/* Close the pipe, so that child would stop reading */
 		close(pp[1]);
 
