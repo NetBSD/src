@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.24 1999/07/07 06:02:21 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.24.12.1 2000/08/05 11:10:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -115,6 +115,15 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MADV_DONTNEED	4	/* dont need these pages */
 #define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
 #define	MADV_FREE	6	/* pages are empty, free them */
+/*
+ * Flags to minherit
+ */
+#define	MAP_INHERIT_SHARE	0	/* share with child */
+#define	MAP_INHERIT_COPY	1	/* copy into child */
+#define	MAP_INHERIT_NONE	2	/* absent from child */
+#define	MAP_INHERIT_DONATE_COPY	3	/* copy and delete -- not
+					   implemented in UVM */
+#define	MAP_INHERIT_DEFAULT	MAP_INHERIT_COPY
 #endif
 
 #ifndef _KERNEL
