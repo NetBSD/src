@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.13 1999/10/19 00:49:34 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.14 1999/11/29 07:50:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.13 1999/10/19 00:49:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.14 1999/11/29 07:50:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,18 +159,18 @@ struct cfb_softc {
 #define	CX_BT459_OFFSET	0x200000
 #define	CX_OFFSET_IREQ	0x300000	/* Interrupt req. control */
 
-int  cfbmatch __P((struct device *, struct cfdata *, void *));
-void cfbattach __P((struct device *, struct device *, void *));
+static int  cfbmatch __P((struct device *, struct cfdata *, void *));
+static void cfbattach __P((struct device *, struct device *, void *));
 
-struct cfattach cfb_ca = {
+const struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
 };
 
-void cfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
-struct fb_devconfig cfb_console_dc;
-tc_addr_t cfb_consaddr;
+static void cfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
+static struct fb_devconfig cfb_console_dc;
+static tc_addr_t cfb_consaddr;
 
-struct wsdisplay_emulops cfb_emulops = {
+static const struct wsdisplay_emulops cfb_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
 	rcons_mapchar,
 	rcons_putchar,
@@ -181,30 +181,30 @@ struct wsdisplay_emulops cfb_emulops = {
 	rcons_alloc_attr
 };
 
-struct wsscreen_descr cfb_stdscreen = {
+static struct wsscreen_descr cfb_stdscreen = {
 	"std", 0, 0,
 	&cfb_emulops,
 	0, 0,
 	WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *_cfb_scrlist[] = {
+static const struct wsscreen_descr *_cfb_scrlist[] = {
 	&cfb_stdscreen,
 };
 
-struct wsscreen_list cfb_screenlist = {
+static const struct wsscreen_list cfb_screenlist = {
 	sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	cfbmmap __P((void *, off_t, int));
+static int  cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int  cfbmmap __P((void *, off_t, int));
 
-int	cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int  cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-void	cfb_free_screen __P((void *, void *));
-void	cfb_show_screen __P((void *, void *));
+static void cfb_free_screen __P((void *, void *));
+static void cfb_show_screen __P((void *, void *));
 
-struct wsdisplay_accessops cfb_accessops = {
+static const struct wsdisplay_accessops cfb_accessops = {
 	cfbioctl,
 	cfbmmap,
 	cfb_alloc_screen,
@@ -214,8 +214,8 @@ struct wsdisplay_accessops cfb_accessops = {
 };
 
 int  cfb_cnattach __P((tc_addr_t));
-int  cfbintr __P((void *));
-void cfbinit __P((struct fb_devconfig *));
+static int  cfbintr __P((void *));
+static void cfbinit __P((struct fb_devconfig *));
 
 static int  get_cmap __P((struct cfb_softc *, struct wsdisplay_cmap *));
 static int  set_cmap __P((struct cfb_softc *, struct wsdisplay_cmap *));
@@ -231,7 +231,7 @@ static void bt459_set_curpos __P((struct cfb_softc *));
  *   3 2 1 0 3 2 1 0		0 0 1 1 2 2 3 3
  *   7 6 5 4 7 6 5 4		4 4 5 5 6 6 7 7
  */
-const static u_int8_t shuffle[256] = {
+static const u_int8_t shuffle[256] = {
 	0x00, 0x40, 0x10, 0x50, 0x04, 0x44, 0x14, 0x54,
 	0x01, 0x41, 0x11, 0x51, 0x05, 0x45, 0x15, 0x55,
 	0x80, 0xc0, 0x90, 0xd0, 0x84, 0xc4, 0x94, 0xd4,
@@ -266,7 +266,7 @@ const static u_int8_t shuffle[256] = {
 	0xab, 0xeb, 0xbb, 0xfb, 0xaf, 0xef, 0xbf, 0xff,
 };
 
-int
+static int
 cfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -280,7 +280,7 @@ cfbmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 cfb_getdevconfig(dense_addr, dc)
 	tc_addr_t dense_addr;
 	struct fb_devconfig *dc;
@@ -326,7 +326,7 @@ cfb_getdevconfig(dense_addr, dc)
 	cfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
 }
 
-void
+static void
 cfbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -358,7 +358,7 @@ cfbattach(parent, self, aux)
 	sc->sc_cursor.cc_magic.y = CX_MAGIC_Y;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
-	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, cfbintr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, cfbintr, sc);
 	*(u_int8_t *)(sc->sc_dc->dc_vaddr + CX_OFFSET_IREQ) = 0;
 
 	waa.console = console;
@@ -369,7 +369,7 @@ cfbattach(parent, self, aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
-int
+static int
 cfbioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -450,7 +450,7 @@ cfbmmap(v, offset, prot)
 	return machine_btop(sc->sc_dc->dc_paddr + offset);
 }
 
-int
+static int
 cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -473,7 +473,7 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return (0);
 }
 
-void
+static void
 cfb_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -486,14 +486,14 @@ cfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
+static void
 cfb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
 }
 
-int
+/* EXPORT */ int
 cfb_cnattach(addr)
         tc_addr_t addr;
 {
@@ -511,7 +511,7 @@ cfb_cnattach(addr)
 }
 
 
-int
+static int
 cfbintr(arg)
 	void *arg;
 {
@@ -592,7 +592,7 @@ cfbintr(arg)
 	return (1);
 }
 
-void
+static void
 cfbinit(dc)
 	struct fb_devconfig *dc;
 {
