@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.3 1999/06/21 02:32:20 danw Exp $	*/
+/*	$NetBSD: utmp.c,v 1.4 2002/08/03 11:37:17 itojun Exp $	*/
 
 /*
  * Written by Gordon W. Ross <gwr@netbsd.org>
@@ -16,6 +16,12 @@ login(ut)
 {
 }
 
+void
+loginx(ut)
+	const struct utmpx *ut;
+{
+}
+
 int
 logout(line)
 	const char *line;
@@ -23,9 +29,23 @@ logout(line)
 	return(0);
 }
 
+int
+logoutx(line, status, type)
+	const char *line;
+	int status, type;
+{
+	return(0);
+}
 
 void
 logwtmp(line, name, host)
 	const char *line, *name, *host;
+{
+}
+
+void
+logwtmpx(line, name, host, status, type)
+	const char *line, *name, *host;
+	int status, type;
 {
 }
