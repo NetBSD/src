@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.3 2003/11/16 09:02:42 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.4 2004/01/29 10:06:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.3 2003/11/16 09:02:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.4 2004/01/29 10:06:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -84,13 +84,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.3 2003/11/16 09:02:42 dyoung Exp $"
 #define	ATW_PCI_MMBA		0x14	/* memory mapped base */
 
 struct atw_pci_softc {
-	struct atw_softc sc_atw;	/* real ADM8211 softc */
+	struct atw_softc	psc_atw;	/* real ADM8211 softc */
 
-	/* PCI-specific goo. */
-	void	*sc_ih;			/* interrupt handle */
+	pci_intr_handle_t	psc_ih;		/* interrupt handle */
+	void			*psc_intrcookie;
 
-	pci_chipset_tag_t sc_pc;	/* our PCI chipset */
-	pcitag_t sc_pcitag;		/* our PCI tag */
+	pci_chipset_tag_t	psc_pc;		/* our PCI chipset */
+	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
 
 int	atw_pci_match __P((struct device *, struct cfdata *, void *));
@@ -143,16 +143,42 @@ atw_pci_match(parent, match, aux)
 	return (0);
 }
 
+static int
+atw_pci_enable(struct atw_softc *sc)
+{
+	struct atw_pci_softc *psc = (void *)sc;
+
+	/* Establish the interrupt. */
+	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
+	    IPL_NET, atw_intr, sc);
+	if (psc->psc_intrcookie == NULL) {
+		printf("%s: unable to establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	return (0);
+}
+
+static void
+atw_pci_disable(struct atw_softc *sc)
+{
+	struct atw_pci_softc *psc = (void *)sc;
+
+	/* Unhook the interrupt handler. */
+	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
+	psc->psc_intrcookie = NULL;
+}
+
 void
 atw_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct atw_pci_softc *psc = (void *) self;
-	struct atw_softc *sc = &psc->sc_atw;
+	struct atw_softc *sc = &psc->psc_atw;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -161,8 +187,8 @@ atw_pci_attach(parent, self, aux)
 	pcireg_t reg;
 	int pmreg, rev;
 
-	psc->sc_pc = pa->pa_pc;
-	psc->sc_pcitag = pa->pa_tag;
+	psc->psc_pc = pa->pa_pc;
+	psc->psc_pcitag = pa->pa_tag;
 
 	app = atw_pci_lookup(pa);
 	if (app == NULL) {
@@ -267,14 +293,15 @@ atw_pci_attach(parent, self, aux)
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &psc->psc_ih)) {
 		printf("%s: unable to map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih); 
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, atw_intr, sc);
-	if (psc->sc_ih == NULL) {
+	intrstr = pci_intr_string(pc, psc->psc_ih); 
+	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
+	    atw_intr, sc);
+	if (psc->psc_intrcookie == NULL) {
 		printf("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
@@ -282,11 +309,14 @@ atw_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
+
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	sc->sc_enable = atw_pci_enable;
+	sc->sc_disable = atw_pci_disable;
 
 	/*
 	 * Finish off the attach.
 	 */
 	atw_attach(sc);
 }
-
