@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: get_args.c,v 1.1.1.5 2002/11/29 22:58:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: get_args.c,v 1.7.2.1 2001/01/10 03:23:05 ezk Exp
+ * Id: get_args.c,v 1.17 2002/06/23 01:50:10 ezk Exp
  *
  */
 
@@ -62,12 +61,6 @@ char *conf_tag = NULL;		/* default conf file tags to use */
 int usage = 0;
 int use_conf_file = 0;		/* default don't use amd.conf file */
 char *mnttab_file_name = NULL;	/* symbol must be available always */
-#if 0
-#ifdef DEBUG
-int debug_flags = D_AMQ		/* Register AMQ */
-		| D_DAEMON;	/* Enter daemon mode */
-#endif /* DEBUG */
-#endif
 
 /*
  * Return the version string (dynamic buffer)
@@ -87,12 +80,14 @@ get_version_string(void)
 
   vers = xmalloc(2048 + wire_buf_len);
   sprintf(vers, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997-2001 Erez Zadok",
+	  "Copyright (c) 1997-2002 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
   sprintf(tmpbuf, "%s version %s (build %d).\n",
-	  PACKAGE, VERSION, AMU_BUILD_VERSION);
+	  PACKAGE_NAME, PACKAGE_VERSION, AMU_BUILD_VERSION);
+  strcat(vers, tmpbuf);
+  sprintf(tmpbuf, "Report bugs to %s.\n", PACKAGE_BUGREPORT);
   strcat(vers, tmpbuf);
   sprintf(tmpbuf, "Built by %s@%s on date %s.\n",
 	  USER_NAME, HOST_NAME, CONFIG_DATE);
@@ -129,12 +124,20 @@ get_args(int argc, char *argv[])
 {
   int opt_ch;
   FILE *fp = stdin;
+  char getopt_arguments[] = "+nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:HA:";
+  char *getopt_args;
+
+#ifdef HAVE_GNU_GETOPT
+  getopt_args = getopt_arguments;
+#else /* ! HAVE_GNU_GETOPT */
+  getopt_args = &getopt_arguments[1];
+#endif /* HAVE_GNU_GETOPT */
 
   /* if no arguments were passed, try to use /etc/amd.conf file */
   if (argc <= 1)
     use_conf_file = 1;
 
-  while ((opt_ch = getopt(argc, argv, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:O:H")) != -1)
+  while ((opt_ch = getopt(argc, argv, getopt_args)) != -1)
     switch (opt_ch) {
 
     case 'a':
@@ -217,6 +220,10 @@ get_args(int argc, char *argv[])
 #else /* not HAVE_MAP_NIS */
       plog(XLOG_USER, "-y: option ignored.  No NIS support available.");
 #endif /* not HAVE_MAP_NIS */
+      break;
+
+    case 'A':
+      gopt.arch = optarg;
       break;
 
     case 'C':
@@ -325,17 +332,15 @@ get_args(int argc, char *argv[])
     strcat(hostd, hostdomain);
 
 #ifdef MOUNT_TABLE_ON_FILE
-# ifdef DEBUG
-    if (debug_flags & D_MTAB)
+#ifdef DEBUG
+    amuDebug(D_MTAB)
       mnttab_file_name = DEBUG_MNTTAB;
     else
-# endif /* DEBUG */
+#endif /* DEBUG */
       mnttab_file_name = MNTTAB_FILE_NAME;
 #else /* not MOUNT_TABLE_ON_FILE */
-# ifdef DEBUG
-    if (debug_flags & D_MTAB)
+    amuDebug(D_MTAB)
       dlog("-D mtab option ignored");
-# endif /* DEBUG */
 # ifdef MNTTAB_FILE_NAME
     mnttab_file_name = MNTTAB_FILE_NAME;
 # endif /* MNTTAB_FILE_NAME */
@@ -367,7 +372,7 @@ show_usage:
   fprintf(stderr,
 	  "Usage: %s [-nprvHS] [-a mount_point] [-c cache_time] [-d domain]\n\
 \t[-k kernel_arch] [-l logfile%s\n\
-\t[-t timeout.retrans] [-w wait_timeout] [-C cluster_name]\n\
+\t[-t timeout.retrans] [-w wait_timeout] [-A arch] [-C cluster_name]\n\
 \t[-o op_sys_ver] [-O op_sys_name]\n\
 \t[-F conf_file] [-T conf_tag]", am_get_progname(),
 #ifdef HAVE_SYSLOG

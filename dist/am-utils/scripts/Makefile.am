@@ -17,6 +17,9 @@ sbin_SCRIPTS =		\
 	wait4amd	\
 	wait4amd2die
 
+noinst_SCRIPTS =	\
+	redhat-ctl-amd
+
 bin_SCRIPTS = expn
 
 sysconf_DATA = amd.conf-sample lostaltmail.conf-sample
@@ -34,6 +37,7 @@ EXTRA_DIST = 			\
 	fixrmtab.in		\
 	fix-amd-map.in		\
 	lostaltmail.in		\
+	redhat-ctl-amd.in	\
 	wait4amd.in		\
 	wait4amd2die.in		\
 	\
@@ -43,4 +47,4 @@ EXTRA_DIST = 			\
 	lostaltmail.conf-sample \
 	$(man_MANS)
 
-CLEANFILES = $(sbin_SCRIPTS) $(bin_SCRIPTS)
+CLEANFILES = $(sbin_SCRIPTS) $(bin_SCRIPTS) $(noinst_SCRIPTS)

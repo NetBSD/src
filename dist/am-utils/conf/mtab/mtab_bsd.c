@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_bsd.c,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+/*	$NetBSD: mtab_bsd.c,v 1.1.1.5 2002/11/29 22:58:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mtab_bsd.c,v 1.3.2.1 2001/01/10 03:23:18 ezk Exp
+ * Id: mtab_bsd.c,v 1.7 2002/02/02 20:58:58 ezk Exp
  *
  */
 
@@ -66,9 +65,9 @@ mnt_dup(struct statfs *mp)
   new_mp->mnt_fsname = strdup(mp->f_mntfromname);
   new_mp->mnt_dir = strdup(mp->f_mntonname);
 
-#ifdef HAVE_FIELD_STRUCT_STATFS_F_FSTYPENAME
+#ifdef HAVE_STRUCT_STATFS_F_FSTYPENAME
   ty = mp->f_fstypename;
-#else /* not HAVE_FIELD_STRUCT_STATFS_F_FSTYPENAME */
+#else /* not HAVE_STRUCT_STATFS_F_FSTYPENAME */
   switch (mp->f_type) {
 
 # if defined(MOUNT_UFS) && defined(MNTTAB_TYPE_UFS)
@@ -94,7 +93,7 @@ mnt_dup(struct statfs *mp)
 
     break;
   }
-#endif /* not HAVE_FIELD_STRUCT_STATFS_F_FSTYPENAME */
+#endif /* not HAVE_STRUCT_STATFS_F_FSTYPENAME */
 
   new_mp->mnt_type = strdup(ty);
   new_mp->mnt_opts = strdup("unset");

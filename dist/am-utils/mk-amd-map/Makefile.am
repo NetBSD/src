@@ -27,7 +27,7 @@ EXTRA_DIST = $(man_MANS)
 
 # dependencies
 $(PROGRAMS): $(LDADD)
-$(OBJECTS):					\
+$(mk_amd_map_OBJECTS):				\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\

@@ -4,6 +4,8 @@
 # Level: Top level Makefile
 # Author: Erez Zadok
 
+@SET_MAKE@
+
 SUBDIRS =		\
 	libamu		\
 	amd		\
@@ -25,6 +27,7 @@ SUBDIRS =		\
 #	aux/aclocal
 EXTRA_DIST_AUX =			\
 	aux/GNUmakefile			\
+	aux/amdgrep			\
 	aux/amindent			\
 	aux/autopat			\
 	aux/chop-aclocal.pl		\
@@ -39,12 +42,14 @@ EXTRA_DIST_AUX =			\
 	aux/macros/c_void_p.m4				\
 	aux/macros/cache_check_dynamic.m4		\
 	aux/macros/check_amu_fs.m4			\
+	aux/macros/check_autofs_style.m4		\
 	aux/macros/check_checkmount_style.m4		\
 	aux/macros/check_extern.m4			\
 	aux/macros/check_fhandle.m4			\
 	aux/macros/check_field.m4			\
 	aux/macros/check_fs_headers.m4			\
 	aux/macros/check_fs_mntent.m4			\
+	aux/macros/check_gnu_getopt.m4                  \
 	aux/macros/check_hide_mount_type.m4		\
 	aux/macros/check_lib2.m4			\
 	aux/macros/check_map_funcs.m4			\
@@ -81,13 +86,11 @@ EXTRA_DIST_AUX =			\
 	aux/macros/field_mntent_t_mnt_time_string.m4	\
 	aux/macros/func_bad_memcmp.m4			\
 	aux/macros/func_bad_yp_all.m4			\
+	aux/macros/header_templates.m4			\
 	aux/macros/host_macros.m4			\
 	aux/macros/linux_headers.m4			\
 	aux/macros/localconfig.m4			\
 	aux/macros/mount_headers.m4			\
-	aux/macros/msg.m4				\
-	aux/macros/name_package.m4			\
-	aux/macros/name_version.m4			\
 	aux/macros/opt_amu_cflags.m4			\
 	aux/macros/opt_cppflags.m4			\
 	aux/macros/opt_debug.m4				\
@@ -96,6 +99,9 @@ EXTRA_DIST_AUX =			\
 	aux/macros/os_cflags.m4				\
 	aux/macros/os_cppflags.m4			\
 	aux/macros/os_ldflags.m4			\
+	aux/macros/package_bugreport.m4			\
+	aux/macros/package_name.m4			\
+	aux/macros/package_version.m4			\
 	aux/macros/save_state.m4			\
 	aux/macros/struct_field_nfs_fh.m4		\
 	aux/macros/struct_mntent.m4			\
@@ -123,9 +129,19 @@ EXTRA_DIST_AUX =			\
 	aux/macros/type_ufs_args.m4			\
 	aux/macros/type_xdrproc_t.m4			\
 	aux/macros/type_xfs_args.m4			\
-	aux/macros/type_yp_order_outorder.m4
+	aux/macros/type_yp_order_outorder.m4            \
+	aux/macros/with_addon.m4
 
 EXTRA_DIST_CONF =			\
+	conf/autofs/autofs_default.h		\
+	conf/autofs/autofs_default.c		\
+	conf/autofs/autofs_linux.h		\
+	conf/autofs/autofs_linux.c		\
+	conf/autofs/autofs_solaris_v1.h		\
+	conf/autofs/autofs_solaris_v1.c		\
+	conf/autofs/autofs_solaris_v2_v3.h	\
+	conf/autofs/autofs_solaris_v2_v3.c	\
+	\
 	conf/checkmount/checkmount_aix.c	\
 	conf/checkmount/checkmount_bsd44.c	\
 	conf/checkmount/checkmount_default.c	\
@@ -178,6 +194,7 @@ EXTRA_DIST_CONF =			\
 	conf/nfs_prot/nfs_prot_aix4.h		\
 	conf/nfs_prot/nfs_prot_aix4_2.h		\
 	conf/nfs_prot/nfs_prot_aix4_3.h		\
+	conf/nfs_prot/nfs_prot_aix5_1.h		\
 	conf/nfs_prot/nfs_prot_bsdi2.h		\
 	conf/nfs_prot/nfs_prot_bsdi3.h		\
 	conf/nfs_prot/nfs_prot_darwin.h		\
@@ -197,7 +214,7 @@ EXTRA_DIST_CONF =			\
 	conf/nfs_prot/nfs_prot_openbsd.h	\
 	conf/nfs_prot/nfs_prot_osf2.h		\
 	conf/nfs_prot/nfs_prot_osf4.h		\
-	conf/nfs_prot/nfs_prot_osf5_1.h		\
+	conf/nfs_prot/nfs_prot_osf5.h		\
 	conf/nfs_prot/nfs_prot_sunos3.h		\
 	conf/nfs_prot/nfs_prot_sunos4.h		\
 	conf/nfs_prot/nfs_prot_sunos5_3.h	\
@@ -261,11 +278,13 @@ EXTRA_DIST =			\
 	README.autofs		\
 	README.ldap		\
 	README.y2k		\
+	bootstrap		\
 	buildall		\
 	config.guess.long	\
 	depcomp			\
 	ldap-id.ms		\
 	ldap-id.txt		\
+	stamp-h.in		\
 	tasks
 
 DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
@@ -277,6 +296,7 @@ DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
 update:
 	(cd $(top_srcdir) && ${MAKE} ${MFLAGS} -f ./aux/GNUmakefile update)
 	${MAKE} ${MFLAGS} libtool
+
 # remake libtool
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
@@ -288,10 +308,10 @@ install-snapshot:
 	snap=`/bin/ls -1 am-utils*.tar.gz` && \
 	echo COPYING SNAPSHOTS: $$snap && \
 	cp -pu $$snap $(FTPTOP)/snapshots && \
-	rm -f $(FTPTOP)/am-utils-snapshot.tar.gz && \
-	ln -s snapshots/$$snap $(FTPTOP)/am-utils-snapshot.tar.gz && \
-	(cd $(FTPTOP) && make) && \
-	(cd $(FTPTOP)/snapshots && make)
+	rm -f $(FTPTOP)/am-utils-6.1-snapshot.tar.gz && \
+	ln -s snapshots/$$snap $(FTPTOP)/am-utils-6.1-snapshot.tar.gz && \
+	(cd $(FTPTOP) && ${MAKE} ${MFLAGS}) && \
+	(cd $(FTPTOP)/snapshots && ${MAKE} ${MFLAGS})
 test-snapshot: dist
 	mv -f am-utils*.tar.gz /proj/bank/ftp/private/ezk
 

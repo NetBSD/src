@@ -1,7 +1,7 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.4 2001/05/13 17:50:13 veego Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.5 2002/11/29 22:58:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: rpc_fwd.c,v 1.3.2.2 2001/04/14 21:08:23 ezk Exp
+ * Id: rpc_fwd.c,v 1.8 2002/02/02 20:58:56 ezk Exp
  *
  */
 
@@ -119,9 +118,7 @@ fwd_alloc(void)
      * Call forwarding function to say that
      * this message was junked.
      */
-#ifdef DEBUG
     dlog("Re-using packet forwarding slot - id %#x", p->rf_xid);
-#endif /* DEBUG */
     if (p->rf_fwd)
       (*p->rf_fwd) (0, 0, 0, &p->rf_sin, p->rf_ptr, FALSE);
     rem_que(&p->rf_q);
@@ -249,7 +246,6 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
    * Otherwise make sure the type_id is
    * fully qualified by allocating an id here.
    */
-#ifdef DEBUG
   switch (type_id & RPC_XID_MASK) {
   case RPC_XID_PORTMAP:
     dlog("Sending PORTMAP request");
@@ -264,20 +260,15 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
     dlog("UNKNOWN RPC XID");
     break;
   }
-#endif /* DEBUG */
 
   if (type_id & ~RPC_XID_MASK) {
     p = fwd_locate(type_id);
     if (p) {
-#ifdef DEBUG
       dlog("Discarding earlier rpc fwd handle");
-#endif /* DEBUG */
       fwd_free(p);
     }
   } else {
-#ifdef DEBUG
     dlog("Allocating a new xid...");
-#endif /* DEBUG */
     type_id = MK_RPC_XID(type_id, XID_ALLOC(struct ));
   }
 
@@ -305,7 +296,6 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
    * gateway has gone down.  Important to fill in the
    * rest of "p" otherwise nasty things happen later...
    */
-#ifdef DEBUG
   {
     char dq[20];
     if (p && fwdto)
@@ -314,7 +304,6 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
 	   inet_dquad(dq, fwdto->sin_addr.s_addr),
 	   ntohs(fwdto->sin_port));
   }
-#endif /* DEBUG */
 
   /* if NULL, remote server probably down */
   if (!fwdto) {
@@ -431,7 +420,6 @@ again:
    */
   pkt_int = (u_int *) pkt;
 
-#ifdef DEBUG
   switch (*pkt_int & RPC_XID_MASK) {
   case RPC_XID_PORTMAP:
     dlog("Receiving PORTMAP reply");
@@ -446,13 +434,10 @@ again:
     dlog("UNKNOWN RPC XID");
     break;
   }
-#endif /* DEBUG */
 
   p = fwd_locate(*pkt_int);
   if (!p) {
-#ifdef DEBUG
     dlog("Can't forward reply id %#x", *pkt_int);
-#endif /* DEBUG */
     goto out;
   }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.5 2002/11/29 22:58:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mount_linux.c,v 1.11.2.8 2001/05/01 23:05:55 ib42 Exp
+ * Id: mount_linux.c,v 1.33 2002/03/29 01:46:24 ezk Exp
  */
 
 /*
@@ -70,7 +69,6 @@ const struct opt_map opt_map[] =
   {MNTTAB_OPT_SUID,	1,	MNT2_GEN_OPT_NOSUID},
   {MNTTAB_OPT_NOSUID,	0,	MNT2_GEN_OPT_NOSUID},
 #ifdef MNT2_GEN_OPT_NODEV
-  {MNTTAB_OPT_DEV,	1,	MNT2_GEN_OPT_NODEV},
   {MNTTAB_OPT_NODEV,	0,	MNT2_GEN_OPT_NODEV},
 #endif /* MNT2_GEN_OPT_NODEV */
 #ifdef MNT2_GEN_OPT_SYNC
@@ -86,7 +84,7 @@ const struct opt_map opt_map[] =
 
 struct fs_opts {
   const char *opt;
-  int type;
+  int type;			/* XXX: Ion, what is this for? */
 };
 
 const struct fs_opts iso_opts[] = {
@@ -99,6 +97,9 @@ const struct fs_opts iso_opts[] = {
   { "mode",	1 },
   { "gid",	1 },
   { "uid",	1 },
+#ifdef HAVE_LOOP_DEVICE
+  { "loop",	1 },		/* XXX: 0 or 1 for "type" */
+#endif /* HAVE_LOOP_DEVICE */
   { NULL,	0 }
 };
 
@@ -115,15 +116,23 @@ const struct fs_opts dos_opts[] = {
   { NULL,	0 }
 };
 
+const struct fs_opts autofs_opts[] = {
+  { "fd",	1 },
+  { "pgrp",	1 },
+  { "minproto",	1 },
+  { "maxproto",	1 },
+  { NULL,	0 }
+};
+
 const struct fs_opts null_opts[] = {
   { NULL,	0 }
 };
 
 
 /*
- * New parser for linux-specific mounts Should now handle fs-type specific
- * mount-options correctly Currently implemented: msdos, iso9660
- *
+ * New parser for linux-specific mounts.
+ * Should now handle fs-type specific mount-options correctly.
+ * Currently implemented: msdos, iso9660.
  */
 static char *
 parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
@@ -159,6 +168,12 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
        * Next, select which fs-type is to be used
        * and parse the fs-specific options
        */
+#ifdef MOUNT_TYPE_AUTOFS
+      if (STREQ(type, MOUNT_TYPE_AUTOFS)) {
+	dev_opts = autofs_opts;
+	goto do_opts;
+      }
+#endif /* MOUNT_TYPE_AUTOFS */
 #ifdef MOUNT_TYPE_PCFS
       if (STREQ(type, MOUNT_TYPE_PCFS)) {
 	dev_opts = dos_opts;
@@ -180,10 +195,20 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
       plog(XLOG_FATAL, "linux mount: unknown fs-type: %s\n", type);
       return NULL;
 
-      do_opts:
+do_opts:
       while (dev_opts->opt &&
-	     !NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt)))
+	     (!NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt))
+#ifdef HAVE_LOOP_DEVICE
+	      /* also skip "loop", but not "loop=/dev/loopX" */
+	      || STREQ(MNTTAB_OPT_LOOP, opt))
+#endif /* HAVE_LOOP_DEVICE */
+	     ) {
 	++dev_opts;
+      }
+#ifdef HAVE_LOOP_DEVICE
+      if (dev_opts->opt && STREQ(MNTTAB_OPT_LOOP, opt))
+	++dev_opts;
+#endif /* HAVE_LOOP_DEVICE */
       if (dev_opts->opt && *xopts) {
 	strcat(*xopts, opt);
 	strcat(*xopts, ",");
@@ -207,7 +232,7 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
  * Returns combined linux kernel version number.  For a kernel numbered
  * x.y.z, returns x*65535+y*256+z.
  */
-static int
+int
 linux_version_code(void)
 {
   struct utsname my_utsname;
@@ -223,6 +248,34 @@ linux_version_code(void)
 
 
 int
+do_mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
+{
+  int errorcode;
+  char *fs_name = mnt->mnt_fsname;
+
+#ifdef DEBUG
+  amuDebug(D_FULL) {
+    plog(XLOG_DEBUG, "do_mount_linux: fsname %s\n", fs_name);
+    plog(XLOG_DEBUG, "do_mount_linux: type (mntent) %s\n", mnt->mnt_type);
+    plog(XLOG_DEBUG, "do_mount_linux: opts %s\n", mnt->mnt_opts);
+    plog(XLOG_DEBUG, "do_mount_linux: dir %s\n", mnt->mnt_dir);
+  }
+#endif /* DEBUG */
+
+  /*
+   * If we have an nfs mount, the 5th argument to system mount() must be the
+   * nfs_mount_data structure, otherwise it is the return from parse_opts()
+   */
+  errorcode = mount(fs_name,
+		    mnt->mnt_dir,
+		    type,
+		    MS_MGC_VAL | flags,
+		    data);
+  return errorcode;
+}
+
+
+int
 mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 {
   char *extra_opts = NULL;
@@ -230,19 +283,25 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   char *sub_type = NULL;
   int noauto = 0;
   int errorcode;
-  nfs_args_t *mnt_data = (nfs_args_t *) data;
 
-  if (mnt->mnt_opts && STREQ (mnt->mnt_opts, "defaults"))
+  if (mnt->mnt_opts && STREQ(mnt->mnt_opts, "defaults"))
     mnt->mnt_opts = NULL;
 
   if (type == NULL)
     type = index(mnt->mnt_fsname, ':') ? MOUNT_TYPE_NFS : MOUNT_TYPE_UFS;
 
   if (STREQ(type, MOUNT_TYPE_NFS)) {
+    nfs_args_t *mnt_data = (nfs_args_t *) data;
+
     /* Fake some values for linux */
     mnt_data->version = NFS_MOUNT_VERSION;
-    if (!mnt_data->timeo)
+    if (!mnt_data->timeo) {
       mnt_data->timeo = 7;
+#ifdef MNT2_NFS_OPT_TCP
+      if (mnt_data->flags & MNT2_NFS_OPT_TCP)
+	mnt_data->timeo = 600;
+#endif /* MNT2_NFS_OPT_TCP */
+    }
     if (!mnt_data->retrans)
       mnt_data->retrans = 3;
 
@@ -263,7 +322,8 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
      * in nfs structure implementation version 4, the old
      * filehandle field was renamed "old_root" and left as 3rd field,
      * while a new field called "root" was added to the end of the
-     * structure.
+     * structure. Both of them however need a copy of the file handle
+     * for NFSv2 mounts.
      */
 #ifdef MNT2_NFS_OPT_VER3
     if (mnt_data->flags & MNT2_NFS_OPT_VER3)
@@ -272,15 +332,15 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 #endif /* MNT2_NFS_OPT_VER3 */
       memcpy(mnt_data->old_root.data, mnt_data->root.data, FHSIZE);
 
-#ifdef HAVE_FIELD_NFS_ARGS_T_BSIZE
+#ifdef HAVE_NFS_ARGS_T_BSIZE
     /* linux mount version 3 */
     mnt_data->bsize = 0;	/* let the kernel decide */
-#endif /* HAVE_FIELD_NFS_ARGS_T_BSIZE */
+#endif /* HAVE_NFS_ARGS_T_BSIZE */
 
-#ifdef HAVE_FIELD_NFS_ARGS_T_NAMLEN
+#ifdef HAVE_NFS_ARGS_T_NAMLEN
     /* linux mount version 2 */
     mnt_data->namlen = NAME_MAX;	/* 256 bytes */
-#endif /* HAVE_FIELD_NFS_ARGS_T_NAMELEN */
+#endif /* HAVE_NFS_ARGS_T_NAMELEN */
 
     mnt_data->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (mnt_data->fd < 0) {
@@ -309,19 +369,36 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
     }
 #ifdef DEBUG
     amuDebug(D_FULL) {
-      plog(XLOG_DEBUG, "linux mount: type %s\n",type);
-      plog(XLOG_DEBUG, "linux mount: version %d\n",mnt_data->version);
-      plog(XLOG_DEBUG, "linux mount: fd %d\n",mnt_data->fd);
-      plog(XLOG_DEBUG, "linux mount: hostname %s\n",
+      plog(XLOG_DEBUG, "mount_linux: type %s\n", type);
+      plog(XLOG_DEBUG, "mount_linux: version %d\n", mnt_data->version);
+      plog(XLOG_DEBUG, "mount_linux: fd %d\n", mnt_data->fd);
+      plog(XLOG_DEBUG, "mount_linux: hostname %s\n",
 	   inet_ntoa(mnt_data->addr.sin_addr));
-      plog(XLOG_DEBUG, "linux mount: port %d\n",
+      plog(XLOG_DEBUG, "mount_linux: port %d\n",
 	   htons(mnt_data->addr.sin_port));
+    }
+    amuDebug(D_TRACE) {
+      plog(XLOG_DEBUG, "mount_linux: Generic mount flags 0x%x", MS_MGC_VAL | flags);
+      plog(XLOG_DEBUG, "mount_linux: updated nfs_args...");
+      print_nfs_args(mnt_data, 0);
     }
 #endif /* DEBUG */
 
-  } else {
+    errorcode = do_mount_linux(type, mnt, flags, data);
 
-    /* Non nfs mounts */
+    /*
+     * If we failed, (i.e. errorcode != 0), then close the socket
+     * if it is open.
+     */
+    if (errorcode && mnt_data->fd != -1) {
+      /* save errno, may be clobbered by close() call! */
+      int save_errno = errno;
+      close(mnt_data->fd);
+      errno = save_errno;
+    }
+
+  } else {			/* non-NFS mounts */
+
     sub_type = hasmnteq(mnt, "type");
     if (sub_type) {
       sub_type = strdup(sub_type);
@@ -341,9 +418,10 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
     if (!hasmntopt(mnt, "type"))
       mnt->mnt_type = type;
 
-    /* We only parse opts if non-NFS drive */
+    /* We only parse opts if non-NFS mount */
     tmp_opts = parse_opts(type, mnt->mnt_opts, &flags, &extra_opts, &noauto);
-#ifdef MOUNT_TYPE_LOFS
+
+#if defined(MOUNT_TYPE_LOFS)
     if (STREQ(type, MOUNT_TYPE_LOFS)) {
 # if defined(MNT2_GEN_OPT_BIND)
       /* use bind mounts for lofs */
@@ -354,53 +432,45 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
       extra_opts = (char *) xmalloc(strlen(mnt->mnt_fsname) + sizeof("dir=") + 1);
       sprintf(extra_opts, "dir=%s", mnt->mnt_fsname);
 # endif /* not MNT2_GEN_OPT_BIND */
-    }
+      errorcode = do_mount_linux(type, mnt, flags, extra_opts);
+      goto fail;
+    } /* end of "if type is LOFS" */
 #endif /* MOUNT_TYPE_LOFS */
 
-#ifdef DEBUG
-    amuDebug(D_FULL) {
-      plog(XLOG_DEBUG, "linux mount: type %s\n", type);
-      plog(XLOG_DEBUG, "linux mount: xopts %s\n", extra_opts);
+#ifdef HAVE_LOOP_DEVICE
+    /*
+     * Yet another hack to support loop mounts of ISO images.
+     * XXX: this file desperately needs to be rewritten!
+     */
+    if (STREQ(type, MOUNT_TYPE_CDFS)) {
+      mntent_t lomnt;		/* temp for loop mounts */
+      char *lodev;
+
+      memcpy(&lomnt, mnt, sizeof(mntent_t));
+      /* extra opts may contain "loop=/dev/loopN" */
+      lomnt.mnt_opts = extra_opts;
+      lodev = hasmnteq(&lomnt, MNTTAB_OPT_LOOP);
+      if (lodev) {
+	char *newopts;
+	lomnt.mnt_fsname = lodev;
+	/* fix mnt->mnt_opts so caller can update /etc/mtab correctly */
+	newopts = (char *) xmalloc(strlen(mnt->mnt_opts) + strlen(extra_opts) + 1);
+	sprintf(newopts, "%s,%s", mnt->mnt_opts, extra_opts);
+	XFREE(mnt->mnt_opts);
+	mnt->mnt_opts = newopts;
+	plog(XLOG_DEBUG, "mount_linux (loop): lodev %s, opts %s",
+	     lodev, mnt->mnt_opts);
+	errorcode = do_mount_linux(type, &lomnt, flags, extra_opts);
+      } else {
+	errorcode = do_mount_linux(type, mnt, flags, extra_opts);
+      }
+      goto fail;
     }
-#endif /* DEBUG */
-  }
+#endif /* HAVE_LOOP_DEVICE */
 
-#ifdef DEBUG
-  amuDebug(D_FULL) {
-    plog(XLOG_DEBUG, "linux mount: fsname %s\n", mnt->mnt_fsname);
-    plog(XLOG_DEBUG, "linux mount: type (mntent) %s\n", mnt->mnt_type);
-    plog(XLOG_DEBUG, "linux mount: opts %s\n", tmp_opts);
-    plog(XLOG_DEBUG, "linux mount: dir %s\n", mnt->mnt_dir);
-  }
-  amuDebug(D_TRACE) {
-    plog(XLOG_DEBUG, "linux mount: Generic mount flags 0x%x", MS_MGC_VAL | flags);
-    if (STREQ(type, MOUNT_TYPE_NFS)) {
-      plog(XLOG_DEBUG, "linux mount: updated nfs_args...");
-      print_nfs_args(mnt_data, 0);
-    }
-  }
-#endif /* DEBUG */
-
-  /*
-   * If we have an nfs mount, the 5th argument to system mount() must be the
-   * nfs_mount_data structure, otherwise it is the return from parse_opts()
-   */
-  errorcode = mount(mnt->mnt_fsname,
-		    mnt->mnt_dir,
-		    type,
-		    MS_MGC_VAL | flags,
-		    STREQ(type, MOUNT_TYPE_NFS) ? (char *) mnt_data : extra_opts);
-
-  /*
-   * If we failed, (i.e. errorcode != 0), then close the socket if its is
-   * open.  mnt_data->fd is valid only for NFS.
-   */
-  if (errorcode && STREQ(type, "nfs") && mnt_data->fd != -1) {
-    /* save errno, may be clobbered by close() call! */
-    int save_errno = errno;
-    close(mnt_data->fd);
-    errno = save_errno;
-  }
+    /* if we get here, then it's not an NFS, LOFS, or CDFS mount */
+    errorcode = do_mount_linux(type, mnt, flags, extra_opts);
+  } /* non-NFS mounts */
 
   /*
    * Free all allocated space and return errorcode.
@@ -447,7 +517,7 @@ fail:
 #define NE_DQUOT	69
 #define NE_STALE	70
 
-#define NFS_LOMAP	1
+#define NFS_LOMAP	0
 #define NFS_HIMAP	122
 
 /*
@@ -455,6 +525,7 @@ fail:
  * with lots of energy ought to verify them against the other ports...
  */
 static int nfs_errormap[] = {
+	0,		/* success(0)		*/
 	NE_PERM,	/* EPERM (1)		*/
 	NE_NOENT,	/* ENOENT (2)		*/
 	NE_INVAL,	/* ESRCH (3)		*/
@@ -588,5 +659,209 @@ linux_nfs_error(int e)
   e = nfs_errormap[e - NFS_LOMAP];
   return (nfsstat)e;
 }
+
+
+#ifdef HAVE_LOOP_DEVICE
+/****************************************************************************/
+/*** LOOP DEVICE SUPPORT						  ***/
+/*** Loop Device setup code taken from mount-2.11g-5.src.rpm, which was   ***/
+/*** originally written bt Ted T'so and others.				  ***/
+/****************************************************************************/
+
+#define PROC_DEVICES	"/proc/devices"
+
+#if not_used_yet
+static int
+show_loop(char *device)
+{
+  struct loop_info loopinfo;
+  int fd;
+
+  if ((fd = open(device, O_RDONLY)) < 0) {
+    dlog("loop: can't open device %s: %m", device);
+    return -2;
+  }
+  if (ioctl(fd, LOOP_GET_STATUS, &loopinfo) < 0) {
+    dlog("loop: can't get info on device %s: %m", device);
+    close(fd);
+    return -1;
+  }
+  dlog("show_loop: %s: [%04x]:%ld (%s)",
+       device, loopinfo.lo_device, loopinfo.lo_inode,
+       loopinfo.lo_name);
+
+  close(fd);
+
+  return 0;
+}
+
+
+static int
+is_loop_device(const char *device)
+{
+  struct stat statbuf;
+  int loopmajor = 7;
+
+  return (loopmajor && stat(device, &statbuf) == 0 &&
+	  S_ISBLK(statbuf.st_mode) &&
+	  (statbuf.st_rdev>>8) == loopmajor);
+}
+#endif /* not_used_yet */
+
+
+/*
+ * Just creating a device, say in /tmp, is probably a bad idea - people
+ * might have problems with backup or so.  So, we just try /dev/loop[0-7].
+ */
+static char *
+find_unused_loop_device(void)
+{
+  char dev[20];
+  char *loop_formats[] = { "/dev/loop%d", "/dev/loop/%d" };
+  int i, j, fd, somedev = 0, someloop = 0, loop_known = 0;
+  struct stat statbuf;
+  struct loop_info loopinfo;
+  FILE *procdev;
+
+#define LOOP_FMT_SIZE(a) (sizeof(a)/sizeof(a[0]))
+  for (j = 0; j < LOOP_FMT_SIZE(loop_formats); j++) {
+    for(i = 0; i < 256; i++) {
+      sprintf(dev, loop_formats[j], i);
+      if (stat(dev, &statbuf) == 0 && S_ISBLK(statbuf.st_mode)) {
+	somedev++;
+	fd = open(dev, O_RDONLY);
+	if (fd >= 0) {
+	  if(ioctl(fd, LOOP_GET_STATUS, &loopinfo) == 0)
+	    someloop++;		/* in use */
+	  else if (errno == ENXIO) {
+	    close(fd);
+	    return strdup(dev); /* probably free */
+	  }
+	  close(fd);
+	}
+	continue;		/* continue trying as long as devices exist */
+      }
+      break;
+    }
+  }
+
+  /* Nothing found. Why not? */
+  if ((procdev = fopen(PROC_DEVICES, "r")) != NULL) {
+    char line[100];
+    while (fgets(line, sizeof(line), procdev))
+      if (strstr(line, " loop\n")) {
+	loop_known = 1;
+	break;
+      }
+    fclose(procdev);
+    if (!loop_known)
+      loop_known = -1;
+  }
+
+  if (!somedev) {
+    dlog("Could not find any device /dev/loop#");
+  } else if(!someloop) {
+    if (loop_known == 1) {
+      dlog("Could not find any loop device.");
+      dlog("...Maybe /dev/loop# has a wrong major number?");
+    }
+    else if (loop_known == -1) {
+      dlog("Could not find any loop device, and, according to %s,", PROC_DEVICES);
+      dlog("...this kernel does not know about the loop device.");
+      dlog("... (If so, then recompile or `insmod loop.o'.)");
+    } else {
+      dlog("Could not find any loop device. Maybe this kernel does not know,");
+      dlog("...about the loop device (then recompile or `insmod loop.o'), or");
+      dlog("...maybe /dev/loop# has the wrong major number?");
+    }
+  } else {
+    dlog("Could not find any free loop device!");
+  }
+  return NULL;
+}
+
+
+/* returns 0 if OK, -1 otherwise */
+char *
+setup_loop_device(const char *file)
+{
+  struct loop_info loopinfo;
+  int fd, ffd, mode, err = -1;
+  char *device = find_unused_loop_device();
+
+  if (!device) {
+    dlog("no unused loop device");
+    goto out;
+  }
+
+  mode = O_RDWR | O_LARGEFILE;
+  if ((ffd = open(file, mode)) < 0) {
+    if (errno == EROFS) {
+      mode = O_RDONLY | O_LARGEFILE;
+      ffd = open(file, mode);
+    }
+    if (ffd < 0) {
+      dlog("%s: %m", file);
+      goto out;
+    }
+  }
+  if ((fd = open(device, mode)) < 0) {
+    dlog("%s: %m", device);
+    goto out_close;
+  }
+
+  memset(&loopinfo, 0, sizeof(loopinfo));
+  strncpy(loopinfo.lo_name, file, LO_NAME_SIZE-1);
+  loopinfo.lo_name[LO_NAME_SIZE-1] = '\0';
+  loopinfo.lo_offset = 0;
+
+  if (ioctl(fd, LOOP_SET_FD, ffd) < 0) {
+    dlog("ioctl: LOOP_SET_FD: %m");
+    goto out_close_all;
+  }
+  if (ioctl(fd, LOOP_SET_STATUS, &loopinfo) < 0) {
+    (void) ioctl(fd, LOOP_CLR_FD, 0);
+    dlog("ioctl: LOOP_SET_STATUS: %m");
+    goto out_close_all;
+  }
+
+  /* if gets here, all is OK */
+  err = 0;
+
+out_close_all:
+  close(fd);
+out_close:
+  close(ffd);
+out:
+
+  if (err) {
+    XFREE(device);
+    return NULL;
+  } else {
+    dlog("setup_loop_device(%s,%s): success", device, file);
+    return device;
+  }
+}
+
+
+int
+delete_loop_device(const char *device)
+{
+  int fd;
+
+  if ((fd = open(device, O_RDONLY)) < 0) {
+    dlog("delete_loop_device: can't delete device %s: %m", device);
+    return -1;
+  }
+  if (ioctl(fd, LOOP_CLR_FD, 0) < 0) {
+    dlog("ioctl: LOOP_CLR_FD: %m");
+    return -1;
+  }
+  close(fd);
+  dlog("delete_loop_device(%s): success", device);
+  return 0;
+}
+#endif /* HAVE_LOOP_DEVICE */
+
 
 /****************************************************************************/

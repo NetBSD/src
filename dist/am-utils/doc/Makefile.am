@@ -4,6 +4,8 @@
 # Level: Makefile for doc/ directory
 # Author: Erez Zadok
 
+@SET_MAKE@
+
 info_TEXINFOS = am-utils.texi
 
 EXTRA_DIST = hlfsd.ps
@@ -29,7 +31,7 @@ $(HOME)/html/am-utils/am-utils_1.html: am-utils.texi
 install-ps: $(HOME)/html/am-utils/am-utils.ps
 $(HOME)/html/am-utils/am-utils.ps: am-utils.ps
 	install -c -m 644 $< $@
-	(cd $(HOME)/html/research && ${MAKE})
+	(cd $(HOME)/html/research && ${MAKE} ${MFLAGS})
 
 install-NEWS: $(HOME)/html/am-utils/NEWS.txt
 $(HOME)/html/am-utils/NEWS.txt: $(top_srcdir)/NEWS

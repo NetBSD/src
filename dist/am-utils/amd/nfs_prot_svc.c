@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.4 2001/05/13 17:50:13 veego Exp $	*/
+/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.5 2002/11/29 22:58:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_svc.c,v 1.5.2.2 2001/01/12 23:28:56 ro Exp
+ * Id: nfs_prot_svc.c,v 1.10 2002/02/02 20:58:55 ezk Exp
  *
  */
 
@@ -71,7 +70,7 @@ extern nfsreaddirres *nfsproc_readdir_2_svc(nfsreaddirargs *, struct svc_req *);
 extern nfsstatfsres *nfsproc_statfs_2_svc(am_nfs_fh *, struct svc_req *);
 
 /* global variables */
-SVCXPRT *nfs_program_2_transp;
+SVCXPRT *current_transp;
 
 /* typedefs */
 typedef char *(*nfssvcproc_t)(voidp, struct svc_req *);
@@ -122,7 +121,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
     return;
   }
 
-  nfs_program_2_transp = NULL;
+  current_transp = NULL;
 
   switch (rqstp->rq_proc) {
 
@@ -159,7 +158,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
      * be stored in the am_node structure and later used for
      * quick_reply().
      */
-    nfs_program_2_transp = transp;
+    current_transp = transp;
     break;
 
   case NFSPROC_READLINK:
@@ -257,7 +256,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
   }
   result = (*local) (&argument, rqstp);
 
-  nfs_program_2_transp = NULL;
+  current_transp = NULL;
 
   if (result != NULL && !svc_sendreply(transp,
 				       (XDRPROC_T_TYPE) xdr_result,
