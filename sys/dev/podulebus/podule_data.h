@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.9 2002/05/22 23:27:16 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.10 2002/05/22 23:46:53 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.11 2002/05/22 23:23:23 bjh21 Exp 
+ *	NetBSD: podules,v 1.12 2002/05/22 23:46:36 bjh21 Exp 
  */
 
 /*
@@ -60,11 +60,11 @@ static struct podule_description known_podules[] = {
 	{ PODULE_OAK_SCSI,	"16 bit SCSI interface" },
 	{ PODULE_ETHER2,	"Ether2 interface" },
 	{ PODULE_ULTIMATE,	"Ultimate micropodule carrier" },
-	{ PODULE_WILDVISION_CENTRONICS,	"Bi-directional Centronics" },
 	{ PODULE_NEXUS,	"Nexus interface (Podule)" },
 	{ PODULE_MORLEY_SCSI,	"SCSI interface" },
 	{ PODULE_MORLEY_USERANALOGUE,	"User and Analogue ports" },
 	{ PODULE_HCCS_USERANALOGUE,	"User and Analogue ports" },
+	{ PODULE_WILDVISION_CENTRONICS,	"Bi-directional Centronics" },
 	{ PODULE_LINGENUITY_SCSI8SHARE,	"8 bit SCSIShare interface" },
 	{ PODULE_VTI_SCSI,	"SCSI interface" },
 	{ PODULE_NEXUSNS,	"Nexus interface (A3020 netslot)" },
