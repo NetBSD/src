@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.4 1999/03/08 00:09:25 fvdl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.5 1999/03/11 12:34:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -45,12 +45,13 @@
 void bi_getbiosgeom()
 {
 	struct btinfo_biosgeom *bibg;
-	int i, j, nhd, nvalid;
+	int i, j, nvalid;
+	unsigned char nhd;
 	unsigned int cksum;
 
 	pvbcopy((void *)(0x400 + 0x75), &nhd, 1);
 #ifdef GEOM_DEBUG
-	printf("nhd %d\n", nhd);
+	printf("nhd %d\n", (int)nhd);
 #endif
 
 	bibg = alloc(sizeof(struct btinfo_biosgeom)
@@ -58,7 +59,7 @@ void bi_getbiosgeom()
 	if (!bibg)
 		return;
 
-	for (i = nvalid = 0; i < BI_NHD && nvalid < nhd; i++) {
+	for (i = nvalid = 0; i < BI_NHD && nvalid < (int)nhd; i++) {
 		struct biosdisk_ll d;
 		struct biosdisk_ext13info ed;
 		char buf[BIOSDISK_SECSIZE];
