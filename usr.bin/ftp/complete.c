@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.12 1998/05/20 00:53:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.12 1998/05/20 00:53:57 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -174,6 +174,7 @@ complete_local(word, list)
 	DIR *dd;
 	struct dirent *dp;
 	unsigned char rv;
+	size_t len;
 
 	if ((file = strrchr(word, '/')) == NULL) {
 		dir[0] = '.';
@@ -195,12 +196,20 @@ complete_local(word, list)
 
 	words = sl_init();
 
+	len = strlen(file);
+
 	for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
-		if (strlen(file) > dp->d_namlen)
+		
+#ifndef __SVR4
+		if (len > dp->d_namlen)
 			continue;
-		if (strncmp(file, dp->d_name, strlen(file)) == 0) {
+#else
+		if (len > strlen(dp->d_name))
+			continue;
+#endif
+		if (strncmp(file, dp->d_name, len) == 0) {
 			char *tcp;
 
 			tcp = strdup(dp->d_name);
@@ -345,7 +354,7 @@ complete(el, ch)
 
 		/* check for 'continuation' completes (which are uppercase) */
 	if ((cursor_argc > celems) && (celems > 0)
-	    && isupper(c->c_complete[celems-1]))
+	    && isupper((unsigned char) c->c_complete[celems-1]))
 		cursor_argc = celems;
 
 	if (cursor_argc > celems)
