@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.344 2004/07/19 18:00:15 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.345 2004/07/23 07:37:44 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5881,4 +5881,23 @@ lib/libm/arch/i387/s_floorf.S			1.7
 
 	amd64: stack sanity, leave the return PC alone
 	[drochner, ticket #679]
+
+distrib/notes/sgimips/hardware			1.8-1.9
+doc/CHANGES					1.301 via patch
+sys/arch/sgimips/conf/files.sgimips		1.38
+sys/arch/sgimips/dev/int.c			1.7
+sys/arch/sgimips/dev/pic.c			1.4-1.7
+sys/arch/sgimips/dev/picreg.h			1.2
+sys/arch/sgimips/dev/zs.c			1.23
+sys/arch/sgimips/hpc/hpc.c			1.27-1.28
+sys/arch/sgimips/sgimips/arcemu.c		1.1-1.5
+sys/arch/sgimips/sgimips/arcemu.h		1.1
+sys/arch/sgimips/sgimips/clock.c		1.13
+sys/arch/sgimips/sgimips/console.c		1.23-1.26
+sys/arch/sgimips/sgimips/machdep.c		1.83-1.85
+sys/dev/arcbios/arcbios.h			1.5
+sys/dev/arcbios/arcbiosvar.h			1.4
+
+	Add Indigo IP12 support.
+	[rumble, ticket #682]
 
