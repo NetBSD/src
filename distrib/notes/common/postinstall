@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.25 2001/05/14 07:46:56 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.26 2001/05/19 05:43:29 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,10 @@ terminal type, you may need to use
 .\}
 and press
 .Key RETURN .
+You may need to type one of the following commands to get your delete key
+to work properly, depending on your keyboard:
+.Dl # Ic "stty erase '^h'"
+.Dl # Ic "stty erase '^?'"
 At this point, you need to configure at least
 one file in the
 .Pa /etc
