@@ -1,4 +1,4 @@
-/* $NetBSD: intcreg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/* $NetBSD: intcreg.h,v 1.3 2000/08/02 11:32:42 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -29,8 +29,8 @@
 #ifndef _SH3_INTCREG_H__
 #define _SH3_INTCREG_H__
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
+#ifndef _BYTE_ORDER
+#error Define _BYTE_ORDER!
 #endif
 
 /*
@@ -41,13 +41,13 @@ struct sh3_intc {
 	union {
 		unsigned short	 WORD;	/* Word Access */
 		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* Bit 15..0 */
 			unsigned char NMIL:1;
 			unsigned char	  :6;
 			unsigned char NMIE:1;
 			unsigned char	  :8;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
+#else  /* _BYTE_ORDER == LITTLE_ENDIAN */
 			/* Bit 0..15 */
 			unsigned char	  :8;
 			unsigned char NMIE:1;
@@ -61,13 +61,13 @@ struct sh3_intc {
 	union {
 		unsigned short	 WORD;	/* Word Access */
 		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* Bit 15..0 */
 			unsigned short TMU0 :4;
 			unsigned short TMU1 :4;
 			unsigned short TMU2 :4;
 			unsigned short RTC  :4;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
+#else  /* _BYTE_ORDER == LITTLE_ENDIAN */
 			/* Bit 0..15 */
 			unsigned short RTC  :4;
 			unsigned short TMU2 :4;
@@ -81,13 +81,13 @@ struct sh3_intc {
 	union {
 		unsigned short	 WORD;	/* Word Access */
 		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 			/* Bit 15..0 */
 			unsigned short WDT  :4;
 			unsigned short REF  :4;
 			unsigned short SCI  :4;
 			unsigned short	    :4;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
+#else  /* _BYTE_ORDER == LITTLE_ENDIAN */
 			/* Bit 0..15 */
 			unsigned short	    :4;
 			unsigned short SCI  :4;
