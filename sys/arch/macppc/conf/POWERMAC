@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.32 2002/01/27 13:23:20 jdolecek Exp $
+#	$NetBSD: POWERMAC,v 1.33 2002/03/07 13:10:12 wiz Exp $
 #
 # POWERMAC config file
 #
@@ -70,6 +70,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+#options 	OFB_ENABLE_CACHE	# Speed up console
 obio0	at pci? dev ? function ?
 
 nsphy*	at mii? phy ?			# NS83840 PHYs
