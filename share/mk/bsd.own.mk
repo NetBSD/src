@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.239 2001/12/22 23:38:20 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.240 2001/12/24 11:38:05 minoura Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -28,7 +28,8 @@ NEED_OWN_INSTALL_TARGET?=	yes
     ${MACHINE} == "news68k" || \
     ${MACHINE} == "cesfic" || \
     ${MACHINE} == "luna68k" || \
-    ${MACHINE} == "atari"
+    ${MACHINE} == "atari" || \
+    ${MACHINE} == "x68k"
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 .endif
@@ -280,7 +281,8 @@ NOPROFILE=	# defined
     ${MACHINE} == "news68k" || \
     ${MACHINE} == "cesfic" || \
     ${MACHINE} == "luna68k" || \
-    ${MACHINE} == "atari"
+    ${MACHINE} == "atari" || \
+    ${MACHINE} == "x68k"
 OBJECT_FMT?=	ELF
 .else
 OBJECT_FMT?=	a.out
