@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_input.c,v 1.77.2.3.4.2 1999/07/06 11:02:47 itojun Exp $	*/
+
 /*
 %%% portions-copyright-nrl-95
 Portions of this software are Copyright 1995-1998 by Randall Atkinson,
@@ -39,8 +41,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: tcp_input.c,v 1.77.2.3.4.1 1999/06/28 06:37:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -2035,11 +2035,20 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 			tp->t_flags |= TF_RCVD_SCALE;
 			tp->requested_s_scale = cp[2];
 			if (tp->requested_s_scale > TCP_MAX_WINSHIFT) {
-#if 0
-				log(LOG_ERR, "TCP: invalid wscale %d from "
-				    "0x%08x, assuming %d\n",
-				    tp->requested_s_scale,
-				    ntohl(ti->ti_src.s_addr),
+#if 0	/*XXX*/
+				char *p;
+
+				if (ip)
+					p = ntohl(ip->ip_src);
+#ifdef INET6
+				else if (ip6)
+					p = ip6_sprintf(&ip6->ip6_src);
+#endif
+				else
+					p = "(unknown)";
+				log(LOG_ERR, "TCP: invalid wscale %d from %s, "
+				    "assuming %d\n",
+				    tp->requested_s_scale, p,
 				    TCP_MAX_WINSHIFT);
 #else
 				log(LOG_ERR, "TCP: invalid wscale %d, "
@@ -2580,9 +2589,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	register struct tcpcb *tp = 0;
 	struct mbuf *am;
 	int s;
-#ifdef IPSEC
 	struct socket *oso;
-#endif
 
 	s = splsoftnet();
 	if ((sc = syn_cache_lookup(src, dst, &scp)) == NULL) {
@@ -2626,9 +2633,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 
 	parentinpcb = (struct inpcb *)so->so_pcb;
 
-#ifdef IPSEC
 	oso = so;
-#endif
 	so = sonewconn(so, SS_ISCONNECTED);
 	if (so == NULL)
 		goto resetandabort;
