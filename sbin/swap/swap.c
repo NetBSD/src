@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.11 1997/05/12 01:47:40 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.12 1997/05/22 21:13:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -297,20 +297,55 @@ do_fstab()
 	long	priority;
 
 #define PRIORITYEQ	"priority="
+#define NFSMNTPT	"nfsmntpt="
+#define PATH_MOUNT	"/usr/sbin/mount_nfs"
 	while (fp = getfsent()) {
-		if (strcmp(fp->fs_type, "sw") == 0) {
-			if (s = strstr(fp->fs_mntops, PRIORITYEQ)) {
-				s += sizeof(PRIORITYEQ) - 1;
-				priority = atol(s);
-			} else
-				priority = pri;
+		char *spec;
 
-			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
-				warn("%s", fp->fs_spec);
-			else
-		printf("swap: adding %s as swap device at priority %d\n",
-				    fp->fs_spec, priority);
+		if (strcmp(fp->fs_type, "sw") != 0)
+			continue;
+
+		spec = fp->fs_spec;
+
+		if (s = strstr(fp->fs_mntops, PRIORITYEQ)) {
+			s += sizeof(PRIORITYEQ) - 1;
+			priority = atol(s);
+		} else
+			priority = pri;
+
+		if (s = strstr(fp->fs_mntops, NFSMNTPT)) {
+			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
+			t = strpbrk(s, ",");
+			if (t != 0)
+				*t = '\0';
+			spec = strdup(s + strlen(NFSMNTPT));
+			if (t != 0)
+				*t = ',';
+
+			if (spec == NULL)
+				errx(1, "Out of memory");
+
+			if (strlen(spec) == 0) {
+				warnx("empty mountpoint");
+				free(spec);
+				continue;
+			}
+			snprintf(cmd, sizeof(cmd), "%s %s %s",
+				PATH_MOUNT, fp->fs_spec, spec);
+			if (system(cmd) != 0) {
+				warnx("%s: mount failed", fp->fs_spec);
+				continue;
+			}
 		}
+
+		if (swapon(SWAP_ON, spec, (int)priority) < 0)
+			warn("%s", spec);
+		else
+printf("swap: adding %s as swap device at priority %d\n",
+	    fp->fs_spec, priority);
+
+		if (spec != fp->fs_spec)
+			free(spec);
 	}
 }
 
