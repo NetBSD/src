@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.24 2003/08/07 11:14:24 agc Exp $	*/
+/*	$NetBSD: k5login.c,v 1.25 2004/12/22 01:28:56 lha Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,14 +51,16 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.24 2003/08/07 11:14:24 agc Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.25 2004/12/22 01:28:56 lha Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
 #include <krb5/krb5.h>
+#ifdef KERBEROS
 #include <kerberosIV/krb.h>
+#endif
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
