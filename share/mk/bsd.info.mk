@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.8 1999/04/22 01:06:42 billc Exp $
+#	$NetBSD: bsd.info.mk,v 1.9 1999/09/14 01:31:11 perry Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -7,6 +7,7 @@ __initialized__:
 .endif
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.depall.mk>
 .MAIN:		all
 .endif
 
