@@ -135,7 +135,8 @@ negerr:				(void)fprintf(stderr,
 
 	prevline = malloc(MAXLINELEN);
 	thisline = malloc(MAXLINELEN);
-	(void)fgets(prevline, MAXLINELEN, ifp);
+	if (!fgets(prevline, MAXLINELEN, ifp))
+		exit(0);
 
 	while (fgets(thisline, MAXLINELEN, ifp)) {
 		/* if requested get the chosen fields + character offsets */
