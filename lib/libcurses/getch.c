@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.12 1999/06/06 21:05:03 pk Exp $	*/
+/*	$NetBSD: getch.c,v 1.13 1999/06/15 04:50:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.12 1999/06/06 21:05:03 pk Exp $");
+__RCSID("$NetBSD: getch.c,v 1.13 1999/06/15 04:50:28 simonb Exp $");
 #endif
 #endif					/* not lint */
 
@@ -91,15 +91,15 @@ struct keymap {
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
 				 * longest multi-key sequence */
-char    inbuf[INBUF_SZ];
-int     start, end, working;	/* pointers for manipulating inbuf data */
+static char    inbuf[INBUF_SZ];
+static int     start, end, working; /* pointers for manipulating inbuf data */
 
 #define INC_POINTER(ptr)  do {	\
 	(ptr)++;		\
 	ptr %= INBUF_SZ;	\
 } while(/*CONSTCOND*/0)
 
-short	state;			/* state of the inkey function */
+static short	state;		/* state of the inkey function */
 
 #define INKEY_NORM	 0	/* no key backlog to process */
 #define INKEY_ASSEMBLING 1	/* assembling a multi-key sequence */
@@ -112,7 +112,7 @@ struct tcdata {
 	int	symbol;		/* the symbol associated with it */
 };
 
-const struct tcdata tc[] = {
+static const struct tcdata tc[] = {
 	{"K1", KEY_A1},
 	{"K2", KEY_B2},
 	{"K3", KEY_A3},
@@ -151,16 +151,16 @@ const struct tcdata tc[] = {
 	{"ku", KEY_UP}
 };
 /* Number of TC entries .... */
-const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
+static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
 /* The root keymap */
 
-keymap_t *base_keymap;
+static keymap_t *base_keymap;
 
 /* prototypes for private functions */
-keymap_t	*new_keymap(void);	/* create a new keymap */
-key_entry_t	*new_key(void);		/* create a new key entry */
-unsigned	inkey(int, int);
+static keymap_t		*new_keymap(void);	/* create a new keymap */
+static key_entry_t	*new_key(void);		/* create a new key entry */
+static unsigned		inkey(int, int);
 
 /*
  * Init_getch - initialise all the pointers & structures needed to make
@@ -263,7 +263,7 @@ static	char termcap[1024];
  * function returns a pointer to the new keymap.
  *
  */
-keymap_t *
+static keymap_t *
 new_keymap(void)
 {
 	int     i;
@@ -294,7 +294,7 @@ new_keymap(void)
  * a pointer to the newly allocated key entry.
  *
  */
-key_entry_t *
+static key_entry_t *
 new_key(void)
 {
 	key_entry_t *new_one;
