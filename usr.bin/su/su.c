@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.60 2005/01/08 08:45:53 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.61 2005/01/08 18:12:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.60 2005/01/08 08:45:53 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.61 2005/01/08 18:12:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,14 +332,14 @@ pam_failed:
 #endif
 
 	if (ruid
+#ifdef USE_PAM	
+	    && (pam_err != PAM_SUCCESS)
+#endif
 #ifdef KERBEROS5
 	    && (!use_kerberos || kerberos5(username, user, pwd->pw_uid))
 #endif
 #ifdef KERBEROS
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
-#endif
-#ifdef USE_PAM	
-	    && (pam_err != PAM_SUCCESS)
 #endif
 	    ) {
 		char *pass = pwd->pw_passwd;
