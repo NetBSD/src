@@ -1,9 +1,11 @@
-#	$NetBSD: bsd.lib.mk,v 1.226 2003/07/28 00:51:47 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.227 2003/07/28 02:29:35 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+# Pull in <bsd.sys.mk> here so we can override its .c.o rule
+.include <bsd.sys.mk>
 
 ##### Basic targets
 .PHONY:		checkver cleanlib libinstall
@@ -576,6 +578,5 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.sys.mk>
 
 ${TARGETS}:	# ensure existence
