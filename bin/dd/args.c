@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.8 1997/07/20 21:58:36 christos Exp $	*/
+/*	$NetBSD: args.c,v 1.9 1997/07/25 06:46:23 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.8 1997/07/20 21:58:36 christos Exp $");
+__RCSID("$NetBSD: args.c,v 1.9 1997/07/25 06:46:23 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,14 +169,19 @@ jcl(argv)
 		errx(1, "buffer sizes cannot be zero");
 
 	/*
-	 * Read, write and seek calls take ints as arguments.  Seek sizes
-	 * could be larger if we wanted to do it in stages or check only
-	 * regular files, but it's probably not worth it.
+	 * Check to make sure that the buffers are not too large.
 	 */
 	if (in.dbsz > INT_MAX || out.dbsz > INT_MAX)
 		errx(1, "buffer sizes cannot be greater than %d", INT_MAX);
-	if (in.offset > INT_MAX / in.dbsz || out.offset > INT_MAX / out.dbsz)
-		errx(1, "seek offsets cannot be larger than %d", INT_MAX);
+
+	/* Read, write and seek calls take off_t as arguments. 
+	 *
+	 * The following check is not done because an off_t is a quad
+	 *  for current NetBSD implementations. 
+	 *
+	 * if (in.offset > INT_MAX/in.dbsz || out.offset > INT_MAX/out.dbsz)
+	 *	errx(1, "seek offsets cannot be larger than %d", INT_MAX);
+	 */
 }
 
 static int
