@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.265 2005/01/25 01:59:07 wiz Exp $
+.\"	$NetBSD: options.4,v 1.266 2005/02/12 12:31:07 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1517,6 +1517,12 @@ protocol.
 See
 .Xr ipsec 4
 for details.
+.It Cd options IPSEC_NAT_T
+Includes support for
+.Tn IPsec
+Network Address Translator traversal (NAT-T), as described in RFC 3947
+and 3948. This feature might be 
+patent-encumbered in some countries.
 .It Cd options ALTQ
 Enabled ALTQ (Alternate Queueing).
 For simple rate-limiting, use

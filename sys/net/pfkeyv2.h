@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.18 2005/01/14 04:11:55 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.19 2005/02/12 12:31:07 manu Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -75,7 +75,8 @@ you leave this credit intact on any copies of this file.
 #define SADB_X_SPDSETIDX  20
 #define SADB_X_SPDEXPIRE  21	/* not yet */
 #define SADB_X_SPDDELETE2 22	/* by policy id */
-#define SADB_MAX          22
+#define SADB_X_NAT_T_NEW_MAPPING 23
+#define SADB_MAX          23
 
 struct sadb_msg {
   u_int8_t sadb_msg_version;
@@ -255,6 +256,34 @@ struct sadb_x_ipsecrequest {
    */
 };
 
+/* NAT traversal type, see draft-ietf-ipsec-udp-encaps-06 */
+/* sizeof(struct sadb_x_nat_t_type) == 8 */
+struct sadb_x_nat_t_type {
+  u_int16_t sadb_x_nat_t_type_len;
+  u_int16_t sadb_x_nat_t_type_exttype;
+  u_int8_t sadb_x_nat_t_type_type;
+  u_int8_t sadb_x_nat_t_type_reserved[3];
+};
+
+/* NAT traversal source or destination port */
+/* sizeof(struct sadb_x_nat_t_port) == 8 */
+struct sadb_x_nat_t_port { 
+  u_int16_t sadb_x_nat_t_port_len;
+  u_int16_t sadb_x_nat_t_port_exttype;
+  u_int16_t sadb_x_nat_t_port_port;
+  u_int16_t sadb_x_nat_t_port_reserved;
+};
+
+/* ESP fragmentation size */
+/* sizeof(struct sadb_x_nat_t_frag) == 8 */
+struct sadb_x_nat_t_frag {
+  u_int16_t sadb_x_nat_t_frag_len;
+  u_int16_t sadb_x_nat_t_frag_exttype;
+  u_int16_t sadb_x_nat_t_frag_fraglen;
+  u_int16_t sadb_x_nat_t_frag_reserved;
+};
+
+
 #define SADB_EXT_RESERVED             0
 #define SADB_EXT_SA                   1
 #define SADB_EXT_LIFETIME_CURRENT     2
@@ -275,7 +304,12 @@ struct sadb_x_ipsecrequest {
 #define SADB_X_EXT_KMPRIVATE          17
 #define SADB_X_EXT_POLICY             18
 #define SADB_X_EXT_SA2                19
-#define SADB_EXT_MAX                  19
+#define SADB_X_EXT_NAT_T_TYPE         20
+#define SADB_X_EXT_NAT_T_SPORT        21
+#define SADB_X_EXT_NAT_T_DPORT        22
+#define SADB_X_EXT_NAT_T_OA           23
+#define SADB_X_EXT_NAT_T_FRAG	      24
+#define SADB_EXT_MAX                  24
 
 #define SADB_SATYPE_UNSPEC	0
 #define SADB_SATYPE_AH		2
