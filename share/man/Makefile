@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$Id: Makefile,v 1.5 1994/02/07 05:10:30 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/02/09 08:00:16 cgd Exp $
 
 SUBDIR=	man1 man3 man4 man5 man7 man8
 
@@ -10,6 +10,6 @@ afterinstall:
 	    ${DESTDIR}/usr/share/man/COPYRIGHT
 
 makedb:
-	/usr/libexec/makewhatis
+	/usr/libexec/makewhatis ${DESTDIR}/usr/share/man
 
 .include <bsd.subdir.mk>
