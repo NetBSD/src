@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.20 2004/12/23 06:12:43 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.21 2004/12/25 06:58:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.20 2004/12/23 06:12:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.21 2004/12/25 06:58:37 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -91,12 +91,13 @@ int rtw_flush_rfio = 1;
 int rtw_rfio_delay = 0;
 
 #ifdef RTW_DEBUG
-int rtw_debug = 2;
+int rtw_debug = 0;
 #endif /* RTW_DEBUG */
 
-#define NEXT_ATTACH_STATE(sc, state) do {				\
-	DPRINTF(sc, ("%s: attach state %s\n", __func__, #state));	\
-	sc->sc_attach_state = state;					\
+#define NEXT_ATTACH_STATE(sc, state) do {			\
+	DPRINTF(sc, RTW_DEBUG_ATTACH,				\
+	    ("%s: attach state %s\n", __func__, #state));	\
+	sc->sc_attach_state = state;				\
 } while (0)
 
 int rtw_dwelltime = 1000;	/* milliseconds */
@@ -107,6 +108,8 @@ static int rtw_sysctl_verify_rfio(SYSCTLFN_PROTO);
 static int rtw_sysctl_verify_rfio_delay(SYSCTLFN_PROTO);
 static int rtw_sysctl_verify_rfprog(SYSCTLFN_PROTO);
 #ifdef RTW_DEBUG
+static void rtw_print_txdesc(struct rtw_softc *, const char *,
+    struct rtw_txctl *, struct rtw_txdesc_blk *, int);
 static int rtw_sysctl_verify_debug(SYSCTLFN_PROTO);
 #endif /* RTW_DEBUG */
 
@@ -222,25 +225,28 @@ rtw_sysctl_verify_rfio(SYSCTLFN_ARGS)
 static int
 rtw_sysctl_verify_debug(SYSCTLFN_ARGS)
 {
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 2);
+	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, RTW_DEBUG_MAX);
 }
 
 static void
 rtw_print_regs(struct rtw_regs *regs, const char *dvname, const char *where)
 {
-#define PRINTREG32(sc, reg) \
-	RTW_DPRINTF2(("%s: reg[ " #reg " / %03x ] = %08x\n", \
+#define PRINTREG32(sc, reg)				\
+	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
+	    ("%s: reg[ " #reg " / %03x ] = %08x\n",	\
 	    dvname, reg, RTW_READ(regs, reg)))
 
-#define PRINTREG16(sc, reg) \
-	RTW_DPRINTF2(("%s: reg[ " #reg " / %03x ] = %04x\n", \
+#define PRINTREG16(sc, reg)				\
+	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
+	    ("%s: reg[ " #reg " / %03x ] = %04x\n",	\
 	    dvname, reg, RTW_READ16(regs, reg)))
 
-#define PRINTREG8(sc, reg) \
-	RTW_DPRINTF2(("%s: reg[ " #reg " / %03x ] = %02x\n", \
+#define PRINTREG8(sc, reg)				\
+	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
+	    ("%s: reg[ " #reg " / %03x ] = %02x\n",	\
 	    dvname, reg, RTW_READ8(regs, reg)))
 
-	RTW_DPRINTF2(("%s: %s\n", dvname, where));
+	RTW_DPRINTF(RTW_DEBUG_REGDUMP, ("%s: %s\n", dvname, where));
 
 	PRINTREG32(regs, RTW_IDR0);
 	PRINTREG32(regs, RTW_IDR1);
@@ -418,7 +424,8 @@ void
 rtw_set_access(struct rtw_softc *sc, enum rtw_access access)
 {
 	rtw_set_access1(&sc->sc_regs, sc->sc_access, access);
-	RTW_DPRINTF(("%s: access %s -> %s\n", sc->sc_dev.dv_xname,
+	RTW_DPRINTF(RTW_DEBUG_ACCESS,
+	    ("%s: access %s -> %s\n", sc->sc_dev.dv_xname,
 	    rtw_access_string(sc->sc_access),
 	    rtw_access_string(access)));
 	sc->sc_access = access;
@@ -485,13 +492,14 @@ rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 
 	RTW_WBR(regs, RTW_CR, RTW_CR);
 
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < 1000; i++) {
 		if ((cr = RTW_READ8(regs, RTW_CR) & RTW_CR_RST) == 0) {
-			RTW_DPRINTF(("%s: reset in %dus\n", dvname, i));
+			RTW_DPRINTF(RTW_DEBUG_RESET,
+			    ("%s: reset in %dus\n", dvname, i));
 			return 0;
 		}
 		RTW_RBR(regs, RTW_CR, RTW_CR);
-		DELAY(1); /* 1us */
+		DELAY(10); /* 10us */
 	}
 
 	printf("%s: reset failed\n", dvname);
@@ -530,8 +538,8 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 	for (i = 0; i < 25; i++) {
 		ecr = RTW_READ8(regs, RTW_9346CR);
 		if ((ecr & RTW_9346CR_EEM_MASK) == RTW_9346CR_EEM_NORMAL) {
-			RTW_DPRINTF(("%s: recall EEPROM in %dus\n", dvname,
-			    i * 100));
+			RTW_DPRINTF(RTW_DEBUG_RESET,
+			    ("%s: recall EEPROM in %dus\n", dvname, i * 100));
 			return 0;
 		}
 		RTW_RBR(regs, RTW_9346CR, RTW_9346CR);
@@ -665,7 +673,8 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 	for (i = 0; i < IEEE80211_ADDR_LEN; i++)
 		mac[i] = RTW_SR_GET(sr, RTW_SR_MAC + i);
 
-	RTW_DPRINTF(("%s: EEPROM MAC %s\n", dvname, ether_sprintf(mac)));
+	RTW_DPRINTF(RTW_DEBUG_ATTACH,
+	    ("%s: EEPROM MAC %s\n", dvname, ether_sprintf(mac)));
 
 	*cs_threshold = RTW_SR_GET(sr, RTW_SR_ENERGYDETTHR);
 
@@ -750,11 +759,11 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	ecr = RTW_READ8(regs, RTW_9346CR);
 
 	if ((flags & RTW_F_9356SROM) != 0) {
-		RTW_DPRINTF(("%s: 93c56 SROM\n", dvname));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c56 SROM\n", dvname));
 		sr->sr_size = 256;
 		sd.sd_chip = C56_66;
 	} else {
-		RTW_DPRINTF(("%s: 93c46 SROM\n", dvname));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c46 SROM\n", dvname));
 		sr->sr_size = 128;
 		sd.sd_chip = C46;
 	}
@@ -814,13 +823,15 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 #ifdef RTW_DEBUG
 	{
 		int i;
-		RTW_DPRINTF(("\n%s: serial ROM:\n\t", dvname));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH,
+		    ("\n%s: serial ROM:\n\t", dvname));
 		for (i = 0; i < sr->sr_size/2; i++) {
 			if (((i % 8) == 0) && (i != 0))
-				RTW_DPRINTF(("\n\t"));
-			RTW_DPRINTF((" %04x", sr->sr_content[i]));
+				RTW_DPRINTF(RTW_DEBUG_ATTACH, ("\n\t"));
+			RTW_DPRINTF(RTW_DEBUG_ATTACH,
+			    (" %04x", sr->sr_content[i]));
 		}
-		RTW_DPRINTF(("\n"));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("\n"));
 	}
 #endif /* RTW_DEBUG */
 	return 0;
@@ -858,7 +869,8 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 
 	RTW_WBR(regs, RTW_CONFIG4, RTW_CONFIG4);
 
-	RTW_DPRINTF(("%s: %s RF programming method, %#02x\n", dvname, method,
+	RTW_DPRINTF(RTW_DEBUG_INIT,
+	    ("%s: %s RF programming method, %#02x\n", dvname, method,
 	    RTW_READ8(regs, RTW_CONFIG4)));
 }
 
@@ -1038,14 +1050,19 @@ static __inline void
 rtw_rxdescs_sync(bus_dma_tag_t dmat, bus_dmamap_t dmap, u_int desc0, u_int
     nsync, int ops)
 {
+	KASSERT(nsync <= RTW_RXQLEN);
 	/* sync to end of ring */
-	if (desc0 + nsync > RTW_NRXDESC) {
+	if (desc0 + nsync > RTW_RXQLEN) {
 		bus_dmamap_sync(dmat, dmap,
 		    offsetof(struct rtw_descs, hd_rx[desc0]),
-		    sizeof(struct rtw_rxdesc) * (RTW_NRXDESC - desc0), ops);
-		nsync -= (RTW_NRXDESC - desc0);
+		    sizeof(struct rtw_rxdesc) * (RTW_RXQLEN - desc0), ops);
+		nsync -= (RTW_RXQLEN - desc0);
 		desc0 = 0;
 	}
+
+	KASSERT(desc0 < RTW_RXQLEN);
+	KASSERT(nsync <= RTW_RXQLEN);
+	KASSERT(desc0 + nsync <= RTW_RXQLEN);
 
 	/* sync what remains */
 	bus_dmamap_sync(dmat, dmap,
@@ -1091,7 +1108,7 @@ rtw_rxbufs_release(bus_dma_tag_t dmat, struct rtw_rxctl *desc)
 	int i;
 	struct rtw_rxctl *srx;
 
-	for (i = 0; i < RTW_NRXDESC; i++) {
+	for (i = 0; i < RTW_RXQLEN; i++) {
 		srx = &desc[i];
 		bus_dmamap_sync(dmat, srx->srx_dmamap, 0,
 		    srx->srx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1140,7 +1157,7 @@ rtw_rxctl_init_all(bus_dma_tag_t dmat, struct rtw_rxctl *desc,
 	int i, rc;
 	struct rtw_rxctl *srx;
 
-	for (i = 0; i < RTW_NRXDESC; i++) {
+	for (i = 0; i < RTW_RXQLEN; i++) {
 		srx = &desc[i];
 		if ((rc = rtw_rxbuf_alloc(dmat, srx)) == 0)
 			continue;
@@ -1157,11 +1174,12 @@ rtw_rxctl_init_all(bus_dma_tag_t dmat, struct rtw_rxctl *desc,
 
 static __inline void
 rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx)
+    struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx, int flags)
 {
-	int is_last = (idx == RTW_NRXDESC - 1);
-	uint32_t ctl;
+	int is_last = (idx == RTW_RXQLEN - 1);
+	uint32_t ctl, octl, obuf;
 
+	obuf = hrx->hrx_buf;
 	hrx->hrx_buf = htole32(srx->srx_dmamap->dm_segs[0].ds_addr);
 
 	ctl = LSHIFT(srx->srx_mbuf->m_len, RTW_RXCTL_LENGTH_MASK) |
@@ -1170,7 +1188,13 @@ rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 	if (is_last)
 		ctl |= RTW_RXCTL_EOR;
 
+	octl = hrx->hrx_ctl;
 	hrx->hrx_ctl = htole32(ctl);
+
+	RTW_DPRINTF(flags,
+	    ("%s: hrx %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, hrx,
+	     le32toh(obuf), le32toh(hrx->hrx_buf), le32toh(octl),
+	     le32toh(hrx->hrx_ctl)));
 
 	/* sync the mbuf */
 	bus_dmamap_sync(dmat, srx->srx_dmamap, 0, srx->srx_dmamap->dm_mapsize,
@@ -1184,16 +1208,16 @@ rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 
 static void
 rtw_rxdesc_init_all(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *desc, struct rtw_rxctl *ctl)
+    struct rtw_rxdesc *desc, struct rtw_rxctl *ctl, int flags)
 {
 	int i;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
 
-	for (i = 0; i < RTW_NRXDESC; i++) {
+	for (i = 0; i < RTW_RXQLEN; i++) {
 		hrx = &desc[i];
 		srx = &ctl[i];
-		rtw_rxdesc_init(dmat, dmam, hrx, srx, i);
+		rtw_rxdesc_init(dmat, dmam, hrx, srx, i, flags);
 	}
 }
 
@@ -1202,7 +1226,7 @@ rtw_io_enable(struct rtw_regs *regs, u_int8_t flags, int enable)
 {
 	u_int8_t cr;
 
-	RTW_DPRINTF(("%s: %s 0x%02x\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_IOSTATE, ("%s: %s 0x%02x\n", __func__,
 	    enable ? "enable" : "disable", flags));
 
 	cr = RTW_READ8(regs, RTW_CR);
@@ -1225,7 +1249,7 @@ rtw_io_enable(struct rtw_regs *regs, u_int8_t flags, int enable)
 static void
 rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 {
-	u_int next;
+	u_int next, nproc = 0;
 	int rate, rssi;
 	u_int32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *hrx;
@@ -1234,6 +1258,8 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
+
+	KASSERT(sc->sc_rxnext < RTW_RXQLEN);
 
 	for (next = sc->sc_rxnext; ; next = (next + 1) % RTW_RXQLEN) {
 		rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
@@ -1246,12 +1272,31 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		htsfth = le32toh(hrx->hrx_tsfth);
 		htsftl = le32toh(hrx->hrx_tsftl);
 
-		RTW_DPRINTF2(("%s: rxdesc[%d] hstat %08x hrssi %08x "
-		    "htsft %08x%08x\n", __func__, next,
-		    hstat, hrssi, htsfth, htsftl));
+		RTW_DPRINTF(RTW_DEBUG_RECV_DESC,
+		    ("%s: rxdesc[%d] hstat %08x hrssi %08x htsft %08x%08x\n",
+		    __func__, next, hstat, hrssi, htsfth, htsftl));
 
-		if ((hstat & RTW_RXSTAT_OWN) != 0) /* belongs to NIC */
-			break;
+		KASSERT((hstat & (RTW_RXSTAT_FS|RTW_RXSTAT_LS)) ==
+		    (RTW_RXSTAT_FS|RTW_RXSTAT_LS));
+
+		++nproc;
+
+		/* still belongs to NIC */
+		if ((hstat & RTW_RXSTAT_OWN) != 0) {
+			if (nproc > 1)
+				break;
+
+			/* sometimes the NIC skips to the 0th descriptor */
+			rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
+			    0, 1, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			hrx = &sc->sc_rxdesc[0];
+			if ((hrx->hrx_stat & htole32(RTW_RXSTAT_OWN)) != 0)
+				break;
+			printf("%s: NIC skipped to rxdesc[0]\n",
+			    sc->sc_dev.dv_xname);
+			next = 0;
+			continue;
+		}
 
 		if ((hstat & RTW_RXSTAT_IOERROR) != 0) {
 			printf("%s: DMA error/FIFO overflow %08x, "
@@ -1272,11 +1317,10 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			break;
 		default:
 #ifdef RTW_DEBUG
-			if (rtw_debug > 1)
-				printf("%s: interpreting rate #%d as 11 MB/s\n",
-				    sc->sc_dev.dv_xname,
-				    MASK_AND_RSHIFT(hstat,
-				        RTW_RXSTAT_RATE_MASK));
+			RTW_DPRINTF(RTW_DEBUG_RECV,
+			    ("%s: interpreting rate #%d as 11 Mb/s\n",
+			    sc->sc_dev.dv_xname,
+			    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK)));
 #endif /* RTW_DEBUG */
 			/*FALLTHROUGH*/
 		case RTW_RXSTAT_RATE_11MBPS:
@@ -1291,7 +1335,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		delim = ","; \
 	} \
 } while (0)
-		if (rtw_debug > 1) {
+		if ((rtw_debug & RTW_DEBUG_RECV_DESC) != 0) {
 			const char *delim = "<";
 			printf("%s: ", sc->sc_dev.dv_xname);
 			if ((hstat & RTW_RXSTAT_DEBUG) != 0) {
@@ -1377,8 +1421,10 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
 		rtw_rxdesc_init(sc->sc_dmat, sc->sc_desc_dmamap,
-		    hrx, srx, next);
+		    hrx, srx, next, RTW_DEBUG_RECV_DESC);
 	}
+	KASSERT(sc->sc_rxnext < RTW_RXQLEN);
+
 	sc->sc_rxnext = next;
 
 	return;
@@ -1390,33 +1436,48 @@ rtw_txbuf_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 {
 	struct mbuf *m;
 	struct ieee80211_node *ni;
-	bus_dmamap_t dmamap;
 
-	dmamap = stx->stx_dmamap;
 	m = stx->stx_mbuf;
 	ni = stx->stx_ni;
-	stx->stx_dmamap = NULL;
+	KASSERT(m != NULL);
+	KASSERT(ni != NULL);
 	stx->stx_mbuf = NULL;
 	stx->stx_ni = NULL;
 
-	bus_dmamap_sync(dmat, dmamap, 0, dmamap->dm_mapsize,
+	bus_dmamap_sync(dmat, stx->stx_dmamap, 0, stx->stx_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(dmat, dmamap);
+	bus_dmamap_unload(dmat, stx->stx_dmamap);
 	m_freem(m);
 	ieee80211_release_node(ic, ni);
 }
 
 static void
-rtw_txbufs_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
-    struct rtw_txctl_blk *stc)
+rtw_txbufs_release(bus_dma_tag_t dmat, bus_dmamap_t desc_dmamap,
+    struct ieee80211com *ic, struct rtw_txctl_blk *stc,
+    struct rtw_txdesc_blk *htc)
 {
+	int desc, i;
 	struct rtw_txctl *stx;
 
 	while ((stx = SIMPLEQ_FIRST(&stc->stc_dirtyq)) != NULL) {
+		rtw_txdescs_sync(dmat, desc_dmamap, htc, stx->stx_first,
+		    stx->stx_dmamap->dm_nsegs,
+		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+		for (i = 0, desc = stx->stx_first;
+		     i < stx->stx_dmamap->dm_nsegs;
+		     i++, desc = RTW_NEXT_IDX(htc, desc)) {
+			htc->htc_desc[desc].htx_ctl0 &=
+			    ~htole32(RTW_TXCTL0_OWN);
+		}
+		rtw_txdescs_sync(dmat, desc_dmamap, htc, stx->stx_first,
+		    stx->stx_dmamap->dm_nsegs,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		htc->htc_nfree += stx->stx_dmamap->dm_nsegs;
 		rtw_txbuf_release(dmat, ic, stx);
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
 		SIMPLEQ_INSERT_TAIL(&stc->stc_freeq, stx, stx_q);
 	}
+	htc->htc_next = 0;
 }
 
 static __inline void
@@ -1448,7 +1509,8 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
 		condstring = "error";
 	}
 
-	DPRINTF2(sc, ("%s: stx %p txdesc[%d, %d] %s tries rts %u data %u\n",
+	DPRINTF(sc, RTW_DEBUG_XMIT_DESC,
+	    ("%s: stx %p txdesc[%d, %d] %s tries rts %u data %u\n",
 	    sc->sc_dev.dv_xname, stx, stx->stx_first, stx->stx_last,
 	    condstring, rts_retry, data_retry));
 }
@@ -1498,7 +1560,8 @@ rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
 
 		rtw_collect_txring(sc, stc, htc);
 
-		rtw_start(&sc->sc_if);
+		if ((isr & RTW_INTR_TX) != 0)
+			rtw_start(&sc->sc_if);
 	}
 
 	/* TBD */
@@ -1519,6 +1582,35 @@ rtw_intr_atim(struct rtw_softc *sc)
 	return;
 }
 
+#ifdef RTW_DEBUG
+static void
+rtw_dump_rings(struct rtw_softc *sc)
+{
+	struct rtw_txdesc_blk *htc;
+	struct rtw_rxdesc *hrx;
+	int desc, pri;
+
+	if ((rtw_debug & RTW_DEBUG_IO_KICK) == 0)
+		return;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		htc = &sc->sc_txdesc_blk[pri];
+		printf("%s: txpri %d ndesc %d nfree %d\n", __func__, pri,
+		    htc->htc_ndesc, htc->htc_nfree);
+		for (desc = 0; desc < htc->htc_ndesc; desc++)
+			rtw_print_txdesc(sc, ".", NULL, htc, desc);
+	}
+
+	for (desc = 0; desc < RTW_RXQLEN; desc++) {
+		hrx = &sc->sc_rxdesc[desc];
+		printf("%s: ctl %08x rsvd0/rssi %08x buf/tsftl %08x "
+		    "rsvd1/tsfth %08x\n", __func__,
+		    le32toh(hrx->hrx_ctl), le32toh(hrx->hrx_rssi),
+		    le32toh(hrx->hrx_buf), le32toh(hrx->hrx_tsfth));
+	}
+}
+#endif /* RTW_DEBUG */
+
 static void
 rtw_hwring_setup(struct rtw_softc *sc)
 {
@@ -1529,6 +1621,21 @@ rtw_hwring_setup(struct rtw_softc *sc)
 	RTW_WRITE(regs, RTW_THPDA, RTW_RING_BASE(sc, hd_txhi));
 	RTW_WRITE(regs, RTW_TBDA, RTW_RING_BASE(sc, hd_bcn));
 	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
+	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+	    ("%s: reg[TLPDA] <- %" PRIxPTR "\n", __func__,
+	     (uintptr_t)RTW_RING_BASE(sc, hd_txlo)));
+	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+	    ("%s: reg[TNPDA] <- %" PRIxPTR "\n", __func__,
+	     (uintptr_t)RTW_RING_BASE(sc, hd_txmd)));
+	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+	    ("%s: reg[THPDA] <- %" PRIxPTR "\n", __func__,
+	     (uintptr_t)RTW_RING_BASE(sc, hd_txhi)));
+	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+	    ("%s: reg[TBDA] <- %" PRIxPTR "\n", __func__,
+	     (uintptr_t)RTW_RING_BASE(sc, hd_bcn)));
+	RTW_DPRINTF(RTW_DEBUG_RECV_DESC,
+	    ("%s: reg[RDSAR] <- %" PRIxPTR "\n", __func__,
+	     (uintptr_t)RTW_RING_BASE(sc, hd_rx)));
 }
 
 static void
@@ -1539,62 +1646,100 @@ rtw_swring_setup(struct rtw_softc *sc)
 	rtw_txctl_blk_init_all(&sc->sc_txctl_blk[0]);
 
 	rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-	    0, RTW_NRXDESC, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	    0, RTW_RXQLEN, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	rtw_rxctl_init_all(sc->sc_dmat, sc->sc_rxctl, &sc->sc_rxnext,
 	    sc->sc_dev.dv_xname);
 	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap,
-	    sc->sc_rxdesc, sc->sc_rxctl);
+	    sc->sc_rxdesc, sc->sc_rxctl,
+	    RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK);
 
 	rtw_txdescs_sync_all(sc->sc_dmat, sc->sc_desc_dmamap,
 	    &sc->sc_txdesc_blk[0]);
 #if 0	/* redundant with rtw_rxdesc_init_all */
 	rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-	    0, RTW_NRXDESC, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    0, RTW_RXQLEN, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 #endif
 }
 
 static void
-rtw_kick(struct rtw_softc *sc)
+rtw_txdesc_blk_reset(struct rtw_txdesc_blk *htc)
+{
+	int i;
+
+	for (i = 0; i < htc->htc_ndesc; i++)
+		htc->htc_desc[i].htx_next = htole32(RTW_NEXT_DESC(htc, i));
+}
+
+static void
+rtw_txdescs_reset(struct rtw_softc *sc)
 {
 	int pri;
+	struct rtw_txdesc_blk *htc;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		htc = &sc->sc_txdesc_blk[pri];
+		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
+		    &sc->sc_txctl_blk[pri], htc);
+		rtw_txdesc_blk_reset(htc);
+		KASSERT(htc->htc_nfree == htc->htc_ndesc);
+	}
+}
+
+static void
+rtw_rxdescs_reset(struct rtw_softc *sc)
+{
+	/* Re-initialize descriptors, just in case. */
+	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap, sc->sc_rxdesc,
+	    &sc->sc_rxctl[0], RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK);
+
+	/* Reset to start of ring. */
+	sc->sc_rxnext = 0;
+}
+
+static void
+rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
+{
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	RTW_WRITE16(regs, RTW_IMR, 0);
-	RTW_WBW(regs, RTW_IMR, RTW_TPPOLL);
+	if ((isr & RTW_INTR_TXFOVW) != 0)
+		printf("%s: tx fifo overflow\n", sc->sc_dev.dv_xname);
 
-	RTW_WRITE8(regs, RTW_TPPOLL,
-	    RTW_TPPOLL_SBQ|RTW_TPPOLL_SHPQ|RTW_TPPOLL_SNPQ|RTW_TPPOLL_SLPQ);
+	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) == 0)
+		return;
 
-	RTW_SYNC(regs, RTW_TPPOLL, RTW_TPPOLL);
+	printf("%s: restarting xmit/recv\n", sc->sc_dev.dv_xname);
+
+	rtw_dump_rings(sc);
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 
-	rtw_rxbufs_release(sc->sc_dmat, &sc->sc_rxctl[0]);
-	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
-		    &sc->sc_txctl_blk[pri]);
-	}
-	rtw_swring_setup(sc);
+	/* Collect rx'd packets.  Refresh rx buffers. */ 
+	rtw_intr_rx(sc, 0);
+	/* Collect tx'd packets. */ 
+	rtw_intr_tx(sc, 0);
+
+	RTW_WRITE16(regs, RTW_IMR, 0);
+	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
+
+	rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
+
+	rtw_rxdescs_reset(sc);
+	rtw_txdescs_reset(sc);
+
 	rtw_hwring_setup(sc);
+
+	rtw_dump_rings(sc);
+
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
 }
 
-static void
-rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
-{
-	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0)
-		rtw_kick(sc);
-	if ((isr & RTW_INTR_TXFOVW) != 0)
-		;	/* TBD restart transmit engine */
-	return;
-}
-
 static __inline void
 rtw_suspend_ticks(struct rtw_softc *sc)
 {
-	RTW_DPRINTF2(("%s: suspending ticks\n", sc->sc_dev.dv_xname));
+	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
+	    ("%s: suspending ticks\n", sc->sc_dev.dv_xname));
 	sc->sc_do_tick = 0;
 }
 
@@ -1611,14 +1756,15 @@ rtw_resume_ticks(struct rtw_softc *sc)
 
 	sc->sc_do_tick = 1;
 
-	RTW_DPRINTF2(("%s: resume ticks delta %#08x now %#08x next %#08x\n",
+	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
+	    ("%s: resume ticks delta %#08x now %#08x next %#08x\n",
 	    sc->sc_dev.dv_xname, tsftrl1 - tsftrl0, tsftrl1, next_tick));
 }
 
 static void
 rtw_intr_timeout(struct rtw_softc *sc)
 {
-	RTW_DPRINTF2(("%s: timeout\n", sc->sc_dev.dv_xname));
+	RTW_DPRINTF(RTW_DEBUG_TIMEOUT, ("%s: timeout\n", sc->sc_dev.dv_xname));
 	if (sc->sc_do_tick)
 		rtw_resume_ticks(sc);
 	return;
@@ -1639,7 +1785,7 @@ rtw_intr(void *arg)
 	if ((sc->sc_flags & RTW_F_ENABLED) == 0 ||
 	    (sc->sc_if.if_flags & IFF_RUNNING) == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
-		RTW_DPRINTF2(("%s: stray interrupt\n", sc->sc_dev.dv_xname));
+		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n", sc->sc_dev.dv_xname));
 		return (0);
 	}
 
@@ -1663,7 +1809,7 @@ rtw_intr(void *arg)
 	} \
 } while (0)
 
-		if (rtw_debug > 1 && isr != 0) {
+		if ((rtw_debug & RTW_DEBUG_INTR) != 0 && isr != 0) {
 			const char *delim = "<";
 
 			printf("%s: reg[ISR] = %x", sc->sc_dev.dv_xname, isr);
@@ -1707,10 +1853,11 @@ rtw_intr(void *arg)
 	return 1;
 }
 
+/* Must be called at splnet. */
 static void
 rtw_stop(struct ifnet *ifp, int disable)
 {
-	int pri, s;
+	int pri;
 	struct rtw_softc *sc = (struct rtw_softc *)ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_regs *regs = &sc->sc_regs;
@@ -1719,8 +1866,6 @@ rtw_stop(struct ifnet *ifp, int disable)
 		return;
 
 	rtw_suspend_ticks(sc);
-
-	s = splnet();
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
@@ -1743,8 +1888,8 @@ rtw_stop(struct ifnet *ifp, int disable)
 	}
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
-		    &sc->sc_txctl_blk[pri]);
+		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
+		    &sc->sc_txctl_blk[pri], &sc->sc_txdesc_blk[pri]);
 	}
 
 	if (disable) {
@@ -1753,10 +1898,8 @@ rtw_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Mark the interface as not running.  Cancel the watchdog timer. */
-	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
-
-	splx(s);
 
 	return;
 }
@@ -1808,7 +1951,8 @@ rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 		anaparm |= RTW_ANAPARM_RFPOW_MAXIM_ON;
 		break;
 	}
-	RTW_DPRINTF(("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
+	RTW_DPRINTF(RTW_DEBUG_PWR,
+	    ("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
@@ -1847,7 +1991,8 @@ rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 		anaparm |= RTW_ANAPARM_RFPOW_RFMD_ON;
 		break;
 	}
-	RTW_DPRINTF(("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
+	RTW_DPRINTF(RTW_DEBUG_PWR,
+	    ("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
@@ -1888,7 +2033,8 @@ rtw_philips_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 			anaparm |= RTW_ANAPARM_RFPOW_ANA_PHILIPS_ON;
 		break;
 	}
-	RTW_DPRINTF(("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
+	RTW_DPRINTF(RTW_DEBUG_PWR,
+	    ("%s: power state %s, %s RF, reg[ANAPARM] <- %08x\n",
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
@@ -1916,7 +2062,8 @@ rtw_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	int rc;
 
-	RTW_DPRINTF2(("%s: %s->%s\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_PWR,
+	    ("%s: %s->%s\n", __func__,
 	    rtw_pwrstate_string(sc->sc_pwrstate), rtw_pwrstate_string(power)));
 
 	if (sc->sc_pwrstate == power)
@@ -1960,7 +2107,8 @@ rtw_tune(struct rtw_softc *sc)
 		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
 
 	if (chan == sc->sc_cur_chan) {
-		RTW_DPRINTF(("%s: already tuned chan #%d\n", __func__, chan)); 
+		RTW_DPRINTF(RTW_DEBUG_TUNE,
+		    ("%s: already tuned chan #%d\n", __func__, chan)); 
 		return 0;
 	}
 
@@ -2183,13 +2331,15 @@ allmulti:
 	RTW_WRITE(regs, RTW_RCR, sc->sc_rcr);
 	RTW_SYNC(regs, RTW_MAR0, RTW_RCR); /* RTW_MAR0 < RTW_MAR1 < RTW_RCR */
 
-	DPRINTF(sc, ("%s: RTW_MAR0 %08x RTW_MAR1 %08x RTW_RCR %08x\n",
+	DPRINTF(sc, RTW_DEBUG_PKTFILT,
+	    ("%s: RTW_MAR0 %08x RTW_MAR1 %08x RTW_RCR %08x\n",
 	    sc->sc_dev.dv_xname, RTW_READ(regs, RTW_MAR0),
 	    RTW_READ(regs, RTW_MAR1), RTW_READ(regs, RTW_RCR)));
 
 	return;
 }
 
+/* Must be called at splnet. */
 static int
 rtw_init(struct ifnet *ifp)
 {
@@ -2205,7 +2355,7 @@ rtw_init(struct ifnet *ifp)
 	rtw_stop(ifp, 0);
 
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	DPRINTF(sc, ("%s: channel %d freq %d flags 0x%04x\n",
+	DPRINTF(sc, RTW_DEBUG_TUNE, ("%s: channel %d freq %d flags 0x%04x\n",
 	    __func__, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
 	    ic->ic_bss->ni_chan->ic_freq, ic->ic_bss->ni_chan->ic_flags));
 
@@ -2273,14 +2423,15 @@ out:
 static int
 rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	int rc = 0;
+	int rc = 0, s;
 	struct rtw_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 
+	s = splnet();
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
+			if (0 && (sc->sc_flags & RTW_F_ENABLED) != 0) {
 				rtw_pktfilt_load(sc);
 			} else
 				rc = rtw_init(ifp);
@@ -2315,6 +2466,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	}
+	splx(s);
 	return rc;
 }
 
@@ -2334,14 +2486,16 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
 
 	sc = (struct rtw_softc *)ifp->if_softc;
 
-	DPRINTF2(sc, ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(sc, RTW_DEBUG_XMIT,
+	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 	*mp = NULL;
 
 	stc = &sc->sc_txctl_blk[RTW_TXPRIMD];
 	htc = &sc->sc_txdesc_blk[RTW_TXPRIMD];
 
 	if (SIMPLEQ_EMPTY(&stc->stc_freeq) || htc->htc_nfree == 0) {
-		DPRINTF2(sc, ("%s: out of descriptors\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT,
+		    ("%s: out of descriptors\n", __func__));
 		ifp->if_flags |= IFF_OACTIVE;
 		return 0;
 	}
@@ -2352,22 +2506,26 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
 		IF_DEQUEUE(&ic->ic_mgtq, m0);
 		*nip = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 		m0->m_pkthdr.rcvif = NULL;
-		DPRINTF2(sc, ("%s: dequeue mgt frame\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT,
+		    ("%s: dequeue mgt frame\n", __func__));
 	} else if (ic->ic_state != IEEE80211_S_RUN) {
-		DPRINTF2(sc, ("%s: not running\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: not running\n", __func__));
 		return 0;
 	} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 		IF_DEQUEUE(&ic->ic_pwrsaveq, m0);
 		*nip = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 		m0->m_pkthdr.rcvif = NULL;
-		DPRINTF2(sc, ("%s: dequeue pwrsave frame\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT,
+		    ("%s: dequeue pwrsave frame\n", __func__));
 	} else {
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL) {
-			DPRINTF2(sc, ("%s: no frame\n", __func__));
+			DPRINTF(sc, RTW_DEBUG_XMIT,
+			    ("%s: no frame\n", __func__));
 			return 0;
 		}
-		DPRINTF2(sc, ("%s: dequeue data frame\n", __func__));
+		DPRINTF(sc, RTW_DEBUG_XMIT,
+		    ("%s: dequeue data frame\n", __func__));
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		ifp->if_opackets++;
 #if NBPFILTER > 0
@@ -2375,15 +2533,29 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 		if ((m0 = ieee80211_encap(ifp, m0, nip)) == NULL) {
-			DPRINTF2(sc, ("%s: encap error\n", __func__));
+			DPRINTF(sc, RTW_DEBUG_XMIT,
+			    ("%s: encap error\n", __func__));
 			ifp->if_oerrors++;
 			return -1;
 		}
 	}
-	DPRINTF2(sc, ("%s: leave\n", __func__));
+	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: leave\n", __func__));
 	*stcp = stc;
 	*htcp = htc;
 	*mp = m0;
+	return 0;
+}
+
+static int
+rtw_seg_too_short(bus_dmamap_t dmamap)
+{
+	int i;
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		if (dmamap->dm_segs[i].ds_len < 4) {
+			printf("%s: segment too short\n", __func__);
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -2404,7 +2576,7 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 	for (first = 1;
 	     ((rc = bus_dmamap_load_mbuf(dmat, dmam, m0,
 			  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
-	      dmam->dm_nsegs > ndescfree) && first;
+	      dmam->dm_nsegs > ndescfree || rtw_seg_too_short(dmam)) && first;
 	     first = 0) {
 		if (rc == 0)
 			bus_dmamap_unload(dmat, dmam);
@@ -2433,6 +2605,12 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		printf("%s: cannot load Tx buffer, rc = %d\n", dvname, rc);
 		m_freem(m0);
 		return NULL;
+	} else if (rtw_seg_too_short(dmam)) {
+		printf("%s: cannot load Tx buffer, segment too short\n",
+		    dvname);
+		bus_dmamap_unload(dmat, dmam);
+		m_freem(m0);
+		return NULL;
 	} else if (dmam->dm_nsegs > ndescfree) {
 		*ifflagsp |= IFF_OACTIVE;
 		bus_dmamap_unload(dmat, dmam);
@@ -2442,18 +2620,20 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 	return m0;
 }
 
+#ifdef RTW_DEBUG
 static void
 rtw_print_txdesc(struct rtw_softc *sc, const char *action,
     struct rtw_txctl *stx, struct rtw_txdesc_blk *htc, int desc)
 {
 	struct rtw_txdesc *htx = &htc->htc_desc[desc];
-	DPRINTF2(sc, ("%s: stx %p %s txdesc[%d] ctl0 %#08x "
+	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] ctl0 %#08x "
 	    "ctl1 %#08x buf %#08x len %#08x\n",
 	    sc->sc_dev.dv_xname, stx, action, desc,
 	    le32toh(htx->htx_ctl0),
 	    le32toh(htx->htx_ctl1), le32toh(htx->htx_buf),
 	    le32toh(htx->htx_len)));
 }
+#endif /* RTW_DEBUG */
 
 static void
 rtw_start(struct ifnet *ifp)
@@ -2476,7 +2656,8 @@ rtw_start(struct ifnet *ifp)
 	sc = (struct rtw_softc *)ifp->if_softc;
 	ic = &sc->sc_ic;
 
-	DPRINTF2(sc, ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(sc, RTW_DEBUG_XMIT,
+	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 
 	/* XXX do real rate control */
 	proto_ctl0 = RTW_TXCTL0_RTSRATE_1MBPS;
@@ -2512,7 +2693,8 @@ rtw_start(struct ifnet *ifp)
 		    htc->htc_nfree, &ifp->if_flags, sc->sc_dev.dv_xname);
 
 		if (m0 == NULL || dmamap->dm_nsegs == 0) {
-			DPRINTF2(sc, ("%s: fail dmamap load\n", __func__));
+			DPRINTF(sc, RTW_DEBUG_XMIT,
+			    ("%s: fail dmamap load\n", __func__));
 			goto post_dequeue_err;
 		}
 
@@ -2535,7 +2717,8 @@ rtw_start(struct ifnet *ifp)
 		    rate, &stx->stx_d0, &stx->stx_dn, &npkt,
 		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
 		    (IFF_DEBUG|IFF_LINK2)) == -1) {
-			DPRINTF2(sc, ("%s: fail compute duration\n", __func__));
+			DPRINTF(sc, RTW_DEBUG_XMIT,
+			    ("%s: fail compute duration\n", __func__));
 			goto post_load_err;
 		}
 
@@ -2561,11 +2744,14 @@ rtw_start(struct ifnet *ifp)
 		    htc, stx->stx_first, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREWRITE);
 
+		KASSERT(stx->stx_first < htc->htc_ndesc);
+
 		for (i = 0, lastdesc = desc = stx->stx_first;
 		     i < dmamap->dm_nsegs;
 		     i++, desc = RTW_NEXT_IDX(htc, desc)) {
 			if (dmamap->dm_segs[i].ds_len > RTW_TXLEN_LENGTH_MASK) {
-				DPRINTF2(sc, ("%s: seg too long\n", __func__));
+				DPRINTF(sc, RTW_DEBUG_XMIT_DESC,
+				    ("%s: seg too long\n", __func__));
 				goto post_load_err;
 			}
 			htx = &htc->htc_desc[desc];
@@ -2581,6 +2767,8 @@ rtw_start(struct ifnet *ifp)
 #endif /* RTW_DEBUG */
 		}
 
+		KASSERT(desc < htc->htc_ndesc);
+
 		stx->stx_ni = ni;
 		stx->stx_mbuf = m0;
 		stx->stx_last = lastdesc;
@@ -2590,8 +2778,6 @@ rtw_start(struct ifnet *ifp)
 
 #ifdef RTW_DEBUG
 		rtw_print_txdesc(sc, "FS on", stx, htc, stx->stx_first);
-#endif /* RTW_DEBUG */
-#ifdef RTW_DEBUG
 		rtw_print_txdesc(sc, "LS on", stx, htc, stx->stx_last);
 #endif /* RTW_DEBUG */
 
@@ -2625,7 +2811,7 @@ rtw_start(struct ifnet *ifp)
 		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, tppoll | RTW_TPPOLL_NPQ);
 		RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
 	}
-	DPRINTF2(sc, ("%s: leave\n", __func__));
+	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: leave\n", __func__));
 	return;
 post_load_err:
 	bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -2661,8 +2847,9 @@ rtw_watchdog(struct ifnet *ifp)
 			printf("%s: transmit timeout, priority %d\n",
 			    ifp->if_xname, pri);
 			ifp->if_oerrors++;
-			/* XXX be gentle */
-			(void)rtw_init(ifp);
+			/* XXX do more? */
+			rtw_intr_tx(sc, 0);
+			rtw_txdescs_reset(sc);
 			rtw_start(ifp);
 		} else
 			ifp->if_timer = 1;
@@ -2758,10 +2945,12 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
 		break;
 	case IEEE80211_S_SCAN:
-#if 0
-		memset(sc->sc_bssid, 0, IEEE80211_ADDR_LEN);
-		rtw_write_bssid(sc);
-#endif
+		if (ostate != IEEE80211_S_SCAN) {
+			(void)memset(ic->ic_bss->ni_bssid, 0,
+			    IEEE80211_ADDR_LEN);
+			rtw_join_bss(sc, ic->ic_bss->ni_bssid, ic->ic_opmode,
+			    ic->ic_bss->ni_intval);
+		}
 
 		callout_reset(&sc->sc_scan_ch, rtw_dwelltime * hz / 1000,
 		    rtw_next_scan, ic);
@@ -2837,7 +3026,8 @@ rtw_node_alloc(struct ieee80211com *ic)
 	struct rtw_softc *sc = (struct rtw_softc *)ic->ic_if.if_softc;
 	struct ieee80211_node *ni = (*sc->sc_mtbl.mt_node_alloc)(ic);
 
-	DPRINTF(sc, ("%s: alloc node %p\n", sc->sc_dev.dv_xname, ni));
+	DPRINTF(sc, RTW_DEBUG_NODE,
+	    ("%s: alloc node %p\n", sc->sc_dev.dv_xname, ni));
 	return ni;
 }
 
@@ -2846,7 +3036,8 @@ rtw_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct rtw_softc *sc = (struct rtw_softc *)ic->ic_if.if_softc;
 
-	DPRINTF(sc, ("%s: freeing node %p %s\n", sc->sc_dev.dv_xname, ni,
+	DPRINTF(sc, RTW_DEBUG_NODE,
+	    ("%s: freeing node %p %s\n", sc->sc_dev.dv_xname, ni,
 	    ether_sprintf(ni->ni_bssid)));
 	(*sc->sc_mtbl.mt_node_free)(ic, ni);
 }
@@ -2886,7 +3077,8 @@ rtw_power(int why, void *arg)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	DPRINTF(sc, ("%s: rtw_power(%d,)\n", sc->sc_dev.dv_xname, why));
+	DPRINTF(sc, RTW_DEBUG_PWR,
+	    ("%s: rtw_power(%d,)\n", sc->sc_dev.dv_xname, why));
 
 	s = splnet();
 	switch (why) {
@@ -3032,12 +3224,10 @@ rtw_txctl_blk_setup(struct rtw_txctl_blk *stc, u_int qlen)
 static void
 rtw_txctl_blk_cleanup_all(struct rtw_softc *sc)
 {
-	struct rtw_txctl_blk *stc;
-	int qlen[RTW_NTXPRI] =
-	     {RTW_TXQLENLO, RTW_TXQLENMD, RTW_TXQLENHI, RTW_TXQLENBCN};
 	int pri;
+	struct rtw_txctl_blk *stc;
 
-	for (pri = 0; pri < sizeof(qlen)/sizeof(qlen[0]); pri++) {
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		stc = &sc->sc_txctl_blk[pri];
 		free(stc->stc_desc, M_DEVBUF);
 		stc->stc_desc = NULL;
@@ -3051,7 +3241,7 @@ rtw_txctl_blk_setup_all(struct rtw_softc *sc)
 	int qlen[RTW_NTXPRI] =
 	     {RTW_TXQLENLO, RTW_TXQLENMD, RTW_TXQLENHI, RTW_TXQLENBCN};
 
-	for (pri = 0; pri < sizeof(qlen)/sizeof(qlen[0]); pri++) {
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		rc = rtw_txctl_blk_setup(&sc->sc_txctl_blk[pri], qlen[pri]);
 		if (rc != 0)
 			break;
@@ -3063,8 +3253,6 @@ static void
 rtw_txdesc_blk_setup(struct rtw_txdesc_blk *htc, struct rtw_txdesc *desc,
     u_int ndesc, bus_addr_t ofs, bus_addr_t physbase)
 {
-	int i;
-
 	htc->htc_ndesc = ndesc;
 	htc->htc_desc = desc;
 	htc->htc_physbase = physbase;
@@ -3073,9 +3261,7 @@ rtw_txdesc_blk_setup(struct rtw_txdesc_blk *htc, struct rtw_txdesc *desc,
 	(void)memset(htc->htc_desc, 0,
 	    sizeof(htc->htc_desc[0]) * htc->htc_ndesc);
 
-	for (i = 0; i < htc->htc_ndesc; i++) {
-		htc->htc_desc[i].htx_next = htole32(RTW_NEXT_DESC(htc, i));
-	}
+	rtw_txdesc_blk_reset(htc);
 }
 
 static void
@@ -3322,8 +3508,8 @@ rtw_attach(struct rtw_softc *sc)
 
 	sc->sc_phydelay = rtw_check_phydelay(&sc->sc_regs, sc->sc_rcr);
 
-	RTW_DPRINTF(("%s: PHY delay %d\n", sc->sc_dev.dv_xname,
-	    sc->sc_phydelay));
+	RTW_DPRINTF(RTW_DEBUG_ATTACH,
+	    ("%s: PHY delay %d\n", sc->sc_dev.dv_xname, sc->sc_phydelay));
 
 	if (sc->sc_locale == RTW_LOCALE_UNKNOWN)
 		rtw_identify_country(&sc->sc_regs, &sc->sc_locale,
