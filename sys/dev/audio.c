@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.47 1997/05/11 00:41:12 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.48 1997/05/17 23:26:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -454,7 +454,7 @@ audio_initbufs(sc)
 
 	audio_init_ring(&sc->rr, sc->sc_blksize);
 	audio_init_ring(&sc->pr, sc->sc_blksize);
-	sc->sc_lowat = nblk / 2;
+	sc->sc_lowat = nblk * 3 / 4;
 	sc->sc_hiwat = nblk;
 }
 
