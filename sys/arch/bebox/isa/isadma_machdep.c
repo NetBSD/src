@@ -1,9 +1,9 @@
-/*	$NetBSD: isadma_machdep.c,v 1.3 1997/12/18 09:08:37 sakamoto Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.4 1998/02/04 01:57:33 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,7 +115,7 @@ int	_isa_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_isa_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_isa_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dmasync_op_t));
+	    int));
 
 int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int));
@@ -437,21 +437,25 @@ _isa_bus_dmamap_unload(t, map)
  * Synchronize an ISA DMA map.
  */
 void
-_isa_bus_dmamap_sync(t, map, op)
+_isa_bus_dmamap_sync(t, map, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	int ops;
 {
 	struct bebox_isa_dma_cookie *cookie = map->_dm_cookie;
 
-	switch (op) {
-	case BUS_DMASYNC_PREREAD:
-		/*
-		 * Nothing to do for pre-read.
-		 */
-		break;
+	/*
+	 * Mixing of PRE and POST operations is not allowed.
+	 */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0) 
+		panic("_isa_bus_dmamap_sync: mix PRE and POST");
 
-	case BUS_DMASYNC_PREWRITE:
+	/*
+	 * Nothing to do for pre-read.
+	 */
+
+	if (ops & BUS_DMASYNC_PREWRITE) {
 		/*
 		 * If we're bouncing this transfer, copy the
 		 * caller's buffer to the bounce buffer.
@@ -459,9 +463,9 @@ _isa_bus_dmamap_sync(t, map, op)
 		if (cookie->id_flags & ID_IS_BOUNCING)
 			bcopy(cookie->id_origbuf, cookie->id_bouncebuf,
 			    cookie->id_origbuflen);
-		break;
+	}
 
-	case BUS_DMASYNC_POSTREAD:
+	if (ops & BUS_DMASYNC_POSTREAD) {
 		/*
 		 * If we're bouncing this transfer, copy the
 		 * bounce buffer to the caller's buffer.
@@ -469,14 +473,11 @@ _isa_bus_dmamap_sync(t, map, op)
 		if (cookie->id_flags & ID_IS_BOUNCING)
 			bcopy(cookie->id_bouncebuf, cookie->id_origbuf,
 			    cookie->id_origbuflen);
-		break;
-
-	case BUS_DMASYNC_POSTWRITE:
-		/*
-		 * Nothing to do for post-write.
-		 */
-		break;
 	}
+
+	/*
+	 * Nothing to do for post-write.
+	 */
 
 #if 0
 	/* This is a noop anyhow, so why bother calling it? */
