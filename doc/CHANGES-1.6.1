@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.82 2003/01/05 09:03:57 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.83 2003/01/05 22:13:04 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2829,3 +2829,23 @@ sys/ufs/ffs/ffs_alloc.c				1.56-1.57
 	Clear IN_SPACECOUNTED on (re-)used inodes.
 	This cures the "unmount pending error:" on softdep umounts.
 	[hannken, ticket #1049]
+
+sys/ufs/ffs/ffs_softdep.c			1.38 (via patch)
+
+	several bugs:
+	- move calls to softdep_setup_pagecache() (which can sleep to allocate
+	  memory) outside the softdep lock.
+	- replace the softdep_flush_indir() hack (which tries to find another
+	  vnode to fsync when we are holding lots of buffer-cache buffers
+	  locked for long periods of time) with softdep_trackbufs() (which
+	  just kicks the syncer and sleeps under the same circumstances). the
+	  former method had a lock-ordering problem which would occasionally
+	  deadlock.
+	- relax the assertion in softdep_sync_metadata() which says that we
+	  should never see D_ALLOCDIRECT deps for VREG vnodes. it's ok to see
+	  those attached to indirect blocks.
+	also, there's no need to splbio() while allocating the buffer headers
+	to which pagecache dependencies are attached, so remove that.
+	fixes all the problems in PR 19288.
+	[chs, ticket #1053]
+
