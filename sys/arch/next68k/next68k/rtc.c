@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.8 2003/07/15 02:59:33 lukem Exp $        */
+/*      $NetBSD: rtc.c,v 1.9 2005/01/19 01:58:21 chs Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2003/07/15 02:59:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9 2005/01/19 01:58:21 chs Exp $");
 
 #include <sys/param.h>
-#include <sys/cdefs.h>          /* for __P */
 #include <sys/systm.h>          /* for panic */
 
 #include <machine/bus.h>

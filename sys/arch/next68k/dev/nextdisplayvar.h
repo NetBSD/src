@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplayvar.h,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
+/* $NetBSD: nextdisplayvar.h,v 1.3 2005/01/19 01:58:21 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <machine/bus.h>
 
-extern int nextdisplay_cnattach __P((void));
+extern int nextdisplay_cnattach(void);
 
 struct nextdisplay_config;
 struct fbcmap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2003/10/23 18:56:49 cl Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2005/01/19 01:58:21 chs Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -47,8 +47,7 @@ extern int errno;
 extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
 
-int devparse __P((const char *fname, int *dev,
-	 char *count, char *lun, char *part, char **file));
+int devparse(const char *, int *, char *, char *, char *, char **);
 
 /* the PROM overwrites MG_boot_arg :-( */
 /* #define PROCESS_ARGS */

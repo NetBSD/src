@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2003/11/15 17:52:30 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2005/01/19 01:58:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/11/15 17:52:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2005/01/19 01:58:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,12 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/11/15 17:52:30 bouyer Exp $")
 
 #define	b_cylinder	b_resid
 
-static unsigned short nextstep_checksum __P((unsigned char *,
-			unsigned char *));
-static char * parse_nextstep_label __P((struct next68k_disklabel *, 
-			struct disklabel *, struct cpu_disklabel *));
-static int build_nextstep_label __P((struct next68k_disklabel *, 
-			struct disklabel *));
+static unsigned short nextstep_checksum(unsigned char *, unsigned char *);
+static char *parse_nextstep_label(struct next68k_disklabel *,
+	struct disklabel *, struct cpu_disklabel *);
+static int build_nextstep_label(struct next68k_disklabel *, struct disklabel *);
 
 static unsigned short
 nextstep_checksum(buf, limit)
@@ -321,7 +319,7 @@ build_nextstep_label(ondisk, lp)
 const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -456,7 +454,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
