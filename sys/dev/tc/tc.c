@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.25 1998/01/19 02:50:58 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.26 1998/05/22 21:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,9 +47,7 @@ struct tc_softc {
 	void	(*sc_intr_establish) __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
 	void	(*sc_intr_disestablish) __P((struct device *, void *));
-#ifdef __alpha__
 	bus_dma_tag_t (*sc_get_dma_tag) __P((int));
-#endif
 };
 
 /* Definition of the driver for autoconfig. */
@@ -104,9 +102,7 @@ tcattach(parent, self, aux)
 	sc->sc_slots = tba->tba_slots;
 	sc->sc_intr_establish = tba->tba_intr_establish;
 	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
-#ifdef __alpha__
 	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
-#endif
 
 	/*
 	 * Try to configure each built-in device
@@ -131,10 +127,8 @@ tcattach(parent, self, aux)
 		 * Set up the device attachment information.
 		 */
 		strncpy(ta.ta_modname, builtin->tcb_modname, TC_ROM_LLEN);
-#ifdef __alpha__ /* XXX */
 		ta.ta_memt = tba->tba_memt;
 		ta.ta_dmat = (*sc->sc_get_dma_tag)(builtin->tcb_slot);
-#endif
 		ta.ta_modname[TC_ROM_LLEN] = '\0';
 		ta.ta_slot = builtin->tcb_slot;
 		ta.ta_offset = builtin->tcb_offset;
@@ -175,10 +169,8 @@ tcattach(parent, self, aux)
 		/*
 		 * Set up the rest of the attachment information.
 		 */
-#ifdef __alpha__ /* XXX */
 		ta.ta_memt = tba->tba_memt;
 		ta.ta_dmat = (*sc->sc_get_dma_tag)(i);
-#endif
 		ta.ta_slot = i;
 		ta.ta_offset = 0;
 		ta.ta_addr = tcaddr;
