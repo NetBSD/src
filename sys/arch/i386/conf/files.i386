@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.235 2003/03/02 22:19:06 christos Exp $
+#	$NetBSD: files.i386,v 1.236 2003/03/25 19:37:14 jmmv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -60,6 +60,11 @@ defflag			NOREDZONE
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
+
+# Beep on halt
+defflag opt_beep.h		BEEP_ONHALT
+defparam opt_beep.h		BEEP_ONHALT_COUNT
+defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
