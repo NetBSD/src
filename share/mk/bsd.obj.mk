@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.23 2000/02/08 12:38:16 sjg Exp $
+#	$NetBSD: bsd.obj.mk,v 1.24 2000/02/18 06:09:11 itohy Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -8,7 +8,7 @@ __initialized_obj__:
 .if ${MKOBJ} == "no"
 obj:
 .else
-.if defined(MAKEOBJDIRPREFIX) || defined(MAKOBJDIR)
+.if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
 .if defined(MAKEOBJDIRPREFIX)
 __objdir:= ${MAKEOBJDIRPREFIX}${.CURDIR}
 .else
