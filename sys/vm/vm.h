@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.6 1993/12/20 12:40:02 cgd Exp $
+ *	$Id: vm.h,v 1.7 1994/01/07 22:46:05 mycroft Exp $
  */
 
 #ifndef _VM_VM_H_
@@ -82,5 +82,8 @@ int	vm_fault __P((vm_map_t, vm_offset_t, vm_prot_t, boolean_t));
 void	vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
 void	vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
 void	vm_fault_copy_entry __P((vm_map_t, vm_map_t, vm_map_entry_t, vm_map_entry_t));
+
+void	vslock __P((caddr_t, u_int));
+void	vsunlock __P((caddr_t, u_int, int));
 
 #endif /* !_VM_VM_H_ */

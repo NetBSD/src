@@ -156,6 +156,7 @@ chgkprot(addr, len, rw)
 }
 #endif
 
+void
 vslock(addr, len)
 	caddr_t	addr;
 	u_int	len;
@@ -164,6 +165,7 @@ vslock(addr, len)
 			round_page(addr+len), FALSE);
 }
 
+void
 vsunlock(addr, len, dirtied)
 	caddr_t	addr;
 	u_int	len;
