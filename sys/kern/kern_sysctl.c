@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.153 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.154 2003/12/05 16:19:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,9 +75,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.153 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.154 2003/12/05 16:19:09 fvdl Exp $");
 
 #include "opt_defcorename.h"
+#include "opt_insecure.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
