@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-#	$NetBSD: groff2netbsd,v 1.1 2001/04/19 23:27:52 wiz Exp $
+#	$NetBSD: groff2netbsd,v 1.2 2003/06/30 18:02:48 wiz Exp $
 #
-# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,6 @@
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/groff/release/tar/file
-#	$ vi /usr/src/gnu/dist/groff/groff2netbsd
-#	  update VERSION to the number of the version you are importing,
-#	  and DATE to the import date.
 #	$ sh /usr/src/gnu/dist/groff/groff2netbsd groff-1.x.y `pwd`
 #	$ cd gnusrc/gnu/dist/groff
 #	$ cvs import -m "Import groff 1.x.y" gnusrc/dist/groff FSF groff-1-x-y
@@ -61,13 +58,10 @@
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
 
-DATE="April 8, 2001"
-VERSION=1.16.1
-
 if [ $# -ne 2 ]; then echo "groff2netbsd src dest"; exit 1; fi
 
 r=$1
-d=$2/gnusrc/dist/groff
+d=$2/src/gnu/dist/groff
 
 case "$d" in
 	/*)
@@ -97,73 +91,6 @@ pax -rw * $d
 # cd to import directory
 cd $d
 
-# delete some superfluous files
-echo deleting some superfluous files
-rm src/preproc/eqn/eqn.cc src/preproc/pic/pic.cc src/preproc/refer/label.cc
-
-echo done
-
-# replace @STRINGS@ in some files
-echo replacing @STRINGS@ in some files
-find . \( -name \*.man -or -name \*.me -or -name grog.sh \) -type f -print | while read f; do
-	sed -e 's,@COMMON_WORDS_FILE@,/usr/share/dict/eign,g' \
-	    -e 's,@DEFAULT_INDEX@,/usr/share/dict/papers/Ind,g' \
-	    -e 's,@DEFAULT_INDEX_NAME@,/usr/share/dict/papers,g' \
-	    -e 's/@DEVICE@/ps/g' \
-	    -e 's,@FONTDIR@,/usr/share/groff_font,g' \
-	    -e 's,@FONTPATH@,/usr/share/groff_font,g' \
-	    -e 's/@g@//g' \
-	    -e 's/@G@//g' \
-	    -e 's/@INDEX_SUFFIX@/.i/g' \
-	    -e 's,@MACRODIR@,/usr/share/tmac,g' \
-	    -e 's,@MACROPATH@,/usr/share/tmac,g' \
-	    -e 's/@MAN1EXT@/1/g' \
-	    -e 's/@MAN5EXT@/5/g' \
-	    -e 's/@MAN7EXT@/7/g' \
-	    -e 's/@TMAC@/tmac./g' \
-	    -e 's/@TMAC_AN_PREFIX@//g' \
-	    -e 's,@TMAC_DIR@,/usr/share/tmac/mm,g' \
-	    -e 's/@TMAC_M_PREFIX@//g' \
-	    -e 's/@TMAC_S_PREFIX@//g' \
-	    -e "s/@VERSION@/${VERSION}/g" \
-	    -e "s/@MDATE@/${DATE}/g" \
-	    $f > /tmp/groff5r$$ && mv /tmp/groff5r$$ $f && \
-	echo replaced @STRINGS@ in $f; \
-done
-
-echo done
-
-# rename some man pages to have correct file names
-echo renaming man pages from .man to .[1-9]
-for f in src/roff/groff/groff.man src/roff/troff/troff.man \
-    src/roff/grog/grog.man src/roff/nroff/nroff.man src/preproc/tbl/tbl.man \
-    src/preproc/pic/pic.man src/preproc/eqn/eqn.man src/preproc/grn/grn.man \
-    src/preproc/refer/refer.man src/preproc/soelim/soelim.man \
-    src/devices/grops/grops.man src/devices/grotty/grotty.man \
-    src/devices/grodvi/grodvi.man src/devices/grolj4/grolj4.man \
-    src/devices/grohtml/grohtml.man src/devices/grolbp/grolbp.man \
-    src/utils/tfmtodit/tfmtodit.man src/utils/hpftodit/hpftodit.man \
-    src/utils/lookbib/lookbib.man src/utils/indxbib/indxbib.man \
-    src/utils/lkbib/lkbib.man src/utils/addftinfo/addftinfo.man \
-    src/utils/pfbtops/pfbtops.man src/utils/afmtodit/afmtodit.man \
-    src/xditview/gxditview.man; do \
-	mv $f `echo $f | sed 's/.man$/.1/'`; \
-done
-
-for f in man/groff_font.man man/groff_out.man tmac/groff_tmac.man; do \
-	mv $f `echo $f | sed 's/.man$/.5/'`; \
-done
-
-for f in man/groff.man man/groff_char.man man/roff.man tmac/groff_man.man \
-    tmac/groff_markup.man tmac/groff_mdoc.man tmac/groff_mdoc.samples.man \
-    tmac/groff_me.man tmac/groff_ms.man tmac/groff_msafer.man \
-    contrib/mm/groff_mm.man contrib/mm/groff_mmse.man contrib/mm/mmroff.man; \
-do \
-	mv $f `echo $f | sed 's/.man$/.7/'`; \
-done
-
-echo done
-
 ### Remove the $'s around RCS tags
 find $d -type f -print | xargs egrep -l '\$(Id|Created|Header|NetBSD|Revision)' | while read f; do
 	sed -e 's/\$\(Id.*\) \$/\1/' \
@@ -177,6 +104,15 @@ done
 
 ### Add our NetBSD RCS Id
 find $d -type f -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/groff3n$$
+echo "" >>/tmp/groff3n$$
+cat $c  >> /tmp/groff3n$$
+mv /tmp/groff3n$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+find $d -type f -name '*.cpp' -print | while read c; do
 	sed 1q < $c | grep -q '\$NetBSD' || (
 echo "/*	\$NetBSD\$	*/" >/tmp/groff3n$$
 echo "" >>/tmp/groff3n$$
