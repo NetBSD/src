@@ -1,4 +1,4 @@
-/*	$NetBSD: fwiso.c,v 1.3 2003/07/14 15:47:13 lukem Exp $	*/
+/*	$NetBSD: fwiso.c,v 1.4 2004/05/13 17:34:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 and 2002
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwiso.c,v 1.3 2003/07/14 15:47:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwiso.c,v 1.4 2004/05/13 17:34:48 christos Exp $");
 
 #include "fwiso.h"
 
@@ -870,6 +870,8 @@ fwiso_set_handler(struct fwiso_data *fd)
 		fd->fd_rsv_size = 64;
 		bufsize = 512;
 		break;
+	default:
+		return EINVAL;
 	}
 
 	s = splbio();
