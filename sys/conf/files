@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.476 2001/11/28 17:40:57 christos Exp $
+#	$NetBSD: files,v 1.477 2001/12/02 10:41:52 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -198,6 +198,7 @@ define	scsi		{[channel = -1]}
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	mii		{[phy = -1]}
+define	irbus		{ }
 
 # audio device attributes
 #
@@ -210,6 +211,14 @@ device	audio
 attach	audio at audio
 device	midi
 attach	midi at midibus
+
+# IrDA physical frame level driver
+device	irframe
+attach	irframe at irbus
+
+# Consumer Ir driver
+device	cir
+attach	cir at irbus
 
 # raster operations attributes
 #
@@ -912,6 +921,10 @@ file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
+file	dev/ir/cir.c			cir			needs-flag
+file	dev/ir/ir.c			cir | irframe
+file	dev/ir/irframe.c		irframe			needs-flag
+#file	dev/ir/irframe_tty.c		irframe			needs-flag
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
