@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp $
+$NetBSD: pcidevs,v 1.446 2002/06/27 09:50:06 pooka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -933,6 +933,8 @@ product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
 
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
+product AVM B1			0x0700	Basic Rate B1 ISDN Interface
+product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
 /* Stallion products */
 product STALLION EC8_32		0x0000	EC8/32
