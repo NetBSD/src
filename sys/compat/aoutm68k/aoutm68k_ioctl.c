@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_ioctl.c,v 1.1.4.1 2001/11/14 19:12:52 nathanw Exp $	*/
+/*	$NetBSD: aoutm68k_ioctl.c,v 1.1.4.2 2001/11/17 10:13:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.1 2001/11/14 19:12:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.2 2001/11/17 10:13:07 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <sys/syscall.h>
@@ -53,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.4.1 2001/11/14 19:12:52 natha
 #include <compat/aoutm68k/aoutm68k_syscallargs.h>
 
 int
-aoutm68k_sys_ioctl(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	/* XXX: For now ... */
 
-	return (sys_ioctl(p, v, retval));
+	return (sys_ioctl(l, v, retval));
 }

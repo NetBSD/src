@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4.2.2 2001/06/21 19:58:57 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.4.2.3 2001/11/17 10:13:08 scw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -861,3 +861,5 @@
 #endif
 304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
 305	NOARGS		{ int sys_issetugid(void); }
+306	NOARGS		{ int sys_getcontext(struct __ucontext *ucp); }
+307	NOARGS		{ int sys_setcontext(const struct __ucontext *ucp); }
