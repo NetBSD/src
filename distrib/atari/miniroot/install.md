@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1.1.1 1996/05/19 19:43:38 leo Exp $
+#	$NetBSD: install.md,v 1.1.1.1.4.1 1996/06/23 14:25:38 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,9 +41,13 @@
 #
 
 __mount_kernfs() {
-	if [ ! -d /kern ]; then
+	#
+	# Mount root rw for convenience of the tester ;-)
+	# Force kern_fs to be mounted
+	#
+	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
 		mount /dev/rd0 / > /dev/null 2>&1
-		mkdir /kern
+		mkdir /kern > /dev/null 2>&1
 		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
 	fi
 }
@@ -80,7 +84,7 @@ md_get_ifdevs() {
 md_installboot() {
 	if [ -x /mnt/usr/mdec/installboot ]; then
 		echo "Installing boot block..."
-		/mnt/usr/mdec/installboot -v $1
+		chroot /mnt /usr/mdec/installboot -v $1
 	else
 		cat << \__md_installboot_1
 There is no installboot program found on the ${MODE}ed filesystems. No boot
@@ -122,7 +126,7 @@ to use the disk. Change the 'id' of all partitions you want to use for NetBSD
 filesystems to 'NBD'. Change the 'id' of the partition you wish to use for swap
 to 'NBS' or 'SWP'.
 
-Hit any key if you have read this...
+Hit the <return> key when you have read this...
 __md_prep_disklabel_1
 		getresp ""
  		edahdi /dev/r${1}c
@@ -147,9 +151,10 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
 
 [End of example]
 
-Hit any key if you have read this...
+Hit the <return> key when you have read this...
 
 __md_prep_disklabel_2
+	getresp ""
 	edlabel /dev/r${1}c
 }
 
@@ -165,7 +170,10 @@ cat << \__md_copy_kernel_1
 Your installation set did not include a netbsd kernel on the installation
 filesystem. You have to install this yourself after you have booted your
 newly installed filesystems. See the INSTALL document for further information.
+
+Hit the <return> key when you have read this...
 __md_copy_kernel_1
+		getresp ""
 	else
 		echo -n "Copying kernel..."
 		cp -p /netbsd /mnt/netbsd
@@ -174,7 +182,6 @@ __md_copy_kernel_1
 }
 
 md_welcome_banner() {
-{
 	if [ "$MODE" = "install" ]; then
 		echo ""
 		echo "Welcome to the NetBSD/atari ${VERSION} installation program."
@@ -214,7 +221,6 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_3
-} | more
 }
 
 md_not_going_to_install() {
@@ -222,6 +228,9 @@ md_not_going_to_install() {
 
 OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
+
+Note: If you wish to have another try. Just type '^D' at the prompt. After
+      a moment, the installer will restart itself.
 
 __not_going_to_install_1
 }
@@ -238,6 +247,9 @@ md_congrats() {
 CONGRATULATIONS!  You have successfully $what NetBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
+
+Note: If you wish to have another try. Just type '^D' at the prompt. After
+      a moment, the installer will restart itself.
 
 __congratulations_1
 }
