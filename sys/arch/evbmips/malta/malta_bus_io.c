@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_bus_io.c,v 1.1 2002/03/07 14:44:04 simonb Exp $	*/
+/*	$NetBSD: malta_bus_io.c,v 1.2 2002/03/23 14:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,15 +49,16 @@
 #include <evbmips/malta/maltavar.h>
 
 #define	CHIP		malta
+#define	CHIP_IO		/* defined */
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct malta_config *)(v))->mc_mallocsafe)
-#define	CHIP_IO_EXTENT(v)	(((struct malta_config *)(v))->mc_io_ex)
+#define	CHIP_EXTENT(v)		(((struct malta_config *)(v))->mc_io_ex)
 
 /* IO region 1 */
-#define	CHIP_IO_W1_BUS_START(v)		0x00000000UL
-#define	CHIP_IO_W1_BUS_END(v)		MALTA_PCIMEM3_SIZE
-#define	CHIP_IO_W1_SYS_START(v)		((u_long)MALTA_PCIMEM3_BASE)
-#define	CHIP_IO_W1_SYS_END(v)		((u_long)MALTA_PCIMEM3_BASE + \
-					 CHIP_IO_W1_BUS_END(v))
+#define	CHIP_W1_BUS_START(v)		0x00000000UL
+#define	CHIP_W1_BUS_END(v)		MALTA_PCIMEM3_SIZE
+#define	CHIP_W1_SYS_START(v)		((u_long)MALTA_PCIMEM3_BASE)
+#define	CHIP_W1_SYS_END(v)		((u_long)MALTA_PCIMEM3_BASE + \
+					 CHIP_W1_BUS_END(v))
 
-#include <evbmips/pci/pci_alignstride_bus_io_chipdep.c>
+#include <mips/mips/bus_space_alignstride_chipdep.c>
