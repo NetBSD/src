@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.2 1995/06/26 14:31:29 leo Exp $
+/*	$NetBSD: ms.c,v 1.3 1995/07/27 06:35:46 leo Exp $
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -75,13 +75,7 @@
 #define NMOUSE 1
 #endif
 
-int
-mouseattach(cnt)
-	int cnt;
-{
-	printf("1 mouse configured\n");
-	return(NMOUSE);
-}
+typedef void	(*FPV)();
 
 /*
  * Mouse specific packages produced by the keyboard. Currently, we only
@@ -94,14 +88,38 @@ typedef struct {
 } REL_MOUSE;
 
 #define IS_REL_MOUSE(id)	(((u_int)(id) & 0xF8) == 0xF8)
+#define TIMEOUT_ID		(0xFC)
 
 static struct ms_softc {
-	u_char		ms_buttons; /* button states		*/
-	struct	evvar	ms_events;  /* event queue state	*/
-	int		ms_dx;	    /* accumulated dx		*/
-	int		ms_dy;	    /* accumulated dy		*/
+	u_char			ms_buttons; /* button states		*/
+	struct	evvar		ms_events;  /* event queue state	*/
+	int			ms_dx;	    /* accumulated dx		*/
+	int			ms_dy;	    /* accumulated dy		*/
+	struct firm_event	ms_bq[2];   /* Button queue		*/
+	int			ms_bq_idx;  /* Button queue index	*/
 } ms_softc[NMOUSE];
 
+static	void	ms_3b_delay __P((struct ms_softc *));
+	void	mouse_soft __P((REL_MOUSE *, int));
+
+int
+mouseattach(cnt)
+	int cnt;
+{
+	printf("1 mouse configured\n");
+	return(NMOUSE);
+}
+
+static void
+ms_3b_delay(ms)
+struct ms_softc	*ms;
+{
+	REL_MOUSE	rel_ms;
+
+	rel_ms.id = TIMEOUT_ID;
+	rel_ms.dx = rel_ms.dy = 0;
+	mouse_soft(&rel_ms, sizeof(rel_ms));
+}
 /* 
  * Note that we are called from the keyboard software interrupt!
  */
@@ -111,10 +129,13 @@ REL_MOUSE	*rel_ms;
 int		size;
 {
 	struct ms_softc		*ms = &ms_softc[0];
-	struct firm_event	*fe;
+	struct firm_event	*fe, *fe2;
 	int			get, put;
 	int			sps;
 	u_char			mbut, bmask;
+	int			is_timeout;
+	int			flush_buttons;
+	int			id;
 
 	if (!IS_REL_MOUSE(rel_ms->id))
 		return;	/* Probably some other message */
@@ -126,10 +147,22 @@ int		size;
 	put = ms->ms_events.ev_put;
 	fe  = &ms->ms_events.ev_q[put];
 
+	if (rel_ms->id == TIMEOUT_ID) {
+		is_timeout = 1;
+		id = ms->ms_buttons;
+	}
+	else {
+		is_timeout = 0;
+		id = (rel_ms->id & 3) | (ms->ms_buttons & 4);
+	}
+
+	if (!is_timeout && ms->ms_bq_idx)
+		untimeout((FPV)ms_3b_delay, (void *)ms);
+
 	/*
 	 * Button states are encoded in the lower 2 bits of 'id'
 	 */
-	if (!(mbut = ((rel_ms->id & 3) ^ ms->ms_buttons)) && (put != get)) {
+	if (!(mbut = (id ^ ms->ms_buttons)) && (put != get)) {
 		/*
 		 * Compact dx/dy messages. Always generate an event when
 		 * a button is pressed or the event queue is empty.
@@ -174,27 +207,76 @@ int		size;
 		}
 		else fe++;
 	}
-	if (mbut) {
+	if (mbut && !is_timeout) {
 		for (bmask = 1; bmask < 0x04; bmask <<= 1) {
 			if (!(mbut & bmask))
 				continue;
-			if ((++put) % EV_QSIZE == get) {
-				put--;
-				goto out;
-			}
-			fe->id    = bmask & 1 ? MS_RIGHT : MS_LEFT;
-			fe->value = rel_ms->id & bmask ? VKEY_DOWN : VKEY_UP;
-			fe->time  = time;
-			if (put >= EV_QSIZE) {
-				put = 0;
-				fe  = &ms->ms_events.ev_q[0];
-			}
-			else fe++;
+			fe2 = &ms->ms_bq[ms->ms_bq_idx++];
+			fe2->id    = bmask & 1 ? MS_RIGHT : MS_LEFT;
+			fe2->value = id & bmask ? VKEY_DOWN : VKEY_UP;
+			fe2->time  = time;
 		}
 	}
+	if (ms->ms_bq_idx) {
+		/*
+		 * We have at least one button, handle it.
+		 */
+		flush_buttons = (is_timeout) ? 1 : 0;
+		if (ms->ms_bq_idx == 2) {
+			if (ms->ms_bq[0].value == ms->ms_bq[1].value) {
+				/* Must be 2 button presses! */
+				if (ms->ms_bq[0].id != ms->ms_bq[1].id) {
+					ms->ms_bq[0].id = MS_MIDDLE;
+					ms->ms_bq_idx = 1;
+					id = 7;
+				}
+			}
+			flush_buttons = 1;
+		}
+		else {
+			if (ms->ms_bq[0].value == VKEY_UP) {
+				/*
+				 * Release of a button is always flushed
+				 * immediately. If the middle button is
+				 * active, the release event is his. Mark
+				 * all buttons released, this also surpresses
+				 * a spurious release event of the not-yet-
+				 * released button.
+				 */
+				if( id & 4) {
+					ms->ms_bq[0].id = MS_MIDDLE;
+					id = 0;
+				}
+				flush_buttons = 1;
+			}
+			else if (!is_timeout) {
+				timeout((FPV)ms_3b_delay, (void *)ms, 10);
+				goto out;
+			}
+		}
+		if (flush_buttons) {
+			int	i;
+
+			for (i = 0; i < ms->ms_bq_idx; i++) {
+				if ((++put) % EV_QSIZE == get) {
+					ms->ms_bq_idx = 0;
+					put--;
+					goto out;
+				}
+				*fe = ms->ms_bq[i];
+				if (put >= EV_QSIZE) {
+					put = 0;
+					fe  = &ms->ms_events.ev_q[0];
+				}
+				else fe++;
+			}
+			ms->ms_bq_idx = 0;
+		}
+	}
+
 out:
 	ms->ms_events.ev_put = put;
-	ms->ms_buttons       = rel_ms->id & 3;
+	ms->ms_buttons       = id;
 	splx(sps);
 	EV_WAKEUP(&ms->ms_events);
 }
@@ -220,6 +302,9 @@ struct proc	*p;
 
 	ms->ms_events.ev_io = p;
 	ms->ms_dx = ms->ms_dy = 0;
+	ms->ms_buttons = 0;
+	ms->ms_bq[0].id = ms->ms_bq[1].id = 0;
+	ms->ms_bq_idx = 0;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
 	/*
