@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.6 1997/10/14 22:07:53 mark Exp $	*/
+/*	$NetBSD: cosc.c,v 1.7 1998/01/13 02:10:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -79,10 +79,6 @@ struct scsipi_device cosc_scsidev = {
 
 struct cfattach cosc_ca = {
 	sizeof(struct cosc_softc), coscmatch, coscattach
-};
-
-struct cfdriver cosc_cd = {
-	NULL, "cosc", DV_DULL, NULL, 0
 };
 
 int cosc_intr		 __P((void *arg));

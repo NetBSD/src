@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.4 1997/10/17 06:49:17 mark Exp $	*/
+/*	$NetBSD: icside.c,v 1.5 1998/01/13 02:10:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -94,10 +94,6 @@ struct cfattach icside_ca = {
 	sizeof(struct icside_softc), icside_probe, icside_attach
 };
 
-struct cfdriver icside_cd = {
-	NULL, "icside", DV_DULL, NULL, 0
-};
-
 /* Print function used during child config */
 
 int
@@ -184,8 +180,6 @@ extern int wdcintr __P((void *));
 struct cfattach wdc_ics_ca = {
 	sizeof(struct icswdc_softc), wdc_ics_probe, wdc_ics_attach
 };
-
-extern struct cfdriver wdc_cd;
 
 extern struct bus_space icside_bs_tag;
 

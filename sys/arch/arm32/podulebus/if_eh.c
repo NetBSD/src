@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.17 1997/10/14 22:32:00 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.18 1998/01/13 02:10:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -183,10 +183,6 @@ void eh_shutdown	__P((void *arg));
 
 struct cfattach eh_ca = {
 	sizeof(struct eh_softc), ehprobe, ehattach
-};
-
-struct cfdriver eh_cd = {
-	NULL, "eh", DV_DULL, NULL, 0
 };
 
 /****************************************************************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.5 1997/11/06 01:52:48 mark Exp $	*/
+/*	$NetBSD: rapide.c,v 1.6 1998/01/13 02:10:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -130,10 +130,6 @@ void	rapide_shutdown	__P((void *arg));
 
 struct cfattach rapide_ca = {
 	sizeof(struct rapide_softc), rapide_probe, rapide_attach
-};
-
-struct cfdriver rapide_cd = {
-	NULL, "rapide", DV_DULL, NULL, 0
 };
 
 /*
@@ -319,8 +315,6 @@ extern int wdcintr __P((void *));
 struct cfattach wdc_rapide_ca = {
 	sizeof(struct rapwdc_softc), wdc_rapide_probe, wdc_rapide_attach
 };
-
-extern struct cfdriver wdc_cd;
 
 /*
  * Create an array of address structures. These define the addresses and

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.19 1997/10/14 22:07:50 mark Exp $	*/
+/*	$NetBSD: asc.c,v 1.20 1998/01/13 02:10:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -102,9 +102,7 @@ struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
 };
 
-struct cfdriver asc_cd = {
-	NULL, "asc", DV_DULL, NULL, 0
-};
+extern struct cfdriver asc_cd;
 
 u_long scsi_nosync;
 int shift_nosync;
