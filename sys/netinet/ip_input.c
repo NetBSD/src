@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.47 1997/02/25 08:35:42 cjs Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.48 1997/02/26 04:09:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -81,7 +81,7 @@
 #define	IPFORWSRCRT	1	/* forward source-routed packets */
 #endif
 #ifndef IPALLOWSRCRT
-#define	IPALLOWSRCRT	0	/* reject all source-routed packets */
+#define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
