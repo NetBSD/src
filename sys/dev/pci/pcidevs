@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.609 2004/01/26 14:18:13 blymn Exp $
+$NetBSD: pcidevs,v 1.610 2004/01/28 17:05:40 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -34,7 +34,7 @@ $NetBSD: pcidevs,v 1.609 2004/01/26 14:18:13 blymn Exp $
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.yourvote.com/pci/
+ *	http://www.pcidatabase.com/
  *
  * (but it doesn't always seem to match vendor documentation)
  *
@@ -502,6 +502,7 @@ vendor HEURICON		0x1223	Heurikon/Computer Products
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
 vendor CCUBE		0x123f	C-Cube Microsystems
+vendor JNI		0x1242	JNI Corporation
 vendor AVM		0x1244	AVM
 vendor SAMSUNGELEC2	0x1249	Samsung Electronics Co. Ltd. (2nd vendor ID)
 vendor STALLION		0x124d	Stallion Technologies
@@ -529,6 +530,7 @@ vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS-Thomson Microelectronics
 vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
+vendor PACKETENGINES	0x1318	Packet Engines
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	Siig, Inc.
 vendor DOMEX		0x134a	Domex
@@ -1319,10 +1321,16 @@ product DOMEX PCISCSI	0x0001	DMX-3191D
 product DYNALINK IS64PH		0x1702	Dynalink IS64PH ISDN Adapter
 
 /* ELSA products */
-product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
+product ELSA	QS1PCI		0x1000	QuickStep 1000 ISDN card
+product ELSA	GLORIAXL	0x8901	Gloria XL 1624
 
 /* Emulex products */
-product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
+product EMULEX LP6000	0x1ae5	LP6000 FibreChannel adapter
+product EMULEX LP982	0xf098	LP982 FibreChannel adapter
+product EMULEX LP7000	0xf700	LP7000 FibreChannel adapter
+product EMULEX LP8000	0xf800	LP8000 FibreChannel adapter
+product EMULEX LP9000	0xf900	LP9000 FibreChannel adapter
+product EMULEX LP9802	0xf980	LP9802 FibreChannel adapter
 
 /* ENE Technology, Inc. products */
 product ENE CB710	0x710	CB710 Cardbus Controller
@@ -1408,6 +1416,7 @@ product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 product GALILEO GT64010A	0x0146	GT-64010A System Controller
 product GALILEO	GT64115		0x4111	GT-64115 System Controller
 product GALILEO	GT64011		0x4146	GT-64011 System Controller
+product GALILEO	SKNET		0x4320	SK-NET Gigabit Ethernet
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
@@ -1760,6 +1769,13 @@ product ITE IT8152		0x8152	IT8152 Host Bridge
 product ITT AGX016	0x0001	AGX016
 product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 
+/* JNI products */
+product JNI JNIC1460	0x1460	JNIC-1460 Fibre-Channel adapter
+product JNI JNIC1560	0x1560	JNIC-1560 dual Fibre-Channel adapter
+product JNI FCI1063	0x4643	FCI-1063 Fibre-Channel adapter
+product JNI FCX26562	0x6562	FCX2-6562 dual Fibre-Channel adapter
+product JNI FCX6562	0x656a	FCX-6562 Fibre-Channel adapter
+
 /* KTI products - XXX better descriptions */
 product KTI NE2KETHER	0x3000	Ethernet
 
@@ -2001,8 +2017,16 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	NFORCE2_PCIB	0x0060	nForce2 PCI-ISA bridge
+product NVIDIA	NFORCE2_SMBUS	0x0064	nForce2 SMBus Controller
 product NVIDIA	NFORCE2_ATA133	0x0065	nForce2 ATA133 IDE
+product NVIDIA	NFORCE2_NET	0x0066	nForce2 Ethernet
+product NVIDIA	NFORCE2_OHCI	0x0067	nForce2 USB Host Controller
+product NVIDIA	NFORCE2_EHCI	0x0068	nForce2 USB2 Host Controller
 product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
+product NVIDIA	NFORCE2_MCPT_AP	0x006b	nForce2 MCP-T Audio Processing Unit
+product NVIDIA	NFORCE2_PPB	0x006c	nForce2 PCI-PCI bridge
+product NVIDIA	NFORCE2_FW	0x006e	nForce2 Firewire Controller
 product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
 product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
 product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
@@ -2010,7 +2034,7 @@ product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
 product NVIDIA	NFORCE3_OHCI	0x00d7	nForce3 USB Host Controller
 product NVIDIA	NFORCE3_EHCI	0x00d8	nForce3 USB2 Host Controller
 product NVIDIA	NFORCE3_MCPT_AC	0x00da	nForce3 MCP-T AC-97
-product NVIDIA	NFORCE3_PPB	0x00dd	nforce3 PCI-PCI bridge
+product NVIDIA	NFORCE3_PPB	0x00dd	nForce3 PCI-PCI bridge
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
@@ -2038,6 +2062,13 @@ product NVIDIA	QUADRO4_380XGL	0x018b	Quadro4 380 XGL
 product NVIDIA	GEFORCE2_IGP	0x01a0	GeForce2 Integrated GPU
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
+product NVIDIA	NFORCE2_PCHB	0x01e0	nForce2 Host-PCI Bridge
+product NVIDIA	NFORCE2_PPB2	0x01e8	nForce2 PCI-PCI Bridge
+product NVIDIA	NFORCE2_MEM1	0x01eb	nForce2 Memory Controller
+product NVIDIA	NFORCE2_MEM2	0x01ec	nForce2 Memory Controller
+product NVIDIA	NFORCE2_MEM3	0x01ed	nForce2 Memory Controller
+product NVIDIA	NFORCE2_MEM4	0x01ee	nForce2 Memory Controller
+product NVIDIA	NFORCE2_MEM5	0x01ef	nForce2 Memory Controller
 product NVIDIA	GF4_MX_IGP	0x01f0	GeForce4 MX Integrated GPU
 product NVIDIA	GEFORCE3	0x0200	GeForce3
 product NVIDIA	GEFORCE3_TI200	0x0201	GeForce3 Ti 200
@@ -2091,6 +2122,9 @@ product OPTI 82C822	0xc822	82C822
 product OPTI RM861HA	0xc861	RM861HA
 product OPTI 82C700	0xc700	82C700
 product OPTI 82C701	0xc701	82C701
+
+/* Packet Engines products */
+product PACKETENGINES GNICII	0x0911	G-NIC II Ethernet
 
 /* pcHDTV products */
 product PCHDTV HD2000	0x2000	HD-2000 HDTV video capture
