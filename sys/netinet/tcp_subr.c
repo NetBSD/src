@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.159 2003/10/27 16:52:01 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.160 2004/01/07 19:15:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.159 2003/10/27 16:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160 2004/01/07 19:15:43 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1847,12 +1847,12 @@ tcp_mss_from_peer(tp, offer)
 
 	/*
 	 * As per RFC1122, use the default MSS value, unless they
-	 * sent us an offer.  Do not accept offers less than 32 bytes.
+	 * sent us an offer.  Do not accept offers less than 256 bytes.
 	 */
 	mss = tcp_mssdflt;
 	if (offer)
 		mss = offer;
-	mss = max(mss, 32);		/* sanity */
+	mss = max(mss, 256);		/* sanity */
 	tp->t_peermss = mss;
 	mss -= tcp_optlen(tp);
 #ifdef INET
