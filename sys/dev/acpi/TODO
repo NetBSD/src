@@ -13,7 +13,7 @@ Important things to make ACPI useful on more machines:
   systems need this because otherwise their _INI methods try to access
   regions in the EC space before it's initialized.  (Affects Steve
   Rumble's Thinkpad T23.)
-  -> Done 2003/03/30, kochi
+  -> Done 2004/03/30, kochi
 
 * Deal with the "implicit return" problem for older laptops.  (Mostly
   affects older Toshiba laptops, like the Portege 7140.)
