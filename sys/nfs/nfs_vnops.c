@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.144 2001/11/29 22:32:53 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.145 2001/11/30 07:08:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.144 2001/11/29 22:32:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.145 2001/11/30 07:08:53 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2875,14 +2875,13 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
-	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	int error;
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	simple_lock(&uobj->vmobjlock);
-	error = (uobj->pgops->pgo_put)(uobj, 0, 0, flushflags);
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;
 		np->n_flag &= ~NWRITEERR;

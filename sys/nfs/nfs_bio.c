@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.71 2001/11/10 10:59:08 lukem Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.72 2001/11/30 07:08:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.71 2001/11/10 10:59:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.72 2001/11/30 07:08:53 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -643,21 +643,21 @@ nfs_write(v)
 
 		if ((oldoff & ~(nmp->nm_wsize - 1)) !=
 		    (uio->uio_offset & ~(nmp->nm_wsize - 1))) {
-			simple_lock(&vp->v_uobj.vmobjlock);
-			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
 				       ~(nmp->nm_wsize - 1)),
-			    PGO_CLEANIT|PGO_WEAK);
+			    PGO_CLEANIT | PGO_WEAK);
 		}
 	} while (uio->uio_resid > 0);
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
 		    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
 			       ~(nmp->nm_wsize - 1)),
-		    PGO_CLEANIT|PGO_SYNCIO);
+		    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	return error;
 }
