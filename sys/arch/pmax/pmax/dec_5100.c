@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.4 1998/10/23 12:29:52 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.5 1999/03/15 11:13:10 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.4 1998/10/23 12:29:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.5 1999/03/15 11:13:10 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,20 +109,23 @@ void
 dec_5100_os_init()
 {
 	/* set correct wbflush routine for this motherboard */
-	 mips_set_wbflush(kn230_wbflush);
+	mips_set_wbflush(kn230_wbflush);
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
 	mips_hardware_intr = dec_5100_intr;
 
+#ifdef NEWSPL
+	__spl = &spl_5100;
+#else
 	splvec.splbio = MIPS_SPL1;
 	splvec.splnet = MIPS_SPL1;
 	splvec.spltty = MIPS_SPL_0_1;
 	splvec.splimp = MIPS_SPL_0_1_2;
 	splvec.splclock = MIPS_SPL_0_1_2;
 	splvec.splstatclock = MIPS_SPL_0_1_2;
-
+#endif
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
@@ -211,7 +214,7 @@ found:
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= kn230intrs[i].intrbit;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
-	wbflush();
+	kn230_wbflush();
 }
 
 void
