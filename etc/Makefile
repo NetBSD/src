@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112.2.6 1999/11/27 16:16:31 he Exp $
+#	$NetBSD: Makefile,v 1.112.2.7 2000/07/09 21:34:13 he Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -24,6 +24,9 @@
 #	instead of a named.conf in etc/namedb.
 #   EXTRA_KERNELS has a machine-dependent list of kernels to build added
 #	to it, but you may also set this to have extra ones built.
+#   BUILD_KERNELS are a machine-dependent list of kernels that should just
+#	be built in place but not made into sets or installed, e.g., an
+#	INSTALL kernel used later in src/distrib/.
 # 
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
@@ -233,24 +236,11 @@ release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 .if exists(../domestic) && !defined(EXPORTABLE_SYSTEM)
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/security secr
-	(cd ${RELEASEDIR}/binary/security && \
-		cksum -o 1 *.tgz >BSDSUM && \
-		cksum *.tgz >CKSUM && \
-		cksum -m *.tgz >MD5 && \
-		cksum -o 2 *.tgz >SYSVSUM )
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/security
 .endif
-	(cd ${RELEASEDIR}/binary/sets && \
-		cksum -o 1 *.tgz >BSDSUM && \
-		cksum *.tgz >CKSUM && \
-		cksum -m *.tgz >MD5 && \
-		cksum -o 2 *.tgz >SYSVSUM )
-.ifdef EXTRA_KERNELS
-	(cd ${RELEASEDIR}/binary/kernel && \
-		cksum -o 1 *.gz >BSDSUM && \
-		cksum *.gz >CKSUM && \
-		cksum -m *.gz >MD5 && \
-		cksum -o 2 *.gz >SYSVSUM )
-.endif
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/sets
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
@@ -280,18 +270,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 #
 .if !target(snap_kern)
 snap_kern:
-	cd ${KERNCONFDIR} && config \
-		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
-.ifndef UPDATE
-	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
-.endif
-	cd ${KERNOBJDIR}/GENERIC && ${MAKE} depend && ${MAKE} ${_J}
-	cd ${KERNOBJDIR}/GENERIC &&	\
-		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
-		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
-# XXX use same loop for ${EXTRA_KERNELS} and ${BUILD_KERNELS} but
-# XXX only install ${EXTRA_KERNELS} in binary/kernel???
-.for configfile in ${EXTRA_KERNELS}
+.for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
@@ -303,17 +282,19 @@ snap_kern:
 			${KERNCONFDIR}/${configfile}` ; {   \
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
+.endfor # kernels
+	cd ${KERNOBJDIR}/GENERIC &&	\
+		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
+.for configfile in GENERIC ${EXTRA_KERNELS}
+	cd ${KERNOBJDIR}/${configfile} && \
+		for kernel in `${GETKERNELAWK} \
+			${KERNCONFDIR}/${configfile}` ; do \
+		gzip -c -9 < $${kernel} > \
+			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz; \
+		done
 .endfor # EXTRA_KERNELS
-.for configfile in ${BUILD_KERNELS}
-	cd ${KERNCONFDIR} && config \
-		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
-.ifndef UPDATE
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
-.endif
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
-.endfor # BUILD_KERNELS
 .endif # no target(snap_kern)
-
 .endif # RELEASEDIR check
 
 snap_md_pre:
