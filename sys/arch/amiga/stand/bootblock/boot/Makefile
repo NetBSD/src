@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.33 2003/10/25 03:14:33 mhitch Exp $
+#	$NetBSD: Makefile,v 1.34 2003/10/26 07:25:36 lukem Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:
 
@@ -37,7 +39,7 @@ SOBJS += inffast.o infutil.o
 #DEFS += -DBOOT_ELF32 -DBOOT_AOUT
 SOBJS += loadfile.o loadfile_aout.o loadfile_elf32.o
 
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 ### main target: ###
@@ -86,7 +88,7 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/version
-	sh ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
 
 machine:
 	-rm -f $@

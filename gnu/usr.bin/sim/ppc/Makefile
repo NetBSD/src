@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/09 12:04:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2003/10/26 07:25:34 lukem Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -26,7 +26,7 @@ libinstall:
 .include <bsd.lib.mk>
 .include "../../Makefile.inc"
 
-MIC=	sh ${DIST}/move-if-change
+MIC=	${HOST_SH} ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I${DIST}/sim/ppc -I${DIST}/include \
 		-I${DIST}/bfd -I../../gdb \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2003/08/27 10:23:53 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2003/10/26 07:25:33 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -11,6 +11,7 @@ LANGUAGES?=	en fr pl
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
 
+.include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk>		# for mk.conf
 
 DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
@@ -21,7 +22,7 @@ UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
 VERDEP=		${NETBSDSRCDIR}/sys/conf/osrelease.sh
-VER!=		sh ${VERDEP}
+VER!=		${HOST_SH} ${VERDEP}
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
@@ -85,7 +86,7 @@ menus.def: menus.mi ${MENUS_MD} msgtouch
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC:M*.${LANG}} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
-	sh ${MSG_XLAT_SH} > ${.TARGET}
+	${HOST_SH} ${MSG_XLAT_SH} > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}
 .endfor

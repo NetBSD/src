@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/28 23:57:37 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2 2003/10/26 07:25:35 lukem Exp $
 
 PROG=		boot32
 PROGSOURCE=	rmheader.S rmvers.c srt0.S boot32.c start.S
@@ -6,7 +6,7 @@ NEWVERSWHAT=	"RISC OS Boot"
 RISCOSTYPE=	ffa
 
 rmvers.c: ${.CURDIR}/version
-	sh ${.CURDIR}/../lib/newvers_rm.sh ${.CURDIR}/version "NetBSD Boot"
+	${HOST_SH} ${.CURDIR}/../lib/newvers_rm.sh ${.CURDIR}/version "NetBSD Boot"
 .PHONY: rmvers.c
 
 CLEANFILES+=	rmvers.c

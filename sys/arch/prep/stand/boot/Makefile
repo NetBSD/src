@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/10/08 01:40:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.11 2003/10/26 07:25:37 lukem Exp $
 
 NOMAN= # defined
 
@@ -66,7 +66,7 @@ powerpc::
 	ln -s ${S}/arch/powerpc/include $@
 
 vers.c: ${.CURDIR}/../boot/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} machine powerpc
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: Makefile,v 1.35 2003/10/26 07:25:34 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -20,6 +20,7 @@ USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
+.include <bsd.sys.mk>		# for HOST_SH
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
@@ -46,7 +47,7 @@ AFLAGS+=-DELF
 AFLAGS+=-DOUT
 .endif
 
-OS_VERSION!= sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 # XXX CFLAGS: While it would be nice to know which compiler flags
 # XXX the library was built with, we don't want pathname information

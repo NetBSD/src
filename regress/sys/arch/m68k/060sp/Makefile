@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/09/30 03:34:42 mycroft Exp $
+#	$NetBSD: Makefile,v 1.12 2003/10/26 07:25:35 lukem Exp $
 
 NOMAN=		# defined
 
@@ -14,7 +14,7 @@ CLEANFILES+=	itest.S ftest.S
 .SUFFIXES: .S .sa
 
 .sa.S:
-	sh ${SPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+	${HOST_SH} ${SPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 
 .PATH: ${SPDIR}/dist
 

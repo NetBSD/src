@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.11 2003/10/09 10:29:39 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.12 2003/10/26 07:25:36 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -137,7 +137,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	sh ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2003/10/24 20:26:57 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.68 2003/10/26 07:25:35 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 afterboot.8 \
@@ -24,7 +24,7 @@ SUBDIR=	man8.acorn26 man8.alpha man8.amiga man8.atari man8.dreamcast \
 
 # create MAKEDEV.8 from ../../etc/MAKEDEV.tmpl
 makedevs:
-	cd ${.CURDIR} && sh MAKEDEV2manpage.sh
+	cd ${.CURDIR} && ${HOST_SH} MAKEDEV2manpage.sh
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/10/08 01:40:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.19 2003/10/26 07:25:36 lukem Exp $
 
 NOMAN=	# defined
 
@@ -75,10 +75,10 @@ srt0.o: ${.CURDIR}/srt0.s
 
 .PHONY: build.c
 build.c:
-	sh ${.CURDIR}/newvers.sh
+	${HOST_SH} ${.CURDIR}/newvers.sh
 
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
 
 #installboot: ${.CURDIR}/installboot.sh
 #	@rm -f installboot

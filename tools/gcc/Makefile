@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/10/10 01:18:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/26 07:25:38 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -35,17 +35,17 @@ MKNATIVE?=	${.CURDIR}/mknative-gcc
 
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
-	@MAKE=${MAKE:Q} sh ${MKNATIVE} libgcc \
+	@MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} libgcc \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native: .native/.configure_done
 	@echo 'Extracting GNU configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${MKNATIVE} all \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${MKNATIVE} all \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${MKNATIVE} gcc3 \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${MKNATIVE} gcc3 \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
@@ -66,7 +66,7 @@ native-gcc: .native/.configure_done
 			gdb_cv_printf_has_long_double=yes \
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes \
-			sh ${GNUHOSTDIST}/configure \
+			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--enable-long-long \
 			--disable-multilib \
 			--enable-threads \

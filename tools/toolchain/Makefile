@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2003/07/18 16:18:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2003/10/26 07:25:38 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,27 +29,27 @@ NEWCONFIGDIR?=	${.CURDIR}/../..
 
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
-	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative libgcc \
+	@MAKE=${MAKE:Q} ${HOST_SH} ${.CURDIR}/mknative libgcc \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native: .native/.configure_done
 	@echo 'Extracting GNU configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative all \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${.CURDIR}/mknative all \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native-binutils: .native/.configure_done
 	@echo 'Extracting GNU binutils configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative binutils \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${.CURDIR}/mknative binutils \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative gcc \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${.CURDIR}/mknative gcc \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native-gdb: .native/.configure_done
 	@echo 'Extracting GNU GDB configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative gdb \
+	@MAKE=${MAKE:Q} ${HOST_SH}  ${.CURDIR}/mknative gdb \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
@@ -70,7 +70,7 @@ native-gdb: .native/.configure_done
 			gdb_cv_printf_has_long_double=yes \
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes \
-			sh ${GNUHOSTDIST}/configure \
+			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--build=`${.CURDIR}/../../gnu/dist/toolchain/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \

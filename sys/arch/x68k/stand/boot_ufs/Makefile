@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/04/09 12:57:13 itohy Exp $
+#	$NetBSD: Makefile,v 1.14 2003/10/26 07:25:37 lukem Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,7 @@ SRCS+=	exec_image.S memset.S strcmp.S
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
 CFLAGS+= -W -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes

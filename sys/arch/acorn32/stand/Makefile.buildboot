@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 2003/10/08 01:40:22 simonb Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5 2003/10/26 07:25:35 lukem Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -22,7 +22,7 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. 

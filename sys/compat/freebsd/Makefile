@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 1996/12/10 08:54:53 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 2003/10/26 07:25:37 lukem Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
 OBJS=	freebsd_sysent.c freebsd_syscalls.c \
@@ -9,4 +11,4 @@ ${OBJS}: ${DEP}
 	-mv -f freebsd_syscalls.c freebsd_syscalls.c.bak
 	-mv -f freebsd_syscall.h freebsd_syscall.h.bak
 	-mv -f freebsd_syscallargs.h freebsd_syscallargs.h.bak
-	sh ../../kern/makesyscalls.sh syscalls.conf syscalls.master
+	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master

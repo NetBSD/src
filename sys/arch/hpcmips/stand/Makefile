@@ -1,7 +1,9 @@
-# $NetBSD: Makefile,v 1.7 2001/12/23 13:28:23 shin Exp $
+# $NetBSD: Makefile,v 1.8 2003/10/26 07:25:36 lukem Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 PROJECT_DIRS=libsa pbsdboot libz
 
@@ -9,11 +11,11 @@ all: winfiles optfiles rom-boot
 
 winfiles: 
 	for name in $(PROJECT_DIRS); do \
-	    sh dspgen/config.sh vc6 $$name; \
-	    sh dspgen/config.sh evc3 $$name; \
+	    ${HOST_SH} dspgen/config.sh vc6 $$name; \
+	    ${HOST_SH} dspgen/config.sh evc3 $$name; \
 	done
-	sh dspgen/gen_workspace.sh vc6 hpcmips_stand.dsw $(PROJECT_DIRS)
-	sh dspgen/gen_workspace.sh evc3 hpcmips_stand.vcw $(PROJECT_DIRS)
+	${HOST_SH} dspgen/gen_workspace.sh vc6 hpcmips_stand.dsw $(PROJECT_DIRS)
+	${HOST_SH} dspgen/gen_workspace.sh evc3 hpcmips_stand.vcw $(PROJECT_DIRS)
 
 optfiles:
 	echo "/* option \`SPEC_PLATFORM' not defined */" \

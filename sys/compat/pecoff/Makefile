@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/18 07:11:06 oki Exp $
+#	$NetBSD: Makefile,v 1.2 2003/10/26 07:25:38 lukem Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
 OBJS=	pecoff_sysent.c pecoff_syscalls.c pecoff_syscall.h pecoff_syscallargs.h
@@ -8,4 +10,4 @@ ${OBJS}: ${DEP}
 	-mv -f pecoff_syscalls.c pecoff_syscalls.c.bak
 	-mv -f pecoff_syscall.h pecoff_syscall.h.bak
 	-mv -f pecoff_syscallargs.h pecoff_syscallargs.h.bak
-	sh ../../kern/makesyscalls.sh syscalls.conf syscalls.master
+	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master
