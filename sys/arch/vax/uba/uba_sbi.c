@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.7 2000/06/05 00:09:20 matt Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.8 2000/07/10 09:14:33 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -152,7 +152,7 @@ dw780_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up dispatch vectors for DW780.
 	 */
-	for (i = 14; i < 17; i++)
+	for (i = 0x14; i < 0x18; i++)
 		scb_vecalloc(vecnum(0, i, sa->sa_nexnum), uba_dw780int,
 		    sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt);
 	evcnt_attach_dynamic(&sc->uv_sc.uh_intrcnt, EVCNT_TYPE_INTR, NULL,
