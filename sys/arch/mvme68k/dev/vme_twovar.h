@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1.16.1 2000/03/11 20:51:51 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.1.16.2 2000/03/13 19:09:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,24 @@
 #ifndef _MVME68K_VME_TWOVAR_H
 #define _MVME68K_VME_TWOVAR_H
 
+struct vmetwo_range {
+	vme_am_t		vr_am;
+	vme_datasize_t		vr_datasize;
+	u_int32_t		vr_locstart;
+	u_int32_t		vr_locmask;
+	vme_addr_t		vr_vmestart;
+	vme_addr_t		vr_vmeend;
+	vme_addr_t		vr_vmemask;
+};
+
+#define VME2_AM_DISABLED	((vme_am_t)-1)
+#define	VME2_RANGE_FIXED_A16	0
+#define	VME2_RANGE_FIXED_A24	1
+#define	VME2_RANGE_FIXED_A32	2
+#define VME2_RANGE_PROG_START	3
+
+#define VME2_NRANGES		(VME2_RANGE_PROG_START + VME2_MASTER_WINDOWS)
+
 struct vmetwo_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_bust;
@@ -46,6 +64,7 @@ struct vmetwo_softc {
 	bus_space_handle_t	sc_gcrh;
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_vmet;
+	struct vmetwo_range	sc_ranges[VME2_NRANGES];
 	struct vme_chipset_tag	sc_vct;
 };
 
@@ -56,6 +75,7 @@ struct vmetwo_mapresc_t {
 	bus_size_t		pm_size;
 	vme_am_t		pm_am;
 	vme_datasize_t		pm_datasize;
+	int			pm_range;
 };
 
 
@@ -83,35 +103,5 @@ int _vmetwo_dmamem_alloc __P((void *, vme_size_t, vme_am_t, vme_datasize_t,
     vme_swap_t, bus_dma_segment_t *, int, int *, int));
 
 void _vmetwo_dmamem_free __P((void *, bus_dma_segment_t *, int));
-
-
-#define VME2_VECTOR_BASE	(0x60u)
-#define	VME2_VECTOR_MIN		0x08
-#define VME2_VECTOR_MAX		0x1f
-
-#define VME2_VEC_SOFT0		0x08
-#define VME2_VEC_SOFT1		0x09
-#define VME2_VEC_SOFT2		0x0a
-#define VME2_VEC_SOFT3		0x0b
-#define VME2_VEC_SOFT4		0x0c
-#define VME2_VEC_SOFT5		0x0d
-#define VME2_VEC_SOFT6		0x0e
-#define VME2_VEC_SOFT7		0x0f
-#define VME2_VEC_GCSRLM0	0x10
-#define VME2_VEC_GCSRLM1	0x11
-#define VME2_VEC_GCSRSIG0	0x12
-#define VME2_VEC_GCSRSIG1	0x13
-#define VME2_VEC_GCSRSIG2	0x14
-#define VME2_VEC_GCSRSIG3	0x15
-#define VME2_VEC_DMAC		0x16
-#define VME2_VEC_VIA		0x17
-#define VME2_VEC_TT1		0x18
-#define VME2_VEC_TT2		0x19
-#define VME2_VEC_IRQ1		0x1a
-#define VME2_VEC_PARITY_ERROR	0x1b
-#define VME2_VEC_MWP_ERROR	0x1c
-#define VME2_VEC_SYSFAIL	0x1d
-#define VME2_VEC_ABORT		0x1e
-#define VME2_VEC_ACFAIL		0x1f
 
 #endif /* _MVME68K_VME_TWOVAR_H */
