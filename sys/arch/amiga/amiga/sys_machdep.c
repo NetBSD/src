@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.27 1999/11/28 20:30:57 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.28 2000/06/29 08:44:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -49,7 +49,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>

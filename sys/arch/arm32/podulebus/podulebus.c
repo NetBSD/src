@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.33 2000/01/10 04:01:17 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.34 2000/06/29 08:53:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>

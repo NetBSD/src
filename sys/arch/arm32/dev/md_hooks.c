@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.15 2000/06/26 14:20:35 mrg Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.16 2000/06/29 08:53:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -33,8 +33,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

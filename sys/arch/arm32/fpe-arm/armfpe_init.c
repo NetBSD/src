@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.19 2000/06/26 14:20:35 mrg Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.20 2000/06/29 08:53:00 mrg Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -47,7 +47,6 @@
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/acct.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>

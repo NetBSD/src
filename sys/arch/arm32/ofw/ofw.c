@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.25 2000/06/26 14:20:36 mrg Exp $	*/
+/*	$NetBSD: ofw.c,v 1.26 2000/06/29 08:53:02 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -45,7 +45,8 @@
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

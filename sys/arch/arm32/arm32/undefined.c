@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.18 2000/05/26 21:19:32 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.19 2000/06/29 08:52:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -56,8 +56,6 @@
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

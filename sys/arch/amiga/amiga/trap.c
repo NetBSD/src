@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2000/06/27 04:18:51 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 2000/06/29 08:44:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,6 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>

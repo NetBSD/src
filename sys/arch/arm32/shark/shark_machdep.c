@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.18 2000/06/26 14:20:38 mrg Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.19 2000/06/29 08:53:03 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -47,7 +47,8 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

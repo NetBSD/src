@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.2 1999/04/05 07:04:17 mark Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.3 2000/06/29 08:53:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>

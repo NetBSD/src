@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36 2000/06/26 14:20:30 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.37 2000/06/29 08:44:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,6 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
