@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.79 1999/04/22 01:32:30 simonb Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.80 1999/04/29 03:54:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1846,13 +1846,11 @@ u_int32_t syn_hash1, syn_hash2;
 	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
 				     ((u_int32_t)(sp)))^syn_hash2)))
 
-LIST_HEAD(, syn_cache_head) tcp_syn_cache_queue;
-
-#define	SYN_CACHE_RM(sc, scp)						\
+#define	SYN_CACHE_RM(sc)						\
 do {									\
-	TAILQ_REMOVE(&(scp)->sch_queue, (sc), sc_queue);		\
-	if (--(scp)->sch_length	== 0)					\
-		LIST_REMOVE((scp), sch_headq);				\
+	LIST_REMOVE((sc), sc_bucketq);					\
+	tcp_syn_cache[(sc)->sc_bucketidx].sch_length--;			\
+	TAILQ_REMOVE(&tcp_syn_cache_timeq[(sc)->sc_rxtshift], (sc), sc_timeq); \
 	syn_cache_count--;						\
 } while (0)
 
@@ -1867,17 +1865,33 @@ do {									\
 
 struct pool syn_cache_pool;
 
+/*
+ * We don't estimate RTT with SYNs, so each packet starts with the default
+ * RTT and each timer queue has a fixed timeout value.  This allows us to
+ * optimize the timer queues somewhat.
+ */
+#define	SYN_CACHE_TIMER_ARM(sc)						\
+do {									\
+	TCPT_RANGESET((sc)->sc_rxtcur,					\
+	    TCPTV_SRTTDFLT * tcp_backoff[(sc)->sc_rxtshift], TCPTV_MIN,	\
+	    TCPTV_REXMTMAX);						\
+	PRT_SLOW_ARM((sc)->sc_rexmt, (sc)->sc_rxtcur);			\
+} while (0)
+
+TAILQ_HEAD(, syn_cache) tcp_syn_cache_timeq[TCP_MAXRXTSHIFT + 1];
+
 void
 syn_cache_init()
 {
 	int i;
 
-	/* Initialize the hash bucket queues. */
+	/* Initialize the hash buckets. */
 	for (i = 0; i < tcp_syn_cache_size; i++)
-		TAILQ_INIT(&tcp_syn_cache[i].sch_queue);
+		LIST_INIT(&tcp_syn_cache[i].sch_bucket);
 
-	/* Initialize the active hash bucket cache. */
-	LIST_INIT(&tcp_syn_cache_queue);
+	/* Initialize the timer queues. */
+	for (i = 0; i <= TCP_MAXRXTSHIFT; i++)
+		TAILQ_INIT(&tcp_syn_cache_timeq[i]);
 
 	/* Initialize the syn cache pool. */
 	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
@@ -1888,9 +1902,9 @@ void
 syn_cache_insert(sc)
 	struct syn_cache *sc;
 {
-	struct syn_cache_head *scp, *scp2, *sce;
+	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
-	int s;
+	int s, i;
 
 	/*
 	 * If there are no entries in the hash table, reinitialize
@@ -1904,7 +1918,8 @@ syn_cache_insert(sc)
 	}
 
 	sc->sc_hash = SYN_HASH(&sc->sc_src, sc->sc_sport, sc->sc_dport);
-	scp = &tcp_syn_cache[sc->sc_hash % tcp_syn_cache_size];
+	sc->sc_bucketidx = sc->sc_hash % tcp_syn_cache_size;
+	scp = &tcp_syn_cache[sc->sc_bucketidx];
 
 	/*
 	 * Make sure that we don't overflow the per-bucket
@@ -1914,44 +1929,71 @@ syn_cache_insert(sc)
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
 		tcpstat.tcps_sc_bucketoverflow++;
 		/*
-		 * The bucket is full.  Toss the first (i.e. oldest)
-		 * element in this bucket.
+		 * The bucket is full.  Toss the oldest element in the
+		 * bucket.  This will be the entry with our bucket
+		 * index closest to the front of the timer queue with
+		 * the largest timeout value.
+		 *
+		 * Note: This timer queue traversal may be expensive, so
+		 * we hope that this doesn't happen very often.  It is
+		 * much more likely that we'll overflow the entire
+		 * cache, which is much easier to handle; see below.
 		 */
-		sc2 = TAILQ_FIRST(&scp->sch_queue);
-		SYN_CACHE_RM(sc2, scp);
-		SYN_CACHE_PUT(sc2);
+		for (i = TCP_MAXRXTSHIFT; i >= 0; i--) {
+			for (sc2 = TAILQ_FIRST(&tcp_syn_cache_timeq[i]);
+			     sc2 != NULL;
+			     sc2 = TAILQ_NEXT(sc2, sc_timeq)) {
+				if (sc2->sc_bucketidx == sc->sc_bucketidx) {
+					SYN_CACHE_RM(sc2);
+					SYN_CACHE_PUT(sc2);
+					goto insert;	/* 2 level break */
+				}
+			}
+		}
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen; we should always find an
+		 * entry in our bucket.
+		 */
+		panic("syn_cache_insert: bucketoverflow: impossible");
+#endif
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		tcpstat.tcps_sc_overflowed++;
 		/*
-		 * The cache is full.  Toss the first (i.e. oldest)
-		 * element in the first non-empty bucket we can find.
+		 * The cache is full.  Toss the oldest entry in the
+		 * entire cache.  This is the front entry in the
+		 * first non-empty timer queue with the largest
+		 * timeout value.
 		 */
-		scp2 = scp;
-		if (TAILQ_FIRST(&scp2->sch_queue) == NULL) {
-			sce = &tcp_syn_cache[tcp_syn_cache_size];
-			for (++scp2; scp2 != scp; scp2++) {
-				if (scp2 >= sce)
-					scp2 = &tcp_syn_cache[0];
-				if (TAILQ_FIRST(&scp2->sch_queue) != NULL)
-					break;
-			}
+		for (i = TCP_MAXRXTSHIFT; i >= 0; i--) {
+			sc2 = TAILQ_FIRST(&tcp_syn_cache_timeq[i]);
+			if (sc2 == NULL)
+				continue;
+			SYN_CACHE_RM(sc2);
+			SYN_CACHE_PUT(sc2);
+			goto insert;		/* symmetry with above */
 		}
-		sc2 = TAILQ_FIRST(&scp2->sch_queue);
-		if (sc2 == NULL) {
-			SYN_CACHE_PUT(sc);
-			return;
-		}
-		SYN_CACHE_RM(sc2, scp2);
-		SYN_CACHE_PUT(sc2);
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen; we should always find an
+		 * entry in the cache.
+		 */
+		panic("syn_cache_insert: cache overflow: impossible");
+#endif
 	}
 
-	/* Set entry's timer. */
-	PRT_SLOW_ARM(sc->sc_timer, tcp_syn_cache_timeo);
+ insert:
+	/*
+	 * Initialize the entry's timer.
+	 */
+	sc->sc_rxttot = 0;
+	sc->sc_rxtshift = 0;
+	SYN_CACHE_TIMER_ARM(sc);
+	TAILQ_INSERT_TAIL(&tcp_syn_cache_timeq[sc->sc_rxtshift], sc, sc_timeq);
 
 	/* Put it into the bucket. */
-	TAILQ_INSERT_TAIL(&scp->sch_queue, sc, sc_queue);
-	if (++scp->sch_length == 1)
-		LIST_INSERT_HEAD(&tcp_syn_cache_queue, scp, sch_headq);
+	LIST_INSERT_HEAD(&scp->sch_bucket, sc, sc_bucketq);
+	scp->sch_length++;
 	syn_cache_count++;
 
 	tcpstat.tcps_sc_added++;
@@ -1959,30 +2001,63 @@ syn_cache_insert(sc)
 }
 
 /*
- * Walk down the cache list, looking for expired entries in each bucket.
+ * Walk the timer queues, looking for SYN,ACKs that need to be retransmitted.
+ * If we have retransmitted an entry the maximum number of times, expire
+ * that entry.
  */
 void
 syn_cache_timer()
 {
-	struct syn_cache_head *scp, *nscp;
 	struct syn_cache *sc, *nsc;
-	int s;
+	int i, s;
 
 	s = splsoftnet();
-	for (scp = LIST_FIRST(&tcp_syn_cache_queue); scp != NULL; scp = nscp) {
-#ifdef DIAGNOSTIC
-		if (TAILQ_FIRST(&scp->sch_queue) == NULL)
-			panic("syn_cache_timer: queue inconsistency");
-#endif
-		nscp = LIST_NEXT(scp, sch_headq);
-		for (sc = TAILQ_FIRST(&scp->sch_queue);
-		     sc != NULL && PRT_SLOW_ISEXPIRED(sc->sc_timer);
+
+	/*
+	 * First, get all the entries that need to be retransmitted, or
+	 * must be expired due to exceeding the initial keepalive time.
+	 */
+	for (i = 0; i < TCP_MAXRXTSHIFT; i++) {
+		for (sc = TAILQ_FIRST(&tcp_syn_cache_timeq[i]);
+		     sc != NULL && PRT_SLOW_ISEXPIRED(sc->sc_rexmt);
 		     sc = nsc) {
-			nsc = TAILQ_NEXT(sc, sc_queue);
-			tcpstat.tcps_sc_timed_out++;
-			SYN_CACHE_RM(sc, scp);
-			SYN_CACHE_PUT(sc);
+			nsc = TAILQ_NEXT(sc, sc_timeq);
+
+			/*
+			 * Compute the total amount of time this entry has
+			 * been on a queue.  If this entry has been on longer
+			 * than the keep alive timer would allow, expire it.
+			 */
+			sc->sc_rxttot += sc->sc_rxtcur;
+			if (sc->sc_rxttot >= TCPTV_KEEP_INIT) {
+				tcpstat.tcps_sc_timed_out++;
+				SYN_CACHE_RM(sc);
+				SYN_CACHE_PUT(sc);
+				continue;
+			}
+
+			tcpstat.tcps_sc_retransmitted++;
+			(void) syn_cache_respond(sc, NULL);
+
+			/* Advance this entry onto the next timer queue. */
+			TAILQ_REMOVE(&tcp_syn_cache_timeq[i], sc, sc_timeq);
+			sc->sc_rxtshift = i + 1;
+			SYN_CACHE_TIMER_ARM(sc);
+			TAILQ_INSERT_TAIL(&tcp_syn_cache_timeq[sc->sc_rxtshift],
+			    sc, sc_timeq);
 		}
+	}
+
+	/*
+	 * Now get all the entries that are expired due to too many
+	 * retransmissions.
+	 */
+	for (sc = TAILQ_FIRST(&tcp_syn_cache_timeq[TCP_MAXRXTSHIFT]);
+	     sc != NULL && PRT_SLOW_ISEXPIRED(sc->sc_rexmt);
+	     sc = nsc) {
+		tcpstat.tcps_sc_timed_out++;
+		SYN_CACHE_RM(sc);
+		SYN_CACHE_PUT(sc);
 	}
 	splx(s);
 }
@@ -2005,8 +2080,8 @@ syn_cache_lookup(ti, headp)
 	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
 	*headp = scp;
 	s = splsoftnet();
-	for (sc = TAILQ_FIRST(&scp->sch_queue); sc != NULL;
-	     sc = TAILQ_NEXT(sc, sc_queue)) {
+	for (sc = LIST_FIRST(&scp->sch_bucket); sc != NULL;
+	     sc = LIST_NEXT(sc, sc_bucketq)) {
 		if (sc->sc_hash != hash)
 			continue;
 		if (sc->sc_src.s_addr == ti->ti_src.s_addr &&
@@ -2056,7 +2131,6 @@ syn_cache_get(so, m)
 	register struct tcpiphdr *ti;
 	struct sockaddr_in *sin;
 	struct mbuf *am;
-	long win;
 	int s;
 
 	ti = mtod(m, struct tcpiphdr *);
@@ -2066,24 +2140,20 @@ syn_cache_get(so, m)
 		return (NULL);
 	}
 
-	win = sbspace(&so->so_rcv);
-	if (win > TCP_MAXWIN)
-		win = TCP_MAXWIN;
-
 	/*
 	 * Verify the sequence and ack numbers.  Try getting the correct
 	 * response again.
 	 */
 	if ((ti->ti_ack != sc->sc_iss + 1) ||
 	    SEQ_LEQ(ti->ti_seq, sc->sc_irs) ||
-	    SEQ_GT(ti->ti_seq, sc->sc_irs + 1 + win)) {
-		(void) syn_cache_respond(sc, m, win, 0);
+	    SEQ_GT(ti->ti_seq, sc->sc_irs + 1 + sc->sc_win)) {
+		(void) syn_cache_respond(sc, m);
 		splx(s);
 		return ((struct socket *)(-1));
 	}
 
 	/* Remove this cache entry */
-	SYN_CACHE_RM(sc, scp);
+	SYN_CACHE_RM(sc);
 	splx(s);
 
 	/*
@@ -2164,7 +2234,7 @@ syn_cache_get(so, m)
 	 * had to retransmit the SYN,ACK, we must initialize cwnd
 	 * to 1 segment (i.e. the Loss Window).
 	 */
-	if (sc->sc_rexmt_count)
+	if (sc->sc_rxtshift)
 		tp->snd_cwnd = tp->t_peermss;
 	else
 		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, tp->t_peermss);
@@ -2180,8 +2250,8 @@ syn_cache_get(so, m)
 	tp->snd_up = tp->snd_una;
 	tp->snd_max = tp->snd_nxt = tp->iss+1;
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
-	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
-		tp->rcv_adv = tp->rcv_nxt + win;
+	if (sc->sc_win > 0 && SEQ_GT(tp->rcv_nxt + sc->sc_win, tp->rcv_adv))
+		tp->rcv_adv = tp->rcv_nxt + sc->sc_win;
 	tp->last_ack_sent = tp->rcv_nxt;
 
 	tcpstat.tcps_sc_completed++;
@@ -2222,7 +2292,7 @@ syn_cache_reset(ti)
 		splx(s);
 		return;
 	}
-	SYN_CACHE_RM(sc, scp);
+	SYN_CACHE_RM(sc);
 	splx(s);
 	tcpstat.tcps_sc_reset++;
 	SYN_CACHE_PUT(sc);
@@ -2262,13 +2332,13 @@ syn_cache_unreach(ip, th)
 	 *
 	 * See tcp_notify().
 	 */
-	if ((sc->sc_flags & SCF_UNREACH) == 0 || sc->sc_rexmt_count < 3) {
+	if ((sc->sc_flags & SCF_UNREACH) == 0 || sc->sc_rxtshift < 3) {
 		sc->sc_flags |= SCF_UNREACH;
 		splx(s);
 		return;
 	}
 
-	SYN_CACHE_RM(sc, scp);
+	SYN_CACHE_RM(sc);
 	splx(s);
 	tcpstat.tcps_sc_unreach++;
 	SYN_CACHE_PUT(sc);
@@ -2336,23 +2406,11 @@ syn_cache_add(so, m, optp, optlen, oi)
 
 	/*
 	 * See if we already have an entry for this connection.
-	 * If we do, resend the SYN,ACK, and remember since the
-	 * initial congestion window must be initialized to 1
-	 * segment when the connection completes.
+	 * If we do, resend the SYN,ACK.  We do not count this
+	 * as a retransmission (XXX though maybe we should).
 	 */
 	if ((sc = syn_cache_lookup(ti, &scp)) != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
-		sc->sc_rexmt_count++;
-		if (sc->sc_rexmt_count == 0) {
-			/*
-			 * Eeek!  We rolled the counter.  Just set it
-			 * to the max value.  This shouldn't ever happen,
-			 * but there's no real reason to panic here, since
-			 * the count doesn't have to be very precise.
-			 */
-			sc->sc_rexmt_count = USHRT_MAX;
-		}
-
 		if (ipopts) {
 			/*
 			 * If we were remembering a previous source route,
@@ -2362,8 +2420,8 @@ syn_cache_add(so, m, optp, optlen, oi)
 				(void) m_free(sc->sc_ipopts);
 			sc->sc_ipopts = ipopts;
 		}
-
-		if (syn_cache_respond(sc, m, win, tb.ts_recent) == 0) {
+		sc->sc_timestamp = tb.ts_recent;
+		if (syn_cache_respond(sc, m) == 0) {
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
 		}
@@ -2393,6 +2451,8 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(m->m_flags & M_PKTHDR ?
 						m->m_pkthdr.rcvif : NULL);
+	sc->sc_win = win;
+	sc->sc_timestamp = tb.ts_recent;
 	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
 		sc->sc_flags |= SCF_TIMESTAMP;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
@@ -2407,7 +2467,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
-	if (syn_cache_respond(sc, m, win, tb.ts_recent) == 0) {
+	if (syn_cache_respond(sc, m) == 0) {
 		syn_cache_insert(sc);
 		tcpstat.tcps_sndacks++;
 		tcpstat.tcps_sndtotal++;
@@ -2419,11 +2479,9 @@ syn_cache_add(so, m, optp, optlen, oi)
 }
 
 int
-syn_cache_respond(sc, m, win, ts)
+syn_cache_respond(sc, m)
 	struct syn_cache *sc;
 	struct mbuf *m;
-	long win;
-	u_long ts;
 {
 	struct route *ro = &sc->sc_route;
 	struct rtentry *rt;
@@ -2473,7 +2531,7 @@ syn_cache_respond(sc, m, win, ts)
 	/* ti_x2 already 0 */
 	ti->ti_off = (sizeof(struct tcphdr) + optlen) >> 2;
 	ti->ti_flags = TH_SYN|TH_ACK;
-	ti->ti_win = htons(win);
+	ti->ti_win = htons(sc->sc_win);
 	/* ti_sum already 0 */
 	/* ti_urp already 0 */
 
@@ -2496,7 +2554,7 @@ syn_cache_respond(sc, m, win, ts)
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
 		*lp++ = htonl(tcp_now);
-		*lp   = htonl(ts);
+		*lp   = htonl(sc->sc_timestamp);
 		optp += TCPOLEN_TSTAMP_APPA;
 	}
 
