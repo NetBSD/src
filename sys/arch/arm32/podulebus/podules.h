@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.15 2000/11/26 15:04:22 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.16 2000/12/05 00:44:21 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.13 2000/11/26 15:03:25 bjh21 Exp 
+ *	NetBSD: podules,v 1.14 2000/12/05 00:43:55 bjh21 Exp 
  */
 
 /*
@@ -90,7 +90,11 @@
 
 #define	PODULE_ARMADILLO_A448	0x0016		/* A448 sound sampler */
 
+/* From an Issue 2.0 ColourCard (others may differ) */
+#define	PODULE_WILDVISION_COLOURCARD	0x0050		/* ColourCard */
 #define	PODULE_WILDVISION_HAWKV9	0x0052		/* hawk v9 mark2 */
+#define	PODULE_WILDVISION_SOUNDSAMPLER	0x0054		/* Sound Sampler */
+#define	PODULE_WILDVISION_CENTRONICS	0x006f		/* Bi-directional Centronics */
 #define	PODULE_WILDVISION_SCANLIGHTV256	0x00cb		/* scanlight video 256 */
 #define	PODULE_WILDVISION_EAGLEM2	0x00cc		/* eagle M2 */
 #define	PODULE_WILDVISION_LARKA16	0x00ce		/* lark A16 */
@@ -160,6 +164,8 @@
 
 #define	PODULE_YES_RAPIDE	0x0114		/* RapIDE32 interface */
 
+/* MCS also call themselves ACE (Acorn Computer Entertainment) */
 #define	PODULE_MCS_SCSI	0x0125		/* Connect32 SCSI II interface */
+#define	PODULE_MCS_MIDICONNECT	0x0133		/* Midi-Connect */
 
 #define	PODULE_EESOX_SCSI	0x008c		/* EESOX SCSI II interface */
