@@ -2,7 +2,7 @@
 
 PROG=	makemap
 MAN=	makemap.8
-CFLAGS+=-I${.CURDIR}/../src -DNEWDB -DNOT_SENDMAIL
+CPPFLAGS+=-I${.CURDIR}/../src -DNEWDB -DNOT_SENDMAIL
 
 SRCS=	makemap.c safefile.c
 
