@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_ef.c,v 1.3 2002/01/24 08:21:33 martti Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.4 2002/03/14 12:32:37 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -19,6 +19,9 @@ etherfind -n -t
  0.32    91   04    131.170.1.10  128.250.133.13
  0.33   566  udp  128.250.37.155   128.250.133.3        901        901
 */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__GNUC__)
@@ -51,7 +54,7 @@ etherfind -n -t
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_ef.c,v 2.2.2.1 2001/06/26 10:43:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_ef.c,v 2.2.2.2 2002/02/22 15:32:53 darrenr Exp";
 #endif
 
 static	int	etherf_open __P((char *));

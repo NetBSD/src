@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.13 2002/01/24 08:21:31 martti Exp $	*/
+/*	$NetBSD: fils.c,v 1.14 2002/03/14 12:32:36 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,6 +13,9 @@
 #   include <osreldate.h>
 #  endif
 # endif
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -93,7 +96,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.33 2002/01/13 04:58:10 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.34 2002/02/22 15:32:45 darrenr Exp";
 #endif
 
 extern	char	*optarg;

@@ -1,10 +1,13 @@
-/*	$NetBSD: ip_state.c,v 1.34 2002/01/24 08:23:45 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.35 2002/03/14 12:34:02 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +40,6 @@
 # include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 #endif
@@ -94,9 +96,9 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.34 2002/01/24 08:23:45 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.35 2002/03/14 12:34:02 martti Exp $");
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.58 2002/01/15 14:36:49 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.61 2002/03/06 14:07:36 darrenr Exp";
 #endif
 #endif
 
@@ -769,7 +771,8 @@ u_int flags;
 	 * but we don't (automatically) care about it's fragment status as
 	 * this may change.
 	 */
-	is->is_v = fin->fin_fi.fi_v;
+	is->is_v = fin->fin_v;
+	is->is_rulen = fin->fin_rule;
 	is->is_opt = fin->fin_fi.fi_optmsk;
 	is->is_optmsk = 0xffffffff;
 	is->is_sec = fin->fin_fi.fi_secmsk;
@@ -1549,6 +1552,11 @@ retry_tcpudp:
 	is->is_pkts++;
 	MUTEX_EXIT(&is->is_lock);
 	fr = is->is_rule;
+	fin->fin_rule = is->is_rulen;
+	if (fr != NULL) {
+		fin->fin_group = fr->fr_group;
+		fin->fin_icode = fr->fr_icode;
+	}
 	fin->fin_fr = fr;
 	pass = is->is_pass;
 	RWLOCK_EXIT(&ipf_state);

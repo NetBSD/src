@@ -1,10 +1,13 @@
-/*	$NetBSD: misc.c,v 1.3 2002/01/24 08:21:34 martti Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #if (SOLARIS2 >= 7)
 # define _SYS_VARARGS_H
 # define _VARARGS_H
@@ -52,7 +55,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: misc.c,v 2.2.2.6 2002/01/15 14:36:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: misc.c,v 2.2.2.7 2002/02/22 15:32:55 darrenr Exp";
 #endif
 
 extern	int	opts;
