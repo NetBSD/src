@@ -1,4 +1,6 @@
-/*	$NetBSD: darwin_mman.c,v 1.4 2002/12/08 00:50:26 manu Exp $ */
+#undef DEBUG_DARWIN
+#undef DEBUG_MACH
+/*	$NetBSD: darwin_mman.c,v 1.5 2002/12/24 12:13:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.4 2002/12/08 00:50:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.5 2002/12/24 12:13:15 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +106,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	if ((error = copyin(SCARG(uap, flags), &flags, sizeof(base))) != 0)
 		return error;
 
+#ifdef DEBUG_DARWIN
 	DPRINTF(("darwin_sys_load_shared_file: filename = %p ", 
 	    SCARG(uap, filename)));
 	DPRINTF(("addr = %p len = 0x%08lx base = %p ", 
@@ -112,6 +115,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	    SCARG(uap, count), SCARG(uap, mappings), SCARG(uap, flags)));
 	DPRINTF(("*base = 0x%08lx *flags = %d filename=`%s'\n",
 	    base, flags, filename));
+#endif
 
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
