@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.27 2002/09/19 08:09:17 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.28 2003/12/16 12:15:04 abs Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -28,7 +28,7 @@
 #define	SIOCGNATL	_IOWR(r, 63, struct natlookup *)
 #endif
 
-#undef	LARGE_NAT	/* define this if you're setting up a system to NAT
+/* #define LARGE_NAT */	/* define this if you're setting up a system to NAT
 			 * LARGE numbers of networks/hosts - i.e. in the
 			 * hundreds or thousands.  In such a case, you should
 			 * also change the RDR_SIZE and NAT_SIZE below to more
