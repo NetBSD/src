@@ -1,4 +1,4 @@
-.\"	$NetBSD: setjmp.3,v 1.15 2003/08/07 16:42:56 agc Exp $
+.\"	$NetBSD: setjmp.3,v 1.16 2004/03/30 13:28:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,28 +75,27 @@ Each of these functions returns 0.
 .Pp
 The corresponding
 .Fn longjmp
-functions restore the environment saved by their most recent respective
-invocations
-of the
+functions restore the environment saved by the most recent
+invocation of the respective
 .Fn setjmp
 function.
 They then return so that program execution continues as if the corresponding
 invocation of the
 .Fn setjmp
-call had just returned  the value specified by
+call had just returned the value specified by
 .Fa val ,
 instead of 0.
 .Pp
-Pairs of calls may be intermixed, i.e. both
+Pairs of calls may be intermixed, i.e., both
 .Fn sigsetjmp
 and
 .Fn siglongjmp
-and
+as well as
 .Fn setjmp
 and
 .Fn longjmp
-combinations may be used in the same program, however, individual
-calls may not, e.g. the
+combinations may be used in the same program.
+However, individual calls may not, e.g., the
 .Fa env
 argument to
 .Fn setjmp
@@ -113,7 +112,7 @@ All accessible objects have values as of the time
 .Fn longjmp
 routine was called, except that the values of objects of automatic storage
 invocation duration that do not have the
-.Em volatile
+.Li volatile
 type and have been changed between the
 .Fn setjmp
 invocation and
@@ -122,16 +121,15 @@ call are indeterminate.
 .Pp
 The
 .Fn setjmp Ns / Ns Fn longjmp
-pairs save and restore the signal mask while
+function pairs save and restore the signal mask while
 .Fn _setjmp Ns / Ns Fn _longjmp
-pairs save and restore only the register set and the stack.
+function pairs save and restore only the register set and the stack.
 (See
 .Fn sigmask 2 . )
 .Pp
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
-function
-pairs save and restore the signal mask if the argument
+function pairs save and restore the signal mask if the argument
 .Fa savemask
 is non-zero.
 Otherwise, only the register set and the stack are saved.
@@ -160,7 +158,7 @@ interfaces are preferred for maximum portability.
 .Sh ERRORS
 If the contents of the
 .Fa env
-are corrupted, or correspond to an environment that has already returned,
+are corrupted or correspond to an environment that has already returned,
 the
 .Fn longjmp
 routine calls the routine
