@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
+/*	$NetBSD: fpu.c,v 1.12 2001/09/22 01:05:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -293,12 +293,31 @@ fpu_execute(fe, instr)
 	 * squish them out here.
 	 */
 	opf = instr.i_opf.i_opf;
+	/*
+	 * The low two bits of the opf field for floating point insns usually
+	 * correspond to the operation width:
+	 *
+	 *	0:	Invalid
+	 *	1:	Single precision float
+	 *	2:	Double precision float
+	 *	3:	Quad precision float
+	 *
+	 * The exceptions are the integer to float conversion instructions.
+	 *
+	 * For double and quad precision, the low bit if the rs or rd field
+	 * is actually the high bit of the register number.
+	 */
+
 	type = opf & 3;
-	mask = "\0\0\1\3"[type];
-	rs1 = instr.i_opf.i_rs1 & ~mask;
-	rs2 = instr.i_opf.i_rs2 & ~mask;
-	rd = instr.i_opf.i_rd & ~mask;
-#ifdef notdef
+	mask = 0x3 >> (3 - type);
+
+	rs1 = instr.i_opf.i_rs1;
+	rs1 = (rs1 & ~mask) | ((rs1 & mask & 0x1) << 5);
+	rs2 = instr.i_opf.i_rs2;
+	rs2 = (rs2 & ~mask) | ((rs2 & mask & 0x1) << 5);
+	rd = instr.i_opf.i_rd;
+	rd = (rd & ~mask) | ((rd & mask & 0x1) << 5);
+#ifdef DIAGNOSTIC
 	if ((rs1 | rs2 | rd) & mask)
 		return (BADREG);
 #endif
@@ -308,7 +327,7 @@ fpu_execute(fe, instr)
 #ifdef SUN4U
 	/*
 	 * Check to see if we're dealing with a fancy cmove and handle
-	 * it first.
+	 * it first.  
 	 */
 	if (instr.i_op3.i_op3 == IOP3_FPop2 && (opf&0xff0) != (FCMP&0xff0)) {
 		switch (opf >>= 2) {
@@ -431,9 +450,9 @@ fpu_execute(fe, instr)
 #ifndef SUN4U
 		fs->fs_regs[rd] = rs1;
 #else /* SUN4U */
-		i = 1<<type;
+		i = 1<<(type-1);
 		fs->fs_regs[rd++] = rs1;
-		while (--i) 
+		while (--i > 0) 
 			fs->fs_regs[rd++] = fs->fs_regs[++rs2];
 #endif /* SUN4U */
 		fs->fs_fsr = fe->fe_fsr;
@@ -531,10 +550,10 @@ fpu_execute(fe, instr)
 		break;
 #endif /* SUN4U */
 
+	case FTOI >> 2:
 	case FTOS >> 2:
 	case FTOD >> 2:
 	case FTOQ >> 2:
-	case FTOI >> 2:
 		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
