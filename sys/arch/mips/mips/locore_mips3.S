@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.79 2002/06/01 13:45:45 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.80 2002/06/05 06:09:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -112,8 +112,8 @@
  *	mtc0/mfc0	one integer op before and after
  *	tlbp		-- one integer op afterwards
  * Obvious solution is to take least common denominator.
- *	
- * For the Toshiba R5900, TX79:		
+ *
+ * For the Toshiba R5900, TX79:
  *	mtc0		following sync.p
  *	tlbw[ri], tlbp	following sync.p or eret
  * for those CPU, define COP0_SYNC as sync.p
@@ -237,7 +237,6 @@ LEAF(mips_wait_idle)
 END(mips_wait_idle)
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 
-
 /*
  * u_int32_t mips3_cp0_compare_read(void)
  *
@@ -262,7 +261,6 @@ LEAF(mips3_cp0_compare_write)
 	j	ra
 	nop
 END(mips3_cp0_compare_write)
-
 
 /*
  * u_int32_t mips3_cp0_config_read(void)
@@ -372,7 +370,6 @@ LEAF(mips3_cp0_count_write)
 	j	ra
 	nop
 END(mips3_cp0_count_write)
-
 
 /*
  * u_int32_t mips3_cp0_wired_read(void)
