@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.29 2002/08/13 13:22:35 wiz Exp $
+.\"	$NetBSD: mt.1,v 1.30 2002/09/25 15:18:41 wiz Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,8 +85,8 @@ need be specified.
 .It Cm asf
 Move forward
 .Ar count
-files from the beginning of the tape. This is accomplished by a rewind
-followed by fsf
+files from the beginning of the tape.
+This is accomplished by a rewind followed by fsf
 .Ar count .
 .It Cm eof , weof
 Write
@@ -142,7 +142,8 @@ Set the tape density code to
 .Ar count
 as specified in the
 .Tn SCSI-3
-specification.  See the
+specification.
+See the
 .Sx DENSITY CODES
 section for a list of codes for commonly used media types.
 .It Cm rdspos
@@ -178,8 +179,8 @@ returns a 0 exit status when the operation(s) were successful,
 1 if the command was unrecognized, and 2 if an operation failed.
 .Sh DENSITY CODES
 The SCSI-3 specification defines a number of density codes for
-various tape media, some of which are listed here.  Note that
-many tape drive vendors also define model-specific codes.
+various tape media, some of which are listed here.
+Note that many tape drive vendors also define model-specific codes.
 .Pp
 .Bl -column "Code" "Format" -compact
 .It Em "Code	Format"

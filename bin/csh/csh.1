@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.34 2002/02/08 01:21:56 ross Exp $
+.\"	$NetBSD: csh.1,v 1.35 2002/09/25 15:18:37 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,8 @@ job control facilities (see
 interactive file name
 and user name completion (see
 .Sx File Name Completion ) ,
-and a C-like syntax. It is used both as an interactive
+and a C-like syntax.
+It is used both as an interactive
 login shell and a shell script command processor.
 .Ss Argument list processing
 If the first argument (argument 0) to the shell is
@@ -100,7 +101,8 @@ is the only flag specified).
 .It Fl m
 Read
 .Pa \&.cshrc
-even if not owned by the user.  This flag is normally given only by
+even if not owned by the user.
+This flag is normally given only by
 .Xr su 1 .
 .It Fl n
 Commands are parsed, but not executed.
@@ -199,7 +201,8 @@ following exceptions.
 The characters
 `\*[Am]' `\&|' `;' `\*[Lt]' `\*[Gt]' `(' `)'
 form separate words.
-If doubled in `\*[Am]\*[Am]', `\&|\&|', `\*[Lt]\*[Lt]' or `\*[Gt]\*[Gt]' these pairs form single words.
+If doubled in `\*[Am]\*[Am]',
+`\&|\&|', `\*[Lt]\*[Lt]' or `\*[Gt]\*[Gt]' these pairs form single words.
 These parser metacharacters may be made part of other words, or prevented their
 special meaning, by preceding them with `\e'.
 A newline preceded by a `\e' is equivalent to a blank.
@@ -231,20 +234,22 @@ waiting for it to terminate by following it with an `\*[Am]'.
 .Pp
 Any of the above may be placed in `(' `)' to form a simple command (that
 may be a component of a pipeline, etc.).
-It is also possible to separate pipelines with `\&|\&|' or `\*[Am]\*[Am]' showing,
-as in the C language,
+It is also possible to separate pipelines with `\&|\&|'
+or `\*[Am]\*[Am]' showing, as in the C language,
 that the second is to be executed only if the first fails or succeeds
-respectively. (See
-.Em Expressions . )
+respectively.
+(See
+.Sx Expressions . )
 .Ss Jobs
 The shell associates a
 .Ar job
-with each pipeline.  It keeps
+with each pipeline.
+It keeps
 a table of current jobs, printed by the
 .Ar jobs
-command, and assigns them small integer numbers.  When
-a job is started asynchronously with `\*[Am]', the shell prints a line that looks
-like:
+command, and assigns them small integer numbers.
+When a job is started asynchronously with `\*[Am]',
+the shell prints a line that looks like:
 .Bd -filled -offset indent
 .Op 1
 1234
@@ -257,8 +262,8 @@ If you are running a job and wish to do something else you may hit the key
 .Ic ^Z
 (control-Z) which sends a STOP signal to the current job.
 The shell will then normally show that the job has been `Stopped',
-and print another prompt.  You can then manipulate the state of this job,
-putting it in the
+and print another prompt.
+You can then manipulate the state of this job, putting it in the
 .Em background
 with the
 .Ar bg
@@ -272,7 +277,8 @@ A
 .Ic ^Z
 takes effect immediately and
 is like an interrupt in that pending output and unread input are discarded
-when it is typed.  There is another special key
+when it is typed.
+There is another special key
 .Ic ^Y
 that does not generate a STOP signal until a program attempts to
 .Xr read  2
@@ -281,15 +287,17 @@ This request can usefully be typed ahead when you have prepared some commands
 for a job that you wish to stop after it has read them.
 .Pp
 A job being run in the background will stop if it tries to read
-from the terminal.  Background jobs are normally allowed to produce output,
+from the terminal.
+Background jobs are normally allowed to produce output,
 but this can be disabled by giving the command ``stty tostop''.
 If you set this
 tty option, then background jobs will stop when they try to produce
 output like they do when they try to read input.
 .Pp
-There are several ways to refer to jobs in the shell.  The character
-`%' introduces a job name.  If you wish to refer to job number 1, you can
-name it as `%1'.  Just naming a job brings it to the foreground; thus
+There are several ways to refer to jobs in the shell.
+The character `%' introduces a job name.
+If you wish to refer to job number 1, you can name it as `%1'.
+Just naming a job brings it to the foreground; thus
 `%1' is a synonym for `fg %1', bringing job number 1 back into the foreground.
 Similarly saying `%1 \*[Am]' resumes job number 1 in the background.
 Jobs can also be named by prefixes of the string typed in to start them,
@@ -297,16 +305,18 @@ if these prefixes are unambiguous, thus `%ex' would normally restart
 a suspended
 .Xr ex  1
 job, if there were only one suspended job whose name began with
-the string `ex'.  It is also possible to say `%?string'
+the string `ex'.
+It is also possible to say `%?string'
 which specifies a job whose text contains
 .Ar string ,
 if there is only one such job.
 .Pp
 The shell maintains a notion of the current and previous jobs.
 In output about jobs, the current job is marked with a `+'
-and the previous job with a `\-'.  The abbreviation `%+' refers
-to the current job and `%\-' refers to the previous job.  For close
-analogy with the syntax of the
+and the previous job with a `\-'.
+The abbreviation `%+' refers
+to the current job and `%\-' refers to the previous job.
+For close analogy with the syntax of the
 .Ar history
 mechanism (described below),
 `%%' is also a synonym for the current job.
@@ -315,19 +325,22 @@ The job control mechanism requires that the
 .Xr stty 1
 option
 .Ic new
-be set. It is an artifact from a
+be set.
+It is an artifact from a
 .Em new
 implementation
 of the
 tty driver that allows generation of interrupt characters from
-the keyboard to tell jobs to stop.  See
+the keyboard to tell jobs to stop.
+See
 .Xr stty 1
 for details on setting options in the new tty driver.
 .Ss Status reporting
 This shell learns immediately whenever a process changes state.
 It normally informs you whenever a job becomes blocked so that
 no further progress is possible, but only just before it prints
-a prompt.  This is done so that it does not otherwise disturb your work.
+a prompt.
+This is done so that it does not otherwise disturb your work.
 If, however, you set the shell variable
 .Ar notify ,
 the shell will notify you immediately of changes of status in background
@@ -335,15 +348,18 @@ jobs.
 There is also a shell command
 .Ar notify
 that marks a single process so that its status changes will be immediately
-reported.  By default
+reported.
+By default
 .Ar notify
 marks the current process;
 simply say `notify' after starting a background job to mark it.
 .Pp
 When you try to leave the shell while jobs are stopped, you will
-be warned that `You have stopped jobs.'  You may use the
+be warned that `You have stopped jobs.'
+You may use the
 .Ar jobs
-command to see what they are.  If you do this or immediately try to
+command to see what they are.
+If you do this or immediately try to
 exit again, the shell will not warn you a second time, and the suspended
 jobs will be terminated.
 .Ss File Name Completion
@@ -391,7 +407,8 @@ incomplete, since there are two file names matching the prefix ``D''.
 If a partial file name is followed by the end-of-file character
 (usually control-D), then, instead of completing the name,
 .Nm
-will list all file names matching the prefix.  For example,
+will list all file names matching the prefix.
+For example,
 the input
 .Pp
 .Dl % vi D\*[Lt]control-D\*[Gt]
@@ -404,8 +421,8 @@ while the input line remains unchanged.
 .Pp
 The same system of escape and end-of-file can also be used to
 expand partial user names, if the word to be completed
-(or listed) begins with the character ``~''.  For example,
-typing
+(or listed) begins with the character ``~''.
+For example, typing
 .Pp
 .Dl cd ~ro\*[Lt]escape\*[Gt]
 .Pp
@@ -418,11 +435,13 @@ can be inhibited by setting the variable
 .Ar nobeep  .
 .Pp
 Normally, all files in the particular directory are candidates
-for name completion.  Files with certain suffixes can be excluded
+for name completion.
+Files with certain suffixes can be excluded
 from consideration by setting the variable
 .Ar fignore
 to the
-list of suffixes to be ignored.  Thus, if
+list of suffixes to be ignored.
+Thus, if
 .Ar fignore
 is set by
 the command
@@ -439,9 +458,11 @@ would result in the completion to
 .Pp
 ignoring the files "xmpl.o" and "xmpl.out".
 However, if the only completion possible requires not ignoring these
-suffixes, then they are not ignored.  In addition,
+suffixes, then they are not ignored.
+In addition,
 .Ar fignore
-does not affect the listing of file names by control-D.  All files
+does not affect the listing of file names by control-D.
+All files
 are listed regardless of their suffixes.
 .Ss Substitutions
 We now describe the various transformations the shell performs on the
@@ -497,8 +518,7 @@ as in `!d' for event 12 or `!wri' for event 9, or by a string contained in
 a word in the command as in `!?mic?' also referring to event 9.
 These forms, without further change, simply reintroduce the words
 of the specified events, each separated by a single blank.
-As a special case, `!!' refers to the previous command; thus `!!'
-alone is a
+As a special case, `!!' refers to the previous command; thus `!!' alone is a
 .Ar redo .
 .Pp
 To select words from an event we can follow the event specification by
@@ -565,7 +585,8 @@ Repeat the previous substitution.
 Apply the change once on each word, prefixing the above, e.g., `g\*[Am]'.
 .It a
 Apply the change as many times as possible on a single word, prefixing
-the above. It can be used together with `g' to apply a substitution
+the above.
+It can be used together with `g' to apply a substitution
 globally.
 .It p
 Print the new command line but do not execute it.
@@ -576,8 +597,8 @@ Like q, but break into words at blanks, tabs and newlines.
 .El
 .Pp
 Unless preceded by a `g' the change is applied only to the first
-modifiable word.  With substitutions, it is an error for no word to be
-applicable.
+modifiable word.
+With substitutions, it is an error for no word to be applicable.
 .Pp
 The left hand side of substitutions are not regular expressions in the sense
 of the editors, but instead strings.
@@ -612,8 +633,8 @@ from the command matching `?foo?'.
 .Pp
 A special abbreviation of a history reference occurs when the first
 non-blank character of an input line is a `\*(ua'.
-This is equivalent to `!:s\*(ua' providing a convenient shorthand for substitutions
-on the text of the previous line.
+This is equivalent to `!:s\*(ua' providing a convenient
+shorthand for substitutions on the text of the previous line.
 Thus `\*(ualb\*(ualib' fixes the spelling of
 `lib'
 in the previous command.
@@ -740,7 +761,8 @@ Braces insulate
 .Ar name
 from following characters that would otherwise be part of it.
 Shell variables have names consisting of up to 20 letters and digits
-starting with a letter.  The underscore character is considered a letter.
+starting with a letter.
+The underscore character is considered a letter.
 If
 .Ar name
 is not a shell variable, but is set in the environment, then
@@ -944,7 +966,8 @@ Note that the default standard input for a command run detached is
 modified to be the empty file
 .Pa /dev/null ;
 instead the standard input
-remains as the original standard input of the shell.  If this is a terminal
+remains as the original standard input of the shell.
+If this is a terminal
 and if the process attempts to read from the terminal, then the process
 will block and the user will be notified (see
 .Sx Jobs
@@ -973,7 +996,8 @@ The following operators are available:
 .Ed
 .Pp
 Here the precedence increases to the right,
-`==' `!=' `=~' and `!~', `\*[Le]' `\*[Ge]' `\*[Lt]' and `\*[Gt]', `\*[Lt]\*[Lt]' and `\*[Gt]\*[Gt]', `+' and `\-',
+`==' `!=' `=~' and `!~', `\*[Le]' `\*[Ge]' `\*[Lt]'
+and `\*[Gt]', `\*[Lt]\*[Lt]' and `\*[Gt]\*[Gt]', `+' and `\-',
 `*' `/' and `%' being, in groups, at the same level.
 The `==' `!=' `=~' and `!~' operators compare their arguments as strings;
 all others operate on numbers.
@@ -981,8 +1005,8 @@ The operators `=~' and `!~' are like `!=' and `==' except that the right
 hand side is a
 .Ar pattern
 (containing, e.g., `*'s, `?'s and instances of `[...]')
-against which the left hand operand is matched.  This reduces the
-need for use of the
+against which the left hand operand is matched.
+This reduces the need for use of the
 .Ar switch
 statement in shell scripts when all that is really needed is pattern matching.
 .Pp
@@ -992,7 +1016,8 @@ The result of all expressions are strings,
 which represent decimal numbers.
 It is important to note that no two components of an expression can appear
 in the same word; except when adjacent to components of expressions that
-are syntactically significant to the parser (`\*[Am]' `\&|' `\*[Lt]' `\*[Gt]' `(' `)'),
+are syntactically significant to the parser
+(`\*[Am]' `\&|' `\*[Lt]' `\*[Gt]' `(' `)'),
 they should be surrounded by spaces.
 .Pp
 Also available in expressions as primitive operands are command executions
@@ -1078,7 +1103,8 @@ or
 Shows the amount of dynamic memory acquired, broken down into used and
 free memory.
 With an argument shows the number of free and used blocks in each size
-category.  The categories start at size 8 and double at each step.
+category.
+The categories start at size 8 and double at each step.
 This command's output may vary across system types, since
 systems other than the VAX may use a different memory allocator.
 .Pp
@@ -1173,7 +1199,8 @@ The arguments are read as input to the shell and the resulting
 command(s) executed in the context of the current shell.
 This is usually used to execute commands
 generated as the result of command or variable substitution, since
-parsing occurs before these substitutions.  See
+parsing occurs before these substitutions.
+See
 .Xr tset  1
 for an example of using
 .Ic eval .
@@ -1375,8 +1402,9 @@ all limitations are given.
 If the
 .Fl h
 flag is given, the hard limits are used instead of the current
-limits.  The hard limits impose a ceiling on the values of
-the current limits.  Only the super-user may raise the hard limits,
+limits.
+The hard limits impose a ceiling on the values of the current limits.
+Only the super-user may raise the hard limits,
 but a user may lower or raise the current limits within the legal range.
 .Pp
 Resources controllable currently include
@@ -1398,7 +1426,8 @@ size of the automatically-extended stack region), and
 The
 .Ar maximum-use
 may be given as a (floating point or integer)
-number followed by a scale factor.  For all limits other than
+number followed by a scale factor.
+For all limits other than
 .Ar cputime
 the default scale is `k' or `kilobytes' (1024 bytes);
 a scale factor of `m' or `megabytes' may also be used.
@@ -1470,7 +1499,8 @@ All processes detached with `\*[Am]' are effectively
 .It Ic notify % Ns Ar job ...
 Causes the shell to notify the user asynchronously when the status of the
 current or specified jobs change; normally notification is presented
-before a prompt.  This is automatic if the shell variable
+before a prompt.
+This is automatic if the shell variable
 .Ic notify
 is set.
 .Pp
@@ -1527,17 +1557,19 @@ With a numeric argument,
 rotates the
 .Ar n Ns \'th
 argument of the directory
-stack around to be the top element and changes to it.  The members
+stack around to be the top element and changes to it.
+The members
 of the directory stack are numbered from the top starting at 0.
 .Pp
 .It Ic rehash
 Causes the internal hash table of the contents of the directories in
 the
 .Ic path
-variable to be recomputed.  This is needed if new commands are added
-to directories in the
+variable to be recomputed.
+This is needed if new commands are added to directories in the
 .Ic path
-while you are logged in.  This should only be necessary if you add
+while you are logged in.
+This should only be necessary if you add
 commands to one of your own directories, or if a systems programmer
 changes the contents of a system directory.
 .Pp
@@ -1600,7 +1632,8 @@ The last form sets the value of environment variable
 .Ar name
 to be
 .Ar value ,
-a single string.  The second form sets
+a single string.
+The second form sets
 .Ar name
 to an empty string.
 The most commonly used environment variables
@@ -1694,13 +1727,16 @@ If arguments are given
 the specified simple command is timed and a time summary
 as described under the
 .Ic time
-variable is printed.  If necessary, an extra shell is created to print the time
+variable is printed.
+If necessary, an extra shell is created to print the time
 statistic when the command completes.
 .Pp
 .It Ic umask
 .It Ic umask Ar value
 The file creation mask is displayed (first form) or set to the specified
-value (second form).  The mask is given in octal.  Common values for
+value (second form).
+The mask is given in octal.
+Common values for
 the mask are 002 giving all access to the group and read and execute
 access to others or 022 giving all access except write access for
 users in the group or others.
@@ -1725,9 +1761,11 @@ If no
 .Ar resource
 is specified, then all
 .Ar resource
-limitations are removed.  If
+limitations are removed.
+If
 .Fl h
-is given, the corresponding hard limits are removed.  Only the
+is given, the corresponding hard limits are removed.
+Only the
 super-user may do this.
 .Pp
 .It Ic unset Ar pattern
@@ -1739,7 +1777,8 @@ It is not an error for nothing to be
 .Pp
 .It Ic unsetenv Ar pattern
 Removes all variables whose name match the specified pattern from the
-environment.  See also the
+environment.
+See also the
 .Ic setenv
 command above and
 .Xr printenv  1  .
@@ -1882,7 +1921,8 @@ since these substitutions are then done selectively.
 Enable file name completion.
 .It Ic histchars
 Can be given a string value to change the characters used in history
-substitution.  The first character of its value is used as the
+substitution.
+The first character of its value is used as the
 history substitution character, replacing the default character `!'.
 The second character of its value replaces the character `^' in
 quick substitutions.
@@ -1965,7 +2005,8 @@ variable after reading
 .Ar \&.cshrc ,
 and each time the
 .Ar path
-variable is reset.  If new commands are added to these directories
+variable is reset.
+If new commands are added to these directories
 while the shell is active, it may be necessary to do a
 .Ic rehash
 or the commands may not be found.
@@ -2003,10 +2044,10 @@ Builtin commands that fail return exit status `1',
 all other builtin commands set status to `0'.
 .It Ic time
 Controls automatic timing of commands.
-This setting allows two parameters.  The first specifies the CPU time
-threshold at which reporting should be done for a process, and the optional
-second specifies the output format.  The following format strings are
-available:
+This setting allows two parameters.
+The first specifies the CPU time threshold at which reporting should be done
+for a process, and the optional second specifies the output format.
+The following format strings are available:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
 .It Li \&%c
@@ -2189,8 +2230,7 @@ substitutions on a single line to 20.
 .Nm
 appeared in
 .Bx 3 .
-It
-was a first implementation of a command language interpreter
+It was a first implementation of a command language interpreter
 incorporating a history mechanism (see
 .Sx History Substitutions ) ,
 job control facilities (see
@@ -2217,16 +2257,17 @@ as the job may have changed directories internally.
 .Pp
 Shell builtin functions are not stoppable/restartable.
 Command sequences of the form `a ; b ; c' are also not handled gracefully
-when stopping is attempted.  If you suspend `b', the shell will
-immediately execute `c'.  This is especially noticeable if this
-expansion results from an
+when stopping is attempted.
+If you suspend `b', the shell will immediately execute `c'.
+This is especially noticeable if this expansion results from an
 .Ar alias .
 It suffices to place the sequence of commands in ()'s to force it to
 a subshell, i.e., `( a ; b ; c )'.
 .Pp
 Control over tty output after processes are started is primitive;
 perhaps this will inspire someone to work on a good virtual
-terminal interface.  In a virtual terminal interface much more
+terminal interface.
+In a virtual terminal interface much more
 interesting things could be done with output control.
 .Pp
 Alias substitution is most often used to clumsily simulate shell procedures;
@@ -2236,7 +2277,8 @@ Commands within loops, prompted for by `?', are not placed on the
 .Ic history
 list.
 Control structure should be parsed instead of being recognized as built-in
-commands.  This would allow control commands to be placed anywhere,
+commands.
+This would allow control commands to be placed anywhere,
 to be combined with `\&|', and to be used with `\*[Am]' and `;' metasyntax.
 .Pp
 It should be possible to use the `:' modifiers on the output of command
