@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.87 1994/02/24 05:03:03 mycroft Exp $
+ *	$Id: machdep.c,v 1.88 1994/02/25 21:11:50 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -468,6 +468,15 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ss = _udatasel;
 }
 
+static __inline int
+verr(u_short sel)
+{
+	int eflags;
+
+	__asm __volatile("verr %1\n\tlahf" : "=a" (eflags) : "g" (sel));
+	return (eflags & (PSL_Z << 8));
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -516,31 +525,27 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 
 	/*
-	 * Sanity check the user's selectors and error if they
-	 * are suspect.
+	 * Sanity check the user's selectors and error if they are suspect.
+	 * We assume that swtch() has loaded the correct LDT descriptor, so
+	 * we can just use the `verr' instruction.  We further assume that
+	 * none of the segments we wish to protect are conforming.  (If they
+	 * were, this check wouldn't help much anyway.)
 	 */
-#define max_ldt_sel(pcb) \
-	((pcb)->pcb_ldt ? (pcb)->pcb_ldt_len : (sizeof(ldt) / sizeof(ldt[0])))
-
-#define valid_ldt_sel(sel) \
-	(ISLDT(sel) && ISPL(sel) == SEL_UPL && \
-	 IDXSEL(sel) < max_ldt_sel(&p->p_addr->u_pcb))
+#define	valid_sel(sel) \
+	(ISPL(sel) == SEL_UPL && verr(sel))
 
 #define null_sel(sel) \
 	(!ISLDT(sel) && IDXSEL(sel) == 0)
 
-	if ((context.sc_cs&0xffff != _ucodesel && !valid_ldt_sel(context.sc_cs)) ||
-	    (context.sc_ss&0xffff != _udatasel && !valid_ldt_sel(context.sc_ss)) ||
-	    (context.sc_ds&0xffff != _udatasel && !valid_ldt_sel(context.sc_ds) &&
-	     !null_sel(context.sc_ds)) ||
-	    (context.sc_es&0xffff != _udatasel && !valid_ldt_sel(context.sc_es) &&
-	     !null_sel(context.sc_es))) {
+	if (!valid_sel(context.sc_cs) ||
+	    !valid_sel(context.sc_ss) ||
+	    (!valid_sel(context.sc_ds) && !null_sel(context.sc_ds)) ||
+	    (!valid_sel(context.sc_es) && !null_sel(context.sc_es))) {
 		trapsignal(p, SIGBUS, T_PROTFLT);
 		return(EINVAL);
 	}
 
-#undef max_ldt_sel
-#undef valid_ldt_sel
+#undef valid_ldt
 #undef null_sel
 
 	p->p_sigacts->ps_onstack = context.sc_onstack & 01;
