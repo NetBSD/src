@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.147 2003/10/29 21:44:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.148 2003/10/29 22:05:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.147 2003/10/29 21:44:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.148 2003/10/29 22:05:15 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -272,7 +272,7 @@ atabus_thread(arg)
 		s = splbio();
 		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
 		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
-		     chp->ch_queue->queue_freese == 0)) {
+		     chp->ch_queue->queue_freeze == 0)) {
 			chp->ch_flags &= ~WDCF_TH_RUN;
 			tsleep(&chp->thread, PRIBIO, "atath", 0);
 			chp->ch_flags |= WDCF_TH_RUN;
@@ -288,22 +288,22 @@ atabus_thread(arg)
 				chp->ch_drive[drive].state = 0;
 			}
 			chp->ch_flags &= ~WDCF_TH_RESET;
-			chp->ch_queue->queue_freese--;
+			chp->ch_queue->queue_freeze--;
 			wdcstart(chp);
 		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
-		    chp->ch_queue->queue_freese == 1) {
+		    chp->ch_queue->queue_freeze == 1) {
 			/*
-			 * caller has bumped queue_freese, decrease it
+			 * caller has bumped queue_freeze, decrease it
 			 */
-			chp->ch_queue->queue_freese--;
+			chp->ch_queue->queue_freeze--;
 			xfer = chp->ch_queue->sc_xfer.tqh_first;
 #ifdef DIAGNOSTIC
 			if (xfer == NULL)
 				panic("channel active with no xfer ?");
 #endif
 			xfer->c_start(chp, xfer);
-		} else if (chp->ch_queue->queue_freese > 1) {
-			panic("queue_freese");
+		} else if (chp->ch_queue->queue_freeze > 1) {
+			panic("queue_freeze");
 		}
 		splx(s);
 	}
@@ -784,7 +784,7 @@ wdcattach(chp)
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
-	chp->ch_queue->queue_freese = 0;
+	chp->ch_queue->queue_freeze = 0;
 
 	chp->atabus = config_found(&chp->wdc->sc_dev, chp, atabusprint);
 }
@@ -988,7 +988,7 @@ wdcstart(chp)
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
 	}
-	if (__predict_false(chp->ch_queue->queue_freese > 0)) {
+	if (__predict_false(chp->ch_queue->queue_freeze > 0)) {
 		return; /* queue froozen */
 	}
 #ifdef DIAGNOSTIC
@@ -1083,7 +1083,7 @@ wdc_reset_channel(drvp, flags)
 	    DEBUG_FUNCS);
 	if ((flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_TH_RESET;
-		chp->ch_queue->queue_freese++;
+		chp->ch_queue->queue_freeze++;
 		wakeup(&chp->thread);
 		return;
 	}
@@ -1319,10 +1319,10 @@ wdcwait(chp, mask, bits, timeout, flags)
 				 * ask the thread to come back here
 				 */
 #ifdef DIAGNOSTIC
-				if (chp->ch_queue->queue_freese > 0)
-					panic("wdcwait: queue_freese");
+				if (chp->ch_queue->queue_freeze > 0)
+					panic("wdcwait: queue_freeze");
 #endif
-				chp->ch_queue->queue_freese++;
+				chp->ch_queue->queue_freeze++;
 				wakeup(&chp->thread);
 				return(WDCWAIT_THR);
 			}
