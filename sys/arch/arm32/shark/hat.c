@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.4 1998/07/08 05:01:17 thorpej Exp $	*/
+/*	$NetBSD: hat.c,v 1.5 2001/05/09 17:34:40 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,10 +51,11 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
+#include <dev/ic/i8253reg.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <arm32/isa/timerreg.h>
 #include <arm32/shark/fiq.h>
 #include <arm32/shark/sequoia.h>
 

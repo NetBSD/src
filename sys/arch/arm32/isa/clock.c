@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2000/12/12 06:06:06 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2001/05/09 17:34:40 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -135,8 +135,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/i8253reg.h>
 #include <arm32/isa/nvram.h>
-#include <arm32/isa/timerreg.h>
 #include <arm32/isa/spkrreg.h>
 
 #ifdef SHARK
