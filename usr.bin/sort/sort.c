@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.30 2002/12/24 13:09:38 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.31 2002/12/24 14:55:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.30 2002/12/24 13:09:38 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.31 2002/12/24 14:55:46 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -107,9 +107,17 @@ main(argc, argv)
 	struct field *ftpos;
 	struct filelist filelist;
 	FILE *outfp = NULL;
+	struct rlimit rl;
 
 	setlocale(LC_ALL, "");
 
+	/* bump RLIMIT_NOFILE to maximum our hard limit allows */
+	if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+		err(2, "getrlimit");
+	rl.rlim_cur = rl.rlim_max;
+	if (setrlimit(RLIMIT_NOFILE, &rl) < 0)
+		err(2, "setrlimit");
+	
 	d_mask[REC_D = '\n'] = REC_D_F;
 	SINGL_FLD = SEP_FLAG = 0;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
