@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.9 1993/08/14 22:21:45 mycroft Exp $
+#	$Id: Makefile,v 1.10 1993/11/08 04:45:28 cgd Exp $
 
 PROG=	hack
 CFLAGS+=-I.
@@ -27,7 +27,7 @@ hack.onames.h: makedefs def.objects.h
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
-	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
+	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
 	@if [ ! -d ${DESTDIR}/var/games/hackdir ]; then \
