@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.36 2000/08/19 14:38:19 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.37 2000/09/24 13:09:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -5649,3 +5649,20 @@ int netbsd32_fhstatfs(p, v, retval)
 	NETBSD32TOP_UAP(buf, struct statfs);
 	return (sys_fhstatfs(p, &ua, retval));
 }
+
+/* virtual memory syscalls */
+int
+netbsd32_ovadvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_ovadvise_args /* {
+		syscallarg(int) anom;
+	} */ *uap = v;
+	struct sys_ovadvise_args ua;
+
+	NETBSD32TO64_UAP(anom);
+	return (sys_ovadvise(p, &ua, retval));
+}
+
