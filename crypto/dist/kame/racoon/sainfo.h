@@ -1,4 +1,4 @@
-/*	$KAME: sainfo.h,v 1.7 2000/10/11 19:54:08 sakane Exp $	*/
+/*	$KAME: sainfo.h,v 1.8 2003/06/27 07:32:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,8 +44,7 @@ struct sainfo {
 	time_t lifetime;
 	int lifebyte;
 	int pfs_group;		/* only use when pfs is required. */
-	int idvtype;		/* my identifier type */
-	vchar_t *idv;		/* my identifier */
+	vchar_t *id_i;		/* identifier of the authorized initiator */
 	struct sainfoalg *algs[MAXALGCLASS];
 
 	LIST_ENTRY(sainfo) chain;
@@ -58,7 +57,8 @@ struct sainfoalg {
 	struct sainfoalg *next;
 };
 
-extern struct sainfo *getsainfo __P((const vchar_t *, const vchar_t *));
+extern struct sainfo *getsainfo __P((const vchar_t *,
+	const vchar_t *, const vchar_t *));
 extern struct sainfo *newsainfo __P((void));
 extern void delsainfo __P((struct sainfo *));
 extern void inssainfo __P((struct sainfo *));
