@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_add.3,v 1.1 2002/10/21 13:55:08 blymn Exp $
+.\"	$NetBSD: curses_add.3,v 1.2 2002/10/21 13:59:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@netbsd.org, brett_lymn@yahoo.com.au)
@@ -65,7 +65,7 @@ at the current cursor position and advances the current cursor
 position by one.  Any character attributes currently set will be
 applied to the added character.  The
 .Fn waddch
-function is the same as the 
+function is the same as the
 .Fn addch
 function excepting that the character is added to the window specified.
 .Pp
@@ -80,13 +80,13 @@ effect at the time will be applied to the added string,
 does the same thing but adds the string to the specified window.
 Similarly,
 .Fn addnstr
-will add the contents of 
+will add the contents of
 .Fa string
-to 
+to
 .Dv stdscr
 but will limit the number of characters added to be, at most,
 .Fa len .
-If 
+If
 .Fa len
 is -1 then
 .Fa addnstr
