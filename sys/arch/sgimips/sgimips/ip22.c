@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.19 2003/12/14 05:23:12 sekiya Exp $	*/
+/*	$NetBSD: ip22.c,v 1.20 2003/12/14 07:53:10 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.19 2003/12/14 05:23:12 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.20 2003/12/14 07:53:10 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -83,50 +83,66 @@ ip22_init(void)
 	unsigned long cps;
 	unsigned long ctrdiff[3];
 
-	mach_type = MACH_SGI_IP22;
-
-	/* enable watchdog timer, clear it */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
-
-	sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
-
-	if (sysid & 1)
-		mach_subtype = MACH_SGI_IP22_FULLHOUSE;
+	if ( !strcmp(cpu_model, "SGI-IP20"))
+	{
+		mach_type = MACH_SGI_IP20;
+		int23addr = 0x1fb801c0;
+	}
 	else
-		mach_subtype = MACH_SGI_IP22_GUINESS;
+	{
+		mach_type = MACH_SGI_IP22;
+		sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
+		if (sysid & 1)
+		{
+			mach_subtype = MACH_SGI_IP22_FULLHOUSE;
+			int23addr = 0x1fbd9000;
+		}
+		else
+		{
+			mach_subtype = MACH_SGI_IP22_GUINESS;
+			int23addr = 0x1fbd9880;
+		}
 
-	mach_boardrev = (sysid >> 1) & 0x0f;
+		mach_boardrev = (sysid >> 1) & 0x0f;
 
-	printf("IOC rev %d, machine %s, board rev %d\n", (sysid >> 5) & 0x07,
-	    (sysid & 1) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
-	    (sysid >> 1) & 0x0f);
+		printf("IOC rev %d, machine %s, board rev %d\n",
+			(sysid >> 5) & 0x07,
+	    		(sysid & 1) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
+	    		(sysid >> 1) & 0x0f);
 
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		int23addr = 0x1fbd9000;
-	else
-		int23addr = 0x1fbd9880;
+		/*
+	 	 * Reset Parallel port, Keyboard/mouse and EISA.  Turn LED off.
+	 	 * For Fullhouse, toggle magic GIO reset bit.
+	 	 */
 
-	/* Reset timer interrupts */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x20) = 3;
+		iocreset = 0x17;
+		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
+			iocreset |= 0x08;
 
-	/*
-	 * Reset Parallel port, Keyboard/mouse and EISA.  Turn LED off.
-	 * For Fullhouse, toggle magic GIO reset bit.
-	 */
-	iocreset = 0x17;
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		iocreset |= 0x08;
+		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9870) = iocreset;
 
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9870) = iocreset;
+		/*
+	 	 * Set the 10BaseT port to use UTP cable, set autoselect mode
+		 * for the ethernet interface (AUI vs. TP), set the two serial
+		 * ports to PC mode.
+		 */
 
-	/*
-	 * Set the 10BaseT port to use UTP cable, set autoselect mode for
-	 * the ethernet interface (AUI vs. TP), set the two serial ports
-	 * to PC mode.
-	 */
-	iocwrite = 0x3a;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9878) = iocwrite;
+		iocwrite = 0x3a;
+		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9878) = iocwrite;
+
+		/* Set the general control registers for Guiness */
+		if (mach_subtype == MACH_SGI_IP22_GUINESS) {
+			*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9848) = 0xff;
+			*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd984c) = 0xff;
+		}
+
+		/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
+		intrtab[7].ih_fun = ip22_mappable_intr;
+		intrtab[7].ih_arg	= (void*) 0;
+
+		intrtab[11].ih_fun = ip22_mappable_intr;
+		intrtab[11].ih_arg	= (void*) 1;
+	}
 
 	/* Clean out interrupt masks */
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x04) = 0x00;
@@ -135,11 +151,16 @@ ip22_init(void)
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14) = 0x00;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18) = 0x00;
 
-	/* Set the general control registers for Guiness */
-	if (mach_subtype == MACH_SGI_IP22_GUINESS) {
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9848) = 0xff;
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd984c) = 0xff;
-	}
+
+	/* enable watchdog timer, clear it */
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
+
+
+	/* Reset timer interrupts */
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x20) = 3;
+
+
 
 	platform.iointr = ip22_intr;
 	platform.bus_reset = ip22_bus_reset;
@@ -149,13 +170,6 @@ ip22_init(void)
 	netmask = 0x0700;
 	ttymask = 0x0f00;
 	clockmask = 0xbf00;
-
-	/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
-	intrtab[7].ih_fun = ip22_mappable_intr;
-	intrtab[7].ih_arg	= (void*) 0;
-
-	intrtab[11].ih_fun = ip22_mappable_intr;
-	intrtab[11].ih_arg	= (void*) 1;
 
 	/* Prime cache */
 	ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
