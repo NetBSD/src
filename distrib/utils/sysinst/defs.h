@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.73 2002/12/05 01:17:15 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.74 2003/01/10 20:00:27 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,7 +40,6 @@
 
 /* System includes needed for this. */
 #include <sys/types.h>
-#define FSTYPENAMES
 #include <sys/disklabel.h>
 
 #include "msg_defs.h"
@@ -77,8 +76,8 @@
 
 /* Round up to the next full cylinder size */
 #define NUMSEC(size,sizemult,cylsize) \
-	((size == -1) ? -1 : (sizemult == 1) ? (size) : \
-	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
+	(((int)(size) == -1) ? -1 : (int)((sizemult == 1) ? (size) : \
+	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize)))
 
 /* What FS type? */
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \

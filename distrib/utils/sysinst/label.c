@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.23 2002/12/23 10:29:57 jdolecek Exp $	*/
+/*	$NetBSD: label.c,v 1.24 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.23 2002/12/23 10:29:57 jdolecek Exp $");
+__RCSID("$NetBSD: label.c,v 1.24 2003/01/10 20:00:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -156,7 +156,7 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 	int rawpart;
 	int bsdpart;
 {
-	while (1) {
+	for (;;) {
 		int i, j;
 
 		/* first give the user the option to edit the label... */
@@ -198,7 +198,9 @@ emptylabel(lp)
 	}
 }
 
+#ifdef notdef
 int
+/*ARGSUSED*/
 savenewlabel(lp, nparts)
 	partinfo *lp;
 	int nparts;
@@ -248,6 +250,7 @@ savenewlabel(lp, nparts)
 	fflush(NULL);
 	return(0);
 }
+#endif
 
 
 /*
@@ -335,7 +338,7 @@ getpartoff(msg_no, defpartstart)
 	int i, localsizemult, partn;
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
-	while (1) {
+	for (;;) {
 		msg_table_add(MSG_label_offset_special, maxpartc, maxpartc);
 		snprintf (isize, 20, "%d", (defpartstart)/sizemult);
 		msg_prompt_add(msg_no, (defpartstart > 0) ? isize : NULL,
@@ -382,7 +385,7 @@ getpartsize(msg_no, partstart, defpartsize)
 	int partn;
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
-	while (1) {
+	for (;;) {
 		msg_table_add(MSG_label_size_special, maxpartc);
 		snprintf (isize, 20, "%d", (defpartsize)/sizemult);
 		msg_prompt_add (msg_no, (defpartsize != 0) ? isize : 0,

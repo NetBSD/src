@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.4 2001/01/14 02:38:14 mrg Exp $	*/
+/*	$NetBSD: geom.c,v 1.5 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -56,7 +56,7 @@ get_geom(disk, l)
 	if (fd < 0) 
 		return 0;
 
-	if (ioctl(fd, DIOCGDEFLABEL, (char *)l) < 0) {
+	if (ioctl(fd, DIOCGDEFLABEL, l) < 0) {
 		(void)close(fd);
 		return 0;
 	}
@@ -77,7 +77,7 @@ get_real_geom(disk, l)
 	if (fd < 0) 
 		return 0;
 
-	if (ioctl(fd, DIOCGDINFO, (char *)l) < 0) {
+	if (ioctl(fd, DIOCGDINFO, l) < 0) {
 		(void)close(fd);
 		return 0;
 	}

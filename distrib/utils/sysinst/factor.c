@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.11 2000/12/22 10:12:12 mrg Exp $ */
+/*	$NetBSD: factor.c,v 1.12 2003/01/10 20:00:28 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,8 +42,6 @@
 
 #include <stdio.h>
 
-static void build_primes (long max);
-void factor (long val, long *fact_list, int fact_size, int *num_fact);
 
 /*
  * primes - prime table, built to include up to 46345 because
@@ -53,8 +51,12 @@ void factor (long val, long *fact_list, int fact_size, int *num_fact);
  * about 19K of space on the binary image.  
  */
 
+#ifdef TESTING
 long primes[4800];
 int  num_primes = 2;
+
+static void build_primes (long max);
+void factor (long val, long *fact_list, int fact_size, int *num_fact);
 
 static void
 build_primes(max)
@@ -118,7 +120,6 @@ factor(val, fact_list, fact_size, num_fact)
 }
 
 
-#ifdef TESTING
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.29 2002/12/05 01:17:16 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.30 2003/01/10 20:00:28 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,6 +111,7 @@ static void convert_mbr_chs (int, int, int, u_int8_t *, u_int8_t *,
 				 u_int8_t *, u_int32_t);
 
 
+#ifdef notdef
 /*
  * First, geometry  stuff...
  */
@@ -120,6 +121,7 @@ check_geom()
 
 	return bcyl <= 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
 }
+#endif
 
 /*
  * get C/H/S geometry from user via menu interface and
@@ -145,6 +147,7 @@ set_bios_geom(cyl, head, sec)
 	bsec = atoi(res);
 }
 
+#ifdef notdef
 void
 disp_cur_geom()
 {
@@ -152,6 +155,7 @@ disp_cur_geom()
 	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
 	msg_display_add(MSG_biosgeom, bcyl, bhead, bsec);
 }
+#endif
 
 
 /*
@@ -194,7 +198,6 @@ edit_mbr(partition)
 		int otherparts = 0;
 		int ourparts = 0;
 
-		int i;
 		/* Count nonempty, non-BSD partitions. */
 		for (i = 0; i < NMBRPART; i++) {
 			otherparts += otherpart(part[i].mbrp_typ);
@@ -403,7 +406,7 @@ disp_cur_part(part, sel, disp)
 int
 read_mbr(disk, buf, len)
 	char *disk, *buf;
-	int len;
+	size_t len;
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i;
@@ -414,7 +417,7 @@ read_mbr(disk, buf, len)
 	if (fd < 0) 
 		return -1;
 
-	if (lseek(fd, MBR_BBSECTOR * MBR_SECSIZE, SEEK_SET) < 0) {
+	if (lseek(fd, (off_t)(MBR_BBSECTOR * MBR_SECSIZE), SEEK_SET) < 0) {
 		close(fd);
 		return -1;
 	}
@@ -424,7 +427,7 @@ read_mbr(disk, buf, len)
 	}
 
 	if (valid_mbr(buf)) {
-		mbrp = (struct mbr_partition *)&buf[MBR_PARTOFF];
+		mbrp = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
 		for (i = 0; i < NMBRPART; i++) {
 			if (mbrp[i].mbrp_typ != 0) {
 				mbrp[i].mbrp_start =
@@ -446,7 +449,7 @@ read_mbr(disk, buf, len)
 int
 write_mbr(disk, buf, len, convert)
 	char *disk, *buf;
-	int len;
+	size_t len;
 	int convert;
 {
 	char diskpath[MAXPATHLEN];
@@ -459,12 +462,12 @@ write_mbr(disk, buf, len, convert)
 	if (fd < 0) 
 		return -1;
 
-	if (lseek(fd, MBR_BBSECTOR * MBR_SECSIZE, SEEK_SET) < 0) {
+	if (lseek(fd, (off_t)(MBR_BBSECTOR * MBR_SECSIZE), SEEK_SET) < 0) {
 		close(fd);
 		return -1;
 	}
 
-	mbrp = (struct mbr_partition *)&buf[MBR_PARTOFF];
+	mbrp = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_start == 0 &&
 		    mbrp[i].mbrp_size == 0) {
@@ -503,7 +506,7 @@ valid_mbr(buf)
 {
 	u_int16_t magic;
 
-	magic = *((u_int16_t *)&buf[MBR_MAGICOFF]);
+	magic = *((u_int16_t *)(void *)&buf[MBR_MAGICOFF]);
 
 	return (le_to_native16(magic) == MBR_MAGIC);
 }
@@ -547,7 +550,7 @@ guess_biosgeom_from_mbr(buf, cyl, head, sec)
 	char *buf;
 	int *cyl, *head, *sec;
 {
-	struct mbr_partition *parts = (struct mbr_partition *)&buf[MBR_PARTOFF];
+	struct mbr_partition *parts = (struct mbr_partition *)(void *)&buf[MBR_PARTOFF];
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
 	int c1, h1, s1, c2, h2, s2;
 	long a1, a2;
@@ -565,7 +568,7 @@ guess_biosgeom_from_mbr(buf, cyl, head, sec)
 			num = (quad_t)h1*(a2-s2) - (quad_t)h2*(a1-s1);
 			denom = (quad_t)c2*(a1-s1) - (quad_t)c1*(a2-s2);
 			if (denom != 0 && num % denom == 0) {
-				heads = num / denom;
+				heads = (int)(num / denom);
 				break;
 			}
 		}
@@ -583,7 +586,7 @@ guess_biosgeom_from_mbr(buf, cyl, head, sec)
 		num = a1 - s1;
 		denom = c1 * heads + h1;
 		if (denom != 0 && num % denom == 0) {
-			sectors = num / denom;
+			sectors = (int)(num / denom);
 			break;
 		}
 	}
@@ -623,20 +626,20 @@ get_mapping(parts, i, cylinder, head, sector, absolute)
 	int i, *cylinder, *head, *sector;
 	long *absolute;
 {
-	struct mbr_partition *part = &parts[i / 2];
+	struct mbr_partition *apart = &parts[i / 2];
 
-	if (part->mbrp_typ == 0)
+	if (apart->mbrp_typ == 0)
 		return -1;
 	if (i % 2 == 0) {
-		*cylinder = MBR_PCYL(part->mbrp_scyl, part->mbrp_ssect);
-		*head = part->mbrp_shd;
-		*sector = MBR_PSECT(part->mbrp_ssect) - 1;
-		*absolute = part->mbrp_start;
+		*cylinder = MBR_PCYL(apart->mbrp_scyl, part->mbrp_ssect);
+		*head = apart->mbrp_shd;
+		*sector = MBR_PSECT(apart->mbrp_ssect) - 1;
+		*absolute = apart->mbrp_start;
 	} else {
-		*cylinder = MBR_PCYL(part->mbrp_ecyl, part->mbrp_esect);
-		*head = part->mbrp_ehd;
-		*sector = MBR_PSECT(part->mbrp_esect) - 1;
-		*absolute = part->mbrp_start + part->mbrp_size - 1;
+		*cylinder = MBR_PCYL(apart->mbrp_ecyl, apart->mbrp_esect);
+		*head = apart->mbrp_ehd;
+		*sector = MBR_PSECT(apart->mbrp_esect) - 1;
+		*absolute = apart->mbrp_start + apart->mbrp_size - 1;
 	}
 	return 0;
 }
