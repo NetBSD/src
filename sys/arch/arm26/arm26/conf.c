@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.7 2001/10/16 23:58:29 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.8 2002/01/12 12:36:31 manu Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.7 2001/10/16 23:58:29 bjh21 Exp $");
+__RCSID("$NetBSD: conf.c,v 1.8 2002/01/12 12:36:31 manu Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -83,6 +83,8 @@ cdev_decl(vc_nb_);
 cdev_decl(raid);
 bdev_decl(raid);
 cons_decl(rs);
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw bdevsw[] = {
 	bdev_swap_init(1, sw),		/* 0: swap pseudo-device */
@@ -128,6 +130,7 @@ struct cdevsw cdevsw[] = {
 	cdev_rnd_init(NRND,rnd),	/* 24: random source pseudo-device */
        	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 25: coda file system psdev */
 	cdev_disk_init(NRAID,raid),    	/* 26: RAIDframe disk driver */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 27: clockctl pseudo device */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -197,6 +200,7 @@ static int chrtoblktbl[] = {
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	7,		/* raid */
+	/* 27 */	NODEV,
 };
 
 /*
