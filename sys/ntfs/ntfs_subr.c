@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.8 1999/08/18 13:35:44 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.9 1999/08/18 16:25:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1982,7 +1982,7 @@ ntfs_toupper_unuse()
 #ifdef DIAGNOSTIC
 	else if (ntfs_toupper_usecount < 0) {
 		panic("ntfs_toupper_unuse(): use count negative: %d\n",
-			ntfs_toupper_used);
+			ntfs_toupper_usecount);
 	}
 #endif
 	
