@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.112.2.2 2003/07/03 01:32:56 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112.2.3 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,6 +43,8 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
+
+struct namecache;
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -92,7 +90,6 @@ struct vnode {
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
-	u_long		v_id;			/* capability identifier */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op) __P((void *));	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
@@ -100,6 +97,8 @@ struct vnode {
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
+	LIST_HEAD(, namecache) v_dnclist;	/* namecaches for children */
+	LIST_HEAD(, namecache) v_nclist;	/* namecaches for our parent */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -256,6 +255,12 @@ extern const int	vttoif_tab[];
 #define	WRITECLOSE	0x0004		/* vflush: only close writable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
+					/* vn_start_write: */
+#define	V_WAIT		0x0001		/*  sleep for suspend */
+#define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
+#define	V_SLEEPONLY	0x0004		/*  just return after sleep */
+#define V_PCATCH	0x0008		/*  sleep witch PCATCH set */
+#define V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
@@ -284,9 +289,12 @@ extern struct simplelock vnode_free_list_slock;
 #define	ilstatic static
 #endif
 
-ilstatic void holdrele(struct vnode *);
-ilstatic void vhold(struct vnode *);
+ilstatic void holdrelel(struct vnode *);
+ilstatic void vholdl(struct vnode *);
 ilstatic void vref(struct vnode *);
+
+static __inline void holdrele(struct vnode *) __attribute__((__unused__));
+static __inline void vhold(struct vnode *) __attribute__((__unused__));
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
@@ -295,12 +303,13 @@ ilstatic void vref(struct vnode *);
 
 /*
  * decrease buf or page ref
+ *
+ * called with v_interlock held
  */
 static __inline void
-holdrele(struct vnode *vp)
+holdrelel(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
 	vp->v_holdcnt--;
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
@@ -309,17 +318,17 @@ holdrele(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 		simple_unlock(&vnode_free_list_slock);
 	}
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
  * increase buf or page ref
+ *
+ * called with v_interlock held
  */
 static __inline void
-vhold(struct vnode *vp)
+vholdl(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
@@ -328,7 +337,6 @@ vhold(struct vnode *vp)
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
@@ -343,6 +351,30 @@ vref(struct vnode *vp)
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
+
+/*
+ * decrease buf or page ref
+ */
+static __inline void
+holdrele(struct vnode *vp)
+{
+
+	simple_lock(&vp->v_interlock);
+	holdrelel(vp);
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * increase buf or page ref
+ */
+static __inline void
+vhold(struct vnode *vp)
+{
+
+	simple_lock(&vp->v_interlock);
+	vholdl(vp);
+	simple_unlock(&vp->v_interlock);
+}
 
 #define	NULLVP	((struct vnode *)NULL)
 
@@ -507,6 +539,102 @@ struct vop_generic_args {
 #define	VOFFSET(OP) (VDESC(OP)->vdesc_offset)
 
 /*
+ * Functions to gate filesystem write operations. Declared static inline
+ * here because they usually go into time critical code paths.
+ */
+#include <sys/mount.h>
+
+/*
+ * Preparing to start a filesystem write operation. If the operation is
+ * permitted, then we bump the count of operations in progress and
+ * proceed. If a suspend request is in progress, we wait until the
+ * suspension is over, and then proceed.
+ * V_PCATCH    adds PCATCH to the tsleep flags.
+ * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
+ * V_SLEEPONLY wait, but do not bump the operations count.
+ * V_LOWER     this is a lower level operation. No further vnodes should be
+ *             locked. Otherwise it is a upper level operation. No vnodes
+ *             should be locked.
+ */
+static inline int
+vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
+{
+	struct mount *mp;
+	int error, mask, prio;
+
+	/*
+	 * If a vnode is provided, get and return the mount point that
+	 * to which it will write.
+	 */
+	if (vp != NULL) {
+		*mpp = vp->v_mount;
+	}
+	if ((mp = *mpp) == NULL)
+		return (0);
+	mp = mp->mnt_leaf;
+	/*
+	 * Check on status of suspension.
+	 */
+	prio = PUSER - 1;
+	if (flags & V_PCATCH)
+		prio |= PCATCH;
+
+	if ((flags & V_LOWER) == 0)
+		mask = IMNT_SUSPEND;
+	else
+		mask = IMNT_SUSPENDLOW;
+
+	while ((mp->mnt_iflag & mask) != 0) {
+		if ((flags & V_WAIT) == 0)
+			return (EWOULDBLOCK);
+		error = tsleep(&mp->mnt_flag, prio, "suspfs", 0);
+		if (error)
+			return (error);
+	}
+	if (flags & V_SLEEPONLY)
+		return (0);
+	simple_lock(&mp->mnt_slock);
+	if ((flags & V_LOWER) == 0)
+		mp->mnt_writeopcountupper++;
+	else
+		mp->mnt_writeopcountlower++;
+	simple_unlock(&mp->mnt_slock);
+	return (0);
+}
+
+/*
+ * Filesystem write operation has completed. If we are suspending and this
+ * operation is the last one, notify the suspender that the suspension is
+ * now in effect.
+ */
+static inline void
+vn_finished_write(struct mount *mp, int flags)
+{
+	if (mp == NULL)
+		return;
+	mp = mp->mnt_leaf;
+	simple_lock(&mp->mnt_slock);
+	if ((flags & V_LOWER) == 0) {
+		mp->mnt_writeopcountupper--;
+		if (mp->mnt_writeopcountupper < 0)
+			printf("vn_finished_write: neg cnt upper=%d\n",
+			       mp->mnt_writeopcountupper);
+		if ((mp->mnt_iflag & IMNT_SUSPEND) != 0 &&
+		    mp->mnt_writeopcountupper <= 0)
+			wakeup(&mp->mnt_writeopcountupper);
+	} else {
+		mp->mnt_writeopcountlower--;
+		if (mp->mnt_writeopcountlower < 0)
+			printf("vn_finished_write: neg cnt lower=%d\n",
+			       mp->mnt_writeopcountlower);
+		if ((mp->mnt_iflag & IMNT_SUSPENDLOW) != 0 &&
+		    mp->mnt_writeopcountupper <= 0)
+			wakeup(&mp->mnt_writeopcountlower);
+	}
+	simple_unlock(&mp->mnt_slock);
+}
+
+/*
  * Finally, include the default set of vnode operations.
  */
 #include <sys/vnode_if.h>
@@ -516,7 +644,6 @@ struct vop_generic_args {
  */
 struct file;
 struct filedesc;
-struct mount;
 struct nameidata;
 struct proc;
 struct stat;
@@ -526,54 +653,53 @@ struct vattr;
 struct vnode;
 
 /* see vnode(9) */
-int 	bdevvp(dev_t dev, struct vnode **vpp);
-int 	cdevvp(dev_t dev, struct vnode **vpp);
+int 	bdevvp(dev_t, struct vnode **);
+int 	cdevvp(dev_t, struct vnode **);
 struct vnode *
-	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
-int 	getnewvnode(enum vtagtype tag, struct mount *mp,
-			 int (**vops)(void *), struct vnode **vpp);
+	checkalias(struct vnode *, dev_t, struct mount *);
+int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
+	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
-int	vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
-		     mode_t acc_mode, struct ucred *cred);
-void 	vattr_null(struct vattr *vap);
-int 	vcount(struct vnode *vp);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
+void 	vattr_null(struct vattr *);
+int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **); 
-int	vflush(struct mount *mp, struct vnode *vp, int flags);
-void	vflushbuf(struct vnode *vp, int sync);
-int 	vget(struct vnode *vp, int lockflag, struct lwp *l);
-void 	vgone(struct vnode *vp);
-void	vgonel(struct vnode *vp, struct lwp *p);
-int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
-	    struct lwp *p, int slpflag, int slptimeo);
-void	vprint(char *label, struct vnode *vp);
-void 	vput(struct vnode *vp);
-int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
-	    struct lwp *p);
-void 	vrele(struct vnode *vp);
-int	vtruncbuf(struct vnode *vp, daddr_t lbn,
-	    int slpflag, int slptimeo);
+int	vflush(struct mount *, struct vnode *, int);
+void	vflushbuf(struct vnode *, int);
+int 	vget(struct vnode *, int, struct lwp *);
+void 	vgone(struct vnode *);
+void	vgonel(struct vnode *, struct lwp *);
+int	vinvalbuf(struct vnode *, int, struct ucred *,
+	    struct lwp *, int, int);
+void	vprint(char *, struct vnode *);
+void 	vput(struct vnode *);
+int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
+void 	vrele(struct vnode *);
+int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
-int	vn_bwrite(void *ap);
-int 	vn_close(struct vnode *vp,
-	    int flags, struct ucred *cred, struct lwp *p);
-int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct lwp *p);
-int	vn_lock(struct vnode *vp, int flags);
+int	vn_bwrite(void *);
+int 	vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
+int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
-int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
-int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
-	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, size_t *aresid, struct lwp *p);
-int	vn_readdir(struct file *fp, char *, int segflg, u_int count,
-	    int *done, struct lwp *p, off_t **cookies, int *ncookies);
-void	vn_restorerecurse(struct vnode *vp, u_int flags);
-u_int	vn_setrecurse(struct vnode *vp);
-int	vn_stat(struct vnode *vp, struct stat *sb, struct lwp *p);
-int	vn_kqfilter(struct file *fp, struct knote *kn);
-int	vn_writechk(struct vnode *vp);
+int 	vn_open(struct nameidata *, int, int);
+int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
+	    int, struct ucred *, size_t *, struct lwp *);
+int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
+	    off_t **, int *);
+void	vn_restorerecurse(struct vnode *, u_int);
+u_int	vn_setrecurse(struct vnode *);
+int	vn_stat(struct vnode *, struct stat *, struct lwp *);
+int	vn_kqfilter(struct file *, struct knote *);
+int	vn_writechk(struct vnode *);
+int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
+            void *);
+int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
+            void *);
 
 /* initialise global vnode management */
 void	vntblinit(void);
@@ -588,8 +714,12 @@ int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
+int	vfs_drainvnodes(long target, struct lwp *);
+void	vfs_write_resume(struct mount *);
+int	vfs_write_suspend(struct mount *, int, int);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
+void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
 #endif /* DDB */
 #endif /* _KERNEL */
 

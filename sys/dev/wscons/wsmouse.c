@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.31.2.1 2003/07/02 15:26:26 darrenr Exp $ */
+/* $NetBSD: wsmouse.c,v 1.31.2.2 2004/08/03 10:52:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -79,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.1 2003/07/02 15:26:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.2 2004/08/03 10:52:12 skrll Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -155,9 +151,7 @@ static int  wsmousedoopen(struct wsmouse_softc *, struct wseventvar *);
 CFATTACH_DECL(wsmouse, sizeof (struct wsmouse_softc),
     wsmouse_match, wsmouse_attach, wsmouse_detach, wsmouse_activate);
 
-#if NWSMOUSE > 0
 extern struct cfdriver wsmouse_cd;
-#endif /* NWSMOUSE > 0 */
 
 dev_type_open(wsmouseopen);
 dev_type_close(wsmouseclose);
@@ -587,6 +581,14 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
 		sc->sc_base.me_evp->async = *(int *)data != 0;
 		return (0);
 
+	case FIOSETOWN:
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (-*(int *)data != sc->sc_base.me_evp->io->p_pgid
+		    && *(int *)data != sc->sc_base.me_evp->io->p_pid)
+			return (EPERM);
+		return (0);
+
 	case TIOCSPGRP:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
@@ -601,7 +603,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
 	 */
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
 	    data, flag, l->l_proc);
-	return (error != -1 ? error : ENOTTY);
+	return (error); /* may be EPASSTHROUGH */
 }
 
 int

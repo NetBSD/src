@@ -1,8 +1,6 @@
-/*	$NetBSD: sys_process.c,v 1.83.2.1 2003/07/02 15:26:42 darrenr Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.83.2.2 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1993 Jan-Simon Pendry.
- * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -10,6 +8,40 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: @(#)sys_process.c	8.1 (Berkeley) 6/10/93
+ */
+
+/*-
+ * Copyright (c) 1993 Jan-Simon Pendry.
+ * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -57,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.1 2003/07/02 15:26:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.2 2004/08/03 10:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +296,7 @@ sys_ptrace(l, v, retval)
 		/*
 		 * Can't write to a RAS
 		 */
-		if ((t->p_nras != 0) &&
+		if (!LIST_EMPTY(&t->p_raslist) &&
 		    (ras_lookup(t, SCARG(uap, addr)) != (caddr_t)-1)) {
 			return (EACCES);
 		}
@@ -278,7 +310,7 @@ sys_ptrace(l, v, retval)
 		iov.iov_len = sizeof(tmp);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(unsigned long)SCARG(uap, addr);
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
@@ -296,7 +328,7 @@ sys_ptrace(l, v, retval)
 		iov.iov_len = piod.piod_len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)piod.piod_offs;
+		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_lwp = l;
@@ -367,6 +399,7 @@ sys_ptrace(l, v, retval)
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
+			s = proclist_lock_write();
 			if (t->p_opptr != t->p_pptr) {
 				struct proc *pp = t->p_opptr;
 				proc_reparent(t, pp ? pp : initproc);
@@ -374,6 +407,7 @@ sys_ptrace(l, v, retval)
 
 			/* not being traced any more */
 			t->p_opptr = NULL;
+			proclist_unlock_write(s);
 			CLR(t->p_flag, P_TRACED|P_WAITED);
 		}
 
@@ -417,11 +451,13 @@ sys_ptrace(l, v, retval)
 		 * Stop the target.
 		 */
 		SET(t->p_flag, P_TRACED);
+		s = proclist_lock_write();
 		t->p_opptr = t->p_pptr;
 		if (t->p_pptr != p) {
 			t->p_pptr->p_flag |= P_CHTRACED;
 			proc_reparent(t, p);
 		}
+		proclist_unlock_write(s);
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
 
@@ -548,17 +584,18 @@ process_doregs(curl, l, uio)
 	char *kv;
 	int kl;
 
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
 	if ((error = process_checkioperm(curl, p)) != 0)
 		return error;
 
 	kl = sizeof(r);
-	kv = (char *) &r;
+	kv = (char *)&r;
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl < 0)
-		return (EINVAL);
-	if ((size_t) kl > uio->uio_resid)
+	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(l);
@@ -607,17 +644,18 @@ process_dofpregs(curl, l, uio)
 	char *kv;
 	int kl;
 
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
 	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
 	kl = sizeof(r);
-	kv = (char *) &r;
+	kv = (char *)&r;
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl < 0)
-		return (EINVAL);
-	if ((size_t) kl > uio->uio_resid)
+	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(l);
@@ -661,6 +699,7 @@ process_domem(curl, l, uio)
 	struct uio *uio;
 {
 	struct proc *p = l->l_proc;	/* traced */
+	struct vmspace *vm;
 	int error;
 
 	size_t len;
@@ -680,15 +719,21 @@ process_domem(curl, l, uio)
 	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
-	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
-		return(EFAULT);
-	p->p_vmspace->vm_refcnt++;  /* XXX */
-	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	uvmspace_free(p->p_vmspace);
+	vm = p->p_vmspace;
+
+	simple_lock(&vm->vm_map.ref_lock);
+	if ((p->p_flag & P_WEXIT) || vm->vm_refcnt < 1) 
+		error = EFAULT;
+	if (error == 0)
+		p->p_vmspace->vm_refcnt++;  /* XXX */
+	simple_unlock(&vm->vm_map.ref_lock);
+	if (error != 0)
+		return (error);
+	error = uvm_io(&vm->vm_map, uio);
+	uvmspace_free(vm);
 
 #ifdef PMAP_NEED_PROCWR
-	if (uio->uio_rw == UIO_WRITE)
+	if (error == 0 && uio->uio_rw == UIO_WRITE)
 		pmap_procwr(p, addr, len);
 #endif
 	return (error);

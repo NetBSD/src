@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.70.2.1 2003/07/02 15:27:15 darrenr Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.70.2.2 2004/08/03 10:56:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -143,8 +143,9 @@ typedef struct {
 #define	EI_OSABI	7	/* Operating system/ABI identification */
 #define	EI_ABIVERSION	8	/* ABI version */
 #define	EI_PAD		9	/* Start of padding bytes up to EI_NIDENT*/
+#define	EI_NIDENT	16	/* First non-ident header byte */
 
-/* e_ident[ELFMAG0,ELFMAG3] */
+/* e_ident[EI_MAG0,EI_MAG3] */
 #define	ELFMAG0		0x7f
 #define	ELFMAG1		'E'
 #define	ELFMAG2		'L'
@@ -259,10 +260,10 @@ typedef struct {
 #define	EM_68HC08	71	/* Motorola MC68HC08 Microcontroller */
 #define	EM_68HC05	72	/* Motorola MC68HC05 Microcontroller */
 #define	EM_SVX		73	/* Silicon Graphics SVx */
-#define	EM_ST19		74	/* STMicroelectronics ST19 8-bit cpu */
+#define	EM_ST19		74	/* STMicroelectronics ST19 8-bit CPU */
 #define	EM_VAX		75	/* Digital VAX */
 #define	EM_CRIS		76	/* Axis Communications 32-bit embedded processor */
-#define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded cpu */
+#define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded CPU */
 #define	EM_FIREPATH	78	/* Element 14 64-bit DSP processor */
 #define	EM_ZSP		79	/* LSI Logic's 16-bit DSP processor */
 #define	EM_MMIX		80	/* Donald Knuth's educational 64-bit processor */
@@ -609,7 +610,7 @@ typedef struct {
 #define	AT_SUN_PLATFORM	2008	/* sysinfo(SI_PLATFORM) */
 #define	AT_SUN_HWCAP	2009	/* process hardware capabilities */
 #define	AT_SUN_IFLUSH	2010	/* do we need to flush the instruction cache? */
-#define	AT_SUN_CPU	2011	/* cpu name */
+#define	AT_SUN_CPU	2011	/* CPU name */
 	/* ibcs2 emulation band aid */
 #define	AT_SUN_EMUL_ENTRY 2012	/* coff entry point */
 #define	AT_SUN_EMUL_EXECFD 2013	/* coff file descriptor */
@@ -768,12 +769,16 @@ struct netbsd_elfcore_procinfo {
 
 #define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
 #define ELF_NO_ADDR	ELF64_NO_ADDR
+#define ELF_LINK_ADDR	ELF64_LINK_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_NO_ADDR	ELF32_NO_ADDR
+#define ELF_LINK_ADDR	ELF32_LINK_ADDR
 #endif
 
 #ifndef ELF32_EHDR_FLAGS_OK
@@ -805,29 +810,29 @@ struct elf_args {
 #endif
 
 #ifdef EXEC_ELF32
-int	exec_elf32_makecmds __P((struct lwp *, struct exec_package *));
-int	elf32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings *,
-    char **, void *));
+int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
+int	elf32_copyargs(struct lwp *, struct exec_package *, 
+    	    struct ps_strings *, char **, void *);
 
-int	coredump_elf32 __P((struct lwp *, struct vnode *, struct ucred *));
-int	coredump_writenote_elf32 __P((struct lwp *, struct vnode *,
-	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
+int	coredump_elf32(struct lwp *, struct vnode *, struct ucred *);
+int	coredump_writenote_elf32(struct lwp *, struct vnode *,
+	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *);
+
+int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
 
 #ifdef EXEC_ELF64
-int	exec_elf64_makecmds __P((struct lwp *, struct exec_package *));
-int	elf64_read_from __P((struct lwp *, struct vnode *, u_long,
-    caddr_t, int));
-int	elf64_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings *,
-    char **, void *));
+int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
+int	elf64_read_from(struct lwp *, struct vnode *, u_long, caddr_t, int);
+int	elf64_copyargs(struct lwp *, struct exec_package *, 
+	    struct ps_strings *, char **, void *);
 
 int	coredump_elf64 __P((struct lwp *, struct vnode *, struct ucred *));
 int	coredump_writenote_elf64 __P((struct lwp *, struct vnode *,
 	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
-#endif
 
-/* common */
-int	exec_elf_setup_stack __P((struct proc *, struct exec_package *));
+int	elf64_check_header(Elf64_Ehdr *, int);
+#endif
 
 #endif /* _KERNEL */
 

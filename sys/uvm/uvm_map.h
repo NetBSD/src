@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.34 2003/02/20 22:16:08 atatat Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.34.2.1 2004/08/03 10:57:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,6 +109,8 @@
 
 #endif /* _KERNEL */
 
+#include <sys/tree.h>
+
 #include <uvm/uvm_anon.h>
 
 /*
@@ -118,6 +120,9 @@
  * Also included is control information for virtual copy operations.
  */
 struct vm_map_entry {
+	RB_ENTRY(vm_map_entry)	rb_entry;	/* tree information */
+	vaddr_t			ownspace;	/* free space after */
+	vaddr_t			space;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
@@ -139,6 +144,7 @@ struct vm_map_entry {
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
 #define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
+#define	UVM_MAP_NOMERGE		0x10		/* this entry is not mergable */
 
 };
 
@@ -208,6 +214,7 @@ struct vm_map_entry {
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	struct lock		lock;		/* Lock for map data */
+	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
@@ -219,8 +226,8 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
-#define	min_offset		header.start
-#define max_offset		header.end
+#define	min_offset		header.end
+#define	max_offset		header.start
 };
 
 /* vm_map flags */
@@ -276,39 +283,40 @@ extern vaddr_t	uvm_maxkaddr;
  */
 
 MAP_INLINE
-void		uvm_map_deallocate __P((struct vm_map *));
+void		uvm_map_deallocate(struct vm_map *);
 
-int		uvm_map_clean __P((struct vm_map *, vaddr_t, vaddr_t, int));
-void		uvm_map_clip_start __P((struct vm_map *, struct vm_map_entry *,
-		    vaddr_t));
-void		uvm_map_clip_end __P((struct vm_map *, struct vm_map_entry *,
-		    vaddr_t));
+int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
+void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
+		    vaddr_t);
+void		uvm_map_clip_end(struct vm_map *, struct vm_map_entry *,
+		    vaddr_t);
 MAP_INLINE
-struct vm_map	*uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
-int		uvm_map_extract __P((struct vm_map *, vaddr_t, vsize_t,
-		    struct vm_map *, vaddr_t *, int));
-struct vm_map_entry *uvm_map_findspace __P((struct vm_map *, vaddr_t, vsize_t,
-		    vaddr_t *, struct uvm_object *, voff_t, vsize_t, int));
-int		uvm_map_inherit __P((struct vm_map *, vaddr_t, vaddr_t,
-		    vm_inherit_t));
-int		uvm_map_advice __P((struct vm_map *, vaddr_t, vaddr_t, int));
-void		uvm_map_init __P((void));
-boolean_t	uvm_map_lookup_entry __P((struct vm_map *, vaddr_t,
-		    struct vm_map_entry **));
+struct vm_map	*uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
+int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
+		    struct vm_map *, vaddr_t *, int);
+struct vm_map_entry *
+		uvm_map_findspace(struct vm_map *, vaddr_t, vsize_t,
+		    vaddr_t *, struct uvm_object *, voff_t, vsize_t, int);
+int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t,
+		    vm_inherit_t);
+int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
+void		uvm_map_init(void);
+boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t,
+		    struct vm_map_entry **);
 MAP_INLINE
-void		uvm_map_reference __P((struct vm_map *));
-int		uvm_map_replace __P((struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry *, int));
-int		uvm_map_reserve __P((struct vm_map *, vsize_t, vaddr_t, vsize_t,
-		    vaddr_t *));
-void		uvm_map_setup __P((struct vm_map *, vaddr_t, vaddr_t, int));
-int		uvm_map_submap __P((struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map *));
+void		uvm_map_reference(struct vm_map *);
+int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map_entry *, int);
+int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
+		    vaddr_t *);
+void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
+int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map *);
 MAP_INLINE
-void		uvm_unmap __P((struct vm_map *, vaddr_t, vaddr_t));
-void		uvm_unmap_detach __P((struct vm_map_entry *,int));
-void		uvm_unmap_remove __P((struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry **));
+void		uvm_unmap(struct vm_map *, vaddr_t, vaddr_t);
+void		uvm_unmap_detach(struct vm_map_entry *,int);
+void		uvm_unmap_remove(struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map_entry **);
 
 #endif /* _KERNEL */
 
@@ -346,13 +354,12 @@ void		uvm_unmap_remove __P((struct vm_map *, vaddr_t, vaddr_t,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static __inline boolean_t vm_map_lock_try __P((struct vm_map *));
-static __inline void vm_map_lock __P((struct vm_map *));
+static __inline boolean_t	vm_map_lock_try(struct vm_map *);
+static __inline void		vm_map_lock(struct vm_map *);
 extern const char vmmapbsy[];
 
 static __inline boolean_t
-vm_map_lock_try(map)
-	struct vm_map *map;
+vm_map_lock_try(struct vm_map *map)
 {
 	boolean_t rv;
 
@@ -375,8 +382,7 @@ vm_map_lock_try(map)
 }
 
 static __inline void
-vm_map_lock(map)
-	struct vm_map *map;
+vm_map_lock(struct vm_map *map)
 {
 	int error;
 

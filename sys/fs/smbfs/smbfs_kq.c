@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.7.2.1 2003/07/02 15:26:33 darrenr Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.7.2.1 2003/07/02 15:26:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ smbfs_kqfilter(void *v)
 	if (!smbkqp) {
 		error = kthread_create1(smbfs_kqpoll, NULL, &smbkqp,
 				"smbkq");
-		smb_makescred(&smbkq_scred, smbkqp, smbkqp->p_ucred);
+		smb_makescred(&smbkq_scred, LIST_FIRST(&smbkqp->p_lwps), smbkqp->p_ucred);
 		if (error) {
 			kevs--;
 			return (error);

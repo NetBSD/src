@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.31 2003/03/18 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: nfs.c,v 1.31.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -112,7 +112,8 @@ struct nfs_iodesc {
 struct nfs_iodesc nfs_root_node;
 
 int	nfs_getrootfh __P((struct iodesc *, char *, u_char *));
-int	nfs_lookupfh __P((struct nfs_iodesc *, char *, struct nfs_iodesc *));
+int	nfs_lookupfh __P((struct nfs_iodesc *, const char *, int,
+	    struct nfs_iodesc *));
 int	nfs_readlink __P((struct nfs_iodesc *, char *));
 ssize_t	nfs_readdata __P((struct nfs_iodesc *, off_t, void *, size_t));
 
@@ -143,7 +144,7 @@ nfs_getrootfh(d, path, fhp)
 		n_long	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -155,7 +156,7 @@ nfs_getrootfh(d, path, fhp)
 
 	bzero(args, sizeof(*args));
 	len = strlen(path);
-	if (len > sizeof(args->path))
+	if ((size_t)len > sizeof(args->path))
 		len = sizeof(args->path);
 	args->len = htonl(len);
 	bcopy(path, args->path, len);
@@ -184,12 +185,13 @@ nfs_getrootfh(d, path, fhp)
  * Return zero or error number.
  */
 int
-nfs_lookupfh(d, name, newfd)
+nfs_lookupfh(d, name, len, newfd)
 	struct nfs_iodesc *d;
-	char *name;
+	const char *name;
+	int len;
 	struct nfs_iodesc *newfd;
 {
-	int len, rlen;
+	int rlen;
 	struct args {
 		u_char	fh[NFS_FHSIZE];
 		n_long	len;
@@ -220,8 +222,7 @@ nfs_lookupfh(d, name, newfd)
 
 	bzero(args, sizeof(*args));
 	bcopy(d->fh, args->fh, sizeof(args->fh));
-	len = strlen(name);
-	if (len > sizeof(args->name))
+	if ((size_t)len > sizeof(args->name))
 		len = sizeof(args->name);
 	bcopy(name, args->name, len);
 	args->len = htonl(len);
@@ -313,9 +314,9 @@ nfs_readdata(d, off, addr, len)
 		n_long	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	long x;
-	int hlen, rlen;
+	size_t hlen, rlen;
 
 	args = &sdata.d;
 	repl = &rdata.d;
@@ -335,7 +336,7 @@ nfs_readdata(d, off, addr, len)
 		/* errno was already set by rpc_call */
 		return (-1);
 	}
-	if (cc < hlen) {
+	if (cc < (ssize_t)hlen) {
 		errno = EBADRPC;
 		return (-1);
 	}
@@ -345,8 +346,8 @@ nfs_readdata(d, off, addr, len)
 	}
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
-	if (rlen < x) {
-		printf("nfsread: short packet, %d < %ld\n", rlen, x);
+	if (rlen < (size_t)x) {
+		printf("nfsread: short packet, %lu < %ld\n", (u_long) rlen, x);
 		errno = EBADRPC;
 		return(-1);
 	}
@@ -398,13 +399,13 @@ nfs_mount(sock, ip, path)
  */
 int
 nfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	struct nfs_iodesc *newfd, *currfd;
-	char *cp;
+	const char *cp;
 #ifndef NFS_NOSYMLINK
-	char *ncp;
+	const char *ncp;
 	int c;
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
@@ -462,12 +463,10 @@ nfs_open(path, f)
 				}
 				cp++;
 			}
-			*cp = '\0';
 		}
 		
 		/* lookup a file handle */
-		error = nfs_lookupfh(currfd, ncp, newfd);
-		*cp = c;
+		error = nfs_lookupfh(currfd, ncp, cp - ncp, newfd);
 		if (error)
 			goto out;
 		
@@ -534,7 +533,7 @@ out:
 
 	/* XXX: Check for empty path here? */
 
-	error = nfs_lookupfh(&nfs_root_node, cp, currfd);
+	error = nfs_lookupfh(&nfs_root_node, cp, strlen(cp), currfd);
 #endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;

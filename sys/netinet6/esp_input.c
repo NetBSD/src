@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.29.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.29.2.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -138,11 +138,7 @@ esp4_input(m, va_alist)
 
 	ip = mtod(m, struct ip *);
 	esp = (struct esp *)(((u_int8_t *)ip) + off);
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	/* find the sassoc. */
 	spi = esp->esp_spi;
@@ -158,8 +154,8 @@ esp4_input(m, va_alist)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP esp4_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv4 ESP input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -184,8 +180,8 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay
-	 && (sav->alg_auth && sav->key_auth)))
+	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay &&
+	    sav->alg_auth && sav->key_auth))
 		goto noreplaycheck;
 
 	if (sav->alg_auth == SADB_X_AALG_NULL ||
@@ -330,8 +326,8 @@ noreplaycheck:
 	nxt = esptail.esp_nxt;
 	taillen = esptail.esp_padlen + sizeof(esptail);
 
-	if (m->m_pkthdr.len < taillen
-	 || m->m_pkthdr.len - taillen < hlen) {	/* ? */
+	if (m->m_pkthdr.len < taillen ||
+	    m->m_pkthdr.len - taillen < off + esplen + ivlen + sizeof(esptail)) {
 		ipseclog((LOG_WARNING,
 		    "bad pad length in IPv4 ESP input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
@@ -571,8 +567,8 @@ esp6_input(mp, offp, proto)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP esp6_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv6 ESP input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -597,8 +593,8 @@ esp6_input(mp, offp, proto)
 		goto bad;
 	}
 
-	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay
-	 && (sav->alg_auth && sav->key_auth)))
+	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay &&
+	    sav->alg_auth && sav->key_auth))
 		goto noreplaycheck;
 
 	if (sav->alg_auth == SADB_X_AALG_NULL ||
@@ -765,7 +761,6 @@ noreplaycheck:
 		flowinfo = ip6->ip6_flow;
 		m_adj(m, off + esplen + ivlen);
 		if (m->m_len < sizeof(*ip6)) {
-			/* okay to pullup in m_pulldown style */
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
 				ipsec6stat.in_inval++;
@@ -839,9 +834,9 @@ noreplaycheck:
 				goto bad;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -906,6 +901,7 @@ esp6_ctlinput(cmd, sa, d)
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		off = 0;
 	}
 
 	if (ip6) {

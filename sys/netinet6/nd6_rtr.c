@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.44.2.1 2004/08/03 10:55:16 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44.2.1 2004/08/03 10:55:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,7 @@ nd6_ra_input(m, off, icmp6len)
 }
 
 /*
- * default router list proccessing sub routines
+ * default router list processing sub routines
  */
 
 /* tell the change to user processes watching the routing socket. */
@@ -1124,7 +1124,6 @@ prelist_update(new, dr, m)
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int newprefix = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1182,8 +1181,6 @@ prelist_update(new, dr, m)
 			pfxrtr_add(pr, dr);
 	} else {
 		struct nd_prefix *newpr = NULL;
-
-		newprefix = 1;
 
 		if (new->ndpr_vltime == 0)
 			goto end;
@@ -1986,7 +1983,7 @@ nd6_setdefaultiface(ifindex)
 {
 	int error = 0;
 
-	if (ifindex < 0 || if_index < ifindex)
+	if (ifindex < 0 || if_indexlim <= ifindex || !ifindex2ifnet[ifindex])
 		return (EINVAL);
 
 	if (nd6_defifindex != ifindex) {

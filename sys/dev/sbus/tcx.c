@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.15 2003/06/29 22:30:36 fvdl Exp $ */
+/*	$NetBSD: tcx.c,v 1.15.2.1 2004/08/03 10:51:05 skrll Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.15 2003/06/29 22:30:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.15.2.1 2004/08/03 10:51:05 skrll Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -298,11 +298,11 @@ tcxattach(parent, self, args)
 #ifdef TCX_CG8
 	if (!sc->sc_8bit) {
 		if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_RDFB32].oa_space,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_RDFB32].oa_base,
+			 sc->sc_physadr[TCX_REG_RDFB32].oa_space,
+			 sc->sc_physadr[TCX_REG_RDFB32].oa_base,
 			 TCX_SIZE_DFB32,
 			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 &bh) != 0) {
 			printf("tcxattach: cannot map control planes\n");
 			return;
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.14 2003/04/02 18:22:56 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.14.2.1 2004/08/03 10:52:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.14 2003/04/02 18:22:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.14.2.1 2004/08/03 10:52:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
@@ -336,8 +331,8 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
 			for (i = 0; i < edp->ncols; i++)
 				if (edp->tabs[i]) {
-					n = sprintf(buf, "%s%d",
-						    (ps ? "/" : ""), i + 1);
+					n = snprintf(buf, sizeof(buf), "%s%d",
+					    (ps ? "/" : ""), i + 1);
 					wsdisplay_emulinput(edp->cbcookie,
 							    buf, n);
 					ps = 1;
@@ -480,14 +475,14 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 			    case 0: /* reset */
 				if (n == edp->nargs - 1) {
 					edp->bkgdattr = edp->curattr = edp->defattr;
-					edp->attrflags = 0;
-					edp->fgcol = WSCOL_WHITE;
-					edp->bgcol = WSCOL_BLACK;
+					edp->attrflags = edp->msgattrs.default_attrs;
+					edp->fgcol = edp->msgattrs.default_fg;
+					edp->bgcol = edp->msgattrs.default_bg;
 					return;
 				}
-				flags = 0;
-				fgcol = WSCOL_WHITE;
-				bgcol = WSCOL_BLACK;
+				flags = edp->msgattrs.default_attrs;
+				fgcol = edp->msgattrs.default_fg;
+				bgcol = edp->msgattrs.default_bg;
 				break;
 			    case 1: /* bold */
 				flags |= WSATTR_HILIT;
@@ -559,8 +554,8 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 				row = ROWS_ABOVE;
 			else
 				row = edp->crow;
-			n = sprintf(buf, "\033[%d;%dR",
-				    row + 1, edp->ccol + 1);
+			n = snprintf(buf, sizeof(buf), "\033[%d;%dR",
+			    row + 1, edp->ccol + 1);
 			wsdisplay_emulinput(edp->cbcookie, buf, n);
 			}
 			break;
@@ -628,13 +623,13 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 {
 	int error;
 
-	if ((flags & WSATTR_WSCOLORS) &&
-	    !(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
+	if (!(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
 		flags &= ~WSATTR_WSCOLORS;
 #ifdef VT100_DEBUG
 		printf("colors ignored (impossible)\n");
 #endif
-	}
+	} else
+		flags |= WSATTR_WSCOLORS;
 	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
 					   flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)

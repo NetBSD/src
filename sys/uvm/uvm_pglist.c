@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.26 2003/03/10 19:52:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.26.2.1 2004/08/03 10:57:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.26 2003/03/10 19:52:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.26.2.1 2004/08/03 10:57:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,11 @@ u_long	uvm_pglistalloc_npages;
 /*
  * uvm_pglistalloc: allocate a list of pages
  *
- * => allocated pages are placed at the tail of rlist.  rlist is
- *    assumed to be properly initialized by caller.
+ * => allocated pages are placed onto an rlist.  rlist is
+ *    initialized by uvm_pglistalloc.
  * => returns 0 on success or errno on failure
- * => XXX: implementation allocates only a single segment, also
- *	might be able to better advantage of vm_physeg[].
+ * => implementation allocates a single segment if any constraints are
+ *	imposed by call arguments.
  * => doesn't take into account clean non-busy pages on inactive list
  *	that could be used(?)
  * => params:
@@ -187,7 +187,7 @@ uvm_pglistalloc_c_ps(ps, num, low, high, alignment, boundary, rlist)
 		if (vm_physseg_find(try + num - 1, &cidx) != ps - vm_physmem)
 			panic("pgalloc contig: botch3");
 		if (cidx != try - ps->start + num - 1)
-			panic("pgalloc contig: botch4");		
+			panic("pgalloc contig: botch4");
 #endif
 		tryidx = try - ps->start;
 		end = tryidx + num;
@@ -279,8 +279,8 @@ uvm_pglistalloc_contig(num, low, high, alignment, boundary, rlist)
 			if (num == 0) {
 #ifdef PGALLOC_VERBOSE
 				printf("pgalloc: %lx-%lx\n",
-				       TAILQ_FIRST(rlist)->phys_addr,
-				       TAILQ_LAST(rlist, pglist)->phys_addr);
+				       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+				       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist)));
 #endif
 				error = 0;
 				goto out;
@@ -408,8 +408,8 @@ out:
 #ifdef PGALLOC_VERBOSE
 	if (!error)
 		printf("pgalloc: %lx..%lx\n",
-		       TAILQ_FIRST(rlist)->phys_addr,
-		       TAILQ_LAST(rlist, pglist)->phys_addr);
+		       VM_PAGE_TO_PHYS(TAILQ_FIRST(rlist)),
+		       VM_PAGE_TO_PHYS(TAILQ_LAST(rlist, pglist)));
 #endif
 	return (error);
 }
@@ -468,13 +468,27 @@ uvm_pglistfree(list)
 
 	s = uvm_lock_fpageq();
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
+		boolean_t iszero;
+
 		KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
 		TAILQ_REMOVE(list, pg, pageq);
+		iszero = (pg->flags & PG_ZERO);
 		pg->pqflags = PQ_FREE;
+#ifdef DEBUG
+		pg->uobject = (void *)0xdeadbeef;
+		pg->offset = 0xdeadbeef;
+		pg->uanon = (void *)0xdeadbeef;
+#endif /* DEBUG */
+#ifdef DEBUG
+		if (iszero)
+			uvm_pagezerocheck(pg);
+#endif /* DEBUG */
 		TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)].
 		    pgfl_buckets[VM_PGCOLOR_BUCKET(pg)].
-		    pgfl_queues[PGFL_UNKNOWN], pg, pageq);
+		    pgfl_queues[iszero ? PGFL_ZEROS : PGFL_UNKNOWN], pg, pageq);
 		uvmexp.free++;
+		if (iszero)
+			uvmexp.zeropages++;
 		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 			uvm.page_idle_zero = vm_page_zero_enable;
 		STAT_DECR(uvm_pglistalloc_npages);

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64 2002/11/24 17:33:43 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.64.6.1 2004/08/03 10:56:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -55,11 +55,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,6 +77,7 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
+#include <sys/properties.h>
 #include <sys/queue.h>
 
 /*
@@ -170,7 +167,8 @@ TAILQ_HEAD(evcntlist, evcnt);
  * NOTE: "ev" should not be a pointer to the object, but rather a direct
  * reference to the object itself.
  */
-#define	EVCNT_ATTACH_STATIC(ev)	__link_set_add_data(evcnts, ev)
+#define	EVCNT_ATTACH_STATIC(ev)		__link_set_add_data(evcnts, ev)
+#define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
 
 /*
  * Description of a configuration parent.  Each device attachment attaches
@@ -307,6 +305,8 @@ extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
+
+extern propdb_t dev_propdb;		/* device properties database */
 
 void	config_init(void);
 void	configure(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.4.2.1 2003/07/02 15:26:28 darrenr Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.4.2.2 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.1 2003/07/02 15:26:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.2 2004/08/03 10:52:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +74,8 @@ u_long idvhash;
 
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
-struct pool cd9660_node_pool;
+POOL_INIT(cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0, "cd9660nopl",
+    &pool_allocator_nointr);
 
 static u_int cd9660_chars2ui __P((u_char *, int));
 
@@ -88,6 +85,11 @@ static u_int cd9660_chars2ui __P((u_char *, int));
 void
 cd9660_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_ISOFSMNT);
+	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
+	    "cd9660nopl", &pool_allocator_nointr);
+#endif
 	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
@@ -95,8 +97,6 @@ cd9660_init()
 	idvhashtbl = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT,
 	    M_WAITOK, &idvhash);
 #endif
-	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
-	    "cd9660nopl", &pool_allocator_nointr);
 }
 
 /*
@@ -165,7 +165,10 @@ cd9660_done()
 #ifdef ISODEVMAP
 	hashdone(idvhashtbl, M_ISOFSMNT);
 #endif
+#ifdef _LKM
 	pool_destroy(&cd9660_node_pool);
+	malloc_type_detach(M_ISOFSMNT);
+#endif
 }
 
 #ifdef ISODEVMAP

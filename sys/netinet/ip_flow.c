@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.26 2002/11/02 07:28:12 perry Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.26.6.1 2004/08/03 10:54:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26 2002/11/02 07:28:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26.6.1 2004/08/03 10:54:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26 2002/11/02 07:28:12 perry Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
-struct pool ipflow_pool;
+POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL);
 
 LIST_HEAD(ipflowhead, ipflow);
 
@@ -130,9 +130,6 @@ void
 ipflow_init()
 {
 	int i;
-
-	pool_init(&ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl",
-	    NULL);
 
 	LIST_INIT(&ipflowlist);
 	for (i = 0; i < IPFLOW_HASHSIZE; i++)
@@ -431,5 +428,21 @@ ipflow_create(
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
+	splx(s);
+}
+
+void
+ipflow_invalidate_all(
+	void)
+{
+	struct ipflow *ipf, *next_ipf;
+	int s;
+
+	s = splnet();
+	ipf = LIST_FIRST(&ipflowlist);
+	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
+		next_ipf = LIST_NEXT(ipf, ipf_list);
+		ipflow_free(ipf);
+	}
 	splx(s);
 }

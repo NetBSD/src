@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_var.h,v 1.6.2.1 2003/07/02 15:27:03 darrenr Exp $	*/
+/*	$NetBSD: idrp_var.h,v 1.6.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 struct mbuf;
 
 /* idrp_usrreq.c */
-void idrp_init __P((void));
-void idrp_input __P((struct mbuf *, ...));
-int idrp_output __P((struct mbuf *, ...));
-int idrp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct lwp *));
+void idrp_init (void);
+void idrp_input (struct mbuf *, ...);
+int idrp_output (struct mbuf *, ...);
+int idrp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *, struct lwp *);
 #endif

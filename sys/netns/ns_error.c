@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.14 2003/01/20 02:12:21 simonb Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.14.2.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.14 2003/01/20 02:12:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.14.2.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +73,7 @@ int	ns_errprintfs = 0;
 struct	ns_errstat ns_errstat;
 
 int
-ns_err_x(c)
-	int c;
+ns_err_x(int c)
 {
 	u_int16_t *w, *lim, *base = ns_errstat.ns_es_codes;
 	u_int16_t x = c;
@@ -103,10 +98,7 @@ ns_err_x(c)
  * in response to bad packet.
  */
 void
-ns_error(om, type, param)
-	struct mbuf *om;
-	int type;
-	int param;
+ns_error(struct mbuf *om, int type, int param)
 {
 	struct ns_epidp *ep;
 	struct mbuf *m;
@@ -183,8 +175,7 @@ freeit:
 }
 
 void
-ns_printhost(p)
-struct ns_addr *p;
+ns_printhost(struct ns_addr *p)
 {
 
 	printf("<net:%x%x,host:%x%x%x,port:%x>",
@@ -201,8 +192,7 @@ struct ns_addr *p;
  * Process a received NS_ERR message.
  */
 void
-ns_err_input(m)
-	struct mbuf *m;
+ns_err_input(struct mbuf *m)
 {
 	struct ns_errp *ep;
 #ifdef NS_ERRPRINTFS
@@ -308,7 +298,7 @@ freeit:
 
 #ifdef notdef
 u_int32_t
-nstime()
+nstime(void)
 {
 	int s = splclock();
 	u_int32_t t;
@@ -320,8 +310,7 @@ nstime()
 #endif
 
 int
-ns_echo(m)
-struct mbuf *m;
+ns_echo(struct mbuf *m)
 {
 	struct idp *idp = mtod(m, struct idp *);
 	struct echo {

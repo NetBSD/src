@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.37.2.2 2003/07/03 01:23:44 wrstuden Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.37.2.3 2004/08/03 10:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.2 2003/07/03 01:23:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.3 2004/08/03 10:54:06 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -52,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.2 2003/07/03 01:23:44 wrstu
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
@@ -65,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.2 2003/07/03 01:23:44 wrstu
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/dirent.h>
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
@@ -75,17 +73,15 @@ int	portal_mount __P((struct mount *, const char *, void *,
 int	portal_start __P((struct mount *, int, struct lwp *));
 int	portal_unmount __P((struct mount *, int, struct lwp *));
 int	portal_root __P((struct mount *, struct vnode **, struct lwp *));
-int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	portal_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct lwp *));
-int	portal_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int	portal_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int	portal_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int	portal_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
 int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	portal_vptofh __P((struct vnode *, struct fid *));
-int	portal_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct lwp *));
 
 void
 portal_init()
@@ -131,7 +127,7 @@ portal_mount(mp, path, data, ndp, l)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = copyin(data, (caddr_t) &args, sizeof(struct portal_args));
+	error = copyin(data, &args, sizeof(struct portal_args));
 	if (error)
 		return (error);
 
@@ -166,7 +162,7 @@ portal_mount(mp, path, data, ndp, l)
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
-	return set_statfs_info(path, UIO_USERSPACE, args.pa_config,
+	return set_statvfs_info(path, UIO_USERSPACE, args.pa_config,
 	    UIO_USERSPACE, mp, l);
 }
 
@@ -259,7 +255,7 @@ portal_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct lwp *l;
 {
 
@@ -267,25 +263,25 @@ portal_quotactl(mp, cmd, uid, arg, l)
 }
 
 int
-portal_statfs(mp, sbp, l)
+portal_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct lwp *l;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_frsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
 	sbp->f_files = 1;		/* Allow for "." */
 	sbp->f_ffree = 0;		/* See comments above */
-#ifdef COMPAT_09
-	sbp->f_type = 12;
-#else
-	sbp->f_type = 0;
-#endif
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0;		/* See comments above */
+	sbp->f_fresvd = 0;
+	sbp->f_namemax = MAXNAMLEN;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -343,17 +339,25 @@ portal_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-int
-portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "portal",
+		       SYSCTL_DESCR("Portal daemon file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 8, CTL_EOL);
+	/*
+	 * XXX the "8" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "8" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc portal_vnodeop_opv_desc;
@@ -370,7 +374,7 @@ struct vfsops portal_vfsops = {
 	portal_unmount,
 	portal_root,
 	portal_quotactl,
-	portal_statfs,
+	portal_statvfs,
 	portal_sync,
 	portal_vget,
 	portal_fhtovp,
@@ -378,8 +382,9 @@ struct vfsops portal_vfsops = {
 	portal_init,
 	NULL,
 	portal_done,
-	portal_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	portal_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	portal_vnodeopv_descs,
 };

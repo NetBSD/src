@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.18 2002/10/02 16:52:40 thorpej Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.18.6.1 2004/08/03 10:51:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18 2002/10/02 16:52:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,8 @@ lebufprint(aux, busname)
 	void *aux;
 	const char *busname;
 {
-	struct sbus_attach_args *sa = aux;
-	bus_space_tag_t t = sa->sa_bustag;
-	struct lebuf_softc *sc = t->cookie;
 
-	sa->sa_bustag = sc->sc_bustag;	/* XXX */
-	sbus_print(aux, busname);	/* XXX */
-	sa->sa_bustag = t;		/* XXX */
+	sbus_print(aux, busname);
 	return (UNCONF);
 }
 
@@ -98,14 +93,11 @@ lebufattach(parent, self, aux)
 	struct lebuf_softc *sc = (void *)self;
 	int node;
 	int sbusburst;
-	bus_space_tag_t sbt;
+	bus_space_tag_t bt = sa->sa_bustag;
+	bus_dma_tag_t	dt = sa->sa_dmatag;
 	bus_space_handle_t bh;
 
-	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_dmatag = sa->sa_dmatag;
-
-	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
@@ -116,7 +108,7 @@ lebufattach(parent, self, aux)
 	 * Lance ring-buffers can be stored. Note the buffer's location
 	 * and size, so the `le' driver can pick them up.
 	 */
-	sc->sc_buffer = bus_space_vaddr(sa->sa_bustag, bh);
+	sc->sc_buffer = bus_space_vaddr(bt, bh);
 	sc->sc_bufsiz = sa->sa_size;
 
 	node = sc->sc_node = sa->sa_node;
@@ -128,7 +120,7 @@ lebufattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	sc->sc_burst = PROM_getpropint(node, "burst-sizes", -1);
+	sc->sc_burst = prom_getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		/* take SBus burst sizes */
 		sc->sc_burst = sbusburst;
@@ -138,24 +130,13 @@ lebufattach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag), 
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sbt == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
-		return;
-	}
-
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
-
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, &sa);
+				       bt, dt, node, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 		sbus_destroy_attach_args(&sa);
 	}

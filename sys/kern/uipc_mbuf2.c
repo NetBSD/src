@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.14 2003/02/01 06:23:44 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.14.2.1 2004/08/03 10:52:57 skrll Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.14 2003/02/01 06:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.14.2.1 2004/08/03 10:52:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,15 +128,20 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * chop the current mbuf into two pieces, set off to 0.
 	 */
 	if (len <= n->m_len - off) {
+		struct mbuf *mlast;
+
 		o = m_dup(n, off, n->m_len - off, M_DONTWAIT);
 		if (o == NULL) {
 			m_freem(m);
 			return NULL;	/* ENOBUFS */
 		}
+		KASSERT(o->m_len >= len);
+		for (mlast = o; mlast->m_next != NULL; mlast = mlast->m_next)
+			;
 		n->m_len = off;
-		o->m_next = n->m_next;
+		mlast->m_next = n->m_next;
 		n->m_next = o;
-		n = n->m_next;
+		n = o;
 		off = 0;
 		goto ok;
 	}
@@ -272,7 +273,7 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 }
 
 /* Unlink and free a packet tag chain, starting from given tag. */
-void
+__inline void
 m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 {
 	struct m_tag *p, *q;
@@ -287,6 +288,21 @@ m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 		m_tag_delete(m, q);
 	m_tag_delete(m, p);
 }
+
+/*
+ * Strip off all tags that would normally vanish when
+ * passing through a network interface.  Only persistent
+ * tags will exist after this; these are expected to remain
+ * so long as the mbuf chain exists, regardless of the
+ * path the mbufs take.
+ */
+void
+m_tag_delete_nonpersistent(struct mbuf *m)
+{
+	/* NetBSD has no persistent tags yet, so just delete all tags. */
+	return m_tag_delete_chain(m, NULL);
+}
+
 
 /* Find a tag, starting from a given position. */
 struct m_tag *

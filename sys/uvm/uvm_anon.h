@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.15 2001/05/26 16:32:46 chs Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.15.22.1 2004/08/03 10:57:02 skrll Exp $	*/
 
 /*
  *
@@ -98,14 +98,15 @@ struct vm_aref {
  * prototypes
  */
 
-struct vm_anon *uvm_analloc __P((void));
-void uvm_anfree __P((struct vm_anon *));
-void uvm_anon_init __P((void));
-int uvm_anon_add __P((int));
-void uvm_anon_remove __P((int));
-struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
-void uvm_anon_dropswap __P((struct vm_anon *));
-boolean_t anon_swap_off __P((int, int));
+struct vm_anon *uvm_analloc(void);
+void uvm_anfree(struct vm_anon *);
+void uvm_anon_init(void);
+int uvm_anon_add(int);
+void uvm_anon_remove(int);
+struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
+void uvm_anon_dropswap(struct vm_anon *);
+boolean_t anon_swap_off(int, int);
+void uvm_anon_release(struct vm_anon *);
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

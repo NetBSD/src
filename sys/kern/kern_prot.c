@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.79 2003/05/16 13:55:18 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.79.2.1 2004/08/03 10:52:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79 2003/05/16 13:55:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79.2.1 2004/08/03 10:52:50 skrll Exp $");
 
 #include "opt_compat_43.h"
 
@@ -56,14 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79 2003/05/16 13:55:18 christos Exp 
 #include <sys/proc.h>
 #include <sys/timeb.h>
 #include <sys/times.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/syslog.h>
+#include <sys/resourcevar.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-MALLOC_DEFINE(M_CRED, "cred", "credentials");
+POOL_INIT(cred_pool, sizeof(struct ucred), 0, 0, 0, "credpl",
+    &pool_allocator_nointr);
 
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
@@ -620,8 +618,9 @@ crget(void)
 {
 	struct ucred *cr;
 
-	MALLOC(cr, struct ucred *, sizeof(*cr), M_CRED, M_WAITOK);
-	memset((caddr_t)cr, 0, sizeof(*cr));
+	cr = pool_get(&cred_pool, PR_WAITOK);
+	memset(cr, 0, sizeof(*cr));
+	simple_lock_init(&cr->cr_lock);
 	cr->cr_ref = 1;
 	return (cr);
 }
@@ -633,9 +632,13 @@ crget(void)
 void
 crfree(struct ucred *cr)
 {
+	int n;
 
-	if (--cr->cr_ref == 0)
-		FREE((caddr_t)cr, M_CRED);
+	simple_lock(&cr->cr_lock);
+	n = --cr->cr_ref;
+	simple_unlock(&cr->cr_lock);
+	if (n == 0)
+		pool_put(&cred_pool, cr);
 }
 
 /*
@@ -660,10 +663,11 @@ crcopy(struct ucred *cr)
 
 	if (cr->cr_ref == 1)
 		return (cr);
+
 	newcr = crget();
-	*newcr = *cr;
+	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
+		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
 	crfree(cr);
-	newcr->cr_ref = 1;
 	return (newcr);
 }
 
@@ -676,8 +680,8 @@ crdup(const struct ucred *cr)
 	struct ucred *newcr;
 
 	newcr = crget();
-	*newcr = *cr;
-	newcr->cr_ref = 1;
+	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
+		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
 	return (newcr);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.16 2003/04/17 12:52:21 fvdl Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.16.2.1 2004/08/03 10:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,7 +72,9 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.16 2003/04/17 12:52:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.16.2.1 2004/08/03 10:55:42 skrll Exp $");
+
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,12 +161,12 @@ char            tp_delay = 0x00;/* delay to keep token ring from blowing it */
  */
 
 int
-tp_emit(dutype, tpcb, seq, eot, data)
-	int             dutype;
-	struct tp_pcb  *tpcb;
-	SeqNum          seq;
-	u_int           eot;
-	struct mbuf    *data;
+tp_emit(
+	int             dutype,
+	struct tp_pcb  *tpcb,
+	SeqNum          seq,
+	u_int           eot,
+	struct mbuf    *data)
 {
 	struct tpdu *hdr;
 	struct mbuf *m;
@@ -197,8 +195,8 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		if (m) {
 			m->m_type = TPMT_TPHDR;
 			mbstat.m_mtypes[TPMT_TPHDR]++;
-			m->m_next = MNULL;
-			m->m_nextpkt = MNULL;
+			m->m_next = NULL;
+			m->m_nextpkt = NULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
 			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
@@ -214,7 +212,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		goto done;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_nextpkt = MNULL;
+	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
 	bzero((caddr_t) hdr, sizeof(struct tpdu));
@@ -858,16 +856,16 @@ done:
  */
 
 int
-tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
-	      dgout_routine)
-	int             error;
-	u_long          sref;
-	struct sockaddr_iso *faddr, *laddr;
-	struct mbuf    *erdata;
-	int             erlen;
-	struct tp_pcb  *tpcb;
-	caddr_t         cons_channel;
-        int 	      (*dgout_routine) __P((struct mbuf *, ...));
+tp_error_emit(
+	int             error,
+	u_long          sref,
+	struct sockaddr_iso *faddr,
+	struct sockaddr_iso *laddr,
+	struct mbuf    *erdata,
+	int             erlen,
+	struct tp_pcb  *tpcb,
+	caddr_t         cons_channel,
+        int 	      (*dgout_routine)(struct mbuf *, ...))
 {
 	int             dutype;
 	int             datalen = 0;
@@ -894,7 +892,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		return ENOBUFS;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_nextpkt = MNULL;
+	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
 
@@ -1071,7 +1069,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		lcp->lcd_flags |= X25_DG_CIRCUIT;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			printf("OUTPUT: dutype 0x%x channel 0x%x\n",
+			printf("OUTPUT: dutype %#x channel %p\n",
 			       dutype, cons_channel);
 		}
 #endif

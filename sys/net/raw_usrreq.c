@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.19.2.1 2003/07/02 15:26:57 darrenr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.19.2.2 2004/08/03 10:54:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.19.2.1 2003/07/02 15:26:57 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.19.2.2 2004/08/03 10:54:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -74,13 +70,7 @@ raw_init()
  * Raw protocol interface.
  */
 void
-#if __STDC__
 raw_input(struct mbuf *m0, ...)
-#else
-raw_input(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct rawcb *rp;
 	struct mbuf *m = m0;
@@ -152,7 +142,7 @@ raw_ctlinput(cmd, arg, d)
 	void *d;
 {
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	return NULL;
 	/* INCOMPLETE */

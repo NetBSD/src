@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.14 2003/05/05 14:36:13 bjh21 Exp $	*/
+/*	$NetBSD: tcp.h,v 1.14.2.1 2004/08/03 10:54:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,6 +42,7 @@ typedef u_int32_t tcp_seq;
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
+ * Updated by RFC 3168, September, 2001.
  */
 struct tcphdr {
 	u_int16_t th_sport;		/* source port */
@@ -69,6 +66,8 @@ struct tcphdr {
 #define	TH_PUSH	  0x08
 #define	TH_ACK	  0x10
 #define	TH_URG	  0x20
+#define	TH_ECE	  0x40			/* (unimplemented) */
+#define	TH_CWR	  0x80			/* (unimplemented) */
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
@@ -92,6 +91,9 @@ struct tcphdr {
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
+#define	TCPOPT_SIGNATURE		19	/* Keyed MD5: RFC 2385 */
+#define	   TCPOLEN_SIGNATURE		18
+
 /*
  * Default maximum segment size for TCP.
  * With an IP MSS of 576, this is 536,
@@ -113,5 +115,6 @@ struct tcphdr {
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
-
+/* Bits 0x04, 0x08 reserved for FreeBSD compatibility: TCP_NOPUSH, TCP_NOOPT */
+#define TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
 #endif /* _NETINET_TCP_H_ */

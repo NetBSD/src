@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.61.2.1 2003/07/02 15:27:18 darrenr Exp $	*/
+/*	$NetBSD: tty.h,v 1.61.2.2 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -53,7 +49,7 @@
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
  * if c_cq is NULL, the ring buffer has no TTY_QUOTE functionality
- * (but, saves memory and cpu time)
+ * (but, saves memory and CPU time)
  *
  * *DON'T* play with c_cs, c_ce, c_cq, or c_cl outside tty_subr.c!!!
  */
@@ -100,7 +96,7 @@ struct tty {
 					/* Set hardware state. */
 	int	(*t_param) __P((struct tty *, struct termios *));
 					/* Set hardware flow control. */
-	int	(*t_hwiflow) __P((struct tty *tp, int flag));
+	int	(*t_hwiflow) __P((struct tty *, int));
 	void	*t_sc;			/* XXX: net/if_sl.c:sl_softc. */
 	short	t_column;		/* Tty output column. */
 	short	t_rocount, t_rocol;	/* Tty. */
@@ -212,48 +208,46 @@ extern	struct ttychars ttydefaults;
 /* Symbolic sleep message strings. */
 extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
-int	 b_to_q __P((const u_char *cp, int cc, struct clist *q));
-void	 catq __P((struct clist *from, struct clist *to));
+int	 b_to_q __P((const u_char *, int, struct clist *));
+void	 catq __P((struct clist *, struct clist *));
 void	 clist_init __P((void));
-int	 getc __P((struct clist *q));
-void	 ndflush __P((struct clist *q, int cc));
-int	 ndqb __P((struct clist *q, int flag));
-u_char	*nextc __P((struct clist *q, u_char *cp, int *c));
-int	 putc __P((int c, struct clist *q));
-int	 q_to_b __P((struct clist *q, u_char *cp, int cc));
-int	 unputc __P((struct clist *q));
+int	 getc __P((struct clist *));
+void	 ndflush __P((struct clist *, int));
+int	 ndqb __P((struct clist *, int));
+u_char	*nextc __P((struct clist *, u_char *, int *));
+int	 putc __P((int, struct clist *));
+int	 q_to_b __P((struct clist *, u_char *, int));
+int	 unputc __P((struct clist *));
 
-int	 nullmodem __P((struct tty *tp, int flag));
-int	 tputchar __P((int c, int flags, struct tty *tp));
-int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
-	    struct lwp *l));
-int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
-void	 ttrstrt __P((void *tp));
-int	 ttpoll __P((struct tty *tp, int events, struct lwp *l));
-void	 ttsetwater __P((struct tty *tp));
-int	 ttspeedtab __P((int speed, struct speedtab *table));
-int	 ttstart __P((struct tty *tp));
-void	 ttwakeup __P((struct tty *tp));
-int	 ttwrite __P((struct tty *tp, struct uio *uio, int flag));
-void	 ttychars __P((struct tty *tp));
-int	 ttycheckoutq __P((struct tty *tp, int wait));
-int	 ttyclose __P((struct tty *tp));
-void	 ttyflush __P((struct tty *tp, int rw));
-void	 ttyinfo __P((struct tty *tp));
-int	 ttyinput __P((int c, struct tty *tp));
-int	 ttylclose __P((struct tty *tp, int flag));
-int	 ttylopen __P((dev_t device, struct tty *tp));
-int	 ttykqfilter __P((dev_t device, struct knote *));
-int	 ttymodem __P((struct tty *tp, int flag));
-int	 ttyopen __P((struct tty *tp, int dialout, int nonblock));
-int	 ttyoutput __P((int c, struct tty *tp));
-void	 ttypend __P((struct tty *tp));
-void	 ttyretype __P((struct tty *tp));
-void	 ttyrub __P((int c, struct tty *tp));
-int	 ttysleep __P((struct tty *tp,
-	    void *chan, int pri, const char *wmesg, int timeout));
-int	 ttywait __P((struct tty *tp));
-int	 ttywflush __P((struct tty *tp));
+int	 nullmodem __P((struct tty *, int));
+int	 tputchar __P((int, int, struct tty *));
+int	 ttioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
+int	 ttread __P((struct tty *, struct uio *, int));
+void	 ttrstrt __P((void *));
+int	 ttpoll __P((struct tty *, int, struct lwp *));
+void	 ttsetwater __P((struct tty *));
+int	 ttspeedtab __P((int, const struct speedtab *));
+int	 ttstart __P((struct tty *));
+void	 ttwakeup __P((struct tty *));
+int	 ttwrite __P((struct tty *, struct uio *, int));
+void	 ttychars __P((struct tty *));
+int	 ttycheckoutq __P((struct tty *, int));
+int	 ttyclose __P((struct tty *));
+void	 ttyflush __P((struct tty *, int));
+void	 ttyinfo __P((struct tty *));
+int	 ttyinput __P((int, struct tty *));
+int	 ttylclose __P((struct tty *, int));
+int	 ttylopen __P((dev_t, struct tty *));
+int	 ttykqfilter __P((dev_t, struct knote *));
+int	 ttymodem __P((struct tty *, int));
+int	 ttyopen __P((struct tty *, int, int));
+int	 ttyoutput __P((int, struct tty *));
+void	 ttypend __P((struct tty *));
+void	 ttyretype __P((struct tty *));
+void	 ttyrub __P((int, struct tty *));
+int	 ttysleep __P((struct tty *, void *, int, const char *, int));
+int	 ttywait __P((struct tty *));
+int	 ttywflush __P((struct tty *));
 
 void	 tty_init __P((void));
 void	 tty_attach __P((struct tty *));
@@ -261,7 +255,7 @@ void	 tty_detach __P((struct tty *));
 struct tty
 	*ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
-u_char	*firstc __P((struct clist *clp, int *c));
+u_char	*firstc __P((struct clist *, int *));
 
 int	clalloc __P((struct clist *, int, int));
 void	clfree __P((struct clist *));

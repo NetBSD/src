@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.23 2002/05/12 19:09:12 matt Exp $	*/
+/*	$NetBSD: ns.c,v 1.23.10.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.23 2002/05/12 19:09:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.23.10.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +59,8 @@ int ns_interfaces;
  */
 /* ARGSUSED */
 int
-ns_control(so, cmd, data, ifp, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
-	struct ifnet *ifp;
-	struct proc *p;
+ns_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+	struct proc *p)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ns_ifaddr *ia = 0;
@@ -106,10 +98,9 @@ ns_control(so, cmd, data, ifp, p)
 			panic("ns_control");
 		if (ia == 0) {
 			MALLOC(ia, struct ns_ifaddr *, sizeof(*ia),
-			       M_IFADDR, M_WAITOK);
+			       M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);
-			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ns_ifaddr, ia, ia_list);
 			IFAREF((struct ifaddr *)ia);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
@@ -209,9 +200,7 @@ ns_control(so, cmd, data, ifp, p)
 }
 
 void
-ns_purgeaddr(ifa, ifp)
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
+ns_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 {
 	struct ns_ifaddr *ia = (void *) ifa;
 
@@ -229,8 +218,7 @@ ns_purgeaddr(ifa, ifp)
 }
 
 void
-ns_purgeif(ifp)
-	struct ifnet *ifp;
+ns_purgeif(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -246,9 +234,7 @@ ns_purgeif(ifp)
  * Delete any previous route for an old address.
  */
 void
-ns_ifscrub(ifp, ia)
-	struct ifnet *ifp;
-	struct ns_ifaddr *ia; 
+ns_ifscrub(struct ifnet *ifp, struct ns_ifaddr *ia)
 {
 
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
@@ -264,11 +250,8 @@ ns_ifscrub(ifp, ia)
  * and routing table entry.
  */
 int
-ns_ifinit(ifp, ia, sns, scrub)
-	struct ifnet *ifp;
-	struct ns_ifaddr *ia;
-	struct sockaddr_ns *sns;
-	int scrub;
+ns_ifinit(struct ifnet *ifp, struct ns_ifaddr *ia, struct sockaddr_ns *sns,
+	int scrub)
 {
 	struct sockaddr_ns oldaddr;
 	union ns_host *h = &ia->ia_addr.sns_addr.x_host;
@@ -340,8 +323,7 @@ bad:
  * Return address info for specified internet network.
  */
 struct ns_ifaddr *
-ns_iaonnetof(dst)
-	struct ns_addr *dst;
+ns_iaonnetof(struct ns_addr *dst)
 {
 	struct ns_ifaddr *ia;
 	struct ns_addr *compare;

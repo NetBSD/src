@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.17 2003/01/18 09:53:20 thorpej Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.17.2.1 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,6 +73,7 @@ struct plimit {
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
 	int	p_lflags;
 	int	p_refcnt;		/* number of references */
+	struct simplelock p_slock;	/* mutex for p_refcnt */
 };
 
 /* add user profiling from AST */
@@ -89,15 +86,33 @@ struct plimit {
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
+/*
+ * Structure associated with user caching.
+ */
+struct uidinfo {
+	LIST_ENTRY(uidinfo) ui_hash;
+	uid_t	ui_uid;
+	long	ui_proccnt;	/* Number of processes */
+	rlim_t	ui_sbsize;	/* socket buffer size */
+
+};
+#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
+extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
+extern u_long uihash;		/* size of hash table - 1 */
+int       chgproccnt(uid_t, int);
+int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
+
 extern char defcorename[];
-void	 addupc_intr __P((struct proc *p, u_long pc));
-void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
-void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
-	    struct timeval *ip));
-struct plimit *limcopy __P((struct plimit *lim));
+void	 addupc_intr __P((struct proc *, u_long));
+void	 addupc_task __P((struct proc *, u_long, u_int));
+void	 calcru __P((struct proc *, struct timeval *, struct timeval *,
+	    struct timeval *));
+struct plimit *limcopy __P((struct plimit *));
 void limfree __P((struct plimit *));
-void	ruadd __P((struct rusage *ru, struct rusage *ru2));
-struct	pstats *pstatscopy __P((struct pstats *ps));
-void 	pstatsfree __P((struct pstats *ps));
+void	ruadd __P((struct rusage *, struct rusage *));
+struct	pstats *pstatscopy __P((struct pstats *));
+void 	pstatsfree __P((struct pstats *));
+extern rlim_t maxdmap;
+extern rlim_t maxsmap;
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.11 2002/06/12 03:46:18 itojun Exp $	*/
-/*	$KAME: key.h,v 1.19 2000/10/05 04:02:58 itojun Exp $	*/
+/*	$NetBSD: key.h,v 1.11.6.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,12 @@
 
 #ifdef _KERNEL
 
+#include <sys/queue.h>
+
 extern struct key_cb key_cb;
+
+extern TAILQ_HEAD(_satailq, secasvar) satailq;
+extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
 
 struct secpolicy;
 struct secpolicyindex;
@@ -46,14 +51,16 @@ struct socket;
 struct sadb_msg;
 struct sadb_x_policy;
 
-extern struct secpolicy *key_allocsp __P((struct secpolicyindex *, u_int));
+extern struct secpolicy *key_allocsp __P((u_int16_t, struct secpolicyindex *,
+	u_int));
 extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
 extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,
 					u_int, u_int32_t));
+extern struct secpolicy *key_getspbyid __P((u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
 extern void key_freesav __P((struct secasvar *));
-extern struct secpolicy *key_newsp __P((void));
+extern struct secpolicy *key_newsp __P((u_int32_t));
 extern struct secpolicy *key_msg2sp __P((struct sadb_x_policy *,
 	size_t, int *));
 extern struct mbuf *key_sp2msg __P((struct secpolicy *));
@@ -62,9 +69,12 @@ extern int key_cmpspidx_exactly
 extern int key_cmpspidx_withmask
 	__P((struct secpolicyindex *, struct secpolicyindex *));
 extern int key_spdacquire __P((struct secpolicy *));
+extern struct mbuf *key_setdumpsp __P((struct secpolicy *,
+	u_int8_t, u_int32_t, u_int32_t));
 extern void key_timehandler __P((void *));
 extern void key_randomfill __P((void *, size_t));
 extern void key_freereg __P((struct socket *));
+struct mbuf *key_setdumpsa_spi __P((u_int32_t));
 extern int key_parse __P((struct mbuf *, struct socket *));
 extern void key_init __P((void));
 extern int key_checktunnelsanity __P((struct secasvar *, u_int,

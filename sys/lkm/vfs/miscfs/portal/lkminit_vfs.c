@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:34 lukem Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5.16.1 2004/08/03 10:54:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.16.1 2004/08/03 10:54:04 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -48,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:34 lukem Exp $"
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+#include <miscfs/portal/portal.h>
 
 int portal_lkmentry __P((struct lkm_table *, int, int));
 
@@ -62,6 +65,13 @@ extern struct vfsops portal_vfsops;
 MOD_VFS("portal", -1, &portal_vfsops);
 
 /*
+ * take care of fs specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_portal_log;
+
+/*
  * entry point
  */
 int
@@ -71,5 +81,25 @@ portal_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc)
+}
+
+static int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_vfs_portal_setup(&_portal_log);
+	return (0);
+}
+
+static int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_teardown(&_portal_log);
+	return (0);
 }

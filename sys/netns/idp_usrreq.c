@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.21.2.1 2003/07/02 15:27:05 darrenr Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.21.2.2 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.21.2.1 2003/07/02 15:27:05 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.21.2.2 2004/08/03 10:56:04 skrll Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -73,13 +69,7 @@ struct	sockaddr_ns idp_ns = { sizeof(idp_ns), AF_NS };
  *  This may also be called for raw listeners.
  */
 void
-#if __STDC__
 idp_input(struct mbuf *m, ...)
-#else
-idp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	struct idp *idp = mtod(m, struct idp *);
@@ -125,8 +115,7 @@ bad:
 }
 
 void
-idp_abort(nsp)
-	struct nspcb *nsp;
+idp_abort(struct nspcb *nsp)
 {
 	struct socket *so = nsp->nsp_socket;
 
@@ -138,9 +127,7 @@ idp_abort(nsp)
  * the specified error.
  */
 void
-idp_drop(nsp, errno)
-	struct nspcb *nsp;
-	int errno;
+idp_drop(struct nspcb *nsp, int errno)
 {
 	struct socket *so = nsp->nsp_socket;
 
@@ -161,13 +148,7 @@ idp_drop(nsp, errno)
 }
 
 int
-#if __STDC__
 idp_output(struct mbuf *m0, ...)
-#else
-idp_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	struct mbuf *m;
@@ -247,11 +228,8 @@ idp_output(m0, va_alist)
 }
 /* ARGSUSED */
 int
-idp_ctloutput(req, so, level, name, value)
-	int req, level;
-	struct socket *so;
-	int name;
-	struct mbuf **value;
+idp_ctloutput(int req, struct socket *so, int level, int name,
+	struct mbuf **value)
 {
 	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
@@ -361,11 +339,8 @@ u_long	idp_recvspace = 2048;
 
 /*ARGSUSED*/
 int
-idp_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+idp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
 {
 	struct nspcb *nsp;
 	struct proc *p;
@@ -502,11 +477,8 @@ release:
 
 /*ARGSUSED*/
 int
-idp_raw_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct proc *p;
@@ -539,4 +511,3 @@ idp_raw_usrreq(so, req, m, nam, control, l)
 	}
 	return (error);
 }
-

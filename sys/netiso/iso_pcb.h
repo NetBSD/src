@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.9 1997/06/24 02:26:11 thorpej Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.9.56.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -118,13 +114,13 @@ struct inpcb;
 struct mbuf;
 struct sockaddr_iso;
 
-int iso_pcballoc __P((struct socket *, void *));
-int iso_pcbbind __P((void *, struct mbuf *, struct proc *));
-int iso_pcbconnect __P((void *, struct mbuf *));
-void iso_pcbdisconnect __P((void *));
-void iso_pcbdetach __P((void *));
-void iso_pcbnotify __P((struct isopcb *, struct sockaddr_iso *, int,
-			void (*) (struct isopcb *)));
-struct isopcb  *iso_pcblookup __P((struct isopcb *, int, caddr_t,
-				   struct sockaddr_iso *));
+int iso_pcballoc (struct socket *, void *);
+int iso_pcbbind (void *, struct mbuf *, struct proc *);
+int iso_pcbconnect (void *, struct mbuf *);
+void iso_pcbdisconnect (void *);
+void iso_pcbdetach (void *);
+void iso_pcbnotify (struct isopcb *, struct sockaddr_iso *, int,
+			void (*) (struct isopcb *));
+struct isopcb  *iso_pcblookup (struct isopcb *, int, caddr_t,
+				   struct sockaddr_iso *);
 #endif

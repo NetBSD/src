@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.14.2.1 2003/07/02 15:26:49 darrenr Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.14.2.2 2004/08/03 10:54:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,4 +77,8 @@ extern int fdesc_root __P((struct mount *, struct vnode **, struct lwp *));
 extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
 extern int (**fdesc_vnodeop_p) __P((void *));
 extern struct vfsops fdesc_vfsops;
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_fdesc_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */

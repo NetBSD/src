@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.47 2003/06/27 08:41:09 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.47.2.1 2004/08/03 10:55:16 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47 2003/06/27 08:41:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.1 2004/08/03 10:55:16 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -498,16 +498,13 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
 	}
 
-	ip6->ip6_plen = htons((u_short)icmp6len);
+	ip6->ip6_plen = htons((u_int16_t)icmp6len);
 	nd_ns->nd_ns_cksum = 0;
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif
-	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL);
+	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, 
+	    &im6o, (struct socket *)NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
@@ -805,7 +802,7 @@ nd6_na_input(m, off, icmp6len)
 		 * argument as the 1st one.
 		 */
 		nd6_output(ifp, ifp, ln->ln_hold,
-			   (struct sockaddr_in6 *)rt_key(rt), rt);
+		    (struct sockaddr_in6 *)rt_key(rt), rt);
 		ln->ln_hold = NULL;
 	}
 
@@ -839,7 +836,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	struct ip6_hdr *ip6;
 	struct nd_neighbor_advert *nd_na;
 	struct ip6_moptions im6o;
-	struct sockaddr_in6 src_sa, dst_sa;
+	struct sockaddr_in6 dst_sa;
 	struct in6_addr *src0;
 	int icmp6len, maxlen, error;
 	caddr_t mac;
@@ -890,10 +887,9 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	ip6->ip6_hlim = 255;
-	bzero(&src_sa, sizeof(src_sa));
 	bzero(&dst_sa, sizeof(dst_sa));
-	src_sa.sin6_len = dst_sa.sin6_len = sizeof(struct sockaddr_in6);
-	src_sa.sin6_family = dst_sa.sin6_family = AF_INET6;
+	dst_sa.sin6_len = sizeof(struct sockaddr_in6);
+	dst_sa.sin6_family = AF_INET6;
 	dst_sa.sin6_addr = *daddr6;
 	if (IN6_IS_ADDR_UNSPECIFIED(daddr6)) {
 		/* reply to DAD */
@@ -918,8 +914,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 		    ip6_sprintf(&dst_sa.sin6_addr), error));
 		goto bad;
 	}
-	src_sa.sin6_addr = *src0;
-	ip6->ip6_src = src_sa.sin6_addr;
+	ip6->ip6_src = *src0;
 	nd_na = (struct nd_neighbor_advert *)(ip6 + 1);
 	nd_na->nd_na_type = ND_NEIGHBOR_ADVERT;
 	nd_na->nd_na_code = 0;
@@ -965,17 +960,13 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
-	ip6->ip6_plen = htons((u_short)icmp6len);
+	ip6->ip6_plen = htons((u_int16_t)icmp6len);
 	nd_na->nd_na_flags_reserved = flags;
 	nd_na->nd_na_cksum = 0;
 	nd_na->nd_na_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif
-	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
@@ -1367,7 +1358,6 @@ nd6_dad_ns_input(ifa)
 	struct ifaddr *ifa;
 {
 	struct in6_ifaddr *ia;
-	struct ifnet *ifp;
 	const struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
@@ -1376,7 +1366,6 @@ nd6_dad_ns_input(ifa)
 		panic("ifa == NULL in nd6_dad_ns_input");
 
 	ia = (struct in6_ifaddr *)ifa;
-	ifp = ifa->ifa_ifp;
 	taddr6 = &ia->ia_addr.sin6_addr;
 	duplicate = 0;
 	dp = nd6_dad_find(ifa);

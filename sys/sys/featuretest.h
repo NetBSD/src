@@ -1,7 +1,7 @@
-/*	$NetBSD: featuretest.h,v 1.5 2003/04/29 12:50:16 bjh21 Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.5.2.1 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*
- * Written by Klaus Klein <kleink@NetBSD.ORG>, February 2, 1998.
+ * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
  * Public domain.
  *
  * NOTE: Do not protect this header against multiple inclusion.  Doing
@@ -53,7 +53,7 @@
  * are:
  *
  * _REENTRANT
- * _ISO_C99_SOURCE
+ * _ISOC99_SOURCE
  * _LARGEFILE_SOURCE		Large File Support
  *		<http://ftp.sas.com/standards/large.file/x_open.20Mar96.html>
  */

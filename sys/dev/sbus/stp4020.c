@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.34 2003/01/07 20:39:19 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.34.2.1 2004/08/03 10:51:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34 2003/01/07 20:39:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.1 2004/08/03 10:51:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ struct stp4020_socket {
 	struct stp4020_softc	*sc;	/* Back link */
 	int		flags;
 #define STP4020_SOCKET_BUSY	0x0001
-#define STP4020_SOCKET_SHUTDOWN	0x0002
 	int		sock;		/* Socket number (0 or 1) */
 	int		sbus_intno;	/* Do we use first (0) or second (1)
 					   interrupt? */
@@ -126,7 +125,6 @@ struct stp4020_socket {
 struct stp4020_softc {
 	struct device	sc_dev;		/* Base device */
 	struct sbusdev	sc_sd;		/* SBus device */
-	bus_space_tag_t	sc_bustag;
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
 	struct proc	*event_thread;		/* event handling thread */
@@ -252,9 +250,6 @@ stp4020_wr_winctl(h, win, idx, v)
 
 #ifndef SUN4U	/* XXX - move to SBUS machdep function? */
 
-#if !__FULL_SPARC_BUS_SPACE
-#error "stp4020 (nell) needs __FULL_SPARC_BUS_SPACE defined as well"
-#else
 static	u_int16_t stp4020_read_2(bus_space_tag_t,
 				 bus_space_handle_t,
 				 bus_size_t);
@@ -333,7 +328,6 @@ stp4020_write_8(space, handle, offset, value)
 {
 	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
 }
-#endif	/* __FULL_SPARC_BUS_SPACE */
 #endif	/* SUN4U */
 
 int
@@ -378,20 +372,21 @@ stp4020attach(parent, self, aux)
 	sbus_intno = sc->sc_dev.dv_cfdata->cf_flags & 1;
 
 	/* Transfer bus tags */
-#if __FULL_SPARC_BUS_SPACE
-	tag = (bus_space_tag_t)
-	    malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	*tag = *sa->sa_bustag;
+#ifdef SUN4U
+	tag = sa->sa_bustag;
+#else
+	tag = bus_space_tag_alloc(sa->sa_bustag, sc);
+	if (tag == NULL) {
+		printf("%s: attach: out of memory\n", self->dv_xname);
+		return;
+	}
 	tag->sparc_read_2 = stp4020_read_2;
 	tag->sparc_read_4 = stp4020_read_4;
 	tag->sparc_read_8 = stp4020_read_8;
 	tag->sparc_write_2 = stp4020_write_2;
 	tag->sparc_write_4 = stp4020_write_4;
 	tag->sparc_write_8 = stp4020_write_8;
-#else
-	tag = sa->sa_bustag;
-#endif	/* __FULL_SPARC_BUS_SPACE */
-	sc->sc_bustag = tag;
+#endif	/* SUN4U */
 
 	/* Set up per-socket static initialization */
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
@@ -546,8 +541,10 @@ stp4020_attach_socket(h, speed)
 			     : STP4020_ICR0_SCILVL_SB0);
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
-	/* Get live status bits from ISR0 */
+	/* Get live status bits from ISR0 and clear pending interrupts */
 	v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
+	stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
+
 	if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) == 0)
 		return;
 
@@ -679,8 +676,7 @@ stp4020_intr(arg)
 		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
 
 		/* Ack all interrupts at once. */
-		stp4020_wr_sockctl(h, STP4020_ISR0_IDX,
-		    STP4020_ISR0_ALL_STATUS_IRQ);
+		stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
 
 #ifdef STP4020_DEBUG
 		if (stp4020_debug != 0) {
@@ -753,6 +749,11 @@ stp4020_intr(arg)
 			r = 1;
 		}
 
+		if ((v & STP4020_ISR0_SCINT) != 0) {
+			DPRINTF(("stp4020[%d]: status change\n", h->sock));
+			r = 1;
+		}
+
 		if ((v & STP4020_ISR0_RDYCHG) != 0) {
 			DPRINTF(("stp4020[%d]: Ready/Busy change\n", h->sock));
 			r = 1;
@@ -767,6 +768,9 @@ stp4020_intr(arg)
 			DPRINTF(("stp4020[%d]: Card access timeout\n", h->sock));
 			r = 1;
 		}
+
+		if ((v & ~STP4020_ISR0_LIVE) && r == 0)
+			printf("stp4020[%d]: unhandled interrupt: 0x%x\n", h->sock, v);
 
 	}
 	splx(s);
@@ -1011,7 +1015,6 @@ stp4020_chip_socket_enable(pch)
 	/*
 	 * Check the card type.
 	 * Enable socket I/O interrupts for IO cards.
-	 * We use level SB_INT[0] for I/O interrupts.
 	 */
 	if (pcmcia_card_gettype(h->pcmcia) == PCMCIA_IFTYPE_IO) {
 		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE);
@@ -1026,6 +1029,8 @@ stp4020_chip_socket_enable(pch)
 		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE
 		    |STP4020_ICR0_SPKREN);
 		v |= STP4020_ICR0_IFTYPE_MEM;
+		h->int_enable = h->int_disable = v;
+		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
 		DPRINTF(("%s: configuring card for MEM ONLY useage\n", h->sc->sc_dev.dv_xname));
 	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);

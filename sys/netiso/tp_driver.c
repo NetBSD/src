@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.15 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.15.16.1 2004/08/03 10:55:42 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.15.16.1 2004/08/03 10:55:42 skrll Exp $");
 
 #include "tp_states.h"
 
@@ -26,6 +26,7 @@ static const struct act_ent {
 #include <sys/errno.h>
 
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_tpdu.h>
@@ -33,24 +34,20 @@ static const struct act_ent {
 #include <netiso/tp_trace.h>
 #include <netiso/iso_errno.h>
 #include <netiso/tp_seq.h>
-#include <netiso/tp_var.h>
 #include <netiso/cons.h>
 
 #define DRIVERTRACE TPPTdriver
-#define sbwakeup(sb)	sowakeup(p->tp_sock, sb);
+#define sbwakeup(sb, dir)	sowakeup(p->tp_sock, sb, dir);
 #define MCPY(d, w) (d ? m_copym(d, 0, (int)M_COPYALL, w): 0)
 
 static int trick_hc = 1;
 
 #include "tp_events.h"
-static int _Xebec_action __P((int, struct tp_event *, struct tp_pcb *));
-static int _Xebec_index __P((struct tp_event *, struct tp_pcb *));
+static int _Xebec_action (int, struct tp_event *, struct tp_pcb *);
+static int _Xebec_index (struct tp_event *, struct tp_pcb *);
 
 static int
-_Xebec_action(a, e, p)
-	int             a;
-	struct tp_event *e;
-	struct tp_pcb  *p;
+_Xebec_action(int a, struct tp_event *e, struct tp_pcb *p)
 {
 	int             error;
 	struct mbuf    *data = NULL;
@@ -382,7 +379,7 @@ _Xebec_action(a, e, p)
 		break;
 	case 0x1a:
 		tp0_stash(p, e);
-		sbwakeup(&p->tp_sock->so_rcv);
+		sbwakeup(&p->tp_sock->so_rcv, POLL_IN);
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
@@ -392,7 +389,7 @@ _Xebec_action(a, e, p)
 		break;
 	case 0x1b:
 		tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
-		sbwakeup(&p->tp_sock->so_rcv);
+		sbwakeup(&p->tp_sock->so_rcv, POLL_IN);
 
 		doack = tp_stash(p, e);
 #ifdef ARGO_DEBUG
@@ -480,7 +477,7 @@ _Xebec_action(a, e, p)
 		}
 #endif
 		tp_indicate(T_XDATA, p, 0);
-		sbwakeup(&p->tp_Xrcv);
+		sbwakeup(&p->tp_Xrcv, POLL_IN);
 
 		(void) tp_emit(XAK_TPDU_type, p, p->tp_Xrcvnxt, 0, NULL);
 		SEQ_INC(p, p->tp_Xrcvnxt);
@@ -718,7 +715,7 @@ _Xebec_action(a, e, p)
 		if (p->tp_class != TP_CLASS_0) {
 			tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
 		}
-		sbwakeup(sb);
+		sbwakeup(sb, POLL_OUT);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
 			printf("GOOD ACK new sndnxt 0x%x\n", p->tp_sndnxt);
@@ -749,7 +746,7 @@ _Xebec_action(a, e, p)
 		tp_ctimeout(p, TM_inact, (int) p->tp_inact_ticks);
 		tp_cuntimeout(p, TM_retrans);
 
-		sbwakeup(&p->tp_sock->so_snd);
+		sbwakeup(&p->tp_sock->so_snd, POLL_OUT);
 
 		/* resume normal data */
 		tp_send(p);
@@ -953,7 +950,7 @@ _Xebec_index(e, p)
 		return 0;
 	}			/* end switch */
 }				/* _Xebec_index() */
-static const int      inx[26][9] =
+static const int inx[26][9] =
 {
     {0, 0, 0, 0, 0, 0, 0, 0, 0,},
     {0x0, 0x0, 0x0, 0x0, 0x31, 0x0, 0x0, 0x0, 0x0,},
@@ -983,13 +980,11 @@ static const int      inx[26][9] =
     {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, -1,},
 };
 int
-tp_driver(p, e)
-	struct tp_pcb *p;
-	struct tp_event *e;
+tp_driver(struct tp_pcb *p, struct tp_event *e)
 {
 	int    index, error = 0;
 	const struct act_ent *a;
-	static struct act_ent erroraction = {0, -1};
+	static const struct act_ent erroraction = {0, -1};
 
 	index = inx[1 + e->ev_number][p->tp_state];
 	if (index < 0)

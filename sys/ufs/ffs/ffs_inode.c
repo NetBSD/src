@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.59.2.1 2003/07/02 15:27:21 darrenr Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.59.2.2 2004/08/03 10:56:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.59.2.1 2003/07/02 15:27:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.59.2.2 2004/08/03 10:56:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -189,7 +185,7 @@ ffs_truncate(v)
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr_t blks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct fs *fs;
 	int offset, size, level;
@@ -223,6 +219,9 @@ ffs_truncate(v)
 	fs = oip->i_fs;
 	if (length > fs->fs_maxfilesize)
 		return (EFBIG);
+
+	if ((oip->i_flags & SF_SNAPSHOT) != 0)
+		ffs_snapremove(ovp);
 
 	osize = oip->i_size;
 	ioflag = ap->a_flags;
@@ -350,14 +349,14 @@ ffs_truncate(v)
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		oldblks[NDADDR + level] = DIP(oip, ib[level]);
+		blks[NDADDR + level] = DIP(oip, ib[level]);
 		if (lastiblock[level] < 0) {
 			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
 	}
 	for (i = 0; i < NDADDR; i++) {
-		oldblks[i] = DIP(oip, db[i]);
+		blks[i] = DIP(oip, db[i]);
 		if (i > lastblock)
 			DIP_ASSIGN(oip, db[i], 0);
 	}
@@ -373,12 +372,14 @@ ffs_truncate(v)
 	 * when we are done.
 	 */
 	for (i = 0; i < NDADDR; i++) {
-		newblks[i] = DIP(oip, db[i]);
-		DIP_ASSIGN(oip, db[i], oldblks[i]);
+		bn = DIP(oip, db[i]);
+		DIP_ASSIGN(oip, db[i], blks[i]);
+		blks[i] = bn;
 	}
 	for (i = 0; i < NIADDR; i++) {
-		newblks[NDADDR + i] = DIP(oip, ib[i]);
-		DIP_ASSIGN(oip, ib[i], oldblks[NDADDR + i]);
+		bn = DIP(oip, ib[i]);
+		DIP_ASSIGN(oip, ib[i], blks[NDADDR + i]);
+		blks[NDADDR + i] = bn;
 	}
 
 	oip->i_size = osize;
@@ -406,7 +407,8 @@ ffs_truncate(v)
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
 				DIP_ASSIGN(oip, ib[level], 0);
-				ffs_blkfree(oip, bn, fs->fs_bsize);
+				ffs_blkfree(fs, oip->i_devvp, bn, fs->fs_bsize,
+				    oip->i_number);
 				blocksreleased += nblocks;
 			}
 		}
@@ -428,7 +430,7 @@ ffs_truncate(v)
 			continue;
 		DIP_ASSIGN(oip, db[i], 0);
 		bsize = blksize(fs, oip, i);
-		ffs_blkfree(oip, bn, bsize);
+		ffs_blkfree(fs, oip->i_devvp, bn, bsize, oip->i_number);
 		blocksreleased += btodb(bsize);
 	}
 	if (lastblock < 0)
@@ -462,7 +464,8 @@ ffs_truncate(v)
 			 * required for the storage we're keeping.
 			 */
 			bn += numfrags(fs, newspace);
-			ffs_blkfree(oip, bn, oldspace - newspace);
+			ffs_blkfree(fs, oip->i_devvp, bn, oldspace - newspace,
+			    oip->i_number);
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
@@ -470,10 +473,10 @@ ffs_truncate(v)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] != DIP(oip, ib[level]))
+		if (blks[NDADDR + level] != DIP(oip, ib[level]))
 			panic("itrunc1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != DIP(oip, db[i]))
+		if (blks[i] != DIP(oip, db[i]))
 			panic("itrunc2");
 	if (length == 0 &&
 	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
@@ -567,7 +570,8 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ffs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
-		VOP_STRATEGY(bp);
+		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		VOP_STRATEGY(vp, bp);
 		error = biowait(bp);
 	}
 	if (error) {
@@ -610,7 +614,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 				allerror = error;
 			blocksreleased += blkcount;
 		}
-		ffs_blkfree(ip, nb, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize, ip->i_number);
 		blocksreleased += nblocks;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.89 2003/06/26 03:35:00 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.89.2.1 2004/08/03 10:54:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,11 +78,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -102,11 +98,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89 2003/06/26 03:35:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.1 2004/08/03 10:54:36 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -133,8 +130,11 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89 2003/06/26 03:35:00 itojun Exp $");
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
 
-#ifdef INET
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
+#ifdef INET
 static u_int in_mask2len __P((struct in_addr *));
 static void in_len2mask __P((struct in_addr *, u_int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
@@ -174,11 +174,11 @@ in_localaddr(in)
 	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
 			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
 	} else {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
 			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
 				return (1);
 	}
@@ -236,7 +236,7 @@ in_fmtaddr(addr)
 
 	addr.s_addr = ntohl(addr.s_addr);
 
-	sprintf(buf, "%d.%d.%d.%d",
+	snprintf(buf, sizeof(buf), "%d.%d.%d.%d",
 		(addr.s_addr >> 24) & 0xFF,
 		(addr.s_addr >> 16) & 0xFF,
 		(addr.s_addr >>  8) & 0xFF,
@@ -258,7 +258,7 @@ in_setmaxmtu()
 	struct ifnet *ifp;
 	unsigned long maxmtu = 0;
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if ((ifp = ia->ia_ifp) == 0)
 			continue;
 		if ((ifp->if_flags & (IFF_UP|IFF_LOOPBACK)) != IFF_UP)
@@ -389,7 +389,7 @@ in_control(so, cmd, data, ifp, p)
 			if (ia == 0)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
-			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
+			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 			    ifa_list);
@@ -468,12 +468,19 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+#ifdef PFIL_HOOKS
+		if (!error)
+			(void)pfil_run_hooks(&if_pfil,
+			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
+#endif
 		return error;
 
 	case SIOCSIFNETMASK:
-		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr =
-		    ifra->ifra_addr.sin_addr.s_addr;
-		break;
+		in_ifscrub(ifp, ia);
+		ia->ia_sockmask = *satosin(&ifr->ifr_addr);
+		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
+		error = in_ifinit(ifp, ia, NULL, 0);
+		return (error);
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
@@ -505,6 +512,11 @@ in_control(so, cmd, data, ifp, p)
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
+#ifdef PFIL_HOOKS
+		if (!error)
+			(void)pfil_run_hooks(&if_pfil,
+			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+#endif
 		return (error);
 
 	case SIOCGIFALIAS:
@@ -518,10 +530,18 @@ in_control(so, cmd, data, ifp, p)
 		else
 			bzero(&ifra->ifra_broadaddr,
 			      sizeof(ifra->ifra_broadaddr));
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil,
+		    (struct mbuf **)SIOCGIFALIAS, ifp, PFIL_IFADDR);
+#endif
 		return 0;
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa, ifp);
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
+		    ifp, PFIL_IFADDR);
+#endif
 		break;
 
 #ifdef MROUTING
@@ -546,43 +566,12 @@ in_purgeaddr(ifa, ifp)
 	struct ifnet *ifp;
 {
 	struct in_ifaddr *ia = (void *) ifa;
-	struct in_ifaddr *nia;
-	struct inpcb *inp, *inp_ialink;
 
 	in_ifscrub(ifp, ia);
-
-	nia = ia;
-	NEXT_IA_WITH_SAME_ADDR(nia);
-	/*
-	 * Kick all the sockets!
-	 */
-	for (inp = LIST_FIRST(&ia->ia_inpcbs); inp != NULL; inp = inp_ialink) {
-		inp_ialink = LIST_NEXT(inp, inp_ialink);
-		KASSERT(inp != inp_ialink);
-		LIST_REMOVE(inp, inp_ialink);
-		IFAFREE(&ia->ia_ifa);
-		inp->inp_ia = NULL;
-		if (nia != NULL) {
-			KASSERT(nia != ia);
-			inp->inp_ia = nia;
-			IFAREF(&nia->ia_ifa); 
-			LIST_INSERT_HEAD(&nia->ia_inpcbs, inp, inp_ialink);
-		} else if (inp->inp_socket != NULL) {
-			if ((inp->inp_socket->so_state & SS_NOFDREF) &&
-			    inp->inp_socket->so_head == NULL) {
-				soabort(inp->inp_socket);
-			} else {
-				inp->inp_socket->so_error = ECONNABORTED;
-				sorwakeup(inp->inp_socket);
-				sowwakeup(inp->inp_socket);
-			}
-		}
-	}
-
 	LIST_REMOVE(ia, ia_hash);
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
-	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
 	IFAFREE(&ia->ia_ifa);
@@ -683,7 +672,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 		if (iflr->flags & IFLR_PREFIX)
 			return EINVAL;
 
-		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR_IN6). */
+		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR_IN). */
 		bzero(&ifra, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name,
 			sizeof(ifra.ifra_name));
@@ -739,7 +728,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 		}
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != AF_INET6)
+			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (!cmp)
 				break;
@@ -771,7 +760,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 		} else {
 			struct in_aliasreq ifra;
 
-			/* fill in_aliasreq and do ioctl(SIOCDIFADDR_IN6) */
+			/* fill in_aliasreq and do ioctl(SIOCDIFADDR_IN) */
 			bzero(&ifra, sizeof(ifra));
 			bcopy(iflr->iflr_name, ifra.ifra_name,
 				sizeof(ifra.ifra_name));
@@ -817,9 +806,12 @@ in_ifinit(ifp, ia, sin, scrub)
 	struct sockaddr_in *sin;
 	int scrub;
 {
-	u_int32_t i = sin->sin_addr.s_addr;
+	u_int32_t i;
 	struct sockaddr_in oldaddr;
 	int s = splnet(), flags = RTF_UP, error;
+
+	if (!sin)
+		sin = &ia->ia_addr;
 
 	/*
 	 * Set up new addresses.
@@ -845,6 +837,7 @@ in_ifinit(ifp, ia, sin, scrub)
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
 
+	i = ia->ia_addr.sin_addr.s_addr;
 	if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
@@ -931,7 +924,7 @@ in_addprefix(target, flags)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
@@ -983,7 +976,7 @@ in_scrubprefix(target)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.14.2.1 2003/07/02 15:26:55 darrenr Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.14.2.2 2004/08/03 10:54:10 skrll Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.14.2.1 2003/07/02 15:26:55 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.14.2.2 2004/08/03 10:54:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ sched_sync(v)
 {
 	struct synclist *slp;
 	struct vnode *vp;
+	struct mount *mp;
 	long starttime;
 	int s;
 
@@ -184,10 +185,14 @@ sched_sync(v)
 		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
-				(void) VOP_FSYNC(vp, curproc->p_ucred,
-				    FSYNC_LAZY, 0, 0, curlwp);
-				VOP_UNLOCK(vp, 0);
+			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
+				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
+				    == 0) {
+					(void) VOP_FSYNC(vp, curproc->p_ucred,
+					    FSYNC_LAZY, 0, 0, curlwp);
+					VOP_UNLOCK(vp, 0);
+				}
+				vn_finished_write(mp, 0);
 			}
 			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
@@ -243,7 +248,7 @@ sched_sync(v)
 /*
  * Request the syncer daemon to speed up its work.
  * We never push it to speed up more than half of its
- * normal turn time, otherwise it could take over the cpu.
+ * normal turn time, otherwise it could take over the CPU.
  */
 int
 speedup_syncer()

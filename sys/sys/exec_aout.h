@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31.2.1 2003/07/02 15:27:15 darrenr Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.31.2.2 2004/08/03 10:56:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -74,19 +74,23 @@ struct exec {
 #define	MID_NS32532	137	/* ns32532 */
 #define	MID_SPARC	138	/* sparc */
 #define	MID_PMAX	139	/* pmax */
-#define	MID_VAX1K	140	/* vax 1K page size binaries */
+#define	MID_VAX1K	140	/* VAX 1K page size binaries */
 #define	MID_ALPHA	141	/* Alpha BSD binary */
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
 #define	MID_M680002K	144	/* m68000 with 2K page sizes */
 #define	MID_SH3		145	/* SH3 */
 #define	MID_POWERPC	149	/* big-endian PowerPC */
-#define	MID_VAX		150	/* vax */
-#define	MID_SPARC64	151	/* LP64 sparc */
-#define	MID_X86_64	152	/* AMD x86-64 */
-#define	MID_M88K	153	/* m88k BSD core dumps */
-#define	MID_SH5_32	154	/* ILP32 SH5 */
+#define	MID_VAX		150	/* VAX */
+				/* 151 - MIPS1 */
+				/* 152 - MIPS2 */
+#define	MID_M88K	153	/* m88k BSD */
+#define	MID_HPPA	154	/* HP PARISC */
 #define	MID_SH5_64	155	/* LP64 SH5 */
+#define	MID_SPARC64	156	/* LP64 sparc */
+#define	MID_X86_64	157	/* AMD x86-64 */
+#define	MID_SH5_32	158	/* ILP32 SH5 */
+#define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
 #define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
@@ -194,7 +198,6 @@ int	exec_aout_makecmds __P((struct lwp *, struct exec_package *));
 int	exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int	exec_aout_setup_stack __P((struct proc *, struct exec_package *));
 
 /* For compatibility modules */
 int	exec_aout_prep_oldzmagic __P((struct proc *, struct exec_package *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.29.2.1 2003/07/02 15:27:16 darrenr Exp $	*/
+/*	$NetBSD: namei.h,v 1.29.2.2 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -131,15 +127,16 @@ struct nameidata {
 #define	HASBUF		0x0000400	/* has allocated pathname buffer */
 #define	SAVENAME	0x0000800	/* save pathname buffer */
 #define	SAVESTART	0x0001000	/* save starting directory */
-#define ISDOTDOT	0x0002000	/* current component name is .. */
-#define MAKEENTRY	0x0004000	/* entry is to be added to name cache */
-#define ISLASTCN	0x0008000	/* this is last component of pathname */
-#define ISSYMLINK	0x0010000	/* symlink needs interpretation */
+#define	ISDOTDOT	0x0002000	/* current component name is .. */
+#define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
+#define	ISLASTCN	0x0008000	/* this is last component of pathname */
+#define	ISSYMLINK	0x0010000	/* symlink needs interpretation */
 #define	ISWHITEOUT	0x0020000	/* found whiteout */
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
-#define PDIRUNLOCK	0x0100000	/* vfs_lookup() unlocked parent dir */
-#define PARAMASK	0x01fff00	/* mask of parameter descriptors */
+#define	PDIRUNLOCK	0x0100000	/* vfs_lookup() unlocked parent dir */
+#define	CREATEDIR	0x0200000	/* creating entry is a directory */
+#define	PARAMASK	0x03fff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
  */
@@ -166,10 +163,11 @@ struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
+	LIST_ENTRY(namecache) nc_dvlist;
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
-	u_long	nc_dvpid;		/* capability number of nc_dvp */
+	LIST_ENTRY(namecache) nc_vlist;
 	struct	vnode *nc_vp;		/* vnode the name refers to */
-	u_long	nc_vpid;		/* capability number of nc_vp */
+	int	nc_flags;		/* copy of componentname's ISWHITEOUT */
 	char	nc_nlen;		/* length of name */
 	char	nc_name[NCHNAMLEN];	/* segment name */
 };
@@ -186,13 +184,17 @@ MALLOC_DECLARE(M_NAMEI);
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
-int	namei __P((struct nameidata *ndp));
+int	namei __P((struct nameidata *));
 uint32_t namei_hash __P((const char *, const char **));
-int	lookup __P((struct nameidata *ndp));
-int	relookup __P((struct vnode *dvp, struct vnode **vpp,
-		      struct componentname *cnp));
-void cache_purge __P((struct vnode *));
+int	lookup __P((struct nameidata *));
+int	relookup __P((struct vnode *, struct vnode **, struct componentname *));
+void cache_purge1 __P((struct vnode *, const struct componentname *, int));
+#define	PURGE_PARENTS	1
+#define	PURGE_CHILDREN	2
+#define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
 int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
+int cache_lookup_raw __P((struct vnode *, struct vnode **,
+    struct componentname *));
 int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));
 void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));

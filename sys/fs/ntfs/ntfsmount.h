@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.1.4.1 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -41,4 +41,4 @@ struct ntfs_args {
 };
 
 #define NTFS_MFLAG_BITS	"\177\20" \
-    "b\00caseins\0b\01allnames"
+    "b\00caseins\0b\01allnames\0"

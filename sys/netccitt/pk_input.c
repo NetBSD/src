@@ -1,11 +1,45 @@
-/*	$NetBSD: pk_input.c,v 1.19 2001/11/13 00:12:58 lukem Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.19.16.1 2004/08/03 10:54:35 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1991, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by the
+ * Laboratory for Computation Vision and the Computer Science Department
+ * of the University of British Columbia and the Computer Science
+ * Department (IV) of the University of Erlangen-Nuremberg, Germany.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)pk_input.c	8.1 (Berkeley) 6/10/93
+ */
 
 /*
  * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1992 Computer Science Department IV,
  * 		University of Erlangen-Nuremberg, Germany.
- * Copyright (c) 1991, 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
@@ -44,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.19 2001/11/13 00:12:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.19.16.1 2004/08/03 10:54:35 skrll Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -112,7 +146,7 @@ pk_newlink(ia, llnext)
 {
 	struct x25config *xcp = &ia->ia_xc;
 	struct pkcb *pkp;
-	struct protosw *pp;
+	const struct protosw *pp;
 	unsigned        size;
 
 	pp = pffindproto(AF_CCITT, (int) xcp->xc_lproto, 0);
@@ -124,10 +158,9 @@ pk_newlink(ia, llnext)
 	 * Allocate a network control block structure
 	 */
 	size = sizeof(struct pkcb);
-	pkp = (struct pkcb *) malloc(size, M_PCB, M_WAITOK);
+	pkp = (struct pkcb *) malloc(size, M_PCB, M_WAITOK|M_ZERO);
 	if (pkp == 0)
 		return ((struct pkcb *) 0);
-	bzero((caddr_t) pkp, size);
 	pkp->pk_lloutput = pp->pr_output;
 	pkp->pk_llctlinput = pp->pr_ctlinput;
 	pkp->pk_xcp = xcp;
@@ -159,7 +192,7 @@ pk_dellink(pkp)
 	struct pkcb *pkp;
 {
 	int    i;
-	struct protosw *pp;
+	const struct protosw *pp;
 
 	/*
 	 * Essentially we have the choice to
@@ -235,9 +268,8 @@ pk_resize(pkp)
 		unsigned        size;
 		pkp->pk_maxlcn = xcp->xc_maxlcn;
 		size = (pkp->pk_maxlcn + 1) * sizeof(struct pklcd *);
-		pkp->pk_chan = malloc(size, M_IFADDR, M_WAITOK);
+		pkp->pk_chan = malloc(size, M_IFADDR, M_WAITOK|M_ZERO);
 		if (pkp->pk_chan) {
-			bzero((caddr_t) pkp->pk_chan, size);
 			/*
 			 * Allocate a logical channel descriptor for lcn 0
 			 */
@@ -361,13 +393,7 @@ struct mbuf_cache pk_input_cache = {0};
 	 ((xp)->packet_cause >= X25_RESTART_DTE_ORIGINATED2))
 
 void
-#if __STDC__
 pk_input(struct mbuf *m, ...)
-#else
-pk_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct x25_packet *xp;
 	struct pklcd *lcp;
@@ -892,7 +918,8 @@ pk_from_bcd(a, iscalling, sa, xcp)
 	if (xcp->xc_addr.x25_net && (xcp->xc_nodnic || xcp->xc_prepnd0)) {
 		octet           dnicname[sizeof(long) * NBBY / 3 + 2];
 
-		sprintf((char *) dnicname, "%d", xcp->xc_addr.x25_net);
+		snprintf((char *) dnicname, sizeof(dnicname), "%d",
+		    xcp->xc_addr.x25_net);
 		prune_dnic((char *) buf, sa->x25_addr, dnicname, xcp);
 	} else
 		bcopy((caddr_t) buf, (caddr_t) sa->x25_addr, count + 1);

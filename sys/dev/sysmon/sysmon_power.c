@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.7.2.1 2003/07/02 15:26:22 darrenr Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.7.2.2 2004/08/03 10:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
  * power management is largely a policy issue.  This merely provides
  * for power management event notification to that daemon.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.7.2.2 2004/08/03 10:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -488,6 +491,24 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		default:
 			printf("%s: unknown lid switch event: %d\n",
 			    smpsw->smpsw_name, event);
+		}
+		break;
+
+	case PSWITCH_TYPE_ACADAPTER:
+		switch (event) {
+		case PSWITCH_EVENT_PRESSED:
+			/*
+			 * Come out of power-save state.
+			 */
+			printf("%s: AC adapter online.\n", smpsw->smpsw_name);
+			break;
+
+		case PSWITCH_EVENT_RELEASED:
+			/*
+			 * Try to enter a power-save state.
+			 */
+			printf("%s: AC adapter offline.\n", smpsw->smpsw_name);
+			break;
 		}
 		break;
 

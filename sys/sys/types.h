@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58 2003/04/28 23:16:31 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.58.2.1 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -134,6 +130,16 @@ typedef	uint64_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	uint32_t	blksize_t;	/* fs optimal block size */
+
+#ifndef	fsblkcnt_t
+typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */
+#define fsblkcnt_t	__fsblkcnt_t
+#endif
+
+#ifndef	fsfilcnt_t
+typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
+#define fsfilcnt_t	__fsfilcnt_t
+#endif
 
 #ifndef	caddr_t
 typedef	__caddr_t	caddr_t;	/* core address */
@@ -358,4 +364,12 @@ struct	uio;
 #endif
 
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#include <pthread_types.h>
+#endif
+#endif
+
 #endif /* !_SYS_TYPES_H_ */

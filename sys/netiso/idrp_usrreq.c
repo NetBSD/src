@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.11.2.1 2003/07/02 15:27:03 darrenr Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.11.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.11.2.1 2003/07/02 15:27:03 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.11.2.2 2004/08/03 10:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +67,7 @@ static struct sockaddr_iso idrp_addrs[2] =
  * IDRP initialization
  */
 void
-idrp_init()
+idrp_init(void)
 {
 	extern struct clnl_protosw clnl_protox[256];
 
@@ -94,13 +90,7 @@ idrp_init()
  * No return value.
  */
 void
-#if __STDC__
 idrp_input(struct mbuf *m, ...)
-#else
-idrp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src, *dst;
 	va_list ap;
@@ -127,13 +117,7 @@ bad:		m_freem(m);
 }
 
 int
-#if __STDC__
 idrp_output(struct mbuf *m, ...)
-#else
-idrp_output(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *siso;
 	int             s = splsoftnet(), i;
@@ -158,11 +142,8 @@ u_long          idrp_recvspace = 40 * 1024;	/* 40 1K datagrams */
 
 /* ARGSUSED */
 int
-idrp_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
 	struct proc *p;
@@ -198,12 +179,11 @@ idrp_usrreq(so, req, m, nam, control, l)
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;
 		}
-		bzero(rp, sizeof(*rp));
 		rp->rcb_socket = so;
 		LIST_INSERT_HEAD(&idrp_pcb, rp, rcb_list);
 		so->so_pcb = rp;

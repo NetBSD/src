@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.24.2.1 2003/07/02 15:27:08 darrenr Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.24.2.2 2004/08/03 10:56:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24.2.1 2003/07/02 15:27:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24.2.2 2004/08/03 10:56:17 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -451,7 +451,7 @@ bootpc_call(nd, lwp)
 	int vcilen;
 #endif
 
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("bootp: socreate, error=%d\n", error);
 		return (error);
@@ -538,7 +538,7 @@ bootpc_call(nd, lwp)
 	/*
 	 * Bind the local endpoint to a bootp client port.
 	 */
-	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC))) {
+	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC, lwp))) {
 		DPRINT("bind failed\n");
 		goto out;
 	}
@@ -584,7 +584,8 @@ bootpc_call(nd, lwp)
 	/*
 	 * Insert a NetBSD Vendor Class Identifier option.
 	 */
-	sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
+	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
+	    osrelease);
 	vcilen = strlen(vci);
 	bootp->bp_vend[7] = TAG_CLASSID;
 	bootp->bp_vend[8] = vcilen;
@@ -606,7 +607,7 @@ bootpc_call(nd, lwp)
 #endif
 
 	error = nfs_boot_sendrecv(so, nam, bootpset, m,
-				  bootpcheck, 0, 0, &bpc);
+				  bootpcheck, 0, 0, &bpc, lwp);
 	if (error)
 		goto out;
 
@@ -624,11 +625,6 @@ bootpc_call(nd, lwp)
 		bootp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		memcpy(&bootp->bp_vend[21], &leasetime, 4);
-		/*
-		 * Insert a NetBSD Vendor Class Identifier option.
-		 */
-		sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
-		vcilen = strlen(vci);
 		bootp->bp_vend[25] = TAG_CLASSID;
 		bootp->bp_vend[26] = vcilen;
 		memcpy(&bootp->bp_vend[27], vci, vcilen);
@@ -637,7 +633,7 @@ bootpc_call(nd, lwp)
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
 		error = nfs_boot_sendrecv(so, nam, bootpset, m,
-					  bootpcheck, 0, 0, &bpc);
+					  bootpcheck, 0, 0, &bpc, lwp);
 		if (error)
 			goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51 2003/06/29 22:31:00 fvdl Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.2.1 2004/08/03 10:52:00 skrll Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51 2003/06/29 22:31:00 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.2.1 2004/08/03 10:52:00 skrll Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -510,6 +510,7 @@ xdcattach(parent, self, aux)
 	bus_dma_segment_t	seg;
 	int			rseg;
 	vme_mapresc_t resc;
+	bus_addr_t		busaddr;
 
 	xdc_md_setup();
 
@@ -582,11 +583,12 @@ xdcattach(parent, self, aux)
 	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->iopmap, &seg, &rseg,
 				     XDC_MAXIOPB * sizeof(struct xd_iopb),
 				     (caddr_t *)&xdc->iopbase,
-				     (bus_addr_t *)&xdc->dvmaiopb)) != 0) {
+				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
+	xdc->dvmaiopb = (struct xd_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
@@ -731,6 +733,7 @@ xdattach(parent, self, aux)
 	struct dkbad *dkb;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
+	bus_addr_t		busaddr;
 	caddr_t			dmaddr;
 	caddr_t			buf;
 
@@ -776,11 +779,12 @@ xdattach(parent, self, aux)
 	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->auxmap, &seg, &rseg,
 				     XDFM_BPS,
 				     (caddr_t *)&buf,
-				     (bus_addr_t *)&dmaddr)) != 0) {
+				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
+	dmaddr = (caddr_t)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	/* first try and reset the drive */
 
@@ -1683,7 +1687,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
  * picked up later by the interrupt routine.  for case [2] the
  * programmed i/o driver is called with a special flag that says
  * return when one iopb is free.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 
@@ -2472,12 +2476,15 @@ xdc_ioctlcmd(xd, dev, xio)
 
 	/* create DVMA buffer for request if needed */
 	if (xio->dlen) {
+		bus_addr_t busbuf;
+
 		if ((error = xd_dmamem_alloc(xdcsc->dmatag, xdcsc->auxmap,
 					     &seg, &rseg,
 					     xio->dlen, &buf,
-					     (bus_addr_t *)&dvmabuf)) != 0) {
+					     &busbuf)) != 0) {
 			return (error);
 		}
+		dvmabuf = (caddr_t)(u_long)BUS_ADDR_PADDR(busbuf);
 
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.33 2002/11/25 02:04:23 thorpej Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.33.6.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.33 2002/11/25 02:04:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.33.6.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -75,7 +75,7 @@ static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
 int	ip6_gif_hlim = GIF_HLIM;
 
 extern struct domain inet6domain;
-struct ip6protosw in6_gif_protosw =
+const struct ip6protosw in6_gif_protosw =
 { SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
   in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
   rip6_usrreq,
@@ -163,7 +163,9 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow	= 0;
 	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc	|= IPV6_VERSION;
-	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
+#if 0	/* ip6->ip6_plen will be filled by ip6_output */
+	ip6->ip6_plen	= htons((u_int16_t)m->m_pkthdr.len);
+#endif
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_gif_hlim;
 	ip6->ip6_src	= sin6_src->sin6_addr;
@@ -214,9 +216,11 @@ in6_gif_output(ifp, family, m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL);
+	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU,
+		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
 #else
-	error = ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL);
+	error = ip6_output(m, 0, &sc->gif_ro6, 0, 
+		    (struct ip6_moptions *)NULL, (struct socket *)NULL, NULL);
 #endif
 
 	return (error);
@@ -427,11 +431,7 @@ in6_gif_ctlinput(cmd, sa, d)
 {
 	struct gif_softc *sc;
 	struct ip6ctlparam *ip6cp = NULL;
-	struct mbuf *m;
 	struct ip6_hdr *ip6;
-	int off;
-	void *cmdarg;
-	const struct sockaddr_in6 *sa6_src = NULL;
 	struct sockaddr_in6 *dst6;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -448,16 +448,9 @@ in6_gif_ctlinput(cmd, sa, d)
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
 		ip6cp = (struct ip6ctlparam *)d;
-		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
-		off = ip6cp->ip6c_off;
-		cmdarg = ip6cp->ip6c_cmdarg;
-		sa6_src = ip6cp->ip6c_src;
 	} else {
-		m = NULL;
 		ip6 = NULL;
-		cmdarg = NULL;
-		sa6_src = &sa6_any;
 	}
 
 	if (!ip6)

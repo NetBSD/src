@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.4 2002/12/10 17:14:30 thorpej Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.4.6.1 2004/08/03 10:53:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -148,7 +144,8 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_TEXT) {
 		PROGRESS(("%ld", x->a_text));
 
-		if (READ(fd, maxp, x->a_text - sub) != x->a_text - sub) {
+		if (READ(fd, maxp, x->a_text - sub) !=
+		    (ssize_t)(x->a_text - sub)) {
 			WARN(("read text"));
 			return 1;
 		}
@@ -182,7 +179,7 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_DATA) {
 		PROGRESS(("+%ld", x->a_data));
 
-		if (READ(fd, maxp, x->a_data) != x->a_data) {
+		if (READ(fd, maxp, x->a_data) != (ssize_t)x->a_data) {
 			WARN(("read data"));
 			return 1;
 		}
@@ -227,7 +224,7 @@ loadfile_aout(fd, x, marks, flags)
 		if (flags & LOAD_SYM) {
 			PROGRESS(("+[%ld", x->a_syms));
 
-			if (READ(fd, maxp, x->a_syms) != x->a_syms) {
+			if (READ(fd, maxp, x->a_syms) != (ssize_t)x->a_syms) {
 				WARN(("read symbols"));
 				return 1;
 			}

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/06 21:38:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2004/08/03 10:53:58 skrll Exp $
 
 .include "../Makefile.inc"
 USE_32=_32
 .PATH:	$S/compat/svr4_32
+CPPFLAGS+=-DCOMPAT_NETBSD32
 .include "../svr4/Makefile.common"
 
 # common source files

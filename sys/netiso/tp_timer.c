@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.12 2001/11/13 01:10:51 lukem Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.12.16.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.12 2001/11/13 01:10:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.12.16.1 2004/08/03 10:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +92,7 @@ struct tp_pcb  *tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
  *  initialize data structures for the timers
  */
 void
-tp_timerinit()
+tp_timerinit(void)
 {
 	int    s;
 	/*
@@ -106,9 +102,8 @@ tp_timerinit()
 		return;
 	tp_refinfo.tpr_size = N_TPREF + 1;	/* Need to start somewhere */
 	s = sizeof(*tp_ref) * tp_refinfo.tpr_size;
-	if ((tp_ref = (struct tp_ref *) malloc(s, M_PCB, M_NOWAIT)) == 0)
+	if ((tp_ref = (struct tp_ref *) malloc(s, M_PCB, M_NOWAIT|M_ZERO)) == 0)
 		panic("tp_timerinit");
-	bzero((caddr_t) tp_ref, (unsigned) s);
 	tp_refinfo.tpr_base = tp_ref;
 	tp_rttdiv = hz / PR_SLOWHZ;
 	tp_rttadd = (2 * tp_rttdiv) - 1;
@@ -123,10 +118,10 @@ tp_timerinit()
  * Set an E type timer.
  */
 void
-tp_etimeout(tpcb, fun, ticks)
-	struct tp_pcb *tpcb;
-	int             fun;	/* function to be called */
-	int             ticks;
+tp_etimeout(
+	struct tp_pcb *tpcb,
+	int             fun,	/* function to be called */
+	int             ticks)
 {
 
 	u_int *callp;
@@ -158,9 +153,7 @@ tp_etimeout(tpcb, fun, ticks)
  *  Cancel all occurrences of E-timer function (fun) for reference (refp)
  */
 void
-tp_euntimeout(tpcb, fun)
-	struct tp_pcb *tpcb;
-	int             fun;
+tp_euntimeout(struct tp_pcb *tpcb, int fun)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_TIMER]) {
@@ -189,7 +182,7 @@ tp_euntimeout(tpcb, fun)
  *  the timers and possibly generate events.
  */
 void
-tp_slowtimo()
+tp_slowtimo(void)
 {
 	u_int *cp;
 	struct tp_ref *rp;
@@ -239,8 +232,7 @@ tp_slowtimo()
  * Called From: tp.trans from tp_slowtimo() -- retransmission timer went off.
  */
 void
-tp_data_retrans(tpcb)
-	struct tp_pcb *tpcb;
+tp_data_retrans(struct tp_pcb *tpcb)
 {
 	int             rexmt, win;
 	tpcb->tp_rttemit = 0;	/* cancel current round trip time */
@@ -285,7 +277,7 @@ tp_data_retrans(tpcb)
 }
 
 void
-tp_fasttimo()
+tp_fasttimo(void)
 {
 	struct tp_pcb *t;
 	int             s = splsoftnet();
@@ -318,9 +310,7 @@ tp_fasttimo()
  * 	Set a C type timer of type (which) to go off after (ticks) time.
  */
 void
-tp_ctimeout(tpcb, which, ticks)
-	struct tp_pcb *tpcb;
-	int             which, ticks;
+tp_ctimeout(struct tp_pcb *tpcb, int which, int ticks)
 {
 
 #ifdef TPPT
@@ -345,9 +335,7 @@ tp_ctimeout(tpcb, which, ticks)
  * 	parameter (ticks) is > the current value of the timer.
  */
 void
-tp_ctimeout_MIN(tpcb, which, ticks)
-	struct tp_pcb *tpcb;
-	int             which, ticks;
+tp_ctimeout_MIN(struct tp_pcb *tpcb, int which, int ticks)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_TIMER]) {
@@ -370,9 +358,7 @@ tp_ctimeout_MIN(tpcb, which, ticks)
  *  Cancel the (which) timer in the ref structure indicated by (refp).
  */
 void
-tp_cuntimeout(tpcb, which)
-	struct tp_pcb *tpcb;
-	int             which;
+tp_cuntimeout(struct tp_pcb *tpcb, int which)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_var.h,v 1.11.2.1 2003/07/02 15:27:03 darrenr Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.11.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -55,11 +51,11 @@ extern struct isopcb   cltb;
 extern struct cltpstat cltpstat;
 
 /* cltp_usrreq.c */
-void cltp_init __P((void));
-void cltp_input __P((struct mbuf *, ...));
-void cltp_notify __P((struct isopcb *));
-void cltp_ctlinput __P((int, struct sockaddr *, void *));
-int cltp_output __P((struct mbuf *, ...));
-int cltp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct lwp *));
+void cltp_init (void);
+void cltp_input (struct mbuf *, ...);
+void cltp_notify (struct isopcb *);
+void cltp_ctlinput (int, struct sockaddr *, void *);
+int cltp_output (struct mbuf *, ...);
+int cltp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *, struct lwp *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.45 2003/05/06 17:54:27 grant Exp $ */
+/*	$NetBSD: if_gre.c,v 1.45.2.1 2004/08/03 10:54:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45 2003/05/06 17:54:27 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45.2.1 2004/08/03 10:54:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -140,9 +140,10 @@ gre_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct gre_softc));
 
-	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_type = IFT_OTHER;
+	sc->sc_if.if_type = IFT_TUNNEL;
 	sc->sc_if.if_addrlen = 0;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_dlt = DLT_NULL;
@@ -188,7 +189,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *ip;
-	u_short etype = 0;
+	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
@@ -243,7 +244,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				msiz = MOB_H_SIZ_L;
 			}
 			HTONS(mob_h.proto);
-			mob_h.hcrc = gre_in_cksum((u_short *)&mob_h, msiz);
+			mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
 
 			if ((m->m_data - msiz) < m->m_pktdat) {
 				/* need new mbuf */
@@ -330,13 +331,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
 		((struct ip*)gh)->ip_ttl = ip_gre_ttl;
 		((struct ip*)gh)->ip_tos = ip->ip_tos;
-		gh->gi_len = m->m_pkthdr.len;
+		gh->gi_len = htons(m->m_pkthdr.len);
 	}
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	/* send it off */
-	error = ip_output(m, NULL, &sc->route, 0, NULL);
+	error = ip_output(m, NULL, &sc->route, 0,
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -588,10 +590,10 @@ gre_compute_route(struct gre_softc *sc)
  * do a checksum of a buffer - much like in_cksum, which operates on
  * mbufs.
  */
-u_short
-gre_in_cksum(u_short *p, u_int len)
+u_int16_t
+gre_in_cksum(u_int16_t *p, u_int len)
 {
-	u_int sum = 0;
+	u_int32_t sum = 0;
 	int nwords = len >> 1;
 
 	while (nwords-- != 0)

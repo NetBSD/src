@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90.2.1 2003/07/02 15:26:56 darrenr Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.2 2004/08/03 10:54:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -337,7 +333,7 @@ struct ifnet {				/* and the entries */
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
- * XXX 1000 vs. 1024? --thorpej@netbsd.org
+ * XXX 1000 vs. 1024? --thorpej@NetBSD.org
  */
 #define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
 #define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
@@ -400,7 +396,9 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
+#ifndef IFQ_MAXLEN
 #define	IFQ_MAXLEN	50
+#endif
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
 /*
@@ -738,7 +736,7 @@ extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
 #endif
-extern u_int if_index;
+extern size_t if_indexlim;
 
 char	*ether_sprintf __P((const u_char *));
 
@@ -758,14 +756,14 @@ int	ifioctl __P((struct socket *, u_long, caddr_t, struct lwp *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((const char *));
 
-struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
+struct	ifaddr *ifa_ifwithaddr __P((const struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
-struct	ifaddr *ifa_ifwithdstaddr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithnet __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithladdr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
-					struct sockaddr *));
-struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
+struct	ifaddr *ifa_ifwithdstaddr __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithnet __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithladdr __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithroute __P((int, const struct sockaddr *,
+					const struct sockaddr *));
+struct	ifaddr *ifaof_ifpforaddr __P((const struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
@@ -807,5 +805,34 @@ char *	if_indextoname __P((unsigned int, char *));
 struct	if_nameindex * if_nameindex __P((void));
 void	if_freenameindex __P((struct if_nameindex *));
 __END_DECLS
+#endif /* _KERNEL */ /* XXX really ALTQ? */
+
+#ifdef _KERNEL
+/*
+ * ifq sysctl support
+ */
+int	sysctl_ifq __P((int *name, u_int namelen, void *oldp,
+		       size_t *oldlenp, void *newp, size_t newlen,
+		       struct ifqueue *ifq));
+/* symbolic names for terminal (per-protocol) CTL_IFQ_ nodes */
+#define IFQCTL_LEN 1
+#define IFQCTL_MAXLEN 2
+#define IFQCTL_PEAK 3
+#define IFQCTL_DROPS 4
+#define IFQCTL_MAXID 5
+
 #endif /* _KERNEL */
+
+#ifdef _NETBSD_SOURCE
+/*
+ * sysctl for ifq (per-protocol packet input queue variant of ifqueue) 
+ */
+#define CTL_IFQ_NAMES  { \
+	{ 0, 0 }, \
+	{ "len", CTLTYPE_INT }, \
+	{ "maxlen", CTLTYPE_INT }, \
+	{ "peak", CTLTYPE_INT }, \
+	{ "drops", CTLTYPE_INT }, \
+}
+#endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */

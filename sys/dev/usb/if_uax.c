@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.7 2003/05/25 14:36:56 gehenna Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.7 2003/05/25 14:36:56 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -203,7 +203,9 @@ Static const struct usb_devno uax_devs[] = {
 	{ USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172 },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100},
 	{ USB_VENDOR_LINKSYS2,		USB_PRODUCT_LINKSYS2_USB200M },
+	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2KTX },
 	{ USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120 },
+
 };
 #define uax_lookup(v, p) ((struct uax_type *)usb_lookup(uax_devs, v, p))
 
@@ -296,7 +298,7 @@ USB_ATTACH(uax)
 
 	DPRINTFN(5,(" : uax_attach: sc=%p", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
@@ -795,7 +797,9 @@ uax_miibus_statchg(device_ptr_t dev)
 	struct uax_softc *sc = USBGETSOFTC(dev);
 	/*struct mii_data	*mii = GET_MII(sc);
 	  uint val;*/
+#if 0
 	usbd_status err;
+#endif
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
@@ -809,11 +813,12 @@ uax_miibus_statchg(device_ptr_t dev)
 		val = 0x00;
 	err = uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MEDIUM_STATUS,
 			  val, 0, 0, NULL);
-#endif
 	if (err) {
 		DPRINTF(("%s: uax_miibus_statchg error=%s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
 	}
+#endif
+	/* Nothing to do */
 }
 
 Static int

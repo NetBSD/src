@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.34 2003/06/26 03:11:08 itojun Exp $	*/
+/*	$NetBSD: igmp.c,v 1.34.2.1 2004/08/03 10:54:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.34 2003/06/26 03:11:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.34.2.1 2004/08/03 10:54:36 skrll Exp $");
 
 #include "opt_mrouting.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.34 2003/06/26 03:11:08 itojun Exp $");
 
 #define IP_MULTICASTOPTS	0
 
-struct pool igmp_rti_pool;
+POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL);
 struct igmpstat igmpstat;
 int igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head = LIST_HEAD_INITIALIZER(rti_head);
@@ -74,14 +74,6 @@ void igmp_sendpkt __P((struct in_multi *, int));
 static int rti_fill __P((struct in_multi *));
 static struct router_info *rti_find __P((struct ifnet *));
 static void rti_delete(struct ifnet *);
-
-void
-igmp_init()
-{
-	igmp_timers_are_running = 0;
-	pool_init(&igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl",
-	    NULL);
-}
 
 static int
 rti_fill(inm)
@@ -145,13 +137,7 @@ rti_delete(ifp)
 }
 
 void
-#if __STDC__
 igmp_input(struct mbuf *m, ...)
-#else
-igmp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int proto;
 	int iphlen;
@@ -584,8 +570,8 @@ igmp_sendpkt(inm, type)
 	imo.imo_multicast_loop = 0;
 #endif /* MROUTING */
 
-	ip_output(m, (struct mbuf *)0, (struct route *)0, IP_MULTICASTOPTS,
-	    &imo);
+	ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
+	    IP_MULTICASTOPTS, &imo, (struct socket *)NULL);
 
 	++igmpstat.igps_snd_reports;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.3 2001/06/07 13:44:48 wiz Exp $	*/
+/*	$NetBSD: overlay.h,v 1.3.22.1 2004/08/03 10:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -126,5 +122,9 @@ extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
 
 extern int (**overlay_vnodeop_p) __P((void *));
 extern struct vfsops overlay_vfsops;
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_overlay_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 #endif /* _KERNEL */

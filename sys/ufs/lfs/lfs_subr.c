@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.40.2.1 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40.2.1 2004/08/03 10:56:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,14 +176,14 @@ lfs_setup_resblks(struct lfs *fs)
 	/*
 	 * Initialize pools for small types (XXX is BPP small?)
 	 */
-	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0,
-		LFS_N_CL, "lfsclpl", &pool_allocator_nointr);
-	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0,
-		LFS_N_SEG, "lfssegpool", &pool_allocator_nointr);
+	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0, 0,
+		"lfsclpl", &pool_allocator_nointr);
+	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
+		"lfssegpool", &pool_allocator_nointr);
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, fs->lfs_ssize / fs->lfs_fsize + 2);
-	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
-		LFS_N_BPP, "lfsbpppl", &pool_allocator_nointr);
+	maxbpp = MIN(maxbpp, segsize(fs) / fs->lfs_fsize + 2);
+	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
+		"lfsbpppl", &pool_allocator_nointr);
 }
 
 void
@@ -367,7 +363,6 @@ lfs_unmark_dirop(struct lfs *fs)
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	int doit;
-	extern int lfs_dirvcount;
 
 	simple_lock(&fs->lfs_interlock);
 	doit = !(fs->lfs_flags & LFS_UNDIROP);
@@ -442,8 +437,6 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	struct buf *bp;
 	int do_unmark_dirop = 0;
-	extern int locked_queue_count;
-	extern long locked_queue_bytes;
 	
 	sp = fs->lfs_sp;
 
@@ -480,11 +473,8 @@ lfs_segunlock(struct lfs *fs)
 		 * At the moment, the user's process hangs around so we can
 		 * sleep.
 		 */
-		if (--fs->lfs_iocount == 0) {
-			lfs_countlocked(&locked_queue_count,
-					&locked_queue_bytes, "lfs_segunlock");
-			wakeup(&locked_queue_count);
-		}
+		if (--fs->lfs_iocount == 0)
+			LFS_DEBUG_COUNTLOCKED("lfs_segunlock");
 		if (fs->lfs_iocount <= 1)
 			wakeup(&fs->lfs_iocount);
 		/*
@@ -524,7 +514,7 @@ lfs_segunlock(struct lfs *fs)
 			if (sync)
 				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
 			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
-			if (!(fs->lfs_ivnode->v_mount->mnt_flag & MNT_UNMOUNT))
+			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT))
 				lfs_auto_segclean(fs);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			simple_lock(&fs->lfs_interlock);
@@ -544,4 +534,44 @@ lfs_segunlock(struct lfs *fs)
 		--fs->lfs_seglock;
 		simple_unlock(&fs->lfs_interlock);
 	}
+}
+
+/*
+ * drain dirops and start writer.
+ */
+int
+lfs_writer_enter(struct lfs *fs, const char *wmesg)
+{
+	int error = 0;
+
+	simple_lock(&fs->lfs_interlock);
+
+	/* disallow dirops during flush */
+	fs->lfs_writer++;
+
+	while (fs->lfs_dirops > 0) {
+		++fs->lfs_diropwait;  
+		error = ltsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
+		    &fs->lfs_interlock);
+		--fs->lfs_diropwait; 
+	}
+
+	if (error)
+		fs->lfs_writer--;
+
+	simple_unlock(&fs->lfs_interlock);
+
+	return error;
+}
+
+void
+lfs_writer_leave(struct lfs *fs)
+{
+	boolean_t dowakeup;
+
+	simple_lock(&fs->lfs_interlock);
+	dowakeup = !(--fs->lfs_writer);
+	simple_unlock(&fs->lfs_interlock);
+	if (dowakeup)
+		wakeup(&fs->lfs_dirops);
 }

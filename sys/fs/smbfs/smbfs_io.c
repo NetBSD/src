@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.15.2.1 2003/07/02 15:26:33 darrenr Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.15.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15.2.1 2003/07/02 15:26:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 	struct smb_cred scred;
 	struct smbfs_fctx *ctx;
 	struct smbnode *np = VTOSMB(vp);
-	int error/*, *eofflag = ap->a_eofflag*/;
+	int error = 0/*, *eofflag = ap->a_eofflag*/;
 	long offset, limit;
 
 	KASSERT(vp->v_type == VDIR);
@@ -111,7 +111,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		de.d_type = DT_DIR;
 		de.d_namlen = 1;
 		strncpy(de.d_name, ".", 2);
-		error = uiomove((caddr_t)&de, sizeof(struct dirent), uio);
+		error = uiomove(&de, sizeof(struct dirent), uio);
 		if (error)
 			return error;
 		limit--;
@@ -125,7 +125,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		de.d_type = DT_DIR;
 		de.d_namlen = 2;
 		strncpy(de.d_name, "..", 3);
-		error = uiomove((caddr_t)&de, sizeof(struct dirent), uio);
+		error = uiomove(&de, sizeof(struct dirent), uio);
 		if (error)
 			return error;
 		limit--;
@@ -178,7 +178,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		de.d_namlen = ctx->f_nmlen;
 		memcpy(de.d_name, ctx->f_name, de.d_namlen);
 		de.d_name[de.d_namlen] = '\0';
-		error = uiomove((caddr_t)&de, DE_SIZE, uio);
+		error = uiomove(&de, DE_SIZE, uio);
 		if (error)
 			break;
 	}
@@ -419,7 +419,7 @@ smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
 
 	while (np->n_flag & NFLUSHINPROG) {
 		np->n_flag |= NFLUSHWANT;
-		error = tsleep((caddr_t)&np->n_flag,
+		error = tsleep(&np->n_flag,
 			(PRIBIO + 2) | slpflag, "smfsvinv", 0);
 		if (error)
 			return (error);
@@ -433,7 +433,7 @@ smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
 			np->n_flag &= ~NFLUSHINPROG;
 			if (np->n_flag & NFLUSHWANT) {
 				np->n_flag &= ~NFLUSHWANT;
-				wakeup((caddr_t)&np->n_flag);
+				wakeup(&np->n_flag);
 			}
 			return (error);
 		}
@@ -441,7 +441,7 @@ smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	np->n_flag &= ~(NMODIFIED | NFLUSHINPROG);
 	if (np->n_flag & NFLUSHWANT) {
 		np->n_flag &= ~NFLUSHWANT;
-		wakeup((caddr_t)&np->n_flag);
+		wakeup(&np->n_flag);
 	}
 	return (error);
 }

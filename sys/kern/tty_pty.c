@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70.2.1 2003/07/02 15:26:43 darrenr Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.70.2.2 2004/08/03 10:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,30 +34,41 @@
 /*
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
+ * Additional multiplexor driver /dev/ptm{,x}
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.1 2003/07/02 15:26:43 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.2 2004/08/03 10:52:56 skrll Exp $");
 
 #include "opt_compat_sunos.h"
+#include "opt_ptm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/namei.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
+#include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
 #include <sys/malloc.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
+
+#ifdef DEBUG_PTM
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -74,6 +81,14 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.1 2003/07/02 15:26:43 darrenr Exp
  * pts == /dev/tty[pqrs]?
  * ptc == /dev/pty[pqrs]?
  */
+
+#define TTY_TEMPLATE	"/dev/XtyXX"
+#define TTY_NAMESIZE	sizeof(TTY_TEMPLATE)
+/* XXX this needs to come from somewhere sane, and work with MAKEDEV */
+#define TTY_LETTERS	"pqrstuvwxyzPQRST"
+#define TTY_OLD_SUFFIX  "0123456789abcdef"
+#define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 struct	pt_softc {
 	struct	tty *pt_tty;
 	int	pt_flags;
@@ -93,13 +108,41 @@ static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void	ptyattach __P((int));
-void	ptcwakeup __P((struct tty *, int));
-void	ptsstart __P((struct tty *));
-int	pty_maxptys __P((int, int));
+void	ptyattach(int);
+void	ptcwakeup(struct tty *, int);
+void	ptsstart(struct tty *);
+int	pty_maxptys(int, int);
 
-static struct pt_softc **ptyarralloc __P((int));
-static int check_pty __P((dev_t));
+static struct pt_softc **ptyarralloc(int);
+static int check_pty(int);
+
+#ifndef NO_DEV_PTM
+
+static int pts_major;
+
+static dev_t pty_getfree(void);
+static char *pty_makename(char *, dev_t, char);
+static int pty_grant_slave(struct lwp *, dev_t);
+static int pty_alloc_master(struct lwp *, int *, dev_t *);
+static int pty_alloc_slave(struct lwp *, int *, dev_t);
+static void pty_fill_ptmget(dev_t, int, int, void *);
+
+void ptmattach(int);
+
+dev_type_open(ptmopen);
+dev_type_close(ptmclose);
+dev_type_ioctl(ptmioctl);
+
+const struct cdevsw ptm_cdevsw = {
+	ptmopen, ptmclose, noread, nowrite, ptmioctl,
+	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
+};
+#else
+const struct cdevsw ptm_cdevsw = {
+	noopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
+};
+#endif
 
 dev_type_open(ptcopen);
 dev_type_close(ptcclose);
@@ -149,8 +192,7 @@ ptyarralloc(nelem)
 {
 	struct pt_softc **pt;
 	nelem += 10;
-	pt = malloc(nelem * sizeof(struct pt_softc *), M_DEVBUF, M_WAITOK);
-	memset(pt, '\0', nelem * sizeof(struct pt_softc *));
+	pt = malloc(nelem * sizeof *pt, M_DEVBUF, M_WAITOK | M_ZERO);
 	return pt;
 }
 
@@ -159,21 +201,27 @@ ptyarralloc(nelem)
  * are properly allocated.
  */
 static int
-check_pty(dev)
-	dev_t dev;
+check_pty(int ptn)
 {
 	struct pt_softc *pti;
 
-	if (minor(dev) >= npty) {
-		struct pt_softc **newpt;
+	if (ptn >= npty) {
+		struct pt_softc **newpt, **oldpt;
 		int newnpty;
 
 		/* check if the requested pty can be granted */
-		if (minor(dev) >= maxptys) {
+		if (ptn >= maxptys) {
 	    limit_reached:
 			tablefull("pty", "increase kern.maxptys");
 			return (ENXIO);
 		}
+
+		/* Allocate a larger pty array */
+		for (newnpty = npty; newnpty <= ptn;)
+			newnpty *= 2;
+		if (newnpty > maxptys)
+			newnpty = maxptys;
+		newpt = ptyarralloc(newnpty);
 
 		/*
 		 * Now grab the pty array mutex - we need to ensure
@@ -183,48 +231,41 @@ check_pty(dev)
 		 */
 		simple_lock(&pt_softc_mutex);
 
-		do {
-			for(newnpty = npty; newnpty <= minor(dev);
-				newnpty *= 2);
-
-			if (newnpty > maxptys)
-				newnpty = maxptys;
-
-			simple_unlock(&pt_softc_mutex);
-			newpt = ptyarralloc(newnpty);
-			simple_lock(&pt_softc_mutex);
-
-			if (maxptys == npty) {
+		if (newnpty >= maxptys) {
+			/* limit cut away beneath us... */
+			newnpty = maxptys;
+			if (ptn >= newnpty) {
 				simple_unlock(&pt_softc_mutex);
+				free(newpt, M_DEVBUF);
 				goto limit_reached;
 			}
-		} while(newnpty > maxptys);
+		}
 
 		/*
 		 * If the pty array was not enlarged while we were waiting
 		 * for mutex, copy current contents of pt_softc[] to newly
 		 * allocated array and start using the new bigger array.
 		 */
-		if (minor(dev) >= npty) {
+		if (newnpty > npty) {
 			memcpy(newpt, pt_softc, npty*sizeof(struct pt_softc *));
-			free(pt_softc, M_DEVBUF);
-
+			oldpt = pt_softc;
 			pt_softc = newpt;
 			npty = newnpty;
 		} else {
-			/* was enlarged when waited fot lock, free new space */
-			free(newpt, M_DEVBUF);
+			/* was enlarged when waited for lock, free new space */
+			oldpt = newpt;
 		}
 
 		simple_unlock(&pt_softc_mutex);
+		free(oldpt, M_DEVBUF);
 	}
-		
+
 	/*
 	 * If the entry is not yet allocated, allocate one. The mutex is
 	 * needed so that the state of pt_softc[] array is consistant
-	 * in case it has been longened above.
+	 * in case it has been lengthened above.
 	 */
-	if (!pt_softc[minor(dev)]) {
+	if (!pt_softc[ptn]) {
 		MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
 			M_DEVBUF, M_WAITOK);
 		memset(pti, 0, sizeof(struct pt_softc));
@@ -237,12 +278,12 @@ check_pty(dev)
 		 * Check the entry again - it might have been
 		 * added while we were waiting for mutex.
 		 */
-		if (!pt_softc[minor(dev)]) {
+		if (!pt_softc[ptn]) {
 			tty_attach(pti->pt_tty);
-			pt_softc[minor(dev)] = pti;
+			pt_softc[ptn] = pti;
 		} else {
 			ttyfree(pti->pt_tty);
-			FREE(pti, M_DEVBUF);
+			free(pti, M_DEVBUF);
 		}
 
 		simple_unlock(&pt_softc_mutex);
@@ -262,28 +303,24 @@ pty_maxptys(newmax, set)
 	if (!set)
 		return (maxptys);
 
-	/* the value cannot be set to value lower than current number of ptys */
-	if (newmax < npty)
-		return (0);
-
-	/* can proceed immediatelly if bigger than current maximum */
-	if (newmax > maxptys) {
-		maxptys = newmax;
-		return (maxptys);
-	}
-
 	/*
 	 * We have to grab the pt_softc lock, so that we would pick correct
 	 * value of npty (might be modified in check_pty()).
 	 */
 	simple_lock(&pt_softc_mutex);
 
-	if (newmax > npty)
+	/*
+	 * The value cannot be set to value lower than the highest pty
+	 * number ever allocated.
+	 */
+	if (newmax >= npty)
 		maxptys = newmax;
+	else
+		newmax = 0;
 
 	simple_unlock(&pt_softc_mutex);
 
-	return (maxptys);
+	return newmax;
 }
 
 /*
@@ -298,6 +335,9 @@ ptyattach(n)
 		n = DEFAULT_NPTYS;
 	pt_softc = ptyarralloc(n);
 	npty = n;
+#ifndef NO_DEV_PTM
+	ptmattach(1);
+#endif
 }
 
 /*ARGSUSED*/
@@ -311,11 +351,13 @@ ptsopen(dev, flag, devtype, l)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	int ptn = minor(dev);
+	int s;
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(ptn)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -330,7 +372,9 @@ ptsopen(dev, flag, devtype, l)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
+
 	if (!ISSET(flag, O_NONBLOCK)) {
+		s = spltty();
 		TTY_LOCK(tp);
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
@@ -339,10 +383,12 @@ ptsopen(dev, flag, devtype, l)
 			tp->t_wopen--;
 			if (error) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (error);
 			}
 		}
 		TTY_UNLOCK(tp);
+		splx(s);
 	}
 	error = (*tp->t_linesw->l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
@@ -376,6 +422,7 @@ ptsread(dev, uio, flag)
 	struct tty *tp = pti->pt_tty;
 	int error = 0;
 	int cc;
+	int s;
 
 again:
 	if (pti->pt_flags & PF_REMOTE) {
@@ -385,16 +432,20 @@ again:
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
+			s = spltty();
 			TTY_LOCK(tp);
 			error = ttysleep(tp, (caddr_t)&lbolt,
 					 TTIPRI | PCATCH | PNORELOCK, ttybg, 0);
+			splx(s);
 			if (error)
 				return (error);
 		}
+		s = spltty();
 		TTY_LOCK(tp);
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (EWOULDBLOCK);
 			}
 			error = ttysleep(tp, (caddr_t)&tp->t_canq,
@@ -405,7 +456,9 @@ again:
 		}
 		while(error == 0 && tp->t_canq.c_cc > 1 && uio->uio_resid > 0) {
 			TTY_UNLOCK(tp);
+			splx(s);
 			error = ureadc(getc(&tp->t_canq), uio);
+			s = spltty();
 			TTY_LOCK(tp);
 			/* Re-check terminal state here? */
 		}
@@ -413,6 +466,7 @@ again:
 			(void) getc(&tp->t_canq);
 		cc = tp->t_canq.c_cc;
 		TTY_UNLOCK(tp);
+		splx(s);
 		if (cc)
 			return (error);
 	} else
@@ -477,7 +531,7 @@ ptsstart(tp)
 		pti->pt_send = TIOCPKT_START;
 	}
 
-	selnotify(&pti->pt_selr, 0);
+	selnotify(&pti->pt_selr, NOTE_SUBMIT);
 	wakeup((caddr_t)&tp->t_outq.c_cf);
 }
 
@@ -502,11 +556,11 @@ ptsstop(tp, flush)
 
 	/* change of perspective */
 	if (flush & FREAD) {
-		selnotify(&pti->pt_selw, 0);
+		selnotify(&pti->pt_selw, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 	if (flush & FWRITE) {
-		selnotify(&pti->pt_selr, 0);
+		selnotify(&pti->pt_selr, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 }
@@ -517,17 +571,20 @@ ptcwakeup(tp, flag)
 	int flag;
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag & FREAD) {
-		selnotify(&pti->pt_selr, 0);
+		selnotify(&pti->pt_selr, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 	if (flag & FWRITE) {
-		selnotify(&pti->pt_selw, 0);
+		selnotify(&pti->pt_selw, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 }
 
 /*ARGSUSED*/
@@ -540,16 +597,25 @@ ptcopen(dev, flag, devtype, l)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	int ptn = minor(dev);
+	int s;
 
-	if ((error = check_pty(dev)))
+	if ((error = check_pty(ptn)))
 		return (error);
 
-	pti = pt_softc[minor(dev)];
+	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
-	if (tp->t_oproc)
+	s = spltty();
+	TTY_LOCK(tp);
+	if (tp->t_oproc) {
+		TTY_UNLOCK(tp);
+		splx(s);
 		return (EIO);
+	}
 	tp->t_oproc = ptsstart;
+	TTY_UNLOCK(tp);
+	splx(s);
 	(void)(*tp->t_linesw->l_modem)(tp, 1);
 	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
@@ -567,10 +633,15 @@ ptcclose(dev, flag, devtype, l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
+	int s;
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
+	s = spltty();
+	TTY_LOCK(tp);
 	tp->t_oproc = 0;		/* mark closed */
+	TTY_UNLOCK(tp);
+	splx(s);
 	return (0);
 }
 
@@ -584,6 +655,7 @@ ptcread(dev, uio, flag)
 	struct tty *tp = pti->pt_tty;
 	u_char buf[BUFSIZ];
 	int error = 0, cc;
+	int s;
 
 	/*
 	 * We want to block until the slave
@@ -591,11 +663,13 @@ ptcread(dev, uio, flag)
 	 * but if we lost the slave or we're NBIO,
 	 * then return the appropriate error instead.
 	 */
+	s = spltty();
 	TTY_LOCK(tp);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
-			if (pti->pt_flags&PF_PKT && pti->pt_send) {
+			if (pti->pt_flags & PF_PKT && pti->pt_send) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
 					return (error);
@@ -614,8 +688,9 @@ ptcread(dev, uio, flag)
 				pti->pt_send = 0;
 				return (0);
 			}
-			if (pti->pt_flags&PF_UCNTL && pti->pt_ucntl) {
+			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = ureadc((int)pti->pt_ucntl, uio);
 				if (error)
 					return (error);
@@ -641,7 +716,9 @@ ptcread(dev, uio, flag)
 
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL)) {
 		TTY_UNLOCK(tp);
+		splx(s);
 		error = ureadc(0, uio);
+		s = spltty();
 		TTY_LOCK(tp);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
@@ -651,7 +728,9 @@ ptcread(dev, uio, flag)
 		if (cc <= 0)
 			break;
 		TTY_UNLOCK(tp);
+		splx(s);
 		error = uiomove(buf, cc, uio);
+		s = spltty();
 		TTY_LOCK(tp);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
@@ -662,10 +741,11 @@ ptcread(dev, uio, flag)
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup((caddr_t)&tp->t_outq);
 		}
-		selnotify(&tp->t_wsel, 0);
+		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 out:
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -683,8 +763,10 @@ ptcwrite(dev, uio, flag)
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
 	int error = 0;
+	int s;
 
 again:
+	s = spltty();
 	TTY_LOCK(tp);
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		goto block;
@@ -697,9 +779,11 @@ again:
 				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
 				cp = locbuf;
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = uiomove((caddr_t)cp, cc, uio);
 				if (error)
 					return (error);
+				s = spltty();
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -722,9 +806,11 @@ again:
 			cc = min(uio->uio_resid, BUFSIZ);
 			cp = locbuf;
 			TTY_UNLOCK(tp);
+			splx(s);
 			error = uiomove((caddr_t)cp, cc, uio);
 			if (error)
 				return (error);
+			s = spltty();
 			TTY_LOCK(tp);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -742,7 +828,9 @@ again:
 			 *	 see also tty.c:ttyinput_wlock()
 			 */
 			TTY_UNLOCK(tp);
+			splx(s);
 			(*tp->t_linesw->l_rint)(*cp++, tp);
+			s = spltty();
 			TTY_LOCK(tp);
 			cnt++;
 			cc--;
@@ -769,6 +857,7 @@ block:
 	}
 	error = ltsleep((caddr_t)&tp->t_rawq.c_cf, TTOPRI | PCATCH | PNORELOCK,
 		       ttyout, 0, &tp->t_slock);
+	splx(s);
 	if (error) {
 		/* adjust for data copied in but not written */
 		uio->uio_resid += cc;
@@ -778,6 +867,7 @@ block:
 
 out:
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -966,6 +1056,7 @@ ptyioctl(dev, cmd, data, flag, l)
 	const struct cdevsw *cdev;
 	u_char *cc = tp->t_cc;
 	int stop, error, sig;
+	int s;
 
 	cdev = cdevsw_lookup(dev);
 	/*
@@ -993,9 +1084,18 @@ ptyioctl(dev, cmd, data, flag, l)
 			CLR(tp->t_lflag, EXTPROC);
 		}
 		return(0);
-	} else
+	}
+
 	if (cdev != NULL && cdev->d_open == ptcopen)
 		switch (cmd) {
+#ifndef NO_DEV_PTM
+		case TIOCGRANTPT:
+			return pty_grant_slave(l, dev);
+
+		case TIOCPTSNAME:
+			pty_fill_ptmget(dev, -1, -1, data);
+			return 0;
+#endif
 
 		case TIOCGPGRP:
 			/*
@@ -1028,9 +1128,11 @@ ptyioctl(dev, cmd, data, flag, l)
 				pti->pt_flags |= PF_REMOTE;
 			else
 				pti->pt_flags &= ~PF_REMOTE;
+			s = spltty();
 			TTY_LOCK(tp);
 			ttyflush(tp, FREAD|FWRITE);
 			TTY_UNLOCK(tp);
+			splx(s);
 			return (0);
 
 #ifdef COMPAT_OLDTTY
@@ -1060,6 +1162,7 @@ ptyioctl(dev, cmd, data, flag, l)
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
+
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH)
 		 error = ttioctl(tp, cmd, data, flag, l);
@@ -1115,3 +1218,331 @@ ptyioctl(dev, cmd, data, flag, l)
 	}
 	return (error);
 }
+
+#ifndef NO_DEV_PTM
+/*
+ * Check if a pty is free to use.
+ */
+static __inline int
+pty_isfree_locked(int minor)
+{
+	struct pt_softc *pt = pt_softc[minor];
+	return (pt == NULL || pt->pt_tty == NULL ||
+	    pt->pt_tty->t_oproc == NULL);
+}
+
+static int
+pty_isfree(int minor)
+{
+	int isfree;
+
+	simple_lock(&pt_softc_mutex);
+	isfree = pty_isfree_locked(minor);
+	simple_unlock(&pt_softc_mutex);
+	return(isfree);
+}
+
+static char *
+pty_makename(char *buf, dev_t dev, char c)
+{
+	size_t nt;
+	dev_t minor = minor(dev);
+
+	(void)memcpy(buf, TTY_TEMPLATE, TTY_NAMESIZE);
+
+	buf[5] = c;
+
+	if (minor < 256) {
+		nt = sizeof(TTY_OLD_SUFFIX) - 1;
+		buf[8] = TTY_LETTERS[minor / nt];
+		buf[9] = TTY_OLD_SUFFIX[minor % nt];
+	} else {
+		minor -= 256;
+		nt = sizeof(TTY_NEW_SUFFIX) - sizeof(TTY_OLD_SUFFIX);
+		buf[8] = TTY_LETTERS[minor / nt];
+		buf[9] = TTY_NEW_SUFFIX[minor % nt];
+	}
+	return buf;
+}
+
+static dev_t
+pty_getfree(void)
+{
+	int i;
+
+	simple_lock(&pt_softc_mutex);
+	for (i = 0; i < npty; i++) {
+		if (pty_isfree_locked(i))
+			break;
+	}
+	simple_unlock(&pt_softc_mutex);
+	return (makedev(pts_major, i));
+}
+
+/*
+ * Hacked up version of vn_open. We _only_ handle ptys and only open
+ * them with FREAD|FWRITE and never deal with creat or stuff like that.
+ *
+ * We need it because we have to fake up root credentials to open the pty.
+ */
+static int
+ptm_vn_open(struct nameidata *ndp)
+{
+	struct vnode *vp;
+	struct lwp *l = ndp->ni_cnd.cn_lwp;
+	struct ucred *cred;
+	int error;
+
+	if ((error = namei(ndp)) != 0)
+		return (error);
+	vp = ndp->ni_vp;
+	if (vp->v_type != VCHR) {
+		error = EINVAL;
+		goto bad;
+	}
+
+	/*
+	 * Get us a fresh cred with root privileges.
+	 */
+	cred = crget();
+	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
+	crfree(cred);
+
+	if (error)
+		goto bad;
+
+	vp->v_writecount++;
+
+	return (0);
+bad:
+	vput(vp);
+	return (error);
+}
+
+static int
+pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
+{
+	int error;
+	struct nameidata nd;
+	struct pt_softc *pti;
+	struct file *fp;
+	struct proc *p = l->l_proc;
+	int md;
+	char name[TTY_NAMESIZE];
+
+	if ((error = falloc(p, &fp, fd)) != 0) {
+		DPRINTF(("falloc %d\n", error));
+		return error;
+	}
+retry:
+	/* Find and open a free master pty. */
+	*dev = pty_getfree();
+	md = minor(*dev);
+	if ((error = check_pty(md)) != 0) {
+		DPRINTF(("ckeck_pty %d\n", error));
+		goto bad;
+	}
+	pti = pt_softc[md];
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+	    pty_makename(name, *dev, 'p'), l);
+	if ((error = ptm_vn_open(&nd)) != 0) {
+		/*
+		 * Check if the master open failed because we lost
+		 * the race to grab it.
+		 */
+		if (error == EIO && !pty_isfree(md))
+			goto retry;
+		DPRINTF(("ptm_vn_open %d\n", error));
+		goto bad;
+	}
+	fp->f_flag = FREAD|FWRITE;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = nd.ni_vp;
+	VOP_UNLOCK(nd.ni_vp, 0);
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, l);
+	return 0;
+bad:
+	FILE_UNUSE(fp, l);
+	fdremove(p->p_fd, *fd);
+	ffree(fp);
+	return error;
+}
+
+static int
+pty_grant_slave(struct lwp *l, dev_t dev)
+{
+	int error;
+	struct nameidata nd;
+	char name[TTY_NAMESIZE];
+
+	/*
+	 * Open the slave.
+	 * namei -> setattr -> unlock -> revoke -> vrele ->
+	 * namei -> open -> unlock
+	 * Three stage rocket:
+	 * 1. Change the owner and permissions on the slave.
+	 * 2. Revoke all the users of the slave.
+	 * 3. open the slave.
+	 */
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+	    pty_makename(name, dev, 't'), l);
+	if ((error = namei(&nd)) != 0) {
+		DPRINTF(("namei %d\n", error));
+		return error;
+	}
+	if ((nd.ni_vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		struct vattr vattr;
+		struct ucred *cred;
+		gid_t gid = _TTY_GID;
+		/* get real uid */
+		uid_t uid = l->l_proc->p_cred->p_ruid;
+
+		VATTR_NULL(&vattr);
+		vattr.va_uid = uid;
+		vattr.va_gid = gid;
+		vattr.va_mode = (S_IRUSR|S_IWUSR|S_IWGRP) & ALLPERMS;
+		/* Get a fake cred to pretend we're root. */
+		cred = crget();
+		error = VOP_SETATTR(nd.ni_vp, &vattr, cred, l);
+		crfree(cred);
+		if (error) {
+			DPRINTF(("setattr %d\n", error));
+			VOP_UNLOCK(nd.ni_vp, 0);
+			vrele(nd.ni_vp);
+			return error;
+		}
+	}
+	VOP_UNLOCK(nd.ni_vp, 0);
+	if (nd.ni_vp->v_usecount > 1 ||
+	    (nd.ni_vp->v_flag & (VALIASED | VLAYER)))
+		VOP_REVOKE(nd.ni_vp, REVOKEALL);
+
+	/*
+	 * The vnode is useless after the revoke, we need to
+	 * namei again.
+	 */
+	vrele(nd.ni_vp);
+	return 0;
+}
+
+static int
+pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
+{
+	int error;
+	struct file *fp;
+	struct proc *p = l->l_proc;
+	struct nameidata nd;
+	char name[TTY_NAMESIZE];
+
+	/* Grab a filedescriptor for the slave */
+	if ((error = falloc(p, &fp, fd)) != 0) {
+		DPRINTF(("falloc %d\n", error));
+		return error;
+	}
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+	    pty_makename(name, dev, 't'), l);
+
+	/* now open it */
+	if ((error = ptm_vn_open(&nd)) != 0) {
+		DPRINTF(("vn_open %d\n", error));
+		FILE_UNUSE(fp, l);
+		fdremove(p->p_fd, *fd);
+		ffree(fp);
+		return error;
+	}
+	fp->f_flag = FREAD|FWRITE;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = nd.ni_vp;
+	VOP_UNLOCK(nd.ni_vp, 0);
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, l);
+	return 0;
+}
+
+static void
+pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
+{
+	struct ptmget *ptm = data;
+	ptm->cfd = cfd;
+	ptm->sfd = sfd;
+	(void)pty_makename(ptm->cn, dev, 'p');
+	(void)pty_makename(ptm->sn, dev, 't');
+}
+
+void
+/*ARGSUSED*/
+ptmattach(int n)
+{
+	/* find the major and minor of the pty devices */
+	if ((pts_major = cdevsw_lookup_major(&pts_cdevsw)) == -1)
+		panic("ptmattach: Can't find pty slave in cdevsw");
+}
+
+int
+/*ARGSUSED*/
+ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	int error;
+	int fd;
+
+	switch(minor(dev)) {
+	case 0:		/* /dev/ptmx */
+		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
+			return error;
+		curlwp->l_dupfd = fd;
+		return ENXIO;
+	case 1:		/* /dev/ptm */
+		return 0;
+	default:
+		return ENODEV;
+	}
+		
+}
+
+int
+/*ARGSUSED*/
+ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	return (0);
+}
+
+int
+/*ARGSUSED*/
+ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+{
+	int error;
+	dev_t newdev;
+	int cfd, sfd;
+	struct file *fp;
+	struct proc *p = l->l_proc;
+
+	error = 0;
+	switch (cmd) {
+	case TIOCPTMGET:
+		if ((error = pty_alloc_master(l, &cfd, &newdev)) != 0)
+			return error;
+
+		if ((error = pty_grant_slave(l, newdev)) != 0)
+			goto bad;
+
+		if ((error = pty_alloc_slave(l, &sfd, newdev)) != 0)
+			goto bad;
+
+		/* now, put the indices and names into struct ptmget */
+		pty_fill_ptmget(newdev, cfd, sfd, data);
+		return 0;
+	default:
+		DPRINTF(("ptmioctl EINVAL\n"));
+		return EINVAL;
+	}
+bad:
+	fp = fd_getfile(p->p_fd, cfd);
+	fdremove(p->p_fd, cfd);
+	ffree(fp);
+	return error;
+}
+#endif

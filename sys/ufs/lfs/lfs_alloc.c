@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.69.2.1 2003/07/02 15:27:23 darrenr Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.69.2.2 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.1 2003/07/02 15:27:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.2 2004/08/03 10:56:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,11 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.1 2003/07/02 15:27:23 darrenr E
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern int lfs_dirvcount;
 extern struct lock ufs_hashlock;
 
 static int extend_ifile(struct lfs *, struct ucred *);
-static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
+static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
+    struct vnode **);
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -203,12 +199,11 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 		/* printf("lfs_rf_valloc: ino %d vp %p\n", ino, vp); */
 
 		/* The dirop-nature of this vnode is past */
+		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
 		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-		--fs->lfs_nadirop;
-		ip->i_flag &= ~IN_ADIROP;
 	}
 	*vpp = vp;
 	return error;
@@ -396,16 +391,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 	uvm_vnp_setsize(vp, 0);
 	*vpp = vp;
-	if (!(vp->v_flag & VDIROP)) {
-		(void)lfs_vref(vp);
-		++lfs_dirvcount;
-		TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-	}
-	vp->v_flag |= VDIROP;
-
-	if (!(ip->i_flag & IN_ADIROP))
-		++fs->lfs_nadirop;
-	ip->i_flag |= IN_ADIROP;
+	lfs_mark_vnode(vp);
 	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
 	/* Set superblock modified bit and increment file count. */
@@ -488,7 +474,6 @@ lfs_vfree(void *v)
 	struct lfs *fs;
 	daddr_t old_iaddr;
 	ino_t ino, otail;
-	extern int lfs_dirvcount;
 	int s;
 	
 	/* Get the inode number and file system. */
@@ -505,6 +490,7 @@ lfs_vfree(void *v)
 
 	lfs_seglock(fs, SEGM_PROT);
 	
+	lfs_unmark_vnode(vp);
 	if (vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
@@ -512,7 +498,6 @@ lfs_vfree(void *v)
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
 	}
-	lfs_unmark_vnode(vp);
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;

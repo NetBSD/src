@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.25 2002/09/11 03:45:45 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.25.6.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.25 2002/09/11 03:45:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.25.6.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -51,20 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.25 2002/09/11 03:45:45 itojun Exp $")
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet/icmp6.h>
-#endif
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #include <netinet6/esp.h>
 #include <netinet6/esp_rijndael.h>
+#include <netinet6/esp_aesctr.h>
 #include <net/pfkeyv2.h>
-#include <netkey/keydb.h>
 #include <netkey/key.h>
+
 #include <crypto/des/des.h>
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -81,7 +76,7 @@ static int esp_descbc_ivlen __P((const struct esp_algorithm *,
 	struct secasvar *));
 static int esp_des_schedule __P((const struct esp_algorithm *,
 	struct secasvar *));
-static int esp_des_schedlen __P((const struct esp_algorithm *));
+static size_t esp_des_schedlen __P((const struct esp_algorithm *));
 static int esp_des_blockdecrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_des_blockencrypt __P((const struct esp_algorithm *,
@@ -89,21 +84,21 @@ static int esp_des_blockencrypt __P((const struct esp_algorithm *,
 static int esp_cbc_mature __P((struct secasvar *));
 static int esp_blowfish_schedule __P((const struct esp_algorithm *,
 	struct secasvar *));
-static int esp_blowfish_schedlen __P((const struct esp_algorithm *));
+static size_t esp_blowfish_schedlen __P((const struct esp_algorithm *));
 static int esp_blowfish_blockdecrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_blowfish_blockencrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_cast128_schedule __P((const struct esp_algorithm *,
 	struct secasvar *));
-static int esp_cast128_schedlen __P((const struct esp_algorithm *));
+static size_t esp_cast128_schedlen __P((const struct esp_algorithm *));
 static int esp_cast128_blockdecrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_cast128_blockencrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_3des_schedule __P((const struct esp_algorithm *,
 	struct secasvar *));
-static int esp_3des_schedlen __P((const struct esp_algorithm *));
+static size_t esp_3des_schedlen __P((const struct esp_algorithm *));
 static int esp_3des_blockdecrypt __P((const struct esp_algorithm *,
 	struct secasvar *, u_int8_t *, u_int8_t *));
 static int esp_3des_blockencrypt __P((const struct esp_algorithm *,
@@ -128,7 +123,7 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_3des_schedule,
 		esp_3des_blockdecrypt, esp_3des_blockencrypt, },
-	{ 1, 0, esp_null_mature, 0, 2048, 0, "null",
+	{ 1, 0, esp_null_mature, 0, 2048, NULL, "null",
 		esp_common_ivlen, esp_null_decrypt,
 		esp_null_encrypt, NULL, },
 	{ 8, 8, esp_cbc_mature, 40, 448, esp_blowfish_schedlen, "blowfish-cbc",
@@ -145,6 +140,9 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_rijndael_schedule,
 		esp_rijndael_blockdecrypt, esp_rijndael_blockencrypt },
+	{ 16, 8, esp_aesctr_mature, 160, 288, esp_aesctr_schedlen, "aes-ctr",
+		esp_common_ivlen, esp_aesctr_decrypt,
+		esp_aesctr_encrypt, esp_aesctr_schedule },
 };
 
 const struct esp_algorithm *
@@ -165,6 +163,8 @@ esp_algorithm_lookup(idx)
 		return &esp_algorithms[4];
 	case SADB_X_EALG_RIJNDAELCBC:
 		return &esp_algorithms[5];
+	case SADB_X_EALG_AESCTR:
+		return &esp_algorithms[6];
 	default:
 		return NULL;
 	}
@@ -229,8 +229,6 @@ esp_schedule(algo, sav)
 		return 0;
 
 	sav->schedlen = (*algo->schedlen)(algo);
-	if (sav->schedlen < 0)
-		return EINVAL;
 	sav->sched = malloc(sav->schedlen, M_SECA, M_DONTWAIT);
 	if (!sav->sched) {
 		sav->schedlen = 0;
@@ -241,6 +239,7 @@ esp_schedule(algo, sav)
 	if (error) {
 		ipseclog((LOG_ERR, "esp_schedule %s: error %d\n",
 		    algo->name, error));
+		bzero(sav->sched, sav->schedlen);
 		free(sav->sched, M_SECA);
 		sav->sched = NULL;
 		sav->schedlen = 0;
@@ -339,7 +338,7 @@ esp_descbc_ivlen(algo, sav)
 	return 8;
 }
 
-static int
+static size_t
 esp_des_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
@@ -456,7 +455,7 @@ esp_cbc_mature(sav)
 	return 0;
 }
 
-static int
+static size_t
 esp_blowfish_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
@@ -482,16 +481,8 @@ esp_blowfish_blockdecrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
-	/* HOLY COW!  BF_decrypt() takes values in host byteorder */
-	BF_LONG t[2];
 
-	bcopy(s, t, sizeof(t));
-	t[0] = ntohl(t[0]);
-	t[1] = ntohl(t[1]);
-	BF_decrypt(t, (BF_KEY *)sav->sched);
-	t[0] = htonl(t[0]);
-	t[1] = htonl(t[1]);
-	bcopy(t, d, sizeof(t));
+	BF_ecb_encrypt(s, d, (BF_KEY *)sav->sched, 0);
 	return 0;
 }
 
@@ -502,25 +493,17 @@ esp_blowfish_blockencrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
-	/* HOLY COW!  BF_encrypt() takes values in host byteorder */
-	BF_LONG t[2];
 
-	bcopy(s, t, sizeof(t));
-	t[0] = ntohl(t[0]);
-	t[1] = ntohl(t[1]);
-	BF_encrypt(t, (BF_KEY *)sav->sched);
-	t[0] = htonl(t[0]);
-	t[1] = htonl(t[1]);
-	bcopy(t, d, sizeof(t));
+	BF_ecb_encrypt(s, d, (BF_KEY *)sav->sched, 1);
 	return 0;
 }
 
-static int
+static size_t
 esp_cast128_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
 
-	return sizeof(u_int32_t) * 32;
+	return sizeof(cast128_key);
 }
 
 static int
@@ -529,7 +512,7 @@ esp_cast128_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
+	cast128_setkey((cast128_key *)sav->sched, _KEYBUF(sav->key_enc),
 	    _KEYLEN(sav->key_enc));
 	return 0;
 }
@@ -542,10 +525,7 @@ esp_cast128_blockdecrypt(algo, sav, s, d)
 	u_int8_t *d;
 {
 
-	if (_KEYLEN(sav->key_enc) <= 80 / 8)
-		cast128_decrypt_round12(d, s, (u_int32_t *)sav->sched);
-	else
-		cast128_decrypt_round16(d, s, (u_int32_t *)sav->sched);
+	cast128_decrypt((cast128_key *)sav->sched, s, d);
 	return 0;
 }
 
@@ -557,14 +537,11 @@ esp_cast128_blockencrypt(algo, sav, s, d)
 	u_int8_t *d;
 {
 
-	if (_KEYLEN(sav->key_enc) <= 80 / 8)
-		cast128_encrypt_round12(d, s, (u_int32_t *)sav->sched);
-	else
-		cast128_encrypt_round16(d, s, (u_int32_t *)sav->sched);
+	cast128_encrypt((cast128_key *)sav->sched, s, d);
 	return 0;
 }
 
-static int
+static size_t
 esp_3des_schedlen(algo)
 	const struct esp_algorithm *algo;
 {
@@ -1141,7 +1118,7 @@ esp_auth(m0, skip, length, sav, sum)
 			break;
 		}
 	}
-	(*algo->result)(&s, sumbuf);
+	(*algo->result)(&s, sumbuf, sizeof(sumbuf));
 	bcopy(sumbuf, sum, siz);	/* XXX */
 
 	return 0;

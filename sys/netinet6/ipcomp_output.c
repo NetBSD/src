@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.17 2002/06/09 14:43:12 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.17.6.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.17 2002/06/09 14:43:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.17.6.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -218,7 +218,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 
 	/*
 	 * if the packet became bigger, meaningless to use IPComp.
-	 * we've only wasted our cpu time.
+	 * we've only wasted our CPU time.
 	 */
 	if (plen0 < plen) {
 		m_freem(md);

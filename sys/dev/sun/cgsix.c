@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.12 2003/06/29 22:30:47 fvdl Exp $ */
+/*	$NetBSD: cgsix.c,v 1.12.2.1 2004/08/03 10:51:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -89,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.12 2003/06/29 22:30:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.12.2.1 2004/08/03 10:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,9 +569,10 @@ cgsixioctl(dev, cmd, data, flags, p)
 	struct proc *p;
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	union cursor_cmap tcm;
+	uint32_t image[32], mask[32];
 	u_int count;
 	int v, error;
-	union cursor_cmap tcm;
 
 	switch (cmd) {
 
@@ -639,12 +636,10 @@ cgsixioctl(dev, cmd, data, flags, p)
 		/* begin ugh ... can we lose some of this crap?? */
 		if (p->image != NULL) {
 			count = cc->cc_size.y * 32 / NBBY;
-			error = copyout((caddr_t)cc->cc_bits[1],
-			    (caddr_t)p->image, count);
+			error = copyout(cc->cc_bits[1], p->image, count);
 			if (error)
 				return (error);
-			error = copyout((caddr_t)cc->cc_bits[0],
-			    (caddr_t)p->mask, count);
+			error = copyout(cc->cc_bits[0], p->mask, count);
 			if (error)
 				return (error);
 		}
@@ -682,9 +677,12 @@ cgsixioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
-			if (!uvm_useracc(p->image, count, B_READ) ||
-			    !uvm_useracc(p->mask, count, B_READ))
-				return (EFAULT);
+			error = copyin(p->image, image, count);
+			if (error)
+				return error;
+			error = copyin(p->mask, mask, count);
+			if (error)
+				return error;
 		}
 
 		/* parameters are OK; do it */
@@ -704,9 +702,9 @@ cgsixioctl(dev, cmd, data, flags, p)
 		if (v & FB_CUR_SETSHAPE) {
 			cc->cc_size = p->size;
 			count = p->size.y * 32 / NBBY;
-			bzero((caddr_t)cc->cc_bits, sizeof cc->cc_bits);
-			copyin(p->mask, (caddr_t)cc->cc_bits[0], count);
-			copyin(p->image, (caddr_t)cc->cc_bits[1], count);
+			memset(cc->cc_bits, 0, sizeof cc->cc_bits);
+			memcpy(cc->cc_bits[1], image, count);
+			memcpy(cc->cc_bits[0], mask, count);
 			cg6_loadcursor(sc);
 		}
 		break;
@@ -762,7 +760,7 @@ cg6_reset(sc)
 	/* take care of hardware bugs in old revisions */
 	if (sc->sc_fhcrev < 5) {
 		/*
-		 * Keep current resolution; set cpu to 68020, set test
+		 * Keep current resolution; set CPU to 68020, set test
 		 * window (size 1Kx1K), and for rev 1, disable dest cache.
 		 */
 		fhc = (*sc->sc_fhc & FHC_RES_MASK) | FHC_CPU_68020 |

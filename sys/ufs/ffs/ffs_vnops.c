@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.59.2.1 2003/07/02 15:27:22 darrenr Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.59.2.2 2004/08/03 10:56:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.1 2003/07/02 15:27:22 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.2 2004/08/03 10:56:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +255,8 @@ ffs_fsync(v)
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
-	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp))
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp) ||
+			(ap->a_vp->v_type != VREG))
 		return ffs_full_fsync(v);
 
 	vp = ap->a_vp;
@@ -273,13 +270,12 @@ ffs_fsync(v)
 	 * First, flush all pages in range.
 	 */
 
-	if (vp->v_type == VREG) {
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
-		    round_page(ap->a_offhi), PGO_CLEANIT|PGO_SYNCIO);
-		if (error) {
-			return error;
-		}
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+	    round_page(ap->a_offhi), PGO_CLEANIT |
+	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
+	if (error) {
+		return error;
 	}
 
 	/*
@@ -287,7 +283,7 @@ ffs_fsync(v)
 	 */
 
 	s = splbio();
-	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
+	if (blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error) {
 			splx(s);
@@ -295,12 +291,17 @@ ffs_fsync(v)
 		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
-			if (bp != NULL && !(bp->b_flags & B_BUSY) &&
-			    (bp->b_flags & B_DELWRI)) {
-				bp->b_flags |= B_BUSY | B_VFLUSH;
-				splx(s);
-				bawrite(bp);
-				s = splbio();
+			if (bp != NULL) {
+				simple_lock(&bp->b_interlock);
+				if (!(bp->b_flags & B_BUSY) && (bp->b_flags & B_DELWRI)) {
+					bp->b_flags |= B_BUSY | B_VFLUSH;
+					simple_unlock(&bp->b_interlock);
+					splx(s);
+					bawrite(bp);
+					s = splbio();
+				} else {
+					simple_unlock(&bp->b_interlock);
+				}
 			}
 		}
 	}
@@ -317,7 +318,8 @@ ffs_fsync(v)
 	splx(s);
 
 	return (VOP_UPDATE(vp, NULL, NULL,
-	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
+	    ? UPDATE_WAIT : 0));
 }
 
 /*
@@ -363,7 +365,7 @@ ffs_full_fsync(v)
 
 	passes = NIADDR + 1;
 	skipmeta = 0;
-	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
+	if (ap->a_flags & FSYNC_WAIT)
 		skipmeta = 1;
 	s = splbio();
 
@@ -372,12 +374,18 @@ loop:
 		bp->b_flags &= ~B_SCANNED;
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		if (bp->b_flags & (B_BUSY | B_SCANNED))
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & (B_BUSY | B_SCANNED)) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
-		if (skipmeta && bp->b_lblkno < 0)
+		if (skipmeta && bp->b_lblkno < 0) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
+		simple_unlock(&bp->b_interlock);
 		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
 		splx(s);
 		/*
@@ -396,7 +404,7 @@ loop:
 		 */
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
-	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
+	if (skipmeta) {
 		skipmeta = 0;
 		goto loop;
 	}
@@ -409,9 +417,6 @@ loop:
 		}
 		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
-
-		if (ap->a_flags & FSYNC_DATAONLY)
-			return (0);
 
 		/* 
 		 * Ensure that any filesystem metadata associated

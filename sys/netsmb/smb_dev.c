@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.18.2.1 2003/07/02 15:27:06 darrenr Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.18.2.2 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.18.2.1 2003/07/02 15:27:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.18.2.2 2004/08/03 10:56:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -176,8 +176,6 @@ nsmbattach(int num)
 		smb_sm_done();
 		return;
 	}
-
-	smb_rqinit();
 }
 #endif /* __NetBSD__ */
 
@@ -470,7 +468,7 @@ int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	struct smb_share **sspp)
 {
-	struct proc *p = scred->scr_p;
+	struct lwp *l = scred->scr_l;
 	struct file *fp;
 	struct vnode *vp;
 	struct smb_dev *sdp;
@@ -478,7 +476,7 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	dev_t dev;
 	int error;
 
-	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

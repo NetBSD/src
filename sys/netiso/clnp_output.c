@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.13 2001/11/13 01:10:47 lukem Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.13.16.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.13 2001/11/13 01:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.13.16.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -183,13 +179,7 @@ int             clnp_id = 0;	/* id for segmented dgrams */
  *			iso_addrmatch1.
  */
 int
-#if __STDC__
 clnp_output(struct mbuf *m0, ...)
-#else
-clnp_output(m0, va_alist)
-	struct mbuf    *m0;	/* data for the packet */
-	va_dcl
-#endif
 {
 	struct isopcb  *isop;	/* iso pcb */
 	int             datalen;/* number of bytes of data in m0 */
@@ -607,7 +597,9 @@ done:
 	return (error);
 }
 
+#ifdef notyet
 void
-clnp_ctloutput()
+clnp_ctloutput(void)
 {
 }
+#endif

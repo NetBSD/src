@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_pcb.h,v 1.7 1996/02/13 22:09:14 christos Exp $	*/
+/*	$NetBSD: cons_pcb.h,v 1.7.64.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -104,7 +100,7 @@ struct cons_pcb {
 	u_short         co_init_ttl;	/* initial value of ttl  */
 	int             co_channel;	/* logical channel */
 	struct ifnet   *co_ifp;	/* interface */
-	struct protosw *co_proto;
+	const struct protosw *co_proto;
 
 	struct ifqueue  co_pending;	/* queue data to send when connection
 					 * completes */

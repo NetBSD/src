@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.9 2002/10/06 13:42:36 dan Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.9.6.1 2004/08/03 10:53:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,9 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/kernel.h>
+#endif
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
@@ -75,6 +77,9 @@ static int arc4_initialized = 0;
 static int arc4_numruns = 0;
 static u_int8_t arc4_sbox[256];
 static struct timeval arc4_tv_nextreseed;
+#ifndef _KERNEL
+extern struct timeval mono_time;
+#endif
 
 static inline u_int8_t arc4_randbyte(void);
 
@@ -199,22 +204,23 @@ arc4random(void)
 		arc4_randrekey();
 	}
 
-	for(i = 0, ret = 0; i < 24; ret |= arc4_randbyte() << i, i += 8);
+	for (i = 0, ret = 0; i < 24; ret |= arc4_randbyte() << i, i += 8)
+		;
 	return ret;
 }
 
 void
 arc4randbytes(void *p, size_t len)
 {
-    u_int8_t *buf;
-    size_t i;
+	u_int8_t *buf;
+	size_t i;
 
-    buf = (u_int8_t *)p;
+	buf = (u_int8_t *)p;
 
-    for(i = 0; i < len; buf[i] = arc4_randbyte(), i++);
-    arc4_numruns += len / sizeof(u_int32_t);
-    if((arc4_numruns > ARC4_MAXRUNS) ||
-	(mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
+	for (i = 0; i < len; buf[i] = arc4_randbyte(), i++);
+		arc4_numruns += len / sizeof(u_int32_t);
+	if ((arc4_numruns > ARC4_MAXRUNS) ||
+	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
 		arc4_randrekey();
 	}
 }

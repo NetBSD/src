@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.23 2002/05/12 21:30:37 matt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.23.10.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.23 2002/05/12 21:30:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.23.10.1 2004/08/03 10:55:43 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -104,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.23 2002/05/12 21:30:37 matt Exp $");
  * ticks are in units of: 500 nano-fortnights ;-) or 500 ms or 1/2 second
  */
 
-struct tp_conn_param tp_conn_param[] = {
+const struct tp_conn_param tp_conn_param[] = {
 	/* ISO_CLNS: TP4 CONNECTION LESS */
 	{
 		TP_NRETRANS,	/* short p_Nretrans;  */
@@ -329,7 +325,7 @@ u_long          tp_recvspace = 1024 * 4;
  * NOTES:
  */
 void
-tp_init()
+tp_init(void)
 {
 	static int      init_done = 0;
 
@@ -368,8 +364,7 @@ tp_init()
  *  If anyone else is sleeping on this socket, wake 'em up.
  */
 void
-tp_soisdisconnecting(so)
-	struct socket *so;
+tp_soisdisconnecting(struct socket *so)
 {
 	soisdisconnecting(so);
 	so->so_state &= ~SS_CANTSENDMORE;
@@ -415,8 +410,7 @@ tp_soisdisconnecting(so)
  *  If anyone else is sleeping on this socket, wake 'em up.
  */
 void
-tp_soisdisconnected(tpcb)
-	struct tp_pcb *tpcb;
+tp_soisdisconnected(struct tp_pcb *tpcb)
 {
 	struct socket *so = tpcb->tp_sock;
 
@@ -463,8 +457,7 @@ tp_soisdisconnected(tpcb)
  * NOTES:	better be called at clock priority !!!!!
  */
 void
-tp_freeref(n)
-	RefNum          n;
+tp_freeref(RefNum n)
 {
 	struct tp_ref *r = tp_ref + n;
 	struct tp_pcb *tpcb;
@@ -524,8 +517,7 @@ tp_freeref(n)
  * NOTES:
  */
 u_long
-tp_getref(tpcb)
-	struct tp_pcb *tpcb;
+tp_getref(struct tp_pcb *tpcb)
 {
 	struct tp_ref *r, *rlim;
 	int    i;
@@ -571,8 +563,7 @@ got_one:
  *  any old ones that might need re-assigning.
  */
 int
-tp_set_npcb(tpcb)
-	struct tp_pcb *tpcb;
+tp_set_npcb(struct tp_pcb *tpcb)
 {
 	struct socket *so = tpcb->tp_sock;
 	int             error;
@@ -617,15 +608,12 @@ tp_set_npcb(tpcb)
  * NOTES:
  */
 int
-tp_attach(so, protocol)
-	struct socket  *so;
-	long            protocol;
+tp_attach(struct socket *so, int protocol)
 {
 	struct tp_pcb *tpcb;
 	int             error = 0;
 	int             dom = so->so_proto->pr_domain->dom_family;
 	u_long          lref;
-	extern struct tp_conn_param tp_conn_param[];
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
@@ -648,12 +636,11 @@ tp_attach(so, protocol)
 	if (error)
 		goto bad2;
 
-	MALLOC(tpcb, struct tp_pcb *, sizeof(*tpcb), M_PCB, M_NOWAIT);
+	MALLOC(tpcb, struct tp_pcb *, sizeof(*tpcb), M_PCB, M_NOWAIT|M_ZERO);
 	if (tpcb == NULL) {
 		error = ENOBUFS;
 		goto bad2;
 	}
-	bzero((caddr_t) tpcb, sizeof(struct tp_pcb));
 
 	if (((lref = tp_getref(tpcb)) & TP_ENOREF) != 0) {
 		error = ETOOMANYREFS;
@@ -764,8 +751,7 @@ bad2:
  *  tp_soisdisconnected() was already when this is called
  */
 void
-tp_detach(tpcb)
-	struct tp_pcb *tpcb;
+tp_detach(struct tp_pcb *tpcb)
 {
 	struct socket *so = tpcb->tp_sock;
 
@@ -896,11 +882,7 @@ struct que {
 u_short         tp_unique;
 
 int
-tp_tselinuse(tlen, tsel, siso, reuseaddr)
-	int tlen;
-	caddr_t         tsel;
-	struct sockaddr_iso *siso;
-	int reuseaddr;
+tp_tselinuse(int tlen, caddr_t tsel, struct sockaddr_iso *siso, int reuseaddr)
 {
 	struct tp_pcb  *b = tp_bound_pcbs.next, *l = tp_listeners;
 	struct tp_pcb *t;
@@ -933,10 +915,7 @@ tp_tselinuse(tlen, tsel, siso, reuseaddr)
 
 
 int
-tp_pcbbind(v, nam, p)
-	void *v;
-	struct mbuf *nam;
-	struct proc *p;
+tp_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 {
 	struct tp_pcb *tpcb = v;
 	struct sockaddr_iso *siso = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.39.2.1 2003/07/02 15:27:27 darrenr Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.39.2.2 2004/08/03 10:57:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.1 2003/07/02 15:27:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.2 2004/08/03 10:57:00 skrll Exp $");
 
 #include "opt_quota.h"
 
@@ -75,6 +71,7 @@ ufs_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct mount *mp;
 	struct lwp *l = ap->a_l;
 	mode_t mode;
 	int error = 0;
@@ -91,6 +88,7 @@ ufs_inactive(v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
@@ -112,10 +110,15 @@ ufs_inactive(v)
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		VOP_VFREE(vp, ip->i_number, mode);
+		vn_finished_write(mp, V_LOWER);
 	}
 
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
+	if (ip->i_flag &
+	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		VOP_UPDATE(vp, NULL, NULL, 0);
+		vn_finished_write(mp, V_LOWER);
+	}
 out:
 	VOP_UNLOCK(vp, 0);
 	/*

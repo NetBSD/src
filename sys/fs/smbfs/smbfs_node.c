@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.18.2.1 2003/07/02 15:26:33 darrenr Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.18.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.1 2003/07/02 15:26:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.1 2003/07/02 15:26:33 darrenr 
 MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 extern int (**smbfs_vnodeop_p) __P((void *));
+extern int prtactive;
 
 static struct genfs_ops smbfs_genfsops = {
 	NULL,
@@ -236,7 +237,12 @@ smbfs_reclaim(v)
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
 	
+	if (prtactive && vp->v_usecount != 0)
+		vprint("smbfs_reclaim(): pushing active", vp);
+
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
+
+	KASSERT((np->n_flag & NOPEN) == 0);
 
 	smbfs_hash_lock(smp);
 
@@ -273,15 +279,28 @@ smbfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
-	int error;
+
+	if (prtactive && vp->v_usecount != 0)
+		vprint("smbfs_inactive(): pushing active", vp);
 
 	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
-	if (np->n_opencount) {
-		error = smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+	if ((np->n_flag & NOPEN) != 0) {
+		struct smb_share *ssp = np->n_mount->sm_share;
+
+		smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
 		smb_makescred(&scred, l, cred);
-		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
-		   &np->n_mtime, &scred);
-		np->n_opencount = 0;
+
+		if (vp->v_type == VDIR && np->n_dirseq) {
+			smbfs_findclose(np->n_dirseq, &scred);
+			np->n_dirseq = NULL;
+		}
+
+		if (vp->v_type != VDIR
+		    || SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS)
+			smbfs_smb_close(ssp, np->n_fid, &np->n_mtime, &scred);
+
+		np->n_flag &= ~NOPEN;
+		smbfs_attr_cacheremove(vp);
 	}
 	VOP_UNLOCK(vp, 0);
 	return (0);
@@ -339,7 +358,7 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 	va->va_nlink = 1;		/* number of references to file */
 	va->va_uid = smp->sm_args.uid;	/* owner user id */
 	va->va_gid = smp->sm_args.gid;	/* owner group id */
-	va->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	va->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	va->va_fileid = np->n_ino;	/* file id */
 	if (va->va_fileid == 0)
 		va->va_fileid = 2;

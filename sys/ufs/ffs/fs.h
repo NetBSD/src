@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.32 2003/04/05 13:37:36 fvdl Exp $	*/
+/*	$NetBSD: fs.h,v 1.32.2.1 2004/08/03 10:56:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -70,6 +66,21 @@
  * given in byte-offset form, so they do not imply a sector size. The
  * SBLOCKSEARCH specifies the order in which the locations should be searched.
  *
+ * Unfortunately the UFS2/FFSv2 change was done without adequate consideration
+ * of backward compatibility.  In particular 'newfs' for a FFSv2 partition
+ * must overwrite any old FFSv1 superblock at 8k, and preferrably as many
+ * of the alternates as it can find - otherwise attempting to mount on a
+ * system that only supports FFSv1 is likely to succeed!.
+ * For a small FFSv1 filesystem, an old FFSv2 superblock can be left on
+ * the disk, and a system that tries to find an FFSv2 filesystem in preference
+ * to and FFSv1 one (as NetBSD does) can mount the old FFSv2 filesystem.
+ * As a added bonus, the 'first alternate' superblock of a FFSv1 filesystem
+ * with 64k blocks is at 64k - just where the code looks first when playing
+ * 'hunt the superblock'.
+ *
+ * The ffsv2 superblock layout (which might contain an ffsv1 filesystem)
+ * can be detected by checking for sb->fs_old_flags & FS_FLAGS_UPDATED.
+ * This is the default suberblock type for NetBSD since ffsv2 support was added.
  */
 #define	BBSIZE		8192
 #define	BBOFF		((off_t)(0))
@@ -80,6 +91,11 @@
 #define SBLOCK_UFS2    65536
 #define SBLOCK_PIGGY  262144
 #define SBLOCKSIZE      8192
+/*
+ * NB: Do not, under any circumstances, look for an ffsv1 filesystem at
+ * SBLOCK_UFS2.  Doing so will find the wrong superblock for filesystems
+ * with a 64k block size.
+ */
 #define SBLOCKSEARCH \
 	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
 
@@ -130,20 +146,22 @@
 /*
  * The volume name for this filesystem is maintained in fs_volname.
  * MAXVOLLEN defines the length of the buffer allocated.
+ * This space used to be part of of fs_fsmnt.
  */
 #define MAXVOLLEN	32
 
 /*
  * There is a 128-byte region in the superblock reserved for in-core
  * pointers to summary information. Originally this included an array
- * of pointers to blocks of struct csum; now there are just three
+ * of pointers to blocks of struct csum; now there are just four
  * pointers and the remaining space is padded with fs_ocsp[].
  * NOCSPTRS determines the size of this padding. One pointer (fs_csp)
  * is taken away to point to a contiguous array of struct csum for
  * all cylinder groups; a second (fs_maxcluster) points to an array
  * of cluster sizes that is computed as cylinder groups are inspected;
- * and the third points to an array that tracks the creation of new
- * directories.
+ * the third (fs_contigdirs) points to an array that tracks the
+ * creation of new directories; and the fourth (fs_active) is used
+ * by snapshots.
  */
 #define	NOCSPTRS	((128 / sizeof(void *)) - 4)
 
@@ -156,9 +174,28 @@
 #define	FS_MAXCONTIG	16
 
 /*
- * Unused value currently, FreeBSD compat.
+ * The maximum number of snapshot nodes that can be associated
+ * with each filesystem. This limit affects only the number of
+ * snapshot files that can be recorded within the superblock so
+ * that they can be found when the filesystem is mounted. However,
+ * maintaining too many will slow the filesystem performance, so
+ * having this limit is a good idea.
  */
 #define FSMAXSNAP 20
+
+/*
+ * Used to identify special blocks in snapshots:
+ *
+ * BLK_NOCOPY - A block that was unallocated at the time the snapshot
+ *      was taken, hence does not need to be copied when written.
+ * BLK_SNAP - A block held by another snapshot that is not needed by this
+ *      snapshot. When the other snapshot is freed, the BLK_SNAP entries
+ *      are converted to BLK_NOCOPY. These are needed to allow fsck to
+ *      identify blocks that are in use by other snapshots (which are
+ *      expunged from this snapshot).
+ */
+#define BLK_NOCOPY	((daddr_t)(1))
+#define BLK_SNAP	((daddr_t)(2))
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
@@ -205,8 +242,7 @@ struct csum_total {
 	int64_t cs_nbfree;		/* number of free blocks */
 	int64_t cs_nifree;		/* number of free inodes */
 	int64_t cs_nffree;		/* number of free frags */
-	int64_t cs_numclusters;		/* number of free clusters */
-	int64_t cs_spare[3];		/* future expansion */
+	int64_t cs_spare[4];		/* future expansion */
 };
 
 
@@ -276,7 +312,7 @@ struct fs {
 	int8_t	 fs_fmod;		/* super block modified flag */
 	int8_t	 fs_clean;		/* file system is clean flag */
 	int8_t	 fs_ronly;		/* mounted read-only flag */
-	int8_t	 fs_old_flags;		/* see FS_ flags below */
+	uint8_t	 fs_old_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	u_char   fs_volname[MAXVOLLEN];	/* volume name */
 	uint64_t fs_swuid;		/* system-wide uid */
@@ -287,24 +323,27 @@ struct fs {
 	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
-	u_int	*fs_active;		/* used by snapshots to track fs */
+	u_char	*fs_active;		/* used by snapshots to track fs */
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
+/* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
 	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
-	int64_t fs_time;		/* last time written */
+	int64_t  fs_time;		/* last time written */
 	int64_t	 fs_size;		/* number of blocks in fs */
 	int64_t	 fs_dsize;		/* number of data blocks in fs */
 	int64_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int64_t	 fs_pendingblocks;	/* blocks in process of being freed */
 	int32_t	 fs_pendinginodes;	/* inodes in process of being freed */
 	int32_t	 fs_snapinum[FSMAXSNAP];/* list of snapshot inode numbers */
+/* back to stuff that has been around a while */
 	int32_t	 fs_avgfilesize;	/* expected average file size */
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	int32_t	 fs_save_cgsize;	/* save real cg size to use fs_bsize */
 	int32_t	 fs_sparecon32[26];	/* reserved for future constants */
-	int32_t  fs_flags;		/* see FS_ flags below */
+	uint32_t fs_flags;		/* see FS_ flags below */
+/* back to stuff that has been around a while (again) */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_old_inodefmt;	/* format of on-disk inodes */
@@ -322,9 +361,24 @@ struct fs {
 #define fs_old_postbloff	fs_spare5[0]
 #define fs_old_rotbloff		fs_spare5[1]
 #define fs_old_postbl_start	fs_maxbsize
+#define fs_old_headswitch	fs_id[0]
+#define fs_old_trkseek	fs_id[1]
+#define fs_old_csmask	fs_spare1[0]
+#define fs_old_csshift	fs_spare1[1]
 
 #define FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
 #define FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
+
+#define	old_fs_postbl(fs_, cylno, opostblsave) \
+    ((((fs_)->fs_old_postblformat == FS_42POSTBLFMT) || \
+     ((fs_)->fs_old_postbloff == offsetof(struct fs, fs_old_postbl_start))) \
+    ? ((int16_t *)(opostblsave) + (cylno) * (fs_)->fs_old_nrpos) \
+    : ((int16_t *)((uint8_t *)(fs_) + \
+	(fs_)->fs_old_postbloff) + (cylno) * (fs_)->fs_old_nrpos))
+#define	old_fs_rotbl(fs) \
+    (((fs)->fs_old_postblformat == FS_42POSTBLFMT) \
+    ? ((uint8_t *)(&(fs)->fs_magic+1)) \
+    : ((uint8_t *)((uint8_t *)(fs) + (fs)->fs_old_rotbloff)))
 
 /*
  * File system identification
@@ -368,20 +422,38 @@ struct fs {
 #define	FS_INTERNAL	0x80000000	/* mask for internal flags */
 
 /*
+ * Macros to access bits in the fs_active array.
+ */
+#define ACTIVECG_SET(fs, cg)				\
+	do {						\
+		if ((fs)->fs_active != NULL)		\
+			setbit((fs)->fs_active, (cg));	\
+	} while (/*CONSTCOND*/ 0)
+#define ACTIVECG_CLR(fs, cg)				\
+	do {						\
+		if ((fs)->fs_active != NULL)		\
+			clrbit((fs)->fs_active, (cg));	\
+	} while (/*CONSTCOND*/ 0)
+#define ACTIVECG_ISSET(fs, cg)				\
+	((fs)->fs_active != NULL && isset((fs)->fs_active, (cg)))
+
+/*
  * The size of a cylinder group is calculated by CGSIZE. The maximum size
  * is limited by the fact that cylinder groups are at most one block.
  * Its size is derived from the size of the maps maintained in the
  * cylinder group and the (struct cg) size.
  */
-#define	CGSIZE(fs) \
+#define	CGSIZE_IF(fs, ipg, fpg) \
     /* base cg */	(sizeof(struct cg) + sizeof(int32_t) + \
     /* old btotoff */	(fs)->fs_old_cpg * sizeof(int32_t) + \
     /* old boff */	(fs)->fs_old_cpg * sizeof(u_int16_t) + \
-    /* inode map */	howmany((fs)->fs_ipg, NBBY) + \
-    /* block map */	howmany((fs)->fs_fpg, NBBY) +\
+    /* inode map */	howmany((ipg), NBBY) + \
+    /* block map */	howmany((fpg), NBBY) +\
     /* if present */	((fs)->fs_contigsumsize <= 0 ? 0 : \
     /* cluster sum */	(fs)->fs_contigsumsize * sizeof(int32_t) + \
-    /* cluster map */	howmany(fragstoblks(fs, (fs)->fs_fpg), NBBY)))
+    /* cluster map */	howmany(fragstoblks(fs, (fpg)), NBBY)))
+
+#define	CGSIZE(fs) CGSIZE_IF((fs), (fs)->fs_ipg, (fs)->fs_fpg)
 
 /*
  * The minimal number of cylinder groups that should be created.
@@ -457,6 +529,25 @@ struct ocg {
 /*
  * Macros for access to cylinder group array structures.
  */
+#define old_cg_blktot_old(cgp, ns) \
+    (((struct ocg *)(cgp))->cg_btot)
+#define old_cg_blks_old(fs, cgp, cylno, ns) \
+    (((struct ocg *)(cgp))->cg_b[cylno])
+
+#define old_cg_blktot_new(cgp, ns) \
+    ((int32_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_old_btotoff, (ns))))
+#define old_cg_blks_new(fs, cgp, cylno, ns) \
+    ((int16_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_old_boff, (ns))) + (cylno) * (fs)->fs_old_nrpos)
+
+#define old_cg_blktot(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      old_cg_blktot_old(cgp, ns) : old_cg_blktot_new(cgp, ns))
+#define old_cg_blks(fs, cgp, cylno, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      old_cg_blks_old(fs, cgp, cylno, ns) : old_cg_blks_new(fs, cgp, cylno, ns))
+
 #define	cg_inosused_new(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_iusedoff, (ns))))
@@ -502,13 +593,15 @@ struct ocg {
  * They calc file system addresses of cylinder group data structures.
  */
 #define	cgbase(fs, c)	(((daddr_t)(fs)->fs_fpg) * (c))
+#define	cgstart_ufs1(fs, c) \
+    (cgbase(fs, c) + (fs)->fs_old_cgoffset * ((c) & ~((fs)->fs_old_cgmask)))
+#define	cgstart_ufs2(fs, c) cgbase((fs), (c))
+#define	cgstart(fs, c) ((fs)->fs_magic == FS_UFS2_MAGIC \
+			    ? cgstart_ufs2((fs), (c)) : cgstart_ufs1((fs), (c)))
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
 #define	cgtod(fs, c)	(cgstart(fs, c) + (fs)->fs_cblkno)	/* cg block */
-#define	cgstart(fs, c) \
-    ((fs)->fs_magic == FS_UFS2_MAGIC ? cgbase(fs, c) : \
-    (cgbase(fs, c) + (fs)->fs_old_cgoffset * ((c) & ~((fs)->fs_old_cgmask))))
 
 /*
  * Macros for handling inode numbers:
@@ -535,6 +628,13 @@ struct ocg {
  */
 #define	blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
+#define	old_cbtocylno(fs, bno) \
+    (fsbtodb(fs, bno) / (fs)->fs_old_spc)
+#define	old_cbtorpos(fs, bno) \
+    ((fs)->fs_old_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_old_spc / (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
+      fsbtodb(fs, bno) % (fs)->fs_old_spc % (fs)->fs_old_nsect * (fs)->fs_old_interleave) % \
+     (fs)->fs_old_nsect * (fs)->fs_old_nrpos / (fs)->fs_old_npsect)
 
 /*
  * The following macros optimize certain frequently calculated
@@ -613,13 +713,16 @@ struct ocg {
 struct appleufslabel {
 	u_int32_t	ul_magic;
 	u_int16_t	ul_checksum;
+	u_int16_t	ul_unused0;
 	u_int32_t	ul_version;
 	u_int32_t	ul_time;
 	u_int16_t	ul_namelen;
-	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME];
-	u_char	ul_reserved[32];
+	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME]; /* Warning: may not be null terminated */
+	u_int16_t	ul_unused1;
+	u_int64_t	ul_uuid;	/* Note this is only 4 byte aligned */
+	u_char	ul_reserved[24];
 	u_char	ul_unused[460];
-};
+} __attribute__((__packed__));
 
 
 #endif /* !_UFS_FFS_FS_H_ */

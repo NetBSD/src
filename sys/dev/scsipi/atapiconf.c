@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.57 2003/04/03 17:41:51 erh Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.57.2.1 2004/08/03 10:51:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.57 2003/04/03 17:41:51 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.57.2.1 2004/08/03 10:51:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,6 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},	PQUIRK_NOTUR},
 	{{T_CDROM, T_REMOV,
-	 "BCD-16X 1997-04-25", "", "VER 2.2"},	PQUIRK_NOSTARTUNIT},
-	{{T_CDROM, T_REMOV,
-	 "BCD-24X 1997-06-27", "", "VER 2.0"},	PQUIRK_NOSTARTUNIT},
-	{{T_CDROM, T_REMOV,
 	 "CR-2801TE", "", "1.07"},		PQUIRK_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "CREATIVECD3630E", "", "AC101"},	PQUIRK_NOSENSE},
@@ -107,20 +103,6 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "CD-ROM  CDR-S1", "", "1.70"},		PQUIRK_NOCAPACITY}, /* Sanyo */
 	{{T_CDROM, T_REMOV,
 	 "CD-ROM  CDR-N16", "", "1.25"},	PQUIRK_NOCAPACITY}, /* Sanyo */
-	{{T_CDROM, T_REMOV,
-	 "UJDCD8730", "", "1.14"},		PQUIRK_NODOORLOCK}, /* Acer */
-	{{T_DIRECT, T_REMOV,		/* Panasonic MultiMediaCard */
-	  "04DA", "1B00", "0010"},		PQUIRK_BYTE5_ZERO |
-	 					PQUIRK_NO_FLEX_PAGE },
-	{{T_DIRECT, T_REMOV,		/* NEO Jukebox */
-	  "IC25N020", "ATDA04-0", "DA3O"}, PQUIRK_BYTE5_ZERO },
-	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
-	  "eUSB", "MultiMediaCard", ""},	PQUIRK_NO_FLEX_PAGE },
-	{{T_DIRECT, T_REMOV,
-	  "FUJIFILM", "USB-DRIVEUNIT", "1.00"},	PQUIRK_NO_FLEX_PAGE |
-						PQUIRK_NOSENSE },
-	{{T_OPTICAL, T_REMOV,
-	  "FUJITSU MCJ3230AP", "", ""},		PQUIRK_NO_FLEX_PAGE },
 };
 
 int
@@ -128,10 +110,8 @@ atapiprint(aux, pnp)
 	void *aux;
 	const char *pnp; 
 {
-	struct scsipi_channel *chan = aux;
 	if (pnp)
 		aprint_normal("atapibus at %s", pnp);
-	aprint_normal(" channel %d", chan->chan_channel);
 	return (UNCONF);
 }
 
@@ -147,10 +127,6 @@ atapibusmatch(parent, cf, aux)
 		return (0);
 
 	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_ATAPI)
-		return (0);
-
-	if (cf->cf_loc[ATAPICF_CHANNEL] != chan->chan_channel &&
-	    cf->cf_loc[ATAPICF_CHANNEL] != ATAPICF_CHANNEL_DEFAULT)
 		return (0);
 
 	return (1);

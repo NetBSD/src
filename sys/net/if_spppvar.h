@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.7 2003/01/28 15:36:40 tron Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.7.2.1 2004/08/03 10:54:18 skrll Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -81,11 +81,16 @@ struct sppp {
 	struct  sppp *pp_next;  /* next interface in keepalive list */
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
 	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
-	u_short pp_alivecnt;    /* keepalive packets counter */
-	u_short pp_loopcnt;     /* loopback detection counter */
+	u_int   pp_alivecnt;    /* keepalive packets counter */
+	u_int   pp_loopcnt;     /* loopback detection counter */
+	u_int	pp_maxalive;	/* number or echo req. w/o reply */
 	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
 	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
 	u_quad_t	pp_saved_mtu;	/* saved MTU value */
+	time_t	pp_last_receive;	/* peer's last "sign of life" */
+	time_t	pp_max_noreceive;	/* seconds since last receive before
+					   we start to worry and send echo
+					   requests */
 	time_t	pp_last_activity;	/* second of last payload data s/r */
 	time_t	pp_idle_timeout;	/* idle seconds before auto-disconnect,
 					 * 0 = disabled */
@@ -119,16 +124,16 @@ struct sppp {
 	 * ready to communicate (like hardware HDLC) can shortcut
 	 * pp_up from pp_tls, and pp_down from pp_tlf.
 	 */
-	void	(*pp_up)(struct sppp *sp);
-	void	(*pp_down)(struct sppp *sp);
+	void	(*pp_up)(struct sppp *);
+	void	(*pp_down)(struct sppp *);
 	/*
 	 * These functions need to be filled in by the lower layer
 	 * (hardware) drivers if they request notification from the
 	 * PPP layer whether the link is actually required.  They
 	 * correspond to the tls and tlf actions.
 	 */
-	void	(*pp_tls)(struct sppp *sp);
-	void	(*pp_tlf)(struct sppp *sp);
+	void	(*pp_tls)(struct sppp *);
+	void	(*pp_tlf)(struct sppp *);
 	/*
 	 * These (optional) functions may be filled by the hardware
 	 * driver if any notification of established connections
@@ -136,8 +141,8 @@ struct sppp {
 	 * state change of the interface state machine should be
 	 * signaled for monitoring purposes (pp_chg).
 	 */
-	void	(*pp_con)(struct sppp *sp);
-	void	(*pp_chg)(struct sppp *sp, int new_state);
+	void	(*pp_con)(struct sppp *);
+	void	(*pp_chg)(struct sppp *, int);
 };
 
 #define PP_KEEPALIVE    0x01    /* use keepalive protocol */
@@ -154,12 +159,11 @@ struct sppp {
 #define PP_MAX_MRU	2048	/* maximal MRU we want to negotiate */
 
 #ifdef _KERNEL
-void sppp_attach (struct ifnet *ifp);
-void sppp_detach (struct ifnet *ifp);
-void sppp_input (struct ifnet *ifp, struct mbuf *m);
-int sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-struct mbuf *sppp_dequeue (struct ifnet *ifp);
-struct mbuf *sppp_pick(struct ifnet *ifp);
-int sppp_isempty (struct ifnet *ifp);
-void sppp_flush (struct ifnet *ifp);
+void sppp_attach (struct ifnet *);
+void sppp_detach (struct ifnet *);
+void sppp_input (struct ifnet *, struct mbuf *);
+int sppp_ioctl(struct ifnet *, u_long, void *);
+struct mbuf *sppp_dequeue (struct ifnet *);
+int sppp_isempty (struct ifnet *);
+void sppp_flush (struct ifnet *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.59.2.1 2003/07/02 15:26:23 darrenr Exp $	*/
+/*	$NetBSD: uhid.c,v 1.59.2.2 2004/08/03 10:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.1 2003/07/02 15:26:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.2 2004/08/03 10:51:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,14 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 			return (EPERM);
 		break;
 
+	case FIOSETOWN:
+		if (sc->sc_async == NULL)
+			return (EINVAL);
+		if (-*(int *)addr != sc->sc_async->p_pgid
+		    && *(int *)addr != sc->sc_async->p_pid);
+			return (EPERM);
+		break;
+
 	case USB_GET_REPORT_DESC:
 		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
@@ -518,6 +526,22 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 	case USB_GET_REPORT_ID:
 		*(int *)addr = sc->sc_hdev.sc_report_id;
 		break;
+
+	case USB_GET_DEVICEINFO:
+		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
+				     (struct usb_device_info *)addr, 1);
+		break;
+
+        case USB_GET_STRING_DESC:
+	    {
+                struct usb_string_desc *si = (struct usb_string_desc *)addr;
+                err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
+			si->usd_string_index,
+                	si->usd_language_id, &si->usd_desc, &size);
+                if (err)
+                        return (EINVAL);
+                break;
+	    }
 
 	default:
 		return (EINVAL);

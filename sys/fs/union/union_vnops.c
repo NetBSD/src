@@ -1,9 +1,41 @@
-/*	$NetBSD: union_vnops.c,v 1.6.2.1 2003/07/03 01:32:56 wrstuden Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1992, 1993, 1994, 1995
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)union_vnops.c	8.33 (Berkeley) 7/31/95
+ */
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
- * Copyright (c) 1992, 1993, 1994, 1995
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -40,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.6.2.1 2003/07/03 01:32:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,7 +918,7 @@ union_getattr(v)
 				ap->a_vap->va_nlink += vap->va_nlink;
 		}
 	}
-	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	return (0);
 }
 
@@ -1064,7 +1096,7 @@ union_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		int  a_command;
-		caddr_t  a_data;
+		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
@@ -1767,7 +1799,7 @@ start:
 			panic("union: locking against myself");
 #endif
 		un->un_flags |= UN_WANTED;
-		tsleep((caddr_t)&un->un_flags, PINOD, "unionlk2", 0);
+		tsleep(&un->un_flags, PINOD, "unionlk2", 0);
 		goto start;
 	}
 
@@ -1824,7 +1856,7 @@ union_unlock(v)
 
 	if (un->un_flags & UN_WANTED) {
 		un->un_flags &= ~UN_WANTED;
-		wakeup((caddr_t) &un->un_flags);
+		wakeup( &un->un_flags);
 	}
 
 #ifdef DIAGNOSTIC
@@ -1932,7 +1964,7 @@ union_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t  a_id;
+		void *a_id;
 		int  a_op;
 		struct flock *a_fl;
 		int  a_flags;
@@ -1954,27 +1986,21 @@ union_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = OTHERVP(bp->b_vp);
 
 #ifdef DIAGNOSTIC
-	if (bp->b_vp == NULLVP)
+	if (ovp == NULLVP)
 		panic("union_strategy: nil vp");
 	if (((bp->b_flags & B_READ) == 0) &&
-	    (bp->b_vp == LOWERVP(savedvp)))
+	    (ovp == LOWERVP(bp->b_vp)))
 		panic("union_strategy: writing to lowervp");
 #endif
 
-	error = VOP_STRATEGY(bp);
-	bp->b_vp = savedvp;
-
-	return (error);
+	return (VOP_STRATEGY(ovp, bp));
 }
 
 int

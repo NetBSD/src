@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.12 2003/04/24 05:06:32 martin Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.12.2.1 2004/08/03 10:51:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -85,12 +81,12 @@
  *
  * Does not handle interrupts, even though they can occur.
  *
- * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.org>.
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.12 2003/04/24 05:06:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.12.2.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +186,7 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_pixeloffset = BWREG_MEM;
 
 	isconsole = fb_is_console(node);
-	name = PROM_getpropstring(node, "model");
+	name = prom_getpropstring(node, "model");
 
 	/* Assume `bwtwo at sbus' only happens at sun4c's */
 	sc->sc_get_video = bwtwo_get_video;

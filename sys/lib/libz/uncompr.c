@@ -1,11 +1,11 @@
-/* $NetBSD: uncompr.c,v 1.2 2002/03/12 00:42:24 fvdl Exp $ */
+/* $NetBSD: uncompr.c,v 1.2.12.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: uncompr.c,v 1.2 2002/03/12 00:42:24 fvdl Exp $ */
+/* @(#) $Id: uncompr.c,v 1.2.12.1 2004/08/03 10:53:58 skrll Exp $ */
 
 #include "zlib.h"
 
@@ -33,7 +33,7 @@ int ZEXPORT uncompress (dest, destLen, source, sourceLen)
     z_stream stream;
     int err;
 
-    stream.next_in = (Bytef*)source;
+    stream.next_in = (Bytef*)(void *)(unsigned long)source;
     stream.avail_in = (uInt)sourceLen;
     /* Check for source > 64K on 16-bit machine: */
     if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;

@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.15 2002/03/17 20:54:05 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.15.12.1 2004/08/03 10:55:40 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.15 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.15.12.1 2004/08/03 10:55:40 skrll Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -65,6 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.15 2002/03/17 20:54:05 martin Exp $"
 #endif
 
 #include <sys/param.h>
+/*
+ * XXX - sys/param.h on alpha (indirectly) includes sys/signal.h, which
+ *	 defines sc_sp - interfering with our use of this identifier.
+ *	 Just undef it for now.
+ */
+#undef sc_sp	
+
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -264,7 +271,8 @@ ipppattach()
 #endif
 		sc->sc_sp.pp_if.if_unit = i;
 #else
-		sprintf(sc->sc_sp.pp_if.if_xname, "ippp%d", i);
+		snprintf(sc->sc_sp.pp_if.if_xname,
+		    sizeof(sc->sc_sp.pp_if.if_xname), "ippp%d", i);
 		sc->sc_unit = i;
 #endif
 

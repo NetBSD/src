@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.92 2003/03/06 00:39:42 matt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.92.2.1 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92 2003/03/06 00:39:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92.2.1 2004/08/03 10:52:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -112,7 +108,7 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
  * local prototypes
  */
 
-static void	 putchar __P((int, int, struct tty *));
+static void	 putchar(int, int, struct tty *);
 
 
 /*
@@ -139,8 +135,8 @@ int	dumponpanic = DUMP_ON_PANIC;
  * [e.g. to a "virtual console"].
  */
 
-void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
-void (*v_flush) __P((void)) = cnflush;	/* start with cnflush (normal cons) */
+void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
+void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
 
 
 /*

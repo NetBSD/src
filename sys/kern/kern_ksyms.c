@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.13.2.1 2003/07/02 15:26:37 darrenr Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.13.2.2 2004/08/03 10:52:45 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.13.2.1 2003/07/02 15:26:37 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.13.2.2 2004/08/03 10:52:45 skrll Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -121,6 +121,7 @@ struct symtab {
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
 	caddr_t sd_strstart;	/* Adderss of corresponding string table */
+	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
 	int *sd_symnmoff;	/* Used when calculating the name offset */
@@ -167,7 +168,7 @@ static int
 ptree_add(char *key, int val)
 {
 	int idx;
-	int nix, cix, bit, rbit, sb, lastrbit, svbit, ix;
+	int nix, cix, bit, rbit, sb, lastrbit, svbit = 0, ix;
 	char *m, *k;
 
 	if (baseidx == 0) {
@@ -241,7 +242,7 @@ static void
 ptree_gen(char *off, struct symtab *tab)
 {
 	Elf_Sym *sym;
-	int i;
+	int i, nsym;
 
 	if (off != NULL)
 		symb = (struct ptree *)ALIGN(off);
@@ -251,7 +252,12 @@ ptree_gen(char *off, struct symtab *tab)
 	symb--; /* sym index won't be 0 */
 
 	sym = tab->sd_symstart;
-	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
+	if ((nsym = tab->sd_symsize/sizeof(Elf_Sym)) > INT16_MAX) {
+		printf("Too many symbols for tree, skipping %d symbols\n",
+		    nsym-INT16_MAX);
+		nsym = INT16_MAX;
+	}
+	for (i = 1; i < nsym; i++) {
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
 		ptree_add(tab->sd_strstart+sym[i].st_name, i);
@@ -263,11 +269,12 @@ ptree_gen(char *off, struct symtab *tab)
  * Finds a certain symbol name in a certain symbol table.
  */
 static Elf_Sym *
-findsym(char *name, struct symtab *table)
+findsym(char *name, struct symtab *table, int userreq)
 {
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
 	char *np;
+	caddr_t realstart = table->sd_strstart - (userreq ? 0 : table->sd_usroffset);
 
 #ifdef USE_PTREE
 	if (table == &kernel_symtab && (i = ptree_find(name)) != 0)
@@ -275,7 +282,7 @@ findsym(char *name, struct symtab *table)
 #endif
 
 	for (i = 0; i < sz; i++) {
-		np = table->sd_strstart + start[i].st_name;
+		np = realstart + start[i].st_name;
 		if (name[0] == np[0] && name[1] == np[1] &&
 		    strcmp(name, np) == 0)
 			return &start[i];
@@ -490,7 +497,7 @@ ksyms_init(int symsize, void *start, void *end)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
+ksyms_getval(const char *mod, char *sym, unsigned long *val, int type, int userreq)
 {
 	struct symtab *st;
 	Elf_Sym *es;
@@ -506,7 +513,7 @@ ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
 	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
 		if (mod && strcmp(st->sd_name, mod))
 			continue;
-		if ((es = findsym(sym, st)) == NULL)
+		if ((es = findsym(sym, st, userreq)) == NULL)
 			continue;
 
 		/* Skip if bad binding */
@@ -531,8 +538,8 @@ ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 	struct symtab *st;
 	Elf_Sym *les, *es = NULL;
 	vaddr_t laddr = 0;
-	const char *lmod;
-	char *stable;
+	const char *lmod = NULL;
+	char *stable = NULL;
 	int type, i, sz;
 
 	if (ksymsinited == 0)
@@ -558,7 +565,7 @@ ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 				laddr = les->st_value;
 				es = les;
 				lmod = st->sd_name;
-				stable = st->sd_strstart;
+				stable = st->sd_strstart - st->sd_usroffset;
 			}
 		}
 	}
@@ -588,51 +595,71 @@ ksyms_sizes_calc(void)
 			for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
 				st->sd_symstart[i].st_name =
 				    strsz + st->sd_symnmoff[i];
+			st->sd_usroffset = strsz;
 		}
                 symsz += st->sd_symsize;
                 strsz += st->sd_strsize;
-        }                               
+        }
 }
 #endif
 
 /*
- * Temporary work buffers for dynamic loaded symbol tables.
+ * Temporary work structure for dynamic loaded symbol tables.
  * Will go away when in-kernel linker is in place.
  */
-#define	NSAVEDSYMS 512
-#define	SZSYMNAMES NSAVEDSYMS*8		/* Just an approximation */
-static Elf_Sym savedsyms[NSAVEDSYMS];
-static int symnmoff[NSAVEDSYMS];
-static char symnames[SZSYMNAMES];
-static int cursyms, curnamep;
+
+struct syminfo {
+	size_t cursyms;
+	size_t curnamep;
+	size_t maxsyms;
+	size_t maxnamep;
+	Elf_Sym *syms;
+	int *symnmoff;
+	char *symnames;
+};
+	
 
 /*
  * Add a symbol to the temporary save area for symbols.
  * This routine will go away when the in-kernel linker is in place.
  */
 static void
-addsym(Elf_Sym *sym, char *name)
+addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
+       const char *mod)
 {
-	int len;
+	int len, mlen;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_MORE_CALLS)
 		printf("addsym: name %s val %lx\n", name, (long)sym->st_value);
 #endif
-	if (cursyms == NSAVEDSYMS || 
-	    ((len = strlen(name) + 1) + curnamep) > SZSYMNAMES) {
-		printf("addsym: too many sumbols, skipping '%s'\n", name);
+	len = strlen(name) + 1;
+	if (mod)
+		mlen = 1 + strlen(mod);
+	else
+		mlen = 0;
+	if (info->cursyms == info->maxsyms || 
+	    (len + mlen + info->curnamep) > info->maxnamep) {
+		printf("addsym: too many symbols, skipping '%s'\n", name);
 		return;
 	}
-	strlcpy(&symnames[curnamep], name, sizeof(symnames) - curnamep);
-	savedsyms[cursyms] = *sym;
-	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
-	curnamep += len;
+	strlcpy(&info->symnames[info->curnamep], name,
+	    info->maxnamep - info->curnamep);
+	if (mlen) {
+		info->symnames[info->curnamep + len - 1] = '.';
+		strlcpy(&info->symnames[info->curnamep + len], mod,
+		    info->maxnamep - (info->curnamep + len));
+		len += mlen;
+	}
+	info->syms[info->cursyms] = *sym;
+	info->syms[info->cursyms].st_name = info->curnamep;
+	info->symnmoff[info->cursyms] = info->curnamep;
+	info->curnamep += len;
 #if NKSYMS
 	if (len > ksyms_maxlen)
 		ksyms_maxlen = len;
 #endif
-	cursyms++;
+	info->cursyms++;
 }
 /*
  * Adds a symbol table.
@@ -641,15 +668,31 @@ addsym(Elf_Sym *sym, char *name)
  * New memory for keeping the symbol table is allocated in this function.
  * Returns 0 if success and EEXIST if the module name is in use.
  */
+static int
+specialsym(const char *symname)
+{
+	return	!strcmp(symname, "_bss_start") ||
+		!strcmp(symname, "__bss_start") ||
+		!strcmp(symname, "_bss_end__") ||
+		!strcmp(symname, "__bss_end__") ||
+		!strcmp(symname, "_edata") ||
+		!strcmp(symname, "_end") ||
+		!strcmp(symname, "__end") ||
+		!strcmp(symname, "__end__") ||
+		!strncmp(symname, "__start_link_set_", 17) ||
+		!strncmp(symname, "__stop_link_set_", 16);
+}
+
 int
 ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
     char *strstart, vsize_t strsize)
 {
 	Elf_Sym *sym = symstart;
 	struct symtab *st;
-	long rval;
+	unsigned long rval;
 	int i;
-	char *str, *name;
+	char *name;
+	struct syminfo info;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
@@ -675,10 +718,11 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	/*
 	 * XXX - Only add a symbol if it do not exist already.
 	 * This is because of a flaw in the current LKM implementation,
-	 * the loop will be removed once the in-kernel linker is in place.
+	 * these loops will be removed once the in-kernel linker is in place.
 	 */
-	cursyms = curnamep = 0;
+	memset(&info, 0, sizeof(info));
 	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
+		char * const symname = strstart + sym[i].st_name;
 		if (sym[i].st_name == 0)
 			continue; /* Just ignore */
 
@@ -688,36 +732,71 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 			continue;
 			
 		/* Check if the symbol exists */
-		if (ksyms_getval(NULL, strstart + sym[i].st_name,
+		if (ksyms_getval_from_kernel(NULL, symname,
 		    &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval) {
-				printf("%s: symbol '%s' redeclared with "
-				    "different value (%lx != %lx)\n",
-				    mod, strstart + sym[i].st_name,
-				    rval, (long)sym[i].st_value);
+				if (specialsym(symname)) {
+					info.maxsyms++;
+					info.maxnamep += strlen(symname) + 1 +
+					    strlen(mod) + 1;
+				} else {
+					printf("%s: symbol '%s' redeclared with"
+					    " different value (%lx != %lx)\n",
+					    mod, symname,
+					    rval, (long)sym[i].st_value);
+				}
+			}
+		} else {
+			/*
+			 * Count this symbol
+			 */
+			info.maxsyms++;
+			info.maxnamep += strlen(symname) + 1;
+		}
+	}
+
+	/*
+	 * Now that we know the sizes, malloc the structures.
+	 */
+	info.syms = malloc(sizeof(Elf_Sym)*info.maxsyms, M_DEVBUF, M_WAITOK);
+	info.symnames = malloc(info.maxnamep, M_DEVBUF, M_WAITOK);
+	info.symnmoff = malloc(sizeof(int)*info.maxsyms, M_DEVBUF, M_WAITOK);
+
+	/*
+	 * Now that we have the symbols, actually fill in the structures.
+	 */
+	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
+		char * const symname = strstart + sym[i].st_name;
+		if (sym[i].st_name == 0)
+			continue; /* Just ignore */
+
+		/* check validity of the symbol */
+		/* XXX - save local symbols if DDB */
+		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
+			continue;
+			
+		/* Check if the symbol exists */
+		if (ksyms_getval_from_kernel(NULL, symname,
+		    &rval, KSYMS_EXTERN) == 0) {
+			if ((sym[i].st_value != rval) && specialsym(symname)) {
+				addsym(&info, &sym[i], symname, mod);
 			}
 		} else
 			/* Ok, save this symbol */
-			addsym(&sym[i], strstart + sym[i].st_name);
+			addsym(&info, &sym[i], symname, NULL);
 	}
-
-	sym = malloc(sizeof(Elf_Sym)*cursyms, M_DEVBUF, M_WAITOK);
-	str = malloc(curnamep, M_DEVBUF, M_WAITOK);
-	memcpy(sym, savedsyms, sizeof(Elf_Sym)*cursyms);
-	memcpy(str, symnames, curnamep);
 
 	st = malloc(sizeof(struct symtab), M_DEVBUF, M_WAITOK);
 	i = strlen(mod) + 1;
 	name = malloc(i, M_DEVBUF, M_WAITOK);
 	strlcpy(name, mod, i);
 	st->sd_name = name;
-	st->sd_symnmoff = malloc(sizeof(int)*cursyms, M_DEVBUF, M_WAITOK);
-	memcpy(st->sd_symnmoff, symnmoff, sizeof(int)*cursyms);
-	st->sd_symstart = sym;
-	st->sd_symsize = sizeof(Elf_Sym)*cursyms;
-	st->sd_strstart = str;
-	st->sd_strsize = curnamep;
+	st->sd_symnmoff = info.symnmoff;
+	st->sd_symstart = info.syms;
+	st->sd_symsize = sizeof(Elf_Sym)*info.maxsyms;
+	st->sd_strstart = info.symnames;
+	st->sd_strsize = info.maxnamep;
 
 	/* Make them absolute references */
 	sym = st->sd_symstart;
@@ -771,6 +850,31 @@ ksyms_delsymtab(const char *mod)
 	return 0;
 }
 
+int
+ksyms_rensymtab(const char *old, const char *new)
+{
+	struct symtab *st, *oldst = NULL;
+	char *newstr;
+
+	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
+		if (strcmp(old, st->sd_name) == 0)
+			oldst = st;
+		if (strcmp(new, st->sd_name) == 0)
+			return (EEXIST);
+	}
+	if (oldst == NULL)
+		return (ENOENT);
+
+	newstr = malloc(strlen(new)+1, M_DEVBUF, M_WAITOK);
+	if (!newstr)
+		return (ENOMEM);
+	strcpy(newstr, new);
+	free((char *)oldst->sd_name, M_DEVBUF);
+	oldst->sd_name = newstr;
+
+	return (0);
+}
+
 #ifdef DDB
 
 /*
@@ -796,7 +900,8 @@ ksyms_sift(char *mod, char *sym, int mode)
 			Elf_Sym *les = st->sd_symstart + i;
 			char c;
 
-			if (strstr(sb + les->st_name, sym) == NULL)
+			if (strstr(sb + les->st_name - st->sd_usroffset, sym)
+			    == NULL)
 				continue;
 
 			if (mode == 'F') {
@@ -817,9 +922,11 @@ ksyms_sift(char *mod, char *sym, int mode)
 					c = ' ';
 					break;
 				}
-				db_printf("%s%c ", sb + les->st_name, c);
+				db_printf("%s%c ", sb + les->st_name -
+				    st->sd_usroffset, c);
 			} else
-				db_printf("%s ", sb + les->st_name);
+				db_printf("%s ", sb + les->st_name -
+				    st->sd_usroffset);
 		}
 	}
 	return ENOENT;
@@ -913,6 +1020,8 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 
 	if (minor(dev))
 		return ENXIO;
+	if (ksymsinited == 0)
+		return ENXIO;
 
 	ksyms_hdr.kh_shdr[SYMTAB].sh_size = symsz;
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = symsz +
@@ -955,8 +1064,6 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 		printf("ksymsread: offset 0x%llx resid 0x%lx\n",
 		    (long long)uio->uio_offset, uio->uio_resid);
 #endif
-	if (ksymsinited == 0)
-		return ENXIO;
 
 	off = uio->uio_offset;
 	if (off >= (strsz + symsz + HDRSIZ))
@@ -1012,10 +1119,10 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;
-	Elf_Sym *sym;
+	Elf_Sym *sym = NULL;
 	unsigned long val;
 	int error = 0;
-	char *str;
+	char *str = NULL;
 
 	if (cmd == KIOCGVALUE || cmd == KIOCGSYMBOL)
 		str = malloc(ksyms_maxlen, M_DEVBUF, M_WAITOK);
@@ -1028,7 +1135,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 		 */
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
-		if ((error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN)))
+		if ((error = ksyms_getval_from_userland(NULL, str, &val, KSYMS_EXTERN)))
 			break;
 		error = copyout(&val, kg->kg_value, sizeof(long));
 		break;
@@ -1041,7 +1148,7 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
 		CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
-			if ((sym = findsym(str, st)) == NULL)
+			if ((sym = findsym(str, st, 1)) == NULL) /* from userland */
 				continue;
 
 			/* Skip if bad binding */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.33 2003/02/10 14:28:21 jdolecek Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.33.2.1 2004/08/03 10:52:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.33 2003/02/10 14:28:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.33.2.1 2004/08/03 10:52:13 skrll Exp $");
 
 #include "opt_wsfont.h"
 
@@ -86,6 +86,18 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.33 2003/02/10 14:28:21 jdolecek Exp $")
 #ifdef FONT_VT220ISO8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/vt220iso8x16.h>
+#endif
+
+#ifdef FONT_VT220KOI8x10_KOI8_R
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220koi8x10.h>
+#endif
+
+#ifdef FONT_VT220KOI8x10_KOI8_U
+#define HAVE_FONT 1
+#define KOI8_U
+#include <dev/wsfont/vt220koi8x10.h>
+#undef KOI8_U
 #endif
 
 #ifdef FONT_SONY8x16
@@ -164,6 +176,12 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_VT220ISO8x16
 	{ { NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_VT220KOI8x10_KOI8_R
+	{ { NULL }, &vt220kr8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_VT220KOI8x10_KOI8_U
+	{ { NULL }, &vt220ku8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_SONY8x16
 	{ { NULL }, &sony8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
@@ -376,7 +394,7 @@ wsfont_add0(struct wsdisplay_font *font, int copy)
 		ent->font->data = data;
 
 		name = malloc(strlen(font->name) + 1, M_DEVBUF, M_WAITOK);
-		strcpy(name, font->name);
+		strlcpy(name, font->name, strlen(font->name) + 1);
 		ent->font->name = name;
 	}
 
@@ -443,10 +461,11 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr)
 			neu = wsfont_add0(ent->font, 1);
 			neu->flags |= WSFONT_COPY;
 
-			aprint_normal("wsfont: font '%s' bito %d byteo %d copied to bito %d byteo %d\n",
-				ent->font->name,
-				ent->font->bitorder, ent->font->byteorder,
-				bito, byteo);
+			aprint_debug("wsfont: font '%s' bito %d byteo %d "
+			    "copied to bito %d byteo %d\n",
+			    ent->font->name,
+			    ent->font->bitorder, ent->font->byteorder,
+			    bito, byteo);
 
 			ent = neu;
 		}

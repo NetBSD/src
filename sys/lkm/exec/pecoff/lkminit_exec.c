@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.3 2002/03/29 17:49:21 oki Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.3.14.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3 2002/03/29 17:49:21 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3.14.1 2004/08/03 10:53:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,8 @@ static struct execsw exec_pecoff =
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
 	  pecoff_copyargs,
 	  NULL,
-	  coredump_netbsd };
+	  coredump_netbsd,
+	  exec_setup_stack };
 
 /*
  * declare the exec

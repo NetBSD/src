@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.20.2.1 2003/07/02 15:27:13 darrenr Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.20.2.2 2004/08/03 10:56:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -77,14 +77,23 @@ int nfs_boot_deladdress __P((struct ifnet *, struct lwp *, u_int32_t));
 void nfs_boot_flushrt __P((struct ifnet *));
 int nfs_boot_setrecvtimo __P((struct socket *));
 int nfs_boot_enbroadcast __P((struct socket *));
-int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t));
+int nfs_boot_sobind_ipport __P((struct socket *, u_int16_t, struct lwp *));
 int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
 			   int (*)(struct mbuf*, void*, int), struct mbuf*,
 			   int (*)(struct mbuf*, void*), struct mbuf**,
-			   struct mbuf**, void*));
+			   struct mbuf**, void*, struct lwp *));
 
 int nfs_bootdhcp  __P((struct nfs_diskless *, struct lwp *));
 int nfs_bootparam __P((struct nfs_diskless *, struct lwp *));
+int nfs_bootstatic __P((struct nfs_diskless *, struct lwp *));
+
+extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
+
+#define	NFS_BOOTSTATIC_HAS_MYIP		0x01
+#define	NFS_BOOTSTATIC_HAS_GWIP		0x02
+#define	NFS_BOOTSTATIC_HAS_MASK		0x04
+#define	NFS_BOOTSTATIC_HAS_SERVADDR	0x08
+#define	NFS_BOOTSTATIC_HAS_SERVER	0x10
 #endif /* _KERNEL */
 
 #endif /* _NFS_NFSDISKLESS_H_ */

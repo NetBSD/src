@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.92.2.1 2004/08/03 10:54:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -49,11 +49,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -79,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.1 2004/08/03 10:54:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -102,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $");
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/sysctl.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -141,7 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $");
 int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
 int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
+int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
+#define	rt_pksent rt_rmx.rmx_pksent
 
 extern	struct domain arpdomain;
 
@@ -174,7 +173,7 @@ static int	revarp_in_progress = 0;
 static struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
-static void db_print_sa __P((struct sockaddr *));
+static void db_print_sa __P((const struct sockaddr *));
 static void db_print_ifa __P((struct ifaddr *));
 static void db_print_llinfo __P((caddr_t));
 static int db_show_radix_node __P((struct radix_node *, void *));
@@ -220,7 +219,7 @@ lla_snprintf(adrp, len)
 	return p;
 }
 
-struct protosw arpsw[] = {
+const struct protosw arpsw[] = {
 	{ 0, 0, 0, 0,
 	  0, 0, 0, 0,
 	  0,
@@ -360,7 +359,19 @@ arptimer(arg)
 		struct rtentry *rt = la->la_rt;
 
 		nla = LIST_NEXT(la, la_list);
-		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
+		if (rt->rt_expire == 0)
+			continue;
+		if ((rt->rt_expire - time.tv_sec) < arpt_refresh &&
+		    rt->rt_pksent > (time.tv_sec - arpt_keep)) {
+			/*
+			 * If the entry has been used during since last
+			 * refresh, try to renew it before deleting.
+			 */
+			arprequest(rt->rt_ifp,
+			    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
+			    &SIN(rt_key(rt))->sin_addr,
+			    LLADDR(rt->rt_ifp->if_sadl));
+		} else if (rt->rt_expire <= time.tv_sec)
 			arptfree(la); /* timer has expired; clear */
 	}
 
@@ -702,6 +713,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
+		rt->rt_pksent = time.tv_sec; /* Time for last pkt sent */
 		return 1;
 	}
 	/*
@@ -1172,11 +1184,16 @@ arplookup(m, addr, create, proxy)
 	else
 		return ((struct llinfo_arp *)rt->rt_llinfo);
 
-	if (create)
+	if (create) {
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
 		    (ifp) ? ifp->if_xname : 0, why);
+		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
+			rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		}
+	}
 	return (0);
 }
 
@@ -1380,7 +1397,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 #include <ddb/db_output.h>
 static void
 db_print_sa(sa)
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 {
 	int len;
 	u_char *p;
@@ -1489,4 +1506,55 @@ db_show_arptab(addr, have_addr, count, modif)
 	return;
 }
 #endif
+
+SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
+{
+	struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "net", NULL,
+			NULL, 0, NULL, 0,
+			CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "inet", NULL,
+			NULL, 0, NULL, 0,
+			CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "arp",
+			SYSCTL_DESCR("Address Resolution Protocol"),
+			NULL, 0, NULL, 0,
+			CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "prune",
+			SYSCTL_DESCR("ARP cache pruning interval"),
+			NULL, 0, &arpt_prune, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "keep",
+			SYSCTL_DESCR("Valid ARP entry lifetime"),
+			NULL, 0, &arpt_keep, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "down",
+			SYSCTL_DESCR("Failed ARP entry lifetime"),
+			NULL, 0, &arpt_down, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "refresh",
+			SYSCTL_DESCR("ARP entry refresh interval"),
+			NULL, 0, &arpt_refresh, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+}
+
 #endif /* INET */

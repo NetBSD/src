@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.10 2002/02/24 17:22:20 martin Exp $ */
+/*	$NetBSD: if_gre.h,v 1.10.16.1 2004/08/03 10:54:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct greip {
  * should be routed over more than one tunnel hop by hop
  */
 struct gre_sre {
-	u_int16_t sre_family;	/* adress family */
+	u_int16_t sre_family;	/* address family */
 	u_char	sre_offset;	/* offset to first octet of active entry */
 	u_char	sre_length;	/* number of octets in the SRE. 
 				   sre_lengthl==0 -> last entry. */
@@ -153,8 +153,8 @@ extern struct gre_softc_head gre_softc_list;
 
 int	gre_ioctl __P((struct ifnet *, u_long, caddr_t));
 int	gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *rt));
-u_short	gre_in_cksum(u_short *p, u_int len);
+	    struct rtentry *));
+u_int16_t gre_in_cksum(u_short *, u_int);
 #endif /* _KERNEL */
 
 #endif

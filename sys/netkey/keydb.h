@@ -1,5 +1,5 @@
-/*	$NetBSD: keydb.h,v 1.13 2003/02/01 06:23:48 thorpej Exp $	*/
-/*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
+/*	$NetBSD: keydb.h,v 1.13.2.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,7 +75,9 @@ struct secashead {
 
 /* Security Association */
 struct secasvar {
+	TAILQ_ENTRY(secasvar) tailq;
 	LIST_ENTRY(secasvar) chain;
+	LIST_ENTRY(secasvar) spihash;
 
 	int refcnt;			/* reference count */
 	u_int8_t state;			/* Status of this Association */
@@ -99,18 +101,20 @@ struct secasvar {
 	struct sadb_lifetime *lft_h;	/* HARD lifetime */
 	struct sadb_lifetime *lft_s;	/* SOFT lifetime */
 
-	u_int32_t seq;			/* sequence number */
+	u_int64_t seq;			/* sequence number */
 	pid_t pid;			/* message's pid */
 
 	struct secashead *sah;		/* back pointer to the secashead */
+
+	u_int32_t id;			/* SA id */
 };
 
 /* replay prevention */
 struct secreplay {
-	u_int32_t count;
+	u_int64_t count;
 	u_int wsize;		/* window size, i.g. 4 bytes */
-	u_int32_t seq;		/* used by sender */
-	u_int32_t lastseq;	/* used by receiver */
+	u_int64_t seq;		/* used by sender */
+	u_int64_t lastseq;	/* used by receiver */
 	u_int8_t *bitmap;	/* used by receiver */
 	int overflow;		/* what round does the counter take. */
 };
@@ -149,6 +153,7 @@ struct key_cb {
 struct secpolicy;
 struct secpolicyindex;
 extern struct secpolicy *keydb_newsecpolicy __P((void));
+extern u_int32_t keydb_newspid __P((void));
 extern void keydb_delsecpolicy __P((struct secpolicy *));
 extern int keydb_setsecpolicyindex
 	__P((struct secpolicy *, struct secpolicyindex *));
@@ -157,8 +162,7 @@ extern struct secashead *keydb_newsecashead __P((void));
 extern void keydb_delsecashead __P((struct secashead *));
 /* secasvar */
 extern struct secasvar *keydb_newsecasvar __P((void));
-extern void keydb_refsecasvar __P((struct secasvar *));
-extern void keydb_freesecasvar __P((struct secasvar *));
+extern void keydb_delsecasvar __P((struct secasvar *));
 /* secreplay */
 extern struct secreplay *keydb_newsecreplay __P((size_t));
 extern void keydb_delsecreplay __P((struct secreplay *));

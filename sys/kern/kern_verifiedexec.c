@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.3 2003/04/01 01:41:39 thorpej Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.1 2004/08/03 10:52:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.1 2004/08/03 10:52:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h> 
@@ -317,8 +320,8 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
           case FINGERPRINT_INDIRECT: /* fingerprint ok but need to check
                                         for direct execution */
                   if (direct_exec == 1) {
-                          printf("Attempt to execute %s (dev %lu, inode %lu) dir
-ectly by pid %u (ppid %u, gppid %u)\n",
+                          printf("Attempt to execute %s (dev %lu, inode %lu) "
+				 "directly by pid %u (ppid %u, gppid %u)\n",
                                  epp->ep_name, epp->ep_vap->va_fsid,
                                  epp->ep_vap->va_fileid, p->p_pid,
                                  p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
@@ -327,9 +330,9 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                   }
                   break;
 
-          case FINGERPRINT_NOMATCH: /* does not match - bitch about it */
-                  printf("Fingerprint for %s (dev %lu, inode %lu) does not match
- loaded value\n",
+          case FINGERPRINT_NOMATCH: /* does not match - whine about it */
+                  printf("Fingerprint for %s (dev %lu, inode %lu) does not "
+			 "match loaded value\n",
                          epp->ep_name, epp->ep_vap->va_fsid,
                          epp->ep_vap->va_fileid);
                   if (securelevel > 1)

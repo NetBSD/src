@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.21 2002/09/27 15:37:51 provos Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.21.6.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.21 2002/09/27 15:37:51 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.21.6.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -199,11 +199,7 @@ ah4_output(m, isr)
 	 * grow the mbuf to accomodate AH.
 	 */
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	if (m->m_len != hlen)
 		panic("ah4_output: assumption failed (first mbuf length)");
@@ -268,7 +264,7 @@ ah4_output(m, isr)
 		 * XXX sequence number must not be cycled, if the SA is
 		 * installed by IKE daemon.
 		 */
-		ahdr->ah_seq = htonl(sav->replay->count);
+		ahdr->ah_seq = htonl(sav->replay->count & 0xffffffff);
 		bzero(ahdr + 1, plen);
 	}
 
@@ -409,7 +405,7 @@ ah6_output(m, nexthdrp, md, isr)
 	/* fix plen */
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) > IPV6_MAXPACKET) {
 		ipseclog((LOG_ERR,
-		    "ip6_output: AH with IPv6 jumbogram is not supported\n"));
+		    "ah6_output: AH with IPv6 jumbogram is not supported\n"));
 		m_freem(m);
 		return EINVAL;
 	}

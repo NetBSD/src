@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.42.2.1 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.42.2.1 2004/08/03 10:56:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -260,32 +256,33 @@ lfs_balloc(void *v)
 		/*
 		 * Create new indirect blocks if necessary
 		 */
-		if (num > 1)
+		if (num > 1) {
 			idaddr = ip->i_ffs1_ib[indirs[0].in_off];
-		for (i = 1; i < num; ++i) {
-			ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize, 0,0);
-			if (!indirs[i].in_exists) {
-				clrbuf(ibp);
-				ibp->b_blkno = UNWRITTEN;
-			} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
-				ibp->b_blkno = fsbtodb(fs, idaddr);
-				ibp->b_flags |= B_READ;
-				VOP_STRATEGY(ibp);
-				biowait(ibp);
-			}
-			/*
-			 * This block exists, but the next one may not.
-			 * If that is the case mark it UNWRITTEN to keep
-			 * the accounting straight.
-			 */
-			/* XXX ondisk32 */
-			if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
-				((int32_t *)ibp->b_data)[indirs[i].in_off] =
-					UNWRITTEN;
-			/* XXX ondisk32 */
-			idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
-			if ((error = VOP_BWRITE(ibp))) {
-				return error;
+			for (i = 1; i < num; ++i) {
+				ibp = getblk(vp, indirs[i].in_lbn,
+				    fs->lfs_bsize, 0,0);
+				if (!indirs[i].in_exists) {
+					clrbuf(ibp);
+					ibp->b_blkno = UNWRITTEN;
+				} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
+					ibp->b_blkno = fsbtodb(fs, idaddr);
+					ibp->b_flags |= B_READ;
+					VOP_STRATEGY(vp, ibp);
+					biowait(ibp);
+				}
+				/*
+				 * This block exists, but the next one may not.
+				 * If that is the case mark it UNWRITTEN to keep
+				 * the accounting straight.
+				 */
+				/* XXX ondisk32 */
+				if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
+					((int32_t *)ibp->b_data)[indirs[i].in_off] =
+						UNWRITTEN;
+				/* XXX ondisk32 */
+				idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
+				if ((error = VOP_BWRITE(ibp)))
+					return error;
 			}
 		}
 	}	
@@ -347,7 +344,7 @@ lfs_balloc(void *v)
 			 */
 			bp->b_blkno = daddr;
 			bp->b_flags |= B_READ;
-			VOP_STRATEGY(bp);
+			VOP_STRATEGY(vp, bp);
 			return (biowait(bp));
 		}
 	}
@@ -380,6 +377,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
     top:
 	if (bpp) {
 		lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
+		LFS_DEBUG_COUNTLOCKED("frag");
 	}
 
 	if (!ISSPACE(fs, bb, cred)) {
@@ -430,16 +428,12 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {
-		LFS_DEBUG_COUNTLOCKED("frag1");
-
 		obufsize = (*bpp)->b_bufsize;
-		allocbuf(*bpp, nsize);
+		allocbuf(*bpp, nsize, 1);
 
 		/* Adjust locked-list accounting */
 		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
 			locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
-
-		LFS_DEBUG_COUNTLOCKED("frag2");
 
 		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.24 2003/05/14 06:47:39 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.24.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.24 2003/05/14 06:47:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.24.2.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ void
 frag6_init()
 {
 
-	ip6_id = arc4random();
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
 }
 
@@ -532,7 +531,7 @@ insert:
 	offset = ip6af->ip6af_offset - sizeof(struct ip6_frag);
 	free(ip6af, M_FTABLE);
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_plen = htons((u_short)next + offset - sizeof(struct ip6_hdr));
+	ip6->ip6_plen = htons(next + offset - sizeof(struct ip6_hdr));
 	ip6->ip6_src = q6->ip6q_src;
 	ip6->ip6_dst = q6->ip6q_dst;
 	nxt = q6->ip6q_nxt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.207.2.1 2003/07/02 15:26:18 darrenr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.207.2.2 2004/08/03 10:51:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.1 2003/07/02 15:26:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.2 2004/08/03 10:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "CHINON  ", "CD-ROM CDS-435  ", ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "Chinon  ", "CD-ROM CDS-525  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", ""},     PQUIRK_NOLUNS},
@@ -458,8 +460,14 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "NEC     ", "CD-ROM DRIVE:84 ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", ""},     PQUIRK_NOLUNS},
+        {{T_CDROM, T_REMOV,
+	 "OLYMPUS ", "CDS620E         ", "1.1d"}, 
+			       PQUIRK_NOLUNS|PQUIRK_NOSYNC|PQUIRK_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "PIONEER ", "CD-ROM DR-124X  ", "1.01"}, PQUIRK_NOLUNS},
+        {{T_CDROM, T_REMOV,
+         "PLEXTOR ", "CD-ROM PX-4XCS  ", "1.01"},
+                               PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-541  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
@@ -495,9 +503,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "VMware", "Virtual",            "1.0"},
-				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
-	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:222", ""},	  PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 
 	{{T_DIRECT, T_FIXED,
@@ -507,10 +512,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ","CD-ROM XM-3401TA",  "0283"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
-	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ", "CD-ROM DRIVE:XM",  "1971"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
-	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "ACB-4000",         ""},     PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE|PQUIRK_NOMODESENSE},
@@ -519,15 +520,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},
 				PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE},
-	/* Gives non-media hardware failure in response to start-unit command */
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP16"}, PQUIRK_NOSTARTUNIT},
-	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",            "CP15"}, PQUIRK_NOSTARTUNIT},
-	{{T_DIRECT, T_FIXED,
-	/* improperly report DT-only sync mode */
-	 "HITACHI", "DX32DJ-72ME",	 ""},
-				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP",  "1548-15MZ1077801",  "HZ2P"}, PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
@@ -612,32 +604,18 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST34501FC       ", ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
+	 "SEAGATE ", "SX910800N",        ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
-	 "VMware", "Virtual",           "1.0"},
-				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
-	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
-	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
-	 "Maxtor 4", "D040H2",           "DAH0"}, PQUIRK_NOMODESENSE},
+	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1924",          ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
 	 "FUJITSU ", "M2266",         ""},     PQUIRK_CAP_SYNC},
 
 	{{T_DIRECT, T_REMOV,
-	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
+	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 ""},	  PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 "J.03"},
-				PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
-	/* Letting the motor run kills floppy drives and disks quite fast. */
-	{{T_DIRECT, T_REMOV,
-	 "TEAC", "FC-1",		 ""},	  PQUIRK_NOSTARTUNIT},
-	{{T_DIRECT, T_REMOV,
-	 "INSITE", "I325VM",             ""},
-				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
+	 "INSITE", "I325VM",             ""},     PQUIRK_NOLUNS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
@@ -759,9 +737,6 @@ scsi_probe_device(sc, target, lun)
 	/*
 	 * Ask the device what it is
 	 */
-	(void) scsipi_test_unit_ready(periph,
-	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-	    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
@@ -771,12 +746,9 @@ scsi_probe_device(sc, target, lun)
 
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
-	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
-		goto bad;
 	{
 		u_int8_t *extension = &inqbuf.flags1;
-		int len = inqbuf.additional_length;
+		int len = 0;
 		while (len < 3)
 			extension[len++] = '\0';
 		while (len < 3 + 28)
@@ -790,6 +762,9 @@ scsi_probe_device(sc, target, lun)
 		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
 			extension[len++] = ' ';
 	}
+	if (scsipi_inquire(periph, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
+		goto bad;
 
 	periph->periph_type = inqbuf.device & SID_TYPE;
 	if (inqbuf.dev_qual2 & SID_REMOVABLE)
@@ -804,10 +779,10 @@ scsi_probe_device(sc, target, lun)
 	checkdtype = 0;
 	switch (inqbuf.device & SID_QUAL) {
 	case SID_QUAL_LU_PRESENT:
-	case SID_QUAL_LU_NOTPRESENT:
 		checkdtype = 1;
 		break;
 
+	case SID_QUAL_LU_NOTPRESENT:
 	case SID_QUAL_reserved:
 	case SID_QUAL_LU_NOT_SUPP:
 		goto bad;
@@ -931,14 +906,6 @@ scsi_probe_device(sc, target, lun)
 	if (periph->periph_version == 0 &&
 	    (periph->periph_quirks & PQUIRK_FORCELUNS) == 0)
 		periph->periph_quirks |= PQUIRK_NOLUNS;
-
-	if (periph->periph_quirks & PQUIRK_CDROM) {
-		periph->periph_quirks ^= PQUIRK_CDROM;
-		inqbuf.dev_qual2 |= SID_REMOVABLE;
-		sa.sa_inqbuf.type = inqbuf.device =
-		    ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
-		sa.sa_inqbuf.removable = T_REMOV;
-	}
 
 	if ((periph->periph_quirks & PQUIRK_NOLUNS) == 0)
 		docontinue = 1;

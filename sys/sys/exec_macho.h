@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.12.2.1 2003/07/02 15:27:15 darrenr Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.12.2.2 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ struct exec_macho_emul_arg {
 	char *path;
 	char filename[MAXPATHLEN];
 	struct exec_macho_object_header *macho_hdr;
+	int dynamic;
 };
 
 #ifndef _LKM
@@ -259,7 +260,6 @@ u_long	exec_macho_thread_entry(struct exec_macho_thread_command *);
 int	exec_macho_makecmds __P((struct lwp *, struct exec_package *));
 int	exec_macho_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
-int	exec_macho_setup_stack __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
 
 #endif /* !_SYS_EXEC_MACHO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.22 2002/09/21 06:16:07 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.22.6.1 2004/08/03 10:57:02 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.22 2002/09/21 06:16:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.22.6.1 2004/08/03 10:57:02 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -65,7 +65,7 @@ struct uvm_anonblock {
 static LIST_HEAD(anonlist, uvm_anonblock) anonblock_list;
 
 
-static boolean_t anon_pagein __P((struct vm_anon *));
+static boolean_t anon_pagein(struct vm_anon *);
 
 
 /*
@@ -125,10 +125,9 @@ uvm_anon_add(count)
 	uvmexp.nanon += needed;
 	uvmexp.nfreeanon += needed;
 	for (lcv = 0; lcv < needed; lcv++) {
-		simple_lock_init(&anon->an_lock);
+		simple_lock_init(&anon[lcv].an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
-		simple_lock_init(&uvm.afree->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return 0;
@@ -244,24 +243,26 @@ uvm_anfree(anon)
 			KASSERT((pg->flags & PG_RELEASED) == 0);
 			simple_lock(&anon->an_lock);
 			pmap_page_protect(pg, VM_PROT_NONE);
-			while ((pg = anon->u.an_page) &&
-			       (pg->flags & PG_BUSY) != 0) {
-				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, 0,
-				    "anfree", 0);
-				simple_lock(&anon->an_lock);
+
+			/*
+			 * if the page is busy, mark it as PG_RELEASED
+			 * so that uvm_anon_release will release it later.
+			 */
+
+			if (pg->flags & PG_BUSY) {
+				pg->flags |= PG_RELEASED;
+				simple_unlock(&anon->an_lock);
+				return;
 			}
-			if (pg) {
-				uvm_lock_pageq();
-				uvm_pagefree(pg);
-				uvm_unlock_pageq();
-			}
+			uvm_lock_pageq();
+			uvm_pagefree(pg);
+			uvm_unlock_pageq();
 			simple_unlock(&anon->an_lock);
 			UVMHIST_LOG(maphist, "anon 0x%x, page 0x%x: "
 				    "freed now!", anon, pg, 0, 0);
 		}
 	}
-	if (pg == NULL && anon->an_swslot != 0) {
+	if (pg == NULL && anon->an_swslot > 0) {
 		/* this page is no longer only in swap. */
 		simple_lock(&uvm.swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
@@ -501,6 +502,9 @@ anon_pagein(anon)
 		 */
 
 		return FALSE;
+
+	default:
+		return TRUE;
 	}
 
 	/*
@@ -510,7 +514,8 @@ anon_pagein(anon)
 
 	pg = anon->u.an_page;
 	uobj = pg->uobject;
-	uvm_swap_free(anon->an_swslot, 1);
+	if (anon->an_swslot > 0)
+		uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
 	pg->flags &= ~(PG_CLEAN);
 
@@ -520,8 +525,14 @@ anon_pagein(anon)
 
 	pmap_clear_reference(pg);
 	uvm_lock_pageq();
-	uvm_pagedeactivate(pg);
+	if (pg->wire_count == 0)
+		uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
+
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+		pg->flags &= ~(PG_WANTED);
+	}
 
 	/*
 	 * unlock the anon and we're done.
@@ -532,4 +543,36 @@ anon_pagein(anon)
 		simple_unlock(&uobj->vmobjlock);
 	}
 	return FALSE;
+}
+
+/*
+ * uvm_anon_release: release an anon and its page.
+ *
+ * => caller must lock the anon.
+ */
+
+void
+uvm_anon_release(anon)
+	struct vm_anon *anon;
+{
+	struct vm_page *pg = anon->u.an_page;
+
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+
+	KASSERT(pg != NULL);
+	KASSERT((pg->flags & PG_RELEASED) != 0);
+	KASSERT((pg->flags & PG_BUSY) != 0);
+	KASSERT(pg->uobject == NULL);
+	KASSERT(pg->uanon == anon);
+	KASSERT(pg->loan_count == 0);
+	KASSERT(anon->an_ref == 0);
+
+	uvm_lock_pageq();
+	uvm_pagefree(pg);
+	uvm_unlock_pageq();
+	simple_unlock(&anon->an_lock);
+
+	KASSERT(anon->u.an_page == NULL);
+
+	uvm_anfree(anon);
 }

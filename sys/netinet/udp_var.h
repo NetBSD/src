@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.21.2.1 2003/07/02 15:27:01 darrenr Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.21.2.2 2004/08/03 10:54:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -94,13 +90,13 @@ extern	struct	udpstat udpstat;
 #define	UDP_HDR_ALIGNED_P(uh)	((((vaddr_t) (uh)) & 3) == 0)
 #endif
 
-void	 *udp_ctlinput __P((int, struct sockaddr *, void *));
-void	 udp_init __P((void));
-void	 udp_input __P((struct mbuf *, ...));
-int	 udp_output __P((struct mbuf *, ...));
-int	 udp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	 udp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
+void	 *udp_ctlinput(int, struct sockaddr *, void *);
+void	 udp_init(void);
+void	 udp_input(struct mbuf *, ...);
+int	 udp_output(struct mbuf *, ...);
+int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	 udp_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 #endif
 
 #endif /* _NETINET_UDP_VAR_H_ */

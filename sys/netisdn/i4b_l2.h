@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.7 2002/05/21 10:31:10 martin Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.7.8.1 2004/08/03 10:55:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.7 2002/05/21 10:31:10 martin Exp $ 
+ *	$Id: i4b_l2.h,v 1.7.8.1 2004/08/03 10:55:40 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -41,7 +41,7 @@
 #define _I4B_L2_H_
 
 typedef struct l2_softc {
-	const struct isdn_layer1_bri_driver * driver;
+	const struct isdn_layer1_isdnif_driver * driver;
 	void*	l1_token;
 	struct isdn_l3_driver *drv;
 
@@ -197,7 +197,7 @@ typedef enum {
 
 /* S frames */
 
-#define S_FRAME_LEN	4	/* lenght of a U-frame */
+#define S_FRAME_LEN	4	/* length of a U-frame */
 #define OFF_SRCR	2	/* 1st byte of control field,	*/
 				/* R-commands and R-responses	*/
 #define OFF_SNR		3	/* 2nd byte of control field, N(R) and PF */
@@ -213,7 +213,7 @@ typedef enum {
 /* U frames */
 
 #define UI_HDR_LEN	3	/* length of UI header in front of L3 frame */
-#define U_FRAME_LEN	3	/* lenght of a U-frame */
+#define U_FRAME_LEN	3	/* length of a U-frame */
 #define UPFBIT		0x10	/* poll/final bit mask */
 #define UPBITSET	UPFBIT
 #define UFBITSET	UPFBIT
@@ -361,7 +361,7 @@ extern int i4b_dl_establish_cnf ( struct isdn_l3_driver *drv );
 extern int i4b_dl_unit_data_ind ( struct isdn_l3_driver *drv, struct mbuf *m );
 extern int i4b_dl_data_ind ( struct isdn_l3_driver *drv, struct mbuf *m );
 int i4b_mdl_command_req(struct isdn_l3_driver *drv, int, void *);
-void * isdn_find_softc_by_bri(int bri);
+void * isdn_find_softc_by_isdnif(int isdnif);
 extern int isdn_bchan_silence __P(( unsigned char *data, int len ));
 
 #endif /* _I4B_L2_H_ */

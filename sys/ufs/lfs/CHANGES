@@ -1,4 +1,4 @@
-#   $NetBSD: CHANGES,v 1.3 2001/07/05 08:38:27 toshii Exp $
+#   $NetBSD: CHANGES,v 1.3.22.1 2004/08/03 10:56:57 skrll Exp $
 
 kernel:
 
@@ -29,7 +29,7 @@ kernel:
   buffers which are written async.  Because the buffer cache does not
   serve to throttle these writes, and malloced memory is used to hold them,
   there is a danger of running out of kmem_map.  To avoid this, a new
-  compile-time paramter, LFS_THROTTLE, is used as an upper bound for the
+  compile-time parameter, LFS_THROTTLE, is used as an upper bound for the
   number of partial-segments allowed to be in progress writing at any
   given time.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.19 2002/10/23 09:14:35 jdolecek Exp $	*/
+/*	$NetBSD: fifo.h,v 1.19.6.1 2004/08/03 10:54:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,13 +62,13 @@ int	fifo_kqfilter	__P((void *));
 #define fifo_readlink	genfs_badop
 #define fifo_abortop	genfs_badop
 #define fifo_reclaim	genfs_nullop
-#define	fifo_lock	genfs_nolock
-#define	fifo_unlock	genfs_nounlock
+#define	fifo_lock	genfs_lock
+#define	fifo_unlock	genfs_unlock
 int	fifo_inactive	__P((void *));
 int	fifo_bmap	__P((void *));
 #define fifo_strategy	genfs_badop
 int	fifo_print	__P((void *));
-#define fifo_islocked	genfs_noislocked
+#define fifo_islocked	genfs_islocked
 int	fifo_pathconf	__P((void *));
 #define	fifo_advlock	genfs_einval
 #define fifo_blkatoff	genfs_badop

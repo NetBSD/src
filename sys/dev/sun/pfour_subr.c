@@ -1,4 +1,4 @@
-/*	$NetBSD: pfour_subr.c,v 1.2 2001/11/13 06:54:32 lukem Exp $ */
+/*	$NetBSD: pfour_subr.c,v 1.2.16.1 2004/08/03 10:51:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.2 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.2.16.1 2004/08/03 10:51:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,12 @@ fb_setsize_pfour(fb)
 		break;
 
 	default:
+
 		/*
-		 * XXX: Do nothing, I guess.
-		 * Should we print a warning about
-		 * an unknown value? --thorpej
+		 * Use the defaults already filled in by the generic fb code.
 		 */
-		break;
+
+		return;
 	}
 
 	fb->fb_type.fb_width = width;

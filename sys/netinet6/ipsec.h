@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.31 2002/11/02 07:30:59 perry Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.31.6.1 2004/08/03 10:55:14 skrll Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -74,14 +74,22 @@ struct secpolicy {
 
 	u_int8_t dir;			/* direction of packet flow */
 	int readonly;			/* write prohibited */
+	int persist;			/* will never be removed */
 	int refcnt;			/* reference count */
 	struct secpolicyindex *spidx;	/* selector - NULL if not valid */
-	u_int32_t id;			/* It's unique number on the system. */
+	u_int16_t tag;			/* PF tag */
+	u_int32_t id;			/* it identifies a policy in the SPD. */
+#define IPSEC_MANUAL_POLICYID_MAX	0x3fff
+				/*
+				 * 1 - 0x3fff are reserved for user operation.
+				 * 0 are reserved.  Others are for kernel use.
+				 */
+	struct socket *so;		/* backpointer to per-socket policy */
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
 
-	int policy;		/* DISCARD, NONE or IPSEC, see keyv2.h */
+	int policy;		/* DISCARD, NONE or IPSEC, see below */
 	struct ipsecrequest *req;
 				/* pointer to the ipsec request tree, */
 				/* if policy == IPSEC else this value == NULL.*/
@@ -119,13 +127,22 @@ struct inpcbpolicy {
 	int priv;			/* privileged socket ? */
 
 	/* cached policy */
-	/* XXX 3 == IPSEC_DIR_MAX */
-	struct secpolicy *cache[3];
-	struct secpolicyindex cacheidx[3];
-	int cachegen[3]; 	/* cache generation #, the time we filled it */
-	int cacheflags;
+	struct {
+		struct secpolicy *cachesp;
+		struct secpolicyindex cacheidx;
+		int cachehint;		/* processing requirement hint: */
+#define	IPSEC_PCBHINT_MAYBE	0	/* IPsec processing maybe required */
+#define	IPSEC_PCBHINT_YES	1	/* IPsec processing is required */
+#define	IPSEC_PCBHINT_NO	2	/* IPsec processing not required */
+		u_int cachegen;		/* spdgen when cache filled */
+	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
+	int sp_cacheflags;
 #define IPSEC_PCBSP_CONNECTED	1
 };
+
+#define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
+	((inpp)->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&	\
+	 (inpp)->sp_cache[(dir)].cachegen == ipsec_spdgen)
 
 /* SP acquiring list table. */
 struct secspacq {
@@ -329,7 +346,9 @@ extern int ip6_ipsec_ecn;
 
 extern int ipsec_pcbconn __P((struct inpcbpolicy *));
 extern int ipsec_pcbdisconn __P((struct inpcbpolicy *));
-extern int ipsec_invalpcbcacheall __P((void));
+extern void ipsec_invalpcbcacheall __P((void));
+
+extern u_int ipsec_spdgen;
 
 extern struct secpolicy *ipsec4_getpolicybysock
 	__P((struct mbuf *, u_int, struct socket *, int *));
@@ -347,15 +366,14 @@ struct inpcb;
 #ifdef INET6
 struct in6pcb;
 #endif
-extern int ipsec_init_pcbpolicy __P((struct socket *so, struct inpcbpolicy **));
+extern int ipsec_init_pcbpolicy __P((struct socket *, struct inpcbpolicy **));
 extern int ipsec_copy_pcbpolicy
 	__P((struct inpcbpolicy *, struct inpcbpolicy *));
 extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *, int));
 
-extern int ipsec4_set_policy __P((struct inpcb *inp, int optname,
-	caddr_t request, size_t len, int priv));
-extern int ipsec4_get_policy __P((struct inpcb *inpcb, caddr_t request,
-	size_t len, struct mbuf **mp));
+extern int ipsec4_set_policy __P((struct inpcb *, int, caddr_t, size_t, int));
+extern int ipsec4_get_policy __P((struct inpcb *, caddr_t, size_t,
+	    struct mbuf **));
 extern int ipsec4_delete_pcbpolicy __P((struct inpcb *));
 extern int ipsec4_in_reject_so __P((struct mbuf *, struct socket *));
 extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
@@ -363,10 +381,9 @@ extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
 #ifdef INET6
 extern int ipsec6_in_reject_so __P((struct mbuf *, struct socket *));
 extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));
-extern int ipsec6_set_policy __P((struct in6pcb *in6p, int optname,
-	caddr_t request, size_t len, int priv));
-extern int ipsec6_get_policy __P((struct in6pcb *in6p, caddr_t request,
-	size_t len, struct mbuf **mp));
+extern int ipsec6_set_policy __P((struct in6pcb *, int, caddr_t, size_t, int));
+extern int ipsec6_get_policy __P((struct in6pcb *, caddr_t, size_t,
+	    struct mbuf **));
 extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
 #endif /* INET6 */
 
@@ -410,8 +427,6 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
 extern void ipsec_delaux __P((struct mbuf *));
-extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
-extern struct socket *ipsec_getsocket __P((struct mbuf *));
 extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t));
 extern int ipsec_getnhist __P((struct mbuf *));
 extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));

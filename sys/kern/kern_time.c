@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.70.2.1 2004/08/03 10:52:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70.2.1 2004/08/03 10:52:54 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -285,7 +281,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
-	if (itimerfix(&atv) || atv.tv_sec > 1000000000)
+	if (itimerfix(&atv))
 		return (EINVAL);
 
 	s = splclock();
@@ -331,7 +327,7 @@ sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
-		syscallarg(struct timezone *) tzp;
+		syscallarg(void *) tzp;		really "struct timezone *"
 	} */ *uap = v;
 	struct timeval atv;
 	int error = 0;
@@ -361,7 +357,7 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_settimeofday_args /* {
 		syscallarg(const struct timeval *) tv;
-		syscallarg(const struct timezone *) tzp;
+		syscallarg(const void *) tzp;	really "const struct timezone *"
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
@@ -447,12 +443,6 @@ adjtime1(delta, olddelta, p)
 	if (error)
 		return (error);
 
-	if (olddelta != NULL) {
-		if (uvm_useracc((caddr_t)olddelta,
-		    sizeof(struct timeval), B_WRITE) == FALSE)
-			return (EFAULT);
-	}
-
 	/*
 	 * Compute the total correction and the rate at which to apply it.
 	 * Round the adjustment down to a whole multiple of the per-tick
@@ -487,9 +477,9 @@ adjtime1(delta, olddelta, p)
 	if (olddelta) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		(void) copyout(&atv, olddelta, sizeof(struct timeval));
+		error = copyout(&atv, olddelta, sizeof(struct timeval));
 	}
-	return (0);
+	return error;
 }
 
 /*
@@ -572,12 +562,12 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		}
 		pt->pt_ev.sigev_value.sival_int = timerid;
 	}
-	pt->pt_info.si_signo = pt->pt_ev.sigev_signo;
-	pt->pt_info.si_errno = 0;
-	pt->pt_info.si_code = 0;
-	pt->pt_info.si_pid = p->p_pid;
-	pt->pt_info.si_uid = p->p_cred->p_ruid;
-	pt->pt_info.si_sigval = pt->pt_ev.sigev_value;
+	pt->pt_info.ksi_signo = pt->pt_ev.sigev_signo;
+	pt->pt_info.ksi_errno = 0;
+	pt->pt_info.ksi_code = 0;
+	pt->pt_info.ksi_pid = p->p_pid;
+	pt->pt_info.ksi_uid = p->p_cred->p_ruid;
+	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
 	pt->pt_proc = p;
@@ -868,16 +858,31 @@ timerupcall(struct lwp *l, void *arg)
 {
 	struct ptimers *pt = (struct ptimers *)arg;
 	unsigned int i, fired, done;
-	KERNEL_PROC_LOCK(l);
+	extern struct pool siginfo_pool;	/* XXX Ew. */
+
+	KDASSERT(l->l_proc->p_sa);
+	/* Bail out if we do not own the virtual processor */
+	if (l->l_savp->savp_lwp != l)
+		return ;
 	
+	KERNEL_PROC_LOCK(l);
+
 	fired = pt->pts_fired;
 	done = 0;
 	while ((i = ffs(fired)) != 0) {
-		i--;
+		siginfo_t *si;
+		int mask = 1 << --i;
+		int f;
+
+		f = l->l_flag & L_SA;
+		l->l_flag &= ~L_SA;
+		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(siginfo_t), &pt->pts_timers[i]->pt_info) == 0)
-			done |= 1 << i;
-		fired &= ~(1 << i);
+		    sizeof(*si), si) == 0)
+			done |= mask;
+		fired &= ~mask;
+		l->l_flag |= f;
 	}
 	pt->pts_fired &= ~done;
 	if (pt->pts_fired == 0)
@@ -1007,6 +1012,7 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	if (p->p_timers->pts_timers[which] == NULL) {
 		pt = pool_get(&ptimer_pool, PR_WAITOK);
 		pt->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		pt->pt_ev.sigev_value.sival_int = which;
 		pt->pt_overruns = 0;
 		pt->pt_proc = p;
 		pt->pt_type = which;
@@ -1188,7 +1194,9 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
+	struct sadata_vp *vp;
 	int s;
+	unsigned int i;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
@@ -1199,14 +1207,17 @@ itimerfire(struct ptimer *pt)
 		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
 			pt->pt_overruns++;
 		else {
+			ksiginfo_t ksi;
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = pt->pt_ev.sigev_signo;
+			ksi.ksi_code = SI_TIMER;
+			ksi.ksi_sigval = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
-			psignal(p, pt->pt_ev.sigev_signo);
+			kpsignal(p, &ksi, NULL);
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
-		struct sadata *sa = p->p_sa;
-		unsigned int i;
 
 		if (p->p_userret == NULL) {
 			/*
@@ -1215,17 +1226,22 @@ itimerfire(struct ptimer *pt)
 			 * makes testing for sa_idle alone insuffucent to
 			 * determine if we really should call setrunnable.
 			 */
-		        if ((sa->sa_idle) && (p->p_stat != SSTOP)) {
-				SCHED_LOCK(s);
-				setrunnable(sa->sa_idle);
-				SCHED_UNLOCK(s);
-			}
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			i = 1 << pt->pt_entry;
 			p->p_timers->pts_fired = i;
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
+			
+			SCHED_LOCK(s);
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
+					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
+					sched_wakeup(vp->savp_lwp);
+					break;
+				}
+			}
+			SCHED_UNLOCK(s);
 		} else if (p->p_userret == timerupcall) {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {
@@ -1236,10 +1252,11 @@ itimerfire(struct ptimer *pt)
 				pt->pt_overruns++;
 		} else {
 			pt->pt_overruns++;
-			printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
-			    p->p_pid, pt->pt_overruns,
-			    pt->pt_ev.sigev_value.sival_int,
-			    p->p_userret);
+			if ((p->p_flag & P_WEXIT) == 0)
+				printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
+				    p->p_pid, pt->pt_overruns,
+				    pt->pt_ev.sigev_value.sival_int,
+				    p->p_userret);
 		}
 	}
 

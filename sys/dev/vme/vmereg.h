@@ -1,8 +1,9 @@
-/* $NetBSD: vmereg.h,v 1.1 1999/06/30 15:06:05 drochner Exp $ */
+/* $NetBSD: vmereg.h,v 1.1.38.1 2004/08/03 10:52:00 skrll Exp $ */
 
 /* constants for address modifiers */
 
 #define VME_AM_ADRSIZEMASK 0x30
+#define VME_AM_ADRSIZESHIFT 4
 #define VME_AM_A32 0
 #define VME_AM_A16 0x20
 #define VME_AM_A24 0x30

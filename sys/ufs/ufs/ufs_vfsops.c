@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.17.2.1 2003/07/02 15:27:28 darrenr Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.17.2.2 2004/08/03 10:57:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.1 2003/07/02 15:27:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.2 2004/08/03 10:57:01 skrll Exp $");
 
 #include "opt_quota.h"
 
@@ -62,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17.2.1 2003/07/02 15:27:28 darrenr 
 
 /* how many times ufs_init() was called */
 int ufs_initcount = 0;
+
+POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
+    &pool_allocator_nointr);
 
 /*
  * Make a filesystem operational.
@@ -104,7 +103,7 @@ ufs_quotactl(mp, cmds, uid, arg, l)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct lwp *l;
 {
 
@@ -235,6 +234,11 @@ ufs_init()
 	if (ufs_initcount++ > 0)
 		return;
 
+#ifdef _LKM
+	pool_init(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
+	    &pool_allocator_nointr);
+#endif
+
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
@@ -262,5 +266,8 @@ ufs_done()
 	ufs_ihashdone();
 #ifdef QUOTA
 	dqdone();
+#endif
+#ifdef _LKM
+	pool_destroy(&ufs_direct_pool);
 #endif
 }

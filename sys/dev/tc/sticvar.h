@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.13 2003/06/29 22:30:54 fvdl Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.13.2.1 2004/08/03 10:51:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@ struct stic_hwcursor64 {
 	struct	wsdisplay_curpos cc_size;
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t	cc_color[6];
-	u_int64_t	cc_image[64 + 64];
+	u_int64_t	cc_image[CURSOR_MAX_SIZE];
+	u_int64_t	cc_mask[CURSOR_MAX_SIZE];
 };
 
 struct stic_screen {

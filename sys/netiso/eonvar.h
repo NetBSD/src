@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.10 2001/01/17 04:05:45 itojun Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.10.24.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -177,13 +173,13 @@ struct eon_llinfo {
 #define el_eonhdr el_ei.ei_eh
 
 #ifdef _KERNEL
-void eonprotoinit __P((void));
-void eonattach   __P((void));
-int eonioctl    __P((struct ifnet *, u_long, caddr_t));
-void eoniphdr    __P((struct eon_iphdr *, caddr_t, struct route *, int, int));
-void eonrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-int eonoutput   __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		     struct rtentry *));
-void eoninput    __P((struct mbuf *, ...));
-void *eonctlinput __P((int, struct sockaddr *, void *));
+void eonprotoinit (void);
+void eonattach   (void);
+int eonioctl    (struct ifnet *, u_long, caddr_t);
+void eoniphdr    (struct eon_iphdr *, caddr_t, struct route *, int, int);
+void eonrtrequest (int, struct rtentry *, struct rt_addrinfo *);
+int eonoutput   (struct ifnet *, struct mbuf *, struct sockaddr *,
+		     struct rtentry *);
+void eoninput    (struct mbuf *, ...);
+void *eonctlinput (int, struct sockaddr *, void *);
 #endif

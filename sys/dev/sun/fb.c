@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.12 2003/06/29 22:30:48 fvdl Exp $ */
+/*	$NetBSD: fb.c,v 1.12.2.1 2004/08/03 10:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12 2003/06/29 22:30:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12.2.1 2004/08/03 10:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12 2003/06/29 22:30:48 fvdl Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 
+#include <machine/promlib.h>
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
 #include <machine/eeprom.h>
@@ -98,20 +95,11 @@ fb_unblank()
  * on machines with old PROMs; in that case, drivers should consult
  * other sources of configuration information (e.g. EEPROM entries).
  */
-#if defined(SUN4U)
-/* Temporary special case for sun4u */
 int
 fb_is_console(node)
 	int node;
 {
-	extern int fbnode;
-	return (node == fbnode);
-}
-#else
-int
-fb_is_console(node)
-	int node;
-{
+#if !defined(SUN4U)
 	int fbnode;
 
 	switch (prom_version()) {
@@ -127,7 +115,7 @@ fb_is_console(node)
 		if (prom_stdout() != PROMDEV_SCREEN)
 			return (0);
 
-		fbnode = PROM_getpropint(findroot(), "fb", 0);
+		fbnode = prom_getpropint(findroot(), "fb", 0);
 		return (fbnode == 0 || node == fbnode);
 
 	case PROM_OBP_V2:
@@ -138,8 +126,10 @@ fb_is_console(node)
 	}
 
 	return (0);
+#else
+		return (node == prom_stdout_node);
+#endif
 }
-#endif /* SUN4U */
 
 void
 fb_attach(fb, isconsole)
@@ -280,9 +270,9 @@ fb_setsize_obp(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
 	int depth, def_width, def_height, node;
 {
-	fb->fb_type.fb_width = PROM_getpropint(node, "width", def_width);
-	fb->fb_type.fb_height = PROM_getpropint(node, "height", def_height);
-	fb->fb_linebytes = PROM_getpropint(node, "linebytes",
+	fb->fb_type.fb_width = prom_getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = prom_getpropint(node, "height", def_height);
+	fb->fb_linebytes = prom_getpropint(node, "linebytes",
 				     (fb->fb_type.fb_width * depth) / 8);
 }
 
@@ -350,24 +340,6 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 
 static void fb_bell __P((int));
 
-#if !defined(RASTERCONS_FULLSCREEN)
-static int a2int __P((char *, int));
-
-static int
-a2int(cp, deflt)
-	register char *cp;
-	register int deflt;
-{
-	register int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
-}
-#endif
-
 static void
 fb_bell(on)
 	int on;
@@ -413,10 +385,15 @@ fbrcons_init(fb)
 	}
 #endif /* !SUN4U */
 	if (!CPU_ISSUN4) {
-		maxcol =
-		    a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);
-		maxrow =
-		    a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34);
+		char buf[6+1];	/* Enough for six digits */
+		maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
+			? strtoul(buf, NULL, 10)
+			: 80;
+
+		maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
+			? strtoul(buf, NULL, 10)
+			: 34;
+
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
 	/*

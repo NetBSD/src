@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.14 2003/02/04 01:21:05 thorpej Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.14.2.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -123,38 +119,38 @@ struct tp_refinfo {
 struct nl_protosw {
 	int		nlp_afamily;	/* address family */
 	void		(*nlp_putnetaddr)	/* puts addresses in nl pcb */
-				__P((void *, struct sockaddr *, int));
+				(void *, struct sockaddr *, int);
 	void		(*nlp_getnetaddr)	/* gets addresses from nl pcb */
-				__P((void *, struct mbuf *, int));
+				(void *, struct mbuf *, int);
 	int		(*nlp_cmpnetaddr)	/* compares address in pcb */
-				__P((void *, struct sockaddr *, int));
+				(void *, struct sockaddr *, int);
 						/* with sockaddr */
 	void		(*nlp_putsufx)		/* puts transport suffixes in */
-				__P((void *, caddr_t, int, int));
+				(void *, caddr_t, int, int);
 						/* nl pcb */
 	void		(*nlp_getsufx)		/* gets transport suffixes */
-				__P((void *, u_short *, caddr_t, int));
+				(void *, u_short *, caddr_t, int);
 						/* from nl pcb */
 	void		(*nlp_recycle_suffix)	/* clears suffix from nl pcb */
-				__P((void *));		 
+				(void *);		 
 	int		(*nlp_mtu)		/* figures out mtu based on */
-				__P((void *));	/* nl used */
+				(void *);	/* nl used */
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */
-				__P((void *, struct mbuf *, struct proc *));
+				(void *, struct mbuf *, struct proc *);
 	int		(*nlp_pcbconn)		/* connect for net level */
-				__P((void *, struct mbuf *));
+				(void *, struct mbuf *);
 	void		(*nlp_pcbdisc)		/* disconnect net level */
-				__P((void *));
+				(void *);
 	void		(*nlp_pcbdetach)	/* detach net level pcb */
-				__P((void *));
+				(void *);
 	int		(*nlp_pcballoc)		/* allocate a net level pcb */
-				__P((struct socket *, void *));
+				(struct socket *, void *);
 	int		(*nlp_output)		/* prepare a packet to give */
-				__P((struct mbuf *, ...)); /* to nl */
+				(struct mbuf *, ...); /* to nl */
 	int		(*nlp_dgoutput)		/* prepare a packet to give */
-				__P((struct mbuf *, ...)); /*to nl*/
+				(struct mbuf *, ...); /*to nl*/
 	int		(*nlp_ctloutput)	/* hook for network set/get */
-				__P((int, int, caddr_t, struct mbuf *));
+				(int, int, caddr_t, struct mbuf *);
 						/* options */
 	caddr_t		nlp_pcblist;	/* list of xx_pcb's for connections */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.35 2003/01/01 00:10:25 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.35.2.1 2004/08/03 10:51:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35 2003/01/01 00:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35.2.1 2004/08/03 10:51:32 skrll Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35 2003/01/01 00:10:25 thorpej Exp $");
 
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, struct cfdata *, void *));
-void	tcattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
@@ -52,8 +51,7 @@ extern struct cfdriver tc_cd;
 
 int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
-int	tc_checkslot __P((tc_addr_t, char *));
-void	tc_devinfo __P((const char *, char *));
+void	tc_devinfo __P((const char *, char *, size_t));
 
 int
 tcmatch(parent, cf, aux)
@@ -190,11 +188,10 @@ tcprint(aux, pnp)
 	char devinfo[256];
 
 	if (pnp) {
-		tc_devinfo(ta->ta_modname, devinfo);
+		tc_devinfo(ta->ta_modname, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
-	aprint_normal(" slot %d offset 0x%lx", ta->ta_slot,
-	    (long)ta->ta_offset);
+	aprint_normal(" slot %d offset 0x%x", ta->ta_slot, ta->ta_offset);
 	return (UNCONF);
 }
 
@@ -305,9 +302,10 @@ struct tc_knowndev {
 #endif /* TCVERBOSE */
 
 void
-tc_devinfo(id, cp)
+tc_devinfo(id, cp, l)
 	const char *id;
 	char *cp;
+	size_t l;
 {
 	const char *driver, *description;
 #ifdef TCVERBOSE
@@ -337,7 +335,7 @@ tc_devinfo(id, cp)
 #endif
 
 	if (driver == NULL)
-		cp += sprintf(cp, "%sdevice %s", unmatched, id);
+		snprintf(cp, l, "%sdevice %s", unmatched, id);
 	else
-		cp += sprintf(cp, "%s (%s)", driver, description);
+		snprintf(cp, l, "%s (%s)", driver, description);
 }

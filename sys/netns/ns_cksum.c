@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.8 2001/11/13 01:08:10 lukem Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.8.16.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.8 2001/11/13 01:08:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.8.16.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -53,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.8 2001/11/13 01:08:10 lukem Exp $");
 #define FOLD(x) {l_util.l = (x); (x) = l_util.s[0] + l_util.s[1]; ADDCARRY(x);}
 
 u_int16_t
-ns_cksum(m, len)
-	struct mbuf *m;
-	int len;
+ns_cksum(struct mbuf *m, int len)
 {
 	u_int16_t *w;
 	int sum = 0;

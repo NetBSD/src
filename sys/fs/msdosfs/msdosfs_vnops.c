@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.5.2.1 2003/07/02 15:26:30 darrenr Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.5.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5.2.1 2003/07/02 15:26:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ msdosfs_create(v)
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
@@ -221,7 +221,7 @@ msdosfs_close(v)
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		DETIMES(dep, &ts, &ts, &ts);
+		DETIMES(dep, &ts, &ts, &ts, dep->de_pmp->pm_gmtoff);
 	}
 	simple_unlock(&vp->v_interlock);
 	return (0);
@@ -263,7 +263,8 @@ msdosfs_access(v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	return (vaccess(ap->a_vp->v_type, mode & pmp->pm_mask,
+	return (vaccess(ap->a_vp->v_type,
+	    mode & (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask),
 	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
 }
 
@@ -286,7 +287,7 @@ msdosfs_getattr(v)
 	u_long fileid;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep, &ts, &ts, &ts);
+	DETIMES(dep, &ts, &ts, &ts, pmp->pm_gmtoff);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -308,16 +309,20 @@ msdosfs_getattr(v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	vap->va_mode = mode & pmp->pm_mask;
+	vap->va_mode =
+	    mode & (ap->a_vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask);
 	vap->va_uid = pmp->pm_uid;
 	vap->va_gid = pmp->pm_gid;
 	vap->va_nlink = 1;
 	vap->va_rdev = 0;
 	vap->va_size = ap->a_vp->v_size;
-	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, &vap->va_mtime);
+	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, pmp->pm_gmtoff,
+	    &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
-		dos2unixtime(dep->de_ADate, 0, 0, &vap->va_atime);
-		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun, &vap->va_ctime);
+		dos2unixtime(dep->de_ADate, 0, 0, pmp->pm_gmtoff,
+		    &vap->va_atime);
+		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun,
+		    pmp->pm_gmtoff, &vap->va_ctime);
 	} else {
 		vap->va_atime = vap->va_mtime;
 		vap->va_ctime = vap->va_mtime;
@@ -396,9 +401,9 @@ msdosfs_setattr(v)
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
 		    vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL, NULL);
+			unix2dostime(&vap->va_atime, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime, NULL);
+			unix2dostime(&vap->va_mtime, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 		de_changed = 1;
@@ -705,7 +710,7 @@ msdosfs_update(v)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(dep,
 	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
+	    ap->a_modify ? ap->a_modify : &ts, &ts, dep->de_pmp->pm_gmtoff);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
 	dep->de_flag &= ~DE_MODIFIED;
@@ -1230,7 +1235,7 @@ msdosfs_mkdir(v)
 	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts, pmp->pm_gmtoff);
 
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
@@ -1508,7 +1513,7 @@ msdosfs_readdir(v)
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
-				error = uiomove((caddr_t) &dirbuf,
+				error = uiomove(&dirbuf, 
 						dirbuf.d_reclen, uio);
 				if (error)
 					goto out;
@@ -1622,7 +1627,7 @@ msdosfs_readdir(v)
 				brelse(bp);
 				goto out;
 			}
-			error = uiomove((caddr_t) &dirbuf,
+			error = uiomove(&dirbuf,
 					dirbuf.d_reclen, uio);
 			if (error) {
 				brelse(bp);
@@ -1731,14 +1736,15 @@ msdosfs_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct denode *dep = VTODE(bp->b_vp);
-	struct vnode *vp;
 	int error = 0;
 
-	if (bp->b_vp->v_type == VBLK || bp->b_vp->v_type == VCHR)
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("msdosfs_strategy: spec");
 	/*
 	 * If we don't already know the filesystem relative block number
@@ -1765,9 +1771,7 @@ msdosfs_strategy(v)
 	 */
 
 	vp = dep->de_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
-	return (0);
+	return (VOP_STRATEGY(vp, bp));
 }
 
 int
@@ -1794,7 +1798,7 @@ msdosfs_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t a_id;
+		void *a_id;
 		int a_op;
 		struct flock *a_fl;
 		int a_flags;

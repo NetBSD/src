@@ -1,7 +1,6 @@
-/*	$NetBSD: kern_physio.c,v 1.56 2003/02/25 20:35:38 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.56.2.1 2004/08/03 10:52:49 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -9,6 +8,36 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
+ */
+
+/*-
+ * Copyright (c) 1994 Christopher G. Demetriou
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.56 2003/02/25 20:35:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.56.2.1 2004/08/03 10:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.56 2003/02/25 20:35:38 thorpej Exp
  * I/O, so raw I/O requests don't have to be single-threaded.
  */
 
-struct buf *getphysbuf __P((void));
-void putphysbuf __P((struct buf *bp));
+struct buf *getphysbuf(void);
+void putphysbuf(struct buf *bp);
 
 /*
  * Do "physical I/O" on behalf of a user.  "Physical I/O" is I/O directly
@@ -73,12 +102,12 @@ void putphysbuf __P((struct buf *bp));
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, minphys, uio)
-	void (*strategy) __P((struct buf *));
+physio(strategy, bp, dev, flags, min_phys, uio)
+	void (*strategy)(struct buf *);
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	void (*minphys) __P((struct buf *));
+	void (*min_phys)(struct buf *);
 	struct uio *uio;
 {
 	struct iovec *iovp;
@@ -95,7 +124,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 
 		bp = getphysbuf();
 		/* bp was just malloc'd so can't already be busy */
-		bp->b_flags |= B_BUSY; 
+		bp->b_flags |= B_BUSY;
 
 	} else {
 
@@ -151,7 +180,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */
-			(*minphys)(bp);
+			(*min_phys)(bp);
 			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
 			if (todo <= 0)
@@ -178,6 +207,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 				goto after_vsunlock;
 			}
 			vmapbuf(bp, todo);
+
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);

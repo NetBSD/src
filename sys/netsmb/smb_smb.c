@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.20 2003/06/29 22:32:10 fvdl Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.20.2.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20 2003/06/29 22:32:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.1 2004/08/03 10:56:05 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	u_int16_t dindex, tw, swlen, bc;
 	int error, maxqsz;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	vcp->vc_hflags = 0;
 	vcp->vc_hflags2 = 0;
@@ -266,7 +266,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	char *pp, *up, *pbuf, *encpass;
 	int error, plen, uniplen, ulen, upper;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	upper = 0;
 
@@ -287,27 +287,26 @@ again:
 		 */
 		if (upper) {
 			iconv_convstr(vcp->vc_toupper, pbuf,
-				      smb_vc_getpass(vcp)/*, SMB_MAXPASSWORDLEN*/);
+			    smb_vc_getpass(vcp), SMB_MAXPASSWORDLEN + 1);
 		} else {
-			strncpy(pbuf, smb_vc_getpass(vcp), SMB_MAXPASSWORDLEN);
-			pbuf[SMB_MAXPASSWORDLEN] = '\0';
+			strlcpy(pbuf, smb_vc_getpass(vcp),
+			    SMB_MAXPASSWORDLEN + 1);
 		}
 		if (!SMB_UNICODE_STRINGS(vcp))
-			iconv_convstr(vcp->vc_toserver, pbuf, pbuf/*,
-				      SMB_MAXPASSWORDLEN*/);
+			iconv_convstr(vcp->vc_toserver, pbuf, pbuf,
+			    SMB_MAXPASSWORDLEN + 1);
 
 		if (vcp->vc_sopt.sv_sm & SMB_SM_ENCRYPT) {
 			uniplen = plen = 24;
 			smb_encrypt(pbuf, vcp->vc_ch, encpass);
 			ntencpass = malloc(uniplen, M_SMBTEMP, M_WAITOK);
 			if (SMB_UNICODE_STRINGS(vcp)) {
-				strncpy(pbuf, smb_vc_getpass(vcp),
-					SMB_MAXPASSWORDLEN);
-				pbuf[SMB_MAXPASSWORDLEN] = '\0';
+				strlcpy(pbuf, smb_vc_getpass(vcp),
+				    SMB_MAXPASSWORDLEN + 1);
 			} else
 				iconv_convstr(vcp->vc_toserver, pbuf,
-					      smb_vc_getpass(vcp)/*,
-					      SMB_MAXPASSWORDLEN*/);
+				    smb_vc_getpass(vcp),
+				    SMB_MAXPASSWORDLEN + 1);
 			smb_ntencrypt(pbuf, vcp->vc_ch, (u_char*)ntencpass);
 			pp = encpass;
 			unipp = ntencpass;
@@ -405,7 +404,7 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	int error;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	if (vcp->vc_smbuid == SMB_UID_UNKNOWN)
 		return 0;
@@ -507,12 +506,10 @@ again:
 		 */
 		if (upper) {
 			iconv_convstr(vcp->vc_toupper, pbuf,
-				      smb_share_getpass(ssp)/*,
-				      SMB_MAXPASSWORDLEN*/);
+			    smb_share_getpass(ssp), SMB_MAXPASSWORDLEN + 1);
 		} else {
-			strncpy(pbuf, smb_share_getpass(ssp),
-				SMB_MAXPASSWORDLEN);
-			pbuf[SMB_MAXPASSWORDLEN] = '\0';
+			strlcpy(pbuf, smb_share_getpass(ssp),
+			    SMB_MAXPASSWORDLEN + 1);
 		}
 		if (vcp->vc_sopt.sv_sm & SMB_SM_ENCRYPT) {
 			plen = 24;
@@ -566,7 +563,6 @@ int
 smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 {
 	struct smb_rq *rqp;
-	struct mbchain *mbp;
 	int error;
 
 	if (ssp->ss_tid == SMB_TID_UNKNOWN)
@@ -574,7 +570,6 @@ smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_TREE_DISCONNECT, scred, &rqp);
 	if (error)
 		return error;
-	mbp = &rqp->sr_rq;
 	smb_rq_wstart(rqp);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);

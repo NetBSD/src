@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.6 1999/11/11 01:32:11 thorpej Exp $	*/
+/*	$NetBSD: ffs.S,v 1.6.28.1 2004/08/03 10:53:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,11 +39,13 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.6 1999/11/11 01:32:11 thorpej Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.6.28.1 2004/08/03 10:53:42 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
+
+#ifndef	__mc68010__
 
 ENTRY(ffs)
 	movl	%sp@(4),%d0
@@ -58,3 +56,19 @@ ENTRY(ffs)
 	bfffo	%d1{#0:#32},%d1
 	subl	%d1,%d0
 	rts
+
+#else	/* __mc68010__ */
+
+ENTRY(ffs)
+	movl	%sp@(4),%d0
+	jeq	L2
+	movql	#31,%d1
+L1:	
+	lsrl	#1,%d0
+	dbcs	%d1,L1
+	movql	#32,%d0
+	subl	%d1,%d0
+L2:
+	rts
+
+#endif	/* __mc68010__ */

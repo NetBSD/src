@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.2 2003/01/12 18:59:16 christos Exp $	*/
+/*	$NetBSD: tftp.h,v 1.2.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -46,11 +40,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -109,13 +99,6 @@ struct	tftphdr {
 #define	EEXISTS		6		/* file already exists */
 #define	ENOUSER		7		/* no such user */
 
-int tftp_open __P((char *path, struct open_file *f));
-int tftp_read __P((struct open_file *f, void *addr,
-	      size_t size, size_t *resid));
-int tftp_close __P((struct open_file *f));
-int tftp_write __P((struct open_file *f, void *addr,
-	      size_t size, size_t *resid));
-int tftp_stat __P((struct open_file *f, struct stat *sb));
-off_t tftp_seek __P((struct open_file *f, off_t offset, int where));
+FS_DEF(tftp);
 
 #define IPPORT_TFTP 69

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.102.2.1 2003/07/02 15:27:00 darrenr Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102.2.2 2004/08/03 10:54:46 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,11 +118,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -155,6 +151,21 @@
 
 #include <sys/callout.h>
 
+#ifdef TCP_SIGNATURE
+/*
+ * Defines which are needed by the xform_tcp module and tcp_[in|out]put
+ * for SADB verification and lookup.
+ */
+#define	TCP_SIGLEN	16	/* length of computed digest in bytes */
+#define	TCP_KEYLEN_MIN	1	/* minimum length of TCP-MD5 key */
+#define	TCP_KEYLEN_MAX	80	/* maximum length of TCP-MD5 key */
+/*
+ * Only a single SA per host may be specified at this time. An SPI is
+ * needed in order for the KEY_ALLOCSA() lookup to work.
+ */
+#define	TCP_SIG_SPI	0x1000
+#endif /* TCP_SIGNATURE */
+
 /*
  * Tcp control block, one per tcp; fields:
  */
@@ -185,6 +196,8 @@ struct tcpcb {
 #define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
 #define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
 #define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
+#define	TF_DEAD		0x8000		/* dead and to-be-released */
+#define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
@@ -273,9 +286,9 @@ struct tcpcb {
 /*
  * TCP reassembly queue locks.
  */
-static __inline int tcp_reass_lock_try __P((struct tcpcb *))
+static __inline int tcp_reass_lock_try (struct tcpcb *)
 	__attribute__((__unused__));
-static __inline void tcp_reass_unlock __P((struct tcpcb *))
+static __inline void tcp_reass_unlock (struct tcpcb *)
 	__attribute__((__unused__));
 
 static __inline int
@@ -377,6 +390,9 @@ struct tcp_opt_info {
 	u_int16_t	maxseg;
 };
 
+#define	TOF_SIGNATURE	0x0040		/* signature option present */
+#define	TOF_SIGLEN	0x0080		/* sigature length valid (RFC2385) */
+
 /*
  * Data for the TCP compressed state engine.
  */
@@ -417,6 +433,8 @@ struct syn_cache {
 
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
+#define	SCF_DEAD		0x0004		/* this entry to be released */
+#define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_peermaxseg;
@@ -547,6 +565,7 @@ struct	tcpstat {
 	u_quad_t tcps_noport;		/* no socket on port */
 	u_quad_t tcps_badsyn;		/* received ack for which we have
 					   no SYN in compressed state */
+	u_quad_t tcps_delayed_free;	/* delayed pool_put() of tcpcb */
 
 	/* These statistics deal with the SYN cache. */
 	u_quad_t tcps_sc_added;		/* # of entries added */
@@ -561,8 +580,11 @@ struct	tcpstat {
 	u_quad_t tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
 	u_quad_t tcps_sc_collisions;	/* # of hash collisions */
 	u_quad_t tcps_sc_retransmitted;	/* # of retransmissions */
+	u_quad_t tcps_sc_delayed_free;	/* # of delayed pool_put()s */
 
 	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
+	u_quad_t tcps_badsig;		/* # of drops due to bad signature */
+	u_quad_t tcps_goodsig;		/* # of packets with good signature */
 };
 
 /*
@@ -599,7 +621,8 @@ struct	tcpstat {
 #define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
 #define	TCPCTL_INIT_WIN_LOCAL	26	/* initial window for local nets */
 #define	TCPCTL_IDENT		27	/* rfc 931 identd */
-#define	TCPCTL_MAXID		28
+#define	TCPCTL_ACKDROPRATELIMIT	28	/* SYN/RST -> ACK rate limit */
+#define	TCPCTL_MAXID		29
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -630,13 +653,11 @@ struct	tcpstat {
 	{ "delack_ticks", CTLTYPE_INT }, \
 	{ "init_win_local", CTLTYPE_INT }, \
 	{ "ident", CTLTYPE_STRUCT }, \
+	{ "ackdropppslimit", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-#ifdef INET6
-extern	struct in6pcb tcb6;
-#endif
 extern	struct tcpstat tcpstat;	/* tcp statistics */
 extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
@@ -657,6 +678,7 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 
 extern	int tcp_rst_ppslim;
+extern	int tcp_ackdrop_ppslim;
 
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
@@ -696,93 +718,106 @@ extern	struct mowner tcp_mowner;
 	{ 1, 0, &tcp_rst_ppslim },		\
 	{ 1, 0, &tcp_delack_ticks },		\
 	{ 1, 0, &tcp_init_win_local },		\
+	{ 1, 0, &tcp_ackdrop_ppslim },		\
 }
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	TCP_HDR_ALIGNED_P(th)	1
 #else
-#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t) (th)) & 3) == 0)
+#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t)(th)) & 3) == 0)
 #endif
 
-int	 tcp_attach __P((struct socket *));
-void	 tcp_canceltimers __P((struct tcpcb *));
+struct secasvar;
+
+int	 tcp_attach(struct socket *);
+void	 tcp_canceltimers(struct tcpcb *);
+int	 tcp_timers_invoking(struct tcpcb*);
 struct tcpcb *
-	 tcp_close __P((struct tcpcb *));
+	 tcp_close(struct tcpcb *);
+int	 tcp_isdead(struct tcpcb *);
 #ifdef INET6
-void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
+void	 tcp6_ctlinput(int, struct sockaddr *, void *);
 #endif
-void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
-int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	 *tcp_ctlinput(int, struct sockaddr *, void *);
+int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf **);
 struct tcpcb *
-	 tcp_disconnect __P((struct tcpcb *));
+	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *
-	 tcp_drop __P((struct tcpcb *, int));
-void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
-void	 tcp_drain __P((void));
-#ifdef INET6
-void	 tcp6_drain __P((void));
+	 tcp_drop(struct tcpcb *, int);
+#ifdef TCP_SIGNATURE
+int	 tcp_signature_apply(void *, caddr_t, u_int);
+struct secasvar *tcp_signature_getsav(struct mbuf *, struct tcphdr *);
+int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
+	    char *);
 #endif
-void	 tcp_established __P((struct tcpcb *));
-void	 tcp_init __P((void));
+int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
+	    struct mbuf *, int, struct tcp_opt_info *);
+void	 tcp_drain(void);
+void	 tcp_established(struct tcpcb *);
+void	 tcp_init(void);
 #ifdef INET6
-int	 tcp6_input __P((struct mbuf **, int *, int));
+int	 tcp6_input(struct mbuf **, int *, int);
 #endif
-void	 tcp_input __P((struct mbuf *, ...));
-u_long	 tcp_mss_to_advertise __P((const struct ifnet *, int));
-void	 tcp_mss_from_peer __P((struct tcpcb *, int));
+void	 tcp_input(struct mbuf *, ...);
+u_long	 tcp_mss_to_advertise(const struct ifnet *, int);
+void	 tcp_mss_from_peer(struct tcpcb *, int);
+void	 tcp_tcpcb_template(void);
 struct tcpcb *
-	 tcp_newtcpcb __P((int, void *));
-void	 tcp_notify __P((struct inpcb *, int));
+	 tcp_newtcpcb(int, void *);
+void	 tcp_notify(struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_notify __P((struct in6pcb *, int));
+void	 tcp6_notify(struct in6pcb *, int);
 #endif
-u_int	 tcp_optlen __P((struct tcpcb *));
-int	 tcp_output __P((struct tcpcb *));
-void	 tcp_pulloutofband __P((struct socket *,
-	    struct tcphdr *, struct mbuf *, int));
-void	 tcp_quench __P((struct inpcb *, int));
+u_int	 tcp_optlen(struct tcpcb *);
+int	 tcp_output(struct tcpcb *);
+void	 tcp_pulloutofband(struct socket *,
+	    struct tcphdr *, struct mbuf *, int);
+void	 tcp_quench(struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_quench __P((struct in6pcb *, int));
+void	 tcp6_quench(struct in6pcb *, int);
 #endif
-int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
-int	 tcp_respond __P((struct tcpcb *, struct mbuf *, struct mbuf *,
-	    struct tcphdr *, tcp_seq, tcp_seq, int));
-void	 tcp_rmx_rtt __P((struct tcpcb *));
-void	 tcp_setpersist __P((struct tcpcb *));
-void	 tcp_slowtimo __P((void));
+int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
+int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
+	    struct tcphdr *, tcp_seq, tcp_seq, int);
+void	 tcp_rmx_rtt(struct tcpcb *);
+void	 tcp_setpersist(struct tcpcb *);
+#ifdef TCP_SIGNATURE
+int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
+	    int, u_char *, u_int);
+#endif
+void	 tcp_slowtimo(void);
 struct mbuf *
-	 tcp_template __P((struct tcpcb *));
-void	 tcp_trace __P((int, int, struct tcpcb *, struct mbuf *, int));
+	 tcp_template(struct tcpcb *);
+void	 tcp_trace(int, int, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
-	 tcp_usrclosed __P((struct tcpcb *));
-int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	 tcp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
-void	 tcp_xmit_timer __P((struct tcpcb *, uint32_t));
-tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
-tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,
-	    tcp_seq));
+	 tcp_usrclosed(struct tcpcb *);
+int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	 tcp_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
+tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
+tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
+	    tcp_seq);
 
-int	 syn_cache_add __P((struct sockaddr *, struct sockaddr *,
+int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
-		struct mbuf *, u_char *, int, struct tcp_opt_info *));
-void	 syn_cache_unreach __P((struct sockaddr *, struct sockaddr *,
-	   struct tcphdr *));
-struct socket *syn_cache_get __P((struct sockaddr *, struct sockaddr *,
+		struct mbuf *, u_char *, int, struct tcp_opt_info *);
+void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
+	   struct tcphdr *);
+struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int,
-		struct socket *so, struct mbuf *));
-void	 syn_cache_init __P((void));
-void	 syn_cache_insert __P((struct syn_cache *, struct tcpcb *));
-struct syn_cache *syn_cache_lookup __P((struct sockaddr *, struct sockaddr *,
-		struct syn_cache_head **));
-void	 syn_cache_reset __P((struct sockaddr *, struct sockaddr *,
-		struct tcphdr *));
-int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
-void	 syn_cache_timer __P((void *));
-void	 syn_cache_cleanup __P((struct tcpcb *));
+		struct socket *so, struct mbuf *);
+void	 syn_cache_init(void);
+void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
+struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
+		struct syn_cache_head **);
+void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
+void	 syn_cache_timer(void *);
+void	 syn_cache_cleanup(struct tcpcb *);
 
-int	tcp_newreno __P((struct tcpcb *, struct tcphdr *));
+int	tcp_newreno(struct tcpcb *, struct tcphdr *);
 #endif
 
 #endif /* _NETINET_TCP_VAR_H_ */

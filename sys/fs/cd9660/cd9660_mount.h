@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.1.4.1 2004/08/03 10:52:23 skrll Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -56,4 +52,4 @@ struct iso_args {
 
 #define ISOFSMNT_BITS "\177\20" \
     "b\00norrip\0b\01gens\0b\02extatt\0b\03nojoliet\0" \
-    "b\04nocasetrans\0b\05rrcaseins"
+    "b\04nocasetrans\0b\05rrcaseins\0"

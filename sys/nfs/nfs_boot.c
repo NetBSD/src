@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.59.2.1 2003/07/02 15:27:08 darrenr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.59.2.2 2004/08/03 10:56:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.1 2003/07/02 15:27:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.2 2004/08/03 10:56:16 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -89,13 +89,16 @@ int nfs_boot_rfc951 = 1; /* BOOTP enabled (default) */
 #ifdef NFS_BOOT_BOOTPARAM
 int nfs_boot_bootparam = 1; /* BOOTPARAM enabled (default) */
 #endif
+#ifdef NFS_BOOT_BOOTSTATIC
+int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
+#endif
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
-	struct nfs_args *argp));
+	struct nfs_args *argp, struct lwp *l));
 
 static void nfs_boot_defrt __P((struct in_addr *));
-static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm));
+static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm, struct lwp *));
 
 
 /*
@@ -123,6 +126,12 @@ nfs_boot_init(nd, lwp)
 	nd->nd_ifp = ifp;
 
 	error = EADDRNOTAVAIL; /* ??? */
+#if defined(NFS_BOOT_BOOTSTATIC)
+	if (error && nfs_boot_bootstatic) {
+		printf("nfs_boot: trying static\n");
+		error = nfs_bootstatic(nd, procp);
+	}
+#endif
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 	if (error && nfs_boot_rfc951) {
 #if defined(NFS_BOOT_DHCP)
@@ -152,7 +161,7 @@ nfs_boot_init(nd, lwp)
 	/*
 	 * Now fetch the NFS file handles as appropriate.
 	 */
-	error = nfs_boot_getfh(&nd->nd_root);
+	error = nfs_boot_getfh(&nd->nd_root, lwp);
 
 	if (error)
 		nfs_boot_cleanup(nd, lwp);
@@ -188,7 +197,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("ifupdown: socreate, error=%d\n", error);
 		return (error);
@@ -237,7 +246,7 @@ nfs_boot_setaddress(ifp, lwp, addr, netmask, braddr)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("setaddress: socreate, error=%d\n", error);
 		return (error);
@@ -296,7 +305,7 @@ nfs_boot_deladdress(ifp, lwp, addr)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("deladdress: socreate, error=%d\n", error);
 		return (error);
@@ -351,9 +360,10 @@ nfs_boot_enbroadcast(so)
 }
 
 int
-nfs_boot_sobind_ipport(so, port)
+nfs_boot_sobind_ipport(so, port, l)
 	struct socket *so;
 	u_int16_t port;
+	struct lwp *l;
 {
 	struct mbuf *m;
 	struct sockaddr_in *sin;
@@ -365,7 +375,7 @@ nfs_boot_sobind_ipport(so, port)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m, curlwp);		/* XXX */
+	error = sobind(so, m, l);
 	m_freem(m);
 	return (error);
 }
@@ -380,7 +390,7 @@ nfs_boot_sobind_ipport(so, port)
 #define TOTAL_TIMEOUT   30	/* seconds */
 
 int
-nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context)
+nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context, lwp)
 	struct socket *so;
 	struct mbuf *nam;
 	int (*sndproc) __P((struct mbuf*, void*, int));
@@ -388,6 +398,7 @@ nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context)
 	int (*rcvproc) __P((struct mbuf*, void*));
 	struct mbuf **rcv, **from_p;
 	void *context;
+	struct lwp *lwp;
 {
 	int error, rcvflg, timo, secs, waited;
 	struct mbuf *m, *from;
@@ -425,7 +436,7 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, nam, NULL, m, NULL, 0);
+	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;
@@ -448,6 +459,7 @@ send_again:
 			m = NULL;
 		}
 		uio.uio_resid = 1 << 16; /* ??? */
+		uio.uio_lwp = lwp;
 		rcvflg = 0;
 		error = (*so->so_receive)(so, &from, &uio, &m, NULL, &rcvflg);
 		if (error == EWOULDBLOCK) {
@@ -548,8 +560,9 @@ nfs_boot_flushrt(ifp)
  * (once for root and once for swap)
  */
 static int
-nfs_boot_getfh(ndm)
+nfs_boot_getfh(ndm, l)
 	struct nfs_dlmount *ndm;	/* output */
+	struct lwp *l;
 {
 	struct nfs_args *args;
 	struct sockaddr_in *sin;
@@ -604,7 +617,7 @@ nfs_boot_getfh(ndm)
 	 * Get file handle using RPC to mountd/mount
 	 */
 	sin = (struct sockaddr_in *)&ndm->ndm_saddr;
-	error = md_mount(sin, pathname, args);
+	error = md_mount(sin, pathname, args, l);
 	if (error) {
 		printf("nfs_boot: mountd `%s', error=%d\n",
 		       ndm->ndm_host, error);
@@ -619,7 +632,7 @@ retry:
 	error = krpc_portmap(sin, NFS_PROG,
 		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
 		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
-		    &port);
+		    &port, l);
 	if (port == htons(0))
 		error = EIO;
 	if (error) {
@@ -643,10 +656,11 @@ retry:
  * Also, sets sin->sin_port to the NFS service port.
  */
 static int
-md_mount(mdsin, path, argp)
+md_mount(mdsin, path, argp, lwp)
 	struct sockaddr_in *mdsin;		/* mountd server address */
 	char *path;
 	struct nfs_args *argp;
+	struct lwp *lwp;
 {
 	/* The RPC structures */
 	struct rdata {
@@ -670,7 +684,7 @@ md_mount(mdsin, path, argp)
 		 * Get port number for MOUNTD.
 		 */
 		error = krpc_portmap(mdsin, RPCPROG_MNT, mntver,
-		                    IPPROTO_UDP, &mdsin->sin_port);
+		                    IPPROTO_UDP, &mdsin->sin_port, lwp);
 		if (error)
 			continue;
 
@@ -681,7 +695,7 @@ md_mount(mdsin, path, argp)
 
 		/* Do RPC to mountd. */
 		error = krpc_call(mdsin, RPCPROG_MNT, mntver,
-		                  RPCMNT_MOUNT, &m, NULL);
+		                  RPCMNT_MOUNT, &m, NULL, lwp);
 		if (error != EPROGMISMATCH)
 			break;
 		/* Try lower version of mountd. */

@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13 2003/01/21 03:23:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13.2.1 2004/08/03 10:54:37 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -106,10 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13 2003/01/21 03:23:44 itojun Exp $")
 #endif
 
 #include <machine/stdarg.h>
-
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif
 
 #include <net/net_osdep.h>
 
@@ -294,13 +290,7 @@ encap4_lookup(m, off, proto, dir)
 }
 
 void
-#if __STDC__
 encap4_input(struct mbuf *m, ...)
-#else
-encap4_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, proto;
 	va_list ap;
@@ -727,8 +717,6 @@ encap6_ctlinput(cmd, sa, d0)
 	struct mbuf *m;
 	int off;
 	struct ip6ctlparam *ip6cp = NULL;
-	const struct sockaddr_in6 *sa6_src = NULL;
-	void *cmdarg;
 	int nxt;
 	struct encaptab *ep;
 	const struct ip6protosw *psw;
@@ -752,37 +740,32 @@ encap6_ctlinput(cmd, sa, d0)
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-		cmdarg = ip6cp->ip6c_cmdarg;
-		sa6_src = ip6cp->ip6c_src;
 		nxt = ip6cp->ip6c_nxt;
+
+		if (ip6 && cmd == PRC_MSGSIZE) {
+			int valid = 0;
+			struct encaptab *match;
+
+			/*
+		 	* Check to see if we have a valid encap configuration.
+		 	*/
+			match = encap6_lookup(m, off, nxt, OUTBOUND);
+			if (match)
+				valid++;
+
+			/*
+		 	* Depending on the value of "valid" and routing table
+		 	* size (mtudisc_{hi,lo}wat), we will:
+		 	* - recalcurate the new MTU and create the
+		 	*   corresponding routing entry, or
+		 	* - ignore the MTU change notification.
+		 	*/
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
+		}
 	} else {
 		m = NULL;
 		ip6 = NULL;
-		cmdarg = NULL;
-		sa6_src = &sa6_any;
 		nxt = -1;
-	}
-
-	if (ip6 && cmd == PRC_MSGSIZE) {
-		int valid = 0;
-		struct encaptab *match;
-
-		/*
-		 * Check to see if we have a valid encap configuration.
-		 */
-		match = encap6_lookup(m, off, nxt, OUTBOUND);
-
-		if (match)
-			valid++;
-
-		/*
-		 * Depending on the value of "valid" and routing table
-		 * size (mtudisc_{hi,lo}wat), we will:
-		 * - recalcurate the new MTU and create the
-		 *   corresponding routing entry, or
-		 * - ignore the MTU change notification.
-		 */
-		icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 	}
 
 	/* inform all listeners */

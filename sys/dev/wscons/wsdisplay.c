@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.75.2.1 2003/07/02 15:26:25 darrenr Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.75.2.2 2004/08/03 10:52:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.75.2.1 2003/07/02 15:26:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.75.2.2 2004/08/03 10:52:10 skrll Exp $");
 
+#include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
+#include "opt_wsmsgattrs.h"
 #include "opt_compat_netbsd.h"
 #include "wskbd.h"
 #include "wsmux.h"
@@ -84,6 +86,7 @@ struct wsscreen {
 #define SCR_OPEN 1		/* is it open? */
 #define SCR_WAITACTIVE 2	/* someone waiting on activation */
 #define SCR_GRAPHICS 4		/* graphics mode, no text (emulation) output */
+#define	SCR_DUMBFB 8		/* in use as a dumb fb (iff SCR_GRAPHICS) */
 	const struct wscons_syncops *scr_syncops;
 	void *scr_synccookie;
 
@@ -114,6 +117,9 @@ struct wsdisplay_softc {
 	void	*sc_accesscookie;
 
 	const struct wsscreen_list *sc_scrdata;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wsdisplay_scroll_data sc_scroll_values;
+#endif
 
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
 	int sc_focusidx;	/* available only if sc_focus isn't null */
@@ -134,6 +140,15 @@ struct wsdisplay_softc {
 #endif
 #endif /* NWSKBD > 0 */
 };
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+
+struct wsdisplay_scroll_data wsdisplay_default_scroll_values = {
+	WSDISPLAY_SCROLL_DOALL,
+	25,
+	2,
+};
+#endif
 
 extern struct cfdriver wsdisplay_cd;
 
@@ -406,6 +421,30 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 	vdevgone(maj, mn, mn, VCHR);
 }
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void
+wsdisplay_scroll(void *arg, int op)
+{
+	struct wsdisplay_softc *sc = arg;
+	int lines;
+
+	if (op == WSDISPLAY_SCROLL_RESET)
+		lines = 0;
+	else {
+		lines = (op & WSDISPLAY_SCROLL_LOW) ?
+			sc->sc_scroll_values.slowlines :
+			sc->sc_scroll_values.fastlines;
+		if (op & WSDISPLAY_SCROLL_BACKWARD)
+			lines = -(lines);
+	}
+	
+	if (sc->sc_accessops->scroll) {
+		(*sc->sc_accessops->scroll)(sc->sc_accesscookie,
+		    sc->sc_focus->scr_dconf->emulcookie, lines);
+	}
+}
+#endif
+
 int
 wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 {
@@ -415,8 +454,7 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
-	scr = sc->sc_scr[idx];
-	if (!scr)
+	if ((scr = sc->sc_scr[idx]) == NULL)
 		return (ENXIO);
 
 	if (scr->scr_dconf == &wsdisplay_console_conf ||
@@ -623,6 +661,10 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	sc->sc_accesscookie = accesscookie;
 	sc->sc_scrdata = scrdata;
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	sc->sc_scroll_values = wsdisplay_default_scroll_values;
+#endif
+
 	/*
 	 * Set up a number of virtual screens if wanted. The
 	 * WSDISPLAYIO_ADDSCREEN ioctl is more flexible, so this code
@@ -693,8 +735,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (WSDISPLAYSCREEN(dev) >= WSDISPLAY_MAXSCREEN)
 		return (ENXIO);
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
-	if (!scr)
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
 		return (ENXIO);
 
 	if (WSSCREEN_HAS_TTY(scr)) {
@@ -752,7 +793,8 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (0);
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		if (scr->scr_hold_screen) {
@@ -812,7 +854,8 @@ wsdisplayread(dev_t dev, struct uio *uio, int flag)
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (ENXIO);
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -837,7 +880,8 @@ wsdisplaywrite(dev_t dev, struct uio *uio, int flag)
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (ENXIO);
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -861,7 +905,8 @@ wsdisplaypoll(dev_t dev, int events, struct lwp *l)
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (ENXIO);
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -882,7 +927,9 @@ wsdisplaykqfilter(dev, kn)
 	if (ISWSDISPLAYCTL(dev))
 		return (1);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (1);
+	
 
 	if (WSSCREEN_HAS_TTY(scr))
 		return (ttykqfilter(dev, kn));
@@ -904,7 +951,8 @@ wsdisplaytty(dev_t dev)
 	if (ISWSDISPLAYCTL(dev))
 		panic("wsdisplaytty() on ctl device");
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return NULL;
 
 	return (scr->scr_tty);
 }
@@ -931,7 +979,8 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	if (ISWSDISPLAYCTL(dev))
 		return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, l));
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (ENXIO);
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		tp = scr->scr_tty;
@@ -973,6 +1022,9 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	int error;
 	char namebuf[16];
 	struct wsdisplay_font fd;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wsdisplay_scroll_data *ksdp, *usdp;
+#endif
 
 #if NWSKBD > 0
 	struct wsevsrc *inp;
@@ -998,21 +1050,28 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
-		*(u_int *)data = (scr->scr_flags & SCR_GRAPHICS ?
-				  WSDISPLAYIO_MODE_MAPPED :
-				  WSDISPLAYIO_MODE_EMUL);
+		if (scr->scr_flags & SCR_GRAPHICS) {
+			if (scr->scr_flags & SCR_DUMBFB)
+				*(u_int *)data = WSDISPLAYIO_MODE_DUMBFB;
+			else
+				*(u_int *)data = WSDISPLAYIO_MODE_MAPPED;
+		} else
+			*(u_int *)data = WSDISPLAYIO_MODE_EMUL;
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
 		if (d != WSDISPLAYIO_MODE_EMUL &&
-		    d != WSDISPLAYIO_MODE_MAPPED)
+		    d != WSDISPLAYIO_MODE_MAPPED &&
+		    d != WSDISPLAYIO_MODE_DUMBFB)
 			return (EINVAL);
 
 	    if (WSSCREEN_HAS_EMULATOR(scr)) {
 		    scr->scr_flags &= ~SCR_GRAPHICS;
-		    if (d == WSDISPLAYIO_MODE_MAPPED)
-			    scr->scr_flags |= SCR_GRAPHICS;
+		    if (d == WSDISPLAYIO_MODE_MAPPED ||
+			d == WSDISPLAYIO_MODE_DUMBFB)
+			    scr->scr_flags |= SCR_GRAPHICS |
+				    ((d == WSDISPLAYIO_MODE_DUMBFB) ? SCR_DUMBFB : 0);
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
@@ -1021,6 +1080,36 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	    return (0);
 #undef d
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+#define	SETSCROLLLINES(dstp, srcp, dfltp)				\
+    do {								\
+	(dstp)->fastlines = ((srcp)->which &				\
+			     WSDISPLAY_SCROLL_DOFASTLINES) ?		\
+			     (srcp)->fastlines : (dfltp)->fastlines;	\
+	(dstp)->slowlines = ((srcp)->which &				\
+			     WSDISPLAY_SCROLL_DOSLOWLINES) ?		\
+			     (srcp)->slowlines : (dfltp)->slowlines;	\
+	(dstp)->which = WSDISPLAY_SCROLL_DOALL;				\
+    } while (0)
+
+
+	case WSDISPLAYIO_DSSCROLL:
+		usdp = (struct wsdisplay_scroll_data *)data;
+		ksdp = &sc->sc_scroll_values;
+		SETSCROLLLINES(ksdp, usdp, ksdp);
+		return (0);
+
+	case WSDISPLAYIO_DGSCROLL:
+		usdp = (struct wsdisplay_scroll_data *)data;
+		ksdp = &sc->sc_scroll_values;
+		SETSCROLLLINES(usdp, ksdp, ksdp);
+		return (0);
+#else
+	case WSDISPLAYIO_DSSCROLL:
+	case WSDISPLAYIO_DGSCROLL:
+		return ENODEV;
+#endif
 
 	case WSDISPLAYIO_SFONT:
 #define d ((struct wsdisplay_usefontdata *)data)
@@ -1058,8 +1147,55 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return ((*sc->sc_accessops->putwschar)
 			(scr->scr_dconf->emulcookie, d));
 #undef d
-		return 1;
+#else
+	case WSDISPLAYIO_PUTWSCHAR:
+	case WSDISPLAYIO_GETWSCHAR:
+		return ENODEV;
 #endif /* WSDISPLAY_CHARFUNCS */
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	case WSDISPLAYIO_GMSGATTRS:
+#define d ((struct wsdisplay_msgattrs *)data)
+		(*scr->scr_dconf->wsemul->getmsgattrs)
+		    (scr->scr_dconf->wsemulcookie, d);
+		return (0);
+#undef d
+
+	case WSDISPLAYIO_SMSGATTRS: {
+#define d ((struct wsdisplay_msgattrs *)data)
+		int i;
+		for (i = 0; i < WSDISPLAY_MAXSCREEN; i++)
+			if (sc->sc_scr[i] != NULL)
+				(*sc->sc_scr[i]->scr_dconf->wsemul->setmsgattrs)
+				    (sc->sc_scr[i]->scr_dconf->wsemulcookie,
+				     sc->sc_scr[i]->scr_dconf->scrdata,
+				     d);
+		}
+		return (0);
+#undef d
+#else
+	case WSDISPLAYIO_GMSGATTRS:
+	case WSDISPLAYIO_SMSGATTRS:
+		return (ENODEV);
+#endif
+
+#ifdef WSDISPLAY_CUSTOM_BORDER
+	case WSDISPLAYIO_GBORDER:
+		if (!sc->sc_accessops->getborder)
+			return (EINVAL);
+		*(u_int *)data = (*sc->sc_accessops->getborder)
+			       (scr->scr_dconf->emulcookie);
+		return (0);
+	case WSDISPLAYIO_SBORDER:
+		if (!sc->sc_accessops->setborder)
+			return (EINVAL);
+		return (*sc->sc_accessops->setborder)
+		    (scr->scr_dconf->emulcookie, (*(u_int *)data));
+#else /* WSDISPLAY_CUSTOM_BORDER */
+	case WSDISPLAYIO_GBORDER:
+	case WSDISPLAYIO_SBORDER:
+		return (ENODEV);
+#endif /* WSDISPLAY_CUSTOM_BORDER */
 
 	}
 
@@ -1246,7 +1382,8 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 	if (ISWSDISPLAYCTL(dev))
 		return (-1);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
+		return (-1);
 
 	if (!(scr->scr_flags & SCR_GRAPHICS))
 		return (-1);
@@ -1269,7 +1406,11 @@ wsdisplaystart(struct tty *tp)
 		return;
 	}
 	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
-	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
+	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)]) == NULL) {
+		splx(s);
+		return; 
+	}
+
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
 		splx(s);
@@ -1302,8 +1443,8 @@ wsdisplaystart(struct tty *tp)
 
 		if (!(scr->scr_flags & SCR_GRAPHICS)) {
 			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
-			(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-							  buf, n, 0);
+			(*scr->scr_dconf->wsemul->output)
+			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
 		}
 		ndflush(&tp->t_outq, n);
 	}
@@ -1607,9 +1748,12 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	int s, res = 0;
 	struct wsscreen *scr;
 
-	if (no != WSDISPLAY_NULLSCREEN &&
-	    (no < 0 || no >= WSDISPLAY_MAXSCREEN || !sc->sc_scr[no]))
-		return (ENXIO);
+	if (no != WSDISPLAY_NULLSCREEN) {
+		if ((no < 0 || no >= WSDISPLAY_MAXSCREEN))
+			return (EINVAL);
+		if (sc->sc_scr[no] == NULL)
+			return (ENXIO);
+	}
 
 	wsdisplay_stat_inject(dev, WSCONS_EVENT_SCREEN_SWITCH, no);
 
@@ -1828,7 +1972,8 @@ wsdisplay_cnputc(dev_t dev, int i)
 	if (!wsdisplay_console_initted)
 		return;
 
-	if (wsdisplay_console_device != NULL &&
+	if ((wsdisplay_console_device != NULL) && 
+	    (wsdisplay_console_device->sc_scr[0] != NULL) &&
 	    (wsdisplay_console_device->sc_scr[0]->scr_flags & SCR_GRAPHICS))
 		return;
 
@@ -1888,7 +2033,8 @@ wsdisplay_switchtoconsole(void)
 
 	if (wsdisplay_console_device != NULL) {
 		sc = wsdisplay_console_device;
-		scr = sc->sc_scr[0];
+		if ((scr = sc->sc_scr[0]) == NULL)
+			return;
 		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
 						 scr->scr_dconf->emulcookie,
 						 0, NULL, NULL);

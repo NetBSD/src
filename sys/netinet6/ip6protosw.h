@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.12.2.1 2003/07/02 15:27:01 darrenr Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.12.2.2 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -45,11 +45,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -146,10 +142,9 @@ struct ip6protosw {
 			__P((void));
 	void	(*pr_drain)		/* flush any excess space possible */
 			__P((void));
-	int	(*pr_sysctl)		/* sysctl for protocol */
-			__P((int *, u_int, void *, size_t *, void *, size_t));
+	int	*pr_wassysctl;		/* @@@ used to be sysctl for protocol */
 };
 
-extern struct ip6protosw inet6sw[];
+extern const struct ip6protosw inet6sw[];
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

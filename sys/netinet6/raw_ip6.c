@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.54.2.1 2003/07/02 15:27:02 darrenr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.54.2.2 2004/08/03 10:55:17 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.1 2003/07/02 15:27:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.2 2004/08/03 10:55:17 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -109,7 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.1 2003/07/02 15:27:02 darrenr Exp
 #include <net/if_faith.h>
 #endif
 
-struct	in6pcb rawin6pcb;
+extern struct inpcbtable rawcbtable;
+struct	inpcbtable raw6cbtable;
 #define ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 
 /*
@@ -125,7 +122,7 @@ void
 rip6_init()
 {
 
-	rawin6pcb.in6p_next = rawin6pcb.in6p_prev = &rawin6pcb;
+	in6_pcbinit(&raw6cbtable, 1, 1);
 }
 
 /*
@@ -140,6 +137,7 @@ rip6_input(mp, offp, proto)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
@@ -166,15 +164,13 @@ rip6_input(mp, offp, proto)
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
-#if 0 /* XXX inbound flowlabel */
-	rip6src.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
-#endif
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-	for (in6p = rawin6pcb.in6p_next;
-	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
-	{
+	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+		in6p = (struct in6pcb *)inph;
+		if (in6p->in6p_af != AF_INET6)
+			continue;
 		if (in6p->in6p_ip6.ip6_nxt &&
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
@@ -186,7 +182,7 @@ rip6_input(mp, offp, proto)
 			continue;
 		if (in6p->in6p_cksum != -1) {
 			rip6stat.rip6s_isum++;
-			if (in6_cksum(m, ip6->ip6_nxt, *offp,
+			if (in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
 				rip6stat.rip6s_badsum++;
 				continue;
@@ -272,8 +268,6 @@ rip6_ctlinput(cmd, sa, d)
 	void *d;
 {
 	struct ip6_hdr *ip6;
-	struct mbuf *m;
-	int off;
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
@@ -298,14 +292,11 @@ rip6_ctlinput(cmd, sa, d)
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
 		ip6cp = (struct ip6ctlparam *)d;
-		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
-		off = ip6cp->ip6c_off;
 		cmdarg = ip6cp->ip6c_cmdarg;
 		sa6_src = ip6cp->ip6c_src;
 		nxt = ip6cp->ip6c_nxt;
 	} else {
-		m = NULL;
 		ip6 = NULL;
 		cmdarg = NULL;
 		sa6_src = &sa6_any;
@@ -325,7 +316,7 @@ rip6_ctlinput(cmd, sa, d)
 		 * from icmp6_notify_error()
 		 */
 		in6p = NULL;
-		in6p = in6_pcblookup_connect(&rawin6pcb, &sa6->sin6_addr, 0,
+		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
 		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
 #if 0
 		if (!in6p) {
@@ -336,7 +327,7 @@ rip6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local
 			 * address (= s) is really ours.
 			 */
-			in6p = in6_pcblookup_bind(&rawin6pcb,
+			in6p = in6_pcblookup_bind(&raw6cbtable,
 			    &sa6->sin6_addr, 0, 0))
 		}
 #endif
@@ -363,7 +354,7 @@ rip6_ctlinput(cmd, sa, d)
 		 */
 	}
 
-	(void) in6_pcbnotify(&rawin6pcb, sa, 0,
+	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
 	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 }
 
@@ -432,6 +423,9 @@ rip6_output(m, va_alist)
 		icmp6 = mtod(m, struct icmp6_hdr *);
 		type = icmp6->icmp6_type;
 		code = icmp6->icmp6_code;
+	} else {
+		type = 0;
+		code = 0;
 	}
 
 	M_PREPEND(m, sizeof(*ip6), M_DONTWAIT);
@@ -478,15 +472,18 @@ rip6_output(m, va_alist)
 	ip6->ip6_vfc  &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc  |= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
-	ip6->ip6_plen  = htons((u_short)plen);
+	ip6->ip6_plen  = htons((u_int16_t)plen);
 #endif
 	ip6->ip6_nxt   = in6p->in6p_ip6.ip6_nxt;
 	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
+		struct mbuf *n;
 		int off;
+		u_int16_t *sump;
 		u_int16_t sum;
+		int sumoff;
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
@@ -499,27 +496,24 @@ rip6_output(m, va_alist)
 		}
 		off += sizeof(struct ip6_hdr);
 
-		sum = 0;
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		n = m_pulldown(m, off, sizeof(*sump), &sumoff);
+		if (n == NULL) {
+			m = NULL;
+			error = ENOBUFS;
+			goto bad;
+		}
+		sump = (u_int16_t *)(mtod(n, caddr_t) + sumoff);
+		memset(sump, 0, sizeof(*sump));
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		memcpy(sump, &sum, sizeof(*sump));
 	}
-
-#ifdef IPSEC
-	if (ipsec_setsocket(m, so) != 0) {
-		error = ENOBUFS;
-		goto bad;
-	}
-#endif /* IPSEC */
 
 	flags = 0;
-#ifdef IN6P_MINMTU
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
-#endif
 
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
-	    in6p->in6p_moptions, &oifp);
+	    in6p->in6p_moptions, so, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
 			icmp6_ifoutstat_inc(oifp, type, code);
@@ -618,9 +612,9 @@ rip6_usrreq(so, req, m, nam, control, l)
 		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
-		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
+		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&rawin6pcb, (struct ifnet *)control);
+		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
 		return (0);
 	}
 
@@ -637,7 +631,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 			splx(s);
 			break;
 		}
-		if ((error = in6_pcballoc(so, &rawin6pcb)) != 0)
+		if ((error = in6_pcballoc(so, &raw6cbtable)) != 0)
 		{
 			splx(s);
 			break;

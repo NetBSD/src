@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.163.2.1 2003/07/02 15:27:18 darrenr Exp $	*/
+/*	$NetBSD: systm.h,v 1.163.2.2 2004/08/03 10:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -269,6 +265,8 @@ void	statclock __P((struct clockframe *));
 void	hardupdate __P((long offset));
 #ifdef PPS_SYNC
 void	hardpps __P((struct timeval *, long));
+extern	void *pps_kc_hardpps_source;
+extern	int pps_kc_hardpps_mode;
 #endif
 #endif
 
@@ -276,6 +274,7 @@ void	initclocks __P((void));
 void	inittodr __P((time_t));
 void	resettodr __P((void));
 void	cpu_initclocks __P((void));
+void	setrootfstime __P((time_t));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
@@ -336,22 +335,19 @@ void	doexithooks __P((struct proc *));
  */
 void	*forkhook_establish __P((void (*)(struct proc *, struct proc *)));
 void	forkhook_disestablish __P((void *));
-void	doforkhooks __P((struct proc *, struct proc *p));
+void	doforkhooks __P((struct proc *, struct proc *));
 
 /*
  * kernel syscall tracing/debugging hooks.
  */
 int	trace_enter __P((struct lwp *, register_t, register_t,
-	    const struct sysent *, void *, register_t []));
+	    const struct sysent *, void *));
 void	trace_exit __P((struct lwp *, register_t, void *, register_t [], int));
 
 int	uiomove __P((void *, size_t, struct uio *));
+int	uiomove_frombuf __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
-caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
-#define	ALLOCSYS(base, name, type, num) \
-	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
-
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
 #endif
@@ -391,10 +387,10 @@ typedef struct cnm_state {
 #define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
-void cn_init_magic __P((cnm_state_t *cnm));
-void cn_destroy_magic __P((cnm_state_t *cnm));
-int cn_set_magic __P((char *magic));
-int cn_get_magic __P((char *magic, int len));
+void cn_init_magic __P((cnm_state_t *));
+void cn_destroy_magic __P((cnm_state_t *));
+int cn_set_magic __P((char *));
+int cn_get_magic __P((char *, int));
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\
@@ -447,12 +443,16 @@ void	_kernel_lock(int);
 void	_kernel_unlock(void);
 void	_kernel_proc_lock(struct lwp *);
 void	_kernel_proc_unlock(struct lwp *);
+int	_kernel_lock_release_all(void);
+void	_kernel_lock_acquire_count(int);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
 #define	KERNEL_LOCK(flag)		_kernel_lock((flag))
 #define	KERNEL_UNLOCK()			_kernel_unlock()
 #define	KERNEL_PROC_LOCK(l)		_kernel_proc_lock((l))
 #define	KERNEL_PROC_UNLOCK(l)		_kernel_proc_unlock((l))
+#define	KERNEL_LOCK_RELEASE_ALL()	_kernel_lock_release_all()
+#define	KERNEL_LOCK_ACQUIRE_COUNT(count) _kernel_lock_acquire_count(count)
 
 #else /* ! MULTIPROCESSOR */
 
@@ -461,6 +461,8 @@ void	_kernel_proc_unlock(struct lwp *);
 #define	KERNEL_UNLOCK()			/* nothing */
 #define	KERNEL_PROC_LOCK(l)		/* nothing */
 #define	KERNEL_PROC_UNLOCK(l)		/* nothing */
+#define	KERNEL_LOCK_RELEASE_ALL()	(0)
+#define	KERNEL_LOCK_ACQUIRE_COUNT(count) /* nothing */
 
 #endif /* MULTIPROCESSOR */
 

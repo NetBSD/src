@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.11 2001/12/03 23:29:11 augustss Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.11.16.1 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -60,6 +56,17 @@ struct winsize {
 	unsigned short	ws_xpixel;	/* horizontal size, pixels */
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
+
+/* ptmget, for /dev/ptm pty getting ioctl PTMGET */
+struct ptmget {
+	int	cfd;
+	int	sfd;
+	char	cn[16];
+	char	sn[16];
+};
+
+#define _PATH_PTMDEV	"/dev/ptm"
+#define _TTY_GID	4	/* XXX evil hardcoding of tty gid */
 
 #define		TIOCM_LE	0001		/* line enable */
 #define		TIOCM_DTR	0002		/* data terminal ready */
@@ -142,6 +149,10 @@ typedef char linedn_t[TTLINEDNAMELEN];
 
 #define	TIOCRCVFRAME	_IOW('t', 69, struct mbuf *)/* data frame received */
 #define	TIOCXMTFRAME	_IOW('t', 68, struct mbuf *)/* data frame transmit */
+
+#define TIOCPTMGET 	 _IOR('t', 70, struct ptmget)	/* get ptys */
+#define TIOCGRANTPT 	 _IO('t', 71) 			/* grantpt(3) */
+#define TIOCPTSNAME 	 _IOR('t', 72, struct ptmget)	/* ptsname(3) */
 
 
 #define	TTYDISC		0		/* termios tty line discipline */

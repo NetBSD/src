@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.29.2.1 2003/07/02 15:27:16 darrenr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.29.2.2 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,31 +72,30 @@ struct protosw {
 
 /* protocol-protocol hooks */
 	void	(*pr_input)		/* input to protocol (from below) */
-			__P((struct mbuf *, ...));
+			(struct mbuf *, ...);
 	int	(*pr_output)		/* output to protocol (from above) */
-			__P((struct mbuf *, ...));
+			(struct mbuf *, ...);
 	void	*(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, void *));
+			(int, struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
-			__P((int, struct socket *, int, int, struct mbuf **));
+			(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct lwp *));
+			(struct socket *, int, struct mbuf *,
+			     struct mbuf *, struct mbuf *, struct lwp *);
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
-			__P((void));
+			(void);
 
 	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			__P((void));
+			(void);
 	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			__P((void));
+			(void);
 	void	(*pr_drain)		/* flush any excess space possible */
-			__P((void));
-	int	(*pr_sysctl)		/* sysctl for protocol */
-			__P((int *, u_int, void *, size_t *, void *, size_t));
+			(void);
+	int	*pr_wassysctl;		/* @@@ was sysctl for protocol, now obsolete */
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
@@ -162,7 +157,7 @@ struct protosw {
 #define	PRU_NREQ		23
 
 #ifdef PRUREQUESTS
-char *prurequests[] = {
+const char * const prurequests[] = {
 	"ATTACH",	"DETACH",	"BIND",		"LISTEN",
 	"CONNECT",	"ACCEPT",	"DISCONNECT",	"SHUTDOWN",
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
@@ -205,7 +200,7 @@ char *prurequests[] = {
 	((cmd) >= PRC_REDIRECT_NET && (cmd) <= PRC_REDIRECT_TOSHOST)
 
 #ifdef PRCREQUESTS
-char	*prcrequests[] = {
+const char * const prcrequests[] = {
 	"IFDOWN", "ROUTEDEAD", "#2", "DEC-BIT-QUENCH2",
 	"QUENCH", "MSGSIZE", "HOSTDEAD", "#7",
 	"NET-UNREACH", "HOST-UNREACH", "PROTO-UNREACH", "PORT-UNREACH",
@@ -234,12 +229,15 @@ char	*prcrequests[] = {
 #define	PRCO_NCMDS	2
 
 #ifdef PRCOREQUESTS
-char	*prcorequests[] = {
+const char * const prcorequests[] = {
 	"GETOPT", "SETOPT",
 };
 #endif
 
 #ifdef _KERNEL
+extern const char * const prurequests[];
+extern const char * const prcrequests[];
+extern const char * const prcorequests[];
 /*
  * Monotonically increasing time values for slow and fast timers.
  */
@@ -259,12 +257,11 @@ extern	u_int pffasttimo_now;
 #define	PRT_FAST_ISEXPIRED(t)	(PRT_FAST_ISARMED((t)) && (t) <= pffasttimo_now)
 
 struct sockaddr;
-struct protosw *pffindproto __P((int, int, int));
-struct protosw *pffindtype __P((int, int));
-struct domain *pffinddomain __P((int));
-extern struct protosw inetsw[];
-void pfctlinput __P((int, struct sockaddr *));
-void pfctlinput2 __P((int, struct sockaddr *, void *));
+const struct protosw *pffindproto(int, int, int);
+const struct protosw *pffindtype(int, int);
+struct domain *pffinddomain(int);
+void pfctlinput(int, struct sockaddr *);
+void pfctlinput2(int, struct sockaddr *, void *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */

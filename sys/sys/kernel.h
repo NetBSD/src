@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.19 2003/02/04 01:21:06 thorpej Exp $	*/
+/*	$NetBSD: kernel.h,v 1.19.2.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,7 @@
 #ifndef _SYS_KERNEL_H_
 #define _SYS_KERNEL_H_
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 /* Global variables for the kernel. */
 
 extern long hostid;
@@ -69,8 +66,9 @@ extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
 
 extern int profsrc;		/* profiling source */
-#if defined(_KERNEL)
+
 #define PROFSRC_CLOCK	0
+
 #endif
 
 #endif /* _SYS_KERNEL_H_ */

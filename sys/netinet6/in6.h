@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.42 2003/04/28 23:16:27 bjh21 Exp $	*/
+/*	$NetBSD: in6.h,v 1.42.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -414,6 +410,7 @@ struct route_in6 {
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
+#define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
@@ -542,9 +539,10 @@ struct in6_pktinfo {
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
 /* 32 to 40: resrved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
+#define IPV6CTL_IFQ		42	/* ip6intrq node */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
-#define IPV6CTL_MAXID		42
+#define IPV6CTL_MAXID		43
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -589,6 +587,7 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "maxfrags", CTLTYPE_INT }, \
+	{ "ifq", CTLTYPE_NODE }, \
 }
 
 #endif /* _NETBSD_SOURCE */

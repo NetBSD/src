@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.51.2.1 2003/07/02 15:26:23 darrenr Exp $	*/
+/*	$NetBSD: ucom.c,v 1.51.2.2 2004/08/03 10:51:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.51.2.1 2003/07/02 15:26:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.51.2.2 2004/08/03 10:51:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no, 0,
 				     &sc->sc_bulkin_pipe);
 		if (err) {
-			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
+			DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no,
 				 usbd_errstr(err)));
 			error = EIO;
@@ -414,7 +414,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
 				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 		if (err) {
-			DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
+			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no,
 				 usbd_errstr(err)));
 			error = EIO;

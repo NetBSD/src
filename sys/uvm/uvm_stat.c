@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.22.16.1 2004/08/03 10:57:09 skrll Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22.16.1 2004/08/03 10:57:09 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $");
 /*
  * globals
  */
-
-struct uvm_cnt *uvm_cnt_head = NULL;
 
 #ifdef UVMHIST
 struct uvm_history_head uvm_histories;
@@ -71,11 +69,11 @@ int uvmhist_print_enabled = 1;
  */
 
 #ifdef UVMHIST
-void uvmhist_dump __P((struct uvm_history *));
-void uvm_hist __P((u_int32_t));
-static void uvmhist_dump_histories __P((struct uvm_history *[]));
+void uvmhist_dump(struct uvm_history *);
+void uvm_hist(u_int32_t);
+static void uvmhist_dump_histories(struct uvm_history *[]);
 #endif
-void uvmcnt_dump __P((void));
+void uvmcnt_dump(void);
 
 
 #ifdef UVMHIST
@@ -191,19 +189,6 @@ uvm_hist(bitmask)
 	uvmhist_dump_histories(hists);
 }
 #endif /* UVMHIST */
-
-void
-uvmcnt_dump()
-{
-	struct uvm_cnt *uvc = uvm_cnt_head;
-
-	while (uvc) {
-		if ((uvc->t & UVMCNT_MASK) != UVMCNT_CNT)
-			continue;
-		printf("%s = %d\n", uvc->name, uvc->c);
-		uvc = uvc->next;
-	}
-}
 
 /*
  * uvmexp_print: ddb hook to print interesting uvm counters

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.9 2001/11/13 01:10:50 lukem Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.9.16.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -67,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.9 2001/11/13 01:10:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.9.16.1 2004/08/03 10:55:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -101,11 +97,8 @@ struct tp_Meas  tp_Meas[TPMEASN];
  * NOTES:
  */
 void
-Tpmeas(ref, kind, timev, seq, win, size)
-	u_int           ref;
-	u_int           kind;
-	struct timeval *timev;
-	u_int           seq, win, size;
+Tpmeas(u_int ref, u_int kind, struct timeval *timev, u_int seq, u_int win,
+	u_int size)
 {
 	struct tp_Meas *tpm;
 	static int      mseq;

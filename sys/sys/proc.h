@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.1 2003/07/02 15:27:16 darrenr Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.2 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -54,6 +50,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/siginfo.h>
 #include <sys/event.h>
 
 /*
@@ -103,30 +100,33 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((int, sigset_t *, u_long));
-	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
+	void		(*e_sendsig) __P((const struct ksiginfo *,
+					  const sigset_t *));
+	void		(*e_trapsignal) __P((struct lwp *,
+					     const struct ksiginfo *));
+	int		(*e_tracesig) __P((struct proc *, int));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
+	struct uvm_object **e_sigobject;/* shared sigcode object */
 	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
-				  u_long));
+					  u_long));
 
 					/* Per-process hooks */
 	void		(*e_proc_exec) __P((struct proc *,
 					    struct exec_package *));
-	void		(*e_proc_fork) __P((struct proc *p,
-					    struct proc *parent));
+	void		(*e_proc_fork) __P((struct proc *, struct proc *));
 	void		(*e_proc_exit) __P((struct proc *));
+	void		(*e_lwp_fork)  __P((struct lwp *, struct lwp *));
+	void		(*e_lwp_exit)  __P((struct lwp *));
 
 #ifdef __HAVE_SYSCALL_INTERN
 	void		(*e_syscall_intern) __P((struct proc *));
 #else
 	void		(*e_syscall) __P((void));
 #endif
-					/* Emulation specific sysctl */
-	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
-				void *, size_t, struct lwp *l));
-					/* Specific VM fault handling */
+					/* Emulation specific sysctl data */
+	struct sysctlnode *e_sysctlovly;
 	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
 
@@ -145,6 +145,9 @@ struct emul {
  * are always addressible except for those marked "(PROC ONLY)" below,
  * which might be addressible only on a processor on which the process
  * is running.
+ *
+ * Fields marked 'p:' are protected by the process's own p_lock.
+ * Fields marked 'l:' are protected by the proclist_lock
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
@@ -169,37 +172,36 @@ struct proc {
 	char		p_pad1[3];
 
 	pid_t		p_pid;		/* Process identifier. */
-	SLIST_ENTRY(proc) p_dead;	/* Processes waiting for reaper */
-	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp. */
-	struct proc 	*p_pptr;	/* Pointer to parent process. */
-	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
-	LIST_HEAD(, proc) p_children;	/* Pointer to list of children. */
+	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
+	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
+	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
+	LIST_HEAD(, proc) p_children;	/* l: Pointer to list of children. */
 
-	struct simplelock p_lwplock;	/* Lock on LWP-related state. */
+	struct simplelock p_lock;	/* Lock on proc state (p:) */
 
-	LIST_HEAD(, lwp) p_lwps;	/* Pointer to list of LWPs. */
+	/* XXX dsl: locking of LWP info is suspect in schedcpu and kpsignal2 */
+	LIST_HEAD(, lwp) p_lwps;	/* p: Pointer to list of LWPs. */
 
-	LIST_HEAD(, ras) p_raslist;	/* Pointer to RAS queue */
-	u_int p_nras;			/* number of RASs */
-	struct simplelock p_raslock;	/* Lock for RAS queue */
+	LIST_HEAD(, ras) p_raslist;	/* p: Pointer to RAS queue */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
 
-	int 		p_nlwps;	/* Number of LWPs */
-	int 		p_nrlwps;	/* Number of running LWPs */
-	int 		p_nzlwps;	/* Number of zombie LWPs */
-	int 		p_nlwpid;	/* Next LWP ID */
+	int 		p_nlwps;	/* p: Number of LWPs */
+	int 		p_nrlwps;	/* p: Number of running LWPs */
+	int 		p_nzlwps;	/* p: Number of zombie LWPs */
+	int 		p_nlwpid;	/* p: Next LWP ID */
+
+	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
 
 	struct sadata 	*p_sa;		/* Scheduler activation information */
 
 	/* scheduling */
 	u_int		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
-	int		p_cpticks;	/* Ticks of cpu time */
+	int		p_cpticks;	/* Ticks of CPU time */
 	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
 	struct proc	*p_opptr;	/* Save parent during ptrace. */
-	int		p_dupfd;	/* Sideways return value from filedescopen XXX */
 	struct ptimers	*p_timers;	/* Timers: real, virtual, profiling */
 	struct timeval 	p_rtime;	/* Real time */
 	u_quad_t 	p_uticks;	/* Statclock hits in user mode */
@@ -217,7 +219,7 @@ struct proc {
 					 * Malloc type M_EMULDATA 
 					 */
 	
-	void 		(*p_userret)(struct lwp *l, void *arg); 
+	void 		(*p_userret)(struct lwp *, void *); 
 					/* Function to call at userret(). */ 
 	void		*p_userret_arg;
 	
@@ -270,9 +272,8 @@ struct proc {
 #define	SACTIVE		2		/* Process is not stopped */
 #define	SSTOP		4		/* Process debugging or suspension */
 #define	SZOMB		5		/* Awaiting collection by parent */
-#define	SDEAD		6		/* Process is almost a zombie */
 
-#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
+#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB)
 
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
@@ -296,6 +297,7 @@ struct proc {
 #define	P_CHTRACED	0x00400000 /* Child has been traced & reparented */
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
+#define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -377,7 +379,18 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curproc */
 
-#define curproc ((curlwp) ? (curlwp)->l_proc : NULL)
+static struct proc *__curproc(void);
+
+static __inline struct proc *
+__curproc()
+{
+	struct lwp *l = curlwp;
+
+	if (l == NULL)
+		return NULL;
+	return l->l_proc;
+}
+#define	curproc	__curproc()
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
@@ -401,29 +414,35 @@ extern struct pool 	pstats_pool;	/* memory pool for pstats */
 extern struct pool	rusage_pool;	/* Memory pool for rusages */
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
-struct proc *pfind(pid_t);		/* Find process by id */
-struct pgrp *pgfind(pid_t);		/* Find process group by id */
+struct proc *p_find(pid_t, uint);	/* Find process by id */
+struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
+/* Flags values for p_find() and pg_find(). */
+#define PFIND_ZOMBIE		1	/* look for zombies as well */
+#define PFIND_LOCKED		2	/* proclist locked on entry */
+#define PFIND_UNLOCK_FAIL	4	/* unlock proclist on failure */
+#define PFIND_UNLOCK_OK		8	/* unlock proclist on success */
+#define PFIND_UNLOCK		(PFIND_UNLOCK_OK | PFIND_UNLOCK_FAIL)
+/* For source compatibility. but UNLOCK_OK gives a stale answer... */
+#define pfind(pid) p_find((pid), PFIND_UNLOCK)
+#define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
-int	chgproccnt(uid_t uid, int diff);
-int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
-void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
-int	inferior(struct proc *p, struct proc *q);
-int	leavepgrp(struct proc *p);
+int	enterpgrp(struct proc *, pid_t, int);
+void	fixjobc(struct proc *, struct pgrp *, int);
+int	inferior(struct proc *, struct proc *);
+int	leavepgrp(struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
 struct lwp *chooselwp(void);
-void	pgdelete(struct pgrp *pgrp);
+void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(const void *chan, int pri, const char *wmesg, int timo,
+int	ltsleep(const void *, int, const char *, int,
 	    __volatile struct simplelock *);
-void	wakeup(const void *chan);
-void	wakeup_one(const void *chan);
-void	reaper(void *);
+void	wakeup(const void *);
+void	wakeup_one(const void *);
 void	exit1(struct lwp *, int);
-void	exit2(struct lwp *);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);
 void	proc0_insert(struct proc *, struct lwp *, struct pgrp *, struct session *);
@@ -438,19 +457,17 @@ int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
 #endif
-void	cpu_exit(struct lwp *, int);
+void	cpu_exit(struct lwp *);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
-
-		/*
-		 * XXX: use __P() to allow ports to have as a #define.
-		 * XXX: we need a better way to solve this.
-		 */
-void	cpu_wait __P((struct lwp *));
+#ifndef cpu_lwp_free
+void	cpu_lwp_free(struct lwp *, int);
+#endif
 
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
+void	proc_stop(struct proc *, int);
 
 void	proclist_lock_read(void);
 void	proclist_unlock_read(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.48 2003/06/13 05:13:43 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.48.2.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -56,11 +56,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -144,6 +140,9 @@ struct lock {
 
 			/* maximum sleep time (for tsleep) */
 			int lk_sleep_timo;
+
+			/* lock taking over this lock */
+			struct lock *lk_newlock;
 		} lk_un_sleep;
 		struct {
 			/* CPU ID of exclusive lock holder */
@@ -158,6 +157,7 @@ struct lock {
 #define	lk_locklwp	lk_un.lk_un_sleep.lk_sleep_locklwp
 #define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
 #define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
+#define	lk_newlock	lk_un.lk_un_sleep.lk_newlock
 
 #define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
 #if defined(LOCKDEBUG)
@@ -224,6 +224,7 @@ struct lock {
 #define	LK_DOWNGRADE	0x00000005	/* exclusive-to-shared downgrade */
 #define	LK_RELEASE	0x00000006	/* release any type of lock */
 #define	LK_DRAIN	0x00000007	/* wait for all lock activity to end */
+#define	LK_EXCLOTHER	0x00000008	/* other process holds lock */
 /*
  * External lock flags.
  *
@@ -250,6 +251,11 @@ struct lock {
 #define	LK_WAITDRAIN	0x00000800	/* process waiting for lock to drain */
 #define	LK_DRAINING	0x00004000	/* lock is being drained */
 #define	LK_DRAINED	0x00008000	/* lock has been decommissioned */
+/*
+ * Internal state flags corresponding to lk_sharecount, and lk_waitcount
+ */
+#define	LK_SHARE_NONZERO 0x00040000	/* lk_sharecount != 0 */
+#define	LK_WAIT_NONZERO	0x00080000	/* lk_waitcount != 0 */
 /*
  * Control flags
  *
@@ -287,15 +293,15 @@ struct lock {
 
 struct proc;
 
-void	lockinit(struct lock *, int prio, const char *wmesg, int timo,
-			int flags);
+void	lockinit(struct lock *, int, const char *, int, int);
 #if defined(LOCKDEBUG)
-int	_lockmgr(__volatile struct lock *, u_int flags, struct simplelock *,
-	    const char *file, int line);
+int	_lockmgr(__volatile struct lock *, u_int, struct simplelock *,
+	    const char *, int);
 #define	lockmgr(l, f, i)	_lockmgr((l), (f), (i), __FILE__, __LINE__)
 #else
 int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
 #endif /* LOCKDEBUG */
+void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(__volatile struct lock *);
 
@@ -352,16 +358,17 @@ void	simple_lock_switchcheck(void);
 #define	LOCK_ASSERT(x)		/* nothing */
 #define	simple_lock_only_held(x,y)		/* nothing */
 #else
-#define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
 #define	simple_lock_try(alp)	(1)
-#ifndef lint
+#ifndef __lint__
+#define	simple_lock_init(alp)	(void)(alp)
 #define	simple_lock(alp)	(void)(alp)
 #define	simple_unlock(alp)	(void)(alp)
-#else /* lint */
+#else /* __lint__ */
+#define	simple_lock_init(alp)	/* nothing */
 #define	simple_lock(alp)	/* nothing */
 #define	simple_unlock(alp)	/* nothing */
 #define	simple_lock_only_held(x,y)		/* nothing */
-#endif /* lint */
+#endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
 

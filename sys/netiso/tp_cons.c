@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.15 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.15.16.1 2004/08/03 10:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.15.16.1 2004/08/03 10:55:42 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -115,9 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
 
 #include <machine/stdarg.h>
 
-#include <netiso/if_cons.c>
-
-
 /*
  * CALLED FROM:
  *  tp_route_to() for PRU_CONNECT
@@ -126,9 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
  */
 
 int
-tpcons_pcbconnect(v, nam)
-	void *v;
-	struct mbuf *nam;
+tpcons_pcbconnect(void *v, struct mbuf *nam)
 {
 	struct isopcb  *isop = v;
 	int             error;
@@ -159,10 +150,7 @@ tpcons_pcbconnect(v, nam)
  * THIS MAYBE BELONGS IN SOME OTHER PLACE??? but i think not -
  */
 void *
-tpcons_ctlinput(cmd, siso, v)
-	int             cmd;
-	struct sockaddr *siso;
-	void *v;
+tpcons_ctlinput(int cmd, struct sockaddr *siso, void *v)
 {
 	struct isopcb  *isop = v;
 	struct tp_pcb *tpcb = 0;
@@ -198,10 +186,10 @@ tpcons_ctlinput(cmd, siso, v)
 					printf("FAKE ACK seq 0x%x cdt 1\n", seq);
 				}
 #endif
-				E.TP_ATTR(AK_TPDU).e_cdt = 1;
-				E.TP_ATTR(AK_TPDU).e_seq = seq;
-				E.TP_ATTR(AK_TPDU).e_subseq = 0;
-				E.TP_ATTR(AK_TPDU).e_fcc_present = 0;
+				E.ev_union.EV_AK_TPDU.e_cdt = 1;
+				E.ev_union.EV_AK_TPDU.e_seq = seq;
+				E.ev_union.EV_AK_TPDU.e_subseq = 0;
+				E.ev_union.EV_AK_TPDU.e_fcc_present = 0;
 				error = DoEvent(AK_TPDU);
 				if (error) {
 					tpcb->tp_sock->so_error = error;
@@ -230,13 +218,7 @@ tpcons_ctlinput(cmd, siso, v)
  * No return value.
  */
 void
-#if __STDC__
 tpcons_input(struct mbuf *m, ...)
-#else
-tpcons_input(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;
 	caddr_t         channel;
@@ -253,7 +235,7 @@ tpcons_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpcons_input before tp_input(m 0x%x)\n", m);
+		printf("tpcons_input before tp_input(m %p)\n", m);
 		dump_buf(m, 12 + m->m_len);
 	}
 #endif
@@ -274,13 +256,7 @@ tpcons_input(m, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct isopcb  *isop;
 	int             datalen;
@@ -298,7 +274,7 @@ tpcons_output(m0, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
 		printf(
-		  "tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
+		  "tpcons_output(isop=%p, m=%p, len=%#x socket=%p\n",
 		       isop, m0, datalen, isop->isop_socket);
 	}
 #endif
@@ -348,13 +324,7 @@ tpcons_output(m0, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output_dg(struct mbuf *m0, ...)
-#else
-tpcons_output_dg(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	caddr_t         chan;
@@ -375,16 +345,10 @@ tpcons_output_dg(m0, va_alist)
 
 struct mbuf;
 
-int tpcons_output __P((struct mbuf *m0, ...));
+int tpcons_output (struct mbuf *m0, ...);
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	return 0;
 }

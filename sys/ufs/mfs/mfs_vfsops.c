@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.2 2003/07/02 21:48:16 wrstuden Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.3 2004/08/03 10:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.2 2003/07/02 21:48:16 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.3 2004/08/03 10:56:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -44,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.2 2003/07/02 21:48:16 wrstuden
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -93,7 +90,7 @@ struct vfsops mfs_vfsops = {
 	ffs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	mfs_statfs,
+	mfs_statvfs,
 	ffs_sync,
 	ffs_vget,
 	ffs_fhtovp,
@@ -101,11 +98,34 @@ struct vfsops mfs_vfsops = {
 	mfs_init,
 	mfs_reinit,
 	mfs_done,
-	ffs_sysctl,
+	NULL,
 	NULL,
 	ufs_check_export,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	mfs_vnodeopv_descs,
 };
+
+SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "mfs",
+		       SYSCTL_DESCR("Memory based file system"),
+		       NULL, 1, NULL, 0,
+		       CTL_VFS, 3, CTL_EOL);
+	/*
+	 * XXX the "1" and the "3" above could be dynamic, thereby
+	 * eliminating one more instance of the "number to vfs"
+	 * mapping problem, but they are in order as taken from
+	 * sys/mount.h
+	 */
+}
 
 /* 
  * Memory based filesystem initialization.
@@ -195,9 +215,8 @@ mfs_mountroot()
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statfs(mp, &mp->mnt_stat, l);
+	(void)ffs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
-	inittodr((time_t)0);
 	return (0);
 }
 
@@ -298,7 +317,7 @@ mfs_mount(mp, path, data, ndp, l)
 			if (error)
 				return (error);
 		}
-		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR))
+		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR))
 			fs->fs_ronly = 0;
 		if (args.fspec == 0)
 			return (vfs_export(mp, &ump->um_export, &args.export));
@@ -326,11 +345,15 @@ mfs_mount(mp, path, data, ndp, l)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, l);
-	(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
-	    sizeof(mp->mnt_stat.f_mntonname));
-	return error;
+	if (error)
+		return error;
+	(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
+		sizeof(fs->fs_fsmnt));
+	fs->fs_fsmnt[sizeof(fs->fs_fsmnt) - 1] = '\0';
+	/* XXX: cleanup on error */
+	return 0;
 }
 
 int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
@@ -394,19 +417,18 @@ mfs_start(mp, flags, l)
  * Get file system statistics.
  */
 int
-mfs_statfs(mp, sbp, l)
+mfs_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct lwp *l;
 {
 	int error;
 
-	error = ffs_statfs(mp, sbp, l);
-#ifdef COMPAT_09
-	sbp->f_type = 3;
-#else
-	sbp->f_type = 0;
-#endif
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
-	return (error);
+	error = ffs_statvfs(mp, sbp, l);
+	if (error)
+		return error;
+	(void)strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name,
+	    sizeof(sbp->f_fstypename));
+	sbp->f_fstypename[sizeof(sbp->f_fstypename) - 1] = '\0';
+	return 0;
 }

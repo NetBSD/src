@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.23.2.1 2003/07/02 15:27:08 darrenr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.23.2.2 2004/08/03 10:56:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.1 2003/07/02 15:27:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.2 2004/08/03 10:56:17 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -94,9 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.1 2003/07/02 15:27:08 darre
 
 /* bootparam RPC */
 static int bp_whoami __P((struct sockaddr_in *bpsin,
-	struct in_addr *my_ip, struct in_addr *gw_ip));
+	struct in_addr *my_ip, struct in_addr *gw_ip, struct lwp *l));
 static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
-	struct nfs_dlmount *ndm));
+	struct nfs_dlmount *ndm, struct lwp *l));
 
 
 /*
@@ -180,7 +180,7 @@ nfs_bootparam(nd, lwp)
 	sin->sin_addr.s_addr = INADDR_BROADCAST;
 
 	/* Do the RPC/bootparam/whoami. */
-	error = bp_whoami(sin, &my_ip, &gw_ip);
+	error = bp_whoami(sin, &my_ip, &gw_ip, lwp);
 	if (error) {
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
 		goto delout;
@@ -192,7 +192,7 @@ nfs_bootparam(nd, lwp)
 	 * Now fetch the server:pathname strings and server IP
 	 * for root and swap.  Missing swap is not fatal.
 	 */
-	error = bp_getfile(sin, "root", &nd->nd_root);
+	error = bp_getfile(sin, "root", &nd->nd_root, lwp);
 	if (error) {
 		printf("nfs_boot: bootparam get root: %d\n", error);
 		goto delout;
@@ -201,7 +201,7 @@ nfs_bootparam(nd, lwp)
 #ifndef NFS_BOOTPARAM_NOGATEWAY
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
 	memset((caddr_t)gw_ndm, 0, sizeof(*gw_ndm));
-	error = bp_getfile(sin, "gateway", gw_ndm);
+	error = bp_getfile(sin, "gateway", gw_ndm, lwp);
 	if (error) {
 		/* No gateway supplied. No error, but try fallback. */
 		error = 0;
@@ -291,10 +291,11 @@ gwok:
  * know about us (don't want to broadcast a getport call).
  */
 static int
-bp_whoami(bpsin, my_ip, gw_ip)
+bp_whoami(bpsin, my_ip, gw_ip, l)
 	struct sockaddr_in *bpsin;
 	struct in_addr *my_ip;
 	struct in_addr *gw_ip;
+	struct lwp *l;
 {
 	/* RPC structures for PMAPPROC_CALLIT */
 	struct whoami_call {
@@ -334,7 +335,7 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	bpsin->sin_port = htons(PMAPPORT);
 	from = NULL;
 	error = krpc_call(bpsin, PMAPPROG, PMAPVERS,
-			PMAPPROC_CALLIT, &m, &from);
+			PMAPPROC_CALLIT, &m, &from, l);
 	if (error)
 		return error;
 
@@ -398,10 +399,11 @@ out:
  *	server pathname
  */
 static int
-bp_getfile(bpsin, key, ndm)
+bp_getfile(bpsin, key, ndm, l)
 	struct sockaddr_in *bpsin;
 	char *key;
 	struct nfs_dlmount *ndm;
+	struct lwp *l;
 {
 	char pathname[MNAMELEN];
 	struct in_addr inaddr;
@@ -426,7 +428,7 @@ bp_getfile(bpsin, key, ndm)
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
-	                  BOOTPARAM_GETFILE, &m, NULL);
+	                  BOOTPARAM_GETFILE, &m, NULL, l);
 	if (error)
 		return error;
 

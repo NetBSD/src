@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.17 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.17.6.1 2004/08/03 10:51:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.17 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.17.6.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,6 @@ hmeattach_sbus(parent, self, aux)
 	struct sbusdev *sd = &hsc->hsc_sbus;
 	u_int32_t burst, sbusburst;
 	int node;
-
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
 
 	node = sa->sa_node;
 
@@ -173,7 +170,7 @@ hmeattach_sbus(parent, self, aux)
 	sd->sd_reset = (void *)hme_reset;
 	sbus_establish(sd, self);
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(node, sc->sc_enaddr);
 
 	/*
 	 * Get transfer burst size from PROM and pass it on
@@ -183,7 +180,7 @@ hmeattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = PROM_getpropint(node, "burst-sizes", -1);
+	burst = prom_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

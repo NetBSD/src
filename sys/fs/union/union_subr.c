@@ -1,9 +1,41 @@
-/*	$NetBSD: union_subr.c,v 1.6.2.1 2003/07/03 01:32:56 wrstuden Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)union_subr.c	8.20 (Berkeley) 5/20/95
+ */
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
- * Copyright (c) 1994
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -40,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.1 2003/07/03 01:32:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +123,7 @@ union_init()
 
 	for (i = 0; i < NHASH; i++)
 		LIST_INIT(&unhead[i]);
-	memset((caddr_t) unvplock, 0, sizeof(unvplock));
+	memset(unvplock, 0, sizeof(unvplock));
 }
 
 /*
@@ -130,7 +162,7 @@ union_list_unlock(ix)
 
 	if (unvplock[ix] & UN_WANTED) {
 		unvplock[ix] &= ~UN_WANTED;
-		wakeup((caddr_t) &unvplock[ix]);
+		wakeup(&unvplock[ix]);
 	}
 }
 
@@ -666,12 +698,17 @@ union_copyup(un, docopy, cred, l)
 	struct lwp *l;
 {
 	int error;
+	struct mount *mp;
 	struct vnode *lvp, *uvp;
 	struct vattr lvattr, uvattr;
 
-	error = union_vn_create(&uvp, un, l);
-	if (error)
+	if ((error = vn_start_write(un->un_dirvp, &mp, V_WAIT | V_PCATCH)) != 0)
 		return (error);
+	error = union_vn_create(&uvp, un, l);
+	if (error) {
+		vn_finished_write(mp, 0);
+		return (error);
+	}
 
 	/* at this point, uppervp is locked */
 	union_newupper(un, uvp);
@@ -707,6 +744,7 @@ union_copyup(un, docopy, cred, l)
 #endif
 
 	}
+	vn_finished_write(mp, 0);
 	union_vn_close(uvp, FWRITE, cred, l);
 
 	/*
@@ -812,16 +850,22 @@ union_mkshadow(um, dvp, cnp, vpp)
 	struct vattr va;
 	struct lwp *l = cnp->cn_lwp;
 	struct componentname cn;
+	struct mount *mp;
 
+	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	error = union_relookup(um, dvp, vpp, cnp, &cn,
 			cnp->cn_nameptr, cnp->cn_namelen);
-	if (error)
+	if (error) {
+		vn_finished_write(mp, 0);
 		return (error);
+	}
 
 	if (*vpp) {
 		VOP_ABORTOP(dvp, &cn);
 		VOP_UNLOCK(dvp, 0);
 		vrele(*vpp);
+		vn_finished_write(mp, 0);
 		*vpp = NULLVP;
 		return (EEXIST);
 	}
@@ -842,6 +886,7 @@ union_mkshadow(um, dvp, cnp, vpp)
 	VOP_LEASE(dvp, l, cn.cn_cred, LEASE_WRITE);
 
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -865,10 +910,14 @@ union_mkwhiteout(um, dvp, cnp, path)
 	struct lwp *l = cnp->cn_lwp;
 	struct vnode *wvp;
 	struct componentname cn;
+	struct mount *mp;
 
 	VOP_UNLOCK(dvp, 0);
+	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
 	if (error) {
+		vn_finished_write(mp, 0);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 	}
@@ -877,6 +926,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 		VOP_ABORTOP(dvp, &cn);
 		vrele(dvp);
 		vrele(wvp);
+		vn_finished_write(mp, 0);
 		return (EEXIST);
 	}
 
@@ -888,6 +938,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 		VOP_ABORTOP(dvp, &cn);
 
 	vrele(dvp);
+	vn_finished_write(mp, 0);
 
 	return (error);
 }
@@ -1190,7 +1241,7 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 		return (error);
 	}
 	VOP_UNLOCK(lvp, 0);
-	fp->f_data = (caddr_t) lvp;
+	fp->f_data = lvp;
 	fp->f_offset = 0;
 	error = vn_close(vp, FREAD, fp->f_cred, l);
 	if (error)

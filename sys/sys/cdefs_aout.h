@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.13 2003/02/23 04:50:18 simonb Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.13.2.1 2004/08/03 10:56:25 skrll Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -8,7 +8,8 @@
 #ifndef _SYS_CDEFS_AOUT_H_
 #define	_SYS_CDEFS_AOUT_H_
 
-#define	_C_LABEL(x)	__CONCAT(_,x)
+#define	_C_LABEL(x)		__CONCAT(_,x)
+#define	_C_LABEL_STRING(x)	"_"x
 
 #if __STDC__
 #define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
@@ -17,20 +18,28 @@
 #define	____RENAME(x)	__asm__(___STRING(x))
 #endif
 
+#define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
+
 #ifdef __GNUC__
 #if __STDC__
-#define	__indr_reference(sym,alias)					\
-	__asm__(".stabs \"_" #alias "\",11,0,0,0");			\
-	__asm__(".stabs \"_" #sym "\",1,0,0,0");
-
+#define	__strong_alias(alias,sym)	       				\
+    __asm__(".global " _C_LABEL_STRING(#alias) "\n"			\
+	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
+#define	__weak_alias(alias,sym)						\
+    __asm__(".weak " _C_LABEL_STRING(#alias) "\n"			\
+	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
+#define	__weak_extern(sym)						\
+    __asm__(".weak " _C_LABEL_STRING(#sym));
 #define	__warn_references(sym,msg)					\
 	__asm__(".stabs \"" msg "\",30,0,0,0");				\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0");
 #else /* __STDC__ */
-#define	__indr_reference(sym,alias)					\
-	__asm__(".stabs \"_/**/alias\",11,0,0,0");			\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0");
-
+#define	__weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
+#define	___weak_alias(alias,sym)					\
+    __asm__(".weak alias\nalias = sym");
+#define	__weak_extern(sym) ___weak_extern(_/**/sym)
+#define	___weak_extern(sym)						\
+    __asm__(".weak sym");
 #define	__warn_references(sym,msg)					\
 	__asm__(".stabs msg,30,0,0,0");					\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0");
@@ -42,21 +51,21 @@
 #if defined(__sh__)		/* XXX SH COFF */
 #undef __indr_reference(sym,alias)
 #undef __warn_references(sym,msg)
-#define __warn_references(sym,msg)
+#define	__warn_references(sym,msg)
 #endif
 
-#define __IDSTRING(_n,_s)						\
+#define	__IDSTRING(_n,_s)						\
 	__asm__(".data ; .asciz \"" _s "\" ; .text")
 
 #undef __KERNEL_RCSID
 
-#define __RCSID(_s)	__IDSTRING(rcsid,_s)
-#define __SCCSID(_s)
-#define __SCCSID2(_s)
+#define	__RCSID(_s)	__IDSTRING(rcsid,_s)
+#define	__SCCSID(_s)
+#define	__SCCSID2(_s)
 #if 0	/* XXX userland __COPYRIGHTs have \ns in them */
-#define __COPYRIGHT(_s)	__IDSTRING(copyright,_s)
+#define	__COPYRIGHT(_s)	__IDSTRING(copyright,_s)
 #else
-#define __COPYRIGHT(_s)							\
+#define	__COPYRIGHT(_s)							\
 	static const char copyright[] __attribute__((__unused__)) = _s
 #endif
 
@@ -71,7 +80,7 @@
 #ifndef __lint__
 #define	__link_set_make_entry(set, sym, type)				\
 	static void const * const					\
-	    __link_set_##set##_sym_##sym __unused = &sym;		\
+	    __link_set_##set##_sym_##sym __used = &sym;		\
 	__asm(".stabs \"___link_set_" #set "\", " #type ", 0, 0, _" #sym)
 #else
 #define	__link_set_make_entry(set, sym, type)				\

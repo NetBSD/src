@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.5.2.1 2003/07/02 15:26:28 darrenr Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.5.2.2 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -92,8 +88,8 @@ int cd9660_mount __P((struct mount *,
 int cd9660_start __P((struct mount *, int, struct lwp *));
 int cd9660_unmount __P((struct mount *, int, struct lwp *));
 int cd9660_root __P((struct mount *, struct vnode **, struct lwp *));
-int cd9660_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
-int cd9660_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int cd9660_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
+int cd9660_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int cd9660_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int cd9660_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **,
@@ -104,8 +100,10 @@ int cd9660_vptofh __P((struct vnode *, struct fid *));
 void cd9660_init __P((void));
 void cd9660_reinit __P((void));
 void cd9660_done __P((void));
-int cd9660_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct lwp *));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_cd9660_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 int cd9660_mountroot __P((void)); 
 

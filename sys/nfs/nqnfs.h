@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.13.2.1 2003/07/02 15:27:13 darrenr Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.13.2.2 2004/08/03 10:56:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -53,7 +49,6 @@
 #define	NQ_MINLEASE	5	/* Min lease duration (sec) */
 #define	NQ_DEFLEASE	30	/* Default lease duration (sec) */
 #define	NQ_RENEWAL	3	/* Time before expiry (sec) to renew */
-#define	NQ_TRYLATERDEL	15	/* Initial try later delay (sec) */
 #define	NQ_MAXNUMLEASE	2048	/* Upper bound on number of server leases */
 #define	NQ_DEADTHRESH	NQ_NEVERDEAD	/* Default nm_deadthresh */
 #define	NQ_NEVERDEAD	9	/* Greater than max. nm_timeouts */
@@ -121,7 +116,7 @@ struct nqlease {
 	struct nqhost	lc_host;	/* Host that got lease */
 	struct nqm	*lc_morehosts;	/* Other hosts that share read lease */
 	fsid_t		lc_fsid;	/* Fhandle */
-	char		lc_fiddata[MAXFIDSZ];
+	char		lc_fiddata[VFS_MAXFIDSZ];
 	struct vnode	*lc_vp;		/* Soft reference to associated vnode */
 };
 #define	lc_flag		lc_host.lph_un.un_udp.udp_flag

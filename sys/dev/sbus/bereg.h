@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.5 2003/05/03 18:11:38 wiz Exp $	*/
+/*	$NetBSD: bereg.h,v 1.5.2.1 2004/08/03 10:51:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,12 +124,16 @@ struct be_bregs {
 #define BE_BRI_IMASK	(65*4)
 #define BE_BRI_TXCFG	(131*4)
 #define BE_BRI_JSIZE	(139*4)
+#define BE_BRI_TXMAX	(140*4)
+#define BE_BRI_TXMIN	(141*4)
 #define BE_BRI_NCCNT	(144*4)
 #define BE_BRI_FCCNT	(145*4)
 #define BE_BRI_EXCNT	(146*4)
 #define BE_BRI_LTCNT	(147*4)
 #define BE_BRI_RANDSEED	(148*4)
 #define BE_BRI_RXCFG	(195*4)
+#define BE_BRI_RXMAX	(196*4)
+#define BE_BRI_RXMIN	(197*4)
 #define BE_BRI_MACADDR2	(198*4)
 #define BE_BRI_MACADDR1	(199*4)
 #define BE_BRI_MACADDR0	(200*4)

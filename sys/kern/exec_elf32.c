@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.92.2.1 2003/07/02 15:26:34 darrenr Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.92.2.2 2004/08/03 10:52:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.1 2003/07/02 15:26:34 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.2 2004/08/03 10:52:43 skrll Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -88,7 +88,6 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.1 2003/07/02 15:26:34 darrenr 
 
 extern const struct emul emul_netbsd;
 
-int	ELFNAME(check_header)(Elf_Ehdr *, int);
 int	ELFNAME(load_file)(struct lwp *, struct exec_package *, char *,
 	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *);
 void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
@@ -225,7 +224,7 @@ ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 	if (eh->e_type != type)
 		return (ENOEXEC);
 
-	if (eh->e_shnum > 512 ||
+	if (eh->e_shnum > 1024 ||
 	    eh->e_phnum > 128)
 		return (ENOEXEC);
 
@@ -405,8 +404,6 @@ ELFNAME(load_file)(struct lwp *l, struct exec_package *epp, char *path,
 	if ((error = exec_read_from(l, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
 
-	/* this breaks on, e.g., OpenBSD-compatible mips shared binaries. */
-#ifndef ELF_INTERP_NON_RELOCATABLE
 	/*
 	 * If no position to load the interpreter was set by a probe
 	 * function, pick the same address that a non-fixed mmap(0, ..)
@@ -435,8 +432,7 @@ ELFNAME(load_file)(struct lwp *l, struct exec_package *epp, char *path,
 		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr));
 	} else
-#endif	/* !ELF_INTERP_NON_RELOCATABLE */
-		addr = *last;
+		addr = *last; /* may be ELF_LINK_ADDR */
 
 	/*
 	 * Load all the necessary sections
@@ -458,6 +454,8 @@ ELFNAME(load_file)(struct lwp *l, struct exec_package *epp, char *path,
 				 */
 				base_ph = ph0;
 				flags = VMCMD_BASE;
+				if (addr == ELF_LINK_ADDR)
+					addr = ph0->p_vaddr;
 				if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
 					addr = ELF_TRUNC(addr, ph0->p_align);
 				else
@@ -582,14 +580,13 @@ ELFNAME2(exec,makecmds)(struct lwp *l, struct exec_package *epp)
 	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
 	epp->ep_daddr = epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
 
-	MALLOC(interp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
-	interp[0] = '\0';
-
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
 		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
+			MALLOC(interp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+			interp[0] = '\0';
 			if ((error = exec_read_from(l, epp->ep_vp,
 			    pp->p_offset, interp, pp->p_filesz)) != 0)
 				goto bad;
@@ -607,16 +604,15 @@ ELFNAME2(exec,makecmds)(struct lwp *l, struct exec_package *epp)
 	 * exists. Emulation packages may possibly replace the interpreter in
 	 * interp[] with a changed path (/emul/xxx/<path>).
 	 */
-	if (!epp->ep_esch->u.elf_probe_func) {
-		pos = ELFDEFNNAME(NO_ADDR);
-	} else {
-		vaddr_t startp = 0;
+	pos = ELFDEFNNAME(NO_ADDR);
+	if (epp->ep_esch->u.elf_probe_func) {
+		vaddr_t startp = (vaddr_t)pos;
 
 		error = (*epp->ep_esch->u.elf_probe_func)(l, epp, eh, interp,
 							  &startp);
-		pos = (Elf_Addr)startp;
 		if (error)
 			goto bad;
+		pos = (Elf_Addr)startp;
 	}
 
 	/*
@@ -683,7 +679,7 @@ ELFNAME2(exec,makecmds)(struct lwp *l, struct exec_package *epp)
 	 * Check if we found a dynamically linked binary and arrange to load
 	 * its interpreter
 	 */
-	if (interp[0]) {
+	if (interp) {
 		struct elf_args *ap;
 		int i = epp->ep_vmcmds.evs_used;
 		u_long interp_offset;
@@ -704,6 +700,8 @@ ELFNAME2(exec,makecmds)(struct lwp *l, struct exec_package *epp)
 		ap->arg_entry = eh->e_entry;
 
 		epp->ep_emul_arg = ap;
+
+		FREE(interp, M_TEMP);
 	} else
 		epp->ep_entry = eh->e_entry;
 
@@ -712,9 +710,8 @@ ELFNAME2(exec,makecmds)(struct lwp *l, struct exec_package *epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
-	FREE(interp, M_TEMP);
 	free(ph, M_TEMP);
-	return exec_elf_setup_stack(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 
 bad:
 	if (interp)
@@ -787,6 +784,8 @@ ELFNAME2(netbsd,probe)(struct lwp *l, struct exec_package *epp,
 
 	if ((error = ELFNAME2(netbsd,signature)(l, epp, eh)) != 0)
 		return error;
-	*pos = ELFDEFNNAME(NO_ADDR);
+#ifdef ELF_INTERP_NON_RELOCATABLE
+	*pos = ELF_LINK_ADDR;
+#endif
 	return 0;
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
+/*	$NetBSD: umidi.c,v 1.16.6.1 2004/08/03 10:51:38 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@netbsd.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.16.6.1 2004/08/03 10:51:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ USB_ATTACH(umidi)
 
 	DPRINTFN(1,("umidi_attach\n"));
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_iface = uaa->iface;
@@ -615,20 +615,17 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 static usbd_status
 alloc_all_endpoints_genuine(struct umidi_softc *sc)
 {
+	usb_interface_descriptor_t *interface_desc;
+	usb_config_descriptor_t *config_desc;
 	usb_descriptor_t *desc;
 	int num_ep;
 	size_t remain, descsize;
 	struct umidi_endpoint *p, *q, *lowest, *endep, tmpep;
 	int epaddr;
 
-	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
-	num_ep = TO_IFD(desc)->bNumEndpoints;
-	desc = NEXT_D(desc); /* ifd -> csifd */
-	remain = ((size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
-		  (size_t)desc->bLength);
-	desc = NEXT_D(desc);
-
-	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint)*num_ep,
+	interface_desc = usbd_get_interface_descriptor(sc->sc_iface);
+	num_ep = interface_desc->bNumEndpoints;
+	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint) * num_ep,
 				      M_USBDEV, M_WAITOK);
 	if (!p)
 		return USBD_NOMEM;
@@ -638,6 +635,9 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 	epaddr = -1;
 
 	/* get the list of endpoints for midi stream */
+	config_desc = usbd_get_config_descriptor(sc->sc_udev);
+	desc = (usb_descriptor_t *) config_desc;
+	remain = (size_t)UGETW(config_desc->wTotalLength);
 	while (remain>=sizeof(usb_descriptor_t)) {
 		descsize = desc->bLength;
 		if (descsize>remain || descsize==0)
@@ -890,7 +890,8 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 	jack->opened = 1;
 	if (ep->num_open++==0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
 		err = start_input_transfer(ep);
-		if (err!=USBD_NORMAL_COMPLETION) {
+		if (err != USBD_NORMAL_COMPLETION &&
+		    err != USBD_IN_PROGRESS) {
 			ep->num_open--;
 		}
 	}
@@ -934,7 +935,9 @@ close_in_jack(struct umidi_jack *jack)
 {
 	if (jack->opened) {
 		jack->opened = 0;
-		jack->endpoint->num_open--;
+		if (--jack->endpoint->num_open == 0) {
+		    usbd_abort_pipe(jack->endpoint->pipe);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.87 2003/05/24 06:25:39 gmcgarry Exp $	*/
+/*	$NetBSD: malloc.h,v 1.87.2.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -207,17 +203,15 @@ extern char			*kmembase;
 extern struct kmembuckets	bucket[];
 
 #ifdef MALLOCLOG
-void	*_malloc(unsigned long size, struct malloc_type *type, int flags,
-	    const char *file, long line);
-void	_free(void *addr, struct malloc_type *type, const char *file,
-	    long line);
+void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
+void	_free(void *, struct malloc_type *, const char *, long);
 #define	malloc(size, type, flags) \
 	    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
 	    _free((addr), (type), __FILE__, __LINE__)
 #else
-void	*malloc(unsigned long size, struct malloc_type *type, int flags);
-void	free(void *addr, struct malloc_type *type);
+void	*malloc(unsigned long, struct malloc_type *, int);
+void	free(void *, struct malloc_type *);
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
@@ -229,8 +223,7 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-void	*realloc(void *curaddr, unsigned long newsize,
-	    struct malloc_type *type, int flags);
+void	*realloc(void *, unsigned long, struct malloc_type *, int);
 unsigned long
 	malloc_roundup(unsigned long);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.17.2.2 2003/07/03 01:23:44 wrstuden Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.17.2.3 2004/08/03 10:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,10 +74,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.2 2003/07/03 01:23:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.3 2004/08/03 10:54:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -129,7 +126,7 @@ ov_mount(mp, path, data, ndp, l)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct overlay_args));
+	error = copyin(data, &args, sizeof(struct overlay_args));
 	if (error)
 		return (error);
 
@@ -157,9 +154,10 @@ ov_mount(mp, path, data, ndp, l)
 	 */
 	nmp = (struct overlay_mount *) malloc(sizeof(struct overlay_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
-	memset((caddr_t)nmp, 0, sizeof(struct overlay_mount));
+	memset(nmp, 0, sizeof(struct overlay_mount));
 
 	mp->mnt_data = nmp;
+	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
 	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -203,7 +201,7 @@ ov_mount(mp, path, data, ndp, l)
 	vp->v_flag |= VROOT;
 	nmp->ovm_rootvp = vp;
 
-	error = set_statfs_info(path, UIO_USERSPACE, args.la.target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
 	    UIO_USERSPACE, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
@@ -266,6 +264,20 @@ ov_unmount(mp, mntflags, l)
 	return 0;
 }
 
+SYSCTL_SETUP(sysctl_vfs_overlay_setup, "sysctl vfs.overlay subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
+		       SYSCTL_DESCR("Overlay file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
+}
+
 extern const struct vnodeopv_desc overlay_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
@@ -280,7 +292,7 @@ struct vfsops overlay_vfsops = {
 	ov_unmount,
 	layerfs_root,
 	layerfs_quotactl,
-	layerfs_statfs,
+	layerfs_statvfs,
 	layerfs_sync,
 	layerfs_vget,
 	layerfs_fhtovp,
@@ -288,8 +300,9 @@ struct vfsops overlay_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	layerfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
+	layerfs_snapshot,
 	ov_vnodeopv_descs,
 };

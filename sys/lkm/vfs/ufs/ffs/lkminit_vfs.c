@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:39 lukem Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5.16.1 2004/08/03 10:54:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.16.1 2004/08/03 10:54:04 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -49,12 +50,21 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2001/11/12 23:23:39 lukem Exp $"
 #include <sys/file.h>
 #include <sys/errno.h>
 
+#include <ufs/ffs/ffs_extern.h>
+
 int ffs_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * This is the vfsops table for the file system in question
  */
 extern struct vfsops ffs_vfsops;
+
+/*
+ * take care of fs specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_ffs_log;
 
 /*
  * declare the filesystem
@@ -71,5 +81,25 @@ ffs_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc)
+}
+
+int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp;        
+	int cmd;
+{
+
+	sysctl_vfs_ffs_setup(&_ffs_log);
+	return (0);
+}
+
+int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp;        
+	int cmd;
+{
+
+	sysctl_teardown(&_ffs_log);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.14.2.1 2003/07/02 15:27:03 darrenr Exp $	*/
+/*	$NetBSD: esis.h,v 1.14.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -129,21 +125,21 @@ struct iso_addr;
 struct rtentry;
 struct sockaddr_dl;
 
-void esis_init __P((void));
-int esis_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct lwp *));
-void esis_input __P((struct mbuf *, ...));
-void esis_rdoutput __P((struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
-			struct iso_addr *, struct rtentry *));
-int esis_insert_addr __P((caddr_t *, int *, struct iso_addr *, struct mbuf *,
-			  int));
-void esis_eshinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_ishinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_rdinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_config __P((void *));
-void esis_shoutput __P((struct ifnet *, int, int, caddr_t, int,
-	               struct iso_addr *));
-void isis_input __P((struct mbuf *, ...));
-int isis_output __P((struct mbuf *, ...));
-void *esis_ctlinput __P((int, struct sockaddr *, void *));
+void esis_init (void);
+int esis_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *, struct lwp *);
+void esis_input (struct mbuf *, ...);
+void esis_rdoutput (struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
+			struct iso_addr *, struct rtentry *);
+int esis_insert_addr (caddr_t *, int *, struct iso_addr *, struct mbuf *,
+			  int);
+void esis_eshinput (struct mbuf *, struct snpa_hdr *);
+void esis_ishinput (struct mbuf *, struct snpa_hdr *);
+void esis_rdinput (struct mbuf *, struct snpa_hdr *);
+void esis_config (void *);
+void esis_shoutput (struct ifnet *, int, int, caddr_t, int,
+	               struct iso_addr *);
+void isis_input (struct mbuf *, ...);
+int isis_output (struct mbuf *, ...);
+void *esis_ctlinput (int, struct sockaddr *, void *);
 #endif /* _KERNEL */

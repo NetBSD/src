@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.27.2.1 2003/07/02 15:27:13 darrenr Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.27.2.2 2004/08/03 10:56:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -95,7 +91,7 @@ struct nfs_args {
     "b\04retrans\0b\05maxgrps\0b\06intr\0b\07noconn\0" \
     "b\10nqnfs\0b\11nfsv3\0b\12kerb\0b\13dumbtimr\0" \
     "b\14leaseterm\0b\15readahead\0b\16deadthresh\0b\17resvport\0" \
-    "b\20rdirplus\0b\21readdirsize\0b\22xlatecookie"
+    "b\20rdirplus\0b\21readdirsize\0b\22xlatecookie\0"
 
 /*
  * NFS internal flags (nm_iflag) */
@@ -184,13 +180,14 @@ int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
 		struct vnode **vpp, struct lwp *p));
 int	nfs_mountroot __P((void));
-void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
-int	nfs_start __P((struct mount *mp, int flags, struct lwp *p));
-int	nfs_unmount __P((struct mount *mp, int mntflags, struct lwp *p));
-int	nfs_root __P((struct mount *mp, struct vnode **vpp, struct lwp *));
-int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, caddr_t arg,
+void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
 		struct lwp *l));
-int	nfs_statfs __P((struct mount *mp, struct statfs *sbp, struct lwp *p));
+int	nfs_start __P((struct mount *mp, int flags, struct lwp *l));
+int	nfs_unmount __P((struct mount *mp, int mntflags, struct lwp *l));
+int	nfs_root __P((struct mount *mp, struct vnode **vpp, struct lwp *l));
+int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, void *arg,
+		struct lwp *l));
+int	nfs_statvfs __P((struct mount *mp, struct statvfs *sbp, struct lwp *l));
 int	nfs_sync __P((struct mount *mp, int waitfor, struct ucred *cred,
 		struct lwp *p));
 int	nfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));

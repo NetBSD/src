@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.61 2003/04/28 23:16:26 bjh21 Exp $	*/
+/*	$NetBSD: in.h,v 1.61.2.1 2004/08/03 10:54:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -111,6 +107,9 @@ typedef __sa_family_t	sa_family_t;
 
 /* last return value of *_input(), meaning "all job for this pkt is done".  */
 #define	IPPROTO_DONE		257
+
+/* sysctl placeholder for (FAST_)IPSEC */
+#define CTL_IPPROTO_IPSEC	258
 
 
 /*
@@ -384,7 +383,9 @@ struct ip_mreq {
 #define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_MAXID	       21
+#define	IPCTL_IFQ	       21	/* ipintrq node */
+#define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
+#define	IPCTL_MAXID	       23
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -408,6 +409,8 @@ struct ip_mreq {
 	{ "maxfragpackets", CTLTYPE_INT }, \
 	{ "grettl", CTLTYPE_INT }, \
 	{ "checkinterface", CTLTYPE_INT }, \
+	{ "ifq", CTLTYPE_NODE }, \
+	{ "random_id", CTLTYPE_INT }, \
 }
 #endif /* _NETBSD_SOURCE */
 
@@ -467,13 +470,13 @@ in_cksum_addword(u_int16_t a, u_int16_t b)
 extern	struct in_addr zeroin_addr;
 extern	u_char	ip_protox[];
 
-int	in_broadcast __P((struct in_addr, struct ifnet *));
-int	in_canforward __P((struct in_addr));
-int	in_cksum __P((struct mbuf *, int));
-int	in4_cksum __P((struct mbuf *, u_int8_t, int, int));
-void	in_delayed_cksum __P((struct mbuf *));
-int	in_localaddr __P((struct in_addr));
-void	in_socktrim __P((struct sockaddr_in *));
+int	in_broadcast(struct in_addr, struct ifnet *);
+int	in_canforward(struct in_addr);
+int	in_cksum(struct mbuf *, int);
+int	in4_cksum(struct mbuf *, u_int8_t, int, int);
+void	in_delayed_cksum(struct mbuf *);
+int	in_localaddr(struct in_addr);
+void	in_socktrim(struct sockaddr_in *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)

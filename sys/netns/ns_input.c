@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.18 2002/05/12 20:23:49 matt Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.18.10.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.18 2002/05/12 20:23:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.18.10.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +86,7 @@ int	idpcksum = 1;
 long	ns_pexseq;
 
 void
-ns_init()
+ns_init(void)
 {
 
 	ns_broadhost = * (union ns_host *) allones;
@@ -113,7 +109,7 @@ ns_init()
 int nsintr_getpck = 0;
 int nsintr_swtch = 0;
 void
-nsintr()
+nsintr(void)
 {
 	struct idp *idp;
 	struct mbuf *m;
@@ -248,7 +244,7 @@ bad:
 	goto next;
 }
 
-u_char nsctlerrmap[PRC_NCMDS] = {
+const u_char nsctlerrmap[PRC_NCMDS] = {
 	ECONNABORTED,	ECONNABORTED,	0,		0,
 	0,		0,		EHOSTDOWN,	EHOSTUNREACH,
 	ENETUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
@@ -259,17 +255,14 @@ u_char nsctlerrmap[PRC_NCMDS] = {
 int idp_donosocks = 1;
 
 void *
-idp_ctlinput(cmd, sa, arg)
-	int cmd;
-	struct sockaddr *sa;
-	void *arg;
+idp_ctlinput(int cmd, struct sockaddr *sa, void *arg)
 {
 	struct ns_addr *ns;
 	struct nspcb *nsp;
 	struct ns_errp *errp = NULL;
 	int type;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	if (nsctlerrmap[cmd] == 0)
 		return NULL;		/* XXX */
@@ -319,8 +312,7 @@ struct route idp_droute;
 struct route idp_sroute;
 
 void
-idp_forward(m)
-	struct mbuf *m;
+idp_forward(struct mbuf *m)
 {
 	struct idp *idp = mtod(m, struct idp *);
 	int error, type, code;
@@ -439,9 +431,7 @@ cleanup:
 }
 
 int
-idp_do_route(src, ro)
-	struct ns_addr *src;
-	struct route *ro;
+idp_do_route(struct ns_addr *src, struct route *ro)
 {
 	
 	struct sockaddr_ns *dst;
@@ -462,16 +452,13 @@ idp_do_route(src, ro)
 }
 
 void
-idp_undo_route(ro)
-	struct route *ro;
+idp_undo_route(struct route *ro)
 {
 	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
 }
 
 void
-ns_watch_output(m, ifp)
-	struct mbuf *m;
-	struct ifnet *ifp;
+ns_watch_output(struct mbuf *m, struct ifnet *ifp)
 {
 	struct nspcb *nsp;
 	struct ifaddr *ifa;

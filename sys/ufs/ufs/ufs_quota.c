@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.27.2.1 2003/07/02 15:27:27 darrenr Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.27.2.2 2004/08/03 10:57:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.1 2003/07/02 15:27:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.2 2004/08/03 10:57:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -894,6 +890,7 @@ dqsync(vp, dq)
 	struct dquot *dq;
 {
 	struct vnode *dqvp;
+	struct mount *mp;
 	struct iovec aiov;
 	struct uio auio;
 	int error;
@@ -904,6 +901,7 @@ dqsync(vp, dq)
 		return (0);
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dqsync: file");
+	vn_start_write(dqvp, &mp, V_WAIT | V_LOWER);
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
@@ -912,6 +910,7 @@ dqsync(vp, dq)
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp, 0);
+			vn_finished_write(mp, V_LOWER);
 			return (0);
 		}
 	}
@@ -933,6 +932,7 @@ dqsync(vp, dq)
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0);
+	vn_finished_write(mp, V_LOWER);
 	return (error);
 }
 

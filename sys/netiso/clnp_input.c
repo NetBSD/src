@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.25 2002/05/12 21:30:35 matt Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.25.10.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.25 2002/05/12 21:30:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.25.10.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -125,9 +121,9 @@ struct clnp_stat clnp_stat;
  * NOTES:
  */
 void
-clnp_init()
+clnp_init(void)
 {
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	/*
 	 * CLNP protox initialization
@@ -297,13 +293,7 @@ next:
  *	will it be correctly aligned?
  */
 void
-#if __STDC__
 clnp_input(struct mbuf *m, ...)
-#else
-clnp_input(m, va_alist)
-	struct mbuf    *m;	/* ptr to first mbuf of pkt */
-	va_dcl
-#endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
 	struct ifaddr *ifa;
@@ -346,7 +336,7 @@ clnp_input(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		printf(
-		    "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
+		    "clnp_input: processing dg; First mbuf m_len %d, m_type x%x, %s\n",
 		    m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
 	}
 #endif

@@ -1,9 +1,38 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5.2.2 2003/07/03 01:21:41 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5.2.3 2004/08/03 10:52:24 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1994 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	filecore_vfsops.c	1.1	1998/6/26
+ */
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
- * Copyright (c) 1994 The Regents of the University of California.
- * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.2 2003/07/03 01:21:41 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.3 2004/08/03 10:52:24 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -57,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.2 2003/07/03 01:21:41 wrst
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -79,7 +109,7 @@ struct vfsops filecore_vfsops = {
 	filecore_unmount,
 	filecore_root,
 	filecore_quotactl,
-	filecore_statfs,
+	filecore_statvfs,
 	filecore_sync,
 	filecore_vget,
 	filecore_fhtovp,
@@ -87,9 +117,10 @@ struct vfsops filecore_vfsops = {
 	filecore_init,
 	filecore_reinit,
 	filecore_done,
-	filecore_sysctl,
+	NULL,
 	NULL,				/* filecore_mountroot */
 	filecore_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	filecore_vnodeopv_descs,
 };
 
@@ -138,7 +169,7 @@ filecore_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)filecore_statfs(mp, &mp->mnt_stat, p);
+	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -175,7 +206,7 @@ filecore_mount(mp, path, data, ndp, l)
 		vfs_showexport(mp, &args.export, &fcmp->fc_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof (struct filecore_args));
+	error = copyin(data, &args, sizeof (struct filecore_args));
 	if (error)
 		return (error);
 	
@@ -234,7 +265,7 @@ filecore_mount(mp, path, data, ndp, l)
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, l);
 }
 
@@ -315,12 +346,12 @@ filecore_mountfs(devvp, mp, l, argp)
 		goto out;
        	fcdr = (struct filecore_disc_record *)(bp->b_data + 4);
 	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
-	memset((caddr_t)fcmp, 0, sizeof *fcmp);
+	memset(fcmp, 0, sizeof *fcmp);
 	if (fcdr->log2bpmb > fcdr->log2secsize)
 		fcmp->log2bsize = fcdr->log2bpmb;
 	else	fcmp->log2bsize = fcdr->log2secsize;
 	fcmp->blksize = 1 << fcmp->log2bsize;
-	memcpy((caddr_t)&fcmp->drec, (caddr_t)fcdr, sizeof(*fcdr));
+	memcpy(&fcmp->drec, fcdr, sizeof(*fcdr));
 	fcmp->map = map;
 	fcmp->idspz = ((8 << fcdr->log2secsize) - fcdr->zone_spare)
 	    / (fcdr->idlen + 1);
@@ -340,8 +371,9 @@ filecore_mountfs(devvp, mp, l, argp)
 	bp = NULL;
 
 	mp->mnt_data = fcmp;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FILECORE);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FILECORE);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = fcdr->log2secsize;
@@ -371,7 +403,7 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
 	VOP_UNLOCK(devvp, 0);
 	if (fcmp) {
-		free((caddr_t)fcmp, M_FILECOREMNT);
+		free(fcmp, M_FILECOREMNT);
 		mp->mnt_data = NULL;
 	}
 	return error;
@@ -420,7 +452,7 @@ filecore_unmount(mp, mntflags, l)
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, l);
 	vput(fcmp->fc_devvp);
-	free((caddr_t)fcmp, M_FILECOREMNT);
+	free(fcmp, M_FILECOREMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
@@ -453,7 +485,7 @@ filecore_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct lwp *l;
 {
 
@@ -464,26 +496,25 @@ filecore_quotactl(mp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-filecore_statfs(mp, sbp, l)
+filecore_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct lwp *l;
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
-#ifdef COMPAT_09
-	sbp->f_type = 255;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = fcmp->blksize;
+	sbp->f_frsize = sbp->f_bsize; /* XXX */
 	sbp->f_iosize = sbp->f_bsize;	/* XXX */
 	sbp->f_blocks = fcmp->nblks;
 	sbp->f_bfree = 0; /* total free blocks */
 	sbp->f_bavail = 0; /* blocks free for non superuser */
+	sbp->f_bresvd = 0; /* reserved blocks */
 	sbp->f_files =  0; /* total files */
-	sbp->f_ffree = 0; /* free file nodes */
-	copy_statfs_info(sbp, mp);
+	sbp->f_ffree = 0; /* free file nodes for non superuser */
+	sbp->f_favail = 0; /* free file nodes */
+	sbp->f_fresvd = 0; /* reserved file nodes */
+	copy_statvfs_info(sbp, mp);
 	return 0;
 }
 
@@ -616,7 +647,7 @@ filecore_vget(mp, ino, vpp, l)
 
 	if (ino == FILECORE_ROOTINO) {
 		/* Here we need to construct a root directory inode */
-		memcpy((caddr_t)ip->i_dirent.name, (caddr_t)"root", 4);
+		memcpy(ip->i_dirent.name, "root", 4);
 		ip->i_dirent.load = 0;
 		ip->i_dirent.exec = 0;
 		ip->i_dirent.len = FILECORE_DIR_SIZE;
@@ -636,8 +667,8 @@ filecore_vget(mp, ino, vpp, l)
 			return (error);
 		}
 		
-		memcpy((caddr_t)&ip->i_dirent,
-		    (caddr_t)fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
+		memcpy(&ip->i_dirent,
+		    fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
 		    sizeof(struct filecore_direntry));
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf5\n", bp);
@@ -709,15 +740,23 @@ filecore_vptofh(vp, fhp)
        	return 0;
 }
 
-int
-filecore_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "filecore",
+		       SYSCTL_DESCR("Acorn FILECORE file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 19, CTL_EOL);
+	/*
+	 * XXX the "19" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "19" is the order as taken from sys/mount.h
+	 */
 }

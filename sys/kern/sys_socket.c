@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.37.2.1 2003/07/02 15:26:42 darrenr Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.37.2.2 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.1 2003/07/02 15:26:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.37.2.2 2004/08/03 10:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +79,7 @@ soo_write(fp, offset, uio, cred, flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_send)(so, (struct mbuf *)0,
-		uio, (struct mbuf *)0, (struct mbuf *)0, 0));
+		uio, (struct mbuf *)0, (struct mbuf *)0, 0, uio->uio_lwp));
 }
 
 int
@@ -94,6 +90,7 @@ soo_ioctl(fp, cmd, data, l)
 	struct lwp *l;
 {
 	struct socket *so = (struct socket *)fp->f_data;
+	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -121,12 +118,14 @@ soo_ioctl(fp, cmd, data, l)
 		return (0);
 
 	case SIOCSPGRP:
-		so->so_pgid = *(int *)data;
-		return (0);
+	case FIOSETOWN:
+	case TIOCSPGRP:
+		return fsetown(p, &so->so_pgid, cmd, data);
 
 	case SIOCGPGRP:
-		*(int *)data = so->so_pgid;
-		return (0);
+	case FIOGETOWN:
+	case TIOCGPGRP:
+		return fgetown(p, so->so_pgid, cmd, data);
 
 	case SIOCATMARK:
 		*(int *)data = (so->so_state&SS_RCVATMARK) != 0;

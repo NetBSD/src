@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.69.2.1 2003/07/02 15:27:10 darrenr Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.69.2.2 2004/08/03 10:56:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.1 2003/07/02 15:27:10 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.2 2004/08/03 10:56:18 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -134,6 +130,7 @@ int nfs_niothreads = -1; /* == "0, and has never been set" */
 #ifdef NFSSERVER
 static void nfsd_rt __P((int, struct nfsrv_descript *, int));
 static struct nfssvc_sock *nfsrv_sockalloc __P((void));
+static void nfsrv_sockfree __P((struct nfssvc_sock *));
 #endif
 
 /*
@@ -180,13 +177,13 @@ sys_nfssvc(l, v, retval)
 	 * Must be super user
 	 */
 	error = suser(p->p_ucred, &p->p_acflag);
-	if(error)
+	if (error)
 		return (error);
 #ifdef NFSSERVER
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
 	while (nfssvc_sockhead_flag & SLP_INIT) {
-		 nfssvc_sockhead_flag |= SLP_WANTINIT;
+		nfssvc_sockhead_flag |= SLP_WANTINIT;
 		(void) ltsleep(&nfssvc_sockhead, PSOCK, "nfsd init", 0,
 		    &nfsd_slock);
 	}
@@ -377,6 +374,16 @@ nfsrv_sockalloc()
 	splx(s);
 
 	return slp;
+}
+
+static void
+nfsrv_sockfree(struct nfssvc_sock *slp)
+{
+
+	KASSERT(slp->ns_so == NULL);
+	KASSERT(slp->ns_fp == NULL);
+	KASSERT((slp->ns_flag & SLP_ALLFLAGS) == 0);
+	free(slp, M_NFSSVC);
 }
 
 /*
@@ -754,7 +761,7 @@ nfssvc_nfsd(nsd, argp, l)
 					(void) nfs_sndlock(solockp, NULL);
 				if (slp->ns_flag & SLP_VALID) {
 					error =
-					    nfs_send(so, nd->nd_nam2, m, NULL);
+					    nfs_send(so, nd->nd_nam2, m, NULL, l);
 				} else {
 					error = EPIPE;
 					m_freem(m);
@@ -829,6 +836,8 @@ done:
  * The trick here is to increment the sref at the start, so that the nfsds
  * will stop using it and clear ns_flag at the end so that it will not be
  * reassigned during cleanup.
+ *
+ * called at splsoftnet.
  */
 void
 nfsrv_zapsock(slp)
@@ -840,40 +849,53 @@ nfsrv_zapsock(slp)
 	struct file *fp;
 	int s;
 
-	slp->ns_flag &= ~SLP_ALLFLAGS;
-	fp = slp->ns_fp;
-	if (fp) {
-		simple_lock(&fp->f_slock);
-		FILE_USE(fp);
-		slp->ns_fp = (struct file *)0;
-		so = slp->ns_so;
-		so->so_upcall = NULL;
-		so->so_upcallarg = NULL;
-		so->so_rcv.sb_flags &= ~SB_UPCALL;
-		soshutdown(so, 2);
-		closef(fp, (struct lwp *)0);
-		if (slp->ns_nam)
-			m_free(slp->ns_nam);
-		m_freem(slp->ns_raw);
-		m_freem(slp->ns_rec);
-		for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
-		    nuidp = nnuidp) {
-			nnuidp = TAILQ_NEXT(nuidp, nu_lru);
-			LIST_REMOVE(nuidp, nu_hash);
-			TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp, nu_lru);
-			if (nuidp->nu_flag & NU_NAM)
-				m_freem(nuidp->nu_nam);
-			free((caddr_t)nuidp, M_NFSUID);
-		}
-		s = splsoftclock();
-		for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
-			nnwp = LIST_NEXT(nwp, nd_tq);
-			LIST_REMOVE(nwp, nd_tq);
-			pool_put(&nfs_srvdesc_pool, nwp);
-		}
-		LIST_INIT(&slp->ns_tq);
-		splx(s);
+	simple_lock(&nfsd_slock);
+	if ((slp->ns_flag & SLP_VALID) == 0) {
+		simple_unlock(&nfsd_slock);
+		return;
 	}
+	if (slp->ns_flag & SLP_DOREC) {
+		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
+	}
+	slp->ns_flag &= ~SLP_ALLFLAGS;
+	simple_unlock(&nfsd_slock);
+
+	fp = slp->ns_fp;
+	slp->ns_fp = NULL;
+	so = slp->ns_so;
+	slp->ns_so = NULL;
+	KASSERT(fp != NULL);
+	KASSERT(so != NULL);
+	KASSERT(fp->f_data == so);
+	simple_lock(&fp->f_slock);
+	FILE_USE(fp);
+	so->so_upcall = NULL;
+	so->so_upcallarg = NULL;
+	so->so_rcv.sb_flags &= ~SB_UPCALL;
+	soshutdown(so, SHUT_RDWR);
+	closef(fp, (struct lwp *)0);
+
+	if (slp->ns_nam)
+		m_free(slp->ns_nam);
+	m_freem(slp->ns_raw);
+	m_freem(slp->ns_rec);
+	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
+	    nuidp = nnuidp) {
+		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
+		LIST_REMOVE(nuidp, nu_hash);
+		TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp, nu_lru);
+		if (nuidp->nu_flag & NU_NAM)
+			m_freem(nuidp->nu_nam);
+		free((caddr_t)nuidp, M_NFSUID);
+	}
+	s = splsoftclock();
+	for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
+		nnwp = LIST_NEXT(nwp, nd_tq);
+		LIST_REMOVE(nwp, nd_tq);
+		pool_put(&nfs_srvdesc_pool, nwp);
+	}
+	LIST_INIT(&slp->ns_tq);
+	splx(s);
 }
 
 /*
@@ -892,7 +914,7 @@ nfsrv_slpderef(slp)
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		simple_unlock(&nfsd_slock);
 		splx(s);
-		free(slp, M_NFSSVC);
+		nfsrv_sockfree(slp);
 	}
 }
 
@@ -920,7 +942,7 @@ nfsrv_init(terminating)
 			simple_unlock(&nfsd_slock);
 			if (slp->ns_flag & SLP_VALID)
 				nfsrv_zapsock(slp);
-			free(slp, M_NFSSVC);
+			nfsrv_sockfree(slp);
 			simple_lock(&nfsd_slock);
 		}
 		simple_unlock(&nfsd_slock);

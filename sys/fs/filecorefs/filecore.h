@@ -1,9 +1,38 @@
-/*	$NetBSD: filecore.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
+/*	$NetBSD: filecore.h,v 1.1.4.1 2004/08/03 10:52:23 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1994 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	filecore.h		1.0	1998/6/1
+ */
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
- * Copyright (c) 1994 The Regents of the University of California.
- * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,7 +115,7 @@ struct filecore_disc_record {
 	unsigned share_size:8;		/* base 2 log sharing granularity */
 	unsigned big_flag:8;		/* 1 if disc > 512Mb */
 	char	 reserved[18];
-};
+} __attribute__((__packed__));
 
 struct filecore_direntry {
 	char	 name[10];
@@ -95,12 +124,12 @@ struct filecore_direntry {
 	unsigned len:32;
 	unsigned addr:24;
 	unsigned attr:8;
-};
+} __attribute__((__packed__));
 
 struct filecore_dirhead {
 	unsigned mas_seq:8;
 	unsigned chkname:32;
-};
+} __attribute__((__packed__));
 
 struct filecore_dirtail {
 	unsigned lastmark:8;
@@ -112,7 +141,7 @@ struct filecore_dirtail {
 	unsigned mas_seq:8;
 	unsigned chkname:32;
 	unsigned checkbyte:8;
-};
+} __attribute__((__packed__));
 
 #define fcdirhead(dp) ((struct filecore_dirhead *)(dp))
 #define fcdirentry(dp,n) (((struct filecore_direntry *)(((char *)(dp))+5))+(n))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.36.2.1 2003/07/02 15:27:27 darrenr Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.36.2.2 2004/08/03 10:57:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -57,6 +53,8 @@ struct ufsmount;
 struct uio;
 struct vattr;
 struct vnode;
+
+extern struct pool ufs_direct_pool;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop
@@ -129,7 +127,7 @@ void ufs_makedirentry __P((struct inode *, struct componentname *,
 int ufs_direnter __P((struct vnode *, struct vnode *, struct direct *,
 		      struct componentname *, struct buf *));
 int ufs_dirremove __P((struct vnode *, struct inode *, int, int));
-int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int));
+int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int, int));
 int ufs_dirempty __P((struct inode *, ino_t, struct ucred *));
 int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *, struct lwp *));
 
@@ -159,7 +157,7 @@ void ufs_reinit __P((void));
 void ufs_done __P((void));
 int ufs_start __P((struct mount *, int, struct lwp *));
 int ufs_root __P((struct mount *, struct vnode **, struct lwp *));
-int ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
+int ufs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **, struct lwp *));
 int ufs_check_export __P((struct mount *, struct mbuf *, int *,
 		struct ucred **));
@@ -170,6 +168,12 @@ void ufs_vinit __P((struct mount *, int (**) __P((void *)),
 int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
 int ufs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
+
+/*
+ * Snapshot function prototypes.
+ */
+
+void	ffs_snapgone(struct inode *);
 
 /*
  * Soft dependency function prototypes.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.38 2002/08/14 00:23:40 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.38.6.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.38 2002/08/14 00:23:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.38.6.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include "opt_eon.h"
 
@@ -124,7 +120,7 @@ extern struct timeval time;
 struct ifnet    eonif[1];
 
 void
-eonprotoinit()
+eonprotoinit(void)
 {
 	(void) eonattach();
 }
@@ -142,7 +138,7 @@ struct eon_llinfo eon_llinfo;
  */
 
 void
-eonattach()
+eonattach(void)
 {
 	struct ifnet *ifp = eonif;
 
@@ -151,7 +147,7 @@ eonattach()
 		printf("eonattach()\n");
 	}
 #endif
-	sprintf(ifp->if_xname, "eon%d", 0);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "eon%d", 0);
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_softc = NULL;
 	/* since everything will go out over ether or token ring */
@@ -188,12 +184,9 @@ eonattach()
  * RETURNS:			nothing
  */
 int
-eonioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long          cmd;
-	caddr_t data;
+eonioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	int             s = splnet();
+	int    s = splnet();
 	int    error = 0;
 
 #ifdef ARGO_DEBUG
@@ -222,11 +215,8 @@ eonioctl(ifp, cmd, data)
 
 
 void
-eoniphdr(hdr, loc, ro, class, zero)
-	struct route   *ro;
-	struct eon_iphdr *hdr;
-	caddr_t         loc;
-	int		class, zero;
+eoniphdr(struct eon_iphdr *hdr, caddr_t loc, struct route *ro,
+	int class, int zero)
 {
 	struct mbuf     mhead;
 	struct sockaddr_in *sin = satosin(&ro->ro_dst);
@@ -281,15 +271,12 @@ eoniphdr(hdr, loc, ro, class, zero)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
 	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
-	struct sockaddr *gate;
+	const struct sockaddr *gate;
 
 	/*
 	 * Common Housekeeping
@@ -354,11 +341,8 @@ eonrtrequest(cmd, rt, info)
  *
  */
 int
-eonoutput(ifp, m, sdst, rt)
-	struct ifnet   *ifp;
-	struct mbuf *m;	/* packet */
-	struct sockaddr *sdst;		/* destination addr */
-	struct rtentry *rt;
+eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
+	struct rtentry *rt)
 {
 	struct sockaddr_iso *dst = (struct sockaddr_iso *) sdst;
 	struct eon_llinfo *el;
@@ -451,7 +435,8 @@ send:
 	}
 #endif
 
-	error = ip_output(m, (struct mbuf *) 0, ro, 0, NULL);
+	error = ip_output(m, (struct mbuf *) 0, ro, 0,
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 	m = 0;
 	if (error) {
 		ifp->if_oerrors++;
@@ -465,13 +450,7 @@ flush:
 }
 
 void
-#if __STDC__
 eoninput(struct mbuf *m, ...)
-#else
-eoninput(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int             iphlen;
 	struct eon_hdr *eonhdr;
@@ -597,10 +576,7 @@ eoninput(m, va_alist)
 }
 
 void *
-eonctlinput(cmd, sa, dummy)
-	int             cmd;
-	struct sockaddr *sa;
-	void *dummy;
+eonctlinput(int cmd, struct sockaddr *sa, void *dummy)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 #ifdef ARGO_DEBUG
@@ -611,7 +587,7 @@ eonctlinput(cmd, sa, dummy)
 	}
 #endif
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 
 	IncStat(es_icmp[cmd]);

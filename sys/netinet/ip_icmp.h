@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.17 2002/06/09 16:33:40 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.17.6.1 2004/08/03 10:54:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -179,15 +175,15 @@ struct icmp {
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
 #ifdef _KERNEL
-void	icmp_error __P((struct mbuf *, int, int, n_long, struct ifnet *));
-void	icmp_mtudisc __P((struct icmp *, struct in_addr));
-void	icmp_input __P((struct mbuf *, ...));
-void	icmp_init __P((void));
-void	icmp_reflect __P((struct mbuf *));
-void	icmp_send __P((struct mbuf *, struct mbuf *));
-int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+void	icmp_error(struct mbuf *, int, int, n_long, struct ifnet *);
+void	icmp_mtudisc(struct icmp *, struct in_addr);
+void	icmp_input(struct mbuf *, ...);
+void	icmp_init(void);
+void	icmp_reflect(struct mbuf *);
+void	icmp_send(struct mbuf *, struct mbuf *);
+int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-void	icmp_mtudisc_callback_register __P((void (*)(struct in_addr)));
+void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.9.2.1 2004/08/03 10:51:44 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * P-in m@ater and various data communication card adapters.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.9.2.1 2004/08/03 10:51:44 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -55,7 +58,6 @@
 #include <sys/device.h>
 #endif
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
@@ -278,7 +280,7 @@ USB_ATTACH(uvscom)
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.44 2002/10/23 09:13:47 jdolecek Exp $	*/
+/*	$NetBSD: if_se.c,v 1.44.6.1 2004/08/03 10:51:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.44 2002/10/23 09:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.44.6.1 2004/08/03 10:51:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -263,7 +263,7 @@ const struct scsipi_periphsw se_switch = {
 	sedone,			/* deal with stats at interrupt time */
 };
 
-struct scsipi_inquiry_pattern se_patterns[] = {
+const struct scsipi_inquiry_pattern se_patterns[] = {
 	{T_PROCESSOR, T_FIXED,
 	 "CABLETRN",         "EA412",                 ""},
 	{T_PROCESSOR, T_FIXED,
@@ -356,7 +356,7 @@ seattach(parent, self, aux)
 	se_get_addr(sc, myaddr);
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
 	ifp->if_start = se_ifstart;
 	ifp->if_ioctl = se_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.17 2003/04/19 21:42:47 christos Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.17.2.1 2004/08/03 10:57:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,6 +72,7 @@
 #endif
 #ifdef _KERNEL
 #include <machine/vmparam.h>
+#include <sys/resourcevar.h>
 #endif
 
 #if defined(_KERNEL)
@@ -240,7 +237,7 @@
 # if defined(VM_DEFAULT_ADDRESS)
 #  error "Default vm address should not be defined here"
 # else /* VM_DEFAULT_ADDRESS */
-#  define VM_DEFAULT_ADDRESS(da, sz) round_page((vaddr_t)(da) + MAXDSIZ)
+#  define VM_DEFAULT_ADDRESS(da, sz) round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 # endif /* VM_DEFAULT_ADDRESS */
 #endif /* !__USING_TOPDOWN_VM */
 

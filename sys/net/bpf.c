@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.82.2.1 2003/07/02 15:26:55 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.82.2.2 2004/08/03 10:54:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.1 2003/07/02 15:26:55 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.2 2004/08/03 10:54:11 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -67,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.1 2003/07/02 15:26:55 darrenr Exp $")
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/poll.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 
@@ -80,19 +77,26 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.1 2003/07/02 15:26:55 darrenr Exp $")
 #include <netinet/if_inarp.h>
 
 #if defined(_KERNEL_OPT)
-#include "bpf.h"
+#include "opt_bpf.h"
 #endif
 
 #ifndef BPF_BUFSIZE
-# define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
+/*
+ * 4096 is too small for FDDI frames. 8192 is too small for gigabit Ethernet
+ * jumbos (circa 9k), ATM, or Intel gig/10gig ethernet jumbos (16k).
+ */
+# define BPF_BUFSIZE 32768
 #endif
 
 #define PRINET  26			/* interruptible */
 
 /*
- * The default read buffer size is patchable.
+ * The default read buffer size, and limit for BIOCSBLEN, is sysctl'able.
+ * XXX the default values should be computed dynamically based
+ * on available memory size and available mbuf clusters.
  */
 int bpf_bufsize = BPF_BUFSIZE;
+int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -102,6 +106,9 @@ struct bpf_if	*bpf_iflist;
 struct bpf_d	bpf_dtab[NBPFILTER];
 
 static int	bpf_allocbufs __P((struct bpf_d *));
+static void	bpf_deliver(struct bpf_if *,
+		            void *(*cpfn)(void *, const void *, size_t),
+			    void *, u_int, u_int, struct ifnet *);
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	*bpf_mcpy __P((void *, const void *, size_t));
@@ -110,6 +117,7 @@ static int	bpf_movein __P((struct uio *, int, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
+static void	bpf_timed_out __P((void *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
@@ -376,6 +384,8 @@ bpfopen(dev, flag, mode, l)
 	/* Mark "free" and do most initialization. */
 	memset((char *)d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
+	d->bd_seesent = 1;
+	callout_init(&d->bd_callout);
 
 	return (0);
 }
@@ -396,6 +406,9 @@ bpfclose(dev, flag, mode, l)
 	int s;
 
 	s = splnet();
+	if (d->bd_state == BPF_WAITING)
+		callout_stop(&d->bd_callout);
+	d->bd_state = BPF_IDLE;
 	if (d->bd_bif)
 		bpf_detachd(d);
 	splx(s);
@@ -425,6 +438,7 @@ bpfread(dev, uio, ioflag)
 	int ioflag;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	int timed_out;
 	int error;
 	int s;
 
@@ -436,17 +450,26 @@ bpfread(dev, uio, ioflag)
 		return (EINVAL);
 
 	s = splnet();
+	if (d->bd_state == BPF_WAITING)
+		callout_stop(&d->bd_callout);
+	timed_out = (d->bd_state == BPF_TIMED_OUT);
+	d->bd_state = BPF_IDLE;
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
 	 * ends when the timeout expires or when enough packets
 	 * have arrived to fill the store buffer.
 	 */
 	while (d->bd_hbuf == 0) {
-		if (d->bd_immediate) {
+		if (ioflag & IO_NDELAY) {
 			if (d->bd_slen == 0) {
 				splx(s);
 				return (EWOULDBLOCK);
 			}
+			ROTATE_BUFFERS(d);
+			break;
+		}
+
+		if ((d->bd_immediate || timed_out) && d->bd_slen != 0) {
 			/*
 			 * A packet(s) either arrived since the previous
 			 * read or arrived while we were asleep.
@@ -455,16 +478,8 @@ bpfread(dev, uio, ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rtout != -1)
-			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
-					  d->bd_rtout);
-		else {
-			if (d->bd_rtout == -1) {
-				/* User requested non-blocking I/O */
-				error = EWOULDBLOCK;
-			} else
-				error = 0;
-		}
+		error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
+				d->bd_rtout);
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
 			return (error);
@@ -522,20 +537,32 @@ static __inline void
 bpf_wakeup(d)
 	struct bpf_d *d;
 {
-	struct proc *p;
-
 	wakeup((caddr_t)d);
-	if (d->bd_async) {
-		if (d->bd_pgid > 0)
-			gsignal (d->bd_pgid, SIGIO);
-		else if (d->bd_pgid && (p = pfind (-d->bd_pgid)) != NULL)
-			psignal (p, SIGIO);
-	}
+	if (d->bd_async)
+		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
 	selnotify(&d->bd_sel, 0);
 	/* XXX */
 	d->bd_sel.sel_pid = 0;
 }
+
+
+static void
+bpf_timed_out(arg)
+	void *arg;
+{
+	struct bpf_d *d = (struct bpf_d *)arg;
+	int s;
+
+	s = splnet();
+	if (d->bd_state == BPF_WAITING) {
+		d->bd_state = BPF_TIMED_OUT;
+		if (d->bd_slen != 0)
+			bpf_wakeup(d);
+	}
+	splx(s);
+}
+
 
 int
 bpfwrite(dev, uio, ioflag)
@@ -594,6 +621,7 @@ reset_d(d)
 	d->bd_hlen = 0;
 	d->bd_rcount = 0;
 	d->bd_dcount = 0;
+	d->bd_ccount = 0;
 }
 
 #ifdef BPF_KERN_FILTER
@@ -629,10 +657,15 @@ bpfioctl(dev, cmd, addr, flag, l)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
-	pid_t pgid;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
+
+	s = splnet();
+	if (d->bd_state == BPF_WAITING)
+		callout_stop(&d->bd_callout);
+	d->bd_state = BPF_IDLE;
+	splx(s);
 
 	switch (cmd) {
 
@@ -673,8 +706,8 @@ bpfioctl(dev, cmd, addr, flag, l)
 		else {
 			u_int size = *(u_int *)addr;
 
-			if (size > BPF_MAXBUFSIZE)
-				*(u_int *)addr = size = BPF_MAXBUFSIZE;
+			if (size > bpf_maxbufsize)
+				*(u_int *)addr = size = bpf_maxbufsize;
 			else if (size < BPF_MINBUFSIZE)
 				*(u_int *)addr = size = BPF_MINBUFSIZE;
 			d->bd_bufsize = size;
@@ -829,6 +862,16 @@ bpfioctl(dev, cmd, addr, flag, l)
 
 			bs->bs_recv = d->bd_rcount;
 			bs->bs_drop = d->bd_dcount;
+			bs->bs_capt = d->bd_ccount;
+			break;
+		}
+
+	case BIOCGSTATSOLD:
+		{
+			struct bpf_stat_old *bs = (struct bpf_stat_old *)addr;
+
+			bs->bs_recv = d->bd_rcount;
+			bs->bs_drop = d->bd_dcount;
 			break;
 		}
 
@@ -856,36 +899,40 @@ bpfioctl(dev, cmd, addr, flag, l)
 		d->bd_hdrcmplt = *(u_int *)addr ? 1 : 0;
 		break;
 
+	/*
+	 * Get "see sent packets" flag
+	 */
+	case BIOCGSEESENT:
+		*(u_int *)addr = d->bd_seesent;
+		break;
+
+	/*
+	 * Set "see sent" packets flag
+	 */
+	case BIOCSSEESENT:
+		d->bd_seesent = *(u_int *)addr;
+		break;
+
 	case FIONBIO:		/* Non-blocking I/O */
-		if (*(int *)addr)
-			d->bd_rtout = -1;
-		else
-			d->bd_rtout = 0;
+		/*
+		 * No need to do anything special as we use IO_NDELAY in
+		 * bpfread() as an indication of whether or not to block
+		 * the read.
+		 */
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */
 		d->bd_async = *(int *)addr;
 		break;
 
-	/*
-	 * N.B.  ioctl (FIOSETOWN) and fcntl (F_SETOWN) both end up doing
-	 * the equivalent of a TIOCSPGRP and hence end up here.  *However*
-	 * TIOCSPGRP's arg is a process group if it's positive and a process
-	 * id if it's negative.  This is exactly the opposite of what the
-	 * other two functions want!
-	 * There is code in ioctl and fcntl to make the SETOWN calls do
-	 * a TIOCSPGRP with the pgid of the process if a pid is given.
-	 */
 	case TIOCSPGRP:		/* Process or group to send signals to */
-		pgid = *(int *)addr;
-		if (pgid != 0)
-			error = pgid_in_session(l->l_proc, pgid);
-		if (error == 0)
-			d->bd_pgid = pgid;
+	case FIOSETOWN:
+		error = fsetown(l->l_proc, &d->bd_pgid, cmd, addr);
 		break;
 
 	case TIOCGPGRP:
-		*(int *)addr = d->bd_pgid;
+	case FIOGETOWN:
+		error = fgetown(l->l_proc, d->bd_pgid, cmd, addr);
 		break;
 	}
 	return (error);
@@ -1054,10 +1101,23 @@ bpfpoll(dev, events, l)
 		/*
 		 * An imitation of the FIONREAD ioctl code.
 		 */
-		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
+		if ((d->bd_hlen != 0) ||
+		    (d->bd_immediate && d->bd_slen != 0)) {
 			revents |= events & (POLLIN | POLLRDNORM);
-		else
+		} else if (d->bd_state == BPF_TIMED_OUT) {
+			if (d->bd_slen != 0)
+				revents |= events & (POLLIN | POLLRDNORM);
+			else
+				revents |= events & POLLIN;
+		} else {
 			selrecord(l, &d->bd_sel);
+			/* Start the read timeout if necessary */
+			if (d->bd_rtout > 0 && d->bd_state == BPF_IDLE) {
+				callout_reset(&d->bd_callout, d->bd_rtout,
+					      bpf_timed_out, d);
+				d->bd_state = BPF_WAITING;
+			}
+		}
 	}
 
 	splx(s);
@@ -1175,6 +1235,62 @@ bpf_mcpy(dst_arg, src_arg, len)
 }
 
 /*
+ * Dispatch a packet to all the listeners on interface bp.
+ *
+ * marg    pointer to the packet, either a data buffer or an mbuf chain
+ * buflen  buffer length, if marg is a data buffer
+ * cpfn    a function that can copy marg into the listener's buffer
+ * pktlen  length of the packet
+ * rcvif   either NULL or the interface the packet came in on.
+ */
+static __inline void
+bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
+    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
+{
+	u_int slen;
+	struct bpf_d *d;
+
+	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
+		if (!d->bd_seesent && (rcvif == NULL))
+			continue;
+		++d->bd_rcount;
+		slen = bpf_filter(d->bd_filter, marg, pktlen, buflen);
+		if (slen != 0)
+			catchpacket(d, marg, pktlen, slen, cpfn);
+	}
+}
+
+/*
+ * Incoming linkage from device drivers, when the head of the packet is in
+ * a buffer, and the tail is in an mbuf chain.
+ */
+void
+bpf_mtap2(arg, data, dlen, m)
+	caddr_t arg;
+	void *data;
+	u_int dlen;
+	struct mbuf *m;
+{
+	struct bpf_if *bp = (struct bpf_if *)arg;
+	u_int pktlen;
+	struct mbuf mb;
+
+	pktlen = m_length(m) + dlen;
+
+	/*
+	 * Craft on-stack mbuf suitable for passing to bpf_filter.
+	 * Note that we cut corners here; we only setup what's
+	 * absolutely needed--this mbuf should never go anywhere else.
+	 */
+	(void)memset(&mb, 0, sizeof(mb));
+	mb.m_next = m;
+	mb.m_data = data;
+	mb.m_len = dlen;
+
+	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif);
+}
+
+/*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 void
@@ -1182,21 +1298,24 @@ bpf_mtap(arg, m)
 	caddr_t arg;
 	struct mbuf *m;
 {
+	void *(*cpfn) __P((void *, const void *, size_t));
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct bpf_d *d;
-	u_int pktlen, slen;
-	struct mbuf *m0;
+	u_int pktlen, buflen;
+	void *marg;
 
-	pktlen = 0;
-	for (m0 = m; m0 != 0; m0 = m0->m_next)
-		pktlen += m0->m_len;
+	pktlen = m_length(m);
 
-	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
-		++d->bd_rcount;
-		slen = bpf_filter(d->bd_filter, (u_char *)m, pktlen, 0);
-		if (slen != 0)
-			catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcpy);
+	if (pktlen == m->m_len) {
+		cpfn = memcpy;
+		marg = mtod(m, void *);
+		buflen = pktlen;
+	} else {
+		cpfn = bpf_mcpy;
+		marg = m;
+		buflen = 0;
 	}
+
+	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif);
 }
 
 /*
@@ -1217,6 +1336,8 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	struct bpf_hdr *hp;
 	int totlen, curlen;
 	int hdrlen = d->bd_bif->bif_hdrlen;
+
+	++d->bd_ccount;
 	/*
 	 * Figure out how many bytes to move.  If the packet is
 	 * greater or equal to the snapshot length, transfer that
@@ -1263,13 +1384,17 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
 
-	if (d->bd_immediate) {
+	/*
+	 * Call bpf_wakeup after bd_slen has been updated so that kevent(2)
+	 * will cause filt_bpfread() to be called with it adjusted.
+	 */
+	if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT)
 		/*
-		 * Immediate mode is set.  A packet arrived so any
-		 * reads should be woken up.
+		 * Immediate mode is set, or the read timeout has
+		 * already expired during a select call.  A packet
+		 * arrived, so the reader should be woken up.
 		 */
 		bpf_wakeup(d);
-	}
 }
 
 /*
@@ -1507,4 +1632,51 @@ bpf_setdlt(d, dlt)
 	}
 	splx(s);
 	return 0;
+}
+
+static int
+sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+	newsize = bpf_maxbufsize;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (newsize < BPF_MINBUFSIZE || newsize > BPF_MAXBUFSIZE)
+		return (EINVAL);
+
+	bpf_maxbufsize = newsize;
+
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
+{
+	struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+
+	node = NULL;
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "bpf",
+		       SYSCTL_DESCR("BPF options"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL);
+	if (node != NULL)
+		sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "maxbufsize",
+			SYSCTL_DESCR("Maximum size for data capture buffer"),
+			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
+			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.84 2003/05/02 03:15:24 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.84.2.1 2004/08/03 10:54:15 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.84 2003/05/02 03:15:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.84.2.1 2004/08/03 10:54:15 skrll Exp $");
 
 #include "ppp.h"
 
@@ -237,7 +237,7 @@ pppattach()
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
-	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "ppp%d", i++);
 	callout_init(&sc->sc_timo_ch);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = PPP_MTU;
@@ -410,6 +410,7 @@ pppioctl(sc, cmd, data, flag, p)
     struct npioctl *npi;
     time_t t;
 #ifdef PPP_FILTER
+/*###413 [cc] warning: `bp' might be used uninitialized in this function%%%*/
     struct bpf_program *bp, *nbp;
     struct bpf_insn *newcode, *oldcode;
     int newcodelen;
@@ -429,6 +430,21 @@ pppioctl(sc, cmd, data, flag, p)
 
     case PPPIOCGFLAGS:
 	*(u_int *)data = sc->sc_flags;
+	break;
+
+    case PPPIOCGRAWIN:
+	{
+	    struct ppp_rawin *rwin = (struct ppp_rawin *)data;
+	    u_char p, q = 0;
+
+	    for (p = sc->sc_rawin_start; p < sizeof(sc->sc_rawin.buf);)
+		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+
+	    for (p = 0; p < sc->sc_rawin_start;)
+		rwin->buf[q++] = sc->sc_rawin.buf[p++];
+
+	    rwin->count = sc->sc_rawin.count;
+	}
 	break;
 
     case PPPIOCSFLAGS:
@@ -616,6 +632,9 @@ pppioctl(sc, cmd, data, flag, p)
 	case PPPIOCSOACTIVE:
 	    bp = &sc->sc_active_filt_out;
 	    break;
+	default:
+	    free(newcode, M_DEVBUF);
+	    return (EPASSTHROUGH);
 	}
 	oldcode = bp->bf_insns;
 	s = splnet();
@@ -778,7 +797,6 @@ pppoutput(ifp, m0, dst, rtp)
     struct ifqueue *ifq;
     enum NPmode mode;
     int len;
-    struct mbuf *m;
     ALTQ_DECL(struct altq_pktattr pktattr;)
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
@@ -853,29 +871,21 @@ pppoutput(ifp, m0, dst, rtp)
     }
 
     /*
-     * Add PPP header.  If no space in first mbuf, allocate another.
-     * (This assumes M_LEADINGSPACE is always 0 for a cluster mbuf.)
+     * Add PPP header.
      */
-    if (M_LEADINGSPACE(m0) < PPP_HDRLEN) {
-	m0 = m_prepend(m0, PPP_HDRLEN, M_DONTWAIT);
-	if (m0 == 0) {
-	    error = ENOBUFS;
-	    goto bad;
-	}
-	m0->m_len = 0;
-    } else
-	m0->m_data -= PPP_HDRLEN;
+    M_PREPEND(m0, PPP_HDRLEN, M_DONTWAIT);
+    if (m0 == NULL) {
+	error = ENOBUFS;
+	goto bad;
+    }
 
     cp = mtod(m0, u_char *);
     *cp++ = address;
     *cp++ = control;
     *cp++ = protocol >> 8;
     *cp++ = protocol & 0xff;
-    m0->m_len += PPP_HDRLEN;
 
-    len = 0;
-    for (m = m0; m != 0; m = m->m_next)
-	len += m->m_len;
+    len = m_length(m0);
 
     if (sc->sc_flags & SC_LOG_OUTPKT) {
 	printf("%s output: ", ifp->if_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.51 2003/01/18 10:06:32 thorpej Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.51.2.1 2004/08/03 10:52:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.51 2003/01/18 10:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.51.2.1 2004/08/03 10:52:54 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -129,7 +125,7 @@ scdebug_call(l, code, args)
 		printf("%ld call: %s", (long)code, em->e_syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
-			for (i = 0; i < sy->sy_narg; i++)
+			for (i = 0; i < sy->sy_argsize/sizeof(register_t); i++)
 				printf("%s0x%lx", i == 0 ? "" : ", ",
 				    (long)args[i]);
 			printf(")");

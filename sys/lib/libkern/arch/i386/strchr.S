@@ -1,4 +1,31 @@
-/*	$NetBSD: strchr.S,v 1.1 1998/02/22 07:01:44 mycroft Exp $	*/
+/*
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
+ * Public domain.
+ */
 
-#define STRCHR
-#include "index.S"
+#include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: strchr.S,v 1.1.48.1 2004/08/03 10:53:42 skrll Exp $")
+#endif
+
+#ifdef INDEX
+ENTRY(index)
+#else
+ENTRY(strchr)
+#endif
+	pushl	%ebx
+	movl	8(%esp),%eax
+	movb	12(%esp),%cl
+	_ALIGN_TEXT,0x90
+L1:
+	movb	(%eax),%bl
+	cmpb	%bl,%cl			/* found char??? */
+	je 	L2
+	incl	%eax
+	testb	%bl,%bl			/* null terminator??? */
+	jnz	L1
+	xorl	%eax,%eax
+L2:
+	popl	%ebx
+	ret

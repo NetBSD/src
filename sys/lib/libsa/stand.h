@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.48 2003/04/15 22:26:42 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.48.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -64,6 +60,9 @@
  *
  *	@(#)stand.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _LIBSA_STAND_H_
+#define	_LIBSA_STAND_H_
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -94,7 +93,7 @@
 struct open_file;
 
 #define FS_DEF(fs) \
-	extern int	__CONCAT(fs,_open)(char *, struct open_file *); \
+	extern int	__CONCAT(fs,_open)(const char *, struct open_file *); \
 	extern int	__CONCAT(fs,_close)(struct open_file *); \
 	extern int	__CONCAT(fs,_read)(struct open_file *, void *, \
 						size_t, size_t *); \
@@ -109,7 +108,7 @@ struct open_file;
  */
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
-	int	(*open)(char *, struct open_file *);
+	int	(*open)(const char *, struct open_file *);
 	int	(*close)(struct open_file *);
 	int	(*read)(struct open_file *, void *, size_t, size_t *);
 	int	(*write)(struct open_file *, void *, size_t size, size_t *);
@@ -223,7 +222,7 @@ void	*alloc(unsigned int);
 void	free(void *, unsigned int);
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-int	dkcksum(struct disklabel *);
+int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...);
 int	sprintf(char *, const char *, ...);
@@ -242,6 +241,7 @@ void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
+void	*memset(void *, int, size_t);
 void	exec(char *, char *, int);
 int	open(const char *, int);
 int	close(int);
@@ -252,6 +252,9 @@ off_t	lseek(int, off_t, int);
 int	ioctl(int, u_long, char *);
 int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
+
+typedef int cmp_t __P((const void *, const void *));
+void	qsort(void *, size_t, size_t, cmp_t * cmp);
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
@@ -278,3 +281,5 @@ int	oclose(int);
 ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
+
+#endif /* _LIBSA_STAND_H_ */

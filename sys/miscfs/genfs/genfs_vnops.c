@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.80.2.1 2003/07/02 15:26:50 darrenr Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.80.2.2 2004/08/03 10:54:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.1 2003/07/02 15:26:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.2 2004/08/03 10:54:05 skrll Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -278,8 +274,8 @@ genfs_revoke(void *v)
 		 */
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vop_revokeall", 0);
+			ltsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
+				&vp->v_interlock);
 			return (0);
 		}
 		/*
@@ -325,7 +321,7 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
 }
 
 /*
@@ -340,7 +336,7 @@ genfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE,
+	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
 	    &vp->v_interlock));
 }
 
@@ -355,7 +351,7 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(&vp->v_lock));
+	return (lockstatus(vp->v_vnlock));
 }
 
 /*
@@ -503,9 +499,9 @@ genfs_getpages(void *v)
 	if (flags & PGO_PASTEOF) {
 		newsize = MAX(vp->v_size,
 		    origoffset + (orignpages << PAGE_SHIFT));
-		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ);
+		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
 	} else {
-		memeof = diskeof;
+		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
@@ -535,7 +531,7 @@ genfs_getpages(void *v)
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 
-	/* vnode is VOP_LOCKed, uobj is locked */
+	/* uobj is locked */
 
 	if (write && (vp->v_flag & VONWORKLST) == 0) {
 		vn_syncer_add_to_worklist(vp, filedelay);
@@ -826,7 +822,11 @@ genfs_getpages(void *v)
 		    "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
 		    bp, offset, iobytes, bp->b_blkno);
 
-		VOP_STRATEGY(bp);
+		if (async)
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 
 loopdone:
@@ -1493,7 +1493,13 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		UVMHIST_LOG(ubchist,
 		    "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
 		    vp, offset, bp->b_bcount, bp->b_blkno);
-		VOP_STRATEGY(bp);
+		if (curproc == uvm.pagedaemon_proc)
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+		else if (async)
+			BIO_SETPRIO(bp, BPRIO_TIMENONCRITICAL);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
@@ -1619,6 +1625,7 @@ genfs_compat_getpages(void *v)
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
 		uio.uio_lwp = curlwp;
+		/* XXX vn_lock */
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
 			break;
@@ -1672,6 +1679,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
 	uio.uio_lwp = curlwp;
+	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
 	s = splbio();

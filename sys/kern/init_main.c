@@ -1,7 +1,6 @@
-/*	$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.2 2004/08/03 10:52:43 skrll Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -9,6 +8,36 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)init_main.c	8.16 (Berkeley) 5/14/95
+ */
+
+/*
+ * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,10 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.2 2004/08/03 10:52:43 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_ipsec.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
@@ -53,7 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr 
 #include "opt_syscall_debug.h"
 #include "opt_systrace.h"
 #include "opt_posix.h"
+#include "opt_kcont.h"
 
+#include "opencrypto.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -63,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr 
 #include <sys/errno.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
+#include <sys/kcont.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -83,10 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr 
 #include <sys/user.h>
 #include <sys/sysctl.h>
 #include <sys/event.h>
+#include <sys/mbuf.h>
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#ifdef SYSVSEM 
+#ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
 #ifdef SYSVMSG
@@ -99,8 +136,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr 
 #include <sys/systrace.h>
 #endif
 #include <sys/domain.h>
-#include <sys/mbuf.h>
 #include <sys/namei.h>
+#if NOPENCRYPTO > 0
+#include <opencrypto/cryptodev.h>	/* XXX really the framework */
+#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -129,13 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.1 2003/07/02 15:26:35 darrenr 
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-const char copyright[] =
-"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003\n"
-"    The NetBSD Foundation, Inc.  All rights reserved.\n"
-"Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
-"    The Regents of the University of California.  All rights reserved.\n"
-"\n";
-
 /* Components of the first process -- never freed. */
 struct	session session0;
 struct	pgrp pgrp0;
@@ -162,6 +194,7 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
+time_t	rootfstime;			/* recorded root fs time, if known */
 
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -199,12 +232,12 @@ main(void)
 	 * Initialize the current LWP pointer (curlwp) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
-	simple_lock_init(&proc0.p_raslock);
 	l = &lwp0;
 	curlwp = l;
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -219,8 +252,14 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
+	/* Initialise pools. */
+	link_pool_init();
+
 	/* Initialize callouts. */
 	callout_startup();
+
+	/* Initialize the buffer cache */
+	bufinit();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
@@ -228,11 +267,13 @@ main(void)
 	 */
 	mbinit();
 
-	/* Initialize kqueues. */
-	kqueue_init();
-
 	/* Initialize sockets. */
 	soinit();
+
+#ifdef KCONT
+	/* Initialize kcont. */
+        kcont_init();
+#endif
 
 	/*
 	 * The following things must be done before autoconfiguration.
@@ -243,13 +284,14 @@ main(void)
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
-
+#if NOPENCRYPTO > 0
+	/* Initialize crypto subsystem before configuring crypto hardware. */
+	(void)crypto_init();
+#endif
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
 
-	/*
-	 * Initialize process and pgrp structures.
-	 */
+	/* Initialize process and pgrp structures. */
 	procinit();
 
 #ifdef LKM
@@ -290,7 +332,6 @@ main(void)
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Create the file descriptor table. */
-	finit();
 	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
 
@@ -298,9 +339,11 @@ main(void)
 	p->p_cwdi = &cwdi0;
 	cwdi0.cwdi_cmask = cmask;
 	cwdi0.cwdi_refcnt = 1;
+	simple_lock_init(&cwdi0.cwdi_slock);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
+	simple_lock_init(&limit0.p_slock);
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
@@ -351,9 +394,9 @@ main(void)
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
 	 * defined in kernel config, adjust the number such as we use roughly
-	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
+	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
-	usevnodes = (ptoa((unsigned)physmem) / 200) / sizeof(struct vnode);
+	usevnodes = (ptoa((unsigned)physmem) / 100) / sizeof(struct vnode);
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -382,7 +425,6 @@ main(void)
 	msginit();
 #endif
 
-
 #ifdef P1003_1B_SEMAPHORE
 	/* Initialize posix semaphores */
 	ksem_init();
@@ -390,6 +432,11 @@ main(void)
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
+
+#ifdef	FAST_IPSEC
+	/* Attach network crypto subsystem */
+	ipsec_attach();
+#endif
 
 	/*
 	 * Initialize protocols.  Block reception of incoming packets
@@ -476,6 +523,13 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
+	/*
+	 * Initialise the time-of-day clock, passing the time recorded
+	 * in the root filesystem (if any) for use by systems that
+	 * don't have a non-volatile time-of-day device.
+	 */
+	inittodr(rootfstime);
+
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
@@ -506,13 +560,12 @@ main(void)
 	 */
 	proclist_lock_read();
 	s = splsched();
-	for (p = LIST_FIRST(&allproc); p != NULL;
-	     p = LIST_NEXT(p, p_list)) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		p->p_stats->p_start = mono_time = boottime = time;
-		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
-		     l = LIST_NEXT(l, l_sibling)) 
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_cpu != NULL)
 				l->l_cpu->ci_schedstate.spc_runtime = time;
+		}
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 	splx(s);
@@ -522,10 +575,6 @@ main(void)
 	uvm_swap_init();
 	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
-
-	/* Create the process reaper kernel thread. */
-	if (kthread_create1(reaper, NULL, NULL, "reaper"))
-		panic("fork reaper");
 
 	/* Create the filesystem syncer kernel thread. */
 	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
@@ -544,11 +593,6 @@ main(void)
 	/* Initialize exec structures */
 	exec_init(1);
 
-#ifndef PIPE_SOCKETPAIR
-	/* Initialize pipe structures */
-	pipe_init();
-#endif
-
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
@@ -558,6 +602,12 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
+}
+
+void
+setrootfstime(time_t t)
+{
+	rootfstime = t;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.77.2.1 2003/07/02 15:26:49 darrenr Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77.2.2 2004/08/03 10:54:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.1 2003/07/02 15:26:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.2 2004/08/03 10:54:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +263,7 @@ out:;
 
 	if (fdcache_lock & FDL_WANT) {
 		fdcache_lock &= ~FDL_WANT;
-		wakeup((caddr_t) &fdcache_lock);
+		wakeup(&fdcache_lock);
 	}
 
 	return (error);
@@ -450,14 +446,14 @@ fdesc_open(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fdesc:
 		/*
-		 * XXX Kludge: set p->p_dupfd to contain the value of the
+		 * XXX Kludge: set dupfd to contain the value of the
 		 * the file descriptor being sought for duplication. The error 
 		 * return ensures that the vnode for this device will be
 		 * released by vn_open. Open will detect this special error and
 		 * take the actions in dupfdopen.  Other callers of vn_open or
 		 * VOP_OPEN will simply report the error.
 		 */
-		ap->a_l->l_proc->p_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
+		curlwp->l_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
 		return (ENODEV);
 
 	case Fctty:
@@ -596,7 +592,7 @@ fdesc_getattr(v)
 		}
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+		vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 		vap->va_blocksize = DEV_BSIZE;
 		vap->va_atime.tv_sec = boottime.tv_sec;
 		vap->va_atime.tv_nsec = 0;
@@ -723,7 +719,7 @@ fdesc_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
-	memset((caddr_t)&d, 0, UIO_MX);
+	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	if (ap->a_ncookies)
 		ncookies = (uio->uio_resid / UIO_MX);
@@ -766,7 +762,7 @@ fdesc_readdir(v)
 			memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
 			d.d_type = ft->ft_type;
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -801,7 +797,7 @@ fdesc_readdir(v)
 				break;
 			}
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -907,7 +903,7 @@ fdesc_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct lwp *a_l;

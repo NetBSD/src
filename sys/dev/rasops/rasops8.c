@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.16 2002/02/11 20:50:58 uwe Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.16.16.1 2004/08/03 10:51:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.16 2002/02/11 20:50:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.16.16.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include "opt_rasops.h"
 
@@ -117,6 +117,9 @@ rasops8_putchar(cookie, row, col, uc, attr)
 	struct rasops_info *ri;
 
 	ri = (struct rasops_info *)cookie;
+
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+		return;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -234,6 +237,9 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 
 	ri = (struct rasops_info *)cookie;
 
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+		return;
+
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
@@ -304,6 +310,9 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 	}
 
 	ri = (struct rasops_info *)cookie;
+
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+	    return;
 
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
@@ -378,6 +387,9 @@ rasops8_putchar16(cookie, row, col, uc, attr)
 	}
 
 	ri = (struct rasops_info *)cookie;
+
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+		return;
 
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {

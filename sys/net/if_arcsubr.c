@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.42 2003/05/02 03:15:23 itojun Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.42.2.1 2004/08/03 10:54:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.42 2003/05/02 03:15:23 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.42.2.1 2004/08/03 10:54:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -407,7 +403,7 @@ arc_defrag(ifp, m)
 	struct mbuf *m1;
 	char *s;
 	int newflen;
-	u_char src,dst,typ;
+	u_char src, dst, typ;
 	
 	ac = (struct arccom *)ifp;
 
@@ -501,7 +497,7 @@ arc_defrag(ifp, m)
 		if (ah->arc_flag == af->af_lastseen + 2) {
 			/* ok, this is next fragment */
 			af->af_lastseen = ah->arc_flag;
-			m_adj(m,ARC_HDRNEWLEN);
+			m_adj(m, ARC_HDRNEWLEN);
 
 			/* 
 			 * m_cat might free the first mbuf (with pkthdr)
@@ -510,7 +506,7 @@ arc_defrag(ifp, m)
 
 			newflen = m->m_pkthdr.len;	
 
-			m_cat(m1,m);
+			m_cat(m1, m);
 
 			m1->m_pkthdr.len += newflen;
 

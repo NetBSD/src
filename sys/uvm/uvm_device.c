@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.41 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.41.6.1 2004/08/03 10:57:04 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.41 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.41.6.1 2004/08/03 10:57:04 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -67,11 +67,11 @@ static struct simplelock udv_lock;
  * functions
  */
 
-static void	udv_init __P((void));
-static void	udv_reference __P((struct uvm_object *));
-static void	udv_detach __P((struct uvm_object *));
-static int	udv_fault __P((struct uvm_faultinfo *, vaddr_t,
-    struct vm_page **, int, int, vm_fault_t, vm_prot_t, int));
+static void	udv_init(void);
+static void	udv_reference(struct uvm_object *);
+static void	udv_detach(struct uvm_object *);
+static int	udv_fault(struct uvm_faultinfo *, vaddr_t,
+    struct vm_page **, int, int, vm_fault_t, vm_prot_t, int);
 
 /*
  * master pager structure
@@ -373,7 +373,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	paddr_t paddr, mdpgno;
 	int lcv, retval;
 	dev_t device;
-	paddr_t (*mapfn) __P((dev_t, off_t, int));
+	paddr_t (*mapfn)(dev_t, off_t, int);
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112.2.1 2004/08/03 10:54:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.1 2004/08/03 10:54:12 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -215,7 +211,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	short mflags;
 
 #ifdef MBUFTRACE
-	m_claim(m, ifp->if_mowner);
+	m_claimm(m, ifp->if_mowner);
 #endif
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -666,7 +662,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	u_int16_t etype;
 	int s;
 	struct ether_header *eh;
-	struct m_tag *mtag;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -677,7 +672,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 #ifdef MBUFTRACE
-	m_claim(m, &ec->ec_rx_mowner);
+	m_claimm(m, &ec->ec_rx_mowner);
 #endif
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
@@ -770,8 +765,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * see if the device performed the decapsulation and
 	 * provided us with the tag.
 	 */
-	if (ec->ec_nvlans &&
-	    (mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
+	if (ec->ec_nvlans && m_tag_find(m, PACKET_TAG_VLAN, NULL) != NULL) {
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()
@@ -1115,6 +1109,11 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 	int s;
+
+#if NBRIDGE > 0
+	if (ifp->if_bridge)
+		bridge_ifdetach(ifp);
+#endif
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);

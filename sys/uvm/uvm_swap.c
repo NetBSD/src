@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.80.2.1 2003/07/02 15:27:30 darrenr Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.80.2.2 2004/08/03 10:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.1 2003/07/02 15:27:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.2 2004/08/03 10:57:09 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80.2.1 2003/07/02 15:27:30 darrenr Ex
  *  [1] SWAP_NSWAP: returns the number of swap devices currently configured
  *  [2] SWAP_STATS: given a pointer to an array of swapent structures
  *	(passed in via "arg") of a size passed in via "misc" ... we load
- *	the current swap config into the array. The actual work is done 
+ *	the current swap config into the array. The actual work is done
  *	in the uvm_swap_stats(9) function.
  *  [3] SWAP_ON: given a pathname in arg (could be device or file) and a
  *	priority in "misc", start swapping on it.
@@ -180,8 +180,8 @@ struct vndbuf {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-static struct pool vndxfer_pool;
-static struct pool vndbuf_pool;
+POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL);
+POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
@@ -220,21 +220,21 @@ struct lock swap_syscall_lock;
 /*
  * prototypes
  */
-static struct swapdev	*swapdrum_getsdp __P((int));
+static struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find __P((struct vnode *, int));
-static void		 swaplist_insert __P((struct swapdev *,
-					     struct swappri *, int));
-static void		 swaplist_trim __P((void));
+static struct swapdev	*swaplist_find(struct vnode *, int);
+static void		 swaplist_insert(struct swapdev *,
+					 struct swappri *, int);
+static void		 swaplist_trim(void);
 
-static int swap_on __P((struct lwp *, struct swapdev *));
-static int swap_off __P((struct lwp *, struct swapdev *));
+static int swap_on(struct lwp *, struct swapdev *);
+static int swap_off(struct lwp *, struct swapdev *);
 
-static void sw_reg_strategy __P((struct swapdev *, struct buf *, int));
-static void sw_reg_iodone __P((struct buf *));
-static void sw_reg_start __P((struct swapdev *));
+static void sw_reg_strategy(struct swapdev *, struct buf *, int);
+static void sw_reg_iodone(struct buf *);
+static void sw_reg_start(struct swapdev *);
 
-static int uvm_swap_io __P((struct vm_page **, int, int, int));
+static int uvm_swap_io(struct vm_page **, int, int, int);
 
 dev_type_read(swread);
 dev_type_write(swwrite);
@@ -285,16 +285,6 @@ uvm_swap_init()
 				M_VMSWAP, 0, 0, EX_NOWAIT);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
-
-	/*
-	 * allocate pools for structures used for swapping to files.
-	 */
-
-	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0,
-	    "swp vnx", NULL);
-
-	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0,
-	    "swp vnd", NULL);
 
 	/*
 	 * done!
@@ -508,7 +498,8 @@ sys_swapctl(l, v, retval)
 	    || SCARG(uap, cmd) == SWAP_OSTATS
 #endif
 	    ) {
-		misc = MIN(uvmexp.nswapdev, misc);
+		if ((size_t)misc > (size_t)uvmexp.nswapdev)
+			misc = uvmexp.nswapdev;
 #if defined(COMPAT_13)
 		if (SCARG(uap, cmd) == SWAP_OSTATS)
 			len = sizeof(struct oswapent) * misc;
@@ -700,13 +691,13 @@ out:
 	return (error);
 }
 
-/* 
+/*
  * swap_stats: implements swapctl(SWAP_STATS). The function is kept
- * away from sys_swapctl() in order to allow COMPAT_* swapctl() 
+ * away from sys_swapctl() in order to allow COMPAT_* swapctl()
  * emulation to use it directly without going through sys_swapctl().
  * The problem with using sys_swapctl() there is that it involves
  * copying the swapent array to the stackgap, and this array's size
- * is not known at build time. Hence it would not be possible to 
+ * is not known at build time. Hence it would not be possible to
  * ensure it would fit in the stackgap in any case.
  */
 void
@@ -735,9 +726,9 @@ uvm_swap_stats(cmd, sep, sec, retval)
 			sdp->swd_ose.ose_inuse =
 			    btodb((u_int64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
-			(void)memcpy(sep, &sdp->swd_ose, 
+			(void)memcpy(sep, &sdp->swd_ose,
 			    sizeof(struct oswapent));
-			
+
 			/* now copy out the path if necessary */
 #if defined(COMPAT_13)
 			if (cmd == SWAP_STATS)
@@ -783,7 +774,7 @@ swap_on(l, sdp)
 	u_long result;
 	struct vattr va;
 #ifdef NFS
-	extern int (**nfsv2_vnodeop_p) __P((void *));
+	extern int (**nfsv2_vnodeop_p)(void *);
 #endif /* NFS */
 	const struct bdevsw *bdev;
 	dev_t dev;
@@ -837,7 +828,7 @@ swap_on(l, sdp)
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
-		     VFS_STATFS(vp->v_mount, &vp->v_mount->mnt_stat, l)) != 0)
+		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat, l)) != 0)
 			goto bad;
 
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
@@ -918,21 +909,21 @@ swap_on(l, sdp)
 	 */
 	if (vp == rootvp) {
 		struct mount *mp;
-		struct statfs *sp;
+		struct statvfs *sp;
 		int rootblocks, rootpages;
 
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
-		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
+		rootblocks = sp->f_blocks * btodb(sp->f_frsize);
 		/*
 		 * XXX: sp->f_blocks isn't the total number of
 		 * blocks in the filesystem, it's the number of
 		 * data blocks.  so, our rootblocks almost
-		 * definitely underestimates the total size 
+		 * definitely underestimates the total size
 		 * of the filesystem - how badly depends on the
-		 * details of the filesystem type.  there isn't 
+		 * details of the filesystem type.  there isn't
 		 * an obvious way to deal with this cleanly
-		 * and perfectly, so for now we just pad our 
+		 * and perfectly, so for now we just pad our
 		 * rootblocks estimate with an extra 5 percent.
 		 */
 		rootblocks += (rootblocks >> 5) +
@@ -979,6 +970,7 @@ swap_on(l, sdp)
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
 	uvmexp.swpages += size;
+	uvmexp.swpgavail += size;
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
 
@@ -1007,11 +999,14 @@ swap_off(l, sdp)
 	struct swapdev *sdp;
 {
 	struct proc *p = l->l_proc;
+	int npages =  sdp->swd_npages;
+
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "  dev=%x", sdp->swd_dev,0,0,0);
+	UVMHIST_LOG(pdhist, "  dev=%x, npages=%d", sdp->swd_dev,npages,0,0);
 
 	/* disable the swap area being removed */
 	sdp->swd_flags &= ~SWF_ENABLE;
+	uvmexp.swpgavail -= npages;
 	simple_unlock(&uvm.swap_data_lock);
 
 	/*
@@ -1028,6 +1023,7 @@ swap_off(l, sdp)
 
 		simple_lock(&uvm.swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
+		uvmexp.swpgavail += npages;
 		simple_unlock(&uvm.swap_data_lock);
 		return ENOMEM;
 	}
@@ -1044,10 +1040,11 @@ swap_off(l, sdp)
 	}
 
 	/* remove anons from the system */
-	uvm_anon_remove(sdp->swd_npages);
+	uvm_anon_remove(npages);
 
 	simple_lock(&uvm.swap_data_lock);
-	uvmexp.swpages -= sdp->swd_npages;
+	uvmexp.swpages -= npages;
+	uvmexp.swpginuse -= sdp->swd_npgbad;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
 		panic("swap_off: swapdev not in list");
@@ -1178,7 +1175,7 @@ swstrategy(bp)
 		 */
 		bp->b_vp = vp;
 		splx(s);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 		return;
 
 	case VREG:
@@ -1372,7 +1369,7 @@ sw_reg_start(sdp)
 		if ((bp->b_flags & B_READ) == 0)
 			V_INCR_NUMOUTPUT(bp->b_vp);
 
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	sdp->swd_flags &= ~SWF_BUSY;
 }
@@ -1522,6 +1519,19 @@ ReTry:	/* XXXMRG */
 	return 0;
 }
 
+boolean_t
+uvm_swapisfull(void)
+{
+	boolean_t rv;
+
+	simple_lock(&uvm.swap_data_lock);
+	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
+	rv = (uvmexp.swpgonly >= uvmexp.swpgavail);
+	simple_unlock(&uvm.swap_data_lock);
+
+	return (rv);
+}
+
 /*
  * uvm_swap_markbad: keep track of swap ranges where we've had i/o errors
  *
@@ -1537,6 +1547,7 @@ uvm_swap_markbad(startslot, nslots)
 
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
+	KASSERT(sdp != NULL);
 
 	/*
 	 * we just keep track of how many pages have been marked bad
@@ -1545,6 +1556,8 @@ uvm_swap_markbad(startslot, nslots)
 	 * one swap device.
 	 */
 
+	KASSERT(uvmexp.swpgonly >= nslots);
+	uvmexp.swpgonly -= nslots;
 	sdp->swd_npgbad += nslots;
 	UVMHIST_LOG(pdhist, "now %d bad", sdp->swd_npgbad, 0,0,0);
 	simple_unlock(&uvm.swap_data_lock);
@@ -1634,6 +1647,7 @@ uvm_swap_get(page, swslot, flags)
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
 	}
+
 	error = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
 	if (error == 0) {
@@ -1707,7 +1721,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	bp->b_vp = swapdev_vp;
-	bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 
 	/*
@@ -1728,6 +1741,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
+		if (curproc == uvm.pagedaemon_proc)
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+	} else {
+		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
 	    "about to start io: data = %p blkno = 0x%x, bcount = %ld",
@@ -1737,7 +1756,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now we start the I/O, and if async, return.
 	 */
 
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(swapdev_vp, bp);
 	if (async)
 		return 0;
 

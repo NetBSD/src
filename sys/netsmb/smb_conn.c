@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.14 2003/06/02 20:43:36 martin Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.14.2.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.14 2003/06/02 20:43:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.14.2.1 2004/08/03 10:56:05 skrll Exp $");
 
 /*
  * Connection engine.
@@ -126,56 +126,58 @@ static int
 smb_sm_lookupint(struct smb_vcspec *vcspec, struct smb_sharespec *shspec,
 	struct smb_cred *scred,	struct smb_vc **vcpp)
 {
-	struct smb_vc *vcp;
+	struct smb_connobj *ocp;
 	int exact = 1;
-	int error;
+	int fail = 1;
 
 	vcspec->shspec = shspec;
-	error = ENOENT;
-	SMBCO_FOREACH((struct smb_connobj*)vcp, &smb_vclist) {
-		error = smb_vc_lock(vcp, LK_EXCLUSIVE);
-		if (error)
+	SMBCO_FOREACH(ocp, &smb_vclist) {
+		struct smb_vc *vcp = (struct smb_vc *)ocp;
+
+		if (smb_vc_lock(vcp, LK_EXCLUSIVE) != 0)
 			continue;
-		itry {
-			if ((vcp->obj.co_flags & SMBV_PRIVATE) ||
+
+		do {
+			if ((ocp->co_flags & SMBV_PRIVATE) ||
 			    !CONNADDREQ(vcp->vc_paddr, vcspec->sap) ||
 			    strcmp(vcp->vc_username, vcspec->username) != 0)
-				ithrow(1);
+				break;
+
 			if (vcspec->owner != SMBM_ANY_OWNER) {
 				if (vcp->vc_uid != vcspec->owner)
-					ithrow(1);
+					break;
 			} else
 				exact = 0;
 			if (vcspec->group != SMBM_ANY_GROUP) {
 				if (vcp->vc_grp != vcspec->group)
-					ithrow(1);
+					break;
 			} else
 				exact = 0;
 
 			if (vcspec->mode & SMBM_EXACT) {
 				if (!exact ||
 				    (vcspec->mode & SMBM_MASK) != vcp->vc_mode)
-					ithrow(1);
+					break;
 			}
 			if (smb_vc_access(vcp, scred, vcspec->mode) != 0)
-				ithrow(1);
+				break;
 			vcspec->ssp = NULL;
-			if (shspec)
-				ithrow(smb_vc_lookupshare(vcp, shspec, scred, &vcspec->ssp));
-			error = 0;
-			break;
-		} icatch(error) {
-			smb_vc_unlock(vcp, 0);
-		} ifinally {
-		} iendtry;
-		if (error == 0)
-			break;
+			if (shspec
+			    &&smb_vc_lookupshare(vcp, shspec, scred, &vcspec->ssp) != 0)
+				break;
+
+			/* if we get here, all checks succeeded */
+			smb_vc_ref(vcp);
+			*vcpp = vcp;
+			fail = 0;
+			goto out;
+		} while(0);
+
+		smb_vc_unlock(vcp, 0);
 	}
-	if (vcp) {
-		smb_vc_ref(vcp);
-		*vcpp = vcp;
-	}
-	return error;
+
+    out:
+	return fail;
 }
 
 int
@@ -184,20 +186,20 @@ smb_sm_lookup(struct smb_vcspec *vcspec, struct smb_sharespec *shspec,
 {
 	struct smb_vc *vcp;
 	struct smb_share *ssp = NULL;
-	int error;
+	int fail, error;
 
 	*vcpp = vcp = NULL;
 
 	error = smb_sm_lockvclist(LK_EXCLUSIVE);
 	if (error)
 		return error;
-	error = smb_sm_lookupint(vcspec, shspec, scred, vcpp);
-	if (error == 0 || (vcspec->flags & SMBV_CREATE) == 0) {
+	fail = smb_sm_lookupint(vcspec, shspec, scred, vcpp);
+	if (!fail || (vcspec->flags & SMBV_CREATE) == 0) {
 		smb_sm_unlockvclist();
-		return error;
+		return 0;
 	}
-	error = smb_sm_lookupint(vcspec, NULL, scred, &vcp);
-	if (error) {
+	fail = smb_sm_lookupint(vcspec, NULL, scred, &vcp);
+	if (fail) {
 		error = smb_vc_create(vcspec, scred, &vcp);
 		if (error)
 			goto out;
@@ -387,7 +389,7 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	char *domain = vcspec->domain;
 	int error, isroot;
 
-	isroot = smb_suser(cred) == 0;
+	isroot = (smb_suser(cred) == 0);
 	/*
 	 * Only superuser can create VCs with different uid and gid
 	 */
@@ -414,39 +416,53 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	vcp->vc_grp = gid;
 
 	smb_sl_init(&vcp->vc_stlock, "vcstlock");
-	error = 0;
-	itry {
-		vcp->vc_paddr = dup_sockaddr(vcspec->sap, 1);
-		ierror(vcp->vc_paddr == NULL, ENOMEM);
+	error = ENOMEM;
+	if ((vcp->vc_paddr = dup_sockaddr(vcspec->sap, 1)) == NULL)
+		goto fail;
 
-		vcp->vc_laddr = dup_sockaddr(vcspec->lap, 1);
-		ierror(vcp->vc_laddr == NULL, ENOMEM);
+	if ((vcp->vc_laddr = dup_sockaddr(vcspec->lap, 1)) == NULL)
+		goto fail;
 
-		ierror((vcp->vc_pass = smb_strdup(vcspec->pass)) == NULL, ENOMEM);
+	if ((vcp->vc_pass = smb_strdup(vcspec->pass)) == NULL)
+		goto fail;
 
-		vcp->vc_domain = smb_strdup((domain && domain[0]) ? domain : "NODOMAIN");
-		ierror(vcp->vc_domain == NULL, ENOMEM);
+	vcp->vc_domain = smb_strdup((domain && domain[0]) ? domain : "NODOMAIN");
+	if (vcp->vc_domain == NULL)
+		goto fail;
 
-		ierror((vcp->vc_srvname = smb_strdup(vcspec->srvname)) == NULL, ENOMEM);
-		ierror((vcp->vc_username = smb_strdup(vcspec->username)) == NULL, ENOMEM);
+	if ((vcp->vc_srvname = smb_strdup(vcspec->srvname)) == NULL)
+		goto fail;
 
-		ithrow(iconv_open("tolower", vcspec->localcs, &vcp->vc_tolower));
-		ithrow(iconv_open("toupper", vcspec->localcs, &vcp->vc_toupper));
-		if (vcspec->servercs[0]) {
-			ithrow(iconv_open(vcspec->servercs, vcspec->localcs,
-			    &vcp->vc_toserver));
-			ithrow(iconv_open(vcspec->localcs, vcspec->servercs,
-			    &vcp->vc_tolocal));
-		}
+	if ((vcp->vc_username = smb_strdup(vcspec->username)) == NULL)
+		goto fail;
 
-		ithrow(smb_iod_create(vcp));
-		*vcpp = vcp;
-		smb_co_addchild(&smb_vclist, VCTOCP(vcp));
-	} icatch(error) {
-		smb_vc_put(vcp, scred);
-	} ifinally {
-	} iendtry;
-	return error;
+#define ithrow(cmd)				\
+		if ((error = cmd))		\
+			goto fail
+
+	ithrow(iconv_open("tolower", vcspec->localcs, &vcp->vc_tolower));
+	ithrow(iconv_open("toupper", vcspec->localcs, &vcp->vc_toupper));
+	if (vcspec->servercs[0]) {
+		ithrow(iconv_open(vcspec->servercs, vcspec->localcs,
+		    &vcp->vc_toserver));
+		ithrow(iconv_open(vcspec->localcs, vcspec->servercs,
+		    &vcp->vc_tolocal));
+	}
+
+	ithrow(smb_iod_create(vcp));
+
+#undef ithrow
+
+	/* all is well, return success */
+	*vcpp = vcp;
+	smb_co_addchild(&smb_vclist, VCTOCP(vcp));
+
+	return 0;
+
+    fail:
+	smb_vc_put(vcp, scred);
+	return (error);
+
 }
 
 static void
@@ -574,12 +590,14 @@ int
 smb_vc_lookupshare(struct smb_vc *vcp, struct smb_sharespec *dp,
 	struct smb_cred *scred,	struct smb_share **sspp)
 {
+	struct smb_connobj *osp;
 	struct smb_share *ssp = NULL;
 	int error;
 
 	*sspp = NULL;
 	dp->scred = scred;
-	SMBCO_FOREACH((struct smb_connobj*)ssp, VCTOCP(vcp)) {
+	SMBCO_FOREACH(osp, VCTOCP(vcp)) {
+		ssp = (struct smb_share *)osp;
 		error = smb_share_lock(ssp, LK_EXCLUSIVE);
 		if (error)
 			continue;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.15 2003/06/29 22:30:53 fvdl Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.15.2.1 2004/08/03 10:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.15 2003/06/29 22:30:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.15.2.1 2004/08/03 10:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 		si = &stic_consinfo;
 		console = 1;
 	} else {
-		if (stic_consinfo.si_slotbase == NULL)
+		if (stic_consinfo.si_slotbase == 0)
 			si = &stic_consinfo;
 		else {
 			si = malloc(sizeof(*si), M_DEVBUF, M_NOWAIT|M_ZERO);
@@ -360,7 +360,7 @@ pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 	  struct proc *p)
 {
 	struct stic_xinfo *sxi;
-	volatile u_int32_t *ptr;
+	volatile u_int32_t *ptr = NULL;
 	int rv, s;
 
 	switch (cmd) {

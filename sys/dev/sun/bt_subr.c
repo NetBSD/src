@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.4 2002/09/04 03:58:37 itojun Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.4.6.1 2004/08/03 10:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.4 2002/09/04 03:58:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.4.6.1 2004/08/03 10:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +83,8 @@ bt_getcmap(p, cm, cmsize, uspace)
 		return (EINVAL);
 
 	if (uspace) {
-		/* Check user buffers for appropriate access */
-		if (!uvm_useracc(p->red, count, B_WRITE) ||
-		    !uvm_useracc(p->green, count, B_WRITE) ||
-		    !uvm_useracc(p->blue, count, B_WRITE))
-			return (EFAULT);
-
 		/* Allocate temporary buffer for color values */
-		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		cbuf = malloc(3 * count * sizeof(char), M_TEMP, M_WAITOK);
 		r = cbuf;
 		g = r + count;
 		b = g + count;
@@ -152,14 +142,8 @@ bt_putcmap(p, cm, cmsize, uspace)
 		return (EINVAL);
 
 	if (uspace) {
-		/* Check user buffers for appropriate access */
-		if (!uvm_useracc(p->red, count, B_READ) ||
-		    !uvm_useracc(p->green, count, B_READ) ||
-		    !uvm_useracc(p->blue, count, B_READ))
-			return (EFAULT);
-
 		/* Allocate temporary buffer for color values */
-		cbuf = malloc(3*count*sizeof(char), M_TEMP, M_WAITOK);
+		cbuf = malloc(3 * count * sizeof(char), M_TEMP, M_WAITOK);
 		r = cbuf;
 		g = r + count;
 		b = g + count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.16.2.1 2003/07/02 15:27:26 darrenr Exp $	*/
+/*	$NetBSD: quota.h,v 1.16.2.2 2004/08/03 10:57:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -202,7 +198,7 @@ int	quotaoff __P((struct lwp *, struct mount *, int));
 int	quotaon __P((struct lwp *, struct mount *, int, caddr_t));
 int	setquota __P((struct mount *, u_long, int, caddr_t));
 int	setuse __P((struct mount *, u_long, int, caddr_t));
-int	ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
+int	ufs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 __END_DECLS
 
 #ifdef DIAGNOSTIC

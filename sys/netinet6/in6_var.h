@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.34 2003/02/01 06:23:47 thorpej Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.34.2.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -275,13 +271,15 @@ struct	in6_aliasreq {
  * prefix related flags passed between kernel(NDP related part) and
  * user land command(ifconfig) and daemon(rtadvd).
  */
+struct prf_ra {
+	u_char onlink : 1;
+	u_char autonomous : 1;
+	u_char router : 1;
+	u_char reserved : 5;
+};
+
 struct in6_prflags {
-	struct prf_ra {
-		u_char onlink : 1;
-		u_char autonomous : 1;
-		u_char router : 1;
-		u_char reserved : 5;
-	} prf_ra;
+	struct prf_ra prf_ra;
 	u_char prf_reserved1;
 	u_short prf_reserved2;
 	/* want to put this on 4byte offset */
@@ -535,7 +533,7 @@ do {								\
 		for ((in6m) = ia->ia6_multiaddrs.lh_first;	\
 		     (in6m) != NULL &&				\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
-		     (in6m) = in6m->in6m_entry.le_next)		\
+		     (in6m) = (in6m)->in6m_entry.le_next)	\
 			continue;				\
 } while (/*CONSTCOND*/ 0)
 

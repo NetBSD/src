@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.23 2002/09/27 15:37:48 provos Exp $	*/
+/*	$NetBSD: arp.c,v 1.23.6.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -208,7 +208,7 @@ arprecv(d, pkt, len, tleft)
 
 	n = readether(d, pkt, len, tleft, &etype);
 	errno = 0;	/* XXX */
-	if (n == -1 || n < sizeof(struct ether_arp)) {
+	if (n == -1 || (size_t)n < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
 			printf("bad len=%ld\n", (signed long) n);

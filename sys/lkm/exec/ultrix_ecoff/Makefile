@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/05/04 06:36:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/08/03 10:53:58 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -11,10 +11,6 @@ KMOD=	exec_ultrix_ecoff
 SRCS=	lkminit_exec.c
 SRCS+=	ultrix_exec_ecoff.c
 
-DPSRCS+= mips
-.PHONY: mips
-mips: 
-	-rm -f $@
-	ln -s $S/arch/mips/include $@
+BUILDSYMLINKS+=${S}/arch/mips/include mips
 
 .include <bsd.kmod.mk>

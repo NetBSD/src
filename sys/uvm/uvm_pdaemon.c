@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.1 2004/08/03 10:57:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.1 2004/08/03 10:57:08 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -99,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51 2003/04/23 00:55:22 tls Exp $")
  * local prototypes
  */
 
-void		uvmpd_scan __P((void));
-void		uvmpd_scan_inactive __P((struct pglist *));
-void		uvmpd_tune __P((void));
+void		uvmpd_scan(void);
+void		uvmpd_scan_inactive(struct pglist *);
+void		uvmpd_tune(void);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -226,6 +226,13 @@ uvm_pageout(void *arg)
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
 		/*
+		 * The metadata cache drainer knows about uvmexp.free
+		 * and uvmexp.freetarg.  We call it _before_ scanning
+		 * so that it sees the amount we really want.
+		 */
+		buf_drain(0);
+
+		/*
 		 * now lock page queues and recompute inactive count
 		 */
 
@@ -274,6 +281,12 @@ uvm_pageout(void *arg)
 		 */
 
 		pool_drain(0);
+
+		/*
+		 * free any cached u-areas we don't need
+		 */
+		uvm_uarea_drain(TRUE);
+
 	}
 	/*NOTREACHED*/
 }
@@ -554,6 +567,10 @@ uvmpd_scan_inactive(pglst)
 				p->flags &= ~(PG_CLEAN);
 			}
 			if (p->flags & PG_CLEAN) {
+				int slot;
+				int pageidx;
+
+				pageidx = p->offset >> PAGE_SHIFT;
 				uvm_pagefree(p);
 				uvmexp.pdfreed++;
 
@@ -566,14 +583,20 @@ uvmpd_scan_inactive(pglst)
 				if (anon) {
 					KASSERT(anon->an_swslot != 0);
 					anon->u.an_page = NULL;
+					slot = anon->an_swslot;
+				} else {
+					slot = uao_find_swslot(uobj, pageidx);
 				}
 				simple_unlock(slock);
 
-				/* this page is now only in swap. */
-				simple_lock(&uvm.swap_data_lock);
-				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
-				uvmexp.swpgonly++;
-				simple_unlock(&uvm.swap_data_lock);
+				if (slot > 0) {
+					/* this page is now only in swap. */
+					simple_lock(&uvm.swap_data_lock);
+					KASSERT(uvmexp.swpgonly <
+						uvmexp.swpginuse);
+					uvmexp.swpgonly++;
+					simple_unlock(&uvm.swap_data_lock);
+				}
 				continue;
 			}
 
@@ -608,8 +631,7 @@ uvmpd_scan_inactive(pglst)
 			 * the inactive queue.
 			 */
 
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (uvmexp.swpgonly == uvmexp.swpages) {
+			if (uvm_swapisfull()) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
 				simple_unlock(slock);
@@ -767,11 +789,6 @@ uvmpd_scan(void)
 
 	UVMHIST_LOG(pdhist, "  starting 'free' loop",0,0,0,0);
 
-	/*
-	 * alternate starting queue between swap and object based on the
-	 * low bit of uvmexp.pdrevs (which we bump by one each call).
-	 */
-
 	pages_freed = uvmexp.pdfreed;
 	uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
@@ -790,8 +807,8 @@ uvmpd_scan(void)
 
 	swap_shortage = 0;
 	if (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.swpginuse == uvmexp.swpages &&
-	    uvmexp.swpgonly < uvmexp.swpages &&
+	    uvmexp.swpginuse >= uvmexp.swpgavail &&
+	    !uvm_swapisfull() &&
 	    pages_freed == 0) {
 		swap_shortage = uvmexp.freetarg - uvmexp.free;
 	}

@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkeyv2.h,v 1.12 2001/08/02 12:10:14 itojun Exp $	*/
-/*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.12.20.1 2004/08/03 10:54:19 skrll Exp $	*/
+/*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -240,9 +240,7 @@ struct sadb_x_policy {
  * This structure is aligned 8 bytes.
  */
 struct sadb_x_ipsecrequest {
-  u_int16_t sadb_x_ipsecrequest_len;	/* structure length aligned to 8 bytes.
-					 * This value is true length of bytes.
-					 * Not in units of 64 bits. */
+  u_int16_t sadb_x_ipsecrequest_len;	/* structure length in 64 bits. */
   u_int16_t sadb_x_ipsecrequest_proto;	/* See ipsec.h */
   u_int8_t sadb_x_ipsecrequest_mode;	/* See IPSEC_MODE_XX in ipsec.h. */
   u_int8_t sadb_x_ipsecrequest_level;	/* See IPSEC_LEVEL_XX in ipsec.h */
@@ -288,7 +286,8 @@ struct sadb_x_ipsecrequest {
 #define SADB_SATYPE_MIP		8
 #define SADB_X_SATYPE_IPCOMP	9
 /*#define SADB_X_SATYPE_POLICY	10	obsolete, do not reuse */
-#define SADB_SATYPE_MAX		11
+#define SADB_X_SATYPE_TCPSIGNATURE	11
+#define SADB_SATYPE_MAX		12
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1
@@ -303,31 +302,39 @@ struct sadb_x_ipsecrequest {
 #define SADB_AALG_MD5HMAC	2
 #define SADB_AALG_SHA1HMAC	3
 #define SADB_AALG_MAX		251
+/* private allocations - based on RFC2407/IANA assignment */
+#define SADB_X_AALG_SHA2_256	5
+#define SADB_X_AALG_SHA2_384	6
+#define SADB_X_AALG_SHA2_512	7
+#define SADB_X_AALG_RIPEMD160HMAC 8
+#define SADB_X_AALG_AES_XCBC_MAC 9 /* draft-ietf-ipsec-ciph-aes-xcbc-mac-04 */
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_AALG_MD5		249	/* Keyed MD5 */
 #define SADB_X_AALG_SHA		250	/* Keyed SHA */
 #define SADB_X_AALG_NULL	251	/* null authentication */
+#define SADB_X_AALG_TCP_MD5	252	/* Keyed TCP-MD5 (RFC2385) */
 
 /* RFC2367 numbers - meets RFC2407 */
 #define SADB_EALG_NONE		0
 #define SADB_EALG_DESCBC	2
 #define SADB_EALG_3DESCBC	3
 #define SADB_EALG_NULL		11
-#define SADB_EALG_MAX		12
+#define SADB_EALG_MAX		250
 /* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_EALG_CAST128CBC	6
 #define SADB_X_EALG_BLOWFISHCBC	7
 #define SADB_X_EALG_RIJNDAELCBC	12
 #define SADB_X_EALG_AES		12
 /* private allocations should use 249-255 (RFC2407) */
+#define SADB_X_EALG_AESCTR	249	/* draft-ietf-ipsec-ciph-aes-ctr-03 */
+#define SADB_X_EALG_SKIPJACK    250
 
-#if 1	/*nonstandard */
+/* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_CALG_NONE	0
 #define SADB_X_CALG_OUI		1
 #define SADB_X_CALG_DEFLATE	2
 #define SADB_X_CALG_LZS		3
 #define SADB_X_CALG_MAX		4
-#endif
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1

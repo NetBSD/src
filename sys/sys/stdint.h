@@ -1,7 +1,7 @@
-/*	$NetBSD: stdint.h,v 1.2 2001/07/18 17:29:53 kleink Exp $	*/
+/*	$NetBSD: stdint.h,v 1.2.20.1 2004/08/03 10:56:30 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -100,5 +100,7 @@ typedef	__uintptr_t	uintptr_t;
 #if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
 #include <machine/int_const.h>
 #endif
+
+#include <machine/wchar_limits.h>
 
 #endif /* !_SYS_STDINT_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2003/04/22 17:23:20 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.1 2004/08/03 10:53:58 skrll Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -7,7 +7,8 @@ NOMAN=	# defined
 
 .include <bsd.own.mk>
 
-DPSRCS+= assym.h
+DPSRCS+=	assym.h
+CLEANFILES+=	assym.h
 
 .if (${MACHINE_ARCH} == "powerpc")
 .if (${MACHINE} == "macppc" || ${MACHINE} == "ofppc" || ${MACHINE} == "prep")
@@ -26,7 +27,7 @@ GENASSYM_DIR?=
 .endif
 
 assym.h: ${S}/kern/genassym.sh ${GENASSYM_DIR}/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	${HOST_SH} $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${GENASSYM_DIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.20 2001/11/12 23:49:46 lukem Exp $	*/
+/*	$NetBSD: pfil.c,v 1.20.16.1 2004/08/03 10:54:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.20 2001/11/12 23:49:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.20.16.1 2004/08/03 10:54:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -60,19 +60,30 @@ pfil_run_hooks(struct pfil_head *ph, struct mbuf **mp, struct ifnet *ifp,
     int dir)
 {
 	struct packet_filter_hook *pfh;
-	struct mbuf *m = *mp;
+	struct mbuf *m = NULL;
 	int rv = 0;
 
+	if ((dir & PFIL_ALL) && mp)
+		m = *mp;
 	for (pfh = pfil_hook_get(dir, ph); pfh != NULL;
 	     pfh = TAILQ_NEXT(pfh, pfil_link)) {
 		if (pfh->pfil_func != NULL) {
-			rv = (*pfh->pfil_func)(pfh->pfil_arg, &m, ifp, dir);
-			if (rv != 0 || m == NULL)
-				break;
+			if (pfh->pfil_flags & PFIL_ALL) {
+				rv = (*pfh->pfil_func)(pfh->pfil_arg, &m, ifp,
+				    dir);
+				if (rv != 0 || m == NULL)
+					break;
+			} else {
+				rv = (*pfh->pfil_func)(pfh->pfil_arg, mp, ifp,
+				    dir);
+				if (rv != 0)
+					break;
+			}
 		}
 	}
 
-	*mp = m;
+	if ((dir & PFIL_ALL) && mp)
+		*mp = m;
 	return (rv);
 }
 
@@ -94,6 +105,8 @@ pfil_head_register(struct pfil_head *ph)
 
 	TAILQ_INIT(&ph->ph_in);
 	TAILQ_INIT(&ph->ph_out);
+	TAILQ_INIT(&ph->ph_ifaddr);
+	TAILQ_INIT(&ph->ph_ifnetevent);
 
 	LIST_INSERT_HEAD(&pfil_head_list, ph, ph_list);
 
@@ -136,6 +149,9 @@ pfil_head_get(int type, u_long val)
  *	PFIL_IN		call me on incoming packets
  *	PFIL_OUT	call me on outgoing packets
  *	PFIL_ALL	call me on all of the above
+ *	PFIL_IFADDR  	call me on interface reconfig (mbuf ** is ioctl #)
+ *	PFIL_IFNET  	call me on interface attach/detach
+ *			(mbuf ** is PFIL_IFNET_*)
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
 int
@@ -154,6 +170,28 @@ pfil_add_hook(int (*func)(void *, struct mbuf **, struct ifnet *, int),
 		if (err) {
 			if (flags & PFIL_IN)
 				pfil_list_remove(&ph->ph_in, func, arg);
+			return err;
+		}
+	}
+	if (flags & PFIL_IFADDR) {
+		err = pfil_list_add(&ph->ph_ifaddr, func, arg, flags);
+		if (err) {
+			if (flags & PFIL_IN)
+				pfil_list_remove(&ph->ph_in, func, arg);
+			if (flags & PFIL_OUT)
+				pfil_list_remove(&ph->ph_out, func, arg);
+			return err;
+		}
+	}
+	if (flags & PFIL_IFNET) {
+		err = pfil_list_add(&ph->ph_ifnetevent, func, arg, flags);
+		if (err) {
+			if (flags & PFIL_IN)
+				pfil_list_remove(&ph->ph_in, func, arg);
+			if (flags & PFIL_OUT)
+				pfil_list_remove(&ph->ph_out, func, arg);
+			if (flags & PFIL_IFADDR)
+				pfil_list_remove(&ph->ph_ifaddr, func, arg);
 			return err;
 		}
 	}
@@ -184,6 +222,7 @@ pfil_list_add(pfil_list_t *list,
 
 	pfh->pfil_func = func;
 	pfh->pfil_arg  = arg;
+	pfh->pfil_flags = flags;
 
 	/*
 	 * insert the input list in reverse order of the output list
@@ -211,6 +250,10 @@ pfil_remove_hook(int (*func)(void *, struct mbuf **, struct ifnet *, int),
 		err = pfil_list_remove(&ph->ph_in, func, arg);
 	if ((err == 0) && (flags & PFIL_OUT))
 		err = pfil_list_remove(&ph->ph_out, func, arg);
+	if ((err == 0) && (flags & PFIL_IFADDR))
+		err = pfil_list_remove(&ph->ph_ifaddr, func, arg);
+	if ((err == 0) && (flags & PFIL_IFNET))
+		err = pfil_list_remove(&ph->ph_ifnetevent, func, arg);
 	return err;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10.2.1 2003/07/02 15:27:14 darrenr Exp $	*/
+/*	$NetBSD: event.h,v 1.10.2.2 2004/08/03 10:56:26 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -82,9 +82,15 @@ struct kevent {
 #define	EV_ERROR	0x4000		/* error, data contains errno */
 
 /*
+ * hint flag for in-kernel use - must not equal any existing note
+ */
+#ifdef _KERNEL
+#define NOTE_SUBMIT	0x01000000		/* initial knote submission */
+#endif
+/*
  * data/hint flags for EVFILT_{READ|WRITE}, shared with userspace
  */
-#define	NOTE_LOWAT	0x0001		/* low water mark */
+#define	NOTE_LOWAT	0x0001			/* low water mark */
 
 /*
  * data/hint flags for EVFILT_VNODE, shared with userspace
@@ -154,11 +160,11 @@ MALLOC_DECLARE(M_KEVENT);
  */
 struct filterops {
 	int	f_isfd;			/* true if ident == filedescriptor */
-	int	(*f_attach)	__P((struct knote *kn));
+	int	(*f_attach)	__P((struct knote *));
 					/* called when knote is ADDed */
-	void	(*f_detach)	__P((struct knote *kn));
+	void	(*f_detach)	__P((struct knote *));
 					/* called when knote is DELETEd */
-	int	(*f_event)	__P((struct knote *kn, long hint));
+	int	(*f_event)	__P((struct knote *, long));
 					/* called when event is triggered */
 };
 
@@ -194,20 +200,16 @@ struct knote {
 
 struct proc;
 
-void		kqueue_init(void);
+void	knote(struct klist *, long);
+void	knote_remove(struct lwp *, struct klist *);
+void	knote_fdclose(struct lwp *, int);
+int 	kqueue_register(struct kqueue *, struct kevent *, struct lwp *);
 
-void	knote(struct klist *list, long hint);
-void	knote_remove(struct lwp *l, struct klist *list);
-void	knote_fdclose(struct lwp *l, int fd);
-int 	kqueue_register(struct kqueue *kq,
-		    struct kevent *kev, struct lwp *l);
+int	kfilter_register(const char *, const struct filterops *, int *);
+int	kfilter_unregister(const char *);
 
-int	kfilter_register(const char *name,
-		    const struct filterops *filtops, int *retfilter);
-int	kfilter_unregister(const char *name);
-
-int	filt_seltrue(struct knote *kn, long hint);
-int	seltrue_kqfilter(dev_t dev, struct knote *kn);
+int	filt_seltrue(struct knote *, long);
+int	seltrue_kqfilter(dev_t, struct knote *);
 
 #else 	/* !_KERNEL */
 
@@ -217,9 +219,8 @@ struct timespec;
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 int	kqueue __P((void));
-int	kevent __P((int kq, const struct kevent *changelist, size_t nchanges,
-		    struct kevent *eventlist, size_t nevents,
-		    const struct timespec *timeout));
+int	kevent __P((int, const struct kevent *, size_t, struct kevent *, size_t,
+		    const struct timespec *));
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 

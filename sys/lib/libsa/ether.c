@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.17 2003/03/12 16:46:31 drochner Exp $	*/
+/*	$NetBSD: ether.c,v 1.17.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -81,7 +81,7 @@ sendether(d, pkt, len, dea, etype)
 	eh->ether_type = htons(etype);
 
 	n = netif_put(d, eh, len);
-	if (n == -1 || n < sizeof(*eh))
+	if (n == -1 || (size_t)n < sizeof(*eh))
 		return (-1);
 
 	n -= sizeof(*eh);
@@ -113,7 +113,7 @@ readether(d, pkt, len, tleft, etype)
 	len += sizeof(*eh);
 
 	n = netif_get(d, eh, len, tleft);
-	if (n == -1 || n < sizeof(*eh))
+	if (n == -1 || (size_t)n < sizeof(*eh))
 		return (-1);
 
 	/* Validate Ethernet address. */

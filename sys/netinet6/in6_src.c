@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.15 2002/09/11 02:46:45 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.15.6.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.15 2002/09/11 02:46:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.15.6.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +169,8 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		 * somewhere...
 		 */
 		if (dstsock->sin6_scope_id < 0 ||
-		    if_index < dstsock->sin6_scope_id) {
+		    if_indexlim <= dstsock->sin6_scope_id ||
+		    !ifindex2ifnet[dstsock->sin6_scope_id]) {
 			*errorp = ENXIO; /* XXX: better error? */
 			return (0);
 		}
@@ -323,6 +320,9 @@ in6_selecthlim(in6p, ifp)
 	struct in6pcb *in6p;
 	struct ifnet *ifp;
 {
+	if (in6p && in6p->in6p_af != AF_INET6)
+		return (-1);
+
 	if (in6p && in6p->in6p_hops >= 0)
 		return (in6p->in6p_hops);
 	else if (ifp)
@@ -341,17 +341,21 @@ in6_pcbsetport(laddr, in6p, p)
 	struct proc *p;
 {
 	struct socket *so = in6p->in6p_socket;
-	struct in6pcb *head = in6p->in6p_head;
-	u_int16_t last_port, lport = 0;
+	struct inpcbtable *table = in6p->in6p_table;
+	int cnt;
+	u_int16_t min, max;
+	u_int16_t lport, *lastport;
 	int wild = 0;
 	void *t;
-	u_int16_t min, max;
+
+	if (in6p->in6p_af != AF_INET6)
+		return (EINVAL);
 
 	/* XXX: this is redundant when called from in6_pcbbind */
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	    (so->so_options & SO_ACCEPTCONN) == 0))
-		wild = IN6PLOOKUP_WILDCARD;
+		wild = 1;
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
@@ -360,44 +364,45 @@ in6_pcbsetport(laddr, in6p, p)
 #endif
 		min = ip6_lowportmin;
 		max = ip6_lowportmax;
+		lastport = &table->inpt_lastlow;
 	} else {
 		min = ip6_anonportmin;
 		max = ip6_anonportmax;
+		lastport = &table->inpt_lastport;
+	}
+	if (min > max) {	/* sanity check */
+		u_int16_t swp;
+
+		swp = min;
+		min = max;
+		max = swp;
 	}
 
-	/* value out of range */
-	if (head->in6p_lport < min)
-		head->in6p_lport = min;
-	else if (head->in6p_lport > max)
-		head->in6p_lport = min;
-	last_port = head->in6p_lport;
-	goto startover;	/*to randomize*/
-	for (;;) {
-		lport = htons(head->in6p_lport);
+	lport = *lastport - 1;
+	for (cnt = max - min + 1; cnt; cnt--, lport--) {
+		if (lport < min || lport > max)
+			lport = max;
+#ifdef INET
 		if (IN6_IS_ADDR_V4MAPPED(laddr)) {
-#if 0
-			t = in_pcblookup_bind(&tcbtable,
-					      (struct in_addr *)&in6p->in6p_laddr.s6_addr32[3],
-					      lport);
-#else
-			t = NULL;
+			t = in_pcblookup_port(table,
+			    *(struct in_addr *)&in6p->in6p_laddr.s6_addr32[3],
+			    lport, wild);
+		} else
 #endif
-		} else {
-			t = in6_pcblookup(head, &zeroin6_addr, 0, laddr,
-					  lport, wild);
+		{
+			t = in6_pcblookup_port(table, laddr, lport, wild);
 		}
 		if (t == 0)
-			break;
-	  startover:
-		if (head->in6p_lport >= max)
-			head->in6p_lport = min;
-		else
-			head->in6p_lport++;
-		if (head->in6p_lport == last_port)
-			return (EADDRINUSE);
+			goto found;
 	}
 
-	in6p->in6p_lport = lport;
+	return (EAGAIN);
+
+found:
+	in6p->in6p_flags |= IN6P_ANONPORT;
+	*lastport = lport;
+	in6p->in6p_lport = htons(lport);
+	in6_pcbstate(in6p, IN6P_BOUND);
 	return (0);		/* success */
 }
 
@@ -460,7 +465,8 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			/* boundary check */
-			if (scopeid < 0 || if_index < scopeid)
+			if (scopeid < 0 || if_indexlim <= scopeid ||
+			    !ifindex2ifnet[scopeid])
 				return ENXIO;  /* XXX EINVAL? */
 			ifp = ifindex2ifnet[scopeid];
 			/* XXX assignment to 16bit from 32bit variable */
@@ -504,7 +510,8 @@ in6_recoverscope(sin6, in6, ifp)
 		scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (scopeid) {
 			/* sanity check */
-			if (scopeid < 0 || if_index < scopeid)
+			if (scopeid < 0 || if_indexlim <= scopeid ||
+			    !ifindex2ifnet[scopeid])
 				return ENXIO;
 			if (ifp && ifp->if_index != scopeid)
 				return ENXIO;

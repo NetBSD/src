@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.47.2.1 2003/07/02 15:26:52 darrenr Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.47.2.2 2004/08/03 10:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.1 2003/07/02 15:26:52 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.2 2004/08/03 10:54:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.1 2003/07/02 15:26:52 darren
 #include <sys/namei.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/protosw.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
@@ -296,7 +293,7 @@ portal_connect(so, so2)
 	so2 = so3;
 
 
-	return (unp_connect2(so, so2));
+	return (unp_connect2(so, so2, PRU_CONNECT2));
 }
 
 int
@@ -337,9 +334,9 @@ portal_open(v)
 	/*
 	 * Can't be opened unless the caller is set up
 	 * to deal with the side effects.  Check for this
-	 * by testing whether the p_dupfd has been set.
+	 * by testing whether the dupfd has been set.
 	 */
-	if (l->l_proc->p_dupfd >= 0)
+	if (curlwp->l_dupfd >= 0)	/* XXX */
 		return (ENODEV);
 
 	pt = VTOPORTAL(vp);
@@ -348,7 +345,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l);
 	if (error)
 		goto bad;
 
@@ -387,7 +384,7 @@ portal_open(v)
 			splx(s);
 			goto bad;
 		}
-		(void) tsleep((caddr_t) &so->so_timeo, PSOCK, "portalcon", 5 * hz);
+		(void) tsleep(&so->so_timeo, PSOCK, "portalcon", 5 * hz);
 	}
 	splx(s);
 
@@ -410,7 +407,7 @@ portal_open(v)
 	pcred.pcr_gid = ap->a_cred->cr_gid;
 	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
 	memcpy(pcred.pcr_groups, ap->a_cred->cr_groups, NGROUPS * sizeof(gid_t));
-	aiov[0].iov_base = (caddr_t) &pcred;
+	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
 	aiov[1].iov_len = pt->pt_size;
@@ -423,7 +420,7 @@ portal_open(v)
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
 	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0);
+			(struct mbuf *) 0, (struct mbuf *) 0, 0, l);
 	if (error)
 		goto bad;
 
@@ -516,7 +513,7 @@ portal_open(v)
 	 * special error code (ENXIO) which causes magic things to
 	 * happen in vn_open.  The whole concept is, well, hmmm.
 	 */
-	l->l_proc->p_dupfd = fd;
+	curlwp->l_dupfd = fd;	/* XXX */
 	error = ENXIO;
 
 bad:;
@@ -551,7 +548,7 @@ portal_getattr(v)
 	vattr_null(vap);
 	vap->va_uid = 0;
 	vap->va_gid = 0;
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
 	/*
@@ -643,7 +640,7 @@ portal_reclaim(v)
 	struct portalnode *pt = VTOPORTAL(ap->a_vp);
 
 	if (pt->pt_arg) {
-		free((caddr_t) pt->pt_arg, M_TEMP);
+		free(pt->pt_arg, M_TEMP);
 		pt->pt_arg = 0;
 	}
 	FREE(ap->a_vp->v_data, M_TEMP);

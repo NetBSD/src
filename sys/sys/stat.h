@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.43 2003/04/28 23:16:30 bjh21 Exp $	*/
+/*	$NetBSD: stat.h,v 1.43.2.1 2004/08/03 10:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -211,8 +207,10 @@ struct stat {
 #define	S_IFLNK	 _S_IFLNK
 #define	S_ISVTX	 _S_ISVTX
 #endif
-#if defined(_NETBSD_SOURCE)
+#if ((_XOPEN_SOURCE - 0) >= 600) || defined(_NETBSD_SOURCE)
 #define	S_IFSOCK _S_IFSOCK
+#endif
+#if defined(_NETBSD_SOURCE)
 #define	S_IFWHT  _S_IFWHT
 
 #define	S_ARCH1	_S_ARCH1
@@ -224,11 +222,15 @@ struct stat {
 #define	S_ISBLK(m)	((m & _S_IFMT) == _S_IFBLK)	/* block special */
 #define	S_ISREG(m)	((m & _S_IFMT) == _S_IFREG)	/* regular file */
 #define	S_ISFIFO(m)	((m & _S_IFMT) == _S_IFIFO)	/* fifo */
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if ((_POSIX_C_SOURCE - 0) >= 200112L) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	S_ISLNK(m)	((m & _S_IFMT) == _S_IFLNK)	/* symbolic link */
 #endif
-#if defined(_NETBSD_SOURCE)
+#if ((_POSIX_C_SOURCE - 0) >= 200112L) || ((_XOPEN_SOURCE - 0) >= 600) || \
+    defined(_NETBSD_SOURCE)
 #define	S_ISSOCK(m)	((m & _S_IFMT) == _S_IFSOCK)	/* socket */
+#endif
+#if defined(_NETBSD_SOURCE)
 #define	S_ISWHT(m)	((m & _S_IFMT) == _S_IFWHT)	/* whiteout */
 #endif
 
@@ -258,6 +260,7 @@ struct stat {
 #define	SF_ARCHIVED	0x00010000	/* file is archived */
 #define	SF_IMMUTABLE	0x00020000	/* file may not be changed */
 #define	SF_APPEND	0x00040000	/* writes to file may only append */
+#define	SF_SNAPSHOT	0x00200000	/* snapshot inode */
 
 #ifdef _KERNEL
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.3 2003/03/19 10:34:34 bouyer Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.3.2.1 2004/08/03 10:54:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -301,9 +301,9 @@ struct bridge_softc {
 
 extern const uint8_t bstp_etheraddr[];
 
-void	bridge_ifdetach(struct ifnet *ifp);
+void	bridge_ifdetach(struct ifnet *);
 
-int	bridge_output(struct ifnet *ifp, struct mbuf *, struct sockaddr *,
+int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 struct mbuf *bridge_input(struct ifnet *, struct mbuf *);
 
@@ -311,6 +311,7 @@ void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
 struct mbuf *bstp_input(struct ifnet *, struct mbuf *);
 
-void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
+void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
+	    int);
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.21 2003/06/23 14:17:24 martin Exp $	*/
+/*	$NetBSD: exec.c,v 1.21.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -92,7 +88,7 @@ exec(path, loadaddr, howto)
 		addr += sizeof(x);
 		x.a_text -= sizeof(x);
 	}
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
+	if (read(io, (char *)addr, x.a_text) != (ssize_t)x.a_text)
 		goto shread;
 	addr += x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
@@ -101,13 +97,13 @@ exec(path, loadaddr, howto)
 
         /* Data */
 	printf("+%ld", x.a_data);
-	if (read(io, addr, x.a_data) != x.a_data)
+	if (read(io, addr, x.a_data) != (ssize_t)x.a_data)
 		goto shread;
 	addr += x.a_data;
 
         /* Bss */
 	printf("+%ld", x.a_bss);
-	for (i = 0; i < x.a_bss; i++)
+	for (i = 0; i < (int)x.a_bss; i++)
 		*addr++ = 0;
 
         /* Symbols */
@@ -116,7 +112,7 @@ exec(path, loadaddr, howto)
 	addr += sizeof(x.a_syms);
 	if (x.a_syms) {
 		printf("+[%ld", x.a_syms);
-		if (read(io, addr, x.a_syms) != x.a_syms)
+		if (read(io, addr, x.a_syms) != (ssize_t)x.a_syms)
 			goto shread;
 		addr += x.a_syms;
 	}

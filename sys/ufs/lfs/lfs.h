@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.64 2003/04/23 07:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.64.2.1 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -115,9 +111,9 @@
 /* Resource limits */
 #define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-#define LFS_MAX_BYTES	    (((bufpages >> 2) - 10) * PAGE_SIZE)
-#define LFS_WAIT_BYTES	    (((bufpages >> 1) - (bufpages >> 3) - 10) \
-			      * PAGE_SIZE)
+extern u_long bufmem; /* XXX */
+#define LFS_MAX_BYTES	    ((bufmem >> 2) - 10 * PAGE_SIZE)
+#define LFS_WAIT_BYTES	    ((bufmem >> 1) - (bufmem >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
@@ -179,19 +175,23 @@ typedef struct lfs_res_blk {
 
 # define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
+		simple_lock(&lfs_subsys_lock);				\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
+		simple_unlock(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags |= B_LOCKED;					\
 } while (0)
 
 # define LFS_UNLOCK_BUF(bp) do {					\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
+		simple_lock(&lfs_subsys_lock);				\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
 			wakeup(&locked_queue_count);			\
+		simple_unlock(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
@@ -202,12 +202,7 @@ typedef struct lfs_res_blk {
 
 # ifdef DEBUG_LOCKED_LIST
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	int _s;								\
-	extern int locked_queue_count;					\
-	extern long locked_queue_bytes;					\
-	_s = splbio();							\
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
-	splx(_s);							\
 	wakeup(&locked_queue_count);					\
 } while (0)
 # else
@@ -345,8 +340,8 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST))
 
 /* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) ((vp)->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
-				(IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
+		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
 
 
 /*
@@ -821,6 +816,9 @@ struct lfs {
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
 
+#define	segsize(fs)	((fs)->lfs_version == 1 ?	     		\
+			   lblktosize((fs), (fs)->lfs_ssize) :		\
+			   (fs)->lfs_ssize)
 #define segtod(fs, seg) (((fs)->lfs_version == 1     ?	     		\
 			   (fs)->lfs_ssize << (fs)->lfs_blktodb :	\
 			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
@@ -894,8 +892,6 @@ struct lfs_cluster {
 	u_int32_t flags;       /* Flags */
 	struct lfs *fs;	       /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
-	void *saveaddr;	       /* Original contents of saveaddr */
-	char *olddata;	       /* Original b_data, if LFS_CL_MALLOC */
 };
 #endif /* _KERNEL */
 
@@ -976,5 +972,11 @@ struct lfs_fcntl_markv {
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
+
+#ifdef _KERNEL
+/* XXX MP */
+#define	LFS_SEGLOCK_HELD(fs) \
+	((fs)->lfs_seglock != 0 && (fs)->lfs_lockpid == curproc->p_pid)
+#endif /* _KERNEL */
 
 #endif /* !_UFS_LFS_LFS_H_ */

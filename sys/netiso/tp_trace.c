@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.8 2001/11/13 01:10:51 lukem Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.8.16.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -69,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.8 2001/11/13 01:10:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.8.16.1 2004/08/03 10:55:43 skrll Exp $");
 
 #define TP_TRACEFILE
 
@@ -103,13 +99,8 @@ u_char          tp_traceflags[128];
 /* VARARGS */
 
 void
-tpTrace(tpcb, event, arg, src, len, arg4, arg5)
-	struct tp_pcb  *tpcb;
-	u_int           event, arg;
-	u_int           src;
-	u_int           len;
-	u_int           arg4;
-	u_int           arg5;
+tpTrace(struct tp_pcb  *tpcb, u_int event, u_int arg, u_int src, u_int len,
+	u_int arg4, u_int arg5)
 {
 	struct tp_Trace *tp;
 

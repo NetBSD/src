@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.71.2.1 2004/08/03 10:52:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71.2.1 2004/08/03 10:52:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Ex
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -61,11 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71 2003/05/16 14:25:03 itojun Ex
 /*
  * Maximum process data and stack limits.
  * They are variables so they are patchable.
- *
- * XXXX Do we really need them to be patchable?
  */
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
+
+struct uihashhead *uihashtbl;
+u_long uihash;		/* size of hash table - 1 */
+
+static struct uidinfo *getuidinfo(uid_t);
+static void freeuidinfo(struct uidinfo *);
+static struct uidinfo *allocuidinfo(uid_t);
 
 /*
  * Resource controls and accounting.
@@ -79,7 +81,7 @@ sys_getpriority(l, v, retval)
 {
 	struct sys_getpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
@@ -140,7 +142,7 @@ sys_setpriority(l, v, retval)
 {
 	struct sys_setpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 		syscallarg(int) prio;
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
@@ -250,7 +252,7 @@ dosetrlimit(p, cred, which, limp)
 	struct rlimit *limp;
 {
 	struct rlimit *alimp;
-	struct plimit *newplim;
+	struct plimit *oldplim;
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
@@ -278,9 +280,8 @@ dosetrlimit(p, cred, which, limp)
 
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-		newplim = limcopy(p->p_limit);
-		limfree(p->p_limit);
-		p->p_limit = newplim;
+		p->p_limit = limcopy(oldplim = p->p_limit);
+		limfree(oldplim);
 		alimp = &p->p_rlimit[which];
 	}
 
@@ -327,7 +328,7 @@ dosetrlimit(p, cred, which, limp)
 			vm_prot_t prot;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {
-				prot = VM_PROT_ALL;
+				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
 				addr = USRSTACK - limp->rlim_cur;
 			} else {
@@ -503,20 +504,29 @@ limcopy(lim)
 	struct plimit *lim;
 {
 	struct plimit *newlim;
-	size_t l;
+	size_t l = 0;
+
+	simple_lock(&lim->p_slock);
+	if (lim->pl_corename != defcorename)
+		l = strlen(lim->pl_corename) + 1;
+	simple_unlock(&lim->p_slock);
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
-	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	if (lim->pl_corename == defcorename) {
-		newlim->pl_corename = defcorename;
-	} else {
-		l = strlen(lim->pl_corename) + 1;
-		newlim->pl_corename = malloc(l, M_TEMP, M_WAITOK);
-		strlcpy(newlim->pl_corename, lim->pl_corename, l);
-	}
+	simple_lock_init(&newlim->p_slock);
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;
+	newlim->pl_corename = (l != 0)
+		? malloc(l, M_TEMP, M_WAITOK)
+		: defcorename;
+
+	simple_lock(&lim->p_slock);
+	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
+	    sizeof(struct rlimit) * RLIM_NLIMITS);
+
+	if (l != 0)
+		strlcpy(newlim->pl_corename, lim->pl_corename, l);
+	simple_unlock(&lim->p_slock);
+
 	return (newlim);
 }
 
@@ -524,11 +534,15 @@ void
 limfree(lim)
 	struct plimit *lim;
 {
+	int n;
 
-	if (--lim->p_refcnt > 0)
+	simple_lock(&lim->p_slock);
+	n = --lim->p_refcnt;
+	simple_unlock(&lim->p_slock);
+	if (n > 0)
 		return;
 #ifdef DIAGNOSTIC
-	if (lim->p_refcnt < 0)
+	if (n < 0)
 		panic("limfree");
 #endif
 	if (lim->pl_corename != defcorename)
@@ -562,4 +576,410 @@ pstatsfree(ps)
 {
 
 	pool_put(&pstats_pool, ps);
+}
+
+/*
+ * sysctl interface in five parts
+ */
+
+/*
+ * a routine for sysctl proc subtree helpers that need to pick a valid
+ * process by pid.
+ */
+static int
+sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
+{
+	struct proc *ptmp;
+	int i, error = 0;
+
+	if (pid == PROC_CURPROC)
+		ptmp = p;
+	else if ((ptmp = pfind(pid)) == NULL)
+		error = ESRCH;
+	else {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
+		if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
+		    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
+			error = suser(p->p_ucred, &p->p_acflag);
+
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
+		else if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
+			error = suser(p->p_ucred, &p->p_acflag);
+
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
+		else {
+			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
+				if (p->p_ucred->cr_groups[i] ==
+				    ptmp->p_cred->p_rgid)
+					break;
+			}
+			if (i == p->p_ucred->cr_ngroups)
+				error = suser(p->p_ucred, &p->p_acflag);
+		}
+	}
+
+	*p2 = ptmp;
+	return (error);
+}
+
+/*
+ * sysctl helper routine for setting a process's specific corefile
+ * name.  picks the process based on the given pid and checks the
+ * correctness of the new value.
+ */
+static int
+sysctl_proc_corename(SYSCTLFN_ARGS)
+{
+	struct proc *ptmp, *p;
+	struct plimit *lim;
+	int error = 0, len;
+	char cname[MAXPATHLEN], *tmp;
+	struct sysctlnode node;
+
+	/*
+	 * is this all correct?
+	 */
+	if (namelen != 0)
+		return (EINVAL);
+	if (name[-1] != PROC_PID_CORENAME)
+		return (EINVAL);
+
+	/*
+	 * whom are we tweaking?
+	 */
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	if (error)
+		return (error);
+
+	/*
+	 * let them modify a temporary copy of the core name
+	 */
+	node = *rnode;
+	strlcpy(cname, ptmp->p_limit->pl_corename, sizeof(cname));
+	node.sysctl_data = cname;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/*
+	 * if that failed, or they have nothing new to say, or we've
+	 * heard it before...
+	 */
+	if (error || newp == NULL ||
+	    strcmp(cname, ptmp->p_limit->pl_corename) == 0)
+		return (error);
+
+	/*
+	 * no error yet and cname now has the new core name in it.
+	 * let's see if it looks acceptable.  it must be either "core"
+	 * or end in ".core" or "/core".
+	 */
+	len = strlen(cname);
+	if (len < 4)
+		return (EINVAL);
+	if (strcmp(cname + len - 4, "core") != 0)
+		return (EINVAL);
+	if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.')
+		return (EINVAL);
+
+	/*
+	 * hmm...looks good.  now...where do we put it?
+	 */
+	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (tmp == NULL)
+		return (ENOMEM);
+	strlcpy(tmp, cname, len + 1);
+
+	lim = ptmp->p_limit;
+	if (lim->p_refcnt > 1 && (lim->p_lflags & PL_SHAREMOD) == 0) {
+		ptmp->p_limit = limcopy(lim);
+		limfree(lim);
+		lim = ptmp->p_limit;
+	}
+	if (lim->pl_corename != defcorename)
+		free(lim->pl_corename, M_TEMP);
+	lim->pl_corename = tmp;
+
+	return (error);
+}
+
+/*
+ * sysctl helper routine for checking/setting a process's stop flags,
+ * one for fork and one for exec.
+ */
+static int
+sysctl_proc_stop(SYSCTLFN_ARGS)
+{
+	struct proc *p, *ptmp;
+	int i, f, error = 0;
+	struct sysctlnode node;
+
+	if (namelen != 0)
+		return (EINVAL);
+
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	if (error)
+		return (error);
+
+	switch (rnode->sysctl_num) {
+	case PROC_PID_STOPFORK:
+		f = P_STOPFORK;
+		break;
+	case PROC_PID_STOPEXEC:
+		f = P_STOPEXEC;
+		break;
+	case PROC_PID_STOPEXIT:
+		f = P_STOPEXIT;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	i = (ptmp->p_flag & f) ? 1 : 0;
+	node = *rnode;
+	node.sysctl_data = &i;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (i)
+		ptmp->p_flag |= f;
+	else
+		ptmp->p_flag &= ~f;
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for a process's rlimits as exposed by sysctl.
+ */
+static int
+sysctl_proc_plimit(SYSCTLFN_ARGS)
+{
+	struct proc *ptmp, *p;
+	u_int limitno;
+	int which, error = 0;
+        struct rlimit alim;
+	struct sysctlnode node;
+
+	if (namelen != 0)
+		return (EINVAL);
+
+	which = name[-1];
+	if (which != PROC_PID_LIMIT_TYPE_SOFT &&
+	    which != PROC_PID_LIMIT_TYPE_HARD)
+		return (EINVAL);
+
+	limitno = name[-2] - 1;
+	if (limitno >= RLIM_NLIMITS)
+		return (EINVAL);
+
+	if (name[-3] != PROC_PID_LIMIT)
+		return (EINVAL);
+
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-4]);
+	if (error)
+		return (error);
+
+	node = *rnode;
+	memcpy(&alim, &ptmp->p_rlimit[limitno], sizeof(alim));
+	if (which == PROC_PID_LIMIT_TYPE_HARD)
+		node.sysctl_data = &alim.rlim_max;
+	else
+		node.sysctl_data = &alim.rlim_cur;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	return (dosetrlimit(ptmp, p->p_cred, limitno, &alim));
+}
+
+/*
+ * and finally, the actually glue that sticks it to the tree
+ */
+SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "proc", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ANYNUMBER,
+		       CTLTYPE_NODE, "curproc",
+		       SYSCTL_DESCR("Per-process settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY2|CTLFLAG_ANYWRITE,
+		       CTLTYPE_STRING, "corename",
+		       SYSCTL_DESCR("Core file name"),
+		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_CORENAME, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "rlimit",
+		       SYSCTL_DESCR("Process limits"),
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, CTL_EOL);
+
+#define create_proc_plimit(s, n) do {					\
+	sysctl_createv(clog, 0, NULL, NULL,				\
+		       CTLFLAG_PERMANENT,				\
+		       CTLTYPE_NODE, s,					\
+		       SYSCTL_DESCR("Process " s " limits"),		\
+		       NULL, 0, NULL, 0,				\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       CTL_EOL);					\
+	sysctl_createv(clog, 0, NULL, NULL,				\
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
+		       CTLTYPE_QUAD, "soft",				\
+		       SYSCTL_DESCR("Process soft " s " limit"),	\
+		       sysctl_proc_plimit, 0, NULL, 0,			\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       PROC_PID_LIMIT_TYPE_SOFT, CTL_EOL);		\
+	sysctl_createv(clog, 0, NULL, NULL,				\
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
+		       CTLTYPE_QUAD, "hard",				\
+		       SYSCTL_DESCR("Process hard " s " limit"),	\
+		       sysctl_proc_plimit, 0, NULL, 0,			\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       PROC_PID_LIMIT_TYPE_HARD, CTL_EOL);		\
+	} while (0/*CONSTCOND*/)
+
+	create_proc_plimit("cputime",		PROC_PID_LIMIT_CPU);
+	create_proc_plimit("filesize",		PROC_PID_LIMIT_FSIZE);
+	create_proc_plimit("datasize",		PROC_PID_LIMIT_DATA);
+	create_proc_plimit("stacksize",		PROC_PID_LIMIT_STACK);
+	create_proc_plimit("coredumpsize",	PROC_PID_LIMIT_CORE);
+	create_proc_plimit("memoryuse",		PROC_PID_LIMIT_RSS);
+	create_proc_plimit("memorylocked",	PROC_PID_LIMIT_MEMLOCK);
+	create_proc_plimit("maxproc",		PROC_PID_LIMIT_NPROC);
+	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
+	create_proc_plimit("sbsize",		PROC_PID_LIMIT_SBSIZE);
+
+#undef create_proc_plimit
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
+		       CTLTYPE_INT, "stopfork",
+		       SYSCTL_DESCR("Stop process at fork(2)"),
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPFORK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
+		       CTLTYPE_INT, "stopexec",
+		       SYSCTL_DESCR("Stop process at execve(2)"),
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXEC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
+		       CTLTYPE_INT, "stopexit",
+		       SYSCTL_DESCR("Stop process before completing exit"),
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
+}
+
+static struct uidinfo *
+getuidinfo(uid_t uid)
+{
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
+
+	uipp = UIHASH(uid);
+
+	LIST_FOREACH(uip, uipp, ui_hash)
+		if (uip->ui_uid == uid)
+			return uip;
+	return NULL;
+}
+
+static void
+freeuidinfo(struct uidinfo *uip)
+{
+	LIST_REMOVE(uip, ui_hash);
+	FREE(uip, M_PROC);
+}
+
+static struct uidinfo *
+allocuidinfo(uid_t uid)
+{
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
+
+	uipp = UIHASH(uid);
+	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
+	LIST_INSERT_HEAD(uipp, uip, ui_hash);
+	uip->ui_uid = uid;
+	uip->ui_proccnt = 0;
+	uip->ui_sbsize = 0;
+	return uip;
+}
+
+/*
+ * Change the count associated with number of processes
+ * a given user is using.
+ */
+int
+chgproccnt(uid_t uid, int diff)
+{
+	struct uidinfo *uip;
+
+	if (diff == 0)
+		return 0;
+
+	if ((uip = getuidinfo(uid)) != NULL) {
+		uip->ui_proccnt += diff;
+		KASSERT(uip->ui_proccnt >= 0);
+		if (uip->ui_proccnt > 0)
+			return uip->ui_proccnt;
+		else {
+			if (uip->ui_sbsize == 0)
+				freeuidinfo(uip);
+			return 0;
+		}
+	} else {
+		if (diff < 0)
+			panic("chgproccnt: lost user %lu", (unsigned long)uid);
+		uip = allocuidinfo(uid);
+		uip->ui_proccnt = diff;
+		return uip->ui_proccnt;
+	}
+}
+
+int
+chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
+{
+	*hiwat = to;
+	return 1;
+#ifdef notyet
+	struct uidinfo *uip;
+	rlim_t nsb;
+	int rv = 0;
+
+	if ((uip = getuidinfo(uid)) == NULL)
+		uip = allocuidinfo(uid);
+	nsb = uip->ui_sbsize + to - *hiwat;
+	if (to > *hiwat && nsb > max)
+		goto done;
+	*hiwat = to;
+	uip->ui_sbsize = nsb;
+	rv = 1;
+	KASSERT(uip->ui_sbsize >= 0);
+done:
+	if (uip->ui_sbsize == 0 && uip->ui_proccnt == 0)
+		freeuidinfo(uip);
+	return rv;
+#endif
 }

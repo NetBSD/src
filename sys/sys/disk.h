@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.22 2003/04/15 18:27:27 darrenr Exp $	*/
+/*	$NetBSD: disk.h,v 1.22.2.1 2004/08/03 10:56:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -58,11 +58,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -159,10 +155,9 @@ struct disk_sysctl {
 struct dkdriver {
 	void	(*d_strategy) __P((struct buf *));
 #ifdef notyet
-	int	(*d_open) __P((dev_t dev, int ifmt, int, struct proc *));
-	int	(*d_close) __P((dev_t dev, int, int ifmt, struct proc *));
-	int	(*d_ioctl) __P((dev_t dev, u_long cmd, caddr_t data, int fflag,
-				struct proc *));
+	int	(*d_open) __P((dev_t, int, int, struct proc *));
+	int	(*d_close) __P((dev_t, int, int, struct proc *));
+	int	(*d_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int	(*d_dump) __P((dev_t));
 	void	(*d_start) __P((struct buf *, daddr_t));
 	int	(*d_mklabel) __P((struct disk *));

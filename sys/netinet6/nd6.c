@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.86.2.1 2004/08/03 10:55:14 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86.2.1 2004/08/03 10:55:14 skrll Exp $");
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $");
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#endif
 
 #include "loop.h"
 extern struct ifnet loif[NLOOP];
@@ -527,7 +533,6 @@ nd6_timer(ignored_arg)
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ia6, *nia6;
-	struct in6_addrlifetime *lt6;
 
 	s = splsoftnet();
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
@@ -555,7 +560,6 @@ nd6_timer(ignored_arg)
 	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
 		nia6 = ia6->ia_next;
 		/* check address lifetime */
-		lt6 = &ia6->ia6_lifetime;
 		if (IFA6_IS_INVALID(ia6)) {
 			in6_purgeaddr(&ia6->ia_ifa);
 		}
@@ -786,7 +790,6 @@ nd6_is_addr_neighbor(addr, ifp)
 	struct ifnet *ifp;
 {
 	struct nd_prefix *pr;
-	struct rtentry *rt;
 
 	/*
 	 * A link-local address is always a neighbor.
@@ -795,7 +798,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * XXX: a link does not necessarily specify a single interface.
 	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr) &&
-	    ntohs(*(u_int16_t *)&addr->sin6_addr.s6_addr[2]) == ifp->if_index)
+	    ntohs(addr->sin6_addr.s6_addr16[1]) == ifp->if_index)
 		return (1);
 
 	/*
@@ -829,7 +832,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * Even if the address matches none of our addresses, it might be
 	 * in the neighbor cache.
 	 */
-	if ((rt = nd6_lookup(&addr->sin6_addr, 0, ifp)) != NULL)
+	if (nd6_lookup(&addr->sin6_addr, 0, ifp) != NULL)
 		return (1);
 
 	return (0);
@@ -1011,7 +1014,6 @@ nd6_rtrequest(req, rt, info)
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
-	int mine = 0;
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0)
 		return;
@@ -1170,7 +1172,6 @@ nd6_rtrequest(req, rt, info)
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			mine = 1;
 			if (macp) {
 				Bcopy(macp, LLADDR(SDL(gate)), ifp->if_addrlen);
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
@@ -1753,11 +1754,8 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 			    1)) != NULL)
 			{
 				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp) {
-					/* XXX: loop care? */
-					return nd6_output(ifp, origifp, m0,
-					    dst, rt);
-				}
+				if (rt->rt_ifp != ifp)
+					senderr(EHOSTUNREACH);
 			} else
 				senderr(EHOSTUNREACH);
 		}
@@ -1991,11 +1989,10 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	void *p;
-	size_t ol, l;
+	size_t ol;
 	int error;
 
 	error = 0;
-	l = 0;
 
 	if (newp)
 		return EPERM;

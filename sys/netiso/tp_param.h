@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.12 2000/03/30 13:10:14 augustss Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.12.28.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -234,9 +230,6 @@ extern int      N_TPREF;
 #define 	TP_FORCE 	0x1
 #define 	TP_STRICT 	0x2
 
-#ifndef 	MNULL
-#define 	MNULL				(struct mbuf *)0
-#endif				/* MNULL */
 /*
  * if ../sys/mbuf.h gets MT_types up to 0x40, these will have to be changed:
  */

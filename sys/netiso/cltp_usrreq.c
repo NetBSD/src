@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.21.2.1 2003/07/02 15:27:02 darrenr Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.21.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.1 2003/07/02 15:27:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.2 2004/08/03 10:55:41 skrll Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -84,13 +80,7 @@ struct cltpstat cltpstat;
 
 /* ARGUSED */
 void
-#if __STDC__
 cltp_input(struct mbuf *m0, ...)
-#else
-cltp_input(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct sockaddr *srcsa, *dstsa;
 	u_int           cons_channel;
@@ -198,10 +188,9 @@ cltp_ctlinput(cmd, sa, dummy)
 	struct sockaddr *sa;
 	void *dummy;
 {
-	extern u_char   inetctlerrmap[];
 	struct sockaddr_iso *siso;
 
-	if ((unsigned) cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	if (sa->sa_family != AF_ISO && sa->sa_family != AF_CCITT)
 		return;
@@ -216,25 +205,19 @@ cltp_ctlinput(cmd, sa, dummy)
 	case PRC_REDIRECT_TOSNET:
 	case PRC_REDIRECT_TOSHOST:
 		iso_pcbnotify(&cltb, siso,
-			      (int) inetctlerrmap[cmd], iso_rtchange);
+			      (int) isoctlerrmap[cmd], iso_rtchange);
 		break;
 
 	default:
-		if (inetctlerrmap[cmd] == 0)
+		if (isoctlerrmap[cmd] == 0)
 			return;	/* XXX */
-		iso_pcbnotify(&cltb, siso, (int) inetctlerrmap[cmd],
+		iso_pcbnotify(&cltb, siso, (int) isoctlerrmap[cmd],
 			      cltp_notify);
 	}
 }
 
 int
-#if __STDC__
 cltp_output(struct mbuf *m, ...)
-#else
-cltp_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct isopcb *isop;
 	int    len;

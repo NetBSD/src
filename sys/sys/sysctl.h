@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.95.2.1 2003/07/02 15:27:17 darrenr Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.95.2.2 2004/08/03 10:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,6 +46,13 @@
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 
+/* For offsetof() */
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/systm.h>
+#else
+#include <stddef.h>
+#endif
+
 /*
  * Definitions for sysctl call.  The sysctl call uses a hierarchical name
  * for objects that can be examined or modified.  The name is expressed as
@@ -60,6 +63,10 @@
  */
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
+#define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
+
+#define CREATE_BASE	(1024)	/* start of dynamic mib allocation */
+#define SYSCTL_DEFSIZE	8	/* initial size of a child set */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -79,6 +86,66 @@ struct ctlname {
 #define	CTLTYPE_STRUCT	5	/* name describes a structure */
 
 /*
+ * Flags that apply to each node, governing access and other features
+ */
+#define CTLFLAG_READONLY	0x00000000
+#define CTLFLAG_READONLY1	0x00000010
+#define CTLFLAG_READONLY2	0x00000020
+/* #define CTLFLAG_READ*	0x00000040 */
+#define CTLFLAG_READWRITE	0x00000070
+#define CTLFLAG_ANYWRITE	0x00000080
+#define CTLFLAG_PRIVATE		0x00000100
+#define CTLFLAG_PERMANENT	0x00000200
+#define CTLFLAG_OWNDATA		0x00000400
+#define CTLFLAG_IMMEDIATE	0x00000800
+#define CTLFLAG_HEX		0x00001000
+#define CTLFLAG_ROOT		0x00002000
+#define CTLFLAG_ANYNUMBER	0x00004000
+#define CTLFLAG_HIDDEN		0x00008000
+#define CTLFLAG_ALIAS		0x00010000
+#define CTLFLAG_MMAP		0x00020000
+#define CTLFLAG_OWNDESC		0x00040000
+
+/*
+ * sysctl API version
+ */
+#define SYSCTL_VERS_MASK	0xff000000
+#define SYSCTL_VERS_0		0x00000000
+#define SYSCTL_VERS_1		0x01000000
+#define SYSCTL_VERSION		SYSCTL_VERS_1
+#define SYSCTL_VERS(f)		((f) & SYSCTL_VERS_MASK)
+
+/*
+ * Flags that can be set by a create request from user-space
+ */
+#define SYSCTL_USERFLAGS	(CTLFLAG_READWRITE|\
+				CTLFLAG_ANYWRITE|\
+				CTLFLAG_PRIVATE|\
+				CTLFLAG_OWNDATA|\
+				CTLFLAG_IMMEDIATE|\
+				CTLFLAG_HEX|\
+				CTLFLAG_HIDDEN)
+
+/*
+ * Accessor macros
+ */
+#define SYSCTL_TYPEMASK		0x0000000f
+#define SYSCTL_TYPE(x)		((x) & SYSCTL_TYPEMASK)
+#define SYSCTL_FLAGMASK		0x00fffff0
+#define SYSCTL_FLAGS(x)		((x) & SYSCTL_FLAGMASK)
+
+/*
+ * Meta-identifiers
+ */
+#define CTL_EOL		-1		/* end of createv/destroyv list */
+#define CTL_QUERY	-2		/* enumerates children of a node */
+#define CTL_CREATE	-3		/* node create request */
+#define CTL_CREATESYM	-4		/* node create request with symbol */
+#define CTL_DESTROY	-5		/* node destroy request */
+#define CTL_MMAP	-6		/* mmap request */
+#define CTL_DESCRIBE	-7		/* get node descriptions */
+
+/*
  * Top-level identifiers
  */
 #define	CTL_UNSPEC	0		/* unused */
@@ -87,7 +154,7 @@ struct ctlname {
 #define	CTL_VFS		3		/* file system, mount type is next */
 #define	CTL_NET		4		/* network, see socket.h */
 #define	CTL_DEBUG	5		/* debugging parameters */
-#define	CTL_HW		6		/* generic cpu/io */
+#define	CTL_HW		6		/* generic CPU/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* in-kernel debugger */
@@ -171,7 +238,7 @@ struct ctlname {
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
-#define	KERN_CP_TIME		51	/* struct: cpu time counters */
+#define	KERN_CP_TIME		51	/* struct: CPU time counters */
 #define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
@@ -196,7 +263,11 @@ struct ctlname {
 #define	KERN_POSIX_SPIN_LOCKS	70	/* int: POSIX Spin Locks option */
 #define	KERN_POSIX_READER_WRITER_LOCKS 71 /* int: POSIX R/W Locks option */
 #define	KERN_DUMP_ON_PANIC	72	/* int: dump on panic */
-#define	KERN_MAXID		73	/* number of valid kern ids */
+#define	KERN_SOMAXKVA		73	/* int: max socket kernel virtual mem */
+#define	KERN_ROOT_PARTITION	74	/* int: root partition */
+#define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
+#define	KERN_BUF		76	/* struct: buffers */
+#define	KERN_MAXID		77	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -273,6 +344,9 @@ struct ctlname {
 	{ "posix_spin_locks", CTLTYPE_INT }, \
 	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
 	{ "dump_on_panic", CTLTYPE_INT}, \
+	{ "somaxkva", CTLTYPE_INT}, \
+	{ "root_partition", CTLTYPE_INT}, \
+	{ "drivers", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -325,6 +399,13 @@ struct kinfo_proc {
 		long	e_spare[3];
 	} kp_eproc;
 };
+
+/*
+ * Convert pointer to 64 bit unsigned integer for struct
+ * kinfo_proc2, etc.
+ */
+#define PTRTOUINT64(p) ((u_int64_t)(uintptr_t)(p))
+#define UINT64TOPTR(u) ((void *)(uintptr_t)(u))
 
 /*
  * KERN_PROC2 subtype ops return arrays of relatively fixed size
@@ -384,7 +465,7 @@ struct kinfo_proc2 {
 	u_int32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
 	u_int32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
 	u_int32_t p_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
-	int32_t	p_cpticks;		/* INT: Ticks of cpu time. */
+	int32_t	p_cpticks;		/* INT: Ticks of CPU time. */
 	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process during p_swtime */
 	u_int32_t p_swtime;		/* U_INT: Time swapped in or out. */
 	u_int32_t p_slptime;		/* U_INT: Time since last blocked. */
@@ -451,7 +532,7 @@ struct kinfo_proc2 {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
-	u_int64_t p_cpuid;		/* LONG: cpu id */
+	u_int64_t p_cpuid;		/* LONG: CPU id */
 	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
 	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
 	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
@@ -481,7 +562,7 @@ struct kinfo_lwp {
 	int32_t	l_pad2;			/* .. and then to an 8-byte boundary */
 	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
 	u_int64_t l_wchan;		/* PTR: sleep address. */
-	u_int64_t l_cpuid;		/* LONG: cpu id */
+	u_int64_t l_cpuid;		/* LONG: CPU id */
 };
 
 /*
@@ -516,6 +597,48 @@ struct kinfo_lwp {
 	{ "rawcc", CTLTYPE_QUAD }, \
 }
 
+/*
+ * kern.drivers returns an array of these.
+ */
+
+struct kinfo_drivers {
+	int32_t		d_cmajor;
+	int32_t		d_bmajor;
+	char		d_name[24];
+};
+
+/*
+ * KERN_BUF subtypes, like KERN_PROC2, where the four following mib
+ * entries specify "which type of buf", "which particular buf",
+ * "sizeof buf", and "how many".  Currently, only "all buf" is
+ * defined.
+ */
+#define	KERN_BUF_ALL	0		/* all buffers */
+
+/*
+ * kern.buf returns an array of these structures, which are designed
+ * both to be immune to 32/64 bit emulation issues and to provide
+ * backwards compatibility.  Note that the order here differs slightly
+ * from the real struct buf in order to achieve proper 64 bit
+ * alignment.
+ */
+struct buf_sysctl {
+	uint32_t b_flags;	/* LONG: B_* flags */
+	int32_t  b_error;	/* INT: Errno value */
+	int32_t  b_prio;	/* INT: Hint for buffer queue discipline */
+	uint32_t b_dev;		/* DEV_T: Device associated with buffer */
+	uint64_t b_bufsize;	/* LONG: Allocated buffer size */
+	uint64_t b_bcount;	/* LONG: Valid bytes in buffer */
+	uint64_t b_resid;	/* LONG: Remaining I/O */
+	uint64_t b_addr;	/* CADDR_T: Memory, superblocks, indirect... */
+	uint64_t b_blkno;	/* DADDR_T: Underlying physical block number */
+	uint64_t b_rawblkno;	/* DADDR_T: Raw underlying physical block */
+	uint64_t b_iodone;	/* PTR: Function called upon completion */
+	uint64_t b_proc;	/* PTR: Associated proc if B_PHYS set */
+	uint64_t b_vp;		/* PTR: File vnode */
+	uint64_t b_saveaddr;	/* PTR: Original b_addr for physio */
+	uint64_t b_lblkno;	/* DADDR_T: Logical block number */
+};
 
 /*
  * CTL_HW identifiers
@@ -652,7 +775,8 @@ struct kinfo_lwp {
 #define	PROC_PID_LIMIT		2
 #define	PROC_PID_STOPFORK	3
 #define	PROC_PID_STOPEXEC	4
-#define	PROC_PID_MAXID		5
+#define	PROC_PID_STOPEXIT	5
+#define	PROC_PID_MAXID		6
 
 #define	PROC_PID_NAMES { \
 	{ 0, 0 }, \
@@ -660,6 +784,7 @@ struct kinfo_lwp {
 	{ "rlimit", CTLTYPE_NODE }, \
 	{ "stopfork", CTLTYPE_INT }, \
 	{ "stopexec", CTLTYPE_INT }, \
+	{ "stopexit", CTLTYPE_INT }, \
 }
 
 /* Limit types from <sys/resources.h> */
@@ -672,7 +797,8 @@ struct kinfo_lwp {
 #define	PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
 #define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
 #define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
-#define	PROC_PID_LIMIT_MAXID 	10
+#define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
+#define	PROC_PID_LIMIT_MAXID 	(RLIM_NLIMITS+1)
 
 #define	PROC_PID_LIMIT_NAMES { \
 	{ 0, 0 }, \
@@ -685,6 +811,7 @@ struct kinfo_lwp {
 	{ "memorylocked", CTLTYPE_NODE }, \
 	{ "maxproc", CTLTYPE_NODE }, \
 	{ "descriptors", CTLTYPE_NODE }, \
+	{ "sbsize", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
 #define	PROC_PID_LIMIT_TYPE_SOFT	1
@@ -706,16 +833,33 @@ struct kinfo_lwp {
 #define	EMUL_LINUX	1
 #define	EMUL_IRIX	2
 #define	EMUL_DARWIN	3
+#define	EMUL_MACH	4
 
-#define	EMUL_MAXID	4
+#define	EMUL_MAXID	5
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
 	{ "linux", CTLTYPE_NODE }, \
 	{ "irix", CTLTYPE_NODE }, \
 	{ "darwin", CTLTYPE_NODE }, \
+	{ "mach", CTLTYPE_NODE }, \
 }
 
-#ifdef	_KERNEL
+#ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_sysctl.h"
+#endif
+
+/*
+ * A log of nodes created by a setup function or set of setup
+ * functions so that they can be torn down in one "transaction"
+ * when no longer needed.
+ *
+ * Users of the log merely pass a pointer to a pointer, and the sysctl
+ * infrastructure takes care of the rest.
+ */
+struct sysctllog;
+
 /*
  * CTL_DEBUG variables.
  *
@@ -727,6 +871,10 @@ struct kinfo_lwp {
  * conveniently locate them when querried. If more debugging
  * variables are added, they must also be declared here and also
  * entered into the array.
+ *
+ * Note that the debug subtree is largely obsolescent in terms of
+ * functionality now that we have dynamic sysctl, but the
+ * infrastructure is retained for backwards compatibility.
  */
 struct ctldebug {
 	char	*debugname;	/* name of debugging variable */
@@ -739,62 +887,273 @@ extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
 extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif	/* DEBUG */
 
+#define SYSCTLFN_PROTO const int *, u_int, void *, \
+	size_t *, const void *, size_t, \
+	const int *, struct lwp *, const struct sysctlnode *
+#define SYSCTLFN_ARGS const int *name, u_int namelen, void *oldp, \
+	size_t *oldlenp, const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, const struct sysctlnode *rnode
+#define SYSCTLFN_RWPROTO const int *, u_int, void *, \
+	size_t *, const void *, size_t, \
+	const int *, struct lwp *, struct sysctlnode *
+#define SYSCTLFN_RWARGS const int *name, u_int namelen, void *oldp, \
+	size_t *oldlenp, const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, struct sysctlnode *rnode
+#define SYSCTLFN_CALL(node) name, namelen, oldp, \
+	oldlenp, newp, newlen, \
+	oname, l, (struct sysctlnode *)node
+
+#ifdef _LKM
+
+#define SYSCTL_SETUP_PROTO(name)				\
+	void name(struct sysctllog **)
+#ifdef SYSCTL_DEBUG_SETUP
+#define SYSCTL_SETUP(name, desc)				\
+	static void __CONCAT(___,name)(struct sysctllog **);	\
+	void name(struct sysctllog **clog) {			\
+		printf("%s\n", desc);				\
+		__CONCAT(___,name)(clog); }			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void __CONCAT(___,name)(struct sysctllog **clog)
+#else /* SYSCTL_DEBUG_SETUP */
+#define SYSCTL_SETUP(name, desc)				\
+	__link_set_add_text(sysctl_funcs, name);		\
+	void name(struct sysctllog **clog)
+#endif /* SYSCTL_DEBUG_SETUP */
+
+#else /* _LKM */
+
+#define SYSCTL_SETUP_PROTO(name)
+#ifdef SYSCTL_DEBUG_SETUP
+#define SYSCTL_SETUP(name, desc)				\
+	static void __CONCAT(___,name)(struct sysctllog **);	\
+	static void name(struct sysctllog **clog) {		\
+		printf("%s\n", desc);				\
+		__CONCAT(___,name)(clog); }			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void __CONCAT(___,name)(struct sysctllog **clog)
+#else /* SYSCTL_DEBUG_SETUP */
+#define SYSCTL_SETUP(name, desc)				\
+	static void name(struct sysctllog **);			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void name(struct sysctllog **clog)
+#endif /* SYSCTL_DEBUG_SETUP */
+typedef void (*sysctl_setup_func)(struct sysctllog **);
+
+#endif /* _LKM */
+
 /*
  * Internal sysctl function calling convention:
  *
- *	(*sysctlfn)(name, namelen, oldval, oldlenp, newval, newlen);
+ *	(*sysctlfn)(name, namelen, oldval, oldlenp, newval, newlen,
+ *		    origname, lwp, node);
  *
  * The name parameter points at the next component of the name to be
  * interpreted.  The namelen parameter is the number of integers in
- * the name.
+ * the name.  The origname parameter points to the start of the name
+ * being parsed.  The node parameter points to the node on which the
+ * current operation is to be performed.
  */
-typedef int (sysctlfn)
-    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+typedef int (*sysctlfn)(SYSCTLFN_PROTO);
 
-int sysctl_int(void *, size_t *, void *, size_t, int *);
-int sysctl_rdint(void *, size_t *, void *, int);
-int sysctl_quad(void *, size_t *, void *, size_t, quad_t *);
-int sysctl_rdquad(void *, size_t *, void *, quad_t);
-int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
-int sysctl_rdstring(void *, size_t *, void *, const char *);
-int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
-int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
-int sysctl_rdminstruct(void *, size_t *, void *, const void *, size_t);
-int sysctl_clockrate(void *, size_t *);
-int sysctl_disknames(void *, size_t *);
-int sysctl_diskstats(int *, u_int, void *, size_t *);
-int sysctl_vnode(char *, size_t *, struct proc *);
-int sysctl_ntptime(void *, size_t *);
-#ifdef GPROF
-int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
-#endif
-int sysctl_dombuf(int *, u_int, void *, size_t *, void *, size_t);
+/*
+ * used in more than just sysctl
+ */
+void	fill_eproc(struct proc *, struct eproc *);
 
-void fill_eproc(struct proc *, struct eproc *);
-
-int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int proc_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-#ifdef DEBUG
-int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-#endif
-int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int emul_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-
-/* ddb_sysctl() declared in ddb_var.h */
-
+/*
+ * subsystem setup
+ */
 void	sysctl_init(void);
 
-#ifdef __SYSCTL_PRIVATE
-extern struct lock sysctl_memlock;
-#endif
+/*
+ * typical syscall call order
+ */
+int	sysctl_lock(struct lwp *, void *, size_t);
+int	sysctl_dispatch(SYSCTLFN_RWPROTO);
+void	sysctl_unlock(struct lwp *);
+
+/*
+ * tree navigation primitives (must obtain lock before using these)
+ */
+int	sysctl_locate(struct lwp *, const int *, u_int, struct sysctlnode **,
+		      int *);
+int	sysctl_query(SYSCTLFN_PROTO);
+#ifdef SYSCTL_DEBUG_CREATE
+#define sysctl_create _sysctl_create
+#endif /* SYSCTL_DEBUG_CREATE */
+int	sysctl_create(SYSCTLFN_RWPROTO);
+int	sysctl_destroy(SYSCTLFN_RWPROTO);
+int	sysctl_lookup(SYSCTLFN_RWPROTO);
+int	sysctl_describe(SYSCTLFN_PROTO);
+
+/*
+ * simple variadic interface for adding/removing nodes
+ */
+int	sysctl_createv(struct sysctllog **, int,
+		       struct sysctlnode **, struct sysctlnode **,
+		       int, int, const char *, const char *,
+		       sysctlfn, u_quad_t, void *, size_t, ...);
+int	sysctl_destroyv(struct sysctlnode *, ...);
+
+/*
+ * miscellany
+ */
+void	sysctl_dump(const struct sysctlnode *);
+void	sysctl_free(struct sysctlnode *);
+void	sysctl_teardown(struct sysctllog **);
+
+#if SYSCTL_INCLUDE_DESCR
+#define SYSCTL_DESCR(s) s
+#else /* SYSCTL_INCLUDE_DESCR */
+#define SYSCTL_DESCR(s) NULL
+#endif /* SYSCTL_INCLUDE_DESCR */
+
+/*
+ * simple interface similar to old interface for in-kernel consumption
+ */
+int	old_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+
+/*
+ * these helpers are in other files (XXX so should the nodes be) or
+ * are used by more than one node
+ */
+int	sysctl_hw_disknames(SYSCTLFN_PROTO);
+int	sysctl_hw_diskstats(SYSCTLFN_PROTO);
+int	sysctl_kern_vnode(SYSCTLFN_PROTO);
+int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
+int	sysctl_consdev(SYSCTLFN_PROTO);
+int	sysctl_root_device(SYSCTLFN_PROTO);
+
+/*
+ * primitive helper stubs
+ */
+int	sysctl_needfunc(SYSCTLFN_PROTO);
+int	sysctl_notavail(SYSCTLFN_PROTO);
+int	sysctl_null(SYSCTLFN_PROTO);
+
+MALLOC_DECLARE(M_SYSCTLNODE);
+MALLOC_DECLARE(M_SYSCTLDATA);
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
+typedef void *sysctlfn;
+
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));
+int	sysctlbyname __P((const char *, void *, size_t *, void *, size_t));
+int	sysctlgetmibinfo __P((const char *, int *, u_int *,
+			      char *, size_t *, struct sysctlnode **, int));
+int	sysctlnametomib __P((const char *, int *, size_t *));
 __END_DECLS
-#endif	/* _KERNEL */
+
+#endif	/* !_KERNEL */
+
+#ifdef __COMPAT_SYSCTL
+/*
+ * old node definitions go here
+ */
+#endif /* __COMPAT_SYSCTL */
+
+/*
+ * padding makes alignment magically "work" for 32/64 compatibility at
+ * the expense of making things bigger on 32 bit platforms.
+ */
+#if defined(_LP64) || (BYTE_ORDER == LITTLE_ENDIAN)
+#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+	struct { type __sysc_sdatum; } __sysc_ustr; }
+#else
+#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+	struct { uint32_t __sysc_spad; type __sysc_sdatum; } __sysc_ustr; }
+#endif
+#define __sysc_unpad(x) x.__sysc_ustr.__sysc_sdatum
+
+/*
+ * The following is for gcc2, which doesn't handle __sysc_unpad().
+ * The code gets a little less ugly this way.
+ */
+#define sysc_init_field(field, value) 	\
+	.field = { .__sysc_ustr = { .__sysc_sdatum = (value), }, }
+
+struct sysctlnode {
+	uint32_t sysctl_flags;		/* flags and type */
+	int32_t sysctl_num;		/* mib number */
+	char sysctl_name[SYSCTL_NAMELEN]; /* node name */
+	uint32_t sysctl_ver;		/* node's version vs. rest of tree */
+	uint32_t __rsvd;
+	union {
+		struct {
+			uint32_t suc_csize;	/* size of child node array */
+			uint32_t suc_clen;	/* number of valid children */
+			__sysc_pad(struct sysctlnode*) _suc_child; /* array of child nodes */
+		} scu_child;
+		struct {
+			__sysc_pad(void*) _sud_data; /* pointer to external data */
+			__sysc_pad(size_t) _sud_offset; /* offset to data */
+		} scu_data;
+		int32_t scu_alias;		/* node this node refers to */
+		int32_t scu_idata;		/* immediate "int" data */
+		u_quad_t scu_qdata;		/* immediate "u_quad_t" data */
+	} sysctl_un;
+	__sysc_pad(size_t) _sysctl_size;	/* size of instrumented data */
+	__sysc_pad(sysctlfn) _sysctl_func;	/* access helper function */
+	__sysc_pad(struct sysctlnode*) _sysctl_parent; /* parent of this node */
+	__sysc_pad(const char *) _sysctl_desc;	/* description of node */
+};
+
+/*
+ * padded data
+ */
+#define suc_child	__sysc_unpad(_suc_child)
+#define sud_data	__sysc_unpad(_sud_data)
+#define sud_offset	__sysc_unpad(_sud_offset)
+#define sysctl_size	__sysc_unpad(_sysctl_size)
+#define sysctl_func	__sysc_unpad(_sysctl_func)
+#define sysctl_parent	__sysc_unpad(_sysctl_parent)
+#define sysctl_desc	__sysc_unpad(_sysctl_desc)
+
+/*
+ * nested data (may also be padded)
+ */
+#define sysctl_csize	sysctl_un.scu_child.suc_csize
+#define sysctl_clen	sysctl_un.scu_child.suc_clen
+#define sysctl_child	sysctl_un.scu_child.suc_child
+#define sysctl_data	sysctl_un.scu_data.sud_data
+#define sysctl_offset	sysctl_un.scu_data.sud_offset
+#define sysctl_alias	sysctl_un.scu_alias
+#define sysctl_idata	sysctl_un.scu_idata
+#define sysctl_qdata	sysctl_un.scu_qdata
+
+/*
+ * when requesting a description of a node (a set of nodes, actually),
+ * you get back an "array" of these, where the actual length of the
+ * descr_str is noted in descr_len (which includes the trailing nul
+ * byte), rounded up to the nearest four (sizeof(int32_t) actually).
+ *
+ * NEXT_DESCR() will take a pointer to a description and advance it to
+ * the next description.
+ */
+struct sysctldesc {
+	int32_t		descr_num;	/* mib number of node */
+	uint32_t	descr_ver;	/* version of node */
+	uint32_t	descr_len;	/* length of description string */
+	char		descr_str[1];	/* not really 1...see above */
+};
+
+#define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
+#define __sysc_desc_adv(d, l) \
+	(/*LINTED ptr cast*/(struct sysctldesc *) \
+	(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
+		__sysc_desc_roundup(l)))
+#define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
+
+static __inline struct sysctlnode *
+sysctl_rootof(struct sysctlnode *n)
+{
+	while (n->sysctl_parent != NULL)
+		n = n->sysctl_parent;
+	return (n);
+}
+
 #endif	/* !_SYS_SYSCTL_H_ */

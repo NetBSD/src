@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.68.2.1 2003/07/02 15:26:54 darrenr Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.68.2.2 2004/08/03 10:54:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.1 2003/07/02 15:26:54 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.2 2004/08/03 10:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68.2.1 2003/07/02 15:26:54 darrenr 
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
+#include <sys/tty.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -183,6 +180,7 @@ spec_open(v)
 	dev_t blkdev, dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
+	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 
 	/*
 	 * Don't allow open if fs is mounted -nodev.
@@ -224,7 +222,10 @@ spec_open(v)
 		VOP_UNLOCK(vp, 0);
 		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, l);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		return (error);
+		if (cdev->d_type != D_DISK)
+			return error;
+		d_ioctl = cdev->d_ioctl;
+		break;
 
 	case VBLK:
 		bdev = bdevsw_lookup(dev);
@@ -244,16 +245,8 @@ spec_open(v)
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
 		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
-		if (error) {
-			return error;
-		}
-		error = (*bdev->d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curlwp);
-		if (error == 0) {
-			vp->v_size = (voff_t)pi.disklab->d_secsize *
-			    pi.part->p_size;
-		}
-		return 0;
+		d_ioctl = bdev->d_ioctl;
+		break;
 
 	case VNON:
 	case VLNK:
@@ -262,9 +255,15 @@ spec_open(v)
 	case VBAD:
 	case VFIFO:
 	case VSOCK:
-		break;
+	default:
+		return 0;
 	}
-	return (0);
+
+	if (error)
+		return error;
+	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&pi, FREAD, curlwp))
+		vp->v_size = (voff_t)pi.disklab->d_secsize * pi.part->p_size;
+	return 0;
 }
 
 /*
@@ -454,7 +453,7 @@ spec_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void  *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct lwp *a_l;
@@ -578,18 +577,49 @@ spec_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
-	struct buf *bp;
-	const struct bdevsw *bdev;
+	struct vnode *vp = ap->a_vp;
+	struct buf *bp = ap->a_bp;
+	int error, s;
+	struct spec_cow_entry *e;
 
-	bp = ap->a_bp;
+	error = 0;
+	bp->b_dev = vp->v_rdev;
 	if (!(bp->b_flags & B_READ) &&
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL)
-		(*bdev->d_strategy)(bp);
+
+	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
+		SPEC_COW_LOCK(vp->v_specinfo, s);
+		while (vp->v_spec_cow_req > 0)
+			ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+			    &vp->v_spec_cow_slock);
+		vp->v_spec_cow_count++;
+		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+		SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list) {
+			if ((error = (*e->ce_func)(e->ce_cookie, bp)) != 0)
+				break;
+		}
+
+		SPEC_COW_LOCK(vp->v_specinfo, s);
+		vp->v_spec_cow_count--;
+		if (vp->v_spec_cow_req && vp->v_spec_cow_count == 0)
+			wakeup(&vp->v_spec_cow_req);
+		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+	}
+
+	if (error) {
+		bp->b_error = error;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return (error);
+	}
+
+	DEV_STRATEGY(bp);
+
 	return (0);
 }
 
@@ -647,14 +677,13 @@ spec_close(v)
 	struct vnode *vp = ap->a_vp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
+	struct session *sess;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct lwp *));
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
-	simple_lock(&vp->v_interlock);
 	flags = vp->v_flag;
-	simple_unlock(&vp->v_interlock);
 
 	switch (vp->v_type) {
 
@@ -667,12 +696,22 @@ spec_close(v)
 		 * process' controlling terminal.  In that case,
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
+		 * Also remove the link from the tty back to the session
+		 * and pgrp - due to the way consoles are handled we cannot
+		 * guarantee that the vrele() will do the final close on the
+		 * actual tty device.
 		 */
-		if (count == 2 && ap->a_l && ap->a_l->l_proc &&
-		    vp == ap->a_l->l_proc->p_session->s_ttyvp) {
+		if (count == 2 && ap->a_l &&
+		    vp == (sess = ap->a_l->l_proc->p_session)->s_ttyvp) {
+			sess->s_ttyvp = NULL;
+			if (sess->s_ttyp->t_session != NULL) {
+				sess->s_ttyp->t_pgrp = NULL;
+				sess->s_ttyp->t_session = NULL;
+				SESSRELE(sess);
+			} else if (sess->s_ttyp->t_pgrp != NULL)
+				panic("spec_close: spurious pgrp ref");
 			vrele(vp);
 			count--;
-			ap->a_l->l_proc->p_session->s_ttyvp = NULL;
 		}
 		/*
 		 * If the vnode is locked, then we are in the midst
@@ -732,7 +771,7 @@ spec_close(v)
 
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
-	 * might end up sleaping for someone else who wants our queues. They
+	 * might end up sleeping for someone else who wants our queues. They
 	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
 	 * don't release the lock as we won't be able to regain it.
 	 */
@@ -816,7 +855,7 @@ spec_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t a_id;
+		void *a_id;
 		int a_op;
 		struct flock *a_fl;
 		int a_flags;

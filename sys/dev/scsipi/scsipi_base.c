@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.c,v 1.88 2003/04/19 19:12:59 fvdl Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.88.2.1 2004/08/03 10:51:15 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88 2003/04/19 19:12:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88.2.1 2004/08/03 10:51:15 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -330,6 +330,7 @@ scsipi_get_tag(xs)
 	int bit, tag;
 	u_int word;
 
+	bit = 0;	/* XXX gcc */
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
 		bit = ffs(periph->periph_freetags[word]);
 		if (bit != 0)
@@ -479,8 +480,8 @@ scsipi_get_xs(periph, flags)
 	SC_DEBUG(periph, SCSIPI_DB3, ("returning\n"));
 
 	if (xs != NULL) {
-		callout_init(&xs->xs_callout);
 		memset(xs, 0, sizeof(*xs));
+		callout_init(&xs->xs_callout);
 		xs->xs_periph = periph;
 		xs->xs_control = flags;
 		xs->xs_status = 0;
@@ -729,6 +730,53 @@ scsipi_kill_pending(periph)
 }
 
 /*
+ * scsipi_print_cdb:
+ * prints a command descriptor block (for debug purpose, error messages,
+ * SCSIPI_VERBOSE, ...)
+ */
+void
+scsipi_print_cdb(cmd)
+	struct scsipi_generic *cmd;
+{
+	int i, j;
+
+ 	printf("0x%02x", cmd->opcode);
+
+ 	switch (CDB_GROUPID(cmd->opcode)) {
+ 	case CDB_GROUPID_0:
+ 		j = CDB_GROUP0;
+ 		break;
+ 	case CDB_GROUPID_1:
+ 		j = CDB_GROUP1;
+ 		break;
+ 	case CDB_GROUPID_2:
+ 		j = CDB_GROUP2;
+ 		break;
+ 	case CDB_GROUPID_3:
+ 		j = CDB_GROUP3;
+ 		break;
+ 	case CDB_GROUPID_4:
+ 		j = CDB_GROUP4;
+ 		break;
+ 	case CDB_GROUPID_5:
+ 		j = CDB_GROUP5;
+ 		break;
+ 	case CDB_GROUPID_6:
+ 		j = CDB_GROUP6;
+ 		break;
+ 	case CDB_GROUPID_7:
+ 		j = CDB_GROUP7;
+ 		break;
+ 	default:
+ 		j = 0;
+ 	}
+ 	if (j == 0)
+ 		j = sizeof (cmd->bytes);
+ 	for (i = 0; i < j-1; i++) /* already done the opcode */
+ 		printf(" %02x", cmd->bytes[i]);
+}
+
+/*
  * scsipi_interpret_sense:
  *
  *	Look at the returned sense and act on the error, determining
@@ -912,7 +960,11 @@ scsipi_interpret_sense(xs)
 			error = 0;
 			break;
 		case SKEY_ABORTED_COMMAND:
-			error = ERESTART;
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
 			break;
 		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
@@ -1074,17 +1126,35 @@ scsipi_inquire(periph, inqbuf, flags)
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = INQUIRY;
-	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
 	else
 		retries = SCSIPIRETRIES;
 
+	/*
+	 * If we request more data than the device can provide, it SHOULD just
+	 * return a short reponse.  However, some devices error with an
+	 * ILLEGAL REQUEST sense code, and yet others have even more special
+	 * failture modes (such as the GL641USB flash adapter, which goes loony
+	 * and sends corrupted CRCs).  To work around this, and to bring our
+	 * behavior more in line with other OSes, we do a shorter inquiry,
+	 * covering all the SCSI-2 information, first, and then request more
+	 * data iff the "additional length" field indicates there is more.
+	 * - mycroft, 2003/10/16
+	 */
+	scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
+	    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2,
 	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
+	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+		scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
+		error = scsipi_command(periph,
+		    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+		    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3,
+		    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
+	}
 	
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
@@ -1101,12 +1171,9 @@ scsipi_inquire(periph, inqbuf, flags)
 		inqbuf->dev_qual2 = 0;
 		inqbuf->version = 0;
 		inqbuf->response_format = SID_FORMAT_SCSI1;
-		inqbuf->additional_length = 3 + 28;
+		inqbuf->additional_length = SCSIPI_INQUIRY_LENGTH_SCSI2 - 4;
 		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
-		memcpy(inqbuf->vendor, "ADAPTEC ", sizeof(inqbuf->vendor));
-		memcpy(inqbuf->product, "ACB-4000        ",
-			sizeof(inqbuf->product));
-		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+		memcpy(inqbuf->vendor, "ADAPTEC ACB-4000            ", 28);
 		error = 0;
 	}
 
@@ -1124,12 +1191,9 @@ scsipi_inquire(periph, inqbuf, flags)
 		 */
 		inqbuf->device = (SID_QUAL_LU_PRESENT | T_SEQUENTIAL);
 		inqbuf->dev_qual2 = SID_REMOVABLE;
-		inqbuf->additional_length = 3 + 28;
+		inqbuf->additional_length = SCSIPI_INQUIRY_LENGTH_SCSI2 - 4;
 		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
-		memcpy(inqbuf->vendor, "EMULEX  ", sizeof(inqbuf->vendor));
-		memcpy(inqbuf->product, "MT-02 QIC       ",
-			sizeof(inqbuf->product));
-		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+		memcpy(inqbuf->vendor, "EMULEX  MT-02 QIC           ", 28);
 	}
 #endif /* SCSI_OLD_NOINQUIRY */
 
@@ -1147,9 +1211,6 @@ scsipi_prevent(periph, type, flags)
 	int type, flags;
 {
 	struct scsipi_prevent scsipi_cmd;
-
-	if (periph->periph_quirks & PQUIRK_NODOORLOCK)
-		return (0);
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
@@ -1171,9 +1232,6 @@ scsipi_start(periph, type, flags)
 	int type, flags;
 {
 	struct scsipi_start_stop scsipi_cmd;
-
-	if (periph->periph_quirks & PQUIRK_NOSTARTUNIT)
-		return 0;
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = START_STOP;
@@ -1204,10 +1262,7 @@ scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
 	scsipi_cmd.opcode = MODE_SENSE;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
-	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
-		_lto2b(len, scsipi_cmd.u_len.atapi.length);
-	else
-		scsipi_cmd.u_len.scsi.length = len & 0xff;
+	scsipi_cmd.length = len & 0xff;
 	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_IN);
@@ -1250,10 +1305,7 @@ scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT;
 	scsipi_cmd.byte2 = byte2;
-	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
-		_lto2b(len, scsipi_cmd.u_len.atapi.length);
-	else
-		scsipi_cmd.u_len.scsi.length = len & 0xff;
+	scsipi_cmd.length = len & 0xff;
 	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_OUT);
@@ -2255,20 +2307,20 @@ scsipi_print_xfer_mode(periph)
 	if ((periph->periph_flags & PERIPH_MODE_VALID) == 0)
 		return;
 
-	printf("%s: ", periph->periph_dev->dv_xname);
+	aprint_normal("%s: ", periph->periph_dev->dv_xname);
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
-		printf("sync (%d.%02dns offset %d)",
+		aprint_normal("sync (%d.%02dns offset %d)",
 		    period / 100, period % 100, periph->periph_offset);
 	} else
-		printf("async");
+		aprint_normal("async");
 
 	if (periph->periph_mode & PERIPH_CAP_WIDE32)
-		printf(", 32-bit");
+		aprint_normal(", 32-bit");
 	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-		printf(", 16-bit");
+		aprint_normal(", 16-bit");
 	else
-		printf(", 8-bit");
+		aprint_normal(", 8-bit");
 
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		freq = scsipi_sync_factor_to_freq(periph->periph_period);
@@ -2280,17 +2332,17 @@ scsipi_print_xfer_mode(periph)
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)
-			printf(" (%d.%03dMB/s)", mbs, speed % 1000);
+			aprint_normal(" (%d.%03dMB/s)", mbs, speed % 1000);
 		else
-			printf(" (%dKB/s)", speed % 1000);
+			aprint_normal(" (%dKB/s)", speed % 1000);
 	}
 
-	printf(" transfers");
+	aprint_normal(" transfers");
 
 	if (periph->periph_mode & PERIPH_CAP_TQING)
-		printf(", tagged queueing");
+		aprint_normal(", tagged queueing");
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*

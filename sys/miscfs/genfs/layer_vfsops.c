@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.9.2.1 2003/07/02 15:26:50 darrenr Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.9.2.2 2004/08/03 10:54:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,9 +73,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.1 2003/07/02 15:26:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.2 2004/08/03 10:54:05 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/proc.h>
@@ -139,7 +136,7 @@ layerfs_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct lwp *l;
 {
 
@@ -148,38 +145,44 @@ layerfs_quotactl(mp, cmd, uid, arg, l)
 }
 
 int
-layerfs_statfs(mp, sbp, l)
+layerfs_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct lwp *l;
 {
 	int error;
-	struct statfs mstat;
+	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_statfs(mp = %p, vp = %p->%p)\n", mp,
+	printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
 	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
 	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
-	memset(&mstat, 0, sizeof(mstat));
+	(void)memset(sbuf, 0, sizeof(*sbuf));
 
-	error = VFS_STATFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, &mstat, l);
-	if (error)
-		return (error);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, l);
+ 	if (error)
+		goto done;
 
 	/* now copy across the "interesting" information and fake the rest */
-	sbp->f_type = mstat.f_type;
-	sbp->f_flags = mstat.f_flags;
-	sbp->f_bsize = mstat.f_bsize;
-	sbp->f_iosize = mstat.f_iosize;
-	sbp->f_blocks = mstat.f_blocks;
-	sbp->f_bfree = mstat.f_bfree;
-	sbp->f_bavail = mstat.f_bavail;
-	sbp->f_files = mstat.f_files;
-	sbp->f_ffree = mstat.f_ffree;
-	copy_statfs_info(sbp, mp);
-	return (0);
+	sbp->f_flag = sbuf->f_flag;
+	sbp->f_bsize = sbuf->f_bsize;
+	sbp->f_frsize = sbuf->f_frsize;
+	sbp->f_iosize = sbuf->f_iosize;
+	sbp->f_blocks = sbuf->f_blocks;
+	sbp->f_bfree = sbuf->f_bfree;
+	sbp->f_bavail = sbuf->f_bavail;
+	sbp->f_bresvd = sbuf->f_bresvd;
+	sbp->f_files = sbuf->f_files;
+	sbp->f_ffree = sbuf->f_ffree;
+	sbp->f_favail = sbuf->f_favail;
+	sbp->f_fresvd = sbuf->f_fresvd;
+	sbp->f_namemax = sbuf->f_namemax;
+	copy_statvfs_info(sbp, mp);
+done:
+	free(sbuf, M_TEMP);
+	return error;
 }
 
 int
@@ -273,15 +276,42 @@ layerfs_vptofh(vp, fhp)
 	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp));
 }
 
+/*
+ * layerfs_snapshot - handle a snapshot through a layered file system
+ *
+ * At present, we do NOT support snapshotting through a layered file
+ * system as the ffs implementation changes v_vnlock of the snapshot
+ * vnodes to point to one common lock. As there is no way for us to
+ * absolutely pass this change up the stack, a layered file system
+ * would end up referencing the wrong lock.
+ *
+ * This routine serves as a central resource for this behavior; all
+ * layered file systems don't need to worry about the above. Also, if
+ * things get fixed, all layers get the benefit.
+ */
 int
-layerfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+layerfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 {
 	return (EOPNOTSUPP);
+}
+
+SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "layerfs",
+		       SYSCTL_DESCR("Generic layered file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE);
+	/*
+	 * other subtrees should really be aliases to this, but since
+	 * they can't tell if layerfs has been instantiated yet, they
+	 * can't do that...not easily.  not yet.  :-)
+	 */
 }

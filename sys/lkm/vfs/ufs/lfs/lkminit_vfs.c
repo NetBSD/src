@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6 2003/03/15 07:20:23 perseant Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6.2.1 2004/08/03 10:54:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/03/15 07:20:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6.2.1 2004/08/03 10:54:04 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -54,18 +55,19 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/03/15 07:20:23 perseant Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-/* used for lfs syscal entry table */
-struct lfs_sysent {
-	int sysno;
-	struct sysent sysent;
-};
+#include <ufs/lfs/lfs_extern.h>
 
 int lfs_lkmentry __P((struct lkm_table *, int, int));
+
 static int lfs_load __P((struct lkm_table *, int));
 static int lfs_unload __P((struct lkm_table *, int));
+static struct sysctllog *_lfs_log;
 
 #define LFS_SYSENT_CNT		4
-const struct lfs_sysent lfs_sysents[LFS_SYSENT_CNT] = {
+static const struct {
+	int sysno;
+	struct sysent sysent;
+} lfs_sysents[LFS_SYSENT_CNT] = {
 	{ SYS_lfs_bmapv,
 		{ 3, sizeof(struct sys_lfs_bmapv_args), 0,
 			sys_lfs_bmapv } },
@@ -79,6 +81,7 @@ const struct lfs_sysent lfs_sysents[LFS_SYSENT_CNT] = {
 		{ 2, sizeof(struct sys_lfs_segwait_args), 0,
 			sys_lfs_segwait } },
 };
+static struct sysent lfs_osysent[LFS_SYSENT_CNT];
 
 /*
  * This is the vfsops table for the file system in question
@@ -99,38 +102,8 @@ lfs_lkmentry(lkmtp, cmd, ver)
 	int cmd;
 	int ver;
 {
-	int error;
 
-	/*
-	 * Since we need to call lkmdispatch() first, we can't use
-	 * DISPATCH().
-	 */
-
-	if (ver != LKM_VERSION)
-		return EINVAL;	/* version mismatch */
-
-	/* do this first, lkmdispatch() expects this to be already filled in */
-	if (cmd == LKM_E_LOAD)
-		lkmtp->private.lkm_any = (void *)&_module;
-
-	if ((error = lkmdispatch(lkmtp, cmd)))
-		return error;
-
-	switch (cmd) {
-	case LKM_E_LOAD:
-		if ((error = lfs_load(lkmtp, cmd)) != 0)
-			return error;
-		break;
-	case LKM_E_UNLOAD:
-		if ((error = lfs_unload(lkmtp, cmd)) != 0)
-			return error;
-		break;
-	case LKM_E_STAT:
-	default:
-		break;
-	}
-
-	return 0;
+	DISPATCH(lkmtp, cmd, ver, lfs_load, lfs_unload, lkm_nofunc);
 }
 
 /*
@@ -154,13 +127,11 @@ lfs_load(lkmtp, cmd)
 
 	/* now, put in the lfs syscalls */
 	for(i=0; i < LFS_SYSENT_CNT; i++) {
-		sysent[lfs_sysents[i].sysno].sy_narg =
-			lfs_sysents[i].sysent.sy_narg;
-		sysent[lfs_sysents[i].sysno].sy_argsize =
-			lfs_sysents[i].sysent.sy_argsize;
-		sysent[lfs_sysents[i].sysno].sy_call =
-			lfs_sysents[i].sysent.sy_call;
+		lfs_osysent[i] = sysent[lfs_sysents[i].sysno];
+		sysent[lfs_sysents[i].sysno] = lfs_sysents[i].sysent;
 	}
+
+	sysctl_vfs_lfs_setup(&_lfs_log);
 
 	return 0;
 }
@@ -175,6 +146,8 @@ lfs_unload(lkmtp, cmd)
 {
 	int i;
 
+	sysctl_teardown(&_lfs_log);
+
 	/* reset lfs syscall entries back to nosys */
 	for(i=0; i < LFS_SYSENT_CNT; i++) {
 		if (sysent[lfs_sysents[i].sysno].sy_call !=
@@ -182,9 +155,8 @@ lfs_unload(lkmtp, cmd)
 			panic("LKM lfs_unload(): syscall %d not lfs syscall",
 				lfs_sysents[i].sysno);
 		}
-		sysent[lfs_sysents[i].sysno].sy_narg = 0;
-		sysent[lfs_sysents[i].sysno].sy_argsize = 0;
-		sysent[lfs_sysents[i].sysno].sy_call = sys_nosys;
+
+		sysent[lfs_sysents[i].sysno] = lfs_osysent[i];
 	}
 
 	return 0;

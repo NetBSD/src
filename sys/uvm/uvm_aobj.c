@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.56.2.1 2004/08/03 10:57:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.56.2.1 2004/08/03 10:57:02 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -137,9 +137,10 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
 
 /*
  * uao_swhash_elt_pool: pool of uao_swhash_elt structures
+ * NOTE: Pages for this pool must not come from a pageable kernel map!
  */
-
-struct pool uao_swhash_elt_pool;
+POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
+    "uaoeltpl", NULL);
 
 /*
  * uvm_aobj: the actual anon-backed uvm_object
@@ -166,8 +167,8 @@ struct uvm_aobj {
 /*
  * uvm_aobj_pool: pool of uvm_aobj structures
  */
-
-struct pool uvm_aobj_pool;
+POOL_INIT(uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0, "aobjpl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 
@@ -176,14 +177,14 @@ MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
  */
 
 static struct uao_swhash_elt *uao_find_swhash_elt
-    __P((struct uvm_aobj *, int, boolean_t));
+    (struct uvm_aobj *, int, boolean_t);
 
-static void	uao_free __P((struct uvm_aobj *));
-static int	uao_get __P((struct uvm_object *, voff_t, struct vm_page **,
-		    int *, int, vm_prot_t, int, int));
-static boolean_t uao_put __P((struct uvm_object *, voff_t, voff_t, int));
-static boolean_t uao_pagein __P((struct uvm_aobj *, int, int));
-static boolean_t uao_pagein_page __P((struct uvm_aobj *, int));
+static void	uao_free(struct uvm_aobj *);
+static int	uao_get(struct uvm_object *, voff_t, struct vm_page **,
+		    int *, int, vm_prot_t, int, int);
+static boolean_t uao_put(struct uvm_object *, voff_t, voff_t, int);
+static boolean_t uao_pagein(struct uvm_aobj *, int, int);
+static boolean_t uao_pagein_page(struct uvm_aobj *, int);
 
 /*
  * aobj_pager
@@ -417,11 +418,10 @@ uao_free(aobj)
 				for (j = 0; j < UAO_SWHASH_CLUSTER_SIZE; j++) {
 					int slot = elt->slots[j];
 
-					if (slot == 0) {
-						continue;
+					if (slot > 0) {
+						uvm_swap_free(slot, 1);
+						swpgonlydelta++;
 					}
-					uvm_swap_free(slot, 1);
-					swpgonlydelta++;
 				}
 
 				next = LIST_NEXT(elt, list);
@@ -439,7 +439,7 @@ uao_free(aobj)
 		for (i = 0; i < aobj->u_pages; i++) {
 			int slot = aobj->u_swslots[i];
 
-			if (slot) {
+			if (slot > 0) {
 				uvm_swap_free(slot, 1);
 				swpgonlydelta++;
 			}
@@ -579,16 +579,6 @@ uao_init(void)
 	uao_initialized = TRUE;
 	LIST_INIT(&uao_list);
 	simple_lock_init(&uao_list_lock);
-
-	/*
-	 * NOTE: Pages fror this pool must not come from a pageable
-	 * kernel map!
-	 */
-
-	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
-	    0, 0, 0, "uaoeltpl", NULL);
-	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0,
-	    "aobjpl", &pool_allocator_nointr);
 }
 
 /*
@@ -1199,7 +1189,7 @@ gotpage:
 
 				swslot = uao_set_swslot(&aobj->u_obj, pageidx,
 							SWSLOT_BAD);
-				if (swslot != -1) {
+				if (swslot > 0) {
 					uvm_swap_markbad(swslot, 1);
 				}
 
@@ -1424,7 +1414,7 @@ uao_pagein_page(aobj, pageidx)
 	int pageidx;
 {
 	struct vm_page *pg;
-	int rv, slot, npages;
+	int rv, npages;
 
 	pg = NULL;
 	npages = 1;
@@ -1452,25 +1442,29 @@ uao_pagein_page(aobj, pageidx)
 		 */
 
 		return FALSE;
+
+	default:
+		return TRUE;
 	}
 
 	/*
 	 * ok, we've got the page now.
 	 * mark it as dirty, clear its swslot and un-busy it.
 	 */
-
-	slot = uao_set_swslot(&aobj->u_obj, pageidx, 0);
-	uvm_swap_free(slot, 1);
+	uao_dropswap(&aobj->u_obj, pageidx);
 
 	/*
 	 * deactivate the page (to make sure it's on a page queue).
 	 */
-
 	uvm_lock_pageq();
-	uvm_pagedeactivate(pg);
+	if (pg->wire_count == 0)
+		uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
 
-	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+	}
+	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_CLEAN|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
 	return FALSE;

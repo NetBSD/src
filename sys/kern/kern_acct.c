@@ -1,7 +1,6 @@
-/*	$NetBSD: kern_acct.c,v 1.54.2.1 2003/07/02 15:26:36 darrenr Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.54.2.2 2004/08/03 10:52:43 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -9,6 +8,36 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)kern_acct.c	8.8 (Berkeley) 5/14/95
+ */
+
+/*-
+ * Copyright (c) 1994 Christopher G. Demetriou
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.54.2.1 2003/07/02 15:26:36 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.54.2.2 2004/08/03 10:52:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +138,10 @@ do {								\
  * The former's operation is described in Leffler, et al., and the latter
  * was provided by UCB with the 4.4BSD-Lite release
  */
-comp_t	encode_comp_t __P((u_long, u_long));
-void	acctwatch __P((void *));
-void	acct_stop __P((void));
-int	acct_chkfree __P((void));
+comp_t	encode_comp_t(u_long, u_long);
+void	acctwatch(void *);
+void	acct_stop(void);
+int	acct_chkfree(void);
 
 /*
  * Values associated with enabling and disabling accounting
@@ -156,21 +185,24 @@ int
 acct_chkfree()
 {
 	int error;
-	struct statfs sb;
+	struct statvfs sb;
+	int64_t bavail;
 
-	error = VFS_STATFS(acct_vp->v_mount, &sb, NULL);
+	error = VFS_STATVFS(acct_vp->v_mount, &sb, NULL);
 	if (error != 0)
 		return (error);
 
+	bavail = sb.f_bfree - sb.f_bresvd;
+
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
-		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
+		if (bavail > acctresume * sb.f_blocks / 100) {
 			acct_state = ACCT_ACTIVE;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
 		break;
 	case ACCT_ACTIVE:
-		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
+		if (bavail <= acctsuspend * sb.f_blocks / 100) {
 			acct_state = ACCT_SUSPENDED;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
@@ -418,7 +450,7 @@ acctwatch(arg)
 		error = acct_chkfree();
 #ifdef DIAGNOSTIC
 		if (error != 0)
-			printf("acctwatch: failed to statfs, error = %d\n",
+			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
 

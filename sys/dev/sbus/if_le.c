@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 2002/12/10 13:44:48 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27.6.1 2004/08/03 10:51:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.27 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.27.6.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -104,14 +104,6 @@ extern struct cfdriver le_cd;
 #include "opt_ddb.h"
 #endif
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
 static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 
@@ -121,9 +113,11 @@ lewrcsr(sc, port, val)
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t t = lesc->sc_bustag;
+	bus_space_handle_t h = lesc->sc_reg;
 
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, val);
+	bus_space_write_2(t, h, LEREG1_RAP, port);
+	bus_space_write_2(t, h, LEREG1_RDP, val);
 
 #if defined(SUN4M)
 	/*
@@ -131,11 +125,7 @@ lewrcsr(sc, port, val)
 	 * easily be accomplished by reading back the register that we
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */
-	if (CPU_ISSUN4M) {
-		volatile u_int16_t discard;
-		discard = bus_space_read_2(lesc->sc_bustag, lesc->sc_reg,
-					   LEREG1_RDP);
-	}
+	(void)bus_space_read_2(t, h, LEREG1_RDP);
 #endif
 }
 
@@ -145,9 +135,11 @@ lerdcsr(sc, port)
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t t = lesc->sc_bustag;
+	bus_space_handle_t h = lesc->sc_reg;
 
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
-	return (bus_space_read_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP));
+	bus_space_write_2(t, h, LEREG1_RAP, port);
+	return (bus_space_read_2(t, h, LEREG1_RDP));
 }
 
 
@@ -172,9 +164,6 @@ leattach_sbus(parent, self, aux)
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_dma_tag_t dmatag;
 	struct sbusdev *sd;
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
-
 
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
@@ -211,7 +200,7 @@ leattach_sbus(parent, self, aux)
 		lebuf->attached = 1;
 
 		/* That old black magic... */
-		sc->sc_conf3 = PROM_getpropint(sa->sa_node,
+		sc->sc_conf3 = prom_getpropint(sa->sa_node,
 					  "busmaster-regval",
 					  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 		break;
@@ -271,7 +260,7 @@ leattach_sbus(parent, self, aux)
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(sa->sa_node, sc->sc_enaddr);
 
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;

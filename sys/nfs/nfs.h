@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.39.2.1 2003/07/02 15:27:07 darrenr Exp $	*/
+/*	$NetBSD: nfs.h,v 1.39.2.2 2004/08/03 10:56:16 skrll Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -61,6 +57,9 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
+#define	NFS_TRYLATERDEL	1		/* Initial try later delay (sec) */
+#define	NFS_TRYLATERDELMAX (1*60)	/* Maximum try later delay (sec) */
+#define	NFS_TRYLATERDELMUL 2		/* Exponential backoff multiplier */
 
 /*
  * These can be overridden through <machine/param.h>, included via
@@ -77,10 +76,25 @@
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
 #endif
 
+/*
+ * NFS client IO daemon threads. May be overridden by config options.
+ */
+#ifndef NFS_MAXASYNCDAEMON
+#define	NFS_MAXASYNCDAEMON 	128	/* Max. number async_daemons runable */
+#endif
+
+/*
+ * NFS client read-ahead. May be overridden by config options.
+ * Should be no more than NFS_MAXASYNCDAEMON as each read-ahead operation
+ * requires one IO thread.
+ */
+#ifndef NFS_MAXRAHEAD
+#define	NFS_MAXRAHEAD	32		/* Max. read ahead # blocks */
+#endif
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
-#define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
+
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
-#define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
+
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
 #ifndef NFS_DEFAULT_NIOTHREADS
@@ -156,23 +170,9 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  */
 #define	NFS_ATTRTIMEO(np) \
 	((((np)->n_flag & NMODIFIED) || \
-	 (time.tv_sec - (np)->n_mtime) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time.tv_sec - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime) / 10))
-
-/*
- * Expected allocation sizes for major data structures. If the actual size
- * of the structure exceeds these sizes, then malloc() will be allocating
- * almost twice the memory required. This is used in nfs_init() to warn
- * the sysadmin that the size of a structure should be reduced.
- * (These sizes are always a power of 2. If the kernel malloc() changes
- *  to one that does not allocate space in powers of 2 size, then this all
- *  becomes bunk!)
- */
-#define NFS_NODEALLOC	256
-#define NFS_MNTALLOC	512
-#define NFS_SVCALLOC	256
-#define NFS_UIDALLOC	128
+	 (time.tv_sec - (np)->n_mtime.tv_sec) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
+	 ((time.tv_sec - (np)->n_mtime.tv_sec) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
+	  (time.tv_sec - (np)->n_mtime.tv_sec) / 10))
 
 /*
  * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
@@ -326,6 +326,7 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #define	R_TPRINTFMSG	0x20		/* Did a tprintf msg. */
 #define	R_MUSTRESEND	0x40		/* Must resend request */
 #define	R_GETONEREP	0x80		/* Probe for one reply only */
+#define	R_REXMITTED	0x100		/* retransmitted after reconnect */
 
 /*
  * A list of nfssvc_sock structures is maintained with all the sockets

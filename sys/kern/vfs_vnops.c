@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.72.2.2 2003/07/03 01:32:56 wrstuden Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.72.2.3 2004/08/03 10:53:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.2 2003/07/03 01:32:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.3 2004/08/03 10:53:02 skrll Exp $");
 
 #include "fs_union.h"
 
@@ -52,12 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.2 2003/07/03 01:32:56 wrstuden 
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/poll.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -101,6 +100,7 @@ vn_open(ndp, fmode, cmode)
 	int fmode, cmode;
 {
 	struct vnode *vp;
+	struct mount *mp;
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
 	struct ucred *cred = l->l_proc->p_ucred;
 	struct vattr va;
@@ -110,7 +110,8 @@ vn_open(ndp, fmode, cmode)
 	struct veriexec_inode_list *veriexec_node;
 	char fingerprint[MAXFINGERPRINTLEN];
 #endif
-		
+
+restart:
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
@@ -125,9 +126,18 @@ vn_open(ndp, fmode, cmode)
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
 				 va.va_vaflags |= VA_EXCLUSIVE;
+			if (vn_start_write(ndp->ni_dvp, &mp, V_NOWAIT) != 0) {
+				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
+				vput(ndp->ni_dvp);
+				if ((error = vn_start_write(NULL, &mp,
+				    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
+					return (error);
+				goto restart;
+			}
 			VOP_LEASE(ndp->ni_dvp, l, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
+			vn_finished_write(mp, 0);
 			if (error)
 				return (error);
 			fmode &= ~O_TRUNC;
@@ -144,21 +154,23 @@ vn_open(ndp, fmode, cmode)
 				error = EEXIST;
 				goto bad;
 			}
-			if (ndp->ni_vp->v_type == VLNK) {
-				error = EFTYPE;
-				goto bad;
-			}
 			fmode &= ~O_CREAT;
 		}
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF;
+		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		if ((fmode & O_NOFOLLOW) == 0)
+			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		vp = ndp->ni_vp;
 	}
 	if (vp->v_type == VSOCK) {
 		error = EOPNOTSUPP;
+		goto bad;
+	}
+	if (ndp->ni_vp->v_type == VLNK) {
+		error = EFTYPE;
 		goto bad;
 	}
 
@@ -264,11 +276,17 @@ vn_open(ndp, fmode, cmode)
 	}
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
+		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
+			vput(vp);
+			return (error);
+		}
 		VOP_LEASE(vp, l, cred, LEASE_WRITE);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
-		if ((error = VOP_SETATTR(vp, &va, cred, l)) != 0)
+		error = VOP_SETATTR(vp, &va, cred, l);
+		vn_finished_write(mp, 0);
+		if (error != 0)
 			goto bad;
 	}
 	if ((error = VOP_OPEN(vp, fmode, cred, l)) != 0)
@@ -377,12 +395,17 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, l)
 {
 	struct uio auio;
 	struct iovec aiov;
+	struct mount *mp;
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		if (rw == UIO_READ) {
 			vn_lock(vp, LK_SHARED | LK_RETRY);
-		} else {
+		} else /* UIO_WRITE */ {
+			if (vp->v_type != VCHR &&
+			    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH))
+			    != 0)
+				return (error);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -405,8 +428,11 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, l)
 	else
 		if (auio.uio_resid && error == 0)
 			error = EIO;
-	if ((ioflg & IO_NODELOCKED) == 0)
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if (rw == UIO_WRITE)
+			vn_finished_write(mp, 0);
 		VOP_UNLOCK(vp, 0);
+	}
 	return (error);
 }
 
@@ -513,6 +539,7 @@ vn_write(fp, offset, uio, cred, flags)
 	int flags;
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct mount *mp;
 	int count, error, ioflag = IO_UNIT;
 
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
@@ -526,6 +553,10 @@ vn_write(fp, offset, uio, cred, flags)
 		ioflag |= IO_DSYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
+	mp = NULL;
+	if (vp->v_type != VCHR &&
+	    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	VOP_LEASE(vp, uio->uio_lwp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
@@ -538,6 +569,7 @@ vn_write(fp, offset, uio, cred, flags)
 			*offset += count - uio->uio_resid;
 	}
 	VOP_UNLOCK(vp, 0);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -682,7 +714,6 @@ vn_ioctl(fp, com, data, l)
 		if (com == FIONBIO || com == FIOASYNC)	/* XXX */
 			return (0);			/* XXX */
 		/* fall into ... */
-
 	case VFIFO:
 	case VCHR:
 	case VBLK:
@@ -737,6 +768,9 @@ vn_lock(vp, flags)
 {
 	int error;
 
+	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
+	    || (vp->v_flag & VONWORKLST) != 0);
+
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
@@ -750,7 +784,8 @@ vn_lock(vp, flags)
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
+			error = VOP_LOCK(vp,
+			    (flags & ~LK_RETRY) | LK_INTERLOCK);
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
@@ -798,4 +833,61 @@ vn_restorerecurse(vp, flags)
 
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
+}
+
+int
+vn_cow_establish(struct vnode *vp,
+    int (*func)(void *, struct buf *), void *cookie)
+{
+	int s;
+	struct spec_cow_entry *e;
+
+	MALLOC(e, struct spec_cow_entry *, sizeof(struct spec_cow_entry),
+	    M_DEVBUF, M_WAITOK);
+	e->ce_func = func;
+	e->ce_cookie = cookie;
+
+	SPEC_COW_LOCK(vp->v_specinfo, s);
+	vp->v_spec_cow_req++;
+	while (vp->v_spec_cow_count > 0)
+		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_slock);
+
+	SLIST_INSERT_HEAD(&vp->v_spec_cow_head, e, ce_list);
+
+	vp->v_spec_cow_req--;
+	if (vp->v_spec_cow_req == 0)
+		wakeup(&vp->v_spec_cow_req);
+	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+	return 0;
+}
+
+int
+vn_cow_disestablish(struct vnode *vp,
+    int (*func)(void *, struct buf *), void *cookie)
+{
+	int s;
+	struct spec_cow_entry *e;
+
+	SPEC_COW_LOCK(vp->v_specinfo, s);
+	vp->v_spec_cow_req++;
+	while (vp->v_spec_cow_count > 0)
+		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_slock);
+
+	SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
+		if (e->ce_func == func && e->ce_cookie == cookie) {
+			SLIST_REMOVE(&vp->v_spec_cow_head, e,
+			    spec_cow_entry, ce_list);
+			FREE(e, M_DEVBUF);
+			break;
+		}
+
+	vp->v_spec_cow_req--;
+	if (vp->v_spec_cow_req == 0)
+		wakeup(&vp->v_spec_cow_req);
+	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+	return e ? 0 : EINVAL;
 }

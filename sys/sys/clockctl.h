@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.6.2.1 2003/07/02 15:27:14 darrenr Exp $ */
+/*      $NetBSD: clockctl.h,v 1.6.2.2 2004/08/03 10:56:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,26 +32,30 @@
  *
  */
 
+#ifndef _SYS_CLOCKCTL_H_
+#define _SYS_CLOCKCTL_H_
+
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/ioctl.h>
 #include <sys/mount.h>	/* For fhandle_t */
 #include <sys/sa.h>	/* for sa_upcall_t */
 #include <sys/syscallargs.h>
 
-#ifndef SYS_CLOCKCTL_H
-#define SYS_CLOCKCTL_H
-
+#if defined(NTP) || !defined(_KERNEL)
 struct clockctl_ntp_adjtime_args {
 	struct sys_ntp_adjtime_args uas;
 	register_t retval;
 };
+#define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
+#endif
 
 #define CLOCKCTL_SETTIMEOFDAY _IOW('C', 0x1, struct sys_settimeofday_args)
 #define CLOCKCTL_ADJTIME _IOWR('C', 0x2, struct sys_adjtime_args)
 #define CLOCKCTL_CLOCK_SETTIME _IOW('C', 0x3, struct sys_clock_settime_args)
-#define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
 
 #ifdef _KERNEL
 void    clockctlattach __P((int));
@@ -59,5 +63,5 @@ int     clockctlopen __P((dev_t, int, int, struct lwp *));
 int     clockctlclose __P((dev_t, int, int, struct lwp *));
 int     clockctlioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
 #endif
-#endif
 
+#endif /* _SYS_CLOCKCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.17 2003/04/01 01:43:29 thorpej Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.17.2.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -79,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.17 2003/04/01 01:43:29 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.17.2.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -115,9 +111,7 @@ __KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.17 2003/04/01 01:43:29 thorpej Exp 
  *		 isn't worth it.
  */
 int
-iso_check_csum(m, len)
-	struct mbuf    *m;
-	int             len;
+iso_check_csum(struct mbuf *m, int len)
 {
 	u_char *p = mtod(m, u_char *);
 	u_long c0 = 0, c1 = 0;
@@ -191,10 +185,10 @@ iso_check_csum(m, len)
  */
 
 void
-iso_gen_csum(m, n, l)
-	struct mbuf    *m;
-	int             n;	/* offset of 2 checksum bytes */
-	int             l;
+iso_gen_csum(
+	struct mbuf    *m,
+	int             n,	/* offset of 2 checksum bytes */
+	int             l)
 {
 	u_char *p = mtod(m, u_char *);
 	int    c0 = 0, c1 = 0;
@@ -299,8 +293,7 @@ iso_gen_csum(m, n, l)
  */
 
 int
-m_datalen(m)
-	struct mbuf *m;
+m_datalen(struct mbuf *m)
 {
 	int    datalen;
 
@@ -310,8 +303,7 @@ m_datalen(m)
 }
 
 int
-m_compress(in, out)
-	struct mbuf *in, **out;
+m_compress(struct mbuf *in, struct mbuf **out)
 {
 	int    datalen = 0;
 	int             s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.8 2003/03/23 17:54:26 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.8.2.1 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -47,6 +47,7 @@
 #define	NMODIFIED		0x0004	/* bogus, until async IO implemented */
 /*efine	NNEW			0x0008*//* smb/vnode has been allocated */
 #define	NREFPARENT		0x0010	/* node holds parent from recycling */
+#define	NOPEN			0x2000	/* file is open */
 
 #define SMBFS_ATTRTIMO		5	/* Attribute cache timeout in sec */
 
@@ -66,7 +67,6 @@ struct smbnode {
 	u_quad_t		n_size;
 	long			n_ino;
 	int			n_dosattr;
-	int 			n_opencount;
 	u_int16_t		n_fid;		/* file handle */
 	int			n_rwstate;	/* granted access mode */
 	u_char			n_nmlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.8.2.1 2003/07/02 15:26:44 darrenr Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.8.2.2 2004/08/03 10:52:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.8.2.2 2004/08/03 10:52:57 skrll Exp $");
 
 #include "opt_posix.h"
 

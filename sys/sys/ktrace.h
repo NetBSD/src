@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.2 2003/08/19 19:40:53 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.3 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -55,12 +51,12 @@
  * ktrace record header
  */
 struct ktr_header {
-	int	ktr_len;		/* length of buf */
+	int	ktr_len;		/* length of ktr_buf */
 	short	ktr_type;		/* trace record type */
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
 	struct	timeval ktr_time;	/* timestamp */
-	caddr_t	ktr_buf;
+	const void *ktr_buf;
 };
 
 /*
@@ -124,6 +120,9 @@ struct ktr_psig {
 	sig_t	action;
 	sigset_t mask;
 	int	code;
+	/*
+	 * followed by optional siginfo_t
+	 */
 };
 
 /*
@@ -174,9 +173,26 @@ struct ktr_mmsg {
 };
 
 /*
+ * KTR_EXEC_ARG, KTR_EXEC_ENV - Arguments and environment from exec
+ */
+#define KTR_EXEC_ARG		10
+#define KTR_EXEC_ENV		11
+	/* record contains arg/env string */
+
+/*
+ * KTR_MOOL - Mach Out Of Line data
+ */
+#define KTR_MOOL		12
+struct ktr_mool {
+	const void 	*uaddr;	/* User address */
+	size_t		size;	/* Data len */
+	/* Followed by size bytes of data */
+};
+
+/*
  * KTR_SAUPCALL - schedular activiated upcall.
  */
-#define	KTR_SAUPCALL	12
+#define	KTR_SAUPCALL	13
 struct ktr_saupcall {
 	int ktr_type;
 	int ktr_nevent;
@@ -187,6 +203,7 @@ struct ktr_saupcall {
 	 * followed by nevent sa_t's from sas[]
 	 */
 };
+
 
 /*
  * kernel trace points (in p_traceflag)
@@ -201,13 +218,18 @@ struct ktr_saupcall {
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define	KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_MMSG	(1<<KTR_MMSG)
+#define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
+#define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
+#define KTRFAC_MOOL	(1<<KTR_MOOL)
 #define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
+
 /*
  * trace flags (also in p_traceflags)
  */
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
+#define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 
 #ifndef	_KERNEL
 
@@ -221,17 +243,20 @@ __END_DECLS
 
 #else
 
-void ktrcsw(struct lwp *, int, int);
-void ktremul(struct lwp *);
-void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
-void ktrnamei(struct lwp *, char *);
-void ktrpsig(struct lwp *, int, sig_t, sigset_t *, int);
-void ktrsyscall(struct lwp *, register_t, register_t, 
+int ktrcsw(struct lwp *, int, int);
+int ktremul(struct lwp *);
+int ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
+int ktrnamei(struct lwp *, char *);
+int ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
+int ktrsyscall(struct lwp *, register_t, register_t, 
     const struct sysent *, register_t []);
-void ktrsysret(struct lwp *, register_t, int, register_t *);
-void ktruser(struct lwp *, const char *, void *, size_t, int);
-void ktrmmsg(struct lwp *, const void *, size_t);
-void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
+int ktrsysret(struct lwp *, register_t, int, register_t *);
+int ktruser(struct lwp *, const char *, void *, size_t, int);
+int ktrmmsg(struct lwp *, const void *, size_t);
+int ktrkmem(struct lwp *, int, const void *, size_t);
+int ktrmool(struct lwp *, const void *, size_t, const void *);
+int ktrsaupcall(struct lwp *, int, int, int, void *, void *);
+
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
 

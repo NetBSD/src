@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.17 2003/05/16 13:55:54 christos Exp $	*/
+/*	$NetBSD: ucred.h,v 1.17.2.1 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,6 +34,8 @@
 #ifndef _SYS_UCRED_H_
 #define	_SYS_UCRED_H_
 
+#include <sys/lock.h>
+
 /*
  * Credentials.
  */
@@ -52,7 +50,9 @@ struct uucred {
 };
 
 struct ucred {
+	struct simplelock cr_lock;		/* mutex for ref count */
 	u_int32_t	cr_ref;			/* reference count */
+#define cr_startcopy	cr_uid			/* for dup & copy */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	u_int32_t	cr_ngroups;		/* number of groups */
@@ -63,7 +63,12 @@ struct ucred {
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef _KERNEL
-#define	crhold(cr)	(cr)->cr_ref++
+static __inline__ void crhold(struct ucred *cr)
+{
+	simple_lock(&cr->cr_lock);
+	cr->cr_ref++;
+	simple_unlock(&cr->cr_lock);
+}
 
 /* flags that control when do_setres{u,g}id will do anything */
 #define	ID_E_EQ_E	0x001		/* effective equals effective */

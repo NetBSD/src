@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.65.2.1 2003/07/02 15:26:23 darrenr Exp $	*/
+/*	$NetBSD: ugen.c,v 1.65.2.2 2004/08/03 10:51:33 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.65.2.1 2003/07/02 15:26:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.65.2.2 2004/08/03 10:51:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ USB_ATTACH(ugen)
 	usbd_status err;
 	int conf;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
@@ -866,8 +866,8 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-	DPRINTFN(5,("ugen_isoc_rintr: xfer %d, count=%d\n", req - sce->isoreqs,
-		    count));
+	DPRINTFN(5,("ugen_isoc_rintr: xfer %ld, count=%d\n",
+	    (long)(req - sce->isoreqs), count));
 
 	/* throw away oldest input if the buffer is full */
 	if(sce->fill < sce->cur && sce->cur <= sce->fill + count) {
@@ -1202,13 +1202,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		free(cdesc, M_TEMP);
 		return (error);
 	}
-	case USB_GET_STRING_DESC:
+	case USB_GET_STRING_DESC: {
+		int len;
 		si = (struct usb_string_desc *)addr;
 		err = usbd_get_string_desc(sc->sc_udev, si->usd_string_index,
-			  si->usd_language_id, &si->usd_desc);
+			  si->usd_language_id, &si->usd_desc, &len);
 		if (err)
 			return (EINVAL);
 		break;
+	}
 	case USB_DO_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.7.2.1 2003/07/02 15:26:30 darrenr Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.7.2.1 2003/07/02 15:26:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.7.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ ntfs_ntlookup(
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %d: %p\n", ino, ip));
-	bzero((caddr_t) ip, sizeof(struct ntnode));
+	bzero(ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
 	ip->i_devvp = ntmp->ntm_devvp;
@@ -916,9 +916,6 @@ ntfs_ntlookupfile(
 	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize));
 
 	rdbuf = (caddr_t) malloc(blsize, M_TEMP, M_WAITOK);
-
-	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize, rdsize));
-
 
     loop:
 	rdsize = vap->va_datalen;
@@ -1949,7 +1946,7 @@ ntfs_procfixups(
 			return (EINVAL);
 		}
 		*cfxp = *fxp;
-		((caddr_t) cfxp) += ntmp->ntm_bps;
+		cfxp = (u_int16_t *)((caddr_t)cfxp + ntmp->ntm_bps);
 	}
 	return (0);
 }

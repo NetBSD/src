@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.14 2003/02/26 06:31:20 matt Exp $	*/
+/*	$NetBSD: domain.h,v 1.14.2.1 2004/08/03 10:56:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,6 +42,7 @@
 /*
  * Forward structure declarations for function prototypes [sic].
  */
+struct	proc;
 struct	mbuf;
 struct	ifnet;
 
@@ -53,26 +50,27 @@ struct	domain {
 	int	dom_family;		/* AF_xxx */
 	char	*dom_name;
 	void	(*dom_init)		/* initialize domain data structures */
-			__P((void));
+			(void);
 	int	(*dom_externalize)	/* externalize access rights */
-			__P((struct mbuf *));
+			(struct mbuf *, struct lwp *);
 	void	(*dom_dispose)		/* dispose of internalized rights */
-			__P((struct mbuf *));
-	struct	protosw *dom_protosw, *dom_protoswNPROTOSW;
+			(struct mbuf *);
+	const struct protosw *dom_protosw, *dom_protoswNPROTOSW;
 	struct	domain *dom_next;
 	int	(*dom_rtattach)		/* initialize routing table */
-			__P((void **, int));
+			(void **, int);
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
 	int	dom_maxrtkey;		/* for routing layer */
-	void	*(*dom_ifattach) __P((struct ifnet *));
-	void	(*dom_ifdetach) __P((struct ifnet *, void *));
-					/* af-dependent data on ifnet */
+	void	*(*dom_ifattach)	/* attach af-dependent data on ifnet */
+			(struct ifnet *);
+	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
+			(struct ifnet *, void *);
 	struct	mowner dom_mowner;
 };
 
 #ifdef _KERNEL
-extern	struct	domain *domains;
-void domaininit __P((void));
+extern struct domain *domains;
+void domaininit(void);
 #endif
 
 #endif /* !_SYS_DOMAIN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.42 2002/11/11 18:35:27 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.42.6.1 2004/08/03 10:54:13 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.42 2002/11/11 18:35:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.42.6.1 2004/08/03 10:54:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -142,7 +142,8 @@ gif_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
 	memset(sc, 0, sizeof(struct gif_softc));
 
-	sprintf(sc->gif_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(sc->gif_if.if_xname, sizeof(sc->gif_if.if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 
 	gifattach0(sc);
 
@@ -870,6 +871,9 @@ gif_set_tunnel(ifp, src, dst)
 		error = in6_gif_attach(sc);
 		break;
 #endif
+	default:
+		error = EINVAL;
+		break;
 	}
 	if (error) {
 		/* rollback */

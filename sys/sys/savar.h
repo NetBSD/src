@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.4 2003/02/02 02:22:14 christos Exp $	*/
+/*	$NetBSD: savar.h,v 1.4.2.1 2004/08/03 10:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,18 @@
 #define _SYS_SAVAR_H
 
 #include <sys/lock.h>
+#include <sys/tree.h>
 #include <sys/queue.h>
+
+union sau_state {
+	struct {
+		ucontext_t	ss_ctx;
+		struct sa_t	ss_sa;
+	} ss_captured;
+	struct {
+		struct lwp	*ss_lwp;
+	} ss_deferred;
+};
 
 struct sadata_upcall {
 	SIMPLEQ_ENTRY(sadata_upcall)	sau_next;
@@ -53,42 +64,60 @@ struct sadata_upcall {
 	size_t	sau_argsize;
 	void	*sau_arg;
 	stack_t	sau_stack;
-	union {
-		struct {
-			ucontext_t	e_ctx;
-			ucontext_t	i_ctx;
-			struct sa_t	e_sa;
-			struct sa_t	i_sa;
-		} captured;
-		struct {
-			struct lwp	*e_lwp;
-			struct lwp	*i_lwp;
-		} deferred;
-	} sau_state;
+	union sau_state	sau_event;
+	union sau_state	sau_interrupted;
 };
 
-#define SAU_FLAG_DEFERRED	0x1
-#define SA_UPCALL_DEFER		0x1000
+#define	SAU_FLAG_DEFERRED_EVENT		0x1
+#define	SAU_FLAG_DEFERRED_INTERRUPTED	0x2
+
+#define	SA_UPCALL_TYPE_MASK		0x00FF
+
+#define	SA_UPCALL_DEFER_EVENT		0x1000
+#define	SA_UPCALL_DEFER_INTERRUPTED	0x2000
+#define	SA_UPCALL_DEFER			(SA_UPCALL_DEFER_EVENT | \
+					 SA_UPCALL_DEFER_INTERRUPTED)
+
+struct sastack {
+	stack_t			sast_stack;
+	SPLAY_ENTRY(sastack)	sast_node;
+	unsigned int		sast_gen;
+};
+
+struct sadata_vp {
+	int	savp_id;		/* "virtual processor" identifier */
+	SLIST_ENTRY(sadata_vp)	savp_next; /* link to next sadata_vp */
+	struct simplelock	savp_lock; /* lock on these fields */
+	struct lwp	*savp_lwp;	/* lwp on "virtual processor" */
+	struct lwp	*savp_blocker;	/* recently blocked lwp */
+	struct lwp	*savp_wokenq_head; /* list of woken lwps */
+	struct lwp	**savp_wokenq_tailp; /* list of woken lwps */
+	vaddr_t	savp_faultaddr;		/* page fault address */
+	vaddr_t	savp_ofaultaddr;	/* old page fault address */
+	LIST_HEAD(, lwp)	savp_lwpcache; /* list of available lwps */
+	int	savp_ncached;		/* list length */
+	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* pending upcalls */
+};
 
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
-	struct lwp	*sa_vp;		/* "virtual processor" allocation */
-	struct lwp	*sa_woken;	/* list of woken lwps */
-	struct lwp	*sa_idle;      	/* lwp in sawait */
-	int	sa_concurrency;		/* desired concurrency */
-	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
-	int	sa_ncached;		/* list length */
-	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
-	int	sa_nstacks;		/* number of valid stacks */
-	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
+	int	sa_concurrency;		/* current concurrency */
+	int	sa_maxconcurrency;	/* requested concurrency */
+	SPLAY_HEAD(sasttree, sastack) sa_stackstree; /* tree of upcall stacks */
+	struct sastack	*sa_stacknext;	/* next free stack */
+	ssize_t	sa_stackinfo_offset;	/* offset from ss_sp to stackinfo data */
+	int	sa_nstacks;		/* number of upcall stacks */
+	SLIST_HEAD(, sadata_vp)	sa_vps;	/* list of "virtual processors" */
 };
 
 #define SA_FLAG_ALL	SA_FLAG_PREEMPT
 
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
+extern struct pool sastack_pool;	/* memory pool for sastack structs */
+extern struct pool savp_pool;		/* memory pool for sadata_vp structures */
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
@@ -96,24 +125,22 @@ extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 MALLOC_DECLARE(M_SA);
 #endif
 
-#define SA_NUMSTACKS	16	/* Number of stacks allocated. XXX */
+#define	SA_MAXNUMSTACKS	16		/* Maximum number of upcall stacks per VP. */
 
 struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 
+void	sa_release(struct proc *);
 void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
-void	sa_switchcall(void *);
-void	sa_yieldcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
-int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
-	    size_t, void *, struct sadata_upcall *, stack_t *);
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
-struct lwp *sa_getcachelwp(struct proc *);
+struct lwp *sa_getcachelwp(struct sadata_vp *);
 
 
+void	sa_unblock_userret(struct lwp *);
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 

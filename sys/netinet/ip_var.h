@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.56.2.1 2003/07/02 15:27:00 darrenr Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.56.2.2 2004/08/03 10:54:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -97,6 +93,7 @@ struct ipq {
 	u_int16_t ipq_id;		/* sequence id for reassembly */
 	struct	  ipqehead ipq_fragq;	/* to ip fragment queue */
 	struct	  in_addr ipq_src, ipq_dst;
+	u_int16_t ipq_nfrags;		/* frags in this queue entry */
 };
 
 /*
@@ -195,9 +192,11 @@ struct ipflow {
 #define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
 #endif
 
+extern const struct protosw inetsw[];
+extern struct domain inetdomain;
+
 extern struct ipstat ipstat;		/* ip statistics */
-extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
-extern u_int16_t ip_id;			/* ip packet ctr, for ids */
+extern LIST_HEAD(ipqhead, ipq) ipq[];	/* ip reass. queue */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
 extern int   ip_mtudisc;		/* mtu discovery */
@@ -218,42 +217,60 @@ extern struct pool inmulti_pool;
 extern struct pool ipqent_pool;
 struct	 inpcb;
 
-int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-int	 ip_dooptions __P((struct mbuf *));
-void	 ip_drain __P((void));
-void	 ip_forward __P((struct mbuf *, int));
-void	 ip_freef __P((struct ipq *));
-void	 ip_freemoptions __P((struct ip_moptions *));
-int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
-void	 ip_init __P((void));
-int	 ip_optcopy __P((struct ip *, struct ip *));
-u_int	 ip_optlen __P((struct inpcb *));
-int	 ip_output __P((struct mbuf *, ...));
-int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
+int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 ip_dooptions(struct mbuf *);
+void	 ip_drain(void);
+void	 ip_forward(struct mbuf *, int);
+void	 ip_freef(struct ipq *);
+void	 ip_freemoptions(struct ip_moptions *);
+int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
+void	 ip_init(void);
+int	 ip_optcopy(struct ip *, struct ip *);
+u_int	 ip_optlen(struct inpcb *);
+int	 ip_output(struct mbuf *, ...);
+int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
+int	 ip_pcbopts(struct mbuf **, struct mbuf *);
 struct mbuf *
-	 ip_reass __P((struct ipqent *, struct ipq *));
+	 ip_reass(struct ipqent *, struct ipq *, struct ipqhead *);
 struct in_ifaddr *
-	 ip_rtaddr __P((struct in_addr));
-void	 ip_savecontrol __P((struct inpcb *, struct mbuf **, struct ip *,
-	   struct mbuf *));
-int	 ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
-void	 ip_slowtimo __P((void));
+	 ip_rtaddr(struct in_addr);
+void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
+	   struct mbuf *);
+int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *);
+void	 ip_slowtimo(void);
 struct mbuf *
-	 ip_srcroute __P((void));
-void	 ip_stripoptions __P((struct mbuf *, struct mbuf *));
-int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	 ipintr __P((void));
-void *	 rip_ctlinput __P((int, struct sockaddr *, void *));
-int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-void	 rip_init __P((void));
-void	 rip_input __P((struct mbuf *, ...));
-int	 rip_output __P((struct mbuf *, ...));
-int	 rip_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
-void	ipflow_init __P((void));
-struct	ipflow *ipflow_reap __P((int));
-void	ipflow_create __P((const struct route *, struct mbuf *));
-void	ipflow_slowtimo __P((void));
-#endif
+	 ip_srcroute(void);
+void	 ip_stripoptions(struct mbuf *, struct mbuf *);
+int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	 ipintr(void);
+void *	 rip_ctlinput(int, struct sockaddr *, void *);
+int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+void	 rip_init(void);
+void	 rip_input(struct mbuf *, ...);
+int	 rip_output(struct mbuf *, ...);
+int	 rip_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+void	ipflow_init(void);
+struct	ipflow *ipflow_reap(int);
+void	ipflow_create(const struct route *, struct mbuf *);
+void	ipflow_slowtimo(void);
+void	ipflow_invalidate_all(void);
+
+extern uint16_t	ip_id;
+static __inline uint16_t ip_newid(void);
+
+u_int16_t ip_randomid(void);
+extern int ip_do_randomid;
+
+static __inline uint16_t
+ip_newid(void)
+{
+	if (ip_do_randomid)
+		return ip_randomid();
+
+	return htons(ip_id++);
+}
+
+#endif  /* _KERNEL */
 
 #endif /* _NETINET_IP_VAR_H_ */
