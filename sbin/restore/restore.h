@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.9 1997/09/15 08:04:37 lukem Exp $	*/
+/*	$NetBSD: restore.h,v 1.10 1998/06/24 19:56:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -50,6 +50,7 @@ extern int	hflag;		/* restore heirarchies */
 extern int	mflag;		/* restore by name instead of inode number */
 extern int	Nflag;		/* do not write the disk */
 extern int	vflag;		/* print out actions taken */
+extern int	uflag;		/* unlink file before writing to it */
 extern int	yflag;		/* always try to recover from tape errors */
 /*
  * Global variables

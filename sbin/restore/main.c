@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1998/01/10 08:27:55 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1998/06/24 19:56:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 1998/01/10 08:27:55 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1998/06/24 19:56:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ main(argc, argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != -1)
+	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tuvxy")) != -1)
 		switch(ch) {
 		case 'b':
 			/* Change default tape blocksize. */
@@ -152,6 +152,9 @@ main(argc, argv)
 				errx(1, "illegal dump number -- %s", optarg);
 			if (dumpnum <= 0)
 				errx(1, "dump number must be greater than 0");
+			break;
+		case 'u':
+			uflag = 1;
 			break;
 		case 'v':
 			vflag = 1;

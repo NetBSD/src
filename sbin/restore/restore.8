@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.22 1998/04/29 09:49:13 fair Exp $
+.\"	$NetBSD: restore.8,v 1.23 1998/06/24 19:56:11 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,32 +43,32 @@
 .Sh SYNOPSIS
 .Nm
 .Fl i
-.Op Fl cdhmvyN
+.Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl R
-.Op Fl cdvyN
+.Op Fl cduvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl r
-.Op Fl cdvyN
+.Op Fl cduvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm ""
 .Fl t
-.Op Fl cdhvy
+.Op Fl cdhuvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op file ...
 .Nm ""
 .Fl x
-.Op Fl cdhmvyN
+.Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
@@ -337,6 +337,11 @@ File numbering starts at 1.
 Normally
 .Nm
 does its work silently.
+The
+.Fl u
+(unlink)
+flag removes files before extracting them. This is useful when an executable
+file is in use.
 The
 .Fl v
 (verbose)

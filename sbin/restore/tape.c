@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.36 1998/04/01 16:21:47 kleink Exp $	*/
+/*	$NetBSD: tape.c,v 1.37 1998/06/24 19:56:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.36 1998/04/01 16:21:47 kleink Exp $");
+__RCSID("$NetBSD: tape.c,v 1.37 1998/06/24 19:56:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,6 +564,8 @@ extractfile(name)
 			    "%s: zero length symbolic link (ignored)\n", name);
 			return (GOOD);
 		}
+		if (uflag)
+			(void) unlink(name);
 		if (linkit(lnkbuf, name, SYMLINK) == GOOD) {
 			(void) lutimes(name, timep);
 			(void) lchown(name, uid, gid);
@@ -579,6 +581,8 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
+		if (uflag)
+			(void) unlink(name);
 		if (mknod(name, (mode & (IFCHR | IFBLK)) | 0600,
 		    (int)curfile.dip->di_rdev) < 0) {
 			fprintf(stderr, "%s: cannot create special file: %s\n",
@@ -599,6 +603,8 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
+		if (uflag)
+			(void) unlink(name);
 		if (mkfifo(name, 0600) < 0) {
 			fprintf(stderr, "%s: cannot create fifo: %s\n",
 			    name, strerror(errno));
@@ -618,6 +624,8 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
+		if (uflag)
+			(void) unlink(name);
 		if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC,
 		    0600)) < 0) {
 			fprintf(stderr, "%s: cannot create file: %s\n",
