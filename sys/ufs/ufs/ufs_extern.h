@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.14 1998/06/25 22:23:06 thorpej Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.15 1998/08/10 08:11:14 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -64,7 +64,7 @@ int	ufs_close	__P((void *));
 int	ufs_create	__P((void *));
 int	ufs_getattr	__P((void *));
 int	ufs_inactive	__P((void *));
-int	ufs_ioctl	__P((void *));
+#define	ufs_ioctl	genfs_enoioctl
 int	ufs_islocked	__P((void *));
 #define	ufs_lease_check genfs_lease_check
 int	ufs_link	__P((void *));

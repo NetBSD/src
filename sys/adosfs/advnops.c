@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.42 1998/08/09 20:20:12 perry Exp $	*/
+/*	$NetBSD: advnops.c,v 1.43 1998/08/10 08:11:10 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -59,7 +59,7 @@ extern struct vnodeops adosfs_vnodeops;
 int	adosfs_getattr	__P((void *));
 int	adosfs_read	__P((void *));
 int	adosfs_write	__P((void *));
-int	adosfs_ioctl	__P((void *));
+#define	adosfs_ioctl	genfs_enoioctl
 #define	adosfs_poll	genfs_poll
 int	adosfs_strategy	__P((void *));
 int	adosfs_link	__P((void *));
@@ -344,29 +344,6 @@ adosfs_write(v)
 	printf(" EOPNOTSUPP)");
 #endif
 	return(EOPNOTSUPP);
-}
-
-/*
- * Device ioctl operation.
- */
-/* ARGSUSED */
-int
-adosfs_ioctl(v)
-	void *v;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *sp = v;
-	advopprint(sp);
-	printf(" ENOTTY)");
-#endif
-	return(ENOTTY);
 }
 
 /*
