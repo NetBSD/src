@@ -2342,8 +2342,19 @@ i386_operand (operand_string)
 	    if ((cp = strchr (input_line_pointer,'@')) != NULL) {
 	      char tmpbuf[BUFSIZ];
 	      
-	      if(!GOT_symbol)
+	      if(!GOT_symbol) {
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+		/* gcc generates _GLOBAL_OFFSET_TABLE_, but an old
+		   sun ld, that NetBSD by some reason wanted to be comatible
+		   with, expexcted __GLOBAL_OFFSET_TABLE_. The problem
+		   was solved this way in NetBSD's old gas. It should
+		   probably be dealt with in libbfd... */
+		GOT_symbol 
+		  = symbol_find_or_make(NBSD_GLOBAL_OFFSET_TABLE_NAME);
+#else
 		GOT_symbol = symbol_find_or_make(GLOBAL_OFFSET_TABLE_NAME);
+#endif
+	      }
 
 	      if (strncmp(cp+1, "PLT", 3) == 0) {
 		i.disp_reloc[this_operand] = BFD_RELOC_386_PLT32;
@@ -2371,6 +2382,7 @@ i386_operand (operand_string)
 #endif
 	  exp_seg = expression (exp);
 
+#if !(defined(TE_NetBSD) && defined(OBJ_AOUT)) /* XXX */
 #ifdef BFD_ASSEMBLER
 	  /* We do this to make sure that the section symbol is in
 	     the symbol table.  We will ultimately change the relocation
@@ -2385,6 +2397,7 @@ i386_operand (operand_string)
 	      exp->X_op_symbol = GOT_symbol;
 	      i.disp_reloc[this_operand] = BFD_RELOC_32;
 	    }
+#endif
 #endif
 
 	  if (*input_line_pointer)
@@ -2710,6 +2723,39 @@ md_apply_fix3 (fixP, valp, seg)
 
   /* Fix a few things - the dynamic linker expects certain values here,
      and we must not dissappoint it. */
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+  if (fixP->fx_r_type == BFD_RELOC_32
+      && GOT_symbol
+      && fixP->fx_addsy == GOT_symbol)
+    {
+      fixP->fx_r_type = BFD_RELOC_386_GOTPC;
+      value += 1;
+    }
+  else if ((fixP->fx_r_type == BFD_RELOC_32)
+	   && aout_pic_flag
+	   && ((fixP->fx_addsy->bsym->flags & BSF_GLOBAL) != 0))
+    {
+      if (!bfd_is_com_section(bfd_get_section(fixP->fx_addsy->bsym)))
+	value =  fixP->fx_offset - bfd_asymbol_value(fixP->fx_addsy->bsym);
+    }
+  
+  switch(fixP->fx_r_type) {
+  case BFD_RELOC_386_PLT32:
+    break;
+  case BFD_RELOC_386_GOT32:
+    value = fixP->fx_offset;
+    break;
+  case BFD_RELOC_386_GOTPC:
+    value -= (fixP->fx_where + fixP->fx_frag->fr_address + 1);
+    break;
+  case BFD_RELOC_386_GOTOFF:
+    value = fixP->fx_offset;
+    break;
+
+  default:
+    break;
+  }
+#endif
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
   if (OUTPUT_FLAVOR == bfd_target_elf_flavour
       && fixP->fx_addsy)
@@ -2883,7 +2929,7 @@ parse_register (reg_string)
 #ifdef OBJ_ELF
 CONST char *md_shortopts = "kmVQ:";
 #else
-CONST char *md_shortopts = "m";
+CONST char *md_shortopts = "mkK";
 #endif
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
@@ -2914,6 +2960,12 @@ md_parse_option (c, arg)
       /* -Qy, -Qn: SVR4 arguments controlling whether a .comment section
 	 should be emitted or not.  FIXME: Not implemented.  */
     case 'Q':
+      break;
+#endif
+#ifdef OBJ_AOUT
+    case 'k':
+    case 'K':
+      aout_pic_flag = 1;
       break;
 #endif
 
@@ -2968,8 +3020,19 @@ md_undefined_symbol (name)
 	      {
 		if(symbol_find(name)) 
 		  as_bad("GOT already in symbol table");
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+		/* gcc generates _GLOBAL_OFFSET_TABLE_, but an old
+		   sun ld, that NetBSD by some reason wanted to be comatible
+		   with, expexcted __GLOBAL_OFFSET_TABLE_. The problem
+		   was solved this way in NetBSD's old gas. It should
+		   probably be dealt with in libbfd... */
+		GOT_symbol = symbol_new (NBSD_GLOBAL_OFFSET_TABLE_NAME,
+					 undefined_section, 
+					 (valueT) 0, &zero_address_frag);
+#else
 		GOT_symbol = symbol_new (name, undefined_section, 
 					 (valueT) 0, &zero_address_frag);
+#endif
 	      };
 	    return GOT_symbol;
 	  }
@@ -3052,6 +3115,17 @@ tc_gen_reloc (section, fixp)
   switch(fixp->fx_r_type)
     {
     case BFD_RELOC_386_PLT32:
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+      /* XXX */
+      if (fixp->fx_addsy != NULL)
+	{
+	  asection *sec;
+	  sec = bfd_get_section (fixp->fx_addsy->bsym);
+	  if (strcmp(sec->name, ".text") == 0)
+	    return 0;
+	}
+#endif
+      /* FALLTHROUGH */
     case BFD_RELOC_386_GOT32:
     case BFD_RELOC_386_GOTOFF:
     case BFD_RELOC_386_GOTPC:

@@ -65,6 +65,9 @@ const segT N_TYPE_seg[N_TYPE + 2] =
 static void obj_aout_line PARAMS ((int));
 static void obj_aout_weak PARAMS ((int));
 static void obj_aout_type PARAMS ((int));
+static void obj_aout_size PARAMS ((int));
+
+int aout_pic_flag = 0;
 
 const pseudo_typeS obj_pseudo_table[] =
 {
@@ -83,7 +86,7 @@ const pseudo_typeS obj_pseudo_table[] =
   {"line", s_ignore, 0},
   {"ln", s_ignore, 0},
   {"scl", s_ignore, 0},
-  {"size", s_ignore, 0},
+  {"size", obj_aout_size, 0},
   {"tag", s_ignore, 0},
   {"val", s_ignore, 0},
   {"version", s_ignore, 0},
@@ -98,6 +101,54 @@ const pseudo_typeS obj_pseudo_table[] =
 
 
 #ifdef BFD_ASSEMBLER
+
+void
+obj_aout_add_size_symbols()
+{
+  /* We don't generate N_SIZE symbols unless we are working with PIC code. */
+  if (!aout_pic_flag)
+    return;
+
+  if (symbol_rootP)
+    {
+      symbolS *sym;
+
+      for (sym = symbol_rootP; sym; sym = symbol_next (sym))
+	{
+	  int type, other;
+
+	  type = S_GET_TYPE (sym);
+	  other = S_GET_OTHER (sym);
+
+	  /* We do only add SIZE symbols for objects (i.e other == 1)
+	     that have a .size directive. */
+	  if ((type != N_SIZE)
+	      && (type != (N_SIZE | N_EXT)) 
+	      && (other == 1)
+	      && ((expressionS*)sym->sy_sizexp != NULL))
+	    {
+	      expressionS *exp = (expressionS*)sym->sy_sizexp;
+	      symbolS *new_sym;
+	      int new_type;
+	      long size;
+
+	      new_type = N_SIZE;
+
+	      if (type && N_EXT)
+		new_type |= N_EXT;
+
+	      new_sym = symbol_make(S_GET_NAME(sym));
+	      S_SET_TYPE(new_sym, new_type);
+	      new_sym->bsym->section = bfd_abs_section_ptr;
+	      new_sym->bsym->flags = sym->bsym->flags;
+
+	      size = exp->X_add_number;
+
+	      S_SET_VALUE(new_sym,size);
+	    }
+	}
+    }
+}
 
 void
 obj_aout_frob_symbol (sym, punt)
@@ -213,6 +264,14 @@ obj_aout_frob_file ()
 				    (bfd_size_type) 1);
     }
   assert (x == true);
+
+  /* Some archetectures has a 'pic' flag in their a.out header. I'm not
+     sure this is the right place to set it, but this is the best hook
+     I have found... */
+  if (aout_pic_flag)
+    {
+      stdoutput->flags = BFD_PIC;
+    }
 }
 
 #else
@@ -390,7 +449,7 @@ obj_aout_weak (ignore)
 
 /* Handle .type.  On {Net,Open}BSD, this is used to set the n_other field,
    which is then apparently used when doing dynamic linking.  Older
-   versions ogas ignored the .type pseudo-op, so we also ignore it if
+   versions of gas ignored the .type pseudo-op, so we also ignore it if
    we can't parse it.  */
 
 static void
@@ -403,7 +462,7 @@ obj_aout_type (ignore)
 
   name = input_line_pointer;
   c = get_symbol_end ();
-  sym = symbol_find (name);
+  sym = symbol_find_or_make (name);
   *input_line_pointer = c;
   if (sym != NULL)
     {
@@ -625,5 +684,114 @@ DEFUN_VOID (s_sect)
 }
 
 #endif /* ! BFD_ASSEMBLER */
+
+static segT
+get_segmented_expression (expP)
+     register expressionS *expP;
+{
+  register segT retval;
+  
+  retval = expression (expP);
+  if (expP->X_op == O_illegal
+      || expP->X_op == O_absent
+      || expP->X_op == O_big)
+    {
+      as_bad ("expected address expression; zero assumed");
+      expP->X_op = O_constant;
+      expP->X_add_number = 0;
+      retval = absolute_section;
+    }
+
+  return retval;
+}
+
+static segT 
+get_known_segmented_expression (expP)
+     register expressionS *expP;
+{
+  register segT retval;
+  
+  if ((retval = get_segmented_expression (expP)) == undefined_section)
+    {
+      /* There is no easy way to extract the undefined symbol from the
+	 expression.  */
+      if (expP->X_add_symbol != NULL
+	  && S_GET_SEGMENT (expP->X_add_symbol) != expr_section)
+	as_warn ("symbol \"%s\" undefined; zero assumed",
+		 S_GET_NAME (expP->X_add_symbol));
+      else
+	as_warn ("some symbol undefined; zero assumed");
+      retval = absolute_section;
+      expP->X_op = O_constant;
+      expP->X_add_number = 0;
+    }
+  
+  know (retval == absolute_section || SEG_NORMAL (retval));
+  return (retval);
+} /* get_known_segmented_expression() */
+
+static void obj_aout_size(ignore) 
+     int ignore;
+{
+  register char *name;
+  register char c;
+  register char *p;
+  register int temp;
+  register symbolS *symbolP;
+  expressionS     *exp;
+  segT            seg;
+  segT retval;
+
+  /* SIZE_T is only used in PIC code. */
+  if (!aout_pic_flag)
+    {
+      s_ignore(0);
+      return;
+    }
+  
+  SKIP_WHITESPACE();
+  name = input_line_pointer;
+  c = get_symbol_end();
+  /* just after name is now '\0' */
+  symbolP = symbol_find(name);
+  p = input_line_pointer;
+  *p = c;
+  
+  if (symbolP == NULL || (S_GET_OTHER(symbolP) != 1))
+    {
+      /* Not an object. Ignore. */
+      /* XXX This assumes that the symbol is created before the .size
+	 directive. */
+      s_ignore(0);
+      return;
+    }
+  
+  SKIP_WHITESPACE();
+  if (*input_line_pointer != ',') 
+    {
+      as_bad("Expected comma after symbol-name: rest of line ignored.");
+      ignore_rest_of_line();
+      return;
+    }
+  input_line_pointer ++; /* skip ',' */
+  exp = (expressionS *)xmalloc(sizeof(expressionS));
+  retval = get_known_segmented_expression(exp); 
+  if (retval !=  absolute_section)
+    {
+      as_bad("Illegal .size expression");
+      ignore_rest_of_line();
+      return;
+    }
+  
+  *p = 0;
+  symbolP = symbol_find_or_make(name);
+  *p = c;
+  if (symbolP->sy_sizexp) {
+    as_warn("\"%s\" already has a size", S_GET_NAME(symbolP));
+  } else
+    symbolP->sy_sizexp = (void *)exp;
+  
+  demand_empty_rest_of_line();
+} /* obj_aout_size() */
 
 /* end of obj-aout.c */
