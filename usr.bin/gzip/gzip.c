@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.25 2004/03/28 03:47:18 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.26 2004/03/28 04:07:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.25 2004/03/28 03:47:18 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.26 2004/03/28 04:07:45 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -111,18 +111,20 @@ static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
 static	int	lflag;			/* list mode */
+
 #ifndef SMALL
 static	int	fflag;			/* force mode */
 static	int	nflag;			/* don't save name/timestamp */
 static	int	Nflag;			/* don't restore name/timestamp */
 static	int	qflag;			/* quiet mode */
 static	int	rflag;			/* recursive mode */
+static	int	tflag;			/* test */
+static	char	*Sflag;
+static	int	vflag;			/* verbose mode */
 #else
 #define		qflag	0
 #endif
-static	int	tflag;			/* test */
-static	int	vflag;			/* verbose mode */
-static	char	*Sflag;
+
 static	char	*suffix;
 
 #define suffix_len	(strlen(suffix) + 1)	/* len + nul */
@@ -133,9 +135,6 @@ static	void	maybe_err(int rv, const char *fmt, ...);
 static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
-#ifndef SMALL
-static	void	prepend_gzip(char *, int *, char ***);
-#endif
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
 static	void	copymodes(const char *, struct stat *);
@@ -143,20 +142,24 @@ static	ssize_t	file_compress(char *);
 static	ssize_t	file_uncompress(char *);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
-#ifndef SMALL
-static	void	handle_dir(char *, struct stat *);
-#endif
 static	void	handle_stdin(void);
 static	void	handle_stdout(void);
 static	void	print_ratio(off_t, off_t, FILE *);
-static	void	print_verbage(char *, char *, ssize_t, ssize_t);
-static	void	print_test(char *, int);
 static	void	print_list(int fd, off_t, const char *, time_t);
 static	void	usage(void);
 static	void	display_version(void);
+
+#ifndef SMALL
+static	void	prepend_gzip(char *, int *, char ***);
+static	void	handle_dir(char *, struct stat *);
+static	void	print_verbage(char *, char *, ssize_t, ssize_t);
+static	void	print_test(char *, int);
+#endif
+
 #ifndef NO_BZIP2_SUPPORT
 static	off_t	unbzip2(int, int);
 #endif
+
 #ifndef NO_COMPRESS_SUPPORT
 static	FILE 	*zopen(const char *);
 static	off_t	zuncompress(FILE *, FILE *);
@@ -229,7 +232,7 @@ main(int argc, char **argv)
 #endif
 
 #ifdef SMALL
-#define OPTIONS_LIST "cdfhHlS:tvV123456789"
+#define OPTIONS_LIST "cdhHl:tV123456789"
 #else
 #define OPTIONS_LIST "cdfhHlnNqrS:tvV123456789"
 #endif
@@ -245,8 +248,16 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			lflag = 1;
-			tflag = 1;
 			dflag = 1;
+			break;
+		case 'V':
+			display_version();
+			/* NOTREACHED */
+		case '1': case '2': case '3':
+		case '4': case '5': case '6':
+		case '7': case '8': case '9':
+			gzipflags[1] = (char)ch;
+			gzipflags[2] = '\0';
 			break;
 #ifndef SMALL
 		case 'f':
@@ -266,7 +277,6 @@ main(int argc, char **argv)
 		case 'r':
 			rflag = 1;
 			break;
-#endif
 		case 'S':
 			Sflag = optarg;
 			break;
@@ -278,15 +288,7 @@ main(int argc, char **argv)
 		case 'v':
 			vflag = 1;
 			break;
-		case 'V':
-			display_version();
-			/* NOTREACHED */
-		case '1': case '2': case '3':
-		case '4': case '5': case '6':
-		case '7': case '8': case '9':
-			gzipflags[1] = (char)ch;
-			gzipflags[2] = '\0';
-			break;
+#endif
 		default:
 			usage();
 			/* NOTREACHED */
@@ -460,22 +462,28 @@ gz_uncompress(gzFile in, FILE *out)
 		len = gzread(in, buf, sizeof(buf));
 
 		if (len < 0) {
+#ifndef SMALL
 			if (tflag) {
 				print_test(infile, 0);
 				return (0);
 			} else
+#endif
 				maybe_errx(1, gzerror(in, &i));
 		} else if (len == 0) {
+#ifndef SMALL
 			if (tflag)
 				print_test(infile, 1);
+#endif
 			break;
 		}
 
 		size += len;
 
+#ifndef SMALL
 		/* don't write anything with -t */
 		if (tflag)
 			continue;
+#endif
 
 		if (fwrite(buf, 1, (unsigned)len, out) != (ssize_t)len)
 			maybe_err(1, "failed fwrite");
@@ -660,15 +668,19 @@ file_uncompress(char *file)
 #ifndef NO_BZIP2_SUPPORT
 	if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
 	    header1[3] >= '0' && header1[3] <= '9') {
+# ifndef SMALL
 		if (Sflag == NULL)
 			suffix = BZ2_SUFFIX;
 		method = FT_BZIP2;
+# endif
 	} else
 #endif
 #ifndef NO_COMPRESS_SUPPORT
 	if (memcmp(header1, Z_MAGIC, 2) == 0) {
+# ifndef SMALL
 		if (Sflag == NULL)
 			suffix = Z_SUFFIX;
+# endif
 		method = FT_Z;
 	} else
 #endif
@@ -743,6 +755,9 @@ close_it:
 	if (method == FT_BZIP2) {
 		int in, out;
 
+		if (lflag)
+			maybe_errx(1, "no -l with bzip2 files");
+
 		if ((in = open(file, O_RDONLY)) == -1)
 			maybe_err(1, "open for read: %s", file);
 		if (cflag == 1)
@@ -762,6 +777,9 @@ close_it:
 	if (method == FT_Z) {
 		FILE *in, *out;
 		int fd;
+
+		if (lflag)
+			maybe_errx(1, "no -l with Lempel-Ziv files");
 
 		if ((in = zopen(file)) == NULL)
 			maybe_err(1, "open for read: %s", file);
@@ -827,7 +845,11 @@ close_it:
 	}
 
 	/* if testing, or we uncompressed to stdout, this is all we need */
-	if (tflag || cflag)
+#ifndef SMALL
+	if (tflag)
+		return (size);
+#endif
+	if (cflag)
 		return (size);
 
 	/*
@@ -976,8 +998,11 @@ handle_file(char *file, struct stat *sbp)
 		usize = sbp->st_size;
 	}
 
+
+#ifndef SMALL
 	if (vflag && !tflag)
 		print_verbage(file, cflag == 0 ? newfile : 0, usize, gsize);
+#endif
 }
 
 #ifndef SMALL
@@ -1030,6 +1055,7 @@ print_ratio(off_t in, off_t out, FILE *where)
 	    (unsigned long)percent % 10);
 }
 
+#ifndef SMALL
 /* print compression statistics, and the new name (if there is one!) */
 static void
 print_verbage(char *file, char *nfile, ssize_t usize, ssize_t gsize)
@@ -1052,6 +1078,7 @@ print_test(char *file, int ok)
 	    strlen(file) < 7 ? "\t\t" : "\t", ok ? "OK" : "NOT OK");
 	fflush(stderr);
 }
+#endif
 
 /* print a file's info ala --list */
 /* eg:
@@ -1068,8 +1095,10 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 	int rv;
 
 	if (first) {
+#ifndef SMALL
 		if (vflag)
 			printf("method  crc     date  time  ");
+#endif
 		if (qflag == 0)
 			printf("  compressed uncompressed  "
 			       "ratio uncompressed_name\n");
@@ -1095,6 +1124,7 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 		}
 	}
 
+#ifndef SMALL
 	if (vflag && fd == -1)
 		printf("                            ");
 	else if (vflag) {
@@ -1105,6 +1135,7 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 		date[12] = 0;
 		printf("%5s %08x %11s ", "defla"/*XXX*/, crc, date);
 	}
+#endif
 	printf("%12llu %12llu ", (unsigned long long)in, (unsigned long long)out);
 	print_ratio(in, out, stdout);
 	printf(" %s\n", outfile);
