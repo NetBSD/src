@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/04/14 08:48:38 veego Exp $
+#	$NetBSD: Makefile,v 1.8 1997/04/14 09:46:29 mrg Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
 .PATH:	${.CURDIR}/../man
@@ -13,7 +13,8 @@ FILESMODE= ${BINMODE}
 
 named.restart:	named.restart.sh Makefile ${.CURDIR}/../Makefile.inc
 	rm -f $@
-	sed -e "s|%DESTSBIN%|${BINDIR}|" -e "s|%INDOT%||" \
+	sed -e "s|%DESTSBIN%|${BINDIR}|" \
+	    -e "s|%INDOT%||" \
 	    < ${.CURDIR}/named.restart.sh > $@
 	chmod +x $@
 
