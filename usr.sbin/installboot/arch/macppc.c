@@ -1,4 +1,4 @@
-/*	$NetBSD: macppc.c,v 1.3 2002/05/15 15:43:01 lukem Exp $ */
+/*	$NetBSD: macppc.c,v 1.4 2002/05/16 01:35:44 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: macppc.c,v 1.3 2002/05/15 15:43:01 lukem Exp $");
+__RCSID("$NetBSD: macppc.c,v 1.4 2002/05/16 01:35:44 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -137,7 +137,7 @@ writeapplepartmap(ib_params *params, struct bbinfo_params *bb_params, char *bb)
 	strlcpy(pme.pmPartName, "NetBSD", sizeof(pme.pmPartName));
 	strlcpy(pme.pmPartType, "NetBSD/macppc", sizeof(pme.pmPartType));
 	pme.pmPartStatus =	htobe32(0x3b);
-	pme.pmBootSize =	htobe32(0x400);
+	pme.pmBootSize =	htobe32(roundup(params->s1stat.st_size, 512));
 	pme.pmBootLoad =	htobe32(0x4000);
 	pme.pmBootEntry =	htobe32(0x4000);
 	strlcpy(pme.pmProcessor, "PowerPC", sizeof(pme.pmProcessor));
