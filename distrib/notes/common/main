@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.16 1999/04/29 19:27:27 is Exp $
+.\" $NetBSD: main,v 1.17 1999/05/04 03:34:14 simonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -352,34 +352,34 @@ This set contains the "domestic" sources. These
 sources may be subject to United States export
 regulations.
 .br
-.Em 412K gzipped, 1.8M uncompressed
+.Em 421K gzipped, 2M uncompressed
 .It gnusrc.tgz:
 This set contains the "gnu" sources, including
 the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution
 sets.
 .br
-.Em 15.6M gzipped, 66.4M uncompressed
+.Em 19M gzipped, 84.2M uncompressed
 .It syssrc.tgz:
 This set contains the sources to the
 .Nx \*V
 kernel, config(8), and dbsym(8).
 .br
-.Em 10.7M gzipped, 50.0M uncompressed
+.Em 13.5M gzipped, 66.7M uncompressed
 .It sharesrc.tgz:
 This set contains the "share" sources, which include
 the sources for the man pages not associated with
 any particular program, the sources for the
 typesettable document set, the dictionaries, and more.
 .br
-.Em 2.9M gzipped, 11.1M uncompressed
+.Em 3M gzipped, 11.9M uncompressed
 .It src.tgz:
 This set contains all of the
 .Nx \*V
 sources which
 are not mentioned above.
 .br
-.Em 13.9M gzipped, 60.7M uncompressed
+.Em 16.1M gzipped, 73.6M uncompressed
 .El
 .Pp
 Most of the above source sets are located in the
@@ -483,155 +483,33 @@ Users upgrading from previous versions of
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx \*V
+.(Note
+Only issues effecting an upgrade from NetBSD 1.3 or NetBSD 1.3.x
+are decribed here.
+.Note)
 .Pp
-.Em NOTE: ALL THESE ARE OBSOLETE PROBLEMS.
-They cover the 1.2->1.3 transition. We need new information for 1.4!!!
-.Pp
-.
-.
 .Bl -bullet
 .It
-Swap configuration
-.
+"machine" directory/link in "/usr/include"
 .
 .Bl -tag -width 3n
 .It Description
-All swap partitions are now configured by the swapctl(8)
-program. The kernel no longer configures a default swap
-partition. Because of this, all swap partitions
-.No must be listed in Pa /etc/fstab .
-.Pp
-Many users of previous releases relied on the kernel
-configuring a "default" swap partition and did not list any swap space in
-.Pa /etc/fstab
-at all -- such users will now have no
-swap space configured unless they list swap partitions in
-.Pa /etc/fstab !
-.Pp
-Common symptoms of of this problem include machine crashes
-during builds, and similar memory intensive activities.
+Some architecture may fail to install the
+.Ic comp
+set because the
+.Dl /usr/include/machine
+directory changed to a symbolic link in NetBSD 1.4.
 .It Fix
-The most common position for a swap partition is the `b'
-partition of the drive the root file system is on. For
-diskless systems, check the new swapctl(8) manual for more
-detail on how this is done. Example fstab entries:
-.
-.Bl -column /dev/sd0bxx nonexx swapxx sw,priority=0xx
-.It /dev/sd0b Ta none Ta swap Ta sw,priority=0
-.It /dev/sd1b Ta none Ta swap Ta sw,priority=5
+If this happens, you can use the command
+.D1 # Ic rm -r /usr/include/machine
+to remove the old directory and it contents and reinstall the
+.Ic comp
+set.
 .El
 .
 .El
 .
-.It
-NFS now uses reserved ports
-.
-.Bl -tag -width 3n
-.It Description
-Earlier versions of
-.Nx
-did not use a reserved (\*(<= 1023)
-port when making NFS client requests. When acting as a server
-NetBSD now requires reserved ports by default.
 .Pp
-Old clients mounting a new server will receive a 'permission
-denied' response when the directory is accessed. New clients
-should work fine with old servers.
-.It Fix
-Add '-P' to the mount options in the old client's
-.Pa /etc/fstab ,
-or (less preferred), add
-.Li \&-noresvport,noresvmnt
-to the options on the new server's
-.Pa /etc/exports .
-.El
-.
-.It
-NFS daemons and other programs in /sbin moved
-.
-.Bl -tag -width 3n
-.It Description
-The NFS daemons (nfsd, nfsiod, mountd) have been moved from
-the
-.Pa /sbin
-to the
-.Pa /usr/sbin directory .
-When new binaries are
-loaded over old ones during upgrade, most programs get
-overlaid and replaced, but unless these binaries are
-explicitly removed they will not disappear. The installation
-subsystems on some
-.Nx
-architectures will not properly
-remove these binaries.
-.Pp
-Due to changes in the NFS subsystem, the old NFS daemon
-binaries will not work correctly, and will cause serious
-problems. Unfortunately, the default startup script
-.Pq Pa /etc/rc
-will run the old binaries in
-.Pa /sbin
-if they are present instead of the new ones in
-.Pa /usr/sbin .
-.Pp
-Some other programs (dumpfs, dumplfs and quotacheck) have also
-been moved from
-.Pa /sbin
-to
-.Pa /usr/sbin ,
-and old versions may be
-left behind by accident. They, too, may cause difficulties.
-.It Fix
-Remove the old daemon binaries
-.Pp Pa (/sbin/nfsiod ,
-.Pa /sbin/nfsd ,
-.Pa /sbin/mountd ,
-.Pq etc.
-after your upgrade has finished. You may
-wish to do an 
-.D1 Ic "ls -lt /sbin | more
-to help determine which
-binaries were not replaced/removed during your upgrade.
-.El
-.
-.It
-.Tn AMANDA
-(The Advanced Maryland Automatic Network Disk Archiver, from
-.Lk http://www.amanda.org)
-.
-.Bl -tag -width 3n
-.It Description
-Due to a change in the output of dump(8) to ensure
-consistency in the messages, AMANDA's dump output
-parser breaks.
-.Pp
-Error messages such as the following may be an
-indication that this problem is present:
-.
-.Bd -unfilled
-FAILURE AND STRANGE DUMP SUMMARY:
-hostname wd0e lev 1 FAILED [no backup size line]
-.Ed
-.
-.It Versions affected
-2.3.0.4, and most likely earlier versions
-.It Workaround/Fix
-One of:
-.
-.Bl -bullet
-.It
-Apply
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch \
-this\~patch
-.It
-Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
-that the network protocol is incompatible with earlier
-versions.
-.El
-.
-.El
-.
-.El
 .
 .
 .Ss "Using online NetBSD documentation"
