@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.8 2001/03/25 19:39:20 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.9 2001/04/09 19:33:01 martin Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -59,7 +59,7 @@ struct sipcp {
 #define IPV6CP_MYIFID_SEEN  4	/* have seen his ifid already */
 };
 
-#define AUTHNAMELEN	32
+#define AUTHNAMELEN	48
 #define AUTHKEYLEN	16
 
 struct sauth {
@@ -95,6 +95,7 @@ struct sppp {
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
+	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
 	u_short pp_alivecnt;    /* keepalive packets counter */
 	u_short pp_loopcnt;     /* loopback detection counter */
 	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
@@ -151,6 +152,9 @@ struct sppp {
 				/* 0x04 was PP_TIMO */
 #define PP_CALLIN	0x08	/* we are being called */
 #define PP_NEEDAUTH	0x10	/* remote requested authentication */
+#define	PP_NOFRAMING	0x20	/* do not add/expect encapsulation
+				   around PPP frames (i.e. the serial
+				   HDLC like encapsulation, RFC1662) */
 
 
 #define PP_MTU          1500    /* default/minimal MRU */
