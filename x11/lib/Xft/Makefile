@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/03/12 03:59:42 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2004/04/29 05:18:25 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ INCSDIR=${X11INCDIR}/X11/Xft
 MAN=	Xft.3
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
-CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 -DXFREE86_FT2
 
 # XXX it would be really swell if SCRIPTS was available from bsd.lib.mk
 FILES=			xft.pc xft-config
