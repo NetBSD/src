@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.3 2001/11/13 20:00:30 briggs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.4 2001/11/15 19:30:04 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,16 +41,6 @@
 	.data
 GLOBAL(powersave)
 	.long	0
-	.section	".rodata"
-	.align 2
-.LC0:
-	.string "."
-.LC1:
-	.string "!"
-.LC2:
-	.string "+"
-.LC3:
-	.string "x"
 
 	.text
 	.align 2
@@ -244,6 +234,7 @@ ENTRY(cpu_switch)
 	andc	9,9,3
 	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
+switch_preempt_common:
 1:
 	/* just did this resched thing */
 	xor	3,3,3
@@ -387,11 +378,11 @@ ENTRY(cpu_preempt)
 	stw	31,12(1)
 	stw	30,8(1)
 
-	stwu	1,-12(1)		/* Extra, temporary, stack usage */
-	stw	29,8(1)			/* to avoid differring from cpu_sw */
-
+	stwu	1,-16(1)
+	stw	29,8(1)
 	mr	30,3
 	mr	29,4
+
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
 	GET_CPUINFO(7)
@@ -446,153 +437,34 @@ ENTRY(cpu_preempt)
 #endif
 
 /* Find a new process */
-	xor	3,3,3
-
-	mr	31,29			/* r31 = newlwp */
-	lwz	29,8(1)			/* restore temp stack allocation */
-	addi	1,1,12
+	mr	31,29
+	lwz	29,8(1)
+	addi	1,1,16
 
 	lwz	4,L_BACK(31)		/* r4 = newlwp->l_back */
-	stw	3,L_BACK(31)		/* newlwp->l_back = NULL */
 	lwz	3,L_FORW(31)		/* r3 = newlwp->l_forw */
 	stw	4,L_BACK(3)		/* r3->l_back = r4 */
 	stw	3,L_FORW(4)		/* r4->l_forw = r3 */
 	
 	cmpl	0,4,3			/* queue empty? */
-	bne	1f
+	bne	switch_preempt_common
 
 	/* so now r31 is newlwp and r3/r4 are scratch again */
 
 	lis	8,_C_LABEL(sched_whichqs)@ha
-	lwz	4,_C_LABEL(sched_whichqs)@l(8)
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
-	lwz	3,L_PRIORITY(31)
-	li	9,2
-	srw	3,3,9			/* r3 = newlwp->l_priority / 4 */
-	li	9,1
-	slw	3,9,3			/* r3 = 1 << r3 */
-	andc	4,4,3			/* sched_whichqs &= ~r3 */
-	stw	4,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
+	lbz	3,L_PRIORITY(31)
+	li	4,2
+	srw	3,3,4			/* r3 = newlwp->l_priority / 4 */
+	lis	4,0x8000
+	srw	3,4,3			/* r3 = 0x80000000 >> r3 */
+	andc	9,9,3			/* sched_whichqs &= ~r3 */
+	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
-1:
-	/* just did this resched thing */
-	xor	3,3,3
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(4)
-	stw	3,CI_WANT_RESCHED(4)
-#else
-	lis	4,_C_LABEL(want_resched)@ha
-	stw	3,_C_LABEL(want_resched)@l(4)
-#endif
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Unlock the sched_lock, but leave interrupts off, for now. */
-	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(4)
-	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
-#else
-	lis	4,_C_LABEL(cpu_info_store)@ha
-	addi	4,4,_C_LABEL(cpu_info_store)@l
-	stw	4,L_CPU(31)		/* l->l_cpu = &cpu_info_store */
-#endif
-
-	/* Process now running on a processor. */
-	li	3,LSONPROC		/* l->l_stat = LSONPROC */
-	stw	3,L_STAT(31)
-
-	/* record new process */
-#if defined(MULTIPROCESSOR)
-	stw	31,CI_CURPROC(4)
-#else
-	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
-#endif
-	lwz	4,L_ADDR(31)
-
-	mfmsr	3
-	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
-	mtmsr	3
-
-#if !defined(MULTIPROCESSOR)		/* XXX */
-	cmpl	0,31,30			/* is it the same lwp? */
-	beq	preempt_return
-
-	or.	30,30,30		/* old lwp was exiting? */
-	beq	preempt_exited
-
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
-	mfcr	11			/* save cr */
-	mr	12,2			/* save r2 */
-	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
-	stmw	10,8(1)
-	lwz	3,L_ADDR(30)
-	stw	1,PCB_SP(3)		/* save SP */
-#endif
-
-preempt_exited:
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
-					   actually switching */
-	mtmsr	3
-
-	/* indicate new pcb */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(6)
-	stw	4,CI_CURPCB(6)
-#else
-	lis	5,_C_LABEL(curpcb)@ha
-	stw	4,_C_LABEL(curpcb)@l(5)
-#endif
-
-	/* save real pmap pointer for spill fill */
-	lwz	5,PCB_PMR(4)
-#if defined(MULTIPROCESSOR)
-	stwu	5,CI_CURPM(6)
-#else
-	lis	6,_C_LABEL(curpm)@ha
-	stwu	5,_C_LABEL(curpm)@l(6)
-#endif
-	stwcx.	5,0,6			/* clear possible reservation */
-
-	addic.	5,5,64
-	li	6,0
-	mfsr	8,KERNEL_SR		/* save kernel SR */
-1:
-	addis	6,6,-0x10000000@ha	/* set new procs segment registers */
-	or.	6,6,6			/* This is done from the real
-					   address pmap */
-	lwzu	7,-4(5)			/* so we don't have to worry */
-	mtsrin	7,6			/* about accessibility */
-	bne	1b
-	mtsr	KERNEL_SR,8		/* restore kernel SR */
-	isync
-
-	lwz	1,PCB_SP(4)		/* get new procs SP */
-
-	ori	3,3,PSL_EE@l		/* interrupts are okay again */
-	mtmsr	3
-
-	lmw	10,8(1)			/* get other regs */
-	lwz	1,0(1)			/* get saved SP */
-	mr	2,12			/* get saved r2 */
-	mtcr	11			/* get saved cr */
-	isync
-	mtsr	USER_SR,10		/* get saved USER_SR */
-	isync
-
-preempt_return:
-	lwz	3,PCB_SPL(4)
-	bl	_C_LABEL(lcsplx)
-
-	lwz	31,12(1)
-	lwz	30,8(1)
-	addi	1,1,16
-	lwz	0,4(1)
-	mtlr	0
-	blr
+	/* Stack normal, r31 is newlwp, r30 is oldlwp */
+	b	switch_preempt_common
+/* NOTREACHED */
 
 /*
  * Child comes here at the end of a fork.
