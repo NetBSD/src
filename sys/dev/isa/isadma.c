@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.24 1997/05/28 20:02:39 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.25 1997/05/29 21:46:07 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,8 +34,8 @@ static int dmapageport[2][4] = {
 static u_int8_t dmamode[4] = {
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
-	DMA37MD_READ | DMA37MD_LOOP,
-	DMA37MD_WRITE | DMA37MD_LOOP
+	DMA37MD_READ | DMA37MD_SINGLE | DMA37MD_LOOP,
+	DMA37MD_WRITE | DMA37MD_SINGLE | DMA37MD_LOOP
 };
 
 int	isa_dmarangecheck	__P((vm_offset_t, u_long, int));
