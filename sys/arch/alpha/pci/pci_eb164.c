@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_eb164.c,v 1.3 1996/11/17 02:30:25 cgd Exp $	*/
+/*	$NetBSD: pci_eb164.c,v 1.4 1996/11/25 03:47:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -77,8 +77,8 @@ bus_space_tag_t eb164_intrgate_iot;
 bus_space_handle_t eb164_intrgate_ioh;
 
 void	eb164_iointr __P((void *framep, unsigned long vec));
-void	eb164_enable_intr __P((int irq));
-void	eb164_disable_intr __P((int irq));
+extern void	eb164_intr_enable __P((int irq));	/* pci_eb164_intr.S */
+extern void	eb164_intr_disable __P((int irq));	/* pci_eb164_intr.S */
 
 void
 pci_eb164_pickintr(ccp)
@@ -99,7 +99,7 @@ pci_eb164_pickintr(ccp)
 	    &eb164_intrgate_ioh) != 0)
 		panic("pci_eb164_pickintr: couldn't map interrupt PLD");
 	for (i = 0; i < EB164_MAX_IRQ; i++)
-		eb164_disable_intr(i);	
+		eb164_intr_disable(i);	
 
 	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ);
 	for (i = 0; i < EB164_MAX_IRQ; i++)
@@ -108,7 +108,7 @@ pci_eb164_pickintr(ccp)
 
 #if NSIO
 	sio_intr_setup(iot);
-	eb164_enable_intr(EB164_SIO_IRQ);
+	eb164_intr_enable(EB164_SIO_IRQ);
 #endif
 
 	set_iointr(eb164_iointr);
@@ -147,9 +147,9 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 		eb164_irq = 5;				/* IDE */
 		break;
 
+	case 5:
 	case 6:
 	case 7:
-	case 8:
 	case 9:
 		switch (buspin) {
 		case 1:
@@ -230,7 +230,7 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg)
 	    level, func, arg, "eb164 irq");
 
 	if (cookie != NULL && alpha_shared_intr_isactive(eb164_pci_intr, ih))
-		eb164_enable_intr(ih);
+		eb164_intr_enable(ih);
 	return (cookie);
 }
 
@@ -270,7 +270,7 @@ eb164_iointr(framep, vec)
 			    "eb164 irq");
 			if (eb164_pci_intr[irq].intr_nstrays ==
 			    eb164_pci_intr[irq].intr_maxstrays)
-				eb164_disable_intr(irq);
+				eb164_intr_disable(irq);
 		}
 		return;
 	}
@@ -283,16 +283,17 @@ eb164_iointr(framep, vec)
 	panic("eb164_iointr: weird vec 0x%x\n", vec);
 }
 
+#if 0		/* THIS DOES NOT WORK!  see pci_eb164_intr.S. */
 u_int8_t eb164_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
-eb164_enable_intr(irq)
+eb164_intr_enable(irq)
 	int irq;
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
 #if 1
-	printf("eb164_enable_intr: enabling %d (%d:%d)\n", irq, byte, bit);
+	printf("eb164_intr_enable: enabling %d (%d:%d)\n", irq, byte, bit);
 #endif
 	eb164_intr_mask[byte] &= ~(1 << bit);
 
@@ -301,16 +302,17 @@ eb164_enable_intr(irq)
 }
 
 void
-eb164_disable_intr(irq)
+eb164_intr_disable(irq)
 	int irq;
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
 #if 1
-	printf("eb164_disable_intr: disabling %d (%d:%d)\n", irq, byte, bit);
+	printf("eb164_intr_disable: disabling %d (%d:%d)\n", irq, byte, bit);
 #endif
 	eb164_intr_mask[byte] |= (1 << bit);
 
 	bus_space_write_1(eb164_intrgate_iot, eb164_intrgate_ioh, byte,
 	    eb164_intr_mask[byte]);
 }
+#endif
