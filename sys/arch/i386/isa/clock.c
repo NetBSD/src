@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.15 1993/10/17 05:34:17 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.16 1993/10/18 07:50:29 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -274,6 +274,9 @@ timerattach(parent, self, aux)
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 }
 
+/*
+ * Clock interrupts.  Always claim the interrupt.
+ */
 static int
 timerintr(aux)
 	void *aux;
@@ -282,6 +285,10 @@ timerintr(aux)
 	return 1;
 }
 
+/*
+ * Set up the real-time clock.  Leave stathz 0 since there is no secondary
+ * clock available.
+ */
 void
 cpu_initclocks(void)
 {
@@ -294,6 +301,17 @@ cpu_initclocks(void)
 	sc->sc_ih.ih_fun = timerintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
+}
+
+/*
+ * This doesn't need to do anything, as we have only one timer and
+ * profhz==stathz==hz.
+ */
+void
+setstatclockrate(newhz)
+	int newhz;
+{
+	/* nothing */
 }
 
 static __inline u_int
