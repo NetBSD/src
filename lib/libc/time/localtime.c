@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.7 1996/09/10 22:04:30 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.7.2.1 1996/09/17 23:01:55 jtc Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -19,9 +19,24 @@ static char	elsieid[] = "@(#)localtime.c	7.58";
 
 /*LINTLIBRARY*/
 
+#include "namespace.h"
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
+
+#ifdef __weak_alias
+__weak_alias(offtime,_offtime);
+__weak_alias(posix2time,_posix2time);
+__weak_alias(time2posix,_time2posix);
+__weak_alias(timegm,_timegm);
+__weak_alias(timelocal,_timelocal);
+__weak_alias(timeoff,_timeoff);
+__weak_alias(tzset,_tzset);
+__weak_alias(tzsetwall,_tzsetwall);
+__weak_alias(daylight,_daylight);
+__weak_alias(timezone,_timezone);
+__weak_alias(tzname,_tzname);
+#endif
 
 /*
 ** SunOS 4.1.1 headers lack O_BINARY.

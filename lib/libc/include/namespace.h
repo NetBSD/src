@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.2.4.4 1996/09/17 21:21:29 jtc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.2.4.5 1996/09/17 23:01:52 jtc Exp $	*/
 
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
@@ -35,6 +35,7 @@
 #define clntudp_bufcreate	_clntudp_bufcreate
 #define clntudp_create	_clntudp_create
 #define closedir	_closedir
+#define daylight	_daylight
 #define dbm_clearerr	_dbm_clearerr 
 #define dbm_close	_dbm_close
 #define dbm_delete	_dbm_delete
@@ -69,12 +70,14 @@
 #define mpool_open	_mpool_open
 #define mpool_put	_mpool_put
 #define mpool_sync	_mpool_sync
+#define offtime		_offtime
 #define opendir		_opendir
 #define pmap_getmaps	_pmap_getmaps
 #define pmap_getport	_pmap_getport
 #define pmap_rmtcall	_pmap_rmtcall
 #define pmap_set	_pmap_set
 #define pmap_unset	_pmap_unset
+#define posix2time	_posix2time
 #define readdir		_readdir
 #define registerrpc	_registerrpc
 #define rewinddir	_rewinddir
@@ -114,6 +117,14 @@
 #define tcsetattr	_tcsetattr
 #define tcsetpgrp	_tcsetpgrp
 #define telldir		_telldir
+#define time2posix	_time2posix
+#define timegm		_timegm
+#define timelocal	_timelocal
+#define timeoff		_timeoff
+#define timezone	_timezone
+#define tzname		_tzname
+#define tzset		_tzset
+#define tzsetwall	_tzsetwall
 #define verr		_verr
 #define verrx		_verrx
 #define vwarn		_vwarn
