@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.15 1998/02/22 00:25:03 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.16 1998/07/06 00:43:28 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -58,6 +58,8 @@
 #include <machine/conf.h>
 #include <machine/mouse.h>
 #include <arm32/dev/pmsvar.h>
+
+#define MOUSE_IOC_ACK
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
