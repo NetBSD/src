@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.108 1999/08/19 13:54:06 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.109 1999/08/19 18:09:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2099,7 +2099,7 @@ vfs_shutdown()
 		printf("giving up\nPrinting vnodes for busy buffers\n");
 		for (bp = &buf[nbuf]; --bp >= buf; )
 			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-				VOP_PRINT(bp->b_vp);
+				vprint(NULL, bp->b_vp);
 #else
 		printf("giving up\n");
 #endif
