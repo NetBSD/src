@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.108 2000/05/02 11:59:40 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.109 2000/05/02 12:01:13 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -85,6 +85,7 @@
 #	uhid*	USB generic HID devices
 #	ulpt*	USB printer devices
 #	ugen*	USB generic devices
+#	urio*	USB Diamond Rio 500 devices
 #	ttyU*	USB modems
 #
 # Special purpose devices:
