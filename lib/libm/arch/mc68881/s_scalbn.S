@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_scalbn.S,v 1.2 1994/03/18 23:23:16 jtc Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.3 1995/05/09 03:01:41 jtc Exp $")
 
 | scalbn(x, N)
 | returns  x * (2**N), for integer values N.

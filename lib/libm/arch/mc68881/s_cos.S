@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sincos.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_cos.S,v 1.2 1994/03/18 23:22:50 jtc Exp $")
+RCSID("$NetBSD: s_cos.S,v 1.3 1995/05/09 01:51:45 jtc Exp $")
 
 ENTRY(cos)
 	fcosd	sp@(4),fp0
