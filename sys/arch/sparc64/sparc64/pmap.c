@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2000/06/26 14:21:01 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2000/06/26 19:45:54 pk Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -564,7 +564,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		/* Claim the rest of the physical page. */
 		newkp = kdatap + kdsize;
 		newkv = kdata + kdsize;
-		if (kdatap != prom_claim_phys(newkp, szdiff)) {
+		if (newkp != prom_claim_phys(newkp, szdiff)) {
 			prom_printf("pmap_bootstrap: could not claim physical "
 				"dseg extention at %lx size %lx\r\n", newkp, szdiff);
 			goto remap_data;
