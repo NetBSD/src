@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.31 2001/01/18 20:28:19 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.32 2001/01/19 12:24:09 martin Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.25 2000/12/22 20:05:35 fvdl Exp 
+ *	NetBSD: vnode_if.sh,v 1.27 2001/01/19 12:22:56 martin Exp 
  */
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 
-const struct vnodeop_desc vop_default_desc = {
+struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
@@ -75,7 +75,7 @@ const int vop_lookup_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lookup_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_lookup_desc = {
+struct vnodeop_desc vop_lookup_desc = {
 	0,
 	"vop_lookup",
 	0,
@@ -106,7 +106,7 @@ const int vop_create_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_create_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_create_desc = {
+struct vnodeop_desc vop_create_desc = {
 	0,
 	"vop_create",
 	0 | VDESC_VP0_WILLPUT,
@@ -139,7 +139,7 @@ const int vop_mknod_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mknod_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_mknod_desc = {
+struct vnodeop_desc vop_mknod_desc = {
 	0,
 	"vop_mknod",
 	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
@@ -172,7 +172,7 @@ const int vop_open_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_open_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_open_desc = {
+struct vnodeop_desc vop_open_desc = {
 	0,
 	"vop_open",
 	0,
@@ -205,7 +205,7 @@ const int vop_close_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_close_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_close_desc = {
+struct vnodeop_desc vop_close_desc = {
 	0,
 	"vop_close",
 	0,
@@ -238,7 +238,7 @@ const int vop_access_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_access_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_access_desc = {
+struct vnodeop_desc vop_access_desc = {
 	0,
 	"vop_access",
 	0,
@@ -271,7 +271,7 @@ const int vop_getattr_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_getattr_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_getattr_desc = {
+struct vnodeop_desc vop_getattr_desc = {
 	0,
 	"vop_getattr",
 	0,
@@ -304,7 +304,7 @@ const int vop_setattr_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_setattr_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_setattr_desc = {
+struct vnodeop_desc vop_setattr_desc = {
 	0,
 	"vop_setattr",
 	0,
@@ -337,7 +337,7 @@ const int vop_read_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_read_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_read_desc = {
+struct vnodeop_desc vop_read_desc = {
 	0,
 	"vop_read",
 	0,
@@ -370,7 +370,7 @@ const int vop_write_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_write_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_write_desc = {
+struct vnodeop_desc vop_write_desc = {
 	0,
 	"vop_write",
 	0,
@@ -403,7 +403,7 @@ const int vop_ioctl_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_ioctl_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_ioctl_desc = {
+struct vnodeop_desc vop_ioctl_desc = {
 	0,
 	"vop_ioctl",
 	0,
@@ -440,7 +440,7 @@ const int vop_fcntl_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_fcntl_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_fcntl_desc = {
+struct vnodeop_desc vop_fcntl_desc = {
 	0,
 	"vop_fcntl",
 	0,
@@ -477,7 +477,7 @@ const int vop_poll_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_poll_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_poll_desc = {
+struct vnodeop_desc vop_poll_desc = {
 	0,
 	"vop_poll",
 	0,
@@ -508,7 +508,7 @@ const int vop_revoke_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_revoke_desc = {
+struct vnodeop_desc vop_revoke_desc = {
 	0,
 	"vop_revoke",
 	0,
@@ -537,7 +537,7 @@ const int vop_mmap_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mmap_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_mmap_desc = {
+struct vnodeop_desc vop_mmap_desc = {
 	0,
 	"vop_mmap",
 	0,
@@ -570,7 +570,7 @@ const int vop_fsync_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_fsync_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_fsync_desc = {
+struct vnodeop_desc vop_fsync_desc = {
 	0,
 	"vop_fsync",
 	0,
@@ -607,7 +607,7 @@ const int vop_seek_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_seek_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_seek_desc = {
+struct vnodeop_desc vop_seek_desc = {
 	0,
 	"vop_seek",
 	0,
@@ -641,7 +641,7 @@ const int vop_remove_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_remove_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_remove_desc = {
+struct vnodeop_desc vop_remove_desc = {
 	0,
 	"vop_remove",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
@@ -673,7 +673,7 @@ const int vop_link_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_link_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_link_desc = {
+struct vnodeop_desc vop_link_desc = {
 	0,
 	"vop_link",
 	0 | VDESC_VP0_WILLPUT,
@@ -707,7 +707,7 @@ const int vop_rename_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_rename_args,a_tvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_rename_desc = {
+struct vnodeop_desc vop_rename_desc = {
 	0,
 	"vop_rename",
 	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLRELE,
@@ -744,7 +744,7 @@ const int vop_mkdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mkdir_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_mkdir_desc = {
+struct vnodeop_desc vop_mkdir_desc = {
 	0,
 	"vop_mkdir",
 	0 | VDESC_VP0_WILLPUT,
@@ -778,7 +778,7 @@ const int vop_rmdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_rmdir_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_rmdir_desc = {
+struct vnodeop_desc vop_rmdir_desc = {
 	0,
 	"vop_rmdir",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
@@ -809,7 +809,7 @@ const int vop_symlink_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_symlink_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_symlink_desc = {
+struct vnodeop_desc vop_symlink_desc = {
 	0,
 	"vop_symlink",
 	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
@@ -844,7 +844,7 @@ const int vop_readdir_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_readdir_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_readdir_desc = {
+struct vnodeop_desc vop_readdir_desc = {
 	0,
 	"vop_readdir",
 	0,
@@ -881,7 +881,7 @@ const int vop_readlink_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_readlink_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_readlink_desc = {
+struct vnodeop_desc vop_readlink_desc = {
 	0,
 	"vop_readlink",
 	0,
@@ -912,7 +912,7 @@ const int vop_abortop_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_abortop_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_abortop_desc = {
+struct vnodeop_desc vop_abortop_desc = {
 	0,
 	"vop_abortop",
 	0,
@@ -941,7 +941,7 @@ const int vop_inactive_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_inactive_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_inactive_desc = {
+struct vnodeop_desc vop_inactive_desc = {
 	0,
 	"vop_inactive",
 	0 | VDESC_VP0_WILLUNLOCK,
@@ -970,7 +970,7 @@ const int vop_reclaim_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reclaim_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_reclaim_desc = {
+struct vnodeop_desc vop_reclaim_desc = {
 	0,
 	"vop_reclaim",
 	0,
@@ -999,7 +999,7 @@ const int vop_lock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lock_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_lock_desc = {
+struct vnodeop_desc vop_lock_desc = {
 	0,
 	"vop_lock",
 	0,
@@ -1028,7 +1028,7 @@ const int vop_unlock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_unlock_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_unlock_desc = {
+struct vnodeop_desc vop_unlock_desc = {
 	0,
 	"vop_unlock",
 	0,
@@ -1057,7 +1057,7 @@ const int vop_bmap_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_bmap_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_bmap_desc = {
+struct vnodeop_desc vop_bmap_desc = {
 	0,
 	"vop_bmap",
 	0,
@@ -1092,7 +1092,7 @@ const int vop_print_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_print_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_print_desc = {
+struct vnodeop_desc vop_print_desc = {
 	0,
 	"vop_print",
 	0,
@@ -1119,7 +1119,7 @@ const int vop_islocked_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_islocked_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_islocked_desc = {
+struct vnodeop_desc vop_islocked_desc = {
 	0,
 	"vop_islocked",
 	0,
@@ -1146,7 +1146,7 @@ const int vop_pathconf_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_pathconf_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_pathconf_desc = {
+struct vnodeop_desc vop_pathconf_desc = {
 	0,
 	"vop_pathconf",
 	0,
@@ -1177,7 +1177,7 @@ const int vop_advlock_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_advlock_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_advlock_desc = {
+struct vnodeop_desc vop_advlock_desc = {
 	0,
 	"vop_advlock",
 	0,
@@ -1212,7 +1212,7 @@ const int vop_blkatoff_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_blkatoff_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_blkatoff_desc = {
+struct vnodeop_desc vop_blkatoff_desc = {
 	0,
 	"vop_blkatoff",
 	0,
@@ -1245,7 +1245,7 @@ const int vop_valloc_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_valloc_args,a_pvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_valloc_desc = {
+struct vnodeop_desc vop_valloc_desc = {
 	0,
 	"vop_valloc",
 	0,
@@ -1278,7 +1278,7 @@ const int vop_balloc_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_balloc_desc = {
+struct vnodeop_desc vop_balloc_desc = {
 	0,
 	"vop_balloc",
 	0,
@@ -1315,7 +1315,7 @@ const int vop_ballocn_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_ballocn_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_ballocn_desc = {
+struct vnodeop_desc vop_ballocn_desc = {
 	0,
 	"vop_ballocn",
 	0,
@@ -1350,7 +1350,7 @@ const int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_reallocblks_desc = {
+struct vnodeop_desc vop_reallocblks_desc = {
 	0,
 	"vop_reallocblks",
 	0,
@@ -1379,7 +1379,7 @@ const int vop_vfree_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_vfree_args,a_pvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_vfree_desc = {
+struct vnodeop_desc vop_vfree_desc = {
 	0,
 	"vop_vfree",
 	0,
@@ -1410,7 +1410,7 @@ const int vop_truncate_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_truncate_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_truncate_desc = {
+struct vnodeop_desc vop_truncate_desc = {
 	0,
 	"vop_truncate",
 	0,
@@ -1445,7 +1445,7 @@ const int vop_update_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_update_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_update_desc = {
+struct vnodeop_desc vop_update_desc = {
 	0,
 	"vop_update",
 	0,
@@ -1478,7 +1478,7 @@ const int vop_lease_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lease_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_lease_desc = {
+struct vnodeop_desc vop_lease_desc = {
 	0,
 	"vop_lease",
 	0,
@@ -1511,7 +1511,7 @@ const int vop_whiteout_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_whiteout_args,a_dvp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_whiteout_desc = {
+struct vnodeop_desc vop_whiteout_desc = {
 	0,
 	"vop_whiteout",
 	0,
@@ -1542,7 +1542,7 @@ const int vop_getpages_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_getpages_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_getpages_desc = {
+struct vnodeop_desc vop_getpages_desc = {
 	0,
 	"vop_getpages",
 	0,
@@ -1583,7 +1583,7 @@ const int vop_putpages_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_putpages_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_putpages_desc = {
+struct vnodeop_desc vop_putpages_desc = {
 	0,
 	"vop_putpages",
 	0,
@@ -1618,7 +1618,7 @@ const int vop_size_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_size_args,a_vp),
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_size_desc = {
+struct vnodeop_desc vop_size_desc = {
 	0,
 	"vop_size",
 	0,
@@ -1650,7 +1650,7 @@ VOP_SIZE(vp, size, eobp)
 const int vop_strategy_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_strategy_desc = {
+struct vnodeop_desc vop_strategy_desc = {
 	0,
 	"vop_strategy",
 	0,
@@ -1676,7 +1676,7 @@ VOP_STRATEGY(bp)
 const int vop_bwrite_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
-const struct vnodeop_desc vop_bwrite_desc = {
+struct vnodeop_desc vop_bwrite_desc = {
 	0,
 	"vop_bwrite",
 	0,
@@ -1701,7 +1701,7 @@ VOP_BWRITE(bp)
 
 /* End of special cases. */
 
-const struct vnodeop_desc *vfs_op_descs[] = {
+struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_default_desc,	/* MUST BE FIRST */
 	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
