@@ -1,4 +1,4 @@
-$NetBSD: audioamdvar.h,v 1.1 2000/05/08 03:09:56 mycroft Exp $
+/*	$NetBSD: audioamdvar.h,v 1.2 2000/05/08 03:11:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
