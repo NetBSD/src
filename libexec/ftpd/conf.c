@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 2000/01/08 11:09:56 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 2000/01/09 10:08:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.25 2000/01/08 11:09:56 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.26 2000/01/09 10:08:45 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,8 +101,6 @@ init_curclass()
 	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
 	curclass.passive =	1;
-	curclass.maxrateget =	0;
-	curclass.maxrateput =	0;
 	curclass.rateget =	0;
 	curclass.rateput =	0;
 	curclass.timeout =	900;		/* 15 minutes */
@@ -124,7 +122,7 @@ parse_conf(findclass)
 	size_t		 len;
 	int		 none, match, rate;
 	char		*endp;
-	char		*class, *word, *arg;
+	char		*class, *word, *arg, *template;
 	const char	*infile;
 	size_t		 line;
 	unsigned int	 timeout;
@@ -142,6 +140,7 @@ parse_conf(findclass)
 		return;
 
 	line = 0;
+	template = NULL;
 	for (;
 	    (buf = fparseln(f, &len, &line, NULL, FPARSELN_UNESCCOMM |
 	    		FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
@@ -162,7 +161,8 @@ parse_conf(findclass)
 			continue;
 		if (strcasecmp(class, "none") == 0)
 			none = 1;
-		if (strcasecmp(class, findclass) != 0 &&
+		if ((strcasecmp(class, findclass) != 0 &&
+		    (template != NULL && strcasecmp(class, template) != 0)) &&
 		    !none && strcasecmp(class, "all") != 0)
 			continue;
 
@@ -261,7 +261,8 @@ parse_conf(findclass)
 				continue;
 			}
 			curclass.limit = limit;
-			REASSIGN(curclass.limitfile, xstrdup(p));
+			REASSIGN(curclass.limitfile,
+			    EMPTYSTR(p) ? NULL : xstrdup(p));
 
 		} else if (strcasecmp(word, "maxtimeout") == 0) {
 			if (none || EMPTYSTR(arg))
@@ -368,6 +369,11 @@ parse_conf(findclass)
 			}
 			curclass.timeout = timeout;
 
+		} else if (strcasecmp(word, "template") == 0) {
+			if (none)
+				continue;
+			REASSIGN(template, EMPTYSTR(arg) ? NULL : xstrdup(arg));
+
 		} else if (strcasecmp(word, "umask") == 0) {
 			mode_t umask;
 
@@ -397,6 +403,7 @@ parse_conf(findclass)
 			continue;
 		}
 	}
+	REASSIGN(template, NULL);
 	fclose(f);
 }
 
@@ -742,6 +749,14 @@ strsuftoi(arg)
 	return (val);
 }
 
+/*
+ * Count the number of current connections, reading from
+ *	/var/run/ftpd.pids-<class>
+ * Does a kill -0 on each pid in that file, and only counts
+ * processes that exist (or frees the slot if it doesn't).
+ * Adds getpid() to the first free slot. Truncates the file
+ * if possible.
+ */ 
 void
 count_users()
 {
