@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.31 2000/05/28 09:58:15 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.32 2000/06/01 07:54:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.31 2000/05/28 09:58:15 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.32 2000/06/01 07:54:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,7 +414,6 @@ t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
 	_DIAGASSERT(id != NULL);
 	_DIAGASSERT(bufptr != NULL);
 	_DIAGASSERT(area != NULL);
-	_DIAGASSERT(size != NULL);
 
 	t_getstr(info, id, NULL, &new_size);
 
