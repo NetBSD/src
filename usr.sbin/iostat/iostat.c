@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.30 2002/11/01 14:02:21 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.31 2002/11/02 06:32:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.30 2002/11/01 14:02:21 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.31 2002/11/02 06:32:10 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	struct timespec	tv;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
 				errx(1, "repetition count <= 0.");
@@ -213,10 +213,12 @@ header(int signo)
 					/* Main Headers. */
 	if (ISSET(todo, SHOW_STATS_X)) {
 		if (ISSET(todo, SHOW_TOTALS)) {
-			(void)printf("device  read KB/t    xfr   time     MB/s");
+			(void)printf(
+			    "device  read KB/t    xfr   time     MB/s");
 			(void)printf(" write KB/t    xfr   time     MB/s\n");
 		} else {
-			(void)printf("device  read KB/t    r/s   time     MB/s");
+			(void)printf(
+			    "device  read KB/t    r/s   time     MB/s");
 			(void)printf(" write KB/t    w/s   time     MB/s\n");
 		}
 		return;
@@ -276,17 +278,18 @@ disk_stats(double etime)
 					/* average Kbytes per transfer. */
 		if (cur.dk_rxfer[dn] + cur.dk_wxfer[dn])
 			mbps = ((cur.dk_rbytes[dn] + cur.dk_rbytes[dn]) /
-			    (1024.0)) / (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]);
+			    1024.0) / (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]);
 		else
 			mbps = 0.0;
 		(void)printf(" %5.2f", mbps);
 
 					/* average transfers per second. */
-		(void)printf(" %3.0f", (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
+		(void)printf(" %3.0f",
+		    (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
 
 					/* time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
-			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
 					/* Megabytes per second. */
 		if (atime != 0.0)
@@ -309,14 +312,17 @@ disk_stats2(double etime)
 			continue;
 
 					/* average kbytes per second. */
-		(void)printf(" %4.0f", (cur.dk_rbytes[dn] + cur.dk_rbytes[dn]) / (1024.0) / etime);
+		(void)printf(" %4.0f",
+		    (cur.dk_rbytes[dn] + cur.dk_rbytes[dn]) /
+		    1024.0 / etime);
 
 					/* average transfers per second. */
-		(void)printf(" %3.0f", (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
+		(void)printf(" %3.0f",
+		    (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
 
 					/* average time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
-			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 		(void)printf(" %4.2f ", atime / etime);
 	}
 }
@@ -332,40 +338,44 @@ disk_statsx(double etime)
 
 					/* average read Kbytes per transfer */
 		if (cur.dk_rxfer[dn])
-			kbps = (cur.dk_rbytes[dn] / (1024.0)) / cur.dk_rxfer[dn];
+			kbps = (cur.dk_rbytes[dn] / 1024.0) / cur.dk_rxfer[dn];
 		else
 			kbps = 0.0;
 		(void)printf(" %8.2f", kbps);
 
-					/* average read transfers (per second) */
+					/* average read transfers
+					   (per second) */
 		(void)printf(" %6.0f", cur.dk_rxfer[dn] / etime);
 
 					/* time read busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
-			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 		(void)printf(" %6.2f", atime / etime);
 
-					/* average read megabytes (per second) */
+					/* average read megabytes
+					   (per second) */
 		(void)printf(" %8.2f",
 		    cur.dk_rbytes[dn] / (1024.0 * 1024) / etime);
 
 
 					/* average write Kbytes per transfer */
 		if (cur.dk_wxfer[dn])
-			kbps = (cur.dk_wbytes[dn] / (1024.0)) / cur.dk_wxfer[dn];
+			kbps = (cur.dk_wbytes[dn] / 1024.0) / cur.dk_wxfer[dn];
 		else
 			kbps = 0.0;
 		(void)printf("   %8.2f", kbps);
 
-					/* average write transfers (per second) */
+					/* average write transfers
+					   (per second) */
 		(void)printf(" %6.0f", cur.dk_wxfer[dn] / etime);
 
 					/* time write busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
-			((double)cur.dk_time[dn].tv_usec / (double)1000000);
+		    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 		(void)printf(" %6.2f", atime / etime);
 
-					/* average write megabytes (per second) */
+					/* average write megabytes
+					   (per second) */
 		(void)printf(" %8.2f",
 		    cur.dk_wbytes[dn] / (1024.0 * 1024) / etime);
 		/*
@@ -397,8 +407,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] [-M core] \
-[-N system] [-w wait] [drives]\n");
+	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] [-M core] "
+	    "[-N system] [-w wait] [drives]\n");
 	exit(1);
 }
 
