@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
+/* $NetBSD: user.c,v 1.70 2003/06/12 17:00:53 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.70 2003/06/12 17:00:53 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1149,8 +1149,8 @@ rm_user_from_groups(char *login_name)
 	int		cc;
 	int		sc;
 
-	(void) snprintf(line, sizeof(line), "(:|,)%s(,|\n|$)", login_name);
-	if (regcomp(&r, line, REG_EXTENDED) != 0) {
+	(void) snprintf(line, sizeof(line), "(:|,)(%s)(,|$)", login_name);
+	if (regcomp(&r, line, REG_EXTENDED|REG_NEWLINE) != 0) {
 		warn("can't compile regular expression `%s'", line);
 		return 0;
 	}
@@ -1178,14 +1178,15 @@ rm_user_from_groups(char *login_name)
 	while (fgets(buf, sizeof(buf), from) > 0) {
 		cc = strlen(buf);
 		if (regexec(&r, buf, 10, matchv, 0) == 0) {
-			cc -= (int)(matchv[0].rm_eo);
-			sc = (int) matchv[0].rm_so;
-			if (cc > 0) {
-				sc += 1;
+			if (buf[(int)matchv[1].rm_so] == ',') {
+				matchv[2].rm_so = matchv[1].rm_so;
+			} else if (matchv[2].rm_eo != matchv[3].rm_eo) {
+				matchv[2].rm_eo = matchv[3].rm_eo;
 			}
+			cc -= (int) matchv[2].rm_eo;
+			sc = (int) matchv[2].rm_so;
 			if (fwrite(buf, sizeof(char), sc, to) != sc ||
-			    fwrite(&buf[(int)matchv[0].rm_eo], sizeof(char), cc, to) != cc ||
-			    (buf[(int)matchv[0].rm_eo - 1] != ',' && fwrite("\n", sizeof(char), 1, to) != 1)) {
+			    fwrite(&buf[(int)matchv[2].rm_eo], sizeof(char), cc, to) != cc) {
 				(void) fclose(from);
 				(void) close(fd);
 				(void) unlink(f);
