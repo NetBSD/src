@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.158 2003/09/23 14:34:07 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.159 2003/09/23 17:59:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.158 2003/09/23 14:34:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.159 2003/09/23 17:59:48 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -359,7 +359,7 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 int
 compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___sigaction14_args /* {
+	struct compat_16_sys___sigaction14_args /* {
 		syscallarg(int)				signum;
 		syscallarg(const struct sigaction *)	nsa;
 		syscallarg(struct sigaction *)		osa;
