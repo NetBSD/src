@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.59 2003/10/05 14:42:45 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.60 2003/10/05 14:44:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.59 2003/10/05 14:42:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.60 2003/10/05 14:44:55 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -715,7 +715,7 @@ static int tl_init(ifp)
 		}
 	}
 	sc->hw_Rx_list[TL_NBUF - 1].fwd = 0;
-	sc->Rx_list[TL_NBUF-1].next = NULL;
+	sc->Rx_list[TL_NBUF - 1].next = NULL;
 	sc->hw_Tx_list[TL_NBUF - 1].fwd = 0;
 	sc->Tx_list[TL_NBUF - 1].next = NULL;
 
