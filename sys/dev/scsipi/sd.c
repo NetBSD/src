@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.125 1998/01/15 18:59:03 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.126 1998/03/03 23:15:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -165,7 +165,7 @@ sdattach(parent, sd, sc_link, ops)
 		 *
 		 * YUCK!
 		 */
-		(void)scsipi_test_unit_ready(sc_link,
+		(void)scsipi_test_unit_ready(sc_link, SCSI_AUTOCONF |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
 		    SCSI_IGNORE_NOT_READY);
 	}
