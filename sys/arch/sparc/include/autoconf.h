@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.11 1995/12/11 12:31:02 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.12 1996/01/11 21:55:57 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,9 @@ void	*mapdev __P((struct rom_reg *pa, int va,
 	)
 #endif
 
+#if defined(SUN4)
+void *		bus_map __P((struct rom_reg *, int, int));
+#endif
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
