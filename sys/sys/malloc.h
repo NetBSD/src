@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.55 2000/11/10 15:47:03 matt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.56 2000/11/10 16:21:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -295,9 +295,9 @@
 	"rp_addr",	/* 113 M_RR_ADDR */ \
 	"softintr",	/* 114 M_SOFTINTR */ \
 	"emuldata",	/* 115 M_EMULDATA */ \
-	"1394ctl",	/* 115 M_1394CTL */ \
-	"1394data",	/* 115 M_1394DATA */ \
-	NULL,		/* 116 */ \
+	"1394ctl",	/* 116 M_1394CTL */ \
+	"1394data",	/* 117 M_1394DATA */ \
+	NULL,		/* 118 */ \
 }
 
 struct kmemstats {
