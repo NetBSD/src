@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 1996/07/11 23:01:09 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 1996/07/14 04:21:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -199,12 +199,9 @@ Lchkast:
 	ldq	t2, astpending			/* AST pending? */
 	beq	t2, Lsetfpenable		/* no: return & deal with FP */
 
-	/* we've got an AST.  call trap to handle it */
-	CONST(T_ASTFLT, a0)			/* type = T_ASTFLT */
-	mov	zero, a1			/* code = 0 */
-	mov	zero, a2			/* v = 0 */
-	mov	sp, a3				/* frame */
-	CALL(trap)
+	/* We've got an AST.  Handle it. */
+	mov	sp, a0				/* only arg is frame */
+	CALL(ast)
 
 Lsetfpenable:
 	/* enable FPU based on whether the current proc is fpcurproc */
@@ -300,13 +297,9 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	mov	a0,s0
-	mov	a1,s1
-
-	CONST(T_ARITHFLT, a0)			/* type = T_ARITHFLT */
-	mov	s0, a1				/* code = "summary" */
-	mov	s1, a2				/* v = "reguster mask" */
-	mov	sp, a3				/* frame */
+	/* a0, a1, & a2 already set up */
+	CONST(ALPHA_KENTRY_ARITH, a3)
+	mov	sp, a4
 	CALL(trap)
 
 	JMP(exception_return)
@@ -327,12 +320,9 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	mov	a0,s0
-
-	or	s0, T_IFLT, a0			/* type = T_IFLT|type*/
-	mov	s0, a1				/* code = type */
-	ldq	a2, (FRAME_PC * 8)(sp)		/* v = frame's pc */
-	mov	sp, a3				/* frame */
+	/* a0, a1, & a2 already set up */
+	CONST(ALPHA_KENTRY_IF, a3)
+	mov	sp, a4
 	CALL(trap)
 
 	JMP(exception_return)
@@ -353,14 +343,8 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	mov	a0,s0
-	mov	a1,s1
-	mov	a2,s2
-
-	mov	s2,a3
-	mov	s1,a2
-	mov	s0,a1
-	mov	sp,a0
+	/* a0, a1, & a2 already set up */
+	mov	sp, a3
 	CALL(interrupt)
 
 	JMP(exception_return)
@@ -381,14 +365,9 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	mov	a0,s0
-	mov	a1,s1
-	mov	a2,s2
-
-	or	s1, T_MMFLT, a0			/* type = T_MMFLT|MMCSR */
-	mov	s2, a1				/* code = "cause" */
-	mov	s0, a2				/* v = VA */
-	mov	sp, a3				/* frame */
+	/* a0, a1, & a2 already set up */
+	CONST(ALPHA_KENTRY_MM, a3)
+	mov	sp, a4
 	CALL(trap)
 
 	JMP(exception_return)
@@ -419,7 +398,7 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 	stq	a5,(FRAME_A5*8)(sp)
 	stq	ra,(FRAME_RA*8)(sp)
 
-	/* save syscall number, which was passed in v0. */
+	/* syscall number, passed in v0, is first arg, frame pointer second */
 	mov	v0,a0
 	mov	sp,a1
 	CALL(syscall)
@@ -442,14 +421,9 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
-	mov	a0,s0
-	mov	a1,s1
-	mov	a2,s2
-
-	CONST(T_UNAFLT, a0)			/* type = T_UNAFLT */
-	mov	zero, a1			/* code = 0 */
-	mov	zero, a2			/* v = 0 */
-	mov	sp, a3				/* frame */
+	/* a0, a1, & a2 already set up */
+	CONST(ALPHA_KENTRY_UNA, a3)
+	mov	sp, a4
 	CALL(trap)
 
 	JMP(exception_return)
@@ -1437,6 +1411,7 @@ LEAF(fuswintr, 2)
 	ldq	at_reg, curproc
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
+	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
@@ -1457,6 +1432,7 @@ LEAF(suswintr, 2)
 	ldq	at_reg, curproc
 	ldq	at_reg, P_ADDR(at_reg)
 	stq	t0, U_PCB_ONFAULT(at_reg)
+	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
