@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.40.2.1 2000/08/13 16:32:11 jhawk Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.40.2.2 2000/08/15 02:12:52 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,6 +77,10 @@ menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
 /*	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
+	option "Set timezone", 
+		action {
+			set_timezone();
+		};
 	option "Configure network",
 		action {
 			extern int network_up;
