@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.5 2001/11/20 12:56:25 lukem Exp $
+#	$NetBSD: IQ80310,v 1.6 2001/11/30 03:01:23 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -30,14 +30,14 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-#file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+#file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 
@@ -116,6 +116,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 # Development and Debugging options
 
 options 	DIAGNOSTIC	# internally consistency checks
+#options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -124,7 +125,8 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	SYMTAB_SPACE=200000
 
-config		netbsd	root on ? type ?
+config		netbsd		root on ? type ?
+config		netbsd-fxp0	root on fxp0 type nfs
 
 # The main bus device
 mainbus0	at root
@@ -138,9 +140,12 @@ com*		at obio? addr ?		# on-board XR 16550 UARTs
 
 # i80312 Companion I/O support
 iopxs*		at mainbus?
-pci*		at iopxs?
+pci0		at iopxs? bus ?
 
 # PCI-PCI bridges
+ppb0		at pci0 dev 7 function ?	# on-board 21154
+pci1		at ppb0 bus ?
+
 ppb*		at pci? dev ? function ?
 pci*		at ppb? bus ?
 
@@ -149,6 +154,7 @@ pci*		at ppb? bus ?
 #
 
 # PCI network devices
+fxp0		at pci1 dev 0 function ?	# on-board i82559
 fxp*		at pci? dev ? function ?	# Intel i8255x 10/100 Eth.
 
 # MII/PHY support
