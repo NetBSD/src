@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.44 1994/12/14 19:08:07 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.45 1994/12/14 19:36:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -715,27 +715,15 @@ open(p, uap, retval)
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if (error = vn_open(&nd, flags, cmode)) {
 		ffree(fp);
-		switch (error) {
-		case ENODEV:		/* XXX from fdopen or fdesc_open? */
-		case ENXIO:		/* XXX from portal_open? */
-			if (p->p_dupfd >= 0 && (error =
-			    dupfdopen(fdp, indx, p->p_dupfd, flags, error))) {
-				*retval = indx;
-				return (0);
-			}
-			break;
-
-		case EJUSTRETURN:	/* XXX cloning device? */
-			if (p->p_dupfd >= 0) {
-				*retval = indx;
-				return (0);
-			}
-			break;
-
-		case ERESTART:
-			error = EINTR;
-			break;
+		if ((error == ENODEV || error == ENXIO) &&
+		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
+		    (error =
+			dupfdopen(fdp, indx, p->p_dupfd, flags, error)) == 0) {
+			*retval = indx;
+			return (0);
 		}
+		if (error == ERESTART)
+			error = EINTR;
 		fdp->fd_ofiles[indx] = NULL;
 		return (error);
 	}
