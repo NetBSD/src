@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.40.2.3 2004/09/21 13:33:42 skrll Exp $ */
+/* $NetBSD: tfb.c,v 1.40.2.4 2004/11/21 08:53:50 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40.2.3 2004/09/21 13:33:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40.2.4 2004/11/21 08:53:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ static const struct wsscreen_list tfb_screenlist = {
 	sizeof(_tfb_scrlist) / sizeof(struct wsscreen_descr *), _tfb_scrlist
 };
 
-static int	tfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	tfbioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	tfbmmap(void *, off_t, int);
 
 static int	tfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -400,12 +400,12 @@ tfb_cmap_init(sc)
 }
 
 static int
-tfbioctl(v, cmd, data, flag, p)
+tfbioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;

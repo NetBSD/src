@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.2.3 2004/09/21 13:25:17 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.2.4 2004/11/21 08:53:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.2.3 2004/09/21 13:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.2.4 2004/11/21 08:53:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,8 +496,8 @@ linux_sys_sigreturn(l, v, retval)
  */
 /* XXX XAX update this, add maps, etc... */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -519,8 +519,7 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	/* XXX njwlwp */
-	return sys_ioctl(curlwp, &bia, retval);
+	return sys_ioctl(l, &bia, retval);
 }
 
 /* XXX XAX fix this */
