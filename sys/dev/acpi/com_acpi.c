@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.8 2003/10/31 20:54:18 mycroft Exp $ */
+/* $NetBSD: com_acpi.c,v 1.9 2003/11/03 06:03:47 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.8 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.9 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,19 +79,11 @@ int
 com_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	const char *id;
-	int i;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	for (i = 0; (id = com_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, id) == 0)
-			return 1;
-	}
-
-	/* No matches found */
-	return 0;
+	return acpi_match_hid(aa->aa_node->ad_devinfo,com_acpi_ids);
 }
 
 /*
