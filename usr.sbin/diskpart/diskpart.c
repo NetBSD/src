@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.9 1997/10/17 00:16:55 lukem Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.10 1998/07/26 12:09:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ int	badsecttable = 126;	/* # sectors */
 int	pflag;			/* print device driver partition tables */
 int	dflag;			/* print disktab entry */
 
-int	gettype __P((const char *, char **));
+int	gettype __P((const char *, const char *const *));
 int	main __P((int, char **));
 struct disklabel *promptfordisk __P((const char *));
 void	usage __P((void));
@@ -386,7 +386,8 @@ promptfordisk(name)
 	struct disklabel *dp = &disk;
 	struct field *fp;
 	int i;
-	char buf[BUFSIZ], **tp, *cp;
+	const char *const *tp;
+	char buf[BUFSIZ], *cp;
 
 	strncpy(dp->d_typename, name, sizeof(dp->d_typename));
 	fprintf(stderr,
@@ -499,9 +500,9 @@ again:
 int
 gettype(t, names)
 	const char *t;
-	char **names;
+	const char *const *names;
 {
-	char **nm;
+	const char *const *nm;
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
