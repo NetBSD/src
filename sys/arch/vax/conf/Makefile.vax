@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.29 1997/02/04 04:32:24 perry Exp $
+#	$NetBSD: Makefile.vax,v 1.30 1997/02/04 05:08:54 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -122,7 +122,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${VAX}/vax/Locore.c ${CFILES} ${VAX}/vax/swapgeneric.c \
+	    ${VAX}/vax/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

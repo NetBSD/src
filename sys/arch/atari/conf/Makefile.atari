@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.27 1997/02/04 04:31:59 perry Exp $
+#	$NetBSD: Makefile.atari,v 1.28 1997/02/04 05:08:32 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -134,7 +134,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${ATARI}/atari/Locore.c ${CFILES} ${ATARI}/atari/swapgeneric.c \
+	    ${ATARI}/atari/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

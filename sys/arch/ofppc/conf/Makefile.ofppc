@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.3 1997/02/04 04:32:18 perry Exp $
+#	$NetBSD: Makefile.ofppc,v 1.4 1997/02/04 05:08:47 perry Exp $
 #
 # Makefile for NetBSD
 #
@@ -140,7 +140,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/powerpc/Locore.c ${CFILES} ${PPC}/powerpc/swapgeneric.c \
+		${PPC}/powerpc/Locore.c ${CFILES} \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 

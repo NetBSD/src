@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1996/10/13 03:31:43 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1997/02/04 04:57:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -205,11 +205,7 @@ mips_init(argc, argv, code)
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-#ifdef GENERIC
-	boothowto = RB_SINGLE | RB_ASKNAME;
-#else
 	boothowto = RB_SINGLE;
-#endif
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif

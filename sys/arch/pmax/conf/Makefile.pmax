@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.41 1997/02/04 04:32:17 perry Exp $
+#	$NetBSD: Makefile.pmax,v 1.42 1997/02/04 05:08:46 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -140,7 +140,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${MIPS}/mips/Locore.c ${CFILES} ${PMAX}/pmax/swapgeneric.c \
+	    ${MIPS}/mips/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

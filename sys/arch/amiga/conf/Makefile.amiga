@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.54 1997/02/04 04:31:57 perry Exp $
+#	$NetBSD: Makefile.amiga,v 1.55 1997/02/04 05:08:29 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -149,7 +149,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${AMIGA}/amiga/Locore.c ${CFILES} ${AMIGA}/amiga/swapgeneric.c \
+	    ${AMIGA}/amiga/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
