@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.121 1999/03/26 01:11:45 oster Exp $
+#	$NetBSD: rc,v 1.122 1999/03/26 13:10:17 sommerfe Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -428,6 +428,8 @@ if checkyesno dhcpd; then
 		logger -s "WARNING: /etc/dhcpd.conf not readable; " \
 		    "dhcpd not started."
 	fi
+elif checkyesno dhcrelay; then
+	echo -n ' dhcrelay';            dhcrelay $dhcrelay_flags
 fi
 
 if checkyesno rwhod; then
