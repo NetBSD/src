@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.17 1996/07/17 21:43:22 explorer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.18 1997/01/09 05:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,7 +91,8 @@ struct ctlname {
 #define	CTL_HW		6		/* generic cpu/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
-#define	CTL_MAXID	9		/* number of valid top-level ids */
+#define	CTL_DDB		9		/* in-kernel debugger */
+#define	CTL_MAXID	10		/* number of valid top-level ids */
 
 #define CTL_NAMES { \
 	{ 0, 0 }, \
@@ -103,6 +104,7 @@ struct ctlname {
 	{ "hw", CTLTYPE_NODE }, \
 	{ "machdep", CTLTYPE_NODE }, \
 	{ "user", CTLTYPE_NODE }, \
+	{ "ddb", CTLTYPE_NODE }, \
 }
 
 /*
@@ -289,6 +291,27 @@ struct kinfo_proc {
 }
 
 /*
+ * CTL_DDB definitions
+ */
+#define	DDBCTL_RADIX		1	/* int: Input and output radix */
+#define	DDBCTL_MAXOFF		2	/* int: max symbol offset */
+#define	DDBCTL_MAXWIDTH		3	/* int: width of the display line */
+#define	DDBCTL_LINES		4	/* int: number of display lines */
+#define	DDBCTL_TABSTOPS		5	/* int: tab width */
+#define	DDBCTL_ONPANIC		6	/* int: DDB on panic if non-zero */
+#define	DDBCTL_MAXID		7	/* number of vallid DDB ids */
+
+#define	CTL_DDB_NAMES { \
+	{ 0, 0 }, \
+	{ "radix", CTLTYPE_INT }, \
+	{ "maxoff", CTLTYPE_INT }, \
+	{ "maxwidth", CTLTYPE_INT }, \
+	{ "tabstops", CTLTYPE_INT }, \
+	{ "lines", CTLTYPE_INT }, \
+	{ "onpanic", CTLTYPE_INT }, \
+}
+
+/*
  * CTL_DEBUG definitions
  *
  * Second level identifier specifies which debug variable.
@@ -374,6 +397,10 @@ int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
+#ifdef DDB
+int ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
+#endif
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
