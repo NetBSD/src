@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pack.c	8.1 (Berkeley) 6/6/93
- *	$Id: pack.c,v 1.3 1994/06/22 10:44:20 pk Exp $
+ *	$Id: pack.c,v 1.4 1994/12/23 16:25:43 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ typedef int (*vec_cmp_func) __P((const void *, int, int));
 
 #define	TAILHSIZE	128
 #define	PVHASH(i)	((i) & (TAILHSIZE - 1))
-#define	LOCHASH(l)	(((int)(l) >> 2) & (TAILHSIZE - 1))
+#define	LOCHASH(l)	(((long)(l) >> 2) & (TAILHSIZE - 1))
 struct tails {
 	struct	tails *t_next;
 	int	t_ends_at;

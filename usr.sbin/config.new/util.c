@@ -40,12 +40,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.6 1994/06/22 10:44:27 pk Exp $
+ *	$Id: util.c,v 1.7 1994/12/23 16:25:45 cgd Exp $
  */
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #if __STDC__
 #include <stdarg.h>
 #else
