@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 Register Definitions
  *
- *	$Id: if_elreg.h,v 1.2 1994/03/01 04:12:32 cgd Exp $
+ *	$Id: if_elreg.h,v 1.3 1994/03/01 05:41:27 mycroft Exp $
  */
 
 /*
@@ -80,5 +80,3 @@
 
 /* Packet buffer size */
 #define	EL_BUFSIZ	2048
-
-#define	ETHER_ADDR_LEN	6
