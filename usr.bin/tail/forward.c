@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.23 2002/10/30 21:48:50 jdolecek Exp $	*/
+/*	$NetBSD: forward.c,v 1.24 2003/03/10 08:04:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.23 2002/10/30 21:48:50 jdolecek Exp $");
+__RCSID("$NetBSD: forward.c,v 1.24 2003/03/10 08:04:15 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -248,7 +248,7 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 			 * We pause for one second after displaying any data
 			 * that has accumulated since we read the file.
 			 */
-                	(void) usleep(1000000);
+                	(void) sleep(1);
 
 			if (fflag == 2 && fileno(fp) != STDIN_FILENO &&
 			    stat(fname, &statbuf) != -1) {
