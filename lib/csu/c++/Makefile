@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2004/02/14 08:41:58 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2004/03/09 20:04:00 skrll Exp $
+
+.include <bsd.own.mk>
 
 CPPFLAGS+=	-DLIBC_SCCS
 .if ${MKPIC} != "no"
