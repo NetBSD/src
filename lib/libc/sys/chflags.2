@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.8 1997/04/22 06:10:26 mikel Exp $
+.\"	$NetBSD: chflags.2,v 1.9 1997/04/23 06:00:51 mikel Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ Otherwise, -1 is returned and the global variable
 is set to indicate the error.
 .Sh ERRORS
 .Fn Chflags
-will fail it:
+will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
@@ -126,6 +126,9 @@ Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EPERM
 The effective user ID does not match the owner of the file and
 the effective user ID is not the super-user.
+.It Bq Er EPERM
+The effective user ID is not the super-user and one or more of the
+super-user-only flags for the named file would be changed.
 .It Bq Er EOPNOTSUPP
 The named file resides on a file system that does not support file
 flags.
@@ -151,6 +154,9 @@ refers to a socket, not to a file.
 .It Bq Er EPERM
 The effective user ID does not match the owner of the file and
 the effective user ID is not the super-user.
+.It Bq Er EPERM
+The effective user ID is not the super-user and one or more of the
+super-user-only flags for the file would be changed.
 .It Bq Er EOPNOTSUPP
 The file resides on a file system that does not support file flags.
 .It Bq Er EROFS
