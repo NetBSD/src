@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.42 1998/07/05 22:29:52 jonathan Exp $	*/
+/*	$NetBSD: in.c,v 1.43 1998/09/06 17:52:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
+	case SIOCGIFALIAS:
 		if (ifra->ifra_addr.sin_family == AF_INET)
 			for (ia = IN_IFADDR_HASH(ifra->ifra_addr.sin_addr.s_addr).lh_first;
 			    ia != 0; ia = ia->ia_hash.le_next) {
@@ -383,6 +384,19 @@ in_control(so, cmd, data, ifp, p)
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
 		return (error);
+
+	case SIOCGIFALIAS:
+		ifra->ifra_mask = ia->ia_sockmask;
+		if ((ifp->if_flags & IFF_POINTOPOINT) &&
+		    (ia->ia_dstaddr.sin_family == AF_INET))
+			ifra->ifra_dstaddr = ia->ia_dstaddr;
+		else if ((ifp->if_flags & IFF_BROADCAST) &&
+		    (ia->ia_broadaddr.sin_family == AF_INET))
+			ifra->ifra_broadaddr = ia->ia_broadaddr;
+		else
+			memset(&ifra->ifra_broadaddr, 0,
+			    sizeof(ifra->ifra_broadaddr));
+		return 0;
 
 	case SIOCDIFADDR:
 		in_ifscrub(ifp, ia);
