@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.14 1997/03/14 20:43:05 leo Exp $	*/
+/*	$NetBSD: sem.c,v 1.15 1997/05/25 18:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 
 #define	NAMESIZE	100	/* local name buffers */
 
-static const char *s_ifnet;		/* magic attribute */
+const char *s_ifnet;		/* magic attribute */
 const char *s_nfs;
 const char *s_qmark;
 
@@ -75,7 +75,6 @@ static struct devi **nextdevi;
 static struct devi **nextpseudo;
 
 static int has_errobj __P((struct nvlist *, void *));
-static int has_attr __P((struct nvlist *, const char *));
 static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
 static int exclude __P((struct nvlist *, const char *, const char *));
 static int resolve __P((struct nvlist **, const char *, const char *,
@@ -237,7 +236,7 @@ has_errobj(nv, obj)
  * Return true if the given attribute is embedded in the given
  * pointer list.
  */
-static int
+int
 has_attr(nv, attr)
 	register struct nvlist *nv;
 	register const char *attr;
@@ -657,9 +656,10 @@ resolve(nvp, name, what, dflt, part)
 	 * Check for the magic network interface attribute, and
 	 * don't bother making a device number.
 	 */
-	if (has_attr(dev->d_attrs, s_ifnet))
+	if (has_attr(dev->d_attrs, s_ifnet)) {
 		nv->nv_int = NODEV;
-	else {
+		nv->nv_ifunit = unit;	/* XXX XXX XXX */
+	} else {
 		if (dev->d_major == NODEV) {
 			error("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
