@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.118 2001/12/08 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.119 2001/12/18 15:51:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.118 2001/12/08 00:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.119 2001/12/18 15:51:52 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1004,6 +1004,7 @@ int
 issignal(struct proc *p)
 {
 	int		s, signum, prop;
+	int		dolock = (p->p_flag & P_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
 	for (;;) {
@@ -1013,6 +1014,8 @@ issignal(struct proc *p)
 		signum = firstsig(&ss);
 		if (signum == 0) {		 	/* no signal to send */
 			p->p_sigctx.ps_sigcheck = 0;
+			if (locked && dolock)
+				SCHED_LOCK(s);
 			return (0);
 		}
 							/* take the signal! */
@@ -1033,12 +1036,16 @@ issignal(struct proc *p)
 			 */
 			p->p_xstat = signum;
 			if ((p->p_flag & P_FSTRACE) == 0)
-				psignal(p->p_pptr, SIGCHLD);
-			SCHED_LOCK(s);
+				psignal1(p->p_pptr, SIGCHLD, dolock);
+			if (dolock)
+				SCHED_LOCK(s);
 			proc_stop(p);
 			mi_switch(p);
 			SCHED_ASSERT_UNLOCKED();
-			splx(s);
+			if (dolock)
+				splx(s);
+			else
+				dolock = 1;
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1100,12 +1107,16 @@ issignal(struct proc *p)
 					break;	/* == ignore */
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-					psignal(p->p_pptr, SIGCHLD);
-				SCHED_LOCK(s);
+					psignal1(p->p_pptr, SIGCHLD, dolock);
+				if (dolock)
+					SCHED_LOCK(s);
 				proc_stop(p);
 				mi_switch(p);
 				SCHED_ASSERT_UNLOCKED();
-				splx(s);
+				if (dolock)
+					splx(s);
+				else
+					dolock = 1;
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1142,6 +1153,8 @@ issignal(struct proc *p)
 						/* leave the signal for later */
 	sigaddset(&p->p_sigctx.ps_siglist, signum);
 	CHECKSIGS(p);
+	if (locked && dolock)
+		SCHED_LOCK(s);
 	return (signum);
 }
 
