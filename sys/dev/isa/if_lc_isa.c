@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.1 1997/07/31 21:58:19 matt Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.2 1997/10/15 21:26:51 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -78,60 +78,6 @@
 
 #include <dev/isa/isavar.h>
 
-/*
- * This keeps track of which ISAs have been through a lc probe sequence.
- * A simple static variable isn't enough, since it's conceivable that
- * a system might have more than one ISA bus.
- *
- * The "isa_bus" member is a pointer to the parent ISA bus device struct
- * which will unique per ISA bus.
- */
-
-#define MAXCARDS_PER_ISABUS	4	/* if you have more than 4, you lose */
-#define	MAXSLOTS_PER_BUS	16	/* 0x200-0x3FF in 0x20 incr. */
-
-struct lemac_isabus {
-    LIST_ENTRY(lemac_isabus) isa_link;
-    struct device *isa_bus;
-    struct lemac_card {
-	bus_addr_t iobase;
-	bus_addr_t maddr;
-	bus_size_t msize;
-	int irq;
-	int available;
-    } isa_cards[MAXCARDS_PER_ISABUS];
-};
-
-static LIST_HEAD(, lemac_isabus) lemac_isa_buses;
-static int lemac_isa_buses_inited;
-
-static void
-lemac_isa_card_add(
-    struct lemac_isabus *bus,
-    bus_addr_t iobase,
-    bus_addr_t maddr,
-    bus_size_t msize,
-    int irq)
-{
-    int idx;
-
-    for (idx = 0; idx < MAXCARDS_PER_ISABUS; idx++) {
-	if (bus->isa_cards[idx].available == 0) {
-	    bus->isa_cards[idx].iobase = iobase;
-	    bus->isa_cards[idx].maddr = maddr;
-	    bus->isa_cards[idx].msize = msize;
-	    bus->isa_cards[idx].irq = irq;
-	    bus->isa_cards[idx].available = 1;
-	    break;
-	}
-    }
-}
-
-/*
- * We'd like like to allow the irq, maddr, and iobase addresses to be
- * wildcarded. So, we probe all the cards the first time lemac_isa_probe()
- * is called. On subsequent calls we look for matching cards.
- */
 static int
 lemac_isa_probe(
     struct device *parent,
@@ -143,92 +89,60 @@ lemac_isa_probe(
     void *aux)
 {
     struct isa_attach_args * const ia = aux;
-    struct lemac_isabus *bus;
-    int idx;
-
-    if (lemac_isa_buses_inited == 0) {
-	LIST_INIT(&lemac_isa_buses);
-	lemac_isa_buses_inited = 1;
-    }
+    int irq;
+    bus_addr_t iobase;
+    bus_addr_t iolimit;
+    bus_addr_t maddr;
+    bus_addr_t msize;
+    bus_space_handle_t memh;
+    bus_space_handle_t ioh;
 
     /*
-     * Probe this bus if we haven't done so already.
+     * Determine if we are probing for any card or a specific card.
      */
-    for (bus = lemac_isa_buses.lh_first; bus != NULL;
-					 bus = bus->isa_link.le_next) {
-	if (bus->isa_bus == parent)
-	    break;
+    if (ia->ia_iobase == IOBASEUNK) {
+	iobase = LEMAC_IOBASE_LOW;
+	iolimit = LEMAC_IOBASE_HIGH;
+    } else if (ia->ia_iobase & (LEMAC_IOSIZE-1)) {
+	return 0;
+    } else {
+	iobase = ia->ia_iobase;
+	iolimit = ia->ia_iobase + LEMAC_IOSIZE;
     }
 
-    if (bus == NULL) {
-	bus_addr_t iobase;
+    for (; iobase < iolimit; iobase += LEMAC_IOSIZE) {
 	/*
-	 * Mark this bus so we don't probe it again.
+	 * Map the LEMACs port-space for the probe sequence.
 	 */
-	bus = (struct lemac_isabus *)
-	    malloc(sizeof(struct lemac_isabus), M_DEVBUF, M_NOWAIT);
-	if (bus == NULL)
-	    panic("lemac_isa_probe: can't allocate state storage for %s",
-		  parent->dv_xname);
+	if (bus_space_map(ia->ia_iot, iobase, LEMAC_IOSIZE, 0, &ioh))
+	    continue;
 
-	bus->isa_bus = parent;
-	LIST_INSERT_HEAD(&lemac_isa_buses, bus, isa_link);
+	/*
+	 * Read the Ethernet address from the EEPROM.
+	 * It must start with on the DEC OUIs and pass the
+	 * DEC ethernet checksum test.
+	 */
 
-	for (iobase = LEMAC_IOBASE_LOW; iobase < LEMAC_IOBASE_HIGH;
-					iobase += LEMAC_IOSIZE) {
-	    bus_space_handle_t ioh;
-	    /*
-	     * Map the LEMACs port-space for the probe sequence.
-	     */
-	    if (bus_space_map(ia->ia_iot, iobase, LEMAC_IOSIZE, 0, &ioh))
-		continue;
-
-	    /*
-	     * Read the Ethernet address from the EEPROM.
-	     * It must start with on the DEC OUIs and pass the
-	     * DEC ethernet checksum test.
-	     */
-
-	    if (lemac_port_check(ia->ia_iot, ioh)) {
-		int irq;
-		bus_addr_t maddr;
-		bus_addr_t msize;
-		bus_space_handle_t memh;
-
-		lemac_info_get(ia->ia_iot, ioh, &maddr, &msize, &irq);
-		if (!bus_space_map(ia->ia_memt, maddr, msize, 0, &memh)) {
-		    lemac_isa_card_add(bus, iobase, maddr, msize, irq);
-		    bus_space_unmap(ia->ia_memt, memh, msize);
+	if (lemac_port_check(ia->ia_iot, ioh)) {
+	    lemac_info_get(ia->ia_iot, ioh, &maddr, &msize, &irq);
+	    if (!bus_space_map(ia->ia_memt, maddr, msize, 0, &memh)) {
+		bus_space_unmap(ia->ia_memt, memh, msize);
+		if ((ia->ia_maddr == MADDRUNK || ia->ia_maddr == maddr)
+			&& (ia->ia_irq == IRQUNK || ia->ia_irq == irq)) {
+		    ia->ia_iobase = iobase;
+		    ia->ia_irq    = irq;
+		    ia->ia_iosize = LEMAC_IOSIZE;
+		    ia->ia_maddr  = maddr;
+		    ia->ia_msize  = msize;
+		    return 1;
 		}
 	    }
-
-	    bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
 	}
+
+	bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
     }
 
-    for (idx = 0; idx < MAXCARDS_PER_ISABUS; idx++) {
-	if (bus->isa_cards[idx].available != 1)
-	    continue;
-	if (ia->ia_iobase != IOBASEUNK
-	        && ia->ia_iobase != bus->isa_cards[idx].iobase)
-	    continue;
-	if (ia->ia_maddr != MADDRUNK
-	        && ia->ia_maddr != bus->isa_cards[idx].maddr)
-	    continue;
-	if (ia->ia_irq != IRQUNK && ia->ia_irq != bus->isa_cards[idx].irq)
-	    continue;
-	break;
-    }
-    if (idx == MAXCARDS_PER_ISABUS)
-	return 0;
-
-    bus->isa_cards[idx].available++;
-    ia->ia_iobase = bus->isa_cards[idx].iobase;
-    ia->ia_irq    = bus->isa_cards[idx].irq;
-    ia->ia_iosize = LEMAC_IOSIZE;
-    ia->ia_maddr  = bus->isa_cards[idx].maddr;
-    ia->ia_msize  = bus->isa_cards[idx].msize;
-    return 1;
+    return 0;
 }
 
 static void
@@ -239,7 +153,6 @@ lemac_isa_attach(
 {
     lemac_softc_t *sc = (void *)self;
     struct isa_attach_args *ia = aux;
-
 
     /* Map i/o space. */
     sc->sc_iot = ia->ia_iot;
