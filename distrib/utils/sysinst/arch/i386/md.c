@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.7 1997/12/15 00:41:03 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.8 1997/12/20 21:31:48 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -252,6 +252,7 @@ void md_copy_filesystem (void)
 	run_prog ("tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
+	run_prog ("/bin/cp /usr/share/misc/termcap /mnt/.termcap");
 }
 
 
