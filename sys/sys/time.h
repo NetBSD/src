@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.11 1994/12/13 14:48:21 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.12 1994/12/14 08:27:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,27 +32,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)time.h	8.1 (Berkeley) 6/2/93
+ *	@(#)time.h	8.2 (Berkeley) 7/10/94
  */
 
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
+
+#include <sys/types.h>
 
 /*
  * Structure returned by gettimeofday(2) system call,
  * and used in other calls.
  */
 struct timeval {
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
+	int32_t	tv_sec;		/* seconds */
+	int32_t	tv_usec;	/* and microseconds */
 };
 
 /*
  * Structure defined by POSIX.4 to be like a timeval.
  */
 struct timespec {
-	long	ts_sec;		/* seconds */
-	long	ts_nsec;	/* and nanoseconds */
+	int32_t	ts_sec;		/* seconds */
+	int32_t	ts_nsec;	/* and nanoseconds */
 };
 
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
@@ -119,9 +121,9 @@ struct	itimerval {
  * Getkerninfo clock information structure
  */
 struct clockinfo {
+	int	hz;		/* clock frequency */
 	int	tick;		/* micro-seconds per hz tick */
 	int	tickadj;	/* clock skew rate for adjtime() */
-	int	hz;		/* clock frequency */
 	int	stathz;		/* statistics clock frequency */
 	int	profhz;		/* profiling clock frequency */
 };
