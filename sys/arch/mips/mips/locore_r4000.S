@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.34 1997/06/21 04:18:16 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.35 1997/06/21 06:32:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2130,17 +2130,23 @@ END(mips3_switch_exit)
  * Resume process indicated by the pte's for its u struct
  * NOTE: This is hard coded to UPAGES == 2.
  * Also, there should be no TLB faults at this point.
+ *
+ * Entered from CPU-common cpu_switch()
+ * v0 = Address Space Identifier (TLB PID) for this process
+ * t0 = First u.pte
+ * t1 = Second u.pte
  */
 /*
  * XXXX - almost done with the UADDR mapping; only the kernel stack should
- * now be using UADDR.  The first TLB entries (one one on the R4000) is used
- * to map UADDR to the u-area.  Then the following TLB entries are used to
- * map the current u-area.  This gets nasty on the R4000:  it can take one
- * or two TLB entries to map the u-area, depending upon whether the u-area
+ * now be using UADDR.  The first TLB entry is used to map UADDR to the
+ * u-area.  Then the following TLB entries are used to map the current u-area.
+ * This gets a bit messy on the R4000:  it can take one or two TLB
+ * entries to map the u-area, depending upon whether the u-area
  * begins on an even or odd page.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
  */
 LEAF(mips3_cpu_switch_resume)
+	or	v0, v0, UADDR			# v0 = first HI entry
 	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
 	mtc0	t0, MACH_COP_0_TLB_LO0		# init low entry 0
