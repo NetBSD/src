@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18.2.2 2000/05/11 10:12:44 he Exp $
+#	$NetBSD: Makefile.inc,v 1.18.2.3 2000/06/03 14:58:49 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -66,9 +66,9 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	mv netbsd.tmp.gz ${.TARGET}
 
 release:
-	-mkdir -p ${RELEASEDIR}/installation/floppies
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppies
-	gzip <${IMAGE} >${RELEASEDIR}/installation/floppies/${IMAGE}.gz
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip -c -9 <${IMAGE} >${RELEASEDIR}/installation/floppy/${IMAGE}.gz
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}

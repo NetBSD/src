@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5.2.1 1999/11/11 21:06:32 he Exp $
+#	$NetBSD: Makefile.inc,v 1.5.2.2 2000/06/03 14:59:53 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -106,9 +106,9 @@ boot: ${BOOTCODE}
 	strip boot
 
 release:
-	-mkdir -p ${RELEASEDIR}/installation/floppies
-	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppies
-	for f in ${RELEASEDIR}/installation/floppies/${BASENAME}?.fs; do \
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
+	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}?.fs; do \
 		gzip <$$f >$$f.gz; \
 	done
 	
