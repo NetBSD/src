@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.21 1997/10/24 09:00:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 1998/02/22 12:16:03 christos Exp $
 
-WARNS=	0
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../usr.sbin/cron -DDEBUGGING=1

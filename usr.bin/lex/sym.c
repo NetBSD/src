@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: sym.c,v 1.9 1998/01/05 05:15:58 perry Exp $ */
+/* $NetBSD: sym.c,v 1.10 1998/02/22 12:08:35 christos Exp $ */
 
 #include "flexdef.h"
 
@@ -40,7 +40,7 @@ struct hash_entry *ndtbl[NAME_TABLE_HASH_SIZE];
 struct hash_entry *sctbl[START_COND_HASH_SIZE];
 struct hash_entry *ccltab[CCL_HASH_SIZE];
 
-struct hash_entry *findsym();
+struct hash_entry *findsym PROTO((char [], hash_table, int));
 
 
 /* addsym - add symbol and definitions to symbol table
@@ -105,7 +105,6 @@ int cclnum;
 	/* We don't bother checking the return status because we are not
 	 * called unless the symbol is new.
 	 */
-	Char *copy_unsigned_string();
 
 	(void) addsym( (char *) copy_unsigned_string( ccltxt ),
 			(char *) 0, cclnum,
@@ -179,9 +178,6 @@ void ndinstal( name, definition )
 char name[];
 Char definition[];
 	{
-	char *copy_string();
-	Char *copy_unsigned_string();
-
 	if ( addsym( copy_string( name ),
 			(char *) copy_unsigned_string( definition ), 0,
 			ndtbl, NAME_TABLE_HASH_SIZE ) )
@@ -227,8 +223,6 @@ void scinstal( str, xcluflg )
 char str[];
 int xcluflg;
 	{
-	char *copy_string();
-
 	/* Generate start condition definition, for use in BEGIN et al. */
 	action_define( str, lastsc );
 
