@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.2 2003/03/17 09:11:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.2 2003/03/17 09:11:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,11 @@ union_mount(mp, path, data, ndp, p)
 	printf("union_mount: from %s, on %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
+
+	/* Setup the readdir hook if it's not set already */
+	if (!vn_union_readdir_hook)
+		vn_union_readdir_hook = union_readdirhook;
+
 	return (0);
 
 bad:
