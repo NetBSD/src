@@ -1,0 +1,241 @@
+/*++
+/* NAME
+/*	postlock 1
+/* SUMMARY
+/*	lock mail folder and execute command
+/* SYNOPSIS
+/* .fi
+/*	\fBpostlock\fR [\fB-c \fIconfig_dir\fB] [\fB-l \fIlock_style\fB]
+/*		[\fB-v\fR] \fIfile command...\fR
+/* DESCRIPTION
+/*	The \fBpostlock\fR command locks \fIfile\fR for exclusive
+/*	access, and executes \fIcommand\fR. The locking method is
+/*	compatible with the Postfix UNIX-style local delivery agent.
+/*
+/*	Options:
+/* .IP "\fB-c \fIconfig_dir\fR"
+/*	Read the \fBmain.cf\fR configuration file in the named directory
+/*	instead of the default configuration directory.
+/* .IP "\fB-l \fIlock_style\fR"
+/*	Override the locking method specified via the
+/*	\fBmailbox_delivery_lock\fR configuration parameter (see below).
+/* .IP \fB-v\fR
+/*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+/*	options make the software increasingly verbose.
+/* .PP
+/*	Arguments:
+/* .IP \fIfile\fR
+/*	A mailbox file. The user should have read/write permission.
+/* .IP \fIcommand...\fR
+/*	The command to execute while \fIfile\fR is locked for exclusive
+/*	access.  The command is executed directly, i.e. without
+/*	interpretation by a shell command interpreter.
+/* DIAGNOSTICS
+/*	The result status is 75 (EX_TEMPFAIL) when \fBpostlock\fR
+/*	could not perform the requested operation.  Otherwise, the
+/*	exit status is the exit status from the command.
+/* BUGS
+/*	With remote file systems, the ability to acquire a lock does not
+/*	necessarily eliminate access conflicts. Avoid file access by
+/*	processes running on different machines.
+/* ENVIRONMENT
+/* .ad
+/* .fi
+/* .IP \fBMAIL_CONFIG\fR
+/*	Directory with Postfix configuration files.
+/* .IP \fBMAIL_VERBOSE\fR
+/*	Enable verbose logging for debugging purposes.
+/* CONFIGURATION PARAMETERS
+/* .ad
+/* .fi
+/*	The following \fBmain.cf\fR parameters are especially relevant to
+/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
+/*	and for default values.
+/* .SH "Locking controls"
+/* .ad
+/* .fi
+/* .IP \fBdeliver_lock_attempts\fR
+/*	Limit the number of attempts to acquire an exclusive lock.
+/* .IP \fBdeliver_lock_delay\fR
+/*	Time in seconds between successive attempts to acquire
+/*	an exclusive lock.
+/* .IP \fBstale_lock_time\fR
+/*	Limit the time after which a stale lock is removed.
+/* .IP \fBmailbox_delivery_lock\fR
+/*	What file locking method(s) to use when delivering to a UNIX-style
+/*	mailbox.
+/*	The default setting is system dependent.  For a list of available
+/*	file locking methods, use the \fBpostconf -l\fR command.
+/* .SH "Resource controls"
+/* .ad
+/* .fi
+/* .IP \fBfork_attempts\fR
+/*	Number of attempts to \fBfork\fR() a process before giving up.
+/* .IP \fBfork_delay\fR
+/*	Delay in seconds between successive \fBfork\fR() attempts.
+/* LICENSE
+/* .ad
+/* .fi
+/*	The Secure Mailer license must be distributed with this software.
+/* AUTHOR(S)
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
+/*--*/
+
+/* System library. */
+
+#include <sys_defs.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+
+/* Utility library. */
+
+#include <msg.h>
+#include <vstring.h>
+#include <vstream.h>
+#include <msg_vstream.h>
+#include <iostuff.h>
+
+/* Global library. */
+
+#include <mail_params.h>
+#include <dot_lockfile.h>
+#include <deliver_flock.h>
+#include <mail_conf.h>
+#include <sys_exits.h>
+#include <mbox_conf.h>
+#include <mbox_open.h>
+
+/* Application-specific. */
+
+/* usage - explain */
+
+static NORETURN usage(char *myname)
+{
+    msg_fatal("usage: %s [-c config_dir] [-l lock_style] [-v] folder command...", myname);
+}
+
+/* fatal_exit - all failures are deemed recoverable */
+
+static void fatal_exit(void)
+{
+    exit(EX_TEMPFAIL);
+}
+
+/* main - go for it */
+
+int     main(int argc, char **argv)
+{
+    VSTRING *why;
+    char   *folder;
+    char  **command;
+    int     ch;
+    int     fd;
+    struct stat st;
+    int     count;
+    WAIT_STATUS_T status;
+    pid_t   pid;
+    int     lock_mask;
+    char   *lock_style = 0;
+    MBOX   *mp;
+
+    /*
+     * Be consistent with file permissions.
+     */
+    umask(022);
+
+    /*
+     * To minimize confusion, make sure that the standard file descriptors
+     * are open before opening anything else. XXX Work around for 44BSD where
+     * fstat can return EBADF on an open file descriptor.
+     */
+    for (fd = 0; fd < 3; fd++)
+	if (fstat(fd, &st) == -1
+	    && (close(fd), open("/dev/null", O_RDWR, 0)) != fd)
+	    msg_fatal("open /dev/null: %m");
+
+    /*
+     * Process environment options as early as we can. We are not set-uid,
+     * and we are supposed to be running in a controlled environment.
+     */
+    if (getenv(CONF_ENV_VERB))
+	msg_verbose = 1;
+
+    /*
+     * Set up logging and error handling. Intercept fatal exits so we can
+     * return a distinguished exit status.
+     */
+    msg_vstream_init(argv[0], VSTREAM_ERR);
+    msg_cleanup(fatal_exit);
+
+    /*
+     * Parse JCL.
+     */
+    while ((ch = GETOPT(argc, argv, "c:l:v")) > 0) {
+	switch (ch) {
+	default:
+	    usage(argv[0]);
+	    break;
+	case 'c':
+	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
+		msg_fatal("out of memory");
+	    break;
+	case 'l':
+	    lock_style = optarg;
+	    break;
+	case 'v':
+	    msg_verbose++;
+	    break;
+	}
+    }
+    if (optind + 2 > argc)
+	usage(argv[0]);
+    folder = argv[optind];
+    command = argv + optind + 1;
+
+    /*
+     * Read the config file. The command line lock style can override the
+     * configured lock style.
+     */
+    mail_conf_read();
+    lock_mask = mbox_lock_mask(lock_style ? lock_style :
+	       get_mail_conf_str(VAR_MAILBOX_LOCK, DEF_MAILBOX_LOCK, 1, 0));
+
+    /*
+     * Lock the folder for exclusive access. Lose the lock upon exit. The
+     * command is not supposed to disappear into the background.
+     */
+    why = vstring_alloc(1);
+    if ((mp = mbox_open(folder, O_APPEND | O_WRONLY | O_CREAT,
+			S_IRUSR | S_IWUSR, (struct stat *) 0,
+			-1, -1, lock_mask, why)) == 0)
+	msg_fatal("open file %s: %s", folder, vstring_str(why));
+
+    /*
+     * Run the command. Remove the lock after completion.
+     */
+    for (count = 1; (pid = fork()) == -1; count++) {
+	msg_warn("fork %s: %m", command[0]);
+	if (count >= var_fork_tries) {
+	    mbox_release(mp);
+	    exit(EX_TEMPFAIL);
+	}
+	sleep(var_fork_delay);
+    }
+    switch (pid) {
+    case 0:
+	execvp(command[0], command);
+	msg_fatal("execvp %s: %m", command[0]);
+    default:
+	if (waitpid(pid, &status, 0) < 0)
+	    msg_fatal("waitpid: %m");
+	mbox_release(mp);
+	exit(WIFEXITED(status) ? WEXITSTATUS(status) : 1);
+    }
+}

@@ -26,7 +26,7 @@ mode, the SMTP server can accept mail even while the mail
 system is not running.
 
 The SMTP server implements a variety of policies for connection
-requests, and for parameters given to \fBHELO, MAIL FROM, VRFY\fR
+requests, and for parameters given to \fBHELO, ETRN, MAIL FROM, VRFY\fR
 and \fBRCPT TO\fR commands. They are detailed below and in the
 \fBmain.cf\fR configuration file.
 .SH SECURITY
@@ -46,7 +46,8 @@ RFC 1651 (SMTP service extensions)
 RFC 1652 (8bit-MIME transport)
 RFC 1854 (SMTP Pipelining)
 RFC 1870 (Message Size Declaration)
-RFC 1985 (ETRN command) (partial)
+RFC 1985 (ETRN command)
+RFC 2554 (AUTH command)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -55,10 +56,6 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 Depending on the setting of the \fBnotify_classes\fR parameter,
 the postmaster is notified of bounces, protocol problems,
 policy violations, and of other trouble.
-.SH BUGS
-.ad
-.fi
-RFC 1985 is implemented by forcing delivery of all deferred mail.
 .SH CONFIGURATION PARAMETERS
 .na
 .nf
@@ -74,6 +71,37 @@ a configuration change.
 .IP \fBstrict_rfc821_envelopes\fR
 Disallow non-RFC 821 style addresses in envelopes. For example,
 allow RFC822-style address forms with comments, like Sendmail does.
+.IP \fBbroken_sasl_auth_clients\fR
+Support older Microsoft clients that mis-implement the AUTH
+protocol, and that expect an EHLO response of "250 AUTH=list"
+instead of "250 AUTH list".
+.SH "Content inspection controls"
+.IP \fBcontent_filter\fR
+The name of a mail delivery transport that filters mail and that
+either bounces mail or re-injects the result back into Postfix.
+This parameter uses the same syntax as the right-hand side of
+a Postfix transport table.
+.SH "Authentication controls"
+.IP \fBenable_sasl_authentication\fR
+Enable per-session authentication as per RFC 2554 (SASL).
+This functionality is available only when explicitly selected
+at program build time and explicitly enabled at runtime.
+.IP \fBsmtpd_sasl_local_domain\fR
+The name of the local authentication realm.
+.IP \fBsmtpd_sasl_security_options\fR
+Zero or more of the following.
+.RS
+.IP \fBnoplaintext\fR
+Disallow authentication methods that use plaintext passwords.
+.IP \fBnoactive\fR
+Disallow authentication methods that are vulnerable to non-dictionary
+active attacks.
+.IP \fBnodictionary\fR
+Disallow authentication methods that are vulnerable to passive
+dictionary attack.
+.IP \fBnoanonymous\fR
+Disallow anonymous logins.
+.RE
 .SH Miscellaneous
 .ad
 .fi
@@ -93,12 +121,12 @@ specified in the \fBdebug_peer_level\fR parameter.
 Recipient of protocol/policy/resource/software error notices.
 .IP \fBhopcount_limit\fR
 Limit the number of \fBReceived:\fR message headers.
-.IP \fBnotify_classes\fR
-List of error classes. Of special interest are:
 .IP \fBlocal_recipient_maps\fR
 List of maps with user names that are local to \fB$myorigin\fR
 or \fB$inet_interfaces\fR. If this parameter is defined,
 then the SMTP server rejects mail for unknown local users.
+.IP \fBnotify_classes\fR
+List of error classes. Of special interest are:
 .RS
 .IP \fBpolicy\fR
 When a client violates any policy, mail a transcript of the
@@ -116,6 +144,9 @@ per message delivery.
 .IP \fBsmtpd_timeout\fR
 Limit the time to send a server response and to receive a client
 request.
+.IP \fBsoft_bounce\fR
+Change hard (5xx) reject responses into soft (4xx) reject responses.
+This can be useful for testing purposes.
 .SH "Resource controls"
 .ad
 .fi

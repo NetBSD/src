@@ -33,10 +33,13 @@ default_process_limit = 50
 #
 deliver_lock_attempts = 5
 
-# The deliver_lock_delay parameter limits the time in seconds between
-# attempts to acquire an exclusive lock.
+# The deliver_lock_delay parameter specifies the time between attempts
+# to acquire an exclusive lock.
 #
-deliver_lock_delay = 1
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+deliver_lock_delay = 1s
 
 # The duplicate_filter_limit parameter limits the number of addresses
 # remembered by the duplicate filter for alias, virtual, etc.
@@ -49,10 +52,13 @@ duplicate_filter_limit = 1000
 #
 fork_attempts = 5
 
-# The fork_delay parameter specifies the delay in seconds between
-# fork() attempts.
+# The fork_delay parameter specifies the delay between attempts to
+# fork() an external process.
 #
-fork_delay = 1
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+fork_delay = 1s
 
 # The header_size_limit parameter limits the amount of memory in
 # bytes used for processing a message header. If a header is larger,
@@ -91,10 +97,16 @@ queue_minfree = 0
 # The stale_lock_time parameter limits the time after which a stale
 # lock is removed. This is used for delivery to file or mailbox.
 #
-stale_lock_time = 500
-
-# The transport_retry_time parameter specifies the time in seconds
-# between attempts by the queue manager to contact a broken message
-# delivery transport.
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
 #
-transport_retry_time = 60
+stale_lock_time = 500s
+
+# The transport_retry_time parameter specifies the time between
+# attempts by the queue manager to contact a broken message delivery
+# transport.
+#
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+transport_retry_time = 60s
