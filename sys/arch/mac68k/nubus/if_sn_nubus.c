@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.17 1997/10/26 03:17:15 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.18 1998/05/02 16:45:30 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -51,7 +51,7 @@
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
-#include <mac68k/dev/nubus.h>
+#include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/if_snreg.h>
 #include <mac68k/dev/if_snvar.h>
 

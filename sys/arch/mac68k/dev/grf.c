@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.51 1998/04/24 05:27:24 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.52 1998/05/02 16:45:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@
 #include <uvm/uvm.h>
 #endif
 
-#include <mac68k/dev/nubus.h>
+#include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/itevar.h>
 #include <mac68k/dev/grfvar.h>
 

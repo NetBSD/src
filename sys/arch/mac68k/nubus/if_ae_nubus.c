@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.25 1998/04/25 21:27:40 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.26 1998/05/02 16:45:30 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -57,7 +57,7 @@
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
-#include <mac68k/dev/nubus.h>
+#include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/if_aevar.h>
 #include <mac68k/dev/if_aereg.h>
 

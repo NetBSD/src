@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.31 1998/03/22 23:40:52 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.32 1998/05/02 16:45:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -49,8 +49,8 @@
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
-#include <mac68k/dev/nubus.h>
-#include <mac68k/dev/obiovar.h>
+#include <mac68k/nubus/nubus.h>
+#include <mac68k/obio/obiovar.h>
 #include <mac68k/dev/grfvar.h>
 
 extern u_int32_t	mac68k_vidlog;

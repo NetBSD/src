@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.42 1998/01/12 19:22:11 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.43 1998/05/02 16:45:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,7 @@
 #include <vm/pmap.h>
 
 #include <mac68k/mac68k/macrom.h>
-#include <mac68k/dev/nubus.h>
+#include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/itevar.h>
 #include <mac68k/dev/grfvar.h>
 

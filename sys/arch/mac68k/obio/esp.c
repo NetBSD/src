@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.14 1998/01/12 19:22:02 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.15 1998/05/02 16:45:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -103,8 +103,8 @@
 
 #include <machine/viareg.h>
 
-#include <mac68k/dev/espvar.h>
-#include <mac68k/dev/obiovar.h>
+#include <mac68k/obio/espvar.h>
+#include <mac68k/obio/obiovar.h>
 
 void	espattach	__P((struct device *, struct device *, void *));
 int	espmatch	__P((struct device *, struct cfdata *, void *));
