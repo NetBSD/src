@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.24 1994/01/09 21:37:20 mycroft Exp $
+ *	$Id: machdep.c,v 1.25 1994/01/13 13:56:20 mycroft Exp $
  */
 
 #include "param.h"
@@ -293,10 +293,8 @@ again:
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-/*	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
- *				 16*NCARGS, TRUE);
- *	NOT CURRENTLY USED -- cgd
- */
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
