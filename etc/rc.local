@@ -6,7 +6,11 @@
 
 T=/tmp/_motd
 rm -f $T
-strings /386bsd | grep version: | sed 's/version: /386BSD 0.1./' > $T
+if [ -f /kern/version ]; then
+	head -1 /kern/version > $T
+else
+	echo "386BSD 0.1 (UNKNOWN)" > $T
+fi
 echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
 cp $T /etc/motd
