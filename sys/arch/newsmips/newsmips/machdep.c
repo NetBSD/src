@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2003/04/02 04:17:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2003/04/02 04:17:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2003/04/02 04:17:52 thorpej Exp $")
 /* the following is used externally (sysctl_hw) */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
@@ -241,7 +241,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 			i = strtoul(bootspec + 1, &bootspec, 10);
 			x_bootdev |= (i << 8);		/* partition */
 		}
-  bootspec_end:
+ bootspec_end:
 		consinit();
 	}
 #endif
@@ -289,13 +289,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 */
 	newsmips_bus_dma_init();
 
-#if 0
-	if (systype == NEWS5000) {
-		mips_L2CacheSize = 1024 * 1024;		/* XXX to be safe */
-		mips3_FlushCache();
-	}
-#endif
-
 #ifdef DDB
 	if (nsym)
 		ddb_init(esym - ssym, ssym, esym);
@@ -341,7 +334,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	/*
 	 * Allocate space for lwp0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -353,7 +346,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 
