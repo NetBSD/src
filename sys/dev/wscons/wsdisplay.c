@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.37.4.2 2000/12/13 22:10:23 he Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.37.4.3 2001/08/16 16:19:12 tv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37.4.2 2000/12/13 22:10:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37.4.3 2001/08/16 16:19:12 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1019,6 +1019,7 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
 	void *buf;
+	u_int fontsz;
 #if defined(COMPAT_14) && NWSKBD > 0
 	struct wsmux_device wsmuxdata;
 #endif
@@ -1061,10 +1062,12 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 			d->name = typebuf;
 		} else
 			d->name = "loaded"; /* ??? */
-		buf = malloc(d->fontheight * d->stride * d->numchars,
-			     M_DEVBUF, M_WAITOK);
-		error = copyin(d->data, buf,
-			       d->fontheight * d->stride * d->numchars);
+		fontsz = d->fontheight * d->stride * d->numchars;
+		if (fontsz > WSDISPLAY_MAXFONTSZ)
+			return (EINVAL);
+
+		buf = malloc(fontsz, M_DEVBUF, M_WAITOK);
+		error = copyin(d->data, buf, fontsz);
 		if (error) {
 			free(buf, M_DEVBUF);
 			return (error);
