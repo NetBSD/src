@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.5 2003/04/10 22:07:06 christos Exp $
+# $NetBSD: INSTALL,v 1.6 2003/04/17 13:32:28 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/x86_64/conf/std.x86_64"
 
-#ident 		"INSTALL-$Revision: 1.5 $"
+#ident 		"INSTALL-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,6 +274,7 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #options 	SIOP_SYMLED		# drive the act. LED in software
