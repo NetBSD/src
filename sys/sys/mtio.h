@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.16 1998/07/03 20:25:20 mjacob Exp $	*/
+/*	$NetBSD: mtio.h,v 1.17 1998/07/30 00:44:46 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,6 +66,7 @@ struct mtop {
 #define MTSETBSIZ	14	/* set block size; 0 for variable */
 #define MTSETDNSTY	15	/* set density code for current mode */
 #define MTCMPRESS	16	/* set/clear device compression */
+#define MTEWARN		17	/* set/clear early warning behaviour */
 
 /* structure for MTIOCGET - mag tape get status command */
 
