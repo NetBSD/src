@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.4 1994/01/05 17:52:01 mycroft Exp $
+#	$Id: DUALITY,v 1.5 1994/01/09 21:38:05 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -32,6 +32,7 @@ options		SYSVSHM
 options		HPUXCOMPAT
 
 # Options specific to this host.
+options		DDB
 options		DEBUG,DIAGNOSTIC
 options		PANICBUTTON,PANICWAIT
 options		KTRACE
