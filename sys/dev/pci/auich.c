@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.5 2001/11/13 07:48:41 lukem Exp $	*/
+/*	$NetBSD: auich.c,v 1.6 2002/01/12 00:13:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.5 2001/11/13 07:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.6 2002/01/12 00:13:42 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,14 +467,17 @@ auich_close(void *v)
 int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
-	switch (aep->index) {
+
 #if 0 /* XXX Not until we emulate it. */
+	switch (aep->index) {
 	case 0:
 		strcpy(aep->name, AudioEulinear);
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
+#else
+	switch (aep->index + 1) {
 #endif
 	case 1:
 		strcpy(aep->name, AudioEmulaw);
