@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.43 2001/12/04 13:54:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.43.2.1 2004/08/31 01:35:26 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,6 +104,8 @@
 # define ULLFP(x)	"%" x "lu"
 # define ULLT		unsigned long
 # define STRTOLL(x,y,z)	strtol(x,y,z)
+# define LLTMIN		LONG_MIN
+# define LLTMAX		LONG_MAX
 #else
 # define LLF		"%lld"
 # define LLFP(x)	"%" x "lld"
@@ -116,6 +114,8 @@
 # define ULLFP(x)	"%" x "llu"
 # define ULLT		unsigned long long
 # define STRTOLL(x,y,z)	strtoll(x,y,z)
+# define LLTMIN		LLONG_MIN
+# define LLTMAX		LLONG_MAX
 #endif
 
 #define FTP_BUFLEN	512
@@ -143,9 +143,6 @@ char   *getline(char *, int, FILE *);
 void	init_curclass(void);
 void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
-#if 0
-void	logwtmp(const char *, const char *, const char *);
-#endif
 struct tab *lookup(struct tab *, const char *);
 void	makedir(const char *);
 void	mlsd(const char *);
@@ -176,10 +173,27 @@ void	statcmd(void);
 void	statfilecmd(const char *);
 void	statxfer(void);
 void	store(const char *, const char *, int);
-LLT	strsuftoll(const char *);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
+
+long long strsuftoll(const char*, const char*, long long, long long);
+long long strsuftollx(const char*, const char*, long long, long long, char*, size_t);  
+
+#ifdef SUPPORT_UTMP
+struct utmp;
+
+void	ftpd_logwtmp(const char *, const char *, const char *);
+void	ftpd_login(const struct utmp *ut);
+int	ftpd_logout(const char *line);
+#endif
+
+#ifdef SUPPORT_UTMPX
+struct utmpx;
+
+void	ftpd_loginx(const struct utmpx *);
+void	ftpd_logwtmpx(const char *, const char *, const char *, int, int);
+#endif
 
 #include <netinet/in.h>
 
@@ -261,21 +275,26 @@ struct ftpclass {
 	char		*display;	/* File to display upon chdir */
 	char		*homedir;	/* Directory to chdir(2) to at login */
 	classflag_t	 flags;		/* Flags; see classflag_t above */
-	int	 	 limit;		/* Max connections (-1 = unlimited) */
+	LLT		 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
 	LLT		 maxfilesize;	/* Maximum file size of uploads */
 	LLT		 maxrateget;	/* Maximum get transfer rate throttle */
 	LLT		 maxrateput;	/* Maximum put transfer rate throttle */
-	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
+	LLT		 maxtimeout;	/* Maximum permitted timeout */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	int		 portmin;	/* Minumum port for passive mode */
-	int		 portmax;	/* Maximum port for passive mode */
+	LLT		 portmin;	/* Minumum port for passive mode */
+	LLT		 portmax;	/* Maximum port for passive mode */
 	LLT		 rateget;	/* Get (RETR) transfer rate throttle */
 	LLT		 rateput;	/* Put (STOR) transfer rate throttle */
-	unsigned int	 timeout;	/* Default timeout */
+	LLT		 timeout;	/* Default timeout */
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
+	LLT		 mmapsize;	/* mmap window size */
+	LLT		 readsize;	/* data read size */
+	LLT		 writesize;	/* data write size */
+	LLT		 sendbufsize;	/* SO_SNDBUF size */
+	LLT		 sendlowat;	/* SO_SNDLOWAT size */
 };
 
 extern void		ftp_loop(void) __attribute__ ((noreturn));
@@ -294,11 +313,10 @@ GLOBAL	struct sockinet	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
-GLOBAL	jmp_buf		errcatch;
 GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
-GLOBAL	gid_t		gidlist[NGROUPS_MAX];
+GLOBAL	gid_t		*gidlist;
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
 GLOBAL	char		homedir[MAXPATHLEN];
@@ -316,7 +334,6 @@ GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
 GLOBAL	off_t		restart_point;
 GLOBAL	char		tmpline[FTP_BUFLEN];
-GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
 GLOBAL	int		usedefault;		/* for data transfers */
 GLOBAL	const char     *version;
@@ -345,8 +362,8 @@ extern	struct tab	cmdtab[];
 			} while (0);
 
 #define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
-		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
-		    	curclass.type == CLASS_REAL   ? "REAL"   : \
+			curclass.type == CLASS_CHROOT ? "CHROOT" : \
+			curclass.type == CLASS_REAL   ? "REAL"   : \
 			"<unknown>"
 
 #define ISDOTDIR(x)	(x[0] == '.' && x[1] == '\0')
