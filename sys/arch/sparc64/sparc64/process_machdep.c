@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2000/01/10 03:53:22 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -214,6 +214,8 @@ struct fpreg	*regs;
 
 		/* NOTE: struct fpreg == struct fpstate */
 		bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg64));
+		statep = p->p_md.md_fpstate;
+		statep->fs_qsize = 0;
 		return 0;
 	}
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
@@ -222,6 +224,7 @@ struct fpreg	*regs;
 	for (i=0; i<32; i++)
 		statep->fs_regs[i] = regp->fr_regs[i];
 	statep->fs_fsr = regp->fr_fsr;
+	statep->fs_qsize = 0;
 
 	return 0;
 }
