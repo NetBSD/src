@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.12 2003/08/07 16:33:46 agc Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.13 2004/04/22 01:01:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.12 2003/08/07 16:33:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.13 2004/04/22 01:01:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.12 2003/08/07 16:33:46 agc Exp $");
 
 extern	struct domain nsdomain;
 
-struct protosw nssw[] = {
+const struct protosw nssw[] = {
 { 0,		&nsdomain,	0,		0,
   0,		idp_output,	0,		0,
   0,

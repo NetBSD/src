@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.98 2004/04/17 15:15:29 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.99 2004/04/22 01:01:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.98 2004/04/17 15:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.99 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -458,7 +458,7 @@ int
 socreate(int dom, struct socket **aso, int type, int proto)
 {
 	struct proc	*p;
-	struct protosw	*prp;
+	const struct protosw	*prp;
 	struct socket	*so;
 	int		error, s;
 
@@ -942,7 +942,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 {
 	struct mbuf	*m, **mp;
 	int		flags, len, error, s, offset, moff, type, orig_resid;
-	struct protosw	*pr;
+	const struct protosw	*pr;
 	struct mbuf	*nextrecord;
 	int		mbuf_removed = 0;
 
@@ -1345,7 +1345,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 int
 soshutdown(struct socket *so, int how)
 {
-	struct protosw	*pr;
+	const struct protosw	*pr;
 
 	pr = so->so_proto;
 	if (!(how == SHUT_RD || how == SHUT_WR || how == SHUT_RDWR))
@@ -1363,7 +1363,7 @@ void
 sorflush(struct socket *so)
 {
 	struct sockbuf	*sb, asb;
-	struct protosw	*pr;
+	const struct protosw	*pr;
 	int		s;
 
 	sb = &so->so_rcv;

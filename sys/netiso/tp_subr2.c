@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.25 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.26 2004/04/22 01:01:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.26 2004/04/22 01:01:41 matt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -437,7 +437,7 @@ tp_netcmd(struct tp_pcb *tpcb, int cmd)
 		break;
 
 	default:
-		printf("tp_netcmd(0x%x, 0x%x) NOT IMPLEMENTED\n", tpcb, cmd);
+		printf("tp_netcmd(%p, %#x) NOT IMPLEMENTED\n", tpcb, cmd);
 		break;
 	}
 #else				/* TPCONS */
