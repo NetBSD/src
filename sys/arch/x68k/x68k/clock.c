@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1996/05/05 12:17:22 oki Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1996/05/15 16:12:48 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
@@ -83,6 +84,7 @@
  * no alternative timer is available.
  *
  */
+void
 cpu_initclocks()
 {
 	/* stop timer-C */
@@ -109,6 +111,7 @@ setstatclockrate(hz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
+int
 clkread()
 {
 	return (mfp.tcdr * CLOCKS_PER_SEC) / CLK_INTERVAL;
@@ -460,6 +463,7 @@ long (*settod) () = 0;
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
+void
 inittodr(base)
 	time_t base;
 {
@@ -484,6 +488,7 @@ inittodr(base)
 	time.tv_sec = timbuf;
 }
 
+void
 resettodr()
 {
 	if (settod)
