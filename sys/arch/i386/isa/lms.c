@@ -124,7 +124,7 @@ int lmsprobe(struct isa_device *dvp)
 	/* Check if something is out there */
 
 	if (val == 0x0C && inb(ioport+SIGN) == 0x50)
-		return(1);
+		return(4);
 
 	/* Not present */
 
