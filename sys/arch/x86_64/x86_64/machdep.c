@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2002/12/03 22:03:01 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2002/12/10 20:45:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ cpu_startup()
 	 * is not managed by the VM system.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) (void *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
