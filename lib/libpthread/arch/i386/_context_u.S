@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.9 2002/08/14 18:48:00 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.10 2002/09/06 17:36:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@ ENTRY(_swapcontext_u_s87)
 #undef FPSAVE
 #undef FPLOAD
 		
-#define FPSAVE(reg)	fxrstor UC_FXSAVEREGS(reg)
-#define FPLOAD(reg)	fxsave UC_FXSAVEREGS(reg)
+#define FPSAVE(reg)	fxsave UC_FXSAVEREGS(reg)
+#define FPLOAD(reg)	fxrstor UC_FXSAVEREGS(reg)
 #include "_getsetc.S"
 
 ENTRY(_getcontext_u_xmm)
