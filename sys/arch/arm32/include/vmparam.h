@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.2 1996/06/03 21:58:28 mark Exp $ */
+/* $NetBSD: vmparam.h,v 1.3 1996/06/12 19:55:04 mark Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -87,13 +87,15 @@
 /*
  * Mach derived constants
  */
+
+/* Need to link some of these with some in param.h */
    
-/*#define	VM_MIN_ADDRESS		((vm_offset_t)0x00400000)*/
 #define	VM_MIN_ADDRESS		((vm_offset_t)0x00001000)
 #define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xefc00000 - UPAGES * NBPG)
 #define	VM_MAX_ADDRESS		((vm_offset_t)0xeffc0000)
 
 #define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf0000000)
+#define	VM_MAXKERN_ADDRESS	((vm_offset_t)0xf3000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffff)
 
 /*
