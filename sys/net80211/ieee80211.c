@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.6 2003/10/14 23:13:44 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.7 2003/10/16 22:25:00 matt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.7 2003/08/13 22:09:44 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.6 2003/10/14 23:13:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.7 2003/10/16 22:25:00 matt Exp $");
 #endif
 
 /*
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.6 2003/10/14 23:13:44 dyoung Exp $")
  */
 
 #include "opt_inet.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -129,8 +130,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 	int i;
 
 	ether_ifattach(ifp, ic->ic_myaddr);
+#if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11,
 	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
+#endif
 	ieee80211_crypto_attach(ifp);
 
 	/*
@@ -197,7 +200,9 @@ ieee80211_ifdetach(struct ifnet *ifp)
 #else
         ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
 #endif
+#if NBPFILTER > 0
 	bpfdetach(ifp);
+#endif
 	ether_ifdetach(ifp);
 }
 
