@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.4 1999/10/27 10:04:41 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -220,7 +220,7 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
 
 
 /*
- * int cardbus_mapreg_map(cardbus_devfunc_t, int, cardbusreg_t,
+ * int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
  *			  int bus_space_tag_t *, bus_space_handle_t *,
  *			  bus_addr_t *, bus_size_t *)
  *    This function maps bus-space on the value of Base Address
@@ -230,17 +230,17 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
  *   written on the BAR.
  */
 int
-cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
-     cardbus_devfunc_t ct;
-     int reg, busflags;
+cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
+     struct cardbus_softc *sc;
+     int func, reg, busflags;
      cardbusreg_t type;
      bus_space_tag_t *tagp;
      bus_space_handle_t *handlep;
      bus_addr_t *basep;
      bus_size_t *sizep;
 {
-  cardbus_chipset_tag_t cc = ct->ct_cc;
-  cardbus_function_tag_t cf = ct->ct_cf;
+  cardbus_chipset_tag_t cc = sc->sc_cc;
+  cardbus_function_tag_t cf = sc->sc_cf;
   bus_space_tag_t bustag;
 #if rbus
   rbus_tag_t rbustag;
@@ -251,26 +251,26 @@ cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
   int flags;
   int status = 0;
 
-  cardbustag_t tag = cardbus_make_tag(cc, cf, ct->ct_bus, ct->ct_dev, ct->ct_func);
+  cardbustag_t tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
 
-  DPRINTF(("cardbus_mapreg_map called: %s %x\n", ct->ct_sc->sc_dev.dv_xname,
+  DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
 	   type));
 
   if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
     if (cardbus_io_find(cc, cf, tag, reg, type, &base, &size, &flags)) {
       status = 1;
     }
-    bustag = ct->ct_sc->sc_iot;
+    bustag = sc->sc_iot;
 #if rbus
-    rbustag = ct->ct_sc->sc_rbus_iot;
+    rbustag = sc->sc_rbus_iot;
 #endif
   } else {
     if (cardbus_mem_find(cc, cf, tag, reg, type, &base, &size, &flags)){
       status = 1;
     }
-    bustag = ct->ct_sc->sc_memt;
+    bustag = sc->sc_memt;
 #if rbus
-    rbustag = ct->ct_sc->sc_rbus_memt;
+    rbustag = sc->sc_rbus_memt;
 #endif
   }
   if (status == 0) {
@@ -311,6 +311,8 @@ cardbus_mapreg_map(ct, reg, type, busflags, tagp, handlep, basep, sizep)
   if (sizep != 0) {
     *sizep = size;
   }
+  cardbus_free_tag(cc, cf, tag);
+
   return 0;
 }
 
