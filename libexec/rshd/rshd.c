@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rshd.c	5.38 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rshd.c,v 1.5 1994/02/18 18:36:54 cgd Exp $";
+static char rcsid[] = "$Id: rshd.c,v 1.6 1994/05/19 22:54:19 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -107,7 +107,7 @@ main(argc, argv)
 	char **argv;
 {
 	extern int opterr, optind;
-	extern int _check_rhosts_file;
+	extern int __check_rhosts_file;
 	struct linger linger;
 	int ch, on = 1, fromlen;
 	struct sockaddr_in from;
@@ -122,7 +122,7 @@ main(argc, argv)
 			break;
 
 		case 'l':
-			_check_rhosts_file = 0;
+			__check_rhosts_file = 0;
 			break;
 
 		case 'n':
