@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.6 1999/01/22 14:05:06 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.7 1999/01/29 05:37:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.6 1999/01/22 14:05:06 simonb Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.7 1999/01/29 05:37:49 simonb Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ static char rcsid[] = "$NetBSD: mkboot.c,v 1.6 1999/01/22 14:05:06 simonb Exp $"
 #include <sys/disklabel.h>
 #include <stdio.h>
 
-#include <dec_boot.h>
+#include <machine/dec_boot.h>
 
 struct	Dec_DiskBoot decBootInfo;
 char	block[DEV_BSIZE];

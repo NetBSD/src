@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1999/01/22 14:05:06 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1999/01/29 05:37:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #include <stand.h>
 #include <ufs.h>
-#include <dec_prom.h>
+#include <machine/dec_prom.h>
 #include <rz.h>
 #ifndef BOOT
 #include <tz.h>
