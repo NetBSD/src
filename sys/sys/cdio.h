@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.18 2004/05/10 15:14:12 christos Exp $	*/
+/*	$NetBSD: cdio.h,v 1.19 2005/01/31 20:25:54 reinoud Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -7,123 +7,129 @@
 
 union msf_lba {
 	struct {
-		u_char unused;
-		u_char minute;
-		u_char second;
-		u_char frame;
+		uint8_t unused;
+		uint8_t minute;
+		uint8_t second;
+		uint8_t frame;
 	} msf;
 	u_int32_t lba;
-	u_char	addr[4];
+	uint8_t	addr[4];
 };
 
 struct cd_toc_entry {
-	u_char	nothing1;
+	uint8_t		nothing1;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	uint8_t		control:4;
+	uint8_t		addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	uint8_t		addr_type:4;
+	uint8_t		control:4;
 #endif
-	u_char	track;
-	u_char	nothing2;
+	uint8_t		track;
+	uint8_t		nothing2;
 	union msf_lba	addr;
-};
+} __packed;
 
+/* READSUBCHANNEL read definitions */
 struct cd_sub_channel_header {
-	u_char	nothing1;
-	u_char	audio_status;
+	uint8_t	nothing1;
+	uint8_t	audio_status;
 #define CD_AS_AUDIO_INVALID	0x00
 #define CD_AS_PLAY_IN_PROGRESS	0x11
 #define CD_AS_PLAY_PAUSED	0x12
 #define CD_AS_PLAY_COMPLETED	0x13
 #define CD_AS_PLAY_ERROR	0x14
 #define CD_AS_NO_STATUS		0x15
-	u_char	data_len[2];
+	uint8_t	data_len[2];
 };
+
 
 struct cd_sub_channel_q_data {
-	u_char	data_format;
+	uint8_t	data_format;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	uint8_t	control:4;
+	uint8_t	addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	uint8_t	addr_type:4;
+	uint8_t	control:4;
 #endif
-	u_char	track_number;
-	u_char	index_number;
-	u_char	absaddr[4];
-	u_char	reladdr[4];
+	uint8_t	track_number;
+	uint8_t	index_number;
+	uint8_t	absaddr[4];
+	uint8_t	reladdr[4];
 #if BYTE_ORDER == LITTLE_ENDIAN
-        u_char  :7;
-        u_char  mc_valid:1;
+        uint8_t  :7;
+        uint8_t  mc_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-        u_char  mc_valid:1;
-        u_char  :7;
+        uint8_t  mc_valid:1;
+        uint8_t  :7;
 #endif
-        u_char  mc_number[15]; 
+        uint8_t  mc_number[15]; 
 #if BYTE_ORDER == LITTLE_ENDIAN
-        u_char  :7;
-        u_char  ti_valid:1;   
+        uint8_t  :7;
+        uint8_t  ti_valid:1;   
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-        u_char  ti_valid:1;   
-        u_char  :7;
+        uint8_t  ti_valid:1;   
+        uint8_t  :7;
 #endif
-        u_char  ti_number[15]; 
+        uint8_t  ti_number[15]; 
 };
 
+
 struct cd_sub_channel_position_data {
-	u_char	data_format;
+	uint8_t	data_format;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	uint8_t	control:4;
+	uint8_t	addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	uint8_t	addr_type:4;
+	uint8_t	control:4;
 #endif
-	u_char	track_number;
-	u_char	index_number;
+	uint8_t	track_number;
+	uint8_t	index_number;
 	union msf_lba	absaddr;
 	union msf_lba	reladdr;
 };
 
+
 struct cd_sub_channel_media_catalog {
-	u_char	data_format;
-	u_char	nothing1;
-	u_char	nothing2;
-	u_char	nothing3;
+	uint8_t	data_format;
+	uint8_t	nothing1;
+	uint8_t	nothing2;
+	uint8_t	nothing3;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	mc_valid:1;
+	uint8_t	:7;
+	uint8_t	mc_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	mc_valid:1;
-	u_char	:7;
+	uint8_t	mc_valid:1;
+	uint8_t	:7;
 #endif
-	u_char	mc_number[15];
+	uint8_t	mc_number[15];
 };
 
+
 struct cd_sub_channel_track_info {
-	u_char	data_format;
-	u_char	nothing1;
-	u_char	track_number;
-	u_char	nothing2;
+	uint8_t	data_format;
+	uint8_t	nothing1;
+	uint8_t	track_number;
+	uint8_t	nothing2;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	ti_valid:1;
+	uint8_t	:7;
+	uint8_t	ti_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	ti_valid:1;
-	u_char	:7;
+	uint8_t	ti_valid:1;
+	uint8_t	:7;
 #endif
-	u_char	ti_number[15];
+	uint8_t	ti_number[15];
 };
+
 
 struct cd_sub_channel_info {
 	struct cd_sub_channel_header header;
@@ -135,14 +141,15 @@ struct cd_sub_channel_info {
 	} what;
 };
 
+
 /*
  * Ioctls for the CD drive
  */
 struct ioc_play_track {
-	u_char	start_track;
-	u_char	start_index;
-	u_char	end_track;
-	u_char	end_index;
+	uint8_t	start_track;
+	uint8_t	start_index;
+	uint8_t	end_track;
+	uint8_t	end_index;
 };
 
 #define	CDIOCPLAYTRACKS	_IOW('c', 1, struct ioc_play_track)
@@ -153,33 +160,33 @@ struct ioc_play_blocks {
 #define	CDIOCPLAYBLOCKS	_IOW('c', 2, struct ioc_play_blocks)
 
 struct ioc_read_subchannel {
-	u_char	address_format;
+	uint8_t	address_format;
 #define CD_LBA_FORMAT		1
 #define CD_MSF_FORMAT		2
-	u_char	data_format;
+	uint8_t	data_format;
 #define CD_SUBQ_DATA		0
 #define CD_CURRENT_POSITION	1
 #define CD_MEDIA_CATALOG	2
 #define CD_TRACK_INFO		3
-	u_char	track;
-	int	data_len;
-	struct	cd_sub_channel_info *data;
+	uint8_t	 track;
+	uint16_t data_len;
+	struct cd_sub_channel_info *data;
 };
 #define CDIOCREADSUBCHANNEL _IOWR('c', 3, struct ioc_read_subchannel )
 
 struct ioc_toc_header {
-	u_short	len;
-	u_char	starting_track;
-	u_char	ending_track;
+	uint16_t len;
+	uint8_t	 starting_track;
+	uint8_t	 ending_track;
 };
 
 #define CDIOREADTOCHEADER _IOR('c', 4, struct ioc_toc_header)
 
 struct ioc_read_toc_entry {
-	u_char	address_format;
-	u_char	starting_track;
-	u_short	data_len;
-	struct	cd_toc_entry *data;
+	uint8_t	 address_format;
+	uint8_t	 starting_track;
+	uint16_t data_len;
+	struct cd_toc_entry *data;
 };
 #define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
 #define CDIOREADTOCENTRYS CDIOREADTOCENTRIES
@@ -188,12 +195,12 @@ struct ioc_read_toc_entry {
 #define CDIOREADMSADDR _IOWR('c', 6, int)
 
 struct	ioc_patch {
-	u_char	patch[4];	/* one for each channel */
+	uint8_t	patch[4];	/* one for each channel */
 };
 #define	CDIOCSETPATCH	_IOW('c', 9, struct ioc_patch)
 
 struct	ioc_vol {
-	u_char	vol[4];	/* one for each channel */
+	uint8_t	vol[4];	/* one for each channel */
 };
 #define	CDIOCGETVOL	_IOR('c', 10, struct ioc_vol)
 #define	CDIOCSETVOL	_IOW('c', 11, struct ioc_vol)
@@ -215,21 +222,21 @@ struct	ioc_vol {
 #define	CDIOCCLOSE	_IO('c', 27)
 
 struct ioc_play_msf {
-	u_char	start_m;
-	u_char	start_s;
-	u_char	start_f;
-	u_char	end_m;
-	u_char	end_s;
-	u_char	end_f;
+	uint8_t	start_m;
+	uint8_t	start_s;
+	uint8_t	start_f;
+	uint8_t	end_m;
+	uint8_t	end_s;
+	uint8_t	end_f;
 };
 #define	CDIOCPLAYMSF	_IOW('c', 25, struct ioc_play_msf)
 
 struct ioc_load_unload {
-	u_char options;
+	uint8_t options;
 #define	CD_LU_ABORT	0x1	/* NOTE: These are the same as the ATAPI */
 #define	CD_LU_UNLOAD	0x2	/* op values for the LOAD_UNLOAD command */
 #define	CD_LU_LOAD	0x3
-	u_char slot;
+	uint8_t slot;
 };
 #define		CDIOCLOADUNLOAD	_IOW('c', 26, struct ioc_load_unload)
 
