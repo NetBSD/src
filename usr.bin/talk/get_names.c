@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.7 1998/07/26 22:26:29 mycroft Exp $	*/
+/*	$NetBSD: get_names.c,v 1.8 2000/07/03 02:51:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.7 1998/07/26 22:26:29 mycroft Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.8 2000/07/03 02:51:35 matt Exp $");
 #endif /* not lint */
 
 #include "talk.h"
 #include <sys/param.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 extern	CTL_MSG msg;

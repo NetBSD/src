@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.5 1999/09/06 21:50:39 kleink Exp $	*/
+/*	$NetBSD: nl.c,v 1.6 2000/07/03 02:51:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.5 1999/09/06 21:50:39 kleink Exp $");
+__RCSID("$NetBSD: nl.c,v 1.6 2000/07/03 02:51:27 matt Exp $");
 #endif    
 
 #include <errno.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: nl.c,v 1.5 1999/09/06 21:50:39 kleink Exp $");
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 typedef enum {

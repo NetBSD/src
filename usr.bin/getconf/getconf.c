@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.12 2000/04/20 00:41:20 simonb Exp $	*/
+/*	$NetBSD: getconf.c,v 1.13 2000/07/03 02:51:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.12 2000/04/20 00:41:20 simonb Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.13 2000/07/03 02:51:17 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: getconf.c,v 1.12 2000/04/20 00:41:20 simonb Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 int	main __P((int, char **));
 static void usage __P((void));

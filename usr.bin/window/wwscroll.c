@@ -1,4 +1,4 @@
-/*	$NetBSD: wwscroll.c,v 1.4 1997/11/21 08:37:48 lukem Exp $	*/
+/*	$NetBSD: wwscroll.c,v 1.5 2000/07/03 02:51:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)wwscroll.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwscroll.c,v 1.4 1997/11/21 08:37:48 lukem Exp $");
+__RCSID("$NetBSD: wwscroll.c,v 1.5 2000/07/03 02:51:41 matt Exp $");
 #endif
 #endif /* not lint */
+
+#include <stdlib.h>
 
 #include "ww.h"
 #include "tt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypcat.c,v 1.8 1997/11/01 06:40:35 lukem Exp $	*/
+/*	$NetBSD: ypcat.c,v 1.9 2000/07/03 02:51:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.8 1997/11/01 06:40:35 lukem Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.9 2000/07/03 02:51:44 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: ypcat.c,v 1.8 1997/11/01 06:40:35 lukem Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>

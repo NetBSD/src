@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.13 2000/04/14 06:11:11 simonb Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.14 2000/07/03 02:51:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>

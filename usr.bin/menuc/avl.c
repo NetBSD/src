@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: avl.c,v 1.2 2000/07/03 02:51:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Philip A. Nelson.
@@ -45,6 +45,8 @@
  *		/ * Other information fields. * /
  *	} id_rec;
  */
+
+#include <string.h>
 
 #include "defs.h"
 

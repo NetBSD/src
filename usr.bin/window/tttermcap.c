@@ -1,4 +1,4 @@
-/*	$NetBSD: tttermcap.c,v 1.5 1999/10/04 23:31:30 lukem Exp $	*/
+/*	$NetBSD: tttermcap.c,v 1.6 2000/07/03 02:51:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)tttermcap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tttermcap.c,v 1.5 1999/10/04 23:31:30 lukem Exp $");
+__RCSID("$NetBSD: tttermcap.c,v 1.6 2000/07/03 02:51:39 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
+#include <string.h>
 #include <termcap.h>
 #include "tt.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.7 1998/12/19 23:22:51 christos Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.8 2000/07/03 02:51:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unifdef.c,v 1.7 1998/12/19 23:22:51 christos Exp $");
+__RCSID("$NetBSD: unifdef.c,v 1.8 2000/07/03 02:51:36 matt Exp $");
 #endif				/* not lint */
 
 /*
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: unifdef.c,v 1.7 1998/12/19 23:22:51 christos Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #define BSS

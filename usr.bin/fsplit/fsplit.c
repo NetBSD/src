@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.7 1998/12/19 16:38:10 christos Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.8 2000/07/03 02:51:16 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: fsplit.c,v 1.7 1998/12/19 16:38:10 christos Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
