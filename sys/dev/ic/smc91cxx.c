@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.39 2002/03/27 07:50:54 chs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.40 2002/05/03 03:30:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.39 2002/03/27 07:50:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.40 2002/05/03 03:30:48 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -141,6 +141,11 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.39 2002/03/27 07:50:54 chs Exp $");
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_read_multi_stream_2  bus_space_read_multi_2
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
