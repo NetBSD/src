@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.12 1997/10/17 09:03:57 lukem Exp $	*/
+/*	$NetBSD: iostat.c,v 1.13 1998/07/05 06:20:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.12 1997/10/17 09:03:57 lukem Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.13 1998/07/05 06:20:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ header(signo)
 
 static void
 disk_stats(etime)
-double etime;
+	double etime;
 {
 	int dn;
 	double atime, mbps;
@@ -289,7 +289,7 @@ double etime;
 
 static void
 disk_stats2(etime)
-double etime;
+	double etime;
 {
 	int dn;
 	double atime;
@@ -330,6 +330,7 @@ cpustats()
 static void
 usage()
 {
+
 	(void)fprintf(stderr,
 "usage: iostat [-CdDIT] [-c count] [-M core] [-N system] [-w wait] [drives]\n");
 	exit(1);
@@ -375,8 +376,8 @@ display()
 
 static void
 selectdrives(argc, argv)
-int	argc;
-char	*argv[];
+	int	argc;
+	char	*argv[];
 {
 	int	i, ndrives;
 
