@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.1 2003/07/06 22:58:08 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.2 2003/09/20 01:03:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.1 2003/07/06 22:58:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.2 2003/09/20 01:03:30 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -647,7 +647,7 @@ atw_attach(struct atw_softc *sc)
 	switch (country_code) {
 	case COUNTRY_MMK2:	/* 1-14 */
 		setbit(ic->ic_chan_avail, 14);
-		break;
+		/*FALLTHROUGH*/
 	case COUNTRY_ETSI:	/* 1-13 */
 		for (i = 1; i <= 13; i++)
 			setbit(ic->ic_chan_avail, i);
