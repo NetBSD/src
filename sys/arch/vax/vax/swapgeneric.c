@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.4 1995/02/13 00:46:18 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.5 1995/03/30 21:25:41 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -187,7 +187,7 @@ gets(cp)
 
 	lp = cp;
 	for (;;) {
-		cnputc(c = cngetc());
+		cnputc(c = (cngetc()&0x7f));
 		switch (c) {
 		case '\n':
 		case '\r':

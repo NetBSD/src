@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.7 1995/02/23 17:53:56 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.8 1995/03/30 21:25:23 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -72,6 +72,15 @@
 #include "vax/include/nexus.h"
 #include "vax/include/trap.h"
 #include "net/netisr.h"
+#ifdef SYSVMSG
+#include "sys/msg.h"
+#endif
+#ifdef SYSVSEM
+#include "sys/sem.h"
+#endif
+#ifdef SYSVSHM
+#include "sys/shm.h"
+#endif
 
 /*
  * We do these external declarations here, maybe they should be done 
@@ -142,7 +151,6 @@ cpu_startup() {
 	mtpr(AST_NO,PR_ASTLVL);
 	spl0();
 
-	boothowto=RB_SINGLE;
 	dumpsize=physmem+1;
 
     /*
@@ -228,25 +236,7 @@ cpu_startup() {
         /*
          * Configure the system.
          */
-#if 1
 	configure();
-#else
-	(*cpu_calls[cpunumber].cpu_conf)();
-#if GENERIC
-        if ((boothowto & RB_ASKNAME) == 0)
-                setroot();
-        setconf();
-#else
-        setroot();
-#endif
-        /*
-         * Configure swap area and related system
-         * parameter based on device(s) used.
-         */
-        gencnslask(); /* XXX inte g|ras h{r */
-        swapconf();
-        cold=0;
-#endif
 }
 
 /*
@@ -312,10 +302,12 @@ allocsys(v)
         return v;
 }
 
+int dumplo=0;
+
 dumpconf()
 {
         int nblks;
-	extern int dumpdev, dumplo;
+	extern int dumpdev;
 
         /*
          * XXX include the final RAM page which is not included in physmem.
@@ -515,9 +507,12 @@ boot(howto)
         }
         splhigh();                      /* extreme priority */
 	if (howto&RB_HALT) {
-		asm("halt"); /* Always want halt */
-		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
-		while(1);
+		int *i;
+		printf("halting (due to bad scbvector)\n");
+		/* This should halt almost every known VAX cpu */
+		i=(int *)0x80000008;
+		*i+=2;
+		asm("movl $0xf0000000,sp;pushl $0;chmk $3");
 	} else {
 		if (howto & RB_DUMP)
 			dumpsys();
@@ -619,11 +614,51 @@ suswintr(){
 	panic("suswintr: need to be implemented");
 }
 
-process_set_pc(){
-	panic("process_set_pc:need to be implemented");
+int
+process_set_pc(p, addr)
+        struct proc *p;
+        caddr_t addr;
+{
+        void *ptr;
+        struct trapframe *tf;
+
+        if ((p->p_flag & P_INMEM) == 0)
+                return (EIO);
+
+        ptr = (char *)p->p_addr->u_pcb.framep;
+        tf = ptr;
+
+        tf->pc = (u_int)addr;
+
+        return (0);
 }
 
-process_sstep(){
-	panic("process_sstep: need to be implemented");
+int
+process_sstep(p, sstep)
+        struct proc *p;
+{
+        void *ptr;
+        struct trapframe *tf;
+
+        if ((p->p_flag & P_INMEM) == 0)
+                return (EIO);
+
+        ptr = p->p_addr->u_pcb.framep;
+        tf = ptr;
+
+	if(sstep)
+        	tf->psl |= PSL_T;
+	else
+		tf->psl &= ~PSL_T;
+
+        return (0);
 }
 
+#undef setsoftnet
+setsoftnet(){
+	panic("setsoftnet");
+}
+
+ns_cksum(){
+	panic("ns_cksum");
+}
