@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.29 2004/02/15 02:59:04 enami Exp $	 */
+/*	$NetBSD: paths.c,v 1.30 2004/03/16 05:25:12 atatat Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -216,21 +216,15 @@ _rtld_add_paths(Search_Path **path_p, const char *pathstr)
 	}
 }
 
-
-struct sysctldesc {
-	const char *name;
-	int type;
-};
-
 struct list {
-	const struct sysctldesc *ctl;
+	const struct ctlname *ctl;
 	int numentries;
 };
 
 #ifdef CTL_MACHDEP_NAMES
-static const struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+static const struct ctlname ctl_machdep[] = CTL_MACHDEP_NAMES;
 #endif
-static const struct sysctldesc ctl_toplvl[] = CTL_NAMES;
+static const struct ctlname ctl_toplvl[] = CTL_NAMES;
 
 const struct list toplevel[] = {
 	{ 0, 0 },
@@ -309,7 +303,8 @@ _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 				continue;
 
 			for (k = 1; k < lists[i][j].numentries; k++)
-				if (matchstr(lists[i][j].ctl[k].name, l, ptr))
+				if (matchstr(lists[i][j].ctl[k].ctl_name, l,
+				    ptr))
 					break;
 
 			if (lists[i][j].numentries == -1) {
@@ -320,7 +315,7 @@ _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 
 			hwptr->ctl[hwptr->ctlmax] = k;
 			hwptr->ctltype[hwptr->ctlmax++] =
-			    lists[i][j].ctl[k].type;
+			    lists[i][j].ctl[k].ctl_type;
 		}
 	}
 
