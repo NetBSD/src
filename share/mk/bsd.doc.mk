@@ -3,15 +3,15 @@
 PRINTER=ps
 
 BIB?=		bib
-EQN?=		deqn -P${PRINTER}
+EQN?=		eqn -P${PRINTER}
 GREMLIN?=	grn -P${PRINTER}
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic -P${PRINTER}
 REFER?=		refer
-ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
+ROFF?=		troff -t ${MACROS} ${PAGES} -P${PRINTER}
 SOELIM?=	soelim
-TBL?=		dtbl -P${PRINTER}
+TBL?=		tbl -P${PRINTER}
 
 .PATH: ${.CURDIR}
 
