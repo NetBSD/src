@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.19 2000/10/10 12:55:15 lukem Exp $
+.\"	$NetBSD: install,v 1.20 2000/10/29 14:08:04 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,10 @@ Installation of
 .Nx*M
 is now easier than ever!
 For the latest news, problem reports, and discussion, join
-the port-alpha mainlist by mailing a line saying
-.Dl subscribe port-alpha
+the port-\*M mailing list by mailing a line saying
+.Pp
+.Dl subscribe port-\*M
+.Pp
 to
 .Mt majordomo@netsbd.org .
 Also, see
@@ -89,14 +91,17 @@ Although booting from floppy is the usual path, the
 hard drive boot is useful if you have another operating system (and a spare
 drive) already installed, or if you don't mind swapping hard drives from
 box to box. CD and tape boots are nice and fast if you have a CD writer
-or a tape format in common with another previously installed Unix-like
+or a tape format in common with another previously installed
+.Ul
 system. Finally, most versions of SRM can locate the
 .Nx
 boot program
 .Ic netboot
 via bootp and download it via tftp,
 .Ic netboot
-then mounts the root file system via NFS and loads the kernel.
+then mounts the root file system
+.Pq Pa /
+via NFS and loads the kernel.
 .Pp
 Note that if you are installing or upgrading from a writable media,
 the media can be write-protected if you wish.
@@ -112,32 +117,40 @@ Floppy disk boot
 The 3.5", 1.44 MB boot floppy set is found under the
 .Nx*M
 \*V distribution directory in
-.Pa alpha/installation/floppy/
+.Pa \*M/installation/floppy/
 as two files called
 .Pa disk1of2
 and
 .Pa disk2of2 .
 You need to put these two disk images on two floppy disks.
 .Pp
-If you have a Unix system handy, you can do this with commands
+If you have a
+.Ul
+system handy, you can do this with commands
 like the following:
-.(disp -offset indent
-dd if=disk1of2 of=/dev/rfd0a bs=18k
-dd if=disk2of2 of=/dev/rfd0a bs=18k
-.disp)
 .Pp
-If the Unix system you are using is not a
+.Dl # Ic "dd if=disk1of2 of=/dev/rfd0a bs=18k"
+.Dl # Ic "dd if=disk2of2 of=/dev/rfd0a bs=18k"
+.Pp
+If the
+.Ul
+system you are using is not a
 .Nx
 system, you will probably need to replace
 .Li /dev/rfd0a
 with the name of the floppy device on your particular system.
 .Pp
-If you have an MS-DOS or Windows system available, you can use
+If you have an
+.Tn MS-DOS
+or
+.Tn Windows
+system available, you can use
 the
 .Ic rawrite.exe
 utility to transfer the image to a floppy
-disk. This utility is provided with the NetBSD/i386 install
-tools, under
+disk. This utility is provided with the
+.Nx Ns /i386
+install tools, under
 .Pa i386/installation/misc ;
 a documentation file,
 .Ic rawrite.doc
@@ -145,7 +158,8 @@ is available there as well.
 .Pp
 Once the floppy has been made, you simply need to put it in the
 drive and type
-.Dl \*>\*>\*> B DVA0
+.Pp
+.Dl \*>\*>\*> Ic "B DVA0"
 .Pp
 .It
 CD boot
@@ -155,22 +169,26 @@ Hard Drive boot
 Magnetic Tape Boot
 .Pp
 All three of these media types use the same initial image:
-.Dl \&.../installation/diskimage/cdhdtape
+.Pa \&.../installation/diskimage/cdhdtape
 The image can be written to a hard drive partition with a command
 like:
-.Dl "dd if=cdhdtape bs=16k of=/dev/rsd0c"
+.Pp
+.Dl # Ic "dd if=cdhdtape bs=16k of=/dev/rsd0c"
+.Pp
 To boot from a magnetic tape device such as
 .Tn DAT
 or
 .Tn DLT ,
 it is important
 to create the tape image with 512-byte records. Use a command like:
-.Dl "dd if=cdhdtape bs=512 of=/dev/rst0"
+.Pp
+.Dl # Ic "dd if=cdhdtape bs=512 of=/dev/rst0"
+.Pp
 If the host system is not
 .Nx ,
 the names of the destination devices are likely to be different.
 Be sure to use a
-.Dq "raw partition"
+.Dq raw partition
 device that doesn't skip over labels!
 .Pp
 The use of CD-R devices varies greatly depending on the host OS
@@ -183,10 +201,12 @@ The installation subdirectory
 .Pa instkernel/
 contains
 .Pa netbsd.gz ;
-this is the same install kernel but without a bootable filesystem
+this is the same install kernel but without a bootable file system
 image wrapped around it. You can perform an complete reinstall
 by beginning it as an upgrade, and booting this kernel in the
-normal way off the root file system of a previous installation.
+normal way off the root file system
+.Pq Pa /
+of a previous installation.
 .Pp
 The gzipped image can be booted directly; it is not necessary to
 uncompress it first.
@@ -204,7 +224,7 @@ the boot:
 .
 .
 .(bullet
-Alpha console software sends a BOOTP request to get its
+\*M console software sends a BOOTP request to get its
 own address, the address of the TFTP server and the file to
 download. It downloads this file, which is the second stage
 bootstrap, via TFTP and then executes it.
@@ -216,9 +236,10 @@ root path via NFS and reads in and transfers to the kernel:
 .It
 The kernel probes and configures the devices, and then sends
 out another BOOTP request so it can find out its address, the NFS
-server, and path. It then mounts its root via NFS and continues.
+server, and path. It then mounts its root
+.Pq Pa /
+via NFS and continues.
 .bullet)
-.
 .
 .Pp
 You will need to set up servers for BOOTP, TFTP and NFS.
@@ -235,8 +256,8 @@ with
 .Ic sh ./MAKEDEV all .
 Detailed instructions on netbooting can be found by visiting the
 .Nx
-Alpha platform page:
-.Lk http://www.NetBSD.org/Ports/alpha
+\*M platform page:
+.Lk http://www.netbsd.org/Ports/\*M
 .Pp
 At the time of this
 release, the URL for the netbooting instructions is:
@@ -246,18 +267,22 @@ You'll want to map root to
 .Li root
 (rather than the default
 .Li nobody )
-when you export your root filesystem. A typical
+when you export your root file system
+.Pq Pa / .
+A typical
 .Pa /etc/exports
 line on a
 .Nx
 system would be:
-.Dl /usr/export/alpha -maproot=0 myclient.mydom.com
+.Pp
+.Dl /usr/export/\*M -maproot=0 myclient.mydom.com
 .Pp
 One option is to load just the install kernel over the network but then
 proceed to a normal disk-based install and disk-based operation.
-(Perhaps the Alpha doesn't have a floppy drive, or you just don't
-want to use a Micro$oft Window$ system to make the floppy; we
-understand.)
+(Perhaps the \*M doesn't have a floppy drive, or you just don't
+want to use a
+.Tn Windows
+system to make the floppy; we understand.)
 .Pp
 For this case, you still need to export an NFS root, but
 the only thing it needs to have in it is the
@@ -273,13 +298,13 @@ boot program,
 so for the TFTP setup, you need to copy the second stage bootstrap,
 .Ic netboot ,
 into an appropriately named file such as
-.Li boot.netbsd.alpha
+.Li boot.netbsd.\*M
 in the directory used by your TFTP server. If you extracted a full
 snapshot, you can get the netboot program from
 .Pa /usr/mdec/netboot ;
 if not, you can get this from the
 .Pa installation/netboot
-directory where you found the alpha distribution.
+directory where you found the \*M distribution.
 .Pp
 For the BOOTP server you need to specify the:
 .
@@ -300,37 +325,44 @@ path to the root for the client (mounted via NFS)
 .bullet)
 .
 .Pp
-Here's an example for a Unix system running bootpd:
+Here's an example for a
+.Ul
+system running
+.Ic bootpd :
 .(disp
 myhost.mydom.com:\
 	 :ht=ethernet:ha=0000c0391ae4:\e
 	 :ip=192.168.1.2:sm=255.255.255.0:\e
-	 :sa=192.168.1.1:bf=boot.netbsd.alpha:rp=/usr/export/alpha:
+	 :sa=192.168.1.1:bf=boot.netbsd.\*M:rp=/usr/export/\*M:
 .disp)
 .Pp
-And here's an example for a Unix system running the ISC dhcpd:
+And here's an example for a
+.Ul
+system running the ISC
+.Ic dhcpd :
 .(disp
 host axp {
 	hardware ethernet 0:0:c0:39:1a:e4;
 	fixed-address 192.168.1.2;
 	option host-name "myhost.mydom.com";
-	filename "boot.netbsd.alpha";
-	option root-path "/usr/export/alpha";
+	filename "boot.netbsd.\*M";
+	option root-path "/usr/export/\*M";
 	option domain-name-servers 192.168.1.1;
 	option broadcast-address 255.255.255.0;
 	option domain-name "my.domain";
 }
 .disp)
 .Pp
-The only Ethernet device the console on most Alpha systems
+The only Ethernet device the console on most \*M systems
 knows how to boot from is the onboard Ethernet interface or a
-DEC Tulip (21040, 21041, 21140) PCI Ethernet card. Some
+.Tn DEC
+Tulip (21040, 21041, 21140) PCI Ethernet card. Some
 older SMC 100 Mbps cards that use this chip have been known to
 work as well. Many older systems will not be able to use the
 newer 2.0 stepping of the 21140, however. If your system appears
 not to be receiving packets, this may be the problem. (You may
 or may not be able to update your firmware to fix this; see
-the alpha port pages on www.netbsd.org for more information on
+the \*M port pages on www.netbsd.org for more information on
 this.) In general, 10 Mb cards from manufacturers other than
 .Tn DEC
 will work, and 100 Mb cards not from
@@ -338,23 +370,25 @@ will work, and 100 Mb cards not from
 will not.
 .Pp
 Once you're set up, you should be able to boot with:
-.Dl "\*>\*>\*> boot -proto bootp ewa0"
+.Pp
+.Dl \*>\*>\*> Ic "boot -proto bootp ewa0"
 .Pp
 You should permanently set your protocol to
 .Tn BOOTP
 with:
-.Dl "\*>\*>\*> set ewa0_protocols bootp"
+.Pp
+.Dl \*>\*>\*> Ic "set ewa0_protocols bootp"
 .Pp
 The 3000 series of Turbochannel systems and certain other models use
 .Em old SRM ,
 do not have a
-.Fl Ic proto
+.Fl proto
 option and use different device names. They also tend to not netboot very
 well so you probably don't need to worry about this section. However, if you
 want to give it a try, note the following differences:
 .(bullet -offset indent
 There is no
-.Fl Ar proto
+.Fl proto
 argument, or
 .Ic ewa0_protocols
 variable. Old SRM uses bootp if the device name is given as
@@ -367,7 +401,8 @@ from that era will properly communicate the ethernet HW address to the
 boot program.
 .It
 Example:
-.Dl \*>\*>\*>\ boot\ ez0
+.Pp
+.Dl \*>\*>\*> Ic "boot ez0"
 .bullet)
 .bullet)
 .
@@ -381,7 +416,7 @@ All of the installation procedures consist of
 putting a label on the disk to provide information on
 the sizes and placement of the partitions into which the disk
 is divided, putting the boot blocks on the disk, creating the
-filesystems on the partitions, and unpacking the distribution
+file systems on the partitions, and unpacking the distribution
 tar archives.
 .
 .
@@ -425,28 +460,28 @@ and run
 .Xr installboot 8
 .bullet)
 .
-.
 .Pp
 If you are reviewing man pages on
 .Nx
-platforms other than alpha, be sure that when reading
+platforms other than \*M, be sure that when reading
 .Xr installboot 8
-you read the alpha
-version by typing: "man 8 alpha/installboot".
+you read the \*M version by typing:
+.Pp
+.Dl # Ic man 8 \*M/installboot
 .Pp
 At this point you need only unpack the distribution sets by running
 .Xr tar 1
 as described below.
 .It B.
-.Li /install
+.Pa /install
 and
-.Li /upgrade
+.Pa /upgrade
 traditional installation scripts
 .Pp
 The
-.Li install
+.Pa install
 and
-.Li upgrade
+.Pa upgrade
 scripts are still there, so by exiting the sysinst program you can type
 .Li install
 or
@@ -456,8 +491,15 @@ at the shell prompt and run them as you did in the good old days.
 You may install
 on either a SCSI or an IDE disk; you will be prompted for
 the disk to install on. The disks in your system will be numbered
-starting at xd0 (where x is an `s' for SCSI disks, `w' for IDE
-disks) based on the SCSI ID or IDE drive order; if you have
+starting at
+.Em x Ns Li d0
+(where
+.Em x
+is an
+.Sq Li s
+for SCSI disks,
+.Sq Li w
+for IDE disks) based on the SCSI-ID or IDE drive order; if you have
 more than one disk, watch the boot messages carefully to see
 which ones are probed as which numbers.
 .Pp
@@ -472,20 +514,27 @@ Generally you'll be giving the sizes in cylinders; the install
 program will tell you how many bytes there are in each cylinder.
 .Pp
 The swap partition is the second thing you specify, after the
-root partition. Regardless of the size of your disk, you'll
+.Pa /
+(root) partition. Regardless of the size of your disk, you'll
 want to specify a swap partition that's at least as large as
 the amount of RAM you have, and probably not less than 64 MB
 in any case.
 .Pp
 If you have a small disk (under 500 MB), it's probably best to
 devote all of the disk (excepting 64 MB or more for the swap)
-to the root partition.
+to the
+.Pa /
+(root) partition.
 .Pp
 If you have more space, we recommend devoting at least 32 MB,
-and preferably 48 MB, to the root partition.
+and preferably 48 MB, to the
+.Pa /
+(root) partition.
 .Pa /usr
 will need 150 MB or so if you're not installing X, 200 MB or so if you
-are. A typical organization is 50 MB for root, 150-250 MB for
+are. A typical organization is 50 MB for
+.Pa /
+(root), 150-250 MB for
 swap, and the remaining space for
 .Pa /usr .
 With enough swap space configured, you can make
@@ -503,7 +552,7 @@ use, plus space required to back up main memory and store inactive images.
 .Pp
 Once you've specified this information, the install script will
 write the disklabel, install boot blocks to make the disk
-bootable, initialise the filesystems, and mount them all under
+bootable, initialise the file systems, and mount them all under
 .Pa /mnt .
 You are now ready to go on to the next step.
 .
@@ -532,15 +581,20 @@ Preparing to Install from a CD-ROM
 All you need to do is mount the CD-ROM, which will generally
 be device cd0. (The initial boot messages will tell you what
 the CD-ROM drive is probed as.) This would be done with:
-.Dl "mount -r -t cd9660 /dev/cd0a /mnt2"
+.Pp
+.Dl # Ic "mount -r -t cd9660 /dev/cd0a /mnt2"
 .It
 Preparing to Install from the Network
 .Pp
 The first thing you need to do is configure the loopback network
 interface, which is done with the command
-.Dl "ifconfig lo0 127.0.0.1"
+.Pp
+.Dl # Ic "ifconfig lo0 127.0.0.1"
+.Pp
 Then you will have to configure your Ethernet card. The command
-.Dl "ifconfig -l"
+.Pp
+.Dl # Ic "ifconfig -l"
+.Pp
 will give you a list of the network interfaces on your system.
 It will show you your ethernet cards first, followed by lo0
 (the loopback interface that we configured above), ppp0 (the
@@ -579,7 +633,9 @@ parameter is one of:
 If the host you are getting the data files from is not on the
 local network, you will also have to configure a gateway into
 your system. Do this with
-.Dl route add default \*<gateway-IP-address\*>
+.Pp
+.Dl # Ic "route add default \*<gateway-IP-address\*>"
+.Pp
 One improvement over the good old days is that the resolver is now
 present; by configuring
 .Pa /etc/resolv.conf
@@ -589,35 +645,32 @@ Once networking has been configured, you may mount the directory
 with the install files via NFS, or download them via FTP.
 .Pp
 To mount them via nfs, type
-.Dl mount -t nfs \*<hostname:/path/to/nfs/volume\*> /mnt2
+.Pp
+.Dl # Ic "mount -t nfs \*<hostname:/path/to/nfs/volume\*> /mnt2"
+.Pp
 If this volume has been exported read-only, you may need the
-`-r' option to mount.
+.Fl r
+option to mount.
 .Pp
 To download the install sets with ftp, create a directory in
 which to put them and then use the ftp client to download them.
 Mirror sites are listed at:
 .Lk http://www.netbsd.org/Sites/net.html
 A typical session might be:
-.(disp
-mkdir /mnt/usr/release
-cd /mnt/usr/release
-ftp ftp.netbsd.org
-.disp)
 .Pp
-[the following commmands are given to the ftp program after logging in]
-.(disp
-prompt
-cd /pub/NetBSD/NetBSD-\*V/alpha/binary/sets
-mget *
-bye
-.disp)
+.Dl # Ic mkdir /mnt/usr/release
+.Dl # Ic cd /mnt/usr/release
+.Dl # Ic ftp ftp.netbsd.org
+.D1 Em "the following commands are given to the" Ic ftp Em "program after logging in"
+.Dl ftp> Ic "prompt"
+.Dl ftp> Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"
+.Dl ftp> Ic "mget *"
+.Dl ftp> Ic "quit"
 .Pp
 Feel free, of course, to leave off the sets that you don't need
 if you don't plan to install everything.
 .
-.
 .bullet)
-.
 .
 .It
 Unpack distribution sets: Extracting the Operating System Files
@@ -628,61 +681,60 @@ drive (which is
 .Pa /mnt
 if you've used the standard install script
 to this point) by typing
-.Dl cd /mnt
+.Pp
+.Dl # Ic "cd /mnt"
+.Pp
 For this and the following commands, replace
 .Pa /mnt/usr/release/
 with the path to your NFS volume or CD-ROM if that's how you
 chose to access your install files instead.
 .Pp
 The sets and kernel are extracted with:
-.
-.(disp
-cd /mnt
-for i in base kern comp etc games man misc text; do
-    tar xpzf /mnt/usr/release/$i.tgz;
-done
-.disp)
+.Pp
+.Dl # Ic "cd /mnt"
+.Dl # Ic "for i in base kern comp etc games man misc text; do"
+.Dl   Ic "\ \ \ \ tar -zxpf /mnt/usr/release/$i.tgz;"
+.Dl # Ic "done"
 .Pp
 or perhaps:
 .Pp
-.
-.(disp
-cd /mnt
-for i in /mnt/usr/release/*.tgz; do
-    echo $i
-    tar xpzf $i
-done
-.disp)
+.Dl # Ic "cd /mnt"
+.Dl # Ic "for i in /mnt/usr/release/*.tgz; do"
+.Dl   Ic "\ \ \ \ echo $i"
+.Dl   Ic "\ \ \ \ tar -zxpf $i"
+.Dl # Ic "done"
 .Pp
 Now make the device nodes:
-.(disp
-cd /mnt/dev
-sh ./MAKEDEV all
-.disp)
-.
+.Pp
+.Dl # Ic "cd /mnt/dev"
+.Dl # Ic "sh ./MAKEDEV all"
 .It
 Restart your system
 .Pp
 Unmount the file systems and halt. The exact instructions to
 type here will depend on the file systems you created, but
 typically the commands are:
-.(disp
-cd /
-umount /mnt/usr
-umount /mnt
-sync		# not needed but traditional
-halt
-.disp)
 .Pp
-You should now be at the SRM console's \*>\*>\*> prompt and can reboot
+.Dl # Ic "cd /"
+.Dl # Ic "umount /mnt/usr"
+.Dl # Ic "umount /mnt"
+.Dl # Ic "sync"
+.D1 Pq Ic sync Em "is not strictly necessary but it is traditional"
+.Dl # Ic "halt"
+.Pp
+You should now be at the SRM console's
+.Li \*>\*>\*>
+prompt and can reboot
 into the new configuration (possibly after an optional power cycle)
 with a command such as:
-.Dl boot dka0
+.Pp
+.Dl \*>\*>\*> Ic "boot dka0"
+.Pp
 This command might be:
-.Ic boot dka100
+.Ic "boot dka100"
 if your drive is on ID 1.
 You can usually use
-.Ic show device
+.Ic "show device"
 to see a full list of bootable
 devices in your system. Your system will come up in single-user
 mode, ready for you to configure it.
@@ -692,17 +744,28 @@ mode, ready for you to configure it.
 .
 .Pp
 You can create the floppy needed for installation
-under DOS or Windows. Supposing your 1.44 MB floppy
+under
+.Tn MS-DOS
+or
+.Tn Windows .
+Supposing your 1.44 MB floppy
 drive is drive A:, and your CD is drive
 .Ic E: ,
-do the following from an MS-DOS command prompt:
-.D1 Ic "e:\&
-.D1 Ic "cd \eNetBSD-\*V\einstallation\emisc
-.D1 Ic "rawrite
+do the following from an
+.Tn MS-DOS
+command prompt:
+.Pp
+.Dl Ic "e:\&"
+.Dl Ic "cd \eNetBSD-\*V\einstallation\emisc"
+.Dl Ic "rawrite"
+.Pp
 When asked for a source filename, answer
-.D1 Ic "\&...\efloppy\edisk1of2
+.Pp
+.Dl "\&...\efloppy\edisk1of2
+.Pp
 When asked for a destination drive answer
-.D1 Ic \&a
+.Pp
+.Dl \&a
 .Pp
 (Repeat the procedure for
 .Pa installation/floppy/disk2of2 . )

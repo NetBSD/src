@@ -1,6 +1,5 @@
-.\"	$NetBSD: prep,v 1.2 2000/10/10 12:55:20 lukem Exp $
+.\"	$NetBSD: prep,v 1.3 2000/10/29 14:08:08 lukem Exp $
 .
 No preparation is necessary, since the
 .Nx*M
-sets must be
-installed on a server.
+sets must be installed on a server.

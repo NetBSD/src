@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: prep,v 1.11 2000/10/29 14:08:07 lukem Exp $
 .
 Find your favorite disk partitioning utility. Any formatter capable of
 partitioning a SCSI disk should work. Some of the ones that have been
@@ -27,7 +27,7 @@ non-Apple drives is available at:
 First, you need to choose a drive on which to install
 .Nx .
 Try to pick a
-drive with a low SCSI ID number, especially if you are likely to add or
+drive with a low SCSI-ID number, especially if you are likely to add or
 remove drives to your SCSI chain in the future.
 .(Note
 Be sure you have a reliable backup of any data which you may want to keep.
@@ -37,19 +37,26 @@ Repartitioning your hard drive is an excellent way to destroy important data.
 Second, decide how you want to set up your partitions. At minimum, you
 need a partition to hold the
 .Nx
-installation (the root partition) and a
+installation (the root partition -
+.Pa / )
+and a
 partition to serve as swap. You may choose to use more than one partition
 to hold the installation. This allows you to separate the more vital
-portions of the filesystem (such as the kernel and the
-.Pa /etc No directory) from
-the more volatile parts of the filesystem. Typical setups place the
+portions of the file system (such as the kernel and the
+.Pa /etc
+directory) from the more volatile parts of the file system.
+Typical setups place the
 .Pa /usr
-directory on a separate partition from the root partition. Generally, the
-root partition can be fairly small while the
-.Pa /usr No partition should be
-fairly large. If you plan to use this machine as a server, you may also
-want a separate
-.Pa /var No partition.
+directory on a separate partition from the root partition
+.Pq Pa / .
+Generally,
+.Pa /
+can be fairly small while the
+.Pa /usr
+partition should be fairly large.
+If you plan to use this machine as a server, you may also want a separate
+.Pa /var
+partition.
 .Pp
 Once you have decided how to lay out your partitions, you need to calculate
 how much space to allocate to each partition. A minimal install of
@@ -69,17 +76,26 @@ with less.
 .Pp
 Keep in mind that
 .Nx
-currently requires MacOS in order to boot, so it is likely that you will
-want to keep at least a minimal install of MacOS around on an HFS
+currently requires
+.Tn MacOS
+in order to boot, so it is likely that you will
+want to keep at least a minimal install of
+.Tn MacOS
+around on an HFS
 partition for this purpose.  The size of this partition may vary depending
-on the size requirements for the version of MacOS you are using.  Of
-course, if you have MacOS on another hard drive or can boot from a floppy,
+on the size requirements for the version of
+.Tn MacOS
+you are using.  Of
+course, if you have
+.Tn MacOS
+on another hard drive or can boot from a floppy,
 feel free to dedicate the entire drive to
 .Nx .
 .Pp
 Next, use your favorite partitioning utility to make partitions of the
 necessary sizes. You can use any type of partition, but partitions of type
-"Apple_Free" might save you some confusion in the future.
+.Li "Apple_Free"
+might save you some confusion in the future.
 .Pp
 You are now set to install
 .Nx

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: prep,v 1.11 2000/10/29 14:08:07 lukem Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -63,7 +63,11 @@ disk entirely for
 .Nx ,
 you may wish to check your
 .Tn BIOS
-settings for the 'Large' or 'LBA' modes, and activate
+settings for the
+.Sq Large
+or
+.Sq LBA
+modes, and activate
 them for the hard disk in question. While they are not needed
 by
 .Nx

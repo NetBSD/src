@@ -1,11 +1,12 @@
-.\"	$NetBSD: hardware,v 1.12 2000/10/10 12:55:21 lukem Exp $
+.\"	$NetBSD: hardware,v 1.13 2000/10/29 14:08:09 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
-DECstation 2100 and 3100, also known as
+.Tn DECstation
+2100 and 3100, also known as
 .Em pmin No and Em pmax
 .It
-DECsystem 5100
+.Tn DECsystem 5100
 .It
 Personal DECstations (5000/20, /25 and /33) also known as
 .Em MAXINE
@@ -38,7 +39,9 @@ The minimal configuration requires 8 MB of RAM and ~60 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx
-with 8 MB of RAM feels like Ultrix with 8 MB of RAM - slow.
+with 8 MB of RAM feels like
+.Tn Ultrix
+with 8 MB of RAM - slow.
 Note that until you have around 16 MB of RAM, getting more RAM is more
 important than getting a faster CPU.
 .
@@ -89,7 +92,8 @@ TURBOchannel AMD Lance ethernet cards
 .It
 SCSI
 .(bullet -compact
-on-board DEC
+on-board
+.Tn DEC
 .Em sii
 SCSI controller (2100 and 3100)
 .It
@@ -102,9 +106,10 @@ TurboChannel
 .Pq the Em PMAZ
 .bullet)
 .It
-DEC (LK-201 or compatible) keyboard
+.Tn DEC
+LK-201 (or compatible) keyboard
 .It
-DEC
+.Tn DEC
 .Em hockey puck
 or compatible mouse
 .bullet)
