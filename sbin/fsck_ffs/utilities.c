@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.15 1995/04/23 10:33:09 cgd Exp $	*/
+/*	$NetBSD: utilities.c,v 1.16 1996/04/05 01:45:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.15 1995/04/23 10:33:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.16 1996/04/05 01:45:33 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -568,7 +568,7 @@ pfatal(s, a1, a2, a3)
 		printf("%s: ", cdevname);
 		printf(s, a1, a2, a3);
 		printf("\n");
-		printf("%s: UNEXPECTED INCONSISTENCY; RUN fsck MANUALLY.\n",
+		printf("%s: UNEXPECTED INCONSISTENCY; RUN fsck_ffs MANUALLY.\n",
 			cdevname);
 		exit(8);
 	}
