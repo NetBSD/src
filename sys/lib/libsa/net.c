@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.17 1997/07/07 15:52:51 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.17.2.1 1997/09/06 19:06:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -77,7 +77,7 @@ sendudp(d, pkt, len)
 
 #ifdef NET_DEBUG
  	if (debug) {
-		printf("sendudp: d=%x called.\n", (u_int)d);
+		printf("sendudp: d=%lx called.\n", (long)d);
 		if (d) {
 			printf("saddr: %s:%d",
 			    inet_ntoa(d->myip), ntohs(d->myport));
@@ -202,7 +202,7 @@ readudp(d, pkt, len, tleft)
 	if (n < ip->ip_len) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad length %d < %d.\n", n, ip->ip_len);
+			printf("readudp: bad length %d < %d.\n", (int)n, ip->ip_len);
 #endif
 		return -1;
 	}
@@ -234,7 +234,7 @@ readudp(d, pkt, len, tleft)
 	if (uh->uh_sum) {
 		n = ntohs(uh->uh_ulen) + sizeof(*ip);
 		if (n > RECV_SIZE - ETHER_SIZE) {
-			printf("readudp: huge packet, udp len %d\n", n);
+			printf("readudp: huge packet, udp len %d\n", (int)n);
 			return -1;
 		}
 
@@ -260,7 +260,7 @@ readudp(d, pkt, len, tleft)
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: bad udp len %d < %d\n",
-				uh->uh_ulen, sizeof(*uh));
+				uh->uh_ulen, (int)sizeof(*uh));
 #endif
 		return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.47.2.2 1997/08/27 23:33:10 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.47.2.3 1997/09/06 19:05:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -584,14 +584,14 @@ scsi_print_sense(xs, verbosity)
 	/*
 	 * Basics- print out SENSE KEY
 	 */
-	printf("	SENSE KEY:  %s", scsi_decode_sense(s, 0));
+	printf("    SENSE KEY:  %s", scsi_decode_sense(s, 0));
 
 	/*
 	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
 	 */
 	if (s[2] & 0xe0) {
 		char pad;
-		printf("\n			  ");
+		printf("\n              ");
 		pad = ' ';
 		if (s[2] & SSD_FILEMARK) {
 			printf("%c Filemark Detected", pad);
@@ -638,14 +638,14 @@ scsi_print_sense(xs, verbosity)
 
 	sbs = scsi_decode_sense(s, 1);
 	if (sbs) {
-		printf("\n	 ASC/ASCQ:  %s", sbs);
+		printf("\n     ASC/ASCQ:  %s", sbs);
 	}
 	if (s[14] != 0) {
-		printf("\n	 FRU CODE:  0x%x\n", s[14] & 0xff);
+		printf("\n     FRU CODE:  0x%x\n", s[14] & 0xff);
 	}
 	sbs = scsi_decode_sense(s, 3);
 	if (sbs) {
-		printf("\n		 SKSV:  %s", sbs);
+		printf("\n         SKSV:  %s", sbs);
 	}
 	printf("\n");
 	if (verbosity == 0) {
