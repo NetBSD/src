@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.49 2003/01/05 21:27:28 agc Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.50 2003/05/14 14:31:01 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.49 2003/01/05 21:27:28 agc Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.50 2003/05/14 14:31:01 wiz Exp $");
 #endif
 
 /*
@@ -528,7 +528,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 
     pkg=strrchr(wildcardurl, '/');
     if (pkg == NULL){
-	warnx("expandURL: no '/' in url %s?!", wildcardurl);
+	warnx("expandURL: no '/' in URL %s?!", wildcardurl);
 	return -1;
     }
     (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-wildcardurl),
@@ -660,7 +660,7 @@ unpackURL(const char *url, const char *dir)
 	char pkg_path[FILENAME_MAX];
 
 	{
-		/* Verify if the url is really ok */
+		/* Verify if the URL is really ok */
 		char expnd[FILENAME_MAX];
 
 		rc=expandURL(expnd, url);
@@ -677,7 +677,7 @@ unpackURL(const char *url, const char *dir)
 	
 	pkg=strrchr(url, '/');
 	if (pkg == NULL){
-		warnx("unpackURL: no '/' in url %s?!", url);
+		warnx("unpackURL: no '/' in URL %s?!", url);
 		return -1;
 	}
 	(void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url),
@@ -733,7 +733,7 @@ miscstuff(const char *url)
 
     pkg=strrchr(url, '/');
     if (pkg == NULL){
-	warnx("miscstuff: no '/' in url %s?!", url);
+	warnx("miscstuff: no '/' in URL %s?!", url);
 	return -1;
     }
     (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url), (int)(pkg-url),
