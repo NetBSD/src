@@ -1,10 +1,10 @@
-/*	$NetBSD: info.c,v 1.9 2003/09/08 13:33:00 wiz Exp $	*/
+/*	$NetBSD: info.c,v 1.10 2004/07/12 23:41:53 wiz Exp $	*/
 
 /* info.c -- Display nodes of Info files in multiple windows.
-   Id: info.c,v 1.7 2003/05/19 13:10:59 karl Exp
+   Id: info.c,v 1.7 2004/03/13 15:52:46 dirt Exp
 
-   Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -79,8 +79,11 @@ int dump_subnodes = 0;
 /* Non-zero means make default keybindings be loosely modeled on vi(1).  */
 int vi_keys_p = 0;
 
-/* Non-zero means don't remove ANSI escape sequences from man pages.  */
-int raw_escapes_p = 0;
+/* Non-zero means don't remove ANSI escape sequences.  */
+int raw_escapes_p = 1;
+
+/* Non-zero means print the absolute location of the file to be loaded.  */
+static int print_where_p = 0;
 
 #ifdef __MSDOS__
 /* Non-zero indicates that screen output should be made 'speech-friendly'.
@@ -105,15 +108,18 @@ static struct option long_options[] = {
   { "file", 1, 0, 'f' },
   { "help", 0, &print_help_p, 1 },
   { "index-search", 1, 0, IDXSRCH_OPTION },
+  { "location", 0, &print_where_p, 1 },
   { "node", 1, 0, 'n' },
   { "output", 1, 0, 'o' },
   { "raw-escapes", 0, &raw_escapes_p, 1 },
+  { "no-raw-escapes", 0, &raw_escapes_p, 0 },
   { "restore", 1, 0, RESTORE_OPTION },
   { "show-options", 0, 0, 'O' },
   { "subnodes", 0, &dump_subnodes, 1 },
   { "usage", 0, 0, 'O' },
   { "version", 0, &print_version_p, 1 },
   { "vi-keys", 0, &vi_keys_p, 1 },
+  { "where", 0, &print_where_p, 1 },
 #ifdef __MSDOS__
   { "speech-friendly", 0, &speech_friendly, 1 },
 #endif
@@ -122,18 +128,17 @@ static struct option long_options[] = {
 
 /* String describing the shorthand versions of the long options found above. */
 #ifdef __MSDOS__
-static char *short_options = "d:n:f:ho:ORsb";
+static char *short_options = "d:n:f:ho:ORswb";
 #else
-static char *short_options = "d:n:f:ho:ORs";
+static char *short_options = "d:n:f:ho:ORws";
 #endif
 
 /* When non-zero, the Info window system has been initialized. */
 int info_windows_initialized_p = 0;
 
 /* Some "forward" declarations. */
-static void info_short_help ();
-static void init_messages ();
-extern void add_file_directory_to_path ();
+static void info_short_help (void);
+static void init_messages (void);
 
 
 /* **************************************************************** */
@@ -143,9 +148,7 @@ extern void add_file_directory_to_path ();
 /* **************************************************************** */
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   int getopt_long_index;        /* Index returned by getopt_long (). */
   NODE *initial_node;           /* First node loaded by Info. */
@@ -155,9 +158,11 @@ main (argc, argv)
   setlocale (LC_ALL, "");
 #endif
 
+#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   init_messages ();
 
@@ -231,6 +236,11 @@ main (argc, argv)
           dump_subnodes = 1;
           break;
 
+          /* For compatibility with man, -w is --where.  */
+        case 'w':
+          print_where_p = 1;
+          break;
+
 #ifdef __MSDOS__
 	  /* User wants speech-friendly output.  */
 	case 'b':
@@ -283,11 +293,10 @@ main (argc, argv)
     {
       printf ("%s (GNU %s) %s\n", program_name, PACKAGE, VERSION);
       puts ("");
-      printf (_("Copyright (C) %s Free Software Foundation, Inc.\n\
-There is NO warranty.  You may redistribute this software\n\
+      puts ("Copyright (C) 2004 Free Software Foundation, Inc.");
+      printf (_("There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
-For more information about these matters, see the files named COPYING.\n"),
-		  "2003");
+For more information about these matters, see the files named COPYING.\n"));
       xexit (0);
     }
 
@@ -324,7 +333,13 @@ For more information about these matters, see the files named COPYING.\n"),
         {
           info_add_path (DEFAULT_INFOPATH, INFOPATH_PREPEND);
 #ifdef INFODIR /* from the Makefile */
-         info_add_path (INFODIR, INFOPATH_PREPEND);
+          info_add_path (INFODIR, INFOPATH_PREPEND);
+#endif
+#ifdef INFODIR2 /* from the Makefile, too */
+#  ifdef INFODIR
+          if (!STREQ (INFODIR, INFODIR2))
+#  endif
+            info_add_path (INFODIR2, INFOPATH_PREPEND);
 #endif
         }
     }
@@ -351,10 +366,10 @@ For more information about these matters, see the files named COPYING.\n"),
   if (!initial_node)
     {
       if (info_recent_file_error)
-        info_error (info_recent_file_error);
+        info_error (info_recent_file_error, NULL, NULL);
       else
-        info_error (msg_cant_find_node,
-                    user_nodenames ? user_nodenames[0] : "Top");
+        info_error ((char *) msg_cant_find_node,
+                    user_nodenames ? user_nodenames[0] : "Top", NULL);
       xexit (1);
     }
 
@@ -366,7 +381,9 @@ For more information about these matters, see the files named COPYING.\n"),
     {
       free (initial_node);
 
-      if (user_output_filename)
+      if (print_where_p)
+        printf ("%s\n", user_filename ? user_filename : "unknown?!");
+      else if (user_output_filename)
         dump_nodes_to_file
           (user_filename, user_nodenames, user_output_filename, dump_subnodes);
       else
@@ -380,12 +397,26 @@ For more information about these matters, see the files named COPYING.\n"),
      file name is either "dir", or the contents of user_filename if one
      was specified. */
   {
-    char *errstr, *errarg1, *errarg2;
+    const char *errstr;
+    char *errarg1, *errarg2;
+
     NODE *new_initial_node = info_follow_menus (initial_node, argv + optind,
-                                                &errstr, &errarg1, &errarg2);
+        &errstr, &errarg1, &errarg2);
 
     if (new_initial_node && new_initial_node != initial_node)
       initial_node = new_initial_node;
+
+    if (print_where_p)
+      {
+        if (initial_node->parent)
+          printf ("%s\n", initial_node->parent);
+        else if (initial_node->filename
+            && !is_dir_name (filename_non_directory (initial_node->filename)))
+          printf ("%s\n", initial_node->filename);
+        else
+          xexit (1);
+        xexit (0);
+      }
 
     /* If the user specified that this node should be output, then do that
        now.  Otherwise, start the Info session with this node.  Or act
@@ -396,14 +427,14 @@ For more information about these matters, see the files named COPYING.\n"),
           dump_node_to_file (initial_node, user_output_filename,
                              dump_subnodes);
         else
-          info_error (errstr, errarg1, errarg2);
+          info_error ((char *) errstr, errarg1, errarg2);
       }
     else
       {
 
         if (errstr)
-          begin_info_session_with_error (initial_node, errstr,
-                                         errarg1, errarg2);
+          begin_info_session_with_error (initial_node, (char *) errstr,
+              errarg1, errarg2);
         /* If the user specified `--index-search=STRING' or
            --show-options, start the info session in the node
            corresponding to what they want. */
@@ -485,8 +516,7 @@ For more information about these matters, see the files named COPYING.\n"),
 }
 
 void
-add_file_directory_to_path (filename)
-     char *filename;
+add_file_directory_to_path (char *filename)
 {
   char *directory_name = xstrdup (filename);
   char *temp = filename_non_directory (directory_name);
@@ -520,9 +550,7 @@ int info_error_rings_bell_p = 1;
    then the message is printed in the echo area.  Otherwise, a message is
    output to stderr. */
 void
-info_error (format, arg1, arg2)
-     char *format;
-     void *arg1, *arg2;
+info_error (char *format, void *arg1, void *arg2)
 {
   info_error_was_printed = 1;
 
@@ -558,7 +586,7 @@ info_error (format, arg1, arg2)
 
 /* Produce a scaled down description of the available options to Info. */
 static void
-info_short_help ()
+info_short_help (void)
 {
 #ifdef __MSDOS__
   static const char speech_friendly_string[] = N_("\
@@ -582,10 +610,12 @@ Options:\n\
       --index-search=STRING    go to node pointed by index entry STRING.\n\
   -n, --node=NODENAME          specify nodes in first visited Info file.\n\
   -o, --output=FILENAME        output selected nodes to FILENAME.\n\
-  -R, --raw-escapes            don't remove ANSI escapes from man pages.\n\
+  -R, --raw-escapes            output \"raw\" ANSI escapes (default).\n\
+      --no-raw-escapes         output escapes as literal text.\n\
       --restore=FILENAME       read initial keystrokes from FILENAME.\n\
   -O, --show-options, --usage  go to command-line options node.\n%s\
       --subnodes               recursively output menu items.\n\
+  -w, --where, --location      print physical location of Info file.\n\
       --vi-keys                use vi-like and less-like key bindings.\n\
       --version                display version information and exit.\n\
 \n\
@@ -636,7 +666,7 @@ const char *msg_win_too_small;
 const char *msg_cant_make_help;
 
 static void
-init_messages ()
+init_messages (void)
 {
   msg_cant_find_node   = _("Cannot find node `%s'.");
   msg_cant_file_node   = _("Cannot find node `(%s)%s'.");
