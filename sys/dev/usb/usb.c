@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.64 2002/01/02 22:44:44 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.65 2002/01/03 22:20:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.64 2002/01/02 22:44:44 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.65 2002/01/03 22:20:45 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,6 +616,13 @@ usb_get_next_event(struct usb_event *ue)
 	if (usb_nevents <= 0)
 		return (0);
 	ueq = SIMPLEQ_FIRST(&usb_events);
+#ifdef DIAGNOSTIC
+	if (ueq == NULL) {
+		printf("usb: usb_nevents got out of sync! %d\n", usb_nevents);
+		usb_nevents = 0;
+		return (0);
+	}
+#endif
 	*ue = ueq->ue;
 	SIMPLEQ_REMOVE_HEAD(&usb_events, ueq, next);
 	free(ueq, M_USBDEV);
