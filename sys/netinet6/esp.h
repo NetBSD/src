@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.13 2000/09/26 08:37:38 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.14 2000/10/18 17:09:16 thorpej Exp $	*/
 /*	$KAME: esp.h,v 1.15 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -100,6 +100,8 @@ extern int esp_max_ivlen __P((void));
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
 extern void esp4_input __P((struct mbuf *, ...));
 extern size_t esp_hdrsiz __P((struct ipsecrequest *));
+
+extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
 
 #ifdef INET6
 extern int esp6_output __P((struct mbuf *, u_char *, struct mbuf *,

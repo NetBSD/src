@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.54 2000/07/28 04:06:53 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.55 2000/10/18 17:09:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,12 +30,15 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Public Access Networks Corporation ("Panix").  It was developed under
  * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of Zembu Labs, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -148,6 +151,17 @@ int	icmpprintfs = 0;
 #endif
 int	icmpreturndatabytes = 8;
 
+/*
+ * List of callbacks to notify when Path MTU changes are made.
+ */
+struct mtudisc_callback {
+	LIST_ENTRY(mtudisc_callback) mc_list;
+	void (*mc_func) __P((struct in_addr));
+};
+
+LIST_HEAD(, mtudisc_callback) icmp_mtudisc_callbacks =
+    LIST_HEAD_INITIALIZER(&icmp_mtudisc_callbacks);
+
 #if 0
 static int	ip_next_mtu __P((int, int));
 #else
@@ -158,10 +172,32 @@ extern int icmperrppslim;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 
-static void icmp_mtudisc __P((struct icmp *));
 static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 static int icmp_ratelimit __P((const struct in_addr *, const int, const int));
+
+/*
+ * Register a Path MTU Discovery callback.
+ */
+void
+icmp_mtudisc_callback_register(func)
+	void (*func) __P((struct in_addr));
+{
+	struct mtudisc_callback *mc;
+
+	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list)) {
+		if (mc->mc_func == func)
+			return;
+	}
+
+	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
+	if (mc == NULL)
+		panic("icmp_mtudisc_callback_register");
+
+	mc->mc_func = func;
+	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, mc, mc_list);
+}
 
 /*
  * Generate an error packet of type error
@@ -459,15 +495,10 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		if (code == PRC_MSGSIZE && ip_mtudisc)
-			icmp_mtudisc(icp);
-		/*
-		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
-		 * notification to TCP layer.
-		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
+			(void) (*ctlfunc)(code, sintosa(&icmpsrc),
+			    &icp->icmp_ip);
 		break;
 
 	badcode:
@@ -864,12 +895,14 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	return error;
 }
 
-static void
-icmp_mtudisc(icp)
+void
+icmp_mtudisc(icp, faddr)
 	struct icmp *icp;
+	struct in_addr faddr;
 {
-	struct rtentry *rt;
+	struct mtudisc_callback *mc;
 	struct sockaddr *dst = sintosa(&icmpsrc);
+	struct rtentry *rt;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 	int    error;
 
@@ -950,6 +983,14 @@ icmp_mtudisc(icp)
 
 	if (rt)
 		rtfree(rt);
+
+	/*
+	 * Notify protocols that the MTU for this destination
+	 * has changed.
+	 */
+	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list))
+		(*mc->mc_func)(faddr);
 }
 
 /*
