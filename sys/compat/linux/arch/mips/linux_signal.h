@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.2 2001/09/02 07:27:33 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.3 2001/09/02 08:39:37 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,11 @@
 #define LINUX_SIGRTMIN		32
 
 #define LINUX__NSIG		128
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define LINUX__NSIG_BPW		64
+#else
 #define LINUX__NSIG_BPW		32
+#endif
 #define LINUX__NSIG_WORDS (LINUX__NSIG / LINUX__NSIG_BPW)
 
 #define LINUX_SIG_BLOCK		1
@@ -108,11 +112,11 @@ typedef struct {
 
 /* Used in rt_* calls. No old_sigaction is defined for MIPS */
 struct linux_sigaction {
-	unsigned long sa_flags;
-	linux___sighandler_t sa_handler;
-	linux_sigset_t	sa_mask;
-	void (*sa_restorer) __P((void));
-	int sa_resv[1];
+	unsigned int		sa_flags;
+	linux___sighandler_t	sa_handler;
+	linux_sigset_t		sa_mask;
+	void			(*sa_restorer) __P((void));
+	int			sa_resv[1];
 };
 
 struct linux_k_sigaction {

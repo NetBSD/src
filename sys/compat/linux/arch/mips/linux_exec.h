@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 2001/08/26 15:24:24 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,18 +61,25 @@
 
 #define LINUX_GCC_SIGNATURE 1			/* XXX to be tested */
 
-/* XXX should use ELFNAME2 */
-#define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs
+#define LINUX_COPYARGS_FUNCTION ELFNAME2(linux,copyargs)
 
 typedef struct {
 	Elf32_Sword a_type;
 	Elf32_Word  a_v;
 } LinuxAux32Info;
+typedef struct {
+	Elf64_Sword a_type;
+	Elf64_Word  a_v;
+} LinuxAux64Info;
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define LinuxAuxInfo LinuxAux64Info
+#else
 #define LinuxAuxInfo LinuxAux32Info
+#endif
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void * linux_elf32_copyargs __P((struct exec_package *,
+void * ELFNAME2(linux,copyargs) __P((struct exec_package *,
     struct ps_strings *, void *, void *)); 
 __END_DECLS
 #endif /* _KERNEL */
