@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.7 1993/11/12 08:24:36 cgd Exp $
+#	$Id: Makefile,v 1.8 1993/11/12 08:47:23 cgd Exp $
 
 PROG=	restore
 SRCS=	main.c interactive.c restore.c dirs.c symtab.c tape.c utilities.c
@@ -11,7 +11,7 @@ CLEANFILES+=dumprmt.o rtape.o rrestore
 
 all: rrestore
 
-rrestore: ${ROBJS} ${LIBC}
+rrestore: ${LIBCRT0} ${ROBJS} ${LIBC} ${DPADD}
 	${CC} ${LDSTATIC} ${LDFLAGS} -o ${.TARGET} ${ROBJS} ${LDADD}
 
 rtape.o: tape.c ${LIBC}
