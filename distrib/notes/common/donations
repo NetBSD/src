@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.21.2.1 2002/07/02 04:20:05 lukem Exp $
+.\"	$NetBSD: donations,v 1.21.2.2 2002/07/20 02:29:33 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,6 +88,7 @@ Kimmo Suominen
 Jason R. Thorpe
 Steve Wadlow
 Krister Walfridsson
+Rob Windsor
 Jim Wise
 Reinoud Zandijk
 Christos Zoulas
