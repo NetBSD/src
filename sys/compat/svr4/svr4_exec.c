@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.2.2.1 1994/08/15 22:03:33 mycroft Exp $	*/
+/*	$NetBSD: svr4_exec.c,v 1.2.2.2 1994/08/15 22:48:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -52,7 +52,7 @@
 #include <machine/reg.h>
 #include <machine/exec.h>
 
-#include <compat/svr4/exec.h>
+#include <compat/svr4/svr4_exec.h>
 
 
 #ifdef DEBUG_SVR4
@@ -62,7 +62,7 @@
 #endif
 
 /*
- * svr4_exec_elf_makecmds(): Prepare an Elf binary's exec package
+ * exec_svr4_elf_makecmds(): Prepare an Elf binary's exec package
  *
  * First, set of the various offsets/lengths in the exec package.
  *
@@ -71,11 +71,11 @@
  * text, data, bss, and stack segments.
  */
 int
-svr4_exec_elf_makecmds(p, epp)
+exec_svr4_elf_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;
 {
-    Elf32_Ehdr eh;
+    Elf32_Ehdr *eh = epp->ep_hdr;
     Elf32_Phdr ph; 
     int error;
     struct exec_vmcmd *ccmdp;
@@ -84,30 +84,20 @@ svr4_exec_elf_makecmds(p, epp)
     long diff;
     u_long pos;
 
-    s = sizeof(eh);
-    if (error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) &eh, s, 0,
-			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p)) {
-	DPRINTF(("Exec header read error %d\n", error));
-	return error;
-    }
-    s -= resid;
-    if (s != sizeof(eh)) {
-	DPRINTF(("Incomplete read for exec header ask=%d, rem=%d got %d\n",
-		 sizeof(eh), resid, s));
+    if (epp->ep_hdrvalid < sizeof(Elf32_Ehdr))
 	return ENOEXEC;
-    }
 
-    if (memcmp(eh.e_ident, Elf32_e_ident, Elf32_e_siz) != 0) {
+    if (memcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0) {
 	DPRINTF(("Not an elf file\n"));
 	return ENOEXEC;
     }
 
-    if (eh.e_type != Elf32_et_exec) {
+    if (eh->e_type != Elf32_et_exec) {
 	DPRINTF(("Not an elf executable\n"));
 	return ENOEXEC;
     }
 
-    if (eh.e_machine != Elf32_em_386 && eh.e_machine != Elf32_em_486) {
+    if (eh->e_machine != Elf32_em_386 && eh->e_machine != Elf32_em_486) {
 	DPRINTF(("Not an elf/386 or 486 executable\n"));
 	return ENOEXEC;
     }
@@ -128,8 +118,8 @@ svr4_exec_elf_makecmds(p, epp)
     epp->ep_emul = EMUL_IBCS2_ELF;
     epp->ep_tsize = ~0;
     epp->ep_dsize = ~0;
-    pos = eh.e_phoff;
-    for (i = 0; i < eh.e_phnum; i++, pos += sizeof(ph)) {
+    pos = eh->e_phoff;
+    for (i = 0; i < eh->e_phnum; i++, pos += sizeof(ph)) {
 	u_long vaddr, offset;
 	int prot = 0;
 	s = sizeof(ph);
@@ -203,7 +193,7 @@ svr4_exec_elf_makecmds(p, epp)
 		  vaddr, epp->ep_vp, offset, prot);
     }
 
-    epp->ep_entry = eh.e_entry;
+    epp->ep_entry = eh->e_entry;
 
     DPRINTF(("Elf entry@ %x\n", epp->ep_entry));
     epp->ep_vp->v_flag |= VTEXT;
