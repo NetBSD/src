@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.53 1999/11/03 09:12:15 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.54 1999/11/12 16:10:16 is Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -774,10 +774,9 @@ sysctl_string(oldp, oldlenp, newp, newlen, str, maxlen)
 		return (ENOMEM);
 	if (newp && newlen >= maxlen)
 		return (EINVAL);
-	if (oldp) {
-		*oldlenp = len;
+	*oldlenp = len;
+	if (oldp)
 		error = copyout(str, oldp, len);
-	}
 	if (error == 0 && newp) {
 		error = copyin(newp, str, newlen);
 		str[newlen] = 0;
