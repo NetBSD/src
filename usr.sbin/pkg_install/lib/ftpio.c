@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.9 2000/01/26 02:12:14 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.10 2000/01/31 13:33:19 agc Exp $	*/
 /*	 Id: foo2.c,v 1.12 1999/12/17 02:31:57 feyrer Exp feyrer 	*/
 
 /*
@@ -300,8 +300,10 @@ ftp_stop(void)
 		close(ftpio.answer);
 	}
 
+#if !(defined(__svr4__) && defined(__sun__))
 	unsetenv(PKG_FTPIO_COMMAND); 
 	unsetenv(PKG_FTPIO_ANSWER);
+#endif
 }
 
 
