@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode32.s,v 1.1.10.2 2002/01/04 22:38:56 eeh Exp $	*/
+/*	$NetBSD: sigcode32.s,v 1.1.10.3 2002/08/23 02:47:07 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -192,6 +192,6 @@ SIGCODE_NAME:
 	 */
 	call	%g1
 	 nop
-	mov	SYS_exit, %g1		! exit(errno)
+	mov	EXIT_NAME, %g1		! exit(errno)
 	t	ST_SYSCALL	
 ESIGCODE_NAME:

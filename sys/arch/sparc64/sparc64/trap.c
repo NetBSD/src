@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.12 2002/08/01 02:43:51 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.13 2002/08/23 02:47:08 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
