@@ -1,4 +1,4 @@
-/*      $NetBSD: menutree.h,v 1.2 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: menutree.h,v 1.3 2005/01/11 23:11:05 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,11 +54,11 @@ extern struct cqMenu *cqMenuHeadp;
 
 #define TREE_ISEMPTY(cqm)	(CIRCLEQ_FIRST(cqm) == (void *)cqm)
 
-void tree_init __P((void));
-void tree_appenditem __P((struct cqMenu *, char *, char *, char *, char *));
-int tree_entries __P((struct cqMenu *));
-MTREE_ENTRY *tree_getentry __P((struct cqMenu *, int));
-MTREE_ENTRY *tree_gettreebyname __P((struct cqMenu *, char *));
-void tree_printtree __P((struct cqMenu *));
+void tree_init(void);
+void tree_appenditem(struct cqMenu *, char *, char *, char *, char *);
+int tree_entries(struct cqMenu *);
+MTREE_ENTRY *tree_getentry(struct cqMenu *, int);
+MTREE_ENTRY *tree_gettreebyname(struct cqMenu *, char *);
+void tree_printtree(struct cqMenu *);
 
 #endif	/* _MENUTREE_H_ */
