@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1996/09/17 21:17:11 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1996/10/15 23:56:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1533,3 +1533,48 @@ LEAF(swpctxt,2)
 Lswpctxt1: call_pal PAL_OSF1_swpctx
 	RET
 	END(swpctxt)
+
+/*
+ * console 'restart' routine to be placed in HWRPB.
+ */
+LEAF(XentRestart, 1)			/* XXX should be NESTED */
+	.set noat
+	lda	sp,-(FRAME_SIZE*8)(sp)
+	stq	at_reg,(FRAME_AT*8)(sp)
+	.set at
+	stq	v0,(FRAME_V0*8)(sp)
+	stq	a3,(FRAME_A3*8)(sp)
+	stq	a4,(FRAME_A4*8)(sp)
+	stq	a5,(FRAME_A5*8)(sp)
+	stq	s0,(FRAME_S0*8)(sp)
+	stq	s1,(FRAME_S1*8)(sp)
+	stq	s2,(FRAME_S2*8)(sp)
+	stq	s3,(FRAME_S3*8)(sp)
+	stq	s4,(FRAME_S4*8)(sp)
+	stq	s5,(FRAME_S5*8)(sp)
+	stq	s6,(FRAME_S6*8)(sp)
+	stq	t0,(FRAME_T0*8)(sp)
+	stq	t1,(FRAME_T1*8)(sp)
+	stq	t2,(FRAME_T2*8)(sp)
+	stq	t3,(FRAME_T3*8)(sp)
+	stq	t4,(FRAME_T4*8)(sp)
+	stq	t5,(FRAME_T5*8)(sp)
+	stq	t6,(FRAME_T6*8)(sp)
+	stq	t7,(FRAME_T7*8)(sp)
+	stq	t8,(FRAME_T8*8)(sp)
+	stq	t9,(FRAME_T9*8)(sp)
+	stq	t10,(FRAME_T10*8)(sp)
+	stq	t11,(FRAME_T11*8)(sp)
+	stq	t12,(FRAME_T12*8)(sp)
+	stq	ra,(FRAME_RA*8)(sp)
+
+	br	pv,LXconsole_restart1
+LXconsole_restart1: SETGP(pv)
+
+	ldq	a0,(FRAME_RA*8)(sp)		/* a0 = ra */
+	ldq	a1,(FRAME_T11*8)(sp)		/* a1 = ai */
+	ldq	a2,(FRAME_T12*8)(sp)		/* a2 = pv */
+	CALL(console_restart)
+
+	call_pal PAL_halt
+	END(XentRestart)
