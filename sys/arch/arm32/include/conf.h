@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.6 1998/09/22 03:42:10 mark Exp $	*/
+/*	$NetBSD: conf.h,v 1.7 1998/10/06 02:40:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -178,3 +178,6 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 cdev_decl(ulpt);
 cdev_decl(vc_nb_);
+cdev_decl(wsdisplay);
+cdev_decl(wskbd);
+cdev_decl(wsmouse);
