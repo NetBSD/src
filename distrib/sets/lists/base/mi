@@ -254,12 +254,12 @@
 ./usr/bin/rcsclean
 ./usr/bin/rcsdiff
 ./usr/bin/rcsfreeze
+./usr/bin/rcslog
 ./usr/bin/rcsmerge
 ./usr/bin/rdist
 ./usr/bin/renice
 ./usr/bin/reset
 ./usr/bin/rev
-./usr/bin/rcslog
 ./usr/bin/rlog
 ./usr/bin/rlogin
 ./usr/bin/rpcinfo
