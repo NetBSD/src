@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.39 1996/09/03 03:12:38 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.40 1996/09/25 04:37:13 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -1103,8 +1103,8 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 	const struct statfs *bfs;
 	struct svr4_statvfs *sfs;
 {
-	sfs->f_bsize = bfs->f_bsize;
-	sfs->f_frsize = bfs->f_bsize / 8; /* XXX */
+	sfs->f_bsize = bfs->f_iosize; /* XXX */
+	sfs->f_frsize = bfs->f_bsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
 	sfs->f_bavail = bfs->f_bavail;
