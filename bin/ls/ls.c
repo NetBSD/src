@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.35 1999/02/12 14:35:49 kleink Exp $	*/
+/*	$NetBSD: ls.c,v 1.36 1999/02/17 15:28:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.35 1999/02/12 14:35:49 kleink Exp $");
+__RCSID("$NetBSD: ls.c,v 1.36 1999/02/17 15:28:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,7 @@ int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
 int f_stream;			/* stream format */
 int f_type;			/* add type character for non-regular files */
+int f_typedir;			/* add type character for directories */
 int f_whiteout;			/* show whiteout entries */
 
 int
@@ -135,7 +136,7 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnoqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -211,6 +212,9 @@ main(argc, argv)
 		case 'o':
 			f_flags = 1;
 			break;
+		case 'p':
+			f_typedir = 1;
+			break;
 		case 'q':
 			f_nonprint = 1;
 			break;
@@ -241,10 +245,10 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * If not -F, -i, -l, -S, -s or -t options, don't require stat
+	 * If not -F, -i, -l, -p, -S, -s or -t options, don't require stat
 	 * information.
 	 */
-	if (!f_inode && !f_longform && !f_size && !f_type &&
+	if (!f_inode && !f_longform && !f_size && !f_type && !f_typedir &&
 	    sortkey == BY_NAME)
 		fts_options |= FTS_NOSTAT;
 
