@@ -31,6 +31,7 @@
 #include "subsegs.h"
 #include "dwarf2dbg.h"
 #include "opcode/i386.h"
+#include "struc-symbol.h"
 
 #ifndef REGISTER_WARNINGS
 #define REGISTER_WARNINGS 1
