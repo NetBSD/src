@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen.c,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $");
+RCSID("$Id: gen.c,v 1.1.1.3 2001/09/17 12:24:59 assar Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -142,10 +142,8 @@ define_asn1 (int level, Type *t)
 	break;
     case TBitString: {
 	Member *m;
-	Type i;
 	int tag = -1;
 
-	i.type = TInteger;
 	space(level);
 	fprintf (headerfile, "BIT STRING {\n");
 	for (m = t->members; m && m->val != tag; m = m->next) {

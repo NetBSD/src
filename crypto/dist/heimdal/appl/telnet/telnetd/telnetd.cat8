@@ -6,7 +6,7 @@ NNAAMMEE
 
 SSYYNNOOPPSSIISS
      tteellnneettdd [--BBUUhhkkllnn] [--DD _d_e_b_u_g_m_o_d_e] [--SS _t_o_s] [--XX _a_u_t_h_t_y_p_e] [--aa _a_u_t_h_m_o_d_e]
-             [--rr_l_o_w_p_t_y_-_h_i_g_h_p_t_y] [--uu _l_e_n] [--ddeebbuugg] [--LL _/_b_i_n_/_l_o_g_i_n] [_p_o_r_t]
+             [--rr_l_o_w_p_t_y_-_h_i_g_h_p_t_y] [--uu _l_e_n] [--ddeebbuugg] [--LL _/_b_i_n_/_l_o_g_i_n] [--yy] [_p_o_r_t]
 
 DDEESSCCRRIIPPTTIIOONN
      The tteellnneettdd command is a server which supports the DARPA standard TELNET
@@ -123,8 +123,11 @@ DDEESSCCRRIIPPTTIIOONN
                   disable a specific authentication type without having to re-
                   compile tteellnneettdd.
 
-     --LL --ppaatthhnnaammee
-                  Specify pathname to an alternative login program.
+     --LL _p_a_t_h_n_a_m_e  Specify pathname to an alternative login program.
+
+     --yy           Makes tteellnneettdd not warn when a user is trying to login with a
+                  cleartext password.
+
 
      TTeellnneettdd operates by allocating a pseudo-terminal device (see pty(4))  for
      a client, then creating a login process which has the slave side of the
@@ -190,11 +193,11 @@ DDEESSCCRRIIPPTTIIOONN
      TTeellnneettdd has support for enabling remotely the following TELNET options:
 
      DO BINARY          Sent to indicate that telnetd is willing to receive an
+
+
                         8 bit data stream.
 
      DO LFLOW           Requests that the client handle flow control charac-
-
-
                         ters remotely.
 
      DO ECHO            This is not really supported, but is sent to identify
@@ -245,7 +248,6 @@ DDEESSCCRRIIPPTTIIOONN
                         encryption, and indicates a willingness to decrypt the
                         data stream.
 
-EENNVVIIRROONNMMEENNTT
 FFIILLEESS
      /etc/services
      /etc/inittab   (UNICOS systems only)
@@ -257,10 +259,10 @@ SSEEEE AALLSSOO
 SSTTAANNDDAARRDDSS
      RRFFCC--885544   TELNET PROTOCOL SPECIFICATION
      RRFFCC--885555   TELNET OPTION SPECIFICATIONS
+
+
      RRFFCC--885566   TELNET BINARY TRANSMISSION
      RRFFCC--885577   TELNET ECHO OPTION
-
-
      RRFFCC--885588   TELNET SUPPRESS GO AHEAD OPTION
      RRFFCC--885599   TELNET STATUS OPTION
      RRFFCC--886600   TELNET TIMING MARK OPTION

@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: crypto.c,v 1.1.1.4 2001/06/19 22:08:20 assar Exp $");
+RCSID("$Id: crypto.c,v 1.1.1.5 2001/09/17 12:25:03 assar Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -1725,7 +1725,7 @@ ARCFOUR_subencrypt(krb5_context context,
     krb5_keyblock kb;
     unsigned char t[4];
     RC4_KEY rc4_key;
-    char *cdata = (char *)data;
+    unsigned char *cdata = data;
     unsigned char k1_c_data[16], k2_c_data[16], k3_c_data[16];
 
     t[0] = (usage >>  0) & 0xFF;
@@ -1781,7 +1781,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     krb5_keyblock kb;
     unsigned char t[4];
     RC4_KEY rc4_key;
-    char *cdata = (char *)data;
+    unsigned char *cdata = data;
     unsigned char k1_c_data[16], k2_c_data[16], k3_c_data[16];
     unsigned char cksum_data[16];
 
@@ -2655,7 +2655,7 @@ krb5_decrypt_EncryptedData(krb5_context context,
  *                                                          *
  ************************************************************/
 
-#ifdef HAVE_OPENSSL_DES_H
+#ifdef HAVE_OPENSSL
 #include <openssl/rand.h>
 
 /* From openssl/crypto/rand/rand_lcl.h */
@@ -2664,7 +2664,6 @@ static int
 seed_something(void)
 {
     int fd = -1;
-    size_t len;
     char buf[1024], seedfile[256];
 
     /* If there is a seed file, load it. But such a file cannot be trusted,
@@ -2684,7 +2683,7 @@ seed_something(void)
        we do not have to deal with it. */
     if (RAND_status() != 1) {
 	krb5_context context;
-	char *p;
+	const char *p;
 
 	/* Try using egd */
 	if (!krb5_init_context(&context)) {
@@ -3000,6 +2999,7 @@ krb5_string_to_key_derived(krb5_context context,
     struct encryption_type *et = _find_enctype(etype);
     krb5_error_code ret;
     struct key_data kd;
+    size_t keylen = et->keytype->bits / 8;
     u_char *tmp;
 
     if(et == NULL) {
@@ -3008,13 +3008,28 @@ krb5_string_to_key_derived(krb5_context context,
 	return KRB5_PROG_ETYPE_NOSUPP;
     }
     ALLOC(kd.key, 1);
+    if(kd.key == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
+	return ENOMEM;
+    }
+    ret = krb5_data_alloc(&kd.key->keyvalue, et->keytype->size);
+    if(ret) {
+	free(kd.key);
+	return ret;
+    }
     kd.key->keytype = etype;
-    tmp = malloc (et->keytype->bits / 8);
-    _krb5_n_fold(str, len, tmp, et->keytype->bits / 8);
-    krb5_data_alloc(&kd.key->keyvalue, et->keytype->size);
+    tmp = malloc (keylen);
+    if(tmp == NULL) {
+	krb5_free_keyblock(context, kd.key);
+	krb5_set_error_string (context, "malloc: out of memory");
+	return ENOMEM;
+    }
+    _krb5_n_fold(str, len, tmp, keylen);
     kd.schedule = NULL;
-    DES3_postproc (context, tmp, et->keytype->bits / 8, &kd); /* XXX */
-    ret = derive_key(context,
+    DES3_postproc (context, tmp, keylen, &kd); /* XXX */
+    memset(tmp, 0, keylen);
+    free(tmp);
+    ret = derive_key(context, 
 		     et,
 		     &kd,
 		     "kerberos", /* XXX well known constant */

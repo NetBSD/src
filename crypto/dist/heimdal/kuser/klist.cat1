@@ -84,6 +84,6 @@ DDEESSCCRRIIPPTTIIOONN
                          the set of addresses from which this ticket is valid
 
 SSEEEE AALLSSOO
-     kinit(1),  kdestroy(1)
+     kdestroy(1),  kinit(1)
 
  HEIMDAL                         July 8, 2000                                2

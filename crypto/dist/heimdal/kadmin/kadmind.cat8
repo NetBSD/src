@@ -88,6 +88,6 @@ EEXXAAMMPPLLEESS
            # kadmind --ports="+ 4711" &
 
 SSEEEE AALLSSOO
-     kdc(8),  kadmin(1),  kpasswdd(8),  kpasswd(1)
+     kadmin(1),  kpasswd(1),  kdc(8),  kpasswdd(8)
 
  HEIMDAL                         June 7, 2000                                2

@@ -32,6 +32,6 @@ BBUUGGSS
      own _/_d_e_v_/_c_o_n_s_o_l_e on the remote host.
 
 SSEEEE AALLSSOO
-     rxtelnet(1),  rxterm(1),  kx(1),  kxd(8),  telnet(1)
+     kx(1),  rxtelnet(1),  rxterm(1),  telnet(1),  kxd(8)
 
  KTH_KRB                        March 31, 1997                               1

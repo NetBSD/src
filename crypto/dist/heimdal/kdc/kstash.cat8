@@ -22,7 +22,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      ----ccoonnvveerrtt--ffiillee
              don't ask for a new master key, just read an old master key file,
-             and writes it back in the new keyfile format
+             and write it back in the new keyfile format
 
      ----mmaasstteerr--kkeeyy--ffdd==_f_d
              filedescriptor to read passphrase from, if not specified the

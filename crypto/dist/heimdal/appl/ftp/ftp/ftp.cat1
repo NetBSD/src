@@ -633,7 +633,9 @@ EENNVVIIRROONNMMEENNTT
      SHELL       For default shell.
 
 SSEEEE AALLSSOO
-     ftpd(8),  _R_F_C_2_2_2_8
+     ftpd(8)
+
+     _R_F_C_2_2_2_8.
 
 HHIISSTTOORRYY
      The ffttpp command appeared in 4.2BSD.

@@ -5,7 +5,7 @@ NNAAMMEE
      ffttppdd - Internet File Transfer Protocol server
 
 SSYYNNOOPPSSIISS
-     ffttppdd [--aa _a_u_t_h_m_o_d_e] [--ddiillvv] [--gg _u_m_a_s_k] [--pp _p_o_r_t] [--TT _m_a_x_t_i_m_e_o_u_t] [--tt
+     ffttppdd [--aa _a_u_t_h_m_o_d_e] [--ddiillvvUU] [--gg _u_m_a_s_k] [--pp _p_o_r_t] [--TT _m_a_x_t_i_m_e_o_u_t] [--tt
      _t_i_m_e_o_u_t] [--uu _d_e_f_a_u_l_t _u_m_a_s_k] [--BB | ----bbuuiillttiinn--llss] [----ggoooodd--cchhaarrss==_s_t_r_i_n_g]
 
 DDEESSCCRRIIPPTTIIOONN
@@ -61,7 +61,12 @@ DDEESSCCRRIIPPTTIIOONN
 
      --uu      Set the initial umask to something else than the default 027.
 
-
+     --UU      In previous versions of ffttppdd, when a passive mode client request-
+             ed a data connection to the server, the server would use data
+             ports in the range 1024..4999.  Now, by default, if the system
+             supports the IP_PORTRANGE socket option, the server will use data
+             ports in the range 49152..65535.  Specifying this option will re-
+             vert to the old behavior.
 
      --vv      Verbose mode.
 
@@ -122,13 +127,14 @@ DDEESSCCRRIIPPTTIIOONN
 
      The following commands are specified by RFC2228.
 
+
+
+
            AUTH       authentication/security mechanism
            ADAT       authentication/security data
            PROT       data channel protection level
            PBSZ       protection buffer size
            MIC        integrity protected command
-
-
            CONF       confidentiality protected command
            ENC        privacy protected command
            CCC        clear command channel
@@ -189,6 +195,7 @@ DDEESSCCRRIIPPTTIIOONN
                 item).  However, the user must still supply a password.  This
                 feature is intended as a compromise between a fully anonymous
                 account and a fully privileged account.  The account should
+
                 also be set up as for an anonymous account.
 
            6.   If the user name is ``anonymous'' or ``ftp'', an anonymous ftp
@@ -252,6 +259,8 @@ DDEESSCCRRIIPPTTIIOONN
      If you want guests to be able to upload files, create a _~_f_t_p_/_i_n_c_o_m_i_n_g di-
      rectory owned by ``root'', and group ``ftp'' with mode 730 (make sure
      ``ftp'' is member of group ``ftp''). The following restrictions apply to
+
+
      anonymous users:
 
      ++oo   Directories created will have mode 700.
@@ -260,7 +269,6 @@ DDEESSCCRRIIPPTTIIOONN
          with the --gg option.
 
      ++oo   These command are not accessible: DDEELLEE, RRMMDD, RRNNTTOO, RRNNFFRR, SSIITTEE UUMMAASSKK,
-
          and SSIITTEE CCHHMMOODD.
 
      ++oo   Filenames must start with an alpha-numeric character, and consist of
@@ -276,7 +284,7 @@ FFIILLEESS
      ~/.klogin        Login access for Kerberos.
 
 SSEEEE AALLSSOO
-     ftp(1),  otp(1),  getusershell(3),  ftpusers(5),  syslogd(8),
+     ftp(1),  otp(1),  getusershell(3),  ftpusers(5),  syslogd(8)
 
 SSTTAANNDDAARRDDSS
      RRFFCC 995599   FTP PROTOCOL SPECIFICATION

@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: telnetd.c,v 1.1.1.4 2001/06/19 22:07:42 assar Exp $");
+RCSID("$Id: telnetd.c,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $");
 
 #ifdef _SC_CRAY_SECURE_SYS
 #include <sys/sysv.h>
@@ -138,6 +138,10 @@ char valid_opts[] = "Bd:hklnS:u:UL:y"
 
 static void doit(struct sockaddr*, int);
 
+#ifdef ENCRYPTION
+extern int des_check_key;
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -150,7 +154,6 @@ main(int argc, char **argv)
     int tos = -1;
 #endif
 #ifdef ENCRYPTION
-    extern int des_check_key;
     des_check_key = 1;	/* Kludge for Mac NCSA telnet 2.6 /bg */
 #endif
     pfrontp = pbackp = ptyobuf;

@@ -49,6 +49,6 @@ BBUUGGSS
      The default password quality checks are too basic.
 
 SSEEEE AALLSSOO
-     kdc(8),  kpasswd(1)
+     kpasswd(1),  kdc(8)
 
  HEIMDAL                        April 19, 1999                               1

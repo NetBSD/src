@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $ 
+ * $Id: kdc_locl.h,v 1.1.1.4 2001/09/17 12:24:58 assar Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -67,8 +67,6 @@ extern krb5_boolean allow_anonymous;
 extern char *v4_realm;
 extern int enable_v4;
 extern int enable_524;
-#endif
-#ifdef KASERVER
 extern krb5_boolean enable_kaserver;
 #endif
 
@@ -106,13 +104,17 @@ krb5_error_code do_version4 (unsigned char*, size_t, krb5_data*, const char*,
 krb5_error_code encode_v4_ticket (void*, size_t, const EncTicketPart*, 
 				  const PrincipalName*, size_t*);
 krb5_error_code encrypt_v4_ticket (void*, size_t, des_cblock*, EncryptedData*);
-krb5_error_code get_des_key(hdb_entry*, krb5_boolean, Key**);
+krb5_error_code get_des_key(hdb_entry*, krb5_boolean, krb5_boolean, Key**);
 int maybe_version4 (unsigned char*, int);
 #endif
 
-#ifdef KASERVER
+#ifdef KRB4
 krb5_error_code do_kaserver (unsigned char*, size_t, krb5_data*, const char*, 
 			     struct sockaddr_in*);
+#endif
+
+#ifdef HAVE_OPENSSL
+#define des_new_random_key des_random_key
 #endif
 
 #endif /* __KDC_LOCL_H__ */
