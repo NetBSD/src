@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.1 1995/02/28 23:25:07 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.2 1995/03/05 23:23:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -244,9 +244,30 @@ linux_time(p, uap, retval)
 }
 
 /*
- * The statfs and fstatfs called are not implemented yet. They're
- * easy, but just not important for the binaries I wanted to get
- * running.
+ * Convert BSD statfs structure to Linux statfs structure.
+ * The Linux structure has less fields, and it also wants
+ * the length of a name in a dir entry in a field, which
+ * we fake (probably the wrong way).
+ */
+static void
+bsd_to_linux_statfs(bsp, lsp)
+	struct statfs *bsp;
+	struct linux_statfs *lsp;
+{
+	lsp->l_ftype = bsp->f_type;
+	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_fblocks = bsp->f_blocks;
+	lsp->l_fbfree = bsp->f_bfree;
+	lsp->l_fbavail = bsp->f_bavail;
+	lsp->l_ffiles = bsp->f_files;
+	lsp->l_fffree = bsp->f_ffree;
+	lsp->l_ffsid.val[0] = bsp->f_fsid.val[0];
+	lsp->l_ffsid.val[1] = bsp->f_fsid.val[1];
+	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+}
+
+/*
+ * Implement the fs stat functions. Straightforward.
  */
 int
 linux_statfs(p, uap, retval)
@@ -257,19 +278,61 @@ linux_statfs(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct statfs btmp, *bsp;
+	struct linux_statfs ltmp;
+	struct statfs_args bsa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init();
+	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&bsa, path) = SCARG(uap, path);
+	SCARG(&bsa, buf) = bsp;
+
+	if ((error = statfs(p, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
 int
 linux_fstatfs(p, uap, retval)
 	struct proc *p;
 	struct linux_fstatfs_args /* {
-		syscallarg(char *) path;
+		syscallarg(int) fd;
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct statfs btmp, *bsp;
+	struct linux_statfs ltmp;
+	struct fstatfs_args bsa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init();
+	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+
+	SCARG(&bsa, fd) = SCARG(uap, fd);
+	SCARG(&bsa, buf) = bsp;
+
+	if ((error = statfs(p, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
 /*
@@ -514,7 +577,7 @@ linux_utime(p, uap, retval)
 	struct linux_utimbuf lut;
 
 	sg = stackgap_init();
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
 

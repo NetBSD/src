@@ -15,13 +15,13 @@
 #define	LINUX_SYS_linux_waitpid	7
 #define	LINUX_SYS_linux_creat	8
 #define	LINUX_SYS_link	9
-#define	LINUX_SYS_unlink	10
+#define	LINUX_SYS_linux_unlink	10
 #define	LINUX_SYS_linux_execve	11
-#define	LINUX_SYS_chdir	12
+#define	LINUX_SYS_linux_chdir	12
 #define	LINUX_SYS_linux_time	13
-#define	LINUX_SYS_mknod	14
-#define	LINUX_SYS_chmod	15
-#define	LINUX_SYS_chown	16
+#define	LINUX_SYS_linux_mknod	14
+#define	LINUX_SYS_linux_chmod	15
+#define	LINUX_SYS_linux_chown	16
 #define	LINUX_SYS_linux_break	17
 				/* 18 is obsolete linux_ostat */
 #define	LINUX_SYS_compat_43_lseek	19
@@ -34,9 +34,9 @@
 #define	LINUX_SYS_linux_access	33
 #define	LINUX_SYS_sync	36
 #define	LINUX_SYS_linux_kill	37
-#define	LINUX_SYS_rename	38
-#define	LINUX_SYS_mkdir	39
-#define	LINUX_SYS_rmdir	40
+#define	LINUX_SYS_linux_rename	38
+#define	LINUX_SYS_linux_mkdir	39
+#define	LINUX_SYS_linux_rmdir	40
 #define	LINUX_SYS_dup	41
 #define	LINUX_SYS_linux_pipe	42
 #define	LINUX_SYS_linux_times	43
@@ -72,16 +72,16 @@
 #define	LINUX_SYS_getgroups	80
 #define	LINUX_SYS_setgroups	81
 #define	LINUX_SYS_linux_select	82
-#define	LINUX_SYS_symlink	83
+#define	LINUX_SYS_linux_symlink	83
 #define	LINUX_SYS_compat_43_lstat	84
-#define	LINUX_SYS_readlink	85
+#define	LINUX_SYS_linux_readlink	85
 #define	LINUX_SYS_linux_uselib	86
 #define	LINUX_SYS_swapon	87
 #define	LINUX_SYS_reboot	88
 #define	LINUX_SYS_linux_readdir	89
 #define	LINUX_SYS_linux_mmap	90
 #define	LINUX_SYS_munmap	91
-#define	LINUX_SYS_compat_43_truncate	92
+#define	LINUX_SYS_linux_truncate	92
 #define	LINUX_SYS_compat_43_ftruncate	93
 #define	LINUX_SYS_fchmod	94
 #define	LINUX_SYS_fchown	95
@@ -105,3 +105,4 @@
 #define	LINUX_SYS_linux_sigprocmask	126
 #define	LINUX_SYS_linux_getpgid	132
 #define	LINUX_SYS_fchdir	133
+#define	LINUX_SYS_linux_llseek	140
