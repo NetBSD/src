@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.361 1999/07/17 00:42:20 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.362 1999/08/10 12:00:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -679,9 +679,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
+				0, "K7 (Athlon)", 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				"K7 (Athlon)"	/* Default */
 			},
 			NULL
 		} }
