@@ -1217,7 +1217,7 @@ void::function::convert_to_integer:cpu *processor, unsigned_word cia, unsigned64
 	    /* FPSCR[fprf] = undefined */
 	  }
 	/**/
-	LABEL(Done):
+	LABEL(Done): ;
 
 
 # extract out raw fields of a FP number
