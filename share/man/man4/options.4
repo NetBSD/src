@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.210 2003/05/04 01:56:52 gmcgarry Exp $
+.\"	$NetBSD: options.4,v 1.211 2003/05/06 08:36:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 22, 2003
+.Dd May 2, 2003
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1460,7 +1460,7 @@ Normally, only root can bind a socket descriptor to a so-called
 port, that is, a port number in the range 0-1023.
 This option eliminates those checks from the kernel.
 This can be useful if there is a desire to allow daemons without
-privileges to bind those ports, e.g. on firewalls.
+privileges to bind those ports, e.g., on firewalls.
 The security tradeoffs in doing this are subtle.
 This option should only be used by experts.
 .It Cd options TCP_COMPAT_42
@@ -1631,7 +1631,8 @@ Size of the buffer cache as a percentage of total available
 Ignored if BUFPAGES is also specified.
 .It Cd options NBUF=value
 Sets the number of buffer headers available, i.e. the number of
-open files that may have a buffer cache entry.  Each buffer header
+open files that may have a buffer cache entry.
+Each buffer header
 requires MAXBSIZE (machine dependent, but usually 65536) bytes.
 The default value is machine dependent, but is usually equal to the
 value of BUFPAGES.
@@ -1874,7 +1875,7 @@ or co-processor.
 .It Cd options VM86
 Include support for virtual 8086 mode, used by
 .Tn DOS
-emulators and X servers to run BIOS code, e.g. for some VESA routines.
+emulators and X servers to run BIOS code, e.g., for some VESA routines.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
@@ -1924,10 +1925,11 @@ for details.
 .It Cd options KSTACK_CHECK_DR0
 Detect kernel stack overflow using DR0 register.
 This option uses DR0 register exclusively so you can't use DR0 register for
-other purpose (e.g. hardware breakpoint) if you turn this on.
+other purpose (e.g., hardware breakpoint) if you turn this on.
 .It Cd options MTRR
-Include support for accessing MTRR registers from user-space.  See
-.Xr i386_get_mtrr 3 .
+Include support for accessing MTRR registers from user-space.
+See
+.Xr i386_get_mtrr 2 .
 .El
 .Ss isa-specific Options
 Options specific to
@@ -2052,7 +2054,7 @@ See
 .Ss x68k-specific Options
 .Bl -ohang
 .It Cd options EXTENDED_MEMORY
-Include support for extended memory e.g. TS-6BE16 and 060turbo on-board.
+Include support for extended memory, e.g., TS-6BE16 and 060turbo on-board.
 .It Cd options JUPITER
 Include support for Jupiter-X MPU accelerator
 .It Cd options ZSCONSOLE,ZSCN_SPEED=value
@@ -2079,8 +2081,8 @@ bolded
 .Xr pmc 1 ,
 .Xr quota 1 ,
 .Xr gettimeofday 2 ,
+.Xr i386_get_mtrr 2 ,
 .Xr i386_iopl 2 ,
-.Xr i386_get_mtrr 3 ,
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
