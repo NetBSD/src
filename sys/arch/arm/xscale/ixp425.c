@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.6 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixp425.c,v 1.7 2003/10/23 09:32:17 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.6 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.7 2003/10/23 09:32:17 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,13 @@ ixp425_attach(struct ixp425_softc *sc)
 	if (bus_space_map(sc->sc_iot, IXP425_GPIO_HWBASE, IXP425_GPIO_SIZE,
 			  0, &sc->sc_gpio_ioh))
 		panic("%s: unable to map GPIO registers", sc->sc_dev.dv_xname);
+
+	/*
+	 * Mapping for Expansion Bus Registers
+	 */
+	if (bus_space_map(sc->sc_iot, IXP425_EXP_HWBASE, IXP425_EXP_SIZE,
+			  0, &sc->sc_exp_ioh))
+		panic("%s: unable to map EXP registers", sc->sc_dev.dv_xname);
 
 	/*
 	 * Invoke the board-specific PCI initialization code
