@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.34 2000/05/25 16:47:18 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.35 2000/05/25 18:46:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -414,6 +414,8 @@ struct tulip_softc {
 
 	u_int32_t sc_tdctl_ch;		/* conditional desc chaining */
 	u_int32_t sc_tdctl_er;		/* conditional desc end-of-ring */
+
+	u_int32_t sc_setup_fsls;	/* FS|LS on setup descriptor */
 
 	struct tulip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
