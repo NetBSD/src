@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.4 1997/10/17 14:53:55 lukem Exp $	*/
+/*	$NetBSD: pl.c,v 1.5 1998/10/08 12:57:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.4 1997/10/17 14:53:55 lukem Exp $");
+__RCSID("$NetBSD: pl.c,v 1.5 1998/10/08 12:57:59 agc Exp $");
 #endif
 #endif
 
@@ -54,7 +54,7 @@ check_list(char *home, Package *pkg)
 	else if (p->type == PLIST_FILE) {
 	    char *cp, name[FILENAME_MAX], buf[33];
 
-	    sprintf(name, "%s/%s", there ? there : where, p->name);
+	    (void) snprintf(name, sizeof(name), "%s/%s", there ? there : where, p->name);
 	    if ((cp = MD5File(name, buf)) != NULL) {
 		PackingList tmp = new_plist_entry();
 
@@ -145,7 +145,7 @@ copy_plist(char *home, Package *plist)
 
 
 	    /* First, look for it in the "home" dir */
-	    sprintf(fn, "%s/%s", home, p->name);
+	    (void) snprintf(fn, sizeof(fn), "%s/%s", home, p->name);
 	    if (fexists(fn)) {
 		if (lstat(fn, &stb) == 0 && stb.st_dev == curdir &&
 		    S_ISREG(stb.st_mode)) {
@@ -190,7 +190,7 @@ copy_plist(char *home, Package *plist)
 		if (p->name[0] == '/')
 		    mythere = root;
 		else mythere = there;
-		sprintf(fn, "%s/%s", mythere ? mythere : where, p->name);
+		(void) snprintf(fn, sizeof(fn), "%s/%s", mythere ? mythere : where, p->name);
 		if (lstat(fn, &stb) == 0 && stb.st_dev == curdir &&
 		    S_ISREG(stb.st_mode)) {
 		    /* if we can link it to the playpen, that avoids a copy
