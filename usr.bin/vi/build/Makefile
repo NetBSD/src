@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2001/03/31 13:48:31 itojun Exp $
+#	$NetBSD: Makefile,v 1.19 2001/05/01 16:48:43 aymeric Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 .include <bsd.own.mk>
 
-WARNS=	0
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -DGTAGS
+CWARNFLAGS+=-Wno-parentheses
 
 LDADD+=	-lcurses
 DPADD+=	${LIBCURSES}
