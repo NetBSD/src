@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.367 2001/06/13 21:05:01 bjh21 Exp $
+# $NetBSD: mi,v 1.368 2001/06/15 12:27:35 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1035,6 +1035,7 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman
 ./usr/share/man/cat5/phones.0			man-uucp-catman
+./usr/share/man/cat5/primes.0			man-secsh-catman
 ./usr/share/man/cat5/printcap.0			man-lpr-catman
 ./usr/share/man/cat5/protocols.0		man-net-catman
 ./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
@@ -2570,6 +2571,7 @@
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
 ./usr/share/man/man5/pcre_table.5		man-postfix-man
 ./usr/share/man/man5/phones.5			man-uucp-man
+./usr/share/man/man5/primes.5			man-secsh-man
 ./usr/share/man/man5/printcap.5			man-lpr-man
 ./usr/share/man/man5/protocols.5		man-net-man
 ./usr/share/man/man5/racoon.conf.5		man-netutil-man
