@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.mi,v 1.1 2003/08/10 08:44:42 mrg Exp $
+#	$NetBSD: gcc.mi,v 1.2 2003/08/29 02:13:41 mrg Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -195,4 +195,5 @@
 ./usr/include/g++/utility			comp-cxx-include
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
+./usr/lib/libfrtbegin.a				comp-c-lib
 ./usr/lib/libgcc_p.a				comp-c-proflib
