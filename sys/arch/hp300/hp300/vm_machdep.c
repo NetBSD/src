@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1995/04/10 13:11:01 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1995/04/12 08:19:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,7 +91,7 @@ cpu_fork(p1, p2)
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	offset = getsp() - kstack;
 	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
+	    (unsigned) USPACE - offset);
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
 
@@ -124,7 +124,7 @@ cpu_exit(p)
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t)p->p_addr, USPACE);
 	switch_exit();
 	/* NOTREACHED */
 }
@@ -155,7 +155,7 @@ cpu_coredump(p, vp, cred)
 	if (p->p_emul == EMUL_HPUX)
 		return (hpux_dumpu(vp, cred));
 #endif
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, USPACE,
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
 	    p));
 }
