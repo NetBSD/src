@@ -49,7 +49,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.1.1.1 1996/03/13 04:58:11 jonathan Exp $
+ *	$Id: locore.S,v 1.2 1996/03/28 12:50:37 jonathan Exp $
  */
 
 /*
@@ -819,7 +819,7 @@ END(switch_exit)
  * profiling.
  */
 LEAF(idle)
-	li	t0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	li	t0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	sw	zero, curproc			# set curproc NULL for stats
 1:
@@ -1136,19 +1136,68 @@ MachTLBMissEnd:
 	.set	at
 
 /*
+ *----------------------------------------------------------------------------
+ *
+ * mips_R2000_execption --
+ *
+ *	Vector code for the general exception vector 0x80000080
+ *	on an r2000 or r3000.
+ *
  * This code is copied to the general exception vector address to
- * handle all execptions except RESET and TLBMiss.
+ * handle all execptions except RESET and UTLBMiss.
  * NOTE: This code must be relocatable!!!
+ *
+ *----------------------------------------------------------------------------
  */
-	.globl	MachException
-MachException:
+	.globl	_C_LABEL(mips_R2000_exception)
+_C_LABEL(mips_R2000_exception):
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
 	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
-	and	k0, k0, MACH_SR_KSU_USER	# test for user mode
+	and	k0, k0, MIPS_3K_SR_KU_PREV	# test for user mode
+	sll	k0, k0, 4			# shift user bit for cause index
+	and	k1, k1, MACH_CR_EXC_CODE	# Mask out the cause bits.
+	or	k1, k1, k0			# change index to user table
+1:
+	la	k0, _C_LABEL(machExceptionTable) # get base of the jump table
+	addu	k0, k0, k1			# Get the address of the
+						#  function entry.  Note that
+						#  the cause is already
+						#  shifted left by 2 bits so
+						#  we dont have to shift.
+	lw	k0, 0(k0)			# Get the function address
+	nop
+	j	k0				# Jump to the function.
+	nop
+	.set	at
+	.globl	_C_LABEL(mips_R2000_exceptionEnd)
+_C_LABEL(mips_R2000_exceptionEnd):
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * Mips_R4000_execption --
+ *
+ *	Vector code for the general exception vector 0x80000080
+ *	on an r4000 or r4400.
+ *
+ * This code is copied to the general exception vector address to
+ * handle all execptions except RESET and TLBMiss.
+ * NOTE: This code must be relocatable!!!
+ *----------------------------------------------------------------------------
+ */
+	.globl	mips_r4000_exception
+_C_LABEL(mips_R4000_exception):
+/*
+ * Find out what mode we came from and jump to the proper handler.
+ */
+	.set	noat
+	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
+	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
+	and	k0, k0, MIPS_4K_SR_KSU_USER	# test for user mode
 						# sneaky but the bits are
 						# with us........
 	sll	k0, k0, 3			# shift user bit for cause index
@@ -1166,8 +1215,9 @@ MachException:
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	MachExceptionEnd
-MachExceptionEnd:
+	.globl	mips_R4000_exceptionEnd
+_C_LABEL(mips_R4000_exceptionEnd):
+
 
 /*
  * We couldn't find a TLB entry.
@@ -1368,7 +1418,7 @@ NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
 	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 	.set	at
 # Turn off fpu and enter kernel mode
-	and	t0, a0, ~(MACH_SR_COP_1_BIT | MACH_SR_EXL | MACH_SR_KSU_MASK | MACH_SR_INT_ENAB)
+	and	t0, a0, ~(MACH_SR_COP_1_BIT | MACH_SR_EXL | MACH_SR_KSU_MASK | MIPS_SR_INT_IE)
 	.set	noat
 /*
  * Call the exception handler.
@@ -1587,7 +1637,7 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	la	gp, _gp				# switch to kernel GP
 # Turn off fpu and enter kernel mode
 	.set	at
-	and	t0, a0, ~(MACH_SR_COP_1_BIT | MACH_SR_EXL | MACH_SR_INT_ENAB | MACH_SR_KSU_MASK)
+	and	t0, a0, ~(MACH_SR_COP_1_BIT | MACH_SR_EXL | MIPS_SR_INT_IE | MACH_SR_KSU_MASK)
 	.set	noat
 	mtc0	t0, MACH_COP_0_STATUS_REG
 /*
@@ -1650,7 +1700,7 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	sw	s6, UADDR+U_PCB_REGS+(S6 * 4)
 	sw	s7, UADDR+U_PCB_REGS+(S7 * 4)
 	sw	s8, UADDR+U_PCB_REGS+(S8 * 4)
-	li	t0, MACH_HARD_INT_MASK | MACH_SR_INT_ENAB
+	li	t0, MACH_HARD_INT_MASK | MIPS_SR_INT_IE
 /*
  * Call the software interrupt handler.
  */
@@ -1916,7 +1966,7 @@ END(clearsoftnet)
 LEAF(MachEnableIntr)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	nop
-	or	v0, v0, MACH_SR_INT_ENAB
+	or	v0, v0, MIPS_SR_INT_IE
 	mtc0	v0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	j	ra
 	nop
@@ -1925,10 +1975,10 @@ END(MachEnableIntr)
 LEAF(spl0)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	nop
-	or	t0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	or	t0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(spl0)
 
 LEAF(splsoftclock)
@@ -1938,7 +1988,7 @@ LEAF(splsoftclock)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftclock)
 
 LEAF(splsoftnet)
@@ -1947,7 +1997,7 @@ LEAF(splsoftnet)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftnet)
 
 LEAF(Mach_spl0)
@@ -1957,7 +2007,7 @@ LEAF(Mach_spl0)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl0)
 
 LEAF(Mach_spl1)
@@ -1967,7 +2017,7 @@ LEAF(Mach_spl1)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl1)
 
 LEAF(Mach_spl2)
@@ -1977,7 +2027,7 @@ LEAF(Mach_spl2)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl2)
 
 LEAF(Mach_spl3)
@@ -1987,7 +2037,7 @@ LEAF(Mach_spl3)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl3)
 
 LEAF(Mach_spl4)
@@ -1997,7 +2047,7 @@ LEAF(Mach_spl4)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl4)
 
 LEAF(Mach_spl5)
@@ -2007,7 +2057,7 @@ LEAF(Mach_spl5)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl5)
 
 /*
@@ -2017,12 +2067,12 @@ END(Mach_spl5)
 LEAF(splhigh)
 ALEAF(_splhigh)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~MACH_SR_INT_ENAB	# disable all interrupts
+	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	nop					# 3 ins to disable
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENAB)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splhigh)
 
 /*
@@ -2031,7 +2081,7 @@ END(splhigh)
 LEAF(splx)
 ALEAF(_splx)
 	mfc0	v0, MACH_COP_0_STATUS_REG
-	li	t0, ~(MACH_INT_MASK | MACH_SR_INT_ENAB)
+	li	t0, ~(MACH_INT_MASK | MIPS_SR_INT_IE)
 	and	t0, t0, v0
 	or	t0, t0, a0
 	mtc0	t0, MACH_COP_0_STATUS_REG

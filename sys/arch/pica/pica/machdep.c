@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.2 1996/03/28 12:50:53 jonathan Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,7 +39,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.1.1.1 1996/03/13 04:58:12 jonathan Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -170,7 +171,8 @@ mips_init(argc, argv, code)
 	struct tlb tlb;
 	extern char edata[], end[];
 	extern char MachTLBMiss[], MachTLBMissEnd[];
-	extern char MachException[], MachExceptionEnd[];
+	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
+	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment in NetBSD code */
 	v = (caddr_t)pica_round_page(end);
@@ -343,8 +345,8 @@ mips_init(argc, argv, code)
 		panic("startup: TLB code too large");
 	bcopy(MachTLBMiss, (char *)MACH_TLB_MISS_EXC_VEC,
 		MachTLBMissEnd - MachTLBMiss);
-	bcopy(MachException, (char *)MACH_GEN_EXC_VEC,
-		MachExceptionEnd - MachException);
+	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
+		mips_R2000_exceptionEnd - mips_R2000_exception);
 
 	/*
 	 * Clear out the I and D caches.
