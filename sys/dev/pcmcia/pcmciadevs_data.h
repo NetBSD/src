@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.167.4.1 2002/05/31 16:21:29 tv Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.167.4.2 2002/06/10 16:25:26 tv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.167.4.1 2002/05/31 16:20:46 tv Exp 
+ *	NetBSD: pcmciadevs,v 1.167.4.2 2002/06/10 16:24:59 tv Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -132,6 +132,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3CRWE62092A Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ACTIONTEC, PCMCIA_PRODUCT_ACTIONTEC_PRISM,
+	    PCMCIA_CIS_ACTIONTEC_PRISM,
+	    0,
+	    "ACTIONTEC",
+	    "PRISM Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
@@ -1787,6 +1794,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "NewMedia",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ACTIONTEC,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "ACTIONTEC",
 	    NULL,
 	},
 	{
