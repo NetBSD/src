@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.2 2002/02/04 17:38:27 uch Exp $	*/
+/*	$NetBSD: sh_7750.h,v 1.1 2002/02/04 17:38:28 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,67 +36,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sh3/sh_arch.h>
-#include <sh3/sh_mmu.h>
+#ifndef _HPCBOOT_SH_7750_H_
+#define _HPCBOOT_SH_7750_H_
+#ifndef _HPCBOOT_SH3_H_
+#error "include sh3.h"
+#endif
 
-BOOL
-MemoryManager_SHMMU::init(void)
-{
+#define SH4_ICACHE_SIZE		8192
+#define SH4_DCACHE_SIZE		16384
+#define SH4_CACHE_LINESZ	32
 
-	_kmode = SetKMode(1);
+/* I-cache address/data array  */
+#define SH4REG_CCIA		0xf0000000
+/* address specification */
+#define   CCIA_A			0x00000008	/* associate bit */
+#define   CCIA_ENTRY_SHIFT		5		/* line size 32B */
+#define   CCIA_ENTRY_MASK		0x00001fe0	/* [12:5] 256-entries */
+/* data specification */
+#define   CCIA_V			0x00000001
+#define   CCIA_TAGADDR_MASK		0xfffffc00	/* [31:10] */
 
-	_asid = VOLATILE_REF(MMUPTEH) & MMUPTEH_ASID_MASK;
-	DPRINTF((TEXT("ASID = %d\n"), _asid));
+#define SH4REG_CCID		0xf1000000
+/* address specification */
+#define   CCID_L_SHIFT			2
+#define   CCID_L_MASK			0x1c		/* line-size is 32B */
+#define   CCID_ENTRY_MASK		0x00001fe0	/* [12:5] 128-entries */
 
-	return TRUE;
-}
+/* D-cache address/data array  */
+#define SH4REG_CCDA		0xf4000000
+/* address specification */
+#define   CCDA_A			0x00000008	/* associate bit */
+#define   CCDA_ENTRY_SHIFT		5		/* line size 32B */
+#define   CCDA_ENTRY_MASK		0x00003fe0	/* [13:5] 512-entries */
+/* data specification */
+#define   CCDA_V			0x00000001
+#define   CCDA_U			0x00000002
+#define   CCDA_TAGADDR_MASK		0xfffffc00	/* [31:10] */
 
-MemoryManager_SHMMU::~MemoryManager_SHMMU(void)
-{
+#define SH4REG_CCDD		0xf5000000
 
-	SetKMode(_kmode);
-}
+#define SH7750_CACHE_FLUSH()						\
+__BEGIN_MACRO								\
+	u_int32_t __e, __a;						\
+									\
+	/* D-cache */							\
+	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+		__a = SH4REG_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
+		VOLATILE_REF(__a) &= ~(CCDA_U | CCDA_V);		\
+	}								\
+	/* I-cache XXX bogus. make sure to run P2 */			\
+	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+		__a = SH4REG_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
+		VOLATILE_REF(__a) &= ~(CCIA_V);				\
+	}								\
+__END_MACRO
 
-// get physical address from memory mapped TLB.
-paddr_t
-MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
-{
-	u_int32_t vpn, idx, s, dum, aae, dae, entry_idx;
-	paddr_t paddr = ~0;
-	int way;
-
-	vpn = vaddr & SH3_PAGE_MASK;
-	// Windows CE uses VPN-only index-mode.
-	idx = vaddr & MMUAA_VPN_MASK;
-
-	// to avoid another TLB access, disable external interrupt.
-	s = suspendIntr();
-
-	do {
-		// load target address page to TLB
-		dum = VOLATILE_REF(vaddr);
-		VOLATILE_REF(vaddr) = dum;
-
-		for (way = 0; way < MMU_WAY; way++) {
-			entry_idx = idx | (way << MMUAA_WAY_SHIFT);
-			// inquire MMU address array.
-			aae = VOLATILE_REF(MMUAA | entry_idx);
-						      
-			if (!(aae & MMUAA_D_VALID) ||
-			    ((aae & MMUAA_D_ASID_MASK) != _asid) ||
-			    (((aae | idx) & SH3_PAGE_MASK) != vpn))
-				continue;
-
-			// entry found.
-			// inquire MMU data array to get its physical address.
-			dae = VOLATILE_REF(MMUDA | entry_idx);
-			paddr = (dae & SH3_PAGE_MASK) | (vaddr & ~SH3_PAGE_MASK);
-			break;
-		}
-	} while (paddr == ~0);
-
-	resumeIntr(s);
-
-	return paddr;
-}
-
+#endif // _HPCBOOT_SH_7750_H_
