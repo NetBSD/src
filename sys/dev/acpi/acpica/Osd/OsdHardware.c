@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.7 2004/03/23 19:00:03 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.7 2004/03/23 19:00:03 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -284,7 +284,7 @@ get_bus_number(
 	ACPI_STATUS rv;
 	ACPI_OBJECT_TYPE type;
 	ACPI_PCI_ID *id;
-	int v;
+	ACPI_INTEGER v;
 	int bus;
 
 	id = *PciId;
