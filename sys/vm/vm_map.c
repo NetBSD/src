@@ -219,7 +219,8 @@ vmspace_free(vm)
  *	the given physical map structure, and having
  *	the given lower and upper address bounds.
  */
-vm_map_t vm_map_create(pmap, min, max, pageable)
+vm_map_t
+vm_map_create(pmap, min, max, pageable)
 	pmap_t		pmap;
 	vm_offset_t	min, max;
 	boolean_t	pageable;
@@ -274,7 +275,8 @@ vm_map_init(map, min, max, pageable)
  *	Allocates a VM map entry for insertion.
  *	No entry fields are filled in.  This routine is
  */
-vm_map_entry_t vm_map_entry_create(map)
+vm_map_entry_t
+vm_map_entry_create(map)
 	vm_map_t	map;
 {
 	vm_map_entry_t	entry;
@@ -534,7 +536,8 @@ vm_map_insert(map, object, offset, start, end)
  *	result indicates whether the address is
  *	actually contained in the map.
  */
-boolean_t vm_map_lookup_entry(map, address, entry)
+boolean_t
+vm_map_lookup_entry(map, address, entry)
 	register vm_map_t	map;
 	register vm_offset_t	address;
 	vm_map_entry_t		*entry;		/* OUT */
@@ -1483,7 +1486,8 @@ vm_map_remove(map, start, end)
  *	privilege on the entire address region given.
  *	The entire region must be allocated.
  */
-boolean_t vm_map_check_protection(map, start, end, protection)
+boolean_t
+vm_map_check_protection(map, start, end, protection)
 	register vm_map_t	map;
 	register vm_offset_t	start;
 	register vm_offset_t	end;
@@ -2133,6 +2137,7 @@ vmspace_fork(vm1)
  *	copying operations, although the data referenced will
  *	remain the same.
  */
+int
 vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				object, offset, out_prot, wired, single_use)
 	vm_map_t		*var_map;	/* IN/OUT */
@@ -2429,7 +2434,7 @@ vm_map_simplify(map, start)
 	vm_map_unlock(map);
 }
 
-#if	defined(DDB) || defined(DIAGNOSTIC)
+#if	defined(DDB) || defined(DEBUG)
 /*
  *	vm_map_print:	[ debug ]
  */
