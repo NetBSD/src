@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2002/07/05 13:31:32 scw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2002/07/10 11:02:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #include "SYS.h"
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(clone, __clone)
+WEAK_ALIAS(clone,__clone)
 #endif
 
 /*
