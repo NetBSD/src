@@ -1,15 +1,15 @@
-#       $NetBSD: Makefile,v 1.57 2000/02/03 23:03:14 cgd Exp $
+#       $NetBSD: Makefile,v 1.58 2000/03/23 07:05:30 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 arp.9 audio.9 bus_space.9 bus_dma.9 copy.9 cpu_reboot.9 \
-	ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 doshutdownhooks.9 \
-	ethersubr.9 extent.9 fetch.9 fork1.9 humanize_number.9 \
-	inittodr.9 intro.9 ioctl.9 kprintf.9 \
+MAN=	access.9 arp.9 audio.9 bus_dma.9 bus_space.9 callout.9 copy.9 \
+	cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 \
+	doshutdownhooks.9 ethersubr.9 extent.9 fetch.9 fork1.9 \
+	humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
 	log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 pool.9 \
 	powerhook_establish.9 psignal.9 ratecheck.9 resettodr.9 rnd.9 \
 	rt_timer.9 shutdownhook_establish.9 \
-	sleep.9 spl.9 store.9 time.9 timeout.9 uiomove.9 usbdi.9 uvm.9 \
+	sleep.9 spl.9 store.9 time.9 uiomove.9 usbdi.9 uvm.9 \
 	wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
@@ -51,6 +51,10 @@ MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamem_alloc.9 bus_dma.9 bus_dmamem_free.9 \
 	bus_dma.9 bus_dmamem_map.9 bus_dma.9 bus_dmamem_unmap.9 \
 	bus_dma.9 bus_dmamem_mmap.9
+MLINKS+=callout.9 callout_init.9 callout.9 callout_reset.9 \
+	callout.9 callout_stop.9 callout.9 callout_active.9 \
+	callout.9 callout_pending.9 callout.9 callout_deactivate.9 \
+	callout.9 timeout.9 callout.9 untimeout.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
@@ -104,7 +108,6 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
-MLINKS+=timeout.9 untimeout.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_map_pageable.9 \
 	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \

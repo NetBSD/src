@@ -1,0 +1,201 @@
+.\"	$NetBSD: callout.9,v 1.1 2000/03/23 07:05:30 thorpej Exp $
+.\"
+.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 21, 2000
+.Dt CALLOUT 9
+.Os
+.Sh NAME
+.Nm callout_init ,
+.Nm callout_reset ,
+.Nm callout_stop
+.Nd execute a function after a specified length of time
+.Sh SYNOPSIS
+.Ft void
+.Fn "callout_init" "struct callout *c"
+.Ft void
+.Fn "callout_reset" "struct callout *c" "int ticks" \
+    "void (*func)(void *)" "void *arg"
+.Ft void
+.Fn "callout_stop" "struct callout *c"
+.Ft int
+.Fn "callout_active" "struct callout *c"
+.Ft int
+.Fn "callout_pending" "struct callout *c"
+.Ft int
+.Fn "callout_expired" "struct callout *c"
+.Ft void
+.Fn "callout_deactivate" "struct callout *c"
+.Sh DESCRIPTION
+The
+.Nm callout
+facility provides a mechanism to execute a function at a given time.
+The timer is based on the hardclock timer which ticks
+.Dv hz
+times per second.  The function is called at softclock interrupt level.
+.Pp
+Clients of the
+.Nm callout
+facility are responsible for providing pre-allocated
+callout structures, or
+.Dq handles .
+The
+.Nm callout
+facility replaces the historic
+.Bx
+functions
+.Fn timeout
+and
+.Fn untimeout .
+.Pp
+The
+.Fn callout_init
+function initializes the callout handle
+.Fa c
+for use.  If it is inconvenient to call
+.Fn callout_init ,
+statically-allocated callout handles may be initialized by assigning
+the value
+.Dv CALLOUT_INITIALIZER
+to them.
+.Pp
+The
+.Fn callout_reset
+function starts (or resets) the timer associated with the callout handle
+.Fa c .
+When the timer expires after
+.Fa ticks Ns No /hz
+seconds, the function specified by
+.Fa func
+will be called with the argument
+.Fa arg .
+Note that if the timer associated with the callout handle is already running,
+it will be implicitly stopped before being reset.
+Once the timer is started, the callout handle is marked as
+.Em ACTIVE 
+and
+.Em PENDING .
+Once the timer expires,
+.Em PENDING
+status is cleared.  Expiration of the timer does not affect
+.Em ACTIVE
+status.
+.Pp
+The
+.Fn callout_stop
+function stops the timer associated the callout handle
+.Fa c .
+The
+.Em ACTIVE
+and
+.Em PENDING
+status for the callout handle is cleared.  It is safe to call
+.Fn callout_stop
+on a callout handle that is not active, so long as it is initialized.
+.Pp
+The
+.Fn callout_active
+function tests the
+.Em ACTIVE
+status of the callout handle
+.Fa c .
+An
+.Em ACTIVE
+callout is one that has been started but not explicitly stopped.
+Testing
+.Em ACTIVE
+status is a way to determine if a callout has been started.  Once the
+callout fires, the executed function may clear
+.Em ACTIVE
+status.  See
+.Fn callout_deactivate
+below.
+.Pp
+The
+.Fn callout_pending
+function tests the
+.Em PENDING
+status of the callout handle
+.Fa c .
+A
+.Em PENDING
+callout is one that has been started and whose function has not yet
+been called.  Note that it is possible for a callout's timer to have
+expired without its function being called if interrupt level has not
+dropped low enough to let softclock interrupts through.  Note that it
+is only safe to test
+.Em PENDING
+status when at softclock interrupt level or higher.
+.Pp
+The
+.Fn callout_expired
+function tests the opposite of
+.Fn callout_pending .
+That is to say that
+.Fn callout_expired
+returns true when the callout function has been called.
+.Pp
+The
+.Fn callout_deactivate
+function clears the
+.Em ACTIVE
+status of the callout handle
+.Fa c .
+Note that is only safe to call
+.Fn callout_deactivate
+if the callout function has already been executed, i.e. the callout
+is no longer
+.Em PENDING .
+.Sh SEE ALSO
+.Xr hz 9
+.Sh HISTORY
+The
+.Nm callout
+facility is based on the work of Adam M. Costello and George Varghese,
+published in a technical report entitled
+.Dq Redesigning the BSD Callout and Timer Facilities ,
+and Justin Gibbs's subsequent integration into
+.Fx .
+It was modified for
+.Nx
+by Jason R. Thorpe, who also added optional statistics gathering and
+an alternate sorting mode for the callwheel.
+.Pp
+The original work on the data structures used in this implementation was
+published by G. Varghese and A. Lauck in the paper
+Hashed and Hierarchical Timing Wheels: Data Structures for the
+Efficient Implementation of a Timer Facility
+in the Proceedings of the 11th ACM Annual Symposium on Operating System
+Principles, Austin, Texas, November 1987.
