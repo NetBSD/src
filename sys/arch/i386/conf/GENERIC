@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.257 1999/09/09 12:33:45 augustss Exp $
+#	$NetBSD: GENERIC,v 1.258 1999/09/19 21:50:06 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -159,6 +159,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+#options	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

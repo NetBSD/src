@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.12 1999/07/30 02:35:19 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.13 1999/09/19 21:50:06 ad Exp $
 #	From: GENERIC,v 1.246 1999/07/29 19:36:59 augustss Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -160,6 +160,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+#options	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
