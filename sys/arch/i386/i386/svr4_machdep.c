@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.47.4.1 2001/05/09 20:43:18 he Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.47.4.2 2001/06/17 22:27:07 he Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -145,8 +145,8 @@ svr4_getmcontext(p, mc, flags)
 	} else
 #endif
 	{
-	        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
-		__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
+		r[SVR4_X86_GS] = tf->tf_gs;
+		r[SVR4_X86_FS] = tf->tf_fs;
 		r[SVR4_X86_ES] = tf->tf_es;
 		r[SVR4_X86_DS] = tf->tf_ds;
 		r[SVR4_X86_EFL] = tf->tf_eflags;
