@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.14 2001/10/30 17:10:50 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.15 2001/11/25 12:29:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ u_int tempo = BASETEMPO;		/* microsec / quarter note */
 u_int ttempo = 100;
 int unit = 0;
 int play = 1;
-int fd;
+int fd = -1;
 int sameprogram = 0;
 
 void
@@ -531,6 +531,9 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
     
+	if (!play)
+		goto output;
+
 	fd = open(file, O_WRONLY);
 	if (fd < 0)
 		err(1, "%s", file);
@@ -564,6 +567,8 @@ main(argc, argv)
 		err(1, "SEQUENCER_TMR_START");
 
 	midireset();
+
+ output:
 	if (example)
 		while (example--)
 			playdata(sample, sizeof sample, "<Gubben Noa>");
