@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.2.5 2004/08/13 18:53:17 jmc Exp $
-
-NOGCCERROR=	# defined
+#	$NetBSD: Makefile,v 1.24.2.5.2.1 2005/02/06 07:45:00 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +14,9 @@ CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_LOOKUP \
 		-DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM -D_RADIX_H_ \
 		-I.
 
-.PATH:		${NETBSDSRCDIR}/sys/netinet
+CPPFLAGS.radix.c=	-Wno-error
+
+.PATH:		${NETBSDSRCDIR}/sys/dist/ipf/netinet
 
 DPSRCS+=	ipnat_l.h ipnat_y.h ippool_l.h ippool_y.h ipf_l.h ipf_y.h
 
