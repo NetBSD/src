@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keysock.h,v 1.1.2.1 1999/06/28 06:37:10 itojun Exp $ */
+/* $Id: keysock.h,v 1.2 1999/07/01 08:13:00 itojun Exp $ */
 
 #ifndef _NETKEY_KEYSOCK_H_
 #define _NETKEY_KEYSOCK_H_

@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: keysock.c,v 1.1.2.1 1999/06/28 06:37:10 itojun Exp $ */
+/* KAME @(#)$Id: keysock.c,v 1.2 1999/07/01 08:13:00 itojun Exp $ */
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"

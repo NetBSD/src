@@ -1,4 +1,46 @@
-/*	$NetBSD: tcp_output.c,v 1.47 1999/01/20 03:39:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.48 1999/07/01 08:12:51 itojun Exp $	*/
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+
+*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +114,8 @@
  *	@(#)tcp_output.c	8.4 (Berkeley) 5/24/95
  */
 
+#include "opt_inet.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -80,6 +124,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -89,6 +134,16 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
+#include <netinet6/in6_pcb.h>
+#include <netinet6/ip6_var.h>
+#endif
+
 #include <netinet/tcp.h>
 #define	TCPOUTFLAGS
 #include <netinet/tcp_fsm.h>
@@ -119,25 +174,95 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	int *txsegsizep, *rxsegsizep;
 {
 	struct inpcb *inp = tp->t_inpcb;
+#ifdef INET6
+	struct in6pcb *in6p = tp->t_in6pcb;
+#endif
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;
+	int iphlen;
 
-	if ((rt = in_pcbrtentry(inp)) == NULL) {
+	switch (tp->t_family) {
+	case AF_INET:
+		iphlen = sizeof(struct ip);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		iphlen = sizeof(struct ip6_hdr);
+		break;
+#endif
+	default:
+		size = tcp_mssdflt;
+		goto out;
+	}
+
+	if (inp)
+		rt = in_pcbrtentry(inp);
+#if defined(INET6) && !defined(TCP6)
+	else if (in6p)
+		rt = in6_pcbrtentry(in6p);
+#endif
+	else
+		rt = NULL;
+	if (rt == NULL) {
 		size = tcp_mssdflt;
 		goto out;
 	}
 
 	ifp = rt->rt_ifp;
 
+	size = tcp_mssdflt;
 	if (rt->rt_rmx.rmx_mtu != 0)
-		size = rt->rt_rmx.rmx_mtu - sizeof(struct tcpiphdr);
-	else if (ip_mtudisc || in_localaddr(inp->inp_faddr) ||
-		 ifp->if_flags & IFF_LOOPBACK)
-		size = ifp->if_mtu - sizeof(struct tcpiphdr);
-	else
-		size = tcp_mssdflt;
-	size -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
+		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
+	else if (ip_mtudisc || ifp->if_flags & IFF_LOOPBACK)
+		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+	else if (inp && in_localaddr(inp->inp_faddr))
+		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+#ifdef INET6
+	else if (in6p) {
+		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+			/* mapped addr case */
+			struct in_addr d;
+			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
+			if (in_localaddr(d))
+				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		} else {
+			if (in6_localaddr(&in6p->in6p_faddr))
+				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		}
+	}
+#endif
+	size -= tcp_optlen(tp);
+	/*
+	 * XXX tp->t_ourmss should have the right size, but without this code
+	 * fragmentation will occur... need more investigation
+	 */
+	if (inp) {
+#ifdef IPSEC
+		size_t t = ipsec4_hdrsiz_tcp(tp);
+		if (t < size)
+			size -= t;
+#endif
+		size -= ip_optlen(inp);
+	}
+#ifdef INET6
+	else if (in6p && tp->t_family == AF_INET) {
+#ifdef IPSEC
+		size_t t = ipsec4_hdrsiz_tcp(tp);
+		if (t < size)
+			size -= t;
+#endif
+		/* XXX size -= ip_optlen(in6p); */
+	}
+	else if (in6p && tp->t_family == AF_INET6) {
+#if defined(IPSEC) && !defined(TCP6)
+		size_t t = ipsec6_hdrsiz_tcp(tp);
+		if (t < size)
+			size -= t;
+#endif
+		size -= ip6_optlen(in6p);
+	}
+#endif
 
  out:
 	*txsegsizep = min(tp->t_peermss, size);
@@ -170,18 +295,56 @@ int
 tcp_output(tp)
 	register struct tcpcb *tp;
 {
-	struct socket *so = tp->t_inpcb->inp_socket;
-	struct route *ro = &tp->t_inpcb->inp_route;
+	struct socket *so;
+	struct route *ro;
 	struct rtentry *rt;
-	struct sockaddr_in *dst;
 	long len, win;
 	int off, flags, error;
 	register struct mbuf *m;
-	register struct tcpiphdr *ti;
+	struct ip *ip;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
+	register struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
 	int idle, sendalot, txsegsize, rxsegsize;
 	int maxburst = TCP_MAXBURST;
+	int af;		/* address family on the wire */
+	int iphdrlen;
+
+	so = NULL;
+	ro = NULL;
+	if (tp->t_inpcb) {
+		so = tp->t_inpcb->inp_socket;
+		ro = &tp->t_inpcb->inp_route;
+	}
+#ifdef INET6
+	else if (tp->t_in6pcb) {
+		so = tp->t_in6pcb->in6p_socket;
+		ro = (struct route *)&tp->t_in6pcb->in6p_route;
+	}
+#endif
+
+	switch (af = tp->t_family) {
+	case AF_INET:
+		if (tp->t_inpcb)
+			break;
+#ifdef INET6
+		/* mapped addr case */
+		if (tp->t_in6pcb)
+			break;
+#endif
+		return EINVAL;
+#ifdef INET6
+	case AF_INET6:
+		if (tp->t_in6pcb)
+			break;
+		return EINVAL;
+#endif
+	default:
+		return EAFNOSUPPORT;
+	}
 
 	tcp_segsize(tp, &txsegsize, &rxsegsize);
 
@@ -409,16 +572,52 @@ send:
 	 * NOTE: we assume that the IP/TCP header plus TCP options
 	 * always fit in a single mbuf, leaving room for a maximum
 	 * link header, i.e.
-	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MHLEN
+	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MCLBYTES
 	 */
 	optlen = 0;
-	hdrlen = sizeof (struct tcpiphdr);
+	switch (af) {
+	case AF_INET:
+		iphdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		iphdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
+		break;
+#endif
+	}
+	hdrlen = iphdrlen;
 	if (flags & TH_SYN) {
-		struct rtentry *rt = in_pcbrtentry(tp->t_inpcb);
+		struct rtentry *rt;
+
+		if (tp->t_inpcb)
+			rt = in_pcbrtentry(tp->t_inpcb);
+#if defined(INET6) && !defined(TCP6)
+		else if (tp->t_in6pcb)
+			rt = in6_pcbrtentry(tp->t_in6pcb);
+#endif
+		else
+			rt = NULL;
 
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
 						    rt->rt_ifp : NULL);
+#ifdef IPSEC
+	    {
+		size_t t;
+		switch (af) {
+		case AF_INET:
+			t = ipsec4_hdrsiz_tcp(tp);
+			break;
+#if defined(INET6) && !defined(TCP6)
+		case AF_INET6:
+			t = ipsec6_hdrsiz_tcp(tp);
+			break;
+#endif
+		}
+		if (t < tp->t_ourmss)
+			tp->t_ourmss -= t;
+	    }
+#endif
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
@@ -462,7 +661,7 @@ send:
 #ifdef DIAGNOSTIC
 	if (len > txsegsize)
 		panic("tcp data to be sent is larger than segment");
- 	if (max_linkhdr + hdrlen > MHLEN)
+ 	if (max_linkhdr + hdrlen > MCLBYTES)
 		panic("tcphdr too big");
 #endif
 
@@ -494,13 +693,20 @@ send:
 		m->m_data -= hdrlen;
 #else
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m != NULL) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				m = NULL;
+			}
+		}
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
 		}
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
-		if (len <= MHLEN - hdrlen - max_linkhdr) {
+		if (len <= MCLBYTES - hdrlen - max_linkhdr) {
 			m_copydata(so->so_snd.sb_mb, off, (int) len,
 			    mtod(m, caddr_t) + hdrlen);
 			m->m_len += len;
@@ -532,6 +738,13 @@ send:
 			tcpstat.tcps_sndwinup++;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m != NULL) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				m = NULL;
+			}
+		}
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
@@ -540,10 +753,27 @@ send:
 		m->m_len = hdrlen;
 	}
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
-	ti = mtod(m, struct tcpiphdr *);
+	switch (af) {
+	case AF_INET:
+		ip = mtod(m, struct ip *);
+#ifdef INET6
+		ip6 = NULL;
+#endif
+		th = (struct tcphdr *)(ip + 1);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ip = NULL;
+		ip6 = mtod(m, struct ip6_hdr *);
+		th = (struct tcphdr *)(ip6 + 1);
+		break;
+#endif
+	}
 	if (tp->t_template == 0)
 		panic("tcp_output");
-	bcopy((caddr_t)tp->t_template, (caddr_t)ti, sizeof (struct tcpiphdr));
+	if (tp->t_template->m_len < iphdrlen)
+		panic("tcp_output");
+	bcopy(mtod(tp->t_template, caddr_t), mtod(m, caddr_t), iphdrlen);
 
 	/*
 	 * If we are doing retransmissions, then snd_nxt will
@@ -560,15 +790,15 @@ send:
 	 */
 	if (len || (flags & (TH_SYN|TH_FIN)) ||
 	    TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
-		ti->ti_seq = htonl(tp->snd_nxt);
+		th->th_seq = htonl(tp->snd_nxt);
 	else
-		ti->ti_seq = htonl(tp->snd_max);
-	ti->ti_ack = htonl(tp->rcv_nxt);
+		th->th_seq = htonl(tp->snd_max);
+	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((caddr_t)opt, (caddr_t)(ti + 1), optlen);
-		ti->ti_off = (sizeof (struct tcphdr) + optlen) >> 2;
+		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
+		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
-	ti->ti_flags = flags;
+	th->th_flags = flags;
 	/*
 	 * Calculate receive window.  Don't shrink window,
 	 * but avoid silly window syndrome.
@@ -579,13 +809,13 @@ send:
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
 	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
 		win = (long)(tp->rcv_adv - tp->rcv_nxt);
-	ti->ti_win = htons((u_int16_t) (win>>tp->rcv_scale));
+	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
 		if (urp > IP_MAXPACKET)
 			urp = IP_MAXPACKET;
-		ti->ti_urp = htons((u_int16_t)urp);
-		ti->ti_flags |= TH_URG;
+		th->th_urp = htons((u_int16_t)urp);
+		th->th_flags |= TH_URG;
 	} else
 		/*
 		 * If no urgent pointer to send, then we pull
@@ -599,10 +829,30 @@ send:
 	 * Put TCP length in extended header, and then
 	 * checksum extended header and data.
 	 */
-	if (len + optlen)
-		ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) +
-		    optlen + len));
-	ti->ti_sum = in_cksum(m, (int)(hdrlen + len));
+	switch (af) {
+	case AF_INET:
+	    {
+		struct ipovly *ipov = (struct ipovly *)ip;
+		if (len + optlen)
+			ipov->ih_len = htons((u_int16_t)(sizeof(struct tcphdr) +
+			    optlen + len));
+		bzero(ipov->ih_x1, sizeof(ipov->ih_x1));
+		th->th_sum = 0;
+		th->th_sum = in_cksum(m, (int)(hdrlen + len));
+		break;
+	    }
+#ifdef INET6
+	case AF_INET6:
+		/* equals to hdrlen + len */
+		m->m_pkthdr.len = sizeof(struct ip6_hdr)
+			+ sizeof(struct tcphdr) + optlen + len;
+		th->th_sum = 0;
+		th->th_sum = in6_cksum(m, IPPROTO_TCP,
+				sizeof(struct ip6_hdr),
+				sizeof(struct tcphdr) + optlen + len);
+		break;
+#endif
+	}
 
 	/*
 	 * In transmit state, time the transmission and arrange for
@@ -655,8 +905,25 @@ send:
 	/*
 	 * Trace.
 	 */
-	if (so->so_options & SO_DEBUG)
-		tcp_trace(TA_OUTPUT, tp->t_state, tp, ti, 0);
+	if (so->so_options & SO_DEBUG) {
+		/*
+		 * need to recover version # field, which was overwritten
+		 * on ip_cksum computation.
+		 */
+		struct ip *sip;
+		sip = mtod(m, struct ip *);
+		switch (af) {
+		case AF_INET:
+			sip->ip_v = 4;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			sip->ip_v = 6;
+			break;
+#endif
+		}
+		tcp_trace(TA_OUTPUT, tp->t_state, tp, m, 0);
+	}
 
 	/*
 	 * Fill in IP length and desired time to live and
@@ -666,9 +933,30 @@ send:
 	 */
 	m->m_pkthdr.len = hdrlen + len;
 
-	((struct ip *)ti)->ip_len = m->m_pkthdr.len;
-	((struct ip *)ti)->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;	/* XXX */
-	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
+	switch (af) {
+	case AF_INET:
+		ip->ip_len = m->m_pkthdr.len;
+		if (tp->t_inpcb) {
+			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
+			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
+		}
+#ifdef INET6
+		else if (tp->t_in6pcb) {
+			ip->ip_ttl = tp->t_in6pcb->in6p_ip6.ip6_hlim;
+			ip->ip_tos = 0;	/*XXX*/
+		}
+#endif
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ip6->ip6_nxt = IPPROTO_TCP;
+		if (tp->t_in6pcb)
+			ip6->ip6_hlim = tp->t_in6pcb->in6p_ip6.ip6_hlim;
+		/* ip6->ip6_flow = ??? */
+		/* ip6_plen will be filled in ip6_output(). */
+		break;
+#endif
+	}
 
 	/*
 	 * If we're doing Path MTU discovery, we need to set DF unless
@@ -683,32 +971,107 @@ send:
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
-		dst = satosin(&ro->ro_dst);
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = tp->t_inpcb->inp_faddr;
+		switch (af) {
+		case AF_INET:
+		    {
+			struct sockaddr_in *dst;
+			dst = satosin(&ro->ro_dst);
+			dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(*dst);
+			if (tp->t_inpcb)
+				dst->sin_addr = tp->t_inpcb->inp_faddr;
+#ifdef INET6
+			else if (tp->t_in6pcb) {
+				bcopy(&tp->t_in6pcb->in6p_faddr.s6_addr32[3],
+					&dst->sin_addr, sizeof(dst->sin_addr));
+			}
+#endif
+			break;
+		    }
+#ifdef INET6
+		case AF_INET6:
+		    {
+			struct sockaddr_in6 *dst;
+			dst = satosin6(&ro->ro_dst);
+			dst->sin6_family = AF_INET6;
+			dst->sin6_len = sizeof(*dst);
+			dst->sin6_addr = tp->t_in6pcb->in6p_faddr;
+			break;
+		    }
+#endif
+		}
 		rtalloc(ro);
 		if ((rt = ro->ro_rt) == NULL) {
 			m_freem(m);
-			ipstat.ips_noroute++;
+			switch (af) {
+			case AF_INET:
+				ipstat.ips_noroute++;
+				break;
+#ifdef INET6
+			case AF_INET6:
+				ip6stat.ip6s_noroute++;
+				break;
+#endif
+			}
 			error = EHOSTUNREACH;
 			goto out;
 		}
 	}
-	if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-		((struct ip *)ti)->ip_off |= IP_DF;
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = (struct ifnet *)so;
+#endif /*IPSEC*/
+
+	switch (af) {
+	case AF_INET:
+	    {
+		struct mbuf *opts;
+
+		if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+			ip->ip_off |= IP_DF;
 
 #if BSD >= 43
-	error = ip_output(m, tp->t_inpcb->inp_options, ro,
-	    so->so_options & SO_DONTROUTE, 0);
+		if (tp->t_inpcb)
+			opts = tp->t_inpcb->inp_options;
+		else
+			opts = NULL;
+		error = ip_output(m, opts, ro,
+			so->so_options & SO_DONTROUTE, 0);
 #else
-	error = ip_output(m, (struct mbuf *)0, ro,
-	    so->so_options & SO_DONTROUTE);
+		opts = NULL;
+		error = ip_output(m, opts, ro, so->so_options & SO_DONTROUTE);
 #endif
+		break;
+	    }
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct ip6_pktopts *opts;
+
+#if BSD >= 43
+		if (tp->t_in6pcb)
+			opts = tp->t_in6pcb->in6p_outputopts;
+		else
+			opts = NULL;
+		error = ip6_output(m, opts, (struct route_in6 *)ro,
+			so->so_options & SO_DONTROUTE, 0);
+#else
+		opts = NULL;
+		error = ip6_output(m, opts, (struct route_in6 *)ro,
+			so->so_options & SO_DONTROUTE);
+#endif
+		break;
+	    }
+#endif
+	}
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcp_quench(tp->t_inpcb, 0);
+			if (tp->t_inpcb)
+				tcp_quench(tp->t_inpcb, 0);
+#if 0 /*XXX def INET6*/
+			else if (tp->t_in6pcb)
+				tcp6_quench(tp->t_in6pcb, 0);
+#endif
 			return (0);
 		}
 		if ((error == EHOSTUNREACH || error == ENETDOWN)

@@ -365,11 +365,7 @@ ip6_input(m)
 #endif
 	}
 
-#ifdef RADISH
-#define rt6_key(r) ((struct saocaddr_in6 *)((r)->rt_radish->rd_route))
-#else 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))
-#endif
 
 	/*
 	 * Accept the packet if the forwarding interface to the destination
@@ -1002,11 +998,6 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_hdrnestlimit);
 	case IPV6CTL_DAD_COUNT:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_dad_count);
-#ifdef MAPPED_ADDR_ENABLED
-	case IPV6CTL_MAPPED_ADDR:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_mapped_addr);
-#endif /* MAPPED_ADDR_ENABLED */
 	case IPV6CTL_AUTO_FLOWLABEL:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_auto_flowlabel);
