@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.6 1999/10/21 21:15:04 erh Exp $	 */
+/*	$NetBSD: search.c,v 1.7 1999/10/22 10:39:16 hannken Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -51,6 +51,12 @@
 
 #include "debug.h"
 #include "rtld.h"
+
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 /*
  * Data declarations.
