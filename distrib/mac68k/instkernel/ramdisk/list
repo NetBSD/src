@@ -1,10 +1,11 @@
-#	$NetBSD: list,v 1.14 2002/07/04 17:59:33 scottr Exp $
+#	$NetBSD: list,v 1.15 2002/07/10 15:50:09 scottr Exp $
 
 SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
 
 PROG	bin/cat
 PROG	bin/chmod
 PROG	bin/cp
+PROG	bin/date
 PROG	bin/dd
 PROG	bin/df
 PROG	bin/ed
