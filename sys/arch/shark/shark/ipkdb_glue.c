@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.1.2.2 2002/02/28 04:11:56 nathanw Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.1.2.3 2002/08/27 06:03:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -200,6 +200,7 @@ ipkdbsbyte(dst, ch)
 	pteo = ReadWord(ptep);
 	pte = pteo | PT_AP(AP_KRW);
 	WriteWord(ptep, pte);
+	PTE_SYNC(ptep);
 	tlbflush();		/* XXX should be purge */
          
 	*dst = (unsigned char)ch;
@@ -208,6 +209,7 @@ ipkdbsbyte(dst, ch)
 	cpu_cache_syncI_rng((u_int)dst, 4);
 
 	WriteWord(ptep, pteo);
+	PTE_SYNC(ptep);
 	tlbflush();		/* XXX should be purge */
 
 	return 0;

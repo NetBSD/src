@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.1.4.3 2002/04/17 00:02:58 nathanw Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.1.4.4 2002/08/27 06:03:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -171,6 +171,7 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;
+			PTE_SYNC(pte);
 		}
 		pmap_update(pmap_kernel());
 

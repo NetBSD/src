@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.5.4.4 2002/04/17 00:02:33 nathanw Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.5.4.5 2002/08/27 06:03:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -162,8 +162,10 @@ mainbus_bs_map(t, bpa, size, cacheable, bshp)
 	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		pte = vtopte(va);
-		if (cacheable == 0)
+		if (cacheable == 0) {
 			*pte &= ~L2_S_CACHE_MASK;
+			PTE_SYNC(pte);
+		}
 	}
 	pmap_update(pmap_kernel());
 

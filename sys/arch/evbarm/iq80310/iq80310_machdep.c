@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.8.2.8 2002/08/01 02:41:36 nathanw Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.8.2.9 2002/08/27 06:03:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -601,7 +601,7 @@ initarm(void *arg)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the Mini-Data cache clean area. */
 	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
@@ -621,7 +621,7 @@ initarm(void *arg)
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
@@ -629,13 +629,13 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
