@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.2 2000/12/14 22:39:02 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.3 2001/01/21 18:30:38 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -61,3 +61,33 @@ sys/arch/mac68k/nubus/grf_nubus.c		1.60
 libexec/ftpd/ftpd.c				patch
 
   Fix a one-byte buffer overrun.
+
+sys/arch/i386/i386/sys_machdep.c		1.55
+
+  Validate gate targets correctly.
+
+sys/arch/sun3/sun3x/pmap.c			1.55
+
+  Properly handle pmap->pm_refcount (initialize and lock before
+  access).  Should fix long-standing "out of space in kmem_map"
+  bug on sun3x.
+
+gnu/usr.bin/ld/ld/ld.c				1.73
+gnu/usr.bin/ld/ld/ld_i.h			1.2
+gnu/usr.bin/ld/ld/lib.c				1.23
+
+  The options --whole-archive and --no-whole-archive should be
+  position-dependent.  Make them actually behave that way.
+
+usr.sbin/chown/chown.c				1.25 via patch
+
+  Correct display of invalid username error and cache duplicate
+  password lookup.  Fixes PR#11695.
+
+share/examples/supfiles/sup.de.netbsd.org	delete
+
+  This service no longer exists.
+
+sys/arch/x68k/dev/rtclock.c			1.6
+
+  Correct ``Year 2001 problem''.
