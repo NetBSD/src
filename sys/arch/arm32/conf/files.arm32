@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.85 2001/01/12 13:43:13 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.86 2001/01/12 21:31:53 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -382,7 +382,6 @@ file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # DDB
-file	arch/arm32/arm32/db_disasm.c		ddb
 file	arch/arm32/arm32/db_interface.c		ddb
 file	arch/arm32/arm32/db_trace.c		ddb
 file	arch/arm32/arm32/db_machdep.c		ddb
