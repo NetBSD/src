@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.37 1998/08/09 14:46:19 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.38 1998/09/27 16:31:11 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -11,7 +11,9 @@ __initialized__:
 .endif
 
 .PHONY:		cleandoc docinstall print spell
+.if !defined(NOSHARE)
 realinstall:	docinstall
+.endif
 clean cleandir distclean: cleandoc
 
 BIB?=		bib
@@ -26,7 +28,11 @@ SOELIM?=	soelim
 TBL?=		tbl
 
 .if !target(all)
+.if !defined(NOSHARE)
 all: paper.ps
+.else
+all:
+.endif
 .endif
 
 .if !target(paper.ps)
