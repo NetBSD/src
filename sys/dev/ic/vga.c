@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.74 2004/05/29 02:04:56 christos Exp $ */
+/* $NetBSD: vga.c,v 1.75 2004/07/28 12:34:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,8 +27,13 @@
  * rights to redistribute these changes.
  */
 
+/* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
+#include "opt_wsdisplay_compat.h"
+/* for WSDISPLAY_CUSTOM_OUTPUT */
+#include "opt_wsmsgattrs.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.74 2004/05/29 02:04:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.75 2004/07/28 12:34:04 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.74 2004/05/29 02:04:56 christos Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
-
-/* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
-#include "opt_wsdisplay_compat.h"
 
 int vga_no_builtinfont = 0;
 
@@ -134,7 +136,12 @@ const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_erasecols,
 	vga_copyrows,
 	pcdisplay_eraserows,
-	vga_allocattr
+	vga_allocattr,
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	pcdisplay_replaceattr,
+#else
+	NULL,
+#endif
 };
 
 /*
@@ -476,6 +483,10 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	if (!vc->hdl.vh_mono)
 		/*
 		 * DEC firmware uses a blue background.
+		 * XXX These should be specified as kernel options for
+		 * XXX alpha only, not hardcoded here (which is wrong
+		 * XXX anyway because the emulation layer will assume
+		 * XXX the default attribute is white on black).
 		 */
 		res = vga_allocattr(scr, WSCOL_WHITE, WSCOL_BLUE,
 		    WSATTR_WSCOLORS, attrp);

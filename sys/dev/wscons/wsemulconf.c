@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulconf.c,v 1.5 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wsemulconf.c,v 1.6 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemulconf.c,v 1.5 2001/10/13 15:56:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemulconf.c,v 1.6 2004/07/28 12:34:05 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsemulvar.h>		/* pulls in opt_wsemul.h */
