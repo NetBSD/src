@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$NetBSD: Makefile.dev,v 1.24 1999/02/13 03:47:59 lukem Exp $
+#	$NetBSD: Makefile.dev,v 1.25 1999/02/14 13:17:13 lukem Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -32,7 +32,6 @@ clean cleandir distclean:
 COPY=	-c
 .endif
 
-.if !target(install)
 .if ${MKSHARE} != "no"
 FILES=${FONTFILES}
 FILESDIR=${DEVICEDIR}
@@ -40,7 +39,6 @@ GENFILES=${FONTFILES:Mgenerate/*}
 .for i in ${GENFILES}
 FILESDIR_$i=${DEVICEDIR}/generate
 .endfor
-.endif
 .endif
 
 .include <bsd.prog.mk>
