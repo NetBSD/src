@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.15 1998/01/09 18:45:47 perry Exp $	
+
 You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0

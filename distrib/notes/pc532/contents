@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.5 1998/01/09 18:47:00 perry Exp $	
+
 The pc532-specific portion of the NetBSD 1.2 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:

@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.2 1998/01/09 18:47:41 perry Exp $	
+
 The sun3x-specific portion of the NetBSD _VER release is found in the
 "sun3x" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
