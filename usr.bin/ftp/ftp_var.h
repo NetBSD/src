@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.67 2004/07/20 10:40:22 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.68 2004/07/21 00:09:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -190,8 +190,6 @@ enum {
 #define	DEFAULTPAGER	"more"	/* default pager if $PAGER isn't set */
 #define	DEFAULTPROMPT	"ftp> "	/* default prompt  if `set prompt' is empty */
 #define	DEFAULTRPROMPT	""	/* default rprompt if `set rprompt' is empty */
-
-#define	EXIT_SIGINT	130	/* exit status if ^C (SIGINT) received */
 
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
