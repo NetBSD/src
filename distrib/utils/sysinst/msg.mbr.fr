@@ -1,0 +1,307 @@
+/*	$NetBSD: msg.mbr.fr,v 1.1 2003/05/16 19:15:01 dsl Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MD Message catalog -- french, i386 version */
+
+message fullpart
+{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
+choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
+sur une partie de celui-ci.
+Une installation sur une partie du disque crée une partition, ou `slice', pour
+NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
+disque. Une installation sur la totalité du disque est `dangereusement
+dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
+d'exploitation ou données existants sur le disque. Cela rend également
+impossible l'installation ultérieure d'un deuxième système d'exploitation,
+sauf si vous reinstallez complètement NetBSD en utilisant uniquement une
+partie du disque.
+
+Que désirez vous faire ?
+}
+
+message Select_your_choice
+{Faite votre choix}
+message Use_only_part_of_the_disk
+{Utilisation d'une partie du disque}
+message Use_the_entire_disk
+{Utilisation de tout le disque}
+
+/* the %s's will expand into three character strings */
+message part_header
+{   Total disksize %d %s.
+
+   Début(%3s) Fin(%3s)   Taille(%3s) Type
+   ---------- ---------- ----------- ----
+}
+
+message part_row_start_unused
+{%-1d:                                  }
+
+message part_row_start_used
+{%-1d: %-10d %-10d %-11d}
+
+message part_row_end
+{ %s\n}
+
+message setbiosgeom
+{On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
+Rappelez vous que le nombre de cylindre doit être <= 1024 et que le nombre
+de secteur doit être <=63. Si votre BIOS est configuré avec plus de 1024
+cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les cylindres
+restant.
+}
+
+.if 0
+message confirmbiosgeom
+{SVP vérifiez que la géometrie du BIOS ci-dessous est correcte. Le nombre
+de cylindre à pu etre tronquée à 1024. Ce n'est pas un problème du moment
+que les autres paramètres sont corrects. Seulement 1024 cuylindres peuvent
+etre specifiés dans le secteur de boot, le reste sera trouvé d'une manière
+différente par NetBSD.
+
+Si vous réentrez ces valeurs, vérifiez qu'elles sont correctes et
+correspondent à celles utilisées par d'autre systèmes sur ce disque. Des
+valeurs différentes peuvent conduire à des pertes de données.
+}
+
+message badgeom
+{Les valeurs actuelles de la géométrie de votre disque sont :
+
+}
+.endif
+
+message realgeom
+{ géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
+
+message biosgeom
+{ géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
+
+.if 0
+message reentergeom
+{La géométrie que vous venez de spécifier n'est pas utilisable. SVP entrez
+de nouveau la géométrie.
+}
+.endif
+
+message ovrwrite
+{Votre disque a actuellement une partition autre que NetBSD. Voulez vous
+vraiment l'écraser par une partition NetBSD ?
+}
+
+message parttable
+{La table des partitions de votre disque est :
+}
+
+message editpart
+{La partition %d ressemble à:
+
+}
+
+message Select_to_change
+{Changement}
+message Kind
+{du type de FS}
+message Start_and_size
+{du Début et de la taille}
+message Set_active
+{Rendre la partition active}
+message Partition_OK
+{Partition OK}
+
+message editparttable
+{Editez votre table de partition DOS. La partition en surbrillance est
+actuellement active. La table des partitions est :
+
+}
+
+message Choose_your_partition
+{Choisissez votre partition}
+message Edit_partition_0
+{Edition de la partition 0}
+message Edit_partition_1
+{Edition de la partition 1}
+message Edit_partition_2
+{Edition de la partition 2}
+message Edit_partition_3
+{Edition de la partition 3}
+message Reselect_size_specification
+{Changer d'untité}
+
+message Partition_Kind
+{Type de Partition?}
+message NetBSD
+{NetBSD}
+message DOS_LT_32_Meg
+{DOS < 32 Meg}
+message DOS_GT_32_Meg
+{DOS > 32 Meg}
+message unused
+{inutilis'e}
+message dont_change
+{ne pas modifier}
+
+message mbrpart_start_special
+{
+  Valeurs spéciales qui peuvent être entrées pour la valeur Début:
+ -N: commence à la fin de la parition N
+  0: commence au début du disque
+}
+
+message mbrpart_size_special
+{
+  Valeurs spéciales qui peuvent être entrées pour la valeur Taille:
+  -N: dimentionne la partition de façon à finir au début de la partition N
+   0: finit à la fin du disque
+}
+
+message reeditpart
+{Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
+exactement une partition NetBSD. Vous devez éditer de nouveau la table
+des partitions.
+
+Voulez vous la rééditer ?
+}
+
+message nobsdpart
+{Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
+boot.}
+
+message multbsdpart
+{Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
+boot. La partition %d sera utilisée.}
+
+message dofdisk
+{Configuration de la table des partition DOS ...
+}
+
+.if BOOTSEL
+message installbootsel
+{Il me semble que vous avez plusieur système d'exploitation sur ce disque.
+Voulez-vous installer un selecteur de boot qui vous permettra de choisir
+quel système chargé lorsque votre ordinateur est (re)démarré?}
+
+message installmbr
+{Le début de la partition de votre disque réservée à NetBSD se trouve en-dehors
+de l'espace que le BIOS peut adresser. Le programme d'amorcage du secteur de
+demmarage doit utiliser l'interface étendue du BIOS pour ammorcer depuis cette
+partition. Voulez-vous installer le programme d'amorcage de NetBSD pour etre
+sur de pouvoir démarer depuis cette partition ? Notez que cela va écraser
+le programme d'amorcage existant, comme un selecteur de boot.}
+
+message installnormalmbr /* XXX translate */
+{You have chosen not to install a bootselector. If this was because you
+already have a bootselector installed, no further action is needed.
+However, if no bootselector is installed, the normal bootcode must be
+used, or your system will not boot properly. Do you want to use the normal
+NetBSD bootcode?}
+
+message configbootsel
+{Configurez les differents choix du selecteur de boot. Vous pouvez changer
+le menu proposé pour chaque partition lorsque le système demarre.
+Vous pouvez également préciser le choix par defaut et le temps d'attente.\n
+}
+
+message Change_a_bootmenu_item
+{Changer une entree du menu}
+message Edit_menu_entry_0
+{Changer l'entrée 0 du menu}
+message Edit_menu_entry_1
+{Changer l'entrée 1 du menu}
+message Edit_menu_entry_2
+{Changer l'entrée 2 du menu}
+message Edit_menu_entry_3
+{Changer l'entrée 3 du menu}
+message Set_timeout_value
+{Changer le temps d'attente}
+message Set_default_option
+{Changer le choix par defaut}
+
+message Pick_a_default_partition_or_disk_to_boot
+{Choisissez un disque ou partition}
+message First_active_partition
+{Première partition active}
+message Partition_0
+{Partition 0}
+message Partition_1
+{Partition 1}
+message Partition_2
+{Partition 2}
+message Partition_3
+{Partition 3}
+message Harddisk_0
+{Disque dur 0}
+message Harddisk_1
+{Disque dur 1}
+message Harddisk_2
+{Disque dur 2}
+message Harddisk_3
+{Disque dur 3}
+message Harddisk_4
+{Disque dur 4}
+message Harddisk_5
+{Disque dur 5}
+
+message bootseltimeout
+{Temps d'attente: %d\n}
+
+message defbootselopt
+{Action par defaut: }
+
+message defbootseloptactive
+{Démarrer la première partition active.\n}
+
+message defbootseloptpart
+{Démarrer depuis la partition %d.\n}
+
+message defbootseloptdisk
+{Demarrer depuis le disque %d.\n}
+
+message bootselitemname
+{Entrez un nom pour ce choix}
+
+message bootseltimeoutval
+{Temps d'attente en secondes (0-3600)}
+
+message bootsel_header
+{Numéro Type                             Nom
+------ -------------------------------- ---
+}
+
+message bootsel_row
+{%-6d %-32s %s\n}
+.endif

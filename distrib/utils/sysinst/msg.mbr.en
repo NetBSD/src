@@ -1,0 +1,306 @@
+/*	$NetBSD: msg.mbr.en,v 1.1 2003/05/16 19:15:00 dsl Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MBR Message catalog -- English, i386 version */
+
+message fullpart
+{We are now going to install NetBSD on the disk %s.  You may
+choose to install NetBSD on the entire disk, or on part of the disk.
+
+Partial-disk installation creates a partition, or `slice', for NetBSD
+in your disk's MBR partition table. Whole-disk installation is
+`dangerously dedicated': it takes over the entire MBR. This WILL
+overwrite all existing data and OSes on the disk. It also prohibits later
+installation of multiple OSes on that disk (unless you overwrite NetBSD and
+reinstall using only part of the disk).
+
+Which would you like to do?
+}
+
+message Select_your_choice
+{Select your choice}
+message Use_only_part_of_the_disk
+{Use only part of the disk}
+message Use_the_entire_disk
+{Use the entire disk}
+
+/* the %s's will expand into three character strings */
+message part_header
+{   Total disksize %d %s.
+
+   Start(%3s) End(%3s)   Size(%3s)  Kind
+   ---------- ---------- ---------- ----
+}
+
+message part_row_start_unused
+{%-1d:                                 }
+
+message part_row_start_used
+{%-1d: %-10d %-10d %-10d}
+
+message part_row_end
+{ %s\n}
+
+message setbiosgeom
+{You will be prompted for the geometry.  Please enter the values you
+want.  The number of cylinders should be <= 1024 and the number of sectors
+should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
+truncate that number to 1024 here; NetBSD will know about the rest of the
+cylinders.
+
+}
+
+.if 0
+message confirmbiosgeom
+{Please verify if the BIOS disk geometry below is correct. The value for
+the number of cylinders may have been truncated to 1024. This is ok as
+long as the other numbers are correct; only 1024 cylinders can be
+specified in the MBR, the rest will be found in a different way by NetBSD.
+
+If you reenter the values, make sure that the values are correct and
+match those used by other systems on this disk. Values that do not match
+may result in data corruption.
+
+}
+
+message badgeom
+{The current values for your disk geometry are:
+
+}
+.endif
+
+message realgeom
+{real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
+
+message biosgeom
+{BIOS geom: %d cyl, %d heads, %d sec\n}
+
+.if 0
+message reentergeom
+{The values just entered for the geometry are not usable.  Please,
+reenter the geometry.
+}
+.endif
+
+message ovrwrite
+{Your disk currently has a non-NetBSD partition.  Do you really want to
+overwrite that partition with NetBSD?
+}
+
+message parttable
+{The partition table on your disk currently looks like the following:
+}
+
+message editpart
+{You are editing partition %d. The highlighted partition is the partition
+you are editing.
+
+}
+
+message Select_to_change
+{Select to change}
+message Kind
+{Kind}
+message Start_and_size
+{Start and size}
+message Set_active
+{Set active}
+message Partition_OK
+{Partition OK}
+
+message editparttable
+{Edit your DOS partition table.  The highlighted partition is the currently
+active partition.  The partition table currently looks like:
+
+}
+
+message Choose_your_partition
+{Choose your partition}
+message Edit_partition_0
+{Edit partition 0}
+message Edit_partition_1
+{Edit partition 1}
+message Edit_partition_2
+{Edit partition 2}
+message Edit_partition_3
+{Edit partition 3}
+message Reselect_size_specification
+{Reselect size specification}
+
+message Partition_Kind
+{Partition Kind?}
+message NetBSD
+{NetBSD}
+message DOS_LT_32_Meg
+{DOS < 32 Meg}
+message DOS_GT_32_Meg
+{DOS > 32 Meg}
+message unused
+{unused}
+message dont_change
+{don't change}
+
+message mbrpart_start_special
+{
+  Special values that can be entered for the start value:
+ -N:    start at the end of partition N
+  0:    start at the beginning of the disk
+}
+
+message mbrpart_size_special
+{
+  Special values that can be entered for the size value:
+ -N:    size the partition so that it ends where partition N starts
+  0:    end at the end of the disk
+}
+
+message reeditpart
+{There are overlapping MBR partitions or there is not exactly one NetBSD
+partition. You should re-edit the MBR partition table.
+
+Do you want to re-edit it?
+}
+
+message nobsdpart
+{There is no NetBSD partition in the MBR partition table.}
+
+message multbsdpart
+{There are multiple NetBSD partitions in the MBR partition table.
+Partition %d will be the one used.}
+
+message dofdisk
+{Setting up the DOS partition table ...
+}
+
+.if BOOTSEL
+message installbootsel
+{You appear to have more than one operating system installed on your
+disk. Do you want to install a bootselector so that you can select
+which system to start up when your computer is (re)started?}
+
+message installmbr
+{The start of the NetBSD part of the disk lies outside of the range
+that the BIOS can address. The initial bootcode in the Master Boot
+Record needs to be able to use the extended BIOS interface to boot
+off this partition. Do you want to install the NetBSD bootcode into
+the Master Boot Record so that this is ensured? Note that this will
+overwrite the existing code in the MBR, like some bootselectors.}
+
+message installnormalmbr
+{You have chosen not to install a bootselector. If this was because you
+already have a bootselector installed, no further action is needed.
+However, if no bootselector is installed, the normal bootcode must be
+used, or your system will not boot properly. Do you want to use the normal
+NetBSD bootcode?}
+
+message configbootsel
+{Configure the different bootselection menu items. You can change the
+simple menu entries for the matching partition entries that are displayed
+when the system boots. Also, you can specify the timeout and default
+action to be taken (if no selection is made in the bootmenu).\n
+}
+
+message Change_a_bootmenu_item
+{Change a bootmenu item}
+message Edit_menu_entry_0
+{Edit menu entry 0}
+message Edit_menu_entry_1
+{Edit menu entry 1}
+message Edit_menu_entry_2
+{Edit menu entry 2}
+message Edit_menu_entry_3
+{Edit menu entry 3}
+message Set_timeout_value
+{Set timeout value}
+message Set_default_option
+{Set default option}
+
+message Pick_a_default_partition_or_disk_to_boot
+{Pick a default partition/disk to boot}
+message First_active_partition
+{First active partition}
+message Partition_0
+{Partition 0}
+message Partition_1
+{Partition 1}
+message Partition_2
+{Partition 2}
+message Partition_3
+{Partition 3}
+message Harddisk_0
+{Harddisk 0}
+message Harddisk_1
+{Harddisk 1}
+message Harddisk_2
+{Harddisk 2}
+message Harddisk_3
+{Harddisk 3}
+message Harddisk_4
+{Harddisk 4}
+message Harddisk_5
+{Harddisk 5}
+
+message bootseltimeout
+{Boot menu timeout: %d\n}
+
+message defbootselopt
+{Default boot menu action: }
+
+message defbootseloptactive
+{boot the first active partition.\n}
+
+message defbootseloptpart
+{boot off partition %d.\n}
+
+message defbootseloptdisk
+{boot off hard disk %d.\n}
+
+message bootselitemname
+{Enter name for menu item}
+
+message bootseltimeoutval
+{Timeout value in seconds (0-3600)}
+
+message bootsel_header
+{Number Type                             Menu entry
+------ -------------------------------- ----------
+}
+
+message bootsel_row
+{%-6d %-32s %s\n}
+.endif
