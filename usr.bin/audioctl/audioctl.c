@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.16 1998/07/28 19:26:09 mycroft Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.17 1998/08/10 18:19:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct field {
 #define ENC 7
 #define PROPS 8
 #define XINT 9
+#define	FORMAT 10
 	char flags;
 #define READONLY 1
 #define ALIAS 2
@@ -95,6 +96,7 @@ struct field {
 	{ "lowat",		&info.lowat,		UINT,	0 },
 	{ "monitor_gain",	&info.monitor_gain,	UINT,	0 },
 	{ "mode",		&info.mode,		P_R,	READONLY },
+	{ "play",		&info.play,		FORMAT,	ALIAS },
 	{ "play.rate",		&info.play.sample_rate,	UINT,	0 },
 	{ "play.sample_rate",	&info.play.sample_rate,	UINT,	ALIAS },
 	{ "play.channels",	&info.play.channels,	UINT,	0 },
@@ -113,6 +115,7 @@ struct field {
 	{ "play.open",		&info.play.open,	UCHAR,	READONLY },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
 	{ "play.buffer_size",	&info.play.buffer_size,	UINT,	0 },
+	{ "record",		&info.record,		FORMAT,	ALIAS },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
@@ -245,6 +248,15 @@ prfield(p, sep)
 			}
 		}
 		break;
+	case FORMAT:
+		prfield(p + 1, 0);
+		fprintf(out, ",");
+		prfield(p + 3, 0);
+		fprintf(out, ",");
+		prfield(p + 4, 0);
+		fprintf(out, ",");
+		prfield(p + 5, 0);
+		break;
 	default:
 		errx(1, "Invalid print format.");
 	}
@@ -257,22 +269,23 @@ rdfield(p, q)
 {
 	int i;
 	u_int u;
+	char *s;
 
 	switch(p->format) {
 	case UINT:
 		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1)
-			warnx("Bad number %s", q);
+			errx(1, "Bad number: %s", q);
 		break;
 	case UCHAR:
 		if (sscanf(q, "%u", &u) != 1)
-			warnx("Bad number %s", q);
+			errx(1, "Bad number: %s", q);
 		else
 			*(u_char *)p->valp = u;
 		break;
 	case XINT:
 		if (sscanf(q, "0x%x", (unsigned int *)p->valp) != 1 &&
 		    sscanf(q, "%x", (unsigned int *)p->valp) != 1)
-			warnx("Bad number %s", q);
+			errx(1, "Bad number: %s", q);
 		break;
 	case ENC:
 		for(i = 0; encs[i].ename; i++)
@@ -281,7 +294,23 @@ rdfield(p, q)
 		if (encs[i].ename)
 			*(u_int*)p->valp = encs[i].eno;
 		else
-			warnx("Unknown encoding: %s", q);
+			errx(1, "Unknown encoding: %s", q);
+		break;
+	case FORMAT:
+		s = strsep(&q, ",");
+		if (s)
+			rdfield(p + 1, s);
+		s = strsep(&q, ",");
+		if (s)
+			rdfield(p + 3, s);
+		s = strsep(&q, ",");
+		if (s)
+			rdfield(p + 4, s);
+		s = strsep(&q, ",");
+		if (s)
+			rdfield(p + 5, s);
+		if (!s || q)
+			errx(1, "Bad format");
 		break;
 	default:
 		errx(1, "Invalid read format.");
