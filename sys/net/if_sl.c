@@ -190,7 +190,6 @@ struct sl_softc sl_softc[NSL];
 #define TRANS_FRAME_END	 	0xdc		/* transposed frame end */
 #define TRANS_FRAME_ESCAPE 	0xdd		/* transposed frame esc */
 
-#define t_sc T_LINEP
 
 int sloutput(), slioctl(), ttrstrt();
 void slstart();
