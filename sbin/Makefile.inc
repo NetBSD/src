@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile.inc,v 1.5 1993/09/07 15:40:14 ws Exp $
+#	$Id: Makefile.inc,v 1.6 1993/10/01 01:53:46 mycroft Exp $
 
-BINDIR?=	/sbin
-CFLAGS += -I../../sys
+BINDIR?=/sbin
+CFLAGS+=-I${.CURDIR}/../../sys
