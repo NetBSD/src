@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.8 1998/10/10 07:50:28 mrg Exp $
+.\"	$NetBSD: mtree.8,v 1.9 1998/12/06 19:07:53 jwise Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl cderux
+.Op Fl cderUux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
@@ -130,6 +130,8 @@ The file group as a numeric value.
 The file group as a symbolic name.
 .It Cm link
 The file the symbolic link is expected to reference.
+.It Cm md5
+The MD5 cryptographic checksum of the file.
 .It Cm mode
 The current file's permissions as a numeric (octal) or symbolic
 value.
@@ -259,6 +261,7 @@ system specification directory
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
 .Xr cksum 1 ,
+.Xr md5 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr chown 8
