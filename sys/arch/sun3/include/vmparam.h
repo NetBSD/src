@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1997/02/27 18:22:54 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 1997/05/29 21:18:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -70,7 +70,7 @@
 #define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(8*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(32*1024*1024)		/* max data size */
