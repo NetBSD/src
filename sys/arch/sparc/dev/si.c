@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.39 1997/10/09 08:37:21 jtc Exp $	*/
+/*	$NetBSD: si.c,v 1.40 1997/10/16 10:49:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,10 +102,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipi_debug.h>
-#include <dev/scsipi/scsiconf.h>
+#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -113,6 +110,11 @@
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
+
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #ifndef DDB
 #define	Debugger()
