@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.11 2000/10/04 00:44:24 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.12 2000/10/10 12:10:08 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,8 +34,7 @@
 Once you've got the operating system running, there are a few
 things you need to do in order to bring the system into a properly
 configured state, with the most important ones described below.
-.Bl -enum
-.It
+.(enum
 Configuring
 .Pa /etc/rc.conf
 .Pp
@@ -183,8 +182,7 @@ make the software run on
 retrieval and installation of any other packages on which the software
 may depend, and simplifies installation (and deinstallation), both
 from source and precompiled binaries.
-.Bl -bullet
-.It
+.(bullet
 More information on the package system is at
 .Lk http://www.netbsd.org/Documentation/software/packages.html
 .It
@@ -200,18 +198,16 @@ retrieving the file
 They are typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine), as with the command:
-.D1 Ic "cat pkgsrc.tar.gz | gunzip | (mkdir /usr/pkgsrc; 
-.D1 Ic "cd /usr/pkgsrc; tar xpf - )
+.D1 Ic "mkdir /usr/pkgsrc; tar -C /usr/pkgsrc -zxpf pkgsrc.tar.gz"
 After extracting, then see the
 .Pa README
 file in the extraction directory (e.g.
 .Pa /usr/pkgsrc/README )
 for more information.
-.El
+.bullet)
 .It
 Misc
-.Bl -bullet
-.It
+.(bullet
 Edit
 .Pa /etc/mail/aliases
 to forward root mail to the right place (run
@@ -236,5 +232,5 @@ Many of the
 files are documented in section 5 of the manual; so just invoking
 .D1 Ic man Ar filename
 is likely to give you more information on these files.
-.El
-.El
+.bullet)
+.enum)
