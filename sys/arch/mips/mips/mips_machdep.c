@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.26 1998/04/27 07:34:28 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.27 1998/05/08 16:55:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.26 1998/04/27 07:34:28 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.27 1998/05/08 16:55:16 kleink Exp $");
 
 #include "opt_uvm.h"
 
@@ -575,8 +575,9 @@ sendsig(catcher, sig, mask, code)
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
 	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size - fsize);
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+		                                  psp->ps_sigstk.ss_size -
+		                                  fsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120 1998/04/30 08:27:59 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.121 1998/05/08 17:13:37 kleink Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/04/30 08:27:59 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 1998/05/08 17:13:37 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1666,7 +1666,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		scp = (struct sigcontext *)(psp->ps_sigstk.ss_sp +
+		scp = (struct sigcontext *)((caddr_t)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - rndfsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else

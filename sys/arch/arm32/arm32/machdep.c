@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1998/04/03 01:56:34 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1998/05/08 16:55:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -708,7 +708,7 @@ sendsig(catcher, sig, mask, code)
 
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
