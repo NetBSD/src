@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.11 1996/10/10 21:21:52 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.12 1996/10/13 01:38:06 christos Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -311,14 +311,14 @@ wds_finish_scbs(sc)
 	if (wmbi->stat == WDS_MBI_FREE) {
 		for (i = 0; i < WDS_MBX_SIZE; i++) {
 			if (wmbi->stat != WDS_MBI_FREE) {
-				kprintf("%s: mbi not in round-robin order\n",
+				printf("%s: mbi not in round-robin order\n",
 				    sc->sc_dev.dv_xname);
 				goto AGAIN;
 			}
 			wds_nextmbx(wmbi, wmbx, mbi);
 		}
 #ifdef WDSDIAGnot
-		kprintf("%s: mbi interrupt with no full mailboxes\n",
+		printf("%s: mbi interrupt with no full mailboxes\n",
 		    sc->sc_dev.dv_xname);
 #endif
 		return;
@@ -328,7 +328,7 @@ AGAIN:
 	do {
 		scb = wds_scb_phys_kv(sc, phystol(wmbi->scb_addr));
 		if (!scb) {
-			kprintf("%s: bad mbi scb pointer; skipping\n",
+			printf("%s: bad mbi scb pointer; skipping\n",
 			    sc->sc_dev.dv_xname);
 			goto next;
 		}
@@ -336,11 +336,11 @@ AGAIN:
 #ifdef WDSDEBUG
 		if (wds_debug) {
 			u_char *cp = &scb->scsi_cmd;
-			kprintf("op=%x %x %x %x %x %x\n",
+			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			kprintf("stat %x for mbi addr = 0x%08x, ",
+			printf("stat %x for mbi addr = 0x%08x, ",
 			    wmbi->stat, wmbi);
-			kprintf("scb addr = 0x%x\n", scb);
+			printf("scb addr = 0x%x\n", scb);
 		}
 #endif /* WDSDEBUG */
 
@@ -386,7 +386,7 @@ wdsintr(arg)
 		break;
 
 	default:
-		kprintf("%s: unrecognized interrupt type %02x",
+		printf("%s: unrecognized interrupt type %02x",
 		    sc->sc_dev.dv_xname, c);
 		break;
 	}
@@ -505,7 +505,7 @@ wds_get_scb(sc, flags, needbuffer)
 			scb = (struct wds_scb *) malloc(sizeof(struct wds_scb),
 			    M_TEMP, M_NOWAIT);
 			if (!scb) {
-				kprintf("%s: can't malloc scb\n",
+				printf("%s: can't malloc scb\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
@@ -708,11 +708,11 @@ wds_done(sc, scb, stat)
 					/* SCSI error recorded in scb, counts as WDS_MBI_OK */
 					switch (scb->cmd.venderr) {
 					case 0x00:
-						kprintf("%s: Is this an error?\n", sc->sc_dev.dv_xname);
+						printf("%s: Is this an error?\n", sc->sc_dev.dv_xname);
 						xs->error = XS_DRIVER_STUFFUP; /* Experiment */
 						break;
 					case 0x01:
-						/*kprintf("%s: OK, see SCSI error field.\n", sc->sc_dev.dv_xname);*/
+						/*printf("%s: OK, see SCSI error field.\n", sc->sc_dev.dv_xname);*/
 						if (scb->cmd.stat == SCSI_CHECK) {
 							/* Do sense. */
 							wds_sense (sc, scb);
@@ -722,13 +722,13 @@ wds_done(sc, scb, stat)
 						}
 						break;
 					case 0x40:
-						/*kprintf("%s: DMA underrun!\n", sc->sc_dev.dv_xname);*/
+						/*printf("%s: DMA underrun!\n", sc->sc_dev.dv_xname);*/
 						/* Hits this if the target returns fewer that datalen bytes (eg my CD-ROM,
 						which returns a short version string, or if DMA is turned off etc. */
 						xs->resid = 0;
 						break;
 					default:
-						kprintf("%s: VENDOR ERROR %02x, scsi %02x\n", sc->sc_dev.dv_xname, scb->cmd.venderr, scb->cmd.stat);
+						printf("%s: VENDOR ERROR %02x, scsi %02x\n", sc->sc_dev.dv_xname, scb->cmd.venderr, scb->cmd.stat);
 						xs->error = XS_DRIVER_STUFFUP; /* Experiment */
 						break;
 					}
@@ -800,21 +800,21 @@ ready:
 	wds_wait(iobase + WDS_STAT, WDSS_RDY, WDSS_RDY);
 	if (inb(iobase + WDS_IRQSTAT) != 1)
 		if (inb(iobase + WDS_IRQSTAT) != 7)
-			kprintf("%s: failed reset!!! %2x\n", sc->sc_dev.dv_xname, inb(iobase + WDS_IRQSTAT));
+			printf("%s: failed reset!!! %2x\n", sc->sc_dev.dv_xname, inb(iobase + WDS_IRQSTAT));
 
 	if ((inb(iobase + WDS_STAT) & (WDSS_RDY)) != WDSS_RDY) {
-		kprintf("%s: waiting for controller to become ready.", sc->sc_dev.dv_xname);
+		printf("%s: waiting for controller to become ready.", sc->sc_dev.dv_xname);
 		for (i = 0; i < 20; i++) {
 			if ((inb(iobase + WDS_STAT) & (WDSS_RDY)) == WDSS_RDY)
 				break;
-			kprintf(".");
+			printf(".");
 			delay(10000);
 		}
 		if ((inb(iobase + WDS_STAT) & (WDSS_RDY)) != WDSS_RDY) {
-			kprintf(" failed\n");
+			printf(" failed\n");
 			return 1;
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 
 	if (sc != NULL) {
@@ -894,7 +894,7 @@ wds_inquire_setup_information(sc)
 	iobase = sc->sc_iobase;
 
 	if ((scb = wds_get_scb(sc, SCSI_NOSLEEP, 0)) == NULL) {
-		kprintf("%s: no request slot available in getvers()!\n", sc->sc_dev.dv_xname);
+		printf("%s: no request slot available in getvers()!\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	scb->xs = NULL;
@@ -916,17 +916,17 @@ wds_inquire_setup_information(sc)
 		goto out;
 
 	/* Print the version number. */
-	kprintf(": version %x.%02x ", scb->cmd.targ, scb->cmd.scb.opcode);
+	printf(": version %x.%02x ", scb->cmd.targ, scb->cmd.scb.opcode);
 	sc->sc_revision = (scb->cmd.targ << 8) | scb->cmd.scb.opcode;
 	/* Print out the version string. */
 	j = 2 + &(scb->cmd.targ);
 	while ((*j >= 32) && (*j < 128)) {
-		kprintf("%c", *j);
+		printf("%c", *j);
 		j++;
 	}
 
 out:
-	kprintf("\n");
+	printf("\n");
 	wds_free_scb(sc, scb);
 }
 
@@ -965,7 +965,7 @@ wds_scsi_cmd(xs)
 
 	if (xs->flags & SCSI_RESET) {
 		/* XXX Fix me! */
-		kprintf("%s: reset!\n", sc->sc_dev.dv_xname);
+		printf("%s: reset!\n", sc->sc_dev.dv_xname);
 		wds_init(sc);
 		return COMPLETE;
 	}
@@ -982,7 +982,7 @@ wds_scsi_cmd(xs)
 		/* XXX Fix me! */
 		/* Let's not worry about UIO. There isn't any code for the *
 		 * non-SG boards anyway! */
-		kprintf("%s: UIO is untested and disabled!\n", sc->sc_dev.dv_xname);
+		printf("%s: UIO is untested and disabled!\n", sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
@@ -1048,7 +1048,7 @@ wds_scsi_cmd(xs)
 					 */
 					/* check it fits on the ISA bus */
 					if (thisphys > 0xFFFFFF) {
-						kprintf("%s: DMA beyond"
+						printf("%s: DMA beyond"
 							" end of ISA\n",
 							sc->sc_dev.dv_xname);
 						goto bad;
@@ -1083,7 +1083,7 @@ wds_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			kprintf("%s: wds_scsi_cmd, more than %d dma segs\n",
+			printf("%s: wds_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, WDS_NSEG);
 			goto bad;
 		}
@@ -1093,7 +1093,7 @@ wds_scsi_cmd(xs)
 	} else if (xs->datalen > 0) {
 		/* The board is an ASC or ASE. Do not use scatter/gather. */
 		if (xs->datalen > BUFLEN) {
-			kprintf("%s: wds_scsi_cmd, I/O too large for bounce buffer\n",
+			printf("%s: wds_scsi_cmd, I/O too large for bounce buffer\n",
 			    sc->sc_dev.dv_xname);
 			goto bad;
 		}
@@ -1259,7 +1259,7 @@ wds_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	kprintf("timed out");
+	printf("timed out");
 
 	s = splbio();
 
@@ -1269,7 +1269,7 @@ wds_timeout(arg)
 	 */
 	wds_collect_mbo(sc);
 	if (scb->flags & SCB_SENDING) {
-		kprintf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 #endif
@@ -1281,11 +1281,11 @@ wds_timeout(arg)
 	 */
 	if (scb->flags & SCB_ABORT) {
 		/* abort timed out */
-		kprintf(" AGAIN\n");
+		printf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		kprintf("\n");
+		printf("\n");
 		scb->xs->error = XS_TIMEOUT;
 		scb->timeout = WDS_ABORT_TIMEOUT;
 		scb->flags |= SCB_ABORT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.89 1996/10/10 22:04:53 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.90 1996/10/13 01:37:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -264,7 +264,7 @@ comprobeHAYESP(hayespioh, sc)
 	if (sc->sc_iobase != combaselist[dips & 0x03])
 		return 0;
 
-	kprintf(": ESP");
+	printf(": ESP");
 
  	/* Check ESP Self Test bits. */
 	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
@@ -272,14 +272,14 @@ comprobeHAYESP(hayespioh, sc)
 	val = bus_io_read_1(bc, hayespioh, HAYESP_STATUS1); /* Clear reg 1 */
 	val = bus_io_read_1(bc, hayespioh, HAYESP_STATUS2);
 	if ((val & 0x70) < 0x20) {
-		kprintf("-old (%o)", val & 0x70);
+		printf("-old (%o)", val & 0x70);
 		/* we do not support the necessary features */
 		return 0;
 	}
 
 	/* Check for ability to emulate 16550: bit 8 == 1 */
 	if ((dips & 0x80) == 0) {
-		kprintf(" slave");
+		printf(" slave");
 		/* XXX Does slave really mean no 16550 support?? */
 		return 0;
 	}
@@ -290,7 +290,7 @@ comprobeHAYESP(hayespioh, sc)
 	 */
 
 	SET(sc->sc_hwflags, COM_HW_HAYESP);
-	kprintf(", 1024 byte fifo\n");
+	printf(", 1024 byte fifo\n");
 	return 1;
 }
 #endif
@@ -458,11 +458,11 @@ comattach(parent, self, aux)
 	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if (ISSET(bus_io_read_1(bc, ioh, com_fifo), FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
-			kprintf(": ns16550a, working fifo\n");
+			printf(": ns16550a, working fifo\n");
 		} else
-			kprintf(": ns16550, broken fifo\n");
+			printf(": ns16550, broken fifo\n");
 	else
-		kprintf(": ns8250 or ns16450, no fifo\n");
+		printf(": ns8250 or ns16450, no fifo\n");
 	bus_io_write_1(bc, ioh, com_fifo, 0);
 #ifdef COM_HAYESP
 	}
@@ -495,10 +495,10 @@ comattach(parent, self, aux)
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				kprintf("%s: ", sc->sc_dev.dv_xname);
+				printf("%s: ", sc->sc_dev.dv_xname);
 				kgdb_connect(1);
 			} else
-				kprintf("%s: kgdb enabled\n",
+				printf("%s: kgdb enabled\n",
 				    sc->sc_dev.dv_xname);
 		}
 	}
@@ -506,7 +506,7 @@ comattach(parent, self, aux)
 
 	/* XXX maybe move up some? */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-		kprintf("%s: console\n", sc->sc_dev.dv_xname);
+		printf("%s: console\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -1216,7 +1216,7 @@ comintr(arg)
 				data = bus_io_read_1(bc, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {
 #ifdef notdef
-					kprintf("break %02x %02x %02x %02x\n",
+					printf("break %02x %02x %02x %02x\n",
 					    sc->sc_msr, sc->sc_mcr, sc->sc_lcr,
 					    sc->sc_dtr);
 #endif
@@ -1258,7 +1258,7 @@ comintr(arg)
 		} else {
 #ifdef COM_DEBUG
 			if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-				kprintf("weird lsr %02x\n", lsr);
+				printf("weird lsr %02x\n", lsr);
 #endif
 			if ((iir & IIR_IMASK) == IIR_RXRDY) {
 				sc->sc_failures++;
@@ -1312,16 +1312,16 @@ comintr(arg)
 
 #ifdef COM_DEBUG
 ohfudge:
-	kprintf("comintr: too many iterations");
+	printf("comintr: too many iterations");
 	for (n = 0; n < 32; n++) {
 		if ((n % 4) == 0)
-			kprintf("\ncomintr: iter[%02d]", n);
-		kprintf("  %02x %02x %02x", iter[n].iir, iter[n].lsr, iter[n].msr);
+			printf("\ncomintr: iter[%02d]", n);
+		printf("  %02x %02x %02x", iter[n].iir, iter[n].lsr, iter[n].msr);
 	}
-	kprintf("\n");
-	kprintf("comintr: msr %02x mcr %02x lcr %02x ier %02x\n",
+	printf("\n");
+	printf("comintr: msr %02x mcr %02x lcr %02x ier %02x\n",
 	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
-	kprintf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
+	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
 	    sc->sc_tty->t_outq.c_cc);
 	return (1);
 #endif

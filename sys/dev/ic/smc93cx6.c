@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.3 1996/10/10 22:18:40 christos Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.4 1996/10/13 01:37:29 christos Exp $	*/
 
 /*
  * Interface for the 93C46/26/06 serial eeprom parts.
@@ -167,15 +167,15 @@ read_seeprom(sd, buf, start_addr, count)
 		CLOCK_PULSE(sd, sd->sd_RDY);
 	}
 #if 0
-	kprintf ("Serial EEPROM:");
+	printf ("Serial EEPROM:");
 	for (k = 0; k < count; k = k + 1) {
 		if (((k % 8) == 0) && (k != 0))
 		{
-			kprintf ("\n              ");
+			printf ("\n              ");
 		}
-		kprintf (" 0x%x", buf[k]);
+		printf (" 0x%x", buf[k]);
 	}
-	kprintf ("\n");
+	printf ("\n");
 #endif
 	return (1);
 }

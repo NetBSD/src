@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.9 1996/10/10 19:58:20 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.10 1996/10/13 01:38:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -128,12 +128,12 @@ ep_pci_attach(parent, self, aux)
 	const char *intrstr = NULL;
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		kprintf(": can't find i/o space\n");
+		printf(": can't find i/o space\n");
 		return;
 	}
 
 	if (bus_io_map(bc, iobase, iosize, &sc->sc_ioh)) {
-		kprintf(": can't map i/o space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -167,7 +167,7 @@ ep_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	}
 
-	kprintf(": %s\n", model);
+	printf(": %s\n", model);
 
 	epconfig(sc, conn);
 
@@ -179,18 +179,18 @@ ep_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		kprintf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			kprintf(" at %s", intrstr);
-		kprintf("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
-	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }

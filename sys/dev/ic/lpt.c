@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.40 1996/10/10 22:05:07 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.41 1996/10/13 01:37:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -80,7 +80,7 @@
 #if !defined(DEBUG) || !defined(notdef)
 #define LPRINTF(a)
 #else
-#define LPRINTF		if (lptdebug) kprintf a
+#define LPRINTF		if (lptdebug) printf a
 int lptdebug = 1;
 #endif
 
@@ -198,7 +198,7 @@ lptprobe(parent, match, aux)
 	int i, rv;
 
 #ifdef DEBUG
-#define	ABORT	do {kprintf("lptprobe: mask %x data %x failed\n", mask, data); \
+#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
 		    goto out;} while (0)
 #else
 #define	ABORT	goto out
@@ -256,9 +256,9 @@ lptattach(parent, self, aux)
 	bus_io_handle_t ioh;
 
 	if (ia->ia_irq != IRQUNK)
-		kprintf("\n");
+		printf("\n");
 	else
-		kprintf(": polled\n");
+		printf(": polled\n");
 
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
@@ -306,7 +306,7 @@ lptopen(dev, flag, mode, p)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		kprintf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
 		    sc->sc_state);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.2 1996/10/10 19:59:17 christos Exp $	*/
+/*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -223,7 +223,7 @@ uha_get_mscp(sc, flags)
 			mscp = (struct uha_mscp *) malloc(sizeof(struct uha_mscp),
 			    M_TEMP, M_NOWAIT);
 			if (!mscp) {
-				kprintf("%s: can't malloc mscp\n",
+				printf("%s: can't malloc mscp\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
@@ -280,7 +280,7 @@ uha_done(sc, mscp)
 	 * into the xfer and call whoever started it
 	 */
 	if ((mscp->flags & MSCP_ALLOC) == 0) {
-		kprintf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
@@ -291,7 +291,7 @@ uha_done(sc, mscp)
 				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
-				kprintf("%s: host_stat %x\n",
+				printf("%s: host_stat %x\n",
 				    sc->sc_dev.dv_xname, mscp->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
@@ -307,7 +307,7 @@ uha_done(sc, mscp)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				kprintf("%s: target_stat %x\n",
+				printf("%s: target_stat %x\n",
 				    sc->sc_dev.dv_xname, mscp->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
@@ -461,7 +461,7 @@ uha_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			kprintf("%s: uha_scsi_cmd, more than %d dma segs\n",
+			printf("%s: uha_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, UHA_NSEG);
 			goto bad;
 		}
@@ -515,17 +515,17 @@ uha_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	kprintf("timed out");
+	printf("timed out");
 
 	s = splbio();
 
 	if (mscp->flags & MSCP_ABORT) {
 		/* abort timed out */
-		kprintf(" AGAIN\n");
+		printf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		kprintf("\n");
+		printf("\n");
 		mscp->xs->error = XS_TIMEOUT;
 		mscp->timeout = UHA_ABORT_TIMEOUT;
 		mscp->flags |= MSCP_ABORT;

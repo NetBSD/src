@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.18 1996/10/10 22:05:10 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.19 1996/10/13 01:37:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -65,7 +65,7 @@
 #include <dev/isa/pasreg.h>
 
 #ifdef AUDIO_DEBUG
-#define DPRINTF(x)	if (pasdebug) kprintf x
+#define DPRINTF(x)	if (pasdebug) printf x
 int	pasdebug = 0;
 #else
 #define DPRINTF(x)
@@ -293,7 +293,7 @@ pasprobe(parent, match, aux)
 	/* XXX Need to setup pseudo device */
 	/* XXX What are good io addrs ? */
 	if (iobase != PAS_DEFAULT_BASE) {
-		kprintf("pas: configured iobase %d invalid\n", iobase);
+		printf("pas: configured iobase %d invalid\n", iobase);
 		return 0;
 	}
 #else
@@ -324,7 +324,7 @@ pasprobe(parent, match, aux)
 
 	if (t != id) {
 		/* Not a PAS2 */
-		kprintf("pas: detected card but PAS2 test failed\n");
+		printf("pas: detected card but PAS2 test failed\n");
 		return 0;
 	}
 	/*XXX*/
@@ -340,7 +340,7 @@ pasprobe(parent, match, aux)
 
         if (sc->model >= 0) {
                 if (ia->ia_irq == IRQUNK) {
-                        kprintf("pas: sb emulation requires known irq\n");
+                        printf("pas: sb emulation requires known irq\n");
                         return (0);
                 } 
                 pasconf(sc->model, ia->ia_iobase, ia->ia_irq, 1);
@@ -362,7 +362,7 @@ pasprobe(parent, match, aux)
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq)) {
-		kprintf("pas: configured dma chan %d invalid\n", ia->ia_drq);
+		printf("pas: configured dma chan %d invalid\n", ia->ia_drq);
 		return 0;
 	}
 #ifdef NEWCONFIG
@@ -373,13 +373,13 @@ pasprobe(parent, match, aux)
 		ia->ia_irq = isa_discoverintr(pasforceintr, aux);
 		sbdsp_reset(&sc->sc_sbdsp);
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			kprintf("pas: couldn't auto-detect interrupt");
+			printf("pas: couldn't auto-detect interrupt");
 			return 0;
 		}
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		kprintf("pas: configured irq chan %d invalid\n", ia->ia_irq);
+		printf("pas: configured irq chan %d invalid\n", ia->ia_irq);
 		return 0;
 	}
 
@@ -441,15 +441,15 @@ pasattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
 
-	kprintf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
+	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
 	
 	sbdsp_attach(&sc->sc_sbdsp);
 
-	ksprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
-	ksprintf(pas_device.version, "%d", sc->rev);
+	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
+	sprintf(pas_device.version, "%d", sc->rev);
 
 	if ((err = audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp)) != 0)
-		kprintf("pas: could not attach to audio pseudo-device driver (%d)\n", err);
+		printf("pas: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.2 1996/10/10 19:52:10 christos Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.3 1996/10/13 01:38:18 christos Exp $	*/
 
 /*
  * cy_pci.c
@@ -49,23 +49,23 @@ cy_map_pci(pa, sc, ioh, iosize, memsize)
 
 	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x18, &memaddr, memsize,
 	    &cacheable) != 0) {
-		kprintf("%s: can't find PCI card memory", sc->sc_dev.dv_xname);
+		printf("%s: can't find PCI card memory", sc->sc_dev.dv_xname);
 		return 0;
 	}
 	/* map the memory (non-cacheable) */
 	if (bus_mem_map(sc->sc_bc, memaddr, *memsize, 0, &sc->sc_memh) != 0) {
-		kprintf("%s: couldn't map PCI memory region\n",
+		printf("%s: couldn't map PCI memory region\n",
 		    sc->sc_dev.dv_xname);
 		return 0;
 	}
 	/* the PCI Cyclom IO space is only used for enabling interrupts */
 	if (pci_io_find(pa->pa_pc, pa->pa_tag, 0x14, &iobase, iosize) != 0) {
-		kprintf("%s: couldn't find PCI io region\n",
+		printf("%s: couldn't find PCI io region\n",
 		    sc->sc_dev.dv_xname);
 		goto unmapmem;
 	}
 	if (bus_io_map(sc->sc_bc, iobase, *iosize, ioh) != 0) {
-		kprintf("%s: couldn't map PCI io region\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map PCI io region\n", sc->sc_dev.dv_xname);
 		goto unmapio;
 	}
 	return 1;
@@ -114,7 +114,7 @@ cy_probe_pci(parent, match, aux)
 	}
 
 #ifdef CY_DEBUG
-	kprintf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
+	printf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
 #endif
 	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
@@ -125,12 +125,12 @@ cy_probe_pci(parent, match, aux)
 		return 0;
 
 #ifdef CY_DEBUG
-	kprintf("%s: pci mapped mem 0x%lx (size %d), io 0x%x (size %d)\n",
+	printf("%s: pci mapped mem 0x%lx (size %d), io 0x%x (size %d)\n",
 	    sc.sc_dev.dv_xname, memaddr, memsize, iobase, iosize);
 #endif
 
 	if ((rv = cy_find(&sc)) == 0)
-		kprintf("%s: PCI Cyclom card with no CD1400s!?\n",
+		printf("%s: PCI Cyclom card with no CD1400s!?\n",
 		    sc.sc_dev.dv_xname);
 
 	cy_unmap_pci(&sc, ioh, iosize, memsize);

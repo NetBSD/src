@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.2 1996/10/10 20:25:37 christos Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.3 1996/10/13 01:38:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -135,7 +135,7 @@ le_dec_writereg(regptr, val)
 		*regptr = val;
 		tc_mb();
 		if (++i > 10000) {
-			kprintf("le: Reg did not settle (to x%x): x%x\n", val,
+			printf("le: Reg did not settle (to x%x): x%x\n", val,
 			    *regptr);
 			return;
 		}

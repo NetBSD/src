@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.18 1996/10/10 19:58:26 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -209,31 +209,31 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += ksprintf(cp, "%svendor 0x%04x product 0x%04x",
+		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
 	else if (product_namep != NULL)
-		cp += ksprintf(cp, "%s %s", vendor_namep, product_namep);
+		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
 	else
-		cp += ksprintf(cp, "vendor %s, unknown product 0x%x",
+		cp += sprintf(cp, "vendor %s, unknown product 0x%x",
 		    vendor_namep, product);
 	if (showclass) {
-		cp += ksprintf(cp, " (");
+		cp += sprintf(cp, " (");
 		if (classp->name == NULL)
-			cp += ksprintf(cp,
+			cp += sprintf(cp,
 			    "unknown class 0x%2x, subclass 0x%02x",
 			    class, subclass);
 		else {
-			cp += ksprintf(cp, "class %s, ", classp->name);
+			cp += sprintf(cp, "class %s, ", classp->name);
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += ksprintf(cp, "unknown subclass 0x%02x",
+				cp += sprintf(cp, "unknown subclass 0x%02x",
 				    subclass);
 			else
-				cp += ksprintf(cp, "subclass %s",
+				cp += sprintf(cp, "subclass %s",
 				    subclassp->name);
 		}
 #if 0 /* not very useful */
-		cp += ksprintf(cp, ", interface 0x%02x", interface);
+		cp += sprintf(cp, ", interface 0x%02x", interface);
 #endif
-		cp += ksprintf(cp, ", revision 0x%02x)", revision);
+		cp += sprintf(cp, ", revision 0x%02x)", revision);
 	}
 }

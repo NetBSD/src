@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.37 1996/10/10 22:05:12 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.38 1996/10/13 01:38:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -159,7 +159,7 @@ sbprobe(parent, match, aux)
 	};
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		kprintf("sb: configured iobase %d invalid\n", ia->ia_iobase);
+		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
 		return 0;
 	}
 	sc->sc_iobase = iobase;
@@ -176,7 +176,7 @@ sbprobe(parent, match, aux)
 	 */
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_DRQ_VALID(ia->ia_drq)) {
-			kprintf("sb: configured dma chan %d invalid\n", ia->ia_drq);
+			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
 			return 0;
 		}
 		if (ISSB16CLASS(sc))
@@ -184,7 +184,7 @@ sbprobe(parent, match, aux)
 	}
 	else {
 		if (!SB_DRQ_VALID(ia->ia_drq)) {
-			kprintf("sb: configured dma chan %d invalid\n", ia->ia_drq);
+			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
 			return 0;
 		}
 	}
@@ -198,13 +198,13 @@ sbprobe(parent, match, aux)
 		sbdsp_reset(sc);
 		if (ISSBPROCLASS(sc)) {
 			if (!SBP_IRQ_VALID(ia->ia_irq)) {
-				kprintf("sb: couldn't auto-detect interrupt");
+				printf("sb: couldn't auto-detect interrupt");
 				return 0;
 			}
 		}
 		else {
 			if (!SB_IRQ_VALID(ia->ia_irq)) {
-				kprintf("sb: couldn't auto-detect interrupt");
+				printf("sb: couldn't auto-detect interrupt");
 				return 0;
 			}
 		}
@@ -212,7 +212,7 @@ sbprobe(parent, match, aux)
 #endif
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(ia->ia_irq)) {
-			kprintf("sb: configured irq %d invalid\n", ia->ia_irq);
+			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
 		if (ISSB16CLASS(sc))
@@ -220,7 +220,7 @@ sbprobe(parent, match, aux)
 	}
 	else {
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			kprintf("sb: configured irq %d invalid\n", ia->ia_irq);
+			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
 	}
@@ -279,7 +279,7 @@ sbattach(parent, self, aux)
 	sbdsp_attach(sc);
 
 	if ((err = audio_hardware_attach(&sb_hw_if, sc)) != 0)
-		kprintf("sb: could not attach to audio pseudo-device driver (%d)\n", err);
+		printf("sb: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 /*
@@ -315,7 +315,7 @@ sb_getdev(addr, retp)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
 		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
-	ksprintf(retp->version, "%d.%d", 
+	sprintf(retp->version, "%d.%d", 
 		SBVER_MAJOR(sc->sc_model),
 		SBVER_MINOR(sc->sc_model));
 	strncpy(retp->config, "sb", sizeof(retp->config));
