@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.3 1997/10/16 23:24:31 lukem Exp $	*/
+/*	$NetBSD: dl.c,v 1.3.4.1 1999/09/27 06:02:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dl.c,v 1.3 1997/10/16 23:24:31 lukem Exp $");
+__RCSID("$NetBSD: dl.c,v 1.3.4.1 1999/09/27 06:02:27 cgd Exp $");
 #endif
 
 #include "os.h"
@@ -48,7 +48,7 @@ mopDumpDL(fd, pkt, trans)
 {
 	int	i,index = 0;
 	u_int32_t tmpl;
-	u_char	tmpc,c,program[17],code,*ucp;
+	u_char	tmpc,c,program[257],code,*ucp;
 	u_short	len,tmps,moplen;
 
 	len = mopGetLength(pkt, trans);
