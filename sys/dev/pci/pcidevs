@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.404 2002/02/20 23:59:58 simonb Exp $
+$NetBSD: pcidevs,v 1.405 2002/02/24 01:42:36 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1215,6 +1215,7 @@ product IBM 82351	0x0022	82351 PCI-PCI Bridge
 product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
+product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
