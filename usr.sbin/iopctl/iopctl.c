@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.10 2001/06/19 10:46:16 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.11 2001/08/04 16:55:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.10 2001/06/19 10:46:16 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.11 2001/08/04 16:55:46 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,8 @@ __RCSID("$NetBSD: iopctl.c,v 1.10 2001/06/19 10:46:16 ad Exp $");
 
 const char	*class2str(int);
 void	getparam(int, int, void *, int);
-int	main(int, char *[]);
+int	gettid(char **);
+int	main(int, char **);
 int	show(const char *, const char *, ...);
 void	i2ostrvis(const char *, int, char *, int);
 void	usage(void);
@@ -205,7 +206,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 	struct {
 		struct	i2o_param_op_list_header olh;
 		struct	i2o_param_op_all_template oat;
-	} req;
+	} __attribute__ ((__packed__)) req;
 
 	mb.msgflags = I2O_MSGFLAGS(i2o_util_params_op);
 	mb.msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_GET);
@@ -345,7 +346,7 @@ showddmid(char **argv)
 	} __attribute__ ((__packed__)) p;
 	char ident[128];
 
-	getparam(atoi(argv[0]), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
+	getparam(gettid(argv), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
 
 	show("ddm tid", "%d", le16toh(p.di.ddmtid) & 4095);
 	i2ostrvis(p.di.name, sizeof(p.di.name), ident, sizeof(ident));
@@ -369,7 +370,7 @@ showdevid(char **argv)
 	} __attribute__ ((__packed__)) p;
 	char ident[128];
 
-	getparam(atoi(argv[0]), I2O_PARAM_DEVICE_IDENTITY, &p, sizeof(p));
+	getparam(gettid(argv), I2O_PARAM_DEVICE_IDENTITY, &p, sizeof(p));
 
 	show("class id", "%d (%s)", le32toh(p.di.classid) & 4095,
 	    class2str(le32toh(p.di.classid) & 4095));
@@ -416,7 +417,7 @@ showtidmap(char **argv)
 	nent = iov.iov_len / sizeof(*it);
 	it = (struct iop_tidmap *)buf;
 
-	for (; nent--; it++)
+	for (; nent-- != 0; it++)
 		if ((it->it_flags & IT_CONFIGURED) != 0)
 			printf("%s\ttid %d\n", it->it_dvname, it->it_tid);
 }
@@ -453,4 +454,20 @@ i2ostrvis(const char *src, int slen, char *dst, int dlen)
 	}
 	
 	dst[lc] = '\0';
+}
+
+int
+gettid(char **argv)
+{
+	char *argp;
+	int tid;
+
+	if (argv[1] != NULL)
+		usage();
+
+	tid = (int)strtol(argv[0], &argp, 0);
+	if (*argp != '\0')
+		usage();
+
+	return (tid);
 }
