@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.10 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.11 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,29 +41,33 @@
 /* NB: Lines ending in spaces force line breaks */
 
 message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk, or on part of the disk.
+{We are now going to install NetBSD on the disk %s.
 
-Partial-disk installation creates a partition, or `slice', for NetBSD
-in your disk's MBR partition table. Whole-disk installation is
-`dangerously dedicated': it takes over the entire MBR. This WILL
-overwrite all existing data and OSes on the disk. It also prohibits later
-installation of multiple OSes on that disk (unless you overwrite NetBSD and
-reinstall using only part of the disk).
+NetBSD requires a single partition in the disk's MBR partition table,
+this is split further by the NetBSD disklabel.
+NetBSD can also access filesystems in other MBR partitions.
 
-Which would you like to do?
+If you select 'Use the entire disk' then the previous contents of the
+disk will be overwritten and a single MBR partition used to cover the
+entire disk. 
+If you want to install more than one operating system then edit the
+MBR partition table and create a partition for NetBSD.
+
+A few hundred MB is enough for a basic installation, but you should allow
+extra for additional software and user files. 
+Allow at least 5GB if you want to build NetBSD itself.
 }
 
 message Select_your_choice
-{Select your choice}
+{Which would you like to do?}
 message Use_only_part_of_the_disk
-{Use only part of the disk}
+{Edit the MBR partition table}
 message Use_the_entire_disk
 {Use the entire disk}
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Total disksize %d %s.
+{   Total disk size %d %s.
 
 .if BOOTSEL
    Start(%3s)  Size(%3s) Flg Kind                    Bootmenu
@@ -138,6 +142,8 @@ message Space_allocated {Space allocated: }
 message ptn_starts {Space at %d..%d %s (size %d %s)\n}
 message get_ptn_start {%s%sStart (in %s)}
 message get_ptn_id {Partition kind (0..255)}
+message No_free_space {No free space}
+message Only_one_extended_ptn {There can only be one extended partition}
 
 message editparttable
 {The Current MBR partition table is shown below. 

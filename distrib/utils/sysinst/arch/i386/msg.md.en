@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.42 2003/08/27 16:00:30 lukem Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.43 2003/10/19 20:17:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,7 +110,10 @@ message biosgeom_advise
 {
 Note: since sysinst was able to uniquely match the disk you chose with a disk
 known to the BIOS, the values displayed above are very likely correct, and
-should not be changed. Only change them if they are very obviously wrong.
+should not be changed (the values for cylinders, heads and sectors are
+probably 1023, 255 and 63 - this is correct). 
+You should only change the geometry if you know the BIOS reports incorrect
+values.
 }
 
 message pickdisk

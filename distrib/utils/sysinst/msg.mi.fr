@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.70 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.71 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,8 @@ message none {aucun}
 message OK {OK}
 message ok {ok}
 message unchanged {unchanged}	/* XXX translate */
+message On {On}
+message Off {Off}
 
 message install
 {installer}
@@ -206,7 +208,7 @@ L'espace libre sera ajouté à la partition marquée par un '+'.
 
 message ptnheaders
 {
-       Mo Cylindres  Secteurs    Système de fichier
+       Mo         Cylindres  Secteurs   Système de fichier
 }
 
 message askfsmount
@@ -248,7 +250,6 @@ La taille de la partition a été tronquée à %d %s.
 message fspart
 {Vos partitions NetBSD sont les suivantes (taille et décalages en %s) :
 
-
 }
 
 message fspart_header
@@ -280,13 +281,13 @@ message fstype_fmt	/* XXX translate */
 {        FStype: %9s}
 
 message start_fmt
-{         debut: %9d %9d %9d}
+{         début: %9u %8u%c %9u}
 
 message size_fmt
-{        taille: %9d %9d %9d}
+{        taille: %9u %8u%c %9u}
 
 message end_fmt
-{           fin: %9d %9d %9d}
+{           fin: %9u %8u%c %9u}
 
 message bsize_fmt	/* XXX translate */
 {    block size: %9d bytes}
@@ -324,20 +325,20 @@ message other_types	/* XXX translate */
 {other types}
 
 message label_size
-{
+{%s
 Valeurs spéciales pouvant être rentrées pour définir la taille de la partition:
-    -1:  Utiliser jusqu'à la fin de la partie NetBSD du disque
+    -1: Utiliser jusqu'à la fin de la partie NetBSD du disque
    a-%c: Terminer cette partition ou la partition X débute
 
 taille (%s)}
 
 message label_offset
-{
-Valeurs spéciales pouvant être rentrées pour définir la valeur de l'offset:
-    -1:  Commencer au début de la partie NetBSD du disque
-   a-%c: Commencer a la suite de la partition précédente (a, b, ..., %c)
+{%s
+Valeurs spéciales pouvant être rentrées pour définir la début de la partition:
+    -1: Commencer au début de la partie NetBSD du disque
+   a-%c: Commencer a la suite de la partition précédente (a ... %c)
 
-debut (%s)}
+début (%s)}
 
 message invalid_sector_number	/* XXX translate */
 {Badly formed sector number
@@ -994,6 +995,18 @@ un point de montage "/".
 Appuyer sur <entrée> pour continuer.
 }
 
+message Pick_an_option {Pick an option to turn on or off.}	/* XXX translate */
+message Scripting {Scripting}	/* XXX translate */
+message Logging {Logging}	/* XXX translate */
+
+message Status  { Status: }	/* XXX translate */
+message Command {Command: }	/* XXX translate */
+message Running {Running}	/* XXX translate */
+message Finished {Finished}	/* XXX translate */
+message Command_failed {Command failed}	/* XXX translate */
+message Command_ended_on_signal {Command ended on signal}	/* XXX translate */
+
+
 message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Programme d'installation}
 message Exit_Install_System {Quitter le programme d'installation}
 message Install_NetBSD_to_hard_disk {Installation de NetBSD sur disque dur}
@@ -1022,7 +1035,7 @@ message ftp {ftp}
 message nfs {nfs}
 message cdrom {cdrom}
 message floppy {disquette}
-message unmounted_fs {systeme de fichier non-monté}
+message local_fs {systeme de fichier non-monté}
 message local_dir {répertoire local}
 message Select_your_distribution {Sélection de la distribution}
 message Full_installation {Installation complète}

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.111 2003/08/06 13:57:00 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.112 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,8 +120,8 @@ struct  tarstats {
 	int nskipped;
 } tarstats;
 
-int	extract_file(char *path);
-int	extract_dist(void);
+static int extract_file(char *path);
+static int extract_dist(void);
 int	distribution_sets_exist_p(const char *path);
 static int check_for(unsigned int mode, const char *pathname);
 
@@ -245,7 +245,6 @@ get_via_floppy(void)
 	char catcmd[STRSIZE];
 	distinfo *list;
 	char post[4];
-	int  mounted = 0;
 	int  first;
 	struct stat sb;
 
@@ -265,9 +264,8 @@ get_via_floppy(void)
 			snprintf(full_name, sizeof full_name, "/mnt2/%s",
 				 fname);
 			first = 1;
-			while (!mounted || stat(full_name, &sb)) {
- 				if (mounted) 
-					run_prog(0, NULL, "/sbin/umount /mnt2");
+			while (!mnt2_mounted || stat(full_name, &sb)) {
+				umount_mnt2();
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -284,10 +282,10 @@ get_via_floppy(void)
 					process_menu(MENU_fdremount, NULL);
 					if (!yesno)
 						return 0;
-					else if (yesno == 2)
+					if (yesno == 2)
 						return 1;
 				}
-				mounted = 1;
+				mnt2_mounted = 1;
 				first = 0;
 			}
 			snprintf(catcmd, sizeof(catcmd), "/bin/cat %s >> %s%s",
@@ -302,8 +300,7 @@ get_via_floppy(void)
 			else
 				post[2] = 'a', post[1]++;
 		}
-		run_prog(0, NULL, "/sbin/umount /mnt2");
-		mounted = 0;
+		umount_mnt2();
 		list++;
 	}
 #ifndef DEBUG
@@ -319,28 +316,32 @@ int
 get_via_cdrom(void)
 {
 	char tmpdir[STRSIZE];
-	int retries = 0;
+	int retries;
 
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource, NULL);
 
 again:
-	run_prog(0, NULL, "/sbin/umount /mnt2");
+	umount_mnt2();
 
 	/* Mount it */
-	if (run_prog(0, NULL, "/sbin/mount -rt cd9660 /dev/%s%c /mnt2",
-	    cdrom_dev, 'a' + getrawpartition())) {
-		if (retries++ < 5) {
+	for (retries = 5;; --retries) {
+		if (run_prog(retries > 0 ? RUN_SILENT : 0, NULL,
+		    "/sbin/mount -rt cd9660 /dev/%s%c /mnt2",
+		    cdrom_dev, 'a' + getrawpartition()) == 0)
+			break;
+		if (retries > 0) {
 			sleep(1);
-			goto again;
+			continue;
 		}
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount, NULL);
 		if (!yesno)
 			return 0;
-		if (!ignorerror)
-			goto again;
+		if (ignorerror)
+			break;
 	}
+	mnt2_mounted = 1;
 
 	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", cdrom_dir);
 
@@ -357,7 +358,6 @@ again:
 	/* return location, don't clean... */
 	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
-	mnt2_mounted = 1;
 	return 1;
 }
 
@@ -375,7 +375,7 @@ get_via_localfs(void)
 	process_menu (MENU_localfssource, NULL);
 
 again:
-	run_prog(0, NULL, "/sbin/umount /mnt2");
+	umount_mnt2();
 
 	/* Mount it */
 	if (run_prog(0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
@@ -388,6 +388,7 @@ again:
 		if (!ignorerror)
 			goto again;
 	}
+	mnt2_mounted = 1;
 
 	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", localfs_dir);
 
@@ -404,7 +405,6 @@ again:
 	/* return location, don't clean... */
 	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
-	mnt2_mounted = 1;
 	return 1;
 }
 
@@ -443,7 +443,6 @@ get_via_localdir(void)
 	/* return location, don't clean... */
 	strlcpy(ext_dir, localfs_dir, sizeof ext_dir);
 	clean_dist_dir = 0;
-	mnt2_mounted = 0;
 	return 1;
 }
 
@@ -686,11 +685,11 @@ ask_verbose_dist(void)
 	}
 }
 
-int
+static int
 extract_file(char *path)
 {
 	char *owd;
-	int   tarexit, rv;
+	int   tarexit;
 	
 	owd = getcwd(NULL, 0);
 
@@ -700,7 +699,7 @@ extract_file(char *path)
 
 		msg_display(MSG_notarfile, path);
 		process_menu(MENU_noyes, NULL);
-		return (yesno == 0);
+		return yesno;
 	}
 
 	tarstats.nfound++;	
@@ -709,31 +708,28 @@ extract_file(char *path)
 
 	/* now extract set files files into "./". */
 	if (verbose == 1)
-		tarexit = run_prog(RUN_DISPLAY, NULL,
+		tarexit = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 				    "progress -zf %s tar -xepf -", path);
 	else if (verbose == 2)
-		tarexit = run_prog(RUN_DISPLAY, NULL,
+		tarexit = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 				    "tar -zxvepf %s", path);
 	else
 		tarexit = run_prog(RUN_DISPLAY, NULL,
 				    "tar -zxepf %s", path);
 
-	/* Check tarexit for errors and give warning. */
-	if (tarexit) {
-		tarstats.nerror++;
-
-		msg_display(MSG_tarerror, path);
-		process_menu(MENU_noyes, NULL);
-		rv = (yesno == 0);
-	} else {
-		tarstats.nsuccess++;
-		rv = 0;
-	}
-	
 	chdir(owd);
 	free(owd);
 
-	return (rv);
+	/* Check tarexit for errors and give warning. */
+	if (tarexit) {
+		tarstats.nerror++;
+		msg_display(MSG_tarerror, path);
+		process_menu(MENU_noyes, NULL);
+		return yesno;
+	}
+
+	tarstats.nsuccess++;
+	return 2;
 }
 
 
@@ -743,40 +739,40 @@ extract_file(char *path)
  * full path name to the directory. 
  */
 
-int
+static int
 extract_dist(void)
 {
 	char fname[STRSIZE];
 	distinfo *list;
-	int punt;
+	int extracted;
 
 	/* reset failure/success counters */
 	memset(&tarstats, 0, sizeof(tarstats));
 
 	/*endwin();*/
-	for (punt = 0, list = dist_list; list->desc != NULL; list++) {
+	for (extracted = 2, list = dist_list; list->desc != NULL; list++) {
 		if (list->name == NULL)
 			continue;
-		if (sets_selected & list->set) {
-			tarstats.nselected++;
-			if (punt) {
-				tarstats.nskipped++;
-				continue;
-			}
-#if 0
-			if (cleanup_dist(list->name) == 0) {
-				msg_display(MSG_cleanup_warn);
-				process_menu(MENU_ok, NULL);
-			}
-#endif
-			(void)snprintf(fname, sizeof fname, "%s/%s%s",
-			    ext_dir, list->name, dist_postfix);
-
-			/* if extraction failed and user aborted, punt. */
-			punt = extract_file(fname);
-			if (!punt)
-				sets_installed |= list->set;
+		if (!(sets_selected & list->set))
+			continue;
+		tarstats.nselected++;
+		if (extracted == 0) {
+			tarstats.nskipped++;
+			continue;
 		}
+#if 0
+		if (cleanup_dist(list->name) == 0) {
+			msg_display(MSG_cleanup_warn);
+			process_menu(MENU_ok, NULL);
+		}
+#endif
+		(void)snprintf(fname, sizeof fname, "%s/%s%s",
+		    ext_dir, list->name, dist_postfix);
+
+		/* if extraction failed and user aborted, punt. */
+		extracted = extract_file(fname);
+		if (extracted == 2)
+			sets_installed |= list->set;
 	}
 
 	wrefresh(curscr);
@@ -788,14 +784,13 @@ extract_dist(void)
 		msg_display(MSG_endtarok);
 		process_menu(MENU_ok, NULL);
 		return 0;
-	} else {
-		/* We encountered  errors. Let the user know. */
-		msg_display(MSG_endtar,
-		    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
-		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
-		process_menu(MENU_ok, NULL);
-		return 1;
 	}
+	/* We encountered errors. Let the user know. */
+	msg_display(MSG_endtar,
+	    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
+	    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
+	process_menu(MENU_ok, NULL);
+	return extracted == 0;
 }
 
 #if 0	/* { NOMORE */
@@ -982,16 +977,17 @@ cleanup_dist(const char *name)
 
 /*
  * Get and unpack the distribution.
- * show success_msg if installation completes. Otherwise,,
- * show failure_msg and wait for the user to ack it before continuing.
+ * Show success_msg if installation completes.
+ * Otherwise show failure_msg and wait for the user to ack it before continuing.
  * success_msg and failure_msg must both be 0-adic messages.
  */
 int
 get_and_unpack_sets(msg success_msg, msg failure_msg)
 {
+	int got_dist;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
-	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
+	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 	if (scripting)
 		(void)fprintf(script, "mkdir /mnt2\nchmod 755 /mnt2\n");
 
@@ -1004,50 +1000,55 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 
 	/* Get the distribution files */
 	do {
-		got_dist = 0;
-		process_menu(MENU_distmedium, NULL);
+		process_menu(MENU_distmedium, &got_dist);
 	} while (got_dist == -1);
 
-	if (nodist)
+	if (got_dist == -2)
 		return 1;
 
-	if (got_dist) {
-
-		/* Extract the distribution, abort on errors. */
-		if (extract_dist())
-			return 1;
-
-		/* Configure the system */
-		if (sets_selected & SET_ETC)
-			run_makedev();
-
-		/* Other configuration. */
-		mnt_net_config();
-		
-		/* Clean up dist dir (use absolute path name) */
-		if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0) {
-			msg_display(MSG_delete_dist_files,
-			    ext_dir + strlen(target_prefix()));
-			process_menu(MENU_yesno, NULL);
-			if (yesno)
-				run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
-		}
-
-		/* Mounted dist dir? */
-		if (mnt2_mounted)
-			run_prog(0, NULL, "/sbin/umount /mnt2");
-
-		/* Install/Upgrade complete ... reboot or exit to script */
-		msg_display(success_msg);
+	if (got_dist != 1) {
+		msg_display(failure_msg);
 		process_menu(MENU_ok, NULL);
-		return 0;
+		return 1;
 	}
 
-	msg_display(failure_msg);
+	/* Extract the distribution, abort on errors. */
+	if (extract_dist())
+		return 1;
+
+	/* Configure the system */
+	if (sets_installed & SET_ETC)
+		run_makedev();
+
+	/* Other configuration. */
+	mnt_net_config();
+	
+	/* Clean up dist dir (use absolute path name) */
+	if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0) {
+		msg_display(MSG_delete_dist_files,
+		    ext_dir + strlen(target_prefix()));
+		process_menu(MENU_yesno, NULL);
+		if (yesno)
+			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
+	}
+
+	/* Mounted dist dir? */
+	umount_mnt2();
+
+	/* Install/Upgrade complete ... reboot or exit to script */
+	msg_display(success_msg);
 	process_menu(MENU_ok, NULL);
-	return 1;
+	return 0;
 }
 
+void
+umount_mnt2(void)
+{
+	if (!mnt2_mounted)
+		return;
+	run_prog(RUN_SILENT, NULL, "/sbin/umount /mnt2");
+	mnt2_mounted = 0;
+}
 
 
 /*
@@ -1357,7 +1358,7 @@ set_timezone(void)
 	alarm(60);
 	
 	menu_no = new_menu(NULL, NULL, 14, 23, 9,
-			   12, 32, MC_SCROLL | MC_NOSHORTCUT,
+			   12, 32, MC_ALWAYS_SCROLL | MC_NOSHORTCUT,
 			   tzm_set_names, NULL, NULL,
 			   "\nPlease consult the install documents.", NULL);
 	if (menu_no < 0)
@@ -1483,6 +1484,16 @@ add_rc_conf(const char *fmt, ...)
 		scripting_fprintf(NULL, "EOF\n");
 	}
 	va_end(ap);
+}
+
+void
+enable_rc_conf(void)
+{
+	const char *tp = target_prefix();
+
+	run_prog(0, NULL, "sed -an -e 's/^rc_configured=YES/rc_configured=NO/;"
+				    "H;$!d;g;w %s/etc/rc.conf' %s/etc/rc.conf",
+		tp, tp);
 }
 
 int
