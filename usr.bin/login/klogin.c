@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)klogin.c	5.11 (Berkeley) 7/12/92";*/
-static char rcsid[] = "$Id: klogin.c,v 1.2 1993/08/01 18:13:33 mycroft Exp $";
+static char rcsid[] = "$Id: klogin.c,v 1.3 1994/03/30 02:49:33 cgd Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -92,11 +92,12 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		(void)sprintf(tkt_location, "%s%d", TKT_ROOT, pw->pw_uid);
+		(void)sprintf(tkt_location, "%s_%d_%x", 
+		TKT_ROOT, pw->pw_uid, time(NULL));
 	else {
 		(void)sprintf(tkt_location, "%s_root_%d", TKT_ROOT, pw->pw_uid);
-		krbtkfile_env = tkt_location;
 	}
+	krbtkfile_env = tkt_location;
 	(void)krb_set_tkt_string(tkt_location);
 
 	/*
