@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.8 1998/04/15 00:51:00 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.8 1998/04/15 00:51:00 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $");
 #include "locators.h"
 
 extern int	cputype;
-int		cpu_node_id;
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
@@ -134,7 +133,6 @@ tlsbattach(parent, self, aux)
 	u_int32_t tldev;
 	u_int8_t vid;
 	int node;
-	struct tlsb_cpu_busdep *tcpu;
 	struct cfdriver *cfd = &cpu_cd;
 
 	printf("\n");
@@ -184,26 +182,9 @@ tlsbattach(parent, self, aux)
 			 */
 			vid = (TLSB_GET_NODEREG(node, TLVID) &
 			    TLVID_VIDA_MASK) >> TLVID_VIDA_SHIFT;
-
-			if ((tcpu = malloc(sizeof(struct tlsb_cpu_busdep),
-			    M_DEVBUF, M_NOWAIT)) == NULL)
-				panic("\nno memory for cpu busdep info");
-
-			tcpu->tcpu_vid = vid;
-			tcpu->tcpu_node = node;
-			cpu_node_id = node;
-			printf(", VID %d -> %s", tcpu->tcpu_vid, cfd->cd_name);
-
-			/*
-			 * Do 2nd CPU (if available) here.
-			 */
+			printf(", VID %d -> %s", vid, cfd->cd_name);
 			printf("\n");
 			TLSB_PUT_NODEREG(node, TLCPUMASK, (1<<vid));
-
-			/*
-			 * XXX: Check to make sure that INTRMASK has ints
-			 * XXX: enabled for this CPU.
-			 */
 		}
 		/*
 		 * Attach any  children nodes, including a CPU's GBus
