@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.66 1999/08/29 22:21:57 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.67 1999/08/31 21:30:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.66 1999/08/29 22:21:57 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.67 1999/08/31 21:30:25 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -481,7 +481,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port, &path)
 	    == -1)
 		goto cleanup_fetch_url;
-	portnum = strtol(port, NULL, 10);
+	portnum = strtol(port, &ep, 10);
+	if (*ep || port == ep) {
+		struct servent *svp = getservbyname(port, "tcp");
+		if (svp != NULL)
+			portnum = ntohs(svp->s_port);
+	}
 
 	if (urltype == FILE_URL_T && ! EMPTYSTRING(host)
 	    && strcasecmp(host, "localhost") != 0) {
