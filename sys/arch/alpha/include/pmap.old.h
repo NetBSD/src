@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.16 1998/01/09 19:13:09 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.17 1998/02/13 02:09:15 cgd Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -116,6 +116,16 @@ typedef	int		pmap_attr_t;
 #define	PMAP_ATTR_REF	0x02			/* referenced */
 
 #ifdef _KERNEL
+
+#include "opt_avalon_a12.h"			/* XXX */
+#include "opt_dec_3000_300.h"			/* XXX */
+#include "opt_dec_3000_500.h"			/* XXX */
+#include "opt_dec_kn8ae.h"			/* XXX */
+
+#if defined(AVALON_A12) || defined(DEC_3000_300) || defined(DEC_3000_500) || defined(DEC_KN8AE) /* XXX */
+#define _PMAP_MAY_USE_PROM_CONSOLE
+#endif
+
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -130,7 +140,9 @@ extern	char *vmmap;			/* map for mem, dumps, etc. */
 void	pmap_bootstrap __P((vm_offset_t firstaddr, vm_offset_t ptaddr));
 void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 		int user, int write));
-void	pmap_unmap_prom __P((void));
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+int	pmap_uses_prom_console __P((void));
+#endif
 #endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */

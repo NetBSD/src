@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.28 1998/01/15 07:02:21 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.29 1998/02/13 02:09:03 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.28 1998/01/15 07:02:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.29 1998/02/13 02:09:03 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.28 1998/01/15 07:02:21 thorpej Exp $");
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
 
 #include "fdc.h"
 bdev_decl(fd);
@@ -155,7 +157,9 @@ cdev_decl(wd);
 #include "satlink.h"
 cdev_decl(satlink);
 
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 cdev_decl(prom);			/* XXX XXX XXX */
+#endif
 
 #include "se.h"
 #include "rnd.h"
@@ -185,7 +189,11 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 20 */
 	cdev_lkm_dummy(),		/* 21 */
 	cdev_lkm_dummy(),		/* 22 */
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	cdev_tty_init(1,prom),          /* 23: XXX prom console */
+#else
+	cdev_notdef(),			/* 23 */
+#endif
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
 	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */

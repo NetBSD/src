@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.19 1998/02/12 01:53:23 cgd Exp $ */
+/* $NetBSD: cpu.h,v 1.20 1998/02/13 02:09:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,7 +156,8 @@ void	dumpconf __P((void));
 void	exception_return __P((void));				/* MAGIC */
 void	frametoreg __P((struct trapframe *, struct reg *));
 long	fswintrberr __P((void));				/* MAGIC */
-void	init_prom_interface __P((void));
+void	init_bootstrap_console __P((void));
+void	init_prom_interface __P((struct rpb *));
 void	interrupt
 	__P((unsigned long, unsigned long, unsigned long, struct trapframe *));
 void	machine_check
