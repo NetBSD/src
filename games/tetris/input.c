@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.7 2002/12/26 20:15:11 jmmv Exp $	*/
+/*	$NetBSD: input.c,v 1.8 2002/12/29 15:12:17 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,12 +66,12 @@
 	}
 
 /*
- * Do a `read wait': select for reading from stdin, with timeout *tvp.
+ * Do a `read wait': poll for reading from stdin, with timeout *tvp.
  * On return, modify *tvp to reflect the amount of time spent waiting.
  * It will be positive only if input appeared before the time ran out;
  * otherwise it will be zero or perhaps negative.
  *
- * If tvp is nil, wait forever, but return if select is interrupted.
+ * If tvp is nil, wait forever, but return if poll is interrupted.
  *
  * Return 0 => no input, 1 => can read() from stdin
  */
@@ -84,11 +84,6 @@ rwait(tvp)
 	int timeout;
 #define	NILTZ ((struct timezone *)0)
 
-	/*
-	 * Someday, select() will do this for us.
-	 * Just in case that day is now, and no one has
-	 * changed this, we use a temporary.
-	 */
 	if (tvp) {
 		(void) gettimeofday(&starttv, NILTZ);
 		endtv = *tvp;
@@ -105,7 +100,7 @@ again:
 			return (-1);
 		if (errno == EINTR)
 			goto again;
-		stop("select failed, help");
+		stop("poll failed, help");
 		/* NOTREACHED */
 
 	case 0:	/* timed out */
@@ -123,7 +118,7 @@ again:
 }
 
 /*
- * `sleep' for the current turn time (using select).
+ * `sleep' for the current turn time.
  * Eat any input that might be available.
  */
 void
