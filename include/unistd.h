@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.18 1994/05/07 00:20:47 jtc Exp $
+ *	$Id: unistd.h,v 1.19 1994/05/23 00:32:32 cgd Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -106,7 +106,6 @@ ssize_t	 write __P((int, const void *, size_t));
 int	 acct __P((const char *));
 int	 async_daemon __P((void));
 char	*brk __P((const char *));
-int	 chflags __P((const char *, long));
 int	 chroot __P((const char *));
 char	*crypt __P((const char *, const char *));
 int	 des_cipher __P((const char *, char *, long, int));
@@ -115,7 +114,6 @@ int	 encrypt __P((char *, int));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
-int	 fchflags __P((int, long));
 int	 fchown __P((int, uid_t, gid_t));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
