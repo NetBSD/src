@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.17 1997/05/06 20:54:41 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.18 1997/05/06 23:53:40 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -34,7 +34,7 @@ __SUBDIRINTERNALUSE: .USE
 .for dir in ${SUBDIR}
 .for targ in ${TARGETS}
 .PHONY: ${targ}-${dir}
-${targ}-${dir}: __SUBDIRINTERNALUSE
+${targ}-${dir}: .MAKE __SUBDIRINTERNALUSE
 .endfor
 
 # Backward-compatibility with the old rules.  If this went away,
