@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.14 2003/11/24 23:54:13 cl Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.14.2.1 2004/05/06 05:34:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.14 2003/11/24 23:54:13 cl Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.14.2.1 2004/05/06 05:34:18 jmc Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -392,5 +392,6 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 	if (retval == 0)
 		return ETIMEDOUT;
 	else
-		return EINTR;
+		/* spurious wakeup */
+		return 0;
 }
