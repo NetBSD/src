@@ -1,5 +1,5 @@
-/*	$NetBSD: ufs_bmap.c,v 1.2 2001/10/28 13:14:06 lukem Exp $	*/
-/* From: NetBSD: ufs_bmap.c,v 1.10 2000/11/27 08:39:57 chs Exp */
+/*	$NetBSD: ufs_bmap.c,v 1.3 2001/11/08 06:10:13 lukem Exp $	*/
+/* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -43,12 +43,13 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ufs_bmap.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
+__RCSID("$NetBSD: ufs_bmap.c,v 1.3 2001/11/08 06:10:13 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <errno.h>
 
 #include <ufs/ufs/ufs_bswap.h>
@@ -84,9 +85,7 @@ ufs_getlbns(struct inode *ip, ufs_daddr_t bn, struct indir *ap, int *nump)
 	if ((long)bn < 0)
 		bn = -(long)bn;
 
-	/* The first NDADDR blocks are direct blocks. */
-	if (bn < NDADDR)
-		return (0);
+	assert (bn >= NDADDR);
 
 	/* 
 	 * Determine the number of levels of indirection.  After this loop
@@ -138,7 +137,7 @@ ufs_getlbns(struct inode *ip, ufs_daddr_t bn, struct indir *ap, int *nump)
 		ap->in_exists = 0;
 		++ap;
 
-		metalbn -= -1 + off * blockcnt;
+		metalbn -= -1 + (off << lbc);
 	}
 	if (nump)
 		*nump = numlevels;
