@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.9 1994/10/29 07:59:33 cgd Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.10 1994/12/27 18:36:24 mycroft Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -69,6 +69,15 @@ unix2dostime(tsp, ddp, dtp)
 	u_long year;
 	u_long month;
 	u_short *months;
+	struct timespec ts;
+
+	/*
+	 * NULL means to read the current time.
+	 */
+	if (tsp == NULL) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		tsp = &ts;
+	}
 
 	/*
 	 * If the time from the last conversion is the same as now, then
