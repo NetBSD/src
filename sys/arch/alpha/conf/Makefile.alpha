@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.6 1995/08/03 00:09:23 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.7 1995/09/19 23:28:06 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ ALPHA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	-Werror -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
+CFLAGS=	-Werror -fno-builtin -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
 AFLAGS=	${COPTS}
 
 ### find out what to use for libkern
