@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.5 1997/04/05 22:36:56 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.6 1997/06/01 23:42:04 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -441,6 +441,7 @@ isp_init(isp)
 	mbs.param[2] = (u_int16_t) (queue_addr >> 16);
 	mbs.param[3] = (u_int16_t) (queue_addr & 0xffff);
 	mbs.param[4] = 0;
+	mbs.param[5] = 0;
 	(void) isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		(void) splx(s);
