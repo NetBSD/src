@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.25 2000/09/24 15:59:32 jdolecek Exp $
+#	$NetBSD: CARDBUS,v 1.26 2000/10/15 10:08:00 minoura Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been removed.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.25 $"
+#ident		"CARDBUS-$Revision: 1.26 $"
 
 maxusers	32		# estimated number of users
 
@@ -172,7 +172,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # use a large software cursor that doesn't blink
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
-#options 	WSCONS_DEFAULT_TYPE="80x24"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
