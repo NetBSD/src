@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/07/30 04:07:25 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 2000/05/11 00:56:48 deberg Exp $
 #
 
 .include <bsd.own.mk>
@@ -26,10 +26,14 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${TARGET_ARCH} \
 LDADD+=		-L${BFDOBJ} -lbfd
 DPADD+=		${BFDOBJ}/libbfd_pic.a
 
+TEXINFO=	as.texi
+INFOFLAGS=	-I${DIST}/gas/doc
+
 DIST=		${.CURDIR}/../../dist
 BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} print-objdir
 
 .PATH:		${DIST}/gas/config ${DIST}/gas ${DIST}/gas/doc
 
 .include "${.CURDIR}/arch/${TARGET_ARCH}/Makefile.inc"
+.include <bsd.info.mk>
 .include <bsd.prog.mk>
