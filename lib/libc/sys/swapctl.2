@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.30 2004/03/21 05:47:44 mrg Exp $
+.\"	$NetBSD: swapctl.2,v 1.31 2004/03/25 01:13:32 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -206,7 +206,7 @@ returns the number of swap devices, if successful.
 The
 .Dv SWAP_NSWAP
 command is always successful.
-Otherwise it returns 0 on success and -1
+Otherwise it returns 0 on success and \-1
 on failure, setting the global variable
 .Va errno
 to indicate the error.
@@ -268,12 +268,16 @@ member was added to
 in
 .Nx 1.4 ,
 when the header file was also moved from
-.Pa \*[Lt]vm/vm_swap.h\*[Gt] ,
+.Aq Pa vm/vm_swap.h
 to its current location in
-.Pa \*[Lt]sys/swap.h\*[Gt] .
+.Aq Pa sys/swap.h .
 .Sh AUTHORS
 The current swap system was designed and implemented by
-Matthew Green \*[Lt]mrg@eterna.com.au\*[Gt],
-with help from Paul Kranenburg \*[Lt]pk@NetBSD.org\*[Gt]
-and Leo Weppelman \*[Lt]leo@NetBSD.org\*[Gt],
-and insights from Jason R. Thorpe \*[Lt]thorpej@NetBSD.org\*[Gt].
+Matthew Green
+.Aq mrg@eterna.com.au ,
+with help from Paul Kranenburg
+.Aq pk@NetBSD.org
+and Leo Weppelman
+.Aq leo@NetBSD.org ,
+and insights from Jason R. Thorpe
+.Aq thorpej@NetBSD.org .
