@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cdefs.h	7.6 (Berkeley) 5/4/91
- *	$Id: cdefs.h,v 1.5 1993/09/23 23:44:09 cgd Exp $
+ *	$Id: cdefs.h,v 1.6 1993/12/03 20:39:35 jtc Exp $
  */
 
 #ifndef	_SYS_CDEFS_H_
@@ -80,6 +80,15 @@
 #define	volatile
 #endif	/* !__GNUC__ */
 #endif	/* !(__STDC__ || __cplusplus) */
+
+
+/*
+ * Disable GCC's __atrribute__ extension when we're not using GCC.
+ */
+#if !defined(__GNUC__)
+#define __attribute__(x)
+#endif
+
 
 /*
  * GCC has extensions for declaring functions as `pure' (always returns
