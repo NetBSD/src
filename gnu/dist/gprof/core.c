@@ -126,7 +126,8 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
 
   if (!bfd_check_format (core_bfd, bfd_object))
     {
-      fprintf (stderr, "%s: %s: not in a.out format\n", whoami, a_out_name);
+      fprintf (stderr, "%s: %s: unrecognized executable format\n",
+	       whoami, a_out_name);
       done (1);
     }
 
