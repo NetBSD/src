@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/12/28 01:32:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2002/02/26 00:24:59 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -18,35 +18,35 @@ INCSDIR=/usr/include
 .include <bsd.own.mk>
 
 .if ${MKLINKLIB} != "no"
-LINKS+=	${LIBDIR}/libtermcap.a ${LIBDIR}/libtermlib.a
+SYMLINKS+=	libtermcap.a ${LIBDIR}/libtermlib.a
 .endif
 
 .if ${MKPROFILE} != "no"
-LINKS+=	${LIBDIR}/libtermcap_p.a ${LIBDIR}/libtermlib_p.a
+SYMLINKS+=	libtermcap_p.a ${LIBDIR}/libtermlib_p.a
 .endif
 
 .if ${MKPIC} != "no"
 
 .if ${MKPICINSTALL} != "no"
-LINKS+=	${LIBDIR}/libtermcap_pic.a ${LIBDIR}/libtermlib_pic.a
+SYMLINKS+=	libtermcap_pic.a ${LIBDIR}/libtermlib_pic.a
 .endif
 
 .if exists(${.CURDIR}/shlib_version)
-LINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_FULLVERSION} \
-	${_LIBSODIR}/libtermlib.so.${SHLIB_FULLVERSION}
+SYMLINKS+=	libtermcap.so.${SHLIB_FULLVERSION} \
+		${_LIBSODIR}/libtermlib.so.${SHLIB_FULLVERSION}
 .if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=${_LIBSODIR}/libtermcap.so.${SHLIB_FULLVERSION} \
-	${LIBDIR}/libtermlib.so.${SHLIB_FULLVERSION}
+SYMLINKS+=	libtermcap.so.${SHLIB_FULLVERSION} \
+		${LIBDIR}/libtermlib.so.${SHLIB_FULLVERSION}
 .endif
 
 .if (${OBJECT_FMT} == "ELF")
-LINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_MAJOR} \
-	${_LIBSODIR}/libtermlib.so.${SHLIB_MAJOR}
-LINKS+=	${_LIBSODIR}/libtermcap.so ${_LIBSODIR}/libtermlib.so
+SYMLINKS+=	libtermcap.so.${SHLIB_MAJOR} \
+		${_LIBSODIR}/libtermlib.so.${SHLIB_MAJOR}
+SYMLINKS+=	libtermcap.so ${_LIBSODIR}/libtermlib.so
 .if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_MAJOR} \
+SYMLINKS+=	libtermcap.so.${SHLIB_MAJOR} \
 		${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}
-SYMLINKS+=	${_LIBSODIR}/libtermcap.so ${LIBDIR}/libtermlib.so
+SYMLINKS+=	libtermcap.so ${LIBDIR}/libtermlib.so
 .endif
 .endif
 .endif	# exists shlib_version
