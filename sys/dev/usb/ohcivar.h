@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.19 2000/02/01 05:42:53 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.20 2000/02/22 11:30:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ typedef struct ohci_softc {
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
 	usbd_xfer_handle sc_intrxfer;
+
+	ohci_physaddr_t sc_done;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
