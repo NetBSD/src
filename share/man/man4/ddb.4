@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.68 2003/06/27 18:16:45 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.69 2003/07/02 07:06:07 simonb Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -357,9 +357,14 @@ or by the breakpoint number returned by
 if it's prefixed with
 .Sq Cm \&# .
 .It Xo
-.Ic dmesg
+.Ic dmesg Op Ar count
 .Xc
 Prints the contents of the kernel message buffer.
+The optional
+.Ar count
+argument will limit printing to at most the last
+.Ar count
+bytes of the message buffer.
 .It Xo
 .Ic dwatch
 .Ar address
