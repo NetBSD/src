@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.21 2000/01/17 07:06:57 itojun Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.22 2000/02/02 16:04:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -661,7 +661,8 @@ smc91cxx_intr(arg)
 	u_int8_t mask, interrupts, status;
 	u_int16_t packetno, tx_status, card_stats;
 
-	if (sc->sc_enabled == 0)
+	if (sc->sc_enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	SMC_SELECT_BANK(sc, 2);
@@ -1230,4 +1231,32 @@ smc91cxx_activate(self, act)
 	}
 	splx(s);
 	return (rv);
+}
+
+int
+smc91cxx_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	/* dp8390_disable() checks sc->sc_enabled */
+	smc91cxx_disable(sc);
+
+	/* smc91cxx_attach() never fails */
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (0);
 }

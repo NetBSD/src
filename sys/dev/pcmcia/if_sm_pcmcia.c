@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.18 1999/09/28 23:20:42 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.19 2000/02/02 16:04:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,9 @@ struct sm_pcmcia_softc {
 	int	sc_io_window;			/* our i/o window */
 	void	*sc_ih;				/* interrupt cookie */
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
+
+	int	sc_configured;			/* bool; attached or not */
+	int	sc_enabled;			/* bool; enabled or not */
 };
 
 struct cfattach sm_pcmcia_ca = {
@@ -173,6 +176,8 @@ sm_pcmcia_attach(parent, self, aux)
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
 	struct sm_pcmcia_product *spp;
 
+	psc->sc_configured = 0;
+
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
 
@@ -189,6 +194,7 @@ sm_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
 	    cfe->iospace[0].length, &psc->sc_pcioh)) {
 		printf(": can't allocate i/o space\n");
+		pcmcia_function_disable(pa->pf);
 		return;
 	}
 
@@ -202,6 +208,8 @@ sm_pcmcia_attach(parent, self, aux)
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
+		pcmcia_io_free(pa->pf, &psc->sc_pcioh);
+		pcmcia_function_disable(pa->pf);
 		return;
 	}
 
@@ -246,6 +254,8 @@ sm_pcmcia_attach(parent, self, aux)
 	smc91cxx_attach(sc, enaddr);
 
 	pcmcia_function_disable(pa->pf);
+
+	psc->sc_configured = 1;
 }
 
 int
@@ -254,23 +264,20 @@ sm_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
+	int rv;
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	if (psc->sc_configured == 0)
+		return 0;
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	rv = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
+	if (rv == 0) {
+		/* Unmap our i/o window. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_smc.sc_ec.ec_if);
-	return (0);
-#else
-	return (EBUSY);
-#endif
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	}
+	return rv;
 }
 
 int
@@ -345,6 +352,10 @@ sm_pcmcia_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
+	int rv;
+
+	if (sc->sc_enabled != 0)
+		return 0;
 
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
@@ -355,7 +366,9 @@ sm_pcmcia_enable(sc)
 		return (1);
 	}
 
-	return (pcmcia_function_enable(psc->sc_pf));
+	rv = pcmcia_function_enable(psc->sc_pf);
+	sc->sc_enabled = 1;
+	return (rv);
 }
 
 void
@@ -364,7 +377,11 @@ sm_pcmcia_disable(sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
+	if (sc->sc_enabled == 0)
+		return;
+
 	pcmcia_function_disable(psc->sc_pf);
 
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	sc->sc_enabled = 0;
 }
