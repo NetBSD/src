@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.8 2003/08/07 10:04:15 agc Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.9 2005/02/06 06:07:12 perry Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.8 2003/08/07 10:04:15 agc Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.9 2005/02/06 06:07:12 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ lfs_ientry(ino_t ino)
 static struct ufs1_dinode *
 lfs_ifind(struct lfs *fs, ino_t ino, struct ufs1_dinode *dip)
 {
-	register int cnt;
+	int cnt;
 
 	for(cnt=0;cnt<INOPB(fs);cnt++)
 		if(dip[cnt].di_inumber == ino)
@@ -305,8 +305,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct ufs1_dinode *dip)
 }
 
 union dinode *
-getino(inum)
-	ino_t inum;
+getino(ino_t inum)
 {
 	static daddr_t inoblkno;
 	daddr_t blkno;
