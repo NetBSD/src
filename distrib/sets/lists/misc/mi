@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2000/07/13 14:31:14 lukem Exp $
+# $NetBSD: mi,v 1.42 2000/08/13 16:22:54 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -497,6 +497,7 @@
 ./usr/share/sendmail/ostype/bsdi.m4
 ./usr/share/sendmail/ostype/bsdi1.0.m4
 ./usr/share/sendmail/ostype/bsdi2.0.m4
+./usr/share/sendmail/ostype/darwin.m4
 ./usr/share/sendmail/ostype/dgux.m4
 ./usr/share/sendmail/ostype/domainos.m4
 ./usr/share/sendmail/ostype/dynix3.2.m4
