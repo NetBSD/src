@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.39 2000/10/10 20:24:52 is Exp $	*/
+/*	$NetBSD: newfs.c,v 1.40 2000/12/01 11:52:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.39 2000/10/10 20:24:52 is Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.40 2000/12/01 11:52:54 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,10 +89,10 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-static struct disklabel *getdisklabel __P((char *, int));
-static void rewritelabel __P((char *, int, struct disklabel *));
-static void usage __P((void));
-int	main __P((int, char *[]));
+static struct disklabel *getdisklabel(char *, int);
+static void rewritelabel(char *, int, struct disklabel *);
+static void usage(void);
+int main(int, char *[]);
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -190,9 +190,7 @@ char	device[MAXPATHLEN];
 extern char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	struct partition *pp;
@@ -624,9 +622,8 @@ const char lmsg[] = "%s: can't read disk label";
 #endif
 
 static struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	volatile int fd;
+getdisklabel(char *s, volatile int fd)
+/* XXX why is fs volatile?! */
 {
 	static struct disklabel lab;
 
@@ -649,10 +646,8 @@ getdisklabel(s, fd)
 }
 
 static void
-rewritelabel(s, fd, lp)
-	char *s;
-	volatile int fd;
-	struct disklabel *lp;
+rewritelabel(char *s, volatile int fd, struct disklabel *lp)
+/* XXX why is fd volatile?! */
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -702,7 +697,7 @@ rewritelabel(s, fd, lp)
 }
 
 static void
-usage()
+usage(void)
 {
 	if (mfs) {
 		fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.38 2000/05/22 10:33:45 bouyer Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.39 2000/12/01 11:52:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.38 2000/05/22 10:33:45 bouyer Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.39 2000/12/01 11:52:54 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,20 +64,20 @@ __RCSID("$NetBSD: mkfs.c,v 1.38 2000/05/22 10:33:45 bouyer Exp $");
 #include <extern.h>
 
 
-static void initcg __P((int, time_t));
-static void fsinit __P((time_t));
-static int makedir __P((struct direct *, int));
-static daddr_t alloc __P((int, int));
-static void iput __P((struct dinode *, ino_t));
-static void rdfs __P((daddr_t, int, void *));
-static void wtfs __P((daddr_t, int, void *));
-static int isblock __P((struct fs *, unsigned char *, int));
-static void clrblock __P((struct fs *, unsigned char *, int));
-static void setblock __P((struct fs *, unsigned char *, int));
-static int32_t calcipg __P((int32_t, int32_t, off_t *));
-static void swap_cg __P((struct cg *, struct cg *));
+static void initcg(int, time_t);
+static void fsinit(time_t);
+static int makedir(struct direct *, int);
+static daddr_t alloc(int, int);
+static void iput(struct dinode *, ino_t);
+static void rdfs(daddr_t, int, void *);
+static void wtfs(daddr_t, int, void *);
+static int isblock(struct fs *, unsigned char *, int);
+static void clrblock(struct fs *, unsigned char *, int);
+static void setblock(struct fs *, unsigned char *, int);
+static int32_t calcipg(int32_t, int32_t, off_t *);
+static void swap_cg(struct cg *, struct cg *);
 
-static int count_digits __P((int));
+static int count_digits(int);
 
 /*
  * make file system for cylinder-group style file systems
@@ -150,10 +150,7 @@ char writebuf[MAXBSIZE];
 int	fsi, fso;
 
 void
-mkfs(pp, fsys, fi, fo)
-	struct partition *pp;
-	char *fsys;
-	int fi, fo;
+mkfs(struct partition *pp, char *fsys, int fi, int fo)
 {
 	int32_t i, mincpc, mincpg, inospercg;
 	int32_t cylno, rpos, blk, j, warn = 0;
@@ -685,9 +682,7 @@ next:
  * Initialize a cylinder group.
  */
 void
-initcg(cylno, utime)
-	int cylno;
-	time_t utime;
+initcg(int cylno, time_t utime)
 {
 	daddr_t cbase, d, dlower, dupper, dmax, blkno;
 	int32_t i;
@@ -879,11 +874,10 @@ struct odirect olost_found_dir[] = {
 };
 #endif
 char buf[MAXBSIZE];
-static void copy_dir __P((struct direct *, struct direct *));
+static void copy_dir(struct direct *, struct direct *);
 
 void
-fsinit(utime)
-	time_t utime;
+fsinit(time_t utime)
 {
 #ifdef LOSTDIR
 	int i;
@@ -946,9 +940,7 @@ fsinit(utime)
  * return size of directory.
  */
 int
-makedir(protodir, entries)
-	struct direct *protodir;
-	int entries;
+makedir(struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
@@ -969,9 +961,7 @@ makedir(protodir, entries)
  * allocate a block or frag
  */
 daddr_t
-alloc(size, mode)
-	int size;
-	int mode;
+alloc(int size, int mode)
 {
 	int i, frag;
 	daddr_t d, blkno;
@@ -1029,10 +1019,7 @@ goth:
  * Calculate number of inodes per group.
  */
 int32_t
-calcipg(cpg, bpcg, usedbp)
-	int32_t cpg;
-	int32_t bpcg;
-	off_t *usedbp;
+calcipg(int32_t cpg, int32_t bpcg, off_t *usedbp)
 {
 	int i;
 	int32_t ipg, new_ipg, ncg, ncyl;
@@ -1069,9 +1056,7 @@ calcipg(cpg, bpcg, usedbp)
  * Allocate an inode on the disk
  */
 static void
-iput(ip, ino)
-	struct dinode *ip;
-	ino_t ino;
+iput(struct dinode *ip, ino_t ino)
 {
 	struct dinode buf[MAXINOPB];
 	daddr_t d;
@@ -1116,8 +1101,7 @@ iput(ip, ino)
  * Replace libc function with one suited to our needs.
  */
 void *
-malloc(size)
-	size_t size;
+malloc(size_t size)
 {
 	char *base, *i;
 	static u_long pgsz;
@@ -1148,9 +1132,7 @@ malloc(size)
  * Replace libc function with one suited to our needs.
  */
 void *
-realloc(ptr, size)
-	void *ptr;
-	size_t size;
+realloc(void *ptr, size_t size)
 {
 	void *p;
 
@@ -1165,8 +1147,7 @@ realloc(ptr, size)
  * Replace libc function with one suited to our needs.
  */
 void *
-calloc(size, numelm)
-	size_t size, numelm;
+calloc(size_t size, size_t numelm)
 {
 	void *base;
 
@@ -1180,8 +1161,7 @@ calloc(size, numelm)
  * Replace libc function with one suited to our needs.
  */
 void
-free(ptr)
-	void *ptr;
+free(void *ptr)
 {
 	
 	/* do not worry about it for now */
@@ -1191,10 +1171,7 @@ free(ptr)
  * read a block from the file system
  */
 void
-rdfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	void *bf;
+rdfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 	off_t offset;
@@ -1222,10 +1199,7 @@ rdfs(bno, size, bf)
  * write a block to the file system
  */
 void
-wtfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	void *bf;
+wtfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 	off_t offset;
@@ -1255,10 +1229,7 @@ wtfs(bno, size, bf)
  * check if a block is available
  */
 int
-isblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+isblock(struct fs *fs, unsigned char *cp, int h)
 {
 	unsigned char mask;
 
@@ -1288,10 +1259,7 @@ isblock(fs, cp, h)
  * take a block out of the map
  */
 void
-clrblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+clrblock(struct fs *fs, unsigned char *cp, int h)
 {
 	switch ((fs)->fs_frag) {
 	case 8:
@@ -1320,10 +1288,7 @@ clrblock(fs, cp, h)
  * put a block into the map
  */
 void
-setblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+setblock(struct fs *fs, unsigned char *cp, int h)
 {
 	switch (fs->fs_frag) {
 	case 8:
@@ -1350,8 +1315,7 @@ setblock(fs, cp, h)
 
 /* swap byte order of cylinder group */
 static void
-swap_cg(o, n)
-	struct cg *o, *n;
+swap_cg(struct cg *o, struct cg *n)
 {
 	int i, btotsize, fbsize;
 	u_int32_t *n32, *o32;
@@ -1417,9 +1381,7 @@ swap_cg(o, n)
 
 /* copy a direntry to a buffer, in fs byte order */
 static void
-copy_dir(dir, dbuf)
-	struct direct *dir;
-	struct direct *dbuf;
+copy_dir(struct direct *dir, struct direct *dbuf)
 {
 	memcpy(dbuf, dir, DIRSIZ(Oflag, dir, 0));
 	if (needswap) {
@@ -1433,8 +1395,7 @@ copy_dir(dir, dbuf)
 
 /* Determine how many digits are needed to print a given integer */
 static int
-count_digits(num)
-	int num;
+count_digits(int num)
 {
 	int ndig;
 
