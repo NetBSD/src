@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_forward.c,v 1.10 2000/05/19 01:40:18 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.35 2000/05/18 16:31:27 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.11 2000/05/19 20:09:26 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.36 2000/05/19 19:10:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -459,7 +459,7 @@ ip6_forward(m, srcrt)
 	else
 		origifp = rt->rt_ifp;
 #ifndef FAKE_LOOPBACK_IF
-	if ((rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0)
+	if ((rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
 #else
 	if (1)
 #endif
