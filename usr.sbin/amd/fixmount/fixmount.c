@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fixmount.c,v 1.1.1.1 1997/07/24 21:24:11 christos Exp $
+ * $Id: fixmount.c,v 1.1.1.2 1997/09/26 16:08:10 christos Exp $
  *
  */
 
@@ -64,7 +64,8 @@
 #define	DOVERIFY	0x8
 #define	DOREMALL	0x10
 
-static CLIENT *clnt_create_timeout();
+extern int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);
+
 static char dir_path[NFS_MAXPATHLEN];
 static char thishost[MAXHOSTNAMELEN] = "";
 static exports mntexports;
@@ -73,8 +74,16 @@ static int type = 0;
 static jmp_buf before_rpc;
 static mountlist mntdump;
 static struct in_addr thisaddr;
+static CLIENT *clnt_create_timeout(char *, struct timeval *);
 
-extern int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);
+RETSIGTYPE create_timeout(int);
+int is_same_host(char *, char *, struct in_addr);
+int main(int, char *[]);
+int remove_all(CLIENT *, char *);
+int remove_mount(CLIENT *, char *, mountlist, int);
+void fix_rmtab(CLIENT *, char *, mountlist, int, int);
+void print_dump(mountlist);
+void usage(void);
 
 /* dummy variables */
 char *progname;

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: xdr_func.c,v 1.1.1.1 1997/09/22 21:11:19 christos Exp $
+ * $Id: xdr_func.c,v 1.1.1.2 1997/09/26 16:06:04 christos Exp $
  *
  */
 
@@ -364,7 +364,7 @@ xdr_groupnode(XDR *xdrs, groupnode *objp)
 
 #ifndef HAVE_XDR_GROUPS
 bool_t
-xdr_groups(XDR *xdrs, groups *objp)
+xdr_groups(XDR *xdrs, groups objp)
 {
   if (!xdr_pointer(xdrs, (char **) objp, sizeof(groupnode), (XDRPROC_T_TYPE) xdr_groupnode)) {
     return (FALSE);
@@ -430,8 +430,6 @@ xdr_mountlist(XDR *xdrs, mountlist *objp)
 bool_t
 xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 {
-  long *buf;
-
   if (!xdr_bytes(xdrs,
 		 (char **) &objp->fhandle3_val,
 		 (u_int *) &objp->fhandle3_len,
@@ -444,8 +442,6 @@ xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 bool_t
 xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 {
-  long *buf;
-
   if (!xdr_enum(xdrs, (enum_t *)objp))
     return (FALSE);
   return (TRUE);
@@ -455,8 +451,6 @@ xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 bool_t
 xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 {
-  long *buf;
-
   if (!xdr_fhandle3(xdrs, &objp->fhandle))
     return (FALSE);
   if (!xdr_array(xdrs,
@@ -473,15 +467,12 @@ xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 bool_t
 xdr_mountres3(XDR *xdrs, mountres3 *objp)
 {
-  long *buf;
-
   if (!xdr_mountstat3(xdrs, &objp->fhs_status))
     return (FALSE);
-  switch (objp->fhs_status) {
-  case 0:			/* 0 == MNT_OK or MNT3_OK */
+
+  if (objp->fhs_status == 0) {	/* 0 == MNT_OK or MNT3_OK */
     if (!xdr_mountres3_ok(xdrs, &objp->mountres3_u.mountinfo))
       return (FALSE);
-    break;
   }
   return (TRUE);
 }

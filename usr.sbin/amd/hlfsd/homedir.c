@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: homedir.c,v 1.1.1.2 1997/09/22 21:12:34 christos Exp $
+ * $Id: homedir.c,v 1.1.1.3 1997/09/26 16:07:43 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -53,7 +53,7 @@
 
 
 /*
- * STATIC VARIABLES:
+ * STATIC VARIABLES AND FUNCTIONS:
  */
 static hlfsd_diskspace(char *);
 static hlfsd_stat(char *, struct stat *);
@@ -65,11 +65,15 @@ static void delay(uid2home_t *, int);
 static void plt_init(void);
 static void table_add(int, char *, char *);
 
+/* GLOBAL FUNCTIONS */
+char *homeof(char *username);
+int uidof(char *username);
+
 /*
  * GLOBALS:
  */
-username2uid_t *untab;		/* user name table */
 char mboxfile[MAXPATHLEN];
+username2uid_t *untab;		/* user name table */
 
 
 /*
@@ -233,7 +237,7 @@ hlfsd_diskspace(char *path)
   char buf[MAXPATHLEN];
   int fd, len;
 
-  sprintf(buf, "%s/._hlfstmp_%lu", path, getpid());
+  sprintf(buf, "%s/._hlfstmp_%lu", path, (long) getpid());
   if ((fd = open(buf, O_RDWR | O_CREAT, 0600)) < 0) {
     plog(XLOG_ERROR, "cannot open %s: %m", buf);
     return -1;

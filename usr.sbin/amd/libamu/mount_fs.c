@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mount_fs.c,v 1.1.1.2 1997/09/22 21:11:17 christos Exp $
+ * $Id: mount_fs.c,v 1.1.1.3 1997/09/26 16:05:59 christos Exp $
  *
  */
 
@@ -130,14 +130,14 @@ int
 mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto, const char *mnttabname)
 {
   int error = 0;
-#if defined(MNTTAB_OPT_DEV) || defined(MNTTAB_OPT_FSID)
-  struct stat stb;
-#endif /* defined(MNTTAB_OPT_DEV) || defined(MNTTAB_OPT_FSID) */
 #ifdef MOUNT_TABLE_ON_FILE
+# ifdef MNTTAB_OPT_DEV
+  struct stat stb;
+# endif /* MNTTAB_OPT_DEV */
   char *zopts = NULL, *xopts = NULL;
-# if defined(MNTTAB_OPT_DEV) || defined(HAVE_FS_NFS3) || defined(MNTTAB_OPT_VERS) || defined(MNTTAB_OPT_PROTO)
+# if defined(MNTTAB_OPT_DEV) || (defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)) || defined(MNTTAB_OPT_PROTO)
   char optsbuf[48];
-# endif /* defined(MNTTAB_OPT_DEV) || defined(HAVE_FS_NFS3) || defined(MNTTAB_OPT_VERS) || defined(MNTTAB_OPT_PROTO) */
+# endif /* defined(MNTTAB_OPT_DEV) || (defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)) || defined(MNTTAB_OPT_PROTO) */
 #endif /* MOUNT_TABLE_ON_FILE */
 #ifdef DEBUG
   char buf[80];			/* buffer for sprintf */
@@ -258,23 +258,25 @@ again:
    * Additional fields in mntent_t
    * are fixed up here
    */
-# ifdef HAVE_FIELD_MNTENT_T_CNODE
+# ifdef HAVE_FIELD_MNTENT_T_MNT_CNODE
   mnt->mnt_cnode = 0;
-# endif /* HAVE_FIELD_MNTENT_T_CNODE */
-# ifdef HAVE_FIELD_MNTENT_T_RO
+# endif /* HAVE_FIELD_MNTENT_T_MNT_CNODE */
+
+# ifdef HAVE_FIELD_MNTENT_T_MNT_RO
   mnt->mnt_ro = (hasmntopt(mnt, MNTTAB_OPT_RO) != NULL);
-# endif /* HAVE_FIELD_MNTENT_T_RO */
-# ifdef HAVE_FIELD_MNTENT_T_TIME
-#  ifdef HAVE_FIELD_MNTENT_T_TIME_STRING
+# endif /* HAVE_FIELD_MNTENT_T_MNT_RO */
+
+# ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
+#  ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
   {				/* allocate enough space for a long */
     char *str = (char *) xmalloc(13 * sizeof(char));
     sprintf(str, "%ld", time((time_t *) NULL));
     mnt->mnt_time = str;
   }
-#  else /* not HAVE_FIELD_MNTENT_T_TIME_STRING */
+#  else /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
   mnt->mnt_time = time((time_t *) NULL);
-#  endif /* not HAVE_FIELD_MNTENT_T_TIME_STRING */
-# endif /* HAVE_FIELD_MNTENT_T_TIME */
+#  endif /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
+# endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
 
   write_mntent(mnt, mnttabname);
 

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: xutil.c,v 1.1.1.2 1997/09/22 21:11:20 christos Exp $
+ * $Id: xutil.c,v 1.1.1.3 1997/09/26 16:06:06 christos Exp $
  *
  */
 
@@ -184,11 +184,12 @@ static void
 checkup_mem(P_void)
 {
   extern struct mallinfo __mallinfo;
+
   if (mem_bytes != __mallinfo.uordbytes) {
     if (orig_mem_bytes == 0)
       mem_bytes = orig_mem_bytes = __mallinfo.uordbytes;
     else {
-      fprintf(logfp, "%s[%d]: ", progname, mypid);
+      fprintf(logfp, "%s[%ld]: ", progname, (long) mypid);
       if (mem_bytes < __mallinfo.uordbytes) {
 	fprintf(logfp, "ALLOC: %d bytes",
 		__mallinfo.uordbytes - mem_bytes);
@@ -282,7 +283,7 @@ show_time_host_and_name(int lvl)
   fprintf(logfp, "%15.15s %s %s[%ld]/%s ",
 	  last_ctime + 4, hostname,
 	  progname,
-	  mypid,
+	  (long) mypid,
 	  sev);
 }
 
