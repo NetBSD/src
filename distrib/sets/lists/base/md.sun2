@@ -1,4 +1,5 @@
-# $NetBSD: md.sun2,v 1.2 2002/05/14 15:08:26 lukem Exp $
+# $NetBSD: md.sun2,v 1.3 2002/08/29 01:30:45 lukem Exp $
+./rescue/edlabel		base-rescue-root
 ./sbin/edlabel			base-sysutil-bin
 ./usr/mdec/bootxx		base-sysutil-bin
 ./usr/mdec/bootyy		base-sysutil-bin
