@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2002/04/10 04:40:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2002/04/10 15:44:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2002/04/10 04:40:58 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2002/04/10 15:44:23 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1289,7 +1289,7 @@ pmap_alloc_l1pt(void)
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
-		ptes[arm_btop(va)] &= ~(L2_C | L2_B);
+		ptes[arm_btop(va)] &= ~L2_S_CACHE_MASK;
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
@@ -1402,7 +1402,7 @@ pmap_allocpagedir(struct pmap *pmap)
 
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
-	*pte &= ~(L2_C | L2_B);
+	*pte &= ~L2_S_CACHE_MASK;
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
@@ -2188,7 +2188,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if ((pmap == npv->pv_pmap 
 			    || kpmap == npv->pv_pmap) && 
 			    (npv->pv_flags & PVF_NC) == 0) {
-				ptes[arm_btop(npv->pv_va)] &= ~(L2_C | L2_B);
+				ptes[arm_btop(npv->pv_va)] &= ~L2_S_CACHE_MASK;
  				npv->pv_flags |= PVF_NC;
 				/*
 				 * If this page needs flushing from the
