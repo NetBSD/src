@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.110.2.2 2000/08/09 07:51:36 drochner Exp $
+#	$NetBSD: NetBSD.dist,v 1.110.2.3 2000/08/15 14:20:53 fvdl Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2132,9 +2132,9 @@ sail		uname=games gname=games mode=0775
 # ./var/games
 ..
 
-# ./var/krb5kdc
-krb5kdc
-# ./var/krb5kdc
+# ./var/heimdal
+heimdal
+# ./var/heimdal
 ..
 
 # ./var/log
