@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.24 2004/06/10 18:06:19 martin Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.25 2004/06/11 07:28:05 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.24 2004/06/10 18:06:19 martin Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.25 2004/06/11 07:28:05 scw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -1158,7 +1158,7 @@ td_thr_suspend(td_thread_t *thread)
 		_INITCONTEXT_U(&uc);
 		PTHREAD_REG_TO_UCONTEXT(&uc, thread->proc->regbuf);
 		PTHREAD_FPREG_TO_UCONTEXT(&uc, thread->proc->fpregbuf);
-		sp = (caddr_t)pthread__uc_sp(&uc);
+		sp = (caddr_t)(intptr_t)pthread__uc_sp(&uc);
 		sp -= sizeof(uc);
 #ifdef _UC_UCONTEXT_ALIGN
 		sp = (caddr_t) ((unsigned long)sp & _UC_UCONTEXT_ALIGN);
