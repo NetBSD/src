@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.1 2003/05/23 06:51:15 petrov Exp $	*/
+/*	$NetBSD: ffb.c,v 1.2 2003/06/11 22:50:12 petrov Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -190,10 +190,12 @@ ffb_ioctl(v, cmd, data, flags, p)
 	struct ffb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
 
+#ifdef FFBDEBUG
 	printf("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
 	       sc->sc_dv.dv_xname,
 	       (cmd & IOC_IN) ? "W" : "", (cmd & IOC_OUT) ? "R" : "",
 	       (char)IOCGROUP(cmd), cmd & 0xff);
+#endif
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
