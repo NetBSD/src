@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.139 2002/12/16 16:59:10 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.140 2002/12/19 10:38:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -74,6 +74,10 @@
 
 #include <machine/oldmon.h>
 #include <machine/idprom.h>
+
+#if defined(MULTIPROCESSOR) && defined(DDB)
+#include <machine/db_machdep.h>
+#endif
 
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/asm.h>
@@ -554,54 +558,33 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	printf("CPU did not spin up\n");
 }
 
-/* 
- * Calls raise_ipi(), waits for the remote CPU to notice the message, and
- * unlocks this CPU's message lock, which we expect was locked at entry.
- */
-void
-raise_ipi_wait_and_unlock(cpi)
-	struct cpu_info *cpi;
-{
-	int i;
-
-	raise_ipi(cpi);
-	i = 0;
-	while ((cpi->flags & CPUFLG_GOTMSG) == 0) {
-		if (i++ > 500000) {
-			printf("raise_ipi_wait_and_unlock(cpu%d): couldn't ping cpu%d\n",
-			    cpuinfo.ci_cpuid, cpi->ci_cpuid);
-			break;
-		}
-	}
-	simple_unlock(&cpi->msg.lock);
-}
-
 /*
  * Call a function on every CPU.  One must hold xpmsg_lock around
  * this function.
  */
 void
-cross_call(func, arg0, arg1, arg2, arg3, cpuset)
+xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	int	(*func)(int, int, int, int);
 	int	arg0, arg1, arg2, arg3;
 	int	cpuset;	/* XXX unused; cpus to send to: we do all */
 {
-	int n, i, not_done;
-	struct xpmsg_func *p;
+	int s, n, i, done;
+	volatile struct xpmsg_func *p;
+
+	/* XXX - note p->retval is probably no longer useful */
 
 	/*
 	 * If no cpus are configured yet, just call ourselves.
 	 */
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
-		p->func = func;
-		p->arg0 = arg0;
-		p->arg1 = arg1;
-		p->arg2 = arg2;
-		p->arg3 = arg3;
-		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+		if (func)
+			p->retval = (*func)(arg0, arg1, arg2, arg3); 
 		return;
 	}
+
+	s = splvm();	/* XXX - should validate this level */
+	LOCK_XPMSG();
 
 	/*
 	 * Firstly, call each CPU.  We do this so that they might have
@@ -615,55 +598,47 @@ cross_call(func, arg0, arg1, arg2, arg3, cpuset)
 		
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_FUNC;
+		cpi->flags &= ~CPUFLG_GOTMSG;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
 		p->arg0 = arg0;
 		p->arg1 = arg1;
 		p->arg2 = arg2;
 		p->arg3 = arg3;
-		cpi->flags &= ~CPUFLG_GOTMSG;
-		raise_ipi(cpi);
+		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
+		/*was: raise_ipi(cpi);*/
 	}
 
 	/*
 	 * Second, call ourselves.
 	 */
-
 	p = &cpuinfo.msg.u.xpmsg_func;
-
-	/* Call this on me first. */
-	p->func = func;
-	p->arg0 = arg0;
-	p->arg1 = arg1;
-	p->arg2 = arg2;
-	p->arg3 = arg3;
-
-	p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+	if (func)
+		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
 	 * Lastly, start looping, waiting for all cpu's to register that they
 	 * have completed (bailing if it takes "too long", being loud about
 	 * this in the process).
 	 */
-	i = 0;
-	while (not_done) {
-		not_done = 0;
+	done = 0;
+	i = 100000;	/* time-out */
+	while (!done) {
+		done = 1;
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
 
 			if (CPU_READY(cpi))
 				continue;
 
-			if ((cpi->flags & CPUFLG_GOTMSG) != 0)
-				not_done = 1;
+			if ((cpi->flags & CPUFLG_GOTMSG) == 0)
+				done = 0;
 		}
-		if (not_done && i++ > 100000) {
-			printf("cross_call(cpu%d): couldn't ping cpus:",
-			    cpuinfo.ci_cpuid);
+		if (!done && i-- < 0) {
+			printf("xcall(cpu%d,%p): couldn't ping cpus:",
+			    cpuinfo.ci_cpuid, func);
 			break;
 		}
-		if (not_done == 0)
-			break;
 	}
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
@@ -671,11 +646,14 @@ cross_call(func, arg0, arg1, arg2, arg3, cpuset)
 		if (CPU_READY(cpi))
 			continue;
 		simple_unlock(&cpi->msg.lock);
-		if ((cpi->flags & CPUFLG_GOTMSG) != 0)
+		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);
 	}
-	if (not_done)
+	if (!done)
 		printf("\n");
+
+	UNLOCK_XPMSG();
+	splx(s);
 }
 
 void
@@ -686,6 +664,7 @@ mp_pause_cpus()
 	if (cpus == NULL)
 		return;
 
+	/* XXX - can currently be called at a high IPL level */
 	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
@@ -696,7 +675,7 @@ mp_pause_cpus()
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		cpi->flags &= ~CPUFLG_GOTMSG;
-		raise_ipi_wait_and_unlock(cpi);
+		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
 	}
 	UNLOCK_XPMSG();
 }
