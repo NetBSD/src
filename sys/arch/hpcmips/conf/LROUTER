@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.10 2003/04/10 22:06:56 christos Exp $
+# 	$NetBSD: LROUTER,v 1.11 2003/10/08 11:09:09 bouyer Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -141,15 +141,16 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 
 # IDE and related devices
 pciide* at pci? dev ? function ? flags 0x0000
+atabus* at pciide? channel ?
 
 # IDE drives
-#wd*	at pciide? channel ? drive ? flags 0x0ffa	# PIO mode 2
-wd*	at pciide? channel ? drive ? flags 0x0ffb	# PIO mode 3
-#wd*	at pciide? channel ? drive ? flags 0x0ff0	# PIO mode 4
-#wd*	at pciide? channel ? drive ? flags 0x0000	# UDMA mode 2
+#wd*	at atabus? drive ? flags 0x0ffa	# PIO mode 2
+wd*	at atabus? drive ? flags 0x0ffb	# PIO mode 3
+#wd*	at atabus? drive ? flags 0x0ff0	# PIO mode 4
+#wd*	at atabus? drive ? flags 0x0000	# UDMA mode 2
 
 # ATAPI bus support
-atapibus* at pciide? channel ?
+atapibus* at atabus?
 
 # ATAPI devices
 cd*	at atapibus? drive ? flags 0x0ff0 # ATAPI CD-ROM drives
