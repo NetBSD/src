@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.27 1993/12/13 10:16:56 cgd Exp $
+ *	$Id: wd.c,v 1.28 1993/12/16 20:22:56 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1445,7 +1445,6 @@ wddump(dev_t dev)
 	long	cylin, head, sector, stat;
 	long	secpertrk, secpercyl, nblocks, i;
 	char *addr;
-	extern	int Maxmem;
 	static  wddoingadump = 0;
 	extern caddr_t CADDR1;
     
@@ -1458,7 +1457,6 @@ wddump(dev_t dev)
 #endif
     
 	/* size of memory to dump */
-	num = Maxmem;
 	lunit = wdunit(dev);	/* eventually support floppies? */
 	part = wdpart(dev);		/* file system */
 	/* check for acceptable drive number */
@@ -1477,7 +1475,7 @@ wddump(dev_t dev)
 	ctrlr = du->dk_ctrlr;
     
 	/* Convert to disk sectors */
-	num = (u_long) num * NBPG / du->dk_dd.d_secsize;
+	num = ctob(physmem) / du->dk_dd.d_secsize;
     
 	/* check if controller active */
 	/*if (wdtab[ctrlr].b_active)
