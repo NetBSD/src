@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.356 2000/03/20 11:03:42 pk Exp $
+#	$NetBSD: files,v 1.357 2000/03/22 20:28:29 soren Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -111,7 +111,7 @@ defopt	opt_bufcache.h	BUFCACHE BUFPAGES
 # Not entirely MI, but present on multiple arch's
 
 # PC-style MBR handling
-defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
+defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # debugging options
 defopt	DDB
