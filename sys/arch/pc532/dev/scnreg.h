@@ -1,4 +1,4 @@
-/*	$NetBSD: scnreg.h,v 1.10 2000/05/26 23:03:18 cgd Exp $	*/
+/*	$NetBSD: scnreg.h,v 1.11 2001/06/12 15:17:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -219,8 +219,8 @@
 
 /* bits cleared by reset error (see MR1 error mode bit) */
 #define SR_PARITY	0x20	/* received parity error */
-#define SR_FRAME	0x40	/* recieved framing error */
-#define SR_BREAK	0x80	/* recieved break */
+#define SR_FRAME	0x40	/* received framing error */
+#define SR_BREAK	0x80	/* received break */
 
 /*
  * Interrupt Mask Register (IMR) and ISR (Interrupt Status Register)

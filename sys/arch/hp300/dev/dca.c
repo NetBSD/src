@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.43 2001/05/30 15:24:29 lukem Exp $	*/
+/*	$NetBSD: dca.c,v 1.44 2001/06/12 15:17:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -810,7 +810,7 @@ dcaparam(tp, t)
 		(void) dcamctl(sc, 0, DMSET);	/* hang up line */
 
 	/*
-	 * Set the FIFO threshold based on the recieve speed, if we
+	 * Set the FIFO threshold based on the receive speed, if we
 	 * are changing it.
 	 */
 	if (tp->t_ispeed != t->c_ispeed) {

@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.2 2001/03/13 16:31:31 uch Exp $ */
+/* $NetBSD: scifreg.h,v 1.3 2001/06/12 15:17:18 wiz Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -47,7 +47,7 @@
 #define SHREG_SCFDR2  (*(volatile unsigned short *)	0xa400015E)
 
 #define SCSCR2_TIE	0x80	/* Transmit Interrupt Enable */
-#define SCSCR2_RIE	0x40	/* Recieve Interrupt Enable */
+#define SCSCR2_RIE	0x40	/* Receive Interrupt Enable */
 #define SCSCR2_TE	0x20	/* Transmit Enable */
 #define SCSCR2_RE	0x10	/* Receive Enable */
 #define SCSCR2_CKE1	0x02	/* ClocK Enable 1 */
@@ -60,7 +60,7 @@
 #define SCSSR2_BRK	0x0010	/* BReaK detection */
 #define SCSSR2_FER	0x0008	/* Framing ERror */
 #define SCSSR2_PER	0x0004	/* Parity ERror */
-#define SCSSR2_RDF	0x0002	/* Recieve fifo Data Full */
+#define SCSSR2_RDF	0x0002	/* Receive fifo Data Full */
 #define SCSSR2_DR	0x0001	/* Data Ready */
 
 #define SCFCR2_RTRG1	0x80	/* Receive TRiGger 1 */
@@ -100,7 +100,7 @@
 #define	SHREG_SCSSR2	SHREG_SCFSR2
 
 #define SCSCR2_TIE	0x0080	/* Transmit Interrupt Enable */
-#define SCSCR2_RIE	0x0040	/* Recieve Interrupt Enable */
+#define SCSCR2_RIE	0x0040	/* Receive Interrupt Enable */
 #define SCSCR2_TE	0x0020	/* Transmit Enable */
 #define SCSCR2_RE	0x0010	/* Receive Enable */
 #define SCSCR2_CKE1	0x0002	/* ClocK Enable 1 */
@@ -113,7 +113,7 @@
 #define SCSSR2_BRK	0x0010	/* BReaK detection */
 #define SCSSR2_FER	0x0008	/* Framing ERror */
 #define SCSSR2_PER	0x0004	/* Parity ERror */
-#define SCSSR2_RDF	0x0002	/* Recieve fifo Data Full */
+#define SCSSR2_RDF	0x0002	/* Receive fifo Data Full */
 #define SCSSR2_DR	0x0001	/* Data Ready */
 
 #define SCFCR2_RTRG1	0x0080	/* Receive TRiGger 1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.10 1998/04/08 22:38:18 fair Exp $	*/
+/*	$NetBSD: time.c,v 1.11 2001/06/12 15:17:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.10 1998/04/08 22:38:18 fair Exp $");
+__RCSID("$NetBSD: time.c,v 1.11 2001/06/12 15:17:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ prusage(r0, r1, e, b)
 		(void) fprintf(cshout, "%ld", r1->ru_oublock - r0->ru_oublock);
 		break;
 
-	    case 'r':		/* socket messages recieved */
+	    case 'r':		/* socket messages received */
 		(void) fprintf(cshout, "%ld", r1->ru_msgrcv - r0->ru_msgrcv);
 		break;
 
@@ -232,7 +232,7 @@ prusage(r0, r1, e, b)
 		(void) fprintf(cshout, "%ld", r1->ru_msgsnd - r0->ru_msgsnd);
 		break;
 
-	    case 'k':		/* number of signals recieved */
+	    case 'k':		/* number of signals received */
 		(void) fprintf(cshout, "%ld", r1->ru_nsignals-r0->ru_nsignals);
 		break;
 

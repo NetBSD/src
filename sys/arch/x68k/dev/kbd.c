@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.10 2000/05/25 03:33:27 itohy Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11 2001/06/12 15:17:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -116,7 +116,7 @@ kbdattach(parent, self, aux)
 	struct mfp_softc *mfp = (void*) parent;
 	int s = spltty();
 
-	/* MFP interrupt #12 is for USART recieve buffer full */
+	/* MFP interrupt #12 is for USART receive buffer full */
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
 
 	kbdenable(1);
@@ -435,7 +435,7 @@ kbdcngetc()
 
 	mfp_bit_clear_iera(MFP_INTR_RCV_FULL);
 	mfp_set_rsr(mfp_get_rsr() | MFP_RSR_RE);
-	c = mfp_recieve_usart();
+	c = mfp_receive_usart();
 
 	mfp_set_iera(ints);
 	splx(s);

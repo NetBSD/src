@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.2 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: mfp.h,v 1.3 2001/06/12 15:17:21 wiz Exp $	*/
 
 /*
  *
@@ -212,4 +212,4 @@ struct mfp_softc {
 
 void mfp_wait_for_hsync __P((void));
 int mfp_send_usart __P((int));
-int mfp_recieve_usart __P((void));
+int mfp_receive_usart __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.91 2001/02/24 00:01:23 cgd Exp $	*/
+/*	$NetBSD: tulip.c,v 1.92 2001/06/12 15:17:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ tlp_attach(sc, enaddr)
 	}
 
 	/*
-	 * Create the recieve buffer DMA maps.
+	 * Create the receive buffer DMA maps.
 	 */
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
@@ -1383,7 +1383,7 @@ tlp_rxintr(sc)
 		(*ifp->if_input)(ifp, m);
 	}
 
-	/* Update the recieve pointer. */
+	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.46 2001/01/29 12:04:10 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.47 2001/06/12 15:17:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -712,7 +712,7 @@ vr_rxeof(sc)
 		memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
 		    total_len);
 
-		/* Allow the recieve descriptor to continue using its mbuf. */
+		/* Allow the receive descriptor to continue using its mbuf. */
 		VR_INIT_RXDESC(sc, i);
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1137,7 +1137,7 @@ vr_init(ifp)
 	/* Program the multicast filter, if necessary. */
 	vr_setmulti(sc);
 
-	/* Give the transmit and recieve rings to the Rhine. */
+	/* Give the transmit and receive rings to the Rhine. */
 	CSR_WRITE_4(sc, VR_RXADDR, VR_CDRXADDR(sc, sc->vr_rxptr));
 	CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, VR_NEXTTX(sc->vr_txlast)));
 

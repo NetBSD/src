@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.24 2001/06/02 01:04:01 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.25 2001/06/12 15:17:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #define	FXP_NRFABUFS		128
 
 /*
- * Maximum number of seconds that the reciever can be idle before we
+ * Maximum number of seconds that the receiver can be idle before we
  * assume it's dead and attempt to reset it by reprogramming the
  * multicast filter.  This is part of a work-around for a bug in the
  * NIC.  See fxp_stats_update().

@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.17 2001/05/30 15:24:37 lukem Exp $ */
+/* $NetBSD: scif.c,v 1.18 2001/06/12 15:17:20 wiz Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -344,7 +344,7 @@ InitializeScif(bps)
 	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1;
 #endif
 
-	/* Send permission, Recieve permission ON */
+	/* Send permission, Receive permission ON */
 	SHREG_SCSCR2 = SCSCR2_TE | SCSCR2_RE;
 
 	/* Serial Status Register */

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.4 2000/12/28 22:59:11 sommerfeld Exp $ */
+/* $NetBSD: btvmei.c,v 1.5 2001/06/12 15:17:25 wiz Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -668,7 +668,7 @@ b3_617_intr(vsc)
 
 		lstat = read_csr_byte(sc, LOC_STATUS);
 		if (lstat & LSR_PR_STATUS) {
-			/* PR interrupt recieved from REMOTE  */
+			/* PR interrupt received from REMOTE  */
 			write_csr_byte(sc, LOC_CMD1, LC1_CLR_PR_INT);
 			continue;
 		}

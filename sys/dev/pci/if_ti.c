@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.24 2001/06/07 14:35:58 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.25 2001/06/12 15:17:25 wiz Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1908,7 +1908,7 @@ fail2:
  * Note: we have to be able to handle three possibilities here:
  * 1) the frame is from the mini receive ring (can only happen)
  *    on Tigon 2 boards)
- * 2) the frame is from the jumbo recieve ring
+ * 2) the frame is from the jumbo receive ring
  * 3) the frame is from the standard receive ring
  */
 

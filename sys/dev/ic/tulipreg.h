@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.24 2001/06/11 01:19:54 wiz Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.25 2001/06/12 15:17:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1341,7 +1341,7 @@ struct tulip_desc {
 #define	CSR_ADM_CR		0x88
 #define	ADM_CR_ATUR		0x00000001	/* auto. tx underrun recover */
 #define	ADM_CR_SINT		0x00000002	/* software interrupt */
-#define	ADM_CR_DRT		0x0000000c	/* drain recieve threshold */
+#define	ADM_CR_DRT		0x0000000c	/* drain receive threshold */
 #define	ADM_CR_DRT_8LW		0x00000000	/*   8 longwords */
 #define	ADM_CR_DRT_16LW		0x00000004	/*   16 longwords */
 #define	ADM_CR_DRT_SF		0x00000008	/*   store-and-forward */

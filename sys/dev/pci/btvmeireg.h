@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeireg.h,v 1.1 1999/06/30 17:45:38 drochner Exp $ */
+/* $NetBSD: btvmeireg.h,v 1.2 2001/06/12 15:17:25 wiz Exp $ */
 
 #ifndef _bit3reg_h_
 #define _bit3reg_h_
@@ -100,7 +100,7 @@
 
 #define LSR_PARITY_ERR       (1<<7)     /* Interface Parity Error PCI->REM.   */
 #define LSR_REMBUS_ERR       (1<<6)     /* BERR from VME on PCI->REM. xfer    */
-#define LSR_PR_STATUS        (1<<5)     /* PR interrupt recieved from REMOTE  */
+#define LSR_PR_STATUS        (1<<5)     /* PR interrupt received from REMOTE  */
 #define LSR_TIMEOUT_ERR      (1<<2)     /* Interface Timeout error PCI->REM   */
 #define LSR_LRC_ERR          (1<<1)     /* LRC error (DMA master only)        */
 #define LSR_NO_CONNECT       (1<<0)     /* REM. bus power or I/O cable is off */

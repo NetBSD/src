@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.4 1997/10/20 00:23:16 lukem Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.5 2001/06/12 15:17:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl_transact.c,v 1.4 1997/10/20 00:23:16 lukem Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.5 2001/06/12 15:17:30 wiz Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: ctl_transact.c,v 1.4 1997/10/20 00:23:16 lukem Exp $");
 
 /*
  * SOCKDGRAM is unreliable, so we must repeat messages if we have
- * not recieved an acknowledgement within a reasonable amount
+ * not received an acknowledgement within a reasonable amount
  * of time
  */
 void

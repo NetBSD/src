@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.8 2001/04/12 07:50:54 itojun Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.9 2001/06/12 15:17:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -407,7 +407,7 @@ lmc_watchdog(int unit)
 
 	/*
 	 * Make sure the tx jabber and rx watchdog are off,
-	 * and the transmit and recieve processes are running.
+	 * and the transmit and receive processes are running.
 	 */
 	LMC_CSR_WRITE (sc, csr_15, 0x00000011);
 	sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;

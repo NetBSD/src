@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.5 1997/10/13 22:05:26 cjs Exp $	*/
+/*	$NetBSD: events.c,v 1.6 2001/06/12 15:17:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: events.c,v 1.5 1997/10/13 22:05:26 cjs Exp $");
+__RCSID("$NetBSD: events.c,v 1.6 2001/06/12 15:17:12 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ int	warp;		/* set if called in a time warp */
 			/* report it if we can */
 			if (!damaged(SSRADIO))
 			{
-				printf("\nUhura:  Captain, we have recieved a distress signal\n");
+				printf("\nUhura:  Captain, we have received a distress signal\n");
 				printf("  from the starbase in quadrant %d,%d.\n",
 					ix, iy);
 				restcancel++;

@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.8 2001/04/25 17:53:13 bouyer Exp $ */
+/* $NetBSD: sfasvar.h,v 1.9 2001/06/12 15:17:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -124,7 +124,7 @@ struct nexus {
 #define SFAS_NS_MSG_IN		5	/* Last phase was MESSAGE IN */
 #define SFAS_NS_MSG_OUT		6	/* Last phase was MESSAGE OUT */
 #define SFAS_NS_SVC		7	/* We have sent the command */
-#define SFAS_NS_DISCONNECTING	8	/* We have recieved a disconnect msg */
+#define SFAS_NS_DISCONNECTING	8	/* We have received a disconnect msg */
 #define SFAS_NS_DISCONNECTED	9	/* We are disconnected */
 #define SFAS_NS_RESELECTED	10	/* We was reselected */
 #define SFAS_NS_DONE		11	/* Done. Prephsase to FINISHED */
@@ -136,7 +136,7 @@ struct nexus {
 
 #define SFAS_NF_SELECT_ME	0x0002	/* Nexus is set up, waiting for bus */
 
-#define SFAS_NF_HAS_MSG		0x0010	/* We have recieved a complete msg */
+#define SFAS_NF_HAS_MSG		0x0010	/* We have received a complete msg */
 
 #define SFAS_NF_DO_SDTR		0x0020	/* We should send a SDTR */
 #define SFAS_NF_SDTR_SENT	0x0040	/* We have sent a SDTR */

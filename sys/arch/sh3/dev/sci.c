@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.14 2001/05/30 15:24:36 lukem Exp $ */
+/* $NetBSD: sci.c,v 1.15 2001/06/12 15:17:20 wiz Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -332,7 +332,7 @@ InitializeSci(bps)
 	 */
 	WaitFor(1);
 
-	/* Send permission, Recieve permission ON */
+	/* Send permission, Receive permission ON */
 	SHREG_SCSCR = SCSCR_TE | SCSCR_RE;
 
 	/* Serial Status Register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.29 2000/05/28 01:28:52 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.30 2001/06/12 15:17:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1619,7 +1619,7 @@ pdq_initialize(
     dbp = pdq->pdq_dbp;
 
     PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", dbp, pdq->pdq_pa_descriptor_block));
-    PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_receives));
+    PDQ_PRINTF(("    Receive Queue          = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_receives));
     PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_transmits));
     PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_host_smt));
     PDQ_PRINTF(("    Command Response Queue = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_command_responses));

@@ -2,7 +2,7 @@ The script endpoint can be executed either as a single endpoint (ie, when
 no forms are present) or is executed when a form is processed.  The script
 is passed all of the form field contents as arguments.  This includes any
 invisible, or uneditable fields.  If a field is left blank the script will
-recieve a argument of '' or a null string.  All variables are passed in
+receive a argument of '' or a null string.  All variables are passed in
 the order they appear in the form.
 
 A simple example is shown below:
@@ -38,4 +38,4 @@ the script, based on the exit code.  A script which produces no output
 will be confusing to users.
 
 
-$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $
+$NetBSD: help,v 1.2 2001/06/12 15:17:16 wiz Exp $

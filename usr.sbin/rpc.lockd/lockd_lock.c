@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.6 2001/04/06 11:13:51 wiz Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.7 2001/06/12 15:17:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -162,7 +162,7 @@ getlock(lckarg, rqstp, flags)
 		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
 	if (lckarg->alock.fh.n_len != sizeof(fhandle_t)) {
-		syslog(LOG_DEBUG, "recieved fhandle size %d, local size %d",
+		syslog(LOG_DEBUG, "received fhandle size %d, local size %d",
 		    lckarg->alock.fh.n_len, (int)sizeof(fhandle_t));
 	}
 	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, sizeof(fhandle_t));

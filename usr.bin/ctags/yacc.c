@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.c,v 1.5 2001/05/03 22:25:00 ross Exp $	*/
+/*	$NetBSD: yacc.c,v 1.6 2001/06/12 15:17:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yacc.c,v 1.5 2001/05/03 22:25:00 ross Exp $");
+__RCSID("$NetBSD: yacc.c,v 1.6 2001/06/12 15:17:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ toss_yysec()
 	 * state == 0 : waiting
 	 * state == 1 : received a newline
 	 * state == 2 : received first %
-	 * state == 3 : recieved second %
+	 * state == 3 : received second %
 	 */
 	lineftell = ftell(inf);
 	for (state = 0; GETC(!=, EOF);)

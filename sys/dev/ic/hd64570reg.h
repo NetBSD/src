@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.7 2001/06/12 11:48:51 wiz Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.8 2001/06/12 15:17:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -354,7 +354,7 @@ struct hdlc_llc_header {
 #define SCA_TXS_CLK_MASK	0x70	/* which clock source */
 #define SCA_TXS_CLK_LINE	0x00	/* TXC line input */
 #define SCA_TXS_CLK_INTERNAL	0x40	/* Baud Rate Gen. output */
-#define SCA_TXS_CLK_RXCLK	0x60	/* Recieve clock */
+#define SCA_TXS_CLK_RXCLK	0x60	/* Receive clock */
 
 #define SCA_ST0_RXRDY           0x01
 #define SCA_ST0_TXRDY           0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.1 1995/10/02 00:28:22 thorpej Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.2 2001/06/12 15:17:18 wiz Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -290,7 +290,7 @@ struct	mt_stat {
  *	185	Self test protocol error
  *	188	HPIB parity error
  *	189	Operator reset during protocol sequence
- *	190	Device clear recieved
+ *	190	Device clear received
  */
 
 /* SR6 is count of commands accepted since Immediate Response command failed */

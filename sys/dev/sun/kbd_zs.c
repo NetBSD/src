@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.6 2000/05/19 05:26:18 eeh Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.7 2001/06/12 15:17:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -323,7 +323,7 @@ kbd_zs_stint(cs, force)
 }
 
 /*
- * Get input from the recieve ring and pass it on.
+ * Get input from the receive ring and pass it on.
  * Note: this is called at splsoftclock()
  */
 static void

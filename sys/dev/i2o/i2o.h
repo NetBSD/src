@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.4 2001/04/01 15:02:08 ad Exp $	*/
+/*	$NetBSD: i2o.h,v 1.5 2001/06/12 15:17:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -1013,8 +1013,8 @@ struct i2o_lan_send_reply {
 	u_int32_t	tctx[1];
 };
 
-#define	I2O_LAN_RECIEVE_POST		0x3e
-struct i2o_lan_recieve_post {
+#define	I2O_LAN_RECEIVE_POST		0x3e
+struct i2o_lan_receive_post {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
@@ -1032,7 +1032,7 @@ struct i2o_lan_pdb {
 #define	I2O_LAN_FRAG_VALID		0x00
 #define	I2O_LAN_FRAG_VALID_MASK		foo
 
-struct i2o_lan_recieve_reply {
+struct i2o_lan_receive_reply {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.9 2000/12/01 02:19:43 simonb Exp $	*/
+/*	$NetBSD: ip.c,v 1.10 2001/06/12 15:17:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.9 2000/12/01 02:19:43 simonb Exp $");
+__RCSID("$NetBSD: ip.c,v 1.10 2001/06/12 15:17:29 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ labelip(void)
 	RHD(6,  "  packets output via raw IP");	
 	RHD(7,  "  total UDP packets sent");
 
-	RHD(9, "total UDP packets recieved");
+	RHD(9, "total UDP packets received");
 	RHD(10, "  too short for header");	
 	RHD(11, "  invalid checksum");	
 	RHD(12, "  invalid length");	

@@ -1,4 +1,4 @@
-.\"	$NetBSD: trekmanual.nr,v 1.2 1995/04/22 10:59:45 cgd Exp $
+.\"	$NetBSD: trekmanual.nr,v 1.3 2001/06/12 15:17:12 wiz Exp $
 .br
 .po 10
 .if n \!.
@@ -692,7 +692,7 @@ with energy, photon torpedoes, and life support reserves.
 Repairs are also done faster at starbase.
 Any prisoners you have taken
 are unloaded.
-You do not recieve points
+You do not receive points
 for taking prisoners
 until this time.
 .pp

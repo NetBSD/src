@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.3 2000/03/22 11:22:22 onoe Exp $ */
+/* $NetBSD: awireg.h,v 1.4 2001/06/12 15:17:21 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@
 #define AWI_INTMASK2		0x4fd
 
 /* Bits in AWI_INTSTAT2/INTMASK2 */
-#define AWI_INT2_RXMGT			0x80 		/* mgt/ps recieved */
+#define AWI_INT2_RXMGT			0x80 		/* mgt/ps received */
 #define AWI_INT2_RXDATA			0x40 		/* data received */
 #define AWI_INT2_TXMGT			0x10		/* mgt tx done */
 #define AWI_INT2_TXCF			0x08		/* CF tx done */

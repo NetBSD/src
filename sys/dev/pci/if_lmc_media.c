@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.5 2001/04/12 07:50:54 itojun Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.6 2001/06/12 15:17:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -400,7 +400,7 @@ lmc_ds3_watchdog (lmc_softc_t * const sc)
 	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
 	if (sc->lmc_miireg16 & 0x0018)
 	{
-		printf("%s: AIS Recieved\n", sc->lmc_xname);
+		printf("%s: AIS Received\n", sc->lmc_xname);
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 	}
 }
@@ -1124,12 +1124,12 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 {
 	int t1stat;
 
-	/* read alarm 1 status (recieve) */
+	/* read alarm 1 status (receive) */
 	t1stat = lmc_t1_read (sc, 0x47);
 	/* blue alarm -- RAIS */
 	if (t1stat & 0x08) {
 		if (sc->lmc_blue != 1)
-			printf ("%s: AIS Recieved\n", sc->lmc_xname);
+			printf ("%s: AIS Received\n", sc->lmc_xname);
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 		sc->lmc_blue = 1;
 	} else {
@@ -1155,12 +1155,12 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 	sc->lmc_red = 0;
 	}
 
-	/* check for Recieve Multiframe Yellow Alarm
-	 * Ignore Recieve Yellow Alarm
+	/* check for Receive Multiframe Yellow Alarm
+	 * Ignore Receive Yellow Alarm
 	 */
 	if (t1stat & 0x80) {
 		if (sc->lmc_yel != 1) {
-			printf ("%s: Recieve Yellow Alarm\n", sc->lmc_xname);
+			printf ("%s: Receive Yellow Alarm\n", sc->lmc_xname);
 		}
 			lmc_led_on (sc, LMC_DS3_LED0 | LMC_DS3_LED2);
 			sc->lmc_yel = 1;
