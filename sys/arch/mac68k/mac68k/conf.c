@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1995/04/10 10:02:03 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1995/04/10 12:59:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,18 +137,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
 
-#define	cdev_adb_init(n) { \
-	dev_init(1,n,open), dev_init(1,n,close), dev_init(1,n,read), \
-	(dev_type_write((*))) nullop, dev_init(1,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, \
-	0, dev_init(1,n,select), (dev_type_reset((*))) nullop, 0 }
-
-#define	cdev_clock_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, \
-	0, (dev_type_select((*))) nullop, dev_init(c,n,mmap), 0 }
-
 cdev_decl(cn);
 cdev_decl(ctty);
 
@@ -211,12 +199,12 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 16 */
 /*	cdev_disk_init(NCH,ch),		 17: SCSI autochanger */
 	cdev_notdef(),			/* 17: until we find chstrategy... */
-	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
+	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	cdev_tape_init(NST,st),		/* 20: SCSI tape */
+	cdev_notdef(),			/* 20 */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
-	cdev_adb_init(adb),		/* 23: ADB event interface */
+	cdev_mouse_init(adb),		/* 23: ADB event interface */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 25: loadable module driver */
 	cdev_lkm_dummy(),		/* 26 */
