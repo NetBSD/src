@@ -1,4 +1,40 @@
-/*	$NetBSD: linux_sem.h,v 1.1 1995/08/15 21:14:35 fvdl Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.2 1998/10/01 03:48:32 erh Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,8 +67,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SEM_H
-#define _LINUX_SEM_H
+#ifndef _COMMON_LINUX_SEM_H
+#define _COMMON_LINUX_SEM_H
+
+#include <sys/sem.h>
 
 /*
  * Operations for semctl(2), in addition to IPC_STAT and IPC_SET
@@ -69,4 +107,25 @@ union linux_semun {
 	void			*l___pad;
 };
 
-#endif /* _LINUX_SEM_H */
+/* Pretend the sys_semctl syscall is defined */
+struct linux_sys_semctl_args {
+	syscallarg(int) semid;
+	syscallarg(int) semnum;
+	syscallarg(int) cmd;
+	syscallarg(union linux_semun) arg;
+};
+
+
+#ifdef SYSVSEM
+#ifdef _KERNEL
+__BEGIN_DECLS
+int linux_sys_semctl __P((struct proc *, void *, register_t *));
+void bsd_to_linux_semid_ds __P((struct semid_ds *,
+				       struct linux_semid_ds *));
+void linux_to_bsd_semid_ds __P((struct linux_semid_ds *,
+				       struct semid_ds *));
+__END_DECLS
+#endif	/* !_KERNEL */
+#endif	/* !SYSVSEM */
+
+#endif /* !_COMMON_LINUX_SEM_H */
