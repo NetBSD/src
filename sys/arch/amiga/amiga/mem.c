@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1995/10/05 12:40:56 chopps Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 1995/10/09 02:46:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,19 +141,25 @@ mmrw(dev, uio, flags)
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#ifdef DEBUG
 			if (v < NBPG) {
-				if (uio->uio_rw != UIO_READ)
-					return (EFAULT);
-				if (zeropage == NULL) {
-					zeropage = (caddr_t)
-					    malloc(CLBYTES, M_TEMP, M_WAITOK);
-					bzero(zeropage, CLBYTES);
-				}
-				c = min(c, NBPG - (int)v);
-				v = (vm_offset_t) zeropage;
-			}
+#ifdef DEBUG
+				/*
+				 * For now, return zeros on read of page 0
+				 * and EFAULT for writes.
+				 */
+				if (uio->uio_rw == UIO_READ) {
+					if (zeropage == NULL) {
+						zeropage = (caddr_t)
+						    malloc(CLBYTES, M_TEMP,
+						    M_WAITOK);
+						bzero(zeropage, CLBYTES);
+					}
+					c = min(c, NBPG - (int)v);
+					v = (vm_offset_t) zeropage;
+				} else
 #endif
+					return (EFAULT);
+			}
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

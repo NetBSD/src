@@ -11,26 +11,26 @@ installed on your hard disk.  If you wish to stop the installation,
 you may hit Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 
-	First you need to get yourself into NetBSD.  This can be
-	done in a couple ways, both of which currently require
-	AmigaDOS.
+>>>	transfer installation file system to the swap partition.
+>>>	Does this go here, or in the hard disk prep section?
 
-	You can insert the AmigaDOS kernel boot floppy and reboot
-	or if you have downloaded a kernel to an AmigaDOS partition
-	along with loadbsd you can run it from the CLI like so:
+>>>	Getting loadbsd, ixemul.library, and netbsd onto AmigaDOS
+>>>	partition.
+	Next you need to get yourself into NetBSD by loading the
+	kernel from AmigaDOS with loadbsd like so:
 
 		loadbsd -b netbsd
 
 	You should see the screen clear and some information about
-	your system as the kernel configures the hardware.  Then
-	you will be prompted for a root device.  At this time remove
-	the AmigaDOS kernel boot floppy from the drive if present and
-	insert the BSD install floppy.  Now type `fd0' to boot off of
-	your floppy drive 0.
+	your system as the kernel configures the hardware.  Note which
+	hard disk device(s) are configured (sd0, sd1, etc).  Then
+	you will be prompted for a root device.  At this time type
+	'sd0*'.
+>>>	Need to document what device number to actually use.
 
 	The system should continue to boot.  For now ignore WARNING:
-	messages about bad dates in clocks and swap space and about
-	a missing /etc/spwd.db (it didn't fit, *shrug*).  Eventually
+	messages about bad dates in clocks and swap space.  Eventually
+>>>	                                       ^^^^^^^^^^???
 	you will be asked to enter the pathname of the shell, just
 	hit return.  After a short while you should see a welcome
 	message and a prompt, asking if you wish to proceed with the
@@ -110,11 +110,11 @@ begin again from scratch.
 		to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base10
+			Extract base11
 
 		and to extract the games distribution:
 
-			Extract game10
+			Extract game11
 
 		If the distribution sets are in different directories,
 		you will need to cd to each directory in turn, runing
@@ -157,11 +157,11 @@ begin again from scratch.
 		wish to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base10
+			Extract base11
 
 		and to extract the games distribution:
 
-			Extract game10
+			Extract game11
 
 		After the extraction is complete, go to the location
 		of the next set you want to extract, "Set_tmp_dir"
@@ -180,7 +180,7 @@ begin again from scratch.
 		files for the game09 set, after the "Extract game09"
 		command has completed, issue the command:
 
-			rm game10.??
+			rm game11.??
 
 		Once you have extracted all sets and are at the "#" prompt
 		again, proceed to the section "Configuring Your System,"
@@ -192,6 +192,7 @@ begin again from scratch.
 		for the installation files.  /mnt/usr/distrib is
 		suggested.
 
+>>> Document using ppp or slip?
 		Configure the appropriate ethernet interface i.e. le0
 		if you have a 2065 or ed0 if you have a AMIGNET from
 		Hydra Systems.
@@ -285,6 +286,7 @@ Next you need to re-make your devices to get the ownership correct:
 
 	cd /dev
 	MAKEDEV all
+>>> Is this step still needed? - check on it!
 
 Your system is now complete but not completely configured; you
 should adjust the /etc/sendmail.cf file as necessary to suit your
@@ -308,3 +310,5 @@ functional:
 
 When it boots off of the hard drive, you will have a complete
 NetBSD system!  CONGRATULATIONS! (You really deserve them!!!)
+
+>>> Missing the step to transfer the netbsd kernel to /

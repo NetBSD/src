@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1 1995/10/02 12:57:45 chopps Exp $
+#	$Id: upgrade.sh,v 1.2 1995/10/09 02:41:35 chopps Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -80,6 +80,13 @@ getdrives() {
 		export $thisunit
 	done
 	export drivenunits
+}
+
+Convert_fstab() {
+	if [ ! -e /mnt/etc/fstab.ufs ]; then
+		mv /mnt/etc/fstab /mnt/etc/fstab.ufs
+	fi
+	sed "s/ufs/ffs/" /mnt/etc/fstab.ufs >/mnt/etc/fstab
 }
 
 echo	"Welcome to the NetBSD ${VERSION} upgrade program."
@@ -196,6 +203,12 @@ if [ $? != 0 ]; then
 fi
 echo	"Done."
 
+#<<<<<<<<<<<<<<<<<<<<<<<< update etc/fstab to ffs? >>>>>>>>>>>>>>>>>>>>>>>>
+echo	""
+echo -n	"Converting ufs entries in fstab to ffs..."
+$DONTDOIT Convert_fstab
+echo	"Done."
+
 if [ $upgradefs = YES ]; then
 	echo	""
 	echo -n	"Copying new fsck binary to your hard disk..."
@@ -209,6 +222,7 @@ if [ $upgradefs = YES ]; then
 		echo	"like you may end up having to upgrade by hand."
 		exit 1
 	fi
+	$DONTDOIT sync
 	echo	" Done."
 
 	echo	""
@@ -248,14 +262,11 @@ fi
 
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
-$DONTDOIT cp /mnt/.profile /mnt/.profile.bak
-$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
-$DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
-$DONTDOIT cp /tmp/.hdprofile /mnt/.profile
+$DONTDOIT tar -cf - sbin/mount_ffs | (cd /mnt ; tar --unlink -xpf - )
 
 echo	""
 echo	"Mounting remaining partitions..."
-$DONTDOIT chroot /mnt mount -at ufs > /dev/null 2>&1
+$DONTDOIT chroot /mnt mount -at ffs > /dev/null 2>&1
 echo	"Done."
 
 echo    ""
