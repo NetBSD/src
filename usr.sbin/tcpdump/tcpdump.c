@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.3 1995/04/24 13:27:48 cgd Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.4 1996/05/20 00:41:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -323,7 +323,11 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s: listening on %s\n", program_name, device);
 		fflush(stderr);
 	}
-	pcap_loop(pd, cnt, printer, pcap_userdata);
+	if (pcap_loop(pd, cnt, printer, pcap_userdata) < 0) {
+		(void)fprintf(stderr, "%s: pcap_loop %s\n",
+		    program_name, pcap_geterr(pd));
+		exit(1);
+	}
 	pcap_close(pd);
 	exit(0);
 }
