@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.5 1997/10/13 19:43:14 christos Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.6 1997/10/13 21:03:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.5 1997/10/13 19:43:14 christos Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.6 1997/10/13 21:03:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ int key;
 		unboard(to, from, 0);
 		subtract(from, totalfrom, crewfrom, fromcap, pcfrom);
 		subtract(to, totalto, crewto, tocap, pcto);
-		makesignal(from, "boarders from %s repelled", to);
+		makemsg(from, "boarders from %s repelled", to->shipname);
 		(void) sprintf(message, "killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
 		Write(W_SIGNAL, to, 1, (long) message, 0, 0, 0);

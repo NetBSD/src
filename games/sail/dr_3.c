@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.4 1997/10/13 19:43:32 christos Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.5 1997/10/13 21:03:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.4 1997/10/13 19:43:32 christos Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.5 1997/10/13 21:03:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,12 +134,10 @@ moveall()		/* move all comp ships */
 				if (snagged2(sp, sq) && range(sp, sq) > 1)
 					snap++;
 				if (!range(sp, sq) && !fouled2(sp, sq)) {
-					makesignal(sp,
-						"collision with %s (%c%c)", sq);
+					makesignal(sp, "collision with $$", sq);
 					if (die() < 4) {
-						makesignal(sp,
-							"fouled with %s (%c%c)",
-							sq);
+						makesignal(sp, "fouled with $$",
+						    sq);
 						Write(W_FOUL, sp, 0, l, 0, 0, 0);
 						Write(W_FOUL, sq, 0, n, 0, 0, 0);
 					}
@@ -283,10 +281,9 @@ char isdefense;
 		Write(isdefense ? W_DBP : W_OBP, from, 0,
 			n, turn, to->file->index, sections);
 		if (isdefense)
-			makesignal(from, "repelling boarders",
-				(struct ship *)0);
+			makemsg(from, "repelling boarders");
 		else
-			makesignal(from, "boarding the %s (%c%c)", to);
+			makesignal(from, "boarding the $$", to);
 	}
 }
 
