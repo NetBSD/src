@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getmntinfo.3	6.5 (Berkeley) 4/19/91
-.\"	$Id: getmntinfo.3,v 1.3 1993/11/30 21:52:46 jtc Exp $
+.\"	$Id: getmntinfo.3,v 1.4 1994/08/29 03:27:36 mycroft Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETMNTINFO 3
@@ -42,7 +42,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/mount.h>
 .Ft int
-.Fn getmntinfo "int mntbufp" "int flags"
+.Fn getmntinfo "struct statfs **mntbufp" "int flags"
 .Sh DESCRIPTION
 The
 .Fn getmntinfo
