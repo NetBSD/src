@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1998/03/21 10:02:40 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1998/05/17 19:00:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -162,12 +162,9 @@ struct	consdev constab[]={
 #define NGEN	0
 #endif
 #if VAX410 || VAX43
-#define NDZCN	1
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
-#else
-#define NDZCN	0
 #endif
-#if VAX410 || VAX43 || VAX650 || VAX630
+#if VAX650 || VAX630
 #if NQV
 	cons_init(qv),	/* QVSS/QDSS bit-mapped console driver */
 #endif
@@ -246,7 +243,6 @@ cdev_decl(ut);
 cdev_decl(idc);
 cdev_decl(fd);
 cdev_decl(gencn);
-cdev_decl(dzcn);
 cdev_decl(rx);
 cdev_decl(rl);
 cdev_decl(ccd);
@@ -398,7 +394,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 33: /dev/klog */
 	cdev_tty_init(NDHU,dhu),	/* 34: DHU-11 */
 	cdev_cnstore_init(NCRL,crl),	/* 35: Console RL02 on 8600 */
-	cdev_tty_init(NDZCN,dzcn),	/* 36: DZ11-like console on VAXst. */
+	cdev_notdef(),			/* 36 */
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
 	cdev_tape_init(NMT,mt),		/* 38: MSCP tape */
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */

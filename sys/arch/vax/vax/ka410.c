@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.7 1997/07/26 10:12:45 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.8 1998/05/17 19:00:56 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,8 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -48,9 +50,9 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/clock.h>
+#include <machine/vsbus.h>
 
 static	void	ka410_conf __P((struct device*, struct device*, void*));
-static	void	ka410_memenable __P((struct sbi_attach_args*, struct device *));
 static	void	ka410_steal_pages __P((void));
 static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
@@ -136,43 +138,15 @@ ka410_mchk(addr)
 	caddr_t addr;
 {
 	panic("Machine check");
+	return 0;
 }
-
-u_long le_iomem;			/* base addr of RAM -- CPU's view */
-u_long le_ioaddr;			/* base addr of RAM -- LANCE's view */
 
 void
 ka410_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail;
         extern  int clk_adrshift, clk_tweak;
-	int	junk;
-
-	int	i;
-	struct {
-		u_long     :2;
-		u_long data:8;
-		u_long     :22;
-	} *p;
-	int *srp;	/* Scratch Ram */
-	char *q = (void*)&srp;
-
-	srp = NULL;
-	p = (void*)KA410_SCR;
-	for (i=0; i<4; i++) {
-	  printf("p[%d] = %x, ", i, p[i].data);
-	  q[i]	= p[i].data;
-	}
-	p = (void*)KA410_SCRLEN;
-	printf("\nlen = %d\n", p->data);
-	printf("srp = 0x%x\n", srp);
-
-	for (i=0; i<0x2; i++) {
-		printf("%x:0x%x ", i*4, srp[i]);
-		if ((i & 0x07) == 0x07)
-			printf("\n");
-	}
-	printf("\n");
+	int	junk, parctl = 0;
 
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
@@ -182,40 +156,36 @@ ka410_steal_pages()
 	 */
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
 
+	/*
+	 * Setup parameters necessary to read time from clock chip.
+	 */
 	clk_adrshift = 1;       /* Addressed at long's... */
 	clk_tweak = 2;          /* ...and shift two */
-	MAPVIRT(clk_page, 2);
+	MAPVIRT(clk_page, 1);
 	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
 	    (vm_offset_t)KA410_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	/*
-	 * At top of physical memory there are some console-prom and/or
-	 * restart-specific data. Make this area unavailable.
-	 */
-	avail_end -= 10 * NBPG;
+	/* LANCE CSR & DMA memory */
+	MAPVIRT(lance_csr, 1);
+	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
+	    (vm_offset_t)NI_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	/*
-	 * If we need to map physical areas also, we can decrease avail_end
-	 * (the highest available memory-address), copy the stuff into the
-	 * gap between and use pmap_map to map it...
-	 *
-	 * Don't use the MAPPHYS macro here, since this uses and changes(!)
-	 * the value of avail_start. Use MAPVIRT even if it's name misleads.
-	 */
-	avail_end -= 10 * NBPG;		/* paranoid: has been done before */
+	MAPVIRT(vs_cpu, 1);
+	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
+	    (vm_offset_t)VS_REGS + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	avail_end = (int)srp;
+	MAPVIRT(dz_regs, 2);
+	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
+	    (vm_offset_t)DZ_CSR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	avail_end &= ~0xffff;		/* make avail_end 64K-aligned */
-	avail_end -= (64 * 1024);	/* steal 64K for LANCE's iobuf */
-	le_ioaddr = avail_end;		/* ioaddr=phys, iomem=virt */
-	MAPVIRT(le_iomem, (64 * 1024)/NBPG);
-	pmap_map((vm_offset_t)le_iomem, le_ioaddr, le_ioaddr + 0xffff,
-		 VM_PROT_READ|VM_PROT_WRITE);
+	MAPVIRT(lance_addr, 1);
+	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
+	    (vm_offset_t)NI_ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	printf("le_iomem: %x, le_ioaddr: %x, srp: %x, avail_end: %x\n",
-	       le_iomem, le_ioaddr, srp, avail_end);
+	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
+	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
+		parctl = PARCTL_DMA;
 	/*
 	 * VAXstation 2000 and MicroVAX 2000: 
 	 * since there's no bus, we have to map in anything which 
@@ -237,9 +207,16 @@ ka410_steal_pages()
 	/*
 	 * Enable memory parity error detection and clear error bits.
 	 */
-	KA410_CPU_BASE->ka410_mser = 1; 
-	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
+        switch (vax_cputype) {
+        case VAX_TYP_UV2:
+		KA410_CPU_BASE->ka410_mser = 1;
+                break;
 
+        case VAX_TYP_CVAX:
+		((struct vs_cpu *)VS_REGS)->vc_parctl =
+		    parctl | PARCTL_CPEN | PARCTL_DPEN ;
+		break;
+        }
 }
 
 static void
