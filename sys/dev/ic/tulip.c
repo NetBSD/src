@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.65 2000/05/25 16:36:03 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.66 2000/05/25 16:37:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -777,7 +777,7 @@ tlp_start(ifp)
 
 #ifdef TLP_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
-			printf("     txsoft %p trainsmit chain:\n", txs);
+			printf("     txsoft %p transmit chain:\n", txs);
 			for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
 				printf("     descriptor %d:\n", seg);
 				printf("       td_status:   0x%08x\n",
@@ -1397,7 +1397,7 @@ tlp_txintr(sc)
 #ifdef TLP_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
 			int i;
-			printf("    txsoft %p trainsmit chain:\n", txs);
+			printf("    txsoft %p transmit chain:\n", txs);
 			for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
 				printf("     descriptor %d:\n", i);
 				printf("       td_status:   0x%08x\n",
