@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.18 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.19 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,13 +168,13 @@ USB_ATTACH(ulpt)
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (!ed)
 		goto nobulk;
-	if ((ed->bEndpointAddress & UE_IN) != UE_OUT ||
+	if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_OUT ||
 	    (ed->bmAttributes & UE_XFERTYPE) != UE_BULK) {
 		/* In case we are using a bidir protocol... */
 		ed = usbd_interface2endpoint_descriptor(iface, 1);
 		if (!ed)
 			goto nobulk;
-		if ((ed->bEndpointAddress & UE_IN) != UE_OUT ||
+		if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_OUT ||
 		    (ed->bmAttributes & UE_XFERTYPE) != UE_BULK)
 			goto nobulk;
 	}
