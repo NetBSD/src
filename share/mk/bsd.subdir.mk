@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.27 1997/10/11 08:16:29 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.28 1997/10/11 08:43:35 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -7,7 +7,6 @@ __initialized__:
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 .include <bsd.own.mk>
-.include <bsd.obj.mk>
 .MAIN:		all
 .endif
 
