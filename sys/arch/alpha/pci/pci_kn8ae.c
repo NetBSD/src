@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.4.2.2 1997/06/01 04:13:35 cgd Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.4.2.3 1997/07/22 06:00:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.4.2.2 1997/06/01 04:13:35 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.4.2.3 1997/07/22 06:00:52 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ dec_kn8ae_intr_map(ccv, bustag, buspin, line, ihp)
                 printf("pci_map_int: bad interrupt pin %d\n", buspin);
                 return 1;
         }
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	ionode = ccp->cc_sc->dwlpx_node - 4;
 	hose = ccp->cc_sc->dwlpx_hosenum;
 
@@ -254,8 +254,10 @@ kn8ae_iointr(framep, vec)
 	}
 	vp = &vectab[ionode][hose][device];
 	if ((*vp->func)(vp->arg) == 0) {
+#if	0
 		printf("kn8ae_iointr: TLSB Node %d Hose %d Slot %d - "
 		    " unclaimed interrupt\n", ionode + 4, hose, device);
+#endif
 	}
 }
 
