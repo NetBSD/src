@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.6 2003/01/31 12:27:19 tron Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.7 2003/02/15 04:37:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,10 @@
  */
 
 
-#include <assert.h>
 #include <ucontext.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
-
-#undef PTHREAD_RUN_DEBUG
 
 #ifdef PTHREAD_RUN_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -111,13 +108,13 @@ pthread__next(pthread_t self)
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	next = PTQ_FIRST(&pthread__runqueue);
 	if (next) {
-		assert(next->pt_type == PT_THREAD_NORMAL);
+		pthread__assert(next->pt_type == PT_THREAD_NORMAL);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 	} else {
 		next = PTQ_FIRST(&pthread__idlequeue);
-		assert(next != 0);
+		pthread__assert(next != 0);
 		PTQ_REMOVE(&pthread__idlequeue, next, pt_runq);
-		assert(next->pt_type == PT_THREAD_IDLE);
+		pthread__assert(next->pt_type == PT_THREAD_IDLE);
 		SDPRINTF(("(next %p) returning idle thread %p\n", self, next));
 	}
 	pthread_spinunlock(self, &pthread__runqueue_lock);
@@ -133,8 +130,8 @@ pthread__sched(pthread_t self, pthread_t thread)
 
 	SDPRINTF(("(sched %p) scheduling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
-	assert (thread->pt_type == PT_THREAD_NORMAL);
-	assert (thread->pt_spinlocks == 0);
+	pthread__assert (thread->pt_type == PT_THREAD_NORMAL);
+	pthread__assert (thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
 	thread->rescheds++;
 #endif
@@ -153,8 +150,8 @@ pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq)
 	PTQ_FOREACH(thread, threadq, pt_sleep) {
 		SDPRINTF(("(sched_sleepers %p) scheduling %p\n", self, thread));
 		thread->pt_state = PT_STATE_RUNNABLE;
-		assert (thread->pt_type == PT_THREAD_NORMAL);
-		assert (thread->pt_spinlocks == 0);
+		pthread__assert (thread->pt_type == PT_THREAD_NORMAL);
+		pthread__assert (thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
 		thread->rescheds++;
 #endif
@@ -222,7 +219,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
-		assert (qhead->pt_spinlocks == 0);
+		pthread__assert (qhead->pt_spinlocks == 0);
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;
@@ -231,8 +228,8 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->rescheds++;
 #endif
 			SDPRINTF(("(bulk %p) scheduling %p\n", self, qhead));
-			assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != qhead);
-			assert(PTQ_FIRST(&pthread__runqueue) != qhead);
+			pthread__assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != qhead);
+			pthread__assert(PTQ_FIRST(&pthread__runqueue) != qhead);
 			PTQ_INSERT_TAIL(&pthread__runqueue, qhead, pt_runq);
 		} else if (qhead->pt_type == PT_THREAD_IDLE) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
