@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.5 1994/10/05 17:33:50 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.6 1994/10/06 05:41:45 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -79,7 +79,7 @@ static char *rcsid = "$Id: msgcat.c,v 1.5 1994/10/05 17:33:50 jtc Exp $";
 static nl_catd loadCat();
 static nl_catd loadSet();
 
-nl_catd 	catopen( name, type)
+nl_catd 	__catopen( name, type)
 char *name;
 int type;
 {
@@ -161,7 +161,7 @@ int type;
  *			>=9	>=10	>=11
  *
  */
-MCSetT	*MCGetSet( cat, setId)
+static MCSetT	*MCGetSet( cat, setId)
 MCCatT *cat;
 int setId;
 {
@@ -199,7 +199,7 @@ int setId;
 }
 
     
-MCMsgT	*MCGetMsg( set, msgId)
+static MCMsgT	*MCGetMsg( set, msgId)
 MCSetT *set;
 int msgId;
 {
@@ -235,7 +235,7 @@ int msgId;
     return(msg);
 }
 
-char		*catgets( catd, setId, msgId, dflt)
+char		*__catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
@@ -252,7 +252,7 @@ char *dflt;
 }
 
 
-void		catclose( catd)
+void		__catclose( catd)
 nl_catd catd;
 {
     MCCatT	*cat = (MCCatT *) catd;
