@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/17 23:18:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/22 02:52:37 lukem Exp $
 
 .include <bsd.own.mk>
 
-# This include file keeps the includes/build of libstdc++ separate,
-# to avoid issues like "iostream.cc" using the default ".cc:" rule
-# to build the "iostream" file (which is actually a header).
-
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
+
+.cc: # disable .cc->NULL transform
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
