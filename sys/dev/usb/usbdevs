@@ -1,4 +1,4 @@
-a$NetBSD: usbdevs,v 1.34 1999/06/26 16:26:20 tron Exp $
+a$NetBSD: usbdevs,v 1.35 1999/06/28 04:09:53 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix Corp.
+vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
@@ -128,6 +129,9 @@ product PHILIPS HUB		0x0201	hub
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* STMicroelectronics products */
+product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
