@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.4 2002/10/01 02:54:12 thorpej Exp $ */
+/* $NetBSD: sbscd.c,v 1.5 2002/10/02 15:52:26 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -46,7 +46,7 @@ static int	sbscd_match(struct device *, struct cfdata *, void *);
 static void	sbscd_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sbscd, sizeof(struct device),
-    sbscd_match, sbscd_attach, NULL, NULL)
+    sbscd_match, sbscd_attach, NULL, NULL);
 
 static int	sbscd_print(void *, const char *);
 static int	sbscd_submatch(struct device *, struct cfdata *, void *);

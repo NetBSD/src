@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.10 2002/10/01 21:24:44 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.11 2002/10/02 15:52:35 thorpej Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -57,7 +57,7 @@ static void wdogattach(struct device *, struct device *, void *);
 static int wdogintr(void *);
 
 CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
-    wdogmatch, wdogattach, NULL, NULL)
+    wdogmatch, wdogattach, NULL, NULL);
 
 extern struct cfdriver wdog_cd;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.4 2002/10/01 02:54:12 thorpej Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.5 2002/10/02 15:52:26 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,7 +50,7 @@ static int smbus_print(void *, const char *);
 static int smbus_submatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(smbus, sizeof(struct device),
-    smbus_match, smbus_attach, NULL, NULL)
+    smbus_match, smbus_attach, NULL, NULL);
 
 /* autoconfiguration match information for zbbus children */
 struct smbus_attach_locs {

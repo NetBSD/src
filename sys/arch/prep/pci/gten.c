@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.7 2002/10/01 21:40:27 thorpej Exp $	*/
+/*	$NetBSD: gten.c,v 1.8 2002/10/02 15:52:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ static	void	gten_attach (struct device *, struct device *, void *);
 static	int	gten_print (void *, const char *);
 
 CFATTACH_DECL(gten, sizeof(struct gten_softc),
-    gten_match, gten_attach, NULL, NULL)
+    gten_match, gten_attach, NULL, NULL);
 
 static struct rasops_info gten_console_ri;
 static pcitag_t gten_console_pcitag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2002/10/01 21:36:00 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2002/10/02 15:52:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct pcib_softc {
 };
 
 CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, NULL, NULL)
+    pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback __P((struct device *));
 int	pcib_print __P((void *, const char *));

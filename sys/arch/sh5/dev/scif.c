@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.6 2002/10/01 19:24:48 thorpej Exp $	*/
+/*	$NetBSD: scif.c,v 1.7 2002/10/02 15:52:36 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -259,7 +259,7 @@ unsigned int scifcn_speed = 38400;
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
 CFATTACH_DECL(scif, sizeof(struct scif_softc),
-    scif_match, scif_attach, NULL, NULL)
+    scif_match, scif_attach, NULL, NULL);
 
 extern struct cfdriver scif_cd;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.3 2002/10/01 21:31:35 thorpej Exp $ */
+/* $NetBSD: rtc.c,v 1.4 2002/10/02 15:52:31 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -104,7 +104,7 @@ static int time_writertc(int, int, int, int);
 
 
 CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
-    rtc_match, rtc_attach, NULL, NULL)
+    rtc_match, rtc_attach, NULL, NULL);
 
 static int rtcfound = 0;
 struct rtc_softc *the_rtc;

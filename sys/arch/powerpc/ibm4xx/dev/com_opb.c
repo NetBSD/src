@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.7 2002/10/01 02:49:56 thorpej Exp $ */
+/* $NetBSD: com_opb.c,v 1.8 2002/10/02 15:52:27 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -59,7 +59,7 @@ static int	com_opb_probe(struct device *, struct cfdata *, void *);
 static void	com_opb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_opb, sizeof(struct com_opb_softc),
-    com_opb_probe, com_opb_attach, NULL, NULL)
+    com_opb_probe, com_opb_attach, NULL, NULL);
 
 int
 com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)

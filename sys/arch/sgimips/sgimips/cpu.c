@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2002/10/01 21:29:43 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2002/10/02 15:52:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,7 +53,7 @@ static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
-    cpu_match, cpu_attach, NULL, NULL)
+    cpu_match, cpu_attach, NULL, NULL);
 
 static void
 sgimips_find_l2cache(struct arcbios_component *comp,

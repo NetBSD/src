@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.4 2002/10/01 21:29:42 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.5 2002/10/02 15:52:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -48,7 +48,7 @@ static void	hpc_attach(struct device *, struct device *, void *);
 static int	hpc_print(void *, const char *);
 
 CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
-    hpc_match, hpc_attach, NULL, NULL)
+    hpc_match, hpc_attach, NULL, NULL);
 
 static int
 hpc_match(parent, match, aux)

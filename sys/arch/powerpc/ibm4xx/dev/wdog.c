@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.5 2002/10/01 02:49:56 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.6 2002/10/02 15:52:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ struct wdog_softc {
 };
 
 CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
-    wdog_match, wdog_attach, NULL, NULL)
+    wdog_match, wdog_attach, NULL, NULL);
 
 static int
 wdog_match(struct device *parent, struct cfdata *cf, void *aux)

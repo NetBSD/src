@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.6 2002/10/01 19:24:48 thorpej Exp $	*/
+/*	$NetBSD: intc.c,v 1.7 2002/10/02 15:52:36 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@ static int intcmatch(struct device *, struct cfdata *, void *);
 static void intcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(intc, sizeof(struct intc_softc),
-    intcmatch, intcattach, NULL, NULL)
+    intcmatch, intcattach, NULL, NULL);
 extern struct cfdriver intc_cd;
 
 static void intc_enable(void *, u_int, int, int);

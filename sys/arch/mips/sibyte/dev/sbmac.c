@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.5 2002/10/01 02:54:11 thorpej Exp $ */
+/* $NetBSD: sbmac.c,v 1.6 2002/10/02 15:52:25 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -253,7 +253,7 @@ static void sbmac_tick(void *arg);
 /* Globals */
 
 CFATTACH_DECL(sbmac, sizeof(struct sbmac_softc),
-    sbmac_match, sbmac_attach, NULL, NULL)
+    sbmac_match, sbmac_attach, NULL, NULL);
 
 static uint32_t sbmac_mii_bitbang_read(struct device *self);
 static void sbmac_mii_bitbang_write(struct device *self, uint32_t val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_sh.c,v 1.3 2002/10/01 19:24:47 thorpej Exp $	*/
+/*	$NetBSD: cpu_sh.c,v 1.4 2002/10/02 15:52:36 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,7 +56,7 @@ static int cpu_shmatch(struct device *, struct cfdata *, void *);
 static void cpu_shattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu_sh, sizeof(struct device),
-    cpu_shmatch, cpu_shattach, NULL, NULL)
+    cpu_shmatch, cpu_shattach, NULL, NULL);
 extern struct cfdriver cpu_cd;
 
 #define	CPU_SH_MODULE_ID	0x51e2

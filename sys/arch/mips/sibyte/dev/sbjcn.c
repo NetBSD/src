@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.3 2002/10/01 02:54:11 thorpej Exp $ */
+/* $NetBSD: sbjcn.c,v 1.4 2002/10/02 15:52:25 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -231,7 +231,7 @@ static int	sbjcn_match(struct device *, struct cfdata *, void *);
 static void	sbjcn_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
-    sbjcn_match, sbjcn_attach, NULL, NULL)
+    sbjcn_match, sbjcn_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))

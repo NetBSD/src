@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mace.c,v 1.4 2002/10/01 21:29:41 thorpej Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.5 2002/10/02 15:52:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -66,7 +66,7 @@ static int	lpt_mace_match(struct device *, struct cfdata *, void *);
 static void	lpt_mace_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_mace, sizeof(struct lpt_mace_softc),
-    lpt_mace_match, lpt_mace_attach, NULL, NULL)
+    lpt_mace_match, lpt_mace_attach, NULL, NULL);
 
 static int
 lpt_mace_match(parent, match, aux)
