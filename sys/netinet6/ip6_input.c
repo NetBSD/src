@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.68 2003/10/30 01:43:09 simonb Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.69 2003/11/12 15:25:19 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.68 2003/10/30 01:43:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.69 2003/11/12 15:25:19 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1446,8 +1446,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	int old, error;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
+	/* All sysctl names (except ifq.*) at this level are terminal. */
+	if ((namelen != 1) && !(namelen == 2 && name[0] == IPCTL_IFQ))
 		return ENOTDIR;
 
 	switch (name[0]) {
@@ -1554,6 +1554,9 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 #endif
 	case IPV6CTL_MAXFRAGS:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
+	case IPV6CTL_IFQ:
+		return sysctl_ifq(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen, &ip6intrq);
 	default:
 		return EOPNOTSUPP;
 	}
