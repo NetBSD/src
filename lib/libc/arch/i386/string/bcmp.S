@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: bcmp.S,v 1.4 1994/03/12 01:39:55 jtc Exp $
+ *	$Id: bcmp.S,v 1.5 1994/03/22 01:15:47 jtc Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: bcmp.S,v 1.4 1994/03/12 01:39:55 jtc Exp $")
+	RCSID("$Id: bcmp.S,v 1.5 1994/03/22 01:15:47 jtc Exp $")
 #endif
 
 /*
@@ -48,17 +48,16 @@ ENTRY(bcmp)
 	pushl	%esi
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
-	movl	20(%esp),%edx
 	xorl	%eax,%eax		/* clear return value */
 	cld				/* set compare direction forward */
 
-	movl	%edx,%ecx		/* compare by words */
+	movl	20(%esp),%ecx		/* compare by words */
 	shrl	$2,%ecx
 	repe
 	cmpsl
 	jne	L1
 
-	movl	%edx,%ecx		/* compare remainder by bytes */
+	movl	20(%esp),%ecx		/* compare remainder by bytes */
 	andl	$3,%ecx
 	repe
 	cmpsb
