@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.57 2000/01/31 10:39:26 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.58 2000/01/31 14:18:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1342,7 +1342,7 @@ udp_usrreq(so, req, m, nam, control, p)
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_ttl = ip_defttl;
 #ifdef IPSEC
-		error = ipsec_init_policy(&inp->inp_sp);
+		error = ipsec_init_policy(so, &inp->inp_sp);
 		if (error != 0) {
 			in_pcbdetach(inp);
 			break;

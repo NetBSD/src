@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.85 1999/12/15 06:28:43 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.86 2000/01/31 14:18:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1657,7 +1657,8 @@ ipsec4_hdrsiz_tcp(tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET:
-		hdrsiz = ipsec4_hdrsiz(tp->t_template, inp);
+		/* XXX: should use currect direction. */
+		hdrsiz = ipsec4_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, inp);
 		break;
 	default:
 		hdrsiz = 0;
@@ -1679,7 +1680,8 @@ ipsec6_hdrsiz_tcp(tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET6:
-		hdrsiz = ipsec6_hdrsiz(tp->t_template, in6p);
+		/* XXX: should use currect direction. */
+		hdrsiz = ipsec6_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, in6p);
 		break;
 	case AF_INET:
 		/* mapped address case - tricky */

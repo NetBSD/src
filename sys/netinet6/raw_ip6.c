@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.15 2000/01/06 15:46:11 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.16 2000/01/31 14:19:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -513,7 +513,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 #ifdef IPSEC
-		error = ipsec_init_policy(&in6p->in6p_sp);
+		error = ipsec_init_policy(so, &in6p->in6p_sp);
 		if (error != 0) {
 			in6_pcbdetach(in6p);
 			break;

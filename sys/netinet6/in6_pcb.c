@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.13 2000/01/26 17:06:36 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.14 2000/01/31 14:19:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -731,8 +731,6 @@ in6_pcbdetach(in6p)
 	struct socket *so = in6p->in6p_socket;
 
 #ifdef IPSEC
-	if (sotoin6pcb(so) != 0)
-		key_freeso(so);
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
 	sotoin6pcb(so) = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.6 1999/08/24 00:46:13 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.7 2000/01/31 14:19:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
 
 #define _INADDR(in) ((struct sockaddr_in *)(in))
 
-#if defined(INET6)
+#ifdef INET6
 #define _IN6ADDR(in6) ((struct sockaddr_in6 *)(in6))
 #define _SALENBYAF(family) \
 	(((family) == AF_INET) ? \

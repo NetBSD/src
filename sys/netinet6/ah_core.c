@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.14 2000/01/16 18:06:03 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.15 2000/01/31 14:19:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,6 +53,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -61,11 +62,9 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
-#include <netinet/in_pcb.h>
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #endif
@@ -77,9 +76,19 @@
 #endif
 #include <netkey/keyv2.h>
 #include <netkey/keydb.h>
+#ifdef HAVE_MD5
 #include <sys/md5.h>
+#else
+#include <crypto/md5.h>
+#endif
+#ifdef HAVE_SHA1
 #include <sys/sha1.h>
 #define SHA1_RESULTLEN	20
+#else
+#include <crypto/sha1.h>
+#endif
+
+#include <net/net_osdep.h>
 
 #define	HMACSIZE	16
 
@@ -88,34 +97,34 @@
 static char zerobuf[ZEROBUFLEN];
 #endif
 
-static int ah_sumsiz_1216 __P((struct secas *));
-static int ah_sumsiz_zero __P((struct secas *));
-static int ah_none_mature __P((struct secas *));
+static int ah_sumsiz_1216 __P((struct secasvar *));
+static int ah_sumsiz_zero __P((struct secasvar *));
+static int ah_none_mature __P((struct secasvar *));
 static void ah_none_init __P((struct ah_algorithm_state *,
-	struct secas *));
+	struct secasvar *));
 static void ah_none_loop __P((struct ah_algorithm_state *, caddr_t, size_t));
 static void ah_none_result __P((struct ah_algorithm_state *, caddr_t));
-static int ah_keyed_md5_mature __P((struct secas *));
+static int ah_keyed_md5_mature __P((struct secasvar *));
 static void ah_keyed_md5_init __P((struct ah_algorithm_state *,
-	struct secas *));
+	struct secasvar *));
 static void ah_keyed_md5_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_keyed_md5_result __P((struct ah_algorithm_state *, caddr_t));
-static int ah_keyed_sha1_mature __P((struct secas *));
+static int ah_keyed_sha1_mature __P((struct secasvar *));
 static void ah_keyed_sha1_init __P((struct ah_algorithm_state *,
-	struct secas *));
+	struct secasvar *));
 static void ah_keyed_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_keyed_sha1_result __P((struct ah_algorithm_state *, caddr_t));
-static int ah_hmac_md5_mature __P((struct secas *));
+static int ah_hmac_md5_mature __P((struct secasvar *));
 static void ah_hmac_md5_init __P((struct ah_algorithm_state *,
-	struct secas *));
+	struct secasvar *));
 static void ah_hmac_md5_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_hmac_md5_result __P((struct ah_algorithm_state *, caddr_t));
-static int ah_hmac_sha1_mature __P((struct secas *));
+static int ah_hmac_sha1_mature __P((struct secasvar *));
 static void ah_hmac_sha1_init __P((struct ah_algorithm_state *,
-	struct secas *));
+	struct secasvar *));
 static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_hmac_sha1_result __P((struct ah_algorithm_state *, caddr_t));
@@ -137,41 +146,42 @@ struct ah_algorithm ah_algorithms[] = {
 };
 
 static int
-ah_sumsiz_1216(sa)
-	struct secas *sa;
+ah_sumsiz_1216(sav)
+	struct secasvar *sav;
 {
-	if (!sa)
+	if (!sav)
 		return -1;
-	if (sa->flags & SADB_X_EXT_OLD)
+	if (sav->flags & SADB_X_EXT_OLD)
 		return 16;
 	else
 		return 12;
 }
 
 static int
-ah_sumsiz_zero(sa)
-	struct secas *sa;
+ah_sumsiz_zero(sav)
+	struct secasvar *sav;
 {
-	if (!sa)
+	if (!sav)
 		return -1;
 	return 0;
 }
 
 static int
-ah_none_mature(sa)
-	struct secas *sa;
+ah_none_mature(sav)
+	struct secasvar *sav;
 {
-	if (sa->type == SADB_SATYPE_AH) {
-		printf("ah_none_mature: protocol and algorithm mismatch.\n");
+	if (sav->sah->saidx.proto == IPPROTO_AH) {
+		ipseclog((LOG_ERR,
+		    "ah_none_mature: protocol and algorithm mismatch.\n"));
 		return 1;
 	}
 	return 0;
 }
 
 static void
-ah_none_init(state, sa)
+ah_none_init(state, sav)
 	struct ah_algorithm_state *state;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	state->foo = NULL;
 }
@@ -192,30 +202,30 @@ ah_none_result(state, addr)
 }
 
 static int
-ah_keyed_md5_mature(sa)
-	struct secas *sa;
+ah_keyed_md5_mature(sav)
+	struct secasvar *sav;
 {
 	/* anything is okay */
 	return 0;
 }
 
 static void
-ah_keyed_md5_init(state, sa)
+ah_keyed_md5_init(state, sav)
 	struct ah_algorithm_state *state;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	if (!state)
 		panic("ah_keyed_md5_init: what?");
 
-	state->sa = sa;
+	state->sav = sav;
 	state->foo = (void *)malloc(sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
 	if (state->foo == NULL)
 		panic("ah_keyed_md5_init: what?");
 	MD5Init((MD5_CTX *)state->foo);
-	if (state->sa) {
+	if (state->sav) {
 		MD5Update((MD5_CTX *)state->foo, 
-			(u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
+			(u_int8_t *)_KEYBUF(state->sav->key_auth),
+			(u_int)_KEYLEN(state->sav->key_auth));
 
 	    {
 		/*
@@ -227,11 +237,11 @@ ah_keyed_md5_init(state, sa)
 		size_t keybitlen;
 		u_int8_t buf[32];
 
-		if (_KEYLEN(state->sa->key_auth) < 56)
-			padlen = 64 - 8 - _KEYLEN(state->sa->key_auth);
+		if (_KEYLEN(state->sav->key_auth) < 56)
+			padlen = 64 - 8 - _KEYLEN(state->sav->key_auth);
 		else
-			padlen = 64 + 64 - 8 - _KEYLEN(state->sa->key_auth);
-		keybitlen = _KEYLEN(state->sa->key_auth);
+			padlen = 64 + 64 - 8 - _KEYLEN(state->sav->key_auth);
+		keybitlen = _KEYLEN(state->sav->key_auth);
 		keybitlen *= 8;
 
 		buf[0] = 0x80;
@@ -278,10 +288,10 @@ ah_keyed_md5_result(state, addr)
 	if (!state)
 		panic("ah_keyed_md5_result: what?");
 
-	if (state->sa) {
+	if (state->sav) {
 		MD5Update((MD5_CTX *)state->foo, 
-			(u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
+			(u_int8_t *)_KEYBUF(state->sav->key_auth),
+			(u_int)_KEYLEN(state->sav->key_auth));
 	}
 	MD5Final(&digest[0], (MD5_CTX *)state->foo);
 	free(state->foo, M_TEMP);
@@ -289,20 +299,21 @@ ah_keyed_md5_result(state, addr)
 }
 
 static int
-ah_keyed_sha1_mature(sa)
-	struct secas *sa;
+ah_keyed_sha1_mature(sav)
+	struct secasvar *sav;
 {
 	struct ah_algorithm *algo;
 
-	if (!sa->key_auth) {
-		printf("esp_keyed_sha1_mature: no key is given.\n");
+	if (!sav->key_auth) {
+		ipseclog((LOG_ERR, "ah_keyed_sha1_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sa->alg_auth];
-	if (sa->key_auth->sadb_key_bits < algo->keymin
-	 || algo->keymax < sa->key_auth->sadb_key_bits) {
-		printf("ah_keyed_sha1_mature: invalid key length %d.\n",
-			sa->key_auth->sadb_key_bits);
+	algo = &ah_algorithms[sav->alg_auth];
+	if (sav->key_auth->sadb_key_bits < algo->keymin
+	 || algo->keymax < sav->key_auth->sadb_key_bits) {
+		ipseclog((LOG_ERR,
+		    "ah_keyed_sha1_mature: invalid key length %d.\n",
+		    sav->key_auth->sadb_key_bits));
 		return 1;
 	}
 
@@ -310,16 +321,16 @@ ah_keyed_sha1_mature(sa)
 }
 
 static void
-ah_keyed_sha1_init(state, sa)
+ah_keyed_sha1_init(state, sav)
 	struct ah_algorithm_state *state;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	SHA1_CTX *ctxt;
 
 	if (!state)
 		panic("ah_keyed_sha1_init: what?");
 
-	state->sa = sa;
+	state->sav = sav;
 	state->foo = (void *)malloc(sizeof(SHA1_CTX), M_TEMP, M_NOWAIT);
 	if (!state->foo)
 		panic("ah_keyed_sha1_init: what?");
@@ -327,9 +338,9 @@ ah_keyed_sha1_init(state, sa)
 	ctxt = (SHA1_CTX *)state->foo;
 	SHA1Init(ctxt);
 
-	if (state->sa) {
-		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
+	if (state->sav) {
+		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sav->key_auth),
+			(u_int)_KEYLEN(state->sav->key_auth));
 
 	    {
 		/*
@@ -339,11 +350,11 @@ ah_keyed_sha1_init(state, sa)
 		size_t keybitlen;
 		u_int8_t buf[32];
 
-		if (_KEYLEN(state->sa->key_auth) < 56)
-			padlen = 64 - 8 - _KEYLEN(state->sa->key_auth);
+		if (_KEYLEN(state->sav->key_auth) < 56)
+			padlen = 64 - 8 - _KEYLEN(state->sav->key_auth);
 		else
-			padlen = 64 + 64 - 8 - _KEYLEN(state->sa->key_auth);
-		keybitlen = _KEYLEN(state->sa->key_auth);
+			padlen = 64 + 64 - 8 - _KEYLEN(state->sav->key_auth);
+		keybitlen = _KEYLEN(state->sav->key_auth);
 		keybitlen *= 8;
 
 		buf[0] = 0x80;
@@ -395,9 +406,9 @@ ah_keyed_sha1_result(state, addr)
 		panic("ah_keyed_sha1_result: what?");
 	ctxt = (SHA1_CTX *)state->foo;
 
-	if (state->sa) {
-		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sa->key_auth),
-			(u_int)_KEYLEN(state->sa->key_auth));
+	if (state->sav) {
+		SHA1Update(ctxt, (u_int8_t *)_KEYBUF(state->sav->key_auth),
+			(u_int)_KEYLEN(state->sav->key_auth));
 	}
 	SHA1Final((caddr_t)&digest[0], ctxt);
 	bcopy(&digest[0], (void *)addr, HMACSIZE);
@@ -406,20 +417,21 @@ ah_keyed_sha1_result(state, addr)
 }
 
 static int
-ah_hmac_md5_mature(sa)
-	struct secas *sa;
+ah_hmac_md5_mature(sav)
+	struct secasvar *sav;
 {
 	struct ah_algorithm *algo;
 
-	if (!sa->key_auth) {
-		printf("esp_hmac_md5_mature: no key is given.\n");
+	if (!sav->key_auth) {
+		ipseclog((LOG_ERR, "ah_hmac_md5_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sa->alg_auth];
-	if (sa->key_auth->sadb_key_bits < algo->keymin
-	 || algo->keymax < sa->key_auth->sadb_key_bits) {
-		printf("ah_hmac_md5_mature: invalid key length %d.\n",
-			sa->key_auth->sadb_key_bits);
+	algo = &ah_algorithms[sav->alg_auth];
+	if (sav->key_auth->sadb_key_bits < algo->keymin
+	 || algo->keymax < sav->key_auth->sadb_key_bits) {
+		ipseclog((LOG_ERR,
+		    "ah_hmac_md5_mature: invalid key length %d.\n",
+		    sav->key_auth->sadb_key_bits));
 		return 1;
 	}
 
@@ -427,9 +439,9 @@ ah_hmac_md5_mature(sa)
 }
 
 static void
-ah_hmac_md5_init(state, sa)
+ah_hmac_md5_init(state, sav)
 	struct ah_algorithm_state *state;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	u_char *ipad;
 	u_char *opad;
@@ -442,7 +454,7 @@ ah_hmac_md5_init(state, sa)
 	if (!state)
 		panic("ah_hmac_md5_init: what?");
 
-	state->sa = sa;
+	state->sav = sav;
 	state->foo = (void *)malloc(64 + 64 + sizeof(MD5_CTX), M_TEMP, M_NOWAIT);
 	if (!state->foo)
 		panic("ah_hmac_md5_init: what?");
@@ -452,16 +464,16 @@ ah_hmac_md5_init(state, sa)
 	ctxt = (MD5_CTX *)(opad + 64);
 
 	/* compress the key if necessery */
-	if (64 < _KEYLEN(state->sa->key_auth)) {
+	if (64 < _KEYLEN(state->sav->key_auth)) {
 		MD5Init(ctxt);
-		MD5Update(ctxt, _KEYBUF(state->sa->key_auth),
-			_KEYLEN(state->sa->key_auth));
+		MD5Update(ctxt, _KEYBUF(state->sav->key_auth),
+			_KEYLEN(state->sav->key_auth));
 		MD5Final(&tk[0], ctxt);
 		key = &tk[0];
 		keylen = 16;
 	} else {
-		key = _KEYBUF(state->sa->key_auth);
-		keylen = _KEYLEN(state->sa->key_auth);
+		key = _KEYBUF(state->sav->key_auth);
+		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
 	bzero(ipad, 64);
@@ -521,20 +533,21 @@ ah_hmac_md5_result(state, addr)
 }
 
 static int
-ah_hmac_sha1_mature(sa)
-	struct secas *sa;
+ah_hmac_sha1_mature(sav)
+	struct secasvar *sav;
 {
 	struct ah_algorithm *algo;
 
-	if (!sa->key_auth) {
-		printf("esp_hmac_sha1_mature: no key is given.\n");
+	if (!sav->key_auth) {
+		ipseclog((LOG_ERR, "ah_hmac_sha1_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sa->alg_auth];
-	if (sa->key_auth->sadb_key_bits < algo->keymin
-	 || algo->keymax < sa->key_auth->sadb_key_bits) {
-		printf("ah_hmac_sha1_mature: invalid key length %d.\n",
-			sa->key_auth->sadb_key_bits);
+	algo = &ah_algorithms[sav->alg_auth];
+	if (sav->key_auth->sadb_key_bits < algo->keymin
+	 || algo->keymax < sav->key_auth->sadb_key_bits) {
+		ipseclog((LOG_ERR,
+		    "ah_hmac_sha1_mature: invalid key length %d.\n",
+		    sav->key_auth->sadb_key_bits));
 		return 1;
 	}
 
@@ -542,9 +555,9 @@ ah_hmac_sha1_mature(sa)
 }
 
 static void
-ah_hmac_sha1_init(state, sa)
+ah_hmac_sha1_init(state, sav)
 	struct ah_algorithm_state *state;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	u_char *ipad;
 	u_char *opad;
@@ -557,7 +570,7 @@ ah_hmac_sha1_init(state, sa)
 	if (!state)
 		panic("ah_hmac_sha1_init: what?");
 
-	state->sa = sa;
+	state->sav = sav;
 	state->foo = (void *)malloc(64 + 64 + sizeof(SHA1_CTX),
 			M_TEMP, M_NOWAIT);
 	if (!state->foo)
@@ -568,16 +581,16 @@ ah_hmac_sha1_init(state, sa)
 	ctxt = (SHA1_CTX *)(opad + 64);
 
 	/* compress the key if necessery */
-	if (64 < _KEYLEN(state->sa->key_auth)) {
+	if (64 < _KEYLEN(state->sav->key_auth)) {
 		SHA1Init(ctxt);
-		SHA1Update(ctxt, _KEYBUF(state->sa->key_auth),
-			_KEYLEN(state->sa->key_auth));
+		SHA1Update(ctxt, _KEYBUF(state->sav->key_auth),
+			_KEYLEN(state->sav->key_auth));
 		SHA1Final(&tk[0], ctxt);
 		key = &tk[0];
 		keylen = SHA1_RESULTLEN;
 	} else {
-		key = _KEYBUF(state->sa->key_auth);
-		keylen = _KEYLEN(state->sa->key_auth);
+		key = _KEYBUF(state->sav->key_auth);
+		keylen = _KEYLEN(state->sav->key_auth);
 	}
 
 	bzero(ipad, 64);
@@ -643,11 +656,11 @@ ah_hmac_sha1_result(state, addr)
  * go generate the checksum.
  */
 int
-ah4_calccksum(m0, ahdat, algo, sa)
+ah4_calccksum(m0, ahdat, algo, sav)
 	struct mbuf *m0;
 	caddr_t ahdat;
 	struct ah_algorithm *algo;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	struct mbuf *m;
 	int hdrtype;
@@ -664,7 +677,7 @@ ah4_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	(algo->init)(&algos, sa);
+	(algo->init)(&algos, sav);
 
 	advancewidth = 0;	/*safety*/
 
@@ -728,10 +741,11 @@ again:
 					break;
 				}
 				if (l <= 0 || hlen - i < l) {
-					printf("ah4_input: invalid IP option "
-						"(type=%02x len=%02x)\n",
-						p[i + IPOPT_OPTVAL],
-						p[i + IPOPT_OLEN]);
+					ipseclog((LOG_ERR,
+					    "ah4_calccksum: invalid IP option "
+					    "(type=%02x len=%02x)\n",
+					    p[i + IPOPT_OPTVAL],
+					    p[i + IPOPT_OLEN]));
 					break;
 				}
 				if (skip) {
@@ -758,13 +772,13 @@ again:
 		int siz;
 		int hdrsiz;
 
-		hdrsiz = (sa->flags & SADB_X_EXT_OLD) ?
+		hdrsiz = (sav->flags & SADB_X_EXT_OLD) ?
 				sizeof(struct ah) : sizeof(struct newah);
 
 		(algo->update)(&algos, p, hdrsiz);
 
 		/* key data region. */
-		siz = (*algo->sumsiz)(sa);
+		siz = (*algo->sumsiz)(sav);
 		bzero(&dummy[0], sizeof(dummy));
 		while (sizeof(dummy) <= siz) {
 			(algo->update)(&algos, dummy, sizeof(dummy));
@@ -775,26 +789,26 @@ again:
 			(algo->update)(&algos, dummy, siz);
 
 		/* padding region, just in case */
-		siz = (((struct ah *)p)->ah_len << 2) - (*algo->sumsiz)(sa);
-		if ((sa->flags & SADB_X_EXT_OLD) == 0)
+		siz = (((struct ah *)p)->ah_len << 2) - (*algo->sumsiz)(sav);
+		if ((sav->flags & SADB_X_EXT_OLD) == 0)
 			siz -= 4;		/* sequence number field */
 		if (0 < siz) {
 			/* RFC 1826 */
-			(algo->update)(&algos, p + hdrsiz + (*algo->sumsiz)(sa),
+			(algo->update)(&algos, p + hdrsiz + (*algo->sumsiz)(sav),
 				siz);
 		}
 
 		hdrtype = ((struct ah *)p)->ah_nxt;
 		advancewidth = hdrsiz;
 		advancewidth += ((struct ah *)p)->ah_len << 2;
-		if ((sa->flags & SADB_X_EXT_OLD) == 0)
+		if ((sav->flags & SADB_X_EXT_OLD) == 0)
 			advancewidth -= 4;	/* sequence number field */
 		break;
 	    }
 
 	default:
-		printf("ah4_calccksum: unexpected hdrtype=%x; "
-			"treating rest as payload\n", hdrtype);
+		ipseclog((LOG_DEBUG, "ah4_calccksum: unexpected hdrtype=%x; "
+			"treating rest as payload\n", hdrtype));
 		/*fall through*/
 	case IPPROTO_ICMP:
 	case IPPROTO_IGMP:
@@ -831,7 +845,8 @@ again:
 				if (m)
 					p = mtod(m, u_char *);
 				else {
-					printf("ERR: hit the end-of-mbuf...\n");
+					ipseclog((LOG_DEBUG,
+					    "hit the end-of-mbuf...\n"));
 					p = NULL;
 				}
 			}
@@ -843,7 +858,7 @@ again:
 
 	/* for HMAC algorithms... */
 	(algo->result)(&algos, &sumbuf[0]);
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sa));
+	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
 
 	return error;
 }
@@ -854,11 +869,11 @@ again:
  * except AH itself.
  */
 int
-ah6_calccksum(m0, ahdat, algo, sa)
+ah6_calccksum(m0, ahdat, algo, sav)
 	struct mbuf *m0;
 	caddr_t ahdat;
 	struct ah_algorithm *algo;
-	struct secas *sa;
+	struct secasvar *sav;
 {
 	struct mbuf *m;
 	int hdrtype;
@@ -876,7 +891,7 @@ ah6_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	(algo->init)(&algos, sa);
+	(algo->init)(&algos, sav);
 
 	advancewidth = 0;	/*safety*/
 	nest = 0;
@@ -917,13 +932,13 @@ again:
 		int siz;
 		int hdrsiz;
 
-		hdrsiz = (sa->flags & SADB_X_EXT_OLD) ?
+		hdrsiz = (sav->flags & SADB_X_EXT_OLD) ?
 				sizeof(struct ah) : sizeof(struct newah);
 
 		(algo->update)(&algos, p, hdrsiz);
 
 		/* key data region. */
-		siz = (*algo->sumsiz)(sa);
+		siz = (*algo->sumsiz)(sav);
 		bzero(&dummy[0], 4);
 		while (4 <= siz) {
 			(algo->update)(&algos, dummy, 4);
@@ -934,18 +949,18 @@ again:
 			(algo->update)(&algos, dummy, siz);
 
 		/* padding region, just in case */
-		siz = (((struct ah *)p)->ah_len << 2) - (*algo->sumsiz)(sa);
-		if ((sa->flags & SADB_X_EXT_OLD) == 0)
+		siz = (((struct ah *)p)->ah_len << 2) - (*algo->sumsiz)(sav);
+		if ((sav->flags & SADB_X_EXT_OLD) == 0)
 			siz -= 4;		/* sequence number field */
 		if (0 < siz) {
-			(algo->update)(&algos, p + hdrsiz + (*algo->sumsiz)(sa),
+			(algo->update)(&algos, p + hdrsiz + (*algo->sumsiz)(sav),
 				siz);
 		}
 
 		hdrtype = ((struct ah *)p)->ah_nxt;
 		advancewidth = hdrsiz;
 		advancewidth += ((struct ah *)p)->ah_len << 2;
-		if ((sa->flags & SADB_X_EXT_OLD) == 0)
+		if ((sav->flags & SADB_X_EXT_OLD) == 0)
 			advancewidth -= 4;	/* sequence number field */
 		break;
 	    }
@@ -1068,12 +1083,12 @@ again:
 		 break;
 	 }
 	default:
-		printf("ah6_calccksum: unexpected hdrtype=%x; "
-			"treating rest as payload\n", hdrtype);
+		ipseclog((LOG_DEBUG, "ah6_calccksum: unexpected hdrtype=%x; "
+			"treating rest as payload\n", hdrtype));
 		/*fall through*/
 	case IPPROTO_ICMP:
 	case IPPROTO_IGMP:
-	case IPPROTO_IPIP:	/*?*/
+	case IPPROTO_IPIP:
 	case IPPROTO_IPV6:
 	case IPPROTO_ICMPV6:
 	case IPPROTO_UDP:
@@ -1104,7 +1119,8 @@ again:
 				if (m)
 					p = mtod(m, u_char *);
 				else {
-					printf("ERR: hit the end-of-mbuf...\n");
+					ipseclog((LOG_DEBUG,
+					    "hit the end-of-mbuf...\n"));
 					p = NULL;
 				}
 			}
@@ -1116,7 +1132,7 @@ again:
 
 	/* for HMAC algorithms... */
 	(algo->result)(&algos, &sumbuf[0]);
-	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sa));
+	bcopy(&sumbuf[0], ahdat, (*algo->sumsiz)(sav));
 
 	return(0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.47 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.48 2000/01/31 14:18:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -464,7 +464,7 @@ rip_usrreq(so, req, m, nam, control, p)
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
 #ifdef IPSEC
-		error = ipsec_init_policy(&inp->inp_sp);
+		error = ipsec_init_policy(so, &inp->inp_sp);
 		if (error != 0) {
 			in_pcbdetach(inp);
 			break;

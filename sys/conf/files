@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.346 2000/01/26 06:27:33 thorpej Exp $
+#	$NetBSD: files,v 1.347 2000/01/31 14:18:52 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -602,6 +602,7 @@ file kern/exec_conf.c
 file kern/exec_ecoff.c			exec_ecoff
 
 file netkey/key.c			ipsec
+file netkey/keydb.c			ipsec
 file netkey/key_debug.c			ipsec
 file netkey/keysock.c			ipsec
 
