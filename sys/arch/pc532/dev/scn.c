@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.14 1995/04/10 07:50:42 mycroft Exp $	*/
+/*	$NetBSD: scn.c,v 1.15 1995/04/21 18:36:32 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -1031,6 +1031,13 @@ scncngetc(dev_t dev)
    splx(x);
    return c;
 }
+
+/* pc532 does not turn off console polling. */
+char
+scncnpollc(dev_t dev, int on)
+{ 
+}
+
 
 /*
  * Console kernel output character routine.
