@@ -12,6 +12,7 @@ options		"TCP_COMPAT_42"
 options		UCONSOLE, XSERVER
 #options		"WD8013"
 options		FDESC,KERNFS
+options		KTRACE
 
 #options 	COM_IGNOREFIFO
 options 	COM_MULTIPORT

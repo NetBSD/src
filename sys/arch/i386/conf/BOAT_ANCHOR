@@ -9,6 +9,7 @@ options		"TCP_COMPAT_42"
 options		"i387"
 options		XSERVER,UCONSOLE
 options		KERNFS,FDESC
+options		KTRACE
 
 config		"386bsd"	root on wd0 swap on wd0 and as0
 
