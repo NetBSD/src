@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.65 2002/12/09 07:26:02 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.66 2002/12/09 09:09:54 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.65 2002/12/09 07:26:02 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.66 2002/12/09 09:09:54 jmc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2391,6 +2391,34 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (fc->fc_bufcnt > 50)			/*XXX*/
 		return ENOBUFS;
 	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
+	if (ndesc > 2) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, 
+		    OHCI_DESC_MAX - 2, pkt->fp_dlen, 0, BUS_DMA_WAITOK, 
+		    &fb->fb_dmamap)) != 0) {
+			fwohci_desc_put(sc, fb->fb_desc, ndesc);
+			free(fb, M_DEVBUF);
+			return error;
+		}
+
+		if (pkt->fp_m != NULL)
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, fb->fb_dmamap,
+			    pkt->fp_m, BUS_DMA_WAITOK);
+		else
+			error = bus_dmamap_load_uio(sc->sc_dmat, fb->fb_dmamap,
+			    &pkt->fp_uio, BUS_DMA_WAITOK);
+		if (error != 0) {
+			DPRINTFN(1, ("Can't load DMA map: %d\n", error));
+			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
+			fwohci_desc_put(sc, fb->fb_desc, ndesc);
+			free(fb, M_DEVBUF);
+			return error;
+		}
+		ndesc = fb->fb_dmamap->dm_nsegs + 2;
+
+		bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0, pkt->fp_dlen,
+		    BUS_DMASYNC_PREWRITE);
+	}
+
 	fb->fb_nseg = ndesc;
 	fb->fb_desc = fwohci_desc_get(sc, ndesc);
 	if (fb->fb_desc == NULL) {
@@ -2404,30 +2432,6 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	fb->fb_statuscb = pkt->fp_statuscb;
 	fb->fb_statusarg = pkt->fp_statusarg;
 	
-	if (ndesc > 2) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, ndesc,
-		    PAGE_SIZE, 0, BUS_DMA_WAITOK, &fb->fb_dmamap)) != 0) {
-			fwohci_desc_put(sc, fb->fb_desc, ndesc);
-			free(fb, M_DEVBUF);
-			return error;
-		}
-
-		if (pkt->fp_m != NULL)
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, fb->fb_dmamap,
-			    pkt->fp_m, BUS_DMA_WAITOK);
-		else
-			error = bus_dmamap_load_uio(sc->sc_dmat, fb->fb_dmamap,
-			    &pkt->fp_uio, BUS_DMA_WAITOK);
-		if (error != 0) {
-			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
-			fwohci_desc_put(sc, fb->fb_desc, ndesc);
-			free(fb, M_DEVBUF);
-			return error;
-		}
-		bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0, pkt->fp_dlen,
-		    BUS_DMASYNC_PREWRITE);
-	}
-
 	fd = fb->fb_desc;
 	fd->fd_flags = OHCI_DESC_IMMED;
 	fd->fd_reqcount = pkt->fp_hlen;
