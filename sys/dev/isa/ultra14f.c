@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.62 1996/02/24 05:27:49 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.63 1996/03/17 00:53:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -326,8 +326,12 @@ int	uhaprobe __P((struct device *, void *, void *));
 void	uhaattach __P((struct device *, struct device *, void *));
 int	uhaprint __P((void *, char *));
 
-struct cfdriver uhacd = {
-	NULL, "uha", uhaprobe, uhaattach, DV_DULL, sizeof(struct uha_softc)
+struct cfattach uha_ca = {
+	sizeof(struct uha_softc), uhaprobe, uhaattach
+};
+
+struct cfdriver uha_cd = {
+	NULL, "uha", DV_DULL
 };
 
 /*

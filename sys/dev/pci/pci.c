@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.15 1996/03/14 04:03:01 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.16 1996/03/17 00:55:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,8 +44,12 @@
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pcicd = {
-	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
+struct cfattach pci_ca = {
+	sizeof(struct device), pcimatch, pciattach
+};
+
+struct cfdriver pci_cd = {
+	NULL, "pci", DV_DULL
 };
 
 int	pciprint __P((void *, char *));
@@ -153,5 +157,5 @@ pcisubmatch(parent, match, aux)
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
