@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.h,v 1.4 2003/08/07 11:13:51 agc Exp $	*/
+/*	$NetBSD: fstat.h,v 1.5 2004/12/12 22:41:04 christos Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,3 +51,4 @@ extern	pid_t	 Pid;
 mode_t	getftype __P((enum vtype));
 int	isofs_filestat __P((struct vnode *, struct filestat *));
 int	ntfs_filestat __P((struct vnode *, struct filestat *));
+int	ptyfs_filestat __P((struct vnode *, struct filestat *));
