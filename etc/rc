@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.64 1997/02/07 08:59:18 mrg Exp $
+#	$NetBSD: rc,v 1.65 1997/02/15 10:02:25 mikel Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -199,8 +199,8 @@ fi
 
 echo clearing /tmp
 
-# prune quickly with one rm, then use find to clean up /tmp/[lq]*
-# (not needed with mfs /tmp, but doesn't hurt there...)
+# Prune quickly with one rm, then use find to clean up /tmp/[lq]* (this
+# is not needed with mfs /tmp, but doesn't hurt anything).
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -exec rm -rf -- {} \; -type d -prune)

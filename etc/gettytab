@@ -1,5 +1,5 @@
-#	$NetBSD: gettytab,v 1.7 1996/05/08 17:19:35 thorpej Exp $
-#	from: @(#)gettytab	5.14 (Berkeley) 3/27/91
+#	$NetBSD: gettytab,v 1.8 1997/02/15 10:02:14 mikel Exp $
+#	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
 # it is by no means certain, or even likely, that any of them are optimal
