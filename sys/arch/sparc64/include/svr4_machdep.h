@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.5 2000/12/04 01:39:04 mrg Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.6 2001/02/11 00:17:03 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #define SVR4_SPARC_MAXWIN	31
 
-typedef int svr4_greg_t;
+typedef long svr4_greg_t;
 
 typedef struct {
 	svr4_greg_t	rwin_lo[8];
