@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.25 2003/07/30 11:10:42 dsl Exp $	*/
+/*	$NetBSD: color.c,v 1.26 2003/10/05 08:26:02 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.25 2003/07/30 11:10:42 dsl Exp $");
+__RCSID("$NetBSD: color.c,v 1.26 2003/10/05 08:26:02 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -459,7 +459,7 @@ int
 assume_default_colors(short fore, short back)
 {
 #ifdef DEBUG
-	__CTRACE("assume_default_colors: %d, %d, %d\n", fore, back);
+	__CTRACE("assume_default_colors: %d, %d\n", fore, back);
 #endif
 	__default_pair.fore = fore;
 	__default_pair.back = back;
