@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.23 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.24 2003/12/07 10:17:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.23 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.24 2003/12/07 10:17:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
@@ -116,7 +117,21 @@ mach_host_info(args)
 		*msglen = sizeof(*reps);
 		break;
 
-	case MACH_HOST_SCHED_INFO:
+	case MACH_HOST_SCHED_INFO: {
+		struct mach_host_sched_info *info
+		    = (struct mach_host_sched_info *)&rep->rep_data[0];
+
+		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep->rep_trailer) + sizeof(*info);
+		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
+
+		info->min_timeout = 1000 / hz; /* XXX timout in ms */
+		info->min_quantum = 1000 / hz; /* quantum in ms */
+
+		rep->rep_data[rep->rep_count + 1] = 8; /* XXX trailer */
+		break;
+	}
+
 	case MACH_HOST_RESOURCE_SIZES:
 		uprintf("mach_host_info() Unimplemented host_info flavor %d\n", 
 		    req->req_flavor);
