@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.9 1999/04/06 01:54:28 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.10 1999/09/05 09:42:58 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.9 1999/04/06 01:54:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.10 1999/09/05 09:42:58 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -23,6 +23,10 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.9 1999/04/06 01:54:28 nisimura 
 #include <dev/tc/ioasicvar.h>
 #include <dev/tc/ioasicreg.h>
 
+#undef	bus_space_read_4
+#define	bus_space_read_4(t, h, o)					\
+     ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
@@ -37,10 +41,6 @@ struct asc_softc {
 	size_t	sc_dmasize;
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
-
-	/* XXX XXX XXX */
-	volatile u_int32_t *sc_scsi_dmaptr;
-	volatile u_int32_t *sc_scsi_nextptr;
 };
 
 int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
@@ -127,10 +127,6 @@ asc_ioasic_attach(parent, self, aux)
 	}
 	asc->sc_cookie = d->iada_cookie;
 
-	/* XXX XXX XXX */
-	asc->sc_scsi_dmaptr =	(void *)(ioasic_base + IOASIC_SCSI_DMAPTR);
-	asc->sc_scsi_nextptr =	(void *)(ioasic_base + IOASIC_SCSI_NEXTPTR);
-
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
 
@@ -207,7 +203,6 @@ asc_ioasic_intr(sc)
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 	asc->sc_active = 0;	
 
 	if (asc->sc_dmasize == 0) {
@@ -235,9 +230,48 @@ asc_ioasic_intr(sc)
 		    trans, asc->sc_dmasize);
 		trans = asc->sc_dmasize;
 	}
-
 	NCR_DMA(("ioasic_intr: tcl=%d, tcm=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, trans, resid));
+
+#if 1
+	/*
+	 * following is supposedly to fixup irregular sized transter.
+	 * I'm not sure whether this is doing things correctly, indeed,
+	 * failed to cure any of erroneous symptoms I'm experiencing.
+	 */
+	if (asc->sc_ispullup) {
+		u_int32_t scr, ptr;
+		u_int16_t *addr;
+		union {
+			u_int32_t sdr[2];
+			u_int16_t word[4];
+		} scratch;
+
+		scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SCR);
+		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_DMAPTR);
+		if (scr != 0) {
+			/*
+			 * scr &= IOASIC_SCR_WORD;
+			 *	1 -> word[0]
+			 *	2 -> word[0] + word[1]
+			 *	3 -> word[0] + word[1] + word[2]
+			 */
+printf("SCSI_SCR: %x\n", scr);
+			scratch.sdr[0] = bus_space_read_4(asc->sc_bst,
+						asc->sc_bsh, IOASIC_SCSI_SDR0);
+			scratch.sdr[1] = bus_space_read_4(asc->sc_bst,
+						asc->sc_bsh, IOASIC_SCSI_SDR1);
+			addr = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
+			addr[0] = scratch.word[0];
+			if (scr > 1)
+				addr[1] = scratch.word[1];
+			if (scr > 2)
+				addr[2] = scratch.word[2];
+		}
+	}
+#endif
 
 	*asc->sc_dmalen -= trans;
 	*asc->sc_dmaaddr += trans;
@@ -279,7 +313,9 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+#if 1	/* !@$#%! */
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
+#endif
 
 	/* If R4K, writeback and invalidate the buffer */
 	if (CPUISMIPS3)
@@ -304,8 +340,10 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 		}
 	}
 
-	*asc->sc_scsi_dmaptr = IOASIC_DMA_ADDR(phys);
-	*asc->sc_scsi_nextptr = IOASIC_DMA_ADDR(nphys);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(phys));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(nphys));
 	if (asc->sc_ispullup)
 		ssr |=  IOASIC_CSR_SCSI_DIR;
 	else
@@ -332,35 +370,6 @@ void
 asc_ioasic_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
-#if 0
-	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_short *to;
-	int w;
-	int nb;
-
-	*asc->sc_ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	to = (u_short *)MIPS_PHYS_TO_KSEG1(*asc->sc_scsi_dmaptr >> 3);
-	*asc->sc_scsi_dmaptr = ~0;
-	*asc->sc_scsi_nextptr = ~0;
-	tc_wmb();
-
-	if (asc->sc_ispullup != 0 && (nb = *asc->sc_scsi_scr) != 0) {
-		/* pick up last upto 6 bytes, sigh. */
-
-		/* Last byte really xferred is.. */
-		w = *asc->sc_scsi_sdr0;
-		*to++ = w;
-		if (--nb > 0) {
-			w >>= 16;
-			*to++ = w;
-		}
-		if (--nb > 0) {
-			w = *asc->sc_scsi_sdr1;
-			*to++ = w;
-		}
-	}
-	asc->sc_active = 0;
-#endif
 }
 
 /*
