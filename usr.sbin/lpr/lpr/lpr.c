@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.29 2003/08/07 11:25:30 agc Exp $	*/
+/*	$NetBSD: lpr.c,v 1.30 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.29 2003/08/07 11:25:30 agc Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.30 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 		switch (c) {
 
 		case '#':		/* n copies */
-			if (isdigit(*optarg)) {
+			if (isdigit((unsigned char)*optarg)) {
 				i = atoi(optarg);
 				if (i > 0)
 					ncopies = i;
