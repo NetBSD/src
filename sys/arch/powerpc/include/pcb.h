@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.16 2003/08/12 18:34:48 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.17 2004/04/04 17:01:44 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,8 @@ struct pcb {
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */
 #define	PCB_ALTIVEC	2	/* Process had AltiVec initialized */
+#define	PCB_FE1		PSL_FE1	/* 0x100 */
+#define	PCB_FE0		PSL_FE0	/* 0x800 */
 	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
 	struct cpu_info * __volatile pcb_veccpu;/* CPU with our VECTOR state */
 	struct faultbuf *pcb_onfault;	/* For use during copyin/copyout */
