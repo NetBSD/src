@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ldconfig,v 1.2 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: ldconfig,v 1.3 2000/09/29 17:49:25 fvdl Exp $
 #
 
 # PROVIDE: ldconfig
@@ -15,7 +15,7 @@ stop_cmd=":"
 ldconfig_start()
 {
 	if [ -f /sbin/ldconfig ]; then
-		echo "Creating runtime link editor directory cache."
+		echo "Creating a.out runtime link editor directory cache."
 		ldconfig
 	fi
 }
