@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.1.1.1 1995/03/26 07:12:13 leo Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.2 1995/07/24 05:56:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@ struct iterepeat {
 #define ITEMINREPEAT	5	/* mininum number of 100/s for key repeat */
 
 #define ITEIOCSKMAP	_IOW('Z',0x70, struct kbdmap)
+#define ITEIOCSSKMAP	_IOW('Z',0x68, struct kbdmap)
 #define ITEIOCGKMAP	_IOR('Z',0x71, struct kbdmap)
 #define ITEIOCGWINSZ	_IOR('Z',0x72, struct itewinsize)
 #define ITEIOCSWINSZ	_IOW('Z',0x73, struct itewinsize)
