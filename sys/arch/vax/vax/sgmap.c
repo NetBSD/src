@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.6 2000/05/17 21:22:20 matt Exp $ */
+/* $NetBSD: sgmap.c,v 1.7 2000/05/23 23:47:28 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -250,15 +250,17 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		 * Load the current PTE with this page.
 		 */
 		if (sgmap->aps_flags & SGMAP_KA49) {
-			unsigned long pte0 = (pa & ~VAX_PGOFSET);
-			unsigned long tmp = pte0 >> VAX_PGSHIFT;
+			unsigned long tmp = pa >> VAX_PGSHIFT;
 			int cnt;
 
 			for (cnt = 0; tmp != 0; tmp >>= 1) {
 				cnt += (tmp & 1);
 			}
-			*pte = pte0 | PG_V | ((cnt & 1) ? 0 : 0x10000000);
-			printf("%p: 0x%08lx\n", pte, *pte);
+			*pte = pa | PG_V | ((cnt & 1) ? 0 : 0x10000000);
+#if 0
+			printf("[%d]: va=0x%08lx map=0x%08lx\n", 
+			    pteidx + map->_dm_ptecnt, va + dmaoffset, *pte);
+#endif
 		} else {
 			*pte = (pa >> VAX_PGSHIFT) | PG_V;
 		}

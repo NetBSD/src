@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.13 2000/05/17 21:22:20 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.13 2000/05/17 21:22:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.14 2000/05/23 23:47:29 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,17 +154,17 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	if (asc_attached)
 		return 0;
 
-	if (vax_boardtype != VAX_BTYP_46
-	   && vax_boardtype != VAX_BTYP_48
-	   && vax_boardtype != VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
+		if (cf->cf_loc[0] != 0x200c0080)
+			return 0;
+#if 0
+	} else if (vax_boardtype == VAX_BTYP_49) {
+		if (cf->cf_loc[0] != 0x26000080)
+			return 0;
+#endif
+	} else {
 		return 0;
-
-	if (vax_boardtype == VAX_BTYP_49 && cf->cf_loc[0] != 0x26000080)
-		return 0;
-
-	if ((vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48)
-	    && cf->cf_loc[0] != 0x200c0080)
-		return 0;
+	}
 
 	ncr_regs = (volatile u_int8_t *) va->va_addr;
 
@@ -184,7 +184,6 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	DELAY(10000);
 
 	dummy = ncr_regs[NCR_INTR << 2] & 0xFF;
-	printf("ncr intr = %d\n", dummy);
 	return (dummy & NCRINTR_SBR) != 0;
 }
 
@@ -248,6 +247,11 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		struct vsbus_softc *vsc = (struct vsbus_softc *) parent;
 		asc->sc_adrh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_ADR);
 		asc->sc_dirh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_DIR);
+#if 0
+		printf("\n%s: adrh=0x%08lx dirh=0x%08lx", self->dv_xname,
+		       asc->sc_adrh, asc->sc_dirh);
+		ncr53c9x_debug = NCR_SHOWDMA|NCR_SHOWINTS|NCR_SHOWCMDS|NCR_SHOWPHASE|NCR_SHOWSTART|NCR_SHOWMSGS;
+#endif
 	}
 	error = bus_dmamap_create(asc->sc_dmat, ASC_MAXXFERSIZE, 1, 
 	    ASC_MAXXFERSIZE, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap);
@@ -448,6 +452,9 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 				  asc->sc_dmamap->dm_segs[0].ds_addr);
 		bus_space_write_4(asc->sc_bst, asc->sc_dirh, 0,
 				  asc->sc_flags & ASC_FROMMEMORY);
+		NCR_DMA(("%s: dma-load %lu@0x%08lx\n", sc->sc_dev.dv_xname,
+			asc->sc_dmamap->dm_segs[0].ds_len,
+			asc->sc_dmamap->dm_segs[0].ds_addr));
 		asc->sc_flags |= ASC_MAPLOADED;
 	}
 
