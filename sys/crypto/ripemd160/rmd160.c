@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.1 2003/07/25 09:46:33 itojun Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.2 2003/08/01 22:25:55 martin Exp $	*/
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.1 2003/07/25 09:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2 2003/08/01 22:25:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ RMD160Transform(u_int32_t state[5], const u_char block[64])
 	int i;
 
 	for (i = 0; i < 16; i++)
-		x[i] = swap32(*(u_int32_t*)(block+i*4));
+		x[i] = le32toh(*(u_int32_t*)(block+i*4));
 #endif
 
 	a = state[0];
