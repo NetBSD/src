@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.1 1998/09/17 20:01:57 drochner Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -41,14 +41,38 @@
 #include <dev/dec/lk201var.h>
 #include <dev/dec/wskbdmap_lk201.h> /* for {MIN,MAX}_LK201_KEY */
 
-void
-lk201_init_keystate(lks)
+#define send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
+
+int
+lk201_init(lks)
 	struct lk201_state *lks;
 {
 	int i;
 
+	send(lks, LK_LED_ENABLE);
+	send(lks, LK_LED_ALL);
+
+	/*
+	 * set all keys to updown mode; autorepeat is
+	 * done by wskbd software
+	 */
+	for (i = 1; i <= 14; i++)
+		send(lks, LK_CMD_MODE(LK_UPDOWN, i));
+
+	send(lks, LK_CL_ENABLE);
+	send(lks, LK_PARAM_VOLUME(3));
+
+	lks->bellvol = -1; /* not yet set */
+
 	for (i = 0; i < LK_KLL; i++)
 		lks->down_keys_list[i] = -1;
+	send(lks, LK_KBD_ENABLE);
+
+	send(lks, LK_LED_DISABLE);
+	send(lks, LK_LED_ALL);
+	lks->leds_state = 0;
+
+	return (0);
 }
 
 int
@@ -68,7 +92,7 @@ lk201_decode(lks, datain, type, dataout)
 		return (1);
 	    case LK_POWER_UP:
 		printf("lk201_decode: powerup detected\n");
-		/* XXX should reinitialize here */
+		lk201_init(lks);
 		return (0);
 	    case LK_KDOWN_ERROR:
 	    case LK_POWER_ERROR:
@@ -107,4 +131,48 @@ lk201_decode(lks, datain, type, dataout)
 	*type = WSCONS_EVENT_KEY_DOWN;
 	lks->down_keys_list[freeslot] = datain;
 	return (1);
+}
+
+void
+lk201_bell(lks, bell)
+	struct lk201_state *lks;
+	struct wskbd_bell_data *bell;
+{
+	unsigned int vol;
+
+	if (bell->which & WSKBD_BELL_DOVOLUME) {
+		vol = 8 - bell->volume * 8 / 100;
+		if (vol > 7)
+			vol = 7;
+	} else
+		vol = 3;
+
+	if (vol != lks->bellvol) {
+		send(lks, LK_BELL_ENABLE);
+		send(lks, LK_PARAM_VOLUME(vol));
+		lks->bellvol = vol;
+	}
+	send(lks, LK_RING_BELL);
+}
+
+void
+lk201_set_leds(lks, leds)
+	struct lk201_state *lks;
+	int leds;
+{
+	int newleds;
+
+	newleds = 0;
+	if (leds & WSKBD_LED_SCROLL)
+		newleds |= LK_LED_WAIT;
+	if (leds & WSKBD_LED_CAPS)
+		newleds |= LK_LED_LOCK;
+
+	send(lks, LK_LED_DISABLE);
+	send(lks, (0x80 | (~newleds & 0x0f)));
+
+	send(lks, LK_LED_ENABLE);
+	send(lks, (0x80 | (newleds & 0x0f)));
+
+	lks->leds_state = leds;
 }
