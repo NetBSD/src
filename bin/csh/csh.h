@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.h,v 1.12 2000/05/31 22:48:45 christos Exp $	*/
+/*	$NetBSD: csh.h,v 1.13 2000/12/13 22:29:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -127,7 +127,7 @@ bool    timflg;			/* Time the next waited for command */
 bool    havhash;		/* path hashing is available */
 
 #ifdef FILEC
-bool    filec;			/* doing filename expansion */
+extern bool    filec;		/* doing filename expansion */
 #endif
 
 /*
@@ -137,7 +137,7 @@ Char   *arginp;			/* Argument input for sh -c and internal `xx` */
 int     onelflg;		/* 2 -> need line for -t, 1 -> exit on read */
 Char   *ffile;			/* Name of shell file for $0 */
 
-char   *seterr;			/* Error message from scanner/parser */
+extern char   *seterr;		/* Error message from scanner/parser */
 Char   *shtemp;			/* Temp name for << shell files in /tmp */
 
 #include <sys/types.h>
@@ -431,7 +431,7 @@ struct varent {
  */
 struct wordent *alhistp;	/* Argument list (first) */
 struct wordent *alhistt;	/* Node after last in arg list */
-Char  **alvec, *alvecp;		/* The (remnants of) alias vector */
+extern Char  **alvec, *alvecp;	/* The (remnants of) alias vector */
 
 /*
  * Filename/command name expansion variables
