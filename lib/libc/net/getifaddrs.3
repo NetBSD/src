@@ -1,4 +1,4 @@
-.\"	$NetBSD: getifaddrs.3,v 1.4 2001/04/10 15:20:18 wiz Exp $
+.\"	$NetBSD: getifaddrs.3,v 1.5 2001/09/16 02:23:09 wiz Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -82,7 +82,7 @@ address of the interface, if one exists, otherwise it is NULL.
 (The
 .Li sa_family
 field of the
-.Li ifa_addr 
+.Li ifa_addr
 field should be consulted to determine the format of the
 .Li ifa_addr
 address.)
@@ -108,7 +108,7 @@ if one exists, otherwise it is NULL.
 .Pp
 The
 .Li ifa_data
-field references address family specific data.  For 
+field references address family specific data.  For
 .Dv AF_LINK
 addresses it contains a pointer to the
 .Fa struct if_data
