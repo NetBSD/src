@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.41 2000/07/10 02:09:15 assar Exp $	*/
+/*	$NetBSD: su.c,v 1.42 2000/07/13 08:37:10 assar Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.41 2000/07/10 02:09:15 assar Exp $");
+__RCSID("$NetBSD: su.c,v 1.42 2000/07/13 08:37:10 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -473,7 +473,7 @@ kerberos5(username, user, uid)
 					  NULL, username, "root", NULL);
 	else
 		ret = krb5_make_principal(context, &princ,
-					  user, NULL);
+					  NULL, user, NULL);
 	if (ret)
 		goto fail;
 	if (!krb5_kuserok(context, princ, user) && !uid) {
