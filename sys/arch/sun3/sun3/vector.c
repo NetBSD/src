@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.20 1998/10/04 23:38:57 thorpej Exp $	*/
+/*	$NetBSD: vector.c,v 1.21 1998/12/18 15:49:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 /*
  * The interrupt vector table.
  */
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
