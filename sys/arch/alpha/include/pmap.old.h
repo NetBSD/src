@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.7 1997/04/06 08:47:35 cgd Exp $ */
+/* $NetBSD: pmap.old.h,v 1.8 1997/09/02 19:06:13 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -59,7 +59,6 @@ extern vm_offset_t       vtophys(vm_offset_t);
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	pt_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	pt_entry_t		pm_stpte;	/* PTE mapping STE */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
@@ -121,7 +120,9 @@ extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
 /* Machine-specific functions. */
-void	pmap_activate __P((pmap_t));
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 void	pmap_bootstrap __P((vm_offset_t firstaddr, vm_offset_t ptaddr));
 void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 		int user, int write));
