@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_var.h	7.7 (Berkeley) 6/28/90
- *	$Id: ip_var.h,v 1.5 1994/01/08 21:21:53 mycroft Exp $
+ *	$Id: ip_var.h,v 1.6 1994/01/09 01:06:19 mycroft Exp $
  */
 
 #ifndef _NETINET_IP_VAR_H_
@@ -149,7 +149,40 @@ struct	ipstat	ipstat;
 struct	ipq	ipq;			/* ip reass. queue */
 u_short	ip_id;				/* ip packet ctr, for ids */
 
-struct	mbuf *ip_srcroute();
+int	ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	ip_deq __P((struct ipasfrag *));
+int	ip_dooptions __P((struct mbuf *));
+void	ip_drain __P((void));
+void	ip_enq __P((struct ipasfrag *, struct ipasfrag *));
+void	ip_freef __P((struct ipq *));
+void	ip_freemoptions __P((struct ip_moptions *));
+int	ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
+void	ip_init __P((void));
+void	ip_intr __P((void));
+int	ip_optcopy __P((struct ip *, struct ip *));
+#ifndef MULTICAST
+int	ip_output __P((struct mbuf *, struct mbuf *, struct route *, int));
+#else
+int	ip_output
+	   __P((struct mbuf *, struct mbuf *, struct route *, int,
+		struct ip_moptions *));
+#endif
+int	ip_pcbopts __P((struct mbuf **, struct mbuf *));
+struct ip *
+	ip_reass __P((struct ipasfrag *, struct ipq *));
+struct in_ifaddr *
+	ip_rtaddr __P((struct in_addr));
+int	ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
+void	ip_slowtimo __P((void));
+struct mbuf *
+	ip_srcroute __P((void));
+void	ip_stripoptions __P((struct mbuf *, struct mbuf *));
+int	rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	rip_input __P((struct mbuf *));
+int	rip_output __P((struct mbuf *, struct socket *));
+int	rip_usrreq
+	   __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		struct mbuf *));
 #endif
 
 #endif /* !_NETINET_IP_VAR_H_ */

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.7 1994/01/08 21:21:36 mycroft Exp $
+ *	$Id: in.c,v 1.8 1994/01/09 01:06:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -47,6 +47,10 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
+
+static int in_ifinit
+	   __P((struct ifnet *, struct in_ifaddr *, struct sockaddr_in *, int));
+static void in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
 
 #ifdef INET
 /*
@@ -112,6 +116,7 @@ in_netof(in)
 /*
  * Compute and save network mask as sockaddr from an internet address.
  */
+void
 in_sockmaskof(in, sockmask)
 	struct in_addr in;
 	register struct sockaddr_in *sockmask;
@@ -204,6 +209,7 @@ int subnetsarelocal = SUBNETSARELOCAL;
  * is true, this includes other subnets of the local net.
  * Otherwise, it includes only the directly-connected (sub)nets.
  */
+int
 in_localaddr(in)
 	struct in_addr in;
 {
@@ -227,6 +233,7 @@ in_localaddr(in)
  * that may not be forwarded, or whether datagrams to that destination
  * may be forwarded.
  */
+int
 in_canforward(in)
 	struct in_addr in;
 {
@@ -251,6 +258,7 @@ extern	struct ifnet loif;
  * Ifp is 0 if not an interface-specific ioctl.
  */
 /* ARGSUSED */
+int
 in_control(so, cmd, data, ifp)
 	struct socket *so;
 	int cmd;
@@ -474,6 +482,7 @@ in_control(so, cmd, data, ifp)
 /*
  * Delete any existing route for an interface.
  */
+static void
 in_ifscrub(ifp, ia)
 	register struct ifnet *ifp;
 	register struct in_ifaddr *ia;
@@ -492,6 +501,7 @@ in_ifscrub(ifp, ia)
  * Initialize an interface's internet address
  * and routing table entry.
  */
+static int
 in_ifinit(ifp, ia, sin, scrub)
 	register struct ifnet *ifp;
 	register struct in_ifaddr *ia;
@@ -594,6 +604,7 @@ in_iaonnetof(net)
 /*
  * Return 1 if the address might be a local broadcast address.
  */
+int
 in_broadcast(in)
 	struct in_addr in;
 {

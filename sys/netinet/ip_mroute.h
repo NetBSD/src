@@ -167,8 +167,8 @@ struct mrtstat {
 	u_long	mrts_wrong_if;		/* arrived on wrong interface */
 };
 
+int	ip_mforward __P((struct ip *, struct ifnet *, struct mbuf *));
 int	ip_mrouter_cmd __P((int, struct socket *, struct mbuf *));
-int	ip_mrouter_done __P(());
-
+int	ip_mrouter_done __P((void));
 #endif /* KERNEL */
 
