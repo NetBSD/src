@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.37 2000/10/01 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.38 2000/10/12 02:24:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -140,10 +140,10 @@ static int wi_intr __P((void *arg));
 
 static void wi_reset		__P((struct wi_softc *));
 static int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void wi_init		__P((struct wi_softc *));
 static void wi_start		__P((struct ifnet *));
-static void wi_stop		__P((struct wi_softc *));
 static void wi_watchdog		__P((struct ifnet *));
+static int wi_init		__P((struct ifnet *));
+static void wi_stop		__P((struct ifnet *, int));
 static void wi_rxeof		__P((struct wi_softc *));
 static void wi_txeof		__P((struct wi_softc *, int));
 static void wi_update_stats	__P((struct wi_softc *));
@@ -385,6 +385,8 @@ wi_attach(parent, self, aux)
 	ifp->if_start = wi_start;
 	ifp->if_ioctl = wi_ioctl;
 	ifp->if_watchdog = wi_watchdog;
+	ifp->if_init = wi_init;
+	ifp->if_stop = wi_stop;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
@@ -1310,7 +1312,6 @@ static int wi_ioctl(ifp, command, data)
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
 	struct proc *p = curproc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ieee80211_nwid nwid;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -1320,83 +1321,6 @@ static int wi_ioctl(ifp, command, data)
 
 	ifr = (struct ifreq *)data;
 	switch (command) {
-	case SIOCSIFADDR:
-		if ((error = wi_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			wi_init(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		default:
-			wi_init(sc);
-			break;
-		}
-		break;
-#if 0
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, command, data);
-		break;
-#endif
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			wi_stop(sc);
-			wi_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			if ((error = wi_enable(sc)) != 0)
-				break;
-			wi_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
-			 */
-#if 0
-			/* XXX We need to call wi_setmulti(), don't we? */
-			if ((ifp->if_flags & IFF_PROMISC) ^
-			    (sc->wi_if_flags & IFF_PROMISC))
-				WI_SETVAL(WI_RID_PROMISC,
-				    (ifp->if_flags & IFF_PROMISC) != 0);
-			else
-#endif
-				wi_init(sc);
-		}
-		sc->wi_if_flags = ifp->if_flags;
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (sc->sc_enabled == 0) {
-			error = EIO;
-			break;
-		}
-
-		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			wi_setmulti(sc);
-			error = 0;
-		}
-		break;
-
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
@@ -1448,7 +1372,7 @@ static int wi_ioctl(ifp, command, data)
 				error = wi_setdef(sc, &wreq);
 			if (error == 0 && sc->sc_enabled != 0)
 				/* Reinitialize WaveLAN. */
-				wi_init(sc);
+				wi_init(ifp);
 		}
 		break;
 	case SIOCG80211NWID:
@@ -1484,7 +1408,7 @@ static int wi_ioctl(ifp, command, data)
 		wi_set_ssid(&sc->wi_netid, nwid.i_nwid, nwid.i_len);
 		if (sc->sc_enabled != 0)
 			/* Reinitialize WaveLAN. */
-			wi_init(sc);
+			wi_init(ifp);
 		break;
 	case SIOCS80211NWKEY:
 		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
@@ -1493,7 +1417,17 @@ static int wi_ioctl(ifp, command, data)
 		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
+		if (error == ENETRESET) {
+			if (sc->sc_enabled != 0) {
+				/*
+				 * Multicast list has changed.  Set the
+				 * hardware filter accordingly.
+				 */
+				wi_setmulti(sc);
+			}
+			error = 0;
+		}
 		break;
 	}
 
@@ -1502,16 +1436,19 @@ static int wi_ioctl(ifp, command, data)
 	return (error);
 }
 
-static void
-wi_init(sc)
-	struct wi_softc *sc;
+static int
+wi_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct wi_softc *sc = ifp->if_softc;
 	struct wi_req wreq;
 	struct wi_ltv_macaddr mac;
-	int s, id = 0;
+	int s, error, id = 0;
 
-	wi_stop(sc);
+	if ((error = wi_enable(sc)) != 0)
+		goto out;
+
+	wi_stop(ifp, 0);
 	wi_reset(sc);
 
 	s = splimp();
@@ -1599,6 +1536,14 @@ wi_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
+
+ out:
+	if (error) {
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_timer = 0;
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	}
+	return (error);
 }
 
 static void wi_start(ifp)
@@ -1724,18 +1669,19 @@ static int wi_mgmt_xmit(sc, data, len)
 	return(0);
 }
 
-static void wi_stop(sc)
-	struct wi_softc		*sc;
+static void
+wi_stop(ifp, disable)
+	struct ifnet *ifp;
 {
-	struct ifnet		*ifp;
-
-	ifp = &sc->sc_ethercom.ec_if;
+	struct wi_softc	*sc = ifp->if_softc;
 
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
 
-
 	callout_stop(&sc->wi_inquire_ch);
+
+	if (disable)
+		wi_disable(sc);
 
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
@@ -1750,7 +1696,7 @@ static void wi_watchdog(ifp)
 
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 
-	wi_init(sc);
+	wi_init(ifp);
 
 	ifp->if_oerrors++;
 
@@ -1943,7 +1889,7 @@ wi_media_change(ifp)
 	if (sc->sc_enabled != 0) {
 		if (otype != sc->wi_ptype ||
 		    orate != sc->wi_tx_rate)
-			wi_init(sc);
+			wi_init(ifp);
 	}
 
 	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
@@ -2031,7 +1977,7 @@ wi_set_nwkey(sc, nwkey)
 		return error;
 
 	if (sc->sc_enabled != 0)
-		wi_init(sc);
+		wi_init(&sc->sc_ethercom.ec_if);
 	return 0;
 }
 
