@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.12 2000/12/15 13:43:54 sakane Exp $	*/
+/*	$KAME: algorithm.c,v 1.13 2001/01/26 03:26:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,7 +44,7 @@
 #include "isakmp.h"
 #include "ipsec_doi.h"
 
-static int ipsecenc2doi[] = {
+static const int ipsecenc2doi[] = {
 	ALGTYPE_NOTHING,
 	IPSECDOI_ESP_DES_IV64,
 	IPSECDOI_ESP_DES,
@@ -60,7 +60,7 @@ static int ipsecenc2doi[] = {
 	IPSECDOI_ESP_RIJNDAEL,
 	IPSECDOI_ESP_TWOFISH,
 };
-static int ipsecauth2doi[] = {
+static const int ipsecauth2doi[] = {
 	ALGTYPE_NOTHING,
 	IPSECDOI_ATTR_AUTH_HMAC_MD5,
 	IPSECDOI_ATTR_AUTH_HMAC_SHA1,
@@ -68,13 +68,13 @@ static int ipsecauth2doi[] = {
 	IPSECDOI_ATTR_AUTH_KPDK,
 	IPSECDOI_ATTR_AUTH_NONE,
 };
-static int ipseccomp2doi[] = {
+static const int ipseccomp2doi[] = {
 	ALGTYPE_NOTHING,
 	IPSECDOI_IPCOMP_OUI,
 	IPSECDOI_IPCOMP_DEFLATE,
 	IPSECDOI_IPCOMP_LZS,
 };
-static int isakmpenc2doi[] = {
+static const int isakmpenc2doi[] = {
 	ALGTYPE_NOTHING,
 	-1,
 	OAKLEY_ATTR_ENC_ALG_DES,
@@ -84,13 +84,13 @@ static int isakmpenc2doi[] = {
 	OAKLEY_ATTR_ENC_ALG_CAST,
 	OAKLEY_ATTR_ENC_ALG_BLOWFISH,
 };
-static int isakmphash2doi[] = {
+static const int isakmphash2doi[] = {
 	ALGTYPE_NOTHING,
 	OAKLEY_ATTR_HASH_ALG_MD5,
 	OAKLEY_ATTR_HASH_ALG_SHA,
 	OAKLEY_ATTR_HASH_ALG_TIGER,
 };
-static int isakmpameth2doi[] = {
+static const int isakmpameth2doi[] = {
 	ALGTYPE_NOTHING,
 	OAKLEY_ATTR_AUTH_METHOD_PSKEY,
 	OAKLEY_ATTR_AUTH_METHOD_DSSSIG,
@@ -99,7 +99,7 @@ static int isakmpameth2doi[] = {
 	OAKLEY_ATTR_AUTH_METHOD_RSAREV,
 	OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB,
 };
-static int isakmpdh2doi[] = {
+static const int isakmpdh2doi[] = {
 	ALGTYPE_NOTHING,
 	OAKLEY_ATTR_GRP_DESC_MODP768,
 	OAKLEY_ATTR_GRP_DESC_MODP1024,
