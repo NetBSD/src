@@ -1,0 +1,28 @@
+#	$NetBSD: files.tsarm,v 1.1 2004/12/23 04:34:03 joff Exp $
+#
+# First try for arm-specific configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+file	arch/evbarm/tsarm/tsarm_machdep.c
+
+# EP93xx Processor CPU support
+include "arch/arm/ep93xx/files.ep93xx"
+
+attach epsoc at mainbus
+
+attach epcom at epsoc with epcom_ts
+file	arch/evbarm/tsarm/epcom_ts.c
+
+define  tspldbus {}
+device	tspld: isabus, tspldbus
+attach tspld at mainbus
+file	arch/evbarm/tsarm/tspld.c	tspld
+
+file	arch/evbarm/tsarm/isa/isa_machdep.c	isa
+file	arch/evbarm/tsarm/isa/isa_io.c		isa
+file	arch/evbarm/tsarm/isa/isa_io_asm.S	isa
+
+attach wdc at tspldbus with wdc_ts
+file 	arch/evbarm/tsarm/wdc_ts.c		wdc_ts
