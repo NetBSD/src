@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.41 2003/12/07 05:44:49 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.42 2004/02/10 00:47:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -62,6 +62,13 @@ struct wi_tx_radiotap_header {
 	u_int16_t				wt_chan_flags;
 } __attribute__((__packed__));
 
+struct wi_rssdesc {
+	struct ieee80211_rssdesc	rd_desc;
+	SLIST_ENTRY(wi_rssdesc)		rd_next;
+};
+
+typedef SLIST_HEAD(,wi_rssdesc) wi_rssdescq_t;
+
 /*
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
@@ -123,11 +130,8 @@ struct wi_softc	{
 	}			sc_txd[WI_NTXBUF];
 	int			sc_txnext;
 	int			sc_txcur;
-	struct wi_rssdesc {
-		struct ieee80211_rssdesc	rd_desc;
-		SLIST_ENTRY(wi_rssdesc)		rd_next;
-	}			sc_rssd[WI_NTXRSS];
-	SLIST_HEAD(,wi_rssdesc)	sc_rssdfree;
+	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
+	wi_rssdescq_t		sc_rssdfree;
 	int			sc_tx_timer;
 	int			sc_scan_timer;
 	int			sc_syn_timer;
