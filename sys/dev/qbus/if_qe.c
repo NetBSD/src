@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.55 2002/10/02 16:52:28 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.56 2003/01/15 22:10:25 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.55 2002/10/02 16:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.56 2003/01/15 22:10:25 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -494,6 +494,8 @@ qestart(struct ifnet *ifp)
 				orword |= QE_ODDBEGIN;
 			if ((buffer + len) & 1)
 				orword |= QE_ODDEND;
+			if (len > m0->m_len) {
+				memset(buffer + m0->m_len, 0, len - m0->m_len);
 			qc->qc_xmit[idx].qe_buf_len = -(len/2);
 			qc->qc_xmit[idx].qe_addr_lo = LOWORD(buffer);
 			qc->qc_xmit[idx].qe_addr_hi = HIWORD(buffer);
