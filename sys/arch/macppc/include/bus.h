@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2001/03/07 22:42:18 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2001/06/19 12:02:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 #ifndef _MACPPC_BUS_H_
 #define _MACPPC_BUS_H_
 
+#include <machine/autoconf.h>
 #include <machine/pio.h>
 
 /*
@@ -109,7 +110,48 @@ typedef u_int32_t bus_space_handle_t;
 #define BUS_SPACE_MAP_LINEAR		0x02
 #define BUS_SPACE_MAP_PREFETCHABLE	0x04
 
-extern void * mapiodev __P((paddr_t, psize_t));
+static __inline int bus_space_map(bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
+static __inline void bus_space_read_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t *, size_t);
+static __inline void bus_space_read_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, size_t);
+static __inline void bus_space_read_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, size_t);
+static __inline void bus_space_read_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, size_t);
+static __inline void bus_space_read_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, size_t);
+static __inline void bus_space_write_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int8_t *, size_t);
+static __inline void bus_space_write_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int16_t *, size_t);
+static __inline void bus_space_write_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int32_t *, size_t);
+static __inline void bus_space_write_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int16_t *, size_t);
+static __inline void bus_space_write_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int32_t *, size_t);
+static __inline void bus_space_set_multi_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t, size_t);
+static __inline void bus_space_set_multi_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void bus_space_set_multi_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, size_t);
+static __inline void bus_space_set_multi_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void bus_space_set_multi_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, size_t);
+static __inline void bus_space_set_region_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t, size_t);
+static __inline void bus_space_set_region_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void bus_space_set_region_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, size_t);
+static __inline void bus_space_set_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void bus_space_set_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 static __inline int
 bus_space_map(t, addr, size, flags, bshp)
