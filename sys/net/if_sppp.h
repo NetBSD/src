@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.19 2003/09/03 20:48:46 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.20 2003/09/05 23:13:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -137,6 +137,6 @@ struct spppkeepalivesettings {
 	time_t	max_noreceive;		/* (sec.) grace period before we start
 					   sending LCP echo requests. */
 };
-#define	SPPPSETKEEPALIVE	_IOW('i', 132, struct spppdnssettings)
-#define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppdnssettings)
+#define	SPPPSETKEEPALIVE	_IOW('i', 132, struct spppkeepalivesettings)
+#define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppkeepalivesettings)
 
