@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.72 2000/06/27 20:32:28 thorpej Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.73 2000/07/16 08:11:34 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.72 2000/06/27 20:32:28 thorpej Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.73 2000/07/16 08:11:34 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -410,7 +410,7 @@ main(argc, argv)
 
 	if (tcp6sock != -1 && tcp6conf != NULL) {
 		bindresvport(tcp6sock, NULL);
-		listen(tcpsock, SOMAXCONN);
+		listen(tcp6sock, SOMAXCONN);
 		tcp6transp = svc_vc_create(tcp6sock, 0, 0);
 		if (tcp6transp != NULL) {
 			if (!svc_reg(tcp6transp, RPCPROG_MNT, RPCMNT_VER1,
@@ -536,6 +536,7 @@ mntsrv(rqstp, transp)
 		   scan_tree(ep->ex_dirl, saddr) == 0))) {
 			if (sport >= IPPORT_RESERVED &&
 			    !(hostset & DP_NORESMNT)) {
+fprintf(stderr, "hostset=%x\n", hostset);
 				syslog(LOG_NOTICE,
 				    "Refused mount RPC from host %s port %d",
 				    numerichost, sport);
