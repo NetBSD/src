@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.7 1997/03/28 21:51:51 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.8 1997/03/28 22:16:06 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -145,7 +145,6 @@ isp_pci_attach(parent, self, aux)
 	bus_space_handle_t sh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int cacheable;
 
 	if (isp_pci_prefer_io) {
 		if (pci_io_find(pa->pa_pc, pa->pa_tag, IO_MAP_REG, &busbase,
@@ -160,7 +159,7 @@ isp_pci_attach(parent, self, aux)
 		}
 	} else {
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &busbase,
-		    &bussize, &cacheable)) {
+		    &bussize, NULL)) {
 			printf(": unable to find PCI memory base\n");
 			return;
 		}
