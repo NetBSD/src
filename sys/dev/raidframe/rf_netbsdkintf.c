@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.66 2000/03/04 06:03:21 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.67 2000/03/07 02:12:13 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -278,7 +278,6 @@ void rf_ReconstructInPlaceThread __P((struct rf_recon_req *));
 void rf_buildroothack __P((void *));
 
 RF_AutoConfig_t *rf_find_raid_components __P((void));
-void print_component_label __P((RF_ComponentLabel_t *));
 RF_ConfigSet_t *rf_create_auto_sets __P((RF_AutoConfig_t *));
 static int rf_does_it_fit __P((RF_ConfigSet_t *,RF_AutoConfig_t *));
 static int rf_reasonable_label __P((RF_ComponentLabel_t *));
@@ -2102,7 +2101,7 @@ raidread_component_label(dev, b_vp, clabel)
 		memcpy(clabel, bp->b_un.b_addr,
 		       sizeof(RF_ComponentLabel_t));
 #if 0
-		print_component_label( clabel );
+		rf_print_component_label( clabel );
 #endif
         } else {
 #if 0
@@ -2640,7 +2639,7 @@ if (raidautoconfig) {
 					printf("Component on: %s%c: %d\n", 
 					       dv->dv_xname, 'a'+i,
 					       label.d_partitions[i].p_size);
-					print_component_label(clabel);
+					rf_print_component_label(clabel);
 #endif
 					/* if it's reasonable, add it, 
 					   else ignore it. */
@@ -2700,7 +2699,7 @@ rf_reasonable_label(clabel)
 
 
 void
-print_component_label(clabel)
+rf_print_component_label(clabel)
 	RF_ComponentLabel_t *clabel;
 {
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
