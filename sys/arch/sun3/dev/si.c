@@ -31,21 +31,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.2 1994/05/13 15:01:39 gwr Exp $
+ * $Id: si.c,v 1.3 1994/05/16 23:11:42 gwr Exp $
  */
 
-#define DEBUG
-
-#ifdef	DEBUG
-#define	STATIC	/* let DDB see the symbols */
-#else
-#define	STATIC	static
-#endif
+/* #define DEBUG 1 */
 
 /* XXX - Need to add support for real DMA. -gwr */
 /* #define PSEUDO_DMA 1 (broken) */
 
-STATIC int si_debug=0;
+static int si_debug=0;
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -124,21 +118,21 @@ struct ncr5380_softc {
     struct scsi_link sc_link;
 };
 
-STATIC u_int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
-STATIC void		ncr5380_minphys(struct buf *bp);
-STATIC int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static u_int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
+static void		ncr5380_minphys(struct buf *bp);
+static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
-STATIC int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
-STATIC int		ncr5380_reset_target(int adapter, int target);
-STATIC int		ncr5380_poll(int adapter, int timeout);
-STATIC int		ncr5380_send_cmd(struct scsi_xfer *xs);
+static int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+static int		ncr5380_reset_target(int adapter, int target);
+static int		ncr5380_poll(int adapter, int timeout);
+static int		ncr5380_send_cmd(struct scsi_xfer *xs);
 
 void		ncr5380_intr(int adapter);
 
-STATIC int	si_generic(int adapter, int id, int lun,
+static int	si_generic(int adapter, int id, int lun,
 			 struct scsi_generic *cmd, int cmdlen,
 			 void *databuf, int datalen);
-STATIC int	si_group0(int adapter, int id, int lun,
+static int	si_group0(int adapter, int id, int lun,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
 
@@ -167,15 +161,15 @@ struct scsi_device ncr_dev = {
 };
 
 extern int	matchbyname();
-STATIC int	si_match();
-STATIC void	si_attach();
+static int	si_match();
+static void	si_attach();
 
 struct cfdriver sicd = {
 	NULL, "si", si_match, si_attach, DV_DULL,
 	sizeof(struct ncr5380_softc), NULL, 0,
 };
 
-STATIC int
+static int
 si_print(aux, name)
 	void *aux;
 	char *name;
@@ -185,7 +179,7 @@ si_print(aux, name)
 	return UNCONF;
 }
 
-STATIC int
+static int
 si_match(parent, cf, aux)
 	struct device	*parent;
 	struct cfdata	*cf;
@@ -198,7 +192,7 @@ si_match(parent, cf, aux)
     return !obio_probe_byte(si_addr);
 }
 
-STATIC void
+static void
 si_attach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
@@ -224,18 +218,17 @@ si_attach(parent, self, aux)
     obio_print(si_addr, level);
     printf("\n");
 
-	Debugger();	/* XXX */
     config_found(self, &(ncr5380->sc_link), si_print);
 }
 
-STATIC u_int
+static u_int
 ncr5380_adapter_info(struct ncr5380_softc *ncr5380)
 {
 	return 1;
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-STATIC void
+static void
 ncr5380_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
@@ -245,7 +238,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-STATIC int									/* si_attach+0x190 */
+static int
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
@@ -318,7 +311,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #endif
 }
 
-STATIC int
+static int
 ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 {
 	u_char	*b = (u_char *) xs->cmd;
@@ -383,7 +376,7 @@ scsi_drq_intr(void)
 	return 1;
 }
 
-STATIC int
+static int
 ncr5380_reset_target(int adapter, int target)
 {
 	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
@@ -403,12 +396,12 @@ ncr5380_reset_target(int adapter, int target)
 	SCI_CLR_INTR(regs);
 }
 
-STATIC int
+static int
 ncr5380_poll(int adapter, int timeout)
 {
 }
 
-STATIC int
+static int
 ncr5380_send_cmd(struct scsi_xfer *xs)
 {
 	int	s;
@@ -450,7 +443,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
-STATIC int
+static int
 si_select_target(register volatile sci_regmap_t *regs,
 	      u_char myid, u_char tid, int with_atn)
 {
@@ -631,7 +624,7 @@ scsi_timeout_error:
 	return cnt;
 }
 
-STATIC int
+static int
 si_command_transfer(register volatile sci_regmap_t *regs,
 		 int maxlen, u_char *data, u_char *status, u_char *msg)
 {
@@ -686,7 +679,7 @@ scsi_timeout_error:
 	}
 }
 
-STATIC int
+static int
 si_data_transfer(register volatile sci_regmap_t *regs,
 	      int maxlen, u_char *data, u_char *status, u_char *msg)
 {
@@ -761,7 +754,7 @@ scsi_timeout_error:
 	}
 }
 
-STATIC int
+static int
 si_dorequest(register volatile sci_regmap_t *regs,
 		int target, int lun, u_char *cmd, int cmdlen,
 		char *databuf, int datalen, int *sent, int *ret)
@@ -805,7 +798,7 @@ si_dorequest(register volatile sci_regmap_t *regs,
 	return stat;
 }
 
-STATIC int
+static int
 si_generic(int adapter, int id, int lun, struct scsi_generic *cmd,
   	 int cmdlen, void *databuf, int datalen)
 {
@@ -822,7 +815,7 @@ si_generic(int adapter, int id, int lun, struct scsi_generic *cmd,
 	return i;
 }
 
-STATIC int
+static int
 si_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 		int flags, caddr_t databuf, int datalen)
 {
