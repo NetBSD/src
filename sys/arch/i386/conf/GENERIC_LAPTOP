@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.19 2003/01/07 21:11:36 thorpej Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.20 2003/01/08 16:58:23 thorpej Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12.2.19 $"
+#ident 		"GENERIC-$Revision: 1.12.2.20 $"
 
 maxusers	32		# estimated number of users
 
@@ -231,7 +231,7 @@ apm0	at mainbus0			# Advanced power management
 #fdc* 		at acpi?		# Floppy disk controller
 #lpt* 		at acpi?		# Parallel port
 #npx* 		at acpi?		# Math coprocessor
-#pckbc* 	at acpi?		# PC keyboard controller
+#pckbc*  	at acpi?		# PC keyboard controller
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial

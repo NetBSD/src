@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.11 2003/01/07 21:33:56 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.12 2003/01/08 17:10:54 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.11 2003/01/07 21:33:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.12 2003/01/08 17:10:54 thorpej Exp $");
 
 #include "opt_acpi.h"
 
@@ -205,12 +205,18 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
+	ACPI_TABLE_HEADER *ap = &AcpiGbl_XSDT->Header;
 	ACPI_STATUS rv;
 
 	printf("\n");
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
+
+	printf("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
+	    sc->sc_dev.dv_xname,
+	    ap->OemId, ap->OemTableId, ap->OemRevision,
+	    ap->AslCompilerId, ap->AslCompilerRevision);
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_memt = aa->aa_memt;
