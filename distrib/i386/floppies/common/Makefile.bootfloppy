@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.9 2002/04/26 15:50:32 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.10 2002/05/02 18:02:36 lukem Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -15,7 +15,7 @@
 #
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 FLOPPYSIZE?=		2880
 MDEC=			${DESTDIR}/usr/mdec
@@ -28,7 +28,7 @@ FLOPPY_BOOT_STRIP=	yes
 FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
 FLOPPYFILES=		boot ${FLOPPYMETAFILE} netbsd
 
-FLOPPYINSTDIR=		installation/floppy
+FLOPPY_RELEASEDIR=	installation/floppy
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 

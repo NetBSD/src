@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/04/26 03:49:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/05/02 18:02:54 lukem Exp $
 
 IMAGESIZE=	7296k
 MAKEFS_FLAGS=   -o density=4k
@@ -12,6 +12,6 @@ IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
 		${KERNOBJDIR}/GENERIC/netbsd
 
 # XXXDISTRIB: binstall needs to be MI and work on image files
-IMAGE_MD_POST=	${DESTDIR}/usr/mdec/binstall -f miniroot.fs \
+IMAGEPOSTBUILD=	${DESTDIR}/usr/mdec/binstall -f ${IMAGE} \
 		    -m ${DESTDIR}/usr/mdec -i ${SPARCINSTALLBOOT} \
 		    -v ffs ${WORKDIR}

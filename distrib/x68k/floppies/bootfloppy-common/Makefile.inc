@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.21 2002/04/26 15:08:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2002/05/02 18:03:02 lukem Exp $
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.include <bsd.kernobj.mk>
 
 # TOP is assumed to be defined by Makefile including this one.
 
 COMMONDIR=	${TOP}/bootfloppy-common
 
-.include <bsd.kernobj.mk>
 
 IMAGE?=		xxx-${DISTRIBREV}.fs
 .ifndef INSTKERNEL
@@ -83,20 +87,13 @@ ${BOOTNAME}:
 netbsd:
 	cp -fp ${INSTKERNEL} netbsd
 
-depend:
-
-release:
-	-mkdir -p ${RELEASEDIR}/installation/floppy
-	${RELINSTALL} ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
+release: check_RELEASEDIR
+	${RELEASE_INSTALL} ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
 	# XXX: do we want this?
 	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}*.fs; do \
 		gzip <$$f >$$f.gz; \
 	done
 
-clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE1}.tmp ${BASENAME}?.fs ${CLEANFILES}
+CLEANFILES+=	${IMAGE1}.tmp ${BASENAME}?.fs
 
-includes:
-
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
