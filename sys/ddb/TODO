@@ -1,10 +1,10 @@
-$NetBSD: TODO,v 1.2 2000/06/07 13:24:11 jhawk Exp $
+$NetBSD: TODO,v 1.3 2000/06/17 05:57:41 jhawk Exp $
 
 In rough order.
 
 Bugs to be fixed:
 
-1.	command history sometimes gets slightly confused
+done	command history sometimes gets slightly confused
 
 2.	uvm_fault()s can loop infinitely (kern/10016)
 

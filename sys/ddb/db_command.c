@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.47 2000/06/10 16:31:42 sommerfeld Exp $	*/
+/*	$NetBSD: db_command.c,v 1.48 2000/06/17 05:57:41 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -212,14 +212,15 @@ db_command(last_cmdp, cmd_table)
 	    addr = (db_expr_t)db_next;
 	    if (t == tCOMMA) {
 	            if (!db_expression(&count)) {
-		    db_printf("Count missing\n");
-		    db_flush_lex();
-		    return;
-	        }
+			    db_printf("Count missing\n");
+			    db_flush_lex();
+			    return;
+		    }
 	    } else
-	        count = last_count;
+		    count = last_count;
 	    have_addr = FALSE;
 	    modif[0] = '\0';
+	    db_skip_to_eol();
 	}
 	else if (t == tEXCL) {
 	    db_fncall(0, 0, 0, NULL);
