@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpgw.c,v 1.3 1995/05/19 22:05:08 mycroft Exp $";
+static char rcsid[] = "$Id: bootpgw.c,v 1.4 1995/07/24 13:38:10 ws Exp $";
 #endif
 
 /*
@@ -113,8 +113,8 @@ u_short bootps_port, bootpc_port;
  */
 
 struct sockaddr_in bind_addr;	/* Listening */
-struct sockaddr_in recv_addr;	/* Packet source */
-struct sockaddr_in send_addr;	/*  destination */
+struct sockaddr_in clnt_addr;	/* client address */
+struct sockaddr_in serv_addr;	/* server address */
 
 
 /*
@@ -342,14 +342,14 @@ main(argc, argv)
 	/*
 	 * Get address of real bootp server.
 	 */
-	if (inet_aton(servername, &send_addr.sin_addr) == 0) {
+	if (inet_aton(servername, &serv_addr.sin_addr) == 0) {
 		hep = gethostbyname(servername);
 		if (!hep) {
 			fprintf(stderr, "bootpgw: can't get addr for %s\n", servername);
 			exit(1);
 		}
-		memcpy(&send_addr.sin_addr, hep->h_addr,
-		    sizeof(send_addr.sin_addr));
+		memcpy(&serv_addr.sin_addr, hep->h_addr,
+		    sizeof(serv_addr.sin_addr));
 	}
 
 	if (standalone) {
@@ -452,15 +452,15 @@ main(argc, argv)
 				   actualtimeout.tv_sec / 60);
 			exit(0);
 		}
-		ra_len = sizeof(recv_addr);
+		ra_len = sizeof(clnt_addr);
 		n = recvfrom(s, pktbuf, MAX_MSG_SIZE, 0,
-					 (struct sockaddr *) &recv_addr, &ra_len);
+					 (struct sockaddr *) &clnt_addr, &ra_len);
 		if (n <= 0) {
 			continue;
 		}
 		if (debug > 3) {
 			report(LOG_INFO, "recvd pkt from IP addr %s",
-				   inet_ntoa(recv_addr.sin_addr));
+				   inet_ntoa(clnt_addr.sin_addr));
 		}
 		if (n < sizeof(struct bootp)) {
 			if (debug) {
@@ -516,11 +516,11 @@ handle_request()
 	struct ifreq *ifr;
 	u_short secs, hops;
 
-	/* XXX - SLIP init: Set bp_ciaddr = recv_addr here? */
+	/* XXX - SLIP init: Set bp_ciaddr = clnt_addr here? */
 
 	if (debug) {
 		report(LOG_INFO, "request from %s",
-			   inet_ntoa(recv_addr.sin_addr));
+			   inet_ntoa(clnt_addr.sin_addr));
 	}
 	/* Has the client been waiting long enough? */
 	secs = ntohs(bp->bp_secs);
@@ -530,8 +530,8 @@ handle_request()
 	/* Has this packet hopped too many times? */
 	hops = ntohs(bp->bp_hops);
 	if (++hops > maxhops) {
-		report(LOG_NOTICE, "reqest from %s reached hop limit",
-			   inet_ntoa(recv_addr.sin_addr));
+		report(LOG_NOTICE, "request from %s reached hop limit",
+			   inet_ntoa(clnt_addr.sin_addr));
 		return;
 	}
 	bp->bp_hops = htons(hops);
@@ -552,10 +552,10 @@ handle_request()
 		 * find out which interface a broadcast was received on. -gwr
 		 * (Thanks to <walker@zk3.dec.com> for finding this bug!)
 		 */
-		ifr = getif(s, &recv_addr.sin_addr);
+		ifr = getif(s, &clnt_addr.sin_addr);
 		if (!ifr) {
 			report(LOG_NOTICE, "no interface for request from %s",
-				   inet_ntoa(recv_addr.sin_addr));
+				   inet_ntoa(clnt_addr.sin_addr));
 			return;
 		}
 		sip = (struct sockaddr_in *) &(ifr->ifr_addr);
@@ -581,13 +581,13 @@ handle_request()
 		 */
 	}
 	/* Set up socket address for send. */
-	send_addr.sin_family = AF_INET;
-	send_addr.sin_port = htons(bootps_port);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(bootps_port);
 
 	/* Send reply with same size packet as request used. */
 	if (sendto(s, pktbuf, pktlen, 0,
-			   (struct sockaddr *) &send_addr,
-			   sizeof(send_addr)) < 0)
+			   (struct sockaddr *) &serv_addr,
+			   sizeof(serv_addr)) < 0)
 	{
 		report(LOG_ERR, "sendto: %s", get_network_errmsg());
 	}
@@ -632,9 +632,9 @@ handle_reply()
 #endif
 
 	/* Set up socket address for send to client. */
-	send_addr.sin_family = AF_INET;
-	send_addr.sin_addr = bp->bp_yiaddr;
-	send_addr.sin_port = htons(bootpc_port);
+	clnt_addr.sin_family = AF_INET;
+	clnt_addr.sin_addr = bp->bp_yiaddr;
+	clnt_addr.sin_port = htons(bootpc_port);
 
 	/* Create an ARP cache entry for the client. */
 	ha = bp->bp_chaddr;
@@ -652,8 +652,8 @@ handle_reply()
 
 	/* Send reply with same size packet as request used. */
 	if (sendto(s, pktbuf, pktlen, 0,
-			   (struct sockaddr *) &send_addr,
-			   sizeof(send_addr)) < 0)
+			   (struct sockaddr *) &clnt_addr,
+			   sizeof(clnt_addr)) < 0)
 	{
 		report(LOG_ERR, "sendto: %s", get_network_errmsg());
 	}
