@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.17 2003/01/06 13:26:28 wiz Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.18 2003/05/17 20:58:39 itojun Exp $");
 #endif
 
 /*
@@ -307,7 +307,7 @@ main(int argc, char **argv)
 						"bootpd: missing hostname\n");
 				break;
 			}
-			strncpy(hostname, stmp, sizeof(hostname)-1);
+			strlcpy(hostname, stmp, sizeof(hostname));
 			break;
 
 		case 'i':				/* inetd mode */
@@ -815,8 +815,7 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * daemon chroot directory (i.e. /tftpboot).
 	 */
 	if (hp->flags.tftpdir) {
-		strncpy(realpath, hp->tftpdir->string, sizeof(realpath) - 1);
-		realpath[sizeof(realpath) - 1] = '\0';
+		strlcpy(realpath, hp->tftpdir->string, sizeof(realpath));
 		clntpath = &realpath[strlen(realpath)];
 	} else {
 		realpath[0] = '\0';
@@ -871,12 +870,9 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * Construct bootfile path.
 	 */
 	if (homedir) {
-		if (homedir[0] != '/') {
-			strncat(realpath, "/", sizeof(realpath) - 1);
-			realpath[sizeof(realpath) - 1] = '\0';
-		}
-		strncat(realpath, homedir, sizeof(realpath) - 1);
-		realpath[sizeof(realpath) - 1] = '\0';
+		if (homedir[0] != '/')
+			strlcat(realpath, "/", sizeof(realpath));
+		strlcat(realpath, homedir, sizeof(realpath));
 		homedir = NULL;
 	}
 	if (bootfile) {
@@ -929,7 +925,7 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 #endif	/* CHECK_FILE_ACCESS */
 		}
 	}
-	strncpy(bp->bp_file, clntpath, BP_FILE_LEN);
+	strlcpy(bp->bp_file, clntpath, sizeof(bp->bp_file));
 	if (debug > 2)
 		report(LOG_INFO, "bootfile=\"%s\"", clntpath);
 
