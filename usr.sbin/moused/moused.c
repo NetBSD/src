@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.10 2002/09/23 03:36:04 itojun Exp $ */
+/* $NetBSD: moused.c,v 1.11 2002/09/23 12:48:06 mycroft Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.10 2002/09/23 03:36:04 itojun Exp $");
+__RCSID("$NetBSD: moused.c,v 1.11 2002/09/23 12:48:06 mycroft Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
