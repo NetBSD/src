@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 1998/09/11 12:50:08 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.16 1998/09/12 00:47:13 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -167,9 +167,11 @@
 92	STD		{ int ibcs2_sys_readlink(char *path, char *buf, \
 			    int count); }
 93	NOARGS		{ int sys_fchmod(int fd, int mode); }
-94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
+94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
+			    fchown
 95	UNIMPL
-96	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+96	NOARGS		{ int sys___sigreturn14(struct sigcontext *sigcntxp); } \
+			    sigreturn
 97	STD		{ int ibcs2_sys_sigaltstack( \
 			    const struct ibcs2_sigaltstack *nss, \
 			    struct ibcs2_sigaltstack *oss); }
