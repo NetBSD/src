@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 1997/02/27 08:31:17 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.33 1997/06/10 07:54:35 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,109 +41,31 @@
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 /*
  * Machine dependent constants for amiga
  */
 #define	_MACHINE	amiga
 #define	MACHINE		"amiga"
-#define	_MACHINE_ARCH	m68k
-#define	MACHINE_ARCH	"m68k"
-#define	MID_MACHINE	MID_M68K
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES	(sizeof(int) - 1)
-#define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
-#define	NBPG		8192		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof(u_int)))
+#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
+#include <m68k/param.h>
+
+#define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
 #define NBSEG		((mmutype == MMU_68040) ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
-
-#define	KERNBASE	0x0		/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
-
-#define	UPAGES		2		/* pages of u-area */
-#define USPACE		(UPAGES * NBPG)
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		128		/* size of an mbuf */
-
-#ifndef	MCLSHIFT
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)
-#define	MCLOFSET	(MCLBYTES - 1)
-#ifndef NMBCLUSTERS
-#ifdef GATEWAY
-# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
-#else
-# define	NMBCLUSTERS	256	/* map size, max cluster allocation */
-#endif
-#endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
-#ifndef NKMEMCLUSTERS
-# define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
-#endif
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
  */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+#ifndef NKMEMCLUSTERS
+# define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
+#endif
 
 /*
  * Mach derived conversion macros
@@ -160,13 +82,13 @@
  */
 #include <machine/psl.h>
 
-#ifdef _KERNEL
+#ifdef	_KERNEL
 /*
  * point to the custom.intenar and custom.intenaw respectively.
  */
 extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
-#ifndef _LOCORE
+#ifndef	_LOCORE
 void delay __P((int));
 void DELAY __P((int));
 #endif	/* !_LOCORE */
