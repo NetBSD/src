@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.75 2001/02/21 21:39:54 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.76 2001/06/03 02:23:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,6 @@ int	kernfs_write	__P((void *));
 #define	kernfs_ioctl	genfs_enoioctl
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
-#define	kernfs_mmap	genfs_eopnotsupp
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
 #define	kernfs_remove	genfs_eopnotsupp_rele
@@ -163,7 +162,6 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
 	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */
 	{ &vop_remove_desc, kernfs_remove },		/* remove */
@@ -191,7 +189,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, kernfs_truncate },	/* truncate */
 	{ &vop_update_desc, kernfs_update },		/* update */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 	{ &kernfs_vnodeop_p, kernfs_vnodeop_entries };
