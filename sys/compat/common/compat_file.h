@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.h,v 1.2 2003/01/22 17:48:02 christos Exp $ */
+/*	$NetBSD: compat_file.h,v 1.3 2003/06/05 12:26:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ int bsd_sys_readlink(struct lwp *, void *, register_t *);
 int bsd_sys_execve(struct lwp *, void *, register_t *);
 int bsd_sys_chroot(struct lwp *, void *, register_t *);
 int bsd_compat_12_sys_swapon(struct lwp *, void *, register_t *);
+int bsd_sys_bind(struct lwp *, void *, register_t *);
 int bsd_sys_rename(struct lwp *, void *, register_t *);
 int bsd_compat_43_sys_truncate(struct lwp *, void *, register_t *);
 int bsd_sys_mkfifo(struct lwp *, void *, register_t *);

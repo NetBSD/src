@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.23 2003/04/20 00:10:20 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.24 2003/06/05 12:26:28 manu Exp $ */
 
 /*
  * System call numbers.
@@ -234,9 +234,6 @@
 
 /* syscall: "sigreturn" ret: "int" args: "struct darwin_ucontext *" */
 #define	DARWIN_SYS_sigreturn	103
-
-/* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
-#define	DARWIN_SYS_bind	104
 
 /* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "const void *" "unsigned int" */
 #define	DARWIN_SYS_setsockopt	105
