@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.24 2000/11/21 09:59:02 lukem Exp $
+# $NetBSD: network,v 1.25 2000/11/21 16:12:48 wiz Exp $
 #
 
 # PROVIDE: network
@@ -92,7 +92,7 @@ network_start()
 		if checkyesno auto_ifconfig; then
 			tmp=`ifconfig -l`
 			for cloner in `ifconfig -C 2>/dev/null`; do
-				for int in /etc/ifconfig.${cloner}[0-9]*
+				for int in /etc/ifconfig.${cloner}[0-9]*; do
 					[ ! -f $int ] && break
 					tmp="$tmp ${int##*.}"
 				done
