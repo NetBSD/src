@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wiconfig.8,v 1.2 1999/07/14 22:43:17 sommerfeld Exp $
+.\"	$Id: wiconfig.8,v 1.3 1999/07/15 14:31:52 sommerfeld Exp $
 .\"
 .Dd April 21, 1999
 .Dt WICONFIG 8
@@ -125,15 +125,18 @@ Set the name of the service set (IBSS) that this station wishes to
 join. The
 .Ar network name
 can be any text string up to 30 characters in length. The default name
-is the string "ANY" which should allow the station to connect to the first
-available access point. The interface should be set for BSS mode using
+is the empty string, which should allow the station to connect to the
+first available access point.  
+Use 
+.Fl n Ar ''
+to specify an empty network name.
+The interface should be set for BSS mode using
 the
 .Fl p
 flag in order for this to work.
 .Pp
-Note: the WaveLAN manual indicates that an empty string will allow the
-host to connect to any access point, however I have also seen a reference
-in another driver which indicates that the "ANY" string works as well.
+Note that some other drivers may use the string "ANY" to reflect this
+in the driver's user interface.
 .It Fl i Ar iface Fl s Ar station name
 Sets the
 .Ar station name

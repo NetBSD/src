@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.1 1999/07/14 22:24:10 sommerfeld Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wireg.h,v 1.1 1999/07/14 22:24:10 sommerfeld Exp $
+ *	$Id: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $
  */
 
 /*
@@ -55,7 +55,12 @@
 #define WI_DEFAULT_TX_RATE	3
 
 /* Default network name: ANY */
-#define WI_DEFAULT_NETNAME	"ANY"
+/*
+ * [sommerfeld 1999/07/15] Changed from "ANY" to ""; according to Bill Fenner,
+ * ANY is used in MS driver user interfaces, while "" is used over the
+ * wire..
+ */
+#define WI_DEFAULT_NETNAME	""
 
 #define WI_DEFAULT_AP_DENSITY	1
 
