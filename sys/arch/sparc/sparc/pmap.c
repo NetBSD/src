@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.257 2003/06/23 13:43:20 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.258 2003/06/23 15:45:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4274,6 +4274,9 @@ pmap_remove(pm, va, endva)
 			cpu_number(), pm, va, endva);
 #endif
 
+	if (!CPU_HAS_SRMMU)
+		write_user_windows();
+
 	if (pm == pmap_kernel()) {
 		/*
 		 * Removing from kernel address space.
@@ -4283,8 +4286,6 @@ pmap_remove(pm, va, endva)
 		/*
 		 * Removing from user address space.
 		 */
-		if (!CPU_HAS_SRMMU)
-			write_user_windows();
 		rm = pmap_rmu;
 	}
 
@@ -5034,8 +5035,6 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 		    pm, va, prot, flags);
 #endif
 
-	write_user_windows();	/* paranoia */
-
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
@@ -5403,6 +5402,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
 
+	write_user_windows();
 	ctx = getcontext4();
 	if (pm == pmap_kernel())
 		error = pmap_enk4_4c(pm, va, prot, flags, pg, pteproto | PG_S);
@@ -5548,7 +5548,6 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	write_user_windows();		/* XXX conservative */
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -5744,6 +5743,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
+	write_user_windows();
 	ctx = getcontext4();
 	s = splvm();
 #if defined(SUN4_MMU3L)
@@ -5803,8 +5803,8 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	/* ptes kept in hardware only */
 	setpte4(va, pteproto);
 	sp->sg_npte++;
-	splx(s);
 	setcontext4(ctx);
+	splx(s);
 }
 
 void
@@ -5826,9 +5826,12 @@ pmap_kremove4_4c(va, len)
 		printf("pmap_kremove(0x%lx, 0x%lx)\n", va, endva);
 #endif
 
+	write_user_windows();
+
 	s = splvm();
 	ctx = getcontext();
 	simple_lock(&pm->pm_lock);
+	setcontext4(0);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
 		vr = VA_VREG(va);
@@ -5847,7 +5850,6 @@ pmap_kremove4_4c(va, len)
 			continue;
 		pmeg = sp->sg_pmeg;
 		KASSERT(pmeg != seginval);
-		setcontext4(0);
 		/* decide how to flush cache */
 		npg = (nva - va) >> PGSHIFT;
 		if (npg > PMAP_SFL_THRESHOLD) {
