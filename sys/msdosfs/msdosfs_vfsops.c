@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.68 2000/03/30 02:27:35 simonb Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.69 2000/04/03 18:12:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -503,10 +503,12 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_fatmult = 4;
 		pmp->pm_fatdiv = 1;
 		pmp->pm_FATsecs = getulong(b710->bpbBigFATsecs);
-		if (getushort(b710->bpbExtFlags) & FATMIRROR)
-			pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
-		else
+
+		/* mirrorring is enabled if the FATMIRROR bit is not set */
+		if ((getushort(b710->bpbExtFlags) & FATMIRROR) == 0)
 			pmp->pm_flags |= MSDOSFS_FATMIRROR;
+		else
+			pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
 	} else
 		pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
