@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15 2001/06/08 09:49:28 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.16 2001/06/30 20:15:02 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -50,7 +50,7 @@ typedef struct {
 	struct frame	 db_fr;
 } db_regs_t;
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && defined(DDB)
 extern db_regs_t *ddb_regp;
 #define DDB_REGS        (ddb_regp)
 #define	DDB_TF		(&ddb_regp->db_tf)
