@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.29 1999/12/18 22:47:11 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.30 2000/01/16 13:05:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -218,8 +218,6 @@ USB_ATTACH(uhid)
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		if (desc != NULL)
-			free(desc, M_USBDEV);
 		USB_ATTACH_ERROR_RETURN;
 	}
 	
