@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.7 1998/08/17 22:14:15 tv Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.8 1998/08/17 22:49:22 tv Exp $";
 #endif
 
 #include <ctype.h>
@@ -846,8 +846,8 @@ segT expr(rank, resultP)
  * which should get resolved by fixup_segment())
  */
 				if (resultP->X_got_symbol &&
-				    resultP->X_add_symbol != NULL &&
-				    resultP->X_subtract_symbol != NULL) {
+				    right.X_add_symbol != NULL &&
+				    right.X_subtract_symbol != NULL) {
 					resultP->X_add_symbol = right.X_add_symbol;
 					resultP->X_subtract_symbol = right.X_subtract_symbol;
 					seg1 = S_GET_SEGMENT(right.X_add_symbol);
