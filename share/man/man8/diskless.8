@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.5 1995/08/08 21:37:40 gwr Exp $
+.\"	$NetBSD: diskless.8,v 1.6 1995/09/02 17:12:32 thorpej Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -69,13 +69,16 @@ address and then use
 .Tn TFTP
 to download a boot program from whoever sent the
 .Tn RARP
-reply.  Typical personal computers may load a
+reply.  HP 300-series machines use the
+.Tn HP Remote Maintainance Protocol
+to download a boot program.
+Typical personal computers may load a
 network boot program either from diskette or
 using a special PROM on the network card.
 .Pp
 In phase 2, the boot program loads a kernel.  Operation in
 this phase depends on the design of the boot program.
-(The design described here is the one used by Sun.)
+(The design described here is the one used by Sun and NetBSD/hp300.)
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -165,15 +168,28 @@ or DNS database:
 .Ed
 .Pp
 .It 3.
-Ensure that
+If booting a Sun machine, ensure that
 .Pa /etc/inetd.conf
 is configured to run
 .Xr tftpd 8
 in the directory
 .Pa /tftpboot .
 .Pp
+If booting an HP 300-sseries machine, ensure that
+.Pa /etc/rbootd.conf
+is configured properly to transfer the boot program to the client.
+An entry might look like this:
+.Bd -literal -offset indent -compact
+08:00:09:01:23:E6	SYS_NBOOT	# myclient
+.Ed
+.Pp
+See the
+.Xr rbootd 8
+manual page for more information.
+.Pp
 .It 4.
-Install a copy of the appropriate diskless boot loader (such as
+If booting a Sun machine, install a copy of the appropriate diskless boot
+loader (such as
 .Pa boot.sun4.sunos.4.1.1
 from the SunOS media) in the
 .Pa /tftpboot
@@ -195,6 +211,14 @@ If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is trying to read.
 .Pp
+If booting an HP 300-series machine, ensure that the network boot program
+.Pa SYS_NBOOT
+(which may be called
+.Pa netboot.lif
+before installation)
+is installed in the directory
+.Pa /usr/mdec/rbootd .
+
 .It 5.
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
@@ -277,15 +301,19 @@ myserver:/usr /usr nfs rw 0 0
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width /etc/bootparams -compact
+.Bl -tag -width /usr/mdec/rbootd -compact
 .It Pa /etc/ethers
 Ethernet addresses of known clients
-.It Pa /tftpboot
-location of boot programs loaded by PROM
 .It Pa /etc/bootparams
 client root and swap pathnames
 .It Pa /etc/exports
 exported NFS mount points
+.It Pa /etc/rbootd.conf
+configuration file for HP Remote Boot Daemon
+.It Pa /tftpboot
+location of boot programs loaded by the Sun PROM
+.It Pa /usr/mdec/rbootd
+location of boot programs loaded by the HP Boot ROM
 .El
 .Sh "SEE ALSO"
 .Xr rarpd 8 ,
@@ -296,4 +324,5 @@ exported NFS mount points
 .Xr mountd 8 ,
 .Xr exports 5 ,
 .Xr nfsd 8 ,
+.Xr rbootd 8 ,
 .Xr reboot 8
