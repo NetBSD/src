@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.7 2005/01/30 17:38:49 thorpej Exp $	 */
+/* $NetBSD: if_bce.c,v 1.8 2005/02/02 13:26:06 christos Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -225,6 +225,12 @@ static const struct bce_product {
 		"Broadcom BCM4401 10/100 Ethernet"
 	},
 	{
+		PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4401_B0,
+		"Broadcom BCM4401-B0 10/100 Ethernet"
+	},
+	{
+
 		0,
 		0,
 		NULL
