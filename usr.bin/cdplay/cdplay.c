@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.22 2003/01/30 21:23:57 is Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.23 2003/02/19 12:55:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.22 2003/01/30 21:23:57 is Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.23 2003/02/19 12:55:58 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,7 +113,9 @@ struct cmdtab {
 	{ CMD_VOLUME,	"volume",  1, "<l> <r>|left|right|mute|mono|stereo" },
 };
 
-struct cd_toc_entry toc_buffer[100];
+#define	CD_MAX_TRACK	99	/* largest 2 digit BCD number */
+
+struct cd_toc_entry toc_buffer[CD_MAX_TRACK + 1];
 
 const char *cdname;
 int     fd = -1;
@@ -140,7 +142,7 @@ int	play_blocks(int, int);
 int	play_msf(int, int, int, int, int, int);
 int	play_track(int, int, int, int);
 int	print_status(const char *);
-void	print_track(struct cd_toc_entry *, int);
+void	print_track(struct cd_toc_entry *);
 const char	*prompt(void);
 int	read_toc_entrys(int);
 int	run(int, const char *);
@@ -822,15 +824,15 @@ info(const char *arg)
 	if (rc < 0)
 		return (rc);
 
-	printf("track     start  duration   block  length   type\n");
-	printf("-------------------------------------------------\n");
+	printf("track     start  duration   block  length     type\n");
+	printf("--------------------------------------------------\n");
 
 	for (i = 0; i < n; i++) {
 		printf("%5d  ", toc_buffer[i].track);
-		print_track(toc_buffer + i, 0);
+		print_track(toc_buffer + i);
 	}
-	printf("%5d  ", toc_buffer[n].track);
-	print_track(toc_buffer + n, 1);
+	printf("    -  ", toc_buffer[n].track);	/* Lead-out area */
+	print_track(toc_buffer + n);
 	return (0);
 }
 
@@ -854,7 +856,7 @@ msf2lba(u_int m, u_int s, u_int f)
 }
 
 void
-print_track(struct cd_toc_entry *e, int lastflag)
+print_track(struct cd_toc_entry *e)
 {
 	int block, next, len;
 	u_int m, s, f;
@@ -872,9 +874,9 @@ print_track(struct cd_toc_entry *e, int lastflag)
 		/* Print track start */
 		printf("%2d:%02d.%02d  ", m, s, f);
 	}
-	if (lastflag) {
-		/* Last track -- print block */
-		printf("       -  %6d       -      -\n", block);
+	if (e->track > CD_MAX_TRACK) {
+		/* lead-out area -- print block */
+		printf("       -  %6d       - lead-out\n", block);
 		return;
 	}
 	if (msf)
@@ -886,7 +888,7 @@ print_track(struct cd_toc_entry *e, int lastflag)
 	lba2msf(len, &m, &s, &f);
 
 	/* Print duration, block, length, type */
-	printf("%2d:%02d.%02d  %6d  %6d  %5s\n", m, s, f, block, len,
+	printf("%2d:%02d.%02d  %6d  %6d %8s\n", m, s, f, block, len,
 	    (e->control & 4) ? "data" : "audio");
 }
 
@@ -1102,7 +1104,7 @@ toc2msf(u_int i, u_int *m, u_int *s, u_int *f)
 	struct cd_toc_entry *ctep;
 
 	assert(i >= 0);
-	assert(i < 100);
+	assert(i <= CD_MAX_TRACK);
 
 	ctep = &toc_buffer[i];
 
@@ -1121,7 +1123,7 @@ toc2lba(u_int i)
 	struct cd_toc_entry *ctep;
 
 	assert(i > 0);
-	assert(i < 100);
+	assert(i <= CD_MAX_TRACK);
 
 	ctep = &toc_buffer[i-1];
 
