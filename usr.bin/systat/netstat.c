@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.15 2000/01/05 11:59:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.15 2000/01/05 11:59:12 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -61,6 +61,10 @@ __RCSID("$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $");
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp_var.h>
 #include <netinet/ip_var.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/in6_pcb.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
@@ -81,13 +85,19 @@ __RCSID("$NetBSD: netstat.c,v 1.14 2000/01/05 11:50:21 itojun Exp $");
 #include "extern.h"
 
 static void enter __P((struct inpcb *, struct socket *, int, char *));
-static char *inetname __P((struct in_addr));
+static const char *inetname __P((struct in_addr));
 static void inetprint __P((struct in_addr *, int, char *));
+#ifdef INET6
+static void enter6 __P((struct in6pcb *, struct socket *, int, char *));
+static const char *inet6name __P((struct in6_addr *));
+static void inet6print __P((struct in6_addr *, int, char *));
+#endif
 
 #define	streq(a,b)	(strcmp(a,b)==0)
 
 struct netinfo {
 	struct	netinfo *ni_forw, *ni_prev;
+	int	ni_family;
 	short	ni_line;		/* line on screen */
 	short	ni_seen;		/* 0 when not present in list */
 	short	ni_flags;
@@ -96,8 +106,14 @@ struct netinfo {
 	short	ni_state;		/* tcp state */
 	char	*ni_proto;		/* protocol */
 	struct	in_addr ni_laddr;	/* local address */
+#ifdef INET6
+	struct	in6_addr ni_laddr6;	/* local address */
+#endif
 	long	ni_lport;		/* local port */
 	struct	in_addr	ni_faddr;	/* foreign address */
+#ifdef INET6
+	struct	in6_addr ni_faddr6;	/* foreign address */
+#endif
 	long	ni_fport;		/* foreign port */
 	long	ni_rcvcc;		/* rcv buffer character count */
 	long	ni_sndcc;		/* snd buffer character count */
@@ -147,6 +163,12 @@ static struct nlist namelist[] = {
 	{ "_tcbtable" },
 #define	X_UDBTABLE	1
 	{ "_udbtable" },
+#ifdef INET6
+#define	X_TCB6		2
+	{ "_tcb6" },
+#define	X_UDB6		3
+	{ "_udb6" },
+#endif
 	{ "" },
 };
 
@@ -175,6 +197,10 @@ fetchnetstat()
 	struct inpcb inpcb;
 	struct socket sockb;
 	struct tcpcb tcpcb;
+#ifdef INET6
+	struct in6pcb in6pcb;
+	struct in6pcb *head6, *prev6, *next6;
+#endif
 	void *off;
 	int istcp;
 
@@ -229,6 +255,56 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 		off = NPTR(X_UDBTABLE);
 		goto again;
 	}
+
+#ifdef INET6
+	if (protos&TCP) {
+		off = NPTR(X_TCB6); 
+		istcp = 1;
+	}
+	else if (protos&UDP) {
+		off = NPTR(X_UDB6); 
+		istcp = 0;
+	}
+	else {
+		error("No protocols to display");
+		return;
+	}
+again6:
+	KREAD(off, &in6pcb, sizeof (struct in6pcb));
+	prev6 = head6 = (struct in6pcb *)off;
+	next6 = in6pcb.in6p_next;
+	while (next6 != head6) {
+		KREAD(next6, &in6pcb, sizeof (in6pcb));
+		if (in6pcb.in6p_prev != prev6) {
+printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_prev);
+			p = netcb.ni_forw;
+			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
+				p->ni_seen = 1;
+			error("Kernel state in transition");
+			return;
+		}
+		prev6 = next6;
+		next6 = in6pcb.in6p_next;
+
+		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
+			continue;
+		if (nhosts && !checkhost6(&in6pcb))
+			continue;
+		if (nports && !checkport6(&in6pcb))
+			continue;
+		KREAD(in6pcb.in6p_socket, &sockb, sizeof (sockb));
+		if (istcp) {
+			KREAD(in6pcb.in6p_ppcb, &tcpcb, sizeof (tcpcb));
+			enter6(&in6pcb, &sockb, tcpcb.t_state, "tcp");
+		} else
+			enter6(&in6pcb, &sockb, 0, "udp");
+	}
+	if (istcp && (protos&UDP)) {
+		istcp = 0;
+		off = NPTR(X_UDB6);
+		goto again6;
+	}
+#endif /*INET6*/
 }
 
 static void
@@ -248,6 +324,8 @@ enter(inp, so, state, proto)
 	 * data structures.
 	 */
 	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+		if (p->ni_family != AF_INET)
+			continue;
 		if (!streq(proto, p->ni_proto))
 			continue;
 		if (p->ni_lport != inp->inp_lport ||
@@ -273,12 +351,67 @@ enter(inp, so, state, proto)
 		p->ni_fport = inp->inp_fport;
 		p->ni_proto = proto;
 		p->ni_flags = NIF_LACHG|NIF_FACHG;
+		p->ni_family = AF_INET;
 	}
 	p->ni_rcvcc = so->so_rcv.sb_cc;
 	p->ni_sndcc = so->so_snd.sb_cc;
 	p->ni_state = state;
 	p->ni_seen = 1;
 }
+
+#ifdef INET6
+static void
+enter6(in6p, so, state, proto)
+	struct in6pcb *in6p;
+	struct socket *so;
+	int state;
+	char *proto;
+{
+	struct netinfo *p;
+
+	/*
+	 * Only take exact matches, any sockets with
+	 * previously unbound addresses will be deleted
+	 * below in the display routine because they
+	 * will appear as ``not seen'' in the kernel
+	 * data structures.
+	 */
+	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+		if (p->ni_family != AF_INET6)
+			continue;
+		if (!streq(proto, p->ni_proto))
+			continue;
+		if (p->ni_lport != in6p->in6p_lport ||
+		    !IN6_ARE_ADDR_EQUAL(&p->ni_laddr6, &in6p->in6p_laddr))
+			continue;
+		if (IN6_ARE_ADDR_EQUAL(&p->ni_faddr6, &in6p->in6p_faddr) &&
+		    p->ni_fport == in6p->in6p_fport)
+			break;
+	}
+	if (p == (struct netinfo *)&netcb) {
+		if ((p = malloc(sizeof(*p))) == NULL) {
+			error("Out of memory");
+			return;
+		}
+		p->ni_prev = (struct netinfo *)&netcb;
+		p->ni_forw = netcb.ni_forw;
+		netcb.ni_forw->ni_prev = p;
+		netcb.ni_forw = p;
+		p->ni_line = -1;
+		p->ni_laddr6 = in6p->in6p_laddr;
+		p->ni_lport = in6p->in6p_lport;
+		p->ni_faddr6 = in6p->in6p_faddr;
+		p->ni_fport = in6p->in6p_fport;
+		p->ni_proto = proto;
+		p->ni_flags = NIF_LACHG|NIF_FACHG;
+		p->ni_family = AF_INET6;
+	}
+	p->ni_rcvcc = so->so_rcv.sb_cc;
+	p->ni_sndcc = so->so_snd.sb_cc;
+	p->ni_state = state;
+	p->ni_seen = 1;
+}
+#endif
 
 /* column locations */
 #define	LADDR	0
@@ -349,15 +482,41 @@ shownetstat()
 		}
 		if (p->ni_flags & NIF_LACHG) {
 			wmove(wnd, p->ni_line, LADDR);
-			inetprint(&p->ni_laddr, p->ni_lport, p->ni_proto);
+			switch (p->ni_family) {
+			case AF_INET:
+				inetprint(&p->ni_laddr, p->ni_lport,
+					p->ni_proto);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				inet6print(&p->ni_laddr6, p->ni_lport,
+					p->ni_proto);
+				break;
+#endif
+			}
 			p->ni_flags &= ~NIF_LACHG;
 		}
 		if (p->ni_flags & NIF_FACHG) {
 			wmove(wnd, p->ni_line, FADDR);
-			inetprint(&p->ni_faddr, p->ni_fport, p->ni_proto);
+			switch (p->ni_family) {
+			case AF_INET:
+				inetprint(&p->ni_faddr, p->ni_fport,
+					p->ni_proto);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				inet6print(&p->ni_faddr6, p->ni_fport,
+					p->ni_proto);
+				break;
+#endif
+			}
 			p->ni_flags &= ~NIF_FACHG;
 		}
 		mvwaddstr(wnd, p->ni_line, PROTO, p->ni_proto);
+#ifdef INET6
+		if (p->ni_family == AF_INET6)
+			waddstr(wnd, "6");
+#endif
 		mvwprintw(wnd, p->ni_line, RCVCC, "%6d", p->ni_rcvcc);
 		mvwprintw(wnd, p->ni_line, SNDCC, "%6d", p->ni_sndcc);
 		if (streq(p->ni_proto, "tcp")) {
@@ -407,12 +566,41 @@ inetprint(in, port, proto)
 	waddstr(wnd, line);
 }
 
+#ifdef INET6
+static void
+inet6print(in6, port, proto)
+	struct in6_addr *in6;
+	int port;
+	char *proto;
+{
+	struct servent *sp = 0;
+	char line[80], *cp;
+
+	(void)snprintf(line, sizeof line, "%.*s.", 16, inet6name(in6));
+	cp = strchr(line, '\0');
+	if (!nflag && port)
+		sp = getservbyport(port, proto);
+	if (sp || port == 0)
+		(void)snprintf(cp, line + sizeof line - cp, "%.8s",
+		     sp ? sp->s_name : "*");
+	else
+		(void)snprintf(cp, line + sizeof line - cp, "%d",
+		     ntohs((u_short)port));
+	/* pad to full column to clear any garbage */
+	cp = strchr(line, '\0');
+	while (cp - line < 22)
+		*cp++ = ' ';
+	*cp = '\0';
+	waddstr(wnd, line);
+}
+#endif
+
 /*
  * Construct an Internet address representation.
  * If the nflag has been supplied, give 
  * numeric value, otherwise try for symbolic name.
  */
-static char *
+static const char *
 inetname(in)
 	struct in_addr in;
 {
@@ -451,6 +639,32 @@ inetname(in)
 	line[sizeof(line) - 1] = '\0';
 	return (line);
 }
+
+#ifdef INET6
+static const char *
+inet6name(in6)
+	struct in6_addr *in6;
+{
+	static char line[NI_MAXHOST];
+	struct sockaddr_in6 sin6;
+	int flags;
+
+	if (nflag)
+		flags = NI_NUMERICHOST;
+	else
+		flags = 0;
+	if (IN6_IS_ADDR_UNSPECIFIED(in6))
+		return "*";
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *in6;
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+			line, sizeof(line), NULL, 0, flags) == 0)
+		return line;
+	return "?";
+}
+#endif
 
 /* please note: there are also some netstat commands in netcmds.c */
 
