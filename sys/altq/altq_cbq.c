@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.6.6.2 2004/08/12 16:15:32 skrll Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6.6.2 2004/08/12 16:15:32 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -809,19 +809,19 @@ static void cbq_purge(cbqp)
 altqdev_decl(cbq);
 
 int
-cbqopen(dev, flag, fmt, p)
+cbqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (0);
 }
 
 int
-cbqclose(dev, flag, fmt, p)
+cbqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ifnet *ifp;
 	struct cbq_interface iface;
@@ -844,13 +844,14 @@ cbqclose(dev, flag, fmt, p)
 }
 
 int
-cbqioctl(dev, cmd, addr, flag, p)
+cbqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check cmd for superuser only */

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -195,20 +195,20 @@ static int dscp2index __P((u_int8_t));
 altqdev_decl(rio);
 
 int
-rioopen(dev, flag, fmt, p)
+rioopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-rioclose(dev, flag, fmt, p)
+rioclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	rio_queue_t *rqp;
 	int err, error = 0;
@@ -224,16 +224,17 @@ rioclose(dev, flag, fmt, p)
 }
 
 int
-rioioctl(dev, cmd, addr, flag, p)
+rioioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	rio_queue_t *rqp;
 	struct rio_interface *ifacep;
 	struct ifnet *ifp;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
