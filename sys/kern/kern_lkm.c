@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.14 1994/02/15 14:17:07 mycroft Exp $
+ *	$Id: kern_lkm.c,v 1.15 1994/03/31 20:31:19 ws Exp $
  */
 
 #include <sys/param.h>
@@ -270,13 +270,20 @@ lkmioctl(dev, cmd, data, flag)
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
-		if (lkm_state != LKMS_LOADED) {
+		switch (lkm_state) {
+		case LKMS_LOADED:
+			break;
+		case LKMS_LOADING:
+			/* The remainder must be bss, so we clear it */
+			bzero((caddr_t)curp->area + curp->offset,
+			      curp->size - curp->offset);
+			break;
+		default:
 
 #ifdef DEBUG
 			printf("lkm_state is %02x\n", lkm_state);
 #endif	/* DEBUG */
-			err = ENXIO;
-			break;
+			return ENXIO;
 		}
 
 		curp->entry = (int (*)()) (*((int *) (data)));
@@ -335,6 +342,11 @@ lkmioctl(dev, cmd, data, flag)
 		}
 
 		curp = &lkmods[i];
+
+		if (!curp->used) {
+			err = ENOENT;
+			break;
+		}
 
 		/* call entry(unload) */
 		if ((*(curp->entry))(curp, LKM_E_UNLOAD, LKM_VERSION)) {
