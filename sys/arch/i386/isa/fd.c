@@ -58,7 +58,7 @@
 #define b_cylin b_resid
 #define b_step b_resid
 #define FDBLK 512
-#define NUMTYPES 4
+#define NUMTYPES 4+1
 
 struct fd_type {
 	int	sectrac;		/* sectors per track         */
@@ -72,6 +72,7 @@ struct fd_type {
 };
 
 struct fd_type fd_types[NUMTYPES] = {
+	{ 0 },				/* non-existant */
  	{ 18,2,0xFF,0x1B,80,2880,1,0 },	/* 1.44 meg HD 3.5in floppy    */
 	{ 15,2,0xFF,0x1B,80,2400,1,0 },	/* 1.2 meg HD floppy           */
 	{ 9,2,0xFF,0x23,40,720,2,1 },	/* 360k floppy in 1.2meg drive */
@@ -177,12 +178,12 @@ fdattach(struct isa_device *dev)
 		if ((fdt & 0xf0) == RTCFDT_12M) {
 			printf("fd%d: <1.2M> on fdc%d slave %d\n", fddrive,
 				dev->id_unit, fdunit);
-			fd_unit[fdunit].type = 1;
+			fd_unit[fdunit].type = 2;
 		}
 		if ((fdt & 0xf0) == RTCFDT_144M) {
 			printf("fd%d: <1.44M> on fdc%d slave %d\n", fddrive,
 				dev->id_unit, fdunit);
-			fd_unit[fdunit].type = 0;
+			fd_unit[fdunit].type = 1;
 		}
 
 		outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
@@ -212,6 +213,11 @@ fdstrategy(bp)
  	unit = FDUNIT(minor(bp->b_dev));
  	/*type = FDTYPE(minor(bp->b_dev));*/
 	type = fd_unit[unit].type;
+	if(type == 0) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		goto bad;
+	}
 
 #ifdef FDTEST
 printf("fdstrat%d, blk = %d, bcount = %d, addr = %x|",
@@ -326,13 +332,14 @@ Fdopen(dev, flags)
 	int	flags;
 {
  	int unit = FDUNIT(minor(dev));
- 	/*int type = FDTYPE(minor(dev));*/
+	int type = fd_unit[unit].type;
 	int s;
 
 	fdopenf = 1;
 	/* check bounds */
 	if (unit >= NFD) return(ENXIO);
-	/*if (type >= NUMTYPES) return(ENXIO);*/
+	if (type >= NUMTYPES || type==0)
+		return ENXIO;
 
 	/* Set proper disk type, only allow one type */
 	return 0;
