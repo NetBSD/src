@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.130 2003/01/18 10:06:29 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.131 2003/02/03 22:56:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.130 2003/01/18 10:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.131 2003/02/03 22:56:23 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -886,9 +886,7 @@ psignal1(struct proc *p, int signum,
 			 * and if all the live LWPs remaining are suspended.
 			 */
 			allsusp = 1;
-			for (l = LIST_FIRST(&p->p_lwps); 
-			     l != NULL; 
-			     l = LIST_NEXT(l, l_sibling)) {
+			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 				if (l->l_stat == LSSLEEP && 
 				    l->l_flag & L_SINTR)
 					break;
@@ -1032,7 +1030,8 @@ psignal1(struct proc *p, int signum,
 			goto out;
 		} else {
 			/* Else what? */
-			panic("psignal: Invalid process state.");
+			panic("psignal: Invalid process state %d.",
+				p->p_stat);
 		}
 	}
 	/*NOTREACHED*/
