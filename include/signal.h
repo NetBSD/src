@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 1995/01/10 01:33:23 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 1995/05/28 02:53:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,8 +46,9 @@
 #endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern __const char *__const sys_signame[NSIG];
-extern __const char *__const sys_siglist[NSIG];
+extern __const char *__const sys_signame[_NSIG];
+extern __const char *__const sys_siglist[_NSIG];
+#define NSIG _NSIG
 #endif
 
 __BEGIN_DECLS
@@ -68,7 +69,7 @@ int	sigsuspend __P((const sigset_t *));
 extern __inline int sigaddset(sigset_t *set, int signo) {
 	extern int errno;
 
-	if (signo <= 0 || signo >= 32) {
+	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
@@ -79,7 +80,7 @@ extern __inline int sigaddset(sigset_t *set, int signo) {
 extern __inline int sigdelset(sigset_t *set, int signo) {
 	extern int errno;
 
-	if (signo <= 0 || signo >= 32) {
+	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
@@ -90,7 +91,7 @@ extern __inline int sigdelset(sigset_t *set, int signo) {
 extern __inline int sigismember(const sigset_t *set, int signo) {
 	extern int errno;
 
-	if (signo <= 0 || signo >= 32) {
+	if (signo <= 0 || signo >= _NSIG) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
