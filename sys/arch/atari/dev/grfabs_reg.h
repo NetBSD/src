@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.9 1996/10/11 21:01:26 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.10 1997/03/13 12:37:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -94,6 +94,7 @@ struct bitmap {
     u_char	*regs;		/* where the registers are		*/
     u_char	*hw_regs;	/* mappable registers			*/
     u_short	reg_size;	/* size of the register area		*/
+    u_int	phys_mappable;	/* the amount of mappable plane mem.	*/
 };
 
 /*
