@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.4 2001/04/01 20:16:25 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.5 2001/04/09 13:59:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.4 2001/04/01 20:16:25 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.5 2001/04/09 13:59:44 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.4 2001/04/01 20:16:25 reinoud Exp $"
 /* for vidc_mode ... needs to be MI indepenent one day */
 #include <machine/vidc.h>
 #include <arm32/vidc/vidc20config.h>
+#include <machine/bootconfig.h>
 
 #define machine_btop(x) arm_byte_to_page(x)
 #define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
@@ -855,7 +856,7 @@ static void vv_copyrows(id, srcrow, dstrow, nrows)
 	scrollup   = (srcrow + nrows >= ri->ri_rows);
 	scrolldown = (dstrow + nrows >= ri->ri_rows);
 
-	if (scrollup || scrolldown) {
+	if ((scrollup || scrolldown) && (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM)) {
 		ri->ri_bits = vidcvideo_hwscroll(offset);
 		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
 
