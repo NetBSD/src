@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.33 1998/08/08 06:46:02 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.34 1998/09/28 09:03:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.33 1998/08/08 06:46:02 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.34 1998/09/28 09:03:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -649,11 +649,11 @@ progressmeter(flag)
 	 * List of order of magnitude prefixes.
 	 * The last is `P', as 2^64 = 16384 Petabytes
 	 */
-	static const char prefixes[] = " KMGTP";
+	static const char prefixes[] = "BKMGTP";
 
 	static off_t lastsize;
 	struct timeval now, td, wait;
-	off_t cursize, abbrevsize;
+	off_t cursize, abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, barlength, i, len, remaining;
 	char buf[256];
@@ -670,12 +670,12 @@ progressmeter(flag)
 		return;
 	cursize = bytes + restart_point;
 
-	ratio = cursize * 100 / filesize;
+	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
 	len += snprintf(buf + len, sizeof(buf) - len, "\r%3d%% ", ratio);
 
-	barlength = ttywidth - 30;
+	barlength = ttywidth - 42;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -685,19 +685,17 @@ progressmeter(flag)
 		    barlength - i, "");
 	}
 
-	i = 0;
 	abbrevsize = cursize;
-	while (abbrevsize >= 100000 && i < sizeof(prefixes)) {
-		i++;
+	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
-	}
 	len += snprintf(buf + len, sizeof(buf) - len,
 #ifndef NO_QUAD
 	    " %5qd %c%c ", (long long)abbrevsize,
 #else
 	    " %5ld %c%c ", (long)abbrevsize,
 #endif
-	    prefixes[i], prefixes[i] == ' ' ? ' ' : 'B');
+	    i == 0 ? ' ' : prefixes[i],
+	    i == 0 ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
@@ -712,6 +710,23 @@ progressmeter(flag)
 
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+
+	bytespersec = 0;
+	if (bytes > 0) {
+		bytespersec = bytes;
+		if (elapsed > 0.0)
+			bytespersec /= elapsed;
+	}
+	for (i = 0; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+		bytespersec >>= 10;
+	len += snprintf(buf + len, sizeof(buf) - len,
+#ifndef NO_QUAD
+	    " %5qd %c%s ", (long long)bytespersec,
+#else
+	    " %5ld %c%s ", (long)bytespersec,
+#endif
+	    prefixes[i],
+	    i == 0 ? "/s " : "B/s");
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -767,7 +782,7 @@ ptransfer(siginfo)
 #ifndef	SMALL
 	struct timeval now, td, wait;
 	double elapsed;
-	off_t bs;
+	off_t bytespersec;
 	int meg, remaining, hh, len;
 	char buf[100];
 
@@ -777,10 +792,15 @@ ptransfer(siginfo)
 	(void)gettimeofday(&now, NULL);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
-	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
+	bytespersec = 0;
 	meg = 0;
-	if (bs > (1024 * 1024))
-		meg = 1;
+	if (bytes > 0) {
+		bytespersec = bytes;
+		if (elapsed > 0.0)
+			bytespersec /= elapsed;
+		if (bytespersec > (1024 * 1024))
+			meg = 1;
+	}
 	len = 0;
 	len += snprintf(buf + len, sizeof(buf) - len,
 #ifndef NO_QUAD
@@ -804,7 +824,7 @@ ptransfer(siginfo)
 		len += snprintf(buf + len, sizeof(buf) - len, "%2d:", hh);
 	len += snprintf(buf + len, sizeof(buf) - len,
 	    "%02d:%02d (%.2f %sB/s)", remaining / 60, remaining % 60,
-	    bs / (1024.0 * (meg ? 1024.0 : 1.0)),
+	    bytespersec / (1024.0 * (meg ? 1024.0 : 1.0)),
 	    meg ? "M" : "K");
 
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
@@ -880,7 +900,8 @@ setttywidth(a)
 {
 	struct winsize winsize;
 
-	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1)
+	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1 &&
+	    winsize.ws_col != 0)
 		ttywidth = winsize.ws_col;
 	else
 		ttywidth = 80;
