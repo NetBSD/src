@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.7 2002/11/10 17:12:58 thorpej Exp $
+# $NetBSD: Makefile.booters,v 1.8 2002/12/23 19:31:24 pooka Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -36,7 +36,9 @@ NOMAN=		# defined
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at
 # the second page of RAM.
+# A warm thank-you to SGI for making load addresses different :)
 LOAD_ADDRESS?=		0x88002000
+LOAD_ADDRESS_IP32?=	0x80002000
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
