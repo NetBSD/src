@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.5.4.1 1996/06/03 19:35:40 is Exp $	*/
+/*	$NetBSD: flsc.c,v 1.5.4.2 1996/06/10 16:52:29 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -376,7 +376,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	if (l < 512)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
 	else if ((p >= (void *)0xFF000000)
-#if M68040
+#if defined(M68040) || defined(M68060)
 		 && ((mmutype == MMU_68040) && (p >= (void *)0xFFFC0000))
 #endif
 		 ) {
