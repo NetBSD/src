@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.3 2001/06/14 17:57:26 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.4 2001/06/14 18:52:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,10 @@ vtpbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+
+	if (vt->vt_pci_iobase == (bus_addr_t) -1)
+		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;
+
 #if defined(ALGOR_P4032)
 	    {
 		struct p4032_config *acp = &p4032_configuration;
