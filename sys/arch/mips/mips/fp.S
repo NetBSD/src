@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.27 2003/10/25 22:06:59 mycroft Exp $	*/
+/*	$NetBSD: fp.S,v 1.28 2003/10/25 22:10:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2560,11 +2560,11 @@ fpe_trap:
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
-	sw	a2, CALLFRAME_SIZ + 8(sp)
+	sw	a2, CALLFRAME_SIZ + 12(sp)
 	lw	a0, _C_LABEL(fpcurlwp)
 	jal	_C_LABEL(savefpregs)		# on RM5231
 
-	lw	a2, CALLFRAME_SIZ + 8(sp)
+	lw	a2, CALLFRAME_SIZ + 12(sp)
 
 	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
 	#nop
