@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.1 1994/03/24 18:41:51 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2 1995/03/08 21:38:59 pk Exp $";
 #endif
 
 /*
@@ -397,11 +397,12 @@ static int
 cmp_usrsys(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 	u_quad_t t1, t2;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	t1 = c1->ci_utime + c1->ci_stime;
 	t2 = c2->ci_utime + c2->ci_stime;
@@ -419,11 +420,12 @@ static int
 cmp_avgusrsys(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 	double t1, t2;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	t1 = c1->ci_utime + c1->ci_stime;
 	t1 /= (double) (c1->ci_calls ? c1->ci_calls : 1);
@@ -444,10 +446,11 @@ static int
 cmp_dkio(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	if (c1->ci_io < c2->ci_io)
 		return -1;
@@ -462,11 +465,12 @@ static int
 cmp_avgdkio(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 	double n1, n2;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	n1 = (double) c1->ci_io / (double) (c1->ci_calls ? c1->ci_calls : 1);
 	n2 = (double) c2->ci_io / (double) (c2->ci_calls ? c2->ci_calls : 1);
@@ -484,10 +488,11 @@ static int
 cmp_cpumem(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	if (c1->ci_mem < c2->ci_mem)
 		return -1;
@@ -502,12 +507,13 @@ static int
 cmp_avgcpumem(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 	u_quad_t t1, t2;
 	double n1, n2;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	t1 = c1->ci_utime + c1->ci_stime;
 	t2 = c2->ci_utime + c2->ci_stime;
@@ -528,10 +534,11 @@ static int
 cmp_calls(d1, d2)
 	const DBT *d1, *d2;
 {
-	struct cmdinfo *c1, *c2;
+	struct cmdinfo c1store, c2store;
+	struct cmdinfo *c1 = &c1store, *c2 = &c2store;
 
-	c1 = (struct cmdinfo *) d1->data;
-	c2 = (struct cmdinfo *) d2->data;
+	bcopy(d1->data, c1, sizeof(struct cmdinfo));
+	bcopy(d2->data, c2, sizeof(struct cmdinfo));
 
 	if (c1->ci_calls < c2->ci_calls)
 		return -1;
