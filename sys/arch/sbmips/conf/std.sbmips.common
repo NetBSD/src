@@ -1,4 +1,4 @@
-# $NetBSD: std.sbmips,v 1.1 2002/03/06 02:13:39 simonb Exp $
+# $NetBSD: std.sbmips.common,v 1.1 2002/03/17 11:00:23 simonb Exp $
 
 machine sbmips mips
 
@@ -8,6 +8,5 @@ options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80001000"
-makeoptions	MACHINE_ARCH="mipseb"
 
 include	"arch/mips/conf/files.sibyte"
