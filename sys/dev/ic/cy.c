@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.8 1998/01/12 09:23:20 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.9 1998/03/21 23:26:15 mjacob Exp $	*/
 
 /*
  * cy.c
@@ -257,8 +257,7 @@ cyopen(dev, flag, mode, p)
 	tp->t_param = cyparam;
 	tp->t_dev = dev;
 
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		SET(tp->t_state, TS_WOPEN);
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -338,9 +337,10 @@ cyopen(dev, flag, mode, p)
 	if (!ISSET(flag, O_NONBLOCK)) {
 		while (!ISSET(tp->t_cflag, CLOCAL) &&
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
-			SET(tp->t_state, TS_WOPEN);
+			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    "cydcd", 0);
+			tp->t_wopen--;
 			if (error != 0) {
 				splx(s);
 				return error;
@@ -919,7 +919,7 @@ cy_poll(arg)
 		    port++) {
 			cy = &sc->sc_ports[port];
 			if ((tp = cy->cy_tty) == NULL || cy->cy_ibuf == NULL ||
-			    !ISSET(tp->t_state, TS_ISOPEN | TS_WOPEN))
+			    !ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen == 0)
 				continue;
 
 			/*
