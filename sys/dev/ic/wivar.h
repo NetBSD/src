@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.28 2003/01/09 08:49:40 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.29 2003/03/27 04:34:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -97,6 +97,8 @@ struct wi_softc	{
 	int			sc_false_syns;
 
 	u_int16_t		sc_txbuf[IEEE80211_MAX_LEN/2];
+
+	void			(*sc_reset)(struct wi_softc *);
 };
 
 #define	sc_if			sc_ic.ic_if
