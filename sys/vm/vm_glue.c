@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.41 1994/08/30 03:07:17 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.42 1994/10/29 07:35:09 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -569,7 +569,7 @@ thread_block()
 
 void
 thread_sleep(event, lock, ruptible)
-	int event;
+	long event;
 	simple_lock_t lock;
 	boolean_t ruptible;
 {
@@ -587,7 +587,7 @@ thread_sleep(event, lock, ruptible)
 
 void
 thread_wakeup(event)
-	int event;
+	long event;
 {
 	int s = splhigh();
 

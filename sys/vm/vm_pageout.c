@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.16 1994/06/29 06:48:33 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.17 1994/10/29 07:35:21 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -206,7 +206,7 @@ vm_pageout_scan()
 		else
 #endif
 		vm_pageout_page(m, object);
-		thread_wakeup((int) object);
+		thread_wakeup((long) object);
 		vm_object_unlock(object);
 		/*
 		 * Former next page may no longer even be on the inactive
