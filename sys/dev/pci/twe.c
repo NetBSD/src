@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.61 2005/02/15 05:56:34 lukem Exp $	*/
+/*	$NetBSD: twe.c,v 1.62 2005/02/20 19:01:47 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.61 2005/02/15 05:56:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.62 2005/02/20 19:01:47 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.61 2005/02/15 05:56:34 lukem Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
@@ -139,6 +140,9 @@ extern struct	cfdriver twe_cd;
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
+
+/* FreeBSD driver revision for sysctl expected by the 3ware cli */
+const char twever[] = "1.50.01.002";
 
 /*
  * Tables to convert numeric codes to strings.
@@ -327,6 +331,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	int s, size, i, rv, rseg;
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
+        struct ctlname ctlnames[] = CTL_NAMES;
+        struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
@@ -472,6 +478,37 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
 	    TWE_CTL_UNMASK_RESP_INTR |
 	    TWE_CTL_ENABLE_INTRS);
+
+	/* sysctl set-up for 3ware cli */
+	if (sysctl_createv(NULL, 0, NULL, NULL,
+				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+				NULL, NULL, 0, NULL, 0,
+				CTL_HW, CTL_EOL) != 0) {
+		printf("%s: could not create %s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		return;
+	}
+	if (sysctl_createv(NULL, 0, NULL, &node,
+        			0, CTLTYPE_NODE, sc->sc_dv.dv_xname,
+        			SYSCTL_DESCR("twe driver information"),
+        			NULL, 0, NULL, 0,
+				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
+                printf("%s: could not create %s.%s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_STRING, "driver_version",
+        			SYSCTL_DESCR("twe0 driver version"),
+        			NULL, 0, &twever, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create %s.%s.driver_version sysctl\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
 }
 
 void
