@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.647 2003/12/10 11:40:11 hannken Exp $
+#	$NetBSD: files,v 1.648 2003/12/12 20:54:30 scw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1251,7 +1251,7 @@ file	net80211/ieee80211_rssadapt.c	wlan
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
-file	netinet/ip_ecn.c		ipsec | gif | stf
+file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre
 file	netinet6/in6_gif.c		gif & inet6
