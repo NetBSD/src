@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.19 2004/05/10 22:28:24 kleink Exp $
+.\"	$NetBSD: readlink.2,v 1.20 2004/05/10 22:33:08 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft ssize_t
-.Fn readlink "const char *path" "char *buf" "size_t bufsiz"
+.Fn readlink "const char * restrict path" "char * restrict buf" "size_t bufsiz"
 .Sh DESCRIPTION
 .Fn readlink
 places the contents of the symbolic link
