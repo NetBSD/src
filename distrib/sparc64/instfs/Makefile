@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/05/08 23:11:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2002/10/13 23:59:51 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,6 +19,8 @@ MDSET_RELEASEDIR=	binary/kernel
 HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
+
+CRUNCHGEN_FLAGS="-d -O"
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
