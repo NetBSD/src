@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.98 2003/05/03 17:27:20 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.99 2003/05/07 16:18:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.98 2003/05/03 17:27:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.99 2003/05/07 16:18:53 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -807,6 +807,7 @@ again:
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		struct nfs_iod *iod = &nfs_asyncdaemon[i];
 
+		simple_lock(&iod->nid_slock);
 		if (iod->nid_want) {
 			/*
 			 * Found one, so wake it up and tell it which
@@ -814,11 +815,14 @@ again:
 			 */
 			iod->nid_want = NULL;
 			iod->nid_mount = nmp;
+			wakeup(&iod->nid_want);
+			simple_lock(&nmp->nm_slock);
+			simple_unlock(&iod->nid_slock);
 			nmp->nm_bufqiods++;
-			wakeup((caddr_t)&iod->nid_want);
 			gotiod = TRUE;
 			break;
 		}
+		simple_unlock(&iod->nid_slock);
 	}
 
 	/*
@@ -826,8 +830,13 @@ again:
 	 * point.  If so, it will process our request.
 	 */
 
-	if (!gotiod && nmp->nm_bufqiods > 0)
-		gotiod = TRUE;
+	if (!gotiod) {
+		simple_lock(&nmp->nm_slock);
+		if (nmp->nm_bufqiods > 0)
+			gotiod = TRUE;
+	}
+
+	LOCK_ASSERT(simple_lock_held(&nmp->nm_slock));
 
 	/*
 	 * If we have an iod which can process the request, then queue
@@ -842,8 +851,9 @@ again:
 
 		while (nmp->nm_bufqlen >= 2*nfs_numasync) {
 			nmp->nm_bufqwant = TRUE;
-			error = tsleep(&nmp->nm_bufq, slpflag | PRIBIO,
-				"nfsaio", slptimeo);
+			error = ltsleep(&nmp->nm_bufq,
+			    slpflag | PRIBIO | PNORELOCK,
+			    "nfsaio", slptimeo, &nmp->nm_slock);
 			if (error) {
 				if (nfs_sigintr(nmp, NULL, curproc))
 					return (EINTR);
@@ -860,11 +870,15 @@ again:
 
 			if (nmp->nm_bufqiods == 0)
 				goto again;
+
+			simple_lock(&nmp->nm_slock);
 		}
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
+		simple_unlock(&nmp->nm_slock);
 		return (0);
 	}
+	simple_unlock(&nmp->nm_slock);
 
 	/*
 	 * All the iods are busy on other mounts, so return EIO to
