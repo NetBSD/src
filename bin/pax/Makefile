@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/10 19:56:36 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1998/03/06 09:13:01 mrg Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -29,5 +29,9 @@ PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
 	tar.c tty_subs.c
+# XXX not yet!
+# MAN=	pax.1 tar.1 cpio.1
+# LINKS+=	${BINDIR}/pax ${BINDIR}/tar
+# LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.7 1997/07/20 20:32:15 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.8 1998/03/06 09:13:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.7 1997/07/20 20:32:15 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.8 1998/03/06 09:13:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,13 @@ ar_open(name)
 #endif
 {
         struct mtget mb;
+	static int minusCfd = -1, curdirfd = -1;
+
+	/*
+	 * change back to the current directory (for now).
+	 */
+	if (curdirfd != -1)
+		fchdir(curdirfd);
 
 	if (arfd != -1)
 		(void)close(arfd);
@@ -206,6 +213,27 @@ ar_open(name)
 		blksz = rdblksz = wrblksz;
 		lstrval = 1;
 		return(0);
+	}
+
+	/*
+	 * change directory if necessary
+	 */
+	if (chdir_dir) {
+		if (curdirfd == -1)
+			curdirfd = open(".", O_RDONLY);
+		if (curdirfd < 1) {
+			syswarn(0, errno, "failed to open directory .");
+			return (-1);
+		}
+
+		if (minusCfd == -1)
+			minusCfd = open(chdir_dir, O_RDONLY);
+		if (minusCfd < 1) {
+			syswarn(0, errno, "failed to open directory %s",
+			    chdir_dir);
+			return (-1);
+		}
+		fchdir(minusCfd);
 	}
 
 	/*
