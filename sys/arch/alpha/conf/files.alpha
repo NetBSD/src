@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.110 2000/03/23 01:04:11 thorpej Exp $
+# $NetBSD: files.alpha,v 1.111 2000/04/07 16:35:22 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -222,16 +222,12 @@ file	arch/alpha/isa/isa_machdep.c	isa
 
 include "dev/pckbc/files.pckbc"
 
-# ISA speaker generates keyboard beep
-device isabeep
-attach isabeep at pcppi
-
 # Floppy disk controller
 device	fdc { drive = -1 }
 attach	fdc at isa
 device	fd: disk, isadma
 attach	fd at fdc
-file	arch/alpha/isa/fd.c		fdc needs-flag
+file	dev/isa/fd.c			fdc needs-flag
 major	{ fd = 0 }
 
 # ISA Plug 'n Play devices

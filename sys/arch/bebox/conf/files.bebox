@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.18 2000/03/14 15:56:54 oster Exp $
+#	$NetBSD: files.bebox,v 1.19 2000/04/07 16:35:23 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -118,7 +118,7 @@ device	fdc {drive = -1}
 attach	fdc at isa
 device	fd: disk, isadma
 attach	fd at fdc
-file	arch/bebox/isa/fd.c		fdc needs-flag
+file	dev/isa/fd.c			fdc needs-flag
 major	{fd = 2}
 
 # Game adapter (joystick)
