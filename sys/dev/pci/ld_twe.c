@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.14 2003/09/21 19:20:18 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.15 2003/09/21 19:33:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.14 2003/09/21 19:20:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.15 2003/09/21 19:33:10 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -97,8 +97,10 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_softc *ld;
 	struct twe_softc *twe;
 	struct twe_drive *td;
-	const char *typestr, *stripestr;
-	char unktype[16], stripebuf[32];
+	const char *typestr, *stripestr, *statstr;
+	char unktype[16], stripebuf[32], unkstat[32];
+	int error;
+	uint8_t status;
 
 	sc = (struct ld_twe_softc *)self;
 	ld = &sc->sc_ld;
@@ -137,7 +139,19 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 		stripebuf[0] = '\0';
 	}
 
-	printf(": %s%s\n", stripebuf, typestr);
+	error = twe_param_get_1(twe, TWE_PARAM_UNITINFO + twea->twea_unit,
+	    TWE_PARAM_UNITINFO_Status, &status);
+	status &= TWE_PARAM_UNITSTATUS_MASK;
+	if (error) {
+		sprintf(unkstat, "<unknown>");
+		statstr = unkstat;
+	} else if ((statstr =
+		    twe_describe_code(twe_table_unitstate, status)) == NULL) {
+		sprintf(unkstat, "<status code 0x%02x>", status);
+		statstr = unkstat;
+	}
+
+	printf(": %s%s, status: %s\n", stripebuf, typestr, statstr);
 	ldattach(ld);
 }
 
