@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.19 2000/06/12 04:27:58 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.20 2000/07/06 02:54:12 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.43 2000/06/12 04:27:03 itojun Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.19 2000/06/12 04:27:58 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.20 2000/07/06 02:54:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -122,7 +122,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	int family, i;
 	const char *addr;
 	u_int32_t v4a;
-	int h_error;
 	char numserv[512];
 	char numaddr[512];
 
@@ -147,8 +146,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		return ENI_SALEN;
 	
 	/* network byte order */
-	port = ((const struct sockinet *)sa)->si_port;
-	addr = (const char *)sa + afd->a_off;
+	port = ((const struct sockinet *)(const void *)sa)->si_port;
+	addr = (const char *)(const void *)sa + afd->a_off;
 
 	if (serv == NULL || servlen == 0) {
 		/*
@@ -179,7 +178,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	switch (sa->sa_family) {
 	case AF_INET:
 		v4a = (u_int32_t)
-		    ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr);
+		    ntohl(((const struct sockaddr_in *)
+		    (const void *)sa)->sin_addr.s_addr);
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
@@ -190,7 +190,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	case AF_INET6:
 	    {
 		const struct sockaddr_in6 *sin6;
-		sin6 = (const struct sockaddr_in6 *)sa;
+		sin6 = (const struct sockaddr_in6 *)(const void *)sa;
 		switch (sin6->sin6_addr.s6_addr[0]) {
 		case 0x00:
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
@@ -250,7 +250,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		}
 	} else {
 		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
-		h_error = h_errno;
 
 		if (hp) {
 #if 0
@@ -318,23 +317,23 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	strcpy(host, numaddr);
 
 #ifdef NI_WITHSCOPEID
-	if (((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
+	if (((const struct sockaddr_in6 *)(const void *)sa)->sin6_scope_id) {
 		if (flags & NI_WITHSCOPEID)
 		{
 			char scopebuf[MAXHOSTNAMELEN];
 			int scopelen;
 
 			/* ip6_sa2str never fails */
-			scopelen = ip6_sa2str((const struct sockaddr_in6 *)sa,
-					      scopebuf, sizeof(scopebuf),
-					      0);
+			scopelen = ip6_sa2str(
+			    (const struct sockaddr_in6 *)(const void *)sa,
+			    scopebuf, sizeof(scopebuf), 0);
 			if (scopelen + 1 + numaddrlen + 1 > hostlen)
 				return ENI_MEMORY;
 			/*
 			 * construct <numeric-addr><delim><scopeid>
 			 */
 			memcpy(host + numaddrlen + 1, scopebuf,
-			       scopelen);
+			    (size_t)scopelen);
 			host[numaddrlen] = SCOPE_DELIMITER;
 			host[numaddrlen + 1 + scopelen] = '\0';
 		}
