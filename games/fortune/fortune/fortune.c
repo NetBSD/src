@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.14 1998/09/13 15:27:28 hubertf Exp $	*/
+/*	$NetBSD: fortune.c,v 1.15 1999/08/21 07:02:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.14 1998/09/13 15:27:28 hubertf Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.15 1999/08/21 07:02:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -984,8 +984,8 @@ get_fort()
 	(void) lseek(fp->datfd,
 		     (off_t) (sizeof fp->tbl + fp->pos * sizeof Seekpts[0]), 0);
 	read(fp->datfd, Seekpts, sizeof Seekpts);
-	Seekpts[0] = ntohl(Seekpts[0]);
-	Seekpts[1] = ntohl(Seekpts[1]);
+	BE64TOH(Seekpts[0]);
+	BE64TOH(Seekpts[1]);
 }
 
 /*
@@ -1128,11 +1128,11 @@ get_tbl(fp)
 		if (read(fd, (char *) &fp->tbl, sizeof fp->tbl) != sizeof fp->tbl) {
 			errx(1, "Database `%s' corrupted", fp->path);
 		}
-		/* fp->tbl.str_version = ntohl(fp->tbl.str_version); */
-		fp->tbl.str_numstr = ntohl(fp->tbl.str_numstr);
-		fp->tbl.str_longlen = ntohl(fp->tbl.str_longlen);
-		fp->tbl.str_shortlen = ntohl(fp->tbl.str_shortlen);
-		fp->tbl.str_flags = ntohl(fp->tbl.str_flags);
+		/* BE32TOH(fp->tbl.str_version); */
+		BE32TOH(fp->tbl.str_numstr);
+		BE32TOH(fp->tbl.str_longlen);
+		BE32TOH(fp->tbl.str_shortlen);
+		BE32TOH(fp->tbl.str_flags);
 		(void) close(fd);
 	}
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.4 1997/10/11 07:59:09 lukem Exp $	*/
+/*	$NetBSD: unstr.c,v 1.5 1999/08/21 07:02:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: unstr.c,v 1.4 1997/10/11 07:59:09 lukem Exp $");
+__RCSID("$NetBSD: unstr.c,v 1.5 1999/08/21 07:02:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,11 +100,11 @@ main(ac, av)
 	if ((Dataf = fopen(Datafile, "r")) == NULL)
 		err(1, "fopen %s", Datafile);
 	(void) fread((char *) &tbl, sizeof tbl, 1, Dataf);
-	tbl.str_version = ntohl(tbl.str_version);
-	tbl.str_numstr = ntohl(tbl.str_numstr);
-	tbl.str_longlen = ntohl(tbl.str_longlen);
-	tbl.str_shortlen = ntohl(tbl.str_shortlen);
-	tbl.str_flags = ntohl(tbl.str_flags);
+	BE32TOH(tbl.str_version);
+	BE32TOH(tbl.str_numstr);
+	BE32TOH(tbl.str_longlen);
+	BE32TOH(tbl.str_shortlen);
+	BE32TOH(tbl.str_flags);
 	if (!(tbl.str_flags & (STR_ORDERED | STR_RANDOM))) {
 		fprintf(stderr, "nothing to do -- table in file order\n");
 		exit(1);
@@ -140,7 +140,7 @@ order_unstr(tbl)
 
 	for (i = 0; i < tbl->str_numstr; i++) {
 		(void) fread((char *) &pos, 1, sizeof pos, Dataf);
-		(void) fseek(Inf, ntohl(pos), 0);
+		(void) fseek(Inf, be64toh(pos), 0);
 		if (i != 0)
 			(void) printf("%c\n", Delimch);
 		for (;;) {
