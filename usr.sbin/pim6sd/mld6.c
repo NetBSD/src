@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.1 2000/01/28 19:32:48 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.2 2000/02/03 06:59:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -442,11 +442,11 @@ make_mld6_msg(type, code, src, dst, group, ifindex, delay, datalen, alert)
 		log(LOG_ERR, 0, "inet6_opt_append(0) failed");
 	if ((hbhlen = inet6_opt_finish(NULL, 0, hbhlen)) == -1)
 		log(LOG_ERR, 0, "inet6_opt_finish(0) failed");
-	hbhlen = CMSG_SPACE(hbhlen);
+	ctllen += CMSG_SPACE(hbhlen);
 #else  /* old advanced API */
 	hbhlen = inet6_option_space(sizeof(raopt));
-#endif
 	ctllen += hbhlen;
+#endif
     }
     /* extend ancillary data space (if necessary) */
     if (ctlbuflen < ctllen) {
