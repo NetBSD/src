@@ -1,3 +1,5 @@
+/*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
  * All rights reserved.
@@ -31,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.5 1995/05/21 15:42:54 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
