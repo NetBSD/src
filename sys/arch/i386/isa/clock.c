@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.19 1993/10/29 21:40:34 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.20 1993/11/08 20:19:35 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -379,7 +379,7 @@ delay(n)
 
 	if (timercd.cd_ndevs < 1 ||
 	    !(sc = timercd.cd_devs[0]))
-		panic("cpu_initclocks: no timer");
+		panic("delay: no timer");
 	
 	iobase = sc->sc_iobase;
 	limit = sc->sc_limit;
