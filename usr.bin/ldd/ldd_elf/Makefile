@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/07/10 22:45:25 eeh Exp $
+#	$NetBSD: Makefile,v 1.12 2001/07/13 17:00:35 matt Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -12,7 +12,8 @@ CPPFLAGS+= -DELFSIZE=64
 .else
 CPPFLAGS+= -DELFSIZE=32
 .endif
-.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64") || \
+    (${MACHINE_ARCH} == "arm")
 CPPFLAGS+= -DVARPSZ
 .endif
 
