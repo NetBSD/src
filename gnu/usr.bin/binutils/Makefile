@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1998/05/21 20:51:37 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/05/22 02:42:06 tv Exp $
 
-SUBDIR=	common addr2line ar c++filt nlmconv nm objcopy objdump ranlib \
-	size strings strip
+SUBDIR=	common addr2line ar c++filt nm objcopy objdump ranlib size strings
 
-all-addr2line all-ar all-c++filt all-nlmconv all-nm all-objcopy all-objdump \
+all-addr2line all-ar all-c++filt all-nm all-objcopy all-objdump \
     all-ranlib all-size all-strings all-strip: all-common
 
 .include <bsd.subdir.mk>
