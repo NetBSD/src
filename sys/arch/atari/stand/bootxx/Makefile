@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/19 21:51:20 leo Exp $
+#	$NetBSD: Makefile,v 1.7 1999/04/22 07:17:01 leo Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
@@ -9,9 +9,6 @@ BINDIR=	/usr/mdec
 BINMODE=${NONBINMODE}
 
 LIBCRT0=
-
-DPADD=	${S_MACHSA}/libsa.a
-LDADD=	${S_MACHSA}/libsa.a
 
 DEFS=	-D_STANDALONE
 INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
@@ -26,6 +23,20 @@ S_SA=${S}/lib/libsa
 S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa
 S_LIBTOS=${S}/arch/atari/stand/tostools/libtos
+
+.if exists(${S_MACHSA}/libsa.a)
+LIBSA=${S_MACHSA}/libsa.a
+.else
+.	if exists(${S_MACHSA}/obj/libsa.a)
+LIBSA=${S_MACHSA}/obj/libsa.a
+.	else
+LIBSA=${S_MACHSA}/obj.${MACHINE}/libsa.a
+.	endif
+.endif
+
+DPADD=	${LIBSA}
+LDADD=	${LIBSA}
+
 
 beforeinstall:
 	@len=`size ${PROG} | awk 'NR==2 { print $$1+$$2 }'`;	\
