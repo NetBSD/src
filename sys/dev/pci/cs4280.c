@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.4.4.2 2000/07/19 19:22:36 augustss Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4.4.3 2001/02/26 15:40:23 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -158,7 +158,6 @@ struct cs4280_softc {
 
 	char	sc_suspend;
 	void   *sc_powerhook;		/* Power Hook */
-	u_int16_t  ac97_reg[CS4280_SAVE_REG_MAX + 1];	/* Save ac97 registers */
 };
 
 #define BA0READ4(sc, r) bus_space_read_4((sc)->ba0t, (sc)->ba0h, (r))
@@ -686,16 +685,15 @@ cs4280_intr(p)
 	struct cs4280_softc *sc = p;
 	u_int32_t intr, mem;
 	char * empty_dma;
+	int handled = 0;
 
+	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
+	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
-	if ((intr & HISR_INTENA) == 0) {
-		BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-		return (0);
-	}
-	
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
+		handled = 1;
 		mem = BA1READ4(sc, CS4280_PFIE);
 		BA1WRITE4(sc, CS4280_PFIE, (mem & ~PFIE_PI_MASK) | PFIE_PI_DISABLE);
 		if (sc->sc_pintr) {
@@ -720,6 +718,7 @@ cs4280_intr(p)
 		int  i;
 		int16_t rdata;
 		
+		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
 		++sc->sc_ri;
@@ -781,6 +780,7 @@ cs4280_intr(p)
 	if (intr & HISR_MIDI) {
 		int data;
 
+		handled = 1;
 		DPRINTF(("i: %d: ", 
 			 BA0READ4(sc, CS4280_MIDSR)));
 		/* Read the received data */
@@ -812,9 +812,8 @@ cs4280_intr(p)
 		DPRINTF(("\n"));
 	}
 #endif
-	/* Throw EOI */
-	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-	return (1);
+
+	return (handled);
 }
 
 
@@ -1655,7 +1654,8 @@ cs4280_init(sc, init)
 	delay(50*1000); /* delay 50ms */
 	
 	/* Turn on clock */
-	BA0WRITE4(sc, CS4280_CLKCR1, CLKCR1_PLLP | CLKCR1_SWCE);
+	mem = BA0READ4(sc, CS4280_CLKCR1) | CLKCR1_SWCE;
+	BA0WRITE4(sc, CS4280_CLKCR1, mem);
 	
 	/* Set the serial port FIFO pointer to the
 	 * first sample in FIFO. (not documented) */
@@ -1687,7 +1687,8 @@ cs4280_init(sc, init)
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
-	while (BA0READ4(sc, CS4280_ACISV) != (ACISV_ISV3 | ACISV_ISV4)) {
+	while ((BA0READ4(sc, CS4280_ACISV) & (ACISV_ISV3 | ACISV_ISV4)) !=
+	       (ACISV_ISV3 | ACISV_ISV4)) {
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
@@ -1781,7 +1782,6 @@ cs4280_power(why, v)
 	void *v;
 {
 	struct cs4280_softc *sc = (struct cs4280_softc *)v;
-	int i;
 
 	DPRINTF(("%s: cs4280_power why=%d\n",
 	       sc->sc_dev.dv_xname, why));
@@ -1790,12 +1790,6 @@ cs4280_power(why, v)
 
 		cs4280_halt_output(sc);
 		cs4280_halt_input(sc);
-		/* Save AC97 registers */
-		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
-			if(i == 0x04) /* AC97_REG_MASTER_TONE */
-				continue;
-			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i]);
-		}
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
 	} else {
@@ -1808,12 +1802,7 @@ cs4280_power(why, v)
 		cs4280_init(sc, 0);
 		cs4280_reset_codec(sc);
 
-		/* restore ac97 registers */
-		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
-			if(i == 0x04) /* AC97_REG_MASTER_TONE */
-				continue;
-			cs4280_write_codec(sc, 2*i, sc->ac97_reg[i]);
-		}
+		(*sc->codev_if->vtbl->restore_ports)(sc->codec_if);
 	}
 }
 
