@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.3 1997/07/25 00:07:56 thorpej Exp $ */
+/* $NetBSD: boot.c,v 1.4 1997/07/25 07:00:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,6 +122,10 @@ main()
 		    sizeof(bootinfo.un.v1.booted_kernel));
 		bcopy(boot_flags, bootinfo.un.v1.boot_flags,
 		    sizeof(bootinfo.un.v1.boot_flags));
+		bootinfo.un.v1.hwrpb = NULL;
+		bootinfo.un.v1.cngetc = NULL;
+		bootinfo.un.v1.cnputc = NULL;
+		bootinfo.un.v1.cnpollc = NULL;
 
 		(void)printf("Entering %s at 0x%lx...\n", name, entry);
 		(*(void (*)())entry)(ffp_save, ptbr_save,
