@@ -1,4 +1,4 @@
-/*	$NetBSD: cfsio.h,v 1.2 1998/09/08 17:12:48 rvb Exp $	*/
+/*	$NetBSD: cfsio.h,v 1.3 1998/09/12 15:05:50 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,10 @@
 /* 
  * HISTORY
  * $Log: cfsio.h,v $
+ * Revision 1.3  1998/09/12 15:05:50  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
  * Revision 1.2  1998/09/08 17:12:48  rvb
  * Pass2 complete
  *
@@ -60,7 +64,7 @@
  * Sync the code for NetBSD -current; test on 1.3 later
  *
  * Revision 1.3  98/01/23  11:53:49  rvb
- * Bring RVB_CFS1_1 to HEAD
+ * Bring RVB_CODA1_1 to HEAD
  * 
  * Revision 1.2.38.1  97/12/16  12:40:22  rvb
  * Sync with 1.3
@@ -69,7 +73,7 @@
  * Added support for Coda MiniCache and raw inode calls (final commit)
  * 
  * Revision 1.1.2.1  1995/12/20 01:57:42  bnoble
- * Added CFS-specific files
+ * Added CODA-specific files
  *
  * Revision 3.1.1.1  1995/03/04  19:08:20  bnoble
  * Branch for NetBSD port revisions
@@ -109,16 +113,16 @@
  * 
  */
 
-#ifndef _CFSIO_H_
-#define _CFSIO_H_
+#ifndef _CODAIO_H_
+#define _CODAIO_H_
 
 /* Define ioctl commands for vcioctl, /dev/cfs */
 
-#define CFSRESIZE    _IOW('c', 1, struct cfs_resize )  /* Resize CFS NameCache */
-#define CFSSTATS      _IO('c', 2)                      /* Collect stats */
-#define CFSPRINT      _IO('c', 3)                      /* Print Cache */
-#define CFSTEST       _IO('c', 4)                      /* Print Cache */
+#define CODARESIZE    _IOW('c', 1, struct coda_resize ) /* Resize CODA NameCache */
+#define CODASTATS      _IO('c', 2)                      /* Collect stats */
+#define CODAPRINT      _IO('c', 3)                      /* Print Cache */
+#define CODATEST       _IO('c', 4)                      /* Print Cache */
 
-struct cfs_resize { int hashsize, heapsize; };
+struct coda_resize { int hashsize, heapsize; };
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.2 1998/09/08 17:12:48 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
 
 /*
  * 
@@ -48,6 +48,10 @@
 /*
  * HISTORY
  * $Log: coda_vnops.h,v $
+ * Revision 1.3  1998/09/12 15:05:49  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
  * Revision 1.2  1998/09/08 17:12:48  rvb
  * Pass2 complete
  *
@@ -67,7 +71,7 @@
  * Sync the code for NetBSD -current; test on 1.3 later
  *
  * Revision 1.4  98/01/23  11:53:49  rvb
- * Bring RVB_CFS1_1 to HEAD
+ * Bring RVB_CODA1_1 to HEAD
  * 
  * Revision 1.3.2.3  98/01/23  11:21:13  rvb
  * Sync with 2.2.5
@@ -76,13 +80,13 @@
  * Sync with 1.3
  * 
  * Revision 1.3.2.1  97/12/10  14:08:34  rvb
- * Fix O_ flags; check result in cfscall
+ * Fix O_ flags; check result in coda_call
  * 
  * Revision 1.3  97/12/05  10:39:25  rvb
  * Read CHANGES
  * 
  * Revision 1.2.34.2  97/11/20  11:46:54  rvb
- * Capture current cfs_venus
+ * Capture current coda_venus
  * 
  * Revision 1.2.34.1  97/11/13  22:03:04  rvb
  * pass2 cfs_NetBSD.h mt
@@ -91,46 +95,46 @@
  * Added support for Coda MiniCache and raw inode calls (final commit)
  * 
  * Revision 1.1.2.1  1995/12/20 01:57:40  bnoble
- * Added CFS-specific files
+ * Added Coda-specific files
  *
  */
 
 /* NetBSD interfaces to the vnodeops */
-int cfs_open      __P((void *));
-int cfs_close     __P((void *));
-int cfs_read      __P((void *));
-int cfs_write     __P((void *));
-int cfs_ioctl     __P((void *));
-/* 1.3 int cfs_select    __P((void *));*/
-int cfs_getattr   __P((void *));
-int cfs_setattr   __P((void *));
-int cfs_access    __P((void *));
-int cfs_abortop   __P((void *));
-int cfs_readlink  __P((void *));
-int cfs_fsync     __P((void *));
-int cfs_inactive  __P((void *));
-int cfs_lookup    __P((void *));
-int cfs_create    __P((void *));
-int cfs_remove    __P((void *));
-int cfs_link      __P((void *));
-int cfs_rename    __P((void *));
-int cfs_mkdir     __P((void *));
-int cfs_rmdir     __P((void *));
-int cfs_symlink   __P((void *));
-int cfs_readdir   __P((void *));
-int cfs_bmap      __P((void *));
-int cfs_strategy  __P((void *));
-int cfs_reclaim   __P((void *));
-int cfs_lock      __P((void *));
-int cfs_unlock    __P((void *));
-int cfs_islocked  __P((void *));
-int cfs_vop_error   __P((void *));
-int cfs_vop_nop     __P((void *));
+int coda_open      __P((void *));
+int coda_close     __P((void *));
+int coda_read      __P((void *));
+int coda_write     __P((void *));
+int coda_ioctl     __P((void *));
+/* 1.3 int coda_select    __P((void *));*/
+int coda_getattr   __P((void *));
+int coda_setattr   __P((void *));
+int coda_access    __P((void *));
+int coda_abortop   __P((void *));
+int coda_readlink  __P((void *));
+int coda_fsync     __P((void *));
+int coda_inactive  __P((void *));
+int coda_lookup    __P((void *));
+int coda_create    __P((void *));
+int coda_remove    __P((void *));
+int coda_link      __P((void *));
+int coda_rename    __P((void *));
+int coda_mkdir     __P((void *));
+int coda_rmdir     __P((void *));
+int coda_symlink   __P((void *));
+int coda_readdir   __P((void *));
+int coda_bmap      __P((void *));
+int coda_strategy  __P((void *));
+int coda_reclaim   __P((void *));
+int coda_lock      __P((void *));
+int coda_unlock    __P((void *));
+int coda_islocked  __P((void *));
+int coda_vop_error   __P((void *));
+int coda_vop_nop     __P((void *));
 
-int (**cfs_vnodeop_p)(void *);
-int cfs_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw,
+int (**coda_vnodeop_p)(void *);
+int coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw,
     int ioflag, struct ucred *cred, struct proc *p);
 
-int cfs_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp);
+int coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp);
 void print_vattr(struct vattr *attr);
 void print_cred(struct ucred *cred);

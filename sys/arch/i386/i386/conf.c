@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.102 1998/08/15 03:51:30 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.103 1998/09/12 15:05:48 rvb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#include "vcfs.h"
+#include "vcoda.h"
 cdev_decl(vc_nb_);
 
 #include "ipfilter.h"
@@ -355,7 +355,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
 	cdev_midi_init(NMIDI,midi),	/* 58: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 59: sequencer I/O */
-	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 60: coda file system psdev */
+	cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
