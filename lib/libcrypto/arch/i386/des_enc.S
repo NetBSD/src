@@ -1,4 +1,11 @@
-/* $NetBSD: des_enc.S,v 1.1 2001/09/09 10:44:24 tls Exp $ */
+/* $NetBSD: des_enc.S,v 1.2 2001/09/09 19:55:24 thorpej Exp $ */
+
+/*
+ * XXX XXX XXX
+ * XXX XXX XXX THIS FILE IS BROKEN.  IT MAKES EXTERNAL REFERECNES AND
+ * XXX XXX XXX MUST BE MADE PIC!
+ * XXX XXX XXX
+ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
