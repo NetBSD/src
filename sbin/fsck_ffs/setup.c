@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.26 1996/09/23 16:18:41 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.26 1996/09/23 16:18:41 christos Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.26 1996/09/23 16:18:41 christos Exp 
 
 #include "fsck.h"
 #include "extern.h"
-#include "util.h"
+#include "fsutil.h"
 
 struct bufarea asblk;
 #define altsblock (*asblk.b_un.b_fs)

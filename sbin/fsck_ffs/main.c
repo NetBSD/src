@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1996/09/23 16:18:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1996/09/27 22:45:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1996/09/23 16:18:35 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1996/09/27 22:45:14 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.20 1996/09/23 16:18:35 christos Exp $
 
 #include "fsck.h"
 #include "extern.h"
-#include "util.h"
+#include "fsutil.h"
 
 int	returntosingle;
 int	argtoi __P((int, char *, char *, int));

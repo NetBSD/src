@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.16 1996/09/23 16:18:37 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: pass2.c,v 1.16 1996/09/23 16:18:37 christos Exp $";
+static char rcsid[] = "$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: pass2.c,v 1.16 1996/09/23 16:18:37 christos Exp 
 #include <string.h>
 
 #include "fsck.h"
-#include "util.h"
+#include "fsutil.h"
 #include "extern.h"
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))

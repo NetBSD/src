@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.19 1996/09/23 16:18:31 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.19 1996/09/23 16:18:31 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.19 1996/09/23 16:18:31 christos Exp $"
 #include <string.h>
 
 #include "fsck.h"
-#include "util.h"
+#include "fsutil.h"
 #include "extern.h"
 
 char	*lfname = "lost+found";

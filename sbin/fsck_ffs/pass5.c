@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.15 1996/09/23 16:18:39 christos Exp $	*/
+/*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$NetBSD: pass5.c,v 1.15 1996/09/23 16:18:39 christos Exp $";
+static char rcsid[] = "$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$NetBSD: pass5.c,v 1.15 1996/09/23 16:18:39 christos Exp 
 #include <ufs/ffs/ffs_extern.h>
 #include <string.h>
 
-#include "util.h"
+#include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
 
