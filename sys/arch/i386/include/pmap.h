@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.6 1993/12/14 05:31:38 mycroft Exp $
+ *	$Id: pmap.h,v 1.7 1994/01/05 16:02:38 mycroft Exp $
  */
 
 /*
@@ -62,9 +62,9 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	UPTDI		0x3f6		/* ptd entry for u./kernel&user stack */
-#define	PTDPTDI		0x3f7		/* ptd entry that points to ptd! */
-#define	KPTDI		0x3f8		/* start of kernel virtual pde's */
+#define	UPTDI		0x3de		/* ptd entry for u./kernel&user stack */
+#define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
+#define	KPTDI		0x3e0		/* start of kernel virtual pde's */
 #define	NKPDE		7
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 
