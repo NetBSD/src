@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.115 1997/05/31 21:21:57 cjs Exp $
+#	$NetBSD: bsd.lib.mk,v 1.116 1997/06/04 08:38:45 pk Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -77,7 +77,7 @@ SHLIB_TYPE=a.out
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-CPICFLAGS?= -fpic
+CPICFLAGS?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
