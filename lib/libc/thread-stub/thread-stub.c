@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.8 2003/03/01 22:11:40 matt Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.9 2003/07/18 21:44:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -334,6 +334,7 @@ int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
 	    void *(*)(void *), void *);
 void	__libc_thr_exit_stub(void *);
 int	*__libc_thr_errno_stub(void);
+int	__libc_thr_setcancelstate_stub(int, int *);
 
 __weak_alias(__libc_thr_once,__libc_thr_once_stub)
 __weak_alias(__libc_thr_sigsetmask,__libc_thr_sigsetmask_stub)
@@ -342,6 +343,7 @@ __weak_alias(__libc_thr_yield,__libc_thr_yield_stub)
 __weak_alias(__libc_thr_create,__libc_thr_create_stub)
 __weak_alias(__libc_thr_exit,__libc_thr_exit_stub)
 __weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
+__weak_alias(__libc_thr_setcancelstate,__libc_thr_setcancelstate_stub)
 
 
 int
@@ -414,6 +416,20 @@ __libc_thr_exit_stub(void *v)
 	(void)v;
 
 	exit(0);
+}
+
+int
+__libc_thr_setcancelstate_stub(int new, int *old)
+{
+	/* LINTED deliberate lack of effect */
+	(void)new;
+
+	/* LINTED deliberate lack of effect */
+	(void)old;
+
+	CHECK_NOT_THREADED();
+
+	return (0);
 }
 
 int *
