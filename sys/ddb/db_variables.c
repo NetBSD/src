@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.20 2001/01/17 19:50:04 jdolecek Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.21 2001/04/11 23:02:12 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -75,7 +75,7 @@ const struct db_variable db_vars[] = {
 	{ "tabstops",	(long *)&db_tab_stop_width, db_rw_internal_variable },
 	{ "lines",	(long *)&db_max_line,	db_rw_internal_variable },
 	{ "onpanic",	(long *)&db_onpanic,	db_rw_internal_variable },
-	{ "fromconsole", (long *)&db_onpanic,	db_rw_internal_variable },
+	{ "fromconsole", (long *)&db_fromconsole, db_rw_internal_variable },
 };
 const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
