@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.38 1999/03/27 07:04:36 explorer Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.39 1999/05/19 14:41:54 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -308,9 +308,12 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # IDE and related devices
 
-# ISA IDE controllers
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
+# ST506, ESDI, and ISA IDE controllers
+# Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
+# fall back to 16bits I/O if 32bits I/O are not functionnal).
+# Some controllers pass the initial 32bit test, but will fail later.
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # IDE drives
 wd*	at wdc? drive ?			# the drives themselves
