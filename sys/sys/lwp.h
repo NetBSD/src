@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.2 2001/04/08 20:51:35 nathanw Exp $	*/
 
 /* XXX Copyright 
 */
@@ -105,13 +105,13 @@ do {									\
 
 
 void	preempt (struct lwp *);
-void	mi_switch (struct lwp *, struct lwp *);
+int	mi_switch (struct lwp *, struct lwp *);
 void	remrunqueue (struct lwp *);
 void	resetpriority (struct lwp *);
 void	setrunnable (struct lwp *);
 void	setrunqueue (struct lwp *);
 void	unsleep (struct lwp *);
-void	cpu_switch (struct lwp *);
+int	cpu_switch (struct lwp *);
 void	cpu_preempt (struct lwp *, struct lwp *);
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, int,
