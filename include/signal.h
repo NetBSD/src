@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 1998/09/12 11:10:43 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 1998/09/13 04:11:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,7 +58,7 @@ int	raise __P((int));
 #ifndef	_ANSI_SOURCE
 int	kill __P((pid_t, int));
 
-#ifdef __LIBC13_SOURCE__
+#ifdef __LIBC12_SOURCE__
 int	sigaction __P((int, const struct sigaction13 *, struct sigaction13 *));
 int	__sigaction14 __P((int, const struct sigaction *, struct sigaction *));
 int	sigaddset __P((sigset13_t *, int));
@@ -77,7 +77,7 @@ int	sigprocmask __P((int, const sigset13_t *, sigset13_t *));
 int	__sigprocmask14 __P((int, const sigset_t *, sigset_t *));
 int	sigsuspend __P((const sigset13_t *));
 int	__sigsuspend14 __P((const sigset_t *));
-#else /* !__LIBC13_SOURCE__ */
+#else /* !__LIBC12_SOURCE__ */
 int	sigaction __P((int, const struct sigaction *, struct sigaction *)) __RENAME(__sigaction14);
 int	sigaddset __P((sigset_t *, int)) __RENAME(__sigaddset14);
 int	sigdelset __P((sigset_t *, int)) __RENAME(__sigdelset14);
@@ -131,7 +131,7 @@ sigismember(const sigset_t *set, int signo)
 /* List definitions after function declarations, or Reiser cpp gets upset. */
 #define	sigemptyset(set)	(__sigemptyset(set), 0)
 #define	sigfillset(set)		(__sigfillset(set), 0)
-#endif /* !__LIBC13_SOURCE__ */
+#endif /* !__LIBC12_SOURCE__ */
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -151,7 +151,7 @@ int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 void	psignal __P((unsigned int, const char *));
 int	sigblock __P((int));
-#ifdef __LIBC13_SOURCE__
+#ifdef __LIBC12_SOURCE__
 int	sigreturn __P((struct sigcontext13 *));
 int	__sigreturn14 __P((struct sigcontext *));
 #else
