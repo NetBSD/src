@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.1 2000/08/29 15:10:17 takemura Exp $	*/
+/*	$NetBSD: panic.c,v 1.2 2000/10/21 13:51:01 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Kazuma Arino.
@@ -27,8 +27,14 @@
  *
  */
 
-#include <stand.h>
 #include <stdlib.h>
+#include <stand.h>
+
+void
+abort()
+{
+	exit (-1);
+}
 
 /* dummy! */
 

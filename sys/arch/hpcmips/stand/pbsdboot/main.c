@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2000/10/21 09:03:57 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2000/10/21 13:51:02 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.16.2 2000.10.21\r\n")
+	TEXT("Version 1.16.3 2000.10.22\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -119,6 +119,7 @@ int how_long_to_boot = -1;
 -----------------------------------------------------------------------------*/
 TCHAR szAppName[ ] = TEXT("PocketBSD boot");
 TCHAR szTitle[ ]   = TEXT("Welcome to PocketBSD!");
+int errno;
 
 /*
  * Wince_conf  identify executable binary file.
