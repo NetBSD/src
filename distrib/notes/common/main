@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.229 2003/05/25 05:20:35 nakayama Exp $
+.\"	$NetBSD: main,v 1.230 2003/05/25 05:30:11 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1645,6 +1645,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org Ta Sy mipsco
 .It Ta Paul Kranenburg Ta Mt pk@netbsd.org Ta Sy sparc
 .It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy i386
+.It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy amd64
 .It Ta Anders Magnusson Ta Mt ragge@netbsd.org Ta Sy vax
 .It Ta Phil Nelson Ta Mt phil@netbsd.org Ta Sy pc532
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org Ta Sy x68k
@@ -1673,12 +1674,12 @@ If you're one of them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
+.It Ta James Chacon Ta Mt jmc@netbsd.org
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta Luke Mewburn Ta Mt lukem@netbsd.org
 .It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
-.It Ta Todd Vierling Ta Mt tv@netbsd.org
 .It Ta Ta
 .
 .br_ne 2i
