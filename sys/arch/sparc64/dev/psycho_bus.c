@@ -1,7 +1,7 @@
-/*	$NetBSD: psycho_bus.c,v 1.7 2000/04/05 03:08:03 mrg Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.8 2000/04/08 04:35:01 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,7 +144,7 @@
 #define PDB_BUSMAP	0x1
 #define PDB_BUSDMA	0x2
 #define PDB_INTR	0x4
-int psycho_busdma_debug = 0x3;
+int psycho_busdma_debug = 0x0;
 #define DPRINTF(l, s)   do { if (psycho_busdma_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -341,62 +341,36 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 }
 
 /*
- * interrupt mapping.
- *
- * this table is from the UltraSPARC IIi users manual, table 11-4.
+ * interrupt mapping.  this tells what sparc ipl any given ino runs at.
  */
 static int pci_ino_to_ipl_table[] = {
-	7,		/* PCI A, Slot 0, INTA# */
-	5,		/* PCI A, Slot 0, INTB# */
-	5,		/* PCI A, Slot 0, INTC# */
-	2,		/* PCI A, Slot 0, INTD# */
-	7,		/* PCI A, Slot 1, INTA# */
-	5,		/* PCI A, Slot 1, INTB# */
-	5,		/* PCI A, Slot 1, INTC# */
-	2,		/* PCI A, Slot 1, INTD# */
-	6,		/* PCI A, Slot 2, INTA# (unavailable) */
-	5,		/* PCI A, Slot 2, INTB# (unavailable) */
-	2,		/* PCI A, Slot 2, INTC# (unavailable) */
-	1,		/* PCI A, Slot 2, INTD# (unavailable) */
-	6,		/* PCI A, Slot 3, INTA# (unavailable) */
-	4,		/* PCI A, Slot 3, INTB# (unavailable) */
-	2,		/* PCI A, Slot 3, INTC# (unavailable) */
-	1,		/* PCI A, Slot 3, INTD# (unavailable) */
-	6,		/* PCI B, Slot 0, INTA# */
-	4,		/* PCI B, Slot 0, INTB# */
-	3,		/* PCI B, Slot 0, INTC# */
-	1,		/* PCI B, Slot 0, INTD# */
-	6,		/* PCI B, Slot 1, INTA# */
-	4,		/* PCI B, Slot 1, INTB# */
-	3,		/* PCI B, Slot 1, INTC# */
-	1,		/* PCI B, Slot 1, INTD# */
-	6,		/* PCI B, Slot 2, INTA# */
-	4,		/* PCI B, Slot 2, INTB# */
-	3,		/* PCI B, Slot 2, INTC# */
-	1,		/* PCI B, Slot 2, INTD# */
-	6,		/* PCI B, Slot 3, INTA# */
-	4,		/* PCI B, Slot 3, INTB# */
-	3,		/* PCI B, Slot 3, INTC# */
-	1,		/* PCI B, Slot 3, INTD# */
-	3,		/* SCSI */
-	3,		/* Ethernet */
-	2,		/* Parallel */
-	8,		/* Audio Record */
-	7,		/* Audio Playback */
-	8,		/* Power Fail */
-	7,		/* Keyboard/Mouse/Serial */
+	0, 0, 0, 0,	/* PCI A, Slot 0, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI A, Slot 1, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI A, Slot 2, INTA#/B#/C#/D# (unavailable) */
+	0, 0, 0, 0,	/* PCI A, Slot 3, INTA#/B#/C#/D# (unavailable) */
+	0, 0, 0, 0,	/* PCI B, Slot 0, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI B, Slot 0, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI B, Slot 2, INTA#/B#/C#/D# */
+	0, 0, 0, 0,	/* PCI B, Slot 3, INTA#/B#/C#/D# */
+	4,		/* SCSI */
+	6,		/* Ethernet */
+	3,		/* Parallel */
+	9,		/* Audio Record */
+	9,		/* Audio Playback */
+	14,		/* Power Fail */
+	4,		/* Keyboard/Mouse/Serial */
 	8,		/* Floppy */
-	2,		/* Spare 1 */
-	4,		/* Keyboard */
-	4,		/* Mouse */
-	7,		/* Serial */
+	14,		/* Thermal Warning */
+	12,		/* Keyboard */
+	12,		/* Mouse */
+	12,		/* Serial */
 	0,		/* Reserved */
 	0,		/* Reserved */
-	8,		/* Uncorrectable ECC error */
-	8,		/* Correctable ECC error */
-	8,		/* PCI bus error */
-	0,		/* Reserved */
-	0,		/* Reserved */
+	14,		/* Uncorrectable ECC error */
+	14,		/* Correctable ECC error */
+	14,		/* PCI A bus error */
+	14,		/* PCI B bus error */
+	14,		/* power management */
 };
 
 int
@@ -655,7 +629,7 @@ psycho_dmamap_unload(t, map)
 	splx(s);
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
-	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
+	cache_flush((caddr_t)(u_long)dvmaddr, (u_int)sgsize);	
 #else
 	bus_dmamap_unload(t->_parent, map);
 #endif
