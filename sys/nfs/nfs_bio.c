@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.28 1996/10/10 23:31:18 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.29 1996/10/13 01:39:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -186,7 +186,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 		case VDIR:
 			break;
 		default:
-			kprintf(" NQNFSNONCACHE: type %x unexpected\n",	
+			printf(" NQNFSNONCACHE: type %x unexpected\n",	
 			    vp->v_type);
 		};
 	    }
@@ -359,7 +359,7 @@ again:
 		got_buf = 1;
 		break;
 	    default:
-		kprintf(" nfsbioread: type %x unexpected\n",vp->v_type);
+		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 		break;
 	    };
 
@@ -379,7 +379,7 @@ again:
 			bp->b_flags |= B_INVAL;
 		break;
 	    default:
-		kprintf(" nfsbioread: type %x unexpected\n",vp->v_type);
+		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 	    }
 	    if (got_buf)
 		brelse(bp);
@@ -855,7 +855,7 @@ nfs_doio(bp, cr, p)
 			error = nfs_readdirrpc(vp, uiop, cr);
 		break;
 	    default:
-		kprintf("nfs_doio:  type %x unexpected\n",vp->v_type);
+		printf("nfs_doio:  type %x unexpected\n",vp->v_type);
 		break;
 	    };
 	    if (error) {
@@ -876,7 +876,7 @@ nfs_doio(bp, cr, p)
 		iomode = NFSV3WRITE_FILESYNC;
 	    bp->b_flags |= B_WRITEINPROG;
 #ifdef fvdl_debug
-	    kprintf("nfs_doio(%x): bp %x doff %d dend %d\n", 
+	    printf("nfs_doio(%x): bp %x doff %d dend %d\n", 
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
 	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
