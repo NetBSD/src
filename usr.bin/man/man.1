@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.1,v 1.10 2000/05/27 21:33:26 jdolecek Exp $
+.\"	$NetBSD: man.1,v 1.11 2000/06/12 14:53:48 simonb Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,10 @@
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Op Fl S Ar srch
-.Op Ar section
+.Oo
+.Op Fl s
+.Ar section
+.Oc
 .Ar name Ar ...
 .Nm ""
 .Op Fl k
@@ -127,6 +130,16 @@ The subdirectories to be searched, and their search order,
 is specified by the ``_subdir'' line in the
 .Nm
 configuration file.
+.It Fl s
+Restrict the directories that
+.Nm
+will search.  The
+.Nm
+configuration file (see
+.Xr man.conf 5 )
+specifies the possible
+.Ar section
+values that are currently available.
 .It Fl S
 Display only man pages that have the specified string in their
 filenames.  This allows the man page search process criteria to be
@@ -142,25 +155,16 @@ and
 combination.
 .El
 .Pp
-The optional
-.Ar section
-argument restricts the directories that
-.Nm
-will search.
-The
-.Nm
-configuration file (see
-.Xr man.conf 5 )
-specifies the possible
-.Ar section
-values that are currently available.
-Except when used with the
+If the
+.Ql Fl s
+option is not specified,
+there is more than one argument,
+the
 .Ql Fl k
-option,
-if only a single argument is specified or if the first argument is
-not a valid section,
-.Nm
-assumes that the argument is the name of a man page to be displayed.
+option is not used and the first argument is a valid section, that
+argument will be used as if specified by the
+.Ql Fl s
+option.
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
