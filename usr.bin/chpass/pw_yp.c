@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.12 1997/10/18 12:49:05 lukem Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.13 1998/07/05 14:26:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.12 1997/10/18 12:49:05 lukem Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.13 1998/07/05 14:26:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ pw_yp(pw, uid)
 	yppasswd.newpw.pw_shell	= pw->pw_shell;
 	
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
-	if (client==NULL) {
+	if (client == NULL) {
 		warnx("cannot contact yppasswdd on %s:  Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
 		return (1);
