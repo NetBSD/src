@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47 1998/03/02 23:40:42 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.48 1998/03/12 05:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,8 @@
  *	Contains code that is the first executed at boot time plus
  *	assembly language support routines.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -700,10 +702,18 @@ NON_LEAF(cpu_switch, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+#if defined(UVM)
+	lw	t0, uvmexp+UVMEXP_SWTCH
+#else
 	lw	t0, cnt+V_SWTCH
+#endif
 	lw	t1, _C_LABEL(whichqs)
 	addu	t0, t0, 1
+#if defined(UVM)
+	sw	t0, uvmexp+UVMEXP_SWTCH
+#else
 	sw	t0, cnt+V_SWTCH
+#endif
 	beq	t1, zero, idle
 	mtc0	zero, MIPS_COP_0_STATUS_REG
 /*
@@ -947,6 +957,49 @@ LEAF(copystrerr)
 	j	ra
 	li	v0, EFAULT			# return EFAULT
 END(copystrerr)
+
+#if defined(UVM)
+/*
+ * kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a fatal
+ * page fault.
+ *
+ * kcopy() _must_ save and restore the old fault handler since it is
+ * called by uiomove(), which may be in the path of servicing a non-fatal
+ * page fault.
+ */
+NON_LEAF(kcopy, 48, ra)
+	subu	sp, sp, 48			# set up stack frame
+	/* Frame contains RA (31) and S0 (16). */
+	.mask	0x80010000, -4
+	sw	ra, 44(sp)			# save ra
+	sw	s0, 32(sp)			# save s0
+	lw	v1, _C_LABEL(curpcb)		# set up fault handler
+	lw	v0, _C_LABEL(kcopyerr)
+	lw	s0, U_PCB_ONFAULT(v1)		# save old handler
+	jal	_C_LABEL(bcopy)			# do the copy
+	sw	v0, U_PCB_ONFAULT(v1)
+
+	lw	v1, _C_LABEL(curpcb)		# restore the old handler
+	sw	s0, U_PCB_ONFAULT(v1)
+	lw	ra, 44(sp)			# restore ra
+	lw	s0, 32(sp)			# restore s0
+	addu	sp, sp, 48			# kill stack frame
+	j	ra
+	move	v0, zero			# success!
+END(kcopy)
+
+LEAF(kcopyerr)
+	lw	v1, _C_LABEL(curpcb)		# restore the old handler
+	sw	s0, U_PCB_ONFAULT(v1)
+	lw	ra, 44(sp)			# restore ra
+	lw	s0, 32(sp)			# restore s0
+	addu	sp, sp, 48			# kill stack frame
+	j	ra
+	li	v0, EFAULT			# return EFAULT
+END(kcopyerr)
+#endif /* UVM */
 
 /*
  * Copy specified amount of data from user space into the kernel

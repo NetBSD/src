@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.23 1998/02/25 23:24:35 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.24 1998/03/12 05:45:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.23 1998/02/25 23:24:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.24 1998/03/12 05:45:06 thorpej Exp $");
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.23 1998/02/25 23:24:35 thorpej Ex
 #endif
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <mips/cpu.h>			/* declaration of of cpu_id */
 #include <mips/regnum.h>		/* symbolic register indices */
@@ -567,7 +573,11 @@ sendsig(catcher, sig, mask, code)
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+#if defined(UVM)
+		(void)uvm_grow(p, (unsigned)fp);
+#else
 		(void)grow(p, (unsigned)fp);
+#endif
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
@@ -1017,7 +1027,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 
 	return (v);

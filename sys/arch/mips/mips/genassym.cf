@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1998/01/05 20:51:44 perry Exp $
+#	$NetBSD: genassym.cf,v 1.6 1998/03/12 05:45:04 thorpej Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -39,6 +39,8 @@
 #	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
 #
 
+include "opt_uvm.h"
+
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/map.h>
@@ -48,6 +50,10 @@ include <sys/user.h>
 include <sys/vmmeter.h>
 
 include <vm/vm.h>
+
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
 
 include <machine/reg.h>
 include <machine/vmparam.h>
@@ -71,7 +77,11 @@ define  U_PCB_SEGTAB		offsetof(struct user, u_pcb.pcb_segtab)
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 
+ifdef UVM
+define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
+else
 define  V_SWTCH			offsetof(struct vmmeter, v_swtch)
+endif
 
 define	SIGILL			SIGILL
 define	SIGFPE		 	SIGFPE

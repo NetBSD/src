@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 1998/02/19 23:10:18 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 1998/03/12 05:45:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 1998/02/19 23:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 1998/03/12 05:45:06 thorpej Exp $");
+
+#include "opt_uvm.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -68,6 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 1998/02/19 23:10:18 thorpej Exp $");
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <mips/trap.h>
@@ -492,7 +498,11 @@ syscall(status, cause, opc, frame)
 		trp = trapdebug;
 #endif
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
 		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
@@ -650,7 +660,11 @@ trap(status, cause, vaddr, opc, frame)
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
 #endif
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		type |= T_USER;
@@ -782,6 +796,14 @@ trap(status, cause, vaddr, opc, frame)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page((vm_offset_t)vaddr);
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#ifdef VMFAULT_TRACE
+		printf(
+	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, ftype) -> %d at pc %p\n",
+		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
+#endif
+#else /* ! UVM */
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
 		printf(
@@ -789,6 +811,7 @@ trap(status, cause, vaddr, opc, frame)
 		    map, vm->vm_map.pmap, va, vaddr, ftype, FALSE, rv,
 		    (void*)opc);
 #endif
+#endif /* UVM */
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -824,7 +847,11 @@ trap(status, cause, vaddr, opc, frame)
 		int rv; 
 
 		va = trunc_page((vm_offset_t)vaddr);
+#if defined(UVM)
+		rv = uvm_fault(kernel_map, va, 0, ftype);
+#else
 		rv = vm_fault(kernel_map, va, ftype, FALSE);
+#endif
 		if (rv == KERN_SUCCESS)
 			return; /* KERN */
 		/*FALLTHROUGH*/
@@ -880,6 +907,16 @@ trap(status, cause, vaddr, opc, frame)
 			vm_offset_t sa, ea;
 			sa = trunc_page((vm_offset_t)va);
 			ea = round_page((vm_offset_t)va + sizeof(int) - 1);
+#if defined(UVM)
+			rv = uvm_map_protect(&p->p_vmspace->vm_map,
+				sa, ea, VM_PROT_DEFAULT, FALSE);
+			if (rv == KERN_SUCCESS) {
+				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+				(void)uvm_map_protect(&p->p_vmspace->vm_map,
+				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
+				}
+			}
+#else
 			rv = vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
 			if (rv == KERN_SUCCESS) {
@@ -888,7 +925,8 @@ trap(status, cause, vaddr, opc, frame)
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 				}
 			}
-#else
+#endif /* UVM */
+#else /* NO_PROCFS_SUBR */
 		{
 		struct uio uio;
 		struct iovec iov;
@@ -903,7 +941,7 @@ trap(status, cause, vaddr, opc, frame)
 		uio.uio_procp = curproc;
 		rv = procfs_domem(p, p, NULL, &uio);
 		}
-#endif
+#endif /* NO_PROCFS_SUBR */
 		MachFlushCache();
 
 		if (rv < 0)
@@ -982,7 +1020,11 @@ interrupt(status, cause, pc, frame)
 		trp = trapdebug;
 #endif
 
+#if defined(UVM)
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 	mask = cause & status;	/* pending interrupts & enable mask */
 
 	/* Device interrupt */
@@ -1004,7 +1046,11 @@ interrupt(status, cause, pc, frame)
 		register isr;
 		isr = netisr; netisr = 0;	/* XXX need protect? */
 		clearsoftnet();
+#if defined(UVM)
+		uvmexp.softs++;
+#else
 		cnt.v_soft++;
+#endif
 		intrcnt[SOFTNET_INTR]++;
 #ifdef INET
 #if NARP > 0
@@ -1029,7 +1075,11 @@ interrupt(status, cause, pc, frame)
 	/* Software clock interrupt */
 	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
+#if defined(UVM)
+		uvmexp.softs++;
+#else
 		cnt.v_soft++;
+#endif
 		intrcnt[SOFTCLOCK_INTR]++;
 		softclock();
 	}
@@ -1046,7 +1096,11 @@ ast(pc)
 {
 	struct proc *p = curproc;
 
+#if defined(UVM)
+	uvmexp.softs++;
+#else
 	cnt.v_soft++;
+#endif
 	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -1279,13 +1333,23 @@ mips_singlestep(p)
 		vm_offset_t sa, ea;
 		sa = trunc_page((vm_offset_t)va);
                 ea = round_page((vm_offset_t)va + sizeof(int) - 1);
-                rv = vm_map_protect(&p->p_vmspace->vm_map,
-                        sa, ea, VM_PROT_DEFAULT, FALSE);
+#if defined(UVM)
+		rv = uvm_map_protect(&p->p_vmspace->vm_map,
+		    sa, ea, VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
-                        rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
-                        (void)vm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
+			rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+			(void)uvm_map_protect(&p->p_vmspace->vm_map,
+			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
+#else
+		rv = vm_map_protect(&p->p_vmspace->vm_map,
+		    sa, ea, VM_PROT_DEFAULT, FALSE);
+		if (rv == KERN_SUCCESS) {
+			rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+			(void)vm_map_protect(&p->p_vmspace->vm_map,
+			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
+		}
+#endif /* UVM */
 	}
 #else
         struct frame *f = (struct frame *)p->p_md.md_regs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 1997/10/17 09:35:08 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 1998/03/12 05:45:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 1997/10/17 09:35:08 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 1998/03/12 05:45:07 thorpej Exp $");
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 1997/10/17 09:35:08 jonathan Exp
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <mips/locore.h>
 #include <mips/pte.h>
@@ -162,9 +168,15 @@ cpu_exit(p)
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
 
+#if defined(UVM)
+	uvmspace_free(p->p_vmspace);
+
+	uvmexp.swtch++;
+#else
 	vmspace_free(p->p_vmspace);
 
 	cnt.v_swtch++;
+#endif
 	(void)splhigh();
 	switch_exit(p);
 	/* NOTREACHED */
@@ -285,7 +297,11 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
+#if defined(UVM)
+	taddr = uvm_km_valloc_wait(phys_map, len);
+#else
 	taddr = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -320,7 +336,11 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
 	kmem_free_wakeup(phys_map, addr, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
