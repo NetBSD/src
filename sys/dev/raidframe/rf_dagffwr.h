@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.h,v 1.5 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,11 +61,11 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t * raidPtr,
 	void    rf_CommonCreateSmallWriteDAG(RF_Raid_t * raidPtr,
             RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
             RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-            RF_RedFuncs_t * pfuncs, RF_RedFuncs_t * qfuncs);
+            const RF_RedFuncs_t * pfuncs, const RF_RedFuncs_t * qfuncs);
 	void    rf_CommonCreateSmallWriteDAGFwd(RF_Raid_t * raidPtr,
             RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
             RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-            RF_RedFuncs_t * pfuncs, RF_RedFuncs_t * qfuncs);
+            const RF_RedFuncs_t * pfuncs, const RF_RedFuncs_t * qfuncs);
 	void    rf_CreateRaidOneWriteDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
             RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
             RF_AllocListElem_t * allocList);

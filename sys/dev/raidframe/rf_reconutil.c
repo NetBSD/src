@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.13 2002/11/23 01:58:18 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.14 2003/02/09 10:04:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.13 2002/11/23 01:58:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14 2003/02/09 10:04:34 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,7 +62,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	RF_ReconUnitCount_t numSpareRUs;
 	RF_ReconCtrl_t *reconCtrlPtr;
 	RF_ReconBuffer_t *rbuf;
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	int     retcode;
 #endif
@@ -204,7 +204,7 @@ rf_GetDefaultHeadSepLimit(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_HeadSepLimit_t hsl;
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 
 	lp = raidPtr->Layout.map;
 	if (lp->GetDefaultHeadSepLimit == NULL)
@@ -221,7 +221,7 @@ int
 rf_GetDefaultNumFloatingReconBuffers(raidPtr)
 	RF_Raid_t *raidPtr;
 {
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 	int     nrb;
 
 	lp = raidPtr->Layout.map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.21 2002/09/17 02:55:12 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.21 2002/09/17 02:55:12 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.22 2003/02/09 10:04:33 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -111,7 +111,7 @@ static void rf_ShutdownDiskQueueSystem(void *);
  *
  ****************************************************************************/
 
-static RF_DiskQueueSW_t diskqueuesw[] = {
+static const RF_DiskQueueSW_t diskqueuesw[] = {
 	{"fifo",		/* FIFO */
 		rf_FifoCreate,
 		rf_FifoEnqueue,
@@ -188,7 +188,7 @@ rf_ConfigureDiskQueue(
       RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
 				 * more... */
       RF_RowCol_t c,
-      RF_DiskQueueSW_t * p,
+      const RF_DiskQueueSW_t * p,
       RF_SectorCount_t sectPerDisk,
       dev_t dev,
       int maxOutstanding,
@@ -259,7 +259,7 @@ rf_ConfigureDiskQueues(
     RF_Config_t * cfgPtr)
 {
 	RF_DiskQueue_t **diskQueues, *spareQueues;
-	RF_DiskQueueSW_t *p;
+	const RF_DiskQueueSW_t *p;
 	RF_RowCol_t r, c;
 	int     rc, i;
 

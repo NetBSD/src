@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.12 2002/11/23 02:38:59 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.13 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.12 2002/11/23 02:38:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.13 2003/02/09 10:04:33 jdolecek Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.12 2002/11/23 02:38:59 oster Ex
  * nWayXorFuncs[i] is a pointer to a function that will xor "i"
  * bufs into the accumulating sum.
  */
-static RF_VoidFuncPtr nWayXorFuncs[] = {
+static const RF_VoidFuncPtr nWayXorFuncs[] = {
 	NULL,
 	(RF_VoidFuncPtr) rf_nWayXor1,
 	(RF_VoidFuncPtr) rf_nWayXor2,
@@ -102,7 +102,7 @@ rf_SubmitReconBuffer(rbuf, keep_it, use_committed)
 	int     use_committed;	/* whether to use a committed or an available
 				 * recon buffer */
 {
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 	int     rc;
 
 	lp = rbuf->raidPtr->Layout.map;

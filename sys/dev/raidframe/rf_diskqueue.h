@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.11 2002/10/04 20:05:14 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.12 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -102,7 +102,7 @@ struct RF_DiskQueueSW_s {
 };
 
 struct RF_DiskQueue_s {
-	RF_DiskQueueSW_t *qPtr;	/* access point to queue functions */
+	const RF_DiskQueueSW_t *qPtr;	/* access point to queue functions */
 	void   *qHdr;		/* queue header, of whatever type */
 	        RF_DECLARE_MUTEX(mutex)	/* mutex locking data structures */
 	        RF_DECLARE_COND(cond)	/* condition variable for
@@ -183,7 +183,7 @@ rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
 
 int 
 rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
-		      RF_RowCol_t, RF_DiskQueueSW_t *,
+		      RF_RowCol_t, const RF_DiskQueueSW_t *,
 		      RF_SectorCount_t, dev_t, int, 
 		      RF_ShutdownList_t **,
 		      RF_AllocListElem_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.19 2002/11/22 20:56:10 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.20 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.19 2002/11/22 20:56:10 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.20 2003/02/09 10:04:33 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.19 2002/11/22 20:56:10 oster Exp $
 
 #define SNUM_DIFF(_a_,_b_) (((_a_)>(_b_))?((_a_)-(_b_)):((_b_)-(_a_)))
 
-RF_RedFuncs_t rf_xorFuncs = {
+const RF_RedFuncs_t rf_xorFuncs = {
 	rf_RegularXorFunc, "Reg Xr",
 rf_SimpleXorFunc, "Simple Xr"};
 
-RF_RedFuncs_t rf_xorRecoveryFuncs = {
+const RF_RedFuncs_t rf_xorRecoveryFuncs = {
 	rf_RecoveryXorFunc, "Recovery Xr",
 rf_RecoveryXorFunc, "Recovery Xr"};
 

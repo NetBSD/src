@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.12 2002/08/02 03:42:33 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.12 2002/08/02 03:42:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -257,7 +257,7 @@ rf_CreateDegradedReadDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    RF_RedFuncs_t * recFunc)
+    const RF_RedFuncs_t * recFunc)
 {
 	RF_DagNode_t *nodes, *rudNodes, *rrdNodes, *xorNode, *blockNode;
 	RF_DagNode_t *commitNode, *rpNode, *termNode;
