@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.40 2003/05/03 18:11:11 wiz Exp $	 */
+/* $NetBSD: adw.c,v 1.41 2003/09/18 01:33:58 mycroft Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.40 2003/05/03 18:11:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.41 2003/09/18 01:33:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ adw_attach(ADW_SOFTC *sc)
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
 	chan->chan_ntargets = ADW_MAX_TID + 1;
-	chan->chan_nluns = 7;
+	chan->chan_nluns = 8;
 	chan->chan_id = sc->chip_scsi_id;
 
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
