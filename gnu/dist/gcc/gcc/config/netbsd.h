@@ -138,23 +138,12 @@ Boston, MA 02111-1307, USA.  */
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-/* Provide a LIBGCC_SPEC appropriate for NetBSD.  We also want to exclude
-   libgcc with -symbolic.  */
+/* Don't provide a LIBGCC_SPEC for NetBSD as the default
+   is correct. In the --disabled-shared case -lgcc is perfect.  */
 
-#ifdef NETBSD_NATIVE
-#define NETBSD_LIBGCC_SPEC	\
-  "%{!symbolic:			\
-     %{!shared:			\
-       %{!p:			\
-	 %{!pg: -lgcc}}}	\
-     %{p: -lgcc_p}		\
-     %{pg: -lgcc_p}}"
-#else
-#define NETBSD_LIBGCC_SPEC "%{!shared:%{!symbolic: -lgcc}}"
+#if defined(NETBSD_TOOLS) || defined(NETBSD_NATIVE)
+#define	LIBGCC_PICSUFFIX	"_pic"
 #endif
-
-#undef LIBGCC_SPEC
-#define LIBGCC_SPEC NETBSD_LIBGCC_SPEC
 
 /* When building shared libraries, the initialization and finalization 
    functions for the library are .init and .fini respectively.  */
