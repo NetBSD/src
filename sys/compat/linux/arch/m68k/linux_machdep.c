@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.11 2002/02/19 22:42:25 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.10 2002/02/15 16:48:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2002/02/19 22:42:25 is Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -569,8 +569,8 @@ bad:		sigexit(p, SIGSEGV);
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
-	linux_old_extra_to_native_sigset(&scp->sc_mask, tsigc2.c_extrasigmask,
-					 &mask);
+	linux_old_extra_to_native_sigset(&mask, &scp->sc_mask,
+					 tsigc2.c_extrasigmask);
 #else
 	linux_old_to_native_sigset(&scp->sc_mask, &mask);
 #endif
@@ -721,7 +721,7 @@ bad:		sigexit(p, SIGSEGV);
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */
-	linux_to_native_sigset(&tuc.uc_sigmask, &mask);
+	linux_to_native_sigset(&mask, &tuc.uc_sigmask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	/*
