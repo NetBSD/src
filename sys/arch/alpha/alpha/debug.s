@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.4 1999/06/18 18:08:52 thorpej Exp $ */
+/* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.4 1999/06/18 18:08:52 thorpej Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $")
 
 /*
  * Debugger glue.
@@ -89,11 +89,11 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	 */
 	lda	t0, debug_stack_bottom
 	cmpule	sp, t0, t1		/* sp <= debug_stack_bottom */
-	bne	t1, 2f		/* yes, switch now */
+	bne	t1, 2f			/* yes, switch now */
 
 	lda	t0, debug_stack_top
 	cmpule	t0, sp, t1		/* debug_stack_top <= sp? */
-	bne	t1, 3f		/* yes, we're on the debug stack */
+	bne	t1, 3f			/* yes, we're on the debug stack */
 
 2:	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
 
