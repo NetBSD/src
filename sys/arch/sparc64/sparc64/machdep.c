@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.3 2000/07/31 02:50:08 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.4 2000/08/07 01:07:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -335,7 +335,9 @@ setregs(p, pack, stack)
 	register struct fpstate64 *fs;
 	register int64_t tstate;
 	int pstate = PSTATE_USER;
+#ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
+#endif
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -922,10 +924,9 @@ dumpsys()
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-#if 0
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();
-#endif
+printf("starting dump, blkno %d\n", blkno);
 	for (mp = mem; mp->size; mp++) {
 		unsigned i = 0, n;
 		paddr_t maddr = mp->start;
@@ -1240,16 +1241,37 @@ _bus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
+	int i;
+	vm_page_t m;
+	struct pglist *mlist;
+	paddr_t pa;
 
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
+	for (i=0; i<map->dm_nsegs; i++) {
+		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {
+			/* 
+			 * We were asked to load random VAs and lost the 
+			 * PA info so just blow the entire cache away.
+			 */
+			blast_vcache();
+			break;
+		}
+		for (m = TAILQ_FIRST(mlist); m != NULL;
+		     m = TAILQ_NEXT(m,pageq)) {
+			pa = VM_PAGE_TO_PHYS(m);
+			/* 
+			 * We should be flushing a subrange, but we
+			 * don't know where the segments starts.
+			 */
+			dcache_flush_page(pa);
+		}
+	}
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-	/* Didn't keep track of vaddrs -- dump entire D$ */
-	blast_vcache();
 }
 
 /*
@@ -1264,6 +1286,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
+	int i;
+	vm_page_t m;
+	struct pglist *mlist;
 
 	/*
 	 * We sync out our caches, but the bus must do the same.
@@ -1279,8 +1304,27 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */
-		blast_vcache();
-		/* Maybe we should flush the I$? When we support LKMs.... */
+		for (i=0; i<map->dm_nsegs; i++) {
+			if ((mlist = map->dm_segs[i]._ds_mlist) == NULL)
+				/* Should not really happen. */
+				continue;
+			for (m = TAILQ_FIRST(mlist);
+			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
+				paddr_t start;
+				psize_t size;
+
+				if (offset < NBPG) {
+					start = VM_PAGE_TO_PHYS(m) + offset;
+					size = NBPG;
+					if (size > len)
+						size = len;
+					cache_flush_phys(start, size, 0);
+					len -= size;
+					continue;
+				}
+				offset -= size;
+			}
+		}
 	}
 	if (ops & BUS_DMASYNC_POSTWRITE) {
 		/* Nothing to do.  Handled by the bus controller. */
