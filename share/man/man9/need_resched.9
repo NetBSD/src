@@ -1,4 +1,4 @@
-.\"     $NetBSD: need_resched.9,v 1.1 2002/09/22 06:26:34 gmcgarry Exp $
+.\"     $NetBSD: need_resched.9,v 1.2 2002/09/27 08:38:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -49,9 +49,9 @@ The
 .Fn need_resched
 function is the machine-independent interface for the scheduler to
 notify machine-dependent code that a context switch from the current
-process is required.  This event may occur if a higher priority
-process appears on the run queue or if the current process has
-exceeded its time slice.
+process is required.
+This event may occur if a higher priority process appears on the run
+queue or if the current process has exceeded its time slice.
 .Pp
 Specifically, the
 .Fn need_resched

@@ -1,6 +1,6 @@
-.\"	$NetBSD: ctxsw.9,v 1.13 2002/09/22 06:26:34 gmcgarry Exp $
+.\"	$NetBSD: ctxsw.9,v 1.14 2002/09/27 08:38:58 wiz Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -50,9 +50,10 @@
 The
 .Fn mi_switch
 function implements the machine-independent prelude to a process
-context switch.  It is called from only a few distinguished places in
-the kernel code as a result of the principle of non-preemptable kernel
-mode execution.  The three major uses of
+context switch.
+It is called from only a few distinguished places in the kernel code
+as a result of the principle of non-preemptable kernel mode execution.
+The three major uses of
 .Fn mi_switch
 can be enumerated as follows:
 .Bl -enum -offset indent
@@ -84,14 +85,16 @@ cause a
 .Dv SIGKILL .
 If
 .Fa newp
-is NULL,
+is
+.Dv NULL ,
 .Fn mi_switch
 will invoke
 .Xr chooseproc 9
-to select a new process from the system run queue.  If the new process
-is the same as the current process, then control is returned
-immediately to the process, avoiding any unnecessary overhead
-associated with switching in a new process.  Otherwise,
+to select a new process from the system run queue.
+If the new process is the same as the current process, then control is
+returned immediately to the process, avoiding any unnecessary overhead
+associated with switching in a new process.
+Otherwise,
 .Fn mi_switch
 hands over control to the machine-dependent function
 .Fn cpu_switch ,
@@ -99,10 +102,11 @@ which will perform the actual process context switch.
 .Pp
 The
 .Fn cpu_switch
-function switches the new process onto the CPU.  This procedure is
-performed by saving the process context of the current process in its
-process control block (PCB) and restoring the process context of the
-new process.  The address space of the new process is activated using
+function switches the new process onto the CPU.
+This procedure is performed by saving the process context of the current
+process in its process control block (PCB) and restoring the process
+context of the new process.
+The address space of the new process is activated using
 .Xr pmap_activate 9 .
 Finally, the new process is checked to see if it was previously
 preempted while inside a restartable atomic sequence
@@ -113,8 +117,8 @@ These functions must be called with the scheduler lock held
 .Xr SCHED_LOCK 9 )
 and at the
 .Xr splsched 9
-interrupt protection level.  Both functions return with the scheduler
-lock released.
+interrupt protection level.
+Both functions return with the scheduler lock released.
 .Sh SEE ALSO
 .Xr SCHED_LOCK 9 ,
 .Xr chooseproc 9 ,

@@ -1,6 +1,6 @@
-.\"	$NetBSD: setrunqueue.9,v 1.5 2002/09/22 06:26:35 gmcgarry Exp $
+.\"	$NetBSD: setrunqueue.9,v 1.6 2002/09/27 08:38:58 wiz Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,14 +51,14 @@
 .Sh DESCRIPTION
 The
 .Fn setrunqueue ,
-.Fn remrunqueue
+.Fn remrunqueue ,
 and
 .Fn nextrunqueue
-functions manipulate the system queue of runnable processes.  The
-system scheduler uses this queue to find the highest-priority process
-when a process switch occurs.  These functions are generally
-machine-dependent implementations in order to permit efficient
-implementation of priority-based process selection.
+functions manipulate the system queue of runnable processes.
+The system scheduler uses this queue to find the highest-priority process
+when a process switch occurs.
+These functions are generally machine-dependent implementations in order
+to permit efficient implementation of priority-based process selection.
 .Pp
 .Bf -symbolic
 Currently, these functions are scheduler specific and correspond to
@@ -73,28 +73,30 @@ different schedulers.
 The priority queue consists of an array
 .Va sched_qs[NQS]
 of queue header structures each of which identifies a list of runnable
-processes of equal priority.  Lower indices in
+processes of equal priority.
+Lower indices in
 .Va sched_qs
-indicate higher priority.  A single word
+indicate higher priority.
+A single word
 .Va sched_whichqs
 containing a bit mask identifying non-empty queues assists in
-selecting a process quickly.  The running process is on no queue,
-other processes are on a queue related to p->p_priority, divided by 4
-actually to shrink the 0-127 range of priorities into the 32 available
-queues.
+selecting a process quickly.
+The running process is on no queue, other processes are on a queue related
+to p->p_priority, divided by 4 actually to shrink the 0-127 range of
+priorities into the 32 available queues.
 .Pp
 The
 .Fn setrunqueue
-function places the given process on the system run queue.  It is an
-error to call
+function places the given process on the system run queue.
+It is an error to call
 .Fn setrunqueue
 with a process that is not runnable or that is already on the system
 run queue or sleep queue.
 .Pp
 The
 .Fn remrunqueue
-function removes the given process from the system run queue. It is an
-error to call
+function removes the given process from the system run queue.
+It is an error to call
 .Fn remrunqueue
 with a process that is not on the system run queue.
 .Pp

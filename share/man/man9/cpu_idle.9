@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_idle.9,v 1.1 2002/09/22 06:26:34 gmcgarry Exp $
+.\"     $NetBSD: cpu_idle.9,v 1.2 2002/09/27 08:38:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -47,9 +47,10 @@
 .Sh DESCRIPTION
 The
 .Fn cpu_idle
-function is invoked to idle the current CPU while waiting for work to
-be done.  It is primarily called by the scheduler if no processes are
-available on the system run queue.  The
+function is invoked to idle the current CPU while waiting for work to be done.
+It is primarily called by the scheduler if no processes are
+available on the system run queue.
+The
 .Fn cpu_idle
 function is a machine-dependent implementations in order to permit
 low-level CPU control.
@@ -60,7 +61,8 @@ function must be called with the scheduler lock held
 .P see Xr SCHED_LOCK 9
 and at the
 .Xr splsched 9
-interrupt protection level.  It performs the following operations:
+interrupt protection level.
+It performs the following operations:
 .Bl -bullet
 .It
 Release the scheduler lock.
@@ -79,10 +81,11 @@ Acquire the scheduler lock.
 .El
 .Pp
 For CPUs which don't support an idle operation, the CPU must spin
-until a process appears on the system run queue.  Generally, this is
-done by checking if the
+until a process appears on the system run queue.
+Generally, this is done by checking if the
 .Va sched_whichqs
-variable in the scheduler is not zero.  See
+variable in the scheduler is not zero.
+See
 .Xr setrunqueue 9
 for further details.
 .Sh SEE ALSO

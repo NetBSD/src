@@ -1,4 +1,4 @@
-.\"     $NetBSD: userret.9,v 1.1 2002/09/22 06:26:36 gmcgarry Exp $
+.\"     $NetBSD: userret.9,v 1.2 2002/09/27 08:38:59 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -49,9 +49,10 @@
 The
 .Fn userret
 function is executed after processing a trap
-.Pq e.g. a system call or interrupt
-before returning to user-mode execution.  The implementation is
-machine dependent and is never invoked from machine-independent code.
+.Pq e.g., a system call or interrupt
+before returning to user-mode execution.
+The implementation is machine dependent and is never invoked from
+machine-independent code.
 The function prototype for each architecture may be different to the
 prototype above, however the functionally provided by the
 .Fn userret
@@ -62,11 +63,11 @@ Specifically, the
 function performs the following procedure:
 .Bl -bullet -indent
 .It
-Detect a change in the signal disposition of the current process and
-invoke
-.Xr postsig
-to post the signal to the process.  This may occur when the outcome of
-the trap or syscall posted a signal to the process
+Detect a change in the signal disposition of the current process and invoke
+.Xr postsig 9
+to post the signal to the process.
+This may occur when the outcome of the trap or syscall posted a signal
+to the process
 .Pq e.g. invalid instruction trap .
 .It
 Check the
