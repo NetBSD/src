@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1998/07/05 00:51:12 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@
 #include <machine/cpu.h>
 #include <machine/adrsmap.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -88,12 +90,24 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), le_match, le_attach
 };
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));  
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
 
 hide void
 lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -104,7 +118,7 @@ lewrcsr(sc, port, val)
 
 hide u_int16_t
 lerdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -155,7 +169,7 @@ le_attach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	/*struct confargs *ca = aux;*/
 	u_char *p;
 
@@ -198,17 +212,17 @@ le_attach(parent, self, aux)
 	sc->sc_enaddr[5] = (*p++ << 4);
 	sc->sc_enaddr[5] |= *p++ & 0x0f;
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 }
 
 int

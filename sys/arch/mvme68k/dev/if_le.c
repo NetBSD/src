@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16 1998/07/05 00:51:11 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17 1998/07/21 17:36:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,6 +67,8 @@
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -82,14 +84,26 @@ struct cfattach le_pcc_ca = {
 
 extern struct cfdriver le_cd;
 
-hide void le_pcc_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_pcc_rdcsr __P((struct am7990_softc *, u_int16_t));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_pcc_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_pcc_rdcsr __P((struct lance_softc *, u_int16_t));
 
 void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
 
 hide void
 le_pcc_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -100,7 +114,7 @@ le_pcc_wrcsr(sc, port, val)
 
 hide u_int16_t
 le_pcc_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -132,7 +146,7 @@ le_pcc_attach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct pcc_attach_args *pa = aux;
 
 	/* XXX the following declarations should be elsewhere */
@@ -148,17 +162,17 @@ le_pcc_attach(parent, self, aux)
 
 	myetheraddr(sc->sc_enaddr);
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_pcc_rdcsr;
 	sc->sc_wrcsr = le_pcc_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* Are we the boot device? */
 	if (PCC_PADDR(pa->pa_offset) == bootaddr) 

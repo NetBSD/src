@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.20 1998/05/31 23:28:07 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.21 1998/07/21 17:36:02 drochner Exp $
 
 # config file for mvme68k
 
@@ -34,7 +34,7 @@ attach lpt at pcc with lpt_pcc
 file arch/mvme68k/dev/lpt.c			lpt needs-flag
 
 # device defined in sys/conf/files
-attach le at pcc with le_pcc
+attach le at pcc with le_pcc: le24
 file arch/mvme68k/dev/if_le.c			le
 
 # Generic VME support

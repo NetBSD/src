@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 1998/07/05 00:51:15 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12 1998/07/21 17:36:05 drochner Exp $	*/
 
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
 
@@ -73,6 +73,8 @@
 #include <machine/vsbus.h>
 #include <machine/rpb.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #define LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
@@ -109,12 +111,24 @@ struct cfattach le_ca = {
 
 extern struct cfdriver le_cd;
 
-hide void lewrcsr __P ((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P ((struct am7990_softc *, u_int16_t));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void lewrcsr __P ((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P ((struct lance_softc *, u_int16_t));
 
 hide void
 lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -130,7 +144,7 @@ lewrcsr(sc, port, val)
 
 hide u_int16_t
 lerdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -148,7 +162,7 @@ lerdcsr(sc, port)
 
 integrate void
 lehwinit(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 }
 
@@ -186,39 +200,39 @@ leattach(parent, self, aux)
 
 	sc->sc_r1  = (void*)uvax_phys2virt(ca->ca_ioaddr);
 
-	sc->sc_am7990.sc_conf3 = 0;
-	sc->sc_am7990.sc_mem = le_iomem;
-	sc->sc_am7990.sc_addr = le_ioaddr;
-	sc->sc_am7990.sc_memsize = LE_IOSIZE;
-	sc->sc_am7990.sc_wrcsr = lewrcsr;
-	sc->sc_am7990.sc_rdcsr = lerdcsr;
-	sc->sc_am7990.sc_hwinit = lehwinit;
-	sc->sc_am7990.sc_nocarrier = NULL;
+	sc->sc_am7990.lsc.sc_conf3 = 0;
+	sc->sc_am7990.lsc.sc_mem = le_iomem;
+	sc->sc_am7990.lsc.sc_addr = le_ioaddr;
+	sc->sc_am7990.lsc.sc_memsize = LE_IOSIZE;
+	sc->sc_am7990.lsc.sc_wrcsr = lewrcsr;
+	sc->sc_am7990.lsc.sc_rdcsr = lerdcsr;
+	sc->sc_am7990.lsc.sc_hwinit = lehwinit;
+	sc->sc_am7990.lsc.sc_nocarrier = NULL;
 
 	xdebug(("leattach: mem=%x, addr=%x, size=%x (%d)\n",
-	    sc->sc_am7990.sc_mem, sc->sc_am7990.sc_addr,
-	    sc->sc_am7990.sc_memsize, sc->sc_am7990.sc_memsize));
+	    sc->sc_am7990.lsc.sc_mem, sc->sc_am7990.lsc.sc_addr,
+	    sc->sc_am7990.lsc.sc_memsize, sc->sc_am7990.lsc.sc_memsize));
 
-	sc->sc_am7990.sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_am7990.sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_am7990.sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_am7990.lsc.sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_am7990.lsc.sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_am7990.lsc.sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_am7990.lsc.sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_am7990.lsc.sc_zerobuf = lance_zerobuf_contig;
 
 	/*
 	 * Get the ethernet address out of rom
 	 */
-	for (i = 0; i < sizeof(sc->sc_am7990.sc_enaddr); i++) {
+	for (i = 0; i < sizeof(sc->sc_am7990.lsc.sc_enaddr); i++) {
 		int *eaddr = (void*)uvax_phys2virt(ca->ca_enaddr);
-		sc->sc_am7990.sc_enaddr[i] = (u_char)eaddr[i];
+		sc->sc_am7990.lsc.sc_enaddr[i] = (u_char)eaddr[i];
 	}
 
-	bcopy(self->dv_xname, sc->sc_am7990.sc_ethercom.ec_if.if_xname,
+	bcopy(self->dv_xname, sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
 	    IFNAMSIZ);
 	am7990_config(&sc->sc_am7990);
 
 #ifdef LEDEBUG
-	sc->sc_am7990.sc_debug = LEDEBUG;
+	sc->sc_am7990.lsc.sc_debug = LEDEBUG;
 #endif
 
 	vsbus_intr_register(ca, am7990_intr, &sc->sc_am7990);

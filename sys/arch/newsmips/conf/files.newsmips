@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.2 1998/03/04 22:14:15 thorpej Exp $
+#	$NetBSD: files.newsmips,v 1.3 1998/07/21 17:36:03 drochner Exp $
 # NEWS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -26,7 +26,7 @@ attach mkclock at hb
 file arch/newsmips/newsmips/clock.c		mkclock
 
 #device le: ifnet, ether, arp
-attach le at hb
+attach le at hb: le24
 file arch/newsmips/dev/if_le.c			le needs-count
 
 device ms
