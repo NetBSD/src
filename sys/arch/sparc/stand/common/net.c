@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.4 1999/05/07 16:19:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -59,6 +59,8 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/nfs.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <sparc/stand/common/promdev.h>
 
