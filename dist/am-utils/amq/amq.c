@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.c,v 1.3 2001/07/14 06:01:22 mrg Exp $	*/
+/*	$NetBSD: amq.c,v 1.4 2002/11/29 23:06:23 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amq.c,v 1.7.2.5 2001/01/12 22:43:43 ro Exp
+ * Id: amq.c,v 1.14 2002/02/02 20:58:56 ezk Exp
  *
  */
 
@@ -50,14 +49,13 @@
 
 #ifndef lint
 char copyright[] = "\
-@(#)Copyright (c) 1997-2001 Erez Zadok\n\
+@(#)Copyright (c) 1997-2002 Erez Zadok\n\
 @(#)Copyright (c) 1990 Jan-Simon Pendry\n\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "Id: amq.c,v 1.7.2.5 2001/01/12 22:43:43 ro Exp";
-static char sccsid[] = "%W% (Berkeley) %G%";
+static char rcsid[] = "Id: amq.c,v 1.14 2002/02/02 20:58:56 ezk Exp";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
 
@@ -118,7 +116,7 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
   case Full:
     {
       struct tm *tp = localtime((time_t *) &mt->mt_mounttime);
-      printf("%-*.*s %-*.*s %-*.*s %s\n\t%-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
+      printf("%-*.*s %-*.*s %-*.*s %s\n\t%-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%04d %02d:%02d:%02d\n",
 	     *dwid, *dwid,
 	     *mt->mt_directory ? mt->mt_directory : "/",	/* XXX */
 	     *twid, *twid,
@@ -134,8 +132,8 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
 	     mt->mt_readlink,
 	     mt->mt_statfs,
 
-	     tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
 	     tp->tm_mon + 1, tp->tm_mday,
+	     tp->tm_year < 1900 ? tp->tm_year + 1900 : tp->tm_year,
 	     tp->tm_hour, tp->tm_min, tp->tm_sec);
     }
   break;
@@ -143,7 +141,7 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
   case Stats:
     {
       struct tm *tp = localtime((time_t *) &mt->mt_mounttime);
-      printf("%-*.*s %-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
+      printf("%-*.*s %-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%04d\n",
 	     *dwid, *dwid,
 	     *mt->mt_directory ? mt->mt_directory : "/",	/* XXX */
 
@@ -154,8 +152,8 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
 	     mt->mt_readlink,
 	     mt->mt_statfs,
 
-	     tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
 	     tp->tm_mon + 1, tp->tm_mday,
+	     tp->tm_year < 1900 ? tp->tm_year + 1900 : tp->tm_year,
 	     tp->tm_hour, tp->tm_min, tp->tm_sec);
     }
   break;
