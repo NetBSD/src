@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1996/05/21 15:32:02 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -255,7 +255,7 @@ fdc_dmastart(read, addr, count)
 {
 	volatile struct dmac *dmac = &IODEVbase->io_dma[DRQ];
 
-	DPRINTF(("fdc_dmastart: (%s, addr = %x, count = %d\n",
+	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %d\n",
 		 read ? "read" : "write", addr, count));
 	if (dmarangecheck((vm_offset_t)addr, count)) {
 		dma_bouncebytes[DRQ] = count;
@@ -580,7 +580,7 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
-	DPRINTF(("fdstrategy: %s b_blkno %d b_bcount %d cylin %d\n",
+	DPRINTF(("fdstrategy: %s b_blkno %d b_bcount %ld cylin %ld\n",
 		 bp->b_flags & B_READ ? "read" : "write",
 		 bp->b_blkno, bp->b_bcount, bp->b_cylin));
 	/* Queue transfer on drive, activate drive and controller if idle. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: grf.c,v 1.2 1996/05/21 15:32:06 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -92,6 +93,7 @@ int grfdebug = 0;
 struct cfdriver grf_cd;
 
 /*ARGSUSED*/
+int
 grfopen(dev, flags)
 	dev_t dev;
 	int flags;
@@ -132,6 +134,7 @@ grfopen(dev, flags)
 }
 
 /*ARGSUSED*/
+int
 grfclose(dev, flags)
 	dev_t dev;
 	int flags;
@@ -147,6 +150,7 @@ grfclose(dev, flags)
 }
 
 /*ARGSUSED*/
+int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -200,6 +204,7 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
+int
 grfselect(dev, rw)
 	dev_t dev;
 	int rw;
@@ -210,13 +215,15 @@ grfselect(dev, rw)
 }
 
 /*ARGSUSED*/
+int
 grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	return(grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off));
+	return (grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off));
 }
 
+int
 grfon(dev)
 	dev_t dev;
 {
@@ -234,6 +241,7 @@ grfon(dev)
 				    (caddr_t)0));
 }
 
+int
 grfoff(dev)
 	dev_t dev;
 {
@@ -250,6 +258,7 @@ grfoff(dev)
 	return(error);
 }
 
+int
 grfaddr(gp, off)
 	struct grf_softc *gp;
 	register int off;
@@ -497,6 +506,7 @@ grfdevno(dev)
 
 #endif	/* COMPAT_HPUX */
 
+int
 grfmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
@@ -510,7 +520,7 @@ grfmap(dev, addrp, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
+		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
 	flags = MAP_SHARED;
@@ -529,6 +539,7 @@ grfmap(dev, addrp, p)
 	return(error);
 }
 
+int
 grfunmap(dev, addr, p)
 	dev_t dev;
 	caddr_t addr;
@@ -540,7 +551,7 @@ grfunmap(dev, addr, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
+		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
