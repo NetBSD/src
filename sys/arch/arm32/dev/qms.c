@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.17 1998/01/17 07:06:45 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.18 1998/02/22 00:24:12 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -60,7 +60,9 @@
 
 #define QMOUSE_BSIZE 12*64
 
+#ifdef MOUSE_IOC_ACK
 static void qmsputbuffer	__P((struct qms_softc *sc, struct mousebufrec *buf));
+#endif
 
 extern struct cfdriver qms_cd;
 
@@ -261,9 +263,9 @@ qmsioctl(dev, cmd, data, flag, p)
 	{
 		register struct mouse_boundingbox *bo = (void *)data;
 		struct mousebufrec buffer;
+#ifdef MOUSE_IOC_ACK
 		int s;
 
-#ifdef MOUSE_IOC_ACK
 		s = spltty();
 #endif
 
@@ -287,9 +289,9 @@ qmsioctl(dev, cmd, data, flag, p)
 	case MOUSEIOC_SETMODE:
 	{
 		struct mousebufrec buffer;
+#ifdef MOUSE_IOC_ACK
 		int s;
 
-#ifdef MOUSE_IOC_ACK
 		s = spltty();
 #endif
 		sc->sc_mode = *(int *)data;
@@ -310,9 +312,9 @@ qmsioctl(dev, cmd, data, flag, p)
 	{
 		register struct mouse_origin *oo = (void *)data;
 		struct mousebufrec buffer;
+#ifdef MOUSE_IOC_ACK
 		int s;
 
-#ifdef MOUSE_IOC_ACK
 		s = spltty();
 #endif
 		/* Need to fix up! */
@@ -435,6 +437,7 @@ qmspoll(dev, events, p)
 }
 
 
+#ifdef MOUSE_IOC_ACK
 static void
 qmsputbuffer(sc, buffer)
 	struct qms_softc *sc;
@@ -462,5 +465,6 @@ qmsputbuffer(sc, buffer)
 	if (dosignal)
 		psignal(sc->sc_proc, SIGIO);
 }
+#endif
 
 /* End of qms.c */
