@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.8 1997/08/20 16:53:31 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.9 1997/09/28 11:47:29 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -17,7 +17,7 @@ DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 CPPFLAGS += -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
 
-CLEANFILES+= vers.c vers.o
+CLEANFILES+= vers.c vers.o ${BASE}.list
 
 .BEGIN: ${.OBJDIR}/machine
 depend all: ${.OBJDIR}/machine
@@ -26,8 +26,6 @@ CLEANFILES+= ${.OBJDIR}/machine
 ${.OBJDIR}/machine::
 	-rm $@
 	ln -s $S/arch/i386/include $@
-
-.include <bsd.prog.mk>
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -55,23 +53,25 @@ vers.o:
 	sh ${I386_STAND_DIR}/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
-${PROG}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${PROG}.sym -M -e _start -N -Ttext 0 $(BSSTART) $(OBJS) \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
+${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+	${LD} -o ${BASE}.sym -M -e _start -N -Ttext 0 $(BSSTART) $(OBJS) \
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
 
-${PROG}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${PROG}.sym -M -e _start -N -Ttext ${RELOC} $(ROMSTART) $(OBJS) \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
-	cp ${PROG}.sym ${PROG}.bin
-	strip ${PROG}.bin
-	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${PROG:Q}.bin \
-		ROMFILE=${.OBJDIR:Q}/${PROG:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
-	rm -f ${PROG}.bin
+${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+	${LD} -o ${BASE}.sym -M -e _start -N -Ttext ${RELOC} $(ROMSTART) $(OBJS) \
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
+	cp ${BASE}.sym ${BASE}.bin
+	strip ${BASE}.bin
+	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${BASE:Q}.bin \
+		ROMFILE=${.OBJDIR:Q}/${BASE:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
+	rm -f ${BASE}.bin
 
-${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${PROG}.sym -M -e _start -N -Ttext 0x100 $(DOSSTART) $(OBJS) \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
-	cp ${PROG}.sym ${PROG}.bin
-	strip ${PROG}.bin
-	dd if=${PROG}.bin of=${PROG}.com ibs=32 skip=1 obs=1024b
-	rm -f ${PROG}.bin
+${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+	${LD} -o ${BASE}.sym -M -e _start -N -Ttext 0x100 $(DOSSTART) $(OBJS) \
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
+	cp ${BASE}.sym ${BASE}.bin
+	strip ${BASE}.bin
+	dd if=${BASE}.bin of=${BASE}.com ibs=32 skip=1 obs=1024b
+	rm -f ${BASE}.bin
+
+.include <bsd.prog.mk>
