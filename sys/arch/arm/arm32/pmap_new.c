@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.4 2003/04/22 00:24:49 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.5 2003/04/22 13:49:48 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.4 2003/04/22 00:24:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.5 2003/04/22 13:49:48 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4312,6 +4312,7 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 	u_int slot = va >> L1_S_SHIFT;
 
 #ifndef ARM32_NEW_VM_LAYOUT
+	KASSERT((va & ((L1_S_SIZE * 4) - 1)) == 0);
 	KASSERT((l2pv->pv_pa & PGOFSET) == 0);
 #endif
 
