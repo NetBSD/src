@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.13 1997/10/10 13:18:37 fvdl Exp $	*/
+/*	$NetBSD: dirent.h,v 1.14 1998/05/06 19:05:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
 
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
 /*
@@ -46,11 +47,13 @@
  */
 #include <sys/dirent.h>
 
-#ifdef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#define	d_ino		d_fileno	/* backward compatibility */
+#endif
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 typedef void *	DIR;
 #else
-
-#define	d_ino		d_fileno	/* backward compatibility */
 
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
@@ -69,7 +72,7 @@ typedef struct _dirdesc {
 
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
-/* flags for opendir2 */
+/* flags for __opendir2() */
 #define DTF_HIDEW	0x0001	/* hide whiteout entries */
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
 #define DTF_REWIND	0x0004	/* rewind after reading union stack */
@@ -79,28 +82,30 @@ typedef struct _dirdesc {
 #define	NULL	0
 #endif
 
-#endif /* _POSIX_SOURCE */
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE */
 
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+int closedir __P((DIR *));
 DIR *opendir __P((const char *));
 struct dirent *readdir __P((DIR *));
 void rewinddir __P((DIR *));
-int closedir __P((DIR *));
-#ifndef _POSIX_SOURCE
-DIR *__opendir2 __P((const char *, int));
-long telldir __P((const DIR *));
-void __seekdir __P((DIR *, long));
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 void seekdir __P((DIR *, long));
+long telldir __P((const DIR *));
+#endif /* !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+DIR *__opendir2 __P((const char *, int));
+void __seekdir __P((DIR *, long));
 int scandir __P((const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *)));
 int alphasort __P((const void *, const void *));
 int getdirentries __P((int, char *, int, long *));
 int getdents __P((int, char *, size_t));
-#endif /* not POSIX */
+#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 __END_DECLS
 
 #endif /* !_KERNEL */
