@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.17 1994/05/12 05:56:32 chopps Exp $
+ *	$Id: locore.s,v 1.18 1994/05/13 06:07:02 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1091,7 +1091,7 @@ ENTRY(longjmp)
  *
  * Call should be made at spl6(), and p->p_stat should be SRUN
  */
-ENTRY(setrq)
+ENTRY(setrunqueue)
 	movl	sp@(4),a0
 	tstl	a0@(P_BACK)
 	jeq	Lset1
@@ -1115,7 +1115,7 @@ Lset1:
 	rts
 
 Lset2:
-	.asciz	"setrq"
+	.asciz	"setrunqueue"
 	.even
 
 /*
