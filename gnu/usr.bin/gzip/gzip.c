@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.5 1999/07/27 00:36:10 simonb Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.6 1999/08/20 02:36:28 simonb Exp $";
 #endif
 
 #include <ctype.h>
@@ -200,7 +200,7 @@ DECLARE(uch, window, 2L*WSIZE);
 
 int ascii = 0;        /* convert end-of-lines to local OS conventions */
 int to_stdout = 0;    /* output to stdout (-c) */
-int de_compress = 0;  /* decompress (-d) */
+int decompress = 0;   /* decompress (-d) */
 int force = 0;        /* don't ask questions, compress links (-f) */
 int no_name = -1;     /* don't save or restore the original file name */
 int no_time = -1;     /* don't save or restore the original file time */
@@ -468,10 +468,10 @@ int main (argc, argv)
      */
     if (  strncmp(progname, "un",  2) == 0     /* ungzip, uncompress */
        || strncmp(progname, "gun", 3) == 0) {  /* gunzip */
-	de_compress = 1;
+	decompress = 1;
     } else if (strequ(progname+1, "cat")       /* zcat, pcat, gcat */
 	    || strequ(progname, "gzcat")) {    /* gzcat */
-	de_compress = to_stdout = 1;
+	decompress = to_stdout = 1;
     }
 #endif
 
@@ -489,13 +489,13 @@ int main (argc, argv)
 	case 'c':
 	    to_stdout = 1; break;
 	case 'd':
-	    de_compress = 1; break;
+	    decompress = 1; break;
 	case 'f':
 	    force++; break;
 	case 'h': case 'H': case '?':
 	    help(); do_exit(OK); break;
 	case 'l':
-	    list = de_compress = to_stdout = 1; break;
+	    list = decompress = to_stdout = 1; break;
 	case 'L':
 	    license(); do_exit(OK); break;
 	case 'm': /* undocumented, may change later */
@@ -524,7 +524,7 @@ int main (argc, argv)
             strcpy(z_suffix, optarg);
             break;
 	case 't':
-	    test = de_compress = to_stdout = 1;
+	    test = decompress = to_stdout = 1;
 	    break;
 	case 'v':
 	    verbose++; quiet = 0; break;
@@ -553,8 +553,8 @@ int main (argc, argv)
     /* By default, save name and timestamp on compression but do not
      * restore them on decompression.
      */
-    if (no_time < 0) no_time = de_compress;
-    if (no_name < 0) no_name = de_compress;
+    if (no_time < 0) no_time = decompress;
+    if (no_name < 0) no_name = decompress;
 
     file_count = argc - optind;
 
@@ -565,12 +565,12 @@ int main (argc, argv)
 		progname);
     }
 #endif
-    if ((z_len == 0 && !de_compress) || z_len > MAX_SUFFIX) {
+    if ((z_len == 0 && !decompress) || z_len > MAX_SUFFIX) {
         fprintf(stderr, "%s: incorrect suffix '%s'\n",
                 progname, optarg);
         do_exit(ERROR);
     }
-    if (do_lzw && !de_compress) work = lzw;
+    if (do_lzw && !decompress) work = lzw;
 
     /* Allocate all global buffers (for DYN_ALLOC option) */
     ALLOC(uch, inbuf,  INBUFSIZ +INBUF_EXTRA);
@@ -586,7 +586,7 @@ int main (argc, argv)
 
     /* And get to work */
     if (file_count != 0) {
-	if (to_stdout && !test && !list && (!de_compress || !ascii)) {
+	if (to_stdout && !test && !list && (!decompress || !ascii)) {
 	    SET_BINARY_MODE(fileno(stdout));
 	}
         while (optind < argc) {
@@ -608,7 +608,7 @@ int main (argc, argv)
 local void treat_stdin()
 {
     if (!force && !list &&
-	isatty(fileno((FILE *)(de_compress ? stdin : stdout)))) {
+	isatty(fileno((FILE *)(decompress ? stdin : stdout)))) {
 	/* Do not send compressed data to the terminal or read it from
 	 * the terminal. We get here when user invoked the program
 	 * without parameters, so be helpful. According to the GNU standards:
@@ -623,16 +623,16 @@ local void treat_stdin()
 	 */
 	fprintf(stderr,
     "%s: compressed data not %s a terminal. Use -f to force %scompression.\n",
-		progname, de_compress ? "read from" : "written to",
-		de_compress ? "de" : "");
+		progname, decompress ? "read from" : "written to",
+		decompress ? "de" : "");
 	fprintf(stderr,"For help, type: %s -h\n", progname);
 	do_exit(ERROR);
     }
 
-    if (de_compress || !ascii) {
+    if (decompress || !ascii) {
 	SET_BINARY_MODE(fileno(stdin));
     }
-    if (!test && !list && (!de_compress || !ascii)) {
+    if (!test && !list && (!decompress || !ascii)) {
 	SET_BINARY_MODE(fileno(stdout));
     }
     strcpy(ifname, "stdin");
@@ -658,7 +658,7 @@ local void treat_stdin()
     to_stdout = 1;
     part_nb = 0;
 
-    if (de_compress) {
+    if (decompress) {
 	method = get_method(ifd);
 	if (method < 0) {
 	    do_exit(exit_code); /* error message already emitted */
@@ -674,7 +674,7 @@ local void treat_stdin()
     for (;;) {
 	if ((*work)(fileno(stdin), fileno(stdout)) != OK) return;
 
-	if (!de_compress || last_member || inptr == insize) break;
+	if (!decompress || last_member || inptr == insize) break;
 	/* end of file */
 
 	method = get_method(ifd);
@@ -686,7 +686,7 @@ local void treat_stdin()
 	if (test) {
 	    fprintf(stderr, " OK\n");
 
-	} else if (!de_compress) {
+	} else if (!decompress) {
 	    display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, stderr);
 	    fprintf(stderr, "\n");
 #ifdef DISPLAY_STDIN_RATIO
@@ -761,7 +761,7 @@ local void treat_file(iname)
      * parameter is ignored but required by some systems (VMS) and forbidden
      * on other systems (MacOS).
      */
-    ifd = OPEN(ifname, ascii && !de_compress ? O_RDONLY : O_RDONLY | O_BINARY,
+    ifd = OPEN(ifname, ascii && !decompress ? O_RDONLY : O_RDONLY | O_BINARY,
 	       RW_USER);
     if (ifd == -1) {
 	fprintf(stderr, "%s: ", progname);
@@ -772,7 +772,7 @@ local void treat_file(iname)
     clear_bufs(); /* clear input and output buffers */
     part_nb = 0;
 
-    if (de_compress) {
+    if (decompress) {
 	method = get_method(ifd); /* updates ofname if original given */
 	if (method < 0) {
 	    close(ifd);
@@ -795,7 +795,7 @@ local void treat_file(iname)
     } else {
 	if (create_outfile() != OK) return;
 
-	if (!de_compress && save_orig_name && !verbose && !quiet) {
+	if (!decompress && save_orig_name && !verbose && !quiet) {
 	    fprintf(stderr, "%s: %s compressed to %s\n",
 		    progname, ifname, ofname);
 	}
@@ -815,7 +815,7 @@ local void treat_file(iname)
 	    method = -1; /* force cleanup */
 	    break;
 	}
-	if (!de_compress || last_member || inptr == insize) break;
+	if (!decompress || last_member || inptr == insize) break;
 	/* end of file */
 
 	method = get_method(ifd);
@@ -835,7 +835,7 @@ local void treat_file(iname)
     if(verbose) {
 	if (test) {
 	    fprintf(stderr, " OK");
-	} else if (de_compress) {
+	} else if (decompress) {
 	    display_ratio(bytes_out-(bytes_in-header_bytes), bytes_out,stderr);
 	} else {
 	    display_ratio(bytes_in-(bytes_out-header_bytes), bytes_in, stderr);
@@ -865,7 +865,7 @@ local int create_outfile()
     struct stat	ostat; /* stat for ofname */
     int flags = O_WRONLY | O_CREAT | O_EXCL | O_BINARY;
 
-    if (ascii && de_compress) {
+    if (ascii && decompress) {
 	flags &= ~O_BINARY; /* force ascii text mode */
     }
     for (;;) {
@@ -899,7 +899,7 @@ local int create_outfile()
 	}
 	if (!name_too_long(ofname, &ostat)) return OK;
 
-	if (de_compress) {
+	if (decompress) {
 	    /* name might be too long if an original name was saved */
 	    WARN((stderr, "%s: %s: warning, name truncated\n",
 		  progname, ofname));
@@ -1011,7 +1011,7 @@ local int get_istat(iname, sbuf)
     /* If input file exists, return OK. */
     if (do_stat(ifname, sbuf) == 0) return OK;
 
-    if (!de_compress || errno != ENOENT) {
+    if (!decompress || errno != ENOENT) {
 	perror(ifname);
 	exit_code = ERROR;
 	return ERROR;
@@ -1077,7 +1077,7 @@ local int make_ofname()
     /* strip a version number if any and get the gzip suffix if present: */
     suff = get_suffix(ofname);
 
-    if (de_compress) {
+    if (decompress) {
 	if (suff == NULL) {
 	    /* Whith -t or -l, try all files (even without .gz suffix)
 	     * except with -r (behave as with just -dr).
@@ -1132,7 +1132,7 @@ local int make_ofname()
 #endif /* NO_MULTIPLE_DOTS */
 	strcat(ofname, z_suffix);
 
-    } /* de_compress ? */
+    } /* decompress ? */
     return OK;
 }
 
@@ -1471,7 +1471,7 @@ local void shorten_name(name)
     char *p;
 
     len = strlen(name);
-    if (de_compress) {
+    if (decompress) {
 	if (len <= 1) error("name too short");
 	name[len-1] = '\0';
 	return;
@@ -1547,7 +1547,7 @@ local int check_ofname()
      * defining ENAMETOOLONG, because on most systems the strict Posix
      * behavior is disabled by default (silent name truncation allowed).
      */
-    if (!de_compress && name_too_long(ofname, &ostat)) {
+    if (!decompress && name_too_long(ofname, &ostat)) {
 	shorten_name(ofname);
 	if (stat(ofname, &ostat) != 0) return 0;
     }
@@ -1558,7 +1558,7 @@ local int check_ofname()
     if (same_file(&istat, &ostat)) {
 	if (strequ(ifname, ofname)) {
 	    fprintf(stderr, "%s: %s: cannot %scompress onto itself\n",
-		    progname, ifname, de_compress ? "de" : "");
+		    progname, ifname, decompress ? "de" : "");
 	} else {
 	    fprintf(stderr, "%s: %s and %s are the same file\n",
 		    progname, ifname, ofname);
@@ -1623,7 +1623,7 @@ local void copy_stat(ifstat)
     struct stat *ifstat;
 {
 #ifndef NO_UTIME
-    if (de_compress && time_stamp != 0 && ifstat->st_mtime != time_stamp) {
+    if (decompress && time_stamp != 0 && ifstat->st_mtime != time_stamp) {
 	ifstat->st_mtime = time_stamp;
 	if (verbose > 1) {
 	    fprintf(stderr, "%s: time stamp restored\n", ofname);
