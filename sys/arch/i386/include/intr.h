@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2002/11/22 21:21:14 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.32 2002/11/23 10:37:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -241,8 +241,6 @@ extern struct intrstub ioapic_stubs[];
 
 struct cpu_info;
 
-#include "ioapic.h"
-
 extern char idt_allocmap[];
 
 void intr_default_setup(void);
@@ -254,12 +252,9 @@ int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
+int intr_find_mpmapping(int bus, int pin, int *handle);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
-#endif
-
-#if NIOAPIC > 0
-int intr_find_mpmapping(int bus, int pin, int *handle);
 #endif
 
 #ifdef MULTIPROCESSOR
