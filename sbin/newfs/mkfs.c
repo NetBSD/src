@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.38.4.5 2001/11/25 19:56:41 he Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.38.4.6 2001/11/25 20:03:39 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.38.4.5 2001/11/25 19:56:41 he Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.38.4.6 2001/11/25 20:03:39 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.38.4.5 2001/11/25 19:56:41 he Exp $");
 #include <ufs/ffs/ffs_extern.h>
 #include <sys/disklabel.h>
 
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -124,7 +125,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 	int32_t mapcramped, inodecramped;
 	int32_t postblsize, rotblsize, totalsbsize;
 	time_t utime;
-	quad_t sizepb;
+	long long sizepb;
 	char *writebuf2;		/* dynamic buffer */
 	int nprintcols, printcolwidth;
 
@@ -995,9 +996,6 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 	int i;
 	int32_t ipg, new_ipg, ncg, ncyl;
 	off_t usedb;
-#if __GNUC__ /* XXX work around gcc 2.7.2 initialization bug */
-	(void)&usedb;
-#endif
 
 	/*
 	 * Prepare to scale by fssize / (number of sectors in cylinder groups).
@@ -1012,8 +1010,10 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 	for (i = 0; i < 10; i++) {
 		usedb = (sblock.fs_iblkno + ipg / INOPF(&sblock))
 			* NSPF(&sblock) * (off_t)sectorsize;
-		new_ipg = (cylpg * (quad_t)bpcg - usedb) / density * fssize
-			  / ncg / secpercyl / cylpg;
+		new_ipg = (cylpg * (long long)bpcg - usedb) /
+		    (long long)density * fssize / (ncg * secpercyl * cylpg);
+		if (new_ipg <= 0)
+			new_ipg = 1;		/* ensure ipg > 0 */
 		new_ipg = roundup(new_ipg, INOPB(&sblock));
 		if (new_ipg == ipg)
 			break;
@@ -1160,14 +1160,14 @@ rdfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("seek error: %d\n", bno);
-		perror("rdfs");
+		printf("rdfs: seek error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(33);
 	}
 	n = read(fsi, bf, size);
 	if (n != size) {
-		printf("read error: %d\n", bno);
-		perror("rdfs");
+		printf("rdfs: read error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(34);
 	}
 }
@@ -1190,14 +1190,14 @@ wtfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("seek error: %d\n", bno);
-		perror("wtfs");
+		printf("wtfs: seek error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(35);
 	}
 	n = write(fso, bf, size);
 	if (n != size) {
-		printf("write error: %d\n", bno);
-		perror("wtfs");
+		printf("wtfs: write error for sector %d: %s\n",
+		    bno, strerror(errno));
 		exit(36);
 	}
 }
