@@ -1,5 +1,6 @@
 #include "systm.h"
-#include "idprom.h"
+#include "../dev/idprom.h"
+#include "./idprom.h"
 
 static int idprom_init = 0;
 

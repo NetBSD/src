@@ -22,7 +22,7 @@
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas ${DEBUG}
 CC=	gcc ${DEBUG}
-CPP=	cpp
+CPP=	gcpp -traditional
 LD=	ld
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/sun3/gmon.ex
@@ -68,7 +68,9 @@ SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
-                ${LD} $$strip -n -o $@ -e _start -N -X -T 0E004000 ${SYSTEM_OBJ} vers.o
+		${LD} -n -o $@ -e _start -N -T 0E004000 ${SYSTEM_OBJ} vers.o
+#SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
+#                ${LD} $$strip -n -o $@ -e _start -N -X -T 0E004000 ${SYSTEM_OBJ} vers.o
 
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
@@ -130,7 +132,7 @@ genassym:
 
 depend: assym.s param.c
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c locore.s
+	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c ${SUN3}/sun3/locore.s
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
