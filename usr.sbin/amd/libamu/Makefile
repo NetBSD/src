@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/11/20 01:56:13 wiz Exp $
+#	$NetBSD: Makefile,v 1.13 2000/11/20 01:58:43 wiz Exp $
 
 LIB=	amu
 
@@ -14,7 +14,6 @@ SRCS=	clnt_sperrno.c hasmntopt.c misc_rpc.c mount_fs.c mtab.c mtab_bsd.c \
 	xdr_func.c xutil.c
 
 # some host specific compile time settings amd wants to have compiled in
-# XXX: will fail cross compilation
 config_local.h: mkconf
 	@rm -f ${.TARGET}
 	sh ${.ALLSRC} `sh ${.CURDIR}/../../../sys/conf/osrelease.sh` > ${.TARGET}
