@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.88 1996/03/17 00:53:27 thorpej Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.89 1996/03/27 04:03:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -407,7 +407,7 @@ epattach(parent, self, aux)
 		}
 		sc->bustype = EP_BUS_PCI;
 		sc->ep_iobase = iobase; /* & 0xfffffff0 */
-		i = pci_conf_read(pa->pa_tag, PCI_CONN);
+		i = pci_conf_read(pa->pa_bc, pa->pa_tag, PCI_CONN);
 
 		/*
 		 * Bits 13,12,9 of the isa adapter are the same as bits 
@@ -439,8 +439,8 @@ epattach(parent, self, aux)
 	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 
-		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       pci_conf_read(pa->pa_tag,
+		pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			       pci_conf_read(pa->pa_bc, pa->pa_tag,
 					     PCI_COMMAND_STATUS_REG) |
 			       PCI_COMMAND_MASTER_ENABLE);
 
