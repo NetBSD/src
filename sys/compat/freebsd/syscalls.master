@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 1997/01/31 02:17:47 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.7 1997/06/13 19:11:42 thorpej Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -164,7 +164,7 @@
 83	NOARGS		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
 84	NOARGS		{ int compat_43_sys_wait(void); } owait
-85	NOARGS		{ int sys_swapon(char *name); }
+85	NOARGS		{ int compat_12_sys_swapon(char *name); }
 86	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
