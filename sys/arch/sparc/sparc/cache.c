@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.47 1999/02/27 13:11:22 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.48 2000/04/30 14:19:37 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -163,10 +163,9 @@ viking_cache_enable()
 
 	/* Now turn on MultiCache if it exists */
 	if (cpuinfo.mxcc && CACHEINFO.ec_totalsize > 0) {
-		/* Multicache controller */
-		stda(MXCC_ENABLE_ADDR, ASI_CONTROL,
-		     ldda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
-		     (u_int64_t)MXCC_ENABLE_BIT);
+		/* Set external cache enable bit in MXCC control register */
+		stda(MXCC_CTRLREG, ASI_CONTROL,
+		     ldda(MXCC_CTRLREG, ASI_CONTROL) | MXCC_CTRLREG_CE);
 		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
 		CACHEINFO.ec_enabled = 1;
 	}
