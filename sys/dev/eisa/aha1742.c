@@ -463,7 +463,7 @@ ahb_attach(struct isa_device *dev)
 
 	/* only one for all boards */
 	if(firsttime==0 && masunit==0) {
-		firsttime==1;
+		firsttime = 1;
 		ahb_timeout(0);
 	}
 	return 0;
