@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.10 1996/10/13 03:06:43 christos Exp $ */
+/* $NetBSD: if_ie.c,v 1.11 1996/10/14 23:42:17 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -66,6 +66,7 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
+#include <arm32/podulebus/podules.h>
 
 /* Include for interface to the net and ethernet subsystems */
 
@@ -107,8 +108,6 @@
 
 /* Some useful defines and macros */
 
-#define MY_MANUFACTURER 0x00
-#define MY_PODULE       0x03
 #define PODULE_IRQ_PENDING (1)
 #define NFRAMES	(16)		/* number of frame to allow for receive */
 #define NRXBUF	(48)		/* number of receive buffers to allocate */
@@ -304,7 +303,7 @@ ieprobe(struct device *parent, void *match, void *aux)
 
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_ETHER1, -1) == 0)
 		return(0);
 
 	return(1);
