@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.40 1995/07/05 02:32:53 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.41 1995/07/10 01:27:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -114,6 +114,7 @@ struct mcd_softc {
 	int	irq, drq;
 
 	char	*type;
+	u_char	readcmd;
 	int	flags;
 #define	MCDF_LOCKED	0x01
 #define	MCDF_WANTED	0x02
@@ -761,6 +762,7 @@ mcdprobe(parent, match, aux)
 	 *
 	 * Note:  Which models support interrupts?  >=LU005S?
 	 */
+	sc->readcmd = MCD_CMDREADSINGLESPEED;
 	switch (mbx.res.data.continfo.code) {
 	case 'M':
 		if (mbx.res.data.continfo.version <= 2)
@@ -775,6 +777,7 @@ mcdprobe(parent, match, aux)
 		break;
 	case 'D':
 		sc->type = "FX001D";
+		sc->readcmd = MCD_CMDREADDOUBLESPEED;
 		break;
 	default:
 		printf("%s: unrecognized drive version %c%02x; will try to use it anyway\n",
@@ -1053,7 +1056,7 @@ mcdintr(arg)
 		hsg2msf(mbx->blkno, msf);
 
 		/* Send the read command. */
-		outb(iobase + MCD_COMMAND, MCD_CMDREAD2);
+		outb(iobase + MCD_COMMAND, sc->readcmd);
 		outb(iobase + MCD_COMMAND, msf[0]);
 		outb(iobase + MCD_COMMAND, msf[1]);
 		outb(iobase + MCD_COMMAND, msf[2]);
@@ -1526,7 +1529,7 @@ mcd_playtracks(sc, p)
 	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
 		return error;
 
-	mbx.cmd.opcode = MCD_CMDREAD2;
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
 	mbx.cmd.length = sizeof(mbx.cmd.data.play);
 	mbx.cmd.data.play.start_msf[0] = sc->toc[a].toc.absolute_pos[0];
 	mbx.cmd.data.play.start_msf[1] = sc->toc[a].toc.absolute_pos[1];
@@ -1560,7 +1563,7 @@ mcd_playmsf(sc, p)
 	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
 		return error;
 
-	mbx.cmd.opcode = MCD_CMDREAD2;
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
 	mbx.cmd.length = sizeof(mbx.cmd.data.play);
 	mbx.cmd.data.play.start_msf[0] = bin2bcd(p->start_m);
 	mbx.cmd.data.play.start_msf[1] = bin2bcd(p->start_s);
@@ -1592,7 +1595,7 @@ mcd_playblocks(sc, p)
 	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
 		return error;
 
-	mbx.cmd.opcode = MCD_CMDREAD2;
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
 	mbx.cmd.length = sizeof(mbx.cmd.data.play);
 	hsg2msf(p->blk, mbx.cmd.data.play.start_msf);
 	hsg2msf(p->blk + p->len, mbx.cmd.data.play.end_msf);
