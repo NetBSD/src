@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.30.2.4 1997/12/14 00:58:09 mellon Exp $
+.\"	$NetBSD: options.4,v 1.30.2.5 1998/02/10 07:04:11 mellon Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -890,6 +890,21 @@ panics.
 These option set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
+.Ss amiga-specific Options
+.Bl -ohang
+.It Cd options LIMITMEM=value
+If there, limit memory usage by NetBSD to value megabytes.
+.br
+The machine specific part of the virtual memory system contains tables which 
+are fixed in size (due to the way initialization is done currently), but would
+need scaling with kernel data space virtual size (see NKMEMCLUSTERS).
+However, the kernel data area contains at least two variables: address space
+of big graphics boards, and the file buffer cache (the latter scales with
+memory size). As the size of the table would get very large if it should
+handle big spaces conveniently, it would make booting on
+small Amigas very painful due to excessive paging.
+This option allows to work around this problem by limiting what the kernel
+things is the memory size.
 .El
 .Ss atari-specific Options
 .Bl -ohang
