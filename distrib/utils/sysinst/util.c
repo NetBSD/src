@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.51.2.1 2000/08/15 02:12:53 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.51.2.2 2000/08/31 12:40:50 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <curses.h>
 #include <errno.h>
+#include <fts.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -948,6 +949,15 @@ set_timezone()
 	int rc;
 	time_t t;
 	sig_t oldalrm;
+	FTS *tree;
+	FTSENT *entry;
+	int rval;
+	char *argv[2];
+	int skip;
+	struct stat sb;
+	int nfiles, n;
+	int menu_no;
+	menu_ent *tz_menu;
 
 	oldalrm=signal(SIGALRM, timezone_sig);
 	alarm(1);
@@ -955,16 +965,19 @@ set_timezone()
 	strncpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
 	strncpy(localtime_link, target_expand("/etc/localtime"), STRSIZE);
 
+	/* Add sanity check that /mnt/usr/share/zoneinfo contains
+	 * something useful */
+
 	rc = readlink(localtime_link, localtime_target,
 		      sizeof(localtime_target));
 	if (rc < 0) {
-		endwin();
-		printf("readlink(\"%s\")\n", localtime_link);
-		exit (1);
+		/* error, default to UTC */
+		tz_default = "UTC";
+	} else {
+		localtime_target[rc] = '\0';
+		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
 	}
-	localtime_target[rc] = '\0';
 
-	tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
 	tz_selected=tz_default;
 	snprintf(tz_env, sizeof(tz_env), "%s/%s",
 		 zoneinfo_dir, tz_selected);
@@ -973,86 +986,61 @@ set_timezone()
 	msg_display(MSG_choose_timezone, 
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
 
-	{
-		#include <fts.h>
-
-		FTS *tree;
-		FTSENT *entry;
-		int rval;
-		char *argv[2];
-		int skip;
-		struct stat sb;
-		int nfiles, n;
-		int menu_no;
-		menu_ent *tz_menu;
-
-		skip = strlen(zoneinfo_dir);
-		argv[0] = zoneinfo_dir;
-		argv[1] = NULL;
-		if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-			endwin();
-			fprintf(stderr, "ftsopen failed\n");
-			exit(1);
-		}
-		for (nfiles = 0; (entry = fts_read(tree)) != NULL;) {
-			stat(entry->fts_accpath, &sb);
-			if (S_ISREG(sb.st_mode))
-				nfiles++;
-		}
-		if (errno) {
-			endwin();
-			fprintf(stderr, "fts_read\n");
-			exit(1);
-		}
-		(void)fts_close(tree);
-		
-		tz_menu = malloc(nfiles * sizeof(struct menu_ent));
-		if (tz_menu == NULL) {
-			endwin();
-			fprintf(stderr, "malloc nfiles*menu_ent\n");
-			exit(1);
-		}
-		
-		if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-			endwin();
-			fprintf(stderr, "ftsopen failed\n");
-			exit(1);
-		}
-		n=0;
-		for (rval=0; (entry = fts_read(tree)) != NULL; ) {
-
-			stat(entry->fts_accpath, &sb);
-			if (S_ISREG(sb.st_mode)) {
-				tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
-				tz_menu[n].opt_menu = OPT_NOMENU;
-				tz_menu[n].opt_flags = 0;
-				tz_menu[n].opt_action = set_timezone_select;
-
-				n++;
-			}
-		}
-		if (errno) {
-			endwin();
-			fprintf(stderr, "fts_read\n");
-			exit(1);
-		}
-		(void)fts_close(tree);  
-		
-		menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
-				   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
-				   "\nPlease consult the install documents.");
-		if (menu_no < 0) {
-			endwin();
-			(void) fprintf(stderr, "Dynamic menu creation failed.\n");
-			exit(1);
-		}
-		process_menu(menu_no);
-
-		free_menu(menu_no);
-		for(n=0; n < nfiles; n++)
-			free(tz_menu[n].opt_name);
-		free(tz_menu);
+	skip = strlen(zoneinfo_dir);
+	argv[0] = zoneinfo_dir;
+	argv[1] = NULL;
+	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
+		return 1;	/* error - skip timezone setting */
 	}
+	for (nfiles = 0; (entry = fts_read(tree)) != NULL;) {
+		stat(entry->fts_accpath, &sb);
+		if (S_ISREG(sb.st_mode))
+			nfiles++;
+	}
+	if (errno) {
+		return 1;	/* error - skip timezone setting */
+	}
+	(void)fts_close(tree);
+	
+	tz_menu = malloc(nfiles * sizeof(struct menu_ent));
+	if (tz_menu == NULL) {
+		return 1;	/* error - skip timezone setting */
+	}
+	
+	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
+		return 1;	/* error - skip timezone setting */
+	}
+	n=0;
+	for (rval=0; (entry = fts_read(tree)) != NULL; ) {
+
+		stat(entry->fts_accpath, &sb);
+		if (S_ISREG(sb.st_mode)) {
+			tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
+			tz_menu[n].opt_menu = OPT_NOMENU;
+			tz_menu[n].opt_flags = 0;
+			tz_menu[n].opt_action = set_timezone_select;
+
+			n++;
+		}
+	}
+	if (errno) {
+		return 1;	/* error - skip timezone setting */
+	}
+	(void)fts_close(tree);  
+	
+	menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
+			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
+			   "\nPlease consult the install documents.");
+	if (menu_no < 0) {
+		return 1;	/* error - skip timezone setting */
+	}
+	process_menu(menu_no);
+
+	free_menu(menu_no);
+	for(n=0; n < nfiles; n++)
+		free(tz_menu[n].opt_name);
+	free(tz_menu);
+
 	signal(SIGALRM, SIG_IGN);
 
 	snprintf(localtime_target, sizeof(localtime_target),
