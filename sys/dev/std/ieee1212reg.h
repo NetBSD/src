@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.2 2001/04/15 00:21:38 jmc Exp $ */
+/*        $NetBSD: ieee1212reg.h,v 1.3 2001/04/16 01:09:31 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,6 +118,10 @@
 /*	size_t P1212_ROMGET_GET_CRC(uint32_t quadlet);
  */
 #define	P1212_ROMFMT_GET_CRC(quadlet)		((uint16_t)(quadlet))
+
+/*      uint8_t      P1212_DIRENT_GET_KEY(uint32_t quadlet);
+ */
+#define P1212_DIRENT_GET_KEY(quadlet)           (((quadlet) >> 24) & 0xff)
 
 /*	unsigned int P1212_DIRENT_GET_KEYTYPE(uint32_t quadlet);
  */
