@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.6 1997/10/17 10:28:44 lukem Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.7 1998/08/27 18:03:44 ross Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.6 1997/10/17 10:28:44 lukem Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.7 1998/08/27 18:03:44 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,11 +152,12 @@ main(argc, argv)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
 		    kfile);
 	if ((rv = read(fsfd, mappedkfile + md_root_offset,
-	    fssb.st_size)) != fssb.st_size)
+	    fssb.st_size)) != fssb.st_size) {
 		if (rv == -1)
 			err(1, "read %s", fsfile);
 		else
 			errx(1, "unexpected EOF reading %s", fsfile);
+	}
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
 	
