@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.42 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.43 2000/01/09 03:55:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42 2000/01/08 01:02:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.43 2000/01/09 03:55:37 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -102,19 +102,18 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42 2000/01/08 01:02:35 simonb Exp $");
 #include <machine/fbvar.h>
 
 #include <pmax/dev/mfbreg.h>
+#include <pmax/dev/mfbvar.h>
 #include <pmax/dev/fbreg.h>
 
 
 /*
  * These need to be mapped into user space.
  */
-struct fbuaccess mfbu;
-struct pmax_fbtty mfbfb;
+static struct fbuaccess mfbu;
+static struct pmax_fbtty mfbfb;
 
-void	mfbPosCursor __P((struct fbinfo *fi, int x, int y));
+static void	mfbPosCursor __P((struct fbinfo *fi, int x, int y));
 
-
-int	mfbinit __P((struct fbinfo *fi, caddr_t mfbaddr, int unit, int silent));
 
 #if 1	/* these  go away when we use the abstracted-out chip drivers */
 static void	mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
@@ -131,7 +130,7 @@ static int	mfbLoadColorMapNoop __P((struct fbinfo *fi,
 
 /* new-style raster-cons "driver" methods */
 
-int		mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
+static int	mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
 
 
 static int	bt455_video_on __P((struct fbinfo *));
@@ -145,8 +144,8 @@ static void	bt431_write_reg __P((bt431_regmap_t *regs, int regno, int val));
 static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
 #endif
 
-static __inline void  bt431_cursor_off __P((struct fbinfo *fi));
-static __inline void  bt431_cursor_on __P((struct fbinfo *fi));
+static void	bt431_cursor_off __P((struct fbinfo *fi));
+static void	bt431_cursor_on __P((struct fbinfo *fi));
 
 /*
  * The default cursor.
@@ -156,7 +155,6 @@ static u_short defCursor[32] = {
 	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
 /* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
               0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
-
 };
 
 /*
@@ -188,16 +186,16 @@ struct fbdriver mfb_driver = {
 /*
  * driver frontend declaration for autoconfiguration.
  */
-int	mfbmatch __P((struct device *, struct cfdata *, void *));
-void	mfbattach __P((struct device *, struct device *, void *));
-int	mfb_intr __P((void *sc));
+static int	mfbmatch __P((struct device *, struct cfdata *, void *));
+static void	mfbattach __P((struct device *, struct device *, void *));
+static int	mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
 
 
-int
+static int
 mfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -217,7 +215,7 @@ mfbmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 mfbattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -335,7 +333,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 
 static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
 
-static __inline void
+static void
 bt431_cursor_on(fi)
 	struct fbinfo *fi;
 {
@@ -343,7 +341,7 @@ bt431_cursor_on(fi)
 }
 
 
-static __inline void
+static void
 bt431_cursor_off(fi)
 	struct fbinfo *fi;
 {
@@ -423,7 +421,7 @@ mfbLoadCursor(fi, cursor)
 
 /* Restore the color of the cursor. */
 
-void
+static void
 mfbRestoreCursorColor (fi)
 	struct fbinfo *fi;
 {
@@ -452,7 +450,7 @@ mfbRestoreCursorColor (fi)
 
 /* Set the color of the cursor. */
 
-void
+static void
 mfbCursorColor(fi, color)
 	struct fbinfo *fi;
 	unsigned int color[];
@@ -467,7 +465,7 @@ mfbCursorColor(fi, color)
 
 /* Position the cursor. */
 
-void
+static void
 mfbPosCursor(fi, x, y)
 	struct fbinfo *fi;
 	int x, y;
@@ -567,7 +565,7 @@ mfbInitColorMap(fi)
 
 /* Load the color map. */
 
-int
+static int
 mfbLoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
 	u_char *bits;
@@ -619,7 +617,7 @@ mfbLoadColorMap(fi, bits, index, count)
 }
 
 /* stub for driver */
-int
+static int
 mfbLoadColorMapNoop(fi, bits, index, count)
 	struct fbinfo *fi;
 	const u_char *bits;
@@ -630,7 +628,7 @@ mfbLoadColorMapNoop(fi, bits, index, count)
 
 /* Get the color map. */
 
-int
+static int
 mfbGetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
 	u_char *bits;
@@ -782,7 +780,7 @@ bt431_init(regs)
 /*
  * copied from cfb_intr
  */
-int
+static int
 mfb_intr(sc)
 	void *sc;
 {
@@ -801,4 +799,3 @@ mfb_intr(sc)
 }
 
 #endif /* NMFB */
-

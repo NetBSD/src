@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.24 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: tz.c,v 1.25 2000/01/09 03:55:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ struct tzquirk {
 #define MAX_PAGE_0_SIZE 64
 
 
-struct	tz_softc {
+static	struct tz_softc {
 	struct	device sc_dev;		/* new config glue */
 	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	int	sc_flags;		/* see below */

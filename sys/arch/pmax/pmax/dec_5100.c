@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.15 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.16 2000/01/09 03:55:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -38,9 +38,10 @@
 /*
  * Local declarations
  */
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -62,24 +63,19 @@
 /*
  * Forward declarations
  */
-void	dec_5100_init __P((void));
-void	dec_5100_bus_reset __P((void));
+void		dec_5100_init __P((void));		/* XXX */
+static void	dec_5100_bus_reset __P((void));
+static void	dec_5100_cons_init __P((void));
+static void	dec_5100_device_register __P((struct device *, void *));
+static void	dec_5100_enable_intr __P((unsigned slotno,
+		    int (*handler)(void *), void *sc, int onoff));
+static int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_5100_memintr __P((void));
 
-void	dec_5100_enable_intr __P((unsigned slotno,
-	    int (*handler)(void *), void *sc, int onoff));
-int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
-void	dec_5100_cons_init __P((void));
-void	dec_5100_device_register __P((struct device *, void *));
-
-void	dec_5100_memintr __P((void));
-
-void	kn230_wbflush __P((void));
 
 void
 dec_5100_init()
 {
-	extern char cpu_model[];
-
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
@@ -110,7 +106,7 @@ dec_5100_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_5100_bus_reset()
 {
 	volatile u_int *icsr_addr =
@@ -122,13 +118,13 @@ dec_5100_bus_reset()
 	kn230_wbflush();
 }
 
-void
+static void
 dec_5100_cons_init()
 {
 }
 
 
-void
+static void
 dec_5100_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -144,7 +140,7 @@ dec_5100_device_register(dev, aux)
  * bits to particular device interrupt handlers.  We may choose to store
  * function and softc pointers at some future point.
  */
-void
+static void
 dec_5100_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
 	int (*handler) __P((void* softc));
@@ -190,7 +186,7 @@ dec_5100_intr_disestablish(dev, arg)
 /*
  * Handle mipsmate (DECstation 5100) interrupts.
  */
-int
+static int
 dec_5100_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;
@@ -269,13 +265,12 @@ dec_5100_intr(mask, pc, status, cause)
  *
  * XXX drain writebuffer on contextswitch to avoid panic?
  */
-void
+static void
 dec_5100_memintr()
 {
 	volatile u_int icsr;
 	volatile u_int *icsr_addr =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
-	extern int cold;
 
 	/* read icsr and clear error  */
 	icsr = *icsr_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.36 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.37 2000/01/09 03:55:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -85,23 +85,17 @@
  * keyboard, a serial port, or the "virtual" console.
  */
 
-extern struct tty *constty;	/* virtual console output device */
+extern struct tty *constty;	/* XXX virtual console output device */
 struct tty *fbconstty;		/* Frame buffer console tty... */
 struct tty rcons_tty [NRASTERCONSOLE];	/* Console tty struct... */
 
-struct	vnode *cn_in_devvp;	/* vnode for underlying input device. */
-dev_t	cn_in_dev = NODEV;	/* console input device. */
+dev_t	cn_in_dev = NODEV;		/* console input device. */
 
 char rcons_maxcols [20];
 
 static struct rconsole rc;
 
-void	rasterconsoleattach __P((int n));
-void	rcons_vputc __P((dev_t dev, int c));
-
-void	rconsreset __P((struct tty *tp, int rw));
-void	rcons_input __P((dev_t dev, int ic));
-
+static void	rcons_vputc __P((dev_t dev, int c));
 #ifdef notyet
 void		rconsstart __P((struct tty *));
 static void	rcons_later __P((void*));
@@ -184,8 +178,6 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	void *cookie;
 	int width, height, cols, rows;
 {
-	extern dev_t cn_in_dev;	/* XXX rcons hackery */
-
 	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 
 	fbconstty = &rcons_tty [0];
@@ -216,7 +208,7 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 /*
  * Hack around the rcons putchar interface not taking a dev_t.
  */
-void
+static void
 rcons_vputc(dev, c)
 	dev_t dev;
 	int c;
@@ -225,7 +217,6 @@ rcons_vputc(dev, c)
 	 * Call the pointer-to-function that rcons_init tried to give us,
 	 * discarding the dev_t argument.
 	 */
-	void	rcons_cnputc __P((int c));
 	rcons_cnputc(c);
 }
 
@@ -401,16 +392,6 @@ rconsstop(tp, rw)
 {
 
 }
-
-/*ARGSUSED*/
-void
-rconsreset(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-
-}
-
 
 int
 rconspoll(dev, events, p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.30 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: pm.c,v 1.31 2000/01/09 03:55:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.30 2000/01/08 01:02:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.31 2000/01/09 03:55:37 simonb Exp $");
 
 
 #include <sys/param.h>
@@ -85,9 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.30 2000/01/08 01:02:36 simonb Exp $");
 /*
  * These need to be mapped into user space.
  */
-extern struct fbuaccess pmu;
 struct fbuaccess pmu;
-static u_short curReg;		/* copy of PCCRegs.cmdr since it's read only */
+static u_short	curReg;		/* copy of PCCRegs.cmdr since it's read only */
 
 /*
  * rcons methods and globals.
@@ -97,21 +96,13 @@ struct pmax_fbtty pmfb;
 /*
  * Forward references.
  */
-void		pmScreenInit __P((struct fbinfo *fi));
+static void	pmInitColorMap __P((struct fbinfo *fi));
 static void	pmLoadCursor __P((struct fbinfo *fi, u_short *ptr));
-void		pmPosCursor __P((struct fbinfo *fi, int x, int y));
-
-void		bt478CursorColor __P((struct fbinfo *fi, u_int *color));
-void		bt478InitColorMap __P((struct fbinfo *fi));
-
-void		pccCursorOn  __P((struct fbinfo *fi));
-void		pccCursorOff __P((struct fbinfo *fi));
-void		pmInitColorMap __P((struct fbinfo *fi));
-
-int		pminit __P((struct fbinfo *fi, caddr_t base, int unit,
-		    int console));
-int		pmattach __P((struct fbinfo *fi, int unit,
-		    int cold_console_flag));
+static void	pmPosCursor __P((struct fbinfo *fi, int x, int y));
+#if 0		/* XXX not used */
+static void	pccCursorOn  __P((struct fbinfo *fi));
+#endif
+static void	pccCursorOff __P((struct fbinfo *fi));
 
 static int	pm_video_on __P((struct fbinfo *));
 static int	pm_video_off __P((struct fbinfo *));
@@ -310,6 +301,7 @@ pmPosCursor(fi, x, y)
 }
 
 
+#if 0	/* XXX not used */
 /*
  * Turn hardware cursor on by turning on the enable for A and B
  * overlay planes. video output under the cursor sprite is then
@@ -322,6 +314,7 @@ void pccCursorOn(fi)
 	pcc -> cmdr = curReg | (PCC_ENPA | PCC_ENPB);
 	wbflush();
 }
+#endif
 
 
 /*
