@@ -1,4 +1,4 @@
-# $NetBSD: files.podulebus,v 1.11 2001/07/04 13:49:24 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.12 2001/07/04 14:33:43 bjh21 Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader
@@ -12,12 +12,6 @@ file	dev/podulebus/oak.c			oak
 device	hcsc: scsi, ncr5380sbc
 attach	hcsc at podulebus
 file	dev/podulebus/hcsc.c			hcsc
-
-# Castle EtherSCSI
-device	ethsc { }
-attach	ethsc at podulebus
-file	dev/podulebus/ethsc.c			ethsc
-attach	iy at ethsc with iy_ethsc
 
 # D.T. software IDE
 device	dtide: wdc_base, ata, atapi
