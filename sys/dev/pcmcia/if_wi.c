@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $
+ *	$Id: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $
  */
 
 /*
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.5 2000/02/12 16:08:04 itojun Exp $";
+	"$Id: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $";
 #endif
 
 #ifdef foo
@@ -483,6 +483,9 @@ void wi_inquire(xsc)
 	sc = xsc;
 	ifp = &sc->sc_ethercom.ec_if;
 
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
 	timeout(wi_inquire, sc, hz * 60);
 
 	/* Don't do this while we're transmitting */
@@ -539,6 +542,8 @@ int wi_intr(arg)
 	struct ifnet		*ifp;
 	u_int16_t		status;
 
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (0);
 
 	ifp = &sc->sc_ethercom.ec_if;
 
