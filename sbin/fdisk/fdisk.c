@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.74 2004/01/05 23:23:32 jmmv Exp $ */
+/*	$NetBSD: fdisk.c,v 1.75 2004/03/19 18:19:17 dyoung Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.74 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.75 2004/03/19 18:19:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.74 2004/01/05 23:23:32 jmmv Exp $");
 #include <sys/sysctl.h>
 
 #include <ctype.h>
+#include <disktab.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -114,10 +115,10 @@ char *boot_path = 0;			/* name of file we actually opened */
 
 #define DEFAULT_ACTIVE	(~(daddr_t)0)
 
-#define OPTIONS			"0123BSafiluvs:b:c:E:r:w:"
+#define OPTIONS			"0123BFSafiluvs:b:c:E:r:w:t:T:"
 #else
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
-#define OPTIONS			"0123Safiluvs:b:c:E:r:w:"
+#define OPTIONS			"0123FSafiluvs:b:c:E:r:w:"
 #endif
 
 uint dos_cylinders;
@@ -140,6 +141,7 @@ int partition = -1;
 
 int fd = -1, wfd = -1, *rfd = &fd;
 char *disk_file;
+char *disk_type = NULL;
 
 int a_flag;		/* set active partition */
 int i_flag;		/* init bootcode */
@@ -152,6 +154,7 @@ int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
 int B_flag;		/* Edit/install bootselect code */
 int E_flag;		/* extended partition number */
 int b_cyl, b_head, b_sec;  /* b_flag values. */
+int F_flag = 0;
 
 struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 int bootsize;		/* actual size of bootcode */
@@ -382,6 +385,9 @@ main(int argc, char *argv[])
 			B_flag = 1;
 			break;
 #endif
+		case 'F':	/* device argument is really a file */
+			F_flag = 1;
+			break;
 		case 'S':	/* Output as shell variables */
 			sh_flag = 1;
 			break;
@@ -445,12 +451,21 @@ main(int argc, char *argv[])
 		case 'w':	/* write data to disk_file */
 			disk_file = optarg;
 			break;
-			
+		case 't':
+			if (setdisktab(optarg) == -1)
+				errx(EXIT_FAILURE, "bad disktab");
+			break;
+		case 'T':
+			disk_type = optarg;
+			break;
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (disk_type != NULL && getdiskbyname(disk_type) == NULL)
+		errx(EXIT_FAILURE, "bad disktype");
 
 	if (sh_flag && (a_flag || i_flag || u_flag || f_flag || s_flag))
 		usage();
@@ -563,6 +578,7 @@ usage(void)
 		"[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
 		"[-s id/start/size[/bootmenu]]] \\\n"
+		"%*s[-t disktab] [-T disktype] \\\n"
 		"%*s[-c bootcode] [-r|-w file] [device]\n"
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
@@ -571,8 +587,9 @@ usage(void)
 		"\t-u update partition data\n"
 		"\t-v verbose output, -v -v more verbose still\n"
 		"\t-B update bootselect options\n"
+		"\t-F treat device as a regular file\n"
 		"\t-S output as shell defines\n",
-		getprogname(), indent, "", indent, "");
+		getprogname(), indent, "", indent, "", indent, "");
 	exit(1);
 }
 
@@ -2213,22 +2230,56 @@ write_disk(daddr_t sector, void *buf)
 	return (write(wfd, buf, 512));
 }
 
+static void
+guess_geometry(daddr_t _sectors)
+{
+	dos_sectors = MAXSECTOR;
+	dos_heads = MAXHEAD - 1;	/* some BIOS might use 256 */
+	dos_cylinders = _sectors / (MAXSECTOR * (MAXHEAD - 1));
+	if (dos_cylinders < 1)
+		dos_cylinders = 1;
+	else if (dos_cylinders > MAXCYL - 1)
+		dos_cylinders = MAXCYL - 1;
+}
+
 int
 get_params(void)
 {
+	if (disk_type != NULL) {
+		struct disklabel *tmplabel;
 
-	if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
+		if ((tmplabel = getdiskbyname(disk_type)) == NULL) {
+			warn("bad disktype");
+			return (-1);
+		}
+		disklabel = *tmplabel;
+	} else if (F_flag) {
+		struct stat st;
+		if (fstat(fd, &st) == -1) {
+			warn("fstat");
+			return (-1);
+		}
+		if (st.st_size % 512 != 0) {
+			warnx("%s size (%lld) is not divisible "
+			    "by sector size (%d)", disk, (long long)st.st_size,
+			    512);
+		}
+		disklabel.d_secperunit = st.st_size / 512;
+		guess_geometry(disklabel.d_secperunit);
+		disklabel.d_ncylinders = dos_cylinders;
+		disklabel.d_ntracks = dos_heads;
+		disklabel.d_nsectors = dos_sectors;
+	} else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
 		warn("DIOCGDEFLABEL");
 		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 			warn("DIOCGDINFO");
 			return (-1);
 		}
 	}
-
+	disksectors = disklabel.d_secperunit;
 	cylinders = disklabel.d_ncylinders;
 	heads = disklabel.d_ntracks;
 	sectors = disklabel.d_nsectors;
-	disksectors = disklabel.d_secperunit;
 
 	/* pick up some defaults for the BIOS sizes */
 	if (sectors <= MAXSECTOR) {
@@ -2237,11 +2288,7 @@ get_params(void)
 		dos_sectors = sectors;
 	} else {
 		/* guess - has to better than the above */
-		dos_sectors = MAXSECTOR;
-		dos_heads = MAXHEAD - 1;	/* some BIOS might use 256 */
-		dos_cylinders = disksectors / (MAXSECTOR * (MAXHEAD - 1));
-		if (dos_cylinders > MAXCYL - 1)
-			dos_cylinders = MAXCYL - 1;
+		guess_geometry(disksectors);
 	}
 	dos_disksectors = disksectors;
 
@@ -2279,7 +2326,7 @@ write_mbr(void)
 	 * sector 0. (e.g. empty disk)
 	 */
 	flag = 1;
-	if (wfd == fd && ioctl(wfd, DIOCWLABEL, &flag) < 0)
+	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
 	if (write_disk(0, &mboot) == -1) {
 		warn("Can't write fdisk partition table");
@@ -2301,7 +2348,7 @@ write_mbr(void)
 	rval = 0;
     protect_label:
 	flag = 0;
-	if (wfd == fd && ioctl(wfd, DIOCWLABEL, &flag) < 0)
+	if (wfd == fd && F_flag == 0 && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
 	return rval;
 }
