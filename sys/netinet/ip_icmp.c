@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
- *	$Id: ip_icmp.c,v 1.2 1993/05/20 03:50:20 cgd Exp $
+ *	$Id: ip_icmp.c,v 1.3 1993/12/06 04:59:34 hpeyerl Exp $
  */
 
 #include "param.h"
@@ -99,7 +99,11 @@ icmp_error(n, type, code, dest)
 		icmpstat.icps_oldicmp++;
 		goto freeit;
 	}
-
+#ifdef MULTICAST
+	/* Don't send error in response to a multicast or broadcast packet */
+	if (n->m_flags & (M_MCAST | M_BCAST))
+		goto freeit;
+#endif
 	/*
 	 * First, formulate icmp message
 	 */
@@ -464,6 +468,7 @@ icmp_reflect(m)
 		bcopy((caddr_t)ip + optlen, (caddr_t)(ip + 1),
 			 (unsigned)(m->m_len - sizeof(struct ip)));
 	}
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 	icmp_send(m, opts);
 	if (opts)
 		(void)m_free(opts);
