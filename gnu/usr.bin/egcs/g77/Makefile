@@ -1,5 +1,5 @@
 #	from: @{#}Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.8 1999/01/02 23:51:51 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1999/01/02 23:56:24 tv Exp $
 
 PROG=		g77
 SRCS=		gcc.c g77spec.c g77version.o version.c choose-temp.c \
@@ -10,7 +10,7 @@ CPPFLAGS+=	-DLANG_SPECIFIC_DRIVER
 LINKS+=		${BINDIR}/g77 ${BINDIR}/f77 ${BINDIR}/g77 ${BINDIR}/fort77
 
 MAN=		g77.1
-MLINKS=		g77.1 f77.1
+MLINKS=		g77.1 f77.1 g77.1 fort77.1
 
 .include <bsd.prog.mk>
 
