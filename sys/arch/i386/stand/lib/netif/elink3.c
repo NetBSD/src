@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: elink3.c,v 1.2 1997/03/15 22:19:26 perry Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -36,7 +36,6 @@ Author: Martin Renters.
 #include "etherdrv.h"
 #include "3c509.h"
 
-extern char bnc, utp; /* for 3C509 */
 extern unsigned short eth_base;
 
 extern u_char eth_myaddr[6];
@@ -110,12 +109,12 @@ void epreset()
 	    FIL_BRDCST);
 
 	/* configure BNC */
-	if(bnc) {
+	if(ether_medium == ETHERMEDIUM_BNC) {
 		outw(BASE + EP_COMMAND, START_TRANSCEIVER);
 		delay(1000);
 		}
 	/* configure UTP */
-	if(utp) {
+	if(ether_medium == ETHERMEDIUM_UTP) {
 		GO_WINDOW(4);
 		outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
 		GO_WINDOW(1);
