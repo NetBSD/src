@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 1998/08/20 20:45:40 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.120 1998/08/21 14:13:55 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ vm_map_t phys_map = NULL;
 #else
 vm_map_t buffer_map;
 #endif
-extern vm_offset_t avail_end;
+extern paddr_t avail_end;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -184,7 +184,7 @@ int   safepri = 0;
  * dvmamap is used to manage DVMA memory. Note: this coincides with
  * the memory range in `phys_map' (which is mostly a place-holder).
  */
-vm_offset_t dvma_base, dvma_end;
+vaddr_t dvma_base, dvma_end;
 struct map *dvmamap;
 static int ndvmamap;	/* # of entries in dvmamap */
 struct extent *dvmamap24;
@@ -199,16 +199,16 @@ void	stackdump __P((void));
 void
 cpu_startup()
 {
-	register unsigned i;
-	register caddr_t v;
-	register int sz;
+	unsigned i;
+	caddr_t v;
+	int sz;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	extern struct user *proc0paddr;
 
 #ifdef DEBUG
@@ -263,13 +263,13 @@ cpu_startup()
         size = MAXBSIZE * nbuf;         /* # bytes for buffers */
 
         /* allocate VM for buffers... area is not managed by VM system */
-        if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+        if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
                     NULL, UVM_UNKNOWN_OFFSET,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
                                 UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
         	panic("cpu_startup: cannot allocate VM for buffers");
 
-        minaddr = (vm_offset_t) buffers;
+        minaddr = (vaddr_t) buffers;
         if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
         	bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
         }
@@ -278,8 +278,8 @@ cpu_startup()
 
         /* now allocate RAM for buffers */
 	for (i = 0 ; i < nbuf ; i++) {
-		vm_offset_t curbuf;
-		vm_size_t curbufsize;
+		vaddr_t curbuf;
+		vsize_t curbufsize;
 		struct vm_page *pg;
 
 		/*
@@ -288,7 +288,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -309,11 +309,11 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 	    &maxaddr, size, TRUE);
 
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 
@@ -326,8 +326,8 @@ cpu_startup()
 	}
 
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -336,7 +336,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -399,10 +399,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-        mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+        mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
             VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
@@ -456,7 +456,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define	valloc(name, type, num) \
@@ -532,9 +532,9 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
-	register int psr;
+	struct trapframe *tf = p->p_md.md_tf;
+	struct fpstate *fs;
+	int psr;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -619,11 +619,11 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
-	register struct sigframe *fp;
-	register struct trapframe *tf;
-	register int addr, oonstack, oldsp, newsp;
+	struct proc *p = curproc;
+	struct sigacts *psp = p->p_sigacts;
+	struct sigframe *fp;
+	struct trapframe *tf;
+	int addr, oonstack, oldsp, newsp;
 	struct sigframe sf;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
@@ -736,15 +736,15 @@ sendsig(catcher, sig, mask, code)
 /* ARGSUSED */
 int
 sys_sigreturn(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct trapframe *tf;
+	struct sigcontext *scp;
+	struct trapframe *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -790,7 +790,7 @@ int	waittime = -1;
 
 void
 cpu_reboot(howto, user_boot_string)
-	register int howto;
+	int howto;
 	char *user_boot_string;
 {
 	int i;
@@ -887,7 +887,7 @@ long	dumplo = 0;
 void
 cpu_dumpconf()
 {
-	register int nblks, dumpblks;
+	int nblks, dumpblks;
 
 	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
 		/* No usable dump device */
@@ -915,14 +915,14 @@ cpu_dumpconf()
 }
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
 caddr_t
 reserve_dumppages(p)
 	caddr_t p;
 {
 
-	dumpspace = (vm_offset_t)p;
+	dumpspace = (vaddr_t)p;
 	return (p + BYTES_PER_DUMP);
 }
 
@@ -932,12 +932,12 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	register int psize;
+	int psize;
 	daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
-	register struct memarr *mp;
-	register int nmem;
+	struct memarr *mp;
+	int nmem;
 	extern struct memarr pmemarr[];
 	extern int npmemarr;
 
@@ -1408,7 +1408,7 @@ _bus_dmamem_alloc_common(t, size, alignment, boundary, segs, nsegs, rsegs, flags
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t low, high;
+	vaddr_t low, high;
 	struct pglist *mlist;
 	int error;
 
@@ -1489,9 +1489,9 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 #if defined(UVM)
-	uvm_unmap(kernel_map, (vm_offset_t)kva, (vm_offset_t)kva + size, 0);
+	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size, 0);
 #else
-	vm_map_remove(kernel_map, (vm_offset_t)kva, (vm_offset_t)kva + size);
+	vm_map_remove(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
 #endif
 }
 
@@ -1590,7 +1590,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1663,7 +1663,7 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t dvmaddr;
 	vm_page_t m;
 	struct pglist *mlist;
@@ -1739,8 +1739,8 @@ sun4_dmamem_free(t, segs, nsegs)
 	bus_size_t len;
 
 	if (segs[0]._ds_mlist == NULL) {
-		vm_offset_t kva = (vm_offset_t)segs[0].ds_addr;
-		vm_offset_t size = round_page(segs[0].ds_len);
+		vaddr_t kva = (vaddr_t)segs[0].ds_addr;
+		vsize_t size = round_page(segs[0].ds_len);
 		uvm_unmap(kernel_map, kva, kva + size, 0);
 		return;
 	}
@@ -1773,7 +1773,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
 
@@ -1834,7 +1834,7 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
  * Base bus space handlers.
  */
 static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
-				    bus_size_t, int, vm_offset_t,
+				    bus_size_t, int, vaddr_t,
 				    bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				     bus_size_t));
@@ -1853,13 +1853,13 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	bus_type_t	iospace;
 	bus_addr_t	addr;
 	bus_size_t	size;
-	vm_offset_t	vaddr;
+	vaddr_t		vaddr;
 	bus_space_handle_t *hp;
 {
-	vm_offset_t v;
-	vm_offset_t pa;
+	vaddr_t v;
+	paddr_t pa;
 	unsigned int pmtype;
-static	vm_offset_t iobase;
+static	vaddr_t iobase;
 
 
 	if (iobase == NULL)
@@ -1901,8 +1901,8 @@ sparc_bus_unmap(t, bh, size)
 	bus_size_t	size;
 	bus_space_handle_t bh;
 {
-	vm_offset_t va = trunc_page((vm_offset_t)bh);
-	vm_offset_t endva = va + round_page(size);
+	vaddr_t va = trunc_page((vaddr_t)bh);
+	vaddr_t endva = va + round_page(size);
 
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);

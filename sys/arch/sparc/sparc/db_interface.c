@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 1998/07/04 22:18:39 jonathan Exp $ */
+/*	$NetBSD: db_interface.c,v 1.25 1998/08/21 14:13:54 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -66,11 +66,11 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
-	register char	*src;
+	char	*src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -82,12 +82,12 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
 	extern char	etext[];
-	register char	*dst;
+	char	*dst;
 
 	dst = (char *)addr;
 	while (size-- > 0) {
