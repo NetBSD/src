@@ -672,7 +672,6 @@ boot(arghowto)
 		for(;;);
 	}
 	howto = arghowto;
-printf ("boot: howto=0x%x\n", howto);
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
@@ -729,16 +728,15 @@ printf ("boot: howto=0x%x\n", howto);
 
 	if (howto & RB_DUMP) {
 #if 1
-/* dump the stack! */
-{ int *fp = (int *)_get_fp();
-  int i=0;
-  while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
-    printf ("0x%x (@0x%x), ", fp[1], fp);
-    fp = (int *)fp[0];
-    if (++i == 3) { printf ("\n"); i=0; }
-  }
-  for(;;) ;  /* Stop here! */
-}
+	  /* dump the stack! */
+	  { int *fp = (int *)_get_fp();
+	    int i=0;
+	    while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
+	      printf ("0x%x (@0x%x), ", fp[1], fp);
+	      fp = (int *)fp[0];
+	      if (++i == 3) { printf ("\n"); i=0; }
+	    }
+	  }
 #else
 		savectx(&dumppcb, 0);
 		dumppcb.pcb_ptd = _get_ptb0();
