@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.4 2004/11/25 03:46:50 atatat Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.5 2004/11/29 13:55:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.4 2004/11/25 03:46:50 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.5 2004/11/29 13:55:59 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,6 @@ static int ptyfs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
 static void ptyfs_time(struct ptyfsnode *, struct timespec *,
     struct timespec *);
 static int atoi(const char *, size_t);
-static u_int digits(u_int);
 
 extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
 
@@ -373,7 +372,7 @@ ptyfs_getattr(void *v)
 	case PTYFSptc:
 		if (pty_isfree(ptyfs->ptyfs_pty, 1))
 			return ENOENT;
-		vap->va_bytes = vap->va_size = digits(ptyfs->ptyfs_pty);
+		vap->va_bytes = vap->va_size = 0;
 		vap->va_rdev = ap->a_vp->v_rdev; 
 		break;
 	case PTYFSroot:
@@ -1015,16 +1014,4 @@ atoi(const char *b, size_t len)
 	}
 
 	return p;
-}
-
-/*
- * Return the number of decimal digits
- */
-static u_int
-digits(u_int i)
-{
-	u_int d;
-	for (d = 1; i != 0; d++)
-		i /= 10;
-	return d;
 }
