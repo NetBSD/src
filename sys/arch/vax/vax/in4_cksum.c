@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.3 2001/05/19 00:04:56 matt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.4 2001/05/19 23:47:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -118,14 +118,14 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	int debugrv = in4_cksum_md_debug(m, nxt, off, len);
 #endif
 
+	if (nxt != 0) {
 #ifdef DIAGNOSTIC
-	if (off < sizeof(struct ipovly))
-		panic("in4_cksum: offset too short");
-	if (m->m_len < sizeof(struct ip))
-		panic("in4_cksum: bad mbuf chain");
+		if (off < sizeof(struct ipovly))
+			panic("in4_cksum: offset too short");
+		if (m->m_len < sizeof(struct ip))
+			panic("in4_cksum: bad mbuf chain");
 #endif
 
-	if (nxt != 0) {
 		__asm __volatile("
 			movzwl	16(ap),%0	# mov len to sum
 			addb2	8(ap),%0	# add proto to sum
