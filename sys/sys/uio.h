@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.20 1999/03/28 17:47:06 kleink Exp $	*/
+/*	$NetBSD: uio.h,v 1.21 2001/10/16 15:52:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -38,7 +38,18 @@
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
 
+#include <machine/ansi.h>
 #include <sys/featuretest.h>
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
+
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
 
 struct iovec {
 	void	*iov_base;	/* Base address. */
@@ -46,6 +57,13 @@ struct iovec {
 };
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#include <sys/ansi.h>
+
+#ifndef	off_t
+typedef	__off_t		off_t;	/* file offset */
+#define	off_t		__off_t
+#endif
+
 enum	uio_rw { UIO_READ, UIO_WRITE };
 
 /* Segment flag values. */
