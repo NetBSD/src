@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.30 1999/05/18 23:55:44 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.31 1999/08/26 20:44:50 is Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -208,7 +208,6 @@ bah_attach_subr(sc)
 
 	ifp->if_mtu = ARCMTU;
 
-	if_attach(ifp);
 	arc_ifattach(ifp, linkaddress);
 
 #if NBPFILTER > 0
