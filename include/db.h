@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <machine/endian.h>
 
 #define	RET_ERROR	-1		/* Return values. */
 #define	RET_SUCCESS	 0
@@ -144,26 +145,9 @@ typedef struct {
  *	BLPSWAP		swap a referenced memory location
  *	BLSWAP_COPY	swap from one location to another
  */
-#define BLSWAP(a) { \
-	u_long _tmp = a; \
-	((char *)&a)[0] = ((char *)&_tmp)[3]; \
-	((char *)&a)[1] = ((char *)&_tmp)[2]; \
-	((char *)&a)[2] = ((char *)&_tmp)[1]; \
-	((char *)&a)[3] = ((char *)&_tmp)[0]; \
-}
-#define	BLPSWAP(a) { \
-	u_long _tmp = *(u_long *)a; \
-	((char *)a)[0] = ((char *)&_tmp)[3]; \
-	((char *)a)[1] = ((char *)&_tmp)[2]; \
-	((char *)a)[2] = ((char *)&_tmp)[1]; \
-	((char *)a)[3] = ((char *)&_tmp)[0]; \
-}
-#define	BLSWAP_COPY(a, b) { \
-	((char *)&(b))[0] = ((char *)&(a))[3]; \
-	((char *)&(b))[1] = ((char *)&(a))[2]; \
-	((char *)&(b))[2] = ((char *)&(a))[1]; \
-	((char *)&(b))[3] = ((char *)&(a))[0]; \
-}
+#define BLSWAP(a) { a = __byte_swap_long(a); }
+#define	BLPSWAP(a) BLSWAP((*a))
+#define	BLSWAP_COPY(a, b) { b = __byte_swap_long(a); }
 
 /*
  * Little endian <==> big endian short swap macros.
@@ -171,20 +155,9 @@ typedef struct {
  *	BSPSWAP		swap a referenced memory location
  *	BSSWAP_COPY	swap from one location to another
  */
-#define BSSWAP(a) { \
-	u_short _tmp = a; \
-	((char *)&a)[0] = ((char *)&_tmp)[1]; \
-	((char *)&a)[1] = ((char *)&_tmp)[0]; \
-}
-#define BSPSWAP(a) { \
-	u_short _tmp = *(u_short *)a; \
-	((char *)a)[0] = ((char *)&_tmp)[1]; \
-	((char *)a)[1] = ((char *)&_tmp)[0]; \
-}
-#define BSSWAP_COPY(a, b) { \
-	((char *)&(b))[0] = ((char *)&(a))[1]; \
-	((char *)&(b))[1] = ((char *)&(a))[0]; \
-}
+#define BSSWAP(a) { a = __byte_swap_word(a); }
+#define BSPSWAP(a)  BSSWAP((*a))
+#define BSSWAP_COPY(a, b) { b = __byte_swap_word(a); }
 
 __BEGIN_DECLS
 DB *dbopen __P((const char *, int, int, DBTYPE, const void *));
