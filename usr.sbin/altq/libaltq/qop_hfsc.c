@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_hfsc.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
-/*	$KAME: qop_hfsc.c,v 1.7 2001/12/03 08:20:55 kjc Exp $	*/
+/*	$NetBSD: qop_hfsc.c,v 1.6 2002/09/08 09:28:23 itojun Exp $	*/
+/*	$KAME: qop_hfsc.c,v 1.8 2002/09/08 09:08:13 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <netdb.h>
+#include <math.h>
 
 #include <altq/altq.h>
 #include <altq/altq_hfsc.h>
@@ -668,7 +669,7 @@ validate_sc(struct service_curve *sc)
 /*
  * admission control using generalized service curve
  */
-#define	INFINITY	1e500		/* IEEE: positive infinity */
+#define	INFINITY	HUGE_VAL  /* positive infinity defined in <math.h> */
 
 /* add a new service curve to a generilized service curve */
 static void
