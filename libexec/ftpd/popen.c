@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.22 2000/05/20 23:34:55 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.22.4.1 2001/03/29 14:14:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.22 2000/05/20 23:34:55 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.22.4.1 2001/03/29 14:14:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,23 +147,30 @@ ftpd_popen(char *argv[], const char *type, int stderrfd)
 		goto pfree;
 	for (argc = 1; argv[argc]; argc++) {
 		glob_t gl;
-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE|GLOB_LIMIT;
 
 		memset(&gl, 0, sizeof(gl));
 		if (glob(argv[argc], flags, NULL, &gl)) {
-			if (sl_add(sl, xstrdup(argv[argc])) == -1)
+			if (sl_add(sl, xstrdup(argv[argc])) == -1) {
+				globfree(&gl);
 				goto pfree;
-		} else
-			for (pop = gl.gl_pathv; *pop; pop++) {
-				if (sl_add(sl, xstrdup(*pop)) == -1)
-					goto pfree;
 			}
+		} else {
+			for (pop = gl.gl_pathv; *pop; pop++) {
+				if (sl_add(sl, xstrdup(*pop)) == -1) {
+					globfree(&gl);
+					goto pfree;
+				}
+			}
+		}
 		globfree(&gl);
 	}
 	if (sl_add(sl, NULL) == -1)
 		goto pfree;
 
+#ifndef NO_INTERNAL_LS
 	isls = (strcmp(sl->sl_str[0], INTERNAL_LS) == 0);
+#endif
 
 	pid = isls ? fork() : vfork();
 	switch (pid) {
@@ -190,11 +197,14 @@ ftpd_popen(char *argv[], const char *type, int stderrfd)
 			}
 			(void)close(pdes[1]);
 		}
+#ifndef NO_INTERNAL_LS
 		if (isls) {	/* use internal ls */
 			optreset = optind = optopt = 1;
 			closelog();
 			exit(ls_main(sl->sl_cur - 1, sl->sl_str));
 		}
+#endif
+
 		execv(sl->sl_str[0], sl->sl_str);
 		_exit(1);
 	}

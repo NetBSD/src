@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.8.4.2 2000/07/25 08:38:40 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.8.4.3 2001/03/29 14:14:18 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2000
+.Dd December 18, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -49,11 +49,33 @@ file specifies various configuration options for
 .Xr ftpd 8
 that apply once a user has authenticated their connection.
 .Pp
+.Nm
+consists of a series of lines, each of which may contain a
+configuration directive, a comment, or a blank line.
+Directives that appear later in the file override settings by previous
+directives.
+This allows
+.Sq wildcard
+entries to define defaults, and then have class-specific overrides.
+.Pp
+A directive line has the format:
+.Dl command class [arguments]
+.Pp
+A
+.Dq \e
+is the escape character; it can be used to escape the meaning of the
+comment character, or if it is the last character on a line, extends
+a configuration directive across multiple lines.
+A
+.Dq #
+is the comment character, and all characters from it to the end of
+line are ignored (unless it is escaped with the escape character).
+.Pp
 Each authenticated user is a member of a
-.Sy class ,
+.Em class ,
 which is determined by
 .Xr ftpusers 5 .
-.Sy class
+.Em class
 is used to determine which
 .Nm
 entries apply to the user.
@@ -88,25 +110,6 @@ is performed after login.
 Normal users.
 .El
 .Pp
-.Nm
-consists of a series of lines, each of which may contain a
-configuration directive, a comment, or a blank line.
-Directives that appear later in the file override settings by previous
-directives.
-This allows
-.Sq wildcard
-entries to define defaults, and then have class-specific overrides.
-.Pp
-A
-.Dq \e
-is the escape character; it can be used to escape the meaning of the
-comment character, or if it is the last character on a line, extends
-a configuration directive across multiple lines.
-A
-.Dq #
-is the comment character, and all characters from it to the end of
-line are ignored (unless it is escaped with the escape character).
-.Pp
 The
 .Xr ftpd 8
 .Sy STAT
@@ -115,12 +118,28 @@ command will return the class settings for the current user as defined by
 .Pp
 Each configuration line may be one of:
 .Bl -tag -width 4n
+.It Sy advertise Ar class Ar host
+Set the address to advertise in the response to the
+.Sy PASV
+and
+.Sy LPSV
+commands to the address for
+.Ar host
+(which may be either a host name or IP address).
+This may be useful in some firewall configurations, although many
+ftp clients may not work if the address being advertised is different
+to the address that they've connected to.
+If
+.Ar class
+is
+.Dq none
+or no argument is given, disable this.
 .It Sy checkportcmd Ar class Op Sy off
 Check the
-PORT
+.Sy PORT
 command for validity.
 The
-PORT
+.Sy PORT
 command will fail if the IP address specified does not match the
 .Tn FTP
 command connection, or if the remote TCP port number is less than
@@ -169,15 +188,23 @@ A
 character.
 .El
 .Pp
-The default root directory is
-.Pa /
-for
-.Sy REAL
-users, and the user's home directory for
-.Sy GUEST
-and
-.Sy CHROOT
-users.
+The default root directory is:
+.Bl -tag -width "CHROOT" -offset indent -compact
+.It Sy CHROOT
+The user's home directory.
+.It Sy GUEST
+If
+.Fl a Ar anondir
+is given, use
+.Ar anondir ,
+otherwise the home directory of the
+.Sq ftp
+user.
+.It Sy REAL
+By default no
+.Xr chroot 2
+is performed.
+.El
 .It Sy classtype Ar class Ar type
 Set the class type of
 .Ar class
@@ -208,7 +235,7 @@ Valid types are:
 (directory).
 .It Ar disable
 The name of file that will prevent conversion if it exists.
-A filename of
+A file name of
 .Dq Pa \&.
 will prevent this disabling action
 (i.e., the conversion is always permitted.)
@@ -244,26 +271,6 @@ Escape sequences are supported; refer to
 in
 .Xr ftpd 8
 for more information.
-.It Xo Sy limit Ar class
-.Ar count Op Ar file
-.Xc
-Limit the maximum number of concurrent connections for
-.Ar class
-to
-.Ar count ,
-with
-.Sq 0
-meaning unlimited connections.
-If the limit is exceeded and
-.Ar file
-is given, display its contents to the user.
-Ignored if
-.Ar class
-is
-.Dq none
-or
-.Ar count
-is not specified.
 .It Sy homedir Ar class Op Sy pathformat
 If
 .Ar pathformat
@@ -292,18 +299,52 @@ for
 and
 .Sy CHROOT
 users.
+.It Xo Sy limit Ar class
+.Ar count Op Ar file
+.Xc
+Limit the maximum number of concurrent connections for
+.Ar class
+to
+.Ar count ,
+with
+.Sq 0
+meaning unlimited connections.
+If the limit is exceeded and
+.Ar file
+is given, display its contents to the user.
+If
+.Ar class
+is
+.Dq none
+or
+.Ar count
+is not specified, disable this.
+If
+.Ar file
+is a relative path, it will be searched for in
+.Pa /etc
+(which can be overridden with
+.Fl c Ar confdir ) .
+.It Sy maxfilesize Ar class Ar size
+Set the maximum size of an uploaded file to
+.Ar size .
+If
+.Ar class
+is
+.Dq none
+or no argument is given, disable this.
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
 This cannot be less than 30 seconds, or the value for
 .Sy timeout .
-Ignored if
+If
 .Ar class
 is
 .Dq none
 or
 .Ar time
-is not specified.
+is not specified, set to default of 2 hours.
 .It Sy modify Ar class Op Sy off
 If
 .Ar class
@@ -312,7 +353,13 @@ is
 or
 .Sy off
 is given, disable the following commands:
-CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
+.Sy CHMOD ,
+.Sy DELE ,
+.Sy MKD ,
+.Sy RMD ,
+.Sy RNFR ,
+and
+.Sy UMASK .
 Otherwise, enable them.
 .It Sy motd Ar class Op Ar file
 If
@@ -330,6 +377,12 @@ Escape sequences are supported; refer to
 in
 .Xr ftpd 8
 for more information.
+If
+.Ar file
+is a relative path, it will be searched for in
+.Pa /etc
+(which can be overridden with
+.Fl c Ar confdir ) .
 .It Sy notify Ar class Op Ar fileglob
 If
 .Ar fileglob
@@ -348,7 +401,12 @@ is
 .Dq none
 or
 .Sy off
-is given, disallow passive (PASV/LPSV/EPSV) connections.
+is given, disallow passive
+.Sy ( PASV ,
+.Sy LPSV ,
+and
+.Sy EPSV )
+connections.
 Otherwise, enable them.
 .It Sy portrange Ar class Ar min Ar max
 Set the range of port number which will be used for the passive data port.
@@ -357,11 +415,16 @@ must be greater than
 .Ar min ,
 and both numbers must be be between
 .Dv IPPORT_RESERVED 
-(1024) and
-.Dv IPPORT_ANONMAX 
-(65535).
+(1024) and 65535.
+If
+.Ar class
+is
+.Dq none
+or no arguments are given, disable this.
 .It Sy rateget Ar class Ar rate
-Set the maximum get (RETR) transfer rate throttle for
+Set the maximum get
+.Pq Sy RETR
+transfer rate throttle for
 .Ar class
 to
 .Ar rate
@@ -369,28 +432,55 @@ bytes per second.
 If
 .Ar rate
 is 0, the throttle is disabled.
+If
+.Ar class
+is
+.Dq none
+or no arguments are given, disable this.
 .Pp
 An optional suffix may be provided, which changes the intrepretation of
 .Ar rate
 as follows:
 .Bl -tag -width 3n -offset indent -compact
 .It b
-Causes no modification. (Optional)
+Causes no modification. (Default; optional)
 .It k
 Kilo; multiply the argument by 1024
 .It m
 Mega; multiply the argument by 1048576
 .It g
 Giga; multiply the argument by 1073741824
+.It t
+Tera; multiply the argument by 1099511627776
 .El
 .It Sy rateput Ar class Ar rate
-Set the maximum put (STOR) transfer rate throttle for
+Set the maximum put
+.Pq Sy STOR
+transfer rate throttle for
 .Ar class
 to
 .Ar rate 
 bytes per second,
 which is parsed as per
 .Sy rateget Ar rate .
+If
+.Ar class
+is
+.Dq none
+or no arguments are given, disable this.
+.It Sy sanenames Ar class Op Sy off
+If
+.Ar class
+is
+.Dq none
+or
+.Sy off
+is given, allow uploaded file names to contain any characters valid for a
+file name.
+Otherwise, only permit file names which don't start with a
+.Sq \&.
+and only comprise of characters from the set
+.Dq [-+,._A-Za-z0-9] .
 .It Sy template Ar class Op Ar refclass
 Define
 .Ar refclass
@@ -415,23 +505,24 @@ Set the inactivity timeout period.
 (the default is fifteen minutes).
 This cannot be less than 30 seconds, or greater than the value for
 .Sy maxtimeout .
-Ignored if
+If
 .Ar class
 is
 .Dq none
 or
 .Ar time
-is not specified.
+is not specified, set to the default of 15 minutes.
 .It Sy umask Ar class Ar umaskval
 Set the umask to
 .Ar umaskval .
-Ignored if
+If
 .Ar class
 is
 .Dq none
 or
 .Ar umaskval
-is not specified.
+is not specified, set to the default of 
+.Li 027 .
 .It Sy upload Ar class Op Sy off
 If
 .Ar class
@@ -440,9 +531,18 @@ is
 or
 .Sy off
 is given, disable the following commands:
-APPE, STOR, and STOU,
+.Sy APPE ,
+.Sy STOR ,
+and
+.Sy STOU ,
 as well as the modify commands:
-CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
+.Sy CHMOD ,
+.Sy DELE ,
+.Sy MKD ,
+.Sy RMD ,
+.Sy RNFR ,
+and
+.Sy UMASK .
 Otherwise, enable them.
 .El
 .Sh DEFAULTS

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28.2.1 2000/07/25 08:38:37 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.28.2.2 2001/03/29 14:14:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,6 +100,24 @@
  * SUCH DAMAGE.
  */
 
+#ifdef NO_LONG_LONG
+# define LLF		"%ld"
+# define LLFP(x)	"%" x "ld"
+# define LLT		long
+# define ULLF		"%lu"
+# define ULLFP(x)	"%" x "lu"
+# define ULLT		unsigned long
+# define STRTOLL(x,y,z)	strtol(x,y,z)
+#else
+# define LLF		"%lld"
+# define LLFP(x)	"%" x "lld"
+# define LLT		long long
+# define ULLF		"%llu"
+# define ULLFP(x)	"%" x "llu"
+# define ULLT		unsigned long long
+# define STRTOLL(x,y,z)	strtoll(x,y,z)
+#endif
+
 void	blkfree(char **);
 void	closedataconn(FILE *);
 char   *conffilename(const char *);
@@ -120,9 +138,11 @@ int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
 char   *getline(char *, int, FILE *);
 void	init_curclass(void);
-void	logcmd(const char *, off_t, const char *, const char *,
+void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
+#if 0
 void	logwtmp(const char *, const char *, const char *);
+#endif
 struct tab *lookup(struct tab *, const char *);
 void	makedir(const char *);
 void	mlsd(const char *);
@@ -131,7 +151,13 @@ void	opts(const char *);
 void	parse_conf(const char *);
 void	pass(const char *);
 void	passive(void);
+int	lpsvproto2af(int);
+int	af2lpsvproto(int);
+int	epsvproto2af(int);
+int	af2epsvproto(int);
 void	long_passive(char *, int);
+int	extended_port(const char *);
+void	epsv_protounsupp(const char *);
 void	perror_reply(int, const char *);
 void	pwd(void);
 void	removedir(const char *);
@@ -146,19 +172,42 @@ void	sizecmd(const char *);
 void	statcmd(void);
 void	statfilecmd(const char *);
 void	store(const char *, const char *, int);
-int	strsuftoi(const char *);
+LLT	strsuftoll(const char *);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
 
-typedef long long qdfmt_t;
-typedef unsigned long long qufmt_t;
+#include <netinet/in.h>
 
-typedef enum {
-	CLASS_GUEST,
-	CLASS_CHROOT,
-	CLASS_REAL
-} class_ft;
+#ifdef BSD4_4
+# define HAVE_SETPROCTITLE	1
+# define HAVE_SOCKADDR_SA_LEN	1
+#endif
+
+struct sockinet {
+	union sockunion {
+		struct sockaddr_in  su_sin;
+#ifdef INET6
+		struct sockaddr_in6 su_sin6;
+#endif
+	} si_su;
+#if !HAVE_SOCKADDR_SA_LEN
+	int	si_len;
+#endif
+};
+
+#if !HAVE_SOCKADDR_SA_LEN
+# define su_len		si_len
+#else
+# define su_len		si_su.su_sin.sin_len
+#endif
+#define su_addr		si_su.su_sin.sin_addr
+#define su_family	si_su.su_sin.sin_family
+#define su_port		si_su.su_sin.sin_port
+#ifdef INET6
+# define su_6addr	si_su.su_sin6.sin6_addr
+# define su_scope_id	si_su.su_sin6.sin6_scope_id
+#endif
 
 struct tab {
 	char	*name;
@@ -177,65 +226,70 @@ struct ftpconv {
 	char		*command;	/* Command to do the conversion */
 };
 
+typedef enum {
+	CLASS_GUEST,
+	CLASS_CHROOT,
+	CLASS_REAL
+} class_ft;
+
+typedef enum {
+	FLAG_checkportcmd =	1<<0,	/* Check port commands */
+	FLAG_modify =		1<<1,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
+					   UMASK */
+	FLAG_passive =		1<<2,	/* Allow PASV mode */
+	FLAG_sanenames =	1<<3,	/* Restrict names of uploaded files */ 
+	FLAG_upload =		1<<4	/* As per modify, but also allow
+					   APPE, STOR, STOU */
+} classflag_t;
+
+#define CURCLASS_FLAGS_SET(x)	(curclass.flags |=  (FLAG_ ## x))
+#define CURCLASS_FLAGS_CLR(x)	(curclass.flags &= ~(FLAG_ ## x))
+#define CURCLASS_FLAGS_ISSET(x)	(curclass.flags &   (FLAG_ ## x))
+
 struct ftpclass {
-	int		 checkportcmd;	/* Check PORT commands are valid */
+	struct sockinet	 advertise;	/* PASV address to advertise as */
 	char		*chroot;	/* Directory to chroot(2) to at login */
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
-	char		*display;	/* Files to display upon chdir */
+	char		*display;	/* File to display upon chdir */
 	char		*homedir;	/* Directory to chdir(2) to at login */
+	classflag_t	 flags;		/* Flags; see classflag_t above */
 	int	 	 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
-	int		 maxrateget;	/* Maximum get transfer rate throttle */
-	int		 maxrateput;	/* Maximum put transfer rate throttle */
+	LLT		 maxfilesize;	/* Maximum file size of uploads */
+	LLT		 maxrateget;	/* Maximum get transfer rate throttle */
+	LLT		 maxrateput;	/* Maximum put transfer rate throttle */
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
-	int		 modify;	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
-					   UMASK */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	int		 passive;	/* Allow PASV mode */
 	int		 portmin;	/* Minumum port for passive mode */
 	int		 portmax;	/* Maximum port for passive mode */
-	int		 rateget;	/* Get (RETR) transfer rate throttle */
-	int		 rateput;	/* Put (STOR) transfer rate throttle */
+	LLT		 rateget;	/* Get (RETR) transfer rate throttle */
+	LLT		 rateput;	/* Put (STOR) transfer rate throttle */
 	unsigned int	 timeout;	/* Default timeout */
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
-	int		 upload;	/* As per modify, but also allow
-					   APPE, STOR, STOU */
 };
 
-#include <netinet/in.h>
-
-union sockunion {
-	struct sockinet {
-		u_char si_len;
-		u_char si_family;
-		u_short si_port;
-	} su_si;
-	struct sockaddr_in  su_sin;
-	struct sockaddr_in6 su_sin6;
-};
-#define su_len		su_si.si_len
-#define su_family	su_si.si_family
-#define su_port		su_si.si_port
-
+#ifndef YYEMPTY
 extern  int		yyparse(void);
+#endif
 
 #ifndef	GLOBAL
 #define	GLOBAL	extern
 #endif
 
 
-GLOBAL	union sockunion	ctrl_addr;
-GLOBAL	union sockunion	data_dest;
-GLOBAL	union sockunion	data_source;
-GLOBAL	union sockunion	his_addr;
-GLOBAL	union sockunion	pasv_addr;
+GLOBAL	struct sockinet ctrl_addr;
+GLOBAL	struct sockinet	data_dest;
+GLOBAL	struct sockinet	data_source;
+GLOBAL	struct sockinet	his_addr;
+GLOBAL	struct sockinet	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
 GLOBAL	jmp_buf		errcatch;
+GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
 GLOBAL	gid_t		gidlist[NGROUPS_MAX];
@@ -248,7 +302,7 @@ GLOBAL	krb5_context	kcontext;
 GLOBAL	int		logged_in;
 GLOBAL	int		logging;
 GLOBAL	int		pdata;			/* for passive mode */
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
 #endif
 GLOBAL	struct passwd  *pw;
@@ -296,3 +350,7 @@ extern	struct tab	cmdtab[];
 			} while ((W) != NULL && *(W) == '\0')
 #define PLURAL(s)	((s) == 1 ? "" : "s")
 #define REASSIGN(X,Y)	do { if (X) free(X); (X)=(Y); } while (/*CONSTCOND*/0)
+
+#ifndef IPPORT_ANONMAX
+# define IPPORT_ANONMAX	65535
+#endif

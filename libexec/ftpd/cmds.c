@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4.2.2 2000/12/13 21:18:09 he Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.3 2001/03/29 14:14:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4.2.2 2000/12/13 21:18:09 he Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.3 2001/03/29 14:14:17 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ delete(const char *name)
 		perror_reply(550, name);
 	} else
 		ack("DELE");
-	logcmd("delete", -1, name, NULL, NULL, p);
+	logxfer("delete", -1, name, NULL, NULL, p);
 }
 
 void
@@ -219,7 +219,7 @@ makedir(const char *name)
 		perror_reply(550, name);
 	} else
 		replydirname(name, "directory created.");
-	logcmd("mkdir", -1, name, NULL, NULL, p);
+	logxfer("mkdir", -1, name, NULL, NULL, p);
 }
 
 void
@@ -412,7 +412,7 @@ removedir(const char *name)
 		perror_reply(550, name);
 	} else
 		ack("RMD");
-	logcmd("rmdir", -1, name, NULL, NULL, p);
+	logxfer("rmdir", -1, name, NULL, NULL, p);
 }
 
 char *
@@ -438,7 +438,7 @@ renamecmd(const char *from, const char *to)
 		perror_reply(550, "rename");
 	} else
 		ack("RNTO");
-	logcmd("rename", -1, from, to, NULL, p);
+	logxfer("rename", -1, from, to, NULL, p);
 }
 
 void
@@ -446,14 +446,17 @@ sizecmd(const char *filename)
 {
 	switch (type) {
 	case TYPE_L:
-	case TYPE_I: {
+	case TYPE_I:
+	    {
 		struct stat stbuf;
 		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%qu", (qufmt_t)stbuf.st_size);
-		break; }
-	case TYPE_A: {
+			reply(213, ULLF, (ULLT)stbuf.st_size);
+		break;
+	    }
+	case TYPE_A:
+	    {
 		FILE *fin;
 		int c;
 		off_t count;
@@ -477,8 +480,9 @@ sizecmd(const char *filename)
 		}
 		(void) fclose(fin);
 
-		reply(213, "%qd", (qdfmt_t)count);
-		break; }
+		reply(213, LLF, (LLT)count);
+		break;
+	    }
 	default:
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
 	}
@@ -602,7 +606,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 			 * since we only need this info in such a case.
 			 */
 	pdir = fe->pdirstat;
-	if (pdir == NULL && curclass.modify) {
+	if (pdir == NULL && CURCLASS_FLAGS_ISSET(modify)) {
 		size_t		len;
 		char		realdir[MAXPATHLEN], *p;
 		struct stat	dir;
@@ -636,15 +640,15 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 	}
 
 			/* 'a': can APPE to file */
-	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(upload) && S_ISREG(fe->stat->st_mode))
 		CPUTC('a', fd);
 
 			/* 'c': can create or append to files in directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('c', fd);
 
 			/* 'd': can delete file or directory */
-	if (pdirwok && curclass.modify) {
+	if (pdirwok && CURCLASS_FLAGS_ISSET(modify)) {
 		int candel;
 
 		candel = 1;
@@ -674,7 +678,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('e', fd);
 
 			/* 'f': can rename file or directory */
-	if (pdirwok && curclass.modify)
+	if (pdirwok && CURCLASS_FLAGS_ISSET(modify))
 		CPUTC('f', fd);
 
 			/* 'l': can list directory */
@@ -682,11 +686,11 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('l', fd);
 
 			/* 'm': can create directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('m', fd);
 
 			/* 'p': can remove files in directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('p', fd);
 
 			/* 'r': can RETR file */
@@ -694,7 +698,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('r', fd);
 
 			/* 'w': can STOR file */
-	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(upload) && S_ISREG(fe->stat->st_mode))
 		CPUTC('w', fd);
 
 	CPUTC(';', fd);
@@ -705,7 +709,7 @@ fact_size(const char *fact, FILE *fd, factelem *fe)
 {
 
 	if (S_ISREG(fe->stat->st_mode))
-		cprintf(fd, "%s=%lld;", fact, (long long)fe->stat->st_size);
+		cprintf(fd, "%s=" LLF ";", fact, (LLT)fe->stat->st_size);
 }
 
 static void
@@ -788,18 +792,21 @@ static void
 replydirname(const char *name, const char *message)
 {
 	char *p, *ep;
-	char npath[MAXPATHLEN];
+	char npath[MAXPATHLEN * 2];
 
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
 	while (*name) {
-		if (*name == '"' && ep - p >= 2) {
+		if (*name == '"') {
+			if (ep - p < 2)
+				break;
 			*p++ = *name++;
 			*p++ = '"';
-		} else if (ep - p >= 1)
+		} else {
+			if (ep - p < 1)
+				break;
 			*p++ = *name++;
-		else
-			break;
+		}
 	}
 	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);

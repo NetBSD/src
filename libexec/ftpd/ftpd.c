@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.95.2.4 2000/09/28 18:37:42 jdolecek Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.95.2.5 2001/03/29 14:14:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.95.2.4 2000/09/28 18:37:42 jdolecek Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.95.2.5 2001/03/29 14:14:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.95.2.4 2000/09/28 18:37:42 jdolecek Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
@@ -168,11 +169,14 @@ __RCSID("$NetBSD: ftpd.c,v 1.95.2.4 2000/09/28 18:37:42 jdolecek Exp $");
 
 int	data;
 jmp_buf	urgcatch;
-struct	passwd *pw;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
+int	dataport;		/* use specific data port */
+int	dopidfile;		/* maintain pid file */
 int	doutmp;			/* update utmp file */
+int	dowtmp;			/* update wtmp file */
+int	doxferlog;		/* syslog wu-ftpd style xferlog entries */
 int	dropprivs;		/* if privileges should or have been dropped */
 int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
@@ -180,8 +184,8 @@ off_t	byte_count;
 static char ttyline[20];
 static struct utmp utmp;	/* for utmp */
 
-static char *anondir = NULL;
-static char confdir[MAXPATHLEN];
+static const char *anondir = NULL;
+static const char *confdir = _DEFAULT_CONFDIR;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	has_ccache = 0;
@@ -207,10 +211,11 @@ int	swaitint = SWAITINT;
 static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
-static void	 dolog(struct sockaddr *);
+static int	 checkpassword(const struct passwd *, const char *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
 static char	*gunique(const char *);
+static void	 logremotehost(struct sockinet *);
 static void	 lostconn(int);
 static void	 myoob(int);
 static int	 receive_data(FILE *, FILE *);
@@ -235,30 +240,42 @@ main(int argc, char *argv[])
 #ifdef KERBEROS5
 	krb5_error_code	kerror;
 #endif
+	char		*p;
 
 	connections = 1;
 	debug = 0;
 	logging = 0;
 	pdata = -1;
 	sflag = 0;
-	doutmp = 0;
+	dataport = 0;
+	dopidfile = 1;		/* default: DO use a pid file to count users */
+	doutmp = 0;		/* default: Do NOT log to utmp */
+	dowtmp = 1;		/* default: DO log to wtmp */
+	doxferlog = 0;		/* default: Do NOT syslog xferlog */
 	dropprivs = 0;
 	mapped = 0;
 	usedefault = 1;
-	(void)strcpy(confdir, _DEFAULT_CONFDIR);
+	emailaddr = NULL;
 	hostname[0] = '\0';
 	homedir[0] = '\0';
 	gidcount = 0;
-
 	version = FTPD_VERSION;
-	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlrst:T:u:UvV:")) != -1) {
+
+	/*
+	 * LOG_NDELAY sets up the logging connection immediately,
+	 * necessary for anonymous ftp's that chroot and can't do it later.
+	 */
+	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
+
+	while ((ch = getopt(argc, argv, "a:c:C:de:h:HlP:qQrst:T:uUvV:wWX"))
+	    != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
 			break;
 
 		case 'c':
-			(void)strlcpy(confdir, optarg, sizeof(confdir));
+			confdir = optarg;
 			break;
 
 		case 'C':
@@ -269,6 +286,10 @@ main(int argc, char *argv[])
 		case 'd':
 		case 'v':		/* deprecated */
 			debug = 1;
+			break;
+
+		case 'e':
+			emailaddr = optarg;
 			break;
 
 		case 'h':
@@ -285,6 +306,24 @@ main(int argc, char *argv[])
 			logging++;	/* > 1 == extra logging */
 			break;
 
+		case 'P':
+			dataport = (int)strtol(optarg, &p, 10);
+			if (*p != '\0' || dataport < IPPORT_RESERVED ||
+			    dataport > IPPORT_ANONMAX) {
+				syslog(LOG_WARNING, "Invalid dataport %s",
+				    optarg);
+				dataport = 0;
+			}
+			break;
+
+		case 'q':
+			dopidfile = 1;
+			break;
+
+		case 'Q':
+			dopidfile = 0;
+			break;
+
 		case 'r':
 			dropprivs = 1;
 			break;
@@ -295,13 +334,17 @@ main(int argc, char *argv[])
 
 		case 't':
 		case 'T':
-		case 'u':
-			warnx("-%c has been deprecated in favour of ftpd.conf",
+			syslog(LOG_WARNING,
+			    "-%c has been deprecated in favour of ftpd.conf",
 			    ch);
 			break;
 
-		case 'U':
+		case 'u':
 			doutmp = 1;
+			break;
+
+		case 'U':
+			doutmp = 0;
 			break;
 
 		case 'V':
@@ -311,31 +354,45 @@ main(int argc, char *argv[])
 				version = xstrdup(optarg);
 			break;
 
+		case 'w':
+			dowtmp = 1;
+			break;
+
+		case 'W':
+			dowtmp = 0;
+			break;
+
+		case 'X':
+			doxferlog = 1;
+			break;
+
 		default:
 			if (optopt == 'a' || optopt == 'C')
 				exit(1);
-			warnx("unknown flag -%c ignored", optopt);
+			syslog(LOG_WARNING, "unknown flag -%c ignored", optopt);
 			break;
 		}
 	}
+	if (EMPTYSTR(confdir))
+		confdir = _DEFAULT_CONFDIR;
 
-	/*
-	 * LOG_NDELAY sets up the logging connection immediately,
-	 * necessary for anonymous ftp's that chroot and can't do it later.
-	 */
-	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
-	addrlen = sizeof(his_addr); /* xxx */
-	if (getpeername(0, (struct sockaddr *)&his_addr, &addrlen) < 0) {
+	memset((char *)&his_addr, 0, sizeof(his_addr));
+	addrlen = sizeof(his_addr.si_su);
+	if (getpeername(0, (struct sockaddr *)&his_addr.si_su, &addrlen) < 0) {
 		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
 		exit(1);
 	}
-	addrlen = sizeof(ctrl_addr);
+	his_addr.su_len = addrlen;
+	memset((char *)&ctrl_addr, 0, sizeof(ctrl_addr));
+	addrlen = sizeof(ctrl_addr.si_su);
 	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
 		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
 		exit(1);
 	}
+	ctrl_addr.su_len = addrlen;
+#ifdef INET6
 	if (his_addr.su_family == AF_INET6
-	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_sin6.sin6_addr)) {
+	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_6addr)) {
 #if 1
 		/*
 		 * IPv4 control connection arrived to AF_INET6 socket.
@@ -343,26 +400,24 @@ main(int argc, char *argv[])
 		 *
 		 * The assumption is untrue on SIIT environment.
 		 */
-		union sockunion tmp_addr;
+		struct sockinet tmp_addr;
 		const int off = sizeof(struct in6_addr) - sizeof(struct in_addr);
 
 		tmp_addr = his_addr;
 		memset(&his_addr, 0, sizeof(his_addr));
-		his_addr.su_sin.sin_family = AF_INET;
-		his_addr.su_sin.sin_len = sizeof(his_addr.su_sin);
-		memcpy(&his_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-			sizeof(his_addr.su_sin.sin_addr));
-		his_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+		his_addr.su_family = AF_INET;
+		his_addr.su_len = sizeof(his_addr.si_su.su_sin);
+		memcpy(&his_addr.su_addr, &tmp_addr.su_6addr.s6_addr[off],
+		    sizeof(his_addr.su_addr));
+		his_addr.su_port = tmp_addr.su_port;
 
 		tmp_addr = ctrl_addr;
 		memset(&ctrl_addr, 0, sizeof(ctrl_addr));
-		ctrl_addr.su_sin.sin_family = AF_INET;
-		ctrl_addr.su_sin.sin_len = sizeof(ctrl_addr.su_sin);
-		memcpy(&ctrl_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-			sizeof(ctrl_addr.su_sin.sin_addr));
-		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+		ctrl_addr.su_family = AF_INET;
+		ctrl_addr.su_len = sizeof(ctrl_addr.si_su.su_sin);
+		memcpy(&ctrl_addr.su_addr, &tmp_addr.su_6addr.s6_addr[off],
+		    sizeof(ctrl_addr.su_addr));
+		ctrl_addr.su_port = tmp_addr.su_port;
 #else
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
@@ -378,6 +433,7 @@ main(int argc, char *argv[])
 
 		mapped = 1;
 	} else
+#endif /* INET6 */
 		mapped = 0;
 #ifdef IP_TOS
 	if (!mapped && his_addr.su_family == AF_INET) {
@@ -389,8 +445,9 @@ main(int argc, char *argv[])
 #endif
 	/* if the hostname hasn't been given, attempt to determine it */ 
 	if (hostname[0] == '\0') {
-		if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
-		    hostname, sizeof(hostname), NULL, 0, 0) != 0)
+		if (getnameinfo((struct sockaddr *)&ctrl_addr.si_su,
+		    ctrl_addr.su_len, hostname, sizeof(hostname), NULL, 0, 0)
+		    != 0)
 			(void)gethostname(hostname, sizeof(hostname));
 		hostname[sizeof(hostname) - 1] = '\0';
 	}
@@ -402,12 +459,12 @@ main(int argc, char *argv[])
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
 	if (signal(SIGURG, myoob) == SIG_ERR)
-		syslog(LOG_ERR, "signal: %m");
+		syslog(LOG_WARNING, "signal: %m");
 
 	/* Try to handle urgent data inline */
 #ifdef SO_OOBINLINE
 	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on)) < 0)
-		syslog(LOG_ERR, "setsockopt: %m");
+		syslog(LOG_WARNING, "setsockopt: %m");
 #endif
 	/* Set keepalives on the socket to detect dropped connections.  */
 #ifdef SO_KEEPALIVE
@@ -419,9 +476,9 @@ main(int argc, char *argv[])
 
 #ifdef	F_SETOWN
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
-		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
+		syslog(LOG_WARNING, "fcntl F_SETOWN: %m");
 #endif
-	dolog((struct sockaddr *)&his_addr);
+	logremotehost(&his_addr);
 	/*
 	 * Set up default state
 	 */
@@ -436,7 +493,7 @@ main(int argc, char *argv[])
 #ifdef KERBEROS5
 	kerror = krb5_init_context(&kcontext);
 	if (kerror) {
-		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
+		syslog(LOG_ERR, "%s when initializing Kerberos context",
 		    error_message(kerror));
 		exit(0);
 	}
@@ -573,7 +630,7 @@ user(const char *name)
 
 #ifdef SKEY
 	if (skey_haskey(name) == 0) {
-		char *myskey;
+		const char *myskey;
 
 		myskey = skey_keyinfo(name);
 		reply(331, "Password [%s] required for %s.",
@@ -613,7 +670,7 @@ user(const char *name)
  *
  * NOTE: needs struct passwd *pw setup before use.
  */
-int
+static int
 checkuser(const char *fname, const char *name, int def, int nofile,
 	    char **retclass)
 {
@@ -659,7 +716,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 
 					/* have a host specifier */
 		if ((p = strchr(glob, '@')) != NULL) {
-			u_int32_t	net, mask, addr;
+			unsigned long	net, mask, addr;
 			int		bits;
 
 			*p++ = '\0';
@@ -669,7 +726,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 			    &net, sizeof(net))) != -1) {
 				net = ntohl(net);
 				mask = 0xffffffffU << (32 - bits);
-				addr = ntohl(his_addr.su_sin.sin_addr.s_addr);
+				addr = ntohl(his_addr.su_addr.s_addr);
 				if ((addr & mask) != net)
 					continue;
 
@@ -739,7 +796,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
  *
  * NOTE: needs struct passwd *pw setup (for checkuser())
  */
-int
+static int
 checkaccess(const char *name)
 {
 
@@ -747,7 +804,7 @@ checkaccess(const char *name)
 }
 
 /*
- * Terminate login as previous user, if any, resetting state;
+ * Terminate login as previous user (if any), resetting state;
  * used when USER command is given or login fails.
  */
 static void
@@ -755,17 +812,21 @@ end_login(void)
 {
 
 	if (logged_in) {
-		logwtmp(ttyline, "", "");
+		if (dowtmp)
+			logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 	}
 			/* reset login state */
-	(void) seteuid((uid_t)0);
+	show_chdir_messages(-1);		/* flush chdir cache */
+	if (pw != NULL && pw->pw_passwd != NULL)
+		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 	pw = NULL;
 	logged_in = 0;
 	quietmessages = 0;
 	gidcount = 0;
 	curclass.type = CLASS_REAL;
+	(void) seteuid((uid_t)0);
 }
 
 void
@@ -813,16 +874,12 @@ pass(const char *passwd)
 			}
 		}
 #endif
-		if (!sflag && *pw->pw_passwd != '\0' &&
-		    !strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd)) {
-			rval = 0;
-			goto skip;
-		}
-		rval = 1;
+		if (!sflag)
+			rval = checkpassword(pw, passwd);
+		else
+			rval = 1;
 
  skip:
-		if (pw != NULL && pw->pw_expire && time(NULL) >= pw->pw_expire)
-			rval = 2;
 
 			/*
 			 * If rval > 0, the user failed the authentication check
@@ -883,7 +940,8 @@ pass(const char *passwd)
 	gidcount = getgroups(sizeof(gidlist), gidlist);
 
 			/* open wtmp before chroot */
-	logwtmp(ttyline, pw->pw_name, remotehost);
+	if (dowtmp)
+		logwtmp(ttyline, pw->pw_name, remotehost);
 
 			/* open utmp before chroot */
 	if (doutmp) {
@@ -919,13 +977,17 @@ pass(const char *passwd)
 			class = xstrdup("real");
 			break;
 		default:
+			syslog(LOG_ERR, "unknown curclass.type %d; aborting",
+			    curclass.type);
 			abort();
 		}
 	}
 
 			/* parse ftpd.conf, setting up various parameters */
 	parse_conf(class);
-	count_users();
+	connections = 1;
+	if (dopidfile)
+		count_users();
 	if (curclass.limit != -1 && connections > curclass.limit) {
 		if (! EMPTYSTR(curclass.limitfile))
 			(void)display_file(conffilename(curclass.limitfile),
@@ -996,6 +1058,16 @@ pass(const char *passwd)
 		}
 		break;
 	case CLASS_REAL:
+			/* only chroot REAL if explictly requested */
+		if (! EMPTYSTR(curclass.chroot)) {
+			format_path(root, curclass.chroot);
+			if (EMPTYSTR(root) || chroot(root) < 0) {
+				syslog(LOG_NOTICE,
+				    "REAL user %s: can't chroot to %s: %m",
+				    pw->pw_name, root);
+				goto bad_chroot;
+			}
+		}
 		format_path(homedir,
 		    curclass.homedir ? curclass.homedir :
 		    pw->pw_dir);
@@ -1049,26 +1121,33 @@ pass(const char *passwd)
 	(void)display_file(conffilename(curclass.motd), 230);
 	show_chdir_messages(230);
 	if (curclass.type == CLASS_GUEST) {
+		char *p;
+
 		reply(230, "Guest login ok, access restrictions apply.");
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%.*s", remotehost,
 		    (int) (sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/")), passwd);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
 			"ANONYMOUS FTP LOGIN FROM %s, %s (class: %s, type: %s)",
 			    remotehost, passwd,
 			    curclass.classname, CURCLASSTYPE);
+			/* store guest password reply into pw_passwd */
+		REASSIGN(pw->pw_passwd, xstrdup(passwd));
+		for (p = pw->pw_passwd; *p; p++)
+			if (!isgraph(*p))
+				*p = '_';
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
-#ifdef HASSETPROCTITLE
+#if HAVE_SETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
 		setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
 			    "FTP LOGIN FROM %s as %s (class: %s, type: %s)",
@@ -1077,9 +1156,11 @@ pass(const char *passwd)
 	}
 	(void) umask(curclass.umask);
 	goto cleanuppass;
+
  bad:
 			/* Forget all about it... */
 	end_login();
+
  cleanuppass:
 	if (class)
 		free(class);
@@ -1100,16 +1181,16 @@ retrieve(char *argv[], const char *name)
 	tdp = NULL;
 	dispname = name;
 	fin = dout = NULL;
-	if (argv == NULL) {
+	if (argv == NULL) {		/* if not running a command ... */
 		log = 1;
 		isdata = 1;
 		fin = fopen(name, "r");
 		closefunc = fclose;
-		if (fin == NULL)
+		if (fin == NULL)	/* doesn't exist?; try a conversion */
 			argv = do_conversion(name);
 		if (argv != NULL) {
 			isconversion++;
-			syslog(LOG_INFO, "get command: '%s' on '%s'",
+			syslog(LOG_DEBUG, "get command: '%s' on '%s'",
 			    argv[0], name);
 		}
 	}
@@ -1135,7 +1216,7 @@ retrieve(char *argv[], const char *name)
 		if (errno != 0) {
 			perror_reply(550, dispname);
 			if (log)
-				logcmd("get", -1, name, NULL, NULL,
+				logxfer("get", -1, name, NULL, NULL,
 				    strerror(errno));
 		}
 		goto cleanupretrieve;
@@ -1177,7 +1258,7 @@ retrieve(char *argv[], const char *name)
 	tdp = &td;
  done:
 	if (log)
-		logcmd("get", byte_count, name, NULL, tdp, NULL);
+		logxfer("get", byte_count, name, NULL, tdp, NULL);
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
 		FILE *err;
@@ -1188,7 +1269,7 @@ retrieve(char *argv[], const char *name)
 			    "Command returned an exit status of %d",
 			    closerv);
 			if (isconversion)
-				syslog(LOG_INFO,
+				syslog(LOG_WARNING,
 				    "retrieve command: '%s' returned %d",
 				    argv[0], closerv);
 		}
@@ -1231,7 +1312,8 @@ store(const char *name, const char *mode, int unique)
 	desc = (*mode == 'w') ? "put" : "append";
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
-		logcmd(desc, -1, name, NULL, NULL, "cannot create unique file");
+		logxfer(desc, -1, name, NULL, NULL,
+		    "cannot create unique file");
 		goto cleanupstore;
 	}
 
@@ -1242,7 +1324,7 @@ store(const char *name, const char *mode, int unique)
 	tdp = NULL;
 	if (fout == NULL) {
 		perror_reply(553, name);
-		logcmd(desc, -1, name, NULL, NULL, strerror(errno));
+		logxfer(desc, -1, name, NULL, NULL, strerror(errno));
 		goto cleanupstore;
 	}
 	byte_count = -1;
@@ -1290,7 +1372,7 @@ store(const char *name, const char *mode, int unique)
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
-	logcmd(desc, byte_count, name, NULL, tdp, NULL);
+	logxfer(desc, byte_count, name, NULL, tdp, NULL);
 	(*closefunc)(fout);
  cleanupstore:
 	closedataconn(din);
@@ -1325,13 +1407,16 @@ getdatasock(const char *mode)
 			 * would be < IPPORT_RESERVED, use a random port
 			 * instead.
 			 */
-	port = ntohs(ctrl_addr.su_port) - 1;
+	if (dataport)
+		port = dataport;
+	else
+		port = ntohs(ctrl_addr.su_port) - 1;
 	if (dropprivs && port < IPPORT_RESERVED)
 		port = 0;		/* use random port */
 	data_source.su_port = htons(port);
 
 	for (tries = 1; ; tries++) {
-		if (bind(s, (struct sockaddr *)&data_source,
+		if (bind(s, (struct sockaddr *)&data_source.si_su,
 		    data_source.su_len) >= 0)
 			break;
 		if (errno != EADDRINUSE || tries > 10)
@@ -1369,16 +1454,16 @@ dataconn(const char *name, off_t size, const char *mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1)
-		(void)snprintf(sizebuf, sizeof(sizebuf), " (%qd byte%s)",
-		    (qdfmt_t)size, PLURAL(size));
+		(void)snprintf(sizebuf, sizeof(sizebuf), " (" LLF " byte%s)",
+		    (LLT)size, PLURAL(size));
 	else
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
-		union sockunion from;
-		int s, fromlen = sizeof(from);
+		struct sockinet from;
+		int s, fromlen = sizeof(from.su_len);
 
 		(void) alarm(curclass.timeout);
-		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
+		s = accept(pdata, (struct sockaddr *)&from.si_su, &fromlen);
 		(void) alarm(0);
 		if (s < 0) {
 			reply(425, "Can't open data connection.");
@@ -1420,17 +1505,19 @@ dataconn(const char *name, off_t size, const char *mode)
 	usedefault = 1;
 	file = getdatasock(mode);
 	if (file == NULL) {
-		char hbuf[INET6_ADDRSTRLEN];
-		char pbuf[10];
-		getnameinfo((struct sockaddr *)&data_source, data_source.su_len,
-			hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-			NI_NUMERICHOST | NI_NUMERICSERV);
+		char hbuf[NI_MAXHOST];
+		char pbuf[NI_MAXSERV];
+
+		if (getnameinfo((struct sockaddr *)&data_source.si_su,
+		    data_source.su_len, hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
+		    NI_NUMERICHOST | NI_NUMERICSERV))
+			strlcpy(hbuf, "?", sizeof(hbuf));
 		reply(425, "Can't create data socket (%s,%s): %s.",
 		      hbuf, pbuf, strerror(errno));
 		return (NULL);
 	}
 	data = fileno(file);
-	while (connect(data, (struct sockaddr *)&data_dest,
+	while (connect(data, (struct sockaddr *)&data_dest.si_su,
 	    data_dest.su_len) < 0) {
 		if (errno == EADDRINUSE && retry < swaitmax) {
 			sleep((unsigned) swaitint);
@@ -1480,7 +1567,7 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 	switch (type) {
 
 	case TYPE_A:
- /* XXXX: rate limit ascii send (get) */
+ /* XXXLUKEM: rate limit ascii send (get) */
 		(void) alarm(curclass.timeout);
 		while ((c = getc(instr)) != EOF) {
 			byte_count++;
@@ -1618,6 +1705,7 @@ static int
 receive_data(FILE *instr, FILE *outstr)
 {
 	int	c, bare_lfs, netfd, filefd, rval;
+	off_t	byteswritten;
 	char	buf[BUFSIZ];
 #ifdef __GNUC__
 	(void) &bare_lfs;
@@ -1626,8 +1714,18 @@ receive_data(FILE *instr, FILE *outstr)
 	bare_lfs = 0;
 	transflag = 1;
 	rval = -1;
+	byteswritten = 0;
 	if (setjmp(urgcatch))
 		goto cleanup_recv_data;
+
+#define FILESIZECHECK(x) \
+			do { \
+				if (curclass.maxfilesize != -1 && \
+				    (x) > curclass.maxfilesize) { \
+					errno = EFBIG; \
+					goto file_err; \
+				} \
+			} while (0)
 
 	switch (type) {
 
@@ -1648,8 +1746,9 @@ receive_data(FILE *instr, FILE *outstr)
 					if ((c = read(netfd, buf,
 					    MIN(sizeof(buf), bufrem))) <= 0)
 						goto recvdone;
+					FILESIZECHECK(byte_count + c);
 					if ((d = write(filefd, buf, c)) != c)
-						goto recvdone;
+						goto file_err;
 					(void) alarm(curclass.timeout);
 					bufrem -= c;
 					byte_count += c;
@@ -1665,6 +1764,7 @@ receive_data(FILE *instr, FILE *outstr)
 			}
 		} else {
 			while ((c = read(netfd, buf, sizeof(buf))) > 0) {
+				FILESIZECHECK(byte_count + c);
 				if (write(filefd, buf, c) != c)
 					goto file_err;
 				(void) alarm(curclass.timeout);
@@ -1687,7 +1787,7 @@ receive_data(FILE *instr, FILE *outstr)
 
 	case TYPE_A:
 		(void) alarm(curclass.timeout);
- /* XXXX: rate limit ascii receive (put) */
+ /* XXXLUKEM: rate limit ascii receive (put) */
 		while ((c = getc(instr)) != EOF) {
 			byte_count++;
 			total_data_in++;
@@ -1709,13 +1809,17 @@ receive_data(FILE *instr, FILE *outstr)
 					total_bytes++;
 					if ((byte_count % 4096) == 0)
 						(void) alarm(curclass.timeout);
+					byteswritten++;
+					FILESIZECHECK(byteswritten);
 					(void) putc ('\r', outstr);
 					if (c == '\0' || c == EOF)
 						goto contin2;
 				}
 			}
+			byteswritten++;
+			FILESIZECHECK(byteswritten);
 			(void) putc(c, outstr);
-	contin2:	;
+ contin2:	;
 		}
 		(void) alarm(0);
 		fflush(outstr);
@@ -1736,6 +1840,7 @@ receive_data(FILE *instr, FILE *outstr)
 		reply(550, "Unimplemented TYPE %d in receive_data", type);
 		goto cleanup_recv_data;
 	}
+#undef FILESIZECHECK
 
  data_err:
 	(void) alarm(0);
@@ -1760,8 +1865,8 @@ receive_data(FILE *instr, FILE *outstr)
 void
 statcmd(void)
 {
-	union sockunion *su = NULL;
-	static char ntop_buf[INET6_ADDRSTRLEN];
+	struct sockinet *su = NULL;
+	static char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
   	u_char *a, *p;
 	int ispassive, af;
 	off_t otbi, otbo, otb;
@@ -1770,13 +1875,14 @@ statcmd(void)
 
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
-	ntop_buf[0] = '\0';
-	if (!getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
-			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
-	    && strcmp(remotehost, ntop_buf) != 0) {
-		reply(0, "Connected to %s (%s)", remotehost, ntop_buf);
-	} else
+	hbuf[0] = '\0';
+	if (!getnameinfo((struct sockaddr *)&his_addr.si_su, his_addr.su_len,
+			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)
+	    && strcmp(remotehost, hbuf) != 0)
+		reply(0, "Connected to %s (%s)", remotehost, hbuf);
+	else
 		reply(0, "Connected to %s", remotehost);
+
 	if (logged_in) {
 		if (curclass.type == CLASS_GUEST)
 			reply(0, "Logged in anonymously");
@@ -1806,7 +1912,10 @@ statcmd(void)
 		su = NULL;
 	} else if (pdata != -1) {
 		reply(0, "in Passive mode");
-		su = (union sockunion *)&pasv_addr;
+		if (curclass.advertise.su_len != 0)
+			su = &curclass.advertise;
+		else
+			su = &pasv_addr;
 		ispassive = 1;
 		goto printaddr;
 	} else if (usedefault == 0) {
@@ -1814,12 +1923,12 @@ statcmd(void)
 			reply(0, "EPSV only mode (EPSV ALL)");
 			goto epsvonly;
 		}
-		su = (union sockunion *)&data_dest;
+		su = (struct sockinet *)&data_dest;
  printaddr:
 							/* PASV/PORT */
 		if (su->su_family == AF_INET) {
-			a = (u_char *) &su->su_sin.sin_addr;
-			p = (u_char *) &su->su_sin.sin_port;
+			a = (u_char *) &su->su_addr;
+			p = (u_char *) &su->su_port;
 #define UC(b) (((int) b) & 0xff)
 			reply(0, "%s (%d,%d,%d,%d,%d,%d)",
 				ispassive ? "PASV" : "PORT" ,
@@ -1834,17 +1943,19 @@ statcmd(void)
 		alen = 0;
 		switch (su->su_family) {
 		case AF_INET:
-			a = (u_char *) &su->su_sin.sin_addr;
-			p = (u_char *) &su->su_sin.sin_port;
-			alen = sizeof(su->su_sin.sin_addr);
+			a = (u_char *) &su->su_addr;
+			p = (u_char *) &su->su_port;
+			alen = sizeof(su->su_addr);
 			af = 4;
 			break;
+#ifdef INET6
 		case AF_INET6:
-			a = (u_char *) &su->su_sin6.sin6_addr;
-			p = (u_char *) &su->su_sin6.sin6_port;
-			alen = sizeof(su->su_sin6.sin6_addr);
+			a = (u_char *) &su->su_6addr;
+			p = (u_char *) &su->su_port;
+			alen = sizeof(su->su_6addr);
 			af = 6;
 			break;
+#endif
 		default:
 			af = 0;
 			break;
@@ -1854,59 +1965,60 @@ statcmd(void)
 			    ispassive ? "LPSV" : "LPRT", af, alen);
 			for (i = 0; i < alen; i++)
 				cprintf(stdout, ",%d", UC(a[i]));
-			cprintf(stdout, ",%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
+			cprintf(stdout, ",%d,%d,%d)\r\n",
+			    2, UC(p[0]), UC(p[1]));
 #undef UC
 		}
 	    }
 
 		/* EPRT/EPSV */
  epsvonly:
-		switch (su->su_family) {
-		case AF_INET:
-			af = 1;
-			break;
-		case AF_INET6:
-			af = 2;
-			break;
-		default:
-			af = 0;
-			break;
-		}
-		if (af) {
-			if (getnameinfo((struct sockaddr *)su, su->su_len,
-				    ntop_buf, sizeof(ntop_buf), NULL, 0,
-					NI_NUMERICHOST) == 0) {
-				reply(0, "%s (|%d|%s|%d|)",
+		af = af2epsvproto(su->su_family);
+		hbuf[0] = '\0';
+		if (af > 0) {
+			struct sockinet tmp;
+
+			tmp = *su;
+#ifdef INET6
+			if (tmp.su_family == AF_INET6)
+				tmp.su_scope_id = 0;
+#endif
+			if (getnameinfo((struct sockaddr *)&tmp.si_su,
+			    tmp.su_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+				reply(0, "%s (|%d|%s|%s|)",
 				    ispassive ? "EPSV" : "EPRT",
-				    af, ntop_buf, ntohs(su->su_port));
-			}
+				    af, hbuf, sbuf);
 		}
 	} else
 		reply(0, "No data connection");
 
 	if (logged_in) {
-		reply(0, "Data sent:        %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data_out, PLURAL(total_data_out),
-		    (qdfmt_t)total_files_out, PLURAL(total_files_out));
-		reply(0, "Data received:    %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data_in, PLURAL(total_data_in),
-		    (qdfmt_t)total_files_in, PLURAL(total_files_in));
-		reply(0, "Total data:       %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data, PLURAL(total_data),
-		    (qdfmt_t)total_files, PLURAL(total_files));
+		reply(0,
+		    "Data sent:        " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data_out, PLURAL(total_data_out),
+		    (LLT)total_files_out, PLURAL(total_files_out));
+		reply(0,
+		    "Data received:    " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data_in, PLURAL(total_data_in),
+		    (LLT)total_files_in, PLURAL(total_files_in));
+		reply(0,
+		    "Total data:       " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data, PLURAL(total_data),
+		    (LLT)total_files, PLURAL(total_files));
 	}
 	otbi = total_bytes_in;
 	otbo = total_bytes_out;
 	otb = total_bytes;
-	reply(0, "Traffic sent:     %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otbo, PLURAL(otbo),
-	    (qdfmt_t)total_xfers_out, PLURAL(total_xfers_out));
-	reply(0, "Traffic received: %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otbi, PLURAL(otbi),
-	    (qdfmt_t)total_xfers_in, PLURAL(total_xfers_in));
-	reply(0, "Total traffic:    %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otb, PLURAL(otb),
-	    (qdfmt_t)total_xfers, PLURAL(total_xfers));
+	reply(0, "Traffic sent:     " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otbo, PLURAL(otbo),
+	    (LLT)total_xfers_out, PLURAL(total_xfers_out));
+	reply(0, "Traffic received: " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otbi, PLURAL(otbi),
+	    (LLT)total_xfers_in, PLURAL(total_xfers_in));
+	reply(0, "Total traffic:    " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otb, PLURAL(otb),
+	    (LLT)total_xfers, PLURAL(total_xfers));
 
 	if (logged_in) {
 		struct ftpconv *cp;
@@ -1915,7 +2027,7 @@ statcmd(void)
 		reply(0, "Class: %s, type: %s",
 		    curclass.classname, CURCLASSTYPE);
 		reply(0, "Check PORT/LPRT commands: %sabled",
-		    curclass.checkportcmd ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(checkportcmd) ? "en" : "dis");
 		if (! EMPTYSTR(curclass.display))
 			reply(0, "Display file: %s", curclass.display);
 		if (! EMPTYSTR(curclass.notify))
@@ -1928,30 +2040,49 @@ statcmd(void)
 		else
 			reply(0, "Maximum connections: %d", curclass.limit);
 		if (curclass.limitfile)
-			reply(0, "Connection limit exceeded file: %s",
+			reply(0, "Connection limit exceeded message file: %s",
 			    curclass.limitfile);
 		if (! EMPTYSTR(curclass.chroot))
 			reply(0, "Chroot format: %s", curclass.chroot);
 		if (! EMPTYSTR(curclass.homedir))
 			reply(0, "Homedir format: %s", curclass.homedir);
+		if (curclass.maxfilesize == -1)
+			reply(0, "Maximum file size: unlimited");
+		else
+			reply(0, "Maximum file size: " LLF,
+			    (LLT)curclass.maxfilesize);
 		if (! EMPTYSTR(curclass.motd))
 			reply(0, "MotD file: %s", curclass.motd);
 		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
-		    curclass.modify ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(modify) ? "en" : "dis");
 		reply(0, "Upload commands (APPE, STOR, STOU): %sabled",
-		    curclass.upload ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(upload) ? "en" : "dis");
+		reply(0, "Sanitize file names: %sabled",
+		    CURCLASS_FLAGS_ISSET(sanenames) ? "en" : "dis");
+		reply(0, "PASV/LPSV/EPSV connections: %sabled",
+		    CURCLASS_FLAGS_ISSET(passive) ? "en" : "dis");
+		if (curclass.advertise.su_len != 0) {
+			char buf[50];	/* big enough for IPv6 address */
+			const char *bp;
+
+			bp = inet_ntop(curclass.advertise.su_family,
+			    (void *)&curclass.advertise.su_addr,
+			    buf, sizeof(buf));
+			if (bp != NULL)
+				reply(0, "PASV advertise address: %s", bp);
+		}
 		if (curclass.portmin && curclass.portmax)
 			reply(0, "PASV port range: %d - %d",
 			    curclass.portmin, curclass.portmax);
 		if (curclass.rateget)
-			reply(0, "Rate get limit: %d bytes/sec",
-			    curclass.rateget);
+			reply(0, "Rate get limit: " LLF " bytes/sec",
+			    (LLT)curclass.rateget);
 		else
 			reply(0, "Rate get limit: disabled");
 		if (curclass.rateput)
-			reply(0, "Rate put limit: %d bytes/sec",
-			    curclass.rateput);
+			reply(0, "Rate put limit: " LLF " bytes/sec",
+			    (LLT)curclass.rateput);
 		else
 			reply(0, "Rate put limit: disabled");
 		reply(0, "Umask: %.04o", curclass.umask);
@@ -2011,21 +2142,24 @@ reply(int n, const char *fmt, ...)
 }
 
 static void
-dolog(struct sockaddr *who)
+logremotehost(struct sockinet *who)
 {
-	getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost), NULL,0,0);
-#ifdef HASSETPROCTITLE
+
+	if (getnameinfo((struct sockaddr *)&who->si_su,
+	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 0))
+		strlcpy(remotehost, "?", sizeof(remotehost));
+
+#if HAVE_SETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
-#endif /* HASSETPROCTITLE */
+#endif /* HAVE_SETPROCTITLE */
 	if (logging)
 		syslog(LOG_INFO, "connection from %s to %s",
 		    remotehost, hostname);
 }
 
 /*
- * Record logout in wtmp file
- * and exit with supplied status.
+ * Record logout in wtmp file and exit with supplied status.
  */
 void
 dologout(int status)
@@ -2037,7 +2171,8 @@ dologout(int status)
 	transflag = 0;
 
 	if (logged_in) {
-		logwtmp(ttyline, "", "");
+		if (dowtmp)
+			logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 #ifdef KERBEROS
@@ -2071,12 +2206,13 @@ myoob(int signo)
 	if (strcasecmp(cp, "STAT\r\n") == 0) {
 		tmpline[0] = '\0';
 		if (file_size != (off_t) -1)
-			reply(213, "Status: %qd of %qd byte%s transferred",
-			    (qdfmt_t)byte_count, (qdfmt_t)file_size,
+			reply(213,
+			    "Status: " LLF " of " LLF " byte%s transferred",
+			    (LLT)byte_count, (LLT)file_size,
 			    PLURAL(byte_count));
 		else
-			reply(213, "Status: %qd byte%s transferred",
-			    (qdfmt_t)byte_count, PLURAL(byte_count));
+			reply(213, "Status: " LLF " byte%s transferred",
+			    (LLT)byte_count, PLURAL(byte_count));
 	}
 }
 
@@ -2089,7 +2225,7 @@ bind_pasv_addr(void)
 	len = pasv_addr.su_len;
 	if (curclass.portmin == 0 && curclass.portmax == 0) {
 		pasv_addr.su_port = 0;
-		return (bind(pdata, (struct sockaddr *)&pasv_addr, len));
+		return (bind(pdata, (struct sockaddr *)&pasv_addr.si_su, len));
 	}
 
 	if (passiveport == 0) {
@@ -2108,7 +2244,7 @@ bind_pasv_addr(void)
 			return (-1);
 		}
 		pasv_addr.su_port = htons(port);
-		if (bind(pdata, (struct sockaddr *)&pasv_addr, len) == 0)
+		if (bind(pdata, (struct sockaddr *)&pasv_addr.si_su, len) == 0)
 			break;
 		if (errno != EADDRINUSE)
 			return (-1);
@@ -2141,11 +2277,15 @@ passive(void)
 	if (bind_pasv_addr() < 0)
 		goto pasv_error;
 	len = pasv_addr.su_len;
-	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *) &pasv_addr.si_su, &len) < 0)
 		goto pasv_error;
+	pasv_addr.su_len = len;
 	if (listen(pdata, 1) < 0)
 		goto pasv_error;
-	a = (char *) &pasv_addr.su_sin.sin_addr;
+	if (curclass.advertise.su_len != 0)
+		a = (char *) &curclass.advertise.su_addr;
+	else
+		a = (char *) &pasv_addr.su_addr;
 	p = (char *) &pasv_addr.su_port;
 
 #define UC(b) (((int) b) & 0xff)
@@ -2159,6 +2299,73 @@ passive(void)
 	pdata = -1;
 	perror_reply(425, "Can't open passive connection");
 	return;
+}
+
+/*
+ * convert protocol identifier to/from AF
+ */
+int
+lpsvproto2af(int proto)
+{
+
+	switch (proto) {
+	case 4:
+		return AF_INET;
+#ifdef INET6
+	case 6:
+		return AF_INET6;
+#endif
+	default:
+		return -1;
+	}
+}
+
+int
+af2lpsvproto(int af)
+{
+
+	switch (af) {
+	case AF_INET:
+		return 4;
+#ifdef INET6
+	case AF_INET6:
+		return 6;
+#endif
+	default:
+		return -1;
+	}
+}
+
+int
+epsvproto2af(int proto)
+{
+
+	switch (proto) {
+	case 1:
+		return AF_INET;
+#ifdef INET6
+	case 2:
+		return AF_INET6;
+#endif
+	default:
+		return -1;
+	}
+}
+
+int
+af2epsvproto(int af)
+{
+
+	switch (af) {
+	case AF_INET:
+		return 1;
+#ifdef INET6
+	case AF_INET6:
+		return 2;
+#endif
+	default:
+		return -1;
+	}
 }
 
 /*
@@ -2177,31 +2384,16 @@ long_passive(char *cmd, int pf)
 		return;
 	}
 
-	if (pf != PF_UNSPEC) {
-		if (ctrl_addr.su_family != pf) {
-			switch (ctrl_addr.su_family) {
-			case AF_INET:
-				pf = 1;
-				break;
-			case AF_INET6:
-				pf = 2;
-				break;
-			default:
-				pf = 0;
-				break;
-			}
-			/*
-			 * XXX
-			 * only EPRT/EPSV ready clients will understand this
-			 */
-			if (strcmp(cmd, "EPSV") == 0 && pf) {
-				reply(522, "Network protocol mismatch, "
-					    "use (%d)", pf);
-			} else
-				reply(501, "Network protocol mismatch"); /*XXX*/
+	if (pf != PF_UNSPEC && ctrl_addr.su_family != pf) {
+		/*
+		 * XXX: only EPRT/EPSV ready clients will understand this
+		 */
+		if (strcmp(cmd, "EPSV") != 0)
+			reply(501, "Network protocol mismatch"); /*XXX*/
+		else
+			epsv_protounsupp("Network protocol mismatch");
 
-			return;
-		}
+		return;
 	}
  
 	if (pdata >= 0)
@@ -2215,8 +2407,9 @@ long_passive(char *cmd, int pf)
 	if (bind_pasv_addr() < 0)
 		goto pasv_error;
 	len = pasv_addr.su_len;
-	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *) &pasv_addr.si_su, &len) < 0)
 		goto pasv_error;
+	pasv_addr.su_len = len;
 	if (listen(pdata, 1) < 0)
 		goto pasv_error;
 	p = (char *) &pasv_addr.su_port;
@@ -2224,16 +2417,25 @@ long_passive(char *cmd, int pf)
 #define UC(b) (((int) b) & 0xff)
 
 	if (strcmp(cmd, "LPSV") == 0) {
-		switch (pasv_addr.su_family) {
+		struct sockinet *advert;
+
+		if (curclass.advertise.su_len != 0)
+			advert = &curclass.advertise;
+		else
+			advert = &pasv_addr;
+		switch (advert->su_family) {
 		case AF_INET:
-			a = (char *) &pasv_addr.su_sin.sin_addr;
-			reply(228, "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+			a = (char *) &advert->su_addr;
+			reply(228,
+    "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 				4, 4, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				2, UC(p[0]), UC(p[1]));
 			return;
+#ifdef INET6
 		case AF_INET6:
-			a = (char *) &pasv_addr.su_sin6.sin6_addr;
-			reply(228, "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+			a = (char *) &advert->su_6addr;
+			reply(228,
+    "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 				6, 16,
 				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]),
@@ -2241,14 +2443,17 @@ long_passive(char *cmd, int pf)
 				UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]),
 				2, UC(p[0]), UC(p[1]));
 			return;
+#endif
 		}
 #undef UC
 	} else if (strcmp(cmd, "EPSV") == 0) {
 		switch (pasv_addr.su_family) {
 		case AF_INET:
+#ifdef INET6
 		case AF_INET6:
+#endif
 			reply(229, "Entering Extended Passive Mode (|||%d|)",
-			ntohs(pasv_addr.su_port));
+			    ntohs(pasv_addr.su_port));
 			return;
 		}
 	} else {
@@ -2262,13 +2467,114 @@ long_passive(char *cmd, int pf)
 	return;
 }
 
+int
+extended_port(const char *arg)
+{
+	char *tmp = NULL;
+	char *result[3];
+	char *p, *q;
+	char delim;
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+	int i;
+	unsigned long proto;
+
+	tmp = xstrdup(arg);
+	p = tmp;
+	delim = p[0];
+	p++;
+	memset(result, 0, sizeof(result));
+	for (i = 0; i < 3; i++) {
+		q = strchr(p, delim);
+		if (!q || *q != delim)
+			goto parsefail;
+		*q++ = '\0';
+		result[i] = p;
+		p = q;
+	}
+
+			/* some more sanity checks */
+	p = NULL;
+	(void)strtoul(result[2], &p, 10);
+	if (!*result[2] || *p)
+		goto parsefail;
+	p = NULL;
+	proto = strtoul(result[0], &p, 10);
+	if (!*result[0] || *p)
+		goto protounsupp;
+	 
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = epsvproto2af((int)proto);
+	if (hints.ai_family < 0)
+		goto protounsupp;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(result[1], result[2], &hints, &res))
+		goto parsefail;
+	if (res->ai_next)
+		goto parsefail;
+	if (sizeof(data_dest) < res->ai_addrlen)
+		goto parsefail;
+	memcpy(&data_dest.si_su, res->ai_addr, res->ai_addrlen);
+	data_dest.su_len = res->ai_addrlen;
+#ifdef INET6
+	if (his_addr.su_family == AF_INET6 &&
+	    data_dest.su_family == AF_INET6) {
+			/* XXX: more sanity checks! */
+		data_dest.su_scope_id = his_addr.su_scope_id;
+	}
+#endif
+
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
+	return 0;
+
+ parsefail:
+	reply(500, "Invalid argument, rejected.");
+	usedefault = 1;
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
+	return -1;
+
+ protounsupp:
+	epsv_protounsupp("Protocol not supported");
+	usedefault = 1;
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
+	return -1;
+}
+
+/*
+ * 522 Protocol not supported (proto,...)
+ * as we assume address family for control and data connections are the same,
+ * we do not return the list of address families we support - instead, we
+ * return the address family of the control connection.
+ */
+void
+epsv_protounsupp(const char *message)
+{
+	int proto;
+
+	proto = af2epsvproto(ctrl_addr.su_family);
+	if (proto < 0)
+		reply(501, "%s", message);	/* XXX */
+	else
+		reply(522, "%s, use (%d)", message, proto);
+}
+
 /*
  * Generate unique name for file with basename "local".
  * The file named "local" is already known to exist.
  * Generates failure reply on error.
  *
- * XXX this function should under go changes similar to
- * the mktemp(3)/mkstemp(3) changes.
+ * XXX:	this function should under go changes similar to
+ *	the mktemp(3)/mkstemp(3) changes.
  */
 static char *
 gunique(const char *local)
@@ -2325,7 +2631,6 @@ send_file_list(const char *whichf)
 	int simple = 0;
 	int freeglob = 0;
 	glob_t gl;
-	off_t b;
 
 #ifdef __GNUC__
 	(void) &dout;
@@ -2336,7 +2641,7 @@ send_file_list(const char *whichf)
 
 	p = NULL;
 	if (strpbrk(whichf, "~{[*?") != NULL) {
-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE|GLOB_LIMIT;
 
 		memset(&gl, 0, sizeof(gl));
 		freeglob = 1;
@@ -2383,16 +2688,19 @@ send_file_list(const char *whichf)
 		}
 
 		if (S_ISREG(st.st_mode)) {
+			/*
+			 * XXXRFC:
+			 *	should we follow RFC959 and not work
+			 *	for non directories?
+			 */
 			if (dout == NULL) {
 				dout = dataconn("file list", (off_t)-1, "w");
 				if (dout == NULL)
 					goto out;
 				transflag++;
 			}
-			b = fprintf(dout, "%s%s\n", dirname,
+			cprintf(dout, "%s%s\n", dirname,
 			    type == TYPE_A ? "\r" : "");
-			total_bytes += b;
-			total_bytes_out += b;
 			byte_count += strlen(dirname) + 1;
 			continue;
 		} else if (!S_ISDIR(st.st_mode))
@@ -2417,7 +2725,12 @@ send_file_list(const char *whichf)
 			 * We have to do a stat to ensure it's
 			 * not a directory or special file.
 			 */
-			/* XXX: follow RFC959 and filter out non files ? */
+			/*
+			 * XXXRFC:
+			 *	should we follow RFC959 and filter out
+			 *	non files ?   lukem - NO!, or not until
+			 *	our ftp client uses MLS{T,D} for completion.
+			 */
 			if (simple || (stat(nbuf, &st) == 0 &&
 			    S_ISREG(st.st_mode))) {
 				char *p;
@@ -2432,10 +2745,8 @@ send_file_list(const char *whichf)
 				p = nbuf;
 				if (nbuf[0] == '.' && nbuf[1] == '/')
 					p = &nbuf[2];
-				b = fprintf(dout, "%s%s\n", p,
+				cprintf(dout, "%s%s\n", p,
 				    type == TYPE_A ? "\r" : "");
-				total_bytes += b;
-				total_bytes_out += b;
 				byte_count += strlen(nbuf) + 1;
 			}
 		}
@@ -2474,58 +2785,132 @@ conffilename(const char *s)
 }
 
 /*
- * logcmd --
- *	based on the arguments, syslog a message:
+ * logxfer --
+ *	if logging > 1, then based on the arguments, syslog a message:
  *	 if bytes != -1		"<command> <file1> = <bytes> bytes"
  *	 else if file2 != NULL	"<command> <file1> <file2>"
  *	 else			"<command> <file1>"
  *	if elapsed != NULL, append "in xxx.yyy seconds"
  *	if error != NULL, append ": " + error
+ *
+ * 	if doxferlog != 0, syslog a wu-ftpd style xferlog entry
  */
 void
-logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
+logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 	const struct timeval *elapsed, const char *error)
 {
-	char	buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
-	const char *p;
-	size_t	len;
+	char		 buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
+	const char	*r1, *r2;
+	char		 direction;
+	size_t		 len;
+	time_t		 now;
 
-	if (logging <=1)
+	if (logging <=1 && !doxferlog)
 		return;
 
-	if ((p = realpath(file1, realfile)) == NULL) {
-#if 0	/* XXX: too noisy */
-		syslog(LOG_WARNING, "realpath `%s' failed: %s",
-		    realfile, strerror(errno));
+	r1 = r2 = NULL;
+	if ((r1 = realpath(file1, realfile)) == NULL)
+		r1 = file1;
+	if (file2 != NULL)
+		if ((r2 = realpath(file2, realfile)) == NULL)
+			r2 = file2;
+
+		/*
+		 * syslog command
+		 */
+	if (logging > 1) {
+		len = snprintf(buf, sizeof(buf), "%s %s", command, r1);
+		if (bytes != (off_t)-1)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    " = " LLF " byte%s", (LLT) bytes, PLURAL(bytes));
+		else if (r2 != NULL)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    " %s", r2);
+		if (elapsed != NULL)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    " in %ld.%.03d seconds", elapsed->tv_sec,
+			    (int)(elapsed->tv_usec / 1000));
+		if (error != NULL)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    ": %s", error);
+		syslog(LOG_INFO, "%s", buf);
+	}
+
+
+		/*
+		 * syslog wu-ftpd style log entry, prefixed with "xferlog: "
+		 */
+	if (!doxferlog)
+		return;
+
+	if (strcmp(command, "get") == 0)
+		direction = 'o';
+	else if (strcmp(command, "put") == 0 || strcmp(command, "append") == 0)
+		direction = 'i';
+	else
+		return;
+
+	time(&now);
+	syslog(LOG_INFO,
+	    "xferlog%s: %.24s %ld %s " LLF " %s %c %s %c %c %s FTP 0 * %c",
+
+/*
+ * XXX: wu-ftpd puts (send) or (recv) in the syslog message, and removes
+ *	the full date.  This may be problematic for accurate log parsing,
+ *	given that syslog messages don't contain the full date.
+ */
+#if 1		/* lukem's method; easier to convert to actual xferlog file */
+	    "",
+	    ctime(&now),
+#else		/* wu-ftpd's syslog method, with an extra unneeded space */
+	    (direction == 'i') ? " (recv)" : " (send)",
+	    "",
 #endif
-		p = file1;
-	}
-	len = snprintf(buf, sizeof(buf), "%s %s", command, p);
+	    elapsed == NULL ? 0 : elapsed->tv_sec + (elapsed->tv_usec > 0),
+	    remotehost,
+	    bytes == (off_t)-1 ? 0 : (LLT) bytes,
+	    r1,
+	    type == TYPE_A ? 'a' : 'b',
+	    "_",		/* XXX: take conversions into account? */
+	    direction, 
 
-	if (bytes != (off_t)-1) {
-		len += snprintf(buf + len, sizeof(buf) - len,
-		    " = %qd byte%s", (qdfmt_t) bytes, PLURAL(bytes));
-	} else if (file2 != NULL) {
-		if ((p = realpath(file2, realfile)) == NULL) {
-#if 0	/* XXX: too noisy */
-			syslog(LOG_WARNING, "realpath `%s' failed: %s",
-			    realfile, strerror(errno));
-#endif
-			p = file2;
-		}
-		len += snprintf(buf + len, sizeof(buf) - len, " %s", p);
-	}
+	    curclass.type == CLASS_GUEST ?  'a' :
+	    curclass.type == CLASS_CHROOT ? 'g' :
+	    curclass.type == CLASS_REAL ?   'r' : '?',
 
-	if (elapsed != NULL) {
-		len += snprintf(buf + len, sizeof(buf) - len,
-		    " in %ld.%.03d seconds", elapsed->tv_sec,
-		    (int)(elapsed->tv_usec / 1000));
-	}
+	    curclass.type == CLASS_GUEST ? pw->pw_passwd : pw->pw_name,
+	    error != NULL ? 'i' : 'c'
+	    );
+}
 
-	if (error != NULL)
-		len += snprintf(buf + len, sizeof(buf) - len, ": %s", error);
+/*
+ * Determine if `password' is valid for user given in `pw'.
+ * Returns 2 if password expired, 1 if otherwise failed, 0 if ok
+ */
+int
+checkpassword(const struct passwd *pw, const char *password)
+{
+	char	*orig, *new;
+	time_t	 expire;
 
-	syslog(LOG_INFO, "%s", buf);
+	expire = 0;
+	if (pw == NULL)
+		return 1;
+
+	orig = pw->pw_passwd;		/* save existing password */
+	expire = pw->pw_expire;
+
+	if (orig[0] == '\0')		/* don't allow empty passwords */
+		return 1;
+
+	new = crypt(password, orig);	/* encrypt given password */
+	if (strcmp(new, orig) != 0)	/* compare */
+		return 1;
+
+	if (expire && time(NULL) >= expire)
+		return 2;		/* check if expired */
+
+	return 0;			/* OK! */
 }
 
 char *
