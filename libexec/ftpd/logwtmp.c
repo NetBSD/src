@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.5 1997/06/18 19:05:51 christos Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.6 1998/04/01 14:35:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.5 1997/06/18 19:05:51 christos Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.6 1998/04/01 14:35:23 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: logwtmp.c,v 1.5 1997/06/18 19:05:51 christos Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "extern.h"
 
 static int fd = -1;
