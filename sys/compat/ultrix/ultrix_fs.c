@@ -1,0 +1,239 @@
+/*	$NetBSD: ultrix_fs.c,v 1.1 1995/12/26 04:44:37 jonathan Exp $	*/
+
+/*
+ * Copyright (c) 1995
+ *	Jonathan Stone (hereinafter referred to as the author)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
+
+#include <compat/ultrix/ultrix_syscallargs.h>
+
+#define	ULTRIX_MAXPATHLEN	1024
+
+/**
+ ** Ultrix filesystem operations: mount(), getmnt().
+ ** These are included purely so one can place an (ECOFF or ELF)
+ ** NetBSD/pmax kernel in an Ultrix root filesystem, boot it,
+ ** and over-write the Ultrix root parition with NetBSD binaries.
+ **/
+
+/*
+ * Ultrix file system data structure, as modified by
+ * Ultrix getmntent(). This  structure is padded to 2560 bytes, for
+ * compatiblity with the size the Ultrix kernel and user apps expect.
+ */
+struct ultrix_fs_data {
+	u_int32_t	ufsd_flags;	/* how mounted */
+	u_int32_t	ufsd_mtsize;	/* max transfer size in bytes */
+	u_int32_t	ufsd_otsize;	/* optimal transfer size in bytes */
+	u_int32_t	ufsd_bsize;	/* fs block size (bytes) for vm code */
+	u_int32_t	ufsd_fstype;	/* see ../h/fs_types.h  */
+	u_int32_t	ufsd_gtot;	/* total number of gnodes */
+	u_int32_t	ufsd_gfree;	/* # of free gnodes */
+	u_int32_t	ufsd_btot;	/* total number of 1K blocks */
+	u_int32_t	ufsd_bfree;	/* # of free 1K blocks */
+	u_int32_t	ufsd_bfreen;	/* user consumable 1K blocks */
+	u_int32_t	ufsd_pgthresh;	/* min size in bytes before paging*/
+	int32_t		ufsd_uid;	/* uid that mounted me */
+	int16_t		ufsd_dev;	/* major/minor of fs */
+	int16_t		ufsd_exroot;	/* root mapping from exports */
+	char		ufsd_devname[ULTRIX_MAXPATHLEN + 4]; /* name of dev */
+	char		ufsd_path[ULTRIX_MAXPATHLEN + 4]; /* name of mnt point */
+	u_int32_t	ufsd_nupdate;	/* number of writes */
+	u_int32_t	ufsd_pad[112];	/* pad to 2560 bytes. */
+};
+
+/*
+ * Get statistics on mounted filesystems.
+ */
+#if 0
+struct ultrix_getmnt_args {
+	int32_t *start;
+	struct ultrix_fs_data *buf;
+	int32_t bufsize;
+	int32_t mode;
+	char *path;
+};
+
+#endif
+/*
+ * Ultrix getmnt() flags.
+ * The operation getmnt() should perform is incoded in the flag
+ * argument.  There are two independent attributes.
+ *
+ * ULTRIX_NOSTAT_xxx will never hang, but it may not return
+ * up-to-date statistics. (For NFS clients, it returns whatever is
+ * in the cache.) ULTRIX_STAT_xxx returns up-to-date info but may
+ * hang (e.g., on dead NFS servers).
+ *
+ * ULTRIX_xxSTAT_ONE returns statistics on just one filesystem, determined
+ * by the parth argument.  ULTRIX_xxSTAT_MANY ignores the path argument and
+ * returns info on as many  filesystems fit in the structure.
+ * the start argument, which should be zero on the first call,
+ * can be used to iterate over all filesystems.
+ *
+ */
+#define	ULTRIX_NOSTAT_MANY	1
+#define	ULTRIX_STAT_MANY	2
+#define	ULTRIX_STAT_ONE		3
+#define	ULTRIX_NOSTAT_ONE	4
+
+/*
+ * Ultrix gnode-layer  filesystem codes.
+ */
+#define ULTRIX_FSTYPE_UNKNOWN	0x0
+#define ULTRIX_FSTYPE_ULTRIX	0x1	/* 4.2bsd ffs */
+#define ULTRIX_FSTYPE_NFS	0x5	/*  NFS v2 */
+
+/*
+ * Construct an Ultrix getmnt() ultrix_fs_data from the native NetBSD
+ * struct statfs.
+ */
+static void
+make_ultrix_mntent(sp, tem)
+	register struct statfs *sp;
+	register struct ultrix_fs_data *tem;
+{
+
+	tem->ufsd_mtsize = sp->f_bsize;		/* XXX max transfer size */
+	tem->ufsd_flags = sp->f_flags;		/* XXX translate */
+	tem->ufsd_otsize = sp->f_iosize;
+	tem->ufsd_bsize = sp->f_bsize;
+	/*
+	 * Translate file system type. NetBSD/1.1 seems to always
+	 * have f_type zero.
+	 */
+	tem->ufsd_fstype = ULTRIX_FSTYPE_NFS;	/* a hack */
+
+	tem->ufsd_gtot = 0;			/* XXX kept where? superblk? */
+	tem->ufsd_gfree = sp->f_ffree;
+	tem->ufsd_bfree = sp->f_bfree;		/* free 1k blocks */
+	tem->ufsd_bfreen = sp->f_bfree;		/* blocks available to users */
+	tem->ufsd_pgthresh = 0;			/* not relevant */
+	tem->ufsd_uid = 0;			/* XXX kept where ?*/
+	tem->ufsd_dev = 0;			/* ?? */
+	tem->ufsd_exroot  = 0;			/* ?? */
+	strncpy(tem->ufsd_path, sp->f_mntonname, ULTRIX_MAXPATHLEN);
+	strncpy(tem->ufsd_devname, sp->f_mntfromname, ULTRIX_MAXPATHLEN);
+	printf("mntent: %s type %d\n", tem->ufsd_devname, tem->ufsd_fstype);
+}
+
+int
+ultrix_sys_getmnt(p, v, retval)
+	struct proc *p;
+	void *v;
+	int *retval;
+{
+	struct ultrix_sys_getmnt_args *uap = v;
+	struct mount *mp, *nmp;
+	struct statfs *sp;
+	struct ultrix_fs_data *sfsp;
+	char *path;
+	int mntflags;
+	int skip;
+	int start;
+	long count, maxcount;
+	int error = 0;
+
+	path = NULL;
+	error = 0;
+	maxcount = SCARG(uap, bufsize) / sizeof(struct ultrix_fs_data);
+	sfsp = SCARG(uap, buf);
+
+	if (SCARG(uap, mode) == ULTRIX_STAT_ONE ||
+	    SCARG(uap, mode) == ULTRIX_STAT_MANY)
+		mntflags = MNT_WAIT;
+	else
+		mntflags = MNT_NOWAIT;
+
+	if (SCARG(uap, mode) == ULTRIX_STAT_ONE || SCARG(uap, mode) == ULTRIX_NOSTAT_ONE) {
+		/*
+		 * Only get info on mountpoints that matches the path
+		 * provided.
+		 */
+		MALLOC(path, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+		if (error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL))
+			goto bad;
+		maxcount = 1;
+	} else {
+		/*
+		 * Get info on any mountpoints, somewhat like readdir().
+		 * Find out how many mount list entries to skip, and skip
+		 * them.
+		 */
+		if (error =
+		    copyin((caddr_t)SCARG(uap, start), &start,
+					  sizeof(*SCARG(uap, start))))
+			goto bad;
+		for (skip = start, mp = mountlist.cqh_first;
+		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
+			nmp = mp->mnt_list.cqe_next;
+	}
+
+	for (count = 0, mp = mountlist.cqh_first;
+	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
+		nmp = mp->mnt_list.cqe_next;
+		if (sfsp != NULL && (mp->mnt_flag & MNT_MLOCK) == 0) {
+			struct ultrix_fs_data tem;
+			sp = &mp->mnt_stat;
+
+			/*
+			 * If requested, refresh the fsstat cache.
+			 */
+			if ((mntflags & MNT_WAIT) != 0 &&
+			    (error = VFS_STATFS(mp, sp, p)) != 0)
+				continue;
+
+			/*
+			 * XXX what does this do? -- cgd
+			 */
+			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			if (path == NULL ||
+			    strcmp(path, sp->f_mntonname) == 0) {
+				make_ultrix_mntent(sp, &tem);
+				if (error =
+				    copyout((caddr_t)&tem, sfsp, sizeof(tem)))
+					goto bad;
+				sfsp++;
+				count++;
+			}
+		}
+	}
+
+	if (sfsp != NULL && count > maxcount)
+		*retval = maxcount;
+	else
+		*retval = count;
+
+bad:
+	if (path)
+		FREE(path, M_TEMP);
+	return (error);
+}
