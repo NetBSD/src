@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/01/01 13:56:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2005/01/03 20:49:06 martin Exp $
 
 MKPRIVATELIB=	yes
 
@@ -26,5 +26,7 @@ SRCS=		addicmp.c addipopt.c addkeep.c bcopywrap.c binprint.c \
 		remove_poolnode.c resetlexer.c rwlock_emul.c tcpflags.c \
 		tcp_flags.c to_interface.c var.c verbose.c v6ionames.c \
 		v6optvalue.c
+
+CPPFLAGS.printstate.c=	-Wno-error
 
 .include <bsd.lib.mk>
