@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2004/03/01 12:06:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2004/03/01 12:06:02 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1664,6 +1664,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
 		tf->tf_err = err;
 		tf->tf_trapno = trapno;
+
+		l->l_md.md_flags |= MDP_IRET;
 	}
 
 	if ((flags & _UC_FPU) != 0) {
