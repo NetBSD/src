@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.30.2.1 1994/07/22 03:38:01 cgd Exp $
+ *	$Id: ld.c,v 1.30.2.2 1994/07/24 01:39:14 cgd Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1386,6 +1386,12 @@ enter_global_ref(lsp, name, entry)
 		if (nzp->nz_size > sp->size)
 			sp->size = nzp->nz_size;
 
+		if ((lsp->flags & LS_WARNING) && (sp->flags & GS_REFERENCED))
+			/*
+			 * Prevent warning symbols from getting
+			 * gratuitously referenced.
+			 */
+			list_warning_symbols = 1;
 		return;
 	}
 
@@ -1686,16 +1692,16 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 	if (got_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
 
-	if (relocatable_output || building_shared_object)
+	if (relocatable_output || building_shared_object) {
 		/* For each alias we write out two struct nlists */
 		global_sym_count += global_alias_count;
-
-	if (relocatable_output) {
-		/* We write out the original N_SET* symbols */
-		global_sym_count += size_sym_count;
 		/* Propagate warning symbols; costs two extra struct nlists */
 		global_sym_count += 2 * warn_sym_count;
 	}
+
+	if (relocatable_output)
+		/* We write out the original N_SET* symbols */
+		global_sym_count += size_sym_count;
 
 #ifdef DEBUG
 printf(
@@ -2006,13 +2012,13 @@ consider_relocation(entry, dataseg)
 			}
 
 			if (force_alias_definition && sp->so_defined &&
-					sp->aux == AUX_FUNC) {
+			    sp->aux == AUX_FUNC) {
 
 				/* Call to shared library procedure */
 				alloc_rrs_jmpslot(entry, sp);
 
 			} else if (sp->size && sp->so_defined &&
-					sp->aux == AUX_OBJECT) {
+				   sp->aux == AUX_OBJECT) {
 
 				/* Reference to shared library data */
 				alloc_rrs_cpy_reloc(entry, sp);
@@ -3205,7 +3211,8 @@ write_syms()
 		/*
 		 * Propagate N_WARNING symbols.
 		 */
-		if (relocatable_output && sp->warning) {
+		if ((relocatable_output || building_shared_object)
+		     && sp->warning) {
 			nl.n_type = N_WARNING;
 			nl.n_un.n_strx = assign_string_table_index(sp->warning);
 			nl.n_value = 0;
