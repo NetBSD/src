@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.62.2.1 2000/07/03 22:33:26 thorpej Exp $
+$NetBSD: acronyms,v 1.62.2.2 2001/01/25 16:36:55 jhawk Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -15,6 +15,7 @@ BIAB	back in a bit
 BIAF	back in a few
 BIAS	back in a second
 BIAW	back in a while
+BOFH	bastard operator from hell
 BRB	[I'll] be right back
 BTDT	been there, done that
 BTTH	butt to the head
@@ -30,8 +31,10 @@ EG	evil grin
 EMSG	email message
 ETLA	extended three letter acronym
 FAQ	frequently asked question
-FIIK	fuck if I know
+FIIK	fuck[ed] if I know
+FOAD	fall over and die
 FSDO	for some definition of
+FSVO	for some value of
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
 FWIW	for what it's worth
@@ -42,6 +45,8 @@ HAND	have a nice day
 HHIS	hanging head in shame
 HTH	hope this helps
 IANAL	I am not a lawyer
+IHAFC	I haven't a fucking clue
+IHNFC	I have no fucking clue
 IIANM	if I am not mistaken
 IIRC	if I recall correctly
 IMCO	in my considered opinion
@@ -53,6 +58,7 @@ IRL	in real life
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
+JIC	just in case
 JK	just kidding
 JMO	just my opinion
 JTLYK	just to let you know
@@ -60,6 +66,7 @@ KISS	keep it simple, stupid
 KITA	kick in the ass
 KNF	kernel normal form
 L8R	later
+LART	luser attitude readjustment tool (ie, hammer)
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
@@ -71,6 +78,7 @@ MYOB	mind your own business
 NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
+NFW	no fucking way
 NIH	not invented here
 NP	no problem
 NRFPT	not ready for prime time
@@ -81,17 +89,19 @@ OTOH	on the other hand
 OTTOMH	off the top of my head
 PITA	pain in the ass
 PNG	persona non grata
+POC	point of contact
 POLA	principle of least astonishment
 PPL	pretty please
 QED	quod erat demonstrandum
 RFC	request for comments
 RL	real life
 ROTFL	rolling on the floor laughing
+RP	responsible person
 RSN	real soon now
-RTFB	read the fine book
-RTFM	read the fine manual
-RTFMP	read the fine man page
-RTFS	read the fine source
+RTFB	read the fine/fucking book
+RTFM	read the fine/fucking manual
+RTFMP	read the fine/fucking man page
+RTFS	read the fine/fucking source
 SCNR	sorry, could not resist
 SEP	someone else's problem
 SFA	sweet fuck all
@@ -102,6 +112,7 @@ SNAFU	situation normal, all fucked up
 SNERT	snot-nosed egotistical rude teenager
 SO	significant other
 SOL	shit out [of] luck
+SUS	stupid user syndrome
 SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
 TIA	thanks in advance
