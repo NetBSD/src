@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traverse.c	8.2 (Berkeley) 9/23/93";*/
-static char *rcsid = "$Id: traverse.c,v 1.4 1994/06/08 18:57:42 mycroft Exp $";
+static char *rcsid = "$Id: traverse.c,v 1.5 1994/06/14 22:49:57 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -362,10 +362,13 @@ dumpino(dp, ino)
 		/*
 		 * Check for short symbolic link.
 		 */
-#ifdef FS_44INODEFMT
 		if (dp->di_size > 0 &&
+#ifdef FS_44INODEFMT
 		    (dp->di_size < sblock->fs_maxsymlinklen ||
-		     (sblock->fs_maxsymlinklen == 0 && OLDFASTLINK(dp)))) {
+		     (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0))) {
+#else
+		    dp->di_blocks == 0) {
+#endif
 			spcl.c_addr[0] = 1;
 			spcl.c_count = 1;
 			writeheader(ino);
@@ -375,7 +378,6 @@ dumpino(dp, ino)
 			writerec(buf, 0);
 			return;
 		}
-#endif
 		/* fall through */
 
 	case S_IFDIR:

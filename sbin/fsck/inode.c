@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inode.c	8.4 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: inode.c,v 1.9 1994/06/08 19:00:23 mycroft Exp $";
+static char *rcsid = "$Id: inode.c,v 1.10 1994/06/14 22:50:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ ckinode(dp, idesc)
 	mode = dp->di_mode & IFMT;
 	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
 	    (dp->di_size < sblock.fs_maxsymlinklen ||
-	     (sblock.fs_maxsymlinklen == 0 && OLDFASTLINK(dp)))))
+	     (sblock.fs_maxsymlinklen == 0 && dp->di_blocks == 0))))
 		return (KEEPON);
 	dino = *dp;
 	ndb = howmany(dino.di_size, sblock.fs_bsize);

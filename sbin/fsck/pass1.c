@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1.c,v 1.7 1994/06/08 19:00:25 mycroft Exp $";
+static char *rcsid = "$Id: pass1.c,v 1.8 1994/06/14 22:50:48 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,7 +169,7 @@ checkinode(inumber, idesc)
 		 * will detect any garbage after symlink string.
 		 */
 		if (dp->di_size < sblock.fs_maxsymlinklen ||
-		    (sblock.fs_maxsymlinklen == 0 && OLDFASTLINK(dp))) {
+		    (sblock.fs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
 			ndb = howmany(dp->di_size, sizeof(daddr_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
