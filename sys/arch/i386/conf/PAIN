@@ -1,7 +1,7 @@
 #
 #	PAIN -- one of cgd's 486/50 EISA boxes
 #
-#	$Id: PAIN,v 1.13.2.4 1993/09/30 20:15:22 mycroft Exp $
+#	$Id: PAIN,v 1.13.2.5 1993/10/06 12:15:30 mycroft Exp $
 #
 
 # standard options
@@ -33,10 +33,11 @@ options		"TCP_COMPAT_42"		# 4.2 networking ABI
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
+options		FASTLINKS		# fast symbolic links in FFS
 options		MFS			# memory file system; uses RAM and swap
 options		NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
-options		ISOFS			# ISO 9660 (CD-ROM) file system, with RR
+options		ISOFS			# ISO 9660 CD-ROM file system, with RR
 options		MSDOSFS			# MS-DOS FAT file system
 options		FDESC			# /dev/fd
 options		KERNFS			# kernel file system; recommended
