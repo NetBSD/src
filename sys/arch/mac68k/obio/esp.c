@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26 2000/12/29 17:23:32 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.27 2000/12/29 21:31:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -575,10 +575,6 @@ esp_quick_dma_setup(sc, addr, len, datain, dmasize)
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;
 
-	/* this should not happen if maxxfer is < 64k */
-	if (esc->sc_dmasize == 65536) {
-		*dmasize = 0;
-	}
 #if DIAGNOSTIC
 	if (esc->sc_dmasize == 0) {
 		printf("esp_quick_dma_setup called with %lx, %lx, %d, %lx\n",
