@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2000/11/27 05:57:26 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2000/12/03 12:57:37 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2000/11/27 05:57:26 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2000/12/03 12:57:37 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -360,6 +360,17 @@ mach_init(argc, argv, bi)
 	if (esym)
 		ddb_init(1000, &end, (int*)esym);
 #endif
+	/*
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
+	 */
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	kernend += UPAGES * PAGE_SIZE;
 
 	/* Setup interrupt handler */
 	(*platform.os_init)();
@@ -413,14 +424,6 @@ mach_init(argc, argv, bi)
 	 */
 	mips_init_msgbuf();
 
-	/*
-	 * Allocate space for proc0's USPACE.
-	 */
-	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures
