@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $");
 #include    "hash.h"
 #include    "dir.h"
 #include    "job.h"
+#include    "pathnames.h"
 
 /*
  * The following array is used to make a fast determination of which
@@ -255,7 +256,7 @@ CompatRunCommand (cmdp, gnp)
 	 * -e flag as well as -c if it's supposed to exit when it hits an
 	 * error.
 	 */
-	static char	*shargv[4] = { "/bin/sh" };
+	static char	*shargv[4] = { _PATH_BSHELL };
 
 	if (DEBUG(SHELL))
 		shargv[1] = (errCheck ? "-exc" : "-xc");
