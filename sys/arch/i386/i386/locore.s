@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.10 2000/06/26 02:04:06 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.11 2000/08/18 14:01:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -808,6 +808,9 @@ begin:
 	call 	_C_LABEL(main)
 
 NENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(proc_trampoline_mp)
+#endif
 	pushl	%ebx
 	call	%esi
 	addl	$4,%esp
@@ -1929,10 +1932,322 @@ NENTRY(remrunqueue)
 	/* NOTREACHED */
 3:	.asciz	"remrunqueue"
 #endif /* DIAGNOSTIC */
+	
+#ifdef DIAGNOSTIC
+NENTRY(switch_error)
+	pushl	$1f
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_switch"
+#endif /* DIAGNOSTIC */
 
-#if NAPM > 0
-	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
+/*
+ * void cpu_switch(struct proc *)
+ * Find a runnable process and switch to it.  Wait if necessary.  If the new
+ * process is the same as the old one, we short-circuit the context save and
+ * restore.
+ */
+ENTRY(cpu_switch)
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	pushl	CPL
+
+	GET_CURPROC(%esi,%ecx)
+
+	/*
+	 * Clear curproc so that we don't accumulate system time while idle.
+	 * This also insures that schedcpu() will move the old process to
+	 * the correct queue if it happens to get called from the spllower()
+	 * below and changes the priority.  (See corresponding comment in
+	 * userret()).
+	 */
+	CLEAR_CURPROC(%ecx)
+	/*
+	 * First phase: find new process.
+	 *
+	 * Registers:
+	 *   %eax - queue head, scratch, then zero
+	 *   %ebx - queue number
+	 *   %ecx - cached value of whichqs
+	 *   %edx - next process in queue
+	 *   %esi - old process
+	 *   %edi - new process
+	 */
+
+	/* Look for new process. */
+	cli				# splhigh doesn't do a cli
+	movl	_C_LABEL(sched_whichqs),%ecx	# XXX MP
+
+	bsfl	%ecx,%ebx		# find a full q
+	jnz	switch_dequeue
+
+	/*
+	 * idling:	save old context.
+	 *
+	 * Registers:
+	 *   %eax, %ecx - scratch
+	 *   %esi - old process, then old pcb
+	 *   %edi - new process
+	 */
+
+	movl	P_ADDR(%esi),%esi
+
+	/* Save segment registers. */
+	movl	%fs,%ax
+	movl	%gs,%cx
+	movl	%eax,PCB_FS(%esi)
+	movl	%ecx,PCB_GS(%esi)
+
+	/* Save stack pointers. */
+	movl	%esp,PCB_ESP(%esi)
+	movl	%ebp,PCB_EBP(%esi)
+
+	/* Find idle PCB for this CPU */
+#ifndef MULTIPROCESSOR
+	movl	$_C_LABEL(proc0),%ebx
+	movl	P_ADDR(%ebx),%esi
+#else
+	GET_CPUINFO(%ebx)
+	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
 #endif
+	/* In case we fault... */
+	CLEAR_CURPROC(%ecx)
+
+	/* Restore the idle context (avoid interrupts) */
+	cli
+
+	/* Restore stack pointers. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+
+	/* Load TSS info. */
+	movl	_C_LABEL(gdt),%eax
+	movl	PCB_TSS_SEL(%esi),%edx
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
+
+	/* We're always in the kernel, so we don't need the LDT. */
+
+	/* Clear segment registers; always null in proc0. */
+	xorl	%ecx,%ecx
+	movl	%cx,%fs
+	movl	%cx,%gs
+
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+	movl	%ecx,%cr0
+
+	/* Record new pcb. */
+	SET_CURPCB(%esi, %ecx)
+
+	xorl	%esi,%esi
+#ifdef MULTIPROCESSOR	
+	pushl	$1
+	call	_C_LABEL(sched_unlock_idle)
+	popl	%eax
+#endif
+	/* Interrupts are okay again. */
+	sti
+	movl	$0,CPL			# spl0()
+	call	_C_LABEL(Xspllower)	# process pending interrupts
+	jmp	idle_start
+idle_loop:	
+#ifdef MULTIPROCESSOR
+	pushl	$2
+	call	_C_LABEL(sched_unlock_idle)
+	popl	%eax
+#endif
+	sti
+	hlt
+NENTRY(mpidle)
+idle_start:	
+	cli
+#ifdef MULTIPROCESSOR
+	pushl	$3	
+	call	_C_LABEL(sched_lock_idle)
+	popl	%eax
+#endif
+	movl	_C_LABEL(sched_whichqs),%ecx
+	bsfl	%ecx,%ebx
+	jz	idle_loop
+
+switch_dequeue:		
+	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
+
+	movl	P_FORW(%eax),%edi	# unlink from front of process q
+#ifdef	DIAGNOSTIC
+	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
+	je	_C_LABEL(switch_error)	# not possible
+#endif /* DIAGNOSTIC */
+	movl	P_FORW(%edi),%edx
+	movl	%edx,P_FORW(%eax)
+	movl	%eax,P_BACK(%edx)
+
+	cmpl	%edx,%eax		# q empty?
+	jne	3f
+
+	btrl	%ebx,%ecx		# yes, clear to indicate empty
+	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
+
+3:	/* We just did it. */
+	CLEAR_RESCHED(%ecx)
+
+#ifdef	DIAGNOSTIC
+	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
+	jne	_C_LABEL(switch_error)	# Yes; shouldn't be queued.
+	cmpb	$SRUN,P_STAT(%edi)	# In run state?
+	jne	_C_LABEL(switch_error)	# No; shouldn't be queued.
+#endif /* DIAGNOSTIC */
+
+	/* Isolate process.  XXX Is this necessary? */
+	movl	%eax,P_BACK(%edi)
+
+	/* Record new process. */
+	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
+	SET_CURPROC(%edi,%ecx)
+
+#ifdef MULTIPROCESSOR	
+	pushl	$4
+	call	_C_LABEL(sched_unlock_idle)
+	popl	%eax
+#endif
+	/* It's okay to take interrupts here. */
+	sti
+
+	/* Skip context switch if same process. */
+	cmpl	%edi,%esi
+	je	switch_return
+
+	/* If old process exited, don't bother. */
+	testl	%esi,%esi
+	jz	switch_exited
+
+	/*
+	 * Second phase: save old context.
+	 *
+	 * Registers:
+	 *   %eax, %ecx - scratch
+	 *   %esi - old process, then old pcb
+	 *   %edi - new process
+	 */
+
+	movl	P_ADDR(%esi),%esi
+
+	/* Save segment registers. */
+	movl	%fs,%ax
+	movl	%gs,%cx
+	movl	%eax,PCB_FS(%esi)
+	movl	%ecx,PCB_GS(%esi)
+
+	/* Save stack pointers. */
+	movl	%esp,PCB_ESP(%esi)
+	movl	%ebp,PCB_EBP(%esi)
+
+switch_exited:
+	/*
+	 * Third phase: restore saved context.
+	 *
+	 * Registers:
+	 *   %eax, %ecx, %edx - scratch
+	 *   %esi - new pcb
+	 *   %edi - new process
+	 */
+
+	/* No interrupts while loading new state. */
+	cli
+	movl	P_ADDR(%edi),%esi
+
+	/* Restore stack pointers. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+
+#if 0
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$P_SYSTEM,P_FLAG(%edi)
+	jnz	switch_restored
+#endif
+
+	/* Load TSS info. */
+	movl	_C_LABEL(gdt),%eax
+	movl	PCB_TSS_SEL(%esi),%edx
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Switch TSS. Reset "task busy" flag before */
+	andl	$~0x0200,4(%eax,%edx, 1)
+	ltr	%dx
+
+#ifdef USER_LDT
+	/*
+	 * Switch LDT.
+	 *
+	 * XXX
+	 * Always do this, because the LDT could have been swapped into a
+	 * different selector after a process exited.  (See gdt_compact().)
+	 */
+	movl	PCB_LDT_SEL(%esi),%edx
+	lldt	%dx
+#endif /* USER_LDT */
+
+	/* Restore segment registers. */
+	movl	PCB_FS(%esi),%eax
+	movl	PCB_GS(%esi),%ecx
+	movl	%ax,%fs
+	movl	%cx,%gs
+
+switch_restored:
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+#ifdef MULTIPROCESSOR
+	/* 
+	 * If our floating point registers are on a different cpu,
+	 * clear CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+	GET_CPUINFO(%eax)
+	movl	PCB_FPCPU(%esi),%ebx
+	cmpl	%eax,%ebx
+	jz	1f
+	orl	$CR0_TS,%ecx
+1:	
+#endif	
+	movl	%ecx,%cr0
+
+	/* Record new pcb. */
+#ifndef MULTIPROCESSOR
+	SET_CURPCB(%esi, %ecx)
+#else
+	movl	%esi,CPU_INFO_CURPCB(%eax)
+#endif
+
+	/* Interrupts are okay again. */
+	sti
+
+switch_return:
+	movl	$0,CPL			# spl0()
+	call	_C_LABEL(Xspllower)	# process pending interrupts
+	/*
+	 * Restore old cpl from stack.  Note that this is always an increase
+	 * from the brief spl0 above.
+	 */
+	popl	CPL
+	
+	movl	%edi,%eax		# return (p);
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	ret
+
+#if 0 /* old idle/cpu_switch code */
+
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
  * something to come ready.
@@ -2163,6 +2478,7 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
+#endif
 
 /*
  * switch_exit(struct proc *p);
@@ -2233,7 +2549,7 @@ ENTRY(switch_exit)
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
 	CLEAR_CURPROC(%ecx)
-	jmp	switch_search
+	jmp	idle_start
 
 /*
  * savectx(struct pcb *pcb);
