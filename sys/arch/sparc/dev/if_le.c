@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.34 1996/05/16 15:56:54 abrown Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35 1996/05/16 22:57:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -182,7 +182,7 @@ leattach(parent, self, aux)
 	struct bootpath *bp;
 	u_long laddr;
 #if defined(SUN4C) || defined(SUN4M)
-	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
+	int sbuschild = strncmp(parent->dv_xname, "sbus", 4) == 0;
 #endif
 
 	/* XXX the following declarations should be elsewhere */
@@ -230,14 +230,15 @@ leattach(parent, self, aux)
 
 	case BUS_SBUS:
 		lesc->sc_sd.sd_reset = (void *)am7990_reset;
-		if (dmachild) {
+		if (sbuschild) {
+			lesc->sc_dma = NULL;
+			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
+		} else {
 			lesc->sc_dma = (struct dma_softc *)parent;
 			lesc->sc_dma->sc_le = lesc;
 			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+			/* Assume SBus is grandparent */
 			sbus_establish(&lesc->sc_sd, parent);
-		} else {
-			lesc->sc_dma = NULL;
-			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 		}
 
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
