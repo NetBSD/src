@@ -1,5 +1,5 @@
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
-.\"	$NetBSD: traceroute6.8,v 1.5 2000/06/12 16:31:52 itojun Exp $
+.\"	$NetBSD: traceroute6.8,v 1.6 2000/09/04 07:37:22 kleink Exp $
 .\"	$KAME: traceroute6.8,v 1.8 2000/06/12 16:29:18 itojun Exp $
 .\"
 .\" All rights reserved.
@@ -108,10 +108,10 @@ Be verbose.
 Specify the delay time between probes.
 .El
 .\"
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 The
 .Nm
-command will exit with 0 on success, and non-zero on errors.
+command exits 0 on success, and >0 on errors.
 .\"
 .Sh SEE ALSO
 .Xr ping 8 ,
