@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1996/10/28 03:54:08 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 1996/10/29 05:36:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2486,6 +2486,7 @@ mac68k_set_io_offsets(base)
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
+			mac68k_machine.scsi96_2 = 1;
 		case MACH_MACQ700:
 			SCSIBase = base + 0xf000;
 			break;
