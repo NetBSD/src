@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2002/10/06 18:31:21 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.87 2002/10/06 20:40:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -151,8 +151,6 @@ struct cpu_info {
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
-
-	struct mp_intr_map *ci_lapic_ints[2];
 };
 
 /*
