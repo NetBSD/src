@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.111.10.1 2005/04/03 13:32:45 tron Exp $	*/
+/*	$NetBSD: vnd.c,v 1.111.10.2 2005/04/03 13:34:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.1 2005/04/03 13:32:45 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.2 2005/04/03 13:34:16 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -592,8 +592,6 @@ vndthread(void *arg)
 			s = splbio();
 			while (vnd->sc_active >= vnd->sc_maxactive) {
 				tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
-				if (vnd->sc_flags & VNF_VUNCONF)
-					goto kthread_end;
 			}
 			vnd->sc_active++;
 			nbp = VND_GETBUF(vnd);
@@ -663,10 +661,8 @@ out: /* Arrive here at splbio */
 done:
 		biodone(bp);
 		s = splbio();
-		continue;
 	}
 
-kthread_end:
 	vnd->sc_flags &= (~VNF_KTHREAD | VNF_VUNCONF);
 	wakeup(&vnd->sc_kthread);
 	splx(s);
