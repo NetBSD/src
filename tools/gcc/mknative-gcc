@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.7 2003/08/22 00:24:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.8 2003/11/27 00:56:20 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -90,6 +90,7 @@ get_libgcc () {
 	getvars gcc/Makefile \
 		CXX_EXTRA_HEADERS CXX_LIB2FUNCS CXX_LIB2SRCS \
 		INCLUDES LIB2ADD LIB2ADDEH LIB2FUNCS_1 LIB2FUNCS_2 \
+		LIB2FUNCS_EXTRA \
 		LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
 		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
 		tm_defines xm_file xm_defines \
