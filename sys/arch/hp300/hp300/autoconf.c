@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1996/10/20 23:46:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1996/12/07 19:00:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -681,7 +681,33 @@ setroot()
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
 
+#ifdef NFSCLIENT
+		if (mountroot == nfs_mountroot) {
+			struct dev_data *dd;
+			/*
+			 * `root on nfs'.  Find the first network
+			 * interface.
+			 */
+			for (dd = dev_data_list.lh_first;
+			    dd != NULL; dd = dd->dd_list.le_next) {
+				if (dd->dd_dev->dv_class == DV_IFNET) {
+					/* Got it! */
+					break;
+				}
+			}
+			if (dd == NULL) {
+				printf("no network interface for NFS root");
+				panic("setroot");
+			}
+			root_device = dd->dd_dev;
+			return;
+		}
+#endif
 		rootdevname = findblkname(major(rootdev));
+		if (rootdevname == NULL) {
+			printf("unknown root device major 0x%x\n", rootdev);
+			panic("setroot");
+		}
 		bzero(buf, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
 		
