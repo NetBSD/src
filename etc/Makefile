@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2000/10/01 05:51:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.163 2000/10/01 22:31:04 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -241,6 +241,7 @@ distribution: distrib-dirs
 	    -g ${BINGRP} -m 444 fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
+	(cd ../usr.bin/ssh; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
 .if (${MKCRYPTO} != "no")
 	(cd ../usr.bin/ssh; ${MAKE} distribution)
