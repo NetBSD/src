@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.20 2001/11/13 17:36:14 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.21 2001/11/14 23:03:06 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -59,27 +59,6 @@ OBJHOSTMACHINE=	# set
 .endif
 
 ##### Build rules
-.if defined(SHAREDSTRINGS)
-CLEANFILES+=strings
-.c.lo:
-	${HOST_CC} -E ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${HOST_CC} ${CFLAGS} -c x.c -o ${.TARGET}
-	@rm -f x.c
-
-.cc.lo:
-	${HOST_CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.cc
-	@${HOST_CXX} ${CXXFLAGS} -c x.cc -o ${.TARGET}
-	@rm -f x.cc
-
-.C.lo:
-	${HOST_CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.C
-	@${HOST_CXX} ${CXXFLAGS} -c x.C -o ${.TARGET}
-	@rm -f x.C
-.endif
-
-
 .if defined(HOSTPROG)
 SRCS?=		${HOSTPROG}.c
 
