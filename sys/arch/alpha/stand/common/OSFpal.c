@@ -1,4 +1,4 @@
-/* $NetBSD: OSFpal.c,v 1.6 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: OSFpal.c,v 1.7 1998/09/28 21:21:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -63,6 +63,8 @@ OSFpal()
 		return;
 	}
 	switch_palcode();
+	bcopy(&p->pcs_palrevisions[PALvar_OSF1], &p->pcs_pal_rev,
+	    sizeof(p->pcs_pal_rev));
 	printf("Switch to OSF PAL code succeeded.\n");
 }
 
