@@ -904,7 +904,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 	CC_STATUS_INIT;						\
       else if (GET_CODE (SET_DEST (EXP)) != ZERO_EXTRACT	\
 	       && GET_CODE (SET_DEST (EXP)) != PC)		\
-	{ cc_status.flags = 0;					\
+	{ cc_status.flags = CC_NO_OVERFLOW;			\
 	  cc_status.value1 = SET_DEST (EXP);			\
 	  cc_status.value2 = SET_SRC (EXP); } }			\
   else if (GET_CODE (EXP) == PARALLEL				\
