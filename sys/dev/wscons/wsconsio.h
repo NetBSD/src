@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.61 2004/03/19 09:00:38 petrov Exp $ */
+/* $NetBSD: wsconsio.h,v 1.62 2004/05/28 21:42:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -104,6 +104,21 @@ struct wskbd_bell_data {
 	u_int	period;				/* period, in milliseconds */
 	u_int	volume;				/* percentage of max volume */
 };
+/* Manipulate the scrolling modifiers and mode */
+struct wskbd_scroll_data {
+	u_int		which;
+	u_int		mode;
+	u_int		modifier;
+};
+
+/* Manipulate the scrolling values (how many lines to scroll) */
+
+struct wsdisplay_scroll_data {
+	u_int		which;
+	u_int		fastlines;
+	u_int		slowlines;
+};
+
 #define		WSKBD_BELL_DOPITCH	0x1		/* get/set pitch */
 #define		WSKBD_BELL_DOPERIOD	0x2		/* get/set period */
 #define		WSKBD_BELL_DOVOLUME	0x4		/* get/set volume */
@@ -159,6 +174,15 @@ struct wskbd_map_data {
 
 #define	WSKBDIO_SETKEYCLICK	_IOW('W', 21, int)
 #define	WSKBDIO_GETKEYCLICK	_IOR('W', 22, int)
+
+#define WSKBDIO_GETSCROLL		_IOR('W', 23, struct wskbd_scroll_data)
+#define WSKBDIO_SETSCROLL		_IOW('W', 24, struct wskbd_scroll_data)
+
+#define		WSKBD_SCROLL_MODE_NORMAL	0x00
+#define		WSKBD_SCROLL_MODE_HOLD		0x01
+#define		WSKBD_SCROLL_DOMODIFIER		0x01
+#define		WSKBD_SCROLL_DOMODE			0x02
+#define		WSKBD_SCROLL_DOALL			0x03
 
 /*
  * Mouse ioctls (32 - 63)
@@ -315,6 +339,11 @@ struct wsdisplay_cursor {
 #define		WSDISPLAY_CURSOR_DOSHAPE	0x10	/* get/set img/mask */
 #define		WSDISPLAY_CURSOR_DOALL		0x1f	/* all of the above */
 
+#define		WSDISPLAY_SCROLL_DOFASTLINES	0x01
+#define		WSDISPLAY_SCROLL_DOSLOWLINES	0x02
+#define		WSDISPLAY_SCROLL_DOALL			0x03
+
+
 /* Cursor control: get and set position */
 #define	WSDISPLAYIO_GCURPOS	_IOR('W', 70, struct wsdisplay_curpos)
 #define	WSDISPLAYIO_SCURPOS	_IOW('W', 71, struct wsdisplay_curpos)
@@ -396,6 +425,9 @@ struct wsdisplay_param {
 };
 #define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
 #define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
+
+#define WSDISPLAYIO_DGSCROLL		_IOR('W', 84, struct wsdisplay_scroll_data)
+#define WSDISPLAYIO_DSSCROLL		_IOW('W', 85, struct wsdisplay_scroll_data)
 
 #define	WSDISPLAYIO_GETACTIVESCREEN	_IOR('W', 84, int)
 
