@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.15 1997/01/31 02:13:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,12 +61,7 @@
 #include "hp.h"
 #include "ra.h"
 
-#define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 u_long  bootdev;                /* should be dev_t, but not until 32 bits */
-extern dev_t rootdev, dumpdev;
-
-#define PARTITIONMASK   0x7
-#define PARTITIONSHIFT  3
 
 /*
  * Attempt to find the device from which we were booted.
@@ -74,20 +69,27 @@ extern dev_t rootdev, dumpdev;
  * change rootdev to correspond to the load device.
  */
 void
-setroot()
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-        int  majdev, mindev, unit, part, controller, adaptor;
-        dev_t temp = 0, orootdev;
-        struct swdevt *swp;
+        int majdev, unit, part, controller, adaptor;
 	extern int boothowto;
-	char *uname;
 
-        if (boothowto & RB_DFLTROOT ||
-            (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+	*partp = 0;
+
+#if 0
+	printf("howto %x bootdev %x ", boothowto, bootdev);
+#endif
+
+        if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
                 return;
+
         majdev = B_TYPE(bootdev);
-        if (majdev >= nblkdev)
-                return;
         adaptor = B_ADAPTOR(bootdev);
         controller = B_CONTROLLER(bootdev);
         part = B_PARTITION(bootdev);
@@ -95,15 +97,15 @@ setroot()
 
 	switch (majdev) {
 	case 0:	/* MBA disk */
-#if NHP
-		if ((mindev = hp_getdev(adaptor, unit, &uname)) < 0)
+#if NHP > 0
+		if (hp_getdev(adaptor, unit, devpp) < 0)
 #endif
 			return;
 		break;
 
 	case 9:	/* MSCP disk */
-#if NRA
-		if ((mindev = ra_getdev(adaptor, controller, unit, &uname)) < 0)
+#if NRA > 0
+		if (ra_getdev(adaptor, controller, unit, devpp) < 0)
 #endif
 			return;
 		break;
@@ -112,57 +114,5 @@ setroot()
 		return;
 	}
 
-        mindev = (mindev << PARTITIONSHIFT) + part;
-        orootdev = rootdev;
-        rootdev = makedev(majdev, mindev);
-        /*
-         * If the original rootdev is the same as the one
-         * just calculated, don't need to adjust the swap configuration.
-         */
-        if (rootdev == orootdev)
-                return;
-
-        printf("Changing root device to %s%c\n", uname, part + 'a');
-
-#ifdef DOSWAP
-        mindev &= ~PARTITIONMASK;
-        for (swp = swdevt; swp->sw_dev; swp++) {
-                if (majdev == major(swp->sw_dev) &&
-                    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
-                        temp = swdevt[0].sw_dev;
-                        swdevt[0].sw_dev = swp->sw_dev;
-                        swp->sw_dev = temp;
-                        break;
-                }
-        }
-        if (swp->sw_dev == 0)
-                return;
-
-        /*
-         * If argdev and dumpdev were the same as the old primary swap
-         * device, move them to the new primary swap device.
-         */
-        if (temp == dumpdev)
-                dumpdev = swdevt[0].sw_dev;
-#endif
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-        register struct swdevt *swp;
-        register int nblks;
-
-        for (swp = swdevt; swp->sw_dev; swp++)
-		if (swp->sw_dev != NODEV &&bdevsw[major(swp->sw_dev)].d_psize){
-                        nblks =
-                          (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-                        if (nblks != -1 &&
-                            (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-                                swp->sw_nblks = nblks;
-                }
-        dumpconf();
+	*partp = part;
 }
