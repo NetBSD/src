@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/03/01 11:51:59 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4 2003/10/12 00:25:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
 	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
 	clrl	%a0@(UC_REGS + (_REG_PS * 4))		;	\
-	movl	#(_UC_CPU+UC_USER),%a0@/*(UC_FLAGS)*/
+	movl	#(_UC_CPU+_UC_USER),%a0@/*(UC_FLAGS)*/
 #endif
 
 /*
