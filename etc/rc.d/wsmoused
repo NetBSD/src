@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: wsmoused,v 1.1 2002/06/27 15:08:55 christos Exp $
+#
+
+# PROVIDE: wsmoused
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="wsmoused"
+rcvar=$name
+command="/usr/sbin/${name}"
+
+load_rc_config $name
+run_rc_command "$1"
