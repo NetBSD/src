@@ -1,13 +1,10 @@
-# $NetBSD: md.atari,v 1.7 2000/08/06 22:39:04 wiz Exp $
+# $NetBSD: md.atari,v 1.8 2002/02/11 16:23:18 tron Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/kbd_mode
 ./usr/X11R6/bin/xvidtune
 ./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/Xvidtune
-./usr/X11R6/lib/X11/doc/COPYRIGHT
-./usr/X11R6/lib/X11/etc/postinst.sh
-./usr/X11R6/lib/X11/etc/preinst.sh
 ./usr/X11R6/lib/X11/etc/sun.termcap
 ./usr/X11R6/lib/X11/etc/sun.terminfo
 ./usr/X11R6/lib/X11/etc/xmodmap.std
