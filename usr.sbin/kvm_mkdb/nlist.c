@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nlist.c,v 1.11 1996/05/16 21:17:21 gwr Exp $";
+static char *rcsid = "$Id: nlist.c,v 1.12 1996/05/16 22:48:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,7 +139,7 @@ create_knlist(name, db)
 			long cur_off, voff;
 			/*
 			 * Calculate offset relative to a normal (non-kernel)
-			 * a.out.  KERNTEXTOFF is where the kernel is really
+			 * a.out.  Kerntextoff is where the kernel is really
 			 * loaded; N_TXTADDR is where a normal file is loaded.
 			 * From there, locate file offset in text or data.
 			 */
