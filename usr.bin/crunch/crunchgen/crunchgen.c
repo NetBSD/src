@@ -807,7 +807,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->name, p->name, p->ident);
     fprintf(outmk, "\tld -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\tcrunchide -k __crunched_%s_stub %s.lo\n", 
+    fprintf(outmk, "\tcrunchide -k _crunched_%s_stub %s.lo\n", 
 	    p->ident, p->name);
 }
 
