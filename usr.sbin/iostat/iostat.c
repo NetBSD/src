@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.42 2004/02/25 03:39:14 dbj Exp $	*/
+/*	$NetBSD: iostat.c,v 1.43 2004/10/29 21:27:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.42 2004/02/25 03:39:14 dbj Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.43 2004/10/29 21:27:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ selectdrives(int argc, char *argv[])
 #define	BACKWARD_COMPATIBILITY
 	for (tried = ndrives = 0; *argv; ++argv) {
 #ifdef BACKWARD_COMPATIBILITY
-		if (isdigit(**argv))
+		if (isdigit((unsigned char)**argv))
 			break;
 #endif
 		tried++;
