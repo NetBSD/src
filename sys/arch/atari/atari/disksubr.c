@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1998/07/05 08:49:38 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1999/09/22 07:20:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -229,7 +229,7 @@ setdisklabel(olp, nlp, openmask, clp)
 		return(EINVAL);
 
 #ifdef DISKLABEL_AHDI
-	if (clp->cd_bblock)
+	if (clp && clp->cd_bblock)
 		ck_label(nlp, clp);
 #endif
 	while (openmask) {
