@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.9 1998/07/27 11:14:34 mycroft Exp $	*/
+/*	$NetBSD: nlist.h,v 1.10 1998/12/17 23:15:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,11 @@ struct nlist {
 #define	N_INDR	0x0a		/* alias definition */
 #define	N_SIZE	0x0c		/* pseudo type, defines a symbol's size */
 #define	N_COMM	0x12		/* common reference */
+#define N_SETA	0x14		/* absolute set element symbol */
+#define N_SETT	0x16		/* text set element symbol */
+#define N_SETD	0x18		/* data set element symbol */
+#define N_SETB	0x1a		/* bss set element symbol */
+#define N_SETV	0x1c		/* set vector symbol */
 #define	N_FN	0x1e		/* file name (N_EXT on) */
 #define	N_WARN	0x1e		/* warning message (N_EXT off) */
 
