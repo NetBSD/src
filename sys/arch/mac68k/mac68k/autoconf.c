@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 1996/10/13 03:21:34 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1996/10/21 00:31:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -244,8 +244,10 @@ setroot(void)
 	struct device *bootdv, *rootdv, *swapdv;
 	int bootpartition;
 #if defined(NFSCLIENT)
+#if NETHER
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot __P((void *));
+#endif
 #endif
 #if defined(FFS)
 	extern int ffs_mountroot __P((void *));
@@ -383,7 +385,9 @@ gotswap:
 #if defined(NFSCLIENT)
 	case DV_IFNET:
 		mountroot = nfs_mountroot;
+#if NETHER
 		nfsbootdevname = rootdv->dv_xname;
+#endif
 		return;
 #endif
 #if defined(FFS)
