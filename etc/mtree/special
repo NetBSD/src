@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.62 2002/08/27 02:01:37 cjs Exp $
+#	$NetBSD: special,v 1.63 2002/09/03 00:56:09 wiz Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -301,6 +301,7 @@
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
+./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755
 ./var/spool/ftp			type=dir  mode=0755 optional
 ./var/spool/ftp/bin		type=dir  mode=0755 optional

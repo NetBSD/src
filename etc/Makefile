@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.224 2002/07/28 01:21:07 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.225 2002/09/03 00:56:08 wiz Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -215,6 +215,8 @@ install-etc-files: check_DESTDIR
 		${DESTDIR}/var/msgs/bounds
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/run/utmpx
 	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/atc_scores
 	${INSTALL_FILE} -o games -g games -m 664 /dev/null \

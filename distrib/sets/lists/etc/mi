@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.104 2002/08/27 14:12:12 takemura Exp $
+# $NetBSD: mi,v 1.105 2002/09/03 00:56:10 wiz Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -220,5 +220,6 @@
 ./var/log/xferlog			etc-netutil-log
 ./var/msgs/bounds			etc-sysutil-log
 ./var/run/utmp				etc-sys-log
+./var/run/utmpx				etc-sys-log
 ./var/yp/Makefile.main			etc-nis-root
 ./var/yp/Makefile.yp			etc-nis-root
