@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.1.2.1 2000/01/20 21:35:11 he Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Tsubai Masanari.  All rights reserved.
@@ -174,8 +174,14 @@ bmac_attach(parent, self, aux)
 	int i;
 
 	sc->sc_flags =0;
-	if (strcmp(ca->ca_name, "ethernet") == 0)
+	if (strcmp(ca->ca_name, "ethernet") == 0) {
+		char name[64];
+
+		bzero(name, 64);
+		OF_package_to_path(ca->ca_node, name, sizeof(name));
+		OF_open(name);
 		sc->sc_flags |= BMAC_BMACPLUS;
+	}
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
