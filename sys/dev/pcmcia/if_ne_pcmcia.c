@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.115 2004/07/04 01:28:51 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.116 2004/07/07 02:17:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.115 2004/07/04 01:28:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.116 2004/07/07 02:17:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,6 +489,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX, 
       0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_STR_MELCO_LPC3_TX, 
+      PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
+      PCMCIA_CIS_MELCO_LPC3_TX, 
+      0, -1, { 0x00, 0x02, 0xdd }, NE2000DVF_AX88190 },
 
     { PCMCIA_STR_BUFFALO_LPC3_CLT,
       PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC3_CLT,
