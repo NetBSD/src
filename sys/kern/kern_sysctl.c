@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.35 1998/04/30 06:28:58 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.36 1998/05/24 19:52:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -348,6 +348,26 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENXIO);
 		}
 		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
+	case KERN_FSYNC:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_SYSVMSG:
+#ifdef SYSVMSG
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+	case KERN_SYSVSEM:
+#ifdef SYSVSEM
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+	case KERN_SYSVSHM:
+#ifdef SYSVSHM
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
