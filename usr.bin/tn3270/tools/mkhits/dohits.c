@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $	*/
+/*	$NetBSD: dohits.c,v 1.8 2000/06/11 03:36:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.8 2000/06/11 03:36:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ int value;
 
     item = &firstentry(second);
     this = (struct thing *) malloc(sizeof *this);
+    this->hits = 0;
     this->next = *item;
     *item = this;
     this->value = value;
