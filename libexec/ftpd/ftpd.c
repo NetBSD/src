@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.58 1998/09/07 08:11:20 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.59 1998/09/07 08:15:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.58 1998/09/07 08:11:20 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.59 1998/09/07 08:15:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1422,14 +1422,6 @@ ack(s)
 {
 
 	reply(250, "%s command successful.", s);
-}
-
-void
-nack(s)
-	char *s;
-{
-
-	reply(502, "%s command not implemented.", s);
 }
 
 void
