@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.214 2003/04/11 22:40:31 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.215 2003/04/20 21:57:17 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -309,6 +309,7 @@ FFLAGS+=	${FOPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.if defined(LIB)
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
 	|| ${MKLINKLIB} != "no"
 _LIBS=lib${LIB}.a
@@ -347,6 +348,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
+.endif
 .endif
 
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
