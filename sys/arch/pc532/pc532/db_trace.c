@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2000/05/26 03:34:28 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9.4.1 2002/02/09 18:02:09 he Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,8 +53,7 @@ struct ns532_frame;
 static void	db_nextframe __P((struct ns532_frame **, db_addr_t *,
     int *, int, void (*)(const char *, ...)));
 static int	db_numargs __P((struct ns532_frame *));
-static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int,
-    void (*)(const char *, ...)));
+static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int));
 
 /*
  * Machine register set.
@@ -384,70 +383,69 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
   *********************************************/
 
 static int
-db_spec_regs(vp, valp, what, pr)
+db_spec_regs(vp, valp, what)
 	struct db_variable *vp;
 	db_expr_t *valp;
 	int what;
-	void (*pr) __P((const char *, ...));
 {
-	if (strcmp(vp->name, "intbase") == 0)
+	if (strcmp(vp->name, "intbase") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(intbase, *valp);
 		else
 			lprd(intbase, *valp);
-	else if (strcmp(vp->name, "ptb") == 0)
+	} else if (strcmp(vp->name, "ptb") == 0) {
 		if (what == DB_VAR_GET)
 			smr(ptb0, *valp);
 		else
 			load_ptb(*valp);
-	else if (strcmp(vp->name, "ivar") == 0)
+	} else if (strcmp(vp->name, "ivar") == 0) {
 		if (what == DB_VAR_GET)
 			*valp = 0;
 		else {
 			lmr(ivar0, *valp);
 			lmr(ivar1, *valp);
 		}
-	else if (strcmp(vp->name, "rtear") == 0)
+	} else if (strcmp(vp->name, "rtear") == 0) {
 		if (what == DB_VAR_GET)
 			smr(tear, *valp);
 		else
 			lmr(tear, *valp);
-	else if (strcmp(vp->name, "mcr") == 0)
+	} else if (strcmp(vp->name, "mcr") == 0) {
 		if (what == DB_VAR_GET)
 			smr(mcr, *valp);
 		else
 			lmr(mcr, *valp);
-	else if (strcmp(vp->name, "rmsr") == 0)
+	} else if (strcmp(vp->name, "rmsr") == 0) {
 		if (what == DB_VAR_GET)
 			smr(msr, *valp);
 		else
 			lmr(msr, *valp);
-	else if (strcmp(vp->name, "dcr") == 0)
+	} else if (strcmp(vp->name, "dcr") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(dcr, *valp);
 		else
 			lprd(dcr, *valp);
-	else if (strcmp(vp->name, "dsr") == 0)
+	} else if (strcmp(vp->name, "dsr") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(dsr, *valp);
 		else
 			lprd(dsr, *valp);
-	else if (strcmp(vp->name, "car") == 0)
+	} else if (strcmp(vp->name, "car") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(car, *valp);
 		else
 			lprd(car, *valp);
-	else if (strcmp(vp->name, "bpc") == 0)
+	} else if (strcmp(vp->name, "bpc") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(bpc, *valp);
 		else
 			lprd(bpc, *valp);
-	else if (strcmp(vp->name, "cfg") == 0)
+	} else if (strcmp(vp->name, "cfg") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(cfg, *valp);
 		else
 			lprd(cfg, *valp);
-	else
-		(*pr)("Internal error, unknown register in db_spec_regs");
+	}	
+
 	return(0);
 }
