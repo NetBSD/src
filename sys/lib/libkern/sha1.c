@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.1 1998/05/27 00:46:32 explorer Exp $	*/
+/*	$NetBSD: sha1.c,v 1.2 1998/05/29 16:50:14 hannken Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #else
 #include <sys/param.h>
 #include <string.h>
-#include <sha1.h>
+#include <sys/sha1.h>
 #endif
 
 /*
