@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.1 2002/09/16 19:52:55 manu Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.2 2002/09/19 16:52:00 manu Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,6 +59,17 @@ struct apm_attach_args {
 #define	 APM_BATT_UNKNOWN	0xff
 #define	 APM_BATT_LIFE_UNKNOWN	0xff
 
+#define  APM_STANDBY_REQ	0x0001
+#define  APM_SUSPEND_REQ	0x0002
+#define  APM_NORMAL_RESUME	0x0003
+#define  APM_CRIT_RESUME	0x0004
+#define  APM_BATTERY_LOW	0x0005
+#define  APM_POWER_CHANGE	0x0006
+#define  APM_CRIT_SUSPEND_REQ	0x0008
+#define  APM_USER_STANDBY_REQ	0x0009
+#define  APM_USER_SUSPEND_REQ	0x000A
+#define  APM_SYS_STANDBY_RESUME	0x000B
+
 struct apm_power_info {
 	u_char battery_state;
 	u_char ac_state;
@@ -70,7 +81,16 @@ struct apm_power_info {
 	u_int spare2[4];
 }; 
 
+struct apm_event_info {
+        u_int type;
+	u_int index;
+	u_int spare[8]; 
+};  
+
 /* ioctl definitions */
 #define APM_IOC_STANDBY _IO('A', 1)
 #define APM_IOC_SUSPEND _IO('A', 2)
 #define APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) 
+
+#define APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info)
+
