@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 1999/09/14 01:32:43 perry Exp $
+#	$NetBSD: Makefile,v 1.100 1999/11/30 16:16:41 sommerfeld Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -35,7 +35,7 @@
 
 .include <bsd.own.mk>			# for configuration variables.
 
-
+MKOBJDIRS ?= no
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if defined(NBUILDJOBS)
@@ -99,6 +99,9 @@ build: beforeinstall
 .endif
 .if !defined(UPDATE)
 	${MAKE} cleandir
+.endif
+.if ${MKOBJDIRS} != "no"
+	${MAKE} obj
 .endif
 .if empty(HAVE_GCC28)
 .if defined(DESTDIR)
