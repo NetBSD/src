@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.35 2004/07/06 19:46:27 mycroft Exp $
 ./etc/mtree/set.games				games-sys-root
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
@@ -84,6 +84,10 @@
 ./usr/games/worms				games-games-bin
 ./usr/games/wtf					games-utils-bin
 ./usr/games/wump				games-games-bin
+./usr/share/doc/usd/30.rogue/Makefile		games-usd-doc		doc
+./usr/share/doc/usd/30.rogue/rogue.me		games-usd-doc		doc
+./usr/share/doc/usd/31.trek/Makefile		games-usd-doc		doc
+./usr/share/doc/usd/31.trek/trek.me		games-usd-doc		doc
 ./usr/share/games/atc/ATC_scores		games-obsolete		obsolete
 ./usr/share/games/atc/Atlantis			games-games-share	share
 ./usr/share/games/atc/Game_List			games-games-share	share
@@ -173,6 +177,7 @@
 ./usr/share/games/quiz.db/trek			games-games-share	share
 ./usr/share/games/quiz.db/ucc			games-games-share	share
 ./usr/share/games/wump.info			games-games-share	share
+./usr/share/man/cat5/dm.conf.0			games-games-catman	.cat
 ./usr/share/man/cat6/adventure.0		games-games-catman	.cat
 ./usr/share/man/cat6/arithmetic.0		games-games-catman	.cat
 ./usr/share/man/cat6/atc.0			games-games-catman	.cat
@@ -221,6 +226,9 @@
 ./usr/share/man/cat6/worms.0			games-games-catman	.cat
 ./usr/share/man/cat6/wtf.0			games-utils-catman	.cat
 ./usr/share/man/cat6/wump.0			games-games-catman	.cat
+./usr/share/man/cat8/dm.0			games-games-catman	.cat
+./usr/share/man/cat8/strfile.0			games-utils-catman	.cat
+./usr/share/man/man5/dm.conf.5			games-games-man		.man
 ./usr/share/man/man6/adventure.6		games-games-man		.man
 ./usr/share/man/man6/arithmetic.6		games-games-man		.man
 ./usr/share/man/man6/atc.6			games-games-man		.man
@@ -269,6 +277,8 @@
 ./usr/share/man/man6/worms.6			games-games-man		.man
 ./usr/share/man/man6/wtf.6			games-utils-man		.man
 ./usr/share/man/man6/wump.6			games-games-man		.man
+./usr/share/man/man8/dm.8			games-games-man		.man
+./usr/share/man/man8/strfile.8			games-utils-man		.man
 ./var/games/atc_scores				games-obsolete		obsolete
 ./var/games/hackdir/data			games-games-root
 ./var/games/hackdir/help			games-games-root
