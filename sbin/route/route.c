@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.17 1996/11/15 18:01:40 gwr Exp $	*/
+/*	$NetBSD: route.c,v 1.18 1997/02/22 21:22:26 carrel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.17 1996/11/15 18:01:40 gwr Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.18 1997/02/22 21:22:26 carrel Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ union	sockunion {
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
 typedef union sockunion *sup;
-int	pid, rtm_addrs, uid;
+int	pid, rtm_addrs;
 int	s;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword();
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
@@ -167,7 +167,6 @@ main(argc, argv)
 	argv += optind;
 
 	pid = getpid();
-	uid = getuid();
 	if (tflag)
 		s = open("/dev/null", O_WRONLY, 0);
 	else
@@ -181,10 +180,7 @@ main(argc, argv)
 
 #ifndef SMALL
 	case K_GET:
-		uid = 0;
-		/* FALLTHROUGH */
 #endif /* SMALL */
-
 	case K_CHANGE:
 	case K_ADD:
 	case K_DELETE:
@@ -192,7 +188,6 @@ main(argc, argv)
 		break;
 
 	case K_SHOW:
-		uid = 0;
 		show(argc, argv);
 		break;
 
@@ -229,10 +224,6 @@ flushroutes(argc, argv)
 	char *buf, *next, *lim;
 	register struct rt_msghdr *rtm;
 
-	if (uid) {
-		errno = EACCES;
-		quit("must be root to alter routing table");
-	}
 	shutdown(s, 0); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
@@ -543,10 +534,6 @@ newroute(argc, argv)
 	int key;
 	struct hostent *hp = 0;
 
-	if (uid) {
-		errno = EACCES;
-		quit("must be root to alter routing table");
-	}
 	cmd = argv[0];
 	if (*cmd != 'g')
 		shutdown(s, 0); /* Don't want to read back our messages */
