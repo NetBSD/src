@@ -1,9 +1,14 @@
-# $NetBSD: files.podulebus,v 1.6 2001/05/26 17:49:46 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.7 2001/05/26 23:01:19 bjh21 Exp $
 
 # Oak SCSI
 device	oak: scsi, ncr5380sbc
 attach	oak at podulebus
 file	dev/podulebus/oak.c			oak
+
+# HCCS 8-bit SCSI
+device	hcsc: scsi, ncr5380sbc
+attach	hcsc at podulebus
+file	dev/podulebus/hcsc.c			hcsc
 
 # Acorn Ether1
 device	ei: ether, ifnet, arp, i82586
