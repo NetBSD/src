@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 1997/03/13 04:32:11 perry Exp $
+#	$NetBSD: Makefile,v 1.68 1997/03/24 18:10:00 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -45,7 +45,7 @@ distribution: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
-	chroot ${DESTDIR}/ pwd_mkdb -p /etc/master.passwd
+	pwd_mkdb -p -d ${DESTDIR}/ ${DESTDIR}/etc/master.passwd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
