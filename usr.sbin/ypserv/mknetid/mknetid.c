@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.7 1997/11/13 18:38:26 thorpej Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.8 1998/06/08 06:53:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.7 1997/11/13 18:38:26 thorpej Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.8 1998/06/08 06:53:48 lukem Exp $");
 #endif
 
 /*
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: mknetid.c,v 1.7 1997/11/13 18:38:26 thorpej Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <rpcsvc/ypclnt.h>
 
@@ -236,7 +237,9 @@ read_passwd(fname)
 		err(1, "%s", fname);
 
 	line_no = 0;
-	while ((p = read_line(pfile, &len, &line_no)) != NULL) {
+	for (;
+	    (p = fparseln(pfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
 		if (len == 0) {
 			warnx("%s line %d: empty line", fname, line_no);
 			continue;
@@ -308,7 +311,9 @@ read_group(fname)
 		err(1, "%s", fname);
 
 	line_no = 0;
-	while ((p = read_line(gfile, &len, &line_no)) != NULL) {
+	for (;
+	    (p = fparseln(gfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
 		if (len == 0) {
 			warnx("%s line %d: empty line", fname, line_no);
 			continue;
@@ -398,8 +403,10 @@ print_hosts(fname, domain)
 	if ((hfile = fopen(fname, "r")) == NULL)
 		err(1, "%s", fname);
 
-	while ((p = read_line(hfile, &len, NULL)) != NULL) {
-		if (len == 0 || *p == '#')
+	for (;
+	    (p = fparseln(hfile, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
+		if (len == 0)
 			continue;
 
 		/* Find the key, replace trailing whitespace will <NUL> */
@@ -430,8 +437,10 @@ print_netid(fname)
 	if (mfile == NULL)
 		return;
 
-	while ((p = read_line(mfile, &len, NULL)) != NULL) {
-		if (len == 0 || *p == '#')
+	for (;
+	    (p = fparseln(mfile, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
+		if (len == 0)
 			continue;
 
 		/* Find the key, replace trailing whitespace will <NUL> */

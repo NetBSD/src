@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/11 20:26:58 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1998/06/08 06:53:48 lukem Exp $
 
 LIB=	common
-SRCS=	localhostname.c read_line.c ypdb.c yplib_host.c yplog.c ypresp_xdr.c
+SRCS=	localhostname.c ypdb.c yplib_host.c yplog.c ypresp_xdr.c
 
 NOPROFILE=	noprofile
 NOPIC=		nopic

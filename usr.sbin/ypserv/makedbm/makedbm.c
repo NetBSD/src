@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.11 1998/06/01 14:05:35 kleink Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.12 1998/06/08 06:53:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.11 1998/06/01 14:05:35 kleink Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.12 1998/06/08 06:53:48 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: makedbm.c,v 1.11 1998/06/01 14:05:35 kleink Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -291,7 +292,9 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	if (new_db == NULL)
 		err(1, "can't create temp database `%s'", db_tempname);
 
-	while ((p = read_line(data_file, &len, &line_no)) != NULL) {
+	for (;
+	    (p = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
 		while (*p && isspace(*p))	/* skip leading whitespace */
 			p++;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.7 1997/11/13 18:42:48 thorpej Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.8 1998/06/08 06:53:49 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.7 1997/11/13 18:42:48 thorpej Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.8 1998/06/08 06:53:49 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,7 +44,9 @@ __RCSID("$NetBSD: stdhosts.c,v 1.7 1997/11/13 18:42:48 thorpej Exp $");
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "protos.h"
 
@@ -80,8 +82,10 @@ main(argc, argv)
 	}
 
 	line_no = 0;
-	while ((v = read_line(data_file, &len, &line_no)) != NULL) {
-		if (len == 0 || *v == '#')
+	for (;
+	    (v = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
+	    free(v)) {
+		if (len == 0)
 			continue;
 
 		k = strchr(v, '#');

@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.5 1998/02/03 05:19:01 perry Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.6 1998/06/08 06:53:49 lukem Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,15 +41,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.5 1998/02/03 05:19:01 perry Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.6 1998/06/08 06:53:49 lukem Exp $");
 #endif
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "hash.h"
 #include "protos.h"
@@ -134,8 +136,10 @@ main(argc, argv)
 	}
 
 	/* Stuff all the netgroup names and members into a hash table. */
-	while ((p = read_line(fp, &len, NULL)) != NULL) {
-		if (len == 0 || *p == '#')
+	for (;
+	    (p = fparseln(fp, &len, NULL, NULL, FPARSELN_UNESCALL));
+	    free(p)) {
+		if (len == 0)
 			continue;
 
 		for (key = p; *p && isspace(*p) == 0; p++)
