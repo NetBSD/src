@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.91 1998/08/05 16:38:09 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.92 1998/08/07 00:00:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -144,11 +144,7 @@ void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
 
 int	audioprint __P((void *, const char *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	audioprobe __P((struct device *, void *, void *));
-#else
 int	audioprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	audioattach __P((struct device *, struct device *, void *));
 
 struct portname {
@@ -197,11 +193,7 @@ extern struct cfdriver audio_cd;
 int
 audioprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct audio_attach_args *sa = aux;

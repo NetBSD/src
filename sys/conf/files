@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.227 1998/07/26 03:29:12 explorer Exp $
+#	$NetBSD: files,v 1.228 1998/08/07 00:00:57 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -96,6 +96,7 @@ devclass tty
 
 # generic attributes
 define	audio { }
+define	midibus { }
 define	scsi {[channel = -1]}
 define	ata {[drive = -1]}
 define	atapi { }
@@ -105,9 +106,11 @@ define  miibus { }
 define	mulaw
 define	auconv
 
-# audio device, attaches to audio hardware driver
+# audio and midi devices, attaches to audio hardware driver
 device	audio
 attach	audio at audio
+device	midi
+attach	midi at midibus
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, and atm.
@@ -328,6 +331,8 @@ pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
 
+pseudo-device sequencer
+
 # kernel sources
 file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
@@ -362,7 +367,9 @@ file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
+file dev/midi.c				midi			needs-flag
 file dev/mulaw.c			mulaw
+file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c				rnd			needs-flag
 file dev/rndpool.c			rnd			needs-flag
