@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_usrreq.c	7.16 (Berkeley) 6/27/91
- *	$Id: pk_usrreq.c,v 1.3 1993/05/20 04:12:24 cgd Exp $
+ *	$Id: pk_usrreq.c,v 1.4 1993/09/06 17:43:33 mycroft Exp $
  */
 
 #include "param.h"
@@ -56,7 +56,7 @@
 #include "pk.h"
 #include "pk_var.h"
 
-int old_to_new(), new_to_old();
+static int old_to_new(), new_to_old();
 
 /*
  * 
