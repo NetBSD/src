@@ -5,7 +5,7 @@
  *
  * Modified by: Charles Hannum, 3/22/94
  *
- *	$Id: ast.c,v 1.7 1994/04/07 06:50:15 mycroft Exp $
+ *	$Id: ast.c,v 1.8 1994/08/14 14:13:25 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -140,21 +140,21 @@ astintr(sc)
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = inb(iobase | 0x1f) & alive;
-	if (bits == alive)
+	bits = ~(inb(iobase | 0x1f)) & alive;
+	if (bits == 0)
 		return 0;
 
-	do {
+	for (;;) {
 #define	TRY(n) \
-		if ((bits & (1 << (n))) == 0) \
+		if (bits & (1 << (n))) \
 			comintr(sc->sc_slaves[n]);
 		TRY(0);
 		TRY(1);
 		TRY(2);
 		TRY(3);
 #undef TRY
-		bits = inb(iobase | 0x1f) & alive;
- 	} while (bits != alive);
-
-	return 1;
+		bits = ~(inb(iobase | 0x1f)) & alive;
+		if (bits == 0)
+			return 1;
+ 	}
 }
