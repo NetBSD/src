@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.300 2001/01/07 13:05:28 martin Exp $
+# $NetBSD: mi,v 1.301 2001/01/08 08:15:35 garbled Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1416,6 +1416,7 @@
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0
 ./usr/share/man/cat8/supservers.0
+./usr/share/man/cat8/sushi.0
 ./usr/share/man/cat8/swapctl.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
@@ -2878,6 +2879,7 @@
 ./usr/share/man/man8/supfilesrv.8
 ./usr/share/man/man8/supscan.8
 ./usr/share/man/man8/supservers.8
+./usr/share/man/man8/sushi.8
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8
 ./usr/share/man/man8/sync.8
