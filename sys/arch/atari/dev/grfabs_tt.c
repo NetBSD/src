@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.2 1996/02/22 10:11:25 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.3 1996/04/12 09:05:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,6 +44,7 @@
 #include <machine/video.h>
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
+#include <atari/atari/stalloc.h>
 #include <atari/dev/grfabs_reg.h>
 
 /*
