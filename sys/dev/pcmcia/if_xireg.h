@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.4 2003/11/02 11:14:22 wiz Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.5 2004/08/08 05:56:08 mycroft Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*
@@ -89,9 +89,8 @@
 #define PTR	0xd	/* R  - Packets Transmitted register */
 
 /* Page 0 */
-#define TSO0	0x8	/* R  - Transmit space open, 3 registers */
-#define TSO1	0x9
-#define TSO2	0xa
+#define TSO	0x8	/* R  - Transmit space open, 3 registers */
+#define TRS	0xa	/* W  - Transmit reservation size */
 #define DO0	0xc	/* W  - Data offset, 2 registers */
 #define DO1	0xd
 #define RSR	0xc	/* R  - Rx status register */

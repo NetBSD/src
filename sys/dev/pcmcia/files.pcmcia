@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.45 2004/07/07 08:47:22 mycroft Exp $
+#	$NetBSD: files.pcmcia,v 1.46 2004/08/08 05:56:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -97,10 +97,15 @@ file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
 attach	wi at pcmcia with wi_pcmcia
 file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
 
-# Xircom Ethernet cards
+# Xircom Ethernet and Ethernet+Modem cards
+device	xirc { }
 device	xi: arp, ether, ifnet, mii
-attach	xi at pcmcia with xi_pcmcia
-file	dev/pcmcia/if_xi.c			xi_pcmcia
+attach	xirc at pcmcia
+attach	com at xirc with com_xirc
+attach	xi at xirc with xi_xirc
+file	dev/pcmcia/xirc.c			xirc | com_xirc | xi_xirc
+								needs-flag
+file	dev/pcmcia/if_xi.c			xi
 
 # IBM Tropic-based Token Ring cards
 attach	tr at pcmcia with tr_pcmcia
