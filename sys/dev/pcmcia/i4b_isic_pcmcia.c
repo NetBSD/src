@@ -30,10 +30,10 @@
  *
  *---------------------------------------------------------------------------
  *
- *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
+ *	i4b_isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.5 2001/02/10 22:44:36 martin Exp $ 
+ *	$Id: i4b_isic_pcmcia.c,v 1.1 2001/02/17 15:00:49 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -79,17 +79,17 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_global.h>
 
-#include <dev/pcmcia/pcmcia_isic.h>
+#include <dev/pcmcia/i4b_isic_pcmcia.h>
 
 #include "opt_isicpcmcia.h"
 
-static int pcmcia_isic_match __P((struct device *, struct cfdata *, void *));
-static void pcmcia_isic_attach __P((struct device *, struct device *, void *));
+static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
+static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
 static const struct isic_pcmcia_card_entry * find_matching_card __P((struct pcmcia_attach_args *pa));
-static int pcmcia_isicattach __P((struct l1_softc *sc));
+static int isic_pcmcia_isdn_attach __P((struct l1_softc *sc));
 
-struct cfattach pcmcia_isic_ca = {
-	sizeof(struct pcmcia_l1_softc), pcmcia_isic_match, pcmcia_isic_attach
+struct cfattach isic_pcmcia_ca = {
+	sizeof(struct pcmcia_l1_softc), isic_pcmcia_match, isic_pcmcia_attach
 };
 
 struct isic_pcmcia_card_entry {
@@ -177,7 +177,7 @@ find_matching_card(pa)
  * Match card
  */
 static int
-pcmcia_isic_match(parent, match, aux)
+isic_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -194,7 +194,7 @@ pcmcia_isic_match(parent, match, aux)
  * Attach the card
  */
 static void
-pcmcia_isic_attach(parent, self, aux)
+isic_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -230,7 +230,7 @@ pcmcia_isic_attach(parent, self, aux)
 	s = splhigh();
 	
 	/* MI initilization */
-	if (pcmcia_isicattach(sc) == 0) {
+	if (isic_pcmcia_isdn_attach(sc) == 0) {
 		/* setup interrupt */
 		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
 	}
@@ -255,7 +255,7 @@ pcmcia_isic_attach(parent, self, aux)
 #endif
 
 int
-pcmcia_isicattach(struct l1_softc *sc)
+isic_pcmcia_isdn_attach(struct l1_softc *sc)
 {
   	static char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
