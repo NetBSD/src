@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/22 21:22:16 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1999/01/11 11:49:20 christos Exp $
 #
 
+.include <bsd.own.mk>
 DIST=	${.CURDIR}/../../dist
 TARGET_ARCH ?= ${MACHINE_ARCH}
 
