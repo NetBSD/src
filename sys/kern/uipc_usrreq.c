@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.49 2001/06/06 17:00:00 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.50 2001/06/07 01:29:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -806,12 +806,13 @@ unp_externalize(rights)
 	int i, *fdp;
 	struct file **rp;
 	struct file *fp;
-	int nfds, f, error = 0, err;
+	int nfds, error = 0;
 
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(struct file *);
-	fdp = (int *)CMSG_DATA(cm);
 	rp = (struct file **)CMSG_DATA(cm);
+
+	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
@@ -834,10 +835,10 @@ unp_externalize(rights)
 			}
 		}
 	}
+
+ restart:
 	rp = (struct file **)CMSG_DATA(cm);
-	
-	/* Make sure that the recipient has space */
-	if (error || (!fdavail(p, nfds))) {
+	if (error != 0) {
 		for (i = 0; i < nfds; i++) {
 			fp = *rp;
 			/*
@@ -847,38 +848,65 @@ unp_externalize(rights)
 			*rp++ = 0;
 			unp_discard(fp);
 		}
-		return (error ? error : EMSGSIZE);
+		goto out;
 	}
-	
+
 	/*
-	 * Add file to the recipient's open file table, converting them
-	 * to integer file descriptors as we go.  Done in forward order
-	 * because an integer will always come in the same place or before
-	 * its corresponding struct file pointer.
+	 * First loop -- allocate file descriptor table slots for the
+	 * new descriptors.
 	 */
+	for (i = 0; i < nfds; i++) {
+		fp = *rp++;
+		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
+			/*
+			 * Back out what we've done so far.
+			 */
+			for (--i; i >= 0; i--)
+				fdremove(p->p_fd, fdp[i]);
+
+			if (error == ENOSPC) {
+				fdexpand(p);
+				error = 0;
+			} else {
+				/*
+				 * This is the error that has historically
+				 * been returned, and some callers may
+				 * expect it.
+				 */
+				error = EMSGSIZE;
+			}
+			goto restart;
+		}
+
+		/*
+		 * Make the slot reference the descriptor so that
+		 * fdalloc() works properly.. We finalize it all
+		 * in the loop below.
+		 */
+		p->p_fd->fd_ofiles[fdp[i]] = fp;
+	}
+
+	/*
+	 * Now that adding them has succeeded, update all of the
+	 * descriptor passing state.
+	 */
+	rp = (struct file **)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fp = *rp++;
 		fp->f_msgcount--;
 		unp_rights--;
-		
-		if ((err = fdalloc(p, 0, &f)) != 0) {
-			/*
-			 * XXXSMP -- FIX ME, PLEASE.
-			 */
-			if (err != ERESTART)
-				panic("unp_externalize");
-		}
-		p->p_fd->fd_ofiles[f] = fp;
-		*fdp++ = f;
 	}
 
 	/*
-	 * Adjust length, in case of transition from large struct file
-	 * pointers to ints.
+	 * Copy temporary array to message and adjust length, in case of
+	 * transition from large struct file pointers to ints.
 	 */
+	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
-	return (0);
+ out:
+	free(fdp, M_TEMP);
+	return (error);
 }
 
 int
