@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1998/04/26 21:24:27 scottr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1998/08/20 08:33:48 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -94,7 +94,7 @@ typedef struct pmap	*pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((vm_offset_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
 }
 
 /*
@@ -104,7 +104,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -150,6 +150,6 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif /* !_HP300_PMAP_H_ */
