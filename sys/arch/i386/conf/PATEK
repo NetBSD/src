@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.25 1995/01/25 04:58:20 cgd Exp $
+#	$NetBSD: PATEK,v 1.26 1995/08/22 19:43:23 jtc Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -10,7 +10,7 @@ options		I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 
