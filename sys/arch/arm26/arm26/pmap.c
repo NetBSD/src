@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2000/12/26 23:18:50 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.10 2000/12/27 15:16:04 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -81,11 +81,12 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
+#include "opt_uvmhist.h"
 #include "arcvideo.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2000/12/26 23:18:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2000/12/27 15:16:04 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2000/12/26 23:18:50 bjh21 Exp $");
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_stat.h>
 
 #include <machine/intr.h>
 #include <machine/machdep.h>
@@ -155,6 +157,11 @@ static struct pool *pmap_pool;
 
 static pmap_t active_pmap;
 
+UVMHIST_DECL(pmaphist);
+static struct uvm_history_ent pmaphistbuf[100];
+
+       void pmap_init2(void);
+
 static void pv_update(struct pv_entry *);
 static struct pv_entry *pv_alloc(void);
 static void pv_free(struct pv_entry *pv);
@@ -203,7 +210,10 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	int i;
 	struct pmap *pmap;
 	size_t pv_table_size;
+	UVMHIST_FUNC("pmap_bootstrap");
 
+	UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+	UVMHIST_CALLED(pmaphist);
 	/* Set up the bootstrap pv_table */
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
@@ -239,7 +249,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	int i;
 	vaddr_t addr;
-	
+	UVMHIST_FUNC("pmap_steal_memory");
+
+	UVMHIST_CALLED(pmaphist);
 	addr = NULL;
 	size = round_page(size);
 	for (i = 0; i < vm_nphysseg; i++) {
@@ -266,35 +278,64 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 void
 pmap_init()
 {
+	UVMHIST_FUNC("pmap_init");
 
+	UVMHIST_CALLED(pmaphist);
 	/* All deferred to pmap_create, because malloc() is nice. */
+}
+
+/*
+ * pmap_init2: third stage pmap initialisation.
+ *
+ * This is invoked the first time pmap_create is called.  It sets up the pool
+ * for allocating user pmaps, and frees some unnecessary memory.
+ */
+void
+pmap_init2()
+{
+	struct pmap *pmap;
+	struct pv_entry *new_pv_table, *old_pv_table;
+	size_t pv_table_size;
+	int lpn;
+	UVMHIST_FUNC("pmap_init2");
+
+	UVMHIST_CALLED(pmaphist);
+	/* We can now call malloc().  Rationalise our memory usage. */
+	pv_table_size = physmem * sizeof(struct pv_entry);
+	new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
+	memcpy(new_pv_table, pv_table, pv_table_size);
+	old_pv_table = pv_table;
+	pv_table = new_pv_table;
+
+	/* Fix up the kernel pmap to point at new pv_entries. */
+	pmap = pmap_kernel();
+	for (lpn = 0; lpn < 1024; lpn++)
+		if (pmap->pm_entries[lpn] ==
+		    old_pv_table + pmap->pm_entries[lpn]->pv_ppn)
+			pmap->pm_entries[lpn] =
+			    pv_table + pmap->pm_entries[lpn]->pv_ppn;
+
+	uvm_pagefree(PHYS_TO_VM_PAGE(
+	    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
+
+	/* Create pmap pool */
+	pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
+	    "pmappool", 0, NULL, NULL, M_VMPMAP);
+	pmap_initialised = 1;
 }
 
 struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-	struct pv_entry *new_pv_table, *old_pv_table;
-	size_t pv_table_size;
+	UVMHIST_FUNC("pmap_create");
 
-	if (!pmap_initialised) {
-		/* We can now call malloc().  Rationalise our memory usage. */
-		pv_table_size = physmem * sizeof(struct pv_entry);
-		new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
-		memcpy(new_pv_table, pv_table, pv_table_size);
-		old_pv_table = pv_table;
-		pv_table = new_pv_table;
-		uvm_pagefree(PHYS_TO_VM_PAGE(
-		    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
-
-		/* Create pmap pool */
-		pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
-		    "pmappool", 0, NULL, NULL, M_VMPMAP);
-		pmap_initialised = 1;
-	}
-
+	UVMHIST_CALLED(pmaphist);
+	if (!pmap_initialised) 
+		pmap_init2();
 	pmap = pool_get(pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
+	pmap->pm_count = 1;
 	return pmap;
 }
 
@@ -304,7 +345,9 @@ pmap_destroy(pmap_t pmap)
 #ifdef DIAGNOSTIC
 	int i;
 #endif
+	UVMHIST_FUNC("pmap_destroy");
 
+	UVMHIST_CALLED(pmaphist);
 	if (--pmap->pm_count > 0)
 		return;
 #ifdef DIAGNOSTIC
@@ -322,7 +365,9 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pmap;
 	int i;
+	UVMHIST_FUNC("pmap_activate");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (pmap == pmap_kernel())
@@ -345,7 +390,9 @@ pmap_deactivate(struct proc *p)
 {
 	pmap_t pmap;
 	int i;
+	UVMHIST_FUNC("pmap_deactivate");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (pmap == pmap_kernel())
@@ -368,7 +415,9 @@ void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_unwire");
 
+	UVMHIST_CALLED(pmaphist);
 	if (pmap == NULL) return;
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL) return;
@@ -379,6 +428,9 @@ void
 pmap_collect(pmap)
 	pmap_t pmap;
 {
+	UVMHIST_FUNC("pmap_collect");
+
+	UVMHIST_CALLED(pmaphist);
 	/* This is allowed to be a no-op. */
 }
 
@@ -388,6 +440,9 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vaddr_t dst_addr, src_addr;
 	vsize_t len;
 {
+	UVMHIST_FUNC("pmap_copy");
+
+	UVMHIST_CALLED(pmaphist);
 	/* This is allowed to be a no-op. */
 }
 
@@ -400,27 +455,17 @@ pv_update(struct pv_entry *pv)
 {
 	int ppl;
 	int pflags;
+	UVMHIST_FUNC("pv_update");
 
+	UVMHIST_CALLED(pmaphist);
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
-	if (pv->pv_pmap == pmap_kernel()) {
-		if (1) {
-			/* Don't risk faults till everything's happy */
-			ppl = MEMC_PPL_NOACCESS;
-			pv_table[pv->pv_ppn].pv_pflags |=
-			    PV_REFERENCED | PV_MODIFIED;
-		} else 	if ((pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
-			ppl = MEMC_PPL_NOACCESS;
-		else {
-			/*
-			 * To keep SVC mode from seeing a page, we
-			 * have to unmap it entirely.
-			 */
-			pv->pv_ppl = MEMC_PPL_NOACCESS;
-			pv->pv_activate = pv->pv_deactivate =
-			    PMAP_UNMAP_ENTRY_32K(pv->pv_ppn);
-			return;
-		}
-	} else {
+	if (pv->pv_pmap == pmap_kernel())
+		/*
+		 * Referenced/modified emulation is almost impossible in
+		 * SVC mode.
+		 */
+		ppl = MEMC_PPL_NOACCESS;
+	else {
 		if ((pv->pv_prot & VM_PROT_WRITE) &&
 		    (pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
 			ppl = MEMC_PPL_RDWR;
@@ -457,19 +502,28 @@ static struct pv_entry *
 pv_get(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pv_get");
 
+	UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
-	if (pv->pv_pmap == NULL)
+	if (pv->pv_pmap == NULL) {
+		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
 		return pv;
+	}
 	/* If this mapping exists already, use that. */
 	for (pv = pv; pv != NULL; pv = pv->pv_next)
-		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn)
+		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
+			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
+			    pv, 0, 0, 0);
 			return pv;
+		}
 	/* Otherwise, allocate a new entry and link it in after the head. */
 	pv = pv_alloc();
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
+	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
 	return pv;
 }
 
@@ -480,7 +534,10 @@ static void
 pv_release(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv, *npv;
+	UVMHIST_FUNC("pv_release");
 
+	UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -491,13 +548,16 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
 		npv = pv->pv_next;
 		if (npv) {
+			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
 			/* Pull up first entry from chain. */
 			npv->pv_pflags = pv->pv_pflags;
 			*pv = *npv;
-			pv->pv_pmap->pm_entries[lpn] = pv;
+			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
 			pv_free(npv);
-		} else
+		} else {
+			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
 			pv->pv_pmap = NULL;
+		}
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap && lpn == npv->pv_lpn)
@@ -508,6 +568,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 		if (npv == NULL)
 			panic("pv_release");
 #endif
+		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
 	}
@@ -529,13 +590,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int ppn, lpn, s;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_enter");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(pa); lpn = atop(va);
 
-#if 0
-	printf("pmap_enter: mapping ppn %d at lpn %d in pmap %p\n",
-	       ppn, lpn, pmap);
-#endif
+	UVMHIST_LOG(pmaphist, "mapping ppn %d at lpn %d in pmap %p",
+	       ppn, lpn, pmap, 0);
 	s = splimp();
 
 	/* Remove any existing mapping at this lpn */
@@ -573,12 +634,12 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int slpn, elpn, lpn, s;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_remove");
 
+	UVMHIST_CALLED(pmaphist);
 	slpn = atop(sva); elpn = atop(eva);
-#if 0
-	printf("pmap_remove: clearing from lpn %d to lpn %d in pmap %p\n",
-	       slpn, elpn - 1, pmap);
-#endif
+	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
+	       slpn, elpn - 1, pmap, 0);
 	s = splimp();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
@@ -598,7 +659,9 @@ boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_extract");
 
+	UVMHIST_CALLED(pmaphist);
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL)
 		return FALSE;
@@ -609,14 +672,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
+	UVMHIST_FUNC("pmap_kenter_pa");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
 pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
 {
+	UVMHIST_FUNC("pmap_kenter_pgs");
 
+	UVMHIST_CALLED(pmaphist);
 	while (npages > 0) {
 		pmap_kenter_pa(va, (*pages)->phys_addr, VM_PROT_ALL);
 		va += NBPG;
@@ -628,7 +695,9 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
+	UVMHIST_FUNC("pmap_kremove");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap_remove(pmap_kernel(), va, va+len);
 }
 
@@ -637,7 +706,9 @@ pmap_is_modified(page)
 	struct vm_page *page;
 {
 	int ppn;
+	UVMHIST_FUNC("pmap_is_modified");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	return (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
 }
@@ -647,7 +718,9 @@ pmap_is_referenced(page)
 	struct vm_page *page;
 {
 	int ppn;
+	UVMHIST_FUNC("pmap_is_referenced");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	return (pv_table[ppn].pv_pflags & PV_REFERENCED) != 0;
 }
@@ -656,7 +729,9 @@ static void
 pmap_update_page(int ppn)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_update_page");
 
+	UVMHIST_CALLED(pmaphist);
 	for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap != NULL) {
 			pv_update(pv);
@@ -674,7 +749,9 @@ pmap_clear_modify(struct vm_page *page)
 {
 	int ppn;
 	boolean_t rv;
+	UVMHIST_FUNC("pmap_clear_modify");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_modified(page);
 	pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
@@ -687,7 +764,9 @@ pmap_clear_reference(struct vm_page *page)
 {
 	int ppn;
 	boolean_t rv;
+	UVMHIST_FUNC("pmap_clear_reference");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_referenced(page);
 	pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
@@ -705,7 +784,9 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 {
 	int lpn, ppn;
 	struct pv_entry *pv, *ppv;
+	UVMHIST_FUNC("pmap_fault");
 
+	UVMHIST_CALLED(pmaphist);
 	lpn = atop(va);
 	pv = pmap->pm_entries[lpn];
 	if (pv == NULL)
@@ -743,10 +824,9 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	 * the mapping back into the MEMC.
 	 */
 	if ((atype & ~pv->pv_prot) == 0) {
-#if 0
-		printf("pmap_fault: MEMC miss; pmap = %p, lpn = %d, ppn = %d\n",
-		    pv->pv_pmap, pv->pv_lpn, pv->pv_ppn);
-#endif
+		UVMHIST_LOG(pmaphist,
+		    "MEMC miss; pmap = %p, lpn = %d, ppn = %d",
+		    pmap, lpn, ppn, 0);
 		MEMC_WRITE(pv->pv_activate);
 		return TRUE;
 	}
@@ -758,12 +838,12 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 {
 	int ppn;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_page_protect");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	if (prot == VM_PROT_NONE) {
-#if 0
-		printf("pmap_page_protect: removing ppn %d\n", ppn);
-#endif
+		UVMHIST_LOG(pmaphist, "removing ppn %d\n", ppn, 0, 0, 0);
 		pv = &pv_table[ppn];
 		while (pv->pv_pmap != NULL) {
 			if (pv->pv_pmap->pm_flags & PM_ACTIVE) {
@@ -796,7 +876,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct pv_entry *pv;
 	int s, slpn, elpn, lpn;
+	UVMHIST_FUNC("pmap_protect");
 
+	UVMHIST_CALLED(pmaphist);
 	if (prot == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
@@ -823,7 +905,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_reference(pmap_t pmap)
 {
+	UVMHIST_FUNC("pmap_reference");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap->pm_count++;
 }
 
@@ -837,7 +921,9 @@ pmap_reference(pmap_t pmap)
 void
 pmap_update()
 {
+	UVMHIST_FUNC("pmap_update");
 
+	UVMHIST_CALLED(pmaphist);
 	/* Do nothing */
 }
 
@@ -852,7 +938,11 @@ pmap_find(paddr_t pa)
 {
 #ifdef CPU_ARM3
 	struct pv_entry *pv;
-		
+#endif
+	UVMHIST_FUNC("pmap_find");
+
+	UVMHIST_CALLED(pmaphist);
+#ifdef CPU_ARM3
 	for (pv = &pv_table[atop(pa)]; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap != NULL && (pv->pv_pmap->pm_flags & PM_ACTIVE))
 			return (caddr_t)ptoa(pv->pv_lpn);
@@ -863,7 +953,9 @@ pmap_find(paddr_t pa)
 void
 pmap_zero_page(paddr_t pa)
 {
+	UVMHIST_FUNC("pmap_zero_page");
 
+	UVMHIST_CALLED(pmaphist);
 	bzero(pmap_find(pa), PAGE_SIZE);
 	pv_table[atop(pa)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
 }
@@ -871,7 +963,9 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dest)
 {
+	UVMHIST_FUNC("pmap_copy_page");
 
+	UVMHIST_CALLED(pmaphist);
 	memcpy(pmap_find(dest), pmap_find(src), PAGE_SIZE);
 	pv_table[atop(src)].pv_pflags |= PV_REFERENCED;
 	pv_table[atop(dest)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
@@ -887,7 +981,9 @@ pmap_copy_page(paddr_t src, paddr_t dest)
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
-	
+	UVMHIST_FUNC("pmap_virtual_space");
+
+	UVMHIST_CALLED(pmaphist);
 	if (vstartp != NULL)
 		*vstartp = VM_MIN_KERNEL_ADDRESS;
 	if (vendp != NULL)
@@ -903,7 +999,9 @@ pmap_confess(vaddr_t va, vm_prot_t atype)
 {
 	pmap_t pmap;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_confess");
 
+	UVMHIST_CALLED(pmaphist);
 	/* XXX Assume access was from user mode (or equiv). */
 	pmap = va < VM_MIN_KERNEL_ADDRESS ? active_pmap : pmap_kernel();
 	pv = pmap->pm_entries[atop(va)];
