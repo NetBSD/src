@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1995/07/11 21:25:32 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1995/09/04 19:37:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1806,15 +1806,24 @@ Lcmpdone:
 
 /*
  * {ov}bcopy(from, to, len)
+ * memcpy(to, from, len)
  *
  * Works for counts up to 128K.
  */
+ENTRY(memcpy)
+	movl	sp@(12),d0		|  get count
+	jeq	Lcpyexit		|  if zero, return
+	movl	sp@(8),a0		|  src address
+	movl	sp@(4),a1		|  dest address
+	jra	Ldocopy
+	
 ALTENTRY(ovbcopy, _bcopy)
 ENTRY(bcopy)
 	movl	sp@(12),d0		|  get count
 	jeq	Lcpyexit		|  if zero, return
 	movl	sp@(4),a0		|  src address
 	movl	sp@(8),a1		|  dest address
+Ldocopy:
 	cmpl	a1,a0			|  src before dest?
 	jlt	Lcpyback		|  yes, copy backwards (avoids overlap)
 	movl	a0,d1
