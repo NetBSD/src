@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.3 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -26,7 +26,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 #include <macppc/dev/dbdma.h>

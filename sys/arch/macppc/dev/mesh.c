@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.4 2000/03/23 06:40:34 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.5 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -40,7 +40,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.6 1998/07/08 04:18:54 scottr Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.7 2000/06/29 08:15:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -46,7 +46,7 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/psc.h>

@@ -1,5 +1,5 @@
-/* $NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $ */
-/*	$NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $	*/
+/* $NetBSD: mem.c,v 1.3 2000/06/29 08:17:26 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.3 2000/06/29 08:17:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
 
 /*
  * Memory special file
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2000/06/26 04:55:46 simonb Exp $");
 #include <sys/proc.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
