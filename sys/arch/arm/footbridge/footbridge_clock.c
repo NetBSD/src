@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.13 2002/10/10 23:19:13 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.14 2002/10/29 14:30:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -244,7 +244,8 @@ setstatclockrate(hz)
 	int statvarticks;
 
 	/* statint == num in counter to drop by desired hz */
-	statint = clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	statint = statprev = clock_sc->sc_statclock_count =
+	    load_timer(TIMER_2_BASE, hz);
 	
 	/* Get the total ticks a second */
 	countpersecond = statint * hz;
