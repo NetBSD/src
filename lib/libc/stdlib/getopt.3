@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getopt.3	6.16 (Berkeley) 4/19/91
-.\"	$Id: getopt.3,v 1.4 1993/10/12 21:52:47 jtc Exp $
+.\"	$Id: getopt.3,v 1.5 1993/10/13 17:23:39 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETOPT 3
@@ -40,11 +40,12 @@
 .Nd get option letter from argv
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Vt extern char *optarg
-.Vt extern int   optind
-.Vt extern int   opterr
 .Ft int
 .Fn getopt "int argc" "char * const *argv" "const char *optstring"
+.Vt extern char *optarg;
+.Vt extern int optind;
+.Vt extern int opterr;
+.Vt extern int optopt;
 .Sh DESCRIPTION
 The
 .Fn getopt
