@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.10 1995/05/05 10:53:53 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.11 1995/05/05 14:13:01 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -39,8 +39,7 @@
 #define enablertclock()
 #define	cpu_swapin(p)
 #define	cpu_wait(p)
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_swapout(p)
 
 
 extern volatile int cpunumber;
