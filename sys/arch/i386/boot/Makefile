@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1995/01/16 02:50:32 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1995/01/18 17:28:07 mycroft Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -52,7 +52,7 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 #CPPFLAGS+=-DSERIAL
 
 # start.o should be first
-OBJS=	start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o version.o
+OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
 boot:	${OBJS} ${LIBKERN}
 	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS} ${LIBKERN}
