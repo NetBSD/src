@@ -1,4 +1,4 @@
-/*	$NetBSD: simide_io_asm.S,v 1.1 1997/10/14 23:20:54 mark Exp $	*/
+/*	$NetBSD: simide_io_asm.S,v 1.2 1997/10/17 06:46:34 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -32,18 +32,17 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /*
  * Custom bus_space I/O functions for Simtec IDE podule
  */
-
-	.text
 
 /*
  * Fast read multiple
  */
 
-	.global	_simide_rm_2
-_simide_rm_2:
+ENTRY(simide_rm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
@@ -53,8 +52,7 @@ _simide_rm_2:
  * Fast write multiple
  */
 
-	.global	_simide_wm_2
-_simide_wm_2:
+ENTRY(simide_wm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
