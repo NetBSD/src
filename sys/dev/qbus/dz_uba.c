@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.15 2002/09/25 22:21:39 thorpej Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.16 2002/09/26 05:54:07 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.15 2002/09/25 22:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.16 2002/09/26 05:54:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,5 +139,5 @@ dz_uba_attach(parent, self, aux)
 		dzrint, sc, &sc->sc_rintrcnt);
 	uba_reset_establish(dzreset, self);
 
-	dzattach(sc, ua->ua_evcnt);
+	dzattach(sc, ua->ua_evcnt, -1);
 }
