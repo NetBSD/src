@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38 2003/01/08 17:49:39 pk Exp $
+#	$NetBSD: genassym.cf,v 1.39 2003/01/11 03:40:32 mrg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ define	SONPROC		SONPROC
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
