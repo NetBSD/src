@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.4 2001/05/30 12:28:45 mrg Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.5 2001/07/11 22:11:29 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -27,11 +27,12 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #endif
 
 #include <macppc/dev/dbdma.h>
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 #define	integrate
 #define hide
 #else
