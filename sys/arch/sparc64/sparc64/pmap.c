@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.144 2003/09/26 03:59:33 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.145 2003/10/12 19:06:29 chs Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2003/09/26 03:59:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/10/12 19:06:29 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1771,8 +1771,6 @@ pmap_kremove(va, size)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
-	vaddr_t flushva = va;
-	vsize_t flushsize = size;
 	paddr_t pa;
 	boolean_t flush = FALSE;
 
@@ -1826,7 +1824,7 @@ pmap_kremove(va, size)
 	}
 	if (flush) {
 		REMOVE_STAT(flushes);
-		cache_flush_virt(flushva, flushsize);
+		blast_dcache();
 	}
 }
 
@@ -2097,7 +2095,6 @@ pmap_remove(pm, va, endva)
 	vaddr_t va, endva;
 {
 	int64_t data;
-	vaddr_t flushva = va;
 	paddr_t pa;
 	struct vm_page *pg;
 	pv_entry_t pv;
@@ -2180,7 +2177,7 @@ pmap_remove(pm, va, endva)
 	simple_unlock(&pm->pm_lock);
 	if (flush && pm->pm_refs) {
 		REMOVE_STAT(flushes);
-		cache_flush_virt(flushva, endva - flushva);
+		blast_dcache();
 	}
 	DPRINTF(PDB_REMOVE, ("\n"));
 	pv_check();
