@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.6 1994/09/19 04:43:02 mycroft Exp $
+#	$Id: Makefile.inc,v 1.7 1994/12/22 10:14:48 cgd Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -17,9 +17,9 @@ SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	vfscanf.c vprintf.c vscanf.c vsnprintf.c vsprintf.c vsscanf.c \
 	wbuf.c wsetup.c
 
-MAN3+=	fclose.0 ferror.0 fflush.0 fgetln.0 fgets.0 fopen.0 fputs.0 \
-	fread.0 fseek.0 funopen.0 getc.0 mktemp.0 perror.0 printf.0 putc.0 \
-	remove.0 scanf.0 setbuf.0 stdio.0 tmpnam.0 ungetc.0
+MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
+	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
+	remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3

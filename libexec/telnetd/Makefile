@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$Id: Makefile,v 1.4 1994/02/25 03:20:39 cgd Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 10:28:19 cgd Exp $
 
 PROG=	telnetd
 CFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DUSE_TERMIO -DDIAGNOSTICS
@@ -8,7 +8,7 @@ SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 	termstat.c utility.c
 DPADD=	${LIBUTIL} ${LIBTERM}
 LDADD=	-lutil -ltermcap -ltelnet
-MAN8=	telnetd.0
+MAN=	telnetd.8
 
 # These are the sources that have encryption stuff in them.
 CRYPT_SRC= authenc.c ext.h state.c telnetd.c termstat.c

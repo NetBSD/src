@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.1 1994/06/23 08:11:33 deraadt Exp $
+#	$Id: Makefile,v 1.2 1994/12/22 10:28:00 cgd Exp $
 
 PROG =	rpc.sprayd
 SRCS =	sprayd.c
-MAN8 =	rpc.sprayd.0
+MAN =	rpc.sprayd.8
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

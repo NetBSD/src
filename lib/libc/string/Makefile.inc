@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.31 1994/11/14 23:48:22 dean Exp $
+#	$Id: Makefile.inc,v 1.32 1994/12/22 10:15:00 cgd Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -126,11 +126,11 @@ strrchr.so: rindex.c
 	    -o ${.TARGET}
 .endif
 
-MAN3+=	bm.0 bcmp.0 bcopy.0 bstring.0 bzero.0 ffs.0 index.0 memccpy.0 memchr.0 \
-	memcmp.0 memcpy.0 memmove.0 memset.0 rindex.0 strcasecmp.0 strcat.0 \
-	strchr.0 strcmp.0 strcoll.0 strcpy.0 strcspn.0 strerror.0 strftime.0 \
-	string.0 strlen.0 strmode.0 strdup.0 strpbrk.0 strrchr.0 strsep.0 \
-	strsignal.0 strspn.0 strstr.0 strtok.0 strxfrm.0 swab.0
+MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 memccpy.3 memchr.3 \
+	memcmp.3 memcpy.3 memmove.3 memset.3 rindex.3 strcasecmp.3 strcat.3 \
+	strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strerror.3 strftime.3 \
+	string.3 strlen.3 strmode.3 strdup.3 strpbrk.3 strrchr.3 strsep.3 \
+	strsignal.3 strspn.3 strstr.3 strtok.3 strxfrm.3 swab.3
 
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=strcasecmp.3 strncasecmp.3

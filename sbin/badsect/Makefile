@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.6 1994/06/11 07:50:42 mycroft Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 10:43:47 cgd Exp $
 
 PROG=	badsect
-MAN8=	badsect.0
+MAN=	badsect.8
 
 .include <bsd.prog.mk>

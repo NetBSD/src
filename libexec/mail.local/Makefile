@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 1/17/91
-#	$Id: Makefile,v 1.2 1993/08/01 05:39:15 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 10:27:22 cgd Exp $
 
 PROG=	mail.local
-MAN8=	mail.local.0
+MAN=	mail.local.8
 BINOWN=	root
 BINMODE=4555
 
