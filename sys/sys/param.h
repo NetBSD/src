@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39.2.4 1998/02/08 21:50:49 mellon Exp $	*/
+/*	$NetBSD: param.h,v 1.39.2.5 1998/10/24 01:39:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,7 +92,16 @@
 #include <sys/resource.h>
 #include <sys/ucred.h>
 #include <sys/uio.h>
+#ifndef NPROC
+#define	NPROC (20 + 16 * MAXUSERS)
 #endif
+#ifndef NTEXT
+#define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
+#endif
+#ifndef NVNODE
+#define	NVNODE (NPROC + NTEXT + 100)
+#endif
+#endif /* _KERNEL */
 
 /* Signals. */
 #include <sys/signal.h>
