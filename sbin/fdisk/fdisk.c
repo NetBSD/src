@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.14 1997/07/29 08:31:31 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.15 1997/08/11 23:31:42 phil Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fdisk.c,v 1.14 1997/07/29 08:31:31 phil Exp $";
+static char rcsid[] = "$NetBSD: fdisk.c,v 1.15 1997/08/11 23:31:42 phil Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,9 @@ int partition = -1;
 int a_flag;		/* set active partition */
 int i_flag;		/* replace partition data */
 int u_flag;		/* update partition data */
-int s_flag;		/* Output data as shell defines */
+int sh_flag;		/* Output data as shell defines */
+int f_flag;		/* force --not interactive */
+int s_flag;		/* set id,offset,size */
 
 unsigned char bootcode[] = {
 0x33, 0xc0, 0xfa, 0x8e, 0xd0, 0xbc, 0x00, 0x7c, 0x8e, 0xc0, 0x8e, 0xd8, 0xfb, 0x8b, 0xf4, 0xbf,
@@ -203,7 +205,7 @@ void	intuit_translated_geometry __P((void));
 int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
 		       quad_t));
 int	try_sectors __P((quad_t, quad_t, quad_t, quad_t, quad_t));
-void	change_part __P((int));
+void	change_part __P((int, int, int, int));
 void	print_params __P((void));
 void	change_active __P((int));
 void	get_params_to_use __P((void));
@@ -227,8 +229,11 @@ main(argc, argv)
 	int ch;
 	int part;
 
-	a_flag = i_flag = u_flag = s_flag = 0;
-	while ((ch = getopt(argc, argv, "0123aius")) != -1)
+	int csysid, cstart, csize;	/* For the b_flag. */
+
+	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = 0;
+	csysid = cstart = csize = 0;
+	while ((ch = getopt(argc, argv, "0123Safisu")) != -1)
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -242,11 +247,18 @@ main(argc, argv)
 		case '3':
 			partition = 3;
 			break;
+		case 'S':
+			sh_flag = 1;
+			break;
 		case 'a':
 			a_flag = 1;
 			break;
+		case 'f':
+			f_flag = 1;
+			break;
 		case 'i':
 			i_flag = 1;
+			break;
 		case 'u':
 			u_flag = 1;
 			break;
@@ -259,8 +271,26 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (s_flag && (a_flag || i_flag || u_flag ))
+	if (sh_flag && (a_flag || i_flag || u_flag || f_flag || s_flag))
 		usage();
+
+	if (partition == -1 && s_flag) {
+		(void) fprintf (stderr,
+				"-s flag requires a partition selected.\n");
+		usage();
+	}
+
+	/* get s_flag parameters. */
+	if (s_flag) {
+		if (argc >= 3) {
+			csysid = atoi(argv[0]);
+			cstart = atoi(argv[1]);
+			csize  = atoi(argv[2]);
+			argc -= 3;
+			argv += 3;
+		} else
+			usage();
+	}
 
 	if (argc > 0)
 		disk = argv[0];
@@ -269,36 +299,47 @@ main(argc, argv)
 		exit(1);
 
 	if (read_s0())
-		init_sector0(1);
+		init_sector0(sectors > 63 ? 63 : sectors);
 
 	intuit_translated_geometry();
 
-	if (!s_flag)
+	if (!sh_flag)
 		printf("******* Working on device %s *******\n", disk);
-	if (u_flag)
+
+
+	if ((i_flag || u_flag) && !f_flag)
 		get_params_to_use();
-	else
-		print_params();
 
-	if (!s_flag) {
+	if (i_flag)
+		init_sector0(dos_sectors > 63 ? 63 : dos_sectors);
+
+	if (!sh_flag)
 		printf("Warning: BIOS sector numbering starts with sector 1\n");
-		printf("Information from DOS bootblock is:\n");
-	}
 
-	if (partition == -1) {
-		for (part = 0; part < NDOSPART; part++)
-			change_part(part);
+	/* Do the update stuff! */
+	if (u_flag) {
+		if (!f_flag)
+			printf("Information from DOS bootblock is:\n");
+		if (partition == -1) 
+			for (part = 0; part < NDOSPART; part++)
+				change_part(part,-1, -1, -1);
+		else
+			change_part(partition, csysid, cstart, csize);
 	} else
-		change_part(partition);
+		if (!i_flag)
+			print_s0(partition);
 
-	if (u_flag || a_flag)
+	if (a_flag)
 		change_active(partition);
 
-	if (u_flag || a_flag) {
-		printf("\nWe haven't changed the partition table yet.  ");
-		printf("This is your last chance.\n");
-		print_s0(-1);
-		if (yesno("Should we write new partition table?"))
+	if (u_flag || a_flag || i_flag) {
+		if (!f_flag) {
+			printf("\nWe haven't changed the partition table "
+			       "yet.  This is your last chance.\n");
+			print_s0(-1);
+			if (yesno("Should we write new partition table?"))
+				write_s0();
+		} else
 			write_s0();
 	}
 
@@ -308,9 +349,8 @@ main(argc, argv)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: fdisk [-aiu] [-0|-1|-2|-3] [device]\n");
-	(void)fprintf(stderr, "usage: fdisk -s [-0|-1|-2|-3] [device]\n");
+	(void)fprintf(stderr, "usage: fdisk [-aiufS] [-0|-1|-2|-3] "
+		      "[-s sysid start size] [device]\n");
 	exit(1);
 }
 
@@ -321,10 +361,14 @@ print_s0(which)
 	int part;
 
 	print_params();
-	printf("Information from DOS bootblock is:\n");
+	if (!sh_flag)
+		printf("Information from DOS bootblock is:\n");
 	if (which == -1) {
-		for (part = 0; part < NDOSPART; part++)
-			printf("%d: ", part), print_part(part);
+		for (part = 0; part < NDOSPART; part++) {
+			if (!sh_flag)
+				printf("%d: ", part);
+			print_part(part);
+		}
 	} else
 		print_part(which);
 }
@@ -383,7 +427,7 @@ print_part(part)
 	partp = &mboot.parts[part];
 	empty = !memcmp(partp, &mtpart, sizeof(struct dos_partition));
 
-	if (s_flag) {
+	if (sh_flag) {
 		if (empty) {
 			printf("PART%dSIZE=0\n", part);
 			return;
@@ -404,7 +448,7 @@ print_part(part)
 		return;
 	}
 
-	/* Not s_flag. */
+	/* Not sh_flag. */
 	if (empty) {
 		printf("<UNUSED>\n");
 		return;
@@ -425,21 +469,29 @@ void
 init_sector0(start)
 	int start;
 {
+	int i;
 	struct dos_partition *partp;
+
+	int dos_disksectors = dos_cylinders * dos_heads * dos_sectors;
 
 	memcpy(mboot.bootinst, bootcode, sizeof(bootcode));
 	putshort(&mboot.signature, BOOT_MAGIC);
+	
+	for (i=0; i<3; i++) 
+		memset (&mboot.parts[i], 0, sizeof(struct dos_partition));
 
 	partp = &mboot.parts[3];
 	partp->dp_typ = DOSPTYP_386BSD;
 	partp->dp_flag = ACTIVE;
 	putlong(&partp->dp_start, start);
-	putlong(&partp->dp_size, disksectors - start);
+	putlong(&partp->dp_size, dos_disksectors - start);
 
 	dos(getlong(&partp->dp_start),
 	    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
 	dos(getlong(&partp->dp_start) + getlong(&partp->dp_size) - 1,
 	    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+
+	printf ("DOS partition table initialized.\n");
 }
 
 /* Prerequisite: the disklabel parameters and master boot record must
@@ -458,6 +510,7 @@ init_sector0(start)
 void
 intuit_translated_geometry()
 {
+
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
 	int c1, h1, s1, c2, h2, s2;
 	long a1, a2;
@@ -552,28 +605,30 @@ get_mapping(i, cylinder, head, sector, absolute)
 }
 
 void
-change_part(part)
-	int part;
+change_part(part, csysid, cstart, csize)
+	int part, csysid, cstart, csize;
 {
 	struct dos_partition *partp;
 
 	partp = &mboot.parts[part];
 
-	if (!s_flag)
-		printf("The data for partition %d is:\n", part);
-	print_part(part);
+	if (s_flag) {
+		partp->dp_typ = csysid;
+		putlong(&partp->dp_start, cstart);
+		putlong(&partp->dp_size, csize);
+		dos(getlong(&partp->dp_start),
+		    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
+		dos(getlong(&partp->dp_start)
+		    + getlong(&partp->dp_size) - 1,
+		    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+		if (f_flag)
+			return;
+	}
 
+	printf("The data for partition %d is:\n", part);
+	print_part(part);
 	if (!u_flag || !yesno("Do you want to change it?"))
 		return;
-
-	if (i_flag) {
-		memset(partp, 0, sizeof(*partp));
-		if (part == 3) {
-			init_sector0(1);
-			printf("\nThe static data for the DOS partition 3 has been reinitialized to:\n");
-			print_part(part);
-		}
-	}
 
 	do {
 		{
@@ -628,7 +683,7 @@ void
 print_params()
 {
 
-	if (s_flag) {
+	if (sh_flag) {
 		printf ("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\n",
 			cylinders, heads, sectors);
 		printf ("BCYL=%d\nBHEAD=%d\nBSEC=%d\n",
@@ -636,7 +691,7 @@ print_params()
 		return;
 	}
 
-	/* Not s_flag */
+	/* Not sh_flag */
 	printf("parameters extracted from in-core disklabel are:\n");
 	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
 	    cylinders, heads, sectors, cylindersectors);
@@ -653,7 +708,7 @@ change_active(which)
 {
 	struct dos_partition *partp;
 	int part;
-	int active = 3;
+	int active = 4;
 
 	partp = &mboot.parts[0];
 
@@ -664,14 +719,22 @@ change_active(which)
 			if (partp[part].dp_flag & ACTIVE)
 				active = part;
 	}
-	if (yesno("Do you want to change the active partition?")) {
-		do {
-			decimal("active partition", &active);
-		} while (!yesno("Are you happy with this choice?"));
-	}
+	if (!f_flag) {
+		if (yesno("Do you want to change the active partition?")) {
+			printf ("Choosing 4 will make no partition active.\n");
+			do {
+				decimal("active partition", &active);
+			} while (!yesno("Are you happy with this choice?"));
+		} else
+			return;
+	} else
+		if (active != 4)
+			printf ("Making partition %d active.\n", active);
+
 	for (part = 0; part < NDOSPART; part++)
 		partp[part].dp_flag &= ~ACTIVE;
-	partp[active].dp_flag |= ACTIVE;
+	if (active < 4)
+		partp[active].dp_flag |= ACTIVE;
 }
 
 void
