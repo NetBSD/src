@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.13 1998/07/11 15:55:48 mrg Exp $	*/
+/*	$NetBSD: passwd.c,v 1.14 1999/08/26 07:33:16 marc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.13 1998/07/11 15:55:48 mrg Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.14 1999/08/26 07:33:16 marc Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,9 @@ main(argc, argv)
 	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
+	if (uflag && (iflag || rflag))
+		errx(1, "-u cannot be used with -r or -i");
+
 	if (use_kerberos)
 		exit(kadm_passwd(username, iflag, rflag, uflag));
 #else
