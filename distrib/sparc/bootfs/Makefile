@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/08/28 02:01:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1998/09/05 14:46:16 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	gzip netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
 depend install:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 1998/02/19 23:38:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.48 1998/09/05 14:48:39 lukem Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -10,7 +10,8 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libkvm \
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
 # XXX process.
 .if !exists(${.CURDIR}/../domestic/lib/libtelnet) || \
-	defined(EXPORTABLE_SYSTEM) || make(clean) || make(cleandir)
+	defined(EXPORTABLE_SYSTEM) || make(clean) || make(cleandir) || \
+	make(distclean)
 SUBDIR+=	libtelnet
 .endif
 
