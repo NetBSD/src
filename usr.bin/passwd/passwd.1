@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.12 1999/03/22 18:16:41 garbled Exp $
+.\"	$NetBSD: passwd.1,v 1.13 2000/02/14 04:36:21 aidan Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,19 +38,46 @@
 .Os
 .Sh NAME
 .Nm passwd ,
-.Nm yppasswd
+.Nm yppasswd ,
+.Nm kpasswd
 .Nd modify a user's password
 .Sh SYNOPSIS
-.Nm
+.Nm passwd
 .Op Fl l
+.Op Ar user
+.Nm passwd
 .Op Fl y
+.Op Ar user
+.Nm passwd
+.Op Fl 4
+.Op Fl k
+.Op Fl i Ar instance
+.Op Fl r Ar realm
+.Op Fl u Ar fullname
+.Op Ar user
+.Nm passwd
+.Op Fl 5
+.Op Fl k
+.Op Fl u Ar fullname
+.Op Ar user
+.Nm kpasswd
+.Op Fl 4
+.Op Fl k
+.Op Fl i Ar instance
+.Op Fl r Ar realm
+.Op Fl u Ar fullname
+.Op Ar user
+.Nm kpasswd
+.Op Fl 5
+.Op Fl k
+.Op Fl u Ar fullname
 .Op Ar user
 .Nm yppasswd
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-changes the user's local or YP password.  First, the user is prompted
-for their current password.
+changes the user's local, YP, or kerberos password.  First, the user is
+prompted for their current password.
 If the current password is correctly typed, a new password is
 requested.
 The new password must be entered twice to avoid typing errors.
@@ -62,6 +89,8 @@ Its total length must be less than
 (currently 128 characters).
 Numbers, upper case letters and meta characters
 are encouraged.
+.Pp
+All options may not be available on all systems.
 .Bl -tag -width flag
 .It Fl l
 This option causes the password to be updated only in the local
@@ -79,11 +108,45 @@ is the equivalent of
 with the
 .Fl y
 flag.
+.It Fl 4
+This option causes passwd to change the user's kerberos password,
+using the kerberos 4 admin protocol.
+.It Fl 5
+This option causes passwd to change the user's kerberos password,
+using the kerberos 5 admin protocol.
+.It Fl k
+This option causes passwd to change the user's kerberos password,
+using either the kerberos 4 or kerberos 5 admin protocol.
+If both kerberos 4 and kerberos 5 libraries and config files are
+installed on the host, kerberos 5 will be used to change the password.
+.Nm kpasswd
+is the equivalent of
+.Nm
+with the
+.Fl k
+flag.
+.It Fl i Ar instance
+This option selects a non-default Kerberos 4 instance for the
+Kerberos password to be changed.
+.It Fl r Ar realm
+This option selects a non-default Kerberos 4 realm for the Kerberos
+password to be changed.
+.It Fl u Ar fullname
+This option specifies the entire principal.instance@realm (for Kerberos
+4) or principal/instance@realm (for Kerberos 5) for the Kerberos
+password to be changed.
 .El
 .Pp
 This is the behavior if no flags are specified:
+If Kerberos is active then
+.Nm
+will talk to the Kerberos server, attempting to use Kerberos 5, then
+Kerberos 4 protocols to change the password (even if the user has an
+entry in the local database.)
+If Kerberos is unavailable, an attempt is made to use the YP database.
 If the password is not in the YP database, then
 an attempt is made to use the local password database.
+.Pp
 The super-user is not required to provide a user's current password
 if only the local password is modified.
 .Sh FILES
