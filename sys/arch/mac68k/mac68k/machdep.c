@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.6 1994/01/20 23:58:47 briggs Exp $
+ *	$Id: machdep.c,v 1.7 1994/01/30 01:04:35 briggs Exp $
  */
 
 #include <param.h>
@@ -784,7 +784,7 @@ boot(howto)
 			if (nbusy == 0)
 				break;
 			printf("%d ", nbusy);
-			DELAY(40000 * iter);
+			delay(40000 * iter);
 		}
 		if (nbusy)
 			printf("giving up\n");
@@ -1116,7 +1116,7 @@ parityerror(fp)
 	if (!gotparmem)
 		return(0);
 	*PARREG = 0;
-	DELAY(10);
+	delay(10);
 	*PARREG = 1;
 	if (panicstr) {
 		printf("parity error after panic ignored\n");
