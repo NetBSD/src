@@ -1,9 +1,4 @@
-/*	$NetBSD: joyvar.h,v 1.2 2001/06/13 10:46:01 wiz Exp $	*/
-
-/*
- * XXX This _really_ should be rewritten such that it doesn't
- * XXX rely in the i386 timer!
- */
+/*	$NetBSD: joyvar.h,v 1.1 2002/02/02 18:37:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -36,11 +31,11 @@
  *
  */
 
-#ifndef _BEBOX_ISA_JOYVAR_H_
-#define _BEBOX_ISA_JOYVAR_H_
+#ifndef _JOYVAR_H_
+#define _JOYVAR_H_
 
 /*
- * Data structures and prototypes used by the i386 ISA joystick driver.
+ * Data structures and prototypes used by joystick driver.
  */
 
 struct joy_softc {
@@ -49,8 +44,13 @@ struct joy_softc {
 	bus_space_handle_t sc_ioh;
 	int	x_off[2], y_off[2];
 	int	timeout[2];
+	int	sc_timer_freq;
 };
 
 void	joyattach __P((struct joy_softc *));
+int	joy_get_tick __P((void));
+int	joy_timer_freq __P((void));
 
-#endif /* ! _BEBOX_ISA_JOYVAR_H_ */
+
+
+#endif /* ! _JOYVAR_H_ */

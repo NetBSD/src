@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.19 2002/01/13 20:20:12 thorpej Exp $
+#	$NetBSD: files.dnard,v 1.20 2002/02/02 18:37:43 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -51,9 +51,8 @@ file	arch/dnard/ofw/cpu_ofbus.c		cpu_ofbus
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
 
-# XXX ISA joystick driver
-device	joy
-file	arch/arm32/isa/joy.c			joy needs-flag
+# Game adapter (joystick)
+file	arch/arm32/isa/joy_timer.c		joy
 
 # OFW ISA bus driver.
 include "dev/ofisa/files.ofisa"

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.2 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.1 2002/02/02 18:37:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.2 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1 2002/02/02 18:37:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.2 2001/11/15 07:03:33 lukem Exp $");
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
-#include <i386/isa/joyvar.h>
+#include <dev/ic/joyvar.h>
 
 int	joy_pci_match __P((struct device *, struct cfdata *, void *));
 void	joy_pci_attach __P((struct device *, struct device *, void *));
 static int bar_is_io __P((pci_chipset_tag_t pc, pcitag_t tag, int reg));
 
-struct cfattach pci_joy_ca = {
+struct cfattach joy_pci_ca = {
 	sizeof(struct joy_softc), joy_pci_match, joy_pci_attach
 };
 
