@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1999/02/11 15:28:04 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1999/03/23 18:07:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -159,7 +159,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
 	((PCLK/32)/38400)-2,	/*12: BAUDLO (default=38400) */
 	0,			/*13: BAUDHI (default=38400) */
-	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
+	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
 };
 
