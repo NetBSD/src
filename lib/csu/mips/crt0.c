@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.13 1999/03/19 23:55:17 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.14 1999/03/20 00:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,63 +37,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/exec.h>
-#include <sys/syscall.h>
-
-#include <stdlib.h>
-#ifdef DYNAMIC
-#include <dlfcn.h>
-#include "rtld.h"
-#else
-typedef void Obj_Entry;
-#endif
-
-/*
- * Lots of the chunks of this file cobbled together from pieces of
- * other NetBSD crt files, including the common code.
- */
-
-extern int	__syscall __P((int, ...));
-#define	_exit(v)	__syscall(SYS_exit, (v))
-#define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
-
-#define _FATAL(str)				\
-	do {					\
-		write(2, str, sizeof(str));	\
-		_exit(1);			\
-	} while (0)
-
-static char	*_strrchr __P((char *, char));
-
-
-char	**environ;
-char	*__progname = "";
-struct ps_strings *__ps_strings = 0;
-
-extern void	_init __P((void));
-extern void	_fini __P((void));
-
-#ifdef DYNAMIC
-void		_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
-
-const Obj_Entry *__mainprog_obj;
-
-/*
- * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
- * as being at address zero, unless something else defines it).  That way,
- * if we happen to be compiling without -static but with without any
- * shared libs present, things will still work.
- */
-asm(".weak _DYNAMIC");
-extern int _DYNAMIC;
-#endif /* DYNAMIC */
-
-#ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
-extern unsigned char _etext, _eprol;
-#endif /* MCRT0 */
+#include "common.h"
 
 /*
  *	C start-up.  Assumes kernel (or ld.so) passes the
@@ -214,7 +158,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.13 1999/03/19 23:55:17 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.14 1999/03/20 00:13:51 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
