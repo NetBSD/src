@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2002/06/14 01:18:54 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 2002/12/06 03:09:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -170,7 +170,7 @@ int	 inlist(struct namelist *, char *);
 void	 insert(char *,
 	    struct namelist *, struct namelist *, struct subcmd *);
 void	 install(char *, char *, int, int);
-void	 log(FILE *, const char *, ...)
+void	 dolog(FILE *, const char *, ...)
      __attribute__((__format__(__printf__, 2, 3)));
 struct namelist *
 	 lookup(char *, int, struct namelist *);
