@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ucred.h	8.2 (Berkeley) 1/4/94
- *	$Id: ucred.h,v 1.6 1994/05/19 03:40:20 mycroft Exp $
+ *	$Id: ucred.h,v 1.7 1994/05/21 03:14:01 cgd Exp $
  */
 
 #ifndef _SYS_UCRED_H_
-#define _SYS_UCRED_H_
+#define	_SYS_UCRED_H_
 
 /*
  * Credentials.
