@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39_subr.S,v 1.1.2.1 2001/10/24 16:51:48 thorpej Exp $	*/
+/*	$NetBSD: cache_tx39_subr.S,v 1.1.2.2 2001/10/30 16:41:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <mips/r3900regs.h>
+#include <mips/cache_tx39.h>
 
 	.set noreorder
 
