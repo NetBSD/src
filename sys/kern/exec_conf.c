@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.65 2002/01/07 22:07:37 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.66 2002/02/21 21:53:00 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.65 2002/01/07 22:07:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.66 2002/02/21 21:53:00 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -315,10 +315,6 @@ const struct execsw execsw_builtin[] = {
 #endif
 
 #ifdef COMPAT_IRIX 
-	/* 
-	 * n32 ABI must be before o32 ABI 
-	 * See comments in syssrc/sys/compat/irix/irix_exec_elf32.c
-	 */
 	/* IRIX Elf32 n32 ABI */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
