@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.13 1999/07/29 01:12:57 mycroft Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.14 1999/07/29 07:48:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.13 1999/07/29 01:12:57 mycroft Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.14 1999/07/29 07:48:03 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -264,7 +264,7 @@ __big_delete(hashp, bufp)
 	n -= 2;
 	bp[0] = n;
 	FREESPACE(bp) = hashp->BSIZE - PAGE_META(n);
-	OFFSET(bp) = hashp->BSIZE - 1;
+	OFFSET(bp) = hashp->BSIZE;
 
 	bufp->flags |= BUF_MOD;
 	if (rbufp)
