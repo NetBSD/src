@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.58 2003/01/23 22:33:41 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.58.4.1 2004/04/24 18:26:36 jdc Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,11 +75,17 @@ struct module_info {
 
 	void (*get_syncflt)(void);
 	int  (*get_asyncflt)(u_int *, u_int *);
-	void (*sp_cache_flush)(caddr_t, u_int, int);
+	void (*cache_flush)(caddr_t, u_int);
 	void (*sp_vcache_flush_page)(int, int);
+	void (*ft_vcache_flush_page)(int, int);
 	void (*sp_vcache_flush_segment)(int, int, int);
+	void (*ft_vcache_flush_segment)(int, int, int);
 	void (*sp_vcache_flush_region)(int, int);
+	void (*ft_vcache_flush_region)(int, int);
 	void (*sp_vcache_flush_context)(int);
+	void (*ft_vcache_flush_context)(int);
+	void (*sp_vcache_flush_range)(int, int, int);
+	void (*ft_vcache_flush_range)(int, int, int);
 	void (*pcache_flush_page)(paddr_t, int);
 	void (*pure_vcache_flush)(void);
 	void (*cache_flush_all)(void);
@@ -88,18 +94,28 @@ struct module_info {
 	void (*copy_page)(paddr_t, paddr_t);
 };
 
+/*
+ * Message structure for Inter Processor Communication in MP systems
+ */
 struct xpmsg {
 	__volatile int tag;
 #define	XPMSG15_PAUSECPU	1
 #define	XPMSG_FUNC		4
+#define	XPMSG_FTRP		5
 
 	__volatile union {
+		/*
+		 * Cross call: ask to run (*func)(arg0,arg1,arg2)
+		 * or (*trap)(arg0,arg1,arg2). `trap' should be the
+		 * address of a `fast trap' handler that executes in
+		 * the trap window (see locore.s).
+		 */
 		struct xpmsg_func {
-			int	(*func)(int, int, int, int);
+			int	(*func)(int, int, int);
+			void	(*trap)(int, int, int);
 			int	arg0;
 			int	arg1;
 			int	arg2;
-			int	arg3;
 			int	retval;
 		} xpmsg_func;
 	} u;
@@ -167,11 +183,9 @@ struct cpu_info {
 	 * the pending register to avoid a hardware bug.
 	 */
 #define raise_ipi(cpi,lvl)	do {			\
+	volatile int x;					\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
-	if ((cpi)->cpu_type == CPUTYP_HS_MBUS) {	\
-		volatile int ross_pend;			\
-		ross_pend = (cpi)->intreg_4m->pi_pend;	\
-	}						\
+	x = (cpi)->intreg_4m->pi_pend;			\
 } while (0)
 
 	int		sun4_mmu3l;	/* [4]: 3-level MMU present */
@@ -216,17 +230,25 @@ struct cpu_info {
 	 * acts only on the CPU it executes on, and another that
 	 * uses inter-processor signals to flush the cache on
 	 * all processor modules.
+	 * The `ft_' versions are fast trap cache flush handlers.
 	 */
-	void	(*cache_flush)(caddr_t, u_int, int);
-	void	(*sp_cache_flush)(caddr_t, u_int, int);
+	void	(*cache_flush)(caddr_t, u_int);
 	void	(*vcache_flush_page)(int, int);
 	void	(*sp_vcache_flush_page)(int, int);
+	void	(*ft_vcache_flush_page)(int, int);
 	void	(*vcache_flush_segment)(int, int, int);
 	void	(*sp_vcache_flush_segment)(int, int, int);
+	void	(*ft_vcache_flush_segment)(int, int, int);
 	void	(*vcache_flush_region)(int, int);
 	void	(*sp_vcache_flush_region)(int, int);
+	void	(*ft_vcache_flush_region)(int, int);
 	void	(*vcache_flush_context)(int);
 	void	(*sp_vcache_flush_context)(int);
+	void	(*ft_vcache_flush_context)(int);
+
+	/* The are helpers for (*cache_flush)() */
+	void	(*sp_vcache_flush_range)(int, int, int);
+	void	(*ft_vcache_flush_range)(int, int, int);
 
 	void	(*pcache_flush_page)(paddr_t, int);
 	void	(*pure_vcache_flush)(void);
@@ -417,24 +439,39 @@ void mmu_install_tables (struct cpu_info *);
 void pmap_alloc_cpu (struct cpu_info *);
 void pmap_globalize_boot_cpu (struct cpu_info *);
 
-#if defined(MULTIPROCESSOR)
-typedef int (*xcall_func_t)(int, int, int, int);
-void xcall(xcall_func_t, int, int, int, int, u_int);
 #define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
+
+#if defined(MULTIPROCESSOR)
+typedef int (*xcall_func_t)(int, int, int);
+typedef void (*xcall_trap_t)(int, int, int);
+void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
 /* Shorthand */
 #define XCALL0(f,cpuset)		\
-	xcall((xcall_func_t)f, 0, 0, 0, 0, cpuset)
+	xcall((xcall_func_t)f, NULL, 0, 0, 0, cpuset)
 #define XCALL1(f,a1,cpuset)		\
-	xcall((xcall_func_t)f, (int)a1, 0, 0, 0, cpuset)
+	xcall((xcall_func_t)f, NULL, (int)a1, 0, 0, cpuset)
 #define XCALL2(f,a1,a2,cpuset)		\
-	xcall((xcall_func_t)f, (int)a1, (int)a2, 0, 0, cpuset)
+	xcall((xcall_func_t)f, NULL, (int)a1, (int)a2, 0, cpuset)
 #define XCALL3(f,a1,a2,a3,cpuset)	\
-	xcall((xcall_func_t)f, (int)a1, (int)a2, (int)a3, 0, cpuset)
+	xcall((xcall_func_t)f, NULL, (int)a1, (int)a2, (int)a3, cpuset)
+
+#define FXCALL0(f,tf,cpuset)		\
+	xcall((xcall_func_t)f, (xcall_trap_t)tf, 0, 0, 0, cpuset)
+#define FXCALL1(f,tf,a1,cpuset)		\
+	xcall((xcall_func_t)f, (xcall_trap_t)tf, (int)a1, 0, 0, cpuset)
+#define FXCALL2(f,tf,a1,a2,cpuset)	\
+	xcall((xcall_func_t)f, (xcall_trap_t)tf, (int)a1, (int)a2, 0, cpuset)
+#define FXCALL3(f,tf,a1,a2,a3,cpuset)	\
+	xcall((xcall_func_t)f, (xcall_trap_t)tf, (int)a1, (int)a2, (int)a3, cpuset)
 #else
 #define XCALL0(f,cpuset)		/**/
 #define XCALL1(f,a1,cpuset)		/**/
 #define XCALL2(f,a1,a2,cpuset)		/**/
 #define XCALL3(f,a1,a2,a3,cpuset)	/**/
+#define FXCALL0(f,tf,cpuset)		/**/
+#define FXCALL1(f,tf,a1,cpuset)		/**/
+#define FXCALL2(f,tf,a1,a2,cpuset)	/**/
+#define FXCALL3(f,tf,a1,a2,a3,cpuset)	/**/
 #endif /* MULTIPROCESSOR */
 
 extern int bootmid;			/* Module ID of boot CPU */
