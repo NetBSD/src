@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 2002/05/10 15:28:45 uch Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 2003/01/18 06:33:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -43,10 +43,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(struct proc *p, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args __attribute__((__unused__)) *uap = v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 2002/09/22 05:42:20 gmcgarry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 2003/01/18 06:33:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -67,6 +67,8 @@
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
 
+extern void proc_trampoline(void);
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -86,20 +88,19 @@
  * accordingly.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack,
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
 {
-	extern void proc_trampoline(void);
 	struct pcb *pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	KDASSERT(!(p1 != curproc && p1 != &proc0));
+	KDASSERT(!(l1 != curlwp && l1 != &lwp0));
 
 	/* Copy flags */
-	p2->p_md.md_flags = p1->p_md.md_flags;
+	l2->l_md.md_flags = l1->l_md.md_flags;
 
 #ifdef SH3
 	/*
@@ -108,23 +109,20 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
 	 * cause virtual-aliasing.
 	 */
-	if (CPU_IS_SH3) {
-		pcb = (struct pcb *)P1ADDR((vaddr_t)&p2->p_addr->u_pcb);
-		p2->p_md.md_pcb = pcb;
-		fptop = (vaddr_t)pcb + NBPG;
-	}
+	if (CPU_IS_SH3)
+		pcb = (struct pcb *)P1ADDR((vaddr_t)&l2->l_addr->u_pcb);
 #endif /* SH3 */
 #ifdef SH4
 	/* SH4 can make wired entry, no need to convert to P1. */
-	if (CPU_IS_SH4) {
-		pcb = &p2->p_addr->u_pcb;
-		p2->p_md.md_pcb = pcb;
-		fptop = (vaddr_t)pcb + NBPG;
-	}
+	if (CPU_IS_SH4)
+		pcb = &l2->l_addr->u_pcb;
 #endif /* SH4 */
 
+	l2->l_md.md_pcb = pcb;
+	fptop = (vaddr_t)pcb + NBPG;
+
 	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)p2->p_addr + NBPG;
+	spbase = (vaddr_t)l2->l_addr + NBPG;
 #ifdef P1_STACK
 	/* Convert to P1 from P3 */
 	/*
@@ -132,17 +130,17 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	 * is accessed from P1 instead of P3.
 	 */
 	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_dcache_wbinv_range((vaddr_t)p2->p_addr, USPACE);
+		sh_dcache_wbinv_range((vaddr_t)l2->l_addr, USPACE);
 	spbase = P1ADDR(spbase);
 #else /* P1_STACK */
 	/* Prepare u-area PTEs */
 #ifdef SH3
 	if (CPU_IS_SH3)
-		sh3_switch_setup(p2);
+		sh3_switch_setup(l2);
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4)
-		sh4_switch_setup(p2);
+		sh4_switch_setup(l2);
 #endif
 #endif /* P1_STACK */
 
@@ -157,8 +155,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	/*
 	 * Copy the user context.
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)fptop - 1;
-	memcpy(tf, p1->p_md.md_regs, sizeof(struct trapframe));
+	l2->l_md.md_regs = tf = (struct trapframe *)fptop - 1;
+	memcpy(tf, l1->l_md.md_regs, sizeof(struct trapframe));
 
 	/*
 	 * If specified, give the child a different stack.
@@ -183,22 +181,107 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 }
 
 /*
- * void cpu_exit(sturct proc *p):
- *	+ Change kernel context to proc0's one.
- *	+ Schedule freeing process 'p' resources.
+ * void cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg):
+ *	+ Reset the stack pointer for the process.
+ *	+ Arrange to the process to call the specified func
+ *	  with argument via the proc_trampoline.
+ *
+ *	XXX There is a lot of duplicated code here (with cpu_lwp_fork()).
+ */
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
+	vaddr_t fptop, spbase;
+
+#ifdef SH3
+	/*
+	 * Convert frame pointer top to P1. because SH3 can't make
+	 * wired TLB entry, context store space accessing must not cause
+	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
+	 * cause virtual-aliasing.
+	 */
+	if (CPU_IS_SH3)
+		pcb = (struct pcb *)P1ADDR((vaddr_t)&l->l_addr->u_pcb);
+#endif /* SH3 */
+#ifdef SH4
+	/* SH4 can make wired entry, no need to convert to P1. */
+	if (CPU_IS_SH4)
+		pcb = &l->l_addr->u_pcb;
+#endif /* SH4 */
+
+	fptop = (vaddr_t)pcb + NBPG;
+	l->l_md.md_pcb = pcb;
+
+	/* set up the kernel stack pointer */
+	spbase = (vaddr_t)l->l_addr + NBPG;
+#ifdef P1_STACK
+	/* Convert to P1 from P3 */
+	/*
+	 * wbinv u-area to avoid cache-aliasing, since kernel stack
+	 * is accessed from P1 instead of P3.
+	 */
+	if (SH_HAS_VIRTUAL_ALIAS)
+		sh_dcache_wbinv_range((vaddr_t)l->l_addr, USPACE);
+	spbase = P1ADDR(spbase);
+#else /* P1_STACK */
+	/* Prepare u-area PTEs */
+#ifdef SH3
+	if (CPU_IS_SH3)
+		sh3_switch_setup(l);
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)
+		sh4_switch_setup(l);
+#endif
+#endif /* P1_STACK */
+
+#ifdef KSTACK_DEBUG
+	/* Fill magic number for tracking */
+	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
+	    NBPG - sizeof(struct user));
+	memset((char *)spbase, 0xa5, (USPACE - NBPG));
+	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
+#endif /* KSTACK_DEBUG */
+
+	l->l_md.md_regs = tf = (struct trapframe *)fptop - 1;
+	tf->tf_ssr = PSL_USERSET;
+
+	/* Setup switch frame */
+	sf = &pcb->pcb_sf;
+	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
+	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
+	sf->sf_r15 = spbase + USPACE - NBPG;	/* current stack pointer */
+	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
+	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
+	/* when switch to me, jump to proc_trampoline */
+	sf->sf_pr  = (int)proc_trampoline;
+	/*
+	 * Enable interrupt when switch frame is restored, since
+	 * kernel thread begin to run without restoring trapframe.
+	 */
+	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
+}
+
+/*
+ * void cpu_exit(struct lwp *l):
+ *	+ Change kernel context to lwp0's one.
+ *	+ Schedule freeing process 'l' resources.
  *	+ switch to another process.
  */
 void
-cpu_exit(struct proc *p)
+cpu_exit(struct lwp *l, int proc)
 {
 	struct switchframe *sf;
 
 	splsched();
 	uvmexp.swtch++;
 
-	/* Switch to proc0 stack */
-	curproc = 0;
-	curpcb = proc0.p_md.md_pcb;
+	/* Switch to lwp0 stack */
+	curlwp = 0;
+	curpcb = lwp0.l_md.md_pcb;
 	sf = &curpcb->pcb_sf;
 	__asm__ __volatile__(
 		"mov	%0, r15;"	/* current stack */
@@ -210,9 +293,12 @@ cpu_exit(struct proc *p)
 		"r"(sf->sf_r7_bank));
 
 	/* Schedule freeing process resources */
-	exit2(p);
+	if (proc)
+		exit2(l);
+	else
+		lwp_exit2(l);
 
-	cpu_switch(p, NULL);
+	cpu_switch(l, NULL);
 	/* NOTREACHED */
 }
 
@@ -224,7 +310,7 @@ struct md_core {
 };
 
 int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct core *chdr)
 {
 	struct md_core md_core;
@@ -237,7 +323,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
+	error = process_read_regs(l, &md_core.intreg);
 	if (error)
 		return error;
 
@@ -248,13 +334,13 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    (int *)0, p);
+	    (int *)0, l->l_proc);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, l->l_proc);
 	if (error)
 		return error;
 
