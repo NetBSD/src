@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.41 2002/03/05 09:40:40 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.41.8.1 2002/06/29 23:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -593,15 +593,24 @@ done:
 	brelse(bp);
 	return (error);
 #else
+	int i;
+
 	/*
-	 * Re-analyze the ondisk Apple Disk Partition Map and recompute
-	 * the faked incore disk label. This is necessary for sysinst,
-	 * which may have modified the disk layout. We don't (yet)
-	 * support writing real BSD disk labels, so this hack instead
-	 * causes the DIOCWDINFO ioctl invoked by sysinst to update the
-	 * in-core disk label when it is "written" to disk.
+	 * Clear and re-analyze the ondisk Apple Disk Partition Map,
+	 * then recompute the faked incore disk label. This is necessary
+	 * for sysinst, which may have modified the disk layout. We don't
+	 * (yet?) support writing real BSD disk labels, so this hack
+	 * instead causes the DIOCWDINFO ioctl invoked by sysinst to
+	 * update the in-core disk label when it is "written" to disk.
 	 * This code was originally developed by Bob Nestor on 9/13/99.
 	 */
+	lp->d_npartitions = 0;
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		lp->d_partitions[i].p_fstype = FS_UNUSED;
+		lp->d_partitions[i].p_offset = 0;
+		if (i != RAW_PART)
+			lp->d_partitions[i].p_size = 0;
+	}
 	return (readdisklabel(dev, strat, lp, osdep) ? EINVAL : 0);
 #endif
 }
