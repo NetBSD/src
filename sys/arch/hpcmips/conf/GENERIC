@@ -2,13 +2,13 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.88 2001/04/21 15:56:55 sato Exp $
+# 	$NetBSD: GENERIC,v 1.89 2001/05/05 05:04:27 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
-maxusers	8
+maxusers	10
 
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 
