@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.35 1996/07/02 21:19:02 pk Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.36 1996/09/02 06:44:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -256,7 +256,7 @@ ptsstart(tp)
 	ptcwakeup(tp, FREAD);
 }
 
-int
+void
 ptsstop(tp, flush)
 	register struct tty *tp;
 	int flush;
@@ -278,7 +278,6 @@ ptsstop(tp, flush)
 	if (flush & FWRITE)
 		flag |= FREAD;
 	ptcwakeup(tp, flag);
-	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.41 1996/05/30 00:57:35 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.42 1996/09/02 06:44:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -418,7 +418,7 @@ zsconsole(tp, unit, out, fnstop)
 	register struct tty *tp;
 	register int unit;
 	int out;
-	int (**fnstop) __P((struct tty *, int));
+	void (**fnstop) __P((struct tty *, int));
 {
 	int zs;
 	volatile struct zsdevice *addr;
@@ -435,7 +435,7 @@ zsconsole(tp, unit, out, fnstop)
 		v_putc = zscnputc;
 	} else
 		zs_consin = unit;
-	if(fnstop)
+	if (fnstop)
 		*fnstop = &zsstop;
 	zs_ctty = tp;
 }
@@ -1331,7 +1331,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-int
+void
 zsstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -1351,7 +1351,6 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return (0);
 }
 
 /*

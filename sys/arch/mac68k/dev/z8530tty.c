@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.3 1996/06/01 00:13:41 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.4 1996/09/02 06:43:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -645,7 +645,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-int
+void
 zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -668,7 +668,6 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return (0);
 }
 
 #ifndef ZS_TOLERANCE

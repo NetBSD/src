@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.1 1996/08/18 21:28:53 jonathan Exp $	*/
+/*	$NetBSD: qd.c,v 1.2 1996/09/02 06:44:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -1583,6 +1583,7 @@ out:
 } /* qdstart */
 
 /*ARGSUSED*/
+void
 qdstop(tp, flag)
 	register struct tty *tp;
 	int flag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dzcons.c,v 1.1 1996/07/20 18:29:49 ragge Exp $	*/
+/*	$NetBSD: dzcons.c,v 1.2 1996/09/02 06:44:30 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -258,11 +258,12 @@ dzcnrint()
 	return;
 }
 
-int
+void
 dzcnstop(tp, flag)
         struct tty *tp;
         int flag;
 {
+
 }
 
 dzcntint()

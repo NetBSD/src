@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.28 1996/06/06 15:36:10 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.29 1996/09/02 06:43:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -1192,7 +1192,7 @@ out:
 /*
  * Stop output on a line.
  */
-int
+void
 dcmstop(tp, flag)
 	register struct tty *tp;
 	int flag;

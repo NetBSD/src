@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.34 1996/09/01 21:32:24 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.35 1996/09/02 06:44:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -150,7 +150,7 @@ struct cdevsw {
 	int	(*d_write)	__P((dev_t dev, struct uio *uio, int ioflag));
 	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
-	int	(*d_stop)	__P((struct tty *tp, int rw));
+	void	(*d_stop)	__P((struct tty *tp, int rw));
 	struct tty *
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_select)	__P((dev_t dev, int which, struct proc *p));
@@ -165,7 +165,7 @@ extern struct cdevsw cdevsw[];
 /* cdevsw-specific types */
 #define	dev_type_read(n)	int n __P((dev_t, struct uio *, int))
 #define	dev_type_write(n)	int n __P((dev_t, struct uio *, int))
-#define	dev_type_stop(n)	int n __P((struct tty *, int))
+#define	dev_type_stop(n)	void n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
 #define	dev_type_mmap(n)	int n __P((dev_t, int, int))

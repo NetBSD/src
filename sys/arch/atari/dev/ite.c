@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.13 1996/06/18 05:54:59 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.14 1996/09/02 06:43:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -482,12 +482,12 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
 }
 
-int
+void
 itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	return (0);
+
 }
 
 struct tty *

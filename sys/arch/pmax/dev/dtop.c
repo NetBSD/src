@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.16 1996/06/16 16:50:58 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.17 1996/09/02 06:44:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -690,7 +690,7 @@ dtopparam(tp, t)
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 dtopstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -703,8 +703,6 @@ dtopstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.1 1996/07/20 18:55:09 ragge Exp $	*/
+/*	$NetBSD: dc.c,v 1.2 1996/09/02 06:44:34 mycroft Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -766,6 +766,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+void
 dcstop(tp, flag)
 	register struct tty *tp;
 {

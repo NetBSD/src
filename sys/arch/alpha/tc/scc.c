@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.19 1996/07/09 00:55:19 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.20 1996/09/02 06:43:16 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -1039,7 +1039,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 sccstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -1057,8 +1057,6 @@ sccstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-
-	return 0;				/* XXX should be void */
 }
 
 int
