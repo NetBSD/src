@@ -2453,18 +2453,20 @@ dostart:
 
 #ifdef DDB
 	/*
-	 * First, check for DDB arguments. The loader passes `_esym' in %o1.
-	 * A DDB magic number is passed in %o2 to allow for bootloaders
+	 * First, check for DDB arguments. The loader passes `_esym' in %o4.
+	 * A DDB magic number is passed in %o5 to allow for bootloaders
 	 * that know nothing about DDB symbol loading conventions.
+	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
+	 * for their own mirky business.
 	 */
 	set	0x44444230, %l3
-	cmp	%o2, %l3		! chk magic
+	cmp	%o5, %l3		! chk magic
 	bne	1f
-	tst	%o1			! do we have the symbols?
+	tst	%o4			! do we have the symbols?
 	bz	1f
 	 nop
 	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
-	st	%o1, [%l3 + %lo(_esym - KERNBASE)]
+	st	%o4, [%l3 + %lo(_esym - KERNBASE)]
 1:
 #endif
 	/*
