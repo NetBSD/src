@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: join.1,v 1.3 1997/01/09 13:29:57 tls Exp $
+.\"
+.\" Copyright (c) 1990, 1993
+.\"   The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +34,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)join.1	6.8 (Berkeley) 11/18/91
-.\"	$Id: join.1,v 1.2 1993/08/01 07:32:01 mycroft Exp $
+.\"	from: @(#)join.1	8.3 (Berkeley) 4/28/95
+.\"	$Id: join.1,v 1.3 1997/01/09 13:29:57 tls Exp $
 .\"
-.Dd November 18, 1991
+.Dd April 28, 1995
 .Dt JOIN 1
 .Os
 .Sh NAME
@@ -85,6 +87,11 @@ The following options are available:
 In addition to the default output, produce a line for each unpairable
 line in file
 .Ar file_number .
+(The argument to
+.Fl a
+must not be preceded by a space; see the
+.Sx COMPATIBILITY
+section.)
 .It Fl e Ar string
 Replace empty output fields with
 .Ar string .
@@ -103,7 +110,7 @@ is a file number and
 .Ar field
 is a field number.
 The elements of list must be either comma (``,'') or whitespace separated.
-(This will require quoting to protect it from the shell, or, a simpler
+(The latter requires quoting to protect it from the shell, or, a simpler
 approach is to use multiple
 .Fl o
 options.)
@@ -166,6 +173,10 @@ the following options are available:
 .It Fl a
 In addition to the default output, produce a line for each unpairable line
 in both file 1 and file 2.
+(To distinguish between this and
+.Fl a Ar file_number ,
+.Nm join
+currently requires that the latter not include any white space.)
 .It Fl j1 Ar field
 Join on the
 .Ar field Ns 'th
