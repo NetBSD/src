@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.1 2002/02/11 17:27:16 uch Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.2 2002/03/02 22:26:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/reboot.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kgdb.h>
 
 #include <sys/termios.h>
 #include <dev/cons.h>
@@ -73,8 +74,8 @@ struct hd64465uart_softc {
 
 /* boot console */
 cdev_decl(com);
-void comcnprobe(struct consdev *);
-void comcninit(struct consdev *);
+void hd64465uartcnprobe(struct consdev *);
+void hd64465uartcninit(struct consdev *);
 
 STATIC int hd64465uart_match(struct device *, struct cfdata *, void *);
 STATIC void hd64465uart_attach(struct device *, struct device *, void *);
@@ -95,7 +96,7 @@ STATIC void hd64465uart_write_1(void *, bus_space_handle_t, bus_size_t,
 #endif
 
 void
-comcnprobe(struct consdev *cp)
+hd64465uartcnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -110,7 +111,7 @@ comcnprobe(struct consdev *cp)
 }
 
 void
-comcninit(struct consdev *cp)
+hd64465uartcninit(struct consdev *cp)
 {
 
 	hd64465uart_init();
@@ -120,6 +121,26 @@ comcninit(struct consdev *cp)
 
 	hd64465uart_chip.console = 1;
 }
+
+#ifdef KGDB
+int
+hd64465uart_kgdb_init()
+{
+
+	if (strcmp(kgdb_devname, "hd64465uart") != 0)
+		return (1);
+
+	hd64465uart_init();
+
+	if (com_kgdb_attach(hd64465uart_chip.io_tag, 0x0, kgdb_rate,
+	    COM_FREQ, CONMODE) != 0) {
+		printf("%s: KGDB console open failed.\n", __FUNCTION__);
+		return (1);
+	}
+
+	return (0);
+}
+#endif /* KGDB */
 
 int
 hd64465uart_match(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2002/02/28 18:17:29 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2002/03/02 22:26:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -197,7 +197,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
 
-	/* ICU initiailze */
+	/* CPU initialize */
+	if (platid_match(&platid, &platid_mask_CPU_SH_3))
+		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
+		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
+	/* ICU initiailze. (now we can use cpu_arch and cpu_product) */
 	switch (cpu_product) {
 	case CPU_PRODUCT_7709A:
 		_reg_write_2(SH7709_IPRC, 0);
@@ -217,12 +223,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #if NHD64465IF > 0
 	hd64465_intr_disable();
 #endif
-
-	/* CPU initialize */
-	if (platid_match(&platid, &platid_mask_CPU_SH_3))
-		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
-	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
-		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -346,8 +346,12 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif /* DDB */
 #ifdef KGDB
 	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
+		if (kgdb_dev == NODEV) {
+			printf("no kgdb console.\n");
+		} else {
+			kgdb_debug_init = 1;
+			kgdb_connect(1);
+		}
 	}
 #endif /* KGDB */
 
@@ -570,37 +574,6 @@ mem_cluster_load()
 #endif
 }
 
-#ifdef NARLY_MEMORY_PROBE
-int
-__check_dram(paddr_t start, paddr_t end)
-{
-	u_int8_t *page;
-	int i, x;
-
-	_DPRINTF(" checking...");
-	for (; start < end; start += NBPG) {
-		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
-		x = random();
-		for (i = 0; i < NBPG; i += 4)
-			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
-			if (*(volatile int *)(page + i) != (x ^ i))
-				goto bad;
-		x = random();
-		for (i = 0; i < NBPG; i += 4)
-			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
-			if (*(volatile int *)(page + i) != (x ^ i))
-				goto bad;
-	}
-	_DPRINTF("success.\n");
-	return (0);
- bad:
-	_DPRINTF("failed.\n");
-	return (1);
-}
-#endif /* NARLY_MEMORY_PROBE */
-
 void
 __find_dram_shadow(paddr_t start, paddr_t end)
 {
@@ -648,3 +621,34 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	
 	mem_cluster_cnt++;
 }
+
+#ifdef NARLY_MEMORY_PROBE
+int
+__check_dram(paddr_t start, paddr_t end)
+{
+	u_int8_t *page;
+	int i, x;
+
+	_DPRINTF(" checking...");
+	for (; start < end; start += NBPG) {
+		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page + i) = (x ^ i);
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page + i) != (x ^ i))
+				goto bad;
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page + i) = (x ^ i);
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page + i) != (x ^ i))
+				goto bad;
+	}
+	_DPRINTF("success.\n");
+	return (0);
+ bad:
+	_DPRINTF("failed.\n");
+	return (1);
+}
+#endif /* NARLY_MEMORY_PROBE */

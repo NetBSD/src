@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 2002/03/02 22:26:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -192,6 +192,11 @@ trap(struct trapframe *tf)
 		if (kdb_trap(type, 0, tf))
 			return;
 #endif
+#ifdef KGDB
+		if (kgdb_trap(T_USERBREAK, tf))
+			return;
+#endif
+
 		if (tf->tf_trapno >> 5 < trap_types)
 			printf("fatal %s", trap_type[tf->tf_trapno >> 5]);
 		else

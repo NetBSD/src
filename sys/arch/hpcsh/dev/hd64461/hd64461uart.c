@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.7 2002/02/11 17:21:48 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.8 2002/03/02 22:26:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/reboot.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kgdb.h>
 
 #include <sys/termios.h>
 #include <dev/cons.h>
@@ -75,8 +76,8 @@ struct hd64461uart_softc {
 
 /* boot console */
 cdev_decl(com);
-void comcnprobe(struct consdev *);
-void comcninit(struct consdev *);
+void hd64461uartcnprobe(struct consdev *);
+void hd64461uartcninit(struct consdev *);
 
 STATIC int hd64461uart_match(struct device *, struct cfdata *, void *);
 STATIC void hd64461uart_attach(struct device *, struct device *, void *);
@@ -97,7 +98,7 @@ STATIC void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
 #endif
 
 void
-comcnprobe(struct consdev *cp)
+hd64461uartcnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -112,24 +113,36 @@ comcnprobe(struct consdev *cp)
 }
 
 void
-comcninit(struct consdev *cp)
+hd64461uartcninit(struct consdev *cp)
 {
 
 	hd64461uart_init();
 
-#ifdef KGDB
-	if (strcmp(kgdb_devname, "hd64461uart") == 0) {
-		if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED,
-		    COM_FREQ, CONMODE) == 0) {
-			return;
-		}
-	}
-#endif /* KGDB */
 	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
 	    CONMODE);	
 
 	hd64461uart_chip.console = 1;
 }
+
+#ifdef KGDB
+int
+hd64461uart_kgdb_init()
+{
+
+	if (strcmp(kgdb_devname, "hd64461uart") != 0)
+		return (1);
+
+	hd64461uart_init();
+
+	if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, kgdb_rate,
+	    COM_FREQ, CONMODE) != 0) {
+		printf("%s: KGDB console open failed.\n", __FUNCTION__);
+		return (1);
+	}
+
+	return (0);
+}
+#endif /* KGDB */
 
 int
 hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,6 +1,6 @@
-#	$NetBSD: JORNADA690,v 1.15 2002/02/17 20:59:36 uch Exp $
+#	$NetBSD: JORNADA690,v 1.16 2002/03/02 22:26:25 uch Exp $
 #
-#	JORNADA690 uch's Jornada 690
+#	HP Jornada680/690
 #
 
 include "arch/hpcsh/conf/std.hpcsh"
@@ -11,6 +11,9 @@ options		SH3
 options 	PCLOCK=22000000		# 22MHz
 
 options 	DDB			# in-kernel debugger
+#options 	KGDB			# in-kernel debugger
+#options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=19200
+#makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
@@ -71,24 +74,20 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 mainbus0 at root
 
 shb* at mainbus?
-
-# Workstation Console attachments
-bivideo0	at mainbus0
-hpcfb*		at bivideo0
-
-wsdisplay*	at hpcfb?
-pfckbd*		at mainbus?
-hpckbd*		at pfckbd?
-wskbd*		at hpckbd? mux 1
-
-# Serial Devices
 # don't need to define SCICONSOLE. you can select from bootloader.
 options 	SCIFCN_SPEED=19200
 scif0 at shb? port 0xa4000008 irq 12
 
 hd64461if* at shb? irq 4
+hd64461video*	at hd64461if?
 hd64461pcmcia*	at hd64461if?
-com*		at hd64461if?
+
+# Workstation Console attachments
+hpcfb*		at hd64461video?
+wsdisplay*	at hpcfb?
+pfckbd*		at mainbus?
+hpckbd*		at pfckbd?
+wskbd*		at hpckbd? mux 1
 
 # PCMCIA bus support
 pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
@@ -97,7 +96,7 @@ pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
 # PCMCIA network interfaces
 ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 ep*	at pcmcia0 function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
+#mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 #wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
 #mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
@@ -124,10 +123,6 @@ wd*	at wdc0 channel ? drive ? flags 0x0000
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
-# Network Interfaces
-
-# Pseudo-Devices
-pseudo-device	biconsdev	1	# build-in console device
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
