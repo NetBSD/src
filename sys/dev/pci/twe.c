@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.20.4.2 2001/10/25 18:03:02 he Exp $	*/
+/*	$NetBSD: twe.c,v 1.20.4.3 2001/11/24 21:54:18 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,9 @@
 #include <sys/malloc.h>
 #include <sys/disk.h>
 
-#include <machine/vmparam.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 #include <machine/bswap.h>
 #include <machine/bus.h>
 
@@ -810,37 +812,24 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 int
 twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 {
-	struct twe_buf *tb;
 	struct twe_cmd *tc;
-	int flags, nsegs, i, rv;
+	int flags, nsegs, i, s, rv;
 	void *data;
 
 	/*
 	 * The data as a whole must be 512-byte aligned.
 	 */
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
-		tb = malloc(sizeof(*ccb->ccb_buf), M_DEVBUF, M_NOWAIT);
-
-		rv = bus_dmamem_alloc(sc->sc_dmat, ccb->ccb_datasize,
-		    NBPG, 0, tb->tb_segs, TWE_MAX_SEGS, &tb->tb_rseg,
-		    BUS_DMA_NOWAIT);
-		if (rv != 0)
-			return (rv);
-
-		rv = bus_dmamem_map(sc->sc_dmat, tb->tb_segs, tb->tb_rseg,
-		    ccb->ccb_datasize, &tb->tb_vaddr, BUS_DMA_NOWAIT);
-		if (rv != 0) {
-			bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
-			return (rv);
-		}
-
-		ccb->ccb_buf = tb;
-		data = tb->tb_vaddr;
+		s = splimp();
+		/* XXX */
+		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
+		splx(s);
+		data = (void *)ccb->ccb_abuf;
 		if ((ccb->ccb_flags & TWE_CCB_DATA_OUT) != 0)
 			memcpy(data, ccb->ccb_data, ccb->ccb_datasize);
 	} else {
-		tb = NULL;
-		ccb->ccb_buf = NULL;
+		ccb->ccb_abuf = (vaddr_t)0;
 		data = ccb->ccb_data;
 	}
 
@@ -850,10 +839,12 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	rv = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer, data,
 	    ccb->ccb_datasize, NULL, BUS_DMA_NOWAIT);
 	if (rv != 0) {
-		if (tb != NULL) {
-			bus_dmamem_unmap(sc->sc_dmat, tb->tb_vaddr,
+		if (ccb->ccb_abuf != (vaddr_t)0) {
+			s = splimp();
+			/* XXX */
+			uvm_km_free(kmem_map, ccb->ccb_abuf,
 			    ccb->ccb_datasize);
-			bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
+			splx(s);
 		}
 		return (rv);
 	}
@@ -915,8 +906,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 void
 twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 {
-	struct twe_buf *tb;
-	int flags;
+	int flags, s;
 
 	if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
 		flags = BUS_DMASYNC_POSTREAD;
@@ -929,15 +919,14 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 	    ccb->ccb_datasize, flags);
 	bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
 
-	if (ccb->ccb_buf != NULL) {
-		tb = ccb->ccb_buf;
-
+	if (ccb->ccb_abuf != (vaddr_t)0) {
 		if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
-			memcpy(ccb->ccb_data, tb->tb_vaddr,
+			memcpy(ccb->ccb_data, (void *)ccb->ccb_abuf,
 			    ccb->ccb_datasize);
-
-		bus_dmamem_unmap(sc->sc_dmat, tb->tb_vaddr, ccb->ccb_datasize);
-		bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
+		s = splimp();
+		/* XXX */
+		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize);
+		splx(s);
 	}
 }
 
