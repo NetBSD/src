@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.2 1996/02/11 13:19:40 ragge Exp $ */
+/*	$NetBSD: mbavar.h,v 1.3 1996/02/24 21:23:00 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -103,10 +103,11 @@ struct	mba_device {
 
 struct	mba_softc {
 	struct  device sc_dev;
-	struct  ivec_dsp sc_dsp;
+	struct  ivec_dsp sc_dsp;	/* Interrupt catch routine */
 	struct  mba_regs *sc_mbareg;
 	struct	mba_device *sc_first, *sc_last;
 	enum    sc_state sc_state;
+	int	sc_physnr;		/* Physical number of this mba */
 	struct	mba_device *sc_md[MAXMBADEV];
 };
 
