@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.24.2.3 2000/09/12 08:43:58 toshii Exp $	*/
+/*	$NetBSD: ucom.c,v 1.24.2.4 2000/09/21 20:01:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ Static void	ucom_break(struct ucom_softc *, int);
 Static usbd_status ucomstartread(struct ucom_softc *);
 Static void	ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	ucomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	tiocm_to_ucom(struct ucom_softc *, int, int);
+Static void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 Static int	ucom_to_tiocm(struct ucom_softc *);
 
 USB_DECLARE_DRIVER(ucom);
@@ -617,7 +617,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 }
 
 Static void
-tiocm_to_ucom(struct ucom_softc *sc, int how, int ttybits)
+tiocm_to_ucom(struct ucom_softc *sc, u_long how, int ttybits)
 {
 	u_char combits;
 
