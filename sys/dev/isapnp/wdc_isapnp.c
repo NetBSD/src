@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.10 1998/12/03 18:24:31 bouyer Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.11 1999/02/22 03:24:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,8 +186,8 @@ wdc_isapnp_dma_start(scv, buf, size, read)
 {
 	struct wdc_isapnp_softc *sc = scv;
 
-	isa_dmastart(sc->sc_ic, sc->sc_drq, buf,
-	    size, NULL, read ? DMAMODE_READ : DMAMODE_WRITE,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, buf, size, NULL,
+	    (read ? DMAMODE_READ : DMAMODE_WRITE) | DMAMODE_DEMAND,
 	    BUS_DMA_NOWAIT);
 }
 
