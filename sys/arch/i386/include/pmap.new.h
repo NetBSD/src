@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.3 1998/02/18 02:05:34 cgd Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.4 1998/02/18 03:04:41 thorpej Exp $	*/
 
 /*
  *
@@ -344,7 +344,7 @@ struct pmap_transfer_location {
  */
 
 /* PTDpaddr: is the physical address of the kernel's PDP */
-/* extern vm_offset_t PTDpaddr; */ /* exported for libkvm, not used by C */
+extern u_long PTDpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int nkpde;			/* current # of PDEs for kernel */

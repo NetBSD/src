@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 1998/02/18 02:05:34 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 1998/02/18 03:04:41 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -98,7 +98,7 @@ extern pt_entry_t	PTmap[], APTmap[], Upte;
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern pt_entry_t	*Sysmap;
 
-extern int	PTDpaddr;	/* physical address of kernel PTD */
+extern u_long	PTDpaddr;	/* physical address of kernel PTD */
 
 void pmap_bootstrap __P((vm_offset_t start));
 boolean_t pmap_testbit __P((vm_offset_t, int));
