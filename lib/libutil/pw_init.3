@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_init.3,v 1.6 1999/11/19 23:29:47 kristerw Exp $
+.\"	$NetBSD: pw_init.3,v 1.7 2000/07/10 11:19:16 ad Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,11 +52,11 @@
 .Fd #include <pwd.h>
 .Fd #include <util.h>
 .Ft void
-.Fn pw_init
+.Fn pw_init "void"
 .Ft void
 .Fn pw_edit "int notsetuid" "const char *filename"
 .Ft void
-.Fn pw_prompt
+.Fn pw_prompt "void"
 .Ft void
 .Fn pw_copy "int ffd" "int tfd" "struct passwd *pw" "struct passwd *old_pw"
 .Ft int
