@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.14 2001/05/21 06:13:12 perry Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.15 2001/05/23 15:56:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -125,8 +125,7 @@
 	adcw	$0, %ax
 
 /* XXX There should really be a section 9 for this. --PM, May 21, 2001 */
-/* XXX The prototype below deserves better parameter names. */
-/* LINTSTUB: Func: int in4_cksum(struct mbuf *m, u_int8_t i, int j, int k) */
+/* LINTSTUB: Func: int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len) */
 ENTRY(in4_cksum)
 	pushl	%ebp
 	pushl	%ebx
@@ -134,12 +133,12 @@ ENTRY(in4_cksum)
 
 	movl	16(%esp), %ebp
 	movzbl	20(%esp), %eax		/* sum = nxt */
+	movl	24(%esp), %edx		/* %edx = off */
+	movl	28(%esp), %esi		/* %esi = len */
 	testl	%eax, %eax
 	jz	mbuf_loop_0		/* skip if nxt == 0 */
-	movl	28(%esp), %esi
 	movl	M_DATA(%ebp), %ebx
 	addl	%esi, %eax		/* sum += len */
-	movl	24(%esp), %edx		/* %edx = off */
 	shll	$8, %eax		/* sum = htons(sum) */
 
 	ADD(IP_SRC)			/* sum += ip->ip_src */
