@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.8 1996/10/21 07:00:06 veego Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.9 1998/09/14 18:36:07 tv Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -33,6 +33,11 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
+ * Revision 1.9  1998/09/14 18:36:07  tv
+ * Increase "keylength" to 32, inspired by <prlw1@newn.cam.ac.uk> in PR
+ * bin/5415.  This will not be a significant performance hit, but allows
+ * LOCALID keywords up to 32 characters long.
+ *
  * Revision 1.8  1996/10/21 07:00:06  veego
  * Fix missing "#ifdef LOCALID" from pr#2876
  *
@@ -435,7 +440,7 @@ struct assoc {
 #define REVISION        "Revision"
 #define SOURCE          "Source"
 #define STATE           "State"
-#define keylength 8 /* max length of any of the above keywords */
+#define keylength 32 /* max length of any of the above keywords */
 
 enum markers { Nomatch, Author, Date, Header, Id,
 #ifdef LOCALID
