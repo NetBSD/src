@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.5 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: geom.c,v 1.6 2003/05/30 11:56:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -40,6 +40,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
+#include <errno.h>
 
 #include "defs.h"
 
@@ -50,6 +51,7 @@ get_geom(disk, l)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
+	int sv_errno;
 
 	/* Open the disk. */
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
@@ -57,7 +59,9 @@ get_geom(disk, l)
 		return 0;
 
 	if (ioctl(fd, DIOCGDEFLABEL, l) < 0) {
+		sv_errno = errno;
 		(void)close(fd);
+		errno = sv_errno;
 		return 0;
 	}
 	(void)close(fd);
