@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/08/30 23:51:51 jhawk Exp $
+#	$NetBSD: Makefile,v 1.11 2000/09/04 16:36:59 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -94,6 +94,16 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	gzip -c -9 < $(.OBJDIR)/$(IMAGE) \
+		> $(RELEASEDIR)/installation/bootfs/$(IMAGE).gz
+.endif	# RELEASEDIR check
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2000/08/28 19:14:25 pk Exp $
+#	$NetBSD: Makefile,v 1.7 2000/09/04 16:36:59 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
-KERN=		${KERNOBJDIR}/INSTALL/netbsd
+KERN=		${KERNOBJDIR}/INSTALL-SYSINST/netbsd
 
 .include "${TOP}/Makefile.inc"
 
@@ -52,9 +52,11 @@ ${IMAGE}:	netbsd.ram.gz
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	/usr/mdec/binstall -v -b boot ffs ${MOUNT_POINT}
+	/usr/mdec/binstall -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+
+all:	${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -73,5 +75,16 @@ depend install:
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=32k
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	cp netbsd.ram.gz $(RELEASEDIR)/installation/netboot
+	gzip -c -9 < $(.OBJDIR)/$(IMAGE) \
+		> $(RELEASEDIR)/installation/bootfs/$(IMAGE).gz
+.endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
