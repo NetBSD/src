@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: str.c,v 1.4 1994/03/05 00:35:08 cgd Exp $";
+static char *rcsid = "$Id: str.c,v 1.5 1994/03/23 00:52:13 jtc Exp $";
 #endif				/* not lint */
 
 #include "make.h"
@@ -366,8 +366,11 @@ Str_SYSVMatch(word, pattern, len)
     char *w = word;
     char *m;
 
-    if (*p == '\0')
-	return NULL;
+    if (*p == '\0') {
+	/* Null pattern is the whole string */
+	*len = strlen(w);
+	return w;
+    }
 
     if ((m = strchr(p, '%')) != NULL) {
 	/* check that the prefix matches */
