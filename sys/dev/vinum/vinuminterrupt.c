@@ -39,7 +39,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinuminterrupt.c,v 1.3 2004/09/19 12:22:22 yamt Exp $
+ * $Id: vinuminterrupt.c,v 1.4 2004/11/08 21:30:05 explorer Exp $
  * $FreeBSD$
  */
 
@@ -404,7 +404,7 @@ complete_raid5_write(struct rqelement *rqe)
 #ifdef VINUMDEBUG
 		    if (debug & DEBUG_ADDRESSES)
 			log(LOG_DEBUG,
-			    "  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %ld\n",
+			    "  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %d\n",
 			    rqe->b.b_flags & B_READ ? "Read" : "Write",
 			    major(rqe->b.b_dev),
 			    minor(rqe->b.b_dev),
@@ -446,7 +446,7 @@ complete_raid5_write(struct rqelement *rqe)
 #ifdef VINUMDEBUG
     if (debug & DEBUG_ADDRESSES)
 	log(LOG_DEBUG,
-	    "  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %ld\n",
+	    "  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %d\n",
 	    rqe->b.b_flags & B_READ ? "Read" : "Write",
 	    major(rqe->b.b_dev),
 	    minor(rqe->b.b_dev),
