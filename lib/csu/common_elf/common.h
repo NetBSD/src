@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.3 1999/08/19 20:52:36 kleink Exp $	*/
+/*	$NetBSD: common.h,v 1.4 2000/02/07 21:40:40 scottb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -42,6 +42,7 @@
 #define dlclose	_dlclose
 #define dlsym	_dlsym
 #define dlerror	_dlerror
+#define dladdr	_dladdr
 #endif
 #include <dlfcn.h>
 #include "rtld.h"

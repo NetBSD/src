@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.24 1999/12/08 08:47:10 itohy Exp $	 */
+/*	$NetBSD: reloc.c,v 1.25 2000/02/07 21:40:41 scottb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -625,6 +625,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 		obj->dlsym = _rtld_dlsym;
 		obj->dlerror = _rtld_dlerror;
 		obj->dlclose = _rtld_dlclose;
+		obj->dladdr = _rtld_dladdr;
 
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL) {

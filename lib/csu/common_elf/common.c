@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 1999/08/19 20:52:36 kleink Exp $	*/
+/*	$NetBSD: common.c,v 1.5 2000/02/07 21:40:40 scottb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -61,6 +61,7 @@ __weak_alias(dlopen,_dlopen);
 __weak_alias(dlclose,_dlclose);
 __weak_alias(dlsym,_dlsym);
 __weak_alias(dlerror,_dlerror);
+__weak_alias(dladdr,_dladdr);
 #endif
 
 void
@@ -130,5 +131,14 @@ dlerror()
 	if (__mainprog_obj == NULL)
 		return ("Dynamic linker interface not available");
 	return (__mainprog_obj->dlerror)();
+}
+
+int
+dladdr(void *addr, Dl_info *dli)
+{
+
+	if (__mainprog_obj == NULL)
+		return -1;
+	return (__mainprog_obj->dladdr)(addr, dli);
 }
 #endif /* DYNAMIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.22 1999/12/15 05:22:37 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.23 2000/02/07 21:40:42 scottb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -193,6 +193,7 @@ typedef struct Struct_Obj_Entry {
 	void           *(*dlsym) __P((void *, const char *));
 	char           *(*dlerror) __P((void));
 	int             (*dlclose) __P((void *));
+	int             (*dladdr) __P((void *, Dl_info *));
 
 	int             mainprog:1;	/* True if this is the main program */
 	int             rtld:1;		/* True if this is the dynamic linker */
