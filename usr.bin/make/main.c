@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1993/10/23 02:32:03 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1993/12/04 02:12:40 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -428,6 +428,7 @@ main(argc, argv)
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", MACHINE, VAR_GLOBAL);
+	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.

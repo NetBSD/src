@@ -1,6 +1,6 @@
-#	$Id: Makefile.dist,v 1.3 1993/08/02 17:54:53 mycroft Exp $
+#	$Id: Makefile.dist,v 1.4 1993/12/04 02:12:34 cgd Exp $
 
-CFLAGS = -I. -DMACHINE=\"sun3\"
+CFLAGS = -I. -DMACHINE=\"sun3\" -DMACHINE_ARCH=\"m68k\"
 
 MAKESRC = arch.c buf.c compat.c cond.c dir.c hash.c job.c main.c make.c \
 	  parse.c str.c suff.c targ.c var.c
