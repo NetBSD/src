@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.234 2003/11/20 04:31:11 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.235 2003/11/25 06:50:47 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3029,3 +3029,9 @@ sys/compat/linux/arch/m68k/linux_syscalls.c	regen
 sys/compat/linux/arch/m68k/linux_sysent.c	regen
 
 	Fixes for ticket #1427. Forgot a #include which broke builds.  
+
+crypto/dist/openssl/crypto/opensslv.h		apply patch
+
+	define OPENSSL_HAS_20031107_FIX which reflects the date that the
+	OpenSSL 0.6.9g -> 0.9.6l fixes were pulled up to the branch.
+	[jlam, ticket #1566]
