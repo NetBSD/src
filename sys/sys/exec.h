@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)exec.h	8.3 (Berkeley) 1/21/94
- *	$Id: exec.h,v 1.38 1994/05/27 08:44:12 mycroft Exp $
+ *	$Id: exec.h,v 1.39 1994/06/22 03:43:09 glass Exp $
  */
 
 /*
@@ -115,7 +115,7 @@ struct ps_strings {
  * address of this gap may need alignment, so use this to reference it:
  *	(caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
  */
-#ifdef COMPAT_SUNOS
+#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
