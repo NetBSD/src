@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.17 2000/03/14 09:39:32 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.18 2000/03/14 10:12:42 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.17 2000/03/14 09:39:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.18 2000/03/14 10:12:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,29 +304,24 @@ dec_3max_intr(cpumask, pc, status, cause)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (cpumask & MIPS_INT_MASK_0) {
-		int ifound;
-
-		do {
-			ifound = 0;
-			csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-			csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
-			switch (csr & 0xf0) {
-			case KN02_IP_DZ:
-				CALLINTR(SYS_DEV_SCC0); break;
-			case KN02_IP_LANCE:
-				CALLINTR(SYS_DEV_LANCE); break;
-			case KN02_IP_SCSI:
-				CALLINTR(SYS_DEV_SCSI); break;
-			}
-			switch (csr & 0x0f) {
-			case KN02_IP_SLOT2:
-				CALLINTR(SYS_DEV_OPT2); break;
-			case KN02_IP_SLOT1:
-				CALLINTR(SYS_DEV_OPT1); break;
-			case KN02_IP_SLOT0:
-				CALLINTR(SYS_DEV_OPT0); break;
-			}
-		} while (ifound);
+		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
+		if (csr & (KN02_IP_DZ | KN02_IP_LANCE | KN02_IP_SCSI)) {
+			if (csr & KN02_IP_DZ)
+				CALLINTR(SYS_DEV_SCC0);
+			if (csr & KN02_IP_LANCE)
+				CALLINTR(SYS_DEV_LANCE);
+			if (csr & KN02_IP_SCSI)
+				CALLINTR(SYS_DEV_SCSI);
+		}
+		if (csr & (KN02_IP_SLOT2 | KN02_IP_SLOT1 | KN02_IP_SLOT0)) {
+			if (csr & KN02_IP_SLOT2)
+				CALLINTR(SYS_DEV_OPT2);
+			if (csr & KN02_IP_SLOT1)
+				CALLINTR(SYS_DEV_OPT1);
+			if (csr & KN02_IP_SLOT0)
+				CALLINTR(SYS_DEV_OPT0);
+		}
 	}
 	if (cpumask & MIPS_INT_MASK_3) {
 		dec_3max_memerr();
