@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.7 2002/05/26 22:07:28 wiz Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.8 2002/08/29 14:40:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.7 2002/05/26 22:07:28 wiz Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.8 2002/08/29 14:40:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: kerberos.c,v 1.7 2002/05/26 22:07:28 wiz Exp $");
 #include <sys/types.h>
 #include <arpa/telnet.h>
 #include <stdio.h>
-#include <des.h>	/* BSD wont include this in krb.h, so we do it here */
+#include <openssl/des.h>	/* BSD wont include this in krb.h, so we do it here */
 #include <krb.h>
 #include <stdlib.h>
 #ifdef	NO_STRING_H
