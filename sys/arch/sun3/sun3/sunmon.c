@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.2 1997/01/23 23:54:26 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.3 1997/01/27 21:59:55 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/vector.h>
-#include <sun3/sun3/sunmon.h>
 
 static void **sunmon_vbr;
 
