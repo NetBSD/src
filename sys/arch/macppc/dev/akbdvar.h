@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.3 1998/10/14 13:21:10 tsubai Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -39,12 +39,12 @@
  * State info, per keyboard instance.
  */
 struct akbd_softc {
-	struct  device  sc_dev;
+	struct	device	sc_dev;
 
 	/* ADB info */
-	u_int8_t        origaddr;       /* ADB device type (ADBADDR_KBD) */
-	u_int8_t        adbaddr;        /* current ADB address */
-	u_int8_t        handler_id;     /* type of keyboard */
+	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
+	int		adbaddr;	/* current ADB address */
+	int		handler_id;	/* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
 	struct device	*sc_wskbddev;
@@ -55,6 +55,6 @@ struct akbd_softc {
 #define LED_CAPSLOCK	0x2
 #define LED_SCROLL_LOCK	0x4
 
-void    kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 
 #endif /* _MACPPC_KBDVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.5 1999/01/10 10:39:13 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.6 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -366,7 +366,7 @@ setleds(ksc, leds)
 	if ((leds & 0x07) == (ksc->sc_leds & 0x07))
 		return (0);
 
-	addr = (int)ksc->adbaddr;
+	addr = ksc->adbaddr;
 	buffer[0] = 0;
 	kbd_done = 0;
 
@@ -416,7 +416,7 @@ blinkleds(ksc)
 	int addr, i;
 	u_char blinkleds, origleds;
 
-	addr = (int)ksc->adbaddr;
+	addr = ksc->adbaddr;
 	origleds = getleds(addr);
 	blinkleds = LED_NUMLOCK | LED_CAPSLOCK | LED_SCROLL_LOCK;
 
