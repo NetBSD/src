@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.561 2003/08/07 05:35:36 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.562 2003/08/14 23:39:47 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.562 2003/08/07 05:35:04 wiz Exp 
+ *	NetBSD: pcidevs,v 1.564 2003/08/14 23:39:22 itojun Exp 
  */
 
 /*
@@ -5750,6 +5750,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "National Semiconductor",
 	    "NS87410",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ISA,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ACPI,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 SMI/ACPI",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_IDE,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 PCI IDE",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_AUDIO,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 XpressAUDIO",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_XBUS,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 X-Bus",
 	},
 	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130HL,
