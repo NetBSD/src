@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.186 1998/11/19 23:44:20 kenh Exp $ */
+/*	$NetBSD: wd.c,v 1.187 1998/11/20 01:23:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -628,9 +628,17 @@ wdopen(dev, flag, fmt, p)
 	wd = wd_cd.cd_devs[unit];
 	if (wd == NULL)
 		return ENXIO;
-	
+
+	/*
+	 * If this is the first open of this device, add a reference
+	 * to the adapter.
+	 */
+	if (wd->sc_dk.dk_openmask == 0 &&
+	    (error = wdc_ata_addref(wd->drvp)) != 0)
+		return (error);
+
 	if ((error = wdlock(wd)) != 0)
-		return error;
+		goto bad4;
 
 	if (wd->sc_dk.dk_openmask != 0) {
 		/*
@@ -684,6 +692,9 @@ bad:
 
 bad3:
 	wdunlock(wd);
+bad4:
+	if (wd->sc_dk.dk_openmask == 0)
+		wdc_ata_delref(wd->drvp);
 	return error;
 }
 
@@ -714,6 +725,8 @@ wdclose(dev, flag, fmt, p)
 
 	if (wd->sc_dk.dk_openmask == 0) {
 		/* XXXX Must wait for I/O to complete! */
+
+		wdc_ata_delref(wd->drvp);
 	}
 
 	wdunlock(wd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.7 1998/11/11 19:38:27 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.8 1998/11/20 01:23:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -733,4 +733,22 @@ wdc_ata_err(chp, ata_bio)
 	if (chp->ch_status & WDCS_CORR)
 		ata_bio->flags |= ATA_CORR;
 	return WDC_ATA_NOERR;
+}
+
+int
+wdc_ata_addref(drvp)
+	struct ata_drive_datas *drvp;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+
+	return (wdc_addref(chp));
+}
+
+void
+wdc_ata_delref(drvp)
+	struct ata_drive_datas *drvp;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+
+	wdc_delref(chp);
 }
