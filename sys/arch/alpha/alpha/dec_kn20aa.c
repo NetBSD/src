@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.34 1997/10/16 00:58:21 thorpej Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.35 1997/10/17 18:59:54 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.34 1997/10/16 00:58:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.35 1997/10/17 18:59:54 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.34 1997/10/16 00:58:21 thorpej Exp 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
+#include <machine/bus.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
