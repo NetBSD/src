@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.52 2002/07/20 02:10:58 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.53 2002/07/21 09:25:27 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -342,17 +342,22 @@ The distribution sets (in this example, they are on CD).
 .if !\n[pmax]:\n[sgimips] \{\
 .It
 .ie r_alpha Two floppy disks.
-.el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
-.el .ie r_mac68k The Mac OS Booter application and an Installation Kernel
-.el .ie \n[acorn26]:\n[cats]:\n[macppc]:\n[sparc]:\n[walnut] \{\
+.el \{\
+.ie r_i386 Two 1.44 MB 3.5" floppy disks.
+.el \{\
+.ie r_mac68k The Mac OS Booter application and an Installation Kernel
+.el \{\
+.ie \n[acorn26]:\n[cats]:\n[macppc]:\n[sparc]:\n[walnut] \{\
 Some form of bootable media, described above.
 .\}
-.el .ie r_atari \{\
+.el \{\
+.ie r_atari \{\
 A floppy disk containing a suitable boot.fs and a floppy with the
 sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
+.\}.\}.\}.\}
 .\} \" !\n[pmax]:\n[sgimips]
 .if r_i386 \{\
 .It
@@ -484,7 +489,8 @@ You should be at the
 .Ic sysinst
 main menu.
 .\}
-.el ie r_mac68k \{\
+.el \{\
+.ie r_mac68k \{\
 Double-click on the Booter application icon to start executing it.
 From the
 .Ic Options
@@ -535,10 +541,7 @@ progress as this may leave the keyboard locked to
 The main menu will be displayed.
 .\}
 .el \{\
-Insert the
-.ie r_i386 first
-.ie r_alpha first
-boot floppy you just created.
+Insert the first boot floppy you just created.
 .ie r_i386 Restart
 .el Boot
 the computer.
@@ -566,7 +569,7 @@ or
 .Pp
 .\}
 The main menu will be displayed.
-.\}
+.\}.\}
 .(disp
 .ne 10
 . cs \n(.f 22
@@ -605,7 +608,7 @@ make sure to use the 'existing' disk layout.
 .\}
 .It
 After your disk has been prepared, choose
-.if r_sgimips \{\
+.ie r_sgimips \{\
 .Me Unmounted file system
 as the medium.
 The CD-ROM device is usually cd0 and the partition
@@ -757,7 +760,8 @@ the problem as you can.
 As an alternative, try using the Traditional
 method of installation described in the next section.
 .\}
-.el .ie \n[acorn26]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
+.el \{\
+.ie \n[acorn26]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
 .Pp
 You may want to read the
 boot messages, to notice your disk's name and capacity.
@@ -820,7 +824,7 @@ configuration as you can.
 .\}
 .Pp
 It will take a while to load the kernel
-.if !r_mac68k \{\
+.ie !r_mac68k \{\
 from the floppy,
 .\}
 .el ,
@@ -874,7 +878,7 @@ but the new installation floppies use a
 ramdisk file system and are no longer dependent on the floppy
 once it has booted.
 .\}
-.\}
+.\}.\}
 .Pp
 Once
 .Nx
@@ -1531,15 +1535,18 @@ the disklabel to add this once you have installed
 .Pp
 .ds usrpart e
 .\}
-.el .ie r_macppc \{\
+.el \{\
+.ie r_macppc \{\
 .ds usrpart g
 .\}
-.el .ie r_sgimips \{\
+.el \{\
+.ie r_sgimips \{\
 .ds usrpart e
 .\}
 .el \{\
 .ds usrpart d
-.\}
+.\}.\}.\}
+.\} \" !r_mac68k
 Some partitions in the disklabel have a fixed purpose.
 .(tag 6n -offset indent
 .It Li a
@@ -1561,15 +1568,17 @@ portion of the disk.
 .It Li d
 The SGI volume header (boot partition)
 .\}
-.el .ie r_macppc \{\
+.el \{\
+.ie r_macppc \{\
 .It Li d-h
 .\}
-.el .ie r_atari \{\
+.el \{\
+.ie r_atari \{\
 .It Li d-p
 .\}
 .el \{\
 .It Li \*[usrpart]-h
-.\}
+.\}.\}.\}
 Available for other use.
 Traditionally,
 .Li \*[usrpart]
