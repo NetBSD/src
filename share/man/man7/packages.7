@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.16 1999/07/22 11:08:30 lukem Exp $
+.\"	$NetBSD: packages.7,v 1.17 1999/07/24 15:37:03 mjl Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -444,6 +444,12 @@ The target to pass to make in the package when building.  The default is
 .It INSTALL_TARGET
 The target to pass to make in the package when installing.  The default is
 .Dq install .
+.It MASTER_SORT
+List of suffixes for preferred download locations to sort the MASTER_SITES
+accordingly.
+.It MASTER_SORT_REGEX
+Similar to MASTER_SORT, but takes a list of regular expressions for
+finer grained control.
 .El
 .Sh MOTIF SUPPORT
 This section documents variables related to the use and installation of
