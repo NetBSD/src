@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.8 2002/02/06 19:48:35 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.9 2002/04/02 00:15:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -239,9 +239,6 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 		/* LWP was runnable before being suspended. */
 		SCHED_LOCK(s);
 		setrunnable(t);
-		simple_lock(&p->p_lwplock);
-		p->p_nrlwps++;
-		simple_unlock(&p->p_lwplock);
 		SCHED_UNLOCK(s);
 	} else {
 		/* LWP was sleeping before being suspended */

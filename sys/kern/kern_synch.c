@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.11 2002/03/22 23:25:47 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.12 2002/04/02 00:16:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.11 2002/03/22 23:25:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.12 2002/04/02 00:16:00 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -488,7 +488,9 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
-	p->p_nrlwps++;
+	/* p->p_nrlwps is incremented by whoever made us runnable again,
+	 * either setrunnable() or awaken().
+	 */
 
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
@@ -598,7 +600,7 @@ awaken(struct lwp *l)
 		updatepri(l);
 	l->l_slptime = 0;
 	l->l_stat = LSRUN;
-
+	l->l_proc->p_nrlwps++;
 	/*
 	 * Since curpriority is a user priority, p->p_priority
 	 * is always better than curpriority.
@@ -776,17 +778,9 @@ preempt(struct lwp *newl)
 		SCHED_LOCK(s);
 		l->l_priority = l->l_usrpri;
 		l->l_stat = LSRUN;
-#ifdef DIAGNOSTIC
-		if (l->l_proc->p_sa->sa_preempted != NULL)
-			panic("preempt: SA process already has "
-			    "a preempted LWP (%p) pending.", 
-			    l->l_proc->p_sa->sa_preempted);
-#endif
-		l->l_proc->p_sa->sa_preempted = l;
 		setrunqueue(l);
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;
 		r = mi_switch(l, newl);
-		l->l_proc->p_sa->sa_preempted = NULL;
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
 		if (r != 0)
@@ -992,6 +986,8 @@ setrunnable(struct lwp *l)
 		break;
 	}
 	l->l_stat = LSRUN;
+	p->p_nrlwps++;
+
 	if (l->l_flag & L_INMEM)
 		setrunqueue(l);
 
@@ -1099,6 +1095,7 @@ suspendsched()
 
 		switch (l->l_stat) {
 		case LSRUN:
+			l->l_proc->p_nrlwps--;
 			if ((l->l_flag & L_INMEM) != 0)
 				remrunqueue(l);
 			/* FALLTHROUGH */
