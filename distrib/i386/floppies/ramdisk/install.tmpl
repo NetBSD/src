@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.1 1997/06/14 18:56:12 perry Exp $
+#	$NetBSD: install.tmpl,v 1.2 1997/06/18 00:09:17 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -470,6 +470,7 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
+echo /dev/${drivename}b none swap sw 0 0 | sed -e s,//,/, >> $FSTAB
 if [ "$ename" != "" ]; then
 	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
