@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.77 1998/08/13 02:11:05 eeh Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.78 1998/09/08 23:44:41 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -252,6 +252,20 @@ vm_fork(p1, p2, shared)
 	 * not return here.
 	 */
 	cpu_fork(p1, p2);
+}
+
+/*
+ * Free the VM resources held by a dead (pre-zombie) process; we
+ * are running on the reaper thread when we come here.  We must
+ * run on a valid context because freeing these resources may block.
+ */
+void
+vm_exit(p)
+	struct proc *p;
+{
+
+	vmspace_free(p->p_vmspace);
+	kmem_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 }
 
 /*
