@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1995/09/04 12:56:47 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 1995/09/23 08:14:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1766,6 +1766,12 @@ Lcmploop:
 Lcmpdone:
 	rts
 
+NTRY(memcpy)
+	movl	sp@(12),d0		| get count
+	jeq	Lcpyexit		| if zero, return
+	movl	sp@(8), a0		| src address
+	movl	sp@(4), a1		| dest address
+	jra	Ldocopy			| jump into bcopy
 /*
  * {ov}bcopy(from, to, len)
  *
@@ -1777,6 +1783,7 @@ ENTRY(bcopy)
 	jeq	Lcpyexit		| if zero, return
 	movl	sp@(4),a0		| src address
 	movl	sp@(8),a1		| dest address
+Ldocopy:
 	cmpl	a1,a0			| src before dest?
 	jlt	Lcpyback		| yes, copy backwards (avoids overlap)
 	movl	a0,d1
