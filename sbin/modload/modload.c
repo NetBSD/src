@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.18 1997/09/16 08:37:10 mrg Exp $	*/
+/*	$NetBSD: modload.c,v 1.19 1997/12/01 19:30:59 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.18 1997/09/16 08:37:10 mrg Exp $");
+__RCSID("$NetBSD: modload.c,v 1.19 1997/12/01 19:30:59 mjacob Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,11 @@ __RCSID("$NetBSD: modload.c,v 1.18 1997/09/16 08:37:10 mrg Exp $");
  * -T		address to link to in hex (assumes it's a page boundry)
  * <target>	object file
  */
+#ifdef	__alpha__
+#define	LINKCMD		"ld -R %s -e %s -o %s -Ttext %x %s"
+#else
 #define	LINKCMD		"ld -A %s -e _%s -o %s -T %x %s"
+#endif
 
 void	cleanup __P((void));
 int	linkcmd __P((char *, char *, char *, u_int, char *));
