@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.24 2002/05/20 19:18:44 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.25 2002/05/20 19:21:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct	pthread_st {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-#define PT_STACKSIZE	(1<<16) 
+#define PT_STACKSIZE	(1<<18) 
 #define PT_STACKMASK	(PT_STACKSIZE-1)
 
 #define PT_UPCALLSTACKS	16
