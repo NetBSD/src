@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 1995/01/26 21:28:09 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12 1995/05/11 23:15:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -62,6 +62,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
+#ifndef AMIGA
 extern char kstack[];		/* XXX */
 
 static inline struct frame *
@@ -76,6 +77,20 @@ process_frame(p)
 	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	return (ptr);
 }
+
+#else	/* !AMIGA */
+
+static inline struct frame *
+process_frame(p)
+	struct proc *p;
+{
+	void *ptr;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (NULL);
+	return ((void *)p->p_md.md_regs);
+}
+#endif /* !AMIGA */
 
 static inline struct fpframe *
 process_fpframe(p)
