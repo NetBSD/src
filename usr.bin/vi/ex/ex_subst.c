@@ -354,7 +354,8 @@ s(sp, cmdp, s, re, flags)
 	EVENT ev;
 	MARK from, to;
 	TEXTH tiq;
-	recno_t elno, lno, slno;
+	recno_t elno, slno;
+	long lno;
 	regmatch_t match[10];
 	size_t blen, cnt, last, lbclen, lblen, len, llen;
 	size_t offset, saved_offset, scno;
