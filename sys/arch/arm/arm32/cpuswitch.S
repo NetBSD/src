@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.27 2003/01/03 21:19:10 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.28 2003/01/07 23:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -186,19 +186,17 @@ ENTRY(cpu_switch)
 	stmfd	sp!, {r4-r7, lr}
 
 	/*
-	 * Get the current lwp and indicate that there is no longer
-	 * a valid process (curlwp = 0).  Zero the current PCB pointer
-	 * while we're at it.
+	 * Indicate that there is no longer a valid process (curlwp = 0).
+	 * Zero the current PCB pointer while we're at it.
 	 */
 	ldr	r7, .Lcurlwp
 	ldr	r6, .Lcurpcb
-	mov	r0, #0x00000000
-	ldr	r1, [r7]		/* r1 = curproc */
-	str	r0, [r7]		/* curproc = NULL */
-	str	r0, [r6]		/* curpcb = NULL */
+	mov	r2, #0x00000000
+	str	r2, [r7]		/* curproc = NULL */
+	str	r2, [r6]		/* curpcb = NULL */
 
 	/* stash the old proc while we call functions */
-	mov	r5, r1
+	mov	r5, r0
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
