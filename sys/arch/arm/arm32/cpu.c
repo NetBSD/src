@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2003/02/14 16:00:33 rjs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.49 2003/04/29 01:07:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2003/02/14 16:00:33 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2003/04/29 01:07:30 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -95,7 +95,7 @@ cpu_attach(struct device *dv)
 
 	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
 	    curcpu()->ci_arm_cpurev < 3) {
-		printf("%s: SA-110 with bugged STM^ instruction\n",
+		aprint_normal("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
 
@@ -103,9 +103,9 @@ cpu_attach(struct device *dv)
 	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
-		printf("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
-		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
-		printf("%s", (clock & 2) ? " sync" : "");
+		aprint_normal("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
+		aprint_normal(" clock:%s", (clock & 1) ? " dynamic" : "");
+		aprint_normal("%s", (clock & 2) ? " sync" : "");
 		switch ((clock >> 2) & 3) {
 		case 0:
 			fclk = "bus clock";
@@ -120,7 +120,7 @@ cpu_attach(struct device *dv)
 			fclk = "illegal";
 			break;
 		}
-		printf(" fclk source=%s\n", fclk);
+		aprint_normal(" fclk source=%s\n", fclk);
  	}
 #endif
 
@@ -386,7 +386,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	cpuid = ci->ci_arm_cpuid;
 
 	if (cpuid == 0) {
-		printf("Processor failed probe - no CPU ID\n");
+		aprint_error("Processor failed probe - no CPU ID\n");
 		return;
 	}
 
@@ -404,9 +404,10 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
-	printf(": %s\n", cpu_model);
+	aprint_naive(": %s\n", cpu_model);
+	aprint_normal(": %s\n", cpu_model);
 
-	printf("%s:", dv->dv_xname);
+	aprint_normal("%s:", dv->dv_xname);
 
 	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
@@ -414,54 +415,54 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			printf(" IDC disabled");
+			aprint_normal(" IDC disabled");
 		else
-			printf(" IDC enabled");
+			aprint_normal(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			printf(" DC disabled");
+			aprint_normal(" DC disabled");
 		else
-			printf(" DC enabled");
+			aprint_normal(" DC enabled");
 		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			printf(" IC disabled");
+			aprint_normal(" IC disabled");
 		else
-			printf(" IC enabled");
+			aprint_normal(" IC enabled");
 		break;
 	default:
 		break;
 	}
 	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		printf(" WB disabled");
+		aprint_normal(" WB disabled");
 	else
-		printf(" WB enabled");
+		aprint_normal(" WB enabled");
 
 	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
-		printf(" LABT");
+		aprint_normal(" LABT");
 	else
-		printf(" EABT");
+		aprint_normal(" EABT");
 
 	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		printf(" branch prediction enabled");
+		aprint_normal(" branch prediction enabled");
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
 		goto skip_pcache;
 
 	if (arm_pcache_unified) {
-		printf("%s: %dKB/%dB %d-way %s unified cache\n",
+		aprint_normal("%s: %dKB/%dB %d-way %s unified cache\n",
 		    dv->dv_xname, arm_pdcache_size / 1024,
 		    arm_pdcache_line_size, arm_pdcache_ways,
 		    wtnames[arm_pcache_type]);
 	} else {
-		printf("%s: %dKB/%dB %d-way Instruction cache\n",
+		aprint_normal("%s: %dKB/%dB %d-way Instruction cache\n",
 		    dv->dv_xname, arm_picache_size / 1024,
 		    arm_picache_line_size, arm_picache_ways);
-		printf("%s: %dKB/%dB %d-way %s Data cache\n",
+		aprint_normal("%s: %dKB/%dB %d-way %s Data cache\n",
 		    dv->dv_xname, arm_pdcache_size / 1024, 
 		    arm_pdcache_line_size, arm_pdcache_ways,
 		    wtnames[arm_pcache_type]);
@@ -505,12 +506,12 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		break;
 	default:
 		if (cpu_classes[cpu_class].class_option != NULL)
-			printf("%s: %s does not fully support this CPU."
+			aprint_error("%s: %s does not fully support this CPU."
 			       "\n", dv->dv_xname, ostype);
 		else {
-			printf("%s: This kernel does not fully support "
+			aprint_error("%s: This kernel does not fully support "
 			       "this CPU.\n", dv->dv_xname);
-			printf("%s: Recompile with \"options %s\" to "
+			aprint_normal("%s: Recompile with \"options %s\" to "
 			       "correct this.\n", dv->dv_xname,
 			       cpu_classes[cpu_class].class_option);
 		}

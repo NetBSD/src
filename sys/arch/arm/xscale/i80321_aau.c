@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.8 2002/10/02 05:02:29 thorpej Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.9 2003/04/29 01:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.8 2002/10/02 05:02:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.9 2003/04/29 01:07:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -164,13 +164,14 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	struct iopxs_attach_args *ia = aux;
 	int error;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_st = ia->ia_st;
 	error = bus_space_subregion(sc->sc_st, ia->ia_sh,
 	    ia->ia_offset, ia->ia_size, &sc->sc_sh);
 	if (error) {
-		printf("%s: unable to subregion registers, error = %d\n",
+		aprint_error("%s: unable to subregion registers, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
@@ -180,7 +181,7 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	sc321->sc_error_ih = i80321_intr_establish(ICU_INT_AAUE, IPL_BIO,
 	    iopaau_intr, sc);
 	if (sc321->sc_error_ih == NULL) {
-		printf("%s: unable to register error interrupt handler\n",
+		aprint_error("%s: unable to register error interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -188,7 +189,7 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	sc321->sc_eoc_ih = i80321_intr_establish(ICU_INT_AAU_EOC, IPL_BIO,
 	    iopaau_intr, sc);
 	if (sc321->sc_eoc_ih == NULL) {
-		printf("%s: unable to register EOC interrupt handler\n",
+		aprint_error("%s: unable to register EOC interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -196,7 +197,7 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	sc321->sc_eot_ih = i80321_intr_establish(ICU_INT_AAU_EOT, IPL_BIO,
 	    iopaau_intr, sc);
 	if (sc321->sc_eoc_ih == NULL) {
-		printf("%s: unable to register EOT interrupt handler\n",
+		aprint_error("%s: unable to register EOT interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
