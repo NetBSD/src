@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2002/09/22 09:47:56 wiz Exp $
+$NetBSD: README,v 1.5 2003/12/04 23:32:37 keihan Exp $
 
 Organization of Sources:
 
@@ -30,5 +30,5 @@ stay in src/gnu/lib or src/gnu/usr.bin (the BSD build areas).
 Make sure all changes made to the GNU sources are submitted to
 the appropriate maintainer, but only after coordinating with the
 NetBSD maintainers by sending your proposed submission to the
-<tech-toolchain@netbsd.org> mailing list.  Only send the changes
+<tech-toolchain@NetBSD.org> mailing list.  Only send the changes
 to the third-party maintainers after consensus has been reached.
