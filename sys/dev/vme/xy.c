@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.52 2003/08/27 15:41:04 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.53 2003/08/28 16:36:22 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.52 2003/08/27 15:41:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.53 2003/08/28 16:36:22 mrg Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -492,7 +492,7 @@ xycattach(parent, self, aux)
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
-	xyc->dvmaiopb = BUS_ADDR_PADDR(busaddr);
+	xyc->dvmaiopb = (struct xy_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
@@ -687,7 +687,7 @@ xyattach(parent, self, aux)
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
-	dmaddr = BUS_ADDR_PADDR(busaddr);
+	dmaddr = (caddr_t)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	/* first try and reset the drive */
 	error = xyc_cmd(xyc, XYCMD_RST, 0, xy->xy_drive, 0, 0, 0, fmode);
@@ -2249,7 +2249,7 @@ xyc_ioctlcmd(xy, dev, xio)
 					     &busbuf)) != 0) {
 			return (error);
 		}
-		dvmabuf = BUS_ADDR_PADDR(busbuf);
+		dvmabuf = (caddr_t)(u_long)BUS_ADDR_PADDR(busbuf);
 
 		if (xio->cmd == XYCMD_WR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {
