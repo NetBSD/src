@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.13 2002/09/27 20:30:39 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.14 2002/10/01 03:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.13 2002/09/27 20:30:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.14 2002/10/01 03:10:12 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -88,9 +88,8 @@ void	beepdma		(struct beep_softc *sc, int buf);
 
 static int sdma_channel;
 
-const struct cfattach beep_ca = {
-	sizeof(struct beep_softc), beepprobe, beepattach
-};
+CFATTACH_DECL(beep, sizeof(struct beep_softc),
+    beepprobe, beepattach, NULL, NULL)
 
 extern struct cfdriver beep_cd;
 
