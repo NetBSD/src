@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.24 1996/06/22 17:59:52 christos Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.25 1996/07/09 06:34:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.24 1996/06/22 17:59:52 christos Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.25 1996/07/09 06:34:12 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -532,8 +532,8 @@ main(argc, argv)
 			evil = 1;
 #ifdef DEBUG
 			if (!debug)
-				daemon(0, 0);
 #endif
+				daemon(0, 0);
 		}
 	}
 }
