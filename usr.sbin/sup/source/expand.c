@@ -92,6 +92,8 @@ static void addone();
 static int addpath();
 static int gethdir();
 
+#define fixit(a) (a[0] ? a : ".")
+
 int expand(spec, buffer, bufsize)
 	register char *spec;
 	char **buffer;
@@ -134,7 +136,7 @@ static void glob(as)
 	}
 	while (*cs == 0 || index(globchars, *cs) == 0) {
 		if (*cs == 0) {
-			if (lstat(path, &stb) >= 0) addone(path, "");
+			if (lstat(fixit(path), &stb) >= 0) addone(path, "");
 			goto endit;
 		}
 		if (addpath(*cs++)) goto endit;
@@ -150,7 +152,7 @@ static void glob(as)
 		return;
 	}
 	/* this should not be an lstat */
-	if (stat(path, &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
+	if (stat(fixit(path), &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
 		matchdir(cs);
 endit:
 	pathp = spathp;
@@ -168,11 +170,11 @@ static void matchdir(pattern)
 #endif
 	DIR *dirp;
 
-	dirp = opendir(path);
+	dirp = opendir(fixit(path));
 	if (dirp == NULL)
 		return;
 	while ((dp = readdir(dirp)) != NULL) {
-#ifdef HAS_POSIX_DIR
+#if defined(HAS_POSIX_DIR) && !defined(__SVR4)
 		if (dp->d_fileno == 0) continue;
 #else
 		if (dp->d_ino == 0) continue;
@@ -320,7 +322,7 @@ slash:
 			while (*s)
 				if (addpath(*s++)) goto pathovfl;
 			if (addpath('/')) goto pathovfl;
-			if (stat(path, &stb) >= 0 &&
+			if (stat(fixit(path), &stb) >= 0 &&
 			    (stb.st_mode&S_IFMT) == S_IFDIR)
 				if (*p == 0)
 					addone(path, "");

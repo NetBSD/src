@@ -25,11 +25,12 @@
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N] [-R]
+ * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S]
  *	-l	"live" -- don't fork daemon
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
  *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
+ *	-S	"Operate silently" -- Only print error messages
  *
  **********************************************************************
  * HISTORY
@@ -42,6 +43,23 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.9  1996/09/05 16:50:12  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.8  1995/10/29 23:54:49  christos
  * - runio fails when result != 0 not only < 0
  * - print vis-encoded file in the scanner.
@@ -237,6 +255,7 @@
 #include <setjmp.h>
 #include <pwd.h>
 #include <grp.h>
+#include <fcntl.h>
 #if __STDC__
 #include <stdarg.h>
 #else
@@ -247,7 +266,12 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/mount.h>
+#ifndef HAS_POSIX_DIR
 #include <sys/dir.h>
+#else
+#include <dirent.h>
+#endif
 #if	MACH
 #include <sys/ioctl.h>
 #endif
@@ -260,6 +284,12 @@
 #define ACCESS_CODE_OK		0
 #define ACCESS_CODE_BADPASSWORD (-2)
 #endif  CMUCS
+
+#ifdef __SVR4
+# include <sys/mkdev.h>
+# include <sys/statvfs.h>
+#endif 
+
 #include "sup.h"
 #define MSGFILE
 #include "supmsg.h"
@@ -317,6 +347,7 @@ int progpid = -1;			/* and process id */
 jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
 
+int silent;				/* -S flag */
 int live;				/* -l flag */
 int dbgportsq;				/* -P flag */
 extern int scmdebug;			/* -N flag */
@@ -359,9 +390,10 @@ main (argc,argv)
 int argc;
 char **argv;
 {
-	register int x,pid,signalmask;
-	struct sigvec chldvec,ignvec,oldvec;
-	void chldsig();
+	register int x,pid;
+	sigset_t nset, oset;
+	struct sigaction chld,ign;
+	void chldsig ();
 	long tloc;
 
 	/* initialize global variables */
@@ -389,16 +421,16 @@ char **argv;
 		(void) serviceend ();
 		exit (0);
 	}
-	ignvec.sv_handler = SIG_IGN;
-	ignvec.sv_onstack = 0;
-	ignvec.sv_mask = 0;
-	(void) sigvec (SIGHUP,&ignvec,&oldvec);
-	(void) sigvec (SIGINT,&ignvec,&oldvec);
-	(void) sigvec (SIGPIPE,&ignvec,&oldvec);
-	chldvec.sv_handler = chldsig;
-	chldvec.sv_mask = 0;
-	chldvec.sv_onstack = 0;
-	(void) sigvec (SIGCHLD,&chldvec,&oldvec);
+	ign.sa_handler = SIG_IGN;
+	sigemptyset(&ign.sa_mask);
+	ign.sa_flags = 0;
+	(void) sigaction (SIGHUP,&ign,NULL);
+	(void) sigaction (SIGINT,&ign,NULL);
+	(void) sigaction (SIGPIPE,&ign,NULL);
+	chld.sa_handler = chldsig;
+	sigemptyset(&chld.sa_mask);
+	chld.sa_flags = 0;
+	(void) sigaction (SIGCHLD,&chld,NULL);
 	nchildren = 0;
 	for (;;) {
 		x = service ();
@@ -407,7 +439,9 @@ char **argv;
 			(void) servicekill ();
 			continue;
 		}
-		signalmask = sigblock(sigmask(SIGCHLD));
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGCHLD);
+		sigprocmask(SIG_BLOCK, &nset, &oset);
 		if ((pid = fork()) == 0) { /* server process */
 			(void) serviceprep ();
 			answer ();
@@ -416,7 +450,7 @@ char **argv;
 		}
 		(void) servicekill ();	/* parent */
 		if (pid > 0) nchildren++;
-		(void) sigsetmask(signalmask);
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	}
 }
 
@@ -428,7 +462,7 @@ void
 chldsig(snum)
 	int snum;
 {
-	union wait w;
+	int w;
 
 	while (wait3((int *) &w, WNOHANG, (struct rusage *)0) > 0) {
 		if (nchildren) nchildren--;
@@ -470,6 +504,9 @@ char **argv;
 	argv++;
 	while (clienthost == NULL && argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
+		case 'S':
+			silent = TRUE;
+			break;
 		case 'l':
 			live = TRUE;
 			break;
@@ -720,7 +757,7 @@ setup ()
 			setupack = FSETUPSAME;
 			(void) msgsetupack ();
 			if (protver >= 6)  longjmp (sjbuf,TRUE);
-			goaway ("User not found");
+			goaway ("User `%s' not found", xuser);
 		}
 		(void) free (xuser);
 		xuser = salloc (pw->pw_dir);
@@ -887,6 +924,7 @@ setup ()
 	}
 	/* try to lock collection */
 	(void) sprintf (buf,FILELOCK,collname);
+#ifdef LOCK_SH
 	x = open (buf,O_RDONLY,0);
 	if (x >= 0) {
 		if (flock (x,(LOCK_SH|LOCK_NB)) < 0) {
@@ -900,6 +938,7 @@ setup ()
 		}
 		lockfd = x;
 	}
+#endif
 	setupack = FSETUPOK;
 	x = msgsetupack ();
 	if (x != SCMOK)  goaway ("Error sending setup reply to client");
@@ -1151,7 +1190,7 @@ TREE *t;
 	register int x,fd;
 	register int fdtmp;
 	char temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
-        union wait status;
+        int status;
 	char *uconvert(),*gconvert();
 	int sendfile ();
 	int ac;
@@ -1200,34 +1239,34 @@ TREE *t;
 #endif
 					av[ac++] = t->Tname;
 					av[ac++] = NULL;
-					status.w_status = runio(av,
-							        NULL,
-							        rcs_file,
-							        "/dev/null");
+					status = runio(av, NULL, rcs_file,
+						       "/dev/null");
                                         /*loginfo("using rcs mode \n");*/
-                                        if (status.w_status < 0 || status.w_retcode) {
+                                        if (status < 0 || WEXITSTATUS(status)) {
                                                 /* Just in case */
                                                 unlink(rcs_file);
-                                                if (status.w_status < 0) {
-                                                        goaway ("We died trying to run cvs or rcs");
+                                                if (status < 0) {
+                                                        goaway ("We died trying to run cvs or rcs on %s", rcs_file);
                                                         t->Tmode = 0;
                                                 }
                                                 else {
-                                                        /*logerr("rcs command failed = %d\n",
-                                                               status.w_retcode);*/
+#if 0
+                                                        logerr("rcs command failed = %d\n",
+                                                               WEXITSTATUS(status));
+#endif
                                                         t->Tflags |= FUPDATE;
                                                 }
                                         }
                                         else if (docompress) {
                                                 tmpnam(temp_file);
 						av[0] = "gzip";
-						av[1] = "-c";
+						av[1] = "-cf";
 						av[2] = NULL;
 						if (runio(av, rcs_file, temp_file, NULL) != 0) {
                                                         /* Just in case */
                                                         unlink(temp_file);
                                                         unlink(rcs_file);
-                                                        goaway ("We died trying to gzip a file");
+                                                        goaway ("We died trying to gzip %s", rcs_file);
                                                         t->Tmode = 0;
                                                 }
                                                 fd = open (temp_file,O_RDONLY,0);
@@ -1241,12 +1280,12 @@ TREE *t;
                                 if (docompress) {
                                         tmpnam(temp_file);
 					av[0] = "gzip";
-					av[1] = "-c";
+					av[1] = "-cf";
 					av[2] = NULL;
 					if (runio(av, t->Tname, temp_file, NULL) != 0) {
                                                 /* Just in case */
                                                 unlink(temp_file);
-                                                goaway ("We died trying to run gzip");
+                                                goaway ("We died trying to gzip %s", t->Tname);
                                                 t->Tmode = 0;
                                         }
                                         fd = open (temp_file,O_RDONLY,0);
@@ -1268,7 +1307,7 @@ TREE *t;
 	if (dorcs)
 		unlink(rcs_file);
 #endif
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
 	return (SCMOK);
 }
 
@@ -1289,7 +1328,7 @@ TREE *t;
 	t->Tuser = salloc (uconvert (t->Tuid));
 	t->Tgroup = salloc (gconvert (t->Tgid));
 	x = msgrecv (sendfile,0);
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
 	return (SCMOK);
 }
 
@@ -1302,7 +1341,7 @@ va_list ap;
 	if ((t->Tmode&S_IFMT) != S_IFREG || listonly || (t->Tflags&FUPDATE))
 		return (SCMOK);
 	x = writefile (fd);
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
         (void) close (fd);
 	return (SCMOK);
 }
@@ -1800,10 +1839,28 @@ struct stat *sinfo;
 	 * determined this empirically -- DLC).  Without a fstatfs()
 	 * system call, this will have to do for now.
 	 */
+#ifdef __SVR4
+	{
+		struct statvfs sf;
+
+		if (fstatvfs(handle, &sf) == -1)
+			return(-1);
+		return strcmp(sf.f_basetype, "nfs") != 0;
+	}
+#elif defined(__NetBSD__)
+	{
+		struct statfs sf;
+		if (fstatfs(handle, &sf) == -1)
+			return(-1);
+		return strcmp(sf.f_fstypename, "nfs") != 0;
+	}
+#else
 	if (major(sb.st_dev) == 255 || major(sb.st_dev) == 130)
 		return(0);
+	else
+		return(1);
+#endif
 
-	return(1);
 }
 
 /*

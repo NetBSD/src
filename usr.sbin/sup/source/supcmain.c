@@ -174,6 +174,23 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.5  1996/09/05 16:50:08  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.4  1995/09/16 19:01:25  glass
  * if the function returns nothing, declare it void
  *
@@ -341,6 +358,7 @@ COLLECTION *firstC,*thisC;		/* collection list pointer */
 extern int dontjump;			/* disable longjmp */
 extern int scmdebug;			/* SCM debugging flag */
 
+int silent;				/* Silent run, print only errors */
 int sysflag;				/* system upgrade flag */
 int timeflag;				/* print times flag */
 #if	MACH
@@ -361,7 +379,7 @@ char **argv;
 	char *progname,*supfname;
 	int restart,sfdev,sfino,sfmtime;
 	struct stat sbuf;
-	struct sigvec ignvec,oldvec;
+	struct sigaction ign;
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;	/* export version number */
@@ -387,10 +405,10 @@ char **argv;
 			prtime ();
 	} else {
 		/* ignore network pipe signals */
-		ignvec.sv_handler = SIG_IGN;
-		ignvec.sv_onstack = 0;
-		ignvec.sv_mask = 0;
-		(void) sigvec (SIGPIPE,&ignvec,&oldvec);
+		ign.sa_handler = SIG_IGN;
+		ign.sa_flags = 0;
+		sigemptyset(&ign.sa_mask);
+		(void) sigaction (SIGPIPE,&ign,NULL);
 		getnams ();		/* find unknown repositories */
 		for (thisC = firstC; thisC; thisC = thisC->Cnext) {
 			getcoll ();	/* upgrade each collection */
@@ -410,8 +428,9 @@ char **argv;
 		(void) endgrent ();	/* close /etc/group */
 		if (restart == 1) {
 			int fd;
-			loginfo ("SUP Restarting %s with new supfile %s",
-				progname,supfname);
+			if (!silent)
+				loginfo("SUP Restarting %s with new supfile %s",
+					progname,supfname);
 			for (fd = getdtablesize (); fd > 3; fd--)
 				(void) close (fd);
 			execv (progname,argv);
@@ -494,6 +513,9 @@ int *oflagsp,*aflagsp;
 			break;
 		case 'X':
 			xpatchflag = TRUE;
+			break;
+		case 'S':
+			silent = TRUE;
 			break;
 		case 's':
 			sysflag = TRUE;
@@ -703,8 +725,9 @@ char **argv;
 		p = "system software";
 	else
 		(void) sprintf (p = buf,"file %s",supfname);
-	loginfo ("SUP %d.%d (%s) for %s at %s",PROTOVERSION,PGMVERSION,
-		scmversion,p,fmttime (timenow));
+	if (!silent)
+	    loginfo ("SUP %d.%d (%s) for %s at %s",PROTOVERSION,PGMVERSION,
+		    scmversion,p,fmttime (timenow));
 	return (salloc (supfname));
 }
 

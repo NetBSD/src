@@ -33,6 +33,23 @@
  *	across the network to save BandWidth
  *
  * $Log: supcdefs.h,v $
+ * Revision 1.3  1996/09/05 16:50:07  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.2  1993/08/04 17:46:16  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -66,6 +83,7 @@
 #include <setjmp.h>
 #include <pwd.h>
 #include <grp.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -122,6 +140,7 @@ typedef struct collstruct COLLECTION;
 #define CFKEEP		01000
 #define CFURELSUF	02000
 #define CFCOMPRESS	04000
+#define CFSILENT	10000
 
 /*************************
  ***	M A C R O S    ***
