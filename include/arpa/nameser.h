@@ -77,7 +77,7 @@
 
 /*
  *      @(#)nameser.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: nameser.h,v 1.11 1998/02/10 00:32:54 perry Exp $
+ *	$NetBSD: nameser.h,v 1.12 1998/10/19 02:58:31 matt Exp $
  */
 
 #ifndef _ARPA_NAMESER_H_
@@ -267,7 +267,7 @@
 
 #if defined(vax) || defined(ns32000) || defined(sun386) || defined(i386) || \
     defined(MIPSEL) || defined(_MIPSEL) || defined(BIT_ZERO_ON_RIGHT) || \
-    defined(__alpha__) || defined(__alpha)
+    defined(__alpha__) || defined(__alpha) || defined(__vax__)
 #define BYTE_ORDER	LITTLE_ENDIAN
 #endif
 
