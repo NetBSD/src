@@ -1,9 +1,9 @@
-# $NetBSD: obsolete.mi,v 1.26 2000/08/01 00:53:15 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.27 2000/08/09 10:34:38 tv Exp $
 /usr/bin/genclass
+/usr/include/bfd
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
-/usr/include/bfd
 /usr/include/dev/ic/aic7xxxreg.h
 /usr/include/dev/ic/awictl.h
 /usr/include/dev/ic/isp_netbsd.h
@@ -22,9 +22,9 @@
 /usr/include/dev/isa/pckbcvar.h
 /usr/include/dev/isa/wdlink.h
 /usr/include/dev/isa/wdreg.h
+/usr/include/dev/microcode/isp
 /usr/include/dev/microcode/isp/asm_pci.h
 /usr/include/dev/microcode/isp/asm_sbus.h
-/usr/include/dev/microcode/isp
 /usr/include/dev/mii/generic_phy.h
 /usr/include/dev/mii/mii_adapter.h
 /usr/include/dev/mii/mii_adapters_id.h
@@ -90,6 +90,7 @@
 /usr/include/g++/fmultmap.h
 /usr/include/g++/fmultset.h
 /usr/include/g++/fset.h
+/usr/include/g++/gen
 /usr/include/g++/gen/AVLMap.ccP
 /usr/include/g++/gen/AVLMap.hP
 /usr/include/g++/gen/AVLSet.ccP
@@ -209,7 +210,6 @@
 /usr/include/g++/gen/defs.hP
 /usr/include/g++/gen/intSList.hP
 /usr/include/g++/gen/intVec.hP
-/usr/include/g++/gen
 /usr/include/g++/generic.h
 /usr/include/g++/getpagesize.h
 /usr/include/g++/hdeque.h
@@ -296,6 +296,7 @@
 /usr/include/sys/vsio.h
 /usr/include/ufs/mfs/mfsiom.h
 /usr/include/uvm/uvm_inherit.h
+/usr/include/vm
 /usr/include/vm/device_pager.h
 /usr/include/vm/lock.h
 /usr/include/vm/pglist.h
@@ -315,7 +316,6 @@
 /usr/include/vm/vm_prot.h
 /usr/include/vm/vm_swap.h
 /usr/include/vm/vnode_pager.h
-/usr/include/vm
 /usr/lib/libamu.a
 /usr/lib/libamu_p.a
 /usr/lib/libamu_pic.a
