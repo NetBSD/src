@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 1995/02/04 14:23:00 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 1995/02/04 14:24:05 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -838,15 +838,8 @@ ENTRY(copyout)
 	shrl	$PGSHIFT,%edi
 
 1:	/* Check PTE for each page. */
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%edi,4),%dl
-	andb	$PG_V|PG_RW|PG_u,%dl	# must be valid/user/write
-	cmpb	$PG_V|PG_RW|PG_u,%dl
-	jne	2f
-#else
 	testb	$PG_RW,_PTmap(,%edi,4)
 	jz	2f
-#endif
 	
 4:	incl	%edi
 	decl	%ecx
@@ -980,15 +973,8 @@ ENTRY(copyoutstr)
 
 	movl	%edi,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%eax,4),%al
-	andb	$PG_V|PG_RW|PG_u,%al
-	cmpb	$PG_V|PG_RW|PG_u,%al
-	je	2f
-#else
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	2f
-#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
@@ -1278,15 +1264,8 @@ ALTENTRY(suiword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%eax,4),%al
-	andb	$PG_V|PG_RW|PG_u,%al
-	cmpb	$PG_V|PG_RW|PG_u,%al
-	je	1f
-#else
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
-#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
@@ -1326,15 +1305,8 @@ ENTRY(susword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%eax,4),%al
-	andb	$PG_V|PG_RW|PG_u,%al
-	cmpb	$PG_V|PG_RW|PG_u,%al
-	je	1f
-#else
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
-#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
@@ -1375,15 +1347,8 @@ ENTRY(suswintr)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%eax,4),%al
-	andb	$PG_V|PG_RW|PG_u,%al
-	cmpb	$PG_V|PG_RW|PG_u,%al
-	je	1f
-#else
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
-#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
@@ -1424,15 +1389,8 @@ ALTENTRY(suibyte)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-#ifdef MYCROFT_IS_A_DORK
-	movb	_PTmap(,%eax,4),%al
-	andb	$PG_V|PG_RW|PG_u,%al
-	cmpb	$PG_V|PG_RW|PG_u,%al
-	je	1f
-#else
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
-#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
