@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.arm32,v 1.8 1996/02/13 23:29:14 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.9 1996/02/26 02:53:27 mycroft Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/i386/conf/``machineid''
+#	/sys/arch/arm32/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/i386/conf/Makefile.i386
+#	/sys/arch/arm32/conf/Makefile.arm32
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -21,13 +21,13 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+AWK?=	awk
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..

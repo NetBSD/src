@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.27 1996/02/09 02:21:35 mycroft Exp $
+# 	$NetBSD: Makefile.sparc,v 1.28 1996/02/26 02:53:49 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,13 +21,13 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+AWK?=	awk
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
