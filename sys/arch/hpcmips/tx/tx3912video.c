@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.6 2000/01/06 18:10:42 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.7 2000/01/07 15:10:50 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -166,12 +166,34 @@ tx3912video_init(tc, fb_start, fb_width, fb_height, fb_addr, fb_size,
 {
  	u_int32_t addr, size;
 	int fb_depth;
+	txreg_t reg;
 	
 	/* Inquire bit depth */
 	fb_depth = tx3912video_fbdepth(tc, 0);
+
+	switch (fb_depth) {
+	case 2:
+		bootinfo->fb_type = BIFB_D2_M2L_0;
+		break;
+	case 4:
+		/* XXX should implement rasops4.c */
+		fb_depth = 2;
+		bootinfo->fb_type = BIFB_D2_M2L_0;
+		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+		TX3912_VIDEOCTRL1_BITSEL_CLR(reg);
+		reg = TX3912_VIDEOCTRL1_BITSEL_SET(
+			reg, TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE);
+		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
+		break;
+	case 8:
+		bootinfo->fb_type = BIFB_D8_FF;
+		break;
+	}
+
 	tx3912video_chip.vc_fbdepth = fb_depth;
 	tx3912video_chip.vc_fbwidth = fb_width;
 	tx3912video_chip.vc_fbheight= fb_height;
+
 	
 	/* Allocate framebuffer area */
 	if (tx3912video_framebuffer_alloc(tc, fb_start, fb_width, fb_height,
