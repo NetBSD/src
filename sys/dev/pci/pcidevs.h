@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.528 2003/04/15 23:15:47 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.529 2003/04/22 20:53:09 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.526 2003/04/15 23:15:23 augustss Exp 
+ *	NetBSD: pcidevs,v 1.527 2003/04/22 20:52:06 fvdl Exp 
  */
 
 /*
@@ -815,6 +815,8 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
+#define	PCI_PRODUCT_AMD_PCIX8131_PPB	0x7450		/* PCI-X Tunnel */
+#define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* IO Apic */
 #define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 
