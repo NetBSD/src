@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.12 2000/12/12 20:22:49 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.13 2000/12/12 20:30:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,6 @@ ibcs2_syscall_plain(frame)
 	code = frame.tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
-	code &= (IBCS2_SYS_NSYSENT - 1);
 	callp = ibcs2_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -123,6 +122,7 @@ ibcs2_syscall_plain(frame)
 		break;
 	}
 
+	code &= (IBCS2_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
@@ -191,7 +191,6 @@ ibcs2_syscall_fancy(frame)
 	code = frame.tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
-	code &= (IBCS2_SYS_NSYSENT - 1);
 	callp = ibcs2_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -207,6 +206,7 @@ ibcs2_syscall_fancy(frame)
 		break;
 	}
 
+	code &= (IBCS2_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
