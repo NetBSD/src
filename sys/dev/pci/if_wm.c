@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.19 2002/08/15 18:35:25 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.20 2002/08/17 20:58:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -677,7 +677,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct wm_control_data), (caddr_t *)&sc->sc_control_data,
-	    BUS_DMA_COHERENT)) != 0) {
+	    0)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
@@ -1504,8 +1504,11 @@ wm_txintr(struct wm_softc *sc)
 
 		status = le32toh(sc->sc_txdescs[
 		    txs->txs_lastdesc].wtx_fields.wtxu_bits);
-		if ((status & WTX_ST_DD) == 0)
+		if ((status & WTX_ST_DD) == 0) {
+			WM_CDTXSYNC(sc, txs->txs_lastdesc, 1,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: job %d done: descs %d..%d\n",
@@ -1588,6 +1591,7 @@ wm_rxintr(struct wm_softc *sc)
 			/*
 			 * We have processed all of the receive descriptors.
 			 */
+			WM_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			break;
 		}
 
