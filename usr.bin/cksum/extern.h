@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2003/12/20 23:41:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,12 +38,12 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	crc __P((int, u_int32_t *, u_int32_t *));
-void	pcrc __P((char *, u_int32_t, u_int32_t));
-void	psum1 __P((char *, u_int32_t, u_int32_t));
-void	psum2 __P((char *, u_int32_t, u_int32_t));
-int	csum1 __P((int, u_int32_t *, u_int32_t *));
-int	csum2 __P((int, u_int32_t *, u_int32_t *));
+int	crc __P((int, u_int32_t *, off_t *));
+void	pcrc __P((char *, u_int32_t, off_t));
+void	psum1 __P((char *, u_int32_t, off_t));
+void	psum2 __P((char *, u_int32_t, off_t));
+int	csum1 __P((int, u_int32_t *, off_t *));
+int	csum2 __P((int, u_int32_t *, off_t *));
 int	md5 __P((int, u_int32_t *, u_int32_t *));
 
 void	MD2String __P((const char *));

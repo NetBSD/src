@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.13 2003/08/07 11:13:20 agc Exp $	*/
+/*	$NetBSD: crc.c,v 1.14 2003/12/20 23:41:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.13 2003/08/07 11:13:20 agc Exp $");
+__RCSID("$NetBSD: crc.c,v 1.14 2003/12/20 23:41:38 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,16 +110,19 @@ static const u_int32_t crctab[] = {
 int
 crc(fd, cval, clen)
 	register int fd;
-	u_int32_t *cval, *clen;
+	u_int32_t *cval;
+	off_t *clen;
 {
 	register u_char *p;
 	register int nr;
-	register u_int32_t thecrc, len;
+	register u_int32_t thecrc;
+	off_t len;
 	u_char buf[16 * 1024];
 
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 
-	thecrc = len = 0;
+	thecrc = 0;
+	len = 0;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (len += nr, p = buf; nr--; ++p) {
 			COMPUTE(thecrc, *p);
