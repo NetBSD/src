@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.39 2002/02/14 20:28:16 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.40 2002/02/20 23:22:12 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1900,3 +1900,110 @@ sys/dev/pcmcia/if_ne_pcmcia.c			1.81,1.85 via patch
    o Edimax Technology Inc. EP4000A
    o Linksys Etherfast clone (Level One)
    o Zonet Zen
+
+distrib/notes/alpha/install			1.21,1.23
+
+  Correct a minor spelling error, and replace tabs with spaces inside
+  two .(disp entries to get sane formatting.
+
+sys/net/radix.h					1.10
+
+  Avoid namespace pollution, only define certain macros under _KERNEL.
+
+gnu/dist/sendmail/KNOWNBUGS			1.4
+gnu/dist/sendmail/PGPKEYS			1.4
+gnu/dist/sendmail/README			1.4
+gnu/dist/sendmail/RELEASE_NOTES			1.8-1.10
+gnu/dist/sendmail/cf/README			1.7-1.9
+gnu/dist/sendmail/cf/cf/Makefile		1.5
+gnu/dist/sendmail/cf/cf/generic-bsd4.4.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-hpux10.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-hpux10.mc	1.3
+gnu/dist/sendmail/cf/cf/generic-hpux9.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-linux.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-nextstep3.3.cf	1.1.1.2 -> 1.4
+gnu/dist/sendmail/cf/cf/generic-osf1.cf		1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-solaris2.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-sunos4.1.cf	1.8-1.10
+gnu/dist/sendmail/cf/cf/generic-ultrix4.cf	1.8-1.10
+gnu/dist/sendmail/cf/m4/cfhead.m4		1.6
+gnu/dist/sendmail/cf/m4/proto.m4		1.6-1.7
+gnu/dist/sendmail/cf/m4/version.m4		1.8-1.10
+gnu/dist/sendmail/cf/ostype/freebsd4.m4		1.1 (new)
+gnu/dist/sendmail/devtools/OS/OpenBSD		1.4
+gnu/dist/sendmail/devtools/README		1.6-1.7
+gnu/dist/sendmail/devtools/bin/Build		1.6-1.7
+gnu/dist/sendmail/devtools/bin/configure.sh	1.3
+gnu/dist/sendmail/devtools/bin/install.sh	1.3
+gnu/dist/sendmail/doc/op/Makefile		1.4
+gnu/dist/sendmail/doc/op/op.me			1.7-1.9
+gnu/dist/sendmail/include/libmilter/milter.h	1.5-1.6
+gnu/dist/sendmail/include/sendmail/sendmail.h	1.6
+gnu/dist/sendmail/libmilter/README		1.7-1.8
+gnu/dist/sendmail/libmilter/libmilter.h		1.6-1.7
+gnu/dist/sendmail/libmilter/listener.c		1.7
+gnu/dist/sendmail/libmilter/main.c		1.5
+gnu/dist/sendmail/libmilter/sm_gethost.c	1.6-1.7
+gnu/dist/sendmail/libsmutil/safefile.c		1.5
+gnu/dist/sendmail/libsmutil/snprintf.c		1.5
+gnu/dist/sendmail/mail.local/mail.local.0	1.5
+gnu/dist/sendmail/mail.local/mail.local.c	1.7
+gnu/dist/sendmail/mailstats/mailstats.0		1.1.1.4
+gnu/dist/sendmail/mailstats/mailstats.8		1.5
+gnu/dist/sendmail/mailstats/mailstats.c		1.6
+gnu/dist/sendmail/makemap/makemap.0		1.1.1.4
+gnu/dist/sendmail/praliases/praliases.0		1.1.1.4
+gnu/dist/sendmail/praliases/praliases.c		1.6
+gnu/dist/sendmail/rmail/rmail.0			1.4
+gnu/dist/sendmail/rmail/rmail.c			1.7
+gnu/dist/sendmail/sendmail/README		1.7-1.9
+gnu/dist/sendmail/sendmail/TRACEFLAGS		1.3
+gnu/dist/sendmail/sendmail/alias.c		1.6
+gnu/dist/sendmail/sendmail/aliases.0		1.5
+gnu/dist/sendmail/sendmail/arpadate.c		1.3
+gnu/dist/sendmail/sendmail/bf_portable.c	1.5
+gnu/dist/sendmail/sendmail/bf_torek.c		1.6
+gnu/dist/sendmail/sendmail/clock.c		1.5-1.7
+gnu/dist/sendmail/sendmail/collect.c		1.7-1.8
+gnu/dist/sendmail/sendmail/conf.c		1.13-1.14
+gnu/dist/sendmail/sendmail/conf.h		1.8-1.9
+gnu/dist/sendmail/sendmail/control.c		1.7
+gnu/dist/sendmail/sendmail/daemon.c		1.9-1.10
+gnu/dist/sendmail/sendmail/deliver.c		1.8-1.9
+gnu/dist/sendmail/sendmail/envelope.c		1.6
+gnu/dist/sendmail/sendmail/err.c		1.4-1.6
+gnu/dist/sendmail/sendmail/headers.c		1.7
+gnu/dist/sendmail/sendmail/mailq.0		1.6
+gnu/dist/sendmail/sendmail/main.c		1.8-1.9
+gnu/dist/sendmail/sendmail/map.c		1.7-1.9
+gnu/dist/sendmail/sendmail/mci.c		1.5
+gnu/dist/sendmail/sendmail/milter.c		1.7-1.9
+gnu/dist/sendmail/sendmail/newaliases.0		1.4
+gnu/dist/sendmail/sendmail/parseaddr.c		1.7-1.8
+gnu/dist/sendmail/sendmail/queue.c		1.7-1.8
+gnu/dist/sendmail/sendmail/readcf.c		1.9-1.11
+gnu/dist/sendmail/sendmail/recipient.c		1.7
+gnu/dist/sendmail/sendmail/savemail.c		1.7
+gnu/dist/sendmail/sendmail/sendmail.0		1.5
+gnu/dist/sendmail/sendmail/sendmail.8		1.5
+gnu/dist/sendmail/sendmail/sendmail.h		1.8-1.10
+gnu/dist/sendmail/sendmail/sfsasl.c		1.6-1.8
+gnu/dist/sendmail/sendmail/srvrsmtp.c		1.7-1.8
+gnu/dist/sendmail/sendmail/stab.c		1.6
+gnu/dist/sendmail/sendmail/udb.c		1.4
+gnu/dist/sendmail/sendmail/usersmtp.c		1.7-1.8
+gnu/dist/sendmail/sendmail/util.c		1.7-1.8
+gnu/dist/sendmail/sendmail/version.c		1.8-1.10 via patch
+gnu/dist/sendmail/smrsh/smrsh.0			1.1.1.4
+gnu/dist/sendmail/smrsh/smrsh.c			1.8
+gnu/dist/sendmail/test/t_snprintf.c		1.1.1.2
+gnu/dist/sendmail/vacation/vacation.0		1.4-1.5
+gnu/dist/sendmail/vacation/vacation.1		1.4
+gnu/dist/sendmail/vacation/vacation.c		1.7
+gnu/usr.sbin/sendmail/Makefile.inc		1.5
+gnu/usr.sbin/sendmail/cf/cf/Makefile		1.16-1.17
+gnu/usr.sbin/sendmail/cf/ostype/Makefile	1.6-1.7
+gnu/usr.sbin/sendmail/libsmdb/Makefile		1.2-1.3
+gnu/usr.sbin/sendmail/libsmutil/Makefile	1.3-1.4
+
+  Upgrade to sendmail version 8.11.6.
