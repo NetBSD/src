@@ -42,7 +42,7 @@
  *	@(#)bsd_audio.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bsd_audio.c,v 1.18 93/04/24 16:20:35 leres Exp  (LBL)
- * $Id: bsd_audio.c,v 1.4 1994/10/15 05:48:47 deraadt Exp $
+ * $Id: bsd_audio.c,v 1.5 1994/11/02 04:55:47 deraadt Exp $
  */
 #include "bsdaudio.h"
 #if NBSDAUDIO > 0
@@ -260,7 +260,7 @@ audioattach(dev)
 #define AUDIOREAD(d, u, f) audioread(dev_t d, struct uio *u, int f)
 #define AUDIOWRITE(d, u, f) audiowrite(dev_t d, struct uio *u, int f)
 #define AUDIOIOCTL(d, c, a, f, o)\
-	audioioctl(dev_t dev, int c, caddr_t a, int f, struct proc *p)
+	audioioctl(dev_t dev, u_long c, caddr_t a, int f, struct proc *p)
 #define AUDIOSELECT(d, r, p) audioselect(dev_t dev, int rw, struct proc *p)
 #define SELWAKEUP selwakeup
 

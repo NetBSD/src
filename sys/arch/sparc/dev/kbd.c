@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.13 1994/09/17 23:57:36 deraadt Exp $
+ * $Id: kbd.c,v 1.14 1994/11/02 04:56:05 deraadt Exp $
  */
 
 /*
@@ -226,7 +226,7 @@ int	kbdopen(dev_t, int, int, struct proc *);
 int	kbdclose(dev_t, int, int, struct proc *);
 int	kbdread(dev_t, struct uio *, int);
 int	kbdwrite(dev_t, struct uio *, int);
-int	kbdioctl(dev_t, int, caddr_t, int, struct proc *);
+int	kbdioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	kbdselect(dev_t, int, struct proc *);
 int	kbd_docmd(int, int);
 
@@ -553,7 +553,7 @@ kbdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-kbdioctl(dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
+kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
 

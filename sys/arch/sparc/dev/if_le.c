@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.14 1994/10/15 08:57:29 deraadt Exp $
+ * $Id: if_le.c,v 1.15 1994/11/02 04:56:02 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -163,7 +163,7 @@ void	lerint(struct le_softc *);
 void	leread(struct le_softc *, char *, int);
 int	leput(char *, struct mbuf *);
 struct mbuf *leget(char *, int, int, struct ifnet *);
-int	leioctl(struct ifnet *, int, caddr_t);
+int	leioctl(struct ifnet *, u_long, caddr_t);
 void	leerror(struct le_softc *, int);
 void	lererror(struct le_softc *, char *);
 void	lexerror(struct le_softc *);
@@ -850,7 +850,7 @@ leget(lebuf, totlen, off0, ifp)
 int
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa;
