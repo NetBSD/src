@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.34 1998/03/19 18:39:39 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.35 1998/05/05 21:25:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,8 +44,11 @@
 #define	_SYS_STAT_H_
 
 #include <sys/featuretest.h>
+#include <sys/types.h>		/* XXX */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #include <sys/time.h>
+#endif
 
 #ifdef _KERNEL
 struct stat43 {				/* BSD-4.3 stat struct */
@@ -148,7 +151,7 @@ struct stat {
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	S_ISTXT	0001000			/* sticky bit */
 #endif
 
@@ -157,7 +160,7 @@ struct stat {
 #define	S_IWUSR	0000200			/* W for owner */
 #define	S_IXUSR	0000100			/* X for owner */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	S_IREAD		S_IRUSR
 #define	S_IWRITE	S_IWUSR
 #define	S_IEXEC		S_IXUSR
@@ -173,7 +176,7 @@ struct stat {
 #define	S_IWOTH	0000002			/* W for other */
 #define	S_IXOTH	0000001			/* X for other */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #define	S_IFMT	 0170000		/* type of file mask */
 #define	S_IFIFO	 0010000		/* named pipe (fifo) */
 #define	S_IFCHR	 0020000		/* character special */
@@ -181,9 +184,11 @@ struct stat {
 #define	S_IFBLK	 0060000		/* block special */
 #define	S_IFREG	 0100000		/* regular */
 #define	S_IFLNK	 0120000		/* symbolic link */
+#define	S_ISVTX	 0001000		/* save swapped text even after use */
+#endif
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	S_IFSOCK 0140000		/* socket */
 #define	S_IFWHT  0160000		/* whiteout */
-#define	S_ISVTX	 0001000		/* save swapped text even after use */
 #endif
 
 #define	S_ISDIR(m)	((m & 0170000) == 0040000)	/* directory */
@@ -191,13 +196,15 @@ struct stat {
 #define	S_ISBLK(m)	((m & 0170000) == 0060000)	/* block special */
 #define	S_ISREG(m)	((m & 0170000) == 0100000)	/* regular file */
 #define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 #define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
+#endif
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
 #define	S_ISWHT(m)	((m & 0170000) == 0160000)	/* whiteout */
 #endif
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 0777 */
 							/* 7777 */
 #define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
@@ -231,8 +238,8 @@ struct stat {
 #define	OPAQUE		(UF_OPAQUE)
 #define	APPEND		(UF_APPEND | SF_APPEND)
 #define	IMMUTABLE	(UF_IMMUTABLE | SF_IMMUTABLE)
-#endif
-#endif
+#endif /* _KERNEL */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
@@ -267,8 +274,7 @@ int	chflags __P((const char *, unsigned long));
 int	fchflags __P((int, unsigned long));
 int	lchmod __P((const char *, mode_t));
 #endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
-
 __END_DECLS
 
-#endif
+#endif /* !_KERNEL */
 #endif /* !_SYS_STAT_H_ */
