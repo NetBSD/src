@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.37 2004/07/08 10:42:41 yamt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.38 2004/07/24 09:14:52 yamt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.37 2004/07/08 10:42:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.38 2004/07/24 09:14:52 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -78,11 +78,27 @@ key_receive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct rawcb *rp = sotorawcb(so);
 	struct keycb *kp = (struct keycb *)rp;
 	int error;
+	int s;
 
 	error = (*kp->kp_receive)(so, paddr, uio, mp0, controlp, flagsp);
-	if (kp->kp_queue &&
-	    sbspace(&rp->rcb_socket->so_rcv) > kp->kp_queue->m_pkthdr.len)
-		sorwakeup(so);
+
+	/*
+	 * now we might have enough receive buffer space.
+	 * pull packets from kp_queue as many as possible.
+	 */
+	s = splsoftnet();
+	while (/*CONSTCOND*/ 1) {
+		struct mbuf *m;
+
+		m = kp->kp_queue;
+		if (m == NULL || sbspace(&so->so_rcv) < m->m_pkthdr.len)
+			break;
+		kp->kp_queue = m->m_nextpkt;
+		m->m_nextpkt = NULL; /* safety */
+		if (key_sendup0(rp, m, 0, 1))
+			break;
+	}
+	splx(s);
 
 	return error;
 }
