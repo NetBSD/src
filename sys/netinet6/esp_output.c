@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.17 2003/07/22 11:18:26 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.18 2003/09/07 15:59:36 itojun Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.17 2003/07/22 11:18:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.18 2003/09/07 15:59:36 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -399,7 +399,7 @@ esp_output(m, nexthdrp, md, isr, af)
 		 * XXX sequence number must not be cycled, if the SA is
 		 * installed by IKE daemon.
 		 */
-		nesp->esp_seq = htonl(sav->replay->count);
+		nesp->esp_seq = htonl(sav->replay->count & 0xffffffff);
 	}
 
     {

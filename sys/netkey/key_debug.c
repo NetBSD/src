@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.26 2003/08/22 06:22:26 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.27 2003/09/07 15:59:39 itojun Exp $	*/
 /*	$KAME: key_debug.c,v 1.36 2003/06/27 06:46:01 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.26 2003/08/22 06:22:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.27 2003/09/07 15:59:39 itojun Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
@@ -695,8 +695,9 @@ kdebug_secreplay(rpl)
 	if (rpl == NULL)
 		panic("kdebug_secreplay: NULL pointer was passed.");
 
-	printf(" secreplay{ count=%u wsize=%u seq=%u lastseq=%u",
-	    rpl->count, rpl->wsize, rpl->seq, rpl->lastseq);
+	printf(" secreplay{ count=%llu wsize=%u seq=%llu lastseq=%llu",
+	    (unsigned long long)rpl->count, rpl->wsize,
+	    (unsigned long long)rpl->seq, (unsigned long long)rpl->lastseq);
 
 	if (rpl->bitmap == NULL) {
 		printf(" }\n");

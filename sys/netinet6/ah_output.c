@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.23 2003/08/22 21:50:42 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.24 2003/09/07 15:59:36 itojun Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.23 2003/08/22 21:50:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.24 2003/09/07 15:59:36 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -264,7 +264,7 @@ ah4_output(m, isr)
 		 * XXX sequence number must not be cycled, if the SA is
 		 * installed by IKE daemon.
 		 */
-		ahdr->ah_seq = htonl(sav->replay->count);
+		ahdr->ah_seq = htonl(sav->replay->count & 0xffffffff);
 		bzero(ahdr + 1, plen);
 	}
 
