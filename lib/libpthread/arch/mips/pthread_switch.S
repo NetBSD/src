@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 23:00:28 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 23:19:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 
 	/* Edit the context to make it continue below, rather than here */
 	la	t3, CALLFRAME_SIZ(sp)
-	la	t1, pthread__locked_return_point
+	la	t1, pthread__switch_return_point
 	sw	t1, UC_EPC(t3)
 	
 	STACK_SWITCH(a1, t2)
@@ -109,7 +109,7 @@ NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	move	a0, t2
 	PIC_CALL(_setcontext_u, t9)
 	NOTREACHED
-XNESTED(pthread__locked_return_point)
+XNESTED(pthread__switch_return_point)
 	lw	ra, CALLFRAME_RA(sp)
 	addiu	sp, (CALLFRAME_SIZ+CONTEXTSIZE)
 	j	ra
