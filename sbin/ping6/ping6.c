@@ -1026,9 +1026,9 @@ pr_pack(buf, cc, mhdr)
 
 				 if (buf[off + ICMP6_NIRLEN] !=
 				     cc - off - ICMP6_NIRLEN - 1) {
-					 (void)printf(",invalid namelen:%d/%d",
+					 (void)printf(",invalid namelen:%d/%lu",
 						      buf[off + ICMP6_NIRLEN],
-						      cc - off - ICMP6_NIRLEN - 1);
+						      (u_long)cc - off - ICMP6_NIRLEN - 1);
 				 }
 				 putchar(')');
 			 }
