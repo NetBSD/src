@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.439 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.440 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -236,3 +236,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	/etc/postinstall: support -s /path/to/etc.tgz to extract the file
 		into a temporary directory and run postinstall from there.
 		[lukem 20050308]
+	wm(4): Add TCPv4 hardware transmit segment offload support.
+		[matt 20050309]
