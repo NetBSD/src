@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.16 1997/03/24 22:06:27 christos Exp $
+#	$Id: Makefile.dev,v 1.17 1997/03/27 09:52:03 mycroft Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -10,7 +10,7 @@ DEVICES_=no_libraries
 # XXX -- this depends on ../include/defs.h
 FONTDIR=	/usr/share/groff_font
 
-DEVICEDIR?=	$(DESTDIR)$(FONTDIR)/dev$(DEVICE)
+DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
 FONTOWN?=	bin
 FONTGRP?=	bin
 FONTMODE?=	444
