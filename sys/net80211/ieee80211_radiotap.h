@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.8 2004/04/30 22:22:53 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -51,6 +51,11 @@
 #define	DLT_IEEE802_11_RADIO	127	/* 802.11 plus WLAN header */
 #endif
 #endif /* _KERNEL */
+
+/* XXX tcpdump/libpcap do not tolerate variable-length headers,
+ * yet, so we pad every radiotap header to 64 bytes. Ugh.
+ */
+#define IEEE80211_RADIOTAP_HDRLEN	64
 
 /* The radio capture header precedes the 802.11 header. */
 struct ieee80211_radiotap_header {
