@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.55 2003/02/09 22:28:40 pk Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.55 2003/02/09 22:28:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.56 2003/04/12 14:36:43 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1461,8 +1461,6 @@ uao_pagein_page(aobj, pageidx)
 
 	slot = uao_set_swslot(&aobj->u_obj, pageidx, 0);
 	uvm_swap_free(slot, 1);
-	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
 
 	/*
 	 * deactivate the page (to make sure it's on a page queue).
@@ -1471,5 +1469,9 @@ uao_pagein_page(aobj, pageidx)
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
+
+	pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_FAKE);
+	UVM_PAGE_OWN(pg, NULL);
+
 	return FALSE;
 }
