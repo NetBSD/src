@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2001/11/17 02:06:47 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2002/06/06 09:53:22 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,7 @@ static void usage (void);
 static void miscsighandler (int);
 static void ttysighandler (int);
 static void cleanup (void);
+static void set_defaults (void);
 static void process_f_flag (char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
@@ -107,6 +108,8 @@ main(argc, argv)
 		default:
 			usage();
 		}
+
+	set_defaults();
 
 	md_init();
 
@@ -249,6 +252,32 @@ cleanup()
 
 	if (!exit_cleanly)
 		fprintf(stderr, "\n\nsysinst terminated.\n");
+}
+
+static void
+set_defaults(void)
+{
+
+	/*
+	 * Set defaults for ftp_dir & cdrom_dir, by appending ftp_prefix.
+	 * This occurs even when the settings are read in from
+	 * "-f definition-file".
+	 *
+	 * Default values (can be changed in definition-file):
+	 *	ftp_dir			SYSINST_FTP_DIR
+	 *	SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" + REL + "/" MACH
+	 *			
+	 *	cdrom_dir		SYSINST_CDROM_DIR
+	 #	SYSINST_CDROM_DIR	"/" + MACH
+	 *
+	 *	ftp_prefix		"/binary/sets"
+	 */
+	
+		/* ftp_dir += ftp_prefix */
+	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
+
+		/* cdrom_dir += ftp_prefix */
+	strncat(cdrom_dir, ftp_prefix, STRSIZE - strlen(cdrom_dir));
 }
 
 

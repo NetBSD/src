@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.69 2002/04/04 14:26:43 ad Exp $	*/
+/*	$NetBSD: defs.h,v 1.70 2002/06/06 09:53:22 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -196,19 +196,21 @@ EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");
 EXTERN int  clean_dist_dir INIT(0);
 /* Absolute path name where the distribution should be extracted from. */
 
-#if !defined(FTP_HOST)
-#define	FTP_HOST	ftp.netbsd.org
+#if !defined(SYSINST_FTP_HOST)
+#define	SYSINST_FTP_HOST	"ftp.netbsd.org"
 #endif
 
-#if !defined(FTP_DIR)
-#define	FTP_DIR		pub/NetBSD/NetBSD-
+#if !defined(SYSINST_FTP_DIR)
+#define	SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL "/" MACH
 #endif
 
-#define	STRING(x)	__STRING(x)
+#if !defined(SYSINST_CDROM_DIR)
+#define	SYSINST_CDROM_DIR	"/" MACH
+#endif
 
 EXTERN char ext_dir[STRSIZE] INIT("");
-EXTERN char ftp_host[STRSIZE] INIT(STRING(FTP_HOST));
-EXTERN char ftp_dir[STRSIZE]  INIT(STRING(FTP_DIR));
+EXTERN char ftp_host[STRSIZE] INIT(SYSINST_FTP_HOST);
+EXTERN char ftp_dir[STRSIZE]  INIT(SYSINST_FTP_DIR);
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
@@ -218,7 +220,7 @@ EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
-EXTERN char cdrom_dir[STRSIZE] INIT("/");
+EXTERN char cdrom_dir[STRSIZE] INIT(SYSINST_CDROM_DIR);
 
 EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
