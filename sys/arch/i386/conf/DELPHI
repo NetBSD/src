@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.38 2004/07/28 12:34:02 jmmv Exp $
+#	$NetBSD: DELPHI,v 1.39 2004/07/29 22:29:35 jmmv Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.38 $"
+ident 		"DELPHI-$Revision: 1.39 $"
 
 maxusers	64		# estimated number of users
 
@@ -170,6 +170,9 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+#options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls

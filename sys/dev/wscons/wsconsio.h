@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.68 2004/07/28 12:34:04 jmmv Exp $ */
+/* $NetBSD: wsconsio.h,v 1.69 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -450,6 +450,9 @@ struct wsdisplay_msgattrs {
 
 #define	WSDISPLAYIO_GMSGATTRS	_IOR('W', 89, struct wsdisplay_msgattrs)
 #define	WSDISPLAYIO_SMSGATTRS	_IOW('W', 90, struct wsdisplay_msgattrs)
+
+#define	WSDISPLAYIO_GBORDER	_IOR('W', 91, int)
+#define	WSDISPLAYIO_SBORDER	_IOW('W', 92, int)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
