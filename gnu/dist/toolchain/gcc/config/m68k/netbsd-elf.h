@@ -32,6 +32,8 @@ Boston, MA 02111-1307, USA.  */
 #define NETBSD_ELF
 #include <netbsd.h>
 
+#define OBJECT_FORMAT_ELF
+
 /* Default target comes from config.gcc */
 #undef TARGET_DEFAULT  
 #define TARGET_DEFAULT TARGET_CPU_DEFAULT 
