@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/09/04 06:42:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/09/20 06:20:43 lukem Exp $
 
 NOLINT=	# defined
 NOPIC=	# defined
@@ -13,7 +13,7 @@ SRCS+=	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c \
 
 .PATH: ${.CURDIR}/../source
 
-LNFILES=	${.CURDIR}/../source/netcryptvoid.c netcrypt.c
+BUILDSYMLINKS=	${.CURDIR}/../source/netcryptvoid.c netcrypt.c
 
 # only needed during build
 libinstall::

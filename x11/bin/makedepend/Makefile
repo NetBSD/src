@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/15 08:31:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:47 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/config/imake \
 
 CPPFLAGS.main.c=-DINCLUDEDIR=\"/usr/include\" -DOBJSUFFIX=\".o\"
 
-LNFILES=	mkdepend.man makedepend.man
+BUILDSYMLINKS=	mkdepend.man makedepend.man
 
 .PATH:	${X11SRCDIR.xc}/config/${PROG}
 

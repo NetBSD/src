@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:44 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SRCS=		maskbits.c mfbbitblt.c mfbbltC.c mfbbltCI.c mfbbltG.c \
 		mfbtewhite.c mfbtileC.c mfbtileG.c mfbwindow.c \
 		mfbzerarc.c
 
-LNFILES=	mfbline.c mfbseg.c \
+BUILDSYMLINKS=	mfbline.c mfbseg.c \
 		mfbplygblt.c mfbpgbwht.c \
 		mfbplygblt.c mfbpgbblak.c \
 		mfbplygblt.c mfbpgbinv.c \

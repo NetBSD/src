@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/15 08:31:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:47 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ CPPSCRIPTFLAGS=	-DCCCMD='"gcc"' -DRMCMD='"rm -f"' -DLNCMD='"ln -s"' \
 SCRIPTS=	${CPPSCRIPTS}
 MAN=		gccmakedep.1
 
-LNFILES=	gccmdep.cpp gccmakedep.cpp
+BUILDSYMLINKS=	gccmdep.cpp gccmakedep.cpp
 
 .PATH:	${X11SRCDIR.xc}/config/util
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/20 06:20:46 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	actions.c comm.c editres.c geometry.c handler.c setvalues.c \
 
 APPDEFS=Editres.ad Editres-color.ad
 
-LNFILES=Edit-col.ad Editres-color.ad
+BUILDSYMLINKS=	Edit-col.ad Editres-color.ad
 
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \

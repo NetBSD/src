@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/15 08:31:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:46 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ CPPSCRIPTFLAGS=	-DPREPROC='"gcc -E -traditional"'
 SCRIPTS=	${CPPSCRIPTS}
 MAN=		ccmakedep.1
 
-LNFILES=	mdepend.cpp ccmakedep.cpp
+BUILDSYMLINKS=	mdepend.cpp ccmakedep.cpp
 
 .PATH:	${X11SRCDIR.xc}/config/util
 

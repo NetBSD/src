@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/14 06:42:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:48 lukem Exp $
 
 NOMAN=		yes
 
@@ -9,7 +9,7 @@ SRCS=		drawing.c dynlist.c resources.c x11-ssh-askpass.c
 
 APPDEFS=	SshAskpass.ad
 
-LNFILES=	SshAskpass-default.ad SshAskpass.ad
+BUILDSYMLINKS=	SshAskpass-default.ad SshAskpass.ad
 
 FILESDIR=	${X11ROOTDIR}/share/examples/ssh-askpass
 FILES=		SshAskpass-1337.ad SshAskpass-NeXTish.ad \

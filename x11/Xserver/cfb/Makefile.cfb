@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.2 2003/09/19 18:32:41 lukem Exp $
+#	$NetBSD: Makefile.cfb,v 1.3 2003/09/20 06:20:44 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ SRCS=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
 		cfbzerarcC.c cfbzerarcG.c cfbzerarcX.c \
 		cfbmodule.c
 
-LNFILES=	cfbline.c cfbseg.c \
+BUILDSYMLINKS=	cfbline.c cfbseg.c \
 		cfbfillarc.c cfbfillarcC.c \
 		cfbfillarc.c cfbfillarcG.c \
 		cfbzerarc.c cfbzerarcC.c \
@@ -57,7 +57,7 @@ LNFILES=	cfbline.c cfbseg.c \
 
 .if ${PIXELSIZE} == 8							# {
 SRCS+=		cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
-LNFILES+=	cfbglblt8.c cfbglrop8.c
+BUILDSYMLINKS+=	cfbglblt8.c cfbglrop8.c
 .endif									# }
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/20 06:20:50 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ FILESDIR_XFree86bw.xpm=	${X11LIBDIR}/xdm/pixmaps
 
 SYMLINKS=	Xservers.ws ${X11LIBDIR}/xdm/Xservers
 
-LNFILES=	Xres.cpp Xresources.cpp \
+BUILDSYMLINKS=	Xres.cpp Xresources.cpp \
 		Xserv.ws.cpp Xservers.ws.cpp \
 		xdm-conf.cpp xdm-config.cpp
 
