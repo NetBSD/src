@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.4 1996/06/08 19:48:10 christos Exp $	*/
+/*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: aux.c,v 1.4 1996/06/08 19:48:10 christos Exp $";
+static char rcsid[] = "$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ name1(mp, reptype)
 	if (reptype == 0 && (cp = hfield("sender", mp)) != NOSTR)
 		return cp;
 	ibuf = setinput(mp);
-	namebuf[0] = 0;
+	namebuf[0] = '\0';
 	if (readline(ibuf, linebuf, LINESIZE) < 0)
 		return(savestr(namebuf));
 newname:
@@ -605,12 +605,19 @@ newname:
 				break;
 			cp++;
 			if (first) {
-				strcpy(namebuf, cp);
+				cp2 = namebuf;
 				first = 0;
 			} else
-				strcpy(rindex(namebuf, '!')+1, cp);
-			strcat(namebuf, "!");
-			goto newname;
+				cp2 = rindex(namebuf, '!') + 1;
+			while (*cp && cp2 < namebuf + LINESIZE - 1)
+				*cp2++ = *cp++;
+			if (cp2 < namebuf + LINESIZE - 1)
+				*cp2++ = '!';
+			*cp2 = '\0';
+			if (cp2 < namebuf + LINESIZE - 1)
+				goto newname;
+			else
+				break;
 		}
 		cp++;
 	}
@@ -682,7 +689,7 @@ isign(field, ignore)
 	char *field;
 	struct ignoretab ignore[2];
 {
-	char realfld[BUFSIZ];
+	char realfld[LINESIZE];
 
 	if (ignore == ignoreall)
 		return 1;
