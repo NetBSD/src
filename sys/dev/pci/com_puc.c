@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.9 2004/02/03 19:51:39 fredb Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.10 2004/02/03 20:35:17 fredb Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.9 2004/02/03 19:51:39 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.10 2004/02/03 20:35:17 fredb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,10 @@ com_puc_attach(parent, self, aux)
 	if (aa->flags & (PUC_COM_SIIG10x|PUC_COM_SIIG20x)) {
 		int usrregno;
 
-		if	(aa->flags & PUC_PORT_USR0) usrregno = 0;
-		else if (aa->flags & PUC_PORT_USR1) usrregno = 1;
+		if	(aa->flags & PUC_PORT_USR3) usrregno = 3;
 		else if (aa->flags & PUC_PORT_USR2) usrregno = 2;
-		else if (aa->flags & PUC_PORT_USR3) usrregno = 3;
+		else if (aa->flags & PUC_PORT_USR1) usrregno = 1;
+		else /* (aa->flags & PUC_PORT_USR0) */ usrregno = 0;
 
 		if (aa->flags & PUC_COM_SIIG10x)
 			write_siig10x_usrreg(aa->pc, aa->tag, usrregno, 1);
