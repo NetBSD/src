@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.13 2003/12/13 23:02:33 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.14 2003/12/14 01:18:36 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.13 2003/12/13 23:02:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.14 2003/12/14 01:18:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,8 +537,10 @@ dzstart(struct tty *tp)
 	sc = dz_cd.cd_devs[unit];
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
+		splx(s);
 		return;
+	}
 	cl = &tp->t_outq;
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -547,8 +549,10 @@ dzstart(struct tty *tp)
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (cl->c_cc == 0)
+	if (cl->c_cc == 0) {
+		splx(s);
 		return;
+	}
 
 	tp->t_state |= TS_BUSY;
 
