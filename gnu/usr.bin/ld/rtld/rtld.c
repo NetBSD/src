@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.31 1995/04/01 20:56:55 pk Exp $
+ *	$Id: rtld.c,v 1.32 1995/06/04 21:56:33 pk Exp $
  */
 
 #include <sys/param.h>
@@ -121,6 +121,10 @@ struct somap_private {
 #define LM_STRINGS(smp)	((char *) \
 	((smp)->som_addr + LM_OFFSET(smp) + LD_STRINGS((smp)->som_dynamic)))
 
+/* Start of search paths */
+#define LM_PATHS(smp)	((char *) \
+	((smp)->som_addr + LM_OFFSET(smp) + LD_PATHS((smp)->som_dynamic)))
+
 /* End of text */
 #define LM_ETEXT(smp)	((char *) \
 	((smp)->som_addr + LM_TXTADDR(smp) + LD_TEXTSZ((smp)->som_dynamic)))
@@ -148,6 +152,9 @@ struct so_map		*link_map_head, *main_map;
 struct so_map		**link_map_tail = &link_map_head;
 struct rt_symbol	*rt_symbol_head;
 
+static char		*ld_library_path;
+static int		no_intern_search;
+
 static void		*__dlopen __P((char *, int));
 static int		__dlclose __P((void *));
 static void		*__dlsym __P((void *, char *));
@@ -170,7 +177,7 @@ static inline void	check_text_reloc __P((	struct relocation_info *,
 static void		reloc_map __P((struct so_map *));
 static void		reloc_copy __P((struct so_map *));
 static void		init_map __P((struct so_map *, char *));
-static char		*rtfindlib __P((char *, int, int, int *));
+static char		*rtfindlib __P((char *, int, int, int *, char *));
 void			binder_entry __P((void));
 long			binder __P((jmpslot_t *));
 static struct nzlist	*lookup __P((char *, struct so_map **, int));
@@ -253,9 +260,12 @@ struct _dynamic		*dp;
 	}
 
 	/* Setup directory search */
-	add_search_path(getenv("LD_LIBRARY_PATH"));
+	ld_library_path = getenv("LD_LIBRARY_PATH");
+	add_search_path(ld_library_path);
 	if (getenv("LD_NOSTD_PATH") == NULL)
 		std_search_path();
+
+	no_intern_search = careful || getenv("LD_NO_INTERN_SEARCH") != 0;
 
 	anon_open();
 	/* Load required objects into the process address space */
@@ -445,7 +455,8 @@ map_object(sodp, smp)
 	struct so_map	*smp;
 {
 	struct _dynamic	*dp;
-	char		*path, *name = (char *)(sodp->sod_name + LM_LDBASE(smp));
+	char		*path, *ipath,
+			*name = (char *)(sodp->sod_name + LM_LDBASE(smp));
 	int		fd;
 	caddr_t		addr;
 	struct exec	hdr;
@@ -455,8 +466,18 @@ map_object(sodp, smp)
 	if (sodp->sod_library) {
 		usehints = 1;
 again:
+		if (no_intern_search || LD_PATHS(smp->som_dynamic) == 0) {
+			ipath = NULL;
+		} else {
+			ipath =  LM_PATHS(smp);
+			add_search_path(ipath);
+		}
+
 		path = rtfindlib(name, sodp->sod_major,
-				 sodp->sod_minor, &usehints);
+				 sodp->sod_minor, &usehints, ipath);
+		if (ipath)
+			remove_search_path(ipath);
+
 		if (path == NULL) {
 			errno = ENOENT;
 			return NULL;
@@ -1086,13 +1107,14 @@ findhint(name, major, minor, preferred_path)
 }
 
 	static char *
-rtfindlib(name, major, minor, usehints)
+rtfindlib(name, major, minor, usehints, ipath)
 	char	*name;
 	int	major, minor;
 	int	*usehints;
+	char	*ipath;
 {
-	char	*cp, *ld_path = getenv("LD_LIBRARY_PATH");
-	int	realminor;
+	register char	*cp;
+	int		realminor;
 
 	if (hheader == NULL)
 		maphints();
@@ -1100,17 +1122,27 @@ rtfindlib(name, major, minor, usehints)
 	if (!HINTS_VALID || !(*usehints))
 		goto lose;
 
-	if (ld_path != NULL) {
-		/* Prefer paths from LD_LIBRARY_PATH */
-		while ((cp = strsep(&ld_path, ":")) != NULL) {
+	/* NOTE: `ipath' may reside in a piece of read-only memory */
 
+	if (ld_library_path || ipath) {
+		/* Prefer paths from some explicit LD_LIBRARY_PATH */
+		register char	*lpath;
+		char		*dp;
+		dp = lpath = concat(ld_library_path?ld_library_path:"",
+				    ":",
+				    ipath?ipath:"");
+		while ((cp = strsep(&dp, ":")) != NULL) {
 			cp = findhint(name, major, minor, cp);
-			if (ld_path)
-				*(ld_path-1) = ':';
 			if (cp)
 				return cp;
 		}
-		/* Not found in hints, try directory search */
+		free(lpath);
+
+		/*
+		 * Not found in hints; try directory search now, before
+		 * we get a spurious hint match below (i.e. a match not
+		 * one of the paths we're supposed to search first.
+		 */
 		realminor = -1;
 		cp = (char *)findshlib(name, &major, &realminor, 0);
 		if (cp && realminor >= minor)
