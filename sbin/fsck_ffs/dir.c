@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.30 2001/01/10 08:22:20 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.31 2001/01/10 08:26:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.30 2001/01/10 08:22:20 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.31 2001/01/10 08:26:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ reparent(inumber, parent)
 	inp->i_parentp = pinp;
 	inp->i_sibling = pinp->i_child;
 	pinp->i_child = inp;
-	propagate(lfdir);
+	propagate(inumber);
 }
 
 /*
