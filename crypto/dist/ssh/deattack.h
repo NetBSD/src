@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.h,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $	*/
+/*	$NetBSD: deattack.h,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - Header file
@@ -26,5 +26,5 @@
 #define DEATTACK_OK		0
 #define DEATTACK_DETECTED	1
 
-int     detect_attack(unsigned char *buf, u_int32_t len, unsigned char IV[8]);
+int     detect_attack(u_char *buf, u_int32_t len, u_char IV[8]);
 #endif

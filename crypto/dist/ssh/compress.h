@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.h,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: compress.h,v 1.6 2000/09/07 20:27:50 deraadt Exp */
+/* from OpenBSD: compress.h,v 1.7 2000/12/20 19:37:22 markus Exp */
 
 #ifndef COMPRESS_H
 #define COMPRESS_H

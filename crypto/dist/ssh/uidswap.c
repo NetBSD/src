@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.1.1.2 2001/01/14 04:51:04 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: uidswap.c,v 1.9 2000/09/07 20:27:55 deraadt Exp */
+/* from OpenBSD: uidswap.c,v 1.12 2000/12/29 10:48:56 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: uidswap.c,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $");
+__RCSID("$NetBSD: uidswap.c,v 1.1.1.2 2001/01/14 04:51:04 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -38,12 +38,9 @@ __RCSID("$NetBSD: uidswap.c,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $");
 /* Lets assume that posix saved ids also work with seteuid, even though that
    is not part of the posix specification. */
 #define SAVED_IDS_WORK_WITH_SETEUID
-#endif /* _POSIX_SAVED_IDS */
-
-#ifdef SAVED_IDS_WORK_WITH_SETEUID
 /* Saved effective uid. */
 static uid_t saved_euid = 0;
-#endif
+#endif /* _POSIX_SAVED_IDS */
 
 /*
  * Temporarily changes to the given uid.  If the effective user
@@ -59,7 +56,7 @@ temporarily_use_uid(uid_t uid)
 	/* Set the effective uid to the given (unprivileged) uid. */
 	if (seteuid(uid) == -1)
 		debug("seteuid %u: %.100s", (u_int) uid, strerror(errno));
-#else /* SAVED_IDS_WORK_WITH_SETUID */
+#else /* SAVED_IDS_WORK_WITH_SETEUID */
 	/* Propagate the privileged uid to all of our uids. */
 	if (setuid(geteuid()) < 0)
 		debug("setuid %u: %.100s", (u_int) geteuid(), strerror(errno));
@@ -74,7 +71,7 @@ temporarily_use_uid(uid_t uid)
  * Restores to the original uid.
  */
 void
-restore_uid()
+restore_uid(void)
 {
 #ifdef SAVED_IDS_WORK_WITH_SETEUID
 	/* Set the effective uid back to the saved uid. */

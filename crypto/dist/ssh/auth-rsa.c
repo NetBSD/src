@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.1.1.2 2001/01/14 04:49:59 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,11 +15,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rsa.c,v 1.29 2000/09/07 21:13:36 markus Exp */
+/* from OpenBSD: auth-rsa.c,v 1.34 2000/12/19 23:17:55 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-rsa.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.1.1.2 2001/01/14 04:49:59 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -38,11 +38,15 @@ __RCSID("$NetBSD: auth-rsa.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $");
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
 
+
+/* import */
+extern ServerOptions options;
+
 /*
  * Session identifier that is used to bind key exchange and authentication
  * responses to a particular session.
  */
-extern unsigned char session_id[16];
+extern u_char session_id[16];
 
 /*
  * The .ssh/authorized_keys file contains public keys, one per line, in the
@@ -65,9 +69,9 @@ auth_rsa_challenge_dialog(RSA *pk)
 {
 	BIGNUM *challenge, *encrypted_challenge;
 	BN_CTX *ctx;
-	unsigned char buf[32], mdbuf[16], response[16];
+	u_char buf[32], mdbuf[16], response[16];
 	MD5_CTX md;
-	unsigned int i;
+	u_int i;
 	int plen, len;
 
 	encrypted_challenge = BN_new();
@@ -125,14 +129,17 @@ auth_rsa_challenge_dialog(RSA *pk)
 int
 auth_rsa(struct passwd *pw, BIGNUM *client_n)
 {
-	extern ServerOptions options;
 	char line[8192], file[1024];
 	int authenticated;
-	unsigned int bits;
+	u_int bits;
 	FILE *f;
-	unsigned long linenum = 0;
+	u_long linenum = 0;
 	struct stat st;
 	RSA *pk;
+
+	/* no user given */
+	if (pw == NULL)
+		return 0;
 
 	/* Temporarily use the user's uid. */
 	temporarily_use_uid(pw->pw_uid);
@@ -255,6 +262,12 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 			    file, linenum, BN_num_bits(pk->n), bits);
 
 		/* We have found the desired key. */
+		/*
+		 * If our options do not allow this key to be used,
+		 * do not send challenge.
+		 */
+		if (!auth_parse_options(pw, options, linenum))
+			continue;
 
 		/* Perform the challenge-response dialog for this key. */
 		if (!auth_rsa_challenge_dialog(pk)) {
@@ -271,9 +284,8 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		 * Break out of the loop if authentication was successful;
 		 * otherwise continue searching.
 		 */
-		authenticated = auth_parse_options(pw, options, linenum);
-		if (authenticated)
-			break;
+		authenticated = 1;
+		break;
 	}
 
 	/* Restore the privileged uid. */
@@ -286,6 +298,8 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 
 	if (authenticated)
 		packet_send_debug("RSA authentication accepted.");
+	else
+		auth_clear_options();
 
 	/* Return authentication result. */
 	return authenticated;

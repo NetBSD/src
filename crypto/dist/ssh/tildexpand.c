@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.c,v 1.1.1.1 2000/09/28 22:10:42 thorpej Exp $	*/
+/*	$NetBSD: tildexpand.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -12,11 +12,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: tildexpand.c,v 1.8 2000/09/07 20:27:55 deraadt Exp */
+/* from OpenBSD: tildexpand.c,v 1.9 2000/12/19 23:17:59 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tildexpand.c,v 1.1.1.1 2000/09/28 22:10:42 thorpej Exp $");
+__RCSID("$NetBSD: tildexpand.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -32,7 +32,7 @@ char *
 tilde_expand_filename(const char *filename, uid_t my_uid)
 {
 	const char *cp;
-	unsigned int userlen;
+	u_int userlen;
 	char *expanded;
 	struct passwd *pw;
 	char user[100];

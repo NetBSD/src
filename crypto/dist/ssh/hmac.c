@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.1.1.1 2000/09/28 22:10:02 thorpej Exp $	*/
+/*	$NetBSD: hmac.c,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: hmac.c,v 1.4 2000/09/07 20:27:51 deraadt Exp */
+/* from OpenBSD: hmac.c,v 1.5 2000/12/19 23:17:56 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hmac.c,v 1.1.1.1 2000/09/28 22:10:02 thorpej Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -41,16 +41,16 @@ __RCSID("$NetBSD: hmac.c,v 1.1.1.1 2000/09/28 22:10:02 thorpej Exp $");
 
 #include "hmac.h"
 
-unsigned char *
+u_char *
 hmac(
     EVP_MD *evp_md,
-    unsigned int seqno,
-    unsigned char *data, int datalen,
-    unsigned char *key, int keylen)
+    u_int seqno,
+    u_char *data, int datalen,
+    u_char *key, int keylen)
 {
 	HMAC_CTX c;
-	static unsigned char m[EVP_MAX_MD_SIZE];
-	unsigned char b[4];
+	static u_char m[EVP_MAX_MD_SIZE];
+	u_char b[4];
 
 	if (key == NULL)
 		fatal("hmac: no key");

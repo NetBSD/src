@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.1 2000/09/28 22:10:23 thorpej Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.2 2001/01/14 04:50:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,11 +34,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: session.c,v 1.37 2000/09/07 20:27:53 deraadt Exp */
+/* from OpenBSD: session.c,v 1.46 2001/01/04 22:41:03 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: session.c,v 1.1.1.1 2000/09/28 22:10:23 thorpej Exp $");
+__RCSID("$NetBSD: session.c,v 1.1.1.2 2001/01/14 04:50:41 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: session.c,v 1.1.1.1 2000/09/28 22:10:23 thorpej Exp $");
 #include "pty.h"
 #include "packet.h"
 #include "buffer.h"
-#include "cipher.h"
 #include "mpaux.h"
 #include "servconf.h"
 #include "uidswap.h"
@@ -98,7 +97,7 @@ void	session_pty_cleanup(Session *s);
 void	session_proctitle(Session *s);
 void	do_exec_pty(Session *s, const char *command, struct passwd * pw);
 void	do_exec_no_pty(Session *s, const char *command, struct passwd * pw);
-void	do_login(Session *s);
+void	do_login(Session *s, const char *command);
 
 void
 do_child(const char *command, struct passwd * pw, const char *term,
@@ -110,7 +109,7 @@ extern ServerOptions options;
 extern char *__progname;
 extern int log_stderr;
 extern int debug_flag;
-extern unsigned int utmp_len;
+extern u_int utmp_len;
 
 extern int startup_pipe;
 
@@ -184,7 +183,7 @@ do_authenticated(struct passwd * pw)
 	char *command;
 	int n_bytes;
 	int plen;
-	unsigned int proto_len, data_len, dlen;
+	u_int proto_len, data_len, dlen;
 
 	/*
 	 * Cancel the alarm we set to limit the time taken for
@@ -203,7 +202,7 @@ do_authenticated(struct passwd * pw)
 	 * by the client telling us, so we can equally well trust the client
 	 * not to request anything bogus.)
 	 */
-	if (!no_port_forwarding_flag)
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
 		channel_permit_all_opens();
 
 	s = session_new();
@@ -348,6 +347,10 @@ do_authenticated(struct passwd * pw)
 		case SSH_CMSG_PORT_FORWARD_REQUEST:
 			if (no_port_forwarding_flag) {
 				debug("Port forwarding not permitted for this authentication.");
+				break;
+			}
+			if (!options.allow_tcp_forwarding) {
+				debug("Port forwarding not permitted.");
 				break;
 			}
 			debug("Received TCP/IP port forwarding request.");
@@ -571,8 +574,8 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 		close(ttyfd);
 
 		/* record login, etc. similar to login(1) */
-		if (command == NULL && !options.use_login)
-			do_login(s);
+		if (!(options.use_login && command == NULL))
+			do_login(s, command);
 
 		/*
 		 * Do common processing for the child, such as execing
@@ -627,7 +630,7 @@ get_remote_name_or_ip(void)
 
 /* administrative, login(1)-like work */
 void
-do_login(Session *s)
+do_login(Session *s, const char *command)
 {
 	FILE *f;
 	char *time_string;
@@ -663,7 +666,9 @@ do_login(Session *s)
 	record_login(pid, s->tty, pw->pw_name, pw->pw_uid,
 	    get_remote_name_or_ip(), (struct sockaddr *)&from);
 
-	/* Done if .hushlogin exists. */
+	/* Done if .hushlogin exists or a command given. */
+	if (command != NULL)
+		return;
 	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
 	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
 		return;
@@ -671,7 +676,7 @@ do_login(Session *s)
 		time_string = ctime(&last_login_time);
 		if (strchr(time_string, '\n'))
 			*strchr(time_string, '\n') = 0;
-		if (strcmp(buf, "") == 0)
+		if (strcmp(hostname, "") == 0)
 			printf("Last login: %s\r\n", time_string);
 		else
 			printf("Last login: %s from %s\r\n", time_string, hostname);
@@ -692,10 +697,10 @@ do_login(Session *s)
  * already exists, its value is overriden.
  */
 static void
-child_set_env(char ***envp, unsigned int *envsizep, const char *name,
+child_set_env(char ***envp, u_int *envsizep, const char *name,
 	      const char *value)
 {
-	unsigned int i, namelen;
+	u_int i, namelen;
 	char **env;
 
 	/*
@@ -733,7 +738,7 @@ child_set_env(char ***envp, unsigned int *envsizep, const char *name,
  * and assignments of the form name=value.  No other forms are allowed.
  */
 static void
-read_environment_file(char ***env, unsigned int *envsize,
+read_environment_file(char ***env, u_int *envsize,
 		      const char *filename)
 {
 	FILE *f;
@@ -781,7 +786,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	char buf[256];
 	char cmd[1024];
 	FILE *f = NULL;
-	unsigned int envsize, i;
+	u_int envsize, i;
 	char **env;
 	extern char **environ;
 	struct stat st;
@@ -975,8 +980,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	if (!options.use_login) {
 		if (stat(_PATH_SSH_USER_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n",
-				    _PATH_BSHELL, _PATH_SSH_USER_RC);
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_USER_RC);
 
 			f = popen(_PATH_BSHELL " " _PATH_SSH_USER_RC, "w");
 			if (f) {
@@ -988,8 +992,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 				    _PATH_SSH_USER_RC);
 		} else if (stat(_PATH_SSH_SYSTEM_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n",
-				    _PATH_BSHELL, _PATH_SSH_SYSTEM_RC);
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_SYSTEM_RC);
 
 			f = popen(_PATH_BSHELL " " _PATH_SSH_SYSTEM_RC, "w");
 			if (f) {
@@ -1218,7 +1221,7 @@ session_window_change_req(Session *s)
 static int
 session_pty_req(Session *s)
 {
-	unsigned int len;
+	u_int len;
 	char *term_modes;	/* encoded terminal modes */
 
 	if (no_pty_flag)
@@ -1267,7 +1270,7 @@ session_pty_req(Session *s)
 static int
 session_subsystem_req(Session *s)
 {
-	unsigned int len;
+	u_int len;
 	int success = 0;
 	char *subsys = packet_get_string(&len);
 	int i;
@@ -1363,7 +1366,7 @@ session_shell_req(Session *s)
 static int
 session_exec_req(Session *s)
 {
-	unsigned int len;
+	u_int len;
 	char *command = packet_get_string(&len);
 	packet_done();
 	if (forced_command) {
@@ -1381,10 +1384,27 @@ session_exec_req(Session *s)
 	return 1;
 }
 
+static int
+session_auth_agent_req(Session *s)
+{
+	static int called = 0;
+	packet_done();
+	if (no_agent_forwarding_flag) {
+		debug("session_auth_agent_req: no_agent_forwarding_flag");
+		return 0;
+	}
+	if (called) {
+		return 0;
+	} else {
+		called = 1;
+		return auth_input_request_forwarding(s->pw);
+	}
+}
+
 void
 session_input_channel_req(int id, void *arg)
 {
-	unsigned int len;
+	u_int len;
 	int reply;
 	int success = 0;
 	char *rtype;
@@ -1417,6 +1437,8 @@ session_input_channel_req(int id, void *arg)
 			success =  session_pty_req(s);
 		} else if (strcmp(rtype, "x11-req") == 0) {
 			success = session_x11_req(s);
+		} else if (strcmp(rtype, "auth-agent-req@openssh.com") == 0) {
+			success = session_auth_agent_req(s);
 		} else if (strcmp(rtype, "subsystem") == 0) {
 			success = session_subsystem_req(s);
 		}
@@ -1447,7 +1469,8 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr)
 		fatal("no channel for session %d", s->self);
 	channel_set_fds(s->chanid,
 	    fdout, fdin, fderr,
-	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ);
+	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+	    1);
 }
 
 void
