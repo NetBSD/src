@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.5 2001/09/05 16:25:18 thorpej Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.6 2002/06/26 16:04:12 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,12 +87,15 @@ scsi_command(fd, cmd, cmdlen, data, datalen, timeout, flags)
 		return;
 
 	/* Some problem; report it and exit. */
-	if (req.retsts & SCCMD_TIMEOUT)
+	if (req.retsts == SCCMD_TIMEOUT)
 		fprintf(stderr, "%s: SCSI command timed out\n", dvname);
-	if (req.retsts & SCCMD_BUSY)
+	else if (req.retsts == SCCMD_BUSY)
 		fprintf(stderr, "%s: device is busy\n", dvname);
-	if (req.retsts & SCCMD_SENSE)
+	else if (req.retsts == SCCMD_SENSE)
 		scsi_print_sense(dvname, &req, 1);
+	else
+		fprintf(stderr, "%s: device had unknown status %x", dvname,
+		    req.retsts);
 
 	exit(1);
 }
@@ -132,6 +135,22 @@ scsi_mode_select(fd, byte2, buf, len)
 	cmd.u_len.scsi.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_WRITE);
+}
+
+void
+scsi_request_sense(fd, buf, len)
+	int fd;
+	void *buf;
+	size_t len;
+{
+	struct scsipi_sense cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+	memset(buf, 0, len);
+
+	cmd.opcode = REQUEST_SENSE;
+	cmd.length = len;
+ 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_READ);
 }
 
 void
