@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1995/03/25 18:13:38 glass Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -27,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pathnames.h,v 1.2 1994/01/29 01:43:09 jtc Exp $
  */
 
 #ifndef _PATHNAMES_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: panic.h,v 1.2 1995/03/25 18:13:35 glass Exp $	*/
+
 /*
  * panic.h -  header for at(1)
  * Copyright (c) 1993 Thomas Koenig
@@ -23,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: panic.h,v 1.1 1993/12/05 11:36:58 cgd Exp $
  */
 
 void panic	__P((char *a));

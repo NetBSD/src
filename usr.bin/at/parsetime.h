@@ -1,3 +1,5 @@
+/*	$NetBSD: parsetime.h,v 1.2 1995/03/25 18:13:37 glass Exp $	*/
+
 /*
  * at.h -  header for at(1)
  * Copyright (c) 1993 by Thomas Koenig
@@ -23,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: parsetime.h,v 1.1 1993/12/05 11:37:17 cgd Exp $
  */
 
 time_t parsetime	__P((int argc, char **argv));

@@ -1,3 +1,5 @@
+/*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
+
 /*
  * at.c : Put file into atrun queue
  * Copyright (C) 1993  Thomas Koenig
@@ -61,7 +63,10 @@
 #define TIMESIZE 50
 
 /* File scope variables */
-static char rcsid[] = "$Id: at.c,v 1.3 1995/03/02 21:33:13 cgd Exp $";
+#ifndef lint
+static char rcsid[] = "$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $";
+#endif
+
 char *no_export[] =
 {
 	"TERM", "TERMCAP", "DISPLAY", "_"
