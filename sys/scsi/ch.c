@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.8 1994/06/29 06:42:55 cgd Exp $	*/
+/*	$NetBSD: ch.c,v 1.9 1994/10/20 20:31:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -262,7 +262,7 @@ chioctl(dev, cmd, arg, mode)
 		}
 	}
 	default:
-		return scsi_do_ioctl(sc_link, cmd, arg, mode);
+		return scsi_do_ioctl(sc_link, dev, cmd, arg, mode);
 	}
 #ifdef DIAGNOSTIC
 	panic("chioctl: impossible");

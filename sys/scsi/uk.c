@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.7 1994/06/29 06:43:25 cgd Exp $	*/
+/*	$NetBSD: uk.c,v 1.8 1994/10/20 20:31:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -167,5 +167,5 @@ ukioctl(dev, cmd, addr, flag)
 	 */
 	unit = UKUNIT(dev);
 	uk = ukcd.cd_devs[unit];
-	return scsi_do_ioctl(uk->sc_link, cmd, addr, flag));
+	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag));
 }

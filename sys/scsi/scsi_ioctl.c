@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.7 1994/06/29 06:43:06 cgd Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.8 1994/10/20 20:31:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -61,6 +61,8 @@ struct scsi_ioctl {
 	struct buf *si_bp;
 	scsireq_t *si_screq;
 	struct scsi_link *si_sc_link;
+	struct uio si_uio;
+	struct iovec si_iov;
 } scsi_ioctl[NIOCTL];
 
 struct scsi_ioctl *
@@ -286,14 +288,6 @@ scsistrategy(bp)
 	return;
 }
 
-void
-scsiminphys(bp)
-	struct buf *bp;
-{
-
-	/*XXX*//* call the adapter's minphys */
-}
-
 /*
  * Something (e.g. another driver) has called us
  * with an sc_link for a target/lun/adapter, and a scsi
@@ -302,8 +296,9 @@ scsiminphys(bp)
  * in the context of the calling process
  */
 int
-scsi_do_ioctl(sc_link, cmd, addr, f)
+scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 	struct scsi_link *sc_link;
+	dev_t dev;
 	int cmd;
 	caddr_t addr;
 	int f;
@@ -312,7 +307,6 @@ scsi_do_ioctl(sc_link, cmd, addr, f)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%x)\n", cmd));
 	switch(cmd) {
-#ifdef notyet /* XXXX Needs to be redone to use copyin/out! */
 	case SCIOCCOMMAND: {
 		/*
 		 * You won't believe this, but the arg copied in
@@ -322,20 +316,15 @@ scsi_do_ioctl(sc_link, cmd, addr, f)
 		 * we need to copy it in and out!
 		 * Make a static copy using malloc!
 		 */
-		scsireq_t *screq2 = (scsireq_t *)addr;
 		scsireq_t *screq = (scsireq_t *)addr;
-		int rwflag = (screq->flags & SCCMD_READ) ? B_READ : B_WRITE;
 		struct buf *bp;
-		caddr_t	d_addr;
+		struct scsi_ioctl *si;
+		caddr_t	daddr;
 		int len;
 
-		if ((unsigned int)screq < KERNBASE) {
-			screq = malloc(sizeof(scsireq_t), M_TEMP, M_WAITOK);
-			bcopy(screq2, screq, sizeof(scsireq_t));
-		}
 		bp = malloc(sizeof(struct buf), M_TEMP, M_WAITOK);
 		bzero(bp, sizeof(struct buf));
-		d_addr = screq->databuf;
+		daddr = screq->databuf;
 		bp->b_bcount = len = screq->datalen;
 		si = si_get(bp);
 		if (!si) {
@@ -345,14 +334,18 @@ scsi_do_ioctl(sc_link, cmd, addr, f)
 		si->si_screq = screq;
 		si->si_sc_link = sc_link;
 		if (len) {
-#ifdef	__NetBSD__
-#error "dev, mincntfn & uio need defining"
-			error = physio(scsistrategy, bp, dev, rwflag,
-			    mincntfn, uio);
-#else
-			error = physio(scsistrategy, 0, bp, 0, rwflag, d_addr,
-			    &len, curproc);
-#endif
+			si->si_iov.iov_base = daddr;
+			si->si_iov.iov_len = len;
+			si->si_uio.uio_iov = &si->si_iov;
+			si->si_uio.uio_iovcnt = 1;
+			si->si_uio.uio_offset = 0;
+			si->si_uio.uio_segflg = UIO_USERSPACE;
+			si->si_uio.uio_rw = 
+			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
+			si->si_uio.uio_procp = curproc;	/* XXX */
+			error = physio(scsistrategy, bp, dev,
+			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
+			    sc_link->adapter->scsi_minphys, &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
 			bp->b_data = 0;
@@ -362,13 +355,8 @@ scsi_do_ioctl(sc_link, cmd, addr, f)
 			error = bp->b_error;
 		}
 		free(bp, M_TEMP);
-		if ((unsigned int)screq2 < KERNBASE) {
-			bcopy(screq, screq2, sizeof(scsireq_t));
-			free(screq, M_TEMP);
-		}
 		return error;
 	}
-#endif
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
