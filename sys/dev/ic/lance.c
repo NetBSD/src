@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.1 1998/07/21 17:26:46 drochner Exp $	*/
+/*	$NetBSD: lance.c,v 1.2 1998/08/08 23:51:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ lance_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	lance_init(sc);
 	splx(s);
 }
@@ -588,7 +588,7 @@ lance_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

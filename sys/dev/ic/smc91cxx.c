@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.10 1998/07/05 06:49:12 jonathan Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ smc91cxx_init(sc)
 	u_int8_t *enaddr;
 	int s, i;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * This resets the registersmostly to defaults, but doesn't
@@ -465,7 +465,7 @@ smc91cxx_init(sc)
 
 /*
  * Start output on an interface.
- * Must be called at splimp or interrupt level.
+ * Must be called at splnet or interrupt level.
  */
 void
 smc91cxx_start(ifp)
@@ -986,7 +986,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1111,7 +1111,7 @@ smc91cxx_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	smc91cxx_stop(sc);
 	smc91cxx_init(sc);
 	splx(s);

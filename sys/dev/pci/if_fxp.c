@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.18 1998/07/05 06:49:15 jonathan Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.19 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1068,7 +1068,7 @@ fxp_stats_update(arg)
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
-	s = splimp();
+	s = splnet();
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
 	 * then assume the receiver has locked up and attempt to clear
@@ -1165,7 +1165,7 @@ fxp_stop(sc)
 		}
 		if (fxp_add_rfabuf(sc, rxd) != 0) {
 			/*
-			 * This "can't happen" - we're at splimp()
+			 * This "can't happen" - we're at splnet()
 			 * and we just freed the buffer we need
 			 * above.
 			 */
@@ -1206,7 +1206,7 @@ fxp_init(xsc)
 	struct fxp_cb_tx *txp;
 	int i, s, prm;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Cancel any pending I/O
 	 */
@@ -1633,7 +1633,7 @@ fxp_ioctl(ifp, command, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -1740,7 +1740,7 @@ fxp_ioctl(ifp, command, data)
  * of it. We then can do 'CU_START' on the mcsetup descriptor and have it
  * lead into the regular TxCB ring when it completes.
  *
- * This function must be called at splimp.
+ * This function must be called at splnet.
  */
 static void
 fxp_mc_setup(sc)
