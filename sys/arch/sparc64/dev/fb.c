@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.13 1999/05/19 21:06:00 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.14 1999/05/23 02:45:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -262,25 +262,8 @@ fbrcons_init(fb)
 	maxcol = 0;
 
 #if !defined(RASTERCONS_FULLSCREEN)
-#if defined(SUN4)
-	if (CPU_ISSUN4) {
-		struct eeprom *eep = (struct eeprom *)eeprom_va;
-
-		if (eep == NULL) {
-			maxcol = 80;
-			maxrow = 34;
-		} else {
-			maxcol = eep->eeTtyCols;
-			maxrow = eep->eeTtyRows;
-		}
-	}
-#endif /* SUN4 */
-	if (!CPU_ISSUN4) {
-		maxcol =
-		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-		maxrow =
-		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
-	}
+	maxcol = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
+	maxrow = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 #endif /* !RASTERCONS_FULLSCREEN */
 	/* 
 	 * XXX until somebody actually sets the colormap after a call to 

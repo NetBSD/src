@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.18 1999/05/14 06:49:55 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.19 1999/05/23 02:45:19 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -136,6 +136,7 @@ file	arch/sparc64/dev/bt_subr.c	bt_dac
 
 file	dev/cons.c
 file	arch/sparc64/dev/fb.c
+file	arch/sparc64/dev/consinit.c
 
 file	arch/sparc64/fpu/fpu.c
 file	arch/sparc64/fpu/fpu_add.c
