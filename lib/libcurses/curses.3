@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.27 2000/05/05 11:57:46 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.28 2000/05/11 22:54:47 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,6 +114,9 @@ to
 If overlay is true then copy is nondestructive.
 .It curs_set(vis)	change cursor visibility, 0 is invisible, 1 is
 normal, 2 is high visibility.  Returns previous value on success.
+.It delay_output(ms)	pause output for
+.Em ms
+milliseconds using terminal pad character.
 .It def_prog_mode()	define program (in curses) terminal modes
 .It def_shell_mode()	define shell (not in curses) terminal modes
 .It delch()	delete a character
@@ -137,12 +140,26 @@ relative to
 .Em win
 .It fullname(termbuf,name)	get full name from
 .Em termbuf
+.It getattrs(win)	get attributes for
+.Em win
 .It getbkgd(win)	get background rendition for
 .Em win
-.It getch()	get a char through
-.Em stdscr
 .It getcap(name)	get terminal capability
 .Em name
+.It getch()	get a char through
+.Em stdscr
+.It getcury(win)	get current y position on
+.Em win
+.It getcurx(win)	get current x position on
+.Em win
+.It getbegy(win)	get start y position on
+.Em win
+.It getbegx(win)	get start x position on
+.Em win
+.It getmaxy(win)	get maximum y position on
+.Em win
+.It getmaxx(win)	get maximum x position on
+.Em win
 .It getstr(str)	get a string through
 .Em stdscr
 .It gettmode()	get tty modes
@@ -210,6 +227,9 @@ for
 .Em count
 characters on window
 .Em win .
+.It napms(ms)	sleep for
+.Em ms
+milliseconds.
 .It newwin(lines,cols,begin_y,begin_x)\ 	create a new window
 .It nl()	set newline mapping
 .It nocbreak()	unset cbreak mode
