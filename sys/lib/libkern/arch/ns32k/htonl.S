@@ -1,3 +1,5 @@
+/*	$NetBSD: htonl.S,v 1.5 1998/02/22 09:08:34 mycroft Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,13 +31,14 @@
  * HISTORY
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$NetBSD: htonl.S,v 1.4 1997/10/13 11:57:10 lukem Exp $
  */
 
 #include <machine/asm.h>
 
-	.text
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: htonl.S,v 1.5 1998/02/22 09:08:34 mycroft Exp $")
+#endif
+
 ENTRY(htonl)
 	movd	S_ARG0,r0
 	rotw	8,r0
