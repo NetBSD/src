@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2001/04/28 15:41:31 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2002/02/28 03:17:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,6 @@ typedef vm_size_t	vsize_t;
 
 typedef int		register_t;
 
-#define __HAVE_MINIMAL_EMUL
+#define	__HAVE_MINIMAL_EMUL
 
 #endif	/* _ARM_TYPES_H_ */
