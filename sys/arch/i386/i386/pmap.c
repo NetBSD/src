@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1997/09/19 13:54:17 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.1 1997/11/13 08:06:11 mellon Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -92,12 +92,6 @@
 
 #include <dev/isa/isareg.h>
 #include <i386/isa/isa_machdep.h>
-
-/*
- * Allocate various and sundry SYSMAPs used in the days of old VM
- * and not yet converted.  XXX.
- */
-#define	BSDVM_COMPAT	1
 
 #ifdef DEBUG
 void	pmap_pvdump __P((vm_offset_t pa));
@@ -197,16 +191,16 @@ int	nkpde = NKPDE;
 int	nkpde = 0;
 #endif
 
-#if BSDVM_COMPAT
-extern caddr_t msgbufaddr;
-
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-pt_entry_t	*CMAP1, *CMAP2, *XXX_mmap;
+pt_entry_t	*CMAP1, *CMAP2;
 caddr_t		CADDR1, CADDR2, vmmap;
-pt_entry_t	*msgbufmap;
-#endif	/* BSDVM_COMPAT */
+extern vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+#ifdef I586_CPU
+extern vm_offset_t pentium_trap_vaddr, pentium_trap_paddr;
+extern int pentium_trap_fixup;
+#endif
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -224,12 +218,8 @@ void
 pmap_bootstrap(virtual_start)
 	vm_offset_t virtual_start;
 {
-#if BSDVM_COMPAT
 	vm_offset_t va;
-	pt_entry_t *pte;
-#endif
-	/* XXX: allow for msgbuf */
-	avail_end -= i386_round_page(MSGBUFSIZE);
+	pt_entry_t *pte, *junk;
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -263,22 +253,35 @@ pmap_bootstrap(virtual_start)
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 
-#if BSDVM_COMPAT
 	/*
 	 * Allocate all the submaps we need
 	 */
-#define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*NBPG); p = pte; pte += (n);
-
 	va = virtual_avail;
 	pte = pmap_pte(pmap_kernel(), va);
 
-	SYSMAP(caddr_t	,CMAP1	   ,CADDR1	,1		 )
-	SYSMAP(caddr_t	,CMAP2	   ,CADDR2	,1		 )
-	SYSMAP(caddr_t	,XXX_mmap  ,vmmap	,1		 )
-	SYSMAP(caddr_t	,msgbufmap ,msgbufaddr	,btoc(MSGBUFSIZE))
-	virtual_avail = va;
+#define	SYSMAP(c, p, v, n) \
+	do {			\
+		v = (c)va;	\
+		va += ctob(n);	\
+		p = pte;	\
+		pte += (n);	\
+	} while (0)
+
+	SYSMAP(caddr_t, CMAP1, CADDR1, 1);
+	SYSMAP(caddr_t, CMAP2, CADDR2, 1);
+	SYSMAP(caddr_t, junk, vmmap, 1);
+	SYSMAP(vm_offset_t, junk, msgbuf_vaddr, btoc(MSGBUFSIZE));
+	avail_end -= round_page(MSGBUFSIZE);
+	msgbuf_paddr = avail_end;
+#ifdef I586_CPU
+	if (pentium_trap_fixup) {
+		SYSMAP(vm_offset_t, junk, pentium_trap_vaddr, 2);
+		avail_end -= ctob(1);
+		pentium_trap_paddr = avail_end;
+	}
 #endif
+
+	virtual_avail = va;
 
 	/*
 	 * Reserve pmap space for mapping physical pages during dump.
