@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.5 2000/11/08 14:28:14 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.6 2001/01/22 12:17:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -260,9 +260,9 @@ ov_unmount(mp, mntflags, p)
 	return 0;
 }
 
-extern struct vnodeopv_desc overlay_vnodeop_opv_desc;
+extern const struct vnodeopv_desc overlay_vnodeop_opv_desc;
 
-struct vnodeopv_desc *ov_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
 	&overlay_vnodeop_opv_desc,
 	NULL,
 };

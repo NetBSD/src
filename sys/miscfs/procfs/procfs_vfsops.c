@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.36 2001/01/17 00:09:08 fvdl Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.37 2001/01/22 12:17:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -307,9 +307,9 @@ procfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc procfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *procfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const procfs_vnodeopv_descs[] = {
 	&procfs_vnodeop_opv_desc,
 	NULL,
 };
