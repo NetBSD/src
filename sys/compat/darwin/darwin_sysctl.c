@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.1 2002/11/23 02:18:54 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.2 2002/11/28 21:23:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.1 2002/11/23 02:18:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.2 2002/11/28 21:23:54 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,21 +58,21 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.1 2002/11/23 02:18:54 manu Exp $
 #include <compat/darwin/darwin_syscallargs.h>
 
 int darwin_kern_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_vm_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_vfs_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_net_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_debug_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_hw_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_machdep_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int darwin_user_sysctl
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int
 darwin_sys___sysctl(struct proc *p, void *v, register_t *retval)
