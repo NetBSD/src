@@ -75,7 +75,7 @@ main(argc, argv)
 	int endseen = 0;
 
 	argv++, argc--;
-	if (**argv == '-') {
+	if (*argv && **argv == '-') {
 		if (argv[0][1] != 'v')
 			fprintf(stderr, "unknown option %s ignored\n", *argv);
 		else
