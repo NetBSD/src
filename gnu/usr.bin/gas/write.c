@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: write.c,v 1.3 1993/08/02 17:28:53 mycroft Exp $";
+#endif /* not lint */
+
 /* 
 
    Umm, with real good luck, this thing should be set up to do byteordering

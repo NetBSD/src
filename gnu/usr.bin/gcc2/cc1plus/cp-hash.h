@@ -1,4 +1,7 @@
-/* C code produced by gperf version 2.5 (GNU C++ version) */
+/* C code produced by gperf version 2.5 (GNU C++ version
+
+	$Id: cp-hash.h,v 1.2 1993/08/02 17:31:47 mycroft Exp $
+*/
 /* Command-line: gperf -p -j1 -g -o -t -N is_reserved_word -k1,4,$,7 gplus.gperf  */
 /* Command-line: gperf -p -j1 -g -o -t -N is_reserved_word -k1,4,$,7 gplus.gperf  */
 struct resword { char *name; short token; enum rid rid;};

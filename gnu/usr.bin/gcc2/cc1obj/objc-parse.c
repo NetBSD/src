@@ -1,6 +1,10 @@
 
 /*  A Bison parser, made from objc-parse.y  */
 
+#ifndef lint
+static char rcsid[] = "$Id: objc-parse.c,v 1.2 1993/08/02 17:30:49 mycroft Exp $";
+#endif /* not lint */
+
 #define YYBISON 1  /* Identify Bison output.  */
 
 #define	IDENTIFIER	258

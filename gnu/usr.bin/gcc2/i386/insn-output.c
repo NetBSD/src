@@ -1,6 +1,10 @@
 /* Generated automatically by the program `genoutput'
 from the machine description file `md'.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: insn-output.c,v 1.2 1993/08/02 17:37:04 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "rtl.h"
 #include "regs.h"

@@ -1,5 +1,9 @@
 /* getpwd.c - get the working directory */
 
+#ifndef lint
+static char rcsid[] = "$Id: getpwd.c,v 1.2 1993/08/02 17:34:39 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 
 #include <errno.h>

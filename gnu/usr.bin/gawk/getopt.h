@@ -13,7 +13,10 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: getopt.h,v 1.2 1993/08/02 17:29:47 mycroft Exp $
+*/
 
 #ifndef _GETOPT_H
 #define _GETOPT_H 1

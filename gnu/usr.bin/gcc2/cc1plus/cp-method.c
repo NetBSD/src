@@ -19,6 +19,9 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: cp-method.c,v 1.2 1993/08/02 17:31:56 mycroft Exp $";
+#endif /* not lint */
 
 #ifndef PARM_CAN_BE_ARRAY_TYPE
 #define PARM_CAN_BE_ARRAY_TYPE 1

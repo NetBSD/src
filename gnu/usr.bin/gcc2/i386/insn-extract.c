@@ -1,6 +1,10 @@
 /* Generated automatically by the program `genextract'
 from the machine description file `md'.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: insn-extract.c,v 1.2 1993/08/02 17:37:01 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "rtl.h"
 

@@ -1,3 +1,5 @@
+/*	$Id: _divsf3.c,v 1.2 1993/08/02 17:37:47 mycroft Exp $ */
+
 extern int target_flags;
   
 enum reg_class

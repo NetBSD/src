@@ -18,9 +18,10 @@ GNU CC General Public License.   A copy of this license is
 supposed to have been given to you along with GNU CC so you
 can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
-and this notice must be preserved on all copies.  */
+and this notice must be preserved on all copies.
 
-
+	$Id: cp-lex.h,v 1.2 1993/08/02 17:31:55 mycroft Exp $
+*/
 
 enum rid
 {

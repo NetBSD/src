@@ -101,7 +101,10 @@ software.
 
 In other words, you are welcome to use, share and improve this program.
 You are forbidden to forbid anyone else to use, share and improve
-what you give them.   Help stamp out software-hoarding!  */
+what you give them.   Help stamp out software-hoarding!
+
+	$Id: dfa.h,v 1.2 1993/08/02 17:29:36 mycroft Exp $
+*/
 
 #ifdef __STDC__
 

@@ -18,6 +18,10 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: objc-act.c,v 1.2 1993/08/02 17:30:37 mycroft Exp $";
+#endif /* not lint */
+
 /* Purpose: This module implements the Objective-C 4.0 language.
 
    compatibility issues (with the Stepstone translator):

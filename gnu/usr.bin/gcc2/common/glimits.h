@@ -1,3 +1,5 @@
+/*	$Id: glimits.h,v 1.2 1993/08/02 17:34:40 mycroft Exp $ */
+
 #ifndef _LIMITS_H___
 #ifndef _MACH_MACHLIMITS_H_
 

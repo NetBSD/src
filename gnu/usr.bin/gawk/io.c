@@ -23,6 +23,10 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: io.c,v 1.2 1993/08/02 17:29:52 mycroft Exp $";
+#endif /* not lint */
+
 #include "awk.h"
 
 #ifndef O_RDONLY
