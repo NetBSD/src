@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.5 2001/07/27 23:09:15 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.6 2001/08/03 00:32:30 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -56,6 +56,8 @@
 #define XOS_IntOff		0x020014
 #define OS_EnterOS		0x000016
 #define XOS_EnterOS		0x020016
+#define OS_Module		0x00001e
+#define XOS_Module		0x02001e
 #define OS_FSControl		0x000029
 #define XOS_FSControl		0x020029
 #define OS_ServiceCall		0x000030
