@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/11/08 23:51:29 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6 2000/02/08 12:04:27 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -11,13 +11,11 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
-IMAGE?=		xxx.fs
-KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
+
+STRIP?=		strip
 
 LISTS=		${.CURDIR}/list
 RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
@@ -37,9 +35,9 @@ CLEANFILES+=	netbsd.ram.gz netbsd.tmp
 
 all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
-	# vnconfig -v -c ${VND_CDEV} ${IMAGE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND_CDEV} ${DISKTYPE}
+	# vnconfig -v -c ${VND} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
+	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
 	    -f 1024 -b 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -54,15 +52,16 @@ all:	netbsd.ram.gz
 	sync
 	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEV}
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
+	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
