@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 1995/07/08 04:25:22 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 1995/07/08 12:39:12 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -390,7 +390,6 @@ pmap_bootstrap(nextpa, firstpa)
 					protopte += NBPG;
 				}
 			}
-			if (pte > Sysmap) printf("Ack!  Over Sysmap!\n");
 		}
 	} else {
 		pte = PA2VA(nbpa, u_int *);
