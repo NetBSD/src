@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.3 2001/01/21 11:43:43 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.4 2001/01/30 06:44:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -75,7 +75,7 @@ struct _formi_page_struct
 
 /* function prototypes */
 unsigned
-skip_blanks(char *, unsigned int);
+_formi_skip_blanks(char *, unsigned int);
 int
 _formi_add_char(FIELD *cur, unsigned pos, char c);
 int
@@ -100,6 +100,8 @@ void
 _formi_stitch_fields(FORM *form);
 int
 _formi_update_field(FORM *form, int old_field);
+int
+_formi_validate_char(FIELD *field, char c);
 int
 _formi_validate_field(FORM *form);
 

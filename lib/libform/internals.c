@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.7 2001/01/23 02:01:56 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.8 2001/01/30 06:44:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -56,6 +56,8 @@ FILE *dbg = NULL;
 #define JOIN_PREV    3
 #define JOIN_PREV_NW 4 /* previous join, don't wrap the joined line */
 
+static void
+_formi_do_char_validation(FIELD *field, FIELDTYPE *type, char c, int *ret_val);
 static void
 _formi_do_validation(FIELD *field, FIELDTYPE *type, int *ret_val);
 static int
@@ -382,7 +384,7 @@ _formi_join_line(FIELD *field, char *str, unsigned int pos, int direction)
  * the first non-blank character.
  */
 unsigned
-skip_blanks(char *string, unsigned int start)
+_formi_skip_blanks(char *string, unsigned int start)
 {
 	unsigned int i;
 
@@ -842,6 +844,13 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	   */
 	if (field->buffers[0].string == NULL) {
 		set_field_buffer(field, 0, "");
+	}
+
+	if (_formi_validate_char(field, c) != E_OK) {
+#ifdef DEBUG
+		fprintf(dbg, "add_char: char %c failed char validation\n", c);
+#endif
+		return E_INVALID_FIELD;
 	}
 	
 #ifdef DEBUG
@@ -1411,6 +1420,47 @@ _formi_manipulate_field(FORM *form, int c)
 }
 
 /*
+ * Validate the give character by passing it to any type character
+ * checking routines, if they exist.
+ */
+int
+_formi_validate_char(FIELD *field, char c)
+{
+	int ret_val;
+	
+	if (field->type == NULL)
+		return E_OK;
+
+	ret_val = E_INVALID_FIELD;
+	_formi_do_char_validation(field, field->type, c, &ret_val);
+
+	return ret_val;
+}
+
+		
+/*
+ * Perform the validation of the character, invoke all field_type validation
+ * routines.  If the field is ok then update ret_val to E_OK otherwise
+ * ret_val is not changed.
+ */
+static void
+_formi_do_char_validation(FIELD *field, FIELDTYPE *type, char c, int *ret_val)
+{
+	if ((type->flags & _TYPE_IS_LINKED) == _TYPE_IS_LINKED) {
+		_formi_do_char_validation(field, type->link->next, c, ret_val);
+		_formi_do_char_validation(field, type->link->prev, c, ret_val);
+	} else {
+		if (type->char_check == NULL)
+			*ret_val = E_OK;
+		else {
+			if (type->char_check((int)(unsigned char) c,
+					     field->args) == TRUE)
+				*ret_val = E_OK;
+		}
+	}
+}
+
+/*
  * Validate the current field.  If the field validation returns success then
  * return E_OK otherwise return E_INVALID_FIELD.
  *
@@ -1419,7 +1469,8 @@ int
 _formi_validate_field(FORM *form)
 {
 	FIELD *cur;
-	int ret_val;
+	char *bp;
+	int ret_val, count;
 	
 
 	if ((form == NULL) || (form->fields == NULL) ||
@@ -1428,12 +1479,15 @@ _formi_validate_field(FORM *form)
 
 	cur = form->fields[form->cur_field];
 	
-	if (((form->opts & O_PASSOK) == O_PASSOK) && (cur->buf0_status = 0))
+	if (((cur->opts & O_PASSOK) == O_PASSOK) && (cur->buf0_status = 0))
 		return E_OK;
 
-	if (((form->opts & O_NULLOK) == O_NULLOK) &&
-	    (cur->buffers[0].string[0] == '\0'))
-		return E_OK;
+	bp = cur->buffers[0].string;
+	count = _formi_skip_blanks(bp, 0);
+	
+	if (((cur->opts & O_NULLOK) != O_NULLOK) &&
+	    (cur->buffers[0].string[count] == '\0'))
+		return E_INVALID_FIELD;
 	
 	  /* if there is no type then just accept the field */
 	if (cur->type == NULL)

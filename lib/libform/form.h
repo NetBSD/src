@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.6 2001/01/23 01:59:29 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.7 2001/01/30 06:44:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -65,7 +65,11 @@ typedef unsigned int Form_Options;
 #define O_STATIC   0x100  /* Field is not dynamic */
 #define O_PASSOK   0x200  /* ??? */
 
-/* Form driver requests */
+/*
+ * Form driver requests - be VERY careful about changing the ordering
+ * of the requests below.  The form driver code depends on a particular
+ * order for the requests.
+ */
 #define REQ_MIN_REQUEST   0x100 /* must equal value of the first request */
 
 #define REQ_NEXT_PAGE     0x100 /* next page in form */
