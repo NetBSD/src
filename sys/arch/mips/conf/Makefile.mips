@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.36 2004/09/29 06:03:03 sekiya Exp $
+#	$NetBSD: Makefile.mips,v 1.37 2004/10/01 06:46:40 sekiya Exp $
 
 # Makefile for NetBSD
 #
@@ -20,15 +20,6 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
-
-#
-# Add arguments for the toolchain (necessary for elf64)
-#
-
-LD+=${LDOPTS}
-.if defined(RANLIB_OVERRIDE)
-RANLIB=true
-.endif
 
 ##
 ## (0) toolchain settings for things that aren't part of the standard
@@ -55,6 +46,14 @@ DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float
 AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
+
+.if ${LP64} == "yes"
+# 64-bit kernels
+CPPFLAGS+=	-D_LP64 -mabi=64
+AFLAGS+=	-mabi=64
+RANLIB=		true
+LD+=		-m elf64bmip
+.endif
 
 ##
 ## (3) libkern and compat
