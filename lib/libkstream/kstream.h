@@ -6,7 +6,7 @@
    For copying and distribution information, please see the file
    <mit-copyright.h>.
 
-   $NetBSD: kstream.h,v 1.1.1.1 2000/06/17 06:24:28 thorpej Exp $
+   $NetBSD: kstream.h,v 1.2 2002/05/26 17:04:44 wiz Exp $
  */
 
 #include <sys/types.h>		/* for size_t */
@@ -15,11 +15,7 @@
    requested, output will be flushed before input is read, or when
    kstream_flush is called.  */
 
-#if defined (__STDC__) || defined (__cplusplus)
 typedef void *kstream_ptr;
-#else
-typedef char *kstream_ptr;
-#endif
 typedef struct kstream_rec *kstream;
 struct kstream_data_block {
   kstream_ptr ptr;
@@ -31,7 +27,6 @@ struct kstream_crypt_ctl_block {
      Right now, it's just a hack so we can bang out the interface
      in some form that lets us run both rcp and rlogin.  This is also
      the only reason the contents of this structure are public.  */
-#if defined (__STDC__) || defined (__cplusplus)
   int (*encrypt) (struct kstream_data_block *, /* output -- written */
 		  struct kstream_data_block*, /* input */
 		  kstream str
@@ -42,14 +37,9 @@ struct kstream_crypt_ctl_block {
 		  );		/* ret val = # input bytes used */
   int (*init) (kstream str, kstream_ptr data);
   void (*destroy) (kstream str);
-#else
-  int (*encrypt) (), (*decrypt) (), (*init) ();
-  void (*destroy) ();
-#endif
 };
 
 /* ctl==0 means no encryption.  data is specific to crypt functions */
-#if defined (__STDC__) || defined (__cplusplus)
 kstream kstream_create_from_fd (int fd,
 				const struct kstream_crypt_ctl_block *ctl,
 				kstream_ptr data);
@@ -64,19 +54,9 @@ int kstream_read (kstream, void*, size_t);
 int kstream_flush (kstream);
 int kstream_destroy (kstream);
 void kstream_set_buffer_mode (kstream, int);
-#else
-kstream kstream_create_from_fd (),
-	kstream_create_rlogin_from_fd (),
-	kstream_create_rcp_from_fd ();
-void kstream_set_buffer_mode ();
-#endif
 
 #if 0 /* Perhaps someday... */
 kstream kstream_create (principal, host, port, ...);
-#endif
-
-#if !defined (__STDC__) && !defined (__cplusplus) && !defined (const)
-#define const /* empty */
 #endif
 
 typedef struct fifo {
