@@ -1,4 +1,5 @@
 #!/bin/ksh
+#	$NetBSD: checkvers,v 1.3 1999/01/27 05:50:29 erh Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,7 +148,9 @@ if [ $usedir -eq 1 ] ; then
     if [ "X$1" != "X" ] ; then
 	libdir="$1"
     fi
-    find $libdir -name 'lib*.so.*.*' > $LIBLIST
+    for f in $libdir ; do
+	ls $f/lib*.so.*.*
+    done > $LIBLIST
 fi
 
 # Build list from set lists.  Parameter may be either
