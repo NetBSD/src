@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.55 1998/06/01 20:06:45 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.56 1998/06/05 20:45:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ int	 ftruncate __P((int, off_t));
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500
+int	 fdatasync __P((int));
 int	 fsync __P((int));
 #endif
 
