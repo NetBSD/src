@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1996/02/14 02:57:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1996/02/24 00:55:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,16 +75,17 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+
 #include <dev/cons.h>
-#include <hp300/hp300/isr.h>
-#include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
+#include <vm/vm_param.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "hp300";		/* cpu "architecture" */
@@ -123,15 +124,31 @@ extern struct emul emul_hpux;
 #endif
 
 /*
+ * Select code of console.  Set to -1 if console is on
+ * "internal" framebuffer.
+ */
+int	conscode;
+int	conpri = CN_DEAD;	/* so drivers can tell if they should bother */
+int	consinit_active = 0;	/* flag for driver init routines */
+caddr_t	conaddr;		/* for drivers in cn_init() */
+int	convasize;		/* size of mapped console device */
+int	conforced;		/* console has been forced */
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
 consinit()
 {
+	extern struct map extiomap[];
+
+	consinit_active = 1;
+	convasize = 0;
+	conforced = 0;
 
 	/*
-	 * Set cpuspeed immediately since cninit() called routines
+	 * Set cpuspeed immediately since hp300_cninit() called routines
 	 * might use delay.  Note that we only set it if a custom value
 	 * has not already been specified.
 	 */
@@ -161,15 +178,18 @@ consinit()
 		if (mmutype == MMU_68040)
 			cpuspeed *= 2;	/* XXX */
 	}
+
 	/*
-         * Find what hardware is attached to this machine.
-         */
-	find_devs();
+	 * Initialize the DIO resource map.
+	 */
+	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
 
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	cninit();
+	hp300_cninit();
+
+	consinit_active = 0;
 
 #ifdef DDB
 	ddb_init();

@@ -1,7 +1,7 @@
-/*	$NetBSD: hpux_machdep.h,v 1.2 1996/02/24 00:55:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.1 1996/02/24 00:55:40 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.
+ * Copyright (c) 1996 Jason R. Thorpe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,16 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_HPUX_MACHDEP_H_
-#define _MACHINE_HPUX_MACHDEP_H_
+#ifdef _KERNEL
+extern	int conscode;			/* select code of console device */
+extern	int conpri;			/* priority of console device */
+extern	int consinit_active;		/* hint for drivers */
+extern	caddr_t conaddr;		/* KVA of console device */
+extern	int convasize;			/* size of mapping at conaddr */
+extern	int conforced;			/* console has been forced */
 
-int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
-int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
-void	hpux_cpu_bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
-void	hpux_cpu_uname __P((struct hpux_utsname *));
-int	hpux_cpu_sysconf_arch __P((void));
-int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
-int	hpux_dumpu __P((struct vnode *, struct ucred *));
-
-#endif /* ! _MACHINE_HPUX_MACHDEP_H_ */
+void	hp300_cninit __P((void));
+void	console_scan __P((int (*)(int, caddr_t, void *), void *));
+caddr_t	iomap __P((caddr_t, int));
+void	iounmap __P((caddr_t, int));
+#endif /* _KERNEL */
