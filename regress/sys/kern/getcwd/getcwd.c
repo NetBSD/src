@@ -1,4 +1,4 @@
-/* $NetBSD: getcwd.c,v 1.1 1999/03/22 18:14:39 sommerfe Exp $ */
+/* $NetBSD: getcwd.c,v 1.2 1999/03/26 13:14:12 sommerfe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  */
 
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -238,6 +239,12 @@ test___getcwd_perms()
 {
 	char kbuf[1024];
 	
+	if (geteuid() != 0) 
+	  {
+	    fprintf(stderr, "Not root; skipping permission tests\n");
+	    return;	    
+	  }
+	    
 	mkdir ("/tmp/permdir", 0700);
 	mkdir ("/tmp/permdir/subdir", 0755);
 	chdir ("/tmp/permdir/subdir");
@@ -258,6 +265,12 @@ test___getcwd_chroot()
 	int pid, status;
 	char kbuf[1024];
 	
+	if (geteuid() != 0) 
+	  {
+	    fprintf(stderr, "Not root; skipping chroot tests\n");
+	    return;
+	  }
+
 	/* XXX we need fchroot to do this properly.. */
 	mkdir ("/tmp/chrootdir", 0755);
 	mkdir ("/tmp/chrootdir/subdir", 0755);
@@ -417,10 +430,18 @@ stress_test_getcwd()
 		char *cp = strrchr(buf, '\n');
 		if (cp) *cp = '\0';
 
-		chdir (buf);
+		if (chdir (buf) < 0) {
+			warn("Can't change directory to %s", buf);
+			continue;
+		}
+		
 
 		cp = old_getcwd (ubuf, MAXPATHLEN);
-		assert (strcmp (buf, ubuf) == 0);		
+		if (strcmp(buf, ubuf) != 0) {
+			warnx("In %s, old_getcwd says %s\n",
+			    buf, ubuf);
+		}
+
 
 		CHECK(buf, __getcwd (kbuf, MAXPATHLEN),
 		    strlen(ubuf)+1, 0);
