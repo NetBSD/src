@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.107 2004/01/09 19:01:01 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.108 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.107 2004/01/09 19:01:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.108 2004/01/10 14:39:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,6 +502,10 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
 		/* Start I/O for the buffer. */
 		SET(bp->b_flags, B_READ | async);
+		if (async)
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		VOP_STRATEGY(bp);
 
 		/* Pay for the read. */
@@ -641,6 +645,11 @@ bwrite(struct buf *bp)
 	V_INCR_NUMOUTPUT(bp->b_vp);
 	simple_unlock(&bp->b_interlock);
 	splx(s);
+
+	if (sync)
+		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+	else
+		BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 
 	VOP_STRATEGY(bp);
 
@@ -978,6 +987,7 @@ start:
 	} else {
 		allocbuf(bp, size, preserve);
 	}
+	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	return (bp);
 }
 
@@ -1273,6 +1283,7 @@ biodone(struct buf *bp)
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
+	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
 		(*bioops.io_complete)(bp);

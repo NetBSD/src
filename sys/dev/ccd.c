@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.93 2003/10/26 23:42:57 chs Exp $	*/
+/*	$NetBSD: ccd.c,v 1.94 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.93 2003/10/26 23:42:57 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.94 2004/01/10 14:39:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,6 +869,8 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_obp = bp;
 	cbp->cb_sc = cs;
 	cbp->cb_comp = ccdisk;
+
+	BIO_COPYPRIO(&cbp->cb_buf, bp);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)

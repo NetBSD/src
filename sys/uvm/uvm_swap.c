@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.82 2003/08/28 13:12:20 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.83 2004/01/10 14:39:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.82 2003/08/28 13:12:20 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.83 2004/01/10 14:39:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1749,6 +1749,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
+		if (curproc == uvm.pagedaemon_proc)
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+	} else {
+		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
 	    "about to start io: data = %p blkno = 0x%x, bcount = %ld",
