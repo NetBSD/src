@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.s,v 1.12 1995/02/24 05:03:49 gwr Exp $	*/
+/*	$NetBSD: trap.s,v 1.13 1995/03/26 19:38:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -181,7 +181,6 @@ _fpunsupp:
  */
 	.globl	_fpfault
 _fpfault:
-#ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-	| save user registers
 	movl	usp,a0		| and save
@@ -200,9 +199,6 @@ Lfptnull:
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
 	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
-#else
-	jra	_badtrap	| treat as an unexpected trap
-#endif
 
 /*
  * Coprocessor and format errors can generate mid-instruction stack
