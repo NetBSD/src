@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1998/09/21 17:16:27 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1998/10/07 06:24:58 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -565,20 +565,19 @@ cpu_startup()
 	bufinit();
 
 	/*
+	 * Configure devices.
+	 */
+	configure();
+
+	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
 		int msr;
 
-		splhigh();
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
-
-	/*
-	 * Configure devices.
-	 */
-	configure();
 }
 
 /*
