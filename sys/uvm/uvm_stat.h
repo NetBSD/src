@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.7 1998/02/10 14:12:30 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.8 1998/02/12 20:10:18 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -143,7 +143,14 @@ struct uvm_history {
 extern int cold;
 
 #if defined(UVMHIST_PRINT)
-#define UVMHIST_PRINTNOW(E) uvmhist_print(E); DELAY(100000);
+extern int uvmhist_print_enabled;
+#define UVMHIST_PRINTNOW(E) \
+	do { \
+		if (uvmhist_print_enabled) { \
+			uvmhist_print(E); \
+			DELAY(100000); \
+		} \
+	} while (0)
 #else
 #define UVMHIST_PRINTNOW(E) /* nothing */
 #endif
