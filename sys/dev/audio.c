@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.189 2005/01/29 18:16:49 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.190 2005/02/13 17:05:15 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.189 2005/01/29 18:16:49 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.190 2005/02/13 17:05:15 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3468,7 +3468,7 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	r->active = sc->sc_rbus;
 
 	p->buffer_size = sc->sc_pustream->bufsize;
-	r->buffer_size = sc->sc_pustream->bufsize;
+	r->buffer_size = sc->sc_rustream->bufsize;
 
 	ai->blocksize = sc->sc_pr.blksize;
 	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
