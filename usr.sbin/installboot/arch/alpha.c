@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.3 2002/04/04 14:00:55 mrg Exp $	*/
+/*	$NetBSD: alpha.c,v 1.4 2002/04/11 08:02:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.3 2002/04/04 14:00:55 mrg Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.4 2002/04/11 08:02:27 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -269,7 +269,7 @@ alpha_setboot(ib_params *params)
 	if (rv == -1) {
 		warn("Reading `%s'", params->bootblock);
 		return (0);
-	} else if (rv != sizeof(bb)) {
+	} else if (rv != bootstrapsb.st_size) {
 		warnx("Reading `%s': short read", params->bootblock);
 		return (0);
 	}
