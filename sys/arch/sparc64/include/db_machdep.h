@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.4 1998/09/02 05:51:37 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.5 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -87,7 +87,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
 #endif
 #define	PC_ADVANCE(regs) do {				\
-	int n = (regs)->ddb_tf.tf_npc;			\
+	vaddr_t n = (regs)->ddb_tf.tf_npc;		\
 	(regs)->ddb_tf.tf_pc = n;			\
 	(regs)->ddb_tf.tf_npc = n + 4;			\
 } while(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1998/08/13 02:10:47 eeh Exp $ */
+/*	$NetBSD: mem.c,v 1.4 1998/09/05 23:57:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 #include <sys/conf.h>
 
 #include <sparc64/sparc64/vaddrs.h>
-#include <sparc64/sparc64/asm.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 #include <machine/ctlreg.h>

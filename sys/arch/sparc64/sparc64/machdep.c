@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1998/09/02 05:51:39 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.9 1998/09/05 23:57:28 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
 
-#include <sparc64/sparc64/asm.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/vaddrs.h>
 
@@ -574,6 +573,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+#ifdef _LP64
+#define rwindow		rwindow64
+#define STACK_OFFSET	BIAS
+#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
+#else
+#define rwindow		rwindow32
+#define STACK_OFFSET	0
+#define CPOUTREG(l,v)	suword((l), (v))
+#endif
 /*
  * Send an interrupt to process.
  */
@@ -588,7 +596,7 @@ sendsig(catcher, sig, mask, code)
 	register struct sigframe *fp;
 	register struct trapframe *tf;
 	vaddr_t addr, oonstack; 
-	struct rwindow32 *kwin, *oldsp, *newsp, /* DEBUG */tmpwin;
+	struct rwindow *oldsp, *newsp, /* DEBUG */tmpwin;
 	struct sigframe sf;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
@@ -599,7 +607,7 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	tf = p->p_md.md_tf;
-	oldsp = (struct rwindow32 *)tf->tf_out[6];
+	oldsp = (struct rwindow *)(tf->tf_out[6] + STACK_OFFSET);
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
@@ -612,7 +620,7 @@ sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
-	fp = (struct sigframe *)((long)(fp - 1) & ~7);
+	fp = (struct sigframe *)((long)(fp - 1) & ~0x0f);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
@@ -629,17 +637,19 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = code;
+#ifndef __LP64
 #ifdef COMPAT_SUNOS
 	sf.sf_scp = &fp->sf_sc;
 #endif
 	sf.sf_addr = 0;			/* XXX */
+#endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
 	sf.sf_sc.sc_onstack = oonstack;
 	sf.sf_sc.sc_mask = mask;
-	sf.sf_sc.sc_sp = (long)oldsp;
+	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
@@ -655,30 +665,18 @@ sendsig(catcher, sig, mask, code)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow32 *)((vaddr_t)fp - sizeof(struct rwindow32));
+	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
 	write_user_windows();
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+		   fp, &(((struct rwindow *)newsp)->rw_in[6]), (vaddr_t)tf->tf_out[6]);
 #endif
-	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	if (rwindow_save(p) || /* copyout(((caddr_t)tf)+CCFSZ, (caddr_t)oldsp, sizeof(struct rwindow32)) || */
-#ifndef TRAPWIN
-	    suword(&oldsp->rw_in[0], tf->tf_in[0]) || suword(&oldsp->rw_in[1], tf->tf_in[1]) ||
-	    suword(&oldsp->rw_in[2], tf->tf_in[2]) || suword(&oldsp->rw_in[3], tf->tf_in[3]) ||
-	    suword(&oldsp->rw_in[4], tf->tf_in[4]) || suword(&oldsp->rw_in[5], tf->tf_in[5]) ||
-	    suword(&oldsp->rw_in[6], tf->tf_in[6]) || suword(&oldsp->rw_in[7], tf->tf_in[7]) ||
-	    suword(&oldsp->rw_local[0], (int)tf->tf_local[0]) || suword(&oldsp->rw_local[1], (int)tf->tf_local[1]) ||
-	    suword(&oldsp->rw_local[2], (int)tf->tf_local[2]) || suword(&oldsp->rw_local[3], (int)tf->tf_local[3]) ||
-	    suword(&oldsp->rw_local[4], (int)tf->tf_local[4]) || suword(&oldsp->rw_local[5], (int)tf->tf_local[5]) ||
-	    suword(&oldsp->rw_local[6], (int)tf->tf_local[6]) || suword(&oldsp->rw_local[7], (int)tf->tf_local[7]) ||
-#endif
-	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (vaddr_t)oldsp)) {
+	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -692,11 +690,6 @@ sendsig(catcher, sig, mask, code)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-
-#if 0
-	/* Now we need to update %i6 in the trap frame -- this was saved to kernel space */
-	(((union rwindow *)(((caddr_t)tf)-CCFSZ))->v8.rw_in[6]) = oldsp;
-#endif
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
@@ -719,7 +712,7 @@ sendsig(catcher, sig, mask, code)
 	}
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (register64_t)newsp;
+	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
@@ -751,7 +744,7 @@ sys_sigreturn(p, v, retval)
 	struct sigcontext *scp;
 	struct sigcontext sc;
 	register struct trapframe *tf;
-	struct rwindow32 *rwstack, *kstack;
+	struct rwindow *rwstack, *kstack;
 #ifndef TRAPWIN
 	int i;
 #endif
@@ -811,46 +804,10 @@ sys_sigreturn(p, v, retval)
 	tf->tf_out[0] = (int64_t)sc.sc_o0;
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
 	rwstack = (struct rwindow32 *)tf->tf_out[6];
-#ifndef TRAPWIN
-#if 0
-	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	for (i=0; i<8; i++) {
-		tf->tf_local[i] = (int64_t)fuword(&rwstack->rw_local[i]);
-		kstack->rw_in[i] = (int)fuword(&rwstack->rw_in[i]);
-	}
-#else
-	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	for (i=0; i<8; i++) {
-		int tmp;
-		if (copyin((caddr_t)&rwstack->rw_local[i], &tmp, sizeof tmp)) {
-			printf("sigreturn: cannot load \%l%d from %p\n", i, &rwstack->rw_local[i]);
-			Debugger();
-		}
-		tf->tf_local[i] = (int64_t)tmp;
-		if (copyin((caddr_t)&rwstack->rw_in[i], &tmp, sizeof tmp)) {
-			printf("sigreturn: cannot load \%i%d from %p\n", i, &rwstack->rw_in[i]);
-			Debugger();
-		}
-		tf->tf_in[i] = (int)tmp;
-	}
-#endif
-#endif
-#ifdef DEBUG
-	/* Need to sync tf locals and ins with stack to prevent panic */
-	{
-		int i;
-
-		kstack = (struct rwindow32 *)tf->tf_out[6];
-		for (i=0; i<8; i++) {
-			tf->tf_local[i] = fuword(&kstack->rw_local[i]);
-			tf->tf_in[i] = fuword(&kstack->rw_in[i]);
-		}
-	}
-#endif
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
-		       (int)tf->tf_pc, (int)tf->tf_out[6], (int)tf->tf_tstate);
+		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
+		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
@@ -1137,10 +1094,10 @@ stackdump()
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%x(%x:%x,%x:%x,%x:%x,%x:%x,%x:%x,%x:%x,%x:%x)sp=%p",
-			       (long)fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
+			printf("%x(%llx,%llx,%llx,%llx,%llx,%llx,%llx)sp=%p",
+			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
 			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
-			       (long)fp64->fr_fp);
+			       fp64->fr_fp);
 			fp = (struct frame32*)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
@@ -1153,67 +1110,6 @@ stackdump()
 	}
 }
 
-#if 0 /* Obsolete? */
-/*
- * Map an I/O device given physical address and size in bytes, e.g.,
- *
- *	mydev = (struct mydev *)mapdev(myioaddr, 0,
- *				       0, sizeof(struct mydev));
- *
- * See also machine/autoconf.h.
- */
-void *
-mapdev(phys, virt, offset, size)
-	register struct rom_reg *phys;
-	register int offset, virt, size;
-{
-	register vaddr_t v;
-	register u_int64_t pa;
-	register void *ret;
-	static vaddr_t iobase;
-
-	if (iobase == NULL)
-		iobase = IODEV_BASE;
-
-	size = round_page(size);
-	if (size == 0) panic("mapdev: zero size");
-
-	if (virt)
-		v = trunc_page(virt);
-	else {
-		v = iobase;
-		iobase += size;
-		if (iobase > IODEV_END)	/* unlikely */
-			panic("mapiodev");
-	}
-	ret = (void *)(v | (((u_long)phys->rr_paddr + offset) & PGOFSET));
-			/* note: preserve page offset */
-
-	pa = ((u_int64_t)phys->rr_iospace<<32) | trunc_page(phys->rr_paddr + offset);
-#ifdef NOTDEF_DEBUG
-	printf("mapdev: io=%x pa=%x va=%x pa=%x:%x\n", phys->rr_iospace, phys->rr_paddr,
-	       v, (int)(pa>>32), (int)pa);
-#endif
-	do {
-		int i;
-
-		for (i=0; page_size_map[i].mask; i++) {
-			if (((pa | v) & page_size_map[i].mask) == 0
-				&& page_size_map[i].mask < size)
-				break;
-		}
-
-		do {
-			pmap_enter_phys(pmap_kernel(), v, pa | PMAP_NC,
-					page_size_map[i].code,
-					VM_PROT_READ | VM_PROT_WRITE, 1);
-			v += PAGE_SIZE;
-			pa += PAGE_SIZE;
-		} while (pa & page_size_map[i].mask);
-	} while ((size -= PAGE_SIZE) > 0);
-	return (ret);
-}
-#endif
 
 int
 cpu_exec_aout_makecmds(p, epp)
@@ -1293,9 +1189,9 @@ wcopy(vb1, vb2, l)
 		*b2 = *b1e;
 }
 
-static bus_addr_t dvmamap_alloc __P((int, int));
+bus_addr_t dvmamap_alloc __P((int, int));
 
-static __inline__ bus_addr_t
+bus_addr_t
 dvmamap_alloc(size, flags)
 	int size;
 	int flags;
@@ -1321,9 +1217,9 @@ dvmamap_alloc(size, flags)
 	return ((bus_addr_t)rctov(pn));
 }
 
-static void dvmamap_free __P((bus_addr_t, bus_size_t));
+void dvmamap_free __P((bus_addr_t, bus_size_t));
 
-static __inline__ void
+void
 dvmamap_free (addr, size)
 	bus_addr_t addr;
 	bus_size_t size;
@@ -1630,15 +1526,11 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error)
 		return (error);
 
-	dvmaddr = dvmamap_alloc(size, flags);
-	if (dvmaddr == (bus_addr_t)-1)
-		return (ENOMEM);
-
 	/*
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_addr= NULL; /* UPA does not map things */
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
@@ -1670,13 +1562,6 @@ _bus_dmamem_free(t, segs, nsegs)
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
-
-
-	addr = segs[0].ds_addr;
-	len = segs[0].ds_len;
-
-	dvmamap_free(addr, len);
-	/* The bus driver should do the actual unmapping */
 
 	/*
 	 * Return the list of pages back to the VM system.
@@ -1873,7 +1758,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 {
 	vaddr_t v;
 	u_int64_t pa;
-static	vaddr_t iobase;
+static	vaddr_t iobase = IODEV_BASE;
 
 
 	if (iobase == NULL)
@@ -1900,13 +1785,13 @@ static	vaddr_t iobase;
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 
 #ifdef NOTDEF_DEBUG
-	printf("\nsparc_bus_map: type %x addr %x:%x virt %x paddr %x:%x\n",
-		       iospace, (int)(addr>>32), (int)addr, (int)*hp, (int)(pa>>32), (int)pa);
+	printf("\nsparc_bus_map: type %x addr %p virt %p paddr %llx\n",
+		       iospace, addr, *hp, (paddr_t)pa);
 #endif
 
 	do {
 #ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %x:%x virt %p hp %x:%x\n", 
+		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
 		       (int)(pa>>32), (int)pa, v, (int)((*hp)>>32), (int)*hp);
 #endif
 		pmap_enter_phys(pmap_kernel(), v, pa | PMAP_NC, NBPG,
@@ -1941,9 +1826,9 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 {
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
 #if 0
-	printf("sparc_bus_mmap: encoding pa %x:%x as %x:%x becomes %x:%x\n",
-	       (int)(paddr>>32), (int)(paddr), (int)((*hp)>>32), (int)*hp, 
-	       (int)(pmap_phys_address(*hp)>>32), (int)(pmap_phys_address(*hp)));
+	printf("sparc_bus_mmap: encoding pa %llx as %llx becomes %llx\n",
+	       (bus_addr_t)(paddr), (bus_space_handle_t)*hp, 
+	       (paddr_t)(pmap_phys_address(*hp)));
 #endif
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 1998/08/13 02:10:46 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.3 1998/09/05 23:57:27 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -100,7 +100,7 @@
 #define COND2(x)	(((x) & 0xf) << 14)
 
 struct sparc_insn {
-	  unsigned long int match;
+	  unsigned int match;
 	  char* name;
 	  char* format;
 };
@@ -801,7 +801,7 @@ db_disasm(loc, altfmt)
 {
 	struct sparc_insn*	i_ptr = (struct sparc_insn *)&sparc_i;
 
-	unsigned long int insn, you_lose, bitmask;
+	unsigned int insn, you_lose, bitmask;
 	int matchp;
 	char* f_ptr, *cp;
 
@@ -891,19 +891,19 @@ db_disasm(loc, altfmt)
 			db_printf("%%%s", regs[((insn >> 25) & 0x1f)]);
 			break;
 		case '3':
-			db_printf("%%f%ld", ((insn >> 14) & 0x1f));
+			db_printf("%%f%d", ((insn >> 14) & 0x1f));
 			break;
 		case '4':
-			db_printf("%%f%ld", (insn & 0x1f));
+			db_printf("%%f%d", (insn & 0x1f));
 			break;
 		case 'e':
-			db_printf("%%f%ld", ((insn >> 25) & 0x1f));
+			db_printf("%%f%d", ((insn >> 25) & 0x1f));
 			break;
 		case 'i':
-			db_printf("0x%lx", (insn & 0x1fff));
+			db_printf("0x%x", (insn & 0x1fff));
 			break;
 		case 'j':
-			db_printf("0x%lx", (insn & 0x7ff));
+			db_printf("0x%x", (insn & 0x7ff));
 			break;
 		case 'l':
 			db_printsym(
@@ -930,7 +930,7 @@ db_disasm(loc, altfmt)
 			db_printf("%%asi");
 			break;
 		case 't':
-			db_printf("0x%-2.2lx", ((insn >> 5) & 0xff));
+			db_printf("0x%-2.2x", ((insn >> 5) & 0xff));
 			break;
 		case 'o':
 			db_printf("%%fcc%ld", ((insn >> 25) & 0x3));
@@ -945,7 +945,7 @@ db_disasm(loc, altfmt)
 			break;
 		case 'q':
 		case '8':
-			db_printf("[%%%s %c 0x%lx]",
+			db_printf("[%%%s %c 0x%x]",
 				  regs[((insn >> 14) & 0x1f)],
 				  (int)((insn & 0x1000)?'-':'+'),
 				  (insn & 0x1000)?((insn+1) & 0xfff):(insn & 0xfff));
@@ -959,7 +959,7 @@ db_disasm(loc, altfmt)
 			db_printf("%%fsr");
 			break;
 		case '9':
-			db_printf("0x%lxl",
+			db_printf("0x%xl",
 				  ((insn & 0xf) | ((insn >> 4) & 0x7)));
 			break;
 		case '0':
@@ -975,16 +975,16 @@ db_disasm(loc, altfmt)
 			db_printf("%%%s", state_regs[((insn >> 14) & 0x1f)]);
 			break;
 		case 'C':
-			db_printf("%%hi(0x%lx)", ((insn & 0x3fffff) << 10));
+			db_printf("%%hi(0x%x)", ((insn & 0x3fffff) << 10));
 			break;
 		case 'D':
-			db_printf("0x%lx", (insn & 0x1f));
+			db_printf("0x%x", (insn & 0x1f));
 			break;
 		case 'E':
-			db_printf("0x%lx", (insn & 0x3f));
+			db_printf("0x%x", (insn & 0x3f));
 			break;
 		case 'F':
-			db_printf("0x%lx", (insn & 0x3f));
+			db_printf("0x%x", (insn & 0x3f));
 			break;
 		case 'G':
 			db_printf("%%%s", priv_regs[((insn >> 25) & 0x1f)]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1998/09/05 17:43:18 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.8 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,7 +78,6 @@
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
-#include <sparc64/sparc64/asm.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #ifdef DDB
@@ -452,6 +451,11 @@ configure()
         OF_set_callback(sync_crash);
 #endif
 
+	/* block clock interrupts and anything below */
+	splclock();
+	/* Enable device interrupts */
+        setpstate(getpstate()|PSTATE_IE);
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
 
@@ -517,7 +521,7 @@ mbprint(aux, name)
 	if (name)
 		printf("%s at %s", ma->ma_name, name);
 	if (ma->ma_address)
-		printf(" addr 0x%x", (int)ma->ma_address[0]);
+		printf(" addr 0x%08lx", (u_long)ma->ma_address[0]);
 	if (ma->ma_pri)
 		printf(" ipl %d", ma->ma_pri);
 	return (UNCONF);
@@ -864,7 +868,7 @@ findzs(zs)
 	int zs;
 {
 	int node, n;
-	unsigned long addr;
+	unsigned int addr;
 
 	node = firstchild(findroot());
 	/* Ultras have zs on the sbus */
@@ -877,8 +881,9 @@ findzs(zs)
 		/* There is no way to identify a node by its number */
 		if ( n++ == zs ) { 
 			if ((addr = getpropint(node, "address", 0)) == 0)
+				/* We really should just map it in ourselves */
 				panic("findzs: zs%d not mapped by PROM", zs);
-			return ((void *)addr);
+			return ((void *)(unsigned long)addr);
 		}
 		node = nextsibling(node);
 	}
@@ -962,7 +967,6 @@ getprop(node, name, size, nitem, bufp)
 	long	len;
 
 	len = getproplen(node, name);
-if (len <= 0 || ((len % size) != 0)) printf("getprop(%s): len = %lx size = %lx\n", name, len, size);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -973,7 +977,6 @@ if (len <= 0 || ((len % size) != 0)) printf("getprop(%s): len = %lx size = %lx\n
 	if (buf == NULL) {
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
-if (!buf) printf("getprop(%s): malloc of %lx failed\n", name, len);
 		if (buf == NULL)
 			return (ENOMEM);
 	}
