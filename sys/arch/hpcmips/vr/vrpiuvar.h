@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.5 2001/01/08 09:50:08 takemura Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.6 2001/01/21 05:00:29 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -62,6 +62,7 @@ struct vrpiu_softc {
 	struct tpcalib_softc sc_tpcalib;
 
 	struct callout sc_adpoll;
+	struct callout sc_tptimeout;
 	void *sc_power_hook;
 	struct battery_values sc_battery;
 };
