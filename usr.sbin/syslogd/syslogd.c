@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.33 2004/11/18 15:55:34 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.34 2004/11/18 16:11:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.33 2004/11/18 15:55:34 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.34 2004/11/18 16:11:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1155,8 +1155,39 @@ fprintlog(struct filed *f, int flags, char *msg)
 				deadq_enter(f->f_un.f_pipe.f_pid,
 					    f->f_un.f_pipe.f_pname);
 			f->f_un.f_pipe.f_pid = 0;
-			errno = e;
-			logerror(f->f_un.f_pipe.f_pname);
+			/*
+			 * If the error was EPIPE, then what is likely
+			 * has happened is we have a command that is
+			 * designed to take a single message line and
+			 * then exit, but we tried to feed it another
+			 * one before we reaped the child and thus
+			 * reset our state.
+			 *
+			 * Well, now we've reset our state, so try opening
+			 * the pipe and sending the message again if EPIPE
+			 * was the error.
+			 */
+			if (e == EPIPE) {
+				if ((f->f_file = p_open(f->f_un.f_pipe.f_pname,
+				     &f->f_un.f_pipe.f_pid)) < 0) {
+					f->f_type = F_UNUSED;
+					logerror(f->f_un.f_pipe.f_pname);
+					break;
+				}
+				if (writev(f->f_file, iov, 6) < 0) {
+					e = errno;
+					(void) close(f->f_file);
+					if (f->f_un.f_pipe.f_pid > 0)
+					    deadq_enter(f->f_un.f_pipe.f_pid,
+							f->f_un.f_pipe.f_pname);
+					f->f_un.f_pipe.f_pid = 0;
+				} else
+					e = 0;
+			}
+			if (e != 0) {
+				errno = e;
+				logerror(f->f_un.f_pipe.f_pname);
+			}
 		}
 		break;
 
