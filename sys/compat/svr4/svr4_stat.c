@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.20 1996/04/11 12:46:41 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -433,7 +433,7 @@ svr4_sys_systeminfo(p, v, retval)
 	int error;
 	long len;
 	extern char ostype[], hostname[], osrelease[],
-		    version[], machine[], domainname[];
+		    version[], machine[], domainname[], cpu_model[];
 
 	u_int rlen = SCARG(uap, len);
 
@@ -474,6 +474,14 @@ svr4_sys_systeminfo(p, v, retval)
 		str = domainname;
 		break;
 
+	case SVR4_SI_PLATFORM:
+		str = cpu_model;
+		break;
+
+	case SVR4_SI_KERB_REALM:
+		str = "unsupported";
+		break;
+
 	case SVR4_SI_SET_HOSTNAME:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
@@ -485,6 +493,9 @@ svr4_sys_systeminfo(p, v, retval)
 			return error;
 		name = KERN_DOMAINNAME;
 		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen, p);
+
+	case SVR4_SI_SET_KERB_REALM:
+		return 0;
 
 	default:
 		DPRINTF(("Bad systeminfo command %d\n", SCARG(uap, what)));
