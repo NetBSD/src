@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.15 1994/07/23 08:40:57 pk Exp $
+ * $Id: warnings.c,v 1.16 1994/10/19 20:16:38 pk Exp $
  */
 
 #include <sys/param.h>
@@ -101,18 +101,21 @@ print_symbols(outfile)
 
 	fprintf(outfile, "\nGlobal symbols:\n\n");
 	FOR_EACH_SYMBOL(i, sp) {
-		if (sp->defined == (N_UNDF|N_EXT))
-			fprintf(outfile, "  %s: common, length %#x\n",
-						sp->name, sp->common_size);
+		fprintf(outfile, "  %s: ", sp->name);
 		if (!(sp->flags & GS_REFERENCED))
-			fprintf(outfile, "  %s: unreferenced\n", sp->name);
+			fprintf(outfile, "unreferenced");
 		else if (sp->so_defined)
-			fprintf(outfile, "  %s: sodefined\n", sp->name);
+			fprintf(outfile, "sodefined");
 		else if (!sp->defined)
-			fprintf(outfile, "  %s: undefined\n", sp->name);
+			fprintf(outfile, "undefined");
+		else if (sp->defined == (N_UNDF|N_EXT))
+			fprintf(outfile, "common: size %#x", sp->common_size);
 		else
-			fprintf(outfile, "  %s: %#x, size %#x\n",
-						sp->name, sp->value, sp->size);
+			fprintf(outfile, "type %d, value %#x, size %#x",
+				sp->defined, sp->value, sp->size);
+		if (sp->alias)
+			fprintf(outfile, ", aliased to %s", sp->alias->name);
+		fprintf(outfile, "\n");
 	} END_EACH_SYMBOL;
 
 	each_file(list_file_locals, (void *)outfile);
@@ -629,6 +632,18 @@ do_file_warnings (entry, outfile)
 					continue;
 				errfmt =
 	"First set element definition of symbol `%s' (multiply defined)";
+				line_number = -1;
+				break;
+
+			case N_SIZE | N_EXT:
+				errfmt =
+	"Size element definition of symbol `%s' (multiply defined)";
+				line_number = -1;
+				break;
+
+			case N_INDR | N_EXT:
+				errfmt =
+	"Alias definition of symbol `%s' (multiply defined)";
 				line_number = -1;
 				break;
 
