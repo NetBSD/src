@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.44 1998/08/09 21:19:51 perry Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.45 1998/08/18 06:45:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1888,11 +1888,12 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 			error = ENOTEMPTY;
 		goto out;
 	}
-	if (fvp == tdvp)
+	if (fvp == tdvp) {
 		if (v3)
 			error = EINVAL;
 		else
 			error = ENOTEMPTY;
+	}
 	/*
 	 * If source is the same as the destination (that is the
 	 * same vnode with the same name in the same directory),
