@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.22 2003/12/02 16:31:06 briggs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.22 2003/12/02 16:31:06 briggs Exp $");
 
 #include "opt_pci.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pccbbreg.h>
 
 int pci_conf_debug = 0;
 
@@ -427,9 +428,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 {
 	pciconf_dev_t	*pd;
 	pciconf_win_t	*pi, *pm;
-	pcireg_t	class, cmd, icr, bar, mask, bar64, mask64;
+	pcireg_t	class, cmd, icr, bhlc, bar, mask, bar64, mask64, busreg;
 	u_int64_t	size;
-	int		br, width;
+	int		br, width, reg_start, reg_end;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
@@ -456,12 +457,32 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
-	if (   (PCI_CLASS(class) == PCI_CLASS_BRIDGE)
-	    && (PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI)) {
+	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(bhlc)) {
+	case PCI_HDRTYPE_DEVICE:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_END;
+		break;
+	case PCI_HDRTYPE_PPB:
 		pd->ppb = query_bus(pb, pd, dev);
 		if (pd->ppb == NULL)
 			return -1;
 		return 0;
+	case PCI_HDRTYPE_PCB:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PCB_END;
+
+		busreg = pci_conf_read(pb->pc, tag, PCI_BUSNUM);
+		busreg  =  (busreg & 0xff000000) |
+		    pb->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT |
+		    pb->next_busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT |
+		    pb->next_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
+		pci_conf_write(pb->pc, tag, PCI_BUSNUM, busreg);
+
+		pb->next_busno ++;
+		break;
+	default:
+		return -1;
 	}
 
 	icr = pci_conf_read(pb->pc, tag, PCI_INTERRUPT_REG);
@@ -489,7 +510,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	}
 
 	width = 4;
-	for (br = PCI_MAPREG_START; br < PCI_MAPREG_END; br += width) {
+	for (br = reg_start; br < reg_end; br += width) {
 #if 0
 /* XXX Should only ignore if IDE not in legacy mode? */
 		if (PCI_CLASS(class) == PCI_CLASS_MASS_STORAGE &&
