@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.9 2000/10/12 00:28:33 itojun Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.10 2001/01/03 15:41:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.9 2000/10/12 00:28:33 itojun Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.10 2001/01/03 15:41:19 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: login_cap.c,v 1.9 2000/10/12 00:28:33 itojun Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -73,6 +74,8 @@ login_getclass(char *class)
 	char *classfiles[2];
 	login_cap_t *lc;
 	int res;
+
+	/* class may be NULL */
 
 	if (secure_path(_PATH_LOGIN_CONF) == 0) {
 		classfiles[0] = _PATH_LOGIN_CONF;
@@ -144,6 +147,9 @@ login_getclass(char *class)
 login_cap_t *
 login_getpwclass(const struct passwd *pwd)
 {
+
+	/* pwd may be NULL */
+
 	return login_getclass(pwd ? pwd->pw_class : NULL);
 }
 
@@ -154,6 +160,8 @@ login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 	int status;
 
 	errno = 0;
+
+	_DIAGASSERT(cap != NULL);
 
 	if (!lc || !lc->lc_cap)
 		return (def);
@@ -181,6 +189,8 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	char *res, *sres;
 	int status;
 	quad_t q, r;
+
+	_DIAGASSERT(cap != NULL);
 
 	errno = 0;
 	if (!lc || !lc->lc_cap)
@@ -258,6 +268,8 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	int status;
 	quad_t q;
 
+	_DIAGASSERT(cap != NULL);
+
 	errno = 0;
 	if (!lc || !lc->lc_cap)
 		return (def);
@@ -302,6 +314,8 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	int status;
 	quad_t q;
 
+	_DIAGASSERT(cap != NULL);
+
 	errno = 0;
 
 	if (!lc || !lc->lc_cap)
@@ -339,6 +353,9 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 int
 login_getcapbool(login_cap_t *lc, char *cap, u_int def)
 {
+
+	_DIAGASSERT(cap != NULL);
+
 	if (!lc || !lc->lc_cap)
 		return (def);
 
@@ -348,6 +365,7 @@ login_getcapbool(login_cap_t *lc, char *cap, u_int def)
 void
 login_close(login_cap_t *lc)
 {
+
 	if (lc) {
 		if (lc->lc_class)
 			free(lc->lc_class);
@@ -387,6 +405,8 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 	struct rlimit r;
 	char name_cur[32];
 	char name_max[32];
+
+	_DIAGASSERT(name != NULL);
 
 	sprintf(name_cur, "%s-cur", name);
 	sprintf(name_max, "%s-max", name);
@@ -586,6 +606,8 @@ setuserpath(login_cap_t *lc, char *home)
 	char *path;
 	char *p, *q;
 
+	_DIAGASSERT(home != NULL);
+
 	hlen = strlen(home);
 
 	p = path = login_getcapstr(lc, "path", NULL, NULL);
@@ -644,6 +666,9 @@ strtosize(char *str, char **endptr, int radix)
 {
 	u_quad_t num, num2;
 	char *expr, *expr2;
+
+	_DIAGASSERT(str != NULL);
+	/* endptr may be NULL */
 
 	errno = 0;
 	num = strtouq(str, &expr, radix);
@@ -713,6 +738,10 @@ erange:
 static u_quad_t
 strtolimit(char *str, char **endptr, int radix)
 {
+
+	_DIAGASSERT(str != NULL);
+	/* endptr may be NULL */
+
 	if (isinfinite(str)) {
 		if (endptr)
 			*endptr = str + strlen(str);
@@ -732,6 +761,8 @@ isinfinite(const char *s)
 		NULL
 	};
 	const char **i;
+
+	_DIAGASSERT(s != NULL);
 
 	for (i = infs; *i; i++) {
 		if (!strcasecmp(s, *i))

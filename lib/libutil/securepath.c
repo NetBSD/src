@@ -1,4 +1,4 @@
-/*	$NetBSD: securepath.c,v 1.4 2000/09/18 16:36:33 ad Exp $	*/
+/*	$NetBSD: securepath.c,v 1.5 2001/01/03 15:41:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,19 +36,22 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: securepath.c,v 1.4 2000/09/18 16:36:33 ad Exp $");
+__RCSID("$NetBSD: securepath.c,v 1.5 2001/01/03 15:41:19 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <util.h>
+#include <assert.h>
 #include <syslog.h>
+#include <util.h>
 
 int
 secure_path(const char *path)
 {
 	struct stat sb;
+
+	_DIAGASSERT(path != NULL);
 
 	/*
 	 * If not a regular file, or is owned/writeable by someone

@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.28 2000/12/08 21:41:14 tron Exp $	*/
+/*	$NetBSD: passwd.c,v 1.29 2001/01/03 15:41:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.28 2000/12/08 21:41:14 tron Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.29 2001/01/03 15:41:19 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,8 @@ pw_setprefix(const char *new_prefix)
 {
 	size_t length;
 
+	_DIAGASSERT(new_prefix != NULL);
+
 	length = strlen(new_prefix);
 	if (length < sizeof(pw_prefix)) {
 		(void)strcpy(pw_prefix, new_prefix);
@@ -96,6 +98,8 @@ static const char *
 pw_filename(const char *filename)
 {
 	static char newfilename[MAXPATHLEN];
+
+	_DIAGASSERT(filename != NULL);
 
 	if (pw_prefix[0] == '\0')
 		return filename;
@@ -398,6 +402,8 @@ trim_whitespace(char *line)
 {
 	char *p;
 
+	_DIAGASSERT(line != NULL);
+
 	/* Remove leading spaces */
 	p = line;
 	while (isspace((unsigned char) *p))
@@ -417,6 +423,9 @@ static int
 read_line(FILE *fp, char *line, int max)
 {
 	char   *p;
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(line != NULL);
 
 	/* Read one line of config */
 	if (fgets(line, max, fp) == NULL)
@@ -445,6 +454,7 @@ pw_default(const char *option)
 	};
 	int i;
 
+	_DIAGASSERT(option != NULL);
 	for (i = 0; i < sizeof(options) / sizeof(options[0]); i++)
 		if (strcmp(options[i][0], option) == 0)
 			return (options[i][1]);
@@ -465,6 +475,10 @@ pw_getconf(char *data, size_t max, const char *key, const char *option)
 	static char result[LINE_MAX];
 	int got, found;
 	const char *cp;
+
+	_DIAGASSERT(data != NULL);
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(option != NULL);
 
 	got = 0;
 	found = 0;
