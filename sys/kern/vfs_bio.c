@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.97 2003/11/08 04:22:35 dbj Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.98 2003/12/02 03:36:33 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.97 2003/11/08 04:22:35 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.98 2003/12/02 03:36:33 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,10 @@ bremfree(bp)
 	 * it is needed (e.g. to reset the tail pointer).
 	 *
 	 * NB: This makes an assumption about how tailq's are implemented.
+	 *
+	 * We break the TAILQ abstraction in order to efficiently remove a
+	 * buffer from its freelist without having to know exactly which
+	 * freelist it is on.
 	 */
 	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
