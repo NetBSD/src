@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.25 1997/04/28 15:59:20 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.26 1997/05/13 06:34:00 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -338,15 +338,13 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 		    != SCI_CSR_DREQ)
 			break;
 	}
-	if (i != 0)
-#ifdef __notyet__	/* not sure why this is ever necessary... */
-		*byte_data = 0;
-#else
-		;
-#endif
-	else
+	if (i == 0)
 		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
 			ncr_sc->sc_dev.dv_xname);
+#ifdef __notyet__	/* not sure why this is ever necessary... */
+	else
+		*byte_data = 0;
+#endif
 
 	sbc_wait_not_req(ncr_sc);
 interrupt:
@@ -392,9 +390,10 @@ sbc_drq_intr(p)
 	volatile u_int8_t *drq;
 	u_int8_t *data;
 	int count, dcount, resid;
-#ifdef SBC_WRITE_HACK
 	u_int8_t tmp;
-#endif
+
+	/* Work around lame gcc initialization bug */
+	(void)&drq;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -413,10 +412,10 @@ sbc_drq_intr(p)
 	 * switching out of DATA-IN/OUT before we're done with the
 	 * current transfer.
 	 */
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)mac68k_buserr_addr
 				  - (u_long)sc->sc_drq_addr));
@@ -443,7 +442,8 @@ sbc_drq_intr(p)
 	}
 
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
-#if notyet /* XXX */
+		dcount = 0;
+
 		/*
 		 * Get the source address aligned.
 		 */
@@ -482,15 +482,6 @@ sbc_drq_intr(p)
 #undef W4
 			data = (u_int8_t *)long_data;
 			drq = (u_int8_t *)long_drq;
-#else /* notyet */
-		/*
-		 * Start the transfer.
-		 */
-		while (dh->dh_len) {
-			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
-			drq = (volatile u_int8_t *)sc->sc_drq_addr;
-			data = (u_int8_t *)dh->dh_addr;
-#endif /* notyet */
 
 #define W1		*drq++ = *data++
 			while (count) {
@@ -502,21 +493,14 @@ sbc_drq_intr(p)
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 
-#ifdef SBC_WRITE_HACK
 		/*
 		 * XXX -- Read a byte from the SBC to trigger a /BERR.
 		 * This seems to be necessary for us to notice that
 		 * the target has disconnected.  Ick.  06 jun 1996 (sr)
 		 */
-		if (dcount >= MAX_DMA_LEN) {
-#if 0
-			while ((*ncr_sc->sci_csr & SCI_CSR_ACK) == 0)
-				;
-#endif
+		if (dcount >= MAX_DMA_LEN)
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
-		}
 		tmp = *drq;
-#endif
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.
