@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.32 1999/07/02 05:52:14 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.33 1999/07/02 07:11:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.32 1999/07/02 05:52:14 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.33 1999/07/02 07:11:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,7 +370,10 @@ cmd
 			}
 			free(tmp);
 			tmp = NULL;
-
+			if (pdata >= 0) {
+				(void) close(pdata);
+				pdata = -1;
+			}
 			reply(200, "EPRT command successful.");
 		eprt_done:;
 		}
