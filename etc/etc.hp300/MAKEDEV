@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 2002/02/25 07:35:03 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.43 2002/03/03 14:16:02 toshii Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,7 +70,7 @@
 #	wsmux*	wscons events multiplexor
 #	wsfont*	console font control
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
 #	ite*	terminal emulator interface to HP300 graphics devices
