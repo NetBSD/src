@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.85 2003/10/29 21:28:37 mycroft Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.86 2003/11/05 10:18:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.85 2003/10/29 21:28:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.86 2003/11/05 10:18:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1255,7 +1255,7 @@ loop1:
 		    if (!error) {
 			if (vn_start_write(vp, &mntp, V_NOWAIT) != 0) {
 			    VOP_UNLOCK(vp, 0);
-			    error = vn_start_write(NULL, &mntp, V_WAIT);
+			    vn_start_write(NULL, &mntp, V_WAIT);
 			    vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			}
 			if (!error) {
