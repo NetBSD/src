@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.3 2003/04/01 15:09:55 thorpej Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.4 2003/05/04 22:01:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -302,8 +302,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pic.pic_hwunmask = ioapic_hwunmask;
 	sc->sc_pic.pic_addroute = ioapic_addroute;
 	sc->sc_pic.pic_delroute = ioapic_delroute;
-	sc->sc_pic.pic_edge_stubs = ioapic_stubs;
-	sc->sc_pic.pic_level_stubs = ioapic_stubs;
+	sc->sc_pic.pic_edge_stubs = ioapic_edge_stubs;
+	sc->sc_pic.pic_level_stubs = ioapic_level_stubs;
 
 	apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
