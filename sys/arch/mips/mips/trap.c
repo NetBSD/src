@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 1999/01/15 01:23:15 castor Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 1999/01/16 03:31:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 1999/01/15 01:23:15 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 1999/01/16 03:31:49 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -904,11 +904,17 @@ dealfpu(status, cause, opc)
 {
 	struct frame *f = (struct frame *)curproc->p_md.md_regs;
 	unsigned v0;
+	int sig;
 
 	set_cp0sr(status | MIPS_SR_COP_1_BIT);
 	v0 = get_fpcsr();
-	if ((int)(v0 << (31 - 17)) >= 0) /* ??? */
-		goto unimplemented;
+
+	/* was it 'unimplemented operation' ? */
+	if ((v0 & MIPS_FPU_EXCEPTION_UNIMPL) == 0) {
+		sig = SIGFPE;
+		goto notforemulation;
+	}
+
 	if (DELAYBRANCH(cause)) {
 		f->f_regs[PC] = MachEmulateBranch(f, opc, v0, 0);
 		v0 = *(unsigned *)(opc + sizeof(unsigned));
@@ -917,18 +923,19 @@ dealfpu(status, cause, opc)
 		f->f_regs[PC] = opc + sizeof(unsigned);
 		v0 = *(unsigned *)opc;
 	}
-	if (MIPS_OPCODE_C1 != (v0 >> MIPS_OPCODE_SHIFT))
-		goto unimplemented;
+	/* make sure the instruction is for FPU */
+	if (MIPS_OPCODE_C1 != (v0 >> MIPS_OPCODE_SHIFT)) {
+		sig = SIGILL;
+		goto notforemulation;
+	}
 
 	MachEmulateFP(v0);
 	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
 	return;
 
-unimplemented:
+notforemulation:
 	clr_fpcsr();
-	f->f_regs[CAUSE] = cause;
-	f->f_regs[BADVADDR] = 0;
-	trapsignal(curproc, SIGFPE, v0);
+	trapsignal(curproc, sig, v0);
 	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
 	return;
 }
