@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.35 2000/05/01 09:44:54 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.36 2000/07/18 07:16:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.35 2000/05/01 09:44:54 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.36 2000/07/18 07:16:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
 char	edithelp[] =	"toggle command line editing";
 char	epsv4help[] =	"toggle use of EPSV/EPRT on IPv4 ftp";
+char	feathelp[] =	"show FEATures supported by remote system";
 char	formhelp[] =	"set file transfer format";
 char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
@@ -111,23 +112,28 @@ char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
 char	lpagehelp[] =	"view a local file through your pager";
 char	lpwdhelp[] =	"print local working directory";
-char	lshelp[] =	"list contents of remote directory";
+char	lshelp[] =	"list contents of remote path";
 char	macdefhelp[] =  "define a macro";
 char	mdeletehelp[] =	"delete multiple files";
-char	mdirhelp[] =	"list contents of multiple remote directories";
 char	mgethelp[] =	"get multiple files";
 char	fgethelp[] =	"get files using a localfile as a source of names";
 char	mkdirhelp[] =	"make directory on the remote machine";
 char	mlshelp[] =	"list contents of multiple remote directories";
+char	mlsdhelp[] =	"list contents of remote directory in a machine "
+			"parsable form";
+char	mlsthelp[] =	"list remote path in a machine parsable form";
 char	modehelp[] =	"set file transfer mode";
 char	modtimehelp[] = "show last modification time of remote file";
 char	mputhelp[] =	"send multiple files";
 char	newerhelp[] =	"get file if remote file is newer than local file ";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
+char	optshelp[] =	"show or set options for remote commands";
 char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
-char	plshelp[] =	"list contents of remote directory through your pager";
+char	plshelp[] =	"list contents of remote path through your pager";
+char	pmlsdhelp[] =	"list contents of remote directory in a machine "
+			"parsable form through your pager";
 char	porthelp[] =	"toggle use of PORT/LPRT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
 			"retrieved files";
@@ -198,6 +204,7 @@ struct cmd cmdtab[] = {
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
 	{ "epsv4",	epsv4help,	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
+	{ "features",	feathelp,	0, 1, 1, CMPL0		feat },
 	{ "fget",	fgethelp,	1, 1, 1, CMPL(l)	fget },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
@@ -215,10 +222,12 @@ struct cmd cmdtab[] = {
 	{ "ls",		lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "macdef",	macdefhelp,	0, 0, 0, CMPL0		macdef },
 	{ "mdelete",	mdeletehelp,	1, 1, 1, CMPL(R)	mdelete },
-	{ "mdir",	mdirhelp,	1, 1, 1, CMPL(R)	mls },
+	{ "mdir",	mlshelp,	1, 1, 1, CMPL(R)	mls },
 	{ "mget",	mgethelp,	1, 1, 1, CMPL(R)	mget },
 	{ "mkdir",	mkdirhelp,	0, 1, 1, CMPL(r)	makedir },
 	{ "mls",	mlshelp,	1, 1, 1, CMPL(R)	mls },
+	{ "mlsd",	mlsdhelp,	1, 1, 1, CMPL(r)	ls },
+	{ "mlst",	mlsthelp,	1, 1, 1, CMPL(r)	mlst },
 	{ "mode",	modehelp,	0, 1, 1, CMPL0		setftmode },
 	{ "modtime",	modtimehelp,	0, 1, 1, CMPL(r)	modtime },
 	{ "more",	pagehelp,	1, 1, 1, CMPL(r)	page },
@@ -229,10 +238,12 @@ struct cmd cmdtab[] = {
 	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
 	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
 	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
+	{ "opts",	optshelp,	0, 1, 1, CMPL0		opts },
 	{ "page",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
-	{ "pdir",	plshelp,	1, 1, 1, CMPL(rl)	ls },
-	{ "pls",	plshelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "pdir",	plshelp,	1, 1, 1, CMPL(r)	ls },
+	{ "pls",	plshelp,	1, 1, 1, CMPL(r)	ls },
+	{ "pmlsd",	pmlsdhelp,	1, 1, 1, CMPL(r)	ls },
 	{ "preserve",	preservehelp,	0, 0, 0, CMPL0		setpreserve },
 	{ "progress",	progresshelp,	0, 0, 0, CMPL0		setprogress },
 	{ "prompt",	prompthelp,	0, 0, 0, CMPL0		setprompt },
