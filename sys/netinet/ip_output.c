@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.52 1998/10/20 01:46:27 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.53 1998/10/26 17:31:01 ws Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -1010,6 +1010,7 @@ ip_setmoptions(optname, imop, m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
+			bzero((caddr_t)&ro, sizeof(ro));
 			ro.ro_rt = NULL;
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
