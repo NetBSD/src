@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.25.4.1 1996/11/10 21:57:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -171,6 +171,10 @@ rip_output(m, va_alist)
 	 * Otherwise, allocate an mbuf for a header and fill it in.
 	 */
 	if ((inp->inp_flags & INP_HDRINCL) == 0) {
+		if ((m->m_pkthdr.len + sizeof(struct ip)) > IP_MAXPACKET) {
+			m_freem(m);
+			return (EMSGSIZE);
+		}
 		M_PREPEND(m, sizeof(struct ip), M_WAIT);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
@@ -182,6 +186,10 @@ rip_output(m, va_alist)
 		ip->ip_ttl = MAXTTL;
 		opts = inp->inp_options;
 	} else {
+		if (m->m_pkthdr.len > IP_MAXPACKET) {
+			m_freem(m);
+			return (EMSGSIZE);
+		}
 		ip = mtod(m, struct ip *);
 		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_id++);
