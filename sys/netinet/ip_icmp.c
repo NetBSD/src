@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.83 2004/04/26 01:31:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.83 2004/04/26 01:31:56 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -371,13 +371,7 @@ struct sockaddr_in icmpmask = { 8, 0 };
  * Process a received ICMP message.
  */
 void
-#if __STDC__
 icmp_input(struct mbuf *m, ...)
-#else
-icmp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int proto;
 	struct icmp *icp;
