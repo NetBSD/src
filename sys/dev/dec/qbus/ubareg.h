@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.8 1996/07/20 19:00:23 ragge Exp $ */
+/*	$NetBSD: ubareg.h,v 1.9 1996/08/20 13:38:02 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -87,11 +87,7 @@
  */
 #define UBAPAGES	496
 #define NUBMREG		496
-/* #if defined(GATEWAY) && !defined(QNIVERT) */
-/* #define	QBAPAGES	1024 */
-/* #else */
-#define QBAPAGES	UBAPAGES
-/* #endif */
+#define	QBAPAGES	1024
 #define UBAIOADDR	0760000		/* start of I/O page */
 #define UBAIOPAGES	16
 
@@ -112,7 +108,7 @@ struct dwbua_regs {
 	int	pad3[10];
 	int	bua_bdps[20];		/* buffered data path space *//*???*/
 	int	pad4[8];
-	pt_entry_t bua_map[UBAPAGES];	/* unibus map registers */
+	struct pte bua_map[UBAPAGES];	/* unibus map registers */
 	int	pad5[UBAIOPAGES];	/* no maps for device address space */
 };
 
@@ -162,7 +158,7 @@ struct uba_regs {
 	int	uba_brrvr[4];		/* receive vector registers */
 	int	uba_dpr[16];		/* buffered data path register */
 	int	pad2[480];
-	pt_entry_t uba_map[UBAPAGES];	/* unibus map register */
+	struct pte uba_map[UBAPAGES];	/* unibus map register */
 	int	pad3[UBAIOPAGES];	/* no maps for device address space */
 };
 #endif
@@ -222,46 +218,13 @@ struct uba_regs {
 #define UBADPR_DPF	0x20000000	/* DP function (RO) */
 #define UBADPR_BS	0x007f0000	/* buffer state field */
 #define UBADPR_BUBA	0x0000ffff	/* buffered UNIBUS address */
-#define UBA_PURGE780(uba, bdp) \
-    ((uba)->uba_dpr[(int)bdp] |= UBADPR_BNE)
-#else
-#define UBA_PURGE780(uba, bdp)
 #endif
 #ifdef DW750
 #define UBADPR_ERROR	0x80000000	/* error occurred */
 #define UBADPR_NXM	0x40000000	/* nxm from memory */
 #define UBADPR_UCE	0x20000000	/* uncorrectable error */
 #define UBADPR_PURGE	0x00000001	/* purge bdp */
-/* the DELAY is for a hardware problem */
-#define UBA_PURGE750(uba, bdp) { \
-    ((uba)->uba_dpr[(int)bdp] |= (UBADPR_PURGE|UBADPR_NXM|UBADPR_UCE)); \
-    {volatile int N=8;while(N--);} \
-}
-#else
-#define UBA_PURGE750(uba, bdp)
 #endif
-
-/*
- * Macros for fast buffered data path purging in time-critical routines.
- *
- * Too bad C pre-processor doesn't have the power of LISP in macro
- * expansion...
- */
-
-/* THIS IS WRONG, should use pointer to uba_hd */
-#if DWBUA || DW780 || DW750
-#define UBAPURGE(uba, bdp) { \
-	switch (vax_cputype) { \
-	case VAX_8200: UBA_PURGEBUA(uba, bdp); break; \
-	case VAX_8600: case VAX_780: UBA_PURGE780((uba), (bdp)); break; \
-	case VAX_750: UBA_PURGE750((uba), (bdp)); break; \
-	} \
-}
-#else
-#define UBAPURGE(uba, bdp)
-#endif
-
-
 
 /* uba_mr[] */
 #define UBAMR_MRV	0x80000000	/* map register valid */
@@ -286,9 +249,9 @@ struct uba_regs {
  */
 
 #if VAX630 || VAX650
-#define QBAMAP630	((struct pte *)0x20088000)
-#define QMEM630		0x30000000
-#define QIOPAGE630	0x20000000
+#define QBAMAP	0x20088000
+#define QMEM	0x30000000
+#define QIOPAGE	0x20000000
 /*
  * Q-bus control registers
  */
