@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.48 2001/06/20 01:07:22 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.49 2001/06/20 01:20:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ typedef struct {
 #define	EM_MIPS_X	51	/* Stanford MIPS-X */
 #define	EM_COLDFIRE	52	/* Motorola Coldfire */
 #define	EM_68HC12	53	/* Motorola MC68HC12 */
-#define EM_X8664	62	/* AMD x86-64 */
+#define EM_X86_64	62	/* AMD x86-64 */
 #define	EM_VAX		75	/* DIGITAL VAX */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
