@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.21 1998/08/25 20:59:39 ross Exp $	*/
+/*	$NetBSD: quota.c,v 1.22 1999/12/16 17:29:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.21 1998/08/25 20:59:39 ross Exp $");
+__RCSID("$NetBSD: quota.c,v 1.22 1999/12/16 17:29:52 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,9 +190,9 @@ usage()
 {
 
 	fprintf(stderr, "%s\n%s\n%s\n",
-		"Usage: quota [-guqv]",
-		"\tquota [-qv] -u username ...",
-		"\tquota [-qv] -g groupname ...");
+	    "Usage: quota [-guqv]",
+	    "\tquota [-qv] -u username ...",
+	    "\tquota [-qv] -g groupname ...");
 	exit(1);
 }
 
@@ -350,7 +350,8 @@ showquotas(type, id, name)
 			    >= qup->dqblk.dqb_bsoftlimit) {
 				if (qup->dqblk.dqb_btime > now)
 					msgb = "In block grace period on";
-				else	msgb = "Over block quota on";
+				else
+					msgb = "Over block quota on";
 			}
 		}
 		if (qflag) {
@@ -373,21 +374,24 @@ showquotas(type, id, name)
 				printf("%s\n", qup->fsname);
 				nam = "";
 			} 
-			printf("%15s%8d%c%7d%8d%8s"
-				, nam
-				, dbtob(qup->dqblk.dqb_curblocks) / 1024
-				, (msgb == (char *)0) ? ' ' : '*'
-				, dbtob(qup->dqblk.dqb_bsoftlimit) / 1024
-				, dbtob(qup->dqblk.dqb_bhardlimit) / 1024
-				, (msgb == (char *)0) ? ""
-				    : timeprt(qup->dqblk.dqb_btime));
+			printf("%12s%9d%c%8d%9d%8s"
+			    , nam
+			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
+				/ 1024)
+			    , (msgb == (char *)0) ? ' ' : '*'
+			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
+				/ 1024)
+			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
+				/ 1024)
+			    , (msgb == (char *)0) ? ""
+			        : timeprt(qup->dqblk.dqb_btime));
 			printf("%8d%c%7d%8d%8s\n"
-				, qup->dqblk.dqb_curinodes
-				, (msgi == (char *)0) ? ' ' : '*'
-				, qup->dqblk.dqb_isoftlimit
-				, qup->dqblk.dqb_ihardlimit
-				, (msgi == (char *)0) ? ""
-				    : timeprt(qup->dqblk.dqb_itime)
+			    , qup->dqblk.dqb_curinodes
+			    , (msgi == (char *)0) ? ' ' : '*'
+			    , qup->dqblk.dqb_isoftlimit
+			    , qup->dqblk.dqb_ihardlimit
+			    , (msgi == (char *)0) ? ""
+			        : timeprt(qup->dqblk.dqb_itime)
 			);
 			continue;
 		}
@@ -406,16 +410,16 @@ heading(type, id, name, tag)
 	printf("Disk quotas for %s %s (%cid %ld): %s\n", qfextension[type],
 	    name, *qfextension[type], (u_long)id, tag);
 	if (!qflag && tag[0] == '\0') {
-		printf("%15s%8s %7s%8s%8s%8s %7s%8s%8s\n"
-			, "Filesystem"
-			, "blocks"
-			, "quota"
-			, "limit"
-			, "grace"
-			, "files"
-			, "quota"
-			, "limit"
-			, "grace"
+		printf("%12s%9s %8s%9s%8s%8s %7s%8s%8s\n"
+		    , "Filesystem"
+		    , "blocks"
+		    , "quota"
+		    , "limit"
+		    , "grace"
+		    , "files"
+		    , "quota"
+		    , "limit"
+		    , "grace"
 		);
 	}
 }
