@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1998/02/08 18:37:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +97,11 @@
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <sys/sysctl.h>
 
 #include "opt_useleds.h"
@@ -109,7 +116,14 @@
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
+#if defined(UVM)
+vm_map_t exec_map = NULL;  
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
 vm_map_t buffer_map;
+#endif
+
 extern vm_offset_t avail_end;
 
 /*
@@ -199,9 +213,14 @@ hp300_init()
 	 * Tell the VM system about available physical memory.  The
 	 * hp300 only has one segment.
 	 */
+#if defined(UVM)
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end));
+#else
 	vm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end));
-#endif
+#endif /* UVM */
+#endif /* MACHINE_NEW_NONCONTIG */
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
@@ -293,8 +312,13 @@ cpu_startup()
 	 * and the give everything true virtual addresses.
 	 */
 	size = (vm_size_t)allocsys((caddr_t)0);
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
+#endif
 	if ((allocsys(v) - v) != size)
 		panic("startup: talbe size inconsistency");
 
@@ -303,15 +327,53 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vm_offset_t)buffers;
+#else
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif /* UVM */
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
+#if defined(UVM)
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL) 
+				panic("cpu_startup: not enough memory for "
+				    "buffer cache");
+#if defined(PMAP_NEW)
+			pmap_kenter_pgs(curbuf, &pg, 1);
+#else
+			pmap_enter(kernel_map->pmap, curbuf,
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+#endif
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else /* ! UVM */
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 
@@ -326,24 +388,43 @@ cpu_startup()
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif /* UVM */
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
+
 	/*
 	 * Allocate a submap for physio
 	 */
+#if defined(UVM)
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+#else
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
+#endif
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
+
 	/*
 	 * Initialize callouts
 	 */
@@ -355,7 +436,11 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
+#if defined(UVM)
+	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+#else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -365,9 +450,15 @@ cpu_startup()
 	 * XXX This is bogus; should just fix KERNBASE and
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
+#else
 	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
 	    != KERN_SUCCESS)
 		panic("can't mark page 0 off-limits");
+#endif
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
@@ -376,9 +467,15 @@ cpu_startup()
 	 * XXX Should be m68k_trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
+#else
 	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
+#endif
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -455,7 +552,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	return (v);
 }
