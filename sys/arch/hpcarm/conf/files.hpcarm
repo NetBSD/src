@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.30 2001/11/26 20:49:52 thorpej Exp $
+#	$NetBSD: files.hpcarm,v 1.31 2001/11/27 00:24:44 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -83,8 +83,6 @@ include	"dev/hpc/files.bicons"
 include	"dev/hpc/files.hpcfb"
 include	"dev/hpc/files.hpckbd"
 include	"dev/hpc/files.hpctp"
-
-file	arch/arm/arm32/intr.c
 
 # LCD
 device	ipaqlcd: hpcfbif
