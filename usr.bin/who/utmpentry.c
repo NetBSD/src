@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.2 2002/08/01 23:36:30 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.3 2002/08/01 23:51:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.2 2002/08/01 23:36:30 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.3 2002/08/01 23:51:42 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -66,7 +66,7 @@ static time_t utmptime = 0;
 static void getentryx(struct utmpentry *, struct utmpx *);
 static time_t utmpxtime = 0;
 #endif
-#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
+#if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 static int setup(const char *);
 static void adjust_size(struct utmpentry *e);
 #endif
@@ -75,7 +75,7 @@ int maxname = 8, maxline = 8, maxhost = 16;
 static int numutmp = 0;
 static struct utmpentry *ehead;
 
-#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
+#if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 static void
 adjust_size(struct utmpentry *e)
 {
@@ -97,10 +97,10 @@ setup(const char *fname)
 
 	if (fname == NULL) {
 #ifdef SUPPORT_UTMPX
-		setutent();
+		setutxent();
 #endif
 #ifdef SUPPORT_UTMP
-		setutxent();
+		setutent();
 #endif
 	} else {
 		size_t len = strlen(fname);
@@ -115,7 +115,7 @@ setup(const char *fname)
 			errx(1, "utmpx support not compiled in");
 #endif
 		} else {
-#ifdef SUPPORT_UTMPX
+#ifdef SUPPORT_UTMP
 			if (utmpname(fname) == 0)
 				err(1, "Cannot open `%s'", fname);
 #else
@@ -169,11 +169,10 @@ getutentries(const char *fname, struct utmpentry **epp)
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 	struct utmpentry *ep;
-#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
 	int what = setup(fname);
 	struct utmpentry **nextp = &ehead;
-#endif
 	if (what == 0) {
 		*epp = ehead;
 		return numutmp;
@@ -181,6 +180,7 @@ getutentries(const char *fname, struct utmpentry **epp)
 		ehead = NULL;
 		numutmp = 0;
 	}
+#endif
 
 #ifdef SUPPORT_UTMPX
 	while ((what & 1) && (utx = getutxent()) != NULL) {
@@ -232,9 +232,12 @@ getutentries(const char *fname, struct utmpentry **epp)
 			numutmp++;
 		}
 	}
-#endif
 	*epp = ehead;
 	return numutmp;
+#else
+	*epp = NULL;
+	return 0;
+#endif
 }
 
 #ifdef SUPPORT_UTMP
