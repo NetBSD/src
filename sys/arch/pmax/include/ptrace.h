@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4 1994/10/26 21:09:56 cgd Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.5 1995/12/20 02:00:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,14 @@
  */
 
 /*
- * Machine dependent trace commands.
+ * Mips-dependent ptrace definitions.
  *
- * None for the pmax at this time.
  */
+
+#define	PT_GETREGS	(PT_FIRSTMACH + 0)
+#define	PT_SETREGS	(PT_FIRSTMACH + 1)
+
+#ifdef notyet
+#define	PT_GETFPREGS	(PT_FIRSTMACH + 2)
+#define	PT_SETFPREGS	(PT_FIRSTMACH + 3)
+#endif
