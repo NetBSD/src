@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.77 1994/04/09 03:43:36 mycroft Exp $
+ *	$Id: wd.c,v 1.78 1994/04/20 07:23:54 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -122,6 +122,7 @@ struct wd_softc {
 #define	WDF_BSDLABEL	0x00010	/* has a BSD disk label */
 #define	WDF_BADSECT	0x00020	/* has a bad144 badsector table */
 #define	WDF_WRITEPROT	0x00040	/* manual unit write protect */
+	TAILQ_ENTRY(wd_softc) sc_drivechain;
 	struct buf sc_q;
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
 	struct disklabel sc_label;	/* device configuration data */
@@ -133,14 +134,16 @@ struct wdc_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	struct buf sc_q;
 	u_char	sc_flags;
+#define	WDCF_ACTIVE	0x00001	/* controller is active */
 #define	WDCF_SINGLE	0x00004	/* sector at a time mode */
 #define	WDCF_ERROR	0x00008	/* processing a disk error */
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
 	u_short	sc_iobase;	/* i/o port base */
 	int	sc_timeout;	/* timeout counter */
+	int	sc_errors;	/* count of errors during current transfer */
+	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
 };
 
 int wdcprobe(), wdprobe(), wdcintr();
@@ -254,6 +257,7 @@ wdcattach(parent, self, aux)
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, &wa, wdprint);
 
+	TAILQ_INIT(&wdc->sc_drives);
 	wdctimeout(wdc);
 	wdc->sc_ih.ih_fun = wdcintr;
 	wdc->sc_ih.ih_arg = wdc;
@@ -333,7 +337,6 @@ void
 wdstrategy(bp)
 	struct buf *bp;
 {
-	struct buf *dp;
 	struct wd_softc *wd;	/* disk unit to do the IO */
 	struct wdc_softc *wdc;
 	int lunit = WDUNIT(bp->b_dev);
@@ -371,14 +374,16 @@ wdstrategy(bp)
 	bp->b_cylin = 0;
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	dp = &wd->sc_q;
 	s = splbio();
-	wddisksort(dp, bp);
-	if (dp->b_active == 0)
+	wddisksort(&wd->sc_q, bp);
+	if (!wd->sc_q.b_active)
 		wdstart(wd);		/* Start drive. */
-	wdc = (void *)wd->sc_dev.dv_parent;
-	if (wdc->sc_q.b_active == 0)
-		wdcstart(wdc);		/* Start controller. */
+#ifdef DIAGNOSTIC
+	else if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
+		printf("wdstrategy: controller inactive\n");
+		wdcstart(wdc);
+	}
+#endif
 	splx(s);
 	return;
     
@@ -410,29 +415,16 @@ static void
 wdstart(wd)
 	struct wd_softc *wd;
 {
-	struct buf *dp;
-	struct wdc_softc *wdc;
+	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
+	int active = wdc->sc_drives.tqh_first != 0;
 
-	dp = &wd->sc_q;
-    
-	/* Unit already active? */
-	if (dp->b_active)
-		return;
-	/* Anything to start? */
-	if (dp->b_actf == NULL)
-		return;	
-    
 	/* Link onto controller queue. */
-	dp->b_forw = NULL;
-	wdc = (void *)wd->sc_dev.dv_parent;
-	if (wdc->sc_q.b_forw == NULL)
-		wdc->sc_q.b_forw = dp;
-	else
-		wdc->sc_q.b_actl->b_forw = dp;
-	wdc->sc_q.b_actl = dp;
+	wd->sc_q.b_active = 1;
+	TAILQ_INSERT_TAIL(&wdc->sc_drives, wd, sc_drivechain);
     
-	/* Mark the drive unit as busy. */
-	dp->b_active = 1;
+	/* If controller not already active, start it. */
+	if (!active)
+		wdcstart(wdc);
 }
 
 void
@@ -446,22 +438,26 @@ wdfinish(wd, bp)
 	dk_busy &= ~(1 << wd->sc_drive);
 #endif
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR);
-	wdc->sc_q.b_errcnt = 0;
+	wdc->sc_errors = 0;
 	/*
 	 * If this is the only buf or the last buf in the transfer (taking into
 	 * account any residual, in case we erred)...
 	 */
 	wd->sc_mbcount -= wd->sc_bcount;
 	if (wd->sc_mbcount == 0) {
+		wd->sc_mskip = 0;
 		/*
 		 * ...then move this drive to the end of the queue to give
 		 * others a `fair' chance.
 		 */
-		wdc->sc_q.b_forw = wd->sc_q.b_forw;
-		wd->sc_mskip = 0;
-		wd->sc_q.b_active = 0;
-		if (wd->sc_q.b_actf)
-			wdstart(wd);
+		if (wd->sc_drivechain.tqe_next) {
+			TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
+			if (bp->b_actf) {
+				TAILQ_INSERT_TAIL(&wdc->sc_drives, wd,
+				    sc_drivechain);
+			} else
+				wd->sc_q.b_active = 0;
+		}
 	}
 	bp->b_resid = wd->sc_bcount;
 	bp->b_flags &= ~B_XXX;
@@ -484,42 +480,34 @@ wdcstart(wdc)
 	struct wd_softc *wd;	/* disk unit for IO */
 	struct buf *bp;
 	struct disklabel *lp;
-	struct buf *dp;
 	long blknum, cylin, head, sector;
 	long secpertrk, secpercyl;
 	int xfrblknum;
-	int lunit;
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
-	dp = wdc->sc_q.b_forw;
-	if (dp == NULL) {
-		wdc->sc_q.b_active = 0;
+	wd = wdc->sc_drives.tqh_first;
+	if (wd == NULL)
 		return;
-	}
     
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	bp = dp->b_actf;
+	bp = wd->sc_q.b_actf;
 	if (bp == NULL) {
-		dp->b_active = 0;
-		wdc->sc_q.b_forw = dp->b_forw;
+		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
+		wd->sc_q.b_active = 0;
 		goto loop;
 	}
     
-	/* Obtain controller and drive information */
-	lunit = WDUNIT(bp->b_dev);
-	wd = wdcd.cd_devs[lunit];
-
-	if (wdc->sc_q.b_errcnt >= WDIORETRIES) {
+	if (wdc->sc_errors >= WDIORETRIES) {
 		wderror(wd, bp, "hard error");
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		wdfinish(wd, bp);
 		goto loop;
 	}
-    
-	/* Mark controller active and set a timeout. */
-	wdc->sc_q.b_active = 1;
+
+	/* Mark the controller active and set a timeout. */
+	wdc->sc_flags |= WDCF_ACTIVE;
 	wdc->sc_timeout = 4;
     
 	/* Do control operations specially. */
@@ -551,7 +539,7 @@ loop:
 	blknum = bp->b_blkno + wd->sc_skip;
 #ifdef WDDEBUG
 	if (wd->sc_skip == 0)
-		printf("\nwdcstart %d: %s %d@%d; map ", lunit,
+		printf("\nwdcstart %s: %s %d@%d; map ", wd->sc_dev.dv_xname,
 		    (bp->b_flags & B_READ) ? "read" : "write", bp->b_bcount,
 		    blknum);
 	else
@@ -680,7 +668,7 @@ loop:
 		    cylin, head, bp->b_un.b_addr, inb(wd->sc_iobase+wd_altsts));
 #endif
 	}
-    
+
 	/* If this is a read operation, just go away until it's done. */
 	if (bp->b_flags & B_READ)
 		return;
@@ -712,13 +700,12 @@ wdcintr(wdc)
 	/* Clear the pending interrupt. */
 	(void) inb(wdc->sc_iobase+wd_status);
 
-	if (!wdc->sc_q.b_active)
+	if ((wdc->sc_flags & WDCF_ACTIVE) == 0)
 		return 0;
-    
-	bp = wdc->sc_q.b_forw->b_actf;
-	wd = wdcd.cd_devs[WDUNIT(bp->b_dev)];
-	wdc->sc_timeout = 0;
-    
+
+	wd = wdc->sc_drives.tqh_first;
+	bp = wd->sc_q.b_actf;
+
 #ifdef WDDEBUG
 	printf("I%d ", ctrlr);
 #endif
@@ -734,6 +721,9 @@ wdcintr(wdc)
 			wdcstart(wdc);
 		return 1;
 	}
+
+	wdc->sc_flags &= ~WDCF_ACTIVE;
+	wdc->sc_timeout = 0;
     
 	/* Have we an error? */
 	if (wdc->sc_status & (WDCS_ERR | WDCS_ECCCOR)) {
@@ -755,7 +745,7 @@ wdcintr(wdc)
 	
 		/* Error or error correction? */
 		if (wdc->sc_status & WDCS_ERR) {
-			if (++wdc->sc_q.b_errcnt >= WDIORETRIES) {
+			if (++wdc->sc_errors >= WDIORETRIES) {
 				wderror(wd, bp, "hard error");
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;	/* Flag the error. */
@@ -782,9 +772,9 @@ wdcintr(wdc)
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
-	if (wdc->sc_q.b_errcnt) {
+	if (wdc->sc_errors) {
 		wderror(wd, bp, "soft error");
-		wdc->sc_q.b_errcnt = 0;
+		wdc->sc_errors = 0;
 	}
     
 	/* Ready for the next block, if any. */
@@ -970,7 +960,7 @@ wdcontrol(wd)
 			return 0;
 		}
 
-		wdc->sc_q.b_errcnt = 0;
+		wdc->sc_errors = 0;
 		wd->sc_state = OPEN;
 		/*
 		 * The rest of the initialization can be done by normal means.
@@ -1498,7 +1488,6 @@ wdcrestart(wdc)
 {
 	int s = splbio();
 
-	wdc->sc_q.b_active = 0;
 	wdcstart(wdc);
 	splx(s);
 }
@@ -1529,7 +1518,7 @@ wdcunwedge(wdc)
 	}
 
 	wdc->sc_flags |= WDCF_ERROR;
-	++wdc->sc_q.b_errcnt;
+	++wdc->sc_errors;
 
 	/* Wake up in a little bit and restart the operation. */
 	timeout((timeout_t)wdcrestart, (caddr_t)wdc, RECOVERYTIME);
