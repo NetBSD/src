@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.12 2004/12/13 19:22:57 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.13 2004/12/13 19:26:34 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -169,7 +169,7 @@ static int	ethfoo_fops_ioctl(struct file *, u_long, void *,
 static int	ethfoo_fops_poll(struct file *, int, struct proc *);
 static int	ethfoo_fops_kqfilter(struct file *, struct knote *);
 
-static struct fileops ethfoo_fileops = {
+static const struct fileops ethfoo_fileops = {
 	ethfoo_fops_read,
 	ethfoo_fops_write,
 	ethfoo_fops_ioctl,
@@ -192,7 +192,7 @@ static int	ethfoo_cdev_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 static int	ethfoo_cdev_poll(dev_t, int, struct proc *);
 static int	ethfoo_cdev_kqfilter(dev_t, struct knote *);
 
-static struct cdevsw ethfoo_cdevsw = {
+static const struct cdevsw ethfoo_cdevsw = {
 	ethfoo_cdev_open, ethfoo_cdev_close,
 	ethfoo_cdev_read, ethfoo_cdev_write,
 	ethfoo_cdev_ioctl, nostop, notty,
