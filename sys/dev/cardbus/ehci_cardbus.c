@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.1 2001/11/06 03:18:53 augustss Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.2 2001/11/10 17:07:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,13 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#ifdef EHCI_DEBUG
+#define DPRINTF(x)	if (ehcidebug) printf x
+extern int ehcidebug;
+#else
+#define DPRINTF(x)
+#endif
+
 int	ehci_cardbus_match(struct device *, struct cfdata *, void *);
 void	ehci_cardbus_attach(struct device *, struct device *, void *);
 int	ehci_cardbus_detach(device_ptr_t, int);
@@ -112,7 +119,9 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	char *vendor;
+	u_int ncomp;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	struct usb_cardbus *up;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -124,11 +133,6 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: can't map mem space\n", devname);
 		return;
 	}
-
-	sc->sc.sc_offs = bus_space_read_1(sc->sc.iot, sc->sc.ioh, EHCI_CAPLENGTH);
-
-	/* Disable interrupts, so we don't get any spurious ones. */
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
@@ -149,6 +153,11 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		       csr | CARDBUS_COMMAND_MASTER_ENABLE
 			   | CARDBUS_COMMAND_MEM_ENABLE);
 
+	/* Disable interrupts, so we don't get any spurious ones. */
+	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
+	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -167,13 +176,29 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		sprintf(sc->sc.sc_vendor, "vendor 0x%04x", 
 			CARDBUS_VENDOR(ca->ca_id));
 	
+	/*
+	 * Find companion controllers.  According to the spec they always
+	 * have lower function numbers so they should be enumerated already.
+	 */
+	ncomp = 0;
+	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
+		if (up->bus == ca->ca_bus && up->device == ca->ca_device) {
+			DPRINTF(("ehci_cardbus_attach: companion %s\n",
+				 USBDEVNAME(up->usb->bdev)));
+			sc->sc.sc_comps[ncomp++] = up->usb;
+			if (ncomp >= EHCI_COMPANION_MAX)
+				break;
+		}
+	}
+	sc->sc.sc_ncomp = ncomp;
+
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
 
 		/* Avoid spurious interrupts. */
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 
 		return;
 	}
