@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.135 2004/02/22 08:58:03 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.136 2004/03/10 09:56:59 keihan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.135 2004/02/22 08:58:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.136 2004/03/10 09:56:59 keihan Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -960,7 +960,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		    "on filesystem previously mounted on %s\n"
 		    "Extra bits discovered in fs_flags on filesystem (0x%08x)\n"
 		    "Consider running the program mentioned in\n"
-		    "http://mail-index.netbsd.org/tech-kern/2003/10/07/0005.html\n",
+		    "http://mail-index.NetBSD.org/tech-kern/2003/10/07/0005.html\n",
 		    fs->fs_fsmnt, fs->fs_flags);
 	}
 
@@ -978,7 +978,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		    "``VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE''\n"
 		    "you should be able to recover with fsck_ffs -b 32 -c 4\n"
 		    "See the file src/UPDATING or\n"
-		    "http://mail-index.netbsd.org/current-users/2004/01/11/0022.html\n"
+		    "http://mail-index.NetBSD.org/current-users/2004/01/11/0022.html\n"
 		    "for more details\n",
 		    fs->fs_fsmnt, fs->fs_maxbsize);
 	}
