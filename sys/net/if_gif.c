@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.41 2002/06/13 05:10:34 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.42 2002/11/11 18:35:27 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.41 2002/06/13 05:10:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.42 2002/11/11 18:35:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -195,6 +195,7 @@ gif_clone_destroy(ifp)
 	free(sc, M_DEVBUF);
 }
 
+#ifdef GIF_ENCAPCHECK
 int
 gif_encapcheck(m, off, proto, arg)
 	const struct mbuf *m;
@@ -262,6 +263,7 @@ gif_encapcheck(m, off, proto, arg)
 		return 0;
 	}
 }
+#endif
 
 int
 gif_output(ifp, m, dst, rt)
