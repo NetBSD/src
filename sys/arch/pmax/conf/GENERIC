@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.25 1998/03/26 11:35:42 jonathan Exp $
+# 	$NetBSD: GENERIC,v 1.26 1998/04/19 08:39:42 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -14,6 +14,7 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of DECstation
 options 	DEC_3100		# kn01:  DECstation 2100, 3100
+options 	DEC_5100		# kn230:  DECsystem 5100
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
 options 	DEC_3MIN		# kn02ba: 5000/1xx (3min) support
 options 	DEC_3MAX		# kn02: 5000/200 support
@@ -114,6 +115,12 @@ include 	"arch/pmax/conf/builtin.3max"
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
 include 	"arch/pmax/conf/builtin.3100"
+include 	"arch/pmax/conf/builtin.5100"
+
+
+#  baseboard devices on 5100, 3100 "ibus" virtual bus
+include 	"arch/pmax/conf/ibus.std"
+
 
 ########################################################################
 # SCSI configuration                                                   #
