@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3 2002/07/10 15:55:02 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.4 2002/07/11 14:15:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 	tf->tf_state.sf_spc = (register_t)(uintptr_t)catcher;
 	tf->tf_caller.r2 = sig;
 	tf->tf_caller.r3 = code;
+	tf->tf_caller.r4 = (register_t)(uintptr_t)scp;
 	tf->tf_caller.r15 = (register_t)(uintptr_t)scp;
 
 	/* Remember that we're now on the signal stack. */
@@ -153,6 +154,8 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
 	struct trapframe *tf;
+	register_t effmask;
+	int i;
 
 	tf = p->p_md.md_regs;
 
@@ -169,6 +172,25 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EFAULT);
 
 	if (ksc.sc_regs.r_intregs[24] != 0xACEBABE5ULL)	/* magic number */
+		return (EINVAL);
+
+	/*
+	 * Validate the branch target registers. If don't, we risk
+	 * a kernel-mode exception when trying to restore invalid
+	 * values to them just before returning to user-mode.
+	 */
+	effmask = ~((1ULL << SH5_NEFF_BITS) - 1);
+	for (i = 0; i < 8; i++) {
+		if ((llabs(ksc.sc_regs.r_tr[i]) & effmask) != 0 ||
+		    (ksc.sc_regs.r_tr[i] & 0x3) == 0x3)
+			return (EINVAL);
+	}
+
+	/*
+	 * Ditto for the PC
+	 */
+	if ((llabs(ksc.sc_regs.r_pc) & effmask) != 0 ||
+	    (ksc.sc_regs.r_pc & 0x3) == 0x3)
 		return (EINVAL);
 
 	/* Restore register context. */
