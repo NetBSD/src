@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.s,v 1.7 2001/03/02 16:43:25 mhitch Exp $ */
+/* $NetBSD: alloc.s,v 1.8 2001/03/11 20:10:04 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ ENTRY_NOPROFILE(alloc)
 	movl	#0x50001,%d1	| MEMF_CLEAR|MEMF_REVERSE|MEMF_PUBLIC for now.
 	jsr	%a6@(-0x2ac)	| AllocVec
 	movl	%sp@+,%a6
+	movl	%d0,%a0		| Comply with ELF ABI
 	rts
 
 ENTRY_NOPROFILE(free)
