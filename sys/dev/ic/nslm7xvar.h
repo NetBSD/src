@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.3 2000/06/24 00:37:19 thorpej Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.4 2000/07/27 21:49:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,40 @@
 #define LM_ID_LM79	0xC0
 #define LM_ID_MASK	0xFE
 
+/* additionnal registers for the Winbond W83627HF */
+#define WB_PIN		0x4B	/* pin & fan3 divider */
+#define WB_BANKSEL	0x4E	/* banck select register */
+#define WB_BANKSEL_B0	0x00	/* select bank 0 */
+#define WB_BANKSEL_B1	0x01	/* select bank 1 */
+#define WB_BANKSEL_B2	0x02	/* select bank 2 */
+#define WB_BANKSEL_B3	0x03	/* select bank 3 */
+#define WB_BANKSEL_B4	0x04	/* select bank 4 */
+#define WB_BANKSEL_B5	0x05	/* select bank 5 */
+#define WB_BANKSEL_HBAC	0x80	/* hight byte access */
+
+#define WB_VENDID	0x4F	/* vendor ID register */
+#define WB_VENDID_WINBOND 0x5CA3
+/* Bank0 regs */
+#define WB_BANK0_FANBAT	0x5D
+/* Bank1 regs */
+#define WB_BANK1_T2H	0x50
+#define WB_BANK1_T2L	0x51
+
+/* Bank2 regs */
+#define WB_BANK2_T3H	0x50
+#define WB_BANK2_T3L	0x51
+
+/* Bank4 regs */
+#define WB_BANK4_T1OFF	0x54
+#define WB_BANK4_T2OFF	0x55
+#define WB_BANK4_T3OFF	0x56
+
+/* Bank5 regs */
+#define WB_BANK5_5VSB	0x50
+#define WB_BANK5_VBAT	0x51
+
+#define WB_NUM_SENSORS	15
+
 struct lm_softc {
 	struct	device sc_dev;
 
@@ -76,8 +110,10 @@ struct lm_softc {
 
 	int	sc_flags;
 	struct	timeval lastread; /* only allow reads every 1.5 seconds */
-	struct	envsys_tre_data sensors[LM_NUM_SENSORS];
-	struct	envsys_basic_info info[LM_NUM_SENSORS];
+	struct	envsys_tre_data sensors[WB_NUM_SENSORS];
+	struct	envsys_basic_info info[WB_NUM_SENSORS];
+	int numsensors;
+	void (*refresh_sensor_data) __P((struct lm_softc *));
 
 	struct sysmon_envsys sc_sysmon;
 };
