@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.29 2000/09/12 15:00:06 minoura Exp $
+#	$NetBSD: MAKEDEV,v 1.30 2000/09/27 03:41:12 itohy Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -259,9 +259,9 @@ cd*)
 	case $unit in
 	[0-6])
 		mknod ${name}${unit}a   b $blk $(($unit * 8 + 0))
-		mknod ${name}${unit}d   b $blk $(($unit * 8 + 3))
+		mknod ${name}${unit}c   b $blk $(($unit * 8 + 2))
 		mknod r${name}${unit}a  c $chr $(($unit * 8 + 0))
-		mknod r${name}${unit}d  c $chr $(($unit * 8 + 3))
+		mknod r${name}${unit}c  c $chr $(($unit * 8 + 2))
 		chgrp operator $name$unit? r$name$unit?
 		chmod 640 $name$unit? r$name$unit?
 		;;
