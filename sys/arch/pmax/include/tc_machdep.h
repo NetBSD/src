@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.8 1998/04/19 11:16:18 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.9 1999/03/12 07:13:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -108,8 +108,6 @@ extern void config_tcbus __P((struct device *parent, int cputype,
 			      int printfn __P((void*, const char*)) ));
 extern int badaddr	 __P((void *, u_int));
 
-#define TC_SCSI  "PMAZ-AA "
-#define TC_ETHER "PMAD-AA "
 #define TC_KV(x)  ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 #define TC_C(x)	((void *)(u_long)x)
 #endif /* __MACHINE_TC_MACHDEP_H__*/
