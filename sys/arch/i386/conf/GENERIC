@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54 1996/08/31 20:43:56 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.55 1996/09/09 16:30:47 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -43,7 +43,7 @@ options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12
+options 	COMPAT_12	# NetBSD 1.2,
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
@@ -77,6 +77,7 @@ options		UNION		# union file system
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 options		NS		# XNS
+#options	NSIP		# XNS tunneling over IP
 options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
@@ -155,6 +156,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
