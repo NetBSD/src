@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.27 2001/01/25 00:10:03 mycroft Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.28 2001/01/25 00:24:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1098,11 +1098,13 @@ uvmpd_scan()
 		}
 
 		/*
-		 * deactivate this page if there's a shortage of
-		 * inactive pages.
+		 * If the page has not been referenced since the
+		 * last scan, deactivate the page if there is a
+		 * shortage of inactive pages.
 		 */
 
-		if (inactive_shortage > 0) {
+		if (inactive_shortage > 0 &&
+		    pmap_clear_reference(p) == FALSE) {
 			pmap_page_protect(p, VM_PROT_NONE);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
