@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.2 1999/01/18 13:29:01 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.3 1999/02/03 06:03:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,8 +122,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <sparc/dev/sbusvar.h>
-
+#include <dev/sbus/sbusvar.h>
 #include <dev/sbus/qecreg.h>
 #include <dev/sbus/qecvar.h>
 #include <dev/sbus/qereg.h>
