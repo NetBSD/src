@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.1 2001/06/13 15:27:17 soda Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.2 2002/12/04 07:43:55 imp Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pckbc.h"
 #if NPCKBC > 0
 #include <dev/ic/pckbcvar.h>
+#include <machine/kbdreg.h>
 #endif
 
 #include "com.h"
