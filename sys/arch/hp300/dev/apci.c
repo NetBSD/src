@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.16 2002/04/17 20:40:30 gmcgarry Exp $	*/
+/*	$NetBSD: apci.c,v 1.17 2002/04/17 23:31:24 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.16 2002/04/17 20:40:30 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.17 2002/04/17 23:31:24 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,7 +737,8 @@ apciparam(tp, t)
 	tp->t_cflag = cflag;
 
 	apci->ap_ier = IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC;
-	apci->ap_mcr |= MCR_IEN;
+	if (mmuid != MMUID_425_E)
+		apci->ap_mcr |= MCR_IEN;
 
 	splx(s);
 	return (0);
@@ -803,13 +804,15 @@ apcimctl(sc, bits, how)
 	struct apciregs *apci = sc->sc_apci;
 	int s;
 
-	/*
-	 * Always make sure MCR_IEN is set (unless setting to 0)
-	 */
-	if (how == DMBIS || (how == DMSET && bits))
-		bits |= MCR_IEN;
-	else if (how == DMBIC)
-		bits &= ~MCR_IEN;
+	if (mmuid != MMUID_425_E) {
+		/*
+		 * Always make sure MCR_IEN is set (unless setting to 0)
+		 */
+		if (how == DMBIS || (how == DMSET && bits))
+			bits |= MCR_IEN;
+		else if (how == DMBIC)
+			bits &= ~MCR_IEN;
+	}
 
 	s = spltty();
 
