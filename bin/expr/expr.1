@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.14 2000/09/19 17:20:00 jdolecek Exp $
+.\"	$NetBSD: expr.1,v 1.15 2000/10/30 16:20:12 jdolecek Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -69,14 +69,34 @@ otherwise the matching operator returns the number of characters matched.
 If the match fails and the pattern contains a regular expression subexpression
 the null string is returned;
 otherwise 0.
+.It Ar "( " expr Li " )"
+Parentheses are used for grouping in the usual manner.
 .El
 .Pp
-Parentheses are used for grouping in the usual manner.
+Operator precedence (from highest to lowest):
+.Bl -enum -compact -offset indent
+.It
+parentheses
+.It
+arithmetic operators, compare operators,
+.Dq \:
+operator
+.It
+.Dq &
+operator
+.It
+.Dq \Z'\*[tty-rn]'|
+operator
+.El
 .Sh EXAMPLES
 .Bl -enum
-.It 
+.It
 The following example adds one to the variable a.
 .Dl a=`expr $a + 1`
+.It
+The following example returns zero, due to deduction having higher precendence
+than '&' operator.
+.Dl expr 1 '&' 1 - 1
 .It
 The following example returns the filename portion of a pathname stored
 in variable a.
@@ -111,12 +131,12 @@ It was rewritten in
 .Nx 1.6
 by
 .An Jaromir Dolecek Aq jdolecek@netbsd.org .
-.Sh BUGS
+.Sh COMPATIBILITY
 This implementation of
 .Nm
 internally uses 64 bit represenation of integers and checks for
-over- and underflows. It also treats / (division mark)
-correctly depending upon context.
+over- and underflows. It also treats / (division mark) and
+option '--' correctly depending upon context.
 .Pp
 .Nm
 on other systems (including
@@ -142,3 +162,27 @@ to avoid abiquity with the division operator:
 .Bd -literal -offset indent
 expr "//$a" : '.*/\e(.*\e)'
 .Ed
+.Pp
+According to
+.St -p1003.2 ,
+.Nm
+has to recognize special option '--', treat it as an end of command
+line options and ignore it.
+Some
+.Nm
+implementations don't recognize it at all, others
+might ignore it even in cases where doing so results in syntax
+error. There should be same result for both following examples,
+but it might not always be:
+.Bl -enum -compact -offset indent
+.It
+expr -- : .
+.It
+expr -- -- : .
+.El
+Althrough
+.Nx
+.Nm
+handles both cases correctly, you should not depend on this behaviour
+for portability reasons and avoid passing bare '--' as first
+argument.
