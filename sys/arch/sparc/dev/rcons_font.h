@@ -1,4 +1,4 @@
-/* $NetBSD: rcons_font.h,v 1.3 1995/11/29 22:03:53 pk Exp $ */
+/* $NetBSD: rcons_font.h,v 1.4 1998/03/22 20:24:05 pk Exp $ */
 
 /*
  * Raster Console font definition; this file exports `console_font',
@@ -1965,9 +1965,9 @@ static u_int32_t gallant19_125_pixels[] = { 0, 0, 0x38000000, 0x0c000000,
 0x0c000000, 0x18000000, 0x18000000, 0x18000000, 0x0c000000, 0x0c000000,
 0x38000000, 0, 0, 0, 0, 0 };
 static struct raster gallant19_125 = { 12, 22, 1, 1, gallant19_125_pixels, 0 };
-static u_int32_t gallant19_126_pixels[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+static u_int32_t gallant19_126_pixels[] = { 0, 0, 0, 0, 0,
 0x1c200000, 0x3e600000, 0x36c00000, 0x67c00000, 0x43800000, 0, 0, 0, 0,
-0, 0, 0 };
+0, 0, 0, 0, 0, 0, 0, 0 };
 static struct raster gallant19_126 = { 12, 22, 1, 1, gallant19_126_pixels, 0 };
 static u_int32_t gallant19_127_pixels[] = { 0xaaa00000, 0x55500000,
 0xaaa00000, 0x55500000, 0xaaa00000, 0x55500000, 0xaaa00000, 0x55500000,
