@@ -15,7 +15,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3 1993/08/15 23:04:50 glass Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3.2.1 1993/09/14 18:24:21 mycroft Exp $ (LBL)
  */
 
 #include "param.h"
@@ -60,7 +60,7 @@ mapply(m, cf)
 	        if (!cf->cf_driver->cd_match) {
 		    printf("mapply: no match function for '%s' device\n",
 			   cf->cf_driver->cd_name);
-		    panic("mapply: not match function\n");
+		    panic("mapply: no match function\n");
 		}
 		pri = (*cf->cf_driver->cd_match)(m->parent, cf, m->aux);
 	}
