@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.1 2002/07/05 13:31:56 scw Exp $	*/
+/*      $NetBSD: bswap.h,v 1.2 2002/07/10 15:52:49 scw Exp $	*/
 
 /*
  * Based on Manuel Bouyer's public domain code.
@@ -44,6 +44,7 @@
 #define	_SH5_BSWAP_H_
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 #ifndef _KERNEL
 
