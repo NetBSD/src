@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2003/01/18 06:33:43 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.8 2003/03/20 17:45:14 tsutsui Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/signal.h>
 include <sys/mbuf.h>
+include <sys/user.h>
+include <sys/errno.h>
 include <uvm/uvm_extern.h>
-include <sh3/pcb.h>
 include <sh3/locore.h>
-include <sh3/proc.h>
+include <sh3/vmparam.h>
 
 define	TF_SIZE			sizeof(struct trapframe)
 define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
@@ -95,10 +96,18 @@ define	SF_R7_BANK		offsetof(struct switchframe, sf_r7_bank)
 
 define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
 
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FAULTBAIL		offsetof(struct pcb, pcb_faultbail)
+
 define	LSONPROC		LSONPROC
 define	LSRUN			LSRUN
 
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+
+define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
+
+define	EFAULT			EFAULT
+define	ENAMETOOLONG		ENAMETOOLONG
 
 #
 # in_cksum.S
