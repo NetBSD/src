@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.36 2000/02/02 10:31:45 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.37 2000/02/02 14:23:48 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1343,7 +1343,7 @@ pcic_chip_socket_enable(pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int cardtype, win, intr;
-#if defined(DIAGNOSTIC) || defined(PCIC_DEBUG)
+#if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	int reg;
 #endif
 
