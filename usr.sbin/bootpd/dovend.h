@@ -1,3 +1,5 @@
+/*	$NetBSD: dovend.h,v 1.2 1998/01/09 08:09:06 perry Exp $	*/
+
 /* dovend.h */
 
 #ifdef	__STDC__

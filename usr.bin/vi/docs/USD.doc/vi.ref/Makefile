@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 08:07:25 perry Exp $
+#
 #	@(#)Makefile	8.18 (Berkeley) 3/27/96
 
 DIR=	usd/13.viref

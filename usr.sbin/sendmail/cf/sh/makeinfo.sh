@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: makeinfo.sh,v 1.5 1998/01/09 08:10:17 perry Exp $
+#
 # Copyright (c) 1983 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.

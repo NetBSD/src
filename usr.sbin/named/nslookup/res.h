@@ -1,3 +1,5 @@
+/*	$NetBSD: res.h,v 1.3 1998/01/09 08:10:10 perry Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -55,7 +57,7 @@
 
 /*
  *	@(#)res.h	5.10 (Berkeley) 6/1/90
- *	$Id: res.h,v 1.2 1997/04/13 10:52:18 mrg Exp $
+ *	$Id: res.h,v 1.3 1998/01/09 08:10:10 perry Exp $
  */
 
 /*

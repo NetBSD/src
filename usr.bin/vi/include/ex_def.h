@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_def.h,v 1.2 1998/01/09 08:08:18 perry Exp $	*/
+
 #define C_SCROLL 0
 #define C_BANG 1
 #define C_HASH 2

@@ -1,3 +1,5 @@
+/*	$NetBSD: domain.c,v 1.14 1998/01/09 08:11:09 perry Exp $	*/
+
 /*
  * Copyright (c) 1986, 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993

@@ -1,3 +1,5 @@
+.\"	$NetBSD: mail9.nr,v 1.3 1998/01/09 08:06:01 perry Exp $
+.\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"

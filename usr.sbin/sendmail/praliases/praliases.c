@@ -1,3 +1,5 @@
+/*	$NetBSD: praliases.c,v 1.9 1998/01/09 08:10:50 perry Exp $	*/
+
 /*
  * Copyright (c) 1983 Eric P. Allman
  * Copyright (c) 1988, 1993

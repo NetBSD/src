@@ -1,3 +1,5 @@
+/*	$NetBSD: options_def.h,v 1.2 1998/01/09 08:08:20 perry Exp $	*/
+
 #define O_ALTWERASE 0
 #define O_AUTOINDENT 1
 #define O_AUTOPRINT 2

@@ -1,4 +1,5 @@
-#	$Netbsd$
+#	$NetBSD: Makefile,v 1.5 1998/01/09 08:11:47 perry Exp $
+#
 
 WARNS?=	0
 PROG=	tcpdchk

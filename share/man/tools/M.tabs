@@ -1,3 +1,5 @@
+.\"	$NetBSD: M.tabs,v 1.2 1998/01/09 08:04:54 perry Exp $
+.\"
 '\"	troff -g M.tabs | gcat -ftabs&
 .fp 2 CW
 .de h

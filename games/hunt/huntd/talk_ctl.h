@@ -1,3 +1,5 @@
+/*	$NetBSD: talk_ctl.h,v 1.4 1998/01/09 08:03:42 perry Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement

@@ -1,3 +1,5 @@
+/*	$NetBSD: lookup.c,v 1.3 1998/01/09 08:09:12 perry Exp $	*/
+
 /*
  * lookup.c - Lookup IP address, HW address, netmask
  */

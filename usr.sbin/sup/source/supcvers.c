@@ -1,3 +1,5 @@
+/*	$NetBSD: supcvers.c,v 1.3 1998/01/09 08:11:46 perry Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.

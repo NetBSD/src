@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_filter.c,v 1.2 1998/01/09 08:07:49 perry Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

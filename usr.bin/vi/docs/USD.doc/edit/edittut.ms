@@ -1,3 +1,5 @@
+.\"	$NetBSD: edittut.ms,v 1.5 1998/01/09 08:07:15 perry Exp $
+.\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
