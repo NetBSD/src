@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.14 1997/07/04 21:40:56 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.15 1997/07/05 21:25:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.14 1997/07/04 21:40:56 christos Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.15 1997/07/05 21:25:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,8 +193,12 @@ main(argc, argv)
 		fprintf(hfile, "/* %s */\n", is_entry[i].comment);
 	}
 	putc('\n', hfile);
-	fprintf(hfile, "#define SYNBASE ((unsigned char) %d)\n", base);
-	fprintf(hfile, "#define PEOF ((unsigned char) %d)\n\n", -base);
+	fprintf(hfile, "#define SYNBASE %d\n", base);
+	fprintf(hfile, "#define PEOF %d\n\n", -base);
+	if (sign)
+		fprintf(hfile, "#define UPEOF %d\n\n", -base);
+	else
+		fprintf(hfile, "#define UPEOF ((unsigned char) %d)\n\n", -base);
 	putc('\n', hfile);
 	fputs("#define BASESYNTAX (basesyntax + SYNBASE)\n", hfile);
 	fputs("#define DQSYNTAX (dqsyntax + SYNBASE)\n", hfile);
@@ -351,9 +355,9 @@ print(name)
 
 static char *macro[] = {
 	"#define is_digit(c)\t((is_type+SYNBASE)[c] & ISDIGIT)",
-	"#define is_alpha(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && isalpha((unsigned char) (c)))",
-	"#define is_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalpha((unsigned char) (c))))",
-	"#define is_in_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalnum((unsigned char) (c))))",
+	"#define is_alpha(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && isalpha((unsigned char) (c)))",
+	"#define is_name(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalpha((unsigned char) (c))))",
+	"#define is_in_name(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalnum((unsigned char) (c))))",
 	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))",
 	NULL
 };
