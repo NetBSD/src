@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
+/*	$NetBSD: print-ip6.c,v 1.3.2.1 2002/12/07 22:46:48 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip6.c,v 1.21 2001/11/16 02:17:36 itojun Exp";
 #else
-__RCSID("$NetBSD: print-ip6.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
+__RCSID("$NetBSD: print-ip6.c,v 1.3.2.1 2002/12/07 22:46:48 he Exp $");
 #endif
 #endif
 
@@ -70,25 +70,6 @@ ip6_print(register const u_char *bp, register u_int length)
 	
 	ip6 = (const struct ip6_hdr *)bp;
 
-#ifdef LBL_ALIGN
-	/*
-	 * The IP6 header is not 16-byte aligned, so copy into abuf.
-	 */
-	if ((u_long)ip6 & 15) {
-		static u_char *abuf;
-
-		if (abuf == NULL) {
-			abuf = malloc(snaplen);
-			if (abuf == NULL)
-				error("ip6_print: malloc");
-		}
-		memcpy(abuf, ip6, min(length, snaplen));
-		snapend += abuf - (u_char *)ip6;
-		packetp = abuf;
-		ip6 = (struct ip6_hdr *)abuf;
-		bp = abuf;
-	}
-#endif
 	TCHECK(*ip6);
 	if (length < sizeof (struct ip6_hdr)) {
 		(void)printf("truncated-ip6 %d", length);
