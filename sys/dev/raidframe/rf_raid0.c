@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid0.c,v 1.9 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_raid0.c,v 1.10 2004/01/02 21:41:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.9 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.10 2004/01/02 21:41:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -123,6 +123,10 @@ rf_RAID0DagSelect(
     RF_AccessStripeMap_t * asmap,
     RF_VoidFuncPtr * createFunc)
 {
+	if (raidPtr->numFailures > 0) {
+		*createFunc = NULL;
+		return;
+	}
 	*createFunc = ((type == RF_IO_TYPE_READ) ?
 	    (RF_VoidFuncPtr) rf_CreateFaultFreeReadDAG : (RF_VoidFuncPtr) rf_CreateRAID0WriteDAG);
 }
