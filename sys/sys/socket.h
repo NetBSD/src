@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.69 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: socket.h,v 1.70 2005/02/03 19:20:02 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -508,35 +508,32 @@ struct omsghdr {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	__cmsg_alignbytes __P((void));
+int	__cmsg_alignbytes(void);
 __END_DECLS
 
 #ifndef	_KERNEL
 
 __BEGIN_DECLS
-int	accept __P((int, struct sockaddr * __restrict, socklen_t * __restrict));
-int	bind __P((int, const struct sockaddr *, socklen_t));
-int	connect __P((int, const struct sockaddr *, socklen_t));
-int	getpeername __P((int, struct sockaddr * __restrict,
-	    socklen_t * __restrict));
-int	getsockname __P((int, struct sockaddr * __restrict,
-	    socklen_t * __restrict));
-int	getsockopt __P((int, int, int, void * __restrict,
-	    socklen_t * __restrict));
-int	listen __P((int, int));
-ssize_t	recv __P((int, void *, size_t, int));
-ssize_t	recvfrom __P((int, void * __restrict, size_t, int,
-	    struct sockaddr * __restrict, socklen_t * __restrict));
-ssize_t	recvmsg __P((int, struct msghdr *, int));
-ssize_t	send __P((int, const void *, size_t, int));
-ssize_t	sendto __P((int, const void *,
-	    size_t, int, const struct sockaddr *, socklen_t));
-ssize_t	sendmsg __P((int, const struct msghdr *, int));
-int	setsockopt __P((int, int, int, const void *, socklen_t));
-int	shutdown __P((int, int));
-int	sockatmark __P((int));
-int	socket __P((int, int, int));
-int	socketpair __P((int, int, int, int *));
+int	accept(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	bind(int, const struct sockaddr *, socklen_t);
+int	connect(int, const struct sockaddr *, socklen_t);
+int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	getsockname(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	getsockopt(int, int, int, void * __restrict, socklen_t * __restrict);
+int	listen(int, int);
+ssize_t	recv(int, void *, size_t, int);
+ssize_t	recvfrom(int, void * __restrict, size_t, int,
+	    struct sockaddr * __restrict, socklen_t * __restrict);
+ssize_t	recvmsg(int, struct msghdr *, int);
+ssize_t	send(int, const void *, size_t, int);
+ssize_t	sendto(int, const void *,
+	    size_t, int, const struct sockaddr *, socklen_t);
+ssize_t	sendmsg(int, const struct msghdr *, int);
+int	setsockopt(int, int, int, const void *, socklen_t);
+int	shutdown(int, int);
+int	sockatmark(int);
+int	socket(int, int, int);
+int	socketpair(int, int, int, int *);
 __END_DECLS
 #endif /* !_KERNEL */
 

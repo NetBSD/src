@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.65 2004/04/25 06:13:38 matt Exp $	*/
+/*	$NetBSD: tty.h,v 1.66 2005/02/03 19:20:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -92,11 +92,11 @@ struct tty {
 	struct	termios t_termios;	/* Termios state. */
 	struct	winsize t_winsize;	/* Window size. */
 					/* Start output. */
-	void	(*t_oproc) __P((struct tty *));
+	void	(*t_oproc)(struct tty *);
 					/* Set hardware state. */
-	int	(*t_param) __P((struct tty *, struct termios *));
+	int	(*t_param)(struct tty *, struct termios *);
 					/* Set hardware flow control. */
-	int	(*t_hwiflow) __P((struct tty *, int));
+	int	(*t_hwiflow)(struct tty *, int);
 	void	*t_sc;			/* XXX: net/if_sl.c:sl_softc. */
 	short	t_column;		/* Tty output column. */
 	short	t_rocount, t_rocol;	/* Tty. */
@@ -208,57 +208,57 @@ extern	struct ttychars ttydefaults;
 /* Symbolic sleep message strings. */
 extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
-int	 b_to_q __P((const u_char *, int, struct clist *));
-void	 catq __P((struct clist *, struct clist *));
-void	 clist_init __P((void));
-int	 getc __P((struct clist *));
-void	 ndflush __P((struct clist *, int));
-int	 ndqb __P((struct clist *, int));
-u_char	*nextc __P((struct clist *, u_char *, int *));
-int	 putc __P((int, struct clist *));
-int	 q_to_b __P((struct clist *, u_char *, int));
-int	 unputc __P((struct clist *));
+int	 b_to_q(const u_char *, int, struct clist *);
+void	 catq(struct clist *, struct clist *);
+void	 clist_init(void);
+int	 getc(struct clist *);
+void	 ndflush(struct clist *, int);
+int	 ndqb(struct clist *, int);
+u_char	*nextc(struct clist *, u_char *, int *);
+int	 putc(int, struct clist *);
+int	 q_to_b(struct clist *, u_char *, int);
+int	 unputc(struct clist *);
 
-int	 nullmodem __P((struct tty *, int));
-int	 tputchar __P((int, int, struct tty *));
-int	 ttioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
-int	 ttread __P((struct tty *, struct uio *, int));
-void	 ttrstrt __P((void *));
-int	 ttpoll __P((struct tty *, int, struct proc *));
-void	 ttsetwater __P((struct tty *));
-int	 ttspeedtab __P((int, const struct speedtab *));
-int	 ttstart __P((struct tty *));
-void	 ttwakeup __P((struct tty *));
-int	 ttwrite __P((struct tty *, struct uio *, int));
-void	 ttychars __P((struct tty *));
-int	 ttycheckoutq __P((struct tty *, int));
-int	 ttyclose __P((struct tty *));
-void	 ttyflush __P((struct tty *, int));
-void	 ttyinfo __P((struct tty *));
-int	 ttyinput __P((int, struct tty *));
-int	 ttylclose __P((struct tty *, int));
-int	 ttylopen __P((dev_t, struct tty *));
-int	 ttykqfilter __P((dev_t, struct knote *));
-int	 ttymodem __P((struct tty *, int));
-int	 ttyopen __P((struct tty *, int, int));
-int	 ttyoutput __P((int, struct tty *));
-void	 ttypend __P((struct tty *));
-void	 ttyretype __P((struct tty *));
-void	 ttyrub __P((int, struct tty *));
-int	 ttysleep __P((struct tty *, void *, int, const char *, int));
-int	 ttywait __P((struct tty *));
-int	 ttywflush __P((struct tty *));
+int	 nullmodem(struct tty *, int);
+int	 tputchar(int, int, struct tty *);
+int	 ttioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+int	 ttread(struct tty *, struct uio *, int);
+void	 ttrstrt(void *);
+int	 ttpoll(struct tty *, int, struct proc *);
+void	 ttsetwater(struct tty *);
+int	 ttspeedtab(int, const struct speedtab *);
+int	 ttstart(struct tty *);
+void	 ttwakeup(struct tty *);
+int	 ttwrite(struct tty *, struct uio *, int);
+void	 ttychars(struct tty *);
+int	 ttycheckoutq(struct tty *, int);
+int	 ttyclose(struct tty *);
+void	 ttyflush(struct tty *, int);
+void	 ttyinfo(struct tty *);
+int	 ttyinput(int, struct tty *);
+int	 ttylclose(struct tty *, int);
+int	 ttylopen(dev_t, struct tty *);
+int	 ttykqfilter(dev_t, struct knote *);
+int	 ttymodem(struct tty *, int);
+int	 ttyopen(struct tty *, int, int);
+int	 ttyoutput(int, struct tty *);
+void	 ttypend(struct tty *);
+void	 ttyretype(struct tty *);
+void	 ttyrub(int, struct tty *);
+int	 ttysleep(struct tty *, void *, int, const char *, int);
+int	 ttywait(struct tty *);
+int	 ttywflush(struct tty *);
 
-void	 tty_init __P((void));
-void	 tty_attach __P((struct tty *));
-void	 tty_detach __P((struct tty *));
+void	 tty_init(void);
+void	 tty_attach(struct tty *);
+void	 tty_detach(struct tty *);
 struct tty
-	*ttymalloc __P((void));
-void	 ttyfree __P((struct tty *));
-u_char	*firstc __P((struct clist *, int *));
+	*ttymalloc(void);
+void	 ttyfree(struct tty *);
+u_char	*firstc(struct clist *, int *);
 
-int	clalloc __P((struct clist *, int, int));
-void	clfree __P((struct clist *));
+int	clalloc(struct clist *, int, int);
+void	clfree(struct clist *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"
@@ -271,7 +271,7 @@ void	clfree __P((struct clist *));
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
     defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
 # define COMPAT_OLDTTY
-int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
+int 	ttcompat(struct tty *, u_long, caddr_t, int, struct proc *);
 #endif
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.174 2004/10/23 21:27:33 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.175 2005/02/03 19:20:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -147,10 +147,10 @@ extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)
 #define	bootquiet	(boothowto & AB_QUIET)
 
-extern void (*v_putc) __P((int)); /* Virtual console putc routine */
+extern void (*v_putc)(int); /* Virtual console putc routine */
 
-extern	void	_insque	__P((void *, void *));
-extern	void	_remque	__P((void *));
+extern	void	_insque(void *, void *);
+extern	void	_remque(void *);
 
 /* casts to keep lint happy, but it should be happy with void * */
 #define	insque(q,p)	_insque(q, p)
@@ -159,12 +159,12 @@ extern	void	_remque	__P((void *));
 /*
  * General function declarations.
  */
-int	nullop __P((void *));
-int	enodev __P((void));
-int	enosys __P((void));
-int	enoioctl __P((void));
-int	enxio __P((void));
-int	eopnotsupp __P((void));
+int	nullop(void *);
+int	enodev(void);
+int	enosys(void);
+int	enoioctl(void);
+int	enxio(void);
+int	eopnotsupp(void);
 
 enum hashtype {
 	HASH_LIST,
@@ -172,58 +172,57 @@ enum hashtype {
 };
 
 struct malloc_type;
-void	*hashinit __P((u_int, enum hashtype, struct malloc_type *,
-	    int, u_long *));
-void	hashdone __P((void *, struct malloc_type *));
-int	seltrue __P((dev_t, int, struct proc *));
-int	sys_nosys __P((struct lwp *, void *, register_t *));
+void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
+void	hashdone(void *, struct malloc_type *);
+int	seltrue(dev_t, int, struct proc *);
+int	sys_nosys(struct lwp *, void *, register_t *);
 
 
 #ifdef _KERNEL
-void	aprint_normal __P((const char *, ...))
+void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	aprint_error __P((const char *, ...))
+void	aprint_error(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	aprint_naive __P((const char *, ...))
+void	aprint_naive(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	aprint_verbose __P((const char *, ...))
+void	aprint_verbose(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	aprint_debug __P((const char *, ...))
-    __attribute__((__format__(__printf__,1,2)));
-
-int	aprint_get_error_count __P((void));
-
-void	printf_nolog __P((const char *, ...))
+void	aprint_debug(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-void	printf __P((const char *, ...))
+int	aprint_get_error_count(void);
+
+void	printf_nolog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-int	sprintf __P((char *, const char *, ...))
+
+void	printf(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
+int	sprintf(char *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-int	snprintf __P((char *, size_t, const char *, ...))
+int	snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
-void	vprintf __P((const char *, _BSD_VA_LIST_));
-int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
-int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
-int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
+void	vprintf(const char *, _BSD_VA_LIST_);
+int	vsprintf(char *, const char *, _BSD_VA_LIST_);
+int	vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
+int	humanize_number(char *, size_t, u_int64_t, const char *, int);
 
-void	twiddle __P((void));
+void	twiddle(void);
 #endif /* _KERNEL */
 
-void	panic __P((const char *, ...))
+void	panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
-void	uprintf __P((const char *, ...))
+void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	ttyprintf __P((struct tty *, const char *, ...))
+void	ttyprintf(struct tty *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
-char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
+char	*bitmask_snprintf(u_quad_t, const char *, char *, size_t);
 
-int	format_bytes __P((char *, size_t, u_int64_t));
+int	format_bytes(char *, size_t, u_int64_t);
 
-void	tablefull __P((const char *, const char *));
+void	tablefull(const char *, const char *);
 
-int	kcopy __P((const void *, void *, size_t));
+int	kcopy(const void *, void *, size_t);
 
 #ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
@@ -231,70 +230,70 @@ int	kcopy __P((const void *, void *, size_t));
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
 #endif /* KERNEL */
 
-int	copystr __P((const void *, void *, size_t, size_t *));
-int	copyinstr __P((const void *, void *, size_t, size_t *));
-int	copyoutstr __P((const void *, void *, size_t, size_t *));
-int	copyin __P((const void *, void *, size_t));
-int	copyout __P((const void *, void *, size_t));
+int	copystr(const void *, void *, size_t, size_t *);
+int	copyinstr(const void *, void *, size_t, size_t *);
+int	copyoutstr(const void *, void *, size_t, size_t *);
+int	copyin(const void *, void *, size_t);
+int	copyout(const void *, void *, size_t);
 
-int	copyin_proc __P((struct proc *, const void *, void *, size_t));
-int	copyout_proc __P((struct proc *, const void *, void *, size_t));
+int	copyin_proc(struct proc *, const void *, void *, size_t);
+int	copyout_proc(struct proc *, const void *, void *, size_t);
 
-int	subyte __P((void *, int));
-int	suibyte __P((void *, int));
-int	susword __P((void *, short));
-int	suisword __P((void *, short));
-int	suswintr __P((void *, short));
-int	suword __P((void *, long));
-int	suiword __P((void *, long));
+int	subyte(void *, int);
+int	suibyte(void *, int);
+int	susword(void *, short);
+int	suisword(void *, short);
+int	suswintr(void *, short);
+int	suword(void *, long);
+int	suiword(void *, long);
 
-int	fubyte __P((const void *));
-int	fuibyte __P((const void *));
-int	fusword __P((const void *));
-int	fuisword __P((const void *));
-int	fuswintr __P((const void *));
-long	fuword __P((const void *));
-long	fuiword __P((const void *));
+int	fubyte(const void *);
+int	fuibyte(const void *);
+int	fusword(const void *);
+int	fuisword(const void *);
+int	fuswintr(const void *);
+long	fuword(const void *);
+long	fuiword(const void *);
 
-int	hzto __P((struct timeval *));
+int	hzto(struct timeval *);
 
-void	hardclock __P((struct clockframe *));
-void	softclock __P((void *));
-void	statclock __P((struct clockframe *));
+void	hardclock(struct clockframe *);
+void	softclock(void *);
+void	statclock(struct clockframe *);
 #ifdef NTP
-void	hardupdate __P((long offset));
+void	hardupdate(long offset);
 #ifdef PPS_SYNC
-void	hardpps __P((struct timeval *, long));
+void	hardpps(struct timeval *, long);
 extern	void *pps_kc_hardpps_source;
 extern	int pps_kc_hardpps_mode;
 #endif
 #endif
 
-void	initclocks __P((void));
-void	inittodr __P((time_t));
-void	resettodr __P((void));
-void	cpu_initclocks __P((void));
-void	setrootfstime __P((time_t));
+void	initclocks(void);
+void	inittodr(time_t);
+void	resettodr(void);
+void	cpu_initclocks(void);
+void	setrootfstime(time_t);
 
-void	startprofclock __P((struct proc *));
-void	stopprofclock __P((struct proc *));
-void	proftick __P((struct clockframe *));
-void	setstatclockrate __P((int));
+void	startprofclock(struct proc *);
+void	stopprofclock(struct proc *);
+void	proftick(struct clockframe *);
+void	setstatclockrate(int);
 
 /*
  * Shutdown hooks.  Functions to be run with all interrupts disabled
  * immediately before the system is halted or rebooted.
  */
-void	*shutdownhook_establish __P((void (*)(void *), void *));
-void	shutdownhook_disestablish __P((void *));
-void	doshutdownhooks __P((void));
+void	*shutdownhook_establish(void (*)(void *), void *);
+void	shutdownhook_disestablish(void *);
+void	doshutdownhooks(void);
 
 /*
  * Power management hooks.
  */
-void	*powerhook_establish __P((void (*)(int, void *), void *));
-void	powerhook_disestablish __P((void *));
-void	dopowerhooks __P((int));
+void	*powerhook_establish(void (*)(int, void *), void *);
+void	powerhook_disestablish(void *);
+void	dopowerhooks(int);
 #define PWR_RESUME	0
 #define PWR_SUSPEND	1
 #define PWR_STANDBY	2
@@ -308,59 +307,58 @@ void	dopowerhooks __P((int));
  * selected as the root device.
  */
 extern int (*mountroot)(void);
-void	*mountroothook_establish __P((void (*)(struct device *),
-	    struct device *));
-void	mountroothook_disestablish __P((void *));
-void	mountroothook_destroy __P((void));
-void	domountroothook __P((void));
+void	*mountroothook_establish(void (*)(struct device *), struct device *);
+void	mountroothook_disestablish(void *);
+void	mountroothook_destroy(void);
+void	domountroothook(void);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process
  * execs.
  */
-void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
-void	exechook_disestablish __P((void *));
-void	doexechooks __P((struct proc *));
+void	*exechook_establish(void (*)(struct proc *, void *), void *);
+void	exechook_disestablish(void *);
+void	doexechooks(struct proc *);
 
 /*
  * Exit hooks. Subsystems may want to do cleanup when a process exits.
  */
-void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
-void	exithook_disestablish __P((void *));
-void	doexithooks __P((struct proc *));
+void	*exithook_establish(void (*)(struct proc *, void *), void *);
+void	exithook_disestablish(void *);
+void	doexithooks(struct proc *);
 
 /*
  * Fork hooks.  Subsystems may want to do special processing when a process
  * forks.
  */
-void	*forkhook_establish __P((void (*)(struct proc *, struct proc *)));
-void	forkhook_disestablish __P((void *));
-void	doforkhooks __P((struct proc *, struct proc *));
+void	*forkhook_establish(void (*)(struct proc *, struct proc *));
+void	forkhook_disestablish(void *);
+void	doforkhooks(struct proc *, struct proc *);
 
 /*
  * kernel syscall tracing/debugging hooks.
  */
-int	trace_enter __P((struct lwp *, register_t, register_t,
-	    const struct sysent *, void *));
-void	trace_exit __P((struct lwp *, register_t, void *, register_t [], int));
+int	trace_enter(struct lwp *, register_t, register_t,
+	    const struct sysent *, void *);
+void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
 
-int	uiomove __P((void *, size_t, struct uio *));
-int	uiomove_frombuf __P((void *, size_t, struct uio *));
+int	uiomove(void *, size_t, struct uio *);
+int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
-int	setjmp	__P((label_t *));
-void	longjmp	__P((label_t *));
+int	setjmp(label_t *);
+void	longjmp(label_t *);
 #endif
 
-void	consinit __P((void));
+void	consinit(void);
 
-void	cpu_startup __P((void));
-void	cpu_configure __P((void));
-void	cpu_rootconf __P((void));
-void	cpu_dumpconf __P((void));
+void	cpu_startup(void);
+void	cpu_configure(void);
+void	cpu_rootconf(void);
+void	cpu_dumpconf(void);
 
 #ifdef GPROF
-void	kmstartup __P((void));
+void	kmstartup(void);
 #endif
 
 #ifdef _KERNEL
@@ -387,10 +385,10 @@ typedef struct cnm_state {
 #define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
-void cn_init_magic __P((cnm_state_t *));
-void cn_destroy_magic __P((cnm_state_t *));
-int cn_set_magic __P((char *));
-int cn_get_magic __P((char *, int));
+void cn_init_magic(cnm_state_t *);
+void cn_destroy_magic(cnm_state_t *);
+int cn_set_magic(char *);
+int cn_get_magic(char *, int);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\
@@ -415,7 +413,7 @@ int cn_get_magic __P((char *, int));
 
 #if defined(DDB) || defined(sun3) || defined(sun2)
 /* note that cpu_Debugger() is always available on sun[23] */
-void	cpu_Debugger __P((void));
+void	cpu_Debugger(void);
 #define Debugger	cpu_Debugger
 #endif
 
@@ -433,8 +431,8 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif /* _KERNEL */
 
 #ifdef SYSCALL_DEBUG
-void scdebug_call __P((struct lwp *, register_t, register_t[]));
-void scdebug_ret __P((struct lwp *, register_t, int, register_t[]));
+void scdebug_call(struct lwp *, register_t, register_t[]);
+void scdebug_ret(struct lwp *, register_t, int, register_t[]);
 #endif /* SYSCALL_DEBUG */
 
 #if defined(MULTIPROCESSOR)

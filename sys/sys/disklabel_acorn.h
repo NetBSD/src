@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_acorn.h,v 1.3 2003/01/11 18:54:19 christos Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.4 2005/02/03 19:20:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -98,12 +98,11 @@ struct cpu_disklabel;
 struct disklabel;
 
 /* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
-int	filecore_label_read __P((dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *, char **, int *,
-	    int *));
+int filecore_label_read(dev_t, void (*)(struct buf *),
+	struct disklabel *, struct cpu_disklabel *, char **, int *, int *);
 
 /* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
-int	filecore_label_locate __P((dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *, int *, int *));
+int filecore_label_locate(dev_t, void (*)(struct buf *),
+	struct disklabel *, struct cpu_disklabel *, int *, int *);
 #endif
 #endif /* _SYS_DISKLABEL_ACORN_H_ */
