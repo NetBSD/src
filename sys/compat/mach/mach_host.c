@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.7 2002/11/12 06:14:39 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.8 2002/11/14 19:44:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.7 2002/11/12 06:14:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.8 2002/11/14 19:44:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -83,14 +83,11 @@ mach_host_info(p, msgh)
 		struct mach_host_basic_info *info;
 
 		info = (struct mach_host_basic_info *)&rep.rep_data[0];
-		info->max_cpus = 1; /* XXX fill this  accurately */
-		info->avail_cpus = 1;
-		info->memory_size = uvmexp.active + uvmexp.inactive;
-		info->cpu_type = 12;
-		info->cpu_subtype = 9;
+		mach_host_basic_info(info);
 		break;
 	}
 
+	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
 		reps = (mach_host_info_reply_simple_t *)&rep;
 		reps->rep_msgh.msgh_size = 
@@ -102,7 +99,6 @@ mach_host_info(p, msgh)
 	case MACH_HOST_SCHED_INFO:
 	case MACH_HOST_RESOURCE_SIZES:
 	case MACH_HOST_PRIORITY_INFO:
-	case MACH_HOST_SEMAPHORE_TRAPS:
 		DPRINTF(("unimplemented host_info flavor %d\n", 
 		    req.req_flavor));
 	default:
