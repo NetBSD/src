@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 1999/01/16 08:48:06 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 1999/01/29 02:18:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 1999/01/16 08:48:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 1999/01/29 02:18:42 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -1190,7 +1190,7 @@ void stacktrace_subr __P((int a0, int a1, int a2, int a3,
 
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
-#define	MIPS_ERET	0x12345678	/* instruction code for eret */
+#define	MIPS_ERET	0x42000018	/* instruction code for eret */
 
 /*
  * Do a stack backtrace.
