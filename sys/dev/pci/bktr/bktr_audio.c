@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.4 2000/05/07 14:43:31 veego Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.5 2000/05/21 15:43:56 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.2 1999/10/28 13:58:14 roger Exp */
 /*
@@ -159,7 +159,8 @@ set_audio( bktr_ptr_t bktr, int cmd )
 		bktr->audio_mute_state = FALSE;	/* clear mute */
 		break;
 	default:
-		printf("bktr: audio cmd error %02x\n", cmd);
+		printf("%s: audio cmd error %02x\n", bktr_name(bktr),
+		       cmd);
 		return( -1 );
 	}
 
@@ -202,7 +203,8 @@ set_audio( bktr_ptr_t bktr, int cmd )
 	temp = INL(bktr, BKTR_GPIO_DATA) & ~bktr->card.gpio_mux_bits;
 #if defined( AUDIOMUX_DISCOVER )
 	OUTL(bktr, BKTR_GPIO_DATA, temp | (cmd & 0xff));
-	printf("cmd: %d audio mux %x temp %x \n", cmd,bktr->card.audiomuxs[ idx ], temp );
+	printf("%s: cmd: %d audio mux %x temp %x \n", bktr_name(bktr),
+	       cmd, bktr->card.audiomuxs[ idx ], temp );
 #else
 	OUTL(bktr, BKTR_GPIO_DATA, temp | bktr->card.audiomuxs[ idx ]);
 #endif /* AUDIOMUX_DISCOVER */
@@ -469,7 +471,8 @@ void msp_autodetect( bktr_ptr_t bktr ) {
       auto_detect = msp_dpl_read(bktr, bktr->msp_addr, 0x10, 0x007e);
       loops++;
     } while (auto_detect > 0xff && loops < 50);
-    if (bootverbose)printf ("Result of autodetect after %dms: %d\n", loops*10, auto_detect);
+    if (bootverbose)printf ("%s: Result of autodetect after %dms: %d\n",
+			    bktr_name(bktr), loops*10, auto_detect);
 
     /* Now set the audio baseband processing */
     switch (auto_detect) {
@@ -481,13 +484,16 @@ void msp_autodetect( bktr_ptr_t bktr ) {
       /* Read the stereo detection value from DSP reg 0x0018 */
       DELAY(20000);
       stereo = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x0018);
-      if (bootverbose)printf ("Stereo reg 0x18 a: %d\n", stereo);
+      if (bootverbose)printf ("%s: Stereo reg 0x18 a: %d\n",
+			      bktr_name(bktr), stereo);
       DELAY(20000);
       stereo = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x0018);
-      if (bootverbose)printf ("Stereo reg 0x18 b: %d\n", stereo);
+      if (bootverbose)printf ("%s: Stereo reg 0x18 b: %d\n",
+			      bktr_name(bktr), stereo); 
       DELAY(20000); 
       stereo = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x0018);
-      if (bootverbose)printf ("Stereo reg 0x18 c: %d\n", stereo);
+      if (bootverbose)printf ("%s: Stereo reg 0x18 c: %d\n",
+			      bktr_name(bktr), stereo);
       if (stereo > 0x0100 && stereo < 0x8000) { /* Seems to be stereo */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0020);/* Loudspeaker set stereo*/
         /*
@@ -496,7 +502,8 @@ void msp_autodetect( bktr_ptr_t bktr ) {
         */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x3f28);
       } else if (stereo > 0x8000) {    /* bilingual mode */
-        if (bootverbose) printf ("Bilingual mode detected\n");
+        if (bootverbose) printf ("%s: Bilingual mode detected\n",
+				 bktr_name(bktr));
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0000);/* Loudspeaker */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x0000);/* all spatial effects off */
        } else {                 /* must be mono */
@@ -527,7 +534,8 @@ void msp_autodetect( bktr_ptr_t bktr ) {
      case 10:                   /* i-FM NICAM */
        break;
      default:
-       if (bootverbose) printf ("Unkown autodetection result value: %d\n", auto_detect);
+       if (bootverbose) printf ("%s: Unknown autodetection result value: %d\n",
+				bktr_name(bktr), auto_detect); 
      }
 
   }
