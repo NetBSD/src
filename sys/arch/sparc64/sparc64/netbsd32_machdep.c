@@ -1,3 +1,52 @@
+/*	$NetBSD: netbsd32_machdep.c,v 1.2 1999/03/25 17:49:44 mrg Exp $	*/
+
+/*
+ * Copyright (c) 1998 Matthew R. Green
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <sys/exec.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/systm.h>
+#include <sys/mount.h>
+
+#include <machine/frame.h>
+#include <machine/reg.h>
+#include <machine/vmparam.h>
+#include <machine/netbsd32_machdep.h>
+
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
+
+void netbsd32_sendsig __P((sig_t, int, int, u_long));
+void netbsd32_setregs __P((struct proc *, struct exec_package *, u_long));
+
 /*
  * Set up registers on exec.
  *
@@ -5,7 +54,7 @@
  */
 /* ARGSUSED */
 void
-sparc32_setregs(p, pack, stack)
+netbsd32_setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack; /* XXX */
@@ -54,12 +103,12 @@ sparc32_setregs(p, pack, stack)
  * NB: since this is a 32-bit address world, sf_scp and sf_sc
  *	can't be a pointer since those are 64-bits wide.
  */
-struct netbsd32_sigframe {
+struct sparc32_sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
 	u_int	sf_scp;			/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
-	struct	sparc32_sigcontext sf_sc;	/* actual sigcontext */
+	struct	netbsd32_sigcontext sf_sc;	/* actual sigcontext */
 };
 
 #undef DEBUG
@@ -80,8 +129,8 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sparc32_sigframe sf;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
+	extern char netbsd32_sigcode[], netbsd32_esigcode[];
+#define	szsigcode	(netbsd32_esigcode - netbsd32_sigcode)
 
 	tf = p->p_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
@@ -91,7 +140,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 	if (onstack) {
-		fp = (struct sparc32_sigframe *)(psp->ps_sigstk.ss_sp +
+		fp = (struct sparc32_sigframe *)((char *)psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
@@ -195,16 +244,16 @@ netbsd32_sendsig(catcher, sig, mask, code)
 
 #undef DEBUG
 int
-compat_sparc32_sigreturn(p, v, retval)
+compat_netbsd32_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_sparc32_sigreturn_args /* {
-		syscallarg(struct sparc32_sigcontext *) sigcntxp;
+	struct compat_netbsd32_sigreturn_args /* {
+		syscallarg(struct netbsd32_sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sparc32_sigcontext *scp;
-	struct sparc32_sigcontext sc;
+	struct netbsd32_sigcontext *scp;
+	struct netbsd32_sigcontext sc;
 	register struct trapframe *tf;
 	struct rwindow32 *rwstack, *kstack;
 	sigset_t mask;
@@ -225,7 +274,7 @@ compat_sparc32_sigreturn(p, v, retval)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
-	scp = (struct sparc32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
+	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
@@ -259,7 +308,7 @@ compat_sparc32_sigreturn(p, v, retval)
 	tf->tf_global[1] = (int64_t)sc.sc_g1;
 	tf->tf_out[0] = (int64_t)sc.sc_o0;
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
-	rwstack = (struct rwindow32 *)tf->tf_out[6];
+	rwstack = (struct rwindow32 *)(u_long)tf->tf_out[6];
 	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {

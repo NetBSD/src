@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.13 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.14 1999/03/25 17:57:22 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,8 +59,6 @@ extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern char *netbsd32_syscallnames[];
 #endif
-void netbsd32_sendsig __P((sig_t, int, int, u_long));
-void netbsd32_setregs __P((struct proc *, struct exec_package *, u_long));
 void *netbsd32_copyargs __P((struct exec_package *, struct ps_strings *,
 	void *, void *));
 int netbsd32_copyinargs __P((struct ps_strings *, void *, size_t,
