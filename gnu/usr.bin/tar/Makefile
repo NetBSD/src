@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:48:36 mycroft Exp $
+#	$Id: Makefile,v 1.6 1993/08/24 04:33:48 mycroft Exp $
 
 PROG=	tar
-SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
+SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.c \
 	getoldopt.c getopt.c getopt1.c gnu.c list.c mangle.c names.c port.c \
 	regex.c rtapelib.c tar.c update.c version.c
 CFLAGS+= -DRETSIGTYPE=void -DDIRENT=1 -DHAVE_SYS_MTIO_H=1 -DHAVE_UNISTD_H=1
