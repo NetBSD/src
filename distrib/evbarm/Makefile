@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/11 12:19:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/13 01:46:29 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-SUBDIR=		gzboot
+SUBDIR=		gzboot instkernel
 
 ITARGET=	${RELEASEDIR}/binary/gzimg
 
