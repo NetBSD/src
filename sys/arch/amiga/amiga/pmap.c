@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2005/01/01 21:02:12 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111.4.1 2005/01/27 14:32:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2005/01/01 21:02:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.4.1 2005/01/27 14:32:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,10 +900,8 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE);
-		uvm_km_pgremove(uvm.kernel_object,
-		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
-		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE
-				- vm_map_min(kernel_map));
+		uvm_km_pgremove((vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE);
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   AMIGA_UPTSIZE);
 	}
