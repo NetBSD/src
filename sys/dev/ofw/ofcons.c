@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.10 2000/03/23 07:01:37 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.11 2000/04/14 19:31:50 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,9 +88,11 @@ ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct ofcons_softc *sc = (struct ofcons_softc *) self;
+
 	printf("\n");
 
-	callout_reset(&sc->sc_poll_ch);
+	callout_init(&sc->sc_poll_ch);
 }
 
 static void ofcons_start __P((struct tty *));
@@ -132,7 +134,7 @@ ofcons_open(dev, flag, mode, p)
 	
 	if (!(sc->of_flags & OFPOLL)) {
 		sc->of_flags |= OFPOLL;
-		callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, 1);
+		callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 	}
 
 	return (*linesw[tp->t_line].l_open)(dev, tp);
@@ -270,7 +272,7 @@ ofcons_poll(aux)
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
-	callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, 1);
+	callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 }
 
 static int
