@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.4 1994/10/26 07:24:19 cgd Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.5 1995/01/07 10:30:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -52,13 +52,19 @@
 #define	IDS_IE		0x80
 #define	IDS_DMA(x)	(1 << (x))
 
-#define	C_DCL		0x14
-#define	C_LAG		0x20
-#define	C_UNL		0x3f
-#define	C_TAG		0x40
-#define	C_UNA		0x5e
-#define	C_UNT		0x5f
-#define	C_SCG		0x60
+#define	C_SDC		0x04	/* Selected device clear */
+#define	C_SDC_P		0x04	/*  with odd parity */
+#define	C_DCL		0x14	/* Universal device clear */
+#define	C_DCL_P		0x94	/*  with odd parity */
+#define	C_LAG		0x20	/* Listener address group commands */
+#define	C_UNL		0x3f	/* Universal unlisten */
+#define	C_UNL_P		0xbf	/*  with odd parity */
+#define	C_TAG		0x40	/* Talker address group commands */
+#define	C_UNA		0x5e	/* Unaddress (master talk address?) */
+#define	C_UNA_P		0x5e	/*  with odd parity */
+#define	C_UNT		0x5f	/* Universal untalk */
+#define	C_UNT_P		0xdf	/*  with odd parity */
+#define	C_SCG		0x60	/* Secondary group commands */
 
 struct	hpib_softc {
 	struct	hp_ctlr *sc_hc;
@@ -77,6 +83,7 @@ struct	hpib_softc {
 #define	HPIBF_DONE	0x2
 #define	HPIBF_PPOLL	0x4
 #define	HPIBF_READ	0x8
+#define	HPIBF_TIMO	0x10
 #define	HPIBF_DMA16	0x8000
 
 #ifdef KERNEL
