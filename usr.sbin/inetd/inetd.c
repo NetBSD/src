@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.50 1999/07/04 00:31:57 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.51 1999/07/19 15:49:39 ghudson Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.50 1999/07/04 00:31:57 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.51 1999/07/19 15:49:39 ghudson Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ struct	servtab {
 	int	se_rpcversl;		/* rpc program lowest version */
 	int	se_rpcversh;		/* rpc program highest version */
 #define isrpcservice(sep)	((sep)->se_rpcversl != 0)
-	short	se_wait;		/* single threaded server */
+	pid_t	se_wait;		/* single threaded server */
 	short	se_checked;		/* looked at during merge */
 	char	*se_user;		/* user name to run as */
 	char	*se_group;		/* group name to run as */
