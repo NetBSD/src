@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.39 1999/12/18 03:09:46 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.40 2000/01/21 12:28:23 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -233,12 +233,13 @@ fd*)
 
 md*)	# Memory disk
 	unit=${i#md}; blk=1; chr=37;
-	rm -f md${unit} md${unit}c rmd${unit}
-	mknod md${unit}  b $blk $((($unit +  0) * 16))
-	mknod md${unit}c b $blk $((($unit + 16) * 16))
-#	mknod md${unit}  c $chr $((($unit + 16) * 16))
-	chgrp operator md${unit} md${unit}c #rmd${unit}
-	chmod 640 md${unit} md${unit}c #rmd${unit}
+	rm -f md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 16 + 0))
+	mknod md${unit}c  b $blk $(($unit * 16 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 16 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 16 + 2))
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
 ss*)	# SCSI changer
