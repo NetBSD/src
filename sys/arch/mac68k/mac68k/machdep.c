@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 2000/03/04 08:16:16 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249 2000/03/09 22:27:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2377,7 +2377,6 @@ gray_bar()
 /* in locore */
 extern u_long ptest040 __P((caddr_t addr, u_int fc));
 extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
-extern int get_pte_s __P((u_int addr, u_long pte[2], u_short * psr));
 
 /*
  * LAK (7/24/94): given a logical address, puts the physical address
@@ -2406,11 +2405,8 @@ get_physical(u_int addr, u_long * phys)
 		mask = (macos_tc & 0x4000) ? 0x00001fff : 0x00000fff;
 		ph &= (~mask);
 	} else {
-		if ((i = get_pte(addr, pte, &psr)) == (-1))
-			i = get_pte_s(addr, pte, &psr);
-
-		switch (i) {
-		case -1:
+		switch (get_pte(addr, pte, &psr)) {
+		case (-1):
 			return 0;
 		case 0:
 			ph = pte[0] & 0xFFFFFF00;
@@ -2576,6 +2572,15 @@ get_mapping(void)
 	}
 
 	/*
+	 * If we can't figure out the PA of the frame buffer by groveling
+	 * the page tables, assume that we already have the correct
+	 * address.  This is the case on several of the PowerBook 1xx
+	 * series, in particular.
+	 */
+	if (!get_physical(videoaddr, &phys))
+		phys = videoaddr;
+
+	/*
 	 * Find on-board video, if we have an idea of where to look
 	 * on this system.
 	 */
@@ -2584,7 +2589,6 @@ get_mapping(void)
 			break;
 
 	if (mac68k_machine.machineid == iip->machineid &&
-	    get_physical(videoaddr, &phys) &&
 	    (phys & ~iip->fbmask) >= iip->fbbase &&
 	    (phys & ~iip->fbmask) < (iip->fbbase + iip->fblen)) {
 		mac68k_vidphys = phys & ~iip->fbmask;
