@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.5 2002/10/02 15:52:24 thorpej Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.6 2003/06/29 13:18:24 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -50,11 +50,14 @@
 
 struct aucom_aubus_softc {
 	struct com_softc sc_com;
+	int sc_irq;
 	void *sc_ih;
 };
 
 static int	aucom_aubus_probe(struct device *, struct cfdata *, void *);
 static void	aucom_aubus_attach(struct device *, struct device *, void *);
+static int	aucom_aubus_enable(struct com_softc *);
+static void	aucom_aubus_disable(struct com_softc *);
 
 CFATTACH_DECL(aucom_aubus, sizeof(struct aucom_aubus_softc),
     aucom_aubus_probe, aucom_aubus_attach, NULL, NULL);
@@ -74,15 +77,14 @@ aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 void
 aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct aucom_aubus_softc *msc = (void *)self;
-	struct com_softc *sc = &msc->sc_com;
+	struct aucom_aubus_softc *asc = (void *)self;
+	struct com_softc *sc = &asc->sc_com;
 	struct aubus_attach_args *aa = aux;
-	void *ih;
 	int addr = aa->aa_addr;
-	int irq = aa->aa_irq[0];
 	
 	sc->sc_iot = aa->aa_st;
 	sc->sc_iobase = sc->sc_ioh = addr;
+	asc->sc_irq = aa->aa_irq[0];
 
 	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
 	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
@@ -99,13 +101,60 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
+	sc->enable = aucom_aubus_enable;
+	sc->disable = aucom_aubus_disable;
 
+	/* Enable UART so we can access it. */
+	aucom_aubus_enable(sc);
+	sc->enabled = 1;
+
+	/* Attach MI com driver. */
 	aucom_attach_subr(sc);
 
-	ih = au_intr_establish(irq, 0, IPL_SERIAL, IST_LEVEL, aucomintr, sc);
-	if (ih == NULL) {
+	/* Disable UART if it's not the console. (XXX kgdb?) */
+	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		aucom_aubus_disable(sc);
+		sc->enabled = 0;
+	}
+}
+
+int
+aucom_aubus_enable(struct com_softc *sc)
+{
+	struct aucom_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
+
+	/* Ignore requests to enable an already enabled console. */
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) && (asc->sc_ih != NULL))
+		return (0);
+
+	/* Enable the UART module. */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UART_MODULE_CONTROL,
+	    UMC_ME | UMC_CE);
+
+	/* Establish the interrupt. */
+	asc->sc_ih = au_intr_establish(asc->sc_irq, 0, IPL_SERIAL, IST_LEVEL,
+	    aucomintr, sc);
+	if (asc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		return (1);
 	}
+
+	return (0);
+}
+
+void
+aucom_aubus_disable(struct com_softc *sc)
+{
+	struct aucom_aubus_softc *asc = (void *)sc; /* XXX mi prototype */
+
+	/* Ignore requests to disable the console. */
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		return;
+
+	/* Disestablish the interrupt. */
+	au_intr_disestablish(asc->sc_ih);
+
+	/* Disable the UART module. */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UART_MODULE_CONTROL, 0);
 }
