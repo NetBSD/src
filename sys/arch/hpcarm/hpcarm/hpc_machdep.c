@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.4 2001/02/25 21:31:16 bjh21 Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.5 2001/03/09 12:13:15 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -183,7 +183,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     vm_offset_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
@@ -671,7 +670,7 @@ initarm(bi)
 #endif
 
 	/* Boot strap pmap telling it where the kernel page table is */
-	pmap_bootstrap(kernel_l1pt.pv_va, kernel_ptpt);
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 
 #ifdef CPU_SA110
