@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.1 2001/06/13 06:01:51 simonb Exp $
+#	$NetBSD: files.walnut,v 1.2 2001/06/24 02:13:38 simonb Exp $
 #
 # walnut-specific configuration info
 
@@ -6,18 +6,6 @@
 maxpartitions 16
 
 maxusers 2 8 64
-
-define	mainbus {[addr=-1], [irq=-1]}
-device	mainbus : pcibus, mainbus
-attach	mainbus at root
-file	arch/walnut/walnut/mainbus.c		mainbus
-
-device	cpu 
-attach	cpu at mainbus
-file	arch/walnut/walnut/cpu.c
-
-attach	com at mainbus with com_mainbus
-file	arch/walnut/dev/com_mainbus.c		com_mainbus
 
 include "arch/powerpc/fpu/files.fpu"
 
@@ -32,11 +20,64 @@ file	arch/walnut/walnut/machdep.c
 file	arch/walnut/dev/ibm405gp.c
 file	arch/walnut/walnut/procfs_machdep.c	procfs
 file	dev/cons.c
+
+# Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
 major	{md = 9}
 
-
+# Machine-independent I2O drivers.
 include	"dev/i2o/files.i2o"
+
+# Machine-independent MII/PHY drivers.
+include	"dev/mii/files.mii"
+
+# Machine-independent SCSI drivers
+include	"dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+# Machine-independent ATA drivers
+include	"dev/ata/files.ata"
+major	{wd = 10}
+
+# RAIDframe 
+major	{raid = 12}
+
+# Workstation Console
+include "dev/wscons/files.wscons"
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+# PCI bus support
+include	"dev/pci/files.pci"
+
+# System bus
+define	mainbus {[addr=-1], [irq=-1]}
+device	mainbus : pcibus, mainbus
+attach	mainbus at root
+file	arch/walnut/walnut/mainbus.c		mainbus
+
+device	cpu 
+attach	cpu at mainbus
+file	arch/walnut/walnut/cpu.c
+
+# On-chip com device(s)
+attach	com at mainbus with com_mainbus
+file	arch/powerpc/ibm4xx/dev/com_mainbus.c	com_mainbus
+
+# On-chip ethernet device(s)
+device	emac: ether, ifnet, arp, mii
+attach	emac at mainbus
+file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
+
+# On-chip PCI bridge
+device	pchb : pcibus
+attach	pchb at pci
+file	arch/walnut/pci/pchb.c			pchb
+
+file	arch/walnut/pci/pci_machdep.c		pci
 
 define	todservice {}
 
@@ -48,32 +89,6 @@ device	dsrtc: todservice
 attach	dsrtc at mainbus
 file	arch/walnut/dev/ds1743.c		dsrtc
 
-device	emac: ether, ifnet, arp, mii
-attach	emac at mainbus
-file	arch/walnut/dev/if_emac.c		emac
-
+include "dev/pckbc/files.pckbc"
 attach	pckbc at mainbus with pckbc_mainbus
 file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
-
-include	"dev/pci/files.pci"
-file	arch/walnut/pci/pci_machdep.c		pci
-
-device	pchb : pcibus
-attach	pchb at pci
-file	arch/walnut/pci/pchb.c			pchb
-
-include	"dev/mii/files.mii"
-include	"dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
-
-include	"dev/ata/files.ata"
-major	{wd = 10}
-
-major	{raid = 12}
-
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
-include "dev/pckbc/files.pckbc"
