@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 2001/05/16 05:36:55 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.55 2001/06/22 16:40:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -288,9 +288,6 @@ cdev_decl(dh);
 #include "dmf.h"
 cdev_decl(dmf);
 
-#include "np.h"
-cdev_decl(np);
-
 #if VAX8600 || VAXANY
 #define NCRL 1
 #else
@@ -440,7 +437,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36 */
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
 	cdev_tape_init(NMT,mt),		/* 38: MSCP tape */
-	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
+	cdev_notdef(),			/* 39  was NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 42: Packet filter */
