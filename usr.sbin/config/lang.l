@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.6 1993/12/05 22:10:48 mycroft Exp $
+ *	$Id: lang.l,v 1.7 1993/12/05 23:04:49 mycroft Exp $
  */
 
 #include <ctype.h>
@@ -62,7 +62,7 @@ struct kt {
 	{ "device",	DEVICE },
 	{ "disk",	DISK },
 	{ "drive",	DRIVE },
-#if	MACHINE_I386
+#if MACHINE_I386
 	{ "drq",	DRQ },
 #endif MACHINE_I386
 	{ "dst",	DST },
@@ -75,7 +75,7 @@ struct kt {
 	{ "iosiz",	IOSIZ },
 	{ "irq",	IRQ },
 #endif MACHINE_I386
-	{ "machine",	MACHINE },
+	{ "machine",	MACHIN },
 	{ "major",	MAJOR },
 	{ "makeoptions", MAKEOPTIONS },
 	{ "master",	MASTER },
