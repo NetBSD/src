@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.76 2003/12/04 14:57:47 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.77 2004/01/28 10:54:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.76 2003/12/04 14:57:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.77 2004/01/28 10:54:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 			n, LFS_WAIT_BUFS);
 	}
 	if (!bytes_fit) {
-		printf("lfs_fits_buf: no fit bytes: %ld + %ld + %d >= %d\n",
+		printf("lfs_fits_buf: no fit bytes: %ld + %ld + %d >= %ld\n",
 			locked_queue_bytes, locked_queue_rbytes,
 			bytes, LFS_WAIT_BYTES);
 	}
@@ -600,11 +600,11 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 
 #ifdef DEBUG_LFS_FLUSH
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS)
-		printf("lqc = %d, max %d\n", locked_queue_count + INOCOUNT(fs),
-			LFS_MAX_BUFS);
+		printf("lqc = %d, max %d\n",
+		    locked_queue_count + INOCOUNT(fs), LFS_MAX_BUFS);
 	if (locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
-		printf("lqb = %ld, max %d\n", locked_queue_bytes + INOBYTES(fs),
-			LFS_MAX_BYTES);
+		printf("lqb = %ld, max %ld\n",
+		    locked_queue_bytes + INOBYTES(fs), LFS_MAX_BYTES);
 	if (lfs_subsys_pages > LFS_MAX_PAGES)
 		printf("lssp = %d, max %d\n", lfs_subsys_pages, LFS_MAX_PAGES);
 	if (lfs_dirvcount > LFS_MAX_DIROP)
