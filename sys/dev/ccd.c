@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.50 1998/07/09 20:56:12 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.51 1998/07/31 01:23:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,46 +132,14 @@ struct ccdbuf {
 	int		cb_unit;	/* target unit */
 	int		cb_comp;	/* target component */
 	int		cb_flags;	/* misc. flags */
-	LIST_ENTRY(ccdbuf) cb_list;	/* entry on freelist */
 };
 
 /* cb_flags */
 #define CBF_MIRROR	0x01		/* we're for a mirror component */
 
-/*
- * Number of freelist buffers per component.  Overridable in kernel
- * config file and patchable.
- */
-#ifndef CCDNBUF
-#define	CCDNBUF		8
-#endif
-int	ccdnbuf = CCDNBUF;
-
-/*
- * XXX Is it OK to wait here?
- * XXX maybe set up a timeout when we hit some lowater?
- * XXX    --thorpej
- */
-#define	CCDGETBUF(cs, cbp)	do {					\
-		(cs)->sc_ngetbuf++;					\
-		if (((cbp) = (cs)->sc_freelist.lh_first) != NULL) {	\
-			LIST_REMOVE((cbp), cb_list);			\
-			(cs)->sc_freecount--;				\
-		} else {						\
-			(cs)->sc_nmisses++;				\
-			MALLOC((cbp), struct ccdbuf *,			\
-			    sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK);	\
-		}							\
-	} while (0)
-
-#define	CCDPUTBUF(cs, cbp)	do {					\
-		if ((cs)->sc_freecount == (cs)->sc_hiwat) {		\
-			FREE((cbp), M_DEVBUF);				\
-		} else {						\
-			LIST_INSERT_HEAD(&(cs)->sc_freelist, (cbp), cb_list); \
-			(cs)->sc_freecount++;				\
-		}							\
-	} while (0)
+/* XXX Safe to wait? */
+#define	CCD_GETBUF(cs)		pool_get(&(cs)->sc_cbufpool, PR_WAITOK)
+#define	CCD_PUTBUF(cs, cbp)	pool_put(&(cs)->sc_cbufpool, cbp)
 
 #define CCDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
@@ -254,7 +222,6 @@ ccdinit(ccd, cpaths, p)
 	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char tmppath[MAXPATHLEN];
-	struct ccdbuf *cbp;
 	int error;
 
 #ifdef DEBUG
@@ -432,23 +399,6 @@ ccdinit(ccd, cpaths, p)
 	ccg->ccg_ntracks = 1;
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
-
-	/*
-	 * Allocate the component buffer header freelist.  We allocate
-	 * ccdnbuf buffers per component.
-	 */
-	LIST_INIT(&cs->sc_freelist);
-	cs->sc_hiwat = cs->sc_nccdisks * ccdnbuf;
-	cs->sc_freecount = cs->sc_hiwat;
-	for (ix = 0; ix < cs->sc_hiwat; ix++) {
-		MALLOC(cbp, struct ccdbuf *, sizeof(struct ccdbuf),
-		    M_DEVBUF, M_WAITOK);
-		LIST_INSERT_HEAD(&cs->sc_freelist, cbp, cb_list);
-	}
-
-	/* Reset statistics. */
-	cs->sc_nmisses = 0;
-	cs->sc_ngetbuf = 0;
 
 	cs->sc_flags |= CCDF_INITED;
 	cs->sc_cflags = ccd->ccd_flags;	/* So we can find out later... */
@@ -849,7 +799,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	/*
 	 * Fill in the component buf structure.
 	 */
-	CCDGETBUF(cs, cbp);
+	cbp = CCD_GETBUF(cs);
 	cbp->cb_flags = 0;
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
@@ -887,7 +837,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	 */
 	if ((cs->sc_cflags & CCDF_MIRROR) &&
 	    ((cbp->cb_buf.b_flags & B_READ) == 0)) {
-		CCDGETBUF(cs, cbp);
+		cbp = CCD_GETBUF(cs);
 		*cbp = *cbpp[0];
 		cbp->cb_flags = CBF_MIRROR;
 		cbp->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
@@ -964,7 +914,7 @@ ccdiodone(vbp)
 	}
 	count = cbp->cb_buf.b_bcount;
 	cbflags = cbp->cb_flags;
-	CCDPUTBUF(cs, cbp);
+	CCD_PUTBUF(cs, cbp);
 
 	/*
 	 * If all done, "interrupt".
@@ -1054,7 +1004,6 @@ ccdioctl(dev, cmd, data, flag, p)
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
-	struct ccdbuf *cbp;
 	char **cpp;
 	struct vnode **vpp;
 
@@ -1175,6 +1124,10 @@ ccdioctl(dev, cmd, data, flag, p)
 		cs->sc_dkdev.dk_name = cs->sc_xname;
 		disk_attach(&cs->sc_dkdev);
 
+		/* Initialize the component buffer pool. */
+		pool_init(&cs->sc_cbufpool, sizeof(struct ccdbuf), 0,
+		    0, 0, "ccdpl", 0, NULL, NULL, M_DEVBUF);
+
 		/* Try and read the disklabel. */
 		ccdgetdisklabel(dev);
 
@@ -1221,12 +1174,6 @@ ccdioctl(dev, cmd, data, flag, p)
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
 		}
 
-		/* Free component buffer freelist. */
-		while ((cbp = cs->sc_freelist.lh_first) != NULL) {
-			LIST_REMOVE(cbp, cb_list);
-			FREE(cbp, M_DEVBUF);
-		}
-
 		/* Free interleave index. */
 		for (i = 0; cs->sc_itable[i].ii_ndisk; ++i)
 			free(cs->sc_itable[i].ii_index, M_DEVBUF);
@@ -1242,6 +1189,9 @@ ccdioctl(dev, cmd, data, flag, p)
 		free(ccddevs[unit].ccd_cpp, M_DEVBUF);
 		free(ccddevs[unit].ccd_vpp, M_DEVBUF);
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
+
+		/* Free the component buffer pool. */
+		pool_destroy(&cs->sc_cbufpool);
 
 		/* Detatch the disk. */
 		disk_detach(&cs->sc_dkdev);
