@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.70 2004/07/23 07:20:44 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.71 2004/07/23 08:34:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.70 2004/07/23 07:20:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.71 2004/07/23 08:34:11 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -2137,7 +2137,7 @@ atw_write_wep(struct atw_softc *sc)
 	sc->sc_wepctl = 0;
 	ATW_WRITE(sc, ATW_WEPCTL, sc->sc_wepctl);
 
-	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0)
+	if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0)
 		return;
 
 	memset(&buf[0][0], 0, sizeof(buf));
@@ -2412,7 +2412,7 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	capinfo = 0;
 	if (sc->sc_flags & ATWF_SHORT_PREAMBLE)
 		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 
 	switch (ic->ic_opmode) {
