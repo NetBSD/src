@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.31 2001/10/24 06:36:38 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.32 2001/11/17 18:55:11 perry Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -593,14 +593,16 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 	u_int32_t sum = 0;
 	const u_int16_t *w;
 
-	w = (u_int16_t *) src;
+	/*LINTED*/
+	w = (const u_int16_t *) src;
 	sum += w[0];
 	if (!IN6_IS_SCOPE_LINKLOCAL(src))
 		sum += w[1];
 	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
 	sum += w[6]; sum += w[7]; 
 
-	w = (u_int16_t *) dst;
+	/*LINTED*/
+	w = (const u_int16_t *) dst;
 	sum += w[0];
 	if (!IN6_IS_SCOPE_LINKLOCAL(dst))
 		sum += w[1];
