@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.10.2 2001/11/17 18:18:24 scw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.3 2001/12/04 19:19:13 gmcgarry Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -337,7 +337,6 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
 	/* See cpu_fork() */
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
@@ -347,8 +346,8 @@ child_return(arg)
 
 	machine_userret(l, f, 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }
 
