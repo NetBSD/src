@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.53 1995/04/19 02:54:12 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.54 1995/04/19 19:02:54 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -71,16 +71,16 @@ file	arch/i386/isa/npx.c		npx needs-flag
 
 # PC console support a la "pccons"
 device	pc at isa: tty
-file	arch/i386/isa/pccons.c		pc needs-count
+file	arch/i386/isa/pccons.c		pc needs-flag
 
 # PC console support a la "pcvt"
 device	vt at isa: tty
-file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-count
-file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-count
-file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-count
-file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-count
-file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-count
-file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-count
+file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms at isa
