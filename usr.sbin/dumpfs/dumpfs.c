@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.30 2001/09/06 02:16:02 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.31 2001/11/09 12:01:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.30 2001/09/06 02:16:02 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.31 2001/11/09 12:01:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,14 @@ __RCSID("$NetBSD: dumpfs.c,v 1.30 2001/09/06 02:16:02 lukem Exp $");
 #include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 union {
 	struct fs fs;
@@ -74,11 +77,12 @@ union {
 #define	acg	cgun.cg
 
 long	dev_bsize = 1;
-int	needswap = 0;
+int	needswap, Fflag;
 
 int	dumpfs(const char *);
 int	dumpcg(const char *, int, int);
 int	main(int, char **);
+int	openpartition(const char *, int, char *, size_t);
 void	pbits(void *, int);
 void	usage(void);
 void	swap_cg(struct cg *);
@@ -86,11 +90,8 @@ void	swap_cg(struct cg *);
 int
 main(int argc, char *argv[])
 {
-	struct fstab *fs;
 	int ch, eval;
-	int Fflag;
 
-	Fflag = 0;
 	while ((ch = getopt(argc, argv, "F")) != -1)
 		switch(ch) {
 		case 'F':
@@ -106,11 +107,11 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
-	for (eval = 0; *argv; ++argv)
-		if (Fflag || ((fs = getfsfile(*argv)) == NULL))
-			eval |= dumpfs(*argv);
-		else
-			eval |= dumpfs(fs->fs_spec);
+	for (eval = 0; *argv; ++argv) {
+		eval |= dumpfs(*argv);
+		printf("\n");
+	}
+
 	exit(eval);
 }
 
@@ -119,10 +120,18 @@ dumpfs(const char *name)
 {
 	int fd, c, i, j, k, size;
 	time_t t;
+	char device[MAXPATHLEN];
 	struct csum *ccsp;
 
-	if ((fd = open(name, O_RDONLY, 0)) < 0)
+	if (Fflag)
+		fd = open(name, O_RDONLY);
+	else {
+		fd = openpartition(name, O_RDONLY, device, sizeof(device));
+		name = device;
+	}
+	if (fd == -1)
 		goto err;
+
 	if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
 		goto err;
 	if (read(fd, &afs, SBSIZE) != SBSIZE)
@@ -139,6 +148,8 @@ dumpfs(const char *name)
  			return (1);
  		}
  	}
+
+	printf("file system: %s\n", name);
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (needswap)
 #else
@@ -437,4 +448,29 @@ swap_cg(struct cg *cg)
 		for (i = 0; i < afs.fs_contigsumsize + 1; i++)
 			n32[i] = bswap32(n32[i]);
 	}
+}
+
+int
+openpartition(const char *name, int flags, char *device, size_t devicelen)
+{
+	char		rawspec[MAXPATHLEN], *p;
+	struct fstab	*fs;
+	int		fd, oerrno;
+
+	fs = getfsfile(name);
+	if (fs) {
+		if ((p = strrchr(fs->fs_spec, '/')) != NULL) {
+			snprintf(rawspec, sizeof(rawspec), "%.*s/r%s",
+			    (int)(p - fs->fs_spec), fs->fs_spec, p + 1);
+			name = rawspec;
+		} else
+			name = fs->fs_spec;
+	}
+	fd = opendisk(name, flags, device, devicelen, 0);
+	if (fd == -1 && errno == ENOENT) {
+		oerrno = errno;
+		strlcpy(device, name, devicelen);
+		errno = oerrno;
+	}
+	return (fd);
 }
