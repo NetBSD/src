@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.12 1995/02/01 09:32:45 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.13 1995/03/28 20:00:53 jtc Exp $	*/
 
 /**************************************************************************
 **
@@ -152,13 +152,13 @@
 #include <sys/time.h>
 #include <sys/proc.h>
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <vm/vm.h>
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #include <dev/pci/ncr_reg.h>
 
@@ -345,7 +345,7 @@
 #endif /*__FreeBSD__*/
 
 #ifdef ANCIENT
-#ifdef KERNEL
+#ifdef _KERNEL
 	extern	int	splbio(void);
 	extern	void	splx(int level);
 	extern	int	wakeup(void* channel);
@@ -354,7 +354,7 @@
 	extern	int	scsi_attachdevs();
 	extern	void	timeout();
 	extern	void	untimeout();
-#endif /* KERNEL */
+#endif /* _KERNEL */
 	#define bio_imask biomask
 	#define LUN       lu
 	#define TARGET    targ
@@ -1145,7 +1145,7 @@ struct script {
 **==========================================================
 */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 void	ncr_alloc_ccb	(ncb_p np, struct scsi_xfer * xp);
 void	ncr_complete	(ncb_p np, ccb_p cp);
 int	ncr_delta	(struct timeval * from, struct timeval * to);
@@ -1191,7 +1191,7 @@ char*	ncr_probe       (pcici_t tag, pcidi_t type);
 void	ncr_attach	(pcici_t tag, int unit);
 #endif /* __NetBSD__ */
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*==========================================================
 **
@@ -1204,7 +1204,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.12 1995/02/01 09:32:45 mycroft Exp $\n";
+	"\n$Id: ncr.c,v 1.13 1995/03/28 20:00:53 jtc Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -1212,7 +1212,7 @@ u_long	ncr_version = NCR_VERSION
 	* (u_long) sizeof (struct lcb)
 	* (u_long) sizeof (struct tcb);
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #ifndef __NetBSD__
 u_long		nncr=MAX_UNITS;
@@ -3314,7 +3314,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.12 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.13 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -6512,6 +6512,6 @@ void ncr_getclock (ncb_p np)
 }
 
 /*=========================================================================*/
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 
