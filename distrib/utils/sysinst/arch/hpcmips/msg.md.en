@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 2002/03/23 03:24:34 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,8 @@
 /* MD Message catalog -- english, i386 version */
 
 message md_hello
-{
+{If you booted from a floppy, you may now remove the disk.
+
 }
 
 message fullpart
@@ -73,7 +74,7 @@ real geometry:	%d cylinders, %d heads, %d sectors
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Total disksize %d sectors
+{   Total disksize %d %s.
 
    Start(%3s) Size(%3s)  End(%3s)   Kind
    ---------- ---------- ---------- ----
@@ -135,12 +136,27 @@ message parttable
 }
 
 message editpart
-{Partition %d looks like:\n\n}
+{You are editing partition %d. The highlighthed partition is the partition
+you are editing.}
 
 message editparttable
 {Edit your DOS partition table.  The highlighted partition is the currently
 active partition.  The partition table currently looks like:
 
+}
+
+message mbrpart_start_special
+{
+  Special values that can be entered for the start value:
+ -N:    start at the end of partition N
+  0:    start at the beginning of the disk
+}
+
+message mbrpart_size_special
+{
+  Special values that can be entered for the size value:
+ -N:    size the partition so that it ends where partition N starts
+  0:    end at the end of the disk
 }
 
 message reeditpart
@@ -163,6 +179,10 @@ message dofdisk
 
 message dobad144
 {Installing the bad block table ...
+}
+
+message getboottype
+{Would you like to install the normal set of bootblocks or serial bootblocks?
 }
 
 message dobootblks
@@ -228,6 +248,13 @@ message biosmultmatch_header
    ------ ---------- ------- -------
 }
 
+message biosgeom_advise
+{
+Note: since sysinst was able to uniquely match the disk you chose with a disk
+known to the BIOS, the values displayed above are very likely correct, and
+should not be changed. Only change them if they are very obviously wrong.
+}
+
 message biosmultmatch_row
 {%-1d: %-6x %-10d %-7d %d\n}
 
@@ -257,11 +284,19 @@ off this partition. Do you want to install the NetBSD bootcode into
 the Master Boot Record so that this is ensured? Note that this will
 overwrite the existing code in the MBR, like some bootselectors.}
 
+message installnormalmbr
+{You have chosen not to install a bootselector. If this was because you
+already have a bootselector installed, no further action is needed.
+However, if no bootselector is installed, the normal bootcode must be
+used, or your system will not boot properly. Do you want to use the normal
+NetBSD bootcode?}
+
 message configbootsel
 {Configure the different bootselection menu items. You can change the
 simple menu entries for the matching partition entries that are displayed
 when the system boots. Also, you can specify the timeout and default
-action to be taken (if no selection is made in the bootmenu).\n}
+action to be taken (if no selection is made in the bootmenu).\n
+}
 
 message bootseltimeout
 {Boot menu timeout: %d\n}
@@ -270,7 +305,7 @@ message defbootselopt
 {Default boot menu action: }
 
 message defbootseloptactive
-{boot the first active partition.}
+{boot the first active partition.\n}
 
 message defbootseloptpart
 {boot off partition %d.\n}
@@ -291,3 +326,10 @@ message bootsel_header
 
 message bootsel_row
 {%-6d %-32s %s\n}
+
+message emulbackup
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted filesystem. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
+}

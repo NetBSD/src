@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.6 2001/11/29 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.7 2002/03/23 03:24:34 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,21 +184,21 @@ menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Kernel (TX3912)",	 action { toggle_getit (1); };
-	option	"Kernel (TX3922)",	 action { toggle_getit (2); };
-	option	"Base",			 action { toggle_getit (3); };
-	option	"System (/etc)",	 action { toggle_getit (4); };
-	option  "Outils de développement", 	 action { toggle_getit (5); };
-	option  "Jeux", 		 action { toggle_getit (6); };
-	option  "Pages de manuel", 	 action { toggle_getit (7); };
-	option  "Divers", 	 action { toggle_getit (8); };
-	option  "Outils de manipulation de textes", action { toggle_getit (9); };
-	option  "X11 base et clients",	 action { toggle_getit (10); };
-	option  "X11 polices",		 action { toggle_getit (11); };
-	option  "X11 serveurs",		 action { toggle_getit (12); };
-	option  "X11 clients contribués",	 action { toggle_getit (13); };
-	option  "X11 développement",	 action { toggle_getit (14); };
-	option  "X11 Misc.",		 action { toggle_getit (15); };
+	option	"Base",			 action { toggle_getit (2); };
+	option	"System (/etc)",	 action { toggle_getit (3); };
+	option  "Outils de développement", 	 action { toggle_getit (4); };
+	option  "Jeux", 		 action { toggle_getit (5); };
+	option  "Pages de manuel", 	 action { toggle_getit (6); };
+	option  "Divers", 	 action { toggle_getit (7); };
+	option  "Outils de manipulation de textes", action { toggle_getit (8); };
+	option  "X11 base et clients",	 action { toggle_getit (9); };
+	option  "X11 polices",		 action { toggle_getit (10); };
+	option  "X11 serveurs",		 action { toggle_getit (11); };
+	option  "X11 clients contribués",	 action { toggle_getit (12); };
+	option  "X11 développement",	 action { toggle_getit (13); };
+	option  "X11 Misc.",		 action { toggle_getit (14); };
 
+/*
 menu biosonematch;
 	option "C'est le bon géométrie", exit, action {
 		extern struct disklist *disklist;
@@ -331,3 +331,4 @@ menu defaultbootsel, title "Choisissez un disque ou partition";
 		action { mbs->defkey = SCAN_F1 + 9; defbootseldisk = 5; };
 	option "Première partition active", exit,
 		action { mbs->defkey = SCAN_ENTER; };
+*/

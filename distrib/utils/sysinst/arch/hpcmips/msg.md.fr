@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.2 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.3 2002/03/23 03:24:34 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,8 @@
 /* MD Message catalog -- french, i386 version */
 
 message md_hello
-{
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+
 }
 
 message fullpart
@@ -165,6 +166,10 @@ message dobad144
 {Installation de la table des block défectueux ...
 }
 
+message getboottype
+{Aimez-vous installer l'ensemble normal de bootblocks ou de bootblocks serial?
+}
+
 message dobootblks
 {Installation des block de démarrage sur %s ...
 }
@@ -261,7 +266,7 @@ le programme d'amorcage existant, comme un selecteur de boot.}
 message configbootsel
 {Configurez les differents choix du selecteur de boot. Vous pouvez changer
 le menu proposé pour chaque partition lorsque le système demarre.
-Vous pouvez également préciser le choix par defaut et le temps d'attente.
+Vous pouvez également préciser le choix par defaut et le temps d'attente.\n
 }
 
 message bootseltimeout
@@ -271,7 +276,7 @@ message defbootselopt
 {Action par defaut: }
 
 message defbootseloptactive
-{Démarrer la première partition active.}
+{Démarrer la première partition active.\n}
 
 message defbootseloptpart
 {Démarrer depuis la partition %d.\n}
