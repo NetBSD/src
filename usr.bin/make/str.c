@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.10 1995/06/14 15:19:56 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.11 1995/10/30 17:36:27 ws Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: str.c,v 1.10 1995/06/14 15:19:56 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.11 1995/10/30 17:36:27 ws Exp $";
 #endif
 #endif				/* not lint */
 
@@ -60,7 +60,7 @@ void
 str_init()
 {
     char *p1;
-    argv = (char **)emalloc((argmax = 50) * sizeof(char *));
+    argv = (char **)emalloc(((argmax = 50) + 1) * sizeof(char *));
     argv[0] = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 }
 
@@ -207,7 +207,7 @@ brk_string(str, store_argc, expand)
 			if (argc == argmax) {
 				argmax *= 2;		/* ramp up fast */
 				if (!(argv = (char **)realloc(argv,
-				    argmax * sizeof(char *))))
+				    (argmax + 1) * sizeof(char *))))
 				enomem();
 			}
 			argv[argc++] = start;
