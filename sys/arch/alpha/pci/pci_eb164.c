@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.16 1998/05/11 23:36:46 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.17 1998/05/24 19:09:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.16 1998/05/11 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.17 1998/05/24 19:09:57 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -318,7 +318,8 @@ eb164_iointr(framep, vec)
 			alpha_shared_intr_stray(eb164_pci_intr, irq,
 			    "eb164 irq");
 			if (eb164_pci_intr[irq].intr_nstrays ==
-			    eb164_pci_intr[irq].intr_maxstrays)
+			    eb164_pci_intr[irq].intr_maxstrays 
+			    && TAILQ_FIRST(&eb164_pci_intr[irq].intr_q) == NULL)
 				eb164_intr_disable(irq);
 		}
 		return;
