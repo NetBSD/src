@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1994/11/06 21:49:08 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.8 1994/12/20 06:53:45 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -43,6 +43,9 @@
 
 #include "../dev/device.h"
 
+#include "sd.h"
+#include "rd.h"
+
 /*
  * Generic configuration;  all in one
  */
@@ -56,8 +59,12 @@ struct	swdevt swdevt[] = {
 };
 int	dmmin, dmmax, dmtext;
 
+#if NRD > 0
 extern	struct driver rddriver;
+#endif
+#if NSD > 0
 extern	struct driver sddriver;
+#endif
 extern struct hp_ctlr hp_cinit[];
 extern struct hp_device hp_dinit[];
 
@@ -66,8 +73,12 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
+#if NRD > 0
 	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},
+#endif
+#if NSD > 0
 	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+#endif
 	{ 0 },
 };
 
