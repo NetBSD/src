@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.64 2003/01/18 08:02:54 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.65 2003/02/19 11:23:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.64 2003/01/18 08:02:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.65 2003/02/19 11:23:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,10 @@ linux_sys_alarm(l, v, retval)
 		ptp = pool_get(&ptimer_pool, PR_WAITOK);
 		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
 		ptp->pt_ev.sigev_signo = SIGALRM;
+		ptp->pt_overruns = 0;
+		ptp->pt_proc = p;
 		ptp->pt_type = CLOCK_REALTIME;
+		ptp->pt_entry = CLOCK_REALTIME;
 		callout_init(&ptp->pt_ch);
 	}
 
