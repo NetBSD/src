@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.23 2001/11/15 09:48:12 lukem Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.24 2001/12/24 09:30:40 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.23 2001/11/15 09:48:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.24 2001/12/24 09:30:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +370,8 @@ com_pcmcia_disable(sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 
-	com_pcmcia_disable1(sc);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	com_pcmcia_disable1(sc);
 }
 
 void
