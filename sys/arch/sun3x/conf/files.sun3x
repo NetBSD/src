@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.8 1997/02/14 20:01:41 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.9 1997/02/18 15:13:13 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -11,7 +11,8 @@ maxusers 2 8 64
 
 # Standard stuff
 file arch/sun3x/sun3x/_startup.c
-file arch/sun3x/sun3x/autoconf.c
+file arch/sun3/sun3/autoconf.c
+file arch/sun3x/sun3x/bus_subr.c
 file arch/sun3/sun3/conf.c
 file arch/sun3x/sun3x/db_machdep.c		ddb
 file arch/sun3x/sun3x/db_memrw.c		ddb | kgdb
