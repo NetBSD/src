@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.29 1999/05/20 09:52:35 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.30 1999/05/21 10:15:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 /*
  * USB Open Host Controller driver.
  *
- * OHCI spec: http://www.intel.com/design/usb/ohci11d.pdf
- * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
+ * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
+ * USB spec: http://www.usb.org/developers/data/usb11.pdf
  */
 
 #include <sys/param.h>
