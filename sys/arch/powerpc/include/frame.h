@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.14 2003/02/03 21:48:01 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.15 2003/07/31 15:29:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,7 +81,7 @@ struct trapframe {
 
 #if defined(_KERNEL) || defined(_LKM)
 #ifdef _LP64
-struct utrapframe {
+struct utrapframe32 {
 	register32_t fixreg[32];
 	register32_t lr;
 	int cr;
@@ -104,9 +104,9 @@ struct utrapframe {
 
 struct switchframe {
 	register_t sp;
-	int fill;
-	int user_sr;	/* VSID on IBM4XX */
-	int cr;
+	register_t fill;
+	register_t user_sr;	/* VSID on IBM4XX */
+	register_t cr;
 	register_t fixreg2;
 	register_t fixreg[19];		/* R13-R31 */
 };
