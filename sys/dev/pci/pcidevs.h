@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.490 2002/11/19 06:52:08 bsh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.491 2002/11/26 18:10:10 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.487 2002/11/19 06:47:24 bsh Exp 
+ *	NetBSD: pcidevs,v 1.488 2002/11/26 18:09:27 thorpej Exp 
  */
 
 /*
@@ -1355,6 +1355,7 @@
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
+#define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller (CDC) */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O (SIO) */
