@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.14 1998/01/12 10:40:06 thorpej Exp $	*/
+/*	$NetBSD: msc.c,v 1.15 1998/09/01 02:33:32 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -330,8 +330,7 @@ mscopen(dev, flag, mode, p)
 	}
 
 	/* initialize tty */
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -386,12 +385,13 @@ mscopen(dev, flag, mode, p)
 	 */
 
 	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
-		tp->t_state |= TS_WOPEN;
+		tp->t_wopen++;
 
 #if DEBUG_CD
 		printf("msc%d: %d waiting for CD\n", msc->unit, MSCLINE(dev));
 #endif
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
 
 		if (error) {
 			splx(s);
@@ -554,7 +554,7 @@ mscmint (data)
 #endif
 			    msc->flags &= ~TIOCM_CD;
 			    if ((tp = msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, i))]) &&
-				 (tp->t_state & (TS_ISOPEN | TS_WOPEN))) {
+				 (tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 
 #ifndef MSCCDHACK
 				if (MSCDIALIN(tp->t_dev))
@@ -577,7 +577,7 @@ mscmint (data)
 #endif
 			    msc->flags |= TIOCM_CD;
 			    if ((tp = msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, i))]) &&
-				(tp->t_state & (TS_ISOPEN | TS_WOPEN))) {
+				(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 				    if (MSCDIALIN(tp->t_dev))
 					(*linesw[tp->t_line].l_modem)(tp, 1);
 			    } /* if tp valid and port open */
@@ -603,7 +603,7 @@ mscmint (data)
 	    newhead = ms->InHead;		/* 65c02 write pointer */
 
 	    /* yoohoo, is the port open? */
-	    if (tp && (tp->t_state & (TS_ISOPEN|TS_WOPEN))) {
+	    if (tp && (tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 		/* port is open, handle all type of events */
 
 		/* set interrupt priority level */
