@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.65 1998/03/03 02:22:00 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.66 1998/03/08 15:12:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -102,7 +102,7 @@ struct statfs {
 #define	MOUNT_CD9660	"cd9660"	/* ISO9660 (aka CDROM) Filesystem */
 #define	MOUNT_UNION	"union"		/* Union (translucent) Filesystem */
 #define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
-#define MOUNT_EXT2FS   "ext2fs"		/* Second Extended Filesystem */
+#define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
