@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.9 1999/08/26 09:28:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_optparms __P((struct sd_softc *,
 		    struct disk_parms *, int));
-static void	sd_scsibus_flush __P((struct sd_softc *, int));
+static int	sd_scsibus_flush __P((struct sd_softc *, int));
 
 const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
@@ -329,7 +329,7 @@ fake_it:
 	return (SDGP_RESULT_OK);
 }
 
-static void
+static int
 sd_scsibus_flush(sd, flags)
 	struct sd_softc *sd;
 	int flags;
@@ -353,16 +353,14 @@ sd_scsibus_flush(sd, flags)
 	 */
 	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2 &&
 	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
+		sd->flags |= SDF_FLUSHING;
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
-		if (scsipi_command(sc_link,
-		    (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
-		    NULL, 0, SDRETRIES, 100000, NULL,
-		    flags|SCSI_IGNORE_ILLEGAL_REQUEST))
-			printf("%s: WARNING: cache synchronization failed\n",
-			    sd->sc_dev.dv_xname);
-		else
-			sd->flags |= SDF_FLUSHING;
-	}
+		return(scsipi_command(sc_link,
+		       (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
+		       NULL, 0, SDRETRIES, 100000, NULL,
+		       flags|SCSI_IGNORE_ILLEGAL_REQUEST));
+	} else
+		return(0);
 }
