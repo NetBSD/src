@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.41 2000/07/21 18:31:03 onoe Exp $
+.\"	$NetBSD: ifconfig.8,v 1.42 2000/08/13 17:17:26 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -304,7 +304,7 @@ The
 .Ar id
 can either be any text string up to 32 characters in length,
 or a series of hexadecimal digits up to 64 digits.
-The empty string allows the inteface to connect to any available
+The empty string allows the interface to connect to any available
 access points.
 .It Cm nwkey Ar key
 (IEEE 802.11 devices only)
@@ -388,7 +388,8 @@ Set valid lifetime for the address.
 displays the current configuration for a network interface
 when no optional parameters are supplied.
 If a protocol family is specified,
-Ifconfig will report only the details specific to that protocol
+.Nm
+will report only the details specific to that protocol
 family.
 .Pp
 If the
@@ -454,7 +455,7 @@ mutually exclusive with all other flags and commands.
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
-Messages indicating the specified interface does not exit, the
+Messages indicating the specified interface does not exist, the
 requested address is unknown, or the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
