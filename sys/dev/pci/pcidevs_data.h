@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.242 2000/06/24 12:16:55 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.243 2000/07/03 06:05:46 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.238 2000/06/24 12:16:21 joda Exp 
+ *	NetBSD: pcidevs,v 1.239 2000/07/03 06:01:17 gmcgarry Exp 
  */
 
 /*
@@ -890,6 +890,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LR,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LR",
 	},
 	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
@@ -2300,6 +2306,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82443BX Host Bridge/Controller (AGP disabled)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX,
+	    0,
+	    "Intel",
+	    "82440MX Host Bridge/Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
+	    0,
+	    "Intel",
+	    "82440MX AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA,
+	    0,
+	    "Intel",
+	    "82440MX PCI-to-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE,
+	    0,
+	    "Intel",
+	    "82440MX IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_USB,
+	    0,
+	    "Intel",
+	    "82440MX USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PMC,
+	    0,
+	    "Intel",
+	    "82440MX Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I740,
