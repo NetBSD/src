@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.40 2000/05/26 21:20:26 thorpej Exp $	   */
+/*	$NetBSD: subr.s,v 1.41 2000/05/27 20:02:58 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -184,22 +184,6 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 		movl	r3,r0
 		ret
 
-# Have bcopy and bzero here to be sure that system files that not gets
-# macros.h included will not complain.
-#if 0
-ENTRY(bcopy,0)
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movl	0xc(ap), r2
-	movc3	r2, (r0), (r1)
-	ret
-
-ENTRY(bzero,0)
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movc5	$0, (r0), $0, r1, (r0)
-	ret
-#endif
 #ifdef DDB
 /*
  * DDB is the only routine that uses setjmp/longjmp.
@@ -314,14 +298,15 @@ noque:	.asciz	"swtch"
 	bneq	1f			# No, continue
 	rsb
 1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
-	addl3	r0,$IFTRAP,pcbtrap	# Save for copy* functions.
+	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
+	mtpr	r1,$PR_ESP		# Use ESP as CPU-specific pointer
+	movl	r1,4(r0)		# Must save in PCB also.
 
 #
 # Nice routine to get physical from virtual adresses.
 #
 	extzv	$9,$21,r0,r1		# extract offset
-	movl	*_Sysmap[r1],r2		# get pte
-	ashl	$9,r2,r3		# shift to get phys address.
+	ashl	$9,*_Sysmap[r1],r3
 
 #
 # Do the actual process switch. pc + psl are already on stack, from
@@ -364,22 +349,26 @@ ENTRY(copyin, 0)
 	movl	4(ap),r1
 	blss	3f		# kernel space
 	movl	8(ap),r2
-2:	movab	1f,*pcbtrap
+2:	mfpr	$PR_ESP,r3
+	movab	1f,(r3)
 	movc3	12(ap),(r1),(r2)
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r3
+	clrl	(r3)
 	ret
 
 3:	mnegl	$1,r0
 	ret
 
 ENTRY(kcopy,0)
-	movl	*pcbtrap,-(sp)
-	movab	1f,*pcbtrap
+	mfpr	$PR_ESP,r3
+	movl	(r3),-(sp)
+	movab	1f,(r3)
 	movl	4(ap),r1
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
 	clrl	r1
-1:	movl	(sp)+,*pcbtrap
+1:	mfpr	$PR_ESP,r3
+	movl	(sp)+,(r3)
 	movl	r1,r0
 	ret
 
@@ -409,7 +398,8 @@ ENTRY(copystr,0)
 	movl	12(ap),r3	# len
 	movl	16(ap),r2	# copied
 	clrl	r0
-	movab	3f,*pcbtrap	# XXX - MULTIPROCESSOR
+	mfpr	$PR_ESP,r1
+	movab	3f,(r1)
 
 	tstl	r3		# any chars to copy?
 	bneq	1f		# yes, jump for more
@@ -424,36 +414,43 @@ ENTRY(copystr,0)
 	movl	$ENAMETOOLONG,r0 # inform about too long string
 	brb	0b		# out of chars
 
-3:	clrl	*pcbtrap	# XXX - MULTIPROCESSOR
+3:	mfpr	$PR_ESP,r1
+	clrl	(r1)
 	brb	0b
 
 ENTRY(subyte,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movb	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
 ENTRY(suword,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movl	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
 ENTRY(suswintr,0)
 	movl	4(ap),r0
 	blss	3f		# illegal space
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movw	8(ap),(r0)
-	movab	1f,*pcbtrap
 	clrl	r1
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
@@ -463,19 +460,14 @@ ENTRY(suswintr,0)
 ENTRY(fuswintr,0)
 	movl	4(ap),r0
 	blss	3b
+	mfpr	$PR_ESP,r1
+	movab	1f,(r1)
 	movzwl	(r0),r1
-	movab	1f,*pcbtrap
-1:	clrl	*pcbtrap
+1:	mfpr	$PR_ESP,r2
+	clrl	(r2)
 	movl	r1,r0
 	ret
 
-#
-# data department
-#
-	.data
-
-_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
-pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
 
 /*
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
@@ -504,3 +496,10 @@ ENTRY(blkclr,R6)
 	jgtr	1b
 	movc5	$0,(r3),$0,r6,(r3)
 	ret
+
+#
+# data department
+#
+	.data
+
+_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
