@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.92 1996/03/24 07:36:11 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.93 1996/03/26 20:32:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -68,7 +68,7 @@
 #include <scsi/scsiconf.h>
 #include <scsi/scsi_conf.h>
 
-#define	SDOUTSTANDING	2
+#define	SDOUTSTANDING	4
 #define	SDRETRIES	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
@@ -182,11 +182,6 @@ sdattach(parent, self, aux)
 	sd->sc_dk.dk_driver = &sddkdriver;
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
-
-	sd->sc_dk.dk_driver = &sddkdriver;
-#if !defined(i386) || defined(NEWCONFIG)
-	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
-#endif
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
@@ -870,7 +865,7 @@ sd_get_parms(sd, flags)
 	} else {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl),
+		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
 		    scsi_sense.pages.rigid_geometry.nheads,
 		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
 		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
