@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.161 2002/02/04 08:36:36 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.162 2002/02/05 13:54:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -525,9 +525,14 @@ bootpath_build()
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
 					cp = str2hex(++cp, &bp->val[1]);
-				if (*cp == ':')
+				if (*cp == ':') {
 					/* XXX - we handle just one char */
-					bp->val[2] = *++cp - 'a', ++cp;
+					/*       skip remainder of paths */
+					/*       like "ledma@f,400010:tpe" */
+					bp->val[2] = *++cp - 'a';
+					while (*++cp != '/' && *cp != '\0')
+						/*void*/;
+				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
 							sbus offset/adddress */
