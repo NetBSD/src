@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42.2.3 1994/08/05 22:47:15 mycroft Exp $
+ *	$Id: if_ep.c,v 1.42.2.4 1994/08/14 09:45:18 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -181,8 +181,6 @@ epprobe(parent, self, aux)
 				continue;
 			}
 
-			printf("epprobe: resetting card\n");
-
 			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 			delay(10);
 			outb(iobase + EISA_CONTROL, EISA_ENABLE);
@@ -197,9 +195,6 @@ epprobe(parent, self, aux)
 		}
 
 		/* find all isa cards */
-#if 0
-		outw(BASE + EP_COMMAND, GLOBAL_RESET);
-#endif
 		delay(1000);
 		elink_reset();	/* global reset to ELINK_ID_PORT */
 		delay(1000);
