@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.22 1997/10/19 01:46:27 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.23 1998/02/19 00:54:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,9 @@
  *		Performance of Cache-Consistency Protocols", Digital
  *		Equipment Corporation WRL Research Report 89/5, May 1989.
  */
+
+#include "fs_nfs.h"
+
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
