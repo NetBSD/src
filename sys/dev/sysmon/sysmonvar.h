@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.4 2003/04/10 18:04:20 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.5 2003/04/17 01:02:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -100,5 +100,28 @@ int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
 
 int	sysmon_wdog_register(struct sysmon_wdog *);
 void	sysmon_wdog_unregister(struct sysmon_wdog *);
+
+/*****************************************************************************
+ * Power management support
+ *****************************************************************************/
+
+struct sysmon_pswitch {
+	const char *smpsw_name;		/* power switch name */
+	int smpsw_type;			/* power switch type */
+
+	LIST_ENTRY(sysmon_pswitch) smpsw_list;
+};
+
+#define	SMPSW_TYPE_POWER	0	/* power button */
+#define	SMPSW_TYPE_SLEEP	1	/* sleep button */
+#define	SMPSW_TYPE_LID		2	/* lid switch */
+
+#define	SMPSW_EVENT_PRESSED	0	/* button pressed/lid closed */
+#define	SMPSW_EVENT_RELEASED	1	/* button released/lid opened */
+
+int	sysmon_pswitch_register(struct sysmon_pswitch *);
+void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
+
+void	sysmon_pswitch_event(struct sysmon_pswitch *, int);
 
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */
