@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.77 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.78 2004/08/20 22:02:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -167,9 +167,5 @@ int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
 #define WDC_RESET_WAIT 31000
 
 void	wdc_atapibus_attach(struct atabus_softc *);
-
-/* XXX */
-struct atabus_softc;
-void	atabusconfig(struct atabus_softc *);
 
 #endif /* _DEV_IC_WDCVAR_H_ */

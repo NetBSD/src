@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.50 2004/08/20 20:53:20 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.51 2004/08/20 22:02:40 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.50 2004/08/20 20:53:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.51 2004/08/20 22:02:40 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -59,6 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.50 2004/08/20 20:53:20 thorpej Exp $");
 
 #include "locators.h"
 
+#include "atapibus.h"
+#include "ataraid.h"
+
+#if NATARAID > 0 
+#include <dev/ata/ata_raidvar.h> 
+#endif
+
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
@@ -73,6 +80,14 @@ int atadebug_mask = 0;
 #endif
 
 POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL);
+
+/*
+ * A queue of atabus instances, used to ensure the same bus probe order
+ * for a given hardware configuration at each boot.
+ */
+struct atabus_initq_head atabus_initq_head =
+    TAILQ_HEAD_INITIALIZER(atabus_initq_head);
+struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
 
 /*****************************************************************************
  * ATA bus layer.
@@ -126,6 +141,131 @@ ataprint(void *aux, const char *pnp)
 	aprint_normal(" drive %d", adev->adev_drv_data->drive);
 
 	return (UNCONF);
+}
+
+static void
+atabusconfig(struct atabus_softc *atabus_sc)
+{
+	struct ata_channel *chp = atabus_sc->sc_chan;
+	struct atac_softc *atac = chp->ch_atac;
+	int i;
+	struct atabus_initq *atabus_initq = NULL;
+
+	/* Probe for the drives. */
+	(*atac->atac_probe)(chp);
+
+	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
+	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
+	    DEBUG_PROBE);
+
+	/* If no drives, abort here */
+	for (i = 0; i < chp->ch_ndrive; i++)
+		if ((chp->ch_drive[i].drive_flags & DRIVE) != 0)
+			break;
+	if (i == chp->ch_ndrive)
+		goto out;
+
+	/* Shortcut in case we've been shutdown */
+	if (chp->ch_flags & ATACH_SHUTDOWN)
+		goto out;
+
+	/* Make sure the devices probe in atabus order to avoid jitter. */
+	simple_lock(&atabus_interlock);
+	while(1) {
+		atabus_initq = TAILQ_FIRST(&atabus_initq_head);
+		if (atabus_initq->atabus_sc == atabus_sc)
+			break;
+		ltsleep(&atabus_initq_head, PRIBIO, "ata_initq", 0,
+		    &atabus_interlock);
+	}
+	simple_unlock(&atabus_interlock);
+
+	/*
+	 * Attach an ATAPI bus, if needed.
+	 */
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI) {
+#if NATAPIBUS > 0
+			(*atac->atac_atapibus_attach)(atabus_sc);
+#else
+			/*
+			 * Fake the autoconfig "not configured" message
+			 */
+			aprint_normal("atapibus at %s not configured\n",
+			    atac->atac_dev.dv_xname);
+			chp->atapibus = NULL;
+			for (i = 0; i < chp->ch_ndrive; i++)
+				chp->ch_drive[i].drive_flags &= ~DRIVE_ATAPI;
+#endif
+			break;
+		}
+	}
+
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		struct ata_device adev;
+		if ((chp->ch_drive[i].drive_flags &
+		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
+			continue;
+		}
+		memset(&adev, 0, sizeof(struct ata_device));
+		adev.adev_bustype = atac->atac_bustype_ata;
+		adev.adev_channel = chp->ch_channel;
+		adev.adev_openings = 1;
+		adev.adev_drv_data = &chp->ch_drive[i];
+		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
+		    &adev, ataprint);
+		if (chp->ata_drives[i] != NULL)
+			ata_probe_caps(&chp->ch_drive[i]);
+		else
+			chp->ch_drive[i].drive_flags &=
+			    ~(DRIVE_ATA | DRIVE_OLD);
+	}
+
+	/* now that we know the drives, the controller can set its modes */
+	if (atac->atac_set_modes) {
+		(*atac->atac_set_modes)(chp);
+		ata_print_modes(chp);
+	}
+#if NATARAID > 0
+	if (atac->atac_cap & ATAC_CAP_RAID)
+		for (i = 0; i < chp->ch_ndrive; i++)
+			if (chp->ata_drives[i] != NULL)
+				ata_raid_check_component(chp->ata_drives[i]);
+#endif /* NATARAID > 0 */
+
+	/*
+	 * reset drive_flags for unattached devices, reset state for attached
+	 * ones
+	 */
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drv_softc == NULL)
+			chp->ch_drive[i].drive_flags = 0;
+		else
+			chp->ch_drive[i].state = 0;
+	}
+
+ out:
+	if (atabus_initq == NULL) {
+		simple_lock(&atabus_interlock);
+		while(1) {
+			atabus_initq = TAILQ_FIRST(&atabus_initq_head);
+			if (atabus_initq->atabus_sc == atabus_sc)
+				break;
+			ltsleep(&atabus_initq_head, PRIBIO, "ata_initq", 0,
+			    &atabus_interlock);
+		}
+		simple_unlock(&atabus_interlock);
+	}
+        simple_lock(&atabus_interlock);
+        TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
+        simple_unlock(&atabus_interlock);
+
+        free(atabus_initq, M_DEVBUF);
+        wakeup(&atabus_initq_head);
+
+	ata_delref(chp);
+
+	config_pending_decr();
 }
 
 /*
