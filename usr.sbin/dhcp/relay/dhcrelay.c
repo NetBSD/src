@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.5 1999/02/18 21:48:54 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.6 1999/02/19 21:58:17 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -76,7 +76,7 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl13";
+static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl14";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -341,7 +341,8 @@ void relay (ip, packet, length, from_port, from, hfrom)
 
 static void usage ()
 {
-	error ("Usage: dhcrelay [-c] [-p <port>] [server1 [... serverN]]");
+	warn ("Usage: dhcrelay [-i] [-d] [-i if0] [...-i ifN] [-p <port>]");
+	error ("       [server1 [... serverN]]");
 }
 
 void cleanup ()
