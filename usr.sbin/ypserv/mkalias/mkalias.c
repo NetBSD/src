@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.2 1997/10/06 06:10:16 lukem Exp $ */
+/*	$NetBSD: mkalias.c,v 1.3 1997/10/07 14:45:18 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: mkalias.c,v 1.2 1997/10/06 06:10:16 lukem Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.3 1997/10/07 14:45:18 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -227,7 +227,7 @@ main(argc, argv)
 	
 	db = ypdb_open(input, O_RDONLY, 0444);
 	if (db == NULL)
-		errx(1, "Unable to open input database `%s'", input);
+		err(1, "Unable to open input database `%s'", input);
 
 	if (output != NULL) {
 		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
@@ -245,7 +245,7 @@ main(argc, argv)
 	
 		if (strlen(output) + strlen(mapname)
 		    + strlen(YPDB_SUFFIX) > MAXPATHLEN)
-			errx(1, "directory name `%s' too long", output);
+			errx(1, "Directory name `%s' too long", output);
 	
 		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
 			mapname);
@@ -255,7 +255,7 @@ main(argc, argv)
 	
 		new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
 		if (new_db == NULL)
-			errx(1, "Unable to open output database `%s'",
+			err(1, "Unable to open output database `%s'",
 			    db_outfile);
 	}
 
