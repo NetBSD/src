@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.53 1998/05/20 00:00:12 pk Exp $
+#	$NetBSD: files.sparc,v 1.54 1998/06/06 21:30:34 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -47,7 +47,7 @@ file	arch/sparc/sparc/clock.c
 
 device power
 attach power at obio
-file	arch/sparc/dev/power.c			power
+file	arch/sparc/dev/power.c			power	needs-flag
 
 device cpu
 attach cpu at mainbus
