@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2000/02/26 17:42:53 mycroft Exp $
+#	$NetBSD: Makefile,v 1.108 2000/02/29 21:54:03 erh Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -73,11 +73,11 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-beforeinstall:
-.ifmake build
+buildmsg:
 	@echo -n "Build started at: "
 	@date
-.endif
+
+beforeinstall:
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
@@ -95,7 +95,7 @@ whatis.db:
 # wrt info/dir below:  It's safe to move this over top of /usr/share/info/dir,
 # as the build will automatically remove/replace the non-pkg entries there.
 
-build: beforeinstall
+build: buildmsg beforeinstall
 .if defined(FORCE_DOMESTIC)
 	@echo '*** CAPUTE!'
 	@echo '    The FORCE_DOMESTIC flag is not compatible with "make build".'
