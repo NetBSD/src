@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1998/07/04 22:18:42 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 1998/07/23 23:49:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -67,6 +67,19 @@
 
 #include <sun3/dev/fdreg.h>
 #include <sun3/dev/fdvar.h>
+
+/*
+ * Print a complaint when no fd children were specified
+ * in the config file.  Better than a link error...
+ *
+ * XXX: Some folks say this driver should be split in two,
+ * but that seems pointless with ONLY one type of child.
+ * (Thankfully, no 3/80 boxes have floppy tapes!:)
+ */
+#include "fdc.h"
+#if NFD == 0
+#error "fdc but no fd?"
+#endif
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
