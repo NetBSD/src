@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.50.4.2 2002/07/16 08:50:44 gehenna Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.50.4.3 2002/08/31 13:45:19 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -715,6 +715,9 @@
 #define	MIPS_REV_R4400_B	0x50
 #define	MIPS_REV_R4400_C	0x60
 
+/* For MIPS_TX4900 */
+#define	MIPS_REV_TX4927		0x22
+
 /*
  * CPU processor revision IDs for company ID == 1 (MIPS)
  */
@@ -725,10 +728,16 @@
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
 
 /*
- * CPU processor revision IDs for company ID == 3 (Alchemy)
+ * Alchemy (company ID 3) use the processor ID field to donote the CPU core
+ * revision and the company options field do donate the SOC chip type.
  */
-#define	MIPS_AU1000_R1	0x01	/* Alchemy Au1000 (Rev 1)	ISA 32  */
-#define	MIPS_AU1000_R2	0x02	/* Alchemy Au1000 (Rev 2)	ISA 32  */
+/* CPU processor revision IDs */
+#define	MIPS_AU_REV1	0x01	/* Alchemy Au1000 (Rev 1)	ISA 32  */
+#define	MIPS_AU_REV2	0x02	/* Alchemy Au1000 (Rev 2)	ISA 32  */
+/* CPU company options IDs */
+#define	MIPS_AU1000	0x00
+#define	MIPS_AU1500	0x01
+#define	MIPS_AU1100	0x02
 
 /*
  * CPU processor revision IDs for company ID == 4 (SiByte)

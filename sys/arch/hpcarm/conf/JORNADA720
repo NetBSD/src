@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.20.2.3 2002/07/21 13:00:37 gehenna Exp $
+#	$NetBSD: JORNADA720,v 1.20.2.4 2002/08/31 13:44:42 gehenna Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20.2.3 $"
+#ident 		"GENERIC-$Revision: 1.20.2.4 $"
 
 # estimated number of users
 maxusers	32
@@ -214,7 +214,12 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=2
+# see arch/hpcarm/dev/j720kbdmap.c for implemented layouts
+#options	J720KBD_LAYOUT=KB_FR
 options 	FONT_VT220L8x10
+# The X server requires theses two options
+options         WSDISPLAY_COMPAT_USL
+options         WSDISPLAY_COMPAT_RAWKBD
 
 # physical console
 sed0		at saip?

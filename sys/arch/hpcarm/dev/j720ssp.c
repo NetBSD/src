@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.5.4.1 2002/07/21 13:00:37 gehenna Exp $ */
+/* $NetBSD: j720ssp.c,v 1.5.4.2 2002/08/31 13:44:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -338,8 +338,19 @@ j720kbd_set_leds(void *v, int on)
 }
 
 int
-j720kbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+j720kbd_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
+	switch (cmd) {
+	case WSKBDIO_GTYPE:
+		*(int *)data = WSKBD_TYPE_HPC_KBD;
+		return 0;
+	}
+
 	return (EPASSTHROUGH);
 }
 

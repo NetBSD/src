@@ -1,4 +1,4 @@
-/*	$NetBSD: iomod.h,v 1.1.4.2 2002/07/14 17:46:35 gehenna Exp $	*/
+/*	$NetBSD: iomod.h,v 1.1.4.3 2002/08/31 13:44:42 gehenna Exp $	*/
 
 /*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
 
@@ -133,9 +133,6 @@
 
 /* size of HPA space for any device */
 #define	IOMOD_HPASIZE	0x1000
-
-/* ASP prom offset for an lan stattion id */
-#define	ASP_PROM	(0xf0810000)
 
 /* offset to the device-specific registers,
  * basically sizeof(struct iomod) (see later)

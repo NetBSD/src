@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.2 2002/07/21 13:00:47 gehenna Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.3 2002/08/31 13:45:46 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -41,10 +41,10 @@
 #include "opt_ppcarch.h"
 #endif
 
-#include <sys/device.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
+#include <sys/device.h>
 
 
 struct cache_info {
@@ -139,6 +139,10 @@ extern struct cpu_info cpu_info[];
 #define astpending		curcpu()->ci_astpending
 #define	intr_depth		curcpu()->ci_intrdepth
 
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
+
 #else
 extern struct cpu_info cpu_info_store;
 extern volatile int want_resched;
@@ -148,7 +152,61 @@ extern volatile int intr_depth;
 #define curcpu()		(&cpu_info_store)
 #define cpu_number()		0
 
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+
 #endif /* MULTIPROCESSOR */
+
+static __inline register_t
+mfmsr(void)
+{
+	register_t msr;
+
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static __inline void
+mtmsr(register_t msr)
+{
+
+	asm volatile ("mtmsr %0" : : "r"(msr));
+}
+
+static __inline uint32_t
+mftbl(void)
+{
+	uint32_t tbl;
+
+	asm volatile ("mftbl %0" : "=r"(tbl));
+	return tbl;
+}
+
+static __inline uint64_t
+mftb(void)
+{
+	uint64_t tb;
+	int tmp;
+
+	asm volatile ("
+1:	mftbu %0	\n\
+	mftb %0+1	\n\
+	mftbu %1	\n\
+	cmplw %0,%1	\n\
+	bne- 1b"
+	    : "=r"(tb), "=r"(tmp));
+	return tb;
+}
+
+static __inline uint32_t
+mfpvr(void)
+{
+	uint32_t pvr;
+
+	asm volatile ("mfpvr %0" : "=r"(pvr));
+	return (pvr);
+}
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
@@ -166,6 +224,7 @@ extern int cpu_printfataltraps;
 extern char cpu_model[];
 
 struct cpu_info *cpu_attach_common(struct device *, int);
+void cpu_setup(struct device *, struct cpu_info *);
 void cpu_identify(char *, size_t);
 void delay (unsigned int);
 void cpu_probe_cache(void);
@@ -202,7 +261,6 @@ extern int cpu_altivec;
 #endif
 
 void __syncicache(void *, size_t);
-
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3.2.3 2002/07/16 08:13:47 gehenna Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.2.4 2002/08/31 13:44:47 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ do {							\
 	}
 #undef SANITY
 	if (sanity_frame == tf) {
-		trap_kdebug(T_IBREAK, 0, tf);
+		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
 		sanity_proc = NULL;
 		sanity_checked = 0;

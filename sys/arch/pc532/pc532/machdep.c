@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127.4.2 2002/07/16 13:02:16 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.4.3 2002/08/31 13:45:35 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -147,10 +147,9 @@ void
 cpu_startup()
 {
 	extern char kernel_text[];
-	unsigned i;
 	caddr_t v;
 	int sz;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -260,7 +259,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

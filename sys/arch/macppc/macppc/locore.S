@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44.6.1 2002/07/16 08:48:22 gehenna Exp $	*/
+/*	$NetBSD: locore.S,v 1.44.6.2 2002/08/31 13:45:11 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_altivec.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -167,6 +168,7 @@ __start:
 	addi	8,8,SPILLSTK
 	stw	8,CI_SPILLSTK(9)
 	stw	8,CI_IDLE_PCB(9)
+	stw	0,USPACE-16(8)		/* terminate idle stack chain */
 #else
 	lis	9,idle_u@ha
 	stw	8,idle_u@l(9)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.47.2.2 2002/07/21 13:00:38 gehenna Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.47.2.3 2002/08/31 13:44:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -571,7 +571,7 @@ initarm(argc, argv, bi)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -589,17 +589,17 @@ initarm(argc, argv, bi)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
@@ -607,7 +607,7 @@ initarm(argc, argv, bi)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_NOCACHE);
+	    PTE_CACHE);
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
@@ -684,6 +684,21 @@ initarm(argc, argv, bi)
 	printf("freemempos=%08lx\n", freemempos);
 	printf("MMU enabled. control=%08x\n", cpu_get_control());
 #endif
+
+	/* Load memory into UVM. */
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
@@ -785,6 +800,7 @@ rpc_sa110_cc_setup(void)
 		pte = vtopte(sa1_cc_base + loop);
 		*pte = L2_S_PROTO | kaddr |
 		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
+		PTE_SYNC(pte);
 	}
 	sa1_cache_clean_addr = sa1_cc_base;
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;

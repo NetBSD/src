@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.206.2.3 2002/07/16 08:29:22 gehenna Exp $
+#	$NetBSD: files.i386,v 1.206.2.4 2002/08/31 13:44:52 gehenna Exp $
 #
 # new style config file for i386 architecture
 #
@@ -33,9 +33,6 @@ defflag			USER_LDT
 
 # Speed hack; make NOPs dummies (might break on some machines)
 defflag			DUMMY_NOPS
-
-# Performance counter support
-defflag			PERFCTRS
 
 # MTRR support
 defflag			MTRR
@@ -171,6 +168,11 @@ device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+
+# AMD Elan SC520 System Controller (PCI-Host bridge)
+device	elansc: sysmon_wdog
+attach	elansc at pci
+file	arch/i386/pci/elan520.c		elansc
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus

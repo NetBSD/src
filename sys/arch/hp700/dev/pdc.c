@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1.4.2 2002/07/14 17:46:20 gehenna Exp $	*/
+/*	$NetBSD: pdc.c,v 1.1.4.3 2002/08/31 13:44:38 gehenna Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -135,7 +135,7 @@ pdcmatch(parent, cf, aux)
 	struct confargs *ca = aux;
 
 	/* there could be only one */
-	if (cf->cf_unit > 0 && !strcmp(ca->ca_name, "pdc"))
+	if (cf->cf_unit > 0 || strcmp(ca->ca_name, "pdc"))
 		return 0;
 
 	return 1;

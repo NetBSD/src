@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2001/07/22 11:29:48 wiz Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18.14.1 2002/08/31 13:45:12 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -322,6 +322,7 @@ fixpci(parent, pc)
 				break;
 
 			case OFW_PCI_PHYS_HI_SPACE_MEM32:
+			case OFW_PCI_PHYS_HI_SPACE_MEM64:
 				csr |= PCI_COMMAND_MEM_ENABLE;
 				break;
 			}

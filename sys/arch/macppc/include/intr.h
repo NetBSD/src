@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.16.1 2002/07/16 08:48:20 gehenna Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.16.2 2002/08/31 13:45:08 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,12 +139,13 @@ extern long intrcnt[];
 #define CNT_SOFTNET	66
 #define CNT_SOFTSERIAL	67
 
-#define MACPPC_IPI_HALT		0x01
-#define MACPPC_IPI_FLUSH_FPU	0x02
-
 #ifdef MULTIPROCESSOR
+#define MACPPC_IPI_HALT		0x0001
+#define MACPPC_IPI_FLUSH_FPU	0x0002
+#define MACPPC_IPI_FLUSH_VEC	0x0004
+
 struct cpu_info;
-void macppc_send_ipi(volatile struct cpu_info *, int);
+void macppc_send_ipi(volatile struct cpu_info *, u_long);
 #endif
 
 #endif /* _LOCORE */

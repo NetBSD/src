@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.1.4.2 2002/07/14 17:46:23 gehenna Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.1.4.3 2002/08/31 13:44:38 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,6 +80,7 @@
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/machdep.h>
 
 #define OSIOP_GSC_RESET         0x0000
 #define	OSIOP_GSC_OFFSET	0x0100
@@ -98,25 +99,21 @@ osiop_gsc_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register bus_space_tag_t iot;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 	int rv = 1;
 
-	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
-	    (ca->ca_type.iodc_sv_model != HPPA_FIO_GSCSI &&
-	     ca->ca_type.iodc_sv_model != HPPA_FIO_SCSI))
+	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
+	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI &&
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI))
 		return 0;
 
-	iot = ca->ca_iot;
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
+	if (bus_space_map(ga->ga_iot, ga->ga_hpa, 
+			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		return 0;
-	ioh |= OSIOP_GSC_OFFSET;
 
 
-
-	ioh &= ~OSIOP_GSC_OFFSET;
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
+	bus_space_unmap(ga->ga_iot, ioh, OSIOP_GSC_OFFSET + OSIOP_NREGS);
 	return rv;
 }
 
@@ -131,8 +128,8 @@ osiop_gsc_attach(parent, self, aux)
 
 	sc->sc_bst = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
-	if (bus_space_map(sc->sc_bst, ga->ga_hpa, IOMOD_HPASIZE,
-			  0, &ioh))
+	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
+			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		panic("osiop_gsc_attach: couldn't map I/O ports");
 	if (bus_space_subregion(sc->sc_bst, ioh, 
 				OSIOP_GSC_OFFSET, OSIOP_NREGS, &sc->sc_reg))
@@ -155,7 +152,7 @@ osiop_gsc_attach(parent, self, aux)
 	}
 
 	sc->sc_flags = 0;
-	sc->sc_id = 7;	/* XXX isn't this stored somewhere? */
+	sc->sc_id = ga->ga_scsi_target;
 
 	/*
 	 * Reset the SCSI subsystem.
@@ -174,8 +171,9 @@ osiop_gsc_attach(parent, self, aux)
 #endif /* OSIOP_DEBUG */
 	osiop_attach(sc);
 
-	(void) gsc_intr_establish((struct gsc_softc *)parent, IPL_BIO,
-				ga->ga_irq, osiop_gsc_intr, sc, &sc->sc_dev);
+	(void) hp700_intr_establish(&sc->sc_dev, IPL_BIO,
+				    osiop_gsc_intr, sc,
+				    ga->ga_int_reg, ga->ga_irq);
 }
 
 /*
@@ -211,6 +209,9 @@ osiop_gsc_intr(arg)
 
 	/* Deal with the interrupt */
 	osiop_intr(sc);
+
+	/* Blink the LED. */
+	hp700_led_blink(HP700_LED_DISK);
 
 	return (1);
 }

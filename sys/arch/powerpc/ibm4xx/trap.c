@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3.8.2 2002/07/16 13:09:57 gehenna Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.8.3 2002/08/31 13:45:43 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -247,10 +247,6 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		}
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(p);
-		break;
-
-	case EXC_SC|EXC_USER:
-		(*p->p_md.md_syscall)(frame);
 		break;
 
 	case EXC_AST|EXC_USER:

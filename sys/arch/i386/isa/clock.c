@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.70 2002/01/01 09:14:14 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.70.8.1 2002/08/31 13:44:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70 2002/01/01 09:14:14 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70.8.1 2002/08/31 13:44:57 gehenna Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -109,8 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70 2002/01/01 09:14:14 perry Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
-#include <i386/isa/timerreg.h>
 #include <dev/clock_subr.h>
 
 #include "mca.h"
@@ -219,12 +219,12 @@ gettick_broken_latch()
 	ef = read_eflags();
 	disable_intr();
 
-	v1 = inb(TIMER_CNTR0);
-	v1 |= inb(TIMER_CNTR0) << 8;
-	v2 = inb(TIMER_CNTR0);
-	v2 |= inb(TIMER_CNTR0) << 8;
-	v3 = inb(TIMER_CNTR0);
-	v3 |= inb(TIMER_CNTR0) << 8;
+	v1 = inb(IO_TIMER1+TIMER_CNTR0);
+	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
+	v2 = inb(IO_TIMER1+TIMER_CNTR0);
+	v2 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
+	v3 = inb(IO_TIMER1+TIMER_CNTR0);
+	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
 	write_eflags(ef);
 
@@ -293,11 +293,11 @@ initrtclock()
 	tval = (tval / 2) + (tval & 0x1);
 
 	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1, tval % 256);
-	outb(IO_TIMER1, tval / 256);
+	outb(IO_TIMER1+TIMER_CNTR0, tval % 256);
+	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
 
 	rtclock_tval = tval;
 
@@ -434,9 +434,9 @@ gettick()
 	ef = read_eflags();
 	disable_intr();
 	/* Select counter 0 and latch it. */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
+	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(IO_TIMER1+TIMER_CNTR0);
+	hi = inb(IO_TIMER1+TIMER_CNTR0);
 	write_eflags(ef);
 	return ((hi << 8) | lo);
 }

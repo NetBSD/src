@@ -1,8 +1,8 @@
-/*	$NetBSD: copyinstr.c,v 1.3 2000/02/19 23:29:16 chs Exp $	*/
+/*	$NetBSD: userret.h,v 1.3.2.2 2002/08/31 13:45:46 gehenna Exp $	*/
 
-/*-
- * Copyright (C) 1995 Wolfgang Solfrank.
- * Copyright (C) 1995 TooLs GmbH.
+/*
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,39 +30,54 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
-#include <sys/errno.h>
-#include <sys/systm.h>
+
+#include "opt_altivec.h"
+
+#include <powerpc/fpu.h>
 
 /*
- * Emulate copyinstr.
+ * Define the code needed before returning to user mode, for
+ * trap and syscall.
  */
-int
-copyinstr(udaddr, kaddr, len, done)
-	const void *udaddr;
-	void *kaddr;
-	size_t len;
-	size_t *done;
+static __inline void
+userret(struct proc *p, struct trapframe *frame)
 {
-	const u_char *up = udaddr;
-	u_char *kp = kaddr;
-	size_t l;
-	int c, rv;
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb;
+	int sig;
 
-	rv = ENAMETOOLONG;
-	for (l = 0; len-- > 0; l++) {
-		if ((c = fubyte(up++)) < 0) {
-			rv = EFAULT;
-			break;
-		}
-		if (!(*kp++ = c)) {
-			l++;
-			rv = 0;
-			break;
-		}
+	/* Take pending signals. */
+	while ((sig = CURSIG(p)) != 0) {
+		postsig(sig);
 	}
-	if (done != NULL) {
-		*done = l;
+
+	pcb = &p->p_addr->u_pcb;
+
+	/*
+	 * If someone stole the fp or vector unit while we were away,
+	 * disable it
+	 */
+#ifdef PPC_HAVE_FPU
+	if ((pcb->pcb_flags & PCB_FPU) &&
+	    (p != ci->ci_fpuproc || pcb->pcb_fpcpu != ci)) {
+		frame->srr1 &= ~PSL_FP;
 	}
-	return rv;
+#endif
+#ifdef ALTIVEC
+	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
+	    (p != ci->ci_vecproc || pcb->pcb_veccpu != ci)) {
+		frame->srr1 &= ~PSL_VEC;
+	}
+
+	/*
+	 * If the new process isn't the current AltiVec process on this
+	 * cpu, we need to stop any data streams that are active (since
+	 * it will be a different address space).
+	 */
+	if (ci->ci_vecproc != NULL && ci->ci_vecproc != p) {
+		__asm __volatile("dssall;sync");
+	}
+#endif
+
+	ci->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }

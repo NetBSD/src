@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.491.2.3 2002/07/16 08:29:11 gehenna Exp $
+# $NetBSD: GENERIC,v 1.491.2.4 2002/08/31 13:44:49 gehenna Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.491.2.3 $"
+#ident 		"GENERIC-$Revision: 1.491.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -63,7 +63,7 @@ options 	PERFCTRS	# performance-monitoring counters support
 # Standard system options
 
 options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -78,7 +78,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
@@ -274,6 +274,9 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# System Controllers
+elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -639,7 +642,7 @@ ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
-wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
@@ -727,10 +730,14 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 #ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
+# ISA USB controllers
+#slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
+
 # USB bus support
 #usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
+#usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
