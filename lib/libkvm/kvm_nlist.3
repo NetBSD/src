@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_nlist.3,v 1.9 2003/05/11 15:40:03 ragge Exp $
+.\"	$NetBSD: kvm_nlist.3,v 1.10 2003/05/13 10:03:43 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)kvm_nlist.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd May 11, 2003
 .Dt KVM_NLIST 3
 .Os
 .Sh NAME
@@ -69,9 +69,9 @@ was created by a call to
 .Fn kvm_open
 with a
 .Dv NULL
-executable image name, 
+executable image name,
 .Fn kvm_nlist
-will use 
+will use
 .Pa /dev/ksyms
 to retrieve the kernel symbol table.
 .Sh RETURN VALUES
