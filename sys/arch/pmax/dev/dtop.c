@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.7 1995/08/10 04:21:39 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.8 1995/09/13 07:46:03 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,8 +119,11 @@ SOFTWARE.
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/dtopreg.h>
+#include <pmax/dev/lk201.h>
+
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
 
 extern int pmax_boardtype;
