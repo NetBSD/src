@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.40 2004/02/03 19:25:29 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.40 2004/02/03 19:25:29 chuck Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.40 2004/02/03 19:25:29 chuck Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -109,6 +109,10 @@ __RCSID("$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $");
  *	    	  	    If it exists, the entire path is returned.
  *	    	  	    Otherwise NULL is returned.
  *
+ *	Dir_FindHereOrAbove Search for a path in the current directory and
+ *			    then all the directories above it in turn until
+ *			    the path is found or we reach the root ("/").
+ * 
  *	Dir_MTime 	    Return the modification time of a node. The file
  *	    	  	    is searched for along the default search path.
  *	    	  	    The path and mtime fields of the node are filled
@@ -1310,6 +1314,85 @@ Dir_FindFile(const char *name, Lst path)
 	return ((char *)NULL);
     }
 #endif /* notdef */
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Dir_FindHereOrAbove  --
+ *	search for a path starting at a given directory and then working 
+ *	our way up towards the root.
+ *
+ * Input:
+ *	here		starting directory
+ *	search_path	the path we are looking for
+ *	result		the result of a successful search is placed here
+ *	rlen		the length of the result buffer 
+ *			(typically MAXPATHLEN + 1)
+ *
+ * Results:
+ *	0 on failure, 1 on success [in which case the found path is put
+ *	in the result buffer].
+ *
+ * Side Effects:
+ *-----------------------------------------------------------------------
+ */
+int 
+Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
+
+	struct stat st;
+	char dirbase[MAXPATHLEN + 1], *db_end;
+        char try[MAXPATHLEN + 1], *try_end;
+
+	/* copy out our starting point */
+	snprintf(dirbase, sizeof(dirbase), "%s", here);
+	db_end = dirbase + strlen(dirbase);
+
+	/* loop until we determine a result */
+	while (1) {
+
+		/* try and stat(2) it ... */
+		snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
+		if (stat(try, &st) != -1) {
+			/*
+			 * success!  if we found a file, chop off
+			 * the filename so we return a directory.
+			 */
+			if ((st.st_mode & S_IFMT) != S_IFDIR) {
+				try_end = try + strlen(try);
+				while (try_end > try && *try_end != '/')
+					try_end--;
+				if (try_end > try) 
+					*try_end = 0;	/* chop! */
+			}
+
+			/*
+			 * done!
+			 */
+			snprintf(result, rlen, "%s", try);
+			return(1);
+		}
+
+		/* 
+		 * nope, we didn't find it.  if we used up dirbase we've
+		 * reached the root and failed.
+		 */
+		if (db_end == dirbase)
+			break;		/* failed! */
+
+		/*
+		 * truncate dirbase from the end to move up a dir
+		 */
+		while (db_end > dirbase && *db_end != '/')
+			db_end--;
+		*db_end = 0;		/* chop! */
+
+	} /* while (1) */
+
+	/*
+	 * we failed... 
+	 */
+	return(0);
 }
 
 /*-
