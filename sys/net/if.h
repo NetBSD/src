@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.37 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.38 1999/07/03 13:52:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
+
+#if !defined(_XOPEN_SOURCE)
 
 #include <sys/queue.h>
 
@@ -387,6 +389,8 @@ struct if_laddrreq {
 
 #include <net/if_arp.h>
 
+#endif /* !_XOPEN_SOURCE */
+
 #ifdef _KERNEL
 #define	IFAFREE(ifa) \
 	if ((ifa)->ifa_refcnt <= 0) \
@@ -438,11 +442,12 @@ struct if_nameindex {
 	char		*if_name;	/* null terminated name: "le0", ... */
 };
 
+#include <sys/cdefs.h>
 __BEGIN_DECLS
 unsigned int if_nametoindex __P((const char *));
-char *if_indextoname __P((unsigned int, char *));
-struct if_nameindex *if_nameindex __P((void));
-void if_freenameindex __P((struct if_nameindex *));
+char *	if_indextoname __P((unsigned int, char *));
+struct	if_nameindex * if_nameindex __P((void));
+void	if_freenameindex __P((struct if_nameindex *));
 __END_DECLS
 #endif /* _KERNEL */
 #endif /* !_NET_IF_H_ */
