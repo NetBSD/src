@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.87 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.88 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -261,3 +261,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	semaphores: Fix kernel implementation, and add non-pthreads
 		version in new librt.  [thorpej 20030123]
 	diff(1), diff3(1), sdiff(1): upgraded to diffutils-2.8.1 [wiz 20030126]
+	grep(1): upgraded to 2.5.  [wiz 20030127]
