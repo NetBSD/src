@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.8 2000/04/10 06:04:28 simonb Exp $ */
+/* $NetBSD: alpha.h,v 1.9 2000/06/01 17:12:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
+
+extern int bootdev_debug;
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
 void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
