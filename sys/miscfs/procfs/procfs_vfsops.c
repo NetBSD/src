@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vfsops.c,v 1.6 1993/08/25 14:41:19 mycroft Exp $
+ *	$Id: procfs_vfsops.c,v 1.7 1993/08/26 19:01:01 pk Exp $
  */
 
 /*
@@ -129,9 +129,19 @@ pfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct vnode *vp;
-	struct pfsnode *pfsp;
+	struct pfsnode *pfsp, **pp;
 	int error;
 
+	/* Look in "cache" first */
+	for (pfsp = pfshead; pfsp != NULL; pfsp = pfsp->pfs_next) {
+		if (pfsp->pfs_vnode->v_flag & VROOT) {
+			*vpp = pfsp->pfs_vnode;
+			vref(*vpp);
+			return 0;
+		}
+	}
+
+	/* Not on list, allocate new vnode */
 	error = getnewvnode(VT_PROCFS, mp, &pfs_vnodeops, &vp);
 	if (error)
 		return error;
@@ -139,8 +149,18 @@ pfs_root(mp, vpp)
 	vp->v_type = VDIR;
 	vp->v_flag = VROOT;
 	pfsp = VTOPFS(vp);
-	pfsp->pfs_vnode = vp;
+	pfsp->pfs_next = NULL;
 	pfsp->pfs_pid = 0;
+	pfsp->pfs_vnode = vp;
+	pfsp->pfs_flags = 0;
+	pfsp->pfs_vflags = 0;
+	pfsp->pfs_uid = 0;
+	pfsp->pfs_gid = 0;
+	pfsp->pfs_mode = 0755;	/* /proc = drwxr-xr-x */
+
+	/* Append to pfs node list */
+	for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next);
+	*pp = pfsp;
 
 	*vpp = vp;
 	return 0;
