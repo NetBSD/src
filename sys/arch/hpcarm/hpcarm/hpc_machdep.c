@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.12 2001/06/01 14:04:29 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.13 2001/06/01 14:06:43 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -174,10 +174,6 @@ static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
 /* Non-buffered non-cachable memory needed to enter idle mode */
 vaddr_t sa11x0_idle_mem;
-
-/* virtual address for framebuffer */
-/* XXX temporary hack until we have bus_space_map */
-#define FRAMEBUF_BASE	0xd0100000
 
 /* Prototypes */
 
@@ -372,7 +368,6 @@ initarm(argc, argv, bi)
 	/* copy bootinfo into known kernel space */
 	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
-	bootinfo->fb_addr = (void *)FRAMEBUF_BASE;
 
 #ifdef BOOTINFO_FB_WIDTH
 	bootinfo->fb_line_bytes = BOOTINFO_FB_LINE_BYTES;
@@ -612,11 +607,6 @@ initarm(argc, argv, bi)
 	printf("mapping IO...");
 	l2pagetable = kernel_pt_table[KERNEL_PT_IO];
 	map_entry_nc(l2pagetable, SACOM3_BASE, SACOM3_HW_BASE);
-
-#ifdef FRAMEBUF_HW_BASE
-	/* map framebuffer if its address is known */
-	map_section(l1pagetable, FRAMEBUF_BASE, FRAMEBUF_HW_BASE, 1);
-#endif
 
 #ifdef CPU_SA110
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
