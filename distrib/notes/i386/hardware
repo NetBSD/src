@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.45.2.7 2000/02/08 22:41:20 he Exp $	
+.\"	$NetBSD: hardware,v 1.45.2.8 2000/02/12 20:34:31 he Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -52,7 +52,8 @@ Supported devices include:
 		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
-		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
+		DPT SmartCache / SmartRAID III / IV SCSI boards
+		Qlogic ISP [12]xx0 SCSI/FibreChannel boards
 		Seagate/Future Domain ISA SCSI adapter cards, including
 			ST01/02
 			Future Domain TMC-885
@@ -109,8 +110,11 @@ Supported devices include:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509, 3c579, 3c589, and 3c59X
+		3COM 3c509, 3c574, 3c579, 3c589, and 3c59X
 		3COM 3c90X (including 3c905B)
+		3COM/Megaherz 10/100 Ethernet/modem cards
+			3CCFEM556BI
+			3CXEM556B-INT
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			ASUS PCI-DEC100TX+
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
@@ -141,6 +145,7 @@ Supported devices include:
 		Intel EtherExpress PRO/10
 		Intel EtherExpress 100 Fast Ethernet adapters
 		Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
+		RealTek 8129/8139 based ethernet boards
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		SMC 91C9x-based boards (ISA and PCMCIA)
@@ -355,13 +360,14 @@ SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 		ex0 	any  	any	[you must assign an interrupt in your
 		    	    	   	 PCI BIOS, or let it do so for you]
 
-AT\*&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
-EtherExpress 16 Ethernet boards
-		ie0 	0x360	7		iomem 0xd0000
-		ie1 	0x300	10		iomem 0xd0000
+AT\*&T StarLAN 10, EN100, or StarLAN Fiber, 
+		ai0 	0x360	7		iomem 0xd0000
+
+Intel EtherExpress 16 Ethernet boards
+		ix0 	0x300	10
 
 Intel EtherExpress PRO 10 ISA
-		iy0		0x360	any
+		iy0	0x360	any
 
 Intel EtherExpress 100 Fast Ethernet adapters
 		fxp0	any	any	[you must assign an interrupt in your
@@ -379,9 +385,16 @@ DC21x4x based Ethernet boards; see above for partial list
 		    	     	   	 PCI BIOS, or let it do so for you]
 
 Digital EtherWORKS III (DE203/DE204/DE205)
-		lc0 	any  	any
+		lc0 	0x320  	any
 
-Qlogic ISP [12]0x0 SCSI/FibreChannel boards
+IBM TROPIC based Token-Ring cards
+		tr0	0xa20	any		iomem 0xd8000
+		tr1	0xa24	any		iomem 0xd0000
+
+DPT SmartCache/SmartRAID III/IV SCSI boards:
+		dpt0	any	any
+
+Qlogic ISP [12]xx0 SCSI/FibreChannel boards
 		isp0	any	any
 
 Efficient Networks EN-155 and Adaptec AIC-590x ATM interfaces
@@ -389,6 +402,9 @@ Efficient Networks EN-155 and Adaptec AIC-590x ATM interfaces
 
 SMC EPIC/100 Fast Ethernet boards:
 		epic0	any	any
+
+RealTek 8129/8139 based ethernet boards:
+		rl0	any	any
 
 Texas Instruments ThunderLAN based ethernet boards:
 		tl0	any	any
