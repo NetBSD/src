@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.2 2002/03/18 16:01:03 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.3 2003/09/14 21:48:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,6 +53,32 @@ typedef struct _hist_entry {
 	const char	*data;
 } HIST_ENTRY;
 
+typedef struct _keymap_entry {
+	char type;
+#define	ISFUNC	0
+#define	ISKMAP	1
+#define	ISMACR	2
+	Function *function;
+} KEYMAP_ENTRY;
+
+#define KEYMAP_SIZE	256
+
+typedef KEYMAP_ENTRY KEYMAP_ENTRY_ARRAY[KEYMAP_SIZE];
+typedef KEYMAP_ENTRY *Keymap;
+
+#define control_character_threshold	0x20
+#define control_character_bit		0x40
+
+#ifndef CTRL
+#define CTRL(a)		((a) & 037)
+#endif
+#ifndef UNCTRL
+#define UNCTRL(a)	(((a) - 'a' + 'A')|control_character_bit)
+#endif
+
+#define	RUBOUT		0x7f
+#define	ABORT_CHAR	CTRL('G')
+
 /* global variables used by readline enabled applications */
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +100,24 @@ extern int		rl_completion_type;
 extern int		rl_completion_query_items;
 extern char		*rl_special_prefixes;
 extern int		rl_completion_append_character;
+extern Function		*rl_pre_input_hook;
+extern Function		*rl_startup_hook;
+extern char		*rl_terminal_name;
+extern int		rl_already_prompted;
+extern char		*rl_prompt;
+/*
+ * The following is not implemented
+ */
+extern KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
+			emacs_meta_keymap,
+			emacs_ctlx_keymap;
+extern int		rl_filename_completion_desired;
+extern int		rl_ignore_completion_duplicates;
+extern Function		*rl_getc_function;
+extern VFunction	*rl_redisplay_function;
+extern Function		*rl_completion_display_matches_hook;
+extern VFunction	*rl_prep_term_function;
+extern VFunction	*rl_deprep_term_function;
 
 /* supported functions */
 char		*readline(const char *);
@@ -111,6 +155,15 @@ void		 rl_display_match_list(char **, int, int);
 int		 rl_insert(int, int);
 void		 rl_reset_terminal(const char *);
 int		 rl_bind_key(int, int (*)(int, int));
+
+/*
+ * The following are not implemented
+ */
+Keymap		 rl_get_keymap(void);
+Keymap		 rl_make_bare_keymap(void);
+int		 rl_add_defun(const char *, Function *, int);
+int		 rl_generic_bind(int, const char *, const char *, Keymap);
+int		 rl_bind_key_in_map(int, Function *, Keymap);
 #ifdef __cplusplus
 }
 #endif
