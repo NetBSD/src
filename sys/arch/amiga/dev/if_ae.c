@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.2 1995/08/18 15:53:30 chopps Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.3 1995/10/07 18:12:42 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -127,11 +127,13 @@ struct	ae_softc {
 
 /* offsets for:	   ID,   REGS,    MEM */
 int	aestd[] = { 0, 0x0370, 0x8000 };
+static u_int16_t	revision;
 
 int	aematch __P((struct device *, void *, void *));
 void	aeattach __P((struct device *, struct device *, void *));
-void	aedrinit __P((struct aereg2 *));
 void	aewatchdog __P((int));
+void	aestop __P((struct ae_softc *));
+void	aememinit __P((struct ae_softc *));
 void	aereset __P((struct ae_softc *));
 void	aeinit __P((struct ae_softc *));
 void	aestart __P((struct ifnet *));
@@ -142,7 +144,7 @@ void	aeread __P((struct ae_softc *, u_char *, int));
 static	void wcopyfrom __P((char *, char *, int));
 static	void wcopyto __P((char *, char *, int));
 static	void wzero __P((char *, int));
-u_short	aeput __P((char *, struct mbuf *));
+int	aeput __P((char *, struct mbuf *));
 struct	mbuf *aeget __P((struct ae_softc *,u_char *, int));
 int	aeioctl __P((struct ifnet *, u_long, caddr_t));
 void	aesetladrf __P((struct arpcom *, u_int16_t *));
@@ -177,12 +179,10 @@ aeattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct aereg0 *aer0;
 	register struct aereg2 *aer2;
 	struct zbus_args *zap;
-	struct aereg2 *aemem = (struct aereg2 *) 0x8000;
-	struct ae_softc *ae = (void *)self;
-	struct ifnet *ifp = &ae->sc_arpcom.ac_if;
+	struct ae_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	unsigned long ser;
 	int s = splhigh ();
 
@@ -193,9 +193,9 @@ aeattach(parent, self, aux)
 	 */
 	printf("\n");
 
-	aer0 = ae->sc_base = zap->va;
-	ae->sc_r1 = (struct aereg1 *)(aestd[1] + (int)zap->va);
-	aer2 = ae->sc_r2 = (struct aereg2 *)(aestd[2] + (int)zap->va);
+	sc->sc_base = zap->va;
+	sc->sc_r1 = (struct aereg1 *)(aestd[1] + (int)zap->va);
+	aer2 = sc->sc_r2 = (struct aereg2 *)(aestd[2] + (int)zap->va);
 
 	/*
 	 * Serial number for board is used as host ID.
@@ -211,39 +211,28 @@ aeattach(parent, self, aux)
 	 * the next four lines will soon have to be altered 
 	 */
 
-	ae->sc_arpcom.ac_enaddr[0] = 0x00;
-	ae->sc_arpcom.ac_enaddr[1] = 0x80;
-	ae->sc_arpcom.ac_enaddr[2] = 0x10;
+	sc->sc_arpcom.ac_enaddr[0] = 0x00;
+	sc->sc_arpcom.ac_enaddr[1] = 0x80;
+	sc->sc_arpcom.ac_enaddr[2] = 0x10;
 
-	ae->sc_arpcom.ac_enaddr[3] = ((ser >> 16) & 0x0f) | 0xf0; /* to diff from A2065 */
-	ae->sc_arpcom.ac_enaddr[4] = (ser >>  8 ) & 0xff;
-	ae->sc_arpcom.ac_enaddr[5] = (ser       ) & 0xff;
+	sc->sc_arpcom.ac_enaddr[3] = ((ser >> 16) & 0x0f) | 0xf0; /* to diff from A2065 */
+	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8 ) & 0xff;
+	sc->sc_arpcom.ac_enaddr[5] = (ser       ) & 0xff;
 
-	printf("%s: hardware address %s 32K\n", ae->sc_dev.dv_xname,
-		ether_sprintf(ae->sc_arpcom.ac_enaddr));
+	printf("%s: hardware address %s 32K", sc->sc_dev.dv_xname,
+		ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	/*
-	 * Setup for transmit/receive
-	 */
-	aer2->aer2_mode = AE_MODE;
+	aestop(sc);
+	delay(100);
 
-	/* you know: no BYTE access.... */
-	aer2->aer2_padr[0] =
-		(ae->sc_arpcom.ac_enaddr[0] << 8) | ae->sc_arpcom.ac_enaddr[1];
-	aer2->aer2_padr[1] =
-		(ae->sc_arpcom.ac_enaddr[2] << 8) | ae->sc_arpcom.ac_enaddr[3];
-	aer2->aer2_padr[2] =
-		(ae->sc_arpcom.ac_enaddr[4] << 8) | ae->sc_arpcom.ac_enaddr[5];
-
-	aesetladrf(&ae->sc_arpcom, aer2->aer2_ladrf);
-	aer2->aer2_rlen = SWAP(AE_RLEN);
-	aer2->aer2_rdra = SWAP((int)aemem->aer2_rmd);
-	aer2->aer2_tlen = SWAP(AE_TLEN);
-	aer2->aer2_tdra = SWAP((int)aemem->aer2_tmd);
+	/* get the chip version of the lance chip */
+	sc->sc_r1->aer1_rap = 0x5900;
+	revision = ((sc->sc_r1->aer1_rdp >> 4) -2);
+	printf("  chip-revision: B%x\n", revision);
 
 	splx (s);
 
-	ifp->if_unit = ae->sc_dev.dv_unit;
+	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = aecd.cd_name;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
@@ -258,23 +247,79 @@ aeattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	ae->sc_isr.isr_intr = aeintr;
-	ae->sc_isr.isr_arg = ae;
-	ae->sc_isr.isr_ipl = 2;
-	add_isr (&ae->sc_isr);
+	sc->sc_isr.isr_intr = aeintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
 	return;
 }
 
 void
-aedrinit(aer2)
-	register struct aereg2 *aer2;
+aewatchdog(unit)
+	short unit;
 {
+	struct ae_softc *sc = aecd.cd_devs[unit];
+
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
+
+	aereset(sc);
+}
+
+void
+aestop(sc)
+	struct ae_softc *sc;
+{
+	sc->sc_r1->aer1_rap =  AE_CSR0;
+	sc->sc_r1->aer1_rdp =  AE_STOP;
+}
+
+	
+/*    
+ * Set up the initialization block and the descriptor rings.
+ */     
+void
+aememinit(sc)
+	register struct ae_softc *sc;
+{        
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	/*
+	 * This structure is referenced from the CARD's/PCnet-ISA's point
+	 * of view, thus the 0x8000 address which is the buffer RAM area
+	 * of the Ariadne card. This pointer is manipulated
+	 * with the PCnet-ISA's view of memory and NOT the Amiga's. FYI.
+	 */
 	register struct aereg2 *aemem = (struct aereg2 *) 0x8000;
+	register struct aereg2 *aer2 = sc->sc_r2;
 	register int i;
 
-	for (i = 0; i < AERBUF; i++) {
+
+#if NBPFILTER > 0
+	if (ifp->if_flags & IFF_PROMISC)
+		/* set the promiscuous bit */
+		aer2->aer2_mode = AE_MODE | AE_PROM;
+	else    
+#endif
+		aer2->aer2_mode = AE_MODE;
+	/* you know: no BYTE access.... */
+	aer2->aer2_padr[0] =
+		(sc->sc_arpcom.ac_enaddr[0] << 8) | sc->sc_arpcom.ac_enaddr[1];
+	aer2->aer2_padr[1] =
+		(sc->sc_arpcom.ac_enaddr[2] << 8) | sc->sc_arpcom.ac_enaddr[3];
+	aer2->aer2_padr[2] =
+		(sc->sc_arpcom.ac_enaddr[4] << 8) | sc->sc_arpcom.ac_enaddr[5];
+	aesetladrf(&sc->sc_arpcom, aer2->aer2_ladrf);
+
+	sc->sc_no_td = sc->sc_tmd = sc->sc_rmd = 0;
+
+	aer2->aer2_rlen = SWAP(AE_RLEN);
+	aer2->aer2_rdra = SWAP((int)aemem->aer2_rmd); 
+	aer2->aer2_tlen = SWAP(AE_TLEN);
+	aer2->aer2_tdra = SWAP((int)aemem->aer2_tmd);
+
+	for (i = 0; i < AERBUF; i++) {  
 		aer2->aer2_rmd[i].rmd0 = SWAP((int)aemem->aer2_rbuf[i]);
-		aer2->aer2_rmd[i].rmd1 = AE_OWN;
+		aer2->aer2_rmd[i].rmd1 = AE_OWN; 
 		aer2->aer2_rmd[i].rmd2 = SWAP(-ETHER_MAX_LEN);
 		aer2->aer2_rmd[i].rmd3 = 0;
 	}
@@ -288,64 +333,43 @@ aedrinit(aer2)
 }
 
 void
-aewatchdog(unit)
-	register int unit;
+aereset(sc)
+	struct ae_softc *sc;
 {
-	struct ae_softc *ae = aecd.cd_devs[unit];
+	int s;
 
-	log(LOG_ERR, "%s: device timeout\n", unit);
-	++ae->sc_arpcom.ac_if.if_oerrors;
-	aereset(ae);
+	s = splimp();
+	aeinit(sc);
+	splx(s);
 }
 
+/*
+ * Initialization of interface; set up initialization block
+ * and transmit/receive descriptor rings.
+ */     
 void
-aereset(ae)
-	struct ae_softc *ae;
+aeinit(sc)
+	struct ae_softc *sc;
 {
-	register struct aereg1 *aer1 = ae->sc_r1;
-	register struct ifnet *ifp = &ae->sc_arpcom.ac_if;
-	/*
-	 * This structure is referenced from the CARD's/PCnet-ISA's point
-	 * of view, thus the 0x8000 address which is the buffer RAM area
-	 * of the Ariadne card. This pointer is manipulated
-	 * with the PCnet-ISA's view of memory and NOT the Amiga's. FYI.
-	 */
+	register struct aereg1 *aer1 = sc->sc_r1;
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register struct aereg2 *aemem = (struct aereg2 *) 0x8000;
 
 	register int timo = 0;
 	volatile int dummy;
 
+	aestop(sc);
+	delay(100);
+
 	dummy = aer1->aer1_reset;    /* Reset PCNet-ISA */
 
-#if NBPFILTER > 0
-	if (ifp->if_flags & IFF_PROMISC)
-		/* set the promiscuous bit */
-		ae->sc_r2->aer2_mode = AE_MODE | AE_PROM;
-	else
-#endif
-		ae->sc_r2->aer2_mode = AE_MODE;
+	aememinit(sc);
 
-	aer1->aer1_rap =  AE_CSR0;
-	aer1->aer1_rdp =  AE_STOP;
-
-	aedrinit(ae->sc_r2);
-
-	ae->sc_rmd = 0;
+	/* Give LANCE the physical address of its init block. */
 	aer1->aer1_rap =  AE_CSR1;
 	aer1->aer1_rdp =  SWAP((int)&aemem->aer2_mode);
 	aer1->aer1_rap =  AE_CSR2;
 	aer1->aer1_rdp =  0;
-	aer1->aer1_rap =  AE_CSR0;
-	aer1->aer1_rdp =  AE_INIT;
-
-	do {
-		if (++timo == 10000) {
-			printf("%s: card failed to initialize\n", ae->sc_dev.dv_xname);
-			break;
-		}
-	} while ((aer1->aer1_rdp & AE_IDON) == 0);
-
-	aer1->aer1_rdp =  AE_STOP;
 
 /*
  *	re-program LEDs to match meaning used on the Ariadne board
@@ -368,56 +392,47 @@ aereset(ae)
  *	link0 -link1	disable autoselect. enable BNC.
  *	link0 link1	disable autoselect. enable UTP.
  */
-#ifdef notyet
 	if (!(ifp->if_flags & IFF_LINK0)) {
+		/* enable autoselect */
 		aer1->aer1_rap = 0x0200;
 		aer1->aer1_idp = 0x0200;
 	} else {
+		/* disable autoselect */
+		aer1->aer1_rap = 0x0200;
+		aer1->aer1_idp = 0x0000;
 		if (!(ifp->if_flags & IFF_LINK1)) {
-			aer1->aer1_rap = SWAP(2);
-			aer1->aer1_idp = SWAP(0x02);
+			/* enable BNC */
+			sc->sc_r2->aer2_mode = 0x0000;
 		} else {
-			aer1->aer1_rap = SWAP(2);
-			aer1->aer1_idp = SWAP(0x02);
+			/* enable UTP */
+			sc->sc_r2->aer2_mode = 0x8000;
 		}
 	}
-#else
-	aer1->aer1_rap = 0x0200;
-	aer1->aer1_idp = 0x0200;
-#endif
 
+	/* Try to initialize the LANCE. */
+	delay(100);
 	aer1->aer1_rap =  AE_CSR0;
-	aer1->aer1_rdp =  AE_STRT | AE_INEA;
+	aer1->aer1_rdp =  AE_INIT;
 
+	/* Wait for initialization to finish. */
+	do {
+		if (++timo == 10000) {
+			printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+			break;
+		}
+	} while ((aer1->aer1_rdp & AE_IDON) == 0);
+
+	/* Start the LANCE. */
+	aer1->aer1_rap =  AE_CSR0;
+	aer1->aer1_rdp =  AE_STRT | AE_INEA | AE_IDON;
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	return;
-}
-
-/*
- * Initialization of interface
- */
-void
-aeinit(ae)
-	struct ae_softc *ae;
-{
-	register struct ifnet *ifp = &ae->sc_arpcom.ac_if;
-	int s;
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		s = splimp();
-		ifp->if_flags |= IFF_RUNNING;
-		aereset(ae);
-		ifp->if_timer = 0;
-		aestart(ifp);
-		splx(s);
-	}
-
-	return;
+	ifp->if_timer = 0;
+	aestart(ifp);
 }
 
 #define AENEXTTMP \
-	if (++bix == AETBUF) bix = 0, tmd = ae->sc_r2->aer2_tmd; else ++tmd
+	if (++bix == AETBUF) bix = 0, tmd = sc->sc_r2->aer2_tmd; else ++tmd
 
 /*
  * Start output on interface.  Get another datagram to send
@@ -428,7 +443,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ae_softc *ae = aecd.cd_devs[ifp->if_unit];
+	register struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
 	register int bix;
 	register struct aetmd *tmd;
 	register struct mbuf *m;
@@ -437,11 +452,11 @@ aestart(ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	bix = ae->sc_tmd;
-	tmd = &ae->sc_r2->aer2_tmd[bix];
+	bix = sc->sc_tmd;
+	tmd = &sc->sc_r2->aer2_tmd[bix];
 
 	for (;;) {
-		if (ae->sc_no_td >= AETBUF) {
+		if (sc->sc_no_td >= AETBUF) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -450,14 +465,15 @@ aestart(ifp)
 		if (m == 0)
 			break;
 
-		++ae->sc_no_td;
+		++sc->sc_no_td;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		len = aeput(ae->sc_r2->aer2_tbuf[bix], m);
+		sc->sc_r1->aer1_rdp =  AE_TINT | AE_INEA;
+		len = aeput(sc->sc_r2->aer2_tbuf[bix], m);
 
 #ifdef AEDEBUG
 		if (len > ETHER_MAX_LEN)
@@ -466,31 +482,31 @@ aestart(ifp)
 
 		ifp->if_timer = 5;
 
-		tmd->tmd3 = 0;
-		tmd->tmd2 = SWAP(-len);
 		tmd->tmd1 = AE_OWN | AE_STP | AE_ENP;
+		tmd->tmd2 = SWAP(-len);
+		tmd->tmd3 = 0;
 
-		ae->sc_r1->aer1_rdp = AE_INEA | AE_TDMD;
+		sc->sc_r1->aer1_rdp = AE_INEA | AE_TDMD;
 
 		AENEXTTMP;
 	}
 
-	ae->sc_tmd = bix;
+	sc->sc_tmd = bix;
 }
 
 int
-aeintr(ae)
-	register struct ae_softc *ae;
+aeintr(sc)
+	register struct ae_softc *sc;
 {
 	register struct aereg1 *aer1;
-	register struct ifnet *ifp = &ae->sc_arpcom.ac_if;
+	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register u_int16_t stat;
 
 	/* if not even initialized, don't do anything further.. */
-	if (ae->sc_base == 0)
+	if (sc->sc_base == 0)
 		return (0);
 
-	aer1 = ae->sc_r1;
+	aer1 = sc->sc_r1;
 	stat =  aer1->aer1_rdp;
 
 	if ((stat & AE_INTR) == 0)
@@ -500,48 +516,47 @@ aeintr(ae)
 				AE_RINT | AE_TINT | AE_IDON));
 	if (stat & AE_SERR) {
 			if (stat & AE_MERR) {
-				printf("%s: memory error\n", ae->sc_dev.dv_xname);
-				aereset(ae);
+				printf("%s: memory error\n", sc->sc_dev.dv_xname);
+				aereset(sc);
 				return (1);
 			}
 			if (stat & AE_BABL) {
-				printf("%s: babble\n", ae->sc_dev.dv_xname);
+				printf("%s: babble\n", sc->sc_dev.dv_xname);
 				ifp->if_oerrors++;
 			}
 #if 0
 			if (stat & AE_CERR) {
-				printf("%s: collision error\n", ae->sc_dev.dv_xname);
+				printf("%s: collision error\n", sc->sc_dev.dv_xname);
 				ifp->if_collisions++;
 			}
 #endif
 			if (stat & AE_MISS) {
-				printf("%s: missed packet\n", ae->sc_dev.dv_xname);
+				printf("%s: missed packet\n", sc->sc_dev.dv_xname);
 				ifp->if_ierrors++;
 			}
 			aer1->aer1_rdp =  AE_BABL | AE_CERR | AE_MISS | AE_INEA;
 		}
 		if ((stat & AE_RXON) == 0) {
-			printf("%s: receiver disabled\n", ae->sc_dev.dv_xname);
+			printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
-			aereset(ae);
+			aereset(sc);
 			return (1);
 		}
 		if ((stat & AE_TXON) == 0) {
-			printf("%s: transmitter disabled\n", ae->sc_dev.dv_xname);
+			printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
-			aereset(ae);
+			aereset(sc);
 			return (1);
 		}
 		if (stat & AE_RINT) {
 			/* Reset watchdog timer. */
 			ifp->if_timer = 0;
-			aerint(ae);
+			aerint(sc);
 		}
 		if (stat & AE_TINT) {
 			/* Reset watchdog timer. */
 			ifp->if_timer = 0;
-			aer1->aer1_rdp =  AE_TINT | AE_INEA;
-			aetint(ae);
+			aetint(sc);
 		}
 
 	return (1);
@@ -552,43 +567,45 @@ aeintr(ae)
  * Start another output if more data to send.
  */
 void
-aetint(ae)
-	struct ae_softc *ae;
+aetint(sc)
+	struct ae_softc *sc;
 {
-	register int bix = (ae->sc_tmd - ae->sc_no_td + AETBUF) % AETBUF;
-	struct aetmd *tmd = &ae->sc_r2->aer2_tmd[bix];
-	struct ifnet *ifp = &ae->sc_arpcom.ac_if;
+	register int bix = (sc->sc_tmd - sc->sc_no_td + AETBUF) % AETBUF;
+	struct aetmd *tmd = &sc->sc_r2->aer2_tmd[bix];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (tmd->tmd1 & AE_OWN) {
-		printf("%s: extra tint\n", ae->sc_dev.dv_xname);
+#ifdef AEDEBUG
+		printf("%s: extra tint\n", sc->sc_dev.dv_xname);
+#endif
 		return;
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	do {
-		if (ae->sc_no_td <= 0)
+		if (sc->sc_no_td <= 0)
 			break;
 		ifp->if_opackets++;
-		--ae->sc_no_td;
+		--sc->sc_no_td;
 
 		if (tmd->tmd1 & AE_ERR) {
 			if (tmd->tmd3 & AE_TBUFF)
-				printf("%s: transmit buffer error\n", ae->sc_dev.dv_xname);
+				printf("%s: transmit buffer error\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & AE_UFLO)
-				printf("%s: underflow\n", ae->sc_dev.dv_xname);
+				printf("%s: underflow\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & (AE_TBUFF | AE_UFLO)) {
-				aereset(ae);
+				aereset(sc);
 				return;
 			}
 			if (tmd->tmd3 & AE_LCAR)
-				printf("%s: lost carrier\n", ae->sc_dev.dv_xname);
+				printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & AE_LCOL) {
-				printf("%s: late collision\n", ae->sc_dev.dv_xname);
+				printf("%s: late collision\n", sc->sc_dev.dv_xname);
 				ifp->if_collisions++;
 			}
 			if (tmd->tmd3 & AE_RTRY) {
 				printf("%s: excessive collisions, tdr %d\n",
-					ae->sc_dev.dv_xname, tmd->tmd3 & AE_TDR_MASK);
+					sc->sc_dev.dv_xname, tmd->tmd3 & AE_TDR_MASK);
 				ifp->if_collisions += 16;
 			}
 		} else if (tmd->tmd1 & AE_ONE) {
@@ -602,12 +619,12 @@ aetint(ae)
 	} while ((tmd->tmd1 & AE_OWN) == 0);
 
 	aestart(ifp);
-	if (ae->sc_no_td == 0)
+	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;
 }
 
 #define	AENEXTRMP \
-	if (++bix == AERBUF) bix = 0, rmd = ae->sc_r2->aer2_rmd; else ++rmd
+	if (++bix == AERBUF) bix = 0, rmd = sc->sc_r2->aer2_rmd; else ++rmd
 
 /*
  * Ethernet interface receiver interrupt.
@@ -616,18 +633,20 @@ aetint(ae)
  * higher-level input routine.
  */
 void
-aerint(ae)
-	struct ae_softc *ae;
+aerint(sc)
+	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &ae->sc_arpcom.ac_if;
-	register int bix = ae->sc_rmd;
-	register struct aermd *rmd = &ae->sc_r2->aer2_rmd[bix];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	register int bix = sc->sc_rmd;
+	register struct aermd *rmd = &sc->sc_r2->aer2_rmd[bix];
 
 	/*
 	 * Out of sync with hardware, should never happen?
 	 */
 	if (rmd->rmd1 & AE_OWN) {
-		printf("%s: extra rint\n", ae->sc_dev.dv_xname);;
+#ifdef AEDEBUG
+		printf("%s: extra rint\n", sc->sc_dev.dv_xname);
+#endif
 		return;
 	}
 
@@ -635,17 +654,17 @@ aerint(ae)
 	 * Process all buffers with valid data
 	 */
 	do {
-		ae->sc_r1->aer1_rdp =  AE_RINT | AE_INEA;
+		sc->sc_r1->aer1_rdp =  AE_RINT | AE_INEA;
 		if (rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_CRC | AE_RBUFF)) {
 			ifp->if_ierrors++;
 			if ((rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_ENP)) == (AE_FRAM | AE_ENP))
-				printf("%s: framing error\n", ae->sc_dev.dv_xname);
+				printf("%s: framing error\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_OFLO | AE_ENP)) == AE_OFLO)
-				printf("%s: overflow\n", ae->sc_dev.dv_xname);
+				printf("%s: overflow\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_CRC | AE_OFLO | AE_ENP)) == (AE_CRC | AE_ENP))
-				printf("%s: crc mismatch\n", ae->sc_dev.dv_xname);
+				printf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
 			if (rmd->rmd1 & AE_RBUFF)
-				printf("%s: receive buffer error\n", ae->sc_dev.dv_xname);
+				printf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
 		} else if ((rmd->rmd1 & (AE_STP | AE_ENP)) != (AE_STP | AE_ENP)) {
 			do {
 				rmd->rmd3 = 0;
@@ -653,43 +672,44 @@ aerint(ae)
 				AENEXTRMP;
 			} while ((rmd->rmd1 & (AE_OWN | AE_ERR | AE_STP | AE_ENP)) == 0);
 
-			ae->sc_rmd = bix;
-			printf("%s: chained buffer\n", ae->sc_dev.dv_xname);
+			sc->sc_rmd = bix;
+			printf("%s: chained buffer\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_OWN | AE_ERR | AE_STP | AE_ENP)) != AE_ENP) {
-				aereset(ae);
+				aereset(sc);
 				return;
 			}
 		} else
-			aeread(ae, ae->sc_r2->aer2_rbuf[bix], SWAP(rmd->rmd3) - 4);
+			aeread(sc, sc->sc_r2->aer2_rbuf[bix], SWAP(rmd->rmd3) - 4);
 
-		rmd->rmd3 = 0;
-		rmd->rmd2 = SWAP(-ETHER_MAX_LEN);
 		rmd->rmd1 = AE_OWN;
+		rmd->rmd2 = SWAP(-ETHER_MAX_LEN);
+		rmd->rmd3 = 0;
+
 		AENEXTRMP;
 	} while ((rmd->rmd1 & AE_OWN) == 0);
 
-	ae->sc_rmd = bix;
+	sc->sc_rmd = bix;
 }
 
 void
-aeread(ae, buf, len)
-	register struct ae_softc *ae;
+aeread(sc, buf, len)
+	register struct ae_softc *sc;
 	u_char *buf;
 	int len;
 {
-	struct ifnet *ifp = &ae->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
     	struct mbuf *m;
 	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) || len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
-			ae->sc_dev.dv_xname, len);
+			sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;
 	}
 
 	/* Pull packet off interface. */
-	m = aeget(ae, buf, len);
+	m = aeget(sc, buf, len);
 	if (m == 0) {
 		ifp->if_ierrors++;
 		return;
@@ -716,7 +736,7 @@ aeread(ae, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, ae->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			sizeof(eh->ether_dhost)) != 0) {
 			    m_freem(m);
 			    return;
@@ -726,7 +746,6 @@ aeread(ae, buf, len)
 
 	/* We assume that the header fit entirely in one mbuf. */
 	m_adj(m, sizeof(struct ether_header));
-
 	ether_input(ifp, eh, m);
 }
 
@@ -749,7 +768,8 @@ aeread(ae, buf, len)
  *	an arbitrary destination. It assumes that the CPU can handle
  *	mis-aligned writes to the destination itself.
  */
-static void wcopyfrom(a1, a2, length) /* bcopy() word-wise */
+static void
+wcopyfrom(a1, a2, length) /* bcopy() word-wise */
 	char *a1, *a2;
 	int length;
 {
@@ -779,7 +799,8 @@ static void wcopyfrom(a1, a2, length) /* bcopy() word-wise */
  *	source to the destination. It assumes that the CPU can handle
  *	mis-aligned reads from the source itself.
  */
-static void wcopyto(a1, a2, length) /* bcopy() word-wise */
+static void
+wcopyto(a1, a2, length) /* bcopy() word-wise */
 	char *a1, *a2;
 	int length;
 {
@@ -807,7 +828,8 @@ static void wcopyto(a1, a2, length) /* bcopy() word-wise */
 	}
 }
 
-static void wzero(a1, length) /* bzero() word-wise */
+static void
+wzero(a1, length) /* bzero() word-wise */
 	char *a1;
 	int length;
 {
@@ -840,31 +862,32 @@ static void wzero(a1, length) /* bzero() word-wise */
 
 	if (length & 0x0001)
 		*b1 &= 0x00ff;
-};
+}
 
 /*
  * Routine to copy from mbuf chain to transmit
  * buffer in board local memory. 
  */
-u_short
+int
 aeput(buffer, m)
 	register char *buffer; 
 	register struct mbuf *m;
 {
-	register struct mbuf *mp;
-	register int len, tlen = 0;  
+	register struct mbuf *n;
+	register int len = 0, tlen = 0;  
  
-	for (mp = m; mp; mp = mp->m_next) {
-		len = mp->m_len;
-		if (len == 0)
+	for (; m; m = n) {
+		len = m->m_len;
+		if (len == 0) {
+			MFREE(m, n);
 			continue;
-		wcopyto(mtod(mp, char *), buffer, len);
-		tlen += len;
+		}
+		wcopyto(mtod(m, char *), buffer, len);
 		buffer += len;
+		tlen += len;
+		MFREE(m, n);
 	}
  
-	m_freem(m);
-
 	if (tlen < ETHER_MIN_LEN) {
 		wzero(buffer, ETHER_MIN_LEN - tlen);
 		tlen = ETHER_MIN_LEN;
@@ -877,20 +900,19 @@ aeput(buffer, m)
  * Routine to copy from board local memory into mbufs.
  */
 struct mbuf *
-aeget(ae, buffer, totlen)
-	struct ae_softc *ae;
+aeget(sc, buffer, totlen)
+	struct ae_softc *sc;
 	u_char *buffer;
 	int totlen;
 {
-	struct ifnet *ifp = &ae->sc_arpcom.ac_if;
-	struct mbuf *top, **mp, *m;
+	register struct mbuf *m;
+	struct mbuf *top, **mp;
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-
-	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -931,10 +953,9 @@ aeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ae_softc *ae = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct aereg1 *aer1 = ae->sc_r1;
 	int s, error = 0;
 
 	s = splimp();
@@ -947,31 +968,41 @@ aeioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			aeinit(ae);	
-			arp_ifinit(&ae->sc_arpcom, ifa);
+			aeinit(sc);	
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(ae->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				wcopyto(ina->x_host.c_host,
-				    ae->sc_arpcom.ac_enaddr,
-				    sizeof(ae->sc_arpcom.ac_enaddr));
-			aeinit(ae); /* does ae_setaddr() */
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			aeinit(sc); /* does ae_setaddr() */
 			break;
 		    }
 #endif
 		default:
-			aeinit(ae);
+			aeinit(sc);
 			break;
 		}
 		break;
+
+#if defined(CCITT) && defined(LLC)
+	case SIOCSIFCONF_X25:
+		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = (void (*)())cons_rtrequest; /* XXX */
+		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
+		if (error == 0)
+			aeinit(sc);
+		break;
+#endif /* CCITT && LLC */
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
@@ -980,7 +1011,7 @@ aeioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			aer1->aer1_rdp =  AE_STOP;
+			aestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -988,28 +1019,28 @@ aeioctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			aeinit(ae);
+			aeinit(sc);
 		} else {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			aeinit(ae);
+			aeinit(sc);
 		}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ae->sc_arpcom):
-		    ether_delmulti(ifr, &ae->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom):
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			aeinit(ae);
+			aereset(sc);
 			error = 0;
 		}
 		break;
