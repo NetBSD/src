@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2001/02/04 17:38:11 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 2001/03/22 04:11:46 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,7 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_altivec.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -44,6 +46,10 @@
 
 #include <machine/fpu.h>
 #include <machine/pcb.h>
+
+#if !defined(MULTIPROCESSOR)
+#define save_fpu_proc(p) save_fpu(p)		/* XXX */
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -80,14 +86,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc, we're creating a kernel thread.
+	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
 	 */
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
 
-	if (p1 == fpuproc)
-		save_fpu(p1);
+	if (p1->p_addr->u_pcb.pcb_fpcpu)
+		save_fpu_proc(p1);
 	*pcb = p1->p_addr->u_pcb;
 #ifdef ALTIVEC
 	if (p1->p1_addr->u_pcb.pcb_vr != NULL) {
@@ -191,10 +197,10 @@ cpu_exit(p)
 #ifdef ALTIVEC
 	struct pcb *pcb = &p->p_addr->u_pcb;
 #endif
-	if (p == fpuproc)	/* release the FPU */
+	if (p->p_addr->u_pcb.pcb_fpcpu)		/* release the FPU */
 		fpuproc = NULL;
 #ifdef ALTIVEC
-	if (p == vecproc)	/* release the AltiVEC */
+	if (p == vecproc)			/* release the AltiVEC */
 		vecproc = NULL;
 	if (pcb->pcb_vr != NULL)
 		pool_put(vecpl, pcb->pcb_vr);
@@ -228,8 +234,8 @@ cpu_coredump(p, vp, cred, chdr)
 	tf = trapframe(p);
 	bcopy(tf, &md_core.frame, sizeof md_core.frame);
 	if (pcb->pcb_flags & PCB_FPU) {
-		if (p == fpuproc)
-			save_fpu(p);
+		if (p->p_addr->u_pcb.pcb_fpcpu)
+			save_fpu_proc(p);
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
 		bzero(&md_core.fpstate, sizeof(md_core.fpstate));

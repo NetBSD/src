@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.28 2001/03/21 11:38:39 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.29 2001/03/22 04:11:46 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -67,7 +67,6 @@ static inline int gc_read_irq __P((void));
 static inline int mapirq __P((int));
 static void gc_enable_irq __P((int));
 static void gc_disable_irq __P((int));
-static void gc_enable_irq_all __P((int));
 
 static void do_pending_int __P((void));
 
@@ -206,31 +205,6 @@ gc_disable_irq(irq)
 		x &= ~(1 << (irq - 32));
 		out32rb(INT_ENABLE_REG_H, x);
 	}
-}
-
-void
-gc_enable_irq_all(x)
-	int x;
-{
-	int lo, hi, v;
-	int irq;
-
-	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
-
-	lo = hi = 0;
-	while (x) {
-		v = 31 - cntlzw(x);
-		irq = hwirq[v];
-		if (irq < 32)
-			lo |= 1 << irq;
-		else
-			hi |= 1 << (irq - 32);
-		x &= ~(1 << v);
-	}
-
-	out32rb(INT_ENABLE_REG_L, lo);
-	if (heathrow_FCR)
-		out32rb(INT_ENABLE_REG_H, hi);
 }
 
 /*
@@ -480,6 +454,10 @@ intr_disestablish(arg)
 		intrtype[irq] = IST_NONE;
 }
 
+#define HH_INTR_SECONDARY 0xf80000c0
+#define GC_IPI_IRQ	  30
+extern int cpuintr(void *);
+
 /*
  * external interrupt handler
  */
@@ -492,15 +470,27 @@ ext_intr()
 	u_long int_state;
 
 #ifdef MULTIPROCESSOR
-	/* Only cpu0 can handle interrupts. */
-	if (cpu_number() != 0)
+	/* Only cpu0 can handle external interrupts. */
+	if (cpu_number() != 0) {
+		/* XXX IPI should be maskable */
+		out32(HH_INTR_SECONDARY, ~0);
+		cpuintr(NULL);
 		return;
+	}
 #endif
 
 	pcpl = cpl;
 	asm volatile ("mfmsr %0" : "=r"(msr));
 
 	int_state = gc_read_irq();
+#ifdef MULTIPROCESSOR
+	r_imen = 1 << virq[GC_IPI_IRQ];
+	if (int_state & r_imen) {
+		/* XXX IPI should be maskable */
+		int_state &= ~r_imen;
+		cpuintr(NULL);
+	}
+#endif
 	if (int_state == 0)
 		return;
 
@@ -602,12 +592,13 @@ do_pending_int()
 	int pcpl;
 	int hwpend;
 	int emsr, dmsr;
-	static int processing;
+	const int cpu_id = cpu_number();
+	static int processing[2];	/* XXX */
 
-	if (processing)
+	if (processing[cpu_id])
 		return;
 
-	processing = 1;
+	processing[cpu_id] = 1;
 	asm volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
 	asm volatile("mtmsr %0" :: "r"(dmsr));
@@ -616,8 +607,9 @@ do_pending_int()
 again:
 
 #ifdef MULTIPROCESSOR
-	if (cpu_number() == 0) {
+	if (cpu_id == 0) {
 #endif
+	/* Do now unmasked pendings */
 	while ((hwpend = ipending & ~pcpl & HWIRQ_MASK) != 0) {
 		irq = 31 - cntlzw(hwpend);
 		if (!have_openpic)
@@ -688,7 +680,7 @@ again:
 	}
 #endif
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	processing = 0;
+	processing[cpu_id] = 0;
 	asm volatile("mtmsr %0" :: "r"(emsr));
 }
 
@@ -776,6 +768,7 @@ openpic_init()
 		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 	}
 
+	/* XXX IPI */
 	/* XXX set spurious intr vector */
 
 	openpic_set_priority(0, 0);
