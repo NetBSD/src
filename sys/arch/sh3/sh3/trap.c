@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2000/02/24 23:32:30 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2000/04/13 23:00:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -221,8 +221,13 @@ trap(p1, p2, p3, p4, frame)
 		/*NOTREACHED*/
 
 	case T_TRAP|T_USER:
-		syscall(&frame);
-		return;
+		if (SHREG_TRA == (0x000000c3 << 2)) {
+			trapsignal(p, SIGTRAP, type &~ T_USER);
+			break;
+		} else {
+			syscall(&frame);
+			return;
+		}
 
 	case T_INITPAGEWR:
 	case T_INITPAGEWR|T_USER:
