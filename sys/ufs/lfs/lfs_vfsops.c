@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.44 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.45 1999/11/21 19:25:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -717,6 +717,7 @@ lfs_vget(mp, ino, vpp)
 		return (error);
 	}
 	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;
