@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.48 2003/08/07 08:52:32 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.48 2003/08/07 08:52:32 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -256,12 +256,8 @@ struct domain inet6domain =
 #endif /* GATEWAY6 */
 #endif /* !IPV6FORWARDING */
 
-#ifndef	IPV6_SENDREDIRECTS
-#define	IPV6_SENDREDIRECTS	1
-#endif
-
 int	ip6_forwarding = IPV6FORWARDING;	/* act as router? */
-int	ip6_sendredirects = IPV6_SENDREDIRECTS;
+int	ip6_sendredirects = 1;
 int	ip6_defhlim = IPV6_DEFHLIM;
 int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
 int	ip6_accept_rtadv = 0;	/* "IPV6FORWARDING ? 0 : 1" is dangerous */
