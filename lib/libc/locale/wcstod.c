@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.1 2001/09/27 16:30:36 yamt Exp $ */
+/* $NetBSD: wcstod.c,v 1.2 2001/09/28 09:29:17 yamt Exp $ */
 
 /*-
  * Copyright (c)1999, 2000, 2001 Citrus Project,
@@ -70,7 +70,7 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 		src++;
 	size = wcsspn(src, _L("0123456789"));
 	src += size;
-	if (*src == _LC('.')) {/* XXX usr localeconv */
+	if (*src == _LC('.')) {/* XXX use localeconv */
 		src++;
 		size = wcsspn(src, _L("0123456789"));
 		src += size;
