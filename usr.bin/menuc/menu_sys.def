@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.43 2003/07/07 12:20:56 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.44 2003/07/25 07:22:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@
 static int __menu_init = 0;
 int __m_endwin = 0;
 static int max_lines = 0, max_cols = 0;
-static char *scrolltext = " <: page up, >: page down";
+static const char *scrolltext = " <: page up, >: page down";
 
 static menudesc *menus = menu_def;
 
@@ -683,7 +683,7 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	void (*post_act)(menudesc *, void *),
 	void (*draw_line)(menudesc *, int, void *),
 	void (*exit_act)(menudesc *, void *),
-	const char * help, const char *exit)
+	const char *help, const char *exit_str)
 {
 	int ix;
 	menudesc *m;
@@ -710,7 +710,7 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	m->draw_line = draw_line;
 	m->exit_act = exit_act;
 	m->helpstr  = help;
-	m->exitstr  = exit ? exit : "Exit";
+	m->exitstr  = exit_str ? exit_str : "Exit";
 
 	init_menu(m);
 
