@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.100 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.101 2004/05/15 21:48:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -712,8 +712,10 @@ again:
 
 	/* Set a default route if one was given */
 	if (net_defroute[0] != '\0') {
-		run_program(0, "/sbin/route -n flush -inet");
-		run_program(0, "/sbin/route -n add default %s", net_defroute);
+		run_program(RUN_DISPLAY | RUN_PROGRESS,
+				"/sbin/route -n flush -inet");
+		run_program(RUN_DISPLAY | RUN_PROGRESS,
+				"/sbin/route -n add default %s", net_defroute);
 	}
 
 	/*
@@ -1055,7 +1057,7 @@ config_dhcp(char *inter)
 	process_menu(MENU_dhcpautoconf, NULL);
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
-		dhcpautoconf = run_program(RUN_DISPLAY, 
+		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s",
 		    DHCLIENT_EX, inter);
 		return dhcpautoconf ? 0 : 1;
