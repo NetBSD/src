@@ -40,18 +40,16 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_finite.S,v 1.3 1995/05/09 02:03:31 jtc Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.4 1996/06/26 14:44:05 jtc Exp $")
 
 | finite(x)
 | returns the value TRUE if -INF < x < +INF and returns FALSE otherwise.
 ENTRY(finite)
-	movw	#0x7FF0,d0
-	movw	sp@(4),d1
-	andw	d0,d1
-	cmpw	d0,d1
-	beq	Lnotfin
-	moveq	#1,d0
-	rts
-Lnotfin:
-	clrl	d0
+	movw	sp@(4),d0
+	movw	#0x7FF0,d1
+	andw	d1,d0
+	cmpw	d1,d0
+	sne	d0
+	extbl	d0
+	negl	d0
 	rts
