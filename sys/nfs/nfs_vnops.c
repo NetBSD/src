@@ -33,15 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00090
- * --------------------         -----   ----------------------
- *
- * 02 Mar 93	Greg Hackney		Make NFS client POSIX compliant (anon)
- *
+ *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
+ *	$Id: nfs_vnops.c,v 1.4 1993/05/21 07:38:07 cgd Exp $
  */
 
 /*
