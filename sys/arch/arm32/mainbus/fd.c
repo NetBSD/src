@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1996/04/26 22:03:37 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 1996/05/06 00:23:57 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -968,9 +968,11 @@ loop:
 			fiqhandler.fh_func = floppy_read_fiq;
 		else
 			fiqhandler.fh_func = floppy_write_fiq;
-		fiqhandler.fh_r11 = nblks * FDC_BSIZE;
-		fiqhandler.fh_r12 = (int)bp->b_data + (int)fd->sc_skip;
-		fiqhandler.fh_r13 = fdc->sc_drq;
+		fiqhandler.fh_r9 = IOMD_FIQRQ;
+		fiqhandler.fh_r10 = nblks * FDC_BSIZE;
+		fiqhandler.fh_r11 = (int)bp->b_data + (int)fd->sc_skip;
+		fiqhandler.fh_r12 = fdc->sc_drq;
+/*		fiqhandler.fh_r13 = 0;*/
 		fiqhandler.fh_mask = 0x01;
 		if (fiq_claim(&fiqhandler) == -1)
 			panic("Cannot claim FIQ vector\n");
@@ -1027,6 +1029,8 @@ loop:
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
+/*		if (fiqhandler.fh_r13)
+			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1043,6 +1047,8 @@ loop:
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
+/*		if (fiqhandler.fh_r13)
+			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1061,7 +1067,8 @@ loop:
 #endif*/
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
-
+/*		if (fiqhandler.fh_r13)
+			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 		if (fdc->sc_errors) {
 /*			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
