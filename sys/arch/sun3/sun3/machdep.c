@@ -38,8 +38,10 @@ int cold;
 
 void cpu_startup()
 {
-
-
+    mon_printf("got to cpu_startup()\n");
+    printf("got to cpu_startup()\n");
+    
+    sun3_stop();
     cold = 0;
 }
 
