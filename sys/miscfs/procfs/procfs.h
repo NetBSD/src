@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.30 2000/11/24 18:58:37 chs Exp $	*/
+/*	$NetBSD: procfs.h,v 1.31 2001/01/17 00:09:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -56,7 +56,9 @@ typedef enum {
 	Pnote,		/* process notifier */
 	Pnotepg,	/* process group notifier */
 	Pmap,		/* memory map */
-	Pcmdline	/* process command line args */
+	Pcmdline,	/* process command line args */
+	Pmeminfo,	/* system memory info (if -o linux) */
+	Pcpuinfo	/* CPU info (if -o linux) */
 } pfstype;
 
 /*
@@ -74,6 +76,15 @@ struct pfsnode {
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
+
+struct procfs_args {
+	int version;
+	int flags;
+};
+
+#define PROCFS_ARGSVERSION	1
+
+#define PROCFSMNT_LINUXCOMPAT	0x01
 
 /*
  * Kernel stuff follows
@@ -93,6 +104,7 @@ struct pfsnode {
 struct procfsmount {
 	void *pmnt_exechook;
 	struct mount *pmnt_mp;
+	int pmnt_flags;
 };
 
 #define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
@@ -132,6 +144,10 @@ int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
+int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
+int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
 
 int procfs_checkioperm __P((struct proc *, struct proc *));
 void procfs_revoke_vnodes __P((struct proc *, void *));
@@ -139,12 +155,14 @@ void procfs_hashinit __P((void));
 void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */
-int procfs_validfile __P((struct proc *));
-int procfs_validfpregs __P((struct proc *));
-int procfs_validregs __P((struct proc *));
-int procfs_validmap __P((struct proc *));
+int procfs_validfile __P((struct proc *, struct mount *));
+int procfs_validfpregs __P((struct proc *, struct mount *));
+int procfs_validregs __P((struct proc *, struct mount *));
+int procfs_validmap __P((struct proc *, struct mount *));
 
 int procfs_rw __P((void *));
+
+int procfs_getcpuinfstr __P((char *, int *));
 
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02
