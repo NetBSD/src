@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.85 2002/11/27 08:35:18 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.86 2002/12/15 16:20:45 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1382,7 +1382,7 @@ lib/libc/net/gethnamaddr.c			1.45
 
 lib/libc/net/gethnamaddr.c			1.48
 
-  Query ip6.arpa then ip6.int for IPv6 reverse lookup.  follows RFC 3152.
+  Query ip6.arpa then ip6.int for IPv6 reverse lookup.  Follows RFC 3152.
 
 sys/dev/pckbc/wskbdmap_mfii.c			1.24
 
@@ -1765,18 +1765,25 @@ crypto/dist/heimdal/kadmin/version4.c		1.2
 
 libexec/ftpd/cmds.c				1.19
 
-  Correct RFC959 compliance in quoting lines starting with digits (page 36).
+  Correct RFC959 compliance in quoting lines starting with digits
+  (page 36).
 
 sys/netinet6/esp_input.c			1.27
 
-  Increase correct statistics on ESP packet length check.  Fixes KAME PR#445.
+  Increase correct statistics on ESP packet length check.  Fixes
+  KAME PR#445.
+
+sys/netinet/ip_input.c				1.160 via patch
+
+  Always create PMTUD timeout queue, as PMTUD can be turned on via
+  sysctl at runtime.
 
 sys/net/route.c					1.55 via patch
 sys/net/route.h					1.32
 sys/netinet/ip_input.c				1.163
 
-  Always create PMTUD timeout queue, as PMTUD can be turned on via
-  sysctl at runtime.  From lha@stacken.kth.se.
+  Remove all entries on rt timer queue on ip_mtudisc change, instead
+  of destroying the queue.
 
 sbin/sysctl/sysctl.c				1.59
 
@@ -1799,8 +1806,8 @@ dist/bind/lib/nameser/ns_name.c			1.7
 dist/bind/lib/nameser/ns_samedomain.c		1.2
 dist/bind/man/named.conf.5			1.8
 
-  Correct multiple DoS holes as well as remote code injection.  Upgrade to
-  Version 8.3.4.
+  Correct multiple DoS holes as well as remote code injection.
+  Upgrade to Version 8.3.4.
 
 sys/netinet6/ip6_forward.c			1.20 via patch
 
@@ -1811,3 +1818,40 @@ sys/netinet/ip_ipsec_pxy.c			via patch
 sys/netinet/ip_netbios_pxy.c			via patch
 
   Fix compilation on a.out systems.
+
+sys/netinet/ip_output.c				1.102
+
+  Initialize len and check what ip_insertoptions() returns.
+  In some rare cases there might not be sufficient room for
+  the options.
+
+include/heimdal/version.h			patch
+
+  Mark this as Heimdal-0.3e-nb1, to indicate presence of fix.
+
+lib/libc/time/strftime.3			1.17
+
+  Fix typo UCT -> UTC.  Fixes PR#19007.
+
+sys/dev/cardbus/cardbusdevs			1.23 via patch
+sys/dev/cardbus/cardbusdevs.h			regenerate
+sys/dev/cardbus/cardbusdevs_data.h		regenerate
+sys/dev/cardbus/if_rtk_cardbus.c		1.12
+
+  Add support for Planex FNW-3603 cardbus ethernet.  Fixes
+  PR#18961.
+
+lib/libc/arch/m68k/gen/__setjmp14.S		1.4
+
+  Restore %a0 after the call to sigprocmask(2), since an ELF kernel
+  will stomp on it due to SVR4 ABI compliance.  Fixes PR#18644.
+
+sbin/ping6/ping6.c				1.53
+
+  Correct the use of sizeof() on memset().
+
+usr.sbin/lpr/lpd/lpd.8				1.27 via patch
+usr.sbin/lpr/lpd/printjob.c			1.35-1.36 via patch
+
+  When ``-r'' is given, actually pass the file through ``of'' and
+  also enable ``if''.
