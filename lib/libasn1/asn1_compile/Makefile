@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2001/11/12 23:16:20 tv Exp $
+# $NetBSD: Makefile,v 1.13 2001/11/15 22:02:42 tv Exp $
 
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
@@ -53,6 +53,8 @@ make-print-version: make-print-version.lo
 
 print_version.h: make-print-version
 	./make-print-version print_version.h
+
+.NOPATH: print_version.h make-print-version
 
 CLEANFILES+=	print_version.h make-print-version make-print-version.lo
 
