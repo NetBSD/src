@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.7 2002/04/02 15:19:00 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.8 2002/04/02 15:22:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.7 2002/04/02 15:19:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.8 2002/04/02 15:22:38 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -94,6 +94,18 @@ msm6258_codec_init (void)
 	r->mc_amp = r->mc_estim = 0;
 
 	return r;
+}
+
+int
+msm6258_codec_open(void *hdl)
+{
+	struct msm6258_softc *sc = hdl;
+	struct msm6258_codecvar *mc = sc->sc_mc;
+
+	mc->mc_amp = 0;
+	mc->mc_estim = 0;
+
+	return 0;
 }
 
 static inline u_char
