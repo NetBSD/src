@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.14 2002/07/12 01:40:15 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.15 2002/07/12 03:02:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.14 2002/07/12 01:40:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.15 2002/07/12 03:02:55 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -157,10 +157,8 @@ sys_exit(struct lwp *l, void *v, register_t *retval)
 void
 exit1(struct lwp *l, int rv)
 {
-	struct lwp	*l2;
 	struct proc	*p, *q, *nq;
-	int		s, error;
-	lwpid_t		waited;
+	int		s;
 
 	p = l->l_proc;
 
@@ -168,14 +166,13 @@ exit1(struct lwp *l, int rv)
 		panic("init died (signal %d, exit %d)",
 		      WTERMSIG(rv), WEXITSTATUS(rv));
 
+	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	/*
 	 * Disable scheduler activation upcalls. 
 	 * We're trying to get out of here. 
 	 */
-	if (l->l_flag & L_SA) {
+	if (l->l_flag & L_SA)
 		l->l_flag &= ~L_SA;
-		DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
-	}
 
 #ifdef PGINPROF
 	vmsizmon();
@@ -188,8 +185,6 @@ exit1(struct lwp *l, int rv)
 	 * wake up the parent early to avoid deadlock.
 	 */
 	p->p_flag |= P_WEXIT;
-	p->p_userret = lwp_exit_hook;
-	p->p_userret_arg = NULL;
 
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
@@ -198,55 +193,10 @@ exit1(struct lwp *l, int rv)
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
 	p->p_sigctx.ps_sigcheck = 0;
-	timers_free(p);
+	timers_free(p, TIMERS_ALL);
 
-	/* XXX SMP 
-	 * This would be the right place to IPI any LWPs running on 
-	 * other processors so that they can notice P_WEXIT.
-	 */
-	/* Make SA-cached LWPs normal process runnable LWPs so that they'll
-	 * also self-destruct.
-	 */
-	if (p->p_sa && p->p_sa->sa_ncached > 0) {
-		DPRINTF(("exit1: Making cached LWPs of %d runnable: ",
-		    p->p_pid));
-		SCHED_LOCK(s);
-		while ((l2 = sa_getcachelwp(p)) != 0) {
-			l2->l_priority = l2->l_usrpri;
-			l2->l_flag &= ~0x800000;
-			setrunnable(l2);
-			DPRINTF(("%d ", l2->l_lid));
-		}
-		DPRINTF(("\n"));
-		SCHED_UNLOCK(s);
-	}
-	
-	/* Interrupt LWPs in interruptable sleep, unsuspend suspended
-	 * LWPs, make detached LWPs undeached (so we can wait for
-	 * them) and then wait for everyone else to finish.  
-	 */
-	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-		l2->l_flag &= ~(L_DETACHED|L_SA);
-		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
-		    l2->l_stat == LSSUSPENDED) {
-			SCHED_LOCK(s);
-			setrunnable(l2);
-			SCHED_UNLOCK(s);
-			DPRINTF(("exit1: Made %d.%d runnable\n",
-			    p->p_pid, l2->l_lid));
-		}
-	}
+	exit_lwps(l);
 
-	
-	while (p->p_nlwps > 1) {
-		DPRINTF(("exit1: waiting for %d LWPs (%d runnable, %d zombies)\n", 
-		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
-		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
-		if (error)
-			panic("exit1: lwp_wait1 failed with error %d\n",
-			    error);
-		DPRINTF(("exit1: Got LWP %d from lwp_wait1()\n", waited));
-	}	
 	/*
 	 * Close open files and release open-file table.
 	 * This may block!
@@ -408,6 +358,69 @@ exit1(struct lwp *l, int rv)
 	 */
 
 	cpu_exit(l, 1);
+}
+
+void
+exit_lwps(struct lwp *l)
+{
+	struct proc *p;
+	struct lwp *l2;
+	int s, error;
+	lwpid_t		waited;
+
+	p = l->l_proc;
+
+	/* XXX SMP 
+	 * This would be the right place to IPI any LWPs running on 
+	 * other processors so that they can notice the userret exit hook.
+	 */
+	p->p_userret = lwp_exit_hook;
+	p->p_userret_arg = NULL;
+
+	/* Make SA-cached LWPs normal process runnable LWPs so that they'll
+	 * also self-destruct.
+	 */
+	if (p->p_sa && p->p_sa->sa_ncached > 0) {
+		DPRINTF(("exit_lwps: Making cached LWPs of %d runnable: ",
+		    p->p_pid));
+		SCHED_LOCK(s);
+		while ((l2 = sa_getcachelwp(p)) != 0) {
+			l2->l_priority = l2->l_usrpri;
+			setrunnable(l2);
+			DPRINTF(("%d ", l2->l_lid));
+		}
+		DPRINTF(("\n"));
+		SCHED_UNLOCK(s);
+	}
+	
+	/* Interrupt LWPs in interruptable sleep, unsuspend suspended
+	 * LWPs, make detached LWPs undeached (so we can wait for
+	 * them) and then wait for everyone else to finish.  
+	 */
+	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+		l2->l_flag &= ~(L_DETACHED|L_SA);
+		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
+		    l2->l_stat == LSSUSPENDED) {
+			SCHED_LOCK(s);
+			setrunnable(l2);
+			SCHED_UNLOCK(s);
+			DPRINTF(("exit_lwps: Made %d.%d runnable\n",
+			    p->p_pid, l2->l_lid));
+		}
+	}
+
+	
+	while (p->p_nlwps > 1) {
+		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n", 
+		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
+		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
+		if (error)
+			panic("exit_lwps: lwp_wait1 failed with error %d\n",
+			    error);
+		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
+	}	
+
+	p->p_userret = NULL;
 }
 
 /* Wrapper function for use in p_userret */
