@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.16 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: tcp.h,v 1.17 2004/05/07 20:11:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@ typedef u_int32_t tcp_seq;
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
+ * Updated by RFC 3168, September, 2001.
  */
 struct tcphdr {
 	u_int16_t th_sport;		/* source port */
@@ -65,6 +66,8 @@ struct tcphdr {
 #define	TH_PUSH	  0x08
 #define	TH_ACK	  0x10
 #define	TH_URG	  0x20
+#define	TH_ECE	  0x40			/* (unimplemented) */
+#define	TH_CWR	  0x80			/* (unimplemented) */
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
