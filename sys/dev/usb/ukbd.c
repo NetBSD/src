@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.33 1999/06/10 15:48:27 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.34 1999/06/11 19:05:13 wrstuden Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -345,6 +345,7 @@ USB_ATTACH(ukbd)
 	if (sc->sc_console_keyboard) {
 		DPRINTF(("ukbd_attach: console keyboard sc=%p\n", sc));
 		wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
+		ukbd_enable(sc, 1);
 	}
 
 	a.console = sc->sc_console_keyboard;
@@ -623,6 +624,7 @@ ukbd_set_leds(v, leds)
 #elif defined(__FreeBSD__)
 	res = leds;
 #endif
+	res |= leds & 0xf8;
 	usbd_set_report_async(sc->sc_iface, UHID_OUTPUT_REPORT, 0, &res, 1);
 }
 
