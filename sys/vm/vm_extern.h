@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.37 1998/05/09 15:04:39 kleink Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.38 1998/07/24 20:27:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,6 +86,8 @@ void		 kmem_init __P((vm_offset_t, vm_offset_t));
 vm_offset_t	 kmem_malloc __P((vm_map_t, vm_size_t, boolean_t));
 vm_map_t	 kmem_suballoc __P((vm_map_t, vm_offset_t *, vm_offset_t *,
 				    vm_size_t, boolean_t));
+vm_offset_t	 kmem_alloc_poolpage __P((void));
+void		 kmem_free_poolpage __P((vm_offset_t));
 void		 loadav __P((struct loadavg *));
 #if !defined(UVM)
 void		 munmapfd __P((struct proc *, int));
