@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.72 2002/10/02 16:02:10 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.73 2002/12/16 16:59:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -599,7 +599,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 					&dva, &sgsize)) != 0)
 		return (error);
 
-	cpuinfo.cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
+	cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
 	 * We always use just one segment.
