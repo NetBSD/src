@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.15 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.16 2001/11/13 06:17:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.16 2001/11/13 06:17:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

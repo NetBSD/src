@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.59 2001/11/10 17:14:52 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.60 2001/11/13 06:17:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,14 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.60 2001/11/13 06:17:46 lukem Exp $");
+
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
 #include "wskbd.h"
 #include "wsmux.h"
 #include "wsdisplay.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.59 2001/11/10 17:14:52 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
