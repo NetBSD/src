@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.15 2000/10/10 18:09:25 is Exp $	*/
+/*	$NetBSD: private.h,v 1.16 2000/12/10 03:56:31 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -186,10 +186,12 @@ static char	privatehid[] = "@(#)private.h	7.49";
 ** SunOS 4.1.1 libraries lack remove.
 */
 
+#ifndef __NetBSD__
 #ifndef remove
 extern int	unlink P((const char * filename));
 #define remove	unlink
 #endif /* !defined remove */
+#endif
 
 /*
 ** Some ancient errno.h implementations don't declare errno.
