@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.11 1997/03/15 18:09:28 is Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.12 1997/03/17 18:04:40 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -91,6 +91,7 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #ifdef INET
@@ -565,6 +566,7 @@ qn_get_packet(sc, len)
 	u_short len;
 {
 	register u_short volatile *nic_fifo_ptr = sc->nic_fifo;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m, *dst, *head = NULL;
 	register u_short len1;
@@ -634,7 +636,7 @@ qn_get_packet(sc, len)
 		 * no BPF listeners. And in prom. mode we have to check
 		 * if the packet is really ours...
 		 */
-		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* not bcast or mcast */
 		    bcmp(eh->ether_dhost,
         	        LLADDR(ifp->if_sadl),
@@ -646,7 +648,7 @@ qn_get_packet(sc, len)
 #endif
 
 	m_adj(head, sizeof(struct ether_header));
-	ether_input(&sc->sc_ethercom.ec_if, eh, head);
+	ether_input(ifp, eh, head);
 	return;
 
 bad:
