@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.79 2000/11/11 00:55:51 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.80 2001/01/13 06:01:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1048,7 +1048,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_IPSEC_POLICY:
 		{
 			caddr_t req = NULL;
-			size_t len;
+			size_t len = 0;
 
 			if (m) {
 				req = mtod(m, caddr_t);
