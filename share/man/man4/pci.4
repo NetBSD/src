@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.11 1998/07/01 01:48:20 cgd Exp $
+.\"	$NetBSD: pci.4,v 1.12 1998/07/13 14:54:11 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -155,6 +155,8 @@ Ensoniq AudioPCI sound device.
 .Pp
 .Ss Miscellaneous devices
 .Bl -tag -width speaker -offset indent
+.It ohci
+USB OHCI host controller
 .It pcic
 .Tn PCI
 .Tn PCMCIA
@@ -173,6 +175,8 @@ communications cards, containing
 and
 .Nm lpt
 communications ports.
+.It uhci
+USB UHCI host controller
 .El
 .Pp
 .Sh SEE ALSO
@@ -190,10 +194,12 @@ communications ports.
 .Xr le 4 ,
 .Xr ncr 4 ,
 .Xr ne 4 ,
+.Xr ohci 4 ,
 .Xr pcic 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
-.Xr tl 4
+.Xr tl 4 ,
+.Xr uhci 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI
