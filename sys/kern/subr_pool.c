@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.74.2.1 2002/03/12 07:53:25 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.74.2.2 2002/03/12 15:54:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74.2.1 2002/03/12 07:53:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74.2.2 2002/03/12 15:54:04 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -425,7 +425,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
-	size = ALIGN(size);
+	size = roundup(size, align);
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
 		panic("pool_init: pool item size (%lu) too large",
@@ -1093,7 +1093,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	caddr_t cp = storage;
 	const unsigned int align = pp->pr_align;
 	const unsigned int ioff = pp->pr_itemoffset;
-	const unsigned int alignsize = roundup(pp->pr_size, align);
 	int n;
 
 #ifdef DIAGNOSTIC
@@ -1145,7 +1144,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 #ifdef DIAGNOSTIC
 		pi->pi_magic = PI_MAGIC;
 #endif
-		cp = (caddr_t)(cp + alignsize);
+		cp = (caddr_t)(cp + pp->pr_size);
 
 		KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 	}
