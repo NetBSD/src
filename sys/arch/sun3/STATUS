@@ -1,4 +1,4 @@
-						<$Revision: 1.3 $> 
+						<$Revision: 1.4 $> 
 
 This is to be a summary of the status of code, its problems,
 and the directions it should and take in the future.
@@ -15,7 +15,10 @@ The major bugs:
 	trap code.  the assembly part of the trap handling code is
 	not currently being used, because at until its time for the
 	fork(), it doesn't do much and the sun3 monitor diagnostics
-	are better than anything in the trap code.
+	are better than anything in the trap code.  (note: buserr must
+	get special delay code for timeouts, and the memory error register
+	needs to be mapped (i think the mapping is commented out in
+	obio_internal_configure())
 
 	This code has been hosted under SunOs.  Its not clear whether
 	the sun boot blocks can load kernels linked with our a.out, etc.
@@ -62,6 +65,16 @@ Random:
 	kgdb support
 
 	kernel still isn't protected.
+
+	locore.s got split into many pieces, partially for organizational
+	purposes, partially because i hate 40k masses of assembly code.  The
+	idea was to break the code up along machine
+	dependent/machine-independent lines.  Any machine-independent code
+	could be shared with other 68k-based implementations as common code.
+	I haven't analyzed this breakdown yet.  There were some surprises
+	in both directions.  Don't consider this the final layout, but
+	also don't make it the first priority to fix.  I'm interested
+	in getting this damn thing to work first :)
 
 pmap: 
 
