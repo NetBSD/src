@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.44 2003/07/12 13:57:49 itojun Exp $	*/
+/*	$NetBSD: function.c,v 1.45 2003/08/03 19:46:04 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.44 2003/07/12 13:57:49 itojun Exp $");
+__RCSID("$NetBSD: function.c,v 1.45 2003/08/03 19:46:04 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_flags __P((PLAN *, FTSENT *));
 	int	f_fstype __P((PLAN *, FTSENT *));
 	int	f_group __P((PLAN *, FTSENT *));
+	int	f_iname __P((PLAN *, FTSENT *));
 	int	f_inum __P((PLAN *, FTSENT *));
 	int	f_links __P((PLAN *, FTSENT *));
 	int	f_ls __P((PLAN *, FTSENT *));
@@ -1088,6 +1089,34 @@ c_name(argvp, isok)
 
 	(*argvp)++;
 	new = palloc(N_NAME, f_name);
+	new->c_data = pattern;
+	return (new);
+}
+ 
+/*
+ * -iname functions --
+ *
+ *	Similar to -name, but does case insensitive matching
+ *	
+ */
+int
+f_iname(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	return (!fnmatch(plan->c_data, entry->fts_name, FNM_CASEFOLD));
+}
+ 
+PLAN *
+c_iname(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *pattern = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	new = palloc(N_INAME, f_iname);
 	new->c_data = pattern;
 	return (new);
 }
