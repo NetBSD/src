@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.37 2002/06/09 13:23:46 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.38 2002/06/09 14:14:51 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.37 2002/06/09 13:23:46 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.38 2002/06/09 14:14:51 yamt Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ enum {
 };
 
 /* the tests that are recognised. */
-static test_t   tests[] = {
+static const test_t   tests[] = {
         {	"<=",	2,	LE	},
         {	"<",	1,	LT	},
         {	">=",	2,	GE	},
@@ -140,7 +140,7 @@ static test_t   tests[] = {
 static int
 mktest(int *op, char *test)
 {
-	test_t  *tp;
+	const test_t *tp;
 
 	for (tp = tests ; tp->s ; tp++) {
 		if (strncasecmp(test, tp->s, tp->len) == 0) {
