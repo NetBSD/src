@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.3 1998/09/26 16:02:56 dante Exp $        */
+/*      $NetBSD: adv.h,v 1.4 1999/02/25 20:21:33 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -41,8 +41,6 @@
 #ifndef _ADVANSYS_NARROW_H_
 #define _ADVANSYS_NARROW_H_
 
-#include <dev/ic/advlib.h>
-
 /******************************************************************************/
 
 struct adv_ccb
@@ -53,6 +51,8 @@ struct adv_ccb
 	struct scsipi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adv_ccb) chain;
+	struct adv_ccb		*nexthash;
+	u_long			hashkey;
 	struct scsipi_xfer	*xs;	/* the scsipi_xfer for this cmd */
 	int			flags;	/* see below */
 
@@ -89,6 +89,7 @@ struct adv_control
 int adv_init __P((ASC_SOFTC *sc));
 void adv_attach __P((ASC_SOFTC *sc));
 int adv_intr __P((void *arg));
+ADV_CCB *adv_ccb_phys_kv __P((ASC_SOFTC *, u_long));
 
 /******************************************************************************/
 

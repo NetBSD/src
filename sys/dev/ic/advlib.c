@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
+/*      $NetBSD: advlib.c,v 1.8 1999/02/25 20:21:33 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -71,8 +71,8 @@
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 
-#include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
+#include <dev/ic/adv.h>
 #include <dev/ic/advmcode.h>
 
 
@@ -219,7 +219,7 @@ static int _AscWaitQDone __P((bus_space_tag_t, bus_space_handle_t,
 static int AscCleanUpDiscQueue __P((bus_space_tag_t, bus_space_handle_t));
 		
 /* Abort and Reset CCB routines */
-static int AscRiscHaltedAbortCCB __P((ASC_SOFTC *, u_int32_t));
+static int AscRiscHaltedAbortCCB __P((ASC_SOFTC *, ADV_CCB *));
 static int AscRiscHaltedAbortTIX __P((ASC_SOFTC *, u_int8_t));
 		
 /* Error Handling routines */
@@ -1775,7 +1775,8 @@ AscIsrQDone(sc)
 			panic("AscIsrQDone: Attempting to free more queues than are active");
 		}
 
-		if ((scsiq->d2.ccb_ptr == 0UL) || ((scsiq->q_status & ASC_QS_ABORTED) != 0)) {
+		if ((adv_ccb_phys_kv(sc, scsiq->d2.ccb_ptr) == 0UL) ||
+		   ((scsiq->q_status & ASC_QS_ABORTED) != 0)) {
 			return (0x11);
 		} else if (scsiq->q_status == ASC_QS_DONE) {
 			scsiq->remain_bytes += scsiq->extra_bytes;
@@ -3029,8 +3030,8 @@ AscCleanUpDiscQueue(iot, ioh)
 
 int
 AscAbortCCB(sc, ccb)
-	ASC_SOFTC      *sc;
-	u_int32_t       ccb;
+	ASC_SOFTC	*sc;
+	ADV_CCB		*ccb;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -3060,8 +3061,8 @@ AscAbortCCB(sc, ccb)
 
 static int
 AscRiscHaltedAbortCCB(sc, ccb)
-	ASC_SOFTC      *sc;
-	u_int32_t       ccb;
+	ASC_SOFTC	*sc;
+	ADV_CCB		*ccb;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -3081,7 +3082,7 @@ AscRiscHaltedAbortCCB(sc, ccb)
 		q_addr = ASC_QNO_TO_QADDR(q_no);
 		scsiq->d2.ccb_ptr = AscReadLramDWord(iot, ioh,
 					       q_addr + ASC_SCSIQ_D_CCBPTR);
-		if (scsiq->d2.ccb_ptr == ccb) {
+		if (adv_ccb_phys_kv(sc, scsiq->d2.ccb_ptr) == ccb) {
 			_AscCopyLramScsiDoneQ(iot, ioh, q_addr, scsiq, sc->max_dma_count);
 			if (((scsiq->q_status & ASC_QS_READY) != 0)
 			    && ((scsiq->q_status & ASC_QS_ABORTED) == 0)
@@ -3186,7 +3187,7 @@ AscResetDevice(sc, target_ix)
 			scsiq->q2.tag_code = M2_QTAG_MSG_SIMPLE;
 			scsiq->q1.target_id = target_id;
 			scsiq->q2.target_ix = ASC_TIDLUN_TO_IX(tid_no, 0);
-			scsiq->cdbptr = (u_int8_t *) scsiq->cdb;
+			scsiq->cdbptr = scsiq->cdb;
 			scsiq->q1.cntl = ASC_QC_NO_CALLBACK | ASC_QC_MSG_OUT | ASC_QC_URGENT;
 			AscWriteLramByte(iot, ioh, ASCV_MSGOUT_BEG, M1_BUS_DVC_RESET);
 			sc->unit_not_ready &= ~target_id;
