@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 2000/05/25 19:57:34 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 2000/05/26 02:10:18 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -332,7 +332,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				db_printf(",");
 		}
 		db_printf(") at ");
-		db_printsym(callpc, DB_STGY_PROC, printf);
+		db_printsym(callpc, DB_STGY_PROC, db_printf);
 		db_printf("\n");
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
