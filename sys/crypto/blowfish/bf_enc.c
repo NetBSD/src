@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.6 2002/02/27 01:32:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.7 2003/08/26 23:51:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <crypto/blowfish/blowfish.h>
@@ -75,9 +75,7 @@ to modify the code.
 
 /* XXX "data" is host endian */
 void
-BF_encrypt(data, key)
-	BF_LONG *data;
-	BF_KEY *key;
+BF_encrypt(BF_LONG *data, const BF_KEY *key)
 {
 	register BF_LONG l, r, *p, *s;
 
@@ -117,9 +115,7 @@ BF_encrypt(data, key)
 
 /* XXX "data" is host endian */
 void
-BF_decrypt(data, key)
-	BF_LONG *data;
-	BF_KEY *key;
+BF_decrypt(BF_LONG *data, const BF_KEY *key)
 {
 	register BF_LONG l, r, *p, *s;
 
