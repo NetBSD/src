@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.350 2001/06/21 02:30:51 assar Exp $
+#	$NetBSD: mi,v 1.351 2001/06/21 12:10:57 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2986,7 +2986,7 @@
 ./usr/share/man/cat9/disk.0		comp-sys-catman
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman
 ./usr/share/man/cat9/disk_busy.0		comp-sys-catman
-./usr/share/man/cat9/disk_detatch.0		comp-sys-catman
+./usr/share/man/cat9/disk_detach.0		comp-sys-catman
 ./usr/share/man/cat9/disk_find.0		comp-sys-catman
 ./usr/share/man/cat9/disk_init.0		comp-sys-catman
 ./usr/share/man/cat9/disk_resetstat.0		comp-sys-catman
@@ -4966,7 +4966,7 @@
 ./usr/share/man/man9/disk.9		comp-sys-man
 ./usr/share/man/man9/disk_attach.9		comp-sys-man
 ./usr/share/man/man9/disk_busy.9		comp-sys-man
-./usr/share/man/man9/disk_detatch.9		comp-sys-man
+./usr/share/man/man9/disk_detach.9		comp-sys-man
 ./usr/share/man/man9/disk_find.9		comp-sys-man
 ./usr/share/man/man9/disk_init.9		comp-sys-man
 ./usr/share/man/man9/disk_resetstat.9		comp-sys-man
