@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: keyboard.c,v 1.1.10.1 2000/07/07 09:53:42 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct wskbd_map_data kbmap = { KS_NUMKEYCODES, mapdata };	/* used in map_parse.
 static struct wskbd_keyrepeat_data repeat;
 static struct wskbd_keyrepeat_data dfrepeat;
 static int ledstate;
-static int kbdencoding;
+static kbd_t kbdencoding;
 
 struct field keyboard_field_tab[] = {
     { "type",			&kbtype,	FMT_KBDTYPE,	FLG_RDONLY },
