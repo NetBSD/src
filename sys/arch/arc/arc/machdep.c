@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2000/06/09 05:41:58 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2000/06/09 06:06:57 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -260,8 +260,6 @@ mach_init(argc, argv, envv)
 		physmem = bios_configure_memory(mem_reserved, mem_clusters,
 		    &mem_cluster_cnt);
 	}
-
-	arc_init_wired_map();
 
 	/*
 	 * Get config register now as mapped from BIOS since we are
@@ -569,6 +567,9 @@ mach_init(argc, argv, envv)
 	 *
 	 * XXX - reserve these KVA space after UVM initialization.
 	 */
+
+	arc_init_wired_map();
+
 	switch (cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
