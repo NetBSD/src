@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.4 2001/01/12 21:31:52 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.5 2001/01/13 00:06:50 bjh21 Exp $
 
 file	arch/arm/arm/in_cksum_arm.c		inet
 file	netinet/in4_cksum.c			inet
@@ -9,3 +9,5 @@ file	arch/arm/arm/db_disasm.c		ddb
 
 # files related to debugging
 file	arch/arm/arm/disassem.c
+
+file	arch/arm/arm/sigcode.S
