@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.8 2001/09/22 15:33:53 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.9 2001/09/22 17:19:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8 2001/09/22 15:33:53 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.9 2001/09/22 17:19:27 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -275,8 +275,15 @@ eca_tx_downgrade(void)
 		    sc->sc_cr2 | MC6854_CR2_CLR_TX_ST);
 	}
 	sc->sc_txmbuf = NULL;
-	/* eca_init_rx_soft() should have been called already. */
-	eca_init_rx_hard(sc);
+	
+	/* Code from eca_init_rx_hard(). */
+	sc->sc_cr1 = MC6854_CR1_RIE;
+	fiq_downgrade_handler = eca_rx_downgrade;
+	sc->sc_transmitting = 0;
+	eca_fiqowner = sc;
+	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+	/* End code from eca_init_rx_hard(). */
+
 	softintr_schedule(sc->sc_tx_soft);
 }
 
@@ -358,6 +365,9 @@ eca_init_rx_soft(struct eca_softc *sc)
 /*
  * Copy state set up by eca_init_rx_soft into the hardware, and reset
  * the FIQ handler as appropriate.
+ *
+ * This code is functionally duplicated across the Tx FIQ handler and
+ * eca_tx_downgrade().  Keep them in sync!
  */
 void
 eca_init_rx_hard(struct eca_softc *sc)
