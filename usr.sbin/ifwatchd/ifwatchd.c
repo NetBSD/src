@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.15 2003/07/04 12:45:05 wiz Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.16 2003/07/04 14:11:36 abs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -223,9 +223,9 @@ usage()
 	    "\t -h       show this help message\n"
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
-	    "\t -q       quiet mode, don't syslog informational messages\n");
+	    "\t -q       quiet mode, don't syslog informational messages\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
-	    "\t -v       verbose/debug output, don't run in background\n"
+	    "\t -v       verbose/debug output, don't run in background\n");
 	exit(EXIT_FAILURE);
 }
 
