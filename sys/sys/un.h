@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
+/*	$NetBSD: un.h,v 1.11.4.1 1996/12/11 03:32:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,6 +63,9 @@ void	unp_shutdown __P((struct unpcb *unp));
 int 	unp_externalize __P((struct mbuf *));
 int	unp_internalize __P((struct mbuf *, struct proc *));
 void 	unp_dispose __P((struct mbuf *));
+int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *));
+void	unp_setsockaddr __P((struct unpcb *, struct mbuf *));
+void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */
