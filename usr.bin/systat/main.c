@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1999/11/11 03:06:04 soren Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1999/12/16 04:02:23 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.17 1999/11/11 03:06:04 soren Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1999/12/16 04:02:23 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -125,14 +125,14 @@ main(argc, argv)
 			if (naptime <= 0)
 				naptime = 5;
 		} else {
-			struct cmdtab *p;
+			struct mode *p;
 
 			p = lookup(&argv[0][0]);
-			if (p == (struct cmdtab *)-1)
+			if (p == (struct mode *)-1)
 				errx(1, "ambiguous request: %s", &argv[0][0]);
 			if (p == 0)
 				errx(1, "unknown request: %s", &argv[0][0]);
-			curcmd = p;
+			curmode = p;
 		}
 		argc--, argv++;
 	}
@@ -182,7 +182,7 @@ main(argc, argv)
 	}
 
 	CMDLINE = LINES - 1;
-	wnd = (*curcmd->c_open)();
+	wnd = (*curmode->c_open)();
 	if (wnd == NULL) {
 		warnx("couldn't initialize display");
 		die(0);
@@ -196,8 +196,8 @@ main(argc, argv)
 	hostname[sizeof(hostname) - 1] = '\0';
 	NREAD(X_HZ, &hz, sizeof hz);
 	NREAD(X_STATHZ, &stathz, sizeof stathz);
-	(*curcmd->c_init)();
-	curcmd->c_flags |= CF_INIT;
+	(*curmode->c_init)();
+	curmode->c_flags |= CF_INIT;
 	labels();
 
 	dellave = 0.0;
@@ -222,12 +222,12 @@ usage()
 void
 labels()
 {
-	if (curcmd->c_flags & CF_LOADAV) {
+	if (curmode->c_flags & CF_LOADAV) {
 		mvaddstr(2, 20,
 		    "/0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10");
 		mvaddstr(3, 5, "Load Average");
 	}
-	(*curcmd->c_label)();
+	(*curmode->c_label)();
 #ifdef notdef
 	mvprintw(21, 25, "CPU usage on %s", hostname);
 #endif
@@ -242,8 +242,8 @@ display(signo)
 
 	/* Get the load average over the last minute. */
 	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
-	(*curcmd->c_fetch)();
-	if (curcmd->c_flags & CF_LOADAV) {
+	(*curmode->c_fetch)();
+	if (curmode->c_flags & CF_LOADAV) {
 		j = 5.0*avenrun[0] + 0.5;
 		dellave -= avenrun[0];
 		if (dellave >= 0.0)
@@ -261,8 +261,8 @@ display(signo)
 		if (j > 50)
 			wprintw(wload, " %4.1f", avenrun[0]);
 	}
-	(*curcmd->c_refresh)();
-	if (curcmd->c_flags & CF_LOADAV)
+	(*curmode->c_refresh)();
+	if (curmode->c_flags & CF_LOADAV)
 		wrefresh(wload);
 	wrefresh(wnd);
 	move(CMDLINE, col);
@@ -282,16 +282,6 @@ redraw(signo)
 	wrefresh(curscr);
 	refresh();
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
-}
-
-void
-load()
-{
-
-	(void)getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
-	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
-	    avenrun[0], avenrun[1], avenrun[2]);
-	clrtoeol();
 }
 
 void
