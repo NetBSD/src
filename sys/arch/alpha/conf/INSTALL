@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 1998/02/01 02:55:42 thorpej Exp $
+# $NetBSD: INSTALL,v 1.8 1998/02/28 02:01:33 cgd Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -58,9 +58,9 @@ options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 # The Alpha console firmware network boots using the BOOTP
-# protocol, so we ask the NFS code to use BOOTP as well, in
-# case we have NFS root.
-options 	NFS_BOOT_BOOTP
+# protocol, so we ask the NFS code to use BOOTP/DHCP as well,
+# in case we have NFS root.
+options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 config		netbsd	root on ? type ?
 
