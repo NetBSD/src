@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.9 2002/09/10 12:06:49 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.10 2002/09/28 11:03:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -141,7 +141,7 @@
 	FPSV(pcb,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)		      ;\
 	fmov.dq	dr0, r0			/* Save dr0 temporarily */	      ;\
 	fgetscr	fr0			/* Always save FPSCR */		      ;\
-	fst.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
+	fst.s	pcb, PCB_CTX_FPREGS_FPSCR, fr0				      ;\
 	fmov.qd	r0, dr0			/* Restore dr0 */		      ;\
 99:
 
@@ -199,7 +199,7 @@
 	andi	r0, 1, r0						      ;\
 	bne/u	r0, r63, tr0		/* Skip FP restore if FPU disabled */ ;\
 	fmov.dq	dr0, r0			/* Save dr0 temporarily */	      ;\
-	fld.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
+	fld.s	pcb, PCB_CTX_FPREGS_FPSCR, fr0				      ;\
 	fputscr	fr0			/* Always restore the FPSCR */	      ;\
 	fmov.qd	r0, dr0			/* Restore dr0 */		      ;\
 	andi	mdf, MDP_FPSAVED, r0	/* Skip if FP state wasn't saved */   ;\
@@ -520,7 +520,7 @@ ENTRY(sh5_fpsave)
 	FPSV(r3,PCB_CTX_FPREGS_DR56,dr56,dr58,dr60,dr62)
 	fmov.dq	dr0, r0			/* Save dr0 temporarily */
 	fgetscr	fr0			/* Always save FPSCR */
-	fst.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
+	fst.s	r3, PCB_CTX_FPREGS_FPSCR, fr0
 	fmov.qd	r0, dr0			/* Restore dr0 */
 	blink	tr1, r63
 
@@ -539,7 +539,7 @@ ENTRY(sh5_fprestore)
 	andi	r0, 1, r0
 	bne/u	r0, r63, tr1		/* Skip FP save if FPU disabled */
 	fmov.dq	dr0, r0			/* Save dr0 temporarily */
-	fld.d	r3, PCB_CTX_FPREGS_FPSCR, dr0
+	fld.s	r3, PCB_CTX_FPREGS_FPSCR, fr0
 	fputscr	fr0			/* Always restore FPSCR */
 	fmov.qd	r0, dr0			/* Restore dr0 */
 	FPRS(r3,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)
