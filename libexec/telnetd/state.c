@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.16 2001/07/19 07:26:53 itojun Exp $	*/
+/*	$NetBSD: state.c,v 1.17 2001/07/19 16:00:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.16 2001/07/19 07:26:53 itojun Exp $");
+__RCSID("$NetBSD: state.c,v 1.17 2001/07/19 16:00:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1697,7 +1697,7 @@ output_data(const char *format, ...)
 		remaining = BUFSIZ - (nfrontp - netobuf);
 	}
 	ret = vsnprintf(nfrontp, remaining, format, args);
-	nfrontp += ret;
+	nfrontp += ((ret < remaining - 1) ? ret : remaining - 1);
 	va_end(args);
 	return ret;
 }
