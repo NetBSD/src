@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.28 2000/02/29 04:41:53 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.29 2000/03/06 03:13:36 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.28 2000/02/29 04:41:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.29 2000/03/06 03:13:36 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.28 2000/02/29 04:41:53 nisimura Exp
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
 static void	dec_maxine_cons_init __P((void));
-static void	dec_maxine_device_register __P((struct device *, void *));
 static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_maxine_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
@@ -122,7 +121,6 @@ dec_maxine_init()
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
-	platform.device_register = dec_maxine_device_register;
 	platform.iointr = dec_maxine_intr;
 	platform.intr_establish = dec_maxine_intr_establish;
 	platform.memsize = memsize_scan;
@@ -222,15 +220,6 @@ dec_maxine_cons_init()
 
 	scc_cnattach(ioasic_base, 0x100000);
 }
-
-static void
-dec_maxine_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_maxine_device_register unimplemented");
-}
-
 
 static void
 dec_maxine_intr_establish(dev, cookie, level, handler, arg)

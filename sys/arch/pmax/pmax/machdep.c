@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2000/03/03 08:36:20 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2000/03/06 03:13:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2000/03/03 08:36:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2000/03/06 03:13:36 mhitch Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -117,7 +117,6 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));	/* XXX */
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
 static void	unimpl_cons_init __P((void));
-static void	unimpl_device_register __P((struct device *, void *));
 static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static void	unimpl_intr_establish __P((struct device *, void *, int,
 		    int (*)(void *), void *));
@@ -128,7 +127,6 @@ struct platform platform = {
 	"iobus not set",
 	unimpl_bus_reset,
 	unimpl_cons_init,
-	unimpl_device_register,
 	unimpl_iointr,
 	unimpl_intr_establish,
 	unimpl_memsize,
@@ -729,15 +727,6 @@ unimpl_cons_init()
 {
 
 	panic("sysconf.init didn't set cons_init");
-}
-
-static void
-unimpl_device_register(sc, arg)
-	struct device *sc;
-	void *arg;
-{
-
-	panic("sysconf.init didn't set device_register");
 }
 
 static int

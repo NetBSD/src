@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.36 2000/03/01 00:44:53 ad Exp $ */
+/* $NetBSD: dec_3min.c,v 1.37 2000/03/06 03:13:35 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.36 2000/03/01 00:44:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.37 2000/03/06 03:13:35 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.36 2000/03/01 00:44:53 ad Exp $");
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
 static void	dec_3min_cons_init __P((void));
-static void	dec_3min_device_register __P((struct device *, void *));
 static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3min_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
@@ -127,7 +126,6 @@ dec_3min_init()
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
-	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
 	platform.intr_establish = dec_3min_intr_establish;
 	platform.memsize = memsize_scan;
@@ -233,16 +231,6 @@ dec_3min_cons_init()
 
 	scc_cnattach(ioasic_base, 0x180000);
 }
-
-
-static void
-dec_3min_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	panic("dec_3min_device_register unimplemented");
-}
-
 
 static void
 dec_3min_intr_establish(dev, cookie, level, handler, arg)
