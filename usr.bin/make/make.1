@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.58 2001/12/23 10:51:56 lukem Exp $
+.\"	$NetBSD: make.1,v 1.59 2002/02/01 19:35:29 bgrayson Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -437,6 +437,7 @@ These variables are
 .Ql Va .ARCHIVE ,
 and
 .Ql Va .MEMBER .
+.El
 .Pp
 In addition,
 .Nm
@@ -541,7 +542,6 @@ is set to the value of
 for all programs which
 .Nm
 executes.
-.El
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
@@ -991,7 +991,8 @@ is found.
 .Pp
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -compact -width Ds
 .It Xo
 .Ic \&.for
 .Ar variable
@@ -1001,11 +1002,10 @@ The syntax of a for loop is:
 .Xc
 .It Xo
 <make-rules>
-.Xc
-.It Xo
 .Ic \&.endfor
 .Xc
 .El
+.Pp
 After the for
 .Ic expression
 is evaluated, it is split into words. On each iteration of the loop,
