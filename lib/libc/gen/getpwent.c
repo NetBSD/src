@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.15 1996/12/20 20:16:05 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.15 1996/12/20 20:16:05 sommerfe Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -445,17 +445,16 @@ __has_yppw()
 	DBT key, data;
 	DBT pkey, pdata;
 	int len;
-	char bf[UT_NAMESIZE];
+	char bf[MAXLOGNAME];
 
 	key.data = (u_char *)__yp_token;
 	key.size = strlen(__yp_token);
 
 	/* Pre-token database support. */
 	bf[0] = _PW_KEYBYNAME;
-	len = strlen("+");
-	bcopy("+", bf + 1, MIN(len, UT_NAMESIZE));
+	bf[1] = '+';
 	pkey.data = (u_char *)bf;
-	pkey.size = len + 1;
+	pkey.size = 2;
 
 	if ((_pw_db->get)(_pw_db, &key, &data, 0)
 	    && (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
@@ -470,7 +469,7 @@ getpwnam(name)
 {
 	DBT key;
 	int len, rval;
-	char bf[UT_NAMESIZE + 1];
+	char bf[MAXLOGNAME + 1];
 
 	if (!_pw_db && !__initdb())
 		return((struct passwd *)NULL);
@@ -634,7 +633,8 @@ pwnam_netgrp:
 
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen(name);
-	bcopy(name, bf + 1, MIN(len, UT_NAMESIZE));
+	len = MIN(len, MAXLOGNAME);
+	bcopy(name, bf + 1, len);
 	key.data = (u_char *)bf;
 	key.size = len + 1;
 	rval = __hashpw(&key);

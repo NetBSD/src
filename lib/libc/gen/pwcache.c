@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.6 1996/12/20 20:16:07 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $";
+static char rcsid[] = "$NetBSD: pwcache.c,v 1.6 1996/12/20 20:16:07 sommerfe Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <grp.h>
 #include <pwd.h>
@@ -59,7 +60,7 @@ user_from_uid(uid, nouser)
 {
 	static struct ncache {
 		uid_t	uid;
-		char	name[UT_NAMESIZE + 1];
+		char	name[MAXLOGNAME + 1];
 	} c_uid[NCACHE];
 	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
@@ -79,8 +80,8 @@ user_from_uid(uid, nouser)
 			return (nbuf);
 		}
 		cp->uid = uid;
-		(void)strncpy(cp->name, pw->pw_name, UT_NAMESIZE);
-		cp->name[UT_NAMESIZE] = '\0';
+		(void)strncpy(cp->name, pw->pw_name, MAXLOGNAME);
+		cp->name[MAXLOGNAME] = '\0';
 	}
 	return (cp->name);
 }
@@ -92,7 +93,7 @@ group_from_gid(gid, nogroup)
 {
 	static struct ncache {
 		gid_t	gid;
-		char	name[UT_NAMESIZE + 1];
+		char	name[MAXLOGNAME + 1];
 	} c_gid[NCACHE];
 	static int gropen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
@@ -112,8 +113,8 @@ group_from_gid(gid, nogroup)
 			return (nbuf);
 		}
 		cp->gid = gid;
-		(void)strncpy(cp->name, gr->gr_name, UT_NAMESIZE);
-		cp->name[UT_NAMESIZE] = '\0';
+		(void)strncpy(cp->name, gr->gr_name, MAXLOGNAME);
+		cp->name[MAXLOGNAME] = '\0';
 	}
 	return (cp->name);
 }
