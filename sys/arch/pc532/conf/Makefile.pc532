@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.12 1995/05/16 22:25:02 jtc Exp $
+#	$NetBSD: Makefile.pc532,v 1.13 1995/06/24 20:46:09 christos Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -49,12 +49,21 @@ LIBKERN=	${KERNLIB}
 LIBKERN=	${KERNLIB_PROF}
 .endif
 
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
+
 NORMAL_S= (${CPP} ${COPTS} ${PROF} $< | ${AS} ${ASFLAGS} -o $*.o)
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o vnode_if.o ${LIBKERN}
+SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o vnode_if.o ${LIBKERN} \
+	${LIBCOMPAT}
 SYSTEM_DEP=Makefile ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
 SYSTEM_LD= @${LD} -z -T FE002000 -o $@ -X vers.o ${SYSTEM_OBJS} 
@@ -66,9 +75,9 @@ SYSTEM_LD_TAIL= size $@ ; nm -n $@ > SYMMS ; chmod 755 $@
 
 %LOAD
 
-clean:
+clean::
 	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		errs linterrs makelinks
+		errs linterrs makelinks genassym
 
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
