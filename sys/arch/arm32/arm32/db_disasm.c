@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.1 1996/02/15 22:37:13 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.2 1996/03/06 22:46:37 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -45,14 +45,49 @@
  * Paul Kranenburg
  *
  * This code is not complete. Not all instructions are disassembled.
- * Current LDR, STR, LDF, STF, CDT and MSRF are not supported.
- *
- *    $Id: db_disasm.c,v 1.1 1996/02/15 22:37:13 mark Exp $
+ * Current LDF, STF, CDT and MSRF are not supported.
  */
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+
+/*
+ * General instruction format
+ *
+ *	insn[cc][mod]	[operands]
+ *
+ * Those fields with an uppercase format code indicate that the field follows
+ * directly after the instruction before the separator i.e. they modify the instruction
+ * rather than just being an operand to the instruction. The only exception is the
+ * writeback flag which follows a operand.
+ *
+ *
+ * 2 - print Operand 2 of a data processing instrcution
+ * d - destination register (bits 12-15)
+ * n - n register (bits 16-19)
+ * s - s register (bits 8-11)
+ * o - indirect register rn (bits 16-19) (used by swap)
+ * m - m register (bits 0-4)
+ * a - address operand of ldr/str instruction
+ * l - register list for ldm/stm instruction
+ * f - 1st fp operand (register) (bits 12-14)
+ * g - 2nd fp operand (register) (bits 16-18)
+ * h - 3rd fp operand (register/immediate) (bits 0-4)
+ * b - branch address
+ * X - block transfer type
+ * c - comment field bits(0-23)
+ * p - saved or current status register
+ * B - byte transfer flag
+ * S - set status flag
+ * T - user mode transfer
+ * P - fp precision
+ * R - fp rounding
+ * w - writeback flag
+ * # - co-processor number
+ * y - co-processor data processing registers
+ * z - co-processor data transfer registers
+ */
 
 struct arm32_insn {
 	u_int mask;
@@ -67,32 +102,32 @@ struct arm32_insn arm32_i[] = {
     { 0x0f000000, 0x0b000000, "bl",	"b" },
     { 0x0fe000f0, 0x00000090, "mul",	"Sdms" },
     { 0x0fe000f0, 0x00200090, "mla",	"Sdmsn" },
-    { 0x0e100000, 0x04000000, "str",	"BTdaw" },
-    { 0x0e100000, 0x04100000, "ldr",	"BTdaw" },
-    { 0x0c100010, 0x04000000, "str",	"BTdaw" },
-    { 0x0c100010, 0x04100000, "ldr",	"BTdaw" },
-    { 0x0e100000, 0x08000000, "stm",	"Xnwl" },
-    { 0x0e100000, 0x08100000, "ldm",	"Xnwl" },
+    { 0x0e100000, 0x04000000, "str",	"BTdaW" },
+    { 0x0e100000, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0c100010, 0x04000000, "str",	"BTdaW" },
+    { 0x0c100010, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0e100000, 0x08000000, "stm",	"XnWl" },
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },
     { 0x0fb00ff0, 0x01000090, "swap",	"Bdmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },
     { 0x0dbffff0, 0x0129f000, "msr",	"pm" },
     { 0x0dbffff0, 0x0128f000, "msrf",	"pm" },
-    { 0x0de00000, 0x00000000, "and"	"Sdn2" },
-    { 0x0de00000, 0x00200000, "eor"	"Sdn2" },
-    { 0x0de00000, 0x00400000, "sub"	"Sdn2" },
-    { 0x0de00000, 0x00600000, "rsb"	"Sdn2" },
-    { 0x0de00000, 0x00800000, "add"	"Sdn2" },
-    { 0x0de00000, 0x00a00000, "adc"	"Sdn2" },
-    { 0x0de00000, 0x00c00000, "sbc"	"Sdn2" },
-    { 0x0de00000, 0x00e00000, "rsc"	"Sdn2" },
-    { 0x0de00000, 0x01000000, "tst"	"Sn2" },
-    { 0x0de00000, 0x01200000, "teq"	"Sn2" },
-    { 0x0de00000, 0x01400000, "cmp"	"Sn2" },
-    { 0x0de00000, 0x01600000, "cmn"	"Sn2" },
-    { 0x0de00000, 0x01800000, "orr"	"Sdn2" },
-    { 0x0de00000, 0x01a00000, "mov"	"Sd2" },
-    { 0x0de00000, 0x01c00000, "bic"	"Sdn2" },
-    { 0x0de00000, 0x01e00000, "mvn"	"Sd2" },
+    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
+    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
+    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
+    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
+    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
+    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
+    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
+    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
+    { 0x0de00000, 0x01000000, "tst",	"Sn2" },
+    { 0x0de00000, 0x01200000, "teq",	"Sn2" },
+    { 0x0de00000, 0x01400000, "cmp",	"Sn2" },
+    { 0x0de00000, 0x01600000, "cmn",	"Sn2" },
+    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
+    { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
+    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
+    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
@@ -132,57 +167,57 @@ struct arm32_insn arm32_i[] = {
 };
 
 char *arm32_insn_conditions[] = {
-    "EQ",
-    "NE",
-    "CS",
-    "CC",
-    "MI",
-    "PL",
-    "VS",
-    "VC",
-    "HI",
-    "LS",
-    "GE",
-    "LT",
-    "GT",
-    "LE",
+    "eq",
+    "ne",
+    "cs",
+    "cc",
+    "mi",
+    "pl",
+    "vs",
+    "vc",
+    "hi",
+    "ls",
+    "ge",
+    "lt",
+    "gt",
+    "le",
     "",
-    "NV"
+    "nv"
 };
 
 char *insn_block_transfers[] = {
-    "DA",
-    "IA",
-    "DB",
-    "IB"
+    "da",
+    "ia",
+    "db",
+    "ib"
 };
 
 char *insn_stack_block_transfers[] = {
-    "FA",
-    "EA",
-    "FD",
-    "FA"
+    "fa",
+    "ea",
+    "fd",
+    "fa"
 };
 
 char *op_shifts[] = {
-    "LSL",
-    "LSR",
-    "ASR",
-    "ROR"
+    "lsl",
+    "lsr",
+    "asr",
+    "ror"
 };
 
 char *insn_fpa_rounding[] = {
     "",
-    "P",
-    "M",
-    "Z"
+    "p",
+    "m",
+    "z"
 };
 
 char *insn_fpa_precision[] = {
-    "S",
-    "D",
-    "E",
-    "P"
+    "s",
+    "d",
+    "e",
+    "p"
 };
 
 char *insn_fpaconstants[] = {
@@ -199,10 +234,10 @@ char *insn_fpaconstants[] = {
 #define insn_condition(x)	arm32_insn_conditions[(x >> 28) & 0x0f]
 #define insn_blktrans(x)	insn_block_transfers[(x >> 23) & 3]
 #define insn_stkblktrans(x)	insn_stack_block_transfers[(x >> 23) & 3]
-#define op2_shift(x)	op_shifts[(x >> 5) & 3]
-#define insn_fparnd(x)	insn_fpa_rounding[(x >> 5) & 0x03]
-#define insn_fpaprec(x)	insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 3]
-#define insn_fpaimm(x)	insn_fpaconstants[x & 0x07]
+#define op2_shift(x)		op_shifts[(x >> 5) & 3]
+#define insn_fparnd(x)		insn_fpa_rounding[(x >> 5) & 0x03]
+#define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 3]
+#define insn_fpaimm(x)		insn_fpaconstants[x & 0x07]
 
 void db_register_shift	__P((u_int insn));
 void db_print_reglist	__P((u_int insn));
@@ -226,7 +261,8 @@ db_disasm(loc, altfmt)
 	matchp = 0;
 	insn = db_get_value(loc, 4, 0);
 
-	db_printf("loc=%08x insn=%08x : ", loc, insn);
+/*	db_printf("loc=%08x insn=%08x : ", loc, insn);*/
+/*	db_printf("loc=%08x : ", loc);*/
 
 	while (i_ptr->name) {
 		if ((insn & i_ptr->mask) ==  i_ptr->pattern) {
@@ -252,7 +288,6 @@ db_disasm(loc, altfmt)
 				db_printf("#0x%08x", (insn & 0xff) << (((insn >> 7) & 0x1e)));
 			} else {
 				db_register_shift(insn);
-				db_printf("Op2");
 			}
 			break;
 		case 'd':
@@ -303,20 +338,20 @@ db_disasm(loc, altfmt)
 			break;
 		case 'p':
 			if (insn & 0x00400000)
-				db_printf("SPSR");
+				db_printf("spsr");
 			else
-				db_printf("CPSR");
+				db_printf("cpsr");
 		case 'B':
 			if (insn & 0x00400000)
-				db_printf("B");
+				db_printf("b");
 			break;
 		case 'S':
 			if (insn & 0x00100000)
-				db_printf("S");
+				db_printf("s");
 			break;
 		case 'T':
 			if ((insn & 0x01200000) == 0x00200000)
-				db_printf("T");
+				db_printf("t");
 			break;
 		case 'P':
 			db_printf("%s", insn_fpaprec(insn));
@@ -324,7 +359,7 @@ db_disasm(loc, altfmt)
 		case 'R':
 			db_printf("%s", insn_fparnd(insn));
 			break;
-		case 'w':
+		case 'W':
 			if (insn & (1 << 21))
 				db_printf("!");
 			break;
@@ -348,17 +383,18 @@ db_disasm(loc, altfmt)
 				db_printf(", %d", (insn >> 5) & 0x07);
 			break;
 		default:
-			db_printf("(UNKNOWN)");
+			db_printf("[%02x:c](unknown)", *f_ptr, *f_ptr);
 			break;
 		}
 		++fmt;
 		if (*(f_ptr+1) > 'A' && *(f_ptr+1) < 'Z')
-			fmt = 0;
-		if (*(++f_ptr))
+			++f_ptr;
+		else if (*(++f_ptr)) {
 			if (fmt == 1)
 				db_printf("\t");
 			else
 				db_printf(", ");
+		}
 	};
 
 	db_printf("\n");
