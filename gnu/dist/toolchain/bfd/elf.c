@@ -1708,7 +1708,8 @@ elf_fake_sections (abfd, asect, failedptrarg)
   this_hdr->sh_name = (unsigned long) _bfd_stringtab_add (elf_shstrtab (abfd),
 							  asect->name,
 							  true, false);
-  if (this_hdr->sh_name == (unsigned long) -1)
+  /* XXXJRT consider making sh_name a bfd_size_type */
+  if (this_hdr->sh_name == (unsigned int) -1)
     {
       *failedptr = true;
       return;
