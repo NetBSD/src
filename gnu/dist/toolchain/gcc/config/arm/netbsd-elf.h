@@ -64,7 +64,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "\
--Dunix -Darm -D__arm__ -D__NetBSD__ -D__ELF__ \
+-D__arm__ -D__NetBSD__ -D__ELF__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 /* Define _POSIX_SOURCE if necessary.  */
