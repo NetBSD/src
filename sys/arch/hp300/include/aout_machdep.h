@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.2 1993/06/03 01:28:36 cgd Exp $
+ *	$Id: aout_machdep.h,v 1.3 1993/06/04 01:12:04 cgd Exp $
  */
 
 #ifndef _HP300_EXEC_H_
@@ -49,7 +49,7 @@
  * a non-zero return value indicates that the machine type is correct.
  */
 #ifdef HPUXCOMPAT
-#define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)\
+#define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300) || \
 				(mid == MID_HPUX))
 #else
 #define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)))
