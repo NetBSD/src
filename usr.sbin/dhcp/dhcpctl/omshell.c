@@ -71,7 +71,7 @@ void classify (struct packet *packet, struct class *class) { }
 static void usage (char *s) {
 	fprintf (stderr,
 		 "Usage: %s [-n <username>] [-p <password>] "
-		 "[-a <algorithm>]\n", s);
+		 "[-a <algorithm>] [-P <port>]\n", s);
 	exit (1);
 }
 
