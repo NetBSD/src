@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.204 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.205 1998/11/23 20:47:03 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -273,6 +273,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # ISA Plug-and-Play SCSI controllers
+aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
