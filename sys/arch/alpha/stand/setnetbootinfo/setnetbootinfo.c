@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.6 1997/11/01 06:49:16 lukem Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.7 1997/11/13 18:06:01 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -48,7 +48,6 @@ char	*netboot, *outfile, *addr, *host;
 
 char	*outfilename;
 
-extern struct ether_addr *ether_aton __P((char *s));		/* XXX */
 extern char *ether_ntoa __P((struct ether_addr *s));		/* XXX */
 struct ether_addr *ether_addr, _ether_addr;
 
