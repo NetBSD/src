@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.19 1996/03/11 23:09:11 phil Exp $
+#	$NetBSD: files.pc532,v 1.20 1996/03/17 01:38:52 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -8,22 +8,28 @@ maxpartitions 8
 
 maxusers 2 16 64
 
-device	membus at root {[addr = -1], [irq = -1]}
+device	membus {[addr = -1], [irq = -1]}
+attach	membus at root
 
 major	{vnd = 5}
 
-device  rd at membus: disk
+device  rd: disk
+attach	rd at membus
 file	arch/pc532/dev/rd.c		rd needs-count
 major	{rd = 3}
 
-#device	timer at membus
-#device	clock at membus
+#device	timer
+#attach timer at membus
+#device	clock
+#attach clock at membus
 file	arch/pc532/pc532/clock.c	# clock timer
 
-device	scn at membus: tty
+device	scn: tty
+attach	scn at membus
 file	arch/pc532/dev/scn.c		scn needs-flag
 
-device  lpt at membus: ether, ifnet
+device  lpt: ether, ifnet
+attach	lpt at membus
 file    arch/pc532/dev/lpt.c            lpt needs-count
 
 include "../../../scsi/files.scsi"
@@ -31,13 +37,17 @@ major	{sd = 0}
 major	{st = 2}
 major	{cd = 4}
 
-device	ncr at membus: scsi, ncr5380sbc
+device	ncr: scsi, ncr5380sbc
+attach	ncr at membus
 file	arch/pc532/dev/ncr.c		ncr needs-count
-device	oldncr at membus: scsi
+device	oldncr: scsi
+attach	oldncr at membus
 file	arch/pc532/dev/oldncr.c		oldncr needs-count
-device	dp at membus: scsi
+device	dp: scsi
+attach	dp at membus
 file	arch/pc532/dev/dp.c		dp needs-count
-device	aic at membus: scsi
+device	aic: scsi
+attach	aic at membus
 file	arch/pc532/dev/aic.c		aic needs-count
 
 file	dev/cons.c

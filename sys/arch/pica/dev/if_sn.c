@@ -116,8 +116,12 @@ struct sn_softc {
 int snmatch __P((struct device *, void *, void *));
 void snattach __P((struct device *, struct device *, void *));
 
-struct cfdriver sncd = {
-	NULL, "sn", snmatch, snattach, DV_IFNET, sizeof(struct sn_softc)
+struct cfattach sn_ca = {
+	sizeof(struct sn_softc), snmatch, snattach
+};
+
+struct cfdriver sn_cd = {
+	NULL, "sn", DV_IFNET
 };
 
 #include <assert.h>
@@ -370,7 +374,7 @@ snioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa;
-	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
 	int     s = splnet(), err = 0;
 	int	temp;
 
@@ -466,7 +470,7 @@ void
 snstart(ifp)
 	struct ifnet *ifp;
 {
-	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m;
 	int	len;
 
@@ -525,7 +529,7 @@ int
 sninit(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct sonic_reg *csr = sc->sc_csr;
 	int s, error;
 
@@ -594,7 +598,7 @@ int
 snstop(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct mtd *mtd;
 	int s = splnet();
 
@@ -630,7 +634,7 @@ void
 snwatchdog(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	int temp;
 
 	if (mtdhead && mtdhead->mtd_mbuf) {

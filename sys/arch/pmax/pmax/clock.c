@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1996/01/29 22:52:28 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 1996/03/17 01:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,16 +133,21 @@ volatile struct chiptime *Mach_clock_addr;
 
 
 /* global autoconfiguration variables -- bus type*/
-extern struct cfdriver mainbuscd;
-extern struct cfdriver ioasiccd;
-extern struct cfdriver tccd;
+extern struct cfdriver mainbus_cd;
+extern struct cfdriver ioasic_cd;
+extern struct cfdriver tc_cd;
 
 
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device),
+
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
 };
 
 static void	clock_startintr __P((void *));
@@ -165,9 +170,9 @@ clockmatch(parent, cfdata, aux)
 	int vec, ipl;
 	int nclocks;
 
-	if (parent->dv_cfdata->cf_driver != &ioasiccd &&
-	    parent->dv_cfdata->cf_driver != &tccd &&
-	    parent->dv_cfdata->cf_driver != &mainbuscd)
+	if (parent->dv_cfdata->cf_driver != &ioasic_cd &&
+	    parent->dv_cfdata->cf_driver != &tc_cd &&
+	    parent->dv_cfdata->cf_driver != &mainbus_cd)
 		return(0);
 
 	/* make sure that we're looking for this type of device. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.11 1996/02/15 19:13:16 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.12 1996/03/17 01:46:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -185,8 +185,12 @@ struct fbdriver mfb_driver = {
 int mfbmatch __P((struct device *, void *, void *));
 void mfbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver mfbcd = {
-	NULL, "mfb", mfbmatch, mfbattach, DV_DULL, sizeof(struct device), 0
+struct cfattach mfb_ca = {
+	sizeof(struct device), mfbmatch, mfbattach
+};
+
+struct cfdriver mfb_cd = {
+	NULL, "mfb", DV_DULL
 };
 
 int
