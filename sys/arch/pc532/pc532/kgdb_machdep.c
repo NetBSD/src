@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/03/01 09:49:45 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 1997/03/20 12:00:51 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -192,4 +192,3 @@ kgdb_panic()
 		kgdb_connect(kgdb_active == 0);
 	}
 }
-
