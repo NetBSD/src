@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.57 2000/02/13 04:57:44 oster Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.58 2000/02/20 19:32:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1077,11 +1077,12 @@ getstr(cp, size)
  *	252215296	`240 MB'
  */
 int
-humanize_number(buf, len, bytes, suffix)
+humanize_number(buf, len, bytes, suffix, divisor)
 	char		*buf;
 	size_t		 len;
 	u_int64_t	 bytes;
 	const char	*suffix;
+	int 		divisor;
 {
 		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
 	static const char prefixes[] = " KMGTPE";
@@ -1103,7 +1104,7 @@ humanize_number(buf, len, bytes, suffix)
 	for (i = 0; i < len - suffixlen - 3; i++)
 		max *= 10;
 	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
-		bytes /= 1024;
+		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
 	    i == 0 ? "" : " ", prefixes[i], suffix);
@@ -1120,7 +1121,7 @@ format_bytes(buf, len, bytes)
 	int	rv;
 	size_t	nlen;
 
-	rv = humanize_number(buf, len, bytes, "B");
+	rv = humanize_number(buf, len, bytes, "B", 1024);
 	if (rv != -1) {
 			/* nuke the trailing ` B' if it exists */
 		nlen = strlen(buf) - 2;
