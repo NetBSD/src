@@ -1,7 +1,7 @@
-/*	$NetBSD: process_machdep.c,v 1.24 1998/01/15 22:25:59 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.25 1998/01/24 12:11:15 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997
+ * Copyright (c) 1995, 1996, 1997, 1998
  *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -65,6 +65,7 @@
  */
 
 #include "opt_vm86.h"
+#include "npx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,19 +147,25 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
+	struct save87 *frame = process_fpframe(p);
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
-		struct save87 *frame = process_fpframe(p);
-
 #if NNPX > 0
+		extern struct proc *npxproc;
+
 		if (npxproc == p)
 			npxsave();
 #endif
+	} else {
+		/* Fake a FNINIT. */
+		bzero(frame, sizeof(*frame));
+		frame->sv_env.en_cw = __INITIAL_NPXCW__;
+		frame->sv_env.en_sw = 0;
+		frame->sv_env.en_tw = 0xffff;
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
 
-		bcopy(frame, regs, sizeof(frame));
-	} else
-		bzero(regs, sizeof(regs));
-
+	bcopy(frame, regs, sizeof(*regs));
 	return (0);
 }
 
@@ -234,14 +241,18 @@ process_write_fpregs(p, regs)
 {
 	struct save87 *frame = process_fpframe(p);
 
+	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-	if (npxproc == p)
-		npxdrop();
+		extern struct proc *npxproc;
+
+		if (npxproc == p)
+			npxdrop();
 #endif
+	} else {
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
 
-	p->p_md.md_flags |= MDP_USEDFPU;
-	bcopy(regs, frame, sizeof(frame));
-
+	bcopy(regs, frame, sizeof(*regs));
 	return (0);
 }
 
