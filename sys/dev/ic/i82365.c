@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.9 1998/05/05 00:37:24 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -74,11 +74,7 @@ int	pcic_debug = 0;
 void	pcic_attach_socket __P((struct pcic_handle *));
 void	pcic_init_socket __P((struct pcic_handle *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcic_submatch __P((struct device *, void *, void *));
-#else
 int	pcic_submatch __P((struct device *, struct cfdata *, void *));
-#endif
 int	pcic_print  __P((void *arg, const char *pnp));
 int	pcic_intr_socket __P((struct pcic_handle *));
 
@@ -361,22 +357,11 @@ pcic_init_socket(h)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-pcic_submatch(parent, match, aux)
-#else
 pcic_submatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcic_handle *h = (struct pcic_handle *) paa->pch;
