@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,17 +32,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mkfifo.1	5.6 (Berkeley) 7/1/91
+.\"     @(#)mkfifo.1	8.2 (Berkeley) 1/5/94
 .\"
-.Dd July 1, 1991
+.Dd January 5, 1994
 .Dt MKFIFO 1
-.Os
+.Os BSD 4.4
 .Sh NAME
 .Nm mkfifo
 .Nd make fifos
 .Sh SYNOPSIS
 .Nm mkfifo
-.Op Fl p
 .Ar fifo_name  ...
 .Sh DESCRIPTION
 .Nm Mkfifo
@@ -50,31 +49,24 @@ creates the fifos requested, in the order specified,
 using mode
 .Li \&0777 .
 .Pp
-Options available are:
-.Bl -tag -width Ds
-.It Fl p
-Create intermediate directories as required.  If this option is not
-specified, the full path prefix of each operand must already exist.
-.El
-.Pp
 .Nm Mkfifo
 requires write permission in the parent directory.
 .Pp
 .Nm Mkfifo
 exits 0 if successful, and >0 if an error occurred.
 .Sh STANDARDS
-.Nm Mkfifo is
+The
+.Nm mkfifo
+utility is expected to be
 .St -p1003.2
 compliant.
-.Pp
-This manual page derived from the
-.St p1003.2
-manual page.
 .Sh SEE ALSO
 .Xr mkdir 1 ,
-.Xr rm 1
+.Xr mknod 1 ,
+.Xr rm 1 ,
+.Xr mkfifo 2
 .Sh HISTORY
 The
 .Nm
-command is
-.Ud
+command appears in
+.Bx 4.4 .
