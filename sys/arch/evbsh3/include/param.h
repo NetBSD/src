@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2000/06/30 17:55:13 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2001/01/03 18:14:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,17 +53,14 @@
 #endif
 #endif
 
+/* will be changed to sh3eb/el */
+#define	_MACHINE_ARCH	sh3
+#define	MACHINE_ARCH	"sh3"
+
 #define	_MACHINE	evbsh3
 #define	MACHINE		"evbsh3"
 
-
-#if 1
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
 #define	MID_MACHINE	MID_SH3
-#else		/* XXX (msaioth) */
-#include <sh3/param.h>
-#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

@@ -1,0 +1,2 @@
+MACHINE=ebsh3eb
+MACHINE_ARCH=sh3

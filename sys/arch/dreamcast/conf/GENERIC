@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 2000/12/11 18:19:12 marcus Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/01/03 18:14:46 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -30,8 +30,6 @@ options		INITTODR_ALWAYS_USE_RTC
 options		BRAINS
 options		USE_RTCCLK
 options		SYNC_CLOCK_TO_RTC
-
-makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 options		LED_ADDR=0xa8000000
 
