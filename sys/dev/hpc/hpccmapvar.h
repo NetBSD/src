@@ -1,7 +1,8 @@
-/*	$NetBSD: pckbd_encode.c,v 1.1 2000/05/04 08:20:26 takemura Exp $	*/
+/* $Id: hpccmapvar.h,v 1.1 2001/02/22 18:37:55 uch Exp $ */
 
 /*-
- * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
+ * Copyright (c) 1999
+ *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,44 +34,6 @@
  *
  */
 
-#include "opt_wsdisplay_compat.h"
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <sys/param.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/pckbc/pckbdreg.h>
-#include <hpcmips/dev/pckbd_encode.h>
-
-/*
- * pckbd_encode() is inverse function of pckbd_decode() in dev/pckbc/pckbd.c.
- */
-int
-pckbd_encode(type, datain, dataout)
-	u_int type;
-	int datain;
-	u_char *dataout;
-{
-	int res;
-	u_char updown;
-
-	res = 0;
-	updown = (type == WSCONS_EVENT_KEY_UP) ? 0x80 : 0;
-
-	/* 0x7f means BREAK key */
-	if (datain == 0x7f) {
-		dataout[res++] = KBR_EXTENDED1;
-		dataout[res++] = (0x1d | updown);
-		datain = 0x45;
-	}
-
- 	/* extended keys */
-	if (datain & 0x80) {
-		dataout[res++] = KBR_EXTENDED0;
-		datain &= 0x7f;
-	}
-
-	dataout[res++] = (datain | updown);
-
-	return (res);
-}
-#endif /* WSDISPLAY_COMPAT_RAWKBD */
+extern unsigned char bivideo_cmap_r[256];
+extern unsigned char bivideo_cmap_g[256];
+extern unsigned char bivideo_cmap_b[256];

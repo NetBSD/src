@@ -1,7 +1,11 @@
-/*	$NetBSD: hpckbd.c,v 1.5 2001/01/10 08:43:13 sato Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.1 2001/02/22 18:37:55 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,21 +15,26 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_tx39xx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,16 +58,11 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <hpcmips/dev/pckbd_encode.h>
+#include <dev/hpc/pckbd_encode.h>
 #endif
 
-#include <hpcmips/dev/hpckbdvar.h>
-#include <hpcmips/dev/hpckbdkeymap.h>
-
-#ifdef TX39XX
-#include <hpcmips/tx/tx39var.h>
-#include <hpcmips/tx/txsnd.h>
-#endif
+#include <dev/hpc/hpckbdvar.h>
+#include <dev/hpc/hpckbdkeymap.h>
 
 struct hpckbd_softc;
 
@@ -93,32 +97,31 @@ struct hpckbd_softc {
 	struct hpckbd_core	sc_coredata;
 };
 
-int	hpckbd_match __P((struct device*, struct cfdata*, void*));
-void	hpckbd_attach __P((struct device*, struct device*, void*));
+int	hpckbd_match(struct device *, struct cfdata *, void *);
+void	hpckbd_attach(struct device *, struct device *, void *);
 
-void	hpckbd_initcore __P((struct hpckbd_core*, struct hpckbd_ic_if*,
-			     int));
-void	hpckbd_initif __P((struct hpckbd_core*));
-int	hpckbd_getevent __P((struct hpckbd_core*, u_int*, int*));
-int	hpckbd_putevent __P((struct hpckbd_core*, u_int, int));
-void	hpckbd_keymap_lookup __P((struct hpckbd_core*));
-void	hpckbd_keymap_setup __P((struct hpckbd_core *, const keysym_t *, int));
-int	__hpckbd_input __P((void*, int, int));
-void	__hpckbd_input_hook __P((void*));
+void	hpckbd_initcore(struct hpckbd_core *, struct hpckbd_ic_if *, int);
+void	hpckbd_initif(struct hpckbd_core *);
+int	hpckbd_getevent(struct hpckbd_core *, u_int *, int *);
+int	hpckbd_putevent(struct hpckbd_core *, u_int, int);
+void	hpckbd_keymap_lookup(struct hpckbd_core*);
+void	hpckbd_keymap_setup(struct hpckbd_core *, const keysym_t *, int);
+int	__hpckbd_input(void *, int, int);
+void	__hpckbd_input_hook(void*);
 
 struct cfattach hpckbd_ca = {
 	sizeof(struct hpckbd_softc), hpckbd_match, hpckbd_attach
 };
 
 /* wskbd accessopts */
-int	hpckbd_enable __P((void *, int));
-void	hpckbd_set_leds __P((void *, int));
-int	hpckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	hpckbd_enable(void *, int);
+void	hpckbd_set_leds(void *, int);
+int	hpckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 /* consopts */
 struct	hpckbd_core hpckbd_consdata;
-void	hpckbd_cngetc __P((void*, u_int*, int*));
-void	hpckbd_cnpollc __P((void *, int));
+void	hpckbd_cngetc(void *, u_int *, int*);
+void	hpckbd_cnpollc(void *, int);
 
 const struct wskbd_accessops hpckbd_accessops = {
 	hpckbd_enable,
@@ -141,19 +144,13 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+hpckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
 
 void
-hpckbd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+hpckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
 	struct hpckbd_softc *sc = (void*)self;
@@ -192,18 +189,13 @@ hpckbd_attach(parent, self, aux)
 }
 
 int
-hpckbd_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+hpckbd_print(void *aux, const char *pnp)
 {
 	return (pnp ? QUIET : UNCONF);
 }
 
 void
-hpckbd_initcore(hc, ic, console)
-	struct hpckbd_core *hc;
-	struct hpckbd_ic_if *ic;
-	int console;
+hpckbd_initcore(struct hpckbd_core *hc, struct hpckbd_ic_if *ic, int console)
 {
 	hc->hc_polling = 0;
 	hc->hc_console = console;
@@ -217,8 +209,7 @@ hpckbd_initcore(hc, ic, console)
 }
 
 void
-hpckbd_initif(hc)
-	struct hpckbd_core *hc;
+hpckbd_initif(struct hpckbd_core *hc)
 {
 	struct hpckbd_if *kbdif = &hc->hc_if;
 
@@ -229,10 +220,7 @@ hpckbd_initif(hc)
 }
 
 int
-hpckbd_putevent(hc, type, data)
-	struct hpckbd_core* hc;
-	u_int type;
-	int data;
+hpckbd_putevent(struct hpckbd_core* hc, u_int type, int data)
 {
 	if (hc->hc_nevents == NEVENTQ)
 		return (0); /* queue is full */
@@ -247,10 +235,7 @@ hpckbd_putevent(hc, type, data)
 }
 
 int
-hpckbd_getevent(hc, type, data)
-	struct hpckbd_core* hc;
-	u_int *type;
-	int *data;
+hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 {
 	if (hc->hc_nevents == 0)
 		return (0); /* queue is empty */
@@ -265,10 +250,7 @@ hpckbd_getevent(hc, type, data)
 }
 
 void
-hpckbd_keymap_setup(hc, map, mapsize)
-	struct hpckbd_core *hc;
-	const keysym_t *map;
-	int mapsize;
+hpckbd_keymap_setup(struct hpckbd_core *hc, const keysym_t *map, int mapsize)
 {
 	int i;
 	struct wscons_keydesc *desc;
@@ -286,8 +268,7 @@ hpckbd_keymap_setup(hc, map, mapsize)
 }
 
 void
-hpckbd_keymap_lookup(hc)
-	struct hpckbd_core *hc;
+hpckbd_keymap_lookup(struct hpckbd_core *hc)
 {
 	const struct hpckbd_keymap_table *tab;
 	platid_mask_t mask;
@@ -324,8 +305,7 @@ hpckbd_keymap_lookup(hc)
 }
 
 void
-__hpckbd_input_hook(arg)
- 	void *arg;
+__hpckbd_input_hook(void *arg)
 {
 #if 0
 	struct hpckbd_core *hc = arg;
@@ -337,17 +317,12 @@ __hpckbd_input_hook(arg)
 }
 
 int
-__hpckbd_input(arg, flag, scancode)
- 	void *arg;
-	int flag, scancode;
+__hpckbd_input(void *arg, int flag, int scancode)
 {
 	struct hpckbd_core *hc = arg;
 	int type, key;
 
 	if (flag) {
-#ifdef TX39XX
-		tx_sound_click(tx_conf_get_tag());
-#endif
 		type = WSCONS_EVENT_KEY_DOWN; 
 	} else {
 		type = WSCONS_EVENT_KEY_UP;
@@ -403,8 +378,7 @@ __hpckbd_input(arg, flag, scancode)
  * console support routines
  */
 int
-hpckbd_cnattach(ic)
-	struct hpckbd_ic_if *ic;
+hpckbd_cnattach(struct hpckbd_ic_if *ic)
 {
 	struct hpckbd_core *hc = &hpckbd_consdata;
 
@@ -420,10 +394,7 @@ hpckbd_cnattach(ic)
 }
 
 void
-hpckbd_cngetc(arg, type, data)
-	void *arg;
-	u_int *type;
-	int *data;
+hpckbd_cngetc(void *arg, u_int *type, int *data)
 {
 	struct hpckbd_core *hc = arg;
 	int s;
@@ -438,9 +409,7 @@ hpckbd_cngetc(arg, type, data)
 }
 
 void
-hpckbd_cnpollc(arg, on)
-	void *arg;
-        int on;
+hpckbd_cnpollc(void *arg, int on)
 {
 	struct hpckbd_core *hc = arg;
 	int s = splimp();
@@ -451,9 +420,7 @@ hpckbd_cnpollc(arg, on)
 }
 
 int
-hpckbd_enable(arg, on)
-	void *arg;
-	int on;
+hpckbd_enable(void *arg, int on)
 {
 	struct hpckbd_core *hc = arg;
 
@@ -471,20 +438,13 @@ hpckbd_enable(arg, on)
 }
 
 void
-hpckbd_set_leds(arg, leds)
-	void *arg;
-	int leds;
+hpckbd_set_leds(void *arg, int leds)
 {
 	/* Can you find any LED which tells you about keyboard? */
 }
 
 int
-hpckbd_ioctl(arg, cmd, data, flag, p)
-	void *arg;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpckbd_core *hc = arg;
