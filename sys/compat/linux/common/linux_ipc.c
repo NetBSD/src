@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.5 1995/08/14 01:27:52 mycroft Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.6 1995/08/15 21:14:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 #include <sys/msg.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -54,6 +55,7 @@
 #include <compat/linux/linux_ipc.h>
 #include <compat/linux/linux_msg.h>
 #include <compat/linux/linux_shm.h>
+#include <compat/linux/linux_sem.h>
 #include <compat/linux/linux_ipccall.h>
 
 /*
@@ -114,35 +116,35 @@ linux_ipc(p, uap, retval)
 
 	switch (SCARG(uap, what)) {
 #ifdef SYSVSEM
-		case LINUX_SYS_semop:
-			return linux_semop(p, uap, retval);
-		case LINUX_SYS_semget:
-			return linux_semget(p, uap, retval);
-		case LINUX_SYS_semctl:
-			return linux_semctl(p, uap, retval);
+	case LINUX_SYS_semop:
+		return linux_semop(p, uap, retval);
+	case LINUX_SYS_semget:
+		return linux_semget(p, uap, retval);
+	case LINUX_SYS_semctl:
+		return linux_semctl(p, uap, retval);
 #endif
 #ifdef SYSVMSG
-		case LINUX_SYS_msgsnd:
-			return linux_msgsnd(p, uap, retval);
-		case LINUX_SYS_msgrcv:
-			return linux_msgrcv(p, uap, retval);
-		case LINUX_SYS_msgget:
-			return linux_msgget(p, uap, retval);
-		case LINUX_SYS_msgctl:
-			return linux_msgctl(p, uap, retval);
+	case LINUX_SYS_msgsnd:
+		return linux_msgsnd(p, uap, retval);
+	case LINUX_SYS_msgrcv:
+		return linux_msgrcv(p, uap, retval);
+	case LINUX_SYS_msgget:
+		return linux_msgget(p, uap, retval);
+	case LINUX_SYS_msgctl:
+		return linux_msgctl(p, uap, retval);
 #endif
 #ifdef SYSVSHM
-		case LINUX_SYS_shmat:
-			return linux_shmat(p, uap, retval);
-		case LINUX_SYS_shmdt:
-			return linux_shmdt(p, uap, retval);
-		case LINUX_SYS_shmget:
-			return linux_shmget(p, uap, retval);
-		case LINUX_SYS_shmctl:
-			return linux_shmctl(p, uap, retval);
+	case LINUX_SYS_shmat:
+		return linux_shmat(p, uap, retval);
+	case LINUX_SYS_shmdt:
+		return linux_shmdt(p, uap, retval);
+	case LINUX_SYS_shmget:
+		return linux_shmget(p, uap, retval);
+	case LINUX_SYS_shmctl:
+		return linux_shmctl(p, uap, retval);
 #endif
-		default:
-			return ENOSYS;
+	default:
+		return ENOSYS;
 	}
 }
 
@@ -181,8 +183,37 @@ bsd_to_linux_ipc_perm(bpp, lpp)
 
 #ifdef SYSVSEM
 /*
- * Semaphore operations: not implemented yet.
+ * Semaphore operations. Most constants and structures are the same on
+ * both systems. Only semctl() needs some extra work.
  */
+
+/*
+ * Convert between Linux and NetBSD semid_ds structures.
+ */
+static void
+bsd_to_linux_semid_ds(bs, ls)
+	struct semid_ds *bs;
+	struct linux_semid_ds *ls;
+{
+	bsd_to_linux_ipc_perm(&bs->sem_perm, &ls->l_sem_perm);
+	ls->l_sem_otime = bs->sem_otime;
+	ls->l_sem_ctime = bs->sem_ctime;
+	ls->l_sem_nsems = bs->sem_nsems;
+	ls->l_sem_base  = bs->sem_base;
+}
+
+static void
+linux_to_bsd_semid_ds(ls, bs)
+	struct linux_semid_ds *ls;
+	struct semid_ds *bs;
+{
+	linux_to_bsd_ipc_perm(&ls->l_sem_perm, &bs->sem_perm);
+	bs->sem_otime = ls->l_sem_otime;
+	bs->sem_ctime = ls->l_sem_ctime;
+	bs->sem_nsems = ls->l_sem_nsems;
+	bs->sem_base =  ls->l_sem_base;
+}
+
 int
 linux_semop(p, uap, retval)
 	struct proc *p;
@@ -195,7 +226,13 @@ linux_semop(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct semop_args bsa;
+
+	SCARG(&bsa, semid) = SCARG(uap, a1);
+	SCARG(&bsa, sops) = (struct sembuf *)SCARG(uap, ptr);
+	SCARG(&bsa, nsops) = SCARG(uap, a2);
+
+	return semop(p, &bsa, retval);
 }
 
 int
@@ -210,9 +247,21 @@ linux_semget(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct semget_args bsa;
+
+	SCARG(&bsa, key) = (key_t)SCARG(uap, a1);
+	SCARG(&bsa, nsems) = SCARG(uap, a2);
+	SCARG(&bsa, semflg) = SCARG(uap, a3);
+
+	return semget(p, &bsa, retval);
 }
 
+/*
+ * Most of this can be handled by directly passing the arguments on,
+ * buf IPC_* require a lot of copy{in,out} because of the extra indirection
+ * (we are passed a pointer to a union cointaining a pointer to a semid_ds
+ * structure.
+ */
 int
 linux_semctl(p, uap, retval)
 	struct proc *p;
@@ -225,14 +274,111 @@ linux_semctl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	caddr_t sg, unptr, dsp, ldsp;
+	int error, cmd;
+	struct __semctl_args bsa;
+	struct linux_semid_ds lm;
+	struct semid_ds bm;
+
+	SCARG(&bsa, semid) = SCARG(uap, a1);
+	SCARG(&bsa, semnum) = SCARG(uap, a2);
+	SCARG(&bsa, cmd) = SCARG(uap, a3);
+	SCARG(&bsa, arg) = (union semun *)SCARG(uap, ptr);
+	switch(SCARG(uap, a3)) {
+	case LINUX_GETVAL:
+		cmd = GETVAL;
+		break;
+	case LINUX_GETPID:
+		cmd = GETPID;
+		break;
+	case LINUX_GETNCNT:
+		cmd = GETNCNT;
+		break;
+	case LINUX_GETZCNT:
+		cmd = GETZCNT;
+		break;
+	case LINUX_SETVAL:
+		cmd = SETVAL;
+		break;
+	case LINUX_IPC_RMID:
+		cmd = IPC_RMID;
+		break;
+	case LINUX_IPC_SET:
+		if ((error = copyin(SCARG(uap, ptr), &ldsp, sizeof ldsp)))
+			return error;
+		if ((error = copyin(ldsp, (caddr_t)&lm, sizeof lm)))
+			return error;
+		linux_to_bsd_semid_ds(&lm, &bm);
+		sg = stackgap_init(p->p_emul);
+		unptr = stackgap_alloc(&sg, sizeof (union semun));
+		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
+		if ((error = copyout((caddr_t)&bm, dsp, sizeof bm)))
+			return error;
+		if ((error = copyout((caddr_t)&dsp, unptr, sizeof dsp)))
+			return error;
+		SCARG(&bsa, arg) = (union semun *)unptr;
+		return __semctl(p, &bsa, retval);
+	case LINUX_IPC_STAT:
+		sg = stackgap_init(p->p_emul);
+		unptr = stackgap_alloc(&sg, sizeof (union semun *));
+		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
+		if ((error = copyout((caddr_t)&dsp, unptr, sizeof dsp)))
+			return error;
+		SCARG(&bsa, arg) = (union semun *)unptr;
+		if ((error = __semctl(p, &bsa, retval)))
+			return error;
+		if ((error = copyin(dsp, (caddr_t)&bm, sizeof bm)))
+			return error;
+		bsd_to_linux_semid_ds(&bm, &lm);
+		if ((error = copyin(SCARG(uap, ptr), &ldsp, sizeof ldsp)))
+			return error;
+		return copyout((caddr_t)&lm, ldsp, sizeof lm);
+	default:
+		return EINVAL;
+	}
+	SCARG(&bsa, cmd) = cmd;
+	return __semctl(p, &bsa, retval);
 }
 #endif /* SYSVSEM */
 
 #ifdef SYSVMSG
-/*
- * Msg functions: not implemented yet.
- */
+
+static void
+linux_to_bsd_msqid_ds(lmp, bmp)
+	struct linux_msqid_ds *lmp;
+	struct msqid_ds *bmp;
+{
+	linux_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	bmp->msg_first = lmp->l_msg_first;
+	bmp->msg_last = lmp->l_msg_last;
+	bmp->msg_cbytes = lmp->l_msg_cbytes;
+	bmp->msg_qnum = lmp->l_msg_qnum;
+	bmp->msg_qbytes = lmp->l_msg_qbytes;
+	bmp->msg_lspid = lmp->l_msg_lspid;
+	bmp->msg_lrpid = lmp->l_msg_lrpid;
+	bmp->msg_stime = lmp->l_msg_stime;
+	bmp->msg_rtime = lmp->l_msg_rtime;
+	bmp->msg_ctime = lmp->l_msg_ctime;
+}
+
+static void
+bsd_to_linux_msqid_ds(bmp, lmp)
+	struct msqid_ds *bmp;
+	struct linux_msqid_ds *lmp;
+{
+	bsd_to_linux_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	lmp->l_msg_first = bmp->msg_first;
+	lmp->l_msg_last = bmp->msg_last;
+	lmp->l_msg_cbytes = bmp->msg_cbytes;
+	lmp->l_msg_qnum = bmp->msg_qnum;
+	lmp->l_msg_qbytes = bmp->msg_qbytes;
+	lmp->l_msg_lspid = bmp->msg_lspid;
+	lmp->l_msg_lrpid = bmp->msg_lrpid;
+	lmp->l_msg_stime = bmp->msg_stime;
+	lmp->l_msg_rtime = bmp->msg_rtime;
+	lmp->l_msg_ctime = bmp->msg_ctime;
+}
+
 int
 linux_msgsnd(p, uap, retval)
 	struct proc *p;
@@ -245,7 +391,14 @@ linux_msgsnd(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct msgsnd_args bma;
+
+	SCARG(&bma, msqid) = SCARG(uap, a1);
+	SCARG(&bma, msgp) = SCARG(uap, ptr);
+	SCARG(&bma, msgsz) = SCARG(uap, a2);
+	SCARG(&bma, msgflg) = SCARG(uap, a3);
+
+	return msgsnd(p, &bma, retval);
 }
 
 int
@@ -260,7 +413,19 @@ linux_msgrcv(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct msgrcv_args bma;
+	struct linux_msgrcv_msgarg kluge;
+	int error;
+
+	if ((error = copyin(SCARG(uap, ptr), &kluge, sizeof kluge)))
+		return error;
+
+	SCARG(&bma, msqid) = SCARG(uap, a1);
+	SCARG(&bma, msgp) = kluge.msg;
+	SCARG(&bma, msgsz) = SCARG(uap, a2);
+	SCARG(&bma, msgtyp) = kluge.type;
+	SCARG(&bma, msgflg) = SCARG(uap, a3);
+	return msgrcv(p, &bma, retval);
 }
 
 int
@@ -275,7 +440,11 @@ linux_msgget(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct msgget_args bma;
+
+	SCARG(&bma, key) = (key_t)SCARG(uap, a1);
+	SCARG(&bma, msgflg) = SCARG(uap, a2);
+	return msgget(p, &bma, retval);
 }
 
 int
@@ -290,7 +459,39 @@ linux_msgctl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct msgctl_args bma;
+	caddr_t umsgptr, sg;
+	struct linux_msqid_ds lm;
+	struct msqid_ds bm;
+	int error;
+
+	SCARG(&bma, msqid) = SCARG(uap, a1);
+	SCARG(&bma, cmd) = SCARG(uap, a2);
+	switch (SCARG(uap, a2)) {
+	case LINUX_IPC_RMID:
+		return msgctl(p, &bma, retval);
+	case LINUX_IPC_SET:
+		if ((error = copyin(SCARG(uap, ptr), (caddr_t)&lm, sizeof lm)))
+			return error;
+		linux_to_bsd_msqid_ds(&lm, &bm);
+		sg = stackgap_init(p->p_emul);
+		umsgptr = stackgap_alloc(&sg, sizeof bm);
+		if ((error = copyout((caddr_t)&bm, umsgptr, sizeof bm)))
+			return error;
+		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
+		return msgctl(p, &bma, retval);
+	case LINUX_IPC_STAT:
+		sg = stackgap_init(p->p_emul);
+		umsgptr = stackgap_alloc(&sg, sizeof (struct msqid_ds));
+		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
+		if ((error = msgctl(p, &bma, retval)))
+			return error;
+		if ((error = copyin(umsgptr, (caddr_t)&bm, sizeof bm)))
+			return error;
+		bsd_to_linux_msqid_ds(&bm, &lm);
+		return copyout((caddr_t)&lm, SCARG(uap, ptr), sizeof lm);
+	}
+	return EINVAL;
 }
 #endif /* SYSVMSG */
 
