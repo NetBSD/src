@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/28 09:10:07 christos Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.2 1999/04/28 10:58:10 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define ELFSIZE 32
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
-#define COUNT_KERNEL	(LOAD_COUNT & ~COUNT_TEXTA)
+#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
 
 #ifdef _STANDALONE
 
