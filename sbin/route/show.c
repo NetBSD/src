@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
+/*	$NetBSD: show.c,v 1.2 1997/04/03 02:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $";
+static char *rcsid = "$NetBSD: show.c,v 1.2 1997/04/03 02:35:52 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,7 @@ static char *rcsid = "$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $";
 #include <string.h>
 #include <unistd.h>
 
-/* XXX: things from route.c */
-extern char * routename __P((struct sockaddr *));
-extern char * netname __P((struct sockaddr *));
-extern char * ns_print __P((struct sockaddr_ns *));
-extern int nflag;
-
+#include "extern.h"
 
 /*
  * Definitions for showing gateway flags.
@@ -93,13 +88,11 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
-
-static void p_rtentry __P((struct rt_msghdr *));
-static void p_sockaddr __P((struct sockaddr *, int, int));
-static void p_flags __P((int, char *));
 static void pr_rthdr __P((void));
+static void p_rtentry __P((struct rt_msghdr *));
 static void pr_family __P((int));
-
+static void p_sockaddr __P((struct sockaddr *, int, int ));
+static void p_flags __P((int, char *));
 
 /*
  * Print routing tables.
@@ -113,7 +106,6 @@ show(argc, argv)
 	int mib[6];
 	char *buf, *next, *lim;
 	register struct rt_msghdr *rtm;
-	int i;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
