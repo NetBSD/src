@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/07/17 15:20:23 simonb Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2001/08/16 03:44:46 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -50,26 +50,26 @@
 #define	ra	"$31"
 
 /*
- * XXX:
- *   stack frame is only 8 bytes long (big enough to store the caller's RA).
- *   Does it need to be 32 bytes to keep gdb happy?
+ *   The stack frame is 16 bytes long; big enough to store the GP saved
+ *   by .cpload (at offset 0) and the caller's RA (at offset 8),
+ *   allowing for 64bit addresses.
  */
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		#entry_pt":				\n"\
-		"	subu	$sp,$sp,8		\n"\
-		"	sw	"ra",0($sp)		\n"\
+		"	subu	$sp,$sp,16		\n"\
+		"	sw	"ra",8($sp)		\n"\
 		"	/* fall thru */			\n"\
 		".previous")
 
 #define	MD_SECTION_EPILOGUE(sect)			\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
-		"	lw	"ra",0($sp)		\n"\
+		"	lw	"ra",8($sp)		\n"\
 		"	.set	noreorder		\n"\
 		"	j	"ra"			\n"\
-		"	addu	$sp,$sp,8		\n"\
+		"	addu	$sp,$sp,16		\n"\
 		"	.set	reorder			\n"\
 		".previous")
 
