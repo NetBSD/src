@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.10 1997/04/01 03:12:16 scottr Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.11 1997/04/01 19:59:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -44,27 +44,30 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/filedesc.h>
-#include <sys/proc.h> 
 #include <sys/buf.h>
-#include <sys/wait.h> 
-#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/exec.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/ipc.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/namei.h>
+#include <sys/poll.h> 
+#include <sys/proc.h> 
 #include <sys/ptrace.h>
+#include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
-#include <sys/mount.h>
-#include <sys/ipc.h>
-#include <sys/namei.h>
+#include <sys/tty.h>
 #include <sys/user.h>
-#include <sys/mman.h>
-#include <sys/conf.h>
+#include <sys/vnode.h>
+#include <sys/wait.h> 
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -75,12 +78,17 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h> 
 
-#include <machine/cpu.h> 
-#include <machine/reg.h>
+#include <arch/hp300/dev/grfreg.h>
+#include <arch/hp300/dev/grfioctl.h>
+#include <arch/hp300/dev/grfvar.h>
+#include <arch/hp300/dev/hilreg.h>
+#include <arch/hp300/dev/hilioctl.h>
+#include <arch/hp300/dev/hilvar.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
@@ -155,11 +163,12 @@ hpux_cpu_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct hpux_exec *hpux_ep = epp->ep_hdr;
+	/* struct hpux_exec *hpux_ep = epp->ep_hdr; */
 
 	/* set up command for exec header */
 	NEW_VMCMD(&epp->ep_vmcmds, hpux_cpu_vmcmd,
 	    sizeof(struct hpux_exec), (long)epp->ep_hdr, NULLVP, 0, 0);
+	return (0);
 }
 
 /*
@@ -188,7 +197,7 @@ hpux_cpu_vmcmd(p, ev)
 			p->p_md.md_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.md_flags & ~MDP_CCBSTACK;
+			p->p_md.md_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);
