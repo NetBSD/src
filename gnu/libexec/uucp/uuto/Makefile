@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.6 1996/10/18 02:57:34 thorpej Exp $
 # Makefile for uuto
-# $Id: Makefile,v 1.5 1995/08/24 05:23:35 jtc Exp $
 
 BINDIR=		$(bindir)
 
@@ -13,7 +13,7 @@ uuto:	uuto.in
 		$(.CURDIR)/uuto.in > $(.TARGET)
 
 install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    uuto ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.2 1996/05/11 11:38:06 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1996/10/18 03:00:21 thorpej Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
@@ -20,7 +20,7 @@ CLEANFILES+= cexp.c
 .PATH:		$(.CURDIR)/../common
 
 afterinstall:
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
+	${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
 		$(.CURDIR)/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
 	@/bin/rm -rf $(DESTDIR)/usr/bin/gcpp
 	@ln $(DESTDIR)/usr/bin/cpp $(DESTDIR)/usr/bin/gcpp

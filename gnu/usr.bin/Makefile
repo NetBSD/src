@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 1996/05/19 05:49:37 cgd Exp $
+#	$NetBSD: Makefile,v 1.41 1996/10/18 02:58:46 thorpej Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
@@ -19,7 +19,7 @@ SUBDIR+=	gcc
 # XXX alpha still needs the /usr/bin/cpp script.
 .if (${MACHINE_ARCH} == "alpha")
 afterinstall:
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
+	${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
 	    $(.CURDIR)/gcc/cpp/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/10/18 02:52:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 1996/10/18 02:52:59 thorpej Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	chess
@@ -15,7 +15,7 @@ chess.6:
 	ln -s ${.CURDIR}/DOCUMENTATION/MAN-PAGE ${.OBJDIR}/chess.6
 
 beforeinstall: 
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/gnuchess.book \
-	    ${DESTDIR}/usr/share/games
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    ${.CURDIR}/gnuchess.book ${DESTDIR}/usr/share/games
 
 .include <bsd.prog.mk>

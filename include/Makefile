@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 1996/09/29 23:29:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.63 1996/10/18 03:09:12 thorpej Exp $
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
 # Missing: mp.h
@@ -26,15 +26,16 @@ includes:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    install -c -m 444 $$i ${DESTDIR}/usr/include/$$i; \
+		    ${INSTALL} -c -m 444 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
-		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			install -c -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
+			${INSTALL} -c -m 444 $$j \
+			${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
