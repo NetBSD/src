@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.17 2001/11/15 07:03:30 lukem Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.18 2002/03/22 14:49:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.17 2001/11/15 07:03:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2002/03/22 14:49:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -108,12 +108,15 @@ linux_syscall_plain(frame)
 	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
+	printf("%d %d\n", code, argsize);
 	if (argsize) {
 		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+		 * Linux passes the args in ebx, ecx, edx, esi, edi, ebp, in
 		 * increasing order.
 		 */
 		switch (argsize >> 2) {
+		case 6:
+			args[5] = frame.tf_ebp;
 		case 5:
 			args[4] = frame.tf_edi;
 		case 4:
@@ -126,8 +129,8 @@ linux_syscall_plain(frame)
 			args[0] = frame.tf_ebx;
 			break;
 		default:
-			panic("linux syscall bogus argument size %d",
-		    		argsize);
+			panic("linux syscall %d bogus argument size %d",
+			    code, argsize);
 			break;
 		}
 	}
@@ -192,10 +195,12 @@ linux_syscall_fancy(frame)
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+		 * Linux passes the args in ebx, ecx, edx, esi, edi, ebp, in
 		 * increasing order.
 		 */
 		switch (argsize >> 2) {
+		case 6:
+			args[5] = frame.tf_ebp;
 		case 5:
 			args[4] = frame.tf_edi;
 		case 4:
@@ -208,8 +213,8 @@ linux_syscall_fancy(frame)
 			args[0] = frame.tf_ebx;
 			break;
 		default:
-			panic("linux syscall bogus argument size %d",
-		    		argsize);
+			panic("linux syscall %d bogus argument size %d",
+			    code, argsize);
 			break;
 		}
 	}
