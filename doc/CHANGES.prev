@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.9 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.10 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7036,3 +7036,644 @@ Changes from NetBSD 1.5 to NetBSD 1.6:
 		rc.conf [manu 20020801]
 	openssl: update to 0.9.6f for security fixes. [itojun 20020808]
 	openssl: update to 0.9.6g. [itojun 20020809]
+
+Changes from NetBSD 1.6 to NetBSD 2.0:
+	libcrypt: support bcrypt password entries.  can be chosen with
+		"blowfish" keyword in passwd.conf.  from openbsd
+		[itojun 20020524]
+	tcp(4): implement path MTU discovery blackhole detection (turn off path
+		MTU discovery if the connection is losing).  PR 12790.
+		[itojun 20020526]
+	pppd(8): import 2.4.1 [christos 20020529]
+	ftpd(8): optionally and experimentally use mmap(2) instead of read(2)
+		for binary file transfer [enami 20020530]
+	prep: support IBM RS/6000 43P 7043-140. [nonaka 20020530]
+	pmppc: a port to Artesyn's PM/PPC board.  [augustss 20020531]
+	tcpdump(8): upgrade to 3.7.1 as of 2002/5/31. [itojun 20020531]
+	amdpm(4): driver for AMD768 Power Management Controller (but currently
+		an interface to rnd(4) only.)  [enami 20020602]
+	gspahextoc: was obsoleted by the -c option to gspa(1) a long
+		time ago, and has thus been removed [is 20020607]
+	netinet6: synchronize with recent interface/router/prefix management
+		logic from KAME.  [itojun 20020608]
+	greconfig(8): obsoleted.  use ifconfig(8) for configuration.
+		[itojun 20020609]
+	netinet: path MTU discovery is turned on by default (currently used
+		for TCP only).  [itojun 20020613]
+	amd(8): add new mount option "xlatecookie" to support NFS v3 mounts
+		with cookie translation.  [tron 20020614]
+	factor(6): Use a Pollard Rho algorithm to factor arbitrary sized
+		numbers.  [simonb 20020615]
+	systrace(1): Integrate Niels Provos' systrace(1) binary sand-boxing,
+		device and userland support. [christos 20020617]
+	netstat(1): add -q flag to print information about
+		software interrupt queue.  [enami 20020703]
+	kernel: Socket buffer insertion is now O(C).  This can provide a
+		substantial performance boost to some applications
+		which use large socket buffers.  [thorpej 20020703]
+	sh5: Added support for the SuperH SH-5 CPU architecture.
+		[scw 20020705]
+	chflags(1), chgrp(1), chmod(1), chown(8): Change default behaviour
+		to follow symlinks on the command line rather than ignoring
+		them, finally fixing PR 563.  [bjh21 20020707]
+	file(1): update to 3.39. [pooka 20020709]
+	pdisk(8): Import pdisk 0.8a1, the Apple disk partitioning
+		utility [dbj 20020709]
+	Switch to a signal trampoline provided by libc.  The kernel
+		will provide one for backward compatibility, and
+		for emulations.  [thorpej 20020710]
+	m68k: m68k-based ports now use __HAVE_SYSCALL_INTERN syscall interface.
+		[scw 20020713]
+	evbarm: Add support for the Intel IXM1200 eval board for
+		the ixp12x0 Network Processor.  [ichiro 20020715]
+	mopd(8): Added "-s <mopdir>" to avoid hard coding /tftpboot/mop.
+		[mrg 20020719]
+	hpcarm: X server for the Jornada 720 now works [manu 20020722]
+	pciide(4): added support for the Silicon Image 0680 IDE controller.
+		[onoe 20020726]
+	macppc: finished support for 2nd CPU on 9500/180MP and 9600/200MP
+		[chs 20020728]
+	systrace(1): Update systrace(1) and the kernel code.  Note that the
+		update contains backward-incompatible change in ioctl.
+		[itojun 20020730]
+	dmover(4): Added dmover(4) API, interface to hardware-assisted data
+		movers.  [thorpej 20020801]
+	pkg_admin(8): Add 'pmatch' keyword to return true if 'pkg' matches
+		'pattern', false else. [hubertf 20020804]
+	macppc: added support for 2nd CPU on dual G4 boxes [chs 20020805]
+	pmc(9): Added new performance counter framework.  [briggs 20020806]
+	auich(4): Added support for ICH4 and SiS 7012.  [kent 20020807]
+	pmc(3): Added new performance counter interface library.
+		[thorpej 20020808]
+	usb(4): Added slhci(4), ScanLogic SL811HS/T USB Host Controller.
+		[isaki 20020811]
+	ifmedia(4): Added new "ibss", "ibss-master", and "hostap" ifmedia media
+		options for 802.11 interfaces.  [thorpej 20020810]
+	wi(4): Add experimental Host-AP support, allowing Intelsil
+		Prism2/2.5/3-based boards to be used to make an
+		802.11 Access Point.  [thorpej 20020811]
+	arm: New versions of copyin(), copyout(), and kcopy().  These make
+		almost all user/kernel interactions faster.  [briggs 20020812]
+	lpd(8): add libwrap support. [itojun 20020812]
+	sparc64: Add sab driver for sab82532 serial controller. Written by
+		Jason L. Wright for OpenBSD. [petrov 20020816]
+	wscons(4): Add wsmoused(8) for mouse cut and paste in wscons vga
+		driver. [christos 20020820]
+	utmpx(5): All userland programs have been converted to understand both
+		utmp and utmpx, wtmp and wtmpx, lastlog and lastlogx
+		[christos 20020821]
+	rescue: enable /rescue system recovery tools.  [lukem 20020822]
+	boot(8): allow path to init(8) to be entered when booting with
+		RB_ASKNAME ("boot -a").  [lukem 20020823]
+	rasctl(2): Restartable Atomic Sequences (RAS).  [gmcgarry 20020828]
+	pmap(1): Added to tree.  Prints the address space of a given
+		process (or processes).  [atatat 20020831]
+	zx(4): Add a driver for the Sun ZX/Leo framebuffer.  [ad 20020913]
+	ipf(8): updated to version 3.4.29. [martti 20020919]
+	mount(2): Add MNT_GETARGS support to retrieve mounted filesystem
+		specific arguments. [christos 20020921]
+	compat_irix(8): sproc emulation supports share groups with private
+		memory mappings. [manu 20020922]
+	mk.conf(5): MKDYNAMICROOT=yes made as the default, resulting in
+		a fully dynamically linked system.  [lukem 20020923]
+	iwic(4): Add driver for Winbond W6692 ISDN [pooka 20020924]
+	kernel: Removed the old rmap code, <sys/map.h> and kern/subr_rmap.c.
+		[thorpej 20020925]
+	kernel: Overhaul device parent matching; now record attributes in
+		a "parent spec" in the kernel. [thorpej 20020925]
+	libcrypto: mdc2 is a patented algorithm, so move it out of libcrypto.
+		if you need mdc2, define MKCRYPTO_MDC2 to get libcrypto_mdc2.a.
+		[itojun 20020926]
+	kernel: Don't reference cfdriver structures directly in the cfdata
+		entries; instead, a string names the driver, which is looked up
+		from a list that is built at run-time.  [thorpej 20020926]
+	ufs: Add support for the Apple UFS variation on ffs
+		See PR 17345 [dbj 20020928]
+	sh(1): Use vfork(2) rather than fork(2) where appropriate.
+		See PR 5475 [christos,elric 20020928]
+	Remove umask setting from /etc/skel/.{cshrc,profile} so that
+		user files are not created group writable by default.
+		[grant 20020929]
+	sendmail(8): Include DOMAIN(generic) in prototype configuration
+		to enable standard sendmail features. [grant 20020930]
+	i386: merge the sommerfeld_i386mp_1 branch [fvdl 20021001]
+	ssh(1): upgrade OpenBSD-based Secure Shell, based on OpenSSH 3.5
+		around 20021001.  [itojun 20021001]
+	kernel: Don't reference cfattach structures directly in the cfdata
+		entries; instead, a string names the attachment, which is
+		looked up from a list that is built at run-time.
+		[thorpej 20021003]
+	cgd(4): Add CryptoGraphic Disk driver, cgd(4).  [elric 20021004]
+	pciide(4): Added support for VIA VT8235 [kent 20021005]
+	auvia(4): Added support for VT8233/VT8235 [kent 20021005]
+	auvia(4): Enabled sampling rate conversion for fixed-rate AC'97 codec
+		[kent 20021008]
+	ubsa(4): Driver for Belkin serial adapters ported from FreeBSD
+		[augustss 20021008]
+	tar(1): upgrade to GNU tar 1.13.25 for security fixes
+		[itojun 20021010]
+	config(9): Allow pseudo-devices to be parents of "real" devices.
+		[thorpej 20021009]
+	config(9): Allow options to register dependencies on attributes
+		(the way it already can for other options).  [thorpej 20021010]
+	config(9): Allow devices to be orphaned in the kernel config file, but
+		emit an informational message when this happens.
+		[thorpej 20021010]
+	tar(1), cpio(1): We are now using pax(1) for those instead of
+		the gnu version. [christos 20021016]
+	basename(3), dirname(3): Change to return pointer to static
+		storage, rather than modifying their input arguments.
+		The new behavior is explicitly allowed by IEEE Std
+		1003.1-2001.  [thorpej 20021016]
+	build.sh: add '-k kernel', to configure and build the given
+		kernel using the new toolchain.
+		From Alan Barrett in PR#18739.  [lukem 20021021]
+	kernel: kqueue branch merged [jdolecek 20021023]
+	kernel: keep separate read & write disk statistics.  [mrg 20021101]
+	iostat(8): report read/write stats in iostat -x.  [mrg 20021101]
+	systat(1): report read/write stats in iostat "rw" mode.  [mrg 20021101]
+	sparc64: Find the correct boot path for all IDE disks.  [mrg 20021102]
+	eap(4): Add support for second DAC [pooka 20021104]
+	kernel: Added two sysctl(8) flags to stop process just after creation by
+		fork(2) or exec(2).  [manu 20021106]
+	mtd(4): Add driver for Myson Technologies MTD803 3-in-1 Fast Ethernet
+		cards from Peter Bex. [martin 20021107]
+	iop(4): Add support for Adaptec 2000S and 2005S [msaitoh 20021108]
+	dreamcast: Add support for memory card and monochrome LCD on
+		Maple bus.  [itohy 20021115]
+	vnd(4): Now also available as an LKM.  [mrg 20021116]
+	etc/postinstall: Add support for examining the obsolete sets for
+		obsolete entries to check or remove.  [lukem 20021117]
+	named(8): Upgrade to BIND 8.3.4. [itojun 20021117]
+	gcc(1), as(1): Fixed bug in how NetBSD ARM ELF binaries were marked.
+		They now properly reflect ATPCS + Soft-VFP.
+		[thorpej 20021121]
+	lib/csu: Split crtbegin/crtend into crti/crtbegin/crtend/crtn.
+		This is inline with what other ELF systems do, and paves
+		the way to using GCC-supplied crtbegin/crtend.
+		[thorpej 20021121]
+	i386: reworked interrupt code to be more independent of the
+		underlying interrupt controller, to perform better
+		with shared lines, and to be more clean in general
+		[fvdl 20021122]
+	postfix(1): upgrade to 1.1.12.  [itojun 20021126]
+	mk.conf(5): removed support for SYS_INCLUDE=symlinks; <sys/*.h>
+		include files are always copied now.  [lukem 20021126]
+	cvs(1): upgrade to 1.11.2 [christos 20021127]
+	strsuftoll(3), strsuftollx(3): Add functions to parse numbers
+		with optional suffixes and/or products.  [lukem 20021129]
+	am-utils: upgrade to 6.1b1 [christos 20021129]
+	routed(8): upgrade to 2.27 [christos 20021129]
+	fparseln(3): migrated from libutil to libc.  [lukem 20021130]
+	x68k: add bmd(4), memory disk driver for Nereid bank memory.
+		[isaki 20021201]
+	i386: biosboot bootblocks now support booting off 2.88MB drive
+		using 1.44MB floppy disk [jdolecek 20021204]
+	edquota(8): Added command-line options to allow setting quotas
+		from command line.  [bouyer 20021204]
+	arc: Add support for NEC Express5800/240 R4400 EISA (NEC-J96A).
+		[tsutsui 20021207]
+	build.sh: add -E, to enable "expert mode", which allows builds
+		to DESTDIR=/.  [lukem 20021208]
+	evbppc: Added arch/evbppc for PowerPC-based evaluation boards, with the
+		existing Walnut port as its first member. [scw 20021209]
+	db(1): Added.  Manipulates db(3) btree(3) and hash(3) databases.
+		[lukem 20021211]
+	mips: support fully coherent data caches on MIPS32 and MIPS64 CPUs
+		(enabled for Au1x00 and SB-1 CPUS).  [simonb 20021217]
+	install(1): added -N dbdir, to specify different location for user
+		and group databases.  [lukem 20021219]
+	build system: Users and groups for the build are now obtained from
+		src/etc instead of the host systems' passwd(5) and group(5)
+		databases.  [lukem 20021219]
+	sunlabel(8): Now enabled by default.  Manipulates SunOS disklabels. 
+		[lukem 20021221]
+	vis(1): Add `-e extra', to provide a list of extra characters to
+		encode (per svis(3)).  [lukem 20021223]
+	mtree(8): Add -C, which acts like -D except that the pathname
+		is printed first instead of last.  [lukem 20021223]
+	build.sh: Add '-i installworlddir', to run "make installworld"
+		after all other operations have completed.  [lukem 20021225]
+	dreamcast: Add support for the SEGA LAN Adapter, based on patch in
+		dreamcast/17493 from Christian Groessler.  [tsutsui 20021227]
+	kprintf(9): Add "aprint" family of autoconfiguration message
+		printing routines that change their behavior based on
+		flags in boothowto.  [thorpej 20021231]
+	procfs:	Add /proc/<pid>/fd/<fd> [christos 20030103]
+	build system: Releases are now installed under ${RELEASEDIR}/${MACHINE}
+		instead of ${RELEASEDIR}.  [lukem 20030103]
+	mtree(8): Newly created directories have 0777 instead of 0700
+		permissions (as modified by the umask(2)).  This only
+		affects 'mtree -W', or directories without an explicit
+		mode= entry.  [lukem 20030105].
+	sparc,sparc64: The nell (STP4020) pcmcia bridge driver is now
+		finished.  [martin 20030107]
+	sparc: MULTIPROCESSOR support works.  [pk,mrg 20030111]
+	cvs(1): upgraded to 1.11.4 [wiz 20030116]
+	auich(4): Added support for nForce2 MCP-T.  [gendalia 20030116]
+	ex(4): Added support for 3c905CX-TX.  [gendalia 20030116]
+	texinfo(1): upgraded to 4.3.  [wiz 20030117]
+	pthreads: Merge nathanw_sa branch, implementing p1003.1 POSIX thread
+		and Scheduler Activation thread interface.  [thorpej 20030117]
+	cpio(1): removed GNU cpio (replaced by pax frontend).  [wiz 20030118]
+	tar(1): removed GNU tar (replaced by pax frontend).  [wiz 20030118]
+	semaphores: Added p1003.1b semaphores from freebsd.  [christos 20030120]
+	cvs(1): upgraded to 1.11.5.  [wiz 20030121]
+	progress(1): New standalone progress bar program factored out
+		from ftp(1).  [jhawk 20030122]
+	sysinst: Leverage progress(1) for reasonable-looking file extraction
+		displays.  [jhawk 20030122]
+	sh(1): Improve Posix conformance [dsl 20030122]
+	build.sh: Rework command line into command line options followed
+		by a list of operations to perform.  [lukem 20030123]
+	gcore(1): Add it back.  [christos 20030123]
+	semaphores: Fix kernel implementation, and add non-pthreads
+		version in new librt.  [thorpej 20030123]
+	diff(1), diff3(1), sdiff(1): upgraded to diffutils-2.8.1 [wiz 20030126]
+	grep(1): upgraded to 2.5.  Warning: -o is now a valid GNU grep option
+		(--only-matching (-o)), so we will not be supporting the 4.4BSD
+		-o any longer -- use -H instead.  [wiz 20030127]
+	objcopy(1): Add --redefine-syms-file option.  [simonb 20030129]
+	crunchgen(1): Use "objcopy --redefine-syms-file".  [simonb 20030129]
+	find(1): allow preceding +/- on numeric arg to -user. [jhawk 20030130]
+	arc: Add support for the Cirrus Logic GD5428 ISA VGA console on
+		Express5800/240 R4400 EISA (NEC-J96A) and RISCserver2200
+		(NEC-R96).  [tsutsui 20030131]
+	malloc(9): Add extensible kernel malloc types, adapted from FreeBSD.
+		[thorpej 20030131]
+	kernel: Added a sysctl(8) flag to control whether the kernel dumps
+		to the dump device on panic.  [atatat 20030210]
+	inetd(8): Use kqueue(2) for enhanced performance and scalability.
+		[tron 20030212]
+	/etc/security, security.conf(5): Allow more flexibility in warnings
+		from check_passwd and check_mtree.  [jhawk 20030213]
+	grep(1): upgraded to 2.5.1.  [wiz 20030213]
+	texinfo(1): upgraded to 4.5.  [wiz 20030213]
+	usb(4): add uax(4), a driver for the AX88172 Ethernet adapter chip.
+		The chip supports 10/100 and USB 2.0.  [augustss 20030216]
+	bridge(4), brconfig(8): add ipf support.  [perseant 20030216]
+	kernel: SMBFS support, ported from FreeBSD.  [jdolecek 20030218]
+	kernel: Top down memory management option added, initially for
+		i386, but others are following.  [atatat 20030220]
+	/etc/daily, daily.conf(5): Suppress empty security reports by default.
+		[jhawk 20030221]
+	/etc/security, security.conf(5): Produce unified diffs by default.
+		[jhawk 20030221]
+	kernel: Add LFSv2 support to libsa [simonb 20030224]
+	i386: Add LFS support to bootblocks [simonb 20030224]
+	kernel: Add MBUFTRACE kernel option.  Change all MGET*(...M_WAIT,...)
+		to m_get*(M_WAIT, ...) to shrink kernel.  Add m_clget 
+		analogue to MCLGET and use it if M_WAIT is passed.  Adapt
+		netinet, if_loop, gem, tulip, fxp driver to MBUFTRACE.  Bump
+		version to 1.6P.  [matt 20030226]
+	libpthread: Add pthread_{,attr}_{get,set}name_np() API, compatible
+		with Tru64 Unix. [thorpej 20030227]
+	sysctl: Add hw.physmem64 and hw.usermem64 sysctl nodes, which
+		return the same data has hw.physmem and hw.usermem, but
+		as a 64-bit byte count, instead of a 32-bit byte count.
+		Required for reporting >=4G RAM.  [thorpej 20030227]
+	binutils: updated to FSF binutils 2.13.2.1 release.  [mrg 20030228]
+	libc: Add _Exit(), the C99 name for _exit().  [bjh21 20030301]
+	acorn26: Add support for the 82C710 multi-I/O chip, as found in (some?)
+		A5000s.  [bjh21 20030301]
+	mdsetimage(1): only use libbfd calls to get symbol information; writing
+		is now done directly into the file. [dogcow 20030304]
+	x86_64: rearrange the x86_64 code, make it share code with i386, and
+		enable MP [fvdl 20030305]
+	kernel: Report correct child CPU times. [dsl 20030305]
+	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
+	sysctl: Make hw.physmem and hw.usermem saturate if they are used
+		on a system with >=4G RAM.  [thorpej 20030306]
+	postfix(1): update to 2.0.6 [perry 20030308]
+	kernel: let LFS use the UBC system natively.  This should provide
+		complete coherency between mmap(2) and read(2)/write(2) on
+		LFS, in addition to allowing it to use much more memory for
+		its buffers.  [perseant 20030308]
+	am-utils: update to 6.1b2 [christos 20030309]
+	evbppc: Add support for the NCD Explora451 ThinClient.
+		[hannken 20030311]
+	kernel: New pid allocator - avoids all the searching in pfind() etc.
+		Bump version to 1.6Q.  [dsl 20030319]
+	pciide(4): Add support for the Intel i31244 and Silicon Image 3112
+		Serial ATA controllers.  [thorpej 20030319]
+	sparc64: Add support for PCI-CardBus bridge.  [nakayama 20030322]
+	pppoectl(8): Add a "-f configfile" option.  [mrg 20030322]
+	sendmail(8): update to 8.12.8.  [atatat 20030324]
+	vax: Add device driver for RX01/RX02 floppies (rfc/rf).
+		From Jochen Kunz. [ragge 20030323]
+	sh5: Shared libraries now supported on SH5 (but not yet enabled
+		in bsd.own.mk due to sundry toolchain issues).
+		[scw 20030325]
+	file(1): update to 4.00. [pooka 20030326]
+	libmagic: add libmagic, which is currently used by file(1)
+		[pooka 20030326]
+	wall(1): added "-g group".  [lukem 20030327]
+	dump(8), dump_lfs(8): remove setgid tty, as "wall -g operator"
+		is now used to notify operators.  [lukem 20030327]
+	vnd(4), vnconfig(8): add read-only configuration support.
+		[yamt 20030327]
+	cron(8): Move default cron log from /var/cron/log to /var/log/cron
+		[perry 20030402]
+	kernel and userland: UFS2 support from Kirk McKusick via FreeBSD.
+		[fvdl 20030402]
+	ssh(1): upgrade OpenBSD-based Secure Shell, based on OpenSSH 3.6.1
+		around 20030403.  [itojun 20030403]
+	pciide(4): add support for i82801DBM (ICH4-M). [kent 20030405]
+	wm(4): add support for i82540EP. [kent 20030405]
+	scsi: Add a MI driver for the Symbios/NCR 53c700 SCSI controller
+		written by Shuichiro URATA. [tsutsui 20030406]
+	rsh(1), rlogin(1): Add -p flag to allow specifying a non-standard
+		port number. [hubertf 20030407]
+	kernel: SMBFS uses low-overhead NT Directory Change Notify SMB to watch
+		for vnode kqueue(2) events on directories [jdolecek 20030407]
+	kernel: hostap power saving mode support [kml 20030407]
+	kernel: pool caches now have the ability to cache physical addresses
+		of objects. [thorpej 20030409]
+	kernel: mbufs use new cached physical address feature of pools,
+		and can provide other information about external buffers
+		to save work for bus_dma back-ends.  Use this information
+		in the ARM and x86 bus_dma back-ends to improve network
+		performance. [thorpej 20030409]
+	pkg_install: improve bzip2 support, especially for non-NetBSD
+		systems. [grant 20030410]
+	less: update to less-381.  [mrg 20030414]
+	kernel: added a sysctl(8) flag to check and reject packets arriving
+		on the "wrong" interface.  [christos 20030412]
+	libc: added slovak language libc message catalog. [salo 20030414]
+	mpt(4): Added device driver for LSI Fusion-MPT based SCSI and
+		Fibre Channel controllers.  Ported from the FreeBSD "mpt"
+		driver written by Greg Ansley.  Supports the LSI 53c1030
+		Ultra320 SCSI and LSI FC909, FC919, and FC929 Fibre
+		Channel adapters.  [thorpej 20030416]
+	df(1), du(1): add -g argument for output in gigabytes [grant 20030418]
+	arm32: Add new arm32 pmap contributed by Wasabi Systems.
+		[scw 20030418]
+	fsdb(8): add a findblk command, which lists the inode(s) owning the
+		disk sector(s) specified as argument. [bouyer 20030426]
+	wd(4): add support for the DIOCGCACHE and DIOCSCACHE ioctls.
+		[bouyer 20030426]
+	inet(3): align signatures of inet_addr(), inet_network(),
+		inet_makeaddr(), inet_lnaof(), and inet_netof() with XNS and
+		POSIX.  [bjh21 20030505]
+	build.sh: Provide defaults for DESTDIR and RELEASEDIR if not in
+		expert mode.  Display summary of operations performed at end.
+		[lukem 20030508]
+	build.sh: Add "sourcesets" option to build the source sets.
+		[lukem 20030510]
+	olms(4),omms(4): Removed olms(4) and omms(4) from the i386 port,
+		since they have been superseded by lms(4) and mms(4)
+		respectively. [wiz 20030516]
+	db(1): Add '-S chr', '-T str' and '-X str' to specify (with options)
+		strvis(3) encoding of keys/values when reading a database.
+		Add '-U chr' to specify strunvis(3) decoding of keys/values
+		when writing a database or deleting entries from a database.
+		[seb 20030519]
+	evbarm: Add support for the NOVATEC NTNP425B eval board for
+		the Intel IXP425 Network Processor.  [ichiro 20030523]
+	file(1): update to 4.03. [pooka 20030525]
+	sendmail(8): update to 8.12.9.  [atatat 20030601]
+	named(8): Upgrade to BIND 8.3.5. [itojun 20030603]
+	named(8): Upgrade to BIND 8.3.6. [itojun 20030609]
+	tftpd(8), tftp(1): Add support for rfcs 2347, 2348, and 2349,
+		tftp 'blksize', 'timeout', and 'tsize' options.  Contributed
+		by Wasabi Systems.  [briggs 20030610]
+	hunt(6), huntd(6): Synced with current version from 2003-04-16,
+		which is BSD licensed. [wiz 20030610]
+	netwinder: Add wscons support. [uwe 20030614]
+	arc: Fix support for DeskStation Tyne and it boots into single user.
+		[tsutsui 20030614]
+	cvs(1): $CVS_RSH defaults to ssh (instead of rsh). [itojun 20030620]
+	cobalt: Implement first stage bootloader for the cobalt port.
+		[cdi 20030625]
+	libc: Add iconv support. [tshiozak 20030627]
+	iconv(1): Added. [tshiozak 20030627]
+	groff(1): Updated to 1.19. [wiz 20030630]
+	texinfo(1): upgraded to 4.6.  [wiz 20030703]
+	locale(1): Added.  Obtained from FreeBSD.  [tshiozak 20030704]
+	pax(1): Add support for gnutar's -O "extract to stdout" option in tar
+		mode.  [simonb 20030708]
+	share/mk: Rename many make(1) variables that contain names of
+		programs from `FOO' to `TOOL_FOO'.  [lukem 20030711]
+	libtelnet: no longer shipped under /usr/lib [itojun 20030716]
+	share/mk: Replace MANZ=, UPDATE=, UNPRIVED= with MKMANZ=yes,
+		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
+	ipsec: support hmac-sha2 for AH/ESP auth.  [itojun 20030722]
+	sparc: Update sparc port to use XFree86 4.x base.  [mrg 20030722]
+	GCC: Import GCC 3.3.1-20030720.  [mrg 20030723]
+	libcrypto: upgrade to 0.9.7b. [itojun 20030724]
+	ipsec: support hmac-ripemd160 and aes-xcbc-mac for AH/ESP auth.
+		support aes-ctr for ESP. [itojun 20030725]
+	i386: New boot code. Uses MI installboot and filesystem code to load
+		2nd level bootstrap. Allows NetBSD partition to be
+		in the extended partition. [dsl 20030728]
+	sysinst: New disk editing menus and general rototil. [dsl 20030728]
+	ftp(1): $FTPUSERAGENT overrides the default HTTP User-Agent.
+		[lukem 20030731]
+	hp300: Switch to MI SCSI at last. [tsutsui 20030801]
+	evbarm: Add support for the Samsung SMDK2410 eval board for
+		the S3C2410 Processor.  [bsh 20030804]
+	GCC: Import GCC 3.3.1.  [mrg 20030809]
+	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
+		[christos,skrll 20030812]
+	gdb(1): Import gdb-5.3 and add support for i386 [christos 20030814]
+	kernel: Add support for non-executable mappings for many platforms.
+		Map the stack and heap non-executable.  [chs 20030824]
+	agp(4): Add support for i865G integrated graphics.  [tron 20030826]
+	vax: Add support for the DELQA-PLUS in Turbo mode (qt).  Driver
+		written by Steven M. Schultz for 2.11BSD.  [ragge 20030829]
+	netinet: randomize IPv4 fragment ID.  avoids prediction.
+		[itojun 20030906]
+	netinet6: randomize IPv6 fragment ID and flowlabel.  avoids prediction.
+		[itojun 20030906]
+	kernel: Enhance LKM versioning, and improve compatibility checking
+		on LKM load [jdolecek 20030906]
+	kernel: Add support for SA_SIGINFO on i386 [christos 20030907]
+	XFree86: Reach-over build framework added under src/x11.
+		[lukem 20030912]
+	i386: Switch to GCC 3.3.1.  [mrg 20030919]
+	sparc: Switch to GCC 3.3.1.  [mrg 20030919]
+	sparc64: Switch to GCC 3.3.1.  [mrg 20030919]
+	alpha: Switch to GCC 3.3.1.  [mrg 20030919]
+	arm: Switch to GCC 3.3.1.  [matt 20030921]
+	amiga: added wsmouse support to mouse driver.  [jandberg 20030922]
+	powerpc: Switch to GCC 3.3.1.  [matt 20030923]
+	powerpc: Switch to GDB 5.3.  [matt 20030923]
+	m68k: Switch to GDB 5.3.  [christos 20030923]
+	alpha: Switch to GDB 5.3.  [matt 20030924]
+	sgimips: Add haltwo(4), a driver for the SGI HAL2 audio controller
+		[lonewolf 20030925]
+	isdncapi(4): Add a support layer for CAPI to i4b.  [pooka 20030925]
+	iavc(4): Add support for AVM B1 PCI CAPI-compatible ISDN adapters.
+		[pooka 20030925]
+	file(1): update to 4.04.  [pooka 20030925]
+	kernel: Add support for SA_SIGINFO on powerpc. [matt 20030925]
+	auich(4): Added support for four channels and six channels audio
+		playback.  [kent 20030928]
+	i2c: New generic i2c framework, supporting bit-bang and
+		"intelligent" controllers.  [thorpej 20030929]
+	pkg_add(1): Added HTTP support. [wiz 20031003]
+	kernel: Add a /dev/constty device (minor 1 on console), use for
+		terminal sessions on 'console'.  Stops terminal output
+		being 'stolen' by the TIOCCONS ioctl. [dsl 20031003]
+	mips: Add R10000 cache ops, written by KIYOHARA Takashi.
+		[tsutsui 20031005]
+	sgimips: O2 (IP32) support is now functional again by fixes
+		contributed by Christopher SEKIYA. [tsutsui 20031005]
+	awk(1): Updated gawk to 3.1.3. [wiz 20031006]
+	installboot(8): On i386, preserve BIOS Parameter Block and MBR
+		partition table.  [lukem 20031008]
+	i386 & amd64: Rename /usr/mdec/biosboot to /usr/mdec/boot and
+		add support for booting off FAT partitions.  Rename
+		/usr/mdec/bootxx_dosfs to /usr/mdec/bootxx_msdos.
+		Deprecate /usr/mdec/bootxx_ufs (use bootxx_ffsv1).
+		[lukem 20031008].
+	whois(1): Has been replaced by the OpenBSD version by jrf.
+		[christos 20031009]
+	arm: Xscale micro-optimisations for libc/libkern, plus some
+		kernel tweaks to use the mini-data cache, and speedup
+		cpuswitch() amongst other things. Contributed by Wasabi
+		Systems.
+		[scw 20031014]
+	syslogd(8): add -r, to prevent the compression of multiple similar
+		messages into "last message repeated N times".
+		[lukem 20031017]
+	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
+		when creating a ccd.  [lukem 20031017]
+	GCC: Import GCC 3.3.2.  [mrg 20031018]
+	hpcsh: Added j6x0tp(4) driver for Jornada 680/690 touch screen.
+		[uwe 20031019]
+	i386: pmap changed from linked list to splay tree for
+		better performance.  [provos 20031022]
+	netinet: change port allocation from linked list to a hash table
+		for better performance. [provos 20031023]
+	MAKEDEV: platform device creation script is now generated from
+		unified template driven by platform config file and
+		MD device major lists. [jdolecek 20031024] 
+	build.sh: Add '-N noisyness', to control how "noisy" the build is.
+		[lukem 20031025]
+	amiga: Add polish wscons keymaps. From Pawel Chwalowski in PR 22961. 
+		[jandberg 20031025]
+	arm: Enable alignment faults on arm32. Misaligned loads/stores
+		will now cause an exception instead of silently failing.
+		[scw 20031025]
+	sh3: Switch to GDB 5.3.  [uwe 20031027]
+	file(1): update to 4.06.  [pooka 20031027]
+	installboot(8): Add support for next68k.  [cl 20031027]
+	stpcide(4): added STMicroelectronics STPC IDE controller.
+		[nisimura 20031031]
+	sun2: Switch to GCC 3.3.2.  [mrg 20031104]
+	libcrypto: upgrade to 0.9.7c. [itojun 20031104]
+	amiga: Add screen types suitable for PAL displays to amidisplaycc(4) 
+		[jandberg 20031112]
+	named(8): Upgrade to BIND 8.3.7. [itojun 20031126]
+	binutils: updated to FSF binutils 2.14 release.  [mrg 20031126]
+	GDB: All platforms updated to GDB 5.3.  [mrg 20031127]
+	m68k: Switch to GCC 3.3.1.  [matt 20031127]
+	binutils: Switch all platforms to binutils 2.14.  [mrg 20031203]
+	sysctl: Switch to dynamic implementation.  [atatat 20031204]
+	editline(3): Provide public interfaces to the internal line
+		tokenization routines.  [lukem 20031205]
+	sh5: Switch sh5 to the in-tree toolchain, albeit somewhat hobbled.
+		[scw 20031207]
+	cvs(1): upgrade to 1.11.10 [itojun 20031210]
+	fss(4): Add file system snapshot pseudo driver.  [hannken 20031210]
+	artsata(4): Split i31244 support out of piixide(4) and into the
+		new artsata(4) driver.  [thorpej 20031213]
+	satalink(4): Split the Silicon Image SATALink support out of cmdide(4)
+		and into the new satalink(4) driver.  [thorpej 20031213]
+	sgimips: Add newport(4), a driver for SGI NG1 graphics controller
+		and enable console on it and pckbc on IP22 machines.
+		[lonewolf 20031215]
+	satalink(4): Add support for the Silicon Image 3114 4-port
+		SATA controller.  [thorpej 20031219]
+	random(3): improved, and now generates the same sequences as glibc
+		and others. WARNING: new sequences. PR 22853. [ross 20031219]
+	MAKEDEV(8): use mknod(8) -r for faster operation and to retain
+		permissions on existing devices.  [lukem 20031221]
+	bpm(1): add a text-only menu-based binary package manager
+		[agc 20031221]
+	dreamcast: Add an Xserver for dreamcast, based on work by
+		Yasushi Oshima.  [tsutsui 20031223]
+	dab(6): Import Dots+Boxes game.  [christos 20031226]
+	macppc: added driver for snapper audio found on some iBook
+		and PowerBook models [grant 20031227]
+	install(1): Make "copy the file" (the -c option) the default behaviour.
+		[simonb 20031229]
+	kernel: new memory allocation scheme for the buffer cache. [pk 20031230]
+	acorn32: Substantial rewrite of vidcaudio(4).  It now works, and has a
+		manual page. [bjh21 20031231]
+	cvs(1): upgrade to 1.11.11 [itojun 20040102]
+	etc/release:  Create & install as part of "make build",
+		based on work by Hubert Feyrer.  [lukem 20040104]
+	rc(8): implement "one" prefix, to skip the rc.conf(5) test yet
+		perform all of the other checks.  [lukem 20040106]
+	pkg_info(1) now also prints the post-install message formerly only
+		available via -D by default, if present.  [hubertf 20040106]
+	sparc64: restartable atomic sequences (RAS) implemented.
+		[martin 20040106]
+	kernel: New "audiobell" code to play console bells through audio
+		device.  [bjh21 20040117]
+	acorn32: sysbeep(4) removed.  [bjh21 20040117]
+	disklabel(8): On i386 & amd64, preserve the MBR and partition table
+		even on disks without a NetBSD MBR partition.  [lukem 20040119]
+	ppbus(4): imported FreeBSD Parallel Port Bus code (lpt+plip ATM only)
+		from netbsd-ppbus port done by Gary Thorpe for evaluation.
+		ppbus separates the physical parallel port access and
+		the specific connected device access, allowing clean support
+		for PLIP and non-printer devices using parallel port. 
+		The port drivers in ppbus also support advanced modes such as
+		Fast Centronics, EPP, and ECP (including DMA). This code will
+		replace historical lpt(4) eventually [jdolecek 20040119]
+	acorn32: beep(4) removed.  [bjh21 20040125]
+	arm: Change ARM9 support code to use the Dcache in write-back mode.
+		[rearnsha 20040126]
+	ppbus(4): add a "pps" device to get pulse-per-second signals into ntpd
+		[drochner 20040128]
+	install(1): Add -h {none,md5,rmd160,sha1} to determine the appropriate
+		hash (digest) of a copied file to store in the -M METALOG.
+		[lukem 20040129]
+	identd(8): Replaced with a newly written one that has all the features
+		of pidentd, plus ipv6 support and cleaner implementation.
+		This version of identd is written by Peter Postma.
+		[christos 20040131]
+	ppbus(4): changed lpt(4) to configure interrupt use, printer priming
+		and auto LF on CR via lptctl(8), dropped compatibility minor
+		number bit mapping [jdolecek 20040203]
+	build.sh: add -x and -X to control building of xsrc.  [lukem 20040206]
+	locate(1): Make locate.updatedb customizable by configuration file
+		/etc/locate.conf.  [itohy 20040206]
+	kernel: add underlying support needed to support multiple mbuf cluster
+		sizes.  [matt 20040209]
+	GCC: Import GCC 3.3.3-20040209.  [mrg 20040210]
+	sh3: Switch to GCC 3.3. [uwe 20040222]
+	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
+	amiga: Add wsfont pseudo-device to amidisplaycc(4). [jandberg 20040223]
+	GCC: Import GCC 3.3.3.  [mrg 20040301]
+	progress(1): Allow printing custom text before (left of) the progress
+		bar. [hubertf 20040309]
+	dge(4): add support for Intel PRO/10GbE ethernet adapter.
+		[ragge 20040312]
+	kernel: Abstracted device interface presented by pckbd(4) so that the
+		same pckbd(4) and pms(4) drivers can be used on systems with
+		different controller chips.  [bjh21 20040313]
+	acorn32: Added iomdkbc(4) driver for IOMD keyboard and mouse ports,
+		allowing attachment of pckbd(4) and pms(4) drivers.
+		Removed opms(4) driver and old qms(4) driver, renaming wsqms(4)
+		to qms(4).  [bjh21 20040313]
+	awk(1): switched from GNU awk to The One True New AWK by
+		B.W.Kernighan.  [jdolecek 20040313]
+	openssl: Update to 0.9.7d for security fixes. [groo 20040319]
+	fdisk(8): Preserve the Drive Serial Number at bytes 440-443 of the MBR.
+		[lukem 20040322]
+	libcurses: add KEY_RESIZE, SIGWINCH handler and support for more
+		colour pairs. [jdc 20040322]
+	file(1): update to 4.08.  [pooka 20040323]
+	sysctl: Update dynamic implementation.  Solves netbsd32 compat issue
+		and adds support for descriptions.  [atatat 20040324]
+	sendmail(8): update to 8.12.11.  [atatat 20040325]
+	gzip(1):  Switch to non GPL gzip.  [mrg 20040326]
+	aac(4): Add support for Adaptec 2200S (Vulcan 2M) & Dell PERC 320/DC
+		[gendalia 20040326]
+	postfix(1): update to 2.0.19 [heas 20040327]
+	ipf(8): updated to version 4.1.1. [martti 20040328]
+	libcurses: add *echochar() functions. [jdc 20040328]
