@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
-#	$Id: netstart,v 1.17 1994/04/10 00:28:31 cgd Exp $
+#	$Id: netstart,v 1.18 1994/06/30 08:17:11 cgd Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -77,7 +77,9 @@ fi
 	    cmd="ifconfig $1 $af $name "
 	    if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
 	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-	    if [ -n "$bcaddr" ]; then cmd="$cmd broadcast $bcaddr"; fi
+	    if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+		cmd="$cmd broadcast $bcaddr";
+	    fi
 	    cmd="$cmd $extras"
 
 	    $cmd
