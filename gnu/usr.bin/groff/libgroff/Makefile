@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:44:00 mycroft Exp $
+#	$Id: Makefile,v 1.6 1993/10/05 21:39:25 pk Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
@@ -11,6 +11,7 @@ CFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
 NOPROFILE=	noprofile	
+NOPIC=		nopic
 
 CLEANFILES+=	version.cc
 version.cc: $(.CURDIR)/../VERSION

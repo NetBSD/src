@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:43:50 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/05 21:39:08 pk Exp $
 
 LIB=		bib
 SRCS=		common.cc index.cc linear.cc search.cc map.c
@@ -6,6 +6,7 @@ CFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
 NOPROFILE=	noprofile
+NOPIC=		nopic
 
 install:
 
