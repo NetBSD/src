@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.13 1997/09/08 02:21:52 mikel Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.14 1997/09/23 07:28:29 mrg Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.13 1997/09/08 02:21:52 mikel Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.14 1997/09/23 07:28:29 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -156,14 +156,16 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
 		    255 & whoami->client_address.bp_address_u.ip_addr.impno);
 
-	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr, (char *) &haddr,
-	    sizeof(haddr));
+	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr,
+	    (char *) &haddr, sizeof(haddr));
 	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
-	if (he)
-		strcpy(askname, he->h_name);
-	else {
+	if (he) {
+		strncpy(askname, he->h_name, sizeof(askname));
+		askname[sizeof(askname)-1] = 0;
+	} else {
 		inaddr.s_addr = haddr;
-		strcpy(askname, inet_ntoa(inaddr));
+		strncpy(askname, inet_ntoa(inaddr), sizeof(askname));
+		askname[sizeof(askname)-1] = 0;
 	}
 
 	if (debug)
@@ -187,14 +189,14 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
 			    255 & res.router_address.bp_address_u.ip_addr.lh,
-			    255 & res.router_address.bp_address_u.ip_addr.impno);
+			    255 &res.router_address.bp_address_u.ip_addr.impno);
 		if (dolog)
 			syslog(LOG_NOTICE, "Returning %s   %s    %d.%d.%d.%d",
 			    res.client_name, res.domain_name,
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
 			    255 & res.router_address.bp_address_u.ip_addr.lh,
-			    255 & res.router_address.bp_address_u.ip_addr.impno);
+			    255 &res.router_address.bp_address_u.ip_addr.impno);
 
 		return (&res);
 	}
@@ -229,7 +231,8 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	if (!he)
 		goto failed;
 
-	strcpy(askname, he->h_name);
+	strncpy(askname, he->h_name, sizeof(askname));
+	askname[sizeof(askname)-1] = 0;
 	err = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
 	if (err == 0) {
