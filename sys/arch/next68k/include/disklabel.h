@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2003/10/27 16:48:08 cl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2003/11/15 17:52:30 bouyer Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -34,9 +34,17 @@
 
 #include <sys/bootblock.h>
 
-#define	LABELSECTOR	NEXT68K_LABEL_SECTOR	/* sector containing label */
-#define	LABELOFFSET	NEXT68K_LABEL_OFFSET	/* offset of label in sector */
-#define LABELSIZE	NEXT68K_LABEL_SIZE	/* size of label */
+#if 0 /* XXX the following doesn't work - still need to find a proper place for the NetBSD disklabel */
+/*
+ * The NetBSD disklabel is located in the last sector of the next68k label
+ * area, so that it can coexists with a next68k v3 label
+ */
+#define	LABELSECTOR	15	/* sector containing label */
+#define	LABELOFFSET	0	/* offset of label in sector */
+#else
+#define LABELSECTOR 0
+#define LABELOFFSET 0
+#endif /* 0 */
 #define	MAXPARTITIONS	8	/* number of partitions */
 #define	RAW_PART	2	/* raw partition: xx?c */
 

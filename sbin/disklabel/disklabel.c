@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.121 2003/11/10 09:22:09 fvdl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.122 2003/11/15 17:52:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.121 2003/11/10 09:22:09 fvdl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.122 2003/11/15 17:52:30 bouyer Exp $");
 #endif
 #endif	/* not lint */
 
@@ -476,12 +476,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 
-#ifdef __sparc__
-	/* Let the kernel deal with SunOS disklabel compatibility */
-	if (0)
-#else	/* ! __sparc__ */
 	if (rflag || Iflag)
-#endif	/* ! __sparc__ */
 	{
 #ifdef USE_MBR
 		struct partition *pp = &lp->d_partitions[2];
@@ -569,6 +564,14 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		writable = 0;
 		if (ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
+		/* 
+		 * Now issue a DIOCWDINFO. This will let the kernel convert the
+		 * disklabel to some machdep format if needed.
+		 */
+		if (ioctl(f, DIOCWDINFO, lp) < 0) {
+			l_perror("ioctl DIOCWDINFO");
+			return (1);
+		}
 	} else {
 		if (ioctl(f, DIOCWDINFO, lp) < 0) {
 			l_perror("ioctl DIOCWDINFO");
