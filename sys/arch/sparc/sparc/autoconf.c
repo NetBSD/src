@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.104 1998/10/08 22:14:44 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.105 1998/10/09 10:08:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -142,9 +142,9 @@ matchbyname(parent, cf, aux)
 int
 find_cpus()
 {
+#if defined(MULTIPROCESSOR)
 	int node, n;
 
-#if defined(MULTIPROCESSOR)
 	n = 0;
 	node = findroot();
 	for (node = firstchild(node); node; node = nextsibling(node)) {
