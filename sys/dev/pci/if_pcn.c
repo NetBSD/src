@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.20 2003/07/21 08:38:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,9 +65,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.20 2003/07/21 08:38:56 jdolecek Exp $");
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $")
 #include <sys/errno.h> 
 #include <sys/device.h>
 #include <sys/queue.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -312,6 +317,10 @@ struct pcn_softc {
 	uint32_t sc_csr5;		/* prototype CSR5 register */
 	uint32_t sc_mode;		/* prototype MODE register */
 	int sc_phyaddr;			/* PHY address */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 /* sc_flags */
@@ -765,6 +774,10 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp); 
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */
@@ -1168,6 +1181,11 @@ pcn_intr(void *arg)
 		csr0 = pcn_csr_read(sc, LE_CSR0);
 		if ((csr0 & LE_C0_INTR) == 0)
 			break;
+
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, csr0);
+#endif
 
 		/* ACK the bits and re-enable interrupts. */
 		pcn_csr_write(sc, LE_CSR0, csr0 &
