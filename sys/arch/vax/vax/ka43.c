@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.13 1999/01/19 21:04:49 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.14 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,22 +52,23 @@
 #include <machine/ka43.h>
 #include <machine/clock.h>
 
-#include "smg.h"
-#include "ncr.h"
+static	void ka43_conf __P((struct device*, struct device*, void*));
+static	void ka43_steal_pages __P((void));
 
-void	ka43_conf __P((struct device*, struct device*, void*));
-void	ka43_steal_pages __P((void));
+static	int ka43_mchk __P((caddr_t));
+static	void ka43_memerr __P((void));
+#if 0
+static	void ka43_clear_errors __P((void));
+#endif
+static	int ka43_cache_init __P((void));	/* "int mapen" as argument? */
+static	int ka43_cache_reset __P((void));
+static	int ka43_cache_enable __P((void));
+static	int ka43_cache_disable __P((void));
+static	int ka43_cache_invalidate __P((void));
+static  void ka43_halt __P((void));
+static  void ka43_reboot __P((int));
+static  void ka43_clrf __P((void));
 
-int	ka43_mchk __P((caddr_t));
-void	ka43_memerr __P((void));
-
-void	ka43_clear_errors __P((void));
-
-int	ka43_cache_init __P((void));	/* "int mapen" as argument? */
-int	ka43_cache_reset __P((void));
-int	ka43_cache_enable __P((void));
-int	ka43_cache_disable __P((void));
-int	ka43_cache_invalidate __P((void));
 
 struct	cpu_dep ka43_calls = {
 	ka43_steal_pages,
@@ -79,6 +80,9 @@ struct	cpu_dep ka43_calls = {
 	chip_clkwrite,
 	7,	/* 7.6 VUP */
 	2,	/* SCB pages */
+        ka43_halt,
+        ka43_reboot,
+        ka43_clrf,
 };
 
 /*
@@ -87,6 +91,7 @@ struct	cpu_dep ka43_calls = {
  * but before leving ka43_steal_pages() we reset them to virtual addresses.
  */
 struct	ka43_cpu   *ka43_cpu	= (void*)KA43_CPU_BASE;
+extern  short *clk_page;
 
 u_int	*ka43_creg = (void*)KA43_CH2_CREG;
 u_int	*ka43_ctag = (void*)KA43_CT2_BASE;
@@ -188,6 +193,7 @@ ka43_cache_init()
 	return (ka43_cache_reset());
 }
 
+#if 0
 void
 ka43_clear_errors()
 {
@@ -195,6 +201,7 @@ ka43_clear_errors()
 	val |= KA43_SESR_SERR | KA43_SESR_LERR | KA43_SESR_CERR;
 	*ka43_creg = val;
 }
+#endif
 
 int
 ka43_cache_reset()
@@ -299,13 +306,24 @@ ka43_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
+        extern  int clk_adrshift, clk_tweak;
 
 	printf(": KA43\n");
+	ka43_cpu = (void *)vax_map_physmem(VS_REGS, 1);
+
+	ka43_creg = (void *)vax_map_physmem(KA43_CH2_CREG, 1);
+	ka43_ctag = (void *)vax_map_physmem(KA43_CT2_BASE,
+	    (KA43_CT2_SIZE/VAX_NBPG));
+
 	/*
 	 * ka43_conf() gets called with MMU enabled, now it's save to
 	 * init/reset the caches.
 	 */
 	ka43_cache_init();
+
+        clk_adrshift = 1;       /* Addressed at long's... */
+        clk_tweak = 2;          /* ...and shift two */
+	clk_page = (short *)vax_map_physmem(VS_CLOCK, 1);
 }
 
 
@@ -318,93 +336,28 @@ ka43_conf(parent, self, aux)
 void
 ka43_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail;
-        extern  short *clk_page;
-        extern  int clk_adrshift, clk_tweak;
-	int	junk, val;
+	extern	vaddr_t avail_start;
+	int	val;
 
         /* Interrupt vector number in interrupt mask table */
         inr_ni = VS3100_NI;
         inr_sr = VS3100_SR;
         inr_st = VS3100_ST;
         inr_vf = VS3100_VF;
-	/* 
-	 * SCB is already copied/initialized at addr avail_start
-	 * by pmap_bootstrap(), but it's not yet mapped. Thus we use
-	 * the MAPPHYS() macro to reserve these two pages and to
-	 * perform the mapping. The mapped address is assigned to junk.
-	 */
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
 
-        clk_adrshift = 1;       /* Addressed at long's... */
-        clk_tweak = 2;          /* ...and shift two */
-        MAPVIRT(clk_page, 2);
-        pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA43_WAT_BASE,
-            (vm_offset_t)KA43_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* LANCE CSR */
-	MAPVIRT(lance_csr, 1);
-	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(vs_cpu, 1);
-	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(dz_regs, 2);
-	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(lance_addr, 1);
-	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* 2nd level CCR */
-	MAPVIRT(ka43_creg, 1);
-	pmap_map((vm_offset_t)ka43_creg, (vm_offset_t)KA43_CH2_CREG,
-	    (vm_offset_t)KA43_CH2_CREG + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* 2nd level CTA */
-	MAPVIRT(ka43_ctag, KA43_CT2_SIZE/VAX_NBPG);
-	pmap_map((vm_offset_t)ka43_ctag, (vm_offset_t)KA43_CT2_BASE,
-	    (vm_offset_t)KA43_CT2_BASE + KA43_CT2_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-#if NNCR > 0
-	/* SCSI controller */
-	MAPVIRT(sca_regs, (KA43_SCS_SIZE / VAX_NBPG));
-	pmap_map((vm_offset_t)sca_regs, (vm_offset_t)KA43_SCS_BASE,
-	    (vm_offset_t)KA43_SCS_BASE + KA43_SCS_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	/* SCSI DMA.  Not used right now, untested. */
-	MAPVIRT(dma_area, (KA43_DMA_SIZE / VAX_NBPG));
-	pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA43_DMA_BASE,
-	    (vm_offset_t)KA43_DMA_BASE + KA43_DMA_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
-#endif
-	/*
-	 * Oh holy shit! It took me over one year(!) to find out that
-	 * the 3100/76 has to use diag-mem instead of physical memory
-	 * for communication with LANCE (using phys-mem results in
-	 * parity errors and mchk exceptions with code 17 (0x11)).
-	 *
-	 * Many thanks to Matt Thomas, without his help it could have
-	 * been some more years...  ;-)
-	 */
-#define	LEMEM (((int)le_iomem & ~KERNBASE)|KA43_DIAGMEM)
-	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)le_iomem, LEMEM, LEMEM + NI_IOSIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-#if NSMG > 0
-	if ((vax_confdata & 0x80) == 0) {
-		MAPVIRT(sm_addr, (SMSIZE / VAX_NBPG));
-		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
-		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
-		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
-	}
-#endif
+        /*
+         * Oh holy shit! It took me over one year(!) to find out that
+         * the 3100/76 has to use diag-mem instead of physical memory
+         * for communication with LANCE (using phys-mem results in 
+         * parity errors and mchk exceptions with code 17 (0x11)).
+         * 
+         * Many thanks to Matt Thomas, without his help it could have
+         * been some more years...  ;-)
+         */
+#define LEMEM (((int)le_iomem & ~KERNBASE)|KA43_DIAGMEM)
+        MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
+        pmap_map((vm_offset_t)le_iomem, LEMEM, LEMEM + NI_IOSIZE,
+            VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * if LANCE\'s io-buffer is above 16 MB, then the appropriate flag
@@ -418,12 +371,6 @@ ka43_steal_pages()
 		val |= KA43_PCTL_DMA;
 	ka43_cpu->parctl = val;		/* and write new value */
 
-	/*
-	 * Clear restart and boot in progress flags in the CPMBX. 
-	 */
-	((struct ka43_clock *)KA43_WAT_BASE)->cpmbx =
-	    ((struct ka43_clock *)KA43_WAT_BASE)->cpmbx & 0xF0;
-
 #if 0
 	/*
 	 * Clear all error flags, not really neccessary here, this will
@@ -431,10 +378,31 @@ ka43_steal_pages()
 	 */
 	ka43_clear_errors();
 #endif
-
-	/*
-	 * MM is not yet enabled, thus we still used the physical addresses,
-	 * but before leaving this routine, we need to reset them to virtual.
-	 */
-	ka43_cpu = (void *)vs_cpu;
 }
+
+static void
+ka43_clrf()
+{
+        struct ka43_clock *clk = (void *)clk_page;
+
+        /*
+         * Clear restart and boot in progress flags in the CPMBX.
+         */
+        clk->cpmbx = (clk->cpmbx & ~0xf0);
+}
+
+static void
+ka43_halt()
+{
+        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+        asm("halt");
+}
+
+static void
+ka43_reboot(arg)
+        int arg;
+{
+        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+        asm("halt");
+}
+

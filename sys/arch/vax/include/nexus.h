@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.12 1996/08/20 14:19:43 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.13 1999/02/02 18:37:22 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -187,9 +187,5 @@ extern caddr_t *nex_vec;
 /* Memory recover defines */
 #define	MCHK_PANIC	-1
 #define	MCHK_RECOVERED	0
-
-#ifndef	_LOCORE
-struct	nexus *nexus;
-#endif
 
 #endif /* _VAX_NEXUS_H_ */

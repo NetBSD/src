@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.4 1999/01/19 21:04:49 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.5 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -62,6 +62,7 @@ static	void	ka46_halt __P((void));
 static	void	ka46_reboot __P((int));
 static	void	ka46_cache_enable __P((void));
 
+struct	vs_cpu *ka46_cpu;
 extern  short *clk_page;
 
 /* 
@@ -87,9 +88,18 @@ ka46_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
+        extern  int clk_adrshift, clk_tweak;
+
 	printf(": KA46\n");
+	ka46_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	printf("%s: turning on floating point chip\n", self->dv_xname);
 	mtpr(2, PR_ACCS); /* Enable floating points */
+	/*
+	 * Setup parameters necessary to read time from clock chip.
+	 */
+	clk_adrshift = 1;       /* Addressed at long's... */
+	clk_tweak = 2;          /* ...and shift two */
+	clk_page = (short *)vax_map_physmem(VS_CLOCK, 1);
 }
 
 void
@@ -142,46 +152,12 @@ void
 ka46_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
-        extern  int clk_adrshift, clk_tweak;
-	int	junk, i;
+	int	i;
 
         /* Interrupt vector number in interrupt mask table */
         inr_ni = VS4000_NI;
         inr_sr = VS4000_SR;
         inr_st = VS4000_ST;
-	/* 
-	 * SCB is already copied/initialized at addr avail_start
-	 * by pmap_bootstrap(), but it's not yet mapped. Thus we use
-	 * the MAPPHYS() macro to reserve these two pages and to
-	 * perform the mapping. The mapped address is assigned to junk.
-	 */
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
-
-	/*
-	 * Setup parameters necessary to read time from clock chip.
-	 */
-	clk_adrshift = 1;       /* Addressed at long's... */
-	clk_tweak = 2;          /* ...and shift two */
-	MAPVIRT(clk_page, 1);
-	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
-	    (vm_offset_t)KA410_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* LANCE CSR & DMA memory */
-	MAPVIRT(lance_csr, 1);
-	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(vs_cpu, 1);
-	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(dz_regs, 2);
-	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(lance_addr, 1);
-	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 1999/01/01 21:43:19 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.45 1999/02/02 18:37:21 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -342,3 +342,35 @@ vunmapbuf(bp, len)
 	bp->b_saveaddr = 0;
 }
 #endif
+
+/*
+ * Map in a bunch of pages read/writeable for the kernel.
+ */
+void
+ioaccess(vaddr, paddr, npgs)
+	vaddr_t vaddr;
+	paddr_t paddr;
+	int npgs;
+{
+	u_int *pte = (u_int *)kvtopte(vaddr);
+	int i;
+
+	for (i = 0; i < npgs; i++)
+		pte[i] = PG_V | PG_KW | (PG_PFNUM(paddr) + i);
+}
+
+/*
+ * Opposite to the above: just forget their mapping.
+ */
+void
+iounaccess(vaddr, npgs)
+	vaddr_t vaddr;
+	int npgs;
+{
+	u_int *pte = (u_int *)kvtopte(vaddr);
+	int i;
+
+	for (i = 0; i < npgs; i++)
+		pte[i] = 0;
+	mtpr(0, PR_TBIA);
+}

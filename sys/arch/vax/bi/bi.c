@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.10 1998/11/29 15:12:57 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.11 1999/02/02 18:37:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -132,16 +132,20 @@ bi_attach(parent, self, aux)
 	int nodenr;
 
 	printf("\n");
-	binode = bi->bi_base = (struct bi_node *)bp->bp_addr;
+	bi->bi_base = (struct bi_node *)bp->bp_addr;
 
 	ba.ba_intcpu = 1 << mastercpu;
+#define	NODEPGS	(sizeof(struct bi_node) / VAX_NBPG)
 	for (nodenr = 0; nodenr < NNODEBI; nodenr++) {
-		if (badaddr((caddr_t)&binode[nodenr], 4))
-			continue;
-
-		ba.ba_node = &binode[nodenr];
-		ba.ba_nodenr = nodenr;
-		ba.ba_busnr = 0; /* XXX */
-		config_found(self, &ba, bi_print);
+		binode = (struct bi_node *)vax_map_physmem(
+		    (paddr_t)(bi->bi_base + nodenr), NODEPGS);
+		if (badaddr((caddr_t)binode, 4)) {
+			vax_unmap_physmem((vaddr_t)binode, NODEPGS);
+		} else {
+			ba.ba_node = binode;
+			ba.ba_nodenr = nodenr;
+			ba.ba_busnr = 0; /* XXX */
+			config_found(self, &ba, bi_print);
+		}
 	}
 }

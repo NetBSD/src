@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.70 1999/01/19 21:04:49 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.71 1999/02/02 18:37:21 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -144,6 +144,9 @@ int		physmem;
 int		todrstopped = 0;
 int		dumpsize = 0;
 
+#define	IOMAPSZ	100
+static	struct map iomap[IOMAPSZ];
+
 caddr_t allocsys __P((caddr_t));
 
 #define valloclim(name, type, num, lim) \
@@ -170,6 +173,10 @@ int		nbuf = 0;
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
+#endif
+
+#ifdef DEBUG
+int iospace_inited = 0;
 #endif
 
 void
@@ -477,6 +484,16 @@ void
 consinit()
 {
 	extern int smgprobe(void), smgcninit(void);
+
+	/*
+	 * Init I/O memory resource map. Must be done before cninit()
+	 * is called; we may want to use iospace in the console routines.
+	 */
+	rminit(iomap, IOSPSZ, (long)1, "iomap", IOMAPSZ);
+#ifdef DEBUG
+	iospace_inited = 1;
+#endif
+
 	cninit();
 #if NSMG
 	/* XXX - do this probe after everything else due to wscons trouble */
@@ -488,7 +505,9 @@ consinit()
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		extern void ksym_init(int *, int *);
+		ksym_init(&end, esym);
+//		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef donotworkbyunknownreason
 	if (boothowto & RB_KDB)
@@ -844,22 +863,61 @@ process_sstep(p, sstep)
 	return (0);
 }
 
-#ifdef notyet
+#undef PHYSMEMDEBUG
 /*
  * Allocates a virtual range suitable for mapping in physical memory.
  * This differs from the bus_space routines in that it allocates on
- * physical page sizes instead of logical sizes.
+ * physical page sizes instead of logical sizes. This implementation
+ * uses resource maps when allocating space, which is allocated from 
+ * the IOMAP submap. The implementation is similar to the uba resource
+ * map handling. Size is given in pages.
+ *
+ * It is known that the first page in the iospace area is unused; it may
+ * be use by console device drivers (before the map system is inited).
  */
 vaddr_t
 vax_map_physmem(phys, size)
 	paddr_t phys;
-	psize_t size;
+	int size;
 {
+	extern vaddr_t iospace;
+	vaddr_t addr;
+	int pageno;
+	static int warned = 0;
 
-	if (size > NBPG) { /* Need to alloc new virtual chunk */
-
-	} else {
-
-	}
-}
+#ifdef DEBUG
+	if (!iospace_inited)
+		panic("vax_map_physmem: called before rminit()?!?");
 #endif
+	pageno = rmalloc(iomap, size);
+	if (pageno == 0) {
+		if (warned++ == 0) /* Warn only once */
+			printf("vax_map_physmem: iomap too small\n");
+		return 0;
+	}
+	addr = iospace + (pageno * VAX_NBPG);
+	ioaccess(addr, phys, size);
+#ifdef PHYSMEMDEBUG
+	printf("vax_map_physmem: alloc'ed %d pages for paddr %lx, at %lx\n",
+	    size, phys, addr);
+#endif
+	return addr;
+}
+
+/*
+ * Unmaps the previous mapped (addr, size) pair.
+ */
+void
+vax_unmap_physmem(addr, size)
+	vaddr_t addr;
+	int size;
+{
+	extern vaddr_t iospace;
+	int pageno = (addr - iospace) / VAX_NBPG;
+#ifdef PHYSMEMDEBUG
+	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
+	    size, addr);
+#endif
+	rmfree(iomap, pageno, size);
+	iounaccess(addr, size);
+}

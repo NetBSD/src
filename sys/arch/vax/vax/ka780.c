@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.11 1999/01/19 21:04:49 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.12 1999/02/02 18:37:21 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -61,13 +61,12 @@ static	void	ka780_conf __P((struct device *, struct device *, void *));
 void	ka780_memenable __P((struct sbi_attach_args *, void *));
 static	void	ka780_memerr __P((void));
 static	int	ka780_mchk __P((caddr_t));
-static	void	ka780_steal_pages __P((void));
 
 /*
  * Declaration of 780-specific calls.
  */
 struct	cpu_dep ka780_calls = {
-	ka780_steal_pages,
+	0,
 	generic_clock,
 	ka780_mchk,
 	ka780_memerr,
@@ -333,17 +332,4 @@ ka780_conf(parent, self, aux)
 	} else
 		printf("no FPA\n");
 
-}
-
-void
-ka780_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct nexus *nexus;
-	int	junk;
-
-	MAPPHYS(junk, 4, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, vax_btoc(8192*16));
-	pmap_map((vm_offset_t)nexus, 0x20000000, 0x20020000,
-	    VM_PROT_READ|VM_PROT_WRITE);
 }

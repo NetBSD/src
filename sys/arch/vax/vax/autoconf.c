@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1998/10/27 21:18:52 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1999/02/02 18:37:20 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -52,12 +52,13 @@
 
 #include <vax/vax/gencons.h>
 
+#include <vax/bi/bireg.h>
+
 #include "locators.h"
 
 void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
-struct nexus *nexus;
 int	mastercpu;	/* chief of the system */
 struct device *booted_from;
 
@@ -195,9 +196,7 @@ mainbus_attach(parent, self, hej)
 		switch (vax_cputype) {
 #if VAX8200
 		case VAX_8200: {
-			extern void *bi_nodebase;
-
-			bp.bp_addr = (int)bi_nodebase;
+			bp.bp_addr = BI_BASE(0,0);
 			config_found(self, &bp, mainbus_print);
 			break;
 		}
@@ -233,13 +232,17 @@ find_sbi(self, bp, print)
 {
 	volatile int tmp;
 	volatile struct sbia_regs *sbiar;
-	extern	struct ioa *ioa;
+	struct ioa *ioa;
 	int	type, i;
 
 	for (i = 0; i < MAXNIOA; i++) {
-		if (badaddr((caddr_t)&ioa[i], 4))
+		ioa = (struct ioa *)vax_map_physmem((paddr_t)IOA8600(0),
+		    (IOAMAPSIZ / VAX_NBPG));
+		if (badaddr((caddr_t)ioa, 4)) {
+			vax_unmap_physmem((vaddr_t)ioa, (IOAMAPSIZ / VAX_NBPG));
 			continue;
-		tmp = ioa[i].ioacsr.ioa_csr;
+		}
+		tmp = ioa->ioacsr.ioa_csr;
 		type = tmp & IOA_TYPMSK;
 
 		switch (type) {
@@ -248,7 +251,7 @@ find_sbi(self, bp, print)
 			bp->type = "sbi";
 			bp->num = i;
 			config_found(self, bp, mainbus_print);
-			sbiar = (void *)&ioa[i];
+			sbiar = (void *)ioa;
 			sbiar->sbi_errsum = -1;
 			sbiar->sbi_error = 0x1000;
 			sbiar->sbi_fltsts = 0xc0000;
@@ -258,6 +261,7 @@ find_sbi(self, bp, print)
 			printf("IOAdapter %x unsupported\n", type);
 			break;
 		}
+		vax_unmap_physmem((vaddr_t)ioa, (IOAMAPSIZ / VAX_NBPG));
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.12 1999/01/19 21:04:49 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.13 1999/02/02 18:37:21 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -53,20 +53,17 @@
 #include <machine/sid.h>
 #include <vax/vax/gencons.h>
 
-struct	ioa *ioa; 
-
 void	ka86_conf __P((struct device *, struct device *, void *));
 void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
 void	ka86_memerr __P((void));
 int	ka86_mchk __P((caddr_t));
-void	ka86_steal_pages __P((void));
 void	ka86_reboot __P((int));
 void	ka86_clrf __P((void));
 
 void	crlattach __P((void));
 
 struct	cpu_dep	ka860_calls = {
-	ka86_steal_pages,
+	0,
 	generic_clock,
 	ka86_mchk,
 	ka86_memerr,
@@ -270,35 +267,6 @@ ka86_mchk(cmcf)
 	printf("\tpc %x psl %x\n", mcf->mc86_pc, mcf->mc86_psl);
 	mtpr(0, PR_EHSR);
 	return (MCHK_PANIC);
-}
-
-void
-ka86_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct nexus *nexus;
-	int	junk;
- 
-	/* 8600 may have 2 SBI's == 4 pages */
-	MAPPHYS(junk, 4, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* Map in ioa register space */
-	MAPVIRT(ioa, MAXNIOA);
-	pmap_map((vm_offset_t)ioa, (u_int)IOA8600(0),
-	    (u_int)IOA8600(0) + IOAMAPSIZ, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)ioa + IOAMAPSIZ, (u_int)IOA8600(1),
-	    (u_int)IOA8600(1) + IOAMAPSIZ, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)ioa + 2 * IOAMAPSIZ, (u_int)IOA8600(2),
-	    (u_int)IOA8600(2) + IOAMAPSIZ, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)ioa + 3 * IOAMAPSIZ, (u_int)IOA8600(3),
-	    (u_int)IOA8600(3) + IOAMAPSIZ, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* Map in possible nexus space */
-	MAPVIRT(nexus, vax_btoc(NEXSIZE * MAXNNEXUS));
-	pmap_map((vm_offset_t)nexus, (u_int)NEXA8600,
-	    (u_int)NEXA8600 + NNEX8600 * NEXSIZE, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)&nexus[NNEXSBI], (u_int)NEXB8600,
-	    (u_int)NEXB8600 + NNEX8600 * NEXSIZE, VM_PROT_READ|VM_PROT_WRITE);
 }
 
 struct ka86 {

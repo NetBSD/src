@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.13 1998/12/06 14:33:54 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.14 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,6 +70,8 @@ int	vsbus_print	__P((void *, const char *));
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
 
+static	struct vs_cpu *vs_cpu;
+
 #define VSBUS_MAXINTR	8
 
 struct	vsbus_softc {
@@ -127,6 +129,8 @@ vsbus_attach(parent, self, aux)
 	struct	vsbus_attach_args va;
 
 	printf("\n");
+
+	vs_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	/*
 	 * first setup interrupt-table, so that devices can register
 	 * their interrupt-routines...
@@ -145,11 +149,9 @@ vsbus_attach(parent, self, aux)
 	config_found(self, &va, vsbus_print);
 
 	/* If sm_addr is set, a monochrome graphics adapter is found */
-	/* XXX ckeck for color adapter */
-	if (sm_addr) {
-		va.va_type = inr_vf;
-		config_found(self, &va, vsbus_print);
-	}
+	/* XXX - fixa! */
+	va.va_type = inr_vf;
+	config_found(self, &va, vsbus_print);
 
 	/* XXX - Avoid searching for SCSI on 4000/60 */
 	if (vax_boardtype == VAX_BTYP_46)

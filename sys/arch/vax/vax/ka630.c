@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.13 1999/01/19 21:04:49 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.14 1999/02/02 18:37:21 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,13 +48,13 @@
 #include <machine/pmap.h>
 #include <machine/ka630.h>
 #include <machine/clock.h>
+#include <machine/vsbus.h>
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
 static void ka630_conf __P((struct device *, struct device *, void *));
 static void ka630_memerr __P((void));
 static int ka630_mchk __P((caddr_t));
-static void ka630_steal_pages __P((void));
 static void ka630_halt __P((void));
 static void ka630_reboot __P((int));
 static void ka630_clrf __P((void));
@@ -62,7 +62,7 @@ static void ka630_clrf __P((void));
 extern	short *clk_page;
 
 struct	cpu_dep ka630_calls = {
-	ka630_steal_pages,
+	0,
 	no_nicr_clock,
 	ka630_mchk,
 	ka630_memerr,
@@ -84,6 +84,19 @@ ka630_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
+	extern	int clk_adrshift, clk_tweak;
+
+	clk_adrshift = 0;	/* Addressed at short's... */
+	clk_tweak = 0;		/* ...and no shifting */
+	clk_page = (short *)vax_map_physmem((paddr_t)KA630CLK, 1);
+
+	uvaxIIcpu_ptr = (void *)vax_map_physmem(VS_REGS, 1);
+
+	/*
+	 * Enable memory parity error detection and clear error bits.
+	 */
+	uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
+	    UVAXIIMSER_LEB);
 
 	printf(": %s\n", "KA630");
 }
@@ -133,35 +146,6 @@ ka630_mchk(cmcf)
 		printf("\n");
 	}
 	return (-1);
-}
-
-void
-ka630_steal_pages()
-{
-	extern	vaddr_t avail_start, virtual_avail;
-	extern	int clk_adrshift, clk_tweak;
-	int	junk;
-
-	/*
-	 * MicroVAX II: map in cpu and clock registers.
-	 */
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(uvaxIIcpu_ptr, 1);
-	pmap_map((vaddr_t)uvaxIIcpu_ptr, (vaddr_t)UVAXIICPU,
-	    (vaddr_t)UVAXIICPU + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	clk_adrshift = 0;	/* Addressed at short's... */
-	clk_tweak = 0;		/* ...and no shifting */
-	MAPVIRT(clk_page, 1);
-	pmap_map((vaddr_t)clk_page, (vaddr_t)KA630CLK,
-	    (vaddr_t)KA630CLK + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/*
-	 * Enable memory parity error detection and clear error bits.
-	 */
-	UVAXIICPU->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
-	    UVAXIIMSER_LEB);
 }
 
 static void

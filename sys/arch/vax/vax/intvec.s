@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.36 1999/01/19 21:04:49 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.37 1999/02/02 18:37:20 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -340,7 +340,7 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 #ifdef VAX46
 		cmpl	_vax_boardtype,$VAX_BTYP_46
 		bneq	1f
-		movl	_vs_cpu,r0
+		movl	_ka46_cpu,r0
 		clrl	0x1c(r0)
 #endif
 1:		pushl	sp

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 1998/08/20 23:52:42 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.25 1999/02/02 18:37:20 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,10 +63,12 @@ microtime(tvp)
 
 	switch (vax_boardtype) {
 #ifdef VAX46
-	case VAX_BTYP_46:
-		i = *(volatile int *)(&vs_cpu->vc_diagtimu);
+	case VAX_BTYP_46: {
+		extern struct vs_cpu *ka46_cpu;
+		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
 		i = (i >> 16) * 1024 + (i & 0x3ff);
 		break;
+		}
 #endif
 	default:
 		i = mfpr(PR_ICR);

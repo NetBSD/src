@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.16 1999/01/19 21:04:49 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.17 1999/02/02 18:37:21 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -54,7 +54,6 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/mtpr.h>
-#include <machine/nexus.h>
 #include <machine/sid.h>
 
 struct	ka650_merr *ka650merr_ptr;
@@ -62,7 +61,6 @@ struct	ka650_cbd *ka650cbd_ptr;
 struct	ka650_ssc *ka650ssc_ptr;
 struct	ka650_ipcr *ka650ipcr_ptr;
 int	*KA650_CACHE_ptr;
-static	int subtyp;
 
 #define	CACHEOFF	0
 #define	CACHEON		1
@@ -72,7 +70,7 @@ static void ka650_halt __P((void));
 static void ka650_reboot __P((int));
 
 struct	cpu_dep	ka650_calls = {
-	uvaxIII_steal_pages,
+	0, /* No special page stealing anymore */
 	no_nicr_clock,
 	uvaxIII_mchk,
 	uvaxIII_memerr,
@@ -93,55 +91,30 @@ uvaxIII_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	int syssub = GETSYSSUBT(subtyp);
+	int syssub = GETSYSSUBT(vax_siedata);
+
+	/*
+	 * MicroVAX III: We map in memory error registers,
+	 * cache control registers, SSC registers,
+	 * interprocessor registers and cache diag space.
+	 */
+	ka650merr_ptr = (void *)vax_map_physmem(KA650_MERR, 1);
+	ka650cbd_ptr = (void *)vax_map_physmem(KA650_CBD, 1);
+	ka650ssc_ptr = (void *)vax_map_physmem(KA650_SSC, 3);
+	ka650ipcr_ptr = (void *)vax_map_physmem(KA650_IPCR, 1);
+	KA650_CACHE_ptr = (void *)vax_map_physmem(KA650_CACHE,
+	    (KA650_CACHESIZE/VAX_NBPG));
 
 	printf(": KA6%d%d, CVAX microcode rev %d Firmware rev %d\n",
 	    syssub == VAX_SIE_KA640 ? 4 : 5,
 	    syssub == VAX_SIE_KA655 ? 5 : 0,
-	    (vax_cpudata & 0xff), GETFRMREV(subtyp));
+	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
 	ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
-}
-
-void
-uvaxIII_steal_pages()
-{
-	extern	vm_offset_t virtual_avail;
-
-	/*
-	 * MicroVAX III: We map in Qbus map registers, memory
-	 * error registers, cache control registers, SSC registers,
-	 * interprocessor registers and cache diag space.
-	 */
-	MAPVIRT(nexus, vax_btoc(0x400000)); /* Qbus map registers */
-	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(ka650merr_ptr, 1); /* mem err & mem config regs */
-	pmap_map((vm_offset_t)ka650merr_ptr, (vm_offset_t)KA650_MERR,
-	    KA650_MERR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(ka650cbd_ptr, 1); /* cache control & boot/diag regs */
-	pmap_map((vm_offset_t)ka650cbd_ptr, (vm_offset_t)KA650_CBD,
-	    KA650_CBD + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(ka650ssc_ptr, 3); /* SSC regs (& console prog mail box) */
-	pmap_map((vm_offset_t)ka650ssc_ptr, (vm_offset_t)KA650_SSC,
-	    KA650_SSC + VAX_NBPG * 3, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(ka650ipcr_ptr, 1); /* InterProcessor Com Regs */
-	pmap_map((vm_offset_t)ka650ipcr_ptr, (vm_offset_t)KA650_IPCR,
-	    KA650_IPCR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(KA650_CACHE_ptr, 128); /* Cache Diagnostic space (for flush) */
-	pmap_map((vm_offset_t)KA650_CACHE_ptr, (vm_offset_t)KA650_CACHE,
-	    KA650_CACHE + KA650_CACHESIZE, VM_PROT_READ|VM_PROT_WRITE);
-
-	subtyp = *(int *)0x20040004;
 }
 
 void
