@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.529 2005/02/22 14:39:58 peter Exp $
+# $NetBSD: mi,v 1.530 2005/03/06 10:28:15 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1728,6 +1728,7 @@
 ./usr/share/i18n/esdb/UTF/UTF-32.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF/UTF-32BE.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF/UTF-32LE.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/UTF/UTF-7.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF/UTF-8.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/esdb.alias		base-sysutil-share	nls
 ./usr/share/i18n/esdb/esdb.alias.db		base-sysutil-share	nls
