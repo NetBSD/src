@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.6 2003/10/21 01:44:45 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.7 2004/11/14 03:30:10 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.6 2003/10/21 01:44:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.7 2004/11/14 03:30:10 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -663,7 +663,7 @@ netbsd32_nanosleep(l, v, retval)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &rqt);
-	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
+	TIMESPEC_TO_TIMEVAL(&atv,&rqt);
 	if (itimerfix(&atv))
 		return (EINVAL);
 

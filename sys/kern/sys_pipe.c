@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.59 2004/11/06 02:03:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.60 2004/11/14 03:30:09 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.59 2004/11/06 02:03:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.60 2004/11/14 03:30:09 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1258,7 +1258,7 @@ pipe_stat(fp, ub, td)
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec)
+	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
 	ub->st_uid = fp->f_cred->cr_uid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.42 2004/04/27 01:12:44 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.43 2004/11/14 03:30:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,14 +59,14 @@ struct timespec {
 	long	tv_nsec;	/* and nanoseconds */
 };
 
-#define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
+#define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
 	(ts)->tv_sec = (tv)->tv_sec;					\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\
-}
-#define	TIMESPEC_TO_TIMEVAL(tv, ts) {					\
+} while (/*CONSTCOND*/0)
+#define	TIMESPEC_TO_TIMEVAL(tv, ts) do {				\
 	(tv)->tv_sec = (ts)->tv_sec;					\
 	(tv)->tv_usec = (ts)->tv_nsec / 1000;				\
-}
+} while (/*CONSTCOND*/0)
 
 /*
  * Note: timezone is obsolete. All timezone handling is now in
