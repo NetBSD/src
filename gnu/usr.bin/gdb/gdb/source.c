@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: source.c,v 1.1 1994/01/28 12:40:42 pk Exp $
+	$Id: source.c,v 1.2 1995/01/26 09:09:38 mycroft Exp $
 */
 
 #include "defs.h"
@@ -632,86 +632,50 @@ find_source_lines (s, desc)
      int desc;
 {
   struct stat st;
-  register char *data, *p, *end;
   int nlines = 0;
   int lines_allocated = 1000;
-  int *line_charpos;
+  fpos_t *line_charpos;
   long exec_mtime;
-  int size;
-#ifdef LSEEK_NOT_LINEAR
-  char c;
-#endif
+  FILE *stream;
+  int c;
+  int newline;
 
-  line_charpos = (int *) xmmalloc (s -> objfile -> md,
-				   lines_allocated * sizeof (int));
+  line_charpos = (fpos_t *) xmmalloc (s -> objfile -> md,
+				      lines_allocated * sizeof (fpos_t));
   if (fstat (desc, &st) < 0)
-   perror_with_name (s->filename);
+    perror_with_name (s->filename);
 
   if (exec_bfd) {
     exec_mtime = bfd_get_mtime(exec_bfd);
     if (exec_mtime && exec_mtime < st.st_mtime)
-     printf_filtered ("Source file is more recent than executable.\n");
+      printf_filtered ("Source file is more recent than executable.\n");
   }
 
-#ifdef LSEEK_NOT_LINEAR
-  /* Have to read it byte by byte to find out where the chars live */
+  stream = fdopen (desc, FOPEN_RT);
+  clearerr (stream);
 
-   line_charpos[0] = tell(desc);
-   nlines = 1;
-   while (myread(desc, &c, 1)>0) 
-   {
-     if (c == '\n') 
-     {
-       if (nlines == lines_allocated) 
-       {
-	 lines_allocated *= 2;
-	 line_charpos =
-	  (int *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
-			     sizeof (int) * lines_allocated);
-       }
-       line_charpos[nlines++] = tell(desc);
-     }
-   }
-
-#else
-  /* st_size might be a large type, but we only support source files whose 
-     size fits in an int.  FIXME. */
-  size = (int) st.st_size;
-
-#ifdef BROKEN_LARGE_ALLOCA
-  data = (char *) xmalloc (size);
-  make_cleanup (free, data);
-#else
-  data = (char *) alloca (size);
-#endif
-  if (myread (desc, data, size) < 0)
-   perror_with_name (s->filename);
-  end = data + size;
-  p = data;
-  line_charpos[0] = 0;
-  nlines = 1;
-  while (p != end)
-  {
-    if (*p++ == '\n'
-	/* A newline at the end does not start a new line.  */
-	&& p != end)
+  newline = 1;
+  while (1)
     {
-      if (nlines == lines_allocated)
-      {
-	lines_allocated *= 2;
-	line_charpos =
-	 (int *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
-			    sizeof (int) * lines_allocated);
-      }
-      line_charpos[nlines++] = p - data;
+      c = fgetc (stream);
+      if (c == EOF) break;
+      if (newline)
+	{
+	  if (nlines == lines_allocated)
+	    {
+	      lines_allocated *= 2;
+	      line_charpos =
+	       (fpos_t *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
+				     lines_allocated * sizeof (fpos_t));
+	    }
+	  fgetpos (stream, &line_charpos[nlines++]);
+	}
+      newline = c == '\n';
     }
-  }
-#endif
-  s->nlines = nlines;
-  s->line_charpos =
-   (int *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
-		      nlines * sizeof (int));
-
+    s->nlines = nlines;
+    s->line_charpos =
+     (fpos_t *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
+			   nlines * sizeof (fpos_t));
 }
 
 /* Return the character position of a line LINE in symtab S.
@@ -719,7 +683,7 @@ find_source_lines (s, desc)
 
 #if 0	/* Currently unused */
 
-int
+fpos_t
 source_line_charpos (s, line)
      struct symtab *s;
      int line;
@@ -807,7 +771,7 @@ identify_source_line (s, line, mid_statement, pc)
   if (line > s->nlines)
     /* Don't index off the end of the line_charpos array.  */
     return 0;
-  printf ("\032\032%s:%d:%d:%s:0x%lx\n", s->fullname,
+  printf ("\032\032%s:%d:%qd:%s:0x%lx\n", s->fullname,
 	  line, s->line_charpos[line - 1],
 	  mid_statement ? "middle" : "beg",
 	  (unsigned long) pc);
@@ -858,14 +822,14 @@ print_source_lines (s, line, stopline, noerror)
 	     line, s->filename, s->nlines);
     }
 
-  if (lseek (desc, s->line_charpos[line - 1], 0) < 0)
-    {
-      close (desc);
-      perror_with_name (s->filename);
-    }
-
   stream = fdopen (desc, FOPEN_RT);
   clearerr (stream);
+
+  if (fsetpos (stream, &s->line_charpos[line - 1]) < 0)
+    {
+      fclose (stream);
+      perror_with_name (s->filename);
+    }
 
   while (nlines-- > 0)
     {
@@ -1210,39 +1174,40 @@ forward_search_command (regex, from_tty)
       error ("Expression not found");
     }
 
-  if (lseek (desc, current_source_symtab->line_charpos[line - 1], 0) < 0)
+  stream = fdopen (desc, FOPEN_RT);
+  clearerr (stream);
+
+  if (fsetpos (stream, &current_source_symtab->line_charpos[line - 1]) < 0)
     {
-      close (desc);
+      fclose (stream);
       perror_with_name (current_source_symtab->filename);
     }
 
-  stream = fdopen (desc, FOPEN_RT);
-  clearerr (stream);
-  while (1) {
+  while (1)
+    {
 /* FIXME!!!  We walk right off the end of buf if we get a long line!!! */
-    char buf[4096];		/* Should be reasonable??? */
-    register char *p = buf;
+      char buf[4096];		/* Should be reasonable??? */
+      register char *p = buf;
 
-    c = getc (stream);
-    if (c == EOF)
-      break;
-    do {
-      *p++ = c;
-    } while (c != '\n' && (c = getc (stream)) >= 0);
+      c = fgetc (stream);
+      if (c == EOF)
+	break;
+      do {
+	*p++ = c;
+      } while (c != '\n' && (c = fgetc (stream)) >= 0);
 
-    /* we now have a source line in buf, null terminate and match */
-    *p = 0;
-    if (re_exec (buf) > 0)
-      {
-	/* Match! */
-	fclose (stream);
-	print_source_lines (current_source_symtab,
-			   line, line+1, 0);
-	current_source_line = max (line - lines_to_list / 2, 1);
-	return;
-      }
-    line++;
-  }
+      /* we now have a source line in buf, null terminate and match */
+      *p = 0;
+      if (re_exec (buf) > 0)
+	{
+	  /* Match! */
+	  fclose (stream);
+	  print_source_lines (current_source_symtab, line, line+1, 0);
+	  current_source_line = max (line - lines_to_list / 2, 1);
+	  return;
+	}
+      line++;
+    }
 
   printf_filtered ("Expression not found\n");
   fclose (stream);
@@ -1282,26 +1247,27 @@ reverse_search_command (regex, from_tty)
       error ("Expression not found");
     }
 
-  if (lseek (desc, current_source_symtab->line_charpos[line - 1], 0) < 0)
+  stream = fdopen (desc, FOPEN_RT);
+  clearerr (stream);
+
+  if (fsetpos (stream, &current_source_symtab->line_charpos[line - 1]) < 0)
     {
-      close (desc);
+      fclose (stream);
       perror_with_name (current_source_symtab->filename);
     }
 
-  stream = fdopen (desc, FOPEN_RT);
-  clearerr (stream);
   while (line > 1)
     {
 /* FIXME!!!  We walk right off the end of buf if we get a long line!!! */
       char buf[4096];		/* Should be reasonable??? */
       register char *p = buf;
 
-      c = getc (stream);
+      c = fgetc (stream);
       if (c == EOF)
 	break;
       do {
 	*p++ = c;
-      } while (c != '\n' && (c = getc (stream)) >= 0);
+      } while (c != '\n' && (c = fgetc (stream)) >= 0);
 
       /* We now have a source line in buf; null terminate and match.  */
       *p = 0;
@@ -1309,13 +1275,12 @@ reverse_search_command (regex, from_tty)
 	{
 	  /* Match! */
 	  fclose (stream);
-	  print_source_lines (current_source_symtab,
-			      line, line+1, 0);
+	  print_source_lines (current_source_symtab, line, line+1, 0);
 	  current_source_line = max (line - lines_to_list / 2, 1);
 	  return;
 	}
       line--;
-      if (fseek (stream, current_source_symtab->line_charpos[line - 1], 0) < 0)
+      if (fsetpos (stream, &current_source_symtab->line_charpos[line - 1]) < 0)
 	{
 	  fclose (stream);
 	  perror_with_name (current_source_symtab->filename);
@@ -1324,7 +1289,6 @@ reverse_search_command (regex, from_tty)
 
   printf_filtered ("Expression not found\n");
   fclose (stream);
-  return;
 }
 
 void
