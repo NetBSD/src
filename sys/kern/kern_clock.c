@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.64 2000/08/21 23:40:56 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.65 2000/08/21 23:43:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -866,7 +866,7 @@ hardclock(struct clockframe *frame)
 			 * NOTE: If we're at ``base priority'', softclock()
 			 * was not already running.
 			 */
-			(void)spllowersoftclock();
+			spllowersoftclock();
 			softclock();
 		} else
 			setsoftclock();
