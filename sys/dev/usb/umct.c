@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.6 2001/12/14 08:33:54 ichiro Exp $	*/
+/*	$NetBSD: umct.c,v 1.7 2001/12/17 14:19:39 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.6 2001/12/14 08:33:54 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.7 2001/12/17 14:19:39 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ struct	umct_softc {
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* umct status register */
+
+	u_int			last_lcr;	/* keep lcr register */
 };
 
 /*
@@ -418,7 +420,8 @@ umct_break(struct umct_softc *sc, int onoff)
 {
 	DPRINTF(("umct_break: onoff=%d\n", onoff));
 
-	umct_set_lcr(sc, onoff ? LCR_SET_BREAK : 0);
+	umct_set_lcr(sc, onoff ? sc->last_lcr | LCR_SET_BREAK :
+		     sc->last_lcr);
 }
 
 void
@@ -517,6 +520,7 @@ umct_param(void *addr, int portno, struct termios *t)
 
 	umct_set_baudrate(sc, t->c_ospeed);
 
+	sc->last_lcr = data;
 	umct_set_lcr(sc, data);
 
 	return (0);
