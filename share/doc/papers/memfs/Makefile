@@ -1,24 +1,23 @@
-#	$NetBSD: Makefile,v 1.3 2002/06/02 17:40:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:27 lukem Exp $
 #
 #	@(#)Makefile	1.8 (Berkeley) 6/8/93
 
 DIR=	papers/memfs
 SRCS=	0.t 1.t
 MACROS=	-ms
-REFER=	refer -n -e -l -s -p ref.bib
 EXTRA=	ref.bib A.t tmac.srefs
 CLEANFILES=ref.bib.i A.gt paper.t
 
 paper.ps: paper.t
-	${ROFF} ${MACROS} tmac.srefs paper.t > ${.TARGET}
+	${TOOL_ROFF_PS} ${MACROS} tmac.srefs paper.t > ${.TARGET}
 
 paper.t: ${SRCS} ref.bib.i A.gt
-	${REFER} ${SRCS} A.gt > ${.TARGET}
+	${TOOL_REFER} -n -e -l -s -p ref.bib ${SRCS} A.gt > ${.TARGET}
 
 ref.bib.i: ref.bib
-	${INDXBIB} ref.bib
+	${TOOL_INDXBIB} ref.bib
 
 A.gt: A.t
-	${GRIND} < A.t > A.gt
+	${TOOL_VGRIND} < A.t > A.gt
 
 .include <bsd.doc.mk>

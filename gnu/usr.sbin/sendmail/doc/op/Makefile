@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/01/05 12:28:49 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2003/07/10 10:34:21 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ all: op.ps
 
 op.ps: ${SRCS}
 	${RM} ${.TARGET}
-	${PIC} ${.ALLSRC} | ${EQN} | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_PIC} ${.ALLSRC} | ${TOOL_EQN} | \
+	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.distrib,v 1.4 2003/05/09 09:06:14 lukem Exp $
+#	$NetBSD: Makefile.distrib,v 1.5 2003/07/10 10:34:04 lukem Exp $
 #
 # Makefile snippet to setup various make variables variables used in distrib/:
 #
@@ -22,7 +22,7 @@ DISTRIBDIR=	${NETBSDSRCDIR}/distrib
 DISTRIBREV!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
-MAKESUMS=	CKSUM=${CKSUM:Q} ${HOST_SH} ${DISTRIBDIR}/sets/makesums
+MAKESUMS=	CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${DISTRIBDIR}/sets/makesums
 RELEASE_INSTALL=${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 

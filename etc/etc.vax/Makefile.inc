@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2003/03/08 00:22:30 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2003/07/10 10:34:19 lukem Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -17,4 +17,4 @@ iso-image-md-pre:
 	cp -f ${DESTDIR}/usr/mdec/boot ${CDROM.work}
 
 iso-image-md-post:
-	${INSTALLBOOT} -m ${MACHINE} ${CDROM.image} ${DESTDIR}/usr/mdec/xxboot
+	${TOOL_INSTALLBOOT} -m ${MACHINE} ${CDROM.image} ${DESTDIR}/usr/mdec/xxboot

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.115 2003/06/26 06:30:07 tshiozak Exp $
+#	$NetBSD: bsd.README,v 1.116 2003/07/10 10:34:35 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -64,9 +64,10 @@ the variable naming scheme is as follows:
 MKxxx		Can be set to `no' by a user to disable functionality.
 		Defaults to `yes' (or usually does)
 
-NOxxx		If defined, disables a feature.  Not intended for users,
-		it's to allow Makefiles to disable functionality that
-		they don't support (such as missing man pages).
+NOxxx		If defined, disables a feature.
+		Not intended for users.
+		This is to allow Makefiles to disable functionality
+		that they don't support (such as missing man pages).
 		NOxxx variables must be defined before <bsd.own.mk>
 		is included.
 
@@ -147,18 +148,6 @@ OBJCOPY		objcopy - copy and translate object files
 
 STRIP		strip - Discard symbols from object files
 
-CONFIG		config - build kernel compilation directories
-
-RPCGEN		rpcgen - Remote Procedure Call (RPC) protocol compiler
-
-MKLOCALE	mklocale - make LC_CTYPE locale files
-
-MKCSMAPPER	mkcsmapper - make charset mapping table
-
-MKESDB		mkesdb - make encoding scheme database
-
-MTREE		mtree - build directory tree from a spec file
-
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 The include file <bsd.man.mk> handles installing manual pages and their
@@ -221,26 +210,26 @@ _SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
 		determined once and then propagated to all sub-makes.
 
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
-		will work correctly. [/usr/src]
+		will work correctly.  [/usr/src]
 
 BSDOBJDIR	The real path to the system 'obj' tree, so that 'make obj'
-		will work correctly. [/usr/obj]
+		will work correctly.  [/usr/obj]
 
-BINGRP		Binary group. [wheel]
+BINGRP		Binary group.  [wheel]
 
-BINOWN		Binary owner. [root]
+BINOWN		Binary owner.  [root]
 
-BINMODE		Binary mode. [555]
+BINMODE		Binary mode.  [555]
 
-NONBINMODE	Mode for non-executable files. [444]
+NONBINMODE	Mode for non-executable files.  [444]
 
-MANDIR		Base path for manual installation. [/usr/share/man/cat]
+MANDIR		Base path for manual installation.  [/usr/share/man/cat]
 
-MANGRP		Manual group. [wheel]
+MANGRP		Manual group.  [wheel]
 
-MANOWN		Manual owner. [root]
+MANOWN		Manual owner.  [root]
 
-MANMODE		Manual mode. [${NONBINMODE}]
+MANMODE		Manual mode.  [${NONBINMODE}]
 
 MANINSTALL	Manual installation type: maninstall, catinstall, or both
 
@@ -248,47 +237,47 @@ LDSTATIC	Control program linking; if set blank, link everything
 		dynamically. If set to "-static", link everything statically.
 		If not set, programs link according to their makefile.
 
-LIBDIR		Base path for library installation. [/usr/lib]
+LIBDIR		Base path for library installation.  [/usr/lib]
 
-LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
+LINTLIBDIR	Base path for lint(1) library installation.  [/usr/libdata/lint]
 
-LIBGRP		Library group. [${BINGRP}]
+LIBGRP		Library group.  [${BINGRP}]
 
-LIBOWN		Library owner. [${BINOWN}]
+LIBOWN		Library owner.  [${BINOWN}]
 
-LIBMODE		Library mode. [${NONBINMODE}]
+LIBMODE		Library mode.  [${NONBINMODE}]
 
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
-	        installation. [/usr/share/doc]
+	        installation.  [/usr/share/doc]
 
 HTMLDOCDIR	Base path for html system documentation installation.
 		[/usr/share/doc/html]
 
-DOCGRP		Documentation group. [wheel]
+DOCGRP		Documentation group.  [wheel]
 
-DOCOWN		Documentation owner. [root]
+DOCOWN		Documentation owner.  [root]
 
-DOCMODE		Documentation mode. [${NONBINMODE}]
+DOCMODE		Documentation mode.  [${NONBINMODE}]
 
 NLSDIR		Base path for Native Language Support files installation.
 		[/usr/share/nls]
 
-NLSGRP		Native Language Support files group. [wheel]
+NLSGRP		Native Language Support files group.  [wheel]
 
-NLSOWN		Native Language Support files owner. [root]
+NLSOWN		Native Language Support files owner.  [root]
 
-NLSMODE		Native Language Support files mode. [${NONBINMODE}]
+NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 
 STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
 		own install script so that the entire system can be made
-		stripped/not-stripped using a single knob. [-s]
+		stripped/not-stripped using a single knob.  [-s]
 
 COPY		The flag passed to the install program to cause the binary
 		to be copied rather than moved.  This is to be used when
 		building our own install script so that the entire system
 		can either be installed with copies, or with moves using
-		a single knob. [-c]
+		a single knob.  [-c]
 
 Additionally, the following variables may be set by bsd.own.mk or in a
 make configuration file to modify the behaviour of the system build
@@ -355,7 +344,7 @@ NOPIC		Do not build PIC versions of system libraries, and
 
 NOLINT		Do not build lint libraries.
 
-OBJECT_FMT	Object file format. [set to "ELF" on architectures that
+OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently if ${MACHINE_ARCH} is "alpha",
 		"mipsel", "mipseb", "powerpc", "sparc", "sparc64",
 		"i386" and some m68k machines, or set to "a.out" on
@@ -421,7 +410,7 @@ SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
 _LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is "yes",
 		otherwise set to ${LIBDIR}
 
-SHLINKINSTALLDIR Base path for shared linker. [/libexec]
+SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
 
 SHLINKDIR	Path to use for shared linker when building a program.
 		[/libexec for programs in /bin and /sbin, /usr/libexec for
@@ -734,10 +723,6 @@ TEXINFO		List of Texinfo source files.  Info documentation will
 
 INFOFLAGS	Flags to pass to makeinfo.  []
 
-INSTALL_INFO	Name of install-info program.  [install-info]
-
-MAKEINFO	Name of makeinfo program.  [makeinfo]
-
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
@@ -745,6 +730,106 @@ The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 the NetBSD source tree.  For instance, if "PARALLEL" is defined by
 the program/library Makefile, it includes a set of rules for lex and
 yacc that allow multiple lex and yacc targets to be built in parallel.
+
+The following variables are defined to commands to perform the
+appropriate operation, with the default in [brackets].
+(Note that these are overridden in <bsd.own.mk> if USETOOLS=yes):
+
+TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
+
+TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
+
+TOOL_CAT		Concatenate and print files.  [cat]
+
+TOOL_CKSUM		Display file checksums.  [cksum]
+
+TOOL_COMPILE_ET		Error table compiler.  [compile_et]
+
+TOOL_CONFIG		Build kernel compilation directories.  [config]
+
+TOOL_CRUNCHGEN		Generate crunched binary build environment.  [crunchgen]
+
+TOOL_CTAGS		Create a tags file.  [ctags]
+
+TOOL_DB			Manipulate db(3) databases.  [db]
+
+TOOL_EQN		Format equations for groff.  [eqn]
+
+TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
+
+TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
+
+TOOL_GROFF		Front end for groff document formatting system.  [groff]
+
+TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
+
+TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
+
+TOOL_INSTALLBOOT	Install disk bootstrap software.  [installboot]
+
+TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
+
+TOOL_M4			M4 macro language processor.  [m4]
+
+TOOL_MAKEFS		Create file system image from directory tree.  [makefs]
+
+TOOL_MAKEINFO		Translate Texinfo documents.  [makeinfo]
+
+TOOL_MAKEWHATIS		Create a whatis.db database.  [makewhatis]
+
+TOOL_MDSETIMAGE		Set kernel RAM disk image.  [mdsetimage]
+
+TOOL_MENUC		Menu compiler.  [menuc]
+
+TOOL_MKCSMAPPER		Make charset mapping table.  [mkcsmapper]
+
+TOOL_MKESDB		Make encoding scheme database.  [mkesdb]
+
+TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
+
+TOOL_MKMAGIC		Create database for file(1).  [file]
+
+TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
+
+TOOL_MSGC		Simple message list compiler.  [msgc]
+
+TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_PAX		Manipulate file archives and copy directories.  [pax]
+
+TOOL_PIC		Compile pictures for groff.  [pic]
+
+TOOL_PREPMKBOOTIMAGE	prep-mkbootimage (XXXBUILDSH).  [prep-mkbootimage]
+
+TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
+
+TOOL_REFER		Preprocess bibliographic references for groff.  [refer]
+
+TOOL_ROFF_ASCII		Generate ASCII groff output.  [nroff]
+
+TOOL_ROFF_DVI		Generate DVI groff output.  [${TOOL_GROFF} -Tdvi]
+
+TOOL_ROFF_HTML		Generate HTML groff output.
+			[${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u]
+
+TOOL_ROFF_PS		Generate PS groff output.  [${TOOL_GROFF} -Tps]
+
+TOOL_ROFF_RAW		Generate "raw" groff output.  [${TOOL_GROFF} -Z]
+
+TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
+
+TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
+
+TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
+
+TOOL_TBL		Format tables for groff.  [tbl]
+
+TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
+
+TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
+
+TOOL_ZIC		Time zone compiler.  [zic]
+
 
 Other variables of note (incomplete list):
 
