@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.10 1996/02/18 16:36:52 jtk Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.11 1996/03/01 04:08:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -79,7 +79,8 @@ struct sbdsp_softc {
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
-	int	sc_drq;			/* DMA */
+	int	sc_drq;			/* DMA (8-bit) */
+	int	sc_drq16;		/* DMA (16-bit) */
 
 	u_short	sc_open;		/* reference count of open calls */
 
@@ -94,8 +95,8 @@ struct sbdsp_softc {
 
 	u_int	spkr_state;		/* non-null is on */
 	
-	int	sc_itc;			/* Sample rate for input */
-	int	sc_otc;			/* ...and output */
+	int	sc_irate, sc_itc;	/* Sample rate for input */
+	int	sc_orate, sc_otc;	/* ...and output */
 
 	int	sc_imode;
 	int	sc_omode;
@@ -111,7 +112,8 @@ struct sbdsp_softc {
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
 	int	sc_last_hs_size;	/* last HS dma size */
-	int	sc_chans;		/* # of channels */
+	int	sc_precision;		/* size of samples */
+	int	sc_channels;		/* # of channels */
 	int	sc_dmadir;		/* DMA direction */
 #define	SB_DMA_NONE	0
 #define	SB_DMA_IN	1
@@ -122,14 +124,14 @@ struct sbdsp_softc {
 #define SBVER_MINOR(v)	((v)&0xff)
 };
 
-#define ISSBPRO(sc) \
-	(SBVER_MAJOR((sc)->sc_model) == 3)
-
 #define ISSBPROCLASS(sc) \
 	(SBVER_MAJOR((sc)->sc_model) > 2)
 
+#define ISSBPRO(sc) \
+	(SBVER_MAJOR((sc)->sc_model) == 3)
+
 #define ISSB16CLASS(sc) \
-      (SBVER_MAJOR((sc)->sc_model) > 3)
+	(SBVER_MAJOR((sc)->sc_model) > 3)
 
 
 #ifdef _KERNEL

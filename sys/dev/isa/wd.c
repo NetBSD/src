@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.145 1996/01/08 21:21:56 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.146 1996/03/01 04:08:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/wdreg.h>
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -661,7 +662,8 @@ loop:
 			    WDCC_READDMA : WDCC_WRITEDMA;
 			/* Start the DMA channel and bounce the buffer if
 			   necessary. */
-			isa_dmastart(bp->b_flags & B_READ,
+			isa_dmastart(
+			    bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
 			    bp->b_data + wd->sc_skip,
 			    wd->sc_nbytes, wdc->sc_drq);
 			break;
@@ -765,8 +767,8 @@ wdcintr(arg)
 
 	/* Turn off the DMA channel and unbounce the buffer. */
 	if (wd->sc_mode == WDM_DMA)
-		isa_dmadone(bp->b_flags & B_READ, bp->b_data + wd->sc_skip,
-		    wd->sc_nbytes, wdc->sc_drq);
+		isa_dmadone(bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
+		    bp->b_data + wd->sc_skip, wd->sc_nbytes, wdc->sc_drq);
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
