@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.58 2002/09/19 08:12:43 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.59 2003/08/07 16:33:07 agc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,7 +100,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.58 2002/09/19 08:12:43 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.59 2003/08/07 16:33:07 agc Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp";
@@ -1496,11 +1496,7 @@ nodata:
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

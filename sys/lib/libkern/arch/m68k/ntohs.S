@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohs.S,v 1.4 1999/11/11 01:32:12 thorpej Exp $	*/
+/*	$NetBSD: ntohs.S,v 1.5 2003/08/07 16:32:16 agc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ntohs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ntohs.S,v 1.4 1999/11/11 01:32:12 thorpej Exp $")
+	RCSID("$NetBSD: ntohs.S,v 1.5 2003/08/07 16:32:16 agc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
