@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_pcic.c,v 1.1 2001/07/07 15:53:24 ichiro Exp $        */
+/*      $NetBSD: sa11x0_pcic.c,v 1.2 2001/07/08 14:45:36 ichiro Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ sagpcic_write(so, reg, arg)
 	int s, value;
 	struct sagpcic_softc *sc = (struct sagpcic_softc *)so->sc;
 
+	value = 0;
 	s = splhigh();
 	switch (reg) {
 	case SAPCIC_CONTROL_RESET:
@@ -224,7 +225,10 @@ sagpcic_write(so, reg, arg)
 		splx(s);
 		panic("sagpcic_write: bogus register");
 	}
-	bus_space_write_4(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
+	value |= bus_space_read_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0) & 0xFFFF;
+#if 0
+	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
+#endif
 	splx(s);
 }
 		
@@ -236,6 +240,7 @@ sagpcic_set_power(so, arg)
 	int value, s;
 	struct sagpcic_softc *sc = (struct sagpcic_softc *)so->sc;
 
+	s = splbio();
 	switch (arg) {
 	case SAPCIC_POWER_OFF:
 		value &= ~(EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON);
@@ -248,8 +253,10 @@ sagpcic_set_power(so, arg)
 		panic("sagpcic_set_power: bogus arg\n");
 	}
 
-	s = splbio();
-	bus_space_write_4(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
+	value |= bus_space_read_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0) & 0xFFFF;
+#if 0
+	bus_space_write_2(sc->sc_pc.sc_iot, sc->sc_egpioh, 0, value);
+#endif
 	splx(s);
 }
 
