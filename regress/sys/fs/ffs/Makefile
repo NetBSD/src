@@ -104,7 +104,7 @@ tmpfs:
 	    "${TMPIM}, ${EN} byte order."
 	dd if=/dev/zero of=${TMPIM} count=5860
 	vnconfig -v ${BVND}${RPART} ${TMPIM}
-	disklabel -rw ${VND} floppy288
+	disklabel -f ${SRCDIR}/disktab -rw ${VND} floppy288
 	newfs -B ${EN} -i 500 -b 8192 -f 1024 ${CVND}${MPART}
 	mkdir ${TMPMP}
 	mount -o async ${BVND}${MPART} ${TMPMP}
