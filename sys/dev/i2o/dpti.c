@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.14 2003/10/25 18:36:35 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.15 2003/10/29 02:13:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.14 2003/10/25 18:36:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.15 2003/10/29 02:13:09 mycroft Exp $");
 
 #include "opt_i2o.h"
 
@@ -540,13 +540,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 		}
 
 		memset(bufs, 0, sizeof(bufs));
-		nbuf = 0; /* XXX: gcc */
-	} else
-		nbuf = -1;
 
-	rv = EINVAL;
-
-	if (sgoff != 0) {
 		p = mbtmp + sgoff;
 		pmax = mbtmp + (msgsize >> 2) - 2;
 
@@ -660,7 +654,8 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 			    sc->sc_dv.dv_xname));
 			goto bad;
 		}
-	}
+	} else
+		nbuf = -1;
 
 	/*
 	 * Allocate a wrapper, and adjust the message header fields to
