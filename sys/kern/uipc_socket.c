@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.66 2002/05/07 08:06:35 enami Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.67 2002/06/10 20:43:16 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.66 2002/05/07 08:06:35 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.67 2002/06/10 20:43:16 he Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -797,6 +797,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	struct protosw	*pr;
 	struct mbuf	*nextrecord;
+	int		mbuf_removed = 0;
 
 	pr = so->so_proto;
 	mp = mp0;
@@ -918,6 +919,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
+			mbuf_removed = 1;
 			if (paddr) {
 				*paddr = m;
 				so->so_rcv.sb_mb = m->m_next;
@@ -936,6 +938,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
+			mbuf_removed = 1;
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
@@ -992,8 +995,24 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
-			if (error)
+			if (error) {
+				/*
+				 * If any part of the record has been removed
+				 * (such as the MT_SONAME mbuf, which will
+				 * happen when PR_ADDR, and thus also
+				 * PR_ATOMIC, is set), then drop the entire
+				 * record to maintain the atomicity of the
+				 * receive operation.
+				 *
+				 * This avoids a later panic("receive 1a")
+				 * when compiled with DIAGNOSTIC.
+				 */
+				if (m && mbuf_removed
+				    && (pr->pr_flags & PR_ATOMIC))
+					(void) sbdroprecord(&so->so_rcv);
+
 				goto release;
+			}
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {
