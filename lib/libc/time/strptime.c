@@ -1,10 +1,11 @@
-/*	$NetBSD: strptime.c,v 1.23 2005/03/04 21:41:42 dsl Exp $	*/
+/*	$NetBSD: strptime.c,v 1.24 2005/03/05 14:07:15 dsl Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
+ * Heavily optimised by David Laight
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.23 2005/03/04 21:41:42 dsl Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.24 2005/03/05 14:07:15 dsl Exp $");
 #endif
 
 #include "namespace.h"
@@ -60,10 +61,10 @@ __weak_alias(strptime,_strptime)
  */
 #define ALT_E			0x01
 #define ALT_O			0x02
-#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return 0; }
+#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
 
 
-static const u_char *conv_num(const unsigned char *, int *, int, int);
+static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
 	const char * const *, int);
 
@@ -78,7 +79,7 @@ strptime(const char *buf, const char *fmt, struct tm *tm)
 
 	bp = (const u_char *)buf;
 
-	while (bp != NULL && (c = *fmt) != '\0') {
+	while (bp != NULL && (c = *fmt++) != '\0') {
 		/* Clear `alternate' modifier prior to new conversion. */
 		alt_format = 0;
 		i = 0;
@@ -87,12 +88,10 @@ strptime(const char *buf, const char *fmt, struct tm *tm)
 		if (isspace(c)) {
 			while (isspace(*bp))
 				bp++;
-
-			fmt++;
 			continue;
 		}
 
-		if ((c = *fmt++) != '%')
+		if (c != '%')
 			goto literal;
 
 
@@ -100,7 +99,7 @@ again:		switch (c = *fmt++) {
 		case '%':	/* "%%" is converted to "%". */
 literal:
 			if (c != *bp++)
-				return 0;
+				return NULL;
 			LEGAL_ALT(0);
 			continue;
 
@@ -176,17 +175,14 @@ literal:
 			continue;
 
 		case 'C':	/* The century number. */
+			i = 20;
 			bp = conv_num(bp, &i, 0, 99);
-			if (bp == NULL)
-				return NULL;
 
-			if (split_year) {
-				tm->tm_year = (tm->tm_year % 100) + (i * 100);
-			} else {
-				tm->tm_year = i * 100;
-				split_year = 1;
-			}
-			tm->tm_year -= TM_YEAR_BASE;
+			i = i * 100 - TM_YEAR_BASE;
+			if (split_year)
+				i += tm->tm_year % 100;
+			split_year = 1;
+			tm->tm_year = i;
 			LEGAL_ALT(ALT_E);
 			continue;
 
@@ -234,10 +230,9 @@ literal:
 			continue;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
-			bp = find_string(bp, &i, _ctloc(am_pm),
-					_ctloc(am_pm), 2);
+			bp = find_string(bp, &i, _ctloc(am_pm), NULL, 2);
 			if (tm->tm_hour > 11)
-				return 0;
+				return NULL;
 			tm->tm_hour += i * 12;
 			LEGAL_ALT(0);
 			continue;
@@ -265,29 +260,27 @@ literal:
 			continue;
 
 		case 'Y':	/* The year. */
+			i = TM_YEAR_BASE;	/* just for data sanity... */
 			bp = conv_num(bp, &i, 0, 9999);
-			if (bp == NULL)
-				return NULL;
-
 			tm->tm_year = i - TM_YEAR_BASE;
 			LEGAL_ALT(ALT_E);
 			continue;
 
 		case 'y':	/* The year within 100 years of the epoch. */
-			bp = conv_num(bp, &i, 0, 99);
-			if (bp == NULL)
-				return NULL;
-
-			if (split_year) {
-				tm->tm_year = ((tm->tm_year / 100) * 100) + i;
-				continue;
-			}
-			split_year = 1;
-			if (i <= 68)
-				tm->tm_year = i + 2000 - TM_YEAR_BASE;
-			else
-				tm->tm_year = i + 1900 - TM_YEAR_BASE;
 			/* LEGAL_ALT(ALT_E | ALT_O); */
+			bp = conv_num(bp, &i, 0, 99);
+
+			if (split_year)
+				/* preserve century */
+				i += (tm->tm_year / 100) * 100;
+			else {
+				split_year = 1;
+				if (i <= 68)
+					i = i + 2000 - TM_YEAR_BASE;
+				else
+					i = i + 1900 - TM_YEAR_BASE;
+			}
+			tm->tm_year = i;
 			continue;
 
 		/*
@@ -302,7 +295,7 @@ literal:
 
 
 		default:	/* Unknown/unsupported conversion. */
-			return 0;
+			return NULL;
 		}
 	}
 
@@ -312,17 +305,17 @@ literal:
 
 
 static const u_char *
-conv_num(const unsigned char *buf, int *dest, int llim, int ulim)
+conv_num(const unsigned char *buf, int *dest, uint llim, uint ulim)
 {
-	int result = 0;
+	uint result = 0;
 	unsigned char ch;
 
 	/* The limit also determines the number of valid digits. */
-	int rulim = ulim;
+	uint rulim = ulim;
 
 	ch = *buf;
 	if (ch < '0' || ch > '9')
-		return 0;
+		return NULL;
 
 	do {
 		result *= 10;
@@ -332,7 +325,7 @@ conv_num(const unsigned char *buf, int *dest, int llim, int ulim)
 	} while ((result * 10 <= ulim) && rulim && ch >= '0' && ch <= '9');
 
 	if (result < llim || result > ulim)
-		return 0;
+		return NULL;
 
 	*dest = result;
 	return buf;
@@ -345,19 +338,17 @@ find_string(const u_char *bp, int *tgt, const char * const *n1,
 	int i;
 	unsigned int len;
 
-	for (i = 0; ; i++, n1++, n2++) {
-		if (i > c)
-			/* Nothing matched */
-			return NULL;
-		/* Full name - must check first! */
-		len = strlen(*n1);
-		if (strncasecmp(*n1, (const char *)bp, len) == 0)
-			break;
-		/* Abbreviated name. */
-		len = strlen(*n2);
-		if (strncasecmp(*n2, (const char *)bp, len) == 0)
-			break;
+	/* check full name - then abbreviated ones */
+	for (; n1 != NULL; n1 = n2, n2 = NULL) {
+		for (i = 0; i < c; i++, n1++) {
+			len = strlen(*n1);
+			if (strncasecmp(*n1, (const char *)bp, len) == 0) {
+				*tgt = i;
+				return bp + len;
+			}
+		}
 	}
-	*tgt = i;
-	return bp + len;
+
+	/* Nothing matched */
+	return NULL;
 }
