@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2001/04/24 04:31:15 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.101 2001/06/04 15:36:00 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,6 +30,8 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,6 +117,15 @@ volatile int recurse;
 #define RECURSEEND
 #endif
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+static struct simplelock pvtable_lock;
+#define	PVTABLE_LOCK	simple_lock(&pvtable_lock);
+#define PVTABLE_UNLOCK	simple_unlock(&pvtable_lock);
+#else
+#define PVTABLE_LOCK
+#define PVTABLE_UNLOCK
+#endif
+
 #ifdef PMAPDEBUG
 int	startpmapdebug = 0;
 #endif
@@ -122,21 +133,19 @@ int	startpmapdebug = 0;
 #ifndef DEBUG
 static inline
 #endif
-void pmap_decpteref __P((struct pmap *, struct pte *));
+void pmap_decpteref(struct pmap *, struct pte *);
 
 #ifndef PMAPDEBUG
 static inline
 #endif
-void rensa __P((int, struct pte *));
+void rensa(int, struct pte *);
 
 vaddr_t   avail_start, avail_end;
 vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 
-void pmap_pinit __P((pmap_t));
-void pmap_release __P((pmap_t));
-struct pv_entry *get_pventry __P((void));
-void free_pventry __P((struct pv_entry *));
-void more_pventries __P((void));
+struct pv_entry *get_pventry(void);
+void free_pventry(struct pv_entry *);
+void more_pventries(void);
 
 /*
  * pmap_bootstrap().
@@ -273,6 +282,7 @@ pmap_bootstrap()
 	    /* btop(virtual_avail - KERNBASE); */
 
 	pmap->ref_count = 1;
+	simple_lock_init(&pmap->pm_lock);
 
 	/* Activate the kernel pmap. */
 	mtpr(pcb->P1BR = pmap->pm_p1br, PR_P1BR);
@@ -289,6 +299,9 @@ pmap_bootstrap()
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
+#endif
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	simple_lock_init(&pvtable_lock);
 #endif
 
 	/*
@@ -408,27 +421,10 @@ pmap_decpteref(pmap, pte)
 }
 
 /*
- * pmap_create() creates a pmap for a new task.
- * If not already allocated, malloc space for one.
- */
-struct pmap * 
-pmap_create()
-{
-	struct pmap *pmap;
-
-	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
-	bzero(pmap, sizeof(struct pmap));
-	pmap_pinit(pmap);
-	simple_lock_init(&pmap->pm_lock);
-	return(pmap);
-}
-
-/*
  * Initialize a preallocated an zeroed pmap structure,
  */
-void
-pmap_pinit(pmap)
-	pmap_t pmap;
+static void
+pmap_pinit(pmap_t pmap)
 {
 	int bytesiz, res;
 
@@ -457,13 +453,28 @@ if (startpmapdebug)
 }
 
 /*
+ * pmap_create() creates a pmap for a new task.
+ * If not already allocated, malloc space for one.
+ */
+struct pmap * 
+pmap_create()
+{
+	struct pmap *pmap;
+
+	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
+	bzero(pmap, sizeof(struct pmap));
+	pmap_pinit(pmap);
+	simple_lock_init(&pmap->pm_lock);
+	return (pmap);
+}
+
+/*
  * Release any resources held by the given physical map.
  * Called when a pmap initialized by pmap_pinit is being released.
  * Should only be called if the map contains no valid mappings.
  */
-void
-pmap_release(pmap)
-	struct pmap *pmap;
+static void
+pmap_release(struct pmap *pmap)
 {
 #ifdef DEBUG
 	vaddr_t saddr, eaddr;
@@ -501,8 +512,7 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
  */
 
 void
-pmap_destroy(pmap)
-	pmap_t pmap;
+pmap_destroy(pmap_t pmap)
 {
 	int count;
   
@@ -533,20 +543,24 @@ rensa(clp, ptp)
 	int	s, *g;
 
 #ifdef PMAPDEBUG
-if (startpmapdebug)
-	printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
+	if (startpmapdebug)
+		printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
 #endif
 	if (IOSPACE(ptp->pg_pfn << VAX_PGSHIFT))
 		return; /* Nothing in pv_table */
 	s = splvm();
+	PVTABLE_LOCK;
 	RECURSESTART;
 	if (pv->pv_pte == ptp) {
 		g = (int *)pv->pv_pte;
 		if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 			pv->pv_attr |= g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 		pv->pv_pte = 0;
+		simple_lock(&pv->pv_pmap->pm_lock);
 		pv->pv_pmap->pm_stats.resident_count--;
+		simple_unlock(&pv->pv_pmap->pm_lock);
 		pv->pv_pmap = 0;
+		PVTABLE_UNLOCK;
 		splx(s);
 		RECURSEEND;
 		return;
@@ -559,8 +573,11 @@ if (startpmapdebug)
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
+			simple_lock(&pf->pv_pmap->pm_lock);
 			pf->pv_pmap->pm_stats.resident_count--;
+			simple_unlock(&pf->pv_pmap->pm_lock);
 			free_pventry(pf);
+			PVTABLE_UNLOCK;
 			splx(s);
 			RECURSEEND;
 			return;
@@ -574,18 +591,16 @@ if (startpmapdebug)
  * without tracking it in the MD code.
  */
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t	pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	int *ptp;
+	int *ptp, opte;
 
 	ptp = (int *)kvtopte(va);
 #ifdef PMAPDEBUG
 if(startpmapdebug)
 	printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
 #endif
+	opte = ptp[0];
 	ptp[0] = PG_V | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_SREF;
 	ptp[1] = ptp[0] + 1;
@@ -595,35 +610,49 @@ if(startpmapdebug)
 	ptp[5] = ptp[0] + 5;
 	ptp[6] = ptp[0] + 6;
 	ptp[7] = ptp[0] + 7;
+	if (opte & PG_V) {
+#if defined(MULTIPROCESSOR)
+		cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
+#endif
+		mtpr(0, PR_TBIA);
+	}
 }
 
 void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove(vaddr_t va, vsize_t len)
 {
 	struct pte *pte;
 	int i;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)
-	printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
+	if(startpmapdebug)
+		printf("pmap_kremove: va: %lx, len %lx, ptp %p\n",
+		    va, len, kvtopte(va));
 #endif
 
-	/*
-	 * Unfortunately we must check if any page may be on the pv list. 
-	 */
 	pte = kvtopte(va);
-	len >>= PGSHIFT;
 
+#ifdef DEBUG
+	/*
+	 * Check if any pages are on the pv list.
+	 * This shouldn't happen anymore.
+	 */
+	len >>= PGSHIFT;
 	for (i = 0; i < len; i++) {
 		if (pte->pg_pfn == 0)
 			continue;
 		if (pte->pg_sref == 0)
-			rensa(pte->pg_pfn >> LTOHPS, pte);
+			panic("pmap_kremove");
 		bzero(pte, LTOHPN * sizeof(struct pte));
 		pte += LTOHPN;
 	}
+#else
+	len >>= VAX_PGSHIFT;
+	bzero(pte, len * sizeof(struct pte));
+#endif
+#if defined(MULTIPROCESSOR)
+	cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
+#endif
 	mtpr(0, PR_TBIA);
 }
 
@@ -652,7 +681,7 @@ if (startpmapdebug)
 #endif
 
 	RECURSESTART;
-	/* Find addess of correct pte */
+	/* Find address of correct pte */
 	if (v & KERNBASE) {
 		patch = (int *)Sysmap;
 		i = (v - KERNBASE) >> VAX_PGSHIFT;
@@ -770,6 +799,7 @@ if (startpmapdebug)
 				pmap->pm_refcnt[index]++; /* New mapping */
 
 		s = splvm();
+		PVTABLE_LOCK;
 		if (pv->pv_pte == 0) {
 			pv->pv_pte = (struct pte *) & patch[i];
 			pv->pv_pmap = pmap;
@@ -780,16 +810,19 @@ if (startpmapdebug)
 			tmp->pv_next = pv->pv_next;
 			pv->pv_next = tmp;
 		}
+		PVTABLE_UNLOCK;
 		splx(s);
 	}
 	pmap->pm_stats.resident_count++;
 
+	PVTABLE_LOCK;
 	if (flags & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
 	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
+	PVTABLE_UNLOCK;
 
 	if (flags & PMAP_WIRED)
 		newpte |= PG_V; /* Not allowed to be invalid */
@@ -970,6 +1003,9 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 		pts += LTOHPN;
 	}
 	RECURSEEND;
+#ifdef MULTIPROCESSOR
+	cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
+#endif
 	mtpr(0, PR_TBIA);
 }
 
@@ -1023,10 +1059,12 @@ if (startpmapdebug)
 	pte[6] |= PG_V;
 	pte[7] |= PG_V;
 	if (IOSPACE(pa) == 0) { /* No pv_table fiddling in iospace */
+		PVTABLE_LOCK;
 		pv = pv_table + (pa >> PGSHIFT);
 		pv->pv_attr |= PG_V; /* Referenced */
 		if (bits & 4) /* (will be) modified. XXX page tables  */
 			pv->pv_attr |= PG_M;
+		PVTABLE_UNLOCK;
 	}
 	return 0;
 }
@@ -1035,8 +1073,7 @@ if (startpmapdebug)
  * Checks if page is referenced; returns true or false depending on result.
  */
 boolean_t
-pmap_is_referenced(pg)
-	struct vm_page *pg;
+pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
@@ -1061,8 +1098,7 @@ pmap_is_referenced(pg)
  * Clears valid bit in all ptes referenced to this physical page.
  */
 boolean_t
-pmap_clear_reference(pg)
-	struct vm_page *pg;
+pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
@@ -1084,6 +1120,7 @@ pmap_clear_reference(pg)
 	pv->pv_attr &= ~PG_V;
 
 	RECURSESTART;
+	PVTABLE_LOCK;
 	if (pv->pv_pte && (pv->pv_pte[0].pg_w == 0))
 		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
 		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
@@ -1096,7 +1133,11 @@ pmap_clear_reference(pg)
 			    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
 			    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 			    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+	PVTABLE_UNLOCK;
 	RECURSEEND;
+#ifdef MULTIPROCESSOR
+	cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
+#endif  
 	mtpr(0, PR_TBIA);
 	return ref;
 }
@@ -1105,8 +1146,7 @@ pmap_clear_reference(pg)
  * Checks if page is modified; returns true or false depending on result.
  */
 boolean_t
-pmap_is_modified(pg)
-	struct vm_page *pg;
+pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
@@ -1129,6 +1169,7 @@ pmap_is_modified(pg)
 		return 1;
 	}
 
+	PVTABLE_LOCK;
 	if (pv->pv_pte)
 		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m
 		    | pv->pv_pte[2].pg_m | pv->pv_pte[3].pg_m
@@ -1137,6 +1178,7 @@ pmap_is_modified(pg)
 #ifdef PMAPDEBUG
 			if (startpmapdebug) printf("Yes: (1)\n");
 #endif
+			PVTABLE_UNLOCK;
 			return 1;
 		}
 
@@ -1148,9 +1190,11 @@ pmap_is_modified(pg)
 #ifdef PMAPDEBUG
 			if (startpmapdebug) printf("Yes: (2)\n");
 #endif
+			PVTABLE_UNLOCK;
 			return 1;
 		}
 	}
+	PVTABLE_UNLOCK;
 #ifdef PMAPDEBUG
 	if (startpmapdebug) printf("No\n");
 #endif
@@ -1161,8 +1205,7 @@ pmap_is_modified(pg)
  * Clears modify bit in all ptes referenced to this physical page.
  */
 boolean_t
-pmap_clear_modify(pg)
-	struct vm_page *pg;
+pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
@@ -1179,6 +1222,7 @@ pmap_clear_modify(pg)
 #endif
 	pv->pv_attr &= ~PG_M;
 
+	PVTABLE_LOCK;
 	if (pv->pv_pte)
 		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m =
 		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
@@ -1190,6 +1234,7 @@ pmap_clear_modify(pg)
 		    pv->pv_pte[2].pg_m = pv->pv_pte[3].pg_m = 
 		    pv->pv_pte[4].pg_m = pv->pv_pte[5].pg_m = 
 		    pv->pv_pte[6].pg_m = pv->pv_pte[7].pg_m = 0;
+	PVTABLE_UNLOCK;
 	return TRUE; /* XXX */
 }
 
@@ -1199,9 +1244,7 @@ pmap_clear_modify(pg)
  * or none; where none is unmapping of the page.
  */
 void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t       prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct	pte *pt;
 	struct	pv_entry *pv, *opv, *pl;
@@ -1227,6 +1270,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 		return;
 
 	RECURSESTART;
+	PVTABLE_LOCK;
 	if (prot == VM_PROT_NONE) {
 		s = splvm();
 		g = (int *)pv->pv_pte;
@@ -1235,7 +1279,9 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 				pv->pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
+			simple_lock(&pv->pv_pmap->pm_lock);
 			pv->pv_pmap->pm_stats.resident_count--;
+			simple_unlock(&pv->pv_pmap->pm_lock);
 			pmap_decpteref(pv->pv_pmap, pv->pv_pte);
 			pv->pv_pte = 0;
 		}
@@ -1248,7 +1294,9 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
+			simple_lock(&pl->pv_pmap->pm_lock);
 			pl->pv_pmap->pm_stats.resident_count--;
+			simple_unlock(&pl->pv_pmap->pm_lock);
 			pmap_decpteref(pl->pv_pmap, pl->pv_pte);
 			opv = pl;
 			pl = pl->pv_next;
@@ -1268,7 +1316,11 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 			    PROT_KR : PROT_RO);
 		} while ((pv = pv->pv_next));
 	}
+	PVTABLE_UNLOCK;
 	RECURSEEND;
+#ifdef MULTIPROCESSOR
+	cpu_send_ipi(IPI_DEST_ALL, IPI_TBIA);
+#endif
 	mtpr(0, PR_TBIA);
 }
 
@@ -1279,8 +1331,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
  * the current process will have wrong pagetables.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(struct proc *p)
 {
 	pmap_t pmap;
 	struct pcb *pcb;
@@ -1328,13 +1379,19 @@ if(startpmapdebug) printf("pmap_unwire: pmap %p v %lx\n", pmap, v);
 	pte[0] &= ~PG_W; /* Informational, only first page */
 }
 
+/*
+ * pv_entry functions.
+ */
 struct pv_entry *pv_list;
 
+/*
+ * get_pventry().
+ * The pv_table lock must be held before calling this.
+ */
 struct pv_entry *
 get_pventry()
 {
 	struct pv_entry *tmp;
-	int s = splvm();
 
 	if (pventries == 0)
 		panic("get_pventry");
@@ -1342,22 +1399,26 @@ get_pventry()
 	tmp = pv_list;
 	pv_list = tmp->pv_next;
 	pventries--;
-	splx(s);
 	return tmp;
 }
 
+/*
+ * free_pventry().
+ * The pv_table lock must be held before calling this.
+ */
 void
 free_pventry(pv)
 	struct pv_entry *pv;
 {
-	int s = splvm();
-
 	pv->pv_next = pv_list;
 	pv_list = pv;
 	pventries++;
-	splx(s);
 }
 
+/*
+ * more_pventries().
+ * The pv_table lock must _not_ be held before calling this.
+ */
 void
 more_pventries()
 {
@@ -1378,8 +1439,10 @@ more_pventries()
 		pv[i].pv_next = &pv[i + 1];
 
 	s = splvm();
+	PVTABLE_LOCK;
 	pv[count - 1].pv_next = pv_list;
 	pv_list = pv;
 	pventries += count;
+	PVTABLE_UNLOCK;
 	splx(s);
 }
