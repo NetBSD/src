@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.15 1999/06/07 03:06:08 mrg Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.16 1999/07/25 07:59:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.15 1999/06/07 03:06:08 mrg Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.16 1999/07/25 07:59:48 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -296,26 +296,22 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	for (;
 	    (p = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
 	    free(p)) {
-		while (*p && isspace(*p))	/* skip leading whitespace */
-			p++;
+		k = p;				/* set start of key */
+		while (*k && isspace(*k))	/* skip leading whitespace */
+			k++;
 
-		if (! *p)
+		if (! *k)
 			continue;
 
-		k = p;				/* save start of key */
-		while (*p && !isspace(*p)) {	/* find whitespace */
-				/* Convert to lower case if forcing. */
-			if (lflag && isupper(*p))
-				*p = tolower(*p);
-			p++;
+		v = k;
+		while (*v && !isspace(*v)) {	/* find leading whitespace */
+				/* convert key to lower case if forcing. */
+			if (lflag && isupper(*v))
+				*v = tolower(*v);
+			v++;
 		}
-		if (! *p)
-			v = "";			/* no value found - use "" */
-		else {
-			while (isspace(*p))	/* replace space with <NUL> */
-				*p++ = '\0';
-			v = p;			/* save start of value */
-		}
+		while (*v && isspace(*v))	/* replace space with <NUL> */
+			*v++ = '\0';
 
 		if (add_record(new_db, k, v, TRUE)) {    /* save record */
 bad_record:
