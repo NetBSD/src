@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.20 1996/06/10 12:51:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -391,9 +391,6 @@ int mbtypes[] = {				/* XXX */
 	M_FTABLE,	/* MT_FTABLE	5	   fragment reassembly header */
 	M_MBUF,		/* MT_CONTROL	6	   extra-data protocol message */
 	M_MBUF,		/* MT_OOBDATA	7	   expedited data  */
-#ifdef DATAKIT
-	25, 26, 27, 28, 29, 30, 31, 32		/* datakit ugliness */
-#endif
 };
 #endif
 #endif
