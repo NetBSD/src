@@ -1,4 +1,3 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.20 2002/01/03 02:29:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -35,6 +34,8 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
+#include <sys/filedesc.h>
+#include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -45,6 +46,22 @@
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/select.h>
+#include <sys/ioctl.h>
+
+#include <dev/sun/event_var.h>
+
+#include <net/if.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/igmp.h>
+#include <netinet/igmp_var.h>
+#include <netinet/ip_mroute.h>
+
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_ioctl.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -52,15 +69,7 @@
 #include <machine/vuid_event.h>
 #include <machine/netbsd32_machdep.h>
 
-#include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_ioctl.h>
-#include <compat/netbsd32/netbsd32_syscallargs.h>
-
-#include <dev/sun/event_var.h>
-
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
-
-#include <sys/ioctl.h>
 
 /*
  * Set up registers on exec.
@@ -637,7 +646,7 @@ ev_out32(e, n, uio)
  * ioctl code
  */
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/openpromio.h>
 
 /* from arch/sparc/include/fbio.h */
@@ -804,12 +813,12 @@ netbsd32_md_ioctl(fp, com, data32, p)
 	struct proc *p;
 {
 	u_int size;
-	caddr_t data;
+	caddr_t data, memp = NULL;
 #define STK_PARAMS	128
-	stkbuf[STK_PARAMS/sizeof(u_long)];
-	stkbuf32[STK_PARAMS/sizeof(u_long)];
+	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
+	int error;
 
-	switch (SCARG(uap, com)) {
+	switch (com) {
 	case FBIOPUTCMAP32:
 		IOCTL_STRUCT_CONV_TO(FBIOPUTCMAP, fbcmap);
 	case FBIOGETCMAP32:
@@ -829,5 +838,7 @@ netbsd32_md_ioctl(fp, com, data32, p)
 	default:
 		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
 	}
+	if (memp)
+		free(memp, M_IOCTLOPS);
 	return (error);
 }

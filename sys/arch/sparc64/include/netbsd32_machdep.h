@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.7 2002/01/03 02:29:40 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.8 2002/01/03 06:43:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,6 +30,10 @@
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
+
+#include <sys/types.h>
+#include <sys/proc.h>
+#include <compat/netbsd32/netbsd32.h>
 
 /* from <arch/sparc/include/signal.h> */
 typedef u_int32_t netbsd32_sigcontextp_t;
