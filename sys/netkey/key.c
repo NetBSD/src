@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.81 2002/12/09 03:20:45 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.82 2003/06/16 08:11:03 itojun Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.81 2002/12/09 03:20:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82 2003/06/16 08:11:03 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1552,13 +1552,16 @@ key_spdadd(so, m, mhp)
 				break;
 			}
 		}
+	}
 
-#if 1
-		/*
-		 * bark if we have different address family on tunnel address
-		 * specification.  applies only if we decapsulate in RFC2401
-		 * IPsec (implementation limitation).
-		 */
+	/*
+	 * bark if we have different address family on tunnel address
+	 * specification.  applies only if we decapsulate in RFC2401
+	 * IPsec (implementation limitation).
+	 */
+	for (isr = newsp->req; isr; isr = isr->next) {
+		struct sockaddr *sa;
+
 		if (isr->saidx.src.ss_family) {
 			sa = (struct sockaddr *)(src0 + 1);
 			if (sa->sa_family != isr->saidx.src.ss_family) {
@@ -1573,7 +1576,6 @@ key_spdadd(so, m, mhp)
 				return key_senderror(so, m, EINVAL);
 			}
 		}
-#endif
 	}
 
 	newsp->created = time.tv_sec;
