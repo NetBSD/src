@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.8 2003/04/08 18:55:43 jdc Exp $
+.\"	$NetBSD: curses_input.3,v 1.9 2003/04/08 21:15:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -94,8 +94,7 @@
 .Fn nodelay "WINDOW *win" "boolf flag"
 .Ft int
 .Fn ungetch "int c"
-.Ft extern int
-.Dv ESCDELAY
+.Va extern int ESCDELAY ;
 .Sh DESCRIPTION
 These functions read characters and strings from the window input file
 descriptor.
@@ -278,7 +277,7 @@ is
 .Dv FALSE ,
 then the component characters of a multi-character sequence must not
 have an inter-character gap of more than
-.Dv ESCDELAY .
+.Va ESCDELAY .
 If this timing is exceeded, then the multi-character key assembly is
 deemed to have failed and the characters read thus far are returned
 one at a time when
@@ -287,10 +286,11 @@ is called.
 The default setting for the flag is
 .Dv FALSE .
 The default value of
-.Dv ESCDELAY
-is 300ms.  If
-.Dv ESCDELAY
-is negative, no timeout applied between characters comprising a
+.Va ESCDELAY
+is 300ms.
+If
+.Va ESCDELAY
+is negative, no timeout is applied between characters comprising a
 multi-character key sequence.
 .Pp
 The
