@@ -1,3 +1,5 @@
+/*	$NetBSD: bf_enc.c,v 1.9 2003/08/27 14:49:44 thorpej Exp $	*/
+
 /* crypto/bf/bf_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -57,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.8 2003/08/27 12:17:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.9 2003/08/27 14:49:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <crypto/blowfish/blowfish.h>
