@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.21 1995/07/24 21:20:46 cgd Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.22 1996/02/01 00:39:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,15 +125,15 @@ nfs_bioread(vp, uio, ioflag, cred)
 			np->n_direofoffset = 0;
 			if (error = VOP_GETATTR(vp, &vattr, cred, p))
 				return (error);
-			np->n_mtime = vattr.va_mtime.ts_sec;
+			np->n_mtime = vattr.va_mtime.tv_sec;
 		} else {
 			if (error = VOP_GETATTR(vp, &vattr, cred, p))
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.ts_sec) {
+			if (np->n_mtime != vattr.va_mtime.tv_sec) {
 				np->n_direofoffset = 0;
 				if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
 					return (error);
-				np->n_mtime = vattr.va_mtime.ts_sec;
+				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
 	}
@@ -749,7 +749,7 @@ nfs_doio(bp, cr, p)
 			  NQNFS_CKINVALID(vp, np, NQL_READ) &&
 			  np->n_lrev != np->n_brev) ||
 			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-			  np->n_mtime != np->n_vattr.va_mtime.ts_sec))) {
+			  np->n_mtime != np->n_vattr.va_mtime.tv_sec))) {
 			uprintf("Process killed due to text file modification\n");
 			psignal(p, SIGKILL);
 			p->p_holdcnt++;
