@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)os-u4_2.h	8.1 (Berkeley) 6/6/93
  *
- * $Id: os-u4_2.h,v 1.1 1993/11/27 21:19:28 mycroft Exp $
+ * $Id: os-u4_2.h,v 1.2 1994/06/13 19:49:14 mycroft Exp $
  *
  * Ultrix 4.2 definitions for Amd (automounter)
  *		from Chris Lindblad <cjl@ai.mit.edu>

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)mtab_aix.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: mtab_aix.c,v 1.1 1993/11/27 21:18:48 mycroft Exp $
+ * $Id: mtab_aix.c,v 1.2 1994/06/13 19:48:39 mycroft Exp $
  *
  */
 
@@ -54,31 +54,22 @@ struct vmount *mp;
 	struct mntent *new_mp = ALLOC(mntent);
 
 	char *ty;
-	char *fsname = strdup(vmt2dataptr(mp, VMT_OBJECT));
+	new_mp->mnt_fsname = strdup(vmt2dataptr(mp, VMT_OBJECT));
 	new_mp->mnt_dir = strdup(vmt2dataptr(mp, VMT_STUB));
 	new_mp->mnt_opts = strdup(vmt2dataptr(mp, VMT_ARGS));
 	switch (mp->vmt_gfstype) {
-	case MNT_JFS:
-		ty = MTAB_TYPE_UFS;
-		new_mp->mnt_fsname = strdup(fsname);
-		break;
-
+	case MNT_JFS:  ty = MTAB_TYPE_UFS; break;
 	case MNT_NFS:
 		ty = MTAB_TYPE_NFS;
-		new_mp->mnt_fsname = str3cat((char *) 0,
-				vmt2dataptr(mp, VMT_HOSTNAME), ":", fsname);
+		new_mp->mnt_fsname = str3cat(new_mp->mnt_fsname,
+				vmt2dataptr(mp, VMT_HOSTNAME),
+				":", new_mp->mnt_fsname);
 		break;
-
-	default:
-		ty = "unknown";
-		new_mp->mnt_fsname = strdup(fsname);
-		break;
+	default:  ty = "unknown"; break;
 	}
 	new_mp->mnt_type = strdup(ty);
 	new_mp->mnt_passno = mp->vmt_vfsnumber;
 	new_mp->mnt_freq = 0;
-
-	free(fsname);
 
 	return new_mp;
 }
