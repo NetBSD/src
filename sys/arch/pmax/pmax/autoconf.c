@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1997/05/25 08:17:00 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1997/06/15 11:23:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,20 +198,32 @@ findroot(devpp, partp)
 {
 	int i, majdev, unit, part, controller;
 	struct pmax_scsi_device *dp;
+	const char *bootdv_name;
 
 	/*
 	 * Default to "not found".
 	 */
 	*devpp = NULL;
 	*partp = 0;
+	bootdv_name = NULL;
 
 	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
 		return;
 
 	majdev = B_TYPE(bootdev);
-	for (i = 0; pmax_nam2blk[i].d_name != NULL; i++)
-		if (majdev == pmax_nam2blk[i].d_maj)
+	for (i = 0; pmax_nam2blk[i].d_name != NULL; i++) {
+		if (majdev == pmax_nam2blk[i].d_maj) {
+			bootdv_name = pmax_nam2blk[i].d_name;
 			break;
+		}
+	}
+
+	if (bootdv_name == NULL) {
+#if defined(DEBUG)
+		printf("findroot(): no name2blk for boot device %d\n", majdev);
+#endif
+		return;
+	}
 
 	controller = B_CONTROLLER(bootdev);
 	part = B_PARTITION(bootdev);
@@ -220,13 +232,16 @@ findroot(devpp, partp)
 	for (dp = scsi_dinit; dp->sd_driver != NULL; dp++) {
 		if (dp->sd_alive && dp->sd_drive == unit &&
 		    dp->sd_ctlr == controller &&
-		    dp->sd_driver->d_name[0] == pmax_nam2blk[i].d_name[0] &&
-		    dp->sd_driver->d_name[1] == pmax_nam2blk[i].d_name[1]) {
+		    dp->sd_driver->d_name[0] == bootdv_name[0] &&
+		    dp->sd_driver->d_name[1] == bootdv_name[1]) {
 			*devpp = dp->sd_devp;
 			*partp = part;
 			return;
 		}
 	}
+#if defined(DEBUG)
+	printf("findroot(): no driver for boot device %s\n", bootdv_name);
+#endif
 }
 
 /*
