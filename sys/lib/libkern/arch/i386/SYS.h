@@ -1,5 +1,3 @@
-/*	$NetBSD: SYS.h,v 1.3 1994/10/26 06:39:04 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,17 +33,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
+ *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
+ *	$Id: SYS.h,v 1.4 1995/02/05 15:06:44 mycroft Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define	SYSCALL(x)	2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; LCALL(7,0); jc 2b
+#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
 #define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; LCALL(7,0); ret
+#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
 #define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
-/* gas fucks up offset -- although we don't currently need it, do for BCS */
-#define	LCALL(x,y)	.byte 0x9a; .long y; .word x
 
 	.globl	cerror
