@@ -1,6 +1,6 @@
-.\" $NetBSD: ucom.4,v 1.3 2000/04/14 14:55:18 augustss Exp $
+.\" $NetBSD: uftdi.4,v 1.1 2000/04/14 14:55:18 augustss Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,47 +34,36 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 25, 1999
-.Dt UCOM 4
+.Dd April 13, 2000
+.Dt UFTDI 4
 .Os
 .Sh NAME
-.Nm ucom
-.Nd USB tty support
+.Nm uftdi
+.Nd USB support for serial adapters based on the FT8U100AX
 .Sh SYNOPSIS
-.\"Cd "ucom* at uetekcom? portno ?"
-.Cd "ucom* at uftdi?"
-.Cd "ucom* at umodem? portno ?"
-.Cd "ucom* at uvisor?"
+.Cd "uftdi* at uhub?"
+.Cd "ucom*  at uftdi?"
+.Sh HARDWARE
+The
+.Nm
+driver supports the following adapters:
 .Pp
+.Bl -tag -width -offset indent -compact
+.It Tn XXX
+.El
 .Sh DESCRIPTION
 The
 .Nm
-driver attaches to USB modems, serial ports, and other devices that need
-to look like a tty.
-The
-.Nm
-driver shows a behaviour like a
-.Xr tty 4 .
-This means that normal programs such as
-.Xr tip 1
-or
-.Xr pppd 8
-can be used to access the device.
+driver provides support for various serial adapters based on the FTDI chip
+FT8U100AX.
 .Pp
-The
-.Va portno
-locator can be used to decide which port to use for device that have
-multiple external ports.
-.Sh FILES
-.Bl -tag -width Pa
-.It Pa /dev/ttyU?
-.El
+The device is accessed through the
+.Xr ucom 4
+driver which makes it behave like a
+.Xr tty 4 .
 .Sh SEE ALSO
 .Xr tty 4 ,
-.\"Xr uetekcom 4 ,
-.Xr uftdi 4 ,
-.Xr umodem 4 ,
-.Xr uvisor 4 ,
+.Xr ucom 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
