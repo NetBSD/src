@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.10 1998/03/22 19:36:52 mycroft Exp $	*/
+/*	$NetBSD: cy.c,v 1.10.8.1 2000/06/03 18:26:40 he Exp $	*/
 
 /*
  * cy.c
@@ -9,10 +9,6 @@
  * Timo Rossi, 1996
  *
  * Supports both ISA and PCI Cyclom cards
- *
- * Uses CD1400 automatic CTS flow control, and
- * if CY_HW_RTS is defined, uses CD1400 automatic input flow control.
- * This requires a special cable that exchanges the RTS and DTR lines.
  *
  * Lots of debug output can be enabled by defining CY_DEBUG
  * Some debugging counters (number of receive/transmit interrupts etc.)
@@ -52,7 +48,7 @@ static int cy_modem_control __P((struct cy_softc *,
     struct cy_port *, int, int));
 static void cy_enable_transmitter __P((struct cy_softc *, struct cy_port *));
 static void cd1400_channel_cmd __P((struct cy_softc *, struct cy_port *, int));
-static int cy_speed __P((speed_t, int *, int *));
+static int cy_speed __P((speed_t, int *, int *, int));
 
 extern struct cfdriver cy_cd;
 
@@ -168,6 +164,7 @@ cy_attach(parent, self, aux)
 {
 	int  port, cy_chip, num_chips, cdu, chip;
 	struct cy_softc *sc = (void *) self;
+	int cy_clock;
 
 	num_chips = sc->sc_nchips;
 	if (num_chips == 0)
@@ -193,13 +190,19 @@ cy_attach(parent, self, aux)
 		 */
 		cd_write_reg(sc, cy_chip, CD1400_GCR, 0);
 
+		if (cd_read_reg(sc, cy_chip, CD1400_GFRCR) <= 0x46)
+			cy_clock = CY_CLOCK;
+		else
+			cy_clock = CY_CLOCK_60;
+
 		/* set up a receive timeout period (1ms) */
 		cd_write_reg(sc, cy_chip, CD1400_PPR,
-		    (CY_CLOCK / CD1400_PPR_PRESCALER / 1000) + 1);
+		    (cy_clock / CD1400_PPR_PRESCALER / 1000) + 1);
 
 		for (cdu = 0; cdu < CD1400_NO_OF_CHANNELS; cdu++) {
 			sc->sc_ports[port].cy_port_num = port;
 			sc->sc_ports[port].cy_chip = cy_chip;
+			sc->sc_ports[port].cy_clock = cy_clock;
 
 			/* should we initialize anything else here? */
 			port++;
@@ -650,10 +653,10 @@ cyparam(tp, t)
 	printf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
 #endif
 
-	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr) < 0)
+	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr, cy->cy_clock) < 0)
 		return EINVAL;
 
-	if (t->c_ispeed != 0 && cy_speed(t->c_ispeed, &i_clk_opt, &ibpr) < 0)
+	if (t->c_ispeed != 0 && cy_speed(t->c_ispeed, &i_clk_opt, &ibpr, cy->cy_clock) < 0)
 		return EINVAL;
 
 	s = spltty();
@@ -742,15 +745,15 @@ cyparam(tp, t)
          * set modem change option registers to generate interrupts
          * on carrier detect changes.
          *
-         * if hardware RTS handshaking is used (CY_HW_RTS, DTR and RTS lines
-         * exchanged), also set the handshaking threshold.
+         * if hardware RTS handshaking is used
+         * also set the handshaking threshold.
          */
-#ifdef CY_HW_RTS
-	cd_write_reg(sc, cy->cy_chip, CD1400_MCOR1, CD1400_MCOR1_CDzd |
-		     (ISSET(t->c_cflag, CRTSCTS) ? RX_DTR_THRESHOLD : 0));
-#else
-	cd_write_reg(sc, cy->cy_chip, CD1400_MCOR1, CD1400_MCOR1_CDzd);
-#endif				/* CY_HW_RTS */
+	if (cy->cy_clock == CY_CLOCK_60) {
+	   cd_write_reg(sc, cy->cy_chip, CD1400_MCOR1, CD1400_MCOR1_CDzd |
+    	      (ISSET(t->c_cflag, CRTSCTS) ? CY_RX_DTR_THRESHOLD : 0));
+	} else {
+	   cd_write_reg(sc, cy->cy_chip, CD1400_MCOR1, CD1400_MCOR1_CDzd);
+	}
 
 	cd_write_reg(sc, cy->cy_chip, CD1400_MCOR2, CD1400_MCOR2_CDod);
 
@@ -774,8 +777,6 @@ cyparam(tp, t)
  * set/get modem line status
  *
  * bits can be: TIOCM_DTR, TIOCM_RTS, TIOCM_CTS, TIOCM_CD, TIOCM_RI, TIOCM_DSR
- *
- * RTS and DTR are exchanged if CY_HW_RTS is set
  *
  */
 static int
@@ -802,19 +803,19 @@ cy_modem_control(sc, cy, bits, howto)
 		if (cy->cy_channel_control & CD1400_CCR_RCVEN)
 			bits |= TIOCM_LE;
 		msvr = cd_read_reg(sc, cy->cy_chip, CD1400_MSVR2);
-#ifdef CY_HW_RTS
-		if (cd_read_reg(sc, cy->cy_chip, CD1400_MSVR1) &
-		    CD1400_MSVR1_RTS)
-			bits |= TIOCM_DTR;
-		if (msvr & CD1400_MSVR2_DTR)
-			bits |= TIOCM_RTS;
-#else
-		if (cd_read_reg(sc, cy->cy_chip, CD1400_MSVR1) &
-		    CD1400_MSVR1_RTS)
-			bits |= TIOCM_RTS;
-		if (msvr & CD1400_MSVR2_DTR)
-			bits |= TIOCM_DTR;
-#endif				/* CY_HW_RTS */
+		if (cy->cy_clock == CY_CLOCK_60) {
+			if (cd_read_reg(sc, cy->cy_chip, CD1400_MSVR1) &
+		    		CD1400_MSVR1_RTS)
+				bits |= TIOCM_DTR;
+			if (msvr & CD1400_MSVR2_DTR)
+				bits |= TIOCM_RTS;
+		} else {
+			if (cd_read_reg(sc, cy->cy_chip, CD1400_MSVR1) &
+			    CD1400_MSVR1_RTS)
+				bits |= TIOCM_RTS;
+			if (msvr & CD1400_MSVR2_DTR)
+				bits |= TIOCM_DTR;
+		}
 		if (msvr & CD1400_MSVR2_CTS)
 			bits |= TIOCM_CTS;
 		if (msvr & CD1400_MSVR2_CD)
@@ -829,51 +830,51 @@ cy_modem_control(sc, cy, bits, howto)
 		return bits;
 
 	case DMSET:		/* replace old values with new ones */
-#ifdef CY_HW_RTS
-		if (!ISSET(tp->>t_cflag, CRTSCTS))
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
-			    ((bits & TIOCM_RTS) ? CD1400_MSVR2_DTR : 0));
-		cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
-		    ((bits & TIOCM_DTR) ? CD1400_MSVR1_RTS : 0));
-#else
-		if (!ISSET(tp->t_cflag, CRTSCTS))
+		if (cy->cy_clock == CY_CLOCK_60) {
+			if (!ISSET(tp->t_cflag, CRTSCTS))
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
+				   ((bits & TIOCM_RTS) ? CD1400_MSVR2_DTR : 0));
 			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
-			   ((bits & TIOCM_RTS) ? CD1400_MSVR1_RTS : 0));
-		cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
-		    ((bits & TIOCM_DTR) ? CD1400_MSVR2_DTR : 0));
-#endif /* CY_HW_RTS */
+			    ((bits & TIOCM_DTR) ? CD1400_MSVR1_RTS : 0));
+		} else {
+			if (!ISSET(tp->t_cflag, CRTSCTS))
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
+				   ((bits & TIOCM_RTS) ? CD1400_MSVR1_RTS : 0));
+			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
+			    ((bits & TIOCM_DTR) ? CD1400_MSVR2_DTR : 0));
+		}
 		break;
 
 	case DMBIS:		/* set bits */
-#ifdef CY_HW_RTS
-		if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
-			    CD1400_MSVR2_DTR);
-		if (bits & TIOCM_DTR)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
-			    CD1400_MSVR1_RTS);
-#else
-		if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
-			    CD1400_MSVR1_RTS);
-		if (bits & TIOCM_DTR)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
-			    CD1400_MSVR2_DTR);
-#endif /* CY_HW_RTS */
+		if (cy->cy_clock == CY_CLOCK_60) {
+			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
+				    CD1400_MSVR2_DTR);
+			if (bits & TIOCM_DTR)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
+				    CD1400_MSVR1_RTS);
+		} else {
+			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
+				    CD1400_MSVR1_RTS);
+			if (bits & TIOCM_DTR)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
+				    CD1400_MSVR2_DTR);
+		}
 		break;
 
 	case DMBIC:		/* clear bits */
-#ifdef CY_HW_RTS
-		if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS))
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
-		if (bits & TIOCM_DTR)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
-#else
-		if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS))
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
-		if (bits & TIOCM_DTR)
-			cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
-#endif /* CY_HW_RTS */
+		if (cy->cy_clock == CY_CLOCK_60) {
+			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS))
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
+			if (bits & TIOCM_DTR)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
+		} else {
+			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS))
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
+			if (bits & TIOCM_DTR)
+				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
+		}
 		break;
 	}
 	splx(s);
@@ -961,7 +962,6 @@ cy_poll(arg)
 #endif
 			}
 
-#ifndef CY_HW_RTS
 			/*
 			 * If we don't have any received data in ibuf and
 			 * CRTSCTS is on and RTS is turned off, it is time to
@@ -975,16 +975,26 @@ cy_poll(arg)
 				cd_write_reg(sc, cy->cy_chip, CD1400_CAR,
 				    port & CD1400_CAR_CHAN);
 
-				if ((cd_read_reg(sc, cy->cy_chip,
-				    CD1400_MSVR1) & CD1400_MSVR1_RTS) == 0) {
-					cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
-					    CD1400_MSVR1_RTS);
+				if (cy->cy_clock == CY_CLOCK_60) {
+				  if ((cd_read_reg(sc, cy->cy_chip,
+				    CD1400_MSVR2) & CD1400_MSVR2_DTR) == 0) {
+					cd_write_reg(sc, cy->cy_chip,
+					CD1400_MSVR2,CD1400_MSVR2_DTR);
 #ifdef CY_DEBUG1
 					did_something = 1;
 #endif
+				  }
+				} else {
+				  if ((cd_read_reg(sc, cy->cy_chip,
+				    CD1400_MSVR1) & CD1400_MSVR1_RTS) == 0) {
+					cd_write_reg(sc, cy->cy_chip,
+					CD1400_MSVR1,CD1400_MSVR1_RTS);
+#ifdef CY_DEBUG1
+					did_something = 1;
+#endif
+				  }
 				}
 			}
-#endif /* CY_HW_RTS */
 
 			/*
 		         * handle carrier changes
@@ -1153,7 +1163,6 @@ cy_intr(arg)
 
 			cy->cy_ibuf_wr_ptr = buf_p;
 
-#ifndef CY_HW_RTS
 			/* RTS handshaking for incoming data */
 			if (ISSET(cy->cy_tty->t_cflag, CRTSCTS)) {
 				int bf;
@@ -1162,17 +1171,21 @@ cy_intr(arg)
 				if (bf < 0)
 					bf += CY_IBUF_SIZE;
 
-				if (bf > (CY_IBUF_SIZE / 2)) /* turn RTS off */
+				if (bf > (CY_IBUF_SIZE / 2)) { /* turn RTS off */
+				  if (cy->cy_clock == CY_CLOCK_60) {
+					cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2, 0);
+				  } else {
 					cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1, 0);
+				  }
+				}
 			}
-#endif				/* CY_HW_RTS */
 
 	end_rx_serv:
 			/* terminate service context */
 			cd_write_reg(sc, cy->cy_chip, CD1400_RIR, save_rir & 0x3f);
 			cd_write_reg(sc, cy->cy_chip, CD1400_CAR, save_car);
 			int_serviced = 1;
-		} /* if(rx_service...) */
+		} /* if (rx_service...) */
 		if (ISSET(stat, CD1400_SVRR_MDMCH)) {
 			u_char save_car, save_mir, serv_type, modem_stat;
 
@@ -1204,7 +1217,7 @@ cy_intr(arg)
 			cd_write_reg(sc, cy->cy_chip, CD1400_MIR, save_mir & 0x3f);
 			cd_write_reg(sc, cy->cy_chip, CD1400_CAR, save_car);
 			int_serviced = 1;
-		} /* if(modem_service...) */
+		} /* if (modem_service...) */
 		if (ISSET(stat, CD1400_SVRR_TXRDY)) {
 			u_char          save_car, save_tir, serv_type,
 			                count, ch;
@@ -1306,7 +1319,7 @@ cy_intr(arg)
 			cd_write_reg(sc, cy->cy_chip, CD1400_TIR, save_tir & 0x3f);
 			cd_write_reg(sc, cy->cy_chip, CD1400_CAR, save_car);
 			int_serviced = 1;
-		}		/* if(tx_service...) */
+		}		/* if (tx_service...) */
 	}			/* for(...all CD1400s on a card) */
 
 	/* ensure an edge for next interrupt */
@@ -1365,9 +1378,9 @@ cd1400_channel_cmd(sc, cy, cmd)
  * with every speed value between 50 and 150000 bps.
  */
 static int
-cy_speed(speed, cor, bpr)
+cy_speed(speed, cor, bpr, cy_clock)
     speed_t speed;
-    int *cor, *bpr;
+    int *cor, *bpr, cy_clock;
 {
 	int c, co, br;
 
@@ -1375,7 +1388,7 @@ cy_speed(speed, cor, bpr)
 		return -1;
 
 	for (c = 0, co = 8; co <= 2048; co <<= 2, c++) {
-		br = (CY_CLOCK + (co * speed) / 2) / (co * speed);
+		br = (cy_clock + (co * speed) / 2) / (co * speed);
 		if (br < 0x100) {
 			*bpr = br;
 			*cor = c;
