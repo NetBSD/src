@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.448 2001/07/31 18:28:59 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.449 2001/08/01 19:50:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -978,9 +978,17 @@ static const struct i386_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_DCACHE,
 	  0x0c,
 	  16 * 1024,	2,			32 },
+#if 0
+	/*
+	 * Just ignore this entry.  What is actually means is:
+	 *
+	 *	No 2nd-level cacle, or if processor contains a valid
+	 *	2nd-level cache, no 3rd-level cache.
+	 */
 	{ CAI_L2CACHE,
 	  0x40,
 	  0,		1,			0 },
+#endif
 	{ CAI_L2CACHE,
 	  0x41,
 	  128 * 1024,	4,			32 },
@@ -996,9 +1004,52 @@ static const struct i386_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,
 	  0x45,
 	  2 * 1024 * 1024, 4,			32 },
+	/*
+	 * XXX Need a way to represent the following:
+	 *
+	 *	0x50:	ITLB: 4K and 2M/4M, 64 entries
+	 *	0x51:	ITLB: 4K and 2M/4M, 128 entries
+	 *	0x52:	ITLB: 4K and 2M/4M, 285 entries
+	 *	0x5b:	DTLB: 4K and 4M, 64 entries
+	 *	0x5b:	DTLB: 4K and 4M, 128 entries
+	 *	0x5d:	DTLB: 4K and 4M, 256 entries
+	 */
+	{ CAI_DCACHE,
+	  0x66,
+	  8 * 1024,	4,			64 },
+	{ CAI_DCACHE,
+	  0x67,
+	  16 * 1024,	4,			64 },
+	{ CAI_DCACHE,
+	  0x68,
+	  32 * 1024,	4,			64 },
+	/*
+	 * XXX Need a way to represent the following:
+	 *
+	 *	0x70:	Trace cache, 12KuOP, 4-way
+	 *	0x71:	Trace cache, 16KuOP, 4-way
+	 *	0x72:	Trace cache, 32KuOP, 4-way
+	 *
+	 * Do we care?
+	 */
+	{ CAI_L2CACHE,
+	  0x79,
+	  128 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7a,
+	  256 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7b,
+	  512 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7c,
+	  1 * 1024 * 1024, 8,			64 },
 	{ CAI_L2CACHE,
 	  0x82,
 	  256 * 1024,	8,			32 },
+	{ CAI_L2CACHE,
+	  0x83,
+	  512 * 1024,	8,			32 },
 	{ CAI_L2CACHE,
 	  0x84,
 	  1 * 1024 * 1024, 8,			32 },
@@ -1016,6 +1067,14 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 	u_int descs[4];
 	int iterations, i, j;
 	u_int8_t desc;
+
+	/*
+	 * If we have the CFLUSH insn, fetch the CFLUSH line size.
+	 */
+	if (cpu_feature & CPUID_CFLUSH) {
+		do_cpuid(1, descs);
+		ci->ci_cflush_lsize = ((descs[1] >> 8) & 0xff) * 8;
+	}
 
 	/*
 	 * Parse the cache info from `cpuid'.
