@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.2 2001/03/05 23:14:22 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.3 2001/03/05 23:29:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -48,6 +48,9 @@
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.3 2001/03/05 23:29:32 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -83,7 +86,8 @@ default_undefined_handler(u_int address, u_int instruction,
 	if (p == NULL)
 		p = &proc0;
 #ifdef VERBOSE_ARM32
-	log(LOG_ERR, "Undefined instruction 0x%08x @ 0x%08x in process %s (pid %d)\n",
+	log(LOG_ERR, "Undefined instruction 0x%08x at 0x%08x "
+	    "in process %s (pid %d)\n",
 	    instruction, address, p->p_comm, p->p_pid);
 #endif
 	return(1);
@@ -95,7 +99,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 {
 	if (coproc < 0 || coproc > MAX_COPROCS)
 		return(EINVAL);
-	if (handler == (undef_handler_t)0)
+	if (handler == NULL)
 		handler = default_undefined_handler;
       
 	undefined_handlers[coproc] = handler;
@@ -155,21 +159,23 @@ undefinedinstruction(trapframe_t *frame)
 	else
 		coprocessor = 0;
 		
-	/* Get the current proc structure or proc0 if there is none */
+	/* Get the current proc structure or proc0 if there is none. */
 
 	if ((p = curproc) == 0)
 		p = &proc0;
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		/* Modify the fault_code to reflect the USR/SVC state at time of fault */
-
+		/*
+		 * Modify the fault_code to reflect the USR/SVC state at
+		 * time of fault.
+		 */
 		fault_code = FAULT_USER;
 		p->p_addr->u_pcb.pcb_tf = frame;
 	} else
 		fault_code = 0;
 
-	/* OK this is were we do something about the instruction */
-	/* Check for coprocessor instruction */
+	/* OK this is were we do something about the instruction. */
+	/* Check for coprocessor instruction. */
 
 	/* Special cases */
 
@@ -177,13 +183,13 @@ undefinedinstruction(trapframe_t *frame)
 	    && fault_code == FAULT_USER) {
 		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
 		trapsignal(curproc, SIGTRAP, 0);
-	} else if ((undefined_handlers[coprocessor](fault_pc, fault_instruction,
-	    frame, fault_code)) != 0) {
+	} else if ((undefined_handlers[coprocessor]
+	    (fault_pc, fault_instruction, frame, fault_code)) != 0) {
 		/* Fault has not been handled */
 
 #ifdef VERBOSE_ARM32
-		{ s = spltty();
-
+		s = spltty();
+		
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
 			printf("CDP\n");
 			disassemble(fault_pc);
@@ -202,14 +208,14 @@ undefinedinstruction(trapframe_t *frame)
 			disassemble(fault_pc);
 		}
 
-		(void)splx(s); }
+		splx(s);
 #endif
         
 		if ((fault_code & FAULT_USER) == 0) {
-			printf("Undefined instruction in kernel: Heavy man !\n");
+			printf("Undefined instruction in kernel\n");
 #ifdef DDB
 			Debugger();
-#endif	/* DDB */
+#endif
 		}
 
 		trapsignal(p, SIGILL, fault_instruction);
@@ -259,9 +265,9 @@ void
 resethandler(trapframe_t *frame)
 {
 #ifdef DDB
-	/* Extra info incase panic drops us into the debugger */
+	/* Extra info in case panic drops us into the debugger. */
 	printf("Trap frame at %p\n", frame);
-#endif	/* DDB */
+#endif
 	panic("Branch to never-never land (zero)..... we're dead\n");
 }
 
