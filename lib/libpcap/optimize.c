@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.9 1999/07/02 16:03:41 simonb Exp $	*/
+/*	$NetBSD: optimize.c,v 1.10 2000/04/14 14:17:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.9 1999/07/02 16:03:41 simonb Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.10 2000/04/14 14:17:13 itojun Exp $");
 #endif
 #endif
 
@@ -1901,7 +1901,7 @@ convert_code_r(p)
 	int slen;
 	u_int off;
 	int extrajmps;		/* number of extra jumps inserted */
-	struct slist **offset;
+	struct slist **offset = NULL;
 
 	if (p == 0 || isMarked(p))
 		return (1);
@@ -1919,10 +1919,12 @@ convert_code_r(p)
 	p->offset = dst - fstart;
 
 	/* generate offset[] for convenience  */
-	offset = (struct slist **)calloc(sizeof(struct slist *), slen);
-	if (!offset) {
-		bpf_error("not enough core");
-		/*NOTREACHED*/
+	if (slen) {
+		offset = (struct slist **)calloc(sizeof(struct slist *), slen);
+		if (!offset) {
+			bpf_error("not enough core");
+			/*NOTREACHED*/
+		}
 	}
 	src = p->stmts;
 	for (off = 0; off < slen && src; off++) {
@@ -1998,7 +2000,8 @@ filled:
 		++dst;
 		++off;
 	}
-	free(offset);
+	if (offset)
+		free(offset);
 
 #ifdef BDEBUG
 	bids[dst - fstart] = p->id + 1;
