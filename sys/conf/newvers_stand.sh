@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.3 2000/07/13 22:04:44 jdolecek Exp $
+# $NetBSD: newvers_stand.sh,v 1.4 2000/08/23 07:15:20 mrg Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,7 +59,7 @@ done
 
 shift `expr $OPTIND - 1`
 
-r=`grep '^[0-9].[0-9]:' $1 | tail -1 | sed -e 's/:.*//'`
+r=`awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' $1`
 
 # always add revision info
 echo "const char bootprog_rev[] = \"${r}\";" > vers.c
