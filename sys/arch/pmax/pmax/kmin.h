@@ -1,4 +1,4 @@
-/*	$NetBSD: kmin.h,v 1.6 1998/06/22 09:37:41 jonathan Exp $	*/
+/*	$NetBSD: kmin.h,v 1.6.4.1 1999/05/07 02:33:30 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,8 +93,8 @@
  *	system module (54-20604-01)
  */
 
-#ifndef	MIPS_KMIN_H
-#define	MIPS_KMIN_H 1
+#ifndef MIPS_KMIN_H
+#define MIPS_KMIN_H 1
 
 /*
  * 3MIN's Physical address space
@@ -114,13 +114,13 @@
  * I/O map
  */
 
-#define	KMIN_PHYS_RESERVED	0x08000000	/* Reserved */
+#define KMIN_PHYS_RESERVED	0x08000000	/* Reserved */
 						/*  64 Meg */
 
-#define	KMIN_PHYS_MREGS_START	0x0c000000	/* Memory control registers */
-#define	KMIN_PHYS_MREGS_END	0x0dffffff	/*  32 Meg */
-#define	KMIN_PHYS_CREGS_START	0x0e000000	/* CPU ASIC control regs */
-#define	KMIN_PHYS_CREGS_END	0x0fffffff	/*  32 Meg */
+#define KMIN_PHYS_MREGS_START	0x0c000000	/* Memory control registers */
+#define KMIN_PHYS_MREGS_END	0x0dffffff	/*  32 Meg */
+#define KMIN_PHYS_CREGS_START	0x0e000000	/* CPU ASIC control regs */
+#define KMIN_PHYS_CREGS_END	0x0fffffff	/*  32 Meg */
 
 #define KMIN_PHYS_TC_0_START	0x10000000	/* TURBOchannel, slot 0 */
 #define KMIN_PHYS_TC_0_END	0x13ffffff	/*  64 Meg, option0 */
@@ -134,46 +134,29 @@
 #define KMIN_PHYS_TC_3_START	0x1c000000	/* TURBOchannel, slot 3 */
 #define KMIN_PHYS_TC_3_END	0x1fffffff	/*  64 Meg, system devices */
 
-#define	KMIN_PHYS_TC_START	KMIN_PHYS_TC_0_START
-#define	KMIN_PHYS_TC_END	KMIN_PHYS_TC_3_END	/* 256 Meg */
+#define KMIN_PHYS_TC_START	KMIN_PHYS_TC_0_START
+#define KMIN_PHYS_TC_END	KMIN_PHYS_TC_3_END	/* 256 Meg */
 
 #define KMIN_TC_NSLOTS		4
-#define	KMIN_TC_MIN		0
+#define KMIN_TC_MIN		0
 #define KMIN_TC_MAX		2		/* don't look at system slot */
-
-/* Pseudo-TCslots */
-#define	KMIN_SCSI_SLOT		3
-#define	KMIN_LANCE_SLOT		4
-#define	KMIN_SCC1_SLOT		5
-#define	KMIN_SCC0_SLOT		6
-#define	KMIN_ASIC_SLOT		7
 
 /*
  * System module space (IO ASIC)
  */
 
-#define	KMIN_SYS_ASIC		( KMIN_PHYS_TC_3_START + 0x0000000 )
-
-#define	KMIN_SYS_ROM_START	( KMIN_SYS_ASIC + IOASIC_SLOT_0_START )
-
+#define KMIN_SYS_ASIC		( KMIN_PHYS_TC_3_START + 0x0000000 )
+#define KMIN_SYS_ROM_START	( KMIN_SYS_ASIC + IOASIC_SLOT_0_START )
 #define KMIN_SYS_ASIC_REGS	( KMIN_SYS_ASIC + IOASIC_SLOT_1_START )
-
-#define	KMIN_SYS_ETHER_ADDRESS	( KMIN_SYS_ASIC + IOASIC_SLOT_2_START )
-
-#define	KMIN_SYS_LANCE		( KMIN_SYS_ASIC + IOASIC_SLOT_3_START )
-
-#define	KMIN_SYS_SCC_0		( KMIN_SYS_ASIC + IOASIC_SLOT_4_START )
-
-#define	KMIN_SYS_SCC_1		( KMIN_SYS_ASIC + IOASIC_SLOT_6_START )
-
-#define	KMIN_SYS_CLOCK		( KMIN_SYS_ASIC + IOASIC_SLOT_8_START )
-
-#define	KMIN_SYS_SCSI		( KMIN_SYS_ASIC + IOASIC_SLOT_12_START )
-
-#define	KMIN_SYS_SCSI_DMA	( KMIN_SYS_ASIC + IOASIC_SLOT_14_START )
-
-#define	KMIN_SYS_BOOT_ROM_START	( KMIN_PHYS_TC_3_START + 0x3c00000 )
-#define	KMIN_SYS_BOOT_ROM_END	( KMIN_PHYS_TC_3_START + 0x3c40000 )
+#define KMIN_SYS_ETHER_ADDRESS	( KMIN_SYS_ASIC + IOASIC_SLOT_2_START )
+#define KMIN_SYS_LANCE		( KMIN_SYS_ASIC + IOASIC_SLOT_3_START )
+#define KMIN_SYS_SCC_0		( KMIN_SYS_ASIC + IOASIC_SLOT_4_START )
+#define KMIN_SYS_SCC_1		( KMIN_SYS_ASIC + IOASIC_SLOT_6_START )
+#define KMIN_SYS_CLOCK		( KMIN_SYS_ASIC + IOASIC_SLOT_8_START )
+#define KMIN_SYS_SCSI		( KMIN_SYS_ASIC + IOASIC_SLOT_12_START )
+#define KMIN_SYS_SCSI_DMA	( KMIN_SYS_ASIC + IOASIC_SLOT_14_START )
+#define KMIN_SYS_BOOT_ROM_START ( KMIN_PHYS_TC_3_START + 0x3c00000 )
+#define KMIN_SYS_BOOT_ROM_END	( KMIN_PHYS_TC_3_START + 0x3c40000 )
 
 /*
  * Interrupts
@@ -190,38 +173,38 @@
  *  System registers addresses (MREG and CREG space, and IO Control ASIC)
  */
 
-#define	KMIN_REG_MER		0x0c400000	/* Memory error register */
-#define	KMIN_REG_MSR		0x0c800000	/* Memory size register */
+#define KMIN_REG_MER		0x0c400000	/* Memory error register */
+#define KMIN_REG_MSR		0x0c800000	/* Memory size register */
 
-#define	KMIN_REG_CNFG		0x0e000000	/* Config mem timeouts */
-#define	KMIN_REG_AER		0x0e000004	/* Address error register */
-#define	KMIN_REG_BOOT		0x0e000008	/* Boot 0 register */
-#define	KMIN_REG_TIMEOUT	0x0e00000c	/* Mem access timeout reg */
+#define KMIN_REG_CNFG		0x0e000000	/* Config mem timeouts */
+#define KMIN_REG_AER		0x0e000004	/* Address error register */
+#define KMIN_REG_BOOT		0x0e000008	/* Boot 0 register */
+#define KMIN_REG_TIMEOUT	0x0e00000c	/* Mem access timeout reg */
 
-#define	KMIN_REG_SCSI_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCSI_DMAPTR )
-#define	KMIN_REG_SCSI_DMANPTR	( KMIN_SYS_ASIC + IOASIC_SCSI_NEXTPTR )
-#define	KMIN_REG_LANCE_DMAPTR	( KMIN_SYS_ASIC + IOASIC_LANCE_DMAPTR )
-#define	KMIN_REG_SCC_T1_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_T1_DMAPTR )
-#define	KMIN_REG_SCC_R1_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_R1_DMAPTR )
-#define	KMIN_REG_SCC_T2_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_T2_DMAPTR )
-#define	KMIN_REG_SCC_R2_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_R2_DMAPTR )
-#define	KMIN_REG_CSR		( KMIN_SYS_ASIC + IOASIC_CSR )
-#define	KMIN_REG_INTR		( KMIN_SYS_ASIC + IOASIC_INTR )
-#define	KMIN_REG_IMSK		( KMIN_SYS_ASIC + IOASIC_IMSK )
-#define	KMIN_REG_CURADDR	( KMIN_SYS_ASIC + IOASIC_CURADDR )
+#define KMIN_REG_SCSI_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCSI_DMAPTR )
+#define KMIN_REG_SCSI_DMANPTR	( KMIN_SYS_ASIC + IOASIC_SCSI_NEXTPTR )
+#define KMIN_REG_LANCE_DMAPTR	( KMIN_SYS_ASIC + IOASIC_LANCE_DMAPTR )
+#define KMIN_REG_SCC_T1_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_T1_DMAPTR )
+#define KMIN_REG_SCC_R1_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_R1_DMAPTR )
+#define KMIN_REG_SCC_T2_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_T2_DMAPTR )
+#define KMIN_REG_SCC_R2_DMAPTR	( KMIN_SYS_ASIC + IOASIC_SCC_R2_DMAPTR )
+#define KMIN_REG_CSR		( KMIN_SYS_ASIC + IOASIC_CSR )
+#define KMIN_REG_INTR		( KMIN_SYS_ASIC + IOASIC_INTR )
+#define KMIN_REG_IMSK		( KMIN_SYS_ASIC + IOASIC_IMSK )
+#define KMIN_REG_CURADDR	( KMIN_SYS_ASIC + IOASIC_CURADDR )
 
-#define	KMIN_REG_LANCE_DECODE	( KMIN_SYS_ASIC + IOASIC_LANCE_DECODE )
-#define	KMIN_REG_SCSI_DECODE	( KMIN_SYS_ASIC + IOASIC_SCSI_DECODE )
-#define	KMIN_REG_SCC0_DECODE	( KMIN_SYS_ASIC + IOASIC_SCC0_DECODE )
-#define	KMIN_REG_SCC1_DECODE	( KMIN_SYS_ASIC + IOASIC_SCC1_DECODE )
+#define KMIN_REG_LANCE_DECODE	( KMIN_SYS_ASIC + IOASIC_LANCE_DECODE )
+#define KMIN_REG_SCSI_DECODE	( KMIN_SYS_ASIC + IOASIC_SCSI_DECODE )
+#define KMIN_REG_SCC0_DECODE	( KMIN_SYS_ASIC + IOASIC_SCC0_DECODE )
+#define KMIN_REG_SCC1_DECODE	( KMIN_SYS_ASIC + IOASIC_SCC1_DECODE )
 #	define KMIN_LANCE_CONFIG	3
 #	define KMIN_SCSI_CONFIG		14
 #	define KMIN_SCC0_CONFIG		(0x10|4)
 #	define KMIN_SCC1_CONFIG		(0x10|6)
 
-#define	KMIN_REG_SCSI_SCR	( KMIN_SYS_ASIC + IOASIC_SCSI_SCR )
-#define	KMIN_REG_SCSI_SDR0	( KMIN_SYS_ASIC + IOASIC_SCSI_SDR0 )
-#define	KMIN_REG_SCSI_SDR1	( KMIN_SYS_ASIC + IOASIC_SCSI_SDR1 )
+#define KMIN_REG_SCSI_SCR	( KMIN_SYS_ASIC + IOASIC_SCSI_SCR )
+#define KMIN_REG_SCSI_SDR0	( KMIN_SYS_ASIC + IOASIC_SCSI_SDR0 )
+#define KMIN_REG_SCSI_SDR1	( KMIN_SYS_ASIC + IOASIC_SCSI_SDR1 )
 
 
 /*
@@ -230,11 +213,11 @@
 
 /* Memory error register */
 
-#define	KMIN_MER_xxx		0xfffe30ff	/* undefined */
-#define	KMIN_MER_PAGE_BRY	0x00010000	/* rw: Page boundary error */
-#define	KMIN_MER_TLEN		0x00008000	/* rw: Xfer length error */
-#define	KMIN_MER_PARDIS		0x00004000	/* rw: Dis parity err intr */
-#define	KMIN_MER_LASTBYTE	0x00000f00	/* rz: Last byte in error: */
+#define KMIN_MER_xxx		0xfffe30ff	/* undefined */
+#define KMIN_MER_PAGE_BRY	0x00010000	/* rw: Page boundary error */
+#define KMIN_MER_TLEN		0x00008000	/* rw: Xfer length error */
+#define KMIN_MER_PARDIS		0x00004000	/* rw: Dis parity err intr */
+#define KMIN_MER_LASTBYTE	0x00000f00	/* rz: Last byte in error: */
 #	define	KMIN_LASTB31	0x00000800	/* upper byte of word */
 #	define	KMIN_LASTB23	0x00000400	/* .. through .. */
 #	define	KMIN_LASTB15	0x00000200	/* .. the .. */
@@ -242,8 +225,8 @@
 
 /* Memory size register */
 
-#define	KMIN_MSR_SIZE_16Mb	0x00002000	/* rw: using 16Mb mem banks */
-#define	KMIN_MSR_xxx		0xffffdfff	/* undefined */
+#define KMIN_MSR_SIZE_16Mb	0x00002000	/* rw: using 16Mb mem banks */
+#define KMIN_MSR_xxx		0xffffdfff	/* undefined */
 
 /* NOTES
 
@@ -266,20 +249,20 @@
 
 /* Timeout config register */
 
-#define	KMIN_CNFG_VALUE_12Mhz		127
-#define	KMIN_CNFG_VALUE_25Mhz		0
+#define KMIN_CNFG_VALUE_12Mhz		127
+#define KMIN_CNFG_VALUE_25Mhz		0
 
 /* Address error register */
 
-#define	KMIN_AER_ADDR_MASK	0x1ffffffc	/* ro: phys addr in error */
+#define KMIN_AER_ADDR_MASK	0x1ffffffc	/* ro: phys addr in error */
 
 /* Boot 0 register */
 
-#define	KMIN_BOOT_FROM_SLOT0	0x00000001	/* rw: diag board boot */
+#define KMIN_BOOT_FROM_SLOT0	0x00000001	/* rw: diag board boot */
 
 /* Memory access timeout interrupt register */
 
-#define	KMIN_TIMEO_INTR		0x00000001	/* rc: intr pending */
+#define KMIN_TIMEO_INTR		0x00000001	/* rc: intr pending */
 
 /*
  * More system registers defines (IO Control ASIC)
@@ -300,19 +283,19 @@
 /* (re)defines for the System Interrupt and Mask Registers */
 /* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
 
-#define	KMIN_INTR_NVR_JUMPER	0x00004000	/* ro */
-#define	KMIN_INTR_TIMEOUT	0x00001000	/* ro */
-#define	KMIN_INTR_NRMOD_JUMPER	0x00000400	/* ro */
-#define	KMIN_INTR_SCSI		0x00000200	/* ro */
-#define	KMIN_INTR_LANCE		0x00000100	/* ro */
-#define	KMIN_INTR_SCC_1		0x00000080	/* ro */
-#define	KMIN_INTR_SCC_0		0x00000040	/* ro */
-#define	KMIN_INTR_CLOCK		0x00000020	/* ro */
-#define	KMIN_INTR_PSWARN	0x00000010	/* ro */
-#define	KMIN_INTR_SCSI_FIFO	0x00000004	/* ro */
-#define	KMIN_INTR_PBNC		0x00000002	/* ro */
-#define	KMIN_INTR_PBNO		0x00000001	/* ro */
-#define	KMIN_INTR_ASIC		0xff0f0004
-#define	KMIN_IM0		0xff0f13f0	/* all good ones enabled */
+#define KMIN_INTR_NVR_JUMPER	0x00004000	/* ro */
+#define KMIN_INTR_TIMEOUT	0x00001000	/* ro */
+#define KMIN_INTR_NRMOD_JUMPER	0x00000400	/* ro */
+#define KMIN_INTR_SCSI		0x00000200	/* ro */
+#define KMIN_INTR_LANCE		0x00000100	/* ro */
+#define KMIN_INTR_SCC_1		0x00000080	/* ro */
+#define KMIN_INTR_SCC_0		0x00000040	/* ro */
+#define KMIN_INTR_CLOCK		0x00000020	/* ro */
+#define KMIN_INTR_PSWARN	0x00000010	/* ro */
+#define KMIN_INTR_SCSI_FIFO	0x00000004	/* ro */
+#define KMIN_INTR_PBNC		0x00000002	/* ro */
+#define KMIN_INTR_PBNO		0x00000001	/* ro */
+#define KMIN_INTR_ASIC		0xff0f0004
+#define KMIN_IM0		0xff0f13f0	/* all good ones enabled */
 
 #endif	/* MIPS_KMIN_H */
