@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/04/08 16:09:58 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.16 2002/04/09 16:05:37 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -23,6 +23,7 @@ CPPFLAGS+= -DCONS_VGA
 AOBJS=	${ASRCS:.s=.o}
 COBJS=	${CSRCS:.c=.o}
 OBJS=	${AOBJS} ${COBJS}
+CFLAGS= -Wno-main
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 NOMAN=	# defined
 STRIPFLAG=
