@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2003/04/04 22:38:05 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2003/04/07 21:42:14 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1833,6 +1833,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
 		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
 		if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
 			register_t batl = battable[va >> ADDR_SR_SHFT].batl;
 			register_t mask = (~(batu & BAT_BL) << 15) & ~0x1ffffL;
