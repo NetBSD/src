@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.11 1999/09/20 04:39:27 lukem Exp $	*/
+/*	$NetBSD: flags.c,v 1.12 2000/01/15 01:11:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: flags.c,v 1.11 1999/09/20 04:39:27 lukem Exp $");
+__RCSID("$NetBSD: flags.c,v 1.12 2000/01/15 01:11:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,11 +91,25 @@ __sflags(mode, optr)
 		return (0);
 	}
 
-	/* [rwa]\+ or [rwa]b\+ means read and write */
-	if (*mode == '+' || (*mode == 'b' && mode[1] == '+')) {
-		ret = __SRW;
-		m = O_RDWR;
-	}
+	/*
+	 * [rwa]\+ or [rwa]b\+ means read and write 
+	 * f means open only plain files.
+	 */
+	for (; *mode; mode++)
+		switch (*mode) {
+		case '+':
+			ret = __SRW;
+			m = O_RDWR;
+			break;
+		case 'f':
+			o |= O_NONBLOCK;
+			break;
+		case 'b':
+			break;
+		default:	/* We could produce a warning here */
+			break;
+		}
+
 	*optr = m | o;
 	return (ret);
 }
