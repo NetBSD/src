@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.92 2003/12/20 19:01:30 fvdl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.92.2.1 2004/11/12 06:56:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.92 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.92.2.1 2004/11/12 06:56:39 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -584,7 +584,7 @@ ultrix_sys_cacheflush(l, v, retval)
 {
 	struct ultrix_sys_cacheflush_args /* {
 		syscallarg(void *) addr;
-		syscallarg(int) nbytes;
+		syscallarg(unsigned) nbytes;
 		syscallarg(int) flag;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
