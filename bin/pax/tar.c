@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.21 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: tar.c,v 1.22 2002/10/11 13:07:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.21 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: tar.c,v 1.22 2002/10/11 13:07:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,14 +406,12 @@ tar_rd(ARCHD *arcn, char *buf)
 	 */
 	hd = (HD_TAR *)buf;
 	if (gnu_hack_string) {
-		int len = MAX(strlen(gnu_hack_string), PAXPATHLEN);
-		arcn->nlen = l_strncpy(arcn->name, gnu_hack_string, len);
-		arcn->name[len] = '\0';
+		arcn->nlen = strlcpy(arcn->name, gnu_hack_string,
+		    sizeof(arcn->name));
 		free(gnu_hack_string);
 		gnu_hack_string = NULL;
 	} else {
-		arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(hd->name));
-		arcn->name[arcn->nlen] = '\0';
+		arcn->nlen = strlcpy(arcn->name, hd->name, sizeof(arcn->name));
 	}
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
@@ -437,9 +435,8 @@ tar_rd(ARCHD *arcn, char *buf)
 		 * the st_mode so -v printing will look correct.
 		 */
 		arcn->type = PAX_SLK;
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 		arcn->sb.st_mode |= S_IFLNK;
 		break;
 	case LNKTYPE:
@@ -449,9 +446,8 @@ tar_rd(ARCHD *arcn, char *buf)
 		 */
 		arcn->type = PAX_HLK;
 		arcn->sb.st_nlink = 2;
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 
 		/*
 		 * no idea of what type this thing really points at, but
@@ -581,7 +577,7 @@ tar_wr(ARCHD *arcn)
 	len = arcn->nlen;
 	if (arcn->type == PAX_DIR)
 		++len;
-	if (len > sizeof(hd->name)) {
+	if (len >= sizeof(hd->name)) {
 		tty_warn(1, "File name too long for tar %s", arcn->name);
 		return(1);
 	}
@@ -594,8 +590,9 @@ tar_wr(ARCHD *arcn)
 	 * added after the file data (0 for all other types, as they only have
 	 * a header)
 	 */
+	memset(hdblk, 0, sizeof(hdblk));
 	hd = (HD_TAR *)hdblk;
-	zf_strncpy(hd->name, arcn->name, sizeof(hd->name));
+	strlcpy(hd->name, arcn->name, sizeof(hd->name));
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {
@@ -605,7 +602,6 @@ tar_wr(ARCHD *arcn)
 		 * dirs, so no pad.
 		 */
 		hd->linkflag = AREGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 		hd->name[len-1] = '/';
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
@@ -614,7 +610,7 @@ tar_wr(ARCHD *arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = SYMTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
@@ -622,7 +618,7 @@ tar_wr(ARCHD *arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = LNKTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
@@ -630,7 +626,6 @@ tar_wr(ARCHD *arcn)
 		 * data follows this file, so set the pad
 		 */
 		hd->linkflag = AREGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 1)) {
 			tty_warn(1,"File is too large for tar %s",
 			    arcn->org_name);
@@ -654,7 +649,7 @@ tar_wr(ARCHD *arcn)
 	 * to be written
 	 */
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
-	    sizeof(hd->chksum), 2))
+	    sizeof(hd->chksum), 3))
 		goto out;
 	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
 		return(-1);
@@ -761,6 +756,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	arcn->org_name = arcn->name;
 	arcn->sb.st_nlink = 1;
 	arcn->pat = NULL;
+	arcn->nlen = 0;
 	hd = (HD_USTAR *)buf;
 
 	/*
@@ -769,14 +765,12 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 */
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
-		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix));
+		cnt = strlcpy(arcn->name, hd->prefix, sizeof(arcn->name));
 		dest += cnt;
 		*dest++ = '/';
+		cnt++;
 	}
-	cnt = l_strncpy(dest, hd->name, sizeof(hd->name));
-	dest += cnt;
-	*dest = '\0';
-	arcn->nlen = dest - arcn->name;
+	arcn->nlen = cnt + strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
@@ -863,9 +857,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 		/*
 		 * copy the link name
 		 */
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 		break;
 	case CONTTYPE:
 	case AREGTYPE:
@@ -916,7 +909,7 @@ ustar_wr(ARCHD *arcn)
 	 * check the length of the linkname
 	 */
 	if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
-	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen > sizeof(hd->linkname))){
+	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen >= sizeof(hd->linkname))){
 		tty_warn(1, "Link name too long for ustar %s", arcn->ln_name);
 		return(1);
 	}
@@ -929,6 +922,11 @@ ustar_wr(ARCHD *arcn)
 		tty_warn(1, "File name too long for ustar %s", arcn->name);
 		return(1);
 	}
+
+	/*
+	 * zero out the header so we don't have to worry about zero fill below
+	 */
+	memset(hdblk, 0, sizeof(hdblk));
 	hd = (HD_USTAR *)hdblk;
 	arcn->pad = 0L;
 
@@ -941,16 +939,15 @@ ustar_wr(ARCHD *arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		zf_strncpy(hd->prefix, arcn->name, sizeof(hd->prefix));
+		strlcpy(hd->prefix, arcn->name, sizeof(hd->prefix));
 		*pt++ = '/';
-	} else
-		memset(hd->prefix, 0, sizeof(hd->prefix));
+	}
 
 	/*
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	zf_strncpy(hd->name, pt, sizeof(hd->name));
+	strlcpy(hd->name, pt, sizeof(hd->name));
 
 	/*
 	 * set the fields in the header that are type dependent
@@ -958,9 +955,6 @@ ustar_wr(ARCHD *arcn)
 	switch(arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -970,7 +964,6 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = CHRTYPE;
 		else
 			hd->typeflag = BLKTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
 		if (ul_oct((u_long)MAJOR(arcn->sb.st_rdev), hd->devmajor,
 		   sizeof(hd->devmajor), 3) ||
 		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
@@ -980,9 +973,6 @@ ustar_wr(ARCHD *arcn)
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -993,9 +983,7 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
+		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
 			goto out;
 		break;
@@ -1009,9 +997,6 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = CONTTYPE;
 		else
 			hd->typeflag = REGTYPE;
-		memset(hd->linkname, 0, sizeof(hd->linkname));
-		memset(hd->devmajor, 0, sizeof(hd->devmajor));
-		memset(hd->devminor, 0, sizeof(hd->devminor));
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 		if (OFFT_OCT(arcn->sb.st_size, hd->size, sizeof(hd->size), 3)) {
 			tty_warn(1,"File is too long for ustar %s",
@@ -1021,8 +1006,8 @@ ustar_wr(ARCHD *arcn)
 		break;
 	}
 
-	zf_strncpy(hd->magic, TMAGIC, TMAGLEN);
-	zf_strncpy(hd->version, TVERSION, TVERSLEN);
+	strncpy(hd->magic, TMAGIC, TMAGLEN);
+	strncpy(hd->version, TVERSION, TVERSLEN);
 
 	/*
 	 * set the remaining fields. Some versions want all 16 bits of mode
@@ -1035,8 +1020,8 @@ ustar_wr(ARCHD *arcn)
 		goto out;
 	user = user_from_uid(arcn->sb.st_uid, 1);
 	group = group_from_gid(arcn->sb.st_gid, 1);
-	zf_strncpy(hd->uname, user ? user : "", sizeof(hd->uname));
-	zf_strncpy(hd->gname, group ? group : "", sizeof(hd->gname));
+	strncpy(hd->uname, user ? user : "", sizeof(hd->uname));
+	strncpy(hd->gname, group ? group : "", sizeof(hd->gname));
 
 	/*
 	 * calculate and store the checksum write the header to the archive
@@ -1083,9 +1068,9 @@ name_split(char *name, int len)
 	 * check to see if the file name is small enough to fit in the name
 	 * field. if so just return a pointer to the name.
 	 */
-	if (len <= TNMSZ)
+	if (len < TNMSZ)
 		return(name);
-	if (len > (TPFSZ + TNMSZ + 1))
+	if (len > (TPFSZ + TNMSZ))
 		return(NULL);
 
 	/*
@@ -1095,7 +1080,7 @@ name_split(char *name, int len)
 	 * prefix we can find) (the -1 is correct the biggest piece would
 	 * include the slash between the two parts that gets thrown away)
 	 */
-	start = name + len - TNMSZ - 1;
+	start = name + len - TNMSZ;
 	while ((*start != '\0') && (*start != '/'))
 		++start;
 
@@ -1113,7 +1098,7 @@ name_split(char *name, int len)
 	 * the file would then expand on extract to //str. The len == 0 below
 	 * makes this special case follow the spec to the letter.
 	 */
-	if ((len > TPFSZ) || (len == 0))
+	if ((len >= TPFSZ) || (len == 0))
 		return(NULL);
 
 	/*
