@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigvec.2	6.7 (Berkeley) 4/29/91
-.\"	$Id: sigvec.2,v 1.2 1993/08/01 07:45:45 mycroft Exp $
+.\"	$Id: sigvec.2,v 1.3 1993/11/29 22:06:07 jtc Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 2
@@ -260,7 +260,7 @@ is set to indicated the reason.
 .Fn Sigvec
 will fail and no new signal handler will be installed if one
 of the following occurs:
-.Bl -tag -width [EINVAL]
+.Bl -tag -width Er
 .It Bq Er EFAULT
 Either
 .Fa vec
