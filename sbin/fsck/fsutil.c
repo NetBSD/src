@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.4 1997/09/14 14:11:01 lukem Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.4.2.1 1997/10/31 21:19:30 mellon Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.4 1997/09/14 14:11:01 lukem Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.4.2.1 1997/10/31 21:19:30 mellon Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -299,10 +299,12 @@ void *
 emalloc(s)
 	size_t s;
 {
-	void *p = malloc(s);
+	void *p;
+
+	p = malloc(s);
 	if (p == NULL)
 		err(1, "malloc failed");
-	return p;
+	return (p);
 }
 
 
@@ -311,10 +313,12 @@ erealloc(p, s)
 	void *p;
 	size_t s;
 {
-	p = realloc(p, s);
-	if (p == NULL)
+	void *q;
+
+	q = realloc(p, s);
+	if (q == NULL)
 		err(1, "realloc failed");
-	return p;
+	return (q);
 }
 
 
@@ -322,8 +326,10 @@ char *
 estrdup(s)
 	const char *s;
 {
-	char *p = strdup(s);
+	char *p;
+
+	p = strdup(s);
 	if (p == NULL)
 		err(1, "strdup failed");
-	return p;
+	return (p);
 }
