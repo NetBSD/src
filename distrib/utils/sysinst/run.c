@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: run.c,v 1.2 1997/09/27 00:09:29 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 #include "defs.h"
 
 #ifdef DEBUG
-#define Xsystem(y) printf ("%s\n", y)
+#define Xsystem(y) printf ("%s\n", y), 0
 #else
 #define Xsystem(y) system(y)
 #endif

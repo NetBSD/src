@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.2 1997/09/27 00:09:22 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,7 +125,9 @@ EXTERN int fake_sel;
 
 /* other vars for menu communication */
 EXTERN int  nodist;
+EXTERN int  got_dist;
 EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");
+EXTERN int  clean_dist_dir INIT(0);
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
 EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-" REL "/" MACH);
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
@@ -169,7 +171,7 @@ int	run_prog (char *, ...);
 void	factor (long, long *, int, int *);
 
 /* from net.c */
-void get_via_ftp (void);
+int  get_via_ftp (void);
 void get_via_nfs (void);
 
 /* from disks.c */

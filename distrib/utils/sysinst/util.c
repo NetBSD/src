@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.2 1997/09/27 00:09:30 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <curses.h>
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
@@ -97,10 +98,6 @@ extract_dist (void)
 	}
 	files[numchar] = '\0';
 
-endwin();
-printf ("Files are %s\n", files);
-getchar();
-
 #ifndef DEBUG
 	if (chdir("/mnt")) {
 		endwin();
@@ -123,5 +120,6 @@ getchar();
 		(void)fprintf(stderr, msg_string(MSG_endtar));
 		getchar();
 		puts(CL);
+		wrefresh(stdscr);
 	}
 }

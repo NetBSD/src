@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.2 1997/09/27 00:09:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -237,10 +237,10 @@ menu selfskind, title "  Select the type ", y=15;
 
 menu distmedium, title "  Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option "ftp",    action { get_via_ftp(); }, exit;
-	option "nfs",    action { get_via_nfs(); }, exit;
-/*	option "cdrom",  action {  }, exit; */
-	option "floppy", action {  }, exit;
+	option "ftp",    action { got_dist = get_via_ftp(); }, exit;
+/*	option "nfs",    action { get_via_nfs(); }, exit;
+	option "cdrom",  action {  }, exit; 
+	option "floppy", action {  }, exit; */
 	option "none",   action { nodist = 1; }, exit;
 
 

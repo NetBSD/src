@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.2 1997/09/27 00:09:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -178,11 +178,12 @@ static void config_network (void)
 	run_prog ("/sbin/route add default %s > /dev/null", net_defroute);
 }
 
-void
+int
 get_via_ftp (void)
-{
+{ 
 	char **list;
 	char realdir[STRSIZE];
+	int  ret;
 
 	config_network ();
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
@@ -191,6 +192,7 @@ get_via_ftp (void)
 	snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
 	strcpy (dist_dir, realdir);
 	run_prog ("/bin/mkdir %s", realdir);
+	clean_dist_dir = 1;
 #ifndef DEBUG
 	if (chdir(realdir)) {
 		endwin();
@@ -205,19 +207,32 @@ get_via_ftp (void)
 	endwin();
 	while (*list) {
 		if (strcmp ("ftp", ftp_user) == 0)
-			run_prog ("/usr/bin/ftp -a ftp://%s/%s/%s%s%s",
-				   ftp_host, ftp_dir,
-				   *list, rels, ftp_postfix);
+			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s%s%s",
+				       ftp_host, ftp_dir,
+				       *list, rels, ftp_postfix);
 		else
-			run_prog ("/usr/bin/ftp ftp://%s:%s@%s/%s/%s%s%s",
-				  ftp_user, ftp_pass, ftp_host, ftp_dir,
-				  *list, rels, ftp_postfix);
-		list++;
+			ret = run_prog("/usr/bin/ftp ftp://%s:%s@%s/%s/%s%s%s",
+				       ftp_user, ftp_pass, ftp_host, ftp_dir,
+				       *list, rels, ftp_postfix);
+		if (ret) {
+			/* Error getting the file.  Bad host name ... ? */
+			wrefresh (stdscr);
+			msg_display (MSG_ftperror);
+			process_menu (MENU_yesno);
+			if (yesno)
+				process_menu (MENU_ftpsource);
+			else
+				return 0;
+			endwin();
+		} else 
+			list++;
 	}
 	puts (CL); /* Just to make sure. */
+	wrefresh (stdscr);
 #ifndef DEBUG
 	chdir("/");
 #endif
+	return 1;
 }
 
 void

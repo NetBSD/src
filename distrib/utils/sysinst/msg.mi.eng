@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.2 1997/09/27 00:09:26 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -332,6 +332,9 @@ message realdir
 {Could not change to directory %s.  Install aborted.
 }
 
+message ftperror
+{Ftp could not retreive a file.  Do you want to try again?}
+
 message netdir
 {What directory shall I use for %s? }
 
@@ -346,3 +349,8 @@ message badls
 
 message endtar
 {All your files have now been extracted.  Please hit CR to continue.}
+
+message abortinst
+{The distribution was not successfully loaded.  You will need to proceed
+by hand.  Installation aborted.
+}
