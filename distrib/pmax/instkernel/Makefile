@@ -1,23 +1,28 @@
-#	$NetBSD: Makefile,v 1.14 2000/01/04 01:20:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.15 2000/01/06 03:47:55 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
 
 IMAGE=		diskimage
-IMAGESIZE=	4096 # 512 byte blocks
-DISKTYPE=
-LABELPROTO=    ${.CURDIR}/diskimage.label.proto
-# Get defaults from minidisk configuration
-.include	"../miniroot/Makefile.inc"
-NEWFSOPTS+=	-i 32768	# don't need many inodes!
+IMAGESIZE=	4096 # 512 byte blocks, update disktab.diskimage if changed
+DISKTAB=	${.CURDIR}/disktab.diskimage
+DISKTYPE=	miniroot
+NEWFSOPTS?=	-c 32 -B le -i 32768	# don't need many inodes!
 
 KERN=		${.CURDIR}/../../../sys/arch/pmax/compile/RAMDISK/netbsd
 RAMDISK!=	cd ${.CURDIR}/../ramdisk; ${MAKE} echoimage
 CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
 
-VND_DEV=	/dev/${VND}
-VND_RDEV=	/dev/r${VND}
+VND?=		vnd0
+VND_DEV=	/dev/${VND}c
+VND_RDEV=	/dev/r${VND}c
 MOUNT_POINT?=	/mnt
+
+#
+# install bootblock, so that we can boot from there
+#
+BOOTINSTALL= ${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
+	${DESTDIR}/usr/mdec/bootxx_ffs
 
 all:	netbsd.gz ${IMAGE}.gz
 
@@ -32,9 +37,11 @@ netbsd.gz: ${KERN} ${RAMDISK}
 
 ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
-	${PRELABEL}
-	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
+	vnconfig ${DISKTYPEARG} -v -c ${VND} ${IMAGE} ${VND_GEOM}
+	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
+	newfs -B le -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
+	${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
+	    ${DESTDIR}/usr/mdec/bootxx_ffs
 	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp -p ${DESTDIR}/usr/mdec/boot.pmax ${MOUNT_POINT}
@@ -43,9 +50,14 @@ ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND}
 	rm -f ${IMAGE}.gz
 	gzip -9 ${IMAGE}
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+	-/bin/rm -f ${IMAGE} ${IMAGE}.gz
 
 realinstall:
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
