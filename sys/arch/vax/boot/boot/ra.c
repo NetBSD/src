@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.4 1999/08/07 11:19:04 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,8 +45,8 @@
 #include "dev/mscp/mscp.h"
 #include "dev/mscp/mscpreg.h"
 
-#include "../bi/bireg.h"
-#include "../bi/kdbreg.h"
+#include "dev/bi/bireg.h"
+#include "dev/bi/kdbreg.h"
 
 #include "vaxstand.h"
 
@@ -119,19 +119,21 @@ raopen(f, adapt, ctlr, unit, part)
 		ra->ubaddr = (int)ubaaddr[adapt];
 		*ra->ra_ip = 0; /* Start init */
 	} else {
-		struct bi_node *bi = (void *)biaddr[adapt];
-		struct kdb_regs *kb = (void *)&bi[ctlr];
+		paddr_t kdaddr = (paddr_t)biaddr[adapt] + BI_NODE(ctlr);
+		volatile int *w;
 		volatile int i = 10000;
 
-		ra->ra_ip = &kb->kdb_ip;
-		ra->ra_sa = &kb->kdb_sa;
-		ra->ra_sw = &kb->kdb_sw;
+		ra->ra_ip = (short *)(kdaddr + KDB_IP);
+		ra->ra_sa = (short *)(kdaddr + KDB_SA);
+		ra->ra_sw = (short *)(kdaddr + KDB_SW);
 		johan = ((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff;
 		johan2 = (((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff0000) >> 16;
-		kb->kdb_bi.bi_csr |= BICSR_NRST;
+		w = (int *)(kdaddr + BIREG_VAXBICSR);
+		*w = *w | BICSR_NRST;
 		while (i--) /* Need delay??? */
 			;
-		kb->kdb_bi.bi_ber = ~(BIBER_MBZ|BIBER_NMR|BIBER_UPEN);/* ??? */
+		w = (int *)(kdaddr + BIREG_BER);
+		*w = ~(BIBER_MBZ|BIBER_NMR|BIBER_UPEN);/* ??? */
 		ubauda = &uda;
 	}
 
