@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.29 2002/10/18 02:37:44 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.30 2002/10/18 04:11:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.29 2002/10/18 02:37:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.30 2002/10/18 04:11:57 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2631,7 +2631,7 @@ setregs(l, pack, stack)
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(l, 0);
+		npxsave_lwp(l, 0);
 #endif
 
 #ifdef USER_LDT
@@ -3640,8 +3640,8 @@ cpu_getmcontext(l, mcp, flags)
 		 * XXX npxsave() also clears the FPU state; depending on the
 		 * XXX application this might be a penalty.
 		 */
-		if (l == npxproc) {
-			npxsave();
+		if (l->l_addr->u_pcb.pcb_fpcpu) {
+			npxsave_lwp(l, 1);
 		}
 #endif
 		if (i386_use_fxsave) {
@@ -3720,11 +3720,10 @@ cpu_setmcontext(l, mcp, flags)
 	if ((flags & _UC_FPU) != 0) {
 #if NNPX > 0
 		/*
-		 * If this process happens to be the current FPU owner,
-		 * forget about its (to be overwritten) context.
+		 * If we were using the FPU, forget that we were.
 		 */
-		if (l == npxproc)
-			npxdrop();
+		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+			npxsave_lwp(l, 0);
 #endif
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
