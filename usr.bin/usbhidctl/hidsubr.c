@@ -1,4 +1,4 @@
-/*	$NetBSD: hidsubr.c,v 1.1 1998/07/13 11:14:04 augustss Exp $	*/
+/*	$NetBSD: hidsubr.c,v 1.2 1998/07/13 20:44:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -407,10 +407,16 @@ init_hid(char *hidname)
 	for (lineno = 1; ; lineno++) {
 		if (fgets(line, sizeof line, f) == NULL)
 			break;
-		if (line[0] == '#' || line[0] == '\n')
+		if (line[0] == '#')
 			continue;
-		if (sscanf(line, " 0x%x %[^\n]", &no, name) != 2 &&
-		    sscanf(line, " %d %[^\n]", &no, name) != 2)
+		for (p = line; *p && isspace(*p); p++)
+			;
+		if (!*p)
+			continue;
+		if (sscanf(line, " * %[^\n]", name) == 1)
+			no = -1;
+		else if (sscanf(line, " 0x%x %[^\n]", &no, name) != 2 &&
+			 sscanf(line, " %d %[^\n]", &no, name) != 2)
 			errx(1, "file %s, line %d, syntax error\n",
 			     hidname, lineno);
 		for (p = name; *p; p++)
@@ -487,18 +493,23 @@ usage_in_page(unsigned int u)
 {
 	int page = HID_PAGE(u);
 	int i = HID_USAGE(u);
-	static char b[10];
-	int j, k;
+	static char b[100];
+	int j, k, us;
 
 	for (k = 0; k < npages; k++)
 		if (pages[k].usage == page)
 			break;
 	if (k >= npages)
 		goto bad;
-	for (j = 0; j < pages[k].pagesize; j++)
-		if (pages[k].page_contents[j].usage == i)
+	for (j = 0; j < pages[k].pagesize; j++) {
+		us = pages[k].page_contents[j].usage;
+		if (us == -1) {
+			sprintf(b, pages[k].page_contents[j].name, i);
+			return b;
+		}
+		if (us == i)
 			return pages[k].page_contents[j].name;
-	
+	}
  bad:
 	sprintf(b, "x%x", i);
 	return b;
