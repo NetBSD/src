@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
+.\"	$NetBSD: fsck.8,v 1.15 1996/10/22 15:30:56 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -39,7 +39,7 @@
 .Op Fl l Ar maxparallel
 .Op Fl t Ar fstype 
 .Op Fl T Ar fstype:fsoptions 
-.Ar special | node ...
+.Op special | node ...
 .Sh DESCRIPTION
 The
 .Nm fsck
@@ -47,6 +47,27 @@ command invokes filesystem-specific programs to check the
 the special devices listed in the 
 .Xr fstab 5
 file or in the command line for consistency.
+.Pp
+It is normally used in the script
+.Pa /etc/rc
+during automatic reboot.
+If no filesystems are specified, and ``preen'' mode is enabled (
+.Fl p
+option)
+.Nm fsck
+reads the table
+.Pa /etc/fstab
+to determine which filesystems to check.
+Only partitions in fstab that are mounted ``rw,'' ``rq'' or ``ro''
+and that have non-zero pass number are checked.
+Filesystems with pass number 1 (normally just the root filesystem)
+are checked one at a time.
+When pass 1 completes, all remaining filesystems are checked,
+running one process per disk drive.
+The disk drive containing each filesystem is inferred from the longest prefix
+of the device name that ends in a digit; the remaining characters are assumed
+to be the partition designator.
+.Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl d
