@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.23 1996/10/13 03:35:26 christos Exp $	*/
+/*	$NetBSD: uda.c,v 1.24 1997/03/12 19:42:30 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -402,10 +402,12 @@ udasaerror(usc, doreset)
 	printf("%s: controller error, sa=0%o (%s%s)\n",
 		sc->sc_dev.dv_xname, code, e->desc + 1,
 		*e->desc == 'E' ? " error" : "");
+#if 0 /* XXX we just avoid panic when autoconfig non-existent KFQSA devices */
 	if (doreset) {
 		mscp_requeue(sc->sc_softc);
 /*		(void) udainit(sc);	XXX */
 	}
+#endif
 }
 
 /*
