@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
- *	$Id: ansi.h,v 1.4 1994/05/17 02:12:16 cgd Exp $
+ *	$Id: ansi.h,v 1.5 1994/05/25 00:02:24 phil Exp $
  */
 
 #ifndef	_ANSI_H_
@@ -41,17 +41,17 @@
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
  * then use:
- *	#ifdef	_SIZE_T_
- *	typedef	_SIZE_T_ size_t;
- *	#undef	_SIZE_T_
+ *	#ifdef	_BSD_SIZE_T_
+ *	typedef	_BSD_SIZE_T_ size_t;
+ *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_CLOCK_T_	unsigned long		/* clock() */
-#define	_PTRDIFF_T_	int			/* ptr1 - ptr2 */
-#define	_SIZE_T_	unsigned int		/* sizeof() */
-#define	_SSIZE_T_	int			/* byte count or error */
-#define	_TIME_T_	long			/* time() */
-#define	_VA_LIST_	char *			/* va_list */
+#define	_BSD_CLOCK_T_	unsigned long		/* clock() */
+#define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
+#define	_BSD_SSIZE_T_	int			/* byte count or error */
+#define	_BSD_TIME_T_	long			/* time() */
+#define	_BSD_VA_LIST_	char *			/* va_list */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
@@ -67,7 +67,7 @@
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
  */
-#define	_WCHAR_T_	int			/* wchar_t */
-#define	_RUNE_T_	int			/* rune_t */
+#define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define	_BSD_RUNE_T_	int			/* rune_t */
 
 #endif	/* _ANSI_H_ */

@@ -82,6 +82,15 @@ struct pcb {
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
 };
 
+/*    
+ * The pcb is augmented with machine-dependent additional data for 
+ * core dumps. For the pc532, there is nothing to add.
+ */     
+struct md_coredump {
+	long	md_pad[8];
+};    
+
+
 #ifdef KERNEL
 struct pcb *curpcb;		/* our current running pcb */
 #endif

@@ -46,14 +46,14 @@ typedef struct label_t {
 	int val[6];
 } label_t;
 
-typedef	u_long	vm_offset_t;
-typedef	u_long	vm_size_t;
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
 
 /*
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
-typedef	signed char		   int8_t;
+typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
