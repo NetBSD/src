@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/08/03 17:19:45 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/26 16:55:15 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -12,17 +12,8 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 YHEADER=	yes
 
-# gawk INFO file
-GDIST=	${NETBSDSRCDIR}/gnu/dist/gawk
-.PATH:	${GDIST}/doc
-
+# info file originally from GNU awk 3.1.3, adjusted for nawk slightly
 TEXINFO=        awk.info
-
-CLEANFILES+=	${PROG}.texi
-
-${PROG}.texi: gawk.texi
-	@-rm -f $@
-	sed -e 's/gawk.info/${PROG}.info/g' <$> >$@
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
