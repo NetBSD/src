@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 1998/06/08 20:47:47 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 1998/06/09 19:58:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,6 +86,20 @@ void	regdump __P((struct trapframe *, int));
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
+
+/*
+ * The sun3 wants faults to go through the pmap code, but
+ * the sun3x just goes directly to the common VM code.
+ */
+#ifdef	_SUN3X_
+#if defined(UVM)
+# define _pmap_fault(map, va, ftype) \
+	uvm_fault(map, va, 0, ftype)
+#else	/* UVM */
+# define _pmap_fault(map, va, ftype) \
+	vm_fault(map, va, ftype, 0)
+#endif	/* UVM */
+#endif	/* SUN3X */
 
 /* Special labels in m68k/copy.s */
 extern char fubail[], subail[];
