@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.99 1997/10/06 09:19:11 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.100 1997/10/09 00:39:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,10 +122,12 @@ sys_mount(p, v, retval)
 	register struct vnode *vp;
 	register struct mount *mp;
 	int error, flag = 0;
-	u_long fsindex = 0;
+	struct vfsops *vops;
 	char fstypename[MFSNAMELEN];
 	struct vattr va;
 	struct nameidata nd;
+
+	vops = NULL;	/* XXX gcc -Wuninitialized */
 
 	/*
 	 * Get vnode to be covered
@@ -206,6 +208,8 @@ sys_mount(p, v, retval)
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
+		u_long fsindex;
+
 		/*
 		 * Historically filesystem types were identified by number.
 		 * If we get an integer for the filesystem type instead of a
@@ -229,11 +233,9 @@ sys_mount(p, v, retval)
 	if (!strncmp(fstypename, "ufs", MFSNAMELEN))
 		strncpy(fstypename, "ffs", MFSNAMELEN);
 #endif
-	for (fsindex = 0; fsindex < nvfssw; fsindex++)
-		if (vfssw[fsindex] != NULL &&
-		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
-			break;
-	if (fsindex >= nvfssw) {
+	fstypename[MFSNAMELEN - 1] = '\0';	/* sanity */
+	vops = vfs_getopsbyname(fstypename);
+	if (vops == NULL) {
 		vput(vp);
 		return (ENODEV);
 	}
@@ -248,14 +250,14 @@ sys_mount(p, v, retval)
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = vfssw[fsindex];
+	mp->mnt_op = vops;
 	if ((error = vfs_lock(mp)) != 0) {
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
 		return (error);
 	}
 	/* Do this early in case we block later. */
-	vfssw[fsindex]->vfs_refcount++;
+	vops->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
@@ -300,7 +302,7 @@ update:
 		error = VFS_START(mp, 0, p);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
-		vfssw[fsindex]->vfs_refcount--;
+		vops->vfs_refcount--;
 		vfs_unlock(mp);
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
