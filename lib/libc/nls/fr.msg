@@ -165,6 +165,10 @@ $ EIDRM
 82 Identifiant supprimé
 $ ENOMSG
 83 Pas de message du type demandé
+$ EOVERFLOW
+84 Valeur trop grande pour stocker dans le type de données
+$ EILSEQ
+85 Séquence d'octets illégale
 $set 2
 $ SIGHUP
 1 Raccroché

@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.22 1999/03/22 19:03:38 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.23 2000/03/10 13:59:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -159,9 +159,11 @@
 #define	EIDRM		82		/* Identifier removed */
 #define	ENOMSG		83		/* No message of desired type */
 #define	EOVERFLOW	84		/* Value too large to be stored in data type */
-#define	ELAST		84		/* Must equal largest errno */
 #endif /* _POSIX_SOURCE */
 
+#define	EILSEQ		85		/* Illegal byte sequence */
+
+#define	ELAST		85		/* Must equal largest errno */
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */
 #define	ERESTART	-1		/* restart syscall */
