@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 1998/12/22 08:47:06 scottr Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.1 1999/05/16 22:38:10 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
  * Implementation of bus_space mapping for mac68k.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
@@ -53,9 +51,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
@@ -172,11 +168,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
-#if defined(UVM)
 	va = uvm_km_valloc(kernel_map, endpa - pa);
-#else
-	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-#endif
 	if (va == 0)
 		return (ENOMEM);
 
@@ -184,7 +176,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 		pte = kvtopte(va);
 		if ((flags & BUS_SPACE_MAP_CACHEABLE))
 			*pte &= ~PG_CI;
@@ -218,11 +210,7 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-#if defined(UVM)
 	uvm_km_free(kernel_map, va, endva - va);
-#else
-	kmem_free(kernel_map, va, endva - va);
-#endif
 
 	if (extent_free(iomem_ex, bpa, size,
 	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {

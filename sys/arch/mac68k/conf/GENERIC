@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.4 1999/03/11 19:00:58 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.5 1999/05/16 22:38:08 scottr Exp $
 #
 # GENERIC
 
@@ -53,9 +53,10 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_SUNOS	# compatibility with SunOS 4.x binaries
+#options 	COMPAT_SVR4	# compatibility with SVR4 binaries
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 # File systems
 file-system 	FFS		# UFS

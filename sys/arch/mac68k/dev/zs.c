@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 1999/02/11 15:28:04 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.2.1 1999/05/16 22:38:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -169,7 +169,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
 	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
-	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
+	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
 };
 
@@ -727,10 +727,19 @@ zs_set_modes(cs, cflag)
 	 */
 	if ((cflag & CDTRCTS) && (cflag & (CRTSCTS | MDMBUF)))
 		return (EINVAL);
+	cs->cs_rr0_pps = 0;
 	if (xcs->cs_hwflags & ZS_HWFLAG_NO_DCD) {
 		if (cflag & MDMBUF)
 			return (EINVAL);
 		cflag |= CLOCAL;
+	} else {
+		/*
+		 * cs->cs_rr0_pps indicates which bit MAY be used for pps.
+		 * Enable only if nothing else will want the interrupt and
+		 * it's ok to enable interrupts on this line.
+		 */
+		if ((cflag & (CLOCAL & MDMBUF)) == CLOCAL)
+			cs->cs_rr0_pps = ZSRR0_DCD;
 	}
 	if ((xcs->cs_hwflags & ZS_HWFLAG_NO_CTS) && (cflag & (CRTSCTS | CDTRCTS)))
 		return (EINVAL);

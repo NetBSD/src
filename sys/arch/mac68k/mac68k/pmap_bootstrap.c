@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48.2.1 1999/03/08 02:06:14 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48.2.2 1999/05/16 22:38:12 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
  */
 
 #include "opt_ddb.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +68,15 @@ extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int physmem;
-extern int avail_remaining, avail_range, avail_end;
-extern paddr_t avail_start, avail_next;
+extern paddr_t avail_start;
+extern paddr_t avail_end;
 extern vaddr_t virtual_avail, virtual_end;
-extern vm_size_t mem_size;
+extern vsize_t mem_size;
 extern int protection_codes[];
 
+#if NZSC > 0
 extern	int	zsinited;
+#endif
 
 /*
  * These are used to map the RAM:
@@ -123,6 +126,9 @@ pmap_bootstrap(nextpa, firstpa)
 {
 	paddr_t kstpa, kptpa, vidpa, iiopa, rompa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
+	paddr_t avail_next;
+	int avail_remaining;
+	int avail_range;
 	int i;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -474,10 +480,7 @@ pmap_bootstrap(nextpa, firstpa)
 
 	maxaddr = high[numranges - 1] - m68k_ptob(1);
 	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-	avail_remaining -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	avail_end = high[numranges - 1];
-	avail_remaining = m68k_btop(m68k_trunc_page(avail_remaining));
-
 	mem_size = m68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -490,7 +493,7 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		int *kp;
 
-		kp = (int *) &protection_codes;
+		kp = (int *)&protection_codes;
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
@@ -558,7 +561,9 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
+#if NZSC > 0
 	extern void zs_init __P((void));
+#endif
 	extern int *esym;
 	paddr_t nextpa;
 	caddr_t oldROMBase;
@@ -617,8 +622,10 @@ bootstrap_mac68k(tc)
 	 * of this function (where we start using the MMU, so the new
 	 * address is correct.
 	 */
+#if NZSC > 0
 	if (zsinited != 0)
 		zs_init();
+#endif
 
 	videoaddr = newvideoaddr;
 }
