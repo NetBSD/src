@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.59 1997/07/12 22:07:36 leo Exp $
+#	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for NetBSD
 #
@@ -178,6 +178,9 @@ machdep.o: Makefile
 
 # depend on CPU configuration 
 amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
+
+# depends on defined(DRACO)
+a2kbbc.o: Makefile
 
 # LEV6_DEFER blocks usage of audio interupt 3:
 aucc.o cc.o: Makefile
