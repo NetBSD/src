@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.58 1997/04/24 02:04:38 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.59 1997/04/24 08:05:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1307,7 +1307,7 @@ ieget(sc, ehp, to_bpf)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(top);
 				return 0;
 			}
