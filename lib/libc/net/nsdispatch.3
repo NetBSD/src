@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.20 2004/09/28 14:44:05 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.21 2004/09/29 02:47:32 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 27, 2004
+.Dd September 28, 2004
 .Dt NSDISPATCH 3
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ in the order given in
 .Pa /etc/nsswitch.conf
 for the database
 .Va database
-until a successful entry is found.
+until the action criteria for a source of that database is fulfulled.
 .Pp
 .Va retval
 is passed to each callback function to modify as necessary
@@ -90,7 +90,7 @@ typedef struct {
 .Pp
 .Bd -ragged -offset indent
 The
-.Fa dtab
+.Va dtab
 array should consist of one entry for each source type that has a
 static implementation,
 with
@@ -113,15 +113,15 @@ and
 .Pp
 Callbacks may also be provided by dynamically-loaded modules, in which
 case they are selected using the
-.Fa database
+.Va database
 and
-.Fa method
+.Va method
 arguments in addition to the configured source.
-.Fa method
+.Va method
 is usually the name of the function calling
 .Fn nsdispatch .
 Note that the callbacks provided by
-.Fa dtab
+.Va dtab
 take priority over those implemented in dynamically-loaded modules in the
 event of a conflict.
 .Pp
@@ -143,12 +143,12 @@ typedef struct {
 .Pp
 .Bd -ragged -offset indent
 The
-.Fa defaults
+.Va defaults
 array should consist of one entry for each source to consult by default
 indicated by
 .Va src ,
 and
-.Fa flags
+.Va flags
 set to the desired behavior
 (usually
 .Dv NS_SUCCESS ;
@@ -156,7 +156,7 @@ refer to
 .Sx Callback return values
 for more information).
 The last entry in
-.Fa defaults
+.Va defaults
 should have
 .Va src
 set to
@@ -164,6 +164,23 @@ set to
 and
 .Va flags
 set to 0.
+.Pp
+Some invokers of
+.Fn nsdispatch
+(such as
+.Xr setgrent(3) )
+need to force all methods to be invoked,
+irrespective of the action criteria listed in
+.Xr nsswitch.conf 5 .
+This can be achieved by adding
+.Dv NS_FORCEALL
+to
+.Va defaults[0].flags
+before invoking
+.Fn nsdispatch .
+The return value of
+.Fn nsdispatch
+will be the result of the final callback method invoked.
 .Pp
 For convenience, a global variable defined as:
 .Dl extern const ns_src __nsdefaultsrc[];
@@ -207,18 +224,18 @@ looks for and calls the following function in the module:
 .Ed
 .Pp
 .Bl -tag -width source
-.It Fa source
+.It Va source
 The name of the source that the module implements, as used by
 .Fn nsdispatch
 to construct the module's name.
-.It Fa nelems
+.It Va nelems
 A pointer to an unsigned integer that
 .Fn nss_module_register
 should set to the number of elements in the
 .Va ns_mtab
 array returned by
 .Fn nss_module_register .
-.It Fa unreg
+.It Va unreg
 A pointer to a function pointer that
 .Fn nss_module_resgister
 can optionally set to a function to be invoked when the module is
@@ -247,7 +264,7 @@ typedef struct {
 .Pp
 .Bd -ragged -offset indent
 The
-.Fa mtab
+.Va mtab
 array should consist of one entry for each method that is implemented,
 with
 .Va database
@@ -306,7 +323,9 @@ for a complete description of what each status code is.
 .Pp
 .Nm
 returns the value of the callback that caused the dispatcher to finish,
-or NS_NOTFOUND otherwise.
+or 
+.Dv NS_NOTFOUND
+otherwise.
 .Sh SEE ALSO
 .Xr ld.elf_so 1 ,
 .Xr hesiod 3 ,

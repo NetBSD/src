@@ -1,7 +1,7 @@
-/*	$NetBSD: nsswitch.h,v 1.13 2004/07/24 18:42:51 thorpej Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.14 2004/09/29 02:47:32 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,6 +62,8 @@
 #define	NS_UNAVAIL	(1<<1)		/* source not responding, or corrupt */
 #define	NS_NOTFOUND	(1<<2)		/* source responded 'no such entry' */
 #define	NS_TRYAGAIN	(1<<3)		/* source busy, may respond to retrys */
+#define	NS_FORCEALL	(1<<7)		/* force all methods to be invoked; */
+					/* this can't be set in nsswitch.conf */
 #define	NS_STATUSMASK	0x000000ff	/* bitmask to get the status flags */
 
 /*
