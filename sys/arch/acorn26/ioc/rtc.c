@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2 2002/09/27 20:29:07 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3 2002/10/02 02:21:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.2 2002/09/27 20:29:07 thorpej Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.3 2002/10/02 02:21:21 thorpej Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -86,9 +86,8 @@ struct rtc_softc *the_rtc;
 
 /* device and attach structures */
 
-const struct cfattach rtc_ca = {
-	sizeof(struct rtc_softc), rtcmatch, rtcattach
-};
+CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
+	rtcmatch, rtcattach, NULL, NULL);
 
 /*
  * rtcmatch()

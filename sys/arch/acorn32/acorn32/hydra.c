@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.4 2002/10/01 22:52:22 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.5 2002/10/02 02:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.4 2002/10/01 22:52:22 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.5 2002/10/02 02:23:50 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static void hydra_shutdown(void *);
 static void hydra_reset(struct hydra_softc *);
 
 CFATTACH_DECL(hydra, sizeof(struct hydra_softc),
-    hydra_match, hydra_attach, NULL, NULL)
+    hydra_match, hydra_attach, NULL, NULL);
 
 extern char const hydra_bootcode[], hydra_ebootcode[];
 
