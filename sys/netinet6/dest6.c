@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.7 2000/02/06 12:49:42 itojun Exp $	*/
+/*	$NetBSD: dest6.c,v 1.7.4.1 2001/02/26 22:59:09 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,22 +88,20 @@ dest6_input(mp, offp, proto)
 
 	/* search header for all options. */
 	for (optlen = 0; dstoptlen > 0; dstoptlen -= optlen, opt += optlen) {
+		if (*opt != IP6OPT_PAD1 &&
+		    (dstoptlen < IP6OPT_MINLEN || *(opt + 1) + 2 > dstoptlen)) {
+			ip6stat.ip6s_toosmall++;
+			goto bad;
+		}
+
 		switch(*opt) {
 		 case IP6OPT_PAD1:
 			 optlen = 1;
 			 break;
 		 case IP6OPT_PADN:
-			 if (dstoptlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
 			 optlen = *(opt + 1) + 2;
 			 break;
 		 default:		/* unknown option */
-			 if (dstoptlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
 			 if ((optlen = ip6_unknown_opt(opt, m,
 						       opt-mtod(m, u_int8_t *))) == -1)
 				 return(IPPROTO_DONE);
