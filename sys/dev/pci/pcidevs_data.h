@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.343 2001/07/28 00:33:44 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.344 2001/07/31 22:30:08 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.338 2001/07/25 01:44:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
  */
 
 /*
@@ -2578,6 +2578,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "TwinTurbo 128M",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
+	    0,
+	    "Intel",
+	    "80310 I/O Companion Chip",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    0,
 	    "Intel",
@@ -3086,6 +3092,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82820 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
+	    0,
+	    "Intel",
+	    "80310 ATU",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
