@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.42 2001/10/26 06:45:40 jmc Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.43 2001/11/20 12:56:39 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -211,13 +211,13 @@ dependall: depend all
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
 ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
 machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile

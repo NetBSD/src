@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.8 2001/11/20 08:43:30 lukem Exp $
+#	$NetBSD: MMTA,v 1.9 2001/11/20 12:56:33 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -14,7 +14,7 @@ include "arch/mmeye/conf/std.mmeye"
 maxusers	32			# estimated number of users
 
 # Standard system options
-options 	SH7708R			# 100MHz 
+options 	SH7708R			# 100MHz
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
@@ -22,7 +22,7 @@ options 	INITTODR_ALWAYS_USE_RTC
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
-options 	HZ=50		# clock interrupt generates every 1/HZ sec 
+options 	HZ=50		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
@@ -116,7 +116,7 @@ shb* at mainbus?
 
 # PCMCIA bus support
 pcmcia*	at shpcic? controller ? socket ?
-#pcmcia*	at shb? 
+#pcmcia*	at shb?
 
 # SH PCMCIA controllers
 shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000

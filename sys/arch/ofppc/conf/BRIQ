@@ -1,16 +1,16 @@
-#	$NetBSD: BRIQ,v 1.2 2001/10/22 14:47:44 thorpej Exp $
+#	$NetBSD: BRIQ,v 1.3 2001/11/20 12:56:35 lukem Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 maxusers	32
 
 options 	NEWPMAP
-options		HZ=256
+options 	HZ=256
 options 	KERNBASE=0x10000
 makeoptions	TEXTADDR=0x10000
 
@@ -25,10 +25,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -36,7 +36,7 @@ options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
-#options	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
@@ -52,7 +52,7 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_LINUX   # Linux binary compatibility
+#options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
@@ -78,8 +78,8 @@ options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support
 options 	NFSSERVER	# Network File System server
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				    # immutable) behave as system flags.
+#options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
+					# immutable) behave as system flags.
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
@@ -90,7 +90,7 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options	MROUTING	# IP multicast routing
+#options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.20 2001/11/20 08:43:42 lukem Exp $
+#	$NetBSD: TOKOCHAN,v 1.21 2001/11/20 12:56:43 lukem Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.20 $"
+#ident 		"TOKOCHAN-$Revision: 1.21 $"
 
 maxusers	10
 
@@ -91,8 +91,8 @@ options 	PANICBUTTON		# interrupt switch invokes DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-g"
-makeoptions 	COPTS="-O2 -pipe"	# pass -pipe option to CC
+makeoptions	DEBUG="-g"
+makeoptions	COPTS="-O2 -pipe"	# pass -pipe option to CC
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
@@ -161,7 +161,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

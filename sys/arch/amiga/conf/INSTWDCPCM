@@ -1,14 +1,14 @@
-# $NetBSD: INSTWDCPCM,v 1.6 2001/06/11 01:50:52 wiz Exp $
+# $NetBSD: INSTWDCPCM,v 1.7 2001/11/20 12:56:20 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: 
+# Created from:
 #$ NetBSD: GENERIC,v 1.151 2000/10/04 20:38:11 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.6 $"
+#ident		"GENERIC-$Revision: 1.7 $"
 
 makeoptions	COPTS="-Os"
 
@@ -20,12 +20,12 @@ options 	RTC_OFFSET=0
 options 	DRACO
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# MC68060 with an OS ROM up to (at least) 
+				# MC68060 with an OS ROM up to (at least)
 				# V40 (OS3.1) and want to boot with the
 				# bootblock.
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
-options		P5PPC68KBOARD	# Phase5 PPC/68K board support
+options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
 
@@ -76,7 +76,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 
 #Support for various kernel options
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM 
+#options 	INSECURE	# allow, among other insecure stuff, LKM
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
@@ -94,12 +94,12 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options	NKPTADD=4	# set this for 4 additional KPT pages
-#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+#options 	NKPTADD=4	# set this for 4 additional KPT pages
+#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-                                # define and decrease this, or define and
-                                # increase NKPTADD if you get "out of PT pages"
-                                # panics.
+				# define and decrease this, or define and
+				# increase NKPTADD if you get "out of PT pages"
+				# panics.
 
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -260,9 +260,9 @@ aftsc0		at mainbus0		# A4000T scsi
 scsibus*	at aftsc0
 flsc0		at zbus0		# FastlaneZ3 scsi
 scsibus*	at flsc0
-bzsc0		at zbus0		# Blizzard 1230 I,II scsi 
+bzsc0		at zbus0		# Blizzard 1230 I,II scsi
 scsibus*	at bzsc0
-bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi 
+bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi
 scsibus*	at bzivsc0
 bztzsc0 	at zbus0		# Blizzard 2060 scsi
 scsibus*	at bztzsc0
@@ -296,7 +296,7 @@ awi*		at pcmcia? function ?		# BayStack 650 (802.11FH)
 mbe*		at pcmcia? function ?		# MB8696x based Ethernet
 ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*		at pcmcia? function ?		# Megahertz Ethernet
-mhzc*		at pcmcia? function ?    # Megahertz Ethernet/Modem combo cards
+mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
 
@@ -331,7 +331,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 #rnd is EXPERIMENTAL at this point.
-pseudo-device  rnd                     # /dev/random and in-kernel generator
-#options        RND_COM                 # use "com" randomness as well (BROKEN)
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?

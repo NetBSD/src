@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.14 2001/11/18 08:24:33 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.15 2001/11/20 12:56:38 lukem Exp $
 
 maxpartitions 16
 
@@ -77,7 +77,7 @@ file arch/sgimips/sgimips/procfs_machdep.c	procfs
 file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
-major {raid = 5} 
+major {raid = 5}
 major {ld = 14}
 
 file dev/clock_subr.c

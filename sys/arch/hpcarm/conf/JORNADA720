@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.11 2001/11/13 17:54:48 augustss Exp $
+#	$NetBSD: JORNADA720,v 1.12 2001/11/20 12:56:27 lukem Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 # estimated number of users
 maxusers	32
@@ -51,7 +51,7 @@ file-system	NULLFS		# loopback file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
 
 # Networking options
@@ -111,10 +111,10 @@ options 	NFS_BOOT_DHCP
 
 # Development and Debugging options
 
-#options	BOOT_DUMP	# Enable memorydump at boot
+#options 	BOOT_DUMP	# Enable memorydump at boot
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -132,11 +132,11 @@ cpu0 at mainbus?
 saip0	at mainbus?
 
 # Serial
-options	CONSPEED=19200
-sacom*  at saip? addr 0xd000d000 size 0x24	intr 17
+options 	CONSPEED=19200
+sacom*	at saip? addr 0xd000d000 size 0x24	intr 17
 
 #OS Timer
-saost*  at saip? addr 0x90000000 size 0x20
+saost*	at saip? addr 0x90000000 size 0x20
 
 # SA1111 companion chip
 sacc0	at saip? addr 0x40000000 size 0x2000
@@ -178,15 +178,15 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #pioc0	at mainbus? base 0x00210000
 
 # Serial ports
-#com*    at pioc? offset 0x03f8 irq 10
-#com*    at pioc? offset 0x02f8 irq -1
-#com*    at pioc? offset 0x0338 irq -1
-#com*    at pioc? offset 0x0238 irq -1
+#com*	at pioc? offset 0x03f8 irq 10
+#com*	at pioc? offset 0x02f8 irq -1
+#com*	at pioc? offset 0x0338 irq -1
+#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-#lpt*    at pioc? offset 0x0278 irq 0
-#lpt*    at pioc? offset 0x0378 irq -1
-#lpt*    at pioc? offset 0x03bc irq -1
+#lpt*	at pioc? offset 0x0278 irq 0
+#lpt*	at pioc? offset 0x0378 irq -1
+#lpt*	at pioc? offset 0x03bc irq -1
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=2
@@ -199,9 +199,9 @@ wsdisplay*	at hpcfb?
 j720ssp0	at saip?	addr 0x80070000 size 0x100
 wskbd*		at j720ssp?	mux 1
 
-pseudo-device	loop	1               # network loopback
-pseudo-device	bpfilter 8              # packet filter
-pseudo-device	sl	2               # CSLIP
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
@@ -213,13 +213,13 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vnd     4               # disk-like interface to files
+#pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-pseudo-device 	biconsdev       1       # build-in console device
-pseudo-device 	wsmux
+pseudo-device	biconsdev 1		# build-in console device
+pseudo-device	wsmux
 
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.15 2001/11/13 17:54:52 augustss Exp $
+#	$NetBSD: GENERIC,v 1.16 2001/11/20 12:56:37 lukem Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	32
 
@@ -34,7 +34,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options 	COMPAT_LINUX   # Linux binary compatibility
+#options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	MSGBUFSIZE=65536
@@ -52,12 +52,12 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
