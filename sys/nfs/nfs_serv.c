@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.65 2002/09/27 19:30:46 bouyer Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.66 2002/12/01 23:02:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.65 2002/09/27 19:30:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.66 2002/12/01 23:02:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,8 @@ extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_false, nfs_true;
 extern enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
-extern nfstype nfsv2_type[9];
-extern nfstype nfsv3_type[9];
+extern const nfstype nfsv2_type[9];
+extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
 
 /*

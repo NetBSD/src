@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.76 2002/09/27 15:38:00 provos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.77 2002/12/01 23:02:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.76 2002/09/27 15:38:00 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.77 2002/12/01 23:02:10 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -112,7 +112,7 @@ extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
 	rpc_auth_kerb;
 extern u_int32_t nfs_prog, nqnfs_prog;
 extern time_t nqnfsstarttime;
-extern int nfsv3_procid[NFS_NPROCS];
+extern const int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
 /*

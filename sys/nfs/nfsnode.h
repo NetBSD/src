@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.36 2002/10/23 09:14:52 jdolecek Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.37 2002/12/01 23:02:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,6 +146,7 @@ struct nfsnode {
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
 };
+LIST_HEAD(nfsnodehashhead, nfsnode);
 
 /*
  * Values for n_commitflags
