@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.89 2001/12/10 17:02:23 martin Exp $
+# $NetBSD: mi,v 1.90 2002/01/31 01:34:51 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -68,7 +68,7 @@
 ./etc/rc.conf				etc-sys-rc
 ./etc/rc.d/DAEMON			etc-sys-rc
 ./etc/rc.d/LOGIN			etc-sys-rc
-./etc/rc.d/NETWORK			etc-sys-rc
+./etc/rc.d/NETWORKING			etc-sys-rc
 ./etc/rc.d/SERVERS			etc-sys-rc
 ./etc/rc.d/accounting			etc-sys-rc
 ./etc/rc.d/altqd			etc-router-rc
