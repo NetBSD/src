@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.7.2.1 2004/05/11 12:46:53 tron Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.7.2.2 2004/05/25 01:15:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -2327,12 +2327,9 @@ void sk_init_yukon(sc_if)
 		SK_YU_WRITE_2(sc_if, YUKON_SAL2 + i * 4, reg);
 	}
 
-	/* clear all Multicast filter hash registers */
+	/* Set multicast filter */
 	DPRINTFN(6, ("sk_init_yukon: 11\n"));
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH1, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, 0);
+	sk_setmulti(sc_if);
 
 	/* enable interrupt mask for counter overflows */
 	DPRINTFN(6, ("sk_init_yukon: 12\n"));
