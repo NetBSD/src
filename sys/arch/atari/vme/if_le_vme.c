@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.2 1997/03/10 10:22:34 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.3 1997/03/17 03:17:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
