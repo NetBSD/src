@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.30 2003/04/16 13:35:25 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.31 2003/06/30 12:10:40 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -354,7 +354,7 @@ functions exist to allow device drivers
 machine-independent access to bus memory and register areas.
 All of the functions and types described in this document can be used
 by including the
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 header file.
 .Pp
 Many common devices are used on multiple architectures, but are accessed
@@ -384,7 +384,7 @@ functions.
 Implementations are encouraged to implement prototyped (type-checked)
 versions of these interfaces, but may implement them as macros if appropriate.
 Machine-dependent types, variables, and functions should be marked clearly in
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 to avoid confusion with the
 machine-independent types and functions, and, if possible, should be
 given names which make the machine-dependence clear.
@@ -500,7 +500,7 @@ Functions which take a count of bytes have undefined results if the specified
 is zero.
 .Sh TYPES
 Several types are defined in
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 to facilitate use of the
 .Nm
 functions by drivers.
@@ -1614,7 +1614,7 @@ Drivers that were written to the
 old, deprecated specification can be compiled by defining the
 .Dv __BUS_SPACE_COMPAT_OLDDEFS
 preprocessor symbol before including
-.Pa Aq machine/bus.h .
+.Aq Pa machine/bus.h .
 .Sh SEE ALSO
 .Xr bus_dma 9
 .Sh HISTORY
