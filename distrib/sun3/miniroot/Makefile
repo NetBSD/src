@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 1999/06/21 03:16:53 perry Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	miniroot
-#CBIN=	mini_usr
 
 TREE=	${TOP}/common/${IMAGE}.tree
 
@@ -15,25 +14,25 @@ LISTS=	${TOP}/common/${IMAGE}.list \
 	${TOP}/common/mini_bin.list \
 	${TOP}/common/mini_usr.list
 
-KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/INSTALL/netbsd
-KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/INSTALL3X/netbsd
+KERNEL3  = ${KERNOBJDIR}/INSTALL/netbsd
+KERNEL3X = ${KERNOBJDIR}/INSTALL3X/netbsd
 
-MOUNT_POINT=	/mnt
-BDEV=		/dev/sd1b
-CDEV=		/dev/rsd1b
+MOUNT_POINT?=	/mnt
+BDEV?=		/dev/sd1b
+CDEV?=		/dev/rsd1b
 
 # These are all the parameters for the miniroot: (8MB)
 DISKTYPE=	miniroot
-NBLKS=		16384
-# old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
+NBLKS=		20480
+# bigendian, old format, minfree, opt, b/i  trks, sects, cpg
+NEWFSARGS= -B be -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
 CLEANFILES= ${IMAGE}.gz install.sub
 
 all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3
@@ -65,3 +64,13 @@ clean cleandir distclean:
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+
+.if !defined(RELEASEDIR)
+release:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else	# RELEASEDIR
+release: ${IMAGE}.gz
+	cp -p ${IMAGE}.gz \
+	 ${RELEASEDIR}/installation/miniroot/${IMAGE}.gz
+.endif	# RELEASEDIR
