@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28.2.3 2002/10/19 12:24:12 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28.2.4 2002/10/19 12:40:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -533,12 +533,10 @@ ENTRY(cpu_switch)
 
 /* LINTSTUB: Func: void switch_exit(struct proc *p, struct proc *p0) */
 ENTRY(switch_exit)
-	/*
-	 * r0 = proc
-	 * r1 = proc0
-	 */
+	/* Could create a stack frame, but we'll never return anyway. */
 
-	mov	r3, r0
+	mov	r4, r0			/* r4 = p */
+	mov	r5, r1			/* r5 = p0 */
 
 	/* In case we fault */
 	ldr	r0, .Lcurproc
@@ -557,27 +555,23 @@ ENTRY(switch_exit)
 
 	/* Switch to proc0 context */
 
-	stmfd	sp!, {r0-r3}
-
 	ldr	r0, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-	ldmfd	sp!, {r0-r3}
-
 	IRQdisable
 
-	ldr	r2, [r1, #(P_ADDR)]
-	ldr	r0, [r2, #(PCB_PAGEDIR)]
+	ldr	r7, [r5, #(P_ADDR)]
+	ldr	r0, [r7, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
-	ldr	r4, .Lcpufuncs
+	ldr	r1, .Lcpufuncs
 	mov	lr, pc
-	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
+	ldr	pc, [r1, #CF_CONTEXT_SWITCH]
        
 	/* Restore all the save registers */
-	add	r7, r2, #PCB_R11
-	ldmia	r7, {r11-r13}
+	add	r0, r7, #PCB_R11
+	ldmia	r0, {r11-r13}
 
 	/* This is not really needed ! */
 	/* Yes it is for the su and fu routines */
@@ -586,12 +580,10 @@ ENTRY(switch_exit)
 
 	IRQenable
 
-/*	str	r3, [sp, #-0x0004]!*/
-
 	/*
 	 * Schedule the vmspace and stack to be freed.
 	 */
-	mov	r0, r3			/* exit2(p) */
+	mov	r0, r4			/* exit2(p) */
 	bl	_C_LABEL(exit2)
 
 	/* Paranoia */
