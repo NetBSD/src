@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.17 2000/12/13 03:17:54 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2001/01/10 22:53:22 jdolecek Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2000/12/13 03:17:54 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2001/01/10 22:53:22 jdolecek Exp $");
 #endif
 
 /*
@@ -429,7 +429,7 @@ main(int argc, char *argv[])
 			if (rc == -1)
 				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getwd(NULL);
+			cwd = getcwd(NULL, 0);
 			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
 				errx(1, "Error in findmatchingname(\"%s\", \"%s\", ...)",
 				     cwd, base);
@@ -468,7 +468,7 @@ main(int argc, char *argv[])
 			if (rc == -1)
 				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getwd(NULL);
+			cwd = getcwd(NULL, 0);
 			p = findbestmatchingname(cwd, base);
 			if (p)
 				printf("%s/%s\n", cwd, p);
