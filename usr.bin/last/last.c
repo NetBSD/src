@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.5 1994/12/21 22:41:25 jtc Exp $	*/
+/*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: last.c,v 1.5 1994/12/21 22:41:25 jtc Exp $";
+static char rcsid[] = "$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,14 +77,14 @@ typedef struct arg {
 ARG	*arglist;				/* head of linked list */
 
 typedef struct ttytab {
-	long	logout;				/* log out time */
+	time_t	logout;				/* log out time */
 	char	tty[UT_LINESIZE + 1];		/* terminal name */
 	struct ttytab	*next;			/* linked list pointer */
 } TTY;
 TTY	*ttylist;				/* head of linked list */
 
-static long	currentout,			/* current logout value */
-		maxrec;				/* records to display */
+static time_t	currentout;			/* current logout value */
+static long	maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
 
 void	 addarg __P((int, char *));
@@ -166,7 +166,7 @@ wtmp()
 	struct utmp	*bp;			/* current structure */
 	TTY	*T;				/* tty list entry */
 	struct stat	stb;			/* stat of file for size */
-	long	bl, delta;			/* time difference */
+	time_t	bl, delta;			/* time difference */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
 
