@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 1995/11/21 05:00:37 briggs Exp $
+#	$NetBSD: GENERIC,v 1.33 1996/03/12 21:06:22 scottr Exp $
 #
 # GENERIC
 
@@ -52,7 +52,8 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68040
-options		M68030		# Includes the 020+851
+options		M68030
+options		M68020		# Must have 68851 PMMU
 options		FPSP
 options		FPU_EMULATE
 options		COMPAT_NOMID

@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.8 1996/03/07 02:48:33 briggs Exp $
+#	$NetBSD: PUMA,v 1.9 1996/03/12 21:06:24 scottr Exp $
 #
 # PUMA
 
@@ -40,7 +40,7 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		M68030		# Includes the 020+851
+options		M68030
 options		MACHINE_NONCONTIG
 options		COMPAT_NOMID
 options		COMPAT_SUNOS

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1 1995/11/21 05:02:02 briggs Exp $
+#	$NetBSD: RAMDISK,v 1.2 1996/03/12 21:06:25 scottr Exp $
 
 # RAMDISK
 # Support Root/swap on ramdisk
@@ -31,7 +31,8 @@ options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Mac-specific options
 options		M68040
-options		M68030		# Includes the 020+851
+options		M68030
+options		M68020		# Must have 68851 PMMU
 options		FPSP
 options		FPU_EMULATE
 options		COMPAT_09
