@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.47 1999/10/05 20:03:49 nathanw Exp $
+$NetBSD: usbdevs,v 1.48 1999/10/11 09:16:59 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ vendor AKS		0x0529	Fast Security AG
 vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
+vendor MUSTEK		0x055f	Mustek Systems Inc.
 vendor PERACOM		0x0565	Peracom Networks Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
@@ -94,6 +95,7 @@ vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
+vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -209,6 +211,9 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
 
+/* Mustek products */
+product MUSTEK MDC800		0xa800	MDC-800 digital camera
+
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
 
@@ -275,6 +280,9 @@ product ENTREGA SERIAL		0x8001	DB25 Serial connector
 /* ActiveWire Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
+
+/* Motorola products */
+product	MOTOROLA MC141555	0x1555	MC141555 hub controller
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
