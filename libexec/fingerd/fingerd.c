@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.11 1999/07/02 06:00:06 itojun Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.12 1999/09/26 10:08:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,11 +43,11 @@ static char const copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char const rcsid[] = "$NetBSD: fingerd.c,v 1.11 1999/07/02 06:00:06 itojun Exp $";
+static char const rcsid[] = "$NetBSD: fingerd.c,v 1.12 1999/09/26 10:08:43 kleink Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
