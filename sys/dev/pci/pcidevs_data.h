@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.359 2001/09/10 15:09:49 eeh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.360 2001/09/15 13:13:53 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp 
+ *	NetBSD: pcidevs,v 1.357 2001/09/15 13:11:42 chris Exp 
  */
 
 /*
@@ -236,6 +236,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Dfx Interactive",
 	    "Voodoo3",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5,
+	    0,
+	    "3Dfx Interactive",
+	    "Voodoo 4/5",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
