@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.19.2.1 2004/07/15 20:19:51 he Exp $
+#	$NetBSD: MALTA,v 1.19.2.1.2.1 2005/04/02 21:31:35 he Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19.2.1 $"
+#ident 		"GENERIC-$Revision: 1.19.2.1.2.1 $"
 
 maxusers	32
 
@@ -195,6 +195,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
