@@ -219,7 +219,7 @@ void bzsc_set_dma_adr(struct sfas_softc *sc, void *ptr, int mode)
 	if (mode == SFAS_DMA_WRITE)
 		p |= BZSC_DMA_WRITE;
 	else
-		p |= BZSC_DMA_WRITE;
+		p |= BZSC_DMA_READ;
 
 	*rp->epowaddr = (u_char)(p>>24) & 0xFF;
 	*rp->cclkaddr = (u_char)(p>>16) & 0xFF;
