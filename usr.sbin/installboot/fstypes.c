@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.3 2002/05/14 06:18:51 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.4 2002/05/15 02:17:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
