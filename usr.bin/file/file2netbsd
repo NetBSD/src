@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.1.1.1 1998/09/19 18:07:41 christos Exp $
+#	$NetBSD: file2netbsd,v 1.2 1998/09/20 15:36:46 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -264,7 +264,8 @@ MAGIC=		${FILESDIR}/${FILES}
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 		print.c compress.c readelf.c internat.c
-CPPFLAGS+=	-DMAGIC='"$(MAGIC)"'
+CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_SYS_WAIT_H -DHAVE_ST_RDEV
+CPPFLAGS+=	-DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic
