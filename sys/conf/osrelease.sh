@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.107 2003/10/04 06:59:56 jdolecek Exp $
+#	$NetBSD: osrelease.sh,v 1.108 2004/09/14 15:19:35 simonb Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Release number to use.
 # We use the number specified in <sys/param.h>
 
 AWK=${AWK:-awk}
