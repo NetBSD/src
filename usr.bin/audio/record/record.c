@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.2 1999/03/26 15:46:22 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.3 1999/03/27 17:46:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -227,21 +227,17 @@ main(argc, argv)
 		info.record.channels = channels;
 	else
 		channels = oinfo.record.channels;
-#if 0
-	/* XXX ??? */
-	if (precision)
-		info.record.precision = precision;
-	else
-		precision = oinfo.record.precision;
-#endif
-	if (encoding) {
-		if (audio_parse_encoding(encoding_str, ctlfd, &info.record.encoding, &info.record.precision))
+
+	if (encoding_str) {
+		encoding = audio_enc_to_val(encoding_str);
+		if (encoding == -1)
 			errx(1, "unknown encoding, bailing...");
-	} else {
-		encoding = oinfo.record.encoding;
-		precision = oinfo.record.precision;
 	}
 
+	if (precision)
+		info.record.precision = precision;
+	if (encoding)
+		info.record.encoding = encoding;
 	if (volume)
 		info.record.gain = volume;
 	if (port)

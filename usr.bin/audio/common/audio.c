@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.3 1999/03/27 05:14:37 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.4 1999/03/27 17:46:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -95,43 +95,6 @@ audio_enc_to_val(enc)
 		return (encs[i].eno);
 	else
 		return (-1);
-}
-
-int
-audio_parse_encoding(encoding_str, fd, encp, precp)
-	char	*encoding_str;
-	int	fd;
-	int	*encp;
-	int	*precp;
-{
-	int	i, prec = 0;
-	char	*colon, *star;
-
-	colon = strchr(encoding_str, ':');
-	if (colon) {
-		*colon++ = '\0';
-		if (*colon)
-			prec = atoi(colon);
-	}
-	star = strrchr(encoding_str, '*');
-	if (star)
-		*star = '\0';
-	for (i = 0; ; i++) {
-		audio_encoding_t enc;
-
-		enc.index = i;
-		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
-			break;
-
-		if (strcasecmp(enc.name, encoding_str) == 0 &&
-		   (prec == 0 || prec == enc.precision)) {
-			*encp = enc.encoding;
-			*precp = enc.precision;
-			return (0);
-		}
-		
-	}
-	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.2 1999/03/26 15:46:22 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.3 1999/03/27 17:46:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -141,8 +141,6 @@ size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *));
 
 /* and something to get a string associated with this error */
 const char *audio_errstring __P((int));
-
-int	audio_parse_encoding __P((char *, int, int *, int *));
 
 /*
  * generic routines?
