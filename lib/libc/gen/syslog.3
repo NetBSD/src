@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.17 2003/05/02 08:26:46 gmcgarry Exp $
+.\"	$NetBSD: syslog.3,v 1.18 2003/05/06 08:28:38 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -158,7 +158,8 @@ descriptors are allocated.
 Write the message to standard error output as well to the system log.
 .It Dv LOG_PID
 Log the process id with each message: useful for identifying
-instantiations of daemons.  (This PID is placed within brackets
+instantiations of daemons.
+(This PID is placed within brackets
 between the ident and the message.)
 .El
 .Pp
