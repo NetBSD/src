@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.13 1997/01/11 02:04:47 tls Exp $	*/
+/*	$NetBSD: show.c,v 1.14 1997/04/11 23:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,12 +40,12 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: show.c,v 1.13 1997/01/11 02:04:47 tls Exp $";
+static char rcsid[] = "$NetBSD: show.c,v 1.14 1997/04/11 23:06:52 christos Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -305,7 +305,7 @@ trputc(c)
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 trace(const char *fmt, ...)
 #else
 trace(va_alist)
@@ -314,7 +314,7 @@ trace(va_alist)
 {
 #ifdef DEBUG
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, fmt);
 #else
 	char *fmt;
