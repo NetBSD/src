@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2003/07/18 09:46:11 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2003/07/27 07:45:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -165,11 +165,11 @@ main(int argc, char **argv)
 }
 
 static int
-set_language(menudesc *m, menu_ent *e, void *arg)
+set_language(menudesc *m, void *arg)
 {
 	char **fnames = arg;
 
-	msg_file(fnames[e - m->opts]);
+	msg_file(fnames[m->cursel]);
 	return 1;
 }
 
