@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.24.2.2 2004/07/23 22:32:14 he Exp $	*/
+/*	$NetBSD: ath.c,v 1.24.2.3 2004/08/22 13:37:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24.2.2 2004/07/23 22:32:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24.2.3 2004/08/22 13:37:22 tron Exp $");
 #endif
 
 /*
@@ -355,7 +355,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 
 	/* enable/disable outdoor operation */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "outdoor", SYSCTL_DESCR("Enable/disable outdoor operation"),
 	    NULL, 0, &ath_outdoor, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
@@ -366,7 +366,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 
 	/* country code */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "countrycode", SYSCTL_DESCR("Country code"),
 	    NULL, 0, &ath_countrycode, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
