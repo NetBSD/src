@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.17 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.18 2000/07/20 22:50:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.17 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.18 2000/07/20 22:50:16 thorpej Exp $");
 #endif
 
 #include "defs.h"
@@ -463,7 +463,7 @@ walk_supply(struct radix_node *rn,
 	 */
 	if ((RT->rt_state & RS_IF)
 	    && RT->rt_ifp != 0
-	    && (RT->rt_ifp->int_if_flags & IS_PASSIVE)
+	    && (RT->rt_ifp->int_state & IS_PASSIVE)
 	    && !(RT->rt_state & RS_MHOME))
 		return 0;
 
