@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.293 2001/12/17 13:10:54 wiz Exp $
+# $NetBSD: mi,v 1.294 2001/12/21 19:57:19 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -196,7 +196,7 @@
 ./usr/bin/cpp		base-util-bin
 ./usr/bin/crontab	base-cron-bin
 ./usr/bin/ctags		base-c-bin
-./usr/bin/cu		base-uucp-bin
+./usr/bin/cu		base-util-bin
 ./usr/bin/cut		base-util-bin
 ./usr/bin/dc		base-util-bin
 ./usr/bin/diff		base-util-bin
