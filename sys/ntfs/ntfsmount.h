@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.3 1999/07/26 14:02:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.4 2002/09/21 18:13:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -39,3 +39,6 @@ struct ntfs_args {
 	mode_t	mode;			/* mask to be applied for ntfs perms */
 	u_long	flag;			/* additional flags */
 };
+
+#define NTFS_MFLAG_BITS	"\177\20" \
+    "b\00caseins\0b\01allnames"
