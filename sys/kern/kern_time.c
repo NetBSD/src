@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.17 2002/08/30 23:59:43 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.18 2002/09/26 19:50:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.17 2002/08/30 23:59:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.18 2002/09/26 19:50:32 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -734,19 +734,12 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 static void
 realtimerupcall(struct lwp *l, void *arg)
 {
-	struct ptimer *pt;
+	struct ptimer *pt = (struct ptimer *)arg;
 
-	/*
-	 * The LWP that is running doesn't change, so we don't need
-	 * to touch sa_vp.
-	 */
-	pt = (struct ptimer *)arg;
-	if (sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(siginfo_t), 
-	    &pt->pt_info) != 0)
-		pt->pt_overruns++;
-	
-	/* The upcall should only be generated once. */
-	l->l_proc->p_userret = NULL;
+	/* The upcall should be generated exactly once. */
+	if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
+	    sizeof(siginfo_t), &pt->pt_info) == 0)
+		l->l_proc->p_userret = NULL;
 }
 
 
