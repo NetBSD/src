@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: modload.8,v 1.1 1993/06/08 03:07:14 cgd Exp $
+.\"	$Id: modload.8,v 1.2 1994/01/14 02:06:15 jtc Exp $
 .\"
 .Dd June 7, 1993
 .Dt MODLOAD 8
@@ -72,10 +72,10 @@ The default module entry point name is `xxxinit'.
 Specify the name of a shell script or program that will
 be executed if the module is successfully loaded. It
 is always passed the module id (in decimal) and module
-type (in hexidecimal) as the first two arguments.
+type (in hexadecimal) as the first two arguments.
 For loadable drivers, the third and fourth arguments are
 the block major and character major numbers respectively.
-For a loadable systam call, the third argument is the system
+For a loadable system call, the third argument is the system
 call number.
 .It Fl o Ar output_file
 Specify the name of the output file that is produced by
@@ -87,7 +87,7 @@ the linker.
 default file passed to the linker to resolve external
 references in the module
 .It Pa /usr/include/sys/lkm.h
-file containing defitions of module types
+file containing definitions of module types
 .\" .It Pa output file.
 .\" default output file name
 .Sh DIAGNOSTICS
