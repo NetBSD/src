@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2001/11/29 23:21:00 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2002/05/18 07:14:31 uch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the i386 */
+/* md.h -- Machine specific definitions for the playstation2 */
 
 
 #include <machine/cpu.h>
@@ -45,27 +45,25 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/* i386 uses the mbr code. */
 #include "mbr.h"
 
-/* constants and defines */
+#define	PART_ROOT	A
+#define	PART_SWAP	B
+#define	PART_RAW	C
+#define	PART_USR	D
+#define	PART_FIRST_FREE	D
 
-
-#define STDNEEDMB	145	/* Min space for non X install */
-#define XNEEDMB		39	/* Extra megs for full X installation */
-
+#define	DEFSWAPRAM	64	/* Assume at least this RAM for swap calc */
+#define	DEFROOTSIZE	32	/* Default root size */
+#define	DEFVARSIZE	0	/* Default /var size, if created */
+#define	DEFUSRSIZE	0	/* Default /usr size, if created */
+#define	STDNEEDMB	0	/* Min space for non X install */
+#define	XNEEDMB		0	/* Extra megs for full X installation(not yet)*/
 
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base, etc, comp, games, man, misc, text,
- *      xbase, xfont, xserver, xcontrib, xcomp.
- *
- * i386 has the  MD set kern first, because generic kernels are  too
- * big to fit on install floppies. i386 does not yet include the x sets. 
- *
- * Third entry is the last extension name in the split sets for loading
- * from floppy.
+ *      base, etc, comp, games, man, misc, text
  */
 EXTERN distinfo dist_list[]
 #ifdef MAIN
@@ -78,14 +76,6 @@ EXTERN distinfo dist_list[]
     {"man",		1, "ar", "Manuals      : "},
     {"misc",		1, "aj", "Miscellaneous: "},
     {"text",		1, "af", "Text tools   : "},
-
-    /* XXX no X11 on floppies, what sets are they?*/
-    {"xbase",		1, "al", "X11 clients  : "},
-    {"xfont",		1, "az", "X11 fonts    : "},
-    {"xserver",		1, "cr", "X11 servers  : "},
-    {"xcontrib",	1, "aa", "X11 contrib  : "},
-    {"xcomp",		1, "ah", "X programming: "},
-    {"xmisc",		1, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
@@ -94,50 +84,33 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On  i386, we allow "wd"  ST-506/IDE disks and  "sd" scsi disks.
+ * On playstation2, we allow "wd" for IDE disk.
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", NULL}
+= {"wd", NULL}
 #endif
 ;
 
-
 /*
- * Legal start character for a disk for checking input. 
+ * Legal start character for a disk for checking input.
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  *
- * On  i386, that means matching 'w' for st-506/ide and 's' for sd.
+ * On playstation2, that means matching 'w' for IDE disk.
  */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
+#define	ISDISKSTART(dn)	(dn == 'w')
 
 /*
  * Machine-specific command to write a new label to a disk.
- * For example, i386  uses "/sbin/disklabel -w -r", just like i386
- * miniroot scripts, though this may leave a bogus incore label.
- * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
- * to get incore  to ondisk inode translation for the Sun proms.
- * If not defined, we assume the port does not support disklabels and
- * hand-edited disklabel will NOT be written by MI code.
- *
- * On i386, do what the 1.2 install scripts did. 
  */
-#define DISKLABEL_CMD "disklabel -w -r"
-
+#define	DISKLABEL_CMD "disklabel -w -r"
 
 /*
- * Default fileystem type for floppy disks.
- * On i386, that is  msdos.
+ * Default fileystem type for IDE disk.
+ * On playstation2, that is msdos.
  */
 EXTERN	char *fdtype INIT("msdos");
-
-extern struct disklist *disklist;
-extern struct nativedisk_info *nativedisk;
-extern struct biosdisk_info *biosdisk;
-
-#define _PATH_MBR	"/usr/mdec/mbr"
-#define _PATH_BOOTSEL	"/usr/mdec/mbr_bootsel"
 
 struct mbr_bootsel {
 	u_int8_t defkey;
@@ -145,24 +118,6 @@ struct mbr_bootsel {
 	u_int16_t timeo;
 	char nametab[4][9];
 	u_int16_t magic;
-} __attribute__((packed));
- 
-extern struct mbr_bootsel *mbs;
- 
-#define BFL_SELACTIVE   0x01
-#define BFL_EXTINT13    0x02
- 
-#define SCAN_ENTER      0x1c
-#define SCAN_F1         0x3b
- 
-#define MBR_BOOTSELOFF  (MBR_PARTOFF - sizeof (struct mbr_bootsel))
-
-extern int defbootselpart, defbootseldisk;
-
-void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
-
-/*
- *  prototypes for MD code.
- */
+} __attribute__((__packed__));
 
 

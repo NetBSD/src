@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2001/10/15 16:22:52 uch Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2002/05/18 07:14:32 uch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- english, i386 version */
+/* MD Message catalog -- english, playstation2 version */
 
 message md_hello
 {
@@ -291,3 +291,24 @@ message bootsel_header
 
 message bootsel_row
 {%-6d %-32s %s\n}
+
+message askfsroot
+{I will be asking for partition sizes and on some, mount points.
+
+First the root partition.  You have %d %s left on your disk.
+Root partition size? }
+
+message askfsswap
+{
+Next the swap partition.  You have %d %s left on your disk.
+Swap partition size? }
+
+message askfsusr
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
+
+message askfspart
+{The next partition is /dev/%s%c.  You have %d %s left on your disk.
+Partition size? }
+
