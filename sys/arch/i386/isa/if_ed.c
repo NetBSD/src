@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.24 1994/02/13 03:49:24 mycroft Exp $
+ *	$Id: if_ed.c,v 1.25 1994/02/13 05:44:39 mycroft Exp $
  */
 
 #include "ed.h"
@@ -1250,7 +1250,7 @@ ed_init(sc)
 		 * Set promiscuous mode.  Multicast filter was set earlier so
 		 * that we should receive all multicast packets.
 		 */
-		i |= ED_RCR_AM | ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
+		i |= ED_RCR_AM | ED_RCR_PRO;
 	} else if (ifp->if_flags & IFF_MULTICAST)
 		i |= ED_RCR_AM;
 	outb(sc->nic_addr + ED_P0_RCR, i);
