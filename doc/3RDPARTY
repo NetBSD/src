@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.216 2004/05/15 16:01:11 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.217 2004/05/18 00:39:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -57,21 +57,18 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	8.3.7
-Current Vers:	4.9.11/8.3.7/8.4.2/9.3
+Version:	9.3.0
+Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
-Responsible:	vixie, itojun
+Responsible:	vixie, itojun, christos
 Notes:
 bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
 do not try to use libc resolver from src/usr.sbin/bind, it adds
 too much constraint between bind and libc, as well as problem with
-_res declaration differences.  DNSSEC portion is disabled.
-On switching to BIND9: waiting for the release of 9.3.x, as 9.2.x has some
-issues (A6 queries for glue, for instance).
-8.4.3 includes serious bug so do not pull it in.  if anything, wait for 8.4.4.
+_res declaration differences.
 
 Package:	bind/resolver
 Version:	4.9.11
