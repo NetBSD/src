@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.1.1.1 1996/08/09 10:15:04 thorpej Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.2 1996/10/02 18:21:03 ws Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -248,7 +248,7 @@ main(argc, argv)
 	struct sockaddr_in saddr;
 	int asize = sizeof(saddr);
 	int xflag = 0;
-	char ch;
+	int ch;
 	
 	while ((ch = getopt(argc, argv, "a:dx")) != -1) {
 		switch (ch) {
