@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.2 2003/07/13 09:45:24 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.3 2003/07/15 20:59:39 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.2 2003/07/13 09:45:24 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.3 2003/07/15 20:59:39 jlam Exp $");
 #endif
 #endif
 
@@ -591,7 +591,7 @@ pkg_do(char *pkg)
 			if (Verbose) {
 				printf("Deleting package %s instance from `%s' view\n", pkg, view);
 			}
-			if (vsystem("env PKG_DBDIR=%s pkg_delete %s", view, pkg) != 0) {
+			if (vsystem("env PKG_DBDIR=%s %s %s", view, ProgramPath, pkg) != 0) {
 				warnx("unable to delete package %s from view %s", pkg, view);
 				(void) fclose(fp);
 				return 1;
@@ -670,7 +670,7 @@ pkg_do(char *pkg)
 		if (Fake)
 			printf("Would execute post-de-install script at this point (arg: POST-DEINSTALL).\n");
 		else {
-			vsystem("chmod +x %s", DEINSTALL_FNAME);	/* make sure */
+			vsystem("%s +x %s", CHMOD_CMD, DEINSTALL_FNAME);	/* make sure */
 			if (vsystem("./%s %s POST-DEINSTALL", DEINSTALL_FNAME, pkg)) {
 				warnx("post-deinstall script returned error status");
 				if (!Force)
