@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.7 2002/02/11 17:08:55 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.8 2003/12/18 12:21:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ HpcMenuInterface::_unsupported[] =
 #ifdef MIPS
 #endif // MIPS
 #ifdef SHx
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , L"unknown Companion Chip FM-7403" },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , L"Companion chip FM-7403 not supported." },
 #endif // SHx
 	{ 0, 0, 0 } // TERMINATOR
 };
