@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2005/01/12 17:04:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2005/01/12 17:04:35 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,10 +47,7 @@ __RCSID("$NetBSD: print.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
 #include "extern.h"
 
 void
-pcrc(fn, val, len)
-	char *fn;
-	u_int32_t val;
-	off_t len;
+pcrc(char *fn, u_int32_t val, off_t len)
 {
 	(void)printf("%lu %lld", (unsigned long)val, (long long)len);
 	if (fn)
@@ -59,10 +56,7 @@ pcrc(fn, val, len)
 }
 
 void
-psum1(fn, val, len)
-	char *fn;
-	u_int32_t val;
-	off_t len;
+psum1(char *fn, u_int32_t val, off_t len)
 {
 	(void)printf("%lu %lld", (unsigned long)val,
 	    (long long)(len + 1023) / 1024);
@@ -72,10 +66,7 @@ psum1(fn, val, len)
 }
 
 void
-psum2(fn, val, len)
-	char *fn;
-	u_int32_t val;
-	off_t len;
+psum2(char *fn, u_int32_t val, off_t len)
 {
 	(void)printf("%lu %lld", (unsigned long)val,
 	    (long long)(len + 511) / 512);
