@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.7 1997/04/14 00:44:01 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.8 1997/04/22 03:04:33 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -186,6 +186,8 @@ sn_nubus_attach(parent, self, aux)
 			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
 		printf(": attachment incomplete.\n");
+		offset = 0;
+		success = 0;
                 return;
         }
 
