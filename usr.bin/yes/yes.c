@@ -1,4 +1,4 @@
-/*	$NetBSD: yes.c,v 1.3 1994/11/14 04:56:15 jtc Exp $	*/
+/*	$NetBSD: yes.c,v 1.4 1997/01/13 22:04:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)yes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: yes.c,v 1.3 1994/11/14 04:56:15 jtc Exp $";
+static char rcsid[] = "$NetBSD: yes.c,v 1.4 1997/01/13 22:04:39 cgd Exp $";
 #endif /* not lint */
 
 main(argc, argv)
@@ -52,7 +52,7 @@ main(argc, argv)
 {
 	if (argc > 1)
 		for(;;)
-			puts(argv[1]);
+			(void)puts(argv[1]);
 	else for (;;)
-		puts("y");
+		(void)puts("y");
 }
