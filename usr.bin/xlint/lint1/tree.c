@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.10 1995/10/02 17:35:57 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.11 1995/10/02 17:37:02 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.10 1995/10/02 17:35:57 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.11 1995/10/02 17:37:02 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1994,38 +1994,36 @@ cvtcon(op, arg, tp, nv, v)
 		xmask = qlmasks[nsz] ^ qlmasks[osz];
 		xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
 		/*
-		 * for bitwise operations we are not interested in the
-		 * value, but in the bits itself
+		 * For bitwise operations we are not interested in the
+		 * value, but in the bits itself.
 		 */
 		if (op == ORASS || op == OR || op == XOR) {
 			/*
-			 * print a warning if we get additional bits set
-			 * or loose bits which are set
+			 * Print a warning if bits which were set are
+			 * lost due to the conversion.
+			 * This can happen with operator ORASS only.
 			 */
-			if (nsz > osz && (nv->v_quad & xmask) != 0) {
-				/*
-				 * extra bits set to 1 in conversion
-				 * of '%s' to '%s', op %s
-				 */
-				warning(308, tyname(gettyp(ot)),
-					tyname(tp), modtab[op].m_name);
-			} else if (nsz < osz && (v->v_quad & xmask) != 0) {
+			if (nsz < osz && (v->v_quad & xmask) != 0) {
 				/* constant truncated by conv., op %s */
 				warning(306, modtab[op].m_name);
 			}
 		} else if (op == ANDASS || op == AND) {
 			/*
-			 * print a warning if additional bits are not all 1
-			 * or at least one (but not all) removed bit was 0
+			 * Print a warning if additional bits are not all 1
+			 * and the most significant bit of the old value is 1,
+			 * or if at least one (but not all) removed bit was 0.
 			 */
-			if (nsz > osz && (nv->v_quad & xmask) != xmask) {
+			if (nsz > osz &&
+			    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
+			    (nv->v_quad & xmask) != xmask) {
 				/*
 				 * extra bits set to 0 in conversion
 				 * of '%s' to '%s', op %s
 				 */
 				warning(309, tyname(gettyp(ot)),
 					tyname(tp), modtab[op].m_name);
-			} else if (nsz < osz && (v->v_quad & xmask) != xmask &&
+			} else if (nsz < osz &&
+				   (v->v_quad & xmask) != xmask &&
 				   (v->v_quad & xmask) != 0) {
 				/* const. truncated by conv., op %s */
 				warning(306, modtab[op].m_name);
