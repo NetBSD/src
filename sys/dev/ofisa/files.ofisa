@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofisa,v 1.7 1998/07/30 14:11:45 augustss Exp $
+#	$NetBSD: files.ofisa,v 1.8 1998/07/30 21:25:05 thorpej Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
@@ -20,8 +20,8 @@ attach	wdc at ofisa with wdc_ofisa
 file	dev/ofisa/wdc_ofisa.c		wdc_ofisa
 
 # attachment of ISA SoundBlaster driver
-#attach	sb at ofisa with sb_ofisa
-#file	dev/ofisa/sb_ofisa.c		sb_ofisa
+attach	sb at ofisa with sb_ofisa
+file	dev/ofisa/sb_ofisa.c		sb_ofisa
 
 # attachment of ISA ESS Technology ES1887/ES888
 attach	ess at ofisa with ess_ofisa
