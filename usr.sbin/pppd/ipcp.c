@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.8 1995/07/04 23:47:42 paulus Exp $";
+static char rcsid[] = "$Id: ipcp.c,v 1.9 1995/08/17 12:03:53 paulus Exp $";
 #endif
 
 /*
@@ -149,6 +149,13 @@ ipcp_init(unit)
     ao->neg_vj = 1;
     ao->maxslotindex = MAX_STATES - 1;
     ao->cflag = 1;
+
+    /*
+     * XXX These control whether the user may use the proxyarp
+     * and defaultroute options.
+     */
+    ao->proxy_arp = 1;
+    ao->default_route = 1;
 }
 
 
@@ -584,8 +591,6 @@ ipcp_nakci(f, p, len)
 		try.neg_addr = 1;
 	    no.neg_addr = 1;
 	    break;
-	default:
-	    goto bad;
 	}
 	p = next;
     }

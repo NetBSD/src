@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.10 1995/07/04 23:47:57 paulus Exp $";
+static char rcsid[] = "$Id: options.c,v 1.11 1995/08/17 12:03:58 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -138,7 +138,9 @@ static int setremote __P((char **));
 static int setauth __P((void));
 static int readfile __P((char **));
 static int setdefaultroute __P((void));
+static int setnodefaultroute __P((void));
 static int setproxyarp __P((void));
+static int setnoproxyarp __P((void));
 static int setpersist __P((void));
 static int setdologin __P((void));
 static int setusehostname __P((void));
@@ -223,7 +225,9 @@ static struct cmd {
     {"auth", 0, setauth},	/* Require authentication from peer */
     {"file", 1, readfile},	/* Take options from a file */
     {"defaultroute", 0, setdefaultroute}, /* Add default route */
+    {"-defaultroute", 0, setnodefaultroute}, /* disable defaultroute option */
     {"proxyarp", 0, setproxyarp}, /* Add proxy ARP entry */
+    {"-proxyarp", 0, setnoproxyarp}, /* disable proxyarp option */
     {"persist", 0, setpersist},	/* Keep on reopening connection after close */
     {"login", 0, setdologin},	/* Use system password database for UPAP */
     {"noipdefault", 0, setnoipdflt}, /* Don't use name for default IP adrs */
@@ -1496,14 +1500,38 @@ setauth()
 static int
 setdefaultroute()
 {
+    if (!ipcp_allowoptions[0].default_route) {
+	fprintf(stderr, "%s: defaultroute option is disabled\n", progname);
+	return 0;
+    }
     ipcp_wantoptions[0].default_route = 1;
+    return 1;
+}
+
+static int
+setnodefaultroute()
+{
+    ipcp_allowoptions[0].default_route = 0;
+    ipcp_wantoptions[0].default_route = 0;
     return 1;
 }
 
 static int
 setproxyarp()
 {
+    if (!ipcp_allowoptions[0].proxy_arp) {
+	fprintf(stderr, "%s: proxyarp option is disabled\n", progname);
+	return 0;
+    }
     ipcp_wantoptions[0].proxy_arp = 1;
+    return 1;
+}
+
+static int
+setnoproxyarp()
+{
+    ipcp_wantoptions[0].proxy_arp = 0;
+    ipcp_allowoptions[0].proxy_arp = 0;
     return 1;
 }
 
