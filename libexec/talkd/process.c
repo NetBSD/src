@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.3 1997/06/29 18:01:14 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.4 1997/06/29 19:13:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.3 1997/06/29 18:01:14 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.4 1997/06/29 19:13:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,15 +60,14 @@ __RCSID("$NetBSD: process.c,v 1.3 1997/06/29 18:01:14 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <paths.h>
+#include "extern.h"
 
-CTL_MSG *find_request();
-CTL_MSG *find_match();
-
+void
 process_request(mp, rp)
-	register CTL_MSG *mp;
-	register CTL_RESPONSE *rp;
+	CTL_MSG *mp;
+	CTL_RESPONSE *rp;
 {
-	register CTL_MSG *ptr;
+	CTL_MSG *ptr;
 	extern int debug;
 
 	rp->vers = TALK_VERSION;
@@ -135,8 +134,9 @@ process_request(mp, rp)
 		print_response("process_request", rp);
 }
 
+void
 do_announce(mp, rp)
-	register CTL_MSG *mp;
+	CTL_MSG *mp;
 	CTL_RESPONSE *rp;
 {
 	struct hostent *hp;
@@ -182,6 +182,7 @@ do_announce(mp, rp)
 /*
  * Search utmp for the local user
  */
+int
 find_user(name, tty)
 	char *name, *tty;
 {
@@ -191,6 +192,8 @@ find_user(name, tty)
 	struct stat statb;
 	char line[sizeof(ubuf.ut_line) + 1];
 	char ftty[sizeof(_PATH_DEV) - 1 + sizeof(line)];
+	time_t atime = 0;
+	int anytty = 0;
 
 	if ((fd = fopen(_PATH_UTMP, "r")) == NULL) {
 		fprintf(stderr, "talkd: can't read %s.\n", _PATH_UTMP);
@@ -199,28 +202,35 @@ find_user(name, tty)
 #define SCMPN(a, b)	strncmp(a, b, sizeof (a))
 	status = NOT_HERE;
 	(void) strcpy(ftty, _PATH_DEV);
-	while (fread((char *) &ubuf, sizeof ubuf, 1, fd) == 1)
-		if (SCMPN(ubuf.ut_name, name) == 0) {
-			(void)strncpy(line, ubuf.ut_line, sizeof(ubuf.ut_line));
-			line[sizeof(ubuf.ut_line)] = '\0';
-			if (*tty == '\0') {
-				status = PERMISSION_DENIED;
-				/* no particular tty was requested */
-				(void) strcpy(ftty + sizeof(_PATH_DEV) - 1,
-				    line);
-				if (stat(ftty, &statb) == 0) {
-					if (!(statb.st_mode & 020))
-						continue;
+
+	if (*tty == '\0')
+		anytty = 1;
+
+	while (fread((char *) &ubuf, sizeof ubuf, 1, fd) == 1) {
+		if (SCMPN(ubuf.ut_name, name) != 0)
+			continue;
+		(void)strncpy(line, ubuf.ut_line, sizeof(ubuf.ut_line));
+		line[sizeof(ubuf.ut_line)] = '\0';
+		if (anytty) {
+			/* no particular tty was requested */
+			(void)strcpy(ftty + sizeof(_PATH_DEV) - 1, line);
+			if (stat(ftty, &statb) == 0) {
+				if (!(statb.st_mode & 020)) {
+					if (status != SUCCESS)
+						status = PERMISSION_DENIED;
+					continue;
+				}
+				if (statb.st_atime > atime) {
+					atime = statb.st_atime;
 					(void) strcpy(tty, line);
 					status = SUCCESS;
-					break;
 				}
 			}
-			if (strcmp(line, tty) == 0) {
-				status = SUCCESS;
-				break;
-			}
+		} else if (strcmp(line, tty) == 0) {
+			status = SUCCESS;
+			break;
 		}
-	fclose(fd);
+	}
+	(void)fclose(fd);
 	return (status);
 }

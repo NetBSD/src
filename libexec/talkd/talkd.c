@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.5 1997/06/29 18:01:16 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.6 1997/06/29 19:13:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.5 1997/06/29 18:01:16 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.6 1997/06/29 19:13:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,13 @@ __RCSID("$NetBSD: talkd.c,v 1.5 1997/06/29 18:01:16 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include "extern.h"
 
 CTL_MSG		request;
 CTL_RESPONSE	response;
 
-int	sockt;
+int	sockt = STDIN_FILENO;
 int	debug = 0;
-void	timeout();
 long	lastmsgtime;
 
 char	hostname[MAXHOSTNAMELEN + 1];
@@ -81,11 +81,15 @@ char	hostname[MAXHOSTNAMELEN + 1];
 #define TIMEOUT 30
 #define MAXIDLE 120
 
+static void timeout __P((int));
+int	main __P((int, char *[]));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register CTL_MSG *mp = &request;
+	CTL_MSG *mp = &request;
 	int cc;
 
 	if (getuid()) {
@@ -127,7 +131,8 @@ main(argc, argv)
 }
 
 void
-timeout()
+timeout(n)
+	int n;
 {
 
 	if (time(0) - lastmsgtime >= MAXIDLE)
