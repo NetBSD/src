@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.5 2000/04/11 05:26:27 chs Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.6 2000/06/28 15:39:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <vm/vm.h>				/* XXX UVM headers are Cool */
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 
 #include <compat/osf1/osf1.h>

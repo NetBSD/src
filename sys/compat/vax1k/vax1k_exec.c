@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.1 1998/08/21 13:25:47 ragge Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.2 2000/06/28 15:39:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -46,8 +46,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
 
 #include <compat/vax1k/vax1k_exec.h>
 
