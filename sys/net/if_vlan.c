@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.14 2000/10/04 06:51:12 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.15 2000/10/10 10:07:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -236,10 +236,6 @@ vlan_clone_destroy(struct ifnet *ifp)
 	vlan_unconfig(ifp);
 	splx(s);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
-	ether_ifdetach(ifp);
 	if_detach(ifp);
 	free(ifv, M_DEVBUF);
 }
