@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.6 1993/06/15 01:50:32 mycroft Exp $
+ *	$Id: lptvar.h,v 1.7 1993/07/17 16:20:32 mycroft Exp $
  */
 
 /*
@@ -271,7 +271,8 @@ printf ("status %x\n", inb(port+lpt_status) );
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if (tsleep (sc, LPPRI|PCATCH, "lptinit", hz/4) != EWOULDBLOCK) {
+		if (tsleep((caddr_t)sc,
+			   LPPRI|PCATCH, "lptinit", hz/4) != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			splx(s);
 			return (EBUSY);
@@ -293,7 +294,7 @@ printf ("status %x\n", inb(port+lpt_status) );
 	sc->sc_inbuf = geteblk(BUFSIZE);
 	sc->sc_xfercnt = 0;
 	splx(s);
-	timeout (lptout, sc, hz/2);
+	timeout((timeout_t)lptout, (caddr_t)sc, hz/2);
 lprintf("opened.\n");
 	return(0);
 }
@@ -304,7 +305,7 @@ lptout (sc)
 
 lprintf ("T %x ", inb(sc->sc_port+lpt_status));
 	if (sc->sc_state&OPEN)
-		timeout (lptout, sc, hz/2);
+		timeout((timeout_t)lptout, (caddr_t)sc, hz/2);
 	else	sc->sc_state &= ~TOUT;
 
 	if (sc->sc_state & ERROR)
@@ -337,7 +338,8 @@ lptclose(dev, flag)
 	while ((inb(port+lpt_status) & (LPS_SEL|LPS_OUT|LPS_NBSY|LPS_NERR)) !=
 			(LPS_SEL|LPS_NBSY|LPS_NERR) || sc->sc_xfercnt)
 		/* wait 1/4 second, give up if we get a signal */
-		if (tsleep (sc, LPPRI|PCATCH, "lpclose", hz) != EWOULDBLOCK)
+		if (tsleep((caddr_t)sc,
+			   LPPRI|PCATCH, "lpclose", hz) != EWOULDBLOCK)
 			break;
 
 	sc->sc_state = 0;
@@ -374,7 +376,8 @@ lprintf("\nC %d. ", sc->sc_xfercnt);
 				(void) splx(pl);
 			}
 lprintf("W ");
-			if (err = tsleep (sc, LPPRI|PCATCH, "lpwrite", 0))
+			if (err = tsleep((caddr_t)sc,
+					 LPPRI|PCATCH, "lpwrite", 0))
 				return(err);
 		}
 	}
