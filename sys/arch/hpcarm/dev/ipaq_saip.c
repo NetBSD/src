@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.1 2001/07/10 16:31:53 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.2 2001/07/10 17:24:35 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -93,6 +93,7 @@ ipaq_attach(parent, self, aux)
 	
 	printf("\n");
 
+	sc->sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
 	sc->sc_gpioh = psc->sc_gpioh;
 
