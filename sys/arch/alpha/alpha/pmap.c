@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.203 2003/08/24 17:52:28 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.204 2003/10/27 07:07:35 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2003/08/24 17:52:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2114,7 +2114,7 @@ boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	paddr_t pa;
+	paddr_t pa = 0;
 	boolean_t rv = FALSE;
 
 #ifdef DEBUG
@@ -2316,6 +2316,7 @@ pmap_zero_page(paddr_t phys)
 #endif
 
 	p0 = (u_long *)ALPHA_PHYS_TO_K0SEG(phys);
+	p1 = NULL;
 	pend = (u_long *)((u_long)p0 + PAGE_SIZE);
 
 	/*

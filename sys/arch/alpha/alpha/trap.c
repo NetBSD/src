@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.86 2003/10/08 00:28:41 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.87 2003/10/27 07:07:35 chs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	struct lwp *l;
 	struct proc *p;
 	ksiginfo_t ksi;
-	vm_prot_t ftype;
+	vm_prot_t ftype = VM_PROT_NONE;
 	u_int64_t ucode;
 	int i, user;
 #if defined(DDB)
@@ -246,13 +246,13 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 
 	l = curlwp;
 
-
-
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user) {
 		l->l_md.md_tf = framep;
 		p = l->l_proc;
 		(void)memset(&ksi, 0, sizeof(ksi));
+	} else {
+		p = NULL;
 	}
 
 	switch (entry) {

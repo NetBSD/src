@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.41 2003/10/25 21:30:03 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.42 2003/10/27 07:07:34 chs Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.41 2003/10/25 21:30:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.42 2003/10/27 07:07:34 chs Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1853,8 +1853,8 @@ ray_check_ccs(arg)
 {
 	ray_cmd_func_t fp;
 	struct ray_softc *sc;
-	u_int i, cmd, stat;
-	bus_size_t ccs;
+	u_int i, cmd, stat = 0;
+	bus_size_t ccs = 0;
 	int s;
 
 	s = splnet();
