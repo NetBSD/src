@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.11 2003/10/11 20:53:14 petrov Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.12 2004/04/23 02:58:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ struct iommu_strbuf {
  * Unfortunately, sabres on UltraSPARC IIi and IIe processors does not use
  * this scheme to determine the IOVA base address.  Instead, bits 31-29 are
  * used to check against the Target Address Space register in the IIi and
- * the the IOMMU is used if they hit.  God knows what goes on in the IIe.
+ * the IOMMU is used if they hit.  God knows what goes on in the IIe.
  *
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.25 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.26 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.25 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.26 2004/04/23 02:58:27 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -244,7 +244,7 @@ grptb_start(void)
 /*
  * user_from_uid()
  *	caches the name (if any) for the uid. If noname clear, we always
- *	return the the stored name (if valid or invalid match).
+ *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
@@ -314,7 +314,7 @@ user_from_uid(uid_t uid, int noname)
 /*
  * group_from_gid()
  *	caches the name (if any) for the gid. If noname clear, we always
- *	return the the stored name (if valid or invalid match).
+ *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)

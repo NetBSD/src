@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.11 2003/07/15 00:25:02 lukem Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.12 2004/04/23 02:58:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.11 2003/07/15 00:25:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.12 2004/04/23 02:58:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,7 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 	/*
-	 * We have mapped the the PCI I/O windows in the early
-	 * bootstrap phase.
+	 * We have mapped the PCI I/O windows in the early bootstrap phase.
 	 */
 	sc->sc_piow_vaddr = IQ80310_PIOW_VBASE;
 	sc->sc_siow_vaddr = IQ80310_SIOW_VBASE;
