@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2002/09/12 07:31:13 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.10 2002/10/10 17:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,7 @@ static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
+	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
@@ -60,7 +60,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	int ret;
 
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %1,r1;jsb Slocktry;movl r0,%0"
+	__asm__ __volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
 		: "=&r"(ret)
 		: "g"(alp)
 		: "r0","r1","cc","memory");
@@ -118,7 +118,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	}
 
 #if 0
-	__asm__ __volatile ("movl %0,r1;jsb Slock"
+	__asm__ __volatile ("movl %0,%%r1;jsb Slock"
 		: /* No output */
 		: "g"(alp)
 		: "r0","r1","cc","memory");
@@ -135,7 +135,7 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
-	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
+	__asm__ __volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
 		: "g"(alp)
 		: "r1","cc","memory");
