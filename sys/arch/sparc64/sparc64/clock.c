@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2000/07/26 12:39:20 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.28 2000/07/26 13:39:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,10 +79,11 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
+#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
+#include <dev/ic/mk48txxreg.h>
 
-#include <sparc64/sparc64/clockreg.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
@@ -117,9 +118,8 @@ static int	clockmatch_sbus __P((struct device *, struct cfdata *, void *));
 static void	clockattach_sbus __P((struct device *, struct device *, void *));
 static int	clockmatch_ebus __P((struct device *, struct cfdata *, void *));
 static void	clockattach_ebus __P((struct device *, struct device *, void *));
-static void	clockattach __P((int, bus_space_handle_t));
+static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
-static struct clockreg *clock_map __P((bus_space_handle_t, char *));
 
 struct cfattach clock_sbus_ca = {
 	sizeof(struct device), clockmatch_sbus, clockattach_sbus
@@ -130,6 +130,10 @@ struct cfattach clock_ebus_ca = {
 };
 
 extern struct cfdriver clock_cd;
+
+/* Global TOD clock handle & idprom pointer */
+static todr_chip_handle_t todr_handle;
+static struct idprom *idprom;
 
 static int	timermatch __P((struct device *, struct cfdata *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
@@ -175,24 +179,6 @@ clockmatch_ebus(parent, cf, aux)
 	return (strcmp("eeprom", ea->ea_name) == 0);
 }
 
-static struct clockreg *
-clock_map(bh, model)
-	bus_space_handle_t bh;
-	char *model;
-{
-	struct clockreg *cl;
-#if 0
-	paddr_t pa;
-
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)bh, &pa);
-	pmap_enter(pmap_kernel(), (vaddr_t)bh, pa, VM_PROT_READ,
-	    VM_PROT_READ|PMAP_WIRED);
-#endif
-	cl = (struct clockreg *)((long)bh + CLK_MK48T08_OFF);
-
-	return (cl);
-}
-
 /*
  * Attach a clock (really `eeprom') to the sbus or ebus.
  *
@@ -222,13 +208,14 @@ clockattach_sbus(parent, self, aux)
 	void *aux;
 {
 	struct sbus_attach_args *sa = aux;
+	bus_space_tag_t bt = sa->sa_bustag;
 	bus_space_handle_t bh;
 	int sz;
 
 	/* use sa->sa_regs[0].size? */
 	sz = 8192;
 
-	if (sbus_bus_map(sa->sa_bustag,
+	if (sbus_bus_map(bt,
 			 sa->sa_slot,
 			 (sa->sa_offset & ~NBPG),
 			 sz,
@@ -238,7 +225,7 @@ clockattach_sbus(parent, self, aux)
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(sa->sa_node, bh);
+	clockattach(sa->sa_node, bt, bh);
 }
 
 /* ARGSUSED */
@@ -248,13 +235,14 @@ clockattach_ebus(parent, self, aux)
 	void *aux;
 {
 	struct ebus_attach_args *ea = aux;
+	bus_space_tag_t bt = ea->ea_bustag;
 	bus_space_handle_t bh;
 	int sz;
 
 	/* hard code to 8K? */
 	sz = ea->ea_regs[0].size;
 
-	if (ebus_bus_map(ea->ea_bustag,
+	if (ebus_bus_map(bt,
 			 0,
 			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
 			 sz,
@@ -264,36 +252,41 @@ clockattach_ebus(parent, self, aux)
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(ea->ea_node, bh);
+	clockattach(ea->ea_node, bt, bh);
 }
 
 static void
-clockattach(node, bh)
+clockattach(node, bt, bh)
 	int node;
+	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 {
 	char *model;
-	struct clockreg *cl;
 	struct idprom *idp;
 	int h;
 
 	model = getpropstring(node, "model");
+
 #ifdef DIAGNOSTIC
 	if (model == NULL)
-		panic("no model");
+		panic("clockattach: no model property");
 #endif
-	printf(": %s (eeprom)", model);
 
-	cl = clock_map(bh, model);
-	idp = &cl->cl_idprom;
+	/* Our TOD clock year 0 is 1968 */
+	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+		panic("Can't attach %s tod clock", model);
+
+#define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
+	idp = (struct idprom *)((u_long)bh + IDPROM_OFFSET);
 
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
-	printf(" hostid %lx\n", (long)hostid);
-	clockreg = cl;
+	printf(": hostid %lx\n", (long)hostid);
+
+	idprom = idp;
 }
 
 /*
@@ -433,22 +426,19 @@ void
 myetheraddr(cp)
 	u_char *cp;
 {
-	struct clockreg *cl = clockreg;
 	struct idprom *idp;
 
-	if (!cl) {
+	if ((idp = idprom) == NULL) {
 		int node, n;
 
 		node = findroot();
-		idp = NULL;
 		if (getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
 		    n != 1) {
 			printf("\nmyetheraddr: clock not setup yet, "
 			       "and no idprom property in /\n");
 			return;
 		}
-	} else
-		idp = &cl->cl_idprom;
+	}
 
 	cp[0] = idp->id_ether[0];
 	cp[1] = idp->id_ether[1];
@@ -456,7 +446,7 @@ myetheraddr(cp)
 	cp[3] = idp->id_ether[3];
 	cp[4] = idp->id_ether[4];
 	cp[5] = idp->id_ether[5];
-	if (idp != &cl->cl_idprom)
+	if (idprom == NULL)
 		free(idp, M_DEVBUF);
 }
 
@@ -469,7 +459,7 @@ myetheraddr(cp)
 void
 cpu_initclocks()
 {
-	register int statint, minint;
+	int statint, minint;
 #ifdef DEBUG
 	extern int intrdebug;
 #endif
@@ -684,110 +674,12 @@ statintr(cap)
 }
 
 /*
- * should use something like
- * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
- * but it's unlikely that we'll still be around in 2100.
- */
-#define	LEAPYEAR(y)	(((y) & 3) == 0)
-
-/*
- * This code is defunct after 2068.
- * Will Unix still be here then??
- */
-const short dayyr[12] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
-
-int
-chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
-{
-	register int days, yr;
-
-	sec = FROMBCD(sec);
-	min = FROMBCD(min);
-	hour = FROMBCD(hour);
-	day = FROMBCD(day);
-	mon = FROMBCD(mon);
-	year = FROMBCD(year) + YEAR0;
-
-	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
-		return (0);
-	days = 0;
-	for (yr = 70; yr < year; yr++)
-		days += LEAPYEAR(yr) ? 366 : 365;
-	days += dayyr[mon - 1] + day - 1;
-	if (LEAPYEAR(yr) && mon > 2)
-		days++;
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
-}
-
-struct chiptime {
-	int	sec;
-	int	min;
-	int	hour;
-	int	wday;
-	int	day;
-	int	mon;
-	int	year;
-};
-
-void
-timetochip(c)
-	register struct chiptime *c;
-{
-	register int t, t2, t3, now = time.tv_sec;
-
-	/* compute the year */
-	t2 = now / SECDAY;
-	t3 = (t2 + 2) % 7;	/* day of week */
-	c->wday = TOBCD(t3 + 1);
-
-	t = 69;
-	while (t2 >= 0) {	/* whittle off years */
-		t3 = t2;
-		t++;
-		t2 -= LEAPYEAR(t) ? 366 : 365;
-	}
-	c->year = t;
-
-	/* t3 = month + day; separate */
-	t = LEAPYEAR(t);
-	for (t2 = 1; t2 < 12; t2++)
-		if (t3 < dayyr[t2] + (t && t2 > 1))
-			break;
-
-	/* t2 is month */
-	c->mon = t2;
-	c->day = t3 - dayyr[t2 - 1] + 1;
-	if (t && t2 > 2)
-		c->day--;
-
-	/* the rest is easy */
-	t = now % SECDAY;
-	c->hour = t / 3600;
-	t %= 3600;
-	c->min = t / 60;
-	c->sec = t % 60;
-
-	c->sec = TOBCD(c->sec);
-	c->min = TOBCD(c->min);
-	c->hour = TOBCD(c->hour);
-	c->day = TOBCD(c->day);
-	c->mon = TOBCD(c->mon);
-	c->year = TOBCD(c->year - YEAR0);
-}
-
-/*
  * Set up the system's time, given a `reasonable' time value.
  */
 void
 inittodr(base)
 	time_t base;
 {
-	register struct clockreg *cl = clockreg;
-	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
 
 	if (base < 5 * SECYR) {
@@ -801,20 +693,9 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
-	clk_wenable(1);
-	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-	sec = cl->cl_sec;
-	min = cl->cl_min;
-	hour = cl->cl_hour;
-	day = cl->cl_mday;
-	mon = cl->cl_month;
-	year = cl->cl_year;
-	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-	clk_wenable(0);
-	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
-	time.tv_usec = 0;
 
-	if (time.tv_sec == 0) {
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
@@ -845,23 +726,12 @@ inittodr(base)
 void
 resettodr()
 {
-	register struct clockreg *cl;
-	struct chiptime c;
 
-	if (!time.tv_sec || (cl = clockreg) == NULL)
+	if (time.tv_sec == 0)
 		return;
-	timetochip(&c);
-	clk_wenable(1);
-	cl->cl_csr |= CLK_WRITE;	/* enable write */
-	cl->cl_sec = c.sec;
-	cl->cl_min = c.min;
-	cl->cl_hour = c.hour;
-	cl->cl_wday = c.wday;
-	cl->cl_mday = c.day;
-	cl->cl_month = c.mon;
-	cl->cl_year = c.year;
-	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
-	clk_wenable(0);
+
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("Cannot set time in time-of-day clock\n");
 }
 
 /*
@@ -875,4 +745,3 @@ eeprom_uio(uio)
 {
 	return (ENODEV);
 }
-
