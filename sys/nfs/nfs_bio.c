@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.101 2003/05/16 17:16:05 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.102 2003/05/21 13:27:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.101 2003/05/16 17:16:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.102 2003/05/21 13:27:19 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -590,7 +590,7 @@ nfs_write(v)
 		boolean_t stalewriteverf = FALSE;
 
 		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
-		error = nfs_writerpc(vp, uio, &iomode, &stalewriteverf);
+		error = nfs_writerpc(vp, uio, &iomode, FALSE, &stalewriteverf);
 		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (stalewriteverf)
 			nfs_clearcommit(vp->v_mount);
@@ -984,6 +984,7 @@ nfs_doio_write(bp, uiop)
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct vm_page *pgs[npages];
 	boolean_t needcommit = TRUE;
+	boolean_t pageprotected;
 	struct uvm_object *uobj = &vp->v_uobj;
 	int error;
 	off_t off, cnt;
@@ -1023,7 +1024,9 @@ again:
 			pmap_page_protect(pgs[i], VM_PROT_READ);
 		}
 		simple_unlock(&uobj->vmobjlock);
-	}
+		pageprotected = TRUE; /* pages can't be modified during i/o. */
+	} else
+		pageprotected = FALSE;
 
 	/*
 	 * Send the data to the server if necessary,
@@ -1093,7 +1096,7 @@ again:
 	cnt = bp->b_bcount;
 	uiop->uio_rw = UIO_WRITE;
 	nfsstats.write_bios++;
-	error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
+	error = nfs_writerpc(vp, uiop, &iomode, pageprotected, &stalewriteverf);
 	if (!error && iomode == NFSV3WRITE_UNSTABLE) {
 		/*
 		 * we need to commit pages later.
@@ -1180,7 +1183,7 @@ nfs_doio_phys(bp, uiop)
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
 		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
-		error = nfs_writerpc(vp, uiop, &iomode, &stalewriteverf);
+		error = nfs_writerpc(vp, uiop, &iomode, FALSE, &stalewriteverf);
 		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 		if (stalewriteverf) {
 			nfs_clearcommit(bp->b_vp->v_mount);

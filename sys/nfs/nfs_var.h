@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.33 2003/05/07 16:18:54 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.34 2003/05/21 13:27:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,7 +107,8 @@ int nfs_setattrrpc __P((struct vnode *, struct vattr *, struct ucred *,
 			struct proc *));
 int nfs_readlinkrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_readrpc __P((struct vnode *, struct uio *));
-int nfs_writerpc __P((struct vnode *, struct uio *, int *, boolean_t *));
+int nfs_writerpc __P((struct vnode *, struct uio *, int *, boolean_t,
+			boolean_t *));
 int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *));
 int nfs_removeit __P((struct sillyrename *));
