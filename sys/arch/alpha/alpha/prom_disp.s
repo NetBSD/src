@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_disp.s,v 1.4 1996/04/12 06:07:38 cgd Exp $	*/
+/*	$NetBSD: prom_disp.s,v 1.5 1996/09/17 21:17:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,10 @@
 
 #ifndef _LOCORE
 #include <machine/asm.h>
-#include <machine/prom.h>
-#include <machine/rpb.h>
 #endif
 
 	.globl	prom_dispatch_v
-	.comm	prom_dispatch_v	16
+	.comm	prom_dispatch_v,16
 
 	.text
 	.align	4
