@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.49 1999/04/24 08:10:41 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.50 1999/04/24 15:04:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.49 1999/04/24 08:10:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.50 1999/04/24 15:04:32 simonb Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
@@ -820,7 +820,7 @@ int
 sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
-	*retval;
+	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
