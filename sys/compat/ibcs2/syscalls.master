@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1998/02/19 00:40:25 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.14 1998/03/05 04:36:08 scottb Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -169,15 +169,17 @@
 93	NOARGS		{ int sys_fchmod(int fd, int mode); }
 94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 95	UNIMPL
-96	UNIMPL
+96	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 97	UNIMPL		sigaltstack
 98	UNIMPL
 99	UNIMPL
 100	UNIMPL		getcontext/setcontext/sigsetjmp
 101	UNIMPL
 102	UNIMPL
-103	UNIMPL		statvfs
-104	UNIMPL		fstatvfs
+103	STD		{ int ibcs2_sys_statvfs(char *path, \
+			    struct ibcs2_statvfs *buf); }
+104	STD		{ int ibcs2_sys_fstatvfs(int fd, \
+			    struct ibcs2_statvfs *buf); }
 105	UNIMPL
 106	UNIMPL
 107	UNIMPL		waitid

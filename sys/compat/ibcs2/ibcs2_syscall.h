@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.h,v 1.17 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscall.h,v 1.18 1998/03/05 04:36:08 scottb Exp $	*/
 
 /*
  * System call numbers.
@@ -221,6 +221,15 @@
 
 /* syscall: "__posix_fchown" ret: "int" args: "int" "int" "int" */
 #define	IBCS2_SYS___posix_fchown	94
+
+/* syscall: "sigreturn" ret: "int" args: "struct sigcontext *" */
+#define	IBCS2_SYS_sigreturn	96
+
+/* syscall: "statvfs" ret: "int" args: "char *" "struct ibcs2_statvfs *" */
+#define	IBCS2_SYS_statvfs	103
+
+/* syscall: "fstatvfs" ret: "int" args: "int" "struct ibcs2_statvfs *" */
+#define	IBCS2_SYS_fstatvfs	104
 
 /* syscall: "mmap" ret: "ibcs2_caddr_t" args: "ibcs2_caddr_t" "ibcs2_size_t" "int" "int" "int" "ibcs2_off_t" */
 #define	IBCS2_SYS_mmap	115
