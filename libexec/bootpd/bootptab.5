@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /cvsroot/src/libexec/bootpd/Attic/bootptab.5,v 1.1 1994/04/18 05:15:58 glass Exp $
+.\"	$Header: /cvsroot/src/libexec/bootpd/Attic/bootptab.5,v 1.2 1994/05/24 15:20:19 gwr Exp $
 .\"
 .TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
 .UC 6
@@ -23,9 +23,13 @@ colons (:), with a general format of:
 .PP
 where
 .I hostname
-is the actual name of a bootp client and
+is the actual name of a bootp client (or a "dummy entry"), and
 .I tg
-is a two-character tag symbol.  Most tags must be followed by an equals-sign
+is a two-character tag symbol.  Dummy entries have an invalid hostname
+(one with a "." as the first character) and are used to provide
+default values used by other entries via the
+.B tc=.dummy-entry
+mechanism.  Most tags must be followed by an equals-sign
 and a value as above.  Some may also appear in a boolean form with no
 value (i.e.
 .RI : tg :).
@@ -43,6 +47,8 @@ The currently recognized tags are:
 	dn	Domain name
 .br
 	ds	Domain name server address list
+.br
+	ef	Extension file
 .br
 	gw	Gateway address list
 .br
@@ -64,6 +70,10 @@ The currently recognized tags are:
 .br
 	ns	IEN-116 name server address list
 .br
+	nt	NTP (time) Server (RFC 1129)
+.br
+	ra	Reply address override
+.br
 	rl	Resource location protocol server address list
 .br
 	rp	Root path to mount as root
@@ -83,6 +93,10 @@ The currently recognized tags are:
 	ts	Time server address list
 .br
 	vm	Vendor magic cookie selector
+.br
+	yd	YP (NIS) domain name
+.br
+	ys	YP (NIS) server address
 
 .PP
 There is also a generic tag,
@@ -105,6 +119,8 @@ The following tags take a whitespace-separated list of IP addresses:
 .BR lg ,
 .BR lp ,
 .BR ns ,
+.BR nt ,
+.BR ra ,
 .BR rl ,
 and
 .BR ts .
@@ -112,12 +128,22 @@ The
 .BR ip ,
 .BR sa ,
 .BR sw ,
+.BR sm ,
 and
-.B sm
+.B ys
 tags each take a single IP address.
-All IP addresses are specified in standard Internet "dot" notation and may use
-decimal, octal, or hexadecimal numbers (octal numbers begin with 0,
-hexadecimal numbers begin with '0x' or '0X').
+All IP addresses are specified in standard Internet "dot" notation
+and may use decimal, octal, or hexadecimal numbers
+(octal numbers begin with 0, hexadecimal numbers begin with '0x' or '0X').
+Any IP addresses may alternatively be specified as a hostname, causing
+.I bootpd
+to lookup the IP address for that host name using gethostbyname(3).
+If the
+.B ip
+tag is not specified,
+.I bootpd
+will determine the IP address using the entry name as the host name.
+(Dummy entries use an invalid host name to avoid automatic IP lookup.)
 .PP
 The
 .B ht
@@ -145,7 +171,8 @@ or
 for Chaos, ARCNET, and AX.25 Amateur Radio networks, respectively.
 The
 .B ha
-tag takes a hardware address which
+tag takes a hardware address which may be specified as a host name
+or in numeric form.  Note that the numeric form
 .I must
 be specified in hexadecimal; optional periods and/or a leading '0x' may be
 included for readability.  The
@@ -155,6 +182,10 @@ tag must be preceded by the
 tag (either explicitly or implicitly; see
 .B tc
 below).
+If the hardware address is not specified and the type is specified
+as either "ethernet" or "ieee802", then
+.I bootpd
+will try to determine the hardware address using ether_hton(3).
 .PP
 The hostname, home directory, and bootfile are ASCII strings which may be
 optionally surrounded by double quotes (").  The client's request and the
@@ -165,42 +196,18 @@ and
 symbols determine how the server fills in the bootfile field of the bootp
 reply packet.
 .PP
-If the client specifies an absolute pathname and that file exists on the
-server machine, that pathname is returned in the reply packet.  If the file
-cannot be found, the request is discarded; no reply is sent.  If the client
-specifies a relative pathname, a full pathname is formed by prepending the
-value of the
-.B hd
-tag and testing for existence of the file.  If the
-.B hd
-tag is not supplied in the configuration file or if the resulting boot file
-cannot be found, then the request is discarded.
-.PP
-Clients which specify null boot files will always elicit a reply from the
-server.  The exact reply will again depend upon the
-.B hd
-and
+If the client provides a file name it is left as is.
+Otherwise, if the
 .B bf
-tags.  If the
-.B bf
-tag gives an absolute pathname and the file exists, that pathname is returned
-in the reply packet.  Otherwise, if the
+option is specified its value is copied into the reply packet.
+If the
 .B hd
-and
-.B bf
-tags together specify an accessible file, that filename is returned in the
-reply.  If a complete filename cannot be determined or the file does not
-exist, the reply will contain a zeroed-out bootfile field.
-.PP
-In all these cases, existence of the file means that, in addition to actually
-being present, the file must have its public read access bit set, since this
-is required by
-.IR tftpd (8)
-to permit the file transfer.  Also, all filenames are first tried as
-.I filename.hostname
-and then simply as
-.IR filename ,
-thus providing for individual per-host bootfiles.
+option is specified as well, its value is prepended to the
+boot file copied into the reply packet.
+The existence of the boot file is checked only if the
+.BR bs =auto
+option is used (to determine the boot file size).
+A reply may be sent whether or not the boot file exists.
 .PP
 Some newer versions of
 .I tftpd
@@ -214,6 +221,9 @@ tag may be used to inform
 .I bootpd
 of this special root directory used by
 .IR tftpd .
+(One may alternatively use the
+.I bootpd
+"-c chdir" option.)
 The
 .B hd
 tag is actually relative to the root directory specified by the
@@ -343,57 +353,38 @@ An example
 .I /etc/bootptab
 file follows:
 .PP
+.nf
+	# Sample bootptab file (domain=andrew.cmu.edu)
 
-.br
-	# Sample bootptab file
-
-.br
-	default1:\\
-.br
+	.default:\\
 		:hd=/usr/boot:bf=null:\\
-.br
-		:ds=128.2.35.50 128.2.13.21:\\
-.br
-		:ns=0x80020b4d 0x80020ffd:\\
-.br
-		:ts=0x80020b4d 0x80020ffd:\\
-.br
-		:sm=255.255.0.0:gw=0x8002fe24:\\
-.br
-		:hn:vm=auto:to=-18000:\\
-.br
-		:T37=0x12345927AD3BCF:T99="Special ASCII string":
+		:ds=netserver, lancaster:\\
+		:ns=pcs2, pcs1:\\
+		:ts=pcs2, pcs1:\\
+		:sm=255.255.255.0:\\
+		:gw=gw.cs.cmu.edu:\\
+		:hn:to=-18000:
 
-.br
-	carnegie:ht=6:ha=7FF8100000AF:ip=128.2.11.1:tc=default1:
-.br
-	baldwin:ht=1:ha=0800200159C3:ip=128.2.11.10:tc=default1:
-.br
-	wylie:ht=1:ha=00DD00CADF00:ip=128.2.11.100:tc=default1:
-.br
-	arnold:ht=1:ha=0800200102AD:ip=128.2.11.102:tc=default1:
-.br
-	bairdford:ht=1:ha=08002B02A2F9:ip=128.2.11.103:tc=default1:
-.br
-	bakerstown:ht=1:ha=08002B0287C8:ip=128.2.11.104:tc=default1:
+	carnegie:ht=6:ha=7FF8100000AF:tc=.default:
+	baldwin:ht=1:ha=0800200159C3:tc=.default:
+	wylie:ht=1:ha=00DD00CADF00:tc=.default:
+	arnold:ht=1:ha=0800200102AD:tc=.default:
+	bairdford:ht=1:ha=08002B02A2F9:tc=.default:
+	bakerstown:ht=1:ha=08002B0287C8:tc=.default:
 
-.br
-	# Special domain name server for next host
-.br
-	butlerjct:ht=1:ha=08002001560D:ip=128.2.11.108:ds=128.2.13.42:tc=default1:
+	# Special domain name server and option tags for next host
+	butlerjct:ha=08002001560D:ds=128.2.13.42:\\
+		:T37=0x12345927AD3BCF:\\
+		:T99="Special ASCII string":\\
+		:tc=.default:
 
-.br
-	gastonville:ht=6:ha=7FFF81000A47:ip=128.2.11.115:tc=default1:
-.br
-	hahntown:ht=6:ha=7FFF81000434:ip=128.2.11.117:tc=default1:
-.br
-	hickman:ht=6:ha=7FFF810001BA:ip=128.2.11.118:tc=default1:
-.br
-	lowber:ht=1:ha=00DD00CAF000:ip=128.2.11.121:tc=default1:
-.br
-	mtoliver:ht=1:ha=00DD00FE1600:ip=128.2.11.122:tc=default1:
+	gastonville:ht=6:ha=7FFF81000A47:tc=.default:
+	hahntown:ht=6:ha=7FFF81000434:tc=.default:
+	hickman:ht=6:ha=7FFF810001BA:tc=.default:
+	lowber:ht=1:ha=00DD00CAF000:tc=.default:
+	mtoliver:ht=1:ha=00DD00FE1600:tc=.default:
 
-
+.fi
 .SH FILES
 /etc/bootptab
 
