@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.38 1997/10/08 23:37:50 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.39 1997/10/11 16:13:19 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -748,7 +748,7 @@ fdloaddisk(sc)
 void
 fdgetdefaultlabel(sc, lp, part)
 	struct fd_softc *sc;
-	struct diskabel *lp;
+	struct disklabel *lp;
 	int part;		/* XXX ick */
 {
 
