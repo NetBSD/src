@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615 2003/06/02 22:51:49 uwe Exp $
+#	$NetBSD: files,v 1.616 2003/07/03 01:42:10 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -25,6 +25,7 @@ defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag	opt_bufq.h		NEW_BUFQ_STRATEGY
 
+defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
 defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 
