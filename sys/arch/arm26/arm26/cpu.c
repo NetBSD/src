@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2000/12/23 13:37:03 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2001/01/22 22:10:41 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,14 +33,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2000/12/23 13:37:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2001/01/22 22:10:41 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/user.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 
