@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.176 1997/11/13 07:21:23 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.177 1997/11/14 12:30:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1987,13 +1987,14 @@ IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
 	ZTRAP(T_BPTFLT)
+IDTVEC(trap04)
+	ZTRAP(T_OFLOW)
 #ifdef I586_CPU
 trap03_fixup:
+trap04_fixup:
 	incl	TF_EIP(%esp)
 	jmp	calltrap
 #endif
-IDTVEC(trap04)
-	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
 IDTVEC(trap06)
@@ -2048,7 +2049,7 @@ trap0e_table:
 	.long	T_TRCTRAP,   trap01_fixup
 	.long	T_NMI,       calltrap
 	.long	T_BPTFLT,    trap03_fixup
-	.long	T_OFLOW,     calltrap
+	.long	T_OFLOW,     trap04_fixup
 	.long	T_BOUND,     calltrap
 	.long	T_PRIVINFLT, calltrap
 #endif
