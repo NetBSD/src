@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/09/12 04:44:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.19.8.1 2002/03/17 21:28:54 thorpej Exp $
 
 KDIR=	/sys/arch/i386/include
 INCSDIR= /usr/include/i386
@@ -16,11 +16,11 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	joystick.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mouse.h mtrr.h \
+	math.h mouse.h mtrr.h mutex_impl.h \
 	npx.h \
 	param.h pcb.h pccons.h pio.h pmap.h pmc.h proc.h profile.h psl.h \
 	pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock_impl.h \
 	segments.h setjmp.h signal.h specialreg.h spkr.h stdarg.h \
 	svr4_machdep.h sysarch.h \
 	trap.h tss.h types.h \

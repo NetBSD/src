@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2001/06/17 21:01:32 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.28.10.1 2002/03/17 21:28:52 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
 include <sys/mbuf.h>
+include <sys/mutex.h>
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
@@ -222,6 +223,8 @@ define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
 define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
+
+define	MUTEX_WAITERS		MUTEX_WAITERS
 
 if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
