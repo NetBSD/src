@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 2002/06/18 08:35:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
+#include <machine/mtrr.h>
 
 #if defined(PERFCTRS) && 0
 #include <machine/pmc.h>
@@ -80,6 +81,8 @@ int x86_64_iopl __P((struct proc *, void *, register_t *));
 int x86_64_get_ioperm __P((struct proc *, void *, register_t *));
 int x86_64_set_ioperm __P((struct proc *, void *, register_t *));
 #endif
+int x86_64_get_mtrr __P((struct proc *, void *, register_t *));
+int x86_64_set_mtrr __P((struct proc *, void *, register_t *));
 
 /* XXXfvdl disabled USER_LDT stuff until I check this stuff */
 
@@ -351,6 +354,60 @@ x86_64_set_ioperm(p, args, retval)
 #endif
 
 int
+x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
+{
+	struct x86_64_get_mtrr_args ua;
+	int error, n;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = copyin(args, &ua, sizeof ua);
+	if (error != 0)
+		return error;
+
+	error = copyin(ua.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	error = mtrr_get(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+
+	copyout(&n, ua.n, sizeof (int));
+
+	return error;
+}
+
+int
+x86_64_set_mtrr(struct proc *p, void *args, register_t *retval)
+{
+	int error, n;
+	struct x86_64_set_mtrr_args ua;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &ua, sizeof ua);
+	if (error != 0)
+		return error;
+
+	error = copyin(ua.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	error = mtrr_set(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+	if (n != 0)
+		mtrr_commit();
+
+	copyout(&n, ua.n, sizeof n);
+
+	return error;
+}
+
+int
 sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -386,6 +443,13 @@ sys_sysarch(p, v, retval)
 		break;
 #endif
 
+	case X86_64_GET_MTRR:
+		error = x86_64_get_mtrr(p, SCARG(uap, parms), retval);
+		break;
+	case X86_64_SET_MTRR:
+		error = x86_64_set_mtrr(p, SCARG(uap, parms), retval);
+		break;
+
 #if defined(PERFCTRS) && 0
 	case X86_64_PMC_INFO:
 		error = pmc_info(p, SCARG(uap, parms), retval);
@@ -399,7 +463,6 @@ sys_sysarch(p, v, retval)
 		error = pmc_read(p, SCARG(uap, parms), retval);
 		break;
 #endif
-
 	default:
 		error = EINVAL;
 		break;
