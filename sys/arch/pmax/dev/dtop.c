@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.64 2003/03/21 17:23:22 drochner Exp $	*/
+/*	$NetBSD: dtop.c,v 1.65 2003/06/29 09:56:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.64 2003/03/21 17:23:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.65 2003/06/29 09:56:28 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -305,10 +305,10 @@ dtopattach(parent, self, aux)
 
 
 int
-dtopopen(dev, flag, mode, p)
+dtopopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit;
@@ -367,10 +367,10 @@ dtopopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dtopclose(dev, flag, mode, p)
+dtopclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit;
@@ -404,15 +404,15 @@ dtopwrite(dev, uio, flag)
 }
 
 int
-dtoppoll(dev, events, p)
+dtoppoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 
 	tp = DTOP_TTY(minor(dev));
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -425,12 +425,12 @@ dtoptty(dev)
 
 /*ARGSUSED*/
 int
-dtopioctl(dev, cmd, data, flag, p)
+dtopioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit = minor(dev);
@@ -438,11 +438,11 @@ dtopioctl(dev, cmd, data, flag, p)
 
 	tp = DTOP_TTY(unit);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
