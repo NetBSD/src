@@ -1,3 +1,5 @@
+/*	$NetBSD: appletalk.h,v 1.2 1995/03/06 19:09:51 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

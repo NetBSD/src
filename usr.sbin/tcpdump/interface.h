@@ -1,3 +1,5 @@
+/*	$NetBSD: interface.h,v 1.2 1995/03/06 19:10:18 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: extract.h,v 1.2 1995/03/06 19:10:08 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

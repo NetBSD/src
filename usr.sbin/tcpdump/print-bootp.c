@@ -1,3 +1,5 @@
+/*	$NetBSD: print-bootp.c,v 1.2 1995/03/06 19:11:05 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

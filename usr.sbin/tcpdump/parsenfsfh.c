@@ -1,3 +1,5 @@
+/*	$NetBSD: parsenfsfh.c,v 1.2 1995/03/06 19:11:00 mycroft Exp $	*/
+
 #ifndef lint
 static char *RCSid = "Header: parsenfsfh.c,v 1.5 94/01/13 19:06:41 leres Exp";
 #endif

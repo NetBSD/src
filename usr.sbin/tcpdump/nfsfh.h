@@ -1,3 +1,5 @@
+/*	$NetBSD: nfsfh.h,v 1.2 1995/03/06 19:10:39 mycroft Exp $	*/
+
 /*
  * Header: nfsfh.h,v 1.3 94/06/12 14:32:58 leres Exp
  *
