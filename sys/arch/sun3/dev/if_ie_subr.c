@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.4 1995/01/11 20:32:08 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.5 1995/01/26 23:23:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,6 +67,10 @@ static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
 
+/*
+ * zero/copy functions: OBIO can use the normal functions, but VME
+ *    must do only byte or half-word (16 bit) accesses...
+ */
 static void wcopy(), wzero();
 
 int
@@ -127,8 +131,8 @@ ie_md_attach(parent, self, args)
 		sc->reset_586 = ie_obreset;
 		sc->chan_attn = ie_obattend;
 		sc->run_586 = ie_obrun;
-		sc->memcopy = bcopy;
-		sc->memzero = bzero;
+		sc->sc_bcopy = bcopy;
+		sc->sc_bzero = bzero;
 		sc->sc_iobase = (caddr_t)0xf000000;	/* XXX */
 		sc->sc_msize = 0x10000;	/* XXX */
 
@@ -144,6 +148,7 @@ ie_md_attach(parent, self, args)
 			panic(": not enough dvma space");
 		sc->sc_maddr = mem;
 
+		/* This is a FIXED address, in a page left by the PROM. */
 		sc->scp = (volatile struct ie_sys_conf_ptr *)
 		    (sc->sc_iobase + IE_SCP_ADDR);
 
@@ -161,13 +166,11 @@ ie_md_attach(parent, self, args)
 		sc->reset_586 = ie_vmereset;
 		sc->chan_attn = ie_vmeattend;
 		sc->run_586 = ie_vmerun;
-		sc->memcopy = wcopy;
-		sc->memzero = wzero;
+		sc->sc_bcopy = wcopy;
+		sc->sc_bzero = wzero;
 		sc->sc_msize = 0x10000;	/* XXX */
 		sc->sc_reg = bus_mapin(ca->ca_bustype, ca->ca_paddr,
 							   sizeof(struct ievme));
-
-		/* XXX - Move this gunk into a separate function? */
 
 		iev = (volatile struct ievme *) sc->sc_reg;
 		/* top 12 bits */
@@ -190,7 +193,7 @@ ie_md_attach(parent, self, args)
 		for (lcv = 0; lcv < IEVME_MAPSZ - 1; lcv++)
 			iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
 		iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
-		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
+		(sc->sc_bzero)(sc->sc_maddr, sc->sc_msize);
 
 		isr_add_vectored(ie_intr, (void *)sc,
 						 ca->ca_intpri,
