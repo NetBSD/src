@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.4 2004/06/22 18:59:14 martin Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.5 2004/06/25 13:17:01 itojun Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2756,9 +2756,11 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		}
 	}
 
-	if (pf_test(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS)
+	if (pf_test(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS) {
+		m_freem(*mp);
+		*mp = NULL;
 		return EHOSTUNREACH;
-	else
+	} else
 		return (0);
 }
 
@@ -2767,9 +2769,11 @@ int
 pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 
-	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS)
+	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS) {
+		m_freem(*mp);
+		*mp = NULL;
 		return EHOSTUNREACH;
-	else
+	} else
 		return (0);
 }
 #endif
