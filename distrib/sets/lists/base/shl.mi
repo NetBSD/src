@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.142 2001/08/19 17:18:01 mrg Exp $
+# $NetBSD: shl.mi,v 1.143 2001/08/25 15:49:12 thorpej Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2.1			base-amd-shlib
 ./usr/lib/libasn1.so.6.0		base-krb5-shlib
@@ -12,7 +12,6 @@
 ./usr/lib/libdes.so.5.1			base-crypto-shlib
 ./usr/lib/libedit.so.2.5		base-sys-shlib
 ./usr/lib/libform.so.2.0		base-sys-shlib
-./usr/lib/libg2c.so.1.0			base-sys-shlib
 ./usr/lib/libgnumalloc.so.0.0		base-sys-shlib
 ./usr/lib/libgssapi.so.4.0		base-krb5-shlib
 ./usr/lib/libhdb.so.8.0			base-krb5-shlib
@@ -29,7 +28,6 @@
 ./usr/lib/libkvm.so.5.1			base-sys-shlib
 ./usr/lib/libm.so.0.1			base-sys-shlib
 ./usr/lib/libmenu.so.2.0		base-sys-shlib
-./usr/lib/libobjc.so.1.0		base-sys-shlib
 ./usr/lib/libossaudio.so.0.0		base-sys-shlib
 ./usr/lib/libpcap.so.1.2		base-net-shlib
 ./usr/lib/libposix.so.0.1		base-sys-shlib
@@ -39,7 +37,6 @@
 ./usr/lib/libsl.so.2.0			base-krb5-shlib
 ./usr/lib/libss.so.4.0			base-krb5-shlib
 ./usr/lib/libssl.so.2.0			base-crypto-shlib
-./usr/lib/libstdc++.so.4.0		base-sys-shlib
 ./usr/lib/libtelnet.so.4.0		base-krb5-shlib
 ./usr/lib/libtermcap.so.0.4		base-sys-shlib
 ./usr/lib/libtermlib.so.0.4		base-sys-shlib
