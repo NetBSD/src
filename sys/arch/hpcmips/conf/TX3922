@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.1 1999/11/21 07:04:32 uch Exp $
+#	$NetBSD: TX3922,v 1.2 1999/12/08 15:56:03 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -22,20 +22,24 @@ options		TX39_DEBUG
 #options	WINCE_DEFAULT_SETTING	# Debugging use
 options		TX39ICUDEBUG
 options		TX39BIUDEBUG
-#options		TX39IODEBUG
+options		TX39IODEBUG
 options		TX39POWERDEBUG
 #options		TX39UARTDEBUG
 
 options		DDB			# in-kernel debugger
+options		DIAGNOSTIC		# extra kernel debugging checks
+options		DEBUG			# extra kernel debugging support
+options		KTRACE			# system call tracing support
 options		NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
-options 	RTC_OFFSET=-540		# JST-9
 
 options		__NO_SOFT_SERIAL_INTERRUPT
 options		SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
 options		COMPAT_43
 
+options 	SCSIVERBOSE	# human readable SCSI error messages
 options		PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 file-system	FFS		# fast filesystem with user and group quotas
 config		netbsd		root on ? type ?
@@ -58,8 +62,11 @@ txcom1		at	tx39uart? slot 1
 
 txcsbus*	at	tx39biu? platform ?
 
+options USE_POLL	# m38813 requires this
 #
-# TC6358TB(Plum2) register space: CS3,	 I/O space: MCS0 & MCS1,  IRQ: 8:21 (IO[5] positive)
+# TC6358TB(Plum2) 
+#  register space: CS3,	 
+#  I/O space: MCS0 & MCS1,  IRQ: 8:21 (IO[5] positive)
 #
 plum*		at	txcsbus? regcs 3 regcswidth 32 iocs 4 iocswidth 32 memcs 5 memcswidth 32 irq1 277
 plumicu*	at	plum?
@@ -67,23 +74,48 @@ plumpower*	at	plum?
 plumvideo*	at	plum?
 plumpcmcia*	at	plum?
 plumiobus*	at	plum?
+#ohci*		at	plum?
+#plumisab0	at	plumiobus? platform ? slot 0
 
-plumisab0	at	plumiobus? platform ? slot 0
+#
+# fake ISA-bridge directly connected TX3922 chip select.
+#
+# CS1 connect
+# IRQ MFIO 3:7
+#txisab*		at	txcsbus? iocs 1 iocswidth 16 irq1 103
+# CS2 connect
+#txisab*		at	txcsbus? iocs 2 iocswidth 16 irq1 103
+# CARD1 io/attr connect
+#txisab*		at	txcsbus? iocs 8 iocswidth 16 irq1 103
+m38813c*	at	txcsbus? iocs 8 iocswidth 16 iocsbase 0 iocssize 8 irq1 103
+skbd*		at	m38813c?
+wskbd*		at	skbd? mux 1
+
+# USB bus support
+#usb*		at ohci?
+# USB Hubs
+#uhub*	at usb?
+#uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+#ums*	at uhub? port ? configuration ? interface ?
+#wsmouse*	at ums? mux 0
+
+# USB Keyboards
+#ukbd*	at uhub? port ? configuration ? interface ?
+#wskbd*	at ukbd? console ? mux 1
+
 # ISA bus support
-isa0		at	plumisab0
+#isa*		at	plumisab?
+#isa*		at	txisab?
 
 # WS console uses SUN or VT100 terminal emulation
-#fb*		at	plumvideo?
-#wsdisplay*	at	fb?
+fb*		at	plumvideo?
+wsdisplay*	at	fb?
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
-#options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
-
-#pckbc0		at	isa0		# pc keyboard controller
-#pckbd*		at	pckbc?		# PC keyboard
-#wskbd* 		at	pckbd? console ?
 
 # PCMCIA bus support
 pcmcia* at plumpcmcia? controller ? socket ?
@@ -110,5 +142,3 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	pty		64	# pseudo ptys
-
-#pseudo-device	biconsdev	1	# build-in console device

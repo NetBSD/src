@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.4 1999/12/02 18:50:54 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.5 1999/12/08 15:54:11 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -27,7 +27,8 @@
  */
 
 #include "opt_tx39_debug.h"
-#include "cckbd.h"
+#include "m38813c.h"
+#include "p7416buf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +59,12 @@
 #define CONSPEED TTYDEF_SPEED
 #endif
 
-#if NCCKBD > 0
-#include <hpcmips/dev/cckbdvar.h>
+/* console keyboard */
+#if NP7416BUF > 0
+#include <hpcmips/dev/p7416bufvar.h>
+#endif
+#if NM38813C > 0
+#include <hpcmips/dev/m38813cvar.h>
 #endif
 
 extern unsigned nullclkread __P((void));
@@ -83,7 +88,8 @@ void	tx_device_register __P((struct device *, void *));
 void    tx_fb_init __P((caddr_t*));
 int     tx_mem_init __P((caddr_t));
 void	tx_reboot __P((int howto, char *bootstr));
-int	tx_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t causeReg));
+int	tx_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, 
+		     u_int32_t causeReg));
 
 void
 tx_init()
@@ -187,12 +193,14 @@ tx_mem_init(kernend)
 	endaddr = MIPS_PHYS_TO_KSEG1(TX39_SYSADDR_DRAMBANK0CS1 +
 				     TX39_SYSADDR_DRAMBANK_LEN);
 	kpage = btoc(MIPS_KSEG1_TO_PHYS(startaddr));
+
 	/* D-RAM bank0 */
 	npage = tx39_find_dram(startaddr, endaddr);
 
-	printf("DRAM bank0: %d pages (%dMByte) reserved %d pages\n", npage + 1, 
-	       ((npage  + 1) * NBPG) / 0x100000, kpage + 1);
+	printf("DRAM bank0: %d pages (%dMByte) reserved %d pages\n", 
+	       npage + 1, ((npage  + 1) * NBPG) / 0x100000, kpage + 1);
 	npage -= kpage; /* exclude kernel area */
+
 	/* Clear DRAM area */
 	memset((void*)startaddr, 0, npage * NBPG);
 	
@@ -204,9 +212,13 @@ tx_mem_init(kernend)
 	printf("DRAM bank1: %d pages (%dMByte) ...but not usable yet\n", 
 	       xpage + 1, ((xpage + 1) * NBPG) / 0x100000);
 
-	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
+	/* 
+	 *  Clear currently unused D-RAM area 
+	 *  (For reboot Windows CE clearly)
+	 */
 	memset((void*)startaddr, 0, npage * NBPG);
-	memset((void*)(KERNBASE + 0x400), 0, KERNTEXTOFF - KERNBASE - 0x800); 
+	memset((void*)(KERNBASE + 0x400), 0, 
+	       KERNTEXTOFF - KERNBASE - 0x800); 
 	
 	return npage; /* Return bank0's memory only */
 }
@@ -261,15 +273,21 @@ tx_cons_init()
 #endif
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
 		if(txcom_cnattach(slot, CONSPEED,
-				  (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)) {
+				  (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | 
+				  CS8)) {
 			panic("tx_cons_init: can't attach serial console.");
 		}
-	}
-#if NCCKBD > 0
-	if(cckbd_cnattach(0, 0)) {
-		panic("tx_cons_init: can't init cckbd as console");
-	}
+	} else {
+#if NP7416BUF > 0
+		if(p7416buf_cnattach(TX39_SYSADDR_CS3)) {
+			panic("tx_cons_init: can't init console");
+		}
+#elif NM38813C > 0
+		if(m38813c_cnattach(TX39_SYSADDR_CARD1)) {
+			panic("tx_cons_init: can't init console");
+		}
 #endif
+	}
 
 }
 
