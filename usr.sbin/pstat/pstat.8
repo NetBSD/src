@@ -1,4 +1,4 @@
-.\"	$NetBSD: pstat.8,v 1.25 2001/05/06 23:48:33 wiz Exp $
+.\"	$NetBSD: pstat.8,v 1.26 2001/07/09 17:46:39 ad Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,8 +67,8 @@ The following options are available:
 .Bl -tag -width Ds
 .It Fl T
 Prints the number of used and free slots for open files, used vnodes, and swap
-space. It is useful for checking to see how large system tables become
-if the system is under heavy load.
+space.  This option is useful for checking to see how large system tables
+become if the system is under heavy load.
 .It Fl f
 Print the open file table with these headings:
 .Bl -tag -width indent
@@ -286,7 +286,7 @@ this is the inode number.
 .It IFLAG
 Miscellaneous filesystem specific state variables encoded thus:
 .Bl -tag -width indent
-.It "For ffs or ext2fs:"
+.It "For ffs, lfs or ext2fs:"
 .Bl -tag -width indent -compact
 .It A
 access time must be corrected
