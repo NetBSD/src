@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.11 1997/03/27 21:21:11 veego Exp $
+#	$NetBSD: DRACO,v 1.12 1997/03/30 11:06:40 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -58,7 +58,6 @@ file-system 	"CD9660"	# ISO 9660 file system, with Rock Ridge
 #file-system 	PORTAL		# Portal filesystem
 file-system 	MSDOSFS		# MS-DOS filesystem
 
-
 #
 # Compatability options for various existing systems
 #
@@ -114,7 +113,7 @@ options		RETINACONSOLE	# enable code to allow retina to be console
 # enables fast scroll code appears to now work on 040 systems.
 #options	RETINA_SPEED_HACK
 # enables the Hardwarecursor which does not work on some systems.
-#options	RH_HARDWARECURSOR
+options	RH_HARDWARECURSOR
 
 grfrh0		at zbus0		# Altais looks just like the Retina Z3
 grf2		at grfrh0
@@ -129,6 +128,9 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
+
+drcom0		at mainbus0		# DraCo serial ports
+drcom1		at mainbus0		# unit 1 normally connected to mouse
 
 le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
