@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.33 1997/04/26 20:32:15 tls Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.34 1997/04/26 21:33:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -346,7 +346,10 @@ i386_iopl(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0 || securelevel > 1)
+	if (securelevel > 1)
+		return EPERM;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -385,6 +388,9 @@ i386_set_ioperm(p, args, retval)
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
+
+	if (securelevel > 1)
+		return EPERM;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return error;
