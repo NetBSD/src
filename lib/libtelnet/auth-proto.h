@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.8 1999/07/02 16:05:11 simonb Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.8.8.1 2001/04/05 23:25:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,6 +55,8 @@
  * or implied warranty.
  */
 
+#ifndef _LIBTELNET_AUTH_PROTO_H_
+#define _LIBTELNET_AUTH_PROTO_H_
 #include <sys/cdefs.h>
 
 #if	defined(AUTHENTICATION)
@@ -67,8 +69,6 @@ void auth_send __P((unsigned char *, int));
 void auth_send_retry __P((void));
 void auth_is __P((unsigned char *, int));
 void auth_reply __P((unsigned char *, int));
-void auth_finished __P((Authenticator *, int));
-int auth_wait __P((char *));
 void auth_disable_name __P((char *));
 void auth_gen_printsub __P((unsigned char *, int, unsigned char *, int));
 
@@ -103,3 +103,4 @@ int kerberos5_status __P((Authenticator *, char *, int));
 void kerberos5_printsub __P((unsigned char *, int, unsigned char *, int));
 #endif
 #endif
+#endif /* _LIBTELNET_AUTH_PROTO_H_ */
