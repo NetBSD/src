@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.18 2000/07/20 21:03:39 jeffs Exp $	*/
+/*	$NetBSD: vr.c,v 1.19 2000/07/22 06:02:46 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -300,6 +300,12 @@ vr_cons_init()
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
 	extern bus_space_tag_t system_bus_iot;
 	extern bus_space_tag_t mb_bus_space_init __P((void));
+
+	/*
+	 * At this time, system_bus_iot is not initialized yet.
+	 * Just initialize it here.
+	 */
+	mb_bus_space_init();
 #endif
 
 #if NCOM > 0
@@ -329,7 +335,6 @@ vr_cons_init()
 #endif
 
 #if NHPCFB > 0
-	mb_bus_space_init(); /* At this time, not initialized yet */
 	if (hpcfb_cnattach(NULL)) {
 		printf("%s(%d): can't init fb console", __FILE__, __LINE__);
 	} else {
