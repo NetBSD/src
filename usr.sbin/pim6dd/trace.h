@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: trace.h,v 1.3 1999/12/10 06:13:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: trace.h,v 1.1.1.1 1999/08/08 23:30:55 itojun Exp
+ *  KAME Id: trace.h,v 1.2 1999/09/12 17:00:10 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -80,19 +80,19 @@
 /*
  * The packet format for a traceroute request.
  */
-struct tr_query {
+struct tr6_query {
     struct in6_addr  tr_src;		/* traceroute source */
     struct in6_addr  tr_dst;		/* traceroute destination */
     struct in6_addr  tr_raddr;		/* traceroute response address */
 #if defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
     struct {
-	u_int	qid : 24;	/* traceroute query id */
-	u_int	rhlim : 8;	/* traceroute response ttl */
+	u_int32_t qid : 24;	/* traceroute query id */
+	u_int32_t rhlim : 8;	/* traceroute response ttl */
     } q;
 #else
     struct {
-	u_int   rhlim : 8;	/* traceroute response ttl */
-	u_int   qid : 24;	/* traceroute query id */
+	u_int32_t rhlim : 8;	/* traceroute response ttl */
+	u_int32_t qid : 24;	/* traceroute query id */
     } q;
 #endif /* BYTE_ORDER */
 };
@@ -104,25 +104,36 @@ struct tr_query {
  * Traceroute response format.  A traceroute response has a tr_query at the
  * beginning, followed by one tr_resp for each hop taken.
  */
-struct tr_resp {
-    u_int32 tr_qarr;		/* query arrival time */
-    struct in6_addr tr_inaddr;	/* incoming interface address */
-    struct in6_addr tr_outaddr;	/* outgoing interface address */
-    struct in6_addr tr_rmtaddr;	/* parent address in source tree */
-    u_int32 tr_vifin;		/* input packet count on interface */
-    u_int32 tr_vifout;		/* output packet count on interface */
-    u_int32 tr_pktcnt;		/* total incoming packets for src-grp */
-    u_char  tr_rproto;		/* routing protocol deployed on router */
-    u_char  tr_fhlim;		/* hop limit required to forward on outvif */
-    u_char  tr_smask;		/* subnet mask for src addr */
-    u_char  tr_rflags;		/* forwarding error codes */
+struct tr6_resp {
+	u_int32_t tr_qarr;	/* query arrival time */
+#if 0
+	struct in6_addr tr_inaddr; /* incoming interface address */
+	struct in6_addr tr_outaddr; /* outgoing interface address */
+#endif
+	u_int32_t tr_inifid;	/* incoming interface identifier */
+	u_int32_t tr_outifid;	/* outgoing interface identifier */
+	struct in6_addr tr_lcladdr; /* router's address(must have largest scope) */
+	struct in6_addr tr_rmtaddr; /* parent address in source tree */
+	u_int32_t tr_vifin;	/* input packet count on interface */
+	u_int32_t tr_vifout;	/* output packet count on interface */
+	u_int32_t tr_pktcnt;	/* total incoming packets for src-grp */
+	u_char  tr_rproto;	/* routing protocol deployed on router */
+#if 0
+	u_char  tr_fhlim;	/* hop limit required to forward on outvif */
+#endif
+	u_char	tr_flags;	/* flags */
+	u_char  tr_plen;	/* prefix length for src addr */
+	u_char  tr_rflags;	/* forwarding error codes */
 };
 
 /* defs within mtrace */
 #define QUERY	1
 #define RESP	2
-#define QLEN	sizeof(struct tr_query)
-#define RLEN	sizeof(struct tr_resp)
+#define QLEN	sizeof(struct tr6_query)
+#define RLEN	sizeof(struct tr6_resp)
+
+/* fields for tr_inifid and tr_outifid */
+#define TR_NO_VIF	0xffffffff/* interface can't be determined */
 
 /* fields for tr_rflags (forwarding error codes) */
 #define TR_NO_ERR	0       /* No error */
@@ -140,9 +151,11 @@ struct tr_resp {
 #define TR_OLD_ROUTER	0x82    /* previous hop does not support traceroute */
 #define TR_ADMIN_PROHIB 0x83    /* traceroute adm. prohibited */
 
-/* fields for tr_smask */
-#define TR_GROUP_ONLY   0x2f    /* forwarding solely on group state */
-#define TR_SUBNET_COUNT 0x40    /* pkt count for (S,G) is for source network */
+/* fields for tr_flags */
+#define TR_SUBNET_COUNT 0x80    /* pkt count for (S,G) is for source network */
+
+/* fields for r_plen */
+#define TR_GROUP_ONLY   0xff    /* forwarding solely on group state */
 
 /* fields for packets count */
 #define TR_CANT_COUNT   0xffffffff  /* no count can be reported */
@@ -157,7 +170,7 @@ struct tr_resp {
 #define PROTO_DVMRP_STATIC 7
 
 #define MASK_TO_VAL(x, i) { \
-			u_int32 _x = ntohl(x); \
+			u_int32_t _x = ntohl(x); \
 			(i) = 1; \
 			while ((_x) <<= 1) \
 				(i)++; \
@@ -180,5 +193,13 @@ struct tr_resp {
 		if (bitlen) \
 			(mask6).s6_addr[bytelen] = maskarray[bitlen - 1]; \
 	}while(0);
+
+/* obnoxious gcc gives an extraneous warning about this constant... */
+#if defined(__STDC__) || defined(__GNUC__)
+#define JAN_1970        2208988800UL    /* 1970 - 1900 in seconds */
+#else
+#define JAN_1970        2208988800L     /* 1970 - 1900 in seconds */
+#define const           /**/
+#endif
 
 #define NBR_VERS(n)	(((n)->al_pv << 8) + (n)->al_mv)
