@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.13 1994/04/21 23:29:59 briggs Exp $
+ *	$Id: machdep.c,v 1.14 1994/04/22 12:11:16 briggs Exp $
  */
 
 #include <param.h>
@@ -398,7 +398,6 @@ setregs(p, entry, sp, retval)
 identifycpu()
 {
 	extern unsigned long	bootdev, root_scsi_id,
-				cpu040, mmutype,
 				videobitdepth, videosize;
 /* MF Just a little interesting tidbit about what machine we are
    running on.  In the future magic may happen here based on
@@ -997,7 +996,7 @@ boot(howto)
 		savectx(curproc->p_addr, 0);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
@@ -2334,7 +2333,6 @@ extern long	(*via1itab[7])();
 extern long	adb_intr_II(void);
 extern long	adb_intr_SI(void);
 extern long	adb_intr_PB(void);
-extern long	cpu040;
 
 /* BG 1/2/94 */
 void setmachdep(void)

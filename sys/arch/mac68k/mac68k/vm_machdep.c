@@ -39,7 +39,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.5 1994/04/21 23:25:41 briggs Exp $
+ *	$Id: vm_machdep.c,v 1.6 1994/04/22 12:11:26 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -54,8 +54,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <machine/pte.h>
-
-extern int	cpu040;
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
