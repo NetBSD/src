@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.6 2000/06/12 10:40:50 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.1 2000/06/13 15:15:24 itojun Exp $	*/
 /*	$KAME: parse.y,v 1.29 2000/06/10 14:17:44 sakane Exp $	*/
 
 /*

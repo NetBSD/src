@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2000/06/03 00:52:22 fvdl Exp $
+#	$NetBSD: Makefile,v 1.143 2000/06/13 15:15:23 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 SRCTOP=	..
@@ -23,7 +23,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 
 # IPv6
 SUBDIR+=faithd gifconfig ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
-	rip6query route6d rtadvd setkey traceroute6 rtsold
+	rip6query route6d rtadvd traceroute6 rtsold
 
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl

@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy.c,v 1.3 2000/02/06 11:21:49 itojun Exp $	*/
+/*	$NetBSD: test-policy.c,v 1.1 2000/06/13 15:15:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.

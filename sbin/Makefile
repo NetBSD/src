@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2000/03/15 12:05:58 soren Exp $
+#	$NetBSD: Makefile,v 1.68 2000/06/13 15:15:21 itojun Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -32,5 +32,8 @@ SUBDIR+= mount_union
 
 # IPv6
 SUBDIR+= ping6 rtsol
+
+# IPsec
+SUBDIR+= setkey
 
 .include <bsd.subdir.mk>

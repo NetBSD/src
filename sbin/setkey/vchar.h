@@ -1,4 +1,4 @@
-/*	$NetBSD: vchar.h,v 1.3 2000/06/12 10:40:51 itojun Exp $	*/
+/*	$NetBSD: vchar.h,v 1.1 2000/06/13 15:15:29 itojun Exp $	*/
 /*	$KAME: vchar.h,v 1.2 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
