@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.89 1998/11/23 22:54:02 mcr Exp $
+$NetBSD: pcidevs,v 1.90 1998/11/27 10:39:16 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -854,6 +854,9 @@ product INTEL 82443BX_AGP	0x7191	82443BX AGP Device (PAC)
 product INTEL 82443BX_AGP_NOT   0x7192  82443BX AGP Device (PAC) (AGP disabled)
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
+
+/* Intergraph products */
+product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
 
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
