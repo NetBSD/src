@@ -1,0 +1,7 @@
+# $NetBSD: md.netwinder,v 1.1 2004/03/27 15:07:22 rtr Exp $
+./usr/X11R6/bin/Xnest
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xnest.0
+./usr/X11R6/man/cat1/Xvfb.0
+./usr/X11R6/man/man1/Xnest.1
+./usr/X11R6/man/man1/Xvfb.1
