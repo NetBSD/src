@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.64 2003/06/24 09:39:52 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.65 2003/06/24 09:42:21 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -813,3 +813,8 @@ sys/arch/sparc64/sparc64/process_machdep.c	1.12 (via patch)
 	Wrap a 64-bit mode case with #ifdef __arch64__ for 32-bit kernels,
 	and fix typo in comment.
 	[nakayama, ticket #1331]
+
+sys/dev/audio.c					1.161
+
+	fix unitialized variable. from simonb. OI
+	[nakayama, ticket #1332]
