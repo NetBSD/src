@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 1999/10/04 16:55:55 tron Exp $
+	$NetBSD: syscalls.master,v 1.37 1999/12/04 22:14:14 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -107,7 +107,7 @@
 45	STD		{ int linux_sys_brk(char *nsize); }
 46	NOARGS		{ int sys_setgid(gid_t gid); }
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	STD		{ int linux_sys_signal(int sig, \
+48	STD		{ int linux_sys_signal(int signum, \
 			    linux_handler_t handler); }
 49	NOARGS		{ uid_t sys_geteuid(void); }
 50	NOARGS		{ gid_t sys_getegid(void); }
