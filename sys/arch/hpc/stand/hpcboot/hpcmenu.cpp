@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.11 2003/12/21 03:18:31 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.12 2004/03/16 22:30:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -277,6 +277,7 @@ __END_MACRO
 		    L"Can't allocate memory for extra kernel options.",
 		    TEXT("WARNING"),
 		    MB_ICONWARNING | MB_OK);
+		UpdateWindow(_root->_window);
 
 		return argc;  
 	}
@@ -295,6 +296,7 @@ __END_MACRO
 			    L"Too many extra kernel options.",
 			    TEXT("WARNING"),
 			    MB_ICONWARNING | MB_OK);
+			UpdateWindow(_root->_window);
 			break;
 		}
 		argv[argc++] = ptokv(locp);
