@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/08/24 15:52:57 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/14 10:36:11 christos Exp $
 
 PROG=	supfilesrv
 SRCS=	supfilesrv.c scan.c
@@ -10,6 +10,6 @@ MLINKS=	supservers.8 supfilesrv.8 supservers.8 supscan.8
 DPADD=	${LIBSUP} ${LIBCRYPT}
 LDADD=	${SUPLIB} -lcrypt -lwrap
 
-supfilesrv: .NOPATH
-
 .include <bsd.prog.mk>
+
+supfilesrv: .NOPATH
