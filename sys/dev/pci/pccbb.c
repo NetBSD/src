@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.102 2004/08/11 01:04:40 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.103 2004/08/11 01:05:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.102 2004/08/11 01:04:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.103 2004/08/11 01:05:42 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2533,9 +2533,9 @@ pccbb_pcmcia_socket_disable(pch)
 	DPRINTF(("pccbb_pcmcia_socket_disable\n"));
 
 	/* disable interrupts */
-	intr = Pcic_read(h, PCIC_INTR);
+	intr = Pcic_read(ph, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
-	Pcic_write(h, PCIC_INTR, intr);
+	Pcic_write(ph, PCIC_INTR, intr);
 
 	/* zero out the address windows */
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
