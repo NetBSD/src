@@ -709,6 +709,8 @@
 ./usr/share/nls/Pig/libc.cat
 ./usr/share/nls/de
 ./usr/share/nls/de/libc.cat
+./usr/share/nls/fr
+./usr/share/nls/fr/libc.cat
 ./usr/share/skel
 ./usr/share/skel/dot.cshrc
 ./usr/share/skel/dot.login
