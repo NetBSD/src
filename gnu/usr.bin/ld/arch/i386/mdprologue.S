@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.3 1994/01/29 02:03:27 jtc Exp $
+ *	$Id: mdprologue.S,v 1.4 1994/08/03 15:57:58 pk Exp $
  */
 
 /*
@@ -43,13 +43,10 @@
 /*
  *	_rtl(int version, struct crt_ldso *crtp)
  */
-#define FRAME	12			/* Size of stack frame */
-
 
 _rtl:					# crt0 calls us here
 	pushl	%ebp			# Allocate stack frame
 	movl	%esp, %ebp
-	subl	$FRAME, %esp
 	pushl	%ebx
 	call	1f			# PIC function prologue
 1:
@@ -68,7 +65,7 @@ _rtl:					# crt0 calls us here
 	call	%eax			# _rtld(version, crtp, DYNAMIC)
 	addl	$12,%esp		# pop arguments
 
-	movl	(-FRAME-4)(%ebp), %ebx	# restore %ebx
+	movl	-4(%ebp), %ebx		# restore %ebx
 	leave				# remove stack frame,
 	ret				# let's rock
 
