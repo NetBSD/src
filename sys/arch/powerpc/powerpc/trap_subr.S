@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.21 2002/05/02 16:47:49 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.22 2002/06/26 01:14:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,40 @@
  *
  *	#include <powerpc/powerpc/trap_subr.S>
  */
+#define	RESTORE_SRS(pmap,sr)	mtsr	0,sr; \
+	lwz	sr,4(pmap);	mtsr	1,sr; \
+	lwz	sr,8(pmap);	mtsr	2,sr; \
+	lwz	sr,12(pmap);	mtsr	3,sr; \
+	lwz	sr,16(pmap);	mtsr	4,sr; \
+	lwz	sr,20(pmap);	mtsr	5,sr; \
+	lwz	sr,24(pmap);	mtsr	6,sr; \
+	lwz	sr,28(pmap);	mtsr	7,sr; \
+	lwz	sr,32(pmap);	mtsr	8,sr; \
+	lwz	sr,36(pmap);	mtsr	9,sr; \
+	lwz	sr,40(pmap);	mtsr	10,sr; \
+	lwz	sr,44(pmap);	mtsr	11,sr; \
+	lwz	sr,48(pmap);	mtsr	12,sr; \
+	lwz	sr,52(pmap);	mtsr	13,sr; \
+	lwz	sr,56(pmap);	mtsr	14,sr; \
+	lwz	sr,60(pmap);	mtsr	15,sr;
+
+/*
+ * User SRs are loaded through a pointer to the current pmap.
+ */
+#define RESTORE_USER_SRS(pmap,sr) \
+	lis	pmap,_C_LABEL(curpm)@ha; \
+	lwz	pmap,_C_LABEL(curpm)@l(pmap); \
+	lwzu	sr,PM_SR(pmap); \
+	RESTORE_SRS(pmap,sr)
+
+/*
+ * Kernel SRs are loaded directly from kernel_pmap_
+ */
+#define RESTORE_KERN_SRS(pmap,sr) \
+	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
+	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
+	RESTORE_SRS(pmap,sr)
+#endif
 
 /*
  * Data used during primary/secondary traps/interrupts
@@ -76,8 +110,9 @@ _C_LABEL(trapcode):
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
+	bla	u_trap
 1:
-	bla	s_trap
+	bla	k_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
 /*
@@ -99,8 +134,9 @@ _C_LABEL(alitrap):
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
+	bla	u_trap
 1:
-	bla	s_trap
+	bla	k_trap
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
@@ -649,30 +685,9 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	3,savearea+4(0);					\
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
-/* Restore user & kernel access SR: */					\
-	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
-	lwz	2,_C_LABEL(curpm)@l(2);					\
-	lwz	3,PM_SR+0(2);						\
-	mtsr	0,3;			/* restore SR0 */		\
-	lwz	3,PM_SR+4(2);						\
-	mtsr	1,3;			/* restore SR1 */		\
-	lwz	3,PM_SR+8(2);						\
-	mtsr	2,3;			/* restore SR2 */		\
-	lwz	3,PM_SR+12(2);						\
-	mtsr	3,3;			/* restore SR3 */		\
-	lwz	3,PM_SR+16(2);						\
-	mtsr	4,3;			/* restore SR4 */		\
-	lwz	3,PM_SR+20(2);						\
-	mtsr	5,3;			/* restore SR5 */		\
-	lwz	3,PM_SR+24(2);						\
-	mtsr	6,3;			/* restore SR6 */		\
-	lwz	3,PM_SR+28(2);						\
-	mtsr	7,3;			/* restore SR7 */		\
-	lwz	3,PM_USRSR(2);						\
-	mtsr	USER_SR,3;						\
-	lwz	3,PM_KERNELSR(2);					\
-	mtsr	KERNEL_SR,3;						\
+/* Restore user SRs */							\
 	CPU601_KERN_LEAVE(2,3);						\
+	RESTORE_USER_SRS(2,3);						\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
 	lwz	2,savearea(0);						\
@@ -699,7 +714,7 @@ realtrap:
 	mtcr	1
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
-	bc	4,17,s_trap		/* branch if PSL_PR is false */
+	bc	4,17,k_trap		/* branch if PSL_PR is false */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -707,23 +722,12 @@ realtrap:
 /*
  * Now the common trap catching code.
  */
-s_trap:
-/* First have to enable KERNEL mapping */
-	lis	31,KERNEL_SEGMENT@h
-	ori	31,31,KERNEL_SEGMENT@l
-	mtsr	KERNEL_SR,31
+
+u_trap:
+	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
 	CPU601_KERN_ENTRY(30,31)
-/* Obliterate SRs so BAT spills work correctly */
-	lis	31,EMPTY_SEGMENT@h
-	ori	31,31,EMPTY_SEGMENT@l
-	mtsr	0,31
-	mtsr	1,31
-	mtsr	2,31
-	mtsr	3,31
-	mtsr	4,31
-	mtsr	5,31
-	mtsr	6,31
-	mtsr	7,31
+
+k_trap:
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	7
@@ -870,21 +874,9 @@ s_isitrap:
 	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
-	lis	3,EMPTY_SEGMENT@h;					\
-	ori	3,3,EMPTY_SEGMENT@l;					\
-	mtsr	0,3;		/* reset SRs so BAT spills work */	\
-	mtsr	1,3;							\
-	mtsr	2,3;							\
-	mtsr	3,3;							\
-	mtsr	4,3;							\
-	mtsr	5,3;							\
-	mtsr	6,3;							\
-	mtsr	7,3;							\
-	CPU601_KERN_ENTRY(3,4);						\
 /* interrupts are recoverable here, and enable translation */		\
-	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
-	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
-	mtsr	KERNEL_SR,3;						\
+	RESTORE_KERN_SRS(3,4);						\
+	CPU601_KERN_ENTRY(3,4);						\
 99:	mfmsr	5;							\
 	ori	5,5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	5;							\
@@ -920,27 +912,8 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
-	lwz	3,_C_LABEL(curpm)@l(3)
-	lwz	4,PM_SR+0(3)
-	mtsr	0,4			/* Restore SR0 */
-	lwz	4,PM_SR+4(3)
-	mtsr	1,4			/* Restore SR1 */
-	lwz	4,PM_SR+8(3)
-	mtsr	2,4			/* Restore SR2 */
-	lwz	4,PM_SR+12(3)
-	mtsr	3,4			/* Restore SR3 */
-	lwz	4,PM_SR+16(3)
-	mtsr	4,4			/* Restore SR4 */
-	lwz	4,PM_SR+20(3)
-	mtsr	5,4			/* Restore SR5 */
-	lwz	4,PM_SR+24(3)
-	mtsr	6,4			/* Restore SR6 */
-	lwz	4,PM_SR+28(3)
-	mtsr	7,4			/* Restore SR7 */
-	lwz	4,PM_KERNELSR(3)
-	mtsr	KERNEL_SR,4		/* Restore kernel SR */
 	CPU601_KERN_LEAVE(3,4)
+	RESTORE_USER_SRS(3,4)
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
