@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.29 2001/04/28 20:55:33 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.30 2001/07/15 00:34:15 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.29 2001/04/28 20:55:33 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.30 2001/07/15 00:34:15 hubertf Exp $");
 #endif
 #endif
 
@@ -294,9 +294,6 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 	char tmp_pattern[256];
 	DIR    *dirp;
 	int     found;
-	char *pat_tgz, *file_tgz;		/* ptr to .tgz */
-	char *pat_tbz, *file_tbz;		/* ptr to .tbz */
-	char *pat_tbgz, *file_tbgz;		/* ptr to .t[bg]z */
 	char pat_sfx[256], file_sfx[256];	/* suffixes */
 
 	found = 0;
@@ -308,27 +305,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 	/* chop any possible suffix off of 'pattern' and
 	 * store it in pat_sfx
 	 */
-	strcpy(tmp_pattern, pattern);
-	pat_sfx[0] = '\0';
-	pat_tgz = strstr(tmp_pattern, ".tgz");
-	if (pat_tgz) {
-		/* strip off any ".tgz" */
-		strcpy(pat_sfx, pat_tgz);
-		*pat_tgz = '\0';
-	}
-	pat_tbz = strstr(tmp_pattern, ".tbz");
-	if (pat_tbz) {
-		/* strip off any ".tbz" */
-		strcpy(pat_sfx, pat_tbz);
-		*pat_tbz = '\0';
-	}
-	pat_tbgz = strstr(tmp_pattern, ".t[bg]z");
-	if (pat_tbgz) {
-		/* strip off any ".t[bg]z" */
-		strcpy(pat_sfx, pat_tbgz);
-		*pat_tbgz = '\0';
-	}
-
+	strip_txz(tmp_pattern, pat_sfx, pattern);
 	
 	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 		char    tmp_file[FILENAME_MAX];
@@ -340,27 +317,8 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		/* chop any possible suffix off of 'tmp_file' and
 		 * store it in file_sfx
 		 */
-		strcpy(tmp_file, dp->d_name);
-		file_sfx[0] = '\0';
-		file_tgz = strstr(tmp_file, ".tgz");
-		if (file_tgz) {
-			/* strip off any ".tgz" */
-			strcpy(file_sfx, file_tgz);
-			*file_tgz = '\0';
-		}
-		file_tbz = strstr(tmp_file, ".tbz");
-		if (file_tbz) {
-			/* strip off any ".tbz" */
-			strcpy(file_sfx, file_tbz);
-			*file_tbz = '\0';
-		}
-		file_tbgz = strstr(tmp_file, ".t[bg]z");
-		if (file_tbgz) {
-			/* strip off any ".t[bg]z" */
-			strcpy(file_sfx, file_tbgz);
-			*file_tbgz = '\0';
-		}
-
+		strip_txz(tmp_file, file_sfx, dp->d_name);
+		
 		/* we need to match pattern and suffix separately, in case
 		 * each is a different pattern class (e.g. dewey and
 		 * character class (.t[bg]z)) */
@@ -395,9 +353,6 @@ int
 findbestmatchingname_fn(const char *found, char *best)
 {
 	char *found_version, *best_version;
-	char *found_tgz, *best_tgz;
-	char *found_tbz, *best_tbz;
-	char *found_tbgz, *best_tbgz;
 	char found_no_sfx[255];
 	char best_no_sfx[255];
 
@@ -409,28 +364,9 @@ findbestmatchingname_fn(const char *found, char *best)
 		/* skip '-', if any version found */
 		found_version++;
 	}
-	found_tgz = strstr(found, ".tgz");
-	if (found_tgz) {
-		/* strip off any ".tgz" */
-		strncpy(found_no_sfx, found_version, found_tgz-found_version);
-		found_no_sfx[found_tgz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-	found_tbz = strstr(found, ".tbz");
-	if (found_tbz) {
-		/* strip off any ".tbz" */
-		strncpy(found_no_sfx, found_version, found_tbz-found_version);
-		found_no_sfx[found_tbz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-	found_tbgz = strstr(found, ".t[bg]z");
-	if (found_tbgz) {
-		/* strip off any ".t[bg]z" */
-		strncpy(found_no_sfx, found_version, found_tbgz-found_version);
-		found_no_sfx[found_tbgz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-
+	strip_txz(found_no_sfx, NULL, found_version);
+	found_version = found_no_sfx;
+	
 	best_version=NULL;
 	if (best && best[0] != '\0') {
 		best_version = strrchr(best, '-');
@@ -438,27 +374,8 @@ findbestmatchingname_fn(const char *found, char *best)
 			/* skip '-' if any version found */
 			best_version++;
 		}
-		best_tgz = strstr(best, ".tgz");
-		if (best_tgz) {
-			/* strip off any ".tgz" */
-			strncpy(best_no_sfx, best_version, best_tgz-best_version);
-			best_no_sfx[best_tgz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
-		best_tbz = strstr(best, ".tbz");
-		if (best_tbz) {
-			/* strip off any ".tbz" */
-			strncpy(best_no_sfx, best_version, best_tbz-best_version);
-			best_no_sfx[best_tbz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
-		best_tbgz = strstr(best, ".t[bg]z");
-		if (best_tbgz) {
-			/* strip off any ".t[bg]z" */
-			strncpy(best_no_sfx, best_version, best_tbgz-best_version);
-			best_no_sfx[best_tbgz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
+		strip_txz(best_no_sfx, NULL, best);
+		best_version = best_no_sfx;
 	}
 
 	if (found_version == NULL) {
@@ -514,21 +431,33 @@ strnncpy(char *to, size_t tosize, char *from, size_t cc)
 
 /*
  * Strip off any .tgz, .tbz or .t[bg]z suffix from fname,
- * and copy into buffer "buf"
+ * and copy into buffer "buf", the suffix is stored in "sfx"
+ * if "sfx" is not NULL. If no suffix is found, "sfx" is set
+ * to an empty string. 
  */
 void
-strip_txz(char *buf, char *fname)
+strip_txz(char *buf, char *sfx, const char *fname)
 {
 	char *s;
 
 	strcpy(buf, fname);
+	if (sfx) sfx[0] = '\0';
 	
 	s = strstr(buf, ".tgz");
-	if (s) { *s = '\0'; }		/* strip off any ".tgz" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".tgz" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 	
 	s = strstr(buf, ".tbz");
-	if (s) { *s = '\0'; }		/* strip off any ".tbz" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".tbz" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 	
 	s = strstr(buf, ".t[bg]z");
-	if (s) { *s = '\0'; }		/* strip off any ".t[bg]z" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".t[bg]z" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 }
