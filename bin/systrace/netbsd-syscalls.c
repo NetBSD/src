@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.5 2002/06/18 02:55:19 thorpej Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.6 2002/07/30 16:29:30 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.5 2002/06/18 02:55:19 thorpej Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.6 2002/07/30 16:29:30 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,7 +136,6 @@ struct nbsd_data {
 	struct emulation *commit;
 };
 
-
 static int nbsd_init(void);
 static int nbsd_attach(int, pid_t);
 static int nbsd_report(int, pid_t);
@@ -146,19 +145,21 @@ static struct intercept_pid *nbsd_getpid(pid_t);
 static void nbsd_freepid(struct intercept_pid *);
 static void nbsd_clonepid(struct intercept_pid *, struct intercept_pid *);
 static struct emulation *nbsd_find_emulation(const char *);
-static int nbsd_set_emulation(pid_t, char *);
+static int nbsd_set_emulation(pid_t, const char *);
 static struct emulation *nbsd_switch_emulation(struct nbsd_data *);
 static const char *nbsd_syscall_name(pid_t, int);
 static int nbsd_syscall_number(const char *, const char *);
 static short nbsd_translate_policy(short);
 static short nbsd_translate_flags(short);
 static int nbsd_translate_errno(int);
-static int nbsd_answer(int, pid_t, short, int, short);
+static int nbsd_answer(int, pid_t, u_int32_t, short, int, short);
 static int nbsd_newpolicy(int);
 static int nbsd_assignpolicy(int, pid_t, int);
 static int nbsd_modifypolicy(int, int, int, short);
+static int nbsd_replace(int, pid_t, struct intercept_replace *);
 static int nbsd_io(int, pid_t, int, void *, u_char *, size_t);
 static char *nbsd_getcwd(int, pid_t, char *, size_t);
+static int nbsd_restcwd(int);
 static int nbsd_argument(int, void *, int, void **);
 static int nbsd_read(int);
 
@@ -274,7 +275,7 @@ nbsd_find_emulation(const char *name)
 }
 
 static int
-nbsd_set_emulation(pid_t pidnr, char *name)
+nbsd_set_emulation(pid_t pidnr, const char *name)
 {
 	struct emulation *tmp;
 	struct intercept_pid *pid;
@@ -299,7 +300,7 @@ nbsd_switch_emulation(struct nbsd_data *data)
 	data->current = data->commit;
 	data->commit = NULL;
 
-	return data->current;
+	return (data->current);
 }
 
 static const char *
@@ -368,11 +369,13 @@ nbsd_translate_errno(int errno)
 }
 
 static int
-nbsd_answer(int fd, pid_t pid, short policy, int errno, short flags)
+nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
+    short flags)
 {
 	struct systrace_answer ans;
 
 	ans.stra_pid = pid;
+	ans.stra_seqnr = seqnr;
 	ans.stra_policy = nbsd_translate_policy(policy);
 	ans.stra_flags = nbsd_translate_flags(flags);
 	ans.stra_error = nbsd_translate_errno(errno);
@@ -430,6 +433,48 @@ nbsd_modifypolicy(int fd, int num, int code, short policy)
 }
 
 static int
+nbsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
+{
+	struct systrace_replace replace;
+	size_t len, off;
+	int i, ret;
+
+	for (i = 0, len = 0; i < repl->num; i++) {
+		len += repl->len[i];
+	}
+
+	replace.strr_pid = pid;
+	replace.strr_nrepl = repl->num;
+	replace.strr_base = malloc(len);
+	replace.strr_len = len;
+	if (replace.strr_base == NULL)
+		err(1, "%s: malloc", __func__);
+
+	for (i = 0, off = 0; i < repl->num; i++) {
+		replace.strr_argind[i] = repl->ind[i];
+		replace.strr_offlen[i] = repl->len[i];
+		if (repl->len[i] == 0) {
+			replace.strr_off[i] = (size_t)repl->address[i];
+			continue;
+		}
+
+		replace.strr_off[i] = off;
+		memcpy(replace.strr_base + off,
+		    repl->address[i], repl->len[i]);
+
+		off += repl->len[i];
+	}
+
+	ret = ioctl(fd, STRIOCREPLACE, &replace);
+	if (ret == -1)
+		warn("%s: ioctl", __func__);
+
+	free(replace.strr_base);
+	
+	return (ret);
+}
+
+static int
 nbsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
@@ -455,11 +500,17 @@ nbsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 		return (NULL);
 
 	path = getcwd(buf, size);
+	return (path);
+}
 
-	if (ioctl(fd, STRIOCRESCWD, 0) == -1)
+static int
+nbsd_restcwd(int fd)
+{
+	int res;
+	if ((res = ioctl(fd, STRIOCRESCWD, 0)) == -1)
 		warn("%s: ioctl", __func__); /* XXX */
 
-	return (path);
+	return (res);
 }
 
 static int
@@ -485,6 +536,8 @@ nbsd_read(int fd)
 
 	char name[SYSTR_EMULEN+1];
 	const char *sysname;
+	u_int16_t seqnr;
+	pid_t pid;
 	int code;
 
 	if (read(fd, &msg, sizeof(msg)) != sizeof(msg))
@@ -497,12 +550,14 @@ nbsd_read(int fd)
 
 	current = data->current;
 
-	switch(msg.msg_type) {
+	seqnr = msg.msg_seqnr;
+	pid = msg.msg_pid;
+	switch (msg.msg_type) {
 	case SYSTR_MSG_ASK:
 		code = msg.msg_data.msg_ask.code;
-		sysname = nbsd_syscall_name(msg.msg_pid, code);
+		sysname = nbsd_syscall_name(pid, code);
 
-		intercept_syscall(fd, msg.msg_pid, msg.msg_policy,
+		intercept_syscall(fd, pid, seqnr, msg.msg_policy,
 		    sysname, code, current->name,
 		    (void *)msg.msg_data.msg_ask.args,
 		    msg.msg_data.msg_ask.argsize);
@@ -510,14 +565,14 @@ nbsd_read(int fd)
 
 	case SYSTR_MSG_RES:
 		code = msg.msg_data.msg_ask.code;
-		sysname = nbsd_syscall_name(msg.msg_pid, code);
+		sysname = nbsd_syscall_name(pid, code);
 
 		/* Switch emulation around at the right time */
 		if (data->commit != NULL) {
 			current = nbsd_switch_emulation(data);
 		}
 
-		intercept_syscall_result(fd, msg.msg_pid, msg.msg_policy,
+		intercept_syscall_result(fd, pid, seqnr, msg.msg_policy,
 		    sysname, code, current->name,
 		    (void *)msg.msg_data.msg_ask.args,
 		    msg.msg_data.msg_ask.argsize,
@@ -529,7 +584,7 @@ nbsd_read(int fd)
 		memcpy(name, msg.msg_data.msg_emul.emul, SYSTR_EMULEN);
 		name[SYSTR_EMULEN] = '\0';
   
-		if (nbsd_set_emulation(msg.msg_pid, name) == -1)
+		if (nbsd_set_emulation(pid, name) == -1)
 			errx(1, "%s:%d: set_emulation(%s)",
 			    __func__, __LINE__, name);
 
@@ -540,13 +595,13 @@ nbsd_read(int fd)
 			current = nbsd_switch_emulation(data);
 
 			intercept_syscall_result(fd,
-			    msg.msg_pid, msg.msg_policy,
+			    pid, seqnr, msg.msg_policy,
 			    "execve", 0, current->name,
 			    NULL, 0, 0, NULL);
 			break;
 		}
 
-		if (nbsd_answer(fd, msg.msg_pid, 0, 0, 0) == -1)
+		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
@@ -568,12 +623,14 @@ struct intercept_system intercept = {
 	nbsd_read,
 	nbsd_syscall_number,
 	nbsd_getcwd,
+	nbsd_restcwd,
 	nbsd_io,
 	nbsd_argument,
 	nbsd_answer,
 	nbsd_newpolicy,
 	nbsd_assignpolicy,
 	nbsd_modifypolicy,
+	nbsd_replace,
 	nbsd_clonepid,
 	nbsd_freepid,
 };

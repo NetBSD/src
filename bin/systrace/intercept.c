@@ -1,6 +1,5 @@
-/*	$NetBSD: intercept.c,v 1.3 2002/07/03 22:54:38 atatat Exp $	*/
-/*	$OpenBSD: intercept.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
-
+/*	$NetBSD: intercept.c,v 1.4 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.20 2002/07/30 16:09:48 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,12 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.3 2002/07/03 22:54:38 atatat Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.4 2002/07/30 16:29:30 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,13 +44,13 @@ __RCSID("$NetBSD: intercept.c,v 1.3 2002/07/03 22:54:38 atatat Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#define	_KERNEL
 #include <errno.h>
-#undef _KERNEL
 #include <err.h>
+#include <libgen.h>
 
-#include "util.h"
 #include "intercept.h"
+
+void simplify_path(char *);
 
 struct intercept_syscall {
 	SPLAY_ENTRY(intercept_syscall) node;
@@ -69,7 +69,6 @@ static int sccompare(struct intercept_syscall *, struct intercept_syscall *);
 static int pidcompare(struct intercept_pid *, struct intercept_pid *);
 static struct intercept_syscall *intercept_sccb_find(const char *,
     const char *);
-static void child_handler(int);
 static void sigusr1_handler(int);
 
 static SPLAY_HEAD(pidtree, intercept_pid) pids;
@@ -82,17 +81,18 @@ void *intercept_newimagecbarg = NULL;
 short (*intercept_gencb)(int, pid_t, int, const char *, int, const char *, void *, int, void *) = NULL;
 void *intercept_gencbarg = NULL;
 
-static int
+int
 sccompare(struct intercept_syscall *a, struct intercept_syscall *b)
 {
 	int diff;
+
 	diff = strcmp(a->emulation, b->emulation);
 	if (diff)
 		return (diff);
 	return (strcmp(a->name, b->name));
 }
 
-static int
+int
 pidcompare(struct intercept_pid *a, struct intercept_pid *b)
 {
 	int diff = a->pid - b->pid;
@@ -124,7 +124,7 @@ intercept_init(void)
 	return (intercept.init());
 }
 
-static struct intercept_syscall *
+struct intercept_syscall *
 intercept_sccb_find(const char *emulation, const char *name)
 {
 	struct intercept_syscall tmp;
@@ -134,7 +134,7 @@ intercept_sccb_find(const char *emulation, const char *name)
 	return (SPLAY_FIND(sctree, &scroot, &tmp));
 }
 
-int
+struct intercept_translate *
 intercept_register_translation(char *emulation, char *name, int offset,
     struct intercept_translate *tl)
 {
@@ -142,22 +142,25 @@ intercept_register_translation(char *emulation, char *name, int offset,
 	struct intercept_translate *tlnew;
 
 	if (offset >= INTERCEPT_MAXSYSCALLARGS)
-		return (-1);
+		errx(1, "%s: %s-%s: offset too large",
+		    __func__, emulation, name);
 
 	tmp = intercept_sccb_find(emulation, name);
 	if (tmp == NULL)
-		return (-1);
+		errx(1, "%s: %s-%s: can't find call back",
+		    __func__, emulation, name);
 
 	tlnew = malloc(sizeof(struct intercept_translate));
 	if (tlnew == NULL)
-		return (-1);
+		err(1, "%s: %s-%s: malloc",
+		    __func__, emulation, name);
 
 	memcpy(tlnew, tl, sizeof(struct intercept_translate));
 	tlnew->off = offset;
 
 	TAILQ_INSERT_TAIL(&tmp->tls, tlnew, next);
 
-	return (0);
+	return (tlnew);
 }
 
 void *
@@ -172,7 +175,7 @@ intercept_sccb_cbarg(char *emulation, char *name)
 }
 
 int
-intercept_register_sccb(const char *emulation, const char *name,
+intercept_register_sccb(char *emulation, char *name,
     short (*cb)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_tlq *, void *),
     void *cbarg)
@@ -222,36 +225,22 @@ intercept_register_execcb(void (*cb)(int, pid_t, int, const char *, const char *
 	return (0);
 }
 
-static void 
-child_handler(int sig)
-{
-	int s = errno, status;
-	extern int trfd;
-
-	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
-		close(trfd);
-	} 
-
-	while (wait4(-1, &status, WNOHANG, NULL) > 0)
-		;
-
-	errno = s;
-}
-
 static void
 sigusr1_handler(int signum)
-{
+{                                                                              
 	/* all we need to do is pretend to handle it */
 }
 
 pid_t
-intercept_run(int bg, char *path, char *const argv[])
+intercept_run(int bg, int fd, char *path, char *const argv[])
 {
+	struct intercept_pid *icpid;
 	sigset_t none, set, oset;
 	sig_t ohandler;
 	pid_t pid, cpid;
 	int status;
 
+	/* Block signals so that timeing on signal delivery does not matter */
 	sigemptyset(&none);
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
@@ -260,6 +249,7 @@ intercept_run(int bg, char *path, char *const argv[])
 	ohandler = signal(SIGUSR1, sigusr1_handler);
 	if (ohandler == SIG_ERR)
 		err(1, "signal");
+
 	pid = getpid();
 	cpid = fork();
 	if (cpid == -1)
@@ -269,7 +259,10 @@ intercept_run(int bg, char *path, char *const argv[])
 	 * If the systrace process should be in the background and we're
 	 * the parent, or vice versa.
 	 */
-	if ((bg && cpid != 0) || (!bg && cpid == 0)) {
+	if ((!bg && cpid == 0) || (bg && cpid != 0)) {
+		/* Needs to be closed */
+		close(fd);
+
 		if (bg) {
 			/* Wait for child to "detach" */
 			cpid = wait(&status);
@@ -280,7 +273,7 @@ intercept_run(int bg, char *path, char *const argv[])
 		}
 
 		/* Sleep */
-		(void)sigsuspend(&none);
+		sigsuspend(&none);
 
 		/*
 		 * Woken up, restore signal handling state.
@@ -299,38 +292,35 @@ intercept_run(int bg, char *path, char *const argv[])
 		err(1, "execvp");
 	}
 
+	/* Choose the pid of the systraced process */
+	pid = bg ? pid : cpid;
+
+	if ((icpid = intercept_getpid(pid)) == NULL)
+		err(1, "intercept_getpid");
+	
+	/* Set uid and gid information */
+	icpid->uid = getuid();
+	icpid->gid = getgid();
+	icpid->flags |= ICFLAGS_UIDKNOWN | ICFLAGS_GIDKNOWN;
+	
 	/* Setup done, restore signal handling state */
 	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
-		if (!bg)
-			kill(cpid, SIGKILL);
+		kill(pid, SIGKILL);
 		err(1, "signal");
 	}
 	if (sigprocmask(SIG_SETMASK, &oset, NULL) == -1) {
-		if (!bg)
-			kill(cpid, SIGKILL);
+		kill(pid, SIGKILL);
 		err(1, "sigprocmask");
 	}
 
 	if (bg) {
-		pid_t c2;
-
-		c2 = fork();
-		if (c2 == -1)
-			err(1, "fork");
-		if (c2 != 0)
-			exit(0);
-		if (setsid() == -1)
-			err(1, "setsid");
-	}
-	else {
-		if (signal(SIGCHLD, child_handler) == SIG_ERR) {
-			warn("signal");
-			kill(cpid, SIGKILL);
-			exit(1);
+		if (daemon(0, 1) == -1) {
+			kill(pid, SIGKILL);
+			err(1, "daemon");
 		}
 	}
 
-	return (bg ? pid : cpid);
+	return (pid);
 }
 
 int
@@ -391,9 +381,6 @@ intercept_open(void)
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		warn("fcntl(O_NONBLOCK)");
-
-	if (fcntl(fd, F_SETFD, 1) == -1)
-		warn("fcntl(F_SETFD)");
 
 	return (fd);
 }
@@ -463,56 +450,154 @@ intercept_read(int fd)
 	return (intercept.read(fd));
 }
 
+int
+intercept_replace_init(struct intercept_replace *repl)
+{
+	memset(repl, 0, sizeof(struct intercept_replace));
+
+	return (0);
+}
+
+int
+intercept_replace_add(struct intercept_replace *repl, int off,
+    u_char *addr, size_t len)
+{
+	int ind = repl->num;
+
+	if (ind >= INTERCEPT_MAXSYSCALLARGS)
+		return (-1);
+
+	repl->ind[ind] = off;
+	repl->address[ind] = addr;
+	repl->len[ind] = len;
+
+	repl->num++;
+
+	return (0);
+}
+
+int
+intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
+{
+	if (repl->num == 0)
+		return (0);
+
+	return (intercept.replace(fd, pid, repl));
+}
+
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
-	static char name[1024];
-	int off = 0;
+	static char name[MAXPATHLEN];
+	int off = 0, done = 0;
 
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
 			&name[off], 4) == -1) {
-			warn("ioctl");
+			warn("%s: ioctl", __func__);
 			return (NULL);
 		}
 
 		off += 4;
 		name[off] = '\0';
 		if (strlen(name) < off)
-			break;
+			done = 1;
 
-	} while (off < sizeof(name));
+	} while (!done && off + 5 < sizeof(name));
+
+	if (!done) {
+		warnx("%s: string too long", __func__);
+		return (NULL);
+	}
 
 	return (name);
 }
 
 char *
-intercept_filename(int fd, pid_t pid, void *addr)
+intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
-	static char cwd[1024];
+	static char cwd[2*MAXPATHLEN];
 	char *name;
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
-		err(1, "%s:%d: getstring", __func__, __LINE__);
+		err(1, "%s: getstring", __func__);
+
+	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
+		if (name[0] != '/')
+			err(1, "%s: getcwd", __func__);
 
 	if (name[0] != '/') {
-		if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-			err(1, "%s:%d: getcwd", __func__, __LINE__);
+		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+	} else {
+		if (strlcpy(cwd, name, sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+	}
 
-		strlcat(cwd, "/", sizeof(cwd));
-		strlcat(cwd, name, sizeof(cwd));
-	} else
-		strlcpy(cwd, name, sizeof(cwd));
+	if (userp) {
+		static char rcwd[2*MAXPATHLEN];
+		int failed = 0;
+		/* If realpath fails then the filename does not exist */
+		if (realpath(cwd, rcwd) == NULL) {
+			char *dir, *file;
+			struct stat st;
 
-	simplify_path(cwd);
+			if (errno != EACCES) {
+				failed = 1;
+				goto out;
+			}
 
-	return (cwd);
+			/* Component of path could not be entered */
+			if (strlcpy(rcwd, cwd, sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			if ((file = basename(rcwd)) == NULL)
+				goto error;
+			if ((dir = dirname(rcwd)) == NULL)
+				goto error;
+
+			/* So, try again */
+			if (realpath(dir, rcwd) == NULL) {
+				failed = 1;
+				goto out;
+			}
+			if (strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			if (strlcat(rcwd, file, sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			/* 
+			 * At this point, filename has to exist and has to
+			 * be a directory.
+			 */
+			if (lstat(rcwd, &st) == -1 || !(st.st_mode & S_IFDIR))
+				failed = 1;
+		}
+	out:
+		if (failed)
+			snprintf(rcwd, sizeof(rcwd),
+			    "/<non-existent filename>: %s", cwd);
+		name = rcwd;
+	} else {
+		simplify_path(cwd);
+		name = cwd;
+	}
+
+
+	/* Restore working directory and change root space after realpath */
+	if (intercept.restcwd(fd) == -1)
+		err(1, "%s: restcwd", __func__);
+
+	return (name);
+
+ error:
+	errx(1, "%s: filename too long", __func__);
 }
 
 void
-intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
-    const char *emulation, void *args, int argsize)
+intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
+    const char *name, int code, const char *emulation, void *args, int argsize)
 {
 	short action, flags = 0;
 	struct intercept_syscall *sc;
@@ -536,11 +621,13 @@ intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		icpid->newname = strdup(intercept_filename(fd, pid, addr));
+		icpid->newname = strdup(intercept_filename(fd, pid, addr, 0));
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 
 		/* We need to know the result from this system call */
+		flags = ICFLAGS_RESULT;
+	} else if (!strcmp(name, "setuid") || !strcmp(name, "setgid")) {
 		flags = ICFLAGS_RESULT;
 	}
 
@@ -566,26 +653,23 @@ intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
 	}
 
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, action, error, flags);
+	intercept.answer(fd, pid, seqnr, action, error, flags);
 }
 
 void
-intercept_syscall_result(int fd, pid_t pid, int policynr,
+intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
     const char *name, int code, const char *emulation, void *args, int argsize,
     int result, void *rval)
 {
 	struct intercept_pid *icpid;
 
+	if (result > 0)
+		goto out;
+
+	icpid = intercept_getpid(pid);
 	if (!strcmp("execve", name)) {
-#ifdef __NetBSD__
-		if (result && result != EJUSTRETURN)
-#else
-		if (result)
-#endif
-			goto out;
 
 		/* Commit the name of the new image */
-		icpid = intercept_getpid(pid);
 		if (icpid->name)
 			free(icpid->name);
 		icpid->name = icpid->newname;
@@ -595,10 +679,16 @@ intercept_syscall_result(int fd, pid_t pid, int policynr,
 			(*intercept_newimagecb)(fd, pid, policynr, emulation,
 			    icpid->name, intercept_newimagecbarg);
 
+	} else if (!strcmp("setuid", name)) {
+		intercept.getarg(0, args, argsize, (void **)&icpid->uid);
+		icpid->flags |= ICFLAGS_UIDKNOWN;
+	} else if (!strcmp("setgid", name)) {
+		intercept.getarg(0, args, argsize, (void **)&icpid->gid);
+		icpid->flags |= ICFLAGS_GIDKNOWN;
 	}
  out:
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, 0, 0, 0);
+	intercept.answer(fd, pid, seqnr, 0, 0, 0);
 }
 
 int
@@ -649,8 +739,16 @@ intercept_child_info(pid_t opid, pid_t npid)
 	inpid = intercept_getpid(npid);
 
 	inpid->policynr = ipid->policynr;
-	if (ipid->name != NULL)
+	if (ipid->name != NULL) {
 		inpid->name = strdup(ipid->name);
+		if (inpid->name == NULL)
+			err(1, "%s:%d: strdup", __func__, __LINE__);
+	}
+
+	/* Copy some information */
+	inpid->flags = ipid->flags;
+	inpid->uid = ipid->uid;
+	inpid->gid = ipid->gid;
 
 	/* XXX - keeps track of emulation */
 	intercept.clonepid(ipid, inpid);

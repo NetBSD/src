@@ -1,6 +1,5 @@
-/*	$NetBSD: systrace.h,v 1.1 2002/06/17 16:29:11 christos Exp $	*/
-/*	$OpenBSD: systrace.h,v 1.5 2002/06/07 18:05:20 provos Exp $	*/
-
+/*	$NetBSD: systrace.h,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.12 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -99,8 +98,10 @@ struct policy {
 #define POLICY_CHANGED		0x04
 
 #define PROCESS_INHERIT_POLICY	0x01	/* Process inherits policy */
+#define PROCESS_DETACH		0x02	/* Process gets detached */
 
 int systrace_initpolicy(char *);
+void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
 int systrace_newpolicynr(int, struct policy *);
 int systrace_modifypolicy(int, int, const char *, short);
@@ -113,10 +114,48 @@ struct filterq *systrace_policyflq(struct policy *, const char *, const char *);
 
 int systrace_error_translate(char *);
 
+#define SYSTRACE_MAXALIAS	5
+
+struct systrace_alias {
+	SPLAY_ENTRY(systrace_alias) node;
+	TAILQ_ENTRY(systrace_alias) next;
+
+	char name[64];
+	char emulation[16];
+
+	char aname[64];
+	char aemul[16];
+
+	struct intercept_translate *arguments[SYSTRACE_MAXALIAS];
+	int nargs;
+
+	struct systrace_revalias *reverse;
+};
+
+int systrace_initalias(void);
+struct systrace_alias *systrace_new_alias(const char *, const char *, char *, char *);
+void systrace_switch_alias(const char *, const char *, char *, char *);
+struct systrace_alias *systrace_find_alias(const char *, const char *);
+void systrace_alias_add_trans(struct systrace_alias *,
+    struct intercept_translate *);
+
+struct systrace_revalias {
+	SPLAY_ENTRY(systrace_revalias) node;
+
+	char name[64];
+	char emulation[16];
+
+	TAILQ_HEAD(revaliasq, systrace_alias) revl;
+};
+
+struct systrace_revalias *systrace_reverse(const char *, const char *);
+struct systrace_revalias *systrace_find_reverse(const char *, const char *);
+
 short filter_evaluate(struct intercept_tlq *, struct filterq *, int *);
 short filter_ask(struct intercept_tlq *, struct filterq *, int, const char *,
     const char *, char *, short *, int *);
 void filter_free(struct filter *);
+void filter_modifypolicy(int, int, const char *, const char *, short);
 
 int filter_parse_simple(char *, short *, short *);
 int filter_parse(char *, struct filter **);
@@ -125,11 +164,27 @@ char *filter_expand(char *data);
 
 int parse_filter(char *, struct filter **);
 
+char *uid_to_name(uid_t);
+
+char *strrpl(char *, size_t, char *, char *);
+
+void make_output(char *, size_t, const char *, pid_t, int,
+    const char *, int, const char *, const char *, int, struct intercept_tlq *,
+    struct intercept_replace *);
+short trans_cb(int, pid_t, int, const char *, int, const char *, void *,
+    int, struct intercept_tlq *, void *);
+short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
+    int, void *);
+void execres_cb(int, pid_t, int, const char *, const char *, void *);
+
 extern struct intercept_translate oflags;
 extern struct intercept_translate modeflags;
 extern struct intercept_translate fdt;
 extern struct intercept_translate uidt;
+extern struct intercept_translate uname;
 extern struct intercept_translate gidt;
+extern struct intercept_translate trargv;
 
 extern struct intercept_translate linux_oflags;
+
 #endif /* _SYSTRACE_H_ */
