@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.11.2.4 2002/10/18 02:41:59 nathanw Exp $ */
+/*      $NetBSD: sgec.c,v 1.11.2.5 2003/01/17 16:31:29 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.11.2.4 2002/10/18 02:41:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.11.2.5 2003/01/17 16:31:29 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -370,8 +370,6 @@ zestart(ifp)
 			if (totlen == len)
 				orword = ZE_TDES1_FS;
 			if (totlen == m->m_pkthdr.len) {
-				if (totlen < ETHER_MIN_LEN)
-					len += (ETHER_MIN_LEN - totlen);
 				orword |= ZE_TDES1_LS;
 				sc->sc_txmbuf[idx] = m;
 			}

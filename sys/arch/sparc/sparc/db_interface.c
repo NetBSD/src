@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.8.8 2003/01/15 18:40:15 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43.8.9 2003/01/17 16:23:29 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -231,6 +231,10 @@ static int db_suspend_others(void);
 static void db_resume_others(void);
 void ddb_suspend(struct trapframe *tf);
 
+/* from cpu.c */
+void mp_pause_cpus_ddb(void);
+void mp_resume_cpus_ddb(void);
+
 __cpu_simple_lock_t db_lock;
 int ddb_cpu = NOCPU;
 
@@ -250,7 +254,7 @@ db_suspend_others(void)
 	__cpu_simple_unlock(&db_lock);
 
 	if (win)
-		mp_pause_cpus();
+		mp_pause_cpus_ddb();
 
 	return win;
 }
@@ -259,7 +263,7 @@ static void
 db_resume_others(void)
 {
 
-	mp_resume_cpus();
+	mp_resume_cpus_ddb();
 
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;

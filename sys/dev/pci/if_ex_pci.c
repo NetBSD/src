@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.15.2.7 2002/12/29 20:49:22 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.15.2.8 2003/01/17 16:31:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.15.2.7 2002/12/29 20:49:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.15.2.8 2003/01/17 16:31:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,9 @@ const struct ex_pci_product {
 	   EX_CONF_PCI_FUNCREG | EX_CONF_RESETHACK | EX_CONF_INV_LED_POLARITY |
 	   EX_CONF_PHY_POWER,
 	  "3c556B MiniPCI 10/100 Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C905CXTX,	EX_CONF_90XB|EX_CONF_MII,
+	  "3c905CX-TX 10/100 Ethernet with mngmt" },
 
 	{ 0,				0,
 	  NULL },

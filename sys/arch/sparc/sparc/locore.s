@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.25 2003/01/17 15:18:54 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.26 2003/01/17 16:23:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4554,7 +4554,6 @@ ENTRY(write_user_windows)
  * and note that the `last loaded process' is nonexistent.
  */
 ENTRY(switchexit)
-	set	_C_LABEL(exit2), %g1
 	mov	%o0, %g2		! save proc for exit2() call
 	mov	%o1, %g1		! exit2() or lwp_exit2()
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57.6.10 2003/01/15 18:40:14 thorpej Exp $ */
+/*	$NetBSD: cache.c,v 1.57.6.11 2003/01/17 16:23:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -576,8 +576,7 @@ sun4_cache_flush(base, len, ctx)
  * Flush the current context from the cache.
  *
  * This is done by writing to each cache line in the `flush context'
- * address space (or, for hardware flush, once to each page in the
- * hardware flush space, for all cache pages).
+ * address space.
  */
 void
 srmmu_vcache_flush_context(ctx)
@@ -684,6 +683,17 @@ srmmu_vcache_flush_page(va, ctx)
 	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+	/*
+	 * The page flush operation will have caused a MMU table walk
+	 * on Hypersparc because the is physically tagged. Since the pmap
+	 * functions will not always cross flush it in the MP case (because
+	 * may not be active on this CPU) we flush the TLB entry now.
+	 */
+	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS)
+		sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+
+#endif
 	setcontext4m(octx);
 	trapon();
 }
@@ -728,6 +738,18 @@ srmmu_cache_flush(base, len, ctx)
 		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+			/*
+			 * See hypersparc comment in srmmu_vcache_flush_page().
+			 * Just flush both possibly touched pages
+			 * fromt the TLB.
+			 */
+			int va = (int)base & ~0xfff;
+			sta(va | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+			sta((va+4096) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0);
+		}
+#endif
 		setcontext4m(octx);
 		trapon();
 		return;
@@ -760,12 +782,25 @@ srmmu_cache_flush(base, len, ctx)
 #endif
 
 	if (i < CACHE_FLUSH_MAGIC) {
+		int octx;
 		/* cache_flush_page, for i pages */
 		p = (char *)((int)base & ~baseoff);
 		ls = CACHEINFO.c_linesize;
 		i <<= PGSHIFT - CACHEINFO.c_l2linesize;
+		octx = getcontext4m();
+		trapoff();
+		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+#if defined(MULTIPROCESSOR)
+		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+			/* Just flush the segment from the TLB */
+			int va = (int)base & ~SGOFSET;
+			sta(va | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0);
+		}
+#endif
+		setcontext4m(octx);
+		trapon();
 		return;
 	}
 	baseoff = (u_int)base & SGOFSET;
@@ -775,7 +810,11 @@ srmmu_cache_flush(base, len, ctx)
 	else {
 		baseoff = (u_int)base & RGOFSET;
 		i = (baseoff + len + RGOFSET) >> RGSHIFT;
-		srmmu_vcache_flush_region(VA_VREG(base), ctx);
+		p = (char *)VA_VREG(base);
+		while (i--) {
+			srmmu_vcache_flush_region((int)p, ctx);
+			p += NBPRG;
+		}
 	}
 }
 

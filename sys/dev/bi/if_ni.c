@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8.2.5 2002/10/18 02:41:32 nathanw Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8.2.6 2003/01/17 16:31:20 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.8.2.5 2002/10/18 02:41:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.8.2.6 2003/01/17 16:31:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -571,8 +571,6 @@ nistart(ifp)
 		data->nd_ptdbidx = 1;
 		data->nd_len = 10 + i * 8;
 		data->bufs[i - 1]._index &= ~NIDG_CHAIN;
-		if (mlen < 64)
-			data->bufs[i - 1]._len = bdp[-1].nb_len += (64 - mlen);
 		data->nd_cmdref = (u_int32_t)m;
 #ifdef DEBUG
 		if (ifp->if_flags & IFF_DEBUG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.11 2003/01/15 18:40:12 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.12 2003/01/17 16:23:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,6 +239,10 @@ int emulinstr(int, struct trapframe *);
 void mp_pause_cpus(void);
 void mp_resume_cpus(void);
 void mp_halt_cpus(void);
+#ifdef DDB
+void mp_pause_cpus_ddb(void);
+void mp_resume_cpus_ddb(void);
+#endif
 /* msiiep.c */
 void msiiep_swap_endian(int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.19 2003/01/15 18:40:14 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.20 2003/01/17 16:23:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -716,8 +716,8 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	i = 10000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
-			printf("xcall(cpu%d,%p): couldn't ping cpus:",
-			    cpuinfo.ci_cpuid, func);
+			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
+			    cpu_number(), func);
 			break;
 		}
 
@@ -754,8 +754,91 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	splx(s);
 }
 
+/*
+ * Tell all CPUs other than the current one to enter the PROM idle loop.
+ */
 void
 mp_pause_cpus()
+{
+	int n;
+
+	if (cpus == NULL)
+		return;
+
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/*
+		 * This PROM utility will put the OPENPROM_MBX_ABORT
+		 * message (0xfc) in the target CPU's mailbox and then
+		 * send it a level 15 soft interrupt.
+		 */
+		if (prom_cpuidle(cpi->node) != 0)
+			printf("cpu%d could not be paused\n", cpi->ci_cpuid);
+	}
+}
+
+/*
+ * Resume all idling CPUs.
+ */
+void
+mp_resume_cpus()
+{
+	int n;
+
+	if (cpus == NULL)
+		return;
+
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/*
+		 * This PROM utility makes the target CPU return
+		 * from its prom_cpuidle(0) call (see intr.c:nmi_soft()).
+		 */
+		if (prom_cpuresume(cpi->node) != 0)
+			printf("cpu%d could not be resumed\n", cpi->ci_cpuid);
+	}
+}
+
+/*
+ * Tell all CPUs except the current one to hurry back into the prom
+ */
+void
+mp_halt_cpus()
+{
+	int n;
+
+	if (cpus == NULL)
+		return;
+
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		int r;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/*
+		 * This PROM utility will put the OPENPROM_MBX_STOP
+		 * message (0xfb) in the target CPU's mailbox and then
+		 * send it a level 15 soft interrupt.
+		 */
+		r = prom_cpustop(cpi->node);
+		printf("cpu%d %shalted\n", cpi->ci_cpuid,
+			r == 0 ? "" : "(boot CPU?) can not be ");
+	}
+}
+
+#if defined(DDB)
+void
+mp_pause_cpus_ddb()
 {
 	int n;
 
@@ -774,7 +857,7 @@ mp_pause_cpus()
 }
 
 void
-mp_resume_cpus()
+mp_resume_cpus_ddb()
 {
 	int n;
 
@@ -791,6 +874,7 @@ mp_resume_cpus()
 		cpi->flags &= ~CPUFLG_PAUSED;
 	}
 }
+#endif /* DDB */
 #endif /* MULTIPROCESSOR */
 
 /*

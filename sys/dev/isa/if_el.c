@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.63.2.5 2002/10/18 02:42:16 nathanw Exp $	*/
+/*	$NetBSD: if_el.c,v 1.63.2.6 2003/01/17 16:31:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.63.2.5 2002/10/18 02:42:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.63.2.6 2003/01/17 16:31:32 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -432,6 +432,9 @@ elstart(ifp)
 		for (m = m0; m != 0; m = m->m_next)
 			bus_space_write_multi_1(iot, ioh, EL_BUF,
 			    mtod(m, u_int8_t *), m->m_len);
+		for (i = 0;
+		    i < ETHER_MIN_LEN - ETHER_CRC_LEN - m0->m_pkthdr.len; i++)
+			bus_space_write_1(iot, ioh, EL_BUF, 0);
 
 		m_freem(m0);
 

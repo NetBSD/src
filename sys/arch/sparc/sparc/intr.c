@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56.4.12 2003/01/15 18:40:16 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.56.4.13 2003/01/17 16:23:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -253,7 +253,7 @@ nmi_hard()
 	nmi_hard_wait = 0;
 	simple_unlock(&nmihard_lock);
 	if (fatal && drop_into_rom_on_fatal) {
-		callrom();
+		prom_abort();
 		return;
 	}
 #endif
@@ -269,6 +269,29 @@ void
 nmi_soft(tf)
 	struct trapframe *tf;
 {
+	if (cpuinfo.mailbox) {
+		/* Check PROM messages */
+		u_int8_t msg = *(u_int8_t *)cpuinfo.mailbox;
+		switch (msg) {
+		case OPENPROM_MBX_STOP:
+		case OPENPROM_MBX_WD:
+			/* In case there's an xcall in progress (unlikely) */
+			spl0();
+			cpuinfo.flags &= ~CPUFLG_READY;
+			prom_cpustop(0);
+			break;
+		case OPENPROM_MBX_ABORT:
+		case OPENPROM_MBX_BPT:
+			prom_cpuidle(0);
+			/*
+			 * We emerge here after someone does a
+			 * prom_resumecpu(ournode).
+			 */
+			return;
+		default:
+			break;
+		}
+	}
 
 #if defined(MULTIPROCESSOR)
 	switch (cpuinfo.msg_lev15.tag) {
@@ -281,10 +304,10 @@ nmi_soft(tf)
 #else
 		while (cpuinfo.flags & CPUFLG_PAUSED)
 			/* spin */;
-#endif
-		return;
+#endif /* DDB */
 	}
-#endif
+	cpuinfo.msg_lev15.tag = 0;
+#endif /* MULTIPROCESSOR */
 }
 
 #if defined(MULTIPROCESSOR)

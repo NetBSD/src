@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.20.2.6 2002/11/11 22:10:58 nathanw Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.20.2.7 2003/01/17 16:31:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.20.2.6 2002/11/11 22:10:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.20.2.7 2003/01/17 16:31:37 thorpej Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -353,9 +353,10 @@ ofnet_start(struct ifnet *ifp)
 		 * minimum size Ethernet packet.
 		 */
 
-		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
-			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
-		else
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
+			memset(bufp, 0, ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			bufp += ETHER_MIN_LEN - ETHER_CRC_LEN - len;
+		} else
 			len = bufp - buf;
 
 		if (OF_write(of->sc_ihandle, buf, len) != len)
