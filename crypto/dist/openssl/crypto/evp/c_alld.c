@@ -64,8 +64,15 @@
 
 void OpenSSL_add_all_digests(void)
 	{
+	static int done=0;
+
+	if (done) return;
+	done=1;
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
+#endif
+#ifndef NO_MD4
+	EVP_add_digest(EVP_md4());
 #endif
 #ifndef NO_MD5
 	EVP_add_digest(EVP_md5());
