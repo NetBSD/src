@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.24 2002/02/07 09:24:06 ross Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.25 2002/05/10 22:11:24 kleink Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -421,9 +421,14 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
+hints.ai_flags = 0;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_canonname = NULL;
+hints.ai_addr = NULL;
+hints.ai_next = NULL;
 error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
@@ -464,10 +469,14 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_canonname = NULL;
+hints.ai_addr = NULL;
+hints.ai_next = NULL;
 error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
