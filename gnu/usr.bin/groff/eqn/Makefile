@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/08/02 17:42:41 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/10/01 00:16:44 jtc Exp $
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
@@ -14,7 +14,7 @@ lex.o:	eqn.cc
 
 afterinstall:
 	sed -e 's/@g@/$(g)/g' $(.CURDIR)/neqn.sh > $(DESTDIR)$(BINDIR)/neqn
-	chown ${BINOWN}.${BINGRP} $(DESTDIR)$(BINDIR)/neqn
+	chown ${BINOWN}:${BINGRP} $(DESTDIR)$(BINDIR)/neqn
 	chmod ${BINMODE} $(DESTDIR)$(BINDIR)/neqn
 
 .include "../../Makefile.inc"
