@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.307 1999/08/04 18:46:58 jdolecek Exp $
+#	$NetBSD: files,v 1.308 1999/08/05 22:38:01 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -343,7 +343,7 @@ file	dev/ic/oplinstrs.c		opl
 
 # MPU401 MIDI UART compatibles
 device	mpu: midibus
-file	dev/ic/mpu.c			mpu
+file	dev/ic/mpu.c			mpu needs-flag
 
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
