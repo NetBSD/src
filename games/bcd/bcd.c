@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.8 1999/07/21 03:59:41 hubertf Exp $	*/
+/*	$NetBSD: bcd.c,v 1.9 1999/07/28 02:12:33 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.8 1999/07/21 03:59:41 hubertf Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.9 1999/07/28 02:12:33 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: bcd.c,v 1.8 1999/07/21 03:59:41 hubertf Exp $");
 #include <ctype.h>
 #include <unistd.h>
 
-u_short holes[256] = {
+const u_short holes[256] = {
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
@@ -160,9 +160,9 @@ void
 printcard(str)
 	char *str;
 {
-	static char rowchars[] = "   123456789";
+	static const char rowchars[] = "   123456789";
 	int i, row;
-	char *p;
+	unsigned char *p;
 
 	/* ruthlessly remove newlines and truncate at 48 characters. */
 	if ((p = strchr(str, '\n')))
