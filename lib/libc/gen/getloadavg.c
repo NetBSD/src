@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,39 +32,40 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)getloadavg.c	6.2 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$Id: getloadavg.c,v 1.3 1994/01/28 04:49:27 cgd Exp $";
+static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/kinfo.h>
+#include <sys/sysctl.h>
+#include <vm/vm_param.h>
+
+#include <stdlib.h>
 
 /*
- *  getloadavg() -- Get system load averages.
+ * getloadavg() -- Get system load averages.
  *
- *  Put `nelem' samples into `loadavg' array.
- *  Return number of samples retrieved, or -1 on error.
+ * Put `nelem' samples into `loadavg' array.
+ * Return number of samples retrieved, or -1 on error.
  */
+int
 getloadavg(loadavg, nelem)
 	double loadavg[];
 	int nelem;
 {
-	int needed, err, i;
-	struct loadavg averunnable;
+	struct loadavg loadinfo;
+	int i, mib[2];
+	size_t size;
 
-	needed = getkerninfo(KINFO_LOADAVG, NULL, NULL, 0);
-	if (needed != sizeof(struct loadavg))
-		return -1;
+	mib[0] = CTL_VM;
+	mib[1] = VM_LOADAVG;
+	size = sizeof(loadinfo);
+	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) < 0)
+		return (-1);
 
-	err = getkerninfo(KINFO_LOADAVG, &averunnable, &needed, 0);
-	if (err != 0 || needed != sizeof(struct loadavg))
-		return -1;
-
-	if (nelem > 3)
-		nelem = 3;
+	nelem = MIN(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
 	for (i = 0; i < nelem; i++)
-		loadavg[i] = (double) averunnable.ldavg[i] / averunnable.fscale;
-	return nelem;
+		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
+	return (nelem);
 }
