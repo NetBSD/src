@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.26 2001/03/24 00:14:53 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.27 2001/04/10 21:33:01 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -179,15 +179,6 @@ file	arch/arm26/podulebus/if_eh.c		eh
 device	dtide {[channel = -1]}: wdc_base, ata, atapi
 attach	dtide at podulebus
 file	arch/arm26/podulebus/dtide.c		dtide
-
-# Generic sbic (WD3393) driver
-define	sbic
-file	arch/arm26/podulebus/sbic.c		sbic
-
-# Acorn SCSI I specific layer for sbic
-device  asc: scsi, sbic
-attach	asc at podulebus
-file	arch/arm26/podulebus/asc.c		asc needs-flag
 
 
 # Memory disk for installation (or ROM versions?)
