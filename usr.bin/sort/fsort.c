@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.9 2001/01/13 17:27:21 itojun Exp $	*/
+/*	$NetBSD: fsort.c,v 1.10 2001/01/18 21:40:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.9 2001/01/13 17:27:21 itojun Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.10 2001/01/18 21:40:15 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -56,7 +56,8 @@ __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 
 const u_char **keylist = 0;
 u_char *buffer = 0, *linebuf = 0;
-size_t bufsize, linebuf_size;
+size_t bufsize = DEFLLEN;
+size_t linebuf_size;
 struct tempfile fstack[MAXFCT];
 extern char *toutpath;
 #define FSORTMAX 4
@@ -93,7 +94,6 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
 	if (!buffer) {
-		bufsize = BUFSIZE;
 		buffer = malloc(bufsize);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
 		if (!SINGL_FLD) {
@@ -129,6 +129,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			keypos = keylist;
 			nelem = 0;
 			crec = (RECHEADER *) buffer;
+
+		   do_read:
 			while((c = get(binno, top, filelist, nfiles, crec,
 			    bufend, ftbl)) == 0) {
 				*keypos++ = crec->data + depth;
@@ -139,7 +141,10 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				crec =(RECHEADER *)	((char *) crec +
 				SALIGN(crec->length) + sizeof(TRECHEADER));
 			}
-			if (c == BUFFEND && nelem == 0) {
+			if (c == BUFFEND && nelem < min(9, MAXNUM)) {
+				const u_char **keyp;
+				u_char *oldb = buffer;
+
 				/* buffer was too small for data, allocate
 				 * bigger buffer */
 				bufsize *= 2;
@@ -149,7 +154,13 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 						(unsigned long) bufsize);
 				}
 				bufend = buffer + bufsize;
-				continue;
+
+				/* patch up keylist[] */
+				for(keyp = &keypos[-1]; keyp >= keylist; keyp--)
+					*keyp = buffer + (*keyp - oldb);
+
+				crec = (RECHEADER *) (buffer + ((u_char *)crec - oldb));
+				goto do_read;
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
