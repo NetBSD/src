@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.35 1998/02/20 18:14:10 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.36 1998/02/21 00:37:07 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,16 +58,18 @@ adb_complete(buffer, data_area, adb_command)
 	ADBDataBlock adbdata;
 	int adbaddr;
 	int error;
-#ifdef MRG_DEBUG
-	register int i;
+#ifdef ADB_DEBUG
+	int i;
 
-	printf("adb: transaction completion\n");
+	if (adb_debug)
+		printf("adb: transaction completion\n");
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
 	error = GetADBInfo(&adbdata, adbaddr);
-#ifdef MRG_DEBUG
-	printf("adb: GetADBInfo returned %d\n", error);
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: GetADBInfo returned %d\n", error);
 #endif
 
 	event.addr = adbaddr;
@@ -76,12 +78,14 @@ adb_complete(buffer, data_area, adb_command)
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
-#ifdef MRG_DEBUG
-	printf("adb: from %d at %d (org %d) %d:", event.addr,
-		event.hand_id, event.def_addr, buffer[0]);
-	for (i = 1; i <= buffer[0]; i++)
-		printf(" %x", buffer[i]);
-	printf("\n");
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		printf("adb: from %d at %d (org %d) %d:", event.addr,
+		    event.hand_id, event.def_addr, buffer[0]);
+		for (i = 1; i <= buffer[0]; i++)
+			printf(" %x", buffer[i]);
+		printf("\n");
+	}
 #endif
 
 	microtime(&event.timestamp);
@@ -99,16 +103,18 @@ adb_msa3_complete(buffer, data_area, adb_command)
 	ADBDataBlock adbdata;
 	int adbaddr;
 	int error;
-#ifdef MRG_DEBUG
-	register int i;
+#ifdef ADB_DEBUG
+	int i;
 
-	printf("adb: transaction completion\n");
+	if (adb_debug)
+		printf("adb: transaction completion\n");
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
 	error = GetADBInfo(&adbdata, adbaddr);
-#ifdef MRG_DEBUG
-	printf("adb: GetADBInfo returned %d\n", error);
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: GetADBInfo returned %d\n", error);
 #endif
 
 	event.addr = adbaddr;
@@ -117,12 +123,14 @@ adb_msa3_complete(buffer, data_area, adb_command)
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
-#ifdef MRG_DEBUG
-	printf("adb: from %d at %d (org %d) %d:",
-	    event.addr, event.hand_id, event.def_addr, buffer[0]);
-	for (i = 1; i <= buffer[0]; i++)
-		printf(" %x", buffer[i]);
-	printf("\n");
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		printf("adb: from %d at %d (org %d) %d:",
+		    event.addr, event.hand_id, event.def_addr, buffer[0]);
+		for (i = 1; i <= buffer[0]; i++)
+			printf(" %x", buffer[i]);
+		printf("\n");
+	}
 #endif
 
 	microtime(&event.timestamp);
@@ -141,16 +149,18 @@ adb_mm_nonemp_complete(buffer, data_area, adb_command)
 	int adbaddr;
 	int error;
 
-#ifdef MRG_DEBUG
-	register int i;
+#ifdef ADB_DEBUG
+	int i;
 
-	printf("adb: transaction completion\n");
+	if (adb_debug)
+		printf("adb: transaction completion\n");
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
 	error = GetADBInfo(&adbdata, adbaddr);
-#ifdef MRG_DEBUG
-	printf("adb: GetADBInfo returned %d\n", error);
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: GetADBInfo returned %d\n", error);
 #endif
 
 #if 0
@@ -180,12 +190,14 @@ adb_mm_nonemp_complete(buffer, data_area, adb_command)
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
-#ifdef MRG_DEBUG
-	printf("adb: from %d at %d (org %d) %d:", event.addr,
-		event.hand_id, event.def_addr, buffer[0]);
-	for (i = 1; i <= buffer[0]; i++)
-		printf(" %x", buffer[i]);
-	printf("\n");
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		printf("adb: from %d at %d (org %d) %d:", event.addr,
+		    event.hand_id, event.def_addr, buffer[0]);
+		for (i = 1; i <= buffer[0]; i++)
+			printf(" %x", buffer[i]);
+		printf("\n");
+	}
 #endif
 
 	microtime(&event.timestamp);
@@ -263,8 +275,9 @@ extdms_init(totaladbs)
 				delay(50);
 
 			if (!extdms_done) {
-#ifdef MRG_DEBUG
-				printf("adb: extdms_init timed out\n");
+#ifdef ADB_DEBUG
+				if (adb_debug)
+					printf("adb: extdms_init timed out\n");
 #endif
 				return;
 			}
@@ -356,21 +369,24 @@ adb_init()
 	}
 
 	printf("adb: bus subsystem\n");
-#ifdef MRG_DEBUG
-	printf("adb: call mrg_initadbintr\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: call mrg_initadbintr\n");
 #endif
 
 	mrg_initadbintr();	/* Mac ROM Glue okay to do ROM intr */
-#ifdef MRG_DEBUG
-	printf("adb: returned from mrg_initadbintr\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: returned from mrg_initadbintr\n");
 #endif
 
 	/* ADBReInit pre/post-processing */
 	JADBProc = adb_jadbproc;
 
 	/* Initialize ADB */
-#ifdef MRG_DEBUG
-	printf("adb: calling ADBAlternateInit.\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
 	ADBAlternateInit();
@@ -378,8 +394,9 @@ adb_init()
 	ADBReInit();
 #endif /* MRG_ADB */
 
-#ifdef MRG_DEBUG
-	printf("adb: done with ADBReInit\n");
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: done with ADBReInit\n");
 #endif
 
 	totaladbs = CountADBs();
@@ -406,7 +423,7 @@ adb_init()
 				break;
                         case ADB_EXTKBD:
 				extdms_done = 0;
-				cmd=(((adbaddr<<4) &0xf0) | 0x0d ); /* talk R1 */
+				cmd = (((adbaddr << 4) & 0xf0) | 0x0d ); /* talk R1 */
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 					(Ptr)&extdms_done, cmd);
 
@@ -482,7 +499,7 @@ adb_init()
 				break;
 			}
 
-			devtype=buffer[2];
+			devtype = buffer[2];
 			switch (devtype) {
 			case ADBMS_100DPI:
 				printf("100 dpi mouse");
@@ -504,7 +521,7 @@ adb_init()
 				      (adbaddr << 4) | 0xd);
 				while (!extdms_done)
 					/* busy-wait until done */;
-				if (buffer[1]==0x9a && buffer[2]==0x20 )
+				if (buffer[1] == 0x9a && buffer[2] == 0x20)
 					printf("Mouseman (non-EMP) mouse");
 				else {
 					printf("extended mouse "
@@ -559,7 +576,7 @@ adb_init()
 		}
 		printf(" at %d\n", adbaddr);
 
-		/* Set completion routine to be MacBSD's */
+		/* Set completion routine to be NetBSD's */
 		if ((adbdata.origADBAddr == ADBADDR_REL) && 
 		    (buffer[0] > 0) && (buffer[2] == ADBMS_MSA3)) {
 			/* Special device handler for the A3 mouse */
@@ -577,36 +594,36 @@ adb_init()
 				 * pseudo keyboard device. */
 				extdms_done = 0;
 				/* listen register 1 */
-				buffer[0]=2;
-				buffer[1]=0x00;
-				buffer[2]=0x81;
+				buffer[0] = 2;
+				buffer[1] = 0x00;
+				buffer[2] = 0x81;
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
 				while (!extdms_done)
 					/* busy-wait until done */;
 				extdms_done = 0;
 				/* listen register 1 */
-				buffer[0]=2;
-				buffer[1]=0x01;
-				buffer[2]=0x81;
+				buffer[0] = 2;
+				buffer[1] = 0x01;
+				buffer[2] = 0x81;
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
 				while (!extdms_done)
 					/* busy-wait until done */;
 				extdms_done = 0;
 				/* listen register 1 */
-				buffer[0]=2;
-				buffer[1]=0x02;
-				buffer[2]=0x81;
+				buffer[0] = 2;
+				buffer[1] = 0x02;
+				buffer[2] = 0x81;
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
 				while (!extdms_done)
 					/* busy-wait until done */;
 				extdms_done = 0;
 				/* listen register 1 */
-				buffer[0]=2;
-				buffer[1]=0x03;
-				buffer[2]=0x38;
+				buffer[0] = 2;
+				buffer[1] = 0x03;
+				buffer[2] = 0x38;
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
 				while (!extdms_done)
@@ -619,8 +636,9 @@ adb_init()
 		}
 		adbinfo.siDataAreaAddr = NULL;
 		error = SetADBInfo(&adbinfo, adbaddr);
-#ifdef MRG_DEBUG
-		printf("returned %d from SetADBInfo\n", error);
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf("adb: returned %d from SetADBInfo\n", error);
 #endif
 	}
 

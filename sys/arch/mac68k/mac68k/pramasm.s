@@ -1,4 +1,4 @@
-/*	$NetBSD: pramasm.s,v 1.6 1997/04/15 07:02:52 scottr Exp $	*/
+/*	$NetBSD: pramasm.s,v 1.7 1998/02/21 00:37:08 scottr Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -46,7 +46,7 @@
  * that are defined later in this file.
  */
 
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #ifdef MRG_ADB
 /*
