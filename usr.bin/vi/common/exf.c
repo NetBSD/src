@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.3 2001/03/31 11:37:45 aymeric Exp $	*/
+/*	$NetBSD: exf.c,v 1.4 2001/08/17 21:33:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -184,6 +184,11 @@ file_init(sp, frp, rcv_name, flags)
 	 */
 	oname = frp->name;
 	if (LF_ISSET(FS_OPENERR) || oname == NULL || !exists) {
+		/*
+		 * Don't try to create a temporary support file twice.
+		 */
+		if (frp->tname != NULL)
+			goto err;
 		if (opts_empty(sp, O_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
@@ -266,7 +271,7 @@ file_init(sp, frp, rcv_name, flags)
 		 * be read.  This isn't useful for single files from a command
 		 * line, but it's quite useful for "vi *.c", since you can skip
 		 * past files that you can't read.
-		 */ 
+		 */
 		open_err = 1;
 		goto oerr;
 	}
