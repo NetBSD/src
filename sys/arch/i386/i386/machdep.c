@@ -44,8 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.4 1993/04/01 00:06:04 cgd Exp $";
-
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.5 1993/04/10 12:04:40 glass Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -878,8 +877,7 @@ init386(first)
 	lidt(&r_idt);
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
-#include "ddb.h"
-#if NDDB > 0
+#ifdef DDB
 	kdb_init();
 	if (boothowto & RB_KDB)
 		Debugger();

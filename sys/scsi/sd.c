@@ -48,12 +48,11 @@
 long int sdstrats,sdqueues;
 
 
-#include <ddb.h>
-#if	NDDB > 0
+#ifdef	DDB
 int	Debugger();
-#else	NDDB > 0
+#else	
 #define Debugger()
-#endif	NDDB > 0
+#endif
 
 
 #define PAGESIZ 	4096

@@ -42,7 +42,7 @@
  * 09 Aug 92	Christoph Robitschko	Correct minor number on com ports
  * 10 Feb 93	Jordan K. Hubbard	Added select code
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.5 1993/04/09 16:43:56 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.6 1993/04/10 12:05:19 glass Exp $";
 
 #include "com.h"
 #if NCOM > 0
@@ -61,6 +61,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.5 1993/
 #include "uio.h"
 #include "kernel.h"
 #include "syslog.h"
+#include "types.h"
 
 #include "i386/isa/isa_device.h"
 #include "i386/isa/comreg.h"
@@ -763,4 +764,5 @@ comselect(dev, rw, p)
 	splx(s);
 	return (1);
 }
+
 #endif

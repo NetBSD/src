@@ -60,8 +60,7 @@ int	rip_input(),rip_output(),rip_ctloutput(), rip_usrreq();
  * Using the raw interface entry to get the timer routine
  * in is a kludge.
  */
-#include "imp.h"
-#if NIMP > 0
+#ifdef IMP
 int	rimp_output(), hostslowtimo();
 #endif
 

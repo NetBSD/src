@@ -64,12 +64,11 @@
 /**/
 
 #ifdef  __386BSD__
-#include "ddb.h"
-#if     NDDB > 0
+#ifdef DDB
 int     Debugger();
-#else   NDDB
+#else 
 #define Debugger() panic("should call debugger here (adaptec.c)")
-#endif  NDDB
+#endif  /*DDB*/
 #endif  __386BSD__
 
 #ifdef  MACH

@@ -40,7 +40,9 @@
  * Line discipline for RS232 tablets;
  * supplies binary coordinate data.
  */
+
 #include "param.h"
+#include "ioctl.h"
 #include "tablet.h"
 #include "tty.h"
 
