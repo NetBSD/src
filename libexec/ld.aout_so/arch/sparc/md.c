@@ -1,5 +1,5 @@
 /*
- * $Id: md.c,v 1.4 1993/11/10 21:46:03 pk Exp $
+ * $Id: md.c,v 1.5 1993/11/13 11:20:34 pk Exp $
  */
 
 #include <sys/param.h>
@@ -291,6 +291,6 @@ long	where;
 long	*savep;
 {
 	*savep = *(long *)where;
-	*(long *)where = TRAP;
+	*(long *)where = BPT;
 }
 
