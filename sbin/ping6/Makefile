@@ -1,7 +1,9 @@
-# $NetBSD: Makefile,v 1.7 2002/05/26 13:01:21 itojun Exp $
+# $NetBSD: Makefile,v 1.8 2005/02/09 14:09:46 xtraeme Exp $
 
 PROG=	ping6
 MAN=	ping6.8
+
+WARNS=	3
 
 BINOWN=	root
 BINMODE=4555
