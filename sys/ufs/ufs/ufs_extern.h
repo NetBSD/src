@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.34 2003/06/28 14:22:28 darrenr Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.35 2003/06/29 18:43:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -113,7 +113,7 @@ void ufs_ihashinit __P((void));
 void ufs_ihashreinit __P((void));
 void ufs_ihashdone __P((void));
 struct vnode *ufs_ihashlookup __P((dev_t, ino_t));
-struct vnode *ufs_ihashget __P((dev_t, ino_t, int, struct lwp *));
+struct vnode *ufs_ihashget __P((dev_t, ino_t, int));
 void ufs_ihashins __P((struct inode *));
 void ufs_ihashrem __P((struct inode *));
 
@@ -158,9 +158,9 @@ void ufs_init __P((void));
 void ufs_reinit __P((void));
 void ufs_done __P((void));
 int ufs_start __P((struct mount *, int, struct lwp *));
-int ufs_root __P((struct mount *, struct vnode **, struct lwp *));
+int ufs_root __P((struct mount *, struct vnode **));
 int ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
-int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **, struct lwp *));
+int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **));
 int ufs_check_export __P((struct mount *, struct mbuf *, int *,
 		struct ucred **));
 

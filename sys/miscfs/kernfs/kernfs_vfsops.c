@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.50 2003/06/28 14:22:02 darrenr Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.51 2003/06/29 18:43:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.50 2003/06/28 14:22:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.51 2003/06/29 18:43:32 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -72,14 +72,13 @@ int	kernfs_mount __P((struct mount *, const char *, void *,
 	    struct nameidata *, struct lwp *));
 int	kernfs_start __P((struct mount *, int, struct lwp *));
 int	kernfs_unmount __P((struct mount *, int, struct lwp *));
-int	kernfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int	kernfs_root __P((struct mount *, struct vnode **));
 int	kernfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct lwp *));
 int	kernfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	kernfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **,
-			   struct lwp *));
+int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
@@ -237,10 +236,9 @@ kernfs_unmount(mp, mntflags, l)
 }
 
 int
-kernfs_root(mp, vpp, l)
+kernfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *vp;
 
@@ -314,11 +312,10 @@ kernfs_sync(mp, waitfor, uc, l)
  * Currently unsupported.
  */
 int
-kernfs_vget(mp, ino, vpp, l)
+kernfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -326,11 +323,10 @@ kernfs_vget(mp, ino, vpp, l)
 
 /*ARGSUSED*/
 int
-kernfs_fhtovp(mp, fhp, vpp, l)
+kernfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);

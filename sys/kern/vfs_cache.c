@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.43 2003/06/28 14:21:58 darrenr Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.44 2003/06/29 18:43:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.43 2003/06/28 14:21:58 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.44 2003/06/29 18:43:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -187,7 +187,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0);
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = vget(vp, LK_EXCLUSIVE, cnp->cn_lwp);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() succeeded and both LOCKPARENT and
 		 * ISLASTCN is set, lock the directory vnode as well.
@@ -200,7 +200,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = vget(vp, LK_EXCLUSIVE, cnp->cn_lwp);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() failed or either of LOCKPARENT or
 		 * ISLASTCN is set, unlock the directory vnode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.15 2003/06/28 14:22:29 darrenr Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.16 2003/06/29 18:43:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.15 2003/06/28 14:22:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.16 2003/06/29 18:43:48 thorpej Exp $");
 
 #include "opt_quota.h"
 
@@ -82,15 +82,14 @@ ufs_start(mp, flags, l)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp, l)
+ufs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp, l)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -202,17 +201,16 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp, l)
+ufs_fhtovp(mp, ufhp, vpp)
 	struct mount *mp;
 	struct ufid *ufhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp, l)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}

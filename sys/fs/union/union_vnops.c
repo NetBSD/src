@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.5 2003/06/29 18:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.5 2003/06/29 18:43:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 		if (vfs_busy(mp, 0, 0))
 			continue;
 
-		error = VFS_ROOT(mp, &tdvp, cnp->cn_lwp);
+		error = VFS_ROOT(mp, &tdvp);
 		vfs_unbusy(mp);
 		if (error) {
 			vput(dvp);
@@ -506,7 +506,7 @@ union_lookup(v)
 		VOP_UNLOCK(lowervp, 0);
 
 	error = union_allocvp(ap->a_vpp, dvp->v_mount, dvp, upperdvp, cnp,
-			      uppervp, lowervp, 1, cnp->cn_lwp);
+			      uppervp, lowervp, 1);
 
 	if (error) {
 		if (uppervp != NULLVP)
@@ -558,7 +558,7 @@ union_create(v)
 			return (error);
 
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP, cnp, vp,
-				NULLVP, 1, cnp->cn_lwp);
+				NULLVP, 1);
 		if (error)
 			vput(vp);
 		return (error);
@@ -617,7 +617,7 @@ union_mknod(v)
 			return (error);
 
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
-				      cnp, vp, NULLVP, 1, cnp->cn_lwp);
+				      cnp, vp, NULLVP, 1);
 		if (error)
 		    vput(vp);
 		return (error);
@@ -1454,7 +1454,7 @@ union_mkdir(v)
 		}
 
 		error = union_allocvp(ap->a_vpp, ap->a_dvp->v_mount, ap->a_dvp,
-				NULLVP, cnp, vp, NULLVP, 1, cnp->cn_lwp);
+				NULLVP, cnp, vp, NULLVP, 1);
 		vrele(ap->a_dvp);
 		if (error)
 			vput(vp);

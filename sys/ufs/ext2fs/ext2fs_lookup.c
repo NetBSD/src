@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.25 2003/06/28 14:22:24 darrenr Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.26 2003/06/29 18:43:39 thorpej Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.25 2003/06/28 14:22:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.26 2003/06/29 18:43:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,8 +586,7 @@ found:
 			*vpp = vdp;
 			return (0);
 		}
-		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp,
-		    cnp->cn_lwp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
 			return (error);
 		/*
 		 * If directory is "sticky", then user must own
@@ -627,7 +626,7 @@ found:
 		 */
 		if (dp->i_number == foundino)
 			return (EISDIR);
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -662,7 +661,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -680,8 +679,7 @@ found:
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp,
-		    cnp->cn_lwp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
@@ -1029,10 +1027,9 @@ ext2fs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ext2fs_checkpath(source, target, cred, l)
+ext2fs_checkpath(source, target, cred)
 	struct inode *source, *target;
 	struct ucred *cred;
-	struct lwp *l;
 {
 	struct vnode *vp;
 	int error, rootino, namlen;
@@ -1075,7 +1072,7 @@ ext2fs_checkpath(source, target, cred, l)
 		if (ino == rootino)
 			break;
 		vput(vp);
-		error = VFS_VGET(vp->v_mount, ino, &vp, l);
+		error = VFS_VGET(vp->v_mount, ino, &vp);
 		if (error != 0) {
 			vp = NULL;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.8 2003/06/28 14:21:50 darrenr Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.9 2003/06/29 18:43:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.8 2003/06/28 14:21:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.9 2003/06/29 18:43:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static int	ntfs_mount __P((struct mount *, const char *, void *,
 #endif
 static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 				   struct lwp *));
-static int	ntfs_root __P((struct mount *, struct vnode **, struct lwp *));
+static int	ntfs_root __P((struct mount *, struct vnode **));
 static int	ntfs_start __P((struct mount *, int, struct lwp *));
 static int	ntfs_statfs __P((struct mount *, struct statfs *,
 				 struct lwp *));
@@ -83,7 +83,7 @@ static int	ntfs_sync __P((struct mount *, int, struct ucred *,
 			       struct lwp *));
 static int	ntfs_unmount __P((struct mount *, int, struct lwp *));
 static int	ntfs_vget __P((struct mount *mp, ino_t ino,
-			       struct vnode **vpp, struct lwp *));
+			       struct vnode **vpp));
 static int	ntfs_mountfs __P((struct vnode *, struct mount *, 
 				  struct ntfs_args *, struct lwp *));
 static int	ntfs_vptofh __P((struct vnode *, struct fid *));
@@ -98,7 +98,7 @@ static void	ntfs_init __P((void));
 static void	ntfs_reinit __P((void));
 static void	ntfs_done __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
-				 struct vnode **, struct lwp *));
+				 struct vnode **));
 static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
 				   int *, struct ucred **));
 static int	ntfs_mountroot __P((void));
@@ -544,8 +544,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	{
 		int pi[3] = { NTFS_MFTINO, NTFS_ROOTINO, NTFS_BITMAPINO };
 		for (i=0; i<3; i++) {
-			error = VFS_VGET(mp, pi[i], &(ntmp->ntm_sysvn[pi[i]]),
-					 l);
+			error = VFS_VGET(mp, pi[i], &(ntmp->ntm_sysvn[pi[i]]));
 			if(error)
 				goto out1;
 			ntmp->ntm_sysvn[pi[i]]->v_flag |= VSYSTEM;
@@ -575,7 +574,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 		struct attrdef ad;
 
 		/* Open $AttrDef */
-		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp, l);
+		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp);
 		if(error) 
 			goto out1;
 
@@ -728,15 +727,14 @@ ntfs_unmount(
 static int
 ntfs_root(
 	struct mount *mp,
-	struct vnode **vpp,
-	struct lwp *l)
+	struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error = 0;
 
 	dprintf(("ntfs_root(): sysvn: %p\n",
 		VFSTONTFS(mp)->ntm_sysvn[NTFS_ROOTINO]));
-	error = VFS_VGET(mp, (ino_t)NTFS_ROOTINO, &nvp, l);
+	error = VFS_VGET(mp, (ino_t)NTFS_ROOTINO, &nvp);
 	if(error) {
 		printf("ntfs_root: VFS_VGET failed: %d\n",error);
 		return (error);
@@ -846,8 +844,7 @@ ntfs_fhtovp(
 #elif defined(__NetBSD__)
 	struct mount *mp,
 	struct fid *fhp,
-	struct vnode **vpp,
-	struct lwp *l)
+	struct vnode **vpp)
 #else
 	struct mount *mp,
 	struct fid *fhp,
@@ -864,7 +861,7 @@ ntfs_fhtovp(
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, l, vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curlwp, vpp); /* XXX */
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -981,7 +978,7 @@ ntfs_vgetex(
 
 	if (FTOV(fp)) {
 		/* vget() returns error if the vnode has been recycled */
-		if (vget(FTOV(fp), lkflags, l) == 0) {
+		if (vget(FTOV(fp), lkflags) == 0) {
 			*vpp = FTOV(fp);
 			return (0);
 		}
@@ -1023,11 +1020,10 @@ static int
 ntfs_vget(
 	struct mount *mp,
 	ino_t ino,
-	struct vnode **vpp,
-	struct lwp *l)
+	struct vnode **vpp)
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, l, vpp);
+			LK_EXCLUSIVE | LK_RETRY, 0, curlwp, vpp); /* XXX */
 }
 
 #if defined(__FreeBSD__)

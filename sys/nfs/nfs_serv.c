@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.77 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.78 2003/06/29 18:43:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.77 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.78 2003/06/29 18:43:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ nfsrv3_access(nfsd, slp, lwp, mrq)
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+	    (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(1, (struct vattr *)0);
@@ -195,7 +195,7 @@ nfsrv_getattr(nfsd, slp, lwp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+	    (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(0);
 		return (0);
@@ -287,7 +287,7 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 	 * Now that we have all the fields, lets do it.
 	 */
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-	    (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+	    (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(preat_ret, &preat, postat_ret, &va);
@@ -528,7 +528,7 @@ nfsrv_readlink(nfsd, slp, lwp, mrq)
 	uiop->uio_segflg = UIO_SYSSPACE;
 	uiop->uio_lwp = (struct lwp *)0;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		m_freem(mp3);
 		nfsm_reply(2 * NFSX_UNSIGNED);
@@ -619,7 +619,7 @@ nfsrv_read(nfsd, slp, lwp, mrq)
 	reqlen = fxdr_unsigned(uint32_t, *tl);
 	reqlen = MIN(reqlen, NFS_SRVMAXDATA(nfsd));
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(1, (struct vattr *)0);
@@ -923,7 +923,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 		return (0);
 	}
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(forat_ret, &forat, aftat_ret, &va);
@@ -1190,7 +1190,7 @@ loop1:
 		forat_ret = aftat_ret = 1;
 		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp, 
 		    nfsd->nd_nam, &rdonly, (nfsd->nd_flag & ND_KERBAUTH),
-		    FALSE, lwp);
+		    FALSE);
 		if (!error) {
 		    if (v3)
 			forat_ret = VOP_GETATTR(vp, &forat, cred, lwp);
@@ -2057,7 +2057,7 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 	nfsm_srvmtofh(dfhp);
 	nfsm_srvnamesiz(len);
 	error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_WCCDATA(v3));
 		nfsm_srvpostop_attr(getret, &at);
@@ -2558,7 +2558,7 @@ nfsrv_readdir(nfsd, slp, lwp, mrq)
 		siz = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (!error && vp->v_type != VDIR) {
 		error = ENOTDIR;
 		vput(vp);
@@ -2817,7 +2817,7 @@ nfsrv_readdirplus(nfsd, slp, lwp, mrq)
 		siz = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (!error && vp->v_type != VDIR) {
 		error = ENOTDIR;
 		vput(vp);
@@ -2877,7 +2877,7 @@ again:
 	 * even be here otherwise.
 	 */
 	if (!getret) {
-		if ((getret = VFS_VGET(vp->v_mount, at.va_fileid, &nvp, lwp)))
+		if ((getret = VFS_VGET(vp->v_mount, at.va_fileid, &nvp)))
 			getret = (getret == EOPNOTSUPP) ?
 				NFSERR_NOTSUPP : NFSERR_IO;
 		else
@@ -2961,7 +2961,7 @@ again:
 			 * For readdir_and_lookup get the vnode using
 			 * the file number.
 			 */
-			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp, lwp))
+			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp))
 				goto invalid;
 			memset((caddr_t)nfhp, 0, NFSX_V3FH);
 			nfhp->fh_fsid =
@@ -3114,7 +3114,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(for_ret, &bfor, aft_ret, &aft);
@@ -3174,7 +3174,7 @@ nfsrv_statfs(nfsd, slp, lwp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -3248,7 +3248,7 @@ nfsrv_fsinfo(nfsd, slp, lwp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -3324,7 +3324,7 @@ nfsrv_pathconf(nfsd, slp, lwp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
-		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);

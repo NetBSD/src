@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.5 2003/06/29 18:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.5 2003/06/29 18:43:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static int union_relookup __P((struct union_mount *, struct vnode *,
 			       struct componentname *, const char *, int));
 int union_vn_close __P((struct vnode *, int, struct ucred *, struct lwp *));
 static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *, struct lwp *));
+struct vnode *union_dircache __P((struct vnode *));
 
 void
 union_init()
@@ -297,7 +297,7 @@ union_newsize(vp, uppersz, lowersz)
  * the vnode free list.
  */
 int
-union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache, l)
+union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	struct vnode **vpp;
 	struct mount *mp;
 	struct vnode *undvp;		/* parent union vnode */
@@ -306,7 +306,6 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache, l)
 	struct vnode *uppervp;		/* may be null */
 	struct vnode *lowervp;		/* may be null */
 	int docache;
-	struct lwp *l;
 {
 	int error;
 	struct union_node *un = NULL;
@@ -370,7 +369,7 @@ loop:
 			    (un->un_uppervp == uppervp ||
 			     un->un_uppervp == NULLVP) &&
 			    (UNIONTOV(un)->v_mount == mp)) {
-				if (vget(UNIONTOV(un), 0, l)) {
+				if (vget(UNIONTOV(un), 0)) {
 					union_list_unlock(hash);
 					goto loop;
 				}
@@ -1093,9 +1092,8 @@ union_dircache_r(vp, vppp, cntp)
 }
 
 struct vnode *
-union_dircache(vp, l)
+union_dircache(vp)
 	struct vnode *vp;
-	struct lwp *l;
 {
 	int cnt;
 	struct vnode *nvp = NULLVP;
@@ -1133,7 +1131,7 @@ union_dircache(vp, l)
 
 	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	VREF(*vpp);
-	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0, l);
+	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
 		VTOUNION(vp)->un_dircache = 0;
 		VTOUNION(nvp)->un_dircache = dircache;
@@ -1172,7 +1170,7 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 	if (vp->v_op != union_vnodeop_p)
 		return (0);
 
-	if ((lvp = union_dircache(vp, l)) == NULLVP)
+	if ((lvp = union_dircache(vp)) == NULLVP)
 		return (0);
 
 	/*
