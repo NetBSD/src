@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.2 2003/08/07 11:14:18 agc Exp $	*/
+/*	$NetBSD: want.c,v 1.3 2004/11/11 00:54:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -32,13 +32,48 @@ static struct utmp *buf;
 
 static void onintr(int);
 static int want(struct utmp *, int);
+static const char *gethost(struct utmp *, int);
+
+static const char *
+gethost(struct utmp* ut, int numeric)
+{
+#if FIRSTVALID == 0
+	return numeric ? "" : ut->ut_host;
+#else
+	if (numeric) {
+		static char buf[512];
+		const char *p;
+		struct sockaddr_storage *ss = &ut->ut_ss;
+		void *a;
+		switch (ss->ss_family) {
+		default:
+			(void)snprintf(buf, sizeof(buf), "%d: unknown family",
+				ss->ss_family);
+			return buf;
+		case 0:	/* reboot etc. entries */
+			return "";
+		case AF_INET:
+			a = &((struct sockaddr_in *)(void *)ss)->sin_addr;
+			break;
+		case AF_INET6:
+			a = &((struct sockaddr_in6 *)(void *)ss)->sin6_addr;
+			break;
+		}
+		if ((p = inet_ntop(ss->ss_family, a, buf, ss->ss_len)) != NULL)
+			return p;
+		(void)snprintf(buf, sizeof(buf), "%s", strerror(errno));
+		return buf;
+	} else
+		return ut->ut_host;
+#endif
+}
 
 /*
  * wtmp --
  *	read through the wtmp file
  */
 void
-wtmp(const char *file, int namesz, int linesz, int hostsz)
+wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 {
 	struct utmp	*bp;		/* current structure */
 	TTY	*T;			/* tty list entry */
@@ -83,7 +118,8 @@ wtmp(const char *file, int namesz, int linesz, int hostsz)
 					printf("%-*.*s  %-*.*s %-*.*s %s\n",
 					    namesz, namesz, bp->ut_name,
 					    linesz, linesz, bp->ut_line,
-					    hostsz, hostsz, bp->ut_host, ct);
+					    hostsz, hostsz,
+					    gethost(bp, numeric), ct);
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -103,7 +139,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz)
 				    linesz, linesz,
 				    bp->ut_line,
 				    hostsz, hostsz,
-				    bp->ut_host,
+				    gethost(bp, numeric),
 				    ct);
 					if (maxrec && !--maxrec)
 						return;
@@ -127,7 +163,8 @@ wtmp(const char *file, int namesz, int linesz, int hostsz)
 				printf("%-*.*s  %-*.*s %-*.*s %s ",
 				    namesz, namesz, bp->ut_name,
 				    linesz, linesz, bp->ut_line,
-				    hostsz, hostsz, bp->ut_host,
+				    hostsz, hostsz,
+				    gethost(bp, numeric),
 				    ct);
 				if (!T->logout)
 					puts("  still logged in");
