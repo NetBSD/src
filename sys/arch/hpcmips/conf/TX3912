@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.2 1999/12/08 15:56:03 uch Exp $
+#	$NetBSD: TX3912,v 1.3 1999/12/12 17:07:13 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -72,11 +72,9 @@ txcom1		at	tx39uart? slot 1
 #
 options USE_POLL	# p7416buf requires this
 
-#
-#	COMPAQ C-series
-#
 #options COMPAQ_LOCAL_INTR
 txcsbus3	at	tx39biu? platform COMPAQ_C
+txcsbus4	at	tx39biu? platform PHILIPS_NINO
 
 # PHILIPS 74ALVC*1624? connected keyboard
 #
@@ -86,13 +84,7 @@ skbd*		at	p7416buf?
 # ITE IT8368E PCMCIA buffer chip
 # card		... 3:2 (98)
 # insert/remove ... 5:1/8 (161/168)
-it8368e*	at	txcsbus3 regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
-
-#
-#	Philips Nino300
-#
-txcsbus4	at	tx39biu? platform PHILIPS_NINO
-it8368e*	at	txcsbus4 regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
+it8368e*	at	txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
 
 #
 #	misc unknown.
