@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32 2004/01/06 09:38:19 petrov Exp $
+#	$NetBSD: genassym.cf,v 1.33 2004/01/06 21:35:18 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_TF			offsetof(struct lwp, l_md.md_tf)
 define	L_FPSTATE		offsetof(struct lwp, l_md.md_fpstate)
 
 define	LSRUN		LSRUN
@@ -137,6 +138,7 @@ define	LSONPROC	LSONPROC
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_PID		offsetof(struct proc, p_pid)
+define	P_RASLIST	offsetof(struct proc, p_raslist)
 
 # user structure fields
 define	USIZ		sizeof(struct user)
