@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.15 1997/06/06 23:43:46 thorpej Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.16 1997/07/27 01:16:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -62,6 +62,12 @@ struct ad1848_softc {
 	u_int	sc_dma_cnt;
 #endif
 
+	char	sc_playrun;		/* running in continuous mode */
+	char	sc_recrun;		/* running in continuous mode */
+#define NOTRUNNING 0
+#define DMARUNNING 1
+#define PCMRUNNING 2
+
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
 	int	sc_drq;			/* DMA */
@@ -113,6 +119,8 @@ int	ad1848_set_params __P((void *, int, struct audio_params *, struct audio_para
 
 int	ad1848_round_blocksize __P((void *, int));
 
+int	ad1848_dma_init_output __P((void *, void *, int));
+int	ad1848_dma_init_input __P((void *, void *, int));
 int	ad1848_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	ad1848_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
@@ -143,4 +151,9 @@ int	ad1848_set_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 void	ad1848_mute_aux1 __P((struct ad1848_softc *, int /* onoff */));
 void	ad1848_mute_aux2 __P((struct ad1848_softc *, int /* onoff */));
+
+void   *ad1848_malloc __P((void *, unsigned long, int, int));
+void	ad1848_free __P((void *, void *, int));
+unsigned long ad1848_round __P((void *, unsigned long));
+
 #endif

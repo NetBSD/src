@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.7 1997/06/06 23:43:56 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.8 1997/07/27 01:17:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define MAX_ISADMA	65536
+
 #define	DMAMODE_WRITE	0
 #define	DMAMODE_READ	1
 #define	DMAMODE_LOOP	2
@@ -63,3 +65,7 @@ int	   isa_dmamem_map __P((struct device *, int, bus_addr_t, bus_size_t,
 void	   isa_dmamem_unmap __P((struct device *, int, caddr_t, size_t));
 int	   isa_dmamem_mmap __P((struct device *, int, bus_addr_t, bus_size_t,
 	       int, int, int));
+
+void      *isa_malloc __P((struct device *, int, size_t, int, int));
+void	   isa_free __P((void *, int));
+
