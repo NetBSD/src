@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.2 2004/05/20 17:42:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -124,7 +124,7 @@ res_nmkquery(res_state statp,
 	if ((buf == NULL) || (buflen < HFIXEDSZ))
 		return (-1);
 	memset(buf, 0, HFIXEDSZ);
-	hp = (HEADER *) buf;
+	hp = (HEADER *)(void *)buf;
 	hp->id = htons(++statp->id);
 	hp->opcode = op;
 	hp->rd = (statp->options & RES_RECURSE) != 0U;
@@ -191,7 +191,7 @@ res_nmkquery(res_state statp,
 		ns_put16(datalen, cp);
 		cp += INT16SZ;
 		if (datalen) {
-			memcpy(cp, data, datalen);
+			memcpy(cp, data, (size_t)datalen);
 			cp += datalen;
 		}
 		hp->ancount = htons(1);
@@ -225,7 +225,7 @@ res_nopt(res_state statp,
 		printf(";; res_nopt()\n");
 #endif
 
-	hp = (HEADER *) buf;
+	hp = (HEADER *)(void *)buf;
 	cp = buf + n0;
 	ep = buf + buflen;
 
