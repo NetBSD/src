@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 1996/02/02 18:08:50 mycroft Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.5 1996/03/03 11:18:59 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,9 +38,9 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 
-#include <ddb/db_variables.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_variables.h>
 
 #include <vax/vax/db_disasm.h>
 
