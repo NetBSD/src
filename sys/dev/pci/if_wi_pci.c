@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.16 2003/01/02 06:26:49 dyoung Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.17 2003/03/27 04:34:16 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.16 2003/01/02 06:26:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.17 2003/03/27 04:34:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,6 +323,8 @@ wi_pci_attach(parent, self, aux)
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}
+
+	sc->sc_reset = wi_pci_reset;
 
 	/* Add a suspend hook to restore PCI config state */
 	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
