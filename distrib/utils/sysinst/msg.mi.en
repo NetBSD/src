@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.133 2004/12/15 08:35:17 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.134 2005/01/09 06:30:08 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -746,7 +746,7 @@ message rootmissing
 }
 
 message badroot
-{The completed new root fileystem failed a basic sanity check.
+{The completed new root filesystem failed a basic sanity check.
  Are you sure you installed all the required sets?
 }
 
