@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.3.2.2 2000/07/23 16:13:49 he Exp $	*/
+/*	$NetBSD: dvma.c,v 1.3.2.3 2000/07/27 17:30:27 he Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -65,7 +65,7 @@ dvma_init()
 
 	/* Align our address base with the DVMA segment */
 	dmava = DVMA_BASE;
-	base_va = segva = (((int)&start)  - 0x40000) & DVMA_BASE;
+	base_va = segva = (((int)&start) & DVMA_BASE) - 0x40000;
 
 	/* Then double-map the DVMA adresses */
 	nseg = (DVMA_MAPLEN + NBPSG - 1) >> SGSHIFT;
