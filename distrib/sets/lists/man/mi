@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.238 2000/05/03 23:04:13 augustss Exp $
+# $NetBSD: mi,v 1.239 2000/05/03 23:30:35 simonb Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -858,7 +858,6 @@
 ./usr/share/man/cat8/ntpdc.0
 ./usr/share/man/cat8/ntpq.0
 ./usr/share/man/cat8/ntptime.0
-./usr/share/man/cat8/ntptimeset.0
 ./usr/share/man/cat8/ntptrace.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
@@ -1839,7 +1838,6 @@
 ./usr/share/man/man8/ntpdc.8
 ./usr/share/man/man8/ntpq.8
 ./usr/share/man/man8/ntptime.8
-./usr/share/man/man8/ntptimeset.8
 ./usr/share/man/man8/ntptrace.8
 ./usr/share/man/man8/pac.8
 ./usr/share/man/man8/pcnfsd.8
