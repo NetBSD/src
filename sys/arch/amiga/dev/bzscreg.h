@@ -1,3 +1,5 @@
+/*	$NetBSD: bzscreg.h,v 1.2 1996/04/21 21:10:54 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  *

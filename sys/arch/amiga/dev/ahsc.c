@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.11 1996/03/17 01:17:00 thorpej Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.12 1996/04/21 21:10:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,8 +58,12 @@ int ahscmatch __P((struct device *, void *, void *));
 void ahsc_enintr __P((struct sbic_softc *));
 void ahsc_dmastop __P((struct sbic_softc *));
 int ahsc_dmanext __P((struct sbic_softc *));
-int ahsc_dmaintr __P((struct sbic_softc *));
+int ahsc_dmaintr __P((void *));
 int ahsc_dmago __P((struct sbic_softc *, char *, int, int));
+
+#ifdef DEBUG
+void ahsc_dump __P((void));
+#endif
 
 struct scsi_adapter ahsc_scsiswitch = {
 	sbic_scsicmd,
@@ -96,7 +100,6 @@ ahscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	char *mbusstr;
 
 	mbusstr = auxp;
@@ -243,9 +246,10 @@ ahsc_dmastop(dev)
 }
 
 int
-ahsc_dmaintr(dev)
-	struct sbic_softc *dev;
+ahsc_dmaintr(arg)
+	void *arg;
 {
+	struct sbic_softc *dev = arg;
 	volatile struct sdmac *sdp;
 	int stat, found;
 
@@ -288,7 +292,6 @@ ahsc_dmanext(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int i, stat;
 
 	sdp = dev->sc_cregs;
 

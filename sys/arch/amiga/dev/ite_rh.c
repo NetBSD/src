@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.5 1995/04/06 19:19:45 chopps Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.6 1996/04/21 21:12:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -48,6 +48,8 @@
 #include <amiga/dev/grf_rhreg.h>
 #include <amiga/dev/itevar.h>
 
+static void screen_up __P((struct ite_softc *, int, int, int));
+static void screen_down __P((struct ite_softc *, int, int, int));
 
 /*
  * grfrh_cnprobe is called when the console is being initialized
@@ -86,7 +88,6 @@ rh_init(ip)
 	struct ite_softc *ip;
 {
 	struct MonDef *md;
-	extern unsigned char RZ3StdPalette[];
 
 #if 0 /* Not in ite_rt.c - DC */
 	if (ip->grf == 0)
@@ -106,7 +107,9 @@ rh_cursor(ip, flag)
 	struct ite_softc *ip;
 	int flag;
 {
+#if 0
 	volatile u_char *ba = ip->grf->g_regkva;
+#endif
 
 	if (flag == START_CURSOROPT || flag == END_CURSOROPT)
 		return;
@@ -142,8 +145,6 @@ screen_up(ip, top, bottom, lines)
 	int bottom;
 	int lines;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -165,8 +166,6 @@ screen_down (ip, top, bottom, lines)
 	int bottom;
 	int lines;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -197,7 +196,6 @@ rh_putc(ip, c, dy, dx, mode)
 	int dx;
 	int mode;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
 	volatile u_char * fb = ip->grf->g_fbkva;
 	register u_char attr;
 
@@ -233,9 +231,9 @@ rh_scroll(ip, sy, sx, count, dir)
 	int count;
 	int dir;
 {
-	volatile u_char * ba = ip->grf->g_regkva;
+#ifndef	RETINA_SPEED_HACK
 	u_long * fb = (u_long *) ip->grf->g_fbkva;
-	register int height, dy, i;
+#endif
 
 	rh_cursor(ip, ERASE_CURSOR);
 
