@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 1997/11/05 04:13:32 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.7 1999/11/06 17:42:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,8 +40,8 @@
 #define	MCOUNT \
 extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
 	int selfpc, frompcindex; \
-	__asm__("movl a6@(4),%0" : "=r" (selfpc)); \
-	__asm__("movl a6@(0)@(4),%0" : "=r" (frompcindex)); \
+	__asm__("movl %%a6@(4),%0" : "=r" (selfpc)); \
+	__asm__("movl %%a6@(0)@(4),%0" : "=r" (frompcindex)); \
 	_mcount(frompcindex, selfpc); \
 }
 
@@ -53,9 +53,9 @@ extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
  * recursively.
  */
 #define MCOUNT_ENTER \
-	__asm__("movw	sr,%0" : "=g" (s)); \
-	__asm__("movw	#0x2700,sr")
+	__asm__("movw	%%sr,%0" : "=g" (s)); \
+	__asm__("movw	#0x2700,%%sr")
 
 #define MCOUNT_EXIT \
-	__asm__("movw	%0,sr" : : "g" (s))
+	__asm__("movw	%0,%%sr" : : "g" (s))
 #endif /* _KERNEL */
