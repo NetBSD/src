@@ -1,4 +1,4 @@
-/*	$NetBSD: bftest.c,v 1.4 2002/02/27 01:41:54 itojun Exp $	*/
+/*	$NetBSD: bftest.c,v 1.5 2005/02/06 06:05:19 perry Exp $	*/
 /*	$KAME: bftest.c,v 1.3 2000/11/08 05:58:24 itojun Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ static const char *bf_cipher[2] = {
 	"324ed0fef413a203", "cc91732b8022f684"
 };
 
-static void hex2bin __P((u_int8_t *, const char *));
-static const char *pt __P((u_int8_t *));
-int main __P((int, char **));
+static void hex2bin(u_int8_t *, const char *);
+static const char *pt(u_int8_t *);
+int main(int, char **);
 
 static void
 hex2bin(p, s)

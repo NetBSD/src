@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndaeltest.c,v 1.5 2003/08/28 22:31:46 uwe Exp $	*/
+/*	$NetBSD: rijndaeltest.c,v 1.6 2005/02/06 06:05:20 perry Exp $	*/
 /*	$KAME: rijndaeltest.c,v 1.7 2001/05/27 01:56:45 itojun Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ struct {
     },
 };
 
-static void hex2key __P((u_int8_t *, size_t, const char *));
-int main __P((int, char **));
+static void hex2key(u_int8_t *, size_t, const char *);
+int main(int, char **);
 
 static void
 hex2key(p, l, s)

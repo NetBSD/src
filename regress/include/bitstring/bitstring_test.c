@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring_test.c,v 1.7 2003/01/04 23:43:03 wiz Exp $	*/
+/*	$NetBSD: bitstring_test.c,v 1.8 2005/02/06 06:05:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ clearbits(b, n)
   bitstr_t *b;
   int n;
 {
-  register int i = bitstr_size(n);
+  int i = bitstr_size(n);
   while(i--) 
     *(b + i) = 0;
 }
@@ -234,7 +234,7 @@ printbits(b, n)
   bitstr_t *b;
   int n;
 {
-  register int i;
+  int i;
   int jc, js;
 
   bit_ffc(b, n, &jc);

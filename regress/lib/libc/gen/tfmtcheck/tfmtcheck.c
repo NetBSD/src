@@ -1,4 +1,4 @@
-/*	$NetBSD: tfmtcheck.c,v 1.1 2002/03/23 17:42:21 christos Exp $	*/
+/*	$NetBSD: tfmtcheck.c,v 1.2 2005/02/06 06:05:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *fmtcheck __P((const char *f1, const char *f2))
+const char *fmtcheck(const char *f1, const char *f2)
                 __attribute__((__format_arg__(2)));
 
 #include <err.h>

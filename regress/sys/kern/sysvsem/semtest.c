@@ -1,4 +1,4 @@
-/*	$NetBSD: semtest.c,v 1.4 2002/07/20 08:36:25 grant Exp $	*/
+/*	$NetBSD: semtest.c,v 1.5 2005/02/06 06:05:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,13 +55,13 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main __P((int, char *[]));
-void	print_semid_ds __P((struct semid_ds *, mode_t));
-void	sigsys_handler __P((int));
-void	sigchld_handler __P((int));
-void	cleanup __P((void));
-void	waiter __P((void));
-void	usage __P((void));
+int	main(int, char *[]);
+void	print_semid_ds(struct semid_ds *, mode_t);
+void	sigsys_handler(int);
+void	sigchld_handler(int);
+void	cleanup(void);
+void	waiter(void);
+void	usage(void);
 
 int	sender_semid = -1;
 pid_t	child_pid;

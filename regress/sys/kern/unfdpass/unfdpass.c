@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.6 2000/06/05 06:01:42 thorpej Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.7 2005/02/06 06:05:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,10 +59,10 @@
 
 #define	SOCK_NAME	"test-sock"
 
-int	main __P((int, char *[]));
-void	child __P((void));
-void	catch_sigchld __P((int));
-void	usage __P((char *progname));
+int	main(int, char *[]);
+void	child(void);
+void	catch_sigchld(int);
+void	usage(char *progname);
 
 #define	FILE_SIZE	128
 #define	MSG_SIZE	-1

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuspeed.c,v 1.5 2002/02/21 07:38:19 itojun Exp $	*/
+/*	$NetBSD: emuspeed.c,v 1.6 2005/02/06 06:05:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 const struct test {
 	char *name; 
-	void (*func)__P((int));
+	void (*func)(int);
 	char *comment;
 } testlist[] = {
 	{"Illegal", illegal, "(test: unimplemented)"},

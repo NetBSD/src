@@ -1,4 +1,4 @@
-/*	$NetBSD: casttest.c,v 1.5 2003/08/27 12:37:09 tron Exp $	*/
+/*	$NetBSD: casttest.c,v 1.6 2005/02/06 06:05:19 perry Exp $	*/
 /*	$KAME: casttest.c,v 1.5 2001/11/28 03:14:03 itojun Exp $	*/
 
 /*
@@ -127,8 +127,8 @@ static unsigned char c_b[16]={
 	0x80,0xAC,0x05,0xB8,0xE8,0x3D,0x69,0x6E};
 #endif
 
-int main __P((int, char **));
-int test1 __P((int));
+int main(int, char **);
+int test1(int);
 
 int
 main(argc, argv)

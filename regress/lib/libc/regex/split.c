@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.3 2002/02/21 07:38:18 itojun Exp $	*/
+/*	$NetBSD: split.c,v 1.4 2005/02/06 06:05:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -47,14 +47,14 @@ char *fields[];			/* list is not NULL-terminated */
 int nfields;			/* number of entries available in fields[] */
 char *sep;			/* "" white, "c" single char, "ab" [ab]+ */
 {
-	register char *p = string;
-	register char c;			/* latest character */
-	register char sepc = sep[0];
-	register char sepc2;
-	register int fn;
-	register char **fp = fields;
-	register char *sepp;
-	register int trimtrail;
+	char *p = string;
+	char c;			/* latest character */
+	char sepc = sep[0];
+	char sepc2;
+	int fn;
+	char **fp = fields;
+	char *sepp;
+	int trimtrail;
 
 	/* white space */
 	if (sepc == '\0') {
@@ -188,7 +188,7 @@ int argc;
 char *argv[];
 {
 	char buf[512];
-	register int n;
+	int n;
 #	define	MNF	10
 	char *fields[MNF];
 
@@ -220,7 +220,7 @@ char *seps;
 {
 #	define	NF	5
 	char *fields[NF];
-	register int nf;
+	int nf;
 
 	nf = split(string, fields, NF, seps);
 	print(nf, NF, fields);
@@ -231,8 +231,8 @@ int nf;
 int nfp;
 char *fields[];
 {
-	register int fn;
-	register int bound;
+	int fn;
+	int bound;
 
 	bound = (nf > nfp) ? nfp : nf;
 	printf("%d:\t", nf);
@@ -312,12 +312,12 @@ struct {
 regress()
 {
 	char buf[512];
-	register int n;
+	int n;
 	char *fields[RNF+1];
-	register int nf;
-	register int i;
-	register int printit;
-	register char *f;
+	int nf;
+	int i;
+	int printit;
+	char *f;
 
 	for (n = 0; tests[n].str != NULL; n++) {
 		(void) strcpy(buf, tests[n].str);

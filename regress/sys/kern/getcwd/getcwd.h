@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.h,v 1.2 2002/02/21 07:38:20 itojun Exp $	*/
+/*	$NetBSD: getcwd.h,v 1.3 2005/02/06 06:05:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,4 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern char *old_getcwd __P((char *, size_t));
+extern char *old_getcwd(char *, size_t);
