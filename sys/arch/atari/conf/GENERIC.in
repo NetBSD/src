@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.37 2004/06/26 07:32:05 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.38 2004/06/28 21:07:47 bouyer Exp $
 #
 # Generic atari
 #
@@ -165,6 +165,7 @@ options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10		# number of semaphore identifiers
 #options 	SEMUME=10		# max number of undo entries per proc.
 #options 	SEMMNU=30		# number of undo structures in system
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #endif
 
 #ifndef INSTALL_KERNEL

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.62 2004/06/26 07:32:09 abs Exp $
+# $NetBSD: GENERIC3X,v 1.63 2004/06/28 21:07:49 bouyer Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -25,6 +25,7 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
