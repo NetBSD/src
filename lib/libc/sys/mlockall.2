@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlockall.2,v 1.2 1999/06/16 23:30:28 thorpej Exp $
+.\"	$NetBSD: mlockall.2,v 1.3 1999/06/16 23:32:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,3 +135,9 @@ physical pages.
 Hence a process with two distinct locked mappings of the same physical page
 counts as 2 pages against the per-process limit and as only a single page
 in the system limit.
+.Pp
+The
+.Dv MCL_FUTURE
+flag to
+.Fn mlockall
+is not fully implemented.
