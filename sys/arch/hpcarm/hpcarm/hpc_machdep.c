@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.40 2002/03/24 18:12:55 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.41 2002/03/25 04:51:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -506,7 +506,8 @@ initarm(argc, argv, bi)
 	    &kernel_ptpt);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 #define SAIPIO_BASE		0xd0000000		/* XXX XXX */
 	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
 	    &kernel_pt_table[KERNEL_PT_IO]);

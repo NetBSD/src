@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2002/03/25 03:00:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2002/03/25 04:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2002/03/25 03:00:28 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2002/03/25 04:51:20 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1290,6 +1290,7 @@ pmap_create()
 	pmap->pm_obj.uo_refs = 1;
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;
+	pmap->pm_ptphint = NULL;
 
 	/* Now init the machine part of the pmap */
 	pmap_pinit(pmap);
@@ -2646,7 +2647,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		KASSERT(pmap != pmap_kernel());
 
 		/* if failure is allowed then don't try too hard */
-		ptp = pmap_get_ptp(pmap, va);
+		ptp = pmap_get_ptp(pmap, va & PD_MASK);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -3418,18 +3419,16 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 	if (pmap_pde_page(pmap_pde(pmap, va))) {
 
 		/* valid... check hint (saves us a PA->PG lookup) */
-#if 0
 		if (pmap->pm_ptphint &&
-		    ((unsigned)pmap_pde(pmap, va) & PG_FRAME) ==
+		    (pmap->pm_pdir[pmap_pdei(va)] & PG_FRAME) ==
 		    VM_PAGE_TO_PHYS(pmap->pm_ptphint))
 			return (pmap->pm_ptphint);
-#endif
 		ptp = uvm_pagelookup(&pmap->pm_obj, va);
 #ifdef DIAGNOSTIC
 		if (ptp == NULL)
 			panic("pmap_get_ptp: unmanaged user PTP");
 #endif
-//		pmap->pm_ptphint = ptp;
+		pmap->pm_ptphint = ptp;
 		return(ptp);
 	}
 
@@ -3461,7 +3460,7 @@ pmap_alloc_ptp(struct pmap *pmap, vaddr_t va)
 	ptp->wire_count = 1;	/* no mappings yet */
 	pmap_map_in_l1(pmap, va, VM_PAGE_TO_PHYS(ptp), TRUE);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
-//	pmap->pm_ptphint = ptp;
+	pmap->pm_ptphint = ptp;
 	return (ptp);
 }
 
@@ -3486,7 +3485,8 @@ pmap_growkernel(maxkvaddr)
 	s = splhigh();	/* to be safe */
 	simple_lock(&kpm->pm_obj.vmobjlock);
 	/* due to the way the arm pmap works we map 4MB at a time */
-	for (/*null*/ ; pmap_curmaxkvaddr < maxkvaddr ; pmap_curmaxkvaddr += 4 * NBPD) {
+	for (/*null*/ ; pmap_curmaxkvaddr < maxkvaddr;
+	     pmap_curmaxkvaddr += 4 * NBPD) {
 
 		if (uvm.page_init_done == FALSE) {
 
@@ -3501,7 +3501,7 @@ pmap_growkernel(maxkvaddr)
 			pmap_zero_page(ptaddr);
 
 			/* map this page in */
-			pmap_map_in_l1(kpm, (pmap_curmaxkvaddr + 1), ptaddr, TRUE);
+			pmap_map_in_l1(kpm, pmap_curmaxkvaddr, ptaddr, TRUE);
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
@@ -3514,14 +3514,14 @@ pmap_growkernel(maxkvaddr)
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
-		if ((ptp = pmap_alloc_ptp(kpm, (pmap_curmaxkvaddr + 1))) == NULL) {
+		if ((ptp = pmap_alloc_ptp(kpm, pmap_curmaxkvaddr)) == NULL)
 			panic("pmap_growkernel: alloc ptp failed");
-		}
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
-		    pmap_map_in_l1(pm, (pmap_curmaxkvaddr + 1), VM_PAGE_TO_PHYS(ptp), TRUE); 
+			pmap_map_in_l1(pm, pmap_curmaxkvaddr,
+			    VM_PAGE_TO_PHYS(ptp), TRUE); 
 		}
 
 		simple_unlock(&pmaps_lock);
