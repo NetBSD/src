@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.14 2002/12/04 18:26:56 jdolecek Exp $
+$NetBSD: version,v 1.15 2003/01/23 21:22:24 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -22,3 +22,7 @@ is taken as the current.
 2.11:	loadfile() update:  ELF symbols no longer need backward seeks.
 2.12:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 2.13:	Support boot from 1.44MB floppies in 2.88MB floppy drives.
+2.14:	Add a quirk for BIOSes which report extended memory size
+	in slightly nonstandard way in int15, function 0xE801
+2.15:	Use int15/0xc7 to get memory information on machines which support
+	it, like later IBM PS/2 machines
