@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.67 2003/06/26 10:23:23 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.68 2003/06/27 18:16:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -214,7 +214,7 @@ the specified
 .Pp
 .Nm
 has a
-.Xr more 1 -like
+.Xr more 1 Ns -like
 functionality; if a number of lines in a command's output exceeds the number
 defined in the
 .Va lines
@@ -252,7 +252,7 @@ supports the following commands:
 .Bl -tag -width 5n
 .It Xo
 .Sm off
-.Ic !
+.Ic \&!
 .Ar address
 .Oo
 .Cm ( Ar expression
@@ -684,7 +684,7 @@ is specified, a character is displayed immediately after each symbol
 name indicating the type of symbol.
 .Pp
 For
-.Ns Xr a.out 5 -format
+.Xr a.out 5 Ns -format
 symbol tables,
 absolute symbols display
 .Sy @ ,
