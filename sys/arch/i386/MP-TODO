@@ -1,0 +1,28 @@
+TODO list for MP branch (incomplete):
+
+showstoppers for merge back to -current:
+
+ - rewrite interrupt dispatch so that multi-level shared interrupts
+are no longer broken.
+
+ - Figure out why things are broken on !MULTIPROCESSOR
+
+ - Sort out cpu feature probes [runs on new cpu], identify_cpu() [runs
+on BSP] and cpu initialization [runs on new cpu]; finish banishing
+most global variables containing cpu configuration information.
+
+ - careful code review of all diffs from -current
+
+"would be nice":
+
+ - try out mpbios+ioapic w/o MULTIPROCESSOR
+
+ - implement MI softint API
+
+ - figure out why cpu time accounting screws up bigtime:
+
+> ld -Ttext c0100000 -e start -X -o netbsd ${SYSTEM_OBJ} vers.o
+> text    data    bss     dec     hex     filename
+> 3839853 369428  322400  4531681 4525e1  netbsd
+> -1787494046.7u 681459032.2s 7:26.71 2421928.1% 0+0k 17+11379io 99pf+0w
+
