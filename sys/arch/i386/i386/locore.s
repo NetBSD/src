@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.20 1993/10/27 05:51:41 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.21 1993/10/27 17:22:24 mycroft Exp $
  */
 
 
@@ -1372,8 +1372,7 @@ badsw:
 ENTRY(cpu_swtch)
 
 	/* switch to new process. first, save context as needed */
-
-	movl	_curproc,%ecx
+	movl	4(%esp),%ecx
 
 	/* if no process to save, don't bother */
 	testl	%ecx,%ecx
