@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.15.2.1 2004/05/22 16:10:37 he Exp $	*/
+/*	$NetBSD: assert.h,v 1.15.2.2 2004/07/02 18:13:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,11 +47,11 @@
 #undef assert
 
 #ifdef NDEBUG
-# ifndef lint
+# ifndef __lint__
 #  define assert(e)	(__static_cast(void,0))
-# else /* !lint */
+# else /* !__lint__ */
 #  define assert(e)
-# endif /* lint */
+# endif /* __lint__ */
 #else /* !NDEBUG */
 # if __STDC__
 #  define assert(e)							\
@@ -66,11 +66,11 @@
 
 #undef _DIAGASSERT
 #if !defined(_DIAGNOSTIC)
-# if !defined(lint)
+# if !defined(__lint__)
 #  define _DIAGASSERT(e) (__static_cast(void,0))
-# else /* !lint */
+# else /* !__lint__ */
 #  define _DIAGASSERT(e)
-# endif /* lint */
+# endif /* __lint__ */
 #else /* _DIAGNOSTIC */
 # if __STDC__
 #  define _DIAGASSERT(e)						\
