@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.590 2003/12/31 16:44:26 jonathan Exp $
+# $NetBSD: GENERIC,v 1.591 2004/01/09 18:31:25 perry Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.590 $"
+#ident 		"GENERIC-$Revision: 1.591 $"
 
 maxusers	32		# estimated number of users
 
@@ -95,7 +95,7 @@ options 	USERCONF	# userconf(4) support
 #options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
 #options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
@@ -690,7 +690,7 @@ ed*	at edc?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
