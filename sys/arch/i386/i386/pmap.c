@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2004/05/13 12:24:05 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.174 2004/07/05 11:19:46 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2004/05/13 12:24:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2004/07/05 11:19:46 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1994,7 +1994,11 @@ pmap_reactivate(struct pmap *pmap)
 	 * for this pmap in the meantime.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi(); /* protect from tlb shootdown ipis. */
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
@@ -2075,7 +2079,11 @@ pmap_load()
 	 * mark the pmap in use by this processor.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
@@ -3706,7 +3714,11 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 
 	self = curcpu();
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 #if 0
 	printf("dshootdown %lx\n", va);
 #endif
@@ -3790,7 +3802,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 /*
  * pmap_do_tlb_shootdown_checktlbstate: check and update ci_tlbstate.
  *
- * => called at splipi.
+ * => called at splipi if MULTIPROCESSOR.
+ * => called at splvm if !MULTIPROCESSOR.
  * => return TRUE if we need to maintain user tlbs.
  */
 static __inline boolean_t
@@ -3836,10 +3849,15 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-#endif
+#endif /* MULTIPROCESSOR */
+
 	KASSERT(self == curcpu());
 
+#ifdef MULTIPROCESSOR
 	s = splipi();
+#else /* MULTIPROCESSOR */
+	s = splvm();
+#endif /* MULTIPROCESSOR */
 
 	__cpu_simple_lock(&pq->pq_slock);
 
@@ -3882,7 +3900,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
-#endif
+#endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 
 	splx(s);
