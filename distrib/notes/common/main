@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.162 2002/03/11 07:02:12 itojun Exp $
+.\"	$NetBSD: main,v 1.163 2002/03/14 13:19:15 uebayasi Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1648,6 +1648,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Konrad Schroder Ta Mt perseant@netbsd.org
 .It Ta Reed Shadgett Ta Mt dent@netbsd.org
 .It Ta Tim Shepard Ta Mt shep@netbsd.org
+.It Ta Takeshi Shibagaki Ta Mt shiba@netbsd.org
 .It Ta Takao Shinohara Ta Mt shin@netbsd.org
 .It Ta Takuya SHIOZAKI Ta Mt tshiozak@netbsd.org
 .It Ta Chuck Silvers Ta Mt chs@netbsd.org
@@ -1665,6 +1666,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matt Thomas Ta Mt matt@netbsd.org
 .It Ta Christoph Toshok Ta Mt toshok@netbsd.org
 .It Ta UCHIYAMA Yasushi Ta Mt uch@netbsd.org
+.It Ta Masao Uebayashi Ta Mt uebayasi@netbsd.org
 .It Ta Shuichiro URATA Ta Mt ur@netbsd.org
 .It Ta Todd Vierling Ta Mt tv@netbsd.org
 .It Ta Aymeric Vincent Ta Mt aymeric@netbsd.org
@@ -1681,7 +1683,6 @@ them, and would like to mentioned, tell us!)
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
-.It Ta Takeshi Shibagaki Ta Mt shiba@netbsd.org
 .
 .El
 .
