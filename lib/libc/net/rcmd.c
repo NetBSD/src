@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.31 1999/05/03 15:26:12 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.32 1999/07/04 00:43:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.31 1999/05/03 15:26:12 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.32 1999/07/04 00:43:44 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -397,21 +397,62 @@ int
 rresvport(alport)
 	int *alport;
 {
-	struct sockaddr_in sin;
-	int s;
+	return rresvport_af(alport, AF_INET);
+}
 
+int
+rresvport_af(alport, family)
+	int *alport;
+	int family;
+{
+	struct sockaddr_storage ss;
+	struct sockaddr *sa;
+	int salen;
+	int s;
+	u_int16_t *portp;
+
+	memset(&ss, 0, sizeof(ss));
+	sa = (struct sockaddr *)&ss;
+	switch (family) {
+	case AF_INET:
 #ifdef BSD4_4
-	sin.sin_len = sizeof(struct sockaddr_in);
+		sa->sa_len =
 #endif
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = INADDR_ANY;
-	s = socket(AF_INET, SOCK_STREAM, 0);
+		salen = sizeof(struct sockaddr_in);
+		portp = &((struct sockaddr_in *)sa)->sin_port;
+		break;
+	case AF_INET6:
+#ifdef BSD4_4
+		sa->sa_len =
+#endif
+		salen = sizeof(struct sockaddr_in6);
+		portp = &((struct sockaddr_in6 *)sa)->sin6_port;
+		break;
+	default:
+		portp = NULL;
+		return EAFNOSUPPORT;
+	}
+	sa->sa_family = family;
+	s = socket(family, SOCK_STREAM, 0);
 	if (s < 0)
 		return (-1);
-#ifndef BSD4_4
+#ifdef BSD4_4
+	if (family == AF_INET) {
+		*portp = 0;
+		if (bindresvport(s, (struct sockaddr_in *)sa) < 0) {
+			int sverr = errno;
+
+			(void)close(s);
+			errno = sverr;
+			return (-1);
+		}
+		*alport = (int)ntohs(*portp);
+		return (s);
+	}
+#endif
 	for (;;) {
-		sin.sin_port = htons((u_short)*alport);
-		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
+		*portp = htons((u_short)*alport);
+		if (bind(s, sa, salen) >= 0)
 			return (s);
 		if (errno != EADDRINUSE) {
 			(void)close(s);
@@ -424,18 +465,6 @@ rresvport(alport)
 			return (-1);
 		}
 	}
-#else
-	sin.sin_port = 0;
-	if (bindresvport(s, &sin) < 0) {
-		int sverr = errno;
-
-		(void)close(s);
-		errno = sverr;
-		return (-1);
-	}
-	*alport = (int)ntohs(sin.sin_port);
-	return (s);
-#endif
 }
 
 int	__check_rhosts_file = 1;
