@@ -1,4 +1,4 @@
-/*  $NetBSD: mii_adapters_id.h,v 1.1 1997/10/17 17:33:57 bouyer Exp $   */
+/*  $NetBSD: mii_adapters_id.h,v 1.1.2.1 1997/11/17 02:07:05 thorpej Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -30,11 +30,12 @@
  */
 
 /* adapter types ( msb = vendor, lsb = board ) */
-#define COMPAQ_INT_NETLIGENT_10_100		0x0001
-#define COMPAQ_DUAL_NETLIGENT_10_100	0x0002
-#define COMPAQ_NETLIGENT_10_100			0x0003
-#define COMPAQ_NETLIGENT_10				0x0004
-#define COMPAQ_DSKP4000					0x0005
-#define COMPAQ_INT_NETFLEX				0x0006
-#define COMPAQ_NETFLEX_BNC				0x0007
-#define COMPAQ_NETFLEX					0x0008
+#define	COMPAQ_INT_NETLIGENT_10_100	0x0001
+#define	COMPAQ_DUAL_NETLIGENT_10_100	0x0002
+#define	COMPAQ_NETLIGENT_10_100		0x0003
+#define	COMPAQ_NETLIGENT_10		0x0004
+#define	COMPAQ_DSKP4000			0x0005
+#define	COMPAQ_INT_NETFLEX		0x0006
+#define	COMPAQ_NETFLEX_BNC		0x0007
+#define	COMPAQ_NETFLEX			0x0008
+#define	TI_TLAN				0x0013
