@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/25 06:58:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1998/02/09 06:25:19 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 SRCS=	pstat.c swaplist.c
@@ -14,3 +14,8 @@ CPPFLAGS+=-I${.CURDIR}/../../sbin/swapctl
 .PATH: ${.CURDIR}/../../sbin/swapctl
 
 .include <bsd.prog.mk>
+
+# XXX
+.if defined(UVM)
+CPPFLAGS+=      -DUVM
+.endif
