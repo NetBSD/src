@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.2 1995/03/03 01:37:22 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.3 1995/04/22 12:41:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -57,7 +57,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-#include <alpha/tc/dmavar.h>
+#include <alpha/tc/tcds_dmavar.h>
 #include <alpha/tc/espreg.h>
 #include <alpha/tc/espvar.h>
 #include <alpha/tc/tc.h>
