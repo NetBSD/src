@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2000/05/23 16:05:51 tv Exp $
+	$NetBSD: syscalls.master,v 1.28 2000/07/18 14:15:05 onoe Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -586,10 +586,14 @@
 337	UNIMPL		kldsym
 338	UNIMPL		jail
 339	UNIMPL		pioctl
-340	UNIMPL		4.0 sigprocmask
-341	UNIMPL		4.0 sigsuspend
-342	UNIMPL		4.0 sigaction
-343	UNIMPL		4.0 sigpending
+340	NOARGS		{ int sys___sigprocmask14(int how, \
+			    const sigset_t *set, \
+			    sigset_t *oset); }
+341	NOARGS		{ int sys___sigsuspend14(const sigset_t *set); }
+342	STD		{ int freebsd_sys_sigaction4(int signum, \
+			    const struct freebsd_sigaction4 *nsa, \
+			    struct freebsd_sigaction4 *osa); }
+343	NOARGS		{ int sys___sigpending14(const sigset_t *set); }
 344	UNIMPL		4.0 sigreturn
 345	UNIMPL		sigtimedwait
 346	UNIMPL		sigwaitinfo
