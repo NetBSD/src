@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1996/01/12 04:17:12 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 1996/01/15 12:29:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1564,14 +1564,14 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a752,	/* ADBReInit */
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
-		(caddr_t) 0x4080c05c,	/* WriteParam */
-		(caddr_t) 0x4080c086,	/* SetDateTime */
-		(caddr_t) 0x4080c5cc,	/* InitUtil */
-		(caddr_t) 0x4080b186,	/* ReadXPRam */
-		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x408b39b6,	/* jClkNoMem */
-		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
-		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x40a0c05c,	/* WriteParam */
+		(caddr_t) 0x40a0c086,	/* SetDateTime */
+		(caddr_t) 0x40a0c5cc,	/* InitUtil */
+		(caddr_t) 0x40a0b186,	/* ReadXPRam */
+		(caddr_t) 0x40a0b190,	/* WriteXPRam */
+		(caddr_t) 0x40ab39b6,	/* jClkNoMem */
+		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40a147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for IIci, Q700
