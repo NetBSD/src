@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: acardide.c,v 1.4 2003/10/24 15:47:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -107,7 +107,7 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	/* 
+	/*
 	 * when the chip is in native mode it identifies itself as a
 	 * 'misc mass storage'. Fake interface in this case.
 	 */
