@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.25 1995/04/28 07:01:06 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.26 1995/04/28 08:16:00 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -230,27 +230,27 @@ read_files()
 	char fname[32];
 
 	ftab = 0;
-	(void) strcpy(fname, "../../../conf/files");
+	(void) strcpy(fname, "../../../conf/files.oldconf");
 	read_file(fname,1,0);
-	(void) sprintf(fname, "files.%s", machinename);
+	(void) sprintf(fname, "files.%s.oldconf", machinename);
 	read_file(fname,1,0);
 	if (strcmp(machinearch, machinename)) {
-		(void) sprintf(fname, "../../%s/conf/files.%s", machinearch,
-		    machinearch);
+		(void) sprintf(fname, "../../%s/conf/files.%s.oldconf",
+		    machinearch, machinearch);
 		read_file(fname,1,0);
 	}
-	(void) sprintf(fname, "files.%s", raisestr(ident));
+	(void) sprintf(fname, "files.%s.oldconf", raisestr(ident));
 	read_file(fname,0,1);
-	(void) strcpy(fname, "../../../conf/options");
+	(void) strcpy(fname, "../../../conf/options.oldconf");
 	read_file(fname,0,0);
-	(void) sprintf(fname, "options.%s", machinename);
+	(void) sprintf(fname, "options.%s.oldconf", machinename);
 	read_file(fname,0,0);
 	if (strcmp(machinearch, machinename)) {
-		(void) sprintf(fname, "../../%s/conf/options.%s", machinearch,
-		    machinearch);
+		(void) sprintf(fname, "../../%s/conf/options.%s.oldconf",
+		    machinearch, machinearch);
 		read_file(fname,0,0);
 	}
-	(void) sprintf(fname, "options.%s", raisestr(ident));
+	(void) sprintf(fname, "options.%s.oldconf", raisestr(ident));
 	read_file(fname,0,1);
 }
 

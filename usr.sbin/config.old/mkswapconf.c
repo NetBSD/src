@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.9 1995/04/28 07:01:08 cgd Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.10 1995/04/28 08:16:07 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -205,7 +205,7 @@ initdevtable()
 		fprintf(stderr, "config.old: machine not specified\n");
 		exit(1);
 	}
-	(void) sprintf(buf, "../conf/devices.%s", machinename);
+	(void) sprintf(buf, "../conf/devices.%s.oldconf", machinename);
 	fp = fopen(buf, "r");
 	if (fp == NULL) {
 		fprintf(stderr, "config.old: ");

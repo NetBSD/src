@@ -42,7 +42,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
- *	$Id: gram.y,v 1.1 1995/04/28 06:55:06 cgd Exp $
+ *	$Id: gram.y,v 1.2 1995/04/28 08:15:48 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -400,15 +400,15 @@ setmachine(mch, mcharch)
 	machine = mch;
 	machinearch = mcharch;
 	if (machinearch != NULL)
-		(void)sprintf(archbuf, "../../%s/conf/files.%s.newconf",
+		(void)sprintf(archbuf, "../../%s/conf/files.%s",
 		    machinearch, machinearch);
 	else
 		strncpy(archbuf, _PATH_DEVNULL, MAXPATHLEN);
-	(void)sprintf(buf, "files.%s.newconf", machine);
+	(void)sprintf(buf, "files.%s", machine);
 
 	if (include(buf, ENDFILE) ||
 	    include(archbuf, ENDFILE) ||
-	    include("../../../conf/files.newconf", ENDFILE))
+	    include("../../../conf/files", ENDFILE))
 		exit(1);
 }
 
