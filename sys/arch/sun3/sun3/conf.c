@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1995/01/25 04:48:27 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1995/01/26 23:21:29 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -197,7 +197,7 @@ decl_ioctl(chioctl);
 #define	chioctl		ndef_ioctl
 #endif
 
-#define	NVND 0 /* #include "vn.h" XXX */
+#include "vnd.h"
 #if NVND > 0
 decl_open(vndopen);
 decl_close(vndclose);
@@ -205,17 +205,13 @@ decl_strategy(vndstrategy);
 decl_ioctl(vndioctl);
 decl_dump(vnddump);
 decl_psize(vndsize);
-decl_read(vndread);
-decl_write(vndwrite);
 #else
 #define	vndopen		ndef_open
 #define	vndclose	ndef_close
-#define	vndread		ndef_read
-#define	vndwrite	ndef_write
 #define	vndstrategy	ndef_strategy
 #define	vndioctl	ndef_ioctl
 #define	vnddump		ndef_dump
-#define	vnsize		ndef_psize
+#define	vndsize		ndef_psize
 #endif
 
 #ifdef LKM
@@ -277,7 +273,9 @@ struct bdevsw	bdevsw[] =
 		nsup_psize,
 		0 },
 
-	bdev_notdef,	/*  5 */
+	/*  5: /dev/vnd* (vnode pseudo-device) */
+	{ vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, 0 },
+
 	bdev_notdef,	/*  6 */
 
 	/*  7: /dev/sd* (SCSI disk) */
@@ -361,24 +359,6 @@ decl_write(cnwrite);
 decl_ioctl(cnioctl);
 decl_select(cnselect);
 
-/* keyboard/display tty (internal, for console) */
-#include "zs.h"
-#if NZS > 1
-decl_open(kdopen);
-decl_close(kdclose);
-decl_read(kdread);
-decl_write(kdwrite);
-decl_ioctl(kdioctl);
-extern	struct tty *kd_tty[];
-#else
-#define	kdopen		ndef_open
-#define	kdclose		ndef_close
-#define	kdread		ndef_read
-#define	kdwrite		ndef_write
-#define	kdioctl		ndef_ioctl
-#define	kd_tty		ndef_ttys
-#endif
-
 /* Controlling tty (/dev/tty) -- XXX should be a tty */
 decl_open(cttyopen);
 decl_read(cttyread);
@@ -421,7 +401,7 @@ decl_ioctl(promioctl);
 #endif
 
 /* Zilog Zerial ports (/dev/tty{a,b}) */
-/* #include "zs.h" (above) */
+#include "zs.h"
 #if NZS > 0
 decl_open(zsopen);
 decl_close(zsclose);
@@ -439,8 +419,26 @@ extern struct tty *zs_tty[];
 #define	zsstop		ndef_stop
 #define	zs_tty		ndef_ttys
 #endif
+
+/* keyboard/display tty (internal, for console) */
 #if NZS > 1
+decl_open(kdopen);
+decl_close(kdclose);
+decl_read(kdread);
+decl_write(kdwrite);
+decl_ioctl(kdioctl);
+extern	struct tty *kd_tty[];
+#else
+#define	kdopen		ndef_open
+#define	kdclose		ndef_close
+#define	kdread		ndef_read
+#define	kdwrite		ndef_write
+#define	kdioctl		ndef_ioctl
+#define	kd_tty		ndef_ttys
+#endif
+
 /* Mouse pseudo-device (/dev/mouse) */
+#if NZS > 1
 decl_open(msopen);
 decl_close(msclose);
 decl_read(msread);
@@ -596,8 +594,10 @@ struct cdevsw	cdevsw[] =
 		stioctl, null_stop, null_reset, nsup_ttys,
 		seltrue, nsup_mmap, ststrategy },
 
-	/* 19: old sun nd (network disk protocol - unused) */
-	cdev_notdef,
+	/* 19: /dev/vnd* (vnode pseudo-device) */
+	{	vndopen, vndclose, rawread, rawwrite,
+		vndioctl, null_stop, null_reset, nsup_ttys,
+		seltrue, nsup_mmap, vndstrategy },
 
 	/* 20: pseudo-tty slave */
 	{	ptsopen, ptsclose, ptsread, ptswrite,
@@ -718,7 +718,6 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef,	/* 69: /dev/audio */
 	cdev_notdef,	/* 70: open prom */
 	cdev_notdef,	/* 71: (sg?) */
-
 };
 int nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
