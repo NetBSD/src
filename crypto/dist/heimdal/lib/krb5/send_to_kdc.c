@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: send_to_kdc.c,v 1.48 2002/03/27 09:32:50 joda Exp $"
-        "$NetBSD: send_to_kdc.c,v 1.6 2002/09/12 13:19:18 joda Exp $");
+        "$NetBSD: send_to_kdc.c,v 1.7 2002/09/20 22:05:59 mycroft Exp $");
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -50,22 +50,34 @@ recv_loop (int fd,
 	   size_t limit,
 	   krb5_data *rep)
 {
+#ifdef HAVE_POLL
+     struct pollfd set[1];
+#else
      fd_set fdset;
      struct timeval timeout;
+#endif
      int ret;
      int nbytes;
 
+#ifndef HAVE_POLL
      if (fd >= FD_SETSIZE) {
 	 return -1;
      }
+#endif
 
      krb5_data_zero(rep);
      do {
+#ifdef HAVE_POLL
+	 set[0].fd = fd;
+	 set[0].events = POLLIN;
+	 ret = poll (set, 1, tmout * 1000);
+#else
 	 FD_ZERO(&fdset);
 	 FD_SET(fd, &fdset);
 	 timeout.tv_sec  = tmout;
 	 timeout.tv_usec = 0;
 	 ret = select (fd + 1, &fdset, NULL, NULL, &timeout);
+#endif
 	 if (ret < 0) {
 	     if (errno == EINTR)
 		 continue;
