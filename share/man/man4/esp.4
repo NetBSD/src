@@ -1,4 +1,4 @@
-.\"	$NetBSD: esp.4,v 1.9 2001/12/04 20:52:48 jdolecek Exp $
+.\"	$NetBSD: esp.4,v 1.10 2002/07/26 13:12:47 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997 Eric S. Hvozda <hvozda@netcom.com>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: esp.4,v 1.9 2001/12/04 20:52:48 jdolecek Exp $
+.\"	$NetBSD: esp.4,v 1.10 2002/07/26 13:12:47 tsutsui Exp $
 .\"
 .Dd December 3, 2001
 .Dt ESP 4
@@ -107,13 +107,17 @@ for use in
 .Xr config 8
 files:
 .Pp
-.Bl -tag -compact -width "bits 8-15:"
+.Bl -tag -compact -width "bits 16-23:"
 .It bits 0-7 :
 disable disconnect/reselect for the corresponding
 .Tn SCSI
 target
 .It bits 8-15 :
-disable synchronous negotiation for
+disable synchronous negotiation for the corresponding
+.Tn SCSI
+target
+.It bits 16-23 :
+disable tagged queuing for the corresponding
 .Tn SCSI
 target
 .El
