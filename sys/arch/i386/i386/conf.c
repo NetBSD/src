@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.97 1998/07/24 15:40:42 rvb Exp $	*/
+/*	$NetBSD: conf.c,v 1.98 1998/07/25 15:39:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -198,8 +198,6 @@ cdev_decl(apm);
 cdev_decl(usb);
 #include "ums.h"
 cdev_decl(ums);
-#include "ukbd.h"
-cdev_decl(ukbd);
 #include "uhid.h"
 cdev_decl(uhid);
 #include "ugen.h"
@@ -348,7 +346,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
 	cdev_mouse_init(NUMS,ums),	/* 58: USB mouse */
-	cdev_mouse_init(NUKBD,ukbd),	/* 59: USB keyboard */
+	cdev_notdef(),			/* 59: free */
 	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 60: coda file system psdev */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -451,6 +449,7 @@ static int chrtoblktbl[] = {
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
+	/* 60 */	NODEV,
 };
 
 /*
