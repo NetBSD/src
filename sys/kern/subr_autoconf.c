@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.36 1998/11/18 18:40:54 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.37 1998/12/03 23:50:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,7 @@ config_attach(parent, cf, aux, print)
 			if (cf->cf_fstate == FSTATE_STAR)
 				cf->cf_unit++;
 		}
-#if defined(__alpha__) || defined(hp300) || defined(__i386__)
+#if defined(__alpha__) || defined(hp300) || defined(__i386__) || defined(__sparc__)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
