@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.2 2004/03/20 02:57:34 snj Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.3 2004/03/20 10:39:21 martin Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.2 2004/03/20 02:57:34 snj Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.3 2004/03/20 10:39:21 martin Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.2 2004/03/20 02:57:34 snj Exp $ ");
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/intr.h>	/* IPL_*, and schedsoftnet() */
 				/* XXX: schedsofnet() should die. */
