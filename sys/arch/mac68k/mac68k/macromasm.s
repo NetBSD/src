@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.10 1996/05/14 04:01:04 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.10.4.1 1996/06/01 03:42:32 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -104,6 +104,8 @@
 	loglob(VBLQueue_head, 0x162)	/* Vertical blanking Queue, head */
 	loglob(VBLQueue_tail, 0x166)	/* Vertical blanking Queue, tail */
 
+	loglob(InitEgretJTVec, 0x2010)	/* pointer to a jump table for */
+					/* InitEgret on AV machines */
 
 #if 0
 	/* I wish I knew what these things were */
