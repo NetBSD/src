@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_union.c,v 1.5 1997/07/24 23:16:38 christos Exp $
+ * $Id: info_union.c,v 1.6 1997/09/26 16:59:58 christos Exp $
  *
  */
 
@@ -57,6 +57,11 @@
 
 #define	UNION_PREFIX	"union:"
 #define	UNION_PREFLEN	6
+
+/* forward declarations */
+int union_init(mnt_map *m, char *map, time_t *tp);
+int union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp);
+int union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *));
 
 
 /*
@@ -87,7 +92,7 @@ union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
 
 int
-union_reload(mnt_map *m, char *map, void (*fn) ())
+union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
 {
   char *mapd = strdup(map + UNION_PREFLEN);
   char **v = strsplit(mapd, ':', '\"');
