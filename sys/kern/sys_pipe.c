@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.43 2003/09/21 19:17:07 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.44 2003/09/22 12:59:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.43 2003/09/21 19:17:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.44 2003/09/22 12:59:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,7 @@ pipeselwakeup(selp, sigp, data, code)
 		break;
 	}
 
-	fownsignal(sigp->pipe_pgid, code, band, selp);
+	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
 }
 
 /* ARGSUSED */

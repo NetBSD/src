@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.65 2003/09/22 03:29:34 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.66 2003/09/22 13:00:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.65 2003/09/22 03:29:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.66 2003/09/22 13:00:03 christos Exp $");
 
 #include "tun.h"
 
@@ -189,7 +189,7 @@ tun_clone_destroy(ifp)
 		wakeup((caddr_t)tp);
 	}
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-		fownsignal(tp->tun_pgid, POLL_HUP, 0, NULL);
+		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 
 	selwakeup(&tp->tun_rsel);
 
@@ -515,7 +515,8 @@ tun_output(ifp, m0, dst, rt)
 		wakeup((caddr_t)tp);
 	}
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-		fownsignal(tp->tun_pgid, POLL_IN, POLLIN|POLLRDNORM, NULL);
+		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
+		    NULL);
 
 	selnotify(&tp->tun_rsel, 0);
 	simple_unlock(&tp->tun_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.47 2003/09/21 19:17:17 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.48 2003/09/22 13:00:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -164,7 +164,7 @@ void	finit(void);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);
-void	fownsignal(pid_t, int, int, void *);
+void	fownsignal(pid_t, int, int, int, void *);
 
 #endif /* _KERNEL */
 
