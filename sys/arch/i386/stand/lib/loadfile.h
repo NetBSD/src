@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.1 1999/01/28 20:18:31 christos Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.2 1999/01/28 22:45:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,19 +40,61 @@
 #define BOOT_ELF
 #define ELFSIZE 32
 
-#define LOADADDR(a)	((u_long)(a) & 0x00ffffff)
-#define ALIGNENTRY(a)	((u_long)(a) & 0x00100000)
-#define READ(f, b, c)	pread((f), (void *)LOADADDR(b), (c))
-#define BCOPY(s, d, c)	vpbcopy((s), (void *)LOADADDR(d), (c))
-#define BZERO(d, c)	pbzero((void *)LOADADDR(d), (c))
+/*
+ * Array indices in the u_long position array
+ */
+#define MARK_START	0
+#define	MARK_NSYM	1
+#define MARK_SYM	2
+#define	MARK_END	3
+#define	MARK_MAX	4
 
-int loadfile __P((const char *, u_long *));
-#define LOAD_START	0
-#define	LOAD_NSYM	1
-#define LOAD_SYM	2
-#define	LOAD_END	3
-#define	LOAD_MAX	4
+/*
+ * Bit flags for sections to load
+ */
+#define	LOAD_TEXT	0x01
+#define	LOAD_DATA	0x02
+#define	LOAD_BSS	0x04
+#define	LOAD_SYM	0x08
+#define	LOAD_HDR	0x10
+#define LOAD_ALL	0x1f
+
+int loadfile __P((const char *, u_long *, int));
+
+#ifndef INSTALLBOOT
+
+#define LOADADDR(a)		((u_long)(a) & 0x00ffffff)
+#define ALIGNENTRY(a)		((u_long)(a) & 0x00100000)
+#define READ(f, b, v, c)	pread((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, v, c)	vpbcopy((s), (void *)LOADADDR(d), (c))
+#define BZERO(d, v, c)		pbzero((void *)LOADADDR(d), (c))
+#define	WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
+#define OKMAGIC(a)		((a) == NMAGIC)
 
 void vpbcopy __P((const void *, void *, size_t));
 void pbzero __P((void *, size_t));
 ssize_t pread __P((int, void *, size_t));
+
+#else
+
+#define LOADADDR(a)		((u_long)(a))
+#define ALIGNENTRY(a)		((u_long)(a))
+#define READ(f, b, v, c)	vread((u_long)(f), (b), &(v), (c))
+#define BCOPY(s, d, v, c)	vcopy((u_long)(s), (d), &(v), (c))
+#define BZERO(d, v, c)		vzero((u_long)(d), &(v), (c))
+#define WARN(a)			warn a
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		malloc(a)
+#define FREE(a, b)		free(a)
+#define OKMAGIC(a)		((a) == OMAGIC)
+
+ssize_t vread __P((int, u_long, u_long *, size_t));
+void vcopy __P((u_long, u_long, u_long *, size_t));
+void vzero __P((u_long, u_long *, size_t));
+
+#endif
