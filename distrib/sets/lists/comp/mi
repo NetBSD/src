@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 1999/11/23 13:13:21 blymn Exp $
+# $NetBSD: mi,v 1.169 1999/11/25 10:41:12 blymn Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -334,6 +334,7 @@
 ./usr/include/elf.h
 ./usr/include/err.h
 ./usr/include/errno.h
+./usr/include/eti.h
 ./usr/include/fcntl.h
 ./usr/include/filecorefs
 ./usr/include/filecorefs/filecore_mount.h
@@ -519,6 +520,7 @@
 ./usr/include/md4.h
 ./usr/include/md5.h
 ./usr/include/memory.h
+./usr/include/menu.h
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
 ./usr/include/miscfs/fdesc/fdesc.h
@@ -1089,6 +1091,7 @@
 ./usr/libdata/lint/llib-lipsec.ln
 ./usr/libdata/lint/llib-lkvm.ln
 ./usr/libdata/lint/llib-ll.ln
+./usr/libdata/lint/llib-lmenu.ln
 ./usr/libdata/lint/llib-lntp.ln
 ./usr/libdata/lint/llib-lossaudio.ln
 ./usr/libdata/lint/llib-lpcap.ln
@@ -1934,6 +1937,27 @@
 ./usr/share/man/cat3/memmove.0
 ./usr/share/man/cat3/memory.0
 ./usr/share/man/cat3/memset.0
+./usr/share/man/cat3/menu_attributes.0
+./usr/share/man/cat3/menu_cursor.0
+./usr/share/man/cat3/menu_driver.0
+./usr/share/man/cat3/menu_format.0
+./usr/share/man/cat3/menu_hook.0
+./usr/share/man/cat3/menu_item_current.0
+./usr/share/man/cat3/menu_item_name.0
+./usr/share/man/cat3/menu_item_new.0
+./usr/share/man/cat3/menu_item_opts.0
+./usr/share/man/cat3/menu_item_userptr.0
+./usr/share/man/cat3/menu_item_value.0
+./usr/share/man/cat3/menu_item_visible.0
+./usr/share/man/cat3/menu_items.0
+./usr/share/man/cat3/menu_mark.0
+./usr/share/man/cat3/menu_new.0
+./usr/share/man/cat3/menu_opts.0
+./usr/share/man/cat3/menu_pattern.0
+./usr/share/man/cat3/menu_post.0
+./usr/share/man/cat3/menu_userptr.0
+./usr/share/man/cat3/menu_win.0
+./usr/share/man/cat3/menus.0
 ./usr/share/man/cat3/mergesort.0
 ./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/mkstemp.0
