@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.6 2003/01/03 15:26:32 lukem Exp $
+# $NetBSD: makesums,v 1.7 2004/04/20 05:37:15 lukem Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
-# makesums [-t tardir] [ -all ] [setname ...]
+# makesums [-a] [-t tardir] [setname [...]]
 #
 # If -t is omitted, RELEASEDIR must be set and not empty.
 # The ``setname'' arguments comprise a list of files to checksum,
 # and may be omitted (in which case ``*.tgz'' is used).
-# If -all is given, then the list of sets is ignored, and ``*'' is used.
+# If -a is given, then the list of sets is ignored, and ``*'' is used.
 #
 # After shell glob expansion, the list of sets is filtered to remove known
 # output file names (of the form *SUM and MD5), non-existent files, and
@@ -17,50 +17,53 @@
 # output files (BSDSUM, CKSUM, MD5, SYSVSUM) are produced.
 #
 
+prog=${0##*/}
+
 # set defaults
 : ${CKSUM=cksum}
-tars=$RELEASEDIR
+targetdir=$RELEASEDIR
 dash_all=no
 
-# handle args
-while : ; do
-	case $1 in
-	-all)
-		dash_all=yes
-		break
-		;;
-	-t*)	
-		tars=$2; shift
-		;;
-	-*)
-		cat 1>&2 <<USAGE
-Usage: $0 [-t targetdir] [-all] [setname ...]
-	-t targetdir	\$RELEASEDIR		[$tars]
-	[setname ...]	sets to checksum 	[*.tgz]
-	-all		do all plain files instead of [setname ...]
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${prog} [-a] [-t targetdir] [setname [...]]
+	-a		checksum all plain files instead of [setname [...]]
+	-t targetdir	\$RELEASEDIR		[$targetdir]
+	setname [...]	sets to checksum 	[*.tgz]
 USAGE
-		exit 1
+	exit 1
+}
+
+# handle args
+while getopts at: ch; do
+	case ${ch} in
+	a)
+		dash_all=yes
+		;;
+	t)	
+		targetdir=${OPTARG}
 		;;
 	*)
-		break
+		usage
 		;;
 	esac
-	shift
 done
+shift $((${OPTIND} - 1))
 
-if [ -z "$tars" ]; then
-	echo \$RELEASEDIR must be set
+if [ -z "$targetdir" ]; then
+	echo 1>&2 '$RELEASEDIR must be set or provided with -t'
 	exit 1
 fi
 
-cd $tars
+cd $targetdir
 pat="$*"
 if [ $dash_all = yes ]; then
 	pat='*'
 elif [ -z "$pat" ]; then
 	pat='*.tgz'
 fi
-lists=`find $pat -prune \( -type f -o -type l \) \! -name '*SUM' \! -name MD5 2>/dev/null`
+lists=$(find $pat -prune \( -type f -o -type l \) \! -name '*SUM' \! -name MD5 2>/dev/null)
 if [ -n "$lists" ]; then
 	${CKSUM} -o1 $lists > BSDSUM
 	${CKSUM}     $lists > CKSUM
