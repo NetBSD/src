@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	$Id: yacc.1,v 1.4 1993/08/06 19:34:17 mycroft Exp $
+.\"	$Id: yacc.1,v 1.5 1993/12/09 19:16:15 jtc Exp $
 .\"
 .Dd July 30, 1991
 .Dt YACC 1
@@ -84,15 +84,15 @@ If the
 .Fl l
 option is not specified,
 .Nm yacc
-will insert \#line directives in the generated code.
-The \#line directives let the C compiler relate errors in the
+will insert #line directives in the generated code.
+The #line directives let the C compiler relate errors in the
 generated code to the user's original code.
 If the
 .Fl l
 option is specified,
 .Nm yacc
-will not insert the \#line directives.
-\&\#line directives specified by the user will be retained.
+will not insert the #line directives.
+#line directives specified by the user will be retained.
 .It Fl r
 The
 .Fl r
