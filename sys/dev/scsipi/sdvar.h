@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.3 1998/02/13 08:28:57 enami Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.4 1998/06/10 22:17:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -72,6 +72,8 @@ struct sd_softc {
 	struct buf buf_queue;
 	u_int8_t type;
 	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */
+
+	void *sc_sdhook;		/* our shutdown hook */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;

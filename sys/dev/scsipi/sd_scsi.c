@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.1 1998/01/15 02:21:40 cgd Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.2 1998/06/10 22:17:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -103,6 +103,8 @@ const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
 };
 
+static void	sd_scsibus_shutdown __P((void *));
+
 int
 sd_scsibus_match(parent, match, aux)
 	struct device *parent;
@@ -150,6 +152,19 @@ sd_scsibus_attach(parent, self, aux)
 		sd->flags |= SDF_ANCIENT;
 
 	sdattach(parent, sd, sc_link, &sd_scsibus_ops);
+
+	/*
+	 * Establish a shutdown hook so that we can ensure that
+	 * our data has actually made it onto the platter at
+	 * shutdown time.  Note that this relies on the fact
+	 * that the shutdown hook code puts us at the head of
+	 * the list (thus guaranteeing that our hook runs before
+	 * our ancestors').
+	 */
+	if ((sd->sc_sdhook =
+	    shutdownhook_establish(sd_scsibus_shutdown, sd)) == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sd->sc_dev.dv_xname);
 }
 
 static int
@@ -325,4 +340,36 @@ fake_it:
 	dp->blksize = 512;
 	dp->disksize = sectors;
 	return (SDGP_RESULT_OK);
+}
+
+static void
+sd_scsibus_shutdown(arg)
+	void *arg;
+{
+	struct sd_softc *sd = arg;
+	struct scsipi_link *sc_link = sd->sc_link;
+	struct scsi_synchronize_cache sync_cmd;
+
+	/*
+	 * If the device is SCSI-2, issue a SYNCHRONIZE CACHE.
+	 * We issue with address 0 length 0, which should be
+	 * interpreted by the device as "all remaining blocks
+	 * starting at address 0".  We ignore ILLEGAL REQUEST
+	 * in the event that the command is not supported by
+	 * the device, and poll for completion so that we know
+	 * that the cache has actually been flushed.
+	 *
+	 * XXX What about older devices?
+	 */
+	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2) {
+		bzero(&sync_cmd, sizeof(sync_cmd));
+		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
+
+		if (scsipi_command(sc_link,
+		    (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
+		    NULL, 0, SDRETRIES, 100000, NULL,
+		    SCSI_POLL|SCSI_IGNORE_ILLEGAL_REQUEST))
+			printf("%s: WARNING: cache synchronization failed\n",
+			    sd->sc_dev.dv_xname);
+	}
 }
