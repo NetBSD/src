@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.7 2003/04/02 10:39:23 fvdl Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.8 2003/05/17 23:09:06 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.7 2003/04/02 10:39:23 fvdl Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.8 2003/05/17 23:09:06 itojun Exp $");
 #endif
 
 #include <err.h>
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 			p = params_combine(p, tp);
 			break;
 		case 'f':
-			strncpy(cfile, optarg, FILENAME_MAX);
+			strlcpy(cfile, optarg, sizeof(cfile));
 			break;
 		case 'g':
 			action = ACTION_GENERATE;
@@ -193,7 +193,7 @@ main(int argc, char **argv)
 			nflag = 1;
 			break;
 		case 'o':
-			strncpy(outfile, optarg, FILENAME_MAX);
+			strlcpy(outfile, optarg, sizeof(outfile));
 			break;
 		case 's':
 			action = ACTION_CONFIGSTDIN;
@@ -503,7 +503,7 @@ opendisk_werror(const char *cgd, char *buf, int buflen)
 		return -1;
 
 	if (nflag) {
-		strncpy(buf, cgd, buflen);
+		strlcpy(buf, cgd, buflen);
 		return 0;
 	}
 
