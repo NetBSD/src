@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2000/09/09 09:37:58 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.20 2000/09/17 23:03:43 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -187,6 +187,9 @@
 #define BURY	1050
 #define JUMP	1051
 #define KICK	1052
+#define OPEN	1053
+#define VERBOSE	1054
+#define BRIEF	1055
 
  /* injuries */
 #define ARM	6		/* broken arm */
@@ -284,6 +287,7 @@ extern unsigned int inven[NUMOFWORDS];
 extern unsigned int wear[NUMOFWORDS];
 extern char    beenthere[NUMOFROOMS + 1];
 extern char    injuries[NUMOFINJURIES];
+extern int     verbose;
 
 extern const char *username;
 
@@ -317,6 +321,7 @@ int cypher __P((void));
 void die __P((void)) __attribute__((__noreturn__));
 void diesig __P((int)) __attribute__((__noreturn__));
 void dig __P((void));
+void dooropen __P((void));
 int draw __P((void));
 void drink __P((void));
 int drive __P((void));

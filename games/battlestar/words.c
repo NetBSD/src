@@ -1,4 +1,4 @@
-/*	$NetBSD: words.c,v 1.7 2000/09/09 18:03:58 jsm Exp $	*/
+/*	$NetBSD: words.c,v 1.8 2000/09/17 23:03:43 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)words.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: words.c,v 1.7 2000/09/09 18:03:58 jsm Exp $");
+__RCSID("$NetBSD: words.c,v 1.8 2000/09/17 23:03:43 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,9 +91,11 @@ struct wlist wlist[] = {
 	{ "match",	MATCHES,	OBJECT, NULL },
 	{ "book",	MATCHES,	OBJECT, NULL },
 	{ "man",	MAN,		NOUNS, NULL },
+	{ "papaya",	PAPAYAS,	OBJECT, NULL },
 	{ "papayas",	PAPAYAS,	OBJECT, NULL },
 	{ "pineapple",	PINEAPPLE,	OBJECT, NULL },
 	{ "kiwi",	KIWI,		OBJECT, NULL },
+	{ "coconut",	COCONUTS,	OBJECT, NULL },
 	{ "coconuts",	COCONUTS,	OBJECT, NULL },
 	{ "mango",	MANGO,		OBJECT, NULL },
 	{ "ring",	RING,		OBJECT, NULL },
@@ -173,6 +175,8 @@ struct wlist wlist[] = {
 	{ "hack",	SMITE,		VERB, NULL },
 	{ "shoot",	SHOOT,		VERB, NULL },
 	{ "blast",	SHOOT,		VERB, NULL },
+	{ "open",	OPEN,		VERB, NULL },
+	{ "unlock",	OPEN,		VERB, NULL },
 	{ "on",		ON,		PREPS, NULL },
 	{ "off",	OFF,		PREPS, NULL },
 	{ "time",	TIME,		VERB, NULL },
@@ -182,6 +186,8 @@ struct wlist wlist[] = {
 	{ "swim",	SWIM,		VERB, NULL },
 	{ "drink",	DRINK,		VERB, NULL },
 	{ "door",	DOOR,		NOUNS, NULL },
+	{ "verbose",	VERBOSE,	VERB, NULL },
+	{ "brief",	BRIEF,		VERB, NULL },
 	{ "save",	SAVE,		VERB, NULL },
 	{ "ride",	RIDE,		VERB, NULL },
 	{ "mount",	RIDE,		VERB, NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.16 2000/09/10 10:51:17 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.17 2000/09/17 23:03:43 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.16 2000/09/10 10:51:17 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.17 2000/09/17 23:03:43 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -247,4 +247,38 @@ light()
 		}
 	} else
 		puts("You're out of matches.");
+}
+
+void
+dooropen()
+{				/* synonyms = {open, unlock} */
+	while(wordtype[++wordnumber] == ADJS)
+		;
+	if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS
+	    && wordvalue[wordnumber] == DOOR) {
+		switch(position) {
+		case 189:
+		case 231:
+			if (location[189].north == 231)
+				puts("The door is already open.");
+			else
+				puts("The door does not budge.");
+			break;
+		case 30:
+			if (location[30].west == 25)
+				puts("The door is gone.");
+			else
+				puts("The door is locked tight.");
+			break;
+		case 31:
+			puts("That's one immovable door.");
+			break;
+		case 20:
+			puts("The door is already ajar.");
+			break;
+		default:
+			puts("What door?");
+		}
+	} else
+		puts("That doesn't open.");
 }
