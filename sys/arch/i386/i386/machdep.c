@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.103 1994/05/06 01:43:34 mycroft Exp $
+ *	$Id: machdep.c,v 1.104 1994/05/07 00:58:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -68,6 +69,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#include <dev/cons.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -85,6 +88,9 @@
 
 #include "isa.h"
 #include "npx.h"
+
+/* the following is used externally (sysctl_hw) */
+char machine[] = "i386";		/* cpu "architecture" */
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -302,6 +308,12 @@ allocsys(v)
 	return v;
 }
 
+/*  
+ * Info for CTL_HW
+ */
+char	cpu_model[120];
+extern	char version[];
+
 struct cpu_nameclass i386_cpus[] = {
 	{ "i386SX",	CPUCLASS_386 },	/* CPU_386SX */
 	{ "i386DX",	CPUCLASS_386 },	/* CPU_386   */
@@ -312,6 +324,7 @@ struct cpu_nameclass i386_cpus[] = {
 
 identifycpu()
 {
+	int len;
 	extern char cpu_vendor[];
 
 	printf("CPU: ");
@@ -319,26 +332,28 @@ identifycpu()
 	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
 		panic("unknown cpu type %d\n", cpu);
 #endif
-	printf("%s", i386_cpus[cpu].cpu_name);
+	sprintf(cpu_model, "%s (", i386_cpus[cpu].cpu_name);
+	if (cpu_vendor[0] != '\0') {
+		strcat(cpu_model, cpu_vendor);
+		strcat(cpu_model, " ");
+	}
+
 	cpu_class = i386_cpus[cpu].cpu_class;
-	printf(" (");
-	if (cpu_vendor[0] != '\0')
-		printf("%s ", cpu_vendor);
 	switch(cpu_class) {
 	case CPUCLASS_386:
-		printf("386");
+		strcat(cpu_model, "386");
 		break;
 	case CPUCLASS_486:
-		printf("486");
+		strcat(cpu_model, "486");
 		break;
 	case CPUCLASS_586:
-		printf("586");
+		strcat(cpu_model, "586");
 		break;
 	default:
-		printf("unknown");	/* will panic below... */
+		strcat(cpu_model, "unknown");	/* will panic below... */
 	}
-	printf("-class CPU)");
-	printf("\n");	/* cpu speed would be nice, but how? */
+	strcat(cpu_model, "-class CPU)");
+	printf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
 
 	/*
 	 * Now that we have told the user what they have,
@@ -363,6 +378,38 @@ identifycpu()
 	default:
 		break;
 	}
+}
+
+/*  
+ * machine dependent system variables.
+ */ 
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 #ifdef PGINPROF
@@ -400,19 +447,21 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
 	tf = (struct trapframe *)p->p_md.md_regs;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp
-				- sizeof(struct sigframe));
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) &&
+	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
 		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
@@ -561,7 +610,10 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 	}
 
-	p->p_sigacts->ps_sigstk.ss_onstack = context.sc_onstack & 01;
+	if (context.sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = context.sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
 
