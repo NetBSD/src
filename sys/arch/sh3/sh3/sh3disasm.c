@@ -1,4 +1,4 @@
-/* $NetBSD: sh3disasm.c,v 1.1 2000/09/01 22:25:36 msaitoh Exp $ */
+/* $NetBSD: sh3disasm.c,v 1.2 2000/09/04 23:02:43 tsubai Exp $ */
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -31,9 +31,9 @@
 /*
  * sh3disasm.c	: SH-3/SH-3E disassembler
  *
- * $Author: msaitoh $
- * $Date: 2000/09/01 22:25:36 $
- * $Revision: 1.1 $
+ * $Author: tsubai $
+ * $Date: 2000/09/04 23:02:43 $
+ * $Revision: 1.2 $
  */
 
 #include <sys/param.h>
@@ -49,12 +49,16 @@
 
 #define	RASM_LINES	24
 
-extern	void *roundadrs(u_char *vp, int type);
+extern	void *roundadrs(u_char *, int);
 
 /*
  * function prototypes
  */
-extern	void	show_opcode(u_short *sp, int lines);
+#ifdef DDB
+void sh3_disasm(void *, char *, char *);
+#else
+extern	void	show_opcode(u_short *, int);
+#endif
 
 
 /*
@@ -66,8 +70,8 @@ typedef	void (*rasm_t)(u_short *, u_char *);
 /*
  * local function prototypes
  */
-static	void	get_opcode(u_short *sp, char *buf);
-static	void	get_ascii(u_char *cp, u_char *str);
+static	void	get_opcode(u_short *, char *);
+static	void	get_ascii(u_char *, u_char *);
 static	void	f_02(u_short *, u_char *);
 static	void	f_03(u_short *, u_char *);
 static	void	f_04(u_short *, u_char *);
@@ -157,6 +161,14 @@ static	rasm_t	f[16][16] = {
 };
 
 
+#ifdef DDB
+void
+sh3_disasm(void *pc, char *line, char *ascii)
+{
+	get_opcode(pc, line);
+	get_ascii(pc, ascii);
+}
+#else
 extern	void
 show_opcode(u_short *sp, int lines)
 {
@@ -171,6 +183,7 @@ show_opcode(u_short *sp, int lines)
 		printf("0x%p  %04X  %-50s  %s\n", sp, *sp, opcode, ascii);
 	}
 }
+#endif
 
 
 static	void
