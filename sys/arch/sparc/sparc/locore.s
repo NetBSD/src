@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2001/03/18 17:11:22 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 2001/04/09 18:18:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4866,6 +4866,13 @@ ENTRY(proc_trampoline)
 	 nop
 #endif
 
+	/* Reset interrupt level */
+	rd	%psr, %o0
+	andn	%o0, PSR_PIL, %o0	! psr &= ~PSR_PIL;
+	wr	%o0, 0, %psr		! (void) spl0();
+	 nop				! psr delay; the next 2 instructions
+					! can safely be made part of the
+					! required 3 instructions psr delay
 	call	%l0
 	 mov	%l1, %o0
 
