@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.29 2003/08/07 09:46:42 agc Exp $	*/
+/*	$NetBSD: subr.c,v 1.30 2004/04/23 21:04:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.29 2003/08/07 09:46:42 agc Exp $");
+__RCSID("$NetBSD: subr.c,v 1.30 2004/04/23 21:04:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ gettable(char *name, char *buf)
 	struct gettynums *np;
 	struct gettyflags *fp;
 	long n;
-	char *dba[2];
+	const char *dba[2];
 	dba[0] = _PATH_GETTYTAB;
 	dba[1] = 0;
 
