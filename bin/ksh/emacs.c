@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.7 1999/10/20 15:49:15 hubertf Exp $	*/
+/*	$NetBSD: emacs.c,v 1.8 1999/11/02 22:06:45 jdolecek Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -145,6 +145,7 @@ static char	*x_lastcp ARGS((void));
 static void	do_complete ARGS((int flags, Comp_type type));
 static int 	x_do_ins    ARGS((const char *, int));
 static void	bind_if_not_bound ARGS((int, int, int));
+static int	x_emacs_putbuf	ARGS((const char *s, size_t len));
 
 
 /* The lines between START-FUNC-TAB .. END-FUNC-TAB are run through a
@@ -470,6 +471,21 @@ x_ins(s)
 
 	x_adj_ok = 1;
 	return 0;
+}
+
+/*
+ * this is used for x_escape() in do_complete()
+ */
+static int
+x_emacs_putbuf(s, len)
+	const char *s;
+	size_t len;
+{
+	int rval;
+
+	if ((rval = x_do_ins(s, len)) != 0)
+		return (rval);
+	return (rval);
 }
 
 static int
@@ -1832,8 +1848,8 @@ do_complete(flags, type)
 			if (nlen > 0) {
 				x_goto(xbuf + start);
 				x_delete(end - start, FALSE);
-				words[0][nlen] = '\0';
-				x_ins(words[0]);
+				x_escape(words[0], nlen, x_emacs_putbuf);
+				x_adjust();
 				/* If single match is not a directory, add a
 				 * space to the end...
 				 */
