@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.6 1997/10/16 23:25:12 lukem Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.7 2001/01/11 01:42:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.6 1997/10/16 23:25:12 lukem Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.7 2001/01/11 01:42:50 lukem Exp $");
 #endif
 
 /*
@@ -75,7 +75,7 @@ main(argc, argv)
 	int	err, aout;
 
 	/* All error reporting is done through syslogs. */
-	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog("mopchk", LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "av")) != -1) {

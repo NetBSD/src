@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.6 1999/06/06 03:21:43 thorpej Exp $	*/
+/*	$NetBSD: mopd.c,v 1.7 2001/01/11 01:42:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.6 1999/06/06 03:21:43 thorpej Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.7 2001/01/11 01:42:50 lukem Exp $");
 #endif
 
 /*
@@ -124,7 +124,7 @@ main(argc, argv)
 		Usage();
 
 	/* All error reporting is done through syslogs. */
-	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog("mopd", LOG_PID, LOG_DAEMON);
 
 	if ((!ForegroundFlag) && DebugFlag)
 		fprintf(stdout,

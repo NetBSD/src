@@ -1,4 +1,4 @@
-/*	$NetBSD: moptrace.c,v 1.5 1997/10/16 23:25:28 lukem Exp $	*/
+/*	$NetBSD: moptrace.c,v 1.6 2001/01/11 01:42:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moptrace.c,v 1.5 1997/10/16 23:25:28 lukem Exp $");
+__RCSID("$NetBSD: moptrace.c,v 1.6 2001/01/11 01:42:50 lukem Exp $");
 #endif
 
 /*
@@ -78,7 +78,7 @@ main(argc, argv)
 	char   *interface;
 
 	/* All error reporting is done through syslogs. */
-	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog("moptrace", LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "34ad")) != -1) {
