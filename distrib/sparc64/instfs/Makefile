@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/08/23 16:59:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/28 16:34:50 mason Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -29,16 +29,16 @@ MINIROOT_KERNEL=${MINIROOT_DIR}/netbsd.INSTALL
 all: ${INSTFS}
 
 ${INSTFS}: ${MINIROOT_IMAGE}
-	vnconfig -v -c ${VND_CDEV} ${MINIROOT_IMAGE}
+	vnconfig -v -c ${VND_CRDEV} ${MINIROOT_IMAGE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	(cd ${MOUNT_POINT}; \
 		tar -z -X ${.CURDIR}/exclude -c -f ${.OBJDIR}/${.TARGET} .)
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND_CRDEV}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${INSTFS}
 
 clean cleandir distclean:
