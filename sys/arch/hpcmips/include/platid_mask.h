@@ -1,7 +1,7 @@
-/* $Id: platid_mask.h,v 1.18 2000/03/31 12:46:24 jun Exp $ */
+/* $Id: platid_mask.h,v 1.19 2000/05/20 05:16:07 takemura Exp $ */
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -165,6 +165,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_430;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_430 ((int)&platid_mask_MACH_NEC_MCR_430)
 #endif
+extern platid_t platid_mask_MACH_NEC_MCR_530A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_530A ((int)&platid_mask_MACH_NEC_MCR_530A)
+#endif
 extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_7XX ((int)&platid_mask_MACH_NEC_MCR_7XX)
@@ -180,6 +184,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_700A;
 extern platid_t platid_mask_MACH_NEC_MCR_730;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_730 ((int)&platid_mask_MACH_NEC_MCR_730)
+#endif
+extern platid_t platid_mask_MACH_NEC_MCR_730A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_730A ((int)&platid_mask_MACH_NEC_MCR_730A)
 #endif
 extern platid_t platid_mask_MACH_EVEREX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

@@ -1,7 +1,7 @@
-/* $Id: platid_generated.h,v 1.18 2000/03/31 12:46:24 jun Exp $ */
+/* $Id: platid_generated.h,v 1.19 2000/05/20 05:16:07 takemura Exp $ */
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,10 @@
 #define PLATID_MACH_NEC_MCR_430	\
   ((PLATID_MACH_NEC_MCR_430_NUM << PLATID_SUBMODEL_SHIFT)| \
     PLATID_MACH_NEC_MCR_5XX)
+#define PLATID_MACH_NEC_MCR_530A_NUM	8
+#define PLATID_MACH_NEC_MCR_530A	\
+  ((PLATID_MACH_NEC_MCR_530A_NUM << PLATID_SUBMODEL_SHIFT)| \
+    PLATID_MACH_NEC_MCR_5XX)
 #define PLATID_MACH_NEC_MCR_7XX_NUM	3
 #define PLATID_MACH_NEC_MCR_7XX	\
   ((PLATID_MACH_NEC_MCR_7XX_NUM << PLATID_MODEL_SHIFT)| \
@@ -178,6 +182,10 @@
 #define PLATID_MACH_NEC_MCR_730_NUM	3
 #define PLATID_MACH_NEC_MCR_730	\
   ((PLATID_MACH_NEC_MCR_730_NUM << PLATID_SUBMODEL_SHIFT)| \
+    PLATID_MACH_NEC_MCR_7XX)
+#define PLATID_MACH_NEC_MCR_730A_NUM	4
+#define PLATID_MACH_NEC_MCR_730A	\
+  ((PLATID_MACH_NEC_MCR_730A_NUM << PLATID_SUBMODEL_SHIFT)| \
     PLATID_MACH_NEC_MCR_7XX)
 #define PLATID_MACH_EVEREX_NUM	2
 #define PLATID_MACH_EVEREX	\

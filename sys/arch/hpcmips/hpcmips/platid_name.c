@@ -1,7 +1,7 @@
-/* $Id: platid_name.c,v 1.5 2000/03/31 12:46:23 jun Exp $ */
+/* $Id: platid_name.c,v 1.6 2000/05/20 05:08:54 takemura Exp $ */
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,6 +104,8 @@ struct platid_name platid_name_table[] = {
 	  "NEC MC-R530" },
 	{ &platid_mask_MACH_NEC_MCR_430,
 	  "NEC MC-R430" },
+	{ &platid_mask_MACH_NEC_MCR_530A,
+	  "NEC MobilePro 780" },
 	{ &platid_mask_MACH_NEC_MCR_7XX,
 	  "NEC MC-R700 series" },
 	{ &platid_mask_MACH_NEC_MCR_700,
@@ -112,6 +114,8 @@ struct platid_name platid_name_table[] = {
 	  "NEC MobilePro 800" },
 	{ &platid_mask_MACH_NEC_MCR_730,
 	  "NEC MC-R730" },
+	{ &platid_mask_MACH_NEC_MCR_730A,
+	  "NEC MobilePro 880" },
 	{ &platid_mask_MACH_EVEREX,
 	  "Everex" },
 	{ &platid_mask_MACH_EVEREX_FREESTYLE,
@@ -239,4 +243,4 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	  "IBM WorkPad z50 2601 1AU" },
 };
-int platid_name_table_size = 99;
+int platid_name_table_size = 101;
