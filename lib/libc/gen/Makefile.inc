@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.59 1994/12/12 22:41:50 jtc Exp $
+#	$Id: Makefile.inc,v 1.60 1994/12/22 10:14:18 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -57,24 +57,24 @@ SRCS+=	_setjmp.S fabs.S frexp.c isinf.S ldexp.S modf.S
 SRCS+=	setjmp.S
 .endif
 
-MAN3+=	alarm.0 clock.0 confstr.0 ctermid.0 ctime.0 ctype.0 \
-	daemon.0 devname.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 \
-	ftok.0 fts.0 \
-	getbsize.0 getcap.0 getcwd.0 getdomainname.0 getdiskbyname.0 \
-	getfsent.0 getgrent.0 \
-	getgrouplist.0 gethostname.0 getloadavg.0 \
-	getmntinfo.0 getnetgrent.0 getpagesize.0 getpass.0 getpwent.0 \
-	getsubopt.0 getttyent.0 getusershell.0 glob.0 \
-	initgroups.0 isalnum.0 \
-	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
-	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
-	ldexp.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
-	pwcache.0 raise.0 scandir.0 setjmp.0 setmode.0 setproctitle.0 \
-	siginterrupt.0 signal.0 sigsetops.0 sleep.0 sysconf.0 sysctl.0 \
-	syslog.0 tcgetpgrp.0 \
-	tcsendbreak.0 tcsetattr.0 tcsetpgrp.0 time.0 times.0 timezone.0 \
-	tolower.0 toupper.0 ttyname.0 tzset.0 \
-	ualarm.0 uname.0 unvis.0 usleep.0 utime.0 valloc.0 vis.0
+MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 \
+	daemon.3 devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 \
+	ftok.3 fts.3 \
+	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
+	getfsent.3 getgrent.3 \
+	getgrouplist.3 gethostname.3 getloadavg.3 \
+	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
+	getsubopt.3 getttyent.3 getusershell.3 glob.3 \
+	initgroups.3 isalnum.3 \
+	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
+	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
+	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 \
+	pwcache.3 raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 \
+	siginterrupt.3 signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 \
+	syslog.3 tcgetpgrp.3 \
+	tcsendbreak.3 tcsetattr.3 tcsetpgrp.3 time.3 times.3 timezone.3 \
+	tolower.3 toupper.3 ttyname.3 tzset.3 \
+	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=ctime.3 asctime.3 ctime.3 difftime.3 ctime.3 gmtime.3 \
 	ctime.3 localtime.3 ctime.3 mktime.3

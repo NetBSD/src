@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.5 1994/03/19 08:04:16 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 10:26:35 cgd Exp $
 
 PROG=	atrun
 BINDIR=	/usr/libexec
-MAN8=	atrun.0
+MAN=	atrun.8
 
 BINOWN=	root
 
