@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ldconfig,v 1.6 2003/01/08 04:17:19 jhawk Exp $
+# $NetBSD: ldconfig,v 1.7 2004/06/03 16:29:15 abs Exp $
 #
 
 # PROVIDE: ldconfig
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="ldconfig"
+rcvar="ldconfig"
 ldconfig_command="/sbin/ldconfig"
 start_cmd="ldconfig_start"
 stop_cmd=":"
