@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.87 2003/01/26 06:19:12 lukem Exp $
+#	$NetBSD: build.sh,v 1.88 2003/01/26 13:12:05 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -250,6 +250,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     kernel=conf		Build kernel with config file \`conf'
     install=idir	Run "make installworld" to \`idir'
 			(useful after 'distribution' or 'release')
+    sets		Create distribution sets in RELEASEDIR
 
  Options:
     -a arch	Set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
@@ -687,7 +688,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.87 2003/01/26 06:19:12 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.88 2003/01/26 13:12:05 lukem Exp $
 #
 
 EOF
