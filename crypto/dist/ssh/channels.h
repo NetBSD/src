@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.1.1.11 2001/11/27 04:03:56 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.1.1.12 2001/12/06 03:46:09 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.51 2001/11/07 22:53:21 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.53 2001/11/29 21:10:51 stevesk Exp $"); */
 
 #ifndef CHANNEL_H
 #define CHANNEL_H
@@ -198,8 +198,7 @@ channel_request_forwarding(const char *, u_short, const char *, u_short, int,
 /* x11 forwarding */
 
 int	 x11_connect_display(void);
-char	*x11_create_display(int);
-char	*x11_create_display_inet(int, int);
+int	 x11_create_display_inet(int, int);
 void     x11_input_open(int, int, void *);
 void     x11_request_forwarding(void);
 void	 x11_request_forwarding_with_spoofing(int, const char *, const char *);

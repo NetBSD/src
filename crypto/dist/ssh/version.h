@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.1.1.12 2001/11/27 04:04:51 itojun Exp $	*/
-/* $OpenBSD: version.h,v 1.26 2001/11/13 09:03:57 markus Exp $ */
+/*	$NetBSD: version.h,v 1.1.1.13 2001/12/06 03:46:48 itojun Exp $	*/
+/* $OpenBSD: version.h,v 1.27 2001/12/05 15:04:48 markus Exp $ */
 
-#define SSH_VERSION	"OpenSSH_3.0.1"
+#define SSH_VERSION	"OpenSSH_3.0.2"

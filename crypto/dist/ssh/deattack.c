@@ -1,5 +1,5 @@
-/*	$NetBSD: deattack.c,v 1.1.1.7 2001/11/27 04:04:01 itojun Exp $	*/
-/*	$OpenBSD: deattack.c,v 1.15 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$NetBSD: deattack.c,v 1.1.1.8 2001/12/06 03:46:14 itojun Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.16 2001/12/05 03:56:39 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -26,6 +26,7 @@
 #include "crc32.h"
 #include "getput.h"
 #include "xmalloc.h"
+#include "deattack.h"
 
 /* SSH Constants */
 #define SSH_MAXBLOCKS	(32 * 1024)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.1.1.11 2001/11/27 04:03:59 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.1.1.12 2001/12/06 03:46:12 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.88 2001/11/22 12:34:22 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.89 2001/12/05 03:50:01 itojun Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -950,7 +950,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	if (received_signal) {
 		if (in_non_blocking_mode)	/* XXX */
 			leave_non_blocking();
-		fatal("Killed by signal %d.", received_signal);
+		fatal("Killed by signal %d.", (int) received_signal);
 	}
 
 	/*

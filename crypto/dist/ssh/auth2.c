@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.1.1.12 2001/11/27 04:03:48 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.1.1.13 2001/12/06 03:46:05 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.73 2001/11/17 19:14:34 stevesk Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.74 2001/12/05 03:56:39 itojun Exp $");
 
 #include <openssl/evp.h>
 
@@ -112,7 +112,7 @@ Authmethod authmethods[] = {
  */
 
 void
-do_authentication2()
+do_authentication2(void)
 {
 	Authctxt *authctxt = authctxt_new();
 
