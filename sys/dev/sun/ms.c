@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.14 1998/09/29 02:46:36 jeremy Exp $	*/
+/*	$NetBSD: ms.c,v 1.15 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -490,8 +490,8 @@ out:
  ****************************************************************/
 
 static void ms_rxint __P((struct zs_chanstate *));
+static void ms_stint __P((struct zs_chanstate *, int));
 static void ms_txint __P((struct zs_chanstate *));
-static void ms_stint __P((struct zs_chanstate *));
 static void ms_softint __P((struct zs_chanstate *));
 
 static void
@@ -551,8 +551,9 @@ ms_txint(cs)
 
 
 static void
-ms_stint(cs)
+ms_stint(cs, force)
 	register struct zs_chanstate *cs;
+	int force;
 {
 	register struct ms_softc *ms;
 	register int rr0;

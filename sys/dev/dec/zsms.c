@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.2 1998/10/22 08:37:16 nisimura Exp $	*/
+/*	$NetBSD: zsms.c,v 1.3 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,8 +307,8 @@ zsms_input(vsc, data)
  ****************************************************************/
 
 static void zsms_rxint __P((struct zs_chanstate *));
+static void zsms_stint __P((struct zs_chanstate *, int));
 static void zsms_txint __P((struct zs_chanstate *));
-static void zsms_stint __P((struct zs_chanstate *));
 static void zsms_softint __P((struct zs_chanstate *));
 
 static void
@@ -367,8 +367,9 @@ zsms_txint(cs)
 
 
 static void
-zsms_stint(cs)
+zsms_stint(cs, force)
 	struct zs_chanstate *cs;
+	int force;
 {
 	struct zsms_softc *zsms;
 	int rr0;

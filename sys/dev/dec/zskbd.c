@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.3 1998/10/22 18:37:57 drochner Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.4 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,8 +364,8 @@ zskbd_input(sc, data)
  ****************************************************************/
 
 static void zskbd_rxint __P((struct zs_chanstate *));
+static void zskbd_stint __P((struct zs_chanstate *, int));
 static void zskbd_txint __P((struct zs_chanstate *));
-static void zskbd_stint __P((struct zs_chanstate *));
 static void zskbd_softint __P((struct zs_chanstate *));
 
 static void
@@ -424,8 +424,9 @@ zskbd_txint(cs)
 
 
 static void
-zskbd_stint(cs)
+zskbd_stint(cs, force)
 	struct zs_chanstate *cs;
+	int force;
 {
 	struct zskbd_softc *zskbd;
 	int rr0;

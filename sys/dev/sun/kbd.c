@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.20 1998/01/12 09:39:27 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.21 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -963,8 +963,8 @@ kbd_input_raw(k, c)
  ****************************************************************/
 
 static void kbd_rxint __P((struct zs_chanstate *));
+static void kbd_stint __P((struct zs_chanstate *, int));
 static void kbd_txint __P((struct zs_chanstate *));
-static void kbd_stint __P((struct zs_chanstate *));
 static void kbd_softint __P((struct zs_chanstate *));
 
 static void
@@ -1046,8 +1046,9 @@ kbd_txint(cs)
 
 
 static void
-kbd_stint(cs)
+kbd_stint(cs, force)
 	register struct zs_chanstate *cs;
+	int force;
 {
 	register struct kbd_softc *k;
 	register int rr0;
