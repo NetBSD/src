@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.272 2000/10/04 06:52:12 itojun Exp $
+# $NetBSD: mi,v 1.273 2000/10/04 07:15:09 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -584,7 +584,6 @@
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
-./usr/share/man/cat4/ssl.0
 ./usr/share/man/cat4/st.0
 ./usr/share/man/cat4/stderr.0
 ./usr/share/man/cat4/stdin.0
@@ -1668,7 +1667,6 @@
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
-./usr/share/man/man4/ssl.4
 ./usr/share/man/man4/st.4
 ./usr/share/man/man4/stderr.4
 ./usr/share/man/man4/stdin.4
