@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -78,11 +78,19 @@
 
 #include <sys/param.h>
 
+#include <net/if_ether.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+
 #include <hp300/dev/hilreg.h>
+
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include <hp300/stand/common/samachdep.h>
 
 #define FEBRUARY        2
 #define STARTOFTIME     1970
-#define SECDAY          86400L
+#define SECDAY          (60L * 60L * 24L)
 #define SECYR           (SECDAY * 365)
 
 #define BBC_SET_REG     0xe0
@@ -91,40 +99,41 @@
 #define NUM_BBC_REGS    12
 
 #define leapyear(year)		((year) % 4 == 0)
-#define range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
+#define range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return 0
 #define days_in_year(a)		(leapyear(a) ? 366 : 365)
 #define days_in_month(a)	(month_days[(a) - 1])
 #define bbc_to_decimal(a,b)	(bbc_registers[a] * 10 + bbc_registers[b])
 
-#include <hp300/stand/common/samachdep.h>
-
-static int month_days[12] = {
+static const int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
 u_char bbc_registers[13];
-u_char read_bbc_reg();
 struct hil_dev *bbcaddr = BBCADDR;
 
-getsecs()
+static int bbc_to_gmt(u_long *);
+
+time_t
+getsecs(void)
 {
 	static int bbcinited = 0;
-	u_long timbuf = 0;
+	time_t timbuf = 0;
 
 	if (!bbc_to_gmt(&timbuf) && !bbcinited)
 		printf("WARNING: bad date in battery clock\n");
 	bbcinited = 1;
 
 	/* Battery clock does not store usec's, so forget about it. */
-	return(timbuf);
+	return timbuf;
 }
 
 
+static int
 bbc_to_gmt(timbuf)
 	u_long *timbuf;
 {
-	register int i;
-	register u_long tmp;
+	int i;
+	u_long tmp;
 	int year, month, day, hour, min, sec;
 
 	read_bbc();
@@ -159,12 +168,13 @@ bbc_to_gmt(timbuf)
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 
 	*timbuf = tmp;
-	return(1);
+	return 1;
 }
 
+void
 read_bbc()
 {
-  	register int i, read_okay;
+  	int i, read_okay;
 
 	read_okay = 0;
 	while (!read_okay) {
@@ -198,5 +208,5 @@ read_bbc_reg(reg)
 		data = bbcaddr->hil_data;
 #endif
 	}
-	return(data);
+	return data;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/10/02 13:53:08 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,6 +77,7 @@
  */
 
 #include <sys/param.h>
+#include <lib/libsa/stand.h>
 #include <hp300/stand/common/samachdep.h>
 
 char *
@@ -133,18 +134,19 @@ getmachineid()
 	default:
 		cp = "???"; break;
 	}
-	return(cp);
+	return cp;
 }
 
 int userom;
 
+int
 trap(fp)
 	struct trapframe *fp;
 {
 	static int intrap = 0;
 
 	if (intrap)
-		return(0);
+		return 0;
 	intrap = 1;
 
 #if 0
@@ -169,7 +171,7 @@ trap(fp)
 #endif
 
 	intrap = 0;
-	return(0);
+	return 0;
 }
 
 #define ROWS	24

@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.2 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -42,26 +42,30 @@
 #include <hp300/stand/common/hpibvar.h>
 #include <hp300/stand/common/samachdep.h>
 
+static int fhpibwait(struct fhpibdevice *, uint8_t);
+
+int
 fhpibinit(unit)
-	register int unit;
+	int unit;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct fhpibdevice *hd = (struct fhpibdevice *)hs->sc_addr;
+	struct hpib_softc *hs = &hpib_softc[unit];
+	struct fhpibdevice *hd = (void *)hs->sc_addr;
 
 	if (hd->hpib_cid != HPIBC)
-		return(0);
+		return 0;
 	hs->sc_type = HPIBC;
 	hs->sc_ba = HPIBC_BA;
 	fhpibreset(unit);
-	return(1);
+	return 1;
 }
 
+void
 fhpibreset(unit)
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct fhpibdevice *hd;
+	struct hpib_softc *hs = &hpib_softc[unit];
+	struct fhpibdevice *hd;
 
-	hd = (struct fhpibdevice *)hs->sc_addr;
+	hd = (void *)hs->sc_addr;
 	hd->hpib_cid = 0xFF;
 	DELAY(100);
 	hd->hpib_cmd = CT_8BIT;
@@ -76,15 +80,17 @@ fhpibreset(unit)
 	DELAY(100000);
 }
 
+int
 fhpibsend(unit, slave, sec, buf, cnt)
-	register char *buf;
-	register int cnt;
+	int unit, slave, sec;
+	char *buf;
+	int cnt;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct fhpibdevice *hd;
+	struct hpib_softc *hs = &hpib_softc[unit];
+	struct fhpibdevice *hd;
 	int origcnt = cnt;
 
-	hd = (struct fhpibdevice *)hs->sc_addr;
+	hd = (void *)hs->sc_addr;
 	hd->hpib_stat = 0;
 	hd->hpib_imask = IM_IDLE | IM_ROOM;
 	fhpibwait(hd, IM_IDLE);
@@ -114,18 +120,20 @@ fhpibsend(unit, slave, sec, buf, cnt)
 		fhpibwait(hd, IM_IDLE);
 	}
 	hd->hpib_imask = 0;
-	return(origcnt - cnt);
+	return origcnt - cnt;
 }
 
+int
 fhpibrecv(unit, slave, sec, buf, cnt)
-	register char *buf;
-	register int cnt;
+	int unit, slave, sec;
+	char *buf;
+	int cnt;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct fhpibdevice *hd;
+	struct hpib_softc *hs = &hpib_softc[unit];
+	struct fhpibdevice *hd;
 	int origcnt = cnt;
 
-	hd = (struct fhpibdevice *)hs->sc_addr;
+	hd = (void *)hs->sc_addr;
 	hd->hpib_stat = 0;
 	hd->hpib_imask = IM_IDLE | IM_ROOM | IM_BYTE;
 	fhpibwait(hd, IM_IDLE);
@@ -151,17 +159,18 @@ fhpibrecv(unit, slave, sec, buf, cnt)
 		fhpibwait(hd, IM_IDLE);
 	}
 	hd->hpib_imask = 0;
-	return(origcnt - cnt);
+	return origcnt - cnt;
 }
 
+int
 fhpibppoll(unit)
-	register int unit;
+	int unit;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct fhpibdevice *hd;
-	register int ppoll;
+	struct hpib_softc *hs = &hpib_softc[unit];
+	struct fhpibdevice *hd;
+	int ppoll;
 
-	hd = (struct fhpibdevice *)hs->sc_addr;
+	hd = (void *)hs->sc_addr;
 	hd->hpib_stat = 0;
 	hd->hpib_psense = 0;
 	hd->hpib_pmask = 0xFF;
@@ -174,17 +183,19 @@ fhpibppoll(unit)
 	hd->hpib_imask = 0;
 	hd->hpib_pmask = 0;
 	hd->hpib_stat = ST_IENAB;
-	return(ppoll);
+	return ppoll;
 }
 
+static int
 fhpibwait(hd, x)
-	register struct fhpibdevice *hd;
+	struct fhpibdevice *hd;
+	uint8_t x;
 {
-	register int timo = 100000;
+	int timo = 100000;
 
 	while ((hd->hpib_intr & x) == 0 && --timo)
 		;
 	if (timo == 0)
-		return(-1);
-	return(0);
+		return -1;
+	return 0;
 }
