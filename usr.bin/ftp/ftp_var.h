@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.66 2004/06/06 01:37:41 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.67 2004/07/20 10:40:22 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -191,6 +191,8 @@ enum {
 #define	DEFAULTPROMPT	"ftp> "	/* default prompt  if `set prompt' is empty */
 #define	DEFAULTRPROMPT	""	/* default rprompt if `set rprompt' is empty */
 
+#define	EXIT_SIGINT	130	/* exit status if ^C (SIGINT) received */
+
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
 
@@ -310,6 +312,7 @@ GLOBAL	void	(*reply_callback)(const char *);
 					 * first (`xxx-') and last (`xxx ')
 					 */
 
+GLOBAL	volatile sig_atomic_t	sigint_raised;
 
 GLOBAL	FILE	*cin;
 GLOBAL	FILE	*cout;

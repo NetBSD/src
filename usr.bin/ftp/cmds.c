@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.105 2004/06/06 13:53:28 kleink Exp $	*/
+/*	$NetBSD: cmds.c,v 1.106 2004/07/20 10:40:21 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.105 2004/06/06 13:53:28 kleink Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.106 2004/07/20 10:40:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1400,7 +1400,7 @@ void
 shell(int argc, char *argv[])
 {
 	pid_t pid;
-	sigfunc old1;
+	sigfunc oldintr;
 	char shellnam[MAXPATHLEN], *shell, *namep;
 	int wait_status;
 
@@ -1409,7 +1409,7 @@ shell(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	old1 = xsignal(SIGINT, SIG_IGN);
+	oldintr = xsignal(SIGINT, SIG_IGN);
 	if ((pid = fork()) == 0) {
 		for (pid = 3; pid < 20; pid++)
 			(void)close(pid);
@@ -1440,7 +1440,7 @@ shell(int argc, char *argv[])
 	if (pid > 0)
 		while (wait(&wait_status) != pid)
 			;
-	(void)xsignal(SIGINT, old1);
+	(void)xsignal(SIGINT, oldintr);
 	if (pid == -1) {
 		warn("Try again later");
 		code = -1;
@@ -1790,6 +1790,7 @@ void
 proxabort(int notused)
 {
 
+	sigint_raised = 1;
 	alarmtimer(0);
 	if (!proxy) {
 		pswitch(1);
