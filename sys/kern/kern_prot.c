@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.77 2003/03/19 11:36:34 dsl Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.78 2003/03/27 17:47:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.77 2003/03/19 11:36:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.78 2003/03/27 17:47:45 jdolecek Exp $");
 
 #include "opt_compat_43.h"
 
@@ -464,7 +464,7 @@ sys_setreuid(struct lwp *l, void *v, register_t *retval)
 	if (euid == -1)
 		euid = p->p_ucred->cr_uid;
 	/* Saved uid is set to the new euid if the ruid changed */
-	svuid = ruid == p->p_cred->p_ruid ? -1 : euid;
+	svuid = (ruid == p->p_cred->p_ruid) ? -1 : euid;
 
 	return do_setresuid(l, ruid, euid, svuid,
 			    ID_R_EQ_R | ID_R_EQ_E |
