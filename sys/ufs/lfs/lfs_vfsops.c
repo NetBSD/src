@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.126 2003/07/12 16:19:00 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.127 2003/07/23 13:38:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.126 2003/07/12 16:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.127 2003/07/23 13:38:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1738,6 +1738,9 @@ static boolean_t
 lfs_issequential_hole(const struct ufsmount *ump,
     daddr_t daddr0, daddr_t daddr1)
 {
+
+	KASSERT(daddr0 == UNWRITTEN || (0 <= daddr0 && daddr0 <= LFS_MAX_DADDR);
+	KASSERT(daddr1 == UNWRITTEN || (0 <= daddr1 && daddr1 <= LFS_MAX_DADDR);
 
 	/* NOTE: all we want to know here is 'hole or not'. */
 
