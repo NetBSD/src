@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.6 1996/02/13 22:04:21 christos Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.7 1998/07/05 02:25:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -39,6 +39,8 @@
  *
  *	@(#)ccitt_proto.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_hdlc.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
