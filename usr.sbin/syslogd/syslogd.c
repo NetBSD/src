@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.27 1999/06/06 01:55:58 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.28 1999/06/07 15:34:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,9 +305,12 @@ main(argc, argv)
 		if (funix[j] < 0 || bind(funix[j],
 		    (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
 		    chmod(*pp, 0666) < 0) {
+			int serrno = errno;
 			(void)snprintf(line, sizeof line,
 			    "cannot create %s", *pp);
+			errno = serrno;
 			logerror(line);
+			errno = serrno;
 			dprintf("cannot create %s (%d)\n", *pp, errno);
 			die(0);
 		}
@@ -417,9 +420,11 @@ main(argc, argv)
 				printline(LocalHostName, line);
 			} else if (i < 0 && errno != EINTR) {
 				char buf[MAXPATHLEN];
+				int serrno = errno;
 
 				(void)snprintf(buf, sizeof buf,
 				    "recvfrom unix %s", *pp);
+				errno = serrno;
 				logerror(buf);
 			}
 		}
@@ -491,7 +496,10 @@ logpath_fileadd(lp, szp, maxszp, file)
 
 	fp = fopen(file, "r");
 	if (fp == NULL) {
+		int serrno = errno;
+
 		dprintf("can't open %s (%d)\n", file, errno);
+		errno = serrno;
 		logerror("could not open socket file list");
 		die(0);
 	}
