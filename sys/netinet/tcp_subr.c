@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.70 1999/07/09 22:57:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.71 1999/07/14 22:08:52 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -391,13 +391,6 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	ip6 = NULL;
 #endif
 	if (m == 0) {
-		if (template
-		 && template->m_len < hlen + sizeof(struct tcphdr)) {
-			if (m)
-				m_freem(m);
-			return EINVAL;
-		}
-
 		/* get family information from template */
 		switch (mtod(template, struct ip *)->ip_v) {
 		case 4:
@@ -411,15 +404,13 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			break;
 #endif
 		default:
-			if (m)
-				m_freem(m);
 			return EAFNOSUPPORT;
 		}
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT)) {
+			if (!(m->m_flags & M_EXT)) {
 				m_free(m);
 				m = NULL;
 			}
