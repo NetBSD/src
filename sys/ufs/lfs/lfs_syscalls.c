@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.83 2003/02/23 03:32:55 simonb Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.84 2003/02/24 08:42:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.83 2003/02/23 03:32:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.84 2003/02/24 08:42:49 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -93,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.83 2003/02/23 03:32:55 simonb Exp
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-/* Max block count for lfs_markv() */
-#define MARKV_MAXBLKCNT		65536
 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_fasthashget(dev_t, ino_t, struct vnode **);
@@ -125,9 +122,6 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 #define LFS_FORCE_WRITE UNASSIGNED
 
 #define LFS_VREF_THRESHOLD 128
-
-static int lfs_bmapv(struct proc *, fsid_t *, BLOCK_INFO *, int);
-static int lfs_markv(struct proc *, fsid_t *, BLOCK_INFO *, int);
 
 /*
  * sys_lfs_markv:
@@ -162,7 +156,7 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
-	if ((u_int) blkcnt > MARKV_MAXBLKCNT)
+	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
@@ -198,7 +192,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
-	if ((u_int) blkcnt > MARKV_MAXBLKCNT)
+	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
@@ -239,7 +233,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 
 #define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
 
-static int
+int
 lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
@@ -709,7 +703,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 }
 #endif
 
-static int
+int
 lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
@@ -967,11 +961,38 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 }
 
 /*
- * sys_lfs_segwait:
- *
  * This will block until a segment in file system fsid is written.  A timeout
  * in milliseconds may be specified which will awake the cleaner automatically.
  * An fsid of -1 means any file system, and a timeout of 0 means forever.
+ */
+int
+lfs_segwait(fsid_t *fsidp, struct timeval *tv)
+{
+	struct mount *mntp;
+	void *addr;
+	u_long timeout;
+	int error, s;
+
+	if ((mntp = vfs_getvfs(fsidp)) == NULL)
+		addr = &lfs_allclean_wakeup;
+	else
+		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
+	/*
+	 * XXX THIS COULD SLEEP FOREVER IF TIMEOUT IS {0,0}!
+	 * XXX IS THAT WHAT IS INTENDED?
+	 */
+	s = splclock();
+	timeradd(tv, &time, tv);
+	timeout = hzto(tv);
+	splx(s);
+	error = tsleep(addr, PCATCH | PUSER, "segment", timeout);
+	return (error == ERESTART ? EINTR : 0);
+}
+
+/*
+ * sys_lfs_segwait:
+ *
+ * System call wrapper around lfs_segwait().
  *
  *  0 on success
  *  1 on timeout
@@ -985,22 +1006,16 @@ sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct mount *mntp;
 	struct timeval atv;
 	fsid_t fsid;
-	void *addr;
-	u_long timeout;
-	int error, s;
+	int error;
 	
+	/* XXX need we be su to segwait? */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 		return (error);
 	}
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
-	if ((mntp = vfs_getvfs(&fsid)) == NULL)
-		addr = &lfs_allclean_wakeup;
-	else
-		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
 	
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), &atv, sizeof(struct timeval));
@@ -1008,19 +1023,9 @@ sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 			return (error);
 		if (itimerfix(&atv))
 			return (EINVAL);
-		/*
-		 * XXX THIS COULD SLEEP FOREVER IF TIMEOUT IS {0,0}!
-		 * XXX IS THAT WHAT IS INTENDED?
-		 */
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		timeout = hzto(&atv);
-		splx(s);
-	} else
-		timeout = 0;
-	
-	error = tsleep(addr, PCATCH | PUSER, "segment", timeout);
-	return (error == ERESTART ? EINTR : 0);
+	} else /* NULL or invalid */
+		atv.tv_sec = atv.tv_usec = 0;
+	return lfs_segwait(&fsid, &atv);
 }
 
 /*

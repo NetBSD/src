@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.88 2003/02/23 00:22:35 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.89 2003/02/24 08:42:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.88 2003/02/23 00:22:35 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.89 2003/02/24 08:42:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_read_desc, lfs_read },			/* read */
 	{ &vop_write_desc, lfs_write },			/* write */
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
-	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
+	{ &vop_ioctl_desc, lfs_ioctl },			/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
@@ -1009,6 +1009,78 @@ lfs_reclaim(void *v)
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+/*
+ * Provide an ioctl interface to sys_lfs_{segwait,bmapv,markv}.
+ */
+int
+lfs_ioctl(void *v)
+{
+        struct vop_ioctl_args /* {
+                struct vnode *a_vp;
+                u_long a_command;
+                caddr_t  a_data;
+                int  a_fflag;
+                struct ucred *a_cred;
+                struct proc *a_p;
+        } */ *ap = v;
+	struct timeval *tvp;
+	BLOCK_INFO *blkiov;
+	int blkcnt, error;
+	struct lfs_ioctl_markv blkvp;
+	fsid_t *fsidp;
+
+	/* Only respect LFS ioctls on fs root or Ifile */
+	if (VTOI(ap->a_vp)->i_number != ROOTINO &&
+	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
+		return ufs_ioctl(v);
+	}
+
+	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
+
+	switch(ap->a_command) {
+	    case LIOCSEGWAITALL:
+		fsidp = NULL;
+		/* FALLSTHROUGH */
+	    case LIOCSEGWAIT:
+		tvp = (struct timeval *)ap->a_data;
+		if ((error = lfs_segwait(fsidp, tvp)) != 0) {
+			return error;
+		}
+		/* copyout(&tv, ap->a_data, sizeof(tv)); */
+		return 0;
+
+	    case LIOCBMAPV:
+	    case LIOCMARKV:
+		if ((error = suser(ap->a_p->p_ucred, &ap->a_p->p_acflag)) != 0)
+			return (error);
+		blkvp = *(struct lfs_ioctl_markv *)ap->a_data;
+
+		blkcnt = blkvp.blkcnt;
+		if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
+			return (EINVAL);
+		blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
+		if ((error = copyin(blkvp.blkiov, blkiov,
+		     blkcnt * sizeof(BLOCK_INFO))) != 0) {
+			free(blkiov, M_SEGMENT);
+			return error;
+		}
+
+		if (ap->a_command == LIOCBMAPV)
+			error = lfs_bmapv(ap->a_p, fsidp, blkiov, blkcnt);
+		else /* LIOCMARKV */
+			error = lfs_markv(ap->a_p, fsidp, blkiov, blkcnt);
+		if (error == 0)
+			error = copyout(blkiov, blkvp.blkiov,
+					blkcnt * sizeof(BLOCK_INFO));
+		free(blkiov, M_SEGMENT);
+		return error;
+
+	    default:
+		return ufs_ioctl(v);
+	}
+	return 0;
 }
 
 #ifndef LFS_UBC
