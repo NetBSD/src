@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.1 2001/08/08 16:23:12 nathanw Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.2 2001/11/16 02:57:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -47,6 +47,7 @@ __weak_alias(pthread_rwlock_wrlock, _pthread_rwlock_wrlock)
 __weak_alias(pthread_rwlock_unlock, _pthread_rwlock_unlock)
 #endif
 __weak_alias(flockfile, _flockfile)
+__weak_alias(ftrylockfile, _ftrylockfile)
 __weak_alias(funlockfile, _funlockfile)
 __weak_alias(pthread_once, _pthread_once)
 __weak_alias(pthread_cond_init, _pthread_cond_init)
@@ -71,6 +72,7 @@ int _pthread_rwlock_wrlock(pthread_rwlock_t *);
 int _pthread_rwlock_unlock(pthread_rwlock_t *);
 #endif
 int _flockfile(FILE *);
+int _ftrylockfile(FILE *);
 int _funlockfile(FILE *);
 int _pthread_once(pthread_once_t *, void (*)(void));
 int _pthread_cond_init(pthread_cond_t *,const pthread_condattr_t *);
@@ -152,6 +154,14 @@ _flockfile(FILE *fp)
 }
 
 int
+_ftrylockfile(FILE *fp)
+{
+	(void)fp;
+
+	return (0);
+}
+
+int
 _funlockfile(FILE *fp)
 {
 	(void)fp;
@@ -222,6 +232,8 @@ _pthread_setspecific(pthread_key_t k, const void *v)
 {
 	(void)k;
 	(void)v;
+
+	return (0);
 }
 
 void*
