@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17 1994/11/23 07:02:15 deraadt Exp $ */
+/*	$NetBSD: if_le.c,v 1.18 1995/02/16 21:50:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -284,11 +284,13 @@ leattach(parent, self, args)
 	bp = ca->ca_ra.ra_bp;
 	switch (ca->ca_bustype) {
 	case BUS_SBUS:
-		if (bp != NULL && strcmp(bp->name, "le") == 0 && SAME_LANCE(bp, ca))
+		if (bp != NULL && strcmp(bp->name, "le") == 0 &&
+		    SAME_LANCE(bp, ca))
 			bootdv = &sc->sc_dev;
 		break;
 	default:
-		if (bp != NULL && strcmp(bp->name, "le") == 0)
+		if (bp != NULL && strcmp(bp->name, "le") == 0 &&
+		    sc->sc_dev.dv_unit == bp->val[1])
 			bootdv = &sc->sc_dev;
 		break;
 	}

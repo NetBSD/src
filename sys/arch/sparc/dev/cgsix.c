@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.11 1994/11/23 07:02:05 deraadt Exp $ */
+/*	$NetBSD: cgsix.c,v 1.12 1995/02/16 21:50:41 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -244,7 +244,7 @@ cgsixattach(parent, self, args)
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
 	printf("\n");
-	if (ca->ca_bustype == BUS_SBUS)
+	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
