@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.10 1999/11/08 20:19:10 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.11 1999/11/09 15:03:59 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -360,8 +360,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	}
 	bar_index = tuple[2] & 7;
 	if(bar_index == 0) {
-	    DPRINTF(("%s: invalid ASI in BAR tuple\n",
-		     __func__, bar_index));
+	    DPRINTF(("%s: invalid ASI in BAR tuple\n", __func__));
 	    break;
 	}
 	bar_index--;
