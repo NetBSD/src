@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.102 2000/03/27 22:42:57 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.103 2000/03/28 09:47:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1835,6 +1835,16 @@ uhci_abort_xfer(xfer, status)
 	/* Set up final processing. */
 	usb_callout(upipe->pipe.abort_handle, hz / USB_FRAMES_PER_SECOND,
 		    uhci_abort_xfer_end, upipe);
+
+	/* XXX This isn't right, but use it until we figure out a better way. */
+	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
+	case UE_CONTROL:
+	case UE_BULK:
+		/* No QH to link back, just return. */
+		upipe->aborting = 0;
+		splx(s);
+		return;
+	}
 
 	/* Pretend we are running to avoid QH manipulation. */
 	upipe->pipe.running = 1;
