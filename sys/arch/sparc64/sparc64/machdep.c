@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2001/03/15 06:10:50 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.103 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -973,9 +974,11 @@ printf("starting dump, blkno %d\n", blkno);
 				printf("%d ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+			pmap_update();
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_update();
 			if (error)
 				break;
 			maddr += n;
@@ -1809,6 +1812,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+	pmap_update();
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.60 2001/04/01 16:45:53 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.61 2001/04/24 04:31:17 thorpej Exp $	*/
 
 /*
  *
@@ -623,7 +623,15 @@ ReFault:
 	}
 	/* locked: maps(read) */
 
-	KASSERT(ufi.map->flags & VM_MAP_PAGEABLE);
+#ifdef DIAGNOSTIC
+	if ((ufi.map->flags & VM_MAP_PAGEABLE) == 0) {
+		printf("Page fault on non-pageable map:\n");
+		printf("ufi.map = %p\n", ufi.map);
+		printf("ufi.orig_map = %p\n", ufi.orig_map);
+		printf("ufi.orig_rvaddr = 0x%lx\n", (u_long) ufi.orig_rvaddr);
+		panic("uvm_fault: (ufi.map->flags & VM_MAP_PAGEABLE) == 0");
+	}
+#endif
 
 	/*
 	 * check protection
@@ -851,6 +859,7 @@ ReFault:
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
 		simple_unlock(&anon->an_lock);
+		pmap_update();
 	}
 
 	/* locked: maps(read), amap(if there) */
@@ -885,6 +894,9 @@ ReFault:
 
 		if (error == ERESTART)
 			goto ReFault;		/* try again! */
+		/*
+		 * object fault routine responsible for pmap_update().
+		 */
 		return error;
 	}
 
@@ -987,6 +999,7 @@ ReFault:
 				pages[lcv]->flags &= ~(PG_BUSY); /* un-busy! */
 				UVM_PAGE_OWN(pages[lcv], NULL);
 			}	/* for "lcv" loop */
+			pmap_update();
 		}   /* "gotpages" != 0 */
 		/* note: object still _locked_ */
 	} else {
@@ -1285,6 +1298,7 @@ ReFault:
 	if (anon != oanon)
 		simple_unlock(&anon->an_lock);
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
+	pmap_update();
 	return 0;
 
 
@@ -1757,6 +1771,8 @@ Case2:
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(&ufi, amap, uobj, anon);
+
+	pmap_update();
 
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return 0;

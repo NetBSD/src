@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2001/04/22 23:42:15 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.31 2001/04/24 04:31:05 thorpej Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -729,6 +729,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
+	pmap_update();
 	return (va);
 }
 
@@ -1844,6 +1845,7 @@ pmap_zero_page(phys)
 	kva = (vaddr_t) CADDR1;
 	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update();
 	zeropage((caddr_t)kva);
 	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
 	    PRM_TFLUSH|PRM_CFLUSH);
@@ -1879,9 +1881,11 @@ pmap_copy_page(src, dst)
 	    VM_PROT_READ|PMAP_WIRED);
 	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update();
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
+	pmap_update();
 }
 
 /*
@@ -2609,6 +2613,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((caddr_t)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
 		    VM_PROT_DEFAULT|PMAP_WIRED);
+		pmap_update();
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);
