@@ -30,7 +30,7 @@ diff -cr src.30/etc/etc.alpha/MAKEDEV src/etc/etc.alpha/MAKEDEV
   	sh $this local xfs0 altq
 ***************
 *** 495,500 ****
---- 496,510 ----
+--- 496,513 ----
   	mknod pf c 35 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -42,6 +42,9 @@ diff -cr src.30/etc/etc.alpha/MAKEDEV src/etc/etc.alpha/MAKEDEV
 + 	mknod ipnat c 37 1
 + 	mknod ipstate c 37 2
 + 	mknod ipauth c 37 3
++ 	mknod ipsync c 37 4
++ 	mknod ipscan c 37 5
++ 	mknod ippool c 37 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -105,7 +108,7 @@ diff -cr src.30/etc/etc.amiga/MAKEDEV src/etc/etc.amiga/MAKEDEV
   
 ***************
 *** 602,607 ****
---- 604,618 ----
+--- 604,621 ----
   	rm -f $name$unit
   	mknod $name$unit c 33 `expr $unit + $flags`
   	chown root.wheel $name$unit
@@ -117,6 +120,9 @@ diff -cr src.30/etc/etc.amiga/MAKEDEV src/etc/etc.amiga/MAKEDEV
 + 	mknod ipnat c 38 1
 + 	mknod ipstate c 38 2
 + 	mknod ipauth c 38 3
++ 	mknod ipsync c 38 4
++ 	mknod ipscan c 38 5
++ 	mknod ippool c 38 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -143,7 +149,7 @@ diff -cr src.30/etc/etc.hp300/MAKEDEV src/etc/etc.hp300/MAKEDEV
   
 ***************
 *** 195,200 ****
---- 195,209 ----
+--- 195,212 ----
   	mknod pf c 33 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -155,6 +161,9 @@ diff -cr src.30/etc/etc.hp300/MAKEDEV src/etc/etc.hp300/MAKEDEV
 + 	mknod ipnat c 37 1
 + 	mknod ipstate c 37 2
 + 	mknod ipauth c 37 3
++ 	mknod ipsync c 37 4
++ 	mknod ipscan c 37 5
++ 	mknod ippool c 37 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -181,7 +190,7 @@ diff -cr src.30/etc/etc.hppa/MAKEDEV src/etc/etc.hppa/MAKEDEV
   
 ***************
 *** 187,192 ****
---- 187,201 ----
+--- 187,204 ----
   	mknod pf c 21 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -193,6 +202,9 @@ diff -cr src.30/etc/etc.hppa/MAKEDEV src/etc/etc.hppa/MAKEDEV
 + 	mknod ipnat c 34 1
 + 	mknod ipstate c 34 2
 + 	mknod ipauth c 34 3
++ 	mknod ipsync c 34 4
++ 	mknod ipscan c 34 5
++ 	mknod ippool c 34 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -219,7 +231,7 @@ diff -cr src.30/etc/etc.i386/MAKEDEV src/etc/etc.i386/MAKEDEV
   	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 ***************
 *** 587,592 ****
---- 587,601 ----
+--- 587,604 ----
   	mknod pf c 73 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -231,6 +243,10 @@ diff -cr src.30/etc/etc.i386/MAKEDEV src/etc/etc.i386/MAKEDEV
 + 	mknod ipnat c 77 1
 + 	mknod ipstate c 77 2
 + 	mknod ipauth c 77 3
++ 	mknod ipauth c 77 3
++ 	mknod ipsync c 77 4
++ 	mknod ipscan c 77 5
++ 	mknod ippool c 77 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -250,7 +266,7 @@ diff -cr src.30/etc/etc.mac68k/MAKEDEV src/etc/etc.mac68k/MAKEDEV
   	sh $this random
 ***************
 *** 427,432 ****
---- 428,442 ----
+--- 428,445 ----
   	mknod pf c 35 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -262,6 +278,9 @@ diff -cr src.30/etc/etc.mac68k/MAKEDEV src/etc/etc.mac68k/MAKEDEV
 + 	mknod ipnat c 38 1
 + 	mknod ipstate c 38 2
 + 	mknod ipauth c 38 3
++ 	mknod ipsync c 38 4
++ 	mknod ipscan c 38 5
++ 	mknod ippool c 38 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -288,7 +307,7 @@ diff -cr src.30/etc/etc.macppc/MAKEDEV src/etc/etc.macppc/MAKEDEV
   	sh $this wscons
 ***************
 *** 551,556 ****
---- 551,565 ----
+--- 551,568 ----
   	mknod pf c 39 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -300,6 +319,9 @@ diff -cr src.30/etc/etc.macppc/MAKEDEV src/etc/etc.macppc/MAKEDEV
 + 	mknod ipnat c 45 1
 + 	mknod ipstate c 45 2
 + 	mknod ipauth c 45 3
++ 	mknod ipsync c 45 4
++ 	mknod ipscan c 45 5
++ 	mknod ippool c 45 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -326,7 +348,7 @@ diff -cr src.30/etc/etc.mvme68k/MAKEDEV src/etc/etc.mvme68k/MAKEDEV
   	sh MAKEDEV pf tun0 tun1 lkm local
 ***************
 *** 431,436 ****
---- 431,445 ----
+--- 431,448 ----
           chown root.kmem lkm
           chmod 640 lkm
           ;;
@@ -337,6 +359,9 @@ diff -cr src.30/etc/etc.mvme68k/MAKEDEV src/etc/etc.mvme68k/MAKEDEV
 + 	mknod ipnat c 44 1
 + 	mknod ipstate c 44 2
 + 	mknod ipauth c 44 3
++ 	mknod ipsync c 44 4
++ 	mknod ipscan c 44 5
++ 	mknod ippool c 44 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
 + 	;;
   
@@ -364,7 +389,7 @@ diff -cr src.30/etc/etc.mvme88k/MAKEDEV src/etc/etc.mvme88k/MAKEDEV
   	sh $this pf tun0 tun1 lkm local
 ***************
 *** 293,298 ****
---- 293,307 ----
+--- 293,310 ----
   	mknod pf c 39 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -376,6 +401,9 @@ diff -cr src.30/etc/etc.mvme88k/MAKEDEV src/etc/etc.mvme88k/MAKEDEV
 + 	mknod ipnat c 41 1
 + 	mknod ipstate c 41 2
 + 	mknod ipauth c 41 3
++ 	mknod ipsync c 41 4
++ 	mknod ipscan c 41 5
++ 	mknod ippool c 41 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -402,7 +430,7 @@ diff -cr src.30/etc/etc.mvmeppc/MAKEDEV src/etc/etc.mvmeppc/MAKEDEV
   	sh $this wscons
 ***************
 *** 532,537 ****
---- 532,546 ----
+--- 532,549 ----
   	mknod pf c 39 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -414,6 +442,9 @@ diff -cr src.30/etc/etc.mvmeppc/MAKEDEV src/etc/etc.mvmeppc/MAKEDEV
 + 	mknod ipnat c 44 1
 + 	mknod ipstate c 44 2
 + 	mknod ipauth c 44 3
++ 	mknod ipsync c 44 4
++ 	mknod ipscan c 44 5
++ 	mknod ippool c 44 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -443,7 +474,7 @@ diff -cr src.30/etc/etc.sparc/MAKEDEV src/etc/etc.sparc/MAKEDEV
   	sh $this lkm random local
 ***************
 *** 341,346 ****
---- 343,357 ----
+--- 343,360 ----
   	mknod pf c 59 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -455,6 +486,9 @@ diff -cr src.30/etc/etc.sparc/MAKEDEV src/etc/etc.sparc/MAKEDEV
 + 	mknod ipnat c 60 1
 + 	mknod ipstate c 60 2
 + 	mknod ipauth c 60 3
++ 	mknod ipsync c 60 4
++ 	mknod ipscan c 60 5
++ 	mknod ippool c 60 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -481,7 +515,7 @@ diff -cr src.30/etc/etc.sparc64/MAKEDEV src/etc/etc.sparc64/MAKEDEV
   	R xfs0 tcx0 lkm audio0 local
 ***************
 *** 243,248 ****
---- 243,253 ----
+--- 243,256 ----
   		U=$(($U+1))
   	done;;
   pf*)M pf c 73 0 600;;
@@ -489,6 +523,9 @@ diff -cr src.30/etc/etc.sparc64/MAKEDEV src/etc/etc.sparc64/MAKEDEV
 + 	M ipnat c 75 1 root.wheel
 + 	M ipstate c 75 2 root.wheel
 + 	M ipauth c 75 3 root.wheel
++ 	M ipsync c 75 4 root.wheel
++ 	M ipscan c 75 5 root.wheel
++ 	M ippool c 75 6 root.wheel
 + 	;;
   cgsix*)M cgsix$U c 67 $U 666;;
   audio*)M sound$U	c 69 $U
@@ -518,7 +555,7 @@ diff -cr src.30/etc/etc.sun3/MAKEDEV src/etc/etc.sun3/MAKEDEV
   	sh $this xfs0 altq
 ***************
 *** 277,282 ****
---- 279,293 ----
+--- 279,296 ----
   	mknod pf c 75 0
   	chown root.wheel pf
   	chmod 600 pf
@@ -530,6 +567,9 @@ diff -cr src.30/etc/etc.sun3/MAKEDEV src/etc/etc.sun3/MAKEDEV
 + 	mknod ipnat c 86 1
 + 	mknod ipstate c 86 2
 + 	mknod ipauth c 86 3
++ 	mknod ipsync c 86 4
++ 	mknod ipscan c 86 5
++ 	mknod ippool c 86 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -556,7 +596,7 @@ diff -cr src.30/etc/etc.vax/MAKEDEV src/etc/etc.vax/MAKEDEV
   	mknod ttyg1		c 25 1
 ***************
 *** 117,122 ****
---- 117,126 ----
+--- 117,129 ----
   	mknod stdout		c 53 1	; chmod 666 stdout
   	mknod stderr		c 53 2	; chmod 666 stderr
   	mknod ksyms		c 50 0	; chmod 640 ksyms ; chown root.kmem ksyms
@@ -564,6 +604,9 @@ diff -cr src.30/etc/etc.vax/MAKEDEV src/etc/etc.vax/MAKEDEV
 + 	mknod ipnat             c 47 1  ; chmod 600 ipnat
 + 	mknod ipstate           c 47 2  ; chmod 600 ipstate
 + 	mknod ipauth            c 47 3  ; chmod 600 ipauth
++ 	mknod ipsync            c 47 4  ; chmod 600 ipsync
++ 	mknod ipscan            c 47 5  ; chmod 600 ipscan
++ 	mknod ippool            c 47 6  ; chmod 600 ippool
   	;;
   
   fd)

@@ -9,12 +9,12 @@ if ( -d /sys/$karch ) set archdir="/sys/$karch"
 set confdir="$archdir/conf"
 
 if ( $dir =~ */BSDOS4 ) cd ..
-foreach i (ip_fil.[ch] ip_nat.[ch] ip_frag.[ch] ip_state.[ch] fil.c ipl.h \
-	   ip_compat.h ip_log.c ip_proxy.[ch] ip_*_pxy.c ip_auth.[ch])
+foreach i (ip_{auth,fil,frag,nat,proxy,scan,state,sync}.[ch] fil.c ipl.h \
+	   ip_compat.h ip_log.c ip_*_pxy.c )
 	echo -n "$i ";
 	cp $i /sys/netinet
 	chmod 664 /sys/netinet/$i
-	switch ( $i )
+	switch ($i)
 	case *.h:
 		/bin/cp $i /usr/include/netinet/$i
 		chmod 644 /usr/include/netinet/$i
@@ -44,7 +44,7 @@ cat BSDOS4/files.diffs | (cd /sys/conf; patch)
 cat BSDOS4/ioconf.c.i386.diffs | (cd $archdir/conf; patch)
 
 echo "Creating device files..."
-foreach i (/dev/ipl /dev/ipnat /dev/ipstate /dev/ipauth)
+foreach i (/dev/ipl /dev/ipnat /dev/ipstate /dev/ipauth /dev/ipsync /dev/ipscan)
 	if ( -f $i ) then
 		/bin/rm -f $i
 	endif

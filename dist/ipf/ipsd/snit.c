@@ -1,12 +1,9 @@
-/*	$NetBSD: snit.c,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: snit.c,v 1.1.1.3 2004/03/28 08:56:13 martti Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
  *
  * See the IPFILTER.LICENCE file for details on licencing.
- *
- *   The author of this software makes no garuntee about the
- * performance of this package or its suitability to fulfill any purpose.
  *
  */
 

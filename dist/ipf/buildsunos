@@ -1,11 +1,9 @@
 #! /bin/sh
-unset LD_LIBRARY_PATH
-
 if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.5.2.13 2002/06/04 14:37:54 darrenr Exp
+# Id: buildsunos,v 2.20 2004/02/07 18:08:46 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -14,6 +12,15 @@ if [ -d /usr/ccs/bin ] ; then
 fi
 
 if [ $rev = 5 ] ; then
+	if [ ! -d ../pfil ] ; then
+		cat << __EOF__
+pfil directory in .. missing, please download pfil package and extract that
+into the parent directory.
+
+See INSTALL.Sol2 for more instructions.
+__EOF__
+		exit 1
+	fi
 	#
 	# /usr/ucb/cc will not work
 	#
@@ -34,41 +41,31 @@ if [ $rev = 5 ] ; then
 	#
 	# Default C compiler is "cc", override on make commandline
 	#
-	: ${CC:=cc}
+	if [ "x$CC" = "x" ] ; then
+		if echo '' | cc -E - >/dev/null 2>&1 ; then
+			CC=cc
+		else
+			if echo '' | gcc -E - >/dev/null 2>&1 ; then
+				CC=gcc
+			else
+				echo "No working compiler found"
+				exit 1
+			fi
+		fi
+	fi
 	v=`echo '__GNUC__' | 2>&1 ${CC} -E - | 2>&1 sed -ne '/^[0-9]* *$/p'`
 	if [ x$v != x ] ; then
 		CC=gcc
-	else
-		CC=cc
-	fi
-
-	if [ $solrev -ge 7 ] && /bin/optisa sparcv8plus > /dev/null
-	then
-		# We run Solaris 7+ on 64 bit capable hardware.
-		BUILDBOTH=true
-		if [ -f /opt/SUNWspro/bin/cc ] ; then
-			CC=/opt/SUNWspro/bin/cc
-		fi
-	else
-		BUILDBOTH=false
-		OBJ32=.
 	fi
 
 	case "$CC" in
 	*gcc*)	# gcc
-		case `uname -p` in
-		sparc)
-			XARCH32="-m32"
-			;;
-		*)
-			XARCH32=""
-			;;
-		esac
+		XARCH32=""
 		XARCH64="-m64 -mcmodel=medlow"
 		;;
 	*)	# Sun C
 		XARCH32="-Xa -xildoff"
-		XARCH64="$XARCH32 -xchip=ultra -dalign -xcode=abs32 -xarch=v9"
+		XARCH64="$XARCH32 -xarch=v9 -xchip=ultra -dalign -xcode=abs32"
 		;;
 	esac
 
@@ -80,6 +77,15 @@ if [ $rev = 5 ] ; then
 	ARCHINC32=
 	OBJ64=sparcv9
 	ARCHINC64="-I/usr/include/v9"
+
+	if [ $solrev -ge 7 ] && /bin/optisa sparcv8plus > /dev/null
+	then
+		# We run Solaris 7+ on 64 bit capable hardware.
+		BUILDBOTH=true
+	else
+		BUILDBOTH=false
+		OBJ32=.
+	fi
 
 	if $BUILDBOTH
 	then
@@ -138,7 +144,10 @@ fi
 : ${MAKE:=make}
 
 if [ $cpu = i386 ] ; then
-	$MAKE $MAKEFLAGS ${1+"$@"} sunos5x86 SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH32" XARCH="$XARCH32" ARCHINC="$ARCHINC32" BITS=32 OBJ=.
+	if [ -n "$BPFILTER" ] ; then
+		BPF="BPFILTER=./$BPFILTER"
+	fi
+	$MAKE $MAKEFLAGS ${1+"$@"} sunos5x86 SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH32" XARCH="$XARCH32" ARCHINC="$ARCHINC32" BITS=32 OBJ=. $BPF
 	exit $?
 fi
 if [ x$solrev = x ] ; then
@@ -152,5 +161,8 @@ do
     do
 	eval $v=\"\$$v$b\"
     done
-    $MAKE $MAKEFLAGS ${1+"$@"} sunos$rev SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH" XARCH="$XARCH" ARCHINC="$ARCHINC" BITS=$b OBJ=$OBJ || exit $?
+    if [ -n "$BPFILTER" ] ; then
+	BPF="BPFILTER=$OBJ/$BPFILTER"
+    fi
+    $MAKE $MAKEFLAGS ${1+"$@"} sunos$rev SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH" XARCH="$XARCH" ARCHINC="$ARCHINC" BITS=$b OBJ=$OBJ $BPF || exit $?
 done

@@ -1,16 +1,15 @@
 #!/bin/sh
 #
 # Major device number definition from /dev/MAKEDEV:
-C_IPFLTR=59	# IP packet filtering device
+C_IPL=79	# IP packet filtering device
 #
 PATH=/sbin:/usr/etc:/usr/sbin:${PATH}
 if [ -r /var/sysgen/boot/ipflkm.o ]; then
 	ipflkm=true
-	id=`/sbin/ml list -l | grep ipflkm | awk ' { print $2 } ' -`
 else
 	ipflkm=false
-	id=""
 fi
+id=`ml list | grep ipl | awk ' { print $2; } ' -`
 pid=`ps -e | grep ipmon | awk ' { print $1 } ' -`
 
 IPFILCONF=/etc/ipf.conf
@@ -24,38 +23,35 @@ case "$1" in
 		if [ x$id != x ] ; then
 			/sbin/ml unld $id
 		fi
-		id=""
 		if ${ipflkm}; then
-			idout="`/sbin/ml ld -v -c /var/sysgen/boot/ipflkm.o -p ipl`"
-			if [ $? -eq 0 ]; then
-				id="`echo $idout | sed -n '/^Module id is [0-9][0-9]*\.$/s/Module id is \([0-9][0-9]*\)\.$/\1/p'`"
-			fi
-		else
-			id=${C_IPFLTR}
+			/sbin/ml ld -v -c /var/sysgen/boot/ipflkm.o -p ipl -s $C_IPL
 		fi
-		if [ "$id" -gt 0 ]; then
-			(cd /dev && rm -f ipf ipl ipnat ipstate ipauth)
-			mknod /dev/ipf c $id 0
-			mknod /dev/ipl c $id 0
-			mknod /dev/ipnat c $id 1
-			mknod /dev/ipstate c $id 2
-			mknod /dev/ipauth c $id 3
-			(cd /dev && chmod 600 ipf ipl ipnat ipstate ipauth)
-			${ipflkm} || ipf -E
-			[ -r ${IPFILCONF} ] && ipf -Fa -f ${IPFILCONF}
-			[ -r ${IPNATCONF} ] && ipnat -CF -f ${IPNATCONF}
-		fi
+		(cd /dev && rm -f ipf ipl ipnat ipstate ipauth)
+		mknod /dev/ipf c $C_IPL 0
+		mknod /dev/ipl c $C_IPL 0
+		mknod /dev/ipnat c $C_IPL 1
+		mknod /dev/ipstate c $C_IPL 2
+		mknod /dev/ipauth c $C_IPL 3
+		mknod /dev/ipsync c $C_IPL 4
+		mknod /dev/ipscan c $C_IPL 5
+		mknod /dev/iplookup c $C_IPL 7
+		(cd /dev && chmod 600 ipf ipl ipnat ipstate ipauth)
+		(cd /dev && chmod 600 ipsync ipscan iplookup)
+		ipf -E
+		[ -r ${IPFILCONF} ] && ipf -Fa -f ${IPFILCONF}
+		[ -r ${IPNATCONF} ] && ipnat -CF -f ${IPNATCONF}
 		ipmon -sn </dev/null >/dev/null 2>&1 &
 		;;
 
 	stop)
-		if [ x$pid != x ] ; then
+		if [ "x$pid" != "x" ] ; then
 			kill -TERM $pid
 		fi
 		if ${ipflkm}; then
 			if [ x$id != x ] ; then
 			    /sbin/ml unld $id && \
 				(cd /dev && rm -f ipf ipl ipnat ipstate ipauth)
+				(cd /dev && rm -f ipsync ipscan iplookup)
 			fi
 		else
 			ipf -D

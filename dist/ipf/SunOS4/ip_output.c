@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.1.1.3 2004/03/28 08:56:09 martti Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -988,7 +988,7 @@ ip_getmoptions(optname, mopts, m)
 	switch (optname) {
 
 #if defined(RSVP_ISI) && defined(MROUTING)
-        case IP_MULTICAST_VIF: 
+        case IP_MULTICAST_VIF:
                 if (imo!=NULL)
                    *(mtod(*m, int *)) = imo->imo_multicast_vif;
                 else

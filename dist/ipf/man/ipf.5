@@ -1,12 +1,12 @@
-.\"	$NetBSD: ipf.5,v 1.1.1.4 2002/01/24 08:18:33 martti Exp $
+.\"	$NetBSD: ipf.5,v 1.1.1.5 2004/03/28 08:56:22 martti Exp $
 .\"
 .TH IPF 5
 .SH NAME
-ipf, ipf.conf \- IP packet filter rule syntax
+ipf, ipf.conf, ipf6.conf \- IP packet filter rule syntax
 .SH DESCRIPTION
 .PP
 A rule file for \fBipf\fP may have any name or even be stdin.  As
-\fBipfstat\fP produces parseable rules as output when displaying the internal
+\fBipfstat\fP produces parsable rules as output when displaying the internal
 kernel filter lists, it is quite plausible to use its output to feed back
 into \fBipf\fP.  Thus, to remove all filters on input packets, the following
 could be done:
@@ -21,12 +21,13 @@ described using the following grammar in BNF:
 \fC
 .nf
 filter-rule = [ insert ] action in-out [ options ] [ tos ] [ ttl ]
-	      [ proto ] [ ip ] [ group ].
+	      [ proto ] ip [ group ].
 
 insert	= "@" decnumber .
 action	= block | "pass" | log | "count" | skip | auth | call .
 in-out	= "in" | "out" .
-options	= [ log ] [ "quick" ] [ "on" interface-name [ dup ] [ froute ] ] .
+options	= [ log ] [ tag ] [ "quick" ] [ "on" interface-name [ dup ]
+           [ froute ] [ replyto ] ] .
 tos	= "tos" decnumber | "tos" hexnumber .
 ttl	= "ttl" decnumber .
 proto	= "proto" protocol .
@@ -34,19 +35,24 @@ ip	= srcdst [ flags ] [ with withopt ] [ icmp ] [ keep ] .
 group	= [ "head" decnumber ] [ "group" decnumber ] .
 
 block	= "block" [ return-icmp[return-code] | "return-rst" ] .
-auth    = "auth" | "preauth" .
 log	= "log" [ "body" ] [ "first" ] [ "or-block" ] [ "level" loglevel ] .
-call	= "call" [ "now" ] function-name .
+tag     = "tag" tagid .
 skip	= "skip" decnumber .
-dup	= "dup-to" interface-name[":"ipaddr] .
-froute	= "fastroute" | "to" interface-name .
+auth	= "auth" | "preauth" .
+call	= "call" [ "now" ] function-name .
+dup	= "dup-to" interface-name [ ":" ipaddr ] .
+froute	= "fastroute" | "to" interface-name [ ":" ipaddr ] .
+replyto = "reply-to" interface-name [ ":" ipaddr ] .
 protocol = "tcp/udp" | "udp" | "tcp" | "icmp" | decnumber .
 srcdst	= "all" | fromto .
 fromto	= "from" [ "!" ] object "to" [ "!" ] object .
 
 return-icmp = "return-icmp" | "return-icmp-as-dest" .
+return-code = "(" icmp-code ")" .
 object	= addr [ port-comp | port-range ] .
 addr	= "any" | nummask | host-name [ "mask" ipaddr | "mask" hexnumber ] .
+addr	= "any" | "<thishost>" | nummask |
+	  host-name [ "mask" ipaddr | "mask" hexnumber ] .
 port-comp = "port" compare port-num .
 port-range = "port" port-num range port-num .
 flags	= "flags" flag { flag } [ "/" flag { flag } ] .
@@ -63,7 +69,7 @@ host-num = digit [ digit [ digit ] ] .
 port-num = service-name | decnumber .
 
 withopt = [ "not" | "no" ] opttype [ withopt ] .
-opttype = "ipopts" | "short" | "frag" | "opt" ipopts  .
+opttype = "ipopts" | "short" | "frag" | "opt" optname .
 optname	= ipopts [ "," optname ] .
 ipopts  = optlist | "sec-class" [ secname ] .
 secname	= seclvl [ "," secname ] .
@@ -118,7 +124,7 @@ below).
 Filters are installed by default at the end of the kernel's filter
 lists, prepending the rule with \fB@n\fP will cause it to be inserted
 as the n'th entry in the current list. This is especially useful when
-modifying and testing active filter rulesets. See ipf(1) for more
+modifying and testing active filter rulesets. See ipf(8) for more
 information.
 .SH ACTIONS
 .PP
@@ -138,7 +144,7 @@ with a rule which is being applied to TCP packets.  When using
 \fBreturn-icmp\fP or \fBreturn-icmp-as-dest\fP, it is possible to specify
 the actual unreachable `type'.  That is, whether it is a network
 unreachable, port unreachable or even administratively
-prohibitied. This is done by enclosing the ICMP code associated with
+prohibited. This is done by enclosing the ICMP code associated with
 it in parenthesis directly following \fBreturn-icmp\fP or
 \fBreturn-icmp-as-dest\fP as follows:
 .nf
@@ -206,6 +212,13 @@ are the currently supported options:
 indicates that, should this be the last matching rule, the packet
 header will be written to the \fBipl\fP log (as described in the
 LOGGING section below).
+.TP
+.B tag tagid
+indicates that, if this rule causes the packet to be logged or entered
+in the state table, the tagid will be logged as part of the log entry.
+This can be used to quickly match "similar" rules in scripts that post
+process the log files for e.g. generation of security reports or accounting
+purposes. The tagid is a 32 bit unsigned integer.
 .TP
 .B quick
 allows "short-cut" rules in order to speed up the filter or override
@@ -376,7 +389,7 @@ against, e.g.:
 			# packets with ONLY the SYN flag set.
 
 	... flags SA
-			# becomes "flags SA/AUPRFSC" and will match any
+			# becomes "flags SA/AUPRFS" and will match any
 			# packet with only the SYN and ACK flags set.
 
 	... flags S/SA
@@ -388,7 +401,7 @@ against, e.g.:
 .TP
 .B icmp-type
 is only effective when used with \fBproto icmp\fP and must NOT be used
-in conjuction with \fBflags\fP.  There are a number of types, which can be
+in conjunction with \fBflags\fP.  There are a number of types, which can be
 referred to by an abbreviation recognised by this language, or the numbers
 with which they are associated can be used.  The most important from
 a security point of view is the ICMP redirect.
@@ -429,7 +442,7 @@ indicates that the rule should be put in group (number n) rather than group 0.
 .PP
 When a packet is logged, with either the \fBlog\fP action or option,
 the headers of the packet are written to the \fBipl\fP packet logging
-psuedo-device. Immediately following the \fBlog\fP keyword, the
+pseudo-device. Immediately following the \fBlog\fP keyword, the
 following qualifiers may be used (in order):
 .TP
 .B body

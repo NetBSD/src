@@ -1,4 +1,4 @@
-/*	$NetBSD: mls_ipl.c,v 1.1.1.4 2002/05/02 16:50:48 martti Exp $	*/
+/*	$NetBSD: mls_ipl.c,v 1.1.1.5 2004/03/28 08:55:48 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)mls_ipl.c	2.6 10/15/95 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.2.2.2 2002/04/10 05:05:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.7.2.1 2004/03/06 14:33:16 darrenr Exp";
 #endif
 
 extern	int	ipldetach __P((void));
@@ -51,18 +51,18 @@ extern	int	ipldetach __P((void));
 #endif
 extern	int	nulldev __P((void));
 extern	int	errno;
-extern	int	iplidentify __P((char *));
 
 extern int nodev __P((void));
 
 static	int	unload __P((void));
 static	int	ipl_attach __P((void));
 int	xxxinit __P((u_int, struct vddrv *, caddr_t, struct vdstat *));
-static	char	*ipf_devfiles[] = { IPL_NAME, IPL_NAT, IPL_STATE, IPL_AUTH,
-				    NULL };
+static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
+				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
+				    IPLOOKUP_NAME, NULL };
 
 
-struct	cdevsw	ipldevsw = 
+struct	cdevsw	ipldevsw =
 {
 	iplopen, iplclose, iplread, nulldev,
 	iplioctl, nulldev, nulldev, nulldev,
@@ -70,7 +70,7 @@ struct	cdevsw	ipldevsw =
 };
 
 
-struct	dev_ops	ipl_ops = 
+struct	dev_ops	ipl_ops =
 {
 	1,
 	iplidentify,
@@ -90,7 +90,7 @@ struct	dev_ops	ipl_ops =
 int	ipl_major = 0;
 
 #ifdef sun4m
-struct	vdldrv	vd = 
+struct	vdldrv	vd =
 {
 	VDMAGIC_PSEUDO,
 	IPL_VERSION,
@@ -173,14 +173,20 @@ struct	vdstat	*vds;
 
 static	int	unload()
 {
+	int err = 0, i;
 	char *name;
-	int err, i;
 
-	err = ipldetach();
+	if (fr_refcnt != 0)
+		err = EBUSY;
+	else if (fr_running >= 0)
+		err = ipldetach();
 	if (err)
 		return err;
+
+	fr_running = -2;
 	for (i = 0; (name = ipf_devfiles[i]); i++)
 		(void) vn_remove(name, UIO_SYSSPACE, FILE);
+	printf("%s unloaded\n", ipfilter_version);
 	return 0;
 }
 
@@ -210,6 +216,32 @@ static	int	ipl_attach()
 		} else {
 			VN_RELE(vp);
 		}
+	}
+
+	if (error == 0) {
+		char *defpass;
+
+		if (FR_ISPASS(fr_pass))
+			defpass = "pass";
+		else if (FR_ISBLOCK(fr_pass))
+			defpass = "block";
+		else                
+			defpass = "no-match -> block";
+
+		printf("%s initialized.  Default = %s all, Logging = %s%s\n",
+			ipfilter_version, defpass,
+#ifdef IPFILTER_LOG
+			"enabled",
+#else             
+			"disabled",
+#endif 
+#ifdef IPFILTER_COMPILED
+			" (COMPILED)"
+#else 
+			""
+#endif
+			);            
+		fr_running = 1;
 	}
 	return error;
 }

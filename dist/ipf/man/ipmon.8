@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.1.1.9 2002/09/19 07:56:50 martti Exp $
+.\"	$NetBSD: ipmon.8,v 1.1.1.10 2004/03/28 08:56:23 martti Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -48,15 +48,12 @@ long).
 4. The group and rule number of the rule, e.g., \fB@0:17\fP. These can be
 viewed with \fBipfstat -n\fP.
 .LP
-5. The action: \fBp\fP for passed, \fBb\fP for blocked, \fBS\fP for a short
-packet, \fBn\fP did not match any rules, \fBL\fP for a log rule.  The order
-of precedence in showing flags is: S, p, b, n, L.  A capital \fBP\fP or
-\fBB\fP means that the packet has been logged due to a global logging
-setting, not a particular rule.
+5. The action: \fBp\fP for passed, \fBb\fP for blocked, \fB\fP for a short
+packet, \fBn\fP did not match any rules or \fBL\fP for a log rule.
 .LP
 6. The addresses.
 This is actually three fields: the source address and port
-(separted by a comma), the \fB->\fP symbol, and the destination address
+(separated by a comma), the \fB->\fP symbol, and the destination address
 and port. E.g.: \fB209.53.17.22,80 -> 198.73.220.17,1722\fP.
 .LP
 7. \fBPR\fP followed by the protocol name or number, e.g., \fBPR tcp\fP.
@@ -84,11 +81,11 @@ are displayed to the same output 'device' (stderr or syslog).
 .TP
 .B \-b
 For rules which log the body of a packet, generate hex output representing
-the packet contents afte the headers.
+the packet contents after the headers.
 .TP
 .B \-D
 Cause ipmon to turn itself into a daemon.  Using subshells or backgrounding
-of ipmon is not required to turn it into an orphan so it can run indefinately.
+of ipmon is not required to turn it into an orphan so it can run indefinitely.
 .TP
 .B "\-f <device>"
 specify an alternative device/file from which to read the log information
@@ -112,7 +109,7 @@ equivalent to using \fB-o NSI\fP.
 .TP
 .B \-O
 Specify which log files you do not wish to read from.  This is most sensibly
-used with the \fB-a\fP.  Letters available as paramters to this are the same
+used with the \fB-a\fP.  Letters available as parameters to this are the same
 as for \fB-o\fP.
 .TP
 .B \-p
@@ -172,3 +169,5 @@ recorded data.
 .SH SEE ALSO
 ipl(4), ipf(8), ipfstat(8), ipnat(8)
 .SH BUGS
+.PP
+If you find any, please send email to me at darrenr@pobox.com

@@ -1,26 +1,31 @@
-OBJS=ipsend.o ip.o ipsopt.o y.tab.o lex.yy.o
-IPFTO=ipft_ef.o ipft_hx.o ipft_pc.o ipft_sn.o ipft_td.o ipft_tx.o
-ROBJS=ipresend.o ip.o resend.o $(IPFTO) inet_addr.o opt.o
+IOBJS=ipsend.o ip.o ipsopt.o iplang_y.o iplang_l.o
+ROBJS=ipresend.o ip.o resend.o
 TOBJS=iptest.o iptests.o ip.o
 UNIXOBJS=sirix.o arp.o
-LIBS=
+OBJ=.
+LIBSRC=../../lib
+DEST=.
+TOP=../..
+LIBS=-L$(OBJ) -lipf
 
 CC=cc
 CFLAGS=-g -I$(TOP)
 
-all build irix : ipsend ipresend iptest
+include $(TOP)/lib/Makefile
+
+all build irix : libipf.a ipsend ipresend iptest
 
 .c.o:
 	$(CC) $(DEBUG) $(CFLAGS) -c $< -o $@
 
-y.tab.o: $(TOP)/iplang/iplang_y.y
+iplang_y.o: $(TOP)/iplang/iplang_y.y
+	(cd $(TOP)/iplang; $(MAKE) 'CFLAGS=$(CFLAGS)' 'DESTDIR=../IRIX/$(CPUDIR)' )
+
+iplang_l.o: $(TOP)/iplang/iplang_l.l
 	(cd $(TOP)/iplang; $(MAKE) 'DESTDIR=../IRIX/$(CPUDIR)' )
 
-lex.yy.o: $(TOP)/iplang/iplang_l.l
-	(cd $(TOP)/iplang; $(MAKE) 'DESTDIR=../IRIX/$(CPUDIR)' )
-
-ipsend: $(OBJS) $(UNIXOBJS)
-	$(CC) $(DEBUG) $(OBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
+ipsend: $(IOBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(IOBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
 
 ipresend: $(ROBJS) $(UNIXOBJS)
 	$(CC) $(DEBUG) $(ROBJS) $(UNIXOBJS) -o $@ $(LIBS)
@@ -30,6 +35,7 @@ iptest: $(TOBJS) $(UNIXOBJS)
 
 clean:
 	rm -rf *.o core a.out ipsend ipresend iptest
+	rm -rf iplany_y.c iplang_l.c iplang_y.h iplang_y.c
 
 ipsend.o: $(TOP)/ipsend/ipsend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ipsend.c -o $@
@@ -45,25 +51,6 @@ ip.o: $(TOP)/ipsend/ip.c
 
 resend.o: $(TOP)/ipsend/resend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/resend.c -o $@
-
-ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h \
-	   $(TOP)/snoop.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_sn.c -o $@
-
-ipft_ef.o: $(TOP)/ipft_ef.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_ef.c -o $@
-
-ipft_td.o: $(TOP)/ipft_td.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_td.c -o $@
-
-ipft_pc.o: $(TOP)/ipft_pc.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_pc.c -o $@
-
-ipft_tx.o: $(TOP)/ipft_tx.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_tx.c -o $@
-
-ipft_hx.o: $(TOP)/ipft_hx.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_hx.c -o $@
 
 iptest.o: $(TOP)/ipsend/iptest.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/iptest.c -o $@

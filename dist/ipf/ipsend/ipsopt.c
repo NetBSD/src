@@ -1,23 +1,25 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.3 2002/03/14 12:30:14 martti Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.1.1.4 2004/03/28 08:56:16 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
  */
-#ifdef __sgi
-# include <sys/ptimers.h>
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipsopt.c,v 2.4.4.1 2004/03/23 12:58:05 darrenr Exp";
 #endif
 #include <sys/param.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #ifndef	linux
 #include <netinet/ip_var.h>
 #endif
@@ -25,9 +27,13 @@
 #include <arpa/inet.h>
 #include "ipsend.h"
 
-#if !defined(lint)
-static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsopt.c,v 2.1.4.3 2002/02/22 15:32:58 darrenr Exp";
+
+#ifndef	__P
+# ifdef	__STDC__
+#  define	__P(x)	x
+# else
+#  define	__P(x)	()
+# endif
 #endif
 
 
@@ -55,7 +61,7 @@ struct	ipopt_names secnames[] = {
 };
 
 
-u_short seclevel(slevel)
+u_short ipseclevel(slevel)
 char *slevel;
 {
 	struct ipopt_names *so;
@@ -100,14 +106,17 @@ char *class;
 			len += val;
 		} else
 			*op++ = io->on_siz;
-		*op++ = IPOPT_MINOFF;
+		if (io->on_value == IPOPT_TS)
+			*op++ = IPOPT_MINOFF + 1;
+		else
+			*op++ = IPOPT_MINOFF;
 
 		while (class && *class) {
 			t = NULL;
 			switch (io->on_value)
 			{
 			case IPOPT_SECURITY :
-				lvl = seclevel(class);
+				lvl = ipseclevel(class);
 				*(op - 1) = lvl;
 				break;
 			case IPOPT_LSRR :

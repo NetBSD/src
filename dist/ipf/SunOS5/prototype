@@ -1,10 +1,11 @@
 i pkginfo
+i depend=../depend
 i copyright=../copyright
 !default 0755 root root
 i postinstall=../postinstall
 i preremove=../preremove
 i postremove=../postremove
-d none /opt ? ? ?
+d none /opt
 d none /opt/ipf
 d none /opt/ipf/man
 d none /opt/ipf/man/man1
@@ -19,33 +20,35 @@ f none /opt/ipf/bin/ipsend=root/opt/ipf/bin/ipsend
 f none /opt/ipf/bin/ipresend=root/opt/ipf/bin/ipresend
 f none /opt/ipf/bin/mkfilters=root/opt/ipf/bin/mkfilters
 d none /opt/ipf/examples
-d none /var ? ? ?
-d none /var/db 700 root sys
+d none /var
+d none /var/db
 d none /var/db/ipf 700 root sys
-d none /usr ? ? ?
-d none /usr/include ? ? ?
-d none /usr/include/netinet ? ? ?
-d none /usr/kernel ? ? ?
-d none /usr/kernel/drv ? ? ?
+d none /usr
+d none /usr/include
+d none /usr/include/ipfilter
+d none /usr/kernel
+d none /usr/kernel/drv
 f none /usr/kernel/drv/ipf=root/usr/kernel/drv/ipf
-d none /sbin ? ? ?
+d none /sbin
 f none /sbin/ipfs=root/sbin/ipfs
 f none /sbin/ipfstat=root/sbin/ipfstat
 f none /sbin/ipf=root/sbin/ipf
 f none /sbin/ipnat=root/sbin/ipnat
-d none /etc ? ? ?
-d none /etc/init.d ? ? ?
+f none /sbin/ippool=root/sbin/ippool
+d none /etc
+d none /etc/init.d
 f none /etc/init.d/ipfboot=root/etc/init.d/ipfboot
-d none /etc/rc2.d ? ? ?
+d none /etc/rc2.d
 l none /etc/rc2.d/S65ipfboot=/etc/init.d/ipfboot
-d none /etc/opt ? ? ?
-d none /etc/opt/ipf ? ? ?
+d none /etc/opt
+d none /etc/opt/ipf 755 root sys
 !default 0444 root root
 f none /opt/ipf/man/man8/ipfstat.8=root/opt/ipf/man/man8/ipfstat.8
 f none /opt/ipf/man/man8/ipmon.8=root/opt/ipf/man/man8/ipmon.8
 f none /opt/ipf/man/man8/ipf.8=root/opt/ipf/man/man8/ipf.8
 f none /opt/ipf/man/man8/ipfs.8=root/opt/ipf/man/man8/ipfs.8
 f none /opt/ipf/man/man8/ipnat.8=root/opt/ipf/man/man8/ipnat.8
+f none /opt/ipf/man/man8/ippool.8=root/opt/ipf/man/man8/ippool.8
 f none /opt/ipf/man/man1/ipftest.1=root/opt/ipf/man/man1/ipftest.1
 f none /opt/ipf/man/man1/mkfilters.1=root/opt/ipf/man/man1/mkfilters.1
 f none /opt/ipf/man/man4/ipf.4=root/opt/ipf/man/man4/ipf.4
@@ -53,14 +56,18 @@ f none /opt/ipf/man/man4/ipl.4=root/opt/ipf/man/man4/ipl.4
 f none /opt/ipf/man/man4/ipnat.4=root/opt/ipf/man/man4/ipnat.4
 f none /opt/ipf/man/man5/ipf.5=root/opt/ipf/man/man5/ipf.5
 f none /opt/ipf/man/man5/ipnat.5=root/opt/ipf/man/man5/ipnat.5
+f none /opt/ipf/man/man5/ippool.5=root/opt/ipf/man/man5/ippool.5
 f none /usr/kernel/drv/ipf.conf=root/usr/kernel/drv/ipf.conf
-f none /usr/include/netinet/ip_fil.h=root/usr/include/netinet/ip_fil.h
-f none /usr/include/netinet/ip_auth.h=root/usr/include/netinet/ip_auth.h
-f none /usr/include/netinet/ip_compat.h=root/usr/include/netinet/ip_compat.h
-f none /usr/include/netinet/ip_frag.h=root/usr/include/netinet/ip_frag.h
-f none /usr/include/netinet/ip_nat.h=root/usr/include/netinet/ip_nat.h
-f none /usr/include/netinet/ip_proxy.h=root/usr/include/netinet/ip_proxy.h
-f none /usr/include/netinet/ip_state.h=root/usr/include/netinet/ip_state.h
+f none /usr/include/ipfilter/ip_fil.h=root/usr/include/ipfilter/ip_fil.h
+f none /usr/include/ipfilter/ip_auth.h=root/usr/include/ipfilter/ip_auth.h
+f none /usr/include/ipfilter/ip_compat.h=root/usr/include/ipfilter/ip_compat.h
+f none /usr/include/ipfilter/ip_frag.h=root/usr/include/ipfilter/ip_frag.h
+f none /usr/include/ipfilter/ip_nat.h=root/usr/include/ipfilter/ip_nat.h
+f none /usr/include/ipfilter/ip_proxy.h=root/usr/include/ipfilter/ip_proxy.h
+f none /usr/include/ipfilter/ip_state.h=root/usr/include/ipfilter/ip_state.h
+f none /usr/include/ipfilter/ip_htable.h=root/usr/include/ipfilter/ip_htable.h
+f none /usr/include/ipfilter/ip_lookup.h=root/usr/include/ipfilter/ip_lookup.h
+f none /usr/include/ipfilter/ip_pool.h=root/usr/include/ipfilter/ip_pool.h
 f none /opt/ipf/examples/example.1=root/opt/ipf/examples/example.1
 f none /opt/ipf/examples/example.2=root/opt/ipf/examples/example.2
 f none /opt/ipf/examples/example.3=root/opt/ipf/examples/example.3

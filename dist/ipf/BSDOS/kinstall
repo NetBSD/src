@@ -8,13 +8,12 @@ set confdir="$archdir/conf"
 
 if ( $dir =~ *fil/BSDOS ) cd ..
 if ($0 =~ *kinstall) then
-	foreach i (ip_fil.[ch] ip_nat.[ch] ip_frag.[ch] ip_state.[ch] \
-		   fil.c ip_compat.h ip_log.c ip_proxy.[ch] ip_*_pxy.c \
-		   ip_auth.[ch])
+	foreach i (ip_{auth,fil,frag,nat,proxy,scan,state,sync}.[ch] \
+		   fil.c ip_compat.h ip_log.c ip_*_pxy.c)
 		echo -n "$i ";
 		cp $i /sys/netinet
 		chmod 664 /sys/netinet/$i
-		switch ( $i )
+		switch ($i)
 		case *.h:
 			/bin/cp $i /usr/include/netinet/$i
 			chmod 644 /usr/include/netinet/$i

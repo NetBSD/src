@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfs.8,v 1.1.1.2 2002/01/24 08:18:33 martti Exp $
+.\"	$NetBSD: ipfs.8,v 1.1.1.3 2004/03/28 08:56:22 martti Exp $
 .\"
 .TH IPFS 8
 .SH NAME
@@ -54,18 +54,12 @@ Change the default directory used with
 and
 .B \-W
 options for saving state information.
-.TP
 .B \-n
 Don't actually take any action that would effect information stored in
 the kernel or on disk.
 .TP
 .B \-v
 Provides a verbose description of what's being done.
-.TP
-.B \-i <ifname1>,<ifname2>
-Change all instances of interface name ifname1 in the state save file to
-ifname2.  Useful if you're restoring state information after a hardware
-reconfiguration or change.
 .TP
 .B \-N
 Operate on NAT information.
@@ -77,17 +71,17 @@ Operate on filtering state information.
 Unlock state tables in the kernel.
 .TP
 .B \-l
-Lock state tables in the kernel.
+Unlock state tables in the kernel.
 .TP
 .B \-r
 Read information in from the specified file and load it into the
 kernel.  This requires the state tables to have already been locked
-and does not change the lock once comlete.
+and does not change the lock once complete.
 .TP
 .B \-w
 Write information out to the specified file and from the kernel.
 This requires the state tables to have already been locked
-and does not change the lock once comlete.
+and does not change the lock once complete.
 .TP
 .B \-R
 Restores all saved state information, if any, from two files,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfstat.8,v 1.1.1.4 2001/03/26 03:55:04 mike Exp $
+.\"	$NetBSD: ipfstat.8,v 1.1.1.5 2004/03/28 08:56:22 martti Exp $
 .\"
 .TH ipfstat 8
 .SH NAME
@@ -6,10 +6,7 @@ ipfstat \- reports on packet filter statistics and filter list
 .SH SYNOPSIS
 .B ipfstat
 [
-.B \-6aAfghIinosv
-] [
-.B \-d
-<device>
+.B \-6aACdfghIinosv
 ]
 
 .B ipfstat -t
@@ -27,9 +24,6 @@ ipfstat \- reports on packet filter statistics and filter list
 ] [
 .B \-T
 <refresh time>
-] [
-.B \-d
-<device>
 ]
 .SH DESCRIPTION
 .PP
@@ -58,15 +52,15 @@ Display "closed" states as well in the top. Normally, a TCP connection is
 not displayed when it reaches the CLOSE_WAIT protocol state. With this
 option enabled, all state entries are displayed.
 .TP
-.BR \-d \0<device>
-Use a device other than \fB/dev/ipl\fP for interfacing with the kernel.
+.BR \-d
+Produce debugging output when displaying data.
 .TP
 .BR \-D \0<addrport>
 This option is only valid in combination with \fB\-t\fP. Limit the state top
 display to show only state entries whose destination IP address and port
 match the addport argument. The addrport specification is of the form
 ipaddress[,port].  The ipaddress and port should be either numerical or the
-string "any" (specifying any ip address resp. any port). If the \fB\-D\fP
+string "any" (specifying any IP address resp. any port). If the \fB\-D\fP
 option is not specified, it defaults to "\fB\-D\fP any,any".
 .TP
 .B \-f
@@ -111,7 +105,7 @@ This option is only valid in combination with \fB\-t\fP. Limit the state top
 display to show only state entries whose source IP address and port match
 the addport argument. The addrport specification is of the form
 ipaddress[,port].  The ipaddress and port should be either numerical or the
-string "any" (specifying any ip address resp. any port). If the \fB\-S\fP
+string "any" (specifying any IP address resp. any port). If the \fB\-S\fP
 option is not specified, it defaults to "\fB\-S\fP any,any".
 .TP
 .B \-t
@@ -124,7 +118,7 @@ be used while ipfstat is in top mode.
 .BR \-T \0<refreshtime>
 This option is only valid in combination with \fB\-t\fP. Specifies how often
 the state top display should be updated. The refresh time is the number of
-seconds between an update. Any postive integer can be used. The default (and
+seconds between an update. Any positive integer can be used. The default (and
 minimal update time) is 1.
 .TP
 .B \-v
@@ -142,7 +136,7 @@ kernel.
 Using the \fB\-t\fP option \fBipfstat\fP will enter the state top mode. In
 this mode the state table is displayed similar to the way \fBtop\fP displays
 the process table. The \fB\-C\fP, \fB\-D\fP, \fB\-P\fP, \fB\-S\fP and \fB\-T\fP 
-commandline options can be used to restrict the state entries that will be 
+command line options can be used to restrict the state entries that will be 
 shown and to specify the frequency of display updates.
 .PP
 In state top mode, the following keys can be used to influence the displayed
@@ -164,7 +158,7 @@ the number of bytes. States are sorted in descending order, but you can use
 the \fBr\fP key to sort them in ascending order.
 .SH STATE TOP LIMITATIONS
 It is currently not possible to interactively change the source, destination
-and protocol filters or the refreh frequency. This must be done from the
+and protocol filters or the refresh frequency. This must be done from the
 command line.
 .PP
 The screen must have at least 80 columns. This is however not checked.

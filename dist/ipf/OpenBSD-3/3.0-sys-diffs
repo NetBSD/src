@@ -475,12 +475,13 @@ diff -cr sys.30/conf/GENERIC sys/conf/GENERIC
 --- sys/conf/GENERIC	Fri Dec 28 11:37:49 2001
 ***************
 *** 71,76 ****
---- 71,78 ----
+--- 71,79 ----
   #option		EON		# OSI tunneling over IP
   #option		NETATALK	# AppleTalk
   #option		CCITT,LLC,HDLC	# X.25
 + option		IPFILTER        # IP packet filter for security
 + option		IPFILTER_LOG    # use /dev/ipl to log IPF
++ #option		IPFILTER_LOOKUP    # use /dev/ippool for IP pools
   option		PPP_BSDCOMP	# PPP BSD compression
   option		PPP_DEFLATE
   #option		MROUTING	# Multicast router
@@ -489,7 +490,7 @@ diff -cr sys.30/conf/files sys/conf/files
 --- sys/conf/files	Fri Dec 28 12:02:08 2001
 ***************
 *** 652,657 ****
---- 652,665 ----
+--- 652,668 ----
   file netinet/tcp_usrreq.c		inet
   file netinet/udp_usrreq.c		inet
   file netinet/ip_gre.c			inet
@@ -501,6 +502,9 @@ diff -cr sys.30/conf/files sys/conf/files
 + file netinet/ip_proxy.c                 ipfilter
 + file netinet/ip_auth.c                  ipfilter
 + file netinet/ip_log.c                   ipfilter
++ file netinet/ip_pool.c                  ipfilter & ipfilter_lookup
++ file netinet/ip_htable.c                ipfilter & ipfilter_lookup
++ file netinet/ip_lookup.c                ipfilter & ipfilter_lookup
   file netinet/ip_ipsp.c			(inet | inet6) & (ipsec | tcp_signature)
   file netinet/ip_spd.c			(inet | inet6) & (ipsec | tcp_signature)
   file netinet/ip_ipip.c			inet | inet6

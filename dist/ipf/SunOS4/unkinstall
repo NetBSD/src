@@ -4,7 +4,8 @@ set dir=`pwd`
 if ($dir =~ */SunOS4) cd ..
 echo -n "Uninstalling "
 foreach i (ip_fil.[ch] ip_nat.[ch] ip_frag.[ch] ip_state.[ch] ip_auth.[ch] \
-	   ip_proxy.[ch] ip_ftp_pxy.c fil.c ip_compat.h ip_log.c)
+	   ip_proxy.[ch] ip_sync.[ch] ip_scan.[ch] ip_pool.[ch] ip_*_pxy.c \
+	   ip_lookup.[ch] ip_htable.[ch] fil.c ip_compat.h ip_log.c ipl.h)
 	echo -n "$i "
 	/bin/rm /sys/netinet/$i
 end

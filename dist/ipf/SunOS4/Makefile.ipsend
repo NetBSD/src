@@ -1,24 +1,29 @@
 MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 	"CC=$(CC)" "CFLAGS=$(CFLAGS)" "DEBUG=$(DEBUG)" \
-	"IPFLKM=$(IPFLKM)" "IPFLOG=$(IPFLOG)" \
+	"IPFLKM=$(IPFLKM)" "IPFLOG=$(IPFLOG)" "LOOKUP=$(LOOKUP)" \
 	"LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)"
 
-OBJS=ipsend.o ip.o ipsopt.o y.tab.o lex.yy.o
-IPFTO=ipft_ef.o ipft_hx.o ipft_pc.o ipft_sn.o ipft_td.o ipft_tx.o
-ROBJS=ipresend.o ip.o resend.o $(IPFTO) inet_addr.o opt.o
+OBJS=ipsend.o ip.o ipsopt.o iplang_y.o iplang_l.o
+ROBJS=ipresend.o ip.o resend.o
 TOBJS=iptest.o iptests.o ip.o
 BPF=sbpf.o
 UNIXOBJS=snit.o sock.o arp.o
+OBJ=.
+DEST=.
+LIBSRC=../lib
+LIBS=-L$(OBJ) -lipf
 
 CC=/usr/5bin/cc
 CFLAGS=-g -I..
 
-all nit sunos4 sunos4-nit : ipsend ipresend iptest
+include $(TOP)/lib/Makefile
 
-y.tab.o: $(TOP)/iplang/iplang_y.y
+all nit build sunos4 sunos4-nit : libipf.a ipsend ipresend iptest
+
+iplang_y.o: $(TOP)/iplang/iplang_y.y
 	(cd $(TOP)/iplang; $(MAKE) 'DESTDIR=../SunOS4' )
 
-lex.yy.o: $(TOP)/iplang/iplang_l.l
+iplang_l.o: $(TOP)/iplang/iplang_l.l
 	(cd $(TOP)/iplang; $(MAKE) 'DESTDIR=../SunOS4' )
 
 .c.o:
@@ -34,7 +39,7 @@ iptest: $(TOBJS) $(UNIXOBJS)
 	$(CC) $(DEBUG) $(TOBJS) $(UNIXOBJS) -o $@ $(LIBS)
 
 clean:
-	rm -rf *.o core a.out ipsend ipresend iptest
+	rm -rf *.o core a.out ipsend ipresend iptest iplang_l.* iplang_y.*
 
 ipsend.o: ../ipsend/ipsend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c ../ipsend/ipsend.c -o $@
@@ -46,10 +51,6 @@ ip.o: ../ipsend/ip.c
 	$(CC) $(DEBUG) $(CFLAGS) -c ../ipsend/ip.c -o $@
 resend.o: ../ipsend/resend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c ../ipsend/resend.c -o $@
-ipft_sn.o: ../ipft_sn.c
-	$(CC) $(DEBUG) $(CFLAGS) -c ../ipft_sn.c -o $@
-ipft_pc.o: ../ipft_pc.c
-	$(CC) $(DEBUG) $(CFLAGS) -c ../ipft_pc.c -o $@
 iptest.o: ../ipsend/iptest.c
 	$(CC) $(DEBUG) $(CFLAGS) -c ../ipsend/iptest.c -o $@
 iptests.o: ../ipsend/iptests.c

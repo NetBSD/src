@@ -2,6 +2,11 @@
 For those running Solaris 2.5 or later, please read COMPILE.2.5 before
 building IP Filter.
 
+Download, build and install the pfil package.
+A pointer to this can be found at:
+
+http://coombs.anu.edu.au/~avalon/ipf-mentat.html
+
 Type "make solaris" to build all the required binaries.  DO NOT USE THE
 GNU make!!!
 

@@ -5,7 +5,7 @@
 set ipf:ipl_unreach = 13
 set ipf:fr_flags = 0
 * FR_NOMATCH | FR_PASS
-set ipf:fr_pass = 0x0202
+set ipf:fr_pass = 0x400002
 
 * Connection state timeouts.
 * the following are all measure of time in half-seconds.

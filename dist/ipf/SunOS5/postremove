@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 rem_drv -b ${BASEDIR:-/} ipf
 egrep -v 'name=ipf' ${BASEDIR}/etc/devlink.tab > ${BASEDIR}/etc/devlink.tab.new
 mv ${BASEDIR}/etc/devlink.tab ${BASEDIR}/etc/devlink.tab.bak

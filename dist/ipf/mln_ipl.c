@@ -1,9 +1,10 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.4 2002/03/14 12:30:10 martti Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.5 2004/03/28 08:55:48 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
  */
 /*
  * 29/12/94 Added code from Marc Huber <huber@fzi.de> to allow it to allocate
@@ -56,33 +57,29 @@
 #define	VOP_LEASE	LEASE_CHECK
 #endif
 
-#ifndef	MIN
-#define	MIN(a,b)	(((a)<(b))?(a):(b))
-#endif
-
 
 extern	int	lkmenodev __P((void));
 
 #if NetBSD >= 199706
 int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
 #else
-#if defined(OpenBSD)
-int	if_ipl __P((struct lkm_table *, int, int));
-#else
 int	xxxinit __P((struct lkm_table *, int, int));
-#endif
 #endif
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
 static	int	ipl_remove __P((void));
 static	int	iplaction __P((struct lkm_table *, int));
-static	char	*ipf_devfiles[] = { IPL_NAME, IPL_NAT, IPL_STATE, IPL_AUTH,
-				    NULL };
+static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
+				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
+				    IPLOOKUP_NAME, NULL };
 
 
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
     (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199511))
-struct	cdevsw	ipldevsw = 
+# if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+extern const struct cdevsw ipl_cdevsw;
+# else
+struct	cdevsw	ipldevsw =
 {
 	iplopen,		/* open */
 	iplclose,		/* close */
@@ -95,8 +92,9 @@ struct	cdevsw	ipldevsw =
 	0,			/* mmap */
 	NULL			/* strategy */
 };
+# endif
 #else
-struct	cdevsw	ipldevsw = 
+struct	cdevsw	ipldevsw =
 {
 	iplopen,		/* open */
 	iplclose,		/* close */
@@ -104,9 +102,7 @@ struct	cdevsw	ipldevsw =
 	(void *)nullop,		/* write */
 	iplioctl,		/* ioctl */
 	(void *)nullop,		/* stop */
-#ifndef OpenBSD
 	(void *)nullop,		/* reset */
-#endif
 	(void *)NULL,		/* tty */
 	(void *)nullop,		/* select */
 	(void *)nullop,		/* mmap */
@@ -115,7 +111,11 @@ struct	cdevsw	ipldevsw =
 #endif
 int	ipl_major = 0;
 
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+MOD_DEV(IPL_VERSION, "ipl", NULL, -1, &ipl_cdevsw, -1);
+#else
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
+#endif
 
 extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
@@ -125,11 +125,7 @@ extern int nchrdev;
 #if NetBSD >= 199706
 int if_ipl_lkmentry(lkmtp, cmd, ver)
 #else
-#if defined(OpenBSD)
-int if_ipl(lkmtp, cmd, ver)
-#else
 int xxxinit(lkmtp, cmd, ver)
-#endif
 #endif
 struct lkm_table *lkmtp;
 int cmd, ver;
@@ -137,15 +133,14 @@ int cmd, ver;
 	DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
 }
 
-#ifdef OpenBSD
-int lkmexists __P((struct lkm_table *)); /* defined in /sys/kern/kern_lkm.c */
-#endif
 
 static int iplaction(lkmtp, cmd)
 struct lkm_table *lkmtp;
 int cmd;
 {
+#if !defined(__NetBSD__) || (__NetBSD_Version__ < 106080000)
 	int i;
+#endif
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int err = 0;
 
@@ -155,6 +150,14 @@ int cmd;
 		if (lkmexists(lkmtp))
 			return EEXIST;
 
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+		err = devsw_attach(args->lkm_devname,
+				   args->lkm_bdev, &args->lkm_bdevmaj,
+				   args->lkm_cdev, &args->lkm_cdevmaj);
+		if (err != 0)
+			return (err);
+		ipl_major = args->lkm_cdevmaj;
+#else
 		for (i = 0; i < nchrdev; i++)
 			if (cdevsw[i].d_open == (dev_type_open((*)))lkmenodev ||
 			    cdevsw[i].d_open == iplopen)
@@ -166,9 +169,15 @@ int cmd;
 
 		ipl_major = i;
 		args->lkm_offset = i;   /* slot in cdevsw[] */
+#endif
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
 		return ipl_load();
 	case LKM_E_UNLOAD :
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+		devsw_detach(args->lkm_bdev, args->lkm_cdev);
+		args->lkm_bdevmaj = -1;
+		args->lkm_cdevmaj = -1;
+#endif
 		err = ipl_unload();
 		if (!err)
 			printf("IP Filter: unloaded from slot %d\n",
@@ -191,16 +200,19 @@ static int ipl_remove()
 	int error, i;
 
         for (i = 0; (name = ipf_devfiles[i]); i++) {
+#if (__NetBSD_Version__ > 106009999)
+		NDINIT(&nd, DELETE, LOCKPARENT|LOCKLEAF, UIO_SYSSPACE,
+		       name, curproc);
+#else
 		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+#endif
 		if ((error = namei(&nd)))
 			return (error);
-		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
-#ifdef OpenBSD
-		VOP_LOCK(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY, curproc);
-#else
+		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+#if !defined(__NetBSD_Version__) || (__NetBSD_Version__ < 106000000)
 		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
-		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
 		(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	}
 	return 0;
@@ -215,10 +227,16 @@ static int ipl_unload()
 	 * Unloading - remove the filter rule check from the IP
 	 * input/output stream.
 	 */
-	error = ipldetach();
+	if (fr_refcnt)
+		error = EBUSY;
+	else if (fr_running >= 0)
+		error = ipldetach();
 
-	if (!error)
+	if (error == 0) {
+		fr_running = -2;
 		error = ipl_remove();
+		printf("%s unloaded\n", ipfilter_version);
+	}
 	return error;
 }
 
@@ -237,14 +255,12 @@ static int ipl_load()
 	 */
 	(void)ipl_remove();
 
-	error = ipl_enable();
-	if (error)
-		return error;
+	error = iplattach();
 
-	for (i = 0; (name = ipf_devfiles[i]); i++) {
+	for (i = 0; (error == 0) && (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
 		if ((error = namei(&nd)))
-			return error;
+			break;
 		if (nd.ni_vp != NULL) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			if (nd.ni_dvp == nd.ni_vp)
@@ -252,7 +268,8 @@ static int ipl_load()
 			else
 				vput(nd.ni_dvp);
 			vrele(nd.ni_vp);
-			return (EEXIST);
+			error = EEXIST;
+			break;
 		}
 		VATTR_NULL(&vattr);
 		vattr.va_type = VCHR;
@@ -260,8 +277,34 @@ static int ipl_load()
 		vattr.va_rdev = (ipl_major << 8) | i;
 		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-		if (error)
-			return error;
+		if (error == 0)
+			vput(nd.ni_vp);
+	}
+
+	if (error == 0) {
+		char *defpass;
+
+		if (FR_ISPASS(fr_pass))
+			defpass = "pass";
+		else if (FR_ISBLOCK(fr_pass))
+			defpass = "block";
+		else
+			defpass = "no-match -> block";
+
+		printf("%s initialized.  Default = %s all, Logging = %s%s\n",
+			ipfilter_version, defpass,
+#ifdef IPFILTER_LOG
+			"enabled",
+#else
+			"disabled",
+#endif
+#ifdef IPFILTER_COMPILED
+			" (COMPILED)"
+#else
+			""
+#endif
+			);
+		fr_running = 1;
 	}
 	return error;
 }

@@ -1,4 +1,4 @@
-OBJS=ipsend.o ip.o ipsopt.o y.tab.o lex.yy.o
+OBJS=ipsend.o ip.o ipsopt.o iplang_y.o iplang_l.o
 IPFTO=ipft_ef.o ipft_hx.o ipft_pc.o ipft_sn.o ipft_td.o ipft_tx.o
 ROBJS=ipresend.o ip.o resend.o $(IPFTO) opt.o
 TOBJS=iptest.o iptests.o ip.o
@@ -17,11 +17,11 @@ MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 #
 all build bsd-bpf : ipsend ipresend iptest
 
-y.tab.o: $(TOP)/iplang/iplang_y.y
-	(cd $(TOP)/iplang; $(MAKE) ../Linux/$(CPUDIR)/y.tab.o $(MFLAGS) "LINUX=$(INC) $(LINUXK)" 'DESTDIR=../Linux/$(CPUDIR)' )
+iplang_y.o: $(TOP)/iplang/iplang_y.y
+	(cd $(TOP)/iplang; $(MAKE) ../Linux/$(CPUDIR)/iplang_y.o $(MFLAGS) "LINUX=$(INC) $(LINUXK)" 'DESTDIR=../Linux/$(CPUDIR)' )
 
-lex.yy.o: $(TOP)/iplang/iplang_l.l
-	(cd $(TOP)/iplang; $(MAKE) ../Linux/$(CPUDIR)/lex.yy.o $(MFLAGS) "LINUX=$(INC) $(LINUXK)" 'DESTDIR=../Linux/$(CPUDIR)' )
+iplang_l.o: $(TOP)/iplang/iplang_l.l
+	(cd $(TOP)/iplang; $(MAKE) ../Linux/$(CPUDIR)/iplang_l.o $(MFLAGS) "LINUX=$(INC) $(LINUXK)" 'DESTDIR=../Linux/$(CPUDIR)' )
 
 .c.o:
 	$(CC) $(DEBUG) $(CFLAGS) $(INC) $(LINUXK) -c $< -o $@

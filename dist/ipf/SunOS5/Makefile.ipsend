@@ -1,47 +1,42 @@
 OBJ=.
+DEST=.
 BITS=32
-OBJS=$(OBJ)/ipsend.o $(OBJ)/ip.o $(OBJ)/ipsopt.o $(OBJ)/y.tab.o $(OBJ)/lex.yy.o
-IPFTO=$(OBJ)/ipft_ef.o $(OBJ)/ipft_hx.o $(OBJ)/ipft_pc.o $(OBJ)/ipft_sn.o \
-    $(OBJ)/ipft_td.o $(OBJ)/ipft_tx.o
-ROBJS=$(OBJ)/ipresend.o $(OBJ)/ip.o $(OBJ)/resend.o $(IPFTO) \
-    $(OBJ)/inet_addr.o $(OBJ)/opt.o
+IOBJS=$(OBJ)/ipsend.o $(OBJ)/ip.o $(OBJ)/ipsopt.o $(OBJ)/iplang_y.o \
+	$(OBJ)/iplang_l.o
+ROBJS=$(OBJ)/ipresend.o $(OBJ)/ip.o $(OBJ)/resend.o $(IPFTO)
 TOBJS=$(OBJ)/iptest.o $(OBJ)/iptests.o $(OBJ)/ip.o
 UNIXOBJS=$(OBJ)/dlcommon.o $(OBJ)/sdlpi.o $(OBJ)/arp.o
-LIBS=-lsocket -lnsl
+LIBS=-lsocket -lnsl -L$(OBJ) -lipf
+LIBSRC=$(TOP)/lib
 
 CC=gcc
 CFLAGS=-g -I$$(TOP) -Dsolaris
 
-all build dlpi sunos5 : $(OBJ)/ipsend $(OBJ)/ipresend $(OBJ)/iptest
+include $(TOP)/lib/Makefile
+
+all build dlpi sunos5 : $(OBJ)/ipsend $(OBJ)/ipresend $(OBJ)/iptest \
+			$(OBJ)/libipf.a
 
 .c.o:
 	$(CC) $(DEBUG) $(CFLAGS) -c $< -o $@
 
-$(OBJ)/y.tab.o: $(TOP)/iplang/iplang_y.y
-	@if [ "x$$OBJ" != "x" -a "x$$OBJ" != "x." ] ; then \
-		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
-	else \
-		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
-	fi
+$(OBJ)/iplang_y.o: $(TOP)/iplang/iplang_y.y
+	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=$(OBJ)')
 
-$(OBJ)/lex.yy.o: $(TOP)/iplang/iplang_l.l
-	@if [ "x$$OBJ" != "x" -a "x$$OBJ" != "x." ] ; then \
-		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ='); \
-	else \
-		(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)' 'OBJ=') ; \
-	fi
+$(OBJ)/iplang_l.o: $(TOP)/iplang/iplang_l.l
+	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)/$(OBJ)' 'CFLAGS=$(CFLAGS)' 'OBJ=$(OBJ)')
 
-$(OBJ)/ipsend: $(OBJS) $(UNIXOBJS)
-	$(CC) $(DEBUG) $(OBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
+$(OBJ)/ipsend: $(IOBJS) $(UNIXOBJS) $(OBJ)/libipf.a
+	$(CC) $(DEBUG) $(IOBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
 
-$(OBJ)/ipresend: $(ROBJS) $(UNIXOBJS)
+$(OBJ)/ipresend: $(ROBJS) $(UNIXOBJS) $(OBJ)/libipf.a
 	$(CC) $(DEBUG) $(ROBJS) $(UNIXOBJS) -o $@ $(LIBS)
 
-$(OBJ)/iptest: $(TOBJS) $(UNIXOBJS)
+$(OBJ)/iptest: $(TOBJS) $(UNIXOBJS) $(OBJ)/libipf.a
 	$(CC) $(DEBUG) $(TOBJS) $(UNIXOBJS) -o $@ $(LIBS)
 
 clean:
-	rm -rf *.o core a.out ipsend ipresend iptest
+	rm -rf *.o core a.out ipsend ipresend iptest iplang_l.* iplang_y.*
 
 $(OBJ)/ipsend.o: $(TOP)/ipsend/ipsend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ipsend.c -o $@
@@ -53,10 +48,6 @@ $(OBJ)/ip.o: $(TOP)/ipsend/ip.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ip.c -o $@
 $(OBJ)/resend.o: $(TOP)/ipsend/resend.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/resend.c -o $@
-$(OBJ)/ipft_sn.o: $(TOP)/ipft_sn.c
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_sn.c -o $@
-$(OBJ)/ipft_pc.o: $(TOP)/ipft_pc.c
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_pc.c -o $@
 $(OBJ)/iptest.o: $(TOP)/ipsend/iptest.c
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/iptest.c -o $@
 $(OBJ)/iptests.o: $(TOP)/ipsend/iptests.c

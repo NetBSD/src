@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.1.1.3 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.1.1.4 2004/03/28 08:56:09 martti Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -250,13 +250,13 @@ next:
 #ifdef RSVP_ISI
 	/*
          * greedy RSVP, snatches any PATH packet of the RSVP protocol and no
-         * matter if it is destined to another node, or whether it is 
+         * matter if it is destined to another node, or whether it is
          * a multicast one, RSVP wants it! and prevents it from being forwarded
          * anywhere else. Also checks if the rsvp daemon is running before
 	 * grabbing the packet.
          */
 
-        if (rsvp_on && ip->ip_p == IPPROTO_RSVP) 
+        if (rsvp_on && ip->ip_p == IPPROTO_RSVP)
               goto ours;
 #endif /* RSVP_ISI */
 
@@ -348,7 +348,7 @@ next:
 		goto ours;
 	}
 #endif /* MULTICAST */
-  	/* 
+  	/*
   	 * Accept broadcasts with network and subnet unspecified.
   	 */
 	if (ip->ip_dst.s_addr == (u_long)INADDR_BROADCAST)

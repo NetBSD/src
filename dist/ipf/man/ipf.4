@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.1.1.4 2002/03/14 12:30:15 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.1.1.5 2004/03/28 08:56:22 martti Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -37,8 +37,8 @@ However, the full complement is as follows:
 	ioctl(fd, SIOCFRSYN, u_int *)
 	ioctl(fd, SIOCFRZST, struct friostat **)
 	ioctl(fd, SIOCZRLST, struct frentry **)
-	ioctl(fd, SIOCAUTHW, struct frauth_t **)
-	ioctl(fd, SIOCAUTHR, struct frauth_t **)
+	ioctl(fd, SIOCAUTHW, struct fr_info **)
+	ioctl(fd, SIOCAUTHR, struct fr_info **)
 	ioctl(fd, SIOCATHST, struct fr_authstat **)
 .fi
 .PP
@@ -124,7 +124,7 @@ Flags which are recognised in fr_flags:
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR_RETICMP      0x000100   /* return an ICMP packet if blocked */
      FR_FAKEICMP     0x00180    /* Return ICMP unreachable with fake source */
-     FR_NOMATCH      0x000200   /* No match occurred */
+     FR_NOMATCH      0x000200   /* no match occured */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */
@@ -164,7 +164,7 @@ and FR_OUTQUE (see above).  This ioctl is also implemented for
 or just all those which are not established if passed 1.
 
 .IP "\fBGeneral Logging Flags\fP" 0
-There are two flags which can be set to log packets independantly of the
+There are two flags which can be set to log packets independently of the
 rules used.  These allow for packets which are either passed or blocked
 to be logged.  To set (and clear)/get these flags, two ioctls are
 provided:

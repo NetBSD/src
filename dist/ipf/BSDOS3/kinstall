@@ -10,16 +10,10 @@ set confdir="$archdir/conf"
 
 if ( $dir =~ */BSDOS3 ) cd ..
 foreach i (ip_fil.[ch] ip_nat.[ch] ip_frag.[ch] ip_state.[ch] fil.c \
-	   ip_compat.h ip_log.c ip_proxy.[ch] ip_*_pxy.c ip_auth.[ch])
+	   ip_compat.h ip_log.c ip_proxy.[ch] ip_{ftp,rcmd}_pxy.c ip_auth.[ch])
 	echo -n "$i ";
 	cp $i /sys/netinet
 	chmod 664 /sys/netinet/$i
-	switch ( $i )
-	case *.h:
-		/bin/cp $i /usr/include/netinet/$i
-		chmod 644 /usr/include/netinet/$i
-		breaksw
-	endsw
 end
 echo ""
 echo "Patching $archdir/$karch/ioconf.c.$karch"
@@ -38,6 +32,12 @@ else
 		endif
 		cp OBJS/$i /sys/$arch/OBJ/$i
 		chmod 644 /sys/$arch/OBJ/$i
+		switch ($i)
+		case *.h:
+			/bin/cp $i /usr/include/netinet/$i
+			chmod 644 /usr/include/netinet/$i
+			breaksw
+		endsw
 	end
 endif
 
@@ -46,7 +46,7 @@ cat BSDOS3/files.diffs | (cd /sys/conf; patch)
 cat BSDOS3/ioconf.c.i386.diffs | (cd /sys/i386/conf; patch)
 
 echo "Creating device files..."
-foreach i (/dev/ipl /dev/ipnat /dev/ipstate /dev/ipauth)
+foreach i (/dev/ipl /dev/ipnat /dev/ipstate /dev/ipauth /dev/ipsync /dev/ipscan)
 	if ( -f $i ) then
 		/bin/rm -f $i
 	endif

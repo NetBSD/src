@@ -1,9 +1,7 @@
 #
 # Copyright (C) 1993-1998 by Darren Reed.
 #
-# Redistribution and use in source and binary forms are permitted
-# provided that this notice is preserved and due credit is given
-# to the original author and the contributors.
+# See the IPFILTER.LICENCE file for details on licencing.
 #
 BINDEST=/usr/local/bin
 SBINDEST=/sbin
@@ -17,18 +15,21 @@ TOP=..
 DCPU:sh=uname -m
 DEF=-D$(DCPU) -D__$(DCPU)__ -DINET -DKERNEL -D_KERNEL -Dsun $(CPU)
 IPDEF=$(DEF) -DGATEWAY -DDIRECTED_BROADCAST
-IPFILC=ip_fil.c
 ATON=-DNEED_INET_ATON
 DEBUG=-g
 # For the LKM:
 LKM=if_ipl.o
 LOGFAC=-DLOGFAC=LOG_LOCAL0
+OBJ=.
+DEST=.
+TOP=..
 #
 MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
-        'CFLAGS=$(CFLAGS) $(SOLARIS2)' "IPFLKM=$(IPFLKM)" \
-        "IPFLOG=$(IPFLOG)" "LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" \
-        "SOLARIS2=$(SOLARIS2)" "DEBUG=$(DEBUG)" "DCPU=$(CPU)" \
-        "CPUDIR=$(CPUDIR)"
+	'CFLAGS=$(CFLAGS) $(SOLARIS2)' "IPFLKM=$(IPFLKM)" "IPFLOG=$(IPFLOG)" \
+	"LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" "SOLARIS2=$(SOLARIS2)" \
+	"DEBUG=$(DEBUG)" "DCPU=$(CPU)" "CPUDIR=$(CPUDIR)" \
+	"LOOKUP=$(LOOKUP)" "SYNC=$(SYNC)" "ALLOPTS=$(ALLOPTS)"
+LIBS=-L. -lipf -L/home/darrenr/src/efence-2.0.1 -lefence
 #
 ########## ########## ########## ########## ########## ########## ##########
 #
@@ -37,192 +38,333 @@ RM=/bin/rm
 CHMOD=/bin/chmod
 INSTALL=install
 #
-MODOBJS=ip_fil.o fil_k.o mls_ipl.o ip_nat.o ip_state.o ip_frag.o ip_proxy.o \
-	ip_auth.o ip_log.o
-DFLAGS=$(IPFLKM) $(DEF)
-IPF=ipf.o common.o parse.o opt.o inet_addr.o facpri.o
-IPT=ipt.o common.o parse.o fil.o opt.o ipft_sn.o ipft_ef.o ipft_td.o \
-    ipft_pc.o ipft_tx.o misc.o ip_nat_u.o ip_frag_u.o ip_state_u.o ip_log_u.o \
-    inet_addr.o ipft_hx.o ip_fil_u.o ip_proxy_u.o ip_auth_u.o natparse.o \
-    facpri.o printnat.o printstate.o
-IPNAT=ipnat.o kmem.o common.o natparse.o inet_addr.o printnat.o
-FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o printstate.o
+MODOBJS=ip_fil.o fil.o mls_ipl.o ip_nat.o ip_state.o ip_frag.o ip_proxy.o \
+	ip_auth.o ip_log.o ip_pool.o ip_htable.o ip_lookup.o ip_scan.o \
+	ip_sync.o ip_rules.o \
+	radix.o md5.o
+#	ip_trafcon.o
+DFLAGS=$(IPFLKM) $(IPFLOG) $(DEF) $(LOOKUP) $(SYNC)
+IPF=ipf.o ipfcomp.o ipf_y.o ipf_l.o
+IPFTEST=ipftest.o fil_u.o ip_nat_u.o ip_frag_u.o ip_state_u.o ip_fil_u.o \
+	ip_proxy_u.o ip_auth_u.o ip_pool_u.o ip_htable_u.o ip_lookup_u.o \
+	ip_scan_u.o ip_sync_u.o ip_rules_u.o ip_log_u.o \
+	ippool_y.o ippool_l.o ipf_y.o ipf_l.o ipnat_y.o ipnat_l.o \
+	bpf_filter_u.o md5_u.o radix_u.o
+#	ip_trafcon_u.o
+IPNAT=ipnat.o ipnat_y.o ipnat_l.o
+IPMON=ipmon.o ipmon_y.o ipmon_l.o
+IPPOOL=ippool_y.o ippool_l.o kmem.o ippool.o
+IPTRAFCON=iptrafcon.o
+IPFSTAT=ipfstat.o
+LIBSRC=$(TOP)/lib
+TOOL=$(TOP)/tools
+RANLIB=ranlib
+AROPTS=cq
+HERE=SunOS4
+CCARGS=-I. $(DEBUG) $(CFLAGS)
+EXTRA=-DIPFILTER_LOG -DIPFILTER_LOOKUP
 
-all:
-	(cd $(TOP) $(MAKE) $(MFLAGS) sunos4; )
+include $(TOP)/lib/Makefile
 
-sunos4 solaris1 build: ipf ipfstat ipftest ipmon ipnat ipfs if_ipl.o
-	/bin/rm -f $(TOP)/ipf
-	ln -s `pwd`/ipf $(TOP)
-	/bin/rm -f $(TOP)/ipftest
-	ln -s `pwd`/ipftest $(TOP)
-	/bin/rm -f $(TOP)/ipmon
-	ln -s `pwd`/ipmon $(TOP)
-	/bin/rm -f $(TOP)/ipnat
-	ln -s `pwd`/ipnat $(TOP)
+build all: libipf.a ipf ipfstat ipftest ipmon ipnat ipfs ippool ipscan \
+	ipsyncm ipsyncs if_ipl.o
+	-sh -c 'for i in ipf ipftest ipmon ippool ipnat ipscan ipsyncm ipsyncs; do /bin/rm -f $(TOP)/$$i; ln -s `pwd`/$$i $(TOP); done'
 
-ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
+ipfstat: $(IPFSTAT) libipf.a
+	$(CC) $(CCARGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(IPFSTAT) \
 	-o $@ $(LIBS) $(STATETOP_LIB) -lkvm
 
-ipf: $(IPF)
-	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
+ipf: $(IPF) libipf.a
+	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS) -ll -lkvm $(LIBBPF)
 
 ipfs: ipfs.o
-	$(CC) $(DEBUG) $(CFLAGS) ipfs.o -o $@ $(LIBS)
+	$(CC) $(CCARGS) ipfs.o -o $@
 
-ipftest: $(IPT)
-	$(CC) $(DEBUG) $(CFLAGS) $(IPT) -o $@ $(LIBS)
+ipsyncm: ipsyncm.o libipf.a
+	$(CC) $(CCARGS) ipsyncm.o -o $@ $(LIBS)
 
-ipnat: $(IPNAT)
-	$(CC) $(DEBUG) $(CFLAGS) $(IPNAT) -o $@ $(LIBS) -lkvm
+ipsyncs: ipsyncs.o libipf.a
+	$(CC) $(CCARGS) ipsyncs.o -o $@ $(LIBS)
+
+ipsyncm.o: $(TOOL)/ipsyncm.c $(TOP)/ip_sync.h
+	$(CC) -DIPFILTER_SYNC $(CCARGS) -c $(TOOL)/ipsyncm.c -o $@
+
+ipsyncs.o: $(TOOL)/ipsyncs.c $(TOP)/ip_sync.h
+	$(CC) -DIPFILTER_SYNC $(CCARGS) -c $(TOOL)/ipsyncs.c -o $@
+
+ipftest: $(IPFTEST) libipf.a
+	$(CC) $(CCARGS) $(IPFTEST) -o $@ $(LIBS) -ll -L. -lefence $(LIBBPF)
+
+ipnat: $(IPNAT) libipf.a
+	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lkvm -ll
 
 tests:
 	(cd test; make )
 
-ipfs.o: $(TOP)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
-	$(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipfs.c -o $@
+ipfs.o: $(TOOL)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h $(TOP)/ip_nat.h
+	$(CC) $(CCARGS) -c $(TOOL)/ipfs.c -o $@
 
-fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
-	-c $(TOP)/fils.c -o $@
+ipfstat.o: $(TOOL)/ipfstat.c $(TOP)/ip_fil.h $(TOP)/ipf.h
+	$(CC) $(CCARGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
+	-c $(TOOL)/ipfstat.c -o $@
 
-fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fil.c -o $@
+fil_u.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
+	$(CC) $(CCARGS) $(EXTRA) $(IPFBPF) -c $(TOP)/fil.c -o $@
 
-fil_k.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) $(POLICY) $(DFLAGS) -c $(TOP)/fil.c -o $@
+fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ipl.h
+	$(CC) $(CCARGS) $(POLICY) $(DFLAGS) $(IPFBPF) -c $(TOP)/fil.c -o $@
 
-ipf.o: $(TOP)/ipf.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipf.c -o $@
+ipf.o: $(TOOL)/ipf.c $(TOP)/ip_fil.h $(TOP)/ipf.h
+	$(CC) $(CCARGS) -c $(TOOL)/ipf.c -o $@
 
-ipt.o: $(TOP)/ipt.c $(TOP)/ip_fil.h $(TOP)/ipt.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipt.c -o $@
+md5.o: $(TOP)/md5.c $(TOP)/md5.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/md5.c -o $@
 
-misc.o: $(TOP)/misc.c $(TOP)/ip_fil.h $(TOP)/ipt.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/misc.c -o $@
+radix.o: $(TOP)/radix.c $(TOP)/radix_ipf.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/radix.c -o $@
 
-inet_addr.o: $(TOP)/inet_addr.c
-	$(CC) $(ATON) $(DEBUG) $(CFLAGS) -c $(TOP)/inet_addr.c -o $@
+bpf_filter_u.o: $(TOP)/bpf_filter.c
+	$(CC) $(CCARGS) -c $(TOP)/bpf_filter.c -o $@
 
-opt.o: $(TOP)/opt.c
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/opt.c -o $@
+md5_u.o: $(TOP)/md5.c $(TOP)/md5.h
+	$(CC) $(CCARGS) -c $(TOP)/md5.c -o $@
 
-ipnat.o: $(TOP)/ipnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipnat.c -o $@
+radix_u.o: $(TOP)/radix.c $(TOP)/radix_ipf.h
+	$(CC) $(CCARGS) -c $(TOP)/radix.c -o $@
 
-natparse.o: $(TOP)/natparse.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h \
-	$(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/natparse.c -o $@
+ipfcomp.o: $(TOOL)/ipfcomp.c $(TOP)/ip_fil.h $(TOP)/ipf.h
+	$(CC) $(CCARGS) -c $(TOOL)/ipfcomp.c -o $@
 
-printnat.o: $(TOP)/printnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h \
-	$(TOP)/ip_compat.h $(TOP)/ip_proxy.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/printnat.c -o $@
+ipftest.o: $(TOOL)/ipftest.c $(TOP)/ip_fil.h $(TOP)/ipt.h $(TOP)/ipf.h \
+	$(TOP)/ip_lookup.h $(TOP)/ip_pool.h $(TOP)/ip_htable.h
+	$(CC) $(CCARGS) -c $(TOOL)/ipftest.c -o $@
 
-printstate.o: $(TOP)/printstate.c $(TOP)/ip_fil.h $(TOP)/ipf.h \
-	$(TOP)/ip_state.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/printstate.c -o $@
-
-ipft_sn.o: $(TOP)/ipft_sn.c $(TOP)/ipt.h $(TOP)/ipf.h $(TOP)/ip_fil.h \
-	$(TOP)/snoop.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_sn.c -o $@
-
-ipft_ef.o: $(TOP)/ipft_ef.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_ef.c -o $@
-
-ipft_td.o: $(TOP)/ipft_td.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_td.c -o $@
-
-ipft_pc.o: $(TOP)/ipft_pc.c $(TOP)/ipf.h $(TOP)/ip_fil.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_pc.c -o $@
-
-ipft_tx.o: $(TOP)/ipft_tx.c $(TOP)/ipf.h $(TOP)/ip_compat.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_tx.c -o $@
-
-ipft_hx.o: $(TOP)/ipft_hx.c $(TOP)/ipf.h $(TOP)/ip_compat.h $(TOP)/ipt.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_hx.c -o $@
+ipnat.o: $(TOOL)/ipnat.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_nat.h
+	$(CC) $(CCARGS) -c $(TOOL)/ipnat.c -o $@
 
 if_ipl.o: $(MODOBJS)
 	ld -r $(MODOBJS) -o $(LKM)
 	${RM} -f if_ipl
 
 ip_nat.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
 
 ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
+
+ip_scan.o: $(TOP)/ip_scan.c $(TOP)/ip_scan.h $(TOP)/ip_compat.h
+	$(CC) -DIPFILTER_SCAN $(CCARGS) $(DFLAGS) -c $(TOP)/ip_scan.c -o $@
+
+ip_sync.o: $(TOP)/ip_sync.c $(TOP)/ip_sync.h $(TOP)/ip_compat.h
+	$(CC) -DIPFILTER_SYNC $(CCARGS) $(DFLAGS) -c $(TOP)/ip_sync.c -o $@
+
+ip_pool.o: $(TOP)/ip_pool.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h $(TOP)/ip_pool.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_pool.c -o $@
+
+ip_htable.o: $(TOP)/ip_htable.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_htable.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_htable.c -o $@
+
+ip_lookup.o: $(TOP)/ip_pool.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_pool.h $(TOP)/ip_htable.h $(TOP)/ip_lookup.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_lookup.c -o $@
+
+ip_trafcon.o: $(TOP)/ip_trafcon.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_trafcon.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_trafcon.c -o $@
+
+ip_rules.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_rules.c -o $@
 
 ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_ftp_pxy.c $(TOP)/ip_rcmd_pxy.c $(TOP)/ip_raudio_pxy.c \
-	$(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
+	$(TOP)/ip_rpcb_pxy.c $(TOP)/ip_nat.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
 
 ip_auth.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
 
 ip_nat_u.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_nat.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_nat.c -o $@
 
 ip_frag_u.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_frag.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_frag.c -o $@
+
+ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h $(TOP)/ip_compat.h
+	$(CC) -DIPFILTER_SCAN $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
 
 ip_state_u.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_state.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_state.c -o $@
+
+ip_scan_u.o: $(TOP)/ip_scan.c $(TOP)/ip_scan.h $(TOP)/ip_compat.h
+	$(CC) -DIPFILTER_SCAN $(CCARGS) $(EXTRA) -c $(TOP)/ip_scan.c -o $@
+
+ip_sync_u.o: $(TOP)/ip_sync.c $(TOP)/ip_sync.h $(TOP)/ip_compat.h
+	$(CC) -DIPFILTER_SYNC $(CCARGS) $(EXTRA) -c $(TOP)/ip_sync.c -o $@
+
+ip_pool_u.o: $(TOP)/ip_pool.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_pool.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_pool.c -o $@
+
+ip_htable_u.o: $(TOP)/ip_htable.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_htable.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_htable.c -o $@
+
+ip_lookup_u.o: $(TOP)/ip_lookup.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_pool.h $(TOP)/ip_htable.h $(TOP)/ip_lookup.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_lookup.c -o $@
+
+ip_trafcon_u.o: $(TOP)/ip_trafcon.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+	$(TOP)/ip_trafcon.h
+	$(CC) $(CCARGS) -c $(TOP)/ip_trafcon.c -o $@
+
 
 ip_proxy_u.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_ftp_pxy.c $(TOP)/ip_rcmd_pxy.c $(TOP)/ip_raudio_pxy.c \
-	$(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_proxy.c -o $@
+	$(TOP)/ip_rpcb_pxy.c $(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_proxy.c -o $@
 
 ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_auth.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_auth.c -o $@
 
-ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_log.c -o $@
+ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_log.c -o $@
 
-ip_fil.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/$(IPFILC) -o $@
+ip_fil.o: $(TOP)/ip_fil_sunos4.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h \
+		$(TOP)/ip_nat.h
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_fil_sunos4.c -o $@
 
 ip_log.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ip_nat.h
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
 
-ip_fil_u.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_fil.c -o $@
+ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_fil.c -o $@
 
 ip_input.o: $(TOP)/ip_input.c $(TOP)/ip_fil.h
-	$(CC) $(DEBUG) $(CFLAGS) $(IPDEF) -c $(TOP)/ip_input.c -o $@
+	$(CC) $(CCARGS) $(IPDEF) -c $(TOP)/ip_input.c -o $@
 
 ip_output.o: $(TOP)/ip_output.c $(TOP)/ip_fil.h
-	$(CC) $(DEBUG) $(CFLAGS) $(IPDEF) -c $(TOP)/ip_output.c -o $@
+	$(CC) $(CCARGS) $(IPDEF) -c $(TOP)/ip_output.c -o $@
 
 mls_ipl.o: $(TOP)/mls_ipl.c $(TOP)/ipl.h
 	-/bin/rm -f $(TOP)/vnode_if.c
-	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/mls_ipl.c -o $@
+	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/mls_ipl.c -o $@
 
-kmem.o: $(TOP)/kmem.c
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/kmem.c -o $@
+ipf_y.o: ipf_y.c ipf_y.h $(TOP)/ipf.h ipf_l.h
+	$(CC) $(CCARGS) $(IPFBPF) -c ipf_y.c -o $@
 
-parse.o: $(TOP)/parse.c $(TOP)/ip_fil.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/parse.c -o $@
+ipf_l.o: ipf_l.c ipf_y.h $(TOP)/ipf.h
+	$(CC) $(CCARGS) -I. -I$(TOP)/tools -c ipf_l.c -o $@
 
-common.o: $(TOP)/common.c $(TOP)/ip_fil.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/common.c -o $@
+ipf_y.h ipf_y.c: $(TOOL)/ipf_y.y $(TOP)/ipf.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
 
-facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/facpri.c -o $@
+ipf_l.c: $(TOOL)/lexer.c $(TOP)/ipf.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
 
-ipmon: $(TOP)/ipmon.c
-	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
+ipf_l.h: $(TOOL)/lexer.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@);
+
+ipmon: $(IPMON) libipf.a
+	$(CC) $(CCARGS) $(IPMON) -o $@ $(LIBS) -ll
+
+ipmon.o: $(TOOL)/ipmon.c $(TOP)/ipmon.h $(TOP)/ip_fil.h
+	$(CC) $(CCARGS) $(LOGFAC) -c $(TOOL)/ipmon.c -o $@
+
+ipmon_y.o: ipmon_y.c ipmon_y.h $(TOP)/ipmon.h ipmon_l.h
+	$(CC) $(CCARGS) -c ipmon_y.c -o $@
+
+ipmon_l.o: ipmon_l.c ipmon_y.h $(TOP)/ipmon.h ipmon_l.h
+	$(CC) $(CCARGS) -I. -I$(TOP)/tools -c ipmon_l.c -o $@
+
+ipmon_y.h ipmon_y.c: $(TOOL)/ipmon_y.y $(TOP)/ipmon.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipmon_l.c: $(TOOL)/lexer.c $(TOP)/ipmon.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipmon_l.h: $(TOOL)/lexer.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipscan: ipscan_y.o ipscan_l.o
+	$(CC) $(DEBUG) ipscan_y.o ipscan_l.o -o $@ -ll $(LIBS) -lkvm
+
+ipscan_y.o: ipscan_y.c ipscan_y.h $(TOP)/ip_scan.h ipscan_l.h
+	$(CC) -DIPFILTER_SCAN $(CCARGS) -c ipscan_y.c -o $@
+
+ipscan_l.o: ipscan_l.c ipscan_y.h $(TOP)/ip_scan.h ipscan_l.h
+	$(CC) -DIPFILTER_SCAN $(CCARGS) -I. -I$(TOP)/tools -c ipscan_l.c -o $@
+
+ipscan_y.h ipscan_y.c: $(TOOL)/ipscan_y.y $(TOP)/ip_scan.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" )
+
+ipscan_l.c: $(TOOL)/lexer.c $(TOP)/ip_scan.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipscan_l.h: $(TOOL)/lexer.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ippool: $(IPPOOL) libipf.a
+	$(CC) $(DEBUG) -I. $(CFLAGS) $(IPPOOL) -o $@ -ll -lkvm $(LIBS)
+
+ippool.o: $(TOOL)/ippool.c $(TOP)/ip_pool.h
+	$(CC) $(CCARGS) -c $(TOOL)/ippool.c -o $@
+
+ippool_y.o: ippool_y.c ippool_y.h $(TOP)/ip_pool.h ippool_l.h
+	$(CC) $(CCARGS) -c ippool_y.c -o $@
+
+ippool_l.o: ippool_l.c ippool_y.h $(TOP)/ip_pool.h
+	$(CC) $(CCARGS) -I. -I$(TOP)/tools -c ippool_l.c -o $@
+
+ippool_y.h ippool_y.c: $(TOOL)/ippool_y.y $(TOP)/ip_pool.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ippool_l.c: $(TOOL)/lexer.c $(TOP)/ip_pool.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ippool_l.h: $(TOOL)/lexer.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipnat_y.o: ipnat_y.c ipnat_y.h $(TOP)/ip_nat.h ipnat_l.h
+	$(CC) $(CCARGS) -c ipnat_y.c -o $@
+
+ipnat_l.o: ipnat_l.c ipnat_y.h $(TOP)/ip_nat.h ipnat_l.h
+	$(CC) $(CCARGS) -I. -I$(TOP)/tools -c ipnat_l.c -o $@
+
+ipnat_y.h ipnat_y.c: $(TOOL)/ipnat_y.y $(TOP)/ip_nat.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipnat_l.c: $(TOOL)/lexer.c $(TOP)/ip_nat.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@)
+
+ipnat_l.h: $(TOOL)/lexer.h
+	(cd $(TOOL); make "DEST=$(TOP)/$(HERE)" $(TOP)/$(HERE)/$@);
+
+iptrafcon.o: $(TOP)/iptrafcon.c
+	$(CC) $(CCARGS) -c $(TOP)/iptrafcon.c -o $@
+
+iptrafcon: $(IPTRAFCON) $(OBJ)/libipf.a
+	$(CC) $(CCARGS) $(IPTRAFCON) -o $@ $(LIBS)
+
+.y.c:
+
+.l.c:
 
 clean:
-	${RM} -f ../ipf ../ipftest ../ipmon ../ipnat
-	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \
-		ipfs $(LKM) y.tab.? lex.yy.c
-	${MAKE} -f Makefile.ipsend clean
+	${RM} -f ../ipf ../ipnat ../ipmon ../ippool ../ipftest
+	${RM} -f ../ipscan ../ipsyncm ../ipsyncs
+	${RM} -f core *.o *.a ipt ipfstat ipf ipfstat ipftest ipmon
+	${RM} -f if_ipl ipnat $(LKM)
+	${RM} -f ip_fil.c ipf_l.c ipf_y.c ipf_y.h ipf_l.h
+	${RM} -f ipscan ipscan_y.c ipscan_y.h ipscan_l.c ipscan_l.h
+	${RM} -f ippool ippool_y.c ippool_y.h ippool_l.c ippool_l.h
+	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
+	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
+	${RM} -f ipsyncm ipsyncs ipfs
+	${MAKE} TOP=.. -f Makefile.ipsend clean
 
 
 install: all $(TOP)/ip_fil.h
@@ -234,4 +376,5 @@ install: all $(TOP)/ip_fil.h
 	-$(INSTALL) -cs -g wheel -m 755 -o root ipftest $(BINDEST)
 	-$(INSTALL) -cs -g wheel -m 755 -o root ipfstat $(SBINDEST)
 	-$(INSTALL) -cs -g wheel -m 755 -o root ipmon $(BINDEST)
+	-$(INSTALL) -cs -g wheel -m 755 -o root ipscan $(BINDEST)
 	(cd $(TOP)/man; make INSTALL=$(INSTALL) MANDIR=$(MANDIR) install; cd ..)

@@ -470,7 +470,7 @@ diff -d -c -r /tmp/sys/conf/files sys/conf/files
 --- sys/conf/files	Thu Apr 25 04:01:15 2002
 ***************
 *** 657,662 ****
---- 657,670 ----
+--- 657,673 ----
   file netinet/tcp_usrreq.c		inet
   file netinet/udp_usrreq.c		inet
   file netinet/ip_gre.c			inet
@@ -482,6 +482,9 @@ diff -d -c -r /tmp/sys/conf/files sys/conf/files
 + file netinet/ip_proxy.c			ipfilter
 + file netinet/ip_auth.c			ipfilter
 + file netinet/ip_log.c			ipfilter
++ file netinet/ip_lookup.c			ipfilter & ipfilter_lookup
++ file netinet/ip_pool.c			ipfilter & ipfilter_lookup
++ file netinet/ip_htable.c			ipfilter & ipfilter_lookup
   file netinet/ip_ipsp.c			(inet | inet6) & (ipsec | tcp_signature)
   file netinet/ip_spd.c			(inet | inet6) & (ipsec | tcp_signature)
   file netinet/ip_ipip.c			inet | inet6
