@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.560 2003/08/01 00:05:27 jonathan Exp $
+$NetBSD: pcidevs,v 1.561 2003/08/01 11:55:03 wiz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -959,7 +959,7 @@ product ATI RADEON_8500		0x514c	Radeon 8500/8500LE
 product ATI RADEON_9100		0x514d	Radeon 9100 Series
 product ATI RADEON_7500		0x5157	Radeon 7500
 product ATI RADEON_7000		0x5159	Radeon 7000/VE
-product ATI RADEON_9100		0x514d	Radeon 9100 Series Secondary
+product ATI RADEON_9100_S	0x514d	Radeon 9100 Series Secondary
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
 product ATI RAGEVRPCI		0x524b	Rage 128 VR PCI
