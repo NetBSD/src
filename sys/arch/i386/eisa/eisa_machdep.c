@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10 1998/06/03 06:35:49 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10.22.1 2000/02/29 13:20:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ eisa_intr_map(ec, irq, ihp)
 	u_int irq;
 	eisa_intr_handle_t *ihp;
 {
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+#endif
 
 	if (irq >= ICU_LEN) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
@@ -151,6 +154,26 @@ eisa_intr_map(ec, irq, ihp)
 		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
+
+#if NIOAPIC > 0
+	if (mp_busses != NULL) {
+		/*
+		 * Assumes 1:1 mapping between PCI bus numbers and
+		 * the numbers given by the MP bios.
+		 * XXX Is this a valid assumption?
+		 */
+		
+		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+			if (mip->bus_pin == irq) {
+				*ihp = mip->ioapic_ih | irq;
+				return 0;
+			}
+		}
+		if (mip == NULL)
+			printf("eisa_intr_map: no MP mapping found\n");
+	}
+#endif
+	
 
 	*ihp = irq;
 	return 0;
@@ -163,10 +186,20 @@ eisa_intr_string(ec, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
 
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC)
+		sprintf(irqstr, "apic %d int %d (irq %d)",
+		    APIC_IRQ_APIC(ih),
+		    APIC_IRQ_PIN(ih),
+		    ih&0xff);
+	else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
 	sprintf(irqstr, "irq %d", ih);
+#endif
 	return (irqstr);
 	
 }
@@ -178,6 +211,14 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 	int type, level, (*func) __P((void *));
 	void *arg;
 {
+	if (ih != -1) {
+#if NIOAPIC > 0
+		if (ih & APIC_INT_VIA_APIC) {
+			return apic_intr_establish(ih, type, level,
+			    func, arg);
+		}
+#endif
+	}
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
