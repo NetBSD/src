@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.16 1997/09/15 23:01:29 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.17 1997/09/15 23:31:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.16 1997/09/15 23:01:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.17 1997/09/15 23:31:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,16 +125,16 @@ cia_conf_read(cpv, tag, offset)
 
 	/*
 	 * Some (apparently-common) revisions of EB164 and AlphaStation
-	 * firmware do the Wrong thing with PCI master aborts, which are
-	 * caused by accesing the configuration space of devices that
-	 * don't exist (for example).
+	 * firmware do the Wrong thing with PCI master and target aborts,
+	 * which are caused by accesing the configuration space of devices
+	 * that don't exist (for example).
 	 *
 	 * To work around this, we clear the CIA error register's PCI
-	 * master abort bit before touching PCI configuration space and
-	 * check it afterwards.  If it indicates a master abort,
-	 * the device wasn't there so we return 0xffffffff.
+	 * master and target abort bits before touching PCI configuration
+	 * space and check it afterwards.  If it indicates a master or target
+	 * abort, the device wasn't there so we return 0xffffffff.
 	 */
-	REGVAL(CIA_CSR_CIA_ERR) = CIA_ERR_RCVD_MAS_ABT;
+	REGVAL(CIA_CSR_CIA_ERR) = CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT;
 	alpha_mb();
 	alpha_pal_draina();	
 
@@ -167,7 +167,7 @@ cia_conf_read(cpv, tag, offset)
 	alpha_pal_draina();	
 	alpha_mb();
 	errbits = REGVAL(CIA_CSR_CIA_ERR);
-	if (errbits & CIA_ERR_RCVD_MAS_ABT) {
+	if (errbits & (CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT)) {
 		ba = 1;
 		data = 0xffffffff;
 	}
