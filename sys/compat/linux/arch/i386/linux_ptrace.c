@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.2 1999/12/12 01:30:49 tron Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.3 1999/12/16 15:11:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
+#include <machine/reg.h>
+
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_signal.h>
@@ -76,8 +78,10 @@ struct linux_reg {
 	int  xss;
 };
 
+#define ISSET(t, f)	((t) & (f))
+
 int
-linux_sys_ptrace(p, v, retval)
+linux_sys_ptrace_arch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -88,46 +92,98 @@ linux_sys_ptrace(p, v, retval)
 		syscallarg(int) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
-	struct sys_ptrace_args pta;
-	caddr_t sg;
+	int request, error;
+	struct proc *t;				/* target process */
+	struct reg regs;
+	struct linux_reg linux_regs;
 
-	sg = stackgap_init(p->p_emul);
+	request = SCARG(uap, request);
 
-	SCARG(&pta, pid) = SCARG(uap, pid);
-	SCARG(&pta, addr) = (caddr_t)SCARG(uap, addr);
-	SCARG(&pta, data) = SCARG(uap, data);
-
-	switch (SCARG(uap, request)) {
-	case LINUX_PTRACE_TRACEME:
-		SCARG(&pta, req) = PT_TRACE_ME;
-		break;
-	case LINUX_PTRACE_PEEKTEXT:
-		SCARG(&pta, req) = PT_READ_I;
-		break;
-	case LINUX_PTRACE_PEEKDATA:
-		SCARG(&pta, req) = PT_READ_D;
-		break;
-	case LINUX_PTRACE_POKETEXT:
-		SCARG(&pta, req) = PT_WRITE_I;
-		break;
-	case LINUX_PTRACE_POKEDATA:
-		SCARG(&pta, req) = PT_WRITE_D;
-		break;
-	case LINUX_PTRACE_CONT:
-		SCARG(&pta, req) = PT_CONTINUE;
-		break;
-	case LINUX_PTRACE_KILL:
-		SCARG(&pta, req) = PT_KILL;
-		break;
-	case LINUX_PTRACE_ATTACH:
-		SCARG(&pta, req) = PT_ATTACH;
-		break;
-	case LINUX_PTRACE_DETACH:
-		SCARG(&pta, req) = PT_DETACH;
-		break;
-	default:
+	if ((request != LINUX_PTRACE_GETREGS) &&
+	    (request != LINUX_PTRACE_SETREGS) &&
+	    (request != LINUX_PTRACE_GETFPREGS) &&
+	    (request != LINUX_PTRACE_SETFPREGS))
 		return EIO;
+
+	/* Find the process we're supposed to be operating on. */
+	if ((t = pfind(SCARG(uap, pid))) == NULL)
+		return ESRCH;
+
+	/*
+	 * You can't do what you want to the process if:
+	 *	(1) It's not being traced at all,
+	 */
+	if (!ISSET(t->p_flag, P_TRACED))
+		return EPERM;
+
+	/*
+	 *	(2) it's being traced by procfs (which has
+	 *	    different signal delivery semantics),
+	 */
+	if (ISSET(t->p_flag, P_FSTRACE))
+		return EBUSY;
+
+	/*
+	 *	(3) it's not being traced by _you_, or
+	 */
+	if (t->p_pptr != p)
+		return EBUSY;
+
+	/*
+	 *	(4) it's not currently stopped.
+	 */
+	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		return EBUSY;
+
+	*retval = 0;
+
+	switch (request) {
+	case  LINUX_PTRACE_GETREGS:
+		error = process_read_regs(t, &regs);
+		if (error != 0)
+			return error;
+
+		linux_regs.ebx = regs.r_ebx;
+		linux_regs.ecx = regs.r_ecx;
+		linux_regs.edx = regs.r_edx;
+		linux_regs.esi = regs.r_esi;
+		linux_regs.edi = regs.r_edi;
+		linux_regs.ebp = regs.r_ebp;
+		linux_regs.eax = regs.r_eax;
+		linux_regs.xds = regs.r_ds;
+		linux_regs.xes = regs.r_es;
+		linux_regs.orig_eax = regs.r_eax; /* XXX is this correct? */
+		linux_regs.eip = regs.r_eip;
+		linux_regs.xcs = regs.r_cs;
+		linux_regs.eflags = regs.r_eflags;
+		linux_regs.esp = regs.r_esp;
+		linux_regs.xss = regs.r_ss;
+
+		return copyout(&linux_regs, (caddr_t)SCARG(uap, data),
+		    sizeof(struct linux_reg));
+	case  LINUX_PTRACE_SETREGS:
+		error = copyin((caddr_t)SCARG(uap, data), &linux_regs,
+		    sizeof(struct linux_reg));
+		if (error != 0)
+			return error;
+
+		regs.r_ebx = linux_regs.ebx;
+		regs.r_ecx = linux_regs.ecx;
+		regs.r_edx = linux_regs.edx;
+		regs.r_esi = linux_regs.esi;
+		regs.r_edi = linux_regs.edi;
+		regs.r_ebp = linux_regs.ebp;
+		regs.r_eax = linux_regs.eax;
+		regs.r_ds = linux_regs.xds;
+		regs.r_es = linux_regs.xes;
+		regs.r_eip = linux_regs.eip;
+		regs.r_cs = linux_regs.xcs;
+		regs.r_eflags = linux_regs.eflags;
+		regs.r_esp = linux_regs.esp;
+		regs.r_ss = linux_regs.xss;
+
+		return process_write_regs(t, &regs);
 	}
 
-	return sys_ptrace(p, &pta, retval);
+	return EIO;
 }
