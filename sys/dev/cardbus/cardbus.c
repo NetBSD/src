@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.25 2000/04/17 09:16:38 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -360,8 +360,16 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	break;
 	
     case PCMCIA_CISTPL_FUNCE:
-	if(cis->funcid == PCMCIA_FUNCTION_NETWORK && tuple[1] >= 8) {
-	    if(tuple[2] == PCMCIA_TPLFE_TYPE_LAN_NID) {
+	switch(cis->funcid) {
+	case PCMCIA_FUNCTION_SERIAL:
+	    if(tuple[1] >= 2 && 
+	       tuple[2] == 0 /* XXX PCMCIA_TPLFE_TYPE_SERIAL_??? */) {
+		cis->funce.serial.uart_type = tuple[3] & 0x1f;
+		cis->funce.serial.uart_present = 1;
+	    }
+	    break;
+	case PCMCIA_FUNCTION_NETWORK:
+	    if(tuple[1] >= 8 && tuple[2] == PCMCIA_TPLFE_TYPE_LAN_NID) {
 		if(tuple[3] > sizeof(cis->funce.network.netid)) {
 		    DPRINTF(("%s: unknown network id type (len = %d)\n", 
 			     __func__, tuple[3]));
@@ -371,6 +379,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 			   tuple + 4, tuple[3]);
 		}
 	    }
+	    break;
 	}
 	break;
     }
