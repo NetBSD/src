@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.27 2000/06/28 16:08:50 mrg Exp $ */
+/* $NetBSD: tga.c,v 1.28 2000/06/30 00:01:22 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -53,6 +53,7 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef __alpha__
 #include <machine/pte.h>
