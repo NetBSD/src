@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.7 2001/01/30 10:59:57 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.8 2001/03/13 23:16:49 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -239,3 +239,8 @@ share/examples/supfiles/Makefile		1.6 via patch
 usr.sbin/ypserv/ypinit/Makefile.yp		1.14
 
   Handle multi-line netgroup entries correctly.
+
+lib/libc/net/ethers.c				patch
+
+  Correct error in pull-up to 1.4.3 which prevents rarpd
+  from working.
