@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.38 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.39 2001/07/03 18:08:51 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -169,7 +169,7 @@ Make_OODate (gn)
      * Certain types of targets needn't even be sought as their datedness
      * doesn't depend on their modification time...
      */
-    if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
+    if ((gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC)) == 0) {
 	(void) Dir_MTime (gn);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
@@ -194,7 +194,7 @@ Make_OODate (gn)
      * These weird rules are brought to you by Backward-Compatibility and
      * the strange people who wrote 'Make'.
      */
-    if (gn->type & OP_USE) {
+    if (gn->type & (OP_USE|OP_USEBEFORE)) {
 	/*
 	 * If the node is a USE node it is *never* out of date
 	 * no matter *what*.
@@ -313,7 +313,7 @@ MakeAddChild (gnp, lp)
     GNode          *gn = (GNode *) gnp;
     Lst            l = (Lst) lp;
 
-    if ((gn->flags & REMAKE) == 0 && !(gn->type & OP_USE)) {
+    if ((gn->flags & REMAKE) == 0 && !(gn->type & (OP_USE|OP_USEBEFORE))) {
 	(void)Lst_EnQueue (l, (ClientData)gn);
     }
     return (0);
@@ -378,13 +378,24 @@ Make_HandleUse (cgn, pgn)
 {
     register LstNode	ln; 	/* An element in the children list */
 
-    if (cgn->type & (OP_USE|OP_TRANSFORM)) {
-	if ((cgn->type & OP_USE) || Lst_IsEmpty(pgn->commands)) {
-	    /*
-	     * .USE or transformation and target has no commands -- append
-	     * the child's commands to the parent.
-	     */
-	    (void) Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
+    if (cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) {
+	if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
+	    if (cgn->type & OP_USEBEFORE) {
+		/*
+		 * .USEBEFORE --
+		 *	prepend the child's commands to the parent.
+		 */
+		Lst cmds = pgn->commands;
+		pgn->commands = Lst_Duplicate (cgn->commands, NOCOPY);
+		(void) Lst_Concat (pgn->commands, cmds, LST_CONCNEW);
+		Lst_Destroy (cmds, NOFREE);
+	    } else {
+		/*
+		 * .USE or target has no commands --
+		 *	append the child's commands to the parent.
+		 */
+		(void) Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
+	    }
 	}
 
 	if (Lst_Open (cgn->children) == SUCCESS) {
@@ -418,7 +429,7 @@ Make_HandleUse (cgn, pgn)
 	    Lst_Close (cgn->children);
 	}
 
-	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
+	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 
 	/*
 	 * This child node is now "made", so we decrement the count of
@@ -427,7 +438,7 @@ Make_HandleUse (cgn, pgn)
 	 * children the parent has. This is used by Make_Run to decide
 	 * whether to queue the parent or examine its children...
 	 */
-	if ((cgn->type & OP_USE) &&
+	if ((cgn->type & (OP_USE|OP_USEBEFORE)) &&
 	    (ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
 	    Lst_Remove(pgn->children, ln);
 	    pgn->unmade--;
@@ -600,7 +611,7 @@ Make_Update (cgn)
 	    if (pgn->flags & REMAKE) {
 		pgn->unmade -= 1;
 
-		if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
+		if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
 		    if (cgn->made == MADE)
 			pgn->flags |= CHILDMADE;
 		    (void)Make_TimeStamp (pgn, cgn);
@@ -700,7 +711,7 @@ MakeAddAllSrc (cgnp, pgnp)
 	return (0);
     cgn->type |= OP_MARK;
 
-    if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
+    if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
 	char *child;
 	char *p1 = NULL;
 

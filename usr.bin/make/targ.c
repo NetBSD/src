@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -588,7 +588,7 @@ TargPrintNode (gnp, passp)
 	    } else {
 		printf("# No unmade children\n");
 	    }
-	    if (! (gn->type & (OP_JOIN|OP_USE|OP_EXEC))) {
+	    if (! (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 		if (gn->mtime != 0) {
 		    printf("# last modified %s: %s\n",
 			      Targ_FmtTime(gn->mtime),

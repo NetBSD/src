@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.70 2001/06/12 23:36:18 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -246,6 +246,7 @@ static struct {
 { ".SINGLESHELL", SingleShell,	0 },
 { ".SUFFIXES",	  Suffixes, 	0 },
 { ".USE",   	  Attribute,   	OP_USE },
+{ ".USEBEFORE",   Attribute,   	OP_USEBEFORE },
 { ".WAIT",	  Wait, 	0 },
 };
 
