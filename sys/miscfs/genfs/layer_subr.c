@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.6 2000/03/16 18:08:24 jdolecek Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.7 2000/11/27 08:39:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -272,6 +272,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	VREF(lowervp);	/* Take into account reference held in layer_node */
 	hd = LAYER_NHASH(lmp, lowervp);
 	LIST_INSERT_HEAD(hd, xp, layer_hash);
+	uvm_vnp_setsize(vp, 0);
 	simple_unlock(&lmp->layerm_hashlock);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.44 2000/08/12 16:43:00 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45 2000/11/27 08:39:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -156,8 +156,14 @@ vn_open(ndp, fmode, cmode)
 	}
 	if ((error = VOP_OPEN(vp, fmode, cred, p)) != 0)
 		goto bad;
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, fmode & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
 	if (fmode & FWRITE)
 		vp->v_writecount++;
+
 	return (0);
 bad:
 	vput(vp);
@@ -174,11 +180,10 @@ vn_writechk(vp)
 {
 
 	/*
-	 * If there's shared text associated with
-	 * the vnode, try to free it up once.  If
-	 * we fail, we can't allow writing.
+	 * If the vnode is in use as a process's text,
+	 * we can't allow writing.
 	 */
-	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+	if (vp->v_flag & VTEXT)
 		return (ETXTBSY);
 	return (0);
 }

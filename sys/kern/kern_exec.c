@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.124 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.125 2000/11/27 08:39:43 chs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -152,6 +152,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 	/* now we have the file, get the exec header */
+	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
 			UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 	if (error)
