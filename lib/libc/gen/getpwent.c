@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.49 2002/02/12 18:58:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.49 2002/02/12 18:58:04 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -406,7 +406,8 @@ _local_getpw(rv, cb_data, ap)
 	DBT		 key;
 	char		 bf[/*CONSTCOND*/ MAX(MAXLOGNAME, sizeof(_pw_keynum)) + 1];
 	uid_t		 uid;
-	int		 search, len, rval;
+	size_t		 len;
+	int		 search, rval;
 	const char	*name;
 
 	if (!_pw_db && !__initdb())
@@ -425,12 +426,14 @@ _local_getpw(rv, cb_data, ap)
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
 		len = strlen(name);
-		memmove(bf + 1, name, (size_t)MIN(len, MAXLOGNAME));
+		if (len > MAXLOGNAME)
+			return NS_NOTFOUND;
+		memmove(bf + 1, name, len);
 		key.size = len + 1;
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
-		memmove(bf + 1, &uid, sizeof(len));
+		memmove(bf + 1, &uid, sizeof(uid));
 		key.size = sizeof(uid) + 1;
 		break;
 	default:
