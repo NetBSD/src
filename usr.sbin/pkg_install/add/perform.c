@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.105 2004/12/29 11:34:59 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.106 2005/02/04 09:03:02 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.105 2004/12/29 11:34:59 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.106 2005/02/04 09:03:02 jlam Exp $");
 #endif
 #endif
 
@@ -426,7 +426,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		add_plist_top(&Plist, PLIST_CWD, Prefix);
 	}
 
-	setenv(PKG_PREFIX_VNAME, (p = find_plist(&Plist, PLIST_CWD)) ? p->name : ".", 1);
 	/* Protect against old packages with bogus @name fields */
 	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
@@ -446,6 +445,11 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	}
 
+	/* Set environment variables expected by the +INSTALL script. */
+	setenv(PKG_PREFIX_VNAME, (p = find_plist(&Plist, PLIST_CWD)) ? p->name : ".", 1);
+	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, pkgdb_refcount_dir(), 1);
+		
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
 		if (fexec("mkdir", "-p", dbdir, NULL)) {
@@ -848,16 +852,11 @@ ignore_replace_depends_check:
 		}
 		/* Make sure pkg_info can read the entry */
 		(void) fexec(CHMOD_CMD, "a+rx", LogDir, NULL);
-		if (fexists(INSTALL_FNAME))
-			move_file(".", INSTALL_FNAME, LogDir);
-		if (fexists(DEINSTALL_FNAME))
-			move_file(".", DEINSTALL_FNAME, LogDir);
-		if (fexists(REQUIRE_FNAME))
-			move_file(".", REQUIRE_FNAME, LogDir);
-		if (fexists(SIZE_PKG_FNAME))
-			move_file(".", SIZE_PKG_FNAME, LogDir);
-		if (fexists(SIZE_ALL_FNAME))
-			move_file(".", SIZE_ALL_FNAME, LogDir);
+
+		/* Move all of the +-files into place */
+		move_files(".", "+*", LogDir);
+
+		/* Generate the +CONTENTS file in-place from the Plist */
 		(void) snprintf(contents, sizeof(contents), "%s/%s", LogDir, CONTENTS_FNAME);
 		cfile = fopen(contents, "w");
 		if (!cfile) {
@@ -867,20 +866,6 @@ ignore_replace_depends_check:
 		}
 		write_plist(&Plist, cfile, NULL);
 		fclose(cfile);
-		move_file(".", DESC_FNAME, LogDir);
-		move_file(".", COMMENT_FNAME, LogDir);
-		if (fexists(BUILD_VERSION_FNAME))
-			move_file(".", BUILD_VERSION_FNAME, LogDir);
-		if (fexists(BUILD_INFO_FNAME))
-			move_file(".", BUILD_INFO_FNAME, LogDir);
-		if (fexists(DISPLAY_FNAME))
-			move_file(".", DISPLAY_FNAME, LogDir);
-		if (fexists(PRESERVE_FNAME))
-			move_file(".", PRESERVE_FNAME, LogDir);
-		if (fexists(VIEWS_FNAME)) {
-			is_depoted_pkg = TRUE;
-			move_file(".", VIEWS_FNAME, LogDir);
-		}
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we

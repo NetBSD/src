@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.54 2004/12/15 17:20:25 agc Exp $
+.\" $NetBSD: pkg_add.1,v 1.55 2005/02/04 09:03:03 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd December 10, 2004
+.Dd February 4, 2005
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -514,6 +514,14 @@ is installed, even if the user might change it with the
 .Fl p
 flag to
 .Cm pkg_add .
+The scripts are also called with the
+.Ev PKG_METADATA_DIR
+environment variable set to the location of the
+.Ar +*
+meta-data files, and with the
+.Ev PKG_REFCOUNT_DBDIR
+environment variable set to the location of the package reference counts
+database directory.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
 .It Ev LOCALBASE
@@ -543,6 +551,12 @@ Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
 FTP URLs may not end with a slash.
+.It Ev PKG_REFCOUNT_DBDIR
+Location of the package reference counts database directory.
+The default location is the path to the package database directory with
+.Do .refcount Dc
+appended to the path, e.g.
+.Pa /var/db/pkg.refcount .
 .It Ev PKG_TMPDIR
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.35 2004/12/15 17:17:51 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.36 2005/02/04 09:03:03 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd November 2, 2004
+.Dd February 4, 2005
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -263,6 +263,31 @@ option when running
 .Nm
 or
 .Xr pkg_add 1 .
+The scripts are also called with the
+.Ev PKG_METADATA_DIR
+environment variable set to the location of the
+.Ar +*
+meta-data files, and with the
+.Ev PKG_REFCOUNT_DBDIR
+environment variable set to the location of the package reference counts
+database directory.
+.Sh ENVIRONMENT
+.Bl -tag -width PKG_DBDIR
+.It Ev PKG_DBDIR
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+is the location of the package database directory.
+The default package database directory is
+.Pa /var/db/pkg .
+.It Ev PKG_REFCOUNT_DBDIR
+Location of the package reference counts database directory.
+The default location is the path to the package database directory with
+.Do .refcount Dc
+appended to the path, e.g.
+.Pa /var/db/pkg.refcount .
+.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,
