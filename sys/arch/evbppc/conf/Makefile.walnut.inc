@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.walnut.inc,v 1.2 2003/01/04 18:13:51 thorpej Exp $
+#	$NetBSD: Makefile.walnut.inc,v 1.2.4.1 2005/03/22 19:07:49 tron Exp $
 
-MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
+MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 CFLAGS+=-mcpu=403
 AFLAGS+=-mcpu=403
 TEXTADDR?=	25000
