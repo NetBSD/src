@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kill.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: kill.c,v 1.8 1994/12/04 07:11:48 cgd Exp $";
+static char *rcsid = "$Id: kill.c,v 1.9 1995/03/17 05:48:48 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -111,7 +111,7 @@ main(argc, argv)
 			numsig = strtol(*argv, &ep, 10);
 			if (!*argv || *ep)
 				errx(1, "illegal signal number: %s", *argv);
-			if (numsig <= 0 || numsig >= NSIG)
+			if (numsig < 0 || numsig >= NSIG)
 				nosig(*argv);
 		} else
 			nosig(*argv);
