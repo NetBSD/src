@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.5 1995/05/03 07:13:51 mycroft Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.6 1995/05/03 07:36:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.5 1995/05/03 07:13:51 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.6 1995/05/03 07:36:59 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ int		reader __P((int));
 void		sendwindow __P((void));
 void		setsignal __P((int));
 void		sigwinch __P((int));
-void		stop __P((char));
+void		stop __P((int));
 __dead void	usage __P((void));
 void		writer __P((void));
 void		writeroob __P((int));
@@ -493,11 +493,16 @@ writer()
 				echo(c);
 				break;
 			}
-			if (CCEQ(deftty.c_cc[VSUSP], c) ||
-			    CCEQ(deftty.c_cc[VDSUSP], c)) {
+			if (CCEQ(deftty.c_cc[VSUSP], c)) {
 				bol = 1;
 				echo(c);
-				stop(c);
+				stop(1);
+				continue;
+			}
+			if (CCEQ(deftty.c_cc[VDSUSP], c)) {
+				bol = 1;
+				echo(c);
+				stop(0);
 				continue;
 			}
 			if (c != escapechar)
@@ -562,16 +567,12 @@ echo(c)
 }
 
 void
-#if __STDC__
-stop(char cmdc)
-#else
-stop(cmdc)
-	char cmdc;
-#endif
+stop(all)
+	int all;
 {
 	mode(0);
 	(void)signal(SIGCHLD, SIG_IGN);
-	(void)kill(CCEQ(deftty.c_cc[VSUSP], cmdc) ? 0 : getpid(), SIGTSTP);
+	(void)kill(all ? 0 : getpid(), SIGTSTP);
 	(void)signal(SIGCHLD, catch_child);
 	mode(1);
 	sigwinch(0);			/* check for size changes */
