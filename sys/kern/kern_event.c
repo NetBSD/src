@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.3 2002/10/23 09:14:14 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.4 2002/11/08 20:26:50 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -816,7 +816,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		s = splclock();
 		timeradd(&atv, &time, &atv);	/* calc. time to wait until */
 		splx(s);
-		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0)
+		if (tsp->tv_sec == 0 && tsp->tv_nsec < 1000 /*<1us*/)
 			timeout = -1;		/* perform a poll */
 		else 
 			timeout = hzto(&atv);	/* calculate hz till timeout */
