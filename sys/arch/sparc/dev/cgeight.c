@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.7 1996/04/01 17:29:57 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.8 1996/08/25 07:47:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -404,7 +404,7 @@ cgeightmmap(dev, off, prot)
 		panic("cgeightmap");
 
 	if ((u_int)off >= NOOVERLAY) {
-		off =- NOOVERLAY;
+		off -= NOOVERLAY;
 
 		/*
 		 * X11 maps a huge chunk of the frame buffer; far more than
@@ -425,7 +425,7 @@ cgeightmmap(dev, off, prot)
 		 * in enable plane
 		 */
 		poff = (off - START_ENABLE) + PFOUR_COLOR_OFF_ENABLE;
-	} else if ((u_int)off < END_COLOR) {
+	} else if ((u_int)off < sc->sc_fb.fb_type.fb_size) {
 		/*
 		 * in colour plane
 		 */
