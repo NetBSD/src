@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/01/26 22:45:02 tron Exp $
+#	$NetBSD: Makefile,v 1.9 2002/08/13 20:07:31 pooka Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
 DIR=	psd/19.curses
@@ -28,7 +28,7 @@ VFONT=	/usr/libexec/vfontedpr
 	${VFONT} ${.IMPSRC} | grep -v "^'wh" > ${.TARGET}
 
 paper.ps: ${SRCS} ${OTHER} ${CEXAMPLES} ${TBLFILES}
-	${SOELIM} -I${.CURDIR} Master | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} Master | ${ROFF} ${MACROS} > ${.TARGET}
 
 # Unfortunately our make doesn't handle single-suffix rules.
 intro.2.tbl: intro.2
