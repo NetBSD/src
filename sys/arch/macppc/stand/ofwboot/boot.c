@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/04/29 03:16:21 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 1999/08/03 07:08:36 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,17 +100,28 @@ char bootfile[128];
 int boothowto;
 int debug;
 
+static ofw_version = 0;
+
 static void
 prom2boot(dev)
 	char *dev;
 {
 	char *cp;
 	
-	for (cp = dev; *cp != '\0'; cp++)
+	cp = dev + strlen(dev) - 1;
+	for (; *cp; cp--) {
 		if (*cp == ':') {
-			*cp = '\0';
-			return;
+			if (ofw_version < 3) {
+				/* sd@0:0 -> sd@0 */
+				*cp = 0;
+				break;
+			} else {
+				/* disk@0:5,boot -> disk@0:0 */
+				strcpy(cp, ":0");
+				break;
+			}
 		}
+	}
 }
 
 static void
@@ -196,7 +207,7 @@ main()
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
-	int chosen, options;
+	int chosen, options, openprom;
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	u_long marks[MARK_MAX];
@@ -206,6 +217,24 @@ main()
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+
+	/*
+	 * Figure out what version of Open Firmware...
+	 */
+	if ((openprom = OF_finddevice("/openprom")) != -1) {
+		char model[32];
+
+		bzero(model, sizeof model);
+		OF_getprop(openprom, "model", model, sizeof model);
+		for (cp = model; *cp; cp++)
+			if (*cp >= '0' && *cp <= '9') {
+				ofw_version = *cp - '0';
+				break;
+			}
+#if 0
+		printf(">> Open Firmware version %d.x\n", ofw_version);
+#endif
+	}
 
 	/*
 	 * Get the boot arguments from Openfirmware
