@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.50 2000/01/22 19:31:02 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.51 2000/02/19 22:54:08 erh Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -47,6 +47,7 @@ TBL?=		tbl
 .if defined(MAN) && !empty(MAN)
 MANPAGES=	${MAN}
 CATPAGES=	${MANPAGES:C/(.*).([1-9])/\1.cat\2/}
+.NOPATH:	${CATPAGES}
 .endif
 
 MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
