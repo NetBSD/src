@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.34 2000/07/26 13:39:39 pk Exp $
+#	$NetBSD: files.sparc64,v 1.35 2000/08/22 21:35:45 pk Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -30,6 +30,8 @@ attach mainbus at root
 device pcons
 attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
+
+include "dev/sun/files.sun"
 
 include "dev/sbus/files.sbus"
 attach sbus at mainbus
@@ -134,7 +136,7 @@ file arch/sparc/dev/zs_kgdb.c		kgdb
 #file dev/ic/sabtty.c			sabtty needs-flag
 
 define zsevent
-file dev/sun/event.c			zsevent
+#file dev/sun/event.c			zsevent
 
 device kbd: zsevent
 attach kbd at zs with kbd_zs
@@ -167,43 +169,21 @@ major	{ wd = 12 }
 # RAIDframe
 major 	{ raid = 25 }
 
-# Brooktree DAC attribute
-define bt_dac
-
-device bwtwo
-attach bwtwo at sbus
-file	arch/sparc64/dev/bwtwo.c		bwtwo needs-flag
-
 device cgtwo
 attach cgtwo at sbus
 file	arch/sparc64/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree: bt_dac
-attach cgthree at sbus
-file	arch/sparc64/dev/cgthree.c	cgthree needs-flag
-
-device cgfour: bt_dac
+device cgfour: bt_dac, pfour
 attach cgfour at sbus
 file	arch/sparc64/dev/cgfour.c		cgfour needs-flag
 
-device cgsix: bt_dac
-attach cgsix at sbus
-file	arch/sparc64/dev/cgsix.c		cgsix needs-flag
-file	arch/sparc64/dev/cgsix_sbus.c		cgsix needs-flag
-
-device cgeight: bt_dac
+device cgeight: bt_dac, pfour
 attach cgeight at sbus
 file	arch/sparc64/dev/cgeight.c	cgeight needs-flag
-
-device tcx: bt_dac
-attach tcx at sbus
-file	arch/sparc64/dev/tcx.c		tcx needs-flag
 
 device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
-
-file	arch/sparc64/dev/bt_subr.c	bt_dac
 
 #
 # Generic Sun stuff
@@ -261,7 +241,6 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 # Raster Console
 #
 include "dev/rcons/files.rcons"
-include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 #
