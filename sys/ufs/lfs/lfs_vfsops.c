@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.24 1998/09/11 21:27:13 pk Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.25 1999/02/26 23:44:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -94,6 +94,7 @@ struct vfsops lfs_vfsops = {
 	lfs_init,
 	lfs_sysctl,
 	NULL,
+	ufs_check_export,
 	lfs_vnodeopv_descs,
 };
 
@@ -630,8 +631,6 @@ lfs_vget(mp, ino, vpp)
  * - check that the inode number is valid
  * - call lfs_vget() to get the locked inode
  * - check for an unallocated inode (i_mode == 0)
- * - check that the given client host has export rights and return
- *   those rights via. exflagsp and credanonp
  *
  * XXX
  * use ifile to see if inode is allocated instead of reading off disk
@@ -639,20 +638,17 @@ lfs_vget(mp, ino, vpp)
  * generational number.
  */
 int
-lfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+lfs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	register struct ufid *ufhp;
 
 	ufhp = (struct ufid *)fhp;
 	if (ufhp->ufid_ino < ROOTINO)
 		return (ESTALE);
-	return (ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp));
+	return (ufs_fhtovp(mp, ufhp, vpp));
 }
 
 /*

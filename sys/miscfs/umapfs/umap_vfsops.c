@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.19 1998/08/09 20:51:10 perry Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.20 1999/02/26 23:44:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,8 +65,9 @@ int	umapfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	umapfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	umapfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	umapfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	umapfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	umapfs_checkexp __P((struct mount *, struct mbuf *, int *,
+			   struct ucred **));
 int	umapfs_vptofh __P((struct vnode *, struct fid *));
 int	umapfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			   struct proc *));
@@ -386,11 +387,19 @@ umapfs_vget(mp, ino, vpp)
 }
 
 int
-umapfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
+umapfs_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
-	struct mbuf *nam;
 	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+int
+umapfs_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred**credanonp;
 {
@@ -442,5 +451,6 @@ struct vfsops umapfs_vfsops = {
 	umapfs_init,
 	umapfs_sysctl,
 	NULL,				/* vfs_mountroot */
+	umapfs_checkexp,
 	umapfs_vnodeopv_descs,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.11 1998/09/11 21:27:12 pk Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.12 1999/02/26 23:44:49 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -119,7 +119,7 @@ int lfs_unmount __P((struct mount *, int, struct proc *));
 int lfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int lfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int lfs_vget __P((struct mount *, ino_t, struct vnode **));
-int lfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
+int lfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int lfs_vptofh __P((struct vnode *, struct fid *));
 int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));

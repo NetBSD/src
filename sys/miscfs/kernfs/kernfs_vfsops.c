@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.34 1998/08/09 20:51:08 perry Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.35 1999/02/26 23:44:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -73,8 +73,9 @@ int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct proc *));
 int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	kernfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
+			   struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
 int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			   struct proc *));
@@ -310,11 +311,20 @@ kernfs_vget(mp, ino, vpp)
 
 /*ARGSUSED*/
 int
-kernfs_fhtovp(mp, fhp, mb, vpp, what, anon)
+kernfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *mb;
 	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+/*ARGSUSED*/
+int
+kernfs_checkexp(mp, mb, what, anon)
+	struct mount *mp;
+	struct mbuf *mb;
 	int *what;
 	struct ucred **anon;
 {
@@ -367,5 +377,6 @@ struct vfsops kernfs_vfsops = {
 	kernfs_init,
 	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */
+	kernfs_checkexp,
 	kernfs_vnodeopv_descs,
 };

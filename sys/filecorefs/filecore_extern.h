@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.4 1998/09/02 18:02:54 mark Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.5 1999/02/26 23:44:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -81,8 +81,9 @@ int filecore_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int filecore_statfs __P((struct mount *, struct statfs *, struct proc *));
 int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));
-int filecore_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-	    struct vnode **, int *, struct ucred **));
+int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
+	    struct ucred **));
 int filecore_vptofh __P((struct vnode *, struct fid *));
 void filecore_init __P((void));
 int filecore_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,

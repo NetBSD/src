@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.35 1999/01/04 15:32:09 is Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.36 1999/02/26 23:44:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -95,6 +95,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_sysctl,
 	cd9660_mountroot,
+	cd9660_check_export,
 	cd9660_vnodeopv_descs,
 };
 
@@ -561,18 +562,13 @@ struct ifid {
 
 /* ARGSUSED */
 int
-cd9660_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+cd9660_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	register struct iso_node *ip;
-	register struct netcred *np;
-	register struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct vnode *nvp;
 	int error;
 	
@@ -581,13 +577,6 @@ cd9660_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	    ifhp->ifid_ino, ifhp->ifid_start);
 #endif
 	
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &imp->im_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -599,6 +588,32 @@ cd9660_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 		return (ESTALE);
 	}
 	*vpp = nvp;
+	return (0);
+}
+
+/* ARGSUSED */
+int
+cd9660_check_export(mp, nam, exflagsp, credanonp)
+	register struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	register struct netcred *np;
+	register struct iso_mnt *imp = VFSTOISOFS(mp);
+	
+#ifdef	ISOFS_DBG
+	printf("check_export: ino %d, start %ld\n",
+	    ifhp->ifid_ino, ifhp->ifid_start);
+#endif
+	
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &imp->im_export, nam);
+	if (np == NULL)
+		return (EACCES);
+
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return (0);

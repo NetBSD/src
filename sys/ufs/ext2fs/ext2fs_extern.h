@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.6 1998/09/01 03:20:46 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.7 1999/02/26 23:44:48 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -110,8 +110,7 @@ int ext2fs_flushfiles __P((struct mount *, int, struct proc *));
 int ext2fs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
-int ext2fs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			struct vnode **, int *, struct ucred **));
+int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		       struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.23 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.24 1999/02/26 23:44:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -74,8 +74,6 @@
 extern struct lock ufs_hashlock;
 
 int ext2fs_sbupdate __P((struct ufsmount *, int));
-int ext2fs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
-	struct vnode **, int *, struct ucred **));
 
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -103,6 +101,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_init,
 	ext2fs_sysctl,
 	ext2fs_mountroot,
+	ufs_check_export,
 	ext2fs_vnodeopv_descs,
 };
 
@@ -122,52 +121,6 @@ ext2fs_init()
 	    "ext2fsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_EXT2FSNODE);
 }
-
-/*
- * This is the generic part of fhtovp called after the underlying
- * filesystem has validated the file handle.
- *
- * Verify that a host should have access to a filesystem, and if so
- * return a vnode for the presented file handle.
- */
-int
-ext2fs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
-	register struct mount *mp;
-	struct ufid *ufhp;
-	struct mbuf *nam;
-	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	register struct inode *ip;
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *nvp;
-	int error;
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
-		*vpp = NULLVP;
-		return (error);
-	}
-	ip = VTOI(nvp);
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
-		ip->i_e2fs_gen != ufhp->ufid_gen) {
-		vput(nvp);
-		*vpp = NULLVP;
-		return (ESTALE);
-	}
-	*vpp = nvp;
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}   
 
 
 /*
@@ -971,18 +924,16 @@ ext2fs_vget(mp, ino, vpp)
  * - check that the inode number is valid
  * - call ext2fs_vget() to get the locked inode
  * - check for an unallocated inode (i_mode == 0)
- * - check that the given client host has export rights and return
- *   those rights via. exflagsp and credanonp
  */
 int
-ext2fs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+ext2fs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
+	register struct inode *ip;
+	struct vnode *nvp;
+	int error;
 	register struct ufid *ufhp;
 	struct m_ext2fs *fs;
 
@@ -991,7 +942,20 @@ ext2fs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	if ((ufhp->ufid_ino < EXT2_FIRSTINO && ufhp->ufid_ino != EXT2_ROOTINO) ||
 		ufhp->ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return (ESTALE);
-	return (ext2fs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp));
+
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+		*vpp = NULLVP;
+		return (error);
+	}
+	ip = VTOI(nvp);
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
+		ip->i_e2fs_gen != ufhp->ufid_gen) {
+		vput(nvp);
+		*vpp = NULLVP;
+		return (ESTALE);
+	}
+	*vpp = nvp;
+	return (0);
 }
 
 /*

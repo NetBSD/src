@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.22 1999/01/15 22:04:44 wrstuden Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.23 1999/02/26 23:44:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -66,8 +66,9 @@ int	nullfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	nullfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	nullfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	nullfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nullfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	nullfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	nullfs_checkexp __P((struct mount *, struct mbuf *, int *,
+			   struct ucred **));
 int	nullfs_vptofh __P((struct vnode *, struct fid *));
 int	nullfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			   struct proc *));
@@ -344,11 +345,19 @@ nullfs_vget(mp, ino, vpp)
 }
 
 int
-nullfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
+nullfs_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
-	struct mbuf *nam;
 	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+int
+nullfs_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred**credanonp;
 {
@@ -400,5 +409,6 @@ struct vfsops nullfs_vfsops = {
 	nullfs_init,
 	nullfs_sysctl,
 	NULL,				/* vfs_mountroot */
+	nullfs_checkexp,
 	nullfs_vnodeopv_descs,
 };

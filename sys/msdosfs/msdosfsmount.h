@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.18 1998/03/01 02:25:12 fvdl Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.19 1999/02/26 23:44:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -214,7 +214,8 @@ int msdosfs_root __P((struct mount *, struct vnode **));
 int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
+int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 void msdosfs_init __P((void));
 
