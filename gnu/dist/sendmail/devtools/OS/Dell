@@ -1,0 +1,13 @@
+#	$Id: Dell,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confCC', `gcc')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-D__svr4__')
+define(`confOPTIMIZE', `-O2')
+define(`confLIBS', `-ldbm -lsocket -lnsl -lelf')
+define(`confMBINDIR', `/usr/ucblib')
+define(`confSBINDIR', `/usr/ucblib')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINGRP', `mail')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confDEPEND_TYPE', `CC-M')

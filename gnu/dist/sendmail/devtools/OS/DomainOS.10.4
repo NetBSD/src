@@ -1,0 +1,13 @@
+#	$Id: DomainOS.10.4,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confCC', `cc -A nansi -A,systype,any -A,runtype,bsd4.3')
+define(`confBEFORE', `dirent.h')
+define(`confMAPDEF', `-DNDBM')
+define(`confSBINDIR', `/usr/etc')
+define(`confMBINDIR', `/usr/lib')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+PUSHDIVERT(3)
+dirent.h:
+	echo "#include <sys/dir.h>" > dirent.h
+	echo "#define dirent	direct" >> dirent.h
+POPDIVERT

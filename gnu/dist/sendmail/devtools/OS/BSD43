@@ -1,0 +1,19 @@
+#	$Id: BSD43,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confBEFORE', `unistd.h stddef.h stdlib.h dirent.h sys/time.h')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-DoldBSD43')
+define(`confLIBS', `-ldbm -ll')
+define(`confUBINDIR', `/usr/ucb')
+PUSHDIVERT(3)
+unistd.h stddef.h stdlib.h sys/time.h:
+	cp /dev/null $@
+
+sys/time.h: sys
+
+sys:
+	mkdir sys
+
+dirent.h:
+	echo "#include <sys/dir.h>" > dirent.h
+	echo "#define dirent	direct" >> dirent.h
+POPDIVERT
