@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.187 2003/09/16 08:27:33 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.188 2003/10/22 00:18:32 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.186 2003/09/16 08:26:37 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.187 2003/10/22 00:12:36 christos Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -217,6 +217,9 @@
 #define	PCMCIA_CIS_BUFFALO_LPC3_CLT	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BUFFALO_LPC3_CLT	0x030a
 #define	PCMCIA_STR_BUFFALO_LPC3_CLT	"BUFFALO LPC3-CLT Ethernet Adapter"
+#define	PCMCIA_CIS_BUFFALO_LPC4_CLX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BUFFALO_LPC4_CLX	0x0309
+#define	PCMCIA_STR_BUFFALO_LPC4_CLX	"BUFFALO LPC4-CLX Ethernet Adapter"
 
 /* Compaq Products */
 #define	PCMCIA_CIS_COMPAQ_NC5004	{ NULL, NULL, NULL, NULL }
