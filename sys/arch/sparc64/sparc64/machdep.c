@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.2 2000/07/18 16:23:28 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.3 2000/07/31 02:50:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -901,6 +901,10 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
+	if (!dumpspace) {
+		printf("\nno address space available, dump not possible\n");
+		return;
+	}
 	if (dumplo <= 0) {
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
