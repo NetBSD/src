@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2001/01/04 03:21:17 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2001/01/04 03:51:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,15 +43,18 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2001/01/04 03:21:17 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2001/01/04 03:51:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include <fcntl.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "extern.h"
+#include "restart.h"
 
 int
 main(int argc, char **argv)
