@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.9 2001/04/25 17:53:16 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.10 2001/12/15 11:11:49 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -322,8 +322,6 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 
 	esc->sc_flags |= DMA_MAPLOADED;
 
-	/* No cache flush required for R3000 processors */
-
 	paddr  = esc->sc_dmamap->dm_segs[0].ds_addr;
 	count  = esc->sc_dmamap->dm_segs[0].ds_len;
 	prime  = (u_int32_t)paddr & 0x3f;
@@ -366,6 +364,9 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE,
 				  esc->dm_mode);
 	}
+
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_dmamap, 0, esc->sc_dmasize,
+			datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	esc->dm_curseg = 0;
 	esc->dm_mode |= RB_DMA_ENABLE;
