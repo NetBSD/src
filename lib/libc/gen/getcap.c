@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getcap.c	5.15 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: getcap.c,v 1.4 1993/08/26 00:44:35 jtc Exp $";
+static char *rcsid = "$Id: getcap.c,v 1.5 1993/12/22 07:10:58 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -675,20 +675,21 @@ cgetnext(bp, db_array)
 					} else
 						continue;
 				}
-			}
-			if (len == 0) {
+			} else
+				line[len - 1] = '\0';
+			if (len == 1) {
 				slash = 0;
 				continue;
 			}
 			if (isspace(*line) ||
 			    *line == ':' || *line == '#' || slash) {
-				if (line[len - 1] == '\\')
+				if (line[len - 2] == '\\')
 					slash = 1;
 				else
 					slash = 0;
 				continue;
 			}
-			if (line[len - 1] == '\\')
+			if (line[len - 2] == '\\')
 				slash = 1;
 			else
 				slash = 0;
@@ -723,7 +724,8 @@ cgetnext(bp, db_array)
 						(void)cgetclose();
 						return (-1);
 					}
-				}
+				} else
+					line[len - 1] = '\0';
 			}
 		}
 		rp = buf;
