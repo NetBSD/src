@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2004/01/05 19:55:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2004/01/05 19:55:27 hannken Exp $");
+
+#include "opt_explora.h"
+#include "ksyms.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,12 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2003/12/30 12:33:16 pk Exp $");
 #include <machine/explora.h>
 #include <machine/bus.h>
 #include <machine/powerpc.h>
+#include <machine/tlb.h>
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-
-#include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
@@ -155,7 +157,7 @@ void
 bootstrap(u_int startkernel, u_int endkernel)
 {
 	u_int i, j, t, br[4];
-	u_int maddr, msize, size;
+	u_int ntlb, maddr, msize, size;
 	struct cpu_info * const ci = &cpu_info[0];
 
 	consinit();
@@ -179,6 +181,14 @@ bootstrap(u_int startkernel, u_int endkernel)
 			size = maddr+msize;
 	}
 
+#ifdef COM_IS_CONSOLE
+	ntlb = TLB_NRESERVED-1;
+#else
+	ntlb = TLB_NRESERVED-2;
+#endif
+	if (size > ntlb*TLB_PG_SIZE)
+		size = ntlb*TLB_PG_SIZE;
+
 	phys_mem[0].start = 0;
 	phys_mem[0].size = size & ~PGOFSET;
 	avail_mem[0].start = startkernel;
@@ -191,19 +201,20 @@ bootstrap(u_int startkernel, u_int endkernel)
 
 	/*
 	 * Setup initial tlbs.
-	 * Physical memory is mapped into the first (reserved) tlbs.
-	 * Memory of potential console devices is mapped into the
-	 * last tlbs. They are only needed until the devices are configured.
+	 * Physical memory and  console device are
+	 * mapped into the first (reserved) tlbs.
 	 */
 
 	t = 0;
 	for (maddr = 0; maddr < phys_mem[0].size; maddr += TLB_PG_SIZE)
 		set_tlb(t++, maddr, 0);
 
-	t = NTLB-1;
-	set_tlb(t--, BASE_FB, TLB_I | TLB_G);
-	set_tlb(t--, BASE_FB2, TLB_I | TLB_G);
-	set_tlb(t--, BASE_COM, TLB_I | TLB_G);
+#ifdef COM_IS_CONSOLE
+	set_tlb(t++, BASE_COM, TLB_I | TLB_G);
+#else
+	set_tlb(t++, BASE_FB, TLB_I | TLB_G);
+	set_tlb(t++, BASE_FB2, TLB_I | TLB_G);
+#endif
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_EXIER, 0);
