@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.29 2003/04/01 23:19:08 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.30 2003/04/18 10:51:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -141,6 +141,19 @@ arm32_vector_init(vaddr_t va, int which)
 	cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
 
 	vector_page = va;
+
+	if (va == ARM_VECTORS_HIGH) {
+		/*
+		 * Assume the MD caller knows what it's doing here, and
+		 * really does want the vector page relocated.
+		 *
+		 * Note: This has to be done here (and not just in
+		 * cpu_setup()) because the vector page needs to be
+		 * accessible *before* cpu_startup() is called.
+		 * Think ddb(9) ...
+		 */
+		cpu_control(CPU_CONTROL_VECRELOC, CPU_CONTROL_VECRELOC);
+	}
 }
 
 /*
