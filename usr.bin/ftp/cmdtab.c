@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.27 1999/09/27 23:09:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.27 1999/09/27 23:09:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
-#include <signal.h>
 #include "ftp_var.h"
 
 /*
@@ -170,7 +169,7 @@ struct cmd cmdtab[] = {
 	{ "glob",	globhelp,	0, 0, 0, CMPL0		setglob },
 	{ "hash",	hashhelp,	0, 0, 0, CMPL0		sethash },
 	{ "help",	helphelp,	0, 0, 1, CMPL(C)	help },
-	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idle },
+	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idlecmd },
 	{ "image",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
 	{ "lcd",	lcdhelp,	0, 0, 0, CMPL(l)	lcd },
 	{ "less",	pagehelp,	1, 1, 1, CMPL(r)	page },
