@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.11 2003/07/13 07:15:22 igy Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.12 2003/09/15 05:11:31 ichiro Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.11 2003/07/13 07:15:22 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.12 2003/09/15 05:11:31 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ ixp12x0_attach(sc)
 		SA_CONTROL) | 0x1;
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		SA_CONTROL, reg);
-#if DEBUG
+#ifdef PCI_DEBUG
 	printf("SA_CONTROL = 0x%08x\n",
 		bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, SA_CONTROL));
 #endif 
