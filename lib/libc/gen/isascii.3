@@ -1,4 +1,4 @@
-.\"	$NetBSD: isascii.3,v 1.11 2002/11/08 02:05:16 enami Exp $
+.\"	$NetBSD: isascii.3,v 1.12 2003/04/14 12:04:18 simonb Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -52,6 +52,10 @@ function tests for an
 .Tn ASCII
 character, which is any character with a value less than or
 equal to 0177.
+.Pp
+The
+.Fn isascii
+is defined on all integer values.
 .Sh SEE ALSO
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
@@ -75,11 +79,3 @@ The
 .Fn isascii
 function conforms to
 .St -xpg4 .
-.Sh CAVEATS
-The argument to
-.Fn isascii
-must be
-.Dv EOF
-or representable as an
-.Li unsigned char ;
-otherwise, the result is undefined.
