@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
+/*	$NetBSD: boot.h,v 1.2 2004/04/10 12:30:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #endif
 
 #define MAXDEVNAME	16
+#define DEFBOOTDEV	"wd0a"
 #define DEFKERNELNAME	kernelnames[0]
 
 extern char *kernelnames[];
@@ -74,3 +75,5 @@ int wdclose	__P((struct open_file *));
  */
 int devparse (const char *fname, int *dev, u_int8_t *unit,
 			u_int8_t *part, const char **file);
+
+int tgets(char *);
