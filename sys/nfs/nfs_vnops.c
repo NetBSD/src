@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.166 2003/05/03 16:28:59 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.167 2003/05/21 13:27:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.166 2003/05/03 16:28:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.167 2003/05/21 13:27:20 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -261,6 +261,8 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 };
 const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
+
+static void nfs_noop(struct mbuf *, caddr_t, size_t, void *);
 
 /*
  * Global variables
@@ -1197,13 +1199,22 @@ nfsmout:
 }
 
 /*
+ * dummy callback for mbuf.
+ */
+static void
+nfs_noop(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+{
+}
+
+/*
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, iomode, stalewriteverf)
+nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 	struct vnode *vp;
 	struct uio *uiop;
 	int *iomode;
+	boolean_t pageprotected;
 	boolean_t *stalewriteverf;
 {
 	u_int32_t *tl;
@@ -1229,10 +1240,13 @@ nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
 	while (tsiz > 0) {
+		int datalen;
+
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
 		len = min(tsiz, nmp->nm_wsize);
+		datalen = pageprotected ? 0 : nfsm_rndup(len);
 		nfsm_reqhead(np, NFSPROC_WRITE,
-			NFSX_FH(v3) + 5 * NFSX_UNSIGNED + nfsm_rndup(len));
+			NFSX_FH(v3) + 5 * NFSX_UNSIGNED + datalen);
 		nfsm_fhtom(np, v3);
 		if (v3) {
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
@@ -1254,7 +1268,35 @@ nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 			*tl = x;        /* size of this write */
 
 		}
-		nfsm_uiotom(uiop, len);
+		if (pageprotected) {
+			/*
+			 * since we know pages can't be modified during i/o,
+			 * no need to copy them for us.
+			 */
+			struct mbuf *m;
+			struct iovec *iovp = uiop->uio_iov;
+
+			m = m_get(M_WAIT, MT_DATA);
+			MCLAIM(m, &nfs_owner);
+			MEXTADD(m, iovp->iov_base, len, M_MBUF, nfs_noop, NULL);
+			m->m_flags |= M_EXT_ROMAP;
+			m->m_len = len;
+			mb->m_next = m;
+			/*
+			 * no need to maintain mb and bpos here
+			 * because no one care them later.
+			 */
+#if 0
+			mb = m;
+			bpos = mtod(caddr_t, mb) + mb->m_len;
+#endif
+			iovp->iov_base = (char *)iovp->iov_base + len;
+			iovp->iov_len -= len;
+			uiop->uio_offset += len;
+			uiop->uio_resid -= len;
+		} else {
+			nfsm_uiotom(uiop, len);
+		}
 		nfsm_request(np, NFSPROC_WRITE, uiop->uio_procp,
 			     VTONFS(vp)->n_wcred);
 		if (v3) {
