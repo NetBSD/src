@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.28 2001/05/05 14:20:05 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.29 2001/05/09 23:22:12 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2001/05/05 14:20:05 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2001/05/09 23:22:12 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -174,7 +174,7 @@ struct pmap kernel_pmap_store;
 
 static boolean_t pmap_initialised = FALSE;
 
-static struct pool *pmap_pool;
+static struct pool pmap_pool;
 
 static pmap_t active_pmap;
 
@@ -340,7 +340,7 @@ pmap_init2()
 	    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
 
 	/* Create pmap pool */
-	pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
+	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", 0, NULL, NULL, M_VMPMAP);
 	pmap_initialised = 1;
 }
@@ -354,7 +354,7 @@ pmap_create()
 	UVMHIST_CALLED(pmaphist);
 	if (!pmap_initialised) 
 		pmap_init2();
-	pmap = pool_get(pmap_pool, PR_WAITOK);
+	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
 	pmap->pm_count = 1;
 	return pmap;
@@ -379,7 +379,7 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
-	pool_put(pmap_pool, pmap);
+	pool_put(&pmap_pool, pmap);
 }
 
 long
