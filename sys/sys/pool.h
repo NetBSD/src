@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.6 1998/08/01 23:44:20 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.7 1998/08/28 21:18:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -129,5 +129,12 @@ void		pool_sethiwat __P((pool_handle_t, int));
 void		pool_print __P((pool_handle_t, char *));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
+
+/*
+ * Alternate pool page allocator, provided for pools that know they
+ * will never be accessed in interrupt context.
+ */
+void		*pool_page_alloc_nointr __P((unsigned long, int, int));
+void		pool_page_free_nointr __P((void *, unsigned long, int));
 
 #endif /* _SYS_POOL_H_ */

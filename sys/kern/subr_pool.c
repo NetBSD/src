@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.11 1998/08/28 20:05:48 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.12 1998/08/28 21:18:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -852,6 +852,47 @@ pool_page_free(v, sz, mtype)
 	kmem_free_poolpage((vaddr_t)v);
 #endif  
 }
+
+/*
+ * Alternate pool page allocator for pools that know they will
+ * never be accessed in interrupt context.
+ */
+void *
+pool_page_alloc_nointr(sz, flags, mtype)
+	unsigned long sz;
+	int flags;
+	int mtype;
+{
+#if defined(UVM)
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+
+	/*
+	 * With UVM, we can use the kernel_map.
+	 */
+	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
+	    waitok));
+#else
+	/*
+	 * Can't do anything so cool with Mach VM.
+	 */
+	return (pool_page_alloc(sz, flags, mtype));
+#endif
+}
+
+void
+pool_page_free_nointr(v, sz, mtype)
+	void *v;
+	unsigned long sz;
+	int mtype;
+{
+
+#if defined(UVM)
+	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
+#else
+	pool_page_free(v, sz, mtype);
+#endif  
+}
+
 
 /*
  * Release all complete pages that have not been used recently.
