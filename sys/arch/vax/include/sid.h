@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.14 2000/05/22 15:40:06 matt Exp $	*/
+/*	$NetBSD: sid.h,v 1.15 2001/01/28 21:01:53 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -155,8 +155,9 @@
 #define VAX_TYP_NVAX	19
 #define VAX_TYP_V13	19
  
-#define VAX_BTYP_680	0x13000001	/* VAX 4000 model 500 */
-#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model 100 */
+#define VAX_BTYP_680	0x13000001	/* VAX 4000 model [45]00 */
+#define	VAX_STYP_675	0x0c		/* VAX 4000 model 400 */
+#define	VAX_STYP_680	0x06		/* VAX 4000 model 500 */
 #define VAX_BTYP_1302	0x13000002
 #define VAX_BTYP_53	0x13000003	/* VAX 4000 model 105A */
 #define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
