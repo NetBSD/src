@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.12 2002/04/09 02:32:53 thorpej Exp $	*/
+/*	$NetBSD: parse.c,v 1.13 2002/09/19 08:08:20 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -151,7 +151,7 @@ int     linenum;
 				}
 				fil.fr_icode = j;
 			}
-		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
+		} else if (!strcasecmp(*(cpp+1), "return-rst")) {
 			fil.fr_flags |= FR_RETRST;
 			cpp++;
 		}
@@ -939,7 +939,6 @@ u_long optmsk, optbits;
 	u_short secmsk = sec[0], secbits = sec[1];
 	struct ipopt_names *io, *so;
 	char *s;
-	int secflag = 0;
 
 	s = " opt ";
 	for (io = ionames; io->on_name; io++)
@@ -951,8 +950,7 @@ u_long optmsk, optbits;
 				if (io->on_value == IPOPT_SECURITY)
 					io++;
 				s = ",";
-			} else
-				secflag = 1;
+			}
 		}
 
 

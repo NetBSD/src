@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.6 2002/04/09 02:32:52 thorpej Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.7 2002/09/19 08:08:18 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -45,10 +45,8 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: ipft_tx.c,v 2.3.2.6 2002/03/13 03:55:15 darrenr Exp";
+static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.7 2002/06/27 14:29:17 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -181,10 +179,8 @@ char	*buf, **ifn;
 int	cnt, *dir;
 {
 	register char *s;
-	ip_t *ip;
 	char	line[513];
 
- 	ip = (ip_t *)buf;
 	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {
 		if ((s = index(line, '\n')))
@@ -201,7 +197,7 @@ int	cnt, *dir;
 		*dir = 0;
 		if (!parseline(line, (ip_t *)buf, ifn, dir))
 #if 0
-			return sizeof(*ip) + sizeof(tcphdr_t);
+			return sizeof(ip_t) + sizeof(tcphdr_t);
 #else
 			return sizeof(ip_t);
 #endif
