@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.57 1997/02/04 21:33:21 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.57.4.1 1997/03/02 16:20:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -346,17 +346,13 @@ nfs_mountroot()
 
 	/*
 	 * "Mount" the swap device.
-	 *
-	 * On a "dataless" configuration (swap on disk) we will have:
-	 *	(swdevt[0].sw_dev != NODEV) identifying the swap device.
 	 */
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("nfs_mountroot: can't setup swap vp");
-	if (swdevt[0].sw_dev != NODEV) {
-		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
-		return (0);
-	}
 
+	/* XXX VM_SWAP XXX */
+	/* XXX This needs to fake a call to sys_swapon() now */
+#if 0
 	/*
 	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
 	 * Create a fake mount point just for the swap vnode so that the
@@ -388,6 +384,7 @@ nfs_mountroot()
 	printf("swap size: 0x%lx (blocks)\n", n);
 #endif
 	swdevt[0].sw_nblks = n;
+#endif
 
 	return (0);
 }
