@@ -1,3 +1,5 @@
+/*	$NetBSD: rs.c,v 1.5 2000/07/24 11:59:38 ad Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.4 1997/10/19 14:22:16 lukem Exp $");
+__RCSID("$NetBSD: rs.c,v 1.5 2000/07/24 11:59:38 ad Exp $");
 #endif
 #endif /* not lint */
 
