@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.91 1999/11/29 17:39:18 hubertf Exp $
+.\"	$NetBSD: options.4,v 1.92 1999/12/17 03:55:52 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -424,13 +424,12 @@ and
 .Xr fsck_msdos 8
 for details.
 .It Cd file-system NTFS
-Includes the
-.Tn Windows/NT
+[EXPERIMENTAL] Includes code for the
+.Tn Microsoft Windows NT
 file system.
 See
 .Xr mount_ntfs 8
-for details. Note that NTFS support is still very experimental and
-should be used with extreme caution. 
+for details.
 .It Cd file-system FDESC
 Includes code for a file system, conventionally mounted on
 .Pa /dev/fd ,
@@ -1539,6 +1538,7 @@ bolded
 .Xr mount_fdesc 8 ,
 .Xr mount_kernfs 8 ,
 .Xr mount_null 8 ,
+.Xr mount_ntfs 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
 .Xr mount_umap 8 ,
