@@ -76,6 +76,7 @@ retry:
 		return (-1);
 	}
 	sin.sin_family = hp->h_addrtype;
+	sin.sin_len = sizeof(sin);
 	sin.sin_port = rport;
 	bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
