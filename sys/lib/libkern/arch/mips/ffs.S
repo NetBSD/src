@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2001/12/27 00:08:19 shin Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2001/12/27 00:09:59 shin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,11 +40,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ffs.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: ffs.S,v 1.1 2001/12/27 00:08:19 shin Exp $")
+	ASMSTR("$NetBSD: ffs.S,v 1.2 2001/12/27 00:09:59 shin Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#if !defined(_KERNEL)
 #ifdef ABICALLS
 	.abicalls
+#endif
 #endif
 
 /* bit = ffs(value) */
