@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.12 2004/03/15 23:48:21 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.13 2004/03/16 22:55:47 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,6 +152,8 @@ int	prom_findnode	__P((int, const char *));
 int	prom_search	__P((int, const char *));
 int	prom_opennode	__P((char *));
 int	prom_node_has_property __P((int, const char *));
+int	prom_getoptionsnode __P((void));
+int	prom_getoption __P((const char *name, char *buf, int buflen));
 
 #define	findroot()		prom_findroot()
 #define	findnode(node,name)	prom_findnode(node,name)
