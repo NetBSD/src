@@ -1,8 +1,8 @@
-#	$NetBSD: list,v 1.1 1998/07/03 11:20:09 tsubai Exp $
+#	$NetBSD: list,v 1.2 1998/07/29 05:52:19 tsubai Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
-#LINK	ramdiskbin			sysinst
+LINK	ramdiskbin			sysinst
 LINK	ramdiskbin			bin/cat
 LINK	ramdiskbin			bin/chmod
 LINK	ramdiskbin			bin/cp
@@ -85,7 +85,7 @@ COPY	${CURDIR}/../../../../etc/services	etc/services
 #COPY    disktab.preinstall              etc/disktab.preinstall
 
 # and the installation scripts
-#COPY	${CURDIR}/dot.profile			.profile
+COPY	${CURDIR}/dot.profile			.profile
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
