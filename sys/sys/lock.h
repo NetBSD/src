@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.50 2003/08/07 16:34:07 agc Exp $	*/
+/*	$NetBSD: lock.h,v 1.51 2003/11/23 08:57:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -246,6 +246,11 @@ struct lock {
 #define	LK_WAITDRAIN	0x00000800	/* process waiting for lock to drain */
 #define	LK_DRAINING	0x00004000	/* lock is being drained */
 #define	LK_DRAINED	0x00008000	/* lock has been decommissioned */
+/*
+ * Internal state flags corresponding to lk_sharecount, and lk_waitcount
+ */
+#define	LK_SHARE_NONZERO 0x00040000	/* lk_sharecount != 0 */
+#define	LK_WAIT_NONZERO	0x00080000	/* lk_waitcount != 0 */
 /*
  * Control flags
  *
