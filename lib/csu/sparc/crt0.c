@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.24 1998/07/25 04:34:13 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.25 1998/07/25 04:59:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -42,7 +42,7 @@ extern void		start __P((void)) __asm__ ("start");
 static void		__call __P((void));
 #endif
 
-#ifdef BSD
+#ifdef __NetBSD__
 #undef mmap
 #define mmap(addr, len, prot, flags, fd, off)	\
     __syscall2((quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
@@ -219,7 +219,7 @@ __call()
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.24 1998/07/25 04:34:13 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.25 1998/07/25 04:59:05 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
