@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.8 1996/08/21 20:26:41 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.8.2.1 1997/01/30 05:23:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -51,7 +51,9 @@
 #include <machine/vmparam.h>
 #include <machine/irqhandler.h>
 
-void
+int main __P((void));
+
+int
 main()
 {
 	struct proc *p = 0;
@@ -154,5 +156,6 @@ main()
 
 	def("PROCSIZE", sizeof(struct proc));
 	def("TRAPFRAMESIZE", sizeof(struct trapframe));
+
 	exit(0);
 }

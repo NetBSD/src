@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.14.2.1 1997/01/18 04:09:16 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.14.2.2 1997/01/30 05:29:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -301,7 +301,7 @@ comprobe(parent, match, aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase, needioh;
+	int iobase;
 	int rv = 1;
 	struct mainbus_attach_args *mb = aux;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.7.2.2 1997/01/18 04:07:34 thorpej Exp $
+#	$NetBSD: DRACO,v 1.7.2.3 1997/01/30 05:19:44 thorpej Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
