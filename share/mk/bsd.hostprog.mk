@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.35 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.36 2003/11/11 11:43:45 dsl Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -49,6 +49,7 @@ LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
 
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
+MKDEP_SUFFIXES?=	.lo .ln
 
 # Override these:
 INSTALL:=	${INSTALL:NSTRIP=*}
@@ -95,14 +96,6 @@ cleanprog:
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
 CPPFLAGS:=	${HOST_CPPFLAGS}
-
-.if defined(SRCS)
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.lo \1.ln:/' \
-	      < .depend > $$TMP; \
-	    mv $$TMP .depend)
-.endif
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
