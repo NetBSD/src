@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.23 2001/06/07 16:49:37 he Exp $
+# $NetBSD: mi,v 1.169.2.24 2001/06/10 12:12:58 he Exp $
 .
 ./altroot
 ./bin
@@ -638,7 +638,6 @@
 ./usr/sbin/mrinfo
 ./usr/sbin/mrouted
 ./usr/sbin/mtrace
-./usr/sbin/mtrace6
 ./usr/sbin/mtree
 ./usr/sbin/named
 ./usr/sbin/named-bootconf
