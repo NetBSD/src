@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.4 2001/08/24 04:20:10 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.5 2001/11/15 07:54:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
 
 #ifndef _SYS_SAVAR_H
 #define _SYS_SAVAR_H
+
+#include <sys/lock.h>
+#include <sys/queue.h>
 
 struct sadata_upcall {
 	LIST_ENTRY(sadata_upcall) sau_next;
