@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.15 2003/03/29 21:27:38 perry Exp $	*/
+/*	$NetBSD: popen.c,v 1.16 2003/03/29 21:41:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.15 2003/03/29 21:27:38 perry Exp $");
+__RCSID("$NetBSD: popen.c,v 1.16 2003/03/29 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdarg.h>
 #include "extern.h"
 
 #define READ 0
@@ -51,22 +55,24 @@ __RCSID("$NetBSD: popen.c,v 1.15 2003/03/29 21:27:38 perry Exp $");
 struct fp {
 	FILE *fp;
 	int pipe;
-	int pid;
+	pid_t pid;
 	struct fp *link;
 };
 static struct fp *fp_head;
 
 struct child {
-	int pid;
+	pid_t pid;
 	char done;
 	char free;
 	int status;
 	struct child *link;
 };
-static struct child *child;
-static struct child *findchild(int);
+static struct child *child, *child_freelist = NULL;
+
+static struct child *findchild(pid_t, int);
 static void delchild(struct child *);
-static int file_pid(FILE *);
+static pid_t file_pid(FILE *);
+static pid_t start_commandv(char *, sigset_t *, int, int, va_list);
 
 FILE *
 Fopen(char *fn, char *mode)
@@ -95,6 +101,7 @@ Fdopen(int fd, char *mode)
 int
 Fclose(FILE *fp)
 {
+
 	unregister_file(fp);
 	return fclose(fp);
 }
@@ -104,7 +111,7 @@ Popen(char *cmd, char *mode)
 {
 	int p[2];
 	int myside, hisside, fd0, fd1;
-	int pid;
+	pid_t pid;
 	sigset_t nset;
 	FILE *fp;
 
@@ -114,17 +121,17 @@ Popen(char *cmd, char *mode)
 	(void)fcntl(p[WRITE], F_SETFD, 1);
 	if (*mode == 'r') {
 		myside = p[READ];
-		fd0 = -1;
-		hisside = fd1 = p[WRITE];
+		hisside = fd0 = fd1 = p[WRITE];
 	} else {
 		myside = p[WRITE];
 		hisside = fd0 = p[READ];
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	if ((pid = start_command(cmd, &nset, fd0, fd1, NULL, NULL, NULL)) < 0) {
-		close(p[READ]);
-		close(p[WRITE]);
+	pid = start_command(value("SHELL"), &nset, fd0, fd1, "-c", cmd, NULL);
+	if (pid < 0) {
+		(void)close(p[READ]);
+		(void)close(p[WRITE]);
 		return NULL;
 	}
 	(void)close(hisside);
@@ -163,11 +170,11 @@ close_all_files(void)
 }
 
 void
-register_file(FILE *fp, int pipefd, int pid)
+register_file(FILE *fp, int pipefd, pid_t pid)
 {
 	struct fp *fpp;
 
-	if ((fpp = (struct fp *) malloc(sizeof *fpp)) == NULL)
+	if ((fpp = (struct fp *)malloc(sizeof(*fpp))) == NULL)
 		errx(1, "Out of memory");
 	fpp->fp = fp;
 	fpp->pipe = pipefd;
@@ -184,68 +191,80 @@ unregister_file(FILE *fp)
 	for (pp = &fp_head; (p = *pp) != NULL; pp = &p->link)
 		if (p->fp == fp) {
 			*pp = p->link;
-			free((char *) p);
+			(void)free(p);
 			return;
 		}
 	errx(1, "Invalid file pointer");
 }
 
-static int
+static pid_t
 file_pid(FILE *fp)
 {
 	struct fp *p;
 
 	for (p = fp_head; p; p = p->link)
 		if (p->fp == fp)
-			return (p->pid);
+			return p->pid;
 	errx(1, "Invalid file pointer");
 	/*NOTREACHED*/
 }
 
 /*
  * Run a command without a shell, with optional arguments and splicing
- * of stdin and stdout.  The command name can be a sequence of words.
+ * of stdin (-1 means none) and stdout.  The command name can be a sequence
+ * of words.
  * Signals must be handled by the caller.
- * "Mask" contains the signals to ignore in the new process.
- * SIGINT is enabled unless it's in the mask.
+ * "nset" contains the signals to ignore in the new process.
+ * SIGINT is enabled unless it's in "nset".
  */
-/*VARARGS4*/
-int
-run_command(char *cmd, sigset_t *mask, int infd, int outfd, char *a0,
-	    char *a1, char *a2)
+static pid_t
+start_commandv(char *cmd, sigset_t *nset, int infd, int outfd, va_list args)
 {
-	int pid;
+	pid_t pid;
 
-	if ((pid = start_command(cmd, mask, infd, outfd, a0, a1, a2)) < 0)
-		return -1;
-	return wait_command(pid);
-}
-
-/*VARARGS4*/
-int
-start_command(char *cmd, sigset_t *mask, int infd, int outfd,
-	      char *a0, char *a1, char *a2)
-{
-	int pid;
-
-	if ((pid = vfork()) < 0) {
+	if ((pid = fork()) < 0) {
 		warn("fork");
 		return -1;
 	}
 	if (pid == 0) {
 		char *argv[100];
-		int i = getrawlist(cmd, argv, sizeof argv / sizeof *argv);
+		int i = getrawlist(cmd, argv, sizeof(argv)/ sizeof(*argv));
 
-		if ((argv[i++] = a0) != NULL &&
-		    (argv[i++] = a1) != NULL &&
-		    (argv[i++] = a2) != NULL)
-			argv[i] = NULL;
-		prepare_child(mask, infd, outfd);
+		while ((argv[i++] = va_arg(args, char *)))
+			;
+		argv[i] = NULL;
+		prepare_child(nset, infd, outfd);
 		execvp(argv[0], argv);
 		warn("%s", argv[0]);
 		_exit(1);
 	}
 	return pid;
+}
+
+int
+run_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+{
+	pid_t pid;
+	va_list args;
+
+	va_start(args, outfd);
+	pid = start_commandv(cmd, nset, infd, outfd, args);
+	va_end(args);
+	if (pid < 0)
+		return -1;
+	return wait_command(pid);
+}
+
+int
+start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+{
+	va_list args;
+	int r;
+
+	va_start(args, outfd);
+	r = start_commandv(cmd, nset, infd, outfd, args);
+	va_end(args);
+	return r;
 }
 
 void
@@ -258,13 +277,22 @@ prepare_child(sigset_t *nset, int infd, int outfd)
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
 	 * close-on-exec.
 	 */
-	if (infd >= 0)
+	if (infd > 0) {
 		dup2(infd, 0);
-	if (outfd >= 0)
+	} else if (infd != 0) {
+		/* we don't want the child stealing my stdin input */
+		close(0);
+		open(_PATH_DEVNULL, O_RDONLY, 0);
+	}
+	if (outfd >= 0 && outfd != 1)
 		dup2(outfd, 1);
-	for (i = 1; i < NSIG; i++)
-		if (nset != NULL && sigismember(nset, i))
-			(void)signal(i, SIG_IGN);
+	if (nset == NULL)
+		return;
+	if (nset != NULL) {
+		for (i = 1; i < NSIG; i++)
+			if (sigismember(nset, i))
+				(void)signal(i, SIG_IGN);
+	}
 	if (nset == NULL || !sigismember(nset, SIGINT))
 		(void)signal(SIGINT, SIG_DFL);
 	sigemptyset(&eset);
@@ -272,18 +300,18 @@ prepare_child(sigset_t *nset, int infd, int outfd)
 }
 
 int
-wait_command(int pid)
+wait_command(pid_t pid)
 {
 
 	if (wait_child(pid) < 0) {
-		printf("Fatal error in process.\n");
+		puts("Fatal error in process.");
 		return -1;
 	}
 	return 0;
 }
 
 static struct child *
-findchild(int pid)
+findchild(pid_t pid, int dont_alloc)
 {
 	struct child **cpp;
 
@@ -291,7 +319,16 @@ findchild(int pid)
 	     cpp = &(*cpp)->link)
 			;
 	if (*cpp == NULL) {
-		*cpp = (struct child *) malloc(sizeof (struct child));
+		if (dont_alloc)
+			return NULL;
+		if (child_freelist) {
+			*cpp = child_freelist;
+			child_freelist = (*cpp)->link;
+		} else {
+			*cpp = (struct child *)malloc(sizeof(struct child));
+			if (*cpp == NULL)
+				errx(1, "Out of memory");
+		}
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
 		(*cpp)->link = NULL;
@@ -307,18 +344,23 @@ delchild(struct child *cp)
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
 		;
 	*cpp = cp->link;
-	free((char *) cp);
+	cp->link = child_freelist;
+	child_freelist = cp;
 }
 
 void
 sigchild(int signo)
 {
-	int pid;
+	pid_t pid;
 	int status;
 	struct child *cp;
+	int save_errno = errno;
 
-	while ((pid = wait3(&status, WNOHANG, NULL)) > 0) {
-		cp = findchild(pid);
+	while ((pid =
+	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
+		cp = findchild(pid, 1);
+		if (!cp)
+			continue;
 		if (cp->free)
 			delchild(cp);
 		else {
@@ -326,6 +368,7 @@ sigchild(int signo)
 			cp->status = status;
 		}
 	}
+	errno = save_errno;
 }
 
 int wait_status;
@@ -334,39 +377,51 @@ int wait_status;
  * Wait for a specific child to die.
  */
 int
-wait_child(int pid)
+wait_child(pid_t pid)
 {
-	sigset_t nset, oset;
 	struct child *cp;
+	sigset_t nset, oset;
+	pid_t rv = 0;
+
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
-
-	cp = findchild(pid);
-	while (!cp->done)
-		sigsuspend(&oset);
-	wait_status = cp->status;
-	delchild(cp);
+	/*
+	 * If we have not already waited on the pid (via sigchild)
+	 * wait on it now.  Otherwise, use the wait status stashed
+	 * by sigchild.
+	 */
+	cp = findchild(pid, 1);
+	if (cp == NULL || !cp->done)
+		rv = waitpid(pid, &wait_status, 0);
+	else
+		wait_status = cp->status;
+	if (cp != NULL)
+		delchild(cp);
 	sigprocmask(SIG_SETMASK, &oset, NULL);
-	return wait_status ? -1 : 0;
+	if (rv == -1 || (WIFEXITED(wait_status) && WEXITSTATUS(wait_status)))
+		return -1;
+	else
+		return 0;
 }
 
 /*
  * Mark a child as don't care.
  */
 void
-free_child(int pid)
+free_child(pid_t pid)
 {
-	sigset_t nset, oset;
 	struct child *cp;
+	sigset_t nset, oset;
+
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
-
-	cp = findchild(pid);
-	if (cp->done)
-		delchild(cp);
-	else
-		cp->free = 1;
+	if ((cp = findchild(pid, 0)) != NULL) {
+		if (cp->done)
+			delchild(cp);
+		else
+			cp->free = 1;
+	}
 	sigprocmask(SIG_SETMASK, &oset, NULL);
 }
