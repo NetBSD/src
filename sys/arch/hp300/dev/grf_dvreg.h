@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf_dvreg.h 1.1 90/07/09
  *	from: @(#)grf_dvreg.h	7.2 (Berkeley) 11/4/90
- *	$Id: grf_dvreg.h,v 1.2 1993/08/01 19:24:11 mycroft Exp $
+ *	$Id: grf_dvreg.h,v 1.3 1993/08/08 03:42:35 mycroft Exp $
  */
 
 /*
@@ -120,9 +120,9 @@ struct dvboxfb {
   vu_short	source_y;		/* Window source Y origin     0x40F6 */
   u_char 	f13[0x40fa-0x40f6-2];
   vu_short	dest_x;			/* Window dest X origin       0x40FA */
-  u_char 	f14[0x40fe-0x40fa-2];
+  u_char 	f14[0x40fe -0x40fa-2];
   vu_short	dest_y;			/* Window dest Y origin       0x40FE */
-  u_char 	f15[0x4102-0x40fe-2];
+  u_char 	f15[0x4102-0x40fe -2];
   vu_short 	wwidth;			/* Window width		      0x4102 */
   u_char 	f16[0x4106-0x4102-2];
   vu_short	wheight;		/* Window height	      0x4106 */
@@ -188,6 +188,6 @@ struct dvboxfb {
   vu_short	status1;		/* Master Status register     0x8012 */
   u_char	f44[0xC226-0x8012-2];
   vu_short	trans;			/* Transparency		      0xC226 */
-  u_char	f45[0xC23E-0xC226-2];
+  u_char	f45[0xC23E -0xC226-2];
   vu_short 	pstop;			/* Pace value control	      0xc23e */
 };
