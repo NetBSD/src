@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.4 2002/10/19 16:05:23 bjh21 Exp $
+#	$NetBSD: BRANCHES,v 1.5 2002/10/23 22:38:10 jdolecek Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -249,9 +249,9 @@ Notes:
 
 Branch:		kqueue
 Description:	kqueue kernel event notification mechanism (from FreeBSD)
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	Tue Jul 10 23:08:38 EST 2001
-End Date:
+End Date:	Tue Oct 24 09:14:14 GMT 2002
 Base Tag:	kqueue-base
 Maintainer:	Jaromir Dolecek <jdolecek@NetBSD.org>
 Scope:		kernel, libc/sys, share/man/man9, usr.bin/fstat
