@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.22 2004/05/27 03:12:48 christos Exp $	*/
+/*	$NetBSD: pty.c,v 1.23 2004/06/18 02:42:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.22 2004/05/27 03:12:48 christos Exp $");
+__RCSID("$NetBSD: pty.c,v 1.23 2004/06/18 02:42:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,10 +86,15 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 		}
 	}
 
+	if (geteuid() != 0) {
+		errno = EPERM;
+		return -1;
+	}
+
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
 	else
-		ttygid = (gid_t) -1;
+		ttygid = _TTY_GID;
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		line[8] = *cp1;
