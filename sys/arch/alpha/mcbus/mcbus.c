@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.1 1998/04/15 00:48:12 mjacob Exp $ */
+/* $NetBSD: mcbus.c,v 1.2 1998/04/15 20:37:39 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -31,13 +31,13 @@
  */
 
 /*
- * Autoconfiguration and support routines for the TurboLaser System Bus
- * found on AlphaServer 8200 and 8400 systems.
+ * Autoconfiguration routines for the MCBUS system
+ * bus found on AlphaServer 4100 systems.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.1 1998/04/15 00:48:12 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.2 1998/04/15 20:37:39 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
