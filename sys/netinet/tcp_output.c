@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.101 2003/08/22 22:00:38 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.102 2003/10/21 21:17:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.101 2003/08/22 22:00:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.102 2003/10/21 21:17:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -442,15 +442,21 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 
 	/*
 	 * To avoid traversing the whole sb_mb chain for correct
-	 * data to send, remember last sent mbuf,  its offset and
-	 * the sent size. When called the next time, see if the
-	 * data to send is the directly following the previous
-	 * transfer.  This is important for large TCP windows.
+	 * data to send, remember last sent mbuf, its offset and
+	 * the sent size.  When called the next time, see if the
+	 * data to send is directly following the previous transfer.
+	 * This is important for large TCP windows.
 	 */
+	if (
 #ifdef FAST_MBSEARCH
-	if (off == 0 || (tp->t_lastoff + tp->t_lastlen) != off) {
+	    off == 0 || (tp->t_lastoff + tp->t_lastlen) != off
 #else
-	if (1) {
+	    1
+#endif
+	   )
+	{
+#ifdef FAST_MBSEARCH
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_hit);
 #endif
 		/*
 		 * Either a new packet or a retransmit.
@@ -458,8 +464,12 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		 */
 		tp->t_lastm = so->so_snd.sb_mb;
 		tp->t_inoff = off;
-	} else
+	} else {
+#ifdef FAST_MBSEARCH
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_miss);
+#endif
 		tp->t_inoff += tp->t_lastlen;
+	}
 
 	/* Traverse forward to next packet */
 	while (tp->t_inoff > 0) {
