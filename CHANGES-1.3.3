@@ -200,3 +200,8 @@ sys/arch/x68k/stand/writefdboot			patch
 share/man/man4/options.4			1.62
 
 	Fix typo: SHMPAXPGS -> SHMMAXPGS (PR#6178).  (frueauf)
+
+bin/pax/tar.c					1.12
+
+	Fix a bug in restoring files with path names >100
+	characters.  (mycroft)
