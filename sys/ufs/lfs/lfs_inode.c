@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.57 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.58 2002/07/02 19:07:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.57 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.58 2002/07/02 19:07:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -193,7 +193,7 @@ lfs_update(void *v)
 #ifdef DEBUG_LFS
 			printf("lfs_update: sleeping on inode %d (dirops)\n",
 			       ip->i_number);
-			printf("lfs_update: vflags 0x%lx, iflags 0x%x\n",
+			printf("lfs_update: vflags 0x%x, iflags 0x%x\n",
 				vp->v_flag, ip->i_flag);
 #endif
 			if (fs->lfs_dirops == 0)
