@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.40 2001/04/25 17:53:33 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.41 2001/05/16 03:55:15 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -95,8 +95,11 @@ struct isposinfo {
 	int	mboxwaiting;
 	u_int32_t	islocked;
 	u_int32_t	onintstack;
-	unsigned int		: 30,
-		no_mbox_ints	: 1;
+	unsigned int		: 28,
+		mbox_wanted	: 1,
+		mbox_locked	: 1,
+		no_mbox_ints	: 1,
+		blocked		: 1;
 	union {
 		u_int64_t	_wwn;
 		u_int16_t	_discovered[2];
@@ -142,7 +145,22 @@ struct isposinfo {
 #define	MEMORYBARRIER(isp, type, offset, size)
 #endif
 
-#define	MBOX_ACQUIRE(isp)
+#define	MBOX_ACQUIRE(isp)						\
+	if (isp->isp_osinfo.onintstack) {				\
+		if (isp->isp_osinfo.mbox_locked) {			\
+			mbp->param[0] = MBOX_HOST_INTERFACE_ERROR;	\
+			isp_prt(isp, ISP_LOGERR, "cannot acquire MBOX lock"); \
+			return;						\
+		}							\
+	} else {							\
+		while (isp->isp_osinfo.mbox_locked) {			\
+			isp->isp_osinfo.mbox_wanted = 1;		\
+			(void) tsleep(&isp->isp_osinfo.mboxwaiting+1,	\
+			    PRIBIO, "mbox_acquire", 0);			\
+		}							\
+	}								\
+	isp->isp_osinfo.mbox_locked = 1
+
 #define	MBOX_WAIT_COMPLETE	isp_wait_complete
 
 #define	MBOX_NOTIFY_COMPLETE(isp)					\
@@ -152,7 +170,12 @@ struct isposinfo {
         }								\
 	isp->isp_mboxbsy = 0
 
-#define	MBOX_RELEASE(isp)
+#define	MBOX_RELEASE(isp)						\
+	if (isp->isp_osinfo.mbox_wanted) {				\
+		isp->isp_osinfo.mbox_wanted = 0;			\
+		wakeup(&isp->isp_osinfo.mboxwaiting+1);			\
+	}								\
+	isp->isp_osinfo.mbox_locked = 0
 
 #ifndef	SCSI_GOOD
 #define	SCSI_GOOD	0x0
