@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.5 2004/03/14 20:11:24 wiz Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.6 2005/01/02 12:22:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.5 2004/03/14 20:11:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.6 2005/01/02 12:22:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ static void	oosiop_msgin(struct oosiop_softc *, struct oosiop_cb *);
 
 /* Possible TP and SCF conbination */
 static const struct {
-	u_int8_t	tp;
-	u_int8_t	scf;
+	uint8_t		tp;
+	uint8_t		scf;
 } synctbl[] = {
 	{0, 1},		/* SCLK /  4.0 */
 	{1, 1},		/* SCLK /  5.0 */
@@ -326,7 +326,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 static __inline void
 oosiop_relocate_io(struct oosiop_softc *sc, bus_addr_t addr)
 {
-	u_int32_t dcmd;
+	uint32_t dcmd;
 	int32_t dsps;
 
 	dcmd = le32toh(sc->sc_scr[addr / 4 + 0]);
@@ -353,7 +353,7 @@ oosiop_relocate_io(struct oosiop_softc *sc, bus_addr_t addr)
 static __inline void
 oosiop_relocate_tc(struct oosiop_softc *sc, bus_addr_t addr)
 {
-	u_int32_t dcmd;
+	uint32_t dcmd;
 	int32_t dsps;
 
 	dcmd = le32toh(sc->sc_scr[addr / 4 + 0]);
@@ -380,7 +380,7 @@ oosiop_relocate_tc(struct oosiop_softc *sc, bus_addr_t addr)
 static __inline void
 oosiop_fixup_select(struct oosiop_softc *sc, bus_addr_t addr, int id)
 {
-	u_int32_t dcmd;
+	uint32_t dcmd;
 
 	dcmd = le32toh(sc->sc_scr[addr / 4]);
 	dcmd &= 0xff00ffff;
@@ -399,7 +399,7 @@ static __inline void
 oosiop_fixup_move(struct oosiop_softc *sc, bus_addr_t addr, bus_size_t dbc,
     bus_addr_t dsps)
 {
-	u_int32_t dcmd;
+	uint32_t dcmd;
 
 	dcmd = le32toh(sc->sc_scr[addr / 4]);
 	dcmd &= 0xff000000;
@@ -567,8 +567,8 @@ static void
 oosiop_phasemismatch(struct oosiop_softc *sc)
 {
 	struct oosiop_cb *cb;
-	u_int32_t dsp, dbc, n, i, len;
-	u_int8_t dfifo, sstat1;
+	uint32_t dsp, dbc, n, i, len;
+	uint8_t dfifo, sstat1;
 
 	cb = sc->sc_curcb;
 	if (cb == NULL)
@@ -996,9 +996,9 @@ int
 oosiop_intr(struct oosiop_softc *sc)
 {
 	struct oosiop_cb *cb;
-	u_int32_t dcmd;
+	uint32_t dcmd;
 	int timeout;
-	u_int8_t istat, dstat, sstat0;
+	uint8_t istat, dstat, sstat0;
 
 	istat = oosiop_read_1(sc, OOSIOP_ISTAT);
 
@@ -1136,10 +1136,10 @@ static void
 oosiop_scriptintr(struct oosiop_softc *sc)
 {
 	struct oosiop_cb *cb;
-	u_int32_t icode;
-	u_int32_t dsp;
+	uint32_t icode;
+	uint32_t dsp;
 	int i;
-	u_int8_t sfbr, resid, resmsg;
+	uint8_t sfbr, resid, resmsg;
 
 	cb = sc->sc_curcb;
 	icode = oosiop_read_4(sc, OOSIOP_DSPS);
