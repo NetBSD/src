@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1994/01/25 07:59:25 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1994/01/25 08:16:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -286,6 +286,10 @@ find_dot_file(basename) char *basename; {
 	char *fullname;
 	char *path = pathval();
 	struct stat statb;
+
+	/* don't try this for absolute or relative paths */
+	if( strchr(basename, '/'))
+		return basename;
 
 	while ((fullname = padvance(&path, basename)) != NULL) {
 		strcpy(localname, fullname);
