@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.5 1994/01/13 12:56:16 briggs Exp $
+ *	$Id: machdep.c,v 1.6 1994/01/20 23:58:47 briggs Exp $
  */
 
 #include <param.h>
@@ -1772,8 +1772,9 @@ cpu_exec_aout_makecmds(p, epp)
 	u_long midmag, magic;
 	u_short mid;
 	int error;
+	struct exec *execp = epp->ep_hdr;
 
-	midmag = ntohl(epp->ep_execp->a_midmag);
+	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16 ) & 0xffff;
 	magic = midmag & 0xffff;
 
@@ -1797,7 +1798,7 @@ cpu_exec_prep_oldzmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = 0;
