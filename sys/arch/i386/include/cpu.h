@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72 2001/06/14 22:56:56 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.73 2001/08/01 19:50:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,6 +80,7 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 
+	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
 };
 
