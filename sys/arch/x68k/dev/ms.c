@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.8 1999/03/24 14:07:38 minoura Exp $ */
+/*	$NetBSD: ms.c,v 1.8.2.1 2000/01/15 17:36:15 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ cdev_decl(ms);
 static int ms_match __P((struct device*, struct cfdata*, void*));
 static void ms_attach __P((struct device*, struct device*, void*));
 static void ms_trigger __P((struct zs_chanstate*, int));
-void ms_modem __P((void));
+void ms_modem __P((void *));
 
 struct cfattach ms_ca = {
 	sizeof(struct ms_softc), ms_match, ms_attach
@@ -235,11 +235,12 @@ msopen(dev, flags, mode, p)
 
 	ms->ms_ready = 1;		/* start accepting events */
 	ms->ms_rts = 1;
-	s = splzs();
-	ms_trigger(ms->ms_cs, 1);	/* set MSCTR high (standby) */
-	splx(s);
 	ms->ms_byteno = -1;
 	ms->ms_nodata = 0;
+
+	/* start sequencer */
+	ms_modem(ms);
+
 	return (0);
 }
 
@@ -253,6 +254,7 @@ msclose(dev, flags, mode, p)
 
 	ms = ms_cd.cd_devs[minor(dev)];
 	ms->ms_ready = 0;		/* stop accepting events */
+	untimeout(ms_modem, ms);
 	ev_fini(&ms->ms_events);
 
 	ms->ms_events.ev_io = NULL;
@@ -654,21 +656,23 @@ ms_trigger (cs, onoff)
  * called after system tick interrupt is done.
  */
 void
-ms_modem(void)
+ms_modem(arg)
+	void *arg;
 {
-	struct ms_softc *ms = ms_cd.cd_devs[0];
+	struct ms_softc *ms = arg;
+	int s;
 
-	/* we are in higher intr. level than splzs. no need splzs(). */
 	if (!ms->ms_ready)
 		return;
-	if (ms->ms_nodata++ > 300) { /* XXX */
-		log(LOG_ERR, "%s: no data for 3 secs. resetting.\n",
+
+	s = splzs();
+
+	if (ms->ms_nodata++ > 250) { /* XXX */
+		log(LOG_ERR, "%s: no data for 5 secs. resetting.\n",
 		    ms->ms_dev.dv_xname);
-		ms->ms_nodata = 0;
 		ms->ms_byteno = -1;
-		ms->ms_rts = 1;
-		ms_trigger(ms->ms_cs, 1);
-		return;
+		ms->ms_nodata = 0;
+		ms->ms_rts = 0;
 	}
 
 	if (ms->ms_rts) {
@@ -682,4 +686,7 @@ ms_modem(void)
 		ms->ms_rts = 1;
 		ms_trigger(ms->ms_cs, ms->ms_rts);
 	}
+
+	(void) splx(s);
+	timeout(ms_modem, ms, 2);
 }
