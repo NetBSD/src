@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/09 00:32:51 ross Exp $
+#	$NetBSD: Makefile,v 1.14 2002/02/04 01:11:09 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,7 +25,7 @@ all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=9000
 	vnconfig -v -c ${VND} ${IMAGE}
 #	disklabel -rw ${VND} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i 5120 -c 20 ${VND_RDEV}
+	newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
