@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.15 2002/03/17 19:41:01 atatat Exp $	*/
+/*	$NetBSD: magma.c,v 1.16 2002/03/21 00:18:36 eeh Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.15 2002/03/17 19:41:01 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.16 2002/03/21 00:18:36 eeh Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -396,9 +396,12 @@ magma_attach(parent, self, aux)
 	}
 
 	/* the SVCACK* lines are daisychained */
-	sc->ms_svcackr = (caddr_t)bh + card->mb_svcackr;
-	sc->ms_svcackt = (caddr_t)bh + card->mb_svcackt;
-	sc->ms_svcackm = (caddr_t)bh + card->mb_svcackm;
+	sc->ms_svcackr = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackr;
+	sc->ms_svcackt = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackt;
+	sc->ms_svcackm = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackm;
 
 	/*
 	 * Find the clock speed; it's the same for all CD1400 chips
