@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.11 2000/04/17 09:52:21 drochner Exp $
+.\" $NetBSD: bus_space.9,v 1.12 2000/05/27 01:55:42 soren Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,19 +145,19 @@
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_region_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_copy_region_1 "bus_space_tag_t space" \
@@ -209,19 +209,19 @@
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_1 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int8_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int8_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_2 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int16_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int16_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_4 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int32_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int32_t *datap" \
 "bus_size_t count"
 .Ft void
 .Fn bus_space_write_multi_8 "bus_space_tag_t space" \
-"bus_space_handle_t handle" "bus_size_t offset" "u_int64_t *datap" \
+"bus_space_handle_t handle" "bus_size_t offset" "const u_int64_t *datap" \
 "bus_size_t count"
 .Sh DESCRIPTION
 .Pp
