@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.33 1998/09/20 20:08:52 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.34 1999/02/14 12:44:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(getpropstringA(node, "device_type", buf),
+		    strcmp(getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 1999/01/19 10:04:42 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.38 1999/02/14 12:48:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,7 @@
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
+#include <machine/promlib.h>
 #include <sparc/sparc/cpuvar.h>
 
 #ifdef INET
@@ -235,7 +236,7 @@ nmi_hard()
 		/* XXX - should check module errors here */
 		if (nmifatal == 0)
 			return;
-		{ extern void callrom __P((void)); callrom(); }
+		prom_halt();
 	}
 
 	nmisync2 = 1;
