@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.75 1996/12/28 22:37:03 cjs Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.76 1997/01/31 02:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -384,7 +384,7 @@ sunos_sys_mount(p, v, retval)
 	return (sys_mount(p, (struct sys_mount_args *)uap, retval));
 }
 
-#if defined(NFSCLIENT)
+#if defined(NFS)
 int
 async_daemon(p, v, retval)
 	struct proc *p;
@@ -398,7 +398,7 @@ async_daemon(p, v, retval)
 
 	return (sys_nfssvc(p, &ouap, retval));
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 int
 sunos_sys_sigpending(p, v, retval)
