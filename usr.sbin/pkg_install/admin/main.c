@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.24 2002/03/05 13:01:19 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2002/06/09 11:57:00 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24 2002/03/05 13:01:19 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2002/06/09 11:57:00 yamt Exp $");
 #endif
 
 /*
@@ -471,8 +471,10 @@ main(int argc, char *argv[])
 
 			cwd = getcwd(NULL, 0);
 			p = findbestmatchingname(cwd, base);
-			if (p)
+			if (p) {
 				printf("%s/%s\n", cwd, p);
+				free(p);
+			}
 			free(cwd);
 			
 			argv++;

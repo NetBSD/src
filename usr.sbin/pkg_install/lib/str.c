@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.35 2002/06/09 10:40:47 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.36 2002/06/09 11:57:00 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.35 2002/06/09 10:40:47 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.36 2002/06/09 11:57:00 yamt Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ dirname_of(const char *path)
 {
 	size_t  cc;
 	char   *s;
-	char   *t;
+	static char buf[PATH_MAX];
 
 	if ((s = strrchr(path, '/')) == NULL) {
 		return ".";
@@ -63,12 +63,11 @@ dirname_of(const char *path)
 		return "/";
 	}
 	cc = (size_t) (s - path);
-	if ((t = (char *) malloc(cc + 1)) == (char *) NULL) {
-		errx(1, "out of memory in dirname_of");
-	}
-	(void) memcpy(t, path, cc);
-	t[cc] = 0;
-	return t;
+	if (cc >= sizeof(buf))
+		errx(1, "dirname_of: too long dirname: '%s'", path);
+	(void) memcpy(buf, path, cc);
+	buf[cc] = 0;
+	return buf;
 }
 
 /*

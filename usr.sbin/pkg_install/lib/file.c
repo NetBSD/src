@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.49 2002/06/09 03:50:13 yamt Exp $	*/
+/*	$NetBSD: file.c,v 1.50 2002/06/09 11:57:00 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.49 2002/06/09 03:50:13 yamt Exp $");
+__RCSID("$NetBSD: file.c,v 1.50 2002/06/09 11:57:00 yamt Exp $");
 #endif
 #endif
 
@@ -348,6 +348,7 @@ fileFindByPath(char *base, char *fname)
 	if (ispkgpattern(fname)) {
 		if ((cp = findbestmatchingname(".", fname)) != NULL) {
 			strcpy(tmp, cp);
+			free(cp);
 			return tmp;
 		}
 	} else {
@@ -392,14 +393,16 @@ fileFindByPath(char *base, char *fname)
 						printf("'%s' expanded to '%s'\n", url, tmp);
 					return tmp;    /* return expanded URL w/ corrent pkg */
 				} else {
-				cp = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
-				if (cp) {
-					char   *s;
-					s = strrchr(tmp, '/');
-					assert(s != NULL);
-					strcpy(s + 1, cp);
-					return tmp;
-				}
+					cp = findbestmatchingname(
+					    dirname_of(tmp), basename_of(tmp));
+					if (cp) {
+						char   *s;
+						s = strrchr(tmp, '/');
+						assert(s != NULL);
+						strcpy(s + 1, cp);
+						free(cp);
+						return tmp;
+					}
 				}
 			} else {
 				if (fexists(tmp)) {
@@ -488,6 +491,7 @@ fileFindByPath(char *base, char *fname)
 				char   *t;
 				t = strrchr(tmp, '/');
 				strcpy(t + 1, s);
+				free(s);
 				return tmp;
 			}
 		} else {
@@ -515,6 +519,7 @@ fileFindByPath(char *base, char *fname)
 						strcpy(tmp, buf2); /* now we can overwrite it */
 						t = strrchr(tmp, '/');
 						strcpy(t+1, s);
+						free(s);
 						return tmp;
 					}
 				}
