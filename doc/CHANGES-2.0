@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.201 2004/05/12 05:00:51 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.202 2004/05/12 05:03:35 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2333,3 +2333,11 @@ lib/libc/sys/readlink.2				patch
 
 	Add an example code piece.
 	[kleink, ticket #312]
+
+usr.bin/systat/bufcache.c			1.17
+
+	"bufmem" is unsigned long inside the kernel, so dont try to grovel it 
+	out of kmem as a unsigned int. 
+	Also avoid overrunning VCACHE_SIZE, thus scribling over unrelated 
+	memory.  PR#/25537
+	[martin, ticket #313]
