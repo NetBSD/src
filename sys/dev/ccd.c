@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.24 1996/02/01 20:47:13 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.25 1996/02/06 18:15:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -369,7 +369,7 @@ ccdinit(ccd, cpaths, p)
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 			printf("%s: mirroring requires interleave\n",
-			    sc->sc_xname);
+			    cs->sc_xname);
 #endif
 			free(ci->ci_path, M_DEVBUF);
 			free(cs->sc_cinfo, M_DEVBUF);
