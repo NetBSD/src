@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.15 2001/08/20 13:53:47 wiz Exp $	*/
+/*	$NetBSD: ext.h,v 1.16 2001/08/24 00:14:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,10 +85,6 @@ extern char	*neturg;		/* one past last bye of urgent data */
 
 extern int	pcc, ncc;
 
-#if defined(CRAY2) && defined(UNICOS5)
-extern int unpcc;  /* characters left unprocessed by CRAY-2 terminal routine */
-extern char *unptyip;  /* pointer to remaining characters in buffer */
-#endif
 
 extern int	pty, net;
 extern char	*line;
@@ -220,9 +216,6 @@ extern struct {
 } clocks;
 
 
-#if	defined(CRAY2) && defined(UNICOS5)
-extern int	needtermstat;
-#endif
 
 #ifndef	DEFAULT_IM
 # ifdef CRAY
