@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.code.c,v 1.3 1994/12/22 06:17:43 jtc Exp $	*/
+/*	$NetBSD: locate.code.c,v 1.4 1995/05/06 06:39:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: locate.code.c,v 1.3 1994/12/22 06:17:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: locate.code.c,v 1.4 1995/05/06 06:39:33 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -142,9 +142,8 @@ main(argc, argv)
 
 		/* Squelch characters that would botch the decoding. */
 		for (cp = path; *cp != NULL; cp++) {
-			if ((u_char)*cp >= PARITY)
-				*cp &= PARITY-1;
-			else if (*cp <= SWITCH)
+			*cp &= PARITY-1;
+			if (*cp <= SWITCH)
 				*cp = '?';
 		}
 
