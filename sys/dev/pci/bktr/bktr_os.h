@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.h,v 1.1.1.2 2000/07/01 01:30:43 wiz Exp $	*/
+/*	$NetBSD: bktr_os.h,v 1.2 2000/10/28 14:50:28 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp */
 
@@ -53,10 +53,15 @@
 vm_offset_t     get_bktr_mem( int unit, unsigned size );
 #endif
 
-#if (defined(__NetBSD__) || defined(__OpenBSD__))
+#if defined(__NetBSD__)
+vaddr_t         get_bktr_mem(bktr_ptr_t, bus_dmamap_t *, unsigned size);
+void            free_bktr_mem(bktr_ptr_t, bus_dmamap_t, vaddr_t);
+#endif
+
+#if defined(__OpenBSD__)
 vm_offset_t     get_bktr_mem(bktr_ptr_t, bus_dmamap_t *, unsigned size);
 void            free_bktr_mem(bktr_ptr_t, bus_dmamap_t, vm_offset_t);
-#endif 
+#endif
 
 /************************************/
 /* *** Interrupt Enable/Disable *** */
