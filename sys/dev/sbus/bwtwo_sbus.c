@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.13 2003/08/07 16:31:21 agc Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.14 2003/12/04 12:42:54 keihan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,12 +81,12 @@
  *
  * Does not handle interrupts, even though they can occur.
  *
- * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.org>.
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.13 2003/08/07 16:31:21 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.14 2003/12/04 12:42:54 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

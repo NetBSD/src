@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.16 2003/07/15 02:43:48 lukem Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.17 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
  * Runs two serial lines per chip using slave drivers.
  * Plain tty/async lines use the zs_async slave.
  *
- * Modified for NetBSD/mvme68k by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Modified for NetBSD/mvme68k by Jason R. Thorpe <thorpej@NetBSD.org>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.16 2003/07/15 02:43:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.17 2003/12/04 12:42:54 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

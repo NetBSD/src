@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.37 2003/08/25 17:50:25 uwe Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.38 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.37 2003/08/25 17:50:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.38 2003/12/04 12:42:54 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ cgfourattach(parent, self, aux)
 	 * we let the bwtwo driver pick up the overlay plane and
 	 * use it instead.  Rconsole should have better performance
 	 * with the 1-bit depth.
-	 *	-- Jason R. Thorpe <thorpej@NetBSD.ORG>
+	 *	-- Jason R. Thorpe <thorpej@NetBSD.org>
 	 */
 
 	/*
