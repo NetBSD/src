@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	8.3 (Berkeley) 1/4/94
- *	$Id: nfs_vfsops.c,v 1.23 1994/06/14 03:29:12 gwr Exp $
+ *	$Id: nfs_vfsops.c,v 1.24 1994/06/22 14:01:45 pk Exp $
  */
 
 #include <sys/param.h>
@@ -236,12 +236,10 @@ nfs_mountroot()
 	 * On a "dataless" configuration (swap on disk) we will have:
 	 *	(swdevt[0].sw_dev != NODEV) identifying the swap device.
 	 */
-	if (swdevt[0].sw_dev != NODEV) {
-		if (bdevvp(swapdev, &swapdev_vp))
-			panic("nfs_mountroot: can't get swap vp for dev %d,%d",
-				  major(swdevt[0].sw_dev), minor(swdevt[0].sw_dev));
+	if (bdevvp(swapdev, &swapdev_vp))
+		panic("nfs_mountroot: can't setup swap vp");
+	if (swdevt[0].sw_dev != NODEV)
 		return (0);
-	}
 
 	/*
 	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
@@ -256,15 +254,14 @@ nfs_mountroot()
 	 */
 	vp->v_type = VREG;
 	vp->v_flag = 0;
-	swapdev_vp = vp;
-	VREF(vp);
 	swdevt[0].sw_vp = vp;
 
 	/*
 	 * Find out how large the swap file is.
 	 */
 	error = VOP_GETATTR(vp, &attr, procp->p_cred->pc_ucred, procp);
-	if (error) panic("nfs_mountroot: getattr for swap");
+	if (error)
+		panic("nfs_mountroot: getattr for swap");
 	n = (long) (attr.va_size / DEV_BSIZE);
 #ifdef	DEBUG
 	printf(" swap size: 0x%x (blocks)\n", n);
