@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.43 2000/05/29 20:41:10 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.44 2000/05/30 03:26:34 cjs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -410,7 +410,7 @@ iommu_remove(dva, len)
 
 #ifdef DEBUG
 	if (dva < base)
-		panic("iommu_remove: va 0x%lx not in DVMA space", (long)va);
+		panic("iommu_remove: va 0x%lx not in DVMA space", (long)dva);
 #endif
 
 	while ((long)len > 0) {
