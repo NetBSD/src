@@ -1,9 +1,9 @@
 #
-#	$NetBSD: GENERIC,v 1.4 1995/06/25 19:07:06 leo Exp $
+#	$NetBSD: GENERIC,v 1.5 1995/08/11 20:01:18 leo Exp $
 #
-# Maximal ATARI-TT
+# Generic atari
 #
-# This configuration file is for a multiple disk/multiple tape ATARI-TT
+# This configuration file is for a multiple disk/multiple tape ATARI-TT/Falcon
 # with network (through ppp or slip).
 
 include "std.atari"
@@ -83,6 +83,9 @@ options		GENERIC			# Mini-root boot support
 #
 #options	KFONT_8x8		# Use 8x8 font instead of 8x16
 #options	FPU_EMULATE		# Floating point emulation
+options		"ST_POOL_SIZE=22"	# smallest that allows TT-HIGH
+options		TT_SCSI			# SCSI-support for TT
+options		FALCON_SCSI		# SCSI-support for Falcon
 
 #
 # Build one kernel that can boot from any disk.
@@ -101,4 +104,3 @@ pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
 #The following sections describe various hardware options.
 #
 zs0	at mainbus0		# Serial support through 8530
-
