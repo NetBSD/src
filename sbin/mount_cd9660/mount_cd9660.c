@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.11 2000/05/27 16:32:08 jdolecek Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.12 2000/07/15 13:54:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.11 2000/05/27 16:32:08 jdolecek Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.12 2000/07/15 13:54:45 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,12 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.11 2000/05/27 16:32:08 jdolecek Exp $");
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
+	{ "extatt", 0, ISOFSMNT_EXTATT, 1 },
+	{ "gens", 0, ISOFSMNT_GENS, 1 },
 	{ "maplcase", 1, ISOFSMNT_NOCASETRANS, 1 },
+	{ "nrr", 0, ISOFSMNT_NORRIP, 1 },
+	{ "rrip", 1, ISOFSMNT_NORRIP, 1 },
+	{ "joliet", 1, ISOFSMNT_NOJOLIET, 1 },
 	{ NULL }
 };
 
@@ -90,18 +95,26 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "egijo:r")) != -1)
 		switch (ch) {
 		case 'e':
+			/* obsolete, retained for compatibility only, use
+			 * -o extatt */
 			opts |= ISOFSMNT_EXTATT;
 			break;
 		case 'g':
+			/* obsolete, retained for compatibility only, use
+			 * -o gens */
 			opts |= ISOFSMNT_GENS;
 			break;
 		case 'j':
+			/* obsolete, retained fo compatibility only, use
+			 * -o nojoliet */
 			opts |= ISOFSMNT_NOJOLIET;
 			break;
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, &opts);
 			break;
 		case 'r':
+			/* obsolete, retained for compatibility only, use
+			 * -o norrip */
 			opts |= ISOFSMNT_NORRIP;
 			break;
 		case '?':
@@ -136,6 +149,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_cd9660 [-egijr] [-o options] special node\n");
+		"usage: mount_cd9660 [-o options] special node\n");
 	exit(1);
 }
