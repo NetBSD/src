@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1996/01/09 15:26:53 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 1996/01/12 04:17:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1890,7 +1890,6 @@ get_machine_info()
 extern void
 getenvvars()
 {
-	extern u_long locore_dodebugmarks;
 	extern u_long bootdev, videobitdepth, videosize;
 	extern u_long end, esym;
 	extern u_long macos_boottime, MacOSROMBase;
@@ -1936,7 +1935,6 @@ getenvvars()
 	}
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
-	locore_dodebugmarks = mac68k_machine.do_graybars;
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
 	/* Should probably check this and fail if old */
