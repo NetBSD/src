@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.53 1998/02/07 19:32:40 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.54 1998/02/07 20:07:42 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.47 1998/01/27 01:02:46 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.49 1998/02/07 20:05:25 augustss Exp 
  */
 
 /*
@@ -1078,7 +1078,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82443LX PCI AGP Controller (PAC)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP,
 	    0,
 	    "Intel",
 	    "82443LX AGP Device (PAC)",
