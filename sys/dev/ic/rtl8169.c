@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.6 2005/01/13 14:24:24 kanaoka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.7 2005/02/13 15:43:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -598,10 +598,6 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 2;
 		} else
 			sc->sc_rev = 1;
-#if defined(DEBUG) || 1
-		aprint_normal("re_attach: MAC chip hwrev 0x%x softc %d\n",
-		    hwrev, sc->sc_rev);
-#endif
 
 		/* Set RX length mask */
 
