@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 1997/07/12 16:19:52 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 1998/03/18 21:59:39 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,10 @@
 #ifndef _NS532_VMPARAM_H_
 #define _NS532_VMPARAM_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
+
 /*
  * Machine dependent constants for 532.
  */
@@ -82,18 +86,18 @@
 #endif
 
 /*
+ * Size of shared memory map
+ */
+#ifndef SHMMAXPGS
+#define SHMMAXPGS	1024
+#endif
+
+/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
 #endif
 
 /*
@@ -148,4 +152,26 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
+
+#define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+/*
+ * pmap specific data stored in the vm_physmem[] array
+ */
+#if defined(PMAP_NEW)
+struct pmap_physseg {
+	struct pv_head *pvhead; 	/* pv_head array */
+	short *attrs;			/* attrs array */
+};
+#else
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv_entry array */
+	short *attrs;			/* attrs array */
+};
+#endif
+
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1997/04/01 16:32:52 matthias Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 1998/03/18 21:59:39 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,9 @@
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
+
 /*
  * Memory special file
  */
@@ -56,6 +59,9 @@
 #include <machine/conf.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 extern char *vmmap;		/* poor name! */
 caddr_t zeropage;
@@ -117,6 +123,16 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
+#if defined(PMAP_NEW)
+			v = uio->uio_offset;
+			pmap_kenter_pa((vm_offset_t)vmmap, trunc_page(v),
+			    (uio->uio_rw == UIO_READ) ? VM_PROT_READ :
+			    VM_PROT_ALL);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_kremove((vm_offset_t)vmmap, NBPG);
+#else /* PMAP_NEW */
 			v = uio->uio_offset;
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
@@ -126,15 +142,22 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
+#endif /* PMAP_NEW */
 			break;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#endif
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
@@ -176,5 +199,29 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	return (EOPNOTSUPP);
+	struct proc *p = curproc;	/* XXX */
+
+	switch (minor(dev)) {
+/* minor device 0 is physical memory */
+	case 0:
+		if (off > ctob(physmem) &&
+		    suser(p->p_ucred, &p->p_acflag) != 0)
+			return -1;
+		return ns532_btop(off);
+
+/* minor device 1 is kernel memory */
+	case 1:
+		/* XXX - writability, executability checks? */
+#if defined(UVM)
+		if (!uvm_kernacc((caddr_t)off, NBPG, B_READ))
+			return -1;
+#else
+		if (!kernacc((caddr_t)off, NBPG, B_READ))
+			return -1;
+#endif
+		return ns532_btop(vtophys(off));
+
+	default:
+		return -1;
+	}
 }

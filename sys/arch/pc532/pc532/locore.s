@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1997/11/10 01:50:37 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1998/03/18 21:59:38 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -40,6 +40,9 @@
  *
  */
 
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
+
 #include "assym.h"
 
 #include <sys/errno.h>
@@ -58,19 +61,29 @@
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-
+#ifdef PMAP_NEW
+	SET(PTmap,	(PDSLOT_PTE << PDSHIFT))
+	SET(PTD,	(_C_LABEL(PTmap) + PDSLOT_PTE * NBPG))
+	SET(PTDpde,	(_C_LABEL(PTD) + PDSLOT_PTE * PDE_SIZE))
+#else
 	SET(PTmap,	(PTDPTDI << PDSHIFT))
 	SET(PTD,	(_C_LABEL(PTmap) + PTDPTDI * NBPG))
-	SET(PTDpde,	(_C_LABEL(PTD) + PTDPTDI * 4))	/* XXX 4 == sizeof pde */
-	SET(Sysmap,	(_C_LABEL(PTmap) + KPTDI * NBPG))
+	SET(PTDpde,	(_C_LABEL(PTD) + PTDPTDI * PDE_SIZE))
+#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
  */
+#ifdef PMAP_NEW
+	SET(APTmap,	(PDSLOT_APTE << PDSHIFT))
+	SET(APTD,	(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG))
+	SET(APTDpde,	(_C_LABEL(PTD) + PDSLOT_APTE * PDE_SIZE))
+#else
 	SET(APTmap,	(APTDPTDI << PDSHIFT))
 	SET(APTD,	(_C_LABEL(APTmap) + APTDPTDI * NBPG))
-	SET(APTDpde,	(_C_LABEL(PTD) + APTDPTDI * 4))	/* XXX 4 == sizeof pde */
+	SET(APTDpde,	(_C_LABEL(PTD) + APTDPTDI * PDE_SIZE))
+#endif
 
 /*
  * kernel_text is used by libkvm.
@@ -178,13 +191,14 @@ GLOBAL(esigcode)
  */
 
 /*
- * copyout(caddr_t from, caddr_t to, size_t len);
+ * int copyout(caddr_t from, caddr_t to, size_t len);
+ *
  * Copy len bytes into the user's address space.
  */
 ENTRY(copyout)
 	enter	[r3,r4],0
 	movd	_C_LABEL(curpcb)(pc),r4
-	addr	_C_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
+	addr	_ASM_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
 
 	movd	B_ARG0,r1		/* from */
 	movd	B_ARG1,r2		/* to */
@@ -233,13 +247,14 @@ ENTRY(copyout)
 	ret	0
 
 /*
- * copyin(caddr_t from, caddr_t to, size_t len);
+ * int copyin(caddr_t from, caddr_t to, size_t len);
+ *
  * Copy len bytes from the user's address space.
  */
 ENTRY(copyin)
 	enter	[r3,r4],0
 	movd	_C_LABEL(curpcb)(pc),r4
-	addr	_C_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
+	addr	_ASM_LABEL(copy_fault)(pc),PCB_ONFAULT(r4)
 
 	movd	B_ARG0,r1		/* from */
 	movd	B_ARG1,r2		/* to */
@@ -255,9 +270,9 @@ ENTRY(copyin)
 	movd	r1,r3
 	addd	r0,r3
 	cmpd	r3,VM_MAXUSER_ADDRESS
-	bhi	_C_LABEL(copy_fault)
+	bhi	_ASM_LABEL(copy_fault)
 	cmpd	r1,r3
-	bhs	_C_LABEL(copy_fault)	/* check for overflow. */
+	bhs	_ASM_LABEL(copy_fault)	/* check for overflow. */
 
 	/* And now do the copy. */
 	lshd	-2,r0
@@ -269,14 +284,15 @@ ENTRY(copyin)
 	exit	[r3,r4]
 	ret	0
 
-ENTRY(copy_fault)
+ASLOCAL(copy_fault)
 	movqd	0,PCB_ONFAULT(r4)
 	movd	EFAULT,r0
 	exit	[r3,r4]
 	ret	0
 
 /*
- * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ *
  * Copy a NUL-terminated string, at most maxlen characters long, into the
  * user's address space.  Return the number of characters copied (including
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
@@ -285,7 +301,7 @@ ENTRY(copy_fault)
 ENTRY(copyoutstr)
 	enter	[r3],0
 	movd	_C_LABEL(curpcb)(pc),r3
-	addr	_C_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
+	addr	_ASM_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
 	movd	B_ARG0,r0		/* from */
 	movd	B_ARG1,r1		/* to */
 	movd	B_ARG2,r2		/* maxlen */
@@ -305,7 +321,8 @@ ENTRY(copyoutstr)
 	br	_ASM_LABEL(copystr_return)
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ *
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
@@ -314,7 +331,7 @@ ENTRY(copyoutstr)
 ENTRY(copyinstr)
 	enter	[r3],0
 	movd	_C_LABEL(curpcb)(pc),r3
-	addr	_C_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
+	addr	_ASM_LABEL(copystr_fault)(pc),PCB_ONFAULT(r3)
 	movd	B_ARG0,r0		/* from */
 	movd	B_ARG1,r1		/* to */
 	movd	B_ARG2,r2		/* maxlen */
@@ -333,7 +350,7 @@ ENTRY(copyinstr)
 	movqd	0,r0
 	br	_ASM_LABEL(copystr_return)
 
-ENTRY(copystr_fault)
+ASLOCAL(copystr_fault)
 	movd	EFAULT,r0
 
 ASLOCAL(copystr_return)
@@ -349,7 +366,8 @@ ASLOCAL(copystr_return)
 	ret	0
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * int copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ *
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
@@ -391,6 +409,103 @@ ENTRY(copystr)
 	movd	r2,0(r1)
 3:	exit	[r4]
 	ret	0
+
+#if defined(UVM)
+/*
+ * int kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a fatal
+ * page fault.
+ *
+ * kcopy() _must_ save and restore the old fault handler since it is
+ * called by uiomove(), which may be in the path of servicing a non-fatal
+ * page fault.
+ *
+ * We can't use bcopy because the state of the stack at fault time must
+ * be known. So we duplicate the bcopy code here. Sigh.
+ */
+
+0:	movd	_C_LABEL(curpcb)(pc),r4
+	movd	tos,PCB_ONFAULT(r4)
+	movd	EFAULT,r0
+	exit	[r3,r4]
+	ret	0
+
+ENTRY(kcopy)
+	enter	[r3,r4],0
+	movd	_C_LABEL(curpcb)(pc),r4
+	movd	PCB_ONFAULT(r4),tos
+	addr	0b(pc),PCB_ONFAULT(r4)
+
+	movd	B_ARG2,r0
+	movd	B_ARG0,r1
+	movd	B_ARG1,r2
+	cmpd	r2,r1
+	bls	0f
+	movd	r1,r3
+	addd	r0,r3
+	cmpd	r2,r3
+	bls	2f
+0:	cmpqd	4,r0
+	bhi	1f
+
+	/*
+	 * Align destination address.
+	 */
+	movd	3,r3
+	andd	r2,r3
+	movd	0(r1),0(r2)
+	negd	r3,r3
+	addqd	4,r3
+	addd	r3,r1
+	addd	r3,r2
+	subd	r3,r0
+
+	movqd	3,r3
+	andd	r0,r3
+	lshd	-2,r0
+	movsd
+
+	movd	r3,r0
+1:	movsb
+	movd	tos,PCB_ONFAULT(r4)
+	movqd	0,r0
+	exit	[r3,r4]
+	ret	0
+
+2:	addd	r0,r1
+	addd	r0,r2
+	addqd	-1,r1
+	addqd	-1,r2
+	cmpqd	4,r0
+	bhi	0f
+
+	/*
+	 * Align destination address.
+	 */
+	movd	r0,r3
+	movqd	1,r0
+	addd	r2,r0
+	andd	3,r0
+	subd	r0,r3
+	movsb	b
+	movd	r3,r0
+	andd	3,r3
+
+	addqd	-3,r1
+	addqd	-3,r2
+	lshd	-2,r0
+	movsd	b
+
+	movd	r3,r0
+	addqd	3,r1
+	addqd	3,r2
+0:	movsb	b
+	movd	tos,PCB_ONFAULT(r4)
+	movqd	0,r0
+	exit	[r3,r4]
+	ret	0
+#endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);
@@ -998,7 +1113,11 @@ ASENTRY_NOPROFILE(interrupt)
 	 * Increment interrupt counters.
 	 */
 	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
+#ifdef UVM
+	addqd	1,_C_LABEL(uvmexp)+V_INTR(pc)
+#else
 	addqd	1,_C_LABEL(cnt)+V_INTR(pc)
+#endif
 	addqd	1,_C_LABEL(ivt)+IV_CNT(r0)
 
 	movd	_C_LABEL(ivt)+IV_ARG(r0),r1 /* Get argument */

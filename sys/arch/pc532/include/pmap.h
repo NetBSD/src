@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 1998/02/18 02:05:35 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 1998/03/18 21:59:39 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -50,6 +50,14 @@
  * from hp300:	@(#)pmap.h	7.2 (Berkeley) 12/16/90
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
+
+#ifdef PMAP_NEW			/* redirect */
+#include <machine/pmap.new.h>	/* defines _NS532_PMAP_H_ */
+#endif
+
 #ifndef	_NS532_PMAP_H_
 #define	_NS532_PMAP_H_
 
@@ -62,6 +70,12 @@
  */
 
 /*
+ * PG_AVAIL usage ... 
+ */
+
+#define PG_W         PG_AVAIL1       /* "wired" mapping */
+
+/*
  * One page directory, shared between
  * kernel and user modes.
  */
@@ -72,6 +86,9 @@
 #define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3fe		/* start of alternate page directory */
 
+#define UPT_MIN_ADDRESS	(PTDPTDI<<PDSHIFT)
+#define UPT_MAX_ADDRESS	(UPT_MIN_ADDRESS + (PTDPTDI<<PGSHIFT))
+
 /*
  * Address of current and alternate address space page table maps
  * and directories.
@@ -80,6 +97,10 @@
 extern pt_entry_t	PTmap[], APTmap[];
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde;
 extern pt_entry_t	*Sysmap;
+
+void pmap_bootstrap __P((vm_offset_t start));
+boolean_t pmap_testbit __P((vm_offset_t, int));
+void pmap_changebit __P((vm_offset_t, int, int));
 #endif
 
 /*
@@ -110,7 +131,6 @@ extern pt_entry_t	*Sysmap;
  */
 typedef struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
-	boolean_t		pm_pdchanged;	/* pdir changed */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -148,17 +168,13 @@ struct pv_page {
 };
 
 #ifdef	_KERNEL
+extern int		nkpde;		/* number of kernel page dir. ents */
 extern struct pmap	kernel_pmap_store;
-struct pv_entry		*pv_table;	/* array of entries, one per page */
 
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
-
-void pmap_bootstrap __P((vm_offset_t start));
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-boolean_t pmap_testbit __P((vm_offset_t, int));
-void pmap_changebit __P((vm_offset_t, int, int));
 
 vm_offset_t reserve_dumppages __P((vm_offset_t));
 
