@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.11 2001/04/06 17:08:52 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.12 2001/04/06 19:01:06 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -248,6 +248,7 @@ void parse_client_statement (cfile, ip, config)
 	int tmp, i;
 
 	switch (peek_token (&val, (unsigned *)0, cfile)) {
+#if !defined (SMALL)
 	      case KEY:
 		next_token (&val, (unsigned *)0, cfile);
 		if (ip) {
@@ -269,6 +270,7 @@ void parse_client_statement (cfile, ip, config)
 		}
 		parse_key (cfile);
 		return;
+#endif
 
 		/* REQUIRE can either start a policy statement or a
 		   comma-seperated list of names of required options. */
@@ -921,6 +923,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 	struct data_string key_id;
 
 	switch (next_token (&val, (unsigned *)0, cfile)) {
+#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != STRING && !is_identifier (token)) {
@@ -933,6 +936,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;
+#endif
 	      case TOKEN_BOOTP:
 		lease -> is_bootp = 1;
 		break;

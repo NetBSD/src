@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.36 2001/04/06 17:08:52 mellon Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.37 2001/04/06 19:01:06 mellon Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -139,9 +139,11 @@ int main (argc, argv, envp)
 		log_fatal ("Can't initialize OMAPI: %s",
 			   isc_result_totext (status));
 
+#if !defined (SMALL)
 	/* Set up the OMAPI wrappers for various server database internal
 	   objects. */
 	dhcp_common_objects_setup ();
+#endif
 
 	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
 	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
@@ -426,6 +428,7 @@ int main (argc, argv, envp)
 	if (release_mode)
 		return 0;
 
+#if !defined (SMALL)
 	/* Start up a listener for the object management API protocol. */
 	if (top_level_config.omapi_port != -1) {
 		listener = (omapi_object_t *)0;
@@ -441,6 +444,7 @@ int main (argc, argv, envp)
 			log_fatal ("Can't start OMAPI protocol: %s",
 				   isc_result_totext (result));
 	}
+#endif
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
