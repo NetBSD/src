@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2004/01/13 05:51:07 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2004/01/13 12:57:24 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2004/01/13 05:51:07 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2004/01/13 12:57:24 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2004/01/13 05:51:07 sekiya Exp $");
 #include <machine/sysconf.h>
 #include <machine/intr.h>
 #include <machine/bootinfo.h>
+#include <machine/bus.h>
 
 #include <mips/locore.h>
 #include <mips/cache.h>
@@ -523,6 +524,11 @@ mach_init(argc, argv, magic, btinfo)
 
 	/* We can now no longer use bootinfo. */
 	bootinfo = NULL;
+
+	/*
+	 * Initialize mips version-dependent DMA handlers.
+	 */
+	sgimips_bus_dma_init();
 
 	/*
 	 * Walk the component tree and count the number of CPUs
