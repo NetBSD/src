@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.20 1997/05/22 03:24:38 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.21 1997/05/22 10:38:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.20 1997/05/22 03:24:38 lukem Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.21 1997/05/22 10:38:11 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -228,13 +228,13 @@ char *s;
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
 	id = strtoul(cp, &ep, 10);
-	if (id > UID_MAX || *ep == '\0')
+	if (id > UID_MAX || *ep != '\0')
 		return 1;
 	pw->pw_uid = (uid_t)id;
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
 	id = strtoul(cp, &ep, 10);
-	if (id > GID_MAX || *ep == '\0')
+	if (id > GID_MAX || *ep != '\0')
 		return 1;
 	pw->pw_gid = (gid_t)id;
 	pw->pw_change = 0;
