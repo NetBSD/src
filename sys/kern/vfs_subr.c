@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.75 1997/10/18 11:51:32 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.76 1997/10/18 16:34:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -345,9 +345,12 @@ vattr_null(vap)
 	vap->va_fileid = VNOVAL;
 	vap->va_size = VNOVAL;
 	vap->va_blocksize = VNOVAL;
-	vap->va_atime.tv_sec = vap->va_atime.tv_nsec =
-	    vap->va_mtime.tv_sec = vap->va_mtime.tv_nsec =
-	    vap->va_ctime.tv_sec = vap->va_ctime.tv_nsec = VNOVAL;
+	vap->va_atime.tv_sec =
+	    vap->va_mtime.tv_sec =
+	    vap->va_ctime.tv_sec = VNOVAL;
+	vap->va_atime.tv_nsec =
+	    vap->va_mtime.tv_nsec =
+	    vap->va_ctime.tv_nsec = VNOVAL;
 	vap->va_gen = VNOVAL;
 	vap->va_flags = VNOVAL;
 	vap->va_rdev = VNOVAL;
