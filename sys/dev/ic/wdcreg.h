@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.14 1997/08/27 11:25:18 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.15 1998/01/14 23:42:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -41,25 +41,30 @@
 /*
  * Disk Controller register definitions.
  */
-#define	wd_data		0x000	/* data register (R/W - 16 bits) */
-#define wd_error	0x001	/* error register (R) */
-#define	wd_precomp	0x001	/* write precompensation (W) */
-#define	wd_features	0x001	/* features (W) */
-#define	wd_seccnt	0x002	/* sector count (R/W) */
-#define wd_ireason  0x002   /* interrupt reason (R/W) (for atapi) */
-#define	wd_sector	0x003	/* first sector number (R/W) */
-#define	wd_cyl_lo	0x004	/* cylinder address, low byte (R/W) */
-#define	wd_cyl_hi	0x005	/* cylinder address, high byte (R/W) */
-#define	wd_sdh		0x006	/* sector size/drive/head (R/W) */
-#define	wd_command	0x007	/* command register (W)	*/
-#define	wd_status	0x007	/* immediate status (R)	*/
 
-#define	wd_altsts	0x206	/* alternate fixed disk status (via 1015) (R) */
-#define	wd_ctlr		0x206	/* fixed disk controller control (via 1015) (W) */
+/* offsets of registers in the 'regular' register region */
+#define	wd_data		0	/* data register (R/W - 16 bits) */
+#define	wd_error	1	/* error register (R) */
+#define	wd_precomp	1	/* write precompensation (W) */
+#define	wd_features	1	/* features (W) */
+#define	wd_seccnt	2	/* sector count (R/W) */
+#define	wd_ireason	2	/* interrupt reason (R/W) (for atapi) */
+#define	wd_sector	3	/* first sector number (R/W) */
+#define	wd_cyl_lo	4	/* cylinder address, low byte (R/W) */
+#define	wd_cyl_hi	5	/* cylinder address, high byte (R/W) */
+#define	wd_sdh		6	/* sector size/drive/head (R/W) */
+#define	wd_command	7	/* command register (W)	*/
+#define	wd_status	7	/* immediate status (R)	*/
+
+/* offsets of registers in the auxiliary register region */
+#define	wd_aux_altsts	0	/* alternate fixed disk status (R) */
+#define	wd_aux_ctlr	0	/* fixed disk controller control (W) */
 #define  WDCTL_4BIT	 0x08	/* use four head bits (wd1003) */
 #define  WDCTL_RST	 0x04	/* reset the controller */
 #define  WDCTL_IDS	 0x02	/* disable controller interrupts */
-#define	wd_digin	0x207	/* disk controller input (via 1015) (R) */
+#if 0 /* NOT MAPPED; fd uses this register on PCs */
+#define	wd_digin	1	/* disk controller input (R) */
+#endif
 
 /*
  * Status bits.

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdlink.h,v 1.3 1997/09/03 07:57:53 bouyer Exp $	*/
+/*	$NetBSD: wdlink.h,v 1.4 1998/01/14 23:42:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -34,31 +34,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * XXX THIS FILE NEEDS TO BE GUTTED, AND TURNED INTO A REAL 'ATA'/'ATAPI'
+ * XXX INTERFACE FILE.
+ */
 
 #undef WDDEBUG
 /* #undef DIAGNOSTIC */
-
-struct wdc_softc {
-	struct device sc_dev;
-	void *sc_ih;
-	struct wd_link *d_link[2];
-	struct scsipi_link *ab_link;
-	int sc_iobase;			/* I/O port base */
-	int sc_drq;			/* DMA channel */
-
-	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
-	int sc_flags;
-#define	WDCF_ACTIVE		0x01	/* controller is active */
-#define	WDCF_SINGLE		0x02	/* sector at a time mode */
-#define	WDCF_ERROR		0x04	/* processing a disk error */
-#define	WDCF_WANTED		0x08	/* XXX locking for wd_get_parms() */
-#define	WDCF_IRQ_WAIT		0x10	/* controller is waiting for irq */
-#define	WDCF_ONESLAVE		0x20	/* ctrl. has one ATAPI slave attached */
-	int sc_errors;			/* errors during current transfer */
-	u_char sc_status;		/* copy of status register */
-	u_char sc_error;		/* copy of error register */
-	u_char sc_drives_mask;	/* bitmask for drives present/absent */
-};
 
 struct wd_link {
 	u_int8_t type;
@@ -96,8 +78,7 @@ struct wd_link {
  * implemented.
  */
 #define WDF_LOADED	0x10		/* parameters loaded */
-#define WDF_32BIT	0x20		/* can do 32-bit transfer */
-#define WDF_WAIT	0x40		/* waiting for resourses */
+#define WDF_WAIT	0x20		/* waiting for resourses */
 
 	daddr_t sc_badsect[127];	/* 126 plus trailing -1 marker */
 	struct disklabel *sc_lp;	/* label info for this disk */

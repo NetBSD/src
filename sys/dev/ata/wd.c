@@ -1,10 +1,12 @@
-/*	$NetBSD: wd.c,v 1.167 1998/01/12 09:43:49 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.168 1998/01/14 23:41:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  *
  * DMA and multi-sector PIO handling are derived from code contributed by
  * Onno van der Linden.
+ *
+ * Bus_space-ified by Christopher G. Demetriou.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,13 +57,12 @@
 
 #include <vm/vm.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/wdreg.h>
-#include <dev/isa/wdlink.h>
+#include <dev/ic/wdcreg.h>		/* XXX */
+#include <dev/ic/wdcvar.h>		/* XXX */
+#include <dev/ata/wdlink.h>
 #include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -90,7 +91,11 @@ struct wd_softc {
 #endif
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	wdprobe		__P((struct device *, void *, void *));
+#else
+int	wdprobe		__P((struct device *, struct cfdata *, void *));
+#endif
 void	wdattach	__P((struct device *, struct device *, void *));
 int	wdprint		__P((void *, char *));
 
@@ -98,7 +103,13 @@ struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
 };
 
+#if (NetBSD > 199801 || NetBSD1_3 >= 3)
 extern struct cfdriver wd_cd;
+#else
+struct cfdriver wd_cd = {
+	NULL, "wd", DV_DISK
+};
+#endif
 
 void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void	wdgetdisklabel	__P((struct wd_softc *));
@@ -119,11 +130,23 @@ int	wdlock		__P((struct wd_link *));
 void	wdunlock	__P((struct wd_link *));
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
+wdprobe(parent, matchv, aux)
+#else
 wdprobe(parent, match, aux)
+#endif
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *matchv;
+#else
+	struct cfdata *match;
+#endif
+
+	void *aux;
 {
-	struct cfdata *cf = match;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	struct cfdata *match = matchv;
+#endif
 	struct wd_link *d_link = aux;
 	int drive;
 
@@ -133,8 +156,8 @@ wdprobe(parent, match, aux)
 		return 0;
 
 	drive = d_link->drive;
-	if (cf->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
-		cf->cf_loc[ATACF_DRIVE] != drive)
+	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
+		match->cf_loc[ATACF_DRIVE] != drive)
 		return 0;
 
 	return 1;
@@ -207,7 +230,8 @@ wdattach(parent, self, aux)
 	else
 		printf(" %d-sector %d-bit pio transfers,",
 		    d_link->sc_multiple,
-		    (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
+		    (((struct wdc_softc *)d_link->wdc_softc)->sc_cap &
+		      WDC_CAPABILITY_DATA32) == 0 ? 16 : 32);
 	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
 		printf(" lba addressing\n");
 	else
@@ -886,7 +910,8 @@ wddump(dev, blkno, va, size)
 		}
 	
 		/* XXX XXX XXX */
-		outsw(wdc->sc_iobase + wd_data, va, lp->d_secsize >> 1);
+		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
