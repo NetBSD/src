@@ -1597,7 +1597,7 @@ alpha_expand_unaligned_load (tgt, mem, size, ofs, sign)
     {
       emit_move_insn (addr, plus_constant (XEXP (mem, 0), ofs));
       emit_insn (gen_extxl (extl, meml, GEN_INT (size*8), addr));
-      switch (size)
+      switch ((int)size)
 	{
 	case 2:
 	  emit_insn (gen_extwh (exth, memh, addr));
@@ -1659,7 +1659,7 @@ alpha_expand_unaligned_store (dst, src, size, ofs)
       emit_insn (gen_insxh (insh, gen_lowpart (DImode, src),
 			    GEN_INT (size*8), addr));
 
-      switch (size)
+      switch ((int)size)
 	{
 	case 2:
 	  emit_insn (gen_inswl (insl, gen_lowpart (HImode, src), addr));
@@ -1675,7 +1675,7 @@ alpha_expand_unaligned_store (dst, src, size, ofs)
 
   emit_insn (gen_mskxh (dsth, dsth, GEN_INT (size*8), addr));
 
-  switch (size)
+  switch ((int)size)
     {
     case 2:
       emit_insn (gen_mskxl (dstl, dstl, GEN_INT (0xffff), addr));
