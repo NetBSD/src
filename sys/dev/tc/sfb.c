@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.18 1999/06/25 03:33:20 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.19 1999/10/05 09:13:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.18 1999/06/25 03:33:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.19 1999/10/05 09:13:30 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,6 @@ void	sfb_erasecols __P((void *, int, int, int, long));
 void	sfb_copyrows __P((void *, int, int, int));
 void	sfb_eraserows __P((void *, int, int, long));
 int	sfb_alloc_attr __P((void *, int, int, int, long *));
-#define	rcons_alloc_attr sfb_alloc_attr
 
 struct wsdisplay_emulops sfb_emulops = {
 	sfb_cursor,			/* could use hardware cursor; punt */
@@ -300,7 +299,7 @@ sfb_getdevconfig(dense_addr, dc)
 	sfbasic = (caddr_t)(dc->dc_vaddr + SFB_ASIC_OFFSET);
 	hsetup = *(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_HSETUP);
 	vsetup = *(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VSETUP);
-	vbase  = *(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_BASE) & 0x1ff;
+	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_BASE) = vbase = 1;
 
 	dc->dc_wid = (hsetup & 0x1ff) << 2;
 	dc->dc_ht = (vsetup & 0x7ff);
@@ -485,7 +484,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	sfb_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -520,7 +519,7 @@ sfb_cnattach(addr)
 
         sfb_getdevconfig(addr, dcp);
  
-        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+        sfb_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
 
         wsdisplay_cnattach(&sfb_stdscreen, &dcp->dc_rcons,
                            0, 0, defattr);
