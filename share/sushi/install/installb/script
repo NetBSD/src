@@ -1,7 +1,8 @@
 #!/bin/sh -x
-# $NetBSD: script,v 1.4 2003/07/26 20:17:39 salo Exp $
+# $NetBSD: script,v 1.5 2005/01/18 18:08:30 peter Exp $
 if [ -z "$PKG_PATH" ]; then
 	PKG_PATH="ftp://ftp.NetBSD.org/pub/NetBSD/packages"
 fi
 NBSDVERS=`uname -r | sed 's@\.\([0-9]*\)[\._].*@\.\1@'`
+NBSDVERS=`echo $NBSDVERS | sed 's@\.99\.*@\.0@'`
 pkg_add -v ${PKG_PATH}/${NBSDVERS}/`uname -m`/$2/${1}.tgz
