@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.3 2002/03/26 05:18:19 mhitch Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.4 2002/07/18 02:13:13 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	if (tsz+dsz+bsz > bbsize)
 		errx(1, "%s: resulting image too big\n", argv[0]);
 
-	memset(buffer, bbsize, 0);
+	memset(buffer, 0, bbsize);
 
 	/* Allocate and load loadable sections */
 	sect_offset = (u_int32_t *)malloc(htobe16(eh->e_shnum) * sizeof(u_int32_t));
