@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.50 1996/09/29 21:27:30 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.51 1996/10/10 23:55:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1083,9 +1083,9 @@ kernel_reload_write(uio)
 		if ((error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
 		     uio)) != 0)
 			return(error);
-		printf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
-			kernel_exec.a_data, kernel_exec.a_bss,
-			esym == NULL ? 0 : kernel_exec.a_syms);
+		kprintf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
+		    kernel_exec.a_data, kernel_exec.a_bss,
+		    esym == NULL ? 0 : kernel_exec.a_syms);
 		/*
 		 * Looks good - allocate memory for a kernel image.
 		 */

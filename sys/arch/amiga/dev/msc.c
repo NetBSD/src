@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.8 1996/09/02 06:43:30 mycroft Exp $ */
+/*	$NetBSD: msc.c,v 1.9 1996/10/10 23:56:23 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -191,12 +191,12 @@ bugi(msc, string)
 	mscmem = msc->board;
 	ms = &mscmem->Status[msc->port];
 
-	printf("msc  %s u%d f%08lx F%08lx\n", string, msc->port, msc->flags,
+	kprintf("msc  %s u%d f%08lx F%08lx\n", string, msc->port, msc->flags,
 		msc->openflags);
-	printf("msc  h%d t%d H%d t%d p%02x c%02x CD%02x\n", ms->InHead,
+	kprintf("msc  h%d t%d H%d t%d p%02x c%02x CD%02x\n", ms->InHead,
 		ms->InTail, ms->OutHead, ms->OutTail, ms->Param, ms->Command,
 		ms->chCD);
-	printf("msc  a%02x b%02x c%02x\n", ms->Pad_a, ms->Pad_b, ms->Padc);
+	kprintf("msc  a%02x b%02x c%02x\n", ms->Pad_a, ms->Pad_b, ms->Padc);
 
 	return
 }
@@ -232,26 +232,26 @@ mscattach(pdp, dp, auxp)
   unit = dp->dv_unit;
 
   if (mscinitcard(zap) != 0) {
-    printf("\nmsc%d: Board initialize failed, bad download code.\n", unit);
+    kprintf("\nmsc%d: Board initialize failed, bad download code.\n", unit);
     return;
   }
 
-  printf("\nmsc%d: Board successfully initialized.\n", unit);
+  kprintf("\nmsc%d: Board successfully initialized.\n", unit);
 
   mscmem = (struct mscmemory *) zap->va;
 
   if (mscmem->Common.Crystal == MSC_UNKNOWN) {
-	printf("msc%d: Unable to detect crystal frequency.\n", unit);
+	kprintf("msc%d: Unable to detect crystal frequency.\n", unit);
 	return;
   }
 
   if (mscmem->Common.Crystal == MSC_TURBO) {
-	printf("msc%d: Turbo version detected (%02x%02x:%d)\n", unit,
+	kprintf("msc%d: Turbo version detected (%02x%02x:%d)\n", unit,
 		mscmem->Common.TimerH, mscmem->Common.TimerL,
 		mscmem->Common.Pad_a);
 	mscspeedtab = mscspeedtab_turbo;
   } else {
-	printf("msc%d: Normal version detected (%02x%02x:%d)\n", unit,
+	kprintf("msc%d: Normal version detected (%02x%02x:%d)\n", unit,
 		mscmem->Common.TimerH, mscmem->Common.TimerL,
 		mscmem->Common.Pad_a);
 	mscspeedtab = mscspeedtab_normal;
@@ -413,7 +413,7 @@ mscopen(dev, flag, mode, p)
       tp->t_state |= TS_WOPEN;
 
 #if DEBUG_CD
-      printf("msc %ld waiting for CD\n", MSCLINE(dev));
+      kprintf("msc %ld waiting for CD\n", MSCLINE(dev));
 #endif
       error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 
@@ -425,7 +425,7 @@ mscopen(dev, flag, mode, p)
 
 done: 
 #if DEBUG_CD
-  printf("msc %ld waiting for CD\n", MSCLINE(dev));
+  kprintf("msc %ld waiting for CD\n", MSCLINE(dev));
 #endif
   /* This is a way to handle lost XON characters */
   if ((flag & O_TRUNC) && (tp->t_state & TS_TTSTOP)) {
@@ -583,7 +583,7 @@ mscmint (data)
       if (newhead != (bufpos = ms->InTail))
       {
 #if DEBUG_MSC
-	      printf("iop%d\n",slot);
+	      kprintf("iop%d\n",slot);
 #endif
 	      /* buffer for input chars/events */
 	      ibuf = &msc->board->InBuf[msc->port][0];
@@ -604,7 +604,7 @@ mscmint (data)
 			    /* carrier detect change OFF -> ON */
 			    case MSCEVENT_CarrierOn:
 #if DEBUG_CD
-			      printf("msc  CD ON %d\n", msc->port);
+			      kprintf("msc  CD ON %d\n", msc->port);
 #endif
 			      msc->flags |= TIOCM_CD;
 			      if (MSCDIALIN(tp->t_dev))
@@ -614,7 +614,7 @@ mscmint (data)
 			    /*  carrier detect change ON -> OFF */
 			    case MSCEVENT_CarrierOff:
 #if DEBUG_CD
-			      printf("msc  CD OFF %d\n", msc->port);
+			      kprintf("msc  CD OFF %d\n", msc->port);
 #endif
 			      msc->flags &= ~TIOCM_CD;
 #ifndef MSCCDHACK
@@ -635,13 +635,13 @@ mscmint (data)
     
 			    case MSCEVENT_Break:
 #if DEBUG_MSC
-			      printf("Break received on msc%d\n", slot);
+			      kprintf("Break received on msc%d\n", slot);
 #endif
 			      (*linesw[tp->t_line].l_rint)(TTY_FE, tp);
 			      break;
     
 			    default:
-			      printf("msc: unknown event type %d\n",
+			      kprintf("msc: unknown event type %d\n",
 				      ibuf[(bufpos-1)&0xff]);
 
 			} /* event type switch */
@@ -652,7 +652,7 @@ mscmint (data)
 			   if (ms->chCD) {
 			     /* Carrier detect ON -> OFF */
 #if DEBUG_CD
-			     printf("msc  CD OFF blocked %d msc->flags %08lx\n",
+			     kprintf("msc  CD OFF blocked %d msc->flags %08lx\n",
 				    msc->port, msc->flags);
 #endif
 			     msc->flags &= ~TIOCM_CD;
@@ -674,13 +674,13 @@ mscmint (data)
 			   goto NoRoomForYa;
 			 }
 #if DEBUG_MSC
-			 printf("'%c' ",ibuf[bufpos]);
+			 kprintf("'%c' ",ibuf[bufpos]);
 #endif
 			 (*linesw[tp->t_line].l_rint)((int)ibuf[bufpos++], tp);
 			break;
 
 		      default:
-			printf("msc: unknown data type %d\n", cbuf[bufpos]);
+			kprintf("msc: unknown data type %d\n", cbuf[bufpos]);
 			bufpos++;
 
 		   } /* switch on input data type */
@@ -728,7 +728,7 @@ NoRoomForYa:
       if (newhead != (bufpos = ms->InTail))
       {
 #if DEBUG_MSC
-	      printf("icp%d\n",slot);
+	      kprintf("icp%d\n",slot);
 #endif
 	      /* buffer for input chars/events */
 	      ibuf = &msc->board->InBuf[msc->port][0];
@@ -749,7 +749,7 @@ NoRoomForYa:
 			    /* carrier detect change OFF -> ON */
 			    case MSCEVENT_CarrierOn:
 #if DEBUG_CD
-			      printf("msc  CD ON %d (closed)\n", msc->port);
+			      kprintf("msc  CD ON %d (closed)\n", msc->port);
 #endif
 			      msc->flags |= TIOCM_CD;
 			      break;
@@ -757,7 +757,7 @@ NoRoomForYa:
 			    /*  carrier detect change ON -> OFF */
 			    case MSCEVENT_CarrierOff:
 #if DEBUG_CD
-			      printf("msc  CD OFF %d (closed)\n", msc->port);
+			      kprintf("msc  CD OFF %d (closed)\n", msc->port);
 #endif
 			      msc->flags &= ~TIOCM_CD;
 #ifndef MSCCDHACK
@@ -778,7 +778,7 @@ NoRoomForYa:
 			      break;
     
 			    default:
-			      printf("msc: unknown event type %d\n",
+			      kprintf("msc: unknown event type %d\n",
 				     ibuf[(bufpos-1)&0xff]);
 
 			} /* event type switch */
@@ -1005,7 +1005,7 @@ mschwiflow(tp, flag)
 /* Rob's version */
 #if 1
 #if DEBUG_MSC
-	printf("mschwiflow %d\n", flag);
+	kprintf("mschwiflow %d\n", flag);
 #endif
 
 	if (flag)
@@ -1065,7 +1065,7 @@ mscstart(tp)
   slot = MSCSLOT(tp->t_dev);
 
 #if 0
-  printf("starting msc%d\n", slot);
+  kprintf("starting msc%d\n", slot);
 #endif
 
   s = spltty();
@@ -1122,7 +1122,7 @@ mscstart(tp)
 
 #if 0
       msc->tmpbuf[cc] = 0;
-      printf("sending '%s'\n", msctmpbuf);
+      kprintf("sending '%s'\n", msctmpbuf);
 #endif
 
       /* send the first char across to reduce latency */
@@ -1172,7 +1172,7 @@ mscstop(tp, flag)
 #if 0
 			msc = &mscdev[MSCSLOT(tp->t_dev)];
 			ms = &msc->board->Status[msc->port];
-			printf("stopped output on msc%d\n", MSCSLOT(tp->t_dev));
+			kprintf("stopped output on msc%d\n", MSCSLOT(tp->t_dev));
 			ms->OutDisable = TRUE;
 #endif
 		}
@@ -1297,9 +1297,9 @@ mscinitcard(zap)
   to += start;
 
 #if DEBUG_MSC
-  printf("\n** copying %ld bytes from %08lx to %08lx (start=%04lx)\n",
+  kprintf("\n** copying %ld bytes from %08lx to %08lx (start=%04lx)\n",
 	  (unsigned long)bcount, (unsigned long)from, to, start);
-  printf("First byte to copy is %02lx\n", *from);
+  kprintf("First byte to copy is %02lx\n", *from);
 #endif
 
   while(bcount--) *to++ = *from++;

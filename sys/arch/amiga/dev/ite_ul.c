@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.5 1996/07/08 13:28:44 is Exp $	*/
+/*	$NetBSD: ite_ul.c,v 1.6 1996/10/10 23:56:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -217,7 +217,7 @@ ulowell_init(ip)
 	 */
 
 #ifdef UL_DEBUG
-	printf("ulowell_init: %d %d %d %d %d %d\n", ip->ftwidth, ip->ftheight,
+	kprintf("ulowell_init: %d %d %d %d %d %d\n", ip->ftwidth, ip->ftheight,
 		ip->ftbaseline, ip->font_lo, ip->font_hi, ip->ftboldsmear);
 #endif
 }
@@ -306,7 +306,7 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
 #ifdef DEBUG_UL
-	printf("screen_up %d %d %d ->",top,bottom,lines);
+	kprintf("screen_up %d %d %d ->",top,bottom,lines);
 #endif
 	/* do some bounds-checking here.. */
 
@@ -340,7 +340,7 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
 #ifdef DEBUG_UL
-	printf("screen_down %d %d %d ->",top,bottom,lines);
+	kprintf("screen_down %d %d %d ->",top,bottom,lines);
 #endif
 
 	/* do some bounds-checking here.. */
@@ -397,7 +397,7 @@ void ulowell_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	u_int16_t cmd[7];
 
 #ifdef	DEBUG_UL
-	printf("ulowell_clear %d %d %d %d ->",sy,sx,h,w);
+	kprintf("ulowell_clear %d %d %d %d ->",sy,sx,h,w);
 #endif
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
@@ -420,7 +420,7 @@ void ulowell_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
 #ifdef DEBUG_UL
-	printf("ulowell_scroll %d %d %d %d ->",sy,sx,count,dir);
+	kprintf("ulowell_scroll %d %d %d %d ->",sy,sx,count,dir);
 #endif
 
 	ulowell_cursor(ip, ERASE_CURSOR);
@@ -458,10 +458,10 @@ gsp_dump(cmd,len)
 	u_int16_t *cmd;
 	int len;
 {
-	printf("gsp");
+	kprintf("gsp");
 	while (len-- > 0)
-		printf(" %lx",*cmd++);
-	printf("\n");
+		kprintf(" %lx",*cmd++);
+	kprintf("\n");
 }
 #endif
 #endif /* NGRFUL */

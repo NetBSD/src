@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.13 1996/05/07 00:46:44 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.14 1996/10/10 23:56:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -196,7 +196,7 @@ esattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -216,24 +216,24 @@ es_dump_smcregs(where, smc)
 {
 	u_short cur_bank = smc->b0.bsr & BSR_MASK;
 
-	printf("SMC registers %p from %s bank %04x\n", smc, where,
+	kprintf("SMC registers %p from %s bank %04x\n", smc, where,
 	    smc->b0.bsr);
 	smc->b0.bsr = BSR_BANK0;
-	printf("TCR %04x EPHSR %04x RCR %04x ECR %04x MIR %04x MCR %04x\n",
+	kprintf("TCR %04x EPHSR %04x RCR %04x ECR %04x MIR %04x MCR %04x\n",
 	    SWAP(smc->b0.tcr), SWAP(smc->b0.ephsr), SWAP(smc->b0.rcr),
 	    SWAP(smc->b0.ecr), SWAP(smc->b0.mir), SWAP(smc->b0.mcr));
 	smc->b1.bsr = BSR_BANK1;
-	printf("CR %04x BAR %04x IAR %04x %04x %04x GPR %04x CTR %04x\n",
+	kprintf("CR %04x BAR %04x IAR %04x %04x %04x GPR %04x CTR %04x\n",
 	    SWAP(smc->b1.cr), SWAP(smc->b1.bar), smc->b1.iar[0], smc->b1.iar[1],
 	    smc->b1.iar[2], smc->b1.gpr, SWAP(smc->b1.ctr));
 	smc->b2.bsr = BSR_BANK2;
-	printf("MMUCR %04x PNR %02x ARR %02x FIFO %04x PTR %04x",
+	kprintf("MMUCR %04x PNR %02x ARR %02x FIFO %04x PTR %04x",
 	    SWAP(smc->b2.mmucr), smc->b2.pnr, smc->b2.arr, smc->b2.fifo,
 	    SWAP(smc->b2.ptr));
-	printf(" DATA %04x %04x IST %02x MSK %02x\n", smc->b2.data,
+	kprintf(" DATA %04x %04x IST %02x MSK %02x\n", smc->b2.data,
 	    smc->b2.datax, smc->b2.ist, smc->b2.msk);
 	smc->b3.bsr = BSR_BANK3;
-	printf("MT %04x %04x %04x %04x\n",
+	kprintf("MT %04x %04x %04x %04x\n",
 	    smc->b3.mt[0], smc->b3.mt[1], smc->b3.mt[2], smc->b3.mt[3]);
 	smc->b3.bsr = cur_bank;
 }
@@ -307,7 +307,7 @@ esintr(arg)
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2 &&
 	    sc->sc_arpcom.ac_if.if_flags & IFF_RUNNING) {
-		printf("%s: intr BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: intr BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
@@ -320,20 +320,20 @@ esintr(arg)
 	}
 #ifdef ESDEBUG
 	if (esdebug)
-		printf ("%s: esintr ist %02x msk %02x",
+		kprintf ("%s: esintr ist %02x msk %02x",
 		    sc->sc_dev.dv_xname, intsts, smc->b2.msk);
 	if (sc->sc_intbusy++) {
-		printf("%s: esintr re-entered\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esintr re-entered\n", sc->sc_dev.dv_xname);
 		panic("esintr re-entered");
 	}
 	if (sc->sc_smcbusy)
-		printf("%s: esintr interrupted busy %d\n", sc->sc_dev.dv_xname,
+		kprintf("%s: esintr interrupted busy %d\n", sc->sc_dev.dv_xname,
 		    sc->sc_smcbusy);
 #endif
 	smc->b2.msk = 0;
 #ifdef ESDEBUG
 	if (esdebug)
-		printf ("=>%02x%02x pnr %02x arr %02x fifo %04x\n",
+		kprintf ("=>%02x%02x pnr %02x arr %02x fifo %04x\n",
 		    smc->b2.ist, smc->b2.ist, smc->b2.pnr, smc->b2.arr,
 		    smc->b2.fifo);
 #endif
@@ -341,14 +341,14 @@ esintr(arg)
 		sc->sc_intctl &= ~MSK_ALLOC;
 #ifdef ESDEBUG
 		if (esdebug || 1)
-			printf ("%s: ist %02x", sc->sc_dev.dv_xname,
+			kprintf ("%s: ist %02x", sc->sc_dev.dv_xname,
 			    intsts);
 #endif
 		if ((smc->b2.arr & ARR_FAILED) == 0) {
 			u_char save_pnr;
 #ifdef ESDEBUG
 			if (esdebug || 1)
-				printf (" arr %02x\n", smc->b2.arr);
+				kprintf (" arr %02x\n", smc->b2.arr);
 #endif
 			save_pnr = smc->b2.pnr;
 			smc->b2.pnr = smc->b2.arr;
@@ -360,12 +360,12 @@ esintr(arg)
 		}
 #ifdef ESDEBUG
 		else if (esdebug || 1)
-			printf (" IST_ALLOC with ARR_FAILED?\n");
+			kprintf (" IST_ALLOC with ARR_FAILED?\n");
 #endif
 	}
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: intr+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: intr+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
@@ -375,23 +375,23 @@ esintr(arg)
 	}
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: intr++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: intr++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
 #endif
 	if (intact & IST_RX_OVRN) {
-		printf ("%s: Overrun ist %02x", sc->sc_dev.dv_xname,
+		kprintf ("%s: Overrun ist %02x", sc->sc_dev.dv_xname,
 		    intsts);
 		smc->b2.ist = ACK_RX_OVRN;
-		printf ("->%02x\n", smc->b2.ist);
+		kprintf ("->%02x\n", smc->b2.ist);
 		sc->sc_arpcom.ac_if.if_ierrors++;
 	}
 	if (intact & IST_TX_EMPTY) {
 		u_short ecr;
 #ifdef ESDEBUG
 		if (esdebug)
-			printf ("%s: TX EMPTY %02x",
+			kprintf ("%s: TX EMPTY %02x",
 			    sc->sc_dev.dv_xname, intsts);
 		++estxint5;		/* count # IST_TX_EMPTY ints */
 #endif
@@ -399,7 +399,7 @@ esintr(arg)
 		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
 #ifdef ESDEBUG
 		if (esdebug)
-			printf ("->%02x intcl %x pnr %02x arr %02x\n",
+			kprintf ("->%02x intcl %x pnr %02x arr %02x\n",
 			    smc->b2.ist, sc->sc_intctl, smc->b2.pnr,
 			    smc->b2.arr);
 #endif
@@ -426,9 +426,9 @@ esintr(arg)
 		int n = 0;
 #ifdef ESDEBUG
 		if (esdebug) {
-			printf ("%s: TX INT ist %02x",
+			kprintf ("%s: TX INT ist %02x",
 			    sc->sc_dev.dv_xname, intsts);
-			printf ("->%02x\n", smc->b2.ist);
+			kprintf ("->%02x\n", smc->b2.ist);
 		}
 		++estxint3;			/* count # IST_TX */
 #endif
@@ -446,11 +446,11 @@ zzzz:
 		smc->b2.pnr = tx_pnr;		/* set TX packet number */
 		smc->b2.ptr = PTR_READ;		/* point to status word */
 #if 0 /* XXXX */
-		printf("%s: esintr TXINT IST %02x PNR %02x(%d)",
+		kprintf("%s: esintr TXINT IST %02x PNR %02x(%d)",
 		    sc->sc_dev.dv_xname, smc->b2.ist,
 		    tx_pnr, n);
-		printf(" Status %04x", smc->b2.data);
-		printf(" EPHSR %04x\n", ephsr);
+		kprintf(" Status %04x", smc->b2.data);
+		kprintf(" EPHSR %04x\n", ephsr);
 #endif
 		if ((smc->b2.data & EPHSR_TX_SUC) == 0 && (tcr & TCR_TXENA) == 0) {
 			/*
@@ -492,10 +492,10 @@ zzzz:
 
 		if ((smc->b2.fifo & FIFO_TEMPTY) == 0 && n++ < 32) {
 #if 0 /* XXXX */
-			printf("%s: multiple TX int(%2d) pnr %02x ist %02x fifo %04x",
+			kprintf("%s: multiple TX int(%2d) pnr %02x ist %02x fifo %04x",
 			    sc->sc_dev.dv_xname, n, tx_pnr, smc->b2.ist, smc->b2.fifo);
 			smc->w2.istmsk = ACK_TX << 8;
-			printf(" %04x\n", smc->b2.fifo);
+			kprintf(" %04x\n", smc->b2.fifo);
 #endif
 			if (tx_pnr != (smc->b2.fifo >> 8))
 				goto zzzz;
@@ -505,7 +505,7 @@ zzzz:
 	estint(sc);
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: intr+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: intr+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
@@ -513,7 +513,7 @@ zzzz:
 	smc->b2.msk = sc->sc_intctl;
 #ifdef ESDEBUG
 	if (--sc->sc_intbusy) {
-		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
 		panic("esintr busy on exit");
 	}
 #endif
@@ -546,14 +546,14 @@ esrint(sc)
 
 #ifdef ESDEBUG
 	if (esdebug)
-		printf ("%s: esrint fifo %04x", sc->sc_dev.dv_xname,
+		kprintf ("%s: esrint fifo %04x", sc->sc_dev.dv_xname,
 		    smc->b2.fifo);
 	if (sc->sc_smcbusy++) {
-		printf("%s: esrint re-entered\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esrint re-entered\n", sc->sc_dev.dv_xname);
 		panic("esrint re-entered");
 	}
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: rint BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: rint BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
@@ -563,13 +563,13 @@ esrint(sc)
 	(void) smc->b2.mmucr;
 #ifdef ESDEBUG
 	if (esdebug)
-		printf ("->%04x", smc->b2.fifo);
+		kprintf ("->%04x", smc->b2.fifo);
 #endif
 	len = *data;
 	len = SWAP(len);	/* Careful of macro side-effects */
 #ifdef ESDEBUG
 	if (esdebug)
-		printf (" length %d", len);
+		kprintf (" length %d", len);
 #endif
 	smc->b2.ptr = PTR_RCV | (PTR_AUTOINCR + PTR_READ) | SWAP(0x0000);
 	(void) smc->b2.mmucr;
@@ -580,7 +580,7 @@ esrint(sc)
 	if (pktctlw & RFSW_ODDFRM)
 		pktlen++;
 	if (len > 1530) {
-		printf("%s: Corrupted packet length-sts %04x bytcnt %04x len %04x bank %04x\n",
+		kprintf("%s: Corrupted packet length-sts %04x bytcnt %04x len %04x bank %04x\n",
 		    sc->sc_dev.dv_xname, pktctlw, pktlen, len, smc->b2.bsr);
 		/* XXX ignore packet, or just truncate? */
 #if defined(ESDEBUG) && defined(DDB)
@@ -594,7 +594,7 @@ esrint(sc)
 		++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef ESDEBUG
 		if (--sc->sc_smcbusy) {
-			printf("%s: esrintr busy on bad packet exit\n",
+			kprintf("%s: esrintr busy on bad packet exit\n",
 			    sc->sc_dev.dv_xname);
 			panic("esrintr busy on exit");
 		}
@@ -623,28 +623,28 @@ esrint(sc)
 		;
 #ifdef ESDEBUG
 	if (pktctlw & (RFSW_ALGNERR | RFSW_BADCRC | RFSW_TOOLNG | RFSW_TOOSHORT)) {
-		printf ("%s: Packet error %04x\n", sc->sc_dev.dv_xname, pktctlw);
+		kprintf ("%s: Packet error %04x\n", sc->sc_dev.dv_xname, pktctlw);
 		/* count input error? */
 	}
 	if (esdebug) {
-		printf (" pktctlw %04x pktlen %04x fifo %04x\n", pktctlw, pktlen,
+		kprintf (" pktctlw %04x pktlen %04x fifo %04x\n", pktctlw, pktlen,
 		    smc->b2.fifo);
 		for (i = 0; i < pktlen; ++i)
-			printf ("%02x%s", pktbuf[i], ((i & 31) == 31) ? "\n" :
+			kprintf ("%02x%s", pktbuf[i], ((i & 31) == 31) ? "\n" :
 			    "");
 		if (i & 31)
-			printf ("\n");
+			kprintf ("\n");
 	}
 #endif
 #else	/* USEPKTBUF */
 	/* XXX copy directly from controller to mbuf */
 #ifdef ESDEBUG
 	if (pktctlw & (RFSW_ALGNERR | RFSW_BADCRC | RFSW_TOOLNG | RFSW_TOOSHORT)) {
-		printf ("%s: Packet error %04x\n", sc->sc_dev.dv_xname, pktctlw);
+		kprintf ("%s: Packet error %04x\n", sc->sc_dev.dv_xname, pktctlw);
 		/* count input error? */
 	}
 	if (esdebug) {
-		printf (" pktctlw %04x pktlen %04x fifo %04x\n", pktctlw, pktlen,
+		kprintf (" pktctlw %04x pktlen %04x fifo %04x\n", pktctlw, pktlen,
 		    smc->b2.fifo);
 	}
 #endif
@@ -691,10 +691,10 @@ esrint(sc)
 		if (esdebug) {
 			buf = mtod(m, u_short *);
 			for (i = 0; i < len; ++i)
-				printf ("%02x%s", ((u_char *)buf)[i],
+				kprintf ("%02x%s", ((u_char *)buf)[i],
 				    ((i & 31) == 31) ? "\n" : "");
 			if (i & 31)
-				printf ("\n");
+				kprintf ("\n");
 		}
 #endif
 #endif	/* USEPKTBUF */
@@ -737,7 +737,7 @@ esrint(sc)
 	ether_input(ifp, eh, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
-		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
 		panic("esintr busy on exit");
 	}
 #endif
@@ -780,11 +780,11 @@ esstart(ifp)
 
 #ifdef ESDEBUG
 	if (sc->sc_smcbusy++) {
-		printf("%s: esstart re-entered\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esstart re-entered\n", sc->sc_dev.dv_xname);
 		panic("esstart re-entred");
 	}
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: esstart BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: esstart BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
@@ -802,7 +802,7 @@ esstart(ifp)
 			break;
 #ifdef ESDEBUG
 		if (esdebug && (m->m_next || m->m_len & 1))
-			printf("%s: esstart m_next %p m_len %d\n",
+			kprintf("%s: esstart m_next %p m_len %d\n",
 			    sc->sc_dev.dv_xname, m->m_next, m->m_len);
 #endif
 		for (m0 = m, pktlen = 0; m0; m0 = m0->m_next)
@@ -826,7 +826,7 @@ esstart(ifp)
 
 #ifdef ESDEBUG
 		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-			printf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			kprintf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 		}
@@ -839,7 +839,7 @@ esstart(ifp)
 		*data = SWAP(pktlen);
 #ifdef ESDEBUG
 		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-			printf("%s: esstart++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			kprintf("%s: esstart++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
 			smc->b2.bsr = BSR_BANK2;
 		}
@@ -858,7 +858,7 @@ esstart(ifp)
 		pktlen -= 4;
 #ifdef ESDEBUG
 		if (pktlen > sizeof(pktbuf) && i > (sizeof(pktbuf) * 2))
-			printf("%s: esstart packet longer than pktbuf\n",
+			kprintf("%s: esstart packet longer than pktbuf\n",
 			    sc->sc_dev.dv_xname);
 #endif
 #if 0 /* doesn't quite work? */
@@ -874,7 +874,7 @@ esstart(ifp)
 #else
 #ifdef ESDEBUG
 		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-			printf("%s: esstart++2 BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			kprintf("%s: esstart++2 BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
 			smc->b2.bsr = BSR_BANK2;
 		}
@@ -903,7 +903,7 @@ esstart(ifp)
 			if (m->m_len & 1)
 				pktctlw = (*buf & 0xff00) | CTLB_ODD;
 			if (m->m_len & 1 && m->m_next)
-				printf("%s: esstart odd byte count in mbuf\n",
+				kprintf("%s: esstart odd byte count in mbuf\n",
 				    sc->sc_dev.dv_xname);
 		}
 		*data = pktctlw;
@@ -919,12 +919,12 @@ esstart(ifp)
 			 * retransmitting the buffer.  mhitch
 			 */
 #ifdef DIAGNOSTIC
-			printf("%s: esstart+++ BSR not 2: %04x\n",
+			kprintf("%s: esstart+++ BSR not 2: %04x\n",
 			    sc->sc_dev.dv_xname, smc->b2.bsr);
 #endif
 			smc->b2.bsr = BSR_BANK2;
 #ifdef ESDEBUG
-			printf("start_ptr %04x end_ptr %04x cur ptr %04x\n",
+			kprintf("start_ptr %04x end_ptr %04x cur ptr %04x\n",
 			    start_ptr, end_ptr, SWAP(smc->b2.ptr));
 			--sc->sc_smcbusy;
 #endif
@@ -934,7 +934,7 @@ esstart(ifp)
 		}
 		smc->b2.mmucr = MMUCR_ENQ_TX;
 		if (smc->b2.pnr != active_pnr)
-			printf("%s: esstart - PNR changed %x->%x\n",
+			kprintf("%s: esstart - PNR changed %x->%x\n",
 			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
 #if NBPFILTER > 0
 		if (sc->sc_arpcom.ac_if.if_bpf)
@@ -947,12 +947,12 @@ esstart(ifp)
 	smc->b2.msk = sc->sc_intctl;
 #ifdef ESDEBUG
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
-		printf("%s: esstart++++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		kprintf("%s: esstart++++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
 	if (--sc->sc_smcbusy) {
-		printf("%s: esstart busy on exit\n", sc->sc_dev.dv_xname);
+		kprintf("%s: esstart busy on exit\n", sc->sc_dev.dv_xname);
 		panic("esstart busy on exit");
 	}
 #endif

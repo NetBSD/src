@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.12 1996/08/28 18:59:40 cgd Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.13 1996/10/10 23:56:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -71,7 +71,7 @@ struct scsi_device mlhsc_scsidev = {
 
 #ifdef DEBUG
 extern int sci_debug;  
-#define QPRINTF(a) if (sci_debug > 1) printf a
+#define QPRINTF(a) if (sci_debug > 1) kprintf a
 #else
 #define QPRINTF(a)
 #endif
@@ -116,7 +116,7 @@ mlhscattach(pdp, dp, auxp)
 	struct sci_softc *sc;
 	struct zbus_args *zap;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 	
@@ -187,7 +187,7 @@ mlhsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("mlhdma_in fail: l%d i%x w%d\n",
+					kprintf("mlhdma_in fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -223,7 +223,7 @@ mlhsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("mlhdma_in fail: l%d i%x w%d\n",
+					kprintf("mlhdma_in fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -276,7 +276,7 @@ mlhsc_dma_xfer_out (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("mlhdma_out fail: l%d i%x w%d\n",
+					kprintf("mlhdma_out fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -304,7 +304,7 @@ mlhsc_dma_xfer_out (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("mlhdma_out fail: l%d i%x w%d\n",
+					kprintf("mlhdma_out fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.33 1996/05/12 02:26:26 mhitch Exp $	*/
+/*	$NetBSD: siop.c,v 1.34 1996/10/10 23:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -203,7 +203,7 @@ siop_scsicmd(xs)
 	/* XXXX ?? */
 	if (sc->sc_nexus && flags & SCSI_POLL)
 /*		panic("siop_scsicmd: busy");*/
-		printf("siop_scsicmd: busy\n");
+		kprintf("siop_scsicmd: busy\n");
 
 	s = splbio();
 	acb = sc->free_list.tqh_first;
@@ -255,7 +255,7 @@ siop_poll(sc, acb)
 	s = splbio();
 	to = xs->timeout / 1000;
 	if (sc->nexus_list.tqh_first)
-		printf("%s: siop_poll called with disconnected device\n",
+		kprintf("%s: siop_poll called with disconnected device\n",
 		    sc->sc_dev.dv_xname);
 	for (;;) {
 		/* use cmd_wait values? */
@@ -265,7 +265,7 @@ siop_poll(sc, acb)
 		    (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0) {
 			if (--i <= 0) {
 #ifdef DEBUG
-				printf ("waiting: tgt %d cmd %02x sbcl %02x dsp %lx (+%lx) dcmd %lx ds %p timeout %d\n",
+				kprintf ("waiting: tgt %d cmd %02x sbcl %02x dsp %lx (+%lx) dcmd %lx ds %p timeout %d\n",
 				    xs->sc_link->target, acb->cmd.opcode,
 				    rp->siop_sbcl, rp->siop_dsp,
 				    rp->siop_dsp - sc->sc_scriptspa,
@@ -284,7 +284,7 @@ siop_poll(sc, acb)
 		dstat = rp->siop_dstat;
 		if (siop_checkintr(sc, istat, dstat, sstat0, &status)) {
 			if (acb != sc->sc_nexus)
-				printf("%s: siop_poll disconnected device completed\n",
+				kprintf("%s: siop_poll disconnected device completed\n",
 				    sc->sc_dev.dv_xname);
 			else if ((sc->sc_flags & SIOP_INTDEFER) == 0) {
 				sc->sc_flags &= ~SIOP_INTSOFF;
@@ -313,7 +313,7 @@ siop_sched(sc)
 
 #ifdef DEBUG
 	if (sc->sc_nexus) {
-		printf("%s: siop_sched- nexus %p/%d ready %p/%d\n",
+		kprintf("%s: siop_sched- nexus %p/%d ready %p/%d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nexus,
 		    sc->sc_nexus->xs->sc_link->target,
 		    sc->ready_list.tqh_first,
@@ -338,7 +338,7 @@ siop_sched(sc)
 
 	if (acb == NULL) {
 #ifdef DEBUGXXX
-		printf("%s: siop_sched didn't find ready command\n",
+		kprintf("%s: siop_sched didn't find ready command\n",
 		    sc->sc_dev.dv_xname);
 #endif
 		return;
@@ -366,7 +366,7 @@ siop_scsidone(acb, stat)
 
 	if (acb == NULL || (xs = acb->xs) == NULL) {
 #ifdef DIAGNOSTIC
-		printf("siop_scsidone: NULL acb or scsi_xfer\n");
+		kprintf("siop_scsidone: NULL acb or scsi_xfer\n");
 #if defined(DEBUG) && defined(DDB)
 		Debugger();
 #endif
@@ -450,7 +450,7 @@ siop_scsidone(acb, stat)
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			--sc->sc_active;
 		} else {
-			printf("%s: can't find matching acb\n",
+			kprintf("%s: can't find matching acb\n",
 			    sc->sc_dev.dv_xname);
 #ifdef DDB
 /*			Debugger(); */
@@ -480,7 +480,7 @@ siopabort(sc, rp, where)
 	int i;
 #endif
 
-	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
+	kprintf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 	    sc->sc_dev.dv_xname,
 	    where, rp->siop_dstat, rp->siop_sstat0, rp->siop_sbcl);
 
@@ -516,7 +516,7 @@ siopabort(sc, rp, where)
 		for (i = 0; i < 2; ++i) {
 			if (sc->sc_iob[i].sc_xs && &sc->sc_iob[i] !=
 			    sc->sc_cur) {
-				printf ("siopabort: cleanup!\n");
+				kprintf ("siopabort: cleanup!\n");
 				sc->sc_iob[i].sc_xs = NULL;
 			}
 		}
@@ -575,7 +575,7 @@ siopinitialize(sc)
 		shift_nosync += 8;
 #ifdef DEBUG
 		if (inhibit_sync)
-			printf("%s: Inhibiting synchronous transfer %02x\n",
+			kprintf("%s: Inhibiting synchronous transfer %02x\n",
 				sc->sc_dev.dv_xname, inhibit_sync);
 #endif
 		for (i = 0; i < 8; ++i)
@@ -600,7 +600,7 @@ siopreset(sc)
 	if (sc->sc_flags & SIOP_ALIVE)
 		siopabort(sc, rp, "reset");
 
-	printf("%s: ", sc->sc_dev.dv_xname);		/* XXXX */
+	kprintf("%s: ", sc->sc_dev.dv_xname);		/* XXXX */
 
 	s = splbio();
 
@@ -645,7 +645,7 @@ siopreset(sc)
 	splx (s);
 
 	delay (siop_reset_delay * 1000);
-	printf("siop id %d reset V%d\n", sc->sc_link.adapter_target,
+	kprintf("siop id %d reset V%d\n", sc->sc_link.adapter_target,
 	    rp->siop_ctest8 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {
@@ -707,9 +707,9 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 
 #ifdef DEBUG
 	if (siop_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
-		printf ("ACK! siop was busy: rp %p script %p dsa %p active %ld\n",
+		kprintf ("ACK! siop was busy: rp %p script %p dsa %p active %ld\n",
 		    rp, &scripts, &acb->ds, sc->sc_active);
-		printf ("istat %02x sfbr %02x lcrc %02x sien %02x dien %02x\n",
+		kprintf ("istat %02x sfbr %02x lcrc %02x sien %02x dien %02x\n",
 		    rp->siop_istat, rp->siop_sfbr, rp->siop_lcrc,
 		    rp->siop_sien, rp->siop_dien);
 #ifdef DDB
@@ -749,7 +749,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 			sc->sc_sync[target].sxfer = 0;
 #ifdef DEBUG
 			if (siopsync_debug)
-				printf ("Forcing target %d asynchronous\n", target);
+				kprintf ("Forcing target %d asynchronous\n", target);
 #endif
 		}
 		else {
@@ -767,7 +767,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 			sc->sc_sync[target].state = SYNC_SENT;
 #ifdef DEBUG
 			if (siopsync_debug)
-				printf ("Sending sync request to target %d\n", target);
+				kprintf ("Sending sync request to target %d\n", target);
 #endif
 		}
 	}
@@ -810,9 +810,9 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 	}
 #ifdef DEBUG
 	if (nchain != 1 && len != 0 && siop_debug & 3) {
-		printf ("DMA chaining set: %d\n", nchain);
+		kprintf ("DMA chaining set: %d\n", nchain);
 		for (i = 0; i < nchain; ++i) {
-			printf ("  [%d] %8p %lx\n", i, acb->ds.chain[i].databuf,
+			kprintf ("  [%d] %8p %lx\n", i, acb->ds.chain[i].databuf,
 			    acb->ds.chain[i].datalen);
 		}
 	}
@@ -825,7 +825,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 		dma_cachectl (buf, len);
 #ifdef DEBUG
 	if (siop_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
-		printf ("ACK! siop was busy at start: rp %p script %p dsa %p active %ld\n",
+		kprintf ("ACK! siop was busy at start: rp %p script %p dsa %p active %ld\n",
 		    rp, &scripts, &acb->ds, sc->sc_active);
 #ifdef DDB
 		/*Debugger();*/
@@ -834,7 +834,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 	if (sc->nexus_list.tqh_first == NULL) {
 		if (rp->siop_istat & SIOP_ISTAT_CON)
-			printf("%s: siop_select while connected?\n",
+			kprintf("%s: siop_select while connected?\n",
 			    sc->sc_dev.dv_xname);
 		rp->siop_temp = 0;
 		rp->siop_sbcl = sc->sc_sync[target].sbcl;
@@ -884,19 +884,19 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 #if 0
 	if (siop_debug & 0x100) {
 		DCIAS(&acb->stat[0]);	/* XXX */
-		printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
+		kprintf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 		    istat, dstat, sstat0, rp->siop_dsps, rp->siop_sbcl, acb->stat[0], acb->msg[0]);
-		printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
+		kprintf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
 		    acb->msg[0], acb->msg[1], acb->msg[2],
 		    acb->msg[3], acb->msg[4], acb->msg[5]);
 	}
 #endif
 	if (rp->siop_dsp && (rp->siop_dsp < sc->sc_scriptspa ||
 	    rp->siop_dsp >= sc->sc_scriptspa + sizeof(scripts))) {
-		printf ("%s: dsp not within script dsp %lx scripts %lx:%lx",
+		kprintf ("%s: dsp not within script dsp %lx scripts %lx:%lx",
 		    sc->sc_dev.dv_xname, rp->siop_dsp, sc->sc_scriptspa,
 		    sc->sc_scriptspa + sizeof(scripts));
-		printf(" istat %x dstat %x sstat0 %x\n",
+		kprintf(" istat %x dstat %x sstat0 %x\n",
 		    istat, dstat, sstat0);
 #ifdef DDB
 		Debugger();
@@ -908,7 +908,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
 		if (rp->siop_dsa != kvtop((caddr_t)&acb->ds)) {
-			printf ("siop: invalid dsa: %lx %x\n", rp->siop_dsa,
+			kprintf ("siop: invalid dsa: %lx %x\n", rp->siop_dsa,
 			    kvtop((caddr_t)&acb->ds));
 			panic("*** siop DSA invalid ***");
 		}
@@ -917,15 +917,15 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		if (sc->sc_sync[target].state == SYNC_SENT) {
 #ifdef DEBUG
 			if (siopsync_debug)
-				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
+				kprintf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
 				    acb->msg[0], acb->msg[1], acb->msg[2],
 				    acb->msg[3], acb->msg[4], acb->msg[5]);
 #endif
 			if (acb->msg[1] == 0xff)
-				printf ("%s: target %d ignored sync request\n",
+				kprintf ("%s: target %d ignored sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			else if (acb->msg[1] == MSG_REJECT)
-				printf ("%s: target %d rejected sync request\n",
+				kprintf ("%s: target %d rejected sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			sc->sc_sync[target].state = SYNC_DONE;
 			sc->sc_sync[target].sxfer = 0;
@@ -945,7 +945,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 				 */
 				if (acb->msg[4] && acb->msg[4] < 100 / 4) {
 #ifdef DEBUG
-					printf ("%d: target %d wanted %dns period\n",
+					kprintf ("%d: target %d wanted %dns period\n",
 					    sc->sc_dev.dv_xname, target,
 					    acb->msg[4] * 4);
 #endif
@@ -955,7 +955,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 						acb->msg[4] = 100 / 4;
 				}
 #endif /* MAXTOR_KLUDGE */
-				printf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
+				kprintf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
 				    sc->sc_dev.dv_xname, target,
 				    acb->msg[4] * 4, acb->msg[5]);
 				scsi_period_to_siop (sc, target);
@@ -965,14 +965,14 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		*status = acb->stat[0];
 #ifdef DEBUG
 		if (rp->siop_sbcl & SIOP_BSY) {
-			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
+			/*kprintf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
 			    rp, &scripts, &acb->ds);*/
 #ifdef DDB
 			/*Debugger();*/
 #endif
 		}
 		if (acb->msg[0] != 0x00)
-			printf("%s: message was not COMMAND COMPLETE: %x\n",
+			kprintf("%s: message was not COMMAND COMPLETE: %x\n",
 			    sc->sc_dev.dv_xname, acb->msg[0]);
 #endif
 		if (sc->nexus_list.tqh_first)
@@ -983,7 +983,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 #ifdef DEBUG
 		++siopphmm;
 		if (acb == NULL)
-			printf("%s: Phase mismatch with no active command?\n",
+			kprintf("%s: Phase mismatch with no active command?\n",
 			    sc->sc_dev.dv_xname);
 #endif
 		if (acb->iob_len) {
@@ -999,12 +999,12 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 #ifdef DEBUG
 			if (siop_debug & 0x100) {
 				int i;
-				printf ("Phase mismatch: curbuf %lx curlen %lx dfifo %x dbc %x sstat1 %x adjust %x sbcl %x starts %d acb %p\n",
+				kprintf ("Phase mismatch: curbuf %lx curlen %lx dfifo %x dbc %x sstat1 %x adjust %x sbcl %x starts %d acb %p\n",
 				    acb->iob_curbuf, acb->iob_curlen, dfifo,
 				    dbc, sstat1, adjust, rp->siop_sbcl, siopstarts, acb);
 				if (acb->ds.chain[1].datalen) {
 					for (i = 0; acb->ds.chain[i].datalen; ++i)
-						printf("chain[%d] addr %p len %lx\n",
+						kprintf("chain[%d] addr %p len %lx\n",
 						    i, acb->ds.chain[i].databuf,
 						    acb->ds.chain[i].datalen);
 				}
@@ -1015,13 +1015,13 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 #ifdef DEBUG
 		SIOP_TRACE('m',rp->siop_sbcl,(rp->siop_dsp>>8),rp->siop_dsp);
 		if (siop_debug & 9)
-			printf ("Phase mismatch: %x dsp +%lx dcmd %lx\n",
+			kprintf ("Phase mismatch: %x dsp +%lx dcmd %lx\n",
 			    rp->siop_sbcl,
 			    rp->siop_dsp - sc->sc_scriptspa,
 			    *((long *)&rp->siop_dcmd));
 #endif
 		if ((rp->siop_sbcl & SIOP_REQ) == 0) {
-			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
+			kprintf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
 			    rp->siop_sbcl, rp->siop_dsp);
 #if defined(DEBUG) && defined(DDB)
 			Debugger();
@@ -1044,15 +1044,15 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	if (sstat0 & SIOP_SSTAT0_STO) {		/* Select timed out */
 #ifdef DEBUG
 		if (acb == NULL)
-			printf("%s: Select timeout with no active command?\n",
+			kprintf("%s: Select timeout with no active command?\n",
 			    sc->sc_dev.dv_xname);
 		if (rp->siop_sbcl & SIOP_BSY) {
-			printf ("ACK! siop was busy at timeout: rp %p script %p dsa %p\n",
+			kprintf ("ACK! siop was busy at timeout: rp %p script %p dsa %p\n",
 			    rp, &scripts, &acb->ds);
-			printf(" sbcl %x sdid %x istat %x dstat %x sstat0 %x\n",
+			kprintf(" sbcl %x sdid %x istat %x dstat %x sstat0 %x\n",
 			    rp->siop_sbcl, rp->siop_sdid, istat, dstat, sstat0);
 			if (!(rp->siop_sbcl & SIOP_BSY)) {
-				printf ("Yikes, it's not busy now!\n");
+				kprintf ("Yikes, it's not busy now!\n");
 #if 0
 				*status = -1;
 				if (sc->nexus_list.tqh_first)
@@ -1080,9 +1080,9 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	if (sstat0 & SIOP_SSTAT0_UDC) {
 #ifdef DEBUG
 		if (acb == NULL)
-			printf("%s: Unexpected disconnect with no active command?\n",
+			kprintf("%s: Unexpected disconnect with no active command?\n",
 			    sc->sc_dev.dv_xname);
-		printf ("%s: target %d disconnected unexpectedly\n",
+		kprintf ("%s: target %d disconnected unexpectedly\n",
 		   sc->sc_dev.dv_xname, target);
 #endif
 #if 0
@@ -1097,14 +1097,14 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	    rp->siop_dsps == 0xff02)) {
 #ifdef DEBUG
 		if (siop_debug & 0x100)
-			printf ("%s: ID %02x disconnected TEMP %lx (+%lx) curbuf %lx curlen %lx buf %p len %lx dfifo %x dbc %x sstat1 %x starts %d acb %p\n",
+			kprintf ("%s: ID %02x disconnected TEMP %lx (+%lx) curbuf %lx curlen %lx buf %p len %lx dfifo %x dbc %x sstat1 %x starts %d acb %p\n",
 			    sc->sc_dev.dv_xname, 1 << target, rp->siop_temp,
 			    rp->siop_temp ? rp->siop_temp - sc->sc_scriptspa : 0,
 			    acb->iob_curbuf, acb->iob_curlen,
 			    acb->ds.chain[0].databuf, acb->ds.chain[0].datalen, dfifo, dbc, sstat1, siopstarts, acb);
 #endif
 		if (acb == NULL) {
-			printf("%s: Disconnect with no active command?\n",
+			kprintf("%s: Disconnect with no active command?\n",
 			    sc->sc_dev.dv_xname);
 			return (0);
 		}
@@ -1120,7 +1120,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			int n = rp->siop_temp - sc->sc_scriptspa;
 
 			if (acb->iob_curlen && acb->iob_curlen != acb->ds.chain[0].datalen)
-				printf("%s: iob_curbuf/len already set? n %x iob %lx/%lx chain[0] %p/%lx\n",
+				kprintf("%s: iob_curbuf/len already set? n %x iob %lx/%lx chain[0] %p/%lx\n",
 				    sc->sc_dev.dv_xname, n, acb->iob_curbuf, acb->iob_curlen,
 				    acb->ds.chain[0].databuf, acb->ds.chain[0].datalen);
 			if (n < Ent_datain)
@@ -1128,15 +1128,15 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			else
 				n = (n - Ent_datain) / 16;
 			if (n <= 0 && n > DMAMAXIO)
-				printf("TEMP invalid %d\n", n);
+				kprintf("TEMP invalid %d\n", n);
 			else {
 				acb->iob_curbuf = (u_long)acb->ds.chain[n].databuf;
 				acb->iob_curlen = acb->ds.chain[n].datalen;
 			}
 #ifdef DEBUG
 			if (siop_debug & 0x100) {
-				printf("%s: TEMP offset %d", sc->sc_dev.dv_xname, n);
-				printf(" curbuf %lx curlen %lx\n", acb->iob_curbuf,
+				kprintf("%s: TEMP offset %d", sc->sc_dev.dv_xname, n);
+				kprintf(" curbuf %lx curlen %lx\n", acb->iob_curbuf,
 				    acb->iob_curlen);
 			}
 #endif
@@ -1153,10 +1153,10 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 
 #ifdef DEBUG
 			if (siop_debug & 0x100)
-				printf ("%s: adjusting DMA chain\n",
+				kprintf ("%s: adjusting DMA chain\n",
 				    sc->sc_dev.dv_xname);
 			if (rp->siop_dsps == 0xff02)
-				printf ("%s: ID %02x disconnected without Save Data Pointers\n",
+				kprintf ("%s: ID %02x disconnected without Save Data Pointers\n",
 				    sc->sc_dev.dv_xname, 1 << target);
 #endif
 			for (i = 0; i < DMAMAXIO; ++i) {
@@ -1168,8 +1168,8 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 					break;
 			}
 			if (i >= DMAMAXIO || acb->ds.chain[i].datalen == 0) {
-				printf("couldn't find saved data pointer: ");
-				printf("curbuf %lx curlen %lx i %d\n",
+				kprintf("couldn't find saved data pointer: ");
+				kprintf("curbuf %lx curlen %lx i %d\n",
 				    acb->iob_curbuf, acb->iob_curlen, i);
 #ifdef DDB
 				Debugger();
@@ -1177,7 +1177,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			}
 #ifdef DEBUG
 			if (siop_debug & 0x100)
-				printf("  chain[0]: %p/%lx -> %lx/%lx\n",
+				kprintf("  chain[0]: %p/%lx -> %lx/%lx\n",
 				    acb->ds.chain[0].databuf,
 				    acb->ds.chain[0].datalen,
 				    acb->iob_curbuf,
@@ -1188,7 +1188,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			for (j = 1, ++i; i < DMAMAXIO && acb->ds.chain[i].datalen; ++i, ++j) {
 #ifdef DEBUG
 			if (siop_debug & 0x100)
-				printf("  chain[%d]: %p/%lx -> %p/%lx\n", j,
+				kprintf("  chain[%d]: %p/%lx -> %p/%lx\n", j,
 				    acb->ds.chain[j].databuf,
 				    acb->ds.chain[j].datalen,
 				    acb->ds.chain[i].databuf,
@@ -1225,17 +1225,17 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		sc->sc_sstat1 = rp->siop_sbcl;	/* XXXX save current SBCL */
 #ifdef DEBUG
 		if (siop_debug & 0x100)
-			printf ("%s: target ID %02x reselected dsps %lx\n",
+			kprintf ("%s: target ID %02x reselected dsps %lx\n",
 			     sc->sc_dev.dv_xname, reselid,
 			     rp->siop_dsps);
 		if ((rp->siop_sfbr & 0x80) == 0)
-			printf("%s: Reselect message in was not identify: %x\n",
+			kprintf("%s: Reselect message in was not identify: %x\n",
 			    sc->sc_dev.dv_xname, rp->siop_sfbr);
 #endif
 		if (sc->sc_nexus) {
 #ifdef DEBUG
 			if (siop_debug & 0x100)
-				printf ("%s: reselect ID %02x w/active\n",
+				kprintf ("%s: reselect ID %02x w/active\n",
 				    sc->sc_dev.dv_xname, reselid);
 #endif
 			TAILQ_INSERT_HEAD(&sc->ready_list, sc->sc_nexus, chain);
@@ -1263,7 +1263,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			break;
 		}
 		if (acb == NULL) {
-			printf("%s: target ID %02x reselect nexus_list %p\n",
+			kprintf("%s: target ID %02x reselect nexus_list %p\n",
 			    sc->sc_dev.dv_xname, reselid,
 			    sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
@@ -1280,14 +1280,14 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		/* reselect was interrupted (by Sig_P or select) */
 		if (siop_debug & 0x100 ||
 		    (ctest2 & SIOP_CTEST2_SIGP) == 0)
-			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x istat %x/%x\n",
+			kprintf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x istat %x/%x\n",
 			    sc->sc_dev.dv_xname, rp->siop_scntl1,
 			    ctest2, rp->siop_sfbr, istat, rp->siop_istat);
 #endif
 		/* XXX assumes it was not select */
 		if (sc->sc_nexus == NULL) {
 #ifdef DEBUG
-			printf("%s: reselect interrupted, sc_nexus == NULL\n",
+			kprintf("%s: reselect interrupted, sc_nexus == NULL\n",
 			    sc->sc_dev.dv_xname);
 #if 0
 			siop_dump(sc);
@@ -1309,11 +1309,11 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff06) {
 		if (acb == NULL)
-			printf("%s: Bad message-in with no active command?\n",
+			kprintf("%s: Bad message-in with no active command?\n",
 			    sc->sc_dev.dv_xname);
 		/* Unrecognized message in byte */
 		dma_cachectl (&acb->msg[1],1);
-		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
+		kprintf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
 			sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
@@ -1322,7 +1322,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {
 		/* Status phase wasn't followed by message in phase? */
-		printf ("%s: Status phase not followed by message in phase? sbcl %x sbdl %x\n",
+		kprintf ("%s: Status phase not followed by message in phase? sbcl %x sbdl %x\n",
 			sc->sc_dev.dv_xname, rp->siop_sbcl, rp->siop_sbdl);
 		if (rp->siop_sbcl == 0xa7) {
 			/* It is now, just continue the script? */
@@ -1333,7 +1333,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	if (sstat0 == 0 && dstat & SIOP_DSTAT_SIR) {
 		dma_cachectl (&acb->stat[0], 1);
 		dma_cachectl (&acb->msg[0], 1);
-		printf ("SIOP interrupt: %lx sts %x msg %x %x sbcl %x\n",
+		kprintf ("SIOP interrupt: %lx sts %x msg %x %x sbcl %x\n",
 		    rp->siop_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
 		    rp->siop_sbcl);
 		siopreset (sc);
@@ -1341,11 +1341,11 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		return 0;	/* siopreset has cleaned up */
 	}
 	if (sstat0 & SIOP_SSTAT0_SGE)
-		printf ("SIOP: SCSI Gross Error\n");
+		kprintf ("SIOP: SCSI Gross Error\n");
 	if (sstat0 & SIOP_SSTAT0_PAR)
-		printf ("SIOP: Parity Error\n");
+		kprintf ("SIOP: Parity Error\n");
 	if (dstat & SIOP_DSTAT_IID)
-		printf ("SIOP: Invalid instruction detected\n");
+		kprintf ("SIOP: Invalid instruction detected\n");
 bad_phase:
 	/*
 	 * temporary panic for unhandled conditions
@@ -1353,11 +1353,11 @@ bad_phase:
 	 * then panics.
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
-	printf ("siopchkintr: target %x ds %p\n", target, &acb->ds);
-	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
+	kprintf ("siopchkintr: target %x ds %p\n", target, &acb->ds);
+	kprintf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
 	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)rp), rp->siop_dsp,
 	    *((long *)&rp->siop_dcmd));
-	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
+	kprintf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sstat0, rp->siop_dsps, rp->siop_dsa,
 	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1], rp->siop_sfbr);
 #ifdef DEBUG
@@ -1381,7 +1381,7 @@ siop_select(sc)
 
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("%s: select ", sc->sc_dev.dv_xname);
+		kprintf ("%s: select ", sc->sc_dev.dv_xname);
 #endif
 
 	rp = sc->sc_siopp;
@@ -1403,7 +1403,7 @@ siop_select(sc)
 	}
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("siop_select: target %x cmd %02x ds %p\n",
+		kprintf ("siop_select: target %x cmd %02x ds %p\n",
 		    acb->xs->sc_link->target, acb->cmd.opcode,
 		    &sc->sc_nexus->ds);
 #endif
@@ -1442,10 +1442,10 @@ siopintr (sc)
 	sc->sc_istat = 0;
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("%s: intr istat %x dstat %x sstat0 %x\n",
+		kprintf ("%s: intr istat %x dstat %x sstat0 %x\n",
 		    sc->sc_dev.dv_xname, istat, dstat, sstat0);
 	if (!sc->sc_active) {
-		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x nexus %p status %x\n",
+		kprintf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x nexus %p status %x\n",
 		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
 		    sc->sc_nexus, sc->sc_nexus ? sc->sc_nexus->stat[0] : 0);
 	}
@@ -1454,7 +1454,7 @@ siopintr (sc)
 #ifdef DEBUG
 	if (siop_debug & 5) {
 		DCIAS(kvtop(&sc->sc_nexus->stat[0]));
-		printf ("%s: intr istat %x dstat %x sstat0 %x dsps %lx sbcl %x sts %x msg %x\n",
+		kprintf ("%s: intr istat %x dstat %x sstat0 %x dsps %lx sbcl %x sts %x msg %x\n",
 		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
 		    rp->siop_dsps,  rp->siop_sbcl,
 		    sc->sc_nexus->stat[0], sc->sc_nexus->msg[0]);
@@ -1468,14 +1468,14 @@ siopintr (sc)
 	if (siop_checkintr (sc, istat, dstat, sstat0, &status)) {
 #if 1
 		if (status == 0xff)
-			printf ("siopintr: status == 0xff\n");
+			kprintf ("siopintr: status == 0xff\n");
 #endif
 		if ((sc->sc_flags & (SIOP_INTSOFF | SIOP_INTDEFER)) != SIOP_INTSOFF) {
 #if 0
 			if (rp->siop_sbcl & SIOP_BSY) {
-				printf ("%s: SCSI bus busy at completion",
+				kprintf ("%s: SCSI bus busy at completion",
 					sc->sc_dev.dv_xname);
-				printf(" targ %d sbcl %02x sfbr %x lcrc %02x dsp +%x\n",
+				kprintf(" targ %d sbcl %02x sfbr %x lcrc %02x dsp +%x\n",
 				    sc->sc_nexus->xs->sc_link->target,
 				    rp->siop_sbcl, rp->siop_sfbr, rp->siop_lcrc,
 				    rp->siop_dsp - sc->sc_scriptspa);
@@ -1516,7 +1516,7 @@ scsi_period_to_siop (sc, target)
 			break;
 		}
 	}
-	printf ("siop sync old: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
+	kprintf ("siop sync old: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
 #endif
 	for (sbcl = 1; sbcl < 4; ++sbcl) {
 		sxfer = (period * 4 - 1) / sc->sc_tcp[sbcl] - 3;
@@ -1524,7 +1524,7 @@ scsi_period_to_siop (sc, target)
 			break;
 	}
 	if (sbcl > 3) {
-		printf("siop sync: unable to compute sync params for period %dns\n",
+		kprintf("siop sync: unable to compute sync params for period %dns\n",
 		    period * 4);
 		/*
 		 * XXX need to pick a value we can do and renegotiate
@@ -1534,16 +1534,16 @@ scsi_period_to_siop (sc, target)
 		sxfer = (sxfer << 4) | ((offset <= SIOP_MAX_OFFSET) ?
 		    offset : SIOP_MAX_OFFSET);
 #ifdef DEBUG_SYNC
-		printf("siop sync: params for period %dns: sxfer %x sbcl %x",
+		kprintf("siop sync: params for period %dns: sxfer %x sbcl %x",
 		    period * 4, sxfer, sbcl);
-		printf(" actual period %dns\n",
+		kprintf(" actual period %dns\n",
 		    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
 #endif
 	}
 	sc->sc_sync[target].sxfer = sxfer;
 	sc->sc_sync[target].sbcl = sbcl;
 #ifdef DEBUG_SYNC
-	printf ("siop sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
+	kprintf ("siop sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
 #endif
 }
 
@@ -1555,10 +1555,10 @@ siop_dump_trace()
 {
 	int i;
 
-	printf("siop trace: next index %d\n", siop_trix);
+	kprintf("siop trace: next index %d\n", siop_trix);
 	i = siop_trix;
 	do {
-		printf("%3d: '%c' %02x %02x %02x\n", i, siop_trbuf[i],
+		kprintf("%3d: '%c' %02x %02x %02x\n", i, siop_trbuf[i],
 		    siop_trbuf[i + 1], siop_trbuf[i + 2], siop_trbuf[i + 3]);
 		i = (i + 4) & (SIOP_TRACE_SIZE - 1);
 	} while (i != siop_trix);
@@ -1572,20 +1572,20 @@ siop_dump_acb(acb)
 	u_char *b = (u_char *) &acb->cmd;
 	int i;
 
-	printf("acb@%p ", acb);
+	kprintf("acb@%p ", acb);
 	if (acb->xs == NULL) {
-		printf("<unused>\n");
+		kprintf("<unused>\n");
 		return;
 	}
-	printf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->target,
+	kprintf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->target,
 	    acb->xs->sc_link->lun, acb->flags, acb->clen);
 	for (i = acb->clen; i; --i)
-		printf(" %02x", *b++);
-	printf("\n");
-	printf("  xs: %p data %p:%04x ", acb->xs, acb->xs->data,
+		kprintf(" %02x", *b++);
+	kprintf("\n");
+	kprintf("  xs: %p data %p:%04x ", acb->xs, acb->xs->data,
 	    acb->xs->datalen);
-	printf("va %p:%lx ", acb->iob_buf, acb->iob_len);
-	printf("cur %lx:%lx\n", acb->iob_curbuf, acb->iob_curlen);
+	kprintf("va %p:%lx ", acb->iob_buf, acb->iob_len);
+	kprintf("cur %lx:%lx\n", acb->iob_curbuf, acb->iob_curlen);
 }
 
 void
@@ -1601,36 +1601,36 @@ siop_dump(sc)
 #if SIOP_TRACE_SIZE
 	siop_dump_trace();
 #endif
-	printf("%s@%p regs %p istat %x\n",
+	kprintf("%s@%p regs %p istat %x\n",
 	    sc->sc_dev.dv_xname, sc, rp, rp->siop_istat);
 	if ((acb = sc->free_list.tqh_first) > 0) {
-		printf("Free list:\n");
+		kprintf("Free list:\n");
 		while (acb) {
 			siop_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if ((acb = sc->ready_list.tqh_first) > 0) {
-		printf("Ready list:\n");
+		kprintf("Ready list:\n");
 		while (acb) {
 			siop_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if ((acb = sc->nexus_list.tqh_first) > 0) {
-		printf("Nexus list:\n");
+		kprintf("Nexus list:\n");
 		while (acb) {
 			siop_dump_acb(acb);
 			acb = acb->chain.tqe_next;
 		}
 	}
 	if (sc->sc_nexus) {
-		printf("Nexus:\n");
+		kprintf("Nexus:\n");
 		siop_dump_acb(sc->sc_nexus);
 	}
 	for (i = 0; i < 8; ++i) {
 		if (sc->sc_tinfo[i].cmds > 2) {
-			printf("tgt %d: cmds %d disc %d senses %d lubusy %x\n",
+			kprintf("tgt %d: cmds %d disc %d senses %d lubusy %x\n",
 			    i, sc->sc_tinfo[i].cmds,
 			    sc->sc_tinfo[i].dconns,
 			    sc->sc_tinfo[i].senses,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.3 1996/08/27 21:54:19 cgd Exp $	*/
+/*	$NetBSD: sfb.c,v 1.4 1996/10/10 23:51:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -217,19 +217,19 @@ sfbattach(parent, self, aux)
 		sfb_getdevconfig(ta->ta_addr, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
-		printf(": couldn't map memory space; punt!\n");
+		kprintf(": couldn't map memory space; punt!\n");
 		return;
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	kprintf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
 #if 0
 	x = (char *)ta->ta_addr + SFB_ASIC_OFFSET;
-	printf("%s: Video Base Address = 0x%x\n", self->dv_xname,
+	kprintf("%s: Video Base Address = 0x%x\n", self->dv_xname,
 	    *(u_int32_t *)(x + SFB_ASIC_VIDEO_BASE));
-	printf("%s: Horizontal Setup = 0x%x\n", self->dv_xname,
+	kprintf("%s: Horizontal Setup = 0x%x\n", self->dv_xname,
 	    *(u_int32_t *)(x + SFB_ASIC_VIDEO_HSETUP));
-	printf("%s: Vertical Setup = 0x%x\n", self->dv_xname,
+	kprintf("%s: Vertical Setup = 0x%x\n", self->dv_xname,
 	    *(u_int32_t *)(x + SFB_ASIC_VIDEO_VSETUP));
 #endif
 
@@ -254,7 +254,7 @@ sfbprint(aux, pnp)
 {
 
 	if (pnp)
-		printf("wscons at %s", pnp);
+		kprintf("wscons at %s", pnp);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.13 1996/10/08 23:18:53 thorpej Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.14 1996/10/10 23:55:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1896,7 +1896,7 @@ display_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE)
-			printf("display_aga_view(%dx%dx%d) %p\n", w, h,
+			kprintf("display_aga_view(%dx%dx%d) %p\n", w, h,
 			    depth, v);
 #endif
 		/* round down to nearest even width */
@@ -1924,9 +1924,9 @@ display_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2) {
-			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			kprintf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
 			    x, y);
-			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			kprintf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
 			    hstart, hstop, vstart, vstop, ddfstart);
 		}
 #endif
@@ -1951,9 +1951,9 @@ display_aga_view(v)
 		ddfstart &= 0xfffc;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2) {
-			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			kprintf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
 			    x, y);
-			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			kprintf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
 			    hstart, hstop, vstart, vstop, ddfstart);
 		}
 #endif
@@ -2011,57 +2011,57 @@ display_aga_view(v)
 		tmp->cp.inst.operand = aga_this_data->beamcon0;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("  beamcon0 %04x", tmp->cp.inst.operand);
+			kprintf("  beamcon0 %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
 		tmp->cp.inst.operand = CALC_DIWHIGH(hstart, vstart, hstop, vstop);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" diwhigh %04x>", tmp->cp.inst.operand);
+			kprintf(" diwhigh %04x>", tmp->cp.inst.operand);
 #endif
 #if 0
 		tmp->cp.inst.operand = (vstop & 0x0700) | ((hstop & 0x0100) << 5);
 #endif
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("%04x", tmp->cp.inst.operand);
+			kprintf("%04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
 		tmp->cp.inst.operand = aga_this_data->bplcon0 |
 		    ((depth & 0x7) << 12) | ((depth & 0x8) << 1);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplcon0 %04x", tmp->cp.inst.operand);
+			kprintf(" bplcon0 %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
 		tmp->cp.inst.operand = con1;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplcon1 %04x>0000\n", con1);
+			kprintf(" bplcon1 %04x>0000\n", con1);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
 		tmp->cp.inst.operand = ((vstart & 0xff) << 8) | (hstart & 0xff);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("  diwstart %04x", tmp->cp.inst.operand);
+			kprintf("  diwstart %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTOP));
 		tmp->cp.inst.operand = ((vstop & 0xff) << 8) | (hstop & 0xff);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" diwstop %04x", tmp->cp.inst.operand);
+			kprintf(" diwstop %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTART));
 		tmp->cp.inst.operand = ddfstart;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" ddfstart %04x", tmp->cp.inst.operand);
+			kprintf(" ddfstart %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTOP));
 		tmp->cp.inst.operand = ddfstart + ddfwidth;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" ddfstop %04x", tmp->cp.inst.operand);
+			kprintf(" ddfstop %04x", tmp->cp.inst.operand);
 #endif
 
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
@@ -2071,7 +2071,7 @@ display_aga_view(v)
 			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf (" bpl%dpth %p", i, v->bitmap->plane[i]);
+			kprintf (" bpl%dpth %p", i, v->bitmap->plane[i]);
 #endif
 		}
 
@@ -2081,7 +2081,7 @@ display_aga_view(v)
 		tmp[1].cp.inst.operand = v->bitmap->row_mod;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplxmod %04x\n", v->bitmap->row_mod);
+			kprintf(" bplxmod %04x\n", v->bitmap->row_mod);
 #endif
 
 		/* set next pointers correctly */
@@ -3027,7 +3027,7 @@ display_pal_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE)
-			printf("display_aga_view(%dx%dx%d) %p\n", w, h,
+			kprintf("display_aga_view(%dx%dx%d) %p\n", w, h,
 			    depth, v);
 #endif
 		/* round down to nearest even width */
@@ -3055,9 +3055,9 @@ display_pal_aga_view(v)
 
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2) {
-			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			kprintf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
 			    x, y);
-			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			kprintf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
 			    hstart, hstop, vstart, vstop, ddfstart);
 		}
 #endif
@@ -3082,9 +3082,9 @@ display_pal_aga_view(v)
 		ddfstart &= 0xfffc;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2) {
-			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			kprintf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
 			    x, y);
-			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			kprintf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
 			    hstart, hstop, vstart, vstop, ddfstart);
 		}
 #endif
@@ -3142,57 +3142,57 @@ display_pal_aga_view(v)
 		tmp->cp.inst.operand = paga_this_data->beamcon0;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("  beamcon0 %04x", tmp->cp.inst.operand);
+			kprintf("  beamcon0 %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
 		tmp->cp.inst.operand = CALC_DIWHIGH(hstart, vstart, hstop, vstop);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" diwhigh %04x>", tmp->cp.inst.operand);
+			kprintf(" diwhigh %04x>", tmp->cp.inst.operand);
 #endif
 #if 0
 		tmp->cp.inst.operand = (vstop & 0x0700) | ((hstop & 0x0100) << 5);
 #endif
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("%04x", tmp->cp.inst.operand);
+			kprintf("%04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
 		tmp->cp.inst.operand = paga_this_data->bplcon0 |
 		    ((depth & 0x7) << 12) | ((depth & 0x8) << 1);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplcon0 %04x", tmp->cp.inst.operand);
+			kprintf(" bplcon0 %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
 		tmp->cp.inst.operand = con1;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplcon1 %04x>0000\n", con1);
+			kprintf(" bplcon1 %04x>0000\n", con1);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
 		tmp->cp.inst.operand = ((vstart & 0xff) << 8) | (hstart & 0xff);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf("  diwstart %04x", tmp->cp.inst.operand);
+			kprintf("  diwstart %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTOP));
 		tmp->cp.inst.operand = ((vstop & 0xff) << 8) | (hstop & 0xff);
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" diwstop %04x", tmp->cp.inst.operand);
+			kprintf(" diwstop %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTART));
 		tmp->cp.inst.operand = ddfstart;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" ddfstart %04x", tmp->cp.inst.operand);
+			kprintf(" ddfstart %04x", tmp->cp.inst.operand);
 #endif
 		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTOP));
 		tmp->cp.inst.operand = ddfstart + ddfwidth;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" ddfstop %04x", tmp->cp.inst.operand);
+			kprintf(" ddfstop %04x", tmp->cp.inst.operand);
 #endif
 
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
@@ -3202,7 +3202,7 @@ display_pal_aga_view(v)
 			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf (" bpl%dpth %p", i, v->bitmap->plane[i]);
+			kprintf (" bpl%dpth %p", i, v->bitmap->plane[i]);
 #endif
 		}
 
@@ -3212,7 +3212,7 @@ display_pal_aga_view(v)
 		tmp[1].cp.inst.operand = v->bitmap->row_mod;
 #ifdef DEBUG
 		if (aga_enable & AGA_TRACE2)
-			printf(" bplxmod %04x\n", v->bitmap->row_mod);
+			kprintf(" bplxmod %04x\n", v->bitmap->row_mod);
 #endif
 
 		/* set next pointers correctly */

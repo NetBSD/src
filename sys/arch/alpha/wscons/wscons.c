@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.5 1996/09/02 06:43:20 mycroft Exp $	*/
+/*	$NetBSD: wscons.c,v 1.6 1996/10/10 23:51:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -147,7 +147,7 @@ wsconsattach(parent, self, aux)
 
 	console = waa->waa_isconsole;
 	if (console)
-		printf(": console");
+		kprintf(": console");
 
 	/*
 	 * If output has already been set up, record it now.  Otherwise,
@@ -183,7 +183,7 @@ wsconsattach(parent, self, aux)
 	sc->sc_ioctl = waa->waa_odev_spec.wo_ioctl;
 	sc->sc_mmap = waa->waa_odev_spec.wo_mmap;
 
-	printf("\n");
+	kprintf("\n");
 }
 
 

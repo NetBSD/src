@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.14 1996/10/08 23:18:50 thorpej Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.15 1996/10/10 23:55:42 christos Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -281,7 +281,7 @@ grfclattach(pdp, dp, auxp)
 
 	zap = auxp;
 
-	printf("\n");
+	kprintf("\n");
 
 	/* make sure both halves have matched */
 	if (!cl_regaddr || !cl_fbaddr)
@@ -322,36 +322,36 @@ grfclattach(pdp, dp, auxp)
 	 */
 	if (amiga_config_found(cfdata, &gp->g_device, gp, grfclprint)) {
 		attachflag = 1;
-		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
+		kprintf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {
 		    case PICASSO:
-			printf("Picasso II");
+			kprintf("Picasso II");
                         cl_maxpixelclock = 86000000;
 			break;
 		    case SPECTRUM:
-			printf("Spectrum");
+			kprintf("Spectrum");
                         cl_maxpixelclock = 90000000;
 			break;
 		    case PICCOLO:
 			if (cl_sd64 == 1) {
-				printf("Piccolo SD64");
+				kprintf("Piccolo SD64");
 				/* 110MHz will be supported if we
 				 * have a palette doubling mode.
 				 */
 				cl_maxpixelclock = 90000000;
 			} else {
-				printf("Piccolo");
+				kprintf("Piccolo");
 				cl_maxpixelclock = 90000000;
 			}
 			break;
 		}
-		printf(" being used\n");
+		kprintf(" being used\n");
 #ifdef CL_OVERCLOCK
                 cl_maxpixelclock = 115000000;
 #endif
 	} else {
 		if (!attachflag)
-			printf("grfcl unattached!!\n");
+			kprintf("grfcl unattached!!\n");
 	}
 }
 
@@ -361,7 +361,7 @@ grfclprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("ite at %s: ", pnp);
+		kprintf("ite at %s: ", pnp);
 	return (UNCONF);
 }
 
@@ -1154,7 +1154,7 @@ denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 	*num = minn;
 	*denom = (mind << 1) | minp;
 	if (minerr > 500000)
-		printf("Warning: CompFQ minimum error = %ld\n", minerr);
+		kprintf("Warning: CompFQ minimum error = %ld\n", minerr);
 	return;
 }
 
@@ -1212,7 +1212,7 @@ cl_load_mon(gp, md)
 	TEXT = (gv->depth == 4);
 
 	if (!cl_mondefok(gv)) {
-		printf("mondef not ok\n");
+		kprintf("mondef not ok\n");
 		return (0);
 	}
 	ba = gp->g_regkva;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 1996/10/08 22:56:04 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 1996/10/10 23:55:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -814,7 +814,7 @@ Laststkadj:
 Ldorte:
 |	moveml	a0/a1/d0/d1,sp@-
 |	pea	pc@(Ldoinrte)
-|	jsr	_printf
+|	jsr	_kprintf
 |	addql	#4,sp
 |	moveml	sp@+,a0/a1/d0/d1
 	rte				| real return
