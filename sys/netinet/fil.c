@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.35 2000/05/23 06:07:42 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.36 2000/06/12 10:28:20 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.35 2000/05/23 06:07:42 veego Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.36 2000/06/12 10:28:20 veego Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.8 2000/05/22 10:26:09 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.10 2000/06/09 14:07:47 darrenr Exp";
 #endif
 #endif
 
@@ -121,10 +121,8 @@ extern	kmutex_t	ipf_rw;
 # if SOLARIS
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, \
 							   ip, qif)
-#  define	SEND_RESET(ip, qif, if, fin)	send_reset(fin, ip, qif)
 # else /* SOLARIS */
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
-#  define	SEND_RESET(ip, qif, if, fin)	send_reset(fin, ip)
 # endif /* SOLARIS || __sgi */
 #endif /* _KERNEL */
 
@@ -981,10 +979,10 @@ int out;
 	if (out && (pass & FR_PASS)) {
 #ifdef	USE_INET6
 		if (v == 6)
-			list = ipacct6[0][fr_active];
+			list = ipacct6[1][fr_active];
 		else
 #endif
-			list = ipacct[0][fr_active];
+			list = ipacct[1][fr_active];
 		if ((fin->fin_fr = list) &&
 		    (fr_scanlist(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT)) {
 			ATOMIC_INCL(frstats[1].fr_acct);
@@ -1129,11 +1127,11 @@ logit:
 
 		if (((pass & FR_FASTROUTE) && !out) ||
 		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
-			if (ipfr_fastroute(qif, ip, m, mp, fin, fdp) == 0)
+			if (ipfr_fastroute(ip, m, mp, fin, fdp) == 0)
 				m = *mp = NULL;
 		}
 		if (mc)
-			ipfr_fastroute(qif, ip, mc, mp, fin, &fr->fr_dif);
+			ipfr_fastroute(ip, mc, mp, fin, &fr->fr_dif);
 	}
 # endif /* !SOLARIS */
 	return (pass & FR_PASS) ? 0 : error;
@@ -1365,7 +1363,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.8 2000/05/22 10:26:09 darrenr Exp
+ * Id: fil.c,v 2.35.2.10 2000/06/09 14:07:47 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
