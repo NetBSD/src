@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.50 2002/06/28 08:45:56 grant Exp $
+# $NetBSD: obsolete.mi,v 1.51 2002/07/09 22:18:38 jdolecek Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -76,6 +76,7 @@
 /usr/share/man/cat8/alpha/installboot.old.0
 /usr/share/man/cat8/gettable.0
 /usr/share/man/cat8/greconfig.0
+/usr/share/man/cat8/grfconfig.0
 /usr/share/man/cat8/htable.0
 /usr/share/man/cat8/i386/apmd.0
 /usr/share/man/cat8/i386/bad144.0
@@ -184,6 +185,7 @@
 /usr/share/man/man8/alpha/installboot.old.8
 /usr/share/man/man8/gettable.8
 /usr/share/man/man8/greconfig.8
+/usr/share/man/man8/grfconfig.8
 /usr/share/man/man8/htable.8
 /usr/share/man/man8/i386/apmd.8
 /usr/share/man/man8/i386/bad144.8
