@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.7 1998/11/06 22:40:13 christos Exp $	*/
+/*	$NetBSD: patch.c,v 1.8 2000/10/16 07:05:04 kleink Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.7 1998/11/06 22:40:13 christos Exp $");
+__RCSID("$NetBSD: patch.c,v 1.8 2000/10/16 07:05:04 kleink Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -424,6 +424,7 @@ decode_long_option(opt)
       { "ignore-whitespace",	'l' },
       { "normal",		'n' },
       { "output",		'o' },
+      { "patchfile",		'i' },
       { "prefix",		'B' },
       { "quiet",		's' },
       { "reject-file",		'r' },
@@ -466,6 +467,9 @@ get_some_switches()
 	if (*s != '-' || !s[1]) {
 	    if (filec == MAXFILEC)
 		fatal1("too many file arguments\n");
+	    if (filec == 1 && filearg[filec] != Nullch)
+		fatal1("-i option and patchfile argument are mutually\
+exclusive\n");
 	    filearg[filec++] = savestr(s);
 	}
 	else {
@@ -517,6 +521,11 @@ get_some_switches()
 		if (*++s == '=')
 		    s++;
 		maxfuzz = atoi(s);
+		break;
+	    case 'i':
+		if (filearg[1] != Nullch)
+		    free(filearg[1]);
+		filearg[1] = savestr(nextarg());
 		break;
 	    case 'l':
 		canonicalize = TRUE;

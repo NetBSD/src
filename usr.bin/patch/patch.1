@@ -1,4 +1,4 @@
-.\"	$NetBSD: patch.1,v 1.4 1996/09/19 06:27:12 thorpej Exp $ -*- nroff -*-
+.\"	$NetBSD: patch.1,v 1.5 2000/10/16 07:05:04 kleink Exp $ -*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -80,8 +80,13 @@ You may also specify where you want the output to go with a
 switch; if that file already exists, it is backed up first.
 .PP
 If
+no
 .I patchfile
-is omitted, or is a hyphen, the patch will be read from standard input.
+argument is specified using the
+.BR -i
+option, and the
+.I patchfile
+argument is omitted, or is a hyphen, the patch will be read from standard input.
 .PP
 Upon startup, patch will attempt to determine the type of the diff listing,
 unless over-ruled by a
@@ -254,6 +259,9 @@ patches are not reversed even if they look like they are.
 This option does not suppress commentary; use
 .B \-s
 for that.
+.TP 5
+.B \-i <patchfile> or \-\-patchfile <patchfile>
+Read the patch to be applied from the specified file.
 .TP 5
 .B \-t or \-\-batch
 similar to
