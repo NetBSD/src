@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.7 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.8 1998/03/03 01:15:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.7 1998/02/27 10:33:46 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.8 1998/03/03 01:15:13 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -530,8 +530,8 @@ auth_name(data, cnt)
 	}
 	if (cnt > sizeof(savename) - 1) {
 		if (auth_debug_mode)
-			printf(">>>%s: Name in NAME (%d) exceeds %d length\r\n",
-					Name, cnt, sizeof(savename)-1);
+			printf(">>>%s: Name in NAME (%d) exceeds %ld length\r\n",
+					Name, cnt, (long)sizeof(savename)-1);
 		return;
 	}
 	memmove((void *)savename, (void *)data, cnt);
