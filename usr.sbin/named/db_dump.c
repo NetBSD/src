@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)db_dump.c	4.33 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: db_dump.c,v 1.2 1993/08/01 17:57:34 mycroft Exp $";
+static char rcsid[] = "$Id: db_dump.c,v 1.3 1995/06/07 17:40:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,6 +70,7 @@ doachkpt()
 {
     extern int errno;
     FILE *fp;
+    time_t dumptime;
     char tmpcheckfile[256];
 
     /* nowhere to checkpoint cache... */
@@ -96,7 +97,8 @@ doachkpt()
     }
 
     (void) gettime(&tt);
-    fprintf(fp, "; Dumped at %s", ctime(&tt.tv_sec));
+    dumptime = tt.tv_sec;
+    fprintf(fp, "; Dumped at %s", ctime(&dumptime));
     fflush(fp);
     if (ferror(fp)) {
 #ifdef DEBUG
@@ -240,6 +242,7 @@ mark_cache(htp, ttl)
 doadump()
 {
 	FILE	*fp;
+	time_t	dumptime;
 
 #ifdef DEBUG
 	if (debug >= 3)
@@ -249,7 +252,8 @@ doadump()
 	if ((fp = fopen(dumpfile, "w")) == NULL)
 		return;
 	gettime(&tt);
-	fprintf(fp, "; Dumped at %s", ctime(&tt.tv_sec));
+	dumptime = tt.tv_sec;
+	fprintf(fp, "; Dumped at %s", ctime(&dumptime));
 	fprintf(fp, "; --- Cache & Data ---\n");
 	if (hashtab != NULL)
 		(void) db_dump(hashtab, fp, DB_Z_ALL, "");
