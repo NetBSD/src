@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.6 1997/07/27 01:28:04 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.7 1997/08/18 21:35:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ main(int argc, char **argv)
     int fd, i, ch;
     int aflag = 0, wflag = 0;
     struct stat dstat, ostat;
-    char *file = "/dev/sound";
+    char *file = "/dev/audioctl";
     char *sep = "=";
     
     prog = *argv;
@@ -320,7 +320,7 @@ main(int argc, char **argv)
     if (fd < 0)
 	err(1, "%s", file);
     
-    /* Check is stdout is the same device as the audio device. */
+    /* Check if stdout is the same device as the audio device. */
     if (fstat(fd, &dstat) < 0)
 	err(1, NULL);
     if (fstat(STDOUT_FILENO, &ostat) < 0)
