@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.9 1999/01/25 00:16:17 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.10 1999/04/18 02:27:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.9 1999/01/25 00:16:17 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.10 1999/04/18 02:27:54 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,6 +55,12 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.9 1999/01/25 00:16:17 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #ifdef __weak_alias
 __weak_alias(nsdispatch,_nsdispatch);

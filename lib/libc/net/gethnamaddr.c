@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.15 1999/04/18 02:27:53 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.15 1999/04/18 02:27:53 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,6 +81,12 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <syslog.h>
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #ifndef LOG_AUTH
 # define LOG_AUTH 0
