@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.24 2003/08/22 05:46:39 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.25 2003/08/22 06:21:09 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.24 2003/08/22 05:46:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.25 2003/08/22 06:21:09 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -274,8 +274,8 @@ key_sendup_mbuf(so, m, target)
 	{
 		if (rp->rcb_proto.sp_family != PF_KEY)
 			continue;
-		if (rp->rcb_proto.sp_protocol
-		 && rp->rcb_proto.sp_protocol != PF_KEY_V2) {
+		if (rp->rcb_proto.sp_protocol &&
+		    rp->rcb_proto.sp_protocol != PF_KEY_V2) {
 			continue;
 		}
 
