@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.10 1999/09/30 14:49:12 sjg Exp $	*/
+/*	$NetBSD: interface.h,v 1.11 1999/10/05 20:37:22 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -216,6 +216,8 @@ extern void default_print(const u_char *, u_int);
 extern void default_print_unaligned(const u_char *, u_int);
 extern void dvmrp_print(const u_char *, u_int);
 extern void egp_print(const u_char *, u_int, const u_char *);
+extern void arcnet_if_print(u_char *, const struct pcap_pkthdr *,
+	const u_char *);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
