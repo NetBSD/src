@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.25 1998/01/12 20:12:33 thorpej Exp $	*/
+/*	$NetBSD: pm.c,v 1.26 1998/03/30 02:34:25 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.25 1998/01/12 20:12:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.26 1998/03/30 02:34:25 jonathan Exp $");
 
 
 #include <sys/param.h>
@@ -125,17 +125,6 @@ static int pm_video_off __P ((struct fbinfo *));
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 
-/*
- * Definition of driver for autoconfiguration.
- */
-
-int old_pmmatch __P((struct device *, struct cfdata *, void *));
-void old_pmattach __P((struct device *, struct device *, void *));
-
-struct cfattach old_pm_ca = {
-	sizeof(struct device), old_pmmatch, old_pmattach
-};
-
 /* new-style raster-cons "driver" methods */
 
 struct fbdriver pm_driver = {
@@ -148,44 +137,6 @@ struct fbdriver pm_driver = {
 	pmLoadCursor,
 	bt478CursorColor,
 };
-
-int
-old_pmmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct confargs *ca = aux;
-	caddr_t pmaddr = (caddr_t)ca->ca_addr;
-
-	/* make sure that we're looking for this type of device. */
-	if (strcmp(ca->ca_name, "pm") != 0)
-		return (0);
-
-	if (badaddr(pmaddr, 4))
-		return (0);
-
-	return (1);
-}
-
-void
-old_pmattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	/*struct confargs *ca = aux;*/
-	/*caddr_t pmaddr = (caddr_t)ca->ca_addr;*/
-	extern struct fbinfo pmfi;	/* XXX */
-
-	if (!pminit(&pmfi, 0, 0))
-		return;
-
-	/* no interrupts for PM */
-	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
-	printf("\n");
-	return;
-}
 
 
 
