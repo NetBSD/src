@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.36 1997/11/30 01:02:44 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.37 1997/12/01 06:07:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -583,7 +583,8 @@ grfmv_intr_cmax(vsc, slot)
 }
 
 /*
- * Routine to clear interrupts for the Sigma Designs ColorMax card.
+ * Routine to clear interrupts for the Lapis ProColorServer 8 PDS card
+ * (for the SE/30).
  */
 /*ARGSUSED*/
 static void
