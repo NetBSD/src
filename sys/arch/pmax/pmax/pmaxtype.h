@@ -1,4 +1,4 @@
-/*	$NetBSD: pmaxtype.h,v 1.6 1998/03/26 11:44:28 jonathan Exp $	*/
+/*	$NetBSD: pmaxtype.h,v 1.7 1998/03/31 11:32:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,5 +52,4 @@
 #define	DS_MIPSFAIR2	0xb	/* DECsystem 5500 */
 #define	DS_MIPSMATE	0xc	/* DECsystem 5100 */
 
-extern int systype;		/* mboard bits from PROM variable */
-extern int pmax_boardtype;	/* (deprecated) */	
+extern int systype;		/* motherboard-type bits from PROM variable */

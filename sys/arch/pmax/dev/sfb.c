@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.23 1998/01/12 20:12:34 thorpej Exp $	*/
+/*	$NetBSD: sfb.c,v 1.24 1998/03/31 11:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -97,13 +97,11 @@
 #include <machine/fbvar.h>
 #include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
 
-
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/sfbreg.h>
 
 #include <mips/cpuregs.h>		/* mips cached->uncached */
 
-#include <pmax/pmax/pmaxtype.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
 
@@ -114,8 +112,6 @@ struct fbuaccess sfbu;
 struct pmax_fbtty sfbfb;
 struct fbinfo	sfbfi;	/*XXX*/ /* should be softc */
 
-
-extern int pmax_boardtype;
 
 /*
  * Forward references.
