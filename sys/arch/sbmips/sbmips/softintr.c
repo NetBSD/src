@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.1 2002/03/06 02:13:52 simonb Exp $ */
+/* $NetBSD: softintr.c,v 1.2 2002/03/17 06:28:57 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1 2002/03/06 02:13:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2002/03/17 06:28:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,22 +187,22 @@ setsoftnet()
 static void
 dosoftnet(void *unused)
 {
-        int n, s;
+	int n, s;
 
 	intrcnt[SOFTNET_INTR]++;
 
 	/* XXX could just use netintr! */
 
-        s = splhigh();
-        n = netisr;
-        netisr = 0;
-        splx(s);
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
 
-#define DONETISR(bit, fn)                                               \
-        do {                                                            \
-                if (n & (1 << (bit)))                                   \
-                        fn();                                           \
-        } while (0)
+#define DONETISR(bit, fn)						\
+	do {								\
+		if (n & (1 << (bit)))					\
+			fn();						\
+	} while (0)
 
 #include <net/netisr_dispatch.h>
 

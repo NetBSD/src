@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.1 2002/03/06 02:13:51 simonb Exp $ */
+/* $NetBSD: disksubr.c,v 1.2 2002/03/17 06:28:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -204,7 +204,8 @@ nombrpart:
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)
+		(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -381,7 +382,8 @@ nombrpart:
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)
+		(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

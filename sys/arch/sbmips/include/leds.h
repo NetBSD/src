@@ -1,4 +1,4 @@
-/* $NetBSD: leds.h,v 1.1 2002/03/06 02:13:44 simonb Exp $ */
+/* $NetBSD: leds.h,v 1.2 2002/03/17 06:28:56 simonb Exp $ */
 
 /*
  * Copyright 2000
@@ -36,4 +36,3 @@
 /* XXX DOES NOT BELONG HERE */
 
 void	cswarm_setleds(const char *str);
-

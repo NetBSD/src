@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 2002/03/16 16:55:58 martin Exp $ */
+/* $NetBSD: conf.c,v 1.3 2002/03/17 06:28:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2 2002/03/16 16:55:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3 2002/03/17 06:28:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ struct cdevsw cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
 	cdev_fd_init(1,filedesc),	/* 10: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 11: Berkeley packet filter */
+	cdev_bpftun_init(NBPFILTER,bpf), /* 11: Berkeley packet filter */
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */
@@ -306,14 +306,12 @@ struct cdevsw cdevsw[] =
 	cdev_lkm_dummy(),		/* 22 */
 	cdev_lkm_dummy(),		/* 23 */
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
-	cdev_wsdisplay_init(NWSDISPLAY,
-	    wsdisplay),			/* 25: frame buffers, etc. */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 25: frame buffers, etc. */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_disk_init(NMD,md),		/* 28: memory disk driver */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 29: keyboards */
-	cdev_mouse_init(NWSMOUSE,
-	    wsmouse),			/* 30: mice */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 30: mice */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
@@ -336,7 +334,7 @@ struct cdevsw cdevsw[] =
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
 	cdev_isdn_init(NISDN, isdn),		/* 51: isdn main device */
 	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 52: isdn control device */
-	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 53: isdn raw b-chnl access */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan), /* 53: isdn raw b-chnl access */
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 54: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 55: isdn phone device */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
@@ -346,7 +344,7 @@ struct cdevsw cdevsw[] =
 	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
 	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
 	cdev_usbdev_init(NURIO,urio),	/* 62: Diamond Rio 500 */
-	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
+	cdev_ugen_init(NUSCANNER,uscanner), /* 63: USB scanner */
 	cdev_altq_init(NALTQ,altq),	/* 64: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
 	cdev_pci_init(NPCI,pci),	/* 66: PCI bus access device */
