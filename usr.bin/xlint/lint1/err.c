@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.7 1995/10/02 17:29:49 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.7 1995/10/02 17:29:49 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -364,7 +364,7 @@ const	char *msgs[] = {
 	"ANSI C forbids conversion of %s to %s, op %s",		      /* 305 */
 	"constant truncated by conversion, op %s",		      /* 306 */
 	"static variable %s set but not used",			      /* 307 */
-	"extra bits set to 1 in conversion of '%s' to '%s', op %s",   /* 308 */
+	"",							      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
 };
 
