@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2002/04/11 12:17:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/16 05:23:40 lukem Exp $
 
-IMAGE=		boot-tiny.fs
-KERNELDIR=	kernel-ramdisk
-KERNEL=		netbsd.INSTALL_TINY.gz
-DISKSIZE=	2400
+FLOPPYBASE=	boot-tiny
+FLOPPYSIZE=	2400
+FLOPPYKERNDIR=	kernel-ramdisk
+FLOPPYKERNEL=	netbsd.INSTALL_TINY.gz
 
 .include "${.CURDIR}/../common/Makefile.bootfloppy"

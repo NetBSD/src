@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/11 12:17:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/16 05:23:39 lukem Exp $
 
-IMAGE=		boot-ps2.fs
-KERNELDIR=	kernel-ramdisk
-KERNEL=		netbsd.INSTALL_PS2.gz
-DISKSIZE=	2880
+FLOPPYBASE=	boot-ps2
+FLOPPYKERNDIR=	kernel-ramdisk
+FLOPPYKERNEL=	netbsd.INSTALL_PS2.gz
 
 .include "${.CURDIR}/../common/Makefile.bootfloppy"
