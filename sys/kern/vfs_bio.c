@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.125 2004/05/25 04:30:33 atatat Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.126 2004/06/20 18:17:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.125 2004/05/25 04:30:33 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.126 2004/06/20 18:17:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,8 +371,9 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && smallmem)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, PR_IMMEDRELEASE, name, pa);
+		pool_init(pp, size, 0, 0, 0, name, pa);
 		pool_setlowat(pp, 1);
+		pool_sethiwat(pp, 1);
 	}
 
 	/* Initialize the buffer queues */
