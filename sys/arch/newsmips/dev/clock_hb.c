@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.2 2002/09/27 20:34:22 thorpej Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.3 2002/10/02 04:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -45,9 +45,8 @@ struct clock_hb_softc {
 int clock_hb_match __P((struct device *, struct cfdata *, void *));
 void clock_hb_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach mkclock_hb_ca = {
-	sizeof(struct clock_hb_softc), clock_hb_match, clock_hb_attach,
-};
+CFATTACH_DECL(mkclock_hb, sizeof(struct clock_hb_softc),
+    clock_hb_match, clock_hb_attach, NULL, NULL);
 
 static void clockinit __P((struct device *));
 static void clockget __P((struct device *, struct clock_ymdhms *));
