@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.29 2001/01/16 02:41:17 cgd Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.30 2001/02/04 22:12:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.29 2001/01/16 02:41:17 cgd Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.30 2001/02/04 22:12:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: cleanerd.c,v 1.29 2001/01/16 02:41:17 cgd Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <errno.h>
+#include <err.h>
 
 #include <syslog.h>
 
