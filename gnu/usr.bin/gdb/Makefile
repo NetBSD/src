@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 1998/09/06 15:07:01 tv Exp $
+# $NetBSD: Makefile,v 1.21 1999/02/07 17:35:28 christos Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -28,9 +28,14 @@ INCLS+= -I${BFDOBJ}
 INCLS+= -I$(dist)/bfd
 INCLS+= -I$(dist)/include
 
+.include <bsd.own.mk>
 # misc. -DHAVE_TERMIOS
 # KERNEL_DEBUG no longer used.  See ADDITIONAL_OPTIONS*
 DEFS= -DNO_MMALLOC
+
+.if ${OBJECT_FMT} == "ELF"
+DEFS+= -DSVR4_SHARED_LIBS
+.endif
 
 CPPFLAGS+= $(INCLS) $(DEFS)
 
