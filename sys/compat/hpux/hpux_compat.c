@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.32 1997/04/27 21:40:47 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.33 1997/05/05 06:56:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1190,7 +1190,6 @@ hpux_sys_getaccess(p, v, retval)
 		*retval |= R_OK;
 	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, p) == 0)
 		*retval |= W_OK;
-	/* XXX we return X_OK for root on VREG even if not */
 	if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
 		*retval |= X_OK;
 	vput(vp);
