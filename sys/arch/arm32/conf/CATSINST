@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.20 2000/07/08 01:24:35 tsutsui Exp $
+#	$NetBSD: CATSINST,v 1.21 2000/08/30 21:29:16 is Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -116,7 +116,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=3400	# Size in blocks
+options 	MINIROOTSIZE=3800	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
