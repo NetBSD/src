@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.15 1996/12/06 02:28:13 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.16 1997/01/19 14:19:11 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd December 6, 1996
+.Dd January 20, 1997
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -42,7 +42,7 @@
 .Tn ARPANET
 file transfer program
 .Sh SYNOPSIS
-.Nm ftp
+.Nm
 .Op Fl a
 .Op Fl d
 .Op Fl g
@@ -54,11 +54,11 @@ file transfer program
 .Op Fl v
 .Op Ar host Op Ar port
 .Nm ftp
-ftp://\fIhost\fR/\fIfile\fR
+ftp://\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
-ftp://\fIhost\fR:\fIport\fR/\fIfile\fR
+http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
-\fIhost\fR:/\fIfile\fR
+\fIhost\fR:\fIfile\fR[/]
 .Sh DESCRIPTION
 .Nm
 is the user interface to the
@@ -84,7 +84,9 @@ multiple file transfers.
 .It Fl n
 Restrains
 .Nm
-from attempting \*(Lqauto-login\*(Rq upon initial connection.
+from attempting
+.Dq auto-login
+upon initial connection.
 If auto-login is enabled,
 .Nm
 will check the
@@ -101,8 +103,6 @@ Enable passive mode operation for use behind connection filtering firewalls.
 .It Fl P Ar port
 Sets the port number to
 .Ar port .
-This option only has meaning if using the auto-fetch feature of
-.Nm ftp .
 .It Fl t
 Enables packet tracing.
 .It Fl v
@@ -111,17 +111,6 @@ Verbose option forces
 to show all responses from the remote server, as well
 as report on data transfer statistics.
 .El
-.Pp
-In addition to standard commands, this version of
-.Nm
-supports an auto-fetch feature.
-To enable auto-fetch, simply pass the list of hostnames/files
-on the command line.
-The hostnames/files may be specified in URL-style format
-.Dq ftp://host/file
-or in the classic
-.Dq host:/file 
-format.
 .Pp
 The client host with which
 .Nm
@@ -284,6 +273,11 @@ the output is sent to the terminal.
 .It Ic disconnect
 A synonym for
 .Ic close .
+.It Ic edit
+Toggle command line editing, and context sensitive command and file
+completion.
+This is automatically enabled for interactive tty sessions, and
+disabled otherwise.
 .It Ic exit
 A synonym for
 .Ic bye .
@@ -661,7 +655,7 @@ will transfer all files, and any
 will delete all files.
 .Pp
 When prompting is on, the following commands are available at a prompt:
-.Bl -tag -width Fl -offset indent
+.Bl -tag -width 2n -offset indent
 .It Ic n
 Do not transfer the file.
 .It Ic a
@@ -766,7 +760,7 @@ server.
 If a
 .Ar command-name
 is specified it is supplied to the server as well.
-.It Ic remotestatus Op Ar file-name
+.It Ic rstatus Op Ar file-name
 With no arguments, show status of remote machine.
 If
 .Ar file-name
@@ -962,11 +956,44 @@ receives a
 .Dv SIGINFO
 (see the
 .Dq status
-arguments of
+argument of
 .Xr stty 1 )
 signal whilst a transfer is in progress, the current transfer rate
 statistics will be written to the standard error output, in the
 same format as the standard completion message.
+.Sh AUTO-FETCHING FILES
+In addition to standard commands, this version of
+.Nm
+supports an auto-fetch feature.
+To enable auto-fetch, simply pass the list of hostnames/files
+on the command line.
+.Pp
+The following formats are valid syntax for an auto-fetch element:
+.Bl -tag -width "http://host[:port]/file"
+.It host:/file 
+.Dq Classic
+ftp format
+.It ftp://host[:port]/file
+FTP URL, using the ftp protocol.
+.It http://host[:port]/file
+HTTP URL, using the http protocol.
+If
+.Ev http_proxy
+is defined, it is used as a URL to an HTTP proxy server.
+.El
+.Pp
+If a classic format or a ftp URL format has a trailing
+.Sq / ,
+then
+.Nm
+will connect to the site and
+.Ic cd
+to the directory given as the path, and leave the user in interactive
+mode ready for further input.
+.Pp
+If successive auto-fetch ftp elements refer to the same host, then
+the connection is maintained between transfers, reducing overhead on
+connection creation and deletion.
 .Sh ABORTING A FILE TRANSFER
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
@@ -1022,7 +1049,7 @@ If the shell command includes spaces, the argument
 must be quoted; e.g.
 \*(Lq" ls -lt"\*(Rq.
 A particularly
-useful example of this mechanism is: \*(Lqdir more\*(Rq.
+useful example of this mechanism is: \*(Lqdir \&|more\*(Rq.
 .It
 Failing the above checks, if ``globbing'' is enabled,
 local file names are expanded
@@ -1187,24 +1214,62 @@ If a macro named
 is defined, it is automatically executed as the last step in the
 auto-login process.
 .El
+.Sh COMMAND LINE EDITING
+.Nm
+supports interactive command line editing, via the 
+.Xr editline 3
+library.
+It is enabled with the
+.Ic edit
+command, and is enabled by default.
+Previous lines can be recalled and edited with the arrow keys,
+and other GNU Emacs-style editing keys may be used as well.
+.Pp
+The
+.Xr editline 3
+library is configured with a
+.Pa .editrc
+file - refer to
+.Xr editrc 5
+for more information.
+.Pp
+An extra key binding is available to
+.Nm
+to provide context sensitive command and filename completion
+(including remote file completion).
+To use this, bind a key to the
+.Xr editline 3
+command
+.Ic ftp-complete .
+By default, this is bound to the TAB key.
 .Sh ENVIRONMENT
 .Nm
 utilizes the following environment variables.
-.Bl -tag -width Fl
+.Bl -tag -width "http_proxy"
 .It Ev HOME
 For default location of a
 .Pa .netrc
 file, if one exists.
 .It Ev SHELL
 For default shell.
+.It Ev http_proxy
+URL of HTTP proxy to use when making HTTP requests.
 .El
 .Sh SEE ALSO
+.Xr editrc 5 ,
 .Xr ftpd 8
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Pp
+Various features such as command line editing, context sensitive 
+command and file completion, dynamic progress bar, automatic
+fetching of files, ftp and http URLs, and modification time
+preservation were implemented in
+.Nx
+by Luke Mewburn, with assistance from Jason Thorpe.
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.

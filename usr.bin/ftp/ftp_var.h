@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.11 1997/01/09 20:19:39 tls Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.12 1997/01/19 14:19:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -41,11 +41,19 @@
 
 #include <sys/param.h>
 #include <setjmp.h>
+#include <stringlist.h>
+
+#ifndef SMALLFTP
+#include <histedit.h>
+#endif /* !SMALLFTP */
 
 #include "extern.h"
 
-#define HASHBYTES 1024
+#define HASHBYTES	1024
+#define FTPBUFLEN	MAXPATHLEN + 200
 
+#define	FTP_PORT	21	/* default if getservbyname("ftp/tcp") fails */
+#define	HTTP_PORT	80	/* default if getservbyname("http/tcp") fails */
 
 /*
  * Options and other state info.
@@ -93,22 +101,36 @@ int	mode;			/* file transfer mode */
 char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
+int	dirchange;		/* remote directory changed by cd command */
+
+#ifndef SMALLFTP
+int	  editing;		/* command line editing enabled */
+EditLine *el;			/* editline(3) status structure */
+History  *hist;			/* editline(3) history structure */
+char	 *cursor_pos;		/* cursor position we're looking for */
+int	  cursor_argc;		/* location of cursor in margv */
+int	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
+#endif /* !SMALLFTP */
+
+off_t	bytes;			/* current # of bytes read */
+off_t	filesize;		/* size of file being transferred */
+char   *direction;		/* direction transfer is occurring */
 
 char	*hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
-
-struct	servent *sp;		/* service spec for tcp/ftp */
+int	ftpport;		/* port number to use for ftp connections */
+int	httpport;		/* port number to use for http connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 
-char	line[200];		/* input line buffer */
+char	line[FTPBUFLEN];	/* input line buffer */
 char	*stringbase;		/* current scan point in line buffer */
-char	argbuf[200];		/* argument storage buffer */
+char	argbuf[FTPBUFLEN];	/* argument storage buffer */
 char	*argbase;		/* current storage point in arg buffer */
+StringList *marg_sl;		/* stringlist containing margv */
 int	margc;			/* count of arguments on input line */
-char	**margv;		/* args parsed from input line */
-int	margvlen;		/* how large margv is currently */
+#define margv (marg_sl->sl_str)	/* args parsed from input line */
 int     cpend;                  /* flag: if != 0, then pending server reply */
 int	mflag;			/* flag: if != 0, then active multi command */
 
@@ -120,9 +142,12 @@ int	options;		/* used during socket creation */
 struct cmd {
 	char	*c_name;	/* name of command */
 	char	*c_help;	/* help string */
-	char	c_bell;		/* give bell when command completes */
-	char	c_conn;		/* must be connected to use command */
-	char	c_proxy;	/* proxy server may execute */
+	char	 c_bell;	/* give bell when command completes */
+	char	 c_conn;	/* must be connected to use command */
+	char	 c_proxy;	/* proxy server may execute */
+#ifndef SMALLFTP
+	char	*c_complete;	/* context sensitive completion list */
+#endif /* !SMALLFTP */
 	void	(*c_handler) __P((int, char **)); /* function to call */
 };
 
@@ -135,8 +160,3 @@ struct macel {
 int macnum;			/* number of defined macros */
 struct macel macros[16];
 char macbuf[4096];
-
-/*
- * The URL prefix for an FTP connection.
- */
-#define	FTPURL			"ftp://"

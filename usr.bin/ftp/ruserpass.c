@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.10 1997/01/09 20:19:41 tls Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
+#else
+static char rcsid[] = "$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -182,8 +186,9 @@ next:
 				(void) fclose(cfile);
 				return (0);
 			}
-			while ((c=getc(cfile)) != EOF && c == ' ' || c == '\t')
-				;
+			while ((c=getc(cfile)) != EOF)
+				if (c != ' ' && c != '\t')
+					break;
 			if (c == EOF || c == '\n') {
 				printf("Missing macdef name argument.\n");
 				goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1997/01/09 20:19:37 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1997/01/19 14:19:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,6 +44,7 @@ void    abortrecv __P(());
 void    abortsend __P(());
 void	account __P((int, char **));
 int	another __P((int *, char ***, const char *));
+int	auto_fetch __P((int, char **));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
@@ -51,6 +52,9 @@ void	changetype __P((int, int));
 void	cmdabort __P(());
 void	cmdscanner __P((int));
 int	command __P(());
+#ifndef SMALLFTP
+unsigned char complete __P((EditLine *, int));
+#endif /* !SMALLFTP */
 int	confirm __P((const char *, const char *));
 FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));
@@ -62,7 +66,6 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
-void	fatal __P((const char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
@@ -74,6 +77,7 @@ char   *hookup __P((const char *, int));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P(());
+void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
 int	login __P((const char *));
 void	lostpeer __P(());
@@ -81,7 +85,7 @@ void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));
 void	macdef __P((int, char **));
-void	makeargv __P((void));
+void	makeargv __P(());
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
@@ -91,6 +95,7 @@ void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
 void    progressmeter __P((int));
+char   *prompt __P(());
 void	proxabort __P(());
 void    proxtrans __P((const char *, const char *, const char *));
 void    psabort __P(());
@@ -122,6 +127,7 @@ void	setbinary __P((int, char **));
 void	setcase __P((int, char **));
 void	setcr __P((int, char **));
 void	setdebug __P((int, char **));
+void	setedit __P((int, char **));
 void	setform __P((int, char **));
 void	setftmode __P((int, char **));
 void	setglob __P((int, char **));
@@ -144,17 +150,18 @@ void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
-char   *slurpstring __P((void));
+char   *slurpstring __P(());
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
 void	usage __P(());
 void	user __P((int, char **));
 
+
 extern jmp_buf	abortprox;
 extern int	abrtflag;
 extern struct	cmd cmdtab[];
-extern FILE	*cout;
+extern FILE    *cout;
 extern int	data;
 extern char    *home;
 extern jmp_buf	jabort;
@@ -162,3 +169,6 @@ extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;
 extern int	NCMDS;
+
+extern char *__progname;		/* from crt0.o */
+
