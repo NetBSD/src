@@ -23,12 +23,16 @@ static int admin_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 static const char *const admin_usage[] =
 {
     "Usage: %s %s [options] files...\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-a users   Append (comma-separated) user names to access list.\n",
     "\t-A file    Append another file's access list.\n",
     "\t-b[rev]    Set default branch (highest branch on trunk if omitted).\n",
+#endif
     "\t-c string  Set comment leader.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-e[users]  Remove (comma-separated) user names from access list\n",
     "\t           (all names if omitted).\n",
+#endif
     "\t-I         Run interactively.\n",
     "\t-k subst   Set keyword substitution mode:\n",
     "\t   kv   (Default) Substitute keyword and value.\n",
@@ -37,10 +41,13 @@ static const char *const admin_usage[] =
     "\t   o    Preserve original string.\n",
     "\t   b    Like o, but mark file as binary.\n",
     "\t   v    Substitute value only.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-l[rev]    Lock revision (latest revision on branch,\n",
     "\t           latest revision on trunk if omitted).\n",
     "\t-L         Set strict locking.\n",
+#endif
     "\t-m rev:msg  Replace revision's log message.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-n tag[:[rev]]  Tag branch or revision.  If :rev is omitted,\n",
     "\t                delete the tag; if rev is omitted, tag the latest\n",
     "\t                revision on the default branch.\n",
@@ -53,14 +60,19 @@ static const char *const admin_usage[] =
     "\t   :rev        rev and previous revisions on the same branch.\n",
     "\t   ::rev       Before rev on the same branch.\n",
     "\t   rev         Just rev.\n",
+#endif
     "\t-q         Run quietly.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-s state[:rev]  Set revision state (latest revision on branch,\n",
     "\t                latest revision on trunk if omitted).\n",
+#endif
     "\t-t[file]   Get descriptive text from file (stdin if omitted).\n",
     "\t-t-string  Set descriptive text.\n",
+#ifndef CVS_ADMIN_LIMITED
     "\t-u[rev]    Unlock the revision (latest revision on branch,\n",
     "\t           latest revision on trunk if omitted).\n",
     "\t-U         Unset strict locking.\n",
+#endif
     "(Specify the --help global option for a list of other help options)\n",
     NULL
 };
@@ -105,6 +117,11 @@ struct admin_data
     int ac;
     char **av;
     int av_alloc;
+
+    /* This contains a printable version of the command line used
+     * for logging
+     */
+    char *cmdline;
 };
 
 /* Add an argument.  OPT is the option letter, e.g. 'a'.  ARG is the
@@ -139,6 +156,60 @@ arg_add (dat, opt, arg)
     dat->av[dat->ac++] = newelt;
 }
 
+static size_t
+wescape(dst, src)
+    char *dst;
+    const char *src;
+{
+    const unsigned char *s = src;
+    char *d = dst;
+    for (; *s; s++) {
+	if (!isprint(*s) || isspace(*s) || *s == '|') {
+	    *d++ = '\\';
+	    *d++ = ((*s >> 6) & 3) + '0';
+	    *d++ = ((*s >> 3) & 7) + '0';
+	    *d++ = ((*s >> 0) & 7) + '0';
+	} else  {
+	    *d++ = *s;
+	}
+    }
+    *d = '\0';
+    return d - dst;
+}
+
+static char *
+makecmdline(argc, argv)
+    int argc;
+    char **argv;
+{
+    size_t clen = 1024, wlen = 1024, len, cpos = 0, i;
+    char *cmd = xmalloc(clen);
+    char *word = xmalloc(wlen);
+
+    for (i = 0; i < argc; i++) {
+	char *arg = (strncmp(argv[i], "cvs ", 4) == 0) ? argv[i] + 4 : argv[i];
+	len = strlen(arg);
+	if (len * 4 < wlen) {
+	    wlen += len * 4;
+	    word = xrealloc(word, wlen);
+	}
+	len = wescape(word, arg);
+	if (clen - cpos < len + 2) {
+	    clen += len + 2;
+	    cmd = xrealloc(cmd, clen);
+	}
+	memcpy(&cmd[cpos], word, len);
+	cpos += len;
+	cmd[cpos++] = ' ';
+    }
+    if (cpos != 0)
+	cmd[cpos - 1] = '\0';
+    else
+	cmd[cpos] = '\0';
+    free(word);
+    return cmd;
+}
+
 int
 admin (argc, argv)
     int argc;
@@ -160,6 +231,7 @@ admin (argc, argv)
     wrap_setup ();
 
     memset (&admin_data, 0, sizeof admin_data);
+    admin_data.cmdline = makecmdline (argc, argv);
 
     /* TODO: get rid of `-' switch notation in admin_data.  For
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
@@ -182,6 +254,7 @@ admin (argc, argv)
 		error (0, 0, "run add or import to create an RCS file");
 		goto usage_error;
 
+#ifndef CVS_ADMIN_LIMITED
 	    case 'b':
 		if (admin_data.branch != NULL)
 		{
@@ -197,7 +270,7 @@ admin (argc, argv)
 		    strcat (admin_data.branch, optarg);
 		}
 		break;
-
+#endif
 	    case 'c':
 		if (admin_data.comment != NULL)
 		{
@@ -209,6 +282,7 @@ admin (argc, argv)
 		strcat (admin_data.comment, optarg);
 		break;
 
+#ifndef CVS_ADMIN_LIMITED
 	    case 'a':
 		arg_add (&admin_data, 'a', optarg);
 		break;
@@ -275,14 +349,14 @@ admin (argc, argv)
 		   legal.  */
 		arg_add (&admin_data, 'N', optarg);
 		break;
-
+#endif
 	    case 'm':
 		/* Change log message.  Could also be parsing the syntax
 		   of optarg, although for now we just pass it to rcs
 		   as-is.  Note that multiple -m options are legal.  */
 		arg_add (&admin_data, 'm', optarg);
 		break;
-
+#ifndef CVS_ADMIN_LIMITED
 	    case 'o':
 		/* Delete revisions.  Probably should also be parsing the
 		   syntax of optarg, so that the client can give errors
@@ -307,7 +381,7 @@ admin (argc, argv)
 		/* Note that multiple -s options are legal.  */
 		arg_add (&admin_data, 's', optarg);
 		break;
-
+#endif
 	    case 't':
 		if (admin_data.desc != NULL)
 		{
@@ -525,6 +599,8 @@ admin (argc, argv)
     Lock_Cleanup ();
 
  return_it:
+    if (admin_data.cmdline != NULL)
+	free (admin_data.cmdline);
     if (admin_data.branch != NULL)
 	free (admin_data.branch);
     if (admin_data.comment != NULL)
@@ -569,6 +645,8 @@ admin_fileproc (callerdat, finfo)
 	goto exitfunc;
     }
 
+    history_write ('X', finfo->update_dir, admin_data->cmdline, finfo->file,
+	finfo->repository);
     rcs = vers->srcfile;
     if (rcs == NULL)
     {

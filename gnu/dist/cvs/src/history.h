@@ -10,4 +10,4 @@
  * with other portions of CVS.
  */
 
-#define ALL_HISTORY_REC_TYPES "TOEFWUPCGMAR"
+#define ALL_HISTORY_REC_TYPES "TOEFWUPCGMARX"
