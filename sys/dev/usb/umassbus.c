@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.12 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.13 2001/11/13 07:56:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.12 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.13 2001/11/13 07:56:04 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -132,6 +132,8 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.sc_channel.chan_nluns = sc->maxlun + 1;
 		sc->bus.sc_channel.chan_id = UMASS_SCSIID_HOST;
 		sc->bus.sc_channel.type = BUS_SCSI;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
+				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
 		    config_found(&sc->sc_dev, &sc->bus.sc_channel, scsipiprint);
 #else
@@ -153,6 +155,8 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.aa.sc_aa.aa_bus_private = &sc->bus.sc_channel;
 		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
+				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
 		    config_found(&sc->sc_dev, &sc->bus.aa.sc_aa, scsipiprint);
 #else
