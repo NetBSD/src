@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2003/10/18 16:33:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.72 2003/10/19 03:35:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,10 @@ SUBDIR+=	groff
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	autoconf gettext
+.endif
+
+.if ${MACHINE} == ibmnws
+SUBDIR+=	ibmnws-ncdcs
 .endif
 
 .if ${MACHINE} == prep
