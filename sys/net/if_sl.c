@@ -32,7 +32,7 @@
  *
  *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.25 1994/02/05 08:01:22 mycroft Exp $
+ *	$Id: if_sl.c,v 1.26 1994/02/10 05:39:07 cgd Exp $
  */
 
 /*
@@ -101,6 +101,7 @@ Huh? Slip without inet?
 
 #include <net/slcompress.h>
 #include <net/if_slvar.h>
+#include <net/slip.h>
 
 #if NBPFILTER > 0
 #include <sys/time.h>
