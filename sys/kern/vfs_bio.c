@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.137 2004/11/13 19:16:18 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.138 2004/12/05 06:00:20 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.137 2004/11/13 19:16:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.138 2004/12/05 06:00:20 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1671,7 +1671,7 @@ SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "bufmem",
-		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
+		       SYSCTL_DESCR("Amount of physical memory used by buffer "
 				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
