@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.22 2002/03/24 18:04:42 uch Exp $ */
+/* $NetBSD: sci.c,v 1.23 2002/04/26 10:22:54 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1165,7 +1165,7 @@ sciintr(void *arg)
 	if (ISSET(ssr, SCSSR_FER)) {
 		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
 #if defined(DDB) || defined(KGDB)
-#ifdef SH3
+#ifdef SH4
 		if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
 #else
 		if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
