@@ -55,7 +55,7 @@ main(void)
 	if (flag == 2)
 		printf("Success: Both handlers ran in order\n");
 	else {
-		printf("Failure: flag was %d\n", flag);
+		printf("Failure: flag was %d\n", (int)flag);
 		exit(1);
 	}
 

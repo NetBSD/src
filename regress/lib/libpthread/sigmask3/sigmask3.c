@@ -41,7 +41,8 @@ threadroutine(void *arg)
 	if (flag == 2)
 		printf("Success: Both handlers ran in order\n");
 	else {
-		printf("Failure: flag was %d, flag2 was %d\n", flag, flag2);
+		printf("Failure: flag was %d, flag2 was %d\n",
+		    (int)flag, (int)flag2);
 		exit(1);
 	}
 
