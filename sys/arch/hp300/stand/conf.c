@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1994/10/26 07:27:06 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1995/02/19 19:17:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,7 +70,7 @@
 /*
  * Device configuration
  */
-#ifdef BOOT
+#ifdef TAPEBOOT
 #define	ctstrategy	nullsys
 #define	ctopen		nodev
 #define	ctclose		nullsys

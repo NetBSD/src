@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1994/10/26 07:26:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.14 1995/02/19 19:17:01 mycroft Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -7,12 +7,14 @@ RELOC=	FFF00000
 
 CONS= -DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
-CFLAGS=	-O ${INCPATH} ${DEFS}
+CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
-SRCS=   autoconf.c cons.c ct.c devopen.c dca.c dcm.c fhpib.c hil.c hpib.c \
+SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
+OBJS=	${SRCS:N*.h:R:S/$/.o/g}
+DSRCS=	ct.c dca.c dcm.c fhpib.c hil.c hpib.c if_le.c \
 	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c ite_hy.c \
 	nhpib.c rd.c scsi.c sd.c
-SRCS+=	conf.c machdep.c prf.c tgets.c
+DOBJS=	${DSRCS:N*.h:R:S/$/.o/g}
 
 S=	${.CURDIR}/../../..
 
@@ -28,20 +30,18 @@ LIBKERN=	${KERNLIB}
 .include "$S/lib/libsa/Makefile.inc"
 LIBSA=	${SA_LIB}
 
-LIBS=	${LIBSA} libdrive.a \
-	${LIBSA} ${LIBKERN}
+LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
 
-BOOTS=	pboot dboot nboot dcopy tboot tcopy cat #ls
+BOOTS=	pboot netboot dboot nboot dcopy tboot tcopy cat #ls
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
 
 ${BOOTS}: ${LIBS}
 
-OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-libdrive.a: ${OBJS}
+libdrive.a: ${DOBJS}
 	rm -f $@
-	${AR} cq $@ ${OBJS}
+	${AR} cq $@ ${DOBJS}
 	${RANLIB} $@
 
 # depend on DEFS
@@ -56,74 +56,76 @@ srt0.o: ${.CURDIR}/srt0.s
 	${CC} ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
 
 tpsrt0.o: ${.CURDIR}/srt0.s
-	${CC} ${INCPATH} ${DEFS} -DTP -c ${.CURDIR}/srt0.s -o tpsrt0.o
+	${CC} ${INCPATH} ${DEFS} -DTP -c ${.CURDIR}/srt0.s -o $@
 
 # new boot
-pboot:	pboot.o srt0.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o pboot.o ${LIBS} -o $@
-	@size pboot
-	@echo pboot total size should not exceed 1044480 bytes
+pboot:	srt0.o pboot.o tgets.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o pboot.o tgets.o conf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
 
-ls:	ls.o srt0.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o ls.o ${LIBS} -o $@
-	@size ls
-	@echo ls total size should not exceed 1044480 bytes
+ls:	srt0.o ls.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o ls.o conf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
 
-cat:	cat.o srt0.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o cat.o ${LIBS} -o $@
-	@size cat
-	@echo cat total size should not exceed 1044480 bytes
+cat:	srt0.o cat.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o cat.o conf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
+
+# bootable from network
+
+netboot:	srt0.o netboot.o clock.o netconf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o netboot.o clock.o netconf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
+	
+netconf.o: ${.CURDIR}/conf.c
+	${CC} ${CFLAGS} -DNETBOOT -c ${.CURDIR}/conf.c -o $@
 
 # bootable from tape
 
-tboot:	tboot.o srt0.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o tboot.o ${LIBS} -o $@
-	@size tboot
-	@echo tboot total size should not exceed 1044480 bytes
+tboot:	srt0.o tboot.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o tboot.o conf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
 
-tboot.o: boot.c
-	cp ${.CURDIR}/boot.c tboot.c; chmod +w tboot.c
-	${CC} -c ${CFLAGS} -DJUSTASK tboot.c
-	rm -f tboot.c
+tboot.o: ${.CURDIR}/boot.c
+	${CC} ${CFLAGS} -DJUSTASK -c ${.CURDIR}/boot.c -o $@
 
-tcopy:	copy.o tpsrt0.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin tpsrt0.o copy.o ${LIBS} -o $@
-	@size tcopy
-	@echo tcopy total size should not exceed 1044480 bytes
+tcopy:	tpsrt0.o copy.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin tpsrt0.o copy.o conf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ total size should not exceed 1044480 bytes
 
 # bootable from floppy or real disks
 
-dboot:	boot.o srt0.o bootconf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o boot.o bootconf.o ${LIBS} -o $@ 
-	@size dboot
-	@echo dboot text+data size should not exceed 57344 bytes
-	@echo dboot total size should not exceed 1044480 bytes
+dboot:	srt0.o boot.o tapeconf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o boot.o tapeconf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ text+data size should not exceed 57344 bytes
+	@echo $@ total size should not exceed 1044480 bytes
 
-bootconf.o: ${.CURDIR}/conf.c
-	rm -f bootconf.c
-	ln -s ${.CURDIR}/conf.c bootconf.c
-	${CC} -c ${CFLAGS} -DBOOT bootconf.c
-	rm -f bootconf.c
+tapeconf.o: ${.CURDIR}/conf.c
+	${CC} ${CFLAGS} -DTAPEBOOT -c ${.CURDIR}/conf.c -o $@
 
 # non-secure boot (allows booting non-root owned or world writable kernels)
 
-nboot:	nboot.o srt0.o bootconf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin -o nboot srt0.o nboot.o bootconf.o ${LIBS}
-	@size nboot
-	@echo nboot text+data size should not exceed 57344 bytes
-	@echo nboot total size should not exceed 1044480 bytes
+nboot:	srt0.o nboot.o tapeconf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o nboot.o tapeconf.o ${LIBS} -o $@
+	@size $@
+	@echo $@ text+data size should not exceed 57344 bytes
+	@echo $@ total size should not exceed 1044480 bytes
 
 nboot.o: ${.CURDIR}/boot.c
-	rm -f nboot.c
-	ln -s ${.CURDIR}/boot.c nboot.c
-	${CC} -c ${CFLAGS} -DINSECURE nboot.c
-	rm -f nboot.c
+	${CC} ${CFLAGS} -DINSECURE -c ${.CURDIR}/boot.c -o $@
 
-dcopy:	copy.o srt0.o conf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin -o dcopy srt0.o copy.o conf.o ${LIBS}
+dcopy:	srt0.o copy.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o copy.o conf.o ${LIBS} -o $@
 
 mkboot: ${.CURDIR}/mkboot.c
-	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
+	${CC} ${CFLAGS} ${.CURDIR}/mkboot.c -o $@
 
 installboot: ${.CURDIR}/installboot.sh
 	@rm -f installboot
@@ -135,11 +137,12 @@ clean cleandir:
 	rm -f *.o *.exe *.i errs make.out
 	rm -f a.out pboot cat ls tboot tcopy
 	rm -f boot[a-z]? boot[a-wyz][a-z].c conf[a-wyz][a-z].c
-	rm -f core sboot bootconf.c nboot.c
+	rm -f core sboot tapeconf.c netconf.c nboot.c
 	rm -f libdrive.a mkboot dboot dcopy nboot installboot *.lif
 
 install: mkboot installboot ${ALL}
 	./mkboot pboot netbsdboot.lif
+	./mkboot netboot netboot.lif
 	./mkboot dboot diskboot.lif
 	./mkboot nboot ndiskboot.lif
 	./mkboot tboot tcopy tapeboot.lif
@@ -152,6 +155,7 @@ install: mkboot installboot ${ALL}
 	rm -f ${DESTDIR}/usr/mdec/bootsd
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
 	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
+	install -c -o bin -g bin -m 444 netboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
 #	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
 #	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
@@ -162,5 +166,3 @@ install: mkboot installboot ${ALL}
 .include <bsd.obj.mk>
 # XXX This should not be necessary.
 .include <bsd.subdir.mk>
-
-FRC:
