@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.c,v 1.1 2001/12/05 14:50:14 augustss Exp $	*/
+/*	$NetBSD: sir.c,v 1.2 2001/12/06 00:17:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,10 +97,12 @@ const u_int16_t irda_fcstab[] = {
 		PUTC(c); \
 	}
 
+#define CHUNK 512
+
 int
 irda_sir_frame(u_int8_t *obuf, u_int maxlen, struct uio *uio, u_int ebofs)
 {
-	u_int8_t ibuf[MAX_IRDA_FRAME];
+	u_int8_t ibuf[CHUNK];
 	u_int8_t *p, *end, *cp;
 	size_t n;
 	int error;
@@ -108,25 +110,28 @@ irda_sir_frame(u_int8_t *obuf, u_int maxlen, struct uio *uio, u_int ebofs)
 	int c;
 	u_int16_t ofcs;
 
-	n = uio->uio_resid;
-	if (n > MAX_IRDA_FRAME)
-		return (EINVAL);
-	error = uiomove(ibuf, n, uio);
-	if (error)
-		return (-error);
-
-	end = obuf + maxlen;
+	p = obuf;
+	end = p + maxlen;
 
 	for (i = 0; i < ebofs; i++)
 		PUTC(SIR_EXTRA_BOF);
 	PUTC(SIR_BOF);
 
 	ofcs = INITFCS;
-	cp = ibuf;
-	while (n-- > 0) {
-		c = *cp++;
-		ofcs = updateFCS(ofcs, c);
-		PUTESC(c);
+	while (uio->uio_resid > 0) {
+		n = uio->uio_resid;
+		if (n > CHUNK)
+			n = CHUNK;
+		error = uiomove(ibuf, n, uio);
+		if (error)
+			return (-error);
+
+		cp = ibuf;
+		while (n-- > 0) {
+			c = *cp++;
+			ofcs = updateFCS(ofcs, c);
+			PUTESC(c);
+		}
 	}
 
 	ofcs = ~ofcs;
