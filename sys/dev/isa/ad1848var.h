@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.14 1997/05/09 22:16:35 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.14.2.1 1997/05/13 03:06:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -50,7 +50,8 @@ struct ad1848_softc {
 	bus_space_handle_t sc_ioh;	/* handle */
 
 	void	*parent;
-	
+	struct	device *sc_isa;		/* ISA bus's device */
+
 	u_short	sc_locked;		/* true when doing HS DMA  */
 	u_int	sc_lastcc;		/* size of last DMA xfer */
 	int	sc_mode;		/* half-duplex record/play */
