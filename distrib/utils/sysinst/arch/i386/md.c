@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2000/10/11 11:04:43 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.42 2000/10/11 22:58:17 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -403,12 +403,10 @@ custom:		ask_sizemult(dlcylsize);
 	/* Disk name */
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
-	/* Create the disktab.preinstall */
-	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
-	f = fopen ("/etc/disktab", "a");
+	f = fopen ("/etc/disktab", "w");
 #endif
 	if (f == NULL) {
 		endwin();
