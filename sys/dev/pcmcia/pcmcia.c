@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.55 2004/08/10 15:29:56 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.55 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -344,40 +344,52 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 		    card->manufacturer, card->product);
 }
 
-const struct pcmcia_product *
-pcmcia_product_lookup(pa, tab, ent_size, matchfn)
+const void *
+pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
 	struct pcmcia_attach_args *pa;
-	const struct pcmcia_product *tab;
+	const void *tab;
+	size_t nent;
 	size_t ent_size;
 	pcmcia_product_match_fn matchfn;
 {
-        const struct pcmcia_product *ent;
+        const struct pcmcia_product *pp;
+	int n;
 	int matches;
 
 #ifdef DIAGNOSTIC
-	if (sizeof *ent > ent_size)
+	if (sizeof *pp > ent_size)
 		panic("pcmcia_product_lookup: bogus ent_size %ld", 
 		      (long) ent_size);
 #endif
 
-        for (ent = tab;
-	    ent->pp_name != NULL;
-	    ent = (const struct pcmcia_product *)
-	      ((const char *)ent + ent_size)) {
-
-		/* see if it matches vendor/product/function */
-		matches = (pa->manufacturer == ent->pp_vendor) &&
-		    (pa->product == ent->pp_product) &&
-		    (pa->pf->number == ent->pp_expfunc);
+        for (pp = tab, n = nent; n; pp = (const struct pcmcia_product *)
+	      ((const char *)pp + ent_size), n--) {
+		/* see if it matches vendor/product */
+		if ((pp->pp_vendor != PCMCIA_VENDOR_INVALID &&
+		     pp->pp_vendor == pa->manufacturer) &&
+		    (pp->pp_product != PCMCIA_PRODUCT_INVALID &&
+		     pp->pp_product == pa->product))
+			matches = 1;
+		else if ((pp->pp_cisinfo[0] && pa->card->cis1_info[0] &&
+		          !strcmp(pp->pp_cisinfo[0], pa->card->cis1_info[0])) &&
+		         (pp->pp_cisinfo[1] && pa->card->cis1_info[1] &&
+		          !strcmp(pp->pp_cisinfo[1], pa->card->cis1_info[1])) &&
+		         (!pp->pp_cisinfo[2] || (pa->card->cis1_info[2] &&
+		           !strcmp(pp->pp_cisinfo[2], pa->card->cis1_info[2]))) &&
+		         (!pp->pp_cisinfo[3] || (pa->card->cis1_info[3] &&
+		           !strcmp(pp->pp_cisinfo[3], pa->card->cis1_info[3]))))
+			matches = 1;
+		else
+			matches = 0;
 
 		/* if a separate match function is given, let it override */
-		if (matchfn != NULL)
-			matches = (*matchfn)(pa, ent, matches);
+		if (matchfn)
+			matches = (*matchfn)(pa, pp, matches);
 
 		if (matches)
-                        return (ent);
+                        return (pp);
         }
-        return (NULL);
+        return (0);
 }
 
 int 

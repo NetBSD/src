@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.9 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.10 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.9 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.10 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,47 +79,12 @@ int	spc_pcmcia_enable __P((struct device *, int));
 CFATTACH_DECL(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
     spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, spc_activate);
 
-static const struct spc_pcmcia_product *
-    spc_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-const struct spc_pcmcia_product {
-	u_int32_t	epp_vendor;		/* vendor ID */
-	u_int32_t	epp_product;		/* product ID */
-	const char	*epp_cisinfo[4];	/* CIS information */
-} spc_pcmcia_products[] = {
+const struct pcmcia_product spc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
 	  PCMCIA_CIS_FUJITSU_SCSI600 },
 };
-
-static const struct spc_pcmcia_product *
-spc_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct spc_pcmcia_product *epp;
-	int n;
-
-	for (epp = spc_pcmcia_products,
-	    n = sizeof(spc_pcmcia_products) / sizeof(spc_pcmcia_products[0]);
-	    n; epp++, n--) {
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    epp->epp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], epp->epp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    epp->epp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], epp->epp_cisinfo[1]) == 0)
-			return (epp);
-
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == epp->epp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == epp->epp_product)
-			return (epp);
-	}
-
-	return (NULL);
-}
+const size_t spc_pcmcia_nproducts =
+    sizeof(spc_pcmcia_products) / sizeof(spc_pcmcia_products[0]);
 
 int
 spc_pcmcia_match(parent, match, aux)
@@ -129,7 +94,8 @@ spc_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (spc_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, spc_pcmcia_products, spc_pcmcia_nproducts,
+	    sizeof(spc_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }
