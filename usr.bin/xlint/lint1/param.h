@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1997/04/19 06:16:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.8 1998/10/08 01:30:50 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -60,31 +60,31 @@
  * Should be set to 1 if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.
  */
-#ifdef __alpha__
+#if defined(__alpha__)
 #define PTRDIFF_IS_LONG		1
 #define SIZEOF_IS_ULONG		1
-#elif __i386__
+#elif defined(__i386__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __m68k__
+#elif defined(__m68k__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __mips__
+#elif defined(__mips__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __ns32k__
+#elif defined(__ns32k__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __sparc__
+#elif defined(__sparc__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __vax__
+#elif defined(__vax__)
 #define PTRDIFF_IS_LONG         0
 #define SIZEOF_IS_ULONG         0
-#elif __arm32__
+#elif defined(__arm32__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif __powerpc__
+#elif defined(__powerpc__) || defined(__ppc__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #else
