@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.h,v 1.1.1.1 2004/03/28 08:56:35 martti Exp $	*/
+/*	$NetBSD: lexer.h,v 1.1.1.1.2.1 2004/05/30 11:21:28 tron Exp $	*/
 
 
 typedef	struct	wordtab	{
@@ -30,6 +30,7 @@ extern	char		*yykeytostr __P((int));
 extern	FILE	*yyin;
 extern	int	yylineNum;
 extern	int	yyexpectaddr;
+extern int     *yycont;
 extern	int	yybreakondot;
 extern	int	yyvarnext;
 
