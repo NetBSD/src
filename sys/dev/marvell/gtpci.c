@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.8 2003/05/27 11:39:50 scw Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.9 2003/06/12 19:18:49 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -249,10 +249,12 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	case 0:
 		gtpc->gtpc_io_bs = gt->gt_pci0_iot;
 		gtpc->gtpc_mem_bs = gt->gt_pci0_memt;
+		gtpc->gtpc_host = gt->gt_pci0_host;
 		break;
 	case 1:
 		gtpc->gtpc_io_bs = gt->gt_pci1_iot;
 		gtpc->gtpc_mem_bs = gt->gt_pci1_memt;
+		gtpc->gtpc_host = gt->gt_pci1_host;
 		break;
 	default:
 		break;
@@ -274,24 +276,28 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	 * establish ISRs for PCI errors
 	 * enable PCI error interrupts
 	 */
+	gtpci_write(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno), 0);
 	gtpci_write(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno), 0);
 	(void)gtpci_read(gtpc, PCI_ERROR_DATA_LOW(gtpc->gtpc_busno));
 	(void)gtpci_read(gtpc, PCI_ERROR_DATA_HIGH(gtpc->gtpc_busno));
 	(void)gtpci_read(gtpc, PCI_ERROR_COMMAND(gtpc->gtpc_busno));
 	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_HIGH(gtpc->gtpc_busno));
 	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
-	intr_establish(pci_irqs[gtpc->gtpc_busno][0], IST_LEVEL, IPL_GTERR,
-	    gtpci_error_intr, pc);
-	intr_establish(pci_irqs[gtpc->gtpc_busno][1], IST_LEVEL, IPL_GTERR,
-	    gtpci_error_intr, pc);
-	intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL, IPL_GTERR,
-	    gtpci_error_intr, pc);
-	aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n", 
-	    pc->pc_parent->dv_xname, "pci", busno,
-	    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
-	    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
-	    intr_string(pci_irqs[gtpc->gtpc_busno][2]));
-	gtpci_write(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno), PCI_SERRMSK_ALL_ERRS);
+	if (gtpc->gtpc_host) {
+		intr_establish(pci_irqs[gtpc->gtpc_busno][0], IST_LEVEL,
+		    IPL_GTERR, gtpci_error_intr, pc);
+		intr_establish(pci_irqs[gtpc->gtpc_busno][1], IST_LEVEL,
+		    IPL_GTERR, gtpci_error_intr, pc);
+		intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL,
+		    IPL_GTERR, gtpci_error_intr, pc);
+		aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n", 
+		    pc->pc_parent->dv_xname, "pci", busno,
+		    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
+		    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
+		    intr_string(pci_irqs[gtpc->gtpc_busno][2]));
+		gtpci_write(gtpc, PCI_ERROR_MASK(gtpc->gtpc_busno),
+		    PCI_SERRMSK_ALL_ERRS);
+	}
 
 	/*
 	 * Fill in the pci_bus_attach_args
@@ -346,8 +352,9 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 #define	GT_PCI1_EXT_ARBITER 0
 #endif
 
-	if ((!GT_PCI0_EXT_ARBITER && gtpc->gtpc_busno == 0) ||
-	    (!GT_PCI1_EXT_ARBITER && gtpc->gtpc_busno == 1)) {
+	if (gtpc->gtpc_host &&
+	    ((!GT_PCI0_EXT_ARBITER && gtpc->gtpc_busno == 0) ||
+	     (!GT_PCI1_EXT_ARBITER && gtpc->gtpc_busno == 1))) {
 		/*
 		 * Enable internal arbiter
 		 */
@@ -365,22 +372,28 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 	 * Make the GT reflects reality.
 	 * We always enable internal memory.
 	 */
-	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20) & 0xfff;
-	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20,
-	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
+	if (gtpc->gtpc_host) {
+		pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    0x20) & 0xfff;
+		gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x20,
+		    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) |
+		    pcidata);
+	}
 	data = PCI_BARE_IntMemEn;
 
 	for (i = 0, pi = pci_initinfo[gtpc->gtpc_busno]; i < 4; i++, pi++)
 		gtpci_write(gtpc, pi->barsize, 0);
 
-	/*
-	 * Enable bus master access (needed for config access).
-	 */
-	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
-	    PCI_COMMAND_STATUS_REG);
-	pcidata |= PCI_COMMAND_MASTER_ENABLE;
-	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
-	    PCI_COMMAND_STATUS_REG, pcidata);
+	if (gtpc->gtpc_host) {
+		/*
+		 * Enable bus master access (needed for config access).
+		 */
+		pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    PCI_COMMAND_STATUS_REG);
+		pcidata |= PCI_COMMAND_MASTER_ENABLE;
+		gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    PCI_COMMAND_STATUS_REG, pcidata);
+	}
 
 	/*
 	 * Map each SCS BAR to correspond to each SDRAM decode register.
@@ -411,8 +424,10 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 		}
 		gtpci_write(gtpc, pi->barsize,
 		    datah ? ((datah << 20) | 0xff000) : 0);
-		gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
-		    pi->bar_regno, pcidata);
+		if (gtpc->gtpc_host) {
+			gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+			    pi->bar_regno, pcidata);
+		}
 		gtpci_write(gtpc, pi->accctl_low, datal);
 		gtpci_write(gtpc, pi->accctl_top, datah);
 	}
@@ -423,14 +438,16 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
 	    ~data);
 
-	/*
-	 * Enable I/O and memory (bus master is already enabled) access.
-	 */
-	pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
-	    PCI_COMMAND_STATUS_REG);
-	pcidata |= PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE;
-	gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
-	    PCI_COMMAND_STATUS_REG, pcidata);
+	if (gtpc->gtpc_host) {
+		/*
+		 * Enable I/O and memory (bus master is already enabled) access.
+		 */
+		pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    PCI_COMMAND_STATUS_REG);
+		pcidata |= PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE;
+		gtpci_conf_write(&gtpc->gtpc_pc, gtpc->gtpc_self,
+		    PCI_COMMAND_STATUS_REG, pcidata);
+	}
 }
 
 void
