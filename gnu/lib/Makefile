@@ -1,10 +1,18 @@
-#	$NetBSD: Makefile,v 1.28 2001/12/19 23:54:16 tv Exp $
+#	$NetBSD: Makefile,v 1.29 2001/12/31 23:04:12 thorpej Exp $
 
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-SUBDIR+= libbfd libg2c libgcc libiberty libobjc libmalloc libstdc++
+.if ${MKBFD} != "no"
+SUBDIR+= libbfd libiberty
+.endif
+
+.if ${MKGCC} != "no"
+SUBDIR+= libg2c libgcc libobjc libstdc++
+.endif
+
+SUBDIR+= libmalloc
 
 .else
 #
