@@ -1,5 +1,5 @@
-.\" Copyright (c) 1987, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1987, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,21 +32,22 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)cmp.1	6.7 (Berkeley) 6/27/91
+.\"     @(#)cmp.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 27, 1991
+.Dd June 6, 1993
 .Dt CMP 1
 .Os
 .Sh NAME
 .Nm cmp
-.Nd Compare two files.
+.Nd compare two files
 .Sh SYNOPSIS
 .Nm cmp
-.Op Fl l Li \&| Fl s
+.Op Fl l | Fl s
 .Ar file1 file2
+.Op Ar skip1 Op Ar skip2
 .Sh DESCRIPTION
-The cmp utility compares two files of any type and
-writes the results to the standard output.
+The cmp utility compares two files of any type and writes the results
+to the standard output.
 By default,
 .Nm
 is silent if the files are the same; if they differ, the byte
@@ -55,7 +56,7 @@ and line number at which the first difference occurred is reported.
 Bytes and lines are numbered beginning with one.
 .Pp
 The following options are available:
-.Bl -tag -width Ds
+.Bl -tag -width flag
 .It Fl l
 Print the byte number (decimal) and the differing
 byte values (octal) for each difference.
@@ -64,11 +65,17 @@ Print nothing for differing files; return exit
 status only.
 .El
 .Pp
-If
+The optional arguments
+.Ar skip1
+and 
+.Ar skip2
+are the byte offsets from the beginning of
 .Ar file1
-or
-.Ar file2
-is ``-'', the the standard input is used.
+and
+.Ar file2 ,
+respectively, where the comparison will begin.
+The offset is decimal by default, but may be expressed as an hexadecimal
+or octal value by preceding it with a leading ``0x'' or ``0''.
 .Pp
 The
 .Nm cmp
@@ -82,10 +89,10 @@ where one file is identical to the first part of
 the other.
 In the latter case, if the
 .Fl s
-option has
-not been specified, cmp writes to standard error
-that EOF was reached in the shorter file (before
-any differences were found).
+option has not been specified,
+.Nm cmp
+writes to standard output that EOF was reached in the shorter
+file (before any differences were found).
 .It >1
 An error occurred.
 .El
@@ -95,4 +102,6 @@ An error occurred.
 .Sh STANDARDS
 The
 .Nm cmp
-function is expected to be POSIX 1003.2 compatible.
+utility is expected to be
+.St -p1003.2
+compatible.
