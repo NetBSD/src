@@ -801,6 +801,10 @@ get_drive_id(unit)
 		id = (id << 1) | (t ? 0 : 1);
 		*b_ptr |= mask2;
 	}
+
+	/* all amigas have internal drives at 0. */
+	if (unit == 0 && id == FD_NONE)
+		return(FD_DD_3);
 	return(id);
 #if 0
   /* set up for ID */
