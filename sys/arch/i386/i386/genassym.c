@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.46 1996/02/02 19:42:43 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.47 1996/03/28 22:33:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,6 +68,7 @@
 #include <i386/isa/isa_machdep.h>
 #endif
 
+int
 main()
 {
 	struct proc *p = 0;
