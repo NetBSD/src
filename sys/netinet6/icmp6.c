@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.7 2001/02/03 18:35:14 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.8 2001/03/11 21:11:58 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -352,14 +352,6 @@ icmp6_input(mp, offp, proto)
 		default:
 			goto freeit;
 		}
-	}
-#endif
-
-#ifdef IPSEC
-	/* drop it if it does not match the default policy */
-	if (ipsec6_in_reject(m, NULL)) {
-		ipsec6stat.in_polvio++;
-		goto freeit;
 	}
 #endif
 
