@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.12 2001/09/24 13:22:37 wiz Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.13 2002/06/02 13:47:02 itojun Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.12 2001/09/24 13:22:37 wiz Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.13 2002/06/02 13:47:02 itojun Exp $");
 #endif
 #endif
 
@@ -414,6 +414,7 @@ main(argc, argv)
 		struct sockaddr_in addr;
 		int     addrlen = sizeof(addr);
 
+		memset(&addr, 0, sizeof(addr));
 		addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 		addr.sin_len = sizeof addr;

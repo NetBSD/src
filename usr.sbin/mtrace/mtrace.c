@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.18 2001/09/24 13:22:37 wiz Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.19 2002/06/02 13:47:04 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.18 2001/09/24 13:22:37 wiz Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.19 2002/06/02 13:47:04 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1345,6 +1345,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
     /*
      * Get default local address for multicasts to use in setting defaults.
      */
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
     addr.sin_len = sizeof(addr);
