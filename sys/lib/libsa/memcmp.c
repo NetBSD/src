@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.1 1997/01/16 04:06:15 cgd Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.2 1997/06/13 14:28:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.
@@ -33,6 +33,7 @@
  */
 
 #include <sys/types.h>
+#include <lib/libkern/libkern.h>
 #include "stand.h"
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.7 1997/02/16 13:02:59 leo Exp $	*/
+/*	$NetBSD: alloc.c,v 1.8 1997/06/13 14:28:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -85,6 +85,7 @@
  */
 
 #include <sys/param.h>
+#include "stand.h"
 
 /*
  * Each block actually has ALIGN(unsigned) + ALIGN(size) bytes allocated
