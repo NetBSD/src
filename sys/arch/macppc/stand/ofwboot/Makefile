@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/11/16 07:36:04 matt Exp $
+#	$NetBSD: Makefile,v 1.21 2001/07/18 05:37:55 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ FILES=		${PROG}.elf ${PROG}.xcf
 SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
-CFLAGS+=	-msoft-float
+CFLAGS+=	-msoft-float -Wno-main
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 DBG=		-Os -mmultiple
