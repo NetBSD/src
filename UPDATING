@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.35 2001/09/16 04:25:39 thorpej Exp $
+$NetBSD: UPDATING,v 1.36 2001/09/25 02:26:13 tv Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,20 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010922:
+	The new toolchain is enabled on i386.  This new build method
+	is intended to make all the ugrade issues elsewhere in UPDATING
+	obsolete (stay tuned...).
+
+	i386 platform builds must now et TOOLDIR in mk.conf or the
+	environment in order to build the system.  This is a pathname
+	where host build tools will be installed, and must NOT be
+	the same as src/tools.
+
+	(Optionally, USETOOLS=no can be set in the environment if you
+	wish to avoid using the separate host toolchain for building a
+	subtree.  Otherwise, this will default to "yes" automatically.)
 
 20010915:
 	The new "ubcperf" code committed by Chuck Silvers removed
