@@ -1,8 +1,9 @@
-#	$NetBSD: files.ev64260,v 1.2 2003/03/16 07:07:17 matt Exp $
+#	$NetBSD: files.ev64260,v 1.3 2003/03/24 17:07:16 matt Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
-#file	dev/cninit.c
+defparam opt_ev64260.h	OBIO0_STRIDE OBIO1_STRIDE OBIO2_STRIDE OBIO3_STRIDE
+defparam opt_ev64260.h  PCI0_GPPINTS PCI1_GPPINTS PCI0_SKIPMASK PCI1_SKIPMASK
 
 file	arch/evbppc/ev64260/autoconf.c
 #file	arch/evbppc/ev64260/bus_space.c
@@ -56,6 +57,10 @@ attach	cpu at mainbus
 # com port
 attach	com at obio with com_obio
 file	arch/evbppc/ev64260/com_obio.c		com_obio
+
+# wdc port
+attach	wdc at obio with wdc_obio
+file	arch/evbppc/ev64260/wdc_obio.c		wdc_obio
 
 #
 # PCI-only drivers

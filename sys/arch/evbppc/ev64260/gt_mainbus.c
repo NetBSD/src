@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.6 2003/03/18 19:35:01 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.7 2003/03/24 17:07:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ev64260.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,6 +76,19 @@ struct powerpc_bus_dma_tag gt_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+};
+
+const int gtpci_skipmask[2] = {
+#ifdef PCI0_SKIPMASK
+	PCI0_SKIPMASK,
+#else
+	0,
+#endif
+#ifdef PCI1_SKIPMASK
+	PCI1_SKIPMASK,
+#else
+	0,
+#endif
 };
 
 static int	gt_match(struct device *, struct cfdata *, void *);
@@ -145,6 +159,10 @@ gtpci_bus_configure(struct gtpci_chipset *gtpc)
 {
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
+#if 0
+	extern int pci_conf_debug;
+	pci_conf_debug = 1;
+#endif
 
 	switch (gtpc->gtpc_busno) {
 	case 0:
@@ -178,23 +196,30 @@ gtpci_md_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 {
 #ifdef PCI_NETBSD_CONFIGURE
 	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
-	if (gtpc->gtpc_busno == 0)
-		*iline = IRQ_GPP_BASE + 27;
-	else
-		*iline = IRQ_GPP_BASE + 29;
+	int line = (gtpc->gtpc_busno == 0 ? PCI0_GPPINTS : PCI1_GPPINTS);
+	*iline = (line >> (8 * ((pin + swiz - 1) & 3))) & 0xff;
+	if (*iline != 0xff)
+		*iline += IRQ_GPP_BASE;
 #endif /* PCI_NETBSD_CONFIGURE */
 }
 
 void
 gtpci_md_bus_devorder(pci_chipset_tag_t pc, int busno, char devs[])
 {
-	int i;
+	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
+	int dev;
 
 	/*
 	 * Don't bother probing the GT itself.
 	 */
-	for (i = (busno == 0); i < 32; i++)
-		*devs++ = i;
+	for (dev = 0; dev < 32; dev++) {
+                if (PCI_CFG_GET_BUSNO(gtpc->gtpc_self) == busno &&
+		    (PCI_CFG_GET_DEVNO(gtpc->gtpc_self) == dev ||
+			(gtpci_skipmask[gtpc->gtpc_busno] & (1 << dev))))
+			continue;
+
+		*devs++ = dev;
+	}
 	*devs = -1;
 }
 
@@ -205,7 +230,7 @@ gtpci_md_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
 	if (bus == 0 && dev == 0)	/* don't configure GT */
 		return 0;
 
-	return PCI_CONF_ALL /* PCI_CONF_MAP_MEM|PCI_CONF_ENABLE_MEM */;
+	return PCI_CONF_ALL;
 }
 
 int
@@ -214,7 +239,7 @@ gtpci_md_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
 
-	if (pin > 4) {
+	if (pin > 4 || line >= NIRQ) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		*ihp = -1;
 		return 1;
