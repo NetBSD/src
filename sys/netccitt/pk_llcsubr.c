@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.2 1994/06/29 06:37:34 cgd Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.3 1995/03/08 02:14:01 cgd Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -352,7 +352,7 @@ npaidb_destroy(struct rtentry *rt)
 /*
  * Glue between X.25 and LLC2
  */
-int
+long
 x25_llcglue(int prc, struct sockaddr *addr)
 {
 	register struct sockaddr_x25 *sx25 = (struct sockaddr_x25 *)addr;
@@ -366,6 +366,6 @@ x25_llcglue(int prc, struct sockaddr *addr)
 	    (struct dllconfig *)(((struct sockaddr_x25 *)(&x25ifa->ia_xc))+1);
 	ctlinfo.dlcti_lsap = LLC_X25_LSAP;
 
-	return ((int)llc_ctlinput(prc, addr, (caddr_t)&ctlinfo));
+	return ((long)llc_ctlinput(prc, addr, (caddr_t)&ctlinfo));
 }
 #endif /* LLC */
