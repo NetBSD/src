@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.16 2001/03/15 09:10:31 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.17 2001/03/16 12:54:47 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1148,7 +1148,7 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char buf[PATH_MAX+30];
 	size_t len;
 	int cur;
-	struct stat sb;
+/*	struct stat sb; */
 
 	if (ftp->data == NULL)
 		bailout(catgets(catalog, 1, 22,
@@ -1194,9 +1194,10 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 
 	sprintf(buf, "%s/%s", dir, comm);
 
+#if 0
 	if (stat(buf, &sb) != 0)
 		bailout("%s: %s", buf, strerror(errno));
-
+#endif
 	file = popen(buf, "r");
 	if (file == NULL)
 		bailout("popen: %s", strerror(errno));
@@ -1255,7 +1256,7 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char *p, *q, *qo, *po, *test, *comm, *tmp;
 	FILE *file;
 	char buf[PATH_MAX+30];
-	struct stat sb;
+/*	struct stat sb; */
 	size_t len;
 	int cur, min, maxi, pre;
 
@@ -1304,9 +1305,10 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 
 	sprintf(buf, "%s/%s", dir, comm);
 
+#if 0
 	if (stat(buf, &sb) != 0)
 		bailout("%s: %s", buf, strerror(errno));
-
+#endif
 	file = popen(buf, "r");
 	if (file == NULL)
 		bailout("popen: %s", strerror(errno));
