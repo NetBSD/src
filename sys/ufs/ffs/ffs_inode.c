@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.64 2004/06/20 18:23:30 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.65 2004/08/14 01:08:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.64 2004/06/20 18:23:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.65 2004/08/14 01:08:02 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -99,7 +99,10 @@ ffs_update(v)
 	FFS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	if (ap->a_flags & UPDATE_CLOSE)
+		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	else
+		flags = ip->i_flag & IN_MODIFIED;
 	if (flags == 0)
 		return (0);
 	fs = ip->i_fs;
