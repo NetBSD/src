@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_fiq.S,v 1.2 1996/05/06 00:21:05 mark Exp $ */
+/*	$NetBSD: iomd_fiq.S,v 1.3 1997/10/14 10:40:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
