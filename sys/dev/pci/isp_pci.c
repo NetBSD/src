@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.42 1999/09/30 23:04:42 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.43 1999/10/14 02:14:35 mjacob Exp $ */
 /* release_6_5_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -66,7 +66,7 @@ static struct ispmdvec mdvec = {
 	ISP_RISC_CODE,
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
-	ISP_CODE_VERSION,
+	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
 };
@@ -85,7 +85,7 @@ static struct ispmdvec mdvec_1080 = {
 	ISP1080_RISC_CODE,
 	ISP1080_CODE_LENGTH,
 	ISP1080_CODE_ORG,
-	ISP1080_CODE_VERSION,
+	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
 };
@@ -104,8 +104,8 @@ static struct ispmdvec mdvec_2100 = {
 	ISP2100_RISC_CODE,
 	ISP2100_CODE_LENGTH,
 	ISP2100_CODE_ORG,
-	ISP2100_CODE_VERSION,
-	0,				/* Irrelevant to the 2100 */
+	0,
+	0,
 	0
 };
 #endif
@@ -123,8 +123,8 @@ static struct ispmdvec mdvec_2200 = {
 	ISP2200_RISC_CODE,
 	ISP2200_CODE_LENGTH,
 	ISP2200_CODE_ORG,
-	ISP2200_CODE_VERSION,
-	0,				/* Irrelevant to the 2200 */
+	0,
+	0,
 	0
 };
 #endif
@@ -414,17 +414,19 @@ isp_pci_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
 
-	/*
-	 * This isn't very random, but it's the best we can do for
-	 * the real edge case of cards that don't have WWNs.
-	 */
-	foo = (long) isp;
-	foo >>= 4;
-	foo &= 0x7;
-	while (version[foo])
-		isp->isp_osinfo.seed += (int) version[foo++];
-	isp->isp_osinfo.seed <<= 8;
-	isp->isp_osinfo.seed += (isp->isp_osinfo._dev.dv_unit + 1);
+	if (IS_FC(isp)) {
+		/*
+		 * This isn't very random, but it's the best we can do for
+		 * the real edge case of cards that don't have WWNs.
+		 */
+		foo = (long) isp;
+		foo >>= 4;
+		foo &= 0x7;
+		while (version[foo])
+			isp->isp_osinfo.seed += (int) version[foo++];
+		isp->isp_osinfo.seed <<= 8;
+		isp->isp_osinfo.seed += (isp->isp_osinfo._dev.dv_unit + 1);
+	}
 
 	ISP_LOCK(isp);
 	isp_reset(isp);
@@ -586,6 +588,19 @@ isp_pci_mbxdma(isp)
 	fcparam *fcp;
 	int rseg;
 
+	if (isp->isp_rquest_dma)	/* been here before? */
+		return (0);
+
+	isp->isp_xflist = (ISP_SCSI_XFER_T **)
+	    malloc(isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T),
+	    M_DEVBUF, M_WAITOK);
+
+	if (isp->isp_xflist == NULL) {
+		printf("%s: cannot malloc xflist array\n", isp->isp_name);
+		return (1);
+	}
+	bzero(isp->isp_xflist, isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T));
+
 	/*
 	 * Allocate and map the request queue.
 	 */
@@ -656,13 +671,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		rq->req_seg_count = 1;
 		goto mbxsync;
 	}
-
-	if (rq->req_handle > RQUEST_QUEUE_LEN || rq->req_handle < 1) {
-		panic("%s: bad handle (%d) in isp_pci_dmasetup\n",
-		    isp->isp_name, rq->req_handle);
-		/* NOTREACHED */
-	}
-
+	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
 	if (xs->xs_control & XS_CTL_DATA_IN) {
 		drq = REQFLAG_DATA_IN;
 	} else {
@@ -738,7 +747,7 @@ dmasync:
 	    BUS_DMASYNC_PREWRITE);
 
 mbxsync:
-
+	ISP_SWIZZLE_REQUEST(isp, rq);
 	bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
 	    pci->pci_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return (CMD_QUEUED);
@@ -761,8 +770,9 @@ isp_pci_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
-	bus_dmamap_t dmap = pci->pci_xfer_dmap[handle];
-
+	bus_dmamap_t dmap;
+	assert(handle != 0 && handle <= isp->isp_maxcmds);
+	dmap = pci->pci_xfer_dmap[handle-1];
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
 	    xs->xs_control & XS_CTL_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
