@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_scanner.h,v 1.9 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: scsi_scanner.h,v 1.10 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -46,51 +46,51 @@
 struct scsi_rw_scanner {
 #define	READ			0x08
 #define WRITE			0x0a
-	uint8_t opcode;
-	uint8_t byte2;
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SRW_FIXED		0x01
-	uint8_t len[3];
-	uint8_t control;
+	u_int8_t len[3];
+	u_int8_t control;
 };
 
 struct scsi_set_window {
 #define SET_WINDOW		0x24 /* set params of image area and windows */
 #define GET_WINDOW		0x25
-	uint8_t opcode;
-	uint8_t byte2;
-	uint8_t reserved[4];
-	uint8_t len[3];
-	uint8_t control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[4];
+	u_int8_t len[3];
+	u_int8_t control;
 };
 
 struct scsi_window_header {
-	uint8_t reserved[6];
-	uint8_t len[2];
+	u_int8_t reserved[6];
+	u_int8_t len[2];
 };
 
 struct scsi_window_data {
-	uint8_t window_id;	    /* must be zero */
-	uint8_t res1:7;
-	uint8_t auto_bit:1;
-	uint8_t x_res[2];
-	uint8_t y_res[2];
-	uint8_t x_org[4];
-	uint8_t y_org[4];
-	uint8_t width[4];
-	uint8_t length[4];
-	uint8_t brightness;
-	uint8_t threshold;
-	uint8_t contrast;
-	uint8_t image_comp;	    /* image composition (data type) */
-	uint8_t bits_per_pixel;
-	uint8_t halftone_pattern[2];
-	uint8_t rif:1;		    /* reverse image format (mono negative) */
-	uint8_t res2:4;
-	uint8_t pad_type:3;
-	uint8_t bit_ordering[2];
-	uint8_t compression_type;
-	uint8_t compression_arg;
-	uint8_t res3[6];
+	u_int8_t window_id;	    /* must be zero */
+	u_int8_t res1:7;
+	u_int8_t auto_bit:1;
+	u_int8_t x_res[2];
+	u_int8_t y_res[2];
+	u_int8_t x_org[4];
+	u_int8_t y_org[4];
+	u_int8_t width[4];
+	u_int8_t length[4];
+	u_int8_t brightness;
+	u_int8_t threshold;
+	u_int8_t contrast;
+	u_int8_t image_comp;	    /* image composition (data type) */
+	u_int8_t bits_per_pixel;
+	u_int8_t halftone_pattern[2];
+	u_int8_t rif:1;		    /* reverse image format (mono negative) */
+	u_int8_t res2:4;
+	u_int8_t pad_type:3;
+	u_int8_t bit_ordering[2];
+	u_int8_t compression_type;
+	u_int8_t compression_arg;
+	u_int8_t res3[6];
 };
 
 /* mustek scsi commands */

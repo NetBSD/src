@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.29 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.29 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.29 2005/01/31 23:06:41 reinoud Exp 
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 
-#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (uint8_t)'\377')
+#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 int
 scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
-    int cmdlen, uint8_t *data_addr, int datalen, int retries, int timeout,
+    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
@@ -91,7 +91,7 @@ struct scsipi_periph *
 scsipi_alloc_periph(int malloc_flag)
 {
 	struct scsipi_periph *periph;
-	uint i;
+	u_int i;
 
 	periph = malloc(sizeof(*periph), M_DEVBUF, malloc_flag|M_ZERO);
 	if (periph == NULL)
@@ -123,7 +123,7 @@ caddr_t
 scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, caddr_t base,
     int nmatches, int matchsize, int *bestpriority)
 {
-	uint8_t type;
+	u_int8_t type;
 	caddr_t bestmatch;
 
 	/* Include the qualifier to catch vendor-unique types. */
@@ -230,7 +230,7 @@ scsipi_dtype(int type)
 }
 
 void
-scsipi_strvis(uint8_t *dst, int dlen, uint8_t *src, int slen)
+scsipi_strvis(u_char *dst, int dlen, u_char *src, int slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */

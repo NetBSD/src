@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.29 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.30 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -60,14 +60,14 @@
  */
 #define	SCSI_FORMAT_UNIT		0x04
 struct scsi_format_unit {
-	uint8_t opcode;
-	uint8_t flags;
+	u_int8_t opcode;
+	u_int8_t flags;
 #define	SFU_DLF_MASK	0x07
 #define	SFU_CMPLST	0x08
 #define	SFU_FMTDATA	0x10
-	uint8_t vendor_specific;
-	uint8_t interleave[2];
-	uint8_t control;
+	u_int8_t vendor_specific;
+	u_int8_t interleave[2];
+	u_int8_t control;
 };
 
 /*
@@ -80,8 +80,8 @@ struct scsi_format_unit {
  */
 
 struct scsi_format_unit_defect_list_header {
-	uint8_t reserved;
-	uint8_t flags;
+	u_int8_t reserved;
+	u_int8_t flags;
 #define	DLH_VS		0x01		/* vendor specific */
 #define	DLH_IMMED	0x02		/* immediate return */
 #define	DLH_DSP		0x04		/* disable saving parameters */
@@ -90,7 +90,7 @@ struct scsi_format_unit_defect_list_header {
 #define	DLH_DCRT	0x20		/* disable certification */
 #define	DLH_DPRY	0x40		/* disable primary */
 #define	DLH_FOV		0x80		/* format options valid */
-	uint8_t defect_lst_len[2];
+	u_int8_t defect_lst_len[2];
 };
 
 /*
@@ -98,15 +98,15 @@ struct scsi_format_unit_defect_list_header {
  * the IP modifier.
  */
 struct scsi_initialization_pattern_descriptor {
-	uint8_t ip_modifier;
-	uint8_t pattern_type;
+	u_int8_t ip_modifier;
+	u_int8_t pattern_type;
 #define	IP_TYPE_DEFAULT		0x01
 #define	IP_TYPE_REPEAT		0x01
 				/* 0x02 -> 0x7f: reserved */
 				/* 0x80 -> 0xff: vendor-specific */
-	uint8_t pattern_length[2];
+	u_int8_t pattern_length[2];
 #if 0
-	uint8_t pattern[...];
+	u_int8_t pattern[...];
 #endif
 };
 
@@ -118,21 +118,21 @@ struct scsi_initialization_pattern_descriptor {
 
 /* Block format */
 struct scsi_defect_descriptor_bf {
-	uint8_t block_address[4];
+	u_int8_t block_address[4];
 };
 
 /* Bytes from index format */
 struct scsi_defect_descriptor_bfif {
-	uint8_t cylinder[3];
-	uint8_t head;
-	uint8_t bytes_from_index[4];
+	u_int8_t cylinder[3];
+	u_int8_t head;
+	u_int8_t bytes_from_index[4];
 };
 
 /* Physical sector format */
 struct scsi_defect_descriptor_psf {
-	uint8_t cylinder[3];
-	uint8_t head;
-	uint8_t sector[4];
+	u_int8_t cylinder[3];
+	u_int8_t head;
+	u_int8_t sector[4];
 };
 
 /*
@@ -142,10 +142,10 @@ struct scsi_defect_descriptor_psf {
  */
 #define	SCSI_REASSIGN_BLOCKS		0x07
 struct scsi_reassign_blocks {
-	uint8_t opcode;
-	uint8_t byte2;
-	uint8_t unused[3];
-	uint8_t control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
 /*
@@ -153,20 +153,20 @@ struct scsi_reassign_blocks {
  */
 #define	SCSI_REZERO_UNIT		0x01
 struct scsi_rezero_unit {
-	uint8_t opcode;
-	uint8_t byte2;
-	uint8_t reserved[3];
-	uint8_t control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[3];
+	u_int8_t control;
 };
 
 #define	SCSI_READ_6_COMMAND		0x08
 #define SCSI_WRITE_6_COMMAND		0x0a
 struct scsi_rw_6 {
-	uint8_t opcode;
-	uint8_t addr[3];
+	u_int8_t opcode;
+	u_int8_t addr[3];
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
-	uint8_t length;
-	uint8_t control;
+	u_int8_t length;
+	u_int8_t control;
 };
 
 /*
@@ -174,15 +174,15 @@ struct scsi_rw_6 {
  */
 #define	SCSI_SYNCHRONIZE_CACHE_10	0x35
 struct scsi_synchronize_cache_10 {
-	uint8_t opcode;
-	uint8_t flags;
+	u_int8_t opcode;
+	u_int8_t flags;
 #define	SSC_RELADR	0x01		/* obsolete */
 #define	SSC_IMMED	0x02
 #define	SSC_SYNC_NV	0x04
-	uint8_t addr[4];
-	uint8_t byte7;
-	uint8_t length[2];
-	uint8_t control;
+	u_int8_t addr[4];
+	u_int8_t byte7;
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
 /*
@@ -190,43 +190,43 @@ struct scsi_synchronize_cache_10 {
  */
 #define SCSI_READ_DEFECT_DATA		0x37
 struct scsi_read_defect_data {
-	 uint8_t opcode;
-	 uint8_t byte2;
+	 u_int8_t opcode;
+	 u_int8_t byte2;
 #define RDD_PRIMARY	0x10
 #define RDD_GROWN	0x08
 #define RDD_BF		0x00
 #define RDD_BFIF	0x04
 #define RDD_PSF		0x05
-	 uint8_t flags;
-	 uint8_t reserved[4];
-	 uint8_t length[2];
-	 uint8_t control;
+	 u_int8_t flags;
+	 u_int8_t reserved[4];
+	 u_int8_t length[2];
+	 u_int8_t control;
 };
 
 #define	SCSI_SYNCHRONIZE_CACHE_16	0x91
 struct scsi_synchronize_cache_16 {
-	uint8_t opcode;
-	uint8_t flags;			/* see SYNCHRONIZE CACHE (10) */
-	uint8_t addr[8];
-	uint8_t length[4];
-	uint8_t byte15;
-	uint8_t control;
+	u_int8_t opcode;
+	u_int8_t flags;			/* see SYNCHRONIZE CACHE (10) */
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t byte15;
+	u_int8_t control;
 };
 
 /* DATAs definitions for the above commands */
 
 struct scsi_reassign_blocks_data {
-	uint8_t reserved[2];
-	uint8_t length[2];
+	u_int8_t reserved[2];
+	u_int8_t length[2];
 	struct {
-		uint8_t dlbaddr[4];
+		u_int8_t dlbaddr[4];
 	} defect_descriptor[1];
 };
 
 struct scsi_read_defect_data_data {
-	uint8_t reserved;
-	uint8_t flags;
-	uint8_t length[2];
+	u_int8_t reserved;
+	u_int8_t flags;
+	u_int8_t length[2];
 	union scsi_defect_descriptor {
 		struct scsi_defect_descriptor_bf bf;
 		struct scsi_defect_descriptor_bfif bfif;
@@ -237,79 +237,79 @@ struct scsi_read_defect_data_data {
 union scsi_disk_pages {
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
 	struct page_disk_format {
-		uint8_t pg_code;	/* page code (should be 3) */
-		uint8_t pg_length;	/* page length (should be 0x16) */
-		uint8_t trk_z[2];	/* tracks per zone */
-		uint8_t alt_sec[2];	/* alternate sectors per zone */
-		uint8_t alt_trk_z[2];	/* alternate tracks per zone */
-		uint8_t alt_trk_v[2];	/* alternate tracks per volume */
-		uint8_t ph_sec_t[2];	/* physical sectors per track */
-		uint8_t bytes_s[2];	/* bytes per sector */
-		uint8_t interleave[2];	/* interleave */
-		uint8_t trk_skew[2];	/* track skew factor */
-		uint8_t cyl_skew[2];	/* cylinder skew */
-		uint8_t flags;		/* various */
+		u_int8_t pg_code;	/* page code (should be 3) */
+		u_int8_t pg_length;	/* page length (should be 0x16) */
+		u_int8_t trk_z[2];	/* tracks per zone */
+		u_int8_t alt_sec[2];	/* alternate sectors per zone */
+		u_int8_t alt_trk_z[2];	/* alternate tracks per zone */
+		u_int8_t alt_trk_v[2];	/* alternate tracks per volume */
+		u_int8_t ph_sec_t[2];	/* physical sectors per track */
+		u_int8_t bytes_s[2];	/* bytes per sector */
+		u_int8_t interleave[2];	/* interleave */
+		u_int8_t trk_skew[2];	/* track skew factor */
+		u_int8_t cyl_skew[2];	/* cylinder skew */
+		u_int8_t flags;		/* various */
 #define	DISK_FMT_SURF	0x10
 #define	DISK_FMT_RMB	0x20
 #define	DISK_FMT_HSEC	0x40
 #define	DISK_FMT_SSEC	0x80
-		uint8_t reserved2;
-		uint8_t reserved3;
+		u_int8_t reserved2;
+		u_int8_t reserved3;
 	} disk_format;
 	struct page_rigid_geometry {
-		uint8_t pg_code;	/* page code (should be 4) */
-		uint8_t pg_length;	/* page length (should be 0x16)	*/
-		uint8_t ncyl[3];	/* number of cylinders */
-		uint8_t nheads;	/* number of heads */
-		uint8_t st_cyl_wp[3];	/* starting cyl., write precomp */
-		uint8_t st_cyl_rwc[3];	/* starting cyl., red. write cur */
-		uint8_t driv_step[2];	/* drive step rate */
-		uint8_t land_zone[3];	/* landing zone cylinder */
-		uint8_t sp_sync_ctl;	/* spindle synch control */
+		u_int8_t pg_code;	/* page code (should be 4) */
+		u_int8_t pg_length;	/* page length (should be 0x16)	*/
+		u_int8_t ncyl[3];	/* number of cylinders */
+		u_int8_t nheads;	/* number of heads */
+		u_int8_t st_cyl_wp[3];	/* starting cyl., write precomp */
+		u_int8_t st_cyl_rwc[3];	/* starting cyl., red. write cur */
+		u_int8_t driv_step[2];	/* drive step rate */
+		u_int8_t land_zone[3];	/* landing zone cylinder */
+		u_int8_t sp_sync_ctl;	/* spindle synch control */
 #define SPINDLE_SYNCH_MASK	0x03	/* mask of valid bits */
 #define SPINDLE_SYNCH_NONE	0x00	/* synch disabled or not supported */
 #define SPINDLE_SYNCH_SLAVE	0x01	/* disk is a slave */
 #define SPINDLE_SYNCH_MASTER	0x02	/* disk is a master */
 #define SPINDLE_SYNCH_MCONTROL	0x03	/* disk is a master control */
-		uint8_t rot_offset;	/* rotational offset (for spindle synch) */
-		uint8_t reserved1;
-		uint8_t rpm[2];	/* media rotation speed */
-		uint8_t reserved2;
-		uint8_t reserved3;
+		u_int8_t rot_offset;	/* rotational offset (for spindle synch) */
+		u_int8_t reserved1;
+		u_int8_t rpm[2];	/* media rotation speed */
+		u_int8_t reserved2;
+		u_int8_t reserved3;
     	} rigid_geometry;
 	struct page_flex_geometry {
-		uint8_t pg_code;	/* page code (should be 5) */
-		uint8_t pg_length;	/* page length (should be 0x1e) */
-		uint8_t xfr_rate[2];
-		uint8_t nheads;	/* number of heads */
-		uint8_t ph_sec_tr;	/* physical sectors per track */
-		uint8_t bytes_s[2];	/* bytes per sector */
-		uint8_t ncyl[2];	/* number of cylinders */
-		uint8_t st_cyl_wp[2];	/* start cyl., write precomp */
-		uint8_t st_cyl_rwc[2];	/* start cyl., red. write cur */
-		uint8_t driv_step[2];	/* drive step rate */
-		uint8_t driv_step_w;	/* drive step pulse width */
-		uint8_t head_settle[2];/* head settle delay */
-		uint8_t motor_on;	/* motor on delay */
-		uint8_t motor_off;	/* motor off delay */
-		uint8_t flags;		/* various flags */
+		u_int8_t pg_code;	/* page code (should be 5) */
+		u_int8_t pg_length;	/* page length (should be 0x1e) */
+		u_int8_t xfr_rate[2];
+		u_int8_t nheads;	/* number of heads */
+		u_int8_t ph_sec_tr;	/* physical sectors per track */
+		u_int8_t bytes_s[2];	/* bytes per sector */
+		u_int8_t ncyl[2];	/* number of cylinders */
+		u_int8_t st_cyl_wp[2];	/* start cyl., write precomp */
+		u_int8_t st_cyl_rwc[2];	/* start cyl., red. write cur */
+		u_int8_t driv_step[2];	/* drive step rate */
+		u_int8_t driv_step_w;	/* drive step pulse width */
+		u_int8_t head_settle[2];/* head settle delay */
+		u_int8_t motor_on;	/* motor on delay */
+		u_int8_t motor_off;	/* motor off delay */
+		u_int8_t flags;		/* various flags */
 #define MOTOR_ON		0x20	/* motor on (pin 16)? */
 #define START_AT_SECTOR_1	0x40	/* start at sector 1  */
 #define READY_VALID		0x20	/* RDY (pin 34) valid */
-		uint8_t step_p_cyl;	/* step pulses per cylinder */
-		uint8_t write_pre;	/* write precompensation */
-		uint8_t head_load;	/* head load delay */
-		uint8_t head_unload;	/* head unload delay */
-		uint8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
-		uint8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
-		uint8_t rpm[2];	/* rotational rate */
-		uint8_t reserved3;
-		uint8_t reserved4;
+		u_int8_t step_p_cyl;	/* step pulses per cylinder */
+		u_int8_t write_pre;	/* write precompensation */
+		u_int8_t head_load;	/* head load delay */
+		u_int8_t head_unload;	/* head unload delay */
+		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
+		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
+		u_int8_t rpm[2];	/* rotational rate */
+		u_int8_t reserved3;
+		u_int8_t reserved4;
 	} flex_geometry;
 	struct page_caching {
-		uint8_t pg_code;	/* page code (should be 8) */
-		uint8_t pg_length;	/* page length (should be 0x0a) */
-		uint8_t flags;		/* cache parameter flags */
+		u_int8_t pg_code;	/* page code (should be 8) */
+		u_int8_t pg_length;	/* page length (should be 0x0a) */
+		u_int8_t flags;		/* cache parameter flags */
 #define	CACHING_RCD	0x01		/* read cache disable */
 #define	CACHING_MF	0x02		/* multiplcation factor */
 #define	CACHING_WCE	0x04		/* write cache enable (write-back) */
@@ -318,43 +318,43 @@ union scsi_disk_pages {
 #define	CACHING_CAP	0x20		/* caching analysis permitted */
 #define	CACHING_ABPF	0x40		/* abort prefetch */
 #define	CACHING_IC	0x80		/* initiator control */
-		uint8_t ret_prio;	/* retention priority */
+		u_int8_t ret_prio;	/* retention priority */
 #define	READ_RET_PRIO_SHIFT 4
 #define	RET_PRIO_DONT_DISTINGUISH	0x0
 #define	RET_PRIO_REPLACE_READ_WRITE	0x1
 #define	RET_PRIO_REPLACE_PREFETCH	0xf
-		uint8_t dis_prefetch_xfer_len[2];
-		uint8_t min_prefetch[2];
-		uint8_t max_prefetch[2];
-		uint8_t max_prefetch_ceiling[2];
-		uint8_t flags2;	/* additional cache param flags */
+		u_int8_t dis_prefetch_xfer_len[2];
+		u_int8_t min_prefetch[2];
+		u_int8_t max_prefetch[2];
+		u_int8_t max_prefetch_ceiling[2];
+		u_int8_t flags2;	/* additional cache param flags */
 #define	CACHING2_VS0	0x08		/* vendor specific bit */
 #define	CACHING2_VS1	0x10		/* vendor specific bit */
 #define	CACHING2_DRA	0x20		/* disable read ahead */
 #define	CACHING2_LBCSS	0x40		/* CACHE SEGMENT SIZE is blocks */
 #define	CACHING2_FSW	0x80		/* force sequential write */
-		uint8_t num_cache_segments;
-		uint8_t cache_segment_size[2];
-		uint8_t reserved1;
-		uint8_t non_cache_segment_size[2];
+		u_int8_t num_cache_segments;
+		u_int8_t cache_segment_size[2];
+		u_int8_t reserved1;
+		u_int8_t non_cache_segment_size[2];
 	} caching_params;
 	struct page_control {
-		uint8_t pg_code;	/* page code (should be 0x0a) */
-		uint8_t pg_length;	/* page length (should be 0x0a) */
-		uint8_t ctl_flags1;	/* First set of flags */
+		u_int8_t pg_code;	/* page code (should be 0x0a) */
+		u_int8_t pg_length;	/* page length (should be 0x0a) */
+		u_int8_t ctl_flags1;	/* First set of flags */
 #define CTL1_TST_PER_INTR 	0x40	/* Task set per initiator */
 #define CTL1_TST_FIELD		0xe0	/* Full field */
 #define CTL1_D_SENSE		0x04	/* Descriptor-format sense return */
 #define CTL1_GLTSD		0x02	/* Glob. Log Targ. Save Disable */
 #define CTL1_RLEC		0x01	/* Rpt Logging Exception Condition */
-		uint8_t ctl_flags2;	/* Second set of flags */
+		u_int8_t ctl_flags2;	/* Second set of flags */
 #define CTL2_QAM_UNRESTRICT 0x10	/* Unrestricted reordering allowed */
 #define CTL2_QAM_FIELD		0xf0	/* Full Queue alogo. modifier field */
 #define CTL2_QERR_ABRT		0x02	/* Queue error - abort all */
 #define CTL2_QERR_ABRT_SELF	0x06	/* Queue error - abort intr's */
 #define CTL2_QERR_FIELD		0x06	/* Full field */
 #define CTL2_DQUE		0x01	/* Disable queuing */
-		uint8_t ctl_flags3;	/* Third set of flags */
+		u_int8_t ctl_flags3;	/* Third set of flags */
 #define CTL3_TAS		0x80	/* other-intr aborts generate status */
 #define CTL3_RAC		0x40	/* Report A Check */
 #define CTL3_UAIC_RET		0x10	/* retain UA, see SPC-3 */
@@ -364,11 +364,11 @@ union scsi_disk_pages {
 #define CTL3_RAERP		0x04	/* (unit) Ready AER Permission */
 #define CTL3_UAAERP		0x02	/* Unit Attention AER Permission */
 #define CTL3_EAERP		0x01	/* Error AER Permission */
-		uint8_t ctl_autoload;	/* autoload mode control */
+		u_int8_t ctl_autoload;	/* autoload mode control */
 #define CTL_AUTOLOAD_FIELD	0x07	/* autoload field */
-		uint8_t ctl_r_hld[2];	/* RAERP holdoff period */
-		uint8_t ctl_busy[2];	/* busy timeout period */
-		uint8_t ctl_selt[2];	/* extended self-test completion time */
+		u_int8_t ctl_r_hld[2];	/* RAERP holdoff period */
+		u_int8_t ctl_busy[2];	/* busy timeout period */
+		u_int8_t ctl_selt[2];	/* extended self-test completion time */
 	} control_params;
 };
 
