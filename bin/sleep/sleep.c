@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
+/*	$NetBSD: sleep.c,v 1.9 1997/07/20 21:28:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $";
+__RCSID("$NetBSD: sleep.c,v 1.9 1997/07/20 21:28:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $";
 #include <locale.h>
 
 void usage __P((void));
+int  main __P((int, char *[]));
 
 int
 main(argc, argv)
