@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.29 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.29 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.30 2005/03/29 02:41:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1036,4 +1036,5 @@ struct vfsops ntfs_vfsops = {
 	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,
 };
+VFS_ATTACH(ntfs_vfsops);
 #endif

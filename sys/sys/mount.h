@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.127 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: mount.h,v 1.128 2005/03/29 02:41:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -254,6 +254,8 @@ struct vfsops {
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
 };
+
+#define	VFS_ATTACH(vfs)		__link_set_add_data(vfsops, vfs)
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
 	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, P)

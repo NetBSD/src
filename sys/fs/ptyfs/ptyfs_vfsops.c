@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.5 2005/02/26 22:58:55 perry Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.6 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.5 2005/02/26 22:58:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.6 2005/03/29 02:41:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,3 +400,4 @@ struct vfsops ptyfs_vfsops = {
 	    struct proc *))eopnotsupp,
 	ptyfs_vnodeopv_descs,
 };
+VFS_ATTACH(ptyfs_vfsops);

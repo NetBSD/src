@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.49 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.50 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.49 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.50 2005/03/29 02:41:05 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -384,3 +384,4 @@ struct vfsops portal_vfsops = {
 	vfs_stdextattrctl,
 	portal_vnodeopv_descs,
 };
+VFS_ATTACH(portal_vfsops);
