@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.2 1998/07/01 22:23:40 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -32,13 +32,23 @@
 #include <sys/types.h>
 #include <machine/cpu.h>
 
+#include <next68k/next68k/seglist.h>
+
 #include <next68k/next68k/nextrom.h>
 
 
 int mon_getc(void);
 int mon_putc(int c);
 
+
+#if 0
+struct mon_global *mg;
+#else
 char *mg;
+#endif
+
+#if 0
+
 
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
 
@@ -56,12 +66,29 @@ dbj_message(char *s)
   MONRELOC(putcptr,MG_putc)('B');
   MONRELOC(putcptr,MG_putc)('J');
   MONRELOC(putcptr,MG_putc)(':');
-  if (s) while(*s) {
+  while (s && *s) {
     MONRELOC(putcptr,MG_putc)(*s++);
   }
   MONRELOC(putcptr,MG_putc)('\r');
   MONRELOC(putcptr,MG_putc)('\n');
 };
+
+void
+dbj_message(char *s)
+{
+	char *vector = (u_int)&mg + NEXT_RAMBASE;
+	putcptr func = (putcptr)(*(int *)(vector + MG_putc));
+
+	(*func)('D');
+	(*func)('B');
+	(*func)('J');
+	(*func)(':');
+  while (s && *s) {
+		(*func)(*s++);
+	}
+	(*func)('\r');
+	(*func)('\n');
+}
 
 void
 dbj_check()
@@ -136,4 +163,86 @@ mon_putc(c)
      int c;
 {
   return(MON(putcptr,MG_putc)(c));
+}
+
+#endif
+
+void    next68k_bootargs __P((unsigned char *args[]));
+
+/*
+ * Very early initialization, before we do much.
+ * Memory isn't even mapped here.
+ */
+#include <next68k/next68k/nextrom.h>
+extern char *mg;
+#define	MON(type, off) (*(type *)((u_int) (mg) + off))
+#define RELOC(v, t)	*((t *)((u_int)&(v) + NEXT_RAMBASE))
+#define	MONRELOC(type, off) (*(type *)((u_int) RELOC(mg,char *) + off))
+
+extern void dbj_message(char * s);
+#define DBJ_DEBUG(xs)  \
+  ((*((void (*)(char *))(((void *)&dbj_message)+NEXT_RAMBASE))) \
+			((xs)+NEXT_RAMBASE))
+
+u_char rom_enetaddr[6];
+
+void
+next68k_bootargs(args)
+     unsigned char *args[];
+{
+  RELOC(mg,char *) = args[1];
+
+#if 0
+  DBJ_DEBUG("Check serial port A for console");
+
+  /* If we continue, we will die because the compiler
+   * generates global symbols
+   */
+#endif
+
+  /* Construct the segment list */
+  {
+    int i;
+    int j = 0;
+    for (i=0;i<N_SIMM;i++) {
+      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_EMPTY) {
+      } else {
+        RELOC(phys_seg_list[j].ps_start, vm_offset_t) 
+          = NEXT_RAMBASE+(i*NEXT_BANKSIZE);
+      }
+      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_16MB) {
+        RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
+          RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
+          (0x1000000);
+        j++;
+      } 
+      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_4MB) {
+        RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
+          RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
+          (0x400000);
+        j++;
+      }
+      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_1MB) {
+        RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
+          RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
+          (0x100000);
+        j++;
+      }
+    }
+    /* pmap is unhappy if it is not null terminated */
+    for(;j<MAX_PHYS_SEGS;j++) {
+      RELOC(phys_seg_list[j].ps_start, vm_offset_t) = 0;
+      RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 0;
+    }
+  }
+
+  /* Read the ethernet address from rom, this should be done later
+   * in device driver somehow.
+   */
+  {
+    int i;
+    for(i=0;i<6;i++) {
+      RELOC(rom_enetaddr[i], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[i];
+    }
+  }
 }
