@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.5 1996/02/01 22:33:36 mycroft Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.6 1996/03/09 23:38:36 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -317,7 +317,7 @@ struct uba_regs {
 #define	UMEM8200(i)	(0x20400000+(i)*0x40000)
 #endif
 
-#if VAX8600
+#if VAX8600 || VAX780
 #define	UMEMA8600(i)	(0x20100000+(i)*0x40000)
 #define	UMEMB8600(i)	(0x22100000+(i)*0x40000)
 #endif
