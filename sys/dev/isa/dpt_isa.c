@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.2 2000/03/16 15:09:59 ad Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.3 2000/03/25 13:38:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.2 2000/03/16 15:09:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.3 2000/03/25 13:38:36 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,7 +185,7 @@ dpt_isa_probe(ia, iobase)
 
 	/* Begin reading */
  	while (i--)
-		*p++ = le16toh(bus_space_read_2(iot, ioh, HA_DATA));
+		*p++ = bus_space_read_2(iot, ioh, HA_DATA);
 
 	if ((i = ec.ec_cfglen) > (sizeof(struct eata_cfg)
 	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
@@ -199,12 +199,12 @@ dpt_isa_probe(ia, iobase)
 	i >>= 1;
 
 	while (i--)
-		*p++ = le16toh(bus_space_read_2(iot, ioh, HA_DATA));
+		*p++ = bus_space_read_2(iot, ioh, HA_DATA);
 
 	/* Flush until we have read 512 bytes. */
 	i = (512 - j + 1) >> 1;
 	while (i--)
- 		le16toh(bus_space_read_2(iot, ioh, HA_DATA));
+ 		bus_space_read_2(iot, ioh, HA_DATA);
 
 	/* Puke if we don't like the returned configuration data. */
 	if ((bus_space_read_1(iot, ioh,  HA_STATUS) & HA_ST_ERROR) != 0 ||

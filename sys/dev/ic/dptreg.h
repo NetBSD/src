@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.7 2000/02/24 18:47:55 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.8 2000/03/25 13:38:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -48,16 +48,16 @@
 #define dpt_inb(x, o)	\
     bus_space_read_1((x)->sc_iot, (x)->sc_ioh, (o))
 #define dpt_inw(x, o)	\
-    le16toh(bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o)))
+    bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o))
 #define dpt_inl(x, o)	\
-    le32toh(bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o)))
+    bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o))
 
 #define dpt_outb(x, o, d) \
     bus_space_write_1((x)->sc_iot, (x)->sc_ioh, (o), (d))
 #define dpt_outw(x, o, d) \
-    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), htole16(d))
+    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), (d))
 #define dpt_outl(x, o, d) \
-    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), htole32(d))
+    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), (d))
 
 #endif	/* _KERNEL */
  
