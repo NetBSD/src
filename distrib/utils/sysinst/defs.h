@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.19 1997/11/05 22:45:53 mhitch Exp $	*/
+/*	$NetBSD: defs.h,v 1.20 1997/11/09 12:47:06 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -253,6 +253,7 @@ void 	get_and_unpack_sets(int success_msg, int failure_msg);
 int	sanity_check __P((void));
 
 /* from target.c */
+int	must_mount_root __P((void));
 const	char * target_expand __P((const char *pathname));
 void	make_target_dir __P((const char *path));
 void	append_to_target_file __P((const char *path, const char *string));
