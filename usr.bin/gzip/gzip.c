@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.10 2004/01/01 02:44:09 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.11 2004/01/01 02:58:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.10 2004/01/01 02:44:09 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.11 2004/01/01 02:58:36 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -134,6 +134,9 @@ static	off_t	unbzip2(int, int);
 
 int main(int, char *p[]);
 
+#ifdef SMALL
+#define getopt_long(a,b,c,d,e) getopt(a,b,c)
+#else
 static const struct option longopts[] = {
 	{ "stdout",		no_argument,		0,	'c' },
 	{ "to-stdout",		no_argument,		0,	'c' },
@@ -161,6 +164,7 @@ static const struct option longopts[] = {
 	{ "license",		no_argument,		0,	'L' },
 #endif
 };
+#endif
 
 int
 main(int argc, char **argv)
@@ -939,6 +943,7 @@ usage(void)
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
     "Usage: %s [-cdfhnNqrStvV123456789] [<file> [<file> ...]]\n"
+#ifndef SMALL
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"
     " -d --decompress      uncompress files\n"
@@ -957,6 +962,9 @@ usage(void)
     " -1 --fast            fastest (worst) compression\n"
     " -2 .. -8             set compression level\n"
     " -9 --best            best (slowest) compression\n",
+#else
+    ,
+#endif
 	    getprogname());
 	fflush(stderr);
 	exit(0);
