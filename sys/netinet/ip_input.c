@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.15 1995/04/13 06:33:21 cgd Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.16 1995/05/14 08:23:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -373,8 +373,17 @@ found:
 		 */
 		ip->ip_len -= hlen;
 		((struct ipasfrag *)ip)->ipf_mff &= ~1;
-		if (ip->ip_off & IP_MF)
+		if (ip->ip_off & IP_MF) {
+		        /*
+		         * Make sure that fragments have a data length
+			 * that's a non-zero multiple of 8 bytes.
+		         */
+			if (ip->ip_len == 0 || (ip->ip_len & 0x7) != 0)
+				ipstat.ips_badfrags++;
+				goto bad;
+			}
 			((struct ipasfrag *)ip)->ipf_mff |= 1;
+		}
 		ip->ip_off <<= 3;
 
 		/*
