@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.337 2003/07/02 15:37:21 marcus Exp $
+#	$NetBSD: bsd.own.mk,v 1.338 2003/07/10 10:34:36 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -152,59 +152,65 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif
 .endif	# EXTERNAL_TOOLCHAIN
 
-ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
-CAP_MKDB=	${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
-CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
-CKSUM=		${TOOLDIR}/bin/${_TOOL_PREFIX}cksum
-COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
-CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
-CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
-CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
-TOOL_DB=	${TOOLDIR}/bin/${_TOOL_PREFIX}db
+HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
-EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
-FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
-GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
-#GRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
-GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
-HEXDUMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
-HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
-INDXBIB=	${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}install
-INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
-INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
 LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
-LORDER=		NM=${NM:Q} MKTEMP=${MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
-M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
-MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
-MAKEINFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
-MAKEWHATIS=	${TOOLDIR}/bin/${_TOOL_PREFIX}makewhatis
-MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
-MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
-MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
+LORDER=		NM=${NM:Q} MKTEMP=${TOOL_MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
 MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
-MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
-MKLOCALE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
-MKMAGIC=	${TOOLDIR}/bin/${_TOOL_PREFIX}file
-MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
-MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
-MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
-NROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}nroff
-PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
-PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
-PREPMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}prep-mkbootimage
-PWD_MKDB=	${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
-REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
-RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
-SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
-SUNLABEL=	${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
-TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
-UUDECODE=	${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
-ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
+
+TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
+TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
+TOOL_CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
+TOOL_CKSUM=		${TOOLDIR}/bin/${_TOOL_PREFIX}cksum
+TOOL_COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
+TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
+TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
+TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
+TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
+TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
+TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
+TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
+TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
+TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
+TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
+TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
+TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
+TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
+TOOL_MAKEINFO=		${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
+TOOL_MAKEWHATIS=	${TOOLDIR}/bin/${_TOOL_PREFIX}makewhatis
+TOOL_MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
+TOOL_MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
+TOOL_MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
+TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
+TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
+TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
+TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
+TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
+TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
+TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
+TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
+TOOL_PREPMKBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}prep-mkbootimage
+TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
+TOOL_REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
+TOOL_ROFF_ASCII=	PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}nroff
+TOOL_ROFF_DVI=		${TOOL_GROFF} -Tdvi
+TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
+TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
+TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
+TOOL_RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
+TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
+TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
+TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
+TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
+TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
+TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .endif	# USETOOLS == yes						# }
 
@@ -309,7 +315,7 @@ HRDLINK?=	-l h
 SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
-METALOG.add?=	${CAT} -l >> ${METALOG}
+METALOG.add?=	${TOOL_CAT} -l >> ${METALOG}
 .if (${_SRC_TOP_} != "")	# only set INSTPRIV if inside ${NETBSDSRCDIR}
 INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG} -D ${DESTDIR}} -N ${NETBSDSRCDIR}/etc
 .endif

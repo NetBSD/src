@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2003/06/27 05:21:52 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.112 2003/07/10 10:34:22 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -138,11 +138,9 @@ rm-from-libkern:
 	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${ARCHSUBDIR}/$$i; done
 .endif
 
-CTAGS?=		ctags
-
 realall: tags
 tags: ${SRCS}
-	${CTAGS} -w ${.ALLSRC:M*.c}
+	${TOOL_CTAGS} -w ${.ALLSRC:M*.c}
 	egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/31 11:37:48 aymeric Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:47 lukem Exp $
 #
 #	@(#)Makefile	8.20 (Berkeley) 8/18/96
 
@@ -10,18 +10,19 @@ CLEANFILES+=	vi.ref.txt vi.ref.ps index index.so
 all: vi.ref.txt vi.ref.ps
 
 vi.ref.txt: vi.ref index.so
-	soelim vi.ref | ${TBL} | groff ${MACROS} -Tascii > $@
+	${TOOL_SOELIM} vi.ref | ${TOOL_TBL} | ${TOOL_ROFF_ASCII} ${MACROS} > $@
 	rm -f index
 	chmod 444 $@
 
 vi.ref.ps: vi.ref index.so
-	soelim vi.ref | ${TBL} | ${ROFF} ${MACROS} > $@
+	${TOOL_SOELIM} vi.ref | ${TOOL_TBL} | ${TOOL_ROFF_PS} ${MACROS} > $@
 	rm -f index
 	chmod 444 $@
 
 index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
-	soelim vi.ref | ${TBL} | ${ROFF} ${MACROS} > /dev/null
+	${TOOL_SOELIM} vi.ref | ${TOOL_TBL} | \
+	    ${TOOL_ROFF_PS} ${MACROS} > /dev/null
 	sed -e 's/MINUSSIGN/\\-/' \
 	    -e 's/DOUBLEQUOTE/""/' \
 	    -e "s/SQUOTE/'/" \

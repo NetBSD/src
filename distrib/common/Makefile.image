@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.24 2003/05/09 12:20:04 dsl Exp $
+#	$NetBSD: Makefile.image,v 1.25 2003/07/10 10:34:04 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -17,7 +17,7 @@
 #	IMAGEPOSTBUILD	operation to run on ${IMAGE} ${.TARGET} after its built
 #			(if this returns non zero, ${.TARGET} is removed)
 #	DESTDIR		destination directory
-#	MAKEFS_FLAGS	extra options to ${MAKEFS}
+#	MAKEFS_FLAGS	extra options to ${TOOL_MAKEFS}
 #	PARSELISTENV	environment variables to set for parselist.awk
 #	WORKDIR		directory to build image in to 
 #	IMAGETAR	tar.gz file to create containing ${IMAGE}'s contents
@@ -46,7 +46,7 @@ ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 	echo "Building tree into ${WORKDIR}"; \
 	rm -rf ${WORKDIR} ${WORKBUILT}; \
 	mkdir -m 755 ${WORKDIR} &&  \
-	${MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW && \
+	${TOOL_MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW && \
 	${PARSELIST} -v mode=populate ${LISTS} | \
 	sh -e ${POPULATE_DEBUG} \
 	&& touch ${WORKBUILT} ; \
@@ -81,7 +81,7 @@ ${IMAGE}: ${WORKBUILT}
 	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
 	echo "Creating image into ${.TARGET}..."; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
-	${MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
+	${TOOL_MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
 	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
 	    -o optimization=space,minfree=0 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
@@ -110,7 +110,7 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
 .if defined(IMAGETAR)						# {
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	( cd ${WORKDIR}; \
-	  GZIP=-9 ${PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
+	  GZIP=-9 ${TOOL_PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 

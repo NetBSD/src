@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2001/10/21 23:23:22 jmc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.21 2003/07/10 10:34:11 lukem Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,11 +18,6 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREECONF=	${COMMONDIR}/mtree.conf
 KERNEL?=	${KERNOBJDIR}/INSTALL/netbsd
-
-CRUNCHGEN?=	crunchgen
-MDSETIMAGE?=	mdsetimage
-MTREE?=		mtree
-STRIP?=		strip
 
 DISKTYPE=	boot3
 RAMDISKTYPE=	rd
@@ -56,7 +51,7 @@ ramdisk.fs: ${CBIN} ${LISTS}
 		-t 1 -u 256 /dev/r${SD}
 	mount /dev/${SD} ${MOUNT_POINT}
 .endif
-	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${TOOL_MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -77,14 +72,14 @@ unconfig:
 	/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${TOOL_CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 netbsd.gz: ramdisk.fs
 	cp ${KERNEL} /var/tmp/$$$$; \
-		${MDSETIMAGE} -v /var/tmp/$$$$ ramdisk.fs; \
+		${TOOL_MDSETIMAGE} -v /var/tmp/$$$$ ramdisk.fs; \
 		${STRIP} /var/tmp/$$$$; \
 		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
 		rm /var/tmp/$$$$
