@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 1999/02/18 11:59:06 is Exp $
 
 PROG=	doexec
 MKMAN=	no
@@ -17,37 +17,51 @@ RP=	${.OBJDIR}/${PROG}
 TD=	${.CURDIR}/tests
 OD=	${.CURDIR}/good
 
-all:	${PROG} goodaout truncaout
-CLEANFILES+= goodaout truncaout
+TESTSCRIPTS=empty nonexistshell devnullscript badinterplen goodscript \
+	scriptarg scriptarg-nospace
+
+all:	${PROG} goodaout truncaout ${TESTSCRIPTS}
+
+.for x in ${TESTSCRIPTS}
+${x}: ${TD}/${x}
+	cp ${TD}/${x} ${.OBJDIR}
+	chmod +x ${.OBJDIR}/${x}
+.endfor
+
+CLEANFILES+= goodaout truncaout ${TESTSCRIPTS}
 
 regress:	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \
 		test-goodscript test-scriptarg test-scriptarg-nospace \
 		test-goodaout test-truncaout
 
-test-empty:	${PROG} ${TD}/empty
-	${RP} ${TD}/empty | diff - ${OD}/empty
+empty:	${TD}/empty
+	cp ${TD}/empty ${.OBJDIR}/empty
+	chmod +x ${.OBJDIR}/empty
+
+test-empty:	${PROG} empty
+	${RP} ${.OBJDIR}/empty | diff - ${OD}/empty
 
 test-nonexist:	${PROG}
 	${RP} ${TD}/nonexistent | diff - ${OD}/nonexistent
 
-test-nonexistshell: ${PROG} ${TD}/nonexistshell
-	${RP} ${TD}/nonexistshell | diff - ${OD}/nonexistshell
+test-nonexistshell: ${PROG} nonexistshell
+	${RP} ${.OBJDIR}/nonexistshell | diff - ${OD}/nonexistshell
 
-test-devnullscript: ${PROG} ${TD}/devnullscript
-	${RP} ${TD}/devnullscript | diff - ${OD}/devnullscript
+test-devnullscript: ${PROG} devnullscript
+	${RP} ${.OBJDIR}/devnullscript | diff - ${OD}/devnullscript
 
-test-badinterplen: ${PROG} ${TD}/badinterplen
-	${RP} ${TD}/badinterplen | diff - ${OD}/badinterplen
+test-badinterplen: ${PROG} badinterplen
+	${RP} ${.OBJDIR}/badinterplen | diff - ${OD}/badinterplen
 
-test-goodscript: ${PROG} ${TD}/goodscript
-	${RP} ${TD}/goodscript | diff - ${OD}/goodscript
+test-goodscript: ${PROG} goodscript
+	${RP} ${.OBJDIR}/goodscript | diff - ${OD}/goodscript
 
-test-scriptarg: ${PROG} ${TD}/scriptarg
-	${RP} ${TD}/scriptarg 2>&1 | diff - ${OD}/scriptarg
+test-scriptarg: ${PROG} scriptarg
+	${RP} ${.OBJDIR}/scriptarg 2>&1 | diff - ${OD}/scriptarg
 
-test-scriptarg-nospace: ${PROG} ${TD}/scriptarg-nospace
-	${RP} ${TD}/scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
+test-scriptarg-nospace: ${PROG} scriptarg-nospace
+	${RP} ${.OBJDIR}/scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
 
 goodaout: ${TD}/goodaout.c
 	${LINK.c} ${GOODAOUT_LIB} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
