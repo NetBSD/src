@@ -88,9 +88,11 @@ static long netbsd_get_dynamic_symtab_upper_bound PARAMS ((bfd *));
 static long netbsd_canonicalize_dynamic_symtab PARAMS ((bfd *, asymbol **));
 static boolean netbsd_slurp_dynamic_symtab PARAMS ((bfd *));
 
+#ifndef SET_ARCH_MACH
 #define SET_ARCH_MACH(ABFD, EXEC) \
   bfd_default_set_arch_mach(abfd, DEFAULT_ARCH, 0); \
   netbsd_choose_reloc_size(ABFD);
+#endif
 
 static void netbsd_choose_reloc_size (bfd *abfd);
 
