@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.138 2001/10/02 17:59:38 pooka Exp $	*/
+/*	$NetBSD: uhci.c,v 1.139 2001/10/24 00:42:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -906,6 +906,16 @@ uhci_dump_ii(uhci_intr_info_t *ii)
         if (pipe == NULL) {
 		printf("ii %p: done=%d xfer=%p pipe=NULL\n",
 		       ii, DONE, ii->xfer);
+                return;
+	}
+        if (pipe->endpoint == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=%p pipe->endpoint=NULL\n",
+		       ii, DONE, ii->xfer, pipe);
+                return;
+	}
+        if (pipe->device == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=%p pipe->device=NULL\n",
+		       ii, DONE, ii->xfer, pipe);
                 return;
 	}
         ed = pipe->endpoint->edesc;
