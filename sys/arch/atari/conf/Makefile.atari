@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.41 1997/11/12 23:12:01 thorpej Exp $
+#	$NetBSD: Makefile.atari,v 1.42 1998/01/01 08:11:41 mikel Exp $
 
 # Makefile for NetBSD
 #
@@ -107,7 +107,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
