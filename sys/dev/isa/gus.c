@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.39 1997/08/07 22:48:10 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.40 1997/08/19 23:50:00 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -942,8 +942,7 @@ gusattach(parent, self, aux)
 	 * Attach to the generic audio layer
 	 */
 
-	if (audio_hardware_attach(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev) != 0)
-		printf("gus: could not attach to audio pseudo-device driver\n");
+	audio_attach_mi(&gus_hw_if, 0, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
 }
 
 int

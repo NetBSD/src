@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.45 1997/07/07 21:54:51 pk Exp $
+# 	$NetBSD: GENERIC,v 1.46 1997/08/19 23:49:52 augustss Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -85,9 +85,12 @@ vmel0	at mainbus0				# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
-audio0	at mainbus0				# sun4c
-audio0	at obio0				# sun4m
-audio0	at sbus0 slot ? offset ?		# sun4m
+audioamd0	at mainbus0				# sun4c
+audio*	at audioamd0
+audioamd0	at obio0				# sun4m
+audio*	at audioamd0
+audioamd0	at sbus0 slot ? offset ?		# sun4m
+audio*	at audioamd0
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
