@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.11 1997/04/30 19:47:11 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.12 1997/05/01 18:17:13 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -219,7 +219,8 @@ sn_nb_card_vendor(na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		if (na->drhw == NUBUS_DRHW_APPLE_SN)
+		if (   (na->drhw == NUBUS_DRHW_APPLE_SN)
+		    || (na->drhw == NUBUS_DRHW_APPLE_SNT))
 			vendor = SN_VENDOR_APPLE;
 		break;
 	case NUBUS_DRSW_APPLE:
