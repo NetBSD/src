@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.39 2003/08/22 00:45:40 petrov Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40 2003/11/09 14:28:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2003/08/22 00:45:40 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2003/11/09 14:28:56 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,7 +127,7 @@ pci_make_tag(pc, b, d, f)
 	int node, len;
 #ifdef DEBUG
 	char name[80];
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.41 2003/08/27 15:59:54 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.42 2003/11/09 14:28:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.41 2003/08/27 15:59:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.42 2003/11/09 14:28:56 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -251,7 +251,7 @@ ebus_setup_attach_args(sc, node, ea)
 {
 	int	n, rv;
 
-	bzero(ea, sizeof(struct ebus_attach_args));
+	memset(ea, 0, sizeof(struct ebus_attach_args));
 	rv = PROM_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (rv != 0)
 		return (rv);
@@ -401,7 +401,7 @@ ebus_alloc_bus_tag(sc, type)
 	if (bt == NULL)
 		panic("could not allocate ebus bus tag");
 
-	bzero(bt, sizeof *bt);
+	memset(bt, 0, sizeof *bt);
 	bt->cookie = sc;
 	bt->parent = sc->sc_memtag;
 	bt->type = type;
