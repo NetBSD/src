@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1995/08/06 04:39:56 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1995/08/09 03:25:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1909,6 +1909,7 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
 		VIA2 = 1;
+		cpu040 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi96 = 1;
