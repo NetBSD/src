@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.17 2001/03/10 20:03:51 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.18 2001/04/16 18:09:56 chris Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -1263,5 +1263,8 @@ sa110_setup(args)
 	/* Set the control register */    
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
+
+	/* enable clockswitching */
+	__asm ("mcr 15, 0, r0, c15, c1, 2");
 }
 #endif	/* CPU_SA110 */
