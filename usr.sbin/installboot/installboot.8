@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.25 2003/02/25 10:36:09 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.26 2003/04/15 14:22:13 dsl Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,6 +151,7 @@ The following platforms do not require this step if the primary bootstrap
 already exists and the secondary bootstrap file is just being updated:
 .Sy alpha ,
 .Sy amiga ,
+.Sy i386 ,
 .Sy pmax ,
 .Sy sparc64 ,
 and
@@ -208,6 +209,7 @@ The following machines are currently supported by
 .Bd -ragged -offset indent
 .Sy alpha ,
 .Sy amiga ,
+.Sy i386 ,
 .Sy macppc ,
 .Sy news68k ,
 .Sy newsmips ,
@@ -254,6 +256,23 @@ which must be a regular file in this case.
 .Sy [ amiga ]
 Modify the default boot command line.
 .
+.It Sy console=<console name>
+.Sy [ i386 ]
+Set the console device, <console name> must be one of:
+pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd or com3kbd.
+.
+.It Sy password=<password>
+.Sy [ i386 ]
+Set the password which must be entered before the boot menu can be accessed.
+.
+.It Sy resetvideo
+.Sy [ i386 ]
+Reset the video before booting.
+.
+.It Sy speed=<baud rate>
+.Sy [ i386 ]
+Set the baud rate for the serial console.
+.
 .It Sy sunsum
 .Sy [ alpha ,
 .Sy pmax ,
@@ -265,6 +284,10 @@ compatible checksum.
 The existing
 .Nx Ns Tn /sparc
 disklabel should use no more than 4 partitions.
+.
+.It Sy timeout=<seconds>
+.Sy [ i386 ]
+Set the timeout before the automatic boot begins to the given number of seconds.
 .El
 .
 .It Fl t Ar fstype
@@ -455,6 +478,7 @@ Matthew Fredette (sun2, sun3),
 Matthew Green (sparc64),
 Ross Harvey (alpha),
 Paul Kranenburg (sparc),
+David Laight (i386),
 Luke Mewburn (macppc),
 Matt Thomas (vax),
 Izumi Tsutsui (news68k, newsmips),
@@ -474,6 +498,11 @@ Similarly, the secondary bootstrap program can only load kernels from
 file systems starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
+though some file systems (e.g. ISO 9660) are able to accommodate larger
+ones.
+.
+.Ss NetBSD/i386
+The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g. ISO 9660) are able to accommodate larger
 ones.
 .

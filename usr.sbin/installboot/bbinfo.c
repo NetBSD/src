@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.7 2003/04/02 10:39:48 fvdl Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.8 2003/04/15 14:22:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.7 2003/04/02 10:39:48 fvdl Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.8 2003/04/15 14:22:13 dsl Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -75,11 +75,6 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
 	if ((bb = malloc(bbparams->maxsize)) == NULL) {
 		warn("Allocating %lu bytes for bbinfo",
 		    (unsigned long) bbparams->maxsize);
-		goto done;
-	}
-
-	if (params->flags & IB_STAGE2START) {
-		warnx("Can't use `-B bno' with `-c'");
 		goto done;
 	}
 
