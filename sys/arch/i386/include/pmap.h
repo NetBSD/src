@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 1998/01/03 01:13:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 1998/01/06 07:16:08 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -119,7 +119,6 @@ void pmap_changebit __P((vm_offset_t, int, int));
  */
 typedef struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
-	boolean_t		pm_pdchanged;	/* pdir changed */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
