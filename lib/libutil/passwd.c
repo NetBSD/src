@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.13 1998/08/19 00:52:18 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.14 1998/09/26 23:59:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.13 1998/08/19 00:52:18 thorpej Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.14 1998/09/26 23:59:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ pw_lock(retries)
 {
 	int i, fd;
 	mode_t old_mode;
+	int oerrno;
 
 	/* Acquire the lock file. */
 	old_mode = umask(0);
@@ -76,7 +77,9 @@ pw_lock(retries)
 		fd = open(_PATH_MASTERPASSWD_LOCK, O_WRONLY|O_CREAT|O_EXCL,
 			  0600);
 	}
-	umask(old_mode);
+	oerrno = errno;
+	(void)umask(old_mode);
+	errno = oerrno;
 	return(fd);
 }
 
