@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.160 2003/02/18 08:37:43 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.161 2003/03/12 22:16:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -446,6 +446,7 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
 int	groupmember(gid_t, const struct ucred *);
+int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
 #endif
