@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $ */
+/* $NetBSD: lapic.c,v 1.5 2004/04/10 14:49:55 kochi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.5 2004/04/10 14:49:55 kochi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -82,13 +82,15 @@ static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
 extern char idt_allocmap[];
 
 struct pic local_pic = {
-	{0, {NULL}, NULL, NULL, NULL, 0, "lapic", NULL, 0},
-	PIC_LAPIC,
-	__SIMPLELOCK_UNLOCKED,
-	lapic_hwmask,
-	lapic_hwunmask,
-	lapic_setup,
-	lapic_setup,
+	.pic_dev = {
+		.dv_xname = "lapic",
+	},
+	.pic_type = PIC_LAPIC,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = lapic_hwmask,
+	.pic_hwunmask = lapic_hwunmask,
+	.pic_delroute =lapic_setup,
+	.pic_delroute = lapic_setup,
 };
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.4 2003/08/07 16:30:34 agc Exp $	*/
+/*	$NetBSD: i8259.c,v 1.5 2004/04/10 14:49:55 kochi Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.4 2003/08/07 16:30:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5 2004/04/10 14:49:55 kochi Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -107,15 +107,17 @@ unsigned i8259_imen;
  * Perhaps this should be made into a real device.
  */
 struct pic i8259_pic = {
-	{0, {NULL}, NULL, NULL, NULL, 0, "pic0", NULL, 0},
-	PIC_I8259,
-	__SIMPLELOCK_UNLOCKED,
-	i8259_hwmask,
-	i8259_hwunmask,
-	i8259_setup,
-	i8259_setup,
-	i8259_stubs,
-	i8259_stubs,
+	.pic_dev = {
+		.dv_xname = "pic0",
+	},
+	.pic_type = PIC_I8259,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = i8259_hwmask,
+	.pic_hwunmask = i8259_hwunmask,
+	.pic_addroute = i8259_setup,
+	.pic_delroute = i8259_setup,
+	.pic_level_stubs = i8259_stubs,
+	.pic_edge_stubs = i8259_stubs,
 };
 
 void
