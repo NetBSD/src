@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.53 1999/05/30 21:43:19 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.54 1999/06/10 03:24:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -323,7 +323,10 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
-		/* What do we know about this one? */
+		sc->cli_offset = 0xa00014;
+		sc->cli_value = 0;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
+		break;
 	default:
 		printf("%s: Unknown video card ID 0x%x --",
 		    sc->sc_dev.dv_xname, sc->card_id);
