@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.6 1999/08/09 07:40:10 mrg Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.7 1999/08/09 17:48:49 cgd Exp $
 
 A complete list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
@@ -24,11 +24,6 @@ sys/compat/common/compat_util.c			1.13-1.14
   Fix emul_find()'s handling of in-kernel buffers (it could return
   incorrect pointers, which could lead to memory corruption).  (cgd)
 
-bin/csh/proc.c					1.18-1.20
-
-  Fix a potential memory corruption problem with the 'kill' builtin
-  that showed itself on NetBSD/alpha as an unaligned access.  (cgd)
-
 sys/arch/alpha/stand/bootxx/bootxx.c		1.15
 sys/arch/alpha/stand/common/bootxx.c		1.4
 sys/arch/alpha/stand/netboot/if_prom.c		1.13
@@ -48,11 +43,6 @@ usr.bin/crunch/crunchgen/crunchgen.c		1.11
   Put temporary files in /tmp and and change directory into
   source directories so that relative path specifications in
   Makefiles work properly.  (cgd)
-
-sbin/disklabel/disklabel.8			1.27
-
-  Kill some bogus comments about -r: it does not cause the boot
-  area to be clobbered.  (cgd)
 
 sbin/disklabel/Makefile				1.33
 sbin/disklabel/disklabel.c			1.70
@@ -388,25 +378,6 @@ sys/uvm/uvm_mmap.c				1.28
   at this time.  Prevents unreasonably large allocations from from
   succeeding.  This is a band-aid for PR#7897.  (cgd)
 
-sys/dev/rnd.c					patch
-
-  Correctly protect critical section in rnd_extract_data().  (ross)
-
-sys/arch/alpha/pci/sio_pic.c			1.24
-
-  Fix the 16-bytes-of-death bug by generating specific-EOI cycles
-  during sio_intr_setup().  (ross)
-
-sys/arch/alpha/alpha/dec_3000_300.c		1.28
-sys/arch/alpha/alpha/dec_3000_500.c		1.27
-sys/arch/alpha/tc/scc.c				1.46
-sys/arch/alpha/tc/sccvar.h			1.6
-
-  DEC 3000-series machines always use a serial console, even if the
-  firmware was using the display.  Tell users what's happening when
-  we switch, otherwise almost everyone just thinks the installation
-  has locked up.  (ross)
-
 sys/arch/pmax/conf/INSTALL			1.22
 
   Add CD9660 filesystem - useful for installing from CD-ROMs.  (simonb)
@@ -416,16 +387,6 @@ distrib/notes/pmax/install			1.20-1.21
   The name of the kernel on the diskimage is "netbsd" and not
   "install", and include the root-path in the bootptab and dhcpd.conf
   examples.  (simonb)
-
-distrib/utils/sysinst/arch/pmax/md.c		1.33
-
-  Remove md_copy_filesystem()'s contents for NetBSD/pmax.  (simonb)
-
-sys/kern/kern_exec.c				1.102
-
-  Stop profiling when execve()ing another program.  Addresses NetBSD
-  Security Advistory SA1999-011.  (ross)
-
 
 sys/arch/mac68k/dev/adb_direct.c		1.23
 
@@ -616,7 +577,8 @@ sys/vm/pmap.h					1.31
 
 bin/csh/proc.c					1.18-1.20
 
-  Fix potential memory corruption with "kill" builtin.  (cgd)
+  Fix a potential memory corruption problem with the 'kill' builtin
+  that showed itself on NetBSD/alpha as an unaligned access.  (cgd)
 
 sys/msdosfs/msdosfs_vnops.c			1.81
 
@@ -735,7 +697,8 @@ sbin/mount_umap/mount_umap.c			1.8
 
 sbin/disklabel/disklabel.8			1.27
 
-  Kill bogus comments about -r.  (cgd)
+  Kill some bogus comments about -r: it does not cause the boot
+  area to be clobbered.  (cgd)
 
 sys/dev/isa/ess.c				1.45
 
@@ -1232,3 +1195,31 @@ sys/sys/param.h					patch
 distrib/utils/sysinst/run.c			1.24
 
   Avoid looping forever when installing.  (abs)
+
+sys/dev/rnd.c					patch
+
+  Correctly protect critical section in rnd_extract_data().  (ross)
+
+sys/arch/alpha/pci/sio_pic.c			1.24
+
+  Fix the 16-bytes-of-death bug by generating specific-EOI cycles
+  during sio_intr_setup().  (ross)
+
+sys/arch/alpha/alpha/dec_3000_300.c		1.28
+sys/arch/alpha/alpha/dec_3000_500.c		1.27
+sys/arch/alpha/tc/scc.c				1.46
+sys/arch/alpha/tc/sccvar.h			1.6
+
+  DEC 3000-series machines always use a serial console, even if the
+  firmware was using the display.  Tell users what's happening when
+  we switch, otherwise almost everyone just thinks the installation
+  has locked up.  (ross)
+
+distrib/utils/sysinst/arch/pmax/md.c		1.33
+
+  Remove md_copy_filesystem()'s contents for NetBSD/pmax.  (simonb)
+
+sys/kern/kern_exec.c				1.102
+
+  Stop profiling when execve()ing another program.  Addresses NetBSD
+  Security Advistory SA1999-011.  (ross)
