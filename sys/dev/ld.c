@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.10 2001/07/24 21:55:35 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.11 2001/09/06 00:47:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	else
 		bp->b_rawblkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
-	if (bp->b_dev != RAW_PART)
+	if (part != RAW_PART)
 		bp->b_rawblkno += lp->d_partitions[part].p_offset;
 
 	s = splbio();
