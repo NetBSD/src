@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.3 1999/12/07 07:33:25 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.4 1999/12/07 07:36:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 #define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
 
 #define	CFDA_SLEEP		0x80000000	/* sleep mode */
+#define	CFDA_SNOOZE		0x40000000	/* snooze mode */
 
 struct tulip_cardbus_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -237,9 +238,9 @@ tlp_cardbus_attach(parent, self, aux)
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
 		reg = cardbus_conf_read(cc, cf, ca->ca_tag, TULIP_PCI_CFDA);
-		if (reg & CFDA_SLEEP)
+		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
 			cardbus_conf_write(cc, cf, ca->ca_tag, TULIP_PCI_CFDA,
-			    reg & ~CFDA_SLEEP);
+			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
 
 	default:

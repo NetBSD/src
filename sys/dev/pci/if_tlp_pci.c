@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.25 1999/12/07 07:32:58 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.26 1999/12/07 07:36:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
 
 #define	CFDA_SLEEP		0x80000000	/* sleep mode */
+#define	CFDA_SNOOZE		0x40000000	/* snooze mode */
 
 struct tulip_pci_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -455,9 +456,9 @@ tlp_pci_attach(parent, self, aux)
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
 		reg = pci_conf_read(pc, pa->pa_tag, TULIP_PCI_CFDA);
-		if (reg & CFDA_SLEEP)
+		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
 			pci_conf_write(pc, pa->pa_tag, TULIP_PCI_CFDA,
-			    reg & ~CFDA_SLEEP);
+			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
 
 	default:
