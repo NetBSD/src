@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.83 1999/10/10 22:33:55 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.84 1999/10/12 06:05:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.83 1999/10/10 22:33:55 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.84 1999/10/12 06:05:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,8 @@ cmdabort(notused)
 	int oerrno = errno;
 
 	alarmtimer(0);
-	write(fileno(ttyout), "\n", 1);
+	if (fromatty)
+		write(fileno(ttyout), "\n", 1);
 	abrtflag++;
 	if (ptflag)
 		siglongjmp(ptabort, 1);
@@ -405,7 +406,8 @@ cmdtimeout(notused)
 	int oerrno = errno;
 
 	alarmtimer(0);
-	write(fileno(ttyout), "\n", 1);
+	if (fromatty)
+		write(fileno(ttyout), "\n", 1);
 	timeoutflag++;
 	if (ptflag)
 		siglongjmp(ptabort, 1);
@@ -1883,7 +1885,8 @@ abortpt(notused)
 {
 
 	alarmtimer(0);
-	write(fileno(ttyout), "\n", 1);
+	if (fromatty)
+		write(fileno(ttyout), "\n", 1);
 	ptabflg++;
 	mflag = 0;
 	abrtflag = 0;

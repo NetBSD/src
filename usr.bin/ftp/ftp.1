@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.53 1999/10/05 13:05:40 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.54 1999/10/12 06:05:00 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd October 5, 1999
+.Dd October 12, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -900,14 +900,16 @@ will delete all files.
 .Pp
 When prompting is on, the following commands are available at a prompt:
 .Bl -tag -width 2n -offset indent
-.It Ic n
-Do not transfer the file.
 .It Ic a
 Answer
 .Sq yes
 to the current file, and automatically answer
 .Sq yes
 to any remaining files for the current command.
+.It Ic n
+Answer
+.Sq no ,
+and do not transfer the file.
 .It Ic p
 Answer
 .Sq yes
@@ -915,6 +917,14 @@ to the current file, and turn off prompt mode
 (as is
 .Dq prompt off
 had been given).
+.It Ic q
+Terminate the current operation.
+.It Ic y
+Answer
+.Sq yes ,
+and transfer the file.
+.It Ic ?
+Display a help message.
 .El
 .Pp
 Any other reponse will answer
