@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2002/02/15 07:32:35 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.41 2002/03/05 15:43:25 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -62,6 +62,7 @@ mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
 void db_kvtophys_cmd(db_expr_t, int, db_expr_t, char *);
+void db_cp0dump_cmd(db_expr_t, int, db_expr_t, char *);
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -321,7 +322,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 
 #ifdef MIPS1
-	if (!CPUISMIPS3) {
+	if (!MIPS_HAS_R4K_MMU) {
 		struct mips1_tlb {
 			u_int32_t tlb_hi;
 			u_int32_t tlb_lo;
@@ -342,13 +343,19 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		}
 	}
 #endif
-#ifdef MIPS3
-	if (CPUISMIPS3) {
+#ifdef MIPS3_PLUS
+	if (MIPS_HAS_R4K_MMU) {
 		struct tlb tlb;
 		int i;
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
+#if defined(MIPS3)
 			mips3_TLBRead(i, &tlb);
+#elif defined(MIPS32)
+			mips32_TLBRead(i, &tlb);
+#elif defined(MIPS64)
+			mips64_TLBRead(i, &tlb);
+#endif
 			db_printf("TLB%c%2d Hi 0x%08x ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
@@ -385,9 +392,144 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		printf("not a kernel virtual address\n");
 }
 
+#define	FLDWIDTH	10
+#define	SHOW32(reg, name)						\
+do {									\
+	uint32_t __val;							\
+									\
+	asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));		\
+	printf("  %s:%*s %#x\n", name, FLDWIDTH - strlen(name), "", __val); \
+} while (0)
+
+/* XXX not 64-bit ABI safe! */
+#define	SHOW64(reg, name)						\
+do {									\
+	uint64_t __val;							\
+									\
+	asm volatile(							\
+		".set push 			\n\t"			\
+		".set mips3			\n\t"			\
+		".set noat			\n\t"			\
+		"dmfc0 $1,$" ___STRING(reg) "	\n\t"			\
+		"dsll %L0,$1,32			\n\t"			\
+		"dsrl %L0,%L0,32		\n\t"			\
+		"dsrl %M0,$1,32			\n\t"			\
+		".set pop"						\
+	    : "=r"(__val));						\
+	printf("  %s:%*s %#llx\n", name, FLDWIDTH - strlen(name), "", __val); \
+} while (0)
+
+void
+db_cp0dump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+
+	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
+	SHOW32(MIPS_COP_0_TLB_RANDOM, "random");
+
+	if (!MIPS_HAS_R4K_MMU) {
+		SHOW32(MIPS_COP_0_TLB_LOW, "entrylow");
+	} else {
+		if (CPUIS64BITS) {
+			SHOW64(MIPS_COP_0_TLB_LO0, "entrylo0");
+			SHOW64(MIPS_COP_0_TLB_LO1, "entrylo1");
+		} else {
+			SHOW32(MIPS_COP_0_TLB_LO0, "entrylo0");
+			SHOW32(MIPS_COP_0_TLB_LO1, "entrylo1");
+		}
+	}
+
+	if (CPUIS64BITS) {
+		SHOW64(MIPS_COP_0_TLB_CONTEXT, "context");
+	} else {
+		SHOW32(MIPS_COP_0_TLB_CONTEXT, "context");
+	}
+
+	if (MIPS_HAS_R4K_MMU) {
+		SHOW32(MIPS_COP_0_TLB_PG_MASK, "pagemask");
+		SHOW32(MIPS_COP_0_TLB_WIRED, "wired");
+	}
+
+	if (CPUIS64BITS) {
+		SHOW64(MIPS_COP_0_BAD_VADDR, "badvaddr");
+	} else {
+		SHOW32(MIPS_COP_0_BAD_VADDR, "badvaddr");
+	}
+
+	if (cpu_arch >= CPU_ARCH_MIPS3) {
+		SHOW32(MIPS_COP_0_COUNT, "count");
+	}
+
+	if (CPUIS64BITS) {
+		SHOW64(MIPS_COP_0_TLB_HI, "entryhi");
+	} else {
+		SHOW32(MIPS_COP_0_TLB_HI, "entryhi");
+	}
+
+	if (cpu_arch >= CPU_ARCH_MIPS3) {
+		SHOW32(MIPS_COP_0_COMPARE, "compare");
+	}
+
+	SHOW32(MIPS_COP_0_STATUS, "status");
+	SHOW32(MIPS_COP_0_CAUSE, "cause");
+
+	if (CPUIS64BITS) {
+		SHOW64(MIPS_COP_0_EXC_PC, "epc");
+	} else {
+		SHOW32(MIPS_COP_0_EXC_PC, "epc");
+	}
+
+	SHOW32(MIPS_COP_0_PRID, "prid");
+	SHOW32(MIPS_COP_0_CONFIG, "config");
+
+#if defined(MIPS32) || defined(MIPS64)
+	if (CPUISMIPSNN) {
+		uint32_t val;
+
+		val = mipsNN_cp0_config1_read();
+		printf("  config1:    %#x\n", val);
+	}
+#endif
+
+	if (MIPS_HAS_LLSC) {
+		if (CPUISMIPS64) {
+			SHOW64(MIPS_COP_0_LLADDR, "lladdr");
+			SHOW64(MIPS_COP_0_WATCH_LO, "watchlo");
+		} else {
+			SHOW32(MIPS_COP_0_LLADDR, "lladdr");
+			SHOW32(MIPS_COP_0_WATCH_LO, "watchlo");
+		}
+
+		SHOW32(MIPS_COP_0_WATCH_HI, "watchhi");
+
+		if (CPUIS64BITS) {
+			SHOW64(MIPS_COP_0_TLB_XCONTEXT, "xcontext");
+		}
+
+		if (CPUISMIPSNN) {
+			if (CPUISMIPS64) {
+				SHOW64(MIPS_COP_0_PERFCNT, "perfcnt");
+			} else {
+				SHOW32(MIPS_COP_0_PERFCNT, "perfcnt");
+			}
+		}
+
+		SHOW32(MIPS_COP_0_ECC, "ecc");
+		SHOW32(MIPS_COP_0_CACHE_ERR, "cacherr");
+		SHOW32(MIPS_COP_0_TAG_LO, "cachelo");
+		SHOW32(MIPS_COP_0_TAG_HI, "cachehi");
+
+		if (CPUIS64BITS) {
+			SHOW64(MIPS_COP_0_ERROR_PC, "errorpc");
+		} else {
+			SHOW32(MIPS_COP_0_ERROR_PC, "errorpc");
+		}
+	}
+}
+
 const struct db_command db_machine_command_table[] = {
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
+	{ "cp0",	db_cp0dump_cmd,		0,	0 },
 	{ (char *)0, }
 };
 #endif	/* !KGDB */
