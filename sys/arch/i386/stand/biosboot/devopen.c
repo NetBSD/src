@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:03:33 thorpej Exp $	 */
+/*	$NetBSD: devopen.c,v 1.3 1997/07/04 10:52:44 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -33,6 +33,9 @@
 
 
 #include <sys/param.h>
+#ifdef COMPAT_OLDBOOT
+#include <sys/disklabel.h>
+#endif
 
 #include <lib/libsa/stand.h>
 
@@ -86,9 +89,20 @@ bios2dev(biosdev, devname, unit)
 	char          **devname;
 	unsigned int   *unit;
 {
-	if (biosdev & 0x80)	/* call it "hd", we don't know better */
-		*devname = biosdevtab[3].name;
-	else
+	if (biosdev & 0x80) {
+#ifdef COMPAT_OLDBOOT
+		extern struct disklabel disklabel;
+
+		if(disklabel.d_magic == DISKMAGIC) {
+			if(disklabel.d_type == DTYPE_SCSI)
+				*devname = biosdevtab[2].name;
+			else
+				*devname = biosdevtab[1].name;
+		} else
+#endif
+			/* call it "hd", we don't know better */
+			*devname = biosdevtab[3].name;
+	} else
 		*devname = biosdevtab[0].name;
 
 	*unit = biosdev & 0x7f;
