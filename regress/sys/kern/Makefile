@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:42:51 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:01:47 mycroft Exp $
 
 SUBDIR+= execve
 
 regress: _SUBDIRUSE
-
-install:
 
 .include <bsd.subdir.mk>
