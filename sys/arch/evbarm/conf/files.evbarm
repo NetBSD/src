@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.16 2002/10/26 13:50:26 jdolecek Exp $
+#	$NetBSD: files.evbarm,v 1.17 2003/02/17 20:51:53 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -65,10 +65,5 @@ defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 defflag	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
-
-# IXM1200 serial device
-device	ixpcom: tty
-file	arch/arm/ixp12x0/ixp12x0_com.c		ixpcom needs-flag
-file	arch/arm/ixp12x0/ixp12x0_com_io.c       ixpcom
 
 include "arch/arm/conf/majors.arm32"

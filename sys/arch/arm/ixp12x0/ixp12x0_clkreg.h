@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clkreg.h,v 1.1 2002/07/15 16:27:16 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_clkreg.h,v 1.2 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -45,9 +45,8 @@
 
 #include <arm/ixp12x0/ixp12x0reg.h>
 
-/* size of I/O space */
-#define	IXPCLK_VBASE		(IXP12X0_PCI_VBASE + 0x300)
-#define IXPCLK_SIZE		0x00000010
+#define IXPCLK_PLL_CFG_OFFSET	(0x90000c00U - 0x42000300U)
+#define IXPCLK_PLL_CFG_SIZE	0x04
 
 /* timer load register */
 #define IXPCLK_LOAD		0x00000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.9 2002/12/03 09:28:27 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.10 2003/02/17 20:51:52 ichiro Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,13 +133,14 @@ void            ixpcomcninit(struct consdev *);
 u_int32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
 u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
-static bus_space_tag_t ixpcomconstag;
-static bus_space_handle_t ixpcomconsioh;
-static bus_addr_t ixpcomconsaddr = IXPCOM_UART_BASE; /* XXX initial value */
 
-static int ixpcomconsattached;
-static int ixpcomconsrate;
-static tcflag_t ixpcomconscflag;
+static struct ixpcom_cons_softc {
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	int			sc_ospeed;
+	tcflag_t		sc_cflag;
+} ixpcomcn_sc;
+
 static struct cnm_state ixpcom_cnm_state;
 
 struct ixpcom_softc* ixpcom_sc = NULL;
@@ -192,17 +193,16 @@ void
 ixpcom_attach_subr(sc)
 	struct ixpcom_softc *sc;
 {
-	bus_addr_t iobase = sc->sc_baseaddr;
-	bus_space_tag_t iot = sc->sc_iot;
 	struct tty *tp;
 
 	ixpcom_sc = sc;
 
-	if (iot == ixpcomconstag && iobase == ixpcomconsaddr) {
-		ixpcomconsattached = 1;
-		sc->sc_speed = IXPCOMSPEED2BRD(ixpcomconsrate);
+	/* force to use ixpcom0 for console */
+	if (sc->sc_dev.dv_unit == 0) {
+		sc->sc_speed = IXPCOMSPEED2BRD(ixpcomcn_sc.sc_ospeed);
 
 		/* Make sure the console is always "hardwired". */
+		/* XXX IXPCOM_SR should be checked  */
 		delay(10000);	/* wait for output to finish */
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
@@ -565,8 +565,8 @@ ixpcomopen(dev, flag, mode, p)
 		 */
 		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-			t.c_ospeed = ixpcomconsrate;
-			t.c_cflag = ixpcomconscflag;
+			t.c_ospeed = ixpcomcn_sc.sc_ospeed;
+			t.c_cflag = ixpcomcn_sc.sc_cflag;
 		} else {
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
@@ -794,38 +794,15 @@ ixpcom_set_cr(struct ixpcom_softc *sc)
 			  ixpcom_cr & ~ixpcom_imask);
 }
 
-/* Initialization for serial console */
-static int
-ixpcominit(bus_space_tag_t iot, bus_addr_t iobase, int baud,
-    tcflag_t cflag, bus_space_handle_t *iohp)
+int
+ixpcomcnattach(iot, iobase, ospeed, cflag)
+	bus_space_tag_t iot;
+	bus_addr_t iobase;
+	int ospeed;
+	tcflag_t cflag;
 {
 	int cr;
 
-	if (bus_space_map(iot, iobase, IXPCOM_UART_SIZE, 0, iohp))
-		printf("register map failed\n");
-
-	cr = cflag2cr(cflag);
-	cr |= IXPCOMSPEED2BRD(baud);
-	cr |= CR_UE;
-	ixpcom_cr = cr;
-
-	/* enable the UART */
-	bus_space_write_4(iot, *iohp, IXPCOM_CR, cr);
-
-	return (0);
-}
-
-int
-ixpcomcnattach(iot, iobase, rate, cflag)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	int rate;
-	tcflag_t cflag;
-{
-	int res;
-
-	if ((res = ixpcominit(iot, iobase, rate, cflag, &ixpcomconsioh)))
-		return (res);
 	cn_tab = &ixpcomcons;
 	cn_init_magic(&ixpcom_cnm_state);
 	/*
@@ -844,39 +821,20 @@ ixpcomcnattach(iot, iobase, rate, cflag)
 	/* default magic is a couple of BREAK. */
 	cn_set_magic("\047\001\047\001");
 
-	ixpcomconstag = iot;
-	ixpcomconsaddr = iobase;
-	ixpcomconsrate = rate;
-	ixpcomconscflag = cflag;
+	ixpcomcn_sc.sc_iot = iot;
+	ixpcomcn_sc.sc_ioh = iobase;
+	ixpcomcn_sc.sc_ospeed = ospeed;
+	ixpcomcn_sc.sc_cflag = cflag;
+
+	cr = cflag2cr(cflag);
+	cr |= IXPCOMSPEED2BRD(ospeed);
+	cr |= CR_UE;
+	ixpcom_cr = cr;
+
+	/* enable the UART */
+	bus_space_write_4(iot, iobase, IXPCOM_CR, cr);
 
 	return (0);
-}
-
-void
-ixpcomcninit(cp)
-	struct consdev *cp;
-{
-	printf("ixpcomcninit called\n");
-#if 0
-	if (cp == NULL) {
-		/* XXX cp == NULL means that MMU is disabled. */
-		ixpcomconsioh = IXPCOM_UART_BASE;
-		ixpcomconstag = &ixpcom_bs_tag;
-		cn_tab = &ixpcomcons;
-
-		IXPREG(IXPCOM_UART_BASE + IXPCOM_CR)
-			= IXPCOMSPEED2BRD(DEFAULT_COMSPEED)
-			| DSS_8BIT
-			| (CR_UE | CR_RIE | CR_XIE);
-		return;
-	}
-
-	if (ixpcominit(&ixpcom_bs_tag, CONADDR, CONSPEED,
-                          CONMODE, &ixpcomconsioh))
-		panic("can't init serial console @%x", CONADDR);
-	cn_tab = &ixpcomcons;
-	ixpcomconstag = &ixpcom_bs_tag;
-#endif
 }
 
 void
@@ -898,21 +856,20 @@ ixpcomcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int s;
+	int			s;
+	bus_space_tag_t		iot = ixpcomcn_sc.sc_iot;
+	bus_space_handle_t	ioh = ixpcomcn_sc.sc_ioh;
 
 	s = splserial();
 
-	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
-	    & SR_TXR))
+	while(!(bus_space_read_4(iot, ioh, IXPCOM_SR) & SR_TXR))
 		;
 
-	bus_space_write_4(ixpcomconstag, ixpcomconsioh, IXPCOM_DR, c);
+	bus_space_write_4(iot, ioh, IXPCOM_DR, c);
 
 #ifdef DEBUG
 	if (c == '\r') {
-		while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh,
-					 IXPCOM_SR)
-			& SR_TXE))
+		while(!(bus_space_read_4(iot, ioh, IXPCOM_SR) & SR_TXE))
 			;
 	}
 #endif
@@ -924,15 +881,17 @@ int
 ixpcomcngetc(dev)
         dev_t dev;
 {
-        int c, s;
+	int			c;
+	int			s;
+	bus_space_tag_t		iot = ixpcomcn_sc.sc_iot;
+	bus_space_handle_t	ioh = ixpcomcn_sc.sc_ioh;
 
         s = splserial();
 
-	while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_SR)
-	    & SR_RXR))
+	while(!(bus_space_read_4(iot, ioh, IXPCOM_SR) & SR_RXR))
 		;
 
-	c = bus_space_read_4(ixpcomconstag, ixpcomconsioh, IXPCOM_DR);
+	c = bus_space_read_4(iot, ioh, IXPCOM_DR);
 	c &= 0xff;
 	splx(s);
 

@@ -1,6 +1,6 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.3 2002/12/08 13:21:44 ichiro Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.4 2003/02/17 20:51:52 ichiro Exp $ */
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,6 +65,11 @@ void ixp12x0_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t ixp12x0_pci_conf_read(void *, pcitag_t, int);
 void ixp12x0_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
+static vaddr_t ixp12x0_pci_conf_setup(void *, struct ixp12x0_softc *, pcitag_t, int);
+
+#define PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
+#define PCI_CONF_UNLOCK(s)	restore_interrupts((s))
+
 #define	MAX_PCI_DEVICES	4
 
 /*
@@ -82,6 +87,10 @@ ixp12x0_pci_init(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+	struct ixp12x0_softc *sc = cookie;
+	struct extent *ioext, *memext;
+#endif
 	pc->pc_conf_v = cookie;
 	pc->pc_attach_hook = ixp12x0_pci_attach_hook;
 	pc->pc_bus_maxdevs = ixp12x0_pci_bus_maxdevs;
@@ -89,6 +98,22 @@ ixp12x0_pci_init(pc, cookie)
 	pc->pc_decompose_tag = ixp12x0_pci_decompose_tag;
 	pc->pc_conf_read = ixp12x0_pci_conf_read;
 	pc->pc_conf_write = ixp12x0_pci_conf_write;
+
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+	ioext  = extent_create("pciio", 0, IXP12X0_PCI_IO_SIZE - 1,
+				M_DEVBUF, NULL, 0, EX_NOWAIT);
+	/* PCI MEM space is mapped same address as real memory */
+	memext = extent_create("pcimem", IXP12X0_PCI_MEM_HWBASE,
+				IXP12X0_PCI_MEM_HWBASE +
+				IXP12X0_PCI_MEM_SIZE - 1,
+				M_DEVBUF, NULL, 0, EX_NOWAIT);
+	printf("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
+			  arm_dcache_align);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif
 }
 
 void
@@ -125,10 +150,6 @@ ixp12x0_pci_make_tag(v, bus, device, function)
 	printf("ixp12x0_pci_make_tag(v=%p, bus=%d, device=%d, function=%d)\n",
 		v, bus, device, function);
 #endif
-#ifdef PCI_DEBUG2
-	printf("ixp12x0_pci_make_tag return = 0x%x\n", 
-		((bus << 16) | (device << 11) | (function << 8)));
-#endif
 	return ((bus << 16) | (device << 11) | (function << 8));
 }
 
@@ -151,32 +172,63 @@ ixp12x0_pci_decompose_tag(v, tag, busp, devicep, functionp)
 		*functionp = (tag >> 8) & 0x7;
 }
 
+static vaddr_t
+ixp12x0_pci_conf_setup(v, sc, tag, offset)
+	void *v;
+	struct ixp12x0_softc *sc;
+	pcitag_t tag;
+	int offset;
+{
+	int bus, device, function;
+	vaddr_t addr;
+
+	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
+
+	if (bus == 0) { 
+		/* configuration type 0 */
+#if 1
+		addr = (vaddr_t) bus_space_vaddr(sc->sc_iot, sc->sc_conf0_ioh) +
+			((1 << (device + 10)) | (offset & 0xff));
+#else
+		addr = (vaddr_t) bus_space_vaddr(sc->sc_iot, sc->sc_conf0_ioh) +
+			(0xc00000 | (1 << (device)) << 11 | (offset & 0xff));
+#endif
+		return addr;
+	} else {
+		return (vaddr_t) - 1;
+	}
+}
+
 pcireg_t
 ixp12x0_pci_conf_read(v, tag, offset)
 	void *v;
 	pcitag_t tag;
 	int offset;
 {
-	int bus, device, function;
-	u_int address;
-	pcireg_t val;
-
-	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
-
-	/* bus == 0 */
-	address = IXP12X0_PCI_TYPE0_VBASE |
-		  ((0x1) << (device)) << 11 | (offset & 0xff); /* XXX */
-
-	val = *((unsigned int *)address);
+	struct ixp12x0_softc *sc = v;
+	vaddr_t va = ixp12x0_pci_conf_setup(v, sc, tag, offset);
+	pcireg_t rv;
+	int s;
 
 #ifdef PCI_DEBUG
-	printf("ixp12x0_pci_conf_read(addr=%08x)(v=%p tag=0x%08lx offset=0x%02x)=0x%08x\n",
-		address, v, tag, offset, val);
+	printf("ixp12x0_pci_conf_read: base=%lx,va=%lx,tag=%lx,offset=%x\n",
+		sc->sc_conf0_ioh, va, tag, offset);
 #endif
-#ifdef PCI_DEBUG2
-	printf("ixp12x0_pci_conf_read(addr=%08x)(bus=0x%08x device=0x%08x function=0x%08x offset=0x%02x)\n", address, bus, device, function, offset);
+	if (va == 0)
+		return -1;
+
+	PCI_CONF_LOCK(s);
+
+	if (badaddr_read((void *) va, sizeof(rv), &rv)) {
+#ifdef PCI_DEBUG
+		printf("conf_read: %lx bad address\n", va);
 #endif
-	return(val);
+		rv = (pcireg_t) - 1;
+	}
+
+	PCI_CONF_UNLOCK(s);
+
+	return rv;
 }
 
 void
@@ -186,19 +238,18 @@ ixp12x0_pci_conf_write(v, tag, offset, val)
 	int offset;
 	pcireg_t val;
 {
-	int bus, device, function;
-	u_int address;
-
-	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
-
-	/* bus == 0 */
-	address = IXP12X0_PCI_TYPE0_VBASE |
-		  ((0x1) << (device)) << 11 | (offset & 0xff); /* XXX */
-
+	struct ixp12x0_softc *sc = v;
+	vaddr_t va = ixp12x0_pci_conf_setup(v, sc, tag, offset);
+	int s;
 
 #ifdef PCI_DEBUG
-	printf("ixp12x0_pci_conf_write(addr=%08x)(v=%p tag=0x%08lx offset=0x%02x)=0x%08x\n",
-		address, v, tag, offset, val);
+	printf("ixp12x0_pci_conf_write: tag=%lx offset=%x -> va=%lx (base=%lx)\n",
+		tag, offset, va, sc->sc_conf0_ioh);
 #endif
-	*((unsigned int *)address) = val;
+
+	PCI_CONF_LOCK(s);
+
+	*(pcireg_t *) va = val;
+
+	PCI_CONF_UNLOCK(s);
 }
