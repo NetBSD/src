@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.2 2000/01/31 18:36:12 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.2.4.1 2000/09/28 16:42:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -33,8 +33,9 @@
 #define	_DEV_PCI_IF_SIPREG_H_
 
 /*
- * Register description for the Silicon Integrated Systems SiS 900
- * and SiS 7016 10/100 PCI Ethernet controller.
+ * Register description for the Silicon Integrated Systems SiS 900,
+ * SiS 7016, and National Semiconductor DP83815 10/100 PCI Ethernet
+ * controller.
  *
  * Written by Jason R. Thorpe for Network Computer, Inc.
  */
@@ -128,6 +129,18 @@ struct sip_desc {
 #define	CR_TXE		0x00000001	/* transmit enable */
 
 #define	SIP_CFG		0x04	/* configuration register */
+#define	CFG_LNKSTS	0x80000000	/* link status (83815) */
+#define	CFG_SPEED100	0x40000000	/* 100Mb/s (83815) */
+#define	CFG_FDUP	0x20000000	/* full duplex (83815) */
+#define	CFG_POL		0x10000000	/* 10Mb/s polarity (83815) */
+#define	CFG_ANEG_DN	0x08000000	/* autonegotiation done (83815) */
+#define	CFG_PHY_CFG	0x00fc0000	/* PHY configuration (83815) */
+#define	CFG_PINT_ACEN	0x00020000	/* PHY interrupt auto clear (83815) */
+#define	CFG_PAUSE_ADV	0x00010000	/* pause advertise (83815) */
+#define	CFG_ANEG_SEL	0x0000e000	/* autonegotiation select (83815) */
+#define	CFG_PHY_RST	0x00000400	/* PHY reset (83815) */
+#define	CFG_PHY_DIS	0x00000200	/* PHY disable (83815) */
+#define	CFG_EUPHCOMP	0x00000100	/* 83810 descriptor compat (83815) */
 #define	CFG_REQALG	0x00000080	/* PCI bus request alg. */
 #define	CFG_SB		0x00000040	/* single backoff */
 #define	CFG_POW		0x00000020	/* program out of window timer */
@@ -235,11 +248,27 @@ struct sip_desc {
 #define	FLOWCTL_PAUSE	0x00000002	/* PAUSE flag */
 #define	FLOWCTL_FLOWEN	0x00000001	/* enable flow control */
 
+#define	SIP_NS_CCSR	0x3c	/* CLKRUN control/status register (83815) */
+#define	CCSR_PMESTS	0x00008000	/* PME status */
+#define	CCSR_PMEEN	0x00000100	/* PME enable */
+#define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
+
+#define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815) */
+
+#define	SIP_NS_PCR	0x44	/* pause control/status register (83815) */
+
 #define	SIP_RFCR	0x48	/* receive filter control register */
 #define	RFCR_RFEN	0x80000000	/* Rx filter enable */
 #define	RFCR_AAB	0x40000000	/* accept all broadcast */
 #define	RFCR_AAM	0x20000000	/* accept all multicast */
 #define	RFCR_AAP	0x10000000	/* accept all physical */
+#define	RFCR_APM	0x08000000	/* accept perfect match (83815) */
+#define	RFCR_APAT	0x07800000	/* accept pattern match (83815) */
+#define	RFCR_AARP	0x00400000	/* accept ARP (83815) */
+#define	RFCR_MHEN	0x00200000	/* multicast hash enable (83815) */
+#define	RFCR_UHEN	0x00100000	/* unicast hash enable (83815) */
+#define	RFCR_ULM	0x00080000	/* U/L bit mask (83815) */
+#define	RFCR_NS_RFADDR	0x000003ff	/* Rx filter ext reg address (83815) */
 #define	RFCR_RFADDR	0x000f0000	/* Rx filter address */
 #define	RFCR_RFADDR_NODE0 0x00000000	/* node address 1, 0 */
 #define	RFCR_RFADDR_NODE2 0x00010000	/* node address 3, 2 */
@@ -253,8 +282,46 @@ struct sip_desc {
 #define	RFCR_RFADDR_MC6	  0x000a0000	/* multicast hash word 6 */
 #define	RFCR_RFADDR_MC7	  0x000b0000	/* multicast hash word 7 */
 
+#define	RFCR_NS_RFADDR_PMATCH	0x0000	/* perfect match */
+#define	RFCR_NS_RFADDR_PCOUNT	0x0006	/* pattern count */
+#define	RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
+
 #define	SIP_RFDR	0x4c	/* receive filter data register */
+#define	RFDR_BMASK	0x00030000	/* byte mask (83815) */
 #define	RFDR_DATA	0x0000ffff	/* data bits */
+
+#define	SIP_NS_BRAR	0x50	/* boot rom address (83815) */
+#define	BRAR_AUTOINC	0x80000000	/* autoincrement */
+#define	BRAR_ADDR	0x0000ffff	/* address */
+
+#define	SIP_NS_BRDR	0x54	/* boot rom data (83815) */
+
+#define	SIP_NS_SRR	0x58	/* silicon revision register (83815) */
+#define	SRR_REV_A	0x00000101
+#define	SRR_REV_B_1	0x00000200
+#define	SRR_REV_B_2	0x00000201
+#define	SRR_REV_B_3	0x00000203
+#define	SRR_REV_C_1	0x00000300
+#define	SRR_REV_C_2	0x00000302
+
+#define	SIP_NS_MIBC	0x5c	/* mib control register (83815) */
+#define	MIBC_MIBS	0x00000008	/* mib counter strobe */
+#define	MIBC_ACLR	0x00000004	/* clear all counters */
+#define	MIBC_FRZ	0x00000002	/* freeze all counters */
+#define	MIBC_WRN	0x00000001	/* warning test indicator */
+
+#define	SIP_NS_MIB(mibreg)	/* mib data registers (83815) */	\
+	(0x60 + (mibreg))
+#define	MIB_RXErroredPkts	0x00
+#define	MIB_RXFCSErrors		0x04
+#define	MIB_RXMsdPktErrors	0x08
+#define	MIB_RXFAErrors		0x0c
+#define	MIB_RXSymbolErrors	0x10
+#define	MIB_RXFrameTooLong	0x14
+#define	MIB_RXTXSQEErrors	0x18
+
+#define	SIP_NS_PHY(miireg)	/* PHY registers (83815) */		\
+	(0x80 + ((miireg) << 2))
 
 #define	SIP_PMCTL	0xb0	/* power management control register */
 #define	PMCTL_GATECLK	0x80000000	/* gate dual clock enable */
