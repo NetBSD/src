@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.1 1998/07/19 17:28:17 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.2 1998/07/19 17:30:02 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp 
+ *	NetBSD: pcmciadevs,v 1.1 1998/07/19 17:28:17 christos Exp 
  */
 
 /*
@@ -58,14 +58,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_3COM_3C562,
 	    0,
 	    "3Com Corporation",
-	    "3c562 33.6 Modem/10Mbps Ethernet"	},
+	    "3Com 3c562 33.6 Modem/10Mbps Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C589,
 	    PCMCIA_CIS_3COM_3C589,
 	    0,
 	    "3Com Corporation",
-	    "3c562 33.6 Modem/10Mbps Ethernet"	},
+	    "3Com 3c562 33.6 Modem/10Mbps Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E,
@@ -79,28 +79,28 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_MOTOROLA_POWER144,
 	    0,
 	    "Motorola Corporation",
-	    "APA-1460/B SCSI Host Adapter"	},
+	    "Adaptec APA-1460/B SCSI Host Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_PM100C,
 	    PCMCIA_CIS_MOTOROLA_PM100C,
 	    0,
 	    "Motorola Corporation",
-	    "APA-1460/B SCSI Host Adapter"	},
+	    "Adaptec APA-1460/B SCSI Host Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
 	    "IBM Corporation",
-	    "APA-1460/A SCSI Host Adapter"	},
+	    "Adaptec APA-1460/A SCSI Host Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
 	    PCMCIA_CIS_IBM_HOME_AND_AWAY,
 	    0,
 	    "IBM Corporation",
-	    "APA-1460/A SCSI Host Adapter"	},
+	    "Adaptec APA-1460/A SCSI Host Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
@@ -128,7 +128,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_MEGAHERTZ_XJ4288,
 	    0,
 	    "Megahertz Corporation",
-	    "3c589 10Mbps Ethernet"	},
+	    "3Com 3c589 10Mbps Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
