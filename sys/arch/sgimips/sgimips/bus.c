@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.11 2001/11/14 18:15:35 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.12 2002/02/27 01:51:48 rafal Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -678,7 +678,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		MachFlushDCache(addr + offset, minlen);
 #endif
 #if 1
-		mips_dcache_wbinv_range(map->dm_segs[i]._ds_vaddr + offset, len);
+		mips_dcache_wbinv_range(addr + offset, minlen);
 #endif
 #if 0
 		MachFlushCache();
