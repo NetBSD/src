@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2003/09/07 14:47:56 cl Exp $
+#	$NetBSD: genassym.cf,v 1.5 2004/12/01 14:27:01 skrll Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ include "pthread_md.h"
 define PT_NEXT          offsetof(struct __pthread_st, pt_next)
 define PT_SWITCHTO      offsetof(struct __pthread_st, pt_switchto)
 define PT_SWITCHTOUC    offsetof(struct __pthread_st, pt_switchtouc)
-define PT_SLEEPUC       offsetof(struct __pthread_st, pt_sleepuc)
 define PT_SPINLOCKS     offsetof(struct __pthread_st, pt_spinlocks)
 define PT_HELDLOCK      offsetof(struct __pthread_st, pt_heldlock)
 define PT_UC            offsetof(struct __pthread_st, pt_uc)
