@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.41 2001/08/18 19:35:33 ad Exp $ */
+/* $NetBSD: user.c,v 1.42 2001/09/05 21:37:32 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.41 2001/08/18 19:35:33 ad Exp $");
+__RCSID("$NetBSD: user.c,v 1.42 2001/09/05 21:37:32 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,6 +82,7 @@ typedef struct user_t {
 	char		*u_expire;		/* when password will expire */
 	int		u_inactive;		/* inactive */
 	char		*u_skeldir;		/* directory for startup files */
+	char		*u_class;		/* login class */
 	unsigned	u_rsize;		/* size of range array */
 	unsigned	u_rc;			/* # of ranges */
 	range_t		*u_rv;			/* the ranges */
@@ -102,7 +103,8 @@ enum {
 	F_SECGROUP	= 0x0100,
 	F_SHELL 	= 0x0200,
 	F_UID		= 0x0400,
-	F_USERNAME	= 0x0800
+	F_USERNAME	= 0x0800,
+	F_CLASS		= 0x1000
 };
 
 #define CONFFILE	"/etc/usermgmt.conf"
@@ -141,6 +143,10 @@ enum {
 
 #ifndef DEF_EXPIRE
 #define DEF_EXPIRE	NULL
+#endif
+
+#ifndef DEF_CLASS
+#define DEF_CLASS	""
 #endif
 
 #ifndef WAITSECS
@@ -695,7 +701,9 @@ setdefaults(user_t *up)
 	FILE	*fp;
 	int	ret;
 	int	fd;
+#ifdef EXTENSIONS
 	int	i;
+#endif
 
 	(void) snprintf(template, sizeof(template), "%s.XXXXXX", CONFFILE);
 	if ((fd = mkstemp(template)) < 0) {
@@ -711,6 +719,9 @@ setdefaults(user_t *up)
 	    fprintf(fp, "base_dir\t%s\n", up->u_basedir) <= 0 ||
 	    fprintf(fp, "skel_dir\t%s\n", up->u_skeldir) <= 0 ||
 	    fprintf(fp, "shell\t\t%s\n", up->u_shell) <= 0 ||
+#ifdef EXTENSIONS
+	    fprintf(fp, "class\t\t%s\n", up->u_class) <= 0 ||
+#endif
 	    fprintf(fp, "inactive\t%d\n", up->u_inactive) <= 0 ||
 	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == NULL) ?  UNSET_EXPIRY : up->u_expire) <= 0 ||
 	    fprintf(fp, "preserve\t%s\n", (up->u_preserve == 0) ? "false" : "true") <= 0) {
@@ -748,6 +759,9 @@ read_defaults(user_t *up)
 	memsave(&up->u_skeldir, DEF_SKELDIR, strlen(DEF_SKELDIR));
 	memsave(&up->u_shell, DEF_SHELL, strlen(DEF_SHELL));
 	memsave(&up->u_comment, DEF_COMMENT, strlen(DEF_COMMENT));
+#ifdef EXTENSIONS
+	memsave(&up->u_class, DEF_CLASS, strlen(DEF_CLASS));
+#endif
 	up->u_rsize = 16;
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
@@ -776,6 +790,12 @@ read_defaults(user_t *up)
 				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
 				}
 				memsave(&up->u_shell, cp, strlen(cp));
+#ifdef EXTENSIONS
+			} else if (strncmp(s, "class", 5) == 0) {
+				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
+				}
+				memsave(&up->u_class, cp, strlen(cp));
+#endif
 			} else if (strncmp(s, "inactive", 8) == 0) {
 				for (cp = s + 8 ; *cp && isspace(*cp) ; cp++) {
 				}
@@ -950,11 +970,16 @@ adduser(char *login, user_t *up)
 				up->u_password, password);
 		}
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d::%d:%ld:%s:%s:%s\n",
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:%s:%d:%ld:%s:%s:%s\n",
 			login,
 			password,
 			up->u_uid,
 			gid,
+#ifdef EXTENSIONS
+			up->u_class,
+#else
+			"",
+#endif
 			up->u_inactive,
 			(long) expire,
 			up->u_comment,
@@ -1107,6 +1132,10 @@ moduser(char *login, char *newlogin, user_t *up)
 			pwp->pw_dir = up->u_home;
 		if (up->u_flags & F_SHELL)
 			pwp->pw_shell = up->u_shell;
+#ifdef EXTENSIONS
+		if (up->u_flags & F_CLASS)
+			pwp->pw_class = up->u_class;
+#endif
 	}
 	loginc = strlen(login);
 	while ((line = fgetln(master, &len)) != NULL) {
@@ -1117,11 +1146,18 @@ moduser(char *login, char *newlogin, user_t *up)
 		colonc = (size_t)(colon - line);
 		if (strncmp(login, line, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
-				len = (int)asprintf(&buf, "%s:%s:%d:%d::%ld:%ld:%s:%s:%s\n",
+				len = (int)asprintf(&buf, "%s:%s:%d:%d:"
+#ifdef EXTENSIONS
+									 "%s" 
+#endif
+									      ":%ld:%ld:%s:%s:%s\n",
 					newlogin,
 					pwp->pw_passwd,
 					pwp->pw_uid,
 					pwp->pw_gid,
+#ifdef EXTENSIONS
+					pwp->pw_class,
+#endif
 					(long)pwp->pw_change,
 					(long)pwp->pw_expire,
 					pwp->pw_gecos,
@@ -1214,7 +1250,7 @@ usermgmt_usage(const char *prog)
 	if (strcmp(prog, "useradd") == 0) {
 		(void) fprintf(stderr, "Usage: %s -D [-b basedir] [-e expiry] "
 		    "[-f inactive] [-g group]\n\t[-r lowuid..highuid] "
-		    "[-s shell]\n", prog);
+		    "[-s shell] [-L class]\n", prog);
 		(void) fprintf(stderr, "Usage: %s [-G group] [-b basedir] "
 		    "[-c comment] [-d homedir] [-e expiry]\n\t[-f inactive] "
 		    "[-g group] [-k skeletondir] [-m] [-o] [-p password]\n"
@@ -1224,7 +1260,7 @@ usermgmt_usage(const char *prog)
 		(void) fprintf(stderr, "Usage: %s [-G group] [-c comment] "
 		    "[-d homedir] [-e expire] [-f inactive]\n\t[-g group] "
 		    "[-l newname] [-m] [-o] [-p password] [-s shell] [-u uid]\n"
-		    "\t[-v] user\n", prog);
+		    "\t[-L class] [-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void) fprintf(stderr, "Usage: %s -D [-p preserve]\n", prog);
 		(void) fprintf(stderr,
@@ -1254,7 +1290,7 @@ usermgmt_usage(const char *prog)
 }
 
 #ifdef EXTENSIONS
-#define ADD_OPT_EXTENSIONS	"p:r:v"
+#define ADD_OPT_EXTENSIONS	"p:r:vL:"
 #else
 #define ADD_OPT_EXTENSIONS	
 #endif
@@ -1266,7 +1302,9 @@ useradd(int argc, char **argv)
 	int	defaultfield;
 	int	bigD;
 	int	c;
+#ifdef EXTENSIONS
 	int	i;
+#endif
 
 	(void) memset(&u, 0, sizeof(u));
 	read_defaults(&u);
@@ -1314,6 +1352,12 @@ useradd(int argc, char **argv)
 		case 'k':
 			memsave(&u.u_skeldir, optarg, strlen(optarg));
 			break;
+#ifdef EXTENSIONS
+		case 'L':
+			defaultfield = 1;
+			memsave(&u.u_class, optarg, strlen(optarg));
+			break;
+#endif
 		case 'm':
 			u.u_flags |= F_MKDIR;
 			break;
@@ -1357,6 +1401,9 @@ useradd(int argc, char **argv)
 		(void) printf("base_dir\t%s\n", u.u_basedir);
 		(void) printf("skel_dir\t%s\n", u.u_skeldir);
 		(void) printf("shell\t\t%s\n", u.u_shell);
+#ifdef EXTENSIONS
+		(void) printf("class\t\t%s\n", u.u_class);
+#endif
 		(void) printf("inactive\t%d\n", u.u_inactive);
 		(void) printf("expire\t\t%s\n", (u.u_expire == NULL) ? UNSET_EXPIRY : u.u_expire);
 #ifdef EXTENSIONS
@@ -1376,7 +1423,7 @@ useradd(int argc, char **argv)
 }
 
 #ifdef EXTENSIONS
-#define MOD_OPT_EXTENSIONS	"p:v"
+#define MOD_OPT_EXTENSIONS	"p:vL:"
 #else
 #define MOD_OPT_EXTENSIONS	
 #endif
@@ -1431,6 +1478,12 @@ usermod(int argc, char **argv)
 			have_new_user = 1;
 			u.u_flags |= F_USERNAME;
 			break;
+#ifdef EXTENSIONS
+		case 'L':
+			memsave(&u.u_class, optarg, strlen(optarg));
+			u.u_flags |= F_CLASS;
+			break;
+#endif
 		case 'm':
 			u.u_flags |= F_MKDIR;
 			break;
@@ -1769,7 +1822,9 @@ userinfo(int argc, char **argv)
 		(void) printf("groups\t%s %s\n", grp->gr_name, buf);
 	}
 	(void) printf("change\t%s", pwp->pw_change ? ctime(&pwp->pw_change) : "NEVER\n");
+#ifdef EXTENSIONS
 	(void) printf("class\t%s\n", pwp->pw_class);
+#endif
 	(void) printf("gecos\t%s\n", pwp->pw_gecos);
 	(void) printf("dir\t%s\n", pwp->pw_dir);
 	(void) printf("shell\t%s\n", pwp->pw_shell);

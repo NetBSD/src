@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.11 2001/06/05 11:31:21 wiz Exp $ */
+.\" $NetBSD: useradd.8,v 1.12 2001/09/05 21:37:32 christos Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd Septemper 5, 2001
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Op Fl f Ar inactive-secs
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
+.Op Fl L Ar login-class
 .Oo
 .Op Fl k Ar skel-dir
 .Fl r Ar low Ns Li .. Ns Ar high
@@ -61,6 +62,7 @@
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
 .Op Fl k Ar skel-dir
+.Op Fl L Ar login-class
 .Op Fl p Ar password
 .Oo
 .Fl r Ar low Ns Li .. Ns Ar high
@@ -123,16 +125,20 @@ the user during that time, the login will be
 sets the default group for any user added using the
 .Nm
 command.
-.It Fl k skel-dir
+.It Fl k Ar skel-dir
 sets the skeleton directory in which to find files with
 which to populate new users' home directories.
+.It Fl L Ar login-class
+This option sets the login class for the user being created.  See
+.Xr login.conf 5
+for more information on user login classes.
 .It Xo
 .Fl r Ar low Ns Li .. Ns Ar high
 .Xc
 sets the low and high bounds of uid ranges for new users. A new user
 can only be created if there are uids which can be assigned from one
 of the free ranges.
-.It Fl s
+.It Fl s Ar shell
 sets the login shell for new users.
 .El
 .Pp
@@ -205,7 +211,25 @@ This value can be preset for all users by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar skel_dir <path-to-skeleton-dir> .
+.br \" XXX skip empty line? - HF
+.Bd -ragged -offset indent -compact
+.Ic skel_dir
+.Ar path-to-skeleton-dir
+.Ed
+.It Fl L Ar login-class
+This option sets the login class for the user being created.  See
+.Xr login.conf 5
+for more information on user login classes. Thie value can be preset
+for all users by using the
+.Ar class
+field in the
+.Pa /etc/usermgmt.conf
+file - it has the format:
+.br \" XXX skip empty line? - HF
+.Bd -ragged -offset indent -compact
+.Ic class
+.Ar login-class
+.Ed
 .It Fl m
 create a new home directory for the new user.
 .It Fl o
@@ -262,6 +286,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .It Pa /etc/skel/*
+.It Pa /etc/login.conf
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
@@ -270,7 +295,8 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr pwd_mkdb 8 ,
 .Xr user 8 ,
 .Xr userdel 8 ,
-.Xr usermod 8
+.Xr usermod 8 ,
+.Xr login.conf 5
 .Sh HISTORY
 The
 .Nm
