@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136 2001/03/02 10:27:00 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.137 2001/03/15 03:20:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2161,6 +2161,7 @@ bpt:
 	bz	slowtrap		! no, go do regular trap
 	 nop
 
+/* XXXSMP */
 	/*
 	 * Build a trap frame for kgdb_trap_glue to copy.
 	 * Enable traps but set ipl high so that we will not
@@ -2506,6 +2507,12 @@ sparc_interrupt_common:
 	st	%o0, [%l4 + %l5]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
+
+#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	call	_C_LABEL(intr_lock_kernel)
+	 nop
+#endif
+
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2533,7 +2540,12 @@ sparc_interrupt_common:
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
-4:	mov	%l7, %g1
+4:
+#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	call	_C_LABEL(intr_unlock_kernel)
+	 nop
+#endif
+	mov	%l7, %g1
 	wr	%l6, 0, %y
 	ldd	[%sp + CCFSZ + 24], %g2
 	ldd	[%sp + CCFSZ + 32], %g4
@@ -4453,6 +4465,7 @@ ENTRY(switchexit)
 	mov	%g5, %l6		! %l6 = _idle_u
 	SET_SP_REDZONE(%l6, %l5)
 #endif
+
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	call	_C_LABEL(exit2)		! exit2(p)
 	 mov	%g2, %o0
