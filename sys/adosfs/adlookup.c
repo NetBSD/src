@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.16 1996/10/13 02:52:06 christos Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -75,7 +75,7 @@ adosfs_lookup(v)
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
 	u_long bn, plen, hval;
-	u_char *pelt;
+	const u_char *pelt;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -91,7 +91,7 @@ adosfs_lookup(v)
 	last = flags & ISLASTCN;
 	lockp = flags & LOCKPARENT;
 	wantp = flags & (LOCKPARENT | WANTPARENT);
-	pelt = (u_char *)cnp->cn_nameptr;
+	pelt = (const u_char *)cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
 	nocache = 0;
 	

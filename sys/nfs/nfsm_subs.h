@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.11 1996/10/25 23:14:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -307,7 +307,7 @@
 			nfsm_build(tl,u_int32_t *,t2); \
 			*tl++ = txdr_unsigned(s); \
 			*(tl+((t2>>2)-2)) = 0; \
-			bcopy((caddr_t)(a), (caddr_t)tl, (s)); \
+			bcopy((const char *)(a), (caddr_t)tl, (s)); \
 		} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, (a), (s))) != 0) { \
 			error = t2; \
 			m_freem(mreq); \

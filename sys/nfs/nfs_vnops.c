@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.67 1996/10/13 01:39:11 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.68 1996/10/25 23:14:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1468,7 +1468,7 @@ nfs_removeit(sp)
 int
 nfs_removerpc(dvp, name, namelen, cred, proc)
 	register struct vnode *dvp;
-	char *name;
+	const char *name;
 	int namelen;
 	struct ucred *cred;
 	struct proc *proc;
@@ -1586,10 +1586,10 @@ nfs_renameit(sdvp, scnp, sp)
 int
 nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	register struct vnode *fdvp;
-	char *fnameptr;
+	const char *fnameptr;
 	int fnamelen;
 	register struct vnode *tdvp;
-	char *tnameptr;
+	const char *tnameptr;
 	int tnamelen;
 	struct ucred *cred;
 	struct proc *proc;
@@ -2195,6 +2195,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	nfsuint64 cookie;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsnode *dnp = VTONFS(vp), *np;
+	const unsigned char *hcp;
 	nfsfh_t *fhp;
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
@@ -2339,9 +2340,9 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				    IFTODT(VTTOIF(np->n_vattr.va_type));
 				ndp->ni_vp = newvp;
 				cnp->cn_hash = 0;
-				for (cp = cnp->cn_nameptr, i = 1; i <= len;
-				    i++, cp++)
-				    cnp->cn_hash += (unsigned char)*cp * i;
+				for (hcp = cnp->cn_nameptr, i = 1; i <= len;
+				    i++, hcp++)
+				    cnp->cn_hash += *hcp * i;
 				if (cnp->cn_namelen <= NCHNAMLEN)
 				    cache_enter(ndp->ni_dvp, ndp->ni_vp, cnp);
 			    }
@@ -2472,7 +2473,7 @@ bad:
 int
 nfs_lookitup(dvp, name, len, cred, procp, npp)
 	register struct vnode *dvp;
-	char *name;
+	const char *name;
 	int len;
 	struct ucred *cred;
 	struct proc *procp;
