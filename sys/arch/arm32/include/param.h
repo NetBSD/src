@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 1998/08/25 21:50:54 mark Exp $	*/
+/*	$NetBSD: param.h,v 1.15 1999/03/12 23:05:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,6 @@
 /*
  * Machine dependent constants for ARM6+ processors
  */
-/*#define	ovbcopy	bcopy	*/	/* XXX should probably have long gone by now */
 
 #define	_MACHINE	arm32
 #define	MACHINE		"arm32"
