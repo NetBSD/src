@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.123 2002/01/14 00:55:57 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.124 2002/01/29 19:01:18 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -15,8 +15,10 @@ _LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
+.if ${MKLINT} != "no"
 LSRCS+=	${_LSRC}
 DPSRCS+=${_LSRC:MLintSys*.c}
+.endif
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
