@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.1 2001/10/13 20:05:43 augustss Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.2 2001/10/18 12:27:15 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <err.h>
@@ -49,6 +50,8 @@
 
 static void usage(void);
 int main(int, char**);
+
+const char *ctlpath = "/dev/wsmuxctl";
 
 const char *devnames[] = { "?", "wsmouse", "wskbd", "wsmux" };
 
@@ -79,21 +82,45 @@ parsedev(const char *dev, struct wsmux_device *mdev)
 	errx(1, "bad device: `%s', use wsmouse, wskdb, or wsmux\n", dev);
 }
 
+static void
+listdevs(int fd, int rec, int ind)
+{
+	int i, rfd;
+	char buf[100];
+	struct wsmux_device_list devs;
+
+	if (ioctl(fd, WSMUX_LIST_DEVICES, &devs) < 0)
+		err(1, "WSMUX_LIST_DEVICES");
+	for (i = 0; i < devs.ndevices; i++) {
+		printf("%*s%s%d\n", ind, "", devnames[devs.devices[i].type],
+		       devs.devices[i].idx);
+		if (rec && devs.devices[i].type == WSMUX_MUX) {
+			sprintf(buf, "%s%d", ctlpath, devs.devices[i].idx);
+			rfd = open(buf, O_WRONLY, 0);
+			if (rfd < 0)
+				warn("%s", buf);
+			listdevs(rfd, rec, ind+2);
+			close(rfd);
+		}
+	}
+}
+
 int
 main(int argc, char **argv)
 {
 	char *wsdev, *dev;
-	int wsfd, list, c, i, add, rem;
-	struct wsmux_device_list devs;
+	int wsfd, list, c, add, rem, recursive;
 	struct wsmux_device mdev;
+	char buf[100];
 
 	wsdev = NULL;
 	dev = NULL;
 	add = 0;
 	rem = 0;
 	list = 0;
+	recursive = 0;
 
-	while ((c = getopt(argc, argv, "a:f:lr:")) != -1) {
+	while ((c = getopt(argc, argv, "a:f:lLr:")) != -1) {
 		switch (c) {
 		case 'a':
 			if (dev)
@@ -110,6 +137,8 @@ main(int argc, char **argv)
 		case 'f':
 			wsdev = optarg;
 			break;
+		case 'L':
+			recursive++;
 		case 'l':
 			list++;
 			break;
@@ -126,17 +155,20 @@ main(int argc, char **argv)
 		usage();
 
 	wsfd = open(wsdev, O_WRONLY, 0);
-	if (wsfd < 0)
-		err(2, "%s", wsdev);
+	if (wsfd < 0) {
+		if (isdigit(wsdev[0])) {
+			sprintf(buf, "%s%s", ctlpath, wsdev);
+			wsdev = buf;
+			wsfd = open(wsdev, O_WRONLY, 0);
+			if (wsfd < 0)
+				err(2, "%s", wsdev);
+		}
+	}
 
 	if (list) {
 		if (add || rem)
 			usage();
-		if (ioctl(wsfd, WSMUX_LIST_DEVICES, &devs) < 0)
-			err(1, "WSMUX_LIST_DEVICES");
-		for (i = 0; i < devs.ndevices; i++)
-			printf("%s%d\n", devnames[devs.devices[i].type],
-			       devs.devices[i].idx);
+		listdevs(wsfd, recursive, 0);
 		exit(0);
 	}
 
