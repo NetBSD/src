@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.3 2001/11/13 13:02:01 lukem Exp $");
+
 #define __NSDUMP_C__
 
 #include "acpi.h"

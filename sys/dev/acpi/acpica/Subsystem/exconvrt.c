@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.3 2001/11/13 13:01:59 lukem Exp $");
 
 #define __EXCONVRT_C__
 

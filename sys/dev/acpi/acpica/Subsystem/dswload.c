@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dswload.c,v 1.2 2001/11/13 13:01:59 lukem Exp $");
+
 #define __DSWLOAD_C__
 
 #include "acpi.h"
