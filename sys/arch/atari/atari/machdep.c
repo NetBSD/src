@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1999/05/20 08:21:43 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1999/05/26 14:29:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,7 +158,6 @@ cpu_startup()
 	register unsigned	i;
 		 caddr_t	v;
 		 int		base, residual;
-		 u_long		avail_mem;
 		 char		pbuf[9];
 
 #ifdef DEBUG
@@ -297,11 +296,11 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	avail_mem = ptoa(uvmexp.free);
-	printf("avail mem = %s\n", format_memory(avail_mem));
-	printf("using %d buffers containing %s of memory\n",
-	    nbuf, format_memory(bufpages * CLBYTES));
-	
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
