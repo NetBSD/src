@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.244 2004/07/22 15:12:23 wiz Exp $
+.\"	$NetBSD: options.4,v 1.245 2004/09/04 23:54:51 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1411,6 +1411,12 @@ with this.
 Multicast routing is controlled by the
 .Xr mrouted 8
 daemon.
+.It Cd options PIM
+Includes support for Protocol Independent Mutlicast (PIM) routing. You need
+.Em MROUTING
+and
+.Em INET 
+with this.
 .It Cd options INET
 Includes support for the
 .Tn TCP/IP
