@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.43 2002/09/16 16:33:13 mycroft Exp $ */
+/* $NetBSD: tga.c,v 1.44 2002/09/16 16:40:57 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.43 2002/09/16 16:33:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.44 2002/09/16 16:40:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1091,11 +1091,11 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	yinc = ydir * dst->ri_stride;
 
         wb = w * (dst->ri_depth / 8);
-	if (sx >= dx) {      /* moving to the left */
+	if (sx >= dx || (sx + w) <= dx) {	/* copy forwards */
 		xstart = 0;
 		xend = wb;
 		xdir = 1;
-	} else {             /* moving to the right */
+	} else {				/* copy backwards */
 		xstart = wb;
 		xend = 0;
 		xdir = -1;
