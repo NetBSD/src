@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.22 1996/03/17 11:50:09 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,7 +187,16 @@ struct devi {
 
 /*
  * Files.  Each file is either standard (always included) or optional,
- * depending on whether it has names on which to *be* optional.
+ * depending on whether it has names on which to *be* optional.  The
+ * options field (fi_optx) is actually an expression tree, with nodes
+ * for OR, AND, and NOT, as well as atoms (words) representing some   
+ * particular option.  The node type is stored in the nv_int field.
+ * Subexpressions appear in the `next' field; for the binary operators
+ * AND and OR, the left subexpression is first stored in the nv_ptr field.
+ * 
+ * For any file marked as needs-count or needs-flag, fixfiles() will
+ * build fi_optf, a `flat list' of the options with nv_int fields that
+ * contain counts or `need' flags; this is used in mkheaders().
  */
 struct files {
 	struct	files *fi_next;	/* linked list */
@@ -198,9 +207,14 @@ struct files {
 	const char *fi_path;	/* full file path */
 	const char *fi_tail;	/* name, i.e., rindex(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
-	struct	nvlist *fi_opt;	/* optional on ... */
+	struct  nvlist *fi_optx;/* options expression */
+	struct  nvlist *fi_optf;/* flattened version of above, if needed */
 	const char *fi_mkrule;	/* special make rule, if any */
 };
+#define	FX_ATOM		0	/* atom (in nv_name) */
+#define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
+#define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
+#define	FX_OR		3	/* OR expr (lhs in nv_ptr, rhs in nv_next) */
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */

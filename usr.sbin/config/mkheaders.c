@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.9 1996/03/17 06:29:25 cgd Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.10 1996/03/17 13:18:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ mkheaders()
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
 		if (fi->fi_flags & (FI_NEEDSCOUNT | FI_NEEDSFLAG) &&
-		    emitcnt(fi->fi_opt))
+		    emitcnt(fi->fi_optf))
 			return (1);
 	}
 	return (0);

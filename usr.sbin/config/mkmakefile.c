@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.28 1996/03/17 06:29:30 cgd Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.29 1996/03/17 13:18:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,15 +52,19 @@
 #include <string.h>
 #include "config.h"
 #include "sem.h"
+
 /*
  * Make the Makefile.
  */
 
+static const char *srcpath __P((struct files *)); 
+                        
 static int emitdefs __P((FILE *));
+static int emitfiles __P((FILE *, int));
+
 static int emitobjs __P((FILE *));
 static int emitcfiles __P((FILE *));
 static int emitsfiles __P((FILE *));
-static int emitfiles __P((FILE *, int));
 static int emitrules __P((FILE *));
 static int emitload __P((FILE *));
 
@@ -139,6 +143,33 @@ bad:
 	/* (void)unlink(ofname); */
 	free(ofname);
 	return (1);
+}
+
+/*
+ * Return (possibly in a static buffer) the name of the `source' for a
+ * file.  If we have `options source', or if the file is marked `always
+ * source', this is always the path from the `file' line; otherwise we
+ * get the .o from the obj-directory.
+ */
+static const char *
+srcpath(fi)
+	register struct files *fi;
+{
+#if 1
+	/* Always have source, don't support object dirs for kernel builds. */
+	return (fi->fi_path);
+#else
+	static char buf[MAXPATHLEN];
+
+	if (have_source || (fi->fi_flags & FI_ALWAYSSRC) != 0)
+		return (fi->fi_path);
+	if (objpath == NULL) {
+		error("obj-directory not set");
+		return (NULL);
+	}
+	(void)snprintf(buf, sizeof buf, "%s/%s.o", objpath, fi->fi_base);
+	return (buf);
+#endif
 }
 
 static int
@@ -224,6 +255,7 @@ emitfiles(fp, suffix)
 	register struct files *fi;
 	register struct config *cf;
 	register int lpos, len, sp;
+	register const char *fpath;
 	char swapname[100];
 
 	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
@@ -233,10 +265,12 @@ emitfiles(fp, suffix)
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		len = strlen(fi->fi_path);
-		if (fi->fi_path[len - 1] != suffix)
+		if ((fpath = srcpath(fi)) == NULL)
+                        return (1);
+		len = strlen(fpath);
+		if (fpath[len - 1] != suffix)
 			continue;
-		if (*fi->fi_path != '/')
+		if (*fpath != '/')
 			len += 3;	/* "$S/" */
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
@@ -244,8 +278,8 @@ emitfiles(fp, suffix)
 			sp = '\t';
 			lpos = 7;
 		}
-		if (fprintf(fp, "%c%s%s", sp, *fi->fi_path != '/' ? "$S/" : "",
-		    fi->fi_path) < 0)
+		if (fprintf(fp, "%c%s%s", sp, *fpath != '/' ? "$S/" : "",
+		    fpath) < 0)
 			return (1);
 		lpos += len + 1;
 		sp = ' ';
@@ -290,19 +324,21 @@ emitrules(fp)
 	register FILE *fp;
 {
 	register struct files *fi;
-	register const char *cp;
+	register const char *cp, *fpath;
 	int ch;
 	char buf[200];
 
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
+		if ((fpath = srcpath(fi)) == NULL)
+			return (1);
 		if (fprintf(fp, "%s.o: %s%s\n", fi->fi_base,
-		    *fi->fi_path != '/' ? "$S/" : "", fi->fi_path) < 0)
+		    *fpath != '/' ? "$S/" : "", fpath) < 0)
 			return (1);
 		if ((cp = fi->fi_mkrule) == NULL) {
 			cp = fi->fi_flags & FI_DRIVER ? "DRIVER" : "NORMAL";
-			ch = fi->fi_lastc;
+			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
 			(void)sprintf(buf, "${%s_%c%s}", cp, ch,
