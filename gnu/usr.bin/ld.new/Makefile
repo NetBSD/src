@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2000/12/07 11:31:51 scw Exp $
+#	$NetBSD: Makefile,v 1.22 2001/01/09 08:52:59 enami Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -38,7 +38,7 @@ TEXINFO=	ld.texi
 INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
 
 DIST=		${.CURDIR}/../../dist
-BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd; ${MAKE} print-objdir
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 SCRIPTDIR=	/usr/share/ldscripts
 
 .PATH:		${DIST}/ld

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2001/01/08 08:29:59 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2001/01/09 08:52:58 enami Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -17,9 +17,7 @@ GNU_ARCH.powerpc=rs6000
 
 DIST=		${.CURDIR}/../../../dist/gcc
 COMMON=		${.CURDIR}/../common
-.ifnmake(print-objdir)
-COMMONOBJ!=	cd ${.CURDIR}/../common; ${MAKE} print-objdir
-.endif
+COMMONOBJ!=	cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}

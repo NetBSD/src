@@ -1,11 +1,15 @@
-LIBUNIX!=cd $(.CURDIR)/../libunix; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libunix.a\n" | ${MAKE} -s -f-
+#	$NetBSD: Makefile.inc,v 1.13 2001/01/09 08:52:57 enami Exp $
 
-LIBUUCONF!=cd $(.CURDIR)/../libuuconf; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libuuconf.a\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
 
-LIBUUCP!=cd $(.CURDIR)/../libuucp; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libuucp.a\n" | ${MAKE} -s -f-
+LIBUNIXDIR!=cd $(.CURDIR)/../libunix && ${PRINTOBJDIR}
+LIBUNIX=${LIBUNIXDIR}/libunix.a
+
+LIBUUCONFDIR!=cd $(.CURDIR)/../libuuconf && ${PRINTOBJDIR}
+LIBUUCONF=${LIBUUCONFDIR}/libuuconf.a
+
+LIBUUCPDIR!=cd $(.CURDIR)/../libuucp && ${PRINTOBJDIR}
+LIBUUCP=${LIBUUCPDIR}/libuucp.a
 
 CPPFLAGS+=-DPOSIX_HEADERS
 WARNS=		1
