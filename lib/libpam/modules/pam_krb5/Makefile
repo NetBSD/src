@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2004/12/29 04:16:17 christos Exp $
+# $NetBSD: Makefile,v 1.4 2004/12/29 15:04:06 lukem Exp $
 # Copyright 2001 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -29,7 +29,11 @@ LIB=	pam_krb5
 SRCS=	pam_krb5.c
 MAN=	pam_krb5.8
 
-DPADD=	${LIBKRB5} ${LIBASN1} ${LIBROKEN} ${LIBCOM_ERR} ${LIBCRYPT} ${LIBCRYPTO}
-LDADD=	-Wl,-L${LIBKRB5DIR}:${LIBASN1DIR}:${LIBROKENDIR}:${LIBCOM_ERRDIR}:${LIBCRYPTDIR}:${LIBCRYPTODIR} -lkrb5 -lasn1 -lroken -lcom_err -lcrypt -lcrypto
+LIBDPLIBS=	krb5	${LIB_ROOT_DIR}/libkrb5 \
+		asn1	${LIB_ROOT_DIR}/libasn1 \
+		roken	${LIB_ROOT_DIR}/libroken \
+		com_err	${LIB_ROOT_DIR}/libcom_err \
+		crypt	${LIB_ROOT_DIR}/libcrypt \
+		crypto	${LIB_ROOT_DIR}/libcrypto
 
 .include "${.CURDIR}/../mod.mk"
