@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.23 2000/04/14 14:26:35 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.24 2000/10/06 16:39:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.23 2000/04/14 14:26:35 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.24 2000/10/06 16:39:24 thorpej Exp $");
 #endif
 #endif
 
@@ -310,6 +310,57 @@ pcap_compile(pcap_t *p, struct bpf_program *program,
 
 	if (root == NULL)
 		root = gen_retblk(snaplen);
+
+	if (optimize && !no_optimize) {
+		bpf_optimize(&root);
+		if (root == NULL ||
+		    (root->s.code == (BPF_RET|BPF_K) && root->s.k == 0))
+			bpf_error("expression rejects all packets");
+	}
+	program->bf_insns = icode_to_fcode(root, &len);
+	program->bf_len = len;
+
+	freechunks();
+	return (0);
+}
+
+/*
+ * entry point for using the compiler with no pcap open
+ * pass in all the stuff that is needed explicitly instead.
+ */
+int
+pcap_compile_nopcap(int snaplen_arg, int linktype_arg,
+		    struct bpf_program *program,
+	     char *buf, int optimize, bpf_u_int32 mask, char *errbuf)
+{
+	extern int n_errors;
+	pcap_t p;
+	int len;
+
+	memset(&p, 0, sizeof(p));
+
+	no_optimize = 0;
+	n_errors = 0;
+	root = NULL;
+	bpf_pcap = &p;
+	if (setjmp(top_ctx)) {
+		strncpy(errbuf, pcap_geterr(&p), PCAP_ERRBUF_SIZE - 1);
+		freechunks();
+		return (-1);
+	}
+
+	netmask = mask;
+	snaplen = snaplen_arg;	/* basis of filter match return value */
+
+	lex_init(buf ? buf : "");
+	init_linktype(linktype_arg);
+	(void)pcap_parse();
+
+	if (n_errors)
+		syntax();
+
+	if (root == NULL)
+		root = gen_retblk(snaplen_arg);
 
 	if (optimize && !no_optimize) {
 		bpf_optimize(&root);
