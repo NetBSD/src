@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.6 2001/11/13 07:46:26 lukem Exp $	*/
+/*	$NetBSD: mca.c,v 1.7 2001/11/24 12:33:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.6 2001/11/13 07:46:26 lukem Exp $");
-
-#include "opt_mcaverbose.h"
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.7 2001/11/24 12:33:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +111,7 @@ mca_print(aux, pnp)
 	case MCA_PRODUCT_IBMRAM2: case MCA_PRODUCT_IBMRAM3:
 	case MCA_PRODUCT_IBMRAM4: case MCA_PRODUCT_IBMRAM5:
 	case MCA_PRODUCT_IBMRAM6: case MCA_PRODUCT_IBMRAM7:
-		printf(": configured\n");
+		printf(": memory configured\n");
 		return (QUIET);
 	default:
 		return (UNCONF);
