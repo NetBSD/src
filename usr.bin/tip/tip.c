@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.21 1998/07/12 09:59:30 mrg Exp $	*/
+/*	$NetBSD: tip.c,v 1.22 1998/12/19 23:00:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.21 1998/07/12 09:59:30 mrg Exp $");
+__RCSID("$NetBSD: tip.c,v 1.22 1998/12/19 23:00:18 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -62,8 +62,6 @@ int rates[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600,
 	1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, -1
 };
-
-int	disc = TTYDISC;		/* tip normally runs this way */
 
 int	escape __P((void));
 int	main __P((int, char **));
@@ -124,7 +122,7 @@ main(argc, argv)
 
 	if (system == NULL)
 		goto notnumber;
-	if (isalpha(*system))
+	if (isalpha((unsigned char)*system))
 		goto notnumber;
 	/*
 	 * System name is really a phone number...
@@ -420,7 +418,7 @@ tipin()
 		} else if (!cumode && gch && gch == character(value(FORCE)))
 			gch = getchar()&STRIP_PAR;
 		bol = any(gch, value(EOL));
-		if (boolean(value(RAISE)) && islower(gch))
+		if (boolean(value(RAISE)) && islower((unsigned char)gch))
 			gch = toupper(gch);
 		xpwrite(FD, &gch, 1);
 		if (boolean(value(HALFDUPLEX)))
