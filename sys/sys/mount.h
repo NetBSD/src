@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.29 1994/04/25 03:50:33 cgd Exp $
+ *	$Id: mount.h,v 1.30 1994/05/11 18:50:39 chopps Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -93,6 +93,7 @@ struct statfs {
 #define	MOUNT_PROCFS	"procfs"	/* proc filesystem */
 #define	MOUNT_LOFS	"lofs"		/* loopback filesystem */
 #define	MOUNT_PORTAL	"portal"	/* portal filesystem */
+#define MOUNT_ADOSFS	"adosfs"	/* amigados filesystem */
 
 /*
  * Structure per mounted file system.
@@ -301,6 +302,16 @@ struct msdosfs_args {
 	char *fspec;		/* blocks special holding the fs to mount */
 	uid_t uid;		/* uid that owns msdosfs files */
 	gid_t gid;		/* gid that owns msdosfs files */
+	mode_t mask;		/* mask to be applied for msdosfs perms */
+};
+
+/*
+ * Arguments to mount amigados filesystems.
+ */
+struct adosfs_args {
+	char *fspec;		/* blocks special holding the fs to mount */
+	uid_t uid;		/* uid that owns adosfs files */
+	gid_t gid;		/* gid that owns adosfs files */
 	mode_t mask;		/* mask to be applied for msdosfs perms */
 };
 
