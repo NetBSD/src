@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.85 1998/08/26 20:00:37 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.86 1998/09/06 17:27:40 veego Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.78 1998/08/26 19:59:16 drochner Exp 
+ *	NetBSD: pcidevs,v 1.79 1998/09/06 17:26:03 veego Exp 
  */
 
 /*
@@ -637,7 +637,9 @@
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Bt848 Video Capture */
-#define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* Bt848 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* Bt849 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT878	0x036e		/* Bt878 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT879	0x036f		/* Bt879 Video Capture */
 
 /* BusLogic products */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC	0x0140		/* MultiMaster NC */
