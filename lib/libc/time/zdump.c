@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.8 1998/01/22 07:07:00 jtc Exp $	*/
+/*	$NetBSD: zdump.c,v 1.9 1998/07/26 16:03:16 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zdump.c	7.27";
 #else
-__RCSID("$NetBSD: zdump.c,v 1.8 1998/01/22 07:07:00 jtc Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.9 1998/07/26 16:03:16 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -132,9 +132,8 @@ extern int	getopt P((int argc, char * const argv[],
 			  const char * options));
 extern char *	optarg;
 extern int	optind;
-extern char *	tzname[2];
 
-static char *	abbr P((struct tm * tmp));
+static const char *	abbr P((struct tm * tmp));
 static long	delta P((struct tm * newp, struct tm * oldp));
 static time_t	hunt P((char * name, time_t lot, time_t	hit));
 int		main P((int, char **));
@@ -366,12 +365,12 @@ int	v;
 	(void) printf("\n");
 }
 
-static char *
+static const char *
 abbr(tmp)
 struct tm *	tmp;
 {
-	register char *	result;
-	static char	nada;
+	register const char *	result;
+	static const char	nada;
 
 	if (tmp->tm_isdst != 0 && tmp->tm_isdst != 1)
 		return &nada;
