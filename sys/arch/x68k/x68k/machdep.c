@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2003/04/26 11:05:22 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2003/05/01 18:38:54 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,8 @@
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 
+#include "ksyms.h"
+
 #if NKSYMS || defined(DDB) || defined(LKM)
 #include <sys/exec_elf.h>
 #endif
@@ -105,8 +107,6 @@
 
 #include <machine/bus.h>
 #include <arch/x68k/dev/intiovar.h>
-
-#include "ksyms.h"
 
 void initcpu __P((void));
 void identifycpu __P((void));
