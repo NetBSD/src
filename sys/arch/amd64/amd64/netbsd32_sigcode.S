@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.3 2004/03/25 15:47:12 drochner Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.4 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#include "opt_compat_netbsd.h"
+
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -60,3 +62,13 @@ NENTRY(netbsd32_sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(netbsd32_esigcode)
 _C_LABEL(netbsd32_esigcode):
+
+#ifdef COMPAT_16
+/*
+ * There is no NetBSD-1.6 compatibility for native code.
+ * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
+ */
+	.globl _C_LABEL(sigcode), _C_LABEL(esigcode)
+	.set _C_LABEL(sigcode),0
+	.set _C_LABEL(esigcode),0
+#endif
