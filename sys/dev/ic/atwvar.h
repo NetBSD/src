@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.4 2003/12/07 04:19:27 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.5 2003/12/07 04:49:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -163,7 +163,7 @@ struct atw_rx_radiotap_header {
 	u_int8_t				ar_rate;
 	u_int16_t				ar_chan_freq;
 	u_int16_t				ar_chan_flags;
-	int8_t					ar_antsignal;
+	u_int8_t				ar_antsignal;
 } __attribute__((__packed__));
 
 #define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \

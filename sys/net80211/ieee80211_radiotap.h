@@ -1,5 +1,6 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.1 2003/09/05 22:19:32 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.3 2003/11/16 09:02:42 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.4 2003/12/07 04:49:17 dyoung Exp $ */
+/* $Header: /cvsroot/src/sys/net80211/ieee80211_radiotap.h,v 1.4 2003/12/07 04:49:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -46,9 +47,11 @@
  * function of...") that I cannot set false expectations for lawyerly
  * readers.
  */
+#ifdef _KERNEL
 #ifndef DLT_IEEE802_11_RADIO
 #define	DLT_IEEE802_11_RADIO	127	/* 802.11 plus WLAN header */
 #endif
+#endif /* _KERNEL */
 
 /* The radio capture header precedes the 802.11 header. */
 struct ieee80211_radiotap_header {
@@ -90,19 +93,31 @@ struct ieee80211_radiotap_header {
  *      For frequency-hopping radios, the hop set (first byte)
  *      and pattern (second byte).
  *
- * IEEE80211_RADIOTAP_RATE              u_int16_t       500kb/s
+ * IEEE80211_RADIOTAP_RATE              u_int8_t        500kb/s
  *
  *      Tx/Rx data rate
  *
- * IEEE80211_RADIOTAP_DB_ANTSIGNAL      int8_t          decibel (dB)
+ * IEEE80211_RADIOTAP_DBM_ANTSIGNAL     int8_t          decibels from
+ *                                                      one milliwatt (dBm)
  *
- *      RF signal power at the antenna, measured from a fixed,
- *      arbitrary reference point.
+ *      RF signal power at the antenna, decibel difference from
+ *      one milliwatt.
  *
- * IEEE80211_RADIOTAP_DB_ANTNOISE       int8_t          decibel (dB)
+ * IEEE80211_RADIOTAP_DBM_ANTNOISE      int8_t          decibels from
+ *                                                      one milliwatt (dBm)
  *
- *      RF noise power at the antenna in decibels from an arbitrary,
- *      fixed reference point.
+ *      RF noise power at the antenna, decibel difference from one
+ *      milliwatt.
+ *
+ * IEEE80211_RADIOTAP_DB_ANTSIGNAL      u_int8_t        decibel (dB)
+ *
+ *      RF signal power at the antenna, decibel difference from an
+ *      arbitrary, fixed reference.
+ *
+ * IEEE80211_RADIOTAP_DB_ANTNOISE       u_int8_t        decibel (dB)
+ *
+ *      RF noise power at the antenna, decibel difference from an
+ *      arbitrary, fixed reference point.
  *
  * IEEE80211_RADIOTAP_BARKER_CODE_LOCK  u_int16_t       unitless
  *
@@ -123,8 +138,8 @@ struct ieee80211_radiotap_header {
  *      set at factory calibration.  0 is max power.  Monotonically
  *      nondecreasing with lower power levels.
  *
- * IEEE80211_RADIOTAP_DBM_TX_POWER      u_int16_t       decibels from
- *                                                      milliwatt (dBm)
+ * IEEE80211_RADIOTAP_DBM_TX_POWER      int8_t          decibels from
+ *                                                      one milliwatt (dBm)
  *
  *      Transmit power expressed as dBm (decibels from a 1 milliwatt
  *      reference). This is the absolute power level measured at
@@ -146,15 +161,27 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_RATE = 2,
 	IEEE80211_RADIOTAP_CHANNEL = 3,
 	IEEE80211_RADIOTAP_FHSS = 4,
-	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 5,
-	IEEE80211_RADIOTAP_DB_ANTNOISE = 6,
+	IEEE80211_RADIOTAP_DBM_ANTSIGNAL = 5,
+	IEEE80211_RADIOTAP_DBM_ANTNOISE = 6,
 	IEEE80211_RADIOTAP_LOCK_QUALITY = 7,
 	IEEE80211_RADIOTAP_TX_ATTENUATION = 8,
 	IEEE80211_RADIOTAP_DB_TX_ATTENUATION = 9,
 	IEEE80211_RADIOTAP_DBM_TX_POWER = 10,
 	IEEE80211_RADIOTAP_ANTENNA = 11,
+	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
+	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
 	IEEE80211_RADIOTAP_EXT = 31
 };
+
+#ifndef _KERNEL
+/* Channel flags. */
+#define IEEE80211_CHAN_TURBO    0x0010  /* Turbo channel */
+#define IEEE80211_CHAN_CCK      0x0020  /* CCK channel */
+#define IEEE80211_CHAN_OFDM     0x0040  /* OFDM channel */
+#define IEEE80211_CHAN_2GHZ     0x0080  /* 2 GHz spectrum channel. */
+#define IEEE80211_CHAN_5GHZ     0x0100  /* 5 GHz spectrum channel */
+#define IEEE80211_CHAN_PASSIVE  0x0200  /* Only passive scan allowed */
+#endif /* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */
 #define	IEEE80211_RADIOTAP_F_CFP	0x01	/* sent/received
