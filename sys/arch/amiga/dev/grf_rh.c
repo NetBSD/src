@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.21 1996/08/11 09:48:27 veego Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.22 1996/08/27 21:54:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1524,7 +1524,7 @@ static struct MonDef *current_mon;	/* EVIL */
 
 int  rh_mode     __P((struct grf_softc *, u_long, void *, u_long, int));
 void grfrhattach __P((struct device *, struct device *, void *));
-int  grfrhprint  __P((void *, char *));
+int  grfrhprint  __P((void *, const char *));
 int  grfrhmatch  __P((struct device *, void *, void *));
 
 struct cfattach grfrh_ca = {
@@ -1619,7 +1619,7 @@ grfrhattach(pdp, dp, auxp)
 int
 grfrhprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s", pnp);

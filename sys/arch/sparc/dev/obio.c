@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.24 1996/05/18 12:22:49 mrg Exp $	*/
+/*	$NetBSD: obio.c,v 1.25 1996/08/27 21:57:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -66,7 +66,7 @@ static void	obioattach __P((struct device *, struct device *, void *));
 static void	vmesattach __P((struct device *, struct device *, void *));
 static void	vmelattach __P((struct device *, struct device *, void *));
 
-int		busprint __P((void *, char *));
+int		busprint __P((void *, const char *));
 static int	busattach __P((struct device *, void *, void *, int));
 void *		bus_map __P((struct rom_reg *, int, int));
 int		obio_scan __P((struct device *, void *, void *));
@@ -122,7 +122,7 @@ busmatch(parent, vcf, aux)
 int
 busprint(args, obio)
 	void *args;
-	char *obio;
+	const char *obio;
 {
 	register struct confargs *ca = args;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.1 1996/07/20 18:55:11 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.2 1996/08/27 21:58:43 cgd Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -178,7 +178,7 @@ struct	hdcsoftc {
  */
 int	hdcmatch  __P((struct device *parent, void *cfdata, void *aux));
 void	hdcattach __P((struct device *parent, struct device *self, void *aux));
-int	hdcprint  __P((void *aux, char *name));
+int	hdcprint  __P((void *aux, const char *name));
 
 struct	cfdriver hdc_cd = {
 	NULL, "hdc", DV_DULL
@@ -189,7 +189,7 @@ struct	cfattach hdc_ca = {
 
 int	rdmatch __P((struct device *parent, void *cfdata, void *aux));
 void	rdattach __P((struct device *parent, struct device *self, void *aux));
-int	rdprint __P((void *aux, char *name));
+int	rdprint __P((void *aux, const char *name));
 void	rdstrategy __P((struct buf *bp));
 
 struct	cfdriver rd_cd = {
@@ -255,7 +255,7 @@ struct hdc_attach_args {
 int
 rdprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct hdc_attach_args *ha = aux;
 

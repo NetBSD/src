@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.3 1996/05/29 04:29:46 chuck Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.4 1996/08/27 21:56:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -53,7 +53,7 @@
 #include <mvme68k/dev/sbicvar.h>
 #include <mvme68k/dev/wdscreg.h>
 
-int     wdscprint       __P((void *auxp, char *));
+int     wdscprint       __P((void *auxp, const char *));
 void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
 int     wdsc_pcc_match  __P((struct device *, void *, void *));
 
@@ -193,7 +193,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
 int
 wdscprint(auxp, pnp)
     void *auxp;
-    char *pnp;
+    const char *pnp;
 {
 
     /* Only scsibusses can attach to wdscs...easy. */

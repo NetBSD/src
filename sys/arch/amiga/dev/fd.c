@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.32 1996/05/04 04:54:00 mhitch Exp $	*/
+/*	$NetBSD: fd.c,v 1.33 1996/08/27 21:54:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -182,7 +182,7 @@ struct fdcargs {
 
 int	fdcmatch __P((struct device *, void *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
-int	fdcprint __P((void *, char *));
+int	fdcprint __P((void *, const char *));
 int	fdmatch __P((struct device *, void *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
@@ -347,7 +347,7 @@ fdcattach(pdp, dp, auxp)
 int
 fdcprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	struct fdcargs *fcp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.51 1996/06/12 19:12:19 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.52 1996/08/27 21:57:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -68,7 +68,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
-/*static*/ int	espprint	__P((void *, char *));
+/*static*/ int	espprint	__P((void *, const char *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	espselect	__P((struct esp_softc *,
@@ -114,7 +114,7 @@ struct scsi_device esp_dev = {
 int
 espprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

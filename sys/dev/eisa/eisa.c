@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.11 1996/04/09 22:46:11 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.12 1996/08/27 21:59:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -60,7 +60,7 @@ struct cfdriver eisa_cd = {
 };
 
 int	eisasubmatch __P((struct device *, void *, void *));
-int	eisaprint __P((void *, char *));
+int	eisaprint __P((void *, const char *));
 void	eisa_devinfo __P((const char *, char *));
 
 int
@@ -82,7 +82,7 @@ eisamatch(parent, match, aux)
 int
 eisaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	register struct eisa_attach_args *ea = aux;
 	char devinfo[256]; 

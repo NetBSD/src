@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1996/08/20 14:13:59 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1996/08/27 21:58:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -177,13 +177,13 @@ configure()
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }
 
-int	printut __P((void *, char *));
+int	printut __P((void *, const char *));
 int	backplane_match __P((struct device *, void *, void *));
 void	backplane_attach __P((struct device *, struct device *, void *));
 int
 printut(aux, hej)
 	void *aux;
-	char *hej;
+	const char *hej;
 {
 	struct bp_conf *bp = aux;
 	if (hej)
@@ -294,7 +294,7 @@ void
 find_sbi(self, bp, print)
 	struct	device *self;
 	struct	bp_conf *bp;
-	int	(*print) __P((void *, char *));
+	int	(*print) __P((void *, const char *));
 {
 	volatile int tmp;
 	volatile struct sbia_regs *sbiar;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 1996/06/17 15:17:06 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.39 1996/08/27 21:57:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -166,7 +166,7 @@ static u_char zs_init_reg[16] = {
 /* Definition of the driver for autoconfig. */
 static int	zsc_match __P((struct device *, void *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
-static int  zsc_print __P((void *, char *name));
+static int  zsc_print __P((void *, const char *name));
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
@@ -328,7 +328,7 @@ zsc_attach(parent, self, aux)
 static int
 zsc_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct zsc_attach_args *args = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.2 1996/07/09 00:55:23 cgd Exp $	*/
+/*	$NetBSD: sfb.c,v 1.3 1996/08/27 21:54:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,7 +56,7 @@
 
 int	sfbmatch __P((struct device *, void *, void *));
 void	sfbattach __P((struct device *, struct device *, void *));
-int	sfbprint __P((void *, char *));
+int	sfbprint __P((void *, const char *));
 
 struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
@@ -250,7 +250,7 @@ sfbattach(parent, self, aux)
 int
 sfbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

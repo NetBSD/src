@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.16 1996/05/17 23:39:19 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.17 1996/08/27 21:59:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ struct cfdriver tc_cd = {
 	NULL, "tc", DV_DULL
 };
 
-int	tcprint __P((void *, char *));
+int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, void *, void *));
 int	tc_checkslot __P((tc_addr_t, char *));
 void	tc_devinfo __P((const char *, char *));
@@ -191,7 +191,7 @@ tcattach(parent, self, aux)
 int
 tcprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct tc_attach_args *ta = aux;
 	char devinfo[256];

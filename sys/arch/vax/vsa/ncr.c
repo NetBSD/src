@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.1 1996/07/20 18:55:14 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.2 1996/08/27 21:58:48 cgd Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -284,7 +284,7 @@ struct cfattach ncr_ca = {
 integrate int
 si_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.2 1996/04/26 22:01:56 mark Exp $ */
+/* $NetBSD: iic.c,v 1.3 1996/08/27 21:55:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -262,7 +262,7 @@ iicmatch(parent, match, aux)
 int
 iicprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct iicbus_attach_args *ib = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.2 1996/07/09 00:55:10 cgd Exp $	*/
+/*	$NetBSD: cfb.c,v 1.3 1996/08/27 21:54:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,7 +56,7 @@
 
 int	cfbmatch __P((struct device *, void *, void *));
 void	cfbattach __P((struct device *, struct device *, void *));
-int	cfbprint __P((void *, char *));
+int	cfbprint __P((void *, const char *));
 
 struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
@@ -205,7 +205,7 @@ cfbattach(parent, self, aux)
 int
 cfbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

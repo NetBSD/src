@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.6 1996/07/09 00:55:16 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.7 1996/08/27 21:54:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -53,7 +53,7 @@ struct ioasic_softc {
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, void *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
-int     ioasicprint(void *, char *);
+int     ioasicprint(void *, const char *);
 
 struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
@@ -189,7 +189,7 @@ ioasicattach(parent, self, aux)
 int
 ioasicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct ioasicdev_attach_args *d = aux;
 

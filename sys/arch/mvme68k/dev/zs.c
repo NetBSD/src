@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 1996/08/26 06:39:03 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 1996/08/27 21:56:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -100,7 +100,7 @@ u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_print __P((void *, char *name));
+static int	zsc_print __P((void *, const char *name));
 
 struct cfdriver zsc_cd = {
 	NULL, "zsc", DV_DULL
@@ -193,7 +193,7 @@ zs_config(zsc, chan_addr)
 static int
 zsc_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct zsc_attach_args *args = aux;
 

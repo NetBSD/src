@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
+/*	$NetBSD: boca.c,v 1.16 1996/08/27 21:59:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ struct boca_softc {
 int bocaprobe __P((struct device *, void *, void *));
 void bocaattach __P((struct device *, struct device *, void *));
 int bocaintr __P((void *));
-int bocaprint __P((void *, char *));
+int bocaprint __P((void *, const char *));
 
 struct cfattach boca_ca = {
 	sizeof(struct boca_softc), bocaprobe, bocaattach,
@@ -127,7 +127,7 @@ out:
 int
 bocaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct commulti_attach_args *ca = aux;
 

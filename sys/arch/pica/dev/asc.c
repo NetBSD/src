@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.3 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: asc.c,v 1.4 1996/08/27 21:56:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -439,7 +439,7 @@ typedef struct asc_softc *asc_softc_t;
  */
 int	ascmatch __P((struct device *, void *, void *));
 void	ascattach __P((struct device *, struct device *, void *));
-int	ascprint(void *, char *);
+int	ascprint(void *, const char *);
 
 int	asc_doprobe __P((void *, int, int, struct device *));
 
@@ -606,7 +606,7 @@ ascattach(parent, self, aux)
 int
 ascprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	return -1;
 }

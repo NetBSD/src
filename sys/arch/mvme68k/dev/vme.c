@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.1 1996/04/26 19:00:12 chuck Exp $	*/
+/*	$NetBSD: vme.c,v 1.2 1996/08/27 21:56:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
@@ -49,9 +49,9 @@ int	vmel_match __P((struct device *, void *, void *));
 void	vme_attach __P((struct device *, struct device *, void *));
 
 int	vme_search __P((struct device *, void *, void *));
-int	vme_print __P((void *, char *));
+int	vme_print __P((void *, const char *));
 
-int	vmechip_print __P((void *, char *));
+int	vmechip_print __P((void *, const char *));
 
 struct cfdriver vmechip_cd = {
 	NULL, "vmechip", DV_DULL
@@ -102,7 +102,7 @@ vme_config(sc)
 int
 vmechip_print(aux, cp)
 	void *aux;
-	char *cp;
+	const char *cp;
 {
 	struct vme_attach_args *va = aux;
 	char *busname;
@@ -247,7 +247,7 @@ vme_search(parent, match, aux)
 int
 vme_print(aux, cp)
 	void *aux;
-	char *cp;
+	const char *cp;
 {
 	struct vme_attach_args *va = aux;
 

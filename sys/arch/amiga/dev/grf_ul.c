@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.19 1996/07/08 13:28:41 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.20 1996/08/27 21:54:57 cgd Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -439,7 +439,7 @@ ul_load_mon(gp, md)
 int ul_mode __P((struct grf_softc *, u_long, void *, u_long, int));
 
 void grfulattach __P((struct device *, struct device *, void *));
-int grfulprint __P((void *, char *));
+int grfulprint __P((void *, const char *));
 int grfulmatch __P((struct device *, void *, void *));
  
 struct cfattach grful_ca = {
@@ -571,7 +571,7 @@ grfulattach(pdp, dp, auxp)
 int
 grfulprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.7 1996/08/20 14:15:04 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.8 1996/08/27 21:58:04 cgd Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,7 +72,7 @@ struct	mbaunit mbaunit[] = {
 int	mbamatch __P((struct device *, void *, void *));
 void	mbaattach __P((struct device *, struct device *, void *));
 void	mbaintr __P((int));
-int	mbaprint __P((void *, char *));
+int	mbaprint __P((void *, const char *));
 void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
 void	mbamapregs __P((struct mba_softc *));
@@ -243,7 +243,7 @@ mbaintr(mba)
 int
 mbaprint(aux, mbaname)
 	void	*aux;
-	char	*mbaname;
+	const char	*mbaname;
 {
 	struct  mba_attach_args *ma = aux;
 

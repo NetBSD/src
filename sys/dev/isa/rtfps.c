@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.23 1996/05/12 23:53:29 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.24 1996/08/27 21:59:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@ struct rtfps_softc {
 int rtfpsprobe __P((struct device *, void *, void *));
 void rtfpsattach __P((struct device *, struct device *, void *));
 int rtfpsintr __P((void *));
-int rtfpsprint __P((void *, char *));
+int rtfpsprint __P((void *, const char *));
 
 struct cfattach rtfps_ca = {
 	sizeof(struct rtfps_softc), rtfpsprobe, rtfpsattach
@@ -129,7 +129,7 @@ out:
 int
 rtfpsprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct commulti_attach_args *ca = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.1 1996/07/19 14:26:55 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.2 1996/08/27 21:57:59 cgd Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -82,7 +82,7 @@ void	kdbattach __P((struct device *, struct device *, void *));
 void	kdbreset __P((int));
 void	kdbintr __P((int));
 void	kdbctlrdone __P((struct device *, int));
-int	kdbprint __P((void *, char *));
+int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
 int	kdbgo __P((struct device *));
 
@@ -106,7 +106,7 @@ struct	mscp_ctlr kdb_mscp_ctlr = {
 int
 kdbprint(aux, name)
 	void	*aux;
-	char	*name;
+	const char	*name;
 {
 	if (name)
 		printf("%s: mscpbus", name);

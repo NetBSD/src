@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 1996/08/25 23:39:47 jtk Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 1996/08/27 21:55:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
 
-int	mainbus_print __P((void *, char *));
+int	mainbus_print __P((void *, const char *));
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -134,7 +134,7 @@ mainbus_attach(parent, self, aux)
 int
 mainbus_print(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	union mainbus_attach_args *mba = aux;
 

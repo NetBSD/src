@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.10 1996/05/29 06:29:02 mhitch Exp $	*/
+/*	$NetBSD: asic.c,v 1.11 1996/08/27 21:56:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -69,7 +69,7 @@ struct asic_softc {
 /* Definition of the driver for autoconfig. */
 int	asicmatch __P((struct device *, void *, void *));
 void	asicattach __P((struct device *, struct device *, void *));
-int     asicprint(void *, char *);
+int     asicprint(void *, const char *);
 
 /* Device locators. */
 #define	ioasiccf_offset	cf_loc[0]		/* offset */
@@ -264,7 +264,7 @@ asicattach(parent, self, aux)
 int
 asicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct ioasicdev_attach_args *d = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.c,v 1.2 1996/03/17 01:42:33 thorpej Exp $	*/
+/*	$NetBSD: pica.c,v 1.3 1996/08/27 21:56:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,7 +46,7 @@ struct pica_softc {
 /* Definition of the driver for autoconfig. */
 int	picamatch(struct device *, void *, void *);
 void	picaattach(struct device *, struct device *, void *);
-int	picaprint(void *, char *);
+int	picaprint(void *, const char *);
 
 struct cfattach pica_ca = {
 	sizeof (struct pica_softc), picamatch, picaattach
@@ -199,7 +199,7 @@ picaattach(parent, self, aux)
 int
 picaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct confargs *ca = aux;
 

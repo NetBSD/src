@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.1 1996/07/19 14:26:52 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.2 1996/08/27 21:57:55 cgd Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,7 @@
 
 static int bi_match __P((struct device *, void *, void *));
 static void bi_attach __P((struct device *, struct device *, void*));
-static int bi_print __P((void *, char *));
+static int bi_print __P((void *, const char *));
 
 struct cfdriver bi_cd = {
 	NULL, "bi", DV_DULL
@@ -84,7 +84,7 @@ struct bi_list bi_list[] = {
 int
 bi_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct bi_attach_args *ba = aux;
 	struct bi_list *bl;

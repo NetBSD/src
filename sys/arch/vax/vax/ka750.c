@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.14 1996/08/20 14:13:56 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.15 1996/08/27 21:58:27 cgd Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -259,7 +259,7 @@ ka750_steal_pages()
 	    VM_PROT_READ|VM_PROT_WRITE);
 }
 
-static  int cmi_print __P((void *, char *));
+static  int cmi_print __P((void *, const char *));
 static  int cmi_match __P((struct device *, void *, void *));
 static  void cmi_attach __P((struct device *, struct device *, void*));
 
@@ -274,7 +274,7 @@ struct  cfattach cmi_ca = {
 int
 cmi_print(aux, name)
         void *aux;
-        char *name;
+        const char *name;
 {
         struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 

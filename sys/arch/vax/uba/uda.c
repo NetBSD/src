@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.20 1996/08/20 13:49:20 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.21 1996/08/27 21:58:16 cgd Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -98,7 +98,7 @@ static	void	mtcintr __P((int));
 static	void	intr __P((struct uda_softc *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *, int));
-int	udaprint __P((void *, char *));
+int	udaprint __P((void *, const char *));
 void	udasaerror __P((struct device *, int));
 int	udago __P((struct device *, struct buf *));
 
@@ -135,7 +135,7 @@ static	int	ivec_no;
 int
 udaprint(aux, name)
 	void	*aux;
-	char	*name;
+	const char	*name;
 {
 	if (name)
 		printf("%s: mscpbus", name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.26 1996/08/20 13:37:57 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.27 1996/08/27 21:58:12 cgd Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -69,7 +69,7 @@
 volatile int rbr, rcvec, svec;
 
 static	void ubascan __P((struct device *, void *));
-static	int ubaprint __P((void *, char *));
+static	int ubaprint __P((void *, const char *));
 static	void ubastray __P((int));
 static	void ubainitmaps __P((struct uba_softc *));
 static	void uba_attach __P((struct uba_softc *, unsigned long));
@@ -984,7 +984,7 @@ ubasetvec(dev, vec, func)
 int
 ubaprint(aux, uba)
 	void *aux;
-	char *uba;
+	const char *uba;
 {
 	struct uba_attach_args *ua = aux;
 

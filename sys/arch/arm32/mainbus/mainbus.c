@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 1996/03/20 18:38:00 mark Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 1996/08/27 21:55:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -75,7 +75,7 @@ mainbusmatch(parent, match, aux)
 int
 mainbusprint(aux, mainbus)
 	void *aux;
-	char *mainbus;
+	const char *mainbus;
 {
 	struct mainbus_attach_args *mb = aux;
 

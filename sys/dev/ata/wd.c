@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.151 1996/08/27 21:59:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -151,7 +151,7 @@ struct cfdriver wdc_cd = {
 
 int wdprobe __P((struct device *, void *, void *));
 void wdattach __P((struct device *, struct device *, void *));
-int wdprint __P((void *, char *));
+int wdprint __P((void *, const char *));
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
@@ -244,7 +244,7 @@ struct wdc_attach_args {
 int
 wdprint(aux, wdc)
 	void *aux;
-	char *wdc;
+	const char *wdc;
 {
 	struct wdc_attach_args *wa = aux;
 

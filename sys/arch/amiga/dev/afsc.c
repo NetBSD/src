@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.14 1996/04/21 21:10:48 veego Exp $	*/
+/*	$NetBSD: afsc.c,v 1.15 1996/08/27 21:54:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,7 +51,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int afscprint __P((void *auxp, char *));
+int afscprint __P((void *auxp, const char *));
 void afscattach __P((struct device *, struct device *, void *));
 int afscmatch __P((struct device *, void *, void *));
 int afsc_dmaintr __P((void *));
@@ -178,7 +178,7 @@ afscattach(pdp, dp, auxp)
 int
 afscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

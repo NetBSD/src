@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.8 1996/06/18 12:55:03 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.9 1996/08/27 21:59:41 cgd Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -180,7 +180,7 @@ struct scsi_device wds_dev = {
 
 int	wdsprobe __P((struct device *, void *, void *));
 void	wdsattach __P((struct device *, struct device *, void *));
-int	wdsprint __P((void *, char *));
+int	wdsprint __P((void *, const char *));
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach
@@ -254,7 +254,7 @@ wdsprobe(parent, match, aux)
 int
 wdsprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

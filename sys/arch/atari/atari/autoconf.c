@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1996/04/18 08:51:13 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1996/08/27 21:55:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -43,7 +43,7 @@
 static void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, char *));
+int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, void *, void *));
 
 extern int cold;	/* 1 if still booting (locore.s) */
@@ -78,7 +78,7 @@ configure()
 int
 simple_devprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	return(QUIET);
 }

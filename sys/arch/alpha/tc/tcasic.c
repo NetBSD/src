@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.7 1996/07/14 04:06:31 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.8 1996/08/27 21:54:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -49,7 +49,7 @@ struct cfdriver tcasic_cd = {
 	NULL, "tcasic", DV_DULL,
 };
 
-int	tcasicprint __P((void *, char *));
+int	tcasicprint __P((void *, const char *));
 
 extern int cputype;
 
@@ -144,7 +144,7 @@ tcasicattach(parent, self, aux)
 int
 tcasicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	/* only TCs can attach to tcasics; easy. */

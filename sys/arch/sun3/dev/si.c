@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.25 1996/06/17 23:21:29 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.26 1996/08/27 21:57:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -108,7 +108,7 @@ static int si_link_flags = 0 /* | SDEV_DB2 */ ;
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static void	si_minphys __P((struct buf *));
-static int	si_print __P((void *, char *));
+static int	si_print __P((void *, const char *));
 
 static struct scsi_adapter	si_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
@@ -193,7 +193,7 @@ si_attach(sc)
 static int
 si_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

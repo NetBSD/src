@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.8 1996/08/04 11:25:36 is Exp $	*/
+/*	$NetBSD: flsc.c,v 1.9 1996/08/27 21:54:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -57,7 +57,7 @@
 #include <amiga/dev/flscreg.h>
 #include <amiga/dev/flscvar.h>
 
-int  flscprint  __P((void *auxp, char *));
+int  flscprint  __P((void *auxp, const char *));
 void flscattach __P((struct device *, struct device *, void *));
 int  flscmatch  __P((struct device *, void *, void *));
 
@@ -197,7 +197,7 @@ flscattach(pdp, dp, auxp)
 int
 flscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

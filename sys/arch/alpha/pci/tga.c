@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.7 1996/07/09 00:55:03 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.8 1996/08/27 21:54:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,7 +56,7 @@
 
 int	tgamatch __P((struct device *, void *, void *));
 void	tgaattach __P((struct device *, struct device *, void *));
-int	tgaprint __P((void *, char *));
+int	tgaprint __P((void *, const char *));
 
 struct cfattach tga_ca = {
 	sizeof(struct tga_softc), tgamatch, tgaattach,
@@ -310,7 +310,7 @@ tgaattach(parent, self, aux)
 int
 tgaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

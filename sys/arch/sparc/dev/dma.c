@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.31 1996/06/29 20:10:50 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.32 1996/08/27 21:57:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -54,7 +54,7 @@
 #include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
-int dmaprint		__P((void *, char *));
+int dmaprint		__P((void *, const char *));
 void dmaattach		__P((struct device *, struct device *, void *));
 int dmamatch		__P((struct device *, void *, void *));
 void dma_reset		__P((struct dma_softc *));
@@ -85,7 +85,7 @@ struct cfdriver ledma_cd = {
 int
 dmaprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	register struct confargs *ca = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.15 1996/06/03 18:55:14 is Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.16 1996/08/27 21:54:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -69,7 +69,7 @@
 
 int	grfcvmatch  __P((struct device *, void *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
-int	grfcvprint  __P((void *, char *));
+int	grfcvprint  __P((void *, const char *));
 
 static int cv_has_4mb __P((volatile caddr_t));
 static unsigned short cv_compute_clock __P((unsigned long));
@@ -400,7 +400,7 @@ grfcvattach(pdp, dp, auxp)
 int
 grfcvprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

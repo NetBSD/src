@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.39 1996/08/27 01:00:00 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.40 1996/08/27 21:59:46 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1332,7 +1332,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.39 1996/08/27 01:00:00 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.40 1996/08/27 21:59:46 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -3344,12 +3344,12 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 
 #ifdef __NetBSD__
 
-int ncr_print __P((void *, char *));
+int ncr_print __P((void *, const char *));
 
 int
 ncr_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.18 1996/03/26 15:16:14 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.19 1996/08/27 21:57:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,7 +43,7 @@
 
 static int  obio_match __P((struct device *, void *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
-static int  obio_print __P((void *, char *parentname));
+static int  obio_print __P((void *, const char *parentname));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -98,7 +98,7 @@ obio_attach(parent, self, aux)
 static int
 obio_print(args, name)
 	void *args;
-	char *name;
+	const char *name;
 {
 	struct confargs *ca = args;
 
