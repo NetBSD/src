@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_smbfs.8,v 1.9 2003/07/04 20:20:22 jdolecek Exp $
+.\" $NetBSD: mount_smbfs.8,v 1.10 2003/11/09 21:19:31 hubertf Exp $
 .\" from: Id: mount_smbfs.8,v 1.10 2002/04/16 02:47:41 bp Exp
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -152,6 +152,9 @@ as the NetBIOS name of remote computer,
 as the remote user name and
 .Ar share
 as the resource name on a remote server.
+If your connections are refused, try using the
+.Ar -I 
+option and use a server name of "*SMBSERVER".
 .It Ar node
 Path to mount point.
 .El
@@ -177,6 +180,11 @@ and
 .Bd -literal -offset indent
 mount_smbfs -I samba.mydomain.com //guest@samba/public /smb/public
 mount_smbfs -I 192.168.20.3 -E koi8-r:cp866 //guest@samba/tmp /smb/tmp
+.Ed
+.Pp
+If you keep on getting "Connection reset by peer" errors, try:
+.Bd -literal -offset indent
+mount_smbfs -N -I 10.0.0.4 //'*SMBSERVER'/tmp /smb/tmp
 .Ed
 .Pp
 It is possible to use
