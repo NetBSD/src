@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.2 2004/05/21 16:02:40 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.3 2004/05/22 15:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.2 2004/05/21 16:02:40 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.3 2004/05/22 15:44:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,16 +46,19 @@ __RCSID("$NetBSD: res_state.c,v 1.2 2004/05/21 16:02:40 christos Exp $");
 #include <arpa/nameser.h>
 #include <resolv.h>
 
-/* Binary Compatibility */
+#undef _res
+
+/* Binary Compatibility; this symbol does not appear in a header file */
 struct __res_state _res;
 
-#ifdef _REENTRANT
 res_state __res_get_state_nothread(void);
 void __res_put_state_nothread(res_state);
 
 #ifdef __weak_alias
 __weak_alias(__res_get_state, __res_get_state_nothread)
 __weak_alias(__res_put_state, __res_put_state_nothread)
+/* Source compatibility; only for single threaded programs */
+__weak_alias(__res_state, __res_get_state_nothread)
 #endif
 
 res_state
@@ -69,4 +72,3 @@ void
 __res_put_state_nothread(res_state res)
 {
 }
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.1 2004/05/21 03:40:51 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.2 2004/05/22 15:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.1 2004/05/21 03:40:51 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.2 2004/05/22 15:44:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ union _res_st {
 
 static pthread_mutex_t res_mtx = PTHREAD_MUTEX_INITIALIZER;
 
+res_state __res_state(void);
 res_state __res_get_state(void);
 void __res_put_state(res_state);
 
@@ -117,4 +118,18 @@ __res_put_state(res_state res)
 	res_state_debug("free", res);
 	LIST_INSERT_HEAD(&res_list, (union _res_st *)(void *)res, st_list);
 	pthread_mutex_unlock(&res_mtx);
+}
+
+/*
+ * This is aliased via a macro to _res; don't allow multi-threaded programs
+ * to use it.
+ */
+res_state
+__res_state(void)
+{
+	static const char res[] = "_res is not supported for multi-threaded"
+	    " programs.\n";
+	(void)write(STDERR_FILENO, res, sizeof(res) - 1);
+	abort();
+	return NULL;
 }
