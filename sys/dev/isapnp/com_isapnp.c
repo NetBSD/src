@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.2 1997/05/28 16:30:54 jtc Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.3 1997/08/03 08:24:07 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,10 +69,12 @@ com_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	if (strcmp(ipa->ipa_devlogic, "ROK0010") == 0)
-		return 1;
+	if (strcmp(ipa->ipa_devlogic, "ROK0010") &&
+	    strcmp(ipa->ipa_devcompat, "PNP0500") &&
+	    strcmp(ipa->ipa_devcompat, "PNP0501"))
+		return (0);
 
-	return 0;
+	return (1);
 }
 
 void
