@@ -69,12 +69,12 @@ copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
-		cd /sys; \
+		cd ../sys.386bsd; \
 		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
 	mkdir ${DESTDIR}/usr/include/machine
-	cd /sys/${MACHINE}/include; \
+	cd ../sys.386bsd/${MACHINE}/include; \
 	tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -); \
 
 symlinks:
