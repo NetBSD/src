@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.4.2 1999/07/04 01:50:25 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.4.3 1999/07/06 14:52:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -216,7 +216,7 @@ ffs_balloc(v)
 				if (vp->v_type == VREG) {
 					uvm_vnp_zerorange(vp,
 							  lblktosize(fs, lbn) +
-							  osize, nsize);
+							  osize, nsize - osize);
 				}
 			}
 		} else {
