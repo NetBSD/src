@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_var.h,v 1.57 1999/01/24 01:19:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.58 1999/01/24 01:21:18 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
