@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2002/03/24 05:52:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2002/03/24 05:55:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2002/03/24 05:52:10 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2002/03/24 05:55:31 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3453,6 +3453,7 @@ pmap_handled_emulation(pmap, va)
 
 	PDEBUG(2, printf("pmap_handled_emulation\n"));
 
+	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
 	if (pmap_pde_v(pmap_pde(pmap, va)) == 0) {
@@ -3475,8 +3476,11 @@ pmap_handled_emulation(pmap, va)
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
 		goto out;
 
+	simple_lock(&pg->mdpage.pvh_slock);
+
 	/*
 	 * Ok we just enable the pte and mark the attibs as handled
+	 * XXX Should we traverse the PV list and enable all PTEs?
 	 */
 	PDEBUG(0,
 	    printf("pmap_handled_emulation: Got a hit va=%08lx pte = %08x\n",
@@ -3486,11 +3490,14 @@ pmap_handled_emulation(pmap, va)
 	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
+	simple_unlock(&pg->mdpage.pvh_slock);
+
 	cpu_tlb_flushID_SE(va);
 	cpu_cpwait();
 	rv = 1;
  out:
 	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+	PMAP_MAP_TO_HEAD_UNLOCK();
 	return (rv);
 }
 
