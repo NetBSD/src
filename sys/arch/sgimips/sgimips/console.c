@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14 2003/12/15 12:48:37 sekiya Exp $	*/
+/*	$NetBSD: console.c,v 1.15 2003/12/16 10:20:10 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2003/12/15 12:48:37 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.15 2003/12/16 10:20:10 sekiya Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2003/12/15 12:48:37 sekiya Exp $");
 
 #include <sgimips/gio/giovar.h>
 #include <sgimips/hpc/hpcreg.h>
-#include <sgimips/hpc/iocreg.h>
+#include <sgimips/ioc/iocreg.h>
 #include <sgimips/dev/macereg.h>
 
 #include "com.h"
