@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/03/17 00:46:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 1999/04/30 14:41:38 kleink Exp $
 
 LIB=		bfd
 
@@ -111,9 +111,15 @@ SRCS+=			cpu-i386.c i386bsd.c i386freebsd.c i386netbsd.c \
 
 .if (${MACHINE_ARCH} == "m68k" || !defined(BFD_SLIM))
 ARCHES+=		m68k
+.if defined(ELF_PLEASE)
+DEFAULT_VEC.m68k=	bfd_elf32_m68k_vec
+SELECT_VECS+=		${DEFAULT_VEC.m68k} m68knetbsd_vec \
+			m68k4knetbsd_vec sunos_big_vec
+.else
 DEFAULT_VEC.m68k=	m68knetbsd_vec
 SELECT_VECS+=		${DEFAULT_VEC.m68k} m68k4knetbsd_vec \
 			bfd_elf32_m68k_vec sunos_big_vec
+.endif
 SRCS+=			cpu-m68k.c m68knetbsd.c m68k4knetbsd.c sunos.c \
 			elf32-m68k.c m68k-dis.c m68k-opc.c \
 			aout32.c elf32.c elf.c elflink.c dwarf2.c
