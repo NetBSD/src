@@ -1,20 +1,20 @@
-#	$NetBSD: Makefile.inc,v 1.8 1999/03/25 12:24:56 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1999/03/26 02:12:17 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
-BINDIR=	/usr/mdec
-BINMODE=444
+BINDIR?=/usr/mdec
+BINMODE?=444
 
-.BEGIN: machine mips
-depend all ${SRCS} ${OBJS}: machine mips
+.BEGIN: machine
+depend all ${SRCS} ${OBJS}: machine
 CLEANFILES+= machine mips
 
+# Do `mips' link here too - can't just depend on target mips
+# because make finds sys/lib/libkern/mips...
 machine:
-	-rm -f ${.TARGET}
+	-rm -f ${.TARGET} mips
 	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-mips:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mips/include ${.TARGET}
+	ln -s $S/arch/mips/include mips
 
 # Tailor C compilation for standalone environment.
 COPTS=	-Os				# -Os gives smaller code
