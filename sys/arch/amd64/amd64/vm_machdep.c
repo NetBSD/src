@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2004/01/04 11:33:29 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2004/01/12 14:31:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2004/01/04 11:33:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2004/01/12 14:31:46 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -253,6 +253,9 @@ cpu_lwp_free(struct lwp *l, int proc)
 
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+
+	/* Nuke the TSS. */
+	tss_free(l->l_md.md_tss_sel);
 }
 
 /*
@@ -267,18 +270,6 @@ cpu_exit(struct lwp *l)
 {
 
 	switch_exit(l, lwp_exit2);
-}
-
-/*
- * cpu_wait is called from reaper() to let machine-dependent
- * code free machine-dependent resources that couldn't be freed
- * in cpu_exit().
- */
-void
-cpu_wait(struct lwp *l)
-{
-	/* Nuke the TSS. */
-	tss_free(l->l_md.md_tss_sel);
 }
 
 /*
