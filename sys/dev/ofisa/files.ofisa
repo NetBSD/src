@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofisa,v 1.11 2001/11/26 19:17:07 yamt Exp $
+#	$NetBSD: files.ofisa,v 1.11.16.1 2004/08/03 10:49:05 skrll Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
@@ -17,7 +17,10 @@ file	dev/ofisa/com_ofisa.c		com_ofisa
 
 # attachment for MI lpt driver
 attach	lpt at ofisa with lpt_ofisa
-file	dev/ofisa/lpt_ofisa.c		lpt_ofisa
+file	dev/ofisa/lpt_ofisa.c		lpt_ofisa & !ppbus
+
+attach	atppc at ofisa with atppc_ofisa: isadma
+file	dev/ofisa/atppc_ofisa.c		atppc_ofisa
 
 # attachment for MI wdc driver
 attach	wdc at ofisa with wdc_ofisa

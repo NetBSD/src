@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.14 2003/06/03 20:09:37 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.14.2.1 2004/08/03 10:44:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -64,6 +64,18 @@ typedef struct mach_sf_mapping {
 } mach_sf_mapping_t;
 
 struct mach_vm_region_basic_info {
+	mach_vm_prot_t protection;
+	mach_vm_prot_t max_protection;
+	mach_vm_inherit_t inheritance;
+	mach_boolean_t shared;
+	mach_boolean_t reserved;
+	mach_vm_offset_t offset;
+	mach_vm_behavior_t behavior;
+	unsigned short user_wired_count;
+};
+
+/* There is no difference between 32 and 64 bits versions */
+struct mach_vm_region_basic_info_64 {
 	mach_vm_prot_t protection;
 	mach_vm_prot_t max_protection;
 	mach_vm_inherit_t inheritance;
@@ -199,25 +211,28 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_inherit_reply_t;
 
-/* vm_make_memory_entry */
+/*
+ * make_memory_entry_64 
+ */
+
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
 	mach_msg_port_descriptor_t req_parent_entry;
 	mach_ndr_record_t req_ndr;
-	mach_vm_size_t req_size;
-	mach_vm_offset_t req_offset;
+	mach_memory_object_size_t req_size;
+	mach_memory_object_offset_t req_offset;
 	mach_vm_prot_t req_perm;
-} mach_vm_make_memory_entry_request_t;
+} __attribute__((packed)) mach_make_memory_entry_64_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_obj_handle;
 	mach_ndr_record_t rep_ndr;
-	mach_vm_size_t rep_size;
+	mach_memory_object_size_t rep_size;
 	mach_msg_trailer_t rep_trailer;
-} mach_vm_make_memory_entry_reply_t;
+} __attribute__((packed)) mach_make_memory_entry_64_reply_t;
 
 /* vm_region */
 
@@ -233,7 +248,7 @@ typedef struct {
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
-	mach_msg_ool_descriptor_t rep_obj;
+	mach_msg_port_descriptor_t rep_obj;
 	mach_ndr_record_t rep_ndr;
 	mach_msg_type_number_t rep_addr;
 	mach_vm_size_t rep_size;
@@ -241,6 +256,28 @@ typedef struct {
 	int rep_info[9];
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_region_reply_t;
+
+/* vm_region_64 */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_region_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_vm_region_64_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_obj;
+	mach_ndr_record_t rep_ndr;
+	mach_vm_address_t rep_addr;
+	mach_vm_size_t rep_size;
+	mach_msg_type_number_t rep_count;
+	int rep_info[10];
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_region_64_reply_t;
 
 /* vm_msync */
 #define MACH_VM_SYNC_ASYNCHRONOUS 0x01
@@ -279,16 +316,83 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_copy_reply_t;
 
+/* vm_read */
 
-int mach_vm_map(struct mach_trap_args *);
-int mach_vm_allocate(struct mach_trap_args *);
-int mach_vm_deallocate(struct mach_trap_args *);
-int mach_vm_wire(struct mach_trap_args *);
-int mach_vm_protect(struct mach_trap_args *);
-int mach_vm_inherit(struct mach_trap_args *);
-int mach_vm_make_memory_entry(struct mach_trap_args *);
-int mach_vm_region(struct mach_trap_args *);
-int mach_vm_msync(struct mach_trap_args *);
-int mach_vm_copy(struct mach_trap_args *);
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_size_t req_size;
+} mach_vm_read_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_ool_descriptor_t rep_data;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_read_reply_t;
+
+/* vm_write */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_ool_descriptor_t req_data;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_msg_type_number_t req_count;
+} mach_vm_write_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_write_reply_t;
+
+/* vm_machine_attribute */
+
+#define MACH_MATTR_CACHE		1
+#define MACH_MATTR_MIGRATE		2
+#define MACH_MATTR_REPLICATE		4
+
+#define MACH_MATTR_VAL_OFF		0
+#define MACH_MATTR_VAL_ON		1
+#define MACH_MATTR_VAL_GET		2
+#define MACH_MATTR_VAL_CACHE_FLUSH	6
+#define MACH_MATTR_VAL_DCACHE_FLUSH	7
+#define MACH_MATTR_VAL_ICACHE_FLUSH	8
+#define MACH_MATTR_VAL_CACHE_SYNC	9
+#define MACH_MATTR_VAL_GET_INFO		10
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_address_t req_size;
+	mach_vm_machine_attribute_t req_attribute;
+	mach_vm_machine_attribute_val_t req_value;
+} mach_vm_machine_attribute_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_retval;
+	mach_vm_machine_attribute_val_t rep_value;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_machine_attribute_reply_t;
+
+/* Kernel-private structures */
+
+struct mach_memory_entry {
+	struct proc *mme_proc;
+	vaddr_t	mme_offset;
+	size_t mme_size;
+};
+
+/* These are machine dependent functions */
+int mach_vm_machine_attribute_machdep(struct lwp *, vaddr_t, size_t, int *);
 
 #endif /* _MACH_VM_H_ */

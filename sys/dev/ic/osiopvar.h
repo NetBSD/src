@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.3.10.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -116,7 +112,7 @@ struct osiop_ds {
 	u_int8_t stat[8];
 } __attribute__((__packed__));
 
-/* status can hold the SCSI_* status values, and 2 additionnal values: */
+/* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_OSIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_OSIOP_NOSTATUS	0xff	/* device didn't report status */
 
@@ -245,8 +241,8 @@ struct osiop_softc {
 /* negotiation states */
 #define NEG_INIT	0	/* Initial negotiate state */
 #define NEG_SYNC	NEG_INIT /* Negotiate synch transfers */
-#define NEG_WAITS	1	/* Waiting for synch negoation response */
-#define NEG_DONE	2	/* Wide and/or sync negotation done */
+#define NEG_WAITS	1	/* Waiting for synch negotiation response */
+#define NEG_DONE	2	/* Wide and/or sync negotiation done */
 
 void osiop_attach(struct osiop_softc *);
 void osiop_intr(struct osiop_softc *);

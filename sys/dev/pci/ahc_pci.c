@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.41 2003/06/04 11:55:05 pk Exp $
+ * $Id: ahc_pci.c,v 1.41.2.1 2004/08/03 10:49:06 skrll Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -48,6 +48,9 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.41.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +145,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 
 #define ID_AIC7892			0x008F9005FFFF9005ull
 #define ID_AIC7892_ARO			0x00839005FFFF9005ull
+#define ID_AHA_2915LP			0x0082900502109005ull
 #define ID_AHA_29160			0x00809005E2A09005ull
 #define ID_AHA_29160_CPQ		0x00809005E2A00E11ull
 #define ID_AHA_29160N			0x0080900562A09005ull
@@ -485,6 +489,12 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		"Adaptec aic7892 Ultra160 SCSI adapter (ARO)",
 		ahc_aic7892_setup
 	},
+	{
+		ID_AHA_2915LP,
+		ID_ALL_MASK,
+		"Adaptec 2915LP Ultra160 SCSI adapter",
+		ahc_aic7892_setup
+	},
 	/* aic7895 based controllers */	
 	{
 		ID_AHA_2940U_DUAL,
@@ -763,10 +773,11 @@ ahc_pci_attach(parent, self, aux)
 	uint32_t	   devconfig;
 	int		   error;
 	pcireg_t	   subid;
-	int		   ioh_valid, memh_valid;
+	int		   ioh_valid;
 	bus_space_tag_t    st, iot;
 	bus_space_handle_t sh, ioh;
 #ifdef AHC_ALLOW_MEMIO
+	int		   memh_valid;
 	bus_space_tag_t    memt;
 	bus_space_handle_t memh;
 	pcireg_t memtype;
@@ -783,6 +794,7 @@ ahc_pci_attach(parent, self, aux)
 	entry = ahc_find_pci_device(pa->pa_id, subid, pa->pa_function);
 	if (entry == NULL)
 		return;
+	printf(": %s\n", entry->name);
 
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
@@ -806,9 +818,10 @@ ahc_pci_attach(parent, self, aux)
 	if (error != 0)
 		return;
 
-	ioh_valid = memh_valid = 0;
+	ioh_valid = 0;
 
 #ifdef AHC_ALLOW_MEMIO
+	memh_valid = 0;
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHC_PCI_MEMADDR);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
@@ -951,7 +964,6 @@ ahc_pci_attach(parent, self, aux)
 		ahc_free(ahc);
 		return;
 	}
-	printf("\n");
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", ahc_name(ahc), intrstr);
 

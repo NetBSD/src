@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              xRevision: 139 $
+ *              xRevision: 143 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.6 2003/03/04 17:25:24 kochi Exp $");
 
 /*
  * Parse the AML and build an operation tree as most interpreters,
@@ -125,6 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.6 2003/03/04 17:25:24 kochi Exp $");
  * fairly compact by parsing based on a list of AML opcode
  * templates in AmlOpInfo[]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -536,7 +537,6 @@ AcpiPsParseLoop (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     ParserState = &WalkState->ParserState;
     WalkState->ArgTypes = 0;
 
@@ -606,8 +606,8 @@ AcpiPsParseLoop (
         {
             /* Get the next opcode from the AML stream */
 
-            WalkState->AmlOffset = ACPI_PTR_DIFF (ParserState->Aml,
-                                                  ParserState->AmlStart);
+            WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (ParserState->Aml,
+                                                           ParserState->AmlStart);
             WalkState->Opcode    = AcpiPsPeekOpcode (ParserState);
 
             /*
@@ -832,16 +832,15 @@ AcpiPsParseLoop (
                 WalkState->ArgTypes = 0;
                 break;
 
-
             default:
 
-                /* Op is not a constant or string, append each argument */
+                /* Op is not a constant or string, append each argument to the Op */
 
                 while (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) &&
                         !WalkState->ArgCount)
                 {
-                    WalkState->AmlOffset = ACPI_PTR_DIFF (ParserState->Aml,
-                                                          ParserState->AmlStart);
+                    WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (ParserState->Aml,
+                                                                   ParserState->AmlStart);
                     Status = AcpiPsGetNextArg (WalkState, ParserState,
                                 GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
                     if (ACPI_FAILURE (Status))
@@ -857,24 +856,24 @@ AcpiPsParseLoop (
                     INCREMENT_ARG_LIST (WalkState->ArgTypes);
                 }
 
+                /* Special processing for certain opcodes */
+
                 switch (Op->Common.AmlOpcode)
                 {
                 case AML_METHOD_OP:
 
-                    /* For a method, save the length and address of the body */
-
                     /*
-                     * Skip parsing of control method or opregion body,
+                     * Skip parsing of control method
                      * because we don't have enough info in the first pass
-                     * to parse them correctly.
+                     * to parse it correctly.
+                     *
+                     * Save the length and address of the body
                      */
                     Op->Named.Data   = ParserState->Aml;
                     Op->Named.Length = (UINT32) (ParserState->PkgEnd - ParserState->Aml);
-                    /*
-                     * Skip body of method.  For OpRegions, we must continue
-                     * parsing because the opregion is not a standalone
-                     * package (We don't know where the end is).
-                     */
+
+                    /* Skip body of method */
+
                     ParserState->Aml    = ParserState->PkgEnd;
                     WalkState->ArgCount = 0;
                     break;
@@ -888,15 +887,15 @@ AcpiPsParseLoop (
                         (WalkState->DescendingCallback != AcpiDsExecBeginOp))
                     {
                         /*
-                         * Skip parsing of
+                         * Skip parsing of Buffers and Packages
                          * because we don't have enough info in the first pass
                          * to parse them correctly.
                          */
                         Op->Named.Data   = AmlOpStart;
                         Op->Named.Length = (UINT32) (ParserState->PkgEnd - AmlOpStart);
-                        /*
-                         * Skip body
-                         */
+
+                        /* Skip body */
+
                         ParserState->Aml    = ParserState->PkgEnd;
                         WalkState->ArgCount = 0;
                     }
@@ -911,6 +910,7 @@ AcpiPsParseLoop (
                     break;
 
                 default:
+
                     /* No action for all other opcodes */
                     break;
                 }
@@ -1214,6 +1214,10 @@ AcpiPsParseAml (
     ACPI_THREAD_STATE       *Thread;
     ACPI_THREAD_STATE       *PrevWalkList = AcpiGbl_CurrentWalkList;
     ACPI_WALK_STATE         *PreviousWalkState;
+#ifndef ACPICA_PEDANTIC
+    ACPI_OPERAND_OBJECT     **CallerReturnDesc = WalkState->CallerReturnDesc;
+    ACPI_OPERAND_OBJECT     *EffectiveReturnDesc = NULL;
+#endif
 
 
     ACPI_FUNCTION_TRACE ("PsParseAml");
@@ -1290,6 +1294,17 @@ AcpiPsParseAml (
 
         WalkState = AcpiDsPopWalkState (Thread);
 
+#ifndef ACPICA_PEDANTIC
+        /* Save the last effective return value */
+
+        if (CallerReturnDesc && WalkState->ReturnDesc)
+        {
+            AcpiUtRemoveReference (EffectiveReturnDesc);
+            EffectiveReturnDesc = WalkState->ReturnDesc;
+            AcpiUtAddReference (EffectiveReturnDesc);
+        }
+#endif
+
         /* Reset the current scope to the beginning of scope stack */
 
         AcpiDsScopeStackClear (WalkState);
@@ -1352,6 +1367,19 @@ AcpiPsParseAml (
          */
         else if (PreviousWalkState->CallerReturnDesc)
         {
+#ifndef ACPICA_PEDANTIC
+            /*
+             * Some AML code expects a return value without a ReturnOp.
+             * Return the saved effective return value instead.
+             */
+
+            if (PreviousWalkState->ReturnDesc == NULL && EffectiveReturnDesc != NULL)
+            {
+                PreviousWalkState->ReturnDesc = EffectiveReturnDesc;
+                AcpiUtAddReference (PreviousWalkState->ReturnDesc);
+            }
+#endif
+
             *(PreviousWalkState->CallerReturnDesc) = PreviousWalkState->ReturnDesc; /* NULL if no return value */
         }
         else if (PreviousWalkState->ReturnDesc)
@@ -1366,6 +1394,9 @@ AcpiPsParseAml (
 
     /* Normal exit */
 
+#ifndef ACPICA_PEDANTIC
+    AcpiUtRemoveReference (EffectiveReturnDesc);
+#endif
     AcpiExReleaseAllMutexes (Thread);
     AcpiUtDeleteGenericState (ACPI_CAST_PTR (ACPI_GENERIC_STATE, Thread));
     AcpiGbl_CurrentWalkList = PrevWalkList;

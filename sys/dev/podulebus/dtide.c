@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.8 2002/10/02 16:52:23 thorpej Exp $ */
+/* $NetBSD: dtide.c,v 1.8.6.1 2004/08/03 10:50:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8 2002/10/02 16:52:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.1 2004/08/03 10:50:27 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -45,14 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8 2002/10/02 16:52:23 thorpej Exp $");
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/dtidereg.h>
 
+#include <dev/ic/wdcreg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 struct dtide_softc {
 	struct wdc_softc sc_wdc;
-	struct channel_softc *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
-	struct channel_softc sc_chan[DTIDE_NCHANNELS];
-	struct channel_queue sc_chq[DTIDE_NCHANNELS];
+	struct wdc_channel *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
+	struct wdc_channel sc_chan[DTIDE_NCHANNELS];
+	struct ata_queue sc_chq[DTIDE_NCHANNELS];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
 };
@@ -79,7 +80,8 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct dtide_softc *sc = (void *)self;
-	int i;
+	struct wdc_channel *ch;
+	int i, j;
 	bus_space_tag_t bst;
 
 	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_NOIRQ;
@@ -94,18 +96,23 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	podulebus_shift_tag(pa->pa_fast_t, DTIDE_REGSHIFT, &bst);
 	printf("\n");
 	for (i = 0; i < DTIDE_NCHANNELS; i++) {
-		sc->sc_chp[i] = &sc->sc_chan[i];
-		sc->sc_chan[i].channel = i;
-		sc->sc_chan[i].wdc = &sc->sc_wdc;
-		sc->sc_chan[i].cmd_iot = bst;
-		sc->sc_chan[i].ctl_iot = bst;
-		sc->sc_chan[i].ch_queue = &sc->sc_chq[i];
+		ch = sc->sc_chp[i] = &sc->sc_chan[i];
+		ch->ch_channel = i;
+		ch->ch_wdc = &sc->sc_wdc;
+		ch->cmd_iot = bst;
+		ch->ctl_iot = bst;
+		ch->ch_queue = &sc->sc_chq[i];
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_cmdoffsets[i], 0, 8,
-		    &sc->sc_chan[i].cmd_ioh);
+		    &ch->cmd_baseioh);
+		for (j = 0; j < WDC_NREG; j++)
+			bus_space_subregion(ch->cmd_iot, ch->cmd_baseioh,
+			    j, j == 0 ? 4 : 1, &ch->cmd_iohs[j]);
+		wdc_init_shadow_regs(ch);
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_ctloffsets[i], 0, 8,
-		    &sc->sc_chan[i].ctl_ioh);
-		wdcattach(&sc->sc_chan[i]);
+		    &ch->ctl_ioh);
+		wdcattach(ch);
 	}
+
 }

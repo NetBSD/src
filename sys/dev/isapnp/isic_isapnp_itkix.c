@@ -1,11 +1,11 @@
-/* $NetBSD: isic_isapnp_itkix.c,v 1.4 2002/06/22 22:14:09 jdolecek Exp $ */
+/* $NetBSD: isic_isapnp_itkix.c,v 1.4.6.1 2004/08/03 10:48:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.4 2002/06/22 22:14:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.4.6.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include "opt_isicpnp.h"
 

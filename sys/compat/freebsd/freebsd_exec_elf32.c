@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.11.2.1 2003/07/02 15:25:42 darrenr Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.11.2.2 2004/08/03 10:43:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.11.2.1 2003/07/02 15:25:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.11.2.2 2004/08/03 10:43:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,12 +115,11 @@ ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
 		free(ph, M_TEMP);
 	}
 
-	if (itp[0]) {
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+	if (itp) {
+		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
+		    itp)))
 			return error;
 	}
-	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_FREEBSD_ELF
 	printf("freebsd_elf32_probe: returning 0\n");
 #endif

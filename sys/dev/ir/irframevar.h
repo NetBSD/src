@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.12.2.1 2003/07/02 15:26:08 darrenr Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.12.2.2 2004/08/03 10:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 struct irframe_methods {
-	int (*im_open)(void *h, int flag, int mode, struct lwp *l);
-	int (*im_close)(void *h, int flag, int mode, struct lwp *l);
-	int (*im_read)(void *h, struct uio *uio, int flag);
-	int (*im_write)(void *h, struct uio *uio, int flag);
-	int (*im_poll)(void *h, int events, struct lwp *l);
-	int (*im_kqfilter)(void *h, struct knote *kn);
-	int (*im_set_params)(void *h, struct irda_params *params);
-	int (*im_get_speeds)(void *h, int *speeds);
-	int (*im_get_turnarounds)(void *h, int *times);
+	int (*im_open)(void *, int, int, struct lwp *);
+	int (*im_close)(void *, int, int, struct lwp *);
+	int (*im_read)(void *, struct uio *, int);
+	int (*im_write)(void *, struct uio *, int);
+	int (*im_poll)(void *, int, struct lwp *);
+	int (*im_kqfilter)(void *, struct knote *);
+	int (*im_set_params)(void *, struct irda_params *);
+	int (*im_get_speeds)(void *, int *);
+	int (*im_get_turnarounds)(void *, int *);
 };
 
 struct irframe_softc {

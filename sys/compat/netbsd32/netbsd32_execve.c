@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.17.2.1 2003/07/02 15:25:50 darrenr Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.17.2.2 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.17.2.1 2003/07/02 15:25:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.17.2.2 2004/08/03 10:44:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -462,6 +462,12 @@ netbsd32_execve2(l, uap, retval)
 	/* update p_emul, the old value is no longer needed */
 	p->p_emul = pack.ep_es->es_emul;
 
+	/* ...and the same for p_execsw */
+	p->p_execsw = pack.ep_es;
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
 		ktremul(p);

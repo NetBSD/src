@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.26.2.1 2003/07/02 15:26:08 darrenr Exp $	*/
+/*	$NetBSD: irframe.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $");
 
 #include "irframe.h"
 
@@ -155,7 +158,6 @@ irframe_activate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.21 2003/02/01 06:23:35 thorpej Exp $	*/
+/*	$NetBSD: vs.c,v 1.21.2.1 2004/08/03 10:42:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Tetsuya Isaki.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -34,6 +31,9 @@
  * VS - OKI MSM6258 ADPCM voice synthesizer device driver.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.21.2.1 2004/08/03 10:42:48 skrll Exp $");
+
 #include "audio.h"
 #include "vs.h"
 #if NAUDIO > 0 && NVS > 0
@@ -52,7 +52,7 @@
 
 #include <arch/x68k/dev/dmacvar.h>
 #include <arch/x68k/dev/intiovar.h>
-#include <arch/x68k/dev/opmreg.h>
+#include <arch/x68k/dev/opmvar.h>
 
 #include <arch/x68k/dev/vsvar.h>
 

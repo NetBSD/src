@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.16 2001/03/10 20:04:30 jdolecek Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.16.22.1 2004/08/03 10:46:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  *
  * The front-end is required to manage the SCP and ISCP structures. i.e.
  * allocate room for them on the board's memory, and arrange to point the
- * chip at the SCB stucture, the offset of which is passed to the MI
+ * chip at the SCB structure, the offset of which is passed to the MI
  * driver in `sc_scb'.
  *
  * The following functions provide the glue necessary to deal with
@@ -193,18 +193,15 @@ struct ie_softc {
 	void	(*hwreset) __P((struct ie_softc *, int));
 	void	(*hwinit) __P((struct ie_softc *));
 	void	(*chan_attn) __P((struct ie_softc *, int));
-	int	(*intrhook) __P((struct ie_softc *, int where));
+	int	(*intrhook) __P((struct ie_softc *, int));
 
 	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
 	void	(*memcopyout) __P((struct ie_softc *, const void *,
 				   int, size_t));
-	u_int16_t (*ie_bus_read16) __P((struct ie_softc *, int offset));
-	void	(*ie_bus_write16) __P((struct ie_softc *, int offset,
-					u_int16_t value));
-	void	(*ie_bus_write24) __P((struct ie_softc *, int offset,
-					int addr));
-	void	(*ie_bus_barrier) __P((struct ie_softc *, int offset, 
-					int length, int flags));
+	u_int16_t (*ie_bus_read16) __P((struct ie_softc *, int));
+	void	(*ie_bus_write16) __P((struct ie_softc *, int, u_int16_t));
+	void	(*ie_bus_write24) __P((struct ie_softc *, int, int));
+	void	(*ie_bus_barrier) __P((struct ie_softc *, int, int, int));
 
 	/* Media management */
         int  (*sc_mediachange) __P((struct ie_softc *));

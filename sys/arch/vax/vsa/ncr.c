@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.39 2002/10/02 16:02:37 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.39.6.1 2004/08/03 10:42:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
  * This code is based on arch/sun3/dev/si*
  * Written by David Jones, Gordon Ross, and Adam Glass.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.39.6.1 2004/08/03 10:42:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

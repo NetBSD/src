@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2002/02/24 01:04:26 matt Exp $ */
+/*	$NetBSD: start.S,v 1.1.20.1 2004/08/03 10:42:22 skrll Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,7 +47,7 @@ _C_LABEL(_start):
 _C_LABEL(start):
 	.globl _C_LABEL(start)	# this is the symbolic name for the start
 	.globl _C_LABEL(_start) # of code to be relocated. We can use this
-				# to get the actual/real adress (pc-rel)
+				# to get the actual/real address (pc-rel)
 				# or to get the relocated address (abs).
 
 .org	0x00			# uVAX booted from TK50 starts here

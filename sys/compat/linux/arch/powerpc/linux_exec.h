@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.14 2003/03/01 04:36:39 thorpej Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.14.2.1 2004/08/03 10:44:03 skrll Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,14 +76,6 @@
  */
 #define LINUX_SHIFT 0x0000000FUL
 
-/* 
- * LINUX_SP_WRAP enable the stack pointer wrap before Linux's ld.so 
- * transfers control to the Linux executable. It is set to the size
- * of the stack pointer wrap code, which is defined in 
- * sys/compat/linux/arch/powerpc/linux_sp_wrap.S
- */
-#define LINUX_SP_WRAP 0x30		/* Size of the stack pointer wrap code */
-
 /*
  * Entries in the ELF auxiliary table. This is counted from
  * sys/compat/linux/arc/powerpc/linux_exec_powerpc.c
@@ -93,14 +85,15 @@
 /*
  * Size of the auxiliary ELF table. On the PowerPC we need 16 extra bytes
  * in order to force an alignement on a 16 bytes boundary (this is expected
- * by PowerPC GNU ld.so). If we use LINUX_SP_WRAP, we also need some extra
- * room for the sp_wrap_code.
+ * by PowerPC GNU ld.so).
  */
 #define LINUX_ELF_AUX_ARGSIZ \
     ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))) \
-    + 16 + LINUX_SP_WRAP)
+    + 16)
 
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
+
+#define linux_exec_setup_stack	exec_setup_stack
 
 #endif /* !_POWERPC_LINUX_EXEC_H */

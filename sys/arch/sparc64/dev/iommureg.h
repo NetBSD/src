@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.9 2003/01/06 20:30:34 wiz Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.9.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -122,7 +118,7 @@ struct iommu_strbuf {
  * Unfortunately, sabres on UltraSPARC IIi and IIe processors does not use
  * this scheme to determine the IOVA base address.  Instead, bits 31-29 are
  * used to check against the Target Address Space register in the IIi and
- * the the IOMMU is used if they hit.  God knows what goes on in the IIe.
+ * the IOMMU is used if they hit.  God knows what goes on in the IIe.
  *
  */
 
@@ -140,6 +136,7 @@ struct iommu_strbuf {
 
 #define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
 #define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
+#define INTMAP_TID_SHIFT 26
 #define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
 #define INTMAP_INO	0x00000003fLL	/* Interrupt number */
 #define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwtimer.c - ACPI Power Management Timer Interface
- *              xRevision: 24 $
+ *              xRevision: 26 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.6 2003/03/04 17:25:21 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.6.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #include "acpi.h"
 
@@ -188,7 +188,7 @@ AcpiGetTimer (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    Status = AcpiHwLowLevelRead (32, Ticks, &AcpiGbl_FADT->XPmTmrBlk, 0);
+    Status = AcpiHwLowLevelRead (32, Ticks, &AcpiGbl_FADT->XPmTmrBlk);
 
     return_ACPI_STATUS (Status);
 }

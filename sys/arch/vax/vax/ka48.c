@@ -33,6 +33,9 @@
 
 /*** needs to be completed MK-990306 ***/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.12.24.1 2004/08/03 10:42:36 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -118,7 +121,7 @@ ka48_cache_enable()
 	mtpr(4, PR_CADR);		/* enable cache */
 	*par_ctl |= (KA48_PARCTL_AGS |	/* AGS? */
 	    KA48_PARCTL_NPEN |		/* N? Parity Enable */
-	    KA48_PARCTL_CPEN);		/* Cpu parity enable */
+	    KA48_PARCTL_CPEN);		/* CPU parity enable */
 }
 
 void

@@ -1,10 +1,13 @@
-/*	$NetBSD: palette.c,v 1.3 2003/05/17 10:38:55 isaki Exp $	*/
+/*	$NetBSD: palette.c,v 1.3.2.1 2004/08/03 10:42:57 skrll Exp $	*/
 /*
  * pelette - manipulate text colormap for NetBSD/x68k.
  * author: Masaru Oki
  *
  * This software is in the Public Domain.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: palette.c,v 1.3.2.1 2004/08/03 10:42:57 skrll Exp $");
 
 #include <stdio.h>
 #include <sys/param.h>

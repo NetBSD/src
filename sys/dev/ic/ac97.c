@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.43.2.1 2004/08/03 10:46:06 skrll Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.1 2004/08/03 10:46:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,45 +77,64 @@ __KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $");
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
+struct ac97_softc;
+struct ac97_source_info;
+int ac97_mixer_get_port(struct ac97_codec_if *, mixer_ctrl_t *);
+int ac97_mixer_set_port(struct ac97_codec_if *, mixer_ctrl_t *);
+int ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
+int ac97_get_portnum_by_name(struct ac97_codec_if *, const char *,
+			     const char *, const char *);
+void ac97_restore_shadow(struct ac97_codec_if *);
+int ac97_set_rate(struct ac97_codec_if *, int, u_long *);
+void ac97_set_clock(struct ac97_codec_if *, unsigned int);
+u_int16_t ac97_get_extcaps(struct ac97_codec_if *);
+int ac97_add_port(struct ac97_softc *, const struct ac97_source_info *);
+int ac97_str_equal(const char *, const char *);
+int ac97_check_capability(struct ac97_softc *, int);
+void ac97_setup_source_info(struct ac97_softc *);
+void ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
+void ac97_setup_defaults(struct ac97_softc *);
+int ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
+
+static void ac97_ad198x_init(struct ac97_softc *);
+static void ac97_alc650_init(struct ac97_softc *);
+static void ac97_vt1616_init(struct ac97_softc *);
+
 #define Ac97Ntone	"tone"
 #define Ac97Nphone	"phone"
 
-static const struct audio_mixer_enum ac97_on_off = { 2,
-					       { { { AudioNoff } , 0 },
-						 { { AudioNon }  , 1 } }};
+static const struct audio_mixer_enum
+ac97_on_off = { 2, { { { AudioNoff } , 0 },
+		     { { AudioNon }  , 1 } } };
 
-static const struct audio_mixer_enum ac97_mic_select = { 2,
-					       { { { AudioNmicrophone "0" },
-						   0 },
-						 { { AudioNmicrophone "1" },
-						   1 } }};
+static const struct audio_mixer_enum
+ac97_mic_select = { 2, { { { AudioNmicrophone "0" }, 0 },
+			 { { AudioNmicrophone "1" }, 1 } } };
 
-static const struct audio_mixer_enum ac97_mono_select = { 2,
-					       { { { AudioNmixerout },
-						   0 },
-						 { { AudioNmicrophone },
-						   1 } }};
+static const struct audio_mixer_enum
+ac97_mono_select = { 2, { { { AudioNmixerout }, 0 },
+			  { { AudioNmicrophone }, 1 } } };
 
-static const struct audio_mixer_enum ac97_source = { 8,
-					       { { { AudioNmicrophone } , 0 },
-						 { { AudioNcd }, 1 },
-						 { { AudioNvideo }, 2 },
-						 { { AudioNaux }, 3 },
-						 { { AudioNline }, 4 },
-						 { { AudioNmixerout }, 5 },
-						 { { AudioNmixerout AudioNmono }, 6 },
-						 { { Ac97Nphone }, 7 }}};
+static const struct audio_mixer_enum
+ac97_source = { 8, { { { AudioNmicrophone } , 0 },
+		     { { AudioNcd }, 1 },
+		     { { AudioNvideo }, 2 },
+		     { { AudioNaux }, 3 },
+		     { { AudioNline }, 4 },
+		     { { AudioNmixerout }, 5 },
+		     { { AudioNmixerout AudioNmono }, 6 },
+		     { { Ac97Nphone }, 7 } } };
 
 /*
  * Due to different values for each source that uses these structures,
  * the ac97_query_devinfo function sets delta in mixer_devinfo_t using
  * ac97_source_info.bits.
  */
-static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume },
-						       2 };
+static const struct audio_mixer_value
+ac97_volume_stereo = { { AudioNvolume }, 2 };
 
-static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume },
-						     1 };
+static const struct audio_mixer_value
+ac97_volume_mono = { { AudioNvolume }, 1 };
 
 #define WRAP(a)  &a, sizeof(a)
 
@@ -313,21 +332,6 @@ struct ac97_softc {
 	u_int16_t shadow_reg[128];
 };
 
-int ac97_mixer_get_port __P((struct ac97_codec_if *self, mixer_ctrl_t *cp));
-int ac97_mixer_set_port __P((struct ac97_codec_if *self, mixer_ctrl_t *));
-int ac97_query_devinfo __P((struct ac97_codec_if *self, mixer_devinfo_t *));
-int ac97_get_portnum_by_name __P((struct ac97_codec_if *, const char *,
-				  const char *, const char *));
-void ac97_restore_shadow __P((struct ac97_codec_if *self));
-int ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate);
-void ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
-u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
-int ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src);
-
-static void ac97_ad1981_init(struct ac97_softc *);
-static void ac97_alc650_init(struct ac97_softc *);
-static void ac97_vt1616_init(struct ac97_softc *);
-
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
 	ac97_mixer_set_port,
@@ -350,8 +354,10 @@ static const struct ac97_codecid {
 	 * http://www.soundmax.com/products/information/codecs.html
 	 * http://www.analog.com/productSelection/pdf/AD1881A_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1885_0.pdf
+	 * http://www.analog.com/UploadedFiles/Data_Sheets/206585810AD1980_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981A_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981B_0.pdf
+	 * http://www.analog.com/UploadedFiles/Data_Sheets/180644528AD1985_0.pdf
 	 */
 	{ AC97_CODEC_ID('A', 'D', 'S', 3),
 	  0xffffffff,			"Analog Devices AD1819B" },
@@ -366,11 +372,13 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
-	  0xffffffff,			"Analog Devices AD1981", ac97_ad1981_init },
+	  0xffffffff,			"Analog Devices AD1980", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
 	  0xffffffff,			"Analog Devices AD1981B" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x75),
+	  0xffffffff,			"Analog Devices AD1985", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Analog Devices unknown" },
 
@@ -570,7 +578,9 @@ static const struct ac97_codecid {
 	  AC97_VENDOR_ID_MASK,		"Yamaha unknown",	},
 
 	/*
-	 * http://www.sigmatel.com/audio/audio_codecs.htm
+	 * http://www.sigmatel.com/products/technical_docs.htm
+	 * and
+	 * http://www.sigmatel.com/documents/c-major-brochure-9-0.pdf
 	 */
 	{ 0x83847600, 0xffffffff,	"SigmaTel STAC9700",	},
 	{ 0x83847604, 0xffffffff,	"SigmaTel STAC9701/3/4/5", },
@@ -580,6 +590,7 @@ static const struct ac97_codecid {
 	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
 	{ 0x83847650, 0xffffffff,	"SigmaTel STAC9750/51",	},
 	{ 0x83847656, 0xffffffff,	"SigmaTel STAC9756/57",	},
+	{ 0x83847658, 0xffffffff,	"SigmaTel STAC9758/59",	},
 	{ 0x83847666, 0xffffffff,	"SigmaTel STAC9766/67",	},
 	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
 	{ 0x83847600, AC97_VENDOR_ID_MASK, "SigmaTel unknown",	},
@@ -637,13 +648,6 @@ static const char * const ac97feature[] = {
 };
 
 
-int ac97_str_equal __P((const char *, const char *));
-int ac97_check_capability(struct ac97_softc *, int);
-void ac97_setup_source_info __P((struct ac97_softc *));
-void ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
-void ac97_setup_defaults __P((struct ac97_softc *));
-int ac97_write __P((struct ac97_softc *, u_int8_t, u_int16_t));
-
 /* #define AC97_DEBUG 10 */
 
 #ifdef AUDIO_DEBUG
@@ -660,12 +664,8 @@ int	ac97debug = 0;
 #endif
 
 void
-ac97_read(as, reg, val)
-	struct ac97_softc *as;
-	u_int8_t reg;
-	u_int16_t *val;
+ac97_read(struct ac97_softc *as, u_int8_t reg, u_int16_t *val)
 {
-
 	if (as->host_flags & AC97_HOST_DONT_READ &&
 	    (reg != AC97_REG_VENDOR_ID1 && reg != AC97_REG_VENDOR_ID2 &&
 	     reg != AC97_REG_RESET)) {
@@ -679,20 +679,14 @@ ac97_read(as, reg, val)
 }
 
 int
-ac97_write(as, reg, val)
-	struct ac97_softc *as;
-	u_int8_t reg;
-	u_int16_t val;
+ac97_write(struct ac97_softc *as, u_int8_t reg, u_int16_t val)
 {
-
 	as->shadow_reg[reg >> 1] = val;
-
-	return (as->host_if->write(as->host_if->arg, reg, val));
+	return as->host_if->write(as->host_if->arg, reg, val);
 }
 
 void
-ac97_setup_defaults(as)
-	struct ac97_softc *as;
+ac97_setup_defaults(struct ac97_softc *as)
 {
 	int idx;
 	const struct ac97_source_info *si;
@@ -706,13 +700,13 @@ ac97_setup_defaults(as)
 }
 
 void
-ac97_restore_shadow(self)
-	struct ac97_codec_if *self;
+ac97_restore_shadow(struct ac97_codec_if *self)
 {
-	struct ac97_softc *as = (struct ac97_softc *) self;
-	int idx;
+	struct ac97_softc *as;
 	const struct ac97_source_info *si;
+	int idx;
 
+	as = (struct ac97_softc *) self;
 	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
 		ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
@@ -728,10 +722,9 @@ ac97_restore_shadow(self)
 }
 
 int
-ac97_str_equal(a, b)
-	const char *a, *b;
+ac97_str_equal(const char *a, const char *b)
 {
-	return ((a == b) || (a && b && (!strcmp(a, b))));
+	return (a == b) || (a && b && (!strcmp(a, b)));
 }
 
 int
@@ -763,8 +756,7 @@ ac97_check_capability(struct ac97_softc *as, int check)
 }
 
 void
-ac97_setup_source_info(as)
-	struct ac97_softc *as;
+ac97_setup_source_info(struct ac97_softc *as)
 {
 	int idx, ouridx;
 	struct ac97_source_info *si, *si2;
@@ -861,31 +853,32 @@ ac97_setup_source_info(as)
 }
 
 int
-ac97_attach(host_if)
-	struct ac97_host_if *host_if;
+ac97_attach(struct ac97_host_if *host_if)
 {
 	struct ac97_softc *as;
-	struct device *sc_dev = (struct device *)host_if->arg;
+	struct device *sc_dev;
 	int error, i, j;
 	u_int32_t id;
 	u_int16_t id1, id2;
 	u_int16_t extstat, rate;
 	mixer_ctrl_t ctl;
-	const char *delim;
 	void (*initfunc)(struct ac97_softc *);
+#define FLAGBUFLEN	140
+	char flagbuf[FLAGBUFLEN];
 
+	sc_dev = (struct device *)host_if->arg;
 	initfunc = NULL;
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (as == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;
 
 	if ((error = host_if->attach(host_if->arg, &as->codec_if))) {
 		free(as, M_DEVBUF);
-		return (error);
+		return error;
 	}
 
 	host_if->reset(host_if->arg);
@@ -897,13 +890,13 @@ ac97_attach(host_if)
 		as->host_flags = host_if->flags(host_if->arg);
 
 	ac97_setup_defaults(as);
+	ac97_read(as, AC97_REG_RESET, &as->caps);
 	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
-	ac97_read(as, AC97_REG_RESET, &as->caps);
 
 	id = (id1 << 16) | id2;
 
-	aprint_normal("%s: ", sc_dev->dv_xname);
+	aprint_normal("%s: ac97: ", sc_dev->dv_xname);
 
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
@@ -931,7 +924,7 @@ ac97_attach(host_if)
 	aprint_normal(" codec; ");
 	for (i = j = 0; i < 10; i++) {
 		if (as->caps & (1 << i)) {
-			aprint_normal("%s%s", j? ", " : "", ac97feature[i]);
+			aprint_normal("%s%s", j ? ", " : "", ac97feature[i]);
 			j++;
 		}
 	}
@@ -940,49 +933,49 @@ ac97_attach(host_if)
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
 	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
-	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
-			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
-			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
-			  | AC97_EXT_AUDIO_LDAC)) {
-		aprint_normal("%s:", sc_dev->dv_xname);
-		delim = "";
+	if (as->ext_id != 0) {
+		/* Print capabilities */
+		bitmask_snprintf(as->ext_id, "\20\20SECONDARY10\17SECONDARY01"
+				 "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
+				 "\7CDAC\4VRM\3SPDIF\2DRA\1VRA",
+				 flagbuf, FLAGBUFLEN);
+		aprint_normal("%s: ac97: ext id %s\n", sc_dev->dv_xname, flagbuf);
 
+		/* Print unusual settings */
+		if (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+			aprint_normal("%s: ac97: Slot assignment: ",
+				      sc_dev->dv_xname);
+			switch (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+			case AC97_EXT_AUDIO_DSA01:
+				aprint_normal("7&8, 6&9, 10&11.\n");
+				break;
+			case AC97_EXT_AUDIO_DSA10:
+				aprint_normal("6&9, 10&11, 3&4.\n");
+				break;
+			case AC97_EXT_AUDIO_DSA11:
+				aprint_normal("10&11, 3&4, 7&8.\n");
+				break;
+			}
+		}
+
+		/* Enable and disable features */
 		ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
-		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
-			aprint_normal("%s variable rate audio", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_VRA;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
-			aprint_normal("%s double rate output", delim);
-			delim = ",";
-		}
 		extstat &= ~AC97_EXT_AUDIO_DRA;
-		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
-			aprint_normal("%s S/PDIF", delim);
-			delim = ",";
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_VRM) {
-			aprint_normal("%s variable rate dedicated mic", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_VRM;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_CDAC) {
-			aprint_normal("%s center DAC", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_CDAC;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_SDAC) {
-			aprint_normal("%s surround DAC", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_SDAC;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_LDAC) {
-			aprint_normal("%s LFE DAC", delim);
+		if (as->ext_id & AC97_EXT_AUDIO_LDAC)
 			extstat |= AC97_EXT_AUDIO_LDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_SDAC)
+			extstat |= AC97_EXT_AUDIO_SDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_CDAC)
+			extstat |= AC97_EXT_AUDIO_CDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_VRM)
+			extstat |= AC97_EXT_AUDIO_VRM;
+		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
+			/* Output the same data as DAC to SPDIF output */
+			extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
+			extstat |= AC97_EXT_AUDIO_SPSA34;
 		}
-		aprint_normal("\n");
-
+		if (as->ext_id & AC97_EXT_AUDIO_VRA)
+			extstat |= AC97_EXT_AUDIO_VRA;
 		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
 		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
 			/* VRA should be enabled. */
@@ -1059,21 +1052,20 @@ ac97_attach(host_if)
 
 	if (initfunc != NULL)
 		initfunc(as);
-	return (0);
+	return 0;
 }
 
 
 int
-ac97_query_devinfo(codec_if, dip)
-	struct ac97_codec_if *codec_if;
-	mixer_devinfo_t *dip;
+ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 {
-	struct ac97_softc *as = (struct ac97_softc *)codec_if;
+	struct ac97_softc *as;
+	struct ac97_source_info *si;
+	const char *name;
 
+	as = (struct ac97_softc *)codec_if;
 	if (dip->index < as->num_source_info) {
-		struct ac97_source_info *si = &as->source_info[dip->index];
-		const char *name;
-
+		si = &as->source_info[dip->index];
 		dip->type = si->type;
 		dip->mixer_class = si->mixer_class;
 		dip->prev = si->prev;
@@ -1097,30 +1089,30 @@ ac97_query_devinfo(codec_if, dip)
 		if (dip->type == AUDIO_MIXER_VALUE)
 			dip->un.v.delta = 1 << (8 - si->bits);
 
-		return (0);
+		return 0;
 	}
 
-	return (ENXIO);
+	return ENXIO;
 }
 
 
 
 int
-ac97_mixer_set_port(codec_if, cp)
-	struct ac97_codec_if *codec_if;
-	mixer_ctrl_t *cp;
+ac97_mixer_set_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
-	struct ac97_softc *as = (struct ac97_softc *)codec_if;
-	struct ac97_source_info *si = &as->source_info[cp->dev];
+	struct ac97_softc *as;
+	struct ac97_source_info *si;
 	u_int16_t mask;
 	u_int16_t val, newval;
 	int error;
 
+	as = (struct ac97_softc *)codec_if;
+	si = &as->source_info[cp->dev];
 	if (cp->dev < 0 || cp->dev >= as->num_source_info)
-		return (EINVAL);
+		return EINVAL;
 
 	if (cp->type != si->type)
-		return (EINVAL);
+		return EINVAL;
 
 	ac97_read(as, si->reg, &val);
 
@@ -1131,7 +1123,7 @@ ac97_mixer_set_port(codec_if, cp)
 	switch (cp->type) {
 	case AUDIO_MIXER_ENUM:
 		if (cp->un.ord > mask || cp->un.ord < 0)
-			return (EINVAL);
+			return EINVAL;
 
 		newval = (cp->un.ord << si->ofs);
 		if (si->reg == AC97_REG_RECORD_SELECT) {
@@ -1147,11 +1139,12 @@ ac97_mixer_set_port(codec_if, cp)
 	case AUDIO_MIXER_VALUE:
 	{
 		const struct audio_mixer_value *value = si->info;
-		u_int16_t  l, r;
+		u_int16_t  l, r, ol, or;
+		int deltal, deltar;
 
 		if ((cp->un.value.num_channels <= 0) ||
 		    (cp->un.value.num_channels > value->num_channels))
-			return (EINVAL);
+			return EINVAL;
 
 		if (cp->un.value.num_channels == 1) {
 			l = r = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -1171,62 +1164,73 @@ ac97_mixer_set_port(codec_if, cp)
 			r = 255 - r;
 		}
 
+		ol = (val >> (8+si->ofs)) & mask;
+		or = (val >> si->ofs) & mask;
+
+		deltal = (ol << (8 - si->bits)) - l;
+		deltar = (or << (8 - si->bits)) - r;
+
 		l = l >> (8 - si->bits);
 		r = r >> (8 - si->bits);
 
-		newval = ((l & mask) << si->ofs);
+		if (deltal && ol == l)
+			l += (deltal > 0) ? (l ? -1 : 0) : (l < mask ? 1 : 0);
+		if (deltar && or == r)
+			r += (deltar > 0) ? (r ? -1 : 0) : (r < mask ? 1 : 0);
+
+		newval = ((r & mask) << si->ofs);
 		if (value->num_channels == 2) {
-			newval = (newval << 8) | ((r & mask) << si->ofs);
+			newval = newval | ((l & mask) << (si->ofs+8));
 			mask |= (mask << 8);
 		}
 		mask = mask << si->ofs;
 		break;
 	}
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	error = ac97_write(as, si->reg, (val & ~mask) | newval);
 	if (error)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 int
-ac97_get_portnum_by_name(codec_if, class, device, qualifier)
-	struct ac97_codec_if *codec_if;
-	const char *class, *device, *qualifier;
+ac97_get_portnum_by_name(struct ac97_codec_if *codec_if, const char *class,
+			 const char *device, const char *qualifier)
 {
-	struct ac97_softc *as = (struct ac97_softc *)codec_if;
+	struct ac97_softc *as;
 	int idx;
 
+	as = (struct ac97_softc *)codec_if;
 	for (idx = 0; idx < as->num_source_info; idx++) {
 		struct ac97_source_info *si = &as->source_info[idx];
 		if (ac97_str_equal(class, si->class) &&
 		    ac97_str_equal(device, si->device) &&
 		    ac97_str_equal(qualifier, si->qualifier))
-			return (idx);
+			return idx;
 	}
 
-	return (-1);
+	return -1;
 }
 
 int
-ac97_mixer_get_port(codec_if, cp)
-	struct ac97_codec_if *codec_if;
-	mixer_ctrl_t *cp;
+ac97_mixer_get_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
-	struct ac97_softc *as = (struct ac97_softc *)codec_if;
-	struct ac97_source_info *si = &as->source_info[cp->dev];
+	struct ac97_softc *as;
+	struct ac97_source_info *si;
 	u_int16_t mask;
 	u_int16_t val;
 
+	as = (struct ac97_softc *)codec_if;
+	si = &as->source_info[cp->dev];
 	if (cp->dev < 0 || cp->dev >= as->num_source_info)
-		return (EINVAL);
+		return EINVAL;
 
 	if (cp->type != si->type)
-		return (EINVAL);
+		return EINVAL;
 
 	ac97_read(as, si->reg, &val);
 
@@ -1247,7 +1251,7 @@ ac97_mixer_get_port(codec_if, cp)
 
 		if ((cp->un.value.num_channels <= 0) ||
 		    (cp->un.value.num_channels > value->num_channels))
-			return (EINVAL);
+			return EINVAL;
 
 		if (value->num_channels == 1) {
 			l = r = (val >> si->ofs) & mask;
@@ -1281,10 +1285,10 @@ ac97_mixer_get_port(codec_if, cp)
 		break;
 	}
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 
@@ -1456,23 +1460,52 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
  * Codec-dependent initialization
  */
 
-#define AC97_AD_REG_MISC	0x76
-#define	AC97_AD_MISC_MBG	0x0001  /* 0 */
-#define AC97_AD_MISC_VREFD	0x0002  /* 1 */
-#define AC97_AD_MISC_VREFH	0x0004  /* 2 */
-#define AC97_AD_MISC_MADST	0x0008  /* 3 */
-#define AC97_AD_MISC_MADPD	0x0020  /* 5 */
-#define AC97_AD_MISC_FMXE	0x0100  /* 8 */
-#define AC97_AD_MISC_DAM	0x0400  /*10 */
-#define AC97_AD_MISC_MSPLT	0x1000  /*12 */
-#define AC97_AD_MISC_DACZ	0x4000  /*14 */
+#define	AD1980_REG_MISC	0x76
+#define		AD1980_MISC_MBG0	0x0001	/* 0 */
+#define		AD1980_MISC_MBG1	0x0002	/* 1 */
+#define		AD1980_MISC_VREFD	0x0004	/* 2 */
+#define		AD1980_MISC_VREFH	0x0008	/* 3 */
+#define		AD1980_MISC_SRU		0x0010	/* 4 */
+#define		AD1980_MISC_LOSEL	0x0020	/* 5 */
+#define		AD1980_MISC_2CMIC	0x0040	/* 6 */
+#define		AD1980_MISC_SPRD	0x0080	/* 7 */
+#define		AD1980_MISC_DMIX0	0x0100	/* 8 */
+#define		AD1980_MISC_DMIX1	0x0200	/* 9 */
+#define		AD1980_MISC_HPSEL	0x0400	/*10 */
+#define		AD1980_MISC_CLDIS	0x0800	/*11 */
+#define		AD1980_MISC_LODIS	0x1000	/*12 */
+#define		AD1980_MISC_MSPLT	0x2000	/*13 */
+#define		AD1980_MISC_AC97NC	0x4000	/*14 */
+#define		AD1980_MISC_DACZ	0x8000	/*15 */
+#define	AD1981_REG_MISC	0x76
+#define		AD1981_MISC_MBG		0x0001  /* 0 */
+#define		AD1981_MISC_VREFD	0x0002  /* 1 */
+#define		AD1981_MISC_VREFH	0x0004  /* 2 */
+#define		AD1981_MISC_MADST	0x0008  /* 3 */
+#define		AD1981_MISC_MADPD	0x0020  /* 5 */
+#define		AD1981_MISC_FMXE	0x0100  /* 8 */
+#define		AD1981_MISC_DAM		0x0400  /*10 */
+#define		AD1981_MISC_MSPLT	0x1000  /*12 */
+#define		AD1981_MISC_DACZ	0x4000  /*14 */
 static void
-ac97_ad1981_init(struct ac97_softc *as)
+ac97_ad198x_init(struct ac97_softc *as)
 {
+	int i;
 	unsigned short misc;
 
-	ac97_read(as, AC97_AD_REG_MISC, &misc);
-	ac97_write(as, AC97_AD_REG_MISC, misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
+	ac97_read(as, AD1980_REG_MISC, &misc);
+	ac97_write(as, AD1980_REG_MISC,
+		   misc | AD1980_MISC_LOSEL | AD1980_MISC_HPSEL);
+
+	for (i = 0; i < as->num_source_info; i++) {
+		if (as->source_info[i].type != AUDIO_MIXER_VALUE)
+			continue;
+
+		if (as->source_info[i].reg == AC97_REG_MASTER_VOLUME)
+			as->source_info[i].reg = AC97_REG_SURR_MASTER;
+		else if (as->source_info[i].reg == AC97_REG_SURR_MASTER)
+			as->source_info[i].reg = AC97_REG_MASTER_VOLUME;
+	}
 }
 
 #define ALC650_REG_MULTI_CHANNEL_CONTROL	0x6a

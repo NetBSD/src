@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2003/01/18 07:33:16 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.40.2.1 2004/08/03 10:43:44 skrll Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -37,6 +37,7 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_posix.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -85,8 +86,8 @@
 16	STD		{ int freebsd_sys_chown(const char *path, int uid, \
 			    int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+18	NOARGS		{ int compat_20_sys_getfsstat(struct statfs12 *buf, \
+			    long bufsize, int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
@@ -307,8 +308,9 @@
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int freebsd_sys_statfs(const char *path, \
-			    struct statfs *buf); }
-158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
+			    struct statfs12 *buf); }
+158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
+			    struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
 #ifdef NFS
@@ -395,8 +397,8 @@
 195	NOARGS		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
 196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-197	NOARGS		{ caddr_t sys_mmap(caddr_t addr, size_t len, int prot, \
-			    int flags, int fd, long pad, off_t pos); }
+197	STD		{ caddr_t freebsd_sys_mmap(caddr_t addr, size_t len, \
+			    int prot, int flags, int fd, long pad, off_t pos); }
 198	NOARGS		{ int sys_nosys(void); } __syscall
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
@@ -553,8 +555,8 @@
 294	UNIMPL
 295	UNIMPL
 296	UNIMPL
-297	NOARGS		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+297	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs12 *buf); }
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
@@ -630,3 +632,92 @@
 361	UNIMPL		getresgid
 362	UNIMPL		kqueue
 363	UNIMPL		kevent
+364	UNIMPL		__cap_get_proc
+365	UNIMPL		__cap_set_proc
+366	UNIMPL		__cap_get_fd
+367	UNIMPL		__cap_get_file
+368	UNIMPL		__cap_set_fd
+369	UNIMPL		__cap_set_file
+370	UNIMPL		lkmressym
+371	UNIMPL		extattr_set_fd
+372	UNIMPL		extattr_get_fd
+373	UNIMPL		extattr_delete_fd
+374	UNIMPL		__setugid
+375	UNIMPL		nfsclnt
+376	UNIMPL		eaccess
+377	UNIMPL		afs_syscall
+378	UNIMPL		nmount
+379	UNIMPL		kse_exit
+380	UNIMPL		kse_wakeup
+381	UNIMPL		kse_create
+382	UNIMPL		kse_thr_interrupt
+383	UNIMPL		kse_release
+384	UNIMPL		__mac_get_proc
+385	UNIMPL		__mac_set_proc
+386	UNIMPL		__mac_get_fd
+387	UNIMPL		__mac_get_file
+388	UNIMPL		__mac_set_fd
+389	UNIMPL		__mac_set_file
+390	UNIMPL		kenv
+391	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
+392	NOARGS		{ int sys_uuidgen(struct uuid *store, int count); }
+393	UNIMPL		sendfile
+394	UNIMPL		mac_syscall
+395	UNIMPL		getfsstat
+396	UNIMPL		statfs
+397	UNIMPL		fsstatfs
+398	UNIMPL		fhstatfs
+399	UNIMPL		nosys
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+400	NOARGS		{ int sys__ksem_close(semid_t id); }
+401	NOARGS		{ int sys__ksem_post(semid_t id); }
+402	NOARGS		{ int sys__ksem_wait(semid_t id); }
+403	NOARGS		{ int sys__ksem_trywait(semid_t id); }
+404	UNIMPL		ksem_init
+405	UNIMPL		ksem_open
+406	NOARGS		{ int sys__ksem_unlink(const char *name); }
+407	NOARGS		{ int sys__ksem_getvalue(semid_t id, \
+			    unsigned int *value); }
+408	NOARGS		{ int sys__ksem_destroy(semid_t id); }
+#else
+400	EXCL		ksem_close
+401	EXCL		ksem_post
+402	EXCL		ksem_wait
+403	EXCL		ksem_trywait
+404	EXCL		ksem_init
+405	EXCL		ksem_open
+406	EXCL		ksem_unlink
+407	EXCL		ksem_getvalue
+408	EXCL		ksem_destroy
+#endif
+409	UNIMPL		__mac_get_pid
+410	UNIMPL		__mac_get_link
+411	UNIMPL		__mac_set_link
+412	UNIMPL		extattr_set_link
+413	UNIMPL		extattr_get_link
+414	UNIMPL		extattr_delete_link
+415	UNIMPL		__mac_execve
+416	UNIMPL		sigaction
+417	UNIMPL		sigreturn
+418	UNIMPL		__xstat
+419	UNIMPL		__xfstat
+420	UNIMPL		__xlstat
+421	UNIMPL		getcontext
+422	UNIMPL		setcontext
+423	UNIMPL		swapcontext
+424	UNIMPL		swapoff
+425	UNIMPL		__acl_get_link
+426	UNIMPL		__acl_set_link
+427	UNIMPL		__acl_delete_link
+428	UNIMPL		__acl_aclcheck_link
+429	UNIMPL		sigwait
+430	UNIMPL		thr_create
+431	UNIMPL		thr_exit
+432	UNIMPL		thr_self
+433	UNIMPL		thr_kill
+434	UNIMPL		_umtx_lock
+435	UNIMPL		_umtx_unlock
+436	UNIMPL		jail_attach
+437	UNIMPL		extattr_list_fd
+438	UNIMPL		extattr_list_file
+439	UNIMPL		extattr_list_link

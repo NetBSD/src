@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43 2002/06/07 19:31:04 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.43.6.1 2004/08/03 10:41:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,9 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43.6.1 2004/08/03 10:41:35 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -197,8 +196,6 @@ struct intrhand *intrhand[16] = {
 	NULL			/* 15 = async faults */
 };
 
-int fastvec = 0;
-
 /*
  * PCI devices can share interrupts so we need to have
  * a handler to hand out interrupts.
@@ -316,7 +313,7 @@ softintr_establish(level, fun, arg)
 	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
-	bzero(ih, sizeof(*ih));
+	memset(ih, 0, sizeof(*ih));
 	ih->ih_fun = (int (*) __P((void *)))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;

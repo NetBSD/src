@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.37.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -17,7 +17,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
@@ -39,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37.2.1 2004/08/03 10:44:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,10 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $");
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
+#include <compat/mach/mach_iokit.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef COMPAT_DARWIN
@@ -92,15 +93,11 @@ mach_sys_thread_self_trap(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct mach_emuldata *med;
+	struct mach_lwp_emuldata *mle;
 	struct mach_right *mr;
 
-	/* 
-	 * XXX for now thread kernel port and task kernel port are the same 
-	 * awaiting for struct lwp ...
-	 */
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
-	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	mle = l->l_emuldata;
+	mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	*retval = (register_t)mr->mr_name;
 
 	return 0;
@@ -155,14 +152,13 @@ mach_port_deallocate(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_REF_RIGHTS)) != NULL) 
 		mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -183,18 +179,18 @@ mach_port_destroy(args)
 	mn = req->req_name;
 	if ((mr = mach_right_check(mn, 
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) != NULL) { 
-		mr->mr_refcount = 0; /* Make sure it will be kicked away */	
+		MACH_PORT_UNREF(mr->mr_port);
+		mr->mr_port = NULL;
 		mach_right_put(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -230,15 +226,14 @@ mach_port_allocate(args)
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_name = (mach_port_name_t)mr->mr_name;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	
+	rep->rep_retval = 0;
+	rep->rep_name = (mach_port_name_t)mr->mr_name;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -288,14 +283,13 @@ mach_port_insert_right(args)
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -314,16 +308,14 @@ mach_port_type(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EPERM);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_retval = 0;
 	rep->rep_ptype = mr->mr_type;
-	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -334,6 +326,12 @@ mach_port_set_attributes(args)
 	mach_port_set_attributes_request_t *req = args->smsg;
 	mach_port_set_attributes_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int end_offset;
+
+	/* Sanity check req->req_count */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_port_info[end_offset]))
+		 return mach_msg_error(args, EINVAL);
 
 	switch(req->req_flavor) {
 	case MACH_PORT_LIMITS_INFO:
@@ -341,19 +339,103 @@ mach_port_set_attributes(args)
 	case MACH_PORT_DNREQUESTS_SIZE:
 		break;
 	default:
-		uprintf("mach_port_get_attributes: unknown flavor %d\n",
+		uprintf("mach_port_set_attributes: unknown flavor %d\n",
 		    req->req_flavor);
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int 
+mach_port_get_attributes(args)
+	struct mach_trap_args *args;
+{
+	mach_port_get_attributes_request_t *req = args->smsg;
+	mach_port_get_attributes_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+
+	/* Sanity check req_count */
+	if (req->req_count > 10)
+		return mach_msg_error(args, EINVAL);
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EPERM);
+
+	switch (req->req_flavor) {
+	case MACH_PORT_LIMITS_INFO: {
+		struct mach_port_limits *mpl;
+
+		if (req->req_count < (sizeof(*mpl) / sizeof(rep->rep_info[0])))
+			return mach_msg_error(args, EINVAL);
+
+		mpl = (struct mach_port_limits *)&rep->rep_info[0];
+		mpl->mpl_qlimit = MACH_PORT_QLIMIT_DEFAULT; /* XXX fake limit */
+
+		rep->rep_count = sizeof(*mpl);
+
+		break;
+	}
+
+	case MACH_PORT_RECEIVE_STATUS: {
+		struct mach_port_status *mps;
+		struct mach_port *mp;
+
+		if (req->req_count < (sizeof(*mps) / sizeof(rep->rep_info[0])))
+			return mach_msg_error(args, EINVAL);
+
+		mps = (struct mach_port_status *)&rep->rep_info[0];
+		memset(mps, 0, sizeof(*mps));
+
+		if (mr->mr_sethead != NULL)
+			mps->mps_pset = mr->mr_sethead->mr_name;
+		mps->mps_seqno = 0; /* XXX */
+		mps->mps_qlimit = MACH_PORT_QLIMIT_DEFAULT; /* XXX fake limit */
+		if ((mp = mr->mr_port) != NULL) {
+			mps->mps_mscount = mp->mp_refcount; /* XXX */
+			mps->mps_msgcount = mp->mp_count;
+		} else {
+			mps->mps_mscount = 0;
+			mps->mps_msgcount = 0;
+		}
+		mps->mps_sorights = 0; /* XXX */
+		mps->mps_srights =  0; /* XXX */
+		if (mr->mr_notify_destroyed != NULL)
+			mps->mps_pdrequest = 1;
+		if (mr->mr_notify_no_senders != NULL)
+			mps->mps_nsrequest = 1;
+		mps->mps_flags = 0; /* XXX */
+
+		rep->rep_count = sizeof(*mps);
+		break;
+	}
+
+	default:
+		printf("mach_port_get_attributes: unknown flavor %d\n",
+		    req->req_flavor);
+		return mach_msg_error(args, EINVAL);
+
+		break;
+	};
+
+	*msglen = sizeof(*rep) - 10 + rep->rep_count;
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -366,14 +448,15 @@ mach_port_insert_member(args)
 	mach_port_insert_member_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	uprintf("Unimplemented mach_port_insert_member\n");
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -411,14 +494,13 @@ mach_port_move_member(args)
 
 	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -451,7 +533,7 @@ mach_port_request_notification(args)
 #ifdef DEBUG_MACH
 	if (nmr->mr_port == NULL) {
 		printf("Notification right without a port\n");
-		printf("### mr->mr_port = %p, mr = %08x\n", nmr->mr_port, nmr->mr_name);
+		printf("mr->mr_port = %p, mr = %08x\n", nmr->mr_port, nmr->mr_name);
 		return mach_msg_error(args, EINVAL);
 	}
 #endif
@@ -487,8 +569,8 @@ mach_port_request_notification(args)
 #ifdef DEBUG_MACH
 		printf("unsupported notify request %d\n", req->req_msgid);
 		return mach_msg_error(args, EINVAL);
-		break;
 #endif
+		break;
 	}
 
 	if (oldnmr != NULL) {
@@ -498,17 +580,75 @@ mach_port_request_notification(args)
 		oldmn = (mach_port_t)MACH_PORT_NULL;
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_previous.name = oldmn;
-	rep->rep_previous.disposition = MACH_MSG_TYPE_MOVE_SEND_ONCE;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, oldmn);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int 
+mach_port_get_refs(args)
+	struct mach_trap_args *args;
+{
+	mach_port_get_refs_request_t *req = args->smsg;
+	mach_port_get_refs_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	mach_port_right_t right = req->req_right;
+
+	mn = req->req_name;
+	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+		return mach_msg_error(args, EINVAL);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+	rep->rep_refs = mr->mr_refcount;
+
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int 
+mach_port_mod_refs(args)
+	struct mach_trap_args *args;
+{
+	mach_port_mod_refs_request_t *req = args->smsg;
+	mach_port_mod_refs_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+#if 0
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	mach_port_right_t right = req->req_right;
+
+	mn = req->req_name;
+	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+		return mach_msg_error(args, EINVAL);
+
+	/* 
+	 * Changing the refcount is likely to cause crashes,
+	 * as we will free a right which might still be referenced
+	 * within the kernel. Add a user refcount field?
+	 */
+	mr->mr_refcount += req->req_delta;
+	if (mr->mr_refcount <= 0)
+		mach_right_put(mr, right);
+#endif
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -516,9 +656,9 @@ void
 mach_port_init(void) 
 {
 	pool_init(&mach_port_pool, sizeof (struct mach_port),
-	    0, 0, 128, "mach_port_pool", NULL);
+	    0, 0, 0, "mach_port_pool", NULL);
 	pool_init(&mach_right_pool, sizeof (struct mach_right),
-	    0, 0, 128, "mach_right_pool", NULL);
+	    0, 0, 0, "mach_right_pool", NULL);
 
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();
@@ -538,7 +678,7 @@ mach_port_get(void)
 {
 	struct mach_port *mp;
 
-	mp = (struct mach_port *)pool_get(&mach_port_pool, M_WAITOK);
+	mp = (struct mach_port *)pool_get(&mach_port_pool, PR_WAITOK);
 	bzero(mp, sizeof(*mp));
 	mp->mp_recv = NULL;
 	mp->mp_count = 0;
@@ -557,10 +697,12 @@ mach_port_put(mp)
 {
 	struct mach_message *mm;
 
+#ifdef DIAGNOSTIC
 	if (mp->mp_refcount > 0) {
 		uprintf("mach_port_put: trying to free a referenced port\n");
 		return;
 	}
+#endif
 
 	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
 	while ((mm = TAILQ_FIRST(&mp->mp_msglist)) != NULL)
@@ -593,6 +735,9 @@ mach_right_get(mp, l, type, hint)
 #endif
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
+	if (mp != NULL)
+		MACH_PORT_REF(mp);
+
 	/* Send and receive right must return an existing right */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE);
 	if (type & rights) {
@@ -611,7 +756,7 @@ mach_right_get(mp, l, type, hint)
 		}
 	}
 	
-	mr = pool_get(&mach_right_pool, M_WAITOK);
+	mr = pool_get(&mach_right_pool, PR_WAITOK);
 
 	mr->mr_port = mp;
 	mr->mr_lwp = l;
@@ -623,9 +768,6 @@ mach_right_get(mp, l, type, hint)
 	mr->mr_notify_no_senders = NULL;
 
 	LIST_INIT(&mr->mr_set);
-
-	if (mp != NULL)
-		mp->mp_refcount++;
 
 	/* Insert the right in the right lists */
 	if (type & MACH_PORT_TYPE_ALL_RIGHTS) {
@@ -727,9 +869,14 @@ mach_right_put_exclocked(mr, right)
 			mach_notify_port_dead_name(mr->mr_lwp, mr);
 		}
 		if (mr->mr_port != NULL) {
-			mr->mr_port->mp_refcount--;
-			if (mr->mr_port->mp_refcount <= 0)
-				mach_port_put(mr->mr_port);
+			/* There is no more receiver */
+#ifdef DIAGNOSTIC
+			if (mr->mr_port->mp_recv != mr)
+				printf("several receiver on a single port\n");
+#endif
+			mr->mr_port->mp_recv = NULL;
+
+			MACH_PORT_UNREF(mr->mr_port);
 			mr->mr_port = NULL;
 		}
 	}
@@ -764,6 +911,8 @@ mach_right_put_exclocked(mr, right)
 #ifdef DEBUG_MACH_RIGHT
 		printf("mach_right_put: kill name %x\n", mr->mr_name);
 #endif
+		/* If the right is used for an IO notification, remove it */
+		mach_iokit_cleanup_notify(mr);
 
 		mach_notify_port_destroyed(mr->mr_lwp, mr);
 		LIST_REMOVE(mr, mr_list);
@@ -773,7 +922,7 @@ mach_right_put_exclocked(mr, right)
 }
 
 /* 
- * Check that a process do have a given right
+ * Check that a process has a given right.
  */
 struct mach_right *
 mach_right_check(mn, l, type)
@@ -847,13 +996,12 @@ mach_right_newname(l, hint)
 void 
 mach_debug_port(void)
 {
-	struct lwp *l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	struct mach_right *mrs;
-	struct proc *p = l->l_proc;
+	struct proc *p;
 
-	LIST_FOREACH(l, &alllwp, l_list) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if ((p->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
 		    (p->p_emul != &emul_darwin) &&
@@ -866,7 +1014,7 @@ mach_debug_port(void)
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				printf("pid %d: %p(%x)=>%p", 
 				    p->p_pid, mr, mr->mr_type, mr->mr_port);
-				if (mr->mr_port != NULL) 
+				if (mr->mr_port && mr->mr_port->mp_recv)
 					printf("[%p]\n", 
 					    mr->mr_port->mp_recv->mr_sethead);
 				else
@@ -881,7 +1029,7 @@ mach_debug_port(void)
 			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {
 				printf("%p(%x)=>%p", 
 				    mrs, mrs->mr_type, mrs->mr_port);
-				if (mrs->mr_port != NULL) 
+				if (mrs->mr_port && mrs->mr_port->mp_recv) 
 					printf("[%p]", 
 					    mrs->mr_port->mp_recv->mr_sethead);
 				else

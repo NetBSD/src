@@ -1,11 +1,11 @@
-/*	$NetBSD: joy_pci.c,v 1.6 2002/10/16 21:09:31 jdolecek Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.6.6.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.6 2002/10/16 21:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.6.6.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,12 @@ joy_pci_match(parent, match, aux)
 	    PCI_INTERFACE(pa->pa_class) == 0x10)
 		return (1);
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CREATIVELABS
-	    && PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBJOY)
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CREATIVELABS &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBJOY ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBJOY2))
+	{
 		return (1);
+	}
 
 	return (0);
 }
@@ -114,7 +117,7 @@ joy_pci_attach(parent, self, aux)
 	bus_size_t mapsize;
 	int reg;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.54.2.1 2003/07/02 15:25:46 darrenr Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.54.2.2 2004/08/03 10:44:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.54.2.1 2003/07/02 15:25:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.54.2.2 2004/08/03 10:44:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ exec_linux_aout_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -244,7 +244,7 @@ exec_linux_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -289,7 +289,7 @@ exec_linux_aout_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 static int
@@ -325,5 +325,5 @@ exec_linux_aout_prep_qmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }

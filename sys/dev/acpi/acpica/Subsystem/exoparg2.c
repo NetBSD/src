@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
- *              xRevision: 117 $
+ *              xRevision: 119 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.5 2003/03/04 17:25:18 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.5.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __EXOPARG2_C__
 
@@ -420,6 +421,8 @@ AcpiExOpcode_2A_1T_1R (
             break;
 
         default:
+            ACPI_REPORT_ERROR (("Concat - invalid obj type: %X\n",
+                    ACPI_GET_OBJECT_TYPE (Operand[0])));
             Status = AE_AML_INTERNAL;
         }
 
@@ -534,7 +537,7 @@ AcpiExOpcode_2A_1T_1R (
             }
 
             ReturnDesc->Reference.TargetType = ACPI_TYPE_PACKAGE;
-            ReturnDesc->Reference.Object     = Operand[0]->Package.Elements [Index];
+            ReturnDesc->Reference.Object     = Operand[0];
             ReturnDesc->Reference.Where      = &Operand[0]->Package.Elements [Index];
         }
         else

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.55 2003/05/14 12:43:26 wiz Exp $	*/
+/*	$NetBSD: wds.c,v 1.55.2.1 2004/08/03 10:48:00 skrll Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55 2003/05/14 12:43:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55.2.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -636,7 +636,7 @@ wds_create_scbs(sc, mem, size)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&scb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (void *)&scb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map memory for scbs\n",
 		    sc->sc_dev.dv_xname);
@@ -654,7 +654,8 @@ wds_create_scbs(sc, mem, size)
 			return (error);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
-		(caddr_t)scb += ALIGN(sizeof(struct wds_scb));
+		scb = (struct wds_scb *)((caddr_t)scb +
+			ALIGN(sizeof(struct wds_scb)));
 		size -= ALIGN(sizeof(struct wds_scb));
 		sc->sc_numscbs++;
 	}

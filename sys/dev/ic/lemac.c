@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.23 2001/11/13 13:14:40 lukem Exp $ */
+/* $NetBSD: lemac.c,v 1.23.16.1 2004/08/03 10:46:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23 2001/11/13 13:14:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -98,7 +98,11 @@ static void lemac_rxd_intr(lemac_softc_t *sc, unsigned cs_value);
 static int  lemac_read_eeprom(lemac_softc_t *sc);
 static void lemac_init_adapmem(lemac_softc_t *sc);
 
-static const u_int16_t lemac_allmulti_mctbl[16] =  {
+static const u_int16_t lemac_allmulti_mctbl[LEMAC_MCTBL_SIZE/sizeof(u_int16_t)] =  {
+    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
+    0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
     0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
     0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
     0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
@@ -153,7 +157,7 @@ lemac_rxd_intr(
     }
 
     /*
-     *  Error during initializion.  Mark card as disabled.
+     *  Error during initialization.  Mark card as disabled.
      */
     printf("%s: recovery failed -- board disabled\n", sc->sc_if.if_xname);
 }
@@ -413,7 +417,7 @@ lemac_read_macaddr(
     hwaddr[0] = bus_space_read_1(iot, ioh, ioreg);
     hwaddr[1] = bus_space_read_1(iot, ioh, ioreg);
 
-    /* hardware adddress can't be multicast */
+    /* hardware address can't be multicast */
     if (hwaddr[0] & 1)
 	return -1;
 

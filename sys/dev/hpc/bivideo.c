@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.17 2002/10/02 16:33:48 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.17.6.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.17 2002/10/02 16:33:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.17.6.1 2004/08/03 10:45:57 skrll Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -376,10 +376,11 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
 	struct wsdisplay_param *dispparam;
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
@@ -387,16 +388,17 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    256 < (cmap->index + cmap->count))
 			return (EINVAL);
 
-		if (!uvm_useracc(cmap->red, cmap->count, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cmap->count, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cmap->count, B_WRITE))
-			return (EFAULT);
-
-		copyout(&bivideo_cmap_r[cmap->index], cmap->red, cmap->count);
-		copyout(&bivideo_cmap_g[cmap->index], cmap->green,cmap->count);
-		copyout(&bivideo_cmap_b[cmap->index], cmap->blue, cmap->count);
-
-		return (0);
+		error = copyout(&bivideo_cmap_r[cmap->index], cmap->red,
+				cmap->count);
+		if (error)
+			return error;
+		error = copyout(&bivideo_cmap_g[cmap->index], cmap->green,
+				cmap->count);
+		if (error)
+			return error;
+		error = copyout(&bivideo_cmap_b[cmap->index], cmap->blue,
+				cmap->count);
+		return error;
 
 	case WSDISPLAYIO_PUTCMAP:
 		/*

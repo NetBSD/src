@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.9.2.1 2003/07/02 15:25:41 darrenr Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.9.2.2 2004/08/03 10:43:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.1 2003/07/02 15:25:41 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.2 2004/08/03 10:43:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.1 2003/07/02 15:25:41 darrenr 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
@@ -81,7 +82,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct filedesc *fdp;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	vaddr_t base;
 	struct proc *p = l->l_proc;
 	int flags;
@@ -90,6 +91,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	size_t maplen;
 	struct sys_open_args open_cup;
 	struct sys_close_args close_cup;
+	register_t fdc;
 	int fd;
 	int i;
 	int error;
@@ -122,9 +124,10 @@ darwin_sys_load_shared_file(l, v, retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = bsd_sys_open(l, &open_cup, (register_t *)&fd)) != 0)
+	if ((error = bsd_sys_open(l, &open_cup, &fdc)) != 0)
 		return error;
 	
+	fd = (int)fdc;
 	fdp = p->p_fd;
 	fp = fd_getfile(fdp, fd);
 	if (fp == NULL) {
@@ -150,7 +153,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	for (i = 0; i < SCARG(uap, count); i++) {
 		DPRINTF(("mapp[%d].mapping_offset = 0x%08lx\n", 
 		    i, mapp[i].mapping_offset));
-		DPRINTF(("mapp[%d].size = 0x%08x\n", i, mapp[i].size));
+		DPRINTF(("mapp[%d].size = 0x%08lx\n", i, (long)mapp[i].size));
 		DPRINTF(("mapp[%d].file_offset = 0x%08lx\n", 
 		    i, mapp[i].file_offset));
 		DPRINTF(("mapp[%d].protection = %d\n", 

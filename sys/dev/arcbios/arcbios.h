@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.3 2001/12/06 14:59:02 rafal Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.3.16.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  *	http://www.microsoft.com/hwdev/download/respec/riscspec.zip
  */
+
+#ifndef _ARCBIOS_H_
+#define _ARCBIOS_H_
 
 #define	ARCBIOS_STDIN		0
 #define	ARCBIOS_STDOUT		1
@@ -286,7 +289,7 @@ struct arcbios_mem {
 };
 
 #if defined(sgimips)
-#define	ARCBIOS_MEM_ExecptionBlock		0
+#define	ARCBIOS_MEM_ExceptionBlock		0
 #define	ARCBIOS_MEM_SystemParameterBlock	1
 #define	ARCBIOS_MEM_FreeContiguous		2
 #define	ARCBIOS_MEM_FreeMemory			3
@@ -467,3 +470,5 @@ struct arcbios_fv {
 			    uint32_t);		/* file ID */
 #endif
 };
+
+#endif /* _ARCBIOS_H_ */

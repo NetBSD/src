@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2000/12/08 02:59:38 itohy Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9.24.1 2004/08/03 10:42:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Floating Point Unit (MC68881/882/040/060)
  * Probe for the FPU at autoconfig time.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9.24.1 2004/08/03 10:42:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

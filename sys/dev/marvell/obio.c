@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2003/03/27 07:20:48 matt Exp $	*/
+/*	$NetBSD: obio.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
 /*
  * gt.c -- GT system controller driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include "opt_marvell.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.13 2003/06/29 22:29:00 fvdl Exp $	*/
+/*	$NetBSD: sab.c,v 1.13.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -40,6 +40,9 @@
 /*
  * SAB82532 Dual UART driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.1 2004/08/03 10:41:24 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,7 +150,6 @@ int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
-void sabtty_abort(struct sabtty_softc *);
 
 CFATTACH_DECL(sab, sizeof(struct sab_softc),
     sab_match, sab_attach, NULL, NULL);
@@ -167,6 +169,8 @@ dev_type_ioctl(sabioctl);
 dev_type_stop(sabstop);
 dev_type_tty(sabtty);
 dev_type_poll(sabpoll);
+
+static struct cnm_state sabtty_cnm_state;
 
 const struct cdevsw sabtty_cdevsw = {
 	sabopen, sabclose, sabread, sabwrite, sabioctl,
@@ -217,7 +221,7 @@ sab_match(parent, match, aux)
 	if (strcmp(ea->ea_name, "se") == 0)
 		return (1);
 
-	compat = PROM_getpropstring(ea->ea_node, "compatible");
+	compat = prom_getpropstring(ea->ea_node, "compatible");
 	if (compat != NULL && !strcmp(compat, "sab82532"))
 		return (1);
 
@@ -260,23 +264,23 @@ sab_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": rev ");
+	aprint_normal(": rev ");
 	r = SAB_READ(sc, SAB_VSTR) & SAB_VSTR_VMASK;
 	switch (r) {
 	case SAB_VSTR_V_1:
-		printf("1");
+		aprint_normal("1");
 		break;
 	case SAB_VSTR_V_2:
-		printf("2");
+		aprint_normal("2");
 		break;
 	case SAB_VSTR_V_32:
-		printf("3.2");
+		aprint_normal("3.2");
 		break;
 	default:
-		printf("unknown(0x%x)", r);
+		aprint_normal("unknown(0x%x)", r);
 		break;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Let current output drain */
 	DELAY(100000);
@@ -308,7 +312,7 @@ sab_print(args, name)
 
 	if (name)
 		aprint_normal("sabtty at %s", name);
-	aprint_normal(" port %d", sa->sbt_portno);
+	aprint_normal(" port %u", sa->sbt_portno);
 	return (UNCONF);
 }
 
@@ -376,7 +380,7 @@ sabtty_attach(parent, self, aux)
 
 	sc->sc_tty = ttymalloc();
 	if (sc->sc_tty == NULL) {
-		printf(": failed to allocate tty\n");
+		aprint_normal(": failed to allocate tty\n");
 		return;
 	}
 	tty_attach(sc->sc_tty);
@@ -402,11 +406,11 @@ sabtty_attach(parent, self, aux)
 		    SAB_CHAN_B, SAB_CHANLEN, &sc->sc_bh);
 		break;
 	default:
-		printf(": invalid channel: %u\n", sa->sbt_portno);
+		aprint_normal(": invalid channel: %u\n", sa->sbt_portno);
 		return;
 	}
 	if (r != 0) {
-		printf(": failed to allocate register subregion\n");
+		aprint_normal(": failed to allocate register subregion\n");
 		return;
 	}
 
@@ -415,6 +419,9 @@ sabtty_attach(parent, self, aux)
 	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		struct termios t;
 		char *acc;
+
+		/* Let residual prom output drain */
+		DELAY(100000);
 
 		switch (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		case SABTTYF_CONS_IN:
@@ -442,21 +449,24 @@ sabtty_attach(parent, self, aux)
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
 			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 			shutdownhook_establish(sabtty_shutdown, sc);
+			cn_init_magic(&sabtty_cnm_state);
+			cn_set_magic("\047\001"); /* default magic is BREAK */
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
+			sabtty_tec_wait(sc);
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
 			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 		}
-		printf(": console %s", acc);
+		aprint_normal(": console %s", acc);
 	} else {
 		/* Not a console... */
 		sabtty_reset(sc);
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int
@@ -490,11 +500,15 @@ sabtty_intr(sc, needsoftp)
 		clearfifo = 1;
 	}
 	if (len != 0) {
-		u_int8_t *ptr;
+		u_int8_t *ptr, b;
 
 		ptr = sc->sc_rput;
 		for (i = 0; i < len; i++) {
-			*ptr++ = SAB_READ(sc, SAB_RFIFO);
+			b = SAB_READ(sc, SAB_RFIFO);
+			if (i % 2 == 0) /* skip status byte */
+				cn_check_magic(sc->sc_tty->t_dev,
+					       b, sabtty_cnm_state);
+			*ptr++ = b;
 			if (ptr == sc->sc_rend)
 				ptr = sc->sc_rbuf;
 			if (ptr == sc->sc_rget) {
@@ -519,7 +533,8 @@ sabtty_intr(sc, needsoftp)
 	}
 
 	if (isr1 & SAB_ISR1_BRKT)
-		sabtty_abort(sc);
+		cn_check_magic(sc->sc_tty->t_dev,
+			       CNC_BREAK, sabtty_cnm_state);
 
 	if (isr1 & (SAB_ISR1_XPR | SAB_ISR1_ALLS)) {
 		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_XFW) &&
@@ -531,7 +546,7 @@ sabtty_intr(sc, needsoftp)
 
 			if (len > 0) {
 				SAB_WRITE_BLOCK(sc, SAB_XFIFO, sc->sc_txp, len);
-				sc->sc_txp += len; 
+				sc->sc_txp += len;
 				sc->sc_txc -= len;
 
 				sabtty_cec_wait(sc);
@@ -1298,23 +1313,18 @@ sabtty_console_flags(sc)
 	struct sabtty_softc *sc;
 {
 	int node, channel, cookie;
-	u_int options;
 	char buf[255];
 
 	node = sc->sc_parent->sc_node;
 	channel = sc->sc_portno;
 
-	options = OF_finddevice("/options");
-
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 
-	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(options, "input-device", buf,
-		    sizeof(buf)) != -1) {
-			if (strcmp("ttyb", buf) == 0)
+	if (node == prom_instance_to_package(prom_stdin())) {
+		if (prom_getoption("input-device", buf, sizeof buf) == 0 &&
+			strcmp("ttyb", buf) == 0)
 				cookie = 1;
-		}
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_IN;
@@ -1322,29 +1332,13 @@ sabtty_console_flags(sc)
 
 	/* Default to same channel if there are no explicit prom args */
 
-	if (node == OF_instance_to_package(OF_stdout())) {
-		if (OF_getprop(options, "output-device", buf,
-		    sizeof(buf)) != -1) {
-			if (strcmp("ttyb", buf) == 0)
+	if (node == prom_instance_to_package(prom_stdout())) {
+		if (prom_getoption("output-device", buf, sizeof buf) == 0 &&
+			strcmp("ttyb", buf) == 0)
 				cookie = 1;
-		}
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_OUT;
-	}
-}
-
-void
-sabtty_abort(sc)
-	struct sabtty_softc *sc;
-{
-
-	if (sc->sc_flags & SABTTYF_CONS_IN) {
-#ifdef DDB
-		cn_trap();
-#else
-		callrom();
-#endif
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.10 2003/02/02 19:07:17 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.10.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_host_get_clock_service_reply_t;
 
-/* mach_host_get_io_master */
+/* host_get_io_master */
 
 typedef struct {
 	mach_msg_header_t req_msgh;
@@ -156,11 +156,36 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_host_get_io_master_reply_t;
 
-int mach_host_info(struct mach_trap_args *);
+/* processor_set_default */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_processor_set_default_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_defaultset;
+	mach_msg_trailer_t rep_trailer;
+} mach_processor_set_default_reply_t;
+
+/* host_processor_set_priv */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_set;
+} mach_host_processor_set_priv_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_ctlset;
+	 mach_msg_trailer_t rep_trailer;
+} mach_host_processor_set_priv_reply_t;
+
+/* These are machine dependent functions */
 void mach_host_basic_info(struct mach_host_basic_info *);
 void mach_host_priority_info(struct mach_host_priority_info *);
-int mach_host_page_size(struct mach_trap_args *);
-int mach_host_get_clock_service(struct mach_trap_args *);
-int mach_host_get_io_master(struct mach_trap_args *);
 
 #endif /* _MACH_HOST_H_ */

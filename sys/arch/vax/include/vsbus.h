@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.13.24.1 2004/08/03 10:42:23 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,7 +59,7 @@ struct	vsbus_attach_args {
  * Some chip addresses and constants, same on all VAXstations.
  */
 #define VS_CFGTST	0x20020000      /* config register */
-#define VS_REGS         0x20080000      /* Misc cpu internal regs */
+#define VS_REGS         0x20080000      /* Misc CPU internal regs */
 #define NI_ADDR         0x20090000      /* Ethernet address */
 #define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
 #define VS_CLOCK        0x200b0000      /* clock chip address */

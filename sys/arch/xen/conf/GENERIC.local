@@ -1,0 +1,6 @@
+#	$NetBSD: GENERIC.local,v 1.1.4.2 2004/08/03 10:43:10 skrll Exp $
+#	NetBSD: GENERIC.local,v 1.1 1996/09/09 16:37:08 mycroft Exp 
+#
+#	GENERIC.local -- local additions to the GENERIC configuration
+#
+

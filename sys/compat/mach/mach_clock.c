@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_clock.c,v 1.8 2003/01/21 04:06:07 matt Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.8.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.8 2003/01/21 04:06:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.8.2.1 2004/08/03 10:44:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.8 2003/01/21 04:06:07 matt Exp $");
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -86,9 +87,9 @@ mach_sys_clock_sleep_trap(l, v, retval)
 	}
 
 	ticks = tts.tv_sec * hz;
-	ticks += (tts.tv_nsec * hz) / 1000000000L;
+	ticks += (tts.tv_nsec * hz) / 100000000L;
 
-	tsleep(&dontcare, PZERO, "sleep", ticks);
+	tsleep(&dontcare, PZERO|PCATCH, "sleep", ticks);
 
 	if (SCARG(uap, wakeup_time) != NULL) {
 		microtime(&now);
@@ -139,16 +140,13 @@ mach_clock_get_time(args)
 
 	microtime(&tv);
 	
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_cur_time.tv_sec = tv.tv_sec; 
 	rep->rep_cur_time.tv_nsec = tv.tv_usec * 1000; 
-	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.h,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.h,v 1.2.42.1 2004/08/03 10:50:44 skrll Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,10 +40,10 @@ rf_IdentifyStripeEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids, RF_RowCol_t * outrow);
 void 
 rf_MapParityEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_MapEEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_EODagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);

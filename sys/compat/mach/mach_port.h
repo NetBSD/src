@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.25 2003/04/30 18:38:19 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.25.2.1 2004/08/03 10:44:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -17,7 +17,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
@@ -38,6 +37,9 @@
 
 #ifndef	_MACH_PORT_H_
 #define	_MACH_PORT_H_
+
+#define MACH_PORT_REF(mp)	(mp)->mp_refcount++
+#define MACH_PORT_UNREF(mp)	if (--(mp)->mp_refcount <= 0) mach_port_put(mp)
 
 #define MACH_PORT_NULL			(struct mach_right *)0
 #define MACH_PORT_DEAD			(struct mach_right *)-1
@@ -63,7 +65,6 @@
 #define MACH_PORT_TYPE_REF_RIGHTS \
     (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME)
 	
-
 /* port_deallocate */
 
 typedef struct {
@@ -128,9 +129,12 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_type_reply_t;  
 
-/* port_get_attributes */
+/* port_set_attributes */
 
 #define MACH_PORT_LIMITS_INFO 1
+#define MACH_PORT_RECEIVE_STATUS 2
+#define MACH_PORT_DNREQUESTS_SIZE 3
+
 typedef struct mach_port_status {
 	mach_port_name_t	mps_pset;
 	mach_port_seqno_t	mps_seqno;
@@ -143,11 +147,10 @@ typedef struct mach_port_status {
 	mach_boolean_t		mps_nsrequest;
 	unsigned int		mps_flags;
 } mach_port_status_t;
-#define MACH_PORT_RECEIVE_STATUS 2
+
 typedef struct mach_port_limits {
 	mach_port_msgcount_t	mpl_qlimit;
 } mach_port_limits_t;
-#define MACH_PORT_DNREQUESTS_SIZE 3
 
 typedef struct {
 	mach_msg_header_t req_msgh;
@@ -155,7 +158,7 @@ typedef struct {
 	mach_port_name_t req_name;
 	mach_port_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
-	mach_integer_t req_port_info[10];
+	mach_integer_t req_port_info[0];
 } mach_port_set_attributes_request_t;
 
 typedef struct {
@@ -165,6 +168,28 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_set_attributes_reply_t;
 	
+/* port_get_attributes */
+
+#define MACH_PORT_QLIMIT_DEFAULT ((mach_port_msgcount_t) 5)
+#define MACH_PORT_QLIMIT_MAX ((mach_port_msgcount_t) 16)
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_port_get_attributes_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_info[10];
+	mach_msg_trailer_t rep_trailer;
+} mach_port_get_attributes_reply_t;
+
 /* port_insert_member */
 
 typedef struct {
@@ -231,15 +256,41 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_request_notification_reply_t;
 
-int mach_port_deallocate(struct mach_trap_args *);
-int mach_port_allocate(struct mach_trap_args *);
-int mach_port_insert_right(struct mach_trap_args *);
-int mach_port_type(struct mach_trap_args *);
-int mach_port_set_attributes(struct mach_trap_args *);
-int mach_port_insert_member(struct mach_trap_args *);
-int mach_port_move_member(struct mach_trap_args *);
-int mach_port_destroy(struct mach_trap_args *);
-int mach_port_request_notification(struct mach_trap_args *);
+/* port_get_refs */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_right_t req_right;
+} mach_port_get_refs_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_port_urefs_t rep_refs;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_get_refs_reply_t;
+
+/* port_mod_refs */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_right_t req_right;
+	mach_port_delta_t req_delta;
+} mach_port_mod_refs_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_mod_refs_reply_t;
+
+/* Kernel-private structures */
 
 extern struct mach_port *mach_clock_port;
 extern struct mach_port *mach_io_master_port;
@@ -296,12 +347,14 @@ struct mach_port {
 
 /* mp_datatype for struct mach_port */
 #define	MACH_MP_NONE		0x0	/* No data */
-#define MACH_MP_DEVICE		0x1	/* struct device */
-#define MACH_MP_DEVICE_ITERATOR	0x2	/* struct mach_device_iterator */
+#define MACH_MP_LWP		0x1	/* (struct lwp *) */
+#define MACH_MP_DEVICE_ITERATOR	0x2	/* (struct mach_device_iterator *) */
 #define MACH_MP_IOKIT_DEVCLASS	0x3	/* (struct mach_iokit_devclass *) */
 #define MACH_MP_PROC		0x4	/* (struct proc *) */
 #define MACH_MP_NOTIFY_SYNC	0x5	/* int */
-#define MACH_MP_IOKIT_DEVCLASS_DONE 0x6 /* (struct mach_iokit_devclass *) */
+#define MACH_MP_MEMORY_ENTRY	0x6	/* (struct mach_memory_entry *) */
+#define MACH_MP_EXC_INFO	0x7	/* (struct mach_exc_info *) */
+#define MACH_MP_SEMAPHORE	0x8	/* (struct mach_semaphore *) */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);

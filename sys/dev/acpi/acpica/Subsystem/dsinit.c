@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              xRevision: 6 $
+ *              xRevision: 10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.3 2003/02/13 14:16:18 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.3.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #define __DSINIT_C__
 
@@ -186,7 +186,7 @@ AcpiDsInitOneObject (
         if (ACPI_FAILURE (Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Region %p [%4.4s] - Init failure, %s\n",
-                ObjHandle, ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii,
+                ObjHandle, AcpiUtGetNodeName (ObjHandle),
                 AcpiFormatException (Status)));
         }
 
@@ -217,14 +217,14 @@ AcpiDsInitOneObject (
         }
 
         /*
-         * Always parse methods to detect errors, we may delete
+         * Always parse methods to detect errors, we will delete
          * the parse tree below
          */
         Status = AcpiDsParseMethod (ObjHandle);
         if (ACPI_FAILURE (Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Method %p [%4.4s] - parse failure, %s\n",
-                ObjHandle, ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii,
+                ObjHandle, AcpiUtGetNodeName (ObjHandle),
                 AcpiFormatException (Status)));
 
             /* This parse failed, but we will continue parsing more methods */
@@ -233,7 +233,7 @@ AcpiDsInitOneObject (
         }
 
         /*
-         * Delete the parse tree.  We simple re-parse the method
+         * Delete the parse tree.  We simply re-parse the method
          * for every execution since there isn't much overhead
          */
         AcpiNsDeleteNamespaceSubtree (ObjHandle);
@@ -306,8 +306,8 @@ AcpiDsInitializeObjects (
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
-        "\nTable [%4.4s] - %hd Objects with %hd Devices %hd Methods %hd Regions\n",
-        TableDesc->Pointer->Signature, Info.ObjectCount,
+        "\nTable [%4.4s](id %4.4X) - %hd Objects with %hd Devices %hd Methods %hd Regions\n",
+        TableDesc->Pointer->Signature, TableDesc->TableId, Info.ObjectCount,
         Info.DeviceCount, Info.MethodCount, Info.OpRegionCount));
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,

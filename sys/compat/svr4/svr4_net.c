@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.33.2.1 2003/07/02 15:25:55 darrenr Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.33.2.2 2004/08/03 10:44:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33.2.1 2003/07/02 15:25:55 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33.2.2 2004/08/03 10:44:32 skrll Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -143,7 +143,7 @@ svr4_netopen(dev, flag, mode, l)
 
 	DPRINTF(("netopen("));
 
-	if (p->p_dupfd >= 0)
+	if (curlwp->l_dupfd >= 0)	/* XXX */
 		return ENODEV;
 
 	switch (minor(dev)) {
@@ -204,7 +204,7 @@ svr4_netopen(dev, flag, mode, l)
 	if ((error = falloc(p, &fp, &fd)) != 0)
 		return error;
 
-	if ((error = socreate(family, &so, type, protocol)) != 0) {
+	if ((error = socreate(family, &so, type, protocol, l)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
 		fdremove(p->p_fd, fd);
 		FILE_UNUSE(fp, NULL);
@@ -221,7 +221,7 @@ svr4_netopen(dev, flag, mode, l)
 
 	DPRINTF(("ok);\n"));
 
-	p->p_dupfd = fd;
+	curlwp->l_dupfd = fd;	/* XXX */
 	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, l);
 	return ENXIO;
@@ -258,7 +258,7 @@ svr4_ptm_alloc(p)
 	 * Cycle through the names. If sys_open() returns ENOENT (or
 	 * ENXIO), short circuit the cycle and exit.
 	 */
-	static char ptyname[] = "/dev/ptyXX";
+	char ptyname[] = "/dev/ptyXX";
 	static const char ttyletters[] = "pqrstuvwxyzPQRST";
 	static const char ttynumbers[] = "0123456789abcdef";
 	caddr_t sg = stackgap_init(p, 0);
@@ -284,7 +284,7 @@ svr4_ptm_alloc(p)
 		case ENXIO:
 			return error;
 		case 0:
-			p->p_dupfd = fd;
+			curlwp->l_dupfd = fd;	/* XXX */
 			return ENXIO;
 		default:
 			if (ttynumbers[++n] == '\0') {

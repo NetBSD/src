@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.64.2.1 2003/07/02 15:25:46 darrenr Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.64.2.1 2003/07/02 15:25:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,9 @@ linux_sys_execve(l, v, retval)
 /*
  * Emulation switch.
  */
+
+struct uvm_object *emul_linux_object;
+
 const struct emul emul_linux = {
 	"linux",
 	"/emul/linux",
@@ -124,18 +127,22 @@ const struct emul emul_linux = {
 	linux_syscallnames,
 	linux_sendsig,
 	linux_trapsignal,
+	NULL,
 	linux_sigcode,
 	linux_esigcode,
+	&emul_linux_object,
 	linux_setregs,
 	linux_e_proc_exec,
 	linux_e_proc_fork,
 	linux_e_proc_exit,
+	NULL,
+	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
 	linux_syscall_intern,
 #else
 #error Implement __HAVE_SYSCALL_INTERN for this platform
 #endif
-	linux_sysctl,
+	NULL,
 	NULL,
 };
 

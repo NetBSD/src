@@ -1,9 +1,49 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.66.2.1 2003/07/02 15:25:44 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.66.2.2 2004/08/03 10:43:46 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ *
+ *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -55,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.1 2003/07/02 15:25:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.2 2004/08/03 10:43:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +416,8 @@ ibcs2_sys_getdents(l, v, retval)
 	struct iovec aiov;
 	struct ibcs2_dirent idb;
 	off_t off;			/* true file offset */
-	int buflen, error, eofflag;
+	size_t buflen;
+	int error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
@@ -392,7 +433,7 @@ ibcs2_sys_getdents(l, v, retval)
 		error = EINVAL;
 		goto out1;
 	}
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = min(MAXBSIZE, (size_t)SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
@@ -502,7 +543,8 @@ ibcs2_sys_read(l, v, retval)
 		ibcs2_ino_t ino;
 		char name[14];
 	} idb;
-	int buflen, error, eofflag;
+	size_t buflen;
+	int error, eofflag;
 	size_t size;
 	off_t *cookiebuf = NULL, *cookie;
 	off_t off;			/* true file offset */
@@ -524,7 +566,7 @@ ibcs2_sys_read(l, v, retval)
 		FILE_UNUSE(fp, l);
 		return sys_read(l, uap, retval);
 	}
-	buflen = min(MAXBSIZE, max(DEV_BSIZE, SCARG(uap, nbytes)));
+	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
@@ -832,7 +874,6 @@ ibcs2_sys_sysconf(l, v, retval)
 	struct proc *p = l->l_proc;
 	int mib[2], value, error;
 	size_t len;
-	struct sys___sysctl_args sa;
 	struct sys_getrlimit_args ga;
 
 	switch(SCARG(uap, name)) {
@@ -898,14 +939,13 @@ ibcs2_sys_sysconf(l, v, retval)
 
 	mib[0] = CTL_KERN;
 	len = sizeof(value);
-	SCARG(&sa, name) = mib;
-	SCARG(&sa, namelen) = 2;
-	SCARG(&sa, old) = &value;
-	SCARG(&sa, oldlenp) = &len;
-	SCARG(&sa, new) = NULL;
-	SCARG(&sa, newlen) = 0;
-	if ((error = sys___sysctl(l, &sa, retval)) != 0)
-		return error;
+	/*
+	 * calling into sysctl with superuser privs, but we don't mind,
+	 * 'cause we're only querying a value.
+	 */
+	error = old_sysctl(&mib[0], 2, &value, &len, NULL, 0, NULL);
+	if (error)
+		return (error);
 	*retval = value;
 	return 0;
 }

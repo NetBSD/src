@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.24 2003/01/18 08:28:25 thorpej Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.24.2.1 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,10 +41,12 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/ucontext.h>
 
 /*
  * first, define the basic types we need.
@@ -104,6 +106,8 @@ typedef netbsd32_pointer_t netbsd32_caddrp;
 typedef netbsd32_pointer_t netbsd32_caddr;
 typedef netbsd32_pointer_t netbsd32_gid_tp;
 typedef netbsd32_pointer_t netbsd32_fsid_tp_t;
+typedef netbsd32_pointer_t netbsd32_lwpidp;
+typedef netbsd32_pointer_t netbsd32_ucontextp;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -471,6 +475,35 @@ __attribute__((packed))
 #endif
 ;
 
+/* from <sys/statvfs.h> */
+typedef netbsd32_pointer_t netbsd32_statvfsp_t;
+struct netbsd32_statvfs {
+	netbsd32_u_long	f_flag;		/* copy of mount exported flags */
+	netbsd32_u_long	f_bsize;	/* system block size */
+	netbsd32_u_long	f_frsize;	/* system fragment size */
+	netbsd32_u_long	f_iosize;	/* optimal file system block size */
+	fsblkcnt_t	f_blocks;	/* number of blocks in file system */
+	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
+	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
+	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
+	fsfilcnt_t	f_files;	/* total file nodes in file system */
+	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
+	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
+	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
+	uint64_t  	f_syncreads;	/* count of sync reads since mount */
+	uint64_t  	f_syncwrites;	/* count of sync writes since mount */
+	uint64_t  	f_asyncreads;	/* count of async reads since mount */
+	uint64_t  	f_asyncwrites;	/* count of async writes since mount */
+	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
+	netbsd32_u_long	f_fsid;		/* Posix compatible fsid */
+	netbsd32_u_long	f_namemax;	/* maximum filename length */
+	uid_t		f_owner;	/* user that mounted the file system */
+	uint32_t	f_spare[4];	/* spare space */
+	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+} __attribute__((packed));
+
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;
 struct netbsd32_ntptimeval {
@@ -523,6 +556,9 @@ typedef struct firm_event32 {
 	struct netbsd32_timeval time;
 } Firm_event32;
 
+void netbsd32_si_to_si32(siginfo32_t *, siginfo_t *);
+void netbsd32_si32_to_si(siginfo_t *, siginfo32_t *);
+
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
  * note that they do *NOT* act like good macros and put ()'s around all
@@ -553,4 +589,7 @@ int	coredump_netbsd32(struct lwp *, struct vnode *, struct ucred *);
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 int netbsd32_execve2(struct lwp *, struct sys_execve_args *, register_t *);
  
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.75 2003/05/26 16:14:49 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.75.2.1 2004/08/03 10:46:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.75 2003/05/26 16:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.75.2.1 2004/08/03 10:46:14 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -190,7 +190,7 @@ void	fxp_stop(struct ifnet *, int);
 void	fxp_txintr(struct fxp_softc *);
 void	fxp_rxintr(struct fxp_softc *);
 
-void	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
+int	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
 
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
@@ -390,14 +390,21 @@ fxp_attach(struct fxp_softc *sc)
 	ifp->if_stop = fxp_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/*
-	 * XXX we should have separate IFCAP flags for transmit and receive.
-	 * XXX it isn't problem for this paticular driver, though.
-	 */
 	if (sc->sc_flags & FXPF_IPCB) {
 		KASSERT(sc->sc_flags & FXPF_EXT_RFA); /* we have both or none */
+		/*
+		 * IFCAP_CSUM_IPv4 seems to have a problem,
+		 * at least, on i82550 rev.12.
+		 * specifically, it doesn't calculate ipv4 checksum correctly
+		 * when sending 20 byte ipv4 header + 1 or 2 byte data.
+		 * FreeBSD driver has related comments.
+		 *
+		 * XXX we should have separate IFCAP flags
+		 * for transmit and receive.
+		 */
 		ifp->if_capabilities =
-		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		    /*IFCAP_CSUM_IPv4 |*/ IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 	}
 
 	/*
@@ -422,6 +429,12 @@ fxp_attach(struct fxp_softc *sc)
 	    NULL, sc->sc_dev.dv_xname, "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
+	if (sc->sc_rev >= FXP_REV_82558_A4) {
+		evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
+		    NULL, sc->sc_dev.dv_xname, "txpause");
+		evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
+		    NULL, sc->sc_dev.dv_xname, "rxpause");
+	}
 #endif /* FXP_EVENT_COUNTERS */
 
 	/*
@@ -579,7 +592,7 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	 * Reset to a stable state.
 	 */
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
-	DELAY(10);
+	DELAY(100);
 
 	sc->sc_eeprom_size = 0;
 	fxp_autosize_eeprom(sc);
@@ -647,6 +660,14 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 			fxp_eeprom_update_cksum(sc);
 		}
 	}
+
+	/* Receiver lock-up workaround detection. */
+	fxp_read_eeprom(sc, &data, 3, 1);
+	if ((data & 0x03) != 0x03) {
+		aprint_verbose("%s: Enabling receiver lock-up workaround\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_flags |= FXPF_RECV_WORKAROUND;
+	}
 }
 
 static void
@@ -656,17 +677,19 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
 	int x;
 
 	for (x = 1 << (len - 1); x != 0; x >>= 1) {
+		DELAY(40);
 		if (data & x)
 			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
 		else
 			reg = FXP_EEPROM_EECS;
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    reg | FXP_EEPROM_EESK);
-		DELAY(4);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(4);
 	}
+	DELAY(40);
 }
 
 /*
@@ -674,7 +697,7 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
  *
  * 559's can have either 64-word or 256-word EEPROMs, the 558
  * datasheet only talks about 64-word EEPROMs, and the 557 datasheet
- * talks about the existance of 16 to 256 word EEPROMs.
+ * talks about the existence of 16 to 256 word EEPROMs.
  *
  * The only known sizes are 64 and 256, where the 256 version is used
  * by CardBus cards to store CIS information.
@@ -702,6 +725,7 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 	int x;
 
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	DELAY(40);
 
 	/* Shift in read opcode. */
 	fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
@@ -712,17 +736,19 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 	 */
 	for (x = 1; x <= 8; x++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
-		DELAY(4);
+		DELAY(40);
 		if ((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 		    FXP_EEPROM_EEDO) == 0)
 			break;
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		DELAY(4);
+		DELAY(40);
 	}
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-	DELAY(4);
+	DELAY(40);
 	if (x != 6 && x != 8) {
 #ifdef DEBUG
 		printf("%s: strange EEPROM size (%d)\n",
@@ -761,15 +787,15 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
+			DELAY(40);
 			if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 			    FXP_EEPROM_EEDO)
 				data[i] |= (1 << (x - 1));
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
+			DELAY(40);
 		}
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-		DELAY(4);
+		DELAY(40);
 	}
 }
 
@@ -1005,6 +1031,21 @@ fxp_start(struct ifnet *ifp)
 				ipcb->ipcb_ip_schedule |=
 				    FXP_IPCB_TCPUDP_CHECKSUM_ENABLE;
 			}
+
+			/*
+			 * request VLAN tag insertion if needed.
+			 */
+			if (sc->sc_ethercom.ec_nvlans != 0) {
+				struct m_tag *vtag;
+
+				vtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL);
+				if (vtag) {
+					ipcb->ipcb_vlan_id =
+					    htobe16(*(u_int *)(vtag + 1));
+					ipcb->ipcb_ip_activation_high |=
+					    FXP_IPCB_INSERTVLAN_ENABLE;
+				}
+			}
 		} else {
 			KASSERT((csum_flags &
 			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) == 0);
@@ -1083,7 +1124,7 @@ fxp_intr(void *arg)
 	int claimed = 0;
 	u_int8_t statack;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || sc->sc_enabled == 0)
 		return (0);
 	/*
 	 * If the interface isn't running, don't try to
@@ -1117,6 +1158,8 @@ fxp_intr(void *arg)
 		}
 
 		if (statack & FXP_SCB_STATACK_RNR) {
+			fxp_scb_wait(sc);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
 			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 			fxp_scb_wait(sc);
 			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
@@ -1199,7 +1242,11 @@ fxp_txintr(struct fxp_softc *sc)
 		ifp->if_timer = 0;
 }
 
-void
+/*
+ * fxp_rx_hwcksum: check status of H/W offloading for received packets.
+ */
+
+int
 fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 {
 	u_int16_t rxparsestat;
@@ -1207,10 +1254,28 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 	u_int32_t csum_data;
 	int csum_flags;
 
-	rxparsestat = le16toh(rfa->rx_parse_stat);
+	/*
+	 * check VLAN tag stripping.
+	 */
+
+	if (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) {
+		struct m_tag *vtag;
+
+		vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
+		if (vtag == NULL)
+			return ENOMEM;
+		*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
+		m_tag_prepend(m, vtag);
+	}
+
+	/*
+	 * check H/W Checksumming.
+	 */
+
 	csum_stat = le16toh(rfa->cksum_stat);
+	rxparsestat = le16toh(rfa->rx_parse_stat);
 	if (!(rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)))
-		return;
+		return 0;
 
 	csum_flags = 0;
 	csum_data = 0;
@@ -1229,6 +1294,8 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 
 	m->m_pkthdr.csum_flags = csum_flags;
 	m->m_pkthdr.csum_data = csum_data;
+
+	return 0;
 }
 
 /*
@@ -1296,7 +1363,8 @@ fxp_rxintr(struct fxp_softc *sc)
 		/* Do checksum checking. */
 		m->m_pkthdr.csum_flags = 0;
 		if (sc->sc_flags & FXPF_EXT_RFA)
-			fxp_rx_hwcksum(m, rfa);
+			if (fxp_rx_hwcksum(m, rfa))
+				goto dropit;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1377,7 +1445,7 @@ fxp_tick(void *arg)
 	if (sp->rx_good) {
 		ifp->if_ipackets += le32toh(sp->rx_good);
 		sc->sc_rxidle = 0;
-	} else {
+	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
 	}
 	ifp->if_ierrors +=
@@ -1394,6 +1462,12 @@ fxp_tick(void *arg)
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
+#ifdef FXP_EVENT_COUNTERS
+	if (sc->sc_rev >= FXP_REV_82558_A4) {
+		sc->sc_ev_txpause.ev_count += sp->tx_pauseframes;
+		sc->sc_ev_rxpause.ev_count += sp->rx_pauseframes;
+	}
+#endif
 
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
@@ -1437,6 +1511,10 @@ fxp_tick(void *arg)
 		sp->rx_alignment_errors = 0;
 		sp->rx_rnr_errors = 0;
 		sp->rx_overrun_errors = 0;
+		if (sc->sc_rev >= FXP_REV_82558_A4) {
+			sp->tx_pauseframes = 0;
+			sp->rx_pauseframes = 0;
+		}
 	}
 
 	if (sc->sc_flags & FXPF_MII) {
@@ -1555,7 +1633,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
-	int i, prm, save_bf, lrxen, allm, error = 0;
+	int i, prm, save_bf, lrxen, vlan_drop, allm, error = 0;
 
 	if ((error = fxp_enable(sc)) != 0)
 		goto out;
@@ -1603,11 +1681,14 @@ fxp_init(struct ifnet *ifp)
 	 */
 	save_bf = 0;
 	lrxen = 0;
+	vlan_drop = 0;
 	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
 		if (sc->sc_rev < FXP_REV_82558_A4)
 			save_bf = 1;
 		else
 			lrxen = 1;
+		if (sc->sc_rev >= FXP_REV_82550)
+			vlan_drop = 1;
 	}
 
 	/*
@@ -1697,6 +1778,7 @@ fxp_init(struct ifnet *ifp)
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
 	cbp->mc_all =		allm;	/* accept all multicasts */
 	cbp->ext_rx_mode =	(sc->sc_flags & FXPF_EXT_RFA) ? 1 : 0;
+	cbp->vlan_drop_en =	vlan_drop;
 
 	if (sc->sc_rev < FXP_REV_82558_A4) {
 		/*
@@ -1720,6 +1802,7 @@ fxp_init(struct ifnet *ifp)
 		cbp->rx_fc_restart =	1;	/* enable FC restart frames */
 		cbp->fc_filter =	!prm;	/* drop FC frames to host */
 		cbp->pri_fc_loc =	1;	/* FC pri location (byte31) */
+		cbp->ext_stats_dis =	0;	/* enable extended stats */
 	}
 
 	FXP_CDCONFIGSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1903,6 +1986,14 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+
+	/*
+	 * XXX Flow control is always turned on if the chip supports
+	 * XXX it; we can't easily control it dynamically, since it
+	 * XXX requires sending a setup packet.
+	 */
+	if (sc->sc_rev >= FXP_REV_82558_A4)
+		ifmr->ifm_active |= IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE;
 }
 
 int

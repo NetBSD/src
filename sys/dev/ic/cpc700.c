@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.5 2003/01/01 00:10:18 thorpej Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.5.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * XXX This driver assumes that there is only one instance of it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.5.2.1 2004/08/03 10:46:12 skrll Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -142,6 +145,7 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	int i;
 	pcitag_t tag; 
 	pcireg_t erren;
+	pcireg_t v;
 	static struct {
 		const char *name;
 		bus_addr_t addr;
@@ -193,7 +197,15 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 
 	/* Save PCI error condition reg. */
 	erren = pci_conf_read(pc, tag, CPC_PCI_BRDGERR);
+	/* Don't generate errors during probe. */
 	pci_conf_write(pc, tag, CPC_PCI_BRDGERR, 0);
+
+	/* Program MITL */
+	v = pci_conf_read(pc, tag, CPC_BRIDGE_OPTIONS2);
+	v &= ~(CPC_BRIDGE_O2_ILAT_MASK | CPC_BRIDGE_O2_SLAT_MASK);
+	v |= (CPC_BRIDGE_O2_ILAT_PRIM_ASYNC << CPC_BRIDGE_O2_ILAT_SHIFT) |
+	  (CPC_BRIDGE_O2_2LAT_PRIM_ASYNC << CPC_BRIDGE_O2_SLAT_SHIFT);
+	pci_conf_write(pc, tag, CPC_BRIDGE_OPTIONS2, v);
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio",  CPC_PCI_IO_START, CPC_PCI_IO_END,

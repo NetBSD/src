@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.12 2003/01/11 06:12:09 dsainty Exp $	*/
+/*	$NetBSD: bthci.c,v 1.12.2.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.12.2.1 2004/08/03 10:45:46 skrll Exp $");
 
 #include "bthcidrv.h"
 
@@ -290,7 +293,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 	struct bthci_softc *sc;
 	int error;
 	int s;
-	unsigned int blocked;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
@@ -307,18 +309,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 
 	s = sc->sc_methods->bt_splraise();
 	while (!sc->sc_outputready) {
-#define BTHCI_READ_EVTS (BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT)
-		blocked = sc->sc_methods->bt_unblockcb(sc->sc_handle,
-						       BTHCI_READ_EVTS);
-		if ((blocked & BTHCI_READ_EVTS) != 0) {
-			/* Problem unblocking events */
-			splx(s);
-			DPRINTFN(1,("%s: couldn't unblock events\n",
-				    __func__));
-			error = EIO;
-			goto ret;
-		}
-
 		DPRINTFN(5,("%s: calling tsleep()\n", __func__));
 		error = tsleep(&sc->sc_outputready, PZERO | PCATCH,
 			       "bthcrd", 0);
@@ -335,8 +325,8 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 
 	if (uio->uio_resid < sc->sc_rd_len) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: short read %d < %d\n", uio->uio_resid,
-		       sc->sc_rd_len);
+		printf("bthciread: short read %ld < %ld\n",
+		    (long)uio->uio_resid, (long)sc->sc_rd_len);
 #endif
 		error = EINVAL;
 		goto ret;
@@ -347,11 +337,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 	if (!error) {
 		sc->sc_outputready = 0;
 		sc->sc_rd_len = 0;
-
-		/* Unblock events (in case they were blocked) */
-		sc->sc_methods->bt_unblockcb(sc->sc_handle,
-					     BT_CBBLOCK_ACL_DATA |
-					     BT_CBBLOCK_EVENT);
 	}
 
  ret:
@@ -415,14 +400,14 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (uiolen > BTHCI_ACL_DATA_MAX_LEN + 1) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: long write %d\n", uio->uio_resid);
+		printf("bthciread: long write %ld\n", (long)uio->uio_resid);
 #endif
 		return (EINVAL);
 	}
 
 	if (uiolen <= 1) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: short write %d\n", uio->uio_resid);
+		printf("bthciread: short write %ld\n", (long)uio->uio_resid);
 #endif
 		return (EINVAL);
 	}
@@ -603,9 +588,6 @@ bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 	sc->sc_rd_len = len + 1;
 	sc->sc_outputready = 1;
 
-	sc->sc_methods->bt_blockcb(sc->sc_handle,
-				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
-
 	wakeup(&sc->sc_outputready);
 	selnotify(&sc->sc_rd_sel, 0);
 }
@@ -647,9 +629,6 @@ bthci_recvacldata(void *h, u_int8_t *data, size_t len)
 	memcpy(&sc->sc_rd_buf[1], data, len);
 	sc->sc_rd_len = len + 1;
 	sc->sc_outputready = 1;
-
-	sc->sc_methods->bt_blockcb(sc->sc_handle,
-				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
 
 	wakeup(&sc->sc_outputready);
 	selnotify(&sc->sc_rd_sel, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46 2003/01/28 12:35:36 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.46.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * Plain tty/async lines use the zs_async slave.
  * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46.2.1 2004/08/03 10:41:24 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,22 +158,16 @@ struct consdev zs_consdev = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int  zs_match_mainbus __P((struct device *, struct cfdata *, void *));
-static void zs_attach_mainbus __P((struct device *, struct device *, void *));
+static int  zs_match_sbus __P((struct device *, struct cfdata *, void *));
+static void zs_attach_sbus __P((struct device *, struct device *, void *));
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-/* Do we really need this ? */
 CFATTACH_DECL(zs, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
-
-CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
+    zs_match_sbus, zs_attach_sbus, NULL, NULL);
 
 extern struct cfdriver zs_cd;
-extern int stdinnode;
-extern int fbnode;
 
 /* Interrupt handlers. */
 int zscheckintr __P((void *));
@@ -190,7 +187,7 @@ void zs_disable __P((struct zs_chanstate *));
  * Is the zs chip present?
  */
 static int
-zs_match_mainbus(parent, cf, aux)
+zs_match_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -204,7 +201,7 @@ zs_match_mainbus(parent, cf, aux)
 }
 
 static void
-zs_attach_mainbus(parent, self, aux)
+zs_attach_sbus(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
@@ -253,7 +250,7 @@ zs_attach_mainbus(parent, self, aux)
 	}
 	zsc->zsc_bustag = sa->sa_bustag;
 	zsc->zsc_dmatag = sa->sa_dmatag;
-	zsc->zsc_promunit = PROM_getpropint(sa->sa_node, "slave", -2);
+	zsc->zsc_promunit = prom_getpropint(sa->sa_node, "slave", -2);
 	zsc->zsc_node = sa->sa_node;
 	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
 }
@@ -321,8 +318,8 @@ zs_attach(zsc, zsd, pri)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Consult PROM properties for this?! */
 		cs->cs_defspeed = zs_get_speed(cs);
@@ -364,7 +361,7 @@ zs_attach(zsc, zsd, pri)
 		 */
 		if (child 
 		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
-		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
+		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */
@@ -773,7 +770,7 @@ zs_putc(arg, c)
 	 * the `transmit-ready' interrupt isn't de-asserted until
 	 * some period of time after the register write completes
 	 * (more than a couple instructions).  So to avoid stray
-	 * interrupts we put in the 2us delay regardless of cpu model.
+	 * interrupts we put in the 2us delay regardless of CPU model.
 	 */
 	zc->zc_data = c;
 	delay(2);
@@ -832,35 +829,29 @@ zs_console_flags(promunit, node, channel)
 	int channel;
 {
 	int cookie, flags = 0;
-	u_int options;
 	char buf[255];
 
 	/*
-	 * We'll just to the OBP grovelling down here since that's
+	 * We'll just do the OBP grovelling down here since that's
 	 * the only type of firmware we support.
 	 */
-	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
-	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(options, "input-device", buf, sizeof(buf)) != -1) {
-
-			if (!strcmp("ttyb", buf))
-				cookie = 1;
-		}
+	if (node == prom_instance_to_package(prom_stdin())) {
+		if (prom_getoption("input-device", buf, sizeof buf) != 0 &&
+		    strcmp("ttyb", buf) == 0)
+			cookie = 1;
 
 		if (channel == cookie)
 			flags |= ZS_HWFLAG_CONSOLE_INPUT;
 	}
 
-	if (node == OF_instance_to_package(OF_stdout())) { 
-		if (OF_getprop(options, "output-device", buf, sizeof(buf)) != -1) {
+	if (node == prom_instance_to_package(prom_stdout())) { 
+		if (prom_getoption("output-device", buf, sizeof buf) != 0 &&
+		    strcmp("ttyb", buf) == 0)
+			cookie = 1;
 
-			if (!strcmp("ttyb", buf))
-				cookie = 1;
-		}
-		
 		if (channel == cookie)
 			flags |= ZS_HWFLAG_CONSOLE_OUTPUT;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: bios32.h,v 1.1.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,5 +80,5 @@ typedef struct bios32_entry *bios32_entry_t;
 #define	BIOS32_MAKESIG(a, b, c, d)					\
 	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 
-void	bios32_init __P((void));
-int	bios32_service __P((u_int32_t, bios32_entry_t, bios32_entry_info_t));
+void	bios32_init(void);
+int	bios32_service(u_int32_t, bios32_entry_t, bios32_entry_info_t);

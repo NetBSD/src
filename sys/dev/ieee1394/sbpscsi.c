@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.5 2002/12/19 09:58:24 jmc Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.5.2.1 2004/08/03 10:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.5 2002/12/19 09:58:24 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.5.2.1 2004/08/03 10:47:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,7 +210,7 @@ sbpscsi_scsipi_request(struct scsipi_channel *channel, scsipi_adapter_req_t req,
 		cmd.cb_arg = xs;
 		handle = sbp2_runcmd(sbp2, &cmd);
 		if (handle)
-			callout_reset(&xs->xs_callout, xs->timeout,
+			callout_reset(&xs->xs_callout, mstohz(xs->timeout),
 			    sbpscsi_timeout, handle);
 		else {
 			DPRINTF(("Got an error from sbp2_runcmd\n"));
@@ -316,7 +316,5 @@ sbpscsi_minphys(bp)
         struct buf *bp;
 {
 
-        if (bp->b_bcount > SBP2_MAXPHYS)
-                bp->b_bcount = SBP2_MAXPHYS;
 	minphys(bp);
 }

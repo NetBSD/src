@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 2003/06/26 13:20:55 he Exp $	*/
+/*	$NetBSD: lock.h,v 1.13.2.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -36,14 +36,10 @@
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include <machine/intr.h>
 #endif
 #include <machine/cpu.h>
 #endif
-
-typedef __volatile int		__cpu_simple_lock_t;
-
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.13 2002/10/02 16:51:56 thorpej Exp $	*/
+/*	$NetBSD: trm.c,v 1.13.6.1 2004/08/03 10:49:12 skrll Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.13 2002/10/02 16:51:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.13.6.1 2004/08/03 10:49:12 skrll Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -1116,7 +1116,6 @@ trm_intr(arg)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct trm_softc *sc;
-	struct trm_srb *srb;
 	int intstat, stat;
 
 	DPRINTF(("trm_intr......\n"));
@@ -1151,7 +1150,6 @@ trm_intr(arg)
 		return (1);
 	}
 	if (intstat & (INT_BUSSERVICE | INT_CMDDONE)) {
-		srb = sc->sc_actsrb;
 		DPRINTF(("sc->sc_phase = %2d, sc->sc_state = %2d\n",
 		    sc->sc_phase, sc->sc_state));
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2003/01/22 21:58:28 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.63.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -69,7 +65,7 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
-#if !defined(_LKM) && defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_sparc_arch.h"
@@ -90,7 +86,6 @@
 
 #define	cpu_swapin(p)		/* nothing */
 #define	cpu_swapout(p)		/* nothing */
-#define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 
@@ -203,7 +198,6 @@ int	probeget(caddr_t, int);
 void	write_all_windows(void);
 void	write_user_windows(void);
 void 	proc_trampoline(void);
-void	switchexit(struct lwp *, void (*)(struct lwp *));
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
@@ -223,8 +217,6 @@ void zs_kgdb_init(void);
 #endif
 /* fb.c */
 void	fb_unblank(void);
-/* cache.c */
-void cache_flush(caddr_t, u_int);
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);

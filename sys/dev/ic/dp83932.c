@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.8 2003/01/18 13:53:29 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.8.2.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.8 2003/01/18 13:53:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.8.2.1 2004/08/03 10:46:13 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -283,7 +283,8 @@ sonic_start(struct ifnet *ifp)
 	struct sonic_tda32 *tda32;
 	struct sonic_descsoft *ds;
 	bus_dmamap_t dmamap;
-	int error, olasttx, nexttx, opending, seg, totlen, olseg;
+	int error, olasttx, nexttx, opending, totlen, olseg;
+	int seg = 0;	/* XXX: gcc */
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;

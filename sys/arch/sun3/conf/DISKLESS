@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.41 2003/04/10 22:07:05 christos Exp $
+# $NetBSD: DISKLESS,v 1.41.2.1 2004/08/03 10:42:02 skrll Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -26,6 +26,7 @@ maxusers	2
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB
@@ -49,6 +50,8 @@ options 	USERCONF	# userconf(4) support
 #options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

@@ -2,7 +2,7 @@
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              xRevision: 61 $
+ *              xRevision: 64 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.6 2003/03/04 17:25:28 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.6.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __TBXFACE_C__
 
@@ -322,7 +322,7 @@ ACPI_STATUS
 AcpiUnloadTable (
     ACPI_TABLE_TYPE         TableType)
 {
-    ACPI_TABLE_DESC         *ListHead;
+    ACPI_TABLE_DESC         *TableDesc;
 
 
     ACPI_FUNCTION_TRACE ("AcpiUnloadTable");
@@ -338,8 +338,8 @@ AcpiUnloadTable (
 
     /* Find all tables of the requested type */
 
-    ListHead = &AcpiGbl_AcpiTables[TableType];
-    do
+    TableDesc = AcpiGbl_TableLists[TableType].Next;
+    while (TableDesc)
     {
         /*
          * Delete all namespace entries owned by this table.  Note that these
@@ -347,14 +347,14 @@ AcpiUnloadTable (
          * "Scope" operator.  Thus, we need to track ownership by an ID, not
          * simply a position within the hierarchy
          */
-        AcpiNsDeleteNamespaceByOwner (ListHead->TableId);
+        AcpiNsDeleteNamespaceByOwner (TableDesc->TableId);
 
-        /* Delete (or unmap) the actual table */
+        TableDesc = TableDesc->Next;
+    }
 
-        AcpiTbDeleteAcpiTable (TableType);
+    /* Delete (or unmap) all tables of this type */
 
-    } while (ListHead != &AcpiGbl_AcpiTables[TableType]);
-
+    AcpiTbDeleteTablesByType (TableType);
     return_ACPI_STATUS (AE_OK);
 }
 
@@ -403,7 +403,7 @@ AcpiGetTableHeader (
     /* Check the table type and instance */
 
     if ((TableType > ACPI_TABLE_MAX)    ||
-        (ACPI_IS_SINGLE_TABLE (AcpiGbl_AcpiTableData[TableType].Flags) &&
+        (ACPI_IS_SINGLE_TABLE (AcpiGbl_TableData[TableType].Flags) &&
          Instance > 1))
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
@@ -489,7 +489,7 @@ AcpiGetTable (
     /* Check the table type and instance */
 
     if ((TableType > ACPI_TABLE_MAX)    ||
-        (ACPI_IS_SINGLE_TABLE (AcpiGbl_AcpiTableData[TableType].Flags) &&
+        (ACPI_IS_SINGLE_TABLE (AcpiGbl_TableData[TableType].Flags) &&
          Instance > 1))
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);

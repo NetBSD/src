@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.5 2000/06/15 19:53:23 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.5.26.1 2004/08/03 10:42:22 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,7 +50,6 @@ extern int csrbase, nexaddr;
 
 struct netif_driver;
 
-char *index(char *, int);
 int net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr);
 
 /* device calls */

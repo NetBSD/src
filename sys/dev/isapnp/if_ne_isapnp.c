@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.17 2002/10/02 16:34:02 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.17.6.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.17 2002/10/02 16:34:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.17.6.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ ne_isapnp_attach(
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
 		/*
-		 * Check for a RealTek 8019.
+		 * Check for a Realtek 8019.
 		 */
 		bus_space_write_1(nict, nich, ED_P0_CR,
 		    ED_CR_PAGE_0 | ED_CR_STP);

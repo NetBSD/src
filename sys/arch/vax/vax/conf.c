@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61 2002/10/26 13:50:48 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.61.6.1 2004/08/03 10:42:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,6 +31,9 @@
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.61.6.1 2004/08/03 10:42:35 skrll Exp $");
+
 #include "opt_cputype.h"
 
 #include <sys/param.h>
@@ -47,6 +46,8 @@
 #include <dev/cons.h>
 
 #include "smg.h"
+#include "lcspx.h"
+#include "lcg.h"
 #include "wskbd.h"
 #if NSMG > 0
 #if NWSKBD > 0
@@ -62,11 +63,41 @@ smgcngetc(dev_t dev)
 #define smgcnputc wsdisplay_cnputc
 #define	smgcnpollc nullcnpollc
 #endif
+#if NLCSPX > 0
+#if NWSKBD > 0
+#define lcspxcngetc wskbd_cngetc
+#else
+static int
+lcspxcngetc(dev_t dev)
+{
+	return 0;
+}
+#endif
+
+#define lcspxcnputc wsdisplay_cnputc
+#define lcspxcnpollc nullcnpollc
+#endif
+#if NLCG > 0
+#if NWSKBD > 0
+#define lcgcngetc wskbd_cngetc
+#else
+static int
+lcgcngetc(dev_t dev)
+{
+	return 0;
+}
+#endif
+
+#define lcgcnputc wsdisplay_cnputc
+#define lcgcnpollc nullcnpollc
+#endif
 
 cons_decl(gen);
 cons_decl(dz);
 cons_decl(qd);
 cons_decl(smg);
+cons_decl(lcspx);
+cons_decl(lcg);
 #include "qv.h"
 #include "qd.h"
 
@@ -88,6 +119,12 @@ struct	consdev constab[]={
 #endif
 #if NSMG
 	cons_init(smg),
+#endif
+#if NLCSPX
+	cons_init(lcspx),
+#endif
+#if NLCG
+	cons_init(lcg),
 #endif
 
 #ifdef notyet

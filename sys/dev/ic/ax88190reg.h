@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190reg.h,v 1.1 2001/08/04 11:38:57 enami Exp $	*/
+/*	$NetBSD: ax88190reg.h,v 1.1.24.1 2004/08/03 10:46:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
  */
 #define	AX88190_LAN_IOBASE	0x3ca
 #define	AX88190_LAN_IOSIZE	4
+#define	AX88790_CSR		0x3c2
+#define	AX88790_CSR_SIZE	2
 
 /*
  * Offset of NODE ID in SRAM memory of ASIX AX88190.

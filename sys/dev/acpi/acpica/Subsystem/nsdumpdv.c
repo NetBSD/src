@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              xRevision: 5 $
+ *              xRevision: 10 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.2 2003/02/13 14:16:22 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.2.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __NSDUMPDV_C__
 
@@ -150,7 +150,8 @@ AcpiNsDumpOneDevice (
     void                    *Context,
     void                    **ReturnValue)
 {
-    ACPI_DEVICE_INFO        Info;
+    ACPI_BUFFER             Buffer;
+    ACPI_DEVICE_INFO        *Info;
     ACPI_STATUS             Status;
     UINT32                  i;
 
@@ -160,18 +161,21 @@ AcpiNsDumpOneDevice (
 
     Status = AcpiNsDumpOneObject (ObjHandle, Level, Context, ReturnValue);
 
-    Status = AcpiGetObjectInfo (ObjHandle, &Info);
+    Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+    Status = AcpiGetObjectInfo (ObjHandle, &Buffer);
     if (ACPI_SUCCESS (Status))
     {
+        Info = Buffer.Pointer;
         for (i = 0; i < Level; i++)
         {
             ACPI_DEBUG_PRINT_RAW ((ACPI_DB_TABLES, " "));
         }
 
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_TABLES, "    HID: %s, ADR: %8.8X%8.8X, Status: %X\n",
-                        Info.HardwareId,
-                        ACPI_HIDWORD (Info.Address), ACPI_LODWORD (Info.Address),
-                        Info.CurrentStatus));
+                        Info->HardwareId.Value,
+                        ACPI_FORMAT_UINT64 (Info->Address),
+                        Info->CurrentStatus));
+        ACPI_MEM_FREE (Info);
     }
 
     return (Status);

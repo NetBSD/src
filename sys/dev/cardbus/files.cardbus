@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.19 2003/03/11 11:59:31 drochner Exp $
+#	$NetBSD: files.cardbus,v 1.19.2.1 2004/08/03 10:45:47 skrll Exp $
 #
 # files.cardbus
 #
@@ -33,6 +33,12 @@ file	dev/cardbus/if_fxp_cardbus.c	fxp_cardbus
 #
 attach	com at cardbus with com_cardbus
 file	dev/cardbus/com_cardbus.c	com_cardbus
+
+#
+# ADMtek ADM8211
+#
+attach	atw at cardbus with atw_cardbus
+file	dev/cardbus/if_atw_cardbus.c	atw_cardbus
 
 #
 # DECchip 21143 and clones.
@@ -71,7 +77,7 @@ attach  ppb at cardbus with rbus_ppb
 file	dev/cardbus/rbus_ppb.c		rbus_ppb
 
 #
-# RealTek 8139
+# Realtek 8139
 #
 attach	rtk at cardbus with rtk_cardbus
 file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
@@ -81,3 +87,9 @@ file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
 #
 attach	adv at cardbus with adv_cardbus
 file	dev/cardbus/adv_cardbus.c	adv_cardbus
+
+#
+# Atheros Wireless LAN
+#
+attach	ath at cardbus with ath_cardbus
+file	dev/cardbus/if_ath_cardbus.c	ath_cardbus

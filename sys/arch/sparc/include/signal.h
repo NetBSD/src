@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2003/04/28 23:16:24 bjh21 Exp $ */
+/*	$NetBSD: signal.h,v 1.11.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -99,52 +95,13 @@ struct sigcontext {
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
 
-#ifdef __arch64__
-#define	_MCONTEXT_TO_SIGCONTEXT_32_64(uc, sc)				\
-do {									\
-	(sc)->sc_tstate =						\
-	    ((uc)->uc_mcontext.__gregs[_REG_CCR] << TSTATE_CCR_SHIFT) |	\
-	    ((uc)->uc_mcontext.__gregs[_REG_ASI] << TSTATE_ASI_SHIFT);	\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_CCR] =				\
-	    ((sc)->sc_tstate & TSTATE_CCR) >> TSTATE_CCR_SHIFT;		\
-	(uc)->uc_mcontext.__gregs[_REG_ASI] =				\
-	    ((sc)->sc_tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;		\
-} while (/*CONSTCOND*/0)
-#else /* ! __arch64__ */
-#define	_MCONTEXT_TO_SIGCONTEXT_32_64(uc, sc)				\
-do {									\
-	(sc)->sc_psr = (uc)->uc_mcontext.__gregs[_REG_PSR];		\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT_32_64(sc, uc)				\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_PSR] = (sc)->sc_psr;		\
-} while (/*CONSTCOND*/0)
-#endif /* __arch64__ */
-
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_sp  = (uc)->uc_mcontext.__gregs[_REG_O6];		\
-	(sc)->sc_pc  = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	(sc)->sc_npc = (uc)->uc_mcontext.__gregs[_REG_nPC];		\
-	_MCONTEXT_TO_SIGCONTEXT_32_64((uc), (sc));			\
-	(sc)->sc_g1  = (uc)->uc_mcontext.__gregs[_REG_G1];		\
-	(sc)->sc_o0  = (uc)->uc_mcontext.__gregs[_REG_O0];		\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_O6]  = (sc)->sc_sp;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
-	(uc)->uc_mcontext.__gregs[_REG_nPC] = (sc)->sc_npc;		\
-	_SIGCONTEXT_TO_MCONTEXT_32_64((sc), (uc));			\
-	(uc)->uc_mcontext.__gregs[_REG_G1]  = (sc)->sc_g1;		\
-	(uc)->uc_mcontext.__gregs[_REG_O0]  = (sc)->sc_o0;		\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
+#endif
 
 #else /* _LOCORE */
 /* XXXXX These values don't work for _LP64 */

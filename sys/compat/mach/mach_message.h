@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.17 2003/07/01 19:15:47 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.17.2.1 2004/08/03 10:44:06 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ typedef unsigned int mach_msg_descriptor_type_t;
 #define MACH_MSG_OOL_VOLATILE_DESCRIPTOR  	3
 
 #define MACH_MAX_MSG_LEN 65536
+
 typedef	struct {
 	mach_msg_bits_t	msgh_bits;
 	mach_msg_size_t	msgh_size;
@@ -162,6 +163,7 @@ typedef	struct {
 	mach_msg_id_t	msgh_id;
 } mach_msg_header_t;
 
+#define MACH_MSG_TRAILER_FORMAT_0	0
 typedef u_int32_t mach_msg_trailer_type_t;
 typedef u_int32_t mach_msg_trailer_size_t;
 typedef struct { 
@@ -207,26 +209,43 @@ typedef struct {
 } mach_msg_body_t;
 
 #define MACH_REQMSG_OVERFLOW(args, test) \
-    (((u_long)&test - (u_long)args->smsg + sizeof(test)) > args->ssize)
+    (((u_long)&test - (u_long)args->smsg) > args->ssize)
 
 struct mach_short_reply {
 	mach_msg_header_t sr_header;
 	mach_msg_trailer_t sr_trailer;
 };
-struct mach_trap_args {
-	struct lwp *l;
-	void *smsg;
-	void *rmsg;
-	size_t ssize;
-	size_t *rsize;
+
+struct mach_complex_msg {
+	mach_msg_header_t mcm_header;
+	mach_msg_body_t mcm_body;
+	union {
+		mach_msg_type_descriptor_t gen[1];
+		mach_msg_port_descriptor_t port[1];
+		mach_msg_ool_ports_descriptor_t ool_ports[1];
+		mach_msg_ool_descriptor_t ool[1];
+	} mcm_desc; 
 };
 
-struct mach_subsystem_namemap {
-	int	map_id;
-	int	(*map_handler)(struct mach_trap_args *);
-	const char	*map_name;
+/* Kernel-private structures */
+
+struct mach_trap_args {
+	struct lwp *l;	/* Current task (doing the Mach system call) */
+	struct lwp *tl; /* Target task */
+	void *smsg;	/* Sent message */
+	void *rmsg;	/* Reply message */
+	size_t ssize;	/* Sent message size */
+	size_t *rsize;	/* Reply message maximum size, may be lowered */
 };
-extern struct mach_subsystem_namemap mach_namemap[];
+
+struct mach_service {
+	int	srv_id;
+	int	(*srv_handler)(struct mach_trap_args *);
+	const char	*srv_name;
+	size_t	srv_reqlen; /* Minimum length of the request message */
+	size_t	srv_replen; /* Maximum length of the reply message */
+};
+extern struct mach_service mach_services_table[];
 
 
 /* In-kernel Mach messages description */
@@ -239,6 +258,18 @@ struct mach_message {
 	struct lwp *mm_l;		/* The thread that sent it */
 };
 
+/* Flags for mach_ool_copy{in|out} */
+#define MACH_OOL_NONE	0x0
+#define MACH_OOL_FREE	0x1	/* Free kernel buffer after copyout */
+#define MACH_OOL_TRACE	0x2	/* ktrace OOL data */
+
+inline int mach_ool_copyin(struct lwp *, const void *, void **, size_t, int);
+inline int mach_ool_copyout(struct lwp *, void *, void **, size_t, int);
+inline void mach_set_trailer(void *, size_t);
+inline void mach_set_header(void *, void *, size_t);
+inline void mach_add_port_desc(void *, mach_port_name_t);
+inline void mach_add_ool_ports_desc(void *, void *, int);
+inline void mach_add_ool_desc(void *, void *, size_t);
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *, 
     size_t, struct mach_port *, struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.9 2002/12/21 16:15:28 kristerw Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.9.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9 2002/12/21 16:15:28 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -360,7 +360,7 @@ sf_start(struct ifnet *ifp)
 	struct sf_txdesc0 *txd;
 	struct sf_descsoft *ds;
 	bus_dmamap_t dmamap;
-	int error, producer, last, opending, seg;
+	int error, producer, last = -1, opending, seg;
 
 	/*
 	 * Remember the previous number of pending transmits.
@@ -481,6 +481,7 @@ sf_start(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txpending != opending) {
+		KASSERT(last != -1);
 		/*
 		 * We enqueued packets.  Cause a transmit interrupt to
 		 * happen on the last packet we enqueued, and give the

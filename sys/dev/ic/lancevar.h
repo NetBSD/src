@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.6 2003/06/29 22:30:12 fvdl Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.6.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ void lance_read __P((struct lance_softc *, int, int));
 void lance_setladrf __P((struct ethercom *, u_int16_t *));
 
 /*
- * The following functions are only useful on certain cpu/bus
+ * The following functions are only useful on certain CPU/bus
  * combinations.  They should be written in assembly language for
  * maximum efficiency, but machine-independent versions are provided
  * for drivers that have not yet been optimized.

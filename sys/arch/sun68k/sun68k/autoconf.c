@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2003/01/01 02:26:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.2.1 2004/08/03 10:42:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * determined (from possibilities mentioned in ioconf.c), and
  * the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.2.1 2004/08/03 10:42:21 skrll Exp $");
 
 #include "opt_kgdb.h"
 

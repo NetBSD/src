@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 2003/01/06 20:30:35 wiz Exp $ */
+/*	$NetBSD: pte.h,v 1.12.2.1 2004/08/03 10:41:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -127,10 +127,29 @@ struct sun4u_tte {
 #endif
 typedef struct sun4u_tte pte_t;
 
+/* TLB shootdown handler arguments. */
+struct ipi_tlb_args {
+	vaddr_t ita_vaddr;
+	int ita_ctx;
+};
+
 /* Assembly routines to flush TLB mappings */
-void tlb_flush_pte __P((vaddr_t, int));
-void tlb_flush_ctx __P((int));
-void tlb_flush_all __P((void));
+void sp_tlb_flush_pte __P((vaddr_t, int));
+void sp_tlb_flush_ctx __P((int));
+void sp_tlb_flush_all __P((void));
+
+#if defined(MULTIPROCESSOR)
+void smp_tlb_flush_pte __P((vaddr_t, int));
+void smp_tlb_flush_ctx __P((int));
+void smp_tlb_flush_all __P((void));
+#define	tlb_flush_pte(va,ctx)	smp_tlb_flush_pte(va, ctx)
+#define	tlb_flush_ctx(ctx)	smp_tlb_flush_ctx(ctx)
+#define	tlb_flush_all()		smp_tlb_flush_all()
+#else
+#define	tlb_flush_pte(va,ctx)	sp_tlb_flush_pte(va, ctx)
+#define	tlb_flush_ctx(ctx)	sp_tlb_flush_ctx(ctx)
+#define	tlb_flush_all()		sp_tlb_flush_all()
+#endif
 
 #endif /* _LOCORE */
 

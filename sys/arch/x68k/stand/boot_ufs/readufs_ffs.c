@@ -1,10 +1,10 @@
-/*	$NetBSD: readufs_ffs.c,v 1.3 2003/04/09 12:57:14 itohy Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.3.2.1 2004/08/03 10:42:56 skrll Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
  * FS specific support for 4.2BSD Fast Filesystem
  *
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@netbsd.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).
@@ -50,10 +50,23 @@ try_ffs()
 #ifdef DEBUG_WITH_STDIO
 		printf("FFS: sblk: pos %d magic 0x%x\n", btodb(*sbl), magic);
 #endif
+#ifdef USE_UFS1
+		if (magic == FS_UFS1_MAGIC
+		    && !(buf.sblk.fs_old_flags & FS_FLAGS_UPDATED)) {
+			if (*sbl == SBLOCK_UFS2)
+				/* might be an alternate suberblock */
+				continue;
+			break;
+		}
+#endif
+		if (*sbl != buf.sblk.fs_sblockloc)
+			/* must be an alternate suberblock */
+			continue;
 
 #ifdef USE_UFS1
-		if (magic == FS_UFS1_MAGIC)
+		if (magic == FS_UFS1_MAGIC) {
 			break;
+		}
 #endif
 #ifdef USE_UFS2
 		if (magic == FS_UFS2_MAGIC) {

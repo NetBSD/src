@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.19 2002/10/02 16:33:55 thorpej Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.19.6.1 2004/08/03 10:47:56 skrll Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.19 2002/10/02 16:33:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.19.6.1 2004/08/03 10:47:56 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -133,18 +133,24 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 	sc->sc_ic.ic_hwaddr.iha_maxrec = i;
-	if (i < 8) {
-		printf("%s: maximum receive packet (%d) is too small\n",
-		    sc->sc_sc1394.sc1394_dev.dv_xname, psc->sc1394_max_receive);
-		splx(s);
-		return;
-	}
 	sc->sc_ic.ic_hwaddr.iha_offset[0] = (FW_FIFO_HI >> 8) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[1] = FW_FIFO_HI & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[2] = (FW_FIFO_LO >> 24) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[3] = (FW_FIFO_LO >> 16) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[4] = (FW_FIFO_LO >>  8) & 0xff;
 	sc->sc_ic.ic_hwaddr.iha_offset[5] = FW_FIFO_LO & 0xff;
+	printf(":");
+	for (i = 0; i < sizeof(sc->sc_ic.ic_hwaddr); i++)
+		printf("%c%02x", (i == 0 ? ' ' : ':'),
+		    ((u_int8_t *)&sc->sc_ic.ic_hwaddr)[i]);
+	printf("\n");
+	if (sc->sc_ic.ic_hwaddr.iha_maxrec < 8) {
+		printf("%s: maximum receive packet (%d) is too small\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, psc->sc1394_max_receive);
+		splx(s);
+		return;
+	}
+
 	strcpy(ifp->if_xname, sc->sc_sc1394.sc1394_dev.dv_xname);
 	ifp->if_softc = sc;
 #if __NetBSD_Version__ >= 105080000
@@ -158,11 +164,6 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	printf(":");
-	for (i = 0; i < sizeof(sc->sc_ic.ic_hwaddr); i++)
-		printf("%c%02x", (i == 0 ? ' ' : ':'),
-		    ((u_int8_t *)&sc->sc_ic.ic_hwaddr)[i]);
-	printf("\n");
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
 
@@ -258,6 +259,7 @@ fw_txint(struct device *self, struct mbuf *m0)
 	struct fw_softc *sc = (struct fw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
+	ifp->if_opackets++;
 	m_freem(m0);
 	if (ifp->if_flags & IFF_OACTIVE) {
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -299,6 +301,7 @@ fw_input(struct device *self, struct mbuf *m0)
 	struct fw_softc *sc = (struct fw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
+	ifp->if_ipackets++;
 	m0->m_pkthdr.rcvif = ifp;
 	(*ifp->if_input)(ifp, m0);
 }

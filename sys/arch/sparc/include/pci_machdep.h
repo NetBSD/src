@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2002/05/15 19:23:56 thorpej Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.3.10.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -91,8 +91,5 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 				    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 #endif /* _SPARC_PCI_MACHDEP_H_ */

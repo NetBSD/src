@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.17 2002/09/30 15:48:48 onoe Exp $	*/
+/*	$NetBSD: awivar.h,v 1.17.6.1 2004/08/03 10:46:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -73,13 +73,27 @@ struct awi_chanset {
 };
 
 struct awi_softc {
+#ifdef __NetBSD__
 	struct device		sc_dev;
+#endif
+#ifdef __FreeBSD__
+	device_t		sc_dev;
+#endif
 	struct am79c930_softc 	sc_chip;
 	struct ieee80211com	sc_ic;
 	u_char			sc_banner[AWI_BANNER_LEN];
 	int			(*sc_enable)(struct awi_softc *);
 	void			(*sc_disable)(struct awi_softc *);
 	void			(*sc_power)(struct awi_softc *, int);
+
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
+	void			(*sc_recv_mgmt)(struct ieee80211com *,
+				    struct mbuf *, struct ieee80211_node *,
+				    int, int, u_int32_t);
+	int			(*sc_send_mgmt)(struct ieee80211com *,
+				    struct ieee80211_node *, int, int);
+
 	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	unsigned int		sc_attached:1,
@@ -89,7 +103,6 @@ struct awi_softc {
 				sc_enab_intr:1,
 				sc_adhoc_ap:1,
 				sc_invalid:1;
-	struct ifmedia		sc_media;
 	enum ieee80211_state	sc_nstate;
 	enum awi_sub_state	sc_substate;
 	int			sc_sleep_cnt;
@@ -136,8 +149,10 @@ struct awi_softc {
 
 int	awi_attach(struct awi_softc *);
 int	awi_detach(struct awi_softc *);
+#ifdef __NetBSD__
 int	awi_activate(struct device *, enum devact);
 void	awi_power(int, void *);
+#endif
 void	awi_shutdown(void *);
 int	awi_intr(void *);
 

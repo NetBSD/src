@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.13 2002/09/23 03:38:51 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.13.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.13 2002/09/23 03:38:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.13.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -58,10 +58,8 @@ typedef struct RF_Raid1ConfigInfo_s {
 }       RF_Raid1ConfigInfo_t;
 /* start of day code specific to RAID level 1 */
 int 
-rf_ConfigureRAID1(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid1ConfigInfo_t *info;
@@ -82,8 +80,6 @@ rf_ConfigureRAID1(
 		info->stripeIdentifier[i][1] = (2 * i) + 1;
 	}
 
-	RF_ASSERT(raidPtr->numRow == 1);
-
 	/* this implementation of RAID level 1 uses one row of numCol disks
 	 * and allows multiple (numCol / 2) stripes per row.  A stripe
 	 * consists of a single data unit and a single parity (mirror) unit.
@@ -99,18 +95,12 @@ rf_ConfigureRAID1(
 
 /* returns the physical disk location of the primary copy in the mirror pair */
 void 
-rf_MapSectorRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
 
-	*row = 0;
 	*col = 2 * mirrorPair;
 	*diskSector = ((SUID / (raidPtr->numCol / 2)) * raidPtr->Layout.sectorsPerStripeUnit) + (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
@@ -122,18 +112,12 @@ rf_MapSectorRAID1(
  * pair
  */
 void 
-rf_MapParityRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
-    RF_RowCol_t * col,
-    RF_SectorNum_t * diskSector,
-    int remap)
+rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
 
-	*row = 0;
 	*col = (2 * mirrorPair) + 1;
 
 	*diskSector = ((SUID / (raidPtr->numCol / 2)) * raidPtr->Layout.sectorsPerStripeUnit) + (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
@@ -145,17 +129,13 @@ rf_MapParityRAID1(
  * returns a list of disks for a given redundancy group
  */
 void 
-rf_IdentifyStripeRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+		       RF_RowCol_t **diskids)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_Raid1ConfigInfo_t *info = raidPtr->Layout.layoutSpecificInfo;
 	RF_ASSERT(stripeID >= 0);
 	RF_ASSERT(addr >= 0);
-	*outRow = 0;
 	*diskids = info->stripeIdentifier[stripeID % (raidPtr->numCol / 2)];
 	RF_ASSERT(*diskids);
 }
@@ -166,11 +146,8 @@ rf_IdentifyStripeRAID1(
  * maps a logical stripe to a stripe in the redundant array
  */
 void 
-rf_MapSIDToPSIDRAID1(
-    RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID,
-    RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru)
+rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -188,13 +165,10 @@ rf_MapSIDToPSIDRAID1(
  *****************************************************************************/
 
 void 
-rf_RAID1DagSelect(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
-    RF_VoidFuncPtr * createFunc)
+rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
+		  RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
-	RF_RowCol_t frow, fcol, or, oc;
+	RF_RowCol_t fcol, oc;
 	RF_PhysDiskAddr_t *failedPDA;
 	int     prior_recon;
 	RF_RowStatus_t rstat;
@@ -204,7 +178,10 @@ rf_RAID1DagSelect(
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
 	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
-		RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
+#if RF_DEBUG_DAG
+		if (rf_dagDebug) 
+			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
+#endif
 		*createFunc = NULL;
 		return;
 	}
@@ -218,23 +195,20 @@ rf_RAID1DagSelect(
 	         * spare. Oops. --jimz
 	         */
 		failedPDA = asmap->failedPDAs[0];
-		frow = failedPDA->row;
 		fcol = failedPDA->col;
-		rstat = raidPtr->status[frow];
+		rstat = raidPtr->status;
 		prior_recon = (rstat == rf_rs_reconfigured) || (
 		    (rstat == rf_rs_reconstructing) ?
-		    rf_CheckRUReconstructed(raidPtr->reconControl[frow]->reconMap, failedPDA->startSector) : 0
+		    rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, failedPDA->startSector) : 0
 		    );
 		if (prior_recon) {
-			or = frow;
 			oc = fcol;
 			oo = failedPDA->startSector;
 			/*
 		         * If we did distributed sparing, we'd monkey with that here.
 		         * But we don't, so we'll
 		         */
-			failedPDA->row = raidPtr->Disks[frow][fcol].spareRow;
-			failedPDA->col = raidPtr->Disks[frow][fcol].spareCol;
+			failedPDA->col = raidPtr->Disks[fcol].spareCol;
 			/*
 		         * Redirect other components, iff necessary. This looks
 		         * pretty suspicious to me, but it's what the raid5
@@ -242,22 +216,22 @@ rf_RAID1DagSelect(
 		         */
 			if (asmap->parityInfo->next) {
 				if (failedPDA == asmap->parityInfo) {
-					failedPDA->next->row = failedPDA->row;
 					failedPDA->next->col = failedPDA->col;
 				} else {
 					if (failedPDA == asmap->parityInfo->next) {
-						asmap->parityInfo->row = failedPDA->row;
 						asmap->parityInfo->col = failedPDA->col;
 					}
 				}
 			}
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			if (rf_dagDebug || rf_mapDebug) {
-				printf("raid%d: Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
-				       raidPtr->raidid, type, or, oc, 
-				       (long) oo, failedPDA->row, 
+				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
+				       raidPtr->raidid, type, oc, 
+				       (long) oo, 
 				       failedPDA->col,
 				       (long) failedPDA->startSector);
 			}
+#endif
 			asmap->numDataFailed = asmap->numParityFailed = 0;
 		}
 	}
@@ -272,19 +246,18 @@ rf_RAID1DagSelect(
 }
 
 int 
-rf_VerifyParityRAID1(
-    RF_Raid_t * raidPtr,
-    RF_RaidAddr_t raidAddr,
-    RF_PhysDiskAddr_t * parityPDA,
-    int correct_it,
-    RF_RaidAccessFlags_t flags)
+rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
+		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
+		     RF_RaidAccessFlags_t flags)
 {
 	int     nbytes, bcount, stripeWidth, ret, i, j, nbad, *bbufs;
 	RF_DagNode_t *blockNode, *wrBlock;
 	RF_DagHeader_t *rd_dag_h, *wr_dag_h;
 	RF_AccessStripeMapHeader_t *asm_h;
 	RF_AllocListElem_t *allocList;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t tracerec;
+#endif
 	RF_ReconUnitNum_t which_ru;
 	RF_RaidLayout_t *layoutPtr;
 	RF_AccessStripeMap_t *aasm;
@@ -365,7 +338,7 @@ rf_VerifyParityRAID1(
 		blockNode->succedents[i]->params[0].p = pda;
 		blockNode->succedents[i]->params[1].p = buf1;
 		blockNode->succedents[i]->params[2].v = psID;
-		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		buf1 += nbytes;
 	}
 	RF_ASSERT(pda == NULL);
@@ -386,14 +359,15 @@ rf_VerifyParityRAID1(
 		blockNode->succedents[i]->params[0].p = pda;
 		blockNode->succedents[i]->params[1].p = buf1;
 		blockNode->succedents[i]->params[2].v = psID;
-		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		buf1 += nbytes;
 	}
 	RF_ASSERT(pda == NULL);
 
+#if RF_ACC_TRACE > 0
 	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
-
+#endif
 #if 0
 	if (rf_verifyParityDebug > 1) {
 		printf("raid%d: RAID1 parity verify read dag:\n", 
@@ -403,8 +377,12 @@ rf_VerifyParityRAID1(
 #endif
 	RF_LOCK_MUTEX(mcpair->mutex);
 	mcpair->flag = 0;
+	RF_UNLOCK_MUTEX(mcpair->mutex);
+
 	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 	    (void *) mcpair);
+
+	RF_LOCK_MUTEX(mcpair->mutex);
 	while (mcpair->flag == 0) {
 		RF_WAIT_MCPAIR(mcpair);
 	}
@@ -504,10 +482,12 @@ rf_VerifyParityRAID1(
 			wrBlock->succedents[i]->params[0].p = pda;
 			wrBlock->succedents[i]->params[1].p = pda->bufPtr;
 			wrBlock->succedents[i]->params[2].v = psID;
-			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
+#if RF_ACC_TRACE > 0
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
+#endif
 #if 0
 		if (rf_verifyParityDebug > 1) {
 			printf("Parity verify write dag:\n");
@@ -516,9 +496,13 @@ rf_VerifyParityRAID1(
 #endif
 		RF_LOCK_MUTEX(mcpair->mutex);
 		mcpair->flag = 0;
+		RF_UNLOCK_MUTEX(mcpair->mutex);
+
 		/* fire off the write DAG */
 		rf_DispatchDAG(wr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 		    (void *) mcpair);
+
+		RF_LOCK_MUTEX(mcpair->mutex);
 		while (!mcpair->flag) {
 			RF_WAIT_COND(mcpair->cond, mcpair->mutex);
 		}
@@ -552,35 +536,35 @@ done:
 	return (ret);
 }
 
+/* rbuf          - the recon buffer to submit 
+ * keep_it       - whether we can keep this buffer or we have to return it
+ * use_committed - whether to use a committed or an available recon buffer
+ */
+
 int 
-rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
-	RF_ReconBuffer_t *rbuf;	/* the recon buffer to submit */
-	int     keep_it;	/* whether we can keep this buffer or we have
-				 * to return it */
-	int     use_committed;	/* whether to use a committed or an available
-				 * recon buffer */
+rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
+			  int use_committed)
 {
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;
-	int     retcode, created;
+	int     retcode;
 	RF_CallbackDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
 	RF_Raid_t *raidPtr;
 	caddr_t ta;
 
 	retcode = 0;
-	created = 0;
 
 	raidPtr = rbuf->raidPtr;
-	reconCtrlPtr = raidPtr->reconControl[rbuf->row];
+	reconCtrlPtr = raidPtr->reconControl;
 
 	RF_ASSERT(rbuf);
 	RF_ASSERT(rbuf->col != reconCtrlPtr->fcol);
 
 #if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
-		printf("raid%d: RAID1 reconbuffer submission r%d c%d psid %ld ru%d (failed offset %ld)\n",
-		       raidPtr->raidid, rbuf->row, rbuf->col, 
+		printf("raid%d: RAID1 reconbuffer submission c%d psid %ld ru%d (failed offset %ld)\n",
+		       raidPtr->raidid, rbuf->col, 
 		       (long) rbuf->parityStripeID, rbuf->which_ru,
 		       (long) rbuf->failedDiskSectorOffset);
 	}
@@ -593,12 +577,17 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 		    rbuf->buffer[0], rbuf->buffer[1], rbuf->buffer[2], rbuf->buffer[3],
 		    rbuf->buffer[4]);
 	}
-	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->row, rbuf->parityStripeID);
+	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	pssPtr = rf_LookupRUStatus(raidPtr, reconCtrlPtr->pssTable,
-	    rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, &created);
+	    rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, NULL);
 	RF_ASSERT(pssPtr);	/* if it didn't exist, we wouldn't have gotten
 				 * an rbuf for it */
 
@@ -651,15 +640,13 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 		    && (raidPtr->numFullReconBuffers == 0)) {
 			/* ruh-ro */
 			RF_ERRORMSG("Buffer wait deadlock\n");
-			rf_PrintPSStatusTable(raidPtr, rbuf->row);
+			rf_PrintPSStatusTable(raidPtr);
 			RF_PANIC();
 		}
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
 		cb = rf_AllocCallbackDesc();
-		cb->row = rbuf->row;
 		cb->col = rbuf->col;
 		cb->callbackArg.v = rbuf->parityStripeID;
-		cb->callbackArg2.v = rbuf->which_ru;
 		cb->next = NULL;
 		if (reconCtrlPtr->bufferWaitList == NULL) {
 			/* we are the wait list- lucky us */
@@ -673,12 +660,10 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 		goto out;
 	}
 	if (t != rbuf) {
-		t->row = rbuf->row;
 		t->col = reconCtrlPtr->fcol;
 		t->parityStripeID = rbuf->parityStripeID;
 		t->which_ru = rbuf->which_ru;
 		t->failedDiskSectorOffset = rbuf->failedDiskSectorOffset;
-		t->spRow = rbuf->spRow;
 		t->spCol = rbuf->spCol;
 		t->spOffset = rbuf->spOffset;
 		/* Swap buffers. DANCE! */
@@ -700,7 +685,10 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 	rf_CheckForFullRbuf(raidPtr, reconCtrlPtr, pssPtr, 1);
 
 out:
-	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->row, rbuf->parityStripeID);
+	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 #if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {

@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.102 2003/05/03 18:11:19 wiz Exp $ */
+/* $NetBSD: isp.c,v 1.102.2.1 2004/08/03 10:46:16 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.102 2003/05/03 18:11:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.102.2.1 2004/08/03 10:46:16 skrll Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -1315,7 +1315,11 @@ isp_fibre_init(struct ispsoftc *isp)
 			 * If we set ZIO, it will disable fast posting,
 			 * so we don't need to clear it in fwoptions.
 			 */
+#ifndef	ISP_NO_ZIO
 			icbp->icb_xfwoptions |= ICBXOPT_ZIO;
+#else
+			icbp->icb_fwoptions |= ICBOPT_FAST_POST;
+#endif
 #if	0
 			/*
 			 * Values, in 100us increments. The default
@@ -2043,7 +2047,7 @@ isp_pdb_sync(struct ispsoftc *isp)
 		}
 
 		/*
-		 * Make sure we can get the approriate port information.
+		 * Make sure we can get the appropriate port information.
 		 */
 		if (isp_getpdb(isp, lp->loopid, &pdb) != 0) {
 			isp_prt(isp, ISP_LOGWARN, nopdb, lp->portid);
@@ -3408,7 +3412,7 @@ isp_control(struct ispsoftc *isp, ispctl_t ctl, void *arg)
 		}
 		/*
 		 * XXX: Look for command in the REQUEST QUEUE. That is,
-		 * XXX: It hasen't been picked up by firmware yet.
+		 * XXX: It hasn't been picked up by firmware yet.
 		 */
 		break;
 
@@ -3929,7 +3933,7 @@ again:
 	if (nlooked) {
 		WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, optr);
 		/*
-		 * While we're at it, read the requst queue out pointer.
+		 * While we're at it, read the request queue out pointer.
 		 */
 		isp->isp_reqodx = READ_REQUEST_QUEUE_OUT_POINTER(isp);
 		if (isp->isp_rscchiwater < ndone)
@@ -4136,7 +4140,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			rval = -1;
 #endif
 		/*
-		 * We've had problems with data corruption occuring on
+		 * We've had problems with data corruption occurring on
 		 * commands that complete (with no apparent error) after
 		 * we receive a LIP. This has been observed mostly on
 		 * Local Loop topologies. To be safe, let's just mark
@@ -4808,7 +4812,7 @@ isp_mbox_continue(struct ispsoftc *isp)
 #define	HIBYT(x)			((x) >> 0x8)
 #define	LOBYT(x)			((x)  & 0xff)
 #define	ISPOPMAP(a, b)			(((a) << 8) | (b))
-static u_int16_t mbpscsi[] = {
+static const u_int16_t mbpscsi[] = {
 	ISPOPMAP(0x01, 0x01),	/* 0x00: MBOX_NO_OP */
 	ISPOPMAP(0x1f, 0x01),	/* 0x01: MBOX_LOAD_RAM */
 	ISPOPMAP(0x03, 0x01),	/* 0x02: MBOX_EXEC_FIRMWARE */
@@ -5004,7 +5008,7 @@ static char *scsi_mbcmd_names[] = {
 };
 #endif
 
-static u_int16_t mbpfc[] = {
+static const u_int16_t mbpfc[] = {
 	ISPOPMAP(0x01, 0x01),	/* 0x00: MBOX_NO_OP */
 	ISPOPMAP(0x1f, 0x01),	/* 0x01: MBOX_LOAD_RAM */
 	ISPOPMAP(0x03, 0x01),	/* 0x02: MBOX_EXEC_FIRMWARE */
@@ -5276,15 +5280,13 @@ static char *fc_mbcmd_names[] = {
 static void
 isp_mboxcmd_qnw(struct ispsoftc *isp, mbreg_t *mbp, int nodelay)
 {
-	unsigned int lim, ibits, obits, box, opcode;
-	u_int16_t *mcp;
+	unsigned int ibits, obits, box, opcode;
+	const u_int16_t *mcp;
 
 	if (IS_FC(isp)) {
 		mcp = mbpfc;
-		lim = (sizeof (mbpfc) / sizeof (mbpfc[0]));
 	} else {
 		mcp = mbpscsi;
-		lim = (sizeof (mbpscsi) / sizeof (mbpscsi[0]));
 	}
 	opcode = mbp->param[0];
 	ibits = HIBYT(mcp[opcode]) & NMBOX_BMASK(isp);
@@ -5318,7 +5320,7 @@ isp_mboxcmd(struct ispsoftc *isp, mbreg_t *mbp, int logmask)
 {
 	char *cname, *xname, tname[16], mname[16];
 	unsigned int lim, ibits, obits, box, opcode;
-	u_int16_t *mcp;
+	const u_int16_t *mcp;
 
 	if (IS_FC(isp)) {
 		mcp = mbpfc;
@@ -5842,6 +5844,9 @@ isp_reinit(struct ispsoftc *isp)
 	XS_T *xs;
 	u_int16_t handle;
 
+	if (IS_FC(isp)) {
+		isp_mark_getpdb_all(isp);
+	}
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		isp_prt(isp, ISP_LOGERR, "isp_reinit cannot reset card");

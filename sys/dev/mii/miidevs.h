@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.48 2003/07/01 22:46:08 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.48.2.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.47 2003/05/02 19:39:29 scw Exp 
+ *	NetBSD: miidevs,v 1.52 2004/02/07 00:51:05 matt Exp 
  */
 
 /*-
@@ -154,6 +154,8 @@
 #define	MII_STR_BROADCOM_BCM5703	"BCM5703 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5704	0x0019
 #define	MII_STR_BROADCOM_BCM5704	"BCM5704 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5705	0x001a
+#define	MII_STR_BROADCOM_BCM5705	"BCM5705 1000BASE-T media interface"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
@@ -184,11 +186,20 @@
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
 
+#define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
+#define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
+
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
 #define	MII_MODEL_LEVEL1_LXT971	0x000e
-#define	MII_STR_LEVEL1_LXT971	"LXT971 10/100 media interface"
+#define	MII_STR_LEVEL1_LXT971	"LXT971/2 10/100 media interface"
+#define	MII_MODEL_LEVEL1_LXT973	0x0021
+#define	MII_STR_LEVEL1_LXT973	"LXT973 10/100 Dual PHY"
+#define	MII_MODEL_LEVEL1_LXT974	0x0004
+#define	MII_STR_LEVEL1_LXT974	"LXT974 10/100 Quad PHY"
+#define	MII_MODEL_LEVEL1_LXT975	0x0005
+#define	MII_STR_LEVEL1_LXT975	"LXT975 10/100 Quad PHY"
 #define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
 #define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
 #define	MII_MODEL_LEVEL1_LXT1000	0x000c

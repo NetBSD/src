@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.5 2003/02/05 00:02:36 perry Exp $ */
+/*	$NetBSD: power.c,v 1.5.2.1 2004/08/03 10:41:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -38,6 +38,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.5.2.1 2004/08/03 10:41:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

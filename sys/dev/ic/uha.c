@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.31 2001/11/15 09:48:08 lukem Exp $	*/
+/*	$NetBSD: uha.c,v 1.31.16.1 2004/08/03 10:46:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.31 2001/11/15 09:48:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.31.16.1 2004/08/03 10:46:21 skrll Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -434,7 +434,6 @@ uha_scsipi_request(chan, req, arg)
 	struct uha_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct uha_mscp *mscp;
-	struct uha_dma_seg *sg;
 	int error, seg, flags, s;
 
 
@@ -488,7 +487,6 @@ uha_scsipi_request(chan, req, arg)
 		mscp->target_stat = 0x00;
 
 		if (xs->datalen) {
-			sg = mscp->uha_dma;
 			seg = 0;
 #ifdef	TFS
 			if (flags & SCSI_DATA_UIO) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.19 2003/05/03 18:11:36 wiz Exp $	*/
+/*	$NetBSD: neo.c,v 1.19.2.1 2004/08/03 10:49:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.19 2003/05/03 18:11:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.19.2.1 2004/08/03 10:49:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,10 +350,9 @@ int
 neo_intr(void *p)
 {
 	struct neo_softc *sc = (struct neo_softc *)p;
-	int status, x, active;
+	int status, x;
 	int rv = 0;
 
-	active = (sc->pintr || sc->rintr);
 	status = (sc->irsz == 2) ?
 	    nm_rd_2(sc, NM_INT_REG) :
 	    nm_rd_4(sc, NM_INT_REG);
@@ -555,7 +554,6 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	int error;
 
 	sc->type = PCI_PRODUCT(pa->pa_id);
 
@@ -594,7 +592,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interruping at %s\n", sc->dev.dv_xname, intrstr);
 
-	if ((error = nm_init(sc)) != 0)
+	if (nm_init(sc) != 0)
 		return;
 
 	/* Enable the device. */
@@ -610,7 +608,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset  = neo_reset_codec;
 	sc->host_if.flags  = neo_flags_codec;
 
-	if ((error = ac97_attach(&sc->host_if)) != 0)
+	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
 	sc->powerhook = powerhook_establish(neo_power, sc);
@@ -692,13 +690,6 @@ neo_open(void *addr, int flags)
 void
 neo_close(void *addr)
 {
-	struct neo_softc *sc = addr;
-    
-	neo_halt_output(sc);
-	neo_halt_input(sc);
-
-	sc->pintr = 0;
-	sc->rintr = 0;
 }
 
 int
@@ -922,6 +913,7 @@ neo_halt_output(void *addr)
 
 	nm_wr_1(sc, NM_PLAYBACK_ENABLE_REG, 0);
 	nm_wr_2(sc, NM_AUDIO_MUTE_REG, NM_AUDIO_MUTE_BOTH);
+	sc->pintr = 0;
 
 	return (0);
 }
@@ -932,6 +924,7 @@ neo_halt_input(void *addr)
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
 	nm_wr_1(sc, NM_RECORD_ENABLE_REG, 0);
+	sc->rintr = 0;
 
 	return (0);
 }

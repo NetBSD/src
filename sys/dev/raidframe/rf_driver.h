@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.8 2002/09/23 04:14:20 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.8.6.1 2004/08/03 10:50:44 skrll Exp $	*/
 /*
  * rf_driver.h
  */
@@ -38,36 +38,24 @@
 #include "rf_netbsd.h"
 
 RF_DECLARE_EXTERN_MUTEX(rf_printf_mutex)
-int     rf_BootRaidframe(void);
-int     rf_UnbootRaidframe(void);
-int     rf_Shutdown(RF_Raid_t * raidPtr);
-int     rf_Configure(RF_Raid_t * raidPtr, RF_Config_t * cfgPtr,
-		     RF_AutoConfig_t *ac);
-RF_RaidAccessDesc_t *rf_AllocRaidAccDesc(RF_Raid_t * raidPtr, RF_IoType_t type,
-					 RF_RaidAddr_t raidAddress, 
-					 RF_SectorCount_t numBlocks, 
-					 caddr_t bufPtr,
-					 void *bp,
-					 RF_RaidAccessFlags_t flags, 
-					 RF_AccessState_t * states);
-void    rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc);
-int     rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
-		    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks, 
-		    caddr_t bufPtr, void *bp_in, 
-		    RF_RaidAccessFlags_t flags);
+int rf_BootRaidframe(void);
+int rf_UnbootRaidframe(void);
+int rf_Shutdown(RF_Raid_t *);
+int rf_Configure(RF_Raid_t *, RF_Config_t *, RF_AutoConfig_t *);
+RF_RaidAccessDesc_t *rf_AllocRaidAccDesc(RF_Raid_t *, RF_IoType_t,
+					 RF_RaidAddr_t, RF_SectorCount_t, 
+					 caddr_t, void *, 
+					 RF_RaidAccessFlags_t, 
+					 const RF_AccessState_t *);
+void rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *);
+int rf_DoAccess(RF_Raid_t *, RF_IoType_t, int, RF_RaidAddr_t, 
+		RF_SectorCount_t, caddr_t, void *, RF_RaidAccessFlags_t);
 #if 0
-int     rf_SetReconfiguredMode(RF_Raid_t * raidPtr, RF_RowCol_t row,
-			       RF_RowCol_t col);
+int rf_SetReconfiguredMode(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t);
 #endif
-int     rf_FailDisk(RF_Raid_t * raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol,
-		    int initRecon);
-void    rf_SignalQuiescenceLock(RF_Raid_t * raidPtr);
-int     rf_SuspendNewRequestsAndWait(RF_Raid_t * raidPtr);
-void    rf_ResumeNewRequests(RF_Raid_t * raidPtr);
-void    rf_StartThroughputStats(RF_Raid_t * raidPtr);
-void    rf_StartUserStats(RF_Raid_t * raidPtr);
-void    rf_StopUserStats(RF_Raid_t * raidPtr);
-void    rf_UpdateUserStats(RF_Raid_t * raidPtr, int rt, int numsect);
-void    rf_PrintUserStats(RF_Raid_t * raidPtr);
+int rf_FailDisk(RF_Raid_t *, RF_RowCol_t, int);
+void rf_SignalQuiescenceLock(RF_Raid_t *);
+int rf_SuspendNewRequestsAndWait(RF_Raid_t *);
+void rf_ResumeNewRequests(RF_Raid_t *);
 
 #endif				/* !_RF__RF_DRIVER_H_ */

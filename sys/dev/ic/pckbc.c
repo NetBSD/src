@@ -1,6 +1,7 @@
-/* $NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $ */
+/* $NetBSD: pckbc.c,v 1.26.2.1 2004/08/03 10:46:18 skrll Exp $ */
 
 /*
+ * Copyright (c) 2004 Ben Harris.
  * Copyright (c) 1998
  *	Matthias Drochner.  All rights reserved.
  *
@@ -12,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26.2.1 2004/08/03 10:46:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,53 +45,27 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $");
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
+#include <dev/pckbport/pckbportvar.h>
+
 #include "rnd.h"
 #include "locators.h"
 
-#ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbc */
-#include "pckbd.h"
-#else /* ie: only md drivers attach to pckbc */
-#define NPCKBD 0
-#endif
-#if (NPCKBD > 0)
-#include <dev/pckbc/pckbdvar.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-/* descriptor for one device command */
-struct pckbc_devcmd {
-	TAILQ_ENTRY(pckbc_devcmd) next;
-	int flags;
-#define KBC_CMDFLAG_SYNC 1 /* give descriptor back to caller */
-#define KBC_CMDFLAG_SLOW 2
-	u_char cmd[4];
-	int cmdlen, cmdidx, retries;
-	u_char response[4];
-	int status, responselen, responseidx;
-};
 
 /* data per slave device */
 struct pckbc_slotdata {
 	int polling;	/* don't process data in interrupt handler */
 	int poll_data;	/* data read from inr handler if polling */
 	int poll_stat;	/* status read from inr handler if polling */
-	TAILQ_HEAD(, pckbc_devcmd) cmdqueue; /* active commands */
-	TAILQ_HEAD(, pckbc_devcmd) freequeue; /* free commands */
-#define NCMD 5
-	struct pckbc_devcmd cmds[NCMD];
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
 };
 
-#define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
-
-void pckbc_init_slotdata __P((struct pckbc_slotdata *));
-int pckbc_attach_slot __P((struct pckbc_softc *, pckbc_slot_t));
-int pckbc_submatch __P((struct device *, struct cfdata *, void *));
-int pckbcprint __P((void *, const char *));
+static void pckbc_init_slotdata __P((struct pckbc_slotdata *));
+static int pckbc_attach_slot __P((struct pckbc_softc *, pckbc_slot_t));
 
 struct pckbc_internal pckbc_consdata;
 int pckbc_console_attached;
@@ -104,14 +73,16 @@ int pckbc_console_attached;
 static int pckbc_console;
 static struct pckbc_slotdata pckbc_cons_slotdata;
 
+static int pckbc_xt_translation __P((void *, pckbport_slot_t, int));
+static int pckbc_send_devcmd __P((void *, pckbport_slot_t, u_char));
+static void pckbc_slot_enable __P((void *, pckbport_slot_t, int));
+static void pckbc_intr_establish __P((void *, pckbport_slot_t));
+static void pckbc_set_poll __P((void *,	pckbc_slot_t, int on));
+
 static int pckbc_wait_output __P((bus_space_tag_t, bus_space_handle_t));
 
 static int pckbc_get8042cmd __P((struct pckbc_internal *));
 static int pckbc_put8042cmd __P((struct pckbc_internal *));
-static int pckbc_send_devcmd __P((struct pckbc_internal *, pckbc_slot_t,
-				  u_char));
-static void pckbc_poll_cmd1 __P((struct pckbc_internal *, pckbc_slot_t,
-				 struct pckbc_devcmd *));
 
 void pckbc_cleanqueue __P((struct pckbc_slotdata *));
 void pckbc_cleanup __P((void *));
@@ -120,8 +91,14 @@ void pckbc_start __P((struct pckbc_internal *, pckbc_slot_t));
 
 const char * const pckbc_slot_names[] = { "kbd", "aux" };
 
-#define KBC_DEVCMD_ACK 0xfa
-#define KBC_DEVCMD_RESEND 0xfe
+static struct pckbport_accessops const pckbc_ops = {
+	pckbc_xt_translation,
+	pckbc_send_devcmd,
+	pckbc_poll_data1,
+	pckbc_slot_enable,
+	pckbc_intr_establish,
+	pckbc_set_poll
+};
 
 #define	KBD_DELAY	DELAY(8)
 
@@ -158,16 +135,16 @@ pckbc_send_cmd(iot, ioh_c, val)
  * This is not canonical way to handle polling input.
  */
 int
-pckbc_poll_data1(pt, slot, checkaux)
-	pckbc_tag_t pt;
+pckbc_poll_data1(pt, slot)
+	void *pt;
 	pckbc_slot_t slot;
-	int checkaux;
 {
 	struct pckbc_internal *t = pt;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	int s;
 	u_char stat, c;
 	int i = 100000; /* if 1 port read takes 1us (?), this polls for 100ms */
+	int checkaux = t->t_haveaux;
 
 	s = splhigh();
 
@@ -223,7 +200,7 @@ pckbc_get8042cmd(t)
 
 	if (!pckbc_send_cmd(iot, ioh_c, K_RDCMDBYTE))
 		return (0);
-	data = pckbc_poll_data1(t, PCKBC_KBD_SLOT, t->t_haveaux);
+	data = pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 	if (data == -1)
 		return (0);
 	t->t_cmdbyte = data;
@@ -250,11 +227,12 @@ pckbc_put8042cmd(t)
 }
 
 static int
-pckbc_send_devcmd(t, slot, val)
-	struct pckbc_internal *t;
+pckbc_send_devcmd(pt, slot, val)
+	void *pt;
 	pckbc_slot_t slot;
 	u_char val;
 {
+	struct pckbc_internal *t = pt;
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
 	bus_space_handle_t ioh_c = t->t_ioh_c;
@@ -281,21 +259,7 @@ pckbc_is_console(iot, addr)
 	return (0);
 }
 
-int
-pckbc_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct pckbc_attach_args *pa = aux;
-
-	if (cf->cf_loc[PCKBCCF_SLOT] != PCKBCCF_SLOT_DEFAULT &&
-	    cf->cf_loc[PCKBCCF_SLOT] != pa->pa_slot)
-		return (0);
-	return (config_match(parent, cf, aux));
-}
-
-int
+static int
 pckbc_attach_slot(sc, slot)
 	struct pckbc_softc *sc;
 	pckbc_slot_t slot;
@@ -303,7 +267,7 @@ pckbc_attach_slot(sc, slot)
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
 	void *sdata;
-	int found;
+	struct device *child;
 	int alloced = 0;
 
 	pa.pa_tag = t;
@@ -321,20 +285,19 @@ pckbc_attach_slot(sc, slot)
 		alloced++;
 	}
 
-	found = (config_found_sm((struct device *)sc, &pa,
-	    pckbcprint, pckbc_submatch) != NULL);
+	child = pckbport_attach_slot(&sc->sc_dv, t->t_pt, slot);
 
-	if (!found && alloced) {
+	if (child == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);
 		t->t_slotdata[slot] = NULL;
 	}
 
 #if NRND > 0
-	if (found && (t->t_slotdata[slot] != NULL))
+	if (child != NULL && t->t_slotdata[slot] != NULL)
 		rnd_attach_source(&t->t_slotdata[slot]->rnd_source,
-		    sc->subname[slot], RND_TYPE_TTY, 0);
+		    child->dv_xname, RND_TYPE_TTY, 0);
 #endif
-	return (found);
+	return child != NULL;
 }
 
 void
@@ -352,8 +315,14 @@ pckbc_attach(sc)
 	ioh_d = t->t_ioh_d;
 	ioh_c = t->t_ioh_c;
 
+	t->t_pt = pckbport_attach(t, &pckbc_ops);
+	if (t->t_pt == NULL) {
+		aprint_error(": attach failed\n");
+		return;
+	}
+
 	/* flush */
-	(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
@@ -406,8 +375,9 @@ pckbc_attach(sc)
 		printf("kbc: aux echo error 2\n");
 		goto nomouse;
 	}
+	t->t_haveaux = 1;
 	bus_space_write_1(iot, ioh_d, 0, 0x5a); /* a random value */
-	res = pckbc_poll_data1(t, PCKBC_AUX_SLOT, 1);
+	res = pckbc_poll_data1(t, PCKBC_AUX_SLOT);
 	if (res != -1) {
 		/*
 		 * In most cases, the 0x5a gets echoed.
@@ -416,14 +386,14 @@ pckbc_attach(sc)
 		 * We are satisfied if there is anything in the
 		 * aux output buffer.
 		 */
-		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
-	}
+	} else {
 #ifdef PCKBCDEBUG
-	  else
 		printf("kbc: aux echo test failed\n");
 #endif
+		t->t_haveaux = 0;
+	}
 
 nomouse:
 	/* enable needed interrupts */
@@ -432,68 +402,21 @@ nomouse:
 		printf("kbc: cmd word write error\n");
 }
 
-int
-pckbcprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pckbc_attach_args *pa = aux;
-
-	if (!pnp)
-		aprint_normal(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
-	return (QUIET);
-}
-
-void
+static void
 pckbc_init_slotdata(q)
 	struct pckbc_slotdata *q;
 {
-	int i;
-	TAILQ_INIT(&q->cmdqueue);
-	TAILQ_INIT(&q->freequeue);
 
-	for (i = 0; i < NCMD; i++) {
-		TAILQ_INSERT_TAIL(&q->freequeue, &(q->cmds[i]), next);
-	}
 	q->polling = 0;
-}
-
-void
-pckbc_flush(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-{
-	struct pckbc_internal *t = self;
-
-	(void) pckbc_poll_data1(t, slot, t->t_haveaux);
-}
-
-int
-pckbc_poll_data(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-{
-	struct pckbc_internal *t = self;
-	struct pckbc_slotdata *q = t->t_slotdata[slot];
-	int c;
-
-	c = pckbc_poll_data1(t, slot, t->t_haveaux);
-	if (c != -1 && q && CMD_IN_QUEUE(q)) {
-		/* we jumped into a running command - try to
-		 deliver the response */
-		if (pckbc_cmdresponse(t, slot, c))
-			return (-1);
-	}
-	return (c);
 }
 
 /*
  * switch scancode translation on / off
  * return nonzero on success
  */
-int
+static int
 pckbc_xt_translation(self, slot, on)
-	pckbc_tag_t self;
+	void *self;
 	pckbc_slot_t slot;
 	int on;
 {
@@ -538,7 +461,7 @@ static const struct pckbc_portcmd {
 
 void
 pckbc_slot_enable(self, slot, on)
-	pckbc_tag_t self;
+	void *self;
 	pckbc_slot_t slot;
 	int on;
 {
@@ -552,9 +475,9 @@ pckbc_slot_enable(self, slot, on)
 		printf("pckbc_slot_enable(%d) failed\n", on);
 }
 
-void
+static void
 pckbc_set_poll(self, slot, on)
-	pckbc_tag_t self;
+	void *self;
 	pckbc_slot_t slot;
 	int on;
 {
@@ -582,358 +505,18 @@ pckbc_set_poll(self, slot, on)
 	}
 }
 
-/*
- * Pass command to device, poll for ACK and data.
- * to be called at spltty()
- */
 static void
-pckbc_poll_cmd1(t, slot, cmd)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	struct pckbc_devcmd *cmd;
+pckbc_intr_establish(pt, slot)
+	void *pt;
+	pckbport_slot_t slot;
 {
-	int i, c = 0;
+	struct pckbc_internal *t = pt;
 
-	while (cmd->cmdidx < cmd->cmdlen) {
-		if (!pckbc_send_devcmd(t, slot, cmd->cmd[cmd->cmdidx])) {
-			printf("pckbc_cmd: send error\n");
-			cmd->status = EIO;
-			return;
-		}
-		for (i = 10; i; i--) { /* 1s ??? */
-			c = pckbc_poll_data1(t, slot, t->t_haveaux);
-			if (c != -1)
-				break;
-		}
-
-		if (c == KBC_DEVCMD_ACK) {
-			cmd->cmdidx++;
-			continue;
-		}
-		if (c == KBC_DEVCMD_RESEND) {
-#ifdef PCKBCDEBUG
-			printf("pckbc_cmd: RESEND\n");
-#endif
-			if (cmd->retries++ < 5)
-				continue;
-			else {
-#ifdef PCKBCDEBUG
-				printf("pckbc: cmd failed\n");
-#endif
-				cmd->status = EIO;
-				return;
-			}
-		}
-		if (c == -1) {
-#ifdef PCKBCDEBUG
-			printf("pckbc_cmd: timeout\n");
-#endif
-			cmd->status = EIO;
-			return;
-		}
-#ifdef PCKBCDEBUG
-		printf("pckbc_cmd: lost 0x%x\n", c);
-#endif
-	}
-
-	while (cmd->responseidx < cmd->responselen) {
-		if (cmd->flags & KBC_CMDFLAG_SLOW)
-			i = 100; /* 10s ??? */
-		else
-			i = 10; /* 1s ??? */
-		while (i--) {
-			c = pckbc_poll_data1(t, slot, t->t_haveaux);
-			if (c != -1)
-				break;
-		}
-		if (c == -1) {
-#ifdef PCKBCDEBUG
-			printf("pckbc_cmd: no data\n");
-#endif
-			cmd->status = ETIMEDOUT;
-			return;
-		} else
-			cmd->response[cmd->responseidx++] = c;
-	}
-}
-
-/* for use in autoconfiguration */
-int
-pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen;
-	u_char *respbuf;
-	int slow;
-{
-	struct pckbc_internal *t = self;
-	struct pckbc_devcmd nc;
-
-	if ((len > 4) || (responselen > 4))
-		return (EINVAL);
-
-	memset(&nc, 0, sizeof(nc));
-	memcpy(nc.cmd, cmd, len);
-	nc.cmdlen = len;
-	nc.responselen = responselen;
-	nc.flags = (slow ? KBC_CMDFLAG_SLOW : 0);
-
-	pckbc_poll_cmd1(t, slot, &nc);
-
-	if (nc.status == 0 && respbuf)
-		memcpy(respbuf, nc.response, responselen);
-
-	return (nc.status);
-}
-
-/*
- * Clean up a command queue, throw away everything.
- */
-void
-pckbc_cleanqueue(q)
-	struct pckbc_slotdata *q;
-{
-	struct pckbc_devcmd *cmd;
-#ifdef PCKBCDEBUG
-	int i;
-#endif
-
-	while ((cmd = TAILQ_FIRST(&q->cmdqueue))) {
-		TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-#ifdef PCKBCDEBUG
-		printf("pckbc_cleanqueue: removing");
-		for (i = 0; i < cmd->cmdlen; i++)
-			printf(" %02x", cmd->cmd[i]);
-		printf("\n");
-#endif
-		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
-	}
-}
-
-/*
- * Timeout error handler: clean queues and data port.
- * XXX could be less invasive.
- */
-void
-pckbc_cleanup(self)
-	void *self;
-{
-	struct pckbc_internal *t = self;
-	int s;
-
-	printf("pckbc: command timeout\n");
-
-	s = spltty();
-
-	if (t->t_slotdata[PCKBC_KBD_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_KBD_SLOT]);
-	if (t->t_slotdata[PCKBC_AUX_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_AUX_SLOT]);
-
-	while (bus_space_read_1(t->t_iot, t->t_ioh_c, 0) & KBS_DIB) {
-		KBD_DELAY;
-		(void) bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
-	}
-
-	/* reset KBC? */
-
-	splx(s);
-}
-
-/*
- * Pass command to device during normal operation.
- * to be called at spltty()
- */
-void
-pckbc_start(t, slot)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-{
-	struct pckbc_slotdata *q = t->t_slotdata[slot];
-	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
-
-	if (q->polling) {
-		do {
-			pckbc_poll_cmd1(t, slot, cmd);
-			if (cmd->status)
-				printf("pckbc_start: command error\n");
-
-			TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-			if (cmd->flags & KBC_CMDFLAG_SYNC)
-				wakeup(cmd);
-			else {
-				callout_stop(&t->t_cleanup);
-				TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
-			}
-			cmd = TAILQ_FIRST(&q->cmdqueue);
-		} while (cmd);
-		return;
-	}
-
-	if (!pckbc_send_devcmd(t, slot, cmd->cmd[cmd->cmdidx])) {
-		printf("pckbc_start: send error\n");
-		/* XXX what now? */
-		return;
-	}
-}
-
-/*
- * Handle command responses coming in asynchonously,
- * return nonzero if valid response.
- * to be called at spltty()
- */
-int
-pckbc_cmdresponse(t, slot, data)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	u_char data;
-{
-	struct pckbc_slotdata *q = t->t_slotdata[slot];
-	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
-#ifdef DIAGNOSTIC
-	if (!cmd)
-		panic("pckbc_cmdresponse: no active command");
-#endif
-	if (cmd->cmdidx < cmd->cmdlen) {
-		if (data != KBC_DEVCMD_ACK && data != KBC_DEVCMD_RESEND)
-			return (0);
-
-		if (data == KBC_DEVCMD_RESEND) {
-			if (cmd->retries++ < 5) {
-				/* try again last command */
-				goto restart;
-			} else {
-#ifdef PCKBCDEBUG
-				printf("pckbc: cmd failed\n");
-#endif
-				cmd->status = EIO;
-				/* dequeue */
-			}
-		} else {
-			if (++cmd->cmdidx < cmd->cmdlen)
-				goto restart;
-			if (cmd->responselen)
-				return (1);
-			/* else dequeue */
-		}
-	} else if (cmd->responseidx < cmd->responselen) {
-		cmd->response[cmd->responseidx++] = data;
-		if (cmd->responseidx < cmd->responselen)
-			return (1);
-		/* else dequeue */
-	} else
-		return (0);
-
-	/* dequeue: */
-	TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-	if (cmd->flags & KBC_CMDFLAG_SYNC)
-		wakeup(cmd);
-	else {
-		callout_stop(&t->t_cleanup);
-		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
-	}
-	if (!CMD_IN_QUEUE(q))
-		return (1);
-restart:
-	pckbc_start(t, slot);
-	return (1);
-}
-
-/*
- * Put command into the device's command queue, return zero or errno.
- */
-int
-pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen, sync;
-	u_char *respbuf;
-{
-	struct pckbc_internal *t = self;
-	struct pckbc_slotdata *q = t->t_slotdata[slot];
-	struct pckbc_devcmd *nc;
-	int s, isactive, res = 0;
-
-	if ((len > 4) || (responselen > 4))
-		return (EINVAL);
-	s = spltty();
-	nc = TAILQ_FIRST(&q->freequeue);
-	if (nc) {
-		TAILQ_REMOVE(&q->freequeue, nc, next);
-	}
-	splx(s);
-	if (!nc)
-		return (ENOMEM);
-
-	memset(nc, 0, sizeof(*nc));
-	memcpy(nc->cmd, cmd, len);
-	nc->cmdlen = len;
-	nc->responselen = responselen;
-	nc->flags = (sync ? KBC_CMDFLAG_SYNC : 0);
-
-	s = spltty();
-
-	if (q->polling && sync) {
-		/*
-		 * XXX We should poll until the queue is empty.
-		 * But we don't come here normally, so make
-		 * it simple and throw away everything.
-		 */
-		pckbc_cleanqueue(q);
-	}
-
-	isactive = CMD_IN_QUEUE(q);
-	TAILQ_INSERT_TAIL(&q->cmdqueue, nc, next);
-	if (!isactive)
-		pckbc_start(t, slot);
-
-	if (q->polling)
-		res = (sync ? nc->status : 0);
-	else if (sync) {
-		if ((res = tsleep(nc, 0, "kbccmd", 1*hz))) {
-			TAILQ_REMOVE(&q->cmdqueue, nc, next);
-			pckbc_cleanup(t);
-		} else
-			res = nc->status;
-	} else
-		callout_reset(&t->t_cleanup, hz, pckbc_cleanup, t);
-
-	if (sync) {
-		if (respbuf)
-			memcpy(respbuf, nc->response, responselen);
-		TAILQ_INSERT_TAIL(&q->freequeue, nc, next);
-	}
-
-	splx(s);
-
-	return (res);
-}
-
-void
-pckbc_set_inputhandler(self, slot, func, arg, name)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	pckbc_inputfcn func;
-	void *arg;
-	char *name;
-{
-	struct pckbc_internal *t = (struct pckbc_internal *)self;
-	struct pckbc_softc *sc = t->t_sc;
-
-	if (slot >= PCKBC_NSLOTS)
-		panic("pckbc_set_inputhandler: bad slot %d", slot);
-
-	(*sc->intr_establish)(sc, slot);
-
-	sc->inputhandler[slot] = func;
-	sc->inputarg[slot] = arg;
-	sc->subname[slot] = name;
+	(*t->t_sc->intr_establish)(t->t_sc, slot);
 }
 
 int
-pckbcintr(vsc)
+pckbcintr_hard(vsc)
 	void *vsc;
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
@@ -941,7 +524,7 @@ pckbcintr(vsc)
 	u_char stat;
 	pckbc_slot_t slot;
 	struct pckbc_slotdata *q;
-	int served = 0, data;
+	int served = 0, data, next, s;
 
 	for(;;) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
@@ -975,15 +558,86 @@ pckbcintr(vsc)
 			break; /* pckbc_poll_data() will get it */
 		}
 
+#if 0 /* XXXBJH */
 		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
 			continue;
-
-		if (sc->inputhandler[slot])
-			(*sc->inputhandler[slot])(sc->inputarg[slot], data);
-#ifdef PCKBCDEBUG
-		else
-			printf("pckbcintr: slot %d lost %d\n", slot, data);
 #endif
+
+		s = splhigh();
+		next = (t->rbuf_write+1) % PCKBC_RBUF_SIZE;
+		if (next == t->rbuf_read) {
+			splx(s);
+			break;
+		}
+		t->rbuf[t->rbuf_write].data = data;
+		t->rbuf[t->rbuf_write].slot = slot;
+		t->rbuf_write = next;
+		splx(s);
+	}
+
+	return (served);
+}
+
+void
+pckbcintr_soft(vsc)
+	void *vsc;
+{
+	struct pckbc_softc *sc = vsc;
+	struct pckbc_internal *t = sc->id;
+	int data, slot, s;
+#ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+	int st;
+
+	st = spltty();
+#endif
+
+	s = splhigh();
+	while (t->rbuf_read != t->rbuf_write) {
+		slot = t->rbuf[t->rbuf_read].slot;
+		data = t->rbuf[t->rbuf_read].data;
+		t->rbuf_read = (t->rbuf_read+1) % PCKBC_RBUF_SIZE;
+		splx(s);
+		pckbportintr(t->t_pt, slot, data);
+		s = splhigh();
+	}
+	splx(s);
+
+
+#ifndef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+	splx(st);
+#endif
+}
+
+int
+pckbcintr(vsc)
+	void *vsc;
+{
+	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
+	struct pckbc_internal *t = sc->id;
+	u_char stat;
+	pckbc_slot_t slot;
+	struct pckbc_slotdata *q;
+	int served = 0, data;
+
+	for(;;) {
+		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
+		if (!(stat & KBS_DIB))
+			break;
+
+		served = 1;
+
+		slot = (t->t_haveaux && (stat & 0x20)) ?
+		    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
+		q = t->t_slotdata[slot];
+
+		KBD_DELAY;
+		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
+
+#if NRND > 0
+		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
+#endif
+
+		pckbportintr(t->t_pt, slot, data);
 	}
 
 	return (served);
@@ -1017,7 +671,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	callout_init(&pckbc_consdata.t_cleanup);
 
 	/* flush */
-	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT);
 
 #ifdef PCKBC_CNATTACH_SELFTEST
 	/*
@@ -1030,7 +684,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 		goto out;
 	}
 
-	reply = pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT, 0);
+	reply = pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT);
 	if (reply != 0x55) {
 		printf("kbc: selftest returned 0x%02x\n", reply);
 		res = EIO;
@@ -1046,22 +700,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 		goto out;
 	}
 
-#if (NPCKBD > 0)
-	res = pckbd_cnattach(&pckbc_consdata, slot);
-#else
-	/*
-	 * XXX This should be replaced with the `notyet' case
-	 * XXX when all of the old PC-style console drivers
-	 * XXX have gone away.  When that happens, all of
-	 * XXX the pckbc_machdep_cnattach() should be purged,
-	 * XXX as well.
-	 */
-#ifdef notyet
-	res = ENXIO;
-#else
-	res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
-#endif
-#endif /* NPCKBD > 0 */
+	res = pckbport_cnattach(&pckbc_consdata, &pckbc_ops, slot);
 
   out:
 	if (res) {

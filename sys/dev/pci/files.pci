@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187 2003/07/01 20:08:51 drochner Exp $
+#	$NetBSD: files.pci,v 1.187.2.1 2004/08/03 10:49:07 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,6 +14,8 @@ defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA
+
+defflag	opt_pcn.h	PCN_NO_PROM
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -191,9 +193,97 @@ file	dev/pci/gtp.c			gtp
 #file	dev/pci/sf64pcr.c		sf4r
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
+define pciide_common
+file dev/pci/pciide_common.c pciide_common
+
+device	pciide {[channel = -1]}: ata, pciide_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
+
+# Acard IDE controllers
+device	acardide {[channel = -1]}: ata, pciide_common
+attach	acardide at pci
+file	dev/pci/acardide.c		acardide
+
+# Acer Lab IDE controllers
+device	aceride {[channel = -1]}: ata, pciide_common
+attach	aceride at pci
+file	dev/pci/aceride.c		aceride
+
+# Intel i31244 SATA controller
+device	artsata {[channel = -1]}: ata, pciide_common
+attach	artsata at pci
+file	dev/pci/artsata.c		artsata
+
+# CMD tech IDE controllers
+device	cmdide {[channel = -1]}: ata, pciide_common
+attach	cmdide at pci
+file	dev/pci/cmdide.c		cmdide
+
+# Cypress IDE controllers
+device	cypide {[channel = -1]}: ata, pciide_common, cy82c693
+attach	cypide at pci
+file	dev/pci/cypide.c		cypide
+
+# AMD Geode IDE controllers
+device	geodeide {[channel = -1]}: ata, pciide_common
+attach	geodeide at pci
+file	dev/pci/geodeide.c		geodeide
+
+# Triones/HighPoint IDE controllers
+device	hptide {[channel = -1]}: ata, pciide_common
+attach	hptide at pci
+file	dev/pci/hptide.c		hptide
+
+# Opti IDE controllers
+device	optiide {[channel = -1]}: ata, pciide_common
+attach	optiide at pci
+file	dev/pci/optiide.c		optiide
+
+# Intel IDE controllers
+device	piixide {[channel = -1]}: ata, pciide_common
+attach	piixide at pci
+file	dev/pci/piixide.c		piixide
+
+# Promise IDE controllers
+device	pdcide {[channel = -1]}: ata, pciide_common
+attach	pdcide at pci
+file	dev/pci/pdcide.c		pdcide
+
+# ServerWorks IDE controllers
+device	rccide {[channel = -1]}: ata, pciide_common
+attach	rccide at pci
+file	dev/pci/rccide.c		rccide
+
+# Silicon Image SATALink controllers
+device	satalink {[channel = -1]}: ata, pciide_common, sata
+attach	satalink at pci
+file	dev/pci/satalink.c		satalink
+
+# SiS IDE controllers
+device	siside {[channel = -1]}: ata, pciide_common
+attach	siside at pci
+file	dev/pci/siside.c		siside
+
+# Symphony Labs IDE controllers
+device	slide {[channel = -1]}: ata, pciide_common
+attach	slide at pci
+file	dev/pci/slide.c		slide
+
+# ServerWorks IDE controllers
+#device	swide {[channel = -1]}: ata, pciide_common
+#attach	swide at pci
+#file	dev/pci/swide.c		swide
+
+# VIA/AMD/Nvidia IDE controllers
+device	viaide {[channel = -1]}: ata, pciide_common
+attach	viaide at pci
+file	dev/pci/viaide.c	viaide
+
+# STMicroelectronics STPC IDE controllers
+device	stpcide {[channel = -1 ]}: ata, pciide_common
+attach	stpcide at pci
+file	dev/pci/stpcide.c	stpcide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus
@@ -228,7 +318,8 @@ attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci | ipkdb_ne_pci
 
 # Texas Instruments ThunderLAN Chip.
-device	tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
+device	tl: ether, ifnet, arp, i2cexec, at24cxx_eeprom, i2c_bitbang,
+	    mii, mii_bitbang
 attach	tl at pci
 file	dev/pci/if_tl.c			tl
 
@@ -302,14 +393,12 @@ attach	mpu at fms with mpu_fms
 file	dev/pci/mpu_fms.c		mpu_fms
 
 # Ensoniq AudioPCI S5016
-device	eap: audiobus, auconv, mulaw, ac97, midibus
+device	eap { }: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
-# Avance Logic ALS4000 audio
-device	als: audiobus, auconv, mulaw
-attach	als at pci
-file	dev/pci/als.c			als
+attach	joy at eap with joy_eap
+file	dev/pci/joy_eap.c		joy_eap needs-flag
 
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
@@ -403,18 +492,17 @@ file	dev/pci/pucdata.c		puc
 
 attach	com at puc with com_puc
 file	dev/pci/com_puc.c		com_puc
+file	dev/pci/cyber.c			com_puc
+
+attach	lpt at puc with lpt_puc
+file	dev/pci/lpt_puc.c		lpt_puc & !ppbus
+
+attach	atppc at puc with atppc_puc
+file	dev/pci/atppc_puc.c		atppc_puc
 
 # Console device support for puc drivers
 defflag	opt_puccn.h	PUCCN
 file	dev/pci/puccn.c			puccn
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-# attach	lpt at puc with lpt_puc
-# file	dev/pci/lpt_puc.c		lpt_puc
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
@@ -444,7 +532,7 @@ attach	vr at pci
 file	dev/pci/if_vr.c			vr
 
 # SiS 900 Fast Ethernet controllers
-device	sip: ether, ifnet, arp, mii
+device	sip: ether, ifnet, arp, mii, mii_bitbang
 attach	sip at pci
 file	dev/pci/if_sip.c		sip
 
@@ -462,14 +550,6 @@ file	dev/pci/if_glxt.c		glxt
 device	stge: ether, ifnet, arp, mii, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
-
-# SysKonnect SKNET-GE Gigabit Ethernet  
-device	skgec { port = -1 }
-attach	skgec at pci
-file	dev/pci/if_skge.c		skgec
-
-device	skge: ether, ifnet, arp, mii
-attach	skge at skgec   
 
 # Intel i8254x Gigabit Ethernet
 device	wm: ether, ifnet, arp, mii, mii_bitbang
@@ -542,13 +622,22 @@ attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 
 # Hi/fn 7751 
-device	hifn {}
+device	hifn: opencrypto
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
+
+# Bluesteelnet 5501/5601, Broadcom 580x/582x security processor
+device	ubsec: opencrypto
+attach	ubsec at pci
+file	dev/pci/ubsec.c			ubsec
 
 # Aironet PC4500/PC4800
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
+
+# ADMtek ADM8211 PCI/Mini-PCI
+attach	atw at pci with atw_pci
+file	dev/pci/if_atw_pci.c		atw_pci
 
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
@@ -559,6 +648,10 @@ attach	isic at pci with isic_pci
 file	dev/pci/isic_pci.c		isic_pci
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
+
+# AVM T1/B1
+attach	iavc at pci with iavc_pci
+file	dev/pci/iavc_pci.c		iavc_pci
 
 device	ifpci: isdndev, passive_isdn, nisac
 attach	ifpci at pci
@@ -578,8 +671,8 @@ file	dev/pci/iwic_fsm.c		iwic
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver
-device oboe: irbus, irdasir
-attach oboe at pci
+device	oboe: irbus, irdasir
+attach	oboe at pci
 file	dev/pci/oboe.c			oboe
 
 # Middle Digital, Inc. PCI-Weasel serial console board control
@@ -601,3 +694,24 @@ file	dev/pci/machfb.c		machfb
 device	txp: ether, ifnet, arp
 attach	txp at pci
 file	dev/pci/if_txp.c		txp
+
+# SysKonnect
+device	skc { }
+attach	skc at pci
+device	sk: ether, ifnet, arp, mii
+attach	sk at skc
+file	dev/pci/if_sk.c			skc | sk
+
+# Broadcom 4401 10/100 Ethernet
+device	bce: ether, ifnet, arp, mii
+attach	bce at pci
+file	dev/pci/if_bce.c		bce
+
+# Intel PRO/10GbE
+device	dge: ether, ifnet, arp
+attach	dge at pci
+file	dev/pci/if_dge.c		dge
+
+# Realtek 8129/8139 Ethernet controllers
+attach	re at pci
+file	dev/pci/if_re.c			re

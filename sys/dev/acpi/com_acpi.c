@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.7 2003/01/09 12:23:28 jdolecek Exp $ */
+/* $NetBSD: com_acpi.c,v 1.7.2.1 2004/08/03 10:45:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.7 2003/01/09 12:23:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.7.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.7 2003/01/09 12:23:28 jdolecek Exp $"
 
 #include <dev/ic/comvar.h>
 
-int	com_acpi_match(struct device *, struct cfdata *, void *);
-void	com_acpi_attach(struct device *, struct device *, void *);
+static int	com_acpi_match(struct device *, struct cfdata *, void *);
+static void	com_acpi_attach(struct device *, struct device *, void *);
 
 struct com_acpi_softc {
 	struct com_softc sc_com;
@@ -69,35 +69,28 @@ static const char * const com_acpi_ids[] = {
 	"PNP0510",	/* Generic IRDA-compatible device */
 	"PNP0511",	/* Generic IRDA-compatible device */
 	"IBM0071",	/* IBM ThinkPad IRDA device */
+	"SMCF010",	/* SMC SuperIO IRDA device */
 	NULL
 };
 
 /*
  * com_acpi_match: autoconf(9) match routine
  */
-int
+static int
 com_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	const char *id;
-	int i;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	for (i = 0; (id = com_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId, id) == 0)
-			return 1;
-	}
-
-	/* No matches found */
-	return 0;
+	return acpi_match_hid(aa->aa_node->ad_devinfo,com_acpi_ids);
 }
 
 /*
  * com_acpi_attach: autoconf(9) attach routine
  */
-void
+static void
 com_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_acpi_softc *asc = (struct com_acpi_softc *)self;
@@ -111,19 +104,17 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
-	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK) {
-		printf("%s: unable to parse resources\n", sc->sc_dev.dv_xname);
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	    &res, &acpi_resource_parse_ops_default);
+	if (ACPI_FAILURE(rv))
 		return;
-	}
 
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our IRQ */
@@ -131,7 +122,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_iot = aa->aa_iot;
@@ -140,7 +131,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    0, &sc->sc_ioh)) {
 			printf("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto out;
 		}
 	}
 	sc->sc_iobase = io->ar_base;
@@ -149,7 +140,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
 		printf(": com probe failed\n");
-		return;
+		goto out;
 	}
 
 	sc->sc_frequency = 115200 * 16;
@@ -159,4 +150,6 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
 	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
 	    IPL_SERIAL, comintr, sc);
+ out:
+	acpi_resource_cleanup(&res);
 }

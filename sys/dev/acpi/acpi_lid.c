@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.8.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.8.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,32 +58,34 @@ struct acpilid_softc {
 	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 };
 
-int	acpilid_match(struct device *, struct cfdata *, void *);
-void	acpilid_attach(struct device *, struct device *, void *);
+static const char * const lid_hid[] = {
+	"PNP0C0D",
+	NULL
+};
+
+static int	acpilid_match(struct device *, struct cfdata *, void *);
+static void	acpilid_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpilid, sizeof(struct acpilid_softc),
     acpilid_match, acpilid_attach, NULL, NULL);
 
-void	acpilid_status_changed(void *);
-void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void	acpilid_status_changed(void *);
+static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *context);
 
 /*
  * acpilid_match:
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpilid_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0D") == 0)
-		return (1);
-
-	return (0);
+	return acpi_match_hid(aa->aa_node->ad_devinfo, lid_hid);
 }
 
 /*
@@ -91,7 +93,7 @@ acpilid_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpilid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpilid_softc *sc = (void *) self;
@@ -112,9 +114,9 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, sc);
-	if (rv != AE_OK) {
-		printf("%s: unable to register device notify handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 }
@@ -124,14 +126,15 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Get, and possibly display, the lid status, and take action.
  */
-void
+static void
 acpilid_status_changed(void *arg)
 {
 	struct acpilid_softc *sc = arg;
-	int status;
+	ACPI_INTEGER status;
+	ACPI_STATUS rv;
 
-	if (acpi_eval_integer(sc->sc_node->ad_handle, "_LID",
-	    &status) != AE_OK)
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_LID", &status);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
@@ -143,7 +146,7 @@ acpilid_status_changed(void *arg)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpilid_softc *sc = context;
@@ -157,9 +160,10 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpilid_status_changed, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue lid change "
-			    "event: %d\n", sc->sc_dev.dv_xname, rv);
+			    "callback: %s\n", sc->sc_dev.dv_xname,
+			    AcpiFormatException(rv));
 		break;
 
 	default:

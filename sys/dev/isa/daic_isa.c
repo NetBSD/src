@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.10 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.10.6.1 2004/08/03 10:47:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

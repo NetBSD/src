@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.9 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.9.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
  * SCSI BIOS ROM.
  * Used to probe the board.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.9.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.12 2003/05/03 18:11:36 wiz Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.12.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.12 2003/05/03 18:11:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.12.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,7 @@ ntwoc_pci_alloc_dma(struct sca_softc *sc)
 	if (bus_dmamem_alloc(sc->scu_dmat,
 			     allocsize,
 			     SCA_DMA_ALIGNMENT,
-			     SCA_DMA_BOUNDRY,
+			     SCA_DMA_BOUNDARY,
 			     &sc->scu_seg, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
 		printf("Could not allocate DMA memory\n");
 		return 1;
@@ -607,7 +607,7 @@ ntwoc_pci_alloc_dma(struct sca_softc *sc)
 	NTWO_DPRINTF(("DMA memory mapped\n"));
 
 	if (bus_dmamap_create(sc->scu_dmat, allocsize, 2,
-			      allocsize, SCA_DMA_BOUNDRY,
+			      allocsize, SCA_DMA_BOUNDARY,
 			      BUS_DMA_NOWAIT, &sc->scu_dmam) != 0) {
 		printf("Could not create DMA map\n");
 		return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.2 2003/05/03 18:11:13 wiz Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.2.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * //depot/aic7xxx/aic7xxx/aic79xx_inline.h#44 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx_inline.h#51 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_inline.h,v 1.8 2003/03/06 23:58:34 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_inline.h,v 1.12 2003/06/28 04:43:19 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -51,7 +51,7 @@
 #define _AIC79XX_INLINE_H_
 
 /******************************** Debugging ***********************************/
-static __inline char *ahd_name(struct ahd_softc *ahd);
+static __inline char *ahd_name(struct ahd_softc *);
 
 static __inline char *
 ahd_name(struct ahd_softc *ahd)
@@ -60,26 +60,20 @@ ahd_name(struct ahd_softc *ahd)
 }
 
 /************************ Sequencer Execution Control *************************/
-static __inline void ahd_known_modes(struct ahd_softc *ahd,
-				     ahd_mode src, ahd_mode dst);
-static __inline ahd_mode_state ahd_build_mode_state(struct ahd_softc *ahd,
-						    ahd_mode src,
-						    ahd_mode dst);
-static __inline void ahd_extract_mode_state(struct ahd_softc *ahd,
-					    ahd_mode_state state,
-					    ahd_mode *src, ahd_mode *dst);
-static __inline void ahd_set_modes(struct ahd_softc *ahd, ahd_mode src,
-				   ahd_mode dst);
-static __inline void ahd_update_modes(struct ahd_softc *ahd);
-static __inline void ahd_assert_modes(struct ahd_softc *ahd, ahd_mode srcmode,
-				      ahd_mode dstmode, const char *file,
-				      int line);
-static __inline ahd_mode_state ahd_save_modes(struct ahd_softc *ahd);
-static __inline void ahd_restore_modes(struct ahd_softc *ahd,
-				       ahd_mode_state state);
-static __inline int  ahd_is_paused(struct ahd_softc *ahd);
-static __inline void ahd_pause(struct ahd_softc *ahd);
-static __inline void ahd_unpause(struct ahd_softc *ahd);
+static __inline void ahd_known_modes(struct ahd_softc *, ahd_mode, ahd_mode);
+static __inline ahd_mode_state ahd_build_mode_state(struct ahd_softc *,
+    ahd_mode, ahd_mode);
+static __inline void ahd_extract_mode_state(struct ahd_softc *,
+    ahd_mode_state, ahd_mode *, ahd_mode *);
+static __inline void ahd_set_modes(struct ahd_softc *, ahd_mode, ahd_mode);
+static __inline void ahd_update_modes(struct ahd_softc *);
+static __inline void ahd_assert_modes(struct ahd_softc *, ahd_mode,
+    ahd_mode, const char *, int);
+static __inline ahd_mode_state ahd_save_modes(struct ahd_softc *);
+static __inline void ahd_restore_modes(struct ahd_softc *, ahd_mode_state);
+static __inline int  ahd_is_paused(struct ahd_softc *);
+static __inline void ahd_pause(struct ahd_softc *);
+static __inline void ahd_unpause(struct ahd_softc *);
 
 static __inline void
 ahd_known_modes(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
@@ -228,22 +222,18 @@ ahd_unpause(struct ahd_softc *ahd)
 		ahd_set_modes(ahd, ahd->saved_src_mode, ahd->saved_dst_mode);
 	}
 
-	if ((ahd_inb(ahd, INTSTAT) & ~(SWTMINT | CMDCMPLT)) == 0)
+	if ((ahd_inb(ahd, INTSTAT) & ~CMDCMPLT) == 0)
 		ahd_outb(ahd, HCNTRL, ahd->unpause);
 
 	ahd_known_modes(ahd, AHD_MODE_UNKNOWN, AHD_MODE_UNKNOWN);
 }
 
 /*********************** Scatter Gather List Handling *************************/
-static __inline void	*ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
-				      void *sgptr, bus_addr_t addr,
-				      bus_size_t len, int last);
-static __inline void	 ahd_setup_scb_common(struct ahd_softc *ahd,
-					      struct scb *scb);
-static __inline void	 ahd_setup_data_scb(struct ahd_softc *ahd,
-					    struct scb *scb);
-static __inline void	 ahd_setup_noxfer_scb(struct ahd_softc *ahd,
-					      struct scb *scb);
+static __inline void	*ahd_sg_setup(struct ahd_softc *, struct scb *,
+			    void *, bus_addr_t, bus_size_t, int);
+static __inline void	 ahd_setup_scb_common(struct ahd_softc *, struct scb *);
+static __inline void	 ahd_setup_data_scb(struct ahd_softc *, struct scb *);
+static __inline void	 ahd_setup_noxfer_scb(struct ahd_softc *, struct scb *);
 
 static __inline void *
 ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
@@ -276,12 +266,12 @@ ahd_setup_scb_common(struct ahd_softc *ahd, struct scb *scb)
 	scb->crc_retry_count = 0;
 	if ((scb->flags & SCB_PACKETIZED) != 0) {
 		/* XXX what about ACA??  It is type 4, but TAG_TYPE == 0x3. */
-		scb->hscb->task_attribute= scb->hscb->control & SCB_TAG_TYPE;
-		/*
-		 * For Rev A short lun workaround.
-		 */
-		memset(scb->hscb->pkt_long_lun, 0, sizeof(scb->hscb->pkt_long_lun));
-		scb->hscb->pkt_long_lun[6] = scb->hscb->lun;
+		scb->hscb->task_attribute = scb->hscb->control & SCB_TAG_TYPE;
+	} else {
+		if (ahd_get_transfer_length(scb) & 0x01)
+			scb->hscb->task_attribute = SCB_XFERLEN_ODD;
+		else
+			scb->hscb->task_attribute = 0;
 	}
 
 	if (scb->hscb->cdb_len <= MAX_CDB_LEN_WITH_SENSE_ADDR
@@ -304,9 +294,12 @@ ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 		scb->hscb->datacnt = sg->len;
 	} else {
 		struct ahd_dma_seg *sg;
+		uint32_t *dataptr_words;
 
 		sg = (struct ahd_dma_seg *)scb->sg_list;
-		scb->hscb->dataptr = sg->addr;
+		dataptr_words = (uint32_t*)&scb->hscb->dataptr;
+		dataptr_words[0] = sg->addr;
+		dataptr_words[1] = 0;
 		if ((ahd->flags & AHD_39BIT_ADDRESSING) != 0) {
 			uint64_t high_addr;
 
@@ -333,24 +326,18 @@ ahd_setup_noxfer_scb(struct ahd_softc *ahd, struct scb *scb)
 }
 
 /************************** Memory mapping routines ***************************/
-static __inline size_t	ahd_sg_size(struct ahd_softc *ahd);
+static __inline size_t	ahd_sg_size(struct ahd_softc *);
 static __inline void *
-			ahd_sg_bus_to_virt(struct ahd_softc *ahd,
-					   struct scb *scb,
-					   uint32_t sg_busaddr);
+			ahd_sg_bus_to_virt(struct ahd_softc *, struct scb *,
+			    uint32_t);
 static __inline uint32_t
-			ahd_sg_virt_to_bus(struct ahd_softc *ahd,
-					   struct scb *scb,
-					   void *sg);
-static __inline void	ahd_sync_scb(struct ahd_softc *ahd,
-				     struct scb *scb, int op);
-static __inline void	ahd_sync_sglist(struct ahd_softc *ahd,
-					struct scb *scb, int op);
-static __inline void	ahd_sync_sense(struct ahd_softc *ahd,
-				       struct scb *scb, int op);
+			ahd_sg_virt_to_bus(struct ahd_softc *, struct scb *,
+			    void *);
+static __inline void	ahd_sync_scb(struct ahd_softc *, struct scb *, int);
+static __inline void	ahd_sync_sglist(struct ahd_softc *, struct scb *, int);
+static __inline void	ahd_sync_sense(struct ahd_softc *, struct scb *, int);
 static __inline uint32_t
-			ahd_targetcmd_offset(struct ahd_softc *ahd,
-					     u_int index);
+			ahd_targetcmd_offset(struct ahd_softc *, u_int);
 
 static __inline size_t
 ahd_sg_size(struct ahd_softc *ahd)
@@ -417,55 +404,47 @@ ahd_targetcmd_offset(struct ahd_softc *ahd, u_int index)
 	       - (uint8_t *)ahd->qoutfifo);
 }
 
-/*********************** Miscelaneous Support Functions ***********************/
-static __inline void	ahd_complete_scb(struct ahd_softc *ahd,
-					 struct scb *scb);
-static __inline void	ahd_update_residual(struct ahd_softc *ahd,
-					    struct scb *scb);
+/*********************** Miscellaneous Support Functions ***********************/
+static __inline void	ahd_complete_scb(struct ahd_softc *, struct scb *);
+static __inline void	ahd_update_residual(struct ahd_softc *, struct scb *);
 static __inline struct ahd_initiator_tinfo *
-			ahd_fetch_transinfo(struct ahd_softc *ahd,
-					    char channel, u_int our_id,
-					    u_int remote_id,
-					    struct ahd_tmode_tstate **tstate);
+			ahd_fetch_transinfo(struct ahd_softc *, char, u_int,
+			    u_int, struct ahd_tmode_tstate **);
 static __inline uint16_t
-			ahd_inw(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outw(struct ahd_softc *ahd, u_int port,
-				 u_int value);
+			ahd_inw(struct ahd_softc *, u_int);
+static __inline void	ahd_outw(struct ahd_softc *, u_int, u_int);
 static __inline uint32_t
-			ahd_inl(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outl(struct ahd_softc *ahd, u_int port,
-				 uint32_t value);
+			ahd_inl(struct ahd_softc *, u_int);
+static __inline void	ahd_outl(struct ahd_softc *, u_int, uint32_t);
 static __inline uint64_t
-			ahd_inq(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outq(struct ahd_softc *ahd, u_int port,
-				 uint64_t value);
-static __inline u_int	ahd_get_scbptr(struct ahd_softc *ahd);
-static __inline void	ahd_set_scbptr(struct ahd_softc *ahd, u_int scbptr);
-static __inline u_int	ahd_get_hnscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_hnscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_hescb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_hescb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_snscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_snscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_sescb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_sescb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_sdscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_sdscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_inb_scbram(struct ahd_softc *ahd, u_int offset);
-static __inline u_int	ahd_inw_scbram(struct ahd_softc *ahd, u_int offset);
+			ahd_inq(struct ahd_softc *, u_int);
+static __inline void	ahd_outq(struct ahd_softc *, u_int, uint64_t);
+static __inline u_int	ahd_get_scbptr(struct ahd_softc *);
+static __inline void	ahd_set_scbptr(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_hnscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_hnscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_hescb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_hescb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_snscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_snscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_sescb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_sescb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_sdscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_sdscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_inb_scbram(struct ahd_softc *, u_int);
+static __inline u_int	ahd_inw_scbram(struct ahd_softc *, u_int);
 static __inline uint32_t
-			ahd_inl_scbram(struct ahd_softc *ahd, u_int offset);
-static __inline void	ahd_swap_with_next_hscb(struct ahd_softc *ahd,
-						struct scb *scb);
-static __inline void	ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb);
+			ahd_inl_scbram(struct ahd_softc *, u_int);
+static __inline uint64_t
+			ahd_inq_scbram(struct ahd_softc *ahd, u_int offset);
+static __inline void	ahd_swap_with_next_hscb(struct ahd_softc *,
+	struct scb *);
+static __inline void	ahd_queue_scb(struct ahd_softc *, struct scb *);
 static __inline uint8_t *
-			ahd_get_sense_buf(struct ahd_softc *ahd,
-					  struct scb *scb);
+			ahd_get_sense_buf(struct ahd_softc *, struct scb *);
 static __inline uint32_t
-			ahd_get_sense_bufaddr(struct ahd_softc *ahd,
-					      struct scb *scb);
-static __inline void	ahd_post_scb(struct ahd_softc *ahd,
-					 struct scb *scb);
+			ahd_get_sense_bufaddr(struct ahd_softc *, struct scb *);
+static __inline void	ahd_post_scb(struct ahd_softc *, struct scb *);
 
 
 static __inline void
@@ -712,10 +691,15 @@ ahd_inw_scbram(struct ahd_softc *ahd, u_int offset)
 static __inline uint32_t
 ahd_inl_scbram(struct ahd_softc *ahd, u_int offset)
 {
-	return (ahd_inb_scbram(ahd, offset)
-	      | (ahd_inb_scbram(ahd, offset+1) << 8)
-	      | (ahd_inb_scbram(ahd, offset+2) << 16)
-	      | (ahd_inb_scbram(ahd, offset+3) << 24));
+	return (ahd_inw_scbram(ahd, offset)
+	      | (ahd_inw_scbram(ahd, offset+2) << 16));
+}
+
+static __inline uint64_t
+ahd_inq_scbram(struct ahd_softc *ahd, u_int offset)
+{
+	return (ahd_inl_scbram(ahd, offset)
+	      | ((uint64_t)ahd_inl_scbram(ahd, offset+4)) << 32);
 }
 
 static __inline struct scb *
@@ -736,6 +720,7 @@ static __inline void
 ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct hardware_scb *q_hscb;
+	struct map_node *q_hscb_map;
 	uint32_t saved_hscb_busaddr;
 
 	/*
@@ -751,6 +736,7 @@ ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 	 * locate the correct SCB by SCB_TAG.
 	 */
 	q_hscb = ahd->next_queued_hscb;
+	q_hscb_map = ahd->next_queued_hscb_map;
 	saved_hscb_busaddr = q_hscb->hscb_busaddr;
 	memcpy(q_hscb, scb->hscb, sizeof(*scb->hscb));
 	q_hscb->hscb_busaddr = saved_hscb_busaddr;
@@ -758,7 +744,12 @@ ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 
 	/* Now swap HSCB pointers. */
 	ahd->next_queued_hscb = scb->hscb;
+	ahd->next_queued_hscb_map = scb->hscb_map;
 	scb->hscb = q_hscb;
+	scb->hscb_map = q_hscb_map;
+
+	KASSERT((vaddr_t)scb->hscb >= (vaddr_t)scb->hscb_map->vaddr &&
+		(vaddr_t)scb->hscb < (vaddr_t)scb->hscb_map->vaddr + PAGE_SIZE);
 
 	/* Now define the mapping from tag to SCB in the scbindex */
 	ahd->scb_data.scbindex[SCB_GET_TAG(scb)] = scb;
@@ -796,12 +787,15 @@ ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_QUEUE) != 0) {
+		uint64_t host_dataptr;
+
+		host_dataptr = ahd_le64toh(scb->hscb->dataptr);
 		printf("%s: Queueing SCB 0x%x bus addr 0x%x - 0x%x%x/0x%x\n",
 		       ahd_name(ahd),
-		       SCB_GET_TAG(scb), scb->hscb->hscb_busaddr,
-		       (u_int)((scb->hscb->dataptr >> 32) & 0xFFFFFFFF),
-		       (u_int)(scb->hscb->dataptr & 0xFFFFFFFF),
-		       scb->hscb->datacnt);
+		       SCB_GET_TAG(scb), ahd_le32toh(scb->hscb->hscb_busaddr),
+		       (u_int)((host_dataptr >> 32) & 0xFFFFFFFF),
+		       (u_int)(host_dataptr & 0xFFFFFFFF),
+		       ahd_le32toh(scb->hscb->datacnt));
 	}
 #endif
 	/* Tell the adapter about the newly queued SCB */
@@ -821,16 +815,16 @@ ahd_get_sense_bufaddr(struct ahd_softc *ahd, struct scb *scb)
 }
 
 /************************** Interrupt Processing ******************************/
-static __inline void	ahd_sync_qoutfifo(struct ahd_softc *ahd, int op);
-static __inline void	ahd_sync_tqinfifo(struct ahd_softc *ahd, int op);
-static __inline u_int	ahd_check_cmdcmpltqueues(struct ahd_softc *ahd);
-static __inline int	ahd_intr(void *arg);
-static __inline void	ahd_minphys(struct buf *bp);
+static __inline void	ahd_sync_qoutfifo(struct ahd_softc *, int);
+static __inline void	ahd_sync_tqinfifo(struct ahd_softc *, int);
+static __inline u_int	ahd_check_cmdcmpltqueues(struct ahd_softc *);
+static __inline int	ahd_intr(void *);
+static __inline void	ahd_minphys(struct buf *);
 
 static __inline void
 ahd_sync_qoutfifo(struct ahd_softc *ahd, int op)
 {
-	ahd_dmamap_sync(ahd, ahd->parent_dmat, ahd->shared_data_dmamap,
+	ahd_dmamap_sync(ahd, ahd->parent_dmat, ahd->shared_data_map.dmamap,
 			/*offset*/0, /*len*/AHD_SCB_MAX * sizeof(uint16_t), op);
 }
 
@@ -840,7 +834,7 @@ ahd_sync_tqinfifo(struct ahd_softc *ahd, int op)
 #ifdef AHD_TARGET_MODE
 	if ((ahd->flags & AHD_TARGETROLE) != 0) {
 		ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/,
-				ahd->shared_data_dmamap,
+				ahd->shared_data_map.dmamap,
 				ahd_targetcmd_offset(ahd, 0),
 				sizeof(struct target_cmd) * AHD_TMODE_CMDS,
 				op);
@@ -860,7 +854,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 	u_int retval;
 
 	retval = 0;
-	ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_dmamap,
+	ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_map.dmamap,
 			/*offset*/ahd->qoutfifonext, /*len*/2,
 			BUS_DMASYNC_POSTREAD);
 	if ((ahd->qoutfifo[ahd->qoutfifonext]
@@ -870,7 +864,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 	if ((ahd->flags & AHD_TARGETROLE) != 0
 	 && (ahd->flags & AHD_TQINFIFO_BLOCKED) == 0) {
 		ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/,
-				ahd->shared_data_dmamap,
+				ahd->shared_data_map.dmamap,
 				ahd_targetcmd_offset(ahd, ahd->tqinfifofnext),
 				/*len*/sizeof(struct target_cmd),
 				BUS_DMASYNC_POSTREAD);
@@ -897,7 +891,7 @@ ahd_intr(void *arg)
 		 * so just return.  This is likely just a shared
 		 * interrupt.
 		 */
-		return 0;
+		return (0);
 	}
 
 	/*
@@ -911,6 +905,9 @@ ahd_intr(void *arg)
 		intstat = CMDCMPLT;
 	else
 		intstat = ahd_inb(ahd, INTSTAT);
+
+	if ((intstat & INT_PEND) == 0)
+		return (0);
 
 	if (intstat & CMDCMPLT) {
 		ahd_outb(ahd, CLRINT, CLRCMDINT);
@@ -949,34 +946,26 @@ ahd_intr(void *arg)
 			return 1;
 	}
 
-	if (intstat == 0xFF && (ahd->features & AHD_REMOVABLE) != 0)
-		/* Hot eject */
-		return 1;
-
-	if ((intstat & INT_PEND) == 0)
-		return 1;
-
-	if (intstat & HWERRINT) {
+	/*
+	 * Handle statuses that may invalidate our cached
+	 * copy of INTSTAT separately.
+	 */
+	if (intstat == 0xFF && (ahd->features & AHD_REMOVABLE) != 0) {
+		/* Hot eject.  Do nothing */
+	} else if (intstat & HWERRINT) {
 		ahd_handle_hwerrint(ahd);
-		return 1;
-	}
-
-	if ((intstat & (PCIINT|SPLTINT)) != 0) {
+	} else if ((intstat & (PCIINT|SPLTINT)) != 0) {
 		ahd->bus_intr(ahd);
-		return 1;
+	} else {
+
+		if ((intstat & SEQINT) != 0)
+			ahd_handle_seqint(ahd, intstat);
+
+		if ((intstat & SCSIINT) != 0)
+			ahd_handle_scsiint(ahd, intstat);
 	}
 
-	if ((intstat & (SEQINT)) != 0) {
-		ahd_handle_seqint(ahd, intstat);
-		return 1;
-	}
-
-	if ((intstat & SCSIINT) != 0) {
-		ahd_handle_scsiint(ahd, intstat);
-		return 1;
-	}
-
-	return 1;
+	return (1);
 }
 
 static __inline void
@@ -987,7 +976,7 @@ ahd_minphys(bp)
  * Even though the card can transfer up to 16megs per command
  * we are limited by the number of segments in the DMA segment
  * list that we can hold.  The worst case is that all pages are
- * discontinuous physically, hense the "page per segment" limit
+ * discontinuous physically, hence the "page per segment" limit
  * enforced here.
  */
         if (bp->b_bcount > AHD_MAXTRANSFER_SIZE) {
@@ -996,7 +985,7 @@ ahd_minphys(bp)
         minphys(bp);
 }
 
-static __inline u_int32_t scsi_4btoul(u_int8_t *bytes);
+static __inline u_int32_t scsi_4btoul(u_int8_t *);
 
 static __inline u_int32_t
 scsi_4btoul(u_int8_t *bytes)

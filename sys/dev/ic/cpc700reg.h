@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700reg.h,v 1.2 2003/01/23 21:17:15 augustss Exp $	*/
+/*	$NetBSD: cpc700reg.h,v 1.2.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,14 @@
 /* Config space regs */
 #define CPC_PCI_BRDGERR		0x48
 #define CPC_PCI_CLEARERR	0x0000ff00
+
+#define CPC_BRIDGE_OPTIONS2	0x60
+#define  CPC_BRIDGE_O2_ILAT_MASK	0x00f8
+#define  CPC_BRIDGE_O2_ILAT_SHIFT	3
+#define  CPC_BRIDGE_O2_ILAT_PRIM_ASYNC	18
+#define  CPC_BRIDGE_O2_SLAT_MASK	0x0f00
+#define  CPC_BRIDGE_O2_SLAT_SHIFT	8
+#define  CPC_BRIDGE_O2_2LAT_PRIM_ASYNC	2
 
 /* PCI interrupt acknowledge & special cycle */
 #define CPC_INTR_ACK		0xfed00000

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeireg.h,v 1.3 2001/09/16 16:34:38 wiz Exp $ */
+/* $NetBSD: btvmeireg.h,v 1.3.18.1 2004/08/03 10:49:06 skrll Exp $ */
 
 #ifndef _bit3reg_h_
 #define _bit3reg_h_
@@ -64,8 +64,8 @@
 #define LOC_CMD1             (0x00)                /* Local Command Register */
 
 #define LC1_CLR_ERROR        (1<<7)     /* w,   Clear status error bits (1 Shot) */
-#define LC1_CLR_PR_INT       (1<<6)     /* w,   Clear PR (PS) Interupt (1 Shot)  */
-#define LC1_SND_PT_INT       (1<<5)     /* r/w, Set PT Interupt                  */
+#define LC1_CLR_PR_INT       (1<<6)     /* w,   Clear PR (PS) Interrupt (1 Shot)  */
+#define LC1_SND_PT_INT       (1<<5)     /* r/w, Set PT Interrupt                  */
 
 /******************************************************************************
 **
@@ -80,7 +80,7 @@
 
 #define LIC_INT_PENDING      (1<<7)     /* r  , Adaptor asserting INT on PCI bus */
 #define LIC_INT_ENABLE       (1<<6)     /* r/w, Normal (PR & CINT) INT Enable */
-#define LIC_ERR_INT_ENABLE   (1<<5)     /* r/w, Error Interupt Enable         */
+#define LIC_ERR_INT_ENABLE   (1<<5)     /* r/w, Error Interrupt Enable         */
 
 #define LIC_PT_CINT_SEL2     (1<<2)     /* r/w, PT CINT Line Selection Bit 2  */
 #define LIC_PT_CINT_SEL1     (1<<1)     /* r/w, PT CINT Line Selection Bit 1  */

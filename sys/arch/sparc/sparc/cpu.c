@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.175 2003/04/02 04:35:24 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.175.2.1 2004/08/03 10:41:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,6 +51,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.175.2.1 2004/08/03 10:41:06 skrll Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
@@ -95,7 +98,7 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-char	cpu_model[100];			/* machine model (primary cpu) */
+char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
@@ -138,7 +141,7 @@ void cpu_spinup __P((struct cpu_info *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
-int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
+int go_smp_cpus = 0;	/* non-primary CPUs wait for this to go */
 
 /* lock this to send IPI's */
 struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
@@ -229,7 +232,7 @@ alloc_cpuinfo()
 
 	/*
 	 * Arrange pcb, idle stack and interrupt stack in the same
-	 * way as is done for the boot cpu in locore.
+	 * way as is done for the boot CPU in locore.
 	 */
 	cpi->eintstack = cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
 
@@ -308,7 +311,7 @@ cpu_mainbus_attach(parent, self, aux)
 	int error, n;
 
 	node = ma->ma_node;
-	mid = (node != 0) ? PROM_getpropint(node, "mid", 0) : 0;
+	mid = (node != 0) ? prom_getpropint(node, "mid", 0) : 0;
 	cpu_attach((struct cpu_softc *)self, node, mid);
 
 	cpi = ((struct cpu_softc *)self)->sc_cpuinfo;
@@ -318,14 +321,14 @@ cpu_mainbus_attach(parent, self, aux)
 	/*
 	 * Map CPU mailbox if available
 	 */
-	if (node != 0 && (error = PROM_getprop(node, "mailbox-virtual",
+	if (node != 0 && (error = prom_getprop(node, "mailbox-virtual",
 					sizeof(*mbprop),
-					&n, (void **)&mbprop)) == 0) {
+					&n, &mbprop)) == 0) {
 		cpi->mailbox = mbprop->va;
 		free(mbprop, M_DEVBUF);
-	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
+	} else if (node != 0 && (error = prom_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
-					&n, (void **)&rrp)) == 0) {
+					&n, &rrp)) == 0) {
 		/* XXX - map cached/uncached? If cached, deal with
 		 *	 cache congruency!
 		 */
@@ -337,7 +340,7 @@ cpu_mainbus_attach(parent, self, aux)
 				rrp[0].oa_size,
 				BUS_SPACE_MAP_LINEAR, 
 				&cpi->mailbox) != 0)
-			panic("%s: can't map cpu mailbox", self->dv_xname);
+			panic("%s: can't map CPU mailbox", self->dv_xname);
 		free(rrp, M_DEVBUF);
 	}
 
@@ -349,9 +352,9 @@ cpu_mainbus_attach(parent, self, aux)
 		return;
 
 	rrp = NULL;
-	if (node == 0 || (error = PROM_getprop(node, "reg",
+	if (node == 0 || (error = prom_getprop(node, "reg",
 					sizeof(struct openprom_addr),
-					&n, (void **)&rrp)) != 0)
+					&n, &rrp)) != 0)
 		return;
 
 	/* register set #0 is the MBus port register */
@@ -360,7 +363,7 @@ cpu_mainbus_attach(parent, self, aux)
 			rrp[0].oa_size,
 			BUS_SPACE_MAP_LINEAR, 
 			&cpi->ci_mbusport) != 0) {
-		panic("%s: can't map cpu regs", self->dv_xname);
+		panic("%s: can't map CPU regs", self->dv_xname);
 	}
 	/* register set #1: MCXX control */
 	if (bus_space_map(ma->ma_bustag,
@@ -368,7 +371,7 @@ cpu_mainbus_attach(parent, self, aux)
 			rrp[1].oa_size,
 			BUS_SPACE_MAP_LINEAR, 
 			&cpi->ci_mxccregs) != 0) {
-		panic("%s: can't map cpu regs", self->dv_xname);
+		panic("%s: can't map CPU regs", self->dv_xname);
 	}
 	/* register sets #3 and #4 are E$ cache data and tags */
 
@@ -443,6 +446,14 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		cpi->eintstack = eintstack;
 		cpi->idle_u = idle_u;
 		/* Note: `curpcb' is set to `proc0' in locore */
+
+		/*
+		 * If we haven't been able to determine the Id of the
+		 * boot CPU, set it now. In this case we can only boot
+		 * from CPU #0 (see also the CPU attach code in autoconf.c)
+		 */
+		if (bootmid == 0)
+			bootmid = mid;
 	} else {
 #if defined(MULTIPROCESSOR)
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
@@ -476,8 +487,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 
 	if (ncpu > 1) {
 		printf(": mid %d", mid);
-		if (mid == 0)
-			printf("[WARNING: mid should not be 0]");
+		if (mid == 0 && !CPU_ISSUN4D)
+			printf(" [WARNING: mid should not be 0]");
 	}
 
 
@@ -518,7 +529,6 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 				continue;
 #define SET_CACHE_FUNC(x) \
 	if (cpi->x != __CONCAT(noop_,x)) cpi->x = __CONCAT(smp_,x)
-			SET_CACHE_FUNC(cache_flush);
 			SET_CACHE_FUNC(vcache_flush_page);
 			SET_CACHE_FUNC(vcache_flush_segment);
 			SET_CACHE_FUNC(vcache_flush_region);
@@ -643,13 +653,15 @@ extern void cpu_hatch __P((void));	/* in locore.s */
  * to call every CPU, or `1 << cpi->ci_cpuid' for each CPU to call.
  */
 void
-xcall(func, arg0, arg1, arg2, arg3, cpuset)
-	int	(*func)(int, int, int, int);
-	int	arg0, arg1, arg2, arg3;
+xcall(func, trap, arg0, arg1, arg2, cpuset)
+	xcall_func_t func;
+	xcall_trap_t trap;
+	int	arg0, arg1, arg2;
 	u_int	cpuset;
 {
 	int s, n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
+	int fasttrap;
 
 	/* XXX - note p->retval is probably no longer useful */
 
@@ -663,7 +675,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
 		if (callself)
-			p->retval = (*func)(arg0, arg1, arg2, arg3); 
+			p->retval = (*func)(arg0, arg1, arg2); 
 		return;
 	}
 
@@ -688,6 +700,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * Firstly, call each CPU.  We do this so that they might have
 	 * finished by the time we start looking.
 	 */
+	fasttrap = trap != NULL ? 1 : 0;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
@@ -699,11 +712,12 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		cpi->msg.complete = 0;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
+		p->trap = trap;
 		p->arg0 = arg0;
 		p->arg1 = arg1;
 		p->arg2 = arg2;
-		p->arg3 = arg3;
-		raise_ipi(cpi,13);/*xcall_cookie->pil*/
+		/* Fast cross calls use interrupt level 14 */
+		raise_ipi(cpi,13+fasttrap);/*xcall_cookie->pil*/
 	}
 
 	/*
@@ -711,15 +725,15 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
 	if (callself)
-		p->retval = (*func)(arg0, arg1, arg2, arg3); 
+		p->retval = (*func)(arg0, arg1, arg2); 
 
 	/*
-	 * Lastly, start looping, waiting for all cpu's to register that they
+	 * Lastly, start looping, waiting for all CPUs to register that they
 	 * have completed (bailing if it takes "too long", being loud about
 	 * this in the process).
 	 */
 	done = 0;
-	i = 10000;	/* time-out, not too long, but still an _AGE_ */
+	i = 100000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
 			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
@@ -743,7 +757,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 			}
 		}
 	}
-	if (!done)
+	if (i < 0)
 		printf_nolog("\n");
 
 	UNLOCK_XPMSG();
@@ -1042,10 +1056,11 @@ struct module_info module_sun4 = {
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
-	sun4_vcache_flush_page,
-	sun4_vcache_flush_segment,
-	sun4_vcache_flush_region,
-	sun4_vcache_flush_context,
+	sun4_vcache_flush_page, NULL,
+	sun4_vcache_flush_segment, NULL,
+	sun4_vcache_flush_region, NULL,
+	sun4_vcache_flush_context, NULL,
+	NULL, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1072,7 +1087,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_nlines = 0;
 
 		/* Override cache flush functions */
-		sc->sp_cache_flush = noop_cache_flush;
+		sc->cache_flush = noop_cache_flush;
 		sc->sp_vcache_flush_page = noop_vcache_flush_page;
 		sc->sp_vcache_flush_segment = noop_vcache_flush_segment;
 		sc->sp_vcache_flush_region = noop_vcache_flush_region;
@@ -1167,10 +1182,11 @@ struct module_info module_sun4c = {
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
-	sun4_vcache_flush_page,
-	sun4_vcache_flush_segment,
-	sun4_vcache_flush_region,
-	sun4_vcache_flush_context,
+	sun4_vcache_flush_page, NULL,
+	sun4_vcache_flush_segment, NULL,
+	sun4_vcache_flush_region, NULL,
+	sun4_vcache_flush_context, NULL,
+	NULL, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1189,11 +1205,11 @@ cpumatch_sun4c(sc, mp, node)
 
 	rnode = findroot();
 	sc->mmu_npmeg = sc->mmu_nsegment =
-		PROM_getpropint(rnode, "mmu-npmg", 128);
-	sc->mmu_ncontext = PROM_getpropint(rnode, "mmu-nctx", 8);
-                              
+		prom_getpropint(rnode, "mmu-npmg", 128);
+	sc->mmu_ncontext = prom_getpropint(rnode, "mmu-nctx", 8);
+
 	/* Get clock frequency */ 
-	sc->hz = PROM_getpropint(rnode, "clock-frequency", 0);
+	sc->hz = prom_getpropint(rnode, "clock-frequency", 0);
 }
 
 void
@@ -1210,16 +1226,16 @@ getcacheinfo_sun4c(sc, node)
 
 	/* Sun4c's have only virtually-addressed caches */
 	ci->c_physical = 0; 
-	ci->c_totalsize = PROM_getpropint(node, "vac-size", 65536);
+	ci->c_totalsize = prom_getpropint(node, "vac-size", 65536);
 	/*
 	 * Note: vac-hwflush is spelled with an underscore
 	 * on the 4/75s.
 	 */
 	ci->c_hwflush =
-		PROM_getpropint(node, "vac_hwflush", 0) |
-		PROM_getpropint(node, "vac-hwflush", 0);
+		prom_getpropint(node, "vac_hwflush", 0) |
+		prom_getpropint(node, "vac-hwflush", 0);
 
-	ci->c_linesize = l = PROM_getpropint(node, "vac-linesize", 16);
+	ci->c_linesize = l = prom_getpropint(node, "vac-linesize", 16);
 	for (i = 0; (1 << i) < l; i++)
 		/* void */;
 	if ((1 << i) != l)
@@ -1235,7 +1251,7 @@ getcacheinfo_sun4c(sc, node)
 	 * chip that affects traps.  (I wish I knew more about this
 	 * mysterious buserr-type variable....)
 	 */
-	if (PROM_getpropint(node, "buserr-type", 0) == 1)
+	if (prom_getpropint(node, "buserr-type", 0) == 1)
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 }
 #endif /* SUN4C */
@@ -1273,7 +1289,7 @@ getcacheinfo_obp(sc, node)
 	 */
 	ci->c_physical = node_has_property(node, "cache-physical?");
 
-	if (PROM_getpropint(node, "ncaches", 1) == 2)
+	if (prom_getpropint(node, "ncaches", 1) == 2)
 		ci->c_split = 1;
 	else
 		ci->c_split = 0;
@@ -1285,28 +1301,28 @@ getcacheinfo_obp(sc, node)
 	    node_has_property(node, "dcache-nlines") &&
 	    ci->c_split) {
 		/* Harvard architecture: get I and D cache sizes */
-		ci->ic_nlines = PROM_getpropint(node, "icache-nlines", 0);
+		ci->ic_nlines = prom_getpropint(node, "icache-nlines", 0);
 		ci->ic_linesize = l =
-			PROM_getpropint(node, "icache-line-size", 0);
+			prom_getpropint(node, "icache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad icache line size %d", l);
 		ci->ic_l2linesize = i;
 		ci->ic_associativity =
-			PROM_getpropint(node, "icache-associativity", 1);
+			prom_getpropint(node, "icache-associativity", 1);
 		ci->ic_totalsize = l * ci->ic_nlines * ci->ic_associativity;
 	
-		ci->dc_nlines = PROM_getpropint(node, "dcache-nlines", 0);
+		ci->dc_nlines = prom_getpropint(node, "dcache-nlines", 0);
 		ci->dc_linesize = l =
-			PROM_getpropint(node, "dcache-line-size",0);
+			prom_getpropint(node, "dcache-line-size",0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad dcache line size %d", l);
 		ci->dc_l2linesize = i;
 		ci->dc_associativity =
-			PROM_getpropint(node, "dcache-associativity", 1);
+			prom_getpropint(node, "dcache-associativity", 1);
 		ci->dc_totalsize = l * ci->dc_nlines * ci->dc_associativity;
 
 		ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
@@ -1314,16 +1330,16 @@ getcacheinfo_obp(sc, node)
 		ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
 	} else {
 		/* unified I/D cache */
-		ci->c_nlines = PROM_getpropint(node, "cache-nlines", 128);
+		ci->c_nlines = prom_getpropint(node, "cache-nlines", 128);
 		ci->c_linesize = l = 
-			PROM_getpropint(node, "cache-line-size", 0);
+			prom_getpropint(node, "cache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad cache line size %d", l);
 		ci->c_l2linesize = i;
 		ci->c_associativity =
-			PROM_getpropint(node, "cache-associativity", 1);
+			prom_getpropint(node, "cache-associativity", 1);
 		ci->dc_associativity = ci->ic_associativity =
 			ci->c_associativity;
 		ci->c_totalsize = l * ci->c_nlines * ci->c_associativity;
@@ -1331,15 +1347,15 @@ getcacheinfo_obp(sc, node)
 	
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
-		ci->ec_nlines = PROM_getpropint(node, "ecache-nlines", 32768);
-		ci->ec_linesize = l = PROM_getpropint(node, "ecache-line-size", 0);
+		ci->ec_nlines = prom_getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = prom_getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
 		ci->ec_l2linesize = i;
 		ci->ec_associativity =
-			PROM_getpropint(node, "ecache-associativity", 1);
+			prom_getpropint(node, "ecache-associativity", 1);
 		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
 	}
 	if (ci->c_totalsize == 0)
@@ -1374,10 +1390,11 @@ struct module_info module_ms1 = {
 	ms1_get_syncflt,
 	no_asyncflt_regs,
 	ms1_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
@@ -1419,10 +1436,11 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_get_syncflt,
 	srmmu_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1445,10 +1463,11 @@ struct module_info module_swift = {
 	swift_get_syncflt,
 	no_asyncflt_regs,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1488,10 +1507,11 @@ struct module_info module_hypersparc = {
 	hypersparc_get_syncflt,
 	hypersparc_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, ft_srmmu_vcache_flush_page,
+	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
+	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
+	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
+	srmmu_vcache_flush_range, ft_srmmu_vcache_flush_range,
 	noop_pcache_flush_page,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
@@ -1554,10 +1574,11 @@ struct module_info module_cypress = {
 	cypress_get_syncflt,
 	cypress_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, ft_srmmu_vcache_flush_page,
+	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
+	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
+	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
+	srmmu_vcache_flush_range, ft_srmmu_vcache_flush_range,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
@@ -1581,10 +1602,11 @@ struct module_info module_turbosparc = {
 	turbosparc_get_syncflt,
 	no_asyncflt_regs,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
+	srmmu_vcache_flush_range, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1620,7 +1642,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->mmu_enable = 0;
 	sc->cache_enable = 0;
 	sc->get_syncflt = 0;
-	sc->sp_cache_flush = 0;
+	sc->cache_flush = 0;
 	sc->sp_vcache_flush_page = 0;
 	sc->sp_vcache_flush_segment = 0;
 	sc->sp_vcache_flush_region = 0;
@@ -1658,10 +1680,11 @@ struct module_info module_viking = {
 	no_asyncflt_regs,
 	/* supersparcs use cached DVMA, no need to flush */
 	noop_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1743,8 +1766,11 @@ viking_mmu_enable()
 int
 viking_getmid(void)
 {
-	u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
-	return ((v >> 24) & 0xf);
+	if (cpuinfo.mxcc) {
+		u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
+		return ((v >> 24) & 0xf);
+	}
+	return (0);
 }
 
 int
@@ -1756,6 +1782,9 @@ viking_module_error(void)
 	/* Report on MXCC error registers in each module */
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL)
+			continue;
 
 		if (cpi->ci_mxccregs == 0) {
 			printf("\tMXCC registers not mapped\n");
@@ -1823,15 +1852,15 @@ getcacheinfo_sun4d(sc, node)
 
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
-		ci->ec_nlines = PROM_getpropint(node, "ecache-nlines", 32768);
-		ci->ec_linesize = l = PROM_getpropint(node, "ecache-line-size", 0);
+		ci->ec_nlines = prom_getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = prom_getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
 			/* void */;
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
 		ci->ec_l2linesize = i;
 		ci->ec_associativity =
-			PROM_getpropint(node, "ecache-associativity", 1);
+			prom_getpropint(node, "ecache-associativity", 1);
 		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
 	}
 }
@@ -1844,15 +1873,17 @@ struct module_info module_viking_sun4d = {
 	viking_hotfix,
 	viking_mmu_enable,
 	viking_cache_enable,
+	viking_getmid,
 	4096,
 	viking_get_syncflt,
 	no_asyncflt_regs,
 	/* supersparcs use cached DVMA, no need to flush */
 	noop_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
+	noop_vcache_flush_range, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1932,22 +1963,22 @@ getcpuinfo(sc, node)
 		i = getpsr();
 		if (node == 0 ||
 		    (cpu_impl =
-		     PROM_getpropint(node, "psr-implementation", -1)) == -1)
+		     prom_getpropint(node, "psr-implementation", -1)) == -1)
 			cpu_impl = IU_IMPL(i);
 
 		if (node == 0 ||
-		    (cpu_vers = PROM_getpropint(node, "psr-version", -1)) == -1)
+		    (cpu_vers = prom_getpropint(node, "psr-version", -1)) == -1)
 			cpu_vers = IU_VERS(i);
 
 		if (CPU_HAS_SRMMU) {
 			i = lda(SRMMU_PCR, ASI_SRMMU);
 			if (node == 0 ||
 			    (mmu_impl =
-			     PROM_getpropint(node, "implementation", -1)) == -1)
+			     prom_getpropint(node, "implementation", -1)) == -1)
 				mmu_impl = SRMMU_IMPL(i);
 
 			if (node == 0 ||
-			    (mmu_vers = PROM_getpropint(node, "version", -1)) == -1)
+			    (mmu_vers = prom_getpropint(node, "version", -1)) == -1)
 				mmu_vers = SRMMU_VERS(i);
 		} else {
 			mmu_impl = ANY;
@@ -1958,14 +1989,14 @@ getcpuinfo(sc, node)
 		 * Get CPU version/implementation from ROM. If not
 		 * available, assume same as boot CPU.
 		 */
-		cpu_impl = PROM_getpropint(node, "psr-implementation",
+		cpu_impl = prom_getpropint(node, "psr-implementation",
 					   cpuinfo.cpu_impl);
-		cpu_vers = PROM_getpropint(node, "psr-version",
+		cpu_vers = prom_getpropint(node, "psr-version",
 					   cpuinfo.cpu_vers);
 
 		/* Get MMU version/implementation from ROM always */
-		mmu_impl = PROM_getpropint(node, "implementation", -1);
-		mmu_vers = PROM_getpropint(node, "version", -1);
+		mmu_impl = prom_getpropint(node, "implementation", -1);
+		mmu_vers = prom_getpropint(node, "version", -1);
 	}
 
 	for (mp = cpu_conf; ; mp++) {
@@ -2007,12 +2038,12 @@ getcpuinfo(sc, node)
 		mp->minfo->getcacheinfo(sc, node);
 
 		if (node && sc->hz == 0 && !CPU_ISSUN4/*XXX*/) {
-			sc->hz = PROM_getpropint(node, "clock-frequency", 0);
+			sc->hz = prom_getpropint(node, "clock-frequency", 0);
 			if (sc->hz == 0) {
 				/*
 				 * Try to find it in the OpenPROM root...
 				 */     
-				sc->hz = PROM_getpropint(findroot(),
+				sc->hz = prom_getpropint(findroot(),
 						    "clock-frequency", 0);
 			}
 		}
@@ -2029,11 +2060,17 @@ getcpuinfo(sc, node)
 		MPCOPY(cache_enable);
 		MPCOPY(get_syncflt);
 		MPCOPY(get_asyncflt);
-		MPCOPY(sp_cache_flush);
+		MPCOPY(cache_flush);
 		MPCOPY(sp_vcache_flush_page);
 		MPCOPY(sp_vcache_flush_segment);
 		MPCOPY(sp_vcache_flush_region);
 		MPCOPY(sp_vcache_flush_context);
+		MPCOPY(sp_vcache_flush_range);
+		MPCOPY(ft_vcache_flush_page);
+		MPCOPY(ft_vcache_flush_segment);
+		MPCOPY(ft_vcache_flush_region);
+		MPCOPY(ft_vcache_flush_context);
+		MPCOPY(ft_vcache_flush_range);
 		MPCOPY(pcache_flush_page);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
@@ -2045,7 +2082,6 @@ getcpuinfo(sc, node)
 		 * Use the single-processor cache flush functions until
 		 * all CPUs are initialized.
 		 */
-		sc->cache_flush = sc->sp_cache_flush;
 		sc->vcache_flush_page = sc->sp_vcache_flush_page;
 		sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
 		sc->vcache_flush_region = sc->sp_vcache_flush_region;
@@ -2145,7 +2181,7 @@ fsrtoname(impl, vers, fver)
 void cpu_debug_dump(void);
 
 /*
- * Dump cpu information from ddb.
+ * Dump CPU information from ddb.
  */
 void
 cpu_debug_dump(void)

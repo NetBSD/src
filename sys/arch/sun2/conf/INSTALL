@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.15 2003/04/10 22:07:05 christos Exp $
+# $NetBSD: INSTALL,v 1.15.2.1 2004/08/03 10:41:48 skrll Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.15 $"
+#ident 		"INSTALL-$Revision: 1.15.2.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -23,6 +23,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
@@ -218,8 +219,7 @@ pseudo-device	loop		1	# network loopback
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files

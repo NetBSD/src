@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.1 2003/06/02 03:52:24 gmcgarry Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.1.2.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -156,7 +156,7 @@ struct	mt_stat {
 #define	SR1_EOF		0x80	/* positioned at File Mark */
 #define	SR1_BOT		0x40	/* positioned at Beginning of Tape */
 #define	SR1_EOT		0x20	/* positioned at End of Tape */
-#define	SR1_SOFTERR	0x10	/* Recoverable Error has Occured */
+#define	SR1_SOFTERR	0x10	/* Recoverable Error has Occurred */
 #define	SR1_REJECT	0x08	/* HPIB Cmd rejected - Regs 4 & 5 have info */
 #define	SR1_RO		0x04	/* No Write Ring */
 #define	SR1_ERR		0x02	/* Unrecoverable Data error - Reg 5 has info */

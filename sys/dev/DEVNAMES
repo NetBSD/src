@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.135 2003/05/15 13:13:26 wiz Exp $
+#	$NetBSD: DEVNAMES,v 1.135.2.1 2004/08/03 10:44:53 skrll Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -18,16 +18,20 @@ abtn			macppc
 abus			vax
 ac			hp300
 ac97			MI		Attribute
+acardide		MI
 acc			vax
 acemidi			MI
+aceride			MI
 aclock			arc
 ad			vax
 ad1848			MI		Attribute
 adb			mac68k
 adb			macppc
+adc			hpcsh
 ade			alpha
 adv			MI		
 adw			MI		
+atw			MI		
 ae			mac68k
 aed			mac68k
 aed			macppc
@@ -86,10 +90,13 @@ ast			MI
 aster			amiga
 aster			amigappc
 ata			MI		Attribute
+ata_hl			MI		Attribute
+atabus			MI		
 atapi			MI		Attribute
 atapibus		MI		
 ate			MI		
 atm			MI		Attribute
+atppc			MI
 atzsc			amiga
 atzsc			amigappc
 aucc			amiga
@@ -98,6 +105,7 @@ auconv			MI		Attribute
 audio			MI		
 audio			MI		Attribute
 audioamd		MI		
+audiobell		MI		Attribute
 audiocs			MI		
 aue			MI		
 auvia			MI		
@@ -111,7 +119,6 @@ bah			MI
 bandit			macppc
 bba			MI
 be			MI		
-beep			acorn32
 bha			MI		
 bi			MI		
 bicc			MI		
@@ -192,6 +199,7 @@ clock			sun2
 clock			sun3
 clock			x68k
 clockctl		MI
+cmdide			MI
 cmi			vax
 cmpci			MI
 cnw			MI		
@@ -218,6 +226,7 @@ cpu			evbmips
 cpu			evbppc
 cpu			hpcarm
 cpu			hpcmips
+cpu			hpcsh
 cpu			macppc
 cpu			mipsco
 cpu			netwinder
@@ -241,6 +250,7 @@ ct			vax
 cue			MI		
 cy			MI		
 cy82c693		MI		
+cypide			MI
 cz			MI		
 daic			MI
 dc			pmax
@@ -248,6 +258,7 @@ dca			hp300
 dcm			hp300
 de			MI		
 depca			MI		
+dge			MI
 dh			vax
 dhu			MI		
 dio			hp300
@@ -445,6 +456,10 @@ grful			amigappc
 gsfb			playstation2
 gt			cobalt
 gt			evbmips
+gt			evbppc
+gfe			evbppc
+gtmpsc			evbppc
+gtidma			evbppc
 gten			prep
 gtsc			amiga
 gtsc			amigappc
@@ -456,6 +471,12 @@ hb			news68k
 hb			newsmips
 hcsc			MI
 hd44780			MI		Attribute
+hd64461if		hpcsh
+hd64461pcmcia		hpcsh
+hd64461video		hpcsh
+hd64465if		hpcsh
+hd64465pcmcia		hpcsh
+hd64465video		hpcsh
 hd64570			MI		Attribute
 hdc			vax
 hdfd			atari
@@ -466,9 +487,14 @@ hme			MI
 hp			vax
 hpc			sgimips
 hpcfb			hpcmips
+hpcfb			hpcsh
 hpcfbif			hpcmips		Attribute
+hpcfbif			hpcsh		Attribute
+hpckbd			hpcsh
+hpckbdif		hpcsh		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
+hptide			MI
 ht			vax
 hydra			acorn32
 hyper			amiga
@@ -480,6 +506,7 @@ i8042			shark		Attribute
 i82586			MI		Attribute
 ibus			pmax
 ibus			vax
+ichlpcib		i386
 icp			MI
 icpsp			MI
 ics2101			MI		Attribute
@@ -516,6 +543,8 @@ iobus			acorn26
 ioc			acorn26
 ioeb			acorn26
 iomd			acorn32
+iomdkbc			acorn32
+iomdiic			acorn32
 iommu			sparc
 iommu			sun3
 iop			MI
@@ -560,6 +589,8 @@ ixpclk			evbarm
 ixpio			evbarm
 ixpsip			evbarm
 iy			MI		
+j6x0pwr			hpcsh
+j6x0tp			hpcsh
 joy			arc
 joy			bebox
 joy			cats
@@ -584,6 +615,7 @@ kue			MI
 latches			acorn26
 lc			MI		
 lca			alpha
+lcspx			vax
 ld			MI		
 le			MI		
 le24			MI		Attribute
@@ -637,6 +669,7 @@ mainbus			evbppc
 mainbus			hp300
 mainbus			hpcarm
 mainbus			hpcmips
+mainbus			hpcsh
 mainbus			i386
 mainbus			i386		Attribute
 mainbus			luna68k
@@ -788,6 +821,7 @@ obio			prep
 obio			sparc
 obio			sun2
 obio			sun3
+obio			evbppc
 obio_norm		mac68k		Attribute
 obio_scsi5380		mac68k		Attribute
 obmem			sun2
@@ -820,9 +854,9 @@ openfirm		shark
 openfirm		sparc64
 opl			MI		
 opm			x68k
-opms			acorn32
 opms			arc
 opms			shark
+optiide			MI
 oscsi			hp300
 osiop			MI
 otgsc			amiga
@@ -831,18 +865,17 @@ panel			cobalt
 par			amiga
 par			amigappc
 par			x68k
+parport			MI		Attribute
 pas			MI		
 pbcpcibr		arc
 pc			arc
 pc			bebox
 pc			i386
-pc			prep
 pc			shark
 pcc			mvme68k
 pccard			amiga
 pcconskbd		bebox
 pcconskbd		i386
-pcconskbd		prep
 pcctwo			mvme68k
 pcdisplay		MI		
 pcdisplayops		MI		Attribute
@@ -874,9 +907,10 @@ pcivga			arc
 pckbc			MI		
 pckbcport		bebox		Attribute
 pckbcport		i386		Attribute
-pckbcport		prep		Attribute
 pckbd			MI		
 pckbd			hpcmips
+pckbport		MI		Attribute
+pckbport_machdep_cnattach MI		Attribute
 pcmb			i386
 pcmcia			MI		
 pcmcia			arc		Attribute
@@ -887,10 +921,14 @@ pcn			MI
 pcons			sparc64
 pcppi			MI		
 pcscp			MI		
+pdcide			MI
 pdq			MI		Attribute
 pfb			bebox
+pfckbd			hpcsh
 pica			arc
+piixide			MI
 pioc			acorn32
+plip			MI
 plum			hpcmips
 plumicu			hpcmips
 plumif			hpcmips
@@ -910,7 +948,9 @@ power			sparc
 power			sparc64
 pp			sun3
 ppb			MI		
+ppbus			MI
 ppi			hp300
+pps			MI		
 ps			vax
 pss			MI		
 psycho			sparc64
@@ -927,6 +967,7 @@ qms			acorn32
 qn			amiga
 qn			amigappc
 qsphy			MI		
+qt			MI
 qv			vax
 ra			MI		
 radio			MI		
@@ -945,6 +986,7 @@ rb			vax
 rbox			hp300
 rd			hp300
 rd			vax
+re			MI
 repulse			amiga
 repulse			amigappc
 rf			MI
@@ -1002,6 +1044,7 @@ sci			amiga		Attribute
 sci			amigappc	Attribute
 sci			evbsh3
 scif			evbsh3
+scif			hpcsh
 scn			pc532
 scr			shark
 scsi			MI		Attribute
@@ -1024,6 +1067,7 @@ sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
 shb			evbsh3
+shb			hpcsh
 shb			mmeye
 shpcic			evbsh3
 shpcic			mmeye
@@ -1041,9 +1085,12 @@ siop_common		MI		Attribute
 siopng			amiga		Attribute
 siotty			luna68k
 sip			MI		
+siside			MI
+sk			MI
 skbd			hpcmips
 skbdif			hpcmips
 slhci			MI
+slide			MI
 sm			MI		
 smap			playstation2
 smc93cx6		MI		Attribute
@@ -1052,6 +1099,8 @@ sn			arc
 sn			mac68k
 sn			newsmips
 sp			MI		
+spif			sparc
+spif			sparc64
 sparcvme		sparc
 spc			luna68k
 spc			x68k
@@ -1065,12 +1114,12 @@ sqphy			MI
 ss			MI		
 st			MI		
 st			hp300
+stpcide			MI
 su			MI		
 supio			amiga		Attribute
 supio			amigappc	Attribute
 sv			MI		
 sw			sparc
-sysbeep			acorn32
 sysbeep			cats
 sysbeep			i386
 sysmon			MI
@@ -1101,13 +1150,14 @@ tlsb			alpha
 tlsbmem			alpha
 tms320av110		MI		Attribute
 tod			sun2
-todclock		acorn32
 todclock		cats
 todclock		netwinder
 todservice		cats		Attribute
 token			MI		Attribute
 topcat			hp300
+tpcalib			hpcarm		Attribute
 tpcalib			hpcmips		Attribute
+tpcalib			hpcsh		Attribute
 tpcic			sparc
 tqphy			MI		
 tr			MI		
@@ -1151,6 +1201,7 @@ ucom			MI
 ucombus			MI		Attribute
 uda			MI		
 udsbr			MI		
+uep			MI		
 uftdi			MI		
 ugen			MI		
 uha			MI		
@@ -1194,6 +1245,7 @@ va			vax
 veriexec		MI
 vga			MI		
 viaenv			MI
+viaide			MI
 viapm			MI
 vidc			acorn32
 vidcaudio		acorn32
@@ -1231,7 +1283,6 @@ vz			vax
 wavelan			MI		Attribute
 wd			MI		
 wdc			MI		
-wdc_base		MI		Attribute
 wdog			evbppc
 wdog			evbsh3
 wdog			mmeye
@@ -1251,7 +1302,6 @@ wskbd			MI
 wskbddev		MI		Attribute
 wsmouse			MI		
 wsmousedev		MI		Attribute
-wsqms			acorn32
 wsrasteremulops		MI		Attribute
 wss			MI		
 wstsc			amiga

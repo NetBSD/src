@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.26 2003/06/29 22:28:59 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.26.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  * Output goes to the screen via PROM printf.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.26.2.1 2004/08/03 10:41:24 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -63,7 +66,7 @@
 
 #ifdef RASTERCONSOLE
 #include <dev/sun/fbio.h>
-#include <machine/fbvar.h>
+#include <dev/sun/fbvar.h>
 #endif
 
 
@@ -123,8 +126,7 @@ kd_init(kd)
 	struct kd_softc *kd;
 {
 	struct tty *tp;
-	int i;
-	char *prop;
+	char prop[6+1];
 	
 	kd = &kd_softc; 	/* XXX */
 
@@ -149,20 +151,12 @@ kd_init(kd)
 	}
 
 	if (kd->rows == 0 &&
-	    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
-		i = 0;
-		while (*prop != '\0')
-			i = i * 10 + *prop++ - '0';
-		kd->rows = (unsigned short)i;
-	}
+	    prom_getoption("screen-#rows", prop, sizeof prop) == 0)
+		kd->rows = strtoul(prop, NULL, 10);
+
 	if (kd->cols == 0 &&
-	    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
-		i = 0;
-		while (*prop != '\0')
-			i = i * 10 + *prop++ - '0';
-		kd->cols = (unsigned short)i;
-	}
-	return;
+	    prom_getoption("screen-#columns", prop, sizeof prop) == 0)
+		kd->cols = strtoul(prop, NULL, 10);
 }
 
 struct tty *
@@ -442,7 +436,7 @@ kd_putfb(tp)
 		while (p < end)
 			*p++ &= 0x7f;
 		/* Now let the PROM print it. */
-		OF_write(OF_stdout(), buf, len);
+		prom_write(prom_stdout(), buf, len);
 	}
 }
 
@@ -650,7 +644,7 @@ kdcnputc(dev, c)
 	char c0 = (c & 0x7f);
 
 	s = splhigh();
-	OF_write(OF_stdout(), &c0, 1);
+	prom_write(prom_stdout(), &c0, 1);
 	splx(s);
 }
 

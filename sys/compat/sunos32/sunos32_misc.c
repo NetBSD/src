@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.22.2.1 2003/07/02 15:25:54 darrenr Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.22.2.2 2004/08/03 10:44:32 skrll Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -50,11 +50,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -83,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.22.2.1 2003/07/02 15:25:54 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.22.2.2 2004/08/03 10:44:32 skrll Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -147,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.22.2.1 2003/07/02 15:25:54 darren
 static void sunos32_sigvec_to_sigaction(const struct netbsd32_sigvec *, struct sigaction *);
 static void sunos32_sigvec_from_sigaction(struct netbsd32_sigvec *, const struct sigaction *);
 
-static int sunstatfs __P((struct statfs *, caddr_t));
+static int sunstatfs __P((struct statvfs *, caddr_t));
 
 static void
 sunos32_sigvec_to_sigaction(sv, sa)
@@ -620,7 +616,7 @@ async_daemon(l, v, retval)
 	struct netbsd32_nfssvc_args ouap;
 
 	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
+	SCARG(&ouap, argp) = 0;
 
 	return (netbsd32_nfssvc(l, &ouap, retval));
 }
@@ -932,7 +928,7 @@ sunos32_sys_setsockopt(l, v, retval)
 #define		SUNOS_IP_MULTICAST_LOOP		4
 #define		SUNOS_IP_ADD_MEMBERSHIP		5
 #define		SUNOS_IP_DROP_MEMBERSHIP	6
-		static int ipoptxlat[] = {
+		static const int ipoptxlat[] = {
 			IP_MULTICAST_IF,
 			IP_MULTICAST_TTL,
 			IP_MULTICAST_LOOP,
@@ -1239,7 +1235,7 @@ sunos32_sys_vhangup(l, v, retval)
 
 static int
 sunstatfs(sp, buf)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 {
 	struct sunos_statfs ssfs;
@@ -1252,7 +1248,7 @@ sunstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }	
 
@@ -1268,7 +1264,7 @@ sunos32_sys_statfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -1282,9 +1278,9 @@ sunos32_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
 }
 
@@ -1301,7 +1297,7 @@ sunos32_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -1309,9 +1305,9 @@ sunos32_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (caddr_t)(u_long)SCARG(uap, buf));
  out:
 	FILE_UNUSE(fp, p);
@@ -1460,13 +1456,13 @@ sunos32_sys_setrlimit(l, v, retval)
 #define PT_SETFPREGS -1
 #endif
 
-static int sreq2breq[] = {
+static const int sreq2breq[] = {
 	PT_TRACE_ME,    PT_READ_I,      PT_READ_D,      -1,
 	PT_WRITE_I,     PT_WRITE_D,     -1,             PT_CONTINUE,
 	PT_KILL,        -1,             PT_ATTACH,      PT_DETACH,
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
-static int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
 int
 sunos32_sys_ptrace(l, v, retval)

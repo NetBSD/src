@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.18 2003/05/10 13:26:44 martin Exp $ */
+/*	$NetBSD: fpu.c,v 1.18.2.1 2004/08/03 10:40:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,9 @@
  *
  *	@(#)fpu.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.18.2.1 2004/08/03 10:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,13 +101,24 @@ static char cx_to_trapx[] = {
 	X8(FSR_OF),
 	X16(FSR_NV)
 };
-static u_char fpu_codes[] = {
+static u_char fpu_codes_native[] = {
+	X1(FPE_FLTRES),
+	X2(FPE_FLTDIV),
+	X4(FPE_FLTUND),
+	X8(FPE_FLTOVF),
+	X16(FPE_FLTINV)
+};
+#if defined(COMPAT_SUNOS)
+static u_char fpu_codes_sunos[] = {
 	X1(FPE_FLTINEX_TRAP),
 	X2(FPE_FLTDIV_TRAP),
 	X4(FPE_FLTUND_TRAP),
 	X8(FPE_FLTOVF_TRAP),
 	X16(FPE_FLTOPERR_TRAP)
 };
+extern struct emul emul_sunos;
+#endif /* SUNOS_COMPAT */
+/* Note: SVR4(Solaris) FPE_* codes happen to be compatible with ours */
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -116,19 +126,27 @@ static u_char fpu_codes[] = {
  * nor FBfcc instructions.  Experiments with `crashme' prove that
  * unknown FPops do enter the queue, however.
  */
-void
+int
 fpu_cleanup(l, fs)
-	register struct lwp *l;
+	struct lwp *l;
 #ifndef SUN4U
-	register struct fpstate *fs;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register struct fpstate64 *fs;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 {
-	register int i, fsr = fs->fs_fsr, error;
+	int i, fsr = fs->fs_fsr, error;
 	struct proc *p = l->l_proc;
 	union instr instr;
 	struct fpemu fe;
+	u_char *fpu_codes;
+	int code = 0;
+
+	fpu_codes =
+#ifdef COMPAT_SUNOS
+		(p->p_emul == &emul_sunos) ? fpu_codes_sunos :
+#endif
+		fpu_codes_native;
 
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
@@ -141,9 +159,7 @@ fpu_cleanup(l, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		KERNEL_PROC_LOCK(l);
-		trapsignal(l, SIGFPE, fpu_codes[i - 1]);
-		KERNEL_PROC_UNLOCK(l);
+		code = fpu_codes[i - 1];
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -152,7 +168,7 @@ fpu_cleanup(l, fs)
 		if (fs->fs_qsize == 0) {
 			printf("fpu_cleanup: unfinished fpop");
 			/* The book sez reexecute or emulate. */
-			return;
+			return (0);
 		}
 		break;
 
@@ -172,9 +188,7 @@ fpu_cleanup(l, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		KERNEL_PROC_LOCK(l);
-		trapsignal(l, SIGFPE, -1);	/* ??? */
-		KERNEL_PROC_UNLOCK(l);
+		code = SI_NOINFO;
 		goto out;
 
 	default:
@@ -194,11 +208,9 @@ fpu_cleanup(l, fs)
 		if (error == 0)
 			continue;
 
-		KERNEL_PROC_LOCK(l);
 		switch (error) {
 		case FPE:
-			trapsignal(l, SIGFPE,
-			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
+			code = fpu_codes[(fs->fs_fsr & FSR_CX) - 1];
 			break;
 
 		case NOTFPU:
@@ -207,18 +219,18 @@ fpu_cleanup(l, fs)
 			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n");
 #endif
 #endif /* SUN4U */
-			trapsignal(l, SIGILL, 0);	/* ??? code?  */
+			code = SI_NOINFO;
 			break;
 
 		default:
 			panic("fpu_cleanup 3");
 			/* NOTREACHED */
 		}
-		KERNEL_PROC_UNLOCK(l);
 		/* XXX should stop here, but queue remains */
 	}
 out:
 	fs->fs_qsize = 0;
+	return (code);
 }
 
 #ifdef notyet
@@ -231,11 +243,11 @@ out:
  */
 fpu_emulate(l, tf, fs)
 	struct lwp *l;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 #ifndef SUN4U
-	register struct fpstate *fs;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register struct fpstate64 *fs;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 {
 
@@ -283,16 +295,16 @@ fpu_emulate(l, tf, fs)
  */
 int
 fpu_execute(fe, instr)
-	register struct fpemu *fe;
+	struct fpemu *fe;
 	union instr instr;
 {
-	register struct fpn *fp;
+	struct fpn *fp;
 #ifndef SUN4U
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx;
-	register struct fpstate *fs;
+	int opf, rs1, rs2, rd, type, mask, fsr, cx;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
-	register struct fpstate64 *fs;
+	int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 	u_int space[4];
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.13 2001/04/25 17:53:29 bouyer Exp $        */
+/*      $NetBSD: advlib.h,v 1.13.22.1 2004/08/03 10:46:06 skrll Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -452,7 +452,7 @@ typedef struct asc_scisq_1
 	u_int32_t	data_addr; /* physical address of first segment to transef */
 	u_int32_t	data_cnt;  /* byte count of first segment to transfer */
 	u_int32_t	sense_addr; /* physical address of the sense buffer */
-	u_int8_t	sense_len; /* lenght of sense buffer */
+	u_int8_t	sense_len; /* length of sense buffer */
 	u_int8_t	extra_bytes;
 } ASC_SCSIQ_1;
 

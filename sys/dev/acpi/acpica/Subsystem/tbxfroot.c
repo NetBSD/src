@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbxfroot - Find the root ACPI table (RSDT)
- *              xRevision: 68 $
+ *              xRevision: 72 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.7 2003/05/11 21:20:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.7.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __TBXFROOT_C__
 
@@ -299,8 +299,7 @@ AcpiGetFirmwareTable (
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "RSDP located at %p, RSDT physical=%8.8X%8.8X \n",
         AcpiGbl_RSDP,
-        ACPI_HIDWORD (Address.Pointer.Value),
-        ACPI_LODWORD (Address.Pointer.Value)));
+        ACPI_FORMAT_UINT64 (Address.Pointer.Value)));
 
     /* Insert ProcessorMode flags */
 
@@ -334,12 +333,12 @@ AcpiGetFirmwareTable (
 
         if (AcpiGbl_RSDP->Revision < 2)
         {
-            Address.Pointer.Value = ((RSDT_DESCRIPTOR *) RsdtInfo.Pointer)->TableOffsetEntry[i];
+            Address.Pointer.Value = (ACPI_CAST_PTR (RSDT_DESCRIPTOR, RsdtInfo.Pointer))->TableOffsetEntry[i];
         }
         else
         {
             Address.Pointer.Value = ACPI_GET_ADDRESS (
-                ((XSDT_DESCRIPTOR *) RsdtInfo.Pointer)->TableOffsetEntry[i]);
+                (ACPI_CAST_PTR (XSDT_DESCRIPTOR, RsdtInfo.Pointer))->TableOffsetEntry[i]);
         }
 
         /* Get the table header */

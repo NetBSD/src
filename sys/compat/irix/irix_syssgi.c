@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.36.2.1 2004/08/03 10:43:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36.2.1 2004/08/03 10:43:53 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -217,9 +217,6 @@ irix_sys_syssgi(l, v, retval)
 		arg1 = SCARG(uap, arg1); /* PID of the process */
 		arg2 = SCARG(uap, arg2); /* Address of user buffer */
 		arg3 = SCARG(uap, arg3); /* Length of user buffer */
-		if (!uvm_useracc((caddr_t)arg2, (size_t)arg2, B_WRITE))
-			return EACCES;
-
 		tp = pfind((pid_t)arg1);
 		if (tp == NULL || \
 		    tp->p_psstr == NULL || \
@@ -317,13 +314,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
 
-	/* Check that the program header array is readable by the process */
-	if (!uvm_useracc((caddr_t)ph, sizeof(Elf_Phdr) * count, B_READ))
-		return EACCES;
-
-	kph = (Elf_Phdr *)malloc(sizeof(Elf_Phdr) * count,
-	    M_TEMP, M_WAITOK);
-
+	kph = (Elf_Phdr *)malloc(sizeof(Elf_Phdr) * count, M_TEMP, M_WAITOK);
 	error = copyin(ph, kph, sizeof(Elf_Phdr) * count);
 	if (error)
 		goto bad;
@@ -355,7 +346,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		 * If not, we will have to perform a relocation
 		 */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
-		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)&uaddr, 
+		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)(void *)&uaddr,
 		    NULL, 0, 0, UVM_FLAG_FIXED);
 		if (ret == NULL)
 			need_relocation = 1;
@@ -377,7 +368,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 
 		/* Find a free place for the sections */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
-		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)&uaddr, 
+		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)(void *)&uaddr,
 			NULL, 0, kph->p_align, 0);
 
 		if (ret == NULL) {
@@ -470,9 +461,7 @@ irix_syssgi_sysconf(name, l, retval)
 	struct proc *p = l->l_proc;
 	int error = 0;
 	int mib[2], value;
-	int len = sizeof(value);
-	struct sys___sysctl_args cup;
-	caddr_t sg = stackgap_init(p, 0);
+	size_t len = sizeof(value);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
@@ -527,20 +516,14 @@ irix_syssgi_sysconf(name, l, retval)
 		break;
 	}
 
-	SCARG(&cup, name) = stackgap_alloc(p, &sg, sizeof(mib));
-	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
-		return error;
-	SCARG(&cup, namelen) = sizeof(mib);
-	SCARG(&cup, old) = stackgap_alloc(p, &sg, sizeof(value));
-	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
-		return error;
-	SCARG(&cup, oldlenp) = stackgap_alloc(p, &sg, sizeof(len));
-	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
-		return error;
-	SCARG(&cup, new) = NULL;
-	SCARG(&cup, newlen) = 0;
-
-	return sys___sysctl(l, &cup, retval);
+	/*
+	 * calling into sysctl with superuser privs, but we don't mind
+	 * 'cause we're only querying a value.
+	 */
+	error = old_sysctl(&mib[0], 2, &value, &len, NULL, 0, NULL);
+	if (error == 0)
+		*retval = value;
+	return (error);
 }
 
 static int 

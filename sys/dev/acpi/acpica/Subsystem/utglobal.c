@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              xRevision: 180 $
+ *              xRevision: 192 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.7 2003/05/11 21:20:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.7.2.1 2004/08/03 10:45:14 skrll Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -383,17 +383,17 @@ AcpiUtHexToAsciiChar (
  ******************************************************************************/
 
 
-ACPI_TABLE_DESC             AcpiGbl_AcpiTables[NUM_ACPI_TABLES];
+ACPI_TABLE_LIST             AcpiGbl_TableLists[NUM_ACPI_TABLE_TYPES];
 
 
-ACPI_TABLE_SUPPORT          AcpiGbl_AcpiTableData[NUM_ACPI_TABLES] =
+ACPI_TABLE_SUPPORT          AcpiGbl_TableData[NUM_ACPI_TABLE_TYPES] =
 {
     /***********    Name,   Signature, Global typed pointer     Signature size,      Type                  How many allowed?,    Contains valid AML? */
 
     /* RSDP 0 */ {RSDP_NAME, RSDP_SIG, NULL,                    sizeof (RSDP_SIG)-1, ACPI_TABLE_ROOT     | ACPI_TABLE_SINGLE},
-    /* DSDT 1 */ {DSDT_SIG,  DSDT_SIG, (void *) &AcpiGbl_DSDT, sizeof (DSDT_SIG)-1, ACPI_TABLE_SECONDARY| ACPI_TABLE_SINGLE   | ACPI_TABLE_EXECUTABLE},
-    /* FADT 2 */ {FADT_SIG,  FADT_SIG, (void *) &AcpiGbl_FADT, sizeof (FADT_SIG)-1, ACPI_TABLE_PRIMARY  | ACPI_TABLE_SINGLE},
-    /* FACS 3 */ {FACS_SIG,  FACS_SIG, (void *) &AcpiGbl_FACS, sizeof (FACS_SIG)-1, ACPI_TABLE_SECONDARY| ACPI_TABLE_SINGLE},
+    /* DSDT 1 */ {DSDT_SIG,  DSDT_SIG, (void *) &AcpiGbl_DSDT,  sizeof (DSDT_SIG)-1, ACPI_TABLE_SECONDARY| ACPI_TABLE_SINGLE   | ACPI_TABLE_EXECUTABLE},
+    /* FADT 2 */ {FADT_SIG,  FADT_SIG, (void *) &AcpiGbl_FADT,  sizeof (FADT_SIG)-1, ACPI_TABLE_PRIMARY  | ACPI_TABLE_SINGLE},
+    /* FACS 3 */ {FACS_SIG,  FACS_SIG, (void *) &AcpiGbl_FACS,  sizeof (FACS_SIG)-1, ACPI_TABLE_SECONDARY| ACPI_TABLE_SINGLE},
     /* PSDT 4 */ {PSDT_SIG,  PSDT_SIG, NULL,                    sizeof (PSDT_SIG)-1, ACPI_TABLE_PRIMARY  | ACPI_TABLE_MULTIPLE | ACPI_TABLE_EXECUTABLE},
     /* SSDT 5 */ {SSDT_SIG,  SSDT_SIG, NULL,                    sizeof (SSDT_SIG)-1, ACPI_TABLE_PRIMARY  | ACPI_TABLE_MULTIPLE | ACPI_TABLE_EXECUTABLE},
     /* XSDT 6 */ {XSDT_SIG,  XSDT_SIG, NULL,                    sizeof (RSDT_SIG)-1, ACPI_TABLE_ROOT     | ACPI_TABLE_SINGLE},
@@ -442,7 +442,7 @@ ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS] =
     /* ACPI_EVENT_GLOBAL        */  {ACPI_BITREG_GLOBAL_LOCK_STATUS,    ACPI_BITREG_GLOBAL_LOCK_ENABLE,  ACPI_BITMASK_GLOBAL_LOCK_STATUS,    ACPI_BITMASK_GLOBAL_LOCK_ENABLE},
     /* ACPI_EVENT_POWER_BUTTON  */  {ACPI_BITREG_POWER_BUTTON_STATUS,   ACPI_BITREG_POWER_BUTTON_ENABLE, ACPI_BITMASK_POWER_BUTTON_STATUS,   ACPI_BITMASK_POWER_BUTTON_ENABLE},
     /* ACPI_EVENT_SLEEP_BUTTON  */  {ACPI_BITREG_SLEEP_BUTTON_STATUS,   ACPI_BITREG_SLEEP_BUTTON_ENABLE, ACPI_BITMASK_SLEEP_BUTTON_STATUS,   ACPI_BITMASK_SLEEP_BUTTON_ENABLE},
-    /* ACPI_EVENT_RTC           */  {ACPI_BITREG_RT_CLOCK_STATUS,       ACPI_BITREG_RT_CLOCK_ENABLE,     0,                                  0},
+    /* ACPI_EVENT_RTC           */  {ACPI_BITREG_RT_CLOCK_STATUS,       ACPI_BITREG_RT_CLOCK_ENABLE,     ACPI_BITMASK_RT_CLOCK_STATUS,       ACPI_BITMASK_RT_CLOCK_ENABLE},
 };
 
 /*****************************************************************************
@@ -618,12 +618,103 @@ AcpiUtGetObjectTypeName (
 }
 
 
-#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
+/*****************************************************************************
+ *
+ * FUNCTION:    AcpiUtGetNodeName
+ *
+ * PARAMETERS:  Object               - A namespace node
+ *
+ * RETURN:      Pointer to a string
+ *
+ * DESCRIPTION: Validate the node and return the node's ACPI name.
+ *
+ ****************************************************************************/
 
+char *
+AcpiUtGetNodeName (
+    void                    *Object)
+{
+    ACPI_NAMESPACE_NODE     *Node;
+
+
+    if (!Object)
+    {
+        return ("NULL NODE");
+    }
+
+    Node = (ACPI_NAMESPACE_NODE *) Object;
+
+    if (Node->Descriptor != ACPI_DESC_TYPE_NAMED)
+    {
+        return ("****");
+    }
+
+    if (!AcpiUtValidAcpiName (* (UINT32 *) Node->Name.Ascii))
+    {
+        return ("----");
+    }
+
+    return (Node->Name.Ascii);
+}
+
+
+/*****************************************************************************
+ *
+ * FUNCTION:    AcpiUtGetDescriptorName
+ *
+ * PARAMETERS:  Object               - An ACPI object
+ *
+ * RETURN:      Pointer to a string
+ *
+ * DESCRIPTION: Validate object and return the descriptor type
+ *
+ ****************************************************************************/
+
+static const char           *AcpiGbl_DescTypeNames[] =    /* printable names of descriptor types */
+{
+    /* 00 */ "Invalid",
+    /* 01 */ "Cached",
+    /* 02 */ "State-Generic",
+    /* 03 */ "State-Update",
+    /* 04 */ "State-Package",
+    /* 05 */ "State-Control",
+    /* 06 */ "State-RootParseScope",
+    /* 07 */ "State-ParseScope",
+    /* 08 */ "State-WalkScope",
+    /* 09 */ "State-Result",
+    /* 10 */ "State-Notify",
+    /* 11 */ "State-Thread",
+    /* 12 */ "Walk",
+    /* 13 */ "Parser",
+    /* 14 */ "Operand",
+    /* 15 */ "Node"
+};
+
+
+char *
+AcpiUtGetDescriptorName (
+    void                    *Object)
+{
+
+    if (!Object)
+    {
+        return ("NULL OBJECT");
+    }
+
+    if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
+    {
+        return ((char *) AcpiGbl_BadType);
+    }
+
+    return ((char *) AcpiGbl_DescTypeNames[ACPI_GET_DESCRIPTOR_TYPE (Object)]);
+
+}
+
+
+#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 /*
  * Strings and procedures used for debug only
  */
-
 
 /*****************************************************************************
  *
@@ -642,14 +733,13 @@ AcpiUtGetMutexName (
     UINT32                  MutexId)
 {
 
-    if (MutexId > MAX_MTX)
+    if (MutexId > MAX_MUTEX)
     {
         return ("Invalid Mutex ID");
     }
 
     return (AcpiGbl_MutexNames[MutexId]);
 }
-
 
 #endif
 
@@ -714,9 +804,12 @@ AcpiUtAllocateOwnerId (
         OwnerId = AcpiGbl_NextTableOwnerId;
         AcpiGbl_NextTableOwnerId++;
 
+        /* Check for wraparound */
+
         if (AcpiGbl_NextTableOwnerId == ACPI_FIRST_METHOD_ID)
         {
             AcpiGbl_NextTableOwnerId = ACPI_FIRST_TABLE_ID;
+            ACPI_REPORT_WARNING (("Table owner ID wraparound\n"));
         }
         break;
 
@@ -728,6 +821,8 @@ AcpiUtAllocateOwnerId (
 
         if (AcpiGbl_NextMethodOwnerId == ACPI_FIRST_TABLE_ID)
         {
+            /* Check for wraparound */
+
             AcpiGbl_NextMethodOwnerId = ACPI_FIRST_METHOD_ID;
         }
         break;
@@ -794,33 +889,31 @@ AcpiUtInitGlobals (
 
     /* ACPI table structure */
 
-    for (i = 0; i < NUM_ACPI_TABLES; i++)
+    for (i = 0; i < NUM_ACPI_TABLE_TYPES; i++)
     {
-        AcpiGbl_AcpiTables[i].Prev          = &AcpiGbl_AcpiTables[i];
-        AcpiGbl_AcpiTables[i].Next          = &AcpiGbl_AcpiTables[i];
-        AcpiGbl_AcpiTables[i].Pointer       = NULL;
-        AcpiGbl_AcpiTables[i].Length        = 0;
-        AcpiGbl_AcpiTables[i].Allocation    = ACPI_MEM_NOT_ALLOCATED;
-        AcpiGbl_AcpiTables[i].Count         = 0;
+        AcpiGbl_TableLists[i].Next          = NULL;
+        AcpiGbl_TableLists[i].Count         = 0;
     }
 
     /* Mutex locked flags */
 
-    for (i = 0; i < NUM_MTX; i++)
+    for (i = 0; i < NUM_MUTEX; i++)
     {
-        AcpiGbl_AcpiMutexInfo[i].Mutex      = NULL;
-        AcpiGbl_AcpiMutexInfo[i].OwnerId    = ACPI_MUTEX_NOT_ACQUIRED;
-        AcpiGbl_AcpiMutexInfo[i].UseCount   = 0;
+        AcpiGbl_MutexInfo[i].Mutex          = NULL;
+        AcpiGbl_MutexInfo[i].OwnerId        = ACPI_MUTEX_NOT_ACQUIRED;
+        AcpiGbl_MutexInfo[i].UseCount       = 0;
     }
 
     /* GPE support */
 
-    AcpiGbl_GpeBlockListHead            = NULL;
+    AcpiGbl_GpeXruptListHead            = NULL;
+    AcpiGbl_GpeFadtBlocks[0]            = NULL;
+    AcpiGbl_GpeFadtBlocks[1]            = NULL;
 
     /* Global notify handlers */
 
-    AcpiGbl_SysNotify.Handler           = NULL;
-    AcpiGbl_DrvNotify.Handler           = NULL;
+    AcpiGbl_SystemNotify.Handler        = NULL;
+    AcpiGbl_DeviceNotify.Handler        = NULL;
     AcpiGbl_InitHandler                 = NULL;
 
     /* Global "typed" ACPI table pointers */

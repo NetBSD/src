@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/05/05 11:46:30 isaki Exp $
+#	$NetBSD: Makefile,v 1.10.10.1 2004/08/03 10:42:56 skrll Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -18,6 +18,7 @@ STRIP?=		/usr/bin/strip
 SRCS=		srt0.S mboot.c
 KERN!=		cd ${.CURDIR}/../../../..; pwd
 
+CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-nostdinc -I${KERN} -I${.CURDIR} -I.
 #CPPFLAGS+=	-I${.CURDIR}/../libiocs
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 

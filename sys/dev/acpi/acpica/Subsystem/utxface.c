@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              xRevision: 101 $
+ *              xRevision: 105 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.6 2003/03/04 17:25:30 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.6.2.1 2004/08/03 10:45:14 skrll Exp $");
 
 #define __UTXFACE_C__
 
@@ -225,24 +226,8 @@ AcpiEnableSubsystem (
 
 
     /*
-     * Install the default OpRegion handlers.  These are installed unless
-     * other handlers have already been installed via the
-     * InstallAddressSpaceHandler interface
-     */
-    if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Installing default address space handlers\n"));
-
-        Status = AcpiEvInitAddressSpaces ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
-    /*
      * We must initialize the hardware before we can enable ACPI.
-     * FADT values are validated here.
+     * The values from the FADT are validated here.
      */
     if (!(Flags & ACPI_NO_HARDWARE_INIT))
     {
@@ -256,7 +241,7 @@ AcpiEnableSubsystem (
     }
 
     /*
-     * Enable ACPI on this platform
+     * Enable ACPI mode
      */
     if (!(Flags & ACPI_NO_ACPI_ENABLE))
     {
@@ -273,8 +258,9 @@ AcpiEnableSubsystem (
     }
 
     /*
-     * Note:
-     * We must have the hardware AND events initialized before we can execute
+     * Initialize ACPI Event handling
+     *
+     * NOTE: We must have the hardware AND events initialized before we can execute
      * ANY control methods SAFELY.  Any control method can require ACPI hardware
      * support, so the hardware MUST be initialized before execution!
      */
@@ -289,7 +275,7 @@ AcpiEnableSubsystem (
         }
     }
 
-    /* Install SCI handler, Global Lock handler, GPE handlers */
+    /* Install the SCI handler, Global Lock handler, and GPE handlers */
 
     if (!(Flags & ACPI_NO_HANDLER_INIT))
     {
@@ -327,6 +313,43 @@ AcpiInitializeObjects (
 
     ACPI_FUNCTION_TRACE ("AcpiInitializeObjects");
 
+
+    /*
+     * Install the default OpRegion handlers.  These are installed unless
+     * other handlers have already been installed via the
+     * InstallAddressSpaceHandler interface.
+     *
+     * NOTE: This will cause _REG methods to be run.  Any objects accessed
+     * by the _REG methods will be automatically initialized, even if they
+     * contain executable AML (see call to AcpiNsInitializeObjects below).
+     */
+    if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Installing default address space handlers\n"));
+
+        Status = AcpiEvInitAddressSpaces ();
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+    }
+
+    /*
+     * Initialize the objects that remain uninitialized.  This
+     * runs the executable AML that may be part of the declaration of these
+     * objects: OperationRegions, BufferFields, Buffers, and Packages.
+     */
+    if (!(Flags & ACPI_NO_OBJECT_INIT))
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Objects\n"));
+
+        Status = AcpiNsInitializeObjects ();
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+    }
+
     /*
      * Initialize all device objects in the namespace
      * This runs the _STA and _INI methods.
@@ -336,22 +359,6 @@ AcpiInitializeObjects (
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Devices\n"));
 
         Status = AcpiNsInitializeDevices ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
-    /*
-     * Initialize the objects that remain uninitialized.  This
-     * runs the executable AML that is part of the declaration of OpRegions
-     * and Fields.
-     */
-    if (!(Flags & ACPI_NO_OBJECT_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Objects\n"));
-
-        Status = AcpiNsInitializeObjects ();
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -532,10 +539,10 @@ AcpiGetSystemInfo (
 
     /* Current status of the ACPI tables, per table type */
 
-    InfoPtr->NumTableTypes = NUM_ACPI_TABLES;
-    for (i = 0; i < NUM_ACPI_TABLES; i++)
+    InfoPtr->NumTableTypes = NUM_ACPI_TABLE_TYPES;
+    for (i = 0; i < NUM_ACPI_TABLE_TYPES; i++)
     {
-        InfoPtr->TableInfo[i].Count = AcpiGbl_AcpiTables[i].Count;
+        InfoPtr->TableInfo[i].Count = AcpiGbl_TableLists[i].Count;
     }
 
     return_ACPI_STATUS (AE_OK);

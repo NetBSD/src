@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.11 2003/05/03 18:11:02 wiz Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.11.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -56,6 +56,12 @@ struct psycho_pbm {
 	/* extents for free bus space */
 	struct extent			*pp_exmem;
 	struct extent			*pp_exio;
+
+	/* PCI Bus Module A or PCI Bus Module B */
+	int				pp_id;
+#define PSYCHO_PBM_UNKNOWN	0
+#define PSYCHO_PBM_A		1
+#define PSYCHO_PBM_B		2
 
 	/* chipset tag for this instance */
 	pci_chipset_tag_t		pp_pc;

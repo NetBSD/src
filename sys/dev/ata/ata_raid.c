@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.4 2003/02/25 21:25:40 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.4.2.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Support for autoconfiguration of RAID sets on ATA RAID controllers.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.4.2.1 2004/08/03 10:45:46 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -50,8 +53,6 @@
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
@@ -235,7 +236,7 @@ ataraid_submatch(struct device *parent, struct cfdata *cf, void *aux)
 /*
  * ata_raid_check_component:
  *
- *	Check the componet for a RAID configuration structure.
+ *	Check the component for a RAID configuration structure.
  *	Called via autoconfiguration callback.
  */
 void
@@ -301,14 +302,13 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *buf,
 	BUF_INIT(bp);
 
 	bp->b_vp = vp;
-	bp->b_dev = vp->v_rdev;
 	bp->b_blkno = blkno;
 	bp->b_bcount = bp->b_resid = size;
 	bp->b_flags = bflags;
 	bp->b_proc = curproc;
 	bp->b_data = buf;
 
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(vp, bp);
 	error = biowait(bp);
 
 	s = splbio();

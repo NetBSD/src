@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.1 2001/06/14 13:08:11 fredette Exp $	*/
+/*	$NetBSD: stub.c,v 1.1.24.1 2004/08/03 10:42:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Stubs to supply things needed when some options are OFF.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stub.c,v 1.1.24.1 2004/08/03 10:42:21 skrll Exp $");
 
 #include "opt_ddb.h"
 

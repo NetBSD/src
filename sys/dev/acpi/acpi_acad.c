@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.8 2003/02/19 11:32:13 yamt Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.8.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.8 2003/02/19 11:32:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.8.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,21 @@ struct acpiacad_softc {
 	int sc_flags;			/* see below */
 
 	struct sysmon_envsys sc_sysmon;
+	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 	struct envsys_basic_info sc_info[ACPIACAD_NSENSORS];
 	struct envsys_tre_data sc_data[ACPIACAD_NSENSORS];
 
 	struct simplelock sc_lock;
 };
 
-const struct envsys_range acpiacad_range[] = {
+static const struct envsys_range acpiacad_range[] = {
 	{ 0, 2,		ENVSYS_INDICATOR },
 	{ 1, 0, 	-1},
+};
+
+static const char * const acad_hid[] = {
+	"ACPI0003",
+	NULL
 };
 
 #define	AACAD_F_VERBOSE		0x01	/* verbose events */
@@ -130,18 +136,15 @@ static int acpiacad_streinfo(struct sysmon_envsys *, struct envsys_basic_info *)
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "ACPI0003") == 0)
-		return (1);
-
-	return (0);
+	return acpi_match_hid(aa->aa_node->ad_devinfo, acad_hid);
 }
 
 /*
@@ -149,7 +152,7 @@ acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpiacad_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpiacad_softc *sc = (void *) self;
@@ -161,20 +164,28 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 	simple_lock_init(&sc->sc_lock);
 
+	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
+	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
+		printf("%s: unable to register with sysmon\n",
+		       sc->sc_dev.dv_xname);
+		return;
+	}
+
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
-	if (rv != AE_OK) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
 	/* XXX See acpiacad_notify_handler() */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpiacad_notify_handler, sc);
-	if (rv != AE_OK) {
-		printf("%s: unable to register SYSTEM NOTIFY handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -191,14 +202,16 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Get, and possibly display, the current AC line status.
  */
-void
+static void
 acpiacad_get_status(void *arg)
 {
 	struct acpiacad_softc *sc = arg;
-	int status, s;
+	ACPI_INTEGER status;
+	int s;
+	ACPI_STATUS rv;
 
-	if (acpi_eval_integer(sc->sc_node->ad_handle, "_PSR",
-	    &status) != AE_OK)
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PSR", &status);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	AACAD_LOCK(sc, s);
@@ -206,6 +219,14 @@ acpiacad_get_status(void *arg)
 	sc->sc_data[ACPIACAD_DISCONNECTED].cur.data_s = !(status);
 	AACAD_SET(sc, AACAD_F_AVAILABLE);
 	AACAD_UNLOCK(sc, s);
+
+	/*
+	 * PSWITCH_EVENT_RELEASED : AC offline
+	 * PSWITCH_EVENT_PRESSED  : AC online
+	 */
+
+	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
+	    PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED);
 
 	if (AACAD_ISSET(sc, AACAD_F_VERBOSE))
 		printf("%s: AC adapter %sconnected\n",
@@ -215,7 +236,7 @@ acpiacad_get_status(void *arg)
 /*
  * Clear status
  */
-void
+static void
 acpiacad_clear_status(struct acpiacad_softc *sc)
 {
 
@@ -231,7 +252,7 @@ acpiacad_clear_status(struct acpiacad_softc *sc)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpiacad_softc *sc = context;
@@ -254,9 +275,9 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		AACAD_UNLOCK(sc, s);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpiacad_get_status, sc);
-		if (rv != AE_OK)
-			printf("%s: unable to queue status check: %d\n",
-			    sc->sc_dev.dv_xname, rv);
+		if (ACPI_FAILURE(rv))
+			printf("%s: unable to queue status check: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
 
 	default:
@@ -265,7 +286,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	}
 }
 
-void
+static void
 acpiacad_init_envsys(struct acpiacad_softc *sc)
 {
 	int i;
@@ -301,7 +322,7 @@ acpiacad_init_envsys(struct acpiacad_softc *sc)
 		    sc->sc_dev.dv_xname);
 }
 
-int
+static int
 acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct acpiacad_softc *sc = sme->sme_cookie;
@@ -313,16 +334,16 @@ acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	*tred = sc->sc_data[tred->sensor];
 	/* XXX locking */
 
-	return (0);
+	return 0;
 }
 
 
-int
+static int
 acpiacad_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 
 	/* XXX Not implemented */
 	binfo->validflags = 0;
 
-	return (0);
+	return 0;
 }

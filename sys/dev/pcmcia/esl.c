@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.10 2003/05/16 23:55:32 kristerw Exp $	*/
+/*	$NetBSD: esl.c,v 1.10.2.1 2004/08/03 10:50:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10 2003/05/16 23:55:32 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10.2.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,9 +150,6 @@ esl_open(void *hdl, int flags)
 	struct esl_pcmcia_softc *sc = hdl;
 	int i;
 
-	if (sc->sc_esl.sc_open != 0)
-		return (EBUSY);
-
 	if ((*sc->sc_enable)(sc))
 		return (ENXIO);
 
@@ -169,8 +166,6 @@ esl_open(void *hdl, int flags)
 	for (i = 0; i < ESS_MAX_NDEVS; i++)
 		esl_set_gain(sc, i, 1);
 
-	sc->sc_esl.sc_open = 1;
-
 	/* XXX: Delay a bit */
 	delay(10000);
 
@@ -186,8 +181,6 @@ esl_close(void *hdl)
 	esl_speaker_off(sc);
 
 	(*sc->sc_disable)(sc);
-
-	sc->sc_esl.sc_open = 0;
 
 	return;
 }
@@ -558,8 +551,6 @@ esl_init(struct esl_pcmcia_softc *sc)
 	bus_space_tag_t iot = sc->sc_pcioh.iot;
 	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
 	
-	sc->sc_esl.sc_open = 0;
-
 	/* Initialization sequence */
 	for (i = 0; ENABLE_ORDER[i] != -1; i++)
 		bus_space_read_1(iot, ioh, ENABLE[i]);
@@ -619,8 +610,6 @@ esl_init(struct esl_pcmcia_softc *sc)
 
 	/* Disable speaker until device is opened */
 	esl_speaker_off(sc);
-
-	sc->sc_esl.sc_open = 0;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2002/10/20 20:55:38 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.6.1 2004/08/03 10:41:22 skrll Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -462,7 +462,7 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 
 	printf(" \n");
 
-#if 1 /* I want to rethink this... --thorpej@netbsd.org */
+#if 1 /* I want to rethink this... --thorpej@NetBSD.org */
 	/*
 	 * Compute the size of the symbol table.
 	 */
@@ -550,7 +550,7 @@ main()
 	/* Initialize kernelname */
 	kernelname = kernels[0];
 
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf("\r>> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.262 2003/06/28 10:17:47 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.262.2.1 2004/08/03 10:41:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -55,6 +55,9 @@
  * SPARC physical map management code.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262.2.1 2004/08/03 10:41:09 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
@@ -66,7 +69,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/exec.h>
@@ -136,6 +138,16 @@ struct pmap_stats {
 	int	ps_npmeg_locked;	/* # of pmegs on locked list */
 	int	ps_npmeg_lru;		/* # of pmegs on lru list */
 } pmap_stats;
+
+#if defined(SUN4) || defined(SUN4C)
+struct evcnt mmu_stolenpmegs_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"mmu","stln pmgs");
+EVCNT_ATTACH_STATIC(mmu_stolenpmegs_evcnt);
+
+struct evcnt mmu_pagein_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"mmu","pagein");
+EVCNT_ATTACH_STATIC(mmu_pagein_evcnt);
+#endif /* SUN4 || SUN4C */
 
 #ifdef DEBUG
 #define	PDB_CREATE	0x0001
@@ -275,8 +287,7 @@ static struct vm_page *pvhead4m(u_int pte)
  * do user address translations.  In particular, pv_changepte() and
  * pmap_enu() maintain consistency, while less critical changes are
  * not maintained.  pm_pte[VA_VSEG(va)] always points to space for those
- * PTEs, unless this is the kernel pmap, in which case pm_pte[x] is not
- * used (sigh).
+ * PTEs.
  *
  * Each PMEG in the MMU is either free or contains PTEs corresponding to
  * some pmap and virtual segment.  If it contains some PTEs, it also contains
@@ -295,9 +306,8 @@ static struct vm_page *pvhead4m(u_int pte)
  *
  * Since I hate the name PMEG I call this data structure an `mmu entry'.
  * Each mmuentry is on exactly one of three `usage' lists: free, LRU,
- * or locked.  The LRU list is for user processes; the locked list is
- * for kernel entries; both are doubly linked queues headed by `mmuhd's.
- * The free list is a simple list, headed by a free list pointer.
+ * or locked.  The locked list is only used for kernel mappings that need
+ * to be wired down.
  *
  *
  * In the sun4m architecture using the SPARC Reference MMU (SRMMU), three
@@ -319,18 +329,37 @@ static struct vm_page *pvhead4m(u_int pte)
  * altering an in-memory page table entry.
  */
 struct mmuentry {
-	TAILQ_ENTRY(mmuentry)	me_list;	/* usage list link */
+	CIRCLEQ_ENTRY(mmuentry)	me_list;	/* usage list link */
 	TAILQ_ENTRY(mmuentry)	me_pmchain;	/* pmap owner link */
 	struct	pmap *me_pmap;		/* pmap, if in use */
 	u_short	me_vreg;		/* associated virtual region/segment */
 	u_short	me_vseg;		/* associated virtual region/segment */
 	u_short	me_cookie;		/* hardware SMEG/PMEG number */
+#ifdef DIAGNOSTIC
+	int *me_statp;/*XXX*/
+#endif
 };
 struct mmuentry *mmusegments;	/* allocated in pmap_bootstrap */
 struct mmuentry *mmuregions;	/* allocated in pmap_bootstrap */
 
-struct mmuhd segm_freelist, segm_lru, segm_locked;
-struct mmuhd region_freelist, region_lru, region_locked;
+CIRCLEQ_HEAD(mmuq, mmuentry);
+struct mmuq segm_freelist, segm_lru, segm_locked;
+struct mmuq region_freelist, region_lru, region_locked;
+/*
+ * We use a circular queue, since that allows us to remove an element
+ * from a list without knowing the list header.
+ */
+#define CIRCLEQ_REMOVE_NOH(elm, field) do {				\
+	(elm)->field.cqe_next->field.cqe_prev = (elm)->field.cqe_prev;	\
+	(elm)->field.cqe_prev->field.cqe_next = (elm)->field.cqe_next;	\
+} while (/*CONSTCOND*/0)
+
+#define MMUQ_INIT(head)			CIRCLEQ_INIT(head)
+#define MMUQ_REMOVE(elm,field)		CIRCLEQ_REMOVE_NOH(elm,field)
+#define MMUQ_INSERT_TAIL(head,elm,field)CIRCLEQ_INSERT_TAIL(head,elm,field)
+#define MMUQ_EMPTY(head)		CIRCLEQ_EMPTY(head)
+#define MMUQ_FIRST(head)		CIRCLEQ_FIRST(head)
+
 
 int	seginval;		/* [4/4c] the invalid segment number */
 int	reginval;		/* [4/3mmu] the invalid region number */
@@ -368,7 +397,7 @@ void	ctx_alloc(struct pmap *);
 void	ctx_free(struct pmap *);
 
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
-caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
+/*caddr_t	vdumppages;	-* 32KB worth of reserved dump pages */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
 
@@ -396,6 +425,13 @@ static struct pool_allocator pgt_page_allocator = {
 	pgt_page_alloc, pgt_page_free, 0,
 };
 
+#endif /* SUN4M || SUN4D */
+
+#if defined(SUN4) || defined(SUN4C)
+/*
+ * Memory pool for user and kernel PTE tables.
+ */
+static struct pool pte_pool;
 #endif
 
 struct	memarr *pmemarr;	/* physical memory regions */
@@ -422,6 +458,7 @@ static struct pool pmap_pmap_pool;
 static struct pool_cache pmap_pmap_pool_cache;
 static int	pmap_pmap_pool_ctor(void *, void *, int);
 static void	pmap_pmap_pool_dtor(void *, void *);
+static struct pool segmap_pool;
 
 #if defined(SUN4)
 /*
@@ -440,7 +477,7 @@ static void	pmap_pmap_pool_dtor(void *, void *);
  * solution: mask the invalid bits in the getsetmap macro.
  */
 
-static u_long segfixmask = 0xffffffff; /* all bits valid to start */
+static u_int segfixmask = 0xffffffff; /* all bits valid to start */
 #else
 #define segfixmask 0xffffffff	/* It's in getsegmap's scope */
 #endif
@@ -459,18 +496,50 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #define	getregmap(va)		((unsigned)lduha((va)+2, ASI_REGMAP) >> 8)
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
+
 #if defined(SUN4M) || defined(SUN4D)
-void		setpgt4m(int *ptep, int pte);
+#if 0
+#if VM_PROT_READ != 1 || VM_PROT_WRITE != 2 || VM_PROT_EXECUTE != 4
+#error fix protection code translation table
+#endif
+#endif
+/*
+ * Translation table for kernel vs. PTE protection bits.
+ */
+const u_int protection_codes[2][8] = {
+	/* kernel */
+	{
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_N_RWX,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_N_RWX,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_READ */
+	PPROT_N_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_N_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_N_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_N_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ */
+	},
+
+	/* user */
+	{
+	PPROT_N_RX,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_R_R,	/* VM_PROT_NONE    | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_RW_RW,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_RW_RW,	/* VM_PROT_NONE    | VM_PROT_WRITE | VM_PROT_READ */
+	PPROT_X_X,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_NONE */
+	PPROT_RX_RX,	/* VM_PROT_EXECUTE | VM_PROT_NONE  | VM_PROT_READ */
+	PPROT_RWX_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_NONE */
+	PPROT_RWX_RWX,	/* VM_PROT_EXECUTE | VM_PROT_WRITE | VM_PROT_READ */
+	}
+};
+#define pte_kprot4m(prot) (protection_codes[0][(prot)])
+#define pte_uprot4m(prot) (protection_codes[1][(prot)])
+#define pte_prot4m(pm, prot) \
+	(protection_codes[(pm) == pmap_kernel() ? 0 : 1][(prot)])
+
 void		setpte4m(vaddr_t va, int pte);
-#if defined(MULTIPROCESSOR)
+void		setpgt4m(int *ptep, int pte);
 void		setpgt4m_va(vaddr_t, int *, int, int, int, u_int);
-#else
-#define		setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset) do { \
-	if ((pageflush)) \
-		tlb_flush_page(va, ctx, 0); \
-	setpgt4m((ptep), (pte)); \
-} while (0)
-#endif /* !MULTIPROCESSOR */
+int		updatepte4m(vaddr_t, int *, int, int, int, u_int);
 #endif /* SUN4M || SUN4D */
 
 #if defined(MULTIPROCESSOR)
@@ -529,7 +598,7 @@ static void  mmu_setup4m_L3(int, struct segmap *);
 				  int, struct vm_page *, int);
 /*static*/ void pv_changepte4_4c(struct vm_page *, int, int);
 /*static*/ int  pv_syncflags4_4c(struct vm_page *);
-/*static*/ int  pv_link4_4c(struct vm_page *, struct pmap *, vaddr_t, int);
+/*static*/ int  pv_link4_4c(struct vm_page *, struct pmap *, vaddr_t, u_int *);
 /*static*/ void pv_unlink4_4c(struct vm_page *, struct pmap *, vaddr_t);
 #endif
 
@@ -603,7 +672,7 @@ static void sp_tlb_flush(int va, int ctx, int lvl)
 	/* and turn traps on again */
 	__asm("wr	%o3, 0, %psr");
 	__asm("nop");
-	__asm("retl");
+	__asm("nop");
 	__asm("nop");
 }
 
@@ -615,19 +684,9 @@ static __inline__ void sp_tlb_flush_all(void)
 #if defined(MULTIPROCESSOR)
 /*
  * The SMP versions of the tlb flush routines.  We only need to
- * do a cross call for these on sun4m systems, which itself
- * ensures that there is only one concurrent flush happening.
- * For the sun4d case, we provide a special lock.
+ * do a cross call for these on sun4m (Mbus) systems. sun4d systems
+ * have an Xbus which broadcasts TLB demaps in hardware.
  */
-
-#if defined(SUN4D)
-static struct simplelock sun4d_tlb_lock = SIMPLELOCK_INITIALIZER;
-#define LOCK_4DTLB()	simple_lock(&sun4d_tlb_lock);
-#define UNLOCK_4DTLB()	simple_unlock(&sun4d_tlb_lock);
-#else
-#define LOCK_4DTLB()	/* nothing */
-#define UNLOCK_4DTLB()	/* nothing */
-#endif
 
 static __inline__ void	smp_tlb_flush_page (int va, int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_segment (int va, int ctx, u_int cpuset);
@@ -635,57 +694,50 @@ static __inline__ void	smp_tlb_flush_region (int va, int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_context (int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_all (void);
 
+/* From locore: */
+extern void ft_tlb_flush(int va, int ctx, int lvl);
+
 static __inline__ void
 smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L3);
-		UNLOCK_4DTLB();
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
 }
 
 static __inline__ void
 smp_tlb_flush_segment(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L2);
-		UNLOCK_4DTLB();
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
 }
 
 static __inline__ void
 smp_tlb_flush_region(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L1);
-		UNLOCK_4DTLB();
 	} else
-		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
 }
 
 static __inline__ void
 smp_tlb_flush_context(int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
-		UNLOCK_4DTLB();
 	} else
-		XCALL3(sp_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
+		FXCALL3(sp_tlb_flush, ft_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
 }
 
 static __inline__ void
 smp_tlb_flush_all()
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush_all();
-		UNLOCK_4DTLB();
 	} else
 		XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
@@ -704,54 +756,6 @@ smp_tlb_flush_all()
 #define tlb_flush_context(ctx,s)	sp_tlb_flush(ctx,0,ASI_SRMMUFP_L0)
 #define tlb_flush_all()			sp_tlb_flush_all()
 #endif /* MULTIPROCESSOR */
-
-/*
- * Atomically update a PTE entry, coping with hardware updating the
- * PTE at the same time we are.  This is the procedure that is
- * recommended in the SuperSPARC user's manual.
- */
-int updatepte4m (vaddr_t, int *, int, int, int, u_int);
-static struct simplelock pte4m_lock = SIMPLELOCK_INITIALIZER;
-
-int
-updatepte4m(va, pte, bic, bis, ctx, cpuset)
-	vaddr_t va;
-	int *pte;
-	int bic;
-	int bis;
-	int ctx;
-	u_int cpuset;
-{
-	int oldval, swapval;
-	volatile int *vpte = (volatile int *)pte;
-
-	/*
-	 * Can only be one of these happening in the system
-	 * at any one time.
-	 */
-	simple_lock(&pte4m_lock);
-
-	/*
-	 * The idea is to loop swapping zero into the pte, flushing
-	 * it, and repeating until it stays zero.  At this point,
-	 * there should be no more hardware accesses to this PTE
-	 * so we can modify it without losing any mod/ref info.
-	 */
-	oldval = 0;
-	do {
-		swapval = 0;
-		swap(vpte, swapval);
-		tlb_flush_page(va, ctx, cpuset);
-		oldval |= swapval;
-	} while (*vpte != 0);
-
-	swapval = (oldval & ~bic) | bis;
-	swap(vpte, swapval);
-
-	simple_unlock(&pte4m_lock);
-
-	return (oldval);
-}
 
 static u_int	VA2PA(caddr_t);
 static u_long	srmmu_bypass_read(u_long);
@@ -806,6 +810,53 @@ VA2PA(addr)
 #endif
 }
 
+/*
+ * Atomically update a PTE entry, coping with hardware updating the
+ * PTE at the same time we are.  This is the procedure that is
+ * recommended in the SuperSPARC user's manual.
+ */
+static struct simplelock demap_lock = SIMPLELOCK_INITIALIZER;
+
+int
+updatepte4m(va, pte, bic, bis, ctx, cpuset)
+	vaddr_t va;
+	int *pte;
+	int bic;
+	int bis;
+	int ctx;
+	u_int cpuset;
+{
+	int oldval, swapval;
+	volatile int *vpte = (volatile int *)pte;
+
+	/*
+	 * Can only be one of these happening in the system
+	 * at any one time.
+	 */
+	simple_lock(&demap_lock);
+
+	/*
+	 * The idea is to loop swapping zero into the pte, flushing
+	 * it, and repeating until it stays zero.  At this point,
+	 * there should be no more hardware accesses to this PTE
+	 * so we can modify it without losing any mod/ref info.
+	 */
+	oldval = 0;
+	do {
+		swapval = 0;
+		swap(vpte, swapval);
+		tlb_flush_page(va, ctx, cpuset);
+		oldval |= swapval;
+	} while (__predict_false(*vpte != 0));
+
+	swapval = (oldval & ~bic) | bis;
+	swap(vpte, swapval);
+
+	simple_unlock(&demap_lock);
+
+	return (oldval);
+}
+
 __inline void
 setpgt4m(ptep, pte)
 	int *ptep;
@@ -815,7 +866,6 @@ setpgt4m(ptep, pte)
 	swap(ptep, pte);
 }
 
-#if defined(MULTIPROCESSOR)
 __inline void
 setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 	vaddr_t va;
@@ -825,45 +875,36 @@ setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 	int ctx;
 	u_int cpuset;
 {
-
+#if defined(MULTIPROCESSOR)
 	updatepte4m(va, ptep, 0xffffffff, pte, pageflush ? ctx : 0, cpuset);
-}
+#else
+	if (__predict_true(pageflush))
+		tlb_flush_page(va, ctx, 0);
+	setpgt4m(ptep, pte);
 #endif /* MULTIPROCESSOR */
+}
 
 /* Set the page table entry for va to pte. */
-__inline void
+void
 setpte4m(va, pte)
 	vaddr_t va;
 	int pte;
 {
 	struct pmap *pm;
-	struct regmap *rm;
-	struct segmap *sm;
+	struct regmap *rp;
+	struct segmap *sp;
 
+#ifdef DEBUG
 	if (getcontext4m() != 0)
 		panic("setpte4m: user context");
+#endif
 
 	pm = pmap_kernel();
+	rp = &pm->pm_regmap[VA_VREG(va)];
+	sp = &rp->rg_segmap[VA_VSEG(va)];
 
-	/* Note: inline version of setptesw4m() */
-#ifdef DEBUG
-	if (pm->pm_regmap == NULL)
-		panic("setpte4m: no regmap entry");
-#endif
-	rm = &pm->pm_regmap[VA_VREG(va)];
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-
-#ifdef DEBUG
-	if (rm->rg_segmap == NULL)
-		panic("setpte4m: no segmap for va %p (rp=%p)",
-			(caddr_t)va, (caddr_t)rm);
-
-	if (sm->sg_pte == NULL)
-		panic("setpte4m: no pte for va %p (rp=%p, sp=%p)",
-		      (caddr_t)va, rm, sm);
-#endif
 	tlb_flush_page(va, 0, CPUSET_ALL);
-	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
+	setpgt4m(sp->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
 /*
@@ -1023,6 +1064,60 @@ pmap_virtual_space(v_start, v_end)
         *v_end   = virtual_end;
 }
 
+#ifdef PMAP_GROWKERNEL
+vaddr_t
+pmap_growkernel(vaddr_t eva)
+{
+	struct regmap *rp;
+	struct segmap *sp;
+	int vr, evr, M, N, i;
+	struct vm_page *pg;
+	vaddr_t va;
+
+	if (eva <= virtual_end)
+		return (virtual_end);
+
+	/* For now, only implemented for sun4/sun4c */
+	KASSERT(CPU_ISSUN4 || CPU_ISSUN4C);
+
+	/*
+	 * Map in the next region(s)
+	 */
+
+	/* Get current end-of-kernel */
+	vr = virtual_end >> RGSHIFT;
+	evr = (eva + NBPRG - 1) >> RGSHIFT;
+	eva = evr << RGSHIFT;
+
+	if (eva > VM_MAX_KERNEL_ADDRESS)
+		panic("growkernel: grown too large: %lx", eva);
+
+	/*
+	 * Divide a region in N blocks of M segments, where each segment
+	 * block can have its PTEs mapped by one page.
+	 * N should come out to 1 for 8K pages and to 4 for 4K pages.
+	 */
+	M = NBPG / (NPTESG * sizeof(int));
+	N = (NBPRG/NBPSG) / M;
+
+	while (vr < evr) {
+		rp = &pmap_kernel()->pm_regmap[vr];
+		for (i = 0; i < N; i++) {
+			sp = &rp->rg_segmap[i * M];
+			va = (vaddr_t)sp->sg_pte;
+			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+			if (pg == NULL)
+				panic("growkernel: out of memory");
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+					VM_PROT_READ | VM_PROT_WRITE);
+		}
+	}
+
+	virtual_end = eva;
+	return (eva);
+}
+#endif
+
 /*
  * Helper routine that hands off available physical pages to the VM system.
  */
@@ -1151,17 +1246,11 @@ mmu_reservemon4_4c(nrp, nsp)
 {
 	u_int va = 0, eva = 0;
 	int mmuseg, i, nr, ns, vr, lastvr;
+	int *pte;
 #if defined(SUN4_MMU3L)
 	int mmureg;
 #endif
 	struct regmap *rp;
-
-#if defined(SUN4M) || defined(SUN4D)
-	if (CPU_HAS_SRMMU) {
-		panic("mmu_reservemon4_4c called on SRMMU machine");
-		return;
-	}
-#endif
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
@@ -1215,10 +1304,13 @@ mmu_reservemon4_4c(nrp, nsp)
 		rp->rg_nsegmap += 1;
 		rp->rg_segmap[VA_VSEG(va)].sg_pmeg = mmuseg;
 		rp->rg_segmap[VA_VSEG(va)].sg_npte = NPTESG;
+		pte = rp->rg_segmap[VA_VSEG(va)].sg_pte;
 
 		/* PROM maps its memory user-accessible: fix it. */
-		for (i = NPTESG; --i >= 0; va += NBPG)
-			setpte4(va, getpte4(va) | PG_S);
+		for (i = NPTESG; --i >= 0; va += NBPG, pte++) {
+			*pte = getpte4(va) | PG_S;
+			setpte4(va, *pte);
+		}
 	}
 	*nsp = ns;
 	*nrp = nr;
@@ -1278,8 +1370,17 @@ mmu_reservemon4m(kpmap)
 	unsigned int rom_ctxtbl;
 	int te;
 
+#if !(defined(PROM_AT_F0) || defined(MSIIEP))
 	prom_vstart = OPENPROM_STARTVADDR;
 	prom_vend = OPENPROM_ENDVADDR;
+#else /* OBP3/OFW in JavaStations */
+	prom_vstart = 0xf0000000;
+#if defined(MSIIEP)
+	prom_vend = 0xf0800000;
+#else
+	prom_vend = 0xf0080000;
+#endif
+#endif
 
 	/*
 	 * XXX: although the sun4m can handle 36 bits of physical
@@ -1364,7 +1465,6 @@ mmu_setup4m_L1(regtblptd, kpmap)
 				struct segmap *sp = &rp->rg_segmap[j];
 
 				for (k = 0; k < SRMMU_L3SIZE; k++) {
-					sp->sg_npte++;
 					setpgt4m(&sp->sg_pte[k],
 						(te & SRMMU_L1PPNMASK) |
 						(j << SRMMU_L2PPNSHFT) |
@@ -1417,7 +1517,6 @@ mmu_setup4m_L2(segtblptd, rp)
 			 * into a 3-level description.
 			 */
 			for (k = 0; k < SRMMU_L3SIZE; k++) {
-				sp->sg_npte++;
 				setpgt4m(&sp->sg_pte[k],
 					(te & SRMMU_L1PPNMASK) |
 					(te & SRMMU_L2PPNMASK) |
@@ -1455,8 +1554,8 @@ mmu_setup4m_L3(pagtblptd, sp)
 		case SRMMU_TEINVALID:
 			break;
 		case SRMMU_TEPTE:
-			sp->sg_npte++;
 			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
+			pmap_kernel()->pm_stats.resident_count++;
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
@@ -1473,10 +1572,12 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-int	me_alloc(struct mmuhd *, struct pmap *, int, int);
-void	me_free(struct pmap *, u_int);
-int	region_alloc(struct mmuhd *, struct pmap *, int);
-void	region_free(struct pmap *, u_int);
+static int	me_alloc(struct mmuq *, struct pmap *, int, int);
+static void	me_free(struct pmap *, u_int);
+#if defined(SUN4_MMU3L)
+static int	region_alloc(struct mmuq *, struct pmap *, int);
+static void	region_free(struct pmap *, u_int);
+#endif
 
 
 /*
@@ -1492,42 +1593,46 @@ void	region_free(struct pmap *, u_int);
  * This routine is large and complicated, but it must be fast
  * since it implements the dynamic allocation of MMU entries.
  */
-int
+
+static __inline__ int
 me_alloc(mh, newpm, newvreg, newvseg)
-	struct mmuhd *mh;
+	struct mmuq *mh;
 	struct pmap *newpm;
 	int newvreg, newvseg;
 {
 	struct mmuentry *me;
 	struct pmap *pm;
-	int i, va, *pte, tpte;
+	int i, va, *ptep, pte;
 	int ctx;
 	struct regmap *rp;
 	struct segmap *sp;
 
 	/* try free list first */
-	if ((me = segm_freelist.tqh_first) != NULL) {
-		TAILQ_REMOVE(&segm_freelist, me, me_list);
+	if (!MMUQ_EMPTY(&segm_freelist)) {
+		me = MMUQ_FIRST(&segm_freelist);
+		MMUQ_REMOVE(me, me_list);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
 			panic("me_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMU_ALLOC)
 			printf("me_alloc: got pmeg %d\n", me->me_cookie);
 #endif
-		TAILQ_INSERT_TAIL(mh, me, me_list);
+		MMUQ_INSERT_TAIL(mh, me, me_list);
 
 		/* onto on pmap chain; pmap is already locked, if needed */
 		TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
 #ifdef DIAGNOSTIC
 		pmap_stats.ps_npmeg_free--;
-		if (mh == &segm_locked)
+		if (mh == &segm_locked) {
 			pmap_stats.ps_npmeg_locked++;
-		else
+			me->me_statp = &pmap_stats.ps_npmeg_locked;
+		} else {
 			pmap_stats.ps_npmeg_lru++;
+			me->me_statp = &pmap_stats.ps_npmeg_lru;
+		}
 #endif
 
 		/* into pmap segment table, with backpointers */
-		newpm->pm_regmap[newvreg].rg_segmap[newvseg].sg_pmeg = me->me_cookie;
 		me->me_pmap = newpm;
 		me->me_vseg = newvseg;
 		me->me_vreg = newvreg;
@@ -1536,32 +1641,39 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	}
 
 	/* no luck, take head of LRU list */
-	if ((me = segm_lru.tqh_first) == NULL)
+	if (MMUQ_EMPTY(&segm_lru))
 		panic("me_alloc: all pmegs gone");
 
+	me = MMUQ_FIRST(&segm_lru);
 	pm = me->me_pmap;
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
 		printf("me_alloc: stealing pmeg 0x%x from pmap %p\n",
 		    me->me_cookie, pm);
 #endif
+
+	mmu_stolenpmegs_evcnt.ev_count++;
+
 	/*
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
 	 */
-	TAILQ_REMOVE(&segm_lru, me, me_list);
-	TAILQ_INSERT_TAIL(mh, me, me_list);
+	MMUQ_REMOVE(me, me_list);
+	MMUQ_INSERT_TAIL(mh, me, me_list);
 
 #ifdef DIAGNOSTIC
 	if (mh == &segm_locked) {
 		pmap_stats.ps_npmeg_lru--;
 		pmap_stats.ps_npmeg_locked++;
+		me->me_statp = &pmap_stats.ps_npmeg_locked;
+	} else {
+		me->me_statp = &pmap_stats.ps_npmeg_lru;
 	}
 #endif
 
 	rp = &pm->pm_regmap[me->me_vreg];
 	sp = &rp->rg_segmap[me->me_vseg];
-	pte = sp->sg_pte;
+	ptep = sp->sg_pte;
 
 #ifdef DEBUG
 	if (sp->sg_pmeg != me->me_cookie)
@@ -1599,13 +1711,13 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	write_user_windows();
 	if (CTX_USABLE(pm,rp)) {
+		setcontext4(pm->pm_ctxnum);
 		va = VSTOVA(me->me_vreg, me->me_vseg);
 #ifdef DEBUG
 		if (getsegmap(va) != me->me_cookie)
-			panic("me_alloc: wrong pmeg in MMU (%ld != %d)",
+			panic("me_alloc: wrong pmeg in MMU (%d != %d)",
 				getsegmap(va), me->me_cookie);
 #endif
-		setcontext4(pm->pm_ctxnum);
 		cache_flush_segment(me->me_vreg, me->me_vseg, pm->pm_ctxnum);
 	} else {
 		va = 0;
@@ -1626,20 +1738,31 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	i = NPTESG;
 	do {
-		tpte = getpte4(va);
-		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
+		int swbits = *ptep & PG_MBZ;
+		pte = getpte4(va);
+		if ((pte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
 			struct vm_page *pg;
-			if ((pg = pvhead4_4c(tpte)) != NULL)
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
+			if ((pg = pvhead4_4c(pte)) != NULL)
+				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(pte);
 		}
-		*pte++ = tpte & ~(PG_U|PG_M);
+		*ptep++ = swbits | (pte & ~(PG_U|PG_M));
 		va += NBPG;
 	} while (--i > 0);
 
 	/* update segment tables */
-	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
-	if (CTX_USABLE(pm,rp))
-		setsegmap(VSTOVA(me->me_vreg,me->me_vseg), seginval);
+	simple_lock(&pm->pm_lock);
+	if (CTX_USABLE(pm,rp)) {
+		va = VSTOVA(me->me_vreg,me->me_vseg);
+		if (pm != pmap_kernel() || HASSUN4_MMU3L)
+			setsegmap(va, seginval);
+		else {
+			/* Unmap segment from all contexts */
+			for (i = ncontext; --i >= 0;) {
+				setcontext4(i);
+				setsegmap(va, seginval);
+			}
+		}
+	}
 	sp->sg_pmeg = seginval;
 
 	/* off old pmap chain */
@@ -1651,7 +1774,6 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
 
 	/* into new segment table, with backpointers */
-	newpm->pm_regmap[newvreg].rg_segmap[newvseg].sg_pmeg = me->me_cookie;
 	me->me_pmap = newpm;
 	me->me_vseg = newvseg;
 	me->me_vreg = newvreg;
@@ -1665,20 +1787,19 @@ me_alloc(mh, newpm, newvreg, newvseg)
  * Assumes the corresponding pmap is already locked.
  * Caller must update hardware.
  */
-void
+static __inline__ void
 me_free(pm, pmeg)
 	struct pmap *pm;
 	u_int pmeg;
 {
 	struct mmuentry *me = &mmusegments[pmeg];
-	struct regmap *rp;
 #ifdef DEBUG
+	struct regmap *rp;
 	int i, va, tpte, ctx;
 #endif
 
-	rp = &pm->pm_regmap[me->me_vreg];
-
 #ifdef DEBUG
+	rp = &pm->pm_regmap[me->me_vreg];
 	if (pmapdebug & PDB_MMU_ALLOC)
 		printf("me_free: freeing pmeg %d from pmap %p\n",
 		    me->me_cookie, pm);
@@ -1710,27 +1831,19 @@ me_free(pm, pmeg)
 
 	/* take mmu entry off pmap chain */
 	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
-	/* ... and remove from segment map */
-	if (rp->rg_segmap == NULL)
-		panic("me_free: no segments in pmap");
-	rp->rg_segmap[me->me_vseg].sg_pmeg = seginval;
 
 	/* off LRU or lock chain */
-	if (pm == pmap_kernel()) {
-		TAILQ_REMOVE(&segm_locked, me, me_list);
+	MMUQ_REMOVE(me, me_list);
 #ifdef DIAGNOSTIC
-		pmap_stats.ps_npmeg_locked--;
+	if (me->me_statp == NULL)
+		panic("me_statp");
+	(*me->me_statp)--;
+	me->me_statp = NULL;
 #endif
-	} else {
-		TAILQ_REMOVE(&segm_lru, me, me_list);
-#ifdef DIAGNOSTIC
-		pmap_stats.ps_npmeg_lru--;
-#endif
-	}
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
-	TAILQ_INSERT_TAIL(&segm_freelist, me, me_list);
+	MMUQ_INSERT_TAIL(&segm_freelist, me, me_list);
 #ifdef DIAGNOSTIC
 	pmap_stats.ps_npmeg_free++;
 #endif
@@ -1742,7 +1855,7 @@ me_free(pm, pmeg)
 
 int
 region_alloc(mh, newpm, newvr)
-	struct mmuhd *mh;
+	struct mmuq *mh;
 	struct pmap *newpm;
 	int newvr;
 {
@@ -1752,21 +1865,21 @@ region_alloc(mh, newpm, newvr)
 	struct regmap *rp;
 
 	/* try free list first */
-	if ((me = region_freelist.tqh_first) != NULL) {
-		TAILQ_REMOVE(&region_freelist, me, me_list);
+	if (!MMUQ_EMPTY(&region_freelist)) {
+		me = MMUQ_FIRST(&region_freelist);
+		MMUQ_REMOVE(me, me_list);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
 			panic("region_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMUREG_ALLOC)
 			printf("region_alloc: got smeg 0x%x\n", me->me_cookie);
 #endif
-		TAILQ_INSERT_TAIL(mh, me, me_list);
+		MMUQ_INSERT_TAIL(mh, me, me_list);
 
 		/* onto on pmap chain; pmap is already locked, if needed */
 		TAILQ_INSERT_TAIL(&newpm->pm_reglist, me, me_pmchain);
 
 		/* into pmap segment table, with backpointers */
-		newpm->pm_regmap[newvr].rg_smeg = me->me_cookie;
 		me->me_pmap = newpm;
 		me->me_vreg = newvr;
 
@@ -1774,8 +1887,10 @@ region_alloc(mh, newpm, newvr)
 	}
 
 	/* no luck, take head of LRU list */
-	if ((me = region_lru.tqh_first) == NULL)
+	if (MMUQ_EMPTY(&region_lru))
 		panic("region_alloc: all smegs gone");
+
+	me = MMUQ_FIRST(&region_lru);
 
 	pm = me->me_pmap;
 	if (pm == NULL)
@@ -1791,8 +1906,8 @@ region_alloc(mh, newpm, newvr)
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
 	 */
-	TAILQ_REMOVE(&region_lru, me, me_list);
-	TAILQ_INSERT_TAIL(mh, me, me_list);
+	MMUQ_REMOVE(me, me_list);
+	MMUQ_INSERT_TAIL(mh, me, me_list);
 
 	rp = &pm->pm_regmap[me->me_vreg];
 	ctx = getcontext4();
@@ -1805,7 +1920,7 @@ region_alloc(mh, newpm, newvr)
 	}
 
 	/* update region tables */
-	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
+	simple_lock(&pm->pm_lock); /* what if other CPU takes mmuentry ?? */
 	if (pm->pm_ctx)
 		setregmap(VRTOVA(me->me_vreg), reginval);
 	rp->rg_smeg = reginval;
@@ -1819,7 +1934,6 @@ region_alloc(mh, newpm, newvr)
 	TAILQ_INSERT_TAIL(&newpm->pm_reglist, me, me_pmchain);
 
 	/* into new segment table, with backpointers */
-	newpm->pm_regmap[newvr].rg_smeg = me->me_cookie;
 	me->me_pmap = newpm;
 	me->me_vreg = newvr;
 
@@ -1828,12 +1942,8 @@ region_alloc(mh, newpm, newvr)
 
 /*
  * Free an MMU entry.
- *
  * Assumes the corresponding pmap is already locked.
- * Does NOT flush cache. ???
- * CALLER MUST SET CONTEXT to pm->pm_ctxnum (if pmap has
- * a context) or to 0 (if not).  Caller must also update
- * pm->pm_regmap and (possibly) the hardware.
+ * Caller must update hardware.
  */
 void
 region_free(pm, smeg)
@@ -1852,26 +1962,107 @@ region_free(pm, smeg)
 		panic("region_free: pm != me_pmap");
 #endif
 
-	if (pm->pm_ctx)
-		cache_flush_region(me->me_vreg, pm->pm_ctxnum);
-
 	/* take mmu entry off pmap chain */
 	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
-	/* ... and remove from segment map */
-	pm->pm_regmap[me->me_vreg].rg_smeg = reginval;
 
 	/* off LRU or lock chain */
-	if (pm == pmap_kernel()) {
-		TAILQ_REMOVE(&region_locked, me, me_list);
-	} else {
-		TAILQ_REMOVE(&region_lru, me, me_list);
-	}
+	MMUQ_REMOVE(me, me_list);
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
-	TAILQ_INSERT_TAIL(&region_freelist, me, me_list);
+	MMUQ_INSERT_TAIL(&region_freelist, me, me_list);
 }
+
+static void
+mmu_pagein_reg(struct pmap *pm, struct regmap *rp, vaddr_t va,
+		int vr, struct mmuq *mh)
+{
+	int i, s, smeg;
+
+	va = VA_ROUNDDOWNTOREG(va);
+	rp->rg_smeg = smeg = region_alloc(mh, pm, vr);
+
+	s = splvm();
+	if (pm == pmap_kernel()) {
+		/* Map region into all contexts */
+		int ctx = getcontext4();
+		i = ncontext - 1;
+		do {
+			setcontext4(i);
+			setregmap(va, smeg);
+		} while (--i >= 0);
+		setcontext4(ctx);
+	} else
+		setregmap(va, smeg);
+
+	/* Load PMEGs into this region */
+	for (i = 0; i < NSEGRG; i++) {
+		setsegmap(va, rp->rg_segmap[i].sg_pmeg);
+		va += NBPSG;
+	}
+	splx(s);
+}
+#endif /* SUN4_MMU3L */
+
+static void
+mmu_pmeg_lock(int pmeg)
+{
+	struct mmuentry *me = &mmusegments[pmeg];
+	MMUQ_REMOVE(me, me_list);
+	MMUQ_INSERT_TAIL(&segm_locked, me, me_list);
+#ifdef DIAGNOSTIC
+	(*me->me_statp)--;
+	pmap_stats.ps_npmeg_locked++;
+	me->me_statp = &pmap_stats.ps_npmeg_locked;
 #endif
+}
+
+static void
+mmu_pmeg_unlock(int pmeg)
+{
+	struct mmuentry *me = &mmusegments[pmeg];
+	MMUQ_REMOVE(me, me_list);
+	MMUQ_INSERT_TAIL(&segm_lru, me, me_list);
+#ifdef DIAGNOSTIC
+	(*me->me_statp)--;
+	pmap_stats.ps_npmeg_lru++;
+	me->me_statp = &pmap_stats.ps_npmeg_lru;
+#endif
+}
+
+static void
+mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
+		int vr, int vs, struct mmuq *mh)
+{
+	int s, i, pmeg, *pte;
+
+	mmu_pagein_evcnt.ev_count++;
+
+	va = VA_ROUNDDOWNTOSEG(va);
+	s = splvm();		/* paranoid */
+	sp->sg_pmeg = pmeg = me_alloc(mh, pm, vr, vs);
+	if (pm != pmap_kernel() || HASSUN4_MMU3L)
+		setsegmap(va, pmeg);
+	else {
+		/* Map kernel address into all contexts */
+		int ctx = getcontext4();
+		int i = ncontext - 1;
+		do {
+			setcontext4(i);
+			setsegmap(va, pmeg);
+		} while (--i >= 0);
+		setcontext4(ctx);
+	}
+
+	/* reload segment: write PTEs into a the MMU */
+	pte = sp->sg_pte;
+	i = NPTESG;
+	do {
+		setpte4(va, *pte++ & ~PG_MBZ);
+		va += NBPG;
+	} while (--i > 0);
+	splx(s);
+}
 
 /*
  * `Page in' (load or inspect) an MMU entry; called on page faults.
@@ -1886,13 +2077,9 @@ mmu_pagein(pm, va, prot)
 	vaddr_t va;
 	int prot;
 {
-	int *pte;
-	int vr, vs, pmeg, i, s, bits;
+	int vr, vs, bits;
 	struct regmap *rp;
 	struct segmap *sp;
-
-	if (va >= (unsigned long)KERNBASE)
-		return (0);
 
 	if (prot != VM_PROT_NONE)
 		bits = PG_V | ((prot & VM_PROT_WRITE) ? PG_W : 0);
@@ -1902,57 +2089,34 @@ mmu_pagein(pm, va, prot)
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
-#ifdef DEBUG
-	if (pm == pmap_kernel())
-	printf("mmu_pagein: kernel wants map at va 0x%lx, vr %d, vs %d\n",
-		(u_long)va, vr, vs);
-#endif
 
 	/* return 0 if we have no PMEGs to load */
-	if (rp->rg_segmap == NULL)
+	if (rp->rg_nsegmap == 0)
 		return (0);
 
-#if defined(SUN4_MMU3L)
-	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
-		smeg_t smeg;
-		unsigned int tva = VA_ROUNDDOWNTOREG(va);
-		struct segmap *sp = rp->rg_segmap;
+#ifdef DIAGNOSTIC
+	if (rp->rg_segmap == NULL)
+		panic("pagein: no segmap");
+#endif
 
-		s = splvm();		/* paranoid */
-		smeg = region_alloc(&region_lru, pm, vr);
-		setregmap(tva, smeg);
-		i = NSEGRG;
-		do {
-			setsegmap(tva, sp++->sg_pmeg);
-			tva += NBPSG;
-		} while (--i > 0);
-		splx(s);
-	}
+#if defined(SUN4_MMU3L)
+	if (HASSUN4_MMU3L && rp->rg_smeg == reginval)
+		mmu_pagein_reg(pm, rp, va, vr, &region_lru);
 #endif
 	sp = &rp->rg_segmap[vs];
 
 	/* return 0 if we have no PTEs to load */
-	if ((pte = sp->sg_pte) == NULL)
+	if (sp->sg_npte == 0)
 		return (0);
 
 	/* return -1 if the fault is `hard', 0 if not */
 	if (sp->sg_pmeg != seginval)
 		return (bits && (getpte4(va) & bits) == bits ? -1 : 0);
 
-	/* reload segment: write PTEs into a new LRU entry */
-	va = VA_ROUNDDOWNTOSEG(va);
-	s = splvm();		/* paranoid */
-	pmeg = me_alloc(&segm_lru, pm, vr, vs);
-	setsegmap(va, pmeg);
-	i = NPTESG;
-	do {
-		setpte4(va, *pte++);
-		va += NBPG;
-	} while (--i > 0);
-	splx(s);
+	mmu_pagein_seg(pm, sp, va, vr, vs, &segm_lru);
 	return (1);
 }
-#endif /* defined SUN4 or SUN4C */
+#endif /* SUN4 or SUN4C */
 
 /*
  * Allocate a context.  If necessary, steal one from someone else.
@@ -2115,7 +2279,7 @@ ctx_alloc(pm)
 		 * context table slot.
 		 *
 		 * Note on multi-threaded processes: a context must remain
-		 * valid as long as any thread is still running on a cpu.
+		 * valid as long as any thread is still running on a CPU.
 		 */
 		simple_lock(&pm->pm_lock);
 #if defined(MULTIPROCESSOR)
@@ -2168,8 +2332,23 @@ ctx_free(pm)
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
+		int i;
+
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
+#if defined(MULTIPROCESSOR)
+		for (i = 0; i < ncpu; i++)
+#else
+		i = 0;
+#endif
+		{
+			struct cpu_info *cpi = cpus[i];
+#if defined(MULTIPROCESSOR)
+			if (cpi == NULL)
+				continue;
+#endif
+			setpgt4m(&cpi->ctx_tbl[ctx], SRMMU_TEINVALID);
+		}
 	}
 #endif
 
@@ -2203,7 +2382,7 @@ pv_changepte4_4c(pg, bis, bic)
 	struct vm_page *pg;
 	int bis, bic;
 {
-	int *pte;
+	int pte, *ptep;
 	struct pvlist *pv;
 	struct pmap *pm;
 	int va, vr, vs;
@@ -2227,20 +2406,17 @@ pv_changepte4_4c(pg, bis, bic)
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		sp = &rp->rg_segmap[vs];
-		pte = sp->sg_pte;
+		ptep = &sp->sg_pte[VA_VPG(va)];
 
 		if (sp->sg_pmeg == seginval) {
 			/* not in hardware: just fix software copy */
-			pte += VA_VPG(va);
-			*pte = (*pte | bis) & ~bic;
+			*ptep = (*ptep | bis) & ~bic;
 		} else {
-			int tpte;
-
 			/* in hardware: fix hardware copy */
 			if (CTX_USABLE(pm,rp)) {
 				setcontext4(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
-				tpte = getpte4(va);
+				pte = getpte4(va);
 				/*
 				 * XXX: always flush cache; conservative, but
 				 * needed to invalidate cache tag protection
@@ -2254,14 +2430,13 @@ pv_changepte4_4c(pg, bis, bic)
 					setregmap(0, tregion);
 				setsegmap(0, sp->sg_pmeg);
 				va = VA_VPG(va) << PGSHIFT;
-				tpte = getpte4(va);
+				pte = getpte4(va);
 			}
-			if (tpte & PG_V)
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
-			tpte = (tpte | bis) & ~bic;
-			setpte4(va, tpte);
-			if (pte != NULL)	/* update software copy */
-				pte[VA_VPG(va)] = tpte;
+			if (pte & PG_V)
+				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(pte);
+			pte = (pte | bis) & ~bic;
+			setpte4(va, pte);
+			*ptep = (*ptep & PG_MBZ) | pte;
 		}
 	}
 	setcontext4(ctx);
@@ -2281,7 +2456,7 @@ pv_syncflags4_4c(pg)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int tpte, va, vr, vs, pmeg, flags;
+	int pte, va, vr, vs, pmeg, flags;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -2289,7 +2464,8 @@ pv_syncflags4_4c(pg)
 	pv = VM_MDPAGE_PVHEAD(pg);
 
 	s = splvm();			/* paranoid? */
-	if (pv->pv_pmap == NULL) {	/* paranoid */
+	if (pv->pv_pmap == NULL) {
+		/* Page not mapped; pv_flags is already up to date */
 		splx(s);
 		return (0);
 	}
@@ -2307,8 +2483,8 @@ pv_syncflags4_4c(pg)
 		if (CTX_USABLE(pm,rp)) {
 			setcontext4(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
-			tpte = getpte4(va);
-			if (tpte & PG_M)
+			pte = getpte4(va);
+			if (pte & PG_M)
 				cache_flush_page(va, pm->pm_ctxnum);
 		} else {
 			/* Make temp map in ctx 0 to access the PTE */
@@ -2317,12 +2493,12 @@ pv_syncflags4_4c(pg)
 				setregmap(0, tregion);
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
-			tpte = getpte4(va);
+			pte = getpte4(va);
 		}
-		if (tpte & (PG_M|PG_U) && tpte & PG_V) {
-			flags |= MR4_4C(tpte);
-			tpte &= ~(PG_M|PG_U);
-			setpte4(va, tpte);
+		if (pte & (PG_M|PG_U) && pte & PG_V) {
+			flags |= MR4_4C(pte);
+			pte &= ~(PG_M|PG_U);
+			setpte4(va, pte);
 		}
 	}
 
@@ -2383,8 +2559,12 @@ pv_unlink4_4c(pg, pm, va)
 	} else {
 		struct pvlist *prev;
 
+		pmap_stats.ps_unlink_pvsearch++;
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
-			pmap_stats.ps_unlink_pvsearch++;
+			if (npv == NULL) {
+				panic("pv_unlink: pm %p is missing on pg %p",
+					pm, pg);
+			}
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -2411,17 +2591,16 @@ pv_unlink4_4c(pg, pm, va)
  * be cached.
  */
 /*static*/ int
-pv_link4_4c(pg, pm, va, nc)
+pv_link4_4c(pg, pm, va, pteprotop)
 	struct vm_page *pg;
 	struct pmap *pm;
 	vaddr_t va;
-	int nc;
+	unsigned int *pteprotop;
 {
-	struct pvlist *pv0, *npv;
-	int ret;
+	struct pvlist *pv0, *pv, *npv;
+	int nc = (*pteprotop & PG_NC) != 0 ? PV_NC : 0;
 
 	pv0 = VM_MDPAGE_PVHEAD(pg);
-	ret = nc ? PG_NC : 0;
 
 	if (pv0->pv_pmap == NULL) {
 		/* no pvlist entries yet */
@@ -2429,55 +2608,66 @@ pv_link4_4c(pg, pm, va, nc)
 		pv0->pv_next = NULL;
 		pv0->pv_pmap = pm;
 		pv0->pv_va = va;
-		pv0->pv_flags |= nc ? PV_NC : 0;
-		return (ret);
+		pv0->pv_flags |= nc;
+		return (0);
 	}
+
+	/*
+	 * Allocate the new PV entry now, and, if that fails, bail out 
+	 * before changing the cacheable state of the existing mappings.
+	 */
+	npv = pool_get(&pv_pool, PR_NOWAIT);
+	if (npv == NULL)
+		return (ENOMEM);
+
+	pmap_stats.ps_enter_secondpv++;
+
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
 	 * and thus need to be `discached'.
 	 */
-	pmap_stats.ps_enter_secondpv++;
 	if (pv0->pv_flags & PV_ANC) {
 		/* already uncached, just stay that way */
-		ret = PG_NC;
-	} else {
-		for (npv = pv0; npv != NULL; npv = npv->pv_next) {
-			if (npv->pv_flags & PV_NC) {
-				ret = PG_NC;
+		*pteprotop |= PG_NC;
+		goto link_npv;
+	}
+
+	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
+		if ((pv->pv_flags & PV_NC) != 0) {
+			*pteprotop |= PG_NC;
 #ifdef DEBUG
-				/* Check currently illegal condition */
-				if (nc == 0)
-					printf("pv_link: proc %s, va=0x%lx: "
+			/* Check currently illegal condition */
+			if (nc == 0)
+				printf("pv_link: proc %s, va=0x%lx: "
 				"unexpected uncached mapping at 0x%lx\n",
-					    curproc ? curproc->p_comm : "--",
-					    va, npv->pv_va);
+				    curproc ? curproc->p_comm : "--",
+				    va, pv->pv_va);
 #endif
-			}
-			if (BADALIAS(va, npv->pv_va)) {
+		}
+		if (BADALIAS(va, pv->pv_va)) {
 #ifdef DEBUG
-				if (pmapdebug & PDB_CACHESTUFF)
-					printf(
-			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pv %p\n",
-					curproc ? curproc->p_comm : "--",
-					va, npv->pv_va, pg);
+			if (pmapdebug & PDB_CACHESTUFF)
+				printf(
+			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pg %p\n",
+				curproc ? curproc->p_comm : "--",
+				va, pv->pv_va, pg);
 #endif
-				/* Mark list head `uncached due to aliases' */
-				pv0->pv_flags |= PV_ANC;
-				pv_changepte4_4c(pg, ret = PG_NC, 0);
-				break;
-			}
+			/* Mark list head `uncached due to aliases' */
+			pv0->pv_flags |= PV_ANC;
+			pv_changepte4_4c(pg, PG_NC, 0);
+			*pteprotop |= PG_NC;
+			break;
 		}
 	}
-	npv = pool_get(&pv_pool, PR_NOWAIT);
-	if (npv == NULL)
-		panic("pv_link: pv_pool exhausted");
+
+link_npv:
 	npv->pv_next = pv0->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
-	npv->pv_flags = nc ? PV_NC : 0;
+	npv->pv_flags = nc;
 	pv0->pv_next = npv;
-	return (ret);
+	return (0);
 }
 
 #endif /* SUN4 || SUN4C */
@@ -2524,11 +2714,6 @@ pv_changepte4m(pg, bis, bic)
 			 * bits and when disabling caching.
 			 */
 			cache_flush_page(va, pm->pm_ctxnum);
-
-#if !defined(MULTIPROCESSOR)	/* XXX? done in updatepte4m() */
-			/* Flush TLB so memory copy is up-to-date */
-			tlb_flush_page(va, pm->pm_ctxnum, 0);
-#endif
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
@@ -2551,16 +2736,17 @@ pv_syncflags4m(pg)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int tpte, va, vr, vs, flags;
+	int va, flags;
 	int s;
 	struct regmap *rp;
 	struct segmap *sp;
-	boolean_t doflush;
+	int tpte;
 
 	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
 	pv = VM_MDPAGE_PVHEAD(pg);
-	if (pv->pv_pmap == NULL) {	/* paranoid */
+	if (pv->pv_pmap == NULL) {
+		/* Page not mapped; pv_flags is already up to date */
 		flags = 0;
 		goto out;
 	}
@@ -2571,51 +2757,25 @@ pv_syncflags4m(pg)
 		pm = pv->pv_pmap;
 		simple_lock(&pm->pm_lock);
 		va = pv->pv_va;
-		vr = VA_VREG(va);
-		vs = VA_VSEG(va);
-		rp = &pm->pm_regmap[vr];
-		sp = &rp->rg_segmap[vs];
-		if (sp->sg_pte == NULL) {
-			simple_unlock(&pm->pm_lock);
-			continue;
-		}
-
-		/*
-		 * We need the PTE from memory as the TLB version will
-		 * always have the SRMMU_PG_R bit on.
-		 */
-		if (pm->pm_ctx)
-			tlb_flush_page(va, pm->pm_ctxnum, PMAP_CPUSET(pm));
+		rp = &pm->pm_regmap[VA_VREG(va)];
+		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
-		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
-			flags |= MR4M(tpte);
-
+		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE &&
+		    (tpte & (SRMMU_PG_R|SRMMU_PG_M)) != 0) {
 			/*
-			 * Clear mod/ref bits from PTE and write it back.
-			 * We must do this before flushing the cache to
-			 * avoid races with another cpu setting the M bit
-			 * and creating dirty cache lines again.
+			 * Flush cache if modified to make sure the PTE
+			 * M bit will be set again on the next write access.
 			 */
-
-			doflush = pm->pm_ctx && (tpte & SRMMU_PG_M);
-			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
-					SRMMU_PG_M | SRMMU_PG_R,
-					0, pm->pm_ctxnum, PMAP_CPUSET(pm));
-			if (doflush) {
-
-				/* Only do this for write-back caches? */
+			if (pm->pm_ctx && (tpte & SRMMU_PG_M) == SRMMU_PG_M)
 				cache_flush_page(va, pm->pm_ctxnum);
 
-				/*
-				 * VIPT caches might use the TLB when
-				 * flushing, so we flush the TLB again.
-				 */
-				tlb_flush_page(va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
-			}
+			flags |= MR4M(updatepte4m(va,
+					&sp->sg_pte[VA_SUN4M_VPG(va)],
+					SRMMU_PG_M | SRMMU_PG_R,
+					0, pm->pm_ctxnum, PMAP_CPUSET(pm)));
 		}
+
 		simple_unlock(&pm->pm_lock);
 	}
 
@@ -2672,13 +2832,13 @@ pv_unlink4m(pg, pm, va)
 	} else {
 		struct pvlist *prev;
 
+		pmap_stats.ps_unlink_pvsearch++;
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
 			if (npv == NULL) {
-				panic("pm %p is missing ", pm);
-				printf("pm %p is missing ", pm);
+				panic("pv_unlink: pm %p is missing on pg %p",
+					pm, pg);
 				goto out;
 			}
-			pmap_stats.ps_unlink_pvsearch++;
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -2740,8 +2900,6 @@ pv_link4m(pg, pm, va, pteprotop)
 		goto out;
 	}
 
-	pmap_stats.ps_enter_secondpv++;
-
 	/*
 	 * Allocate the new PV entry now, and, if that fails, bail out 
 	 * before changing the cacheable state of the existing mappings.
@@ -2751,6 +2909,8 @@ pv_link4m(pg, pm, va, pteprotop)
 		error = ENOMEM;
 		goto out;
 	}
+
+	pmap_stats.ps_enter_secondpv++;
 
 	/*
 	 * See if the new mapping will cause old mappings to
@@ -2800,7 +2960,7 @@ link_npv:
 
 out:
 	simple_unlock(&pg->mdpage.pv_slock);
-	return (0);
+	return (error);
 }
 #endif
 
@@ -2884,8 +3044,6 @@ pv_flushcache4m(struct vm_page *pg)
 		for (;;) {
 			if (pm->pm_ctx) {
 				cache_flush_page(pv->pv_va, pm->pm_ctxnum);
-				tlb_flush_page(pv->pv_va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
 			}
 			pv = pv->pv_next;
 			if (pv == NULL)
@@ -2984,16 +3142,18 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #if defined(SUN4_MMU3L)
 	struct mmuentry *mmureg;
 #endif
-	struct   regmap *rp;
+	struct regmap *rp;
+	struct segmap *sp;
 	int i, j;
 	int npte, zseg, vr, vs;
 	int startscookie, scookie;
 #if defined(SUN4_MMU3L)
-	int startrcookie, rcookie;
+	int startrcookie = 0, rcookie = 0;
 #endif
-	caddr_t p;
+	int *kptes;
 	int lastpage;
 	vaddr_t va;
+	vaddr_t p;
 	extern char kernel_text[];
 
 	/*
@@ -3048,6 +3208,8 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	pmap_rmu_p		=	pmap_rmu4_4c;
 #endif /* defined SUN4M || defined SUN4D */
 
+	p = (vaddr_t)top;
+
 	/*
 	 * Last segment is the `invalid' one (one PMEG of pte's with !pg_v).
 	 * It will never be used for anything else.
@@ -3060,6 +3222,32 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #endif
 
 	/*
+	 * Allocate and initialise mmu entries and context structures.
+	 */
+#if defined(SUN4_MMU3L)
+	mmuregions = mmureg = (struct mmuentry *)p;
+	p += nregion * sizeof(struct mmuentry);
+	bzero(mmuregions, nregion * sizeof(struct mmuentry));
+#endif
+	mmusegments = mmuseg = (struct mmuentry *)p;
+	p += nsegment * sizeof(struct mmuentry);
+	bzero(mmusegments, nsegment * sizeof(struct mmuentry));
+
+	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
+	p += nctx * sizeof *ci;
+
+	/* Initialize MMU resource queues */
+#if defined(SUN4_MMU3L)
+	MMUQ_INIT(&region_freelist);
+	MMUQ_INIT(&region_lru);
+	MMUQ_INIT(&region_locked);
+#endif
+	MMUQ_INIT(&segm_freelist);
+	MMUQ_INIT(&segm_lru);
+	MMUQ_INIT(&segm_locked);
+
+
+	/*
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
@@ -3068,6 +3256,15 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
 #endif
 	TAILQ_INIT(&kernel_pmap_store.pm_seglist);
+
+	/*
+	 * Allocate memory for kernel PTEs
+	 * XXX Consider allocating memory for only a few regions
+	 * and use growkernel() to allocate more as needed.
+	 */
+	kptes = (int *)p;
+	p += NKREG * NSEGRG * NPTESG * sizeof(int);
+	bzero(kptes, NKREG * NSEGRG * NPTESG * sizeof(int));
 
 	/*
 	 * Set up pm_regmap for kernel to point NUREG *below* the beginning
@@ -3082,8 +3279,11 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #endif
 		kernel_regmap_store[i].rg_segmap =
 			&kernel_segmap_store[i * NSEGRG];
-		for (j = NSEGRG; --j >= 0;)
-			kernel_segmap_store[i * NSEGRG + j].sg_pmeg = seginval;
+		for (j = NSEGRG; --j >= 0;) {
+			sp = &kernel_segmap_store[i * NSEGRG + j];
+			sp->sg_pmeg = seginval;
+			sp->sg_pte = &kptes[(i * NSEGRG + j) * NPTESG];
+		}
 	}
 
 	/*
@@ -3102,33 +3302,6 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #endif
 
 	/*
-	 * Allocate and clear mmu entries and context structures.
-	 */
-	p = top;
-
-#if defined(SUN4_MMU3L)
-	mmuregions = mmureg = (struct mmuentry *)p;
-	p += nregion * sizeof(struct mmuentry);
-	bzero(mmuregions, nregion * sizeof(struct mmuentry));
-#endif
-	mmusegments = mmuseg = (struct mmuentry *)p;
-	p += nsegment * sizeof(struct mmuentry);
-	bzero(mmusegments, nsegment * sizeof(struct mmuentry));
-
-	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
-	p += nctx * sizeof *ci;
-
-	/* Initialize MMU resource queues */
-#if defined(SUN4_MMU3L)
-	TAILQ_INIT(&region_freelist);
-	TAILQ_INIT(&region_lru);
-	TAILQ_INIT(&region_locked);
-#endif
-	TAILQ_INIT(&segm_freelist);
-	TAILQ_INIT(&segm_lru);
-	TAILQ_INIT(&segm_locked);
-
-	/*
 	 * Set up the `constants' for the call to vm_init()
 	 * in main().  All pages beginning at p (rounded up to
 	 * the next whole page) and continuing through the number
@@ -3137,20 +3310,20 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	 * for pmap_zero_page and pmap_copy_page, and one MI page
 	 * for /dev/mem, all with no associated physical memory.
 	 */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (p + NBPG - 1) & ~PGOFSET;
 
 	avail_start = PMAP_BOOTSTRAP_VA2PA(p);
 
-	i = (int)p;
-	cpuinfo.vpage[0] = p, p += NBPG;
-	cpuinfo.vpage[1] = p, p += NBPG;
-	vmmap = p, p += NBPG;
-	p = reserve_dumppages(p);
+	i = p;
+	cpuinfo.vpage[0] = (caddr_t)p, p += NBPG;
+	cpuinfo.vpage[1] = (caddr_t)p, p += NBPG;
+	vmmap = (caddr_t)p, p += NBPG;
+	p = (vaddr_t)reserve_dumppages((caddr_t)p);
 
-	virtual_avail = (vaddr_t)p;
+	virtual_avail = p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
-	p = (caddr_t)i;			/* retract to first free phys */
+	p = i;			/* retract to first free phys */
 
 	/*
 	 * All contexts are free except the kernel's.
@@ -3178,17 +3351,17 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	 */
 
 	/* Compute the number of segments used by the kernel */
-	zseg = ((((u_int)p + NBPSG - 1) & ~SGOFSET) - KERNBASE) >> SGSHIFT;
+	zseg = (((p + NBPSG - 1) & ~SGOFSET) - KERNBASE) >> SGSHIFT;
 	lastpage = VA_VPG(p);
 	if (lastpage == 0)
 		/*
 		 * If the page bits in p are 0, we filled the last segment
-		 * exactly (now how did that happen?); if not, it is
-		 * the last page filled in the last segment.
+		 * exactly; if not, it is the last page filled in the
+		 * last segment.
 		 */
 		lastpage = NPTESG;
 
-	p = (caddr_t)KERNBASE;		/* first va */
+	p = KERNBASE;			/* first va */
 	vs = VA_VSEG(KERNBASE);		/* first virtual segment */
 	vr = VA_VREG(KERNBASE);		/* first virtual region */
 	rp = &pmap_kernel()->pm_regmap[vr];
@@ -3224,12 +3397,15 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #if defined(SUN4_MMU3L)
 			if (HASSUN4_MMU3L) {
 				for (i = 1; i < nctx; i++)
-					prom_setcontext(i, p, rcookie);
+					prom_setcontext(i, (caddr_t)p, rcookie);
 
-				TAILQ_INSERT_TAIL(&region_locked,
+				MMUQ_INSERT_TAIL(&region_locked,
 						  mmureg, me_list);
 				TAILQ_INSERT_TAIL(&pmap_kernel()->pm_reglist,
 						  mmureg, me_pmchain);
+#ifdef DIAGNOSTIC
+				mmuseg->me_statp = NULL;
+#endif
 				mmureg->me_cookie = rcookie;
 				mmureg->me_pmap = pmap_kernel();
 				mmureg->me_vreg = vr;
@@ -3237,27 +3413,35 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 				mmureg++;
 				rcookie++;
 			}
-#endif
+#endif /* SUN4_MMU3L */
 		}
 
 #if defined(SUN4_MMU3L)
 		if (!HASSUN4_MMU3L)
 #endif
 			for (i = 1; i < nctx; i++)
-				prom_setcontext(i, p, scookie);
+				prom_setcontext(i, (caddr_t)p, scookie);
 
 		/* set up the mmu entry */
-		TAILQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
+		MMUQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
+#ifdef DIAGNOSTIC
+		mmuseg->me_statp = &pmap_stats.ps_npmeg_locked;
+#endif
 		TAILQ_INSERT_TAIL(&pmap_kernel()->pm_seglist, mmuseg, me_pmchain);
 		pmap_stats.ps_npmeg_locked++;
 		mmuseg->me_cookie = scookie;
 		mmuseg->me_pmap = pmap_kernel();
 		mmuseg->me_vreg = vr;
 		mmuseg->me_vseg = vs % NSEGRG;
-		rp->rg_segmap[vs % NSEGRG].sg_pmeg = scookie;
+		sp = &rp->rg_segmap[vs % NSEGRG];
+		sp->sg_pmeg = scookie;
 		npte = ++scookie < zseg ? NPTESG : lastpage;
-		rp->rg_segmap[vs % NSEGRG].sg_npte = npte;
+		sp->sg_npte = npte;
+		sp->sg_nwired = npte;
+		pmap_kernel()->pm_stats.resident_count += npte;
 		rp->rg_nsegmap += 1;
+		for (i = 0; i < npte; i++)
+			sp->sg_pte[i] = getpte4(p + i * NBPG) | PG_WIRED;
 		mmuseg++;
 		vs++;
 		if (scookie < zseg) {
@@ -3286,7 +3470,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 			 */
 			for (i = 0; i < nctx; i++) {
 				setcontext4(i);
-				for (va = (vaddr_t)p;
+				for (va = p;
 				     va < (OPENPROM_STARTVADDR & ~(NBPRG - 1));
 				     va += NBPRG)
 					setregmap(va, reginval);
@@ -3300,7 +3484,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 			 */
 			for (i = 0; i < nctx; i++) {
 				setcontext4(i);
-				for (va = (vaddr_t)p;
+				for (va = p;
 				     va < (OPENPROM_STARTVADDR & ~(NBPSG - 1));
 				     va += NBPSG)
 					setsegmap(va, seginval);
@@ -3311,23 +3495,30 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L)
-		for (rcookie = 0; rcookie < nregion; rcookie++, mmureg++) {
+		for (rcookie = 0; rcookie < nregion; rcookie++) {
 			if (rcookie == startrcookie)
 				/* Kernel must fit in one region! */
 				rcookie++;
 			mmureg = &mmuregions[rcookie];
 			mmureg->me_cookie = rcookie;
-			TAILQ_INSERT_TAIL(&region_freelist, mmureg, me_list);
-		}
+			MMUQ_INSERT_TAIL(&region_freelist, mmureg, me_list);
+#ifdef DIAGNOSTIC
+			mmuseg->me_statp = NULL;
 #endif
+		}
+#endif /* SUN4_MMU3L */
 
-	for (scookie = 0; scookie < nsegment; scookie++, mmuseg++) {
+	for (scookie = 0; scookie < nsegment; scookie++) {
 		if (scookie == startscookie)
+			/* Skip static kernel image */
 			scookie = zseg;
 		mmuseg = &mmusegments[scookie];
 		mmuseg->me_cookie = scookie;
-		TAILQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
+		MMUQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
 		pmap_stats.ps_npmeg_free++;
+#ifdef DIAGNOSTIC
+		mmuseg->me_statp = NULL;
+#endif
 	}
 
 	/* Erase all spurious user-space segmaps */
@@ -3339,7 +3530,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		else
 			for (p = 0, vr = 0; vr < NUREG; vr++) {
 				if (VA_INHOLE(p)) {
-					p = (caddr_t)MMU_HOLE_END;
+					p = MMU_HOLE_END;
 					vr = VA_VREG(p);
 				}
 				for (j = NSEGRG; --j >= 0; p += NBPSG)
@@ -3357,21 +3548,31 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		extern char etext[];
 
 		/* Enable cache on message buffer and cpuinfo */
-		for (p = (caddr_t)KERNBASE; p < (caddr_t)trapbase; p += NBPG)
+		for (p = KERNBASE; p < (vaddr_t)trapbase; p += NBPG)
 			setpte4(p, getpte4(p) & ~PG_NC);
 
 		/* Enable cache and write protext kernel text */
-		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
+		for (p = (vaddr_t)trapbase; p < (vaddr_t)etext; p += NBPG)
 			setpte4(p, getpte4(p) & ~(PG_NC|PG_W));
 
 		/*
 		 * Unmap the `etext gap'; it'll be made available
 		 * to the VM manager.
 		 */
-		for (p = (caddr_t)etext_gap_start;
-		     p < (caddr_t)etext_gap_end;
-		     p += NBPG)
+		for (p = etext_gap_start; p < etext_gap_end; p += NBPG) {
+			rp = &pmap_kernel()->pm_regmap[VA_VREG(p)];
+			sp = &rp->rg_segmap[VA_VSEG(p)];
+			sp->sg_nwired--;
+			sp->sg_npte--;
+			pmap_kernel()->pm_stats.resident_count--;
+			sp->sg_pte[VA_VPG(p)] = 0;
 			setpte4(p, 0);
+		}
+
+		/* Enable cache on data & bss */
+		for (p = etext_gap_end; p < virtual_avail; p += NBPG)
+			setpte4(p, getpte4(p) & ~PG_NC);
+
 	}
 }
 #endif
@@ -3387,14 +3588,13 @@ pmap_bootstrap4m(top)
 	caddr_t top;
 {
 	int i, j;
-	caddr_t p, q;
+	vaddr_t p, q;
 	union ctxinfo *ci;
 	int reg, seg;
 	unsigned int ctxtblsize;
-	caddr_t pagetables_start, pagetables_end;
+	vaddr_t pagetables_start, pagetables_end;
 	paddr_t pagetables_start_pa;
 	extern char etext[];
-	extern caddr_t reserve_dumppages(caddr_t);
 	extern char kernel_text[];
 
 	/*
@@ -3426,7 +3626,7 @@ pmap_bootstrap4m(top)
 	/*
 	 * p points to top of kernel mem
 	 */
-	p = top;
+	p = (vaddr_t)top;
 
 	/*
 	 * Intialize the kernel pmap.
@@ -3454,16 +3654,16 @@ pmap_bootstrap4m(top)
 	/* Allocate kernel region pointer tables */
 	pmap_kernel()->pm_reg_ptps = (int **)(q = p);
 	p += ncpu * sizeof(int **);
-	bzero(q, (u_int)p - (u_int)q);
+	bzero((void *)q, (u_int)p - (u_int)q);
 
 	pmap_kernel()->pm_reg_ptps_pa = (int *)(q = p);
 	p += ncpu * sizeof(int *);
-	bzero(q, (u_int)p - (u_int)q);
+	bzero((void *)q, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
 	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
-	bzero((caddr_t)ci, (u_int)p - (u_int)ci);
+	bzero((void *)ci, (u_int)p - (u_int)ci);
 
 
 	/*
@@ -3472,7 +3672,7 @@ pmap_bootstrap4m(top)
 	 * the next whole page) and continuing through the number
 	 * of available pages are free.
 	 */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (p + NBPG - 1) & ~PGOFSET;
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
@@ -3490,7 +3690,7 @@ pmap_bootstrap4m(top)
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
 	cpuinfo.ctx_tbl_pa = PMAP_BOOTSTRAP_VA2PA(cpuinfo.ctx_tbl);
-	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
+	p = (u_int)cpuinfo.ctx_tbl + ctxtblsize;
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -3506,24 +3706,24 @@ pmap_bootstrap4m(top)
 	 * is necessary since pmap_enter() *must* be able to enter a kernel
 	 * mapping without delay.
 	 */
-	p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(u_int));
-	qzero(p, SRMMU_L1SIZE * sizeof(u_int));
+	p = (vaddr_t) roundup(p, SRMMU_L1SIZE * sizeof(u_int));
+	qzero((void *)p, SRMMU_L1SIZE * sizeof(u_int));
 	kernel_regtable_store = (u_int *)p;
 	p += SRMMU_L1SIZE * sizeof(u_int);
 
-	p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(u_int));
-	qzero(p, (SRMMU_L2SIZE * sizeof(u_int)) * NKREG);
+	p = (vaddr_t) roundup(p, SRMMU_L2SIZE * sizeof(u_int));
+	qzero((void *)p, (SRMMU_L2SIZE * sizeof(u_int)) * NKREG);
 	kernel_segtable_store = (u_int *)p;
 	p += (SRMMU_L2SIZE * sizeof(u_int)) * NKREG;
 
-	p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(u_int));
+	p = (vaddr_t) roundup(p, SRMMU_L3SIZE * sizeof(u_int));
 	/* zero it: all will be SRMMU_TEINVALID */
-	qzero(p, ((SRMMU_L3SIZE * sizeof(u_int)) * NKREG) * NSEGRG);
+	qzero((void *)p, ((SRMMU_L3SIZE * sizeof(u_int)) * NSEGRG) * NKREG);
 	kernel_pagtable_store = (u_int *)p;
-	p += ((SRMMU_L3SIZE * sizeof(u_int)) * NKREG) * NSEGRG;
+	p += ((SRMMU_L3SIZE * sizeof(u_int)) * NSEGRG) * NKREG;
 
 	/* Round to next page and mark end of pre-wired kernel space */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (p + NBPG - 1) & ~PGOFSET;
 	pagetables_end = p;
 
 	avail_start = PMAP_BOOTSTRAP_VA2PA(p);
@@ -3588,10 +3788,10 @@ pmap_bootstrap4m(top)
 	 * for /dev/mem, and some more for dumpsys().
 	 */
 	q = p;
-	cpuinfo.vpage[0] = p, p += NBPG;
-	cpuinfo.vpage[1] = p, p += NBPG;
-	vmmap = p, p += NBPG;
-	p = reserve_dumppages(p);
+	cpuinfo.vpage[0] = (caddr_t)p, p += NBPG;
+	cpuinfo.vpage[1] = (caddr_t)p, p += NBPG;
+	vmmap = (caddr_t)p, p += NBPG;
+	p = (vaddr_t)reserve_dumppages((caddr_t)p);
 
 	/* Find PTE locations of vpage[] to optimize zero_fill() et.al. */
 	for (i = 0; i < 2; i++) {
@@ -3603,7 +3803,13 @@ pmap_bootstrap4m(top)
 			&sp->sg_pte[VA_SUN4M_VPG(cpuinfo.vpage[i])];
 	}
 
-	virtual_avail = (vaddr_t)p;
+#if !(defined(PROM_AT_F0) || defined(MSIIEP))
+	virtual_avail = p;
+#elif defined(MSIIEP)
+	virtual_avail = (vaddr_t)0xf0800000; /* Krups */
+#else
+	virtual_avail = (vaddr_t)0xf0080000; /* Mr.Coffee/OFW */
+#endif
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	p = q;			/* retract to first free phys */
@@ -3629,13 +3835,13 @@ pmap_bootstrap4m(top)
 	 * the kernel pmap).
 	 */
 #ifdef DEBUG			/* Sanity checks */
-	if ((u_int)p % NBPG != 0)
+	if (p % NBPG != 0)
 		panic("pmap_bootstrap4m: p misaligned?!?");
 	if (KERNBASE % NBPRG != 0)
 		panic("pmap_bootstrap4m: KERNBASE not region-aligned");
 #endif
 
-	for (q = (caddr_t) KERNBASE; q < p; q += NBPG) {
+	for (q = KERNBASE; q < p; q += NBPG) {
 		struct regmap *rp;
 		struct segmap *sp;
 		int pte, *ptep;
@@ -3651,13 +3857,10 @@ pmap_bootstrap4m(top)
 		 * Unmap the `etext gap'; it'll be made available
 		 * to the VM manager.
 		 */
-		if (q >= (caddr_t)etext_gap_start &&
-		    q < (caddr_t)etext_gap_end) {
+		if (q >= etext_gap_start && q < etext_gap_end) {
 			setpgt4m(ptep, 0);
 			continue;
 		}
-
-		sp->sg_npte++;
 
 		pte = PMAP_BOOTSTRAP_VA2PA(q) >> SRMMU_PPNPASHIFT;
 		pte |= PPROT_N_RX | SRMMU_TEPTE;
@@ -3668,10 +3871,11 @@ pmap_bootstrap4m(top)
 			pte |= SRMMU_PG_C;
 
 		/* write-protect kernel text */
-		if (q < (caddr_t) trapbase || q >= etext)
+		if (q < (vaddr_t)trapbase || q >= (vaddr_t)etext)
 			pte |= PPROT_WRITE;
 
 		setpgt4m(ptep, pte);
+		pmap_kernel()->pm_stats.resident_count++;
 	}
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
@@ -3684,15 +3888,15 @@ pmap_bootstrap4m(top)
 		 */
 		int size = pagetables_end - pagetables_start;
 		if (CACHEINFO.c_vactype != VAC_NONE) {
-			int va = (vaddr_t)pagetables_start;
-			while (size != 0) {
+			vaddr_t va = (vaddr_t)pagetables_start;
+			while (size > 0) {
 				cache_flush_page(va, 0);
 				va += NBPG;
 				size -= NBPG;
 			}
 		} else if (cpuinfo.pcache_flush_page != NULL) {
-			int pa = pagetables_start_pa;
-			while (size != 0) {
+			paddr_t pa = pagetables_start_pa;
+			while (size > 0) {
 				pcache_flush_page(pa, 0);
 				pa += NBPG;
 				size -= NBPG;
@@ -3748,7 +3952,7 @@ srmmu_restore_prom_ctx()
 
 #if defined(MULTIPROCESSOR)
 /*
- * Globalize the boot cpu's cpu_info structure.
+ * Globalize the boot CPU's cpu_info structure.
  */
 void
 pmap_globalize_boot_cpuinfo(cpi)
@@ -3895,7 +4099,7 @@ pmap_alloc_cpu(sc)
 void
 pmap_init()
 {
-	u_int sizeof_pmap;
+	u_int sz;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: PAGE_SIZE!=NBPG");
@@ -3907,17 +4111,20 @@ pmap_init()
 
 	/*
 	 * Setup a pool for pmap structures.
-	 * The pool size includes space for an array of per-cpu
+	 * The pool size includes space for an array of per-CPU
 	 * region table pointers & physical addresses
 	 */
-	sizeof_pmap = ALIGN(sizeof(struct pmap)) +
-		      ALIGN(NUREG * sizeof(struct regmap)) +
-		      ncpu * sizeof(int *) +		/* pm_reg_ptps */
-		      ncpu * sizeof(int);		/* pm_reg_ptps_pa */
-	pool_init(&pmap_pmap_pool, sizeof_pmap, 0, 0, 0, "pmappl",
+	sz = ALIGN(sizeof(struct pmap)) +
+	     ALIGN(NUREG * sizeof(struct regmap)) +
+	     ncpu * sizeof(int *) +		/* pm_reg_ptps */
+	     ncpu * sizeof(int);		/* pm_reg_ptps_pa */
+	pool_init(&pmap_pmap_pool, sz, 0, 0, 0, "pmappl",
 		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
 			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
+
+	sz = NSEGRG * sizeof (struct segmap);
+	pool_init(&segmap_pool, sz, 0, 0, 0, "segmap", NULL);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
@@ -3926,17 +4133,21 @@ pmap_init()
 		 * 1024 (for region level tables) and 256 (for segment
 		 * and page level tables).
 		 */
-		int n;
-
-		n = SRMMU_L1SIZE * sizeof(int);
-		pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable",
+		sz = SRMMU_L1SIZE * sizeof(int);
+		pool_init(&L1_pool, sz, sz, 0, 0, "L1 pagetable",
 			  &pgt_page_allocator);
 
-		n = SRMMU_L2SIZE * sizeof(int);
-		pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable",
+		sz = SRMMU_L2SIZE * sizeof(int);
+		pool_init(&L23_pool, sz, sz, 0, 0, "L2/L3 pagetable",
 			  &pgt_page_allocator);
 	}
 #endif /* SUN4M || SUN4D */
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		sz = NPTESG * sizeof(int);
+		pool_init(&pte_pool, sz, 0, 0, 0, "ptemap", NULL);
+	}
+#endif /* SUN4 || SUN4C */
 }
 
 
@@ -4000,7 +4211,7 @@ pmap_quiet_check(struct pmap *pm)
 			{
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
-						"region %d on cpu %d\n", vr, n);
+						"region %d on CPU %d\n", vr, n);
 			}
 		}
 		if (rp->rg_nsegmap != 0)
@@ -4120,6 +4331,11 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	}
 #endif /* SUN4M || SUN4D */
 
+	/* XXX - a peculiar place to do this, but we can't do it in pmap_init
+	 * and here at least it's off the beaten code track.
+	 */
+{static int x; if (x == 0) pool_setlowat(&pv_pool, 512), x = 1; }
+
 	return (0);
 }
 
@@ -4230,6 +4446,82 @@ pmap_reference(pm)
 	splx(s);
 }
 
+#if defined(SUN4) || defined(SUN4C)
+/*
+ * helper to deallocate level 2 & 3 page tables.
+ */
+static void pgt_lvl23_remove4_4c(struct pmap *pm, struct regmap *rp,
+				struct segmap *sp, int vr, int vs)
+{
+	vaddr_t va, tva;
+	int i, pmeg;
+
+	va = VSTOVA(vr,vs);
+	if ((pmeg = sp->sg_pmeg) != seginval) {
+		if (CTX_USABLE(pm,rp)) {
+			setcontext4(pm->pm_ctxnum);
+			setsegmap(va, seginval);
+		} else {
+			/* no context, use context 0 */
+			setcontext4(0);
+			if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
+				setregmap(0, rp->rg_smeg);
+				tva = vs << SGSHIFT;
+				setsegmap(tva, seginval);
+			}
+		}
+		if (!HASSUN4_MMU3L) {
+			if (pm == pmap_kernel()) {
+				/* Unmap segment from all contexts */
+				for (i = ncontext; --i >= 0;) {
+					setcontext4(i);
+					setsegmap(va, seginval);
+				}
+			}
+		}
+		me_free(pm, pmeg);
+		sp->sg_pmeg = seginval;
+	}
+	/* Free software tables for non-kernel maps */
+	if (pm != pmap_kernel()) {
+		pool_put(&pte_pool, sp->sg_pte);
+		sp->sg_pte = NULL;
+	}
+
+	if (rp->rg_nsegmap <= 0)
+		panic("pgt_rm: pm %p: nsegmap = %d\n", pm, rp->rg_nsegmap);
+
+	if (--rp->rg_nsegmap == 0) {
+#if defined(SUN4_MMU3L)
+		if (HASSUN4_MMU3L) {
+			if (rp->rg_smeg != reginval) {
+				if (pm == pmap_kernel()) {
+					/* Unmap from all contexts */
+					for (i = ncontext; --i >= 0;) {
+						setcontext4(i);
+						setregmap(va, reginval);
+					}
+				} else if (pm->pm_ctx) {
+					setcontext4(pm->pm_ctxnum);
+					setregmap(va, reginval);
+				}
+
+				/* Release MMU resource */
+				region_free(pm, rp->rg_smeg);
+				rp->rg_smeg = reginval;
+			}
+		}
+#endif /* SUN4_MMU3L */
+		/* Free software tables for non-kernel maps */
+		if (pm != pmap_kernel()) {
+			GAP_WIDEN(pm,vr);
+			pool_put(&segmap_pool, rp->rg_segmap);
+			rp->rg_segmap = NULL;
+		}
+	}
+}
+#endif /* SUN4 || SUN4C */
+
 #if defined(SUN4M) || defined(SUN4D)
 /*
  * SRMMU helper to deallocate level 2 & 3 page tables.
@@ -4258,12 +4550,35 @@ static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
 
-		free(rp->rg_segmap, M_VMPMAP);
+		pool_put(&segmap_pool, rp->rg_segmap);
 		rp->rg_segmap = NULL;
 		pool_put(&L23_pool, rp->rg_seg_ptps);
 	}
 }
 #endif /* SUN4M || SUN4D */
+
+void pmap_remove_all(struct pmap *pm)
+{
+	if (pm->pm_ctx == NULL)
+		return;
+
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		int ctx = getcontext4();
+		setcontext4(pm->pm_ctxnum);
+		cache_flush_context(pm->pm_ctxnum);
+		setcontext4(ctx);
+	}
+#endif
+
+#if defined(SUN4M) || defined(SUN4D)
+	if (CPU_HAS_SRMMU) {
+		cache_flush_context(pm->pm_ctxnum);
+	}
+#endif
+
+	pm->pm_flags |= PMAP_USERCACHECLEAN;
+}
 
 /*
  * Remove the given range of mapping entries.
@@ -4342,9 +4657,9 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int i, tpte, perpage, npg;
+	int pte, mmupte, *ptep, perpage, npg;
 	struct vm_page *pg;
-	int nleft, pmeg;
+	int nleft, pmeg, inmmu;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -4356,10 +4671,14 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	if ((nleft = sp->sg_npte) == 0)
 		return;
 	pmeg = sp->sg_pmeg;
-	setcontext4(0);
+	inmmu = pmeg != seginval;
+	ptep = &sp->sg_pte[VA_VPG(va)];
+
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
-	if (npg > PMAP_SFL_THRESHOLD) {
+	if (!inmmu) {
+		perpage = 0;
+	} else if (npg > PMAP_SFL_THRESHOLD) {
 		/* flush the whole segment */
 		perpage = 0;
 		cache_flush_segment(vr, vs, 0);
@@ -4367,18 +4686,24 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		/* flush each page individually; some never need flushing */
 		perpage = (CACHEINFO.c_vactype != VAC_NONE);
 	}
-	while (va < endva) {
-		tpte = getpte4(va);
-		if ((tpte & PG_V) == 0) {
-			va += NBPG;
+
+	for (; va < endva; va += NBPG, ptep++) {
+		pte = *ptep;
+		mmupte = inmmu ? getpte4(va) : 0;
+		if ((pte & PG_V) == 0) {
+#ifdef DIAGNOSTIC
+			if (inmmu && (mmupte & PG_V) != 0)
+				printf("rmk: inconsistent ptes va=%lx\n", va);
+#endif
 			continue;
 		}
-		if ((tpte & PG_TYPE) == PG_OBMEM) {
+		if ((pte & PG_TYPE) == PG_OBMEM) {
 			/* if cacheable, flush page as needed */
-			if (perpage && (tpte & PG_NC) == 0)
+			if (perpage && (mmupte & PG_NC) == 0)
 				cache_flush_page(va, 0);
-			if ((pg = pvhead4_4c(tpte)) != NULL) {
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
+			if ((pg = pvhead4_4c(pte)) != NULL) {
+				if (inmmu)
+					VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(mmupte);
 				pv_unlink4_4c(pg, pm, va);
 			}
 		}
@@ -4388,38 +4713,25 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			panic("pmap_rmk: too many PTEs in segment; "
 			      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
-		setpte4(va, 0);
-		va += NBPG;
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
+
+		if (inmmu)
+			setpte4(va, 0);
+		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
-	/*
-	 * If the segment is all gone, remove it from everyone and
-	 * free the MMU entry.
-	 */
-	if ((sp->sg_npte = nleft) == 0) {
-		va = VSTOVA(vr,vs);		/* retract */
-#if defined(SUN4_MMU3L)
-		if (HASSUN4_MMU3L)
-			setsegmap(va, seginval);
-		else
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+		panic("pmap_rmk: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, nleft, sp->sg_nwired);
 #endif
-			for (i = ncontext; --i >= 0;) {
-				setcontext4(i);
-				setsegmap(va, seginval);
-			}
-		me_free(pm, pmeg);
-		if (--rp->rg_nsegmap == 0) {
-#if defined(SUN4_MMU3L)
-			if (HASSUN4_MMU3L) {
-				for (i = ncontext; --i >= 0;) {
-					setcontext4(i);
-					setregmap(va, reginval);
-				}
-				/* note: context is 0 */
-				region_free(pm, rp->rg_smeg);
-			}
-#endif
-		}
+	if ((sp->sg_npte = nleft) == 0)
+		pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+	else if (sp->sg_nwired == 0) {
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
 }
 
@@ -4436,7 +4748,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 {
 	int tpte, perpage, npg;
 	struct vm_page *pg;
-	int nleft;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -4444,8 +4755,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	sp = &rp->rg_segmap[vs];
 	if (rp->rg_nsegmap == 0)
 		return;
-	if ((nleft = sp->sg_npte) == 0)
-		return;
+
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
 	if (npg > PMAP_SFL_THRESHOLD) {
@@ -4480,16 +4790,9 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		}
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		    SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
-		nleft--;
-#ifdef DIAGNOSTIC
-		if (nleft < 0)
-			panic("pmap_rmk: too many PTEs in segment; "
-			      "va 0x%lx; endva 0x%lx", va, endva);
-#endif
+		pm->pm_stats.resident_count--;
 		va += NBPG;
 	}
-
-	sp->sg_npte = nleft;
 }
 #endif /* SUN4M || SUN4D */
 
@@ -4502,9 +4805,9 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int *pte0, pteva, tpte, perpage, npg;
+	int *ptep, pteva, pte, perpage, npg;
 	struct vm_page *pg;
-	int nleft, pmeg;
+	int nleft, pmeg, inmmu;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -4515,61 +4818,22 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	if ((nleft = sp->sg_npte) == 0)
 		return;
 	pmeg = sp->sg_pmeg;
-	pte0 = sp->sg_pte;
-	if (pmeg == seginval) {
-		int *pte = pte0 + VA_VPG(va);
-
-		/*
-		 * PTEs are not in MMU.  Just invalidate software copies.
-		 */
-		for (; va < endva; pte++, va += NBPG) {
-			tpte = *pte;
-			if ((tpte & PG_V) == 0) {
-				/* nothing to remove (braindead VM layer) */
-				continue;
-			}
-			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				if ((pg = pvhead4_4c(tpte)) != NULL)
-					pv_unlink4_4c(pg, pm, va);
-			}
-			nleft--;
-#ifdef DIAGNOSTIC
-			if (nleft < 0)
-				panic("pmap_rmu: too many PTEs in segment; "
-				      "va 0x%lx; endva 0x%lx", va, endva);
-#endif
-			*pte = 0;
-		}
-		if ((sp->sg_npte = nleft) == 0) {
-			free(pte0, M_VMPMAP);
-			sp->sg_pte = NULL;
-			if (--rp->rg_nsegmap == 0) {
-				free(rp->rg_segmap, M_VMPMAP);
-				rp->rg_segmap = NULL;
-#if defined(SUN4_MMU3L)
-				if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
-					if (pm->pm_ctx) {
-						setcontext4(pm->pm_ctxnum);
-						setregmap(va, reginval);
-					} else
-						setcontext4(0);
-					region_free(pm, rp->rg_smeg);
-				}
-#endif
-			}
-		}
-		return;
-	}
+	inmmu = pmeg != seginval;
 
 	/*
 	 * PTEs are in MMU.  Invalidate in hardware, update ref &
 	 * mod bits, and flush cache if required.
 	 */
-	if (CTX_USABLE(pm,rp)) {
+	if (!inmmu) {
+		perpage = 0;
+		pteva = 0;
+	} else if (CTX_USABLE(pm,rp)) {
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
 		setcontext4(pm->pm_ctxnum);
-		if (npg > PMAP_SFL_THRESHOLD) {
+		if ((pm->pm_flags & PMAP_USERCACHECLEAN) != 0)
+			perpage = 0;
+		else if (npg > PMAP_SFL_THRESHOLD) {
 			perpage = 0; /* flush the whole segment */
 			cache_flush_segment(vr, vs, pm->pm_ctxnum);
 		} else
@@ -4580,21 +4844,33 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		setcontext4(0);
 		if (HASSUN4_MMU3L)
 			setregmap(0, tregion);
-		/* XXX use per-cpu pteva? */
+		/* XXX use per-CPU pteva? */
 		setsegmap(0, pmeg);
 		pteva = VA_VPG(va) << PGSHIFT;
 		perpage = 0;
 	}
-	for (; va < endva; pteva += NBPG, va += NBPG) {
-		tpte = getpte4(pteva);
-		if ((tpte & PG_V) == 0)
+
+	ptep = sp->sg_pte + VA_VPG(va);
+	for (; va < endva; ptep++, pteva += NBPG, va += NBPG) {
+		int mmupte;
+		pte = *ptep;
+		mmupte = inmmu ? getpte4(pteva) : 0;
+
+		if ((pte & PG_V) == 0) {
+#ifdef DIAGNOSTIC
+			if (inmmu && (mmupte & PG_V) != 0)
+				printf("pmap_rmu: pte=%x, mmupte=%x\n",
+					pte, getpte4(pteva));
+#endif
 			continue;
-		if ((tpte & PG_TYPE) == PG_OBMEM) {
+		}
+		if ((pte & PG_TYPE) == PG_OBMEM) {
 			/* if cacheable, flush page as needed */
-			if (perpage && (tpte & PG_NC) == 0)
+			if (perpage && (mmupte & PG_NC) == 0)
 				cache_flush_page(va, pm->pm_ctxnum);
-			if ((pg = pvhead4_4c(tpte)) != NULL) {
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
+			if ((pg = pvhead4_4c(pte)) != NULL) {
+				if (inmmu)
+					VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(mmupte);
 				pv_unlink4_4c(pg, pm, va);
 			}
 		}
@@ -4602,45 +4878,27 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 #ifdef DIAGNOSTIC
 		if (nleft < 0)
 			panic("pmap_rmu: too many PTEs in segment; "
-			     "va 0x%lx; endva 0x%lx; pmeg %d", va, endva, pmeg);
+			     "va 0x%lx; endva 0x%lx", va, endva);
 #endif
-		setpte4(pteva, 0);
-		pte0[VA_VPG(pteva)] = 0;
+		if (inmmu)
+			setpte4(pteva, 0);
+
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
+		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
-	/*
-	 * If the segment is all gone, and the context is loaded, give
-	 * the segment back.
-	 */
-
-	sp->sg_npte = nleft;
-	if (nleft == 0) {
-		va = VSTOVA(vr,vs);
-		if (CTX_USABLE(pm,rp))
-			setsegmap(va, seginval);
-		else if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
-			/* note: context already set earlier */
-			setregmap(0, rp->rg_smeg);
-			setsegmap(vs << SGSHIFT, seginval);
-		}
-		free(pte0, M_VMPMAP);
-		sp->sg_pte = NULL;
-		me_free(pm, pmeg);
-
-		if (--rp->rg_nsegmap == 0) {
-			free(rp->rg_segmap, M_VMPMAP);
-			rp->rg_segmap = NULL;
-			GAP_WIDEN(pm,vr);
-
-#if defined(SUN4_MMU3L)
-			if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
-				/* note: context already set */
-				if (pm->pm_ctx)
-					setregmap(va, reginval);
-				region_free(pm, rp->rg_smeg);
-			}
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+		panic("pmap_rmu: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, nleft, sp->sg_nwired);
 #endif
-		}
+	if ((sp->sg_npte = nleft) == 0)
+		pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+	else if (sp->sg_nwired == 0) {
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
 }
 
@@ -4672,7 +4930,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	/*
 	 * Invalidate PTE in MMU pagetables. Flush cache if necessary.
 	 */
-	if (pm->pm_ctx) {
+	if (pm->pm_ctx && (pm->pm_flags & PMAP_USERCACHECLEAN) == 0) {
 		/* process has a context, must flush cache */
 		if (CACHEINFO.c_vactype != VAC_NONE) {
 			npg = (endva - va) >> PGSHIFT;
@@ -4720,6 +4978,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 #endif
 		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
@@ -4748,8 +5007,9 @@ pmap_page_protect4_4c(pg, prot)
 {
 	struct pvlist *pv, *npv;
 	struct pmap *pm;
-	int va, vr, vs, pteva, tpte;
-	int flags, nleft, i, s, ctx;
+	vaddr_t va;
+	int vr, vs, pteva, pte, *ptep;
+	int flags, nleft, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -4799,115 +5059,49 @@ pmap_page_protect4_4c(pg, prot)
 		if ((nleft = sp->sg_npte) <= 0)
 			panic("pmap_page_protect: empty vseg");
 		sp->sg_npte = --nleft;
+		ptep = &sp->sg_pte[VA_VPG(va)];
 
-		if (sp->sg_pmeg == seginval) {
-			/* Definitely not a kernel map */
-			if (nleft) {
-				sp->sg_pte[VA_VPG(va)] = 0;
+		if (*ptep & PG_WIRED)
+			sp->sg_nwired--;
+
+		if (sp->sg_pmeg != seginval) {
+			/* Update PV flags */
+			if (CTX_USABLE(pm,rp)) {
+				setcontext4(pm->pm_ctxnum);
+				pteva = va;
+				cache_flush_page(va, pm->pm_ctxnum);
 			} else {
-				free(sp->sg_pte, M_VMPMAP);
-				sp->sg_pte = NULL;
-				if (--rp->rg_nsegmap == 0) {
-					free(rp->rg_segmap, M_VMPMAP);
-					rp->rg_segmap = NULL;
-					GAP_WIDEN(pm,vr);
-#if defined(SUN4_MMU3L)
-					if (HASSUN4_MMU3L && rp->rg_smeg != reginval) {
-						if (pm->pm_ctx) {
-							setcontext4(pm->pm_ctxnum);
-							setregmap(va, reginval);
-						} else
-							setcontext4(0);
-						region_free(pm, rp->rg_smeg);
-					}
-#endif
-				}
+				setcontext4(0);
+				/* XXX use per-CPU pteva? */
+				if (HASSUN4_MMU3L)
+					setregmap(0, tregion);
+				setsegmap(0, sp->sg_pmeg);
+				pteva = VA_VPG(va) << PGSHIFT;
 			}
-			goto nextpv;
-		}
 
-		if (CTX_USABLE(pm,rp)) {
-			setcontext4(pm->pm_ctxnum);
-			pteva = va;
-			cache_flush_page(va, pm->pm_ctxnum);
-		} else {
-			setcontext4(0);
-			/* XXX use per-cpu pteva? */
-			if (HASSUN4_MMU3L)
-				setregmap(0, tregion);
-			setsegmap(0, sp->sg_pmeg);
-			pteva = VA_VPG(va) << PGSHIFT;
-		}
-
-		tpte = getpte4(pteva);
-#ifdef	DIAGNOSTIC
-		if ((tpte & PG_V) == 0)
-			panic("pmap_page_protect !PG_V: "
-			      "ctx %d, va 0x%x, pte 0x%x",
-			      pm->pm_ctxnum, va, tpte);
+			pte = getpte4(pteva);
+#ifdef DIAGNOSTIC
+			if ((pte & PG_V) == 0)
+				panic("pmap_page_protect !PG_V: pg %p "
+				      "ctx %d, va 0x%lx, pte 0x%x",
+				      pg, pm->pm_ctxnum, va, pte);
 #endif
-		flags |= MR4_4C(tpte);
+			flags |= MR4_4C(pte);
 
-		if (nleft) {
 			setpte4(pteva, 0);
-			if (sp->sg_pte != NULL)
-				sp->sg_pte[VA_VPG(pteva)] = 0;
-			goto nextpv;
+#ifdef DIAGNOSTIC
+			if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+				panic("pmap_page_protect: pm %p, va %lx: nleft=%d, nwired=%d",
+					pm, va, nleft, sp->sg_nwired);
+#endif
+			if (sp->sg_nwired == 0)
+				mmu_pmeg_unlock(sp->sg_pmeg);
 		}
 
-		/* Entire segment is gone */
-		if (pm == pmap_kernel()) {
-#if defined(SUN4_MMU3L)
-			if (!HASSUN4_MMU3L)
-#endif
-				for (i = ncontext; --i >= 0;) {
-					setcontext4(i);
-					setsegmap(va, seginval);
-				}
-			me_free(pm, sp->sg_pmeg);
-			if (--rp->rg_nsegmap == 0) {
-#if defined(SUN4_MMU3L)
-				if (HASSUN4_MMU3L) {
-					for (i = ncontext; --i >= 0;) {
-						setcontext4(i);
-						setregmap(va, reginval);
-					}
-					region_free(pm, rp->rg_smeg);
-				}
-#endif
-			}
-		} else {
-			if (CTX_USABLE(pm,rp))
-				/* `pteva'; we might be using tregion */
-				setsegmap(pteva, seginval);
-#if defined(SUN4_MMU3L)
-			else if (HASSUN4_MMU3L &&
-				 rp->rg_smeg != reginval) {
-				/* note: context already set earlier */
-				setregmap(0, rp->rg_smeg);
-				setsegmap(vs << SGSHIFT, seginval);
-			}
-#endif
-			free(sp->sg_pte, M_VMPMAP);
-			sp->sg_pte = NULL;
-			me_free(pm, sp->sg_pmeg);
-
-			if (--rp->rg_nsegmap == 0) {
-#if defined(SUN4_MMU3L)
-				if (HASSUN4_MMU3L &&
-				    rp->rg_smeg != reginval) {
-					if (pm->pm_ctx)
-						setregmap(va, reginval);
-					region_free(pm, rp->rg_smeg);
-				}
-#endif
-				free(rp->rg_segmap, M_VMPMAP);
-				rp->rg_segmap = NULL;
-				GAP_WIDEN(pm,vr);
-			}
-		}
-
-	nextpv:
+		*ptep = 0;
+		pm->pm_stats.resident_count--;
+		if (nleft == 0)
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
 		npv = pv->pv_next;
 		if (pv != VM_MDPAGE_PVHEAD(pg))
 			pool_put(&pv_pool, pv);
@@ -4972,34 +5166,35 @@ pmap_protect4_4c(pm, sva, eva, prot)
 			continue;
 		}
 #ifdef DEBUG
-		if (pm != pmap_kernel() && sp->sg_pte == NULL)
+		if (sp->sg_pte == NULL)
 			panic("pmap_protect: no pages");
 #endif
 		if (sp->sg_pmeg == seginval) {
-			int *pte = &sp->sg_pte[VA_VPG(va)];
+			int *ptep = &sp->sg_pte[VA_VPG(va)];
 
 			/* not in MMU; just clear PG_W from core copies */
 			for (; va < nva; va += NBPG)
-				*pte++ &= ~PG_W;
+				*ptep++ &= ~PG_W;
 		} else {
 			/* in MMU: take away write bits from MMU PTEs */
 			if (CTX_USABLE(pm,rp)) {
-				int tpte;
+				int pte;
 
 				/*
 				 * Flush cache so that any existing cache
 				 * tags are updated.  This is really only
 				 * needed for PTEs that lose PG_W.
 				 */
+				pmap_stats.ps_npg_prot_all +=
+					(nva - va) >> PGSHIFT;
 				setcontext4(pm->pm_ctxnum);
 				for (; va < nva; va += NBPG) {
-					tpte = getpte4(va);
-					pmap_stats.ps_npg_prot_all++;
-					if ((tpte & (PG_W|PG_TYPE)) ==
+					pte = getpte4(va);
+					if ((pte & (PG_W|PG_TYPE)) ==
 					    (PG_W|PG_OBMEM)) {
 						pmap_stats.ps_npg_prot_actual++;
 						cache_flush_page(va, pm->pm_ctxnum);
-						setpte4(va, tpte & ~PG_W);
+						setpte4(va, pte & ~PG_W);
 					}
 				}
 			} else {
@@ -5010,7 +5205,7 @@ pmap_protect4_4c(pm, sva, eva, prot)
 				 * just update PTEs.
 				 */
 				setcontext4(0);
-				/* XXX use per-cpu pteva? */
+				/* XXX use per-CPU pteva? */
 				if (HASSUN4_MMU3L)
 					setregmap(0, tregion);
 				setsegmap(0, sp->sg_pmeg);
@@ -5037,7 +5232,8 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	int vr, vs, tpte, newprot, ctx;
+	int vr, vs, newprot, ctx, pte, *ptep;
+	int pmeg;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -5055,15 +5251,24 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
+
 	pmap_stats.ps_changeprots++;
 
-	/* update PTEs in software or hardware */
-	if (sp->sg_pmeg == seginval) {
-		int *pte = &sp->sg_pte[VA_VPG(va)];
+	pte = *ptep;
+	if (pte & PG_WIRED && (flags & PMAP_WIRED) == 0) {
+		pte &= ~PG_WIRED;
+		sp->sg_nwired--;
+	} else if ((pte & PG_WIRED) == 0 && flags & PMAP_WIRED) {
+		pte |= PG_WIRED;
+		sp->sg_nwired++;
+	}
+	pte = (pte & ~PG_PROT) | newprot;
+	/* Update S/W pte entry */
+	*ptep = pte;
 
-		/* update in software */
-		*pte = (*pte & ~PG_PROT) | newprot;
-	} else {
+	/* update PTEs in software or hardware */
+	if ((pmeg = sp->sg_pmeg) != seginval) {
 		/* update in hardware */
 		ctx = getcontext4();
 		if (CTX_USABLE(pm,rp)) {
@@ -5073,27 +5278,36 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 			 * avoid stale protection bits in the cache tags.
 			 */
 			setcontext4(pm->pm_ctxnum);
-			tpte = getpte4(va);
-			if ((tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
+			pte = getpte4(va);
+			if ((pte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page(va, pm->pm_ctxnum);
 		} else {
 			setcontext4(0);
-			/* XXX use per-cpu va? */
+			/* XXX use per-CPU va? */
 			if (HASSUN4_MMU3L)
 				setregmap(0, tregion);
-			setsegmap(0, sp->sg_pmeg);
+			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
-			tpte = getpte4(va);
+			pte = getpte4(va);
 		}
-		tpte = (tpte & ~PG_PROT) | newprot;
-		setpte4(va, tpte);
+		pte = (pte & ~PG_PROT) | newprot;
+		setpte4(va, pte);
 		setcontext4(ctx);
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+			panic("pmap_protect: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+		if (sp->sg_nwired == 0)
+			mmu_pmeg_unlock(pmeg);
+		else
+			mmu_pmeg_lock(pmeg);
 	}
 }
 
 #endif /* SUN4 || SUN4C */
 
-#if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of protection routines above */
+#if defined(SUN4M) || defined(SUN4D)
 /*
  * Lower (make more strict) the protection on the specified
  * physical page.
@@ -5109,7 +5323,8 @@ pmap_page_protect4m(pg, prot)
 {
 	struct pvlist *pv, *npv;
 	struct pmap *pm;
-	int va, vr, vs, tpte;
+	vaddr_t va;
+	int vr, vs, tpte;
 	int flags, nleft, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -5158,9 +5373,12 @@ pmap_page_protect4m(pg, prot)
 		if (rp->rg_nsegmap == 0)
 			panic("pmap_remove_all: empty vreg");
 		sp = &rp->rg_segmap[vs];
-		if ((nleft = sp->sg_npte) <= 0)
-			panic("pmap_page_protect: empty vseg");
-		sp->sg_npte = --nleft;
+		nleft = sp->sg_npte;
+		if (pm != pmap_kernel()) {
+			if (nleft <= 0)
+				panic("pmap_page_protect: empty vseg");
+			sp->sg_npte = --nleft;
+		}
 
 		/*
 		 * Invalidate PTE in MMU pagetables.
@@ -5174,12 +5392,14 @@ pmap_page_protect4m(pg, prot)
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
+		pm->pm_stats.resident_count--;
+
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
-			panic("pmap_page_protect !PG_V");
+			panic("pmap_page_protect !PG_V: pg %p va %lx", pg, va);
 
 		flags |= MR4M(tpte);
 
-		if (nleft == 0 && pm != pmap_kernel())
+		if (pm != pmap_kernel() && nleft == 0)
 			/*
 			 * Entire user mode segment is gone
 			 */
@@ -5206,11 +5426,6 @@ out:
 /*
  * Lower (make more strict) the protection on the specified
  * range of this pmap.
- *
- * There are only two cases: either the protection is going to 0
- * (in which case we call pmap_remove to do the dirty work), or
- * it is going from read/write to read-only.  The latter is
- * fairly easy.
  */
 void
 pmap_protect4m(pm, sva, eva, prot)
@@ -5222,6 +5437,7 @@ pmap_protect4m(pm, sva, eva, prot)
 	int s, vr, vs;
 	struct regmap *rp;
 	struct segmap *sp;
+	int newprot;
 
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
@@ -5231,11 +5447,14 @@ pmap_protect4m(pm, sva, eva, prot)
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
 		printf("pmap_protect[%d][curpid %d, ctx %d,%d](%lx, %lx, %x)\n",
-			cpu_number(), getcontext4m(),
-			curproc==NULL ? -1 : curproc->p_pid,
-			pm->pm_ctx ? pm->pm_ctxnum : -1, sva, eva, prot);
+			cpu_number(), curproc->p_pid,
+			getcontext4m(), pm->pm_ctx ? pm->pm_ctxnum : -1,
+			sva, eva, prot);
 #endif
 
+	newprot = pte_prot4m(pm, prot);
+
+	write_user_windows();
 	s = splvm();
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pm->pm_lock);
@@ -5245,56 +5464,46 @@ pmap_protect4m(pm, sva, eva, prot)
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		nva = VSTOVA(vr,vs + 1);
-		if (nva == 0)	/* XXX */
-			panic("pmap_protect: last segment"); /* cannot happen(why?)*/
 		if (nva > eva)
 			nva = eva;
 		if (rp->rg_nsegmap == 0) {
 			va = nva;
 			continue;
 		}
-#ifdef DEBUG
-		if (rp->rg_segmap == NULL)
-			panic("pmap_protect: no segments");
-#endif
 		sp = &rp->rg_segmap[vs];
-		if (sp->sg_npte == 0) {
+		if (pm != pmap_kernel() && sp->sg_npte == 0) {
 			va = nva;
 			continue;
 		}
-#ifdef DEBUG
-		if (sp->sg_pte == NULL)
-			panic("pmap_protect: no pages");
-#endif
+
 		/*
 		 * pages loaded: take away write bits from MMU PTEs
 		 */
-
-		pmap_stats.ps_npg_prot_all = (nva - va) >> PGSHIFT;
+		pmap_stats.ps_npg_prot_all += (nva - va) >> PGSHIFT;
 		for (; va < nva; va += NBPG) {
-			int tpte;
+			int tpte, npte;
 
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+			if ((tpte & SRMMU_PGTYPE) != PG_SUN4M_OBMEM)
+				continue;
+			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
+				continue;
+			npte = (tpte & ~SRMMU_PROT_MASK) | newprot;
+			if (npte == tpte)
+				continue;
+
 			/*
 			 * Flush cache so that any existing cache
-			 * tags are updated.  This is really only
-			 * needed for PTEs that lose PG_W.
+			 * tags are updated.
 			 */
-			if ((tpte & (PPROT_WRITE|SRMMU_PGTYPE)) ==
-			    (PPROT_WRITE|PG_SUN4M_OBMEM)) {
-				pmap_stats.ps_npg_prot_actual++;
-				if (pm->pm_ctx) {
-					cache_flush_page(va, pm->pm_ctxnum);
-#if !defined(MULTIPROCESSOR)
-					/* Flush TLB entry */
-					tlb_flush_page(va, pm->pm_ctxnum,
-					   PMAP_CPUSET(pm));
-#endif
-				}
-				updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
-				    PPROT_WRITE, 0, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
+
+			pmap_stats.ps_npg_prot_actual++;
+			if (pm->pm_ctx) {
+				cache_flush_page(va, pm->pm_ctxnum);
 			}
+			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+			    SRMMU_PROT_MASK, newprot, pm->pm_ctxnum,
+			    PMAP_CPUSET(pm));
 		}
 	}
 	simple_unlock(&pm->pm_lock);
@@ -5324,10 +5533,7 @@ pmap_changeprot4m(pm, va, prot, flags)
 		    cpu_number(), pm, va, prot, flags);
 #endif
 
-	if (pm == pmap_kernel())
-		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
-	else
-		newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
+	newprot = pte_prot4m(pm, prot);
 
 	pmap_stats.ps_changeprots++;
 
@@ -5414,6 +5620,9 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
 
+	if ((flags & PMAP_WIRED) != 0)
+		pteproto |= PG_WIRED;
+
 	write_user_windows();
 	ctx = getcontext4();
 	if (pm == pmap_kernel())
@@ -5434,38 +5643,29 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 	struct vm_page *pg;
 	int pteproto;
 {
-	int vr, vs, tpte, i, s;
+	int vr, vs, pte, s, inmmu;
+	int *ptep;
 	struct regmap *rp;
 	struct segmap *sp;
+	int error = 0;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
 	s = splvm();		/* XXX way too conservative */
 
 #if defined(SUN4_MMU3L)
-	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
-		vaddr_t tva;
-		rp->rg_smeg = region_alloc(&region_locked, pm, vr);
-		i = ncontext - 1;
-		do {
-			setcontext4(i);
-			setregmap(va, rp->rg_smeg);
-		} while (--i >= 0);
-
-		/* set all PTEs to invalid, then overwrite one PTE below */
-		tva = VA_ROUNDDOWNTOREG(va);
-		for (i = 0; i < NSEGRG; i++) {
-			setsegmap(tva, rp->rg_segmap[i].sg_pmeg);
-			tva += NBPSG;
-		}
-	}
+	if (HASSUN4_MMU3L && rp->rg_smeg == reginval)
+		mmu_pagein_reg(pm, rp, va, vr, &region_locked);
 #endif
-	if (sp->sg_pmeg != seginval && (tpte = getpte4(va)) & PG_V) {
+
+	inmmu = sp->sg_pmeg != seginval;
+	if ((pte = *ptep) & PG_V) {
 
 		/* old mapping exists, and is of the same pa type */
-		if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+		if ((pte & (PG_PFNUM|PG_TYPE)) ==
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			pmap_changeprot4_4c(pm, va, prot, flags);
@@ -5473,7 +5673,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 			return (0);
 		}
 
-		if ((tpte & PG_TYPE) == PG_OBMEM) {
+		if ((pte & PG_TYPE) == PG_OBMEM) {
 			struct vm_page *opg;
 
 			/*
@@ -5481,68 +5681,67 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			if ((opg = pvhead4_4c(tpte)) != NULL)
+			if ((opg = pvhead4_4c(pte)) != NULL)
 				pv_unlink4_4c(opg, pm, va);
-			if ((tpte & PG_NC) == 0) {
+			if (inmmu && (pte & PG_NC) == 0) {
 				setcontext4(0);	/* ??? */
 				cache_flush_page(va, 0);
 			}
 		}
+		*ptep = 0;
+		if (inmmu)
+			setpte4(va, 0);
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
-		sp->sg_npte++;
+		if (sp->sg_npte++ == 0) {
+#ifdef DIAGNOSTIC
+			int i; for (i = 0; i < NPTESG; i++) {
+				if (sp->sg_pte[i] == 0)
+					continue;
+				panic("pmap_enk: pm %p, va %lx: pte[%d] not empty\n",
+					pm, va, i);
+			}
+#endif
+			rp->rg_nsegmap++;
+		}
 	}
 
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
-	 * Note that the mapping for a malloc page will always be
-	 * unique (hence will never cause a second call to malloc).
 	 */
-	if (pg != NULL)
-		pteproto |= pv_link4_4c(pg, pm, va, pteproto & PG_NC);
-
-	if (sp->sg_pmeg == seginval) {
-		int tva;
-
-		/*
-		 * Allocate an MMU entry now (on locked list),
-		 * and map it into every context.  Set all its
-		 * PTEs invalid (we will then overwrite one, but
-		 * this is more efficient than looping twice).
-		 */
-#ifdef DEBUG
-		if (pm->pm_ctx == NULL || pm->pm_ctxnum != 0)
-			panic("pmap_enk: kern seg but no kern ctx");
-#endif
-		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs);
-		rp->rg_nsegmap++;
-
-#if defined(SUN4_MMU3L)
-		if (HASSUN4_MMU3L)
-			setsegmap(va, sp->sg_pmeg);
-		else
-#endif
-		{
-			i = ncontext - 1;
-			do {
-				setcontext4(i);
-				setsegmap(va, sp->sg_pmeg);
-			} while (--i >= 0);
-		}
-
-		/* set all PTEs to invalid, then overwrite one PTE below */
-		tva = VA_ROUNDDOWNTOSEG(va);
-		i = NPTESG;
-		do {
-			setpte4(tva, 0);
-			tva += NBPG;
-		} while (--i > 0);
+	if (pg != NULL && (error = pv_link4_4c(pg, pm, va, &pteproto)) != 0) {
+		if (--sp->sg_npte == 0)
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
 	}
 
-	/* ptes kept in hardware only */
-	setpte4(va, pteproto);
+	/* Update S/W page table */
+	*ptep = pteproto;
+	if (pteproto & PG_WIRED)
+		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
+
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_enk: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+	if (sp->sg_pmeg == seginval)
+		mmu_pagein_seg(pm, sp, va, vr, vs,
+			(pteproto & PG_WIRED) != 0 ? &segm_locked : &segm_lru);
+	else if ((pteproto & PG_WIRED) != 0)
+		mmu_pmeg_lock(sp->sg_pmeg);
+
+	/* Update H/W page table */
+	setpte4(va, pteproto & ~PG_MBZ);
+out:
 	splx(s);
-	return (0);
+	return (error);
 }
 
 /* enter new (or change existing) user mapping */
@@ -5555,10 +5754,12 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	struct vm_page *pg;
 	int pteproto;
 {
-	int vr, vs, *pte, tpte, pmeg, s, doflush;
+	int vr, vs, *ptep, pte, pmeg, s;
 	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
+
+	pm->pm_flags &= ~PMAP_USERCACHECLEAN;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -5587,24 +5788,23 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	if (rp->rg_segmap == NULL) {
 		/* definitely a new mapping */
 		int i;
-		int size = NSEGRG * sizeof (struct segmap);
-		int mflag = M_NOWAIT;
+		int mflag = PR_NOWAIT;
 
 	rretry:
-		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, mflag);
+		sp = (struct segmap *)pool_get(&segmap_pool, mflag);
 		if (sp == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			mflag = M_WAITOK;
+			mflag = PR_WAITOK;
 			goto rretry;
 		}
 #ifdef DEBUG
 		if (rp->rg_segmap != NULL)
 			panic("pmap_enter: segment filled during sleep");
 #endif
-		qzero((caddr_t)sp, size);
+		qzero((caddr_t)sp, NSEGRG * sizeof (struct segmap));
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
 		for (i = NSEGRG; --i >= 0;)
@@ -5613,19 +5813,19 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 
 	sp = &rp->rg_segmap[vs];
 
-	if ((pte = sp->sg_pte) == NULL) {
+	if ((ptep = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
-		int size = NPTESG * sizeof *pte;
-		int mflag = M_NOWAIT;
+		int size = NPTESG * sizeof *ptep;
+		int mflag = PR_NOWAIT;
 
 	sretry:
-		pte = (int *)malloc((u_long)size, M_VMPMAP, mflag);
-		if (pte == NULL) {
+		ptep = (int *)pool_get(&pte_pool, mflag);
+		if (ptep == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			mflag = M_WAITOK;
+			mflag = PR_WAITOK;
 			goto sretry;
 		}
 #ifdef DEBUG
@@ -5634,35 +5834,16 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
 #endif
-		qzero((caddr_t)pte, size);
-		sp->sg_pte = pte;
+		qzero((caddr_t)ptep, size);
+		sp->sg_pte = ptep;
 		sp->sg_npte = 1;
 		rp->rg_nsegmap++;
 	} else {
 		/* might be a change: fetch old pte */
-		doflush = 0;
-		if ((pmeg = sp->sg_pmeg) == seginval) {
-			/* software pte */
-			tpte = pte[VA_VPG(va)];
-		} else {
-			/* hardware pte */
-			if (CTX_USABLE(pm,rp)) {
-				setcontext4(pm->pm_ctxnum);
-				tpte = getpte4(va);
-				doflush = CACHEINFO.c_vactype != VAC_NONE;
-			} else {
-				setcontext4(0);
-				/* XXX use per-cpu pteva? */
-				if (HASSUN4_MMU3L)
-					setregmap(0, tregion);
-				setsegmap(0, pmeg);
-				tpte = getpte4(VA_VPG(va) << PGSHIFT);
-			}
-		}
-
-		if (tpte & PG_V) {
+		pte = ptep[VA_VPG(va)];
+		if (pte & PG_V) {
 			/* old mapping exists, and is of the same pa type */
-			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+			if ((pte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
 				/* caller should call this directly: */
@@ -5681,16 +5862,34 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			 */
 #if 0
 			printf("%s[%d]: pmap_enu: changing existing "
-				"va(0x%x)=>pa entry\n",
+				"va(0x%lx)=>pa entry\n",
 				curproc->p_comm, curproc->p_pid, va);
 #endif
-			if ((tpte & PG_TYPE) == PG_OBMEM) {
+			if ((pte & PG_TYPE) == PG_OBMEM) {
 				struct vm_page *opg;
-				if ((opg = pvhead4_4c(tpte)) != NULL)
+				if ((opg = pvhead4_4c(pte)) != NULL)
 					pv_unlink4_4c(opg, pm, va);
-				if (doflush && (tpte & PG_NC) == 0)
+				if (CACHEINFO.c_vactype != VAC_NONE &&
+				    (pmeg = sp->sg_pmeg) != seginval) {
+					/* hardware pte */
+					if (CTX_USABLE(pm,rp)) {
+						setcontext4(pm->pm_ctxnum);
+					} else {
+						setcontext4(0);
+						/* XXX use per-CPU pteva? */
+						if (HASSUN4_MMU3L)
+							setregmap(0, tregion);
+						setsegmap(0, pmeg);
+					}
 					cache_flush_page(va, pm->pm_ctxnum);
+				}
 			}
+			if (pte & PG_WIRED)
+				sp->sg_nwired--;
+			pm->pm_stats.resident_count--;
+			ptep[VA_VPG(va)] = 0;
+			if (sp->sg_pmeg != seginval)
+				setpte4(va, 0);
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5703,29 +5902,42 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 		}
 	}
 
-	if (pg != NULL)
-		pteproto |= pv_link4_4c(pg, pm, va, pteproto & PG_NC);
+	if (pg != NULL && (error = pv_link4_4c(pg, pm, va, &pteproto)) != 0) {
+		if (--sp->sg_npte == 0)
+			/* Sigh, undo pgt allocations */
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
 
-	/*
-	 * Update hardware & software PTEs.
-	 */
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
+	}
+
+	/* Update S/W page table */
+	ptep += VA_VPG(va);
+	*ptep = pteproto;
+	if (pteproto & PG_WIRED)
+		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
+
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_enu: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+
 	if ((pmeg = sp->sg_pmeg) != seginval) {
-		/* ptes are in hardware */
+		/* Update H/W page table */
 		if (CTX_USABLE(pm,rp))
 			setcontext4(pm->pm_ctxnum);
 		else {
 			setcontext4(0);
-			/* XXX use per-cpu pteva? */
 			if (HASSUN4_MMU3L)
 				setregmap(0, tregion);
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
 		}
-		setpte4(va, pteproto);
+		setpte4(va, pteproto & ~PG_MBZ);
 	}
-	/* update software copy */
-	pte += VA_VPG(va);
-	*pte = pteproto;
 
 out:
 	splx(s);
@@ -5741,8 +5953,9 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
 	struct segmap *sp;
-	int vr, vs, i, s;
-	int pteproto, ctx;
+	int vr, vs, s;
+	int *ptep, pteproto;
+	int lockit = 1;
 
 	pteproto = PG_S | PG_V | PMAP_T2PTE_4(pa);
 	pa &= ~PMAP_TNC_4;
@@ -5754,70 +5967,85 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
 
-	write_user_windows();
-	ctx = getcontext4();
+	if (lockit) {
+		pteproto |= PG_WIRED;
+		sp->sg_nwired++;
+	}
+
+	KASSERT((*ptep & PG_V) == 0);
+
 	s = splvm();
 #if defined(SUN4_MMU3L)
-	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
-		vaddr_t tva;
-		rp->rg_smeg = region_alloc(&region_locked, pm, vr);
-		i = ncontext - 1;
-		do {
-			setcontext4(i);
-			setregmap(va, rp->rg_smeg);
-		} while (--i >= 0);
-
-		/* set all PTEs to invalid, then overwrite one PTE below */
-		tva = VA_ROUNDDOWNTOREG(va);
-		for (i = 0; i < NSEGRG; i++) {
-			setsegmap(tva, rp->rg_segmap[i].sg_pmeg);
-			tva += NBPSG;
-		}
-	}
+	if (HASSUN4_MMU3L && rp->rg_smeg == reginval)
+		mmu_pagein_reg(pm, rp, va, vr, &region_locked);
 #endif
-	KASSERT(sp->sg_pmeg == seginval || (getpte4(va) & PG_V) == 0);
-	if (sp->sg_pmeg == seginval) {
-		int tva;
 
-		/*
-		 * Allocate an MMU entry now (on locked list),
-		 * and map it into every context.  Set all its
-		 * PTEs invalid (we will then overwrite one, but
-		 * this is more efficient than looping twice).
-		 */
-
-		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs);
+	if (sp->sg_npte++ == 0) {
+#ifdef DIAGNOSTIC
+		int i; for (i = 0; i < NPTESG; i++) {
+			if (sp->sg_pte[i] == 0)
+				continue;
+			panic("pmap_enk: pm %p, va %lx: pte[%d] not empty\n",
+				pm, va, i);
+		}
+#endif
 		rp->rg_nsegmap++;
-
-#if defined(SUN4_MMU3L)
-		if (HASSUN4_MMU3L)
-			setsegmap(va, sp->sg_pmeg);
-		else
-#endif
-		{
-			i = ncontext - 1;
-			do {
-				setcontext4(i);
-				setsegmap(va, sp->sg_pmeg);
-			} while (--i >= 0);
-		}
-
-		/* set all PTEs to invalid, then overwrite one PTE below */
-		tva = VA_ROUNDDOWNTOSEG(va);
-		i = NPTESG;
-		do {
-			setpte4(tva, 0);
-			tva += NBPG;
-		} while (--i > 0);
 	}
 
-	/* ptes kept in hardware only */
-	setpte4(va, pteproto);
-	sp->sg_npte++;
-	setcontext4(ctx);
+	/* Update S/W page table */
+	*ptep = pteproto;
+
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_kenter: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+
+	if (sp->sg_pmeg == seginval) {
+		mmu_pagein_seg(pm, sp, va, vr, vs,
+				lockit ? &segm_locked : &segm_lru);
+	} else if (lockit)
+		mmu_pmeg_lock(sp->sg_pmeg);
+
+	/* Update H/W page table */
+	setpte4(va, pteproto & ~PG_MBZ);
 	splx(s);
 }
+
+#if notyet
+void pmap_lockmmu(vaddr_t sva, size_t sz);
+void
+pmap_lockmmu(vaddr_t sva, size_t sz)
+{
+	struct pmap *pm = pmap_kernel();
+	vaddr_t va, eva;
+	struct regmap *rp;
+	struct segmap *sp;
+	int vr, vs;
+
+	if (CPU_ISSUN4M || CPU_ISSUN4D)
+		return;
+
+	eva = sva + sz;
+	va = VA_ROUNDDOWNTOSEG(sva);
+
+	for (; va < eva; va += NBPSG) {
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		rp = &pm->pm_regmap[vr];
+		sp = &rp->rg_segmap[vs];
+
+		KASSERT(sp->sg_npte != 0);
+
+		if (sp->sg_pmeg == seginval)
+			mmu_pagein_seg(pm, sp, va, vr, vs, &segm_locked);
+		else
+			mmu_pmeg_lock(sp->sg_pmeg);
+	}
+}
+#endif
 
 void
 pmap_kremove4_4c(va, len)
@@ -5828,7 +6056,7 @@ pmap_kremove4_4c(va, len)
 	struct regmap *rp;
 	struct segmap *sp;
 	vaddr_t nva, endva;
-	int i, tpte, perpage, npg;
+	int pte, mmupte, *ptep, perpage, npg, inmmu;
 	int nleft, pmeg;
 	int vr, vs, s, ctx;
 
@@ -5861,10 +6089,14 @@ pmap_kremove4_4c(va, len)
 		if (nleft == 0)
 			continue;
 		pmeg = sp->sg_pmeg;
-		KASSERT(pmeg != seginval);
+		inmmu = (pmeg != seginval);
+		ptep = &sp->sg_pte[VA_VPG(va)];
+
 		/* decide how to flush cache */
 		npg = (nva - va) >> PGSHIFT;
-		if (npg > PMAP_SFL_THRESHOLD) {
+		if (!inmmu) {
+			perpage = 0;
+		} else if (npg > PMAP_SFL_THRESHOLD) {
 			/* flush the whole segment */
 			perpage = 0;
 			cache_flush_segment(vr, vs, 0);
@@ -5875,15 +6107,20 @@ pmap_kremove4_4c(va, len)
 			 */
 			perpage = (CACHEINFO.c_vactype != VAC_NONE);
 		}
-		while (va < nva) {
-			tpte = getpte4(va);
-			if ((tpte & PG_V) == 0) {
-				va += NBPG;
+
+		for (; va < nva; va += NBPG, ptep++) {
+			pte = *ptep;
+			mmupte = inmmu ? getpte4(va) : 0;
+			if ((pte & PG_V) == 0) {
+#ifdef DIAGNOSTIC
+				if (inmmu && (mmupte & PG_V) != 0)
+					printf("rmk: inconsistent ptes va=%lx\n", va);
+#endif
 				continue;
 			}
-			if ((tpte & PG_TYPE) == PG_OBMEM) {
+			if ((pte & PG_TYPE) == PG_OBMEM) {
 				/* if cacheable, flush page as needed */
-				if (perpage && (tpte & PG_NC) == 0)
+				if (perpage && (mmupte & PG_NC) == 0)
 					cache_flush_page(va, 0);
 			}
 			nleft--;
@@ -5892,40 +6129,25 @@ pmap_kremove4_4c(va, len)
 				panic("pmap_kremove: too many PTEs in segment; "
 				      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
-			setpte4(va, 0);
-			va += NBPG;
+			if (pte & PG_WIRED)
+				sp->sg_nwired--;
+
+			if (inmmu)
+				setpte4(va, 0);
+			*ptep = 0;
 		}
 
-		/*
-		 * If the segment is all gone, remove it from everyone and
-		 * free the MMU entry.
-		 */
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+			panic("pmap_kremove: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, nleft, sp->sg_nwired);
+#endif
 
-		sp->sg_npte = nleft;
-		if (nleft == 0) {
-			va = VSTOVA(vr, vs);
-#if defined(SUN4_MMU3L)
-			if (HASSUN4_MMU3L)
-				setsegmap(va, seginval);
-			else
-#endif
-				for (i = ncontext; --i >= 0;) {
-					setcontext4(i);
-					setsegmap(va, seginval);
-				}
-			me_free(pm, pmeg);
-			if (--rp->rg_nsegmap == 0) {
-#if defined(SUN4_MMU3L)
-				if (HASSUN4_MMU3L) {
-					for (i = ncontext; --i >= 0;) {
-						setcontext4(i);
-						setregmap(va, reginval);
-					}
-					/* note: context is 0 */
-					region_free(pm, rp->rg_smeg);
-				}
-#endif
-			}
+		if ((sp->sg_npte = nleft) == 0)
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+		else if (sp->sg_nwired == 0) {
+			if (sp->sg_pmeg != seginval)
+				mmu_pmeg_unlock(sp->sg_pmeg);
 		}
 	}
 	simple_unlock(&pm->pm_lock);
@@ -6013,12 +6235,10 @@ pmap_enter4m(pm, va, pa, prot, flags)
 			      " MicroSPARC");
 	}
 #endif
+	pteproto |= SRMMU_TEPTE;
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
-
-	/* Make sure we get a pte with appropriate perms! */
-	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
-
 	pa &= ~PMAP_TNC_SRMMU;
+
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -6026,8 +6246,8 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	 */
 	pteproto |= (atop(pa) << SRMMU_PPNSHIFT);
 
-	if (prot & VM_PROT_WRITE)
-		pteproto |= PPROT_WRITE;
+	/* Make sure we get a pte with appropriate perms! */
+	pteproto |= pte_prot4m(pm, prot);
 
 	if (pm == pmap_kernel())
 		error = pmap_enk4m(pm, va, prot, flags, pg, pteproto | PPROT_S);
@@ -6108,22 +6328,20 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 			SRMMU_TEINVALID, pm->pm_ctx != NULL,
 			pm->pm_ctxnum, PMAP_CPUSET(pm));
-	} else {
-		/* adding new entry */
-		sp->sg_npte++;
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
 	 */
-	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
-		sp->sg_npte--;
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto)) != 0) {
 		if ((flags & PMAP_CANFAIL) != 0)
 			goto out;
 		panic("pmap_enter: cannot allocate PV entry");
 	}
 
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 out:
 	simple_unlock(&pm->pm_lock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -6151,6 +6369,8 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		panic("pmap_enu4m: can't enter va 0x%lx above KERNBASE", va);
 #endif
 
+	pm->pm_flags &= ~PMAP_USERCACHECLEAN;
+
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -6160,22 +6380,23 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 
 	if (rp->rg_segmap == NULL) {
 		/* definitely a new mapping */
-		int size = NSEGRG * sizeof (struct segmap);
-		int mflag = M_NOWAIT;
+		int mflag = PR_NOWAIT;
 
-		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, mflag);
+	rretry:
+		sp = (struct segmap *)pool_get(&segmap_pool, mflag);
 		if (sp == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			panic("pmap_enter: cannot allocate segmap");
+			mflag = PR_WAITOK;
+			goto rretry;
 		}
 #ifdef DEBUG
 		if (rp->rg_segmap != NULL)
 			panic("pmap_enu4m: segment filled during sleep");
 #endif
-		qzero((caddr_t)sp, size);
+		qzero((caddr_t)sp, NSEGRG * sizeof (struct segmap));
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
 		rp->rg_seg_ptps = NULL;
@@ -6185,13 +6406,15 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		int i, *ptd;
 		int mflag = PR_NOWAIT;
 
+	sretry:
 		ptd = pool_get(&L23_pool, mflag);
 		if (ptd == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
 			}
-			panic("pmap_enter: cannot allocate PTP table");
+			mflag = PR_WAITOK;
+			goto sretry;
 		}
 
 		rp->rg_seg_ptps = ptd;
@@ -6242,8 +6465,6 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		/*
 		 * Might be a change: fetch old pte
 		 */
-		if (pm->pm_ctx)
-			tlb_flush_page(va, pm->pm_ctxnum, PMAP_CPUSET(pm));
 		tpte = pte[VA_SUN4M_VPG(va)];
 
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
@@ -6295,6 +6516,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 				SRMMU_TEINVALID, pm->pm_ctx != NULL,
 				pm->pm_ctxnum, PMAP_CPUSET(pm));
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -6307,7 +6529,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		}
 	}
 
-	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto)) != 0) {
 		if (--sp->sg_npte == 0)
 			/* Sigh, undo pgt allocations */
 			pgt_lvl23_remove4m(pm, rp, sp, vr, vs);
@@ -6321,6 +6543,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	 * Update PTEs, flush TLB as necessary.
 	 */
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 
 out:
 	simple_unlock(&pm->pm_lock);
@@ -6338,40 +6561,23 @@ pmap_kenter_pa4m(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
 	struct segmap *sp;
-	int pteproto, vr, vs, tpte;
-	int s;
+	int pteproto, vr, vs;
 
 	/* Initialise pteproto with cache bit */
 	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
+	pteproto |= SRMMU_TEPTE | PPROT_S;
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
-	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
 	pteproto |= (atop(pa & ~PMAP_TNC_SRMMU) << SRMMU_PPNSHIFT);
-	if (prot & VM_PROT_WRITE)
-		pteproto |= PPROT_WRITE;
-	pteproto |= PPROT_S;
+	pteproto |= pte_kprot4m(prot);
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
-	s = splvm();
-#ifdef notyet
-	/* XXX - we can be called with the kernel map already locked
-	 *	 pmap_enter4m()->pv_link()->pool_get()
-	 *	 figure out another way to protect `sg_npte' update.
-	 */
-	simple_lock(&pm->pm_lock);
-#endif
-	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
+	KASSERT((sp->sg_pte[VA_SUN4M_VPG(va)] & SRMMU_TETYPE) != SRMMU_TEPTE);
 
-	sp->sg_npte++;
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
-#ifdef notyet
-	simple_unlock(&pm->pm_lock);
-#endif
-	splx(s);
 }
 
 void
@@ -6384,13 +6590,15 @@ pmap_kremove4m(va, len)
 	struct segmap *sp;
 	vaddr_t endva, nva;
 	int vr, vs;
-	int tpte, perpage, npg;
-	int nleft;
-	int s;
+	int tpte, perpage, npg, s;
+
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * in updatepte() requires interrupt protection.
+	 */
+	s = splvm();
 
 	endva = va + len;
-	s = splvm();
-	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
 		vr = VA_VREG(va);
@@ -6401,17 +6609,9 @@ pmap_kremove4m(va, len)
 		}
 
 		rp = &pm->pm_regmap[vr];
-		if (rp->rg_nsegmap == 0) {
-			continue;
-		}
-
 		sp = &rp->rg_segmap[vs];
-		nleft = sp->sg_npte;
-		if (nleft == 0) {
-			continue;
-		}
 
-		/* decide how to flush cache */
+		/* decide how to flush the cache */
 		npg = (nva - va) >> PGSHIFT;
 		if (npg > PMAP_SFL_THRESHOLD) {
 			/* flush the whole segment */
@@ -6420,19 +6620,17 @@ pmap_kremove4m(va, len)
 				cache_flush_segment(vr, vs, 0);
 			}
 		} else {
-
 			/*
 			 * flush each page individually;
 			 * some never need flushing
 			 */
-
 			perpage = (CACHEINFO.c_vactype != VAC_NONE);
 		}
 		for (; va < nva; va += NBPG) {
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
-			}
+
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 				/* if cacheable, flush page as needed */
 				if (perpage && (tpte & SRMMU_PG_C))
@@ -6440,11 +6638,8 @@ pmap_kremove4m(va, len)
 			}
 			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 				 SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
-			nleft--;
 		}
-		sp->sg_npte = nleft;
 	}
-	simple_unlock(&pm->pm_lock);
 	splx(s);
 }
 
@@ -6455,12 +6650,18 @@ void
 pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 {
 	struct pmap *pm = pmap_kernel();
-	int pte, newprot;
+	int pte, newprot, s;
 	struct regmap *rp;
 	struct segmap *sp;
 
 	size = roundup(size,NBPG);
-	newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
+	newprot = pte_kprot4m(prot);
+
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * in updatepte() requires interrupt protection.
+	 */
+	s = splvm();
 
 	while (size > 0) {
 		rp = &pm->pm_regmap[VA_VREG(va)];
@@ -6482,6 +6683,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 		va += NBPG;
 		size -= NBPG;
 	}
+	splx(s);
 }
 #endif /* SUN4M || SUN4D */
 
@@ -6494,8 +6696,39 @@ pmap_unwire(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
+	int vr, vs, pte, *ptep;
+	struct regmap *rp;
+	struct segmap *sp;
 
-	pmap_stats.ps_useless_changewire++;
+	/* For now, `wired page accounting' is only used on sun4/sun4c */
+	if (CPU_HAS_SRMMU)
+		return;
+
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
+	pte = *ptep;
+
+#if defined(SUN4) || defined(SUN4C)
+	if ((pte & PG_WIRED) == 0) {
+		pmap_stats.ps_useless_changewire++;
+		return;
+	}
+
+	pte &= ~PG_WIRED;
+	*ptep = pte;
+	if (--sp->sg_nwired <= 0) {
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+			panic("pmap_unwire: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
+	}
+#endif
 }
 
 /*
@@ -6511,10 +6744,10 @@ pmap_extract4_4c(pm, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	int tpte;
 	int vr, vs;
 	struct regmap *rp;
 	struct segmap *sp;
+	int pte, *ptep;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6527,32 +6760,26 @@ pmap_extract4_4c(pm, va, pap)
 		return (FALSE);
 	}
 	sp = &rp->rg_segmap[vs];
-
-	if (pm == pmap_kernel() && sp->sg_pmeg != seginval) {
-		tpte = getpte4(va);
-	} else {
-		int *pte = sp->sg_pte;
-
-		if (pte == NULL) {
+	ptep = sp->sg_pte;
+	if (ptep == NULL) {
 #ifdef DEBUG
-			if (pmapdebug & PDB_FOLLOW)
-				printf("pmap_extract: invalid segment\n");
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: invalid segment\n");
 #endif
-			return (FALSE);
-		}
-		tpte = pte[VA_VPG(va)];
+		return (FALSE);
 	}
-	if ((tpte & PG_V) == 0) {
+	pte = ptep[VA_VPG(va)];
+
+	if ((pte & PG_V) == 0) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid pte\n");
 #endif
 		return (FALSE);
 	}
-	tpte &= PG_PFNUM;
-	tpte = tpte;
+	pte &= PG_PFNUM;
 	if (pap != NULL)
-		*pap = (tpte << PGSHIFT) | (va & PGOFSET);
+		*pap = (pte << PGSHIFT) | (va & PGOFSET);
 	return (TRUE);
 }
 #endif /* SUN4 || SUN4C */
@@ -6569,23 +6796,24 @@ pmap_extract4m(pm, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	struct regmap *rm;
-	struct segmap *sm;
+	struct regmap *rp;
+	struct segmap *sp;
 	int pte;
-	int s, v = FALSE;
+	int vr, vs, s, v = FALSE;
 
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+
+	/*
+	 * The kernel pmap doesn't need to be locked, but the demap lock
+	 * requires interrupt protection.
+	 */
 	s = splvm();
-	simple_lock(&pm->pm_lock);
-	if ((rm = pm->pm_regmap) == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("pmap_extract: no regmap entry\n");
-#endif
-		goto out;
-	}
+	if (pm != pmap_kernel())
+		simple_lock(&pm->pm_lock);
 
-	rm += VA_VREG(va);
-	if ((sm = rm->rg_segmap) == NULL) {
+	rp = &pm->pm_regmap[vr];
+	if (rp->rg_segmap == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no segmap\n");
@@ -6593,8 +6821,8 @@ pmap_extract4m(pm, va, pap)
 		goto out;
 	}
 
-	sm += VA_VSEG(va);
-	if (sm->sg_pte == NULL) {
+	sp = &rp->rg_segmap[vs];
+	if (sp->sg_pte == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: no ptes\n");
@@ -6602,18 +6830,27 @@ pmap_extract4m(pm, va, pap)
 		goto out;
 	}
 
-	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
+	pte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid pte of type %d\n",
 			       pte & SRMMU_TETYPE);
 #endif
-		goto out;
+		/*
+		 * We can read a spurious invalid pte if the system is in
+		 * the middle of the PTE update protocol. So, acquire the
+		 * demap lock and retry.
+		 */
+		simple_lock(&demap_lock);
+		pte = sp->sg_pte[VA_SUN4M_VPG(va)];
+		simple_unlock(&demap_lock);
+		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
+			goto out;
 	}
 #ifdef DIAGNOSTIC
-	if (sm->sg_npte <= 0)
-		panic("pmap_extract: pm %p: npte = %d\n", pm, sm->sg_npte);
+	if (pm != pmap_kernel() && sp->sg_npte <= 0)
+		panic("pmap_extract: pm %p: npte = %d\n", pm, sp->sg_npte);
 #endif
 
 	if (pap != NULL)
@@ -6622,7 +6859,8 @@ pmap_extract4m(pm, va, pap)
 
 	v = TRUE;
 out:
-	simple_unlock(&pm->pm_lock);
+	if (pm != pmap_kernel())
+		simple_unlock(&pm->pm_lock);
 	splx(s);
 	return (v);
 }
@@ -6645,8 +6883,8 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vaddr_t src_addr;
 {
 #if notyet
-	struct regmap *rm;
-	struct segmap *sm;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	if (pmap_copy_disabled)
 		return;
@@ -6666,24 +6904,24 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 		npg = len >> PGSHIFT;
 		for (i = 0; i < npg; i++) {
-			tlb_flush_page(src_addr, getcontext4m(), PMAP_CPUSET(src_map));
-			if ((rm = src_pmap->pm_regmap) == NULL)
+			if ((rp = src_pmap->pm_regmap) == NULL)
 				continue;
-			rm += VA_VREG(src_addr);
+			rp += VA_VREG(src_addr);
 
-			if ((sm = rm->rg_segmap) == NULL)
+			if ((sp = rp->rg_segmap) == NULL)
 				continue;
-			sm += VA_VSEG(src_addr);
-			if (sm->sg_npte == 0)
+			sp += VA_VSEG(src_addr);
+			if (sp->sg_npte == 0)
 				continue;
 
-			pte = sm->sg_pte[VA_SUN4M_VPG(src_addr)];
+			pte = sp->sg_pte[VA_SUN4M_VPG(src_addr)];
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
 
 			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			pmap_enter(dst_pmap, dst_addr,
 				   pa,
+				   /* XXX - need to copy VM_PROT_EXEC too */
 				   (pte & PPROT_WRITE)
 					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
@@ -6782,7 +7020,7 @@ pmap_is_referenced4_4c(pg)
  * Clear the modify bit for the given physical page.
  */
 boolean_t
-pmap_clear_modify4m(pg)	   /* XXX %%%: Should service from swpagetbl for 4m */
+pmap_clear_modify4m(pg)
 	struct vm_page *pg;
 {
 	boolean_t rv;
@@ -6797,7 +7035,7 @@ pmap_clear_modify4m(pg)	   /* XXX %%%: Should service from swpagetbl for 4m */
  * Tell whether the given physical page has been modified.
  */
 boolean_t
-pmap_is_modified4m(pg) /* Test performance with SUN4M && SUN4/4C. XXX */
+pmap_is_modified4m(pg)
 	struct vm_page *pg;
 {
 
@@ -7057,7 +7295,7 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(cpuinfo.vpage_pte[0], spte);
 	setpgt4m(cpuinfo.vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
-	cache_flush_page((vaddr_t)sva, getcontext4m());
+	cpuinfo.sp_vcache_flush_page((vaddr_t)sva, getcontext4m());
 	sp_tlb_flush((int)sva, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
@@ -7237,33 +7475,6 @@ kvm_iocache(va, npages)
 #endif
 }
 
-int
-pmap_count_ptes(pm)
-	struct pmap *pm;
-{
-	int idx, vs, total;
-	struct regmap *rp;
-	struct segmap *sp;
-
-	if (pm == pmap_kernel()) {
-		rp = &pm->pm_regmap[NUREG];
-		idx = NKREG;
-	} else {
-		rp = pm->pm_regmap;
-		idx = NUREG;
-	}
-	for (total = 0; idx;) {
-		if ((sp = rp[--idx].rg_segmap) == NULL) {
-			continue;
-		}
-		for (vs = 0; vs < NSEGRG; vs++) {
-			total += sp[vs].sg_npte;
-		}
-	}
-	pm->pm_stats.resident_count = total;
-	return (total);
-}
-
 /*
  * Find first virtual address >= *va that is
  * least likely to cause cache aliases.
@@ -7342,11 +7553,6 @@ pmap_deactivate(l)
 	pmap_t pm;
 	struct proc *p;
 
-#ifdef DIAGNOSTIC
-	if (l == NULL)
-		panic("pmap_deactivate: l==NULL");
-#endif
-
 	p = l->l_proc;
 	if (p->p_vmspace &&
 	    (pm = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
@@ -7388,14 +7594,14 @@ pm_check_u(s, pm)
 	cpu = cpuinfo.ci_cpuid;
 
 	if (pm->pm_regmap == NULL)
-		panic("%s: cpu %d: CHK(pmap %p): no region mapping",
+		panic("%s: CPU %d: CHK(pmap %p): no region mapping",
 			s, cpu, pm);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[cpu] == NULL ||
 	     pm->pm_reg_ptps_pa[cpu] != VA2PA((caddr_t)pm->pm_reg_ptps[cpu])))
-		panic("%s: cpu %d: CHK(pmap %p): no SRMMU region table or bad pa: "
+		panic("%s: CPU %d: CHK(pmap %p): no SRMMU region table or bad pa: "
 		      "tblva=%p, tblpa=0x%x",
 			s, cpu, pm, pm->pm_reg_ptps[cpu], pm->pm_reg_ptps_pa[cpu]);
 
@@ -7403,7 +7609,7 @@ pm_check_u(s, pm)
 	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps[cpu])
 					      >> SRMMU_PPNPASHIFT) |
 					     SRMMU_TEPTD)))
-	    panic("%s: cpu %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
+	    panic("%s: CPU %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, cpu, pm, pm->pm_reg_ptps_pa[cpu], pm->pm_ctxnum);
 #endif
 
@@ -7412,29 +7618,29 @@ pm_check_u(s, pm)
 		if (rp->rg_nsegmap == 0)
 			continue;
 		if (rp->rg_segmap == NULL)
-			panic("%s: cpu %d: CHK(vr %d): nsegmap = %d; sp==NULL",
+			panic("%s: CPU %d: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, cpu, vr, rp->rg_nsegmap);
 #if defined(SUN4M) || defined(SUN4D)
 		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
-		    panic("%s: cpu %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
+		    panic("%s: CPU %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, cpu, vr, rp->rg_nsegmap);
 		if (CPU_HAS_SRMMU &&
 		    pm->pm_reg_ptps[cpu][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
-		    panic("%s: cpu %d: CHK(vr %d): SRMMU segtbl not installed",
+		    panic("%s: CPU %d: CHK(vr %d): SRMMU segtbl not installed",
 				s, cpu, vr);
 #endif
 		if ((unsigned int)rp < KERNBASE)
-			panic("%s: cpu %d: rp=%p", s, cpu, rp);
+			panic("%s: CPU %d: rp=%p", s, cpu, rp);
 		n = 0;
 		for (vs = 0; vs < NSEGRG; vs++) {
 			sp = &rp->rg_segmap[vs];
 			if ((unsigned int)sp < KERNBASE)
-				panic("%s: cpu %d: sp=%p", s, cpu, sp);
+				panic("%s: CPU %d: sp=%p", s, cpu, sp);
 			if (sp->sg_npte != 0) {
 				n++;
 				if (sp->sg_pte == NULL)
-					panic("%s: cpu %d: CHK(vr %d, vs %d): npte=%d, "
+					panic("%s: CPU %d: CHK(vr %d, vs %d): npte=%d, "
 					   "pte=NULL", s, cpu, vr, vs, sp->sg_npte);
 #if defined(SUN4M) || defined(SUN4D)
 				if (CPU_HAS_SRMMU &&
@@ -7442,7 +7648,7 @@ pm_check_u(s, pm)
 				     ((VA2PA((caddr_t)sp->sg_pte)
 					>> SRMMU_PPNPASHIFT) |
 				       SRMMU_TEPTD))
-				    panic("%s: cpu %d: CHK(vr %d, vs %d): SRMMU page "
+				    panic("%s: CPU %d: CHK(vr %d, vs %d): SRMMU page "
 					  "table not installed correctly",
 						s, cpu, vr, vs);
 #endif
@@ -7454,13 +7660,13 @@ pm_check_u(s, pm)
 					 :(*pte & PG_V)))
 					m++;
 				if (m != sp->sg_npte)
-					printf("%s: cpu %d: user CHK(vr %d, vs %d): "
+					printf("%s: CPU %d: user CHK(vr %d, vs %d): "
 					    "npte(%d) != # valid(%d)\n",
 						s, cpu, vr, vs, sp->sg_npte, m);
 			}
 		}
 		if (n != rp->rg_nsegmap)
-			panic("%s: cpu %d: CHK(vr %d): inconsistent "
+			panic("%s: CPU %d: CHK(vr %d): inconsistent "
 				"# of pte's: %d, should be %d",
 				s, cpu, vr, rp->rg_nsegmap, n);
 	}
@@ -7484,31 +7690,31 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[cpu] == NULL ||
 	     pm->pm_reg_ptps_pa[cpu] != VA2PA((caddr_t)pm->pm_reg_ptps[cpu])))
-	    panic("%s: cpu %d: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
+	    panic("%s: CPU %d: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
 		  s, cpu, pm, pm->pm_reg_ptps[cpu], pm->pm_reg_ptps_pa[cpu]);
 
 	if (CPU_HAS_SRMMU &&
 	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps[cpu]) >>
 					     SRMMU_PPNPASHIFT) | SRMMU_TEPTD)))
-	    panic("%s: cpu %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
+	    panic("%s: CPU %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, cpu, pm, pm->pm_reg_ptps_pa[cpu], 0);
 #endif
 	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
 		rp = &pm->pm_regmap[vr];
 		if (rp->rg_segmap == NULL)
-			panic("%s: cpu %d: CHK(vr %d): nsegmap = %d; sp==NULL",
+			panic("%s: CPU %d: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, cpu, vr, rp->rg_nsegmap);
 		if (rp->rg_nsegmap == 0)
 			continue;
 #if defined(SUN4M) || defined(SUN4D)
 		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
-		    panic("%s: cpu %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
+		    panic("%s: CPU %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, cpu, vr, rp->rg_nsegmap);
 
-		if (CPU_HAS_SRMMU && vr != NUREG /* 1st kseg is per cpu */ &&
+		if (CPU_HAS_SRMMU && vr != NUREG /* 1st kseg is per CPU */ &&
 		    pm->pm_reg_ptps[cpu][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
-		    panic("%s: cpu %d: CHK(vr %d): SRMMU segtbl not installed",
+		    panic("%s: CPU %d: CHK(vr %d): SRMMU segtbl not installed",
 				s, cpu, vr);
 #endif
 		if (CPU_HAS_SRMMU) {
@@ -7520,7 +7726,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 			}
 		}
 		if (n != rp->rg_nsegmap)
-			printf("%s: cpu %d: kernel CHK(vr %d): inconsistent "
+			printf("%s: CPU %d: kernel CHK(vr %d): inconsistent "
 				"# of pte's: %d, should be %d\n",
 				s, cpu, vr, rp->rg_nsegmap, n);
 	}
@@ -7560,7 +7766,7 @@ pmap_dumpsize()
 int
 pmap_dumpmmu(dump, blkno)
 	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 {
 	kcore_seg_t	*ksegp;
 	cpu_kcore_hdr_t	*kcpup;
@@ -7629,7 +7835,7 @@ pmap_dumpmmu(dump, blkno)
 	for (i = 0; i < npmemarr; i++) {
 		memseg.start = pmemarr[i].addr;
 		memseg.size = pmemarr[i].len;
-		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
+		EXPEDITE((void *)&memseg, sizeof(phys_ram_seg_t));
 	}
 
 	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
@@ -7887,7 +8093,7 @@ void print_fe_map(void)
 	u_int i, pte;
 
 	printf("map of region 0xfe:\n");
-	for (i = 0xfe000000; i < 0xff000000; i+=4096) {
+	for (i = 0xfe000000; i < 0xff000000; i += 4096) {
 		if (((pte = getpte4m(i)) & SRMMU_TETYPE) != SRMMU_TEPTE)
 		    continue;
 		printf("0x%x -> 0x%x%x (pte 0x%x)\n", i, pte >> 28,
@@ -7895,5 +8101,58 @@ void print_fe_map(void)
 	}
 	printf("done\n");
 }
+#endif /* EXTREME_DEBUG */
 
-#endif
+#ifdef DDB
+int pmap_dump(struct pmap *pm);
+int pmap_dump(struct pmap *pm)
+{
+	int startvr, endvr, vr, vs, i, n;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	if (pm == NULL)
+		pm = pmap_kernel();
+
+	if (pm == pmap_kernel()) {
+		startvr = NUREG;
+		endvr = 256;
+	} else {
+		startvr = 0;
+		endvr = NUREG;
+	}
+
+	for (vr = startvr; vr < endvr; vr++) {
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap == 0)
+			continue;
+		printf("vr %d: %d segments", vr, rp->rg_nsegmap);
+		if (rp->rg_segmap == NULL) {
+			printf("[no segments]\n");
+			continue;
+		}
+		for (vs = 0; vs < NSEGRG; vs++) {
+			sp = &rp->rg_segmap[vs];
+			if (sp->sg_npte == 0)
+				continue;
+			if ((vs & 3) == 0)
+				printf("\n   ");
+			printf(" %d: n %d w %d p %d,", vs,
+				sp->sg_npte, sp->sg_nwired, sp->sg_pmeg);
+			if (sp->sg_pte == NULL) {
+				printf("[no ptes]");
+				continue;
+			}
+			for (n = 0, i = 0; i < NPTESG; i++) {
+				if (sp->sg_pte[i] & PG_WIRED)
+					n++;
+			}
+			if (n != sp->sg_nwired)
+				printf("[wired count %d]", n);
+		}
+		printf("\n");
+	}
+
+	return (0);
+}
+#endif /* DDB */

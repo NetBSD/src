@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: bicons.c,v 1.6.6.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.6.6.1 2004/08/03 10:45:57 skrll Exp $");
 
 #define HALF_FONT
 
@@ -258,7 +258,7 @@ void
 bicons_puts(char *s)
 {
 	while (*s)
-		biconscnputc(NULL, *s++);
+		biconscnputc(0, *s++);
 }
 
 
@@ -266,7 +266,7 @@ void
 bicons_putn(const char *s, int n)
 {
 	while (0 < n--)
-		biconscnputc(NULL, *s++);
+		biconscnputc(0, *s++);
 }
 
 void

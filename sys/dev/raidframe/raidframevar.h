@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.3 2003/02/01 18:34:14 tron Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.3.2.1 2004/08/03 10:50:41 skrll Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@
 #ifndef _RF_RAIDFRAMEVAR_H_
 #define _RF_RAIDFRAMEVAR_H_
 
-
+#ifndef _STANDALONE
 #include <sys/ioctl.h>
 
 #include <sys/errno.h>
@@ -112,6 +112,7 @@
 #include <sys/lock.h>
 
 #include <sys/mallocvar.h>
+#endif
 
 /*
  * First, define system-dependent types and constants.
@@ -280,7 +281,6 @@ typedef enum RF_AccessState_e {
 	/* original states */
 	rf_QuiesceState,	    /* handles queisence for reconstruction */
 	rf_IncrAccessesCountState,  /* count accesses in flight */
-	rf_DecrAccessesCountState,
 	rf_MapState,		    /* map access to disk addresses */
 	rf_LockState,		    /* take stripe locks */
 	rf_CreateDAGState,	    /* create DAGs */
@@ -288,6 +288,7 @@ typedef enum RF_AccessState_e {
 	rf_ProcessDAGState,	    /* DAGs are completing- check if correct,
 				     * or if we need to retry */
 	rf_CleanupState,	    /* release stripe locks, clean up */
+	rf_DecrAccessesCountState,
 	rf_LastState		    /* must be the last state */
 }       RF_AccessState_t;
 
@@ -490,6 +491,7 @@ typedef struct RF_ProgressInfo_s {
 	RF_uint64 total;
 } RF_ProgressInfo_t;
 
+#ifndef _STANDALONE
 typedef struct RF_LayoutSW_s {
 	RF_ParityConfig_t parityConfig;
 	const char *configName;
@@ -507,24 +509,23 @@ typedef struct RF_LayoutSW_s {
 
 	/* routine to map RAID sector address -> physical (row, col, offset) */
 	void    (*MapSector) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * row, RF_RowCol_t * col, 
+			      RF_RowCol_t * col, 
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of parity
 	 * unit */
 	void    (*MapParity) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * row, RF_RowCol_t * col, 
+			      RF_RowCol_t * col, 
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of Q unit */
 	void    (*MapQ) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector, 
-			 RF_RowCol_t * row, RF_RowCol_t * col, 
+			 RF_RowCol_t * col, 
 			 RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to identify the disks comprising a stripe */
 	void    (*IdentifyStripe) (RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-				   RF_RowCol_t ** diskids, 
-				   RF_RowCol_t * outRow);
+				   RF_RowCol_t ** diskids);
 
 	/* routine to select a dag */
 	void    (*SelectionFunc) (RF_Raid_t * raidPtr, RF_IoType_t type,
@@ -568,10 +569,11 @@ typedef struct RF_LayoutSW_s {
 
 	/* states to step through in an access. Must end with "LastState". The
 	 * default is DefaultStates in rf_layout.c */
-	RF_AccessState_t *states;
+	const RF_AccessState_t *states;
 
 	RF_AccessStripeMapFlags_t flags;
 #endif				/* !KERNEL */
 }       RF_LayoutSW_t;
+#endif
 
 #endif				/* !_RF_RAIDFRAMEVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.31 2003/05/26 16:14:49 yamt Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.31.2.1 2004/08/03 10:46:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -205,6 +205,8 @@ struct fxp_softc {
 	struct evcnt sc_ev_txstall;	/* Tx stalled */
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+	struct evcnt sc_ev_txpause;	/* Tx PAUSE frames */
+	struct evcnt sc_ev_rxpause;	/* Rx PAUSE frames */
 #endif /* FXP_EVENT_COUNTERS */
 
 	bus_dma_segment_t sc_cdseg;	/* control dma segment */
@@ -224,6 +226,7 @@ struct fxp_softc {
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
 #define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
 #define	FXPF_IPCB		0x0400	/* use IPCB */
+#define	FXPF_RECV_WORKAROUND	0x0800	/* receiver lock-up workaround */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */

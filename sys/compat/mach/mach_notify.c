@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.2.2.1 2003/08/19 19:53:48 skrll Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.2.2.2 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,23 +37,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2.2.1 2003/08/19 19:53:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2.2.2 2004/08/03 10:44:06 skrll Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
+#include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_services.h>
 
 void
 mach_notify_port_destroyed(l, mr)
@@ -65,14 +64,17 @@ mach_notify_port_destroyed(l, mr)
 
 	if (mr->mr_notify_destroyed == NULL)
 		return;
+
 	mp = mr->mr_notify_destroyed->mr_port;
 
-#ifdef DEBUG_MACH
-	if (mp == NULL) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || (mp->mp_recv == NULL)) {
+		printf("mach_notify_port_destroyed: bad port or receiver\n");
 		return;
 	}
 #endif
+
+	MACH_PORT_REF(mp);
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -80,14 +82,12 @@ mach_notify_port_destroyed(l, mr)
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_destroyed->mr_name;
-	req->req_msgh.msgh_id= MACH_NOTIFY_DESTROYED_MSGID;
+	req->req_msgh.msgh_id = MACH_NOTIFY_DESTROYED_MSGID;
 	req->req_body.msgh_descriptor_count = 1;
 	req->req_rights.name = mr->mr_name;
-	req->req_trailer.msgh_trailer_size = 8;
 
-#ifdef KTRACE 
-	ktruser(l, "notify_port_destroyed", NULL, 0, 0);
-#endif
+	mach_set_trailer(req, sizeof(*req));
+
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
@@ -95,6 +95,8 @@ mach_notify_port_destroyed(l, mr)
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
+
+	MACH_PORT_UNREF(mp);
 
 	return;
 }
@@ -112,14 +114,17 @@ mach_notify_port_no_senders(l, mr)
 		return;
 	mp = mr->mr_notify_no_senders->mr_port;
 
-#ifdef DEBUG_MACH
-	if ((mp == NULL) || (mp->mp_datatype != MACH_MP_NOTIFY_SYNC)) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || 
+	    (mp->mp_recv == NULL) ||
+	    (mp->mp_datatype != MACH_MP_NOTIFY_SYNC)) {
+		printf("mach_notify_port_no_senders: bad port or reciever\n");
 		return;
 	}
 #endif
+	MACH_PORT_REF(mp);
 	if ((int)mp->mp_data >= mr->mr_refcount)
-		return;
+		goto out;
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -127,13 +132,11 @@ mach_notify_port_no_senders(l, mr)
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_no_senders->mr_name;
-	req->req_msgh.msgh_id= MACH_NOTIFY_NO_SENDERS_MSGID;
+	req->req_msgh.msgh_id = MACH_NOTIFY_NO_SENDERS_MSGID;
 	req->req_mscount = mr->mr_refcount;
-	req->req_trailer.msgh_trailer_size = 8;
 
-#ifdef KTRACE 
-	ktruser(l, "notify_port_no_senders", NULL, 0, 0);
-#endif
+	mach_set_trailer(req, sizeof(*req));
+
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
@@ -142,6 +145,8 @@ mach_notify_port_no_senders(l, mr)
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
 
+out:
+	MACH_PORT_UNREF(mp);
 	return;
 }
 
@@ -156,14 +161,15 @@ mach_notify_port_dead_name(l, mr)
 	if ((mr->mr_notify_dead_name == NULL) || 
 	    (mr->mr_notify_dead_name->mr_port == NULL))
 		return;
-	mp = mr->mr_notify_no_senders->mr_port;
+	mp = mr->mr_notify_dead_name->mr_port;
 
-#ifdef DEBUG_MACH
-	if (mp == NULL) {
-		printf("Warning: notification right without a port\n");
+#ifdef DIAGNOSTIC
+	if ((mp == NULL) || (mp->mp_recv)) {
+		printf("mach_notify_port_dead_name: bad port or reciever\n");
 		return;
 	}
 #endif
+	MACH_PORT_REF(mp);
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -171,17 +177,13 @@ mach_notify_port_dead_name(l, mr)
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_dead_name->mr_name;
-	req->req_msgh.msgh_id= MACH_NOTIFY_DEAD_NAME_MSGID;
+	req->req_msgh.msgh_id = MACH_NOTIFY_DEAD_NAME_MSGID;
 	req->req_name = mr->mr_name;
-	req->req_trailer.msgh_trailer_size = 8;
 
-#ifdef KTRACE 
-	ktruser(l, "notify_port_dead_name", NULL, 0, 0);
-#endif
+	mach_set_trailer(req, sizeof(*req));
 
 	mr->mr_refcount++;
 
-	mp = mr->mr_notify_dead_name->mr_port;
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
@@ -189,7 +191,7 @@ mach_notify_port_dead_name(l, mr)
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
+	MACH_PORT_UNREF(mp);
 
 	return;
 }
-

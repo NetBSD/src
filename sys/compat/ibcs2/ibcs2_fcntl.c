@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.1 2003/07/02 15:25:44 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.2 2004/08/03 10:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.1 2003/07/02 15:25:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.2 2004/08/03 10:43:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.1 2003/07/02 15:25:44 darrenr
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>

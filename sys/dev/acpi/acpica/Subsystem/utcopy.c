@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              xRevision: 112 $
+ *              xRevision: 114 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.8 2003/03/04 17:25:28 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.8.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __UTCOPY_C__
 
@@ -744,14 +744,23 @@ AcpiUtCopySimpleObject (
         if ((SourceDesc->Buffer.Pointer) &&
             (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
-            DestDesc->Buffer.Pointer = ACPI_MEM_ALLOCATE (SourceDesc->Buffer.Length);
-            if (!DestDesc->Buffer.Pointer)
-            {
-                return (AE_NO_MEMORY);
-            }
+            DestDesc->Buffer.Pointer = NULL;
 
-            ACPI_MEMCPY (DestDesc->Buffer.Pointer, SourceDesc->Buffer.Pointer,
-                         SourceDesc->Buffer.Length);
+            /* Create an actual buffer only if length > 0 */
+
+            if (SourceDesc->Buffer.Length)
+            {
+                DestDesc->Buffer.Pointer = ACPI_MEM_ALLOCATE (SourceDesc->Buffer.Length);
+                if (!DestDesc->Buffer.Pointer)
+                {
+                    return (AE_NO_MEMORY);
+                }
+
+                /* Copy the actual buffer data */
+
+                ACPI_MEMCPY (DestDesc->Buffer.Pointer, SourceDesc->Buffer.Pointer,
+                             SourceDesc->Buffer.Length);
+            }
         }
         break;
 

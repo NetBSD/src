@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2003/06/15 23:09:08 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define _X86_BUS_H_
 
 #include <machine/pio.h>
+#include <machine/cpufunc.h>	/* for x86_lfence */
 
 #ifdef BUS_SPACE_DEBUG
 #include <sys/systm.h> /* for printf() prototype */
@@ -120,8 +121,8 @@ typedef	int bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 /*
- *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
- *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp);
  *
  * Map a region of bus space.
  */
@@ -130,76 +131,76 @@ typedef	u_long bus_space_handle_t;
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
-int	x86_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+int	x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 /* like map, but without extent map checking/allocation */
-int	_x86_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 
 #define	bus_space_map(t, a, s, f, hp)					\
 	x86_memio_map((t), (a), (s), (f), (hp))
 
 /*
- *	int bus_space_unmap __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	int bus_space_unmap(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Unmap a region of bus space.
  */
 
-void	x86_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
-void	_x86_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size, bus_addr_t *));
+void	x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size);
+void	_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size, bus_addr_t *);
 
 #define bus_space_unmap(t, h, s)					\
 	x86_memio_unmap((t), (h), (s))
 
 /*
- *	int bus_space_subregion __P((bus_space_tag_t t,
+ *	int bus_space_subregion(bus_space_tag_t t,
  *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
- *	    bus_space_handle_t *nbshp));
+ *	    bus_space_handle_t *nbshp);
  *
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
 
-int	x86_memio_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
+int	x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp);
 
 #define bus_space_subregion(t, h, o, s, nhp)				\
 	x86_memio_subregion((t), (h), (o), (s), (nhp))
 
 /*
- *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+ *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
  *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
- *	    bus_space_handle_t *bshp));
+ *	    bus_space_handle_t *bshp);
  *
  * Allocate a region of bus space.
  */
 
-int	x86_memio_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+int	x86_memio_alloc(bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
 	    bus_size_t boundary, int flags, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp));
+	    bus_space_handle_t *bshp);
 
 #define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
 	x86_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
 
 /*
- *	int bus_space_free __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	int bus_space_free(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Free a region of bus space.
  */
 
-void	x86_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
+void	x86_memio_free(bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size);
 
 #define bus_space_free(t, h, s)						\
 	x86_memio_free((t), (h), (s))
 
 /*
- *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
  *
  * Get the kernel virtual address for the mapped bus space.
  * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
@@ -209,21 +210,20 @@ void	x86_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	((t) == X86_BUS_SPACE_MEM ? (void *)(h) : (void *)0)
 
 /*
- *	paddr_t bus_space_mmap __P((bus_space_tag_t t, bus_addr_t base,
- *	    off_t offset, int prot, int flags));
+ *	paddr_t bus_space_mmap(bus_space_tag_t t, bus_addr_t base,
+ *	    off_t offset, int prot, int flags);
  *
  * Mmap an area of bus space.
  */
 
-paddr_t	x86_memio_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
-	    int, int));
+paddr_t	x86_memio_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 #define	bus_space_mmap(t, b, o, p, f)					\
 	x86_memio_mmap((t), (b), (o), (p), (f))
 
 /*
- *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset));
+ *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
@@ -254,9 +254,9 @@ paddr_t	x86_memio_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 #endif
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -337,9 +337,9 @@ do {									\
 #endif
 
 /*
- *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -454,9 +454,9 @@ do {									\
 #endif
 
 /*
- *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value));
+ *	    u_intN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
@@ -499,9 +499,9 @@ do {									\
 #endif
 
 /*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -580,9 +580,9 @@ do {									\
 #endif
 
 /*
- *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -697,20 +697,20 @@ do {									\
 #endif
 
 /*
- *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
  */
 
-static __inline void x86_memio_set_multi_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
-static __inline void x86_memio_set_multi_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
-static __inline void x86_memio_set_multi_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
+static __inline void x86_memio_set_multi_1(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int8_t, size_t);
+static __inline void x86_memio_set_multi_2(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void x86_memio_set_multi_4(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
 	x86_memio_set_multi_1((t), (h), (o), (v), (c))
@@ -774,20 +774,20 @@ x86_memio_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 #endif
 
 /*
- *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
  */
 
-static __inline void x86_memio_set_region_1 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
-static __inline void x86_memio_set_region_2 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
-static __inline void x86_memio_set_region_4 __P((bus_space_tag_t,
-	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
+static __inline void x86_memio_set_region_1(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int8_t, size_t);
+static __inline void x86_memio_set_region_2(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int16_t, size_t);
+static __inline void x86_memio_set_region_4(bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int32_t, size_t);
 
 #define	bus_space_set_region_1(t, h, o, v, c)				\
 	x86_memio_set_region_1((t), (h), (o), (v), (c))
@@ -851,24 +851,24 @@ x86_memio_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 #endif
 
 /*
- *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
- *	    size_t count));
+ *	    size_t count);
  *
  * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void x86_memio_copy_region_1 __P((bus_space_tag_t,
+static __inline void x86_memio_copy_region_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
-	bus_size_t, size_t));
-static __inline void x86_memio_copy_region_2 __P((bus_space_tag_t,
+	bus_size_t, size_t);
+static __inline void x86_memio_copy_region_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
-	bus_size_t, size_t));
-static __inline void x86_memio_copy_region_4 __P((bus_space_tag_t,
+	bus_size_t, size_t);
+static __inline void x86_memio_copy_region_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
-	bus_size_t, size_t));
+	bus_size_t, size_t);
 
 #define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
 	x86_memio_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
@@ -1000,9 +1000,9 @@ x86_memio_copy_region_4(bus_space_tag_t t,
 /*
  * Bus read/write barrier methods.
  *
- *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	void bus_space_barrier(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags));
+ *	    bus_size_t len, int flags);
  *
  * Note: the x86 does not currently require barriers, but we must
  * provide the flags to MI code.
@@ -1077,39 +1077,41 @@ struct x86_bus_dma_tag {
 	bus_addr_t _bounce_thresh;
 	bus_addr_t _bounce_alloc_lo;
 	bus_addr_t _bounce_alloc_hi;
-	int	(*_may_bounce) __P((bus_dma_tag_t, bus_dmamap_t, int, int *));
+	int	(*_may_bounce)(bus_dma_tag_t, bus_dmamap_t, int, int *);
 
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t, bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
 };
+
+static __inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+    bus_addr_t, bus_size_t, int) __attribute__((__unused__));
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
 	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
@@ -1125,9 +1127,15 @@ struct x86_bus_dma_tag {
 	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
+static __inline void
+bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
+    int ops)
+{
+	if (ops & BUS_DMASYNC_POSTREAD)
+		x86_lfence();
+	if (t->_dmamap_sync)
+		(*t->_dmamap_sync)(t, p, o, l, ops);
+}
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
@@ -1167,44 +1175,36 @@ struct x86_bus_dmamap {
 };
 
 #ifdef _X86_BUS_DMA_PRIVATE
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-	    size_t size));
-paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags));
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
+paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
 
-int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    paddr_t low, paddr_t high));
-
-int	_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
-	    bus_size_t size, int flags);
-void	_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
-int	_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-	    void *buf, bus_size_t buflen, struct proc *p, int flags,
-	    paddr_t *lastaddrp, int *segp, int first);
+	    paddr_t low, paddr_t high);
 
 
 
@@ -1233,16 +1233,16 @@ struct x86_bus_dma_cookie {
 };
 
 /* id_flags */
-#define	X86_DMA_ID_MIGHT_NEED_BOUNCE	0x01	/* may eed bounce buffers */
-#define	X86_DMA_ID_HAS_BOUNCE		0x02	/* has bounce buffers */
-#define	X86_DMA_ID_IS_BOUNCING		0x04	/* is bouncing current xfer */
+#define	X86_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
+#define	X86_DMA_HAS_BOUNCE		0x02	/* has bounce buffers */
+#define	X86_DMA_IS_BOUNCING		0x04	/* is bouncing current xfer */
 
 /* id_buftype */
-#define	X86_DMA_ID_BUFTYPE_INVALID	0
-#define	X86_DMA_ID_BUFTYPE_LINEAR	1
-#define	X86_DMA_ID_BUFTYPE_MBUF		2
-#define	X86_DMA_ID_BUFTYPE_UIO		3
-#define	X86_DMA_ID_BUFTYPE_RAW		4
+#define	X86_DMA_BUFTYPE_INVALID		0
+#define	X86_DMA_BUFTYPE_LINEAR		1
+#define	X86_DMA_BUFTYPE_MBUF		2
+#define	X86_DMA_BUFTYPE_UIO		3
+#define	X86_DMA_BUFTYPE_RAW		4
 
 #endif /* _X86_BUS_DMA_PRIVATE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.10 2000/05/05 20:12:00 hannken Exp $ */
+/*	$NetBSD: lock.h,v 1.10.28.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,41 +43,40 @@
  * Machine dependent spin lock operations.
  */
 
-/*
- * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores
- * `lock_data' given its address (and the fact that SPARC is big-endian).
- */
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	0xff000000
-#define	__SIMPLELOCK_UNLOCKED	0
+#if __SIMPLELOCK_UNLOCKED != 0
+#error __SIMPLELOCK_UNLOCKED must be 0 for this implementation
+#endif
 
 /* XXX So we can expose this to userland. */
 #ifdef __lint__
 #define __ldstub(__addr)	(__addr)
 #else /* !__lint__ */
-#define	__ldstub(__addr)						\
-({									\
-	int __v;							\
-									\
-	__asm __volatile("ldstub [%1],%0"				\
-	    : "=r" (__v)						\
-	    : "r" (__addr)						\
-	    : "memory");						\
-									\
-	__v;								\
-})
+static __inline__ int __ldstub(__cpu_simple_lock_t *addr);
+static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
+{
+	int v;
+
+	__asm __volatile("ldstub [%1],%0"
+	    : "=r" (v)
+	    : "r" (addr)
+	    : "memory");
+
+	return v;
+}
 #endif /* __lint__ */
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
-	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
+#ifndef __CPU_SIMPLE_LOCK_NOINLINE
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+#else
+extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
+#endif
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
@@ -86,6 +85,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
+#ifndef __CPU_SIMPLE_LOCK_NOINLINE
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
@@ -102,6 +102,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 			/* spin */ ;
 	}
 }
+#endif /* __CPU_SIMPLE_LOCK_NOINLINE */
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
@@ -114,6 +115,11 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
+	/*
+	 * Insert compiler barrier to prevent instruction re-ordering
+	 * around the lock release.
+	 */
+	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 

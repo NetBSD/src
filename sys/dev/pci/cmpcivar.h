@@ -1,11 +1,11 @@
-/*	$NetBSD: cmpcivar.h,v 1.4 2001/11/04 06:57:40 itohy Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.4.16.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI <tshiozak@netbsd.org> .
+ * by Takuya SHIOZAKI <tshiozak@NetBSD.org> .
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by ITOH Yasufumi.
@@ -121,8 +121,8 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 #define CmpciNrear			"rear"
 #define CmpciNindividual		"individual"
 #define CmpciNreverse			"reverse"
-#define CmpciNlow_v			"0.5V"
 #define CmpciNhigh_v			"5V"
+#define CmpciNlow_v			"0.5V"
 #define CmpciNsurround			"surround"
 
 /* record.sorce bitmap (see cmpci_set_in_ports()) */
@@ -158,8 +158,8 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
 #define CMPCI_SPDIF_OUT_PLAYBACK_LEGACY	1		/* legacy */
 
 /* spdif.output.voltage */
-#define CMPCI_SPDIF_OUT_VOLTAGE_LOW	0		/* 0.5V */
-#define CMPCI_SPDIF_OUT_VOLTAGE_HIGH	1		/* 5V */
+#define CMPCI_SPDIF_OUT_VOLTAGE_HIGH	0		/* 5V */
+#define CMPCI_SPDIF_OUT_VOLTAGE_LOW	1		/* 0.5V */
 
 /* spdif.monitor */
 #define CMPCI_MONDAC_ENABLE	0x01
@@ -229,6 +229,9 @@ struct cmpci_softc {
 		void		*intr_arg;
 		int		md_divide;
 	} sc_play, sc_rec;
+
+	/* value of CMPCI_REG_MISC register */
+	uint32_t		sc_reg_misc;
 
 	/* mixer */
 	uint8_t			sc_gain[CMPCI_NDEVS][2];

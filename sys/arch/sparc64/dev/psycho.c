@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.63 2003/06/15 23:09:06 fvdl Exp $	*/
+/*	$NetBSD: psycho.c,v 1.63.2.1 2004/08/03 10:41:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.1 2004/08/03 10:41:24 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,7 +202,7 @@ psycho_match(parent, match, aux)
 	void		*aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = PROM_getpropstring(ma->ma_node, "model");
+	char *model = prom_getpropstring(ma->ma_node, "model");
 	int i;
 
 	/* match on a name of "pci" and a sabre or a psycho */
@@ -208,13 +211,44 @@ psycho_match(parent, match, aux)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
 
-		model = PROM_getpropstring(ma->ma_node, "compatible");
+		model = prom_getpropstring(ma->ma_node, "compatible");
 		for (i=0; psycho_names[i].p_name; i++)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
 	}
 	return (0);
 }
+
+#ifdef DEBUG
+static void psycho_dump_intmap(struct psycho_softc *sc);
+static void
+psycho_dump_intmap(struct psycho_softc *sc)
+{
+	volatile u_int64_t *intrmapptr = NULL;
+
+	printf("psycho_dump_intmap: OBIO\n");
+
+	for (intrmapptr = &sc->sc_regs->scsi_int_map;
+	     intrmapptr < &sc->sc_regs->ue_int_map;
+	     intrmapptr++)
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
+
+	printf("\tintmap:pci\n");
+	for (intrmapptr = &sc->sc_regs->pcia_slot0_int;
+	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
+	     intrmapptr++)
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
+
+	printf("\tintmap:ffb\n");
+	for (intrmapptr = &sc->sc_regs->ffb0_int_map;
+	     intrmapptr <= &sc->sc_regs->ffb1_int_map;
+	     intrmapptr++)
+		printf("%p: %llx\n", intrmapptr,
+		    (unsigned long long)*intrmapptr);
+}
+#endif
 
 /*
  * SUNW,psycho initialisation ..
@@ -242,7 +276,7 @@ psycho_attach(parent, self, aux)
 	u_int64_t csr;
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
-	char *model = PROM_getpropstring(ma->ma_node, "model");
+	char *model = prom_getpropstring(ma->ma_node, "model");
 
 	printf("\n");
 
@@ -259,7 +293,7 @@ psycho_attach(parent, self, aux)
 			goto found;
 		}
 
-	model = PROM_getpropstring(ma->ma_node, "compatible");
+	model = prom_getpropstring(ma->ma_node, "compatible");
 	for (i=0; psycho_names[i].p_name; i++)
 		if (strcmp(model, psycho_names[i].p_name) == 0) {
 			sc->sc_mode = psycho_names[i].p_type;
@@ -308,6 +342,7 @@ found:
 		} else
 			panic("psycho_attach: %d not enough registers",
 				ma->ma_nreg);
+
 	} else {
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
 
@@ -429,11 +464,25 @@ found:
 	/* setup the rest of the psycho pbm */
 	pba.pba_pc = psycho_alloc_chipset(pp, sc->sc_node, pp->pp_pc);
 
+	switch((ma->ma_reg[0].ur_paddr) & 0xf000) {
+	case 0x2000:
+		pp->pp_id = PSYCHO_PBM_A;
+		break;
+	case 0x4000:
+		pp->pp_id = PSYCHO_PBM_B;
+		break;
+	}
+
 	printf("\n");
 
 	/* allocate extents for free bus space */
 	pp->pp_exmem = psycho_alloc_extent(pp, sc->sc_node, 0x02, "psycho mem");
 	pp->pp_exio = psycho_alloc_extent(pp, sc->sc_node, 0x01, "psycho io");
+
+#ifdef DEBUG
+	if (psycho_debug & PDB_INTR)
+		psycho_dump_intmap(sc);
+#endif
 
 	/*
 	 * And finally, if we're a sabre or the first of a pair of psycho's to
@@ -460,17 +509,19 @@ found:
 		psycho_set_intr(sc, 15, psycho_bus_a,
 			&sc->sc_regs->pciaerr_int_map, 
 			&sc->sc_regs->pciaerr_clr_int);
-		psycho_set_intr(sc, 15, psycho_bus_b,
-			&sc->sc_regs->pciberr_int_map, 
-			&sc->sc_regs->pciberr_clr_int);
 		psycho_set_intr(sc, 15, psycho_powerfail,
 			&sc->sc_regs->power_int_map, 
 			&sc->sc_regs->power_clr_int);
 		psycho_register_power_button(sc);
-		psycho_set_intr(sc, 1, psycho_wakeup,
-			&sc->sc_regs->pwrmgt_int_map, 
-			&sc->sc_regs->pwrmgt_clr_int);
-
+		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
+			/* sabre doesn't have these interrups */
+			psycho_set_intr(sc, 15, psycho_bus_b,
+					&sc->sc_regs->pciberr_int_map, 
+					&sc->sc_regs->pciberr_clr_int);
+			psycho_set_intr(sc, 1, psycho_wakeup,
+					&sc->sc_regs->pwrmgt_int_map, 
+					&sc->sc_regs->pwrmgt_clr_int);
+		}
 
 		/*
 		 * Apparently a number of machines with psycho and psycho+
@@ -515,7 +566,7 @@ found:
 		pp->pp_sb.sb_is = sc->sc_is;
 
 		sc->sc_is->is_sb[0] = sc->sc_is->is_sb[1] = NULL;
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
 			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
@@ -561,7 +612,7 @@ found:
 		/* Point the strbuf_ctl at the iommu_state */
 		pp->pp_sb.sb_is = sc->sc_is;
 
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
 			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
@@ -712,8 +763,9 @@ psycho_alloc_extent(pp, node, ss, name)
 	bsize = BUS_ADDR(pr->size_hi, pr->size_lo);
 
 	/* get available lists */
-	if (PROM_getprop(node, "available", sizeof(*pa), &num, (void *)&pa)) {
-		printf("psycho_alloc_extent: PROM_getprop failed\n");
+	num = 0;
+	if (prom_getprop(node, "available", sizeof(*pa), &num, &pa)) {
+		printf("psycho_alloc_extent: prom_getprop failed\n");
 		return NULL;
 	}
 
@@ -771,13 +823,16 @@ psycho_get_bus_range(node, brp)
 	int node;
 	int *brp;
 {
-	int n;
+	int n, error;
 
-	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void *)&brp))
-		panic("could not get psycho bus-range");
+	n = 2;
+	error = prom_getprop(node, "bus-range", sizeof(*brp), &n, &brp);
+	if (error)
+		panic("could not get psycho bus-range, error %d", error);
 	if (n != 2)
 		panic("broken psycho bus-range");
-	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n", node, brp[0], brp[1]));
+	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
+			   node, brp[0], brp[1]));
 }
 
 static void
@@ -787,7 +842,7 @@ psycho_get_ranges(node, rp, np)
 	int *np;
 {
 
-	if (PROM_getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
+	if (prom_getprop(node, "ranges", sizeof(**rp), np, rp))
 		panic("could not get psycho ranges");
 	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
 }
@@ -943,8 +998,9 @@ psycho_iommu_init(sc, tsbsize)
 	 * We could query the `#virtual-dma-size-cells' and
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
-	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
-		(void *)&vdma)) {
+	nitem = 0;
+	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+		&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break
@@ -983,7 +1039,7 @@ psycho_alloc_bus_tag(pp, type)
 	if (bt == NULL)
 		panic("could not allocate psycho bus tag");
 
-	bzero(bt, sizeof *bt);
+	memset(bt, 0, sizeof *bt);
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
 	bt->type = type;
@@ -1005,7 +1061,7 @@ psycho_alloc_dma_tag(pp)
 	if (dt == NULL)
 		panic("could not allocate psycho DMA tag");
 
-	bzero(dt, sizeof *dt);
+	memset(dt, 0, sizeof *dt);
 	dt->_cookie = pp;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
@@ -1220,7 +1276,6 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	 * interrupt which has a full vector that can be set arbitrarily.  
 	 */
 
-
 	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
 	ino = INTINO(vec);
 	DPRINTF(PDB_INTR, (" ino %x", ino));
@@ -1239,7 +1294,7 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	/* Hunt thru obio first */
 	for (intrmapptr = &sc->sc_regs->scsi_int_map,
 		     intrclrptr = &sc->sc_regs->scsi_clr_int;
-	     intrmapptr < &sc->sc_regs->ffb0_int_map;
+	     intrmapptr < &sc->sc_regs->ue_int_map;
 	     intrmapptr++, intrclrptr++) {
 		if (INTINO(*intrmapptr) == ino)
 			goto found;
@@ -1250,6 +1305,10 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 		     intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
 	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
 	     intrmapptr++, intrclrptr += 4) {
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+		    (intrmapptr == &sc->sc_regs->pcia_slot2_int ||
+		     intrmapptr == &sc->sc_regs->pcia_slot3_int))
+			continue;
 		if (((*intrmapptr ^ vec) & 0x3c) == 0) {
 			intrclrptr += vec & 0x3;
 			goto found;
@@ -1272,15 +1331,6 @@ found:
 	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;
 	ih->ih_clr = intrclrptr;
-
-#ifdef NOT_DEBUG
-	if (psycho_debug & PDB_INTR) {
-		long i;
-
-		for (i = 0; i < 500000000; i++)
-			continue;
-	}
-#endif
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;

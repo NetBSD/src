@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.81 2003/04/02 04:35:24 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.81.2.1 2004/08/03 10:41:07 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,9 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.81.2.1 2004/08/03 10:41:07 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -75,7 +74,14 @@
 void *softnet_cookie;
 #if defined(MULTIPROCESSOR)
 void *xcall_cookie;
+
+/* Stats */
+struct evcnt lev13_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","std");
+struct evcnt lev14_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","fast");
+EVCNT_ATTACH_STATIC(lev13_evcnt);
+EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
+
 
 void	strayintr __P((struct clockframe *));
 #ifdef DIAGNOSTIC
@@ -358,6 +364,9 @@ nmi_soft(tf)
 static void xcallintr(void *v)
 {
 
+	/* Tally */
+	lev13_evcnt.ev_count++;
+
 	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_FUNC:
@@ -365,7 +374,7 @@ static void xcallintr(void *v)
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		if (p->func)
-			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2); 
 		break;
 	    }
 	}

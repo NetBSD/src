@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.4 2003/05/22 22:07:39 manu Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.4.2.1 2004/08/03 10:43:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ typedef struct {
 
 #define DARWIN_IOKIT_DEVCLASSES			\
 	&darwin_iohidsystem_devclass,		\
-	&darwin_ioframebuffer_devclass,
+	&darwin_ioframebuffer_devclass,		\
+	&darwin_iokbd_devclass,			\
+	&darwin_iomouse_devclass,		\
+	&darwin_ioresources_devclass,
 							
 #endif /* _DARWIN_IOKIT_H_ */

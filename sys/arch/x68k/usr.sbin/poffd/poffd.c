@@ -1,4 +1,4 @@
-/*	$NetBSD: poffd.c,v 1.6 2001/06/12 11:29:31 minoura Exp $	*/
+/*	$NetBSD: poffd.c,v 1.6.24.1 2004/08/03 10:42:57 skrll Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -30,6 +30,9 @@
  */
 
 /* poffd: looks at the power switch / alarm and does shutdown. */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: poffd.c,v 1.6.24.1 2004/08/03 10:42:57 skrll Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

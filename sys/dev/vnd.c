@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.101.2.1 2003/07/02 15:26:02 darrenr Exp $	*/
+/*	$NetBSD: vnd.c,v 1.101.2.2 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,44 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: vn.c 1.13 94/04/02$
+ *
+ *	@(#)vn.c	8.9 (Berkeley) 5/14/95
+ */
+
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -98,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.1 2003/07/02 15:26:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -373,6 +408,7 @@ vndstrategy(bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
 	struct vndxfer *vnx;
+	struct mount *mp;
 	int s, bsize, resid;
 	off_t bn;
 	caddr_t addr;
@@ -460,6 +496,9 @@ vndstrategy(bp)
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 
+	if ((flags & B_READ) == 0)
+		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf *nbp;
 		struct vnode *vp;
@@ -524,6 +563,8 @@ vndstrategy(bp)
 
 		nbp->vb_xfer = vnx;
 
+		BIO_COPYPRIO(&nbp->vb_buf, bp);
+
 		/*
 		 * Just sort by block number
 		 */
@@ -544,6 +585,8 @@ vndstrategy(bp)
 	s = splbio();
 
 out: /* Arrive here at splbio */
+	if ((flags & B_READ) == 0)
+		vn_finished_write(mp, 0);
 	vnx->vx_flags &= ~VX_BUSY;
 	if (vnx->vx_pending == 0) {
 		if (vnx->vx_error != 0) {
@@ -600,7 +643,7 @@ vndstart(vnd)
 
 		if ((bp->b_flags & B_READ) == 0)
 			bp->b_vp->v_numoutput++;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	vnd->sc_flags &= ~VNF_BUSY;
 }
@@ -840,7 +883,10 @@ vndioctl(dev, cmd, data, flag, l)
 			 * XXX we?
 			 */
 			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
-			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
+			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0 ||
+			    vnd->sc_geom.vng_ncylinders == 0 ||
+			    (vnd->sc_geom.vng_ntracks *
+			     vnd->sc_geom.vng_nsectors) == 0) {
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -899,7 +945,7 @@ vndioctl(dev, cmd, data, flag, l)
 
 		/* Attach the disk. */
 		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
-		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
+		snprintf(vnd->sc_xname, sizeof(vnd->sc_xname), "vnd%d", unit);
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 

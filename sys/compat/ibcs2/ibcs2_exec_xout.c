@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.1 2003/07/02 15:25:44 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.2 2004/08/03 10:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.1 2003/07/02 15:25:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.2 2004/08/03 10:43:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ int exec_ibcs2_xout_prep_nmagic __P((struct lwp *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_prep_zmagic __P((struct lwp *, struct exec_package *,
 				     struct xexec *, struct xext *));
-int exec_ibcs2_xout_setup_stack __P((struct lwp *, struct exec_package *));
 
 int
 exec_ibcs2_xout_makecmds(l, epp)
@@ -111,15 +110,20 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 	struct xexec *xp;
 	struct xext *xep;
 {
-	int error, nseg, i;
+	int error;
+	size_t nseg, i;
 	long baddr, bsize;
 	struct xseg *xs;
 	size_t resid;
+	size_t segsize = (size_t)xep->xe_segsize;
+
+	if (segsize > 16 * sizeof(*xs))
+		return ENOEXEC;
 
 	/* read in segment table */
-	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
+	xs = (struct xseg *)malloc(segsize, M_TEMP, M_WAITOK);
 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
-			xep->xe_segsize, xep->xe_segpos,
+			segsize, xep->xe_segpos,
 			UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
 			&resid, l);
 	if (error) {
@@ -128,7 +132,7 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 		return ENOEXEC;
 	}
 
-	for (nseg = xep->xe_segsize / sizeof(*xs), i = 0; i < nseg; i++) {
+	for (nseg = segsize / sizeof(*xs), i = 0; i < nseg; i++) {
 		switch (xs[i].xs_type) {
 		case XS_TTEXT:	/* text segment */
 
@@ -192,48 +196,5 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 		 epp->ep_entry));
 	
 	free(xs, M_TEMP);
-	return exec_ibcs2_xout_setup_stack(l, epp);
-}
-
-/*
- * exec_ibcs2_xout_setup_stack(): Set up the stack segment for a x.out
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-
-int
-exec_ibcs2_xout_setup_stack(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
-{
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-		  ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-		  epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-		  (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 }

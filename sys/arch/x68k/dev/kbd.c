@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 2002/10/23 09:12:45 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.16.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -32,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.16.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -280,6 +279,12 @@ kbdioctl(dev, cmd, data, flag, p)
 	case FIOASYNC:
 		k->sc_events.ev_async = *(int *)data != 0;
 		return (0);
+
+	case FIOSETOWN:
+		if (-*(int *)data != k->sc_events.ev_io->p_pgid
+		    && *(int *)data != k->sc_events.ev_io->p_pid)
+			return (EPERM);
+		return 0;
 
 	case TIOCSPGRP:
 		if (*(int *)data != k->sc_events.ev_io->p_pgid)

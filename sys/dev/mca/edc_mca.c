@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.21 2002/11/01 11:31:58 mrg Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.21.6.1 2004/08/03 10:48:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21 2002/11/01 11:31:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.1 2004/08/03 10:48:23 skrll Exp $");
 
 #include "rnd.h"
 
@@ -169,7 +169,7 @@ edc_mca_attach(parent, self, aux)
 	 * 
 	 * 7 6 5 4 3 2 1 0
 	 *   \ \____/  \ \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *    \     \   \___ Primary/Alternate Port Adresses:
+	 *    \     \   \___ Primary/Alternate Port Addresses:
 	 *     \     \		0=0x3510-3517 1=0x3518-0x351f
 	 *      \     \_____ DMA Arbitration Level: 0101=5 0110=6 0111=7
 	 *       \              0000=0 0001=1 0011=3 0100=4
@@ -199,7 +199,8 @@ edc_mca_attach(parent, self, aux)
 		typestr = "IBM Integ. ESDI Fixed Disk & Controller";
 		break;
 	default:
-		/* never reached */ ;
+		typestr = NULL;
+		break;
 	}
 		
 	irq = ESDIC_IRQ;
@@ -212,7 +213,7 @@ edc_mca_attach(parent, self, aux)
 #ifdef DIAGNOSTIC
 	/*
 	 * It's not strictly necessary to check this, machine configuration
-	 * utility uses only valid adresses.
+	 * utility uses only valid addresses.
 	 */
 	if (drq == 2 || drq >= 8) {
 		printf("%s: invalid DMA Arbitration Level %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 1998/10/24 16:22:58 kleink Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5.46.1 2004/08/03 10:42:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 #define _MACHINE_DISKLABEL_H_
 
 #define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
+#define	LABELOFFSET	128			/* offset of label in sector */
 #define	MAXPARTITIONS	8			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.12 2002/11/23 02:44:15 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.12.6.1 2004/08/03 10:50:43 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.12 2002/11/23 02:44:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.12.6.1 2004/08/03 10:50:43 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -64,10 +64,7 @@ static void memory_hash_insert(void *addr, int size, int line, char *filen);
 static int memory_hash_remove(void *addr, int sz);
 
 void 
-rf_record_malloc(p, size, line, filen)
-	void   *p;
-	int     size, line;
-	char   *filen;
+rf_record_malloc(void *p, int size, int line, char *filen)
 {
 	RF_ASSERT(size != 0);
 
@@ -81,9 +78,7 @@ rf_record_malloc(p, size, line, filen)
 }
 
 void 
-rf_unrecord_malloc(p, sz)
-	void   *p;
-	int     sz;
+rf_unrecord_malloc(void *p, int sz)
 {
 	int     size;
 
@@ -120,17 +115,12 @@ rf_print_unfreed()
 #endif /* RF_DEBUG_MEM */
 
 int 
-rf_ConfigureDebugMem(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 {
 #if RF_DEBUG_MEM
 	int     i, rc;
 
-	rc = rf_create_managed_mutex(listp, &rf_debug_mem_mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
-		return (rc);
-	}
+	rf_mutex_init(&rf_debug_mem_mutex);
 	if (rf_memDebug) {
 		for (i = 0; i < RF_MH_TABLESIZE; i++)
 			mh_table[i] = NULL;
@@ -145,10 +135,7 @@ rf_ConfigureDebugMem(listp)
 #define HASHADDR(_a_)      ( (((unsigned long) _a_)>>3) % RF_MH_TABLESIZE )
 
 static void 
-memory_hash_insert(addr, size, line, filen)
-	void   *addr;
-	int     size, line;
-	char   *filen;
+memory_hash_insert(void *addr, int size, int line, char *filen)
 {
 	unsigned long bucket = HASHADDR(addr);
 	struct mh_struct *p;
@@ -177,9 +164,7 @@ memory_hash_insert(addr, size, line, filen)
 }
 
 static int 
-memory_hash_remove(addr, sz)
-	void   *addr;
-	int     sz;
+memory_hash_remove(void *addr, int sz)
 {
 	unsigned long bucket = HASHADDR(addr);
 	struct mh_struct *p;

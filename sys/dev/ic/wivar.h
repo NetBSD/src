@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.34 2003/05/20 01:29:35 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34.2.1 2004/08/03 10:46:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -32,6 +32,43 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Radio capture format for Prism. */
+
+#define WI_RX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
+				 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \
+				 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+
+struct wi_rx_radiotap_header {
+	struct ieee80211_radiotap_header	wr_ihdr;
+	u_int8_t				wr_flags;
+	u_int8_t				wr_rate;
+	u_int16_t				wr_chan_freq;
+	u_int16_t				wr_chan_flags;
+	int8_t					wr_antsignal;
+	int8_t					wr_antnoise;
+} __attribute__((__packed__));
+
+#define WI_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct wi_tx_radiotap_header {
+	struct ieee80211_radiotap_header	wt_ihdr;
+	u_int8_t				wt_flags;
+	u_int8_t				wt_rate;
+	u_int16_t				wt_chan_freq;
+	u_int16_t				wt_chan_flags;
+} __attribute__((__packed__));
+
+struct wi_rssdesc {
+	struct ieee80211_rssdesc	rd_desc;
+	SLIST_ENTRY(wi_rssdesc)		rd_next;
+};
+
+typedef SLIST_HEAD(,wi_rssdesc) wi_rssdescq_t;
+
 /*
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
@@ -43,6 +80,9 @@ struct wi_softc	{
 	int			(*sc_enable)(struct wi_softc *);
 	void			(*sc_disable)(struct wi_softc *);
 	void			(*sc_reset)(struct wi_softc *);
+
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
 
 	int			sc_attached;
 	int			sc_enabled;
@@ -59,7 +99,6 @@ struct wi_softc	{
 	bus_space_tag_t		sc_iot;			/* bus cookie */
 	bus_space_handle_t	sc_ioh;			/* bus i/o handle */
 
-	struct ifmedia		sc_media;
 	caddr_t			sc_drvbpf;
 	int			sc_flags;
 	int			sc_bap_id;
@@ -67,7 +106,8 @@ struct wi_softc	{
 
 	u_int16_t		sc_portnum;
 
-	u_int16_t		sc_dbm_adjust;
+	/* RSSI interpretation */
+	u_int16_t		sc_dbm_offset;	/* dBm ~ RSSI - sc_dbm_offset */
 	u_int16_t		sc_max_datalen;
 	u_int16_t		sc_frag_thresh;
 	u_int16_t		sc_rts_thresh;
@@ -82,12 +122,18 @@ struct wi_softc	{
 
 	int			sc_buflen;
 #define	WI_NTXBUF	3
-	struct sc_txdesc {
-		int		d_fid;
-		int		d_len;
+#define	WI_NTXRSS	10
+	struct {
+		int				d_fid;
 	}			sc_txd[WI_NTXBUF];
-	int			sc_txnext;
-	int			sc_txcur;
+	int			sc_txalloc;	/* next FID to allocate */
+	int			sc_txalloced;	/* FIDs currently allocated */
+	int			sc_txqueue;	/* next FID to queue */
+	int			sc_txqueued;	/* FIDs currently queued */
+	int			sc_txstart;	/* next FID to start */
+	int			sc_txstarted;	/* FIDs currently started */
+	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
+	wi_rssdescq_t		sc_rssdfree;
 	int			sc_tx_timer;
 	int			sc_scan_timer;
 	int			sc_syn_timer;
@@ -99,14 +145,40 @@ struct wi_softc	{
 	int 			sc_naps;
 
 	int			sc_false_syns;
+	int			sc_alt_retry;
 
+	union {
+		struct wi_rx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_rxtapu;
+	union {
+		struct wi_tx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_txtapu;
 	u_int16_t		sc_txbuf[IEEE80211_MAX_LEN/2];
+	/* number of transmissions pending at each data rate */
+	u_int8_t		sc_txpending[IEEE80211_RATE_MAXSIZE];
+	struct callout		sc_rssadapt_ch;
 };
+
+#define sc_rxtap	sc_rxtapu.tap
+#define sc_txtap	sc_txtapu.tap
 
 #define	sc_if			sc_ic.ic_if
 
+struct wi_node {
+	struct ieee80211_node		wn_node;
+	struct ieee80211_rssadapt	wn_rssadapt;
+};
+
 /* maximum consecutive false change-of-BSSID indications */
 #define	WI_MAX_FALSE_SYNS		10	
+
+#define	WI_PRISM_DBM_OFFSET	100	/* XXX */
+
+#define	WI_LUCENT_DBM_OFFSET	149
+
+#define	WI_RSSI_TO_DBM(sc, rssi) ((rssi) - (sc)->sc_dbm_offset)
 
 #define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
 #define	WI_SCAN_WAIT			5	/* maximum scan wait */
@@ -115,6 +187,7 @@ struct wi_softc	{
 #define	WI_FLAGS_ATTACHED		0x0001
 #define	WI_FLAGS_INITIALIZED		0x0002
 #define	WI_FLAGS_OUTRANGE		0x0004
+#define	WI_FLAGS_RSSADAPTSTA		0x0008
 #define	WI_FLAGS_HAS_MOR		0x0010
 #define	WI_FLAGS_HAS_ROAMING		0x0020
 #define	WI_FLAGS_HAS_DIVERSITY		0x0040

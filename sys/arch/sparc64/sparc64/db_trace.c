@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.26 2003/01/18 06:55:23 thorpej Exp $ */
+/*	$NetBSD: db_trace.c,v 1.26.2.1 2004/08/03 10:41:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26.2.1 2004/08/03 10:41:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

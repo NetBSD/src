@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.7 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.7.18.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,25 +49,16 @@
  * EPIC transmit descriptor.  Must be 4-byte aligned.
  */
 struct epic_txdesc {
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	et_txlength;	/* transmit length */
-	u_int16_t	et_txstatus;	/* transmit status; see below */
-#else
-	u_int16_t	et_txstatus;	/* transmit status; see below */
-	u_int16_t	et_txlength;	/* transmit length */
-#endif
+	u_int32_t	et_txstatus;	/* transmit status; see below */
 	u_int32_t	et_bufaddr;	/* buffer address */
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	et_control;	/* control word; see below */
-	u_int16_t	et_buflength;	/* buffer length */
-#else
-	u_int16_t	et_buflength;	/* buffer length */
-	u_int16_t	et_control;	/* control word; see below */
-#endif
+	u_int32_t	et_control;	/* control word; see below */
 	u_int32_t	et_nextdesc;	/* next descriptor pointer */
 };
 
 /* et_txstatus */
+#define	TXSTAT_TXLENGTH_SHIFT	16	/* TX length in higher 16bits */
+#define	TXSTAT_TXLENGTH(x)	((x) << TXSTAT_TXLENGTH_SHIFT)
+
 #define	ET_TXSTAT_OWNER		0x8000	/* NIC owns descriptor */
 #define	ET_TXSTAT_COLLMASK	0x1f00	/* collisions */
 #define	ET_TXSTAT_DEFERRING	0x0080	/* deferring due to jabber */
@@ -82,35 +73,29 @@ struct epic_txdesc {
 #define	TXSTAT_COLLISIONS(x)	(((x) & ET_TXSTAT_COLLMASK) >> 8)
 
 /* et_control */
-#define	ET_TXCTL_LASTDESC	0x0010	/* last descriptor in frame */
-#define	ET_TXCTL_NOCRC		0x0008	/* disable CRC generation */
-#define	ET_TXCTL_IAF		0x0004	/* interrupt after frame */
-#define	ET_TXCTL_LFFORM		0x0002	/* alternate fraglist format */
-#define	ET_TXCTL_FRAGLIST	0x0001	/* descriptor points to fraglist */
+#define	TXCTL_BUFLENGTH_MASK	0x0000ffff /* buf length in lower 16bits */
+#define	TXCTL_BUFLENGTH(x)	((x) & TXCTL_BUFLENGTH_MASK)
+
+#define	ET_TXCTL_LASTDESC	0x00100000 /* last descriptor in frame */
+#define	ET_TXCTL_NOCRC		0x00080000 /* disable CRC generation */
+#define	ET_TXCTL_IAF		0x00040000 /* interrupt after frame */
+#define	ET_TXCTL_LFFORM		0x00020000 /* alternate fraglist format */
+#define	ET_TXCTL_FRAGLIST	0x00010000 /* descriptor points to fraglist */
 
 /*
  * EPIC receive descriptor.  Must be 4-byte aligned.
  */
 struct epic_rxdesc {
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	er_rxlength;	/* receive frame length */
-	u_int16_t	er_rxstatus;	/* receive status; see below */
-#else
-	u_int16_t	er_rxstatus;	/* receive status; see below */
-	u_int16_t	er_rxlength;	/* receive frame length */
-#endif
+	u_int32_t	er_rxstatus;	/* receive status; see below */
 	u_int32_t	er_bufaddr;	/* buffer address */
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t	er_control;	/* control word; see below */
-	u_int16_t	er_buflength;	/* buffer length */
-#else
-	u_int16_t	er_buflength;	/* buffer length */
-	u_int16_t	er_control;	/* control word; see below */
-#endif
+	u_int32_t	er_control;	/* control word; see below */
 	u_int32_t	er_nextdesc;	/* next descriptor pointer */
 };
 
 /* er_rxstatus */
+#define	RXSTAT_RXLENGTH_SHIFT	16	/* TX length in higher 16bits */
+#define	RXSTAT_RXLENGTH(x)	((x) >> RXSTAT_RXLENGTH_SHIFT)
+
 #define	ER_RXSTAT_OWNER		0x8000	/* NIC owns descriptor */
 #define	ER_RXSTAT_HDRCOPIED	0x4000	/* rx status posted after hdr copy */
 #define	ER_RXSTAT_FRAGLISTERR	0x2000	/* ran out of frags to copy frame */
@@ -124,9 +109,12 @@ struct epic_rxdesc {
 #define	ER_RXSTAT_PKTINTACT	0x0001	/* packet received without error */
 
 /* er_control */
-#define	ER_RXCTL_HEADER		0x0004	/* descriptor is for hdr copy */
-#define	ER_RXCTL_LFFORM		0x0002	/* alternate fraglist format */
-#define	ER_RXCTL_FRAGLIST	0x0001	/* descriptor points to fraglist */
+#define	RXCTL_BUFLENGTH_MASK	0x0000ffff /* buf length in lower 16bits */
+#define	RXCTL_BUFLENGTH(x)	((x) & RXCTL_BUFLENGTH_MASK)
+
+#define	ER_RXCTL_HEADER		0x00040000 /* descriptor is for hdr copy */
+#define	ER_RXCTL_LFFORM		0x00020000 /* alternate fraglist format */
+#define	ER_RXCTL_FRAGLIST	0x00010000 /* descriptor points to fraglist */
 
 /*
  * This is not really part of the register description, but we need
@@ -346,7 +334,7 @@ struct epic_fraglist {
 #define	IDCHK_ID_MASK		0x0000ff00	/* board ID */
 #define	IDCHK_CKSUM_MASK	0x000000ff	/* checksum (should be 0xff) */
 
-#define	EPIC_MC0		0x50 /* MULTICAST ADDDRESS HASH TABLE */
+#define	EPIC_MC0		0x50 /* MULTICAST ADDRESS HASH TABLE */
 
 #define	EPIC_MC1		0x54
 

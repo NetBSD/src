@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.40 2003/01/06 13:05:11 wiz Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.40.2.1 2004/08/03 10:46:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.40 2003/01/06 13:05:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.40.2.1 2004/08/03 10:46:20 skrll Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -350,7 +350,7 @@ bah_stop(sc)
 /*
  * Start output on interface. Get another datagram to send
  * off the interface queue, and copy it to the
- * interface becore starting the output
+ * interface before starting the output
  *
  * this assumes that it is called inside a critical section...
  * XXX hm... does it still?
@@ -677,7 +677,7 @@ bah_tint(sc, isr)
 
 	/*
 	 * retransmit code:  
-	 * Normal situtations first for fast path:
+	 * Normal situations first for fast path:
 	 * If acknowledgement received ok or broadcast, we're ok.
 	 * else if 
 	 */ 

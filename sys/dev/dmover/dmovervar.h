@@ -1,7 +1,7 @@
-/*	$NetBSD: dmovervar.h,v 1.5 2003/06/14 19:03:40 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.5.2.1 2004/08/03 10:45:57 skrll Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -45,8 +45,9 @@
  * Types of buffers the dmover-api can handle.
  */
 typedef enum {
-	DMOVER_BUF_LINEAR,
-	DMOVER_BUF_UIO
+	DMOVER_BUF_NONE			= 0,
+	DMOVER_BUF_LINEAR		= 1,
+	DMOVER_BUF_UIO			= 2
 } dmover_buffer_type;
 
 typedef struct {
@@ -235,6 +236,9 @@ extern const char dmover_funcname_fill8[];
 extern const char dmover_funcname_copy[];
 #define	DMOVER_FUNC_COPY		dmover_funcname_copy
 
+extern const char dmover_funcname_iscsi_crc32c[];
+#define	DMOVER_FUNC_ISCSI_CRC32C	dmover_funcname_iscsi_crc32c
+
 extern const char dmover_funcname_xor2[];
 #define	DMOVER_FUNC_XOR2		dmover_funcname_xor2
 
@@ -255,6 +259,30 @@ extern const char dmover_funcname_xor7[];
 
 extern const char dmover_funcname_xor8[];
 #define	DMOVER_FUNC_XOR8		dmover_funcname_xor8
+
+extern const char dmover_funcname_xor9[];
+#define	DMOVER_FUNC_XOR9		dmover_funcname_xor9
+
+extern const char dmover_funcname_xor10[];
+#define	DMOVER_FUNC_XOR10		dmover_funcname_xor10
+
+extern const char dmover_funcname_xor11[];
+#define	DMOVER_FUNC_XOR11		dmover_funcname_xor11
+
+extern const char dmover_funcname_xor12[];
+#define	DMOVER_FUNC_XOR12		dmover_funcname_xor12
+
+extern const char dmover_funcname_xor13[];
+#define	DMOVER_FUNC_XOR13		dmover_funcname_xor13
+
+extern const char dmover_funcname_xor14[];
+#define	DMOVER_FUNC_XOR14		dmover_funcname_xor14
+
+extern const char dmover_funcname_xor15[];
+#define	DMOVER_FUNC_XOR15		dmover_funcname_xor15
+
+extern const char dmover_funcname_xor16[];
+#define	DMOVER_FUNC_XOR16		dmover_funcname_xor16
 
 /* Back-end management functions. */
 void	dmover_backend_register(struct dmover_backend *);

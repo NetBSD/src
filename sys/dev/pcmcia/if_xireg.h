@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.3 2001/07/01 01:57:29 gmcgarry Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.3.22.1 2004/08/03 10:50:15 skrll Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*
@@ -84,7 +84,7 @@
 #define ESR	0x0	/* R  - Ethernet status register */
 #define PR	0x1	/* RW - Page register select */
 #define EDP	0x2	/* RW - Ethernet data port, 4 registers */
-#define ISR0	0x6	/* R  - Etherenet interrupt status register */
+#define ISR0	0x6	/* R  - Ethernet interrupt status register */
 #define GIR	0x7	/* RW - Global interrupt register - dingo only */
 #define PTR	0xd	/* R  - Packets Transmitted register */
 

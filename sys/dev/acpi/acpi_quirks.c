@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.1 2003/05/15 21:29:50 fvdl Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.1.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.1 2003/05/15 21:29:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.1.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include "opt_acpi.h"
 
@@ -51,15 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.1 2003/05/15 21:29:50 fvdl Exp $")
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_osd.h>
 
-static struct acpi_quirk acpi_quirks[] = {	
+static struct acpi_quirk acpi_quirks[] = {
 	/*
 	 * This implementation seems to be in widespread use, but
 	 * unfortunately, on some systems, it constructs a PCI hierarchy
 	 * that doesn't match reality at all (like on SuperMicro boards).
 	 */
 	{ "PTLTD ", 0x06040000, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
+	/*
+	 * This is on my Appro 1224 Xi. It does not find all the busses
+	 * in the ACPI tables.
+	 */
+	{ "A M I ", 0x02000304, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
 };
 
 /*
@@ -71,15 +75,13 @@ acpi_find_quirks(void)
 {
 	int i, nquirks;
 	struct acpi_quirk *aqp;
-	ACPI_TABLE_HEADER *ap;
 
-	ap = &AcpiGbl_XSDT->Header;
 	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
 
 	for (i = 0; i < nquirks; i++) {
 		aqp = &acpi_quirks[i];
-		if (!strncmp(aqp->aq_oemid, ap->OemId, strlen(aqp->aq_oemid)) &&
-		    aqp->aq_oemrev == ap->OemRevision)
+		if (!strncmp(aqp->aq_oemid, AcpiGbl_XSDT->OemId, strlen(aqp->aq_oemid)) &&
+		    aqp->aq_oemrev == AcpiGbl_XSDT->OemRevision)
 			return aqp->aq_quirks;
 	}
 	return 0;

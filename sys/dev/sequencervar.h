@@ -1,11 +1,11 @@
-/*	$NetBSD: sequencervar.h,v 1.6 2000/03/23 07:01:27 thorpej Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.6.28.1 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

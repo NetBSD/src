@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.9 2002/10/02 16:02:32 thorpej Exp $ */
+/*      $NetBSD: if_ze.c,v 1.9.6.1 2004/08/03 10:42:22 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.9.6.1 2004/08/03 10:42:22 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -60,7 +63,7 @@
 
 #include "ioconf.h"
 /*
- * Adresses.
+ * Addresses.
  */
 #define SGECADDR        0x20008000
 #define NISA_ROM        0x20084000

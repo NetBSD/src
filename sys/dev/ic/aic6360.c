@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.79 2003/02/21 17:14:06 tsutsui Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.79.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.79 2003/02/21 17:14:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.79.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -823,7 +823,7 @@ abort:
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from aic_scsipi_request and aic_done.  This
- * may save us an unecessary interrupt just to get things going.  Should only
+ * may save us an unnecessary interrupt just to get things going.  Should only
  * be called when state == AIC_IDLE and at bio pl.
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.61 2003/04/10 01:58:21 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.61.2.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61 2003/04/10 01:58:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61.2.1 2004/08/03 10:49:09 skrll Exp $");
+
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +117,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61 2003/04/10 01:58:21 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -157,6 +163,8 @@ static struct vr_type {
 		"VIA VT3043 (Rhine) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 		"VIA VT6102 (Rhine II) 10/100" },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
+		"VIA VT6105 (Rhine III) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 		"VIA VT86C100A (Rhine-II) 10/100" },
 	{ 0, 0, NULL }
@@ -236,6 +244,10 @@ struct vr_softc {
 	int	vr_txlast;		/* last used TX descriptor */
 
 	int	vr_rxptr;		/* next ready RX descriptor */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 #define	VR_CDTXADDR(sc, x)	((sc)->vr_cddma + VR_CDTXOFF((x)))
@@ -270,7 +282,7 @@ do {									\
 	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * register space access macros
@@ -319,27 +331,27 @@ int	vr_copy_small = 0;
 
 #define	VR_SETBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
-		CSR_READ_1(sc, reg) | x)
+	    CSR_READ_1(sc, reg) | (x))
 
 #define	VR_CLRBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
-		CSR_READ_1(sc, reg) & ~x)
+	    CSR_READ_1(sc, reg) & ~(x))
 
 #define	VR_SETBIT16(sc, reg, x)				\
 	CSR_WRITE_2(sc, reg,				\
-		CSR_READ_2(sc, reg) | x)
+	    CSR_READ_2(sc, reg) | (x))
 
 #define	VR_CLRBIT16(sc, reg, x)				\
 	CSR_WRITE_2(sc, reg,				\
-		CSR_READ_2(sc, reg) & ~x)
+	    CSR_READ_2(sc, reg) & ~(x))
 
 #define	VR_SETBIT32(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) | x)
+	    CSR_READ_4(sc, reg) | (x))
 
 #define	VR_CLRBIT32(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) & ~x)
+	    CSR_READ_4(sc, reg) & ~(x))
 
 /*
  * MII bit-bang glue.
@@ -516,7 +528,7 @@ vr_reset(sc)
 			    sc->vr_dev.dv_xname);
 			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
 		}
-	}			
+	}
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -855,6 +867,11 @@ vr_intr(arg)
 
 		handled = 1;
 
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, status);
+#endif
+
 		if (status & VR_ISR_RX_OK)
 			vr_rxeof(sc);
 
@@ -1029,10 +1046,8 @@ vr_start(ifp)
 		 */
 		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
 		d->vr_ctl = htole32(m0->m_pkthdr.len);
-		d->vr_ctl |=
-		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
-		    VR_TXCTL_LASTFRAG);
-		
+		d->vr_ctl |= htole32(VR_TXCTL_FIRSTFRAG | VR_TXCTL_LASTFRAG);
+
 		/*
 		 * If this is the first descriptor we're enqueuing,
 		 * don't give it to the Rhine yet.  That could cause
@@ -1081,7 +1096,7 @@ vr_start(ifp)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Start the transmitter. */
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_TX_GO);
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_GO);
 
 		/* Set the watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1106,8 +1121,19 @@ vr_init(ifp)
 	/* Reset the Rhine to a known state. */
 	vr_reset(sc);
 
+	/* set DMA length in BCR0 and BCR1 */
+	VR_CLRBIT(sc, VR_BCR0, VR_BCR0_DMA_LENGTH);
+	VR_SETBIT(sc, VR_BCR0, VR_BCR0_DMA_STORENFWD);
+
+	VR_CLRBIT(sc, VR_BCR0, VR_BCR0_RX_THRESH);
+	VR_SETBIT(sc, VR_BCR0, VR_BCR0_RXTH_128BYTES);
+
+	VR_CLRBIT(sc, VR_BCR1, VR_BCR1_TX_THRESH);
+	VR_SETBIT(sc, VR_BCR1, VR_BCR1_TXTH_STORENFWD);
+
+	/* set DMA threshold length in RXCFG and TXCFG */
 	VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_THRESH);
-	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_STORENFWD);
+	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_128BYTES);
 
 	VR_CLRBIT(sc, VR_TXCFG, VR_TXCFG_TX_THRESH);
 	VR_SETBIT(sc, VR_TXCFG, VR_TXTHRESH_STORENFWD);
@@ -1421,7 +1447,7 @@ vr_attach(parent, self, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
-	u_int32_t command;
+	u_int32_t pmreg, reg;
 	struct ifnet *ifp;
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, rseg, error;
@@ -1443,39 +1469,40 @@ vr_attach(parent, self, aux)
 	 * Handle power management nonsense.
 	 */
 
-	command = PCI_CONF_READ(VR_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-		command = PCI_CONF_READ(VR_PCI_PWRMGMTCTRL);
-		if (command & VR_PSTATE_MASK) {
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag,
+	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = PCI_CONF_READ(pmreg + PCI_PMCSR);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
 			u_int32_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = PCI_CONF_READ(VR_PCI_LOIO);
 			membase = PCI_CONF_READ(VR_PCI_LOMEM);
-			irq = PCI_CONF_READ(VR_PCI_INTLINE);
+			irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
 
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
-				"-- setting to D0\n",
-				sc->vr_dev.dv_xname, command & VR_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			PCI_CONF_WRITE(VR_PCI_PWRMGMTCTRL, command);
+			    "-- setting to D0\n",
+			    sc->vr_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
+			reg = (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0;
+			PCI_CONF_WRITE(pmreg + PCI_PMCSR, reg);
 
 			/* Restore PCI config data. */
 			PCI_CONF_WRITE(VR_PCI_LOIO, iobase);
 			PCI_CONF_WRITE(VR_PCI_LOMEM, membase);
-			PCI_CONF_WRITE(VR_PCI_INTLINE, irq);
+			PCI_CONF_WRITE(PCI_INTERRUPT_REG, irq);
 		}
 	}
 
 	/* Make sure bus mastering is enabled. */
-	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
-	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
+	reg = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE;
+	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, reg);
 
 	/* Get revision */
-	sc->vr_revid = PCI_CONF_READ(VR_PCI_REVID) & 0x000000FF;
-	
+	sc->vr_revid = PCI_REVISION(pa->pa_class);
+
 	/*
 	 * Map control/status registers.
 	 */
@@ -1551,9 +1578,22 @@ vr_attach(parent, self, aux)
 	 * they've been programmed a special way. Consequently,
 	 * we need to read the node address from the PAR0 and PAR1
 	 * registers.
+	 *
+	 * XXXSCW: On the Rhine III, setting VR_EECSR_LOAD forces a reload
+	 *         of the *whole* EEPROM, not just the MAC address. This is
+	 *         pretty pointless since the chip does this automatically
+	 *         at powerup/reset.
+	 *         I suspect the same thing applies to the other Rhine
+	 *         variants, but in the absence of a data sheet for those
+	 *         (and the lack of anyone else noticing the problems this
+	 *         causes) I'm going to retain the old behaviour for the
+	 *         other parts.
 	 */
-	VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
-	DELAY(200);
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6102) {
+		VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
+		DELAY(200);
+	}
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 
@@ -1666,6 +1706,10 @@ vr_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->vr_enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->vr_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.9 2003/04/18 01:31:34 thorpej Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.9.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.9 2003/04/18 01:31:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.9.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,35 +59,47 @@ struct acpibut_softc {
 	int sc_flags;			/* see below */
 };
 
+static const char * const power_button_hid[] = {
+	"PNP0C0C",
+	NULL
+};
+
+static const char * const sleep_button_hid[] = {
+	"PNP0C0E",
+	NULL
+};
+
 #define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
 
-int	acpibut_match(struct device *, struct cfdata *, void *);
-void	acpibut_attach(struct device *, struct device *, void *);
+static int	acpibut_match(struct device *, struct cfdata *, void *);
+static void	acpibut_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, NULL, NULL);
 
-void	acpibut_pressed_event(void *);
-void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void	acpibut_pressed_event(void *);
+static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
 
 /*
  * acpibut_match:
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpibut_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0C") == 0 ||
-	    strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0E") == 0)
-		return (1);
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid))
+		return 1;
 
-	return (0);
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid))
+		return 1;
+
+	return 0;
 }
 
 /*
@@ -95,7 +107,7 @@ acpibut_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpibut_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibut_softc *sc = (void *) self;
@@ -105,10 +117,10 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0C") == 0) {
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, power_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 		desc = "Power";
-	} else if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C0E") == 0) {
+	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
 		desc = "Sleep";
 	} else {
@@ -128,9 +140,9 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, sc);
-	if (rv != AE_OK) {
-		printf("%s: unable to register device notify handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -145,7 +157,7 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Deal with a button being pressed.
  */
-void
+static void
 acpibut_pressed_event(void *arg)
 {
 	struct acpibut_softc *sc = arg;
@@ -161,7 +173,7 @@ acpibut_pressed_event(void *arg)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpibut_softc *sc = context;
@@ -178,9 +190,10 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpibut_pressed_event, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue button pressed "
-			    "callback: %d\n", sc->sc_dev.dv_xname, rv);
+			    "callback: %s\n", sc->sc_dev.dv_xname,
+			    AcpiFormatException(rv));
 		break;
 
 	/* XXX ACPI_NOTIFY_DeviceWake?? */

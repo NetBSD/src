@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.18 2003/03/19 17:56:58 christos Exp $	*/
+/*	$NetBSD: puc.c,v 1.18.2.1 2004/08/03 10:49:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18 2003/03/19 17:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18.2.1 2004/08/03 10:49:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,9 +279,12 @@ puc_attach(parent, self, aux)
 		paa.type = sc->sc_desc->ports[i].type;
 		paa.flags = sc->sc_desc->ports[i].flags;
 		paa.pc = pa->pa_pc;
+		paa.tag = pa->pa_tag;
 		paa.intrhandle = intrhandle;
 		paa.a = sc->sc_bar_mappings[barindex].a;
 		paa.t = sc->sc_bar_mappings[barindex].t;
+		paa.dmat = pa->pa_dmat;
+		paa.dmat64 = pa->pa_dmat64;
 
 		if (
 #ifdef PUCCN

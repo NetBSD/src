@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80.2.1 2003/07/02 15:25:35 darrenr Exp $     */
+/*	$NetBSD: trap.c,v 1.80.2.2 2004/08/03 10:42:37 skrll Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,9 @@
 
  /* All bugs are subject to removal without further notice */
 		
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.2 2004/08/03 10:42:37 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -124,6 +127,10 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 	int sig;
 	struct proc *p = l->l_proc;
 
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
+
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
@@ -151,7 +158,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
@@ -160,16 +167,18 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 void
 trap(struct trapframe *frame)
 {
-	u_int	sig = 0, type = frame->trap, trapsig = 1;
+	u_int	sig = 0, type = frame->trap, trapsig = 1, code = 0;
 	u_int	rv, addr, umode;
-	struct	lwp *l = curlwp;
-	struct	proc *p = l->l_proc;
+	struct	lwp *l;
+	struct	proc *p = NULL;
 	u_quad_t oticks = 0;
 	struct vmspace *vm;
 	struct vm_map *map;
 	vm_prot_t ftype;
 	vsize_t nss;
 
+	if ((l = curlwp) != NULL)
+		p = l->l_proc;
 	uvmexp.traps++;
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
@@ -220,6 +229,7 @@ fram:
 	case T_ACCFLT|T_USER:
 		if (frame->code < 0) { /* Check for kernel space */
 			sig = SIGSEGV;
+			code = SEGV_ACCERR;
 			break;
 		}
 
@@ -258,9 +268,13 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (umode)
+		if (umode) {
 			KERNEL_PROC_LOCK(l);
-		else
+			if (l->l_flag & L_SA) {
+				l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		} else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 		nss = 0;
@@ -285,6 +299,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
+			code = SEGV_ACCERR;
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
@@ -294,28 +309,42 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				sig = SIGKILL;
 			} else {
 				sig = SIGSEGV;
+				if (rv != EACCES)
+					code = SEGV_MAPERR;
 			}
 		} else {
 			trapsig = 0;
 			if (nss != 0 && nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		}
-		if (umode) 
+		if (umode) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
-		else
+		} else
 			KERNEL_UNLOCK();
 		break;
 
 	case T_BPTFLT|T_USER:
+		sig = SIGTRAP;
+		code = TRAP_BRKPT;
+		break;
 	case T_TRCTRAP|T_USER:
 		sig = SIGTRAP;
+		code = TRAP_TRACE;
 		frame->psl &= ~PSL_T;
 		break;
 
 	case T_PRIVINFLT|T_USER:
+		sig = SIGILL;
+		code = ILL_PRVOPC;
+		break;
 	case T_RESADFLT|T_USER:
+		sig = SIGILL;
+		code = ILL_ILLADR;
+		break;
 	case T_RESOPFLT|T_USER:
 		sig = SIGILL;
+		code = ILL_ILLOPC;
 		break;
 
 	case T_XFCFLT|T_USER:
@@ -341,12 +370,18 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 	}
 	if (trapsig) {
+		ksiginfo_t ksi;
 		if ((sig == SIGSEGV || sig == SIGILL) && cpu_printfataltraps)
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, sig, frame->code);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = sig;
+		ksi.ksi_trap = frame->trap;
+		ksi.ksi_addr = (void *)frame->code;
+		ksi.ksi_code = code;
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 	}
 
@@ -411,12 +446,16 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	KERNEL_PROC_LOCK(l);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err)
+		if (err) {
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
+		}
 	}
 
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args, rval)) != 0)
+	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	err = (*callp->sy_call)(curlwp, args, rval);
 	KERNEL_PROC_UNLOCK(l);

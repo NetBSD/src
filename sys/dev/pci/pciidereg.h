@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.6.24.1 2004/08/03 10:49:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -83,6 +83,7 @@
 
 /* secondary channel registers offset */
 #define IDEDMA_SCH_OFFSET 0x08
+#define IDEDMA_NREGS 8
 
 /* Bus master command register */
 #define IDEDMA_CMD 0x00

@@ -1,4 +1,30 @@
-/*	$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.9.2.1 2004/08/03 10:46:12 skrll Exp $	*/
+
+/*
+ * Copyright (c) 2004 Christopher Gilbert
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1997
@@ -186,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.9.2.1 2004/08/03 10:46:12 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -264,6 +290,9 @@ static int cs_enable(struct cs_softc *);
 static void cs_disable(struct cs_softc *);
 static void cs_stop(struct ifnet *, int);
 static void cs_power(int, void *);
+static int cs_scan_eeprom(struct cs_softc *);
+static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, u_int16_t *);
+
 
 /*
  * GLOBAL DECLARATIONS
@@ -396,6 +425,15 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 			    0, NULL);
 		cs_get_default_media(sc);
 	}
+	
+	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
+		if (cs_scan_eeprom(sc) == CS_ERROR) {
+			/* failed to scan the eeprom, pretend there isn't an eeprom */
+			printf("%s: unable to scan EEPROM\n",
+				    sc->sc_dev.dv_xname);
+			sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
+		}
+	}	
 
 	if ((sc->sc_cfgflags & CFGFLG_NOT_EEPROM) == 0) {
 		/* Get parameters from the EEPROM */
@@ -571,6 +609,141 @@ cs_get_default_media(struct cs_softc *sc)
 	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
 }
 
+/*
+ * cs_scan_eeprom
+ *
+ * Attempt to take a complete copy of the eeprom into main memory.
+ * this will allow faster parsing of the eeprom data.
+ *
+ * Only tested against a 8920M's eeprom, but the data sheet for the
+ * 8920A indicates that is uses the same layout.
+ */
+int 
+cs_scan_eeprom(struct cs_softc *sc)
+{
+	u_int16_t result;
+	int	i;
+	int	eeprom_size;
+	u_int8_t checksum = 0;
+
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
+		printf("%s: cs_scan_params: EEPROM missing or bad\n",
+				sc->sc_dev.dv_xname);
+		return (CS_ERROR);
+	}
+
+	/* 
+	 * read the 0th word from the eeprom, it will tell us the length
+	 * and if the eeprom is valid
+	 */
+	cs_read_eeprom(sc, 0, &result);
+
+	/* check the eeprom signature */
+	if ((result & 0xE000) != 0xA000) {
+		/* empty eeprom */
+		return (CS_ERROR);
+	}
+
+	/* 
+	 * take the eeprom size (note the read value doesn't include the header
+	 * word)
+	 */
+	eeprom_size = (result & 0xff) + 2;
+
+	sc->eeprom_data = malloc(eeprom_size, M_DEVBUF, M_WAITOK);
+	if (sc->eeprom_data == NULL) {
+		/* no memory, treat this as if there's no eeprom */
+		return (CS_ERROR);
+	}
+	
+	sc->eeprom_size = eeprom_size;
+
+	/* read the eeprom into the buffer, also calculate the checksum  */
+	for (i = 0; i < (eeprom_size >> 1); i++) {
+		cs_read_eeprom(sc, i, &(sc->eeprom_data[i]));
+		checksum += (sc->eeprom_data[i] & 0xff00) >> 8;
+		checksum += (sc->eeprom_data[i] & 0x00ff);
+	}
+
+	/* 
+	 * validate checksum calculation, the sum of all the bytes should be 0,
+	 * as the high byte of the last word is the 2's complement of the
+	 * sum to that point.
+	 */
+	if (checksum != 0) {
+		printf("%s: eeprom checksum failure\n", sc->sc_dev.dv_xname);
+		return (CS_ERROR);
+	}
+
+	return (CS_OK);
+}
+
+static int 
+cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, u_int16_t *pValue)
+{
+	int x, maxword;
+
+	/* Check that we have eeprom data */
+	if (sc->eeprom_data == NULL && (sc->eeprom_size > 2))
+		return (CS_ERROR);
+
+	/*
+	 * We only want to read the data words, the last word contains the
+	 * checksum
+	 */
+	maxword = (sc->eeprom_size - 2) >> 1;
+
+	/* start 1 word in, as the first word is the length and signature */
+	x = 1;
+
+	while ( x < (maxword)) {
+		u_int16_t header;
+		int group_size;
+		int offset;
+		int offset_max;
+
+		/* read in the group header word */
+		header = sc->eeprom_data[x];
+		x++;	/* skip group header */
+
+		/* 
+		 * size of group in words is in the top 4 bits, note that it
+		 * is one less than the number of words
+		 */
+		group_size = header & 0xF000;
+
+		/* 
+		 * CS8900 Data sheet says this should be 0x01ff,
+		 * but my cs8920 eeprom has higher offsets, 
+		 * perhaps the 8920 allows higher offsets, otherwise 
+		 * it's writing to places that it shouldn't
+		 */
+		/* work out the offsets this group covers */
+		offset = header & 0x0FFF;
+		offset_max = offset + (group_size << 1);
+
+		/* check if the pkgpg we're after is in this group */
+		if ((offset <= pktpg) && (pktpg <= offset_max)) {
+			/* the pkgpg value we want is in here */
+			int eeprom_location;
+			
+			eeprom_location = ((pktpg - offset) >> 1) ;
+			
+			*pValue = sc->eeprom_data[x + eeprom_location]; 
+			return (CS_OK);
+		} else {
+			/* skip this group (+ 1 for first entry) */
+			x += group_size + 1;
+		}
+	}
+
+	/*
+	 * if we've fallen out here then we don't have a value in the EEPROM
+	 * for this pktpg so return an error 
+	 */
+	return (CS_ERROR);
+}
+
 int 
 cs_get_params(struct cs_softc *sc)
 {
@@ -583,31 +756,58 @@ cs_get_params(struct cs_softc *sc)
 		return (CS_ERROR);
 	}
 
-	/* Get ISA configuration from the EEPROM */
-	if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
-		goto eeprom_bad;
+	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
+		/* Get ISA configuration from the EEPROM */
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_BUS_CTL, &isaConfig)
+			       	== CS_ERROR) {
+			/* eeprom doesn't have this value, use data sheet default */
+			isaConfig = 0x0017;
+		}
 
-	/* Get adapter configuration from the EEPROM */
-	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
-		goto eeprom_bad;
+		/* Get adapter configuration from the EEPROM */
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_SELF_CTL, &adapterConfig)
+				== CS_ERROR) {
+			/* eeprom doesn't have this value, use data sheet default */
+			adapterConfig = 0x0015;
+		}
 
-	/* Copy the USE_SA flag */
-	if (isaConfig & ISA_CFG_USE_SA)
-		sc->sc_cfgflags |= CFGFLG_USE_SA;
+		/* Copy the USE_SA flag */
+		if (isaConfig & BUS_CTL_USE_SA)
+			sc->sc_cfgflags |= CFGFLG_USE_SA;
 
-	/* Copy the IO Channel Ready flag */
-	if (isaConfig & ISA_CFG_IOCHRDY)
-		sc->sc_cfgflags |= CFGFLG_IOCHRDY;
+		/* Copy the IO Channel Ready flag */
+		if (isaConfig & BUS_CTL_IOCHRDY)
+			sc->sc_cfgflags |= CFGFLG_IOCHRDY;
 
-	/* Copy the DC/DC Polarity flag */
-	if (adapterConfig & ADPTR_CFG_DCDC_POL)
-		sc->sc_cfgflags |= CFGFLG_DCDC_POL;
+		/* Copy the DC/DC Polarity flag */
+		if (adapterConfig & SELF_CTL_HCB1)
+			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
+	} else {
+		/* Get ISA configuration from the EEPROM */
+		if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
+			goto eeprom_bad;
+
+		/* Get adapter configuration from the EEPROM */
+		if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
+			goto eeprom_bad;
+
+		/* Copy the USE_SA flag */
+		if (isaConfig & ISA_CFG_USE_SA)
+			sc->sc_cfgflags |= CFGFLG_USE_SA;
+
+		/* Copy the IO Channel Ready flag */
+		if (isaConfig & ISA_CFG_IOCHRDY)
+			sc->sc_cfgflags |= CFGFLG_IOCHRDY;
+
+		/* Copy the DC/DC Polarity flag */
+		if (adapterConfig & ADPTR_CFG_DCDC_POL)
+			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
+	}
 
 	return (CS_OK);
-
- eeprom_bad:
+eeprom_bad:
 	printf("%s: cs_get_params: unable to read from EEPROM\n",
-	    sc->sc_dev.dv_xname);
+			sc->sc_dev.dv_xname);
 	return (CS_ERROR);
 }
 
@@ -626,12 +826,24 @@ cs_get_enaddr(struct cs_softc *sc)
 
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
-		goto eeprom_bad;
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
-		goto eeprom_bad;
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
-		goto eeprom_bad;
+	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_IND_ADDR, &myea[0])
+				== CS_ERROR)
+			goto eeprom_bad;
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_IND_ADDR + 2, &myea[1])
+				== CS_ERROR)
+			goto eeprom_bad;
+		if (cs_read_pktpg_from_eeprom(sc, PKTPG_IND_ADDR + 4, &myea[2])
+				== CS_ERROR)
+			goto eeprom_bad;
+	} else {
+		if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
+			goto eeprom_bad;
+		if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
+			goto eeprom_bad;
+		if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
+			goto eeprom_bad;
+	}
 
 	return (CS_OK);
 
@@ -1286,9 +1498,6 @@ cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
 void 
 cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 {
-	struct ifnet *ifp;
-
-	ifp = &sc->sc_ethercom.ec_if;
 
 	/*
 	 * multiple events can be in the buffer event register at one time so
@@ -1492,7 +1701,7 @@ cs_process_receive(struct cs_softc *sc)
 	int totlen;
 	u_int16_t *pBuff, *pBuffLimit;
 	int pad;
-	unsigned int frameOffset;
+	unsigned int frameOffset = 0;	/* XXX: gcc */
 
 #ifdef SHARK
 	ledNetActive();
@@ -1520,7 +1729,8 @@ cs_process_receive(struct cs_softc *sc)
 	}
 
 	if (totlen > ETHER_MAX_LEN) {
-		printf("%s: invalid packet length\n", sc->sc_dev.dv_xname);
+		printf("%s: invalid packet length %d\n",
+		    sc->sc_dev.dv_xname, totlen);
 
 		/* skip the received frame */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsdmareg.h,v 1.1 2003/03/05 22:08:23 matt Exp $	*/
+/*	$NetBSD: gtsdmareg.h,v 1.1.2.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #define SDMA_SDC_BLMR		BIT(6)		/* RX Big=0 Lil=1 Endian mode */
 #define SDMA_SDC_BLMT		BIT(7)		/* TX Big=0 Lil=1 Endian mode */
 #define SDMA_SDC_POVR		BIT(8)		/* PCI Override */
-#define SDMA_SDC_RIFB		BIT(9)		/* RX Intr on Frame boundries */
+#define SDMA_SDC_RIFB		BIT(9)		/* RX Intr on Frame boundaries */
 #define SDMA_SDC_RESa		BITS(11,10)
 #define SDMA_SDC_BSZ_MASK	BITS(13,12)	/* Maximum Burst Size */
 #define SDMA_SDC_BSZ_1x64	(0 << 12)	/* 1 64 bit word */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2003/01/19 16:47:17 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.6.2.1 2004/08/03 10:44:35 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -54,6 +54,7 @@
 #include <compat/svr4_32/svr4_32_statvfs.h>
 #include <compat/svr4_32/svr4_32_resource.h>
 #include <compat/svr4_32/svr4_32_acl.h>
+#include <compat/svr4_32/svr4_32_schedctl.h>
 
 %%
 
@@ -332,7 +333,7 @@
 203	NOARGS		{ int netbsd32_setregid(int rgid, int egid); }
 204	UNIMPL		install_utrap
 205	UNIMPL		signotify
-206	UNIMPL		schedctl
+206	STD		{ int svr4_32_sys_schedctl(unsigned int x, int y, void **z); }
 207	UNIMPL		pset
 208	UNIMPL		sparc_utrap_install
 209	STD		{ int svr4_32_sys_resolvepath(const netbsd32_charp path, \

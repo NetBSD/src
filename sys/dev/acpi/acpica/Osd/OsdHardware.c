@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.4.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,27 +66,27 @@ __KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp 
  *	Read a value from an input port.
  */
 ACPI_STATUS
-AcpiOsReadPort(ACPI_IO_ADDRESS Address, void *Value, UINT32 Width)
+AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32 *Value, UINT32 Width)
 {
 
 	switch (Width) {
 	case 8:
-		*(uint8_t *) Value = acpi_md_OsIn8(Address);
+		*Value = acpi_md_OsIn8(Address);
 		break;
 
 	case 16:
-		*(uint16_t *) Value = acpi_md_OsIn16(Address);
+		*Value = acpi_md_OsIn16(Address);
 		break;
 
 	case 32:
-		*(uint32_t *) Value = acpi_md_OsIn32(Address);
+		*Value = acpi_md_OsIn32(Address);
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -95,7 +95,7 @@ AcpiOsReadPort(ACPI_IO_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to an output port.
  */
 ACPI_STATUS
-AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
+AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width)
 {
 
 	switch (Width) {
@@ -112,10 +112,10 @@ AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -124,26 +124,26 @@ AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
  *	Read a value from a memory location.
  */
 ACPI_STATUS
-AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
+AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv;
 
 	rv = AcpiOsMapMemory(Address, Width / 8, &LogicalAddress);
 	if (rv != AE_OK)
-		return (rv);
+		return rv;
 
 	switch (Width) {
 	case 8:
-		*(uint8_t *) Value = *(__volatile uint8_t *) LogicalAddress;
+		*Value = *(__volatile uint8_t *) LogicalAddress;
 		break;
 
 	case 16:
-		*(uint16_t *) Value = *(__volatile uint16_t *) LogicalAddress;
+		*Value = *(__volatile uint16_t *) LogicalAddress;
 		break;
 
 	case 32:
-		*(uint32_t *) Value = *(__volatile uint32_t *) LogicalAddress;
+		*Value = *(__volatile uint32_t *) LogicalAddress;
 		break;
 
 	default:
@@ -152,7 +152,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
 
 	AcpiOsUnmapMemory(LogicalAddress, Width / 8);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -161,15 +161,14 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to a memory location.
  */
 ACPI_STATUS
-AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, ACPI_INTEGER Value,
-    UINT32 Width)
+AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv;
 
 	rv = AcpiOsMapMemory(Address, Width / 8, &LogicalAddress);
 	if (rv != AE_OK)
-		return (rv);
+		return rv;
 
 	switch (Width) {
 	case 8:
@@ -190,7 +189,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, ACPI_INTEGER Value,
 
 	AcpiOsUnmapMemory(LogicalAddress, Width / 8);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -217,7 +216,7 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
 		break;
 
 	case 16:
-		*(uint16_t *) Value = (tmp >> ((Register & 1) * 8)) & 0xffff;
+		*(uint16_t *) Value = (tmp >> ((Register & 3) * 8)) & 0xffff;
 		break;
 
 	case 32:
@@ -225,10 +224,10 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -256,9 +255,9 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 		break;
 
 	case 16:
-		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~1);
-		tmp &= ~(0xffff << ((Register & 1) * 8));
-		tmp |= (Value << ((Register & 1) * 8));
+		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~3);
+		tmp &= ~(0xffff << ((Register & 3) * 8));
+		tmp |= (Value << ((Register & 3) * 8));
 		break;
 
 	case 32:
@@ -266,18 +265,74 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
 	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
 
-	return (AE_OK);
+	return AE_OK;
+}
+
+/* get PCI bus# from root bridge recursively */
+static int
+get_bus_number(
+    ACPI_HANDLE        rhandle,
+    ACPI_HANDLE        chandle,
+    ACPI_PCI_ID        **PciId)
+{
+	ACPI_HANDLE handle;
+	ACPI_STATUS rv;
+	ACPI_OBJECT_TYPE type;
+	ACPI_PCI_ID *id;
+	ACPI_INTEGER v;
+	int bus;
+
+	id = *PciId;
+
+	rv = AcpiGetParent(chandle, &handle);
+	if (ACPI_FAILURE(rv))
+		return 0;
+
+	/*
+	 * When handle == rhandle, we have valid PciId->Bus
+	 * which was obtained from _BBN in evrgnini.c
+	 * so we don't have to reevaluate _BBN.
+	 */
+	if (handle != rhandle) {
+		bus = get_bus_number(rhandle, handle, PciId);
+
+		rv = AcpiGetType(handle, &type);
+		if (ACPI_FAILURE(rv) || type != ACPI_TYPE_DEVICE)
+			return bus;
+
+		rv = acpi_eval_integer(handle, METHOD_NAME__ADR, &v);
+
+		if (ACPI_FAILURE(rv))
+			return bus;
+
+		id->Bus = bus;
+		id->Device = ACPI_HIWORD((ACPI_INTEGER)v);
+		id->Function = ACPI_LOWORD((ACPI_INTEGER)v);
+
+		/* read HDR_TYPE register */
+		rv = AcpiOsReadPciConfiguration(id, 0x0e, &v, 8);
+		if (ACPI_SUCCESS(rv) &&
+			/* mask multifunction bit & check bridge type */
+			((v & 0x7f) == 1 || (v & 0x7f) == 2)) {
+			/* read SECONDARY_BUS register */
+			rv = AcpiOsReadPciConfiguration(id, 0x19, &v, 8);
+			if (ACPI_SUCCESS(rv))
+				id->Bus = v;
+		}
+	}
+
+	return id->Bus;
 }
 
 /*
  * AcpiOsDerivePciId:
  *
- *     Interim function needed for PCI IRQ routing.
+ * Derive correct PCI bus# by traversing bridges
  */
 void
 AcpiOsDerivePciId(
@@ -285,5 +340,5 @@ AcpiOsDerivePciId(
     ACPI_HANDLE        chandle,
     ACPI_PCI_ID        **PciId)
 {
-       /* XXX TBD */
+	(*PciId)->Bus = get_bus_number(rhandle, chandle, PciId);
 }

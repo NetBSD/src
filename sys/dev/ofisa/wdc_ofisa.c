@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.12.2.1 2004/08/03 10:49:05 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.1 2004/08/03 10:49:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $");
 
 struct wdc_ofisa_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanlist[1];	
-	struct channel_softc wdc_channel;
-	struct channel_queue wdc_chqueue;
+	struct wdc_channel *wdc_chanlist[1];	
+	struct wdc_channel wdc_channel;
+	struct ata_queue wdc_chqueue;
 	void	*sc_ih;
 };
 
@@ -100,6 +100,7 @@ wdc_ofisa_attach(parent, self, aux)
 	struct ofisa_reg_desc reg[2];
 	struct ofisa_intr_desc intr;
 	int n;
+	bus_space_handle_t ioh;
 
 	/*
 	 * We're living on an ofw.  We have to ask the OFW what our
@@ -135,13 +136,22 @@ wdc_ofisa_attach(parent, self, aux)
 	    (reg[0].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
 	sc->wdc_channel.ctl_iot =
 	    (reg[1].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-        if (bus_space_map(sc->wdc_channel.cmd_iot, reg[0].addr, 8, 0,
-              &sc->wdc_channel.cmd_ioh) ||
+        if (bus_space_map(sc->wdc_channel.cmd_iot, reg[0].addr, 8, 0, &ioh) ||
             bus_space_map(sc->wdc_channel.ctl_iot, reg[1].addr, 1, 0,
 	      &sc->wdc_channel.ctl_ioh)) {
                 printf(": can't map register spaces\n");
 		return;
         }
+	sc->wdc_channel.cmd_baseioh = ioh;
+
+	for (n = 0; n < WDC_NREG; n++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot, ioh, n,
+		    n == 0 ? 4 : 1, &sc->wdc_channel.cmd_iohs[n]) != 0) {
+                	printf(": can't subregion register space\n");
+			return;
+		}
+	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_BIO, wdcintr, &sc->wdc_channel);
@@ -151,11 +161,11 @@ wdc_ofisa_attach(parent, self, aux)
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.channel = 0;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_channel = 0;
+	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+
 	wdcattach(&sc->wdc_channel);
-	wdc_print_modes(&sc->wdc_channel);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);

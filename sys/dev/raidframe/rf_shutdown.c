@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.13 2002/09/23 03:42:50 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.13.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13 2002/09/23 03:42:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_archs.h"
 #include "rf_shutdown.h"
-#include "rf_freelist.h"
+#include "rf_debugMem.h"
 
 
 #ifndef RF_DEBUG_SHUTDOWN
@@ -50,18 +50,20 @@ __KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13 2002/09/23 03:42:50 oster Exp $
 static void rf_FreeShutdownEnt(RF_ShutdownList_t *);
 
 static void 
-rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
+rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
 	FREE(ent, M_RAIDFRAME);
 }
 
-int 
-_rf_ShutdownCreate(
-    RF_ShutdownList_t ** listp,
-    void (*cleanup) (void *arg),
-    void *arg,
-    char *file,
-    int line)
+#if RF_DEBUG_SHUTDOWN
+void
+_rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
+		   void *arg, char *file, int line)
+#else
+void
+_rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
+		   void *arg)
+#endif
 {
 	RF_ShutdownList_t *ent;
 
@@ -72,20 +74,19 @@ _rf_ShutdownCreate(
 	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
 		M_RAIDFRAME, M_WAITOK); */
 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
-					   M_RAIDFRAME, M_NOWAIT);
-	if (ent == NULL)
-		return (ENOMEM);
+					   M_RAIDFRAME, M_WAITOK);
 	ent->cleanup = cleanup;
 	ent->arg = arg;
+#if RF_DEBUG_SHUTDOWN
 	ent->file = file;
 	ent->line = line;
+#endif
 	ent->next = *listp;
 	*listp = ent;
-	return (0);
 }
 
-int 
-rf_ShutdownList(RF_ShutdownList_t ** list)
+void
+rf_ShutdownList(RF_ShutdownList_t **list)
 {
 	RF_ShutdownList_t *r, *next;
 #if RF_DEBUG_SHUTDOWN
@@ -112,5 +113,4 @@ rf_ShutdownList(RF_ShutdownList_t ** list)
 		rf_FreeShutdownEnt(r);
 	}
 	*list = NULL;
-	return (0);
 }

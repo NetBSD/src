@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.7 2001/06/10 08:27:42 scw Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.7.22.1 2004/08/03 10:46:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct clmpcc_chan {
 	struct tty	*ch_tty;	/* This channel's tty structure */
 	struct clmpcc_softc *ch_sc;	/* Pointer to chip's softc structure */
 	u_char		ch_car;		/* Channel number (CD2400_REG_CAR) */
-	u_char		ch_openflags;	/* Persistant TIOC flags */
+	u_char		ch_openflags;	/* Persistent TIOC flags */
 	volatile u_short ch_flags;	/* Various channel-specific flags */
 #define	CLMPCC_FLG_IS_CONSOLE	0x0001	/* Channel is system console */
 #define CLMPCC_FLG_START_BREAK 	0x0002
@@ -108,9 +108,9 @@ struct clmpcc_softc {
 	int		sc_clk;		/* Clock-rate, in Hz */
 	struct evcnt	*sc_evcnt;	/* Parent Event Counter (or NULL) */
 	u_char		sc_vector_base;	/* Vector base reg, or 0 for auto */
-	u_char		sc_rpilr;	/* Receive Priority Interupt Level */
-	u_char		sc_tpilr;	/* Transmit Priority Interupt Level */
-	u_char		sc_mpilr;	/* Modem Priority Interupt Level */
+	u_char		sc_rpilr;	/* Receive Priority Interrupt Level */
+	u_char		sc_tpilr;	/* Transmit Priority Interrupt Level */
+	u_char		sc_mpilr;	/* Modem Priority Interrupt Level */
 	int		sc_swaprtsdtr;	/* Non-zero if RTS and DTR swapped */
 	u_int		sc_byteswap;	/* One of the following ... */
 #define CLMPCC_BYTESWAP_LOW	0x00	/* *byteswap pin is low */

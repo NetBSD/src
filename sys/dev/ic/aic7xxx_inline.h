@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.3 2003/05/03 18:11:15 wiz Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.3.2.1 2004/08/03 10:46:10 skrll Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -234,7 +234,7 @@ ahc_name(struct ahc_softc *ahc)
 	return (ahc->name);
 }
 
-/*********************** Miscelaneous Support Functions ***********************/
+/*********************** Miscellaneous Support Functions ***********************/
 
 static __inline void	ahc_update_residual(struct ahc_softc *ahc,
 					    struct scb *scb);
@@ -464,7 +464,7 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 	ahc->qinfifo[ahc->qinfifonext++] = scb->hscb->tag;
 
 	/*
-	 * Make sure our data is consistant from the
+	 * Make sure our data is consistent from the
 	 * perspective of the adapter.
 	 */
 	ahc_sync_scb(ahc, scb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -515,7 +515,7 @@ ahc_minphys(bp)
  * Even though the card can transfer up to 16megs per command
  * we are limited by the number of segments in the DMA segment
  * list that we can hold.  The worst case is that all pages are
- * discontinuous physically, hense the "page per segment" limit
+ * discontinuous physically, hence the "page per segment" limit
  * enforced here.
  */
         if (bp->b_bcount > AHC_MAXTRANSFER_SIZE) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              xRevision: 96 $
+ *              xRevision: 98 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.8 2003/03/04 17:25:12 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.8.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -183,6 +184,7 @@ enum AcpiExDebuggerCommands
     CMD_TERMINATE,
     CMD_THREADS,
     CMD_TREE,
+    CMD_TYPE,
     CMD_UNLOAD
 };
 
@@ -240,6 +242,7 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
     {"TERMINATE",    0},
     {"THREADS",      3},
     {"TREE",         0},
+    {"TYPE",         1},
     {"UNLOAD",       1},
     {NULL,           0}
 };
@@ -801,6 +804,10 @@ AcpiDbCommandDispatch (
 
     case CMD_TREE:
         AcpiDbDisplayCallingTree ();
+        break;
+
+    case CMD_TYPE:
+        AcpiDbDisplayObjectType (AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_UNLOAD:

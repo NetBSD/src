@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.1.20.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -153,6 +153,7 @@
 
 /* EEPROM Offsets */
 
+#define EEPROM_MAC		0x0009
 #define EEPROM_IND_ADDR_H	0x001C
 #define EEPROM_IND_ADDR_M	0x001D
 #define EEPROM_IND_ADDR_L	0x001E
@@ -190,6 +191,9 @@
 
 /* EEPROM Command Register */
 
+#define EEPROM_WRITE_DISABLE	0x0000
+#define EEPROM_WRITE_ENABLE	0x00F0
+#define EEPROM_CMD_WRITE	0x0100
 #define EEPROM_CMD_READ		0x0200
 #define EEPROM_CMD_ELSEL	0x0400
 

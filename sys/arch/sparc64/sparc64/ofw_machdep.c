@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.16.22.1 2004/08/03 10:41:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16.22.1 2004/08/03 10:41:37 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -38,15 +42,15 @@
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/kprintf.h>
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 
 #include <machine/openfirm.h>
+#include <machine/promlib.h>
 
-#if defined(FFS) && defined(CD9660)
-#include <ufs/ffs/fs.h>
-#endif
+#include <dev/ofw/ofw_pci.h>
 
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
@@ -55,13 +59,6 @@
 #include <machine/stdarg.h>
 
 #include <machine/sparc64.h>
-
-int vsprintf __P((char *, const char *, va_list));
-
-void dk_cleanup __P((void));
-#if defined(FFS) && defined(CD9660)
-static int dk_match_ffs __P((void));
-#endif
 
 static u_int mmuh = -1, memh = -1;
 
@@ -267,7 +264,7 @@ prom_free_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_free_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -302,7 +299,7 @@ prom_unmap_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -430,7 +427,7 @@ prom_claim_phys(phys, len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_alloc_phys: cannot get memh\r\n");
+		prom_printf("prom_claim_phys: cannot get memh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -510,12 +507,14 @@ prom_get_msgbuf(len, align)
 	int rooth;
 	int is_e250 = 1;
 
-	/* E250s tend to have buggy PROMs that break on test-method */
+	/* E250s and E450s tend to have buggy PROMs that break on test-method */
+	/* XXX - need to find the reason why this breaks someday */
 	if ((rooth = OF_finddevice("/")) != -1) {
 		char name[80];
 
 		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250")) 
+			if (strcmp(name, "SUNW,Ultra-250")
+			    && strcmp(name, "SUNW,Ultra-4")) 
 				is_e250 = 0;
 		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
 	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
@@ -555,63 +554,53 @@ prom_get_msgbuf(len, align)
 	return addr; /* Kluge till we go 64-bit */
 }
 
-/* 
- * Low-level prom I/O routines.
- */
-
-static u_int stdin = NULL;
-static u_int stdout = NULL;
-
-int 
-OF_stdin() 
-{
-	u_int chosen;
-
-	if (stdin != NULL) 
-		return stdin;
-		
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
-	return stdin;
-}
-
-int
-OF_stdout()
-{
-	u_int chosen;
-
-	if (stdout != NULL) 
-		return stdout;
-		
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	return stdout;
-}
-
-
+#ifdef MULTIPROCESSOR
 /*
- * print debug info to prom. 
- * This is not safe, but then what do you expect?
+ * Start secondary cpu, arrange 'func' as the entry.
  */
 void
-#ifdef __STDC__
-prom_printf(const char *fmt, ...)
-#else
-prom_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
+prom_startcpu(u_int cpu, void *func, u_long arg)
 {
-	int len;
-	static char buf[256];
-	va_list ap;
+        static struct {
+                cell_t  name;
+                cell_t  nargs;
+                cell_t  nreturns;
+                cell_t  cpu;
+                cell_t  func;
+                cell_t  arg;
+        } args;
 
-	va_start(ap, fmt);
-	len = vsprintf(buf, fmt, ap);
-	va_end(ap);
+	args.name = ADR2CELL(&"SUNW,start-cpu");
+	args.nargs = 3;
+	args.nreturns = 0;
+        args.cpu = cpu;
+        args.func = (cell_t)func;
+        args.arg = (cell_t)arg;
 
-	OF_write(OF_stdout(), buf, len);
+        openfirmware(&args);
 }
+
+/*
+ * Stop the calling cpu.
+ */
+void
+prom_stopself(void)
+{
+	extern void openfirmware_exit(void*);
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+	} args;
+
+	args.name = ADR2CELL(&"SUNW,stop-self");
+	args.nargs = 0;
+	args.nreturns = 0;
+
+	openfirmware_exit(&args);
+	panic("sun4u_stopself: failed.");
+}
+#endif
 
 #ifdef DEBUG
 int ofmapintrdebug = 0;
@@ -660,6 +649,27 @@ compare_cells(int *cell1, int *cell2, int *mask, int ncells)
 }
 
 /*
+ * Find top pci bus host controller for a node.
+ */
+static int
+find_pci_host_node(int node)
+{
+	char dev_type[16];
+	int pch = 0;
+	int len;
+
+	for (; node; node = OF_parent(node)) {
+		len = OF_getprop(node, "device_type",
+				 &dev_type, sizeof(dev_type));
+		if (len <= 0)
+			continue;
+		if (!strcmp(dev_type, "pci"))
+			pch = node;
+	}
+	return pch;
+}
+
+/*
  * Follow the OFW algorithm and return an interrupt specifier.
  *
  * Pass in the interrupt specifier you want mapped and the node
@@ -675,6 +685,13 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int interrupt_map[100];
 	int interrupt_map_mask[10];
 	int reg[10];
+	char dev_type[32];
+	int phc_node;
+	int rc = -1;
+
+	/* Don't need to map OBP interrupt, it's already */
+	if (*interrupt & 0x20)
+		return validlen;
 
 	/*
 	 * If there is no interrupt map in the bus node, we 
@@ -695,20 +712,36 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		return (-1);
 	}
 
+	phc_node = find_pci_host_node(node);
+
 	for (; node; node = OF_parent(node)) {
 #ifdef DEBUG
 		char name[40];
 
 		if (ofmapintrdebug) {
 			OF_getprop(node, "name", &name, sizeof(name));
-			printf("Node %s\n", name);
+			printf("Node %s (%x), host %x\n", name,
+			       node, phc_node);
 		}
 #endif
 
 		if ((interrupt_map_len = OF_getprop(node,
 			"interrupt-map", &interrupt_map,
 			sizeof(interrupt_map))) <= 0) {
+
+			/* Swizzle interrupt if this is a PCI bridge. */
+			if (((len = OF_getprop(node, "device_type", &dev_type,
+					      sizeof(dev_type))) > 0) &&
+			    !strcmp(dev_type, "pci") &&
+			    (node != phc_node)) {
+				*interrupt = ((*interrupt +
+				    OFW_PCI_PHYS_HI_DEVICE(reg[0]) - 1) & 3) + 1;
+				DPRINTF(("OF_mapintr: interrupt %x, reg[0] %x\n",
+					 *interrupt, reg[0]));
+			}
+
 			/* Get reg for next level compare. */
+			reg[0] = 0;
 			OF_getprop(node, "reg", &reg, sizeof(reg));
 			continue;
 		}
@@ -797,7 +830,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 #endif
 				for (i=0; i<pintr_cells; i++)
 					interrupt[i] = parent[i];
-				validlen = pintr_cells;
+				rc = validlen = pintr_cells;
 				break;
 			}
 			/* Move on to the next interrupt_map entry. */
@@ -820,5 +853,5 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		DPRINTF(("reg len %d\n", len));
 
 	} 
-	return (validlen);
+	return (rc);
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2003/01/18 08:02:46 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.42.2.1 2004/08/03 10:43:53 skrll Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -179,8 +179,7 @@
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
 74	STD		{ int linux_sys_mprotect(const void *start, \
 			    unsigned long len, int prot); }
-; Linux sys_madvise just returns 0.
-75	UNIMPL		madvise
+75	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 76	UNIMPL		vhangup
 77	UNIMPL
 78	UNIMPL
@@ -601,7 +600,67 @@
 372	UNIMPL		getresgid
 373	UNIMPL		sys_dipc
 374	UNIMPL		pivot_root
-375	UNIMPL		mincore
+375	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 376	UNIMPL		pciconfig_iobase
 377	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
+378	UNIMPL		gettid
+379	UNIMPL		readahead
+380	UNIMPL		/* unused */
+381	UNIMPL		tkill
+382	UNIMPL		setxattr
+383	UNIMPL		lsetxattr
+384	UNIMPL		fsetxattr
+385	UNIMPL		getxattr
+386	UNIMPL		lgetxattr
+387	UNIMPL		fgetxattr
+388	UNIMPL		listxattr
+389	UNIMPL		llistxattr
+390	UNIMPL		flistxattr
+391	UNIMPL		removexattr
+392	UNIMPL		lremovexattr
+393	UNIMPL		fremovexattr
+394	UNIMPL		futex
+395	UNIMPL		sched_setaffinity
+396	UNIMPL		sched_getaffinity
+397	UNIMPL		tuxcall
+398	UNIMPL		io_setup
+399	UNIMPL		io_destroy
+400	UNIMPL		io_getevents
+401	UNIMPL		io_submit
+402	UNIMPL		io_cancel
+403	UNIMPL		/* unused */
+404	UNIMPL		/* unused */
+405	UNIMPL		exit_group
+406	UNIMPL		lookup_dcookie
+407	UNIMPL		sys_epoll_create
+408	UNIMPL		sys_epoll_ctl
+409	UNIMPL		sys_epoll_wait
+410	UNIMPL		remap_file_pages
+411	UNIMPL		set_tid_address
+412	UNIMPL		restart_syscall
+413	UNIMPL		fadvise64
+414	UNIMPL		timer_create
+415	UNIMPL		timer_settime
+416	UNIMPL		timer_gettime
+417	UNIMPL		timer_getoverrun
+418	UNIMPL		timer_delete
+419	UNIMPL		clock_settime
+420	UNIMPL		clock_gettime
+421	UNIMPL		clock_getres
+422	UNIMPL		clock_nanosleep
+423	UNIMPL		semtimedop
+424	UNIMPL		tgkill
+425	UNIMPL		stat64
+426	UNIMPL		lstat64
+427	UNIMPL		fstat64
+428	UNIMPL		vserver
+429	UNIMPL		mbind
+430	UNIMPL		get_mempolicy
+431	UNIMPL		set_mempolicy
+432	UNIMPL		mq_open
+433	UNIMPL		mq_unlink
+434	UNIMPL		mq_timedsend
+435	UNIMPL		mq_timedreceive
+436	UNIMPL		mq_notify
+437	UNIMPL		mq_getsetattr

@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
+/*	$NetBSD: i8259.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -50,11 +50,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,6 +68,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -108,15 +107,17 @@ unsigned i8259_imen;
  * Perhaps this should be made into a real device.
  */
 struct pic i8259_pic = {
-	{0, {NULL}, NULL, NULL, NULL, 0, "pic0", NULL, 0},
-	PIC_I8259,
-	__SIMPLELOCK_UNLOCKED,
-	i8259_hwmask,
-	i8259_hwunmask,
-	i8259_setup,
-	i8259_setup,
-	i8259_stubs,
-	i8259_stubs,
+	.pic_dev = {
+		.dv_xname = "pic0",
+	},
+	.pic_type = PIC_I8259,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
+	.pic_hwmask = i8259_hwmask,
+	.pic_hwunmask = i8259_hwunmask,
+	.pic_addroute = i8259_setup,
+	.pic_delroute = i8259_setup,
+	.pic_level_stubs = i8259_stubs,
+	.pic_edge_stubs = i8259_stubs,
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.58.2.1 2003/07/02 15:26:12 darrenr Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.58.2.2 2004/08/03 10:49:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -144,6 +144,16 @@ struct pci_quirkdata {
 	int			quirks;		/* quirks; see below */
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
+#define	PCI_QUIRK_MONOFUNCTION		2
+#define	PCI_QUIRK_SKIP_FUNC(n)		(4 << n)
+#define	PCI_QUIRK_SKIP_FUNC0		PCI_QUIRK_SKIP_FUNC(0)
+#define	PCI_QUIRK_SKIP_FUNC1		PCI_QUIRK_SKIP_FUNC(1)
+#define	PCI_QUIRK_SKIP_FUNC2		PCI_QUIRK_SKIP_FUNC(2)
+#define	PCI_QUIRK_SKIP_FUNC3		PCI_QUIRK_SKIP_FUNC(3)
+#define	PCI_QUIRK_SKIP_FUNC4		PCI_QUIRK_SKIP_FUNC(4)
+#define	PCI_QUIRK_SKIP_FUNC5		PCI_QUIRK_SKIP_FUNC(5)
+#define	PCI_QUIRK_SKIP_FUNC6		PCI_QUIRK_SKIP_FUNC(6)
+#define	PCI_QUIRK_SKIP_FUNC7		PCI_QUIRK_SKIP_FUNC(7)
 
 struct pci_softc {
 	struct device sc_dev;
@@ -193,11 +203,9 @@ int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
 /*
  * Helper functions for autoconfiguration.
  */
-int	pci_enumerate_bus_generic(struct pci_softc *,
-	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
-void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
+void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *, size_t));
 void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
 const struct pci_quirkdata *
@@ -218,8 +226,7 @@ int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
 #define PCI_PWR_D1	1
 #define PCI_PWR_D2	2
 #define PCI_PWR_D3	3
-int	pci_set_powerstate __P((pci_chipset_tag_t, pcitag_t, int));
-int	pci_get_powerstate __P((pci_chipset_tag_t, pcitag_t));
+int	pci_powerstate __P((pci_chipset_tag_t, pcitag_t, const int *, int *));
 
 /*
  * Vital Product Data (PCI 2.2)
@@ -230,7 +237,8 @@ int	pci_vpd_write __P((pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *));
 /*
  * Misc.
  */
-char   *pci_findvendor __P((pcireg_t));
+const char *pci_findvendor __P((pcireg_t));
+const char *pci_findproduct __P((pcireg_t));
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_dma64_available(struct pci_attach_args *);

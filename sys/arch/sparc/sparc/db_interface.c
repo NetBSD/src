@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.56 2003/06/23 11:01:39 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.56.2.1 2004/08/03 10:41:06 skrll Exp $ */
 
 /*
  * Mach Operating System
@@ -31,6 +31,10 @@
 /*
  * Interface to new debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56.2.1 2004/08/03 10:41:06 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -60,7 +64,6 @@
 #endif
 
 #include <machine/instr.h>
-#include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
@@ -122,7 +125,7 @@ cpu_Debugger()
 	sparc_noop();	/* Force this function to allocate a stack frame */
 }
 
-static int nil;
+static long nil;
 
 /*
  * Machine register set.
@@ -138,7 +141,7 @@ const struct db_variable db_regs[] = {
 	{ "npc",	dbreg(npc),		db_sparc_regop, },
 	{ "y",		dbreg(y),		db_sparc_regop, },
 	{ "wim",	dbreg(global[0]),	db_sparc_regop, }, /* see reg.h */
-	{ "g0",		(long *)&nil,		FCN_NULL, },
+	{ "g0",		&nil,			FCN_NULL, 	},
 	{ "g1",		dbreg(global[1]),	db_sparc_regop, },
 	{ "g2",		dbreg(global[2]),	db_sparc_regop, },
 	{ "g3",		dbreg(global[3]),	db_sparc_regop, },
@@ -324,7 +327,7 @@ kdb_trap(type, tf)
 	dbregs.db_tf = *tf;
 	dbregs.db_fr = *(struct frame *)tf->tf_out[6];
 
-	/* Setup current cpu & reg pointers */
+	/* Setup current CPU & reg pointers */
 	ddb_cpuinfo = curcpu();
 	curcpu()->ci_ddb_regs = ddb_regp = &dbregs;
 
@@ -373,9 +376,9 @@ db_proc_cmd(addr, have_addr, count, modif)
 	p = l->l_proc;
 
 	db_printf("LWP %p: ", l);
-	db_printf("pid:%d.%d cpu:%d stat:%d vmspace:%p", p->p_pid,
+	db_printf("PID:%d.%d CPU:%d stat:%d vmspace:%p", p->p_pid,
 	    l->l_lid, l->l_cpu->ci_cpuid, l->l_stat, p->p_vmspace);
-	if (p->p_stat != SZOMB && p->p_stat != SDEAD)
+	if (!P_ZOMBIE(p))
 		db_printf(" ctx: %p cpuset %x",
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
@@ -531,25 +534,25 @@ db_cpu_cmd(addr, have_addr, count, modif)
 	}
 	
 	if ((addr < 0) || (addr >= ncpu)) {
-		db_printf("%ld: cpu out of range\n", addr);
+		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}
 	ci = cpus[addr];
 	if (ci == NULL) {
-		db_printf("cpu %ld not configured\n", addr);
+		db_printf("CPU %ld not configured\n", addr);
 		return;
 	}
 	if (ci != curcpu()) {
 		if (!(ci->flags & CPUFLG_PAUSED)) {
-			db_printf("cpu %ld not paused\n", addr);
+			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}
 	}
 	if (ci->ci_ddb_regs == 0) {
-		db_printf("cpu %ld has no saved regs\n", addr);
+		db_printf("CPU %ld has no saved regs\n", addr);
 		return;
 	}
-	db_printf("using cpu %ld", addr);
+	db_printf("using CPU %ld", addr);
 	ddb_regp = (void *)ci->ci_ddb_regs;
 	ddb_cpuinfo = ci;
 }

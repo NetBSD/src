@@ -1,4 +1,4 @@
-/*	$NetBSD: inphyreg.h,v 1.2 1999/06/20 16:42:37 thorpej Exp $	*/
+/*	$NetBSD: inphyreg.h,v 1.2.36.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #define	SCTRL_GOODLINK		0x0800	/* 100baseTX link good */
 #define	SCTRL_TCSD		0x0200	/* transmit carrier sense disable */
 #define	SCTRL_DDPD		0x0100	/* disable dynamic power-down */
-#define	SCTRL_ANEGLOOP		0x0080	/* autonegotiaion loopback */
+#define	SCTRL_ANEGLOOP		0x0080	/* autonegotiation loopback */
 #define	SCTRL_MDITRISTATE	0x0040	/* MDI Tri-state */
 #define	SCTRL_FILTERBYPASS	0x0020	/* Filter bypass */
 #define	SCTRL_AUTOPOLDIS	0x0010	/* auto-polarity disable */

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3.2.1 2004/08/03 10:43:05 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $")
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
 
@@ -204,9 +205,9 @@ dokbd:
  * mi keyboard controller driver
  */
 int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+pckbport_machdep_cnattach(kbctag, kbcslot)
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 #if (NPC > 0) && (NPCCONSKBD > 0)
 	return (pcconskbd_cnattach(kbctag, kbcslot));

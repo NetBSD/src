@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.5 2002/04/14 12:24:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.5.10.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include "opt_isicpcmcia.h"  
 #ifdef ISICPCMCIA_SBSPEEDSTAR2

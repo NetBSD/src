@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.2 2003/01/06 12:14:29 wiz Exp $ */
+/* $NetBSD: mtd803.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $ */
 
 /*-
  *
@@ -49,6 +49,9 @@
  * - When you enable the TXBUN (Tx buffer unavailable) interrupt, it gets
  *    raised every time a packet is sent. Strange, since everything works anyway
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -213,8 +216,7 @@ mtd_init(ifp)
 	 */
 	MTD_WRITE_4(sc, MTD_BCR, MTD_BCR_BLEN16);
 
-	MTD_WRITE_4(sc, MTD_RXTXR, MTD_TX_STFWD | MTD_RX_BLEN | MTD_RX_512
-			| MTD_TX_FDPLX);
+	MTD_WRITE_4(sc, MTD_RXTXR, MTD_TX_STFWD | MTD_TX_FDPLX);
 
 	/* Promiscuous mode? */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -461,8 +463,8 @@ mtd_put(sc, index, m)
 			continue;
 		} else if (tlen > MTD_TXBUF_SIZE) {
 			/* XXX FIXME: No idea what to do here. */
-			printf("%s: packet too large!\n",
-				sc->dev.dv_xname);
+			printf("%s: packet too large! Size = %i\n",
+				sc->dev.dv_xname, tlen);
 			MFREE(m, n);
 			continue;
 		}
@@ -549,7 +551,7 @@ mtd_stop (ifp, disable)
 
 	/* Must do more at disable??... */
 	if (disable) {
-		/* Delete tx and rx descriptor base adresses */
+		/* Delete tx and rx descriptor base addresses */
 		MTD_WRITE_4(sc, MTD_RXLBA, 0x00000000);
 		MTD_WRITE_4(sc, MTD_TXLBA, 0x00000000);
 	}

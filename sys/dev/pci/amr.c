@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.11 2003/05/15 18:04:08 fvdl Exp $	*/
+/*	$NetBSD: amr.c,v 1.11.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.11 2003/05/15 18:04:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.11.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,9 @@ struct amr_pci_type {
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID,  0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID2, 0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ | AT_SIG }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ | AT_SIG },
+	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI, AT_QUARTZ },
+	{ PCI_VENDOR_DELL,  PCI_PRODUCT_DELL_PERC_4DI_2, AT_QUARTZ },
 };
 
 struct amr_typestr {
@@ -242,8 +244,6 @@ amr_match(struct device *parent, struct cfdata *match, void *aux)
 void
 amr_attach(struct device *parent, struct device *self, void *aux)
 {
-	bus_space_tag_t memt, iot;
-	bus_space_handle_t memh, ioh;
 	struct pci_attach_args *pa;
 	struct amr_attach_args amra;
 	const struct amr_pci_type *apt;
@@ -253,7 +253,6 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
-	bus_size_t memsize, iosize;
         struct amr_ccb *ac;
 
 	aprint_naive(": RAID controller\n");
@@ -273,34 +272,24 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		reg = pci_conf_read(pc, pa->pa_tag, i);
 		switch (PCI_MAPREG_TYPE(reg)) {
 		case PCI_MAPREG_TYPE_MEM:
-			if ((memsize = PCI_MAPREG_MEM_SIZE(reg)) != 0)
+			if (PCI_MAPREG_MEM_SIZE(reg) != 0)
 				memreg = i;
 			break;
 		case PCI_MAPREG_TYPE_IO:
-			if ((iosize = PCI_MAPREG_IO_SIZE(reg)) != 0)
+			if (PCI_MAPREG_IO_SIZE(reg) != 0)
 				ioreg = i;
 			break;
+
 		}
 	}
 
-	if (memreg != 0)
-		if (pci_mapreg_map(pa, memreg, PCI_MAPREG_TYPE_MEM, 0,
-		    &memt, &memh, NULL, NULL))
-			memreg = 0;
-	if (ioreg != 0)
-		if (pci_mapreg_map(pa, ioreg, PCI_MAPREG_TYPE_IO, 0,
-		    &iot, &ioh, NULL, NULL))
-			ioreg = 0;
-
-	if (memreg) {
-		amr->amr_iot = memt;
-		amr->amr_ioh = memh;
-		amr->amr_ios = memsize;
-	} else if (ioreg) {
-		amr->amr_iot = iot;
-		amr->amr_ioh = ioh;
-		amr->amr_ios = iosize;
-	} else {
+	if (memreg && pci_mapreg_map(pa, memreg, PCI_MAPREG_TYPE_MEM, 0,
+	    &amr->amr_iot, &amr->amr_ioh, NULL, &amr->amr_ios) == 0)
+		;
+	else if (ioreg && pci_mapreg_map(pa, ioreg, PCI_MAPREG_TYPE_IO, 0,
+	    &amr->amr_iot, &amr->amr_ioh, NULL, &amr->amr_ios) == 0)
+		;
+	else {
 		aprint_error("can't map control registers\n");
 		amr_teardown(amr);
 		return;
@@ -345,7 +334,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
 
-	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, NULL,
+	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, 0,
 	    &amr->amr_dmaseg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to allocate buffer, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
@@ -474,7 +463,10 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
-	kthread_create(amr_thread_create, amr);
+
+	/* XXX This doesn't work for newer boards yet. */
+	if ((apt->apt_flags & AT_QUARTZ) == 0)
+		kthread_create(amr_thread_create, amr);
 }
 
 /*
@@ -596,8 +588,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
 			aprint_error(
 			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
-			    "\n", amr->amr_dv.dv_xname,
-			    ae->ae_ldrv.al_numdrives, AMR_MAX_UNITS);
+			    "\n", amr->amr_dv.dv_xname, AMR_MAX_UNITS,
+			    amr->amr_numdrives);
 			amr->amr_numdrives = AMR_MAX_UNITS;
 		} else
 			amr->amr_numdrives = aex->ae_numldrives;
@@ -627,7 +619,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			i++;
 		}
 		if (i == sizeof(amr_typestr) / sizeof(amr_typestr[0])) {
-			sprintf(buf, "unknown ENQUIRY2 sig (0x%08x)", sig);
+			snprintf(buf, sizeof(buf),
+			    "unknown ENQUIRY2 sig (0x%08x)", sig);
 			prodstr = buf;
 		} else
 			prodstr = amr_typestr[i].at_str;
@@ -647,7 +640,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			prodstr = "Series 434";
 			break;
 		default:
-			sprintf(buf, "unknown PCI dev (0x%04x)",
+			snprintf(buf, sizeof(buf), "unknown PCI dev (0x%04x)",
 			    PCI_PRODUCT(pa->pa_id));
 			prodstr = buf;
 			break;
@@ -850,7 +843,8 @@ amr_thread(void *cookie)
 		s = splbio();
 		amr_intr(cookie);
 		curtime = (time_t)mono_time.tv_sec;
-		if ((ac = TAILQ_FIRST(&amr->amr_ccb_active)) != NULL) {
+		ac = TAILQ_FIRST(&amr->amr_ccb_active);
+		while (ac != NULL) {
 			if (ac->ac_start_time + AMR_TIMEOUT > curtime)
 				break;
 			if ((ac->ac_flags & AC_MOAN) == 0) {
@@ -859,6 +853,7 @@ amr_thread(void *cookie)
 				amr_ccb_dump(amr, ac);
 				ac->ac_flags |= AC_MOAN;
 			}
+			ac = TAILQ_NEXT(ac, ac_chain.tailq);
 		}
 		splx(s);
 
@@ -1170,7 +1165,7 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		return (EAGAIN);
 
 	v = amr_inl(amr, AMR_QREG_IDB);
-	if ((v & (AMR_QIDB_SUBMIT | AMR_QIDB_ACK)) != 0) {
+	if ((v & AMR_QIDB_SUBMIT) != 0) {
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
@@ -1186,7 +1181,8 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 
 	ac->ac_start_time = (time_t)mono_time.tv_sec;
 	ac->ac_flags |= AC_ACTIVE;
-	amr_outl(amr, AMR_QREG_IDB, amr->amr_mbox_paddr | AMR_QIDB_SUBMIT);
+	amr_outl(amr, AMR_QREG_IDB,
+	    (amr->amr_mbox_paddr + 16) | AMR_QIDB_SUBMIT);
 	return (0);
 }
 
@@ -1259,7 +1255,7 @@ amr_quartz_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 	 * should.  Who is right?
 	 */
 	while ((amr_inl(amr, AMR_QREG_IDB) & AMR_QIDB_ACK) != 0)
-		;
+		DELAY(10);
 
 	return (0);
 }

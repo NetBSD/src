@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360reg.h,v 1.1 1997/10/06 19:49:18 christos Exp $	*/
+/*	$NetBSD: aic6360reg.h,v 1.1.52.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,7 @@
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
 
-/* Definitions, most of them has turned out to be unneccesary, but here they
+/* Definitions, most of them have turned out to be unnecessary, but here they
  * are anyway.
  */
 

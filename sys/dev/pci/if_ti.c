@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.57 2003/02/09 21:43:43 mjacob Exp $ */
+/* $NetBSD: if_ti.c,v 1.57.2.1 2004/08/03 10:49:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.57 2003/02/09 21:43:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.57.2.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -386,9 +386,16 @@ static void ti_mem(sc, addr, len, buf)
 			    TI_WINDOW + (segptr & (TI_WINLEN - 1)), 0,
 			    segsize / 4);
 		} else {
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+			bus_space_write_region_stream_4(sc->ti_btag,
+			    sc->ti_bhandle,
+			    TI_WINDOW + (segptr & (TI_WINLEN - 1)),
+			    (u_int32_t *)ptr, segsize / 4);
+#else
 			bus_space_write_region_4(sc->ti_btag, sc->ti_bhandle,
 			    TI_WINDOW + (segptr & (TI_WINLEN - 1)),
 			    (u_int32_t *)ptr, segsize / 4);
+#endif
 			ptr += segsize;
 		}
 		segptr += segsize;
@@ -976,7 +983,7 @@ static int ti_init_rx_ring_jumbo(sc)
 	int		i;
 	struct ti_cmd_desc	cmd;
 
-	for (i = 0; i < (TI_JSLOTS - 20); i++) {
+	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (ti_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return(ENOBUFS);
 	};
@@ -1289,6 +1296,7 @@ static int ti_chipinit(sc)
 {
 	u_int32_t		cacheline;
 	u_int32_t		pci_writemax = 0;
+	u_int32_t		rev;
 
 	/* Initialize link to down state. */
 	sc->ti_linkstat = TI_EV_CODE_LINK_DOWN;
@@ -1313,7 +1321,8 @@ static int ti_chipinit(sc)
 	TI_SETBIT(sc, TI_CPU_STATE, TI_CPUSTATE_HALT);
 
 	/* Figure out the hardware revision. */
-	switch(CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK) {
+	rev = CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK;
+	switch(rev) {
 	case TI_REV_TIGON_I:
 		sc->ti_hwrev = TI_HWREV_TIGON;
 		break;
@@ -1321,7 +1330,8 @@ static int ti_chipinit(sc)
 		sc->ti_hwrev = TI_HWREV_TIGON_II;
 		break;
 	default:
-		printf("%s: unsupported chip revision\n", sc->sc_dev.dv_xname);
+		printf("%s: unsupported chip revision 0x%x\n",
+		    sc->sc_dev.dv_xname, rev);
 		return(ENODEV);
 	}
 
@@ -1885,7 +1895,7 @@ static void ti_attach(parent, self, aux)
                 /*
                  * Copper cards allow manual 10/100 mode selection,
                  * but not manual 1000baseT mode selection. Why?
-                 * Becuase currently there's no way to specify the
+                 * Because currently there's no way to specify the
                  * master/slave setting through the firmware interface,
                  * so Alteon decided to just bag it and handle it
                  * via autonegotiation.
@@ -1954,7 +1964,8 @@ static void ti_rxeof(sc)
 
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
 			have_tag = 1;
-			vlan_tag = cur_rx->ti_vlan_tag;
+			/* ti_vlan_tag also has the priority, trim it */
+			vlan_tag = cur_rx->ti_vlan_tag & 4095;
 		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {

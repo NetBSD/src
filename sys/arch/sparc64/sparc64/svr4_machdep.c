@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 2003/05/17 01:38:41 nakayama Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.29.2.1 2004/08/03 10:41:39 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29.2.1 2004/08/03 10:41:39 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -197,7 +200,7 @@ svr4_getmcontext(l, mc, flags)
 	/*
 	 * Get the floating point registers
 	 */
-	bcopy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
+	memcpy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
 	f->fp_nqsize = sizeof(struct fp_qentry);
 	f->fp_nqel = fps->fs_qsize;
 	f->fp_fsr = fps->fs_fsr;
@@ -336,7 +339,7 @@ svr4_setmcontext(l, mc, flags)
 			return EINVAL;
 		}
 		/* Note: only copy as much FP registers as in the mcontext. */
-		bcopy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
+		memcpy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
 		if (f->fp_q != NULL) {
@@ -499,11 +502,9 @@ svr4_getsiginfo(si, sig, code, addr)
 #endif
 
 void
-svr4_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	int sig = ksi->ksi_signo;
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct trapframe64 *tf;
@@ -544,7 +545,8 @@ svr4_sendsig(sig, mask, code)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_getcontext(l, &frame.sf_uc);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t)(u_long)tf->tf_pc);
+	svr4_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
+	    (caddr_t)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
@@ -664,8 +666,8 @@ svr4_trap(type, l)
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = ((u_int32_t *)(void *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *)(void *) &tm)[1];
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 
@@ -694,8 +696,8 @@ svr4_trap(type, l)
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
-			tf->tf_out[0] = ((u_int32_t *)(void *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *)(void *) &tm)[1];
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,10 +64,13 @@
  *	  Ethernet chip (XXX only if we use an ILACC-compatible SWSTYLE).
  */
 
+#include "opt_pcn.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19 2003/03/30 19:20:37 jdolecek Exp $")
 #include <sys/errno.h> 
 #include <sys/device.h>
 #include <sys/queue.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -312,6 +319,10 @@ struct pcn_softc {
 	uint32_t sc_csr5;		/* prototype CSR5 register */
 	uint32_t sc_mode;		/* prototype MODE register */
 	int sc_phyaddr;			/* PHY address */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 /* sc_flags */
@@ -610,12 +621,28 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	pcn_reset(sc);
 
+#if !defined(PCN_NO_PROM)
+
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
 		    PCN32_APROM + i);
+#else
+	/*
+	 * The PROM is not used; instead we assume that the MAC address
+	 * has been programmed into the device's physical address
+	 * registers by the boot firmware
+	 */
+
+        for (i=0; i < 3; i++) {
+		uint32_t val;
+		val = pcn_csr_read(sc, LE_CSR12 + i);
+		enaddr[2*i] = val & 0x0ff;
+		enaddr[2*i+1] = (val >> 8) & 0x0ff;
+	}
+#endif
 
 	/*
 	 * Now that the device is mapped, attempt to figure out what
@@ -765,6 +792,10 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp); 
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */
@@ -859,7 +890,7 @@ pcn_start(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	struct pcn_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx, ofree, seg;
+	int error, nexttx, lasttx = -1, ofree, seg;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1033,6 +1064,7 @@ pcn_start(struct ifnet *ifp)
 			}
 		}
 
+		KASSERT(lasttx != -1);
 		/* Interrupt on the packet, if appropriate. */
 		if ((sc->sc_txsnext & PCN_TXINTR_MASK) == 0)
 			sc->sc_txdescs[lasttx].tmd1 |= htole32(LE_T1_LTINT);
@@ -1168,6 +1200,11 @@ pcn_intr(void *arg)
 		csr0 = pcn_csr_read(sc, LE_CSR0);
 		if ((csr0 & LE_C0_INTR) == 0)
 			break;
+
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, csr0);
+#endif
 
 		/* ACK the bits and re-enable interrupts. */
 		pcn_csr_write(sc, LE_CSR0, csr0 &

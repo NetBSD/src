@@ -1,11 +1,11 @@
-/*	$NetBSD: sequencer.c,v 1.24.2.1 2003/07/02 15:26:01 darrenr Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.24.2.2 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.24.2.1 2003/07/02 15:26:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.24.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #include "sequencer.h"
 
