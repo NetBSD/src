@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.12 1996/04/28 06:49:35 mhitch Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.13 1996/08/27 21:55:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int wstscprint __P((void *auxp, char *));
+int wstscprint __P((void *auxp, const char *));
 void wstscattach __P((struct device *, struct device *, void *));
 int wstscmatch __P((struct device *, void *, void *));
 
@@ -186,7 +186,7 @@ wstscattach(pdp, dp, auxp)
 int
 wstscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.2 1996/05/19 19:03:01 is Exp $	*/
+/*	$NetBSD: drsc.c,v 1.3 1996/08/27 21:54:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -51,7 +51,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
 
-int drscprint __P((void *auxp, char *));
+int drscprint __P((void *auxp, const char *));
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, void *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
@@ -157,7 +157,7 @@ drscattach(pdp, dp, auxp)
 int
 drscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

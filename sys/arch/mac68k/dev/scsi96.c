@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.17 1996/05/05 06:17:19 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.18 1996/08/27 21:56:11 cgd Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -110,11 +110,11 @@ struct cfdriver ncr96scsi_cd = {
 	NULL, "ncr96scsi", DV_DULL, NULL, 0
 };
 
-static int ncr96_print __P((void *, char *));
+static int ncr96_print __P((void *, const char *));
 static int
 ncr96_print(aux, name)
 	void   *aux;
-	char   *name;
+	const char   *name;
 {
 	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); return UNCONF; */
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.10 1996/04/22 02:35:03 abrown Exp $ */
+/*	$NetBSD: sbus.c,v 1.11 1996/08/27 21:57:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
 
-int sbus_print __P((void *, char *));
+int sbus_print __P((void *, const char *));
 void sbusreset __P((int));
 
 /* autoconfiguration driver */
@@ -81,7 +81,7 @@ struct cfdriver sbus_cd = {
 int
 sbus_print(args, sbus)
 	void *args;
-	char *sbus;
+	const char *sbus;
 {
 	register struct confargs *ca = args;
 

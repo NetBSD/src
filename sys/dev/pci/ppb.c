@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.8 1996/05/03 17:33:51 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.9 1996/08/27 21:59:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -60,7 +60,7 @@ struct cfdriver ppb_cd = {
 	NULL, "ppb", DV_DULL
 };
 
-int	ppbprint __P((void *, char *pnp));
+int	ppbprint __P((void *, const char *pnp));
 
 int
 ppbmatch(parent, match, aux)
@@ -131,7 +131,7 @@ ppbattach(parent, self, aux)
 int
 ppbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct pcibus_attach_args *pba = aux;
 

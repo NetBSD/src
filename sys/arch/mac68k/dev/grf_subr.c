@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.2 1996/08/04 06:03:56 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.3 1996/08/27 21:56:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 int
 grfbusprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct grfbus_attach_args *ga = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.15 1996/04/21 21:12:04 veego Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.16 1996/08/27 21:55:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,7 +48,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int ivscprint __P((void *auxp, char *));
+int ivscprint __P((void *auxp, const char *));
 void ivscattach __P((struct device *, struct device *, void *));
 int ivscmatch __P((struct device *, void *, void *));
 
@@ -175,7 +175,7 @@ ivscattach(pdp, dp, auxp)
 int
 ivscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

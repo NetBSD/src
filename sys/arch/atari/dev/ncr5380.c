@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.21 1996/07/05 19:35:38 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.22 1996/08/27 21:55:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -199,7 +199,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-int	ncr_cprint __P((void *auxp, char *));
+int	ncr_cprint __P((void *auxp, const char *));
 void	ncr_attach __P((struct device *, struct device *, void *));
 int	ncr_match __P((struct device *, void *, void *));
 
@@ -285,7 +285,7 @@ void		*auxp;
 int
 ncr_cprint(auxp, name)
 void	*auxp;
-char	*name;
+const char	*name;
 {
 	if (name == NULL)
 		return (UNCONF);

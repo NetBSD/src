@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36 1996/06/20 20:12:31 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.37 1996/08/27 21:57:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -217,7 +217,7 @@ void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
-int fdprint __P((void *, char *));
+int fdprint __P((void *, const char *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
@@ -309,7 +309,7 @@ struct fdc_attach_args {
 int
 fdprint(aux, fdc)
 	void *aux;
-	char *fdc;
+	const char *fdc;
 {
 	register struct fdc_attach_args *fa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.16 1996/04/21 21:12:45 veego Exp $	*/
+/*	$NetBSD: zssc.c,v 1.17 1996/08/27 21:55:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,7 +50,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int  zsscprint __P((void *auxp, char *));
+int  zsscprint __P((void *auxp, const char *));
 void zsscattach __P((struct device *, struct device *, void *));
 int  zsscmatch __P((struct device *, void *, void *));
 int  zssc_dmaintr __P((void *));
@@ -150,7 +150,7 @@ zsscattach(pdp, dp, auxp)
 int
 zsscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

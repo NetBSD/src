@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.19 1996/04/21 21:11:08 veego Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.20 1996/08/27 21:54:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -61,7 +61,7 @@
 #include "view.h" 
 
 int grfccmatch __P((struct device *, void *, void *));
-int grfccprint __P((void *, char *));
+int grfccprint __P((void *, const char *));
 void grfccattach __P((struct device *, struct device *, void *));
 void grf_cc_on __P((struct grf_softc *));
 
@@ -157,7 +157,7 @@ grfccattach(pdp, dp, auxp)
 int
 grfccprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,

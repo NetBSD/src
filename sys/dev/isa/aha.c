@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.12 1996/06/18 12:55:00 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.13 1996/08/27 21:59:16 cgd Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -165,7 +165,7 @@ struct scsi_device aha_dev = {
 
 int	ahaprobe __P((struct device *, void *, void *));
 void	ahaattach __P((struct device *, struct device *, void *));
-int	ahaprint __P((void *, char *));
+int	ahaprint __P((void *, const char *));
 
 struct cfattach aha_ca = {
 	sizeof(struct aha_softc), ahaprobe, ahaattach
@@ -340,7 +340,7 @@ ahaprobe(parent, match, aux)
 int
 ahaprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

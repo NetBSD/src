@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.4 1996/05/21 07:25:07 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.5 1996/08/27 21:57:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,7 +61,7 @@ int	has_iocache;
 
 
 /* autoconfiguration driver */
-int	iommu_print __P((void *, char *));
+int	iommu_print __P((void *, const char *));
 void	iommu_attach __P((struct device *, struct device *, void *));
 int	iommu_match __P((struct device *, void *, void *));
 
@@ -82,7 +82,7 @@ struct cfdriver iommu_cd = {
 int
 iommu_print(args, iommu)
 	void *args;
-	char *iommu;
+	const char *iommu;
 {
 	register struct confargs *ca = args;
 

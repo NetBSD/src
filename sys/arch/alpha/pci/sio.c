@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.8 1996/04/13 00:23:34 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.9 1996/08/27 21:54:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -71,7 +71,7 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-int	sioprint __P((void *, char *pnp));
+int	sioprint __P((void *, const char *pnp));
 void	sio_isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
 void	sio_eisa_attach_hook __P((struct device *, struct device *,
@@ -171,7 +171,7 @@ sioattach(parent, self, aux)
 int
 sioprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
         register union sio_attach_args *sa = aux;
 
