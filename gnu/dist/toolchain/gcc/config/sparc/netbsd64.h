@@ -15,6 +15,9 @@
 
 #include <sparc/sp64-elf.h>
 
+#undef INIT_SUBTARGET_OPTABS  
+#define INIT_SUBTARGET_OPTABS  
+
 #include <sparc/netbsd-elf-common.h>
 
 #undef CPP_SUBTARGET_SPEC
@@ -50,11 +53,11 @@
 #undef STARTFILE_SPEC32
 #define	STARTFILE_SPEC32 \
  "%{!shared: \
-     %{pg:/emul/netbsd32/usr/lib/gcrt0%O%s} \
+     %{pg:/usr/lib/32/gcrt0%O%s} \
      %{!pg: \
-        %{p:/emul/netbsd32/usr/lib/gcrt0%O%s} \
-        %{!p:/emul/netbsd32/usr/lib/crt0%O%s}}} \
-   %{!shared:/emul/netbsd32/usr/lib/crtbegin%O%s} %{shared:/emul/netbsd32/usr/lib/crtbeginS%O%s}"
+        %{p:/usr/lib/32/gcrt0%O%s} \
+        %{!p:/usr/lib/32/crt0%O%s}}} \
+   %{!shared:/usr/lib/32/crtbegin%O%s} %{shared:/usr/lib/32/crtbeginS%O%s}"
 
 #undef STARTFILE_SPEC
 #if DEFAULT_ARCH32_P
@@ -75,7 +78,7 @@
 
 #undef ENDFILE_SPEC32
 #define	ENDFILE_SPEC32 \
- "%{!shared:/emul/netbsd32/usr/lib/crtend%O%s} %{shared:/emul/netbsd32/usr/lib/crtendS%O%s}"
+ "%{!shared:/usr/lib/32/crtend%O%s} %{shared:/usr/lib/32/crtendS%O%s}"
 
 #undef ENDFILE_SPEC
 #if DEFAULT_ARCH32_P
@@ -100,7 +103,7 @@
 #undef LINK_ARCH32_SPEC
 #define LINK_ARCH32_SPEC \
  "-m elf32_sparc \
-  -Y P,/emul/netbsd32/usr/lib \
+  -Y P,/usr/lib/32 \
   %{assert*} %{R*} \
   %{shared:-shared} \
   %{!shared: \
@@ -137,7 +140,7 @@
 %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
 %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
 %{m64:-mptr64 -mcpu=ultrasparc -mstack-bias %{p*:-mcmodel=medlow} 
-%{p:-mcmodel=medlow} } \
+%{p:-mcmodel=medlow}} \
 "
 #else
 #define CC1_SPEC "\
@@ -146,7 +149,6 @@
 %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
 %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
 %{m32:-mptr32 -mcpu=cypress -mno-stack-bias} \
-%{p*:-mcmodel=medlow} \
 "
 #endif
 
