@@ -1,7 +1,14 @@
-#	$NetBSD: files.x68k,v 1.22 1998/12/15 19:37:14 itohy Exp $
+#	$NetBSD: files.x68k,v 1.22.2.1 1998/12/23 16:47:27 minoura Exp $
 #
 # new style config file for x68k architecture
 #
+
+defopt	opt_fpuemulate.h	FPU_EMULATE
+defopt	opt_m060sp.h		M060SP
+#defopt	opt_fpsp.h		FPSP		# this will fail...
+
+defopt	opt_jupiter.h		JUPITER
+defopt	opt_panicbutton.h	PANICBUTTON
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -17,13 +24,8 @@ attach	cpu at mainbus
 define	event {}
 file	arch/x68k/dev/event.c		event
 
-# keyboard
-pseudo-device kbd: event
-file	arch/x68k/dev/kbd.c		kbd
-
 file	arch/x68k/x68k/x68k_init.c
 file	arch/x68k/x68k/autoconf.c
-file	arch/x68k/x68k/clock.c
 file	arch/x68k/x68k/conf.c
 file	arch/x68k/x68k/disksubr.c	disk
 file	arch/x68k/x68k/machdep.c
@@ -35,9 +37,10 @@ file	arch/x68k/x68k/trap.c
 file	arch/x68k/x68k/vm_machdep.c
 file	arch/x68k/x68k/db_memrw.c	ddb
 file	arch/x68k/x68k/fpu.c
+file	arch/x68k/x68k/bus.c
 
 file	dev/cons.c
-file	dev/cninit.c			ite
+file	dev/cninit.c
 major	{vnd = 6}
 
 # Emulation modules
@@ -63,29 +66,12 @@ device	mha: scsi
 attach	mha at mainbus
 file	arch/x68k/dev/mha.c		mha needs-count
 
-device	ed: ether, ifnet, arp
-attach	ed at mainbus
-file	arch/x68k/dev/if_ed.c		ed needs-flag
-
 device	fdc { unit = -1 }
 attach	fdc at mainbus
 
 device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
-
-device zsc {channel = -1}
-attach zsc at mainbus
-file arch/x68k/dev/zs.c			zsc needs-flag
-file dev/ic/z8530sc.c			zsc
-
-device zstty: tty
-attach zstty at zsc
-file dev/ic/z8530tty.c			zstty needs-flag
-
-device ms: event
-attach ms at zsc
-file arch/x68k/dev/ms.c			ms needs-flag
 
 device	xcom: tty
 attach	xcom at mainbus
@@ -94,8 +80,6 @@ file	arch/x68k/dev/com.c		xcom needs-count
 device	par
 attach	par at mainbus
 file	arch/x68k/dev/par.c		par needs-flag
-
-file	arch/x68k/dev/rtclock.c
 
 # graphic devices
 define	grfb {}
@@ -116,6 +100,51 @@ attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
 file	arch/x68k/dev/ite_tv.c		grf|ite
 file	arch/x68k/dev/kbdmap.c		ite
+
+device	intio {[addr = -1], [intr = -1], [errintr = -1], [dma = -1]}
+attach	intio at mainbus
+file	arch/x68k/dev/intio.c		intio
+
+device	test
+attach	test at intio
+file	arch/x68k/dev/test.c		test needs-count
+
+device	mfp {}
+attach	mfp at intio
+file	arch/x68k/dev/mfp.c		mfp
+
+device clock
+attach	clock at mfp
+file	arch/x68k/x68k/clock.c		clock needs-flag
+
+device kbd: event
+attach	kbd at mfp
+file	arch/x68k/dev/kbd.c		kbd needs-flag
+
+device rtc
+attach	rtc at intio
+file	arch/x68k/dev/rtclock.c		rtc
+
+defopt	opt_zsc.h	ZSCONSOLE ZSCN_SPEED
+device zsc {channel = -1}
+attach zsc at intio
+file arch/x68k/dev/zs.c			zsc needs-flag
+file dev/ic/z8530sc.c			zsc
+
+device zstty: tty
+attach zstty at zsc
+file dev/ic/z8530tty.c			zstty needs-flag
+
+device ms: event
+attach ms at zsc
+file arch/x68k/dev/ms.c			ms needs-flag
+
+device	neptune {[addr = -1]}
+attach	neptune at intio
+file	arch/x68k/dev/neptune.c		neptune
+
+attach	ne at neptune with ne_neptune: rtl80x9
+file	arch/x68k/dev/if_ne_neptune.c	ne_neptune
 
 pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.6 1997/10/09 13:00:51 oki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.6.10.1 1998/12/23 16:47:30 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,6 @@
 #include "ite.h"
 #include "bell.h"
 
-#if NITE > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -50,76 +49,111 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
-#include <x68k/dev/itevar.h>
-#include <x68k/x68k/iodevice.h>
+#include <arch/x68k/dev/intiovar.h>
+#include <arch/x68k/dev/mfp.h>
+#include <arch/x68k/dev/itevar.h>
 
 /* for sun-like event mode, if you go thru /dev/kbd. */
-#include <x68k/dev/event_var.h>
+#include <arch/x68k/dev/event_var.h>
 #include <machine/kbio.h>
 #include <machine/kbd.h>
 #include <machine/vuid_event.h>
 
 struct kbd_softc {
-	int k_event_mode;  	 /* if true, collect events, else pass to ite */
-	struct evvar k_events; /* event queue state */
-} kbd_softc;
+	struct device	sc_dev;
 
-void	kbdattach	__P((int));
-void	kbdenable	__P((void));
+	int sc_event_mode;	/* if true, collect events, else pass to ite */
+	struct evvar sc_events; /* event queue state */
+};
+
+void	kbdenable	__P((int));
 int	kbdopen 	__P((dev_t, int, int, struct proc *));
 int	kbdclose	__P((dev_t, int, int, struct proc *));
 int	kbdread 	__P((dev_t, struct uio *, int));
 int	kbdwrite	__P((dev_t, struct uio *, int));
 int	kbdioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
 int	kbdpoll 	__P((dev_t, int, struct proc *));
-void	kbdintr 	__P((void));
+int	kbdintr 	__P((void *));
 void	kbdsoftint	__P((void));
 void	kbd_bell	__P((int));
-int	kbdgetcn	__P((void));
+int	kbdcngetc	__P((void));
 void	kbd_setLED	__P((void));
 int	kbd_send_command __P((int));
 
-/*
- * Called from main() during pseudo-device setup.  If this keyboard is
- * the console, this is our chance to open the underlying serial port and
- * send a RESET, so that we can find out what kind of keyboard it is.
- */
-void
-kbdattach(kbd)
-	int kbd;
+
+static int kbdmatch	__P((struct device *, struct cfdata *, void *));
+static void kbdattach	__P((struct device *, struct device *, void *));
+
+struct cfattach kbd_ca = {
+	sizeof(struct kbd_softc), kbdmatch, kbdattach
+};
+
+
+static int
+kbdmatch (parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
+	if (strcmp(aux, "kbd") != 0)
+		return (0);
+	if (cf->cf_unit != 0)
+		return (0);
+
+	return (1);
 }
+
+static void
+kbdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct kbd_softc *k = (void*) self;
+	struct mfp_softc *mfp = (void*) parent;
+	int s = spltty();
+
+	/* MFP interrupt #12 is for USART recieve buffer full */
+	intio_intr_establish (mfp->sc_intr + 12, "kbd", kbdintr, self);
+
+	kbdenable(1);
+	k->sc_event_mode = 0;
+	k->sc_events.ev_io = 0;
+	splx(s);
+
+	printf ("\n");
+}
+
 
 /* definitions for x68k keyboard encoding. */
 #define KEY_CODE(c)  ((c) & 0x7f)
 #define KEY_UP(c)    ((c) & 0x80)
 
 void
-kbdenable()
+kbdenable(mode)
+	int mode;		/* 1: interrupt, 0: poll */
 {
-	int s = spltty();
+	intio_set_sysport_keyctrl(8);
+	mfp_bit_clear_iera (MFP_INTR_RCV_FULL | MFP_INTR_TIMER_B);
+	mfp_set_tbcr(MFP_TIMERB_RESET | MFP_TIMERB_STOP);
+	mfp_set_tbdr(13);	/* Timer B interrupt interval */
+	mfp_set_tbcr(1);	/* 1/4 delay mode */
+	mfp_set_ucr(MFP_UCR_CLKX16 | MFP_UCR_RW_8 | MFP_UCR_ONESB);
+	mfp_set_rsr(MFP_RSR_RE); /* USART receive enable */
+	mfp_set_tsr(MFP_TSR_TE); /* USART transmit enable */
 
-	sysport.keyctrl = 8;	/* send character from keyboard enable */
-	mfp.iera &= (~0x11);	/* MPSC RBF, Timer-B interrupt disable */
-	mfp.tbcr = MFP_TIMERB_RESET | MFP_TIMERB_STOP;    /* Timer-B stop */
-	mfp.tbdr = 13;		/* Timer-B 38400 Hz clock (interrupt 76800Hz) */
-	mfp.tbcr = 1;		/* Timer-B deray mode, prescale 1/4 */
-	mfp.ucr = MFP_UCR_CLKX16 | MFP_UCR_RW_8 | MFP_UCR_ONESB;
-	mfp.rsr = MFP_RSR_RE;	/* USART receive enable */
-	mfp.iera |= 0x11;	/* MPSC RBF, Timer-B interrupt enable */
-
-	while(!(mfp.tsr & MFP_TSR_BE)) ;
-	mfp.udr = 0x49;     /* send character from keyboard enable */
-	kbdled = 0;	    /* all keyboard LED turn off. */
+	if (mode)
+		mfp_bit_set_iera(MFP_INTR_RCV_FULL);
+			     
+	kbdled = 0;		/* all keyboard LED turn off. */
 	kbd_setLED();
 
-	if (!(sysport.keyctrl & 8))
-		printf("WARNING: no connected keyboard\n");
-	kbd_softc.k_event_mode = 0;
-	kbd_softc.k_events.ev_io = 0;
-	splx(s);
+	if (!(intio_get_sysport_keyctrl() & 8))
+		printf(" (no connected keyboard)");
 }
+
+extern struct cfdriver kbd_cd;
 
 int
 kbdopen(dev, flags, mode, p)
@@ -127,10 +161,20 @@ kbdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	if (kbd_softc.k_events.ev_io)
+	struct kbd_softc *k;
+	int unit = minor(dev);
+
+	if (unit >= kbd_cd.cd_ndevs)
+		return (ENXIO);
+	k = kbd_cd.cd_devs[minor(dev)];
+	if (k == NULL)
+		return (ENXIO);
+
+	if (k->sc_events.ev_io)
 		return (EBUSY);
-	kbd_softc.k_events.ev_io = p;
-	ev_init(&kbd_softc.k_events);
+	k->sc_events.ev_io = p;
+	ev_init(&k->sc_events);
+
 	return (0);
 }
 
@@ -140,12 +184,16 @@ kbdclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+
 	/* Turn off event mode, dump the queue */
-	kbd_softc.k_event_mode = 0;
-	ev_fini(&kbd_softc.k_events);
-	kbd_softc.k_events.ev_io = NULL;
+	k->sc_event_mode = 0;
+	ev_fini(&k->sc_events);
+	k->sc_events.ev_io = NULL;
+
 	return (0);
 }
+
 
 int
 kbdread(dev, uio, flags)
@@ -153,7 +201,9 @@ kbdread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	return ev_read(&kbd_softc.k_events, uio, flags);
+	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+
+	return ev_read(&k->sc_events, uio, flags);
 }
 
 /* this routine should not exist, but is convenient to write here for now */
@@ -174,7 +224,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct kbd_softc *k = &kbd_softc;
+	register struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 	int cmd_data;
 
 	switch (cmd) {
@@ -191,7 +241,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		return (0);
 
 	case KIOCSDIRECT:
-		k->k_event_mode = *(int *)data;
+		k->sc_event_mode = *(int *)data;
 		return (0);
 
 	case KIOCCMD:
@@ -219,11 +269,11 @@ kbdioctl(dev, cmd, data, flag, p)
 		return (0);
 
 	case FIOASYNC:
-		k->k_events.ev_async = *(int *)data != 0;
+		k->sc_events.ev_async = *(int *)data != 0;
 		return (0);
 
 	case TIOCSPGRP:
-		if (*(int *)data != k->k_events.ev_io->p_pgid)
+		if (*(int *)data != k->sc_events.ev_io->p_pgid)
 			return (EPERM);
 		return (0);
 
@@ -237,14 +287,19 @@ kbdioctl(dev, cmd, data, flag, p)
 	return (EOPNOTSUPP);		/* misuse, but what the heck */
 }
 
+
 int
 kbdpoll(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;
 {
-	return ev_poll (&kbd_softc.k_events, events, p);
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_poll(&k->sc_events, events, p));
 }
+
 
 #define KBDBUFMASK 63
 #define KBDBUFSIZ 64
@@ -252,18 +307,19 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-void
-kbdintr()
+int
+kbdintr(arg)
+	void *arg;
 {
 	u_char c, in;
-	struct kbd_softc *k = &kbd_softc;
+	struct kbd_softc *k = arg; /* XXX */
 	struct firm_event *fe;
 	int put;
 
-	c = in = mfp.udr;
+	c = in = mfp_get_udr();
 
 	/* if not in event mode, deliver straight to ite to process key stroke */
-	if (! k->k_event_mode) {
+	if (! k->sc_event_mode) {
 		kbdbuf[kbdputoff++ & KBDBUFMASK] = c;
 		setsoftkbd();
 		return;
@@ -273,24 +329,24 @@ kbdintr()
 	   event and put it in the queue.  If the queue is full, the
 	   keystroke is lost (sorry!). */
   
-	put = k->k_events.ev_put;
-	fe = &k->k_events.ev_q[put];
+	put = k->sc_events.ev_put;
+	fe = &k->sc_events.ev_q[put];
 	put = (put + 1) % EV_QSIZE;
-	if (put == k->k_events.ev_get) {
+	if (put == k->sc_events.ev_get) {
 		log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
 		return;
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
 	fe->time = time;
-	k->k_events.ev_put = put;
-	EV_WAKEUP(&k->k_events);
+	k->sc_events.ev_put = put;
+	EV_WAKEUP(&k->sc_events);
 }
 
 void
-kbdsoftint()
+kbdsoftint()			/* what if ite is not configured? */
 {
-	int s = splhigh();
+	int s = spltty();
 
 	while(kbdgetoff < kbdputoff)
 		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK], ITEFILT_TTY);
@@ -311,31 +367,11 @@ kbd_bell(mode)
 #endif
 }
 
-int
-kbdgetcn()
-{
-	int s = spltty();
-	u_char ints, c, in;
-
-	ints = mfp.iera;
-
-	mfp.iera &= 0xef;
-	mfp.rsr |= 1;
-	while (!(mfp.rsr & MFP_RSR_BF))
-		asm("nop");
-	in = c = mfp.udr;
-
-	mfp.iera = ints;
-	splx (s);
-
-	return c;
-}
-
+unsigned char kbdled;
 void
 kbd_setLED()
 {
-	while(!(mfp.tsr & MFP_TSR_BE)) ;
-        mfp.udr = ~kbdled | 0x80;
+        mfp_send_usart(~kbdled | 0x80);
 }
 
 int
@@ -360,4 +396,26 @@ kbd_send_command(cmd)
 	}
 }
 
+/*
+ * for console
+ */
+#include "ite.h"
+#if NITE > 0
+int
+kbdcngetc()
+{
+	int s = splhigh();
+	u_char ints, c, in;
+
+	ints = mfp_get_iera();
+
+	mfp_bit_clear_iera(MFP_INTR_RCV_FULL);
+	mfp_set_rsr(mfp_get_rsr() | MFP_RSR_RE);
+	in = c = mfp_recieve_usart();
+
+	mfp_set_iera(ints);
+	splx (s);
+
+	return c;
+}
 #endif

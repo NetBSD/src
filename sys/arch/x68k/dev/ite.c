@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.13 1998/08/06 14:08:54 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.13.6.1 1998/12/23 16:47:29 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #if NITE > 0
 
 #include "bell.h"
+#include "kbd.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,15 +62,16 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
 #include <machine/kbio.h>
-#include <machine/iteioctl.h>
+#include <machine/bus.h>
 #include <machine/grfioctl.h>
+#include <machine/iteioctl.h>
 
-#include <x68k/dev/grfvar.h>
-#include <x68k/dev/itevar.h>
-#include <x68k/dev/kbdmap.h>
-
-#include <x68k/x68k/iodevice.h>
+#include <arch/x68k/dev/grfvar.h>
+#include <arch/x68k/dev/itevar.h>
+#include <arch/x68k/dev/kbdmap.h>
+#include <arch/x68k/dev/mfp.h>
 
 #define SUBR_CNPROBE(min)	itesw[min].ite_cnprobe(min)
 #define SUBR_INIT(ip)		ip->isw->ite_init(ip)
@@ -138,8 +140,6 @@ int	start_repeat_timeo = 20; /* /100: initial timeout till pressed key repeats *
 int	next_repeat_timeo  = 3;  /* /100: timeout when repeating for next char */
 
 u_char	cons_tabs[MAX_TABS];
-
-int kbd_init;
 
 cdev_decl(ite);
 
@@ -302,6 +302,9 @@ iteon(dev, flag)
 	if (ip->flags & ITE_INGRF)
 		return(0);
 	iteinit(dev);
+#if NKBD > 0
+	mfp_send_usart (0x49);	/* XXX */
+#endif
 	return(0);
 }
 
@@ -339,8 +342,12 @@ iteoff(dev, flag)
 	 * cleared, we will never see messages printed during
 	 * the process of rebooting.
 	 */
-	if ((flag & 2) == 0 && (ip->flags & ITE_ISCONS) == 0)
+	if ((flag & 2) == 0 && (ip->flags & ITE_ISCONS) == 0) {
 		ip->flags &= ~ITE_ACTIVE;
+#if NKBD > 0
+		mfp_send_usart (0x48);	/* XXX */
+#endif
+	}
 }
 
 /*
@@ -392,10 +399,6 @@ iteopen(dev, mode, devtype, p)
 	if (error == 0) {
 		tp->t_winsize.ws_row = ip->rows;
 		tp->t_winsize.ws_col = ip->cols;
-		if (!kbd_init) {
-			kbd_init = 1;
-			kbdenable();
-		}
 	} else if (first)
 		iteoff(dev, 0);
 	return (error);
@@ -502,12 +505,11 @@ iteioctl(dev, cmd, addr, flag, p)
 			return EFAULT;
 
 	case ITETVCTRL:
-		if (addr && *(u_char *)addr < 0x40) {
-			  while(!(mfp.tsr & 0x80)) ;
-			  mfp.udr = *(u_char *)addr;
-			return 0;
-		} else
+		if (addr && *(u_int8_t *)addr < 0x40) {
+			return mfp_send_usart (* (u_int8_t *)addr);
+		} else {
 			return EFAULT;
+		}
 #endif
 	}
 	return (ENOTTY);
@@ -2441,10 +2443,14 @@ itecheckwrap(ip)
 
 #endif
 
+#if NITE > 0 && NKBD > 0
+
 /*
  * Console functions
  */
 #include <dev/cons.h>
+extern void kbdenable __P((int));
+extern int kbdcngetc __P((void));
 
 /*
  * Return a priority in consdev->cn_pri field highest wins.  This function
@@ -2474,9 +2480,13 @@ itecnprobe(cd)
 		cd->cn_pri = CN_DEAD;
 	else {
 		con_itesoftc.flags = (ITE_ALIVE|ITE_CONSOLE);
-		con_itesoftc.isw = &itesw[0]; /* XXX */
+		/*
+		 * hardcode the minor number.
+		 * currently we support only one ITE, it is enough for now.
+		 */
+		con_itesoftc.isw = &itesw[0];
 		cd->cn_pri = CN_INTERNAL;
-		cd->cn_dev = makedev(maj, 0); /* XXX */
+		cd->cn_dev = makedev(maj, 0);
 	}
 
 }
@@ -2490,6 +2500,8 @@ itecninit(cd)
 	ip = getitesp(cd->cn_dev);
 	iteinit(cd->cn_dev);	       /* init console unit */
 	ip->flags |= ITE_ACTIVE | ITE_ISCONS;
+	kbdenable(0);
+	mfp_send_usart(0x49);
 }
 
 /*
@@ -2515,13 +2527,8 @@ itecngetc(dev)
 {
 	register int c;
 
-	/* XXX this should be moved */
-	if (!kbd_init) {
-		kbd_init = 1;
-		kbdenable();
-	}
 	do {
-		c = kbdgetcn();
+		c = kbdcngetc();
 		c = ite_cnfilter(c, ITEFILT_CONSOLE);
 	} while (c == -1);
 	return (c);
@@ -2543,3 +2550,4 @@ itecnputc(dev, c)
 	}
 	ite_putstr(&ch, 1, dev);
 }
+#endif

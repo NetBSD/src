@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.11 1998/12/05 19:43:47 mjacob Exp $	*/
+/*	$NetBSD: mha.c,v 1.11.4.1 1998/12/23 16:47:30 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -385,6 +385,7 @@ mhaattach(parent, self, aux)
 	config_found(self, &sc->sc_link, scsiprint);
 }
 
+#if 0
 void
 mha_reset(sc)
 	struct mha_softc *sc;
@@ -406,6 +407,7 @@ printf("reset...");
 	sc->sc_id = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 printf("done.\n");
 }
+#endif
 
 /*
  * Pull the SCSI RST line for 500us.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1998/08/22 14:38:39 minoura Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.6.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,10 @@
  *	@(#)clock.c	8.2 (Berkeley) 1/12/94
  */
 
+#include "clock.h"
+
+#if NCLOCK > 0
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -49,13 +53,48 @@
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
-#include <x68k/x68k/iodevice.h>
-#include <x68k/dev/rtclock_var.h>
+#include <arch/x68k/dev/mfp.h>
+#include <arch/x68k/dev/rtclock_var.h>
 
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
+
+struct clock_softc {
+	struct device		sc_dev;
+};
+
+static int clock_match __P((struct device *, struct cfdata *, void *));
+static void clock_attach __P((struct device *, struct device *, void *));
+
+struct cfattach clock_ca = {
+	sizeof(struct clock_softc), clock_match, clock_attach
+};
+
+
+static int
+clock_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	if (strcmp (aux, "clock") != 0)
+		return (0);
+	if (cf->cf_unit != 0)
+		return (0);
+	return 1;
+}
+
+
+static void
+clock_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	printf (": MFP timer C\n");
+
+	return;
+}
+
 
 /* We're using a 100 Hz clock. */
 
@@ -89,13 +128,11 @@ static int clkread __P((void));
 void
 cpu_initclocks()
 {
-	/* stop timer-C */
-	mfp.tcdcr &= 0x0f;
-	mfp.tcdr  =  CLK_INTERVAL;
+	mfp_set_tcdcr(mfp_get_tcdcr() & 0x0f); /* stop timer C */
+	mfp_set_tcdr(CLK_INTERVAL);
 
-	/* enable interrupts for timer-C */
-	mfp.tcdcr |= 0x70; /* prescale 1/200 */
-	mfp.ierb  |= 0x20;
+	mfp_set_tcdcr(mfp_get_tcdcr() | 0x70); /* 1/200 delay mode */
+	mfp_bit_set_ierb(MFP_INTR_TIMER_C);
 }
 
 /*
@@ -116,8 +153,9 @@ setstatclockrate(hz)
 int
 clkread()
 {
-	return (mfp.tcdr * CLOCKS_PER_SEC) / CLK_INTERVAL;
+	return (mfp_get_tcdr() * CLOCKS_PER_SEC) / CLK_INTERVAL;
 }
+
 
 #if 0
 void
@@ -155,8 +193,6 @@ DELAY(mic)
 /* implement this later. I'd suggest using both timers in CIA-A, they're
    not yet used. */
 
-#include "clock.h"
-#if NCLOCK > 0
 /*
  * /dev/clock: mappable high resolution timer.
  *
@@ -198,13 +234,13 @@ clockopen(dev, flags)
 	 */
 	if (profiling)
 		return(EBUSY);
-#endif
+#endif	/* PROF */
 	/*
 	 * If any user processes are profiling, give up.
 	 */
 	if (profprocs)
 		return(EBUSY);
-#endif
+#endif	/* PROFTIMER */
 	if (!clockon) {
 		startclock();
 		clockon++;
@@ -316,9 +352,8 @@ stopclock()
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_IENAB;
 }
-#endif
 
-#endif
+#endif	/* notyet */
 
 
 #ifdef PROFTIMER
@@ -346,7 +381,6 @@ char profon    = 0;		/* Is profiling clock on? */
 
 initprofclock()
 {
-#if NCLOCK > 0
 	struct proc *p = curproc;		/* XXX */
 
 	/*
@@ -372,7 +406,6 @@ initprofclock()
 		profprocs++;
 	else
 		profprocs--;
-#endif
 	/*
 	 * The profile interrupt interval must be an even divisor
 	 * of the CLK_INTERVAL so that scaling from a system clock
@@ -429,8 +462,8 @@ profclock(pc, ps)
 			stopprofclock();
 	}
 }
-#endif
-#endif
+#endif	/* PROF */
+#endif	/* PROFTIMER */
 
 /*
  * Return the best possible estimate of the current time.
@@ -497,3 +530,6 @@ resettodr()
 		if (settod (time.tv_sec) != 1)
 			printf("Cannot set battery backed clock\n");
 }
+#else	/* NCLOCK */
+#error loose.
+#endif

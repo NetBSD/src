@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 1998/08/07 11:19:13 minoura Exp $	*/
+/*    $NetBSD: z8530var.h,v 1.1.6.1 1998/12/23 16:47:32 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Minoura Makoto
@@ -46,11 +46,24 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <arch/x68k/x68k/iodevice.h>
+#include <machine/bus.h>
 #include <dev/ic/z8530sc.h>
 
 
 #define ZS_DELAY()			delay(2)
+
+/* The layout of this is hardware-dependent (padding, order). */
+struct zschan {
+	u_char		zc_xxx0;
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx1;
+	volatile u_char	zc_data;	/* data */
+};
+struct zsdevice {
+	/* Yes, they are backwards. */
+	struct	zschan zs_chan_b;
+	struct	zschan zs_chan_a;
+};
 
 struct zsc_softc {
 	struct	device zsc_dev;		/* required first: base device */
@@ -75,3 +88,9 @@ u_char zs_read_data __P((struct zs_chanstate *cs));
 void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
 void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+
+/*
+ * Physical address for built-in ZS.
+ */
+#define ZSCN_PHYSADDR	0xe98004 /* for serial console */
+#define ZSMS_PHYSADDR	0xe98000 /* for mouse */

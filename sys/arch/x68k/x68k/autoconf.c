@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1998/09/09 16:42:51 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.6.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -51,8 +51,9 @@
 void configure __P((void));
 static void findroot __P((struct device **, int *));
 void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata*, void*));
+int x68k_config_found __P((struct cfdata *, struct device *,
+			   void *, cfprint_t));
 
 static int simple_devprint __P((void *, const char *));
 static struct device *scsi_find __P((dev_t));
@@ -158,6 +159,7 @@ config_console()
 	cf = config_rootsearch(NULL, "mainbus", "mainbus");
 	if (cf == NULL)
 		panic("no mainbus");
+	x68k_config_found(cf, NULL, "intio", NULL);
 	x68k_config_found(cf, NULL, "grfbus", NULL);
 }
 
@@ -303,7 +305,7 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf ("\n");
-	config_found(dp, "clock"  , simple_devprint);
+	config_found(dp, "intio"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "par"    , simple_devprint);
 	config_found(dp, "fdc"    , simple_devprint);
@@ -315,14 +317,4 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "mha"    , simple_devprint);
 	config_found(dp, "adpcm"  , simple_devprint);
 	config_found(dp, "*"      , simple_devprint);
-}
-
-int
-mbprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
-	return(UNCONF);
 }

@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7 1998/10/18 04:42:38 itohy Exp $
+|	$NetBSD: vectors.s,v 1.7.6.1 1998/12/23 16:47:35 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -69,14 +69,14 @@ _vectab:
 	.long	_coperr		/* 13: coprocessor protocol violation */
 	.long	_fmterr		/* 14: format error */
 	.long	_badtrap	/* 15: uninitialized interrupt vector */
-	.long	_badtrap	/* 16: unassigned, reserved */
-	.long	_badtrap	/* 17: unassigned, reserved */
-	.long	_badtrap	/* 18: unassigned, reserved */
-	.long	_badtrap	/* 19: unassigned, reserved */
-	.long	_badtrap	/* 20: unassigned, reserved */
-	.long	_badtrap	/* 21: unassigned, reserved */
-	.long	_badtrap	/* 22: unassigned, reserved */
-	.long	_badtrap	/* 23: unassigned, reserved */
+	.long	_intiotrap	/* 16: unassigned, reserved */
+	.long	_intiotrap	/* 17: unassigned, reserved */
+	.long	_intiotrap	/* 18: unassigned, reserved */
+	.long	_intiotrap	/* 19: unassigned, reserved */
+	.long	_intiotrap	/* 20: unassigned, reserved */
+	.long	_intiotrap	/* 21: unassigned, reserved */
+	.long	_intiotrap	/* 22: unassigned, reserved */
+	.long	_intiotrap	/* 23: unassigned, reserved */
 	.long	_spurintr	/* 24: spurious interrupt */
 	.long	_lev1intr	/* 25: level 1 interrupt autovector */
 	.long	_lev2intr	/* 26: level 2 interrupt autovector */
@@ -127,48 +127,48 @@ _vectab:
 
 	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
 	.long	_badtrap	/* 56: MMU configuration error */
-	.long	_badtrap	/* 57: unassigned, reserved */
-	.long	_badtrap	/* 58: unassigned, reserved */
-	.long	_badtrap	/* 59: unassigned, reserved */
-	.long	_badtrap	/* 60: unassigned, reserved */
-	.long	_badtrap	/* 61: unassigned, reserved */
-	.long	_badtrap	/* 62: unassigned, reserved */
-	.long	_badtrap	/* 63: unassigned, reserved */
-	.long	_mfptrap	/* 64: MFP GPIP0 RTC alarm */
+	.long	_intiotrap	/* 57: unassigned, reserved */
+	.long	_intiotrap	/* 58: unassigned, reserved */
+	.long	_intiotrap	/* 59: unassigned, reserved */
+	.long	_intiotrap	/* 60: unassigned, reserved */
+	.long	_intiotrap	/* 61: unassigned, reserved */
+	.long	_intiotrap	/* 62: unassigned, reserved */
+	.long	_intiotrap	/* 63: unassigned, reserved */
+	.long	_intiotrap	/* 64: MFP GPIP0 RTC alarm */
 	.long	_powtrap	/* 65: MFP GPIP1 ext. power switch */
 	.long	_powtrap	/* 66: MFP GPIP2 front power switch */
-	.long	_mfptrap	/* 67: MFP GPIP3 FM sound generator */
-	.long	_mfptrap	/* 68: MFP timer-D */
+	.long	_intiotrap	/* 67: MFP GPIP3 FM sound generator */
+	.long	_intiotrap	/* 68: MFP timer-D */
 	.long	_timertrap	/* 69: MFP timer-C */
-	.long	_mfptrap	/* 70: MFP GPIP4 VBL */
-	.long	_mfptrap	/* 71: MFP GPIP5 unassigned */
+	.long	_intiotrap	/* 70: MFP GPIP4 VBL */
+	.long	_intiotrap	/* 71: MFP GPIP5 unassigned */
 	.long	_kbdtimer	/* 72: MFP timer-B */
-	.long	_mfptrap	/* 73: MFP MPSC send error */
-	.long	_mfptrap	/* 74: MFP MPSC transmit buffer empty */
-	.long	_mfptrap	/* 75: MFP MPSC receive error */
-	.long	_kbdtrap	/* 76: MFP MPSC receive buffer full */
-	.long	_mfptrap	/* 77: MFP timer-A */
-	.long	_mfptrap	/* 78: MFP CRTC raster */
-	.long	_mfptrap	/* 79: MFP H-SYNC */
-	.long	_badtrap	/* 80: unassigned, reserved */
-	.long	_badtrap	/* 81: unassigned, reserved */
-	.long	_badtrap	/* 82: unassigned, reserved */
-	.long	_badtrap	/* 83: unassigned, reserved */
-	.long	_badtrap	/* 84: unassigned, reserved */
-	.long	_badtrap	/* 85: unassigned, reserved */
-	.long	_badtrap	/* 86: unassigned, reserved */
-	.long	_badtrap	/* 87: unassigned, reserved */
-	.long	_badtrap	/* 88: unassigned, reserved */
-	.long	_badtrap	/* 89: unassigned, reserved */
-	.long	_badtrap	/* 90: unassigned, reserved */
-	.long	_badtrap	/* 91: unassigned, reserved */
-	.long	_badtrap	/* 92: unassigned, reserved */
-	.long	_badtrap	/* 93: unassigned, reserved */
-	.long	_badtrap	/* 94: unassigned, reserved */
-	.long	_badtrap	/* 95: unassigned, reserved */
+	.long	_intiotrap	/* 73: MFP MPSC send error */
+	.long	_intiotrap	/* 74: MFP MPSC transmit buffer empty */
+	.long	_intiotrap	/* 75: MFP MPSC receive error */
+	.long	_intiotrap	/* 76: MFP MPSC receive buffer full */
+	.long	_intiotrap	/* 77: MFP timer-A */
+	.long	_intiotrap	/* 78: MFP CRTC raster */
+	.long	_intiotrap	/* 79: MFP H-SYNC */
+	.long	_intiotrap	/* 80: unassigned, reserved */
+	.long	_intiotrap	/* 81: unassigned, reserved */
+	.long	_intiotrap	/* 82: unassigned, reserved */
+	.long	_intiotrap	/* 83: unassigned, reserved */
+	.long	_intiotrap	/* 84: unassigned, reserved */
+	.long	_intiotrap	/* 85: unassigned, reserved */
+	.long	_intiotrap	/* 86: unassigned, reserved */
+	.long	_intiotrap	/* 87: unassigned, reserved */
+	.long	_intiotrap	/* 88: unassigned, reserved */
+	.long	_intiotrap	/* 89: unassigned, reserved */
+	.long	_intiotrap	/* 90: unassigned, reserved */
+	.long	_intiotrap	/* 91: unassigned, reserved */
+	.long	_intiotrap	/* 92: unassigned, reserved */
+	.long	_intiotrap	/* 93: unassigned, reserved */
+	.long	_intiotrap	/* 94: unassigned, reserved */
+	.long	_intiotrap	/* 95: unassigned, reserved */
 	.long	_fdctrap	/* 96: FDC */
 	.long	_fdeject	/* 97: floppy ejection */
-	.long	_badtrap	/* 98: unassigned, reserved */
+	.long	_intiotrap	/* 98: unassigned, reserved */
 	.long	_partrap	/* 99: parallel port */
 	.long	_fdcdmatrap	/* 100: FDC DMA */
 	.long	_fdcdmaerrtrap	/* 101: FDC DMA (error) */
@@ -176,37 +176,37 @@ _vectab:
 	.long	_spcdmatrap	/* 102: SCSI DMA */
 	.long	_spcdmaerrtrap	/* 103: SCSI DMA (error) */
 #else
-	.long	_badtrap	/* 102: unassigned, reserved */
-	.long	_badtrap	/* 103: unassigned, reserved */
+	.long	_intiotrap	/* 102: unassigned, reserved */
+	.long	_intiotrap	/* 103: unassigned, reserved */
 #endif
-	.long	_badtrap	/* 104: unassigned, reserved */
-	.long	_badtrap	/* 105: unassigned, reserved */
+	.long	_intiotrap	/* 104: unassigned, reserved */
+	.long	_intiotrap	/* 105: unassigned, reserved */
 	.long	_audiotrap	/* 106: ADPCM DMA */
 	.long	_audioerrtrap	/* 107: ADPCM DMA */
 	.long	_spctrap	/* 108: internal SPC */
-	.long	_badtrap	/* 109: unassigned, reserved */
-	.long	_badtrap	/* 110: unassigned, reserved */
-	.long	_badtrap	/* 111: unassigned, reserved */
-	.long	_zstrap		/* 112: Z8530 SCC (onboard) */
-	.long	_zstrap		/* 113: Z8530 SCC */
-	.long	_zstrap		/* 114: Z8530 SCC */
-	.long	_badtrap	/* 115: unassigned, reserved */
-	.long	_badtrap	/* 116: unassigned, reserved */
-	.long	_badtrap	/* 117: unassigned, reserved */
-	.long	_badtrap	/* 118: unassigned, reserved */
-	.long	_badtrap	/* 119: unassigned, reserved */
-	.long	_badtrap	/* 129: unassigned, reserved */
-	.long	_badtrap	/* 121: unassigned, reserved */
-	.long	_badtrap	/* 122: unassigned, reserved */
-	.long	_badtrap	/* 123: unassigned, reserved */
-	.long	_badtrap	/* 124: unassigned, reserved */
-	.long	_badtrap	/* 125: unassigned, reserved */
-	.long	_badtrap	/* 126: unassigned, reserved */
-	.long	_badtrap	/* 127: unassigned, reserved */
-#define BADTRAP16	.long	_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap,\
-				_badtrap,_badtrap,_badtrap,_badtrap
+	.long	_intiotrap	/* 109: unassigned, reserved */
+	.long	_intiotrap	/* 110: unassigned, reserved */
+	.long	_intiotrap	/* 111: unassigned, reserved */
+	.long	_intiotrap	/* 112: Z8530 SCC (onboard) */
+	.long	_intiotrap	/* 113: Z8530 SCC */
+	.long	_intiotrap	/* 114: Z8530 SCC */; 
+	.long	_intiotrap	/* 115: unassigned, reserved */
+	.long	_intiotrap	/* 116: unassigned, reserved */
+	.long	_intiotrap	/* 117: unassigned, reserved */
+	.long	_intiotrap	/* 118: unassigned, reserved */
+	.long	_intiotrap	/* 119: unassigned, reserved */
+	.long	_intiotrap	/* 129: unassigned, reserved */
+	.long	_intiotrap	/* 121: unassigned, reserved */
+	.long	_intiotrap	/* 122: unassigned, reserved */
+	.long	_intiotrap	/* 123: unassigned, reserved */
+	.long	_intiotrap	/* 124: unassigned, reserved */
+	.long	_intiotrap	/* 125: unassigned, reserved */
+	.long	_intiotrap	/* 126: unassigned, reserved */
+	.long	_intiotrap	/* 127: unassigned, reserved */
+#define BADTRAP16	.long	_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
+				_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
+				_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
+				_intiotrap,_intiotrap,_intiotrap,_intiotrap
 	BADTRAP16		/* 128-143: user interrupt vectors */
 	BADTRAP16		/* 144-159: user interrupt vectors */
 	BADTRAP16		/* 160-175: user interrupt vectors */
@@ -216,17 +216,17 @@ _vectab:
 	BADTRAP16		/* 224-239: user interrupt vectors */
 	.long	_com0trap	/* 240: unassigned, reserved */
 	.long	_com1trap	/* 241: unassigned, reserved */
-	.long	_badtrap	/* 242: unassigned, reserved */
-	.long	_badtrap	/* 243: unassigned, reserved */
-	.long	_badtrap	/* 244: unassigned, reserved */
-	.long	_badtrap	/* 245: unassigned, reserved */
+	.long	_intiotrap	/* 242: unassigned, reserved */
+	.long	_intiotrap	/* 243: unassigned, reserved */
+	.long	_intiotrap	/* 244: unassigned, reserved */
+	.long	_intiotrap	/* 245: unassigned, reserved */
 	.long	_exspctrap	/* 246: external SPC */
-	.long	_badtrap	/* 247: unassigned, reserved */
-	.long	_badtrap	/* 248: unassigned, reserved */
-	.long	_edtrap		/* 249: Neptune-X */
-	.long	_badtrap	/* 250: unassigned, reserved */
-	.long	_badtrap	/* 251: unassigned, reserved */
-	.long	_badtrap	/* 252: unassigned, reserved */
-	.long	_badtrap	/* 253: unassigned, reserved */
-	.long	_badtrap	/* 254: unassigned, reserved */
-	.long	_badtrap	/* 255: unassigned, reserved */
+	.long	_intiotrap	/* 247: unassigned, reserved */
+	.long	_intiotrap	/* 248: unassigned, reserved */
+	.long	_intiotrap	/* 249: Neptune-X */
+	.long	_intiotrap	/* 250: unassigned, reserved */
+	.long	_intiotrap	/* 251: unassigned, reserved */
+	.long	_intiotrap	/* 252: unassigned, reserved */
+	.long	_intiotrap	/* 253: unassigned, reserved */
+	.long	_intiotrap	/* 254: unassigned, reserved */
+	.long	_intiotrap	/* 255: unassigned, reserved */

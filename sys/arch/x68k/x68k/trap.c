@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1998/12/15 19:37:17 itohy Exp $	*/
+/*	$NetBSD: trap.c,v 1.26.2.1 1998/12/23 16:47:35 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -288,7 +288,7 @@ trap(type, code, v, frame)
 	struct proc *p;
 	int i, s;
 	u_int ucode;
-	u_quad_t sticks;
+	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 
 #if defined(UVM)
 	uvmexp.traps++;
@@ -579,7 +579,10 @@ trap(type, code, v, frame)
 #else
 			cnt.v_soft++;
 #endif
+#include "kbd.h"
+#if NKBD > 0
 			kbdsoftint();
+#endif
 		}
 		/*
 		 * If this was not an AST trap, we are all done.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1998/11/29 16:20:13 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.1 1998/12/23 16:47:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,9 @@
 #include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
+#include "opt_fpuemulate.h"
+#include "opt_m060sp.h"
+#include "opt_panicbutton.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -108,7 +111,9 @@
 #include <sys/sysctl.h>
 
 #include <sys/device.h>
-#include <x68k/x68k/iodevice.h>
+
+#include <machine/bus.h>
+#include <arch/x68k/dev/intiovar.h>
 
 void initcpu __P((void));
 void identifycpu __P((void));
@@ -282,7 +287,9 @@ cpu_startup()
 
 	pmapdebug = 0;
 #endif
+#if 0
 	rtclockinit(); /* XXX */
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -552,6 +559,7 @@ again:
 	/*
 	 * Configure the system.
 	 */
+	splnone();
 	configure();
 }
 
@@ -617,7 +625,7 @@ identifycpu()
 	/*
 	 * check machine type constant
 	 */
-	switch (IODEVbase->io_sysport.mpustat) {
+	switch (intio_get_sysport_mpustat()) {
 	case 0xdc:
 		/*
 		 * CPU Type == 68030, Clock == 25MHz
@@ -1250,7 +1258,8 @@ void
 nmihand(frame)
 	struct frame frame;
 {
-	sysport.keyctrl = sysport.keyctrl | 0x04;
+	intio_set_sysport_keyctrl(intio_get_sysport_keyctrl() | 0x04);
+
 	if (1) {
 #ifdef PANICBUTTON
 		static int innmihand = 0;

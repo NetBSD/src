@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.11 1998/08/06 14:08:54 minoura Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.11.6.1 1998/12/23 16:47:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -59,6 +59,8 @@
  * false when initing for the console.
  */
 extern int x68k_realconfig;
+int x68k_config_found __P((struct cfdata *, struct device *,
+			   void *, cfprint_t));
 
 int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, struct cfdata *, void *));
