@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.3 2002/04/03 10:21:02 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.4 2002/04/04 07:24:55 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 3, 2002
+.Dd April 4, 2002
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -45,19 +45,6 @@
 .Nm ""
 .Fl nv
 .Bk -words
-.Op Fl b Ar bno
-.Ek
-.ig
-.Bk -words
-.Oo
-.Fl B
-.Sm off
-.Ar bno Op , Ar ...
-.Sm on
-.Oc
-.Ek
-..
-.Bk -words
 .Op Fl m Ar machine
 .Ek
 .Bk -words
@@ -65,6 +52,9 @@
 .Ek
 .Bk -words
 .Op Fl t Ar fstype
+.Ek
+.Bk -words
+.Op Fl b Ar bno
 .Ek
 .Ar filesystem
 .Ar bootstrap
@@ -85,7 +75,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility installs and removes disk bootstrap software.
+utility installs and removes
+.Nx
+disk bootstrap software.
 .Nm
 can install
 .Ar bootstrap
@@ -94,7 +86,46 @@ into
 or disable an existing bootstrap in
 .Ar filesystem .
 .Pp
-(XXX: flesh out description of primary & secondary bootstrap, ...)
+Generally,
+.Nx
+disk bootstrap software consists of two parts: a
+.Dq primary
+bootstrap program usually written into the disklabel area of the
+disk by
+.Nm "" ,
+and a
+.Dq secondary
+bootstrap program that usually resides in a file system on the disk.
+.Pp
+When booting, the primary bootstrap program is loaded and invoked by
+the machine's PROM or BIOS.
+After receiving control of the system it loads and runs the secondary
+bootstrap program, which in turn loads and runs the kernel.
+The secondary bootstrap may allow control over various boot parameters
+passed to the kernel.
+.Pp
+To make a disk bootable, copy the secondary bootstrap
+(usually
+.Pa /usr/mdec/boot. Ns Sy MACHINE )
+to the root directory of the first file system on the disk.
+.Nx Ns Tn /pmax
+requires this file system to start at block 0 of the disk.
+Then use
+.Nm
+to install the primary bootstrap program
+(usually
+.Pa /usr/mdec/bootxx. Ns Sy <fs> )
+into the disk's raw partition
+.Po
+usually
+.Dq c
+.ig
+but
+.Dq d
+on platforms such as
+.Sy i386 .
+..
+.Pc .
 .Pp
 The options recognized by
 .Nm
@@ -179,6 +210,9 @@ The default operation is to attempt to auto-detect this setting.
 .It Fl v
 Verbose operation.
 .El
+.Pp
+.Nm
+exits 0 on success, and \*[Gt]0 if an error occurs.
 .
 .Sh ENVIRONMENT
 .Nm
@@ -195,7 +229,63 @@ overriding the result from
 .El
 .
 .Sh FILES
-XXX
+Most NetBSD ports will contain variations of the following files:
+.Pp
+.Bl -tag -width /usr/mdec/boot.$MACHINE
+.
+.It Pa /usr/mdec/bootxx_ Ns Sy <fs>
+Primary bootstrap for file system
+.Sy <fs> .
+Installed into the bootstrap area of the file system by
+.Nm "" .
+.
+.It Pa /usr/mdec/boot. Ns Sy MACHINE
+Secondary bootstrap for machine type
+.Sy MACHINE .
+This should be installed into the file system before
+.Nm
+is run.
+.
+.It Pa /boot. Ns Sy MACHINE
+Installed copy of secondary bootstrap for machine type
+.Sy MACHINE .
+.
+.It Pa /boot
+Installed copy of secondary bootstrap.
+Searched for by the primary bootstrap if
+.Pa /boot. Ns Sy MACHINE
+is not found.
+.
+.El
+.
+.
+.Sh EXAMPLES
+.\".if t .ne 4
+Install the Berkeley Fast File System primary bootstrap on to disk sd0:
+.D1 Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
+.Pp
+Remove the primary bootstrap from disk wd1:
+.Dl Ic installboot -c /dev/rwd1c
+.Pp
+.Ss NetBSD/pmax examples
+.Pp
+Install the ISO 9660 primary bootstrap in the file
+.Pa /tmp/cd-image :
+.Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Pp
+Make an ISO 9660 filesystem in the file
+.Pa /tmp/cd-image
+and install the ISO 9660 primary bootstrap in the filesystem, where the
+source directory for the ISO 9660 filesystem contains a kernel, the
+primary bootstrap
+.Pa bootxx_cd9660
+and the secondary bootstrap
+.Pa boot.pmax :
+.Dl Ic mkisofs -o /tmp/cd-image -a -l -v iso-source-dir
+.Dl ...
+.Dl 48 51 iso-source-dir/bootxx_cd9660
+.Dl ...
+.Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
 .
 .Sh SEE ALSO
 .Xr uname 3 ,
@@ -204,11 +294,33 @@ XXX
 .Xr init 8
 .
 .Sh HISTORY
-The
+This implementation of
 .Nm
-utility first appeared the depths of time (XXX).
-This version appeared in
+appeared in
 .Nx 1.6 .
 .
+.Sh AUTHORS
+The machine independant portion of this implementation of
+.Nm
+was written by Luke Mewburn.
+The following people contributed to the various machine dependent
+back-ends:
+Simon Burge (pmax),
+Chris Demetriou (alpha),
+Ross Harvey (alpha),
+Matth Thomas (vax).
+.
 .Sh BUGS
-XXX
+There are not currently primary bootstraps to support all file systems
+types which are capable of being the root file system.
+.Pp
+.Ss NetBSD/pmax bugs
+.Pp
+The
+.Nx Ns Tn /pmax
+secondary bootstrap program can only load kernels from file
+systems starting at the beginning of disks.
+.Pp
+The size of primary bootstrap programs is restricted to 7.5KB, even
+though some file systems (e.g. ISO 9660) are able to accomodate larger
+ones.
