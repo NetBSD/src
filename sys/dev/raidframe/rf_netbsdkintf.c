@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.142 2002/10/01 18:11:57 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.143 2002/10/04 20:05:14 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.142 2002/10/01 18:11:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.143 2002/10/04 20:05:14 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1931,8 +1931,19 @@ KernelWakeupFunc(vbp)
 
 	pool_put(&raidframe_cbufpool, raidbp);
 
-	rf_DiskIOComplete(queue, req, (bp->b_flags & B_ERROR) ? 1 : 0);
-	(req->CompleteFunc) (req->argument, (bp->b_flags & B_ERROR) ? 1 : 0);
+	/* Fill in the error value */
+
+	req->error = (bp->b_flags & B_ERROR) ? bp->b_error : 0;
+
+	simple_lock(&queue->raidPtr->iodone_lock);
+
+	/* Drop this one on the "finished" queue... */
+	TAILQ_INSERT_TAIL(&(queue->raidPtr->iodone), req, iodone_entries);
+
+	/* Let the raidio thread know there is work to be done. */
+	wakeup(&(queue->raidPtr->iodone));
+
+	simple_unlock(&queue->raidPtr->iodone_lock);
 
 	splx(s);
 }
