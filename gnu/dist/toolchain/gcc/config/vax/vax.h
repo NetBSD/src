@@ -62,6 +62,10 @@ extern int target_flags;
 #define MASK_G_FLOAT 4
 #define TARGET_G_FLOAT (target_flags & MASK_G_FLOAT)
 
+/* Nonzero if compiling for PIC code */
+#define MASK_HALFPIC 8
+#define TARGET_HALFPIC (target_flags & MASK_HALFPIC)
+
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
    each pair being { "NAME", VALUE }
@@ -76,6 +80,8 @@ extern int target_flags;
     {"g-float", MASK_G_FLOAT, "Generate GFLOAT double precision code"}, \
     {"d", -MASK_G_FLOAT, "Generate DFLOAT double precision code"}, \
     {"d-float", -MASK_G_FLOAT, "Generate DFLOAT double precision code"}, \
+    {"half-pic",  MASK_HALFPIC, "Generate PIC code"}, \
+    {"no-pic",  -MASK_HALFPIC, "Generate non-PIC code"}, \
     { "", TARGET_DEFAULT, 0}}
 
 /* Default target_flags if no switches specified.  */
@@ -693,11 +699,11 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
      goto LABEL; 							\
    if (GET_CODE (ADDR) == PLUS)						\
      { if (CONSTANT_ADDRESS_P (XEXP (ADDR, 0))				\
-	   && (!(flag_pic)						\
+	   && (!(flag_pic || TARGET_HALFPIC)				\
 	       || GET_CODE (XEXP (ADDR, 0)) != SYMBOL_REF)		\
 	   && GET_CODE (XEXP (ADDR, 1)) == REG);			\
        else if (CONSTANT_ADDRESS_P (XEXP (ADDR, 1))			\
-	        && (!(flag_pic)						\
+	        && (!(flag_pic || TARGET_HALFPIC)			\
 		    || GET_CODE (XEXP (ADDR, 1)) != SYMBOL_REF)		\
 		&& GET_CODE (XEXP (ADDR, 0)) == REG);			\
        else goto LABEL; }}

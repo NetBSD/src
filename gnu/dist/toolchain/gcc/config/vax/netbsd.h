@@ -1,5 +1,5 @@
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dvax -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
+#define CPP_PREDEFINES "-D__vax__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -22,3 +22,5 @@
    and initialization stuff better.  */
 #undef DWARF2_UNWIND_INFO
 
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT MASK_HALFPIC	/* default to half-pic mode */
