@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.7 1997/10/14 19:07:20 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.8 1998/01/13 02:10:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -227,9 +227,7 @@ struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtcmatch, rtcattach
 };
 
-struct cfdriver rtc_cd = {
-	NULL, "rtc", DV_DULL, 0
-};
+extern struct cfdriver rtc_cd;
 
 /*
  * rtcmatch()

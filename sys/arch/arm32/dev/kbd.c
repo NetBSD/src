@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.19 1997/10/14 19:35:38 mark Exp $	*/
+/*	$NetBSD: kbd.c,v 1.20 1998/01/13 02:10:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -146,9 +146,7 @@ extern int console_scrollforward	__P((void));
 extern void pmap_debug		__P((int level));
 #endif
 
-struct cfdriver	kbd_cd = {
-	NULL, "kbd", DV_TTY
-};
+extern struct cfdriver kbd_cd;
 
 /* keyboard commands */
 
@@ -193,7 +191,6 @@ struct cfdriver	kbd_cd = {
 #define KBD_ST_RXPARITY	0x04
 #define KBD_ST_KDATAI	0x02
 #define KBD_ST_KCLKI	0x01
-
 
 int
 kbdopen(dev, flag, mode, p)

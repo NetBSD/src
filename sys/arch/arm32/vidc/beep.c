@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.11 1997/10/14 12:03:10 mark Exp $	*/
+/*	$NetBSD: beep.c,v 1.12 1998/01/13 02:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -99,10 +99,7 @@ struct cfattach beep_ca = {
 	sizeof(struct beep_softc), beepprobe, beepattach
 };
 
-struct cfdriver	beep_cd = {
-	NULL, "beep", DV_TTY
-};
-
+extern struct cfdriver beep_cd;
 
 int
 beepprobe(parent, cf, aux)
