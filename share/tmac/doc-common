@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.56 2002/05/30 23:38:19 augustss Exp $
+.\"	$NetBSD: doc-common,v 1.57 2002/07/11 10:53:21 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -343,7 +343,7 @@
 .\}
 ..
 .de lM
-.\" We may still have a partial line in the enviroment.  If this is the case,
+.\" We may still have a partial line in the environment.  If this is the case,
 .\" and we happen to be on the last line of the page, the .fl will cause the
 .\" page to be ejected and troff will immediately exit.  If we're in nroff
 .\" mode, this would be unfortunate, since we would never get a chance to

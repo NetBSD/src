@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $	*/
+/*	$NetBSD: init.c,v 1.12 2002/07/11 10:53:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $");
+__RCSID("$NetBSD: init.c,v 1.12 2002/07/11 10:53:21 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ struct	gettystrs gettystrs[] = {
 	{ "et", &tmode.c_cc[VEOF] },	/* eof chatacter (eot) */
 	{ "pc", "" },			/* pad character */
 	{ "tt" },			/* terminal type */
-	{ "ev" },			/* enviroment */
+	{ "ev" },			/* environment */
 	{ "lo", _PATH_LOGIN },		/* login program */
 	{ "hn", hostname },		/* host name */
 	{ "he" },			/* host name edit */

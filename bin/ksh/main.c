@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.6 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2002/07/11 10:53:19 wiz Exp $	*/
 
 /*
- * startup, main loop, enviroments and error handling
+ * startup, main loop, environments and error handling
  */
 
 #define	EXTERN				/* define EXTERNs in sh.h */
@@ -119,7 +119,7 @@ main(argc, argv)
 
 	ainit(&aperm);		/* initialize permanent Area */
 
-	/* set up base enviroment */
+	/* set up base environment */
 	memset(&env, 0, sizeof(env));
 	env.type = E_NONE;
 	ainit(&env.area);
@@ -205,7 +205,7 @@ main(argc, argv)
 	change_flag(FPOSIX, OF_SPECIAL, 1);
 #endif /* POSIXLY_CORRECT */
 
-	/* import enviroment */
+	/* import environment */
 	if (environ != NULL)
 		for (wp = environ; *wp != NULL; wp++)
 			typeset(*wp, IMPORT|EXPORT, 0, 0, 0);
