@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.5 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: md.i386,v 1.6 2004/03/06 20:49:05 heas Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -231,6 +231,7 @@
 ./usr/X11R6/man/cat4/tseng.0
 ./usr/X11R6/man/cat4/vesa.0
 ./usr/X11R6/man/cat4/vga.0
+./usr/X11R6/man/cat4/via.0
 ./usr/X11R6/man/cat4/vmware.0
 ./usr/X11R6/man/cat4/void.0
 ./usr/X11R6/man/cat4/wacom.0
