@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.19 2005/02/06 08:32:05 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.20 2005/02/06 08:33:40 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -585,3 +585,10 @@ usr.bin/sed/compile.c				1.31
 	'verbatim'. Fix a comment for compile_text indicating it's also used 
 	for the 'c' command.
 	[matt, ticket #982]
+
+sys/dev/ata/wd.c				1.297
+
+	Some drives reports ATA version < 4, and still support (and need) the
+	WDCC_FLUSHCACHE command. So for drive < ATA4, test WDC_CMD2_FC in 
+	atap_cmd_set2 before returning ENODEV.
+	[bouyer, ticket #986]
