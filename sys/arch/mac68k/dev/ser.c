@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.18 1995/04/08 13:20:52 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.19 1995/04/11 03:00:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -89,13 +89,15 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-
 #include <sys/device.h>
-#include "serreg.h"
+
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
 #include <dev/cons.h>
+
+#include <dev/ic/z8530.h>
+#include <mac68k/dev/serreg.h>
 
 /*#define DEBUG*/
 #undef DEBUG
@@ -266,9 +268,9 @@ seropen(dev_t dev, int flag, int mode, struct proc *p)
 	bzero((char *)&ser_status[unit], sizeof(struct ser_status));
 
 	/* turn on RTS & DTR */
-	serctl(unit, SER_W5_RTS | SER_W5_DTR, DMSET);
+	serctl(unit, ZSWR5_RTS | ZSWR5_DTR, DMSET);
 
-	if(serctl(unit, 0, DMGET) & SER_R0_DCD)
+	if(serctl(unit, 0, DMGET) & ZSRR0_DCD)
 		tp->t_state |= TS_CARR_ON;
 
 	/* enable interrupts */
@@ -410,37 +412,37 @@ ser_intr(void)
 	    SCCRDWR(unit) = c;
 	    ser_outlen[unit]--;
 	} else {
-	    SER_DOCNTL(unit, 0, SER_W0_RSTTXPND);
+	    SER_DOCNTL(unit, 0, ZSWR0_RESET_TXINT);
 	    ser_status[unit].flags &= ~SER_BUSY;
 	    setsoftserial();
 	}
-	SER_DOCNTL(unit, 0, SER_W0_RSTIUS);
+	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
       case 1:	/* ext/status change */
-	if ((reg0 & SER_R0_DCD) && ser_status[unit].dcd == 0)
+	if ((reg0 & ZSRR0_DCD) && ser_status[unit].dcd == 0)
 		ser_status[unit].ddcd = 1;
 	else
-		if (!(reg0 & SER_R0_DCD) && ser_status[unit].dcd != 0)
+		if (!(reg0 & ZSRR0_DCD) && ser_status[unit].dcd != 0)
 			ser_status[unit].ddcd = 1;
-	ser_status[unit].dcd = reg0 & SER_R0_DCD;
+	ser_status[unit].dcd = reg0 & ZSRR0_DCD;
 
-	if ((reg0 & SER_R0_CTS) && ser_status[unit].cts == 0)
+	if ((reg0 & ZSRR0_CTS) && ser_status[unit].cts == 0)
 		ser_status[unit].dcts = 1;
 	else
-		if (!(reg0 & SER_R0_CTS) && ser_status[unit].cts != 0)
+		if (!(reg0 & ZSRR0_CTS) && ser_status[unit].cts != 0)
 			ser_status[unit].dcts = 1;
-	ser_status[unit].cts = reg0 & SER_R0_CTS;
+	ser_status[unit].cts = reg0 & ZSRR0_CTS;
 
-	if (reg0 & SER_R0_TXUNDERRUN)
-	    SER_DOCNTL(unit, 0, SER_W0_RSTTXUNDERRUN);
+	if (reg0 & ZSRR0_TXUNDER)
+	    SER_DOCNTL(unit, 0, ZSWR0_RESET_EOM);
 
-	SER_DOCNTL(unit, 0, SER_W0_RSTESINTS);
-	SER_DOCNTL(unit, 0, SER_W0_RSTIUS);
+	SER_DOCNTL(unit, 0, ZSWR0_RESET_STATUS);
+	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
       case 2:	/* recv char available */
 	ch = SCCRDWR(unit);
 	c = 1;
-	if (SER_STATUS(unit, 0) & SER_R0_RXREADY) {
+	if (SER_STATUS(unit, 0) & ZSRR0_RX_READY) {
 		ch1 = SCCRDWR(unit);
 		c = 2;
 	}
@@ -455,15 +457,15 @@ ser_intr(void)
 	}
 	setsoftserial();
 
-	SER_DOCNTL(unit, 0, SER_W0_RSTIUS);
+	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
       case 3:	/* spec recv condition */
 	reg1 = SER_STATUS(unit, 1);
 	SCCRDWR(unit); /* flush fifo */
-	if (reg1 & SER_R1_RXOVERRUN)
+	if (reg1 & ZSRR1_DO)
 		ser_status[unit].over++;
-	SER_DOCNTL(unit, 0, SER_W0_RSTERR);
-	SER_DOCNTL(unit, 0, SER_W0_RSTIUS);
+	SER_DOCNTL(unit, 0, ZSWR0_RESET_ERRORS);
+	SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
 	break;
     }
 
@@ -574,11 +576,11 @@ serioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		break;
 #endif
 	case TIOCSDTR:	/* set DTR */
-		(void) serctl(dev, SER_W5_DTR | SER_W5_RTS, DMBIS);
+		(void) serctl(dev, ZSWR5_DTR | ZSWR5_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:	/* clear DTR */
-		(void) serctl(dev, SER_W5_DTR | SER_W5_RTS, DMBIC);
+		(void) serctl(dev, ZSWR5_DTR | ZSWR5_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:	/* set modem control bits */
@@ -634,37 +636,39 @@ ser_calc_regs(int unit, int cflag, unsigned char *preg3, unsigned char *preg4,
 {
 	unsigned char r3, r4, r5;
 
-	r3 = SER_W3_ENBRX;
-	r5 = SER_W5_ENBTX;
+	r3 = ZSWR3_RX_ENABLE;
+	r5 = ZSWR5_TX_ENABLE;
 	if (ser_status[unit].dtr)
-		r5 |= SER_W5_DTR;
+		r5 |= ZSWR5_DTR;
 	if (ser_status[unit].rts)
-		r5 |= SER_W5_RTS;
+		r5 |= ZSWR5_RTS;
 	switch (cflag&CSIZE) {
 	    case CS5:
-		r3 |= SER_W3_RX5DBITS;
-		r5 |= SER_W5_TX5DBITS;
+		r3 |= ZSWR3_RX_5;
+		r5 |= ZSWR5_TX_5;
 		break;
 	    case CS6:
-		r3 |= SER_W3_RX6DBITS;
-		r5 |= SER_W5_TX6DBITS;
+		r3 |= ZSWR3_RX_6;
+		r5 |= ZSWR5_TX_6;
 		break;
 	    case CS7:
-		r3 |= SER_W3_RX7DBITS;
-		r5 |= SER_W5_TX7DBITS;
+		r3 |= ZSWR3_RX_7;
+		r5 |= ZSWR5_TX_7;
 		break;
 	    case CS8:
-		r3 |= SER_W3_RX8DBITS;
-		r5 |= SER_W5_TX8DBITS;
+		r3 |= ZSWR3_RX_8;
+		r5 |= ZSWR5_TX_8;
 		break;
 	}
 	r4 = 0;
-	if(cflag & PARENB)
-		r4 |= (cflag & PARODD) ? SER_W4_PARODD : SER_W4_PAREVEN;
-	if(cflag & CSTOPB)
-		r4 |= SER_W4_2SBIT;
+	if ((cflag & PARODD) == 0)
+		r4 |= ZSWR4_EVENP
+	if (cflag & PARENB)
+		r4 |= ZSWR4_PARENB;
+	if (cflag & CSTOPB)
+		r4 |= ZSWR4_TWOSB;
 	else
-		r4 |= SER_W4_1SBIT;
+		r4 |= ZSWR4_ONESB;
 	
 	*preg3 = r3;
 	*preg4 = r4;
@@ -711,7 +715,7 @@ serparam(register struct tty *tp, register struct termios *t)
 	splx(s);
 */
 	serctl(unit, 1, SCC_INT);
-	serctl(unit, SER_W5_DTR | SER_W5_RTS, DMSET);
+	serctl(unit, ZSWR5_DTR | ZSWR5_RTS, DMSET);
 
 	/* End of serial specific param code */
 
@@ -815,8 +819,8 @@ serctl(dev_t dev, int bits, int how)
 	switch (how) {
 
 	case DMSET:
-		ser_status[unit].dtr = bits & SER_W5_DTR;
-		ser_status[unit].rts = bits & SER_W5_RTS;
+		ser_status[unit].dtr = bits & ZSWR5_DTR;
+		ser_status[unit].rts = bits & ZSWR5_RTS;
 		SER_DOCNTL(unit, 5, bits | 0x68);
 		break;
 
@@ -833,12 +837,9 @@ serctl(dev_t dev, int bits, int how)
 	/* */
 	case SCC_INT:
 		if (bits) {
-			SER_DOCNTL(unit, 0, SER_W0_RSTERR);
-			SER_DOCNTL(unit, 0, SER_W0_RSTIUS);
-			SER_DOCNTL(unit, 1,
-				   SER_W1_ENBEXTINT |
-				   SER_W1_ENBRXINT |
-				   SER_W1_ENBTXINT);
+			SER_DOCNTL(unit, 0, ZSWR0_RESET_ERRORS);
+			SER_DOCNTL(unit, 0, ZSWR0_CLR_INTR);
+			SER_DOCNTL(unit, 1, ZSWR1_SIE | ZSWR1_RIE | ZSWR1_TIE);
 		} else
 			SER_DOCNTL(unit, 1, 0);
 		break;
@@ -902,9 +903,9 @@ sercngetc(dev_t dev)
 
     unit = UNIT(dev);
 
-    while (!(SER_STATUS(unit, 0) & SER_R0_RXREADY));
+    while (!(SER_STATUS(unit, 0) & ZSRR0_RX_READY));
     c = SCCRDWR(unit);
-    SER_STATUS(unit, 0) = SER_W0_RSTESINTS;
+    SER_STATUS(unit, 0) = ZSWR0_RESET_STATUS;
 
     return c;
 }
@@ -915,6 +916,6 @@ sercnputc(dev_t dev, int c)
 
     unit = UNIT(dev);
 
-    while (!(SER_STATUS(unit, 0) & SER_R0_TXREADY));
+    while (!(SER_STATUS(unit, 0) & ZSRR0_TX_READY));
     SCCRDWR(unit) = c;
 }
