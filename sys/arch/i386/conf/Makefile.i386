@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.133 2004/03/25 23:32:10 jmc Exp $
+#	$NetBSD: Makefile.i386,v 1.134 2004/04/15 15:02:17 he Exp $
 
 # Makefile for NetBSD
 #
@@ -110,6 +110,8 @@ UUDECODE_FILES=athhal-elf-o
 UUDECODE_FILES_RENAME_athhal-elf-o=athhal-elf.o
 
 athhal-elf.o: athhal-elf-o
+
+EXTRA_CLEAN+= athhal-elf-o
 
 .PATH: $S/../contrib/sys/arch/i386/dev
 
