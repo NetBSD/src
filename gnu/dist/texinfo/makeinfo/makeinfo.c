@@ -1,5 +1,5 @@
 /* makeinfo -- convert Texinfo source into other formats.
-   $Id: makeinfo.c,v 1.5 2001/07/25 17:40:09 assar Exp $
+   $Id: makeinfo.c,v 1.6 2001/09/02 21:55:03 wiz Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96, 97, 98, 99
    Free Software Foundation, Inc.
@@ -539,7 +539,7 @@ main (argc, argv)
         case 'h': /* --help */
           usage (0);
           break;
-          
+
         case 'I':
           /* Append user-specified dir to include file path. */
           if (!include_files_path)
