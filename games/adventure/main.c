@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1999/02/10 00:29:21 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1999/07/16 01:38:20 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 1999/02/10 00:29:21 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 1999/07/16 01:38:20 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,7 @@ l4080:
 			printf(" %d minutes before continuing.", latncy);
 			if (!yes(200, 54, 54))
 				goto l2012;
-			datime(&saved, &savet);
+			datime(&saveday, &savet);
 			ciao();	/* Do we quit? */
 			continue;	/* Maybe not */
 		case 31:	/* hours=8310 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.9 1999/02/10 00:11:28 hubertf Exp $	*/
+/*	$NetBSD: wizard.c,v 1.10 1999/07/16 01:38:20 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.9 1999/02/10 00:11:28 hubertf Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.10 1999/07/16 01:38:20 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,7 +91,7 @@ Start()
 	int     d, t, delay;
 
 	datime(&d, &t);
-	delay = (d - saved) * 1440 + (t - savet);	/* good for about a
+	delay = (d - saveday) * 1440 + (t - savet);	/* good for about a
 							 * month     */
 
 	if (delay >= latncy) {
