@@ -1,8 +1,8 @@
-/*	$NetBSD: db_defs.h,v 1.5 2002/11/14 02:04:27 itojun Exp $	*/
+/*	$NetBSD: db_defs.h,v 1.6 2002/11/17 14:09:52 itojun Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
- *	Id: db_defs.h,v 8.47 2002/05/18 01:02:53 marka Exp
+ *	Id: db_defs.h,v 8.47.4.1 2002/11/14 13:22:24 marka Exp
  */
 
 /*
