@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.19 2004/11/17 03:08:14 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.20 2004/11/17 03:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.19 2004/11/17 03:08:14 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.20 2004/11/17 03:23:09 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,8 @@ struct filed {
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
 	int	f_repeatcount;			/* number of "repeated" msgs */
+	int	f_flags;			/* file-specific flags */
+#define	FFLAG_SYNC	0x01
 };
 
 /*
@@ -1133,7 +1135,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				errno = e;
 				logerror(f->f_un.f_fname);
 			}
-		} else if (flags & SYNC_FILE)
+		} else if ((flags & SYNC_FILE) && (f->f_flags & FFLAG_SYNC))
 			(void)fsync(f->f_file);
 		break;
 
@@ -1620,7 +1622,7 @@ void
 cfline(char *line, struct filed *f, char *prog, char *host)
 {
 	struct addrinfo hints, *res;
-	int    error, i, pri;
+	int    error, i, pri, syncfile;
 	char   *bp, *p, *q;
 	char   buf[MAXLINE];
 	int    sp_err;
@@ -1758,6 +1760,12 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 	while ((*p == '\t') || (*p == ' '))
 		p++;
 
+	if (*p == '-') {
+		syncfile = 0;
+		p++;
+	} else
+		syncfile = 1;
+
 	switch (*p)
 	{
 	case '@':
@@ -1785,6 +1793,8 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 			logerror(p);
 			break;
 		}
+		if (syncfile)
+			f->f_flags |= FFLAG_SYNC;
 		if (isatty(f->f_file))
 			f->f_type = F_TTY;
 		else

@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.6 2004/11/17 01:27:26 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.7 2004/11/17 03:23:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -257,6 +257,20 @@ There are five forms:
 .It
 A pathname (beginning with a leading slash).
 Selected messages are appended to the file.
+.Pp
+To ensure that kernel messages are written to disk promptly,
+.Xr syslogd 8
+calls
+.Xr fsync 2
+after writing messages from the kernel.
+Other messages are not synced explcitly.
+You my disable syncing of files specified to receive kernel messages
+by prefixing the pathname with a minus sign
+.Ql - .
+Note that use of this option may cause the loss of log information in
+the event of a system crash immediately following the write attempt.
+However, using this option may improve be useful if your system's
+kernel is logging many messages.
 .It
 A hostname (preceded by an at
 .Pq Sq @
@@ -362,6 +376,9 @@ mail,news.err				/var/log/spoolerr
 
 # Pipe all authentication messages to a filter.
 auth.*					|exec /usr/local/sbin/authfilter
+
+# Log kernel messages to a separate file without syncing each message.
+kern.*					-/var/log/kernlog
 
 # Save ftpd transactions along with mail and news.
 !ftpd
