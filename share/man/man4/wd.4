@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.1 1998/10/19 12:44:15 bouyer Exp $
+.\"	$NetBSD: wd.4,v 1.2 1998/12/02 11:05:59 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -30,14 +30,22 @@
 .Nm wd 
 .Nd WD100x compatible hard disk driver
 .Sh SYNOPSIS
-.Cd "wd* at wdc? channel ? drive ?"
-.Cd "wd* at pciide? channel ? drive ?"
+.Cd "wd* at wdc? channel ? drive ? flags 0x0000"
+.Cd "wd* at pciide? channel ? drive ? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm wd 
 driver supports hard disk which emulate the Western
 Digital WD100x.  This includes standard MFM, RLL, ESDI, IDE and EIDE
 drives.
+.Pp
+The flags are used only with controllers with mode settings support (like
+some PCIIDE controllers). The first 4 bytes of the flags define the PIO mode
+to use, the second DMA mode and the third UltraDMA mode. For each group of 4
+bytes, the 3 lower define the mode to use, and the last one must be 1 for the
+setting to be used. For DMA and UDMA, 0xf means 'disable'. For example, 0x0fac
+means 'use PIO mode 4 DMA mode 2, disable UltraDMA'. 0x0000 means "use whatever
+the drive claims to support.
 .Sh SEE ALSO
 .Xr intro 4
 .Xr wdc 4
