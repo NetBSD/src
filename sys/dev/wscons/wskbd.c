@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.49 2001/10/24 15:44:50 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.50 2001/10/25 14:46:41 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.49 2001/10/24 15:44:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.50 2001/10/25 14:46:41 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -728,7 +728,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
-	evar = wsevent_alloc();
+	evar = &sc->sc_base.me_evar;
+	wsevent_init(evar);
 	sc->sc_base.me_evp = evar;
 	evar->io = p;
 
@@ -737,7 +738,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		DPRINTF(("wskbdopen: %s open failed\n",
 			 sc->sc_base.me_dv.dv_xname));
 		sc->sc_base.me_evp = NULL;
-		wsevent_free(evar);
+		wsevent_fini(evar);
 	}
 	return (error);
 }
@@ -766,7 +767,7 @@ wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
 	wskbd_enable(sc, 0);
-	wsevent_free(evar);
+	wsevent_fini(evar);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.17 2001/10/24 14:07:33 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.18 2001/10/25 14:46:41 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.17 2001/10/24 14:07:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.18 2001/10/25 14:46:41 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -425,6 +425,10 @@ out:
 		sc->sc_ub = ub;
 		evar->put = put;
 		WSEVENT_WAKEUP(evar);
+#if NWSMUX > 0
+		DPRINTFN(5,("wsmouse_input: %s wakeup evar=%p\n",
+			    sc->sc_base.me_dv.dv_xname, evar));
+#endif
 	}
 }
 
@@ -461,7 +465,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
-	evar = wsevent_alloc();
+	evar = &sc->sc_base.me_evar;
+	wsevent_init(evar);
 	sc->sc_base.me_evp = evar;
 	evar->io = p;
 
@@ -470,7 +475,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		DPRINTF(("wsmouseopen: %s open failed\n",
 			 sc->sc_base.me_dv.dv_xname));
 		sc->sc_base.me_evp = NULL;
-		wsevent_free(evar);
+		wsevent_fini(evar);
 	}
 	return (error);
 }
@@ -487,7 +492,7 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 		return (0);
 	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
-	wsevent_free(evar);
+	wsevent_fini(evar);
 
 	return (0);
 }

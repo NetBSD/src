@@ -3,7 +3,7 @@
   use method to get sc of muxee, common code for add&rem
  */
 
-/*	$NetBSD: wsmux.c,v 1.15 2001/10/25 13:19:41 shin Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.16 2001/10/25 14:46:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,9 +76,11 @@
 
 #ifdef WSMUX_DEBUG
 #define DPRINTF(x)	if (wsmuxdebug) printf x
+#define DPRINTFN(n,x)	if (wsmuxdebug > (n)) printf x
 int	wsmuxdebug = 0;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 
 /*
@@ -213,7 +215,8 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 		/* Already open. */
 		return (EBUSY);
 
-	evar = wsevent_alloc();
+	evar = &sc->sc_base.me_evar;
+	wsevent_init(evar);
 	evar->io = p;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
@@ -300,7 +303,7 @@ wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 		return (0);
 
 	sc->sc_base.me_evp = NULL;
-	wsevent_free(evar);
+	wsevent_fini(evar);
 	wsmux_do_close(sc);
 	return (0);
 }
@@ -347,13 +350,16 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
+	struct wseventvar *evar;
+	int error;
 
 	if (WSMUXCTL(minr)) {
 		/* control device */
 		return (EINVAL);
 	}
 
-	if (sc->sc_base.me_evp == NULL) {
+	evar = sc->sc_base.me_evp;
+	if (evar == NULL) {
 #ifdef DIAGNOSTIC
 		/* XXX can we get here? */
 		printf("wsmuxread: not open\n");
@@ -361,7 +367,12 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
 		return (EINVAL);
 	}
 
-	return (wsevent_read(sc->sc_base.me_evp, uio, flags));
+	DPRINTFN(5,("wsmuxread: %s event read evar=%p\n", 
+		    sc->sc_base.me_dv.dv_xname, evar));
+	error = wsevent_read(evar, uio, flags);
+	DPRINTFN(5,("wsmuxread: %s event read ==> error=%d\n", 
+		    sc->sc_base.me_dv.dv_xname, error));
+	return (error);
 }
 
 /*
@@ -391,7 +402,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct timeval thistime;
 	struct wsmux_device_list *l;
 
-	DPRINTF(("wsmux_do_ioctl: %s: sc=%p, cmd=%08lx\n", 
+	DPRINTF(("wsmux_do_ioctl: %s: enter sc=%p, cmd=%08lx\n", 
 		 sc->sc_base.me_dv.dv_xname, sc, cmd));
 
 	switch (cmd) {
@@ -472,6 +483,10 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		DPRINTF(("wsmux_do_ioctl: save rawkbd = %d\n", sc->sc_rawkbd));
 		break;
 #endif
+	case FIONBIO:
+		DPRINTF(("%s: FIONBIO\n", sc->sc_base.me_dv.dv_xname));
+		return (0);
+
 	case FIOASYNC:
 		DPRINTF(("%s: FIOASYNC\n", sc->sc_base.me_dv.dv_xname));
 		evar = sc->sc_base.me_evp;
@@ -503,7 +518,6 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	error = 0;
 	ok = 0;
 	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
-		DPRINTF(("wsmux_do_ioctl: me=%p\n", me));
 #ifdef DIAGNOSTIC
 		/* XXX check evp? */
 		if (me->me_parent != sc) {
@@ -511,9 +525,10 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			continue;
 		}
 #endif
-		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s\n", 
-			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname));
 		error = wsevsrc_ioctl(me, cmd, data, flag, p);
+		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n", 
+			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname,
+			 error));
 		if (!error)
 			ok = 1;
 	}

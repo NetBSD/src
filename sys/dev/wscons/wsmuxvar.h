@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.4 2001/10/24 14:07:33 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.5 2001/10/25 14:46:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 struct wsevsrc {
 	struct device me_dv;
 	const struct wssrcops *me_ops;	/* method pointers */
+	struct wseventvar me_evar;	/* wseventvar opened directly */
 	struct wseventvar *me_evp;	/* our wseventvar when open */
 #if NWSDISPLAY > 0
 	struct device *me_dispdv;       /* our display if part of one */
