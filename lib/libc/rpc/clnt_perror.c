@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.24 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.25 2001/02/13 01:00:21 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.24 2000/06/02 23:11:07 fvdl Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.25 2001/02/13 01:00:21 cgd Exp $");
 #endif
 #endif
 
@@ -88,7 +88,7 @@ _buf()
 char *
 clnt_sperror(rpch, s)
 	CLIENT *rpch;
-	char *s;
+	const char *s;
 {
 	struct rpc_err e;
 	char *err;
@@ -181,7 +181,7 @@ clnt_sperror(rpch, s)
 void
 clnt_perror(rpch, s)
 	CLIENT *rpch;
-	char *s;
+	const char *s;
 {
 
 	_DIAGASSERT(rpch != NULL);
@@ -238,7 +238,7 @@ clnt_perrno(num)
 
 char *
 clnt_spcreateerror(s)
-	char *s;
+	const char *s;
 {
 	char *str;
 	size_t len, i;
@@ -289,7 +289,7 @@ clnt_spcreateerror(s)
 
 void
 clnt_pcreateerror(s)
-	char *s;
+	const char *s;
 {
 
 	_DIAGASSERT(s != NULL);
