@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.8 2001/02/24 00:01:24 cgd Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.9 2001/10/13 15:56:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -40,10 +40,10 @@
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wsemul_vt100var.h>
 
-static int vt100_selectattribute __P((struct wsemul_vt100_emuldata *,
-				      int, int, int, long *, long *));
-static int vt100_ansimode __P((struct wsemul_vt100_emuldata *, int, int));
-static int vt100_decmode __P((struct wsemul_vt100_emuldata *, int, int));
+static int vt100_selectattribute(struct wsemul_vt100_emuldata *,
+				      int, int, int, long *, long *);
+static int vt100_ansimode(struct wsemul_vt100_emuldata *, int, int);
+static int vt100_decmode(struct wsemul_vt100_emuldata *, int, int);
 #define VTMODE_SET 33
 #define VTMODE_RESET 44
 #define VTMODE_REPORT 55
@@ -52,9 +52,7 @@ static int vt100_decmode __P((struct wsemul_vt100_emuldata *, int, int));
  * scroll up within scrolling region
  */
 void
-wsemul_vt100_scrollup(edp, n)
-	struct wsemul_vt100_emuldata *edp;
-	int n;
+wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *edp, int n)
 {
 	int help;
 
@@ -84,9 +82,7 @@ wsemul_vt100_scrollup(edp, n)
  * scroll down within scrolling region
  */
 void
-wsemul_vt100_scrolldown(edp, n)
-	struct wsemul_vt100_emuldata *edp;
-	int n;
+wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *edp, int n)
 {
 	int help;
 
@@ -116,9 +112,7 @@ wsemul_vt100_scrolldown(edp, n)
  * erase in display
  */
 void
-wsemul_vt100_ed(edp, arg)
-	struct wsemul_vt100_emuldata *edp;
-	int arg;
+wsemul_vt100_ed(struct wsemul_vt100_emuldata *edp, int arg)
 {
 	int n;
 
@@ -164,9 +158,7 @@ wsemul_vt100_ed(edp, arg)
  * erase in line
  */
 void
-wsemul_vt100_el(edp, arg)
-	struct wsemul_vt100_emuldata *edp;
-	int arg;
+wsemul_vt100_el(struct wsemul_vt100_emuldata *edp, int arg)
 {
 	switch (arg) {
 	    case 0: /* cursor to end */
@@ -192,9 +184,7 @@ wsemul_vt100_el(edp, arg)
  * handle commands after CSI (ESC[)
  */
 void
-wsemul_vt100_handle_csi(edp, c)
-	struct wsemul_vt100_emuldata *edp;
-	u_char c;
+wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	int n, help, flags, fgcol, bgcol;
 	long attr, bkgdattr;
@@ -628,10 +618,8 @@ wsemul_vt100_handle_csi(edp, c)
  * is not supported
  */
 static int
-vt100_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
-	struct wsemul_vt100_emuldata *edp;
-	int flags, fgcol, bgcol;
-	long *attr, *bkgdattr;
+vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
+	int flags, int fgcol, int bgcol, long *attr, long *bkgdattr)
 {
 	int error;
 
@@ -707,8 +695,7 @@ vt100_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
  * told so by setting edp->dcstype to a nonzero value
  */
 void
-wsemul_vt100_handle_dcs(edp)
-	struct wsemul_vt100_emuldata *edp;
+wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *edp)
 {
 	int i, pos;
 
@@ -748,9 +735,7 @@ wsemul_vt100_handle_dcs(edp)
 }
 
 static int
-vt100_ansimode(edp, nr, op)
-	struct wsemul_vt100_emuldata *edp;
-	int nr, op;
+vt100_ansimode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 {
 	int res = 0; /* default: unknown */
 
@@ -784,9 +769,7 @@ vt100_ansimode(edp, nr, op)
 }
 
 static int
-vt100_decmode(edp, nr, op)
-	struct wsemul_vt100_emuldata *edp;
-	int nr, op;
+vt100_decmode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 {
 	int res = 0; /* default: unknown */
 	int flags;
