@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.490 2002/10/05 06:02:56 grant Exp $
+#	$NetBSD: mi,v 1.491 2002/10/13 04:37:03 elric Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1704,6 +1704,8 @@
 ./usr/share/man/cat3/directory.0	comp-c-catman
 ./usr/share/man/cat3/dirfd.0	comp-c-catman
 ./usr/share/man/cat3/dirname.0	comp-c-catman
+./usr/share/man/cat3/disklabel_dkcksum.0	comp-c-catman
+./usr/share/man/cat3/disklabel_scan.0	comp-c-catman
 ./usr/share/man/cat3/div.0	comp-c-catman
 ./usr/share/man/cat3/dladdr.0	comp-c-catman
 ./usr/share/man/cat3/dlclose.0	comp-c-catman
@@ -4438,6 +4440,8 @@
 ./usr/share/man/man3/directory.3		comp-c-man
 ./usr/share/man/man3/dirfd.3		comp-c-man
 ./usr/share/man/man3/dirname.3		comp-c-man
+./usr/share/man/man3/disklabel_dkcksum.3	comp-c-man
+./usr/share/man/man3/disklabel_scan.3	comp-c-man
 ./usr/share/man/man3/div.3		comp-c-man
 ./usr/share/man/man3/dladdr.3		comp-c-man
 ./usr/share/man/man3/dlclose.3		comp-c-man
