@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.12 1998/01/26 06:58:01 ross Exp $
+.\"	$NetBSD: swapctl.8,v 1.13 1998/02/10 03:14:32 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -87,7 +87,9 @@ This option causes
 to read the
 .Pa /etc/fstab
 file for devices and files with a ``sw'' type, and adds all these entries
-as swap devices.
+as swap devices.  If no swap devices are configured,
+.Nm
+will exit with an error code.
 .It Fl a
 The
 .Fl a
