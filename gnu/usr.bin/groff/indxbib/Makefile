@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1997/03/24 22:06:30 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/18 05:59:04 lukem Exp $
 
 PROG=		indxbib
 SRCS=		indxbib.cc dirnamemax.c signal.c

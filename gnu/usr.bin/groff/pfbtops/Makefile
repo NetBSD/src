@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:44:37 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/18 05:59:23 lukem Exp $
 
 PROG=		pfbtops
 LDADD+=		$(LIBGROFF)

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1995/10/26 00:58:54 jtc Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/18 05:58:55 lukem Exp $
 
 PROG=		groff
 SRCS=		groff.cc pipeline.c

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:41:56 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/18 05:58:26 lukem Exp $
 
 DEVICE=		X100
 FONTFILES=	CB CBI CI CR HB HBI HI HR NB NBI NI NR S TB TBI TI TR DESC
