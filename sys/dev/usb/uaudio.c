@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.30 2000/12/28 01:01:42 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.31 2000/12/28 11:56:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -127,6 +127,8 @@ struct chan {
 	u_char	*cur;		/* current position in upper layer buffer */
 	int	blksize;	/* chunk size to report up */
 	int	transferred;	/* transferred bytes not reported up */
+
+	char	nofrac;		/* don't do sample rate adjustment */
 
 	int	curchanbuf;
 	struct chanbuf {
@@ -380,6 +382,9 @@ USB_ATTACH(uaudio)
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_chan.sc = sc;
+
+	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
+		sc->sc_chan.nofrac = 1;
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 #if defined(__OpenBSD__)
@@ -961,7 +966,7 @@ uaudio_add_extension(struct uaudio_softc *sc, usb_descriptor_t *v,
 	DPRINTFN(2,("uaudio_add_extension: bUnitId=%d bNrInPins=%d\n",
 		    d->bUnitId, d->bNrInPins));
 
-	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_XU)
+	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_XU)
 		return;
 
 	if (d1->bmControls[0] & UA_EXT_ENABLE_MASK) {
@@ -1056,6 +1061,10 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 
 	dir = UE_GET_DIR(ed->bEndpointAddress);
 	type = UE_GET_ISO_TYPE(ed->bmAttributes);
+	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_INP_ASYNC) &&
+	    dir == UE_DIR_IN && type == UE_ISO_ADAPT)
+		type = UE_ISO_ASYNC;
+
 	/* We can't handle endpoints that need a sync pipe. */
 	if (dir == UE_DIR_IN ? type == UE_ISO_ADAPT : type == UE_ISO_ASYNC) {
 		printf("%s: ignored %sput endpoint of type %s\n",
@@ -1869,7 +1878,8 @@ uaudio_chan_ptransfer(struct chan *ch)
 		size = ch->bytes_per_frame;
 		residue += ch->fraction;
 		if (residue >= USB_FRAMES_PER_SECOND) {
-			size += ch->sample_size;
+			if (!ch->nofrac)
+				size += ch->sample_size;
 			residue -= USB_FRAMES_PER_SECOND;
 		}
 		cb->sizes[i] = size;
@@ -1972,7 +1982,8 @@ uaudio_chan_rtransfer(struct chan *ch)
 		size = ch->bytes_per_frame;
 		residue += ch->fraction;
 		if (residue >= USB_FRAMES_PER_SECOND) {
-			size += ch->sample_size;
+			if (!ch->nofrac)
+				size += ch->sample_size;
 			residue -= USB_FRAMES_PER_SECOND;
 		}
 		cb->sizes[i] = size;
@@ -2016,9 +2027,17 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5,("uaudio_chan_rintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
+
+	if (count < cb->size) {
+		/* if the device fails to keep up, copy last byte */
+		u_char b = count ? cb->buffer[count-1] : 0;
+		while (count < cb->size)
+			cb->buffer[count++] = b;
+	}
+
 #ifdef DIAGNOSTIC
 	if (count != cb->size) {
-		printf("uaudio_chan_pintr: count(%d) != size(%d)\n",
+		printf("uaudio_chan_rintr: count(%d) != size(%d)\n",
 		       count, cb->size);
 	}
 #endif
@@ -2042,7 +2061,7 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	s = splaudio();
 	while (ch->transferred >= ch->blksize) {
 		ch->transferred -= ch->blksize;
-		DPRINTFN(5,("uaudio_chan_pintr: call %p(%p)\n", 
+		DPRINTFN(5,("uaudio_chan_rintr: call %p(%p)\n", 
 			    ch->intr, ch->arg));
 		ch->intr(ch->arg);
 	}
