@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.40 1999/06/17 00:22:41 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.41 1999/07/09 02:32:31 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -31,7 +31,7 @@ device	lpt: ether, ifnet, arp
 attach	lpt at mainbus
 file	arch/pc532/dev/lpt.c		lpt needs-flag
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major	{sd = 0}
 major	{cd = 4}
 

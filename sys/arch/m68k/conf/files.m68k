@@ -1,4 +1,4 @@
-#       $NetBSD: files.m68k,v 1.25 1999/04/19 21:22:58 kleink Exp $
+#       $NetBSD: files.m68k,v 1.26 1999/07/09 02:32:30 thorpej Exp $
 #
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
@@ -22,4 +22,4 @@ file	arch/m68k/m68k/reenter_syscall.s	compat_linux | compat_svr4
 
 file	arch/m68k/m68k/svr4_machdep.c		compat_svr4
 
-include "../../../compat/m68k4k/files.m68k4k"
+include "compat/m68k4k/files.m68k4k"

@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.53 1999/06/20 01:05:19 ragge Exp $
+#       $NetBSD: files.vax,v 1.54 1999/07/09 02:32:32 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -107,7 +107,7 @@ major	{ry = 24}
 #
 # Machine-independent SCSI driver.
 #
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major	{ sd = 20 }
 major	{ cd = 22 }
 
@@ -315,8 +315,8 @@ file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 file	arch/vax/uba/uba_dma.c		uba
 
-include "../../../compat/ultrix/files.ultrix"
-include "../../../compat/vax1k/files.vax1k"
+include "compat/ultrix/files.ultrix"
+include "compat/vax1k/files.vax1k"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/dkbad.c         standard

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.88 1999/07/07 00:05:28 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.89 1999/07/09 02:32:28 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -235,7 +235,7 @@ file	dev/ic/lpt.c			lpt needs-flag
 attach	lpt at supio with lpt_supio
 file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major	{sd = 4}
 major	{cd = 7}
 
