@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2002/04/21 22:05:45 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.3 2002/05/19 18:56:54 augustss Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -130,3 +130,5 @@ define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
 
 define	CACHELINESIZE	CACHELINESIZE
+
+define	CPU_CI		offsetof(struct cpu_info, ci_ci)
