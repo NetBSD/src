@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2001/10/18 01:03:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2001/11/04 21:15:03 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -665,6 +665,7 @@ pmap_pte_spill(vaddr_t addr)
 			if (i >= 0) {
 				PVO_PTEGIDX_SET(pvo, i);
 				pmap_pte_overflow--;
+				PMAP_PVO_CHECK(pvo);	/* sanity check */
 				return 1;
 			}
 			source_pvo = pvo;
@@ -687,7 +688,7 @@ pmap_pte_spill(vaddr_t addr)
 		return 0;
 
 	if (victim_pvo == NULL)
-		panic("pmap_pte_spill: victim pte has no pvo entry!");
+		panic("pmap_pte_spill: victim pte (%p) has no pvo entry!", pt);
 
 	/*
 	 * We are invalidating the TLB entry for the EA for the
@@ -703,6 +704,9 @@ pmap_pte_spill(vaddr_t addr)
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
 	pmap_pte_replacements++;
+
+	PMAP_PVO_CHECK(victim_pvo);
+	PMAP_PVO_CHECK(source_pvo);
 	return 1;
 }
 
