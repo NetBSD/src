@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.103 2000/12/19 16:54:14 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.104 2000/12/19 17:11:38 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.104 2000/12/19 16:53:41 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.105 2000/12/19 17:11:22 thorpej Exp 
  */
 
 /*-
@@ -882,7 +882,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INTERSIL_PRISM2,
 	    0,
 	    "Intersil",
-	    "Intersil Prism II"	},
+	    "Prism II"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MELCO_LPC2_TX,
@@ -896,7 +896,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_SMC_2632W,
 	    0,
 	    "Standard Microsystems Corporation",
-	    "} SMC 2632 EZ Connect Wireless PC Card"	},
+	    "SMC 2632 EZ Connect Wireless PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
