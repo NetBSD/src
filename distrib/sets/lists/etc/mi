@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122 2003/04/20 20:55:39 thorpej Exp $
+# $NetBSD: mi,v 1.123 2003/04/24 01:05:49 perry Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -181,6 +181,7 @@
 ./etc/shells				etc-sys-etc
 ./etc/skel/.cshrc			etc-sys-etc
 ./etc/skel/.login			etc-sys-etc
+./etc/skel/.logout			etc-sys-etc
 ./etc/skel/.profile			etc-sys-etc
 ./etc/skeykeys				etc-sys-etc
 ./etc/spwd.db				etc-sys-etc
