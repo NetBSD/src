@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2000/08/27 19:40:45 leo Exp $
+#	$NetBSD: list,v 1.11 2000/11/14 13:13:36 leo Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64KB!
 LIBS	libhack.o
@@ -15,8 +15,8 @@ LINK	instbin			usr/sbin/loadkmap
 ARGVLINK mount_msdos	msdos
 
 # crunchgen source directory specials
-CRUNCHSPECIAL	ahdilabel srcdir /usr/src/sys/arch/atari/stand/ahdilabel/
-CRUNCHSPECIAL	loadkmap srcdir /usr/src/sys/arch/atari/stand/loadkmap/
+CRUNCHSPECIAL	ahdilabel srcdir sys/arch/atari/stand/ahdilabel/
+CRUNCHSPECIAL	loadkmap srcdir sys/arch/atari/stand/loadkmap/
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
@@ -47,3 +47,6 @@ SPECIAL	mkdir kern
 # remove the /usr/share/zoneinfo directory, so the installation script
 # can determine that the atari install does not support it.
 SPECIAL	rmdir usr/share/zoneinfo
+
+# strip /etc/services - not enough space... (leaves ftp in).
+SPECIAL grep ftp ${DESTDIR}/etc/services > etc/services
