@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.69 1998/05/22 16:43:42 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.70 1998/05/25 23:40:22 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -138,6 +138,7 @@ GNU_ARCH.m68k=m68k
 GNU_ARCH.mips=mips
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
+GNU_ARCH.sparc=sparc
 GNU_ARCH.vax=vax
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 
