@@ -75,11 +75,7 @@ AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -
 USE_CRYPT		= yes
 .endif
 
-.if defined(USE_CRYPT)
 NETBSD_LIBS		= -lcrypt -lutil
-.else
-NETBSD_LIBS		= -lutil
-.endif
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 LIBS			= libextra.a
