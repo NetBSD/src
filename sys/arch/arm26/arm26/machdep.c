@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 2001/11/16 13:41:58 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.14 2002/03/18 21:14:34 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2001/11/16 13:41:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2002/03/18 21:14:34 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -129,18 +129,6 @@ haltsys:
 		asm volatile("movs pc, #3"); /* reboot in SVC mode */
 	}
 	panic("cpu_reboot failed");
-}
-
-/*
- * This is provided because GCC seems to generate calls to it.
- */
-void abort __P((void)) __attribute__((__noreturn__));
-
-void
-abort()
-{
-
-	panic("abort() called -- noreturn function returned?");
 }
 
 /*
