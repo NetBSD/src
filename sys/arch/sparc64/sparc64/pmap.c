@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2002/03/14 20:59:19 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2002/04/18 17:19:12 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1633,15 +1633,9 @@ pmap_pinit(pm)
 	simple_lock(&pm->pm_lock);
 	pm->pm_refs = 1;
 	if(pm != pmap_kernel()) {
-#ifdef NOTDEF_DEBUG
-		printf("pmap_pinit: need to alloc page\n");
-#endif
 		pmap_get_page(&pm->pm_physaddr , "pmap_pinit");
 		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
-#ifdef NOTDEF_DEBUG
-		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
-#endif
 		ctx_alloc(pm);
 	}
 #ifdef DEBUG
@@ -2002,8 +1996,6 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 	splx(s);
 	ASSERT((tsb[i].data & TLB_NFO) == 0);
-	/* this is correct */
-	dcache_flush_page(pa);
 }
 
 /*
@@ -2168,9 +2160,9 @@ pmap_enter(pm, va, pa, prot, flags)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
-		if ((flags & VM_PROT_ALL) || (tte.data & TLB_ACCESS))
+		if (flags & VM_PROT_ALL)
 			pv->pv_va |= PV_REF;
-		if (flags & VM_PROT_WRITE || (tte.data & (TLB_MODIFY)))
+		if (flags & VM_PROT_WRITE)
 			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
@@ -2195,7 +2187,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	if (prot & VM_PROT_WRITE) tte.data |= TLB_REAL_W;
 #else
 	/* If it needs ref accounting do nothing. */
-	if (!(flags&VM_PROT_READ)) {
+	if (!(flags & VM_PROT_READ)) {
 		simple_unlock(&pm->pm_lock);
 		splx(s);
 		if (wired) {
@@ -2205,13 +2197,15 @@ pmap_enter(pm, va, pa, prot, flags)
 		return 0;
 	}
 #endif
+	if (flags & VM_PROT_EXECUTE) {
+		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) == 0)
+			tte.data |= TLB_EXEC_ONLY|TLB_EXEC;
+		else
+			tte.data |= TLB_EXEC;
+	}
 	if (wired) tte.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
-#ifdef NOTDEF_DEBUG
-	printf("pmap_enter: inserting %x:%x at %x\n", 
-	       (int)(tte.data>>32), (int)tte.data, (int)va);
-#endif
 	while (pseg_set(pm, va, tte.data, pg) == 1) {
 		char *wmsg;
 
@@ -2229,10 +2223,6 @@ pmap_enter(pm, va, pa, prot, flags)
 		}
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
-#endif
-#ifdef NOTDEF_DEBUG
-	printf("pmap_enter: inserting %x:%x at %x with %x\n", 
-	       (int)(tte.data>>32), (int)tte.data, (int)va, (int)pg);
 #endif
 	}
 
@@ -2278,8 +2268,8 @@ pmap_enter(pm, va, pa, prot, flags)
 		tlb_flush_pte(va, pm->pm_ctx);	
 		ASSERT((tsb[i].data & TLB_NFO) == 0);
 	}
-	/* this is correct */
-	dcache_flush_page(pa);
+	if (pm == pmap_kernel() && (flags & VM_PROT_EXECUTE) != 0)
+		icache_flush_page(pa);
 
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
@@ -2376,17 +2366,6 @@ pmap_remove(pm, va, endva)
 				ASSERT((tsb[i].data & TLB_NFO) == 0);
 				/* Flush the TLB */
 			}
-#ifdef NOTDEF_DEBUG
-			else if (pmapdebug & PDB_REMOVE) {
-				printf("TSB[%d] has ctx %d va %x: ",
-				       i,
-				       TSB_TAG_CTX(tsb[i].tag),
-				       (int)(TSB_TAG_VA(tsb[i].tag)|(i<<13)));
-				printf("%08x:%08x %08x:%08x\n",
-				       (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-				       (int)(tsb[i].data>>32), (int)tsb[i].data);			       
-			}
-#endif
 #ifdef DEBUG
 			remove_stats.tflushes ++;
 #endif
@@ -2844,7 +2823,6 @@ pmap_clear_modify(pg)
 				changed |= 1;
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pv->pv_pmap->pm_lock);
-			dcache_flush_page(pa);
 		}
 	splx(s);
 	pv_check();
@@ -2942,8 +2920,6 @@ pmap_clear_reference(pg)
 			simple_unlock(&pv->pv_pmap->pm_lock);
 		}
 	}
-	/* Stupid here will take a cache hit even on unmapped pages 8^( */
-	dcache_flush_page(pa);
 	splx(s);
 	pv_check();
 #ifdef DEBUG
@@ -3309,7 +3285,6 @@ pmap_page_protect(pg, prot)
 				pv->pv_next = NULL;
 			}
 		}
-		dcache_flush_page(pa);
 		splx(s);
 	}
 	/* We should really only flush the pages we demapped. */
