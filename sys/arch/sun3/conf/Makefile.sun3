@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.sun3,v 1.23 1994/10/26 09:08:12 cgd Exp $
+#	$NetBSD: Makefile.sun3,v 1.24 1994/11/21 21:26:45 gwr Exp $
 
-# Makefile for 4.4 BSD
+#
+# Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -17,7 +18,7 @@
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
-
+#
 # For cross development, uncomment XINC, and
 # copy a few things from NetBSD:/usr/include
 # into compile/xinc : nlist.h setjmp.h stab.h
@@ -100,7 +101,7 @@ newvers:
 
 clean:
 	rm -f eddep netbsd* tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks
+		Errs errs linterrs makelinks vnode_if.[ch]
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

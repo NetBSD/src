@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.h,v 1.3 1994/10/26 09:08:49 cgd Exp $	*/
+/*	$NetBSD: if_le.h,v 1.4 1994/11/21 21:30:53 gwr Exp $	*/
 
 /*
  * Ethernet software status per interface.

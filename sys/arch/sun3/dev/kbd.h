@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.2 1994/10/26 09:09:00 cgd Exp $	*/
+/*	$NetBSD: kbd.h,v 1.3 1994/11/21 21:31:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbd.h	8.1 (Berkeley) 6/11/93
- *
- * Header: kbd.h,v 1.5 92/11/26 01:15:33 torek Exp  (LBL)
+ *	from: Header: kbd.h,v 1.5 92/11/26 01:15:33 torek Exp  (LBL)
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.5 1994/10/26 09:10:33 cgd Exp $	*/
+/*	$NetBSD: isr.h,v 1.6 1994/11/21 21:33:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	isr.h,v 1.2 1993/05/22 07:57:26 cgd Exp
  */
 
 struct isr {

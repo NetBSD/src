@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 1994/10/26 09:08:46 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13 1994/11/21 21:30:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -32,9 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
- *
- *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
+ *	from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
+ *	from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
 
 #include "bpfilter.h"
