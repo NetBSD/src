@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.7 1999/12/20 16:22:41 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.8 1999/12/30 15:39:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -463,7 +463,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	if (error == -1)
 		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 
-	error = connect(s_dst, sa4, sa4->sa_family);
+	error = connect(s_dst, sa4, sa4->sa_len);
 	if (error == -1)
 		exit_failure("connect: %s", ERRSTR);
 
