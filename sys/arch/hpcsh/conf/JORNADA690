@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.9 2001/07/13 16:27:48 uch Exp $
+#	$NetBSD: JORNADA690,v 1.10 2001/07/14 17:02:57 kanaoka Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -102,6 +102,9 @@ mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
 # PCMCIA SCSI interfaces
 #aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
 
@@ -127,9 +130,11 @@ pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
