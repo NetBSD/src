@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.41 2003/06/26 05:38:45 itojun Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.42 2003/12/25 19:01:35 wiz Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.41 2003/06/26 05:38:45 itojun Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.42 2003/12/25 19:01:35 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -469,7 +469,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: %s [-ds] [-i interface] [-r router] [-f bootparmsfile]\n",
+	    "usage: %s [-ds] [-i interface] [-r router] [-f bootparamsfile]\n",
 	    getprogname());
 	exit(1);
 }
