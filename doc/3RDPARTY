@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.294 2005/02/28 22:05:59 jwise Exp $
+#	$NetBSD: 3RDPARTY,v 1.295 2005/03/01 15:31:20 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -138,7 +138,7 @@ there's also a version in the works that has all changes from *BSD and Linux.
 
 Package:	cvs
 Version:	1.11.18
-Current Vers:	1.11.18/1.12.11
+Current Vers:	1.11.19/1.12.11
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
