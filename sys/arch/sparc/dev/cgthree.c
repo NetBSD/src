@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.43 2000/04/04 21:47:17 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.44 2000/04/14 19:36:43 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -347,7 +347,8 @@ cgthreeattach(sc, name, isconsole)
 {
 	int i;
 	struct fbdevice *fb = &sc->sc_fb;
-	volatile struct bt_regs *bt;
+	volatile struct fbcontrol *fbc = sc->sc_fbc;
+	volatile struct bt_regs *bt = &fbc->fbc_dac;
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
@@ -359,7 +360,6 @@ cgthreeattach(sc, name, isconsole)
 	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0) {
 		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
 		     i++) {
-			volatile struct fbcontrol *fbc = sc->sc_fbc;
 			if ((fbc->fbc_status & FBS_MSENSE) ==
 			     cg3_videoctrl[i].sense) {
 				int j;
