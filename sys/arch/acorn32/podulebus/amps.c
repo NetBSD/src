@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.9 2003/07/14 22:48:25 lukem Exp $	*/
+/*	$NetBSD: amps.c,v 1.10 2004/09/13 15:14:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.9 2003/07/14 22:48:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.10 2004/09/13 15:14:12 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ amps_attach(parent, self, aux)
 	aa.aa_irq = pa->pa_podule->interrupt;
 	for (aa.aa_port = 0; aa.aa_port < MAX_AMPS_PORTS; ++aa.aa_port) {
 		aa.aa_base -= AMPS_PORT_SPACING;
-		config_found_sm(self, &aa, amps_print, NULL);
+		config_found(self, &aa, amps_print);
 	}
 }
 

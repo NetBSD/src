@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.4 2004/01/05 16:05:14 hannken Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.5 2004/09/13 15:14:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.4 2004/01/05 16:05:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.5 2004/09/13 15:14:12 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -169,7 +169,7 @@ fb_elb_attach(struct device *parent, struct device *self, void *aux)
 	waa.accessops = &accessops;
 	waa.accesscookie = sc;
 
-	config_found_sm(self, &waa, wsemuldisplaydevprint, NULL);
+	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
 static void

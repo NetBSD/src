@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.16 2004/08/22 13:15:11 jandberg Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.17 2004/09/13 15:14:12 drochner Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.16 2004/08/22 13:15:11 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.17 2004/09/13 15:14:12 drochner Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -181,7 +181,7 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	paa.iobase = 0;
 	paa.iosize = 0;
 	self->devs[0].card =
-		config_found_sm(myself, &paa, simple_devprint, NULL);
+		config_found(myself, &paa, simple_devprint);
 	if (self->devs[0].card == NULL) {
 		printf("attach failed, config_found_sm() returned NULL\n");
 		return;
