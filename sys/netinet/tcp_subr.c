@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.55 1998/07/17 23:02:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.56 1998/07/17 23:09:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -600,6 +600,9 @@ tcp_mtudisc(inp, errno)
 			 * Slow start out of the error condition.  We
 			 * use the MTU because we know it's smaller
 			 * than the previously transmitted segment.
+			 *
+			 * Note: This is more conservative than the
+			 * suggestion in draft-floyd-incr-init-win-03.
 			 */
 			if (rt->rt_rmx.rmx_mtu != 0)
 				tp->snd_cwnd =
