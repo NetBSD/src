@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2001/11/05 06:44:11 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2001/11/06 06:25:28 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1226,8 +1226,8 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	static int depth;
 	static u_int calls;
 	DPRINTFN(SYNCICACHE, ("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
-	if (pa < SEGMENT_LENGTH) {
-		__syncicache((void *)pa, NBPG);
+	if (pa + len <= SEGMENT_LENGTH) {
+		__syncicache((void *)pa, len);
 		return;
 	}
 	if (pmap_initialized) {
