@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.3 1997/02/11 22:26:14 pk Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.4 1997/02/11 22:40:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: mdsetimage.c,v 1.3 1997/02/11 22:26:14 pk Exp $";
+static char *rcsid = "$NetBSD: mdsetimage.c,v 1.4 1997/02/11 22:40:25 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,7 +127,7 @@ main(argc, argv)
 		errx(1, "fs image is too big");
 	if (fssb.st_size > md_root_size)
 		errx(1, "fs image (%qd bytes) too big for buffer (%ld bytes)",
-		     fssb.st_size, (unsigned long)md_root_size);
+		     (long long)fssb.st_size, (unsigned long)md_root_size);
 
 	if (verbose)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
