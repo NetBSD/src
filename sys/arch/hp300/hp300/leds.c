@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.13 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: leds.c,v 1.14 2004/08/28 19:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.13 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.14 2004/08/28 19:11:19 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -93,7 +93,7 @@ static volatile u_int8_t currentleds; /* current LED status */
  * Map the LED page and setup the KVA to access it.
  */
 void
-ledinit()
+ledinit(void)
 {
 
 	pmap_enter(pmap_kernel(), (vaddr_t)ledbase, (paddr_t)LED_ADDR,
@@ -112,8 +112,7 @@ ledinit()
  * would like to be able to profile this routine.
  */
 void
-ledcontrol(ons, offs, togs)
-	int ons, offs, togs;
+ledcontrol(int ons, int offs, int togs)
 {
 
 	__asm __volatile (

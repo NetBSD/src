@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2004/08/28 17:53:01 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2004/08/28 17:53:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/08/28 19:11:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,20 +125,17 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2004/08/28 17:53:01 jdolecek Exp $");
 extern struct emul emul_sunos;
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((int type, u_int code, u_int v, struct frame frame));
+int	writeback(struct frame *fp, int docachepush);
+void	trap(int type, u_int code, u_int v, struct frame frame);
 
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
-
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 int	astpending;
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",
@@ -154,7 +151,7 @@ char	*trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -218,13 +215,9 @@ int mmupid = -1;
  * trap and syscall both need the following work done before returning
  * to user mode.
  */
-static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+static __inline void
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
+    u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -286,10 +279,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -302,11 +292,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(type, code, v, frame)
-	int type;
-	unsigned code;
-	unsigned v;
-	struct frame frame;
+trap(int type, u_int code, u_int v, struct frame frame)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -660,7 +646,7 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti __P((pmap_t, vaddr_t));
+			int pmap_mapmulti(pmap_t, vaddr_t);
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
@@ -744,18 +730,16 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
-		 "M-code", "k-data", "k-code", "RES" };
-char wberrstr[] =
+static const char *f7sz[] = { "longword", "byte", "word", "line" };
+static const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+static const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+			      "M-code", "k-data", "k-code", "RES" };
+static const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -993,8 +977,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -1020,10 +1003,7 @@ dumpssw(ssw)
 }
 
 void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
