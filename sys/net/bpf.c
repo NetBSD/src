@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.46 1998/12/04 11:04:37 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.47 1999/05/11 02:11:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1337,6 +1337,34 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
+}
+
+/*
+ * Change the data link type of a BPF instance.
+ */
+void
+bpf_change_type(driverp, dlt, hdrlen)
+	caddr_t *driverp;
+	u_int dlt, hdrlen;
+{
+	struct bpf_if *bp;
+
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_driverp == (struct bpf_if **)driverp)
+			break;
+	}
+	if (bp == NULL)
+		panic("bpf_change_type");
+
+	bp->bif_dlt = dlt;
+
+	/*
+	 * Compute the length of the bpf header.  This is not necessarily
+	 * equal to SIZEOF_BPF_HDR because we want to insert spacing such
+	 * that the network layer header begins on a longword boundary (for
+	 * performance reasons and to alleviate alignment restrictions).
+	 */
+	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
 }
 
 #if BSD >= 199103
