@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.30 2004/01/04 06:32:22 jmc Exp $
+.\"	$NetBSD: main,v 1.179.2.31 2004/02/01 08:26:17 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -522,6 +522,21 @@ Various networking stack fixes for IPv4, IPv6 and IPSEC.
 .Ss2 Security
 .
 .(bullet
+NetBSD-SA2003-018 DNS negative cache poisoning
+.It
+NetBSD-SA2003-017 OpenSSL multiple vulnerability
+.It
+NetBSD-SA2003-016 Sendmail - another prescan() bug CAN-2003-0694
+.It
+NetBSD-SA2003-015 Remote and local vulnerabilities in XFree86 font libraries
+.It
+NetBSD-SA2003-014 Insufficient argument checking in sysctl(2)
+.It
+NetBSD-SA2003-012 Out of bounds memset(0) in sshd
+.It
+NetBSD-SA2003-011 off-by-one error in realpath(3)
+.It
+NetBSD-SA2003-010 remote panic in OSI networking code
 .bullet)
 .
 .Ss2 System administration and user tools
