@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $   */
+/*	$NetBSD: slcompress.c,v 1.18 1998/12/12 18:22:39 christos Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -250,6 +250,8 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		comp->last_cs = lcs;
 		hlen += th->th_off;
 		hlen <<= 2;
+		if (hlen > m->m_len)
+			return (TYPE_IP);
 		goto uncompressed;
 
 	found:
@@ -280,6 +282,8 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 	deltaS = hlen;
 	hlen += th->th_off;
 	hlen <<= 2;
+	if (hlen > m->m_len)
+		return (TYPE_IP);
 
 	if (((u_int16_t *)ip)[0] != ((u_int16_t *)&cs->cs_ip)[0] ||
 	    ((u_int16_t *)ip)[3] != ((u_int16_t *)&cs->cs_ip)[3] ||
@@ -438,7 +442,8 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	struct slcompress *comp;
 {
 	u_char *hdr, *cp;
-	int hlen, vjlen;
+	int vjlen;
+	u_int hlen;
 
 	cp = bufp? *bufp: NULL;
 	vjlen = sl_uncompress_tcp_core(cp, len, len, type, comp, &hdr, &hlen);
