@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.11 1997/09/03 23:09:05 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.12 1997/09/16 06:57:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -253,8 +253,25 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
 
 /*
+ * Bits used in the amask instruction [EV56 and later]
+ */
+
+#define	ALPHA_AMASK_BWX		0x0001		/* byte/word extension */
+#define	ALPHA_AMASK_CIX		0x0002		/* count extension */
+#define	ALPHA_AMASK_MAX		0x0100		/* multimedia extension */
+
+/*
+ * Chip family IDs returned by implver instruction
+ */
+
+#define	ALPHA_IMPLVER_EV4	0		/* LCA/EV4/EV45 */
+#define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
+#define	ALPHA_IMPLVER_EV6	2		/* EV6 */
+
+/*
  * Stubs for Alpha instructions normally inaccessible from C.
  */
+unsigned long	alpha_amask __P((void));
 unsigned long	alpha_rpcc __P((void));
 void		alpha_mb __P((void));
 void		alpha_wmb __P((void));
