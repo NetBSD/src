@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.7 1997/11/22 07:28:57 lukem Exp $	*/
+/*	$NetBSD: v3451.c,v 1.8 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v3451.c,v 1.7 1997/11/22 07:28:57 lukem Exp $");
+__RCSID("$NetBSD: v3451.c,v 1.8 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -203,6 +203,7 @@ static void
 alarmtr(dummy)
 	int dummy;
 {
+
 	longjmp(Sjbuf, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.7 1997/11/22 07:28:59 lukem Exp $	*/
+/*	$NetBSD: ventel.c,v 1.8 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.7 1997/11/22 07:28:59 lukem Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.8 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -176,6 +176,7 @@ static void
 sigALRM(dummy)
 	int dummy;
 {
+
 	printf("\07timeout waiting for reply\n");
 	timeout = 1;
 	longjmp(timeoutbuf, 1);
@@ -255,8 +256,8 @@ vensync(fd)
 			continue;
 		}
 		while (nread > 0) {
-			read(fd, buf, min(nread, 60));
-			if ((buf[nread - 1] & 0177) == '$')
+			read(fd, buf, min(nread, sizeof buf));
+			if ((buf[min(nread, sizeof buf) - 1] & 0177) == '$')
 				return (1);
 			nread -= min(nread, 60);
 		}
@@ -265,4 +266,3 @@ vensync(fd)
 	}
 	return (0);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.6 1997/11/22 07:28:58 lukem Exp $	*/
+/*	$NetBSD: v831.c,v 1.7 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v831.c,v 1.6 1997/11/22 07:28:58 lukem Exp $");
+__RCSID("$NetBSD: v831.c,v 1.7 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -121,6 +121,7 @@ static void
 alarmtr(dummy)
 	int dummy;
 {
+
         alarm(0);
         longjmp(jmpbuf, 1);
 }
@@ -255,7 +256,7 @@ sanitize(s)
         static char buf[128];
         char *cp;
 
-        for (cp = buf; *s; s++) {
+        for (cp = buf; *s && buf + sizeof buf - cp > 1; s++) {
 		if (!isdigit(*s) && *s == '<' && *s != '_')
 			continue;
 		if (*s == '_')
