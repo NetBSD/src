@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.14 2002/06/24 22:03:45 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.15 2002/07/05 02:36:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.14 2002/06/24 22:03:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.15 2002/07/05 02:36:35 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -174,9 +174,9 @@ upcallret(struct lwp *l)
  *
  *	Send an an upcall to userland.
  */
-
 void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
@@ -193,7 +193,6 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	frame.sa_interrupted = ninterrupted;
 #endif
 	frame.sa_arg = ap;
-	frame.sa_upcall = upcall;
 
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
@@ -206,8 +205,9 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->tf_r1 = (int) sas;
 	tf->tf_r2 = nevents;
 	tf->tf_r3 = ninterrupted;
+	tf->tf_pc = (int) upcall;
 	tf->tf_usr_sp = (int) sf;
-	tf->tf_pc = (int) ((caddr_t)p->p_sigctx.ps_sigcode + (
+	tf->tf_usr_lr = (int) ((caddr_t)p->p_sigctx.ps_sigcode + (
 	    (caddr_t)upcallcode - (caddr_t)sigcode));
 #ifndef arm26
 	cpu_icache_sync_all();	/* XXX really necessary? */
