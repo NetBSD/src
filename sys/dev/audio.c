@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.92 1998/08/07 00:00:58 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.93 1998/08/09 04:54:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2403,10 +2403,8 @@ audiosetinfo(sc, ai)
 				rp.precision   = pp.precision;
 			}
 		}
-		if (setmode & AUMODE_RECORD)
-			sc->sc_rparams = rp;
-		if (setmode & AUMODE_PLAY)
-			sc->sc_pparams = pp;
+		sc->sc_rparams = rp;
+		sc->sc_pparams = pp;
 	}
 
 	oldpblksize = sc->sc_pr.blksize;
