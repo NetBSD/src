@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.12 1998/02/03 18:23:42 perry Exp $	*/
+/*	$NetBSD: fstab.c,v 1.13 1998/07/26 13:47:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.12 1998/02/03 18:23:42 perry Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.13 1998/07/26 13:47:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -221,7 +221,7 @@ error(err)
 	iov[1].iov_len = sizeof(_PATH_FSTAB) - 1;
 	iov[2].iov_base =  ": ";
 	iov[2].iov_len = 2;
-	iov[3].iov_base = strerror(err);
+	iov[3].iov_base = (char *)strerror(err);
 	iov[3].iov_len = strlen(iov[3].iov_base);
 	iov[4].iov_base = "\n";
 	iov[4].iov_len = 1;
