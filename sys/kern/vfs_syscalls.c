@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.94 1997/10/03 13:32:06 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.95 1997/10/03 13:37:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1450,7 +1450,8 @@ sys_chmod(p, v, retval)
 		vattr.va_mode = SCARG(uap, mode) & ALLPERMS;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
-	vput(vp);
+	VOP_UNLOCK(vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -1625,7 +1626,8 @@ sys_utimes(p, v, retval)
 		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
-	vput(vp);
+	VOP_UNLOCK(vp);
+	vrele(vp);
 	return (error);
 }
 
