@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.10.2.1 2000/08/08 17:20:46 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.10.2.2 2000/11/05 00:58:30 tv Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -277,10 +277,8 @@ void InitializeScif  __P((unsigned int));
 
 static void WaitFor __P((int));
 void PutcScif __P((unsigned char));
-void PutStrScif __P((unsigned char *));
 int ScifErrCheck __P((void));
 unsigned char GetcScif __P((void));
-int GetStrScif __P((unsigned char *, int));
 
 /*
  * WaitFor
@@ -384,19 +382,6 @@ PutcScif(c)
 }
 
 /*
- * PutStrScif
- * : unsigned char *s;
- */
-void
-PutStrScif(s)
-	unsigned char *s;
-{
-
-	while (*s)
-		PutcScif(*s++);
-}
-
-/*
  * : ScifErrCheck
  *	0x80 = error
  *	0x08 = frame error
@@ -439,46 +424,23 @@ GetcScif(void)
 {
 	unsigned char c, err_c;
 
-	/* wait for ready */
-	while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
-		;
-	err_c = SHREG_SCSSR2;
-	if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER | SCSSR2_PER)) != 0)
-		return(err_c |= 0x80);
+	while (1) {
+		/* wait for ready */
+		while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
+			;
 
-	c = SHREG_SCFRDR2;
+		c = SHREG_SCFRDR2;
+		err_c = SHREG_SCSSR2;
+		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF
+		    | SCSSR2_DR);
+		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
+		    | SCSSR2_PER)) == 0) {
+			return(c);
+		}
+	}
 
-	SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR);
-
-	return(c);
 }
 #endif
-
-/*
- * GetStrScif
- *  : unsigned char *s;
- *  : int size;
- */
-int
-GetStrScif(s, size)
-	unsigned char *s;
-	int size;
-{
-
-	for (; size ; size--) {
-		*s = GetcScif();
-		if (*s & 0x80)
-			return -1;
-		if (*s == CR) {
-			*s = 0;
-			break;
-		}
-		s++;
-	}
-	if (size == 0)
-		*s = 0;
-	return 0;
-}
 
 #if 0
 #define SCIF_MAX_UNITS 2
@@ -1576,9 +1538,6 @@ scifcnprobe(cp)
 	cp->cn_pri = CN_NORMAL;
 #endif
 }
-
-#define scif_gets GetStrScif
-#define scif_puts PutStrScif
 
 void
 scifcninit(cp)
