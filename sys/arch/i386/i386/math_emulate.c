@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.7 1994/03/09 07:37:08 mycroft Exp $
+ *	$Id: math_emulate.c,v 1.8 1994/05/03 20:51:15 mycroft Exp $
  */
 
 /*
@@ -50,7 +50,6 @@
 #define __ALIGNED_TEMP_REAL 1
 #include <i386/i386/math_emu.h>
 
-#define bswapw(x) __asm__("xchgb %%al,%%ah":"=a" (x):"0" ((short)x))
 #define ST(x) (*__st((x)))
 #define PST(x) ((const temp_real *) __st((x)))
 #define	math_abort(tfp, signo) tfp->tf_eip = oldeip; return (signo);
@@ -63,451 +62,416 @@ static void fpush(void);
 static void fxchg(temp_real_unaligned * a, temp_real_unaligned * b);
 static temp_real_unaligned * __st(int i);
 
-unsigned char get_fs_byte(char *adr) { return(fubyte(adr)); }
-unsigned short get_fs_word(unsigned short *adr) { return(fuword(adr)); }
-unsigned long get_fs_long(unsigned long *adr) { return(fuword(adr)); }
-put_fs_byte(unsigned char val, char *adr) { (void)subyte(adr,val); }
-put_fs_word(unsigned short val, short *adr) { (void)susword(adr,val); }
-put_fs_long(unsigned long val, unsigned long *adr) { (void)suword(adr,val); }
+#define	fninit()	do { \
+	I387.cwd = __INITIAL_NPXCW__;	\
+	I387.swd = 0x0000;		\
+	I387.twd = 0x0000;		\
+} while (0)
 
 math_emulate(struct trapframe * info)
 {
-	unsigned short code;
+	u_short code;
 	temp_real tmp;
 	char * address;
 	u_long oldeip;
 
+	if (ISPL(info->tf_cs) != SEL_UPL)
+		panic("math emulator called from supervisor mode");
+
 	/* ever used fp? */
 	if ((curproc->p_addr->u_pcb.pcb_flags & FP_SOFTFP) == 0) {
 		curproc->p_addr->u_pcb.pcb_flags |= FP_SOFTFP;
-		I387.cwd = 0x037f;
-		I387.swd = 0x0000;
-		I387.twd = 0x0000;
+		fninit();
 	}
 
 	if (I387.cwd & I387.swd & 0x3f)
 		I387.swd |= 0x8000;
 	else
 		I387.swd &= 0x7fff;
-	oldeip = info->tf_eip;
-/* 0x001f means user code space */
-	if ((u_short)info->tf_cs != 0x001F) {
-		printf("math_emulate: %04x:%08x\n\r", (u_short)info->tf_cs,
-			oldeip);
-		panic("?Math emulation needed in kernel?");
-	}
-	code = get_fs_word((unsigned short *) oldeip);
-	bswapw(code);
-	code &= 0x7ff;
-	I387.fip = oldeip;
-	*(unsigned short *) &I387.fcs = (u_short) info->tf_cs;
-	*(1+(unsigned short *) &I387.fcs) = code;
+
+	I387.fip = oldeip = info->tf_eip;
 	info->tf_eip += 2;
+	code = htons(fusword((u_short *) oldeip)) & 0x7ff;
+	*((u_short *) &I387.fcs) = (u_short) info->tf_cs;
+	*((u_short *) &I387.fcs + 1) = code;
+
 	switch (code) {
-		case 0x1d0: /* fnop */
-			return(0);
-		case 0x1d1: case 0x1d2: case 0x1d3:
-		case 0x1d4: case 0x1d5: case 0x1d6: case 0x1d7:
-			math_abort(info,SIGILL);
-		case 0x1e0:
-			ST(0).exponent ^= 0x8000;
-			return(0);
-		case 0x1e1:
-			ST(0).exponent &= 0x7fff;
-			return(0);
-		case 0x1e2: case 0x1e3:
-			math_abort(info,SIGILL);
-		case 0x1e4:
-			ftst(PST(0));
-			return(0);
-		case 0x1e5:
-			printf("fxam not implemented\n\r");
-			math_abort(info,SIGILL);
-		case 0x1e6: case 0x1e7:
-			math_abort(info,SIGILL);
-		case 0x1e8:
-			fpush();
-			ST(0) = CONST1;
-			return(0);
-		case 0x1e9:
-			fpush();
-			ST(0) = CONSTL2T;
-			return(0);
-		case 0x1ea:
-			fpush();
-			ST(0) = CONSTL2E;
-			return(0);
-		case 0x1eb:
-			fpush();
-			ST(0) = CONSTPI;
-			return(0);
-		case 0x1ec:
-			fpush();
-			ST(0) = CONSTLG2;
-			return(0);
-		case 0x1ed:
-			fpush();
-			ST(0) = CONSTLN2;
-			return(0);
-		case 0x1ee:
-			fpush();
-			ST(0) = CONSTZ;
-			return(0);
-		case 0x1ef:
-			math_abort(info,SIGILL);
-		case 0x1f0: case 0x1f1: case 0x1f2: case 0x1f3:
-		case 0x1f4: case 0x1f5: case 0x1f6: case 0x1f7:
-		case 0x1f8: case 0x1f9: case 0x1fa: case 0x1fb:
-		case 0x1fe: case 0x1ff:
-			uprintf(
-			 "math_emulate: instruction %04x not implemented\n",
-			  code + 0xd800);
-			math_abort(info,SIGILL);
-		case 0x1fd:
-			/* incomplete and totally inadequate -wfj */
-			Fscale(PST(0), PST(1), &tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);			/* 19 Sep 92*/
-		case 0x1fc:
-			frndint(PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x2e9:
-			fucom(PST(1),PST(0));
-			fpop(); fpop();
-			return(0);
-		case 0x3d0: case 0x3d1:
-			return(0);
-		case 0x3e2:
-			I387.swd &= 0x7f00;
-			return(0);
-		case 0x3e3:
-			I387.cwd = 0x037f;
-			I387.swd = 0x0000;
-			I387.twd = 0x0000;
-			return(0);
-		case 0x3e4:
-			return(0);
-		case 0x6d9:
-			fcom(PST(1),PST(0));
-			fpop(); fpop();
-			return(0);
-		case 0x7e0:
-			*(short *) &info->tf_eax = I387.swd;
-			return(0);
+	case 0x1d0: /* fnop */
+		return(0);
+	case 0x1e0: /* fchs */
+		ST(0).exponent ^= 0x8000;
+		return(0);
+	case 0x1e1: /* fabs */
+		ST(0).exponent &= 0x7fff;
+		return(0);
+	case 0x1e4: /* fxtract XXX */
+		ftst(PST(0));
+		return(0);
+	case 0x1e8: /* fld1 */
+		fpush();
+		ST(0) = CONST1;
+		return(0);
+	case 0x1e9: /* fld2t */
+		fpush();
+		ST(0) = CONSTL2T;
+		return(0);
+	case 0x1ea: /* fld2e */
+		fpush();
+		ST(0) = CONSTL2E;
+		return(0);
+	case 0x1eb: /* fldpi */
+		fpush();
+		ST(0) = CONSTPI;
+		return(0);
+	case 0x1ec: /* fldlg2 */
+		fpush();
+		ST(0) = CONSTLG2;
+		return(0);
+	case 0x1ed: /* fldln2 */
+		fpush();
+		ST(0) = CONSTLN2;
+		return(0);
+	case 0x1ee: /* fldz */
+		fpush();
+		ST(0) = CONSTZ;
+		return(0);
+	case 0x1fc: /* frndint */
+		frndint(PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x1fd: /* fscale */
+		/* incomplete and totally inadequate -wfj */
+		Fscale(PST(0), PST(1), &tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);			/* 19 Sep 92*/
+	case 0x2e9: /* XXX */
+		fucom(PST(1),PST(0));
+		fpop(); fpop();
+		return(0);
+	case 0x3d0: case 0x3d1: /* XXX */
+		return(0);
+	case 0x3e2: /* fclex */
+		I387.swd &= 0x7f00;
+		return(0);
+	case 0x3e3: /* fninit */
+		fninit();
+		return(0);
+	case 0x3e4: /* XXX */
+		return(0);
+	case 0x6d9: /* fcompp */
+		fcom(PST(1),PST(0));
+		fpop(); fpop();
+		return(0);
+	case 0x7e0: /* fstsw ax */
+		*(u_short *) &info->tf_eax = I387.swd;
+		return(0);
+	case 0x1d1: case 0x1d2: case 0x1d3:
+	case 0x1d4: case 0x1d5: case 0x1d6: case 0x1d7:
+	case 0x1e2: case 0x1e3:
+	case 0x1e6: case 0x1e7:
+	case 0x1ef:
+		math_abort(info,SIGILL);
+	case 0x1e5:
+		uprintf("math_emulate: fxam not implemented\n\r");
+		math_abort(info,SIGILL);
+	case 0x1f0: case 0x1f1: case 0x1f2: case 0x1f3:
+	case 0x1f4: case 0x1f5: case 0x1f6: case 0x1f7:
+	case 0x1f8: case 0x1f9: case 0x1fa: case 0x1fb:
+	case 0x1fe: case 0x1ff:
+		uprintf("math_emulate: 0x%04x not implemented\n",
+		    code + 0xd800);
+		math_abort(info,SIGILL);
 	}
 	switch (code >> 3) {
-		case 0x18:
-			fadd(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x19:
-			fmul(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x1a:
-			fcom(PST(code & 7),PST(0));
-			return(0);
-		case 0x1b:
-			fcom(PST(code & 7),PST(0));
-			fpop();
-			return(0);
-		case 0x1c:
-			real_to_real(&ST(code & 7),&tmp);
-			tmp.exponent ^= 0x8000;
-			fadd(PST(0),&tmp,&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x1d:
-			ST(0).exponent ^= 0x8000;
-			fadd(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x1e:
-			fdiv(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x1f:
-			fdiv(PST(code & 7),PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x38:
-			fpush();
-			ST(0) = ST((code & 7)+1);
-			return(0);
-		case 0x39:
-			fxchg(&ST(0),&ST(code & 7));
-			return(0);
-		case 0x3b:
-			ST(code & 7) = ST(0);
-			fpop();
-			return(0);
-		case 0x98:
-			fadd(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0x99:
-			fmul(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0x9a:
-			fcom(PST(code & 7),PST(0));
-			return(0);
-		case 0x9b:
-			fcom(PST(code & 7),PST(0));
-			fpop();
-			return(0);			
-		case 0x9c:
-			ST(code & 7).exponent ^= 0x8000;
-			fadd(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0x9d:
-			real_to_real(&ST(0),&tmp);
-			tmp.exponent ^= 0x8000;
-			fadd(PST(code & 7),&tmp,&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0x9e:
-			fdiv(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0x9f:
-			fdiv(PST(code & 7),PST(0),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			return(0);
-		case 0xb8:
-			printf("ffree not implemented\n\r");
-			math_abort(info,SIGILL);
-		case 0xb9:
-			fxchg(&ST(0),&ST(code & 7));
-			return(0);
-		case 0xba:
-			ST(code & 7) = ST(0);
-			return(0);
-		case 0xbb:
-			ST(code & 7) = ST(0);
-			fpop();
-			return(0);
-		case 0xbc:
-			fucom(PST(code & 7),PST(0));
-			return(0);
-		case 0xbd:
-			fucom(PST(code & 7),PST(0));
-			fpop();
-			return(0);
-		case 0xd8:
-			fadd(PST(code & 7),PST(0),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xd9:
-			fmul(PST(code & 7),PST(0),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xda:
-			fcom(PST(code & 7),PST(0));
-			fpop();
-			return(0);
-		case 0xdc:
-			ST(code & 7).exponent ^= 0x8000;
-			fadd(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xdd:
-			real_to_real(&ST(0),&tmp);
-			tmp.exponent ^= 0x8000;
-			fadd(PST(code & 7),&tmp,&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xde:
-			fdiv(PST(0),PST(code & 7),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xdf:
-			fdiv(PST(code & 7),PST(0),&tmp);
-			real_to_real(&tmp,&ST(code & 7));
-			fpop();
-			return(0);
-		case 0xf8:
-			printf("ffree not implemented\n\r");
-			math_abort(info,SIGILL);
-			fpop();
-			return(0);
-		case 0xf9:
-			fxchg(&ST(0),&ST(code & 7));
-			return(0);
-		case 0xfa:
-		case 0xfb:
-			ST(code & 7) = ST(0);
-			fpop();
-			return(0);
+	case 0x18: /* fadd */
+		fadd(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x19: /* fmul */
+		fmul(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x1a: /* fcom */
+		fcom(PST(code & 7),PST(0));
+		return(0);
+	case 0x1b: /* fcomp */
+		fcom(PST(code & 7),PST(0));
+		fpop();
+		return(0);
+	case 0x1c: /* fsubr */
+		real_to_real(&ST(code & 7),&tmp);
+		tmp.exponent ^= 0x8000;
+		fadd(PST(0),&tmp,&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x1d: /* fsub */
+		ST(0).exponent ^= 0x8000;
+		fadd(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x1e: /* fdivr */
+		fdiv(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x1f: /* fdiv */
+		fdiv(PST(code & 7),PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x38: /* fld */
+		fpush();
+		ST(0) = ST((code & 7)+1);
+		return(0);
+	case 0x39: /* fxch */
+		fxchg(&ST(0),&ST(code & 7));
+		return(0);
+	case 0x3b: /* XXX */
+		ST(code & 7) = ST(0);
+		fpop();
+		return(0);
+	case 0x98: /* fadd */
+		fadd(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0x99: /* fmul */
+		fmul(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0x9a: /* XXX */
+		fcom(PST(code & 7),PST(0));
+		return(0);
+	case 0x9b: /* XXX */
+		fcom(PST(code & 7),PST(0));
+		fpop();
+		return(0);			
+	case 0x9c: /* fsubr */
+		ST(code & 7).exponent ^= 0x8000;
+		fadd(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0x9d: /* fsub */
+		real_to_real(&ST(0),&tmp);
+		tmp.exponent ^= 0x8000;
+		fadd(PST(code & 7),&tmp,&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0x9e: /* fdivr */
+		fdiv(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0x9f: /* fdiv */
+		fdiv(PST(code & 7),PST(0),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		return(0);
+	case 0xb8: /* ffree */
+		printf("ffree not implemented\n\r");
+		math_abort(info,SIGILL);
+	case 0xb9: /* fstp XXX */
+		fxchg(&ST(0),&ST(code & 7));
+		return(0);
+	case 0xba: /* fst */
+		ST(code & 7) = ST(0);
+		return(0);
+	case 0xbb: /* XXX */
+		ST(code & 7) = ST(0);
+		fpop();
+		return(0);
+	case 0xbc: /* fucom */
+		fucom(PST(code & 7),PST(0));
+		return(0);
+	case 0xbd: /* fucomp */
+		fucom(PST(code & 7),PST(0));
+		fpop();
+		return(0);
+	case 0xd8: /* faddp */
+		fadd(PST(code & 7),PST(0),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xd9: /* fmulp */
+		fmul(PST(code & 7),PST(0),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xda: /* XXX */
+		fcom(PST(code & 7),PST(0));
+		fpop();
+		return(0);
+	case 0xdc: /* fsubrp */
+		ST(code & 7).exponent ^= 0x8000;
+		fadd(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xdd: /* fsubp */
+		real_to_real(&ST(0),&tmp);
+		tmp.exponent ^= 0x8000;
+		fadd(PST(code & 7),&tmp,&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xde: /* fdivrp */
+		fdiv(PST(0),PST(code & 7),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xdf: /* fdivp */
+		fdiv(PST(code & 7),PST(0),&tmp);
+		real_to_real(&tmp,&ST(code & 7));
+		fpop();
+		return(0);
+	case 0xf8: /* XXX */
+		printf("ffree not implemented\n\r");
+		math_abort(info,SIGILL);
+		fpop();
+		return(0);
+	case 0xf9: /* XXX */
+		fxchg(&ST(0),&ST(code & 7));
+		return(0);
+	case 0xfa: /* XXX */
+	case 0xfb: /* XXX */
+		ST(code & 7) = ST(0);
+		fpop();
+		return(0);
 	}
 	switch ((code>>3) & 0xe7) {
-		case 0x22:
-			put_short_real(PST(0),info,code);
-			return(0);
-		case 0x23:
-			put_short_real(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0x24:
-			address = ea(info,code);
-			for (code = 0 ; code < 7 ; code++) {
-				((long *) & I387)[code] =
-				   get_fs_long((unsigned long *) address);
-				address += 4;
-			}
-			return(0);
-		case 0x25:
-			address = ea(info,code);
-			*(unsigned short *) &I387.cwd =
-				get_fs_word((unsigned short *) address);
-			return(0);
-		case 0x26:
-			address = ea(info,code);
-			/*verify_area(address,28);*/
-			for (code = 0 ; code < 7 ; code++) {
-				put_fs_long( ((long *) & I387)[code],
-					(unsigned long *) address);
-				address += 4;
-			}
-			return(0);
-		case 0x27:
-			address = ea(info,code);
-			/*verify_area(address,2);*/
-			put_fs_word(I387.cwd,(short *) address);
-			return(0);
-		case 0x62:
-			put_long_int(PST(0),info,code);
-			return(0);
-		case 0x63:
-			put_long_int(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0x65:
-			fpush();
-			get_temp_real(&tmp,info,code);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0x67:
-			put_temp_real(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0xa2:
-			put_long_real(PST(0),info,code);
-			return(0);
-		case 0xa3:
-			put_long_real(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0xa4:
-			address = ea(info,code);
-			for (code = 0 ; code < 27 ; code++) {
-				((long *) & I387)[code] =
-				   get_fs_long((unsigned long *) address);
-				address += 4;
-			}
-			return(0);
-		case 0xa6:
-			address = ea(info,code);
-			/*verify_area(address,108);*/
-			for (code = 0 ; code < 27 ; code++) {
-				put_fs_long( ((long *) & I387)[code],
-					(unsigned long *) address);
-				address += 4;
-			}
-			I387.cwd = 0x037f;
-			I387.swd = 0x0000;
-			I387.twd = 0x0000;
-			return(0);
-		case 0xa7:
-			address = ea(info,code);
-			/*verify_area(address,2);*/
-			put_fs_word(I387.swd,(short *) address);
-			return(0);
-		case 0xe2:
-			put_short_int(PST(0),info,code);
-			return(0);
-		case 0xe3:
-			put_short_int(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0xe4:
-			fpush();
-			get_BCD(&tmp,info,code);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0xe5:
-			fpush();
-			get_longlong_int(&tmp,info,code);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 0xe6:
-			put_BCD(PST(0),info,code);
-			fpop();
-			return(0);
-		case 0xe7:
-			put_longlong_int(PST(0),info,code);
-			fpop();
-			return(0);
+	case 0x22:
+		put_short_real(PST(0),info,code);
+		return(0);
+	case 0x23:
+		put_short_real(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0x24:
+		address = ea(info,code);
+		copyin((u_long *) address, (u_long *) &I387, 28);
+		return(0);
+	case 0x25:
+		address = ea(info,code);
+		*(u_short *) &I387.cwd =
+			fusword((u_short *) address);
+		return(0);
+	case 0x26:
+		address = ea(info,code);
+		copyout((u_long *) &I387, (u_long *) address, 28);
+		return(0);
+	case 0x27:
+		address = ea(info,code);
+		susword((u_short *) address, I387.cwd);
+		return(0);
+	case 0x62:
+		put_long_int(PST(0),info,code);
+		return(0);
+	case 0x63:
+		put_long_int(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0x65:
+		fpush();
+		get_temp_real(&tmp,info,code);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0x67:
+		put_temp_real(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0xa2:
+		put_long_real(PST(0),info,code);
+		return(0);
+	case 0xa3:
+		put_long_real(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0xa4:
+		address = ea(info,code);
+		copyin((u_long *) address, (u_long *) &I387, 108);
+		return(0);
+	case 0xa6:
+		address = ea(info,code);
+		copyout((u_long *) &I387, (u_long *) address, 108);
+		fninit();
+		return(0);
+	case 0xa7:
+		address = ea(info,code);
+		susword((u_short *) address, I387.swd);
+		return(0);
+	case 0xe2:
+		put_short_int(PST(0),info,code);
+		return(0);
+	case 0xe3:
+		put_short_int(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0xe4:
+		fpush();
+		get_BCD(&tmp,info,code);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0xe5:
+		fpush();
+		get_longlong_int(&tmp,info,code);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 0xe6:
+		put_BCD(PST(0),info,code);
+		fpop();
+		return(0);
+	case 0xe7:
+		put_longlong_int(PST(0),info,code);
+		fpop();
+		return(0);
 	}
 	switch (code >> 9) {
-		case 0:
-			get_short_real(&tmp,info,code);
-			break;
-		case 1:
-			get_long_int(&tmp,info,code);
-			break;
-		case 2:
-			get_long_real(&tmp,info,code);
-			break;
-		case 4:
-			get_short_int(&tmp,info,code);
+	case 0:
+		get_short_real(&tmp,info,code);
+		break;
+	case 1:
+		get_long_int(&tmp,info,code);
+		break;
+	case 2:
+		get_long_real(&tmp,info,code);
+		break;
+	case 4:
+		get_short_int(&tmp,info,code);
 	}
 	switch ((code>>3) & 0x27) {
-		case 0:
-			fadd(&tmp,PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 1:
-			fmul(&tmp,PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 2:
-			fcom(&tmp,PST(0));
-			return(0);
-		case 3:
-			fcom(&tmp,PST(0));
-			fpop();
-			return(0);
-		case 4:
-			tmp.exponent ^= 0x8000;
-			fadd(&tmp,PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 5:
-			ST(0).exponent ^= 0x8000;
-			fadd(&tmp,PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 6:
-			fdiv(PST(0),&tmp,&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
-		case 7:
-			fdiv(&tmp,PST(0),&tmp);
-			real_to_real(&tmp,&ST(0));
-			return(0);
+	case 0:
+		fadd(&tmp,PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 1:
+		fmul(&tmp,PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 2:
+		fcom(&tmp,PST(0));
+		return(0);
+	case 3:
+		fcom(&tmp,PST(0));
+		fpop();
+		return(0);
+	case 4:
+		tmp.exponent ^= 0x8000;
+		fadd(&tmp,PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 5:
+		ST(0).exponent ^= 0x8000;
+		fadd(&tmp,PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 6:
+		fdiv(PST(0),&tmp,&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
+	case 7:
+		fdiv(&tmp,PST(0),&tmp);
+		real_to_real(&tmp,&ST(0));
+		return(0);
 	}
 	if ((code & 0x138) == 0x100) {
-			fpush();
-			real_to_real(&tmp,&ST(0));
-			return(0);
+		fpush();
+		real_to_real(&tmp,&ST(0));
+		return(0);
 	}
 	printf("Unknown math-insns: %04x:%08x %04x\n\r",(u_short)info->tf_cs,
 		info->tf_eip,code);
@@ -516,7 +480,7 @@ math_emulate(struct trapframe * info)
 
 static void fpop(void)
 {
-	unsigned long tmp;
+	u_long tmp;
 
 	tmp = I387.swd & 0xffffc7ff;
 	I387.swd += 0x00000800;
@@ -526,10 +490,10 @@ static void fpop(void)
 
 static void fpush(void)
 {
-	unsigned long tmp;
+	u_long tmp;
 
 	tmp = I387.swd & 0xffffc7ff;
-	I387.swd += 0x00003800;
+	I387.swd -= 0x00000800;
 	I387.swd &= 0x00003800;
 	I387.swd |= tmp;
 }
@@ -569,10 +533,10 @@ static int __regoffset[] = {
 
 static char * sib(struct trapframe * info, int mod)
 {
-	unsigned char ss,index,base;
+	u_char ss,index,base;
 	long offset = 0;
 
-	base = get_fs_byte((char *) info->tf_eip);
+	base = fubyte((char *) info->tf_eip);
 	info->tf_eip++;
 	ss = base >> 6;
 	index = (base >> 3) & 7;
@@ -585,10 +549,10 @@ static char * sib(struct trapframe * info, int mod)
 	if (mod || base != 5)
 		offset += REG(base);
 	if (mod == 1) {
-		offset += (signed char) get_fs_byte((char *) info->tf_eip);
+		offset += (signed char) fubyte((char *) info->tf_eip);
 		info->tf_eip++;
 	} else if (mod == 2 || base == 5) {
-		offset += (signed) get_fs_long((unsigned long *) info->tf_eip);
+		offset += (signed) fuword((u_long *) info->tf_eip);
 		info->tf_eip += 4;
 	}
 	I387.foo = offset;
@@ -596,9 +560,9 @@ static char * sib(struct trapframe * info, int mod)
 	return (char *) offset;
 }
 
-char * ea(struct trapframe * info, unsigned short code)
+char * ea(struct trapframe * info, u_short code)
 {
-	unsigned char mod,rm;
+	u_char mod,rm;
 	long * tmp;
 	int offset = 0;
 
@@ -607,7 +571,7 @@ char * ea(struct trapframe * info, unsigned short code)
 	if (rm == 4 && mod != 3)
 		return sib(info,mod);
 	if (rm == 5 && !mod) {
-		offset = get_fs_long((unsigned long *) info->tf_eip);
+		offset = fuword((u_long *) info->tf_eip);
 		info->tf_eip += 4;
 		I387.foo = offset;
 		I387.fos = 0x17;
@@ -617,11 +581,11 @@ char * ea(struct trapframe * info, unsigned short code)
 	switch (mod) {
 		case 0: offset = 0; break;
 		case 1:
-			offset = (signed char) get_fs_byte((char *) info->tf_eip);
+			offset = (signed char) fubyte((char *) info->tf_eip);
 			info->tf_eip++;
 			break;
 		case 2:
-			offset = (signed) get_fs_long((unsigned long *) info->tf_eip);
+			offset = (signed) fuword((u_long *) info->tf_eip);
 			info->tf_eip += 4;
 			break;
 #ifdef notyet
@@ -646,47 +610,47 @@ char * ea(struct trapframe * info, unsigned short code)
  */
 
 void get_short_real(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	short_real sr;
 
 	addr = ea(info,code);
-	sr = get_fs_long((unsigned long *) addr);
+	sr = fuword((u_long *) addr);
 	short_to_temp(&sr,tmp);
 }
 
 void get_long_real(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	long_real lr;
 
 	addr = ea(info,code);
-	lr.a = get_fs_long((unsigned long *) addr);
-	lr.b = get_fs_long(1 + (unsigned long *) addr);
+	lr.a = fuword((u_long *) addr);
+	lr.b = fuword((u_long *) addr + 1);
 	long_to_temp(&lr,tmp);
 }
 
 void get_temp_real(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 
 	addr = ea(info,code);
-	tmp->a = get_fs_long((unsigned long *) addr);
-	tmp->b = get_fs_long(1 + (unsigned long *) addr);
-	tmp->exponent = get_fs_word(4 + (unsigned short *) addr);
+	tmp->a = fuword((u_long *) addr);
+	tmp->b = fuword((u_long *) addr + 1);
+	tmp->exponent = fusword((u_short *) addr + 4);
 }
 
 void get_short_int(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
-	ti.a = (signed short) get_fs_word((unsigned short *) addr);
+	ti.a = (signed short) fusword((u_short *) addr);
 	ti.b = 0;
 	if (ti.sign = (ti.a < 0))
 		ti.a = - ti.a;
@@ -694,13 +658,13 @@ void get_short_int(temp_real * tmp,
 }
 
 void get_long_int(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
-	ti.a = get_fs_long((unsigned long *) addr);
+	ti.a = fuword((u_long *) addr);
 	ti.b = 0;
 	if (ti.sign = (ti.a < 0))
 		ti.a = - ti.a;
@@ -708,14 +672,14 @@ void get_long_int(temp_real * tmp,
 }
 
 void get_longlong_int(temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
-	ti.a = get_fs_long((unsigned long *) addr);
-	ti.b = get_fs_long(1 + (unsigned long *) addr);
+	ti.a = fuword((u_long *) addr);
+	ti.b = fuword((u_long *) addr + 1);
 	if (ti.sign = (ti.b < 0))
 		__asm__("notl %0 ; notl %1\n\t"
 			"addl $1,%0 ; adcl $0,%1"
@@ -735,21 +699,21 @@ __asm__("addl %0,%0 ; adcl %1,%1\n\t" \
 
 #define ADD64(val,low,high) \
 __asm__("addl %4,%0 ; adcl $0,%1":"=r" (low),"=r" (high) \
-:"0" (low),"1" (high),"r" ((unsigned long) (val)))
+:"0" (low),"1" (high),"r" ((u_long) (val)))
 
-void get_BCD(temp_real * tmp, struct trapframe * info, unsigned short code)
+void get_BCD(temp_real * tmp, struct trapframe * info, u_short code)
 {
 	int k;
 	char * addr;
 	temp_int i;
-	unsigned char c;
+	u_char c;
 
 	addr = ea(info,code);
 	addr += 9;
-	i.sign = 0x80 & get_fs_byte(addr--);
+	i.sign = 0x80 & fubyte(addr--);
 	i.a = i.b = 0;
 	for (k = 0; k < 9; k++) {
-		c = get_fs_byte(addr--);
+		c = fubyte(addr--);
 		MUL10(i.a, i.b);
 		ADD64((c>>4), i.a, i.b);
 		MUL10(i.a, i.b);
@@ -759,86 +723,80 @@ void get_BCD(temp_real * tmp, struct trapframe * info, unsigned short code)
 }
 
 void put_short_real(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	short_real sr;
 
 	addr = ea(info,code);
-	/*verify_area(addr,4);*/
 	temp_to_short(tmp,&sr);
-	put_fs_long(sr,(unsigned long *) addr);
+	suword((u_long *) addr,sr);
 }
 
 void put_long_real(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	long_real lr;
 
 	addr = ea(info,code);
-	/*verify_area(addr,8);*/
 	temp_to_long(tmp,&lr);
-	put_fs_long(lr.a, (unsigned long *) addr);
-	put_fs_long(lr.b, 1 + (unsigned long *) addr);
+	suword((u_long *) addr, lr.a);
+	suword((u_long *) addr + 1, lr.b);
 }
 
 void put_temp_real(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 
 	addr = ea(info,code);
-	/*verify_area(addr,10);*/
-	put_fs_long(tmp->a, (unsigned long *) addr);
-	put_fs_long(tmp->b, 1 + (unsigned long *) addr);
-	put_fs_word(tmp->exponent, 4 + (short *) addr);
+	suword((u_long *) addr, tmp->a);
+	suword((u_long *) addr + 1, tmp->b);
+	susword((u_short *) addr + 4, tmp->exponent);
 }
 
 void put_short_int(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
 	real_to_int(tmp,&ti);
-	/*verify_area(addr,2);*/
 	if (ti.sign)
 		ti.a = -ti.a;
-	put_fs_word(ti.a,(short *) addr);
+	susword((u_short *) addr,ti.a);
 }
 
 void put_long_int(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
 	real_to_int(tmp,&ti);
-	/*verify_area(addr,4);*/
 	if (ti.sign)
 		ti.a = -ti.a;
-	put_fs_long(ti.a,(unsigned long *) addr);
+	suword((u_long *) addr, ti.a);
 }
 
 void put_longlong_int(const temp_real * tmp,
-	struct trapframe * info, unsigned short code)
+	struct trapframe * info, u_short code)
 {
 	char * addr;
 	temp_int ti;
 
 	addr = ea(info,code);
 	real_to_int(tmp,&ti);
-	/*verify_area(addr,8);*/
 	if (ti.sign)
 		__asm__("notl %0 ; notl %1\n\t"
 			"addl $1,%0 ; adcl $0,%1"
 			:"=r" (ti.a),"=r" (ti.b)
 			:"0" (ti.a),"1" (ti.b));
-	put_fs_long(ti.a,(unsigned long *) addr);
-	put_fs_long(ti.b,1 + (unsigned long *) addr);
+	suword((u_long *) addr, ti.a);
+	suword((u_long *) addr + 1, ti.b);
 }
 
 #define DIV10(low,high,rem) \
@@ -846,26 +804,25 @@ __asm__("divl %6 ; xchgl %1,%2 ; divl %6" \
 	:"=d" (rem),"=a" (low),"=r" (high) \
 	:"0" (0),"1" (high),"2" (low),"c" (10))
 
-void put_BCD(const temp_real * tmp,struct trapframe * info, unsigned short code)
+void put_BCD(const temp_real * tmp,struct trapframe * info, u_short code)
 {
 	int k,rem;
 	char * addr;
 	temp_int i;
-	unsigned char c;
+	u_char c;
 
 	addr = ea(info,code);
-	/*verify_area(addr,10);*/
 	real_to_int(tmp,&i);
 	if (i.sign)
-		put_fs_byte(0x80, addr+9);
+		subyte(addr+9,0x80);
 	else
-		put_fs_byte(0, addr+9);
+		subyte(addr+9,0x00);
 	for (k = 0; k < 9; k++) {
 		DIV10(i.a,i.b,rem);
 		c = rem;
 		DIV10(i.a,i.b,rem);
 		c += rem<<4;
-		put_fs_byte(c,addr++);
+		subyte(addr++,c);
 	}
 }
 
@@ -985,7 +942,7 @@ static void div64(int * a, int * b, int * c)
 {
 	int tmp[4];
 	int i;
-	unsigned int mask = 0;
+	u_int mask = 0;
 
 	c += 4;
 	for (i = 0 ; i<64 ; i++) {
@@ -1252,7 +1209,7 @@ void long_to_temp(const long_real * a, temp_real * b)
 	b->exponent = ((a->b >> 20) & 0x7ff)-1023+16383;
 	if (a->b<0)
 		b->exponent |= 0x8000;
-	b->b = 0x80000000 | (a->b<<11) | (((unsigned long)a->a)>>21);
+	b->b = 0x80000000 | (a->b<<11) | (((u_long)a->a)>>21);
 	b->a = a->a<<11;
 }
 
@@ -1320,7 +1277,7 @@ void temp_to_long(const temp_real * a, long_real * b)
 void frndint(const temp_real * a, temp_real * b)
 {
 	int shift =  16383 + 63 - (a->exponent & 0x7fff);
-	unsigned long underflow;
+	u_long underflow;
 
 	if ((shift < 0) || (shift == 16383+63)) {
 		*b = *a;
@@ -1403,7 +1360,7 @@ void Fscale(const temp_real *a, const temp_real *b, temp_real *c)
 void real_to_int(const temp_real * a, temp_int * b)
 {
 	int shift =  16383 + 63 - (a->exponent & 0x7fff);
-	unsigned long underflow;
+	u_long underflow;
 
 	b->a = b->b = underflow = 0;
 	b->sign = (a->exponent < 0);
