@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.3 1996/03/26 19:04:48 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.4 1996/03/31 22:21:45 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -64,7 +64,7 @@
 
 typedef int svr4_greg_t;
 
-typedef struct { 
+typedef struct {
 	svr4_greg_t	rwin_lo[8];
 	svr4_greg_t	rwin_in[8];
 } svr4_rwindow_t;
