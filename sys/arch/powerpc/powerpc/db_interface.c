@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12.6.7 2002/12/29 19:35:06 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12.6.8 2003/01/04 23:51:18 thorpej Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -69,22 +69,22 @@ int
 ddb_trap_glue(frame)
 	struct trapframe *frame;
 {
-#ifndef PPC_IBM4XX
-	if (!(frame->srr1 & PSL_PR)
-	    && (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC
-		|| (frame->exc == EXC_PGM
-		    && (frame->srr1 & 0x20000))
-		|| frame->exc == EXC_BPT)) {
+#ifdef PPC_IBM4XX
+	if ((frame->srr1 & PSL_PR) == 0)
+		return kdb_trap(frame->exc, frame);
+#else /* PPC_MPC6XX */
+	if ((frame->srr1 & PSL_PR) == 0 &&
+	    (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC ||
+	     (frame->exc == EXC_PGM && (frame->srr1 & 0x20000)) ||
+	     frame->exc == EXC_BPT)) {
 		int type = frame->exc;
 		if (type == EXC_PGM && (frame->srr1 & 0x20000)) {
 			type = T_BREAKPOINT;
 		}
 		return kdb_trap(type, frame);
 	}
-	return 0;
-#else
-	return kdb_trap(frame->exc, frame);
 #endif
+	return 0;
 }
 
 int
