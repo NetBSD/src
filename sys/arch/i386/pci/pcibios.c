@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.20 2004/10/21 17:12:42 augustss Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.21 2004/11/21 22:00:00 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.20 2004/10/21 17:12:42 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.21 2004/11/21 22:00:00 augustss Exp $");
 
 #include "opt_pcibios.h"
 
@@ -747,13 +747,40 @@ pcibios_biosroute(int bus, int device, int func, int pin, int irq)
 	return rv;
 }
 
+#define MM20_PCI_BUS 0
+#define MM20_PCI_EHCI_DEV 15
+#define MM20_PCI_EHCI_FUNC 3
+#define MM20_PCI_EHCI_PIN 3
+#define MM20_PCI_EHCI_INTR 11
+#define MM20_PCI_ISA_DEV 3
+#define MM20_PCI_ISA_FUNC 0
+
 static void
 pcibios_mm20_fixup(void)
 {
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+
 	/* Copy BIOS */
 	pcibios_copy_bios();
 	/* Route the interrupt for the EHCI controller. */
-	(void)pcibios_biosroute(0, 15, 3, 3, 11);
+	(void)pcibios_biosroute(MM20_PCI_BUS,
+				MM20_PCI_EHCI_DEV,
+				MM20_PCI_EHCI_FUNC,
+				MM20_PCI_EHCI_PIN,
+				MM20_PCI_EHCI_INTR);
+
+	/* Fake some tags. */
+	pc = NULL;
+	tag = pci_make_tag(pc, MM20_PCI_BUS, MM20_PCI_EHCI_DEV,
+			   MM20_PCI_EHCI_FUNC);
+	/* Set interrupt register in EHCI controller */
+	pci_conf_write(pc, tag, 0x3c, 0x50000400 + MM20_PCI_EHCI_INTR);
+	tag = pci_make_tag(pc, MM20_PCI_BUS, MM20_PCI_ISA_DEV,
+			   MM20_PCI_ISA_FUNC);
+	/* Set some unknown registers in the ISA bridge. */
+	pci_conf_write(pc, tag, 0x58, 0xd87f5300);
+	pci_conf_write(pc, tag, 0x74, 0x00000009);
 }
 
 #endif /* PCIBIOS_SHARP_MM20_FIXUP */
