@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2001/09/30 17:12:08 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.109 2002/03/01 23:55:10 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -148,15 +148,15 @@ vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 struct pv_entry *get_pventry(void);
 void free_pventry(struct pv_entry *);
 void more_pventries(void);
-#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
 
 /*
  * Calculation of the System Page Table is somewhat a pain, because it
  * must be in contiguous physical memory and all size calculations must
  * be done before memory management is turned on.
+ * Arg is usrptsize in ptes.
  */
 static vsize_t
-calc_kvmsize(void)
+calc_kvmsize(vsize_t usrptsize)
 {
 	extern int bufcache;
 	vsize_t kvmsize;
@@ -165,7 +165,7 @@ calc_kvmsize(void)
 	/* All physical memory */
 	kvmsize = avail_end;
 	/* User Page table area. This may be large */
-	kvmsize += (USRPTSIZE * sizeof(struct pte) * maxproc);
+	kvmsize += (usrptsize * sizeof(struct pte));
 	/* Kernel stacks per process */
 	kvmsize += (USPACE * maxproc);
 	/* kernel malloc arena */
@@ -184,6 +184,9 @@ calc_kvmsize(void)
 	/* Buffer space */
 	kvmsize += (MAXBSIZE * nbuf);
 	nbuf = n; nswbuf = s; bufpages = bp; bufcache = bc;
+
+	/* UBC submap space */
+	kvmsize += (UBC_NWINS << UBC_WINSHIFT);
 
 	/* Exec arg space */
 	kvmsize += NCARGS;
@@ -212,7 +215,7 @@ pmap_bootstrap()
 	extern	unsigned int etext, proc0paddr;
 	struct pcb *pcb = (struct pcb *)proc0paddr;
 	pmap_t pmap = pmap_kernel();
-	vsize_t kvmsize;
+	vsize_t kvmsize, usrptsize;
 
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
@@ -220,7 +223,8 @@ pmap_bootstrap()
 
 	physmem = btoc(avail_end);
 
-	kvmsize = calc_kvmsize();
+	usrptsize = PROCPTSIZE * maxproc;
+	kvmsize = calc_kvmsize(usrptsize);
 	sysptsize = kvmsize >> VAX_PGSHIFT;
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
@@ -279,7 +283,7 @@ pmap_bootstrap()
 #endif
 
 	/* User page table map. This is big. */
-	MAPVIRT(ptemapstart, USRPTSIZE);
+	MAPVIRT(ptemapstart, vax_btoc(usrptsize * sizeof(struct pte)));
 	ptemapend = virtual_avail;
 
 	MAPVIRT(iospace, IOSPSZ); /* Device iospace mapping area */
@@ -296,11 +300,12 @@ pmap_bootstrap()
 	virtual_end = trunc_page(virtual_end);
 
 
-#if 0 /* Breaks cninit() on some machines */
+#if 1 /* Breaks cninit() on some machines */
 	cninit();
 	printf("Sysmap %p, istack %lx, scratch %lx\n",Sysmap,istack,scratch);
 	printf("etext %p, kvmsize %lx\n", &etext, kvmsize);
-	printf("SYSPTSIZE %x\n",sysptsize);
+	printf("SYSPTSIZE %x PROCPTSIZE %x usrptsize %lx\n",
+	    sysptsize, PROCPTSIZE, usrptsize * sizeof(struct pte));
 	printf("pv_table %p, ptemapstart %lx ptemapend %lx\n",
 	    pv_table, ptemapstart, ptemapend);
 	printf("avail_start %lx, avail_end %lx\n",avail_start,avail_end);
@@ -470,7 +475,7 @@ pmap_pinit(pmap_t pmap)
 	 * Allocate PTEs and stash them away in the pmap.
 	 * XXX Ok to use kmem_alloc_wait() here?
 	 */
-	bytesiz = USRPTSIZE * sizeof(struct pte);
+	bytesiz = PROCPTSIZE * sizeof(struct pte);
 	res = extent_alloc(ptemap, bytesiz, 4, 0, EX_WAITSPACE|EX_WAITOK,
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
@@ -533,13 +538,13 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 			    pmap->pm_refcnt[i], i);
 
 	saddr = (vaddr_t)pmap->pm_p0br;
-	eaddr = saddr + USRPTSIZE * sizeof(struct pte);
+	eaddr = saddr + PROCPTSIZE * sizeof(struct pte);
 	for (; saddr < eaddr; saddr += NBPG)
 		if (kvtopte(saddr)->pg_pfn)
 			panic("pmap_release: page mapped");
 #endif
 	extent_free(ptemap, (u_long)pmap->pm_p0br,
-	    USRPTSIZE * sizeof(struct pte), EX_WAITOK);
+	    PROCPTSIZE * sizeof(struct pte), EX_WAITOK);
 }
 
 /*
