@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.17 1993/09/21 13:43:15 brezak Exp $
+ *	$Id: trap.c,v 1.18 1993/11/05 23:18:51 cgd Exp $
  */
 
 /*
@@ -89,6 +89,7 @@ trap(frame)
 	register struct proc *p = curproc;
 	struct timeval syst;
 	int ucode, type, code, eva;
+	int s;
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
@@ -368,11 +369,11 @@ out:
 		 * swtch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		(void) splclock();
+		s = splclock();
 		setrq(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
-		(void) splnone();
+		splx(s);
 		while (i = CURSIG(p))
 			psig(i);
 	}
@@ -425,7 +426,7 @@ syscall(frame)
 	register struct sysent *callp;
 	register struct proc *p = curproc;
 	struct timeval syst;
-	int error, opc;
+	int error, opc, s;
 	int args[8], rval[2];
 	int code;
 
@@ -503,11 +504,11 @@ done:
 		 * swtch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		(void) splclock();
+		s = splclock();
 		setrq(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
-		(void) splnone();
+		splx(s);
 		while (i = CURSIG(p))
 			psig(i);
 	}
