@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.65 1997/03/26 22:38:40 gwr Exp $	*/
+/*	$NetBSD: systm.h,v 1.66 1997/03/30 17:29:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -223,6 +223,9 @@ void	softclock __P((void));
 void	statclock __P((struct clockframe *frame));
 #ifdef NTP
 void	hardupdate __P((long offset));
+#ifdef PPS_SYNC
+void	hardpps __P((struct timeval *, long));
+#endif
 #endif
 
 void	initclocks __P((void));
