@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.30 2002/04/05 00:54:52 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.31 2002/04/10 04:01:27 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -460,13 +460,13 @@ struct wi_ltv_ver {
 #define	WI_NIC_EVB2_SST_ID	0x8009
 #define	WI_NIC_EVB2_SST_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash"
 
-#define	WI_NIC_3842_EVA_ID	0x800A	/* 3842 Evaluation Board */
+#define	WI_NIC_3842_EVA_ID	0x800A	/* Prism2 3842 Evaluation Board */
 #define	WI_NIC_3842_EVA_STR	"RF:PRISM2 MAC:HFA3842 CARD:HFA3842 EVAL"
 
 #define	WI_NIC_3842_PCMCIA_AMD_ID	0x800B	/* Prism2.5 PCMCIA */
 #define	WI_NIC_3842_PCMCIA_SST_ID	0x800C
 #define	WI_NIC_3842_PCMCIA_ATM_ID	0x800D
-#define	WI_NIC_3842_PCMCIA_STR		"RF:PRISM2.5 MAC:ISL3873"
+#define	WI_NIC_3842_PCMCIA_STR		"RF:PRISM2.5 MAC:ISL3873B(PCMCIA)"
 
 #define	WI_NIC_3842_MINI_AMD_ID		0x8012	/* Prism2.5 Mini-PCI */
 #define	WI_NIC_3842_MINI_SST_ID		0x8013
@@ -480,11 +480,11 @@ struct wi_ltv_ver {
 
 #define	WI_NIC_P3_PCMCIA_AMD_ID		0x801A	/* Prism3 PCMCIA */
 #define	WI_NIC_P3_PCMCIA_SST_ID		0x801B
-#define	WI_NIC_P3_PCMCIA_STR		"RF:PRISM3(PCMCIA)"
+#define	WI_NIC_P3_PCMCIA_STR		"RF:PRISM3 MAC:ISL3871(PCMCIA)"
 
 #define	WI_NIC_P3_MINI_AMD_ID		0x8021	/* Prism3 Mini-PCI */
 #define	WI_NIC_P3_MINI_SST_ID		0x8022
-#define	WI_NIC_P3_MINI_STR		"RF:PRISM3(Mini-PCI)"
+#define	WI_NIC_P3_MINI_STR		"RF:PRISM3 MAC:ISL3871(Mini-PCI)"
 
 /*
  * List of intended regulatory domains (0xFD11).
