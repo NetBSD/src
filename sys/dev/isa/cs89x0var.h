@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.8 1999/03/30 21:02:41 mycroft Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.9 2000/09/28 10:37:21 tsutsui Exp $	*/
 
 /*
  * Copyright 1997
@@ -103,7 +103,7 @@ struct cs_softc {
 
 	int	sc_carrier;		/* has carrier */
 
-	u_int8_t sc_enaddr[6];		/* MAC address */
+	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* MAC address */
 
 #if NRND > 0
 	rndsource_element_t rnd_source; /* random source */
