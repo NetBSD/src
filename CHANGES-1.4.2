@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.9 1999/08/28 23:28:35 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.10 1999/08/29 11:26:58 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -189,3 +189,10 @@ sys/miscfs/procfs/procfs_vnops.c		1.66-1.68
   Protect {fdesc,kernfs,procfs}_readdir against directory seeks
   with bogus offsets.  (sommerfeld)
 
+etc/rc						1.129
+
+  Fix denial-of-service attack involving vi preserve.  (christos)
+
+usr.bin/su/su.c					1.35
+
+  Fix memory corruption problem.  (christos)
