@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 2000/03/28 02:58:50 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52 2000/03/28 03:11:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2000/03/28 02:58:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2000/03/28 03:11:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2000/03/28 02:58:50 simonb Exp $
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
-
-/* XXX will be declared in mips/include/cpu.h XXX */
-extern struct proc *fpcurproc;
 
 paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
