@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.h,v 1.1 2001/02/02 06:11:52 briggs Exp $	*/
+/*	$NetBSD: openpic.h,v 1.2 2001/02/04 17:38:10 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -30,6 +30,7 @@
 
 #include <machine/openpicreg.h>
 
+void openpic_init __P((unsigned char *, int));
 void openpic_enable_irq __P((int, int));
 void openpic_disable_irq __P((int));
 void openpic_set_priority __P((int, int));
