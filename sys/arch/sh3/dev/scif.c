@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.10 2000/06/19 09:30:35 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.10.2.1 2000/08/08 17:20:46 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1139,7 +1139,7 @@ scif_rxsoft(sc, tp)
 	if (cc == scif_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			callout(&sc->sc_diag_ch, 60 * hz, scifdiag, sc);
+			callout_reset(&sc->sc_diag_ch, 60 * hz, scifdiag, sc);
 	}
 
 	while (cc) {
