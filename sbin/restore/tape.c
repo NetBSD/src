@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.28 1997/09/15 08:04:40 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.29 1997/09/16 13:44:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
+static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.28 1997/09/15 08:04:40 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.29 1997/09/16 13:44:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,7 +659,7 @@ getfile(fill, skip)
 {
 	int i;
 	int curblk = 0;
-	long size = spcl.c_dinode.di_size;
+	quad_t size = spcl.c_dinode.di_size;
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
@@ -681,20 +681,19 @@ loop:
 		if (spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
 			if (curblk == fssize / TP_BSIZE) {
-				(*fill)((char *)buf, size > TP_BSIZE ?
-				     (long) (fssize) :
-				     (curblk - 1) * TP_BSIZE + size);
+				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
+				     fssize : (curblk - 1) * TP_BSIZE + size));
 				curblk = 0;
 			}
 		} else {
 			if (curblk > 0) {
-				(*fill)((char *)buf, size > TP_BSIZE ?
-				     (long) (curblk * TP_BSIZE) :
-				     (curblk - 1) * TP_BSIZE + size);
+				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
+				     curblk * TP_BSIZE :
+				     (curblk - 1) * TP_BSIZE + size));
 				curblk = 0;
 			}
-			(*skip)(clearedbuf, size > TP_BSIZE ?
-				(long) TP_BSIZE : size);
+			(*skip)(clearedbuf, (long)(size > TP_BSIZE ?
+				TP_BSIZE : size));
 		}
 		if ((size -= TP_BSIZE) <= 0) {
 			for (i++; i < spcl.c_count; i++)
@@ -711,7 +710,7 @@ loop:
 			curfile.name, blksread);
 	}
 	if (curblk > 0)
-		(*fill)((char *)buf, (curblk * TP_BSIZE) + size);
+		(*fill)((char *)buf, (long)((curblk * TP_BSIZE) + size));
 	findinode(&spcl);
 	gettingfile = 0;
 }
@@ -795,7 +794,7 @@ xtrmap(buf, size)
 	long	size;
 {
 
-	memcpy(map, buf, size);
+	memmove(map, buf, size);
 	map += size;
 }
 
@@ -838,7 +837,7 @@ readtape(buf)
 	int cnt, seek_failed;
 
 	if (blkcnt < numtrec) {
-		memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
+		memmove(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
 		blksread++;
 		tpblksread++;
 		return;
@@ -941,10 +940,10 @@ getmore:
 			panic("partial block read: %d should be %d\n",
 				rd, ntrec * TP_BSIZE);
 		terminateinput();
-		memcpy(&tapebuf[rd], &endoftapemark, (long)TP_BSIZE);
+		memmove(&tapebuf[rd], &endoftapemark, (long)TP_BSIZE);
 	}
 	blkcnt = 0;
-	memcpy(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
+	memmove(buf, &tapebuf[(blkcnt++ * TP_BSIZE)], (long)TP_BSIZE);
 	blksread++;
 	tpblksread++;
 }
@@ -1072,7 +1071,7 @@ gethead(buf)
 	buf->c_dinode.di_mtime = u_ospcl.s_ospcl.c_dinode.odi_mtime;
 	buf->c_dinode.di_ctime = u_ospcl.s_ospcl.c_dinode.odi_ctime;
 	buf->c_count = u_ospcl.s_ospcl.c_count;
-	memcpy(buf->c_addr, u_ospcl.s_ospcl.c_addr, (long)256);
+	memmove(buf->c_addr, u_ospcl.s_ospcl.c_addr, (long)256);
 	if (u_ospcl.s_ospcl.c_magic != OFS_MAGIC ||
 	    checksum((int *)(&u_ospcl.s_ospcl)) == FAIL)
 		return(FAIL);

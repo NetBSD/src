@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.12 1997/09/16 08:37:14 mrg Exp $	*/
+/*	$NetBSD: symtab.c,v 1.13 1997/09/16 13:44:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
+static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.12 1997/09/16 08:37:14 mrg Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.13 1997/09/16 13:44:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ myname(ep)
 
 	for (cp = &namebuf[MAXPATHLEN - 2]; cp > &namebuf[ep->e_namlen]; ) {
 		cp -= ep->e_namlen;
-		memcpy(cp, ep->e_name, (long)ep->e_namlen);
+		memmove(cp, ep->e_name, (long)ep->e_namlen);
 		if (ep == lookupino(ROOTINO))
 			return (cp);
 		*(--cp) = '/';
@@ -491,7 +491,7 @@ dumpsymtable(filename, checkpt)
 	stroff = 0;
 	for (i = WINO; i <= maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
-			memcpy(tep, ep, (long)sizeof(struct entry));
+			memmove(tep, ep, (long)sizeof(struct entry));
 			tep->e_name = (char *)stroff;
 			stroff += allocsize(ep->e_namlen);
 			tep->e_parent = (struct entry *)(long)
