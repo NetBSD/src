@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 1998/10/14 19:19:32 kleink Exp $
+#	$NetBSD: Makefile,v 1.78 1998/11/28 17:01:54 eeh Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -39,7 +39,7 @@ LLIBS=
 .include "${.CURDIR}/md/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
 .include "${.CURDIR}/regex/Makefile.inc"
@@ -62,7 +62,7 @@ KSRCS=	bcopy.c bcmp.c bzero.c ffs.c \
 	htonl.c htons.c ntohl.c ntohs.c md5c.c \
 	memchr.c memcmp.c memcpy.c memmove.c memset.c \
 	index.c rindex.c
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
 KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
 	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
