@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.15 2002/03/17 19:40:37 atatat Exp $	*/
+/*	$NetBSD: apci.c,v 1.16 2002/04/17 20:40:30 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.15 2002/03/17 19:40:37 atatat Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.16 2002/04/17 20:40:30 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,9 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.15 2002/03/17 19:40:37 atatat Exp $");
 
 #include <dev/cons.h>
 
-#include <hp300/dev/dioreg.h>		/* to check for dca at 9 */
-#include <hp300/dev/diovar.h>
-#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/frodoreg.h>
 #include <hp300/dev/frodovar.h>
@@ -904,7 +902,7 @@ apcicnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return (1);
 
-        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+        if (bus_space_map(bst, addr, INTIO_DEVSIZE, BUS_SPACE_MAP_LINEAR, &bsh))
                 return (1);
 
         va = bus_space_vaddr(bst, bsh);
