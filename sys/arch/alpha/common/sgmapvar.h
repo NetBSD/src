@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.4 1998/01/17 03:37:23 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.5 1998/01/17 21:53:54 thorpej Exp $ */
 
 #define	SGMAP_LOG
 
@@ -60,22 +60,6 @@ struct alpha_sgmap {
 	bus_addr_t aps_wbase;		/* base of the dma window */
 };
 
-/*
- * Cookie used to store SGMAP state for a DMA mapping.  We
- * could compute some of this at unload time, but storing it
- * is convenient.
- */
-struct alpha_sgmap_cookie {
-	int	apdc_pteidx;		/* PTE index */
-	int	apdc_ptecnt;		/* PTE count */
-	u_long	apdc_sgva;		/* allocated sgva */
-	bus_size_t apdc_len;		/* sgva size */
-	int	apdc_flags;
-};
-
-/* apdc_flags */
-#define	APDC_HAS_SGMAP		0x01	/* sgva/len are valid */
-
 #ifdef SGMAP_LOG
 /*
  * Log entry, used for debugging SGMAPs.
@@ -98,5 +82,4 @@ void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 
 int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
 	    struct alpha_sgmap *, int));
-void	alpha_sgmap_free __P((struct alpha_sgmap *,
-	    struct alpha_sgmap_cookie *));
+void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));

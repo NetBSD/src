@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.5 1998/01/17 03:38:51 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.6 1998/01/17 21:53:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.5 1998/01/17 03:38:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.6 1998/01/17 21:53:52 thorpej Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -67,7 +67,6 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	int flags;
 	struct alpha_sgmap *sgmap;
 {
-	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 	vm_offset_t va = (vm_offset_t)buf;
 	vm_offset_t pa, endva;
 	bus_addr_t dmaoffset;
@@ -117,13 +116,13 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	 */
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
-	if ((a->apdc_flags & APDC_HAS_SGMAP) == 0) {
+	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0) {
 		error = alpha_sgmap_alloc(map, endva - va, sgmap, flags);
 		if (error)
 			return (error);
 	}
 
-	pteidx = a->apdc_sgva >> PGSHIFT;
+	pteidx = map->_dm_sgva >> PGSHIFT;
 	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
 
 #ifdef SGMAP_DEBUG
@@ -142,7 +141,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 
 #ifdef SGMAP_LOG
 	if (panicstr == NULL) {
-		sl.sl_sgva = a->apdc_sgva;
+		sl.sl_sgva = map->_dm_sgva;
 		sl.sl_dmaaddr = map->dm_segs[0].ds_addr;
 	}
 #endif
@@ -155,11 +154,11 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 		    map->dm_segs[0].ds_addr);
 #endif
 
-	a->apdc_pteidx = pteidx;
-	a->apdc_ptecnt = 0;
+	map->_dm_pteidx = pteidx;
+	map->_dm_ptecnt = 0;
 
 	for (; va < endva; va += NBPG, pte += SGMAP_PTE_SPACING,
-	    a->apdc_ptecnt++) {
+	    map->_dm_ptecnt++) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -183,7 +182,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 
 #ifdef SGMAP_LOG
 	if (panicstr == NULL) {
-		sl.sl_ptecnt = a->apdc_ptecnt;
+		sl.sl_ptecnt = map->_dm_ptecnt;
 		bcopy(&sl, &__C(SGMAP_TYPE,_log)[__C(SGMAP_TYPE,_log_next)],
 		    sizeof(sl));
 		__C(SGMAP_TYPE,_log_last) = __C(SGMAP_TYPE,_log_next);
@@ -246,7 +245,6 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	bus_dmamap_t map;
 	struct alpha_sgmap *sgmap;
 {
-	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	int ptecnt;
 #ifdef SGMAP_LOG
@@ -258,7 +256,7 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 		bzero(sl, sizeof(*sl));
 		sl->sl_op = 0;
 		sl->sl_sgmap = sgmap;
-		sl->sl_sgva = a->apdc_sgva;
+		sl->sl_sgva = map->_dm_sgva;
 		sl->sl_dmaaddr = map->dm_segs[0].ds_addr;
 
 		__C(SGMAP_TYPE,_log_last) = __C(SGMAP_TYPE,_log_next);
@@ -271,8 +269,8 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	/*
 	 * Invalidate the PTEs for the mapping.
 	 */
-	for (ptecnt = a->apdc_ptecnt,
-	    pte = &page_table[a->apdc_pteidx * SGMAP_PTE_SPACING];
+	for (ptecnt = map->_dm_ptecnt,
+	    pte = &page_table[map->_dm_pteidx * SGMAP_PTE_SPACING];
 	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING) {
 #ifdef SGMAP_DEBUG
 		if (__C(SGMAP_TYPE,_debug))
@@ -287,5 +285,5 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	 * if necessary.
 	 */
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
-		alpha_sgmap_free(sgmap, a);
+		alpha_sgmap_free(map, sgmap);
 }
