@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.17 1994/12/15 19:15:06 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.18 1994/12/29 22:42:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -409,14 +409,12 @@ union_whiteout(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_dvp);
-	struct vnode *dvp;
 
-	if ((dvp = un->un_uppervp) == NULLVP)
+	if (un->un_uppervp == NULLVP)
 		return (EOPNOTSUPP);
 
 	FIXUP(un);
-	ap->a_dvp = dvp;
-	return (VCALL(dvp, VOFFSET(vop_whiteout), ap));
+	return (VOP_WHITEOUT(un->un_uppervp, ap->a_cnp, ap->a_flags));
 }
 
 int
@@ -477,43 +475,46 @@ union_open(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *vp;
+	struct vnode *tvp;
+	int mode = ap->a_mode;
+	struct ucred *cred = ap->a_cred;
+	struct proc *p = ap->a_p;
 	int error;
 
 	/*
 	 * If there is an existing upper vp then simply open that.
 	 */
-	if ((vp = un->un_uppervp) == NULLVP) {
+	tvp = un->un_uppervp;
+	if (tvp == NULLVP) {
 		/*
 		 * If the lower vnode is being opened for writing, then
 		 * copy the file contents to the upper vnode and open that,
 		 * otherwise can simply open the lower vnode.
 		 */
-		vp = un->un_lowervp;
-		if ((ap->a_mode & FWRITE) && (vp->v_type == VREG)) {
-			if (error = union_copyup(un,
-			    (ap->a_mode & O_TRUNC) == 0, ap->a_cred, ap->a_p))
-				return (error);
-			vp = un->un_uppervp;
-			ap->a_vp = vp;
-			return (VCALL(vp, VOFFSET(vop_open), ap));
+		tvp = un->un_lowervp;
+		if ((ap->a_mode & FWRITE) && (tvp->v_type == VREG)) {
+			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, p);
+			if (error == 0)
+				error = VOP_OPEN(un->un_uppervp, mode, cred, p);
+			return (error);
 		}
 
 		/*
 		 * Just open the lower vnode
 		 */
 		un->un_openl++;
-		VOP_LOCK(vp);
-		ap->a_vp = vp;
-		error = VCALL(vp, VOFFSET(vop_open), ap);
-		VOP_UNLOCK(vp);
+		VOP_LOCK(tvp);
+		error = VOP_OPEN(tvp, mode, cred, p);
+		VOP_UNLOCK(tvp);
 
 		return (error);
 	}
 
 	FIXUP(un);
-	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_open), ap));
+
+	error = VOP_OPEN(tvp, mode, cred, p);
+
+	return (error);
 }
 
 int
@@ -560,29 +561,27 @@ union_access(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *vp;
 	int error = EACCES;
+	struct vnode *vp;
 
 	if ((vp = un->un_uppervp) != NULLVP) {
 		FIXUP(un);
-		ap->a_vp = vp;
-		return (VCALL(vp, VOFFSET(vop_access), ap));
+		return (VOP_ACCESS(vp, ap->a_mode, ap->a_cred, ap->a_p));
 	}
 
 	if ((vp = un->un_lowervp) != NULLVP) {
 		VOP_LOCK(vp);
-		ap->a_vp = vp;
-		error = VCALL(vp, VOFFSET(vop_access), ap);
+		error = VOP_ACCESS(vp, ap->a_mode, ap->a_cred, ap->a_p);
 		if (error == 0) {
 			struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
 
-			if (um->um_op == UNMNT_BELOW) {
-				ap->a_cred = um->um_cred;
-				error = VCALL(vp, VOFFSET(vop_access), ap);
-			}
+			if (um->um_op == UNMNT_BELOW)
+				error = VOP_ACCESS(vp, ap->a_mode,
+						um->um_cred, ap->a_p);
 		}
 		VOP_UNLOCK(vp);
-		return (error);
+		if (error)
+			return (error);
 	}
 
 	return (error);
@@ -670,7 +669,6 @@ union_setattr(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *vp;
 	int error;
 
 	/*
@@ -678,24 +676,23 @@ union_setattr(ap)
 	 * by creating a zero length upper object.  This is to
 	 * handle the case of open with O_TRUNC and O_CREAT.
 	 */
-	if ((vp = un->un_uppervp) == NULLVP &&
+	if ((un->un_uppervp == NULLVP) &&
 	    /* assert(un->un_lowervp != NULLVP) */
-	    un->un_lowervp->v_type == VREG) {
+	    (un->un_lowervp->v_type == VREG)) {
 		error = union_copyup(un, (ap->a_vap->va_size != 0),
 						ap->a_cred, ap->a_p);
 		if (error)
 			return (error);
-		vp = un->un_uppervp;
 	}
 
 	/*
 	 * Try to set attributes in upper layer,
 	 * otherwise return read-only filesystem error.
 	 */
-	if (vp != NULLVP) {
+	if (un->un_uppervp != NULLVP) {
 		FIXUP(un);
-		ap->a_vp = vp;
-		error = VCALL(vp, VOFFSET(vop_setattr), ap);
+		error = VOP_SETATTR(un->un_uppervp, ap->a_vap,
+					ap->a_cred, ap->a_p);
 		if ((error == 0) && (ap->a_vap->va_size != VNOVAL))
 			union_newsize(ap->a_vp, ap->a_vap->va_size, VNOVAL);
 	} else {
@@ -863,8 +860,8 @@ union_fsync(ap)
 			VOP_LOCK(targetvp);
 		else
 			FIXUP(VTOUNION(ap->a_vp));
-		ap->a_vp = targetvp;
-		error = VCALL(targetvp, VOFFSET(vop_fsync), ap);
+		error = VOP_FSYNC(targetvp, ap->a_cred,
+					ap->a_waitfor, ap->a_p);
 		if (dolock)
 			VOP_UNLOCK(targetvp);
 	}
