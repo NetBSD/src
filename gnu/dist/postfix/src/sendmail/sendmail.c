@@ -34,12 +34,13 @@
 /*	the reason for failure is shown. This mode of operation is implemented
 /*	by connecting to the \fBshowq\fR(8) daemon.
 /* .IP \fBnewaliases\fR
-/*	Initialize the alias database. If no alias database type is
-/*	specified, the program uses the type specified in the
-/*	\fBdatabase_type\fR configuration parameter; if no input file
-/*	is specified, the program processes the file(s) specified with the
-/*	\fBalias_database\fR configuration parameter. This mode of operation
-/*	is implemented by running the \fBpostalias\fR(1) command.
+/*	Initialize the alias database.  If no input file is specified (with
+/*	the \fB-oA\fR option, see below), the program processes the file(s)
+/*	specified with the \fBalias_database\fR configuration parameter.
+/*	If no alias database type is specified, the program uses the type
+/*	specified with the \fBdatabase_type\fR configuration parameter.
+/*	This mode of operation is implemented by running the \fBpostalias\fR(1)
+/*	command.
 /* .sp
 /*	Note: it may take a minute or so before an alias database update
 /*	becomes visible. Use the \fBpostfix reload\fR command to eliminate
@@ -517,11 +518,9 @@ static void show_queue(void)
     signal(SIGPIPE, SIG_DFL);
     if ((showq = mail_connect(MAIL_CLASS_PUBLIC, MAIL_SERVICE_SHOWQ, BLOCKING)) != 0) {
 	while ((n = vstream_fread(showq, buf, sizeof(buf))) > 0)
-	    if (vstream_fwrite(VSTREAM_OUT, buf, n) != n)
+	    if (vstream_fwrite(VSTREAM_OUT, buf, n) != n
+		|| vstream_fflush(VSTREAM_OUT) != 0)
 		msg_fatal("write error: %m");
-
-	if (vstream_fflush(VSTREAM_OUT))
-	    msg_fatal("write error: %m");
 
 	if (vstream_fclose(showq))
 	    msg_warn("close: %m");
@@ -949,6 +948,8 @@ int     main(int argc, char **argv)
     case SM_MODE_NEWALIAS:
 	if (argv[OPTIND])
 	    msg_fatal("alias initialization mode requires no recipient");
+	if (*var_alias_db_map == 0)
+	    return (0);
 	ext_argv = argv_alloc(2);
 	argv_add(ext_argv, "postalias", (char *) 0);
 	for (n = 0; n < msg_verbose; n++)
