@@ -1,4 +1,4 @@
-.\" $NetBSD: hardware,v 1.30 1999/04/09 20:55:28 is Exp $	
+.\" $NetBSD: hardware,v 1.31 1999/04/18 10:50:17 is Exp $	
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -85,7 +85,7 @@ Scanners:
 CD-ROM drives:
 	Most SCSI CD-ROM drives
 Serial cards:
-	HyperCom 3Z and HyperCom 4
+	HyperCom 3Z, HyperCom 4, HyperCom 3+ and 4+ (serial ports only)
 	MultiFaceCard II and III
 	A2232 (normal and clockdoubled)
 Amiga floppy drives with Amiga (880/1760kB) and 
