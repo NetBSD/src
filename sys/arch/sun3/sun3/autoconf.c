@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.9 1994/05/20 04:26:18 gwr Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.10 1994/06/14 02:31:09 gwr Exp $
  */
 /*
  * Setup the system to run on the current machine.
@@ -96,6 +96,7 @@ void configure()
 	panic("configure: autoconfig failed, no device tree root found");
     isr_add(7, nmi_intr, 0);
     isr_cleanup();
+    conf_init();
 }
 
 int always_match(parent, cf, args)
