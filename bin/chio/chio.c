@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.4 1997/09/15 13:15:16 lukem Exp $	*/
+/*	$NetBSD: chio.c,v 1.5 1997/09/29 17:32:24 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -31,11 +31,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/*
+ * Additional Copyright (c) 1997, by Matthew Jacob, for NASA/Ames Research Ctr.
+ */
 
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.4 1997/09/15 13:15:16 lukem Exp $");
+__RCSID("$NetBSD: chio.c,v 1.5 1997/09/29 17:32:24 mjacob Exp $");
 #endif
 
 #include <sys/param.h>
@@ -71,6 +74,7 @@ static	int do_params __P((char *, int, char **));
 static	int do_getpicker __P((char *, int, char **));
 static	int do_setpicker __P((char *, int, char **));
 static	int do_status __P((char *, int, char **));
+static	int do_ielem __P((char *, int, char **));
 
 /* Valid changer element types. */
 const struct element_type elements[] = {
@@ -90,6 +94,7 @@ const struct changer_command commands[] = {
 	{ "getpicker",		do_getpicker },
 	{ "setpicker",		do_setpicker },
 	{ "status",		do_status },
+	{ "ielem", 		do_ielem },
 	{ NULL,			0 },
 };
 
@@ -579,6 +584,19 @@ do_status(cname, argc, argv)
 }
 
 static int
+do_ielem(cname, argc, argv)
+	char *cname;
+	int argc;
+	char **argv;
+{
+	if (ioctl(changer_fd, CHIOIELEM, (char *)NULL))
+		err(1, "%s: CHIOIELEM", changer_name);
+
+	return (0);
+}
+
+
+static int
 parse_element_type(cp)
 	char *cp;
 {
@@ -660,7 +678,6 @@ bits_to_string(v, cp)
 static void
 cleanup()
 {
-
 	/* Simple enough... */
 	(void)close(changer_fd);
 }
@@ -670,5 +687,9 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s command arg1 arg2 ...\n", __progname);
+	fprintf(stderr, "Examples:\n");
+	fprintf(stderr, "\tchio -f /dev/ch0 move slot 1 drive 0\n");
+	fprintf(stderr, "\tchio ielem\n");
+	fprintf(stderr, "\tchio -f /dev/ch1 status\n");
 	exit(1);
 }

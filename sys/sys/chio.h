@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.h,v 1.8 1996/04/03 00:25:21 thorpej Exp $	*/
+/*	$NetBSD: chio.h,v 1.9 1997/09/29 17:32:26 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -146,6 +146,7 @@ struct changer_element_status {
 #define CHIOGPICKER	_IOR('c', 0x04, int)
 #define CHIOSPICKER	_IOW('c', 0x05, int)
 #define CHIOGPARAMS	_IOR('c', 0x06, struct changer_params)
+#define CHIOIELEM	 _IO('c', 0x07)
 #define CHIOGSTATUS	_IOW('c', 0x08, struct changer_element_status)
 
 #endif /* _SYS_CHIO_H_ */
