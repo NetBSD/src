@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.26 1998/08/14 16:46:09 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.27 1998/09/22 08:16:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -306,7 +306,13 @@ struct pcs {
 	u_int64_t	pcs_halt_reason;	/* 118: */
 
 	u_int64_t	pcs_reserved_soft;	/* 120: preserved software */
-	u_int64_t	pcs_buffer[21];		/* 128: console buffers */
+
+	struct {				/* 128: inter-console buffers */
+		u_int	iccb_rxlen;
+		u_int	iccb_txlen;
+		char	iccb_rxbuf[80];
+		char	iccb_txbuf[80];
+	} pcs_iccb;
 
 #define	PALvar_reserved	0
 #define	PALvar_OpenVMS	1
