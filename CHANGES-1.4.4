@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.20 2002/03/07 21:16:24 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.21 2002/06/26 22:16:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -415,3 +415,13 @@ lib/libwrap/tcpd.h				1.9,1.11 via patch
 
    Include required files, and wrap declarations in __BEGIN_DECLS/
    __END_DECLS.
+
+lib/libc/net/gethnamaddr.c			1.45-1.46 via patch
+lib/libc/net/getnetnamadr.c			1.22
+
+  Fix remote buffer overrun on hostbuf[].  Also fix up logic of
+  buffer handling.  
+
+distrib/notes/common/main			1.167 via patch
+
+  Note that agc is not a member of core anymore.
