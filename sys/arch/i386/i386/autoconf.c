@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1999/03/08 01:26:00 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 1999/03/10 01:28:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,7 @@
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
@@ -64,10 +65,11 @@
 #include <machine/bootinfo.h>
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
-#ifdef PASS_GEOM
 static void matchbiosdisks __P((void));
-#endif
 void findroot __P((struct device **, int *));
+
+extern struct bi_devmatch *native_disks;
+extern int nnative_disks;
 
 /*
  * The following several variables are related to
@@ -116,9 +118,7 @@ cpu_rootconf()
 	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
-#ifdef PASS_GEOM
 	matchbiosdisks();
-#endif
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -126,7 +126,10 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition, i386_nam2blk);
 }
 
-#ifdef PASS_GEOM
+/*
+ * XXX ugly bit of code. But, this is the only safe time that the
+ * match between BIOS disks and native disks can be done.
+ */
 static void
 matchbiosdisks()
 {
@@ -134,10 +137,9 @@ matchbiosdisks()
 	struct bi_biosgeom_entry *be;
 	struct device *dv;
 	struct devnametobdevmaj *d;
-	int i, ck, error;
+	int i, ck, error, m, n;
 	struct vnode *tv;
-	struct buf *bp;
-	char *mbr;
+	char mbr[DEV_BSIZE];
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
@@ -146,7 +148,25 @@ matchbiosdisks()
 		return;
 	}
 
-	/* XXX code duplication from findroot() */
+	/*
+	 * First, count all native disks
+	 */
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
+		if (dv->dv_class == DV_DISK &&
+		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")))
+			nnative_disks++;
+
+	/* XXX M_TEMP is wrong */
+	native_disks = malloc(nnative_disks * sizeof (struct bi_devmatch),
+	    M_TEMP, M_NOWAIT);
+	if (native_disks == NULL)
+		return;
+
+	/*
+	 * XXX code duplication from findroot()
+	 */
+	n = -1;
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class != DV_DISK)
 			continue;
@@ -156,36 +176,40 @@ matchbiosdisks()
 #endif
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+			n++;
+			sprintf(native_disks[n].bd_devname, "%s%d",
+			    dv->dv_cfdata->cf_driver->cd_name,
+			    dv->dv_unit);
+
 			for (d = i386_nam2blk; d->d_name &&
 			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
 			   d++);
 			if (d->d_name == NULL)
 				return;
+
 			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
+
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
 			if (error) {
 				vrele(tv);
 				continue;
 			}
-			bp = getblk(tv, 0, DEV_BSIZE, 0, 0);
-			bp->b_flags = B_BUSY | B_READ;
-			VOP_STRATEGY(bp);
-			if (biowait(bp)) {
+			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
+			    UIO_SYSSPACE, 0, NOCRED, NULL, 0);
+			VOP_CLOSE(tv, FREAD, NOCRED, 0);
+			if (error) {
 #ifdef GEOM_DEBUG
 				printf("matchbiosdisks: %s: MBR read failure\n",
 				    dv->dv_xname);
 #endif
-				brelse(bp);
-				vrele(tv);
 				continue;
 			}
-			VOP_CLOSE(tv, FREAD, NOCRED, 0);
-			mbr = (char *)bp->b_data;
+
 			for (ck = i = 0; i < DEV_BSIZE; i++)
 				ck += mbr[i];
-			for (i = 0; i < big->num; i++) {
+			for (m = i = 0; i < big->num; i++) {
 				be = &big->disk[i];
 #ifdef GEOM_DEBUG
 				printf("match %s with %d\n", dv->dv_xname, i);
@@ -197,25 +221,18 @@ matchbiosdisks()
 				    !memcmp(&mbr[MBR_PARTOFF], be->dosparts,
 					NMBRPART *
 					    sizeof (struct mbr_partition))) {
-					sprintf(be->devname, "%s%d",
-					    dv->dv_cfdata->cf_driver->cd_name,
-					    dv->dv_unit);
 #ifdef GEOM_DEBUG
 					printf("matched bios disk %x with %s\n",
 					    be->dev, be->devname);
 #endif
-					if (be->flags & BI_GEOM_MATCHED)
-						be->flags |= BI_GEOM_MULTIPLE;
-					else
-						be->flags |= BI_GEOM_MATCHED;
+					native_disks[n].bd_matches[m++] = i;
 				}
 			}
-			brelse(bp);
+			native_disks[n].bd_nmatches = m;
 			vrele(tv);
 		}
 	}
 }
-#endif
 
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
