@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -49,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.3 2003/09/14 01:14:55 dyoung E
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
@@ -63,16 +65,23 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.3 2003/09/14 01:14:55 dyoung E
 #include <net/if_arp.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h> 
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 
 /*
@@ -399,7 +408,11 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 					m_freem(m);
 					return NULL;
 				}
+#ifdef __FreeBSD__
 				M_MOVE_PKTHDR(n, m);
+#else
+				M_COPY_PKTHDR(n, m);
+#endif
 				n->m_len = MHLEN;
 			} else {
 				MGET(n, M_DONTWAIT, MT_DATA);
@@ -650,9 +663,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			printf("%s: caps 0x%x bintval %u erp 0x%x\n",
 				__func__, le16toh(*(u_int16_t *)capinfo),
 				le16toh(*(u_int16_t *)bintval), erp);
-			if (country)
-				printf("%s: country info %*D\n",
-					__func__, country[1], country+2, " ");
+			if (country) {
+				int i;
+				printf("%s: country info", __func__);
+				for (i = 0; i < country[1]; i++)
+					printf(" %02x", country[i+2]);
+				printf("\n");
+			}
 		}
 #endif
 		if (ni == NULL) {

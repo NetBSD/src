@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.4 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.5 2003/09/28 02:35:20 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.4 2003/09/14 01:14:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.5 2003/09/28 02:35:20 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -49,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.4 2003/09/14 01:14:55 dyoung 
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
@@ -63,17 +65,23 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.4 2003/09/14 01:14:55 dyoung 
 #include <net/if_arp.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 #include <net/if_llc.h>
 
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h> 
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 
 /*
@@ -108,7 +116,9 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
+#ifdef __FreeBSD__
 	KASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
+#endif
 	m->m_pkthdr.rcvif = (void *)ni;
 
 	wh = mtod(m, struct ieee80211_frame *);

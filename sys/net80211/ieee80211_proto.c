@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.3 2003/07/20 21:36:08 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $");
 #endif
 
 /*
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.3 2003/09/14 01:14:55 dyoung E
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
@@ -67,16 +69,23 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.3 2003/09/14 01:14:55 dyoung E
 #include <net/if_arp.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h> 
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
@@ -129,8 +138,12 @@ ieee80211_proto_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
+#ifdef __FreeBSD__
 	IF_DRAIN(&ic->ic_mgtq);
 	mtx_destroy(&ic->ic_mgtq.ifq_mtx);
+#else
+	IF_PURGE(&ic->ic_mgtq);
+#endif
 }
 
 void
@@ -361,7 +374,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
 			ic->ic_mgt_timer = 0;
+#ifdef __FreeBSD__
 			IF_DRAIN(&ic->ic_mgtq);
+#else
+			IF_PURGE(&ic->ic_mgtq);
+#endif
 			if (ic->ic_wep_ctx != NULL) {
 				free(ic->ic_wep_ctx, M_DEVBUF);
 				ic->ic_wep_ctx = NULL;
