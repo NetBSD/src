@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.6 1998/11/06 22:40:13 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.6 1998/11/06 22:40:13 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -455,8 +455,11 @@ int assume_exists;
     if (debug & 128)
 	say4("fetchname %s %d %d\n",at,strip_leading,assume_exists);
 #endif
-    if (strnEQ(at, "/dev/null", 9))	/* so files can be created by diffing */
+    filename_is_dev_null = FALSE;
+    if (strnEQ(at, "/dev/null", 9)) {	/* so files can be created by diffing */
+        filename_is_dev_null = TRUE;
 	return Nullch;			/*   against /dev/null. */
+    }
     name = fullname = t = savestr(at);
 
     /* Strip off up to `sleading' leading slashes and null terminate.  */

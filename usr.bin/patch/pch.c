@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.6 1998/11/06 22:40:13 christos Exp $	*/
+/*	$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.6 1998/11/06 22:40:13 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -204,6 +204,7 @@ intuit_diff_type()
     bool no_filearg = (filearg[0] == Nullch);
 
     ok_to_create_file = FALSE;
+    old_file_is_dev_null = FALSE;
     Fseek(pfp, p_base, 0);
     p_input_line = p_bline - 1;
     for (;;) {
@@ -307,8 +308,10 @@ intuit_diff_type()
     if (no_filearg) {
 	if (indtmp != Nullch)
 	    indname = fetchname(indtmp, strippath, ok_to_create_file);
-	if (oldtmp != Nullch)
+	if (oldtmp != Nullch) {
 	    oldname = fetchname(oldtmp, strippath, ok_to_create_file);
+	    old_file_is_dev_null = filename_is_dev_null;
+	}
 	if (newtmp != Nullch)
 	    newname = fetchname(newtmp, strippath, ok_to_create_file);
 	if (oldname && newname) {
@@ -333,8 +336,10 @@ intuit_diff_type()
     else if (indtmp != Nullch)
 	bestguess = fetchname(indtmp, strippath, TRUE);
     else {
-	if (oldtmp != Nullch)
+        if (oldtmp != Nullch) {
 	    oldname = fetchname(oldtmp, strippath, TRUE);
+	    old_file_is_dev_null = filename_is_dev_null;
+	}
 	if (newtmp != Nullch)
 	    newname = fetchname(newtmp, strippath, TRUE);
 	if (oldname && newname) {
