@@ -582,6 +582,22 @@ and the bottom line will disappear.
 The current line will become blank,
 and the current \*y will remain unchanged.
 .Ds
+.Fn is_linetouched "WINDOW *win" "int line"
+.De
+Returns TRUE if 
+.Vn line
+in the window
+.Vn win
+has been modified since the last call to
+.Fn wrefresh .
+.Ds
+.Fn is_wintouched "WINDOW *win" "int line"
+.De
+Returns TRUE if the window
+.Vn win
+has been modified since the last call to
+.Fn wrefresh .
+.Ds
 .Fn isendwin ""
 .De
 Returns TRUE if
@@ -1168,6 +1184,10 @@ or
 is guaranteed to function correctly.  The results of attempting more
 than one character of push back is undefined.
 .Ds
+.Fn untouchwin "WINDOW *win"
+.De
+Make the window appear to have not been updated even if it has been.
+.Ds
 .Fn vline "chtype ch" "int count"
 .De
 Draws a vertical line of character
@@ -1202,6 +1222,22 @@ characters of the string
 .Vn str
 are output to the current \*y position of the window specified by
 .Vn win.
+.Ds
+.Fn wtouchln "WINDOW *win" "int line" "int n" "int changed"
+.De
+If 
+.Vn changed
+is 1 then 
+.Vn n
+lines starting at
+.Vn line
+in the window are touched.  If
+.Vn changed
+is 0 then 
+.Vn n
+lines starting at
+.Vn line
+in the window are untouched.
 .sp 2
 .pp
 \fIThe following functions differ from the standard functions only in their

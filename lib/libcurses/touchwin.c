@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.12 2000/04/15 22:53:05 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.13 2000/04/26 12:29:47 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,12 +38,26 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.12 2000/04/15 22:53:05 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.13 2000/04/26 12:29:47 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
+
+/*
+ * is_linetouched --
+ *    Indicate if line has been touched or not.
+ */
+bool
+is_linetouched(WINDOW *win, int line)
+{
+	if (line > win->maxy)
+		return FALSE;
+	
+	return ((win->lines[line]->flags & (__ISDIRTY | __FORCEPAINT)) != 0);
+}
+	
 
 /*
  * Touch count lines starting at start.  This is the SUS v2 compliant
@@ -53,13 +67,25 @@ __RCSID("$NetBSD: touchwin.c,v 1.12 2000/04/15 22:53:05 jdc Exp $");
 int
 touchline(WINDOW *win, int start, int count)
 {
-	int y;
+	return wtouchln(win, start, count, 1);
+}
 
-	for (y = start; y < start + count; y++) {
-		__touchline(win, y, 0, (int) win->maxx - 1, 1);
+/*
+ * is_wintouched --
+ *      Check if the window has been touched.
+ */
+bool
+is_wintouched(WINDOW *win)
+{
+	int y, maxy;
+
+	maxy = win->maxy;
+	for (y = 0; y < maxy; y++) {
+		if (is_linetouched(win, y) == TRUE)
+			return TRUE;
 	}
 
-	return OK;
+	return FALSE;
 }
 
 /*
@@ -69,18 +95,46 @@ touchline(WINDOW *win, int start, int count)
 int
 touchwin(WINDOW *win)
 {
-	int     y, maxy;
-
 #ifdef DEBUG
 	__CTRACE("touchwin: (%0.2o)\n", win);
 #endif
-	maxy = win->maxy;
-	for (y = 0; y < maxy; y++)
-		__touchline(win, y, 0, (int) win->maxx - 1, 1);
-	return (OK);
+	return wtouchln(win, 0, win->maxy, 1);
 }
 
+/*
+ * untouchwin --
+ *     Make it look like the window has not been changed.
+ */
+int
+untouchwin(WINDOW *win)
+{
+	return wtouchln(win, 0, win->maxy, 0);
+}
 
+/*
+ * wtouchln --
+ *     If changed is 1 then touch n lines starting at line.  If changed
+ *     is 0 then mark the lines as unchanged.
+ */
+int
+wtouchln(WINDOW *win, int line, int n, int changed)
+{
+	int y;
+
+	for (y = line; y < line + n; y++) {
+		if (changed == 1)
+			__touchline(win, y, 0, (int) win->maxx - 1, 0);
+		else {
+  			*win->lines[y]->firstchp = win->maxx + win->ch_off;
+  			*win->lines[y]->lastchp = win->ch_off;
+			win->lines[y]->flags &= ~(__FORCEPAINT | __ISDIRTY);
+		}
+	}
+
+	return OK;
+}
+
+		
 int
 __touchwin(WINDOW *win)
 {
