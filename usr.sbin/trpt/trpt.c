@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.18 2003/09/19 08:24:07 itojun Exp $	*/
+/*	$NetBSD: trpt.c,v 1.19 2005/02/06 05:00:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.18 2003/09/19 08:24:07 itojun Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.19 2005/02/06 05:00:46 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,19 +146,17 @@ static int aflag, follow, sflag, tflag;
 struct  tcp_debug tcp_debug[TCP_NDEBUG];
 int tcp_debx;
 
-int	main __P((int, char *[]));
-void	dotrace __P((caddr_t));
-void	tcp_trace __P((short, short, struct tcpcb *, struct tcpcb *,
-	    int, void *, int));
-int	numeric __P((const void *, const void *));
-void	usage __P((void));
+int	main(int, char *[]);
+void	dotrace(caddr_t);
+void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
+	    int, void *, int);
+int	numeric(const void *, const void *);
+void	usage(void);
 
 kvm_t	*kd;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, i, jflag, npcbs;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
@@ -287,8 +285,7 @@ main(argc, argv)
 }
 
 void
-dotrace(tcpcb)
-	caddr_t tcpcb;
+dotrace(caddr_t tcpcb)
 {
 	struct tcp_debug *td;
 	int prev_debx = tcp_debx;
@@ -375,12 +372,8 @@ dotrace(tcpcb)
  */
 /*ARGSUSED*/
 void
-tcp_trace(act, ostate, atp, tp, family, packet, req)
-	short act, ostate;
-	struct tcpcb *atp, *tp;
-	int family;
-	void *packet;
-	int req;
+tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
+    int family, void *packet, int req)
 {
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
@@ -472,7 +465,7 @@ tcp_trace(act, ostate, atp, tp, family, packet, req)
 			printf("(win=%x)", win);
 		flags = th->th_flags;
 		if (flags) {
-			register char *cp = "<";
+			char *cp = "<";
 #define	pf(flag, string) { \
 	if (th->th_flags&flag) { \
 		(void)printf("%s%s", cp, string); \
@@ -510,8 +503,8 @@ skipact:
 	}
 	/* print out timers? */
 	if (tflag) {
-		register char *cp = "\t";
-		register int i;
+		char *cp = "\t";
+		int i;
 		int hardticks;
 
 		if (kvm_read(kd, nl[N_HARDCLOCK_TICKS].n_value,
@@ -533,8 +526,7 @@ skipact:
 }
 
 int
-numeric(v1, v2)
-	const void *v1, *v2;
+numeric(const void *v1, const void *v2)
 {
 	const caddr_t *c1 = v1;
 	const caddr_t *c2 = v2;
@@ -551,7 +543,7 @@ numeric(v1, v2)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr, "usage: %s [-afjst] [-p hex-address]"
