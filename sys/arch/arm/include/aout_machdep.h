@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.2 2002/12/10 17:14:08 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.3 2005/02/04 19:07:26 joff Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -52,8 +52,12 @@ struct relocation_info_arm6 {
 };
 
 #define relocation_info relocation_info_arm6
-                                                                                                                                                                                       
+
 /* No special executable format */
-#define	cpu_exec_aout_makecmds(a, b)	ENOEXEC
+static __inline int
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *e)
+{
+	return ENOEXEC;
+}
 
 #endif	/* _ARM32_AOUT_MACHDEP_H_ */
