@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.5 1997/10/18 12:05:22 lukem Exp $
+.\" $NetBSD: audioctl.1,v 1.6 1998/04/27 16:48:59 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -90,8 +90,12 @@ or
 .Sh FILES
 .Bl -tag -width /dev/audioctl
 .It Pa /dev/audioctl
-audio device
+audio control device
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIOCTLUNIT
+.It Pa AUDIOCTLUNIT
+the audio control device to use.
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
 .Xr audio 4 ,
