@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.231 2004/05/29 09:07:41 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.232 2004/05/29 14:25:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3180,4 +3180,58 @@ sys/lkm/vfs/smbfs/lkminit_vfs.c			1.3
 	structs defined in other header files.  Gcc 2.95 on vax doesn't like
 	this. Add appropriate header files to fix vax compile failures.
 	[mhitch, ticket #394]
+
+usr.bin/vi/build/Makefile			1.25
+
+	-I. is part of CPPFLAGS, not CFLAGS. Make it so, allows to lint.
+	[aymeric, ticket #395]
+
+sys/dev/ata/ata_wdc.c				1.54
+sys/dev/ic/wdc.c				1.173
+sys/dev/scsipi/atapi_wdc.c			1.70
+
+	Add a delay(10) after re-enabling interrupts in the control register.
+	Some controllers/drives (e.g. SataLink 3114 with WD Raptor) require
+	it. Should fix kern/23808 by Chris Gilbert, patch suplied by
+	Chris Gilbert on tech-kern, extended to all places enabling
+	interrupts by me.
+	[bouyer, ticket #396]
+
+sys/dev/ic/wdc.c				1.174-1.175
+
+	In wdcprobe1(), protect the register writability test with splbio().
+	What we do here seems to trigger interrupts on some pcmcia adapters,
+	which cause the kernel to hang.	Add some WDCDEBUG_PRINT((),
+	DEBUG_PROBE). Avoid touching registers of nonexistent drives, once we
+	know which drive is or is not here.
+	This makes the "IBM PCMCIA Portable CD-ROM Drive" (external CD drive
+	with PCMCIA adapter) work.
+	Add a delay(5000) between the ATAPI_SOFT_RESET and the channel reset.
+	Some ATAPI device never get out of busy if touched too fast after a
+	reset. Delay value from atapi_wdc.c; fix problem reported by
+	Nicolas Joly on current-users.
+	[bouyer, ticket #397]
+
+sys/dev/ata/wd.c				1.276
+
+	Add support for the DIOCCACHESYNC ioctl.
+	[bouyer, ticket #398]
+
+sys/dev/scsipi/sd.c				1.217
+
+	If READ_FORMAT_CAPACITIES fails with "Medium Format Corrupted"
+	ASC/ASQ error, handle it as if the drive was not formatted, so that
+	"scsictl sdx format" can open the raw device.
+	[bouyer, ticket #399]
+
+sys/dev/pci/eso.c				1.34
+sys/dev/pci/esoreg.h				1.6
+sys/dev/pci/esovar.h				1.5
+
+	Fix a shift-by-one-bit glitch in the MONO_OUT mixer register's
+	definition; from Stephen Ma in PR kern/18342.
+	General mixer initialization improvements around the MONO_IN/MONO_OUT/
+	PreAmp register, including a new MONO_IN mixer stage bypass mixer
+	control; inspired by (and fixing) PR kern/18342 from Stephen Ma.
+	[kleink, ticket #400]
 
