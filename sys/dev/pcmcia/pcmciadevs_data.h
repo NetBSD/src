@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.203 2004/08/05 21:53:26 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.204 2004/08/06 19:07:27 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.202 2004/08/05 21:53:04 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.203 2004/08/06 19:07:13 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -645,11 +645,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "MACNICA ME1 for JEIDA",	}
 	,
 	{
-	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
-	    PCMCIA_CIS_MEGAHERTZ_XJEM3336,
+	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_EM3336,
+	    PCMCIA_CIS_MEGAHERTZ_EM3336,
 	    0,
 	    "Megahertz Corporation",
-	    "Megahertz X-JACK Ethernet Modem",	}
+	    "Megahertz Ethernet+Modem 33.6k",	}
 	,
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
@@ -673,11 +673,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Megahertz X-JACK 56kbps Modem",	}
 	,
 	{
-	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJEM1144,
-	    PCMCIA_CIS_MEGAHERTZ2_XJEM1144,
+	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,
+	    PCMCIA_CIS_MEGAHERTZ2_EM1144,
 	    0,
 	    "Megahertz Corporation",
-	    "Megahertz X-JACK",	}
+	    "Megahertz Ethernet+Modem 14.4k",	}
 	,
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
