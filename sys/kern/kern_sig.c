@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.135 2003/02/15 20:54:39 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.136 2003/02/17 23:45:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.135 2003/02/15 20:54:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.136 2003/02/17 23:45:00 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1574,6 +1574,7 @@ void
 sigexit(struct lwp *l, int signum)
 {
 	struct proc	*p;
+	struct lwp	*l2;
 	int		error, exitsig;
 
 	p = l->l_proc;
@@ -1582,13 +1583,16 @@ sigexit(struct lwp *l, int signum)
 	 * Don't permit coredump() or exit1() multiple times 
 	 * in the same process.
 	 */
-	if (p->p_flag & P_WEXIT)
+	if (p->p_flag & P_WEXIT) {
+		KERNEL_PROC_UNLOCK(l);
 		(*p->p_userret)(l, p->p_userret_arg);
+	}
 	p->p_flag |= P_WEXIT;
 	/* We don't want to switch away from exiting. */
 	/* XXX multiprocessor: stop LWPs on other processors. */
-	if (l->l_flag & L_SA) {
-		l->l_flag &= ~L_SA;
+	if (p->p_flag & P_SA) {
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+		    l2->l_flag &= ~L_SA;
 		p->p_flag &= ~P_SA;
 	}
 
