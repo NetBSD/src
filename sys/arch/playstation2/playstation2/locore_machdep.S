@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.4 2004/07/06 13:09:18 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.5 2004/07/09 10:04:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -156,7 +156,6 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	/* 
 	 * 2. Cache flush
 	 */
-	li	t1, CACHE_R5900_SIZE_I
 	li	t2, CACHE_R5900_SIZE_D
 
 	/*
@@ -187,6 +186,7 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	/*
 	 * Flush the instruction cache.
 	 */
+	li	t1, CACHE_R5900_SIZE_I
 	li	t0, MIPS_KSEG0_START
 	srl	t1, 1			# Two way set assoc
 	addu	t1, t0, t1		# End address
