@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.28.2.1 2000/07/14 14:37:41 onoe Exp $
+#	$NetBSD: files.pcmcia,v 1.28.2.2 2000/12/12 21:27:48 he Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -102,3 +102,7 @@ file	dev/pcmcia/if_xi.c			xi_pcmcia
 # IBM Tropic-based Token Ring cards
 attach	tr at pcmcia with tr_pcmcia
 file	dev/pcmcia/if_tr_pcmcia.c		tr_pcmcia
+
+# Aironet PC4500/PC4800
+attach	an at pcmcia with an_pcmcia
+file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
