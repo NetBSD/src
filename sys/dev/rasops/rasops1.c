@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.8 1999/08/20 06:46:44 mouse Exp $ */
+/* 	$NetBSD: rasops1.c,v 1.9 1999/08/31 10:11:52 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.8 1999/08/20 06:46:44 mouse Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.9 1999/08/31 10:11:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,8 +121,8 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	col = col & 31;
 	rs = ri->ri_stride;
 	
-	bg = (attr & 0x000f0000) ? 0xffffffff : 0;
-	fg = (attr & 0x0f000000) ? 0xffffffff : 0;
+	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
@@ -264,8 +264,8 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
 	
-	bg = (attr & 0x000f0000) ? 0xff : 0;
-	fg = (attr & 0x0f000000) ? 0xff : 0;
+	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
 	
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
@@ -330,9 +330,9 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
 	
-	bg = (attr & 0x000f0000) ? 0xffff : 0;
-	fg = (attr & 0x0f000000) ? 0xffff : 0;
-	
+	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+	fg = (attr & 0x0f000000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
+
 	/* If fg and bg match this becomes a space character */
 	if (fg == bg || uc == ' ') {
 		while (height--) {
