@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/16 13:14:57 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 00:07:47 tv Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
 .if make(distribution)
@@ -10,6 +10,7 @@ FILESNAME_${F}=	${F:S/dot//}
 
 distribution: filesinstall
 .endif
-MKOBJ=	no
+
+NOOBJ=		# defined
 
 .include <bsd.prog.mk>
