@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.15 2003/07/15 02:43:27 lukem Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.15.4.1 2005/01/24 21:38:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.15 2003/07/15 02:43:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.15.4.1 2005/01/24 21:38:22 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -281,7 +281,8 @@ mcioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mcreset(sc);
 			err = 0;
 		}
 		break;
