@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.4 1998/02/06 06:16:23 perry Exp $
+.\"     $NetBSD: panic.9,v 1.5 1998/09/03 01:05:03 jeremy Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
 .\" All rights reserved.
@@ -45,24 +45,30 @@ The
 .Fn panic
 function terminates the
 .Nx
-system.  The message
+system.
+The message
 .Fa fmt
 is a
 .Xr printf 3
-style format string.  The message is printed to the console and the location
-.Fa panicstr 
-is set to the address of the message text for retrival from the OS
-core dump.
+style format string which is printed to the console and saved in the
+variable
+.Va panicstr 
+for later retrival via core dump inspection.
 .Pp
-If the kernel debugger is installed control is passed to it, otherwise
-an attempt to save a core dump of the OS to a configured dump device
-is made.
+If a kernel debugger is installed, control is passed to it after the
+message is printed.
+Otherwise an attempt is made to save an image of system memory on the
+dump device that was configured at the time the kernel was compiled.
 .Pp
-If
+If during the process of handling the panic,
 .Fn panic
-is called twice (from the disk sync routines, for example) the system is
-rebooted without syncing the disks.
+is called again
+.Pq "from the filesystem synchronization routines, for example" ,
+the system is rebooted immediately without synchronizing any filesystems.
 .Sh RETURN VALUES
 The
 .Fn panic
 function does not return.
+.Sh SEE ALSO
+.Xr options 4 ,
+.Xr savecore 8 .
