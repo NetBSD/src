@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.98 2003/09/21 19:29:10 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.99 2003/09/25 22:00:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.98 2003/09/21 19:29:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.99 2003/09/25 22:00:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -122,13 +122,13 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
 static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
-    sigset_t *, struct sigaltstack *, struct linux_ucontext *));
+    const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
 static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
-    sigset_t *, struct linux_sigcontext *));
+    const sigset_t *, struct linux_sigcontext *));
 static int linux_restore_sigcontext __P((struct lwp *,
     struct linux_sigcontext *, register_t *));
-static void linux_rt_sendsig __P((ksiginfo_t *, sigset_t *));
-static void linux_old_sendsig __P((ksiginfo_t *, sigset_t *));
+static void linux_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
+static void linux_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -193,7 +193,7 @@ linux_setregs(l, epp, stack)
  */
 
 void
-linux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	if (SIGACTION(curproc, ksi->ksi_signo).sa_flags & SA_SIGINFO)
 		linux_rt_sendsig(ksi, mask);
@@ -206,7 +206,7 @@ static void
 linux_save_ucontext(l, tf, mask, sas, uc)
 	struct lwp *l;
 	struct trapframe *tf;
-	sigset_t *mask;
+	const sigset_t *mask;
 	struct sigaltstack *sas;
 	struct linux_ucontext *uc;
 {
@@ -222,7 +222,7 @@ static void
 linux_save_sigcontext(l, tf, mask, sc)
 	struct lwp *l;
 	struct trapframe *tf;
-	sigset_t *mask;
+	const sigset_t *mask;
 	struct linux_sigcontext *sc;
 {
 	/* Save register context. */
@@ -267,7 +267,7 @@ linux_save_sigcontext(l, tf, mask, sc)
 }
 
 static void
-linux_rt_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -369,7 +369,7 @@ linux_rt_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 }
 
 static void
-linux_old_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -401,6 +401,7 @@ linux_old_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 
+/*###404 [cc] warning: passing arg 3 of `linux_save_sigcontext' discards qualifiers from pointer target type%%%*/
 	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {

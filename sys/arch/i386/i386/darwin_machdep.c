@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.4 2003/09/06 22:08:14 christos Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.5 2003/09/25 22:01:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.4 2003/09/06 22:08:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.5 2003/09/25 22:01:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.4 2003/09/06 22:08:14 christos 
 #include <machine/darwin_machdep.h>
 
 void
-darwin_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	printf("darwin_sendsig: sig = %d\n", ksi->ksi_signo);
 	return;

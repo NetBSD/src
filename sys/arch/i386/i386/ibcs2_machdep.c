@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.25 2003/09/10 16:46:15 christos Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.26 2003/09/25 22:01:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.25 2003/09/10 16:46:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.26 2003/09/25 22:01:31 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -100,7 +100,7 @@ ibcs2_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-ibcs2_sendsig(ksiginfo_t *ksi, sigset_t *mask)
+ibcs2_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
 	u_long code = ksi->ksi_trap;
