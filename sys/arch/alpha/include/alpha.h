@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.5 1999/07/11 22:39:21 ross Exp $ */
+/* $NetBSD: alpha.h,v 1.6 1999/09/17 19:59:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@ struct mchkinfo {
 	 */
 };
 
-extern int cold;
 struct mchkinfo *cpu_mchkinfo __P((void));
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */

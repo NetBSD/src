@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.39 1999/08/10 21:08:09 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.40 1999/09/17 20:07:19 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -73,7 +73,6 @@ struct clockframe {
 };
 
 extern struct device *booted_from;
-extern int cold;
 extern int mastercpu;
 extern int bootdev;
 

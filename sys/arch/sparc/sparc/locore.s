@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 1999/05/05 15:32:33 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 1999/09/17 20:04:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6157,9 +6157,6 @@ _C_LABEL(esym):
 	.globl	_C_LABEL(bootinfo)
 _C_LABEL(bootinfo):
 	.word	0
-	.globl	_C_LABEL(cold)
-_C_LABEL(cold):
-	.word	1		! cold start flag
 
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):

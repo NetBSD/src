@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1999/06/28 08:20:46 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1999/09/17 20:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,7 @@
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -111,8 +112,6 @@ struct machvec machine_interface = {
 	fake_clock_return,
 	fake_irq_establish,
 };
-
-int cold = 1;
 
 void
 initppc(startkernel, endkernel, args)

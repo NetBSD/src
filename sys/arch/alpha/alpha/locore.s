@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.64 1999/07/11 22:35:28 ross Exp $ */
+/* $NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.64 1999/07/11 22:35:28 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -307,11 +307,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 
 /**************************************************************************/
 
-	.data
-EXPORT(cold)
-	.long 1			/* cold start flag (.long -> _4_ bytes) */
 	.text
-
 .stabs	__FILE__,132,0,0,backtolocore1	/* done with includes */
 .loc	1 __LINE__
 backtolocore1:

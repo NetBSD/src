@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1999/07/18 23:55:57 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1999/09/17 20:07:15 thorpej Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -10011,10 +10011,6 @@ _C_LABEL(ssym):
 _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
 	
-	.globl	_C_LABEL(cold)
-_C_LABEL(cold):
-	.word	1		! cold start flag
-
 /* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
 _C_LABEL(intrnames):

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1999/08/01 21:34:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1999/09/17 20:04:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1707,9 +1707,6 @@ GLOBAL(bootaddr)
 	.long	0
 GLOBAL(boothowto)
 	.long	0
-
-GLOBAL(cold)
-	.long	1		| cold start flag
 
 GLOBAL(want_resched)
 	.long	0

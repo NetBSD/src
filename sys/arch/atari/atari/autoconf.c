@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1999/09/15 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -47,7 +47,6 @@ void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
 
-extern int cold;	/* 1 if still booting (locore.s) */
 int atari_realconfig;
 #include <sys/kernel.h>
 
@@ -63,8 +62,6 @@ cpu_configure()
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
-
-	cold = 0;
 }
 
 void
