@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.4 1997/09/08 03:18:19 mikel Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.5 1997/10/07 14:42:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -50,8 +50,6 @@
 #include "ypdef.h"
 
 extern	char *__progname;		/* from crt0.o */
-extern	char *optarg;
-extern	int optind;
 
 int	main __P((int, char *[]));
 void	usage __P((void));
@@ -205,7 +203,7 @@ list_database(database)
 
 	db = ypdb_open(database, O_RDONLY, 0444);
 	if (db == NULL)
-		errx(1, "can't open database `%s'", database);
+		err(1, "can't open database `%s'", database);
 
 	key = ypdb_firstkey(db);
 
@@ -252,7 +250,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	}
 
 	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
-		errx(1, "%s: file name too long\n", database);
+		errx(1, "file name `%s' too long\n", database);
 
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
 
@@ -266,7 +264,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 
 	if (strlen(database) + strlen(mapname) +
 	    strlen(YPDB_SUFFIX) > MAXPATHLEN)
-		errx(1, "%s: directory name too long", database);
+		errx(1, "directory name `%s' too long", database);
 
 	snprintf(db_tempname, sizeof(db_tempname), "%s%s",
 	    database, mapname);
@@ -276,7 +274,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 
 	new_db = ypdb_open(db_tempname, O_RDWR | O_CREAT | O_EXCL, 0644);
 	if (new_db == NULL)
-		errx(1, "can't create temp database `%s'", db_tempname);
+		err(1, "can't create temp database `%s'", db_tempname);
 
 	while (read_line(data_file, data_line, sizeof(data_line))) {
 		line_no++;
