@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.247 2001/07/12 23:35:42 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.248 2001/07/27 00:25:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2001/07/12 23:35:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2001/07/27 00:25:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_wrfen(0);
 	ALPHA_TBIA();
 	alpha_pal_imb();
+
+	/* Initialize the SCB. */
+	scb_init();
 
 	cpu_id = cpu_number();
 
