@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.9 1997/11/12 00:05:00 mrg Exp $	*/
+/*	$NetBSD: whatis.c,v 1.10 1998/02/03 04:24:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.9 1997/11/12 00:05:00 mrg Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.10 1998/02/03 04:24:17 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: whatis.c,v 1.9 1997/11/12 00:05:00 mrg Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "pathnames.h"
