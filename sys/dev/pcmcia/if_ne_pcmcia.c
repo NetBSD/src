@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.76 2001/06/13 13:41:01 toddpw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.77 2001/06/29 14:56:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -160,6 +160,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
       PCMCIA_CIS_EPSON_EEN10B,
       0, 0xff0, { 0x00, 0x00, 0x48 } },
+
+    { PCMCIA_STR_CNET_NE2000,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_CNET_NE2000,
+      0, -1, { 0x00, 0x80, 0xad } },
 
     /*
      * You have to add new entries which contains
