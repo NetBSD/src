@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.25 2002/04/26 15:50:42 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2002/05/02 18:02:47 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 # Whether or not to regenerate tables of contents
 MKTOCS?=yes
@@ -92,8 +92,8 @@ echosrcs! ${SRCS}
 echomore!
 	@echo ${.OBJDIR}/${TARG}.more
 
-release: check_RELEASEDIR
-	${RELINSTALL} ${TARGS} ${RELEASEDIR}/.
+release: check_RELEASEDIR .WAIT ${TARGS}
+	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/.
 
 .PATH: ${.CURDIR}/../common
 

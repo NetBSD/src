@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/29 05:02:57 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.15 2002/05/02 18:02:51 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -6,7 +6,7 @@ all:
 	@false
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \

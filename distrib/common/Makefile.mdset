@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.10 2002/04/26 15:50:27 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.11 2002/05/02 18:02:31 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -19,7 +19,7 @@
 #			the target name.
 #
 # Optional variables:
-#	MDSETDIR			Where to install release kernels.
+#	MDSET_RELEASEDIR		Where to install release kernels.
 #
 #	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
@@ -89,8 +89,8 @@ CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${KERNELS} ${KERNELSYMS}
 
 realall: ${KERNELDEPS}
 
-.if defined(MDSETDIR)
+.if defined(MDSET_RELEASEDIR)
 release: check_RELEASEDIR .WAIT ${KERNELDEPS}
-	-mkdir -p ${RELEASEDIR}/${MDSETDIR}
-	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/${MDSETDIR}
+	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
+	    ${RELEASEDIR}/${MDSET_RELEASEDIR}
 .endif

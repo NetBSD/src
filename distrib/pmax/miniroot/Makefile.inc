@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2002/04/23 19:53:12 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/05/02 18:02:48 lukem Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
@@ -15,4 +15,4 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.rcons \
 		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
 		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
 
-IMAGE_MD_POST=	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
+IMAGEPOSTBUILD=	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
