@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 2004/03/26 14:11:01 drochner Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 2004/06/15 16:29:01 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2004/03/26 14:11:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2004/06/15 16:29:01 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ u_int fpu_csw;
 paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
-void hppa_fpu_swap(struct user *, struct user *);
+void hppa_fpu_swap(struct pcb *, struct pcb *);
 
 /* XXX see trap.c */
 void hppa_trapsignal_hack(struct lwp *, int, u_long);
@@ -231,10 +231,13 @@ hppa_fpu_flush(struct lwp *l)
 	 * state is currently in it, swap it out.
 	 */
 
-	if (fpu_present &&
-	    fpu_cur_uspace != 0 &&
-	    fpu_cur_uspace == tf->tf_cr30)
-		hppa_fpu_swap(l->l_addr, NULL);
+	if (!fpu_present || fpu_cur_uspace == 0 ||
+	    fpu_cur_uspace != tf->tf_cr30) {
+		return;
+	}
+
+	hppa_fpu_swap(&l->l_addr->u_pcb, NULL);
+	fpu_cur_uspace = 0;
 }
 
 #ifdef FPEMUL
@@ -252,7 +255,8 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	u_int offset, index, im5;
 	void *fpreg;
 	u_int r0 = 0;
-	
+	int error;
+
 	/*
 	 * Get the instruction that we're emulating,
 	 * and break it down.  Using HP bit notation,
@@ -339,9 +343,12 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	KASSERT(offset == frame->tf_ior);
 
 	/* Perform the load or store. */
-	return (inst & OPCODE_STORE) ?
+	error = (inst & OPCODE_STORE) ?
 		copyout(fpreg, (void *) offset, 1 << log2size) :
 		copyin((const void *) offset, fpreg, 1 << log2size);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpreg,
+		sizeof(l->l_addr->u_pcb.pcb_fpregs));
+	return error;
 }
 
 /*
@@ -406,6 +413,8 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
 		break;
         }
 
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs,
+		sizeof(l->l_addr->u_pcb.pcb_fpregs));
 	if (exception)
 		hppa_trapsignal_hack(l, (exception & UNIMPLEMENTEDEXCEPTION) ?
 			SIGILL : SIGFPE, frame->tf_iioq_head);
