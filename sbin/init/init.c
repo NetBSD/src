@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.61 2003/08/07 10:04:25 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.62 2003/09/11 12:51:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.61 2003/08/07 10:04:25 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.62 2003/09/11 12:51:51 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,9 @@ __RCSID("$NetBSD: init.c,v 1.61 2003/08/07 10:04:25 agc Exp $");
 #endif
 
 #include "pathnames.h"
+
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
 
 /*
  * Sleep times; used to prevent thrashing.
@@ -180,10 +183,18 @@ DB *session_db;
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
+#define NINODE 896
+#define FSSIZE ((8192		/* boot area */				\
+	+ 2 * 8192		/* two copies of superblock */		\
+	+ 4096			/* cylinder group info */		\
+	+ NINODE * (128 + 18)	/* inode and directory entry */		\
+	+ mfile[0].len		/* size of MAKEDEV file */		\
+	+ 2 * 4096) / 512)	/* some slack */
+
 struct mappedfile {
 	const char *path;
-	void	*buf;
-	size_t	len;
+	char	*buf;
+	int	len;
 } mfile[] = {
 	{ "/dev/MAKEDEV",	NULL,	0 },
 	{ "/dev/MAKEDEV.local",	NULL,	0 }
@@ -1350,15 +1361,26 @@ mapfile(struct mappedfile *mf)
 	int fd;
 	struct stat st;
 
-	if ((fd = open(mf->path, O_RDONLY)) != -1) {
-		if (fstat(fd, &st) != -1 && (mf->buf = mmap(0,
-		    (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
-		    (off_t)0)) != MAP_FAILED)
-			mf->len = (size_t)st.st_size;
-		else
-			mf->len = 0;
-		(void)close(fd);
+	if (lstat(mf->path, &st) == -1)
+		return;
+
+	if ((st.st_mode & S_IFMT) == S_IFLNK) {
+		mf->buf = malloc(st.st_size + 1);
+		mf->buf[st.st_size] = 0;
+		if (readlink(mf->path, mf->buf, st.st_size) != st.st_size)
+			return;
+		mf->len = -1;
+		return;
 	}
+
+	if ((fd = open(mf->path, O_RDONLY)) == -1)
+		return;
+	mf->buf = mmap(0, (size_t)st.st_size, PROT_READ,
+			MAP_FILE|MAP_SHARED, fd, (off_t)0);
+	(void)close(fd);
+	if (mf->buf == MAP_FAILED)
+		return;
+	mf->len = st.st_size;
 }
 
 static void
@@ -1366,12 +1388,20 @@ writefile(struct mappedfile *mf)
 {
 	int fd;
 
-	if (mf->len && (fd = open(mf->path, O_WRONLY|O_CREAT|O_TRUNC,
-	    0755)) != -1) {
-		(void)write(fd, mf->buf, mf->len);
-		(void)munmap(mf->buf, mf->len);
-		(void)close(fd);
+	if (mf->len == -1) {
+		symlink(mf->buf, mf->path);
+		free(mf->buf);
+		return;
 	}
+
+	if (mf->len == 0)
+		return;
+	fd = open(mf->path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
+	if (fd == -1)
+		return;
+	(void)write(fd, mf->buf, mf->len);
+	(void)munmap(mf->buf, mf->len);
+	(void)close(fd);
 }
 
 static int
@@ -1383,6 +1413,7 @@ mfs_dev(void)
 	pid_t pid;
 	int status;
 	dev_t dev;
+	char *fs_size;
 #ifdef CPU_CONSDEV
 	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
 	size_t olen;
@@ -1401,9 +1432,11 @@ mfs_dev(void)
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
 	case 0:
-		(void)execl(INIT_MOUNT_MFS, "mount_mfs", "-i", "192",
-		    "-s", "768", "-b", "4096", "-f", "512", "swap", "/dev",
-		    NULL);
+		asprintf(&fs_size, "%d", FSSIZE);
+		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
+		    "-b", "4096", "-f", "512",
+		    "-s", fs_size, "-n", STR(NINODE),
+		    "swap", "/dev", NULL);
 		_exit(1);
 		/*NOTREACHED*/
 
@@ -1431,7 +1464,7 @@ mfs_dev(void)
 
 	(void)freopen(_PATH_CONSOLE, "a", stderr);
 
-	warnx("Creating mfs /dev");
+	warnx("Creating mfs /dev (%d blocks, %d inodes)", FSSIZE, NINODE);
 
 	/* Create a MAKEDEV script in the mfs /dev */
 	writefile(&mfile[0]);
@@ -1442,9 +1475,11 @@ mfs_dev(void)
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
 	case 0:
+		dup2(2, 1);	/* Give the script stdout */
 		if (chdir("/dev") == 0)
-			(void)execl(INIT_BSHELL, "sh", "./MAKEDEV", "init",
-			    NULL); 
+			(void)execl(INIT_BSHELL, "sh",
+			    mfile[0].len ? "./MAKEDEV" : "/etc/MAKEDEV",
+			    "init", NULL); 
 		_exit(1);
 
 	case -1:
