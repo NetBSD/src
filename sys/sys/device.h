@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 1994/06/29 06:43:49 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.5 1994/11/03 20:27:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,11 @@ struct cfdata {
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
 
+#ifndef CONFIG_INDIRECT
 typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
+#else
+typedef int (*cfmatch_t) __P((struct device *, struct device *, void *));
+#endif
 
 /*
  * `configuration' driver (what the machine-independent autoconf uses).
