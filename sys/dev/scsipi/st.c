@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.82 1997/10/13 00:48:02 explorer Exp $	*/
+/*	$NetBSD: st.c,v 1.83 1997/10/16 03:16:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -87,6 +87,9 @@
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
 #define CTLMODE		3
+
+#define	FALSE		0
+#define	TRUE		1
 
 /*
  * Maximum density code known.
