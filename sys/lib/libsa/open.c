@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.14 1997/01/22 00:38:11 cgd Exp $	*/
+/*	$NetBSD: open.c,v 1.15 1997/01/25 01:13:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -82,7 +82,7 @@ oopen(fname, mode)
 	int mode;
 {
 	register struct open_file *f;
-	register int fd, i, error;
+	register int fd, i, error, besterror;
 	char *file;
 
 	/* find a free file descriptor */
@@ -112,6 +112,7 @@ fnd:
 	}
 
 	/* pass file name to the different filesystem open routines */
+	besterror = ENOENT;
 	for (i = 0; i < nfsys; i++) {
 		/* convert mode (0,1,2) to FREAD, FWRITE. */
 		error = (file_system[i].open)(file, f);
@@ -119,9 +120,10 @@ fnd:
 			f->f_ops = &file_system[i];
 			return (fd);
 		}
+		if (error != EINVAL)
+			besterror = error;
 	}
-	if (!error)
-		error = ENOENT;
+	error = besterror;
 
 	if ((f->f_flags & F_NODEV) == 0)
 		f->f_dev->dv_close(f);
