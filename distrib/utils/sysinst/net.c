@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.58 2000/06/18 23:50:04 cyber Exp $	*/
+/*	$NetBSD: net.c,v 1.59 2000/07/02 15:07:52 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -639,7 +639,7 @@ confirm:
 #ifdef INET6
 	if (v6config && network_up) {
 		network_up = !run_prog(0, 1, NULL, 
-		    "/sbin/ping6 -v -c 3 -n -I %s ff02::9", net_dev);
+		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
 		if (strcmp(net_namesvr6, "") != 0)
 			network_up = !run_prog(0, 1, NULL, 
