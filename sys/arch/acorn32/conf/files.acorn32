@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.7 2001/12/16 00:24:00 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.8 2002/02/11 21:48:48 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -11,10 +11,6 @@ defflag	IRQSTATS
 
 # X server support in console drivers
 defflag	XSERVER
-
-# Bootloader options (COMPAT... to be dropped ASAP)
-# (!)
-defflag	COMPAT_OLD_BOOTLOADER
 
 #
 # predefine some variables ... not that we have one but the arm framework
