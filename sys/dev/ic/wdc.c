@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.61 1999/03/07 14:02:54 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.62 1999/03/10 13:11:43 bouyer Exp $ */
 
 
 /*
@@ -258,17 +258,25 @@ wdcprobe(chp)
 		if ((sc == 0x00 || sc == 0x01) && sn == 0x01 &&
 		    cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
+		} else if (sc == 0x01 && sn == 0x01 &&
+		    cl == 0x00 && ch == 0x00) {
+			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
 		}
 	}
+	/*
+	 * Maybe there's an old device, try to detect it if we didn't
+	 * find a ATA or ATAPI device.
+	 */
+	if ((chp->ch_drive[0].drive_flags & DRIVE) != 0 ||
+	    (chp->ch_drive[1].drive_flags & DRIVE) != 0)
+		return (ret_value);	
 	for (drive = 0; drive < 2; drive++) {
-		if ((ret_value & (0x01 << drive)) == 0 ||
-		    (chp->ch_drive[drive].drive_flags & DRIVE_ATAPI) != 0)
+		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
 		delay(1);
 		/*
-		 * Maybe it's an old device, so don't rely on ATA sig.
 		 * Test registers writability (Error register not writable,
 		 * but cyllo is), then try an ATA command.
 		 */
@@ -293,12 +301,12 @@ wdcprobe(chp)
 			continue;
 		}
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command,
-		    WDCC_DIAGNOSE);
+		    WDCC_RECAL);
 		if (wait_for_ready(chp, 10000) == 0) {
 			chp->ch_drive[drive].drive_flags |=
-			    DRIVE_ATA;
+			    DRIVE_OLD;
 		} else {
-			WDCDEBUG_PRINT(("%s:%d:%d: WDCC_DIAGNOSE failed\n",
+			WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 			    chp->channel, drive), DEBUG_PROBE);
 			ret_value &= ~(0x01 << drive);
@@ -313,17 +321,8 @@ wdcattach(chp)
 {
 	int channel_flags, ctrl_flags, i, error;
 	struct ata_atapi_attach aa_link;
-
-	LIST_INIT(&xfer_free_list);
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-		/* If controller can't do 16bit flag the drives as 32bit */
-		if ((chp->wdc->cap &
-		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
-		    WDC_CAPABILITY_DATA32)
-			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
-	}
+	struct ataparams params;
+	static int inited = 0;
 
 	if ((error = wdc_addref(chp)) != 0) {
 		printf("%s: unable to enable controller\n",
@@ -337,7 +336,40 @@ wdcattach(chp)
 		return;
 	}
 
+	/* init list only once */
+	if (inited == 0) {
+		LIST_INIT(&xfer_free_list);
+		inited++;
+	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
+
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+		/* If controller can't do 16bit flag the drives as 32bit */
+		if ((chp->wdc->cap &
+		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
+		    WDC_CAPABILITY_DATA32)
+			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+
+		/* Issue a IDENTIFY command, to try to detect slave ghost */
+		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) !=
+		    CMD_OK) {
+			chp->ch_drive[i].drive_flags &=
+			    ~(DRIVE_ATA | DRIVE_ATAPI);
+		}
+		/*
+		 * XXX some drives (e.g. some revisions of ZIP) are both ATA
+		 * and ATAPI
+		 */
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATA) {
+			if ((params.atap_config & WDC_CFG_ATAPI_MASK) ==
+			    WDC_CFG_ATAPI) {
+				chp->ch_drive[i].drive_flags &= ~DRIVE_ATA;
+				chp->ch_drive[i].drive_flags |= DRIVE_ATAPI;
+			    }
+		}
+	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
 	channel_flags = (ctrl_flags >> (NBBY * chp->channel)) & 0xff;
 
