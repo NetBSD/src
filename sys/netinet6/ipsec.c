@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.49 2002/06/08 20:06:45 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.50 2002/06/09 14:43:13 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.49 2002/06/08 20:06:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.50 2002/06/09 14:43:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -437,7 +437,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 			*error = 0;
 			ipsec_fillpcbcache(pcbsp, m, &ip4_def_policy, dir);
 			return &ip4_def_policy;
-			
+
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
@@ -664,7 +664,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 			*error = 0;
 			ipsec_fillpcbcache(pcbsp, m, &ip6_def_policy, dir);
 			return &ip6_def_policy;
-			
+
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
@@ -1765,7 +1765,7 @@ ipsec_in_reject(sp, m)
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
 		return 0;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		break;
 
@@ -1951,7 +1951,7 @@ ipsec_hdrsiz(sp)
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
 		return 0;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		break;
 

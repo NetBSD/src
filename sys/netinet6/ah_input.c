@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.33 2002/05/29 09:05:18 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.34 2002/06/09 14:43:10 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.33 2002/05/29 09:05:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.34 2002/06/09 14:43:10 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -273,7 +273,7 @@ ah4_input(m, va_alist)
 	 * alright, it seems sane.  now we are going to check the
 	 * cryptographic checksum.
 	 */
-	
+
     {
 #if 1
 	/*
@@ -760,7 +760,7 @@ ah6_input(mp, offp, proto)
 	 * alright, it seems sane.  now we are going to check the
 	 * cryptographic checksum.
 	 */
-	
+
 	if (ah6_calccksum(m, (caddr_t)cksum, siz1, algo, sav)) {
 		ipsec6stat.in_inval++;
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.47 2002/06/07 22:08:41 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.48 2002/06/09 14:43:14 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.47 2002/06/07 22:08:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.48 2002/06/09 14:43:14 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -513,7 +513,7 @@ rip6_output(m, va_alist)
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 #endif
-	
+
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
 	    in6p->in6p_moptions, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
@@ -641,7 +641,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
-		
+
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
 		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
