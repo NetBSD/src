@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.24 2002/05/21 12:51:27 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.25 2002/06/14 19:05:19 wiz Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -28,26 +28,22 @@
  */
 
 #include "file.h"
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
-#ifdef __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <time.h>
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.35 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.24 2002/05/21 12:51:27 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.25 2002/06/14 19:05:19 wiz Exp $");
 #endif
 #endif  /* lint */
 
@@ -55,8 +51,7 @@ __RCSID("$NetBSD: print.c,v 1.24 2002/05/21 12:51:27 christos Exp $");
 
 #ifndef COMPILE_ONLY
 void
-mdump(m)
-	struct magic *m;
+mdump(struct magic *m)
 {
 	static const char *typ[] = { "invalid", "byte", "short", "invalid",
 				     "long", "string", "date", "beshort",
@@ -145,9 +140,7 @@ mdump(m)
  * ckfprintf - fprintf, but with error checking
  */
 void
-ckfputs(str, fil) 	
-	const char *str;
-	FILE *fil;
+ckfputs(const char *str, FILE *fil)
 {
 	if (fputs(str,fil) == EOF)
 		error("write failed.\n");
@@ -155,23 +148,11 @@ ckfputs(str, fil)
 
 /*VARARGS*/
 void
-#ifdef __STDC__
 ckfprintf(FILE *f, const char *fmt, ...)
-#else
-ckfprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list va;
-#ifdef __STDC__
+
 	va_start(va, fmt);
-#else
-	FILE *f;
-	const char *fmt;
-	va_start(va);
-	f = va_arg(va, FILE *);
-	fmt = va_arg(va, const char *);
-#endif
 	(void) vfprintf(f, fmt, va);
 	if (ferror(f))
 		error("write failed.\n");
@@ -183,21 +164,11 @@ ckfprintf(va_alist)
  */
 /*VARARGS*/
 void
-#ifdef __STDC__
 error(const char *f, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
 {
 	va_list va;
-#ifdef __STDC__
+
 	va_start(va, f);
-#else
-	const char *f;
-	va_start(va);
-	f = va_arg(va, const char *);
-#endif
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
@@ -210,21 +181,11 @@ error(va_alist)
 
 /*VARARGS*/
 void
-#ifdef __STDC__
 magwarn(const char *f, ...)
-#else
-magwarn(va_alist)
-	va_dcl
-#endif
 {
 	va_list va;
-#ifdef __STDC__
+
 	va_start(va, f);
-#else
-	const char *f;
-	va_start(va);
-	f = va_arg(va, const char *);
-#endif
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
@@ -239,9 +200,7 @@ magwarn(va_alist)
 
 #ifndef COMPILE_ONLY
 char *
-fmttime(v, local)
-	long v;
-	int local;
+fmttime(long int v, int local)
 {
 	char *pp, *rt;
 	time_t t = (time_t)v;
