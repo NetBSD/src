@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.8 1998/07/21 00:40:17 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.9 1998/07/21 00:53:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -126,7 +126,5 @@ struct cs_softc {
 /* Miscellaneous definitions */
 
 #define MAXLOOP            0x8888
-#define RXBUFCOUNT         16
-#define MC_LOANED          5
 
 #endif /* __IF_CSVAR_H__ */
