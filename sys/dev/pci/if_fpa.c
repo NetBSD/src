@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.33 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.34 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -60,10 +60,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
 #endif
 
 #if defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.52 2001/05/27 21:00:33 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.53 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
  * Ethernet controller family driver.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "opt_tlp.h"
 
@@ -67,16 +65,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

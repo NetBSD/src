@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.18 2001/02/12 18:49:05 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.19 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
