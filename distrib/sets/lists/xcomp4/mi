@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1 2002/02/15 22:29:23 tron Exp $
+# $NetBSD: mi,v 1.2 2002/09/04 22:56:21 tron Exp $
 ./usr/X11R6/bin/bdftruncate.pl
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
@@ -164,6 +164,8 @@
 ./usr/X11R6/lib/X11/config/cygwin.rules
 ./usr/X11R6/lib/X11/config/cygwin.tmpl
 ./usr/X11R6/lib/X11/config/darwin.cf
+./usr/X11R6/lib/X11/config/darwinLib.rules
+./usr/X11R6/lib/X11/config/darwinLib.tmpl
 ./usr/X11R6/lib/X11/config/version.def
 ./usr/X11R6/lib/libGL.a
 ./usr/X11R6/lib/libGLU.a
