@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.h,v 1.5 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -44,7 +44,7 @@ void
 rf_CreateDegradedReadDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-    RF_RedFuncs_t * recFunc);
+    const RF_RedFuncs_t * recFunc);
 void 
 rf_CreateRaidCDegradedReadDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
