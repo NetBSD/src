@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1994/11/22 01:21:11 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 1994/12/13 15:31:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -126,9 +126,6 @@ readdisklabel(dev, strat, lp, osdep)
 					    dp->dp_start;
 					lp->d_ntracks = dp->dp_ehd + 1;
 					lp->d_nsectors = DPSECT(dp->dp_esect);
-					lp->d_subtype |=
-					    ((lp->d_subtype & 3) + i) |
-					    DSTYPE_INDOSPART;
 					lp->d_secpercyl =
 					    lp->d_ntracks * lp->d_nsectors;
 				}
