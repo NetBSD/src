@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 1998/09/09 00:07:55 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.40 1998/09/09 11:17:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -350,7 +350,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_coredump md_core;
 	struct coreseg cseg;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_SPARC, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
@@ -363,7 +363,7 @@ cpu_coredump(p, vp, cred, chdr)
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, sizeof(struct fpstate));
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_SPARC, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
