@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.22 1998/11/08 19:41:49 mycroft Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1282,8 +1282,19 @@ sw_reg_strategy(sdp, bp, bn)
 		error = VOP_BMAP(sdp->swd_vp, byteoff / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
 
-		if (error == 0 && (long)nbn == -1)
+		if (error == 0 && (long)nbn == -1) {
+			/* 
+			 * this used to just set error, but that doesn't
+			 * do the right thing.  Instead, it causes random
+			 * memory errors.  The panic() should remain until
+			 * this condition doesn't destabilize the system.
+			 */
+#if 1
+			panic("sw_reg_strategy: swap to sparse file");
+#else
 			error = EIO;	/* failure */
+#endif
+		}
 
 		/*
 		 * punt if there was an error or a hole in the file.
