@@ -51,8 +51,9 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vm86.h
 ./usr/include/machine/vmparam.h
-./usr/lib/libc_pic.a
 ./usr/lib/libamu_pic.a
+./usr/lib/libbfd_pic.a
+./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
@@ -64,6 +65,7 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
+./usr/lib/libossaudio_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a
@@ -81,3 +83,9 @@
 ./usr/share/man/cat2/i386_set_ioperm.0
 ./usr/share/man/cat2/i386_set_ldt.0
 ./usr/share/man/cat2/i386_vm86.0
+./usr/share/man/man2/i386_get_ioperm.2
+./usr/share/man/man2/i386_get_ldt.2
+./usr/share/man/man2/i386_iopl.2
+./usr/share/man/man2/i386_set_ioperm.2
+./usr/share/man/man2/i386_set_ldt.2
+./usr/share/man/man2/i386_vm86.2
