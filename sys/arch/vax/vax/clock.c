@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1997/04/18 18:49:37 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.21 1998/02/22 14:19:39 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -284,7 +284,7 @@ chip_clkread(base)
 		}
 
 	s = splhigh();
-	c.dt_year = REGPEEK(YR_OFF) + 1970;
+	c.dt_year = ((u_char)REGPEEK(YR_OFF)) + 1970;
 	c.dt_mon = REGPEEK(MON_OFF);
 	c.dt_day = REGPEEK(DAY_OFF);
 	c.dt_wday = REGPEEK(WDAY_OFF);
@@ -311,7 +311,7 @@ chip_clkwrite()
 
 	clock_secs_to_ymdhms(time.tv_sec, &c);
 
-	REGPOKE(YR_OFF, c.dt_year - 1970);
+	REGPOKE(YR_OFF, ((u_char)(c.dt_year - 1970)));
 	REGPOKE(MON_OFF, c.dt_mon);
 	REGPOKE(DAY_OFF, c.dt_day);
 	REGPOKE(WDAY_OFF, c.dt_wday);
