@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.156 2001/04/29 04:49:55 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.157 2001/05/27 21:15:59 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1808,6 +1808,11 @@ bebox
 # ./usr/share/man/cat8/bebox
 ..
 
+# ./usr/share/man/cat8/dreamcast
+dreamcast
+# ./usr/share/man/cat8/dreamcast
+..
+
 # ./usr/share/man/cat8/hp300
 hp300
 # ./usr/share/man/cat8/hp300
@@ -2130,6 +2135,11 @@ atari
 # ./usr/share/man/man8/bebox
 bebox
 # ./usr/share/man/man8/bebox
+..
+
+# ./usr/share/man/man8/dreamcast
+dreamcast
+# ./usr/share/man/man8/dreamcast
 ..
 
 # ./usr/share/man/man8/hp300
