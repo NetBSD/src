@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.51 2001/11/12 15:25:13 lukem Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.52 2002/02/14 07:08:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.51 2001/11/12 15:25:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.52 2002/02/14 07:08:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			PHOLD(p);
 			error = uvm_vslock(p, bp->b_data, todo,
 					   (flags & B_READ) ?
-					   VM_PROT_READ | VM_PROT_WRITE :
-					   VM_PROT_READ);
+					   VM_PROT_WRITE : VM_PROT_READ);
 			if (error) {
 				bp->b_flags |= B_ERROR;
 				bp->b_error = error;
