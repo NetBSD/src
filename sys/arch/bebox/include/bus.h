@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1997/12/12 03:08:28 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1998/02/03 03:11:15 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*
@@ -72,9 +72,8 @@
 /*
  * Values for the Be bus space tag, not to be used directly by MI code.
  */
-#define	BEBOX_BUS_SPACE_IO	0x80000000	/* space is i/o space */
-#define BEBOX_BUS_SPACE_MEM	0xC0000000	/* space is mem space */
-#define	BEBOX_BUS_REVERSE	1
+#define	BEBOX_BUS_SPACE_IO	0x80000000	/* i/o space */
+#define BEBOX_BUS_SPACE_MEM	0xC0000000	/* mem space */
 
 /*
  * Bus access types.
@@ -82,14 +81,7 @@
 typedef u_int32_t bus_addr_t;
 typedef u_int32_t bus_size_t;
 typedef	u_int32_t bus_space_handle_t;
-typedef	struct bebox_bus_space *bus_space_tag_t;
-
-struct bebox_bus_space {
-	u_int32_t	bus_base;
-	u_int8_t	bus_reverse;	/* Reverse bytes */
-};
-
-extern struct bebox_bus_space bebox_bus_io, bebox_bus_mem;
+typedef	u_int32_t bus_space_tag_t;
 
 #define BUS_SPACE_MAP_CACHEABLE         0x01
 #define BUS_SPACE_MAP_LINEAR            0x02
@@ -105,13 +97,58 @@ extern struct bebox_bus_space bebox_bus_io, bebox_bus_mem;
 /*
  * Access methods for bus resources
  */
-#define bus_space_map(t, addr, size, cacheable, bshp)			      \
-    ((*(bshp) = (t)->bus_base + (addr)), 0)
+
+#define	__BUS_SPACE_NEED_STREAM_METHODS
+
+/*
+ *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *
+ * Map a region of bus space.
+ */
+
+#define bus_space_map(t, addr, size, flags, bshp)			      \
+    ((*(bshp) = (t) + (addr)), 0)
+
+/*
+ *	int bus_space_unmap __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size));
+ *
+ * Unmap a region of bus space.
+ */
 
 #define bus_space_unmap(t, bsh, size)
 
-#define	bus_space_subregion(t, addr, size, cacheable, bshp)		      \
-    ((*(bshp) = (t)->bus_base + (addr)), 0)
+/*
+ *	int bus_space_subregion __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
+ *	    bus_space_handle_t *nbshp));
+ *
+ * Get a new handle for a subregion of an already-mapped area of bus space.
+ */
+
+#define	bus_space_subregion(t, bsh, offset, size, bshp)			      \
+    ((*(bshp) = (bsh) + (offset)), 0)
+
+/*
+ *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+ *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+ *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
+ *	    bus_space_handle_t *bshp));
+ *
+ * Allocate a region of bus space.
+ */
+
+#define	bus_space_alloc	!!! bus_space_alloc not implemented !!!
+
+/*
+ *	int bus_space_free __P((bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size));
+ *
+ * Free a region of bus space.
+ */
+
+#define	bus_space_free	!!! bus_space_free not implemented !!!
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
@@ -126,16 +163,33 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
      bus_size_t offset)							      \
 {									      \
-    if(tag->bus_reverse)						      \
 	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));  \
-    else								      \
-	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));      \
 }
 
 bus_space_read(1,8)
 bus_space_read(2,16)
 bus_space_read(4,32)
 #define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
+
+/*
+ *	u_intN_t bus_space_read_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset));
+ *
+ * Read a 2, 4, or 8 byte stream quantity from bus space
+ * described by tag/handle/offset.
+ */
+
+#define bus_space_read_stream(n,m)					      \
+static __inline CAT3(u_int,m,_t)					      \
+CAT(bus_space_read_stream_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,    \
+     bus_size_t offset)							      \
+{									      \
+	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)));  \
+}
+
+bus_space_read_stream(2,16)
+bus_space_read_stream(4,32)
+#define	bus_space_read_stream_8	!!! bus_space_read_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
@@ -151,11 +205,7 @@ static __inline void							      \
 CAT(bus_space_read_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,     \
      bus_size_t offset, CAT3(u_int,m,_t) *addr, size_t count)		      \
 {									      \
-    if(tag->bus_reverse)						      \
 	CAT3(ins,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
-	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
-    else								      \
-	CAT(ins,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
 	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
 }
 
@@ -163,6 +213,30 @@ bus_space_read_multi(1,8)
 bus_space_read_multi(2,16)
 bus_space_read_multi(4,32)
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
+
+/*
+ *	void bus_space_read_multi_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Read `count' 2, 4, or 8 byte stream quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.
+ */
+
+#define bus_space_read_multi_stream(n,m)				      \
+static __inline void							      \
+CAT(bus_space_read_multi_stream_,n)(bus_space_tag_t tag,		      \
+     bus_space_handle_t bsh,						      \
+     bus_size_t offset, CAT3(u_int,m,_t) *addr, size_t count)		      \
+{									      \
+	CAT(ins,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+}
+
+bus_space_read_multi_stream(2,16)
+bus_space_read_multi_stream(4,32)
+#define	bus_space_read_multi_stream_8					      \
+	!!! bus_space_read_multi_stream_8 not implemented !!!
 
 /*
  *	void bus_space_write_N __P((bus_space_tag_t tag,
@@ -178,16 +252,34 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,	      \
      bus_size_t offset, CAT3(u_int,m,_t) x)				      \
 {									      \
-    if(tag->bus_reverse)						      \
 	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);     \
-    else								      \
-	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);	      \
 }
 
 bus_space_write(1,8)
 bus_space_write(2,16)
 bus_space_write(4,32)
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
+
+/*
+ *	void bus_space_write_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t value));
+ *
+ * Write the 2, 4, or 8 byte stream value `value' to bus space
+ * described by tag/handle/offset.
+ */
+
+#define bus_space_write_stream(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_stream_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,   \
+     bus_size_t offset, CAT3(u_int,m,_t) x)				      \
+{									      \
+	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)), x);     \
+}
+
+bus_space_write_stream(2,16)
+bus_space_write_stream(4,32)
+#define	bus_space_write_stream_8 !!! bus_space_write_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
@@ -203,11 +295,7 @@ static __inline void							      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,    \
      bus_size_t offset, const CAT3(u_int,m,_t) *addr, size_t count)	      \
 {									      \
-    if (tag->bus_reverse)						      \
 	CAT3(outs,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
-	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
-    else								      \
-	CAT(outs,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
 	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
 }
 
@@ -215,6 +303,30 @@ bus_space_write_multi(1,8)
 bus_space_write_multi(2,16)
 bus_space_write_multi(4,32)
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
+
+/*
+ *	void bus_space_write_multi_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_intN_t *addr, size_t count));
+ *
+ * Write `count' 2, 4, or 8 byte stream quantities from the buffer
+ * provided to bus space described by tag/handle/offset.
+ */
+
+#define bus_space_write_multi_stream(n,m)				      \
+static __inline void							      \
+CAT(bus_space_write_multi_stream_,n)(bus_space_tag_t tag,		      \
+     bus_space_handle_t bsh,						      \
+     bus_size_t offset, const CAT3(u_int,m,_t) *addr, size_t count)	      \
+{									      \
+	CAT(outs,m)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),	      \
+	    (CAT3(u_int,m,_t) *)addr, (size_t)count);			      \
+}
+
+bus_space_write_multi_stream(2,16)
+bus_space_write_multi_stream(4,32)
+#define	bus_space_write_multi_stream_8					      \
+	!!! bus_space_write_multi_stream_8 not implemented !!!
 
 /*
  *	void bus_space_read_region_N __P((bus_space_tag_t tag,
@@ -226,18 +338,102 @@ bus_space_write_multi(4,32)
  * buffer provided.
  */
 
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_1(t, h, o, a, c) do {			\
-} while (0)
+static __inline void
+bus_space_read_region_1(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int8_t *addr;
+	size_t count;
+{
+	volatile u_int8_t *s;
 
-#define	bus_space_read_region_2(t, h, o, a, c) do {			\
-} while (0)
+	s = (volatile u_int8_t *)(bsh + offset);
+	while (count--)
+		*addr++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
 
-#define	bus_space_read_region_4(t, h, o, a, c) do {			\
-} while (0)
+static __inline void
+bus_space_read_region_2(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t *addr;
+	size_t count;
+{
+	volatile u_int16_t *s;
+
+	s = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("lhbrx %0, 0, %1" :
+			"=r"(*addr++) : "r"(s++));
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_read_region_4(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t *addr;
+	size_t count;
+{
+	volatile u_int32_t *s;
+
+	s = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("lwbrx %0, 0, %1" :
+			"=r"(*addr++) : "r"(s++));
+	__asm__ volatile("eieio; sync");
+}
 
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
+
+/*
+ *	void bus_space_read_region_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Read `count' 2, 4, or 8 byte stream quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ */
+
+static __inline void
+bus_space_read_region_stream_2(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t *addr;
+	size_t count;
+{
+	volatile u_int16_t *s;
+
+	s = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		*addr++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t *addr;
+	size_t count;
+{
+	volatile u_int32_t *s;
+
+	s = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		*addr++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_read_region_stream_8					      \
+	!!! bus_space_read_region_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_write_region_N __P((bus_space_tag_t tag,
@@ -248,19 +444,101 @@ bus_space_write_multi(4,32)
  * to bus space described by tag/handle starting at `offset'.
  */
 
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_1(t, h, o, a, c) do {			\
-} while (0)
+static __inline void
+bus_space_write_region_1(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	const u_int8_t *addr;
+	size_t count;
+{
+	volatile u_int8_t *d;
 
-#define	bus_space_write_region_2(t, h, o, a, c) do {			\
-} while (0)
+	d = (volatile u_int8_t *)(bsh + offset);
+	while (count--)
+		*d++ = *addr++;
+	__asm__ volatile("eieio; sync");
+}
 
-#define	bus_space_write_region_4(t, h, o, a, c) do {			\
-} while (0)
+static __inline void
+bus_space_write_region_2(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	const u_int16_t *addr;
+	size_t count;
+{
+	volatile u_int16_t *d;
 
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#endif
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("sthbrx %0, 0, %1" ::
+			"r"(*addr++), "r"(d++));
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_write_region_4(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	const u_int32_t *addr;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("stwbrx %0, 0, %1" ::
+			"r"(*addr++), "r"(d++));
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_write_region_8 !!! bus_space_write_region_8 unimplemented !!!
+
+/*
+ *	void bus_space_write_region_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_intN_t *addr, size_t count));
+ *
+ * Write `count' 2, 4, or 8 byte stream quantities from the buffer provided
+ * to bus space described by tag/handle starting at `offset'.
+ */
+
+static __inline void
+bus_space_write_region_stream_2(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	const u_int16_t *addr;
+	size_t count;
+{
+	volatile u_int16_t *d;
+
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		*d++ = *addr++;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_write_region_stream_4(tag, bsh, offset, addr, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	const u_int32_t *addr;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		*d++ = *addr++;
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_write_region_stream_8					      \
+	 !!! bus_space_write_region_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
@@ -271,7 +549,101 @@ bus_space_write_multi(4,32)
  * by tag/handle/offset `count' times.
  */
 
-	/* XXX IMPLEMENT bus_space_set_multi_N() XXX */
+static __inline void
+bus_space_set_multi_1(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int8_t val;
+	size_t count;
+{
+	volatile u_int8_t *d;
+
+	d = (volatile u_int8_t *)(bsh + offset);
+	while (count--)
+		*d = val;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_multi_2(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t val;
+	size_t count;
+{
+	volatile u_int16_t *d;
+
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("sthbrx %0, 0, %1" ::
+			"r"(val), "r"(d));
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_multi_4(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t val;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("stwbrx %0, 0, %1" ::
+			"r"(val), "r"(d));
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_set_multi_8 !!! bus_space_set_multi_8 unimplemented !!!
+
+/*
+ *	void bus_space_set_multi_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count));
+ *
+ * Write the 2, 4, or 8 byte stream value `val' to bus space described
+ * by tag/handle/offset `count' times.
+ */
+
+static __inline void
+bus_space_set_multi_stream_2(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t val;
+	size_t count;
+{
+	volatile u_int16_t *d;
+
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		*d = val;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_multi_stream_4(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t val;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		*d = val;
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_set_multi_stream_8					      \
+	!!! bus_space_set_multi_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_set_region_N __P((bus_space_tag_t tag,
@@ -282,7 +654,101 @@ bus_space_write_multi(4,32)
  * by tag/handle starting at `offset'.
  */
 
-	/* XXX IMPLEMENT bus_space_set_region_N() XXX */
+static __inline void
+bus_space_set_region_1(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int8_t val;
+	size_t count;
+{
+	volatile u_int8_t *d;
+
+	d = (volatile u_int8_t *)(bsh + offset);
+	while (count--)
+		*d++ = val;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_region_2(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t val;
+	size_t count;
+{
+	volatile u_int16_t *d;
+
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("sthbrx %0, 0, %1" ::
+			"r"(val), "r"(d++));
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_region_4(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t val;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		__asm__ volatile("stwbrx %0, 0, %1" ::
+			"r"(val), "r"(d++));
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_set_region_8 !!! bus_space_set_region_8 unimplemented !!!
+
+/*
+ *	void bus_space_set_region_stream_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count));
+ *
+ * Write `count' 2, 4, or 8 byte stream value `val' to bus space described
+ * by tag/handle starting at `offset'.
+ */
+
+static __inline void
+bus_space_set_region_stream_2(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t val;
+	size_t count;
+{
+	volatile u_int16_t *d;
+
+	d = (volatile u_int16_t *)(bsh + offset);
+	while (count--)
+		*d++ = val;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_region_stream_4(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t val;
+	size_t count;
+{
+	volatile u_int32_t *d;
+
+	d = (volatile u_int32_t *)(bsh + offset);
+	while (count--)
+		*d++ = val;
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_set_region_stream_8					      \
+	!!! bus_space_set_region_stream_8 unimplemented !!!
 
 /*
  *	void bus_space_copy_N __P((bus_space_tag_t tag,
@@ -294,7 +760,61 @@ bus_space_write_multi(4,32)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-	/* XXX IMPLEMENT bus_space_copy_N() XXX */
+static __inline void
+bus_space_copy_1(tag, bsh1, off1, bsh2, off2, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh1;
+	bus_size_t off1;
+	bus_space_handle_t bsh2;
+	bus_size_t off2;
+	size_t count;
+{
+	volatile u_int8_t *s, *d;
+
+	s = (volatile u_int8_t *)(bsh1 + off1);
+	d = (volatile u_int8_t *)(bsh2 + off2);
+	while (count--)
+		*d++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_copy_2(tag, bsh1, off1, bsh2, off2, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh1;
+	bus_size_t off1;
+	bus_space_handle_t bsh2;
+	bus_size_t off2;
+	size_t count;
+{
+	volatile u_int16_t *s, *d;
+
+	s = (volatile u_int16_t *)(bsh1 + off1);
+	d = (volatile u_int16_t *)(bsh2 + off2);
+	while (count--)
+		*d++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_copy_4(tag, bsh1, off1, bsh2, off2, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh1;
+	bus_size_t off1;
+	bus_space_handle_t bsh2;
+	bus_size_t off2;
+	size_t count;
+{
+	volatile u_int32_t *s, *d;
+
+	s = (volatile u_int32_t *)(bsh1 + off1);
+	d = (volatile u_int32_t *)(bsh2 + off2);
+	while (count--)
+		*d++ = *s++;
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_copy_8 !!! bus_space_copy_8 unimplemented !!!
 
 /*
  * Bus read/write barrier methods.
