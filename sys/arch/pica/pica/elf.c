@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.3 1996/10/13 03:31:41 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.3.24.1 1999/07/04 01:33:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Ted Lemon
@@ -97,7 +97,15 @@ pmax_elf_makecmds (p, epp)
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = 0;

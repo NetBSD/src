@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.37 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.37.4.1 1999/07/04 01:33:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -335,7 +335,15 @@ exec_linux_aout_prep_qmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

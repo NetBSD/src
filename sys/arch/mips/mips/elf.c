@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.12.10.1 1999/06/21 00:52:06 thorpej Exp $	*/
+/*	$NetBSD: elf.c,v 1.12.10.2 1999/07/04 01:33:33 chs Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -689,7 +689,16 @@ exec_elf_makecmds(p, epp)
 
 #ifdef EXEC_AOUT
 	free((char *) ph, M_TEMP);
+
+	/*
+	 * mark this vnode as being the image of a running process.
+	 * also flush any cached file mappings now so the process will
+	 * have a better chance of being able to use the cache.
+	 */
+
 	epp->ep_vp->v_flag |= VTEXT;
+	ubc_flush(&epp->ep_vp->v_uvm.u_obj, 0, 0);
+
 	return exec_aout_setup_stack(p, epp);
 #endif
 
