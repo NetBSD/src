@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.h,v 1.11 2000/06/05 06:38:23 itojun Exp $	*/
-/*	$KAME: in6_pcb.h,v 1.25 2000/06/05 00:41:58 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.12 2000/07/07 15:54:18 itojun Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.28 2000/06/09 01:10:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -165,16 +165,22 @@ int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
 			   u_int, struct in6_addr *, u_int, int,
 			   void (*)(struct in6pcb *, int)));
 void	in6_pcbpurgeif __P((struct in6pcb *, struct ifnet *));
-int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
 void	in6_rtchange __P((struct in6pcb *, int));
 void	in6_setpeeraddr __P((struct in6pcb *, struct mbuf *));
 void	in6_setsockaddr __P((struct in6pcb *, struct mbuf *));
+
+/* in in6_src.c */
 struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 				     struct ip6_pktopts *,
 				     struct ip6_moptions *,
 				     struct route_in6 *,
 				     struct in6_addr *, int *));
 int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
+int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
+int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
+	struct in6pcb *, struct ifnet **));
+int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
+	struct ifnet *));
 
 #ifndef TCP6
 extern struct rtentry *

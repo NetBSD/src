@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.35 2000/07/06 12:36:18 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.36 2000/07/07 15:54:17 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.120 2000/07/06 11:47:20 itojun Exp $	*/
 
 /*
@@ -1704,16 +1704,8 @@ icmp6_rip6_input(mp, off)
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
-	rip6src.sin6_addr = ip6->ip6_src;
-	if (IN6_IS_SCOPE_LINKLOCAL(&rip6src.sin6_addr))
-		rip6src.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&rip6src.sin6_addr))
-			rip6src.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			rip6src.sin6_scope_id = 0;
-	} else
-		rip6src.sin6_scope_id = 0;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
 	for (in6p = rawin6pcb.in6p_next;
 	     in6p != &rawin6pcb; in6p = in6p->in6p_next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.68 2000/07/06 12:51:40 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.69 2000/07/07 15:54:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -353,6 +353,10 @@ udp6_input(mp, offp, proto)
 	}
 #endif
 	ulen = ntohs((u_short)uh->uh_ulen);
+	/*
+	 * RFC2675 section 4: jumbograms will have 0 in the UDP header field,
+	 * iff payload length > 0xffff.
+	 */
 	if (ulen == 0 && plen > 0xffff)
 		ulen = plen;
 
@@ -389,28 +393,14 @@ udp6_input(mp, offp, proto)
 	bzero(&src, sizeof(src));
 	src.sin6_family = AF_INET6;
 	src.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &src.sin6_addr, sizeof(src.sin6_addr));
-	if (IN6_IS_SCOPE_LINKLOCAL(&src.sin6_addr))
-		src.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&src.sin6_addr))
-			src.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			src.sin6_scope_id = 0;
-	}
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(&src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 	src.sin6_port = uh->uh_sport;
 	bzero(&dst, sizeof(dst));
 	dst.sin6_family = AF_INET6;
 	dst.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &dst.sin6_addr, sizeof(dst.sin6_addr));
-	if (IN6_IS_SCOPE_LINKLOCAL(&dst.sin6_addr))
-		dst.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&dst.sin6_addr))
-			dst.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			dst.sin6_scope_id = 0;
-	}
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(&dst, &ip6->ip6_dst, m->m_pkthdr.rcvif);
 	dst.sin6_port = uh->uh_dport;
 
 	if (udp6_realinput(AF_INET6, &src, &dst, m, off) == 0) {

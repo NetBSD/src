@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.28 2000/07/06 12:51:41 itojun Exp $	*/
-/*	$KAME: in6_pcb.c,v 1.56 2000/07/03 13:23:28 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.29 2000/07/07 15:54:18 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.57 2000/07/07 10:27:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,7 +143,6 @@ in6_pcbbind(in6p, nam, p)
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)NULL;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
-	int error;
 
 	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
 		return(EINVAL);
@@ -170,36 +169,11 @@ in6_pcbbind(in6p, nam, p)
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 			return(EADDRNOTAVAIL);
 
-		/*
-		 * If the scope of the destination is link-local, embed the
-		 * interface index in the address.
-		 */
-		if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr)) {
-			/* XXX boundary check is assumed to be already done. */
-			/* XXX sin6_scope_id is weaker than advanced-api. */
-			struct in6_pktinfo *pi;
-			if (in6p->in6p_outputopts &&
-			    (pi = in6p->in6p_outputopts->ip6po_pktinfo) &&
-			    pi->ipi6_ifindex) {
-				sin6->sin6_addr.s6_addr16[1]
-					= htons(pi->ipi6_ifindex);
-			} else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)
-				&& in6p->in6p_moptions
-				&& in6p->in6p_moptions->im6o_multicast_ifp) {
-				sin6->sin6_addr.s6_addr16[1] =
-					htons(in6p->in6p_moptions->im6o_multicast_ifp->if_index);
-			} else if (sin6->sin6_scope_id) {
-				/* boundary check */
-				if (sin6->sin6_scope_id < 0
-				 || if_index < sin6->sin6_scope_id) {
-					return ENXIO;  /* XXX EINVAL? */
-				}
-				sin6->sin6_addr.s6_addr16[1]
-					= htons(sin6->sin6_scope_id & 0xffff);/*XXX*/
-				/* this must be cleared for ifa_ifwithaddr() */
-				sin6->sin6_scope_id = 0;
-			}
-		}
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&sin6->sin6_addr, sin6, in6p, NULL) != 0)
+			return EINVAL;
+		/* this must be cleared for ifa_ifwithaddr() */
+		sin6->sin6_scope_id = 0;
 
 		lport = sin6->sin6_port;
 		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
@@ -247,10 +221,15 @@ in6_pcbbind(in6p, nam, p)
 		}
 		if (lport) {
 #ifndef IPNOPRIVPORTS
+			int priv;
+
+			/*
+			 * NOTE: all operating systems use suser() for
+			 * privilege check!  do not rewrite it into SS_PRIV.
+			 */
+			priv = (p && !suser(p->p_ucred, &p->p_acflag)) ? 1 : 0;
 			/* GROSS */
-			if (ntohs(lport) < IPV6PORT_RESERVED &&
-			    (p == 0 ||
-			     (error = suser(p->p_ucred, &p->p_acflag))))
+			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
 				return(EACCES);
 #endif
 
@@ -302,7 +281,6 @@ in6_pcbconnect(in6p, nam)
 {
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
-	struct in6_pktinfo *pi;
 	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
 	struct in6_addr mapped;
@@ -332,36 +310,9 @@ in6_pcbconnect(in6p, nam)
 	tmp = *sin6;
 	sin6 = &tmp;
 
-	/*
-	 * If the scope of the destination is link-local, embed the interface
-	 * index in the address.
-	 */
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr)) {
-		/* XXX boundary check is assumed to be already done. */
-		/* XXX sin6_scope_id is weaker than advanced-api. */
-		if (in6p->in6p_outputopts &&
-		    (pi = in6p->in6p_outputopts->ip6po_pktinfo) &&
-		    pi->ipi6_ifindex) {
-			sin6->sin6_addr.s6_addr16[1] = htons(pi->ipi6_ifindex);
-			ifp = ifindex2ifnet[pi->ipi6_ifindex];
-		}
-		else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr) &&
-			 in6p->in6p_moptions &&
-			 in6p->in6p_moptions->im6o_multicast_ifp) {
-			sin6->sin6_addr.s6_addr16[1] =
-				htons(in6p->in6p_moptions->im6o_multicast_ifp->if_index);
-			ifp = ifindex2ifnet[in6p->in6p_moptions->im6o_multicast_ifp->if_index];
-		} else if (sin6->sin6_scope_id) {
-			/* boundary check */
-			if (sin6->sin6_scope_id < 0
-			 || if_index < sin6->sin6_scope_id) {
-				return ENXIO;  /* XXX EINVAL? */
-			}
-			sin6->sin6_addr.s6_addr16[1]
-				= htons(sin6->sin6_scope_id & 0xffff);/*XXX*/
-			ifp = ifindex2ifnet[sin6->sin6_scope_id];
-		}
-	}
+	/* KAME hack: embed scopeid */
+	if (in6_embedscope(&sin6->sin6_addr, sin6, in6p, &ifp) != 0)
+		return EINVAL;
 
 	/* Source address selection. */
 	if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
@@ -416,9 +367,14 @@ in6_pcbconnect(in6p, nam)
 	if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
 	 || (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
 	  && in6p->in6p_laddr.s6_addr32[3] == 0)) {
-		if (in6p->in6p_lport == 0)
+		if (in6p->in6p_lport == 0) {
+#ifdef __NetBSD__
 			(void)in6_pcbbind(in6p, (struct mbuf *)0,
 			    (struct proc *)0);
+#else
+			(void)in6_pcbbind(in6p, (struct mbuf *)0);
+#endif
+		}
 		in6p->in6p_laddr = *in6a;
 	}
 	in6p->in6p_faddr = sin6->sin6_addr;
@@ -484,13 +440,8 @@ in6_setsockaddr(in6p, nam)
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_port = in6p->in6p_lport;
-	sin6->sin6_addr = in6p->in6p_laddr;
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
-		sin6->sin6_scope_id = ntohs(sin6->sin6_addr.s6_addr16[1]);
-	else
-		sin6->sin6_scope_id = 0;	/*XXX*/
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
-		sin6->sin6_addr.s6_addr16[1] = 0;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(sin6, &in6p->in6p_laddr, NULL);
 }
 
 void
@@ -506,13 +457,8 @@ in6_setpeeraddr(in6p, nam)
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_port = in6p->in6p_fport;
-	sin6->sin6_addr = in6p->in6p_faddr;
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
-		sin6->sin6_scope_id = ntohs(sin6->sin6_addr.s6_addr16[1]);
-	else
-		sin6->sin6_scope_id = 0;	/*XXX*/
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr))
-		sin6->sin6_addr.s6_addr16[1] = 0;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(sin6, &in6p->in6p_faddr, NULL);
 }
 
 /*
@@ -540,9 +486,7 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	int errno;
 	int nmatch = 0;
-	void (*notify2) __P((struct in6pcb *, int));
-
-	notify2 = NULL;
+	int do_rtchange = (notify == in6_rtchange);
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 0;
@@ -563,14 +507,7 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 		lport = 0;
 		bzero((caddr_t)laddr6, sizeof(*laddr6));
 
-		/*
-		 * Keep the old notify function to store a soft error
-		 * in each PCB.
-		 */
-		if (cmd == PRC_HOSTDEAD && notify != in6_rtchange)
-			notify2 = notify;
-
-		notify = in6_rtchange;
+		do_rtchange = 1;
 	}
 
 	if (notify == NULL)
@@ -580,7 +517,7 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 	for (in6p = head->in6p_next; in6p != head; in6p = nin6p) {
 		nin6p = in6p->in6p_next;
 
-		if (notify == in6_rtchange) {
+		if (do_rtchange) {
 			/*
 			 * Since a non-connected PCB might have a cached route,
 			 * we always call in6_rtchange without matching
@@ -592,10 +529,8 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 					       &faddr6))
 				in6_rtchange(in6p, errno);
 
-			if (notify2 == NULL)
-				continue;
-
-			notify = notify2;
+			if (notify == in6_rtchange)
+				continue; /* there's nothing to do any more */
 		}
 
 		/* at this point, we can assume that NOTIFY is not NULL. */
