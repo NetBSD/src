@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.46 2000/03/23 06:48:16 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.47 2000/03/25 20:23:05 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1221,7 +1221,7 @@ hpux_sys_alarm_6x(p, v, retval)
 	}
 	p->p_realtimer.it_value = time;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
-	callout_reset(&p->p_realit_ch, hxto(&p->p_realtimer.it_value),
+	callout_reset(&p->p_realit_ch, hzto(&p->p_realtimer.it_value),
 	    realitexpire, p);
 	splx(s);
 	return (0);
