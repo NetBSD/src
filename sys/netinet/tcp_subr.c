@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.104 2000/12/09 01:29:48 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.105 2000/12/21 00:45:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1403,7 +1403,7 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
 	(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sin6, 0,
-	    &zeroin6_addr, 0, EMSGSIZE, tcp6_mtudisc);
+	    &zeroin6_addr, 0, PRC_MSGSIZE, tcp6_mtudisc);
 }
 
 void
