@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.54 2000/08/21 02:03:12 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.55 2000/09/04 00:31:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2000/08/21 02:03:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2000/09/04 00:31:58 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -347,13 +347,12 @@ recognized:
 	 * Initialize the idle stack pointer, reserving space for an
 	 * (empty) trapframe (XXX is the trapframe really necessary?)
 	 */
-	pcb->pcb_hw.apcb_ksp =
+	pcb->pcb_hw.apcb_ksp = pcb->pcb_hw.apcb_backup_ksp =
 	    (u_int64_t)pcb + USPACE - sizeof(struct trapframe);
 
 	/*
 	 * Initialize the idle PCB.
 	 */
-	pcb->pcb_hw.apcb_backup_ksp = pcb->pcb_hw.apcb_ksp;
 	pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
 	pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
 #if 0
@@ -371,12 +370,6 @@ recognized:
 		ci->ci_flags |= CPUF_PRIMARY;
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
-#else /* ! MULTIPROCESSOR */
-	/*
-	 * Bail out now if we're not the primary CPU.
-	 */
-	if (ma->ma_slot != hwrpb->rpb_primary_cpu_id)
-		return;
 #endif /* MULTIPROCESSOR */
 
 	ci->ci_softc = sc;
@@ -496,6 +489,9 @@ cpu_boot_secondary(ci)
 void
 cpu_pause_resume(u_long cpu_id, int pause)
 {
+#if 1
+	return;
+#else
 	u_long cpu_mask = (1UL << cpu_id);
 
 	if (pause) {
@@ -503,6 +499,7 @@ cpu_pause_resume(u_long cpu_id, int pause)
 		alpha_send_ipi(cpu_id, ALPHA_IPI_PAUSE);
 	} else
 		atomic_clearbits_ulong(&cpus_paused, cpu_mask);
+#endif
 }
 
 void
@@ -558,10 +555,8 @@ void
 cpu_hatch(ci)
 	struct cpu_info *ci;
 {
-	u_long cpumask = (1UL << ci->ci_cpuid);
-
-	/* Set our `curpcb' to reflect our context. */
-	curpcb = ci->ci_idle_pcb_paddr;
+	u_long cpu_id = cpu_number();
+	u_long cpumask = (1UL << cpu_id);
 
 	/* Mark the kernel pmap active on this processor. */
 	atomic_setbits_ulong(&pmap_kernel()->pm_cpus, cpumask);
@@ -573,18 +568,6 @@ cpu_hatch(ci)
 	printf("%s: processor ID %lu running\n",
 	    ci->ci_softc->sc_dev.dv_xname, cpu_number());
 	atomic_setbits_ulong(&cpus_running, cpumask);
-
-	/*
-	 * Lower interrupt level so that we can get IPIs.  Don't use
-	 * spl0() because we don't want to hassle w/ software interrupts
-	 * right now.  Note that interrupt() prevents the secondaries
-	 * from servicing DEVICE and CLOCK interrupts.
-	 */
-	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
-
-	/* Ok, so all we do is spin for now... */
-	for (;;)
-		/* nothing */ ;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.79 2000/08/20 21:50:06 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.80 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,17 +77,13 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.79 2000/08/20 21:50:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.80 2000/09/04 00:31:59 thorpej Exp $");
 
 #include "assym.h"
 
 .stabs	__FILE__,132,0,0,kernel_text
 
 #if defined(MULTIPROCESSOR)
-#if 0
-#define	SPLX	 _splx
-#define	SPLRAISE _splraise
-#endif
 
 /*
  * Get various per-cpu values.  A pointer to our cpu_info structure
@@ -114,11 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.79 2000/08/20 21:50:06 thorpej Exp $");
 	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
 
 #else	/* if not MULTIPROCESSOR... */
-
-#if 0
-#define	SPLX	 splx
-#define	SPLRAISE splraise
-#endif
 
 IMPORT(cpu_info_store, CPU_INFO_SIZEOF)
 
@@ -196,10 +187,10 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	lda	sp,bootstack
 
 	/* Load KGP with current GP. */
-	or	a0,zero,s0		/* save pfn */
-	or	gp,zero,a0
+	mov	a0, s0			/* save pfn */
+	mov	gp, a0
 	call_pal PAL_OSF1_wrkgp		/* clobbers a0, t0, t8-t11 */
-	or	s0,zero,a0		/* restore pfn */
+	mov	s0, a0			/* restore pfn */
 
 	/*
 	 * Call alpha_init() to do pre-main initialization.
@@ -366,7 +357,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	ldq	t0, 0(t0)
 	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
 	cmpeq	t1, v0, t0
-	beq	t0, 5f				/* == 0: bail out now */
+	beq	t0, 4f				/* == 0: bail out now */
 #endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
@@ -967,59 +958,24 @@ cpu_switch_queuescan:
 	RET
 	END(cpu_switch)
 
-#if 0
-/**************************************************************************/
-
-LEAF(SPLRAISE, 1)				/* shouldn't need a GP	*/
-	call_pal PAL_OSF1_rdps			/* v0 <- PS		*/
-	and	v0, ALPHA_PSL_IPL_MASK, v0	/* v0 <- ipl		*/
-	cmplt	v0, a0, t0			/* t0 <= ipl < arg ?	*/
-	bfalse	t0, 1f
-	call_pal PAL_OSF1_swpipl		/* raise IPL if needed	*/
-1:	RET
-	END(SPLRAISE)
-
-/**************************************************************************/
-
 /*
- * We put splraise() and splx() together (and near the context switch code)
- * for cache efficiency. We don't restore ra if all we did was the pal op.
- * We save ra unconditionally, on the theory that the common case is the
- * spl0() one and in any case because we want traceback to work ... and
- * traceback-needing events quite frequently follow an spl0!
- */
-NESTED(SPLX, 1, 8, ra, IM_RA, 0)
-	LDGP(pv)
-	lda	sp, -8(sp)			/* set up stack frame	     */
-	stq	ra, (8-8)(sp)			/* save ra		     */
-	cmpeq	a0, ALPHA_PSL_IPL_0, t0
-	btrue	t0, 1f
-	call_pal PAL_OSF1_swpipl
-	lda	sp, 8(sp)			/* ra is still OK */
-	RET					/* v0 left over from copystr */
-1:	CALL(spl0)
-	ldq	ra, (8-8)(sp)			/* restore ra.		     */
-	lda	sp, 8(sp)			/* kill stack frame.	     */
-	RET
-	END(SPLX)
-#endif
-
-
-/*
- * switch_trampoline()
+ * proc_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Arrange for a function to be invoked neatly, after a cpu_fork().
  *
  * Invokes the function specified by the s0 register with the return
  * address specified by the s1 register and with one argument specified
  * by the s2 register.
  */
-LEAF(switch_trampoline, 0)
+LEAF(proc_trampoline, 0)
+#if defined(MULTIPROCESSOR)
+	CALL(proc_trampoline_mp)
+#endif
 	mov	s0, pv
 	mov	s1, ra
 	mov	s2, a0
 	jmp	zero, (pv)
-	END(switch_trampoline)
+	END(proc_trampoline)
 
 /*
  * switch_exit(struct proc *p)
