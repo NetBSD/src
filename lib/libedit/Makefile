@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/05/08 13:20:44 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2003/05/08 13:22:05 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -62,7 +62,7 @@ fcns.h: ${AHDR} makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -fh ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
-fcns.c: ${AHDR} fcns.h makelist
+fcns.c: ${AHDR} fcns.h help.h makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
