@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.13 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.14 2001/05/22 18:59:57 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,12 +53,19 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include "opt_scsi.h"
 #include "rnd.h"
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
+#ifndef	SDRETRIES
 #define	SDRETRIES	4
+#endif
+
+#ifndef	SD_IO_TIMEOUT
+#define	SDT_IO_IMEOUT	(60 * 1000)
+#endif
 
 struct sd_ops;
 
