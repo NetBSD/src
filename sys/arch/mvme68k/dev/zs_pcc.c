@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.11 2000/11/24 09:36:41 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.12 2001/05/31 18:46:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ zsc_pcc_attach(parent, self, aux)
 	 */
 	zs_config(zsc, &zs, PCC_VECBASE + PCCV_ZS, PCLK_147);
 
+	evcnt_attach_dynamic(&zsc->zsc_evcnt, EVCNT_TYPE_INTR,
+	    pccintr_evcnt(zs_level), "rs232", zsc->zsc_dev.dv_xname);
+
 	/*
 	 * Now safe to install interrupt handlers.  Note the arguments
 	 * to the interrupt handlers aren't used.  Note, we only do this
@@ -148,7 +151,7 @@ zsc_pcc_attach(parent, self, aux)
 	 */
 	if (didintr == 0) {
 		didintr = 1;
-		pccintr_establish(PCCV_ZS, zshard_shared, zs_level, zsc);
+		pccintr_establish(PCCV_ZS, zshard_shared, zs_level, zsc, NULL);
 	}
 
 	/* Sanity check the interrupt levels. */

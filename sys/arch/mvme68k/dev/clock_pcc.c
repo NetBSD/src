@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.7 2001/04/14 13:53:05 scw Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.8 2001/05/31 18:46:07 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,9 +134,17 @@ clock_pcc_attach(parent, self, aux)
 	/* Ensure our interrupts get disabled at shutdown time. */
 	(void) shutdownhook_establish(clock_pcc_shutdown, NULL);
 
+	/* Register the event counters */
+	evcnt_attach_dynamic(&clock_profcnt, EVCNT_TYPE_INTR,
+	    pccintr_evcnt(pa->pa_ipl), "clock", "profint");
+	evcnt_attach_dynamic(&clock_statcnt, EVCNT_TYPE_INTR,
+	    pccintr_evcnt(pa->pa_ipl), "clock", "statint");
+
 	/* Attach the interrupt handlers. */
-	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl, NULL);
-	pccintr_establish(PCCV_TIMER2, clock_pcc_statintr, pa->pa_ipl, NULL);
+	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl,
+	    NULL, &clock_profcnt);
+	pccintr_establish(PCCV_TIMER2, clock_pcc_statintr, pa->pa_ipl,
+	    NULL, &clock_statcnt);
 	sc->sc_clock_lvl = pa->pa_ipl | PCC_IENABLE | PCC_TIMERACK;
 }
 
@@ -210,10 +218,8 @@ clock_pcc_profintr(frame)
 	    clock_pcc_sc->sc_clock_lvl);
 	__asm __volatile("movw %0,%%sr" : : "di" (s));
 
-	for (cr >>= PCC_TIMEROVFLSHIFT; cr; cr--) {
+	for (cr >>= PCC_TIMEROVFLSHIFT; cr; cr--)
 		hardclock(frame);
-		clock_profcnt.ev_count++;
-	}
 
 	return (1);
 }
@@ -227,7 +233,6 @@ clock_pcc_statintr(frame)
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, 0);
 
 	statclock((struct clockframe *) frame);
-	clock_statcnt.ev_count++;
 
 	pcc_reg_write16(sys_pcc, PCCREG_TMR2_PRELOAD,
 	    pcc_timer_us2lim(CLOCK_NEWINT(clock_statvar, clock_statmin)));

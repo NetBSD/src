@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.20 2001/04/25 17:53:17 bouyer Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.21 2001/05/31 18:46:08 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -101,6 +101,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     struct sbic_softc *sc;
     struct pcc_attach_args *pa;
     bus_space_handle_t bush;
+    static struct evcnt evcnt;	/* XXXSCW: Temporary hack */
 
     sc = (struct sbic_softc *)dp;
     pa = auxp;
@@ -112,6 +113,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
      */
     sc->sc_sbicp = (sbic_regmap_p) bush;
 
+    sc->sc_driver  = (void *) &evcnt;
     sc->sc_enintr  = wdsc_enintr;
     sc->sc_dmago   = wdsc_dmago;
     sc->sc_dmanext = wdsc_dmanext;
@@ -160,8 +162,10 @@ wdsc_pcc_attach(pdp, dp, auxp)
     pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL, PCC_ICLEAR);
     pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
 
-    pccintr_establish(PCCV_DMA, wdsc_dmaintr,  sc->sc_ipl, sc);
-    pccintr_establish(PCCV_SCSI, wdsc_scsiintr, sc->sc_ipl, sc);
+    evcnt_attach_dynamic(&evcnt, EVCNT_TYPE_INTR, pccintr_evcnt(sc->sc_ipl),
+	"disk", sc->sc_dev.dv_xname);
+    pccintr_establish(PCCV_DMA, wdsc_dmaintr,  sc->sc_ipl, sc, &evcnt);
+    pccintr_establish(PCCV_SCSI, wdsc_scsiintr, sc->sc_ipl, sc, &evcnt);
     pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
         sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
