@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.33 2001/12/23 12:29:57 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.34 2001/12/23 12:54:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.33 2001/12/23 12:29:57 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.34 2001/12/23 12:54:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,14 +46,7 @@ __RCSID("$NetBSD: tape.c,v 1.33 2001/12/23 12:29:57 lukem Exp $");
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dinode.h>
-#endif
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 
@@ -588,11 +581,7 @@ startnewtape(int top)
 	int	status;
 	int	waitforpid;
 	char	*p;
-#ifdef sunos
-	void	(*interrupt_save)();
-#else
 	sig_t	interrupt_save;
-#endif
 
 	interrupt_save = signal(SIGINT, SIG_IGN);
 	parentpid = getpid();
