@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.30 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: scan.l,v 1.30.8.1 2002/05/16 12:49:58 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,9 @@ WORD	[A-Za-z_][-A-Za-z_0-9]*
 and		return AND;
 at		return AT;
 attach		return ATTACH;
+block		return BLOCK;
 build		return BUILD;
+char		return CHAR;
 cinclude	return CINCLUDE;
 compile-with	return COMPILE_WITH;
 config		return CONFIG;
@@ -98,6 +100,7 @@ defparam	return DEFPARAM;
 defpseudo	return DEFPSEUDO;
 devclass	return DEVCLASS;
 device		return DEVICE;
+device-major	return DEVICE_MAJOR;
 dumps		return DUMPS;
 file		return XFILE;
 file-system	return FILE_SYSTEM;
