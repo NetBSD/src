@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.3 1997/02/25 06:36:06 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.4 1997/02/28 07:52:45 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -36,6 +36,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -55,8 +56,9 @@
 
 static int	ae_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	ae_nubus_attach __P((struct device *, struct device *, void *));
-static int	ae_card_vendor __P((struct nubus_attach_args *na));
-static int	ae_get_enaddr __P((struct nubus_attach_args *na, u_int8_t *ep));
+static int	ae_nb_card_vendor __P((struct nubus_attach_args *));
+static int	ae_nb_get_enaddr __P((struct nubus_attach_args *, u_int8_t *));
+static void	ae_nb_watchdog __P((struct ifnet *));
 
 struct cfattach ae_nubus_ca = {
 	sizeof(struct ae_softc), ae_nubus_match, ae_nubus_attach
@@ -80,7 +82,7 @@ ae_nubus_match(parent, cf, aux)
 
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
-		switch (ae_card_vendor(na)) {
+		switch (ae_nb_card_vendor(na)) {
 		case AE_VENDOR_APPLE:
 		case AE_VENDOR_ASANTE:
 		case AE_VENDOR_FARALLON:
@@ -112,6 +114,7 @@ ae_nubus_attach(parent, self, aux)
 {
 	struct ae_softc *sc = (struct ae_softc *) self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	int success;
@@ -126,11 +129,11 @@ ae_nubus_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_reg_tag = sc->sc_buf_tag = bst;
+	sc->sc_regt = sc->sc_buft = bst;
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 	sc->regs_rev = 0;
 	sc->use16bit = 1;
-	sc->vendor = ae_card_vendor(na);
+	sc->vendor = ae_nb_card_vendor(na);
 	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
 	    INTERFACE_NAME_LEN);
 	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
@@ -143,7 +146,7 @@ ae_nubus_attach(parent, self, aux)
 	case AE_VENDOR_ASANTE:
 		sc->regs_rev = 1;
 		if (bus_space_subregion(bst, bsh,
-		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -153,7 +156,7 @@ ae_nubus_attach(parent, self, aux)
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
-		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -163,7 +166,7 @@ ae_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (AE_ROM_OFFSET + i * 2));
 #else
-		if (ae_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -174,13 +177,13 @@ ae_nubus_attach(parent, self, aux)
 
 	case AE_VENDOR_DAYNA:
 		if (bus_space_subregion(bst, bsh,
-		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
 		sc->mem_size = 8192;
 		if (bus_space_subregion(bst, bsh,
-		    DP_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+		    DP_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -190,7 +193,7 @@ ae_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
 #else
-		if (ae_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -202,7 +205,7 @@ ae_nubus_attach(parent, self, aux)
 	case AE_VENDOR_FARALLON:
 		sc->regs_rev = 1;
 		if (bus_space_subregion(bst, bsh,
-		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -212,7 +215,7 @@ ae_nubus_attach(parent, self, aux)
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
-		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+		    AE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -232,7 +235,7 @@ ae_nubus_attach(parent, self, aux)
 
 	case AE_VENDOR_INTERLAN:
 		if (bus_space_subregion(bst, bsh,
-		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -242,7 +245,7 @@ ae_nubus_attach(parent, self, aux)
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
-		    GC_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+		    GC_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -256,7 +259,7 @@ ae_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (GC_ROM_OFFSET + i * 4));
 #else
-		if (ae_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -268,7 +271,7 @@ ae_nubus_attach(parent, self, aux)
 	case AE_VENDOR_KINETICS:
 		sc->use16bit = 0;
 		if (bus_space_subregion(bst, bsh,
-		    KE_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+		    KE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
@@ -278,11 +281,11 @@ ae_nubus_attach(parent, self, aux)
 			break;
 		}
 		if (bus_space_subregion(bst, bsh,
-		    KE_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+		    KE_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
 			printf(": failed to map register space\n");
 			break;
 		}
-		if (ae_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -299,11 +302,13 @@ ae_nubus_attach(parent, self, aux)
 		return;
 	}
 
+	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
 	aesetup(sc);
 
 	/* make sure interrupts are vectored to us */
 	add_nubus_intr(na->slot, aeintr, sc);
 
+#ifdef MAC68K_BROKEN_VIDEO
 	/*
 	 * XXX -- enable nubus interrupts here.  Should be done elsewhere,
 	 *        but that currently breaks with some nubus video cards'
@@ -311,10 +316,11 @@ ae_nubus_attach(parent, self, aux)
 	 *	  have an ethernet card...  i.e., we do it here.
 	 */
 	enable_nubus_intr();
+#endif
 }
 
 static int
-ae_card_vendor(na)
+ae_nb_card_vendor(na)
 	struct nubus_attach_args *na;
 {
 	int vendor;
@@ -359,7 +365,7 @@ ae_card_vendor(na)
 }
 
 static int
-ae_get_enaddr(na, ep)
+ae_nb_get_enaddr(na, ep)
 	struct nubus_attach_args *na;
 	u_int8_t *ep;
 {
@@ -381,4 +387,25 @@ ae_get_enaddr(na, ep)
 		return 1;
 
 	return 0;
+}
+
+static void
+ae_nb_watchdog(ifp)
+	struct ifnet *ifp;
+{
+	struct ae_softc *sc = ifp->if_softc;
+
+#if 1
+/*
+ * This is a kludge!  The via code seems to miss slot interrupts
+ * sometimes.  This kludges around that by calling the handler
+ * by hand if the watchdog is activated. -- XXX (akb)
+ */
+	(*via2itab[1])((void *) 1);
+#endif
+
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
+
+	aereset(sc);
 }
