@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 1997/10/11 02:01:02 lukem Exp $	*/
+/*	$NetBSD: log.c,v 1.7 1998/07/24 23:22:26 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.6 1997/10/11 02:01:02 lukem Exp $");
+__RCSID("$NetBSD: log.c,v 1.7 1998/07/24 23:22:26 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -157,7 +157,7 @@ log_score(list_em)
 		}
 		strcpy(thisscore.name, pw->pw_name);
 		uname(&name);
-		strncpy(thisscore.host, name.sysname, sizeof(thisscore.host)-1);
+		strncpy(thisscore.host, name.nodename, sizeof(thisscore.host)-1);
 		thisscore.host[sizeof(thisscore.host) - 1] = '\0';
 
 		cp = strrchr(file, '/');
