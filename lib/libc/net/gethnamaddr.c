@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.61 2004/06/04 20:05:25 ginsbach Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.62 2004/07/21 03:16:29 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.61 2004/06/04 20:05:25 ginsbach Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.62 2004/07/21 03:16:29 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1224,16 +1224,6 @@ _dns_gethtbyaddr(void *rv, void	*cb_data, va_list ap)
 	if (res == NULL)
 		return NS_NOTFOUND;
 	n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
-	if (n < 0 && af == AF_INET6) {
-		*qp = '\0';
-		if (strlcat(qbuf, "ip6.int", sizeof(qbuf)) >= sizeof(qbuf)) {
-			free(buf);
-			h_errno = NETDB_INTERNAL;
-			__res_put_state(res);
-			return NS_NOTFOUND;
-		}
-		n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
-	}
 	if (n < 0) {
 		free(buf);
 		dprintf("res_nquery failed (%d)\n", res, n);
