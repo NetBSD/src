@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.51 2002/11/29 14:39:59 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.51.2.1 2004/08/12 20:44:20 jmc Exp $	*/
 
 /*-
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.51 2002/11/29 14:39:59 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.51.2.1 2004/08/12 20:44:20 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: conf.c,v 1.51 2002/11/29 14:39:59 lukem Exp $");
 #include <fcntl.h>
 #include <glob.h>
 #include <netdb.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
