@@ -1,9 +1,9 @@
-/*	$NetBSD: supcvers.c,v 1.4 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcvers.c,v 1.5 2002/07/10 20:19:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -30,11 +30,11 @@
  * Revision 1.8  92/08/11  12:07:51  mrt
  * 	Added use-rel-suffix option. Picked up STUMP changes.
  * 	[V7.26]
- * 
+ *
  * Revision 1.7  92/02/08  18:24:23  mja
  * 	Support for -k/-K and "keep" option. [V7.25]
  * 	[92/01/17            vdelvecc]
- * 
+ *
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.  Removed nameserver support. [V7.24]
  *

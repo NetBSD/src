@@ -1,9 +1,9 @@
-/*	$NetBSD: vprintf.c,v 1.7 1997/06/18 15:25:42 christos Exp $	*/
+/*	$NetBSD: vprintf.c,v 1.8 2002/07/10 20:19:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -32,21 +32,21 @@
  * Revision 2.5  89/09/08  18:15:55  mbj
  * 	Use _doprnt() for the Multimax (an "old" architecture).
  * 	[89/09/08            mbj]
- * 
+ *
  * Revision 2.4  89/08/03  14:40:10  mja
  * 	Add vsnprintf() routine.
  * 	[89/07/12            mja]
- * 
+ *
  * 	Terminate vsprintf() string with null byte.
  * 	[89/04/21            mja]
- * 
+ *
  * 	Change to use new hidden name for _doprnt on MIPS.
  * 	[89/04/18            mja]
- * 
+ *
  * Revision 2.3  89/06/10  14:13:43  gm0w
  * 	Added putc of NULL byte to vsprintf.
  * 	[89/06/10            gm0w]
- * 
+ *
  * Revision 2.2  88/12/13  13:53:17  gm0w
  * 	From Brad White.
  * 	[88/12/13            gm0w]
@@ -57,13 +57,13 @@
 #include <varargs.h>
 
 #ifdef _IOSTRG
-#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#define STRFLAG	(_IOSTRG|_IOWRT)/* no _IOWRT: avoid stdio bug */
 #else
-#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
+#define STRFLAG	(_IOREAD)	/* XXX: Assume svr4 stdio */
 #endif
 
 #ifdef DOPRINT_VA
-/* 
+/*
  *  system provides _doprnt_va routine
  */
 #define	_doprnt	_doprnt_va
@@ -110,7 +110,7 @@ vsprintf(s, fmt, args)
 	putc('\0', &fakebuf);
 	return (strlen(s));
 }
-#endif	/* NEED_VPRINTF */
+#endif				/* NEED_VPRINTF */
 
 #if	defined(NEED_VSNPRINTF) || defined(NEED_VPRINTF)
 int
@@ -123,13 +123,13 @@ vsnprintf(s, n, fmt, args)
 	fakebuf._flag = STRFLAG;
 	fakebuf._base = (void *) s;
 	fakebuf._ptr = (void *) s;
-	fakebuf._cnt = n-1;
+	fakebuf._cnt = n - 1;
 	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);
 	fakebuf._cnt++;
 	putc('\0', &fakebuf);
-	if (fakebuf._cnt<0)
-	    fakebuf._cnt = 0;
-	return (n-fakebuf._cnt-1);
+	if (fakebuf._cnt < 0)
+		fakebuf._cnt = 0;
+	return (n - fakebuf._cnt - 1);
 }
-#endif	/* NEED_VPRINTF || NEED_VSNPRINTF */
+#endif				/* NEED_VPRINTF || NEED_VSNPRINTF */
