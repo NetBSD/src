@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/04/13 15:36:10 msaitoh Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2002/02/22 19:44:04 uch Exp $	*/
 
 #ifndef _MMEYE_INTR_H_
 #define _MMEYE_INTR_H_
@@ -30,7 +30,7 @@
 
 /* IRQ */
 
-#define TMU1_IRQ 2
+#define TMU0_IRQ 2
 
 #define IRQ_LOW  2
 #define IRQ_HIGH 15

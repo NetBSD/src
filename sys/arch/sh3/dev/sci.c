@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.18 2002/02/12 15:26:46 uch Exp $ */
+/* $NetBSD: sci.c,v 1.19 2002/02/22 19:44:04 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -120,7 +120,7 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
-#include <sh3/pclock.h>
+#include <sh3/clock.h>
 #include <sh3/scireg.h>
 #include <sh3/tmureg.h>
 
@@ -275,35 +275,9 @@ void InitializeSci (unsigned int);
 #define I2C_ADRS (*(volatile unsigned int *)0xa8000000)
 #define USART_ON (unsigned int)~0x08
 
-static void WaitFor(int);
 void sci_putc(unsigned char);
 unsigned char sci_getc(void);
 int SciErrCheck(void);
-
-/*
- * WaitFor
- * : int mSec;
- */
-static void
-WaitFor(int mSec)
-{
-
-	/* Disable Under Flow interrupt, rising edge, 1/4 */
-	SHREG_TCR2 = 0x0000;
-
-	/* Set counter value (count down with 4 KHz) */
-	SHREG_TCNT2 = mSec * 4;
-
-	/* start Channel2 */
-	SHREG_TSTR |= TSTR_STR2;
-
-	/* wait for under flag ON of channel2 */
-	while ((SHREG_TCR2 & TCR_UNF) == 0)
-		;
-
-	/* stop channel2 */
-	SHREG_TSTR &= ~TSTR_STR2;
-}
 
 /*
  * InitializeSci
@@ -328,7 +302,7 @@ InitializeSci(unsigned int bps)
 	 * wait 1mSec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
 	 */
-	WaitFor(1);
+	delay(1000);
 
 	/* Send permission, Receive permission ON */
 	SHREG_SCSCR = SCSCR_TE | SCSCR_RE;

@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.20 2002/02/12 15:26:46 uch Exp $ */
+/* $NetBSD: scif.c,v 1.21 2002/02/22 19:44:04 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -120,9 +120,9 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
-#include <sh3/pclock.h>
+#include <sh3/clock.h>
 #include <sh3/scifreg.h>
-#include <sh3/tmureg.h>
+//#include <sh3/tmureg.h>
 
 #include <machine/shbvar.h>
 
@@ -276,35 +276,9 @@ void InitializeScif (unsigned int);
 #define CR      0x0D
 #define USART_ON (unsigned int)~0x08
 
-static void WaitFor(int);
 void scif_putc(unsigned char);
 unsigned char scif_getc(void);
 int ScifErrCheck(void);
-
-/*
- * WaitFor
- * : int mSec;
- */
-static void
-WaitFor(int mSec)
-{
-
-	/* Disable Under Flow interrupt, rising edge, 1/4 */
-	SHREG_TCR2 = 0x0000;
-
-	/* Set counter value (count down with 4 KHz) */
-	SHREG_TCNT2 = mSec * 4;
-
-	/* start Channel2 */
-	SHREG_TSTR |= TSTR_STR2;
-
-	/* wait for under flag ON of channel2 */
-	while ((SHREG_TCR2 & TCR_UNF) == 0)
-		;
-
-	/* stop channel2 */
-	SHREG_TSTR &= ~TSTR_STR2;
-}
 
 /*
  * InitializeScif
@@ -328,13 +302,13 @@ InitializeScif(unsigned int bps)
 	SHREG_SCSMR2 = 0x00;	/* 8bit,NonParity,Even,1Stop */
 
 	/* Bit Rate Register */
-	SHREG_SCBRR2 = divrnd(PCLOCK, 32 * bps) - 1;
+	SHREG_SCBRR2 = divrnd(sh_clock_get_pclock(), 32 * bps) - 1;
 
 	/*
 	 * wait 1mSec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
 	 */
-	WaitFor(1);
+	delay(1000);
 
 #if 0
 	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE;
@@ -635,7 +609,7 @@ scifparam(struct tty *tp, struct termios *t)
 		SHREG_SCFCR2 &= ~SCFCR2_MCE;
 	}
 
-	SHREG_SCBRR2 = divrnd(PCLOCK, 32 * ospeed) -1;
+	SHREG_SCBRR2 = divrnd(sh_clock_get_pclock(), 32 * ospeed) -1;
 
 	/*
 	 * Set the FIFO threshold based on the receive speed.

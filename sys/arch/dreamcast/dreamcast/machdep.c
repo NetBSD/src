@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/02/19 17:21:19 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2002/02/22 19:43:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ cpu_startup()
 {
 
 	sh3_startup();
+	printf("%s\n", cpu_model);
 
 	/* Safe for i/o port allocation to use malloc now. */
 	ioport_malloc_safe = 1;

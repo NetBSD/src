@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/02/06 16:45:20 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2002/02/22 19:44:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,8 +75,6 @@ static void findroot __P((void));
 void
 cpu_configure()
 {
-
-	startrtclock();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

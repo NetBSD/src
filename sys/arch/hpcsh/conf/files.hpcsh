@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.19 2002/02/17 21:01:15 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.20 2002/02/22 19:44:03 uch Exp $
 #
 maxpartitions 8
 
@@ -11,11 +11,10 @@ defflag debug_hpcsh.h	BUS_SPACE_DEBUG
 
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
-file	arch/hpcsh/hpcsh/clock.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
-#file	arch/hpcsh/hpcsh/bus_dma.c
+file	arch/hpcsh/hpcsh/clock_machdep.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 
 file	arch/hpc/hpc/kloader.c

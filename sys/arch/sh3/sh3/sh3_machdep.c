@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.24 2002/02/17 20:57:10 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.25 2002/02/22 19:44:05 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,13 +99,13 @@
 
 #include <sh3/cache.h>
 #include <sh3/mmu.h>
+#include <sh3/clock.h>
 
 char cpu_model[120];
 
 /* 
  * if PCLOCK isn't defined in config file, use this.
  */
-int sh3_pclock;
 int cpu_arch;
 int cpu_product;
 
@@ -131,6 +131,9 @@ sh_cpu_init(int arch, int product)
 
 	/* MMU access ops. */
 	sh_mmu_init();
+
+	/* Hardclock, RTC initialize. */
+	machine_clock_init();
 }
 
 void
@@ -147,7 +150,11 @@ sh3_startup()
 
 	printf(version);
 
-	sprintf(cpu_model, "Hitachi SH3");
+#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+	sprintf(cpu_model, "HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz",
+	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
+	    MHZ(sh_clock_get_pclock()));
+#undef MHZ
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -230,6 +237,10 @@ sh3_startup()
 	 * Print cache configuration.
 	 */
 	sh_cache_information();
+	/*
+	 * Print MMU configuration.
+	 */
+	sh_mmu_information();
 	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

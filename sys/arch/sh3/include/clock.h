@@ -1,8 +1,11 @@
-/*	$NetBSD: clockvar.h,v 1.1 2001/04/23 16:47:16 uch Exp $	*/
+/*	$NetBSD: clock.h,v 1.1 2002/02/22 19:44:01 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,6 +36,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void clock_init(void);
-int clock_get_cpuclock(void);
-int clock_get_pclock(void);
+/*
+ * void sh_clock_init(int flags, struct rtc_ops *):
+ *   flags:
+ *	SH_CLOCK_NORTC		... If SH RTC module is disabled, set this.
+ *				    internal module don't use RTCCLK.
+ *	SH_CLOCK_NOINITTODR	... Don't initialize RTC time.
+ *   rtc_ops:
+ *	Machine dependent RTC ops pointer. If NULL is specified, use SH
+ *	internal RTC.
+ *
+ * void machine_clock_init(void):
+ *	Implement machine specific part of clock routines.
+ *	must call sh_clock_init() at exit.
+ *
+ * int sh_clock_get_cpuclock(void): 
+ *	returns CPU clock estimated by sh_clock_init().
+ *
+ * int sh_clock_get_pclock(void):
+ *	returns PCLOCK. when PCLOCK is not specified by kernel configuration 
+ *	file, this value is estimated by sh_clock_init().
+ *
+ */
+struct rtc_ops;
+struct clock_ymdhms;
+
+void sh_clock_init(int, struct rtc_ops *);
+#define SH_CLOCK_NORTC			0x00000001
+#define SH_CLOCK_NOINITTODR		0x00000002
+void machine_clock_init(void);
+
+int sh_clock_get_cpuclock(void);
+int sh_clock_get_pclock(void);
+
+/* 
+ * SH RTC module interface.
+ */
+void sh_rtc_init(void *);
+void sh_rtc_get(void *, time_t, struct clock_ymdhms *);
+void sh_rtc_set(void *, struct clock_ymdhms *);
+
+/* 
+ * machine specific RTC ops 
+ */
+struct clock_ymdhms;
+struct rtc_ops {
+	void *_cookie;
+	void (*init)(void *);
+	void (*get)(void *, time_t, struct clock_ymdhms *);
+	void (*set)(void *, struct clock_ymdhms *);
+};
+

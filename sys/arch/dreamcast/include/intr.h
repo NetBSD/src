@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2000/12/11 18:19:15 marcus Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/02/22 19:44:02 uch Exp $	*/
 #ifndef _DREAMCAST_INTR_H_
 #define _DREAMCAST_INTR_H_
 
@@ -28,7 +28,7 @@
 #define SIR_HIGH	31
 
 /* IRQ */
-#define TMU1_IRQ	2
+#define TMU0_IRQ	2
 #define SCI_IRQ		6
 #define SCIF_IRQ	7
 #define WDOG_IRQ 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.9 2002/02/19 17:21:20 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.10 2002/02/22 19:44:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -402,8 +402,8 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1)
-		irq_num = TMU1_IRQ;
+	} else if (irl == INTEVT_TMU0)
+		irq_num = TMU0_IRQ;
 	else
 		irq_num = (irl - 0x200) >> 5;
 
@@ -511,8 +511,8 @@ mask_irq(irq)
 {
 	unsigned short mask;
 
-	if (irq == TMU1_IRQ) {
-		SHREG_IPRA &= 0xf0ff;
+	if (irq == TMU0_IRQ) {
+		SHREG_IPRA &= 0x0fff;
 	} else{
 		mask = IRQ_BIT(15 - irq);
 		MMTA_IMASK &= ~mask;
@@ -525,8 +525,8 @@ unmask_irq(irq)
 {
 	unsigned short mask;
 
-	if (irq == TMU1_IRQ) {
-		SHREG_IPRA |= ((15 - irq)<<8);
+	if (irq == TMU0_IRQ) {
+		SHREG_IPRA |= ((15 - irq)<<12);
 	} else{
 		mask = IRQ_BIT(15 - irq);
 		MMTA_IMASK |= mask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2002/02/19 17:21:20 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2002/02/22 19:44:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 
 #include <sh3/cpu.h>
 #include <sh3/mmu.h>
+#include <sh3/clock.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -84,10 +85,8 @@
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/kloader.h>
 
-#include <hpcsh/hpcsh/clockvar.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
 
-#include <sh3/pclock.h>
 #include <sh3/intcreg.h>
 
 #ifdef DEBUG
@@ -285,8 +284,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* 
 	 * Console
 	 */
-	clock_init();	/* serial console requires PCLOCK. estimate here */
-	sh3_pclock = clock_get_pclock();
 	consinit();
 #ifdef HPC_DEBUG_LCD
 	dbg_lcd_test();
@@ -407,9 +404,10 @@ void
 cpu_startup()
 {
 	platid_t cpu;
-	int cpuclock;
+	int cpuclock, pclock;
 
-	cpuclock = clock_get_cpuclock();
+	cpuclock = sh_clock_get_cpuclock();
+	pclock = sh_clock_get_pclock();
 
 	sh3_startup();
 
@@ -419,8 +417,7 @@ cpu_startup()
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
-	    MHZ(cpuclock), MHZ(PCLOCK));
-
+	    MHZ(cpuclock), MHZ(pclock));
 #ifdef SYSCALL_DEBUG
 	scdebug |= SCDEBUG_ALL;
 #endif
