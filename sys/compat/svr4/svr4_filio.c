@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.4 1996/03/30 22:37:52 christos Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.5 1996/04/11 12:54:40 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -53,17 +53,17 @@
 
 
 int
-svr4_filioctl(fp, cmd, data, p, retval)
+svr4_fil_ioctl(fp, p, retval, fd, cmd, data)
 	struct file *fp;
-	u_long cmd;
-	caddr_t data;
 	struct proc *p;
 	register_t *retval;
-{
-	struct filedesc *fdp = p->p_fd;
-	int error;
 	int fd;
+	u_long cmd;
+	caddr_t data;
+{
+	int error;
 	int num;
+	struct filedesc *fdp = p->p_fd;
 	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
 			fp->f_ops->fo_ioctl;
 
@@ -71,12 +71,10 @@ svr4_filioctl(fp, cmd, data, p, retval)
 
 	switch (cmd) {
 	case SVR4_FIOCLEX:
-		fd = fp - fdp->fd_ofiles[0]; 
 		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
 		return 0;
 
 	case SVR4_FIONCLEX:
-		fd = fp - fdp->fd_ofiles[0]; 
 		fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
 		return 0;
 
