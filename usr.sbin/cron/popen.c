@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.7 2002/10/02 06:47:48 itojun Exp $	*/
+/*	$NetBSD: popen.c,v 1.8 2003/08/07 11:25:17 agc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -15,10 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -40,7 +36,7 @@
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.7 2002/10/02 06:47:48 itojun Exp $");
+__RCSID("$NetBSD: popen.c,v 1.8 2003/08/07 11:25:17 agc Exp $");
 #endif
 #endif /* not lint */
 

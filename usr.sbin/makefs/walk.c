@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.13 2003/05/09 00:48:59 itojun Exp $	*/
+/*	$NetBSD: walk.c,v 1.14 2003/08/07 11:25:32 agc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,11 +54,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.13 2003/05/09 00:48:59 itojun Exp $");
+__RCSID("$NetBSD: walk.c,v 1.14 2003/08/07 11:25:32 agc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
