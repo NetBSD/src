@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.4 2002/08/26 11:16:02 scw Exp $
+#	$NetBSD: CAYMAN,v 1.5 2002/08/30 11:25:09 scw Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -10,9 +10,7 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"CAYMAN-$Revision: 1.4 $"
-
-options 	CPU_STB1
+#ident		"CAYMAN-$Revision: 1.5 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -71,6 +69,8 @@ femi0		at superhyway0 pport 0x08	# Flash/External memory
 #
 cprc0		at pbridge0			# Clock, Power & Reset Control
 intc0		at pbridge0			# Interrupt controller
+options 	SH5_INTC_IRL_MODE_INDEP		# Independent IRL[0-3] inputs
+
 tmu0		at pbridge0 ipl 14 intevt 0x400	# Timer
 scif0		at pbridge0 ipl 12 intevt 0x700	# On-chip serial controller
 rtc0		at pbridge0			# Battery-backed Date/Time chip
