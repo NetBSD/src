@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.26 2003/01/21 17:41:38 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.27 2003/03/10 00:56:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.26 2003/01/21 17:41:38 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.27 2003/03/10 00:56:38 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: readline.c,v 1.26 2003/01/21 17:41:38 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 #include "histedit.h"
 #include "readline/readline.h"
 #include "el.h"
