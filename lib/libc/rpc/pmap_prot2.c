@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot2.c,v 1.2 1995/02/25 03:01:50 cgd Exp $	*/
+/*	$NetBSD: pmap_prot2.c,v 1.3 1997/07/13 20:13:15 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_prot2.c,v 1.2 1995/02/25 03:01:50 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: pmap_prot2.c,v 1.3 1997/07/13 20:13:15 christos Exp $");
+#endif
 #endif
 
 /*
@@ -97,7 +101,7 @@ xdr_pmaplist(xdrs, rp)
 	 */
 	bool_t more_elements;
 	register int freeing = (xdrs->x_op == XDR_FREE);
-	register struct pmaplist **next;
+	register struct pmaplist **next	= NULL; /* pacify gcc */
 
 	while (TRUE) {
 		more_elements = (bool_t)(*rp != NULL);

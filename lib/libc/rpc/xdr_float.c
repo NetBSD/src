@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.11 1997/03/29 21:04:08 thorpej Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.12 1997/07/13 20:13:30 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_float.c,v 1.11 1997/03/29 21:04:08 thorpej Exp $";
+#if 0
+static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: xdr_float.c,v 1.12 1997/07/13 20:13:30 christos Exp $");
+#endif
 #endif
 
 /*

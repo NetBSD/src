@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.7 1996/12/20 20:23:22 cgd Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.8 1997/07/13 20:13:11 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getrpcport.c 1.3 87/08/11 SMI";*/
-/*static char *sccsid = "from: @(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: getrpcport.c,v 1.7 1996/12/20 20:23:22 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)getrpcport.c 1.3 87/08/11 SMI";
+static char *sccsid = "@(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: getrpcport.c,v 1.8 1997/07/13 20:13:11 christos Exp $");
+#endif
 #endif
 
 /*
@@ -49,6 +53,7 @@ static char *rcsid = "$NetBSD: getrpcport.c,v 1.7 1996/12/20 20:23:22 cgd Exp $"
 int
 getrpcport(host, prognum, versnum, proto)
 	char *host;
+	int prognum, versnum, proto;
 {
 	struct sockaddr_in addr;
 	struct hostent *hp;

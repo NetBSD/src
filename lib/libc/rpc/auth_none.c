@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.4 1997/07/13 20:13:02 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: auth_none.c,v 1.4 1997/07/13 20:13:02 christos Exp $");
+#endif
 #endif
 
 /*
@@ -52,11 +56,12 @@ static char *rcsid = "$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $";
 /*
  * Authenticator operations routines
  */
-static void	authnone_verf();
-static void	authnone_destroy();
-static bool_t	authnone_marshal();
-static bool_t	authnone_validate();
-static bool_t	authnone_refresh();
+
+static bool_t authnone_marshal __P((AUTH *, XDR *));
+static void authnone_verf __P((AUTH *));
+static bool_t authnone_validate __P((AUTH *, struct opaque_auth *));
+static bool_t authnone_refresh __P((AUTH *));
+static void authnone_destroy __P((AUTH *));
 
 static struct auth_ops ops = {
 	authnone_verf,
@@ -113,26 +118,35 @@ authnone_marshal(client, xdrs)
 	    ap->marshalled_client, ap->mcnt));
 }
 
+/*ARGSUSED*/
 static void 
-authnone_verf()
+authnone_verf(client)
+	AUTH *client;
 {
 }
 
+/*ARGSUSED*/
 static bool_t
-authnone_validate()
+authnone_validate(client, auth)
+	AUTH *client;
+	struct opaque_auth *auth;
 {
 
 	return (TRUE);
 }
 
+/*ARGSUSED*/
 static bool_t
-authnone_refresh()
+authnone_refresh(client)
+	AUTH *client;
 {
 
 	return (FALSE);
 }
 
+/*ARGSUSED*/
 static void
-authnone_destroy()
+authnone_destroy(client)
+	AUTH *client;
 {
 }

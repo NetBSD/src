@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.6 1997/03/13 19:47:42 mycroft Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,9 +30,13 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$NetBSD: getrpcent.c,v 1.6 1997/03/13 19:47:42 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
+#else
+__RCSID("$NetBSD: getrpcent.c,v 1.7 1997/07/13 20:13:10 christos Exp $");
+#endif
 #endif
 
 /*
@@ -63,6 +67,8 @@ static	struct rpcent *interpret __P((char *val, int len));
 
 static char RPCDB[] = "/etc/rpc";
 
+static struct rpcdata *_rpcdata __P((void));
+
 static struct rpcdata *
 _rpcdata()
 {
@@ -82,7 +88,7 @@ getrpcbynumber(number)
 	struct rpcent *rpc;
 
 	setrpcent(0);
-	while (rpc = getrpcent()) {
+	while ((rpc = getrpcent()) != NULL) {
 		if (rpc->r_number == number)
 			break;
 	}
@@ -98,7 +104,7 @@ getrpcbyname(name)
 	char **rp;
 
 	setrpcent(0);
-	while (rpc = getrpcent()) {
+	while ((rpc = getrpcent()) != NULL) {
 		if (strcmp(rpc->r_name, name) == 0)
 			break;
 		for (rp = rpc->r_aliases; *rp != NULL; rp++) {
@@ -141,8 +147,6 @@ endrpcent()
 struct rpcent *
 getrpcent()
 {
-	struct rpcent *hp;
-	int reason;
 	register struct rpcdata *d = _rpcdata();
 
 	if (d == 0)
