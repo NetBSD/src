@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.141.2.1 2001/05/01 12:27:37 he Exp $	*/
+/*	$NetBSD: cd.c,v 1.141.2.2 2001/05/06 20:49:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ cddetach(self, flags)
 {
 	struct cd_softc *cd = (struct cd_softc *) self;
 	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
 	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
@@ -245,9 +245,11 @@ cddetach(self, flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = CDMINOR(self->dv_unit, 0);
-	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
-	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = CDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
 
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
