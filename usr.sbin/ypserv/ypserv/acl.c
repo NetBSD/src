@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.3 1997/07/30 22:55:17 jtc Exp $	*/
+/*	$NetBSD: acl.c,v 1.4 1997/10/15 05:01:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: acl.c,v 1.4 1997/10/15 05:01:18 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
