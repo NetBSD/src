@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.14 2000/12/30 13:42:12 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.15 2000/12/31 16:09:34 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,24 +32,44 @@
  */
 
 /*
+ * The MMU on ARM2 and ARM3 systems is an Acorn custom chip called MEMC
+ * (Anna to her friends).  Each MEMC can handle up to 4MB of local DRAM,
+ * split into 128 pages.  Thus, a system with 16MB of RAM will have four
+ * MEMCs co-operating to run it.  In addition the the MMU, the master MEMC
+ * in a system handles video and sound DMA, the system clocks and the
+ * address decoding necessary to control accesses to the I/O system, ROMs
+ * and VIDC.
+ * 
+ * The memory layout provided by the MEMC is mostly fixed, with the bottom
+ * 32 MB being logically-mapped RAM and the next 16 MB being physically-
+ * mapped RAM.
+ *
+ * The MEMC provides some rudimentary access control over memory and I/O
+ * devices.  Code running in USR mode is allowed access to ROM and to those
+ * parts of logical RAM to which it's been granted access.  Code running in
+ * SVC mode can access everything.  The fact that SVC-mode code can't be
+ * prevented from writing to RAM makes it very difficult to emulate modified
+ * bits for pages that might be accessed from SVC mode.
+ *
+ * The page tables in the MEMC are implemented using content-addressable
+ * memory, with one cell for each physical page.  This means that it's
+ * impossible to have one physical page mapped in two locations.  For this
+ * reason, we try to treat the MEMC as a TLB, and to keep enough information
+ * around to quickly re-load mappings without troubling uvm_fault().
+ * Having multiple physical pages mapped to the same logical page is possible,
+ * and we arrange to map all unused physical pages in the same place.
+ * Accessing the logical page in question has undefined results, though, as
+ * it may end up with multiple DRAMs trying to drive the data bus at once.
+ *
  * The MEMC has variable page sizes, and moreover it's necessary to
  * change the page size depending on the amount of DRAM under the
  * MEMC's control.  This code currently only handles 32k pages.
  *
  * The bottom 32k of logically-mapped RAM is zero page, and is mapped
  * in all address spaces (though it's not accessible in user mode).
- * This contains interrupt vectors, and probably context-switching
- * code.  It doesn't appear in any pmap as it's never unmapped.
- * 
- * Wired pages are an interesting proposition.  We aren't allowed to
- * let page faults on them reach the MI fault handler, and in general
- * we shouldn't let them get dropped from the map in the MEMC at all.
- * This is tricky when we have kernel and user space shared, as we
- * have to ensure that no wired page in the kernel is mapped by any
- * user process or vice versa.
- */
-
-/*
+ * This contains exception vectors.  It doesn't appear in any pmap as
+ * it's never unmapped.
+ *
  * On an ARM3, the cache must be flushed whenever:
  * 
  * 1 - We remove read access to a page, since we need to ensure reads
@@ -63,9 +83,7 @@
  *     /dev/mem.  In all other cases, a physical page should only be
  *     accessed through one of its mappings (virtual if it has one,
  *     physical if it doesn't).  pmap_find is useful for this.
- */
-
-/*
+ *
  * We assume the following rules apply:
  *
  * Accesses to memory managed by user pmaps will always be from USR
@@ -73,7 +91,8 @@
  * the MEMC).
  *
  * Accesses to memory managed by the kernel pmap will always be from
- * SVC mode.
+ * SVC mode, and pmap_enter() will be explicitly told what to do to
+ * the referenced/modified bits.
  *
  * Breaking these rules (especially the first) is likely to upset
  * referenced/modified emulation.
@@ -86,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2000/12/30 13:42:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2000/12/31 16:09:34 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
