@@ -1,4 +1,4 @@
-.\"	$NetBSD: mixerctl.conf.5,v 1.2 2002/06/02 19:05:09 jmcneill Exp $
+.\"	$NetBSD: mixerctl.conf.5,v 1.3 2002/06/02 19:07:25 wiz Exp $
 .\"
 .\" Copyright 2002 Jared D. McNeill <jmcneill@netbsd.org>
 .\" All rights reserved.
@@ -36,20 +36,26 @@
 .Sh DESCRIPTION
 The
 .Pa /etc/mixerctl.conf
-file consists of mixerctl(1) variables to set at boot time.
+file consists of
+.Xr mixerctl 1
+variables to set at boot time.
+Each line of
+.Nm
+has the following format:
+.Dl variable=value
 .Pp
-To generate a mixerctl.conf from the current mixer settings, execute:
-.Pp
-.Bl -tag -width "mixerctl -a >/etc/mixerctl.conf"
-.It Pa mixerctl.conf -a >/etc/mixerctl.conf
-.El
-.Pp
+To generate a
+.Nm
+from the current mixer settings, execute:
+.Dl Ic mixerctl -a \*[Gt] /etc/mixerctl.conf
 .Sh FILES
 .Bl -tag -width /etc/mixerctl.conf -compact
 .It Pa /etc/mixerctl.conf
 .El
 .Sh EXAMPLES
-Example mixer settings for an esa(4) audio adapter.
+Example mixer settings for an
+.Xr esa 4
+audio adapter:
 .Bd -literal
 outputs.master=255,255
 outputs.master.mute=off
