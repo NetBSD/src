@@ -2,71 +2,123 @@ This file describes various problems that have been encountered in
 compiling, installing and running groff.  Suggestions for additions or
 other improvements to this file are welcome.
 
-* I am having problems compiling groff with g++ on a DECstation or
-other machine using a MIPS processor (such as SGI machines).
+* gcc 2.3.3 fails to compile pic/object.cc.
 
-Try getting g++ from foobar.colorado.edu:pub/Gnu-For-Pmax.
+Apply the following patch:
 
-* I am having problems compiling groff with g++ on a 386 PC
-running SVR3.2.
+Thu Apr  1 12:06:03 1993  Brendan Kehoe  (brendan@lisa.cygnus.com)
 
-I recommend using Michael Bloom's GNU COFF patches
-(tut.cis.ohio-state.edu:pub/gnu/coff/gnu-coff.tar.Z).
+	* cp-init.c (expand_default_init): Don't clear DECL_REGISTER.
+
+*** cp-init.c.~2~	Mon Mar 29 21:48:36 1993
+--- cp-init.c	Thu Apr  1 12:00:33 1993
+*************** expand_default_init (binfo, true_exp, ex
+*** 1141,1149 ****
+      }
+  
+-   /* ARM $7.1.1: "[register] may be ignored and in most implementations
+-      it will be ignored if the address of the variable is taken."
+-      Since we're likely to do just that in the ctor call, clear this.  */
+-   DECL_REGISTER (exp) = 0;
+- 
+    rval = build_method_call (exp, constructor_name (type),
+  			    parms, binfo, flags|xxref_init_possible);
+--- 1141,1144 ----
+
+
+* On a DECstation or other machine using a MIPS cpu, gcc/g++ 2.2.2
+gets a fatal signal while compiling tbl/main.c and tbl/table.c.
+
+Upgrade to gcc 2.3 or compile those files without -O.
 
 * I get lots of `numeric overflow' error messages whenever I run
 groff; I compiled groff with AT&T C++ 2.0 with an ANSI C compiler.
 
-Include -DCFRONT_ANSI_BUG in CPPDEFINES in the top-level Makefile.  If
-that doesn't solve the problem, define INT_MIN as -INT_MAX in
-lib/lib.h.
-
-* Using SunOS 4.1, gtroff aborts in malloc.
-
-Include -DSUNOS_LOCALTIME_BUG in MALLOCFLAGS in the top-level Makefile.
-
-* g++ 1.37.2 alpha gives the following error while compiling groff:
-Failed assertion `TREE_CHAIN (list) == NULL_TREE' at line 777 of `cplus-tree.c'
-
-Apply the fix given in the groff INSTALL file.  I recommend using g++
-1.37.1 in preference to 1.37.2 alpha.
-
-* When I try to compile groff with g++, I get lots of parse errors
-from files in /usr/include.
-
-You must install C++ versions of the standard include files; these are
-included with libg++.
-
-* g++ complains about conflicting declarations of fmod() while
-compiling pic.tab.c; I'm using a 68k based machine.
-
-This is a bug in the libg++ header files.  Apply the fix given in the
-INSTALL file.
+Make sure -DCFRONT_ANSI_BUG is included in DEFINES in the top-level
+Makefile.  If that doesn't solve the problem, define INT_MIN as
+-INT_MAX in libgroff/lib.h.
 
 * I get errors when I try to compile groff with Sun C++.
 
-Groff requires ANSI C style header files.  The Sun C++ header files
-need some changes to meet this requirement: <string.h> must declare
-the mem* functions, (just add `#include <memory.h>' to <string.h>);
-the first argument to fopen and freopen should be declared as `const
-char *'; the first argument to fread should be declared as `void *';
-malloc should be declared to return `void *'.  You can either change
-them in place, or copy them to some other directory and include that
-directory with a -I option.
+Groff requires header files that are moderately compatible with AT&T
+C++ and ANSI C.  With some versions of Sun C++, the supplied header
+files need some of the following changes to meet this requirement:
+<string.h> must declare the mem* functions, (just add `#include
+<memory.h>' to <string.h>); the first argument to fopen and freopen
+should be declared as `const char *'; the first argument to fread
+should be declared as `void *'; the first argument to fwrite should be
+declared as `const void *'; malloc should be declared to return `void
+*'; in <alloca.h>, the declaration `extern "C" { void
+*__builtin_alloca(int); }' should be added; declarations of getopt(),
+optarg, optind and opterr should be added to <stdlib.h>; in
+<sys/signal.h> the return type and the second argument type of
+signal() should be changed to be `void (*)(int)'.
 
-* I get the error `make[2]: execve: /bin/sh: Arg list too long.'.
+You can either change them in place, or copy them to some other
+directory and include that directory with a -I option.
 
-If you're using GNU make, try using /bin/make instead.  Otherwise if
-you have the `env' command, try changing occurrences of $(MAKE) in the
-top-level Makefile to
-   env - PATH=/bin:/usr/bin $(MAKE)
+* I get errors when I try to compile groff with DEC C++.
 
-* The pic Makefile refers to a program called gperf; I can't find
-gperf anywhere.
+Fix the declaration of write() in <unistd.h> so that the second
+argument is a const char *.  Fix the declaration of open() in
+<sys/file.h> so that the first argument is a const char *.
 
-You don't need gperf unless you want to add new keywords to gpic:
-gperf is only used to generate key.c and a suitable key.c is supplied
-in the distribution.  Gperf is distributed with libg++; it's a perfect
-hash function generator
+* On Ultrix, the make stops with the message
+
+  *** Error code 1
+
+  Stop.
+
+for no apparent reason.
+
+Use GNU make.
+
+* I'm having problems compiling groff on 386BSD 0.1.
+
+If you're using ash as /bin/sh, you'll need the following patch.
+
+*** gendef.sh.org	Sun Jun 30 13:30:36 1991
+--- gendef.sh	Sun Feb 28 10:23:49 1993
+***************
+*** 3,9 ****
+  file=$1
+  shift
+  
+! defs="#define $1"
+  shift
+  for def
+  do
+--- 3,10 ----
+  file=$1
+  shift
+  
+! x=$1
+! defs="#define $x"
+  shift
+  for def
+  do
+
+You'll also need to change dirnamemax.c so that it doesn't use
+pathconf().
+
+* While compiling on Xenix, ranlib libgroff.a fails.
+
+The system ranlib can't handle externals longer than 40 characters.
+Use the ranlib included in demon.co.uk:/pub/xenix/g++-1.40.3a.v1
+instead.
+
+* Groff can't handle my troff document. It works fine with AT&T troff.
+
+Read the section on incompatibilities in gtroff(1).  Try using the -C
+option.  Alternatively there's the sed script in tmac/fixmacros.sed
+which will attempt to edit a file of macros so that it can be used
+with groff without the -C flag.
+
+* groff -Tdvi produces dvi files that use fonts at weird magnifications.
+
+Yes, it does.  You may need to compile fonts with Metafont at these
+magnifications. The CompileFonts script in the devdvi/generate
+directory may help you to do this. (It will take a *long* time.)
 
 * pic output is not centered horizontally; pictures sometimes run off
 the bottom of the page.
@@ -94,17 +146,6 @@ bounding box.  For more detail on these requirements, read the
 specification of Encapsulated PostScript format.  (This is available
 from the Adobe file server; send a message with a body of `help' to
 ps-file-server@adobe.com.)
-
-* I am trying to include a PostScript illustration by using:
-  \!%
-  \!PB
-  <lines of PostScript, each preceded by \!>
-  \!PE
-  \!.
-
-This mechanism for including PostScript illustrations is a feature
-peculiar to Adobe's TranScript software.  It is not supported by
-groff.  You should switch to using the PSPIC macro.
 
 * I've configured groff for A4 paper, but gtroff still seems to think
 that the length of a page (as returned by \n(.p) is 11 inches.
@@ -161,8 +202,7 @@ line join parameters to 1 while printing tpic specials.
 by about 0.7 inches; I'm using 8.5x11 inch paper.
 
 Make sure that PAGE is defined to be `letter' in the top-level
-Makefile.  If you failed to do this, you can fix the problem by doing:
-  cp ps/devps/DESC-letter /usr/local/lib/groff/font/devps/DESC
+Makefile.
 
 * When I try to print the output of groff -Tps, I get no output at all
 from the printer, and the log file shows the error
@@ -170,45 +210,34 @@ from the printer, and the log file shows the error
 I using TranScript spooling software.
 
 This is a bug in the page reversal filter in early versions of
-TranScript.  Include -DBROKEN_SPOOLER in CPPDEFINES in the top-level
-Makefile, and rebuild grops.
+TranScript.  Change the `broken' parameter in
+/usr/local/lib/groff/font/devps/DESC to 7.
 
 * When I preview groff -Tps output using the Sun OpenWindows 2.0 pageview
 program, all the pages are displayed on top of each other.
 
-This is a defect in pageview.  Include -DBROKEN_SPOOLER in CPPDEFINES
-in the top-level Makefile, and rebuild grops.
+This is a defect in pageview.  Change the `broken' parameter in
+/usr/local/lib/groff/font/devps/DESC to 2.
 
-* When I try to preview the output of groff -Tps using ralpage, I get
-errors from ralpage.
-
-This is a bug in ralpage.  You may be able to work around the bug by
-defining MF and SF in ps/devps/prologue using `def' instead of `bind
-def'.
-
-* With groff -TX75 or -TX100, I can only view the first page.
+* With groff -TX75, -TX100or -X, I can only view the first page.
 
 The left mouse button brings up a menu that allows you to view other
 pages.
 
-* Documents that use mainly 12-point text exhibit poor letter spacing
-when previewed with groff -TX75 or -TX100.
-
-Use groff -TX75-12 or groff -TX100-12.
-
 * When I print the output of groff -Tdvi, I just get a black dot in
 upper left corner.
 
-Some dvi drivers (notably early versions of xtex) do not correct
+Some dvi drivers (notably early versions of xtex) do not correctly
 handle dvi files that use a resolution different from that used by dvi
 files produced by TeX.  Try getting a more up to date driver.
 
-* I get lots of errors when I use groff with -mm.
+* I get lots of errors when I use groff with the AT&T -mm macros.
 
--mm needs a few changes to work with groff; `make install.mm' will
-copy your -mm macros to groff's macro directory and make the necessary
-changes.  You may need to edit the commands for the install.mm target
-in the Makefile.
+The AT&T -mm macros need a few changes to work with groff; `make
+install.dwbmm' will copy your -mm macros to groff's macro directory
+and make the necessary changes.  You may need to edit the commands for
+the install.mm target in the Makefile.  Alternatively use the groff
+-mm macros.
 
 * gtroff doesn't understand lines like `.ce99' with no space between
 the name of the request or macro and the arguments.
@@ -246,12 +275,6 @@ you will need to change the line
 to
   .el .ds an-extra3 UNIX Programmer's Manual
 
-* Where is the document ``Groff Character Names'' that is mentioned in various
-man pages?
-
-It is in doc/chars.tr.  You can print it out with each device to see
-what characters are available for that device.
-
 * While formatting a manual page, groff complains about not being able to
 break lines.  The problem seems to be caused by a line like:
   .TP \w'label'+2
@@ -267,19 +290,169 @@ argument, so that it will be evaluated as if it were
 The solution is to fix the manual page:
   .TP \w'label'u+2
 
+* I'm having problems formatting Ultrix man pages with groff -man.
+
+The Ultrix man pages use a number of non-standard extensions to the
+Unix man macros.  One solution is to use the Ultrix -man macros with
+groff.  Rename /usr/local/lib/groff/tmac/tmac.an to
+/usr/local/lib/groff/tmac/tmac.an.gnu, copy /usr/lib/tmac/tmac.an to
+/usr/local/lib/groff/tmac/tmac.an and apply the following patch (from
+Frank Wortner):
+
+*** /usr/local/lib/groff/tmac/tmac.an     Wed Sep  9 12:29:28 1992
+--- /usr/lib/tmac/tmac.an       Fri Jul 24 19:58:19 1992
+***************
+*** 489,495 ****
+  .     \" make special case of shift out of italic
+  .de }S
+  .ds ]F
+! .if \\$12 .if !\\$5 .ds ]F \^
+  .ie !\\$4 .}S \\$2 \\$1 "\\$3\f\\$1\\$4\\*(]F" "\\$5" "\\$6" "\\$7" "\\$8" "\\$9"
+  .el \\$3
+  .}f
+--- 489,495 ----
+  .     \" make special case of shift out of italic
+  .de }S
+  .ds ]F
+! .if \\$12 .if !\\$5 .ds ]F\^
+  .ie !\\$4 .}S \\$2 \\$1 "\\$3\f\\$1\\$4\\*(]F" "\\$5" "\\$6" "\\$7" "\\$8" "\\$9"
+  .el \\$3
+  .}f
+
+Another possible solution is to install tmac/man.ultrix as
+/usr/local/lib/groff/tmac/man.local.
+
+* I'm having problems formatting HP-UX 9.0 man pages with groff -man.
+
+Rename /usr/local/lib/groff/tmac/tmac.an to (for example)
+/usr/local/lib/groff/tmac/tmac.gan, copy HP's tmac.an into
+/usr/local/lib/groff/tmac/tmac.an, and either put `.cp 1' at the
+beginning or filter it (and any files it .so's) through
+tmac/fixmacros.sed.
+
+* I'm having problems formatting man pages produced by the perl
+wrapman script.
+
+Some versions of wrapman have a superfluous blank line before the .TH
+line.  This must be deleted.  Then either use groff -C, or apply the
+following patch:
+
+*** wrapman.~2~	Sun Jan 19 12:10:24 1992
+--- wrapman	Fri Apr  2 12:12:57 1993
+***************
+*** 35,41 ****
+      $line1 .= <IN> if $line1 =~ /eval/;
+      $line1 .= <IN> if $line1 =~ /argv/;
+      $line2 = <IN>;
+!     next if $line2 eq "'di';\n";
+  
+      # Pull the old switcheroo.
+  
+--- 35,41 ----
+      $line1 .= <IN> if $line1 =~ /eval/;
+      $line1 .= <IN> if $line1 =~ /argv/;
+      $line2 = <IN>;
+!     next if $line2 eq "'di ';\n";
+  
+      # Pull the old switcheroo.
+  
+***************
+*** 49,56 ****
+  
+      print OUT $line1;
+      print OUT <<EOF;
+! 'di';
+! 'ig00';
+  #
+  # $header
+  #
+--- 49,57 ----
+  
+      print OUT $line1;
+      print OUT <<EOF;
+! 'di ';
+! 'ds 00 \\"';
+! 'ig 00 ';
+  #
+  # $header
+  #
+***************
+*** 72,85 ****
+  
+      # These next few lines are legal in both Perl and nroff.
+  
+! $null.00;                       # finish .ig
+   
+  'di           \\" finish diversion--previous line must be blank
+  .nr nl 0-1    \\" fake up transition to first page again
+  .nr % 0         \\" start at page 1
+! '; __END__ ##### From here on it's a standard manual page #####
+  .TH $PROG 1 "$month $mday, 19$year"
+- .AT 3
+  .SH NAME
+  $prog \\- whatever
+  .SH SYNOPSIS
+--- 73,85 ----
+  
+      # These next few lines are legal in both Perl and nroff.
+  
+! $null.00 ;                      # finish .ig
+   
+  'di           \\" finish diversion--previous line must be blank
+  .nr nl 0-1    \\" fake up transition to first page again
+  .nr % 0         \\" start at page 1
+! .\\"'; __END__ ##### From here on it's a standard manual page #####
+  .TH $PROG 1 "$month $mday, 19$year"
+  .SH NAME
+  $prog \\- whatever
+  .SH SYNOPSIS
+
+
 * When I preview documents using -TX75 or -TX100, the layout is not the same
-as when I print the document with -Tps or -Tdvi: the line and page
-breaks come in different places.
+as when I print the document with -Tps: the line and page breaks come
+in different places.
 
-This is the way xditview works: the widths of characters in the X
-fonts don't match the widths of characters in the PostScript fonts, so
-the layout usually comes out differently.  The idea of xditview is
-just to give you a readable representation of your document on screen,
-rather than to give you a simulation of how it will look when printed.
-If you want that, then you could use a PostScript previewer or a dvi
-previewer according as you're using -Tps or -Tdvi.  Alternatively you
-could port xtroff.
+Use groff -X -Tps.
 
-* In gpic expressions don't work at all. I'm using g++ 1.39 on a sparc.
+* When I try to run gxditview, I get the error:
+Error: Widget viewport has zero width and/or height
 
-This is a bug in gcc/g++ 1.39.  Apply the fix given in the INSTALL file.
+This error means you haven't correctly installed the application
+defaults file, GXditview.ad; ``make install'' does this for you
+automatically, so either you didn't do ``make install'', or you don't
+have imake configured correctly.
+
+* groff uses up an enormous amount of memory processing large files.
+I'm using 386BSD 0.1.
+
+386BSD includes an old version of g++, 1.39, which has a bug that
+causes a major memory leak in gtroff.  Apply the following fix to g++
+and recompile groff:
+
+*** cplus-decl.c.~1~	Mon Aug  6 05:28:59 1990
+--- cplus-decl.c	Wed Jun  5 08:55:04 1991
+***************
+*** 7951,7961 ****
+  
+        /* At the end, call delete if that's what's requested.  */
+        if (TREE_GETS_DELETE (current_class_type))
+  	exprstmt = build_method_call (build1 (NOP_EXPR, TYPE_POINTER_TO (current_class_type), error_mark_node),
+  				      get_identifier (OPERATOR_DELETE_FORMAT),
+! 				      build_tree_list (NULL_TREE, integer_zero_node),
+  				      NULL_TREE, LOOKUP_NORMAL);
+        else if (TYPE_USES_VIRTUAL_BASECLASSES (current_class_type))
+  	exprstmt = build_x_delete (ptr_type_node, current_class_decl, 0);
+        else
+  	exprstmt = 0;
+--- 7951,7961 ----
+  
+        /* At the end, call delete if that's what's requested.  */
+        if (TREE_GETS_DELETE (current_class_type))
+  	exprstmt = build_method_call (build1 (NOP_EXPR, TYPE_POINTER_TO (current_class_type), error_mark_node),
+  				      get_identifier (OPERATOR_DELETE_FORMAT),
+! 				      build_tree_list (NULL_TREE, current_class_decl),
+  				      NULL_TREE, LOOKUP_NORMAL);
+        else if (TYPE_USES_VIRTUAL_BASECLASSES (current_class_type))
+  	exprstmt = build_x_delete (ptr_type_node, current_class_decl, 0);
+        else
+  	exprstmt = 0;

@@ -1,8 +1,13 @@
-#	@(#)Makefile	6.3 (Berkeley) 5/6/91
+# Makefile for groff
 
-SUBDIR=		libgroff libdriver groff troff tbl eqn pic \
-		grotty grops devices macros
+SUBDIR=		libgroff libdriver libbib\
+		groff troff nroff tbl pic eqn grops grotty grodvi\
+		refer lookbib indxbib lkbib \
+		tfmtodit addftinfo pfbtops psbb \
+		devices tmac mm man \
+		xditview
 
-depend:
+# BSD already provides soelim 
+MISC=		soelim
 
 .include <bsd.subdir.mk>
