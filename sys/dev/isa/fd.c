@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.15 2001/05/19 12:04:07 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.16 2001/05/27 18:16:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,8 @@
  * XXX This driver should be properly MI'd some day, but this allows us
  * XXX to eliminate a lot of code duplication for now.
  */
-#if !defined(alpha) && !defined(bebox) && !defined(i386) && !defined(prep) && !defined(atari)
+#if !defined(alpha) && !defined(algor) && !defined(atari) && \
+    !defined(bebox) && !defined(i386) && !defined(prep)
 #error platform not supported by this driver, yet
 #endif
 
@@ -119,6 +120,7 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/conf.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -129,12 +131,8 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
 #if defined(atari)
-#include <sys/conf.h>
-
-bdev_decl(fd);
-cdev_decl(fd);
-
 /*
  * On the atari, it is configured as fdcisa
  */
@@ -143,10 +141,7 @@ cdev_decl(fd);
 
 #define	fd_cd	fdisa_cd
 #define	fd_ca	fdisa_ca
-
-#else
-#include <machine/conf.h>
-#endif /* defined(atari) */
+#endif /* atari */
 
 #include <machine/intr.h>
 
@@ -167,6 +162,9 @@ cdev_decl(fd);
 #endif
 
 #endif /* i386 */
+
+bdev_decl(fd);
+cdev_decl(fd);
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
