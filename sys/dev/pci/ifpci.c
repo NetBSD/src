@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.6 2002/04/06 22:26:38 martin Exp $
+ *	$Id: ifpci.c,v 1.7 2002/04/08 12:20:50 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.6 2002/04/06 22:26:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.7 2002/04/08 12:20:50 martin Exp $");
 
 
 #include <sys/param.h>
@@ -427,7 +427,7 @@ ifpci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, STI_ATTACH, 0);
 		isdn_detach_bri(psc->sc_isic.sc_l3token);
 		psc->sc_isic.sc_l3token = NULL;
@@ -926,7 +926,7 @@ avma1pp_intr(void * parm)
 #define OURS	ret = 1
 	u_char stat;
 
-	if (sc->sc_dying)
+	if (sc->sc_intr_valid != ISIC_INTR_VALID)
 		return 0;
 
 	stat = bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET);
