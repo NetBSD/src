@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2003/12/04 17:17:36 drochner Exp $	*/
 
 /*  Copyright (C) 1996, 1997, 2000 N.M. Maclaren
     Copyright (C) 1996, 1997, 2000 The University of Cambridge
@@ -243,7 +243,24 @@ typedef struct {
     double dispersion, weight, when, offset, error;
 } data_record;
 
-
+void syntax(int);
+void display_data(ntp_data *);
+void display_packet(unsigned char *, int);
+void pack_ntp(unsigned char *, int, ntp_data *);
+void unpack_ntp(ntp_data *, unsigned char *, int);
+void make_packet(ntp_data *, int);
+int read_packet(int, ntp_data *, double *, double *);
+void format_time(char *, int, double, double, double, double);
+double reset_clock(double, double, int);
+void run_server(void);
+double estimate_stats(int *, int *, data_record *, double, double *, double *,
+	double *, double *, double *, double *, int *, int);
+double correct_drift(double *, double *, double);
+void handle_saving(int, int *, int *, int *, data_record *, double *,
+	double *, double *);
+void query_savefile(void);
+void run_daemon(char **, int, int);
+void run_client(char **, int);
 
 void fatal (int syserr, const char *message, const char *insert) {
 
