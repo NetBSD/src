@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 1999/03/26 22:00:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -515,7 +515,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 			/*
 			 * If the memory must remain coherent with the
 			 * cache then we must make the memory uncacheable
