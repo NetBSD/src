@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	8.2 (Berkeley) 10/12/93";*/
-static char *rcsid = "$Id: csh.c,v 1.8 1994/09/23 11:16:28 mycroft Exp $";
+static char *rcsid = "$Id: csh.c,v 1.9 1995/01/15 09:47:36 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -616,9 +616,6 @@ importpath(cp)
 	for (;;) {
 	    if ((c = *dp) == ':' || c == 0) {
 		*dp = 0;
-		if ((*cp != '/' || *cp == '\0') && (euid == 0 || uid == 0)) 
-		    (void) fprintf(csherr,
-	    "Warning: imported path contains relative components\n");
 		pv[i++] = Strsave(*cp ? cp : STRdot);
 		if (c) {
 		    cp = dp + 1;
