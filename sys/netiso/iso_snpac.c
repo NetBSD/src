@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.29 2003/08/07 16:33:37 agc Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.30 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.29 2003/08/07 16:33:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.30 2003/10/30 01:43:10 simonb Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -519,7 +519,6 @@ snpac_ioctl(so, cmd, data, p)
 	struct proc *p;
 {
 	struct systype_req *rq = (struct systype_req *) data;
-	int error;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
@@ -532,7 +531,7 @@ snpac_ioctl(so, cmd, data, p)
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

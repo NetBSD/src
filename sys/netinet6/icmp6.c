@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.101 2003/09/04 09:17:05 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.102 2003/10/30 01:43:08 simonb Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.101 2003/09/04 09:17:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.102 2003/10/30 01:43:08 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2187,8 +2187,6 @@ icmp6_redirect_input(m, off)
 	int icmp6len = ntohs(ip6->ip6_plen);
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-	u_char *redirhdr = NULL;
-	int redirhdrlen = 0;
 	struct rtentry *rt = NULL;
 	int is_router;
 	int is_onlink;
@@ -2310,11 +2308,6 @@ icmp6_redirect_input(m, off)
 	if (ndopts.nd_opts_tgt_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
-	}
-
-	if (ndopts.nd_opts_rh) {
-		redirhdrlen = ndopts.nd_opts_rh->nd_opt_rh_len;
-		redirhdr = (u_char *)(ndopts.nd_opts_rh + 1); /* xxx */
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {

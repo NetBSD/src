@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.71 2003/10/03 20:56:11 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.72 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.71 2003/10/03 20:56:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.72 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -155,7 +155,6 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	struct route_in6 ip6route;
 	struct sockaddr_in6 *dst;
 	int error = 0;
-	struct in6_ifaddr *ia;
 	u_long mtu;
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
 	struct ip6_exthdrs exthdrs;
@@ -542,7 +541,6 @@ skip_ipsec2:;
 			/* XXX in6_ifstat_inc(ifp, ifs6_out_discard); */
 			goto bad;
 		}
-		ia = ifatoia6(ro->ro_rt->rt_ifa);
 		ifp = ro->ro_rt->rt_ifp;
 		ro->ro_rt->rt_use++;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
@@ -637,7 +635,6 @@ skip_ipsec2:;
 				/* XXX in6_ifstat_inc(ifp, ifs6_out_discard) */
 				goto bad;
 			}
-			ia = ifatoia6(ro->ro_rt->rt_ifa);
 			ifp = ro->ro_rt->rt_ifp;
 			ro->ro_rt->rt_use++;
 		}

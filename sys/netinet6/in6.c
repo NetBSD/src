@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.81 2003/10/15 22:55:34 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.82 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.81 2003/10/15 22:55:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.82 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -1001,10 +1001,8 @@ in6_update_ifa(ifp, ifra, ia)
 	 */
 	if (dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
-		int e;
-
 		if ((ia->ia_flags & IFA_ROUTE) != 0 &&
-		    (e = rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST)) != 0) {
+		    rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST) != 0) {
 			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
 			    "a route to the old destination: %s\n",
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));

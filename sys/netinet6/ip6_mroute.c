@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.57 2003/10/15 22:55:34 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.58 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.57 2003/10/15 22:55:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.58 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1784,7 +1784,6 @@ pim6_input(mp, offp, proto)
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
 		u_int32_t *reghdr;
-		int rc;
 
 		++pim6stat.pim6s_rcv_registers;
 
@@ -1886,7 +1885,7 @@ pim6_input(mp, offp, proto)
 		}
 #endif
 
-		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
+		looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
 
