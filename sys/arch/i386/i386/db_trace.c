@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.9 1994/10/09 13:27:09 mycroft Exp $
+ *	$Id: db_trace.c,v 1.10 1994/10/09 13:48:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -134,7 +134,6 @@ db_nextframe(fp, ip, argp, is_trap)
 	int *argp;			/* in */
 	int is_trap;			/* in */
 {
-	db_regs_t *saved_regs;
 
 	switch (is_trap) {
 	    case 0:
@@ -143,33 +142,21 @@ db_nextframe(fp, ip, argp, is_trap)
 		*fp = (struct i386_frame *)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
+
+	    case SYSCALL:
 	    case TRAP:
-	    default:
-		/*
-		 * We know that trap() has 1 argument and we know that
-		 * it is an (int *).
-		 */
-#if 0
-		saved_regs = (db_regs_t *)
-			     db_get_value((int)argp, 4, FALSE);
-#endif
-		saved_regs = (db_regs_t *)argp;
-		db_printf("--- trap (number %d) ---\n",
-			  saved_regs->tf_trapno & 0xffff);
-		db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
-		db_printf(":\n");
-		*fp = (struct i386_frame *)saved_regs->tf_ebp;
-		*ip = (db_addr_t)saved_regs->tf_eip;
-		break;
+	    default: {
+		struct trapframe *tf;
 
-	    case SYSCALL: {
-		struct trapframe	*saved_regs = (struct trapframe *)argp;
-
-		db_printf("--- syscall (number %d) ---\n", saved_regs->tf_eax);
-		db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
+		/* The only argument to trap() or syscall() is the trapframe. */
+		tf = (struct trapframe *)argp;
+		db_printf("--- %s (number %d) ---\n",
+		    is_trap == SYSCALL ? "syscall" : "trap",
+		    is_trap == SYSCALL ? tf->tf_eax : tf->tf_trapno);
+		db_printsym(tf->tf_eip, DB_STGY_XTRN);
 		db_printf(":\n");
-		*fp = (struct i386_frame *)saved_regs->tf_ebp;
-		*ip = (db_addr_t)saved_regs->tf_eip;
+		*fp = (struct i386_frame *)tf->tf_ebp;
+		*ip = (db_addr_t)tf->tf_eip;
 		break;
 	    }
 	}
