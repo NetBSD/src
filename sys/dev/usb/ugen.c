@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.41 2000/09/08 00:55:26 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.42 2000/09/08 01:27:12 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -151,9 +151,8 @@ Static struct cdevsw ugen_cdevsw = {
 
 Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, 
 		     usbd_status status);
-Static void ugen_isoc_rintr __P((usbd_xfer_handle xfer,
-                               usbd_private_handle addr,
-                               usbd_status status));
+Static void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
+			    usbd_status status);
 Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long, 
@@ -819,10 +818,8 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 }
 
 Static void
-ugen_isoc_rintr(xfer, addr, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle addr;
-	usbd_status status;
+ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr, 
+		usbd_status status)
 {
 	struct isoreq *req = addr;
 	struct ugen_endpoint *sce = req->sce;
@@ -846,7 +843,7 @@ ugen_isoc_rintr(xfer, addr, status)
 	}
 
 	/* copy data to buffer */
-	while(count > 0) {
+	while (count > 0) {
 		n = min(count, sce->limit - sce->fill);
 		memcpy(sce->fill, req->dmabuf, n);
 
