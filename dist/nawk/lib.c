@@ -34,7 +34,7 @@ THIS SOFTWARE.
 
 FILE	*infile	= NULL;
 char	*file	= "";
-char	*record;
+uschar	*record;
 int	recsize	= RECSIZE;
 char	*fields;
 int	fieldssize = RECSIZE;
@@ -101,11 +101,11 @@ void initgetrec(void)
 	infile = stdin;		/* no filenames, so use stdin */
 }
 
-int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
+int getrec(uschar **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 {			/* note: cares whether buf == record */
 	int c;
 	static int firsttime = 1;
-	char *buf = *pbuf;
+	uschar *buf = *pbuf;
 	int bufsize = *pbufsize;
 
 	if (firsttime) {
@@ -177,10 +177,10 @@ void nextfile(void)
 	argno++;
 }
 
-int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf */
+int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf */
 {
 	int sep, c;
-	char *rr, *buf = *pbuf;
+	uschar *rr, *buf = *pbuf;
 	int bufsize = *pbufsize;
 
 	if (strlen(*FS) >= sizeof(inputFS))
@@ -431,8 +431,8 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 		if (nematch(pfa, rec)) {
 			pfa->initstat = 2;	/* horrible coupling to b.c */
 			   dprintf( ("match %s (%d chars)\n", patbeg, patlen) );
-			strncpy(fr, rec, patbeg-rec);
-			fr += patbeg - rec + 1;
+			strncpy(fr, rec, ((char*)patbeg)-rec);
+			fr += ((char*)patbeg) - rec + 1;
 			*(fr-1) = '\0';
 			rec = patbeg + patlen;
 		} else {
@@ -448,7 +448,8 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 void recbld(void)	/* create $0 from $1..$NF if necessary */
 {
 	int i;
-	char *r, *p;
+	uschar *r;
+	char *p;
 
 	if (donerec == 1)
 		return;
