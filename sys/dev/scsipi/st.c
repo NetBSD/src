@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.95 1998/07/30 04:11:43 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.96 1998/07/31 04:00:22 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -93,11 +93,6 @@
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
 #define	ST_SPC_TIME	(4 * 60 * 60 * 1000)	/* 4 hours */
-
-/*
- * Maximum density code known.
- */
-#define SCSI_2_MAX_DENSITY_CODE	0x45
 
 /*
  * Define various devices that we know mis-behave in some way,
@@ -353,11 +348,7 @@ struct scsipi_device st_switch = {
 	st_interpret_sense,
 	ststart,
 	NULL,
-#if NRND > 0
-	stdone,  /* only needed to gather timing data for randomness */
-#else
-	NULL,
-#endif
+	stdone
 };
 
 #define	ST_INFO_VALID	0x0001
@@ -572,6 +563,7 @@ stopen(dev, flags, mode, p)
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
+
 	/*
 	 * Only allow one at a time
 	 */
@@ -581,26 +573,35 @@ stopen(dev, flags, mode, p)
 	}
 
 	/*
+	 * clear any latched errors.
+	 */
+	st->mt_resid = 0;
+	st->mt_erreg = 0;
+
+	/*
 	 * Catch any unit attention errors.
 	 */
 	error = scsipi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
-	    (stmode == CTRL_MODE ? SCSI_IGNORE_NOT_READY : 0));
-	if (error)
+	    (stmode == CTRL_MODE ? SCSI_SILENT : 0));
+	if (error && stmode != CTRL_MODE) {
 		goto bad;
-
+	}
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
 	/*
-	 * If the mode is 3 (e.g. minor = 3,7,11,15)
-	 * then the device has been opened to set defaults
-	 * and perform other, usually non-I/O related, operations.
+	 * If the mode is 3 (e.g. minor = 3,7,11,15) then the device has
+	 * been opened to set defaults and perform other, usually non-I/O
+	 * related, operations. In this case, do a quick check to see
+	 * whether the unit actually had a tape loaded (this will be known
+	 * as to whether or not we got a NOT READY for the above
+	 * unit attention). If a tape is there, go do a mount sequence.
 	 */
-	if (stmode == CTRL_MODE) {
+	if (stmode == CTRL_MODE && st->mt_erreg == SKEY_NOT_READY) {
 		return (0);
 	}
 
 	/*
-	 * if it's a different mode, or if the media has been
+	 * If it's a different mode, or if the media has been
 	 * invalidated, unmount the tape from the previous
 	 * session but continue with open processing
 	 */
@@ -615,14 +616,6 @@ stopen(dev, flags, mode, p)
 		st_mount_tape(dev, flags);
 		st->last_dsty = dsty;
 	}
-
-	/*
-	 * Make sure that a tape opened in write-only mode will have
-	 * file marks written on it when closed, even if not written to.
-	 * This is for SUN compatibility
-	 */
-	if ((flags & O_ACCMODE) == FWRITE)
-		st->flags |= ST_WRITTEN;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
 	return (0);
@@ -644,17 +637,35 @@ stclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
+	int stxx;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
-	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
+
+	/*
+	 * Make sure that a tape opened in write-only mode will have
+	 * file marks written on it when closed, even if not written to.
+	 *
+	 * This is for SUN compatibility. Actually, the Sun way of
+	 * things is to:
+	 *
+	 *	only write filemarks if there are fmks to be written and
+	 *   		- open for write (possibly read/write)
+	 *		- the last operation was a write
+	 * 	or:
+	 *		- opened for wronly
+	 *		- no data was written (including filemarks)
+	 */
+
+	stxx = st->flags & (ST_WRITTEN | ST_FM_WRITTEN);
+	if (stxx == ST_WRITTEN || ((flags & O_ACCMODE) == FWRITE && stxx == 0))
 		st_write_filemarks(st, 1, 0);
 	switch (STMODE(dev)) {
 	case NORMAL_MODE:
-	case CTRL_MODE:		/* for now */
 		st_unmount(st, NOEJECT);
 		break;
 	case NOREW_MODE:
+	case CTRL_MODE:
 		/* leave mounted unless media seems to have been removed */
 		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
 			st_unmount(st, NOEJECT);
@@ -1089,7 +1100,6 @@ ststart(v)
 		if ((bp->b_flags & B_READ) == B_WRITE) {
 			cmd.opcode = WRITE;
 			st->flags &= ~ST_FM_WRITTEN;
-			st->flags |= ST_WRITTEN;
 			flags = SCSI_DATA_OUT;
 		} else {
 			cmd.opcode = READ;
@@ -1117,17 +1127,21 @@ ststart(v)
 	} /* go back and see if we can cram more work in.. */
 }
 
-#if NRND > 0
 void
 stdone(xs)
 	struct scsipi_xfer *xs;
 {
-	struct st_softc *st = xs->sc_link->device_softc;
 
-	if (xs->bp != NULL)
+	if (xs->bp != NULL) {
+		struct st_softc *st = xs->sc_link->device_softc;
+		if ((xs->bp->b_flags & B_READ) == B_WRITE) {
+			st->flags |= ST_WRITTEN;
+		}
+#if NRND > 0
 		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
-}
 #endif
+	}
+}
 
 int
 stread(dev, uio, iomode)
@@ -2097,13 +2111,6 @@ st_interpret_sense(xs)
 	int32_t info;
 
 	/*
-	 * If the device is not open yet, let generic handle
-	 */
-	if ((sc_link->flags & SDEV_OPEN) == 0) {
-		return (retval);
-	}
-
-	/*
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
@@ -2119,6 +2126,14 @@ st_interpret_sense(xs)
 	key = sense->flags & SSD_KEY;
 	st->mt_erreg = key;
 	st->mt_resid = (short) info;
+
+	/*
+	 * If the device is not open yet, let generic handle
+	 */
+	if ((sc_link->flags & SDEV_OPEN) == 0) {
+		return (retval);
+	}
+
 
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
