@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.15 1996/04/07 05:47:26 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.16 1996/04/26 18:36:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -329,10 +329,7 @@ kd_later(tpaddr)
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (tp->t_line)
-		(*linesw[tp->t_line].l_start)(tp);
-	else
-		kdstart(tp);
+	(*linesw[tp->t_line].l_start)(tp);
 	splx(s);
 }
 
@@ -377,7 +374,7 @@ kd_input(c)
     if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
-	ttyinput(c, kd->kd_tty);
+	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
 
