@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.39 2002/02/13 08:18:19 ross Exp $
+.\"	$NetBSD: hier.7,v 1.40 2002/02/19 15:03:33 pooka Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -646,88 +646,109 @@ kernel source files
 AmigaDOS file-system support; see
 .Xr mount_ados 8
 .It Sy arch/
+architecture-specific support
 .Pp
-.Bl -tag -width "amigappc/" -compact
+.Bl -tag -width "playstation2/" -compact
 .It Sy acorn32/
-support for Acorn RiscPC/A7000/NC and compatibles
+Acorn RiscPC/A7000/NC and compatibles
+.It Sy algor/
+Algorithmics MIPS evaluations board
 .It Sy alpha/
-support for the Digital Equipment Corp. Alpha architecture
+Digital Equipment Corp. Alpha architecture
 .It Sy amiga/
-support for the Amiga architecture
+Amiga architecture
 .It Sy amigappc/
-support for the PowerPC based Amiga architecture
+PowerPC based Amiga architecture
 .It Sy arc/
-support for the ARC specification compliant systems.
+ARC specification compliant systems.
+.It Sy arm/
+ARM processor general support
 .It Sy arm26/
-support for ARM2 and ARM3 based systems
-.It Sy arm32/
-support for the ARM32 architecture
+ARM2 and ARM3 based systems
 .It Sy atari/
-support for the Atari architecture
+Atari architecture
 .It Sy bebox/
-support for the Be Inc. BeBox architecture
+Be Inc. BeBox architecture
+.It Sy cats/
+Chalice Technology StrongARM evaluation board
+.It Sy cesfic/
+CES FIC8234 VME processor board
 .It Sy cobalt/
-support for the Cobalt Networks MIPS Microserver architecture
+Cobalt Networks MIPS Microserver architecture
 .It Sy dreamcast/
-support for the Sega Dreamcast game console
+Sega Dreamcast game console
 .It Sy evbsh3/
-support for the SH3 based evaluation boards
+SH3 based evaluation boards
 .It Sy hp300/
-support for the Hewlett-Packard 9000/300 68000-based workstations
+Hewlett-Packard 9000/300 680x0-based workstations
+.It Sy hparm/
+StrongARM based WinCE hand-held devices
 .It Sy hpcmips/
-support for the MIPS based WinCE hand-held devices
+MIPS based WinCE hand-held devices
 .It Sy hpcsh/
-support for the Hitachi SH3/4 based WinCE hand-held devices
+Hitachi SH3/4 based WinCE hand-held devices
 .It Sy i386/
-support for the Intel 386/486/Pentium/etc. workstations
+Intel 386/486/Pentium/etc. workstations
 .It Sy luna68k/
-support for the Omron LUNA 68000-based workstations
+Omron LUNA 68000-based workstations
 .It Sy m68k/
-general support for the 68000 processor
+680x0 processor support
 .It Sy mac68k/
-support for the Apple Computer 68000-based workstations
+Apple Computer 680x0-based workstations
 .It Sy macppc/
-support for the Apple Computer PowerPC-based workstations
+Apple Computer PowerPC-based workstations
 .It Sy mips/
-general support for MIPS architectures
+MIPS processor support
 .It Sy mipsco/
-support for Mips Computer Systems Inc. architecture
+Mips Computer Systems Inc. architecture
 .It Sy mmeye/
-support for the Brains Inc. SH3 based mmEye multimedia server
+Brains Inc. SH3 based mmEye multimedia server
 .It Sy mvme68k/
-support for the VME 68000-based cards
+VME 680x0-based cards
 .It Sy news68k/
-support for the Sony NEWS 68000-based workstations
+Sony NEWS 680x0-based workstations
 .It Sy newsmips/
-support for the Sony NEWS MIPS-based workstations
+Sony NEWS MIPS-based workstations
 .It Sy next68k/
-support for the NeXT 68000-based workstations
+NeXT 680x0-based workstations
 .It Sy ofppc/
-support for Open Firmware PowerPC workstations
+Open Firmware PowerPC workstations
 .It Sy pc532/
-support for the pc532 architecture
+pc532 architecture
 .It Sy playstation2/
-support for the SONY PlayStation 2
+SONY PlayStation 2
 .It Sy pmax/
-support for the MIPS-based DECstation architecture
+MIPS-based DECstation architecture
 .It Sy powerpc/
-general support for PowerPC architectures
+PowerPC processor support
 .It Sy prep/
-support for the PowerPC Reference Platform
+PowerPC Reference Platform
+.It Sy sandpoint/
+Motorola Sandpoint reference platform
 .It Sy sgimips/
-support for the SGI MIPS architecture
+SGI MIPS architecture
 .It Sy sh3/
-general support for SH3 architectures
+SH3 processor general support
+.It Sy shark/
+StrongARM based Digital DNARD ("Shark") machines
 .It Sy sparc/
-support for the Sun Microsystems SPARC architecture
+Sun Microsystems SPARC architecture
 .It Sy sparc64/
-support for the Sun Microsystems UltraSPARC architecture
+Sun Microsystems UltraSPARC architecture
+.It Sy sun2/
+Sun Microsystems 68010-based Sun 2 architecture
 .It Sy sun3/
-support for the Sun Microsystems 68000-based architecture
+Sun Microsystems 68020/68030-based Sun 3/3x architecture
+.It Sy sun68k/
+680x0-based Sun architecture general support
 .It Sy vax/
 Digital Equipment Corp. VAX architecture
+.It Sy walnut/
+IBM 405GP PowerPC "walnut" evaluation board
 .It Sy x68k/
-support for the Sharp X680x0 68000-based workstations
+Sharp X680x0 680x0-based workstations
+.It Sy x86_64/
+AMD x86-64(tm) 64-bit CPU
 .El
 .Pp
 .It Sy compat/
