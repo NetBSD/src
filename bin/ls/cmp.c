@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmp.c	5.7 (Berkeley) 3/1/92";*/
-static char rcsid[] = "$Id: cmp.c,v 1.5 1993/08/07 03:56:51 mycroft Exp $";
+static char rcsid[] = "$Id: cmp.c,v 1.6 1993/12/05 21:35:20 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,4 +100,18 @@ revstatcmp(a, b)
 	const FTSENT *a, *b;
 {
 	return (a->fts_statp->st_ctime - b->fts_statp->st_ctime);
+}
+
+int
+sizecmp(a, b)
+	const FTSENT *a, *b;
+{
+	return (b->fts_statp->st_size - a->fts_statp->st_size);
+}
+
+int
+revsizecmp(a, b)
+	const FTSENT *a, *b;
+{
+	return (a->fts_statp->st_size - b->fts_statp->st_size);
 }

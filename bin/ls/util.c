@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.12 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: util.c,v 1.5 1993/08/07 03:57:05 mycroft Exp $";
+static char rcsid[] = "$Id: util.c,v 1.6 1993/12/05 21:35:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,8 @@ prcopy(src, dest, len)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: ls [-1ACFLRTacdfiklqrstu] [file ...]\n");
+	(void)fprintf(stderr,
+	    "usage: ls [-1ACFLRSTacdfiklqrstu] [file ...]\n");
 	exit(1);
 }
 
