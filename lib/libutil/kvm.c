@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.16 1993/08/15 01:54:29 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.17 1993/08/15 13:57:51 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1330,7 +1330,7 @@ struct swapblk	*swb;
 			setsyserr("vatosw: read vm_map_entry");
 			return 0;
 		}
-		if ((vaddr >= vm_entry.start) && (vaddr <= vm_entry.end) &&
+		if ((vaddr >= vm_entry.start) && (vaddr < vm_entry.end) &&
 				(vm_entry.object.vm_object != 0))
 			break;
 
@@ -1364,8 +1364,13 @@ struct swapblk	*swb;
 		if (findpage(addr, off, maddr))
 			return 1;
 
-		if (vm_object.shadow == 0)
+		if (vm_object.pager != 0)
 			break;
+
+		if (vm_object.shadow == 0) {
+			seterr("%u: no pager\n", p->p_pid);
+			return 0;
+		}
 
 #if DEBUG
 		fprintf(stderr, "%u: shadow obj at %x: offset %x+%x\n",
@@ -1374,11 +1379,6 @@ struct swapblk	*swb;
 
 		addr = (long)vm_object.shadow;
 		off += vm_object.shadow_offset;
-	}
-
-	if (!vm_object.pager) {
-		seterr("%u: no pager\n", p->p_pid);
-		return 0;
 	}
 
 	/* Find address in swap space */
