@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2002/04/12 08:10:51 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.66 2002/04/15 14:47:04 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.65 $"
+#ident		"GENERIC-$Revision: 1.66 $"
 
 maxusers	32		# estimated number of users
 
@@ -358,8 +358,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

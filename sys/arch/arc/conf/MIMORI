@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.14 2002/04/12 08:10:51 gmcgarry Exp $
+#	$NetBSD: MIMORI,v 1.15 2002/04/15 14:47:04 tsutsui Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -229,8 +229,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 
