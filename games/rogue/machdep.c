@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,15 +105,14 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $";
 
 #ifdef UNIX_BSD4_2
 #include <sys/time.h>
-#include <sgtty.h>
 #endif
 
 #ifdef UNIX_SYSV
 #include <time.h>
-#include <termio.h>
 #endif
 
 #include <signal.h>
+#include <termios.h>
 #include "rogue.h"
 #include "pathnames.h"
 
@@ -132,77 +131,6 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $";
 md_slurp()
 {
 	(void)fpurge(stdin);
-}
-
-/* md_control_keyboard():
- *
- * This routine is much like md_cbreak_no_echo_nonl() below.  It sets up the
- * keyboard for appropriate input.  Specifically, it prevents the tty driver
- * from stealing characters.  For example, ^Y is needed as a command
- * character, but the tty driver intercepts it for another purpose.  Any
- * such behavior should be stopped.  This routine could be avoided if
- * we used RAW mode instead of CBREAK.  But RAW mode does not allow the
- * generation of keyboard signals, which the program uses.
- *
- * The parameter 'mode' when true, indicates that the keyboard should
- * be set up to play rogue.  When false, it should be restored if
- * necessary.
- *
- * This routine is not strictly necessary and may be stubbed.  This may
- * cause certain command characters to be unavailable.
- */
-
-md_control_keybord(mode)
-boolean mode;
-{
-	static boolean called_before = 0;
-#ifdef UNIX_BSD4_2
-	static struct ltchars ltc_orig;
-	static struct tchars tc_orig;
-	struct ltchars ltc_temp;
-	struct tchars tc_temp;
-#endif
-#ifdef UNIX_SYSV
-	static struct termio _oldtty;
-	struct termio _tty;
-#endif
-
-	if (!called_before) {
-		called_before = 1;
-#ifdef UNIX_BSD4_2
-		ioctl(0, TIOCGETC, &tc_orig);
-		ioctl(0, TIOCGLTC, &ltc_orig);
-#endif
-#ifdef UNIX_SYSV
-		ioctl(0, TCGETA, &_oldtty);
-#endif
-	}
-#ifdef UNIX_BSD4_2
-	ltc_temp = ltc_orig;
-	tc_temp = tc_orig;
-#endif
-#ifdef UNIX_SYSV
-	_tty = _oldtty;
-#endif
-
-	if (!mode) {
-#ifdef UNIX_BSD4_2
-		ltc_temp.t_suspc = ltc_temp.t_dsuspc = -1;
-		ltc_temp.t_rprntc = ltc_temp.t_flushc = -1;
-		ltc_temp.t_werasc = ltc_temp.t_lnextc = -1;
-		tc_temp.t_startc = tc_temp.t_stopc = -1;
-#endif
-#ifdef UNIX_SYSV
-		_tty.c_cc[VSWTCH] = CNSWTCH;
-#endif
-	}
-#ifdef UNIX_BSD4_2
-	ioctl(0, TIOCSETC, &tc_temp);
-	ioctl(0, TIOCSLTC, &ltc_temp);
-#endif
-#ifdef UNIX_SYSV
-	ioctl(0, TCSETA, &_tty);
-#endif
 }
 
 /* md_heed_signals():
@@ -606,37 +534,20 @@ char *shell;
 md_cbreak_no_echo_nonl(on)
 boolean on;
 {
-#ifdef UNIX_BSD4_2
-	static struct sgttyb tty_buf;
-	static int tsave_flags;
+	struct termios tty_buf;
+	static struct termios tty_save;
 
 	if (on) {
-		ioctl(0, TIOCGETP, &tty_buf);
-		tsave_flags = tty_buf.sg_flags;
-		tty_buf.sg_flags |= CBREAK;
-		tty_buf.sg_flags &= ~(ECHO | CRMOD);	/* CRMOD: see note 3 above */
-		ioctl(0, TIOCSETP, &tty_buf);
-	} else {
-		tty_buf.sg_flags = tsave_flags;
-		ioctl(0, TIOCSETP, &tty_buf);
-	}
-#endif
-#ifdef UNIX_SYSV
-	struct termio tty_buf;
-	static struct termio tty_save;
-
-	if (on) {
-		ioctl(0, TCGETA, &tty_buf);
+		tcgetattr(0, &tty_buf);
 		tty_save = tty_buf;
 		tty_buf.c_lflag &= ~(ICANON | ECHO);
 		tty_buf.c_oflag &= ~ONLCR;
-		tty_buf.c_cc[4] = 1;  /* MIN */
-		tty_buf.c_cc[5] = 2;  /* TIME */
-		ioctl(0, TCSETAF, &tty_buf);
+		tty_buf.c_cc[VMIN] = 1;
+		tty_buf.c_cc[VTIME] = 2;
+		tcsetattr(0, TCSADRAIN, &tty_buf);
 	} else {
-		ioctl(0, TCSETAF, &tty_save);
+		tcsetattr(0, TCSADRAIN, &tty_save);
 	}
-#endif
 }
 
 /* md_gdtcf(): (Get Default Termcap File)
