@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.15.6.1 1997/01/23 06:07:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.15.6.1 1997/01/23 06:07:18 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -1390,6 +1390,11 @@ void
 dologout(status)
 	int status;
 {
+	/*
+	* Prevent reception of SIGURG from resulting in a resumption
+	* back to the main program loop.
+	*/
+	transflag = 0;
 
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
