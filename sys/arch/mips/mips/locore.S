@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.119 2000/10/31 23:39:25 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.120 2000/12/14 21:29:51 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -297,6 +297,13 @@ LEAF(mips_idle)
 	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 1:
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+	# Do this again since the mask may have changed.
+	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
+	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
+	nop
+#endif
 	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
