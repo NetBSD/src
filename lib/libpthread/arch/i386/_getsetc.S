@@ -62,8 +62,8 @@
 	leal	-4(%edx), %esp				; \
 	ret						; \
 							; \
-1:	bt 	$_UC_FPU, %eax				; \
-	jnc	2f					; \
+1:	and 	$_UC_FPU, %eax				; \
+	jz	2f					; \
 	FPLOAD(%ecx)					; \
 2:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
 	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
