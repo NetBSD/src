@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.27 2002/08/12 02:22:52 grant Exp $ */
+/*	$NetBSD: mbr.c,v 1.28 2002/08/13 03:58:56 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -334,7 +334,12 @@ partsoverlap(part, i, j)
 	int j;
 {
 
-	if (part[i].mbrp_size == 0 || part[j].mbrp_size == 0)
+	/*
+	 * If the size or type of either partition is zero, they don't
+	 * overlap by definition.
+	 */
+	if (part[i].mbrp_size == 0 || part[j].mbrp_size == 0 ||
+	    part[i].mbrp_typ == 0 || part[j].mbrp_typ == 0)
 		return 0;
 
 	return 
