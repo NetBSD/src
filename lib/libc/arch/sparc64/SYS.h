@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.2 1999/01/14 22:48:22 kleink Exp $
+ *	$NetBSD: SYS.h,v 1.3 2000/06/26 06:31:39 kleink Exp $
  */
 
 #include <machine/asm.h>
@@ -69,8 +69,11 @@
  * Note that it adds a `nop' over what we could do, if we only knew what
  * came at label 1....
  */
+#define	_SYSCALL(x,y) \
+	ENTRY(x); mov _CAT(SYS_,y),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+
 #define	SYSCALL(x) \
-	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+	_SYSCALL(x,x)
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
