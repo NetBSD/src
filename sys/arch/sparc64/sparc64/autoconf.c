@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 2002/05/16 01:01:41 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.58 2002/06/04 14:44:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -992,7 +992,7 @@ getdevunit(name, unit)
 #define BUSCLASS_FDC		9
 
 static int bus_class __P((struct device *));
-static char *bus_compatible __P((char *, struct device *));
+static int dev_compatible __P((struct device *, void *, char *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
 static void nail_bootdev __P((struct device *, struct bootpath *));
 
@@ -1020,45 +1020,119 @@ static struct {
 };
 
 /*
- * A list of PROM device names that differ from our NetBSD
- * device names.
+ * A list of driver names may have differently named PROM nodes.
  */
 static struct {
-	char	*bpname;
-	int	class;
-	char	*cfname;
+	char	*name;
+	char	*compat[6];
 } dev_compat_tab[] = {
-	{ "espdma",	BUSCLASS_NONE,		"dma" },
-	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
-	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
-	{ "ptisp",	BUSCLASS_NONE,		"isp" },
-	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
-	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
-	{ "pci",	BUSCLASS_PCI,		"ppb" },
-	{ "ide",	BUSCLASS_PCI,		"pciide" },
-	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
-	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
-	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
-	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
-	{ "glm",	BUSCLASS_PCI,		"siop" },
-	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
+	{ "dma",	{ "espdma", NULL }},
+	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi", NULL }},
+	{ "fdc",	{ "SUNW,fdtwo",	NULL }},
+	{ "psycho",	{ "pci", NULL }},
+	{ "wd",		{ "disk", "ide-disk", NULL }},
+	{ "sd",		{ "disk", NULL }},
+	{ "hme",	{ "SUNW,hme", "network", NULL }},
+	{ "esp",	{ "SUNW,fas", "fas", NULL }},
+	{ "siop",	{ "glm",  "SUNW,glm", NULL }},
+	{ NULL,		{ NULL }},
 };
 
-static char *
-bus_compatible(bpname, dev)
-	char *bpname;
+int
+dev_compatible(dev, aux, bpname)
 	struct device *dev;
+	void *aux;
+	char *bpname;
 {
-	int i, class = bus_class(dev);
+	int i, j;
 
-	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
-		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
-		     dev_compat_tab[i].class == class))
-			return (dev_compat_tab[i].cfname);
+	/*
+	 * Step 1:
+	 *
+	 * If this is a PCI device, find it's device class and try that.
+	 */
+	if ((bus_class(dev->dv_parent)) == BUSCLASS_PCI) {
+		struct pci_attach_args *pa = aux;
+
+		DPRINTF(ACDB_BOOTDEV,
+			("\n%s: dev_compatible: checking PCI class %x\n",
+				dev->dv_xname, pa->pa_class));
+
+		switch (PCI_CLASS(pa->pa_class)) {
+			/*
+			 * We can only really have pci-pci bridges,
+			 * disk controllers, or NICs on the bootpath.
+			 */
+		case PCI_CLASS_BRIDGE:
+			if (PCI_SUBCLASS(pa->pa_class) != 
+				PCI_SUBCLASS_BRIDGE_PCI)
+				break;
+			DPRINTF(ACDB_BOOTDEV,
+				("\n%s: dev_compatible: comparing %s with %s\n",
+					dev->dv_xname, bpname, "pci"));
+			if (strcmp(bpname, "pci") == 0)
+				return (0);
+			break;
+		case PCI_CLASS_MASS_STORAGE:
+			if (PCI_SUBCLASS(pa->pa_class) == 
+				PCI_SUBCLASS_MASS_STORAGE_IDE) {
+				DPRINTF(ACDB_BOOTDEV,
+					("\n%s: dev_compatible: "
+						"comparing %s with %s\n",
+						dev->dv_xname, bpname, "ide"));
+				if (strcmp(bpname, "ide") == 0)
+					return (0);
+			}
+			if (PCI_SUBCLASS(pa->pa_class) == 
+				PCI_SUBCLASS_MASS_STORAGE_SCSI) {
+				DPRINTF(ACDB_BOOTDEV,
+					("\n%s: dev_compatible: "
+						"comparing %s with %s\n",
+						dev->dv_xname, bpname, "scsi"));
+				if (strcmp(bpname, "scsi") == 0)
+					return (0);
+			}
+			break;
+		case PCI_CLASS_NETWORK:
+			DPRINTF(ACDB_BOOTDEV,
+				("\n%s: dev_compatible: comparing %s with %s\n",
+					dev->dv_xname, bpname, "network"));
+			if (strcmp(bpname, "network") == 0)
+				return (0);
+			break;
+		default:
+			break;
+		}
 	}
 
-	return (bpname);
+	/*
+	 * Step 2:
+	 * 
+	 * Look through the list of equivalent names and see if any of them
+	 * match.  This is a nasty O(n^2) operation.
+	 */
+	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
+		if (strcmp(dev->dv_cfdata->cf_driver->cd_name, 
+			dev_compat_tab[i].name) == 0) {
+			DPRINTF(ACDB_BOOTDEV,
+				("\n%s: dev_compatible: translating %s\n",
+					dev->dv_xname, dev_compat_tab[i].name));
+			for (j = 0; dev_compat_tab[i].compat[j] != NULL; j++) {
+				DPRINTF(ACDB_BOOTDEV,
+					("\n%s: dev_compatible: "
+						"comparing %s to %s\n",
+						dev->dv_xname, bpname,
+						dev_compat_tab[i].compat[j]));
+				if (strcmp(bpname, 
+					dev_compat_tab[i].compat[j]) == 0)
+					return (0);
+			}
+		}
+	}
+	DPRINTF(ACDB_BOOTDEV,
+		("\n%s: dev_compatible: no match\n",
+			dev->dv_xname));
+	return (1);
 }
 
 static int
@@ -1187,18 +1261,20 @@ device_register(dev, aux)
 		return;
 
 	/*
-	 * Translate PROM name in case our drivers are named differently
+	 * Translate device name to device class name in case the prom uses
+	 * that.
 	 */
-	bpname = bus_compatible(bp->name, dev);
+	bpname = bp->name;
 	dvname = dev->dv_cfdata->cf_driver->cd_name;
-
 	DPRINTF(ACDB_BOOTDEV,
-	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
+	    dev->dv_xname, dvname, dev->dv_xname, bpname));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0)
-		return;
+	if (strcmp(dvname, bpname) != 0) {
+		if (dev_compatible(dev, aux, bpname) != 0)
+			return;
+	}
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
 		/*
