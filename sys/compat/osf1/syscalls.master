@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 1999/05/04 02:12:15 cgd Exp $
+	$NetBSD: syscalls.master,v 1.25 1999/05/04 04:59:21 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -40,6 +40,7 @@
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
 
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 
 0	NOARGS		{ int sys_nosys(void); } syscall
@@ -312,10 +313,13 @@
 207	STD		{ int osf1_sys_uname(struct osf1_uname *name); }
 208	NOARGS		{ int sys___posix_lchown(const char *path, int uid, \
 			    int gid); }
-209	UNIMPL		shmat
-210	UNIMPL		shmctl
-211	UNIMPL		shmdt
-212	UNIMPL		shmget
+209	STD		{ void *osf1_sys_shmat(int shmid, \
+			    const void *shmaddr, int shmflg); }
+210	STD		{ int osf1_sys_shmctl(int shmid, int cmd, \
+			    struct osf1_shmid_ds *buf); }
+211	STD		{ int osf1_sys_shmdt(const void *shmaddr); }
+212	STD		{ int osf1_sys_shmget(osf1_key_t key, size_t size, \
+			    int flags); } 
 213	UNIMPL		mvalid
 214	UNIMPL		getaddressconf
 215	UNIMPL		msleep
