@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 2001/01/25 14:33:32 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 2001/03/04 16:21:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1332,17 +1332,6 @@ ENTRY(ecacheoff)
 	movl	_C_LABEL(cache_ctl),%a0
 	sf	%a0@			| NEWS-OS does `sf 0xe1300000'
 Lnocache8:
-	rts
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- */
-ENTRY_NOPROFILE(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
 	rts
 
 ENTRY_NOPROFILE(getsfc)
