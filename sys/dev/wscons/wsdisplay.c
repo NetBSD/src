@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.8 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.9 1998/07/23 14:33:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.8 1998/06/15 17:48:33 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.9 1998/07/23 14:33:01 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -544,12 +544,6 @@ wsdisplayclose(dev, flag, mode, p)
 	if (WSSCREEN_HAS_EMULATOR(scr))
 		scr->scr_flags &= ~SCR_GRAPHICS;
 
-#if 0
-	if (sc->sc_kbddv != NULL)
-		wskbd_set_translation(sc->sc_kbddv,
-				      ((scr->scr_flags & SCR_GRAPHICS) ? 0 : 1));
-#endif
-
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (scr->scr_rawkbd) {
 		int kbmode = WSKBD_TRANSLATED;
@@ -687,9 +681,6 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	struct proc *p;
 {
 	int error;
-#if 0
-	int flush;
-#endif
 	void *buf;
 
 	if (sc->sc_kbddv != NULL) {
@@ -731,16 +722,7 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			    scr->scr_flags |= SCR_GRAPHICS;
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
-#if 0
-		flush = (scr->scr_graphics != *(u_int *)data);
-		scr->scr_graphics = *(u_int *)data;
-		if (sc->sc_kbddv != NULL)
-			wskbd_set_translation(sc->sc_kbddv,
-			    scr->scr_graphics == WSDISPLAYIO_MODE_EMUL);
-		if (flush)
-			ttyflush(scr->scr_tty, FREAD | FWRITE);
-#endif
-		return (0);
+	    return (0);
 #undef d
 	case WSDISPLAYIO_SFONT:
 #define d ((struct wsdisplay_font *)data)
