@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.117 1999/04/27 03:08:02 simonb Exp $
+#	$NetBSD: Makefile,v 1.118 1999/05/21 03:45:50 gwr Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -276,6 +276,7 @@ KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
+.if !target(snap_kern)
 snap_kern:
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
@@ -309,6 +310,7 @@ snap_kern:
 .endif
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # BUILD_KERNELS
+.endif # no target(snap_kern)
 
 .endif # RELEASEDIR check
 
