@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.xxx,v 1.3 2003/11/13 02:33:39 sekiya Exp $
+#	$NetBSD: Makefile.inc.xxx,v 1.4 2003/11/13 14:07:38 sekiya Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
@@ -18,8 +18,8 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.iris-ansi \
 # Write preliminary Label so that newfs succeeds when updating label.
 PRELABEL=${DESTDIR}/sbin/disklabel -w ${VND} ${DISKTYPE} ; \
 	${DESTDIR}/usr/mdec/sgivol -if ${VND} ;\
-	${DESTDIR}/usr/mdec/sgivol -wf boot /usr/mdec/boot ${VND} ; \
-	${DESTDIR}/usr/mdec/sgivol -wf boot.elf /usr/mdec/boot.elf ${VND} ; \
-	${DESTDIR}/usr/mdec/sgivol -wf boot.ip32 /usr/mdec/boot.ip32 ${VND}
+	${DESTDIR}/usr/mdec/sgivol -wf aoutboot /usr/mdec/aoutboot ${VND} ; \
+	${DESTDIR}/usr/mdec/sgivol -wf ip2xboot /usr/mdec/ip2xboot ${VND} ; \
+	${DESTDIR}/usr/mdec/sgivol -wf ip3xboot /usr/mdec/ip3xboot ${VND}
 
 image_md_post:
