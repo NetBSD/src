@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.6 2003/01/24 21:37:02 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.7 2003/10/25 18:38:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.6 2003/01/24 21:37:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.7 2003/10/25 18:38:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,8 @@ darwin_sys_sigaction(l, v, retval)
 	nsa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 	if (SCARG(uap, osa) != NULL)
 		osa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
+	else
+		osa = NULL;
 
 	sa.sa_handler = dsa.darwin_sa_handler.__sa_handler;
 	native_sigset13_to_sigset(&dsa.darwin_sa_mask, &sa.sa_mask);
