@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.58 2000/09/09 04:49:55 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.59 2000/09/09 21:03:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1451,7 +1451,7 @@ lfs_writeseg(fs, sp)
 		cbp->b_bcount = 0;
 
 #ifdef DIAGNOSTIC
-		if(datosn(fs, (*bpp)->b_blkno + btodb(*bpp)->b_bcount - 1) !=
+		if(datosn(fs, (*bpp)->b_blkno + btodb((*bpp)->b_bcount) - 1) !=
 		   datosn(fs, cbp->b_blkno)) {
 			panic("lfs_writeseg: Segment overwrite");
 		}
