@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.17.4.1 1997/11/10 21:59:41 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.17.4.2 1998/05/08 05:36:26 mycroft Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -473,7 +473,7 @@ _name_	=	_value_
 _name_:;							\
 	.mask	_i_mask_|IM_EXC,0;				\
 	.frame	sp,MSS_SIZE,ra;				
-/*	.livereg _i_mask_|IM_EXC,0
+/*	.livereg _i_mask_|IM_EXC,0	*/
 /* should have been
 	.proc	_name_,1;					\
 	.frame	MSS_SIZE,$31,_i_mask_,0;			\
