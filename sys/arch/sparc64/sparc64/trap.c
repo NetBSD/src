@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2004/01/16 09:10:10 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.113 2004/01/18 17:14:46 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/01/16 09:10:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2004/01/18 17:14:46 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/01/16 09:10:10 martin Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/userret.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -442,20 +443,8 @@ userret(l, pc, oticks)
 	u_quad_t oticks;
 {
 	struct proc *p = l->l_proc;
-	int sig;
 
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* XXX copied from alpha port */
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
+	mi_userret(l);
 
 	if (want_ast) {
 		want_ast = 0;
@@ -464,26 +453,12 @@ userret(l, pc, oticks)
 			ADDUPROF(p);
 		}
 	}
-#if 0
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
-#endif
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
-
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
