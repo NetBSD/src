@@ -1,3 +1,5 @@
+/*	$NetBSD: smtpd_check.c,v 1.15 2004/05/31 00:46:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtpd_check 3
@@ -2870,11 +2872,14 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 			  (unsigned long) state->msg_size,
 #ifdef USE_SASL_AUTH
 			  ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD,
-			  state->sasl_method ? state->sasl_method : "",
+			  var_smtpd_sasl_enable && state->sasl_method ?
+			  state->sasl_method : "",
 			  ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME,
-			  state->sasl_username ? state->sasl_username : "",
+			  var_smtpd_sasl_enable && state->sasl_username ?
+			  state->sasl_username : "",
 			  ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER,
-			  state->sasl_sender ? state->sasl_sender : "",
+			  var_smtpd_sasl_enable && state->sasl_sender ?
+			  state->sasl_sender : "",
 #endif
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply attributes. */

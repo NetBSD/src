@@ -1,3 +1,5 @@
+/*	$NetBSD: mynetworks.c,v 1.4 2004/05/31 00:46:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mynetworks 3

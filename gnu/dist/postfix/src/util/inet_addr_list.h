@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_addr_list.h,v 1.5 2004/05/31 00:46:48 heas Exp $	*/
+
 #ifndef _INET_ADDR_LIST_H_INCLUDED_
 #define _INET_ADDR_LIST_H_INCLUDED_
 
