@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/12/19 22:25:53 jmc Exp $
+#	$NetBSD: Makefile,v 1.34 2003/12/20 17:08:32 dsl Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -14,7 +14,7 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MKTEMP=${TOOL_MKTEMP:Q} PAX=${TOOL_PAX:Q} 
 
 .if !defined(MAKETARSETS)
-MAKETARSETS!=	${SETSENV} ${HOST_SH} -c '. sets.defaults; echo $${lists}'
+MAKETARSETS!=	${SETSENV} ${HOST_SH} -c '. ${.CURDIR}/sets.defaults; echo $${lists}'
 .endif
 
 print_have_gcc3:
