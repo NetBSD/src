@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1994/10/18 21:21:48 cgd Exp $
+#	$Id: Makefile.inc,v 1.3 1995/04/16 19:11:46 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -29,7 +29,7 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV} ${IMAGE}
+	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
 
 unconfig:
