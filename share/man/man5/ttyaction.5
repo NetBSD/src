@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.5,v 1.3 1998/08/29 17:31:57 tsarna Exp $
+.\" $NetBSD: ttyaction.5,v 1.4 2000/01/22 01:34:55 kleink Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ These variables may be used directly in the shell command
 part of the record for simple tasks such as changing the
 ownership of related devices.  For example:
 .Bd -literal -offset indent
-console  *	chown ${USER}.tty /dev/mouse
+console  *	chown ${USER}:tty /dev/mouse
 .Ed
 .Pp
 will
