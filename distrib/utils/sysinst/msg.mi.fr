@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.62 2003/07/08 17:38:57 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.63 2003/07/11 15:28:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -130,15 +130,11 @@ message onedisk
 NetBSD dessus.
 }
 
-message askdisk
-{J'ai trouvé les disques suivants : %s
-\nSur quel disque voulez vous installer NetBSD ?}
+message ask_disk
+{Sur quel disque voulez vous installer NetBSD ?}
 
-
-message badname
-{Vous n'avez pas choisi un disque dans la liste. Veuillez en choisir un..
-Les disques suivants sont disponibles : %s
-\nSur quel disque voulez vous installer NetBSD ?}
+message Available_disks	/* XXX translate */
+{Available disks}
 
 message pleasemountroot
 {Le système de fichiers racine n'est pas monté. Veuillez le monter.

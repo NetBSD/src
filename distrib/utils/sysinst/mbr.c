@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.46 2003/07/08 17:38:56 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.47 2003/07/11 15:28:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1294,10 +1294,12 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 			} else {
 				mbri->last_mounted[i] = strdup(get_last_mounted(
 					fd, mbri->sector + mbrp->mbrp_start));
+#if BOOTSEL
 				if (ombri->install == 0 &&
 				    strcmp(mbri->last_mounted[i], "/") == 0)
 					ombri->install = mbri->sector +
 							mbrp->mbrp_start;
+#endif
 			}
 #if BOOTSEL
 			if (mbri->nametab[i][0] != 0 && bootkey-- == 0)
@@ -1503,7 +1505,7 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 	if (xcylinders > MAXCYL || xheads > MAXHEAD || xsectors > MAXSECTOR) {
 		xsectors = MAXSECTOR;
 		xheads = MAXHEAD;
-		xcylinders = disk->dd_totsec / (MAXSECTOR * MAXHEAD);
+		xcylinders = dlsize / (MAXSECTOR * MAXHEAD);
 		if (xcylinders > MAXCYL)
 			xcylinders = MAXCYL;
 	}
@@ -1541,7 +1543,7 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 	 * Estimate the number of cylinders.
 	 * XXX relies on get_disks having been called.
 	 */
-	xcylinders = disk->dd_totsec / xheads / xsectors;
+	xcylinders = dlsize / xheads / xsectors;
 
 	/* Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
