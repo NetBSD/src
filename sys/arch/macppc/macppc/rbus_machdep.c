@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.6 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7 2000/08/02 09:02:46 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -143,10 +143,14 @@ macppc_cardbus_init(pc, tag)
 		x |= 0x02;
 		pci_conf_write(pc, tag, 0x8c, x);
 
-		/* Set Subordinate bus number to 1 */
 		tag = pci_make_tag(pc, 0, 0, 0);
-		x = pci_conf_read(pc, tag, 0x40);
-		x |= 1 << 8;
-		pci_conf_write(pc, tag, 0x40, x);
+		x = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (PCI_VENDOR(x) == PCI_VENDOR_MOT &&
+		    PCI_PRODUCT(x) == PCI_PRODUCT_MOT_MPC106) {
+			/* Set subordinate bus number to 1. */
+			x = pci_conf_read(pc, tag, 0x40);
+			x |= 1 << 8;
+			pci_conf_write(pc, tag, 0x40, x);
+		}
 	}
 }
