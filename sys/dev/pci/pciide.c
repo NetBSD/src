@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.64 2000/06/06 22:56:06 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.65 2000/06/07 04:31:49 thorpej Exp $	*/
 
 
 /*
@@ -672,6 +672,7 @@ pciide_mapreg_dma(sc, pa)
 			sc->sc_wdcdev.dma_start = pciide_dma_start;
 			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 		}
+		break;
 
 	default:
 		sc->sc_dma_ok = 0;
