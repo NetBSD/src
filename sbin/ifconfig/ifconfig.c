@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.79.4.6 2001/01/26 01:37:09 jhawk Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.79.4.7 2001/05/01 11:06:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.79.4.6 2001/01/26 01:37:09 jhawk Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.79.4.7 2001/05/01 11:06:43 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ int	clearaddr, s;
 int	newaddr = -1;
 int	nsellength = 1;
 int	af;
-int	Aflag, aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag;
+int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -288,7 +288,7 @@ void 	adjust_nsellength __P((void));
 int	getinfo __P((struct ifreq *));
 int	carrier __P((void));
 void	getsock __P((int));
-void	printall __P((void));
+void	printall __P((const char *));
 void	list_cloners __P((void));
 void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
@@ -392,7 +392,7 @@ main(argc, argv)
 			)) != -1) {
 		switch (ch) {
 		case 'A':
-			Aflag = 1;
+			warnx("-A is deprecated");
 			break;
 
 		case 'a':
@@ -452,7 +452,7 @@ main(argc, argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if ((lflag || Cflag) && (aflag || mflag || Aflag || argc))
+	if ((lflag || Cflag) && (aflag || mflag || argc))
 		usage();
 #ifdef INET6
 	if ((lflag || Cflag) && Lflag)
@@ -478,7 +478,7 @@ main(argc, argv)
 			af = ifr.ifr_addr.sa_family = afp->af_af;
 		else
 			af = ifr.ifr_addr.sa_family = afs[0].af_af;
-		printall();
+		printall(NULL);
 		exit(0);
 	}
 
@@ -529,7 +529,7 @@ main(argc, argv)
 
 	/* No more arguments means interface status. */
 	if (argc == 0) {
-		status(NULL, 0);
+		printall(name);
 		exit(0);
 	}
 
@@ -686,7 +686,8 @@ getinfo(ifr)
 }
 
 void
-printall()
+printall(ifname)
+	const char *ifname;
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
@@ -707,6 +708,8 @@ printall()
 			    ifa->ifa_addr->sa_len);
 		}
 
+		if (ifname && strcmp(ifname, ifa->ifa_name) != 0)
+			continue;
 		if (ifa->ifa_addr->sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
@@ -781,6 +784,9 @@ printall()
 			errx(1, "ifr too big");
 		memcpy(ifrbuf, cp, siz);
 
+		if (ifname && strncmp(ifname, ifr->ifr_name,
+		    sizeof(ifr->ifr_name)))
+			continue;
 		if (ifr->ifr_addr.sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
@@ -2023,9 +2029,6 @@ in_alias(creq)
 	if (memcmp(&ifr.ifr_addr, &creq->ifr_addr,
 		   sizeof(creq->ifr_addr)) == 0)
 		alias = 0;
-	/* we print aliases only with -A */
-	if (alias && !Aflag)
-		return;
 	(void) memset(&addreq, 0, sizeof(addreq));
 	(void) strncpy(addreq.ifra_name, name, sizeof(addreq.ifra_name));
 	addreq.ifra_addr = creq->ifr_addr;
@@ -2818,7 +2821,7 @@ usage()
 	extern const char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [ -m ] [ -A ] "
+	    "usage: %s [ -m ] "
 #ifdef INET6
 		"[ -L ] "
 #endif
@@ -2838,7 +2841,7 @@ usage()
 		"\t[ instance minst ]\n"
 		"\t[ vlan n vlanif i ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n"
+		"       %s -a [ -m ] [ -d ] [ -u ] [ af ]\n"
 		"       %s -l [ -d ] [ -u ]\n"
 		"       %s interface create\n"
 		"       %s interface destroy\n",
