@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.12 2001/01/04 03:51:23 jwise Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.13 2001/01/04 06:16:51 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.12 2001/01/04 03:51:23 jwise Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.13 2001/01/04 06:16:51 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ void	moveall(void);
 static int	stillmoving(int);
 static int	is_isolated(struct ship *);
 static int	push(struct ship *, struct ship *);
-static void	step(int, struct ship *, char *);
+static void	step(struct ship *, int,  char *);
 void	sendbp(struct ship *, struct ship *, int, int);
 int	is_toughmelee(struct ship *, struct ship *, int, int);
 void	reload(void);
@@ -124,7 +124,7 @@ moveall(void)
 			if (!sp->file->movebuf[k])
 				sp->file->movebuf[k+1] = '\0';
 			else if (sp->file->dir)
-				step(sp->file->movebuf[k], sp, &moved[n]);
+				step(sp, sp->file->movebuf[k], &moved[n]);
 			n++;
 		}
 		/*
@@ -233,7 +233,7 @@ push(struct ship *from, struct ship *to)
 }
 
 static void
-step(int com, struct ship *sp, char *moved)
+step(struct ship *sp, int com, char *moved)
 {
 	int dist;
 
