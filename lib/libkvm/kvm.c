@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.15 1993/08/14 11:47:51 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.16 1993/08/15 01:54:29 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,8 +65,9 @@ static char rcsid[] = "$Id: kvm.c,v 1.15 1993/08/14 11:47:51 cgd Exp $";
 #include <vm/vm_page.h>
 #include <vm/swap_pager.h>
 #include <sys/kinfo_proc.h>
-#ifdef hp300
+#if defined(hp300) || defined(amiga)
 #include <machine/pte.h>
+#define	btos(x)		(((unsigned)(x)) >> SEGSHIFT)	/* XXX */
 #endif
 #else /* NEWVM */
 #include <machine/pte.h>
@@ -117,7 +118,7 @@ static	int	dmmin, dmmax;
 static	int	pcbpf;
 static	int	nswap;
 static	char	*tmp;
-#if defined(hp300)
+#if defined(hp300) || defined(amiga)
 static	int	lowram;
 static	struct ste *Sysseg;
 #endif
@@ -128,7 +129,7 @@ static	struct pde *PTD;
 #define basename(cp)	((tmp=rindex((cp), '/')) ? tmp+1 : (cp))
 #define	MAXSYMSIZE	256
 
-#if defined(hp300)
+#if defined(hp300) || defined(amiga)
 #define pftoc(f)	((f) - lowram)
 #define iskva(v)	(1)
 #endif
@@ -172,7 +173,7 @@ static struct nlist nl[] = {
 	{ "_nproc" },
 #define	X_NPROC		12
 #define	X_LAST		12
-#if defined(hp300)
+#if defined(hp300) || defined(amiga)
 	{ "_Sysseg" },
 #define	X_SYSSEG	(X_LAST+1)
 	{ "_lowram" },
@@ -826,16 +827,38 @@ kvm_procread(p, addr, buf, len)
 
 	real_len = len < (CLBYTES - (addr & CLOFSET)) ? len : (CLBYTES - (addr & CLOFSET));
 
-#if defined(hp300)
-	if (kp->kp_eproc.e_vm.vm_pmap.pm_ptab) {
-		struct pte pte[CLSIZE*2];
+#if defined(hp300) || defined(amiga)
+	if (kp->kp_eproc.e_vm.vm_pmap.pm_stab) {
+	        unsigned long ste;
 
-		klseek(kmem,
-		    (long)&kp->kp_eproc.e_vm.vm_pmap.pm_ptab
-		    [btoc(USRSTACK-CLBYTES*2)], 0);
-		if (read(kmem, (char *)&pte, sizeof(pte)) == sizeof(pte)) {
-			memaddr = ctob(pftoc(pte[CLSIZE*1].pg_pfnum)) +
-				(addr % (1 << CLSHIFT));
+		/* position at process segment table */
+		klseek (kmem,
+			(int) kp->kp_eproc.e_vm.vm_pmap.pm_stab 
+			+ btos(addr) * sizeof (struct ste), 0);
+
+		if (read (kmem, (char *) &ste, sizeof (ste))
+		    == sizeof (ste) && (ste & SG_V)) {
+			int p, pte;
+
+			p = btop(addr & SG_PMASK);
+			memaddr = (ste & SG_FRAME) + (p * sizeof(struct pte));
+			(void) lseek(mem, memaddr, 0);
+			if (read(mem, (char *)&pte, sizeof pte) != sizeof pte) {
+				seterr("kvmprocread: cannot locate pte");
+				memaddr = 0;
+			}
+			else {
+				memaddr = pte & PG_FRAME;
+				if (pte == PG_NV 
+				    || memaddr < (off_t)ptob(lowram)) {
+					seterr("kvmprocread: page not valid");
+					memaddr = 0;
+				}
+				else
+					memaddr = (memaddr 
+						   - (off_t)ptob(lowram)) 
+						   + (addr & PGOFSET);
+			}
 		}
 	}
 #endif
@@ -1047,7 +1070,7 @@ getkvars()
 			return (-1);
 		}
 #endif
-#if defined(hp300)
+#if defined(hp300) || defined(amiga)
 		addr = (long) nl[X_LOWRAM].n_value;
 		(void) lseek(kmem, addr, 0);
 		if (read(kmem, (char *) &lowram, sizeof (lowram))
@@ -1183,18 +1206,18 @@ Vtophys(loc)
 	u_long	loc;
 {
 	off_t newloc = (off_t) -1;
-#ifdef hp300
+#if defined(hp300) || defined(amiga)
 	int p, ste, pte;
 
-	ste = *(int *)&Sysseg[loc >> SG_ISHIFT];
+	ste = *(int *)&Sysseg[btos(loc)];
 	if ((ste & SG_V) == 0) {
 		seterr("vtophys: segment not valid");
 		return((off_t) -1);
 	}
 	p = btop(loc & SG_PMASK);
 	newloc = (ste & SG_FRAME) + (p * sizeof(struct pte));
-	(void) lseek(kmem, (long)(newloc-(off_t)ptob(lowram)), 0);
-	if (read(kmem, (char *)&pte, sizeof pte) != sizeof pte) {
+	(void) lseek(mem, newloc, 0);
+	if (read(mem, (char *)&pte, sizeof pte) != sizeof pte) {
 		seterr("vtophys: cannot locate pte");
 		return((off_t) -1);
 	}
@@ -1257,7 +1280,7 @@ vtophys(loc)
 		seterr("vtophys: page not valid");
 		return((off_t) -1);
 	}
-#if defined(hp300)
+#if defined(hp300) || defined(amiga)
 	if (pte->pg_pfnum < lowram) {
 		seterr("vtophys: non-RAM page (%d<%d)", pte->pg_pfnum, lowram);
 		return((off_t) -1);
