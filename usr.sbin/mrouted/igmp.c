@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.7 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: igmp.c,v 1.8 2002/08/01 03:40:34 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -316,7 +316,7 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code, u_int32_t group,
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_cksum        = inet_cksum((u_short *)igmp,
+    igmp->igmp_cksum        = inet_cksum((u_int16_t *)igmp,
 					 IGMP_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {

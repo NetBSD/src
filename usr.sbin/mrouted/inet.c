@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.5 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: inet.c,v 1.6 2002/08/01 03:40:34 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -185,12 +185,12 @@ inet_parse(char *s)
  *
  */
 int
-inet_cksum(u_short *addr, u_int len)
+inet_cksum(u_int16_t *addr, u_int len)
 {
 	int nleft = (int)len;
-	u_short *w = addr;
-	u_short answer = 0;
-	int sum = 0;
+	u_int16_t *w = addr;
+	u_int16_t answer = 0;
+	int32_t sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
