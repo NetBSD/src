@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2004/03/06 11:44:41 rtr Exp $
+#	$NetBSD: Makefile,v 1.1 2004/03/06 11:44:41 rtr Exp $
 
 .include <bsd.own.mk>
 
-KMOD=	mga
+KMOD=	radeon
 MKMAN=	no
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared/drm/kernel
-SRCS=	mga_dma.c mga_irq.c mga_state.c mga_warp.c
+SRCS=	radeon_cp.c radeon_state.c radeon_irq.c radeon_mem.c
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel
-SRCS+=	mga_drv.c
+SRCS+=	radeon_drv.c
 
 DPSRCS=	opt_drm.h
 
