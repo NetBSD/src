@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.13 1996/08/30 20:19:44 thorpej Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.14 1997/09/17 16:35:55 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -28,20 +28,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rusers_proc.c,v 1.13 1996/08/30 20:19:44 thorpej Exp $";
+__RCSID("$NetBSD: rusers_proc.c,v 1.14 1997/09/17 16:35:55 christos Exp $");
 #endif /* not lint */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <signal.h>
+#include <syslog.h>
+#include <utmp.h>
+
 #include <sys/types.h>
 #include <sys/time.h>
-#include <utmp.h>
-#include <stdio.h>
-#include <syslog.h>
-#include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+
+#include <rpc/rpc.h>
+
+#include "rusers_proc.h"
+
 #ifdef XIDLE
 #include <setjmp.h>
 #include <X11/Xlib.h>
@@ -78,28 +87,41 @@ typedef char ut_line_t[UT_LINESIZE];
 typedef char ut_name_t[UT_NAMESIZE];
 typedef char ut_host_t[UT_HOSTSIZE];
 
-struct rusers_utmp utmps[MAXUSERS];
-struct utmpidle *utmp_idlep[MAXUSERS];
-struct utmpidle utmp_idle[MAXUSERS];
-ut_line_t line[MAXUSERS];
-ut_name_t name[MAXUSERS];
-ut_host_t host[MAXUSERS];
+static struct rusers_utmp utmps[MAXUSERS];
+static struct utmpidle *utmp_idlep[MAXUSERS];
+static struct utmpidle utmp_idle[MAXUSERS];
+static ut_line_t line[MAXUSERS];
+static ut_name_t name[MAXUSERS];
+static ut_host_t host[MAXUSERS];
 
 extern int from_inetd;
 
-FILE *ufp;
+static u_int getidle __P((char *, char *));
+static int *rusers_num_svc __P((void *, struct svc_req *));
+static utmp_array *do_names_3 __P((int));
+static struct utmpidlearr *do_names_2 __P((int));
+
+/* XXX */
+struct utmpidlearr *rusersproc_names_2_svc __P((void *, struct svc_req *));
+struct utmpidlearr *rusersproc_allnames_2_svc __P((void *, struct svc_req *));
+
 
 #ifdef XIDLE
-Display *dpy;
-
+static FILE *ufp;
+static Display *dpy;
 static sigjmp_buf openAbort;
 
+static int XqueryIdle __P((char *));
+static void abortOpen __P((int));
+
 static void
-abortOpen()
+abortOpen(n)
+	int n;
 {
 	siglongjmp(openAbort, 1);
 }
 
+static int
 XqueryIdle(display)
 	char *display;
 {
@@ -108,7 +130,7 @@ XqueryIdle(display)
 
 	(void) signal(SIGALRM, abortOpen);
 	(void) alarm(10);
-	if (!sigsetjmp(openAbort)) {
+	if (!sigsetjmp(openAbort, 0)) {
 		if ((dpy = XOpenDisplay(display)) == NULL) {
 			syslog(LOG_ERR, "cannot open display %s", display);
 			return (-1);
@@ -186,7 +208,7 @@ getidle(tty, display)
 	return (idle);
 }
 	
-int *
+static int *
 rusers_num_svc(arg, rqstp)
 	void *arg;
 	struct svc_req *rqstp;
@@ -223,7 +245,7 @@ do_names_3(int all)
 	struct utmp usr;
 	int nusers = 0;
 	
-	bzero((char *)&ut, sizeof(ut));
+	memset(&ut, 0, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
 	
 	ufp = fopen(_PATH_UTMP, "r");
