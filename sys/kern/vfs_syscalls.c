@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.47 1995/01/18 06:14:45 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.48 1995/03/05 08:52:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1205,7 +1205,8 @@ out1:
 	return (error);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) \
+    || defined(COMPAT_LINUX)
 /*
  * Get file status; this version follows links.
  */
@@ -1322,7 +1323,7 @@ cvtstat(st, ost)
 	ost->st_flags = st->st_flags;
 	ost->st_gen = st->st_gen;
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_IBCS2 */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_IBCS2 || COMPAT_LINUX */
 
 /*
  * Get file status; this version follows links.
@@ -1798,7 +1799,7 @@ ftruncate(p, uap, retval)
 	return (error);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX)
 /*
  * Truncate a file given its path name.
  */
@@ -1844,7 +1845,7 @@ compat_43_ftruncate(p, uap, retval)
 	SCARG(&nuap, length) = SCARG(uap, length);
 	return (ftruncate(p, &nuap, retval));
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_LINUX */
 
 /*
  * Sync an open file.
