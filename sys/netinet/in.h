@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.22 1996/09/09 14:51:10 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.23 1997/01/11 05:21:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -184,6 +184,7 @@ struct ip_opts {
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
+#define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 
 /*
  * Defaults and limits for options
