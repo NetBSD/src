@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.91 2003/05/09 12:45:01 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.92 2003/05/16 19:34:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,10 +106,10 @@ distribution_sets_exist_p(path)
 	int result;
 
 	result = 1;
-	snprintf(buf, STRSIZE, "%s/%s", path, "etc.tgz");
+	snprintf(buf, sizeof buf, "%s/%s", path, "etc.tgz");
 	result = result && file_exists_p(buf);
 
-	snprintf(buf, STRSIZE, "%s/%s", path, "base.tgz");
+	snprintf(buf, sizeof buf, "%s/%s", path, "base.tgz");
 	result = result && file_exists_p(buf);
 
 	return(result);
@@ -198,10 +198,12 @@ get_via_floppy()
 	list = dist_list;
 	while (list->name) {
 		strcpy(post, ".aa");
-		snprintf(distname, STRSIZE, "%s%s", list->name, dist_postfix);
+		snprintf(distname, sizeof distname, "%s%s",
+		    list->name, dist_postfix);
 		while (list->getit) {
-			snprintf(fname, STRSIZE, "%s%s", list->name, post);
-			snprintf(full_name, STRSIZE, "/mnt2/%s", fname);
+			snprintf(fname, sizeof fname, "%s%s", list->name, post);
+			snprintf(full_name, sizeof full_name, "/mnt2/%s",
+				 fname);
 			first = 1;
 			while (!mounted || stat(full_name, &sb)) {
  				if (mounted) 
@@ -280,7 +282,7 @@ again:
 			goto again;
 	}
 
-	snprintf(tmpdir, STRSIZE, "%s/%s", "/mnt2", cdrom_dir);
+	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", cdrom_dir);
 
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(tmpdir) == 0) {
@@ -293,7 +295,7 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strncpy(ext_dir, tmpdir, STRSIZE);
+	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -327,7 +329,7 @@ again:
 			goto again;
 	}
 
-	snprintf(tmpdir, STRSIZE, "%s/%s", "/mnt2", localfs_dir);
+	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", localfs_dir);
 
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(tmpdir) == 0) {
@@ -340,7 +342,7 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strncpy(ext_dir, tmpdir, STRSIZE);
+	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -379,7 +381,7 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strncpy(ext_dir, localfs_dir, STRSIZE);
+	strlcpy(ext_dir, localfs_dir, STRSIZE);
 	clean_dist_dir = 0;
 	mnt2_mounted = 0;
 	return 1;
@@ -403,7 +405,7 @@ cd_dist_dir(forwhat)
 
 	/* Set ext_dir for absolute path. */
 	cwd = getcwd(NULL,0);
-	strncpy(ext_dir, cwd, STRSIZE);
+	strlcpy(ext_dir, cwd, STRSIZE);
 	free (cwd);
 }
 
@@ -533,10 +535,10 @@ extract_dist()
 				process_menu(MENU_ok);
 			}
 #endif
-			(void)snprintf(distname, STRSIZE, "%s%s", list->name,
-			    dist_postfix);
-			(void)snprintf(fname, STRSIZE, "%s/%s", ext_dir,
-			    distname);
+			(void)snprintf(distname, sizeof distname, "%s%s",
+			    list->name, dist_postfix);
+			(void)snprintf(fname, sizeof fname, "%s/%s",
+			    ext_dir, distname);
 
 			/* if extraction failed and user aborted, punt. */
 			punt = extract_file(fname);
@@ -944,8 +946,7 @@ set_timezone_select(menudesc *m)
 
 	if (m)
 		tz_selected = m->opts[m->cursel].opt_name;
-	snprintf(tz_env, sizeof(tz_env), "%s/%s",
-		 zoneinfo_dir, tz_selected);
+	snprintf(tz_env, sizeof(tz_env), "%s/%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
@@ -979,15 +980,17 @@ set_timezone()
 	char *argv[2];
 	int skip;
 	struct stat sb;
-	int nfiles, n;
+	int nfiles, maxfiles;
 	int menu_no;
-	menu_ent *tz_menu;
+	menu_ent *tz_menu, *tz_menu1;
+	char **tz_titles, **tz_titles1;
 
 	signal(SIGALRM, timezone_sig);
 	alarm(1);
        
-	strncpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
-	strncpy(localtime_link, target_expand("/etc/localtime"), STRSIZE);
+	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
+	strlcpy(localtime_link, target_expand("/etc/localtime"),
+	    sizeof localtime_link);
 
 	/* Add sanity check that /mnt/usr/share/zoneinfo contains
 	 * something useful */
@@ -999,12 +1002,11 @@ set_timezone()
 		tz_default = "UTC";
 	} else {
 		localtime_target[rc] = '\0';
-		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
+		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/') + 1;
 	}
 
-	tz_selected=tz_default;
-	snprintf(tz_env, sizeof(tz_env), "%s/%s",
-		 zoneinfo_dir, tz_selected);
+	tz_selected = tz_default;
+	snprintf(tz_env, sizeof(tz_env), "%s/%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
@@ -1013,58 +1015,53 @@ set_timezone()
 	skip = strlen(zoneinfo_dir);
 	argv[0] = zoneinfo_dir;
 	argv[1] = NULL;
-	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-		return 1;	/* error - skip timezone setting */
-	}
-	for (nfiles = 0; (entry = fts_read(tree)) != NULL;) {
-		stat(entry->fts_accpath, &sb);
-		if (S_ISREG(sb.st_mode))
-			nfiles++;
-	}
-	if (errno) {
-		return 1;	/* error - skip timezone setting */
-	}
-	(void)fts_close(tree);
 	
-	tz_menu = malloc(nfiles * sizeof(struct menu_ent));
-	if (tz_menu == NULL) {
-		return 1;	/* error - skip timezone setting */
-	}
+	nfiles = 0;
+	maxfiles = 32;
+	tz_menu = malloc(maxfiles * sizeof *tz_menu);
+	tz_titles = malloc(maxfiles * sizeof *tz_titles);
+	if (tz_menu == NULL || tz_titles == NULL)
+		goto done;	/* error - skip timezone setting */
 	
-	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-		return 1;	/* error - skip timezone setting */
-	}
-	n = 0;
-	for (; (entry = fts_read(tree)) != NULL; ) {
-		stat(entry->fts_accpath, &sb);
-		if (S_ISREG(sb.st_mode)) {
-			tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
-			if (tz_menu[n].opt_name == NULL)
-				tz_menu[n].opt_name = "*";
-			tz_menu[n].opt_menu = OPT_NOMENU;
-			tz_menu[n].opt_flags = 0;
-			tz_menu[n].opt_action = set_timezone_select;
+	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL)))
+		goto done;	/* error - skip timezone setting */
 
-			n++;
+	for (; (entry = fts_read(tree)) != NULL; ) {
+		if (stat(entry->fts_accpath, &sb) == -1)
+			continue;
+		if (!S_ISREG(sb.st_mode))
+			continue;
+		if (nfiles >= maxfiles) {
+			maxfiles *= 2;
+			tz_menu1 = realloc(tz_menu, maxfiles * sizeof *tz_menu);
+			tz_titles1 = realloc(tz_titles,
+					     maxfiles * sizeof *tz_titles);
+			if (tz_menu1 == NULL || tz_titles1 == NULL)
+				break;
+			tz_menu = tz_menu1;
+			tz_titles = tz_titles1;
 		}
-	}
-	if (errno) {
-		return 1;	/* error - skip timezone setting */
+		tz_titles[nfiles] = strdup(entry->fts_accpath + skip + 1);
+		if (tz_titles[nfiles] == NULL)
+			break;
+		tz_menu[nfiles].opt_name = tz_titles[nfiles];
+		tz_menu[nfiles].opt_menu = OPT_NOMENU;
+		tz_menu[nfiles].opt_flags = 0;
+		tz_menu[nfiles].opt_action = set_timezone_select;
+
+		nfiles++;
 	}
 	(void)fts_close(tree);  
 	
 	menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
 			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
 			   "\nPlease consult the install documents.");
-	if (menu_no < 0) {
-		return 1;	/* error - skip timezone setting */
-	}
+	if (menu_no < 0)
+		goto done;	/* error - skip timezone setting */
+
 	process_menu(menu_no);
 
 	free_menu(menu_no);
-	for(n=0; n < nfiles; n++)
-		free((void *)tz_menu[n].opt_name);
-	free(tz_menu);
 
 	signal(SIGALRM, SIG_IGN);
 
@@ -1073,6 +1070,13 @@ set_timezone()
 	unlink(localtime_link);
 	symlink(localtime_target, localtime_link);
 	
+done:
+	while (nfiles > 0)
+		free(tz_titles[--nfiles]);
+	if (tz_titles != NULL)
+		free(tz_titles);
+	if (tz_menu != NULL)
+		free(tz_menu);
 	return 1;
 }
 
