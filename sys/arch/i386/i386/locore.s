@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.259 2002/09/22 06:51:10 gmcgarry Exp $	*/
+/*	$NetBSD: locore.s,v 1.260 2002/09/23 21:35:42 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1657,12 +1657,20 @@ ENTRY(longjmp)
 
 /*
  * The following primitives manipulate the run queues.
+ * _whichqs tells which of the 32 queues _qs
+ * have processes in them.  Setrq puts processes into queues, Remrq
+ * removes them from queues.  The running process is on no queue,
+ * other processes are on a queue related to p->p_pri, divided by 4
+ * actually to shrink the 0-127 range of priorities into the 32 available
+ * queues.
  */
 	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
  * void setrunqueue(struct proc *p);
+ * Insert a process on the appropriate queue.  Should be called at splclock().
+ * See setrunqueue(9) for more details.
  */
 /* LINTSTUB: Func: void setrunqueue(struct proc *p) */
 NENTRY(setrunqueue)
@@ -1694,6 +1702,8 @@ NENTRY(setrunqueue)
 
 /*
  * void remrunqueue(struct proc *p);
+ * Remove a process from its queue.  Should be called at splclock().
+ * See remrunqueue(9) for more details.
  */
 /* LINTSTUB: Func: void remrunqueue(struct proc *p) */
 NENTRY(remrunqueue)
@@ -1723,97 +1733,30 @@ NENTRY(remrunqueue)
 3:	.asciz	"remrunqueue"
 #endif /* DIAGNOSTIC */
 
-/*
- * struct proc *nextrunqueue(void)
- */
-/* LINTSTUB: Func: struct proc *nextrunqueue(void) */
-ENTRY(nextrunqueue)
-	pushl	%ebx
-	pushl	%edi
-
-	/*
-	 * Find new process.
-	 *
-	 * Registers:
-	 *   %edi - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
-	 *   %eax - new process
-	 */
-
-	/* Default to none found. */
-	xorl	%eax,%eax
-
-	/* Wait for new process. */
-	movl	_C_LABEL(sched_whichqs),%ecx
-	testl	%ecx,%ecx
-	je 	2f
-
-	bsfl	%ecx,%ebx		# find a full q
-	leal	_C_LABEL(sched_qs)(,%ebx,8),%edi # select q
-
-	movl	P_FORW(%edi),%eax	# unlink from front of process q
-#ifdef	DIAGNOSTIC
-	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
-	je	_C_LABEL(nextrunqueue_error)	# not possible
-#endif /* DIAGNOSTIC */
-	movl	P_FORW(%eax),%edx
-	movl	%edx,P_FORW(%edi)
-	movl	%edi,P_BACK(%edx)
-	movl	$0,P_BACK(%eax)		# isolate process
-
-	cmpl	%edx,%edi		# q empty?
-	jne	1f
-
-	btrl	%ebx,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
-1:
-#ifdef	DIAGNOSTIC
-	xorl	%ebx, %ebx
-	cmpl	%ebx,P_WCHAN(%eax)	# Waiting for something?
-	jne	_C_LABEL(nextrunqueue_error)	# Yes; shouldn't be queued.
-	cmpb	$SRUN,P_STAT(%eax)	# In run state?
-	jne	_C_LABEL(nextrunqueue_error)	# No; shouldn't be queued.
-#endif /* DIAGNOSTIC */
-
-2:
-	popl	%edi
-	popl	%ebx
-	ret
-
-#ifdef DIAGNOSTIC
-/* LINTSTUB: Ignore */
-NENTRY(nextrunqueue_error)
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"nextrunqueue"
-#endif /* DIAGNOSTIC */
-
 #if NAPM > 0
 /* LINTSTUB: Func: void apm_cpu_busy (void) */
 /* LINTSTUB: Func: void apm_cpu_idle (void) */
 	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
 #endif
-
 /*
- * void cpu_idle(void)
+ * When no processes are on the runq, cpu_switch() branches to here to wait for
+ * something to come ready.
  */
-ENTRY(cpu_idle)
-	pushl	%ebx
+/* LINTSTUB: Ignore */
+ENTRY(idle)
+	/*
+	 * When we get here, interrupts are off (via cli) and
+	 * sched_lock is held.
+	 */
+	movl	_C_LABEL(sched_whichqs),%ecx
+	testl	%ecx,%ecx
+	jnz	sw1
 #if defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)
 #endif
+	sti
 
-	movl	_C_LABEL(cpl), %ebx
-	movl	$0,_C_LABEL(cpl)	# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
-	movl	%ebx, _C_LABEL(cpl)
-
-	/*
-	 * Try to zero some pages.
-	 */
+	/* Try to zero some pages. */
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
 	testl	%ecx,%ecx
 	jz	1f
@@ -1826,35 +1769,116 @@ ENTRY(cpu_idle)
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_busy)
 #endif
+	cli
 #if defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)
 #endif
-	popl	%ebx
-	ret
+	jmp	_C_LABEL(idle)
+
+#ifdef DIAGNOSTIC
+/* LINTSTUB: Ignore */
+NENTRY(switch_error)
+	pushl	$1f
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_switch"
+#endif /* DIAGNOSTIC */
 
 /*
- * void cpu_switch(struct proc *, struct proc *)
+ * void cpu_switch(struct proc *)
+ * Find a runnable process and switch to it.  Wait if necessary.  If the new
+ * process is the same as the old one, we short-circuit the context save and
+ * restore.
+ * see cpu_switch(9)
  */
-/* LINTSTUB: Func: void cpu_switch(struct proc *curp, struct proc *newp) */
+/* LINTSTUB: Func: void cpu_switch(struct proc *p) */
 ENTRY(cpu_switch)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
 	pushl	_C_LABEL(cpl)
 
-	movl	24(%esp),%edi
-	movl	20(%esp),%esi
+	movl	_C_LABEL(curproc),%esi
 
-#ifdef DIAGNOSTIC
-	cmpl	%edi, %esi
-	jne	sw1
-	pushl	$9f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-9:	.asciz	"cpu_switch: switching to self!"
+	/*
+	 * Clear curproc so that we don't accumulate system time while idle.
+	 * This also insures that schedcpu() will move the old process to
+	 * the correct queue if it happens to get called from the spllower()
+	 * below and changes the priority.  (See corresponding comment in
+	 * userret()).
+	 */
+	movl	$0,_C_LABEL(curproc)
+
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	call	_C_LABEL(sched_unlock_idle)
 #endif
 
-sw1:
+	movl	$0,_C_LABEL(cpl)	# spl0()
+	call	_C_LABEL(Xspllower)	# process pending interrupts
+
+switch_search:
+	/*
+	 * First phase: find new process.
+	 *
+	 * Registers:
+	 *   %eax - queue head, scratch, then zero
+	 *   %ebx - queue number
+	 *   %ecx - cached value of whichqs
+	 *   %edx - next process in queue
+	 *   %esi - old process
+	 *   %edi - new process
+	 */
+
+	/* Lock the scheduler. */
+	cli				# splhigh doesn't do a cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
+#endif
+
+	/* Wait for new process. */
+	movl	_C_LABEL(sched_whichqs),%ecx
+
+sw1:	bsfl	%ecx,%ebx		# find a full q
+	jz	_C_LABEL(idle)		# if none, idle
+
+	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
+
+	movl	P_FORW(%eax),%edi	# unlink from front of process q
+#ifdef	DIAGNOSTIC
+	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
+	je	_C_LABEL(switch_error)	# not possible
+#endif /* DIAGNOSTIC */
+	movl	P_FORW(%edi),%edx
+	movl	%edx,P_FORW(%eax)
+	movl	%eax,P_BACK(%edx)
+
+	cmpl	%edx,%eax		# q empty?
+	jne	3f
+
+	btrl	%ebx,%ecx		# yes, clear to indicate empty
+	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
+
+3:	/* We just did it. */
+	xorl	%eax,%eax
+	movl	%eax,_C_LABEL(want_resched)
+
+#ifdef	DIAGNOSTIC
+	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
+	jne	_C_LABEL(switch_error)	# Yes; shouldn't be queued.
+	cmpb	$SRUN,P_STAT(%edi)	# In run state?
+	jne	_C_LABEL(switch_error)	# No; shouldn't be queued.
+#endif /* DIAGNOSTIC */
+
+	/* Isolate process.  XXX Is this necessary? */
+	movl	%eax,P_BACK(%edi)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -1867,25 +1891,22 @@ sw1:
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
 	movl	%edi,_C_LABEL(curproc)
 
-	/* We just did it. */
-	movl	$0,_C_LABEL(want_resched)
+	/* It's okay to take interrupts here. */
+	sti
 
-#if defined(LOCKDEBUG)
-        /*
-         * Unlock the sched_lock.
-         */
-        call    _C_LABEL(sched_unlock_idle)
-#endif
+	/* Skip context switch if same process. */
+	cmpl	%edi,%esi
+	je	switch_return
 
 	/* If old process exited, don't bother. */
 	testl	%esi,%esi
-	jz	1f
+	jz	switch_exited
 
 	/*
-	 * Save old context.
+	 * Second phase: save old context.
 	 *
 	 * Registers:
-	 *   %eax, %ebx, %ecx - scratch
+	 *   %eax, %ecx - scratch
 	 *   %esi - old process, then old pcb
 	 *   %edi - new process
 	 */
@@ -1896,9 +1917,9 @@ sw1:
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
 
-1:
+switch_exited:
 	/*
-	 * Restore saved context.
+	 * Third phase: restore saved context.
 	 *
 	 * Registers:
 	 *   %eax, %ecx, %edx - scratch
@@ -1962,27 +1983,33 @@ switch_restored:
 	/* Interrupts are okay again. */
 	sti
 
-	/*
-	 *  Check for restartable atomic sequences (RAS)
-	 */
+/*
+ *  Check for restartable atomic sequences (RAS)
+ */
+	movl	_C_LABEL(curproc),%edi
 	cmpl	$0,P_NRAS(%edi)
-	je	2f
-	movl	P_MD_REGS(%edi),%ebx
-	movl	TF_EIP(%ebx),%eax
+	je	1f
+	movl	P_MD_REGS(%edi),%edx
+	movl	TF_EIP(%edx),%eax
 	pushl	%eax
 	pushl	%edi
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
-	je	2f
-	movl	%eax,TF_EIP(%ebx)
-2:
+	je	1f
+	movl	_C_LABEL(curproc),%edi
+	movl	P_MD_REGS(%edi),%edx
+	movl	%eax,TF_EIP(%edx)
+1:
+
+switch_return:
 	/*
 	 * Restore old cpl from stack.  Note that this is always an increase,
 	 * due to the spl0() on entry.
 	 */
 	popl	_C_LABEL(cpl)
 
+	movl	%edi,%eax		# return (p);
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -2047,16 +2074,10 @@ ENTRY(switch_exit)
 	call	_C_LABEL(exit2)
 	addl	$4,%esp
 
-#if defined(LOCKDEBUG)
-	call	_C_LABEL(sched_lock_idle)
-#endif
-
-	call	_C_LABEL(chooseproc)
-	movl	%eax,%edi
-
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
-	jmp	sw1
+	movl	$0,_C_LABEL(curproc)
+	jmp	switch_search
 
 /*
  * void savectx(struct pcb *pcb);

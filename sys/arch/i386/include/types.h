@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.37 2002/09/22 08:30:58 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.38 2002/09/23 21:35:43 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,5 @@ typedef int		register_t;
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_RAS
 #define	__HAVE_MD_RUNQUEUE
-#define	__HAVE_CHOOSEPROC
 
 #endif	/* _MACHTYPES_H_ */
