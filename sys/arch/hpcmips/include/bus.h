@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.7 2000/06/26 04:55:42 simonb Exp $   */
+/*     $NetBSD: bus.h,v 1.8 2000/08/09 02:12:50 shin Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -514,6 +514,35 @@ __HPCMIPS_copy_region(4)
 
 #undef __PB_TYPENAME_PREFIX
 #undef __PB_TYPENAME
+
+/*
+ * Bus stream operations--defined in terms of non-stream counterparts
+ */
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+#define	bus_space_read_stream_8 bus_space_read_8
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+#define	bus_space_read_multi_stream_8 bus_space_read_multi_8
+#define bus_space_read_region_stream_1 bus_space_read_region_1
+#define bus_space_read_region_stream_2 bus_space_read_region_2
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+#define	bus_space_read_region_stream_8 bus_space_read_region_8
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+#define	bus_space_write_stream_8 bus_space_write_8
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
+#define	bus_space_write_multi_stream_8 bus_space_write_multi_8
+#define bus_space_write_region_stream_1 bus_space_write_region_1
+#define bus_space_write_region_stream_2 bus_space_write_region_2
+#define bus_space_write_region_stream_4 bus_space_write_region_4
+#define	bus_space_write_region_stream_8	bus_space_write_region_8
 
 /*
  * Flags used in various bus DMA methods.
