@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.15 2003/01/01 02:36:54 dyoung Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.16 2003/01/02 06:26:49 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.15 2003/01/01 02:36:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.16 2003/01/02 06:26:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,6 @@ wi_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	bus_space_tag_t memt, iot;
 	bus_space_handle_t memh, ioh;
-	pcireg_t csr;
 
 	psc->psc_pa = pa;
 
@@ -278,12 +277,6 @@ wi_pci_attach(parent, self, aux)
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pci_enable;
 	sc->sc_disable = wi_pci_disable;
-
-	/* Enable the card. */
-	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	csr &= ~PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
