@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.7 1998/02/22 12:55:46 christos Exp $	*/
+/*	$NetBSD: vax.c,v 1.8 1998/06/09 17:07:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vax.c,v 1.7 1998/02/22 12:55:46 christos Exp $");
+__RCSID("$NetBSD: vax.c,v 1.8 1998/06/09 17:07:12 ragge Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ nltype	indirectchild = {
     };
 
 
-operandenum operandmode __P((unsigned char *));
+operandenum operandmode __P((struct modebyte *));
 char *operandname __P((operandenum));
-long operandlength __P((unsigned char *));
-unsigned long reladdr __P((char *));
+long operandlength __P((struct modebyte *));
+unsigned long reladdr __P((struct modebyte *));
 
 operandenum
 operandmode( modep )
