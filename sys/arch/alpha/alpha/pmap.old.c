@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.64 1998/03/18 23:55:25 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.65 1998/03/22 05:41:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@
  *	Support for the new UVM pmap interface was written by
  *	Jason R. Thorpe.
  *
+ *	Support for ASNs was written by Jason R. Thorpe, again
+ *	with help from Chris Demetriou and Ross Harvey.
+ *
  * Notes:
  *
  *	All page table access is done via K0SEG.  The one exception
@@ -117,11 +120,26 @@
  *
  * Bugs/misfeatures:
  *
- *	Does not currently support ASNs.  Support for ASNs would
- *	eliminate a good deal of TLB invalidation.
+ *	Does not currently support multiple processors.  Problems:
  *
- *	Does not currently support multiple processors.  At the very
- *	least, TLB shootdown is needed.
+ *		- There is no locking protocol to speak of.
+ *
+ *		- pmap_activate() and pmap_deactivate() are called
+ *		  from a critical section in locore, and cannot lock
+ *		  the pmap (because doing so may sleep).  Thus, they
+ *		  must be rewritten to use ldq_l and stq_c to update
+ *		  the CPU mask.
+ *
+ *		- ASN logic needs minor adjustments for multiple processors:
+ *
+ *			- pmap_next_asn and pmap_asn_generation need
+ *			  to be changed to arrays indexed by processor
+ *			  number.
+ *
+ *			- A similar change needs to happen for the pmap
+ *			  structure's pm_asn and pm_asngen members.
+ *
+ *		- TLB shootdown code needs to be written.
  */
 
 /*
@@ -155,7 +173,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.64 1998/03/18 23:55:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.65 1998/03/22 05:41:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,19 +241,20 @@ struct chgstats {
 #endif
 
 #ifdef DEBUG
-#define PDB_FOLLOW	0x0001
-#define PDB_INIT	0x0002
-#define PDB_ENTER	0x0004
-#define PDB_REMOVE	0x0008
-#define PDB_CREATE	0x0010
-#define PDB_PTPAGE	0x0020
-#define PDB_BITS	0x0080
-#define PDB_COLLECT	0x0100
-#define PDB_PROTECT	0x0200
-#define PDB_BOOTSTRAP	0x1000
-#define PDB_PARANOIA	0x2000
-#define PDB_WIRING	0x4000
-#define PDB_PVDUMP	0x8000
+#define	PDB_FOLLOW	0x0001
+#define	PDB_INIT	0x0002
+#define	PDB_ENTER	0x0004
+#define	PDB_REMOVE	0x0008
+#define	PDB_CREATE	0x0010
+#define	PDB_PTPAGE	0x0020
+#define	PDB_ASN		0x0040
+#define	PDB_BITS	0x0080
+#define	PDB_COLLECT	0x0100
+#define	PDB_PROTECT	0x0200
+#define	PDB_BOOTSTRAP	0x1000
+#define	PDB_PARANOIA	0x2000
+#define	PDB_WIRING	0x4000
+#define	PDB_PVDUMP	0x8000
 
 int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
@@ -319,6 +338,67 @@ int		pv_nfree;
  */
 LIST_HEAD(, pmap) pmap_all_pmaps;
 
+/*
+ * Address Space Numbers.
+ *
+ * On many implementations of the Alpha architecture, the TLB entries and
+ * I-cache blocks are tagged with a unique number within an implementation-
+ * specified range.  When a process context becomes active, the ASN is used
+ * to match TLB entries; if a TLB entry for a particular VA does not match
+ * the current ASN, it is ignored (one could think of the processor as
+ * having a collection of <max ASN> separate TLBs).  This allows operating
+ * system software to skip the TLB flush that would otherwise be necessary
+ * at context switch time.
+ *
+ * Alpha PTEs have a bit in them (PG_ASM - Address Space Match) that
+ * causes TLB entries to match any ASN.  The PALcode also provides
+ * a TBI (Translation Buffer Invalidate) operation that flushes all
+ * TLB entries that _do not_ have PG_ASM.  We use this bit for kernel
+ * mappings, so that invalidation of all user mappings does not invalidate
+ * kernel mappings (which are consistent across all processes).
+ *
+ * pmap_next_asn always indicates to the next ASN to use.  When
+ * pmap_next_asn exceeds pmap_max_asn, we start a new ASN generation.
+ *
+ * When a new ASN generation is created, the per-process (i.e. non-PG_ASM)
+ * TLB entries and the I-cache are flushed, the generation number is bumped,
+ * and pmap_next_asn is changed to indicate the first non-reserved ASN.
+ *
+ * We reserve ASN #0 for pmaps that use the global Lev1map.  This prevents
+ * the following scenario:
+ *
+ *	* New ASN generation starts, and process A is given ASN #0.
+ *
+ *	* A new process B (and thus new pmap) is created.  The ASN,
+ *	  for lack of a better value, is initialized to 0.
+ *
+ *	* Process B runs.  It is now using the TLB entries tagged
+ *	  by process A.  *poof*
+ *
+ * In the scenario above, in addition to the processor using using incorrect
+ * TLB entires, the PALcode might use incorrect information to service a
+ * TLB miss.  (The PALcode uses the recursively mapped Virtual Page Table
+ * to locate the PTE for a faulting address, and tagged TLB entires exist
+ * for the Virtual Page Table addresses in order to speed up this procedure,
+ * as well.)
+ *
+ * By reserving an ASN for Lev1map users, we are guaranteeing that
+ * new pmaps will initially run with no TLB entries for user addresses
+ * or VPT mappings that map user page tables.  Since Lev1map only
+ * contains mappings for kernel addresses, and since those mappings
+ * are always made with PG_ASM, sharing an ASN for Lev1map users is
+ * safe (since PG_ASM mappings match any ASN).
+ *
+ * On processors that do not support ASNs, the PALcode invalidates
+ * the TLB and I-cache automatically on swpctx.  We still still go
+ * through the motions of assigning an ASN (really, just refreshing
+ * the ASN generation in this particular case) to keep the logic sane
+ * in other parts of the code.
+ */
+u_int	pmap_max_asn;		/* max ASN supported by the system */
+u_int	pmap_next_asn;		/* next free ASN to use */
+u_long	pmap_asn_generation;	/* current ASN generation */
+
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
 static __inline struct pv_head *pa_to_pvh __P((vm_offset_t));
@@ -360,6 +440,11 @@ void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
 
 /*
+ * ASN management functions.
+ */
+void	pmap_alloc_asn __P((pmap_t));
+
+/*
  * Misc. functions.
  */
 vm_offset_t pmap_alloc_physpage __P((void));
@@ -374,8 +459,78 @@ void	pmap_pvdump __P((vm_offset_t));
  *
  *	Check to see if a pmap is active on the current processor.
  */
+#ifdef DEBUG
+#define	active_pmap(pm)							\
+({									\
+	int isactive_ =							\
+	    (((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0);	\
+									\
+	if (isactive_) {						\
+		if (curproc == NULL ||					\
+		    (pm) != curproc->p_vmspace->vm_map.pmap) {		\
+			printf("line %ld, false TRUE\n", __LINE__);	\
+			panic("active_pmap");				\
+		}							\
+	} else {							\
+		if (curproc != NULL &&					\
+		    (pm) == curproc->p_vmspace->vm_map.pmap) {		\
+			printf("line %ld, false FALSE\n", __LINE__);	\
+			panic("active_pmap");				\
+		}							\
+	}								\
+									\
+	(isactive_);							\
+})
+#else
 #define	active_pmap(pm)							\
 	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+#endif /* DEBUG */
+
+/*
+ * PMAP_ACTIVATE_ASN_SANITY:
+ *
+ *	DEBUG sanity checks for ASNs within PMAP_ACTIVATE.
+ */
+#ifdef DEBUG
+#define	PMAP_ACTIVATE_ASN_SANITY(pmap)					\
+do {									\
+	if ((pmap)->pm_lev1map == Lev1map) {				\
+		/*							\
+		 * This pmap implementation also ensures that		\
+		 * pmaps referencing Lev1map use a reserved ASN		\
+		 * to prevent the PALcode from servicing a TLB miss	\
+		 * with the wrong PTE.					\
+		 */							\
+		if ((pmap)->pm_asn != PMAP_ASN_RESERVED) {		\
+			printf("Lev1map with non-reserved ASN "		\
+			    "(line %ld)\n", __LINE__);			\
+			panic("PMAP_ACTIVATE_ASN_SANITY");		\
+		}							\
+	} else {							\
+		if ((pmap)->pm_asngen != pmap_asn_generation) {		\
+			/*						\
+			 * ASN generation number isn't valid!		\
+			 */						\
+			printf("pmap asngen %lu, current %lu "		\
+			    "(line %ld)\n",				\
+			    (pmap)->pm_asngen, pmap_asn_generation,	\
+			    __LINE__);					\
+			panic("PMAP_ACTIVATE_ASN_SANITY");		\
+		}							\
+		if ((pmap)->pm_asn == PMAP_ASN_RESERVED) {		\
+			/*						\
+			 * DANGER WILL ROBINSON!  We're going to	\
+			 * pollute the VPT TLB entries!			\
+			 */						\
+			printf("Using reserved ASN! (line %ld)\n",	\
+			    __LINE__);					\
+			panic("PMAP_ACTIVATE_ASN_SANITY");		\
+		}							\
+	}								\
+} while (0)
+#else
+#define	PMAP_ACTIVATE_ASN_SANITY(pmap)	/* nothing */
+#endif
 
 /*
  * PMAP_ACTIVATE:
@@ -383,11 +538,20 @@ void	pmap_pvdump __P((vm_offset_t));
  *	This is essentially the guts of pmap_activate(), without
  *	ASN allocation.  This is used by pmap_activate(),
  *	pmap_create_lev1map(), and pmap_destroy_lev1map().
+ *
+ *	This is called only when it is known that a pmap is "active"
+ *	on the current processor; the ASN must already be valid.
+ *
+ *	NOTE: This must be written such that no locking of the pmap
+ *	is necessary!  See pmap_activate().
  */
 #define	PMAP_ACTIVATE(pmap, p)						\
 do {									\
+	PMAP_ACTIVATE_ASN_SANITY(pmap);					\
+									\
 	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)(pmap)->pm_lev1map) >> PGSHIFT; \
+	(p)->p_addr->u_pcb.pcb_hw.apcb_asn = (pmap)->pm_asn;		\
 									\
 	if ((p) == curproc) {						\
 		/*							\
@@ -395,11 +559,25 @@ do {									\
 		 * our own context again so that it will take effect.	\
 		 */							\
 		(void) alpha_pal_swpctx((u_long)p->p_md.md_pcbpaddr);	\
-									\
-		/* XXX These go away if we use ASNs. */			\
-		ALPHA_TBIAP();						\
-		alpha_pal_imb();					\
 	}								\
+} while (0)
+
+/*
+ * PMAP_INVALIDATE_ASN:
+ *
+ *	Invalidate the specified pmap's ASN, so as to force allocation
+ *	of a new one the next time pmap_alloc_asn() is called.
+ *
+ *	NOTE: THIS MUST ONLY BE CALLED IF AT LEAST ONE OF THE FOLLOWING
+ *	CONDITIONS ARE TRUE:
+ *
+ *		(1) The pmap references the global Lev1map.
+ *
+ *		(2) The pmap is not active on the current processor.
+ */
+#define	PMAP_INVALIDATE_ASN(pmap)					\
+do {									\
+	(pmap)->pm_asn = PMAP_ASN_RESERVED;				\
 } while (0)
 
 /*
@@ -411,13 +589,26 @@ do {									\
 do {									\
 	if ((hadasm) || (isactive)) {					\
 		/*							\
-		 * Simply invalidating the TLB entry and I-stream	\
+		 * Simply invalidating the TLB entry and I-cache	\
 		 * works in this case.					\
 		 */							\
 		ALPHA_TBIS((va));					\
 		if ((doimb))						\
 			alpha_pal_imb();				\
+	} else if ((pmap)->pm_asngen == pmap_asn_generation) {		\
+		/*							\
+		 * We can't directly invalidate the TLB entry		\
+		 * in this case, so we have to force allocation		\
+		 * of a new ASN the next time this pmap becomes		\
+		 * active.						\
+		 */							\
+		PMAP_INVALIDATE_ASN((pmap));				\
 	}								\
+		/*							\
+		 * Nothing to do in this case; the next time the	\
+		 * pmap becomes active on this processor, a new		\
+		 * ASN will be allocated anyway.			\
+		 */							\
 } while (0)
 
 /*
@@ -578,18 +769,33 @@ pmap_bootstrap(ptaddr, maxasn)
 	LIST_INIT(&pmap_all_pmaps);
 
 	/*
-	 * Initialize kernel pmap.
+	 * Initialize the ASN logic.
+	 */
+	pmap_max_asn = maxasn;
+	pmap_next_asn = 1;
+	pmap_asn_generation = 0;
+
+	/*
+	 * Initialize kernel pmap.  Note that all kernel mappings
+	 * have PG_ASM set, so the ASN doesn't really matter for
+	 * the kernel pmap.  Also, since the kernel pmap always
+	 * references Lev1map, it always has an invalid ASN
+	 * generation.
 	 */
 	pmap_kernel()->pm_lev1map = Lev1map;
 	pmap_kernel()->pm_count = 1;
+	pmap_kernel()->pm_asn = PMAP_ASN_RESERVED;
+	pmap_kernel()->pm_asngen = pmap_asn_generation;
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
 	/*
-	 * Set up proc0's PCB such that the ptbr points to the right place.
+	 * Set up proc0's PCB such that the ptbr points to the right place
+	 * and has the kernel pmap's (really unused) ASN.
 	 */
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
+	proc0.p_addr->u_pcb.pcb_hw.apcb_asn = pmap_kernel()->pm_asn;
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -809,6 +1015,8 @@ pmap_pinit(pmap)
 	pmap->pm_lev1map = Lev1map;
 
 	pmap->pm_count = 1;
+	pmap->pm_asn = PMAP_ASN_RESERVED;
+	pmap->pm_asngen = pmap_asn_generation;
 	simple_lock_init(&pmap->pm_lock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap, pm_list);
 }
@@ -1736,6 +1944,11 @@ pmap_collect(pmap)
  *	Activate the pmap used by the specified process.  This includes
  *	reloading the MMU context if the current process, and marking
  *	the pmap in use by the processor.
+ *
+ *	NOTE: This is called from a critical section in locore.  This
+ *	means we cannot lock the pmap, because doing so may sleep!
+ *	Instead, we have to ensure that operations performed in this
+ *	function do not require locking!
  */
 void
 pmap_activate(p)
@@ -1748,7 +1961,10 @@ pmap_activate(p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
-	/* XXX Allocate an ASN. */
+	/*
+	 * Allocate an ASN.
+	 */
+	pmap_alloc_asn(pmap);
 
 	/*
 	 * Mark the pmap in use by this processor.
@@ -1763,6 +1979,9 @@ pmap_activate(p)
  *
  *	Mark that the pmap used by the specified process is no longer
  *	in use by the processor.
+ *
+ *	The comment above pmap_activate() wrt. locking applies here,
+ *	as well.
  */
 void
 pmap_deactivate(p)
@@ -2191,7 +2410,9 @@ pmap_remove_mapping(pmap, va, pte)
 			 * miss using the stale VPT TLB entry it entered
 			 * behind our back to shortcut to the VA's PTE.
 			 */
-			ALPHA_TBIS((vm_offset_t)(&VPT[VPT_INDEX(va)]));
+			PMAP_INVALIDATE_TLB(pmap,
+			    (vm_offset_t)(&VPT[VPT_INDEX(va)]), FALSE,
+			    active_pmap(pmap), FALSE);
 
 			/*
 			 * We've freed a level 3 table, so delete the
@@ -2768,9 +2989,9 @@ pmap_alloc_physpage()
 	vm_offset_t pa;
 
 #if defined(UVM)
-	if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL) {
+	if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL)
 #else
-	if ((pg = vm_page_alloc1()) == NULL) {
+	if ((pg = vm_page_alloc1()) == NULL)
 #endif
 		/*
 		 * XXX This is lame.  We can probably wait for the
@@ -2778,7 +2999,6 @@ pmap_alloc_physpage()
 		 * XXX page from another pmap.
 		 */
 		panic("pmap_alloc_physpage: no pages available");
-	}
 
 	pa = VM_PAGE_TO_PHYS(pg);
 	pmap_zero_page(pa);
@@ -2831,6 +3051,9 @@ pmap_create_lev1map(pmap)
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
 		panic("pmap_create_lev1map: got kernel pmap");
+
+	if (pmap->pm_asn != PMAP_ASN_RESERVED)
+		panic("pmap_create_lev1map: pmap uses non-reserved ASN");
 #endif
 
 	/*
@@ -2865,10 +3088,7 @@ pmap_create_lev1map(pmap)
 	 * reactivate it.
 	 */
 	if (active_pmap(pmap)) {
-#ifdef DIAGNOSTIC
-		if (curproc == NULL || pmap != curproc->p_vmspace->vm_map.pmap)
-			panic("pmap_create_lev1map: active inconsistency");
-#endif
+		pmap_alloc_asn(pmap);
 		PMAP_ACTIVATE(pmap, curproc);
 	}
 }
@@ -2899,13 +3119,24 @@ pmap_destroy_lev1map(pmap)
 
 	/*
 	 * The page table base has changed; if the pmap was active,
-	 * reactivate it.
+	 * reactivate it.  Note that allocation of a new ASN is
+	 * not necessary here:
+	 *
+	 *	(1) We've gotten here because we've deleted all
+	 *	    user mappings in the pmap, invalidating the
+	 *	    TLB entries for them as we go.
+	 *
+	 *	(2) Lev1map contains only kernel mappings, which
+	 *	    were identical in the user pmap, and all of
+	 *	    those mappings have PG_ASM, so the ASN doesn't
+	 *	    matter.
+	 *
+	 * We do, however, ensure that the pmap is using the
+	 * reserved ASN, to ensure that no two pmaps never have
+	 * clashing TLB entries.
 	 */
 	if (active_pmap(pmap)) {
-#ifdef DIAGNOSTIC
-		if (curproc == NULL || pmap != curproc->p_vmspace->vm_map.pmap)
-			panic("pmap_destroy_lev1map: active inconsistency");
-#endif
+		PMAP_INVALIDATE_ASN(pmap);
 		PMAP_ACTIVATE(pmap, curproc);
 	}
 
@@ -3060,4 +3291,137 @@ pmap_ptpage_delref(pte)
 #endif
 
 	return (pvh->pvh_ptref);
+}
+
+/******************** Address Space Number management ********************/
+
+/*
+ * pmap_alloc_asn:
+ *
+ *	Allocate and assign an ASN to the specified pmap.
+ */
+void
+pmap_alloc_asn(pmap)
+	pmap_t pmap;
+{
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_ASN))
+		printf("pmap_alloc_asn(%p)\n", pmap);
+#endif
+
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_alloc_asn: got kernel pmap");
+#endif
+
+	/*
+	 * If the pmap is still using the global Lev1map, there
+	 * is no need to assign an ASN at this time, because only
+	 * kernel mappings exist in that map, and all kernel mappings
+	 * have PG_ASM set.  If the pmap eventually gets its own
+	 * lev1map, an ASN will be allocated at that time.
+	 */
+	if (pmap->pm_lev1map == Lev1map) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_ASN)
+			printf("pmap_alloc_asn: still references Lev1map\n");
+#endif
+#ifdef DIAGNOSTIC
+		if (pmap->pm_asn != PMAP_ASN_RESERVED)
+			panic("pmap_alloc_asn: Lev1map without "
+			    "PMAP_ASN_RESERVED");
+#endif
+		return;
+	}
+
+	/*
+	 * On processors which do not implement ASNs, the swpctx PALcode
+	 * operation will automatically invalidate the TLB and I-cache,
+	 * so we don't need to do that here.
+	 */
+	if (pmap_max_asn == 0) {
+		/*
+		 * Refresh the pmap's generation number, to
+		 * simplify logic elsewhere.
+		 */
+		pmap->pm_asngen = pmap_asn_generation;
+#ifdef DEBUG
+		if (pmapdebug & PDB_ASN)
+			printf("pmap_alloc_asn: no ASNs, using asngen %lu\n",
+			    pmap->pm_asngen);
+#endif
+		return;
+	}
+
+	/*
+	 * Hopefully, we can continue using the one we have...
+	 */
+	if (pmap->pm_asn != PMAP_ASN_RESERVED &&
+	    pmap->pm_asngen == pmap_asn_generation) {
+		/*
+		 * ASN is still in the current generation; keep on using it.
+		 */
+#ifdef DEBUG
+		if (pmapdebug & PDB_ASN) 
+			printf("pmap_alloc_asn: same generation, keeping %u\n",
+			    pmap->pm_asn);
+#endif
+		return;
+	}
+
+	/*
+	 * Need to assign a new ASN.  Grab the next one, incrementing
+	 * the generation number if we have to.
+	 */
+	if (pmap_next_asn > pmap_max_asn) {
+		/*
+		 * Invalidate all non-PG_ASM TLB entries and the
+		 * I-cache, and bump the generation number.
+		 */
+		ALPHA_TBIAP();
+		alpha_pal_imb();
+
+		pmap_next_asn = 1;
+
+		pmap_asn_generation++;
+#ifdef DIAGNOSTIC
+		if (pmap_asn_generation == 0) {
+			/*
+			 * The generation number has wrapped.  We could
+			 * handle this scenario by traversing all of
+			 * the pmaps, and invaldating the generation
+			 * number on those which are not currently
+			 * in use by this processor.
+			 *
+			 * However... considering that we're using
+			 * an unsigned 64-bit integer for generation
+			 * numbers, on non-ASN CPUs, we won't wrap
+			 * for approx. 585 million years, or 75 billion
+			 * years on a 128-ASN CPU (assuming 1000 switch
+			 * operations per second).
+			 *
+			 * So, we don't bother.
+			 */
+			panic("pmap_alloc_asn: too much uptime");
+		}
+#endif
+#ifdef DEBUG
+		if (pmapdebug & PDB_ASN)
+			printf("pmap_alloc_asn: generation bumped to %lu\n",
+			    pmap_asn_generation);
+#endif
+	}
+
+	/*
+	 * Assign the new ASN and validate the generation number.
+	 */
+	pmap->pm_asn = pmap_next_asn++;
+	pmap->pm_asngen = pmap_asn_generation;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_ASN)
+		printf("pmap_alloc_asn: assigning %u to pmap %p\n",
+		    pmap->pm_asn, pmap);
+#endif
 }
