@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.18 2002/09/21 01:18:45 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.19 2002/09/23 02:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.18 2002/09/21 01:18:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.19 2002/09/23 02:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -533,7 +533,7 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 	RF_Raid_t *raidPtr;
 	RF_AccessStripeMap_t *asmap;
 {
-	RF_RowCol_t trow, tcol, prow, pcol, *diskids, row, i;
+	RF_RowCol_t trow, tcol, prow, pcol, *diskids, i;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_StripeCount_t stripeOffset;
 	int     numFailures;
@@ -549,7 +549,6 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 		return (0);
 
 	sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
-	row = asmap->physInfo->row;
 	(layoutPtr->map->IdentifyStripe) (raidPtr, asmap->raidAddress, &diskids, &testrow);
 	(layoutPtr->map->MapParity) (raidPtr, asmap->raidAddress, &prow, &pcol, &poffset, 0);	/* get pcol */
 
