@@ -1,0 +1,187 @@
+#!/bin/sh
+#
+# $NetBSD: fixsb,v 1.1 2004/04/16 14:52:52 dbj Exp $
+#
+
+# PROVIDE: fixsb
+# REQUIRE: localswap
+# BEFORE: fsck
+
+. /etc/rc.subr
+
+name="fixsb"
+start_cmd="fsck_start"
+stop_cmd=":"
+
+# This rc.d script attempts to correct problems with ffs1 filesystems
+# which may have been introduced by booting a netbsd-current kernel
+# from between April of 2003 and January 2004. For more information
+# see <http://mail-index.NetBSD.org/current-users/2004/01/11/0022.html>
+# This script was developed as a response to NetBSD pr install/25138
+# Additional prs regarding the original issue include:
+#  bin/17910 kern/21283 kern/21404 port-macppc/23925 port-macppc/23926
+#
+
+fstab=/etc/fstab
+#verbose=1
+
+# This shell function extracts the `ffs superblock' of the file
+# provided as its argument and tests for the following condition:
+# ((fs_magic == FS_UFS1_MAGIC) || fs_magic == FS_UFS1_MAGIC_SWAPPED) &&
+# (fs_sbsize == fs_maxbsize) && !(fs_old_flags & FS_FLAGS_UPDATED)
+#
+# return status is based on status of last filesystem checked:
+#   0 for botched superblock
+#   1 for filesystem does not appear to be ffs1 filesystem
+#   3 for ok fslevel 3 filesystem
+#   4 for ok fslevel 4 filesystem
+#
+# dbj@netbsd.org 2004-04-12T18:15:06-0400
+check_part()
+{
+  # The following are 'cat -v' representations of the ffs1 magic number:
+  fsmagicn="^@^A^YT"  # 0x00011954 FS_UFS1_MAGIC
+  fsmagics="T^Y^A^@"  # 0x54190100 FS_UFS1_MAGIC_SWAPPED
+
+  # In each of the foo=`dd | dd | cat -v` pipelines below, the first dd command reads in
+  # the superblock using block aligned i/o so that it works on a raw character device.
+  # The second dd extracts the exact field from the superblock that we with to
+  # read.  The data is put through cat -v to avoid having binary data in shell strings.
+
+  if [ ! -z "${verbose}" ]; then
+    echo -n "Checking $1 ... " 1>&2
+  fi
+
+  # First we extract the superblock magic number field:
+  magic="`(dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=1372 | cat -v) 2> /dev/null`"
+  
+  # First we check if the magic number is valid either swapped or unswapped:
+  if [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]; then
+
+    # Then we read fs_bsize, fs_maxbsize and fs_old_flags fields from the disk:
+    bsize="`(dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=48 | cat -v) 2> /dev/null`"
+    maxbsize="`(dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=860 | cat -v) 2> /dev/null`"
+    oldflags="`(dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=1 skip=211 | cat -v) 2> /dev/null`"
+
+    if [ ! -z "${debug}" ]; then
+      echo "$1: magic=${magic} bsize=${bsize} maxbsize=${maxbsize} oldflags=${oldflags}" 1>&2
+    fi
+
+    # Compare the fs_bsize with fs_maxbsize to see if they are the same
+    if [ "${bsize}" = "${maxbsize}" ]; then
+
+      # Now check to see if the high bit of fs_old_flags is set.
+      case "${oldflags}" in
+
+        # Since the shell variable is the cat -v output, the
+        # high bit is indicated in the variable with the prefix M-
+        M-*)
+        if [ ! -z "${verbose}" ]; then
+          echo "file system looks ok at fslevel 4." 1>&2
+          return 4
+        fi
+        ;;
+
+        # if the high bit of fs_old_flags is not set, then there is a problem
+        *)
+        if [ ! -z "${verbose}" ]; then
+          echo "file system has botched superblock upgrade." 1>&2
+        fi
+        return 0
+        ;;
+      esac
+
+    fi # [ "${bsize}" = "${maxbsize}" ]
+
+  else # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
+    if [ ! -z "${verbose}" ]; then
+      echo "does not appear to be an ffs1 filesystem." 1>&2
+    fi
+    return 1
+  fi  # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
+  if [ ! -z "${verbose}" ]; then
+    echo "file system looks ok at fslevel 3." 1>&2
+  fi
+  return 3
+}
+
+# This extracts raw ufs partitions to be fsck'ed from the file ${fstab}
+parse_fstab()
+{
+  for l in 1 2; do
+    sed -e '/^#/d' -e 's,/dev/,&r,' "${fstab}" 2> /dev/null | \
+      while read d m t o b f err; do
+        if [ \( "$t" = "ffs" -o "$t" = "ufs" \) -a "$f" = "$l" ]; then
+          echo "$d"
+        fi
+      done
+  done
+}
+
+stop_boot()
+{
+	#	Terminate the process (which may include the parent /etc/rc)
+	#	if booting directly to multiuser mode.
+	#
+	if [ "$autoboot" = yes ]; then
+		kill -TERM $$
+	fi
+	exit 1
+}
+
+do_fsck()
+{
+		# During fsck ignore SIGQUIT
+
+		fsck_ffs ${1+"$@"}
+		case $? in
+		0)
+			;;
+		2)
+			stop_boot
+			;;
+		4)
+			echo "Rebooting..."
+			reboot
+			echo "Reboot failed; help!"
+			stop_boot
+			;;
+		8)
+			echo "Automatic file system check failed; help!"
+			stop_boot
+			;;
+		12)
+			echo "Boot interrupted."
+			stop_boot
+			;;
+		130)
+			stop_boot
+			;;
+		*)
+			echo "Unknown error; help!"
+			stop_boot
+			;;
+		esac
+}
+
+fsck_start()
+{
+	if [ -e /fastboot ]; then
+		echo "Fast boot: skipping disk checks."
+	else
+		# During fsck ignore SIGQUIT
+		trap : 3
+
+		echo "Checking for botched superblock upgrades:"
+		for p in `parse_fstab`; do
+			if check_part "$p"; then
+				echo "Repairing partition $p"
+				do_fsck -p -b 16 -c 4 "$p"
+				do_fsck -p -c 3 "$p"
+			fi
+		done
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
