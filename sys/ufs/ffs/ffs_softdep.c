@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.30 2002/03/08 20:48:45 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.31 2002/03/18 13:38:52 wiz Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.30 2002/03/08 20:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.31 2002/03/18 13:38:52 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -119,7 +119,7 @@ const char *softdep_typenames[] = {
 #define CURPROC curproc
 #define CURPROC_PID (curproc ? curproc->p_pid : 0)
 /*
- * End system adaptaion definitions.
+ * End system adaptation definitions.
  */
 
 /*
@@ -464,7 +464,7 @@ softdep_freequeue_add(struct worklist *item)
 	int s;
 
 	s = splbio();
-	LIST_INSERT_HEAD(&softdep_freequeue, item , wk_list);
+	LIST_INSERT_HEAD(&softdep_freequeue, item, wk_list);
 	splx(s);
 }
 
@@ -698,8 +698,8 @@ softdep_process_worklist(matchmnt)
 			break;
 
 		default:
-			panic("%s_process_worklist: Unknown type %s",
-			    "softdep", TYPENAME(wk->wk_type));
+			panic("softdep_process_worklist: Unknown type %s",
+			    TYPENAME(wk->wk_type));
 			/* NOTREACHED */
 		}
 		if (softdep_worklist_busy && matchmnt == NULL)
