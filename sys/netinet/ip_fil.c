@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.87 2002/10/23 09:14:43 jdolecek Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.88 2002/12/11 16:33:11 atatat Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,7 +123,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.87 2002/10/23 09:14:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.88 2002/12/11 16:33:11 atatat Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -1713,8 +1713,8 @@ frdest_t *fdp;
 			(void) fr_checkstate(ip, fin);
 		(void) ip_natout(ip, fin);
 		fin->fin_ifp = sifp;
-	} else
-		ip->ip_sum = 0;
+	}
+	ip->ip_sum = 0;
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
