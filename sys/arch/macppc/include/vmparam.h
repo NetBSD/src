@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2000/12/08 21:51:35 mycroft Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2001/03/15 16:06:59 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,13 +91,8 @@
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 7 / 10)
+#define VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH / 2)
 #endif
-
-/*
- * Override the default pager_map size, there's not enough KVA.
- */
-#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
 
 #define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
 
