@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
+/*	$NetBSD: printjob.c,v 1.32 2002/06/08 23:40:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.32 2002/06/08 23:40:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,8 @@ printjob(void)
 	if (nitems == 0)		/* no work to do */
 		exit(0);
 	if (stb.st_mode & S_IXOTH) {	/* reset queue flag */
-		if (fchmod(lfd, stb.st_mode & 0776) < 0)
+		stb.st_mode &= ~S_IXOTH;
+		if (fchmod(lfd, stb.st_mode & 0777) < 0)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 	}
 	openpr();			/* open printer or remote */
@@ -243,7 +244,8 @@ again:
 			if (stb.st_mode & S_IXOTH) {
 				for (free((char *) q); nitems--; free((char *) q))
 					q = *qp++;
-				if (fchmod(lfd, stb.st_mode & 0776) < 0)
+				stb.st_mode &= ~S_IXOTH;
+				if (fchmod(lfd, stb.st_mode & 0777) < 0)
 					syslog(LOG_WARNING, "%s: %s: %m",
 						printer, LO);
 				break;
