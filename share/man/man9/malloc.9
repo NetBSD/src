@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.24 2002/02/13 08:18:44 ross Exp $
+.\"	$NetBSD: malloc.9,v 1.25 2002/06/27 17:31:25 yamt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,6 +77,12 @@ macro variant is equivalent to
 .Bd -literal -offset indent
 free((caddr_t)(addr), type)
 .Ed
+.Pp
+The
+.Fn MALLOC
+is intended to be used with a compile-time constant
+.Fa size
+so that the compiler can do constant folding.
 .Pp
 Unlike its standard C library counterpart
 .Pq Xr malloc 3 ,
