@@ -1,5 +1,7 @@
-#       $Id: files.m68k.newconf,v 1.5 1994/02/03 18:58:41 mycroft Exp $
+#       $Id: files.m68k.newconf,v 1.6 1994/04/21 23:07:30 briggs Exp $
 
+file	arch/m68k/fpsp/fpsp.U			fpsp compile-with "uudecode $S/arch/m68k/fpsp/fpsp.U"
+#file	arch/m68k/fpsp/fpspnull.s		not fpsp
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
