@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.5 1999/12/16 23:31:46 he Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.6 1999/12/17 23:54:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ int	 lfs_writevnodes __P((struct lfs *fs, struct mount *mp,
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
+int	lfs_dirvcount = 0;		/* # active dirops */
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -380,9 +381,9 @@ lfs_writevnodes(fs, mp, sp, op)
 		}
 
 		if(vp->v_flag & VDIROP) {
-			--fs->lfs_dirvcount;
+			--lfs_dirvcount;
 			vp->v_flag &= ~VDIROP;
-			wakeup(&fs->lfs_dirvcount);
+			wakeup(&lfs_dirvcount);
 			lfs_vunref(vp);
 		}
 
