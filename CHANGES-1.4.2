@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.82 1999/11/21 15:49:33 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.83 1999/11/27 16:22:56 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1202,3 +1202,51 @@ sys/arch/x68k/x68k/trap.c			1.34
 
   Fix the problem where single-step tracing of a trap instruction
   makes the system fall into kernel debugger.
+
+sys/dev/scsipi/scsiconf.c			1.123
+
+  Add SCSI quirk for UMAX Astra 1220S scanner: skip LUN check,
+  fixes PR#7991.
+
+usr.bin/vi/ex/ex_tag.c				1.10
+
+  Fix vi to handle tags files with relative paths in them.
+
+share/man/man8/man8.pmax/boot.8			1.6
+
+  Fix minor typo - missing `)'.
+
+sys/kern/kern_exec.c				1.104
+
+  Add explicit instruction and data cache flush on machines which
+  needs it when installing the signal trampoline code.  This makes
+  regress/sys/kern/sigtramp work on M68060 processors.
+
+sys/arch/amiga/amiga/sys_machdep.c		1.26
+sys/arch/atari/atari/sys_machdep.c		1.21
+sys/arch/hp300/hp300/sys_machdep.c		1.27
+sys/arch/mvme68k/mvme68k/sys_machdep.c		1.19
+sys/arch/next68k/next68k/sys_machdep.c		1.9
+sys/arch/x68k/x68k/sys_machdep.c		1.18
+
+  Fix i-cache/d-cache synchronization for M68040 cpus (see M68040
+  UM p.4-10).  Makes regress/sys/kern/sigtramp work even on M68040.
+
+usr.sbin/pkg_install/lib/file.c			1.33
+
+  Do not preserve uids or permissions of checked-out files (MTREE,
+  DEINSTALL, INSTALL) into binary package tar files.  Does not
+  affect files installed by the package itself.
+
+sys/arch/alpha/alpha/pmap.c			1.116
+
+  Fix bugs in pmap_protect():
+   o do not overrun eva by L1SEG_SIZE - PAGE_SIZE.
+   o do not advance sva twice for each valid l3 or l2 page.
+
+etc/Makefile					1.122,1.126 via patch
+distrib/sets/lists/etc/mi			1.38
+
+  Create and install $DESTDIR/etc/aliases.db, using
+  $DESTDIR/etc/sendmail.cf, so that sendmail works "out of the
+  box".
