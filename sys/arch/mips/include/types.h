@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.22 2000/02/22 12:28:25 soda Exp $	*/
+/*	$NetBSD: types.h,v 1.23 2000/06/06 02:24:02 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,17 +51,17 @@
  */
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
-typedef long long mips_reg_t;
+typedef long long	mips_reg_t;
 typedef unsigned long long mips_ureg_t;
 #if _MIPS_BSD_API != _MIPS_BSD_API_LP32 && _MIPS_BSD_API != _MIPS_BSD_API_LP32_64CLEAN
 typedef	long long	mips_fpreg_t;
 #else
-typedef	int	mips_fpreg_t;
+typedef	int		mips_fpreg_t;
 #endif
 #else
-typedef long mips_reg_t;
-typedef unsigned long mips_ureg_t;
-typedef	long	mips_fpreg_t;
+typedef long		mips_reg_t;
+typedef unsigned long	mips_ureg_t;
+typedef	long		mips_fpreg_t;
 #endif
 
 #if defined(_KERNEL)
@@ -97,5 +97,9 @@ typedef	unsigned long long	u_int64_t;
 typedef int32_t			register_t;
 
 #define	__SWAP_BROKEN
+
+#ifdef MIPS3
+#define __HAVE_CPU_COUNTER
+#endif
 
 #endif	/* _MACHTYPES_H_ */
