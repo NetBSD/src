@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)unctime.c	5.5 (Berkeley) 6/18/92"; */
-static char *rcsid = "$Id: unctime.c,v 1.5 1993/12/22 10:25:02 cgd Exp $";
+static char *rcsid = "$Id: unctime.c,v 1.6 1993/12/24 01:16:59 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,6 @@ unctime(str)
 {
 	struct tm then;
 	char dbuf[30];
-	time_t emitl();
 
 	if (strlen(str) != 25)
 		str[25] = 0;
@@ -83,7 +82,8 @@ unctime(str)
 	then.tm_min = atoi(&dbuf[E_MINUTE]);
 	then.tm_sec = atoi(&dbuf[E_SECOND]);
 	then.tm_year = atoi(&dbuf[E_YEAR]) - 1900;
-	return(emitl(&then));
+	then.tm_isdst = -1;
+	return(mktime(&then));
 }
 
 static char months[] =
@@ -99,57 +99,4 @@ lookup(str)
 		if (strncmp(cp, cp2, 3) == 0)
 			return((cp-months) / 3);
 	return(-1);
-}
-/*
- * Routine to convert a localtime(3) format date back into
- * a system format date.
- *
- *	Use a binary search.
- */
-
-struct tm *localtime();
-static int dcmp();
-
-time_t
-emitl(dp)
-	struct tm *dp;
-{
-	time_t conv;
-	register int i, bit;
-	struct tm dcopy;
-
-	dcopy = *dp;
-	dp = &dcopy;
-	conv = 0;
-	for (i = 30; i >= 0; i--) {
-		bit = 1 << i;
-		conv |= bit;
-		if (dcmp(localtime(&conv), dp) > 0)
-			conv &= ~bit;
-	}
-	return(conv);
-}
-
-/*
- * Compare two localtime dates, return result.
- */
-
-#define DECIDE(a) \
-	if (dp->a > dp2->a) \
-		return(1); \
-	if (dp->a < dp2->a) \
-		return(-1)
-
-static int
-dcmp(dp, dp2)
-	register struct tm *dp, *dp2;
-{
-
-	DECIDE(tm_year);
-	DECIDE(tm_mon);
-	DECIDE(tm_mday);
-	DECIDE(tm_hour);
-	DECIDE(tm_min);
-	DECIDE(tm_sec);
-	return(0);
 }
