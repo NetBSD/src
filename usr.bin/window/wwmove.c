@@ -1,4 +1,4 @@
-/*	$NetBSD: wwmove.c,v 1.5 1997/11/21 08:37:35 lukem Exp $	*/
+/*	$NetBSD: wwmove.c,v 1.6 2002/06/14 01:07:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwmove.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwmove.c,v 1.5 1997/11/21 08:37:35 lukem Exp $");
+__RCSID("$NetBSD: wwmove.c,v 1.6 2002/06/14 01:07:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: wwmove.c,v 1.5 1997/11/21 08:37:35 lukem Exp $");
  * Move a window.  Should be unattached.
  */
 void
-wwmove(w, row, col)
-	struct ww *w;
-	int row, col;
+wwmove(struct ww *w, int row, int col)
 {
 	int dr, dc;
 	int i;

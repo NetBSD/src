@@ -1,4 +1,4 @@
-/*	$NetBSD: ttwyse75.c,v 1.4 1997/11/21 08:36:40 lukem Exp $	*/
+/*	$NetBSD: ttwyse75.c,v 1.5 2002/06/14 01:06:56 wiz Exp $	*/
 
 /*
  * Copyright 1987 by David C. Elliott, MIPS Computer Systems.
@@ -48,7 +48,7 @@
 #if 0
 static char sccsid[] = "@(#)ttwyse75.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttwyse75.c,v 1.4 1997/11/21 08:36:40 lukem Exp $");
+__RCSID("$NetBSD: ttwyse75.c,v 1.5 2002/06/14 01:06:56 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ extern struct tt_str *gen_AS;
 extern struct tt_str *gen_AE;
 
 int
-tt_wyse75()
+tt_wyse75(void)
 {
 	static struct tt_str ae = { "\033(B", 3 };
 	static struct tt_str as = { "\033(0", 3 };

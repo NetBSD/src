@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2001/02/19 23:03:53 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2002/06/14 01:06:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 2001/02/19 23:03:53 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2002/06/14 01:06:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,13 +62,11 @@ __RCSID("$NetBSD: main.c,v 1.10 2001/02/19 23:03:53 cgd Exp $");
 #include "char.h"
 #include "local.h"
 
-int	main __P((int, char **));
-void	usage __P((void));
+int	main(int, char **);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *p;
 	char fflag = 0;
@@ -196,7 +194,7 @@ bad:
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr,
 	    "Usage: %s [-e escape-char] [-c command] [-t] [-f] [-d]\n",

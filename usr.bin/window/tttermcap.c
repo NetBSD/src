@@ -1,4 +1,4 @@
-/*	$NetBSD: tttermcap.c,v 1.6 2000/07/03 02:51:39 matt Exp $	*/
+/*	$NetBSD: tttermcap.c,v 1.7 2002/06/14 01:06:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tttermcap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tttermcap.c,v 1.6 2000/07/03 02:51:39 matt Exp $");
+__RCSID("$NetBSD: tttermcap.c,v 1.7 2002/06/14 01:06:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,24 +51,21 @@ __RCSID("$NetBSD: tttermcap.c,v 1.6 2000/07/03 02:51:39 matt Exp $");
 #include "tt.h"
 
 int
-tttputc(c)
-	int c;
+tttputc(int c)
 {
 	ttputc(c);
 	return (0);
 }
 
 int
-ttxputc(c)
-	int c;
+ttxputc(int c)
 {
 	*tt_strp++ = c;
 	return (0);
 }
 
 struct tt_str *
-tttgetstr(str)
-	char *str;
+tttgetstr(char *str)
 {
 	struct tt_str *s;
 
@@ -82,8 +79,7 @@ tttgetstr(str)
 }
 
 struct tt_str *
-ttxgetstr(str)
-	char *str;
+ttxgetstr(char *str)
 {
 	struct tt_str *s;
 	char buf[100];
@@ -101,9 +97,7 @@ ttxgetstr(str)
 }
 
 void
-tttgoto(s, col, row)
-	struct tt_str *s;
-	int col, row;
+tttgoto(struct tt_str *s, int col, int row)
 {
 	char *p = s->ts_str;
 
@@ -113,17 +107,14 @@ tttgoto(s, col, row)
 }
 
 void
-ttpgoto(s, col, row, n)
-	struct tt_str *s;
-	int col, row, n;
+ttpgoto(struct tt_str *s, int col, int row, int n)
 {
 
 	tputs(tgoto(s->ts_str, col, row), n, tttputc);
 }
 
 int
-ttstrcmp(a, b)
-	struct tt_str *a, *b;
+ttstrcmp(struct tt_str *a, struct tt_str *b)
 {
 	int n, r;
 

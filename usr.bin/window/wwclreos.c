@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreos.c,v 1.5 1997/11/21 08:37:04 lukem Exp $	*/
+/*	$NetBSD: wwclreos.c,v 1.6 2002/06/14 01:06:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwclreos.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwclreos.c,v 1.5 1997/11/21 08:37:04 lukem Exp $");
+__RCSID("$NetBSD: wwclreos.c,v 1.6 2002/06/14 01:06:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,7 @@ __RCSID("$NetBSD: wwclreos.c,v 1.5 1997/11/21 08:37:04 lukem Exp $");
 #include "tt.h"
 
 void
-wwclreos(w, row, col)
-	struct ww *w;
-	int row, col;
+wwclreos(struct ww *w, int row, int col)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.4 1997/11/21 08:35:47 lukem Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.5 2002/06/14 01:06:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.4 1997/11/21 08:35:47 lukem Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.5 2002/06/14 01:06:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,10 +108,10 @@ char *help_longcmd[] = {
 	0
 };
 
-int	help_print __P((struct ww *, char *, char **));
+int	help_print(struct ww *, char *, char **);
 
 void
-c_help()
+c_help(void)
 {
 	struct ww *w;
 
@@ -127,10 +127,7 @@ c_help()
 }
 
 int
-help_print(w, name, list)
-	struct ww *w;
-	char *name;
-	char **list;
+help_print(struct ww *w, char *name, char **list)
 {
 	wwprintf(w, "%s:\n\n", name);
 	while (*list)
@@ -149,7 +146,7 @@ help_print(w, name, list)
 }
 
 void
-c_quit()
+c_quit(void)
 {
 	char oldterse = terse;
 
