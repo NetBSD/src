@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.65 2003/12/18 08:15:42 pk Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.66 2003/12/18 15:02:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.65 2003/12/18 08:15:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.66 2003/12/18 15:02:04 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -360,15 +360,18 @@ uvm_km_pgremove_intrsafe(start, end)
  *	free VM space in the map... caller should be prepared to handle
  *	this case.
  * => we return KVA of memory allocated
+ * => align,prefer - passed on to uvm_map()
  * => flags: NOWAIT, VALLOC - just allocate VA, TRYLOCK - fail if we can't
  *	lock the map
  */
 
 vaddr_t
-uvm_km_kmemalloc(map, obj, size, flags)
+uvm_km_kmemalloc1(map, obj, size, align, prefer, flags)
 	struct vm_map *map;
 	struct uvm_object *obj;
 	vsize_t size;
+	vsize_t align;
+	voff_t prefer;
 	int flags;
 {
 	vaddr_t kva, loopva;
@@ -392,10 +395,10 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	 * allocate some virtual space
 	 */
 
-	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
-	      0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-			  UVM_ADV_RANDOM,
-			  (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT))))
+	if (__predict_false(uvm_map(map, &kva, size, obj, prefer, align,
+		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+			    UVM_ADV_RANDOM,
+			    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT))))
 			!= 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);
@@ -655,6 +658,34 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 		tsleep((caddr_t)map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/
+}
+
+/* Function definitions for binary compatibility */
+vaddr_t
+uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj,
+		 vsize_t sz, int flags)
+{
+	return uvm_km_kmemalloc1(map, obj, sz, 0, UVM_UNKNOWN_OFFSET, flags);
+}
+
+vaddr_t uvm_km_valloc(struct vm_map *map, vsize_t sz)
+{
+	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
+}
+
+vaddr_t uvm_km_valloc_align(struct vm_map *map, vsize_t sz, vsize_t align)
+{
+	return uvm_km_valloc1(map, sz, align, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
+}
+
+vaddr_t uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t sz, voff_t prefer)
+{
+	return uvm_km_valloc1(map, sz, 0, prefer, 0);
+}
+
+vaddr_t uvm_km_valloc_wait(struct vm_map *map, vsize_t sz)
+{
+	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, 0);
 }
 
 /* Sanity; must specify both or none. */
