@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.84 2000/05/30 01:29:59 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.85 2000/06/05 23:44:59 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.84 2000/05/30 01:29:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.85 2000/06/05 23:44:59 jhawk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1044,7 +1044,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2000/05/26 21:20:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2000/06/05 23:45:01 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -618,7 +618,6 @@ dumpsys()
 	daddr_t blkno;
 	int error = 0;
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumppage == 0)

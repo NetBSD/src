@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2000/05/26 21:19:49 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2000/06/05 23:45:03 jhawk Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2000/05/26 21:19:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2000/06/05 23:45:03 jhawk Exp $");
 
 #include "opt_ddb.h"
 
@@ -716,9 +716,6 @@ dumpsys()
 	/* XXX initialized here because of gcc lossage */
 	maddr = 0 /* lowram */;
 	pg = 0;
-
-	/* Don't put dump messages in msgbuf. */
-	msgbufenabled = 0;
 
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
