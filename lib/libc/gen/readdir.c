@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.8 1997/10/10 02:18:22 fvdl Exp $	*/
+/*	$NetBSD: readdir.c,v 1.9 1997/10/10 14:31:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.8 1997/10/10 02:18:22 fvdl Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.9 1997/10/10 14:31:55 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ readdir(dirp)
 		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
 			dirp->dd_seek = lseek(dirp->dd_fd, 0, SEEK_CUR);
 			dirp->dd_size = getdents(dirp->dd_fd,
-			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
+			    dirp->dd_buf, dirp->dd_len);
 			if (dirp->dd_size <= 0)
 				return (NULL);
 		}
