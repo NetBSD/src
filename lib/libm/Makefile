@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.50 1999/08/19 21:53:03 is Exp $
+#  $NetBSD: Makefile,v 1.51 1999/08/22 18:28:37 is Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -65,9 +65,14 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 .PATH:	${.CURDIR}/arch/m68060
 .include "${.CURDIR}/arch/m68060/Makefile.list"
 COPTS+=-m68060
+.PATH:	${.CURDIR}/arch/m68k
+ARCH_SRCS += s_ceil.S s_copysign.S s_finite.S s_floor.S s_rint.S
 .elif defined(M68040)
+.PATH: ${.CURDIR}/arch/m68k
+COPTS+=-m68040
+ARCH_SRCS = s_copysign.S s_finite.S
 .else
-.PATH:	${.CURDIR}/arch/mc68881
+.PATH:	${.CURDIR}/arch/mc68881 ${.CURDIR}/arch/m68k
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
