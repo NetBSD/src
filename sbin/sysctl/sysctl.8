@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.99 2003/09/20 17:02:17 grant Exp $
+.\"	$NetBSD: sysctl.8,v 1.100 2003/09/21 15:23:55 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,25 +37,20 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
-.Op Fl n
-.Op Fl e
+.Op Fl en
 .Ar name ...
 .Nm sysctl
-.Op Fl n
-.Op Fl q
+.Op Fl nq
 .Fl w
 .Ar name Ns Li = Ns Ar value ...
 .Nm sysctl
-.Op Fl n
-.Op Fl e
+.Op Fl en
 .Fl a
 .Nm sysctl
-.Op Fl n
-.Op Fl e
+.Op Fl en
 .Fl A
 .Nm sysctl
-.Op Fl n
-.Op Fl q
+.Op Fl nq
 .Fl f
 .Ar file
 .Sh DESCRIPTION
