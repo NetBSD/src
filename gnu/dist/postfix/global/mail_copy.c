@@ -166,10 +166,12 @@ int     mail_copy(const char *sender, const char *delivered,
 	if (type != REC_TYPE_NORM && type != REC_TYPE_CONT)
 	    break;
 	bp = vstring_str(buf);
-	if ((flags & MAIL_COPY_QUOTE) && *bp == 'F' && !strncmp(bp, "From ", 5))
-	    VSTREAM_PUTC('>', dst);
-	if ((flags & MAIL_COPY_DOT) && *bp == '.')
-	    VSTREAM_PUTC('.', dst);
+	if (prev_type == REC_TYPE_NORM) {
+	    if ((flags & MAIL_COPY_QUOTE) && *bp == 'F' && !strncmp(bp, "From ", 5))
+		VSTREAM_PUTC('>', dst);
+	    if ((flags & MAIL_COPY_DOT) && *bp == '.')
+		VSTREAM_PUTC('.', dst);
+	}
 	if (VSTRING_LEN(buf) && VSTREAM_FWRITE_BUF(dst, buf) != VSTRING_LEN(buf))
 	    break;
 	if (type == REC_TYPE_NORM && VSTREAM_PUTC('\n', dst) == VSTREAM_EOF)
