@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.5 1996/01/11 06:33:32 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.4 1994/12/25 12:22:03 pk Exp $
 
 PROG=	pstat
 MAN=	pstat.8

@@ -1,3 +1,5 @@
+/*	$NetBSD: pstat.c,v 1.16 1996/01/11 06:33:36 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.15 1995/11/28 19:43:40 jtc Exp $";
+#if 0
+from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
+#else
+static char *rcsid = "$NetBSD: pstat.c,v 1.16 1996/01/11 06:33:36 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
