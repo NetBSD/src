@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.73 1998/11/25 20:30:46 hwr Exp $
+# 	$NetBSD: GENERIC,v 1.74 1999/01/13 20:35:30 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -211,6 +211,9 @@ memreg0	at mainbus0				# sun4c
 memreg0	at obio0				# sun4m
 memreg0	at obio0 addr 0xf4000000		# sun4/200 and sun4/300
 memreg0	at obio0 addr 0x04000000		# sun4/100
+
+## ECC memory control
+eccmemctl0 at mainbus0				# sun4m
 
 ## Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at mainbus0				# sun4c
