@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.9.2.1 1999/06/21 14:49:07 perry Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9.2.2 2000/01/23 12:05:19 he Exp $	*/
 
 /*
  * xntp_io.c - input/output routines for xntpd.  The socket-opening code
@@ -166,9 +166,9 @@ int maxactivefd;
  */
 extern u_long current_time;
 
-#ifndef SYS_WINNT
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
-#endif /* SYS_WINNT */
+#endif /* NEED_DECLARATION_ERRNO */
 extern int debug;
 
 static	int	create_sockets	P((u_int));
