@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.49 2001/12/20 06:54:25 thorpej Exp $	 */
+/*	$NetBSD: reloc.c,v 1.50 2002/01/06 03:54:42 eeh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -634,7 +634,7 @@ _rtld_bind(obj, reloff)
 			/*
 			 * XXXX
 			 *
-			 * The first for PLT entries are reserved.  There
+			 * The first four PLT entries are reserved.  There
 			 * is some disagreement whether they should have
 			 * associated relocation entries.  Both the SPARC
 			 * 32-bit and 64-bit ELF specifications say that
@@ -761,6 +761,31 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			const Elf_Rela *rela;
 			for (rela = obj->pltrela; rela < obj->pltrelalim;
 			    ++rela) {
+#ifdef __sparc64__
+				if (ELF_R_TYPE(rela->r_info) !=
+					R_TYPE(JMP_SLOT)) {
+					/*
+					 * XXXX
+					 *
+					 * The first four PLT entries are
+					 * reserved.  There is some
+					 * disagreement whether they should
+					 * have associated relocation
+					 * entries.  Both the SPARC 32-bit
+					 * and 64-bit ELF specifications say
+					 * that they should have relocation
+					 * entries, but the 32-bit SPARC
+					 * binutils do not generate them,
+					 * and now the 64-bit SPARC binutils
+					 * have stopped generating them too.
+					 *
+					 * To provide binary compatibility, we
+					 * will skip any entries that are not
+					 * of type JMP_SLOT.  
+					 */
+					continue;
+				}
+#endif
 				if (_rtld_relocate_plt_object(obj, rela,
 				    NULL, bind_now, dodebug) < 0)
 					ok = 0;
