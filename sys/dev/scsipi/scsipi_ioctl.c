@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.44 2003/02/23 08:50:59 yamt Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.45 2003/06/28 14:21:43 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.44 2003/02/23 08:50:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.45 2003/06/28 14:21:43 darrenr Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -319,13 +319,13 @@ bad:
  * still be running in the context of the calling process
  */
 int
-scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
+scsipi_do_ioctl(periph, dev, cmd, addr, flag, l)
 	struct scsipi_periph *periph;
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 
@@ -366,7 +366,7 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_procp = p;
+			si->si_uio.uio_lwp = l;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
@@ -377,7 +377,7 @@ scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
 			si->si_bp.b_data = 0;
 			si->si_bp.b_bcount = 0;
 			si->si_bp.b_dev = dev;
-			si->si_bp.b_proc = p;
+			si->si_bp.b_proc = l->l_proc;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.20 2003/05/10 23:12:45 thorpej Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.21 2003/06/28 14:21:37 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.20 2003/05/10 23:12:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.21 2003/06/28 14:21:37 darrenr Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -329,10 +329,10 @@ ed_unlock(ed)
 }
 
 int
-edmcaopen(dev, flag, fmt, p)
+edmcaopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *wd;
 	int part, error;
@@ -406,10 +406,10 @@ bad4:
 }
 
 int
-edmcaclose(dev, flag, fmt, p)
+edmcaclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);
@@ -519,12 +519,12 @@ edgetdisklabel(dev, ed)
 }
 
 int
-edmcaioctl(dev, xfer, addr, flag, p)
+edmcaioctl(dev, xfer, addr, flag, l)
 	dev_t dev;
 	u_long xfer;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(dev));
 	int error;
@@ -616,7 +616,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
+		auio.uio_lwp = l;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;

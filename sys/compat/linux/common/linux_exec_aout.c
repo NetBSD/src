@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.52 2003/04/01 15:05:11 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.53 2003/06/28 14:21:21 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.52 2003/04/01 15:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.53 2003/06/28 14:21:21 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.52 2003/04/01 15:05:11 thorpej
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-int linux_aout_copyargs __P((struct proc *, struct exec_package *,
+int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
 static int exec_linux_aout_prep_zmagic __P((struct proc *,
@@ -83,8 +83,8 @@ static int exec_linux_aout_prep_qmagic __P((struct proc *,
     struct exec_package *));
 
 int
-linux_aout_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+linux_aout_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -139,8 +139,8 @@ linux_aout_copyargs(p, pack, arginfo, stackp, argp)
 }
 
 int
-exec_linux_aout_makecmds(p, epp)
-	struct proc *p;
+exec_linux_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *linux_ep = epp->ep_hdr;
@@ -156,16 +156,16 @@ exec_linux_aout_makecmds(p, epp)
 
 	switch (magic) {
 	case QMAGIC:
-		error = exec_linux_aout_prep_qmagic(p, epp);
+		error = exec_linux_aout_prep_qmagic(l->l_proc, epp);
 		break;
 	case ZMAGIC:
-		error = exec_linux_aout_prep_zmagic(p, epp);
+		error = exec_linux_aout_prep_zmagic(l->l_proc, epp);
 		break;
 	case NMAGIC:
-		error = exec_linux_aout_prep_nmagic(p, epp);
+		error = exec_linux_aout_prep_nmagic(l->l_proc, epp);
 		break;
 	case OMAGIC:
-		error = exec_linux_aout_prep_omagic(p, epp);
+		error = exec_linux_aout_prep_omagic(l->l_proc, epp);
 		break;
 	}
 	return error;

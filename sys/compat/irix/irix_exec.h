@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.17 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.18 2003/06/28 14:21:19 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -83,13 +83,13 @@ struct irix_emuldata {
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux32Info), sizeof (Elf32_Addr))
 
-int irix_elf32_copyargs __P((struct proc *, struct exec_package *,
+int irix_elf32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
-int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
+int irix_elf32_probe_o32 __P((struct lwp *, struct exec_package *, void *,  
     char *, vaddr_t *));
 
-int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,  
+int irix_elf32_probe_n32 __P((struct lwp *, struct exec_package *, void *,  
     char *, vaddr_t *));
 #endif
 
@@ -97,10 +97,10 @@ int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
 /* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
-int irix_elf64_copyargs __P((struct proc *, struct exec_package *,
+int irix_elf64_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
-int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
+int irix_elf64_probe __P((struct lwp *, struct exec_package *, void *,  
     char *, vaddr_t *));
 #endif
 

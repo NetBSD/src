@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 2003/04/01 16:34:59 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.26 2003/06/28 14:21:09 darrenr Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,7 +144,7 @@ mmrw(dev, uio, flags)
 			/* However, we do need to partially re-implement uiomove() */
 			if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 				panic("mmrw: uio mode");
-			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curlwp)
+			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
 				panic("mmrw: uio proc");
 			while (c > 0 && uio->uio_resid) {
 				struct iovec *iov;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.11 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.12 2003/06/28 14:21:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.11 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.12 2003/06/28 14:21:24 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -203,7 +203,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
@@ -325,7 +325,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
@@ -394,7 +394,7 @@ netbsd32_utimes(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, path)), p);
+	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -460,7 +460,7 @@ netbsd32_statfs(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, path)), p);
+	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -576,7 +576,7 @@ netbsd32_lutimes(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE,
-	    (caddr_t)NETBSD32PTR64(SCARG(uap, path)), p);
+	    (caddr_t)NETBSD32PTR64(SCARG(uap, path)), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -606,9 +606,9 @@ netbsd32___stat13(l, v, retval)
 
 	path = (char *)NETBSD32PTR64(SCARG(uap, path));
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -674,9 +674,9 @@ netbsd32___lstat13(l, v, retval)
 
 	path = (char *)NETBSD32PTR64(SCARG(uap, path));
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(l, &sg, path);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);

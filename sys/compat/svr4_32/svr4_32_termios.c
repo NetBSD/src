@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.5 2003/04/16 19:20:33 dsl Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.6 2003/06/28 14:21:28 darrenr Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.5 2003/04/16 19:20:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.6 2003/06/28 14:21:28 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -516,7 +516,7 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	struct svr4_32_termios	st;
 	struct svr4_termio	t;
 	int			error, new;
-	int (*ctl)(struct file *, u_long, void *, struct proc *) =
+	int (*ctl)(struct file *, u_long, void *, struct lwp *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.h,v 1.13 2003/01/17 22:53:07 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.14 2003/06/28 14:20:52 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct hpuxsigcontext {
 struct exec_package;
 struct exec_vmcmd;
 
-int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
+int	hpux_cpu_makecmds __P((struct lwp *, struct exec_package *));
 int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
 int	hpux_cpu_sysconf_arch __P((void));
 int	hpux_to_bsd_uoff __P((int *, int *, struct lwp *));
