@@ -1,4 +1,32 @@
-/*	$NetBSD: ultrix_misc.c,v 1.22 1996/04/07 16:38:03 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
+
+/*
+ * Copyright (c) 1995
+ *	Jonathan Stone (hereinafter referred to as the author)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +123,9 @@
 
 #include <vm/vm.h>
 
+#include <sys/conf.h>					/* iszerodev() */
+#include <sys/socketvar.h>				/* sosetopt() */
+
 extern struct sysent ultrix_sysent[];
 extern char *ultrix_syscallnames[];
 
@@ -131,6 +162,7 @@ struct emul emul_ultrix = {
 
 #define GSI_PROG_ENV 1
 
+int
 ultrix_sys_getsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -152,16 +184,22 @@ ultrix_sys_getsysinfo(p, v, retval)
 	}
 }
 
+int
 ultrix_sys_setsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+
+#ifdef notyet
 	struct ultrix_sys_setsysinfo_args *uap = v;
+#endif
+
 	*retval = 0;
 	return 0;
 }
 
+int
 ultrix_sys_waitpid(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -178,6 +216,7 @@ ultrix_sys_waitpid(p, v, retval)
 	return (sys_wait4(p, &ua, retval));
 }
 
+int
 ultrix_sys_wait3(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -196,16 +235,19 @@ ultrix_sys_wait3(p, v, retval)
 
 /*
  * Ultrix binaries pass in FD_MAX as the first arg to select().
- * On Ultrix, that is 4096, which is more than the NetBSD sys_select()
+ * On Ultrix, FD_MAX is 4096, which is more than the NetBSD sys_select()
  * can handle.
+ * Since we can't have more than the (native) FD_MAX descriptors open, 
+ * limit nfds to at most FD_MAX.
  */
+int
 ultrix_sys_select(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_select_args *uap = v;
-	struct timeval atv, *tvp;
+	struct timeval atv;
 	int error;
 
 	/* Limit number of FDs selected on to the native maximum */
@@ -222,7 +264,7 @@ ultrix_sys_select(p, v, retval)
 #ifdef DEBUG
 		/* Ultrix clients sometimes give negative timeouts? */
 		if (atv.tv_sec < 0 || atv.tv_usec < 0)
-			printf("ultrix select( %d, %d)\n",
+			printf("ultrix select( %ld, %ld): negative timeout\n",
 			       atv.tv_sec, atv.tv_usec);
 		/*tvp = (timeval *)STACKGAPBASE;*/
 #endif
@@ -237,6 +279,7 @@ done:
 }
 
 #if defined(NFSCLIENT)
+int
 async_daemon(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -304,6 +347,7 @@ ultrix_sys_mmap(p, v, retval)
 	return (sys_mmap(p, &ouap, retval));
 }
 
+int
 ultrix_sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -314,7 +358,7 @@ ultrix_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int error;
 
-	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp))  != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
@@ -332,8 +376,8 @@ ultrix_sys_setsockopt(p, v, retval)
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
-		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-		    (u_int)SCARG(uap, valsize))) {
+		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+				    (u_int)SCARG(uap, valsize))) != 0) {
 			(void) m_free(m);
 			return (error);
 		}
@@ -403,13 +447,14 @@ ultrix_sys_nfssvc(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+
+#if 0	/* XXX */
 	struct ultrix_sys_nfssvc_args *uap = v;
 	struct emul *e = p->p_emul;
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
 
-#if 0
 	bzero(&outuap, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
 	SCARG(&outuap, mskval) = STACKGAPBASE;
@@ -454,7 +499,7 @@ ultrix_sys_ustat(p, v, retval)
 	 * How do we translate dev -> fstat? (and then to ultrix_ustat)
 	 */
 
-	if (error = copyout(&us, SCARG(uap, buf), sizeof us))
+	if ((error = copyout(&us, SCARG(uap, buf), sizeof us)) != 0)
 		return (error);
 	return 0;
 }
@@ -465,7 +510,10 @@ ultrix_sys_quotactl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+
+#ifdef notyet
 	struct ultrix_sys_quotactl_args *uap = v;
+#endif
 
 	return EINVAL;
 }
@@ -486,7 +534,9 @@ ultrix_sys_exportfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notyet
 	struct ultrix_sys_exportfs_args *uap = v;
+#endif
 
 	/*
 	 * XXX: should perhaps translate into a mount(2)
