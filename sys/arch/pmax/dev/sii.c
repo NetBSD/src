@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.30 1998/03/30 09:47:51 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.31 1998/04/19 01:27:02 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -178,10 +178,6 @@ static void sii_StartDMA __P((register SIIRegs *regs, int phase,
 
 void siistart __P((register ScsiCmd *scsicmd));
 void sii_DumpLog __P((void));
-
-void  CopyToBuffer __P((u_short *src, 	/* NOTE: must be short aligned */
-			volatile u_short *dst, int length));
-void CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
 
 
 /*
@@ -438,7 +434,7 @@ sii_StartCmd(sc, target)
 
 		state->dmaCurPhase = SII_MSG_OUT_PHASE,
 		state->dmalen = 6;
-		CopyToBuffer((u_short *)sii_buf,
+		sc->sii_copytobuf((u_short *)sii_buf,
 			(volatile u_short *)SII_BUF_ADDR(sc), 6);
 		regs->slcsr = target;
 		regs->dmctrl = state->dmaReqAck;
@@ -503,7 +499,7 @@ sii_StartCmd(sc, target)
 		regs->dstat = SII_DNE;	/* clear Msg Out DMA done */
 
 		/* send command data */
-		CopyToBuffer((u_short *)state->cmd,
+		sc->sii_copytobuf((u_short *)state->cmd,
 			(volatile u_short *)state->dmaAddr[0], state->cmdlen);
 		sii_StartDMA(regs, state->dmaCurPhase = SII_CMD_PHASE,
 			state->dmaAddr[0], state->dmalen = scsicmd->cmdlen);
@@ -720,7 +716,7 @@ again:
 				dstat &= ~(SII_IBF | SII_TBE);
 			}
 			/* copy in the data */
-			CopyFromBuffer((volatile u_short *)dma, buf, i);
+			sc->sii_copyfrombuf((volatile u_short *)dma, buf, i);
 			break;
 
 		case SII_DATA_OUT_PHASE:
@@ -744,7 +740,7 @@ again:
 				i -= SII_MAX_DMA_XFER_LENGTH;
 				if (i > SII_MAX_DMA_XFER_LENGTH)
 					i = SII_MAX_DMA_XFER_LENGTH;
-				CopyToBuffer((u_short *)(state->buf +
+				sc->sii_copytobuf((u_short *)(state->buf +
 					SII_MAX_DMA_XFER_LENGTH),
 					(volatile u_short *)
 					state->dmaAddr[!state->dmaBufIndex], i);
@@ -819,7 +815,7 @@ again:
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
-				CopyToBuffer((u_short *)state->cmd,
+				sc->sii_copytobuf((u_short *)state->cmd,
 					(volatile u_short *)state->dmaAddr[0],
 					i);
 				sii_StartDMA(regs, state->dmaCurPhase =
@@ -913,7 +909,7 @@ again:
 			/* start first chunk */
 			if (state->flags & FIRST_DMA) {
 				state->flags &= ~FIRST_DMA;
-				CopyToBuffer((u_short *)state->buf,
+				sc->sii_copytobuf((u_short *)state->buf,
 					(volatile u_short *)
 					state->dmaAddr[state->dmaBufIndex], i);
 			}
@@ -926,7 +922,7 @@ again:
 				/* prepare for next chunk */
 				if (i > SII_MAX_DMA_XFER_LENGTH)
 					i = SII_MAX_DMA_XFER_LENGTH;
-				CopyToBuffer((u_short *)(state->buf +
+				sc->sii_copytobuf((u_short *)(state->buf +
 					SII_MAX_DMA_XFER_LENGTH),
 					(volatile u_short *)
 					state->dmaAddr[!state->dmaBufIndex], i);
@@ -963,7 +959,7 @@ again:
 				switch (comm & SII_PHASE_MSK) {
 				case SII_DATA_IN_PHASE:
 					/* copy in the data */
-					CopyFromBuffer((volatile u_short *)
+					sc->sii_copyfrombuf((volatile u_short*)
 					    state->dmaAddr[state->dmaBufIndex],
 					    state->buf, i);
 
@@ -1675,7 +1671,7 @@ sii_DoSync(regs, state)
 		wbflush();
 	}
 #else	/* 0 */
-	CopyToBuffer((u_short *)sii_buf,
+	sc->sii_copytobuf((u_short *)sii_buf,
 		     (volatile u_short *)SII_BUF_ADDR(sc), 5);
 	printf("sii_DoSync: %x %x %x ds %x\n",
 		((volatile u_short *)SII_BUF_ADDR(sc))[0],
