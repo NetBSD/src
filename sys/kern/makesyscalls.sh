@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.50 2001/07/08 19:08:48 wiz Exp $
+#	$NetBSD: makesyscalls.sh,v 1.51 2001/10/30 21:52:27 manu Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -199,8 +199,10 @@ NR == 1 {
 	printf "\tunion {\t\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t%s pad;\t\t\t\t\t\t\\\n", registertype > sysarghdr
 	printf "\t\tstruct { x datum; } le;\t\t\t\t\t\\\n" > sysarghdr
-	printf "\t\tstruct {\t\t\t\t\t\t\\\n" > sysarghdr
-	printf "\t\t\tint8_t pad[ (sizeof (%s) < sizeof (x))\t\\\n", \
+	printf "\t\tstruct { /* LINTED zero array dimension */\t\t\\\n" \
+		> sysarghdr
+	printf "\t\t\tint8_t pad[  /* CONSTCOND */\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t\t(sizeof (%s) < sizeof (x))\t\\\n", \
 		registertype > sysarghdr
 	printf "\t\t\t\t? 0\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t\t\t: sizeof (%s) - sizeof (x)];\t\\\n", \
