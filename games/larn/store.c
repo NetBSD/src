@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.4 1995/03/23 08:34:20 cgd Exp $	*/
+/*	$NetBSD: store.c,v 1.5 1997/07/13 20:21:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-static char rcsid[] = "$NetBSD: store.c,v 1.4 1995/03/23 08:34:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: store.c,v 1.5 1997/07/13 20:21:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -395,7 +395,7 @@ oschool()
 			time_used += coursetime[i-'a']*100;
 			if (time_used > 0)
 			  {
-			  gtime += time_used;
+			  gltime += time_used;
 			  course[i-'a']++;	/*	remember that he has taken that course	*/
 			  c[HP] = c[HPMAX];  c[SPELLS] = c[SPELLMAX]; /* he regenerated */ 
 
@@ -455,12 +455,12 @@ ointerest()
 	if (c[BANKACCOUNT]<0) c[BANKACCOUNT] = 0;
 	else if ((c[BANKACCOUNT]>0) && (c[BANKACCOUNT]<500000))
 		{
-		i = (gtime-lasttime)/100; /* # mobuls elapsed */
+		i = (gltime-lasttime)/100; /* # mobuls elapsed */
 		while ((i-- > 0) && (c[BANKACCOUNT]<500000))
 			c[BANKACCOUNT] += c[BANKACCOUNT]/250;
 		if (c[BANKACCOUNT]>500000) c[BANKACCOUNT]=500000; /* interest limit */
 		}
-	lasttime = (gtime/100)*100;
+	lasttime = (gltime/100)*100;
 	}
 
 static short gemorder[26]={0};	/* the reference to screen location for each */
@@ -479,7 +479,7 @@ obanksub()
 
 					if (iven[i]==OLARNEYE)
 						{
-						gemvalue[i]=250000-((gtime*7)/100)*100;
+						gemvalue[i]=250000-((gltime*7)/100)*100;
 						if (gemvalue[i]<50000) gemvalue[i]=50000;
 						}
 					else gemvalue[i] = (255&ivenarg[i])*100;
@@ -568,7 +568,7 @@ appraise(gemstone)
 			lprcat("yes.\n  Just one moment please \n");  nap(1000);
 			if (gemstone==OLARNEYE)
 				{
-				amt = 250000-((gtime*7)/100)*100;
+				amt = 250000-((gltime*7)/100)*100;
 				if (amt<50000) amt=50000;
 				}
 			else amt = (255 & ivenarg[j]) * 100;

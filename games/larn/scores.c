@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: scores.c,v 1.8 1996/10/09 00:45:37 jtc Exp $";
+static char rcsid[] = "$NetBSD: scores.c,v 1.9 1997/07/13 20:21:39 christos Exp $";
 #endif /* not lint */
 
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -407,7 +407,7 @@ new1sub(score,i,whoo,taxes)
 		{
 		strcpy(p->who,whoo);  		p->score=score;
 		p->hardlev=c[HARDGAME];		p->suid=userid;
-		p->timeused=gtime/100;
+		p->timeused=gltime/100;
 		}
 	}
 

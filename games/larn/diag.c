@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: diag.c,v 1.6 1995/04/24 12:23:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: diag.c,v 1.7 1997/07/13 20:21:34 christos Exp $";
 #endif /* not lint */
 
 /*	diag.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -171,7 +171,7 @@ savegame(fname)
 	times(&cputime);	/* get cpu time */
 	c[CPUTIME] += (cputime.tms_utime+cputime.tms_stime)/60;
 	lwrite((char*)&c[0],100*sizeof(long));
-	lprint((long)gtime);		lprc(level);
+	lprint((long)gltime);		lprc(level);
 	lprc(playerx);		lprc(playery);
 	lwrite((char*)iven,26);	lwrite((char*)ivenarg,26*sizeof(short));
 	for (k=0; k<MAXSCROLL; k++)  lprc(scrollname[k][0]);
@@ -213,7 +213,7 @@ restoregame(fname)
 		if (beenhere[k])
 			lrfill((char*)&cell[k*MAXX*MAXY],sizeof(struct cel)*MAXY*MAXX);
 
-	lrfill((char*)&c[0],100*sizeof(long));	gtime = lrint();
+	lrfill((char*)&c[0],100*sizeof(long));	gltime = lrint();
 	level = c[CAVELEVEL] = lgetc();
 	playerx = lgetc();		playery = lgetc();
 	lrfill((char*)iven,26);		lrfill((char*)ivenarg,26*sizeof(short));
@@ -271,7 +271,7 @@ restoregame(fname)
 		c[EXPERIENCE] = skill[24];
 		raiseexperience((long)tmp);
 		}
-	getlevel();  lasttime=gtime;
+	getlevel();  lasttime=gltime;
 	}
 
 /*

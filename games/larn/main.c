@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1996/05/22 00:36:09 mrg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/07/13 20:21:36 christos Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
@@ -258,7 +258,7 @@ qshowstr()
 		{  for (i=22; i<84; i++)
 			 for (j=0; j<=k; j++)  if (i==iven[j])  show3(j); k=0; }
 
-	lprintf("\nElapsed time is %d.  You have %d mobuls left",(long)((gtime+99)/100+1),(long)((TIMELIMIT-gtime)/100));
+	lprintf("\nElapsed time is %d.  You have %d mobuls left",(long)((gltime+99)/100+1),(long)((TIMELIMIT-gltime)/100));
 	more();		nosignal=sigsav;
 	}
 
