@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socketvar.h	7.17 (Berkeley) 5/5/91
- *	$Id: socketvar.h,v 1.5 1993/05/20 11:49:03 cgd Exp $
+ *	$Id: socketvar.h,v 1.6 1993/06/12 23:35:14 andrew Exp $
  */
 
 #ifndef _SYS_SOCKETVAR_H_
@@ -94,7 +94,7 @@ struct socket {
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_NOTIFY	(SB_WAIT|SB_SEL|SB_ASYNC)
-/* was	SB_COLL		0x20		/* collision selecting */
+/* was	SB_COLL		0x20		 * collision selecting */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
 	caddr_t	so_tpcb;		/* Wisc. protocol control block XXX */
