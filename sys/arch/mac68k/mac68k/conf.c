@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1999/02/18 07:32:56 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.4.1 1999/11/08 07:49:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include "raid.h"
 #include "sd.h"
 #include "st.h"
+#include "vcoda.h"
 #include "vnd.h"
 
 /* No cdev for md */
@@ -158,6 +159,7 @@ cdev_decl(wsmouse);
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
+cdev_decl(vc_nb_);
 
 dev_decl(filedesc,open);
 
@@ -213,6 +215,16 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
+#if 0
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
+#else
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+#endif
+	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -297,6 +309,11 @@ static int chrtoblktab[] = {
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
 	/* 42 */	20,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 dev_t
