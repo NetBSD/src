@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.7 1994/06/29 06:44:30 cgd Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.8 1995/03/26 07:47:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -74,10 +74,10 @@ struct ktr_header {
  */
 #define KTR_SYSCALL	1
 struct ktr_syscall {
-	short	ktr_code;		/* syscall number */
-	short	ktr_narg;		/* number of arguments */
+	int	ktr_code;		/* syscall number */
+	int	ktr_argsize;		/* size of arguments */
 	/*
-	 * followed by ktr_narg ints
+	 * followed by ktr_argsize/sizeof(register_t) "register_t"s
 	 */
 };
 
