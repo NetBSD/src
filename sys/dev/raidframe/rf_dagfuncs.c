@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.19 2004/03/01 23:30:58 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.20 2004/03/04 00:54:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.19 2004/03/01 23:30:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.20 2004/03/04 00:54:30 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -422,11 +422,6 @@ rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
 {
 
 	switch (node->status) {
-	case rf_bwd1:
-		node->status = rf_bwd2;
-		if (node->dagFuncData)
-			rf_FreeDiskQueueData((RF_DiskQueueData_t *) node->dagFuncData);
-		return (rf_DiskWriteFuncForThreads(node));
 	case rf_fired:
 		if (status)
 			node->status = rf_bad;
