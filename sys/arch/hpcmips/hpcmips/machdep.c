@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2000/02/10 08:34:08 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2000/02/21 13:46:02 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2000/02/10 08:34:08 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2000/02/21 13:46:02 shin Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -131,7 +131,6 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 int	systype;		/* mother board type */
-int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
@@ -171,7 +170,7 @@ void	unimpl_device_register __P((struct device *, void *));
 void 	unimpl_iointr __P ((void *, u_long));
 void	unimpl_clockintr __P ((void *));
 void    unimpl_fb_init __P((caddr_t*));
-int     unimpl_mem_init __P((caddr_t));
+void    unimpl_mem_init __P((paddr_t));
 void	unimpl_reboot __P((int howto, char *bootstr));
 
 struct platform platform = {
@@ -208,7 +207,6 @@ mach_init(argc, argv, bi)
 	char *argv[];
 	struct bootinfo *bi;
 {
-	u_long first, last;
 	int i;
 	caddr_t kernend, v;
 	unsigned size;
@@ -388,28 +386,34 @@ mach_init(argc, argv, bi)
 		Debugger();
 #endif
 
-	/*
-	 * Find out how much memory is available and clear memory.
-	 */
-	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START) + 
-		(*platform.mem_init)(kernend);
-	maxmem = physmem;
+	/* Find physical memory regions. */
+	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
 
-	/*
-	 * Now that we know how much memory we have, initialize the
-	 * mem cluster array.
-	 */
-	mem_clusters[0].start = 0;		/* XXX is this correct? */
-	mem_clusters[0].size  = ctob(physmem);
-	mem_cluster_cnt = 1;
+	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
+	physmem = 0;
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		printf("mem_clusters[%d] = {0x%lx,0x%lx}\n", i,
+		    (paddr_t)mem_clusters[i].start,
+		    (paddr_t)mem_clusters[i].size);
+		physmem += atop(mem_clusters[i].size);
+	}
 
-	/*
-	 * Load the rest of the available pages into the VM system.
-	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first),
-			  atop(last), VM_FREELIST_DEFAULT);
+	/* Cluster 0 is always the kernel, which doesn't get loaded. */
+	for (i = 1; i < mem_cluster_cnt; i++) {
+		paddr_t start, size;
+
+		start = (paddr_t)mem_clusters[i].start;
+		size = (paddr_t)mem_clusters[i].size;
+
+		printf("loading 0x%lx,0x%lx\n", start, size);
+
+		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0,
+		       size);
+
+		uvm_page_physload(atop(start), atop(start + size),
+				  atop(start), atop(start + size),
+				  VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -761,9 +765,9 @@ unimpl_intr(mask, pc, statusreg, causereg)
 	panic("sysconf.init didnt set intr");
 }
 
-int
+void
 unimpl_mem_init(kernend)
-	caddr_t kernend;
+	paddr_t kernend;
 {
 	panic("sysconf.init didnt set memory");
 }
