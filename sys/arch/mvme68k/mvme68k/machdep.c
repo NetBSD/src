@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1998/03/18 07:11:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1998/03/18 22:19:40 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -680,7 +680,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
+char	cpu_model[124];
 extern	char version[];
 
 void
@@ -784,9 +784,16 @@ identifycpu()
 
 #if defined(M68040) || defined(M68060)
 	switch (cputype) {
+#if defined(M68040)
 	case CPU_68040:
-	case CPU_68060:		/* XXX is this right? */
-		strcat(cpu_model, ", 4k on-chip physical I/D caches");
+		strcat(cpu_model, ", 4k+4k on-chip physical I/D caches");
+		break;
+#endif
+#if defined(M68060)
+	case CPU_68060:
+		strcat(cpu_model, ", 8k+8k on-chip physical I/D caches");
+		break;
+#endif
 	}
 #endif
 
