@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.53 2001/06/02 18:09:10 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.54 2001/06/02 22:48:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -209,8 +209,11 @@ copyfault:
 	error = cpu_dataabt_fixup(frame);
 	if (error == ABORT_FIXUP_RETURN)
 		return;
-	if (error == ABORT_FIXUP_FAILED)
+	if (error == ABORT_FIXUP_FAILED) {
+		printf("pc = 0x%08x, insn = ", fault_pc);
+		disassemble(fault_pc);
 		panic("data abort fixup failed\n");
+	}
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
