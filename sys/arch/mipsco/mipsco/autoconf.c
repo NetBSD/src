@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2000/08/16 21:54:44 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2000/09/26 11:45:06 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,7 +163,7 @@ makebootdev(cp)
 			boot_id = *cp++ - '0';
 		if (*cp == ',')
 			cp += 1;
-		if (*cp >= '0' && *cp <= '9')
+		if (*cp >= '0' && *cp <= '7')
 			boot_part = *cp - '0';
 		boot_class = DV_DISK;
 		return;
