@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.46 2001/11/06 07:08:09 simonb Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.47 2001/11/06 07:09:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -543,7 +543,7 @@ ext2fs_mountfs(devvp, mp, p)
 	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
 	    EXT2_DINODE_SIZE);
 #endif
-	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
+	error = bread(devvp, (SBOFF / size), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
