@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)config.c	8.7 (Berkeley) 1/3/94";
+static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -122,6 +122,8 @@ config(fname)
 			TAILQ_INSERT_TAIL(&tp->list, ep, q);
 		}
 	}
+
+	fclose(cfp);
 }
 
 /*
