@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.26 1996/10/23 22:19:23 cgd Exp $	*/
+/*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.26 1996/10/23 22:19:23 cgd Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -540,6 +540,11 @@ mount_print(mp)
 		if (flags & MNT_ASYNC) {
 			(void)printf("%sasync", comma);
 			flags &= ~MNT_ASYNC;
+			comma = ",";
+		}
+		if (flags & MNT_NOCOREDUMP) {
+			(void)printf("%snocoredump", comma);
+			flags &= ~MNT_NOCOREDUMP;
 			comma = ",";
 		}
 		if (flags & MNT_EXRDONLY) {
