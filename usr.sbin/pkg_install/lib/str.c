@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.39 2002/07/19 19:04:43 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.40 2002/11/14 09:40:23 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.39 2002/07/19 19:04:43 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.40 2002/11/14 09:40:23 agc Exp $");
 #endif
 #endif
 
@@ -106,6 +106,8 @@ str_lowercase(char *s)
 
 /* do not modify these values, or things will NOT work */
 enum {
+        Alpha = -3,
+        Beta = -2,
         RC = -1,
         Dot = 0,
         Patch = 1
@@ -146,6 +148,16 @@ static const test_t   tests[] = {
         {	NULL,	0,	0	}
 };
 
+static const test_t	modifiers[] = {
+	{	"alpha",	5,	Alpha	},
+	{	"beta",		4,	Beta	},
+	{	"rc",		2,	RC	},
+	{	"pl",		2,	Dot	},
+	{	".",		1,	Dot	},
+        {	NULL,		0,	0	}
+};
+
+
 
 /* locate the test in the tests array */
 static int
@@ -168,6 +180,8 @@ mktest(int *op, char *test)
  * '.' encodes as Dot which is '0'
  * '_' encodes as 'patch level', or 'Dot', which is 0.
  * 'pl' encodes as 'patch level', or 'Dot', which is 0.
+ * 'alpha' encodes as 'alpha version', or Alpha, which is -3.
+ * 'beta' encodes as 'beta version', or Beta, which is -2.
  * 'rc' encodes as 'release candidate', or RC, which is -1.
  * 'nb' encodes as 'netbsd version', which is used after all other tests
  */
@@ -175,6 +189,7 @@ static int
 mkcomponent(arr_t *ap, char *num)
 {
 	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
+	const test_t	       *modp;
 	int64_t                 n;
 	char                   *cp;
 
@@ -196,13 +211,11 @@ mkcomponent(arr_t *ap, char *num)
 		ap->v[ap->c++] = n;
 		return (int)(num - cp);
 	}
-	if (strncasecmp(num, "rc", 2) == 0) {
-		ap->v[ap->c++] = RC;
-		return 2;
-	}
-	if (strncasecmp(num, "pl", 2) == 0) {
-		ap->v[ap->c++] = Dot;
-		return 2;
+	for (modp = modifiers ; modp->s ; modp++) {
+		if (strncasecmp(num, modp->s, modp->len) == 0) {
+			ap->v[ap->c++] = modp->t;
+			return modp->len;
+		}
 	}
 	if (strncasecmp(num, "nb", 2) == 0) {
 		for (cp = num, num += 2, n = 0 ; isdigit(*num) ; num++) {
@@ -210,10 +223,6 @@ mkcomponent(arr_t *ap, char *num)
 		}
 		ap->netbsd = n;
 		return (int)(num - cp);
-	}
-	if (*num == '.') {
-		ap->v[ap->c++] = Dot;
-		return 1;
 	}
 	if (isalpha(*num)) {
 		ap->v[ap->c++] = Dot;
