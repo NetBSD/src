@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2000/03/21 02:26:48 soren Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2000/03/22 20:38:05 soren Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -33,125 +33,181 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/syslog.h>
 
-#if 0
-#include <machine/disklabel.h>
-#endif
+#define NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
 
-#if 0
-char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp; 
-	struct cpu_disklabel *osdep;
-{
-	return NULL;
-}
-#endif
-
-int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp;
-	struct disklabel *nlp;
-	unsigned long openmask;
-	struct cpu_disklabel *clp;
-{
-	return 0;
-
-}
-
-int     
-writedisklabel(dev, strat, lp, osdep)
-        dev_t dev; 
-        void (*strat)(struct buf *);
-        struct disklabel *lp;
-        struct cpu_disklabel *osdep;
-{               
-	return ENODEV;
-}
+static struct mbr_partition *
+mbr_findslice(struct mbr_partition* dp, struct buf *bp);
 
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	return;
-} 
 
-int     mbr_label_read __P((dev_t, void (*)(struct buf *), struct disklabel *,
-            struct cpu_disklabel *, char **, int *, int *));
+	/* Nothing to do. */
+}
 
+/* 
+ * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
+ * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
+ * partition is found, return a pointer to it; else return  NULL.
+ */
+static
+struct mbr_partition *
+mbr_findslice(dp, bp)
+	struct mbr_partition *dp;
+	struct buf *bp;
+{
+	struct mbr_partition *ourdp = NULL;
+	u_int16_t *mbrmagicp;
+	int i;
+
+	/* Note: Magic number is little-endian. */
+	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGICOFF);
+	if (*mbrmagicp != MBR_MAGIC)
+		return (NO_MBR_SIGNATURE);
+
+	/* XXX how do we check veracity/bounds of this? */
+	memcpy(dp, bp->b_data + MBR_PARTOFF, NMBRPART * sizeof(*dp));
+
+	/* look for NetBSD partition */
+	for (i = 0; i < NMBRPART; i++) {
+		if (dp[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+			ourdp = &dp[i];
+			break;
+		}
+	}
+
+	return (ourdp);
+}
+
+
+/*
+ * Attempt to read a disk label from a device
+ * using the indicated stategy routine.
+ * The label must be partly set up before this:
+ * secpercyl, secsize and anything required for a block i/o read
+ * operation in the driver's strategy/start routines
+ * must be filled in before calling us.
+ *
+ * If dos partition table requested, attempt to load it and
+ * find disklabel inside a DOS partition. Also, if bad block
+ * table needed, attempt to extract it as well. Return buffer
+ * for use in signalling errors if requested.
+ *
+ * Returns null on success and an error string on failure.
+ */
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)(struct buf *);
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
+	struct mbr_partition *dp;
+	struct partition *pp;
+	struct dkbad *bdp;
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int cyl, netbsdpartoff, i;
+	int dospartoff, cyl, i;
 
 	/* minimal requirements for archtypal disk label */
-
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
-
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-
-	lp->d_npartitions = MAXPARTITIONS;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		if (i == RAW_PART) continue;
-		lp->d_partitions[i].p_offset = 0;
-		lp->d_partitions[i].p_fstype = FS_UNUSED;
+#if 0
+	if (lp->d_ncylinders == 16383) {
+		printf("disklabel: Disk > 8G ... readjusting chs %d/%d/%d to ",
+			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
+		lp->d_ncylinders = lp->d_secperunit /  lp->d_ntracks / lp->d_nsectors;
+		printf("%d/%d/%d\n",
+			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
+	}
+#endif
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
 	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = 0x1fffffff;
+	lp->d_partitions[i].p_offset = 0;
 
-	if (lp->d_partitions[RAW_PART].p_size == 0) {
-		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED; 
-		lp->d_partitions[RAW_PART].p_offset = 0; 
-		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
-	}
-
-	/* obtain buffer to probe drive with */
-    
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	
-	/* request no partition relocation by driver on I/O operations */
-
 	bp->b_dev = dev;
 
-	/* do netbsd partitions in the process of getting disklabel? */
-
-	netbsdpartoff = 0;
-#define LABELSECTOR 1
-#define LABELOFFSET 0
+	/* do dos partitions in the process of getting disklabel? */
+	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
+	if (!osdep)
+		goto nombrpart;
+	dp = osdep->dosparts;
 
-	if (mbr_label_read(dev, strat, lp, osdep, &msg, &cyl,
-	      &netbsdpartoff))
-		if (msg != NULL)
-			goto done;
+	/* read master boot record */
+	bp->b_blkno = MBR_BBSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
+
+	/* if successful, wander through dos partition table */
+	if (biowait(bp)) {
+		msg = "dos partition I/O error";
+		goto done;
+	} else {
+		struct mbr_partition *ourdp = NULL;
+
+		ourdp = mbr_findslice(dp, bp);
+		if (ourdp ==  NO_MBR_SIGNATURE)
+			goto nombrpart;
+
+		for (i = 0; i < NMBRPART; i++, dp++) {
+			/* Install in partition e, f, g, or h. */
+			pp = &lp->d_partitions[RAW_PART + 1 + i];
+			pp->p_offset = dp->mbrp_start;
+			pp->p_size = dp->mbrp_size;
+			if (dp->mbrp_typ == MBR_PTYPE_LNXEXT2)
+				pp->p_fstype = FS_EX2FS;
+
+			if (dp->mbrp_typ == MBR_PTYPE_LNXSWAP)
+				pp->p_fstype = FS_SWAP;
+
+			/* is this ours? */
+			if (dp == ourdp) {
+				/* need sector address for SCSI/IDE,
+				 cylinder for ESDI/ST506/RLL */
+				dospartoff = dp->mbrp_start;
+				cyl = MBR_PCYL(dp->mbrp_scyl, dp->mbrp_ssect);
+
+				/* update disklabel with details */
+				lp->d_partitions[2].p_size =
+				    dp->mbrp_size;
+				lp->d_partitions[2].p_offset = 
+				    dp->mbrp_start;
+			}
+		}
+		lp->d_npartitions = RAW_PART + 1 + i;
+	}
+
+nombrpart:
 	/* next, dig out disk label */
-
-/*	printf("Reading disklabel addr=%08x\n", netbsdpartoff * DEV_BSIZE);*/
-  
-	bp->b_blkno = netbsdpartoff + LABELSECTOR;
-	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
+	bp->b_blkno = dospartoff + LABELSECTOR;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
-
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
 		goto done;
@@ -177,9 +233,9 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* obtain bad sector table if requested and present */
 	if (osdep && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *bdp = &osdep->bad;
 		struct dkbad *db;
 
+		bdp = &osdep->bad;
 		i = 0;
 		do {
 			/* read a bad sector table */
@@ -212,45 +268,93 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 
 done:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
 }
 
-#define MBRSIGOFS 0x1fe
-static char mbrsig[2] = {0x55, 0xaa};
-
-int fat_types[] = {
-	MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
-	MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
-	MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
-	-1
-};
-
+/*
+ * Check new disk label for sensibility
+ * before setting it.
+ */
 int
-mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
+setdisklabel(olp, nlp, openmask, osdep)
+	struct disklabel *olp, *nlp;
+	u_long openmask;
+	struct cpu_disklabel *osdep;
+{
+	int i;
+	struct partition *opp, *npp;
+
+	/* sanity clause */
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
+		|| (nlp->d_secsize % DEV_BSIZE) != 0)
+			return(EINVAL);
+
+	/* special case to allow disklabel to be invalidated */
+	if (nlp->d_magic == 0xffffffff) {
+		*olp = *nlp;
+		return (0);
+	}
+
+	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
+	    dkcksum(nlp) != 0)
+		return (EINVAL);
+
+	/* XXX missing check if other dos partitions will be overwritten */
+
+	while (openmask != 0) {
+		i = ffs(openmask) - 1;
+		openmask &= ~(1 << i);
+		if (nlp->d_npartitions <= i)
+			return (EBUSY);
+		opp = &olp->d_partitions[i];
+		npp = &nlp->d_partitions[i];
+		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+			return (EBUSY);
+		/*
+		 * Copy internally-set partition information
+		 * if new label doesn't include it.		XXX
+		 */
+		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
+			npp->p_fstype = opp->p_fstype;
+			npp->p_fsize = opp->p_fsize;
+			npp->p_frag = opp->p_frag;
+			npp->p_cpg = opp->p_cpg;
+		}
+	}
+ 	nlp->d_checksum = 0;
+ 	nlp->d_checksum = dkcksum(nlp);
+	*olp = *nlp;
+	return (0);
+}
+
+
+/*
+ * Write disk label back to device after modification.
+ */
+int
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
-	char **msgp;
-	int *cylp, *netbsd_label_offp;
 {
-	struct mbr_partition *mbrp;
-	struct partition *pp;
-	int cyl, mbrpartoff, i, *ip;
+	struct mbr_partition *dp;
 	struct buf *bp;
-	int rv = 1;
+	struct disklabel *dlp;
+	int error, dospartoff, cyl;
 
 	/* get a buffer and initialize it */
-        bp = geteblk((int)lp->d_secsize);
-        bp->b_dev = dev;
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
 
-	/* In case nothing sets them */
-	mbrpartoff = 0;
+	/* do dos partitions in the process of getting disklabel? */
+	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-
-	mbrp = osdep->mbrparts;
+	if (!osdep)
+		goto nombrpart;
+	dp = osdep->dosparts;
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
@@ -259,76 +363,50 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
-	/* if successful, wander through dos partition table */
-	if (biowait(bp)) {
-		*msgp = "dos partition I/O error";
-		goto out;
-	} else {
-		struct mbr_partition *ourmbrp = NULL;
+	if ((error = biowait(bp)) == 0) {
+		struct mbr_partition *ourdp = NULL;
 
-		/* XXX "there has to be a better check than this." */
-		if (bcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig))) {
-			rv = 0;
-			goto out;
+		ourdp = mbr_findslice(dp, bp);
+		if (ourdp ==  NO_MBR_SIGNATURE)
+			goto nombrpart;
+
+		if (ourdp) {
+			/* need sector address for SCSI/IDE,
+			 cylinder for ESDI/ST506/RLL */
+			dospartoff = ourdp->mbrp_start;
+			cyl = MBR_PCYL(ourdp->mbrp_scyl, ourdp->mbrp_ssect);
 		}
-
-		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + MBR_PARTOFF, mbrp,
-		      NMBRPART * sizeof(*mbrp));
-
-		/* look for NetBSD partition */
-		ourmbrp = NULL;
-		for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
-				ourmbrp = &mbrp[i];
-		}
-
-		for (i = 0; i < NMBRPART; i++, mbrp++) {
-
-			strncpy(lp->d_packname, "fictitious-MBR",
-			    sizeof lp->d_packname);
-
-			/* Install in partition e, f, g, or h. */
-			pp = &lp->d_partitions['e' - 'a' + i];
-			pp->p_offset = mbrp->mbrp_start;
-			pp->p_size = mbrp->mbrp_size;
-			for (ip = fat_types; *ip != -1; ip++) {
-				if (mbrp->mbrp_typ == *ip)
-					pp->p_fstype = FS_MSDOS;
-			}
-			if (mbrp->mbrp_typ == MBR_PTYPE_LNXEXT2)
-				pp->p_fstype = FS_EX2FS;
-
-			/* is this ours? */
-			if (mbrp == ourmbrp) {
-				/* need sector address for SCSI/IDE,
-				 cylinder for ESDI/ST506/RLL */
-				mbrpartoff = mbrp->mbrp_start;
-				cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
-
-#ifdef __i386__ /* XXX? */
-				/* update disklabel with details */
-				lp->d_partitions[2].p_size =
-				    mbrp->mbrp_size;
-				lp->d_partitions[2].p_offset = 
-				    mbrp->mbrp_start;
-				lp->d_ntracks = mbrp->mbrp_ehd + 1;
-				lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
-				lp->d_secpercyl =
-				    lp->d_ntracks * lp->d_nsectors;
-#endif
-			}
-		}
-		lp->d_npartitions = 'e' - 'a' + i;
 	}
 
-	*cylp = cyl;
-	*netbsd_label_offp = mbrpartoff;
-	*msgp = NULL;
-out:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-        brelse(bp);
-	return (rv);
+nombrpart:
+	/* next, dig out disk label */
+	bp->b_blkno = dospartoff + LABELSECTOR;
+	bp->b_cylinder = cyl;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if ((error = biowait(bp)) != 0)
+		goto done;
+	for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
+		    dkcksum(dlp) == 0) {
+			*dlp = *lp;
+			bp->b_flags = B_BUSY | B_WRITE;
+			(*strat)(bp);
+			error = biowait(bp);
+			goto done;
+		}
+	}
+	error = ESRCH;
+
+done:
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+	return (error);
 }
 
 /*
@@ -374,7 +452,7 @@ bounds_check_with_label(bp, lp, wlabel)
 		goto bad;
 	}
 
-	/* Calculate cylinder for disksort to order transfers with. */
+	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
