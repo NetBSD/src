@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.30 2000/02/05 04:41:49 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.31 2000/02/21 03:55:22 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -406,17 +406,18 @@ wdc_pcmcia_enable(arg, onoff)
 	struct wdc_pcmcia_softc *sc = arg;
 
 	if (onoff) {
-		/* Establish the interrupt handler. */
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
-		    &sc->wdc_channel);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			return (EIO);
-		}
-
 		/* See the comment in aic_pcmcia_enable */
 		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
+			/* Establish the interrupt handler. */
+			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+			    wdcintr, &sc->wdc_channel);
+			if (sc->sc_ih == NULL) {
+				printf("%s: "
+				    "couldn't establish interrupt handler\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				return (EIO);
+			}
+
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname);
@@ -427,7 +428,8 @@ wdc_pcmcia_enable(arg, onoff)
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	}
 
 	return (0);
