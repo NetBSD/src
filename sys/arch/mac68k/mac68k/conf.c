@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.8 1994/07/09 07:28:22 briggs Exp $
+ *	$Id: conf.c,v 1.9 1994/07/31 14:23:33 briggs Exp $
  */
 /*
    ALICE
@@ -85,6 +85,9 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <dev/cons.h>
+
+#include "ite.h"
+#include "ser.h"
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -380,7 +383,6 @@ cdev_decl(adb);
 	(dev_type_reset((*))) nullop, \
 	0 }
 
-#include "ser.h"
 cdev_decl(ser);
 
 cdev_decl(cd);
@@ -566,10 +568,19 @@ chrtoblk(dev)
 	return (makedev(blkmaj, minor(dev)));
 }
 
+#if NITE > 0
 int	itecnprobe(), itecninit(), itecngetc(), itecnputc();
+#endif
+#if NSER > 0
 int	sercnprobe(), sercninit(), sercngetc(), sercnputc();
+#endif
 
 struct	consdev constab[] = {
+#if NITE > 0
 	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
+#endif
+#if NSER > 0
+	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
+#endif
 	{ 0 },
 };
