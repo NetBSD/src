@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.132 2001/11/15 18:06:11 soren Exp $	*/
+/*	$NetBSD: param.h,v 1.133 2001/11/21 00:58:08 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -233,7 +233,7 @@
  * size allocations should be done infrequently as they will be slow.
  *
  * Constraints: NBPG <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
- * MAXALLOCSIZE must be a power of two.
+ * MAXALLOCSAVE must be a power of two.
  */
 #define	MINBUCKET	4		/* 4 => min allocation of 16 bytes */
 #define	MAXALLOCSAVE	(2 * NBPG)
