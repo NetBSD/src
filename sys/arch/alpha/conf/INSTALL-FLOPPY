@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL-FLOPPY,v 1.6 1998/05/03 23:15:45 ross Exp $
+# $NetBSD: INSTALL-FLOPPY,v 1.7 1998/05/13 22:03:08 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -60,7 +60,7 @@ cpu*	at	mainbus0
 #kft*	at	tlsb? node ? offset ?
 
 # Gbus Devices
-#mcclock* at	gbus? offset 0x20000000
+#mcclock* at	gbus? offset ?
 
 # TurboChannel host bus adapter support
 #tcasic*	at	mainbus0
