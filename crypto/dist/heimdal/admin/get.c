@@ -33,8 +33,8 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("$Heimdal: get.c,v 1.22 2003/01/16 19:03:23 lha Exp $"
-        "$NetBSD: get.c,v 1.1.1.7 2003/05/15 20:28:40 lha Exp $");
+__RCSID("$Heimdal: get.c,v 1.22.2.1 2004/06/21 10:55:46 lha Exp $"
+        "$NetBSD: get.c,v 1.1.1.7.2.1 2004/09/17 04:34:43 jmc Exp $");
 
 static void*
 open_kadmin_connection(char *principal,
@@ -171,6 +171,10 @@ kt_get(int argc, char **argv)
 	krb5_keytab_entry entry;
 
 	ret = krb5_parse_name(context, argv[i], &princ_ent);
+	if (ret) {
+	    krb5_warn(context, ret, "can't parse principal %s", argv[i]);
+	    continue;
+	}
 	memset(&princ, 0, sizeof(princ));
 	princ.principal = princ_ent;
 	mask |= KADM5_PRINCIPAL;

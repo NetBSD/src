@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.2 2003/08/07 09:15:20 agc Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.2.2.1 2004/09/17 04:34:55 jmc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -39,15 +39,18 @@
 %{
 
 #include "ftpd_locl.h"
-__RCSID("$Heimdal: ftpcmd.y,v 1.61 2001/08/05 06:39:29 assar Exp $"
-        "$NetBSD: ftpcmd.y,v 1.2 2003/08/07 09:15:20 agc Exp $");
+__RCSID("$Heimdal: ftpcmd.y,v 1.61.10.2 2004/08/20 15:15:46 lha Exp $"
+        "$NetBSD: ftpcmd.y,v 1.2.2.1 2004/09/17 04:34:55 jmc Exp $");
 
 off_t	restart_point;
+
+static	int hasyyerrored;
+
 
 static	int cmd_type;
 static	int cmd_form;
 static	int cmd_bytesz;
-char	cbuf[2048];
+char	cbuf[64 * 1024];
 char	*fromname;
 
 struct tab {
@@ -300,15 +303,6 @@ cmd
 		}
 	| sTAT CRLF
 		{
-		    if(oobflag){
-			if (file_size != (off_t) -1)
-			    reply(213, "Status: %lu of %lu bytes transferred",
-				  (unsigned long)byte_count, 
-				  (unsigned long)file_size);
-			else
-			    reply(213, "Status: %lu bytes transferred", 
-				  (unsigned long)byte_count);
-		    }else
 			statcmd();
 	}
 	| DELE SP pathname CRLF check_login_no_guest
@@ -334,13 +328,7 @@ cmd
 		}
 	| ABOR CRLF
 		{
-			if(oobflag){
-				reply(426, "Transfer aborted. Data connection closed.");
-				reply(226, "Abort successful");
-				oobflag = 0;
-				longjmp(urgcatch, 1);
-			}else
-				reply(225, "ABOR command successful.");
+			reply(225, "ABOR command successful.");
 		}
 	| CWD CRLF check_login
 		{
@@ -911,8 +899,6 @@ check_secure : /* empty */
 
 %%
 
-extern jmp_buf errcatch;
-
 #define	CMD	0	/* beginning of command */
 #define	ARGS	1	/* expect miscellaneous arguments */
 #define	STR1	2	/* expect SP followed by STRING */
@@ -1031,15 +1017,13 @@ ftpd_getline(char *s, int n)
 	char *cs;
 
 	cs = s;
-/* tmpline may contain saved command from urgent mode interruption */
+
+	/* might still be data within the security MIC/CONF/ENC */
 	if(ftp_command){
-	  strlcpy(s, ftp_command, n);
-	  if (debug)
-	    syslog(LOG_DEBUG, "command: %s", s);
-#ifdef XXX
-	  fprintf(stderr, "%s\n", s);
-#endif
-	  return s;
+	    strlcpy(s, ftp_command, n);
+	    if (debug)
+		syslog(LOG_DEBUG, "command: %s", s);
+	    return s;
 	}
 	while ((c = getc(stdin)) != EOF) {
 		c &= 0377;
@@ -1124,6 +1108,8 @@ yylex(void)
 		switch (state) {
 
 		case CMD:
+			hasyyerrored = 0;
+
 			signal(SIGALRM, toolong);
 			alarm((unsigned) ftpd_timeout);
 			if (ftpd_getline(cbuf, sizeof(cbuf)-1) == NULL) {
@@ -1132,7 +1118,7 @@ yylex(void)
 			}
 			alarm(0);
 #ifdef HAVE_SETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != NULL)
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
 				setproctitle("%s: %s", proctitle, cbuf);
 #endif /* HAVE_SETPROCTITLE */
 			if ((cp = strchr(cbuf, '\r'))) {
@@ -1151,8 +1137,8 @@ yylex(void)
 			if (p != 0) {
 				if (p->implemented == 0) {
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					hasyyerrored = 1;
+					break;
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1177,8 +1163,8 @@ yylex(void)
 				if (p->implemented == 0) {
 					state = CMD;
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					hasyyerrored = 1;
+					break;
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1326,10 +1312,25 @@ yylex(void)
 		default:
 			fatal("Unknown state in scanner.");
 		}
-		yyerror((char *) 0);
+		yyerror(NULL);
 		state = CMD;
-		longjmp(errcatch,0);
+		return (0);
 	}
+}
+
+/* ARGSUSED */
+void
+yyerror(char *s)
+{
+	char *cp;
+
+	if (hasyyerrored)
+	    return;
+
+	if ((cp = strchr(cbuf,'\n')))
+		*cp = '\0';
+	reply(500, "'%s': command not understood.", cbuf);
+	hasyyerrored = 1;
 }
 
 static char *
