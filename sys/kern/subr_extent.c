@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.41 2001/05/09 23:38:20 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.42 2001/06/05 04:39:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -403,6 +403,11 @@ extent_alloc_region(ex, start, size, flags)
 		panic("extent_alloc_region: overflow");
 	}
 #endif
+#ifdef LOCKDEBUG
+	if (flags & EX_WAITSPACE)
+		simple_lock_only_held(NULL,
+		    "extent_alloc_region(EX_WAITSPACE)");
+#endif
 
 	/*
 	 * Make sure the requested region lies within the
@@ -569,6 +574,11 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		    "boundary 0x%lx\n", ex->ex_name, size, boundary);
 		panic("extent_alloc_subregion: bad boundary");
 	}
+#endif
+#ifdef LOCKDEBUG
+	if (flags & EX_WAITSPACE)
+		simple_lock_only_held(NULL,
+		    "extent_alloc_subregion1(EX_WAITSPACE)");
 #endif
 
 	/*
