@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1996/03/29 02:00:38 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1996/04/04 00:27:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -285,7 +285,7 @@ findbootdev(void)
 	if (disk_count <= 0)
 		return;
 
-	for (dv = alldevs ; dv ; dv = dv->dv_next) {
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if ((dv->dv_class == DV_DISK) && (unit == dv->dv_unit)) {
 			/*
 			 * Find the disk corresponding to the current
