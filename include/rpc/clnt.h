@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.12 1998/07/26 11:45:21 mycroft Exp $	*/
+/*	$NetBSD: clnt.h,v 1.13 1998/11/16 12:07:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -136,7 +136,7 @@ typedef struct __rpc_client {
 		bool_t          (*cl_control) __P((struct __rpc_client *, u_int,
 				    char *));
 	} *cl_ops;
-	caddr_t			cl_private;	/* private stuff */
+	void 			*cl_private;	/* private stuff */
 } CLIENT;
 
 
@@ -159,11 +159,11 @@ typedef struct __rpc_client {
  *	struct timeval timeout;
  */
 #define	CLNT_CALL(rh, proc, xargs, argsp, xres, resp, secs)		\
-	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, (caddr_t)argsp,	\
-	    xres, (caddr_t)resp, secs))
+	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, 			\
+	(caddr_t)(void *)argsp,	xres, (caddr_t)(void *)resp, secs))
 #define	clnt_call(rh, proc, xargs, argsp, xres, resp, secs)		\
-	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, (caddr_t)argsp,	\
-	    xres, (caddr_t)resp, secs))
+	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, 			\
+	 (caddr_t)(void *)argsp, xres, (caddr_t)(void *)resp, secs))
 
 /*
  * void
