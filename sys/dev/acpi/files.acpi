@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.22 2004/01/31 13:59:20 jdolecek Exp $
+#	$NetBSD: files.acpi,v 1.22.2.1 2004/04/28 05:25:23 jmc Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -14,7 +14,7 @@ file	dev/acpi/acpi_quirks.c		acpi
 # ACPI Embedded Controller
 device	acpiec
 attach	acpiec at acpi
-file	dev/acpi/acpi_ec.c		acpiec
+file	dev/acpi/acpi_ec.c		acpiec		needs-flag
 
 # ACPI Lid Switch
 device	acpilid: sysmon_power
