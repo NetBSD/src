@@ -473,6 +473,7 @@ extern int warn_traditional;
 
 extern int warn_format;
 extern int warn_format_y2k;
+extern int warn_format_extra_args;
 
 /* Warn about a subscript that has type char.  */
 
