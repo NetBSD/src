@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.12 2002/10/11 21:54:58 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.13 2002/10/28 16:50:05 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -473,6 +473,7 @@ main(int argc, char **argv)
 
 			if (cr_uid <= 0 || cr_gid <= 0)
 				usage();
+			break;
 		case 'a':
 			if (allow)
 				usage();
