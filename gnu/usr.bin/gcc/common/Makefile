@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/03/05 00:12:50 jtc Exp $
+#	$NetBSD: Makefile,v 1.4 1996/03/06 20:40:06 jtc Exp $
 
 LIB=	cc1
 
@@ -32,7 +32,7 @@ insn-extract.c insn-output.c insn-emit.c insn-attrtab.c
 
 all: insn-attr.h insn-flags.h insn-codes.h insn-config.h bc-opcode.h bc-opname.h bc-arity.h lib$(LIB).a
 
-beforedepend: insn-attr.h insn-flags.h insn-codes.h insn-config.h bc-opcode.h bc-opname.h bc-arity.h 
+beforedepend: insn-attr.h insn-flags.h insn-codes.h insn-config.h bc-opcode.h bc-opname.h bc-arity.h c-parse.h
 
 insn-attr.h: genattr
 	./genattr $(MD) > insn-attr.h
