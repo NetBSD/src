@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.9 1995/04/10 16:49:22 mycroft Exp $  */
+/*      $NetBSD: machdep.c,v 1.10 1995/04/12 15:35:00 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -71,6 +71,7 @@
 #include "vax/include/macros.h"
 #include "vax/include/nexus.h"
 #include "vax/include/trap.h"
+#include "machine/reg.h"
 #include "net/netisr.h"
 #ifdef SYSVMSG
 #include "sys/msg.h"
@@ -132,7 +133,7 @@ cpu_startup() {
          */
 #if 0
         for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-                pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
+                pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
                     avail_end + i * NBPG, VM_PROT_ALL, TRUE);
         msgbufmapped = 1;
 #endif
@@ -507,12 +508,9 @@ boot(howto)
         }
         splhigh();                      /* extreme priority */
 	if (howto&RB_HALT) {
-		int *i;
-		printf("halting (due to bad scbvector)\n");
-		/* This should halt almost every known VAX cpu */
-		i=(int *)0x80000008;
-		*i+=2;
-		asm("movl $0xf0000000,sp;pushl $0;chmk $3");
+		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
+		for(;;)
+			;
 	} else {
 		if (howto & RB_DUMP)
 			dumpsys();
@@ -612,6 +610,64 @@ suibyte(){
 
 suswintr(){
 	panic("suswintr: need to be implemented");
+}
+
+int
+process_read_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf=p->p_addr->u_pcb.framep;
+
+	regs->r0=tf->r0;
+	regs->r1=tf->r1;
+	regs->r2=tf->r2;
+	regs->r3=tf->r3;
+	regs->r4=tf->r4;
+	regs->r5=tf->r5;
+#ifdef notyet
+	regs->r6=tf->r6;
+	regs->r7=tf->r7;
+	regs->r8=tf->r8;
+	regs->r9=tf->r9;
+	regs->r10=tf->r10;
+	regs->r11=tf->r11;
+#endif
+	regs->ap=tf->ap;
+	regs->fp=tf->fp;
+	regs->sp=mfpr(PR_USP);
+	regs->pc=tf->pc;
+	regs->psl=tf->psl;
+	return 0;
+}
+
+int
+process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf=p->p_addr->u_pcb.framep;
+
+	tf->r0=regs->r0;
+	tf->r1=regs->r1;
+	tf->r2=regs->r2;
+	tf->r3=regs->r3;
+	tf->r4=regs->r4;
+	tf->r5=regs->r5;
+#ifdef notyet
+	tf->r6=regs->r6;
+	tf->r7=regs->r7;
+	tf->r8=regs->r8;
+	tf->r9=regs->r9;
+	tf->r10=regs->r10;
+	tf->r11=regs->r11;
+#endif
+	tf->ap=regs->ap;
+	tf->fp=regs->fp;
+	mtpr(regs->sp,PR_USP);
+	tf->pc=regs->pc;
+	tf->psl=regs->psl;
+	return 0;
 }
 
 int

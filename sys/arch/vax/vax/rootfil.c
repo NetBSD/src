@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.5 1995/03/30 21:25:32 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.6 1995/04/12 15:35:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,8 +49,8 @@
 #include "buf.h"
 #include "mbuf.h"
 #include "vax/include/pte.h"
-#include "uba.h"
 #include "uda.h"
+#include "uba.h"
 #include "reboot.h"
 #include "conf.h"
 #include "vax/include/macros.h"
@@ -154,17 +154,19 @@ setroot()
         } else {
                 register struct uba_device *ubap;
 
-                for (ubap = ubdinit; ubap->ui_driver; ubap++)
+                for (ubap = ubdinit; ubap->ui_driver; ubap++){
+			printf("ubap %x\n",ubap);
                         if (ubap->ui_alive && ubap->ui_slave == unit &&
                            ubap->ui_ctlr == controller &&
                            ubap->ui_ubanum == adaptor &&
                            ubap->ui_driver->ud_dname[0] == devname[majdev][0] &&
                            ubap->ui_driver->ud_dname[1] == devname[majdev][1])
                                 break;
-
+		}
                 if (ubap->ui_driver == 0)
                         return;
                 mindev = ubap->ui_unit;
+		printf("mindev %x, majdev %x\n",mindev,majdev);
 #endif
         }
         mindev = (mindev << PARTITIONSHIFT) + part;
