@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.h,v 1.4 1996/02/10 17:12:38 christos Exp $	 */
+/*	$NetBSD: svr4_stat.h,v 1.5 1997/07/21 23:02:40 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -63,7 +63,27 @@ struct svr4_xstat {
 	svr4_timestruc_t	st_mtim;
 	svr4_timestruc_t	st_ctim;
 	long			st_blksize;
-	long			st_blocks;
+	svr4_blkcnt_t		st_blocks;
+	char			st_fstype[16];
+	long			st_pad4[8];
+};
+
+struct svr4_stat64 {
+	svr4_dev_t		st_dev;
+	long			st_pad1[3];
+	svr4_ino64_t		st_ino;
+	svr4_mode_t		st_mode;
+	svr4_nlink_t		st_nlink;
+	svr4_uid_t		st_uid;
+	svr4_gid_t		st_gid;
+	svr4_dev_t		st_rdev;
+	long			st_pad2[2];
+	svr4_off64_t		st_size;
+	svr4_timestruc_t	st_atim;
+	svr4_timestruc_t	st_mtim;
+	svr4_timestruc_t	st_ctim;
+	long			st_blksize;
+	svr4_blkcnt64_t		st_blocks;
 	char			st_fstype[16];
 	long			st_pad4[8];
 };

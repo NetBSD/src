@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.17 1997/04/02 15:29:18 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.18 1997/07/21 23:02:35 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -211,6 +211,16 @@ svr4_sys_open(p, v, retval)
 
 
 int
+svr4_sys_open64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return svr4_sys_open(p, v, retval);
+}
+
+
+int
 svr4_sys_creat(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -231,6 +241,39 @@ svr4_sys_creat(p, v, retval)
 
 
 int
+svr4_sys_creat64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return svr4_sys_creat(p, v, retval);
+}
+
+
+int
+svr4_sys_llseek(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_llseek_args *uap = v;
+	struct sys_lseek_args ap;
+
+	SCARG(&ap, fd) = SCARG(uap, fd);
+
+#if BYTE_ORDER == BIG_ENDIAN
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) | 
+		SCARG(uap, offset2);
+#else
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) | 
+		SCARG(uap, offset1);
+#endif
+	SCARG(&ap, whence) = SCARG(uap, whence);
+
+	return sys_lseek(p, &ap, retval);
+}
+
+int
 svr4_sys_access(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -246,6 +289,110 @@ svr4_sys_access(p, v, retval)
 	SCARG(&cup, flags) = SCARG(uap, flags);
 
 	return sys_access(p, &cup, retval);
+}
+
+
+int
+svr4_sys_pread(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pread_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_read_args rap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&rap, fd) = SCARG(uap, fd);
+	SCARG(&rap, buf) = SCARG(uap, buf);
+	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_read(p, &rap, retval);
+}
+
+
+int
+svr4_sys_pread64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pread64_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_read_args rap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&rap, fd) = SCARG(uap, fd);
+	SCARG(&rap, buf) = SCARG(uap, buf);
+	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_read(p, &rap, retval);
+}
+
+
+int
+svr4_sys_pwrite(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pwrite_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_write_args wap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&wap, fd) = SCARG(uap, fd);
+	SCARG(&wap, buf) = SCARG(uap, buf);
+	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_write(p, &wap, retval);
+}
+
+
+int
+svr4_sys_pwrite64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pwrite_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_write_args wap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&wap, fd) = SCARG(uap, fd);
+	SCARG(&wap, buf) = SCARG(uap, buf);
+	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_write(p, &wap, retval);
 }
 
 
