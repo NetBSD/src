@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 1994/12/17 20:14:24 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 1994/12/21 23:56:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,6 +69,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/mon.h>
 #include <machine/eeprom.h>
@@ -178,7 +179,25 @@ static struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /* Default OBIO addresses. */
 static int zs_physaddr[NZS] = { OBIO_ZS, OBIO_KEYBD_MS };
-	
+
+static u_char zs_init_reg[16] = {
+	0,	/* 0: CMD (reset, etc.) */
+	ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE,
+	0x18 + ZSHARD_PRI,	/* IVECT */
+	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
+	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
+	ZSWR5_TX_8 | ZSWR5_TX_ENABLE,
+	0,	/* 6: TXSYNC/SYNCLO */
+	0,	/* 7: RXSYNC/SYNCHI */
+	0,	/* 8: alias for data port */
+	0,	/* 9: ZSWR9_MASTER_IE (later) */
+	0,	/*10: Misc. TX/RX control bits */
+	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
+	0,	/*12: BAUDLO (later) */
+	0,	/*13: BAUDHI (later) */
+	ZSWR14_BAUD_FROM_PCLK | ZSWR14_BAUD_ENA,
+	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
+};
 
 /* Find PROM mappings (for console support). */
 void zs_init()
@@ -358,7 +377,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 
 /*
  * Put a channel in a known state.  Interrupts may be left disabled
- * or enabled, as desired.
+ * or enabled, as desired.  (Used only by kgdb)
  */
 static void
 zs_reset(zc, inten, speed)
@@ -366,26 +385,12 @@ zs_reset(zc, inten, speed)
 	int inten, speed;
 {
 	int tconst;
-	static u_char reg[16] = {
-		0,
-		0,
-		0,
-		ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
-		ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
-		ZSWR5_TX_8 | ZSWR5_TX_ENABLE,
-		0,
-		0,
-		0,
-		0,
-		ZSWR10_NRZ,
-		ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-		0,
-		0,
-		ZSWR14_BAUD_FROM_PCLK | ZSWR14_BAUD_ENA,
-		ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
-	};
+	u_char reg[16];
 
-	reg[9] = inten ? ZSWR9_MASTER_IE | ZSWR9_NO_VECTOR : ZSWR9_NO_VECTOR;
+	bcopy(zs_init_reg, reg, 16);
+	if (inten)
+		reg[9] |= ZSWR9_MASTER_IE;
+
 	tconst = BPS_TO_TCONST(PCLK / 16, speed);
 	reg[12] = tconst;
 	reg[13] = tconst >> 8;
@@ -1272,9 +1277,6 @@ zsstop(register struct tty *tp, int flag)
 
 /*
  * Set ZS tty parameters from termios.
- *
- * This routine makes use of the fact that only registers
- * 1, 3, 4, 5, 9, 10, 11, 12, 13, 14, and 15 are written.
  */
 static int
 zsparam(register struct tty *tp, register struct termios *t)
@@ -1311,9 +1313,10 @@ zsparam(register struct tty *tp, register struct termios *t)
 	 * be altered until we are done setting it up.
 	 */
 	s = splzs();
+	bcopy(zs_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[12] = tmp;
 	cs->cs_preg[13] = tmp >> 8;
-	cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE;
+	cs->cs_preg[9] |= ZSWR9_MASTER_IE;
 	switch (cflag & CSIZE) {
 	case CS5:
 		tmp = ZSWR3_RX_5;
@@ -1352,11 +1355,6 @@ zsparam(register struct tty *tp, register struct termios *t)
 	if (cflag & PARENB)
 		tmp |= ZSWR4_PARENB;
 	cs->cs_preg[4] = tmp;
-	cs->cs_preg[9] = ZSWR9_MASTER_IE | ZSWR9_NO_VECTOR;
-	cs->cs_preg[10] = ZSWR10_NRZ;
-	cs->cs_preg[11] = ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD;
-	cs->cs_preg[14] = ZSWR14_BAUD_FROM_PCLK | ZSWR14_BAUD_ENA;
-	cs->cs_preg[15] = ZSWR15_BREAK_IE | ZSWR15_DCD_IE;
 
 	/*
 	 * If nothing is being transmitted, set up new current values,
@@ -1418,20 +1416,50 @@ zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
 	int i;
 
 	zc->zc_csr = ZSM_RESET_ERR;	/* reset error condition */
+	ZS_DELAY();
+
+#if 1	/* XXX - Is this really a good idea? -gwr */
 	i = zc->zc_data;		/* drain fifo */
+	ZS_DELAY();
 	i = zc->zc_data;
+	ZS_DELAY();
 	i = zc->zc_data;
+	ZS_DELAY();
+#endif
+
+	/* baud clock divisor, stop bits, parity */
 	ZS_WRITE(zc, 4, reg[4]);
+
+	/* misc. TX/RX control bits */
 	ZS_WRITE(zc, 10, reg[10]);
+
+	/* char size, enable (RX/TX) */
 	ZS_WRITE(zc, 3, reg[3] & ~ZSWR3_RX_ENABLE);
 	ZS_WRITE(zc, 5, reg[5] & ~ZSWR5_TX_ENABLE);
+
+	/* interrupt enables: TX, TX, STATUS */
 	ZS_WRITE(zc, 1, reg[1]);
+
+	/* interrupt vector */
+	ZS_WRITE(zc, 2, reg[2]);
+
+	/* master interrupt control */
 	ZS_WRITE(zc, 9, reg[9]);
+
+	/* clock mode control */
 	ZS_WRITE(zc, 11, reg[11]);
+
+	/* baud rate (lo/hi) */
 	ZS_WRITE(zc, 12, reg[12]);
 	ZS_WRITE(zc, 13, reg[13]);
+
+	/* Misc. control bits */
 	ZS_WRITE(zc, 14, reg[14]);
+
+	/* which lines cause status interrupts */
 	ZS_WRITE(zc, 15, reg[15]);
+
+	/* char size, enable (RX/TX)*/
 	ZS_WRITE(zc, 3, reg[3]);
 	ZS_WRITE(zc, 5, reg[5]);
 }
