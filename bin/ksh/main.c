@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 1997/01/12 19:12:07 tls Exp $	*/
+
 /*
  * startup, main loop, enviroments and error handling
  */

@@ -1,7 +1,9 @@
+/*	$NetBSD: proto.h,v 1.2 1997/01/12 19:12:10 tls Exp $	*/
+
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.1.1.2 1996/12/18 04:50:31 jtc Exp $
+ * $NetBSD: proto.h,v 1.2 1997/01/12 19:12:10 tls Exp $
  */
 
 /* alloc.c */

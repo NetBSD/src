@@ -1,3 +1,5 @@
+/*	$NetBSD: path.c,v 1.2 1997/01/12 19:12:09 tls Exp $	*/
+
 #include "sh.h"
 #include "ksh_stat.h"
 
@@ -12,6 +14,9 @@
 
 /*
  * $Log: path.c,v $
+ * Revision 1.2  1997/01/12 19:12:09  tls
+ * RCS ID Police
+ *
  * Revision 1.1.1.1  1996/09/21 23:35:15  jtc
  * import pdksh 5.2.8
  *

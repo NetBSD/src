@@ -1,3 +1,5 @@
+/*	$NetBSD: ksh_times.h,v 1.2 1997/01/12 19:12:02 tls Exp $	*/
+
 #ifndef KSH_TIMES_H
 # define KSH_TIMES_H
 

@@ -1,5 +1,7 @@
+/*	$NetBSD: ksh_wait.h,v 1.2 1997/01/12 19:12:03 tls Exp $	*/
+
 /* Wrapper around the ugly sys/wait includes/ifdefs */
-/* $Id: ksh_wait.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $ */
+/* $NetBSD: ksh_wait.h,v 1.2 1997/01/12 19:12:03 tls Exp $ */
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>

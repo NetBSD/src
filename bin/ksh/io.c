@@ -1,3 +1,5 @@
+/*	$NetBSD: io.c,v 1.2 1997/01/12 19:11:53 tls Exp $	*/
+
 /*
  * shell buffered IO and formatted output
  */

@@ -1,3 +1,4 @@
+#	$NetBSD: siglist.in,v 1.2 1997/01/12 19:12:17 tls Exp $
 #
 # List of signals used to initialize ksh's signal table (see trap.c
 # and siglist.sh).

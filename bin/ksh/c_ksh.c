@@ -1,3 +1,5 @@
+/*	$NetBSD: c_ksh.c,v 1.2 1997/01/12 19:11:38 tls Exp $	*/
+
 /*
  * built-in Korn commands: c_*
  */

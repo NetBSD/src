@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.2 1997/01/12 19:12:22 tls Exp $	*/
+
 /*
  * signal handling
  */
