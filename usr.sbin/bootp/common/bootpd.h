@@ -181,7 +181,7 @@ struct host {
 				       RFC951 only allocates 1 byte. . . */
 			    haddr[MAXHADDRLEN];
     int32		    time_offset;
-    unsigned int32	    bootsize,
+    u_int32		    bootsize,
 			    msg_size,
 			    min_wait;
     struct in_addr	    bootserver,

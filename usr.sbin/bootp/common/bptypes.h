@@ -5,12 +5,14 @@
 
 /*
  * 32 bit integers are different types on various architectures
+ * XXX THE CORRECT WAY TO DO THIS IS:
+ * XXX	(1) convert to _t form for all uses,
+ * XXX	(2) define the _t's here (or somewhere)
+ * XXX		if !defined(__BIT_TYPES_DEFINED__)
  */
 
-#ifndef	int32
-#define int32 long
-#endif
-typedef unsigned int32 u_int32;
+typedef int32_t int32;
+typedef u_int32_t u_int32;
 
 /*
  * Nice typedefs. . .

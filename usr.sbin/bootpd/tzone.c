@@ -4,6 +4,8 @@
  * This is shared by bootpd and bootpef
  */
 
+#include <sys/types.h>
+
 #ifdef	SVR4
 /* XXX - Is this really SunOS specific? -gwr */
 /* This is in <time.h> but only visible if (__STDC__ == 1). */
