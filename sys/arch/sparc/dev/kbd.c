@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.8 1994/04/10 21:02:23 deraadt Exp $
+ * $Id: kbd.c,v 1.9 1994/04/16 11:18:58 deraadt Exp $
  */
 
 /*
@@ -211,7 +211,8 @@ struct kbd_softc {
 	int	k_evmode;		/* set if we should produce events */
 	struct	kbd_state k_state;	/* ASCII decode state */
 	struct	evvar k_events;		/* event queue state */
-	char	k_repeatc;		/* repeated character */
+	int	k_repeatc;		/* repeated character */
+	int	k_repeating;		/* we've called timeout() */
 } kbd_softc;
 
 /* Prototypes */
@@ -395,7 +396,7 @@ kbd_repeat(caddr_t arg)
 	struct kbd_softc *k = (struct kbd_softc *)arg;
 	int s = spltty();
 
-	if (k->k_repeatc >= 0 && k->k_cons != NULL) {
+	if (k->k_repeating && k->k_repeatc >= 0 && k->k_cons != NULL) {
 		ttyinput(k->k_repeatc, k->k_cons);
 		timeout(kbd_repeat, (caddr_t)k, kbd_repeat_step);
 	}
@@ -409,8 +410,8 @@ kbd_rint(register int c)
 	register struct firm_event *fe;
 	register int put;
 
-	if (k->k_repeatc) {
-		k->k_repeatc = 0;
+	if (k->k_repeating) {
+		k->k_repeating = 0;
 		untimeout(kbd_repeat, (caddr_t)k);
 	}
 
@@ -450,6 +451,7 @@ kbd_rint(register int c)
 		c = kbd_translate(c, &k->k_state);
 		if (c >= 0 && k->k_cons != NULL) {
 			ttyinput(c, k->k_cons);
+			k->k_repeating = 1;
 			k->k_repeatc = c;
 			timeout(kbd_repeat, (caddr_t)k, kbd_repeat_start);
 		}
