@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.14 1999/09/09 17:12:03 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.15 1999/09/11 20:52:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,8 +87,6 @@
  *	  a fair number of USB->SCSI dongles out there.
  *
  *	x Need to implement SCSI command timeout/abort handling.
- *
- *	x Need to handle SCSI Sense handling.
  *
  *	x Need to handle hot-unplug.
  *
@@ -192,7 +190,7 @@ typedef struct {
 USB_DECLARE_DRIVER(umass);
 
 /* USB related functions */
-usbd_status umass_usb_transfer __P((usbd_interface_handle iface,
+usbd_status umass_usb_transfer __P((umass_softc_t *,
 				usbd_pipe_handle pipe,
 		                void *buf, int buflen,
 				int flags, int *xfer_size));
@@ -342,18 +340,19 @@ umass_activate(self, act)
 	enum devact act;
 {
 	struct umass_softc *sc = (struct umass_softc *) self;
-	int rv = 0;
+	int s, rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
 	    USBDEVNAME(sc->sc_dev), act));
 
+	s = splhigh();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
+		if (sc->sc_child == NULL || sc->sc_dying)
 			break;
 		rv = config_deactivate(sc->sc_child);
 		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
@@ -362,6 +361,7 @@ umass_activate(self, act)
 			sc->sc_dying = 1;
 		break;
 	}
+	splx(s);
 	return (rv);
 }
 
@@ -380,10 +380,14 @@ umass_detach(self, flags)
 		rv = config_detach(sc->sc_child, flags);
 	
 	if (rv == 0) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
+		if (sc->sc_bulkin_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkin_pipe);
+			usbd_close_pipe(sc->sc_bulkin_pipe);
+		}
+		if (sc->sc_bulkout_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkout_pipe);
+			usbd_close_pipe(sc->sc_bulkout_pipe);
+		}
 	}
 
 	return (rv);
@@ -399,7 +403,7 @@ umass_detach(self, flags)
  */
 
 usbd_status
-umass_usb_transfer(usbd_interface_handle iface, usbd_pipe_handle pipe,
+umass_usb_transfer(umass_softc_t *sc, usbd_pipe_handle pipe,
 		   void *buf, int buflen, int flags, int *xfer_size)
 {
 	usbd_request_handle reqh;
@@ -414,15 +418,16 @@ umass_usb_transfer(usbd_interface_handle iface, usbd_pipe_handle pipe,
 
 	reqh = usbd_alloc_request(usbd_pipe2device_handle(pipe));
 	if (!reqh) {
-		DPRINTF(UDMASS_USB, ("Not enough memory\n"));
+		DPRINTF(UDMASS_USB, ("%s: not enough memory\n",
+		    USBDEVNAME(sc->sc_dev)));
 		return USBD_NOMEM;
 	}
 
 	usbd_setup_request(reqh, pipe, 0, buf, buflen,flags, 3000 /*ms*/, NULL);
 	err = usbd_sync_transfer(reqh);
 	if (err) {
-		DPRINTF(UDMASS_USB, ("transfer failed, %s\n",
-			usbd_errstr(err)));
+		DPRINTF(UDMASS_USB, ("%s: transfer failed: %s\n",
+			USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
 		usbd_free_request(reqh);
 		return(err);
 	}
@@ -443,6 +448,8 @@ umass_bulk_get_max_lun(umass_softc_t *sc, u_int8_t *maxlun)
 	usb_device_request_t req;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
+
+	*maxlun = 0;		/* Default to 0. */
 
 	DPRINTF(UDMASS_BULK, ("%s: Get Max Lun\n", USBDEVNAME(sc->sc_dev)));
 
@@ -465,12 +472,19 @@ umass_bulk_get_max_lun(umass_softc_t *sc, u_int8_t *maxlun)
 
 	case USBD_STALLED:
 		/*
-		 * Device doesn't support Get Max Lun request.  Default
-		 * to `0' (one LUN).
+		 * Device doesn't support Get Max Lun request.
 		 */
-		*maxlun = 0;
 		err = USBD_NORMAL_COMPLETION;
 		DPRINTF(UDMASS_BULK, ("%s: Get Max Lun not supported\n",
+		    USBDEVNAME(sc->sc_dev)));
+		break;
+
+	case USBD_SHORT_XFER:
+		/*
+		 * XXX This must mean Get Max Lun is not supported, too!
+		 */
+		err = USBD_NORMAL_COMPLETION;
+		DPRINTF(UDMASS_BULK, ("%s: Get Max Lun SHORT_XFER\n",
 		    USBDEVNAME(sc->sc_dev)));
 		break;
 
@@ -586,7 +600,8 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 		dir = DIR_NONE;
 	}
 
-	*residue = 0;			/* reset residue */
+	if (residue != NULL)
+		*residue = 0;			/* reset residue */
 
 	/*
 	 * Determine the direction of transferring data and data length.
@@ -624,7 +639,7 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 	bcopy(cmd, cbw.CBWCDB, cmdlen);
 
 	/* Send the CBW from host to device via bulk-out endpoint. */
-	err = umass_usb_transfer(sc->sc_iface, sc->sc_bulkout_pipe,
+	err = umass_usb_transfer(sc, sc->sc_bulkout_pipe,
 				&cbw, USB_BULK_CBW_SIZE, 0, NULL);
 	if (err) {
 		DPRINTF(UDMASS_BULK, ("%s: failed to send CBW\n",
@@ -644,7 +659,7 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 
 	if (dir == DIR_IN) {
 		/* we allow short transfers for bulk-in pipes */
-		err = umass_usb_transfer(sc->sc_iface, sc->sc_bulkin_pipe,
+		err = umass_usb_transfer(sc, sc->sc_bulkin_pipe,
 					data, datalen,
 					USBD_SHORT_XFER_OK, &n);
 		if (err)
@@ -653,8 +668,7 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 				USBDEVNAME(sc->sc_dev),
 				datalen, n, usbd_errstr(err)));
 	} else if (dir == DIR_OUT) {
-		err = umass_usb_transfer(sc->sc_iface,
-					sc->sc_bulkout_pipe,
+		err = umass_usb_transfer(sc, sc->sc_bulkout_pipe,
 					data, datalen, 0, &n);
 		if (err)
 			DPRINTF(UDMASS_BULK, ("%s: failed to send data, "
@@ -671,14 +685,15 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 	 */
 
 	/* Read the Command Status Wrapper via bulk-in endpoint. */
-	err = umass_usb_transfer(sc->sc_iface, sc->sc_bulkin_pipe,
+	err = umass_usb_transfer(sc, sc->sc_bulkin_pipe,
 				&csw, USB_BULK_CSW_SIZE, 0, NULL);
 	/* Try again if the bulk-in pipe was stalled */
 	if (err == USBD_STALLED) {
 		err = usbd_clear_endpoint_stall(sc->sc_bulkin_pipe);
 		if (!err) {
-			err = umass_usb_transfer(sc->sc_iface, sc->sc_bulkin_pipe,
-						&csw, USB_BULK_CSW_SIZE, 0, NULL);
+			err = umass_usb_transfer(sc, sc->sc_bulkin_pipe,
+						&csw, USB_BULK_CSW_SIZE, 0,
+						NULL);
 		}
 	}
 	if (err && err != USBD_STALLED)
@@ -723,7 +738,8 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 			"residue = %d, n = %d\n",
 			USBDEVNAME(sc->sc_dev),
 			UGETDW(csw.dCSWDataResidue), n));
-		*residue = UGETDW(csw.dCSWDataResidue);
+		if (residue != NULL)
+			*residue = UGETDW(csw.dCSWDataResidue);
 		return(USBD_COMMAND_FAILED);
 	}
 
@@ -748,10 +764,21 @@ umass_scsipi_scsi_cmd(xs)
 	struct umass_softc *sc = sc_link->adapter_softc;
 	int residue, dir;
 	usbd_status err;
+	struct scsipi_sense sense_cmd;
 
 	DPRINTF(UDMASS_SCSI, ("%s: umass_scsi_cmd %d:%d\n",
 	    USBDEVNAME(sc->sc_dev),
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+
+	if (sc->sc_dying) {
+		xs->flags |= ITSDONE;
+		xs->error = XS_DRIVER_STUFFUP;
+		scsipi_done(xs);
+		if (xs->flags & SCSI_POLL)
+			return (SUCCESSFULLY_QUEUED);
+		else
+			return (COMPLETE);
+	}
 
 #ifdef UMASS_DEBUG
 	if (sc_link->scsipi_scsi.target != UMASS_SCSIID_DEVICE) {
@@ -789,8 +816,31 @@ umass_scsipi_scsi_cmd(xs)
 	 */
 	if (err == USBD_NORMAL_COMPLETION)
 		xs->error = XS_NOERROR;
-	else
-		xs->error = XS_DRIVER_STUFFUP;	/* XXX */
+	else {
+		DPRINTF(UDMASS_USB|UDMASS_SCSI, ("%s: bulk transfer completed "
+		    "with error %s\n", USBDEVNAME(sc->sc_dev),
+		    usbd_errstr(err)));
+
+		/*
+		 * Probably have a CHECK CONDITION here.  Issue a
+		 * REQUEST SENSE.
+		 */
+		memset(&sense_cmd, 0, sizeof(sense_cmd));
+		sense_cmd.opcode = REQUEST_SENSE;
+		sense_cmd.byte2 = sc_link->scsipi_scsi.lun <<
+		    SCSI_CMD_LUN_SHIFT;
+		sense_cmd.length = sizeof(xs->sense);
+
+		if ((err = umass_bulk_transfer(sc, sc_link->scsipi_scsi.lun,
+		    (struct scsipi_generic *)&sense_cmd, sizeof(sense_cmd),
+		    &xs->sense, sizeof(xs->sense), DIR_IN, NULL)) !=
+		    USBD_NORMAL_COMPLETION) {
+			DPRINTF(UDMASS_SCSI, ("%s: REQUEST SENSE failed: %s\n",
+			    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+			xs->error = XS_DRIVER_STUFFUP;	/* XXX */
+		} else
+			xs->error = XS_SENSE;
+	}
 	xs->resid = residue;
 
 	DPRINTF(UDMASS_SCSI, ("%s: umass_scsi_cmd: error = %d, resid = 0x%x\n",
@@ -805,7 +855,7 @@ umass_scsipi_scsi_cmd(xs)
 	 * XXXJRT freed twice: once in scsipi_done(), and once in
 	 * XXXJRT scsi_scsipi_cmd().
 	 */
-	if (SCSIPI_XFER_ASYNC(xs))
+	if ((xs->flags & SCSI_POLL) == 0)
 		return (SUCCESSFULLY_QUEUED);
 
 	return (COMPLETE);
