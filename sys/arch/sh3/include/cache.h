@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.1 2002/02/11 18:03:05 uch Exp $	*/
+/*	$NetBSD: cache.h,v 1.2 2002/02/17 20:58:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -141,6 +141,11 @@ extern int sh_cache_unified;
 extern int sh_cache_size_icache;
 extern int sh_cache_size_dcache;
 extern int sh_cache_line_size;
+/* for n-way set associative cache */
+extern int sh_cache_way_size;
+extern int sh_cache_way_shift;
+extern int sh_cache_entry_mask;
+
 /* Special mode */
 extern int sh_cache_ram_mode;
 extern int sh_cache_index_mode_icache;
@@ -172,7 +177,7 @@ extern struct sh_cache_ops sh_cache_ops;
 #define	sh_dcache_wb_range(v, s)					\
 	(*sh_cache_ops._dcache_wb_range)((v), (s))
 
-void sh_cache_config(int);
+void sh_cache_init(void);
 void sh_cache_information(void);
 
 #endif /* _KERNEL */

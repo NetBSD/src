@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.1 2002/02/11 18:03:06 uch Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.2 2002/02/17 20:58:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,20 +60,33 @@ static __inline__ void cache_sh3_op_line_16_nway(int, vaddr_t, u_int32_t);
 static __inline__ void cache_sh3_op_8lines_16_nway(int, vaddr_t, u_int32_t);
 
 void
-sh3_cache_config(int cpu_id)
+sh3_cache_config()
 {
-	u_int32_t r;
 	size_t cache_size;
-#if notyet
-	cache_size = cpu_id == CPU_PRODUCT_SH7709A ? (16 * 1024) : (8 * 1024);
-#else	
-#ifdef SH7709A	
-	cache_size = 16 * 1024;
-#else
-	cache_size = 8 * 1024;
-#endif
-#endif /* notyet */
-	r = _reg_read_4(SH3REG_CCR);
+	u_int32_t r;
+
+	/* Determine cache size */
+	switch (cpu_product) {
+	default:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_UNKNOWN:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7708:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7708S:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7708R:
+		cache_size = 8 * 1024;
+		break;
+	case CPU_PRODUCT_7709:
+		cache_size = 8 * 1024;
+		break;
+	case CPU_PRODUCT_7709A:
+		cache_size = 16 * 1024;
+		break;
+	}
+
+	r = _reg_read_4(SH3_CCR);
 
 	sh_cache_unified = 1;
 	sh_cache_enable_unified = (r & SH3_CCR_CE);
@@ -139,7 +152,7 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
 
 	/* operate for each way */
 	for (way = 0; way < n; way++) {
-		cca = (SH3REG_CCA | way << sh_cache_way_shift | va);
+		cca = (SH3_CCA | way << sh_cache_way_shift | va);
 		_reg_write_4(cca, _reg_read_4(cca) & ~bits);
 	}
 }
@@ -162,7 +175,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
 	/* operate for each way */
 	for (way = 0; way < n; way++) {
 		cca = (__volatile__ u_int32_t *)
-		    (SH3REG_CCA | way << sh_cache_way_shift | va);
+		    (SH3_CCA | way << sh_cache_way_shift | va);
 		cca[ 0] &= ~bits;
 		cca[ 4] &= ~bits;
 		cca[ 8] &= ~bits;
@@ -210,7 +223,7 @@ sh3_cache_wbinv_range(vaddr_t va, vsize_t sz)
 	va = trunc_line(va);
 	
 	while (va < eva) {
-		cca = SH3REG_CCA | CCA_A | (va & sh_cache_entry_mask);
+		cca = SH3_CCA | CCA_A | (va & sh_cache_entry_mask);
 		/*
 		 * extract virtual tag-address.
 		 * MMU translates it to physical address tag,
