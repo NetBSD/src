@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/21 11:26:04 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/01/22 13:35:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -102,5 +102,6 @@ typedef struct {
  */
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_UCONTEXT_ALIGN	(~0x7)
 
 #endif /* _SH5_MCONTEXT_H_ */
