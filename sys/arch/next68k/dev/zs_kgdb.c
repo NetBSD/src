@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.5 2005/01/10 17:01:55 chs Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.6 2005/01/10 17:07:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5 2005/01/10 17:01:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2005/01/10 17:07:09 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -111,7 +111,7 @@ zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 {
 	int s, tconst;
 
-	bcopy(zs_kgdb_regs, cs->cs_preg, 16);
+	memcpy(cs->cs_preg, zs_kgdb_regs, 16);
 
 	if (iena) {
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
@@ -138,7 +138,7 @@ zs_kgdb_init(void)
 {
 	struct zs_chanstate cs;
 	volatile struct zschan *zc;
-	int channel, zs_unit;
+	int channel;
 	extern const struct cdevsw zstty_cdevsw;
 
 	printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev);
@@ -146,14 +146,13 @@ zs_kgdb_init(void)
 		return;
 
 	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
-	zs_unit = (kgdb_dev & 2) ? 2 : 0;	/* XXX - config info! */
 	channel  =  kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
-	bzero((caddr_t)&cs, sizeof(cs));
-	zc = zs_get_chan_addr(zs_unit, channel);
+	memset(&cs, 0, sizeof(cs));
+	zc = zs_get_chan_addr(channel);
 
 	if (zc == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");
