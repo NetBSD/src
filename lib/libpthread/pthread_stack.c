@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.8 2003/07/17 21:07:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.9 2003/11/27 16:30:54 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.8 2003/07/17 21:07:39 nathanw Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.9 2003/11/27 16:30:54 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -48,13 +48,29 @@ __RCSID("$NetBSD: pthread_stack.c,v 1.8 2003/07/17 21:07:39 nathanw Exp $");
 #include <unistd.h>
 #include <sys/queue.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 
 #include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
 
 static pthread_t
-pthread__stackid_setup(void *base, int size);
+pthread__stackid_setup(void *base, size_t size);
+
+#ifndef PT_FIXEDSTACKSIZE_LG
+/* 
+ * We have to initialize the pt_stack* variables here because mutexes
+ * are used before pthread_init() and thus pthread__initmain() are
+ * called.  Since mutexes only save the stack pointer and not a
+ * pointer to the thread data, it is safe to change the mapping from
+ * stack pointer to thread data afterwards.
+ */
+#define	_STACKSIZE_LG 18
+int	pt_stacksize_lg = _STACKSIZE_LG;
+size_t	pt_stacksize = 1 << _STACKSIZE_LG;
+vaddr_t	pt_stackmask = (1 << _STACKSIZE_LG) - 1;
+#undef	_STACKSIZE_LG
+#endif /* !PT_FIXEDSTACKSIZE_LG */
 
 
 /*
@@ -89,6 +105,46 @@ pthread__initmain(pthread_t *newt)
 {
 	void *base;
 
+#ifndef PT_FIXEDSTACKSIZE_LG
+	struct rlimit slimit;
+	size_t pagesize;
+	char *value;
+	int ret;
+
+	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+	pt_stacksize = 0;
+	ret = getrlimit(RLIMIT_STACK, &slimit);
+	if (ret == -1)
+		err(1, "Couldn't get stack resource consumption limits");
+	value = getenv("PTHREAD_STACKSIZE");
+	if (value) {
+		pt_stacksize = atoi(value) * 1024;
+		if (pt_stacksize > slimit.rlim_cur)
+			pt_stacksize = (size_t)slimit.rlim_cur;
+	}
+	if (pt_stacksize == 0)
+		pt_stacksize = (size_t)slimit.rlim_cur;
+	if (pt_stacksize < 4 * pagesize)
+		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
+		    4 * pagesize / 1024);
+
+	pt_stacksize_lg = -1;
+	while (pt_stacksize) {
+		pt_stacksize >>= 1;
+		pt_stacksize_lg++;
+	}
+
+	pt_stacksize = (1 << pt_stacksize_lg);
+	pt_stackmask = pt_stacksize - 1;
+
+	/*
+	 * XXX The "initial" thread stack can be smaller than
+	 * requested because we don't control the end of the stack.
+	 * On i386 the stack usually ends at 0xbfc00000 and for
+	 * requested sizes >=8MB, we get a 4MB smaller stack.
+	 */
+#endif /* PT_FIXEDSTACKSIZE_LG */
+
 	base = (void *) (pthread__sp() & ~PT_STACKMASK);
 
 	*newt = pthread__stackid_setup(base, PT_STACKSIZE);
@@ -96,7 +152,7 @@ pthread__initmain(pthread_t *newt)
 
 static pthread_t
 /*ARGSUSED*/
-pthread__stackid_setup(void *base, int size)
+pthread__stackid_setup(void *base, size_t size)
 {
 	pthread_t t;
 	size_t pagesize;
