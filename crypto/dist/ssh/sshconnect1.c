@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.11 2001/04/10 08:08:04 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.12 2001/04/17 12:27:37 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -518,8 +518,7 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
   
   problem = krb5_init_context(context);
   if (problem) {
-     debug("Kerberos 5: krb5_init_context failed: %s",
-       krb5_get_err_text(*context, problem));
+     debug("Kerberos 5: krb5_init_context failed");
      ret = 0;
      goto out;
   }
