@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.51 2000/10/27 06:28:27 jmc Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.52 2000/11/08 05:29:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -249,7 +249,7 @@ spec_read(v)
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn, nextbn;
-	long bsize, bscale, ssize;
+	int bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -295,10 +295,10 @@ spec_read(v)
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (vp->v_lastr + bscale == bn) {
 				nextbn = bn + bscale;
-				error = breadn(vp, bn, (int)bsize, &nextbn,
-					(int *)&bsize, 1, NOCRED, &bp);
+				error = breadn(vp, bn, bsize, &nextbn,
+					&bsize, 1, NOCRED, &bp);
 			} else
-				error = bread(vp, bn, (int)bsize, NOCRED, &bp);
+				error = bread(vp, bn, bsize, NOCRED, &bp);
 			vp->v_lastr = bn;
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
@@ -335,7 +335,7 @@ spec_write(v)
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	long bsize, bscale, ssize;
+	int bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
