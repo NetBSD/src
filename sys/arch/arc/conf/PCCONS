@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.12 2001/11/05 01:23:18 tsutsui Exp $
+#	$NetBSD: PCCONS,v 1.13 2001/11/13 17:54:47 augustss Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -364,4 +364,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

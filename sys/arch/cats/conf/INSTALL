@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2001/07/08 16:32:16 abs Exp $
+#	$NetBSD: INSTALL,v 1.7 2001/11/13 17:54:48 augustss Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -443,7 +443,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # for IPv6
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

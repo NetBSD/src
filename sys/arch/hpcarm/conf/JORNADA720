@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.10 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: JORNADA720,v 1.11 2001/11/13 17:54:48 augustss Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 # estimated number of users
 maxusers	32
@@ -219,7 +219,7 @@ pseudo-device	tb	1		# tablet line discipline
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 pseudo-device 	biconsdev       1       # build-in console device
-pseudo-device 	wsmux		2
+pseudo-device 	wsmux
 
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator

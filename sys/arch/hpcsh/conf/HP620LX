@@ -1,4 +1,4 @@
-#	$NetBSD: HP620LX,v 1.4 2001/07/14 17:02:57 kanaoka Exp $
+#	$NetBSD: HP620LX,v 1.5 2001/11/13 17:54:50 augustss Exp $
 #
 #	HP620LX
 #
@@ -133,4 +133,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
