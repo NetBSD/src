@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.5 1997/11/18 07:01:52 lukem Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.6 2002/07/06 00:46:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_svc.c,v 1.5 1997/11/18 07:01:52 lukem Exp $");
+__RCSID("$NetBSD: yppush_svc.c,v 1.6 2002/07/06 00:46:12 wiz Exp $");
 #endif
 
 /*
@@ -60,10 +60,6 @@ __RCSID("$NetBSD: yppush_svc.c,v 1.5 1997/11/18 07:01:52 lukem Exp $");
 
 #include "yppush.h"
 
-#ifdef __STDC__
-#define SIG_PF void(*)(int)
-#endif
-
 #ifdef DEBUG
 #define RPC_SVC_FG
 #endif
@@ -73,11 +69,10 @@ int _rpcpmstart;		/* Started by a port monitor ? */
 int _rpcfdtype;			/* Whether Stream or Datagram ? */
 int _rpcsvcdirty;		/* Still serving ? */
 
-static	void _msgout __P((char *));
+static	void _msgout(char *);
 
 static
-void _msgout(msg)
-	char *msg;
+void _msgout(char *msg)
 {
 #ifdef RPC_SVC_FG
 	if (_rpcpmstart)
@@ -90,16 +85,14 @@ void _msgout(msg)
 }
 
 void
-yppush_xfrrespprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+yppush_xfrrespprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		struct yppushresp_xfr yppushproc_xfrresp_1_arg;
 	} argument;
 	void *result;
 	xdrproc_t xdr_argument, xdr_result;
-	void *(*local) __P((void *, struct svc_req *));
+	void *(*local)(void *, struct svc_req *);
 
 	_rpcsvcdirty = 1;
 	switch (rqstp->rq_proc) {
