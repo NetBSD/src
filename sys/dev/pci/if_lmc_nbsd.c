@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.2 1999/05/12 22:55:14 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -172,13 +172,8 @@
 static void lmc_shutdown(void *arg);
 
 static int
-lmc_pci_probe(struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-	       void *match,
-#else
-	       struct cfdata *match,
-#endif
-	       void *aux)
+lmc_pci_probe(struct device *parent, struct cfdata *match,
+	      void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	u_int32_t id;
