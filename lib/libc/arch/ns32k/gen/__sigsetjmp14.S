@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.3 1998/10/03 10:39:47 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -28,12 +28,11 @@
 #include <machine/jmpbuf.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __sigsetjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $")
+	RCSID("$NetBSD: __sigsetjmp14.S,v 1.3 1998/10/03 10:39:47 matthias Exp $")
 #endif
 
 ENTRY(__sigsetjmp14)
 	movd	4(sp),r2		/* jmp_buf */
-	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
 
 	cmpqd	0,8(sp)			/* save signal mask? */
 	sned	JMP_BUF_SIGMASK+16(r2)
@@ -48,7 +47,8 @@ ENTRY(__sigsetjmp14)
 
 	movd	4(sp),r2		/* jmp_buf */
 
-1:	sprd	sp,JMP_BUF_SP(r2)
+1:	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
+	sprd	sp,JMP_BUF_SP(r2)
 	sprd	fp,JMP_BUF_FP(r2)
 	sprd	sb,JMP_BUF_SB(r2)
 	movd	r3,JMP_BUF_R3(r2)	/* save registers r3-r7 */

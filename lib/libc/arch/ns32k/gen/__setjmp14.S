@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 1998/10/03 10:39:46 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -25,12 +25,10 @@
 #include <machine/jmpbuf.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.3 1998/10/03 10:39:46 matthias Exp $")
 #endif
 
 ENTRY(__setjmp14)
-	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
-
 	/* Get signal mask. */
 	addr	JMP_BUF_SIGMASK(4(sp)),tos
 	movqd	0,tos
@@ -40,6 +38,7 @@ ENTRY(__setjmp14)
 
 	movd	4(sp),r2		/* jmp_buf */
 
+	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
 	sprd	sp,JMP_BUF_SP(r2)
 	sprd	fp,JMP_BUF_FP(r2)
 	sprd	sb,JMP_BUF_SB(r2)
