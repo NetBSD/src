@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2004/05/11 11:31:34 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2004/06/05 07:31:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2004/05/11 11:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2004/06/05 07:31:31 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -131,6 +131,13 @@ int bus_dma_stats_bounces;
 #endif
 
 static int _bus_dma_uiomove(void *, struct uio *, size_t, int);
+static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+	    bus_size_t size, int flags);
+static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
+static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
+	    void *buf, bus_size_t buflen, struct proc *p, int flags,
+	    paddr_t *lastaddrp, int *segp, int first);
+
 
 /*
  * Create a DMA map.
@@ -741,7 +748,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high));
 }
 
-int
+static int
 _bus_dma_alloc_bouncebuf(t, map, size, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -780,7 +787,7 @@ _bus_dma_alloc_bouncebuf(t, map, size, flags)
 	return (error);
 }
 
-void
+static void
 _bus_dma_free_bouncebuf(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -1049,7 +1056,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * the starting segment on entrace, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
-int
+static int
 _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
