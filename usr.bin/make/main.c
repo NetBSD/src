@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $	*/
+/*	$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $");
+__RCSID("$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1263,7 +1263,7 @@ Cmd_Exec(cmd, err)
 	(void) dup2(fds[1], 1);
 	(void) close(fds[1]);
 
-	(void) execv("/bin/sh", args);
+	(void) execv(_PATH_BSHELL, args);
 	_exit(1);
 	/*NOTREACHED*/
 
