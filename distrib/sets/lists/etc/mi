@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.115 2003/02/22 03:20:48 lukem Exp $
+# $NetBSD: mi,v 1.116 2003/02/22 23:39:54 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -197,13 +197,6 @@
 ./var/cron/log				etc-cron-log
 ./var/cron/tabs/root			etc-cron-root
 ./var/db/locate.database		etc-sys-root
-./var/db/obsolete/base			etc-sys-etc
-./var/db/obsolete/comp			etc-sys-etc
-./var/db/obsolete/etc			etc-sys-etc
-./var/db/obsolete/games			etc-sys-etc
-./var/db/obsolete/man			etc-sys-etc
-./var/db/obsolete/misc			etc-sys-etc
-./var/db/obsolete/text			etc-sys-etc
 ./var/games/atc_scores			etc-games-scores
 ./var/games/battlestar.log		etc-games-scores
 ./var/games/cfscores			etc-games-scores
