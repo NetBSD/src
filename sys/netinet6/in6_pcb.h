@@ -140,11 +140,7 @@ struct	in6pcb {
 	  (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3])	\
 	 + (fport) + (lport))
 
-#ifdef MAPPED_ADDR_ENABLED
-#define sotoin6pcb(so)	((struct in6pcb *)(so)->so_pcb2)
-#else /* MAPPED_ADDR_ENABLED */
 #define sotoin6pcb(so)	((struct in6pcb *)(so)->so_pcb)
-#endif /* MAPPED_ADDR_ENABLED */
 
 #ifdef _KERNEL
 void	in6_losing __P((struct in6pcb *));

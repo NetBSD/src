@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.40 1999/06/26 06:16:47 sommerfeld Exp $	*/
+/*	$NetBSD: in.h,v 1.41 1999/07/01 08:12:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,9 +47,11 @@
  * Protocols
  */
 #define	IPPROTO_IP		0		/* dummy for IP */
+#define IPPROTO_HOPOPTS		0		/* IP6 hop-by-hop options */
 #define	IPPROTO_ICMP		1		/* control message protocol */
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
+#define IPPROTO_IPV4		4 		/* IP header */
 #define	IPPROTO_IPIP		4		/* IP inside IP */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
@@ -57,15 +59,22 @@
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define IPPROTO_IPV6		41		/* IP6 header */
+#define IPPROTO_ROUTING		43		/* IP6 routing header */
+#define IPPROTO_FRAGMENT	44		/* IP6 fragmentation header */
+#define IPPROTO_RSVP		46		/* resource reservation */
 #define IPPROTO_GRE		47		/* GRE encaps RFC 1701 */
 #define	IPPROTO_ESP		50 		/* encap. security payload */
 #define	IPPROTO_AH		51 		/* authentication header */
 #define IPPROTO_MOBILE		55		/* IP Mobility RFC 2004 */
 #define IPPROTO_IPV6_ICMP	58		/* IPv6 ICMP */
+#define IPPROTO_ICMPV6		58		/* ICMP6 */
+#define IPPROTO_NONE		59		/* IP6 no next header */
+#define IPPROTO_DSTOPTS		60		/* IP6 destination option */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define IPPROTO_PIM		103		/* Protocol indep. multicast */
-#define IPPROTO_IPPCP		108		/* IP Payload Comp. Protocol */
+#define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
@@ -177,6 +186,9 @@ struct in_addr {
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
+/* last return value of *_input(), meaning "all job for this pkt is done".  */
+#define	IPPROTO_DONE		257
+
 /*
  * Socket address, internet style.
  */
@@ -187,6 +199,8 @@ struct sockaddr_in {
 	struct	  in_addr sin_addr;
 	int8_t	  sin_zero[8];
 };
+
+#define INET_ADDRSTRLEN                 16
 
 /*
  * Structure used to describe IP options.
@@ -220,6 +234,9 @@ struct ip_opts {
 #define IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
+#if 1 /*IPSEC*/
+#define IP_IPSEC_POLICY		22 /* struct; get/set security policy */
+#endif
 
 /*
  * Defaults and limits for options
@@ -251,7 +268,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_IDP + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_ESP + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -277,6 +294,34 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "idp", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "ipsec", CTLTYPE_NODE }, \
 }
 
 /*
@@ -298,7 +343,8 @@ struct ip_mreq {
 #define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
 #define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
 #define	IPCTL_HOSTZEROBROADCAST 14	/* is host zero a broadcast addr? */
-#define	IPCTL_MAXID	       15
+#define IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
+#define	IPCTL_MAXID	       16
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -316,9 +362,12 @@ struct ip_mreq {
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "maxflows", CTLTYPE_INT }, \
 	{ "hostzerobroadcast", CTLTYPE_INT }, \
+	{ "gifttl", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
+/* INET6 stuff */
+#include <netinet6/in6.h>
 
 #ifdef _KERNEL
 extern	struct in_addr zeroin_addr;

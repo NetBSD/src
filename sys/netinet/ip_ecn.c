@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ip_ecn.c,v 1.1.2.1 1999/06/28 06:36:59 itojun Exp $
+ * $Id: ip_ecn.c,v 1.2 1999/07/01 08:12:50 itojun Exp $
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.

@@ -1,4 +1,33 @@
-/*	$NetBSD: in_proto.c,v 1.31 1999/07/01 05:53:10 darrenr Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.32 1999/07/01 08:12:50 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +68,7 @@
 #include "opt_eon.h"			/* ISO CLNL over IP */
 #include "opt_iso.h"			/* ISO TP tunneled over IP */
 #include "opt_ns.h"			/* NSIP: XNS tunneled over IP */
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -56,6 +86,14 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
+#endif
+
 #include <netinet/igmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
@@ -69,6 +107,19 @@
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
+
+#ifdef IPSEC
+#include <netinet6/ah.h>
+#ifdef IPSEC_ESP
+#include <netinet6/esp.h>
+#endif
+#include <netinet6/ipcomp.h>
+#endif /* IPSEC */
+
+#include "gif.h"
+#if NGIF > 0
+#include <netinet/in_gif.h>
+#endif
 
 #ifdef NSIP
 #include <netns/ns_var.h>
@@ -122,6 +173,39 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
+#ifdef IPSEC
+{ SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
+  ah4_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#ifdef IPSEC_ESP
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
+  esp4_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#endif
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
+  ipcomp4_input, 0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#endif /* IPSEC */
+#if NGIF > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+  in_gif_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,
+},
+#ifdef INET6
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  in_gif_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,
+},
+#endif /* INET6 */
+#else /* NGIF */
 #if NIPIP > 0 || defined(MROUTING)
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ipip_input,	rip_output,	0,		rip_ctloutput,
@@ -141,6 +225,7 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* NGRE > 0 */
+#endif /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,

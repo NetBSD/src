@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.17 1998/12/27 18:27:48 thorpej Exp $	*/
+/*	$NetBSD: route.h,v 1.18 1999/07/01 08:12:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -228,6 +228,7 @@ struct rt_addrinfo {
 
 struct route_cb {
 	int	ip_count;
+	int	ip6_count;
 	int	ipx_count;
 	int	ns_count;
 	int	iso_count;
@@ -296,6 +297,9 @@ void	 rt_timer_remove_all __P((struct rtentry *));
 void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
+#if 1 /*for INET6*/
+void	 rtcalloc __P((struct route *));
+#endif
 struct rtentry *
 	 rtalloc1 __P((struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));
