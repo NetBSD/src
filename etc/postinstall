@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.43 2002/12/30 12:24:45 tron Exp $
+# $NetBSD: postinstall,v 1.44 2002/12/30 13:16:43 tron Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -758,7 +758,7 @@ main()
 		if [ -n "${items_failed}" -a "${op}" = "check" ]; then
 			cat <<_Fix_me_
 To fix, run:
-    ${0} -s ${SRC_DIR} -d ${DEST_DIR}/ fix${items_failed}
+    ${0} -s ${SRC_DIR} -d ${DEST_DIR:-/} fix${items_failed}
 _Fix_me_
 		fi
 
