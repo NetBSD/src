@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/10/14 22:33:29 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/10/15 09:44:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2003/10/14 22:33:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/10/15 09:44:55 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -244,7 +244,7 @@ cpu_startup()
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update(pmap_kenel());
+	pmap_update(pmap_kernel());
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
