@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.9 1994/06/29 06:36:48 cgd Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.10 1995/03/08 02:57:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -94,7 +94,7 @@ sl_compress_init(comp, max_state)
  * form).
  */
 #define ENCODE(n) { \
-	if ((u_short)(n) >= 256) { \
+	if ((u_int16_t)(n) >= 256) { \
 		*cp++ = 0; \
 		cp[1] = (n); \
 		cp[0] = (n) >> 8; \
@@ -104,7 +104,7 @@ sl_compress_init(comp, max_state)
 	} \
 }
 #define ENCODEZ(n) { \
-	if ((u_short)(n) >= 256 || (u_short)(n) == 0) { \
+	if ((u_int16_t)(n) >= 256 || (u_int16_t)(n) == 0) { \
 		*cp++ = 0; \
 		cp[1] = (n); \
 		cp[0] = (n) >> 8; \
@@ -119,7 +119,7 @@ sl_compress_init(comp, max_state)
 		(f) = htonl(ntohl(f) + ((cp[1] << 8) | cp[2])); \
 		cp += 3; \
 	} else { \
-		(f) = htonl(ntohl(f) + (u_long)*cp++); \
+		(f) = htonl(ntohl(f) + (u_int32_t)*cp++); \
 	} \
 }
 
@@ -128,7 +128,7 @@ sl_compress_init(comp, max_state)
 		(f) = htons(ntohs(f) + ((cp[1] << 8) | cp[2])); \
 		cp += 3; \
 	} else { \
-		(f) = htons(ntohs(f) + (u_long)*cp++); \
+		(f) = htons(ntohs(f) + (u_int32_t)*cp++); \
 	} \
 }
 
@@ -137,7 +137,7 @@ sl_compress_init(comp, max_state)
 		(f) = htons((cp[1] << 8) | cp[2]); \
 		cp += 3; \
 	} else { \
-		(f) = htons((u_long)*cp++); \
+		(f) = htons((u_int32_t)*cp++); \
 	} \
 }
 
@@ -166,7 +166,7 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 	if ((ip->ip_off & htons(0x3fff)) || m->m_len < 40)
 		return (TYPE_IP);
 
-	th = (struct tcphdr *)&((int *)ip)[hlen];
+	th = (struct tcphdr *)&((int32_t *)ip)[hlen];
 	if ((th->th_flags & (TH_SYN|TH_FIN|TH_RST|TH_ACK)) != TH_ACK)
 		return (TYPE_IP);
 	/*
@@ -179,7 +179,7 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 	INCR(sls_packets)
 	if (ip->ip_src.s_addr != cs->cs_ip.ip_src.s_addr ||
 	    ip->ip_dst.s_addr != cs->cs_ip.ip_dst.s_addr ||
-	    *(int *)th != ((int *)&cs->cs_ip)[cs->cs_ip.ip_hl]) {
+	    *(int32_t *)th != ((int32_t *)&cs->cs_ip)[cs->cs_ip.ip_hl]) {
 		/*
 		 * Wasn't the first -- search for it.
 		 *
@@ -200,7 +200,8 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 			INCR(sls_searches)
 			if (ip->ip_src.s_addr == cs->cs_ip.ip_src.s_addr
 			    && ip->ip_dst.s_addr == cs->cs_ip.ip_dst.s_addr
-			    && *(int *)th == ((int *)&cs->cs_ip)[cs->cs_ip.ip_hl])
+			    && *(int32_t *)th ==
+			    ((int32_t *)&cs->cs_ip)[cs->cs_ip.ip_hl])
 				goto found;
 		} while (cs != lastcs);
 
@@ -242,14 +243,14 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 	 * different between the previous & current datagram, we send the
 	 * current datagram `uncompressed'.
 	 */
-	oth = (struct tcphdr *)&((int *)&cs->cs_ip)[hlen];
+	oth = (struct tcphdr *)&((int32_t *)&cs->cs_ip)[hlen];
 	deltaS = hlen;
 	hlen += th->th_off;
 	hlen <<= 2;
 
-	if (((u_short *)ip)[0] != ((u_short *)&cs->cs_ip)[0] ||
-	    ((u_short *)ip)[3] != ((u_short *)&cs->cs_ip)[3] ||
-	    ((u_short *)ip)[4] != ((u_short *)&cs->cs_ip)[4] ||
+	if (((u_int16_t *)ip)[0] != ((u_int16_t *)&cs->cs_ip)[0] ||
+	    ((u_int16_t *)ip)[3] != ((u_int16_t *)&cs->cs_ip)[3] ||
+	    ((u_int16_t *)ip)[4] != ((u_int16_t *)&cs->cs_ip)[4] ||
 	    th->th_off != oth->th_off ||
 	    (deltaS > 5 &&
 	     BCMP(ip + 1, &cs->cs_ip + 1, (deltaS - 5) << 2)) ||
@@ -274,7 +275,7 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		 * with it. */
 		 goto uncompressed;
 
-	if (deltaS = (u_short)(ntohs(th->th_win) - ntohs(oth->th_win))) {
+	if (deltaS = (u_int16_t)(ntohs(th->th_win) - ntohs(oth->th_win))) {
 		ENCODE(deltaS);
 		changes |= NEW_W;
 	}
@@ -433,7 +434,7 @@ sl_uncompress_tcp_part(bufp, buflen, total_len, type, comp)
 		comp->flags &=~ SLF_TOSS;
 		ip->ip_p = IPPROTO_TCP;
 		hlen = ip->ip_hl;
-		hlen += ((struct tcphdr *)&((int *)ip)[hlen])->th_off;
+		hlen += ((struct tcphdr *)&((int32_t *)ip)[hlen])->th_off;
 		hlen <<= 2;
 		BCOPY(ip, &cs->cs_ip, hlen);
 		cs->cs_ip.ip_sum = 0;
@@ -527,10 +528,10 @@ sl_uncompress_tcp_part(bufp, buflen, total_len, type, comp)
 		 * this but the old slip framing won't) */
 		goto bad;
 
-	if ((int)cp & 3) {
+	if ((long)cp & 3) {
 		if (buflen > 0)
-			(void) ovbcopy(cp, (caddr_t)((int)cp &~ 3), buflen);
-		cp = (u_char *)((int)cp &~ 3);
+			(void) ovbcopy(cp, (caddr_t)((long)cp &~ 3), buflen);
+		cp = (u_char *)((long)cp &~ 3);
 	}
 	cp -= cs->cs_hlen;
 	total_len += cs->cs_hlen;
@@ -540,7 +541,7 @@ sl_uncompress_tcp_part(bufp, buflen, total_len, type, comp)
 
 	/* recompute the ip header checksum */
 	{
-		register u_short *bp = (u_short *)cp;
+		register u_int16_t *bp = (u_int16_t *)cp;
 		for (changes = 0; hlen > 0; hlen -= 2)
 			changes += *bp++;
 		changes = (changes & 0xffff) + (changes >> 16);

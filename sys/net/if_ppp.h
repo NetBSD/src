@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.7 1994/06/29 06:36:19 cgd Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.8 1995/03/08 02:57:02 cgd Exp $	*/
 
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
@@ -26,9 +26,9 @@
  * Standard PPP header.
  */
 struct ppp_header {
-	u_char	ph_address;	/* Address Field */
-	u_char	ph_control;	/* Control Field */
-	u_short	ph_protocol;	/* Protocol Field */
+	u_int8_t	ph_address;	/* Address Field */
+	u_int8_t	ph_control;	/* Control Field */
+	u_int16_t	ph_protocol;	/* Protocol Field */
 };
 
 #define PPP_HDRLEN	4	/* sizeof(struct ppp_header) must be 4 */
@@ -66,7 +66,7 @@ struct ppp_header {
 #define PPP_MAXMRU	65000	/* Largest MRU we allow */
 
 /* Extended asyncmap - allows any character to be escaped. */
-typedef u_long	ext_accm[8];
+typedef u_int32_t ext_accm[8];
 
 /*
  * Structure describing each ppp unit.
@@ -89,7 +89,7 @@ struct ppp_softc {
 	
 	/* Device-dependent part for async lines. */
 	ext_accm sc_asyncmap;	/* async control character map */
-	u_long	sc_rasyncmap;	/* receive async control char map */
+	u_int32_t sc_rasyncmap;	/* receive async control char map */
 	struct	mbuf *sc_outm;	/* mbuf chain being output currently */
 	struct	mbuf *sc_m;	/* pointer to input mbuf chain */
 	struct	mbuf *sc_mc;	/* pointer to current input mbuf */
@@ -127,11 +127,11 @@ struct ppp_softc {
 /* this stuff doesn't belong here... */
 #define	PPPIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
 #define	PPPIOCSFLAGS	_IOW('t', 89, int)	/* set configuration flags */
-#define	PPPIOCGASYNCMAP	_IOR('t', 88, int)	/* get async map */
-#define	PPPIOCSASYNCMAP	_IOW('t', 87, int)	/* set async map */
+#define	PPPIOCGASYNCMAP	_IOR('t', 88, int32_t)	/* get async map */
+#define	PPPIOCSASYNCMAP	_IOW('t', 87, int32_t)	/* set async map */
 #define	PPPIOCGUNIT	_IOR('t', 86, int)	/* get ppp unit number */
-#define	PPPIOCGRASYNCMAP _IOR('t', 85, int)	/* get receive async map */
-#define	PPPIOCSRASYNCMAP _IOW('t', 84, int)	/* set receive async map */
+#define	PPPIOCGRASYNCMAP _IOR('t', 85, int32_t)	/* get receive async map */
+#define	PPPIOCSRASYNCMAP _IOW('t', 84, int32_t)	/* set receive async map */
 #define	PPPIOCGMRU	_IOR('t', 83, int)	/* get max receive unit */
 #define	PPPIOCSMRU	_IOW('t', 82, int)	/* set max receive unit */
 #define	PPPIOCSMAXCID	_IOW('t', 81, int)	/* set VJ max slot ID */
