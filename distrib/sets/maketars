@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.20 2002/04/01 15:50:30 bjh21 Exp $
+# $NetBSD: maketars,v 1.21 2002/04/08 15:39:33 tron Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -14,9 +14,23 @@
 
 machine=`${MAKE} print_machine`
 machine_arch=`${MAKE} print_machine_arch`
+x11_version=`${MAKE} print_x11_version`
 setd=`pwd`
 nlists="base comp etc games man misc text"
-xlists="xbase xcomp xcontrib xfont xserver xmisc"
+xlists=
+for xlist in xbase xcomp xcontrib xfont xserver xmisc
+do
+ if [ -z "$xlists" ]
+ then
+  xlists=$xlist
+ else
+  xlists="$xlists $xlist"
+ fi
+ if [ -d "$setd/lists/$xlist${x11_version}" ]
+ then
+  xlists="$xlists $xlist${x11_version}"
+ fi
+done
 lists=$nlists
 tars=$RELEASEDIR
 dest=$DESTDIR
