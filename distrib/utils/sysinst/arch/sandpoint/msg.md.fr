@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 2003/06/11 21:35:48 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 2003/06/12 10:51:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,20 +43,6 @@ message md_hello
 
 }
 
-message wdtype
-{Quel type de disque est %s?}
-
-message sectforward
-{Est ce que votre disque fait AUTOMATIQUEMENT se suivre les secteurs ?}
-
-message dlgeom
-{Votre disque a déjà un label BSD. Ce label montre une géométrie différente
-de la géométrie réelle du disque. Les deux géométrie sont :
-
-disklabel:	%d cylindres, %d têtes, %d secteurs 
-géom réelle:	%d cylindres, %d têtes, %d secteurs 
-}
-
 message diagcyl
 {Certains vieux BIOS ou programmes de diagnostics peuvent utiliser le dernier
 cylindre pour des tests. Cela ne devrait plus etre le cas avec des systèmes
@@ -77,15 +63,6 @@ message dobad144
 message dobootblks
 {Installation des block de démarrage sur %s ...
 }
-
-message cyl1024
-{ Le label (liste des partitions) que vous avez entré a une partition racine
-qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
-le système puisse etre toujours démaré, cette partition doit etre entièrement
-en dessous de cette limite. Vous pouvez: }
-
-message wmbrfail
-{L'écriture du MBR a échouée. Je ne peux pas continuer.}
 
 message set_kernel_1
 {Kernel (GENERIC)}

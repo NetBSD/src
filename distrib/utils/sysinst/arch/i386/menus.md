@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.4 2003/06/11 21:35:43 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.5 2003/06/12 10:51:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,63 +49,6 @@ menu getboottype, title MSG_Bootblocks_selection;
 	    {boottype = "serial57600";};
 	option MSG_Use_serial_115200_bootblocks, exit, action
 	    {boottype = "serial115200";};
-
-menu wdtype, title MSG_Select_type;
-	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE",	exit;
-	option "ESDI",	exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-	option "ST506", exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-
-
-menu dlgeom, title MSG_Choose_an_option;
-	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
-				dlsec, disk->dd_cyl, disk->dd_head,
-				disk->dd_sec);
-			};
-	option MSG_Use_real_geometry, exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option MSG_Use_disklabel_geometry, exit, action {
-			disk->dd_cyl = dlcyl;
-			disk->dd_head = dlhead;
-			disk->dd_sec = dlsec;
-		};
-
-menu cyl1024;
-	display action {
-		msg_display(MSG_cyl1024);
-	};
-	option MSG_Reedit_both_MBR_and_label, exit, action
-	{
-		/* XXX UGH */
-		extern int c1024_resp;
-
-		c1024_resp = 1;
-	};
-	option MSG_Reedit_the_label, exit, action
-	{
-		extern int c1024_resp;
-
-		c1024_resp = 2;
-	};
-	option MSG_Use_it_anyway,	exit, action
-	{	
-		extern int c1024_resp;
-
-		c1024_resp = 3;
-	};
 
 menu biosonematch;
 	option MSG_This_is_the_correct_geometry, exit, action {

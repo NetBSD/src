@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.9 2003/06/11 21:35:48 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.10 2003/06/12 10:51:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,45 +37,4 @@
  */
 
 /* Menu definitions for sysinst. prep version, machine dependent. */
-
-menu wdtype, title  "Select type";
-	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE", 	exit;
-	option "ESDI", 	exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-	option "ST506", exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-
-
-menu cyl1024;
-	display action {
-		msg_display(MSG_cyl1024);
-	};
-	option "Re-edit both MBR and label", exit, action
-	{
-		/* XXX UGH */
-		extern int c1024_resp;
-
-		c1024_resp = 1;
-	};
-	option "Re-edit the label", exit, action
-	{
-		extern int c1024_resp;
-
-		c1024_resp = 2;
-	};
-	option "Use it anyway",	exit, action
-	{	
-		extern int c1024_resp;
-
-		c1024_resp = 3;
-	};
 
