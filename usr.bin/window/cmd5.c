@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd5.c,v 1.4 1997/11/21 08:35:52 lukem Exp $	*/
+/*	$NetBSD: cmd5.c,v 1.5 1998/07/09 18:34:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd5.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd5.c,v 1.4 1997/11/21 08:35:52 lukem Exp $");
+__RCSID("$NetBSD: cmd5.c,v 1.5 1998/07/09 18:34:39 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ c_move(w)
 void
 movewin(w, row, col)
 	struct ww *w;
+	int row, col;
 {
 	struct ww *back = w->ww_back;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: api.c,v 1.5 1998/07/09 18:33:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api.c,v 1.4 1998/03/04 13:16:06 christos Exp $");
+__RCSID("$NetBSD: api.c,v 1.5 1998/07/09 18:33:32 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,6 +439,7 @@ copy_subroutine(target, source, parms, what_is_user, length)
 BufferDescriptor *target, *source;
 CopyStringParms *parms;
 int what_is_user;
+int length;
 #define	USER_IS_TARGET	0
 #define	USER_IS_SOURCE	1
 {
