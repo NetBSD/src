@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1995/02/16 19:38:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1997/11/08 07:39:38 lukem Exp $
 
 PROG=	re
 SRCS=	main.c split.c debug.c
 NOMAN=
 
-CFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex
+CPPFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex
 
 TESTS=	${.CURDIR}/tests
 

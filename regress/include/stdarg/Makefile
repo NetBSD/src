@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/07 16:01:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 1997/11/08 07:39:30 lukem Exp $
 
 PROG=	stdargtest
 SRCS=	argtest.c
 NOMAN=	noman, no way, man
 
-CFLAGS+= -DSTDARG
+CPPFLAGS+= -DSTDARG
 
 .PATH:	${.CURDIR}/../stdarg
 
