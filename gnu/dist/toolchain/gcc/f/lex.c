@@ -39,7 +39,7 @@ void dwarfout_resume_previous_source_file (register unsigned);
 void dwarfout_start_new_source_file (register char *);
 void dwarfout_define (register unsigned, register char *);
 void dwarfout_undef (register unsigned, register char *);
-#endif DWARF_DEBUGGING_INFO
+#endif /* DWARF_DEBUGGING_INFO */
 
 static void ffelex_append_to_token_ (char c);
 static int ffelex_backslash_ (int c, ffewhereColumnNumber col);

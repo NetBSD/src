@@ -436,7 +436,7 @@ ffewhere_track (ffewhereLine *wl, ffewhereColumn *wc, ffewhereTrack wt,
   else
     {
       wt[i * 2 - 2] = lo;
-      if (cn > FFEWHERE_indexUNKNOWN)
+      if (cn >= FFEWHERE_indexUNKNOWN)
 	{
 	  wt[i * 2 - 1] = FFEWHERE_indexUNKNOWN;
 	  ffewhere_line_kill (*wl);
