@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 1995/03/10 02:15:03 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.22 1995/03/27 01:25:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -100,10 +100,10 @@
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 
 /*
- * Select software interrupt levels.
+ * Define interrupt levels.
  */
-#define ZSSOFT_PRI	2	/* XXX - Want TTY_PRI */
 #define ZSHARD_PRI	6	/* Wired on the CPU board... */
+#define ZSSOFT_PRI	3	/* Want tty pri (4) but this is OK. */
 
 /*
  * Software state per found chip.  This would be called `zs_softc',
