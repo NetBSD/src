@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.22 2000/02/19 01:55:42 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.23 2000/02/19 15:13:07 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -386,11 +386,11 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		crq->req_header.rqs_entry_count = 1;
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
 		crq->req_dataseg[0].ds_count = xs->datalen;
-		crq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		crq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
 		ISP_SWIZZLE_CONTINUATION(isp, crq);
 	} else {
 		rq->req_dataseg[0].ds_count = xs->datalen;
-		rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		rq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
 		rq->req_seg_count = 1;
 	}
 
