@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.32 2002/02/21 21:52:27 reinoud Exp $
+.\"	$NetBSD: uvm.9,v 1.33 2002/03/29 08:56:31 manu Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -751,6 +751,9 @@ and should match what was used for previous call to
 .Ft void
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags"
 .Pp
+.Ft void
+.Fn uvm_swap_stats "int cmd" "struct swapent *sep" "int sec" "register_t *retval"
+.Pp
 .nr nS 0
 .Pp
 The
@@ -975,6 +978,27 @@ causes any pages which do not already exist to be skipped.
 causes any pages which do already exist to be skipped.
 .Dv UFP_NORDONLY
 causes any pages which are marked PG_READONLY to be skipped.
+.Pp
+.Fn uvm_swap_stats
+implements the 
+.Dv SWAP_STATS 
+and
+.Dv SWAP_OSTATS
+operation of the
+.Xr swapctl 2
+system call.
+.Fa cmd
+is the requested command, 
+.Dv SWAP_STATS
+or
+.Dv SWAP_OSTATS .
+The function will copy no more than 
+.Fa sec
+entries in the array pointed by
+.Fa sep .
+On return, 
+.Fa retval
+holds the actual number of entries copied in the array.
 .Sh NOTES
 .Fn uvm_chgkprot
 is only available if the kernel has been compiled with options
@@ -985,6 +1009,7 @@ All structure and types whose names begin with
 will be renamed to
 .Dq uvm_ .
 .Sh SEE ALSO
+.Xr swapctl 2 ,
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
 .Xr sysctl 3 ,
