@@ -1,5 +1,34 @@
-/* $Id: dtop.c,v 1.1.2.1 1998/10/15 02:48:59 nisimura Exp $ */
-/* $NetBSD: dtop.c,v 1.1.2.1 1998/10/15 02:48:59 nisimura Exp $ */
+/*	$NetBSD: dtop.c,v 1.1.2.2 1998/10/23 13:06:56 nisimura Exp $ */
+
+/*
+ * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "opt_ddb.h"
 
@@ -27,6 +56,9 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsmousevar.h>
 
+#include <dev/dec/lk201.h>
+#include <dev/dec/lk201vsxxxvar.h>
+
 /* XXX XXX XXX */
 #include <pmax/pmax/maxine.h>
 #define	DTOP_IDLE		0
@@ -36,7 +68,7 @@
 #define	DATA(x)	(*(x) >> 8)
 /* XXX XXX XXX */
 
-#include <dev/dec/lk201.h>
+int wscons_dtop;
 
 struct dtop_softc {
 	struct device	sc_dv;
@@ -85,6 +117,10 @@ dtopattach(parent, self, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	struct dtop_softc *sc = (struct dtop_softc*)self;
+#if 0
+	struct wskbddev_attach_args a;
+	struct wsmousedev_attach_args b;
+#endif
 
 	sc->sc_reg = (void *)(ioasic_base + IOASIC_SLOT_10_START);
 	sc->sc_intr = (void *)(ioasic_base + IOASIC_INTR);
@@ -97,73 +133,18 @@ dtopattach(parent, self, aux)
 			d->iada_cookie, TC_IPL_TTY, dtopintr, sc);
 	printf("\n");
 
-#if WSKBDDEV
-	{
-	struct wskbd_dev_attach_args a;
+#if 0
+	a.console = wscons_dtop;
+	a.keymap = &lk201_keymapdata;
+	a.accessops = &lk201_accessops;
+	a.accesscookie = (void *)sc;
 
-	a.layout = KB_US;
-	a.getc = dtop_cngetc;
-	a.pollc = dtop_cnpollc;
-	a.set_leds = /* XXX */ 0;
-	a.ioctl = dtop_ioctl;
-	a.accesscookie = sc;
+	b.accessops = &vsxxx_accessops;
+	b.accesscookie = (void *)sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-	}
+	sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint);
 #endif
-#if NWSMOUSEDEV
-	{
-	struct wskbd_dev_attach_args a;
-
-	a.accessops = &vsxxx_accessops;
-	a.accesscookie = sc;
-
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-	}
-#endif
-}
-
-int	vsxxx_enable __P((void *));
-int	vsxxx_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	vsxxx_disable __P((void *));
-
-const struct wsmouse_accessops vsxxx_accessops = {
-	vsxxx_enable,
-	vsxxx_ioctl,
-	vsxxx_disable,
-};
-
-int
-vsxxx_enable(v)
-	void *v;
-{
-	struct dtop_softc *sc = v;
-	sc->sc_mouse_enabled = 1;
-	return 1;
-}
-
-void
-vsxxx_disable(v)
-	void *v;
-{
-	struct dtop_softc *sc = v;
-	sc->sc_mouse_enabled = 0;
-}
-
-int
-vsxxx_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = 0x12345678;
-		return 0;
-	}
-	return -1;
 }
 
 struct packet {
