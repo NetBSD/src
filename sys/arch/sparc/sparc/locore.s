@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 2001/12/30 16:41:29 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 2002/01/08 05:59:31 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4464,7 +4464,7 @@ idle:
 #endif
 
 idle_enter_no_schedlock:
-	wr	%g1, 0, %psr		! (void) spl0();
+	wr	%g1, 0, %psr		! spl0();
 1:					! spin reading whichqs until nonzero
 	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
@@ -4473,6 +4473,7 @@ idle_enter_no_schedlock:
 #else
 	bnz,a	Lsw_scan
 #endif
+	! NB: annulled delay slot (executed when we leave the idle loop)
 	 wr	%g1, PSR_PIL, %psr	! (void) splhigh();
 
 	! Check uvm.page_idle_zero
