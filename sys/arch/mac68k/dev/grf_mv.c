@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.21 1997/04/14 16:28:35 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.22 1997/05/01 03:34:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -215,16 +215,25 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_M2HRVC:
 	case NUBUS_DRHW_TFB:
 		sc->cli_offset = 0xa0000;
+		sc->cli_value = 0;
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
+		sc->cli_value = 0;
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		break;
+	case NUBUS_DRHW_FIILX:
+	case NUBUS_DRHW_FIISXDSP:
+		sc->cli_offset = 0xF05000;
+		sc->cli_value = 0x80;
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
 		break;
 	case NUBUS_DRHW_SAM768:
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
 		break;
 	case NUBUS_DRHW_CB264:
+	case NUBUS_DRHW_CB364:
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
 		break;
 	case NUBUS_DRHW_SE30:
