@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1996/01/08 13:51:43 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 1998/05/25 20:59:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -40,7 +40,8 @@
 
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 /*
  * Get the "code" values
  */
@@ -84,5 +85,5 @@ struct	sigcontext {
 #define sc_pc sc_eip
 #define sc_ps sc_eflags
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_I386_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1996/03/19 04:22:04 jonathan Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 1998/05/25 20:59:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,8 @@
 
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -64,4 +65,4 @@ struct	sigcontext {
 	int	sc_xxx[8];	/* XXX reserved */ 
 };
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
