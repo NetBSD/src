@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.10 2000/01/16 23:18:56 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.11 2000/01/17 02:20:43 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1378,7 +1378,7 @@ aue_send(sc, m, idx)
 	 * and base the frame size on the bulk transfer length.
 	 */
 	c->aue_buf[0] = (u_int8_t)m->m_pkthdr.len;
-	c->aue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 3) & 0xE0;
+	c->aue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
 	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_TX],
