@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.16 2002/08/12 20:21:25 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.17 2002/08/12 20:34:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -236,15 +236,12 @@ ASENTRY_NP(idle)
 	/* Enable interrupts */
 	IRQenable
 
-	/* XXX - r1 needs to be preserved for cpu_switch */
-	mov	r7, r1
 	ldr	r3, Lcpufuncs
 	mov	r0, #0
 	add	lr, pc, #Lidle_slept - . - 8
 	ldr	pc, [r3, #CF_SLEEP]
 
 Lidle_slept:
-	mov	r1, r7
 
 	/* Disable interrupts while we check for an active queue */
 	IRQdisable
@@ -308,12 +305,9 @@ ENTRY(cpu_switch)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	/* put old proc back in r1 */
-	mov	r1, r5
-
 	/* First phase : find a new lwp */
 
-	/* rem: r1 = old lwp */
+	/* rem: r5 = old lwp */
 
 Lswitch_search:
 	IRQdisable
@@ -326,6 +320,9 @@ Lswitch_search:
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
 Lidle_ret:
+
+	/* put old proc back in r1 */
+	mov	r1, r5
 
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
@@ -778,7 +775,7 @@ Lse_context_switched:
 	ldr	r1, Lcurlwp
 	str	r0, [r1]
 
-	mov	r1, #0x00000000		/* r1 = old lwp = NULL */
+	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
 	b	Lswitch_search
 
 /*
@@ -857,7 +854,7 @@ Lsle_context_switched:
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
-	mov	r1, #0x00000000		/* r1 = old lwp = NULL */
+	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
 	b	Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
