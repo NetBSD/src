@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.12 2002/05/02 15:42:18 wiz Exp $
+# $NetBSD: ad.sh3,v 1.13 2002/05/05 01:24:24 thorpej Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
@@ -47,4 +47,3 @@
 ./usr/include/sh3/va-sh.h	comp-c-include
 ./usr/include/sh3/varargs.h	comp-c-include
 ./usr/include/sh3/vmparam.h	comp-c-include
-./usr/lib/libbfd.a		comp-c-lib
