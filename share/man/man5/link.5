@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.10 1999/03/24 06:14:18 mycroft Exp $
+.\"	$NetBSD: link.5,v 1.11 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ complete the link-editing process and indirection tables to facilitate
 .Em Position Independent Code
 (PIC) to improve sharing of code pages among different processes.
 .Pp
-The collection of data structures described here will be refered to as the
+The collection of data structures described here will be referred to as the
 .Em Run-time Relocation Section
 (RRS) and is embedded in the standard text and data segments of
 the dynamically linked program or shared object image as the existing
@@ -79,7 +79,7 @@ through the .size assembler directive.
 .Pp
 PIC code differs from conventional code in that it accesses data
 variables through an indirection table, the Global Offset Table,
-by convention accessable by the reserved name
+by convention accessible by the reserved name
 .Em _GLOBAL_OFFSET_TABLE_ .
 The exact mechanism used for this is machine dependent, usually a machine
 register is reserved for the purpose.
@@ -138,11 +138,11 @@ struct	_dynamic {
 This field provides for different versions of the dynamic linking
 implementation.
 The current version numbers understood by ld and ld.so are
-.Em LD_VERSION_SUN (3),
+.Em LD_VERSION_SUN (3) ,
 which is used by the
 .Tn "SunOS 4.x"
 releases, and
-.Em LD_VERSION_BSD (8),
+.Em LD_VERSION_BSD (8) ,
 which is currently in use by
 .Nx .
 .It Fa d_un
@@ -236,7 +236,7 @@ The size of the Procedure Linkage Table.
 .Pp
 A
 .Fa sod
-structure descibes a shared object that is needed
+structure describes a shared object that is needed
 to complete the link edit process of the object containing it.
 A list of such objects
 .Po
@@ -278,7 +278,7 @@ should point at a full path name for the desired shared object.
 .It Fa sod_major
 Specifies the major version number of the shared object to load.
 .It Fa sod_minor
-Specifies the prefered minor version number of the shared object to load.
+Specifies the preferred minor version number of the shared object to load.
 .El
 .Pp
 The run-time link-editor maintains a list of structures called
@@ -455,7 +455,7 @@ Set by the run-time linker whenever it adds symbols by loading shared objects.
 The address were a breakpoint will be set by the run-time linker to
 divert control to the debugger.
 This address is determined by the start-up module,
-.Em crt0.o,
+.Em crt0.o ,
 to be some convenient place before the call to _main.
 .It Fa dd_bpt_shadow
 Contains the original instruction that was at
@@ -543,7 +543,7 @@ The
 and
 .Fa hints_bucket
 structures define the layout of the library hints, normally found in
-.Dq /var/run/ld.so.hints,
+.Dq /var/run/ld.so.hints ,
 which is used by ld.so to quickly locate the shared object images in the
 filesystem.
 The organization of the hints file is not unlike that of an
