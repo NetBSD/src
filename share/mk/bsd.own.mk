@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.274 2002/03/18 18:42:52 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.275 2002/03/19 11:03:05 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -75,7 +75,8 @@ HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//}-${_HOST_ARCH}
 .MAKEOVERRIDES+= HOST_OSTYPE
 .endif
 
-.if ${USETOOLS} == "yes"
+.if ${USETOOLS} == "yes"						# {
+
 # Provide a default for TOOLDIR.
 .if !defined(TOOLDIR)
 _TOOLOBJ!=	cd ${_SRC_TOP_:U${BSDSRCDIR}}/tools && ${PRINTOBJDIR}
@@ -146,6 +147,7 @@ UUDECODE=	${TOOLDIR}/bin/nbuudecode
 YACC=		${TOOLDIR}/bin/nbyacc
 ZIC=		${TOOLDIR}/bin/nbzic
 
+.endif	# USETOOLS == yes						# }
 
 # Targets to check if DESTDIR or RELEASEDIR is provided
 #
@@ -170,11 +172,13 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 .endif
 
 
+.if ${USETOOLS} == "yes"
 # Make sure DESTDIR is set, so that builds with these tools always
 # get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
 # <empty string>, meaning start from /, the root directory.
 DESTDIR?=
 .endif
+
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
