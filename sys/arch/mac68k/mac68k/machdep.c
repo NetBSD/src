@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1995/04/23 00:37:23 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1995/04/30 17:01:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2188,7 +2188,8 @@ static	int			firstpass = 1;
 	/*
 	 * Set up current ROM Glue vectors
 	 */
-	mrg_setvectors(cpui->rom_vectors);
+	if ((mac68k_machine.serial_console & 0x01) == 0)
+		mrg_setvectors(cpui->rom_vectors);
 
 	/*
 	 * Set up any machine specific stuff that we have to before
