@@ -1,4 +1,4 @@
-i*	$NetBSD: zs.c,v 1.2 1996/03/17 01:35:05 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 1996/03/19 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Mackerras.
