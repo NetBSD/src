@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.41 1998/03/24 09:47:30 mycroft Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.42 1998/07/02 23:26:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -519,16 +519,50 @@ linux_sys_mremap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifdef notyet
 	struct linux_sys_mremap_args /* {
 		syscallarg(void *) old_address;
 		syscallarg(size_t) old_size;
 		syscallarg(size_t) new_size;
 		syscallarg(u_long) flags;
 	} */ *uap = v;
-#endif
+	struct sys_munmap_args mua;
+	size_t old_size, new_size;
+	int error;
 
-	return ENOMEM;
+	old_size = round_page(SCARG(uap, old_size));
+	new_size = round_page(SCARG(uap, new_size));
+
+	/*
+	 * Growing mapped region.
+	 */
+	if (new_size > old_size) {
+		/*
+		 * XXX Implement me.  What we probably want to do is
+		 * XXX dig out the guts of the old mapping, mmap that
+		 * XXX object again with the new size, then munmap
+		 * XXX the old mapping.
+		 */
+		*retval = 0;
+		return (ENOMEM);
+	}
+
+	/*
+	 * Shrinking mapped region.
+	 */
+	if (new_size < old_size) {
+		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) +
+		    SCARG(uap, new_size);
+		SCARG(&mua, len) = old_size - new_size;
+		error = sys_munmap(p, &mua, retval);
+		*retval = error ? 0 : (register_t)SCARG(uap, old_address);
+		return (error);
+	}
+
+	/*
+	 * No change.
+	 */
+	*retval = (register_t)SCARG(uap, old_address);
+	return (0);
 }
 
 int
