@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.59 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.60 1999/11/16 03:06:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1640,7 +1640,8 @@ ufs_print(v)
 	printf(" flags 0x%x, effnlink %d, nlink %d\n",
 	    ip->i_flag, ip->i_ffs_effnlink, ip->i_ffs_nlink);
 	printf("\tmode 0%o, owner %d, group %d, size %qd",
-	    ip->i_ffs_mode, ip->i_ffs_uid, ip->i_ffs_gid, ip->i_ffs_size);
+	    ip->i_ffs_mode, ip->i_ffs_uid, ip->i_ffs_gid,
+	    (long long)ip->i_ffs_size);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 	lockmgr_printinfo(&vp->v_lock);
