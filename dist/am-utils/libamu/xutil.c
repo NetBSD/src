@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.9 2003/07/14 17:20:16 itojun Exp $	*/
+/*	$NetBSD: xutil.c,v 1.10 2003/07/15 09:01:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -289,7 +289,7 @@ expand_error(const char *f, char *e, int maxlen)
 
   for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
-      strcpy(q, strerror(error));
+      strlcpy(q, strerror(error), maxlen - (q - e));
       len += strlen(q) - 1;
       q += strlen(q) - 1;
       p++;
@@ -323,7 +323,7 @@ show_time_host_and_name(int lvl)
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
     t = ts.tv_sec;
     if (amuDebug(D_HRTIME))
-      sprintf(nsecs, ".%09ld", ts.tv_nsec);
+      snprintf(nsecs, sizeof(nsecs), ".%09ld", ts.tv_nsec);
   }
   else
 #endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
@@ -524,7 +524,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
      * cycles like crazy.
      */
     show_time_host_and_name(last_lvl);
-    sprintf(last_msg, "last message repeated %d times\n", last_count);
+    snprintf(last_msg, sizeof(last_msg), "last message repeated %d times\n", last_count);
     fwrite(last_msg, strlen(last_msg), 1, logfp);
     fflush(logfp);
     last_count = 0;		/* start from scratch */
@@ -535,7 +535,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       last_count++;
     } else {		/* last msg repeated+skipped, new one differs */
       show_time_host_and_name(last_lvl);
-      sprintf(last_msg, "last message repeated %d times\n", last_count);
+      snprintf(last_msg, sizeof(last_msg), "last message repeated %d times\n", last_count);
       fwrite(last_msg, strlen(last_msg), 1, logfp);
       strlcpy(last_msg, msg, sizeof(last_msg));
       last_count = 1;

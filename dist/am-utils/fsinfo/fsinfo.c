@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.8 2003/07/14 17:20:16 itojun Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.9 2003/07/15 09:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -158,7 +158,7 @@ fsi_get_args(int c, char *v[])
     case 'I':
     case 'D':
     case 'U':
-      sprintf(iptr, "-%c%s ", ch, optarg);
+      snprintf(iptr, sizeof(idvbuf) - (iptr - idvbuf), "-%c%s ", ch, optarg);
       iptr += strlen(iptr);
       break;
 
