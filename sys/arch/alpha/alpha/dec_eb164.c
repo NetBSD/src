@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.32 2000/02/05 22:14:42 veego Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.32 2000/02/05 22:14:42 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,8 @@ dec_eb164_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 		/*
 		 * Add an extra check to boot from ide drives:
 		 * Newer SRM firmware use the protocol identifier IDE,
