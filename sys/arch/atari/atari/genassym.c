@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1995/05/14 15:20:24 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5 1995/05/28 19:14:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,6 +107,8 @@ main()
 	printf("#define\tT_FPERR %d\n", T_FPERR);
 	printf("#define\tT_ASTFLT %d\n", T_ASTFLT);
 	printf("#define\tT_TRAP15 %d\n", T_TRAP15);
+	printf("#define\tT_FPEMULI %d\n", T_FPEMULI);
+	printf("#define\tT_FPEMULD %d\n", T_FPEMULD);
 	printf("#define\tPSL_S %d\n", PSL_S);
 	printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
 	printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
