@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.3 1998/11/09 03:58:06 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.3 1998/11/09 03:58:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,16 @@ struct bt463reg {
 	u_int8_t	bt_cmap;
 };
 
-/* it's really painful to manipulate 'twined' registers... */
+/*
+ * N.B. a paif of Bt431s are located adjascently.
+ * 	struct bt431twin {
+ *		struct {
+ *			u_int8_t u0;	for sprite image
+ *			u_int8_t u1;	for sprite mask
+ *			unsigned :16;
+ *		} bt_lo;
+ *		...
+ */
 struct bt431reg {
 	u_int16_t	bt_lo;
 	unsigned : 16;
@@ -101,16 +110,6 @@ struct bt463reg {
 	u_int32_t	bt_cmap;
 };
 
-/*
- * N.B. a paif of Bt431s are located adjascently.
- * 	struct bt431twin {
- *		struct {
- *			u_int8_t u0;	for sprite image
- *			u_int8_t u1;	for sprite mask
- *			unsigned :16;
- *		} bt_lo;
- *		...
- */
 struct bt431reg {
 	u_int32_t	bt_lo;
 	u_int32_t	bt_hi;
@@ -761,7 +760,7 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count;
+	int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -777,7 +776,7 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
+		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
 		if (!useracc(p->image, count, B_READ) ||
 		    !useracc(p->mask, count, B_READ))
 			return (EFAULT);
@@ -796,7 +795,6 @@ set_cursor(sc, p)
 		sc->sc_changed |= DATA_ENB_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		count = p->cmap.count;
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
@@ -805,8 +803,8 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, cc->cc_image, count);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
+		copyin(p->image, cc->cc_image, icount);
+		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
 		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
 

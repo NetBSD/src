@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,16 @@ struct bt455reg {
 	u_int8_t	bt_ovly;
 };
 
-/* it's really painful to manipulate 'twined' registers... */
+/*
+ * N.B. a paif of Bt431s are located adjascently.
+ * 	struct bt431twin {
+ *		struct {
+ *			u_int8_t u0;	for sprite image
+ *			u_int8_t u1;	for sprite mask
+ *			unsigned :16;
+ *		} bt_lo;
+ *		...
+ */
 struct bt431reg {
 	u_int16_t	bt_lo;
 	unsigned : 16;
@@ -104,16 +113,6 @@ struct bt455reg {
 	u_int32_t	bt_ovly;
 };
 
-/*
- * N.B. a paif of Bt431s are located adjascently.
- * 	struct bt431twin {
- *		struct {
- *			u_int8_t u0;	for sprite image
- *			u_int8_t u1;	for sprite mask
- *			unsigned :16;
- *		} bt_lo;
- *		...
- */
 struct bt431reg {
 	u_int32_t	bt_lo;
 	u_int32_t	bt_hi;
@@ -567,23 +566,6 @@ mfbintr(arg)
 		curs->bt_ctl = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
-#if 0
-		u_int8_t *bp1, *bp2;
-		u_int16_t twin;
-		int index;
-
-		bp1 = (u_int8_t *)&sc->sc_cursor.cc_image;
-		bp2 = (u_int8_t *)(&sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
-
-		BT431_SELECT(curs, BT431_REG_CRAM_BASE+0);
-		for (index = 0;
-		    index < sizeof(sc->sc_cursor.cc_image)/sizeof(u_int16_t);
-		    index++) {	
-			twin = *bp1++ | (*bp2++ << 8);
-			curs->bt_ram = twin;
-			tc_wmb();
-		}
-#else
 		u_int8_t *ip, *mp, img, msk;
 		int bcnt;
 
@@ -614,7 +596,6 @@ mfbintr(arg)
 			tc_wmb();
 			bcnt += 2;
 		}
-#endif
 	}
 	return (1);
 }
