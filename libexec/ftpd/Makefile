@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1998/12/28 04:54:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 1999/02/18 21:22:51 scottr Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftpd
@@ -16,18 +16,6 @@ MLINKS+=ftpd.8 ftpd.conf.5
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
-.endif
-
-.ifdef KERBEROS5
-SRCS+=	k5login.c
-CPPFLAGS+=-DKERBEROS5
-DPADD+=	${LIBKRB5} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lcrypto -lcom_err
-.elifdef KERBEROS
-SRCS+=	klogin.c
-CPPFLAGS+=-DKERBEROS
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkrb -ldes
 .endif
 
 .include <bsd.prog.mk>
