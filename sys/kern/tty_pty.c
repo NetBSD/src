@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.78 2004/05/27 03:56:49 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.79 2004/06/05 11:23:15 lha Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.78 2004/05/27 03:56:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.79 2004/06/05 11:23:15 lha Exp $");
 
 #include "opt_compat_sunos.h"
 #include "pty.h"
@@ -1342,7 +1342,7 @@ retry:
 		 */
 		if (error == EIO && !pty_isfree(md))
 			goto retry;
-		DPRINTF(("check_pty %d\n", error));
+		DPRINTF(("ptm_vn_open %d\n", error));
 		goto bad;
 	}
 	fp->f_flag = FREAD|FWRITE;
@@ -1512,7 +1512,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case TIOCPTMGET:
 		if ((error = pty_alloc_master(p, &cfd, &newdev)) != 0)
-			goto bad;
+			return error;
 
 		if ((error = pty_grant_slave(p, newdev)) != 0)
 			goto bad;
