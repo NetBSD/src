@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.49.4.2 2000/08/30 06:23:08 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.49.4.3 2001/02/04 19:17:51 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -92,11 +92,6 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-/*
- * NOTE: MINCLSIZE is changed to MHLEN + 1, to avoid allocating chained
- * non-external mbufs in the driver.  This has no impact on performance
- * seen from the packet statistics, and avoid header pullups in network code.
- */
 #define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
@@ -395,10 +390,18 @@ do {									\
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
+ *
+ * we do need to check non-first mbuf for m_aux, since some of existing
+ * code does not call M_PREPEND properly.
+ * (example: call to bpf_mtap from drivers)
  */
 #define	MFREE(m, n) \
 	MBUFLOCK( \
 		mbstat.m_mtypes[(m)->m_type]--; \
+		if (((m)->m_flags & M_PKTHDR) != 0 && (m)->m_pkthdr.aux) { \
+			m_freem((m)->m_pkthdr.aux); \
+			(m)->m_pkthdr.aux = NULL; \
+		} \
 		if ((m)->m_flags & M_EXT) { \
 			_MEXTREMOVE((m)); \
 		} \
