@@ -1,4 +1,4 @@
-/*	$NetBSD: icside_io.c,v 1.2 1997/03/15 18:09:34 is Exp $	*/
+/*	$NetBSD: icside_io.c,v 1.3 1997/10/14 22:59:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,6 +45,7 @@
  */
 
 bs_protos(icside);
+bs_protos(bs_notimpl);
 
 /* Declare the icside bus space tag */
 
@@ -68,55 +69,55 @@ struct bus_space icside_bs_tag = {
 	icside_r_1,
 	icside_r_2,
 	icside_r_4,
-	icside_r_8,
+	bs_notimpl_r_8,
 
 	/* read multiple */
-	icside_rm_1,
+	bs_notimpl_rm_1,
 	icside_rm_2,
-	icside_rm_4,
-	icside_rm_8,
+	bs_notimpl_rm_4,
+	bs_notimpl_rm_8,
 
 	/* read region */
-	icside_rr_1,
-	icside_rr_2,
-	icside_rr_4,
-	icside_rr_8,
+	bs_notimpl_rr_1,
+	bs_notimpl_rr_2,
+	bs_notimpl_rr_4,
+	bs_notimpl_rr_8,
 
 	/* write (single) */
 	icside_w_1,
 	icside_w_2,
 	icside_w_4,
-	icside_w_8,
+	bs_notimpl_w_8,
 
 	/* write multiple */
-	icside_wm_1,
+	bs_notimpl_wm_1,
 	icside_wm_2,
-	icside_wm_4,
-	icside_wm_8,
+	bs_notimpl_wm_4,
+	bs_notimpl_wm_8,
 
 	/* write region */
-	icside_wr_1,
-	icside_wr_2,
-	icside_wr_4,
-	icside_wr_8,
+	bs_notimpl_wr_1,
+	bs_notimpl_wr_2,
+	bs_notimpl_wr_4,
+	bs_notimpl_wr_8,
 
 	/* set multiple */
-	icside_sm_1,
-	icside_sm_2,
-	icside_sm_4,
-	icside_sm_8,
+	bs_notimpl_sm_1,
+	bs_notimpl_sm_2,
+	bs_notimpl_sm_4,
+	bs_notimpl_sm_8,
 
 	/* set region */
-	icside_sr_1,
-	icside_sr_2,
-	icside_sr_4,
-	icside_sr_8,
+	bs_notimpl_sr_1,
+	bs_notimpl_sr_2,
+	bs_notimpl_sr_4,
+	bs_notimpl_sr_8,
 
 	/* copy */
-	icside_c_1,
-	icside_c_2,
-	icside_c_4,
-	icside_c_8,
+	bs_notimpl_c_1,
+	bs_notimpl_c_2,
+	bs_notimpl_c_4,
+	bs_notimpl_c_8,
 };
 
 /* bus space functions */
