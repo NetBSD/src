@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.13 2000/04/19 08:44:33 haya Exp $
+#	$NetBSD: DR-EVIL,v 1.14 2000/04/23 17:51:21 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -6,6 +6,8 @@
 include "arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
+
+#options IFAREF_DEBUG
 
 # Pull in config fragments for kernel crypto
 prefix ../crypto-us/sys
@@ -18,10 +20,13 @@ prefix
 #options 	I586_CPU
 options 	I686_CPU
 
+makeoptions	COPTS="-O2 -mcpu=pentiumpro"
+
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
+options 	MTRR		# MTRR support
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 options 	DUMMY_NOPS
 
@@ -69,7 +74,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -89,7 +94,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options 	COMPAT_AOUT	# binary compatibility w/ NetBSD a.out
+#options 	COMPAT_AOUT	# binary compatibility w/ NetBSD a.out
 
 # Executable format options
 
@@ -132,18 +137,20 @@ options 	MROUTING	# IP multicast routing
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
-options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+
+options 	NMBCLUSTERS=4096 # Max. number of mbuf clusters
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
@@ -170,6 +177,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -194,8 +202,10 @@ lpt*	at pnpbios? index ?
 #sb*	at pnpbios? index ?
 wss*	at pnpbios? index ?
 #ym*	at pnpbios? index ?
+pckbc*	at pnpbios? index ?
+fdc*	at pnpbios? index ?
 
-#options 	PNPBIOSVERBOSE
+options 	PNPBIOSVERBOSE
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -226,18 +236,18 @@ isa*	at mainbus?
 isa*	at pcib?
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
+#pcmcia*	at pcic? controller ? socket ?
 #pcmcia*	at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+#pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 #tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
 
-options 	PCIC_ISA_INTR_ALLOC_MASK="0x8200"
+#options 	PCIC_ISA_INTR_ALLOC_MASK="0x8200"
 
 # PCI PCMCIA controllers
-pcic*	at pci? dev? function ?
+#pcic*	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
 #isapnp0	at isa?
@@ -272,7 +282,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	NORWEGIAN_KBD
 
 # wscons
-pckbc0	at isa?			# pc keyboard controller
+pckbc*	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
@@ -283,11 +293,11 @@ vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
-wskbd*	at pckbd? console ? mux 1
+wskbd*		at pckbd? console ? mux 1
 wsmouse*	at pms? mux 0
 #wsmouse*	at pmsi? mux 0
 
-pcppi0	at isa?
+pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # Serial Devices
@@ -392,8 +402,8 @@ scsibus* at aic?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
+#ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
@@ -445,11 +455,11 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
+fdc*	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc*	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?			# the drives themselves
 # some machines need you to do this instead of fd*
-#fd0	at fdc0 drive 0
+#fd0	at fdc* drive 0
 
 # ISA CD-ROM devices
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
@@ -489,10 +499,11 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+#mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 ray*	at pcmcia? function ?		# Raytheon RayLink 802.11
+xe*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megaherz combo cards
 com*	at mhzc?
@@ -691,9 +702,9 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	16	# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
