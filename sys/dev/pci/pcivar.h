@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.60 2004/04/23 21:13:07 itojun Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.61 2004/05/08 23:41:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -228,8 +228,7 @@ int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
 #define PCI_PWR_D1	1
 #define PCI_PWR_D2	2
 #define PCI_PWR_D3	3
-int	pci_set_powerstate __P((pci_chipset_tag_t, pcitag_t, int));
-int	pci_get_powerstate __P((pci_chipset_tag_t, pcitag_t));
+int	pci_powerstate __P((pci_chipset_tag_t, pcitag_t, const int *, int *));
 
 /*
  * Vital Product Data (PCI 2.2)
