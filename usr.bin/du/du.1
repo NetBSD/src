@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.17 2003/08/07 11:13:34 agc Exp $
+.\"	$NetBSD: du.1,v 1.17.2.1 2004/05/17 09:17:37 tron Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd April 18, 2003
+.Dd May 17, 2004
 .Dt DU 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Nm
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl s
-.Op Fl cghkmrx
+.Op Fl cghkmnrx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -91,6 +91,8 @@ If the
 .Fl m
 flag is specified, the number displayed is the number of megabyte
 (1024*1024 bytes) blocks.
+.It Fl n
+Ignore files and directories with user "nodump" flag (UF_NODUMP) set.
 .It Fl r
 Generate warning messages about directories that cannot be read.
 This is the default behaviour.
@@ -141,6 +143,7 @@ size block.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,
+.Xr chflags 2 ,
 .Xr fts 3 ,
 .Xr getbsize 3 ,
 .Xr symlink 7 ,
