@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.15 2000/03/23 14:50:36 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.16 2000/04/14 06:03:40 simonb Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,8 +93,6 @@ main(argc,argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
 	int num_options;
 	unsigned long action;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.13 1999/07/17 19:11:30 hubertf Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.14 2000/04/14 05:58:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.13 1999/07/17 19:11:30 hubertf Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.14 2000/04/14 05:58:01 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,8 +118,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, cnt;
 
 	/* Revoke setgid privileges */
