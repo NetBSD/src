@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.117 2000/06/19 19:00:14 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.117.2.1 2000/06/29 23:35:09 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -116,7 +116,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib -Wl,-rpath-link,${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${LIBCRTEND}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -Wl,-rpath-link,${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib -lgcc -lc -lgcc ${LIBCRTEND}
 
 .else
 
