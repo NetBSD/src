@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.80 1996/04/29 20:03:00 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.81 1996/05/05 19:50:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -122,7 +122,6 @@ void	comdiag		__P((void *));
 int	comspeed	__P((long));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
-int	comintr		__P((void *));
 void	compoll		__P((void *));
 
 /* XXX: These belong elsewhere */
