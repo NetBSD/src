@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.11 1999/03/04 00:35:06 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.12 1999/03/04 01:45:22 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.11 1999/03/04 00:35:06 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.12 1999/03/04 01:45:22 hubertf Exp $");
 #endif
 #endif
 
@@ -236,10 +236,6 @@ show_depends(char *title, package_t *plist)
 	plist_t	*p;
 	int nodepends;
 
-	if (!Quiet) {
-		printf("%s%s", InfoPrefix, title);
-	}
-
 	nodepends = 1;
 	for (p = plist->head; p && nodepends; p = p->next) {
 		switch(p->type) {
@@ -253,6 +249,10 @@ show_depends(char *title, package_t *plist)
 	if (nodepends)
 	  return;
 	
+	if (!Quiet) {
+		printf("%s%s", InfoPrefix, title);
+	}
+
 	for (p = plist->head; p ; p = p->next) {
 		switch(p->type) {
 		case PLIST_PKGDEP:
