@@ -1,4 +1,4 @@
-.\" $NetBSD: sigtimedwait.2,v 1.1 2003/02/15 21:11:49 jdolecek Exp $
+.\" $NetBSD: sigtimedwait.2,v 1.2 2003/03/03 07:00:57 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,49 +56,49 @@
 .Fn sigwaitinfo
 and
 .Fn sigwait
-return first pending signal from the set specified by
+return the first pending signal from the set specified by
 .Fa set .
 Should multiple signals from
 .Fa set
-be pending, the lowest numbered one is returned. The selection
-order between realtime and non-realtime signals is unspecified.
+be pending, the lowest numbered one is returned.
+The selection order between realtime and non-realtime signals is unspecified.
 If there is no signal from
 .Ar set
-pending at the time of the call, calling thread
-is suspended until the signal would be generated.
+pending at the time of the call, the calling thread
+is suspended until one of the specified signals is generated.
 .Pp
 .Fn sigtimedwait
 is exactly equal to
 .Fn sigwaitinfo ,
 except
 .Fa timeout
-specifies the maximum time interval it would suspend for.
+specifies the maximum time interval for which the calling thread will
+be suspended.
 If
 .Fa timeout
 is zero (tv_sec == tv_nsec == 0),
 .Fn sigtimedwait
-only checks current pending signals and returns immediatelly.
+only checks the currently pending signals and returns immediately.
 If
-.Va NULL
+.Dv NULL
 is used for
 .Fa timeout ,
 .Fn sigtimedwait
-is exactly equal to
+behaves exactly like
 .Fn sigwaitinfo
 in all regards.
 .Pp
-If there are several threads waiting for given signal, exactly one of them
-returns from the signal wait when the signal would be generated.
+If several threads are waiting for a given signal, exactly one of them
+returns from the signal wait when the signal is generated.
 .Pp
-Behaviour of these functions is unspecified if any of the signals
-in
+Behaviour of these functions is unspecified if any of the signals in
 .Fa set
 are unblocked at the time these functions are called.
 .Sh RETURN VALUES
 Upon successful completion
 .Fa info
-is updated with signal information, and function returns 0.
-Otherwise, a \-1 is returned and the global variable
+is updated with signal information, and the function returns 0.
+Otherwise, \-1 is returned and the global variable
 .Va errno
 indicates the error.
 .Sh ERRORS
@@ -115,7 +115,7 @@ pointer will remain unchanged if:
 .It Bq Er EAGAIN
 No signal specified in
 .Fa set
-was generated in in specified
+was generated in the specified
 .Fa timeout .
 .El
 .Pp
@@ -138,20 +138,22 @@ is pending and it would be necessary to wait.
 .Sh STANDARDS
 The functions
 .Fn sigtimedwait ,
-.Fn sigwaitinfo
+.Fn sigwaitinfo ,
 and
 .Fn sigwait
 conform to
 .St -p1003.1-2001 .
 .Sh HISTORY
+The
 .Fn sigtimedwait ,
-.Fn sigwaitinfo
+.Fn sigwaitinfo ,
 and
 .Fn sigwait
 functions appeared in
 .Nx 2.0 .
 .Sh AUTHORS
 The initial
-.Nx 
-implementation of signal wait functions was written by
-.An Jaromir Dolecek Aq jdolecek@NetBSD.org .
+.Nx
+implementation of the signal wait functions was written by
+.An Jaromir Dolecek
+.Aq jdolecek@NetBSD.org .
