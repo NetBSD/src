@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1996/03/11 13:45:31 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1996/05/28 23:34:35 christos Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
-CFLAGS+= -I${.CURDIR} -DPOSIX -DSYSVINCLUDE
+CFLAGS+= -I${.CURDIR} -Wall -Wno-unused
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c var.c util.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
