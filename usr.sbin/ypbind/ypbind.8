@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.4 1996/10/01 01:37:58 thorpej Exp $
+.\"	$NetBSD: ypbind.8,v 1.5 1996/10/02 05:55:05 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ is started without the
 option,
 .Nm
 steps through the list of YP servers specified in
-.Pa /var/yp/domainname/ypservers
+.Pa /var/yp/binding/domainname.ypservers
 and contacts each in turn attempting to bind to that server. 
 It is strongly recommended that these hosts are in the local
 hosts file, and that hosts are looked up in local files before
@@ -78,7 +78,7 @@ If
 is started with the
 .Fl broadcast
 option, or if
-.Pa /var/yp/domainname/ypservers
+.Pa /var/yp/binding/domainname.ypservers
 does not exist,
 .Nm
 broadcasts to find a process willing to serve maps for the
@@ -115,9 +115,9 @@ and
 .Fl broadcast
 options are inherently insecure and should be avoided.
 .Sh FILES
-.Pa /var/yp/bindings/domainname.version
+.Pa /var/yp/binding/domainname.version
 - binding file for domainname
-.Pa /var/yp/domainname/ypservers
+.Pa /var/yp/binding/domainname.ypservers
 - explicit servers to bind to.
 .Sh SEE ALSO
 .Xr domainname 1 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.28 1996/10/01 01:38:00 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.29 1996/10/02 05:55:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.28 1996/10/01 01:38:00 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.29 1996/10/02 05:55:06 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ static char rcsid[] = "$NetBSD: ypbind.c,v 1.28 1996/10/01 01:38:00 thorpej Exp 
 
 #define BUFSIZE		1400
 
-#define YPSERVERSFILE	"ypservers"
+#define YPSERVERSSUFF	".ypservers"
 #define BINDINGDIR	__CONCAT(_PATH_VAR_YP, "binding")
 
 struct _dom_binding {
@@ -455,8 +455,8 @@ main(argc, argv)
 	 * Note that we can still override direct mode by passing
 	 * the -broadcast flag.
 	 */
-	snprintf(pathname, sizeof(pathname), "%s%s/%s", _PATH_VAR_YP,
-	    domainname, YPSERVERSFILE);
+	snprintf(pathname, sizeof(pathname), "%s/%s%s", BINDINGDIR,
+	    domainname, YPSERVERSSUFF);
 	if (stat(pathname, &st) < 0) {
 #ifdef DEBUG
 		if (debug)
@@ -862,7 +862,7 @@ direct(buf, outlen)
 		rewind(df);
 	else {
 		snprintf(ypservers_path, sizeof(ypservers_path),
-		    "%s%s/%s", _PATH_VAR_YP, domainname, YPSERVERSFILE);
+		    "%s/%s%s", BINDINGDIR, domainname, YPSERVERSSUFF);
 		df = fopen(ypservers_path, "r");
 		if (df == NULL)
 			err(1, ypservers_path);
