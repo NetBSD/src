@@ -1,5 +1,5 @@
 PROG=		vttest
-CFLAGS+=	-traditional -DUSEMYSTTY
+CFLAGS+=	-DUSEMYSTTY
 SRCS=		main.c esc.c
 
 NOMAN=	yes
