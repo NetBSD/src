@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1 2002/01/27 05:14:34 uch Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1 2002/01/29 18:44:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -33,18 +33,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/bootinfo.h>
+
+struct kloader_ops;
+struct kloader_page_tag;
+struct kloader_bootinfo;
+
+typedef void kloader_bootfunc_t(struct kloader_bootinfo *,
+    struct kloader_page_tag *);
+
+struct kloader_ops {
+	void (*jump)(kloader_bootfunc_t *, vaddr_t, struct kloader_bootinfo *,
+	    struct kloader_page_tag *);
+	kloader_bootfunc_t *boot;
+};
+
+struct kloader_page_tag {
+	u_int32_t next;
+	u_int32_t src;
+	u_int32_t dst;
+	u_int32_t sz;
+} __attribute__((__packed__, __aligned__(4)));
+
 #define KLOADER_KERNELARGS_MAX		256
 
 struct kloader_bootinfo {
-	char _argbuf[KLOADER_KERNELARGS_MAX];
-
 	vaddr_t entry;
-	struct bootinfo bootinfo;		
 	int argc;
 	char **argv;
-} __attribute__((__aligned__(4)));
+	struct bootinfo bootinfo;		
 
-void kloader_reboot_setup(const char *);
+	char _argbuf[KLOADER_KERNELARGS_MAX];
+} __attribute__((__packed__, __aligned__(4)));
+
+void __kloader_reboot_setup(struct kloader_ops *, const char *);
 void kloader_reboot(void);
 void kloader_bootinfo_set(struct kloader_bootinfo *, int, char *[],
-    struct bootinfo *, boolean_t);
+    struct bootinfo *, int);
