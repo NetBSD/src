@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.15 1995/04/10 00:06:54 mycroft Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.16 1995/04/13 06:26:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,16 +40,16 @@
  * this is only used by the ethers(3) functions.
  */
 struct ether_addr {
-	u_char ether_addr_octet[6];
+	u_int8_t ether_addr_octet[6];
 };
 
 /*
  * Structure of a 10Mb/s Ethernet header.
  */
 struct	ether_header {
-	u_char	ether_dhost[6];
-	u_char	ether_shost[6];
-	u_short	ether_type;
+	u_int8_t  ether_dhost[6];
+	u_int8_t  ether_shost[6];
+	u_int16_t ether_type;
 };
 
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
@@ -76,14 +76,14 @@ struct	ether_header {
  */
 #define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
 	/* struct in_addr *ipaddr; */ \
-	/* u_char enaddr[6];	   */ \
+	/* u_int8_t enaddr[6];	   */ \
 { \
 	(enaddr)[0] = 0x01; \
 	(enaddr)[1] = 0x00; \
 	(enaddr)[2] = 0x5e; \
-	(enaddr)[3] = ((u_char *)ipaddr)[1] & 0x7f; \
-	(enaddr)[4] = ((u_char *)ipaddr)[2]; \
-	(enaddr)[5] = ((u_char *)ipaddr)[3]; \
+	(enaddr)[3] = ((u_int8_t *)ipaddr)[1] & 0x7f; \
+	(enaddr)[4] = ((u_int8_t *)ipaddr)[2]; \
+	(enaddr)[5] = ((u_int8_t *)ipaddr)[3]; \
 }
 #endif
 
@@ -95,11 +95,11 @@ struct	ether_header {
  * RFC 826.
  */
 struct	ether_arp {
-	struct	arphdr ea_hdr;	/* fixed-size header */
-	u_char	arp_sha[6];	/* sender hardware address */
-	u_char	arp_spa[4];	/* sender protocol address */
-	u_char	arp_tha[6];	/* target hardware address */
-	u_char	arp_tpa[4];	/* target protocol address */
+	struct	 arphdr ea_hdr;	/* fixed-size header */
+	u_int8_t arp_sha[6];	/* sender hardware address */
+	u_int8_t arp_spa[4];	/* sender protocol address */
+	u_int8_t arp_tha[6];	/* target hardware address */
+	u_int8_t arp_tpa[4];	/* target protocol address */
 };
 #define	arp_hrd	ea_hdr.ar_hrd
 #define	arp_pro	ea_hdr.ar_pro
@@ -113,11 +113,11 @@ struct	ether_arp {
  * begins with this structure.
  */
 struct	arpcom {
-	struct 	ifnet ac_if;		/* network-visible interface */
-	u_char	ac_enaddr[6];		/* ethernet hardware address */
-	struct	in_addr ac_ipaddr;	/* copy of ip address- XXX */
-	struct	ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
-	int	ac_multicnt;		/* length of ac_multiaddrs list */
+	struct 	 ifnet ac_if;		/* network-visible interface */
+	u_int8_t ac_enaddr[6];		/* ethernet hardware address */
+	struct	 in_addr ac_ipaddr;	/* copy of ip address- XXX */
+	struct	 ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
+	int	 ac_multicnt;		/* length of ac_multiaddrs list */
 };
 
 struct llinfo_arp {
@@ -130,13 +130,13 @@ struct llinfo_arp {
 };
 
 struct sockaddr_inarp {
-	u_char	sin_len;
-	u_char	sin_family;
-	u_short	sin_port;
-	struct	in_addr sin_addr;
-	struct	in_addr sin_srcaddr;
-	u_short	sin_tos;
-	u_short	sin_other;
+	u_int8_t  sin_len;
+	u_int8_t  sin_family;
+	u_int16_t sin_port;
+	struct	  in_addr sin_addr;
+	struct	  in_addr sin_srcaddr;
+	u_int16_t sin_tos;
+	u_int16_t sin_other;
 #define SIN_PROXY 1
 };
 
@@ -147,9 +147,9 @@ struct sockaddr_inarp {
 #define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
 #ifdef	_KERNEL
-u_char	etherbroadcastaddr[6];
-u_char	ether_ipmulticast_min[6];
-u_char	ether_ipmulticast_max[6];
+u_int8_t etherbroadcastaddr[6];
+u_int8_t ether_ipmulticast_min[6];
+u_int8_t ether_ipmulticast_max[6];
 struct	ifqueue arpintrq;
 
 struct	llinfo_arp llinfo_arp;		/* head of the llinfo queue */
@@ -173,11 +173,11 @@ int	ether_delmulti __P((struct ifreq *, struct arpcom *));
  * the minimally-disrupting place to put it.)
  */
 struct ether_multi {
-	u_char	enm_addrlo[6];		/* low  or only address of range */
-	u_char	enm_addrhi[6];		/* high or only address of range */
-	struct	arpcom *enm_ac;		/* back pointer to arpcom */
-	u_int	enm_refcount;		/* no. claims to this addr/range */
-	struct	ether_multi *enm_next;	/* ptr to next ether_multi */
+	u_int8_t enm_addrlo[6];		/* low  or only address of range */
+	u_int8_t enm_addrhi[6];		/* high or only address of range */
+	struct	 arpcom *enm_ac;	/* back pointer to arpcom */
+	u_int	 enm_refcount;		/* no. claims to this addr/range */
+	struct	 ether_multi *enm_next;	/* ptr to next ether_multi */
 };
 
 /*
@@ -194,8 +194,8 @@ struct ether_multistep {
  * record is found, "enm" returns NULL.
  */
 #define ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm) \
-	/* u_char addrlo[6]; */ \
-	/* u_char addrhi[6]; */ \
+	/* u_int8_t addrlo[6]; */ \
+	/* u_int8_t addrhi[6]; */ \
 	/* struct arpcom *ac; */ \
 	/* struct ether_multi *enm; */ \
 { \

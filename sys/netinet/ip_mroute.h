@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.7 1995/03/26 20:32:31 jtc Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.8 1995/04/13 06:35:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering.
@@ -68,8 +68,8 @@
  * Types and macros for handling bitmaps with one bit per virtual interface.
  */
 #define	MAXVIFS 32
-typedef u_long vifbitmap_t;
-typedef u_short vifi_t;		/* type of a vif index */
+typedef u_int32_t vifbitmap_t;
+typedef u_int16_t vifi_t;	/* type of a vif index */
 
 #define	VIFM_SET(n, m)		((m) |= (1 << (n)))
 #define	VIFM_CLR(n, m)		((m) &= ~(1 << (n)))
@@ -85,8 +85,8 @@ typedef u_short vifi_t;		/* type of a vif index */
  */
 struct vifctl {
 	vifi_t	    vifc_vifi;	    	/* the index of the vif to be added */
-	u_char	    vifc_flags;     	/* VIFF_ flags defined below */
-	u_char	    vifc_threshold; 	/* min ttl required to forward on vif */
+	u_int8_t    vifc_flags;     	/* VIFF_ flags defined below */
+	u_int8_t    vifc_threshold; 	/* min ttl required to forward on vif */
 	struct	in_addr vifc_lcl_addr;	/* local interface address */
 	struct	in_addr vifc_rmt_addr;	/* remote address (tunnels only) */
 };

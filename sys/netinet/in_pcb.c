@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.12 1994/09/29 02:31:35 deraadt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.13 1995/04/13 06:28:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -86,7 +86,7 @@ in_pcbbind(inp, nam)
 	register struct inpcb *head = inp->inp_head;
 	register struct sockaddr_in *sin;
 	struct proc *p = curproc;		/* XXX */
-	u_short lport = 0;
+	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
 
@@ -186,7 +186,7 @@ in_pcbconnect(inp, nam)
 #define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 		    sin->sin_addr = IA_SIN(in_ifaddr)->sin_addr;
-		else if (sin->sin_addr.s_addr == (u_long)INADDR_BROADCAST &&
+		else if (sin->sin_addr.s_addr == (u_int32_t)INADDR_BROADCAST &&
 		  (in_ifaddr->ia_ifp->if_flags & IFF_BROADCAST))
 		    sin->sin_addr = satosin(&in_ifaddr->ia_broadaddr)->sin_addr;
 	}
@@ -225,7 +225,7 @@ in_pcbconnect(inp, nam)
 		if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 			ia = ifatoia(ro->ro_rt->rt_ifa);
 		if (ia == 0) {
-			u_short fport = sin->sin_port;
+			u_int16_t fport = sin->sin_port;
 
 			sin->sin_port = 0;
 			ia = ifatoia(ifa_ifwithdstaddr(sintosa(sin)));
@@ -359,7 +359,7 @@ in_pcbnotify(head, dst, fport_arg, laddr, lport_arg, cmd, notify)
 	extern u_char inetctlerrmap[];
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
-	u_short fport = fport_arg, lport = lport_arg;
+	u_int16_t fport = fport_arg, lport = lport_arg;
 	int errno;
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET)
@@ -461,7 +461,7 @@ in_pcblookup(head, faddr, fport_arg, laddr, lport_arg, flags)
 {
 	register struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
-	u_short fport = fport_arg, lport = lport_arg;
+	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	for (inp = head->inp_next; inp != head; inp = inp->inp_next) {
 		if (inp->inp_lport != lport)

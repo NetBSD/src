@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.21 1995/04/11 04:30:52 mycroft Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.22 1995/04/13 06:25:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -80,10 +80,11 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-static	void arprequest __P((struct arpcom *, u_long *, u_long *, u_char *));
+static	void arprequest
+	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_char *));
 static	void arptfree __P((struct llinfo_arp *));
 static	void arptimer __P((void *));
-static	struct llinfo_arp *arplookup __P((u_long, int, int));
+static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
 extern	struct ifnet loif;
@@ -260,8 +261,8 @@ arpwhohas(ac, addr)
 static void
 arprequest(ac, sip, tip, enaddr)
 	register struct arpcom *ac;
-	register u_long *sip, *tip;
-	register u_char *enaddr;
+	register u_int32_t *sip, *tip;
+	register u_int8_t *enaddr;
 {
 	register struct mbuf *m;
 	register struct ether_header *eh;
@@ -554,7 +555,7 @@ arptfree(la)
  */
 static struct llinfo_arp *
 arplookup(addr, create, proxy)
-	u_long addr;
+	u_int32_t addr;
 	int create, proxy;
 {
 	register struct rtentry *rt;

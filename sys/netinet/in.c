@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.17 1995/04/11 04:30:55 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.18 1995/04/13 06:27:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -56,12 +56,12 @@
 /*
  * Return the network number from an internet address.
  */
-u_long
+u_int32_t
 in_netof(in)
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
-	register u_long net;
+	register u_int32_t i = ntohl(in.s_addr);
+	register u_int32_t net;
 	register struct in_ifaddr *ia;
 
 	if (IN_CLASSA(i))
@@ -99,7 +99,7 @@ int
 in_localaddr(in)
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
+	register u_int32_t i = ntohl(in.s_addr);
 	register struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
@@ -123,8 +123,8 @@ int
 in_canforward(in)
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
-	register u_long net;
+	register u_int32_t i = ntohl(in.s_addr);
+	register u_int32_t net;
 
 	if (IN_EXPERIMENTAL(i) || IN_MULTICAST(i))
 		return (0);
@@ -164,7 +164,7 @@ int	in_interfaces;		/* number of external internet interfaces */
 int
 in_control(so, cmd, data, ifp)
 	struct socket *so;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
 {
@@ -175,7 +175,7 @@ in_control(so, cmd, data, ifp)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
-	u_long i;
+	u_int32_t i;
 
 	/*
 	 * Find address for this interface, if it exists.
@@ -408,7 +408,7 @@ in_ifinit(ifp, ia, sin, scrub)
 	struct sockaddr_in *sin;
 	int scrub;
 {
-	register u_long i = ntohl(sin->sin_addr.s_addr);
+	register u_int32_t i = ntohl(sin->sin_addr.s_addr);
 	struct sockaddr_in oldaddr;
 	int s = splimp(), flags = RTF_UP, error, ether_output();
 
@@ -492,7 +492,7 @@ in_broadcast(in, ifp)
 	struct ifnet *ifp;
 {
 	register struct ifaddr *ifa;
-	u_long t;
+	u_int32_t t;
 
 	if (in.s_addr == INADDR_BROADCAST ||
 	    in.s_addr == INADDR_ANY)

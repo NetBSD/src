@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.8 1994/06/29 06:37:56 cgd Exp $	*/
+/*	$NetBSD: igmp.c,v 1.9 1995/04/13 06:26:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -59,7 +59,7 @@
 #include <netinet/igmp_var.h>
 
 static int igmp_timers_are_running = 0;
-static u_long igmp_all_hosts_group;
+static u_int32_t igmp_all_hosts_group;
 
 static void igmp_sendreport __P((struct in_multi *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.7 1995/03/26 20:32:29 jtc Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.8 1995/04/13 06:32:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,17 +44,17 @@
  * Structure of an icmp header.
  */
 struct icmp {
-	u_char	icmp_type;		/* type of message, see below */
-	u_char	icmp_code;		/* type sub code */
-	u_short	icmp_cksum;		/* ones complement cksum of struct */
+	u_int8_t  icmp_type;		/* type of message, see below */
+	u_int8_t  icmp_code;		/* type sub code */
+	u_int16_t icmp_cksum;		/* ones complement cksum of struct */
 	union {
-		u_char ih_pptr;			/* ICMP_PARAMPROB */
+		u_int8_t ih_pptr;		/* ICMP_PARAMPROB */
 		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
 		struct ih_idseq {
 			n_short	icd_id;
 			n_short	icd_seq;
 		} ih_idseq;
-		int ih_void;
+		int32_t ih_void;
 
 		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
 		struct ih_pmtu {
@@ -79,8 +79,8 @@ struct icmp {
 			struct ip idi_ip;
 			/* options and then 64 bits of data */
 		} id_ip;
-		u_long	id_mask;
-		char	id_data[1];
+		u_int32_t id_mask;
+		int8_t	  id_data[1];
 	} icmp_dun;
 #define	icmp_otime	icmp_dun.id_ts.its_otime
 #define	icmp_rtime	icmp_dun.id_ts.its_rtime
