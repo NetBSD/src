@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.642 2004/01/03 13:50:27 lukem Exp $
+# $NetBSD: mi,v 1.643 2004/01/03 14:17:06 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -458,10 +458,10 @@
 ./usr/share/man/cat1/x68k/tvctrl.0		man-util-catman
 ./usr/share/man/cat1/xargs.0			man-util-catman
 ./usr/share/man/cat1/yes.0			man-util-catman
-./usr/share/man/cat1/ypcat.0			man-nis-catman
-./usr/share/man/cat1/ypmatch.0			man-nis-catman
-./usr/share/man/cat1/yppasswd.0			man-nis-catman
-./usr/share/man/cat1/ypwhich.0			man-nis-catman
+./usr/share/man/cat1/ypcat.0			man-nis-catman	yp
+./usr/share/man/cat1/ypmatch.0			man-nis-catman	yp
+./usr/share/man/cat1/yppasswd.0			man-nis-catman	yp
+./usr/share/man/cat1/ypwhich.0			man-nis-catman	yp
 ./usr/share/man/cat1/zcat.0			man-util-catman
 ./usr/share/man/cat1/zcmp.0			man-util-catman
 ./usr/share/man/cat1/zdiff.0			man-util-catman
@@ -1390,7 +1390,7 @@
 ./usr/share/man/cat5/named.conf.0		man-bind-catman
 ./usr/share/man/cat5/netconfig.0		man-net-catman
 ./usr/share/man/cat5/netgroup.0			man-nis-catman
-./usr/share/man/cat5/netid.0			man-nis-catman
+./usr/share/man/cat5/netid.0			man-nis-catman	yp
 ./usr/share/man/cat5/networks.0			man-net-catman
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman
@@ -1726,7 +1726,7 @@
 ./usr/share/man/cat8/mail.local.0		man-sendmail-catman
 ./usr/share/man/cat8/mailstats.0		man-sendmail-catman	sendmail
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman
-./usr/share/man/cat8/makedbm.0			man-sendmail-catman
+./usr/share/man/cat8/makedbm.0			man-nis-catman	yp
 ./usr/share/man/cat8/makedev.0			man-sysutil-catman
 ./usr/share/man/cat8/makefs.0			man-sysutil-catman
 ./usr/share/man/cat8/makekey.0			man-crypto-catman
@@ -1742,8 +1742,8 @@
 ./usr/share/man/cat8/mipsco/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/mipsco/makedev.0		man-obsolete	obsolete
 ./usr/share/man/cat8/mk-amd-map.0		man-amd-catman
-./usr/share/man/cat8/mkalias.0			man-nis-catman
-./usr/share/man/cat8/mknetid.0			man-nis-catman
+./usr/share/man/cat8/mkalias.0			man-nis-catman	yp
+./usr/share/man/cat8/mknetid.0			man-nis-catman	yp
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-catman
@@ -1890,7 +1890,7 @@
 ./usr/share/man/cat8/renice.0			man-sysutil-catman
 ./usr/share/man/cat8/repquota.0			man-sysutil-catman
 ./usr/share/man/cat8/restore.0			man-sysutil-catman
-./usr/share/man/cat8/revnetgroup.0		man-nis-catman
+./usr/share/man/cat8/revnetgroup.0		man-nis-catman	yp
 ./usr/share/man/cat8/rexecd.0			man-netutil-catman
 ./usr/share/man/cat8/rip6query.0		man-netutil-catman
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman
@@ -1909,7 +1909,7 @@
 ./usr/share/man/cat8/rpc.rwalld.0		man-rpcserver-catman
 ./usr/share/man/cat8/rpc.sprayd.0		man-rpcserver-catman
 ./usr/share/man/cat8/rpc.statd.0		man-nfsserver-catman
-./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman
+./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman	yp
 ./usr/share/man/cat8/rpcbind.0			man-rpcserver-catman
 ./usr/share/man/cat8/rpcinfo.0			man-rpcutil-catman
 ./usr/share/man/cat8/rquotad.0			man-nfsserver-catman
@@ -1968,8 +1968,8 @@
 ./usr/share/man/cat8/sshd.0			man-secsh-catman
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman
 ./usr/share/man/cat8/statmsg.0			man-obsolete	obsolete
-./usr/share/man/cat8/stdethers.0		man-nis-catman
-./usr/share/man/cat8/stdhosts.0			man-nis-catman
+./usr/share/man/cat8/stdethers.0		man-nis-catman	yp
+./usr/share/man/cat8/stdhosts.0			man-nis-catman	yp
 ./usr/share/man/cat8/sticky.0			man-sys-catman
 ./usr/share/man/cat8/strfile.0			man-sysutil-catman
 ./usr/share/man/cat8/string2key.0		man-krb5-catman	kerberos
@@ -2065,15 +2065,15 @@
 ./usr/share/man/cat8/xntpd.0			man-obsolete	obsolete
 ./usr/share/man/cat8/xntpdc.0			man-obsolete	obsolete
 ./usr/share/man/cat8/yp.0			man-nis-catman
-./usr/share/man/cat8/ypbind.0			man-nis-catman
-./usr/share/man/cat8/ypinit.0			man-nis-catman
-./usr/share/man/cat8/yppasswdd.0		man-nis-catman
-./usr/share/man/cat8/yppoll.0			man-nis-catman
-./usr/share/man/cat8/yppush.0			man-nis-catman
-./usr/share/man/cat8/ypserv.0			man-nis-catman
-./usr/share/man/cat8/ypset.0			man-nis-catman
-./usr/share/man/cat8/yptest.0			man-nis-catman
-./usr/share/man/cat8/ypxfr.0			man-nis-catman
+./usr/share/man/cat8/ypbind.0			man-nis-catman	yp
+./usr/share/man/cat8/ypinit.0			man-nis-catman	yp
+./usr/share/man/cat8/yppasswdd.0		man-nis-catman	yp
+./usr/share/man/cat8/yppoll.0			man-nis-catman	yp
+./usr/share/man/cat8/yppush.0			man-nis-catman	yp
+./usr/share/man/cat8/ypserv.0			man-nis-catman	yp
+./usr/share/man/cat8/ypset.0			man-nis-catman	yp
+./usr/share/man/cat8/yptest.0			man-nis-catman	yp
+./usr/share/man/cat8/ypxfr.0			man-nis-catman	yp
 ./usr/share/man/cat8/zdump.0			man-sysutil-catman
 ./usr/share/man/cat8/zic.0			man-sysutil-catman
 ./usr/share/man/cat8/zzz.0			man-sysutil-catman
@@ -2505,10 +2505,10 @@
 ./usr/share/man/man1/x68k/tvctrl.1		man-util-man
 ./usr/share/man/man1/xargs.1			man-util-man
 ./usr/share/man/man1/yes.1			man-util-man
-./usr/share/man/man1/ypcat.1			man-nis-man
-./usr/share/man/man1/ypmatch.1			man-nis-man
-./usr/share/man/man1/yppasswd.1			man-nis-man
-./usr/share/man/man1/ypwhich.1			man-nis-man
+./usr/share/man/man1/ypcat.1			man-nis-man	yp
+./usr/share/man/man1/ypmatch.1			man-nis-man	yp
+./usr/share/man/man1/yppasswd.1			man-nis-man	yp
+./usr/share/man/man1/ypwhich.1			man-nis-man	yp
 ./usr/share/man/man1/zcat.1			man-util-man
 ./usr/share/man/man1/zcmp.1			man-util-man
 ./usr/share/man/man1/zdiff.1			man-util-man
@@ -3438,7 +3438,7 @@
 ./usr/share/man/man5/named.conf.5		man-bind-man
 ./usr/share/man/man5/netconfig.5		man-net-man
 ./usr/share/man/man5/netgroup.5			man-nis-man
-./usr/share/man/man5/netid.5			man-nis-man
+./usr/share/man/man5/netid.5			man-nis-man	yp
 ./usr/share/man/man5/networks.5			man-net-man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man
@@ -3774,7 +3774,7 @@
 ./usr/share/man/man8/mail.local.8		man-sendmail-man
 ./usr/share/man/man8/mailstats.8		man-sendmail-man	sendmail
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man
-./usr/share/man/man8/makedbm.8			man-sendmail-man
+./usr/share/man/man8/makedbm.8			man-nis-man	yp
 ./usr/share/man/man8/makedev.8			man-sysutil-man
 ./usr/share/man/man8/makefs.8			man-sysutil-man
 ./usr/share/man/man8/makekey.8			man-crypto-man
@@ -3790,8 +3790,8 @@
 ./usr/share/man/man8/mipsco/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/mipsco/makedev.8		man-obsolete	obsolete
 ./usr/share/man/man8/mk-amd-map.8		man-amd-man
-./usr/share/man/man8/mkalias.8			man-nis-man
-./usr/share/man/man8/mknetid.8			man-nis-man
+./usr/share/man/man8/mkalias.8			man-nis-man	yp
+./usr/share/man/man8/mknetid.8			man-nis-man	yp
 ./usr/share/man/man8/mknod.8			man-sysutil-man
 ./usr/share/man/man8/mld6query.8		man-netutil-man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man
@@ -3938,7 +3938,7 @@
 ./usr/share/man/man8/renice.8			man-sysutil-man
 ./usr/share/man/man8/repquota.8			man-sysutil-man
 ./usr/share/man/man8/restore.8			man-sysutil-man
-./usr/share/man/man8/revnetgroup.8		man-nis-man
+./usr/share/man/man8/revnetgroup.8		man-nis-man	yp
 ./usr/share/man/man8/rexecd.8			man-netutil-man
 ./usr/share/man/man8/rip6query.8		man-netutil-man
 ./usr/share/man/man8/rlogind.8			man-netutil-man
@@ -3957,7 +3957,7 @@
 ./usr/share/man/man8/rpc.rwalld.8		man-rpcserver-man
 ./usr/share/man/man8/rpc.sprayd.8		man-rpcserver-man
 ./usr/share/man/man8/rpc.statd.8		man-nfsserver-man
-./usr/share/man/man8/rpc.yppasswdd.8		man-nis-man
+./usr/share/man/man8/rpc.yppasswdd.8		man-nis-man	yp
 ./usr/share/man/man8/rpcbind.8			man-rpcserver-man
 ./usr/share/man/man8/rpcinfo.8			man-rpcutil-man
 ./usr/share/man/man8/rquotad.8			man-nfsserver-man
@@ -4016,8 +4016,8 @@
 ./usr/share/man/man8/sshd.8			man-secsh-man
 ./usr/share/man/man8/statd.8			man-nfsserver-man
 ./usr/share/man/man8/statmsg.8			man-obsolete	obsolete
-./usr/share/man/man8/stdethers.8		man-nis-man
-./usr/share/man/man8/stdhosts.8			man-nis-man
+./usr/share/man/man8/stdethers.8		man-nis-man	yp
+./usr/share/man/man8/stdhosts.8			man-nis-man	yp
 ./usr/share/man/man8/sticky.8			man-sys-man
 ./usr/share/man/man8/strfile.8			man-sysutil-man
 ./usr/share/man/man8/string2key.8		man-krb5-man	kerberos
@@ -4113,15 +4113,15 @@
 ./usr/share/man/man8/xntpd.8			man-obsolete	obsolete
 ./usr/share/man/man8/xntpdc.8			man-obsolete	obsolete
 ./usr/share/man/man8/yp.8			man-nis-man
-./usr/share/man/man8/ypbind.8			man-nis-man
-./usr/share/man/man8/ypinit.8			man-nis-man
-./usr/share/man/man8/yppasswdd.8		man-nis-man
-./usr/share/man/man8/yppoll.8			man-nis-man
-./usr/share/man/man8/yppush.8			man-nis-man
-./usr/share/man/man8/ypserv.8			man-nis-man
-./usr/share/man/man8/ypset.8			man-nis-man
-./usr/share/man/man8/yptest.8			man-nis-man
-./usr/share/man/man8/ypxfr.8			man-nis-man
+./usr/share/man/man8/ypbind.8			man-nis-man	yp
+./usr/share/man/man8/ypinit.8			man-nis-man	yp
+./usr/share/man/man8/yppasswdd.8		man-nis-man	yp
+./usr/share/man/man8/yppoll.8			man-nis-man	yp
+./usr/share/man/man8/yppush.8			man-nis-man	yp
+./usr/share/man/man8/ypserv.8			man-nis-man	yp
+./usr/share/man/man8/ypset.8			man-nis-man	yp
+./usr/share/man/man8/yptest.8			man-nis-man	yp
+./usr/share/man/man8/ypxfr.8			man-nis-man	yp
 ./usr/share/man/man8/zdump.8			man-sysutil-man
 ./usr/share/man/man8/zic.8			man-sysutil-man
 ./usr/share/man/man8/zzz.8			man-sysutil-man
