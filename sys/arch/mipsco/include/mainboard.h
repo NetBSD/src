@@ -1,4 +1,4 @@
-/*	$NetBSD: mainboard.h,v 1.1 2000/08/12 22:58:28 wdk Exp $	*/
+/*	$NetBSD: mainboard.h,v 1.2 2000/08/16 21:00:39 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 
 #define RAMBO_TCOUNT    (RAMBO_BASE+0xc00) /* Timer count register */
 #define RAMBO_TBREAK    (RAMBO_BASE+0xd00) /* Timner break register */
+#define RAMBO_ERREG	(RAMBO_BASE+0xe00) /* Machine error register */
 #define RAMBO_CTL       (RAMBO_BASE+0xf00) /* Machine control register */
 
 #define	LANCE_PORT	0xba000000
