@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.89 2003/11/06 22:59:03 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.90 2003/11/07 00:05:24 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -45,7 +45,7 @@ MANCOMPRESS:=	| ${MANCOMPRESS}
 
 __installpage: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (${_MKSHMSG} "install  ${.TARGET}"; \
+	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
 	     ${_MKSHECHO} "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
@@ -97,7 +97,7 @@ manlinks: manpages					# symlink install
 		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
-	    		${_MKSHMSG} "install  $$t"; \
+			${_MKSHMSG_INSTALL} $$t; \
 			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
@@ -158,7 +158,7 @@ catlinks: catpages					# symlink install
 		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
-	    		${_MKSHMSG} "install  $$t"; \
+			${_MKSHMSG_INSTALL} $$t; \
 			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
