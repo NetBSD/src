@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.15 2000/02/22 16:04:44 thorpej Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.16 2000/02/25 20:48:22 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -225,7 +225,7 @@ pcic_isa_probe_interrupts(sc, h)
 			continue;
 		}
 
-		if ((sc->ih = isa_intr_establish(ic, irq, IST_LEVEL, IPL_TTY,
+		if ((sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
 		    pcic_isa_count_intr, h)) == NULL)
 			panic("cant get interrupt");
 
@@ -482,7 +482,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	int reg;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
-		ist = IST_LEVEL;
+		ist = IST_EDGE;
 	else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
 		ist = IST_PULSE;
 	else
