@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.48 1998/02/20 21:31:20 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.49 1998/02/20 22:06:18 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1591,11 +1591,29 @@ checksum: fetch
 # You probably won't need to touch these
 ################################################################
 
+HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
+
+# Set to YES by the README.html target (and passed via depends-list
+# and package-depends)
+.ifndef PACKAGE_NAME_AS_LINK
+PACKAGE_NAME_AS_LINK=NO
+.endif # PACKAGE_NAME_AS_LINK
+
+
 # Nobody should want to override this unless PKGNAME is simply bogus.
 
 .if !target(package-name)
 package-name:
-	@${ECHO} ${PKGNAME}
+.if (${PACKAGE_NAME_AS_LINK} == "YES")
+	@${ECHO} '<A HREF="../../'`${MAKE} package-path | ${HTMLIFY}`'/README.html">'`echo ${PKGNAME} | ${HTMLIFY}`'</A>'
+.else
+	@${ECHO} '${PKGNAME}'
+.endif # PACKAGE_NAME_AS_LINK != ""
+.endif # !target(package-name)
+
+.if !target(package-path)
+package-path:
+	@pwd | sed s@`cd ${PORTSDIR} ; pwd`/@@g
 .endif
 
 # Show (recursively) all the packages this package depends on.
@@ -1604,7 +1622,7 @@ package-name:
 package-depends:
 	@for dir in `${ECHO} ${LIB_DEPENDS} ${RUN_DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/^[^:]*://' -e 's/:.*//' | sort -u` `${ECHO} ${DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/:.*//' | sort -u`; do \
 		if [ -d $$dir ]; then \
-			(cd $$dir ; ${MAKE} package-name package-depends); \
+			(cd $$dir ; ${MAKE} package-name package-depends PACKAGE_NAME_AS_LINK=${PACKAGE_NAME_AS_LINK}); \
 		else \
 			${ECHO_MSG} "Warning: \"$$dir\" non-existent -- @pkgdep registration incomplete" >&2; \
 		fi; \
@@ -1780,7 +1798,7 @@ clean-depends:
 .if !target(depends-list)
 depends-list:
 	@for dir in `${ECHO} ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/^[^:]*://' -e 's/:.*//' | sort -u` `${ECHO} ${DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/:.*//' | sort -u`; do \
-		(cd $$dir; ${MAKE} package-name depends-list); \
+		(cd $$dir; ${MAKE} package-name depends-list PACKAGE_NAME_AS_LINK=${PACKAGE_NAME_AS_LINK}; ); \
 	done
 .endif
 
@@ -1832,8 +1850,6 @@ readme:
 	@cd ${.CURDIR} && make README.html
 .endif
 
-HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
-
 .if (${OPSYS} == "NetBSD")
 README_NAME=	${TEMPLATES}/README.pkg
 .else
@@ -1842,11 +1858,13 @@ README_NAME=	${TEMPLATES}/README.port
 
 README.html:
 	@${ECHO_MSG} "===>  Creating README.html for ${PKGNAME}"
-	@${MAKE} print-depends-list | ${HTMLIFY} >> $@.tmp1
-	@${MAKE} print-package-depends | ${HTMLIFY} >> $@.tmp2
+	@${MAKE} depends-list PACKAGE_NAME_AS_LINK=YES >> $@.tmp1
+	@[ -s $@.tmp1 ] || echo "(none)" >> $@.tmp1
+	@${MAKE} package-depends PACKAGE_NAME_AS_LINK=YES >> $@.tmp2
+	@[ -s $@.tmp2 ] || echo "(none)" >> $@.tmp2
 	@${ECHO} ${PKGNAME} | ${HTMLIFY} >> $@.tmp3
 	@${CAT} ${README_NAME} | \
-		${SED} -e 's/%%PORT%%/'"`basename ${.CURDIR}`"'/g' \
+		${SED} -e 's|%%PORT%%|'"`${MAKE} package-path | ${HTMLIFY}`"'|g' \
 			-e '/%%PKG%%/r$@.tmp3' \
 			-e '/%%PKG%%/d' \
 			-e '/%%COMMENT%%/r${PKGDIR}/COMMENT' \
