@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.34 2002/01/13 17:24:29 christos Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.34.10.1 2003/04/28 06:25:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,8 +121,9 @@ struct wdc_softc { /* Per controller state */
 	void           (*dma_start) __P((void *, int, int));
 	int            (*dma_finish) __P((void *, int, int, int));
 /* flags passed to dma_init */
-#define WDC_DMA_READ 0x01
-#define WDC_DMA_IRQW 0x02
+#define WDC_DMA_READ	0x01
+#define WDC_DMA_IRQW	0x02
+#define WDC_DMA_LBA48	0x04
 	int		dma_status; /* status returned from dma_finish() */
 #define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
 #define WDC_DMAST_ERR	0x02	/* DMA error */
