@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
+.\"	$NetBSD: iop.4,v 1.8 2001/06/12 12:00:20 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,12 +62,12 @@ Note that the headers
 .Pa sys/device.h
 and
 .Pa dev/i2o/i2o.h
-are prerequsites and must therefore be included beforehand.
+are prerequisites and must therefore be included beforehand.
 .Bl -tag -width OTTF
 .It Dv IOPIOCPT (struct ioppt)
 Submit a message to the IOP and return the reply.  Note that the return
 value of this ioctl is not affected by completion status as indicated by the
-reply. 
+reply.
 .Bd -literal
 struct ioppt {
 	void	*pt_msg;	/* pointer to message buffer */
@@ -101,7 +101,7 @@ The following ioctls may block while attempting to acquire the
 driver's configuration lock, and may fail if the acquisition times out.
 .Bl -tag -width OTTF
 .It Dv IOPIOCGLCT (struct iovec)
-Retreive the
+Retrieve the
 .Nm
 driver's copy of the logical configuration table.  This copy of the LCT
 matches the current device configuration, but is not necessarily the latest
