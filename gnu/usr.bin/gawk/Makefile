@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/28 09:58:10 jmc Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/30 22:31:13 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,10 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -DDEFPATH=\".:/usr/share/awk\" \
 		-I${.CURDIR} -I${.CURDIR}/../../dist/gawk
 LDADD=		-lm
 CLEANFILES+=	${PROG}.1 ${PROG}.texi
+
+.if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
+COPTS+=		-O1
+.endif
 
 ${PROG}.1:	gawk.1
 		@-rm -f $@
