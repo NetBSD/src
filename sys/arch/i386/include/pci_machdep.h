@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.14 2000/06/04 19:14:45 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.14.2.1 2000/08/10 22:25:57 soda Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -98,3 +98,15 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+/*
+ * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
+ * BY PORTABLE CODE.
+ */
+
+/*
+ * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,
+ * says that 255 means `unknown' or `no connection' to the interrupt
+ * controller on a PC.
+ */
+#define	I386_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
