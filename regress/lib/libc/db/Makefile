@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.6 1993/09/09 01:46:32 cgd Exp $
+#	$Id: Makefile,v 1.7 1993/09/16 23:18:45 cgd Exp $
 
 PROG=	dbtest
 SRCS=	dbtest.c
@@ -15,7 +15,7 @@ SRCS=	dbtest.c
 #.PATH:	${.CURDIR}/../hash
 #LDADD=	/usr/src/lib/libc/obj/libc.a
 
-CFLAGS= -g -DDEBUG -DSTATISTICS
+CFLAGS= -g -DDEBUG #-DSTATISTICS
 NOMAN=  noman
 CLEANFILES+= t1 t2 t3
 
