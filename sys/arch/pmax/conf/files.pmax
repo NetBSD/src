@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.49 1998/02/16 22:12:47 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.50 1998/03/25 04:05:35 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -182,9 +182,9 @@ file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/mainbus.c
 
-# Console autoconfiguration code: selects between a framebuffers
-file	arch/pmax/pmax/cpu_cons.c
+# Console code.  conf.c selects a console at runtime.
 file	dev/cons.c
+file	arch/pmax/dev/promio.c			# default console
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
