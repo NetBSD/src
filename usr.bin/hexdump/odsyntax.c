@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.8 1997/10/19 02:34:09 lukem Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.9 1998/08/25 20:59:37 ross Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.8 1997/10/19 02:34:09 lukem Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.9 1998/08/25 20:59:37 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ odoffset(argc, argvp)
 		return;
 	}
 
-	if (*p)
+	if (*p) {
 		if (*p == 'B') {
 			skip *= 1024;
 			++p;
@@ -234,12 +234,11 @@ odoffset(argc, argvp)
 			skip *= 512;
 			++p;
 		}
-
+	}
 	if (*p) {
 		skip = 0;
 		return;
 	}
-
 	/*
 	 * If the offset uses a non-octal base, the base of the offset
 	 * is changed as well.  This isn't pretty, but it's easy.

@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.11 1998/08/10 03:11:07 perry Exp $	*/
+/*	$NetBSD: finger.c,v 1.12 1998/08/25 20:59:37 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.11 1998/08/10 03:11:07 perry Exp $");
+__RCSID("$NetBSD: finger.c,v 1.12 1998/08/25 20:59:37 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,11 +164,12 @@ main(argc, argv)
 		if (!sflag)
 			lflag = 1;	/* if -s not explicit, force -l */
 	}
-	if (entries)
+	if (entries) {
 		if (lflag)
 			lflag_print();
 		else
 			sflag_print();
+	}
 	return (0);
 }
 

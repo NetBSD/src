@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd.c,v 1.5 1997/11/21 08:35:44 lukem Exp $	*/
+/*	$NetBSD: cmd.c,v 1.6 1998/08/25 20:59:42 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd.c,v 1.5 1997/11/21 08:35:44 lukem Exp $");
+__RCSID("$NetBSD: cmd.c,v 1.6 1998/08/25 20:59:42 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,12 +290,13 @@ void
 setterse(new)
 	char new;
 {
-	if (incmd)
+	if (incmd) {
 		if (new && !terse) {
 			wwdelete(cmdwin);
 			reframe();
 		} else if (!new && terse)
 			wwadd(cmdwin, &wwhead);
+	}
 	terse = new;
 }
 

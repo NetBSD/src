@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.9 1997/11/21 08:36:48 lukem Exp $	*/
+/*	$NetBSD: win.c,v 1.10 1998/08/25 20:59:43 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.9 1997/11/21 08:36:48 lukem Exp $");
+__RCSID("$NetBSD: win.c,v 1.10 1998/08/25 20:59:43 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,12 +163,13 @@ closewin(w)
 			didit++;
 		}
 	if (didit) {
-		if (selwin == 0)
+		if (selwin == 0) {
 			if (lastselwin != 0) {
 				setselwin(lastselwin);
 				lastselwin = 0;
 			} else if ((w = findselwin()))
 				setselwin(w);
+		}
 		if (lastselwin == 0 && selwin)
 			if ((w = findselwin()))
 				lastselwin = w;

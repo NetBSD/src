@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.21 1998/01/21 00:48:44 mycroft Exp $	*/
+/*	$NetBSD: touch.c,v 1.22 1998/08/25 20:59:42 ross Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.21 1998/01/21 00:48:44 mycroft Exp $");
+__RCSID("$NetBSD: touch.c,v 1.22 1998/08/25 20:59:42 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ main(argc, argv)
 
 	for (rval = 0; *argv; ++argv) {
 		/* See if the file exists. */
-		if ((*get_file_status)(*argv, &sb))
+		if ((*get_file_status)(*argv, &sb)) {
 			if (!cflag) {
 				/* Create the file. */
 				fd = open(*argv,
@@ -169,7 +169,7 @@ main(argc, argv)
 					continue;
 			} else
 				continue;
-
+		}
 		if (!aflag)
 			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 		if (!mflag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.4 1997/11/21 08:36:12 lukem Exp $	*/
+/*	$NetBSD: parser2.c,v 1.5 1998/08/25 20:59:42 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser2.c,v 1.4 1997/11/21 08:36:12 lukem Exp $");
+__RCSID("$NetBSD: parser2.c,v 1.5 1998/08/25 20:59:42 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ p_function(name, v, flag)
 	struct value av[LCMD_NARG + 1];
 	struct value *vp;
 
-	if (name != 0)
+	if (name != 0) {
 		if ((c = lcmd_lookup(name)))
 			name = c->lc_name;
 		else if ((a = alias_lookup(name)))
@@ -79,7 +79,7 @@ p_function(name, v, flag)
 			p_error("%s: No such command or alias.", name);
 			flag = 0;
 		}
-
+	}
 	for (vp = av; vp < &av[LCMD_NARG + 1]; vp++)
 		vp->v_type = V_ERR;
 
@@ -190,10 +190,10 @@ p_function(name, v, flag)
 	else if (token != T_EOL && token != T_EOF)
 		flag = 0;		/* look for legal follow set */
 	v->v_type = V_ERR;
-	if (flag)
+	if (flag) {
 		if (c != 0)
 			(*c->lc_func)(v, av);
-		else
+		else {
 			if (a->a_flags & A_INUSE)
 				p_error("%s: Recursive alias.", a->a_name);
 			else {
@@ -202,6 +202,8 @@ p_function(name, v, flag)
 					p_memerror();
 				a->a_flags &= ~A_INUSE;
 			}
+		}
+	}
 	if (p_abort()) {
 		val_free(*v);
 		v->v_type = V_ERR;

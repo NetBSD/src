@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.7 1997/11/22 07:28:45 lukem Exp $	*/
+/*	$NetBSD: remote.c,v 1.8 1998/08/25 20:59:41 ross Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.7 1997/11/22 07:28:45 lukem Exp $");
+__RCSID("$NetBSD: remote.c,v 1.8 1998/08/25 20:59:41 ross Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -80,7 +80,7 @@ getremcap(host)
 	int   stat;
 
 	rempath = getenv("REMOTE");
-	if (rempath != NULL)
+	if (rempath != NULL) {
 		if (*rempath != '/')
 			/* we have an entry */
 			cgetset(rempath);
@@ -88,7 +88,7 @@ getremcap(host)
 			db_array[1] = rempath;
 			db_array[2] = _PATH_REMOTE;
 		}
-
+	}
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
 		if (DV ||
 		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {

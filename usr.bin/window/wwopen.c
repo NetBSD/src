@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.8 1998/07/18 05:04:39 lukem Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.9 1998/08/25 20:59:43 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwopen.c,v 1.8 1998/07/18 05:04:39 lukem Exp $");
+__RCSID("$NetBSD: wwopen.c,v 1.9 1998/08/25 20:59:43 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,11 +142,11 @@ wwopen(type, oflags, nrow, ncol, row, col, nline)
 	m = 0;
 	if (oflags & WWO_GLASS)
 		m |= WWM_GLS;
-	if (oflags & WWO_REVERSE)
+	if (oflags & WWO_REVERSE) {
 		if (wwavailmodes & WWM_REV)
 			m |= WWM_REV;
-		else
-			oflags &= ~WWO_REVERSE;
+		else	oflags &= ~WWO_REVERSE;
+	}
 	for (i = w->ww_w.t; i < w->ww_w.b; i++)
 		for (j = w->ww_w.l; j < w->ww_w.r; j++)
 			w->ww_win[i][j] = m;

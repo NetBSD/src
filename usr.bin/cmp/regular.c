@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.6 1997/12/09 10:59:54 mrg Exp $	*/
+/*	$NetBSD: regular.c,v 1.7 1998/08/25 20:59:36 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.6 1997/12/09 10:59:54 mrg Exp $");
+__RCSID("$NetBSD: regular.c,v 1.7 1998/08/25 20:59:36 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 
 	dfound = 0;
 	for (byte = line = 1; length--; ++p1, ++p2, ++byte) {
-		if ((ch = *p1) != *p2)
+		if ((ch = *p1) != *p2) {
 			if (lflag) {
 				dfound = 1;
 				(void)printf("%6qd %3o %3o\n", (long long)byte,
@@ -95,6 +95,7 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 			} else
 				diffmsg(file1, file2, byte, line);
 				/* NOTREACHED */
+		}
 		if (ch == '\n')
 			++line;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.9 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: netstat.c,v 1.10 1998/08/25 20:59:40 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.9 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.10 1998/08/25 20:59:40 ross Exp $");
 #endif /* not lint */
 
 /*
@@ -363,13 +363,14 @@ shownetstat()
 		mvwaddstr(wnd, p->ni_line, PROTO, p->ni_proto);
 		mvwprintw(wnd, p->ni_line, RCVCC, "%6d", p->ni_rcvcc);
 		mvwprintw(wnd, p->ni_line, SNDCC, "%6d", p->ni_sndcc);
-		if (streq(p->ni_proto, "tcp"))
+		if (streq(p->ni_proto, "tcp")) {
 			if (p->ni_state < 0 || p->ni_state >= TCP_NSTATES)
 				mvwprintw(wnd, p->ni_line, STATE, "%d",
 				    p->ni_state);
 			else
 				mvwaddstr(wnd, p->ni_line, STATE,
 				    tcpstates[p->ni_state]);
+		}
 		wclrtoeol(wnd);
 	}
 	if (lastrow < getmaxy(wnd)) {

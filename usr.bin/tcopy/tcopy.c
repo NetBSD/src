@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.7 1997/10/20 03:25:26 mrg Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.8 1998/08/25 20:59:41 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-__RCSID("$NetBSD: tcopy.c,v 1.7 1997/10/20 03:25:26 mrg Exp $");
+__RCSID("$NetBSD: tcopy.c,v 1.8 1998/08/25 20:59:41 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -296,11 +296,12 @@ void
 intr(signo)
 	int signo;
 {
-	if (record)
+	if (record) {
 		if (record - lastrec > 1)
 			fprintf(msg, "records %ld to %ld\n", lastrec, record);
 		else
 			fprintf(msg, "record %ld\n", lastrec);
+	}
 	fprintf(msg, "interrupt at file %d: record %ld\n", filen, record);
 	fprintf(msg, "total length: %qd bytes\n", (long long)(tsize + size));
 	exit(1);

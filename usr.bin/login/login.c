@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.39 1998/07/26 22:04:37 mycroft Exp $       */
+/*     $NetBSD: login.c,v 1.40 1998/08/25 20:59:38 ross Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.39 1998/07/26 22:04:37 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.40 1998/08/25 20:59:38 ross Exp $");
 #endif /* not lint */
 
 /*
@@ -429,7 +429,7 @@ main(argc, argv)
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
-	if (pwd->pw_expire)
+	if (pwd->pw_expire) {
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
@@ -437,7 +437,8 @@ main(argc, argv)
 		    _PASSWORD_WARNDAYS * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
-	if (pwd->pw_change)
+	}
+	if (pwd->pw_change) {
 		if (pwd->pw_change == _PASSWORD_CHGNOW)
 			need_chpass = 1;
 		else if (tp.tv_sec >= pwd->pw_change) {
@@ -448,6 +449,7 @@ main(argc, argv)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 
+	}
 	/* Nothing else left to fail -- really log in. */
 	memset((void *)&utmp, 0, sizeof(utmp));
 	(void)time(&utmp.ut_time);
@@ -501,12 +503,14 @@ main(argc, argv)
 		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
-	if (rootlogin && fflag == 0)
+	if (rootlogin && fflag == 0) {
 		if (hostname)
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s",
 			    username, tty, hostname);
 		else
-			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s", username, tty);
+			syslog(LOG_NOTICE,
+				"ROOT LOGIN (%s) ON %s", username, tty);
+	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 	if (!quietlog && notickets == 1)
@@ -623,7 +627,7 @@ getloginname()
 			if (p < nbuf + (NBUFSIZ - 1))
 				*p++ = ch;
 		}
-		if (p > nbuf)
+		if (p > nbuf) {
 			if (nbuf[0] == '-')
 				(void)fprintf(stderr,
 				    "login names may not start with '-'.\n");
@@ -632,6 +636,7 @@ getloginname()
 				username = nbuf;
 				break;
 			}
+		}
 	}
 }
 

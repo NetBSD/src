@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.10 1998/07/06 06:51:08 mrg Exp $	*/
+/*	$NetBSD: last.c,v 1.11 1998/08/25 20:59:38 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.10 1998/07/06 06:51:08 mrg Exp $");
+__RCSID("$NetBSD: last.c,v 1.11 1998/08/25 20:59:38 ross Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -301,7 +301,7 @@ want(bp, check)
 {
 	ARG *step;
 
-	if (check)
+	if (check) {
 		/*
 		 * when uucp and ftp log in over a network, the entry in
 		 * the utmp file is the name plus their process id.  See
@@ -311,6 +311,7 @@ want(bp, check)
 			bp->ut_line[3] = '\0';
 		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
 			bp->ut_line[4] = '\0';
+	}
 	if (!arglist)
 		return (YES);
 

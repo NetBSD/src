@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.11 1997/10/18 13:21:39 lukem Exp $	*/
+/*	$NetBSD: cut.c,v 1.12 1998/08/25 20:59:36 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.11 1997/10/18 13:21:39 lukem Exp $");
+__RCSID("$NetBSD: cut.c,v 1.12 1998/08/25 20:59:36 ross Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -215,12 +215,13 @@ c_cut(fp, fname)
 			if (*pos++)
 				(void)putchar(ch);
 		}
-		if (ch != '\n')
+		if (ch != '\n') {
 			if (autostop)
 				while ((ch = getc(fp)) != EOF && ch != '\n')
 					(void)putchar(ch);
 			else
 				while ((ch = getc(fp)) != EOF && ch != '\n');
+		}
 		(void)putchar('\n');
 	}
 }
@@ -259,12 +260,14 @@ f_cut(fp, fname)
 					(void)putchar(sep);
 				while ((ch = *p++) != '\n' && ch != sep)
 					(void)putchar(ch);
-			} else
-				while ((ch = *p++) != '\n' && ch != sep);
+			} else {
+				while ((ch = *p++) != '\n' && ch != sep)
+					continue;
+			}
 			if (ch == '\n')
 				break;
 		}
-		if (ch != '\n')
+		if (ch != '\n') {
 			if (autostop) {
 				if (output)
 					(void)putchar(sep);
@@ -272,6 +275,7 @@ f_cut(fp, fname)
 					(void)putchar(ch);
 			} else
 				for (; (ch = *p) != '\n'; ++p);
+		}
 		(void)putchar('\n');
 	}
 }

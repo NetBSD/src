@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.8 1997/11/25 17:55:52 bad Exp $	*/
+/*	$NetBSD: send.c,v 1.9 1998/08/25 20:59:38 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.8 1997/11/25 17:55:52 bad Exp $");
+__RCSID("$NetBSD: send.c,v 1.9 1998/08/25 20:59:38 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,12 +179,13 @@ send(mp, obuf, doign, prefix)
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
 			 */
-			if (prefix != NOSTR)
+			if (prefix != NOSTR) {
 				if (length > 1)
 					fputs(prefix, obuf);
 				else
 					(void) fwrite(prefix, sizeof *prefix,
 							prefixlen, obuf);
+			}
 			(void) fwrite(line, sizeof *line, length, obuf);
 			if (ferror(obuf))
 				return -1;
@@ -315,7 +316,7 @@ mail1(hp, printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
-	if (value("interactive") != NOSTR)
+	if (value("interactive") != NOSTR) {
 		if (value("askcc") != NOSTR || value("askbcc") != NOSTR) {
 			if (value("askcc") != NOSTR)
 				grabh(hp, GCC);
@@ -325,11 +326,13 @@ mail1(hp, printheaders)
 			printf("EOT\n");
 			(void) fflush(stdout);
 		}
-	if (fsize(mtf) == 0)
+	}
+	if (fsize(mtf) == 0) {
 		if (hp->h_subject == NOSTR)
 			printf("No message, no subject; hope that's ok\n");
 		else
 			printf("Null message body; hope that's ok\n");
+	}
 	/*
 	 * Now, take the user names from the combined
 	 * to and cc lists and do all the alias

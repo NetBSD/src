@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.5 1997/07/25 16:46:35 perry Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.6 1998/08/25 20:59:44 ross Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: mkpar.c,v 1.5 1997/07/25 16:46:35 perry Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.6 1998/08/25 20:59:44 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,11 +250,12 @@ unused_rules()
     for (i = 3; i < nrules; ++i)
 	if (!rules_used[i]) ++nunused;
 
-    if (nunused)
+    if (nunused) {
 	if (nunused == 1)
 	    fprintf(stderr, "%s: 1 rule never reduced\n", myname);
 	else
 	    fprintf(stderr, "%s: %d rules never reduced\n", myname, nunused);
+    }
 }
 
 

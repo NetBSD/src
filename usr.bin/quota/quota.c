@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.20 1998/07/26 22:17:53 mycroft Exp $	*/
+/*	$NetBSD: quota.c,v 1.21 1998/08/25 20:59:39 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.20 1998/07/26 22:17:53 mycroft Exp $");
+__RCSID("$NetBSD: quota.c,v 1.21 1998/08/25 20:59:39 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,21 +334,25 @@ showquotas(type, id, name)
 		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_ihardlimit)
 			msgi = "File limit reached on";
 		else if (qup->dqblk.dqb_isoftlimit &&
-		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_isoftlimit)
+		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_isoftlimit) {
 			if (qup->dqblk.dqb_itime > now)
 				msgi = "In file grace period on";
 			else
 				msgi = "Over file quota on";
+		}
 		msgb = (char *)0;
 		if (qup->dqblk.dqb_bhardlimit &&
 		    qup->dqblk.dqb_curblocks >= qup->dqblk.dqb_bhardlimit)
 			msgb = "Block limit reached on";
-		else if (qup->dqblk.dqb_bsoftlimit &&
-		    qup->dqblk.dqb_curblocks >= qup->dqblk.dqb_bsoftlimit)
-			if (qup->dqblk.dqb_btime > now)
-				msgb = "In block grace period on";
-			else
-				msgb = "Over block quota on";
+		else {
+			if (qup->dqblk.dqb_bsoftlimit
+			&&  qup->dqblk.dqb_curblocks
+			    >= qup->dqblk.dqb_bsoftlimit) {
+				if (qup->dqblk.dqb_btime > now)
+					msgb = "In block grace period on";
+				else	msgb = "Over block quota on";
+			}
+		}
 		if (qflag) {
 			if ((msgi != (char *)0 || msgb != (char *)0) &&
 			    lines++ == 0)
