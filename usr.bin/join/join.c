@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.17 2000/06/10 19:03:22 mycroft Exp $	*/
+/*	$NetBSD: join.c,v 1.18 2000/06/10 19:15:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.17 2000/06/10 19:03:22 mycroft Exp $");
+__RCSID("$NetBSD: join.c,v 1.18 2000/06/10 19:15:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,7 @@ cmp(lp1, fieldno1, lp2, fieldno2)
 {
 
 	if (lp1->fieldcnt <= fieldno1)
-		return (lp2->fieldcnt < fieldno2 ? 0 : 1);
+		return (lp2->fieldcnt <= fieldno2 ? 0 : 1);
 	if (lp2->fieldcnt <= fieldno2)
 		return (-1);
 	return (strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]));
@@ -508,7 +508,7 @@ fieldarg(option)
 	u_long fieldno;
 	char *end, *token;
 
-	while ((token = strsep(&option, " \t")) != NULL) {
+	while ((token = strsep(&option, ", \t")) != NULL) {
 		if (*token == '\0')
 			continue;
 		if ((token[0] != '1' && token[0] != '2') || token[1] != '.')
