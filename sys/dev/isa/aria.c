@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.16 2002/12/10 05:05:11 thorpej Exp $	*/
+/*	$NetBSD: aria.c,v 1.17 2003/04/06 18:20:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -40,8 +40,8 @@
  *      with O_RDONLY and O_WRONLY at the same time.  But I
  *      do not see support for this in /sys/dev/audio.c, so
  *	I cannot effectively code it.
- *  o   We should nicely deal with the cards that can do mulaw
- *      and alaw output.
+ *  o   We should nicely deal with the cards that can do mu-law
+ *      and A-law output.
  *  o   Rework the mixer interface.
  *       o   Deal with the lvls better.  We need to do better mapping
  *           between logarithmic scales and the one byte that
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.16 2002/12/10 05:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.17 2003/04/06 18:20:13 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ struct aria_softc {
 	u_short sc_gain[2];		/* left/right gain (play) */
 
 	u_long	sc_rate;		/* Sample rate for input and output */
-	u_int	sc_encoding;		/* audio encoding -- ulaw/linear */
+	u_int	sc_encoding;		/* audio encoding -- mu-law/linear */
 	int	sc_chans;		/* # of channels */
 	int	sc_precision;		/* # bits per sample */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.20 2002/03/09 05:39:00 tacha Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.21 2003/04/06 18:20:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.20 2002/03/09 05:39:00 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.21 2003/04/06 18:20:12 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
 #include <dev/mulaw.h>
 
 /*
- * This table converts a (8 bit) mulaw value to a 16 bit value.
+ * This table converts a (8 bit) mu-law value to a 16 bit value.
  * The 16 bits are represented as an array of two bytes for easier access
  * to the individual bytes.
  */
