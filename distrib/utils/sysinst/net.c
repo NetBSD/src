@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.37 1999/01/25 23:34:24 garbled Exp $	*/
+/*	$NetBSD: net.c,v 1.38 1999/03/19 14:49:07 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,11 @@
 
 int network_up = 0;
 
+/* URL encode unsafe characters.  */
+
+static char *url_encode __P((char *dst, const char *src, size_t len,
+				const char *safe_chars));
+
 /* Get the list of network interfaces. */
 
 static void get_ifconfig_info __P((void));
@@ -60,6 +65,70 @@ static void get_ifinterface_info __P((void));
 
 /* external */
 const char* target_prefix __P((void));
+
+/*
+ * URL encode unsafe characters.  See RFC 1738.
+ *
+ * Copies src string to dst, encoding unsafe or reserved characters
+ * in %hex form as it goes, and returning a pointer to the result.
+ * The result is always a nul-terminated string even if it had to be
+ * truncated to avoid overflowing the available space.
+ *
+ * len is the length of the destination buffer.  The result will be
+ * truncated if necessary to fit in the destination buffer.
+ *
+ * safe_chars is a string of characters that should not be encoded.  Any
+ * characters in this string, as well as any alphanumeric characters,
+ * will be copied from src to dst without encoding.  Some potentially
+ * useful settings for this parameter are:
+ *
+ *	NULL or ""	Everything except alphanumerics are encoded
+ *	"/"		Alphanumerics and '/' remain unencoded
+ *	"$-_.+!*'(),"	Consistent with a strict reading of RFC 1738
+ *	"$-_.+!*'(),/"	As above, except '/' is not encoded
+ *	"-_.+!,/"	As above, except shell special characters are encoded
+ *
+ * Unsafe and reserved characters are defined in RFC 1738 section 2.2.
+ * The most important parts are:
+ *
+ *      The characters ";", "/", "?", ":", "@", "=" and "&" are the
+ *      characters which may be reserved for special meaning within a
+ *      scheme. No other characters may be reserved within a scheme.
+ *      [...]
+ *
+ *      Thus, only alphanumerics, the special characters "$-_.+!*'(),",
+ *      and reserved characters used for their reserved purposes may be
+ *      used unencoded within a URL.
+ *
+ */
+
+#define RFC1738_SAFE				"$-_.+!*'(),"
+#define RFC1738_SAFE_LESS_SHELL			"-_.+!,"
+#define RFC1738_SAFE_LESS_SHELL_PLUS_SLASH	"-_.+!,/"
+
+static char *
+url_encode(char *dst, const char *src, size_t len,
+	const char *safe_chars)
+{
+	char *p = dst;
+
+	if (safe_chars == NULL)
+		safe_chars = "";
+	while (--len > 0 && *src != '\0') {
+		if (isalnum(*src) || strchr(safe_chars, *src)) {
+			*p++ = *src++;
+		} else {
+			/* encode this char */
+			if (len < 3)
+				break;
+			sprintf(p, "%%%02X", *src++);
+			p += 3;
+			len -= 2;
+		}
+	}
+	*p = '\0';
+	return dst;
+}
 
 static void
 get_ifconfig_info()
@@ -305,6 +374,9 @@ int
 get_via_ftp()
 { 
 	distinfo *list;
+	char ftp_user_encoded[STRSIZE];
+	char ftp_pass_encoded[STRSIZE];
+	char ftp_dir_encoded[STRSIZE];
 	char filename[SSTRSIZE];
 	int  ret;
 
@@ -332,12 +404,37 @@ get_via_ftp()
 		}
 		(void)snprintf(filename, SSTRSIZE, "%s%s", list->name,
 		    dist_postfix);
+		/*
+		 * Invoke ftp to fetch the file.
+		 *
+		 * ftp_pass is quite likely to contain unsafe characters
+		 * that need to be encoded in the URL (for example,
+		 * "@", ":" and "/" need quoting).  Let's be
+		 * paranoid and also encode ftp_user and ftp_dir.  (For
+		 * example, ftp_dir could easily contain '~', which is
+		 * unsafe by a strict reading of RFC 1738).  There's
+		 * no need to encode the ftp_host or filename parts
+		 * of the URL for consumption by ftp, but we may need
+		 * to protect them from the shell, so we wrap the
+		 * whole URL in quotes for the shell.
+		 */
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog(0, 1, "/usr/bin/ftp -a ftp://%s/%s/%s",
-			    ftp_host, ftp_dir, filename);
-		else
-			ret = run_prog(0, 1, "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
-			    ftp_user, ftp_pass, ftp_host, ftp_dir, filename);
+			ret = run_prog(0, 1, "/usr/bin/ftp -a 'ftp://%s/%s/%s'",
+			    ftp_host,
+			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+			    filename);
+		else {
+			ret = run_prog(0, 1, "/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
+			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
+					RFC1738_SAFE_LESS_SHELL),
+			    url_encode(ftp_pass_encoded, ftp_pass, STRSIZE,
+					RFC1738_SAFE_LESS_SHELL),
+			    ftp_host,
+			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+			    filename);
+		}
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
 			msg_display(MSG_ftperror_cont);
