@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.13 2001/05/13 05:01:43 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.14 2001/05/15 06:52:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,19 @@ struct fwohci_ctx {
 struct fwohci_uidtbl {
 	int		fu_valid;
 	u_int8_t	fu_uid[8];
+};
+
+/*
+ * Needed to keep track of outstanding packets during a read op. Since the
+ * packet stream is asynch it's possible to parse a response packet before the
+ * ack bits are processed. In this case something needs to track whether the
+ * abuf is still valid before possibly attempting to use items from within it.
+ */
+
+struct fwohci_cb {
+	struct ieee1394_abuf *ab;
+	int count;
+	int abuf_valid;
 };
 
 struct fwohci_softc {
