@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.6 2004/03/14 18:18:54 chs Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.7 2004/03/21 14:10:08 pk Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -52,10 +52,5 @@ u_int64_t prom_get_msgbuf (int, int);
 
 void prom_stopself(void);
 void prom_startcpu(u_int, void *, u_long);
-
-/*
- * Debug
- */
-void prom_printf (const char *, ...);
 
 #endif	/* _MACHINE_SPARC64_H_ */
