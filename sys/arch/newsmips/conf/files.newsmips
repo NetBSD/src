@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.23 2003/07/27 01:19:29 thorpej Exp $
+#	$NetBSD: files.newsmips,v 1.24 2003/10/25 04:07:28 tsutsui Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -27,14 +27,12 @@ attach ap at mainbus
 file arch/newsmips/apbus/apbus.c		ap
 file arch/newsmips/apbus/apbus_subr.c		ap
 
-device mkclock
-file arch/newsmips/newsmips/clock.c		mkclock
-
+# MK48T02 TOD clock and NVRAM
+device mkclock: mk48txx
 attach mkclock at hb with mkclock_hb
-file arch/newsmips/dev/clock_hb.c		mkclock_hb
-
+file arch/newsmips/dev/mkclock_hb.c		mkclock_hb
 attach mkclock at ap with mkclock_ap
-file arch/newsmips/apbus/clock_ap.c		mkclock_ap
+file arch/newsmips/apbus/mkclock_ap.c		mkclock_ap
 
 attach le at hb: le24
 file arch/newsmips/dev/if_le.c			le needs-count
@@ -89,6 +87,7 @@ file arch/newsmips/apbus/if_tlp_ap.c		tlp_ap
 
 file arch/newsmips/newsmips/autoconf.c
 file arch/newsmips/newsmips/bus.c
+file arch/newsmips/newsmips/clock.c
 file arch/newsmips/newsmips/machdep.c
 file arch/newsmips/newsmips/news3400.c		hb
 file arch/newsmips/newsmips/news5000.c		ap
