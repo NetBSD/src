@@ -1,7 +1,9 @@
-/*	$NetBSD: mdreloc.c,v 1.22 2003/07/24 10:12:27 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.23 2003/07/26 15:04:38 mrg Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <string.h>
 
 #include "debug.h"
 #include "rtld.h"
