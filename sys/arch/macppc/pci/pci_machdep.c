@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 1998/10/21 08:58:36 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 1999/02/04 14:54:00 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -154,21 +154,25 @@ pci_conf_read(pc, tag, reg)
 
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
+		r = &pci_bridges[pc];
+
 		/*
-		 * bandit's minimum device number is 11.  So we behave
-		 * as if there is no device when dev < 11.
+		 * bandit's minimum device number of the first bus is 11.
+		 * So we behave as if there is no device when dev < 11.
 		 */
-		if (dev < 11) {
-			if (reg == PCI_ID_REG)
-				return 0xffffffff;
-			panic("pci_conf_read: dev < 11");
-		}
 		if (func > 7)
 			panic("pci_conf_read: func > 7");
 
-		r = &pci_bridges[pc];
-
-		out32rb(r->addr, (1 << dev) | (func << 8) | reg);
+		if (bus == r->bus) {
+			if (dev < 11) {
+				if (reg == PCI_ID_REG)
+					return 0xffffffff;
+				else
+					panic("pci_conf_read: dev < 11");
+			}
+			out32rb(r->addr, (1 << dev) | (func << 8) | reg);
+		} else
+			out32rb(r->addr, tag | reg | 1);
 		DELAY(10);
 		data = in32rb(r->data);
 		DELAY(10);
@@ -198,13 +202,17 @@ pci_conf_write(pc, tag, reg, data)
 		int bus, dev, func;
 
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-		if (dev < 11 || func > 7)
-			panic("pci_conf_write");
-
 		r = &pci_bridges[pc];
 
-		out32rb(r->addr, (1 << dev) | (func << 8) | reg);
+		if (func > 7)
+			panic("pci_conf_write: func > 7");
+
+		if (bus == r->bus) {
+			if (dev < 11)
+				panic("pci_conf_write: dev < 11");
+			out32rb(r->addr, (1 << dev) | (func << 8) | reg);
+		} else
+			out32rb(r->addr, tag | reg | 1);
 		DELAY(10);
 		out32rb(r->data, data);
 		DELAY(10);

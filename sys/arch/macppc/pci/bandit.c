@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.6 1998/12/29 06:27:59 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.7 1999/02/04 14:54:00 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -70,7 +70,7 @@
 
 static void bandit_init __P((pci_chipset_tag_t));
 static void scan_pci_devs __P((void));
-static void config_slot __P((int, pci_chipset_tag_t));
+static void config_slot __P((int, pci_chipset_tag_t, int));
 
 void
 pci_init()
@@ -139,7 +139,7 @@ scan_pci_devs()
 
 			child = OF_child(node);
 			while (child) {
-				config_slot(child, n);
+				config_slot(child, n, -1);
 				child = OF_peer(child);
 			}
 			n++;
@@ -164,7 +164,7 @@ scan_pci_devs()
 
 			child = OF_child(node);
 			while (child) {
-				config_slot(child, pci_bridges[n].pc);
+				config_slot(child, pci_bridges[n].pc, -1);
 				child = OF_peer(child);
 			}
 			n++;
@@ -175,15 +175,31 @@ scan_pci_devs()
 }
 
 void
-config_slot(node, pc)
+config_slot(node, pc, irq)
 	int node;
 	pci_chipset_tag_t pc;
+	int irq;
 {
 	pcitag_t tag;
-	int sp, irq, intr, csr;
+	int sp, intr, csr;
 	int bus, dev, func;
 	int sz;
 	u_int reg[40], *rp;
+	char name[16];
+
+	bzero(name, sizeof(name));
+	OF_getprop(node, "name", name, sizeof(name));
+	if (strcmp(name, "pci-bridge") == 0) {
+		if (irq == -1)
+			OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq));
+
+		node = OF_child(node);
+		while (node) {
+			config_slot(node, pc, irq);
+			node = OF_peer(node);
+		}
+		return;
+	}
 
 	sz = OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
 	if (sz < 4)
@@ -220,21 +236,18 @@ config_slot(node, pc)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/* Fix intr bits */
-	if (OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq)) ==
-			sizeof(irq)) {
+	if (irq == -1 &&
+	    OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq)) == -1 &&
+	    OF_getprop(node, "interrupts", &irq, sizeof(irq)) == -1)
+		return;
 
-		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-		intr = (intr & 0xffffff00) | (irq & 0xff);
-		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
-	} else if (OF_getprop(node, "interrupts", &irq, sizeof(irq)) ==
-			sizeof(irq)) {
-		/* XXX USB on iMac */
-		if (bus == 0 && dev == 20 && func == 0 && irq == 1)
-			irq = 28;
-		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-		intr = (intr & 0xffffff00) | (irq & 0xff);
-		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
-	}
+	/* XXX USB on iMac */
+	if (bus == 0 && dev == 20 && func == 0 && irq == 1)
+		irq = 28;
+
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	intr = (intr & 0xffffff00) | (irq & 0xff);
+	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 }
 
 /*
