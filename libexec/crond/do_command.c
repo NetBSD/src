@@ -1,19 +1,16 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.3 1993/05/26 18:45:07 guido Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.4 1993/05/28 08:34:17 cgd Exp $";
 #endif
 
 /* $Source: /cvsroot/src/libexec/crond/Attic/do_command.c,v $
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $Log: do_command.c,v $
- * Revision 1.3  1993/05/26 18:45:07  guido
- * Weird security hole removed. Thanks to cor@hacktic.nl
+ * Revision 1.4  1993/05/28 08:34:17  cgd
+ * update for newest version of vixie's cron, as of May 27 1993
  *
- * Revision 1.2  1993/03/28  17:24:44  glass
- * cleanup so that crond compiles quietly
+ * Revision 2.2  1992/12/18  18:46:57  vixie
+ * vix/ckp
  *
- * Revision 1.1.1.1  93/03/21  09:52:52  cgd
- * initial import of 386bsd-0.1 sources
- * 
  * Revision 2.1  90/07/18  00:23:38  vixie
  * Baseline for 4.4BSD release
  * 
@@ -78,7 +75,7 @@ do_command(cmd, u)
 {
 	extern int	fork(), _exit();
 	extern void	child_process(), log_it();
-	extern char	*env_get();
+	extern char	*env_get(), arpadate();
 
 	Debug(DPROC, ("[%d] do_command(%s, (%s,%d,%d))\n",
 		getpid(), cmd, env_get(USERENV, u->envp), u->uid, u->gid))
@@ -106,7 +103,7 @@ do_command(cmd, u)
 }
 
 
-void
+static void
 child_process(cmd, u)
 	char	*cmd;
 	user	*u;
@@ -181,6 +178,16 @@ child_process(cmd, u)
 		*input_data++ = '\0';
 	}
 
+	/* set our directory, uid and gid.  Set gid first, since once
+	 * we set uid, we've lost root privledges.  (oops!)
+	 */
+	setgid(u->gid);
+# if defined(BSD)
+	initgroups(env_get(USERENV, u->envp), u->gid);
+# endif
+	setuid(u->uid);		/* you aren't root after this... */
+	chdir(env_get("HOME", u->envp));
+
 	/* fork again, this time so we can exec the user's command.  Vfork()
 	 * is okay this time, since we are going to exec() pretty quickly.
 	 * I'm assuming that closing pipe ends &whatnot will not affect our
@@ -239,16 +246,6 @@ child_process(cmd, u)
 		do_univ(u);
 # endif
 
-		/* set our directory, uid and gid.  Set gid first, since once
-		 * we set uid, we've lost root privledges.  (oops!)
-		 */
-		setgid(u->gid);
-# if defined(BSD)
-		initgroups(env_get(USERENV, u->envp), u->gid);
-# endif
-		setuid(u->uid);		/* you aren't root after this... */
-		chdir(env_get("HOME", u->envp));
-
 		/* exec the command.
 		 */
 		{
@@ -271,10 +268,10 @@ child_process(cmd, u)
 					getpid(), shell, shell, cmd))
 			 */
 
-# ifdef bad_idea
-			/* files writable by non-owner are a no-no
+			/* files writable by non-owner are a no-no, if we are
+			 * running with privileges.
 			 */
-			{
+			if (u->uid == ROOT_UID) {
 				struct stat sb;
 
 				if (0 != stat(cmd, &sb)) {
@@ -286,14 +283,13 @@ child_process(cmd, u)
 					"crond: %s writable by nonowner\n",
 						cmd);
 					_exit(ERROR_EXIT);
-				} else if (sb.st_uid & 022) {
+				} else if (sb.st_uid != u->uid) {
 					fprintf(stderr,
 					"crond: %s owned by uid %d\n",
 						cmd, sb.st_uid);
 					_exit(ERROR_EXIT);
 				}
 			}
-# endif /*bad_idea*/
 
 			execle(shell, shell, "-c", cmd, (char *)0, u->envp);
 			fprintf(stderr, "execl: couldn't exec `%s'\n", shell);
@@ -433,18 +429,14 @@ child_process(cmd, u)
 			if (mailto)
 			{
 				extern FILE	*popen();
-				extern char	*print_cmd();
+				extern char	*sprintf(), *print_cmd();
 				register char	**env;
 				auto char	mailcmd[MAX_COMMAND];
 				auto char	hostname[MAXHOSTNAMELEN];
 
 				(void) gethostname(hostname, MAXHOSTNAMELEN);
-				(void) sprintf(mailcmd, MAILCMD, mailto);
-				setgid(u->gid);
-# if defined(BSD)
-				initgroups(env_get(USERENV, u->envp), u->gid);
-# endif
-				setuid(u->uid);		/* you aren't root after this... */
+				(void) sprintf(mailcmd, MAILARGS,
+					       MAILCMD, mailto);
 				if (!(mail = popen(mailcmd, "w")))
 				{
 					perror(MAILCMD);
@@ -456,7 +448,10 @@ child_process(cmd, u)
 				"Subject: cron for %s@%s said this\n",
 					usernm, first_word(hostname, ".")
 				);
-				fprintf(mail, "Date: %s", ctime(&TargetTime));
+# if defined(MAIL_DATE)
+				fprintf(mail, "Date: %s",
+					arpadate(&TargetTime));
+# endif /* MAIL_DATE */
 				fprintf(mail, "X-Cron-Cmd: <%s>\n", cmd);
 				for (env = u->envp;  *env;  env++)
 					fprintf(mail, "X-Cron-Env: <%s>\n",
@@ -478,6 +473,18 @@ child_process(cmd, u)
 				bytes++;
 				if (mailto)
 					putc(ch, mail);
+			}
+
+			/* if the cron job output ended on something other
+			 * than a newline, add a newline here.  this helps
+			 * keep mailboxes from being corrupted; apparently
+			 * /bin/mail versions that use \n\nFrom as a marker
+			 * do not guarantee that messages end on newlines,
+			 * which causes follow-on messages to glue together.
+			 */
+			if (mailto && (ch != '\n')) {
+				bytes++;
+				putc(ch, mail);
 			}
 
 			/* only close pipe if we opened it -- i.e., we're
@@ -527,7 +534,7 @@ child_process(cmd, u)
 
 		Debug(DPROC, ("[%d] waiting for grandchild #%d to finish\n",
 			getpid(), children))
-		pid = wait((int *) &waiter);
+		pid = wait(&waiter);
 		if (pid < OK) {
 			Debug(DPROC, ("[%d] no more grandchildren--mail written?\n",
 				getpid()))

@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.4 1993/05/11 08:16:03 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.5 1993/05/28 08:34:22 cgd Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -7,7 +7,7 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.4 19
  * vix 30dec86 [written]
  */
 
-/* Copyright 1988,1990 by Paul Vixie
+/* Copyright 1988,1990,1993 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -21,8 +21,8 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.4 19
  *
  * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
  * I'll try to keep a version up to date.  I can be reached as follows:
- * Paul Vixie, 329 Noe Street, San Francisco, CA, 94114, (415) 864-7013,
- * paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl,crash}!vixie!paul
+ * Paul Vixie, 3477 South Court, Palo Alto, CA, 94306, USA, +1 415 858 2736
+ * paul@vix.com || paul@vixie.sf.ca.us || {hoptoad,pacbell,decwrl}!vixie!paul
  */
 
 
@@ -32,15 +32,13 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.4 19
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #if defined(ATT)
 # include <fcntl.h>
 #endif
-#ifdef SYSLOG
-#include <syslog.h>
+#if defined(SYSLOG)
+# include <syslog.h>
 #endif
+
 
 void log_it(), be_different(), acquire_daemonlock();
 
@@ -49,6 +47,8 @@ char *
 savestr(str)
 	char	*str;
 {
+	extern	int	strlen();
+	extern	char	*malloc(), *strcpy();
 	/**/	char	*temp;
 
 	temp = malloc((unsigned) (strlen(str) + 1));
@@ -289,6 +289,7 @@ be_different()
 	 *  do an IOCTL to void tty association
 	 */
 
+	extern int	getpid(), setpgrp(), open(), ioctl(), close();
 	auto int	fd;
 
 	(void) setpgrp(0, getpid());
@@ -328,13 +329,17 @@ be_different()
 void
 acquire_daemonlock()
 {
-	int	fd = open(PIDFILE, O_RDWR|O_CREAT, 0644);
-	FILE	*fp = fdopen(fd, "r+");
-	int	pid = getpid(), otherpid;
+	char	pidfile[MAX_FNAME];
+	FILE	*fp;
+	int	fd, pid = getpid(), otherpid;
 	char	buf[MAX_TEMPSTR];
 
-	if (fd < 0 || fp == NULL) {
-		sprintf(buf, "can't open or create %s, errno %d", PIDFILE, errno);
+	(void) sprintf(pidfile, PIDFILE, PIDDIR);
+	if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644)))
+	 || (NULL == (fp = fdopen(fd, "r+")))
+	    ) {
+		sprintf(buf, "can't open or create %s: %s",
+			pidfile, strerror(errno));
 		log_it("CROND", pid, "DEATH", buf);
 		exit(ERROR_EXIT);
 	}
@@ -343,8 +348,8 @@ acquire_daemonlock()
 		int save_errno = errno;
 
 		fscanf(fp, "%d", &otherpid);
-		sprintf(buf, "can't lock %s, otherpid may be %d, errno %d",
-			PIDFILE, otherpid, save_errno);
+		sprintf(buf, "can't lock %s, otherpid may be %d: %s",
+			pidfile, otherpid, strerror(save_errno));
 		log_it("CROND", pid, "DEATH", buf);
 		exit(ERROR_EXIT);
 	}
@@ -352,7 +357,8 @@ acquire_daemonlock()
 	rewind(fp);
 	fprintf(fp, "%d\n", pid);
 	fflush(fp);
-	ftruncate(fd, ftell(fp));
+	(void) ftruncate(fd, ftell(fp));
+	(void) fcntl(fd, F_SETFD, 1);
 
 	/* abandon fd and fp even though the file is open. we need to
 	 * keep it open and locked, but we don't need the handles elsewhere.
@@ -535,6 +541,9 @@ log_it(username, pid, event, detail)
 	char	*detail;
 {
 #if defined(LOG_FILE)
+	extern struct tm	*localtime();
+	extern long		time();
+	extern char		*malloc();
 	auto char		*msg;
 	auto long		now = time((long *) 0);
 	register struct tm	*t = localtime(&now);
@@ -557,8 +566,11 @@ log_it(username, pid, event, detail)
 	if (log_fd < OK) {
 		log_fd = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
 		if (log_fd < OK) {
-			fprintf(stderr, "%s: can't open log file\n", ProgramName);
+			fprintf(stderr, "%s: can't open log file\n",
+				ProgramName);
 			perror(LOG_FILE);
+		} else {
+			(void) fcntl(log_fd, F_SETFD, 1);
 		}
 	}
 
@@ -691,9 +703,35 @@ mkprints(src, len)
 	register unsigned char *src;
 	register unsigned int len;
 {
+	extern char *malloc();
 	register char *dst = malloc(len*4 + 1);
 
 	mkprint(dst, src, len);
 
 	return dst;
+}
+
+
+/* Sat, 27 Feb 93 11:44:51 CST
+ * 123456789012345678901234567
+ */
+
+char *
+arpadate(
+	 time_t *clock
+) {
+	time_t t = clock ?*clock :time(NULL);
+	struct tm *tm = localtime(&t);
+	static char ret[30];	/* zone name might be >3 chars */
+	
+	(void) sprintf(ret, "%s, %2d %s %2d %02d:%02d:%02d %s",
+		       DowNames[tm->tm_wday],
+		       tm->tm_mday,
+		       MonthNames[tm->tm_mon],
+		       tm->tm_year,
+		       tm->tm_hour,
+		       tm->tm_min,
+		       tm->tm_sec,
+		       tm->tm_zone);
+	return ret;
 }

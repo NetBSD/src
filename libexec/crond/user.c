@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/user.c,v 1.2 1993/03/28 17:24:49 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/user.c,v 1.3 1993/05/28 08:34:23 cgd Exp $";
 #endif
 
 /* vix 26jan87 [log is in RCS file]
@@ -54,7 +54,7 @@ load_user(crontab_fd, name, uid, gid, dir, shell)
 	char	*dir;
 	char	*shell;
 {
-	char	**env_init(), **env_set();
+	char	*malloc(), *sprintf(), **env_init(), **env_set();
 	int	load_env();
 	entry	*load_entry();
 
