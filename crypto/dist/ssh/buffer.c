@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.6.2.2 2003/09/16 17:57:56 grant Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.6.2.3 2003/09/16 23:29:22 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -24,8 +24,11 @@ RCSID("$OpenBSD: buffer.c,v 1.16 2002/06/26 08:54:18 markus Exp $");
 void
 buffer_init(Buffer *buffer)
 {
-	buffer->alloc = 4096;
-	buffer->buf = xmalloc(buffer->alloc);
+	const u_int len = 4096;
+
+	buffer->alloc = 0;
+	buffer->buf = xmalloc(len);
+	buffer->alloc = len;
 	buffer->offset = 0;
 	buffer->end = 0;
 }
@@ -35,8 +38,10 @@ buffer_init(Buffer *buffer)
 void
 buffer_free(Buffer *buffer)
 {
+	if (buffer->alloc > 0) {
 	memset(buffer->buf, 0, buffer->alloc);
 	xfree(buffer->buf);
+}
 }
 
 /*
