@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.6 1999/03/14 10:31:06 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.7 1999/08/03 09:16:01 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -47,7 +47,7 @@ struct nextdma_config {
 
 	void *nd_cb_arg;							/* callback argument */
 
-	struct generic_bus_dma_tag _nd_dmat; /* should probably be elsewhere */
+	struct next68k_bus_dma_tag _nd_dmat; /* should probably be elsewhere */
 	bus_dmamap_t _nd_map;					/* map currently in dd_next */
 	int          _nd_idx;					/* idx of segment currently in dd_next */
 	bus_dmamap_t _nd_map_cont;    /* map needed to continue DMA */

@@ -1,4 +1,11 @@
-/* $NetBSD: bus_dma.c,v 1.9 1999/07/08 18:08:56 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.10 1999/08/03 09:16:01 dbj Exp $ */
+
+/*
+ * This file was taken from from alpha/common/bus_dma.c
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <dbj@netbsd.org> Sat Jul 31 06:11:33 UTC 1999
+ * original cvs id: NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp 
+ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,11 +44,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pmap_new.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-#if 0
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 1999/07/08 18:08:56 thorpej Exp $");
-#endif
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 1999/08/03 09:16:01 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,42 +63,16 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 1999/07/08 18:08:56 thorpej Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#define _GENERIC_BUS_DMA_PRIVATE
+
+#include <machine/cpu.h>
+
+#define _NEXT68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/intr.h>
+#include <m68k/cacheops.h>
 
-
-#if !defined(DEBUG) || 1
-#define DPRINTF(x)
-#else
-
-#define DPRINTF(x) printf x;
-
-#define XCHR(x) "0123456789abcdef"[(x) & 0xf]
-void
-hex_dump(unsigned char *pkt, size_t len)
-{
-	size_t i, j;
-
-	printf("0000: ");
-	for(i=0; i<len; i++) {
-		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
-		if ((i+1) % 16 == 0) {
-			printf("  %c", '"');
-			for(j=0; j<16; j++)
-				printf("%c", pkt[i-15+j]>=32 && pkt[i-15+j]<127?pkt[i-15+j]:'.');
-			printf("%c\n%c%c%c%c: ", '"', XCHR((i+1)>>12),
-				XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
-		}
-	}
-	printf("\n");
-}
-#endif
-
-
-int	_bus_dmamap_load_buffer_direct_common __P((bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, bus_addr_t,
-	    vm_offset_t *, int *, int));
+int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
+	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
+	    paddr_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -107,7 +88,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct generic_bus_dmamap *map;
+	struct next68k_bus_dmamap *map;
 	void *mapstore;
 	size_t mapsize;
 
@@ -123,18 +104,21 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct generic_bus_dmamap) +
+	mapsize = sizeof(struct next68k_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DEVBUF,
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
 	bzero(mapstore, mapsize);
-	map = (struct generic_bus_dmamap *)mapstore;
+	map = (struct next68k_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
-	map->_dm_boundary = boundary;
+	if (t->_boundary != 0 && t->_boundary < boundary)
+		map->_dm_boundary = t->_boundary;
+	else
+		map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -153,7 +137,7 @@ _bus_dmamap_destroy(t, map)
 	bus_dmamap_t map;
 {
 
-	free(map, M_DEVBUF);
+	free(map, M_DMAMAP);
 }
 
 /*
@@ -163,27 +147,27 @@ _bus_dmamap_destroy(t, map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
+_bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
     lastaddrp, segp, first)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_addr_t wbase;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
-	vm_offset_t curaddr, lastaddr;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
 	lastaddr = *lastaddrp;
+	bmask = ~(map->_dm_boundary - 1);
 
-	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
-
+	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -191,9 +175,7 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
 			    vaddr, &curaddr);
 		else
-			(void) pmap_extract(pmap_kernel(), vaddr, &curaddr);
-
-		curaddr |= wbase;
+			(void) pmap_extract(pmap_kernel(),vaddr, &curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -202,11 +184,14 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-#if 0 && defined(DEBUG)
-		DPRINTF(("Dumping PA 0x%08x-0x%08x, length %d\n",
-				curaddr,curaddr+sgsize,sgsize));
-		hex_dump(vaddr, sgsize);
-#endif
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
 
 		/*
 		 * Insert chunk into a segment, coalescing with
@@ -219,10 +204,14 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			    map->_dm_maxsegsz)
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
+				if (++seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
@@ -241,10 +230,12 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 	 */
 	if (buflen != 0) {
 		/*
-		 * XXX Should fall back on SGMAPs.
+		 * If there is a chained window, we will automatically
+		 * fall back to it.
 		 */
 		return (EFBIG);		/* XXX better return value here? */
 	}
+
 	return (0);
 }
 
@@ -263,7 +254,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -276,8 +267,8 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 		return (EINVAL);
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
-	    p, flags, 0, &lastaddr, &seg, 1);
+	error = _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen,
+	    p, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -295,7 +286,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -307,7 +298,7 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf_direct: no packet header");
+		panic("_bus_dmamap_load_mbuf_direct_common: no packet header");
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
@@ -317,9 +308,8 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer_direct_common(map,
-		    m->m_data, m->m_len, NULL, flags, 0, &lastaddr,
-		    &seg, first);
+		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -339,8 +329,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-#if 0
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -360,7 +349,7 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		p = uio->uio_procp;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
+			panic("_bus_dmamap_load_direct_common: USERSPACE but no proc");
 #endif
 	}
 
@@ -375,9 +364,8 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
 		addr = (caddr_t)iov[i].iov_base;
 
-		error = _bus_dmamap_load_buffer_direct_common(map, addr,
-		    minlen, p, flags, 
-				&lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer_direct_common(t, map,
+		    addr, minlen, p, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
@@ -387,16 +375,6 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		map->dm_nsegs = seg + 1;
 	}
 	return (error);
-#else
-	/* @@@ This needs to be re-synced with the
-	 * arch/alpha/common/bus_dma.c driver. (and probably
-	 * that should be moved to MI code.  Unfortunately,
-	 * the above addition won't compile until this is updated.
-	 * Hopefully, I will get to this shortly.
-   * Darrin B. Jewell <dbj@netbsd.org>  Sun Jul 19 17:28:16 1998
-	 */
-	panic("_bus_dmamap_load_uio_direct: not implemented");
-#endif
 }
 
 /*
@@ -445,14 +423,74 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-
-	/*
-	 * Flush the store buffer.
+	/* flush/purge the cache.
+	 * assumes pointers are aligned
+	 * @@@ should probably be fixed to use offset and len args.
 	 */
 
-  /* Should we do a bus_space barrier call here?
-   * Darrin B Jewell <jewell@mit.edu>  Mon Feb  9 16:56:34 1998
-   */
+	if (ops & BUS_DMASYNC_PREWRITE) {
+		int i;
+		for(i=0;i<map->dm_nsegs;i++) {
+			bus_addr_t p = map->dm_segs[i].ds_addr;
+			bus_addr_t e = p+map->dm_segs[i].ds_len;
+#ifdef DIAGNOSTIC
+			if ((p % 16) || (e % 16)) {
+				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
+						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+			}
+#endif
+			while((p<e)&&(!p%NBPG)) {
+				DCFL(p);							/* flush cache line */
+				p += 16;
+			}
+			while(p+NBPG<=e) {
+				DCFP(p);							/* flush page */
+				p += NBPG;
+			}
+			while(p<e) {
+				DCFL(p);							/* flush cache line */
+				p += 16;
+			}
+#ifdef DIAGNOSTIC
+			if (p != e) {
+				panic("overrun in _bus_dmamap_sync while flushing.\n"
+						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+			}
+#endif
+		}
+	}
+
+	if (ops & BUS_DMASYNC_POSTREAD) {
+		int i;
+		for(i=0;i<map->dm_nsegs;i++) {
+			bus_addr_t p = map->dm_segs[i].ds_addr;
+			bus_addr_t e = p+map->dm_segs[i].ds_len;
+#ifdef DIAGNOSTIC
+			if ((p % 16) || (e % 16)) {
+				panic("unaligned address in _bus_dmamap_sync while purging.\n"
+						"address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
+			}
+#endif
+			while((p<e)&&(!p%NBPG)) {
+				DCPL(p);							/* purge cache line */
+				p += 16;
+			}
+			while(p+NBPG<=e) {
+				DCPP(p);							/* purge page */
+				p += NBPG;
+			}
+			while(p<e) {
+				DCPL(p);							/* purge cache line */
+				p += 16;
+			}
+#ifdef DIAGNOSTIC
+			if (p != e) {
+				panic("overrun in _bus_dmamap_sync while flushing.\n"
+						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+			}
+#endif
+		}
+	}
 }
 
 /*
@@ -468,8 +506,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags; 
 {
-	extern vm_offset_t avail_start, avail_end;
-	vm_offset_t curaddr, lastaddr, high;
+	extern paddr_t avail_start, avail_end;
+	paddr_t curaddr, lastaddr, high;
 	vm_page_t m;    
 	struct pglist mlist;
 	int curseg, error;
@@ -566,20 +604,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;  
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-
-#if 0
-	/*
-	 * If we're only mapping 1 segment, use K0SEG, to avoid
-	 * TLB thrashing.
-	 */
-	if (nsegs == 1) {
-		*kvap = (caddr_t)GENERIC_PHYS_TO_K0SEG(segs[0].ds_addr);
-		return (0);
-	}
-#endif
 
 	size = round_page(size);
 
@@ -615,20 +642,10 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
-#endif
-
-#if 0
-	/*
-	 * Nothing to do if we mapped it with K0SEG.
-	 */
-	if (kva >= (caddr_t)GENERIC_K0SEG_BASE &&
-	    kva <= (caddr_t)GENERIC_K0SEG_END)
-		return;
 #endif
 
 	size = round_page(size);
@@ -662,10 +679,9 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (generic_btop((caddr_t)segs[i].ds_addr + off));
+		return (m68k_btop((caddr_t)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
 	return (-1);
 }
-

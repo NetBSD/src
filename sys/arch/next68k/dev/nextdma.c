@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.15 1999/03/14 10:31:05 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.16 1999/08/03 09:16:01 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <next68k/next68k/isr.h>
 
-#define _GENERIC_BUS_DMA_PRIVATE
+#define _NEXT68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include "nextdmareg.h"
@@ -88,7 +88,6 @@ nextdma_config(nd)
 		bus_dma_tag_t t;
 		t = &nd->_nd_dmat;
 		t->_cookie = nd;
-		t->_get_tag = NULL;           /* lose */
 		t->_dmamap_create = _bus_dmamap_create;
 		t->_dmamap_destroy = _bus_dmamap_destroy;
 		t->_dmamap_load = _bus_dmamap_load_direct;
@@ -96,7 +95,7 @@ nextdma_config(nd)
 		t->_dmamap_load_uio = _bus_dmamap_load_uio_direct;
 		t->_dmamap_load_raw = _bus_dmamap_load_raw_direct;
 		t->_dmamap_unload = _bus_dmamap_unload;
-		t->_dmamap_sync = next_dmamap_sync;
+		t->_dmamap_sync = _bus_dmamap_sync;
   
 		t->_dmamem_alloc = _bus_dmamem_alloc;
 		t->_dmamem_free = _bus_dmamem_free;
@@ -181,68 +180,6 @@ nextdma_reset(nd)
 
 /****************************************************************/
 
-/* If the next had multiple busses, this should probably
- * go elsewhere, but it is here anyway */
-void
-next_dmamap_sync(t, map, offset, len, ops)
-     bus_dma_tag_t t;
-     bus_dmamap_t map;
-     bus_addr_t offset;
-     bus_size_t len;
-     int ops;
-{
-	/* flush/purge the cache.
-	 * assumes pointers are aligned
-	 * @@@ should probably be fixed to use offset and len args.
-	 * should also optimize this to work on pages for larger regions?
-	 */
-
-	if ((ops & BUS_DMASYNC_PREWRITE) ||
-			(ops & BUS_DMASYNC_PREREAD)) {
-		int i;
-		for(i=0;i<map->dm_nsegs;i++) {
-			bus_addr_t p = map->dm_segs[i].ds_addr;
-			bus_addr_t e = p+map->dm_segs[i].ds_len;
-#ifdef DIAGNOSTIC
-			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in next_dmamap_sync while flushing.\n"
-						"address=0x%08x, length=0x%08x, ops=0x%x",
-						p,e,ops);
-			}
-#endif
-			while(p<e) {
-				DCFL(p);								/* flush */
-				p += 16;								/* cache line length */
-			}
-		}
-	}
-
-	if ((ops & BUS_DMASYNC_POSTREAD) ||
-			(ops & BUS_DMASYNC_POSTWRITE)) {
-		int i;
-		for(i=0;i<map->dm_nsegs;i++) {
-			bus_addr_t p = map->dm_segs[i].ds_addr;
-			bus_addr_t e = p+map->dm_segs[i].ds_len;
-#ifdef DIAGNOSTIC
-			/* We don't check the end address for alignment since if the
-			 * dma operation stops short, the end address may be modified.
-			 */
-			if (p % 16) {
-				panic("unaligned address in next_dmamap_sync while purging.\n"
-						"address=0x%08x, length=0x%08x, ops=0x%x",
-						p,e,ops);
-			}
-#endif
-			while(p<e) {
-				DCPL(p);								/* purge */
-				p += 16;								/* cache line length */
-			}
-		}
-	}
-}
-
-/****************************************************************/
-
 
 /* Call the completed and continue callbacks to try to fill
  * in the dma continue buffers.
@@ -253,6 +190,14 @@ next_dma_rotate(nd)
 {
 
 	DPRINTF(("DMA next_dma_rotate()\n"));
+
+#ifdef DIAGNOSTIC
+	if (nd->_nd_map && 
+			nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len == 0x1234beef) {
+		next_dma_print(nd);
+		panic("DMA didn't set read length of segment");
+	}
+#endif
 
 	/* If we've reached the end of the current map, then inform
 	 * that we've completed that map.
@@ -276,6 +221,12 @@ next_dma_rotate(nd)
 		}
 		nd->_nd_idx_cont = 0;
 	}
+
+#ifdef DIAGNOSTIC
+	if (nd->_nd_map) {
+		nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = 0x1234beef;
+	}
+#endif
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map_cont) {
@@ -458,6 +409,8 @@ next_dma_print(nd)
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
 		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_len = %d\n",
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
+		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_read_len = %d\n",
+				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len);
 	} else {
 		printf("NDMAP: nd->_nd_map = NULL\n");
 	}
@@ -470,6 +423,8 @@ next_dma_print(nd)
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
+		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_read_len = %d\n",
+				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_read_len);
 	} else {
 		printf("NDMAP: nd->_nd_map_cont = NULL\n");
 	}
@@ -659,7 +614,7 @@ nextdma_intr(arg)
 				limit -= 0x20;
 			}
 #endif
-			
+
 			if ((limit-next < 0) || 
 					(limit-next >= expected_limit-expected_next)) {
 #ifdef DIAGNOSTIC
@@ -672,13 +627,14 @@ nextdma_intr(arg)
 				panic("Unexpected saved registers values.");
 #endif
 #endif
-			} else {
-				/* Set the length of the segment to match actual length. 
-				 * @@@ is it okay to resize dma segments here?
-				 * i should probably ask jason about this.
+
+				/* @@@ we pretend the entire buffer transferred ok.
+				 * we might consider throwing away this transfer instead
 				 */
-				nd->_nd_map->dm_segs[nd->_nd_idx].ds_len = limit-next;
-				expected_limit = expected_next + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = expected_limit-expected_next;
+			} else {
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = limit-next;
+				expected_limit = expected_next + (limit-next);
 			}
 
 #if 0 /* these checks are turned off until the above mentioned weirdness is fixed. */
