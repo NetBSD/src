@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.20 2003/09/07 16:22:21 wiz Exp $
+.\"	$NetBSD: resolver.3,v 1.21 2005/01/25 01:39:57 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -294,7 +294,7 @@ an array of pointers
 .Fa dnptrs
 to previously-compressed names in the current message.
 The first pointer points to
-to the beginning of the message and the list ends with
+the beginning of the message and the list ends with
 .Dv NULL .
 The limit to the array is specified by
 .Fa lastdnptr .
@@ -328,10 +328,9 @@ which is of size
 .Fa length .
 The size of compressed name is returned or \-1 if there was an error.
 .Sh FILES
-.Bl -tag -width Pa
-/etc/resolv.conf
-The configuration file
-see
+.Bl -tag -width XetcXresolv.confXX
+.It Pa /etc/resolv.conf
+The configuration file, see
 .Xr resolv.conf 5 .
 .El
 .Sh SEE ALSO
