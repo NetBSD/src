@@ -55,5 +55,5 @@ typedef unsigned char byte, DesData[ 8], IdeaData[16];
 extern void genkeys(char *public, char *secret);
 extern void common_key(char *secret, char *public, IdeaData *common,
   DesData *deskey);
-extern void pk_encode(char *in, char *out, DesData *deskey);
-extern void pk_decode(char *in, char *out, DesData *deskey);
+extern void pk_encode(const char *in, char *out, DesData *deskey);
+extern void pk_decode(const char *in, char *out, DesData *deskey);
