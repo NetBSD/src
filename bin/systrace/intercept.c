@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.12 2002/11/25 06:25:09 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.13 2003/03/25 22:58:24 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.12 2002/11/25 06:25:09 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.13 2003/03/25 22:58:24 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -654,11 +654,11 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			 * At this point, filename has to exist and has to
 			 * be a directory.
 			 */
-			if (lstat(rcwd, &st) == -1)
-				failed = 1;
-			else if (userp != ICLINK_NOLAST &&
-			    !(st.st_mode & S_IFDIR))
+			if (userp != ICLINK_NOLAST) {
+				if (lstat(rcwd, &st) == -1 ||
+				    !(st.st_mode & S_IFDIR))
 					failed = 1;
+			}
 		}
 	out:
 		if (failed)
