@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.21.2.4 2004/11/14 08:15:24 skrll Exp $
+# $NetBSD: GENERIC,v 1.21.2.5 2005/01/24 08:34:27 skrll Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.4 $"
+#ident 		"GENERIC-$Revision: 1.21.2.5 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -169,6 +169,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipip		2	# RFC 2003 IP Encapsulation
 #pseudo-device	gif		4	# RFC1933 tunnel

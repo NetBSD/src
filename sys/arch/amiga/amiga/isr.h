@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.9.16.3 2004/09/21 13:12:15 skrll Exp $	*/
+/*	$NetBSD: isr.h,v 1.9.16.4 2005/01/24 08:33:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -31,6 +31,9 @@
  *	@(#)isr.h	7.1 (Berkeley) 5/8/90
  */
 
+#ifndef _AMIGA_ISR_H_
+#define _AMIGA_ISR_H_ 1
+
 struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
@@ -50,3 +53,5 @@ void alloc_sicallback(void);
 void add_sicallback(sifunc_t, void *, void *);
 void rem_sicallback(sifunc_t);
 #endif
+
+#endif /* _AMIGA_ISR_H_ */

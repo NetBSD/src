@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41.2.4 2004/11/14 08:15:16 skrll Exp $
+# $NetBSD: GENERIC,v 1.41.2.5 2005/01/24 08:34:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41.2.4 $"
+#ident 		"GENERIC-$Revision: 1.41.2.5 $"
 
 maxusers	8
 
@@ -184,6 +184,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		2	# RAIDframe disk driver
 #pseudo-device	sl		1	# SLIP interfaces
 #pseudo-device	tun		2	# Network "tunnel" device
+#pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

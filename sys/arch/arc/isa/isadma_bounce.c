@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.6 2003/05/05 12:55:42 fvdl Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.6.2.1 2005/01/24 08:33:58 skrll Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.6 2003/05/05 12:55:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.6.2.1 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,13 +113,12 @@ void	isadma_bounce_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 int	isadma_bounce_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int);
 
-static int isadma_bounce_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_size_t, int));
-static void isadma_bounce_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+static int isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
+	    bus_size_t, int);
+static void isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 void
-isadma_bounce_tag_init(t)
-	bus_dma_tag_t t;
+isadma_bounce_tag_init(bus_dma_tag_t t)
 {
 	/*
 	 * Initialize the DMA tag used for ISA DMA.
@@ -155,7 +154,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 	    flags, dmamp);
 	if (error)
-		return (error);
+		return error;
 
 	map = *dmamp;
 	map->_dm_cookie = NULL;
@@ -219,7 +218,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 			free(map->_dm_cookie, M_DMAMAP);
 		_bus_dmamap_destroy(t, map);
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -263,7 +262,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
 	if (error == 0 ||
 	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
-		return (error);
+		return error;
 
 	/*
 	 * First attempt failed; bounce it.
@@ -275,7 +274,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if ((cookie->id_flags & ID_HAS_BOUNCE) == 0) {
 		error = isadma_bounce_alloc_bouncebuf(t, map, buflen, flags);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	/*
@@ -294,12 +293,12 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 */
 		if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
 			isadma_bounce_free_bouncebuf(t, map);
-		return (error);
+		return error;
 	}
 
 	/* ...so isadma_bounce_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= ID_IS_BOUNCING;
-	return (0);
+	return 0;
 }
 
 /*
@@ -324,7 +323,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Try to load the map the normal way.  If this errors out,
@@ -333,7 +332,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
 	if (error == 0 ||
 	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
-		return (error);
+		return error;
 
 	/*
 	 * First attempt failed; bounce it.
@@ -346,7 +345,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 		error = isadma_bounce_alloc_bouncebuf(t, map, m0->m_pkthdr.len,
 		    flags);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	/*
@@ -365,12 +364,12 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 		 */
 		if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
 			isadma_bounce_free_bouncebuf(t, map);
-		return (error);
+		return error;
 	}
 
 	/* ...so isadma_bounce_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= ID_IS_BOUNCING;
-	return (0);
+	return 0;
 }
 
 /*
@@ -583,8 +582,8 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	else
 		high = trunc_page(avail_end);
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, high));
+	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, high);
 }
 
 /**********************************************************************
@@ -617,7 +616,7 @@ isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	} else
 		cookie->id_flags |= ID_HAS_BOUNCE;
 
-	return (error);
+	return error;
 }
 
 static void

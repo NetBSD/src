@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecreg.h,v 1.3 2001/08/17 20:27:12 fredette Exp $	*/
+/*	$NetBSD: if_ecreg.h,v 1.3.22.1 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,16 +44,16 @@
 
 #if __for_reference_only__
 struct ec_regs {
-	u_int16_t	ec_csr;		/* control/status register */
-	u_int16_t	ec_backoff;	/* backoff seed */
-	u_int8_t	ec_pad1[0x400 - (2 * sizeof(u_int16_t))];
+	uint16_t	ec_csr;		/* control/status register */
+	uint16_t	ec_backoff;	/* backoff seed */
+	uint8_t		ec_pad1[0x400 - (2 * sizeof(uint16_t))];
 	struct		ether_addr ec_arom;	/* address ROM */
-	u_int8_t	ec_pad2[0x200 - sizeof(struct ether_addr)];
+	uint8_t		ec_pad2[0x200 - sizeof(struct ether_addr)];
 	struct		ether_addr ec_aram;	/* address RAM */
-	u_int8_t	ec_pad3[0x200 - sizeof(struct ether_addr)];
-	u_int8_t	ec_tbuf[EC_BUF_SZ];	/* transmit buffer */
-	u_int8_t	ec_abuf[EC_BUF_SZ];	/* receive buffer A */
-	u_int8_t	ec_bbuf[EC_BUF_SZ];	/* receive buffer B */
+	uint8_t		ec_pad3[0x200 - sizeof(struct ether_addr)];
+	uint8_t		ec_tbuf[EC_BUF_SZ];	/* transmit buffer */
+	uint8_t		ec_abuf[EC_BUF_SZ];	/* receive buffer A */
+	uint8_t		ec_bbuf[EC_BUF_SZ];	/* receive buffer B */
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.16.2.3 2004/09/21 13:24:08 skrll Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.16.2.4 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.16.2.3 2004/09/21 13:24:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.16.2.4 2005/01/24 08:35:10 skrll Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,41 +123,37 @@ CFATTACH_DECL(grf, sizeof(struct grf_softc),
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata_gbus  = NULL;
-static struct cfdata *cfdata_grf   = NULL;
+static struct cfdata *cfdata_gbus;
+static struct cfdata *cfdata_grf;
 
 extern struct cfdriver grfbus_cd;
 
 int
-grfbusmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (strcmp(auxp, grfbus_cd.cd_name))
-		return(0);
+		return (0);
 
-	if((x68k_realconfig == 0) || (cfdata_gbus == NULL)) {
+	if ((x68k_realconfig == 0) || (cfdata_gbus == NULL)) {
+
 		/*
 		 * Probe layers we depend on
 		 */
-		if(x68k_realconfig == 0) {
+		if (x68k_realconfig == 0) {
 			cfdata_gbus = cfp;
 		}
 	}
-	return(1);	/* Always there	*/
+	return (1);
 }
 
 void
-grfbusattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int i;
 
 	if (dp == NULL) {
 		i = 0;
-		x68k_config_found(cfdata_gbus, NULL, (void*)&i, grfbusprint);
+		x68k_config_found(cfdata_gbus, NULL, &i, grfbusprint);
 	} else {
 		printf("\n");
 		config_search(grfbussearch, dp, NULL);
@@ -163,70 +161,69 @@ grfbusattach(pdp, dp, auxp)
 }
 
 int
-grfbussearch(dp, match, aux)
-	struct device *dp;
-	struct cfdata *match;
-	
-	void *aux;
+grfbussearch(struct device *dp, struct cfdata *match, void *aux)
 {
-	int i = 0;
-	config_found(dp, (void*)&i, grfbusprint);
+
+	config_found(dp, &match->cf_loc[GRFBCF_ADDR], grfbusprint);
 	return (0);
 }
 
 int
-grfbusprint(auxp, name)
-	void *auxp;
-	const char *name;
+grfbusprint(void *auxp, const char *name)
 {
-	if(name == NULL)
-		return(UNCONF);
-	return(QUIET);
+
+	if (name == NULL)
+		return (UNCONF);
+	return (QUIET);
 }
 
 /*
  * Normal init routine called by configure() code
  */
 int
-grfmatch(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+grfmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
-	/* XXX console at grf0 */
+	int addr;
+
+	addr = cfp->cf_loc[GRFBCF_ADDR];
 	if (x68k_realconfig == 0) {
-		if (cfp->cf_unit != 0)
-			return(0);
+		if (addr != 0)
+			return 0;
 		cfdata_grf = cfp;
 	}
-	return(1);
+
+	if (addr < 0 || addr > ngrfsw)
+		return 0;
+
+	return 1;
 }
 
 static struct grf_softc	congrf;
 
 void
-grfattach(parent, dp, aux)
-	struct device *parent;
-	struct device *dp;
-	void *aux;
+grfattach(struct device *parent, struct device *dp, void *aux)
 {
 	struct grf_softc *gp;
+	struct cfdata *cf;
+	int addr;
 
 	/*
 	 * Handle exeption case: early console init
 	 */
-	if(dp == NULL) {
+	if (dp == NULL) {
 		/* Attach console ite */
 		grfinit(&congrf, 0);
 		x68k_config_found(cfdata_grf, NULL, &congrf, grfprint);
 		return;
 	}
 
-	grfinit(dp, dp->dv_unit);
+	cf = dp->dv_cfdata;
+	addr = cf->cf_loc[GRFBCF_ADDR];
+	grfinit(dp, addr);
 
 	gp = (struct grf_softc *)dp;
-	printf(": %d x %d ", gp->g_display.gd_dwidth,
-	    gp->g_display.gd_dheight);
+	gp->g_cfaddr = addr;
+	printf(": %d x %d ", gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
 	if (gp->g_display.gd_colors == 2)
 		printf("monochrome");
 	else
@@ -240,30 +237,27 @@ grfattach(parent, dp, aux)
 }
 
 int
-grfprint(auxp, pnp)
-void *auxp;
-const char *pnp;
+grfprint(void *auxp, const char *pnp)
 {
-	if(pnp)
+
+	if (pnp)
 		aprint_normal("ite at %s", pnp);
 	return UNCONF;
 }
 
 int
-grfinit(dp, unit)
-	void *dp;
-	int unit;
+grfinit(void *dp, int cfaddr)
 {
 	struct grf_softc *gp = dp;
-	register struct grfsw *gsw;
+	struct grfsw *gsw;
 	caddr_t addr;
 
-	if (unit == 0)
+	if (cfaddr == 0)
 		addr = (caddr_t)IODEVbase->tvram;
 	else
 		addr = (caddr_t)IODEVbase->gvram;
 
-	gsw = &grfsw[unit];
+	gsw = &grfsw[cfaddr];
 	if (gsw < &grfsw[ngrfsw] && (*gsw->gd_init)(gp, addr)) {
 		gp->g_sw = gsw;
 		gp->g_display.gd_id = gsw->gd_swid;

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.183.2.4 2004/11/29 07:24:01 skrll Exp $
+# $NetBSD: ALPHA,v 1.183.2.5 2005/01/24 08:33:57 skrll Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.183.2.4 $"
+ident		"ALPHA-$Revision: 1.183.2.5 $"
 
 maxusers 32
 
@@ -587,6 +587,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.136.2.5 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.136.2.6 2005/01/24 08:36:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.5 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.6 2005/01/24 08:36:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3257,14 +3257,11 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		return ENOMEM;
 	}
 
-	/* XXX non-pmap_wired_count case must be handled by caller */
-#ifdef pmap_wired_count
 	if (limit != 0 &&
 	    (size + ptoa(pmap_wired_count(vm_map_pmap(map))) > limit)) {
 		vm_map_unlock(map);
 		return ENOMEM;
 	}
-#endif
 
 	/*
 	 * Pass 2.
@@ -4377,13 +4374,8 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
 	    map->nentries, map->size, map->ref_count, map->timestamp,
 	    map->flags);
-#ifdef pmap_wired_count
 	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
 	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
-#else
-	(*pr)("\tpmap=%p(resident=%ld)\n", map->pmap,
-	    pmap_resident_count(map->pmap));
-#endif
 	if (!full)
 		return;
 	for (entry = map->header.next; entry != &map->header;

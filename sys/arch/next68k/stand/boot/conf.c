@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.2.3 2004/09/21 13:19:44 skrll Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.2.4 2005/01/24 08:34:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -49,17 +49,15 @@
  * Device configuration
  */
 
-extern int	sdstrategy __P((void *, int, daddr_t, size_t,
-				void *, size_t *));
-extern int	sdopen __P((struct open_file *, ...));
-extern int	sdclose __P((struct open_file *));
+extern int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int	sdopen(struct open_file *, ...);
+extern int	sdclose(struct open_file *);
 #define	sdioctl	noioctl
 
 /* ### now from libsa
-extern int	enstrategy __P((void *, int, daddr_t, size_t,
-				void *, size_t *));
-extern int	enopen __P((struct open_file *, ...));
-extern int	enclose __P((struct open_file *));
+extern int	enstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int	enopen(struct open_file *, ...);
+extern int	enclose(struct open_file *);
 #define	enioctl	noioctl
 */
 

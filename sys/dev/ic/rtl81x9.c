@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.45.2.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45.2.5 2005/01/24 08:35:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.4 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.5 2005/01/24 08:35:19 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -768,6 +768,12 @@ rtk_attach(sc)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
+
 	return;
  fail_4:
 	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
@@ -862,6 +868,10 @@ rtk_detach(sc)
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->mii.mii_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -1264,6 +1274,11 @@ int rtk_intr(arg)
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		rtk_start(ifp);
+
+#if NRND > 0
+	if (RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
 
 	return (handled);
 }

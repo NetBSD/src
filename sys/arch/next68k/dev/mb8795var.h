@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.7 2002/09/11 01:46:32 mycroft Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.7.6.1 2005/01/24 08:34:18 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -53,13 +53,6 @@ struct mb8795_glue {
 	void	(*gl_dma_tx_go)(struct mb8795_softc *);
 	int	(*gl_dma_tx_mbuf)(struct mb8795_softc *, struct mbuf *);
 	int	(*gl_dma_tx_isactive)(struct mb8795_softc *);
-#if 0
-	int	(*gl_dma_setup)(struct mb8795_softc *,
-		    caddr_t *, size_t *, int, size_t *);
-	void	(*gl_dma_go)(struct mb8795_softc *);
-	void	(*gl_dma_stop)(struct mb8795_softc *);
-	int	(*gl_dma_isactive)(struct mb8795_softc *);
-#endif
 	/* Optional entry points. */
 };
 
@@ -113,13 +106,13 @@ struct mb8795_softc {
 #define MBDMA_TX_MBUF(sc,m)	(*(sc)->sc_glue->gl_dma_tx_mbuf) ((sc), (m))
 #define	MBDMA_TX_ISACTIVE(sc)	(*(sc)->sc_glue->gl_dma_tx_isactive)((sc))
 
-void mb8795_config __P((struct mb8795_softc *, int *, int, int));
-void mb8795_init __P((struct mb8795_softc *));
-int mb8795_ioctl __P((struct ifnet *, u_long, caddr_t));
-void mb8795_reset __P((struct mb8795_softc *));
-void mb8795_start __P((struct ifnet *));
-void mb8795_stop __P((struct mb8795_softc *));
-void mb8795_watchdog __P((struct ifnet *));
+void mb8795_config(struct mb8795_softc *, int *, int, int);
+void mb8795_init(struct mb8795_softc *);
+int mb8795_ioctl(struct ifnet *, u_long, caddr_t);
+void mb8795_reset(struct mb8795_softc *);
+void mb8795_start(struct ifnet *);
+void mb8795_stop(struct mb8795_softc *);
+void mb8795_watchdog(struct ifnet *);
 
-void mb8795_rint __P((struct mb8795_softc *));
-void mb8795_tint __P((struct mb8795_softc *));
+void mb8795_rint(struct mb8795_softc *);
+void mb8795_tint(struct mb8795_softc *);

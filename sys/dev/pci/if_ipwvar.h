@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.2.2.4 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.2.2.5 2005/01/24 08:35:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -124,6 +124,7 @@ struct ipw_softc {
 	u_int32_t			table2_base;
 
 	u_int32_t			txcur;
+	u_int32_t			txfree;
 	u_int32_t			txold;
 	u_int32_t			rxcur;
 

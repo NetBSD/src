@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.3.20.3 2004/09/21 13:23:29 skrll Exp $	*/
+/*	$NetBSD: enable.c,v 1.3.20.4 2005/01/24 08:35:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.3.20.3 2004/09/21 13:23:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.3.20.4 2005/01/24 08:35:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/sun/fbio.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.3.20.3 2004/09/21 13:23:29 skrll Exp $"
 
 volatile short *enable_reg;
 
-void
-enable_init()
+void 
+enable_init(void)
 {
 
 	enable_reg = (short*) obio_find_mapping(OBIO_ENABLEREG, 2);
@@ -60,9 +60,8 @@ enable_init()
  * External interfaces to the system enable register.
  */
 
-void
-enable_fpu(on)
-	int on;
+void 
+enable_fpu(int on)
 {
 	int s;
 	short ena;
@@ -79,9 +78,8 @@ enable_fpu(on)
 	splx(s);
 }
 
-void
-enable_video(on)
-	int on;
+void 
+enable_video(int on)
 {
 	int s;
 	short ena;

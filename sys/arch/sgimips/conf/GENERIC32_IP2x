@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.19.2.7 2005/01/17 19:30:09 skrll Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.19.2.8 2005/01/24 08:34:33 skrll Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.19.2.7 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.19.2.8 $"
 
 maxusers	32
 
@@ -275,6 +275,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

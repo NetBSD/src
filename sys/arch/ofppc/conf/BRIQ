@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.10.2.4 2004/11/14 08:15:24 skrll Exp $
+#	$NetBSD: BRIQ,v 1.10.2.5 2005/01/24 08:34:26 skrll Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10.2.4 $"
+#ident 		"GENERIC-$Revision: 1.10.2.5 $"
 
 maxusers	32
 
@@ -150,6 +150,7 @@ pseudo-device	ipfilter		# IP Filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f

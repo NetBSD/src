@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.3.52.3 2004/09/21 13:24:08 skrll Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.3.52.4 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -92,14 +92,15 @@ struct	grfsw {
 	int	gd_hwid;	/* id returned by hardware */
 	int	gd_swid;	/* id to be returned by software */
 	char	*gd_desc;	/* description printed at config time */
-	int	(*gd_init) __P((struct grf_softc *, caddr_t));
-	int	(*gd_mode) __P((struct grf_softc *, u_long, caddr_t));
+	int	(*gd_init)(struct grf_softc *, caddr_t);
+	int	(*gd_mode)(struct grf_softc *, u_long, caddr_t);
 };
 
 /* per display info */
 struct	grf_softc {
 	struct device g_device;		/* for config */
 	int	g_flags;		/* software flags */
+	int	g_cfaddr;		/* "addr" locator */
 	struct  grfsw *g_sw;		/* static configuration info */
 	caddr_t	g_regkva;		/* KVA of registers */
 	caddr_t	g_fbkva;		/* KVA of framebuffer */

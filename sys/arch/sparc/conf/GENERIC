@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147.2.4 2004/11/14 08:15:25 skrll Exp $
+# $NetBSD: GENERIC,v 1.147.2.5 2005/01/24 08:34:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147.2.4 $"
+#ident 		"GENERIC-$Revision: 1.147.2.5 $"
 
 maxusers	32
 
@@ -568,6 +568,7 @@ pseudo-device	pppoe
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 pseudo-device	tun		4
+pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel

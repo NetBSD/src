@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.11.16.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.11.16.4 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.11.16.3 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.11.16.4 2005/01/24 08:35:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns_proto.c,v 1.11.16.3 2004/09/21 13:38:23 skrll Exp
 #include <netns/spp_timer.h>
 #include <netns/spp_var.h>
 
-extern	struct domain nsdomain;
+DOMAIN_DEFINE(nsdomain);	/* forward declare and add to link set */
 
 const struct protosw nssw[] = {
 { 0,		&nsdomain,	0,		0,
@@ -96,6 +96,6 @@ const struct protosw nssw[] = {
 
 struct domain nsdomain =
     { PF_NS, "network systems", 0, 0, 0, 
-      nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])], 0,
+      nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])],
       rn_inithead, 16, sizeof(struct sockaddr_ns)};
 

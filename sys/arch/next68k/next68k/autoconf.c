@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.2.4 2004/11/02 07:50:46 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.5 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.4 2004/11/02 07:50:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.5 2005/01/24 08:34:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.4 2004/11/02 07:50:46 skrll Exp 
 volatile u_long *intrstat;
 volatile u_long *intrmask;
 
-static struct device *getdevunit __P((char *, int));
-static int devidentparse __P((const char *, int *, int *, int *));
-static int atoi __P((const char *));
+static struct device *getdevunit(char *, int);
+static int devidentparse(const char *, int *, int *, int *);
+static int atoi(const char *);
 
 struct device_equiv {
 	char *alias;
@@ -126,7 +126,7 @@ static int ndevice_equivs = (sizeof(device_equiv)/sizeof(device_equiv[0]));
  * Determine mass storage and memory configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 /* 	int dma_rev; */
 	extern u_int rom_intrmask;
@@ -169,7 +169,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	int count, lun, part;
 	
@@ -188,9 +188,7 @@ cpu_rootconf()
  * find a device matching "name" and unit number
  */
 static struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
+getdevunit(char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -224,11 +222,7 @@ getdevunit(name, unit)
  *   (count, lun, part)
  */
 static int
-devidentparse(spec, count, lun, part)
-	const char *spec;
-	int *count; 
-	int *lun;
-	int *part;
+devidentparse(const char *spec, int *count, int *lun, int *part)
 {
 	int i;
 	const char *args[3];
@@ -270,8 +264,7 @@ devidentparse(spec, count, lun, part)
 }
 
 static int
-atoi(s)
-	const char *s;
+atoi(const char *s)
 {
 	int val = 0;
 	

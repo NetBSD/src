@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.180.2.6 2005/01/17 19:30:38 skrll Exp $	*/
+/*	$NetBSD: audio.c,v 1.180.2.7 2005/01/24 08:35:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.180.2.6 2005/01/17 19:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.180.2.7 2005/01/24 08:35:18 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -775,7 +775,7 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 	stream->start = malloc(size, M_DEVBUF, M_WAITOK);
 	if (stream->start == NULL)
 		return ENOMEM;
-	frame_size = param->precision / 8 * param->channels;
+	frame_size = (param->precision + 7) / 8 * param->channels;
 	size = (size / frame_size) * frame_size;
 	stream->end = stream->start + size;
 	stream->inp = stream->start;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.3 2004/09/21 13:12:47 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.3 2004/09/21 13:12:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,10 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
 		    -1 };
 
-#define NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
+#define NO_MBR_SIGNATURE ((struct mbr_partition *)-1)
 
 static struct mbr_partition *
-mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
+mbr_findslice(struct mbr_partition* dp, struct buf *bp);
 
 
 /*
@@ -67,21 +67,19 @@ mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
  */
 static
 struct mbr_partition *
-mbr_findslice(dp, bp)
-	struct mbr_partition *dp;
-	struct buf *bp;
+mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 {
 	struct mbr_partition *ourdp = NULL;
 #if 0
-	u_int16_t *mbrmagicp;
+	uint16_t *mbrmagicp;
 #endif
 	int i;
 
 #if 0
 	/* Note: Magic number is little-endian. */
-	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGIC_OFFSET);
+	mbrmagicp = (uint16_t *)(bp->b_data + MBR_MAGIC_OFFSET);
 	if (*mbrmagicp != MBR_MAGIC)
-		return (NO_MBR_SIGNATURE);
+		return NO_MBR_SIGNATURE;
 #endif
 
 	/* XXX how do we check veracity/bounds of this? */
@@ -125,7 +123,7 @@ mbr_findslice(dp, bp)
 		}
 	}
 
-	return (ourdp);
+	return ourdp;
 }
 
 
@@ -145,11 +143,8 @@ mbr_findslice(dp, bp)
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -247,18 +242,21 @@ readdisklabel(dev, strat, lp, osdep)
 #if 0
 				if (lp->d_ntracks != dp->mbrp_ehd + 1 ||
 				    lp->d_nsectors != DPSECT(dp->mbrp_esect)) {
-					printf("disklabel: BIOS sees chs %d/%d/%d as ",
-						lp->d_ncylinders, lp->d_ntracks,
-						lp->d_nsectors);
+					printf("disklabel: BIOS sees chs "
+					    "%d/%d/%d as ",
+					    lp->d_ncylinders, lp->d_ntracks,
+					    lp->d_nsectors);
 					lp->d_ntracks = dp->mbrp_ehd + 1;
 					lp->d_nsectors = DPSECT(dp->mbrp_esect);
-					lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-					lp->d_ncylinders = lp->d_secperunit / lp->d_secpercyl;
-					if (! lp->d_ncylinders)
+					lp->d_secpercyl =
+					    lp->d_ntracks * lp->d_nsectors;
+					lp->d_ncylinders =
+					    lp->d_secperunit / lp->d_secpercyl;
+					if (lp->d_ncylinders == 0)
 						lp->d_ncylinders = 1;
 					printf("%d/%d/%d\n",
-						lp->d_ncylinders, lp->d_ntracks,
-						lp->d_nsectors);
+					    lp->d_ncylinders, lp->d_ntracks,
+					    lp->d_nsectors);
 				    }
 #endif
 			}
@@ -281,7 +279,8 @@ nombrpart:
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+	    sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -352,7 +351,7 @@ nombrpart:
 
 done:
 	brelse(bp);
-	return (msg);
+	return msg;
 }
 
 /*
@@ -360,28 +359,26 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
 
 	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-		|| (nlp->d_secsize % DEV_BSIZE) != 0)
-			return(EINVAL);
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
+	    (nlp->d_secsize % DEV_BSIZE) != 0)
+		return EINVAL;
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
-		return (0);
+		return 0;
 	}
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* XXX missing check if other dos partitions will be overwritten */
 
@@ -389,11 +386,11 @@ setdisklabel(olp, nlp, openmask, osdep)
 		i = ffs(openmask) - 1;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
-			return (EBUSY);
+			return EBUSY;
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
+			return EBUSY;
 		/*
 		 * Copy internally-set partition information
 		 * if new label doesn't include it.		XXX
@@ -408,7 +405,7 @@ setdisklabel(olp, nlp, openmask, osdep)
  	nlp->d_checksum = 0;
  	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
-	return (0);
+	return 0;
 }
 
 
@@ -416,11 +413,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
@@ -488,7 +482,8 @@ nombrpart:
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+	    sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
@@ -504,7 +499,7 @@ nombrpart:
 
 done:
 	brelse(bp);
-	return (error);
+	return error;
 }
 
 /*
@@ -513,10 +508,7 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
@@ -554,9 +546,9 @@ bounds_check_with_label(dk, bp, wlabel)
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-	return (1);
+	return 1;
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return (-1);
+	return -1;
 }

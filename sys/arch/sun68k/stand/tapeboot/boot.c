@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.24.3 2004/09/21 13:23:40 skrll Exp $ */
+/*	$NetBSD: boot.c,v 1.1.24.4 2005/01/24 08:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -54,8 +54,8 @@
 char	defname[32] = "1";
 char	line[80];
 
-int
-main()
+int 
+main(void)
 {
 	char *cp, *file;
 	void *entry;

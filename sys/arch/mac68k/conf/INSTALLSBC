@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.14.2.4 2004/11/14 08:15:16 skrll Exp $
+#	$NetBSD: INSTALLSBC,v 1.14.2.5 2005/01/24 08:34:13 skrll Exp $
 #
 # INSTALLSBC
 
@@ -140,10 +140,10 @@ zstty*	at zsc? channel ?
 
 # SCSI controllers
 # XXX - use only one of ncrscsi or sbc
-#ncrscsi0 at obio?			# SCSI NCR 5380
-sbc0	at obio? flags 0x1		# MI SCSI NCR 5380
-esp0	at obio?			# SCSI NCR 53C9x
-esp1	at obio?			# SCSI NCR 53C9x
+#ncrscsi0 at obio? addr 0		# SCSI NCR 5380
+sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
+esp0	at obio? addr 0			# SCSI NCR 53C9x
+esp1	at obio? addr 1			# SCSI NCR 53C9x
 
 # SCSI bus support
 scsibus* at scsi?

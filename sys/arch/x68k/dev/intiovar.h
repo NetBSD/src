@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.4.6.3 2004/09/21 13:24:08 skrll Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.4.6.4 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  *
@@ -75,15 +75,15 @@ enum intio_map_flag {
 	INTIO_MAP_ALLOCATE = 0,
 	INTIO_MAP_TESTONLY = 1
 };
-int intio_map_allocate_region __P((struct device*, struct intio_attach_args*, enum intio_map_flag));
-int intio_map_free_region __P((struct device*, struct intio_attach_args*));
+int intio_map_allocate_region(struct device *, struct intio_attach_args *,
+	enum intio_map_flag);
+int intio_map_free_region(struct device *, struct intio_attach_args *);
 
+typedef int (*intio_intr_handler_t)(void *);
 
-typedef int (*intio_intr_handler_t) __P((void*));
-
-int intio_intr_establish __P((int, const char *, intio_intr_handler_t, void *));
-int intio_intr_disestablish __P((int, void *));
-int intio_intr __P((struct frame *));
+int intio_intr_establish(int, const char *, intio_intr_handler_t, void *);
+int intio_intr_disestablish(int, void *);
+int intio_intr(struct frame *);
 
 
 #define PHYS_INTIODEV 0x00c00000
@@ -160,7 +160,7 @@ extern u_int8_t *intiobase;
 
 #define intio_set_sicilian_ivec(a) \
 	intio_sicilian[sicilian_ivec] = (a)
-void intio_set_ivec __P((int));
+void intio_set_ivec(int);
 
 struct intio_dma_cookie {
 	int	id_flags;		/* flags; see below */

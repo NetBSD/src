@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.543.2.11 2005/01/17 19:31:25 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.543.2.12 2005/01/24 08:35:26 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -932,6 +932,18 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_KAUAI	0x003b		/* Kauai ATA Controller */
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid I/O Controller */
+#define	PCI_PRODUCT_APPLE_INTREPID_USB	0x003f		/* Intrepid USB Controller */
+#define	PCI_PRODUCT_APPLE_K2_USB	0x0040		/* K2 USB Controller */
+#define	PCI_PRODUCT_APPLE_K2	0x0041		/* K2 MAC-IO Controller */
+#define	PCI_PRODUCT_APPLE_K2_FW	0x0042		/* K2 Firewire */
+#define	PCI_PRODUCT_APPLE_K2_UATA	0x0043		/* K2 UATA Controller */
+#define	PCI_PRODUCT_APPLE_U3_PPB1	0x0045		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB2	0x0046		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB3	0x0047		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB4	0x0048		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
+#define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1494,6 +1506,7 @@
 #define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
 #define	PCI_PRODUCT_GALILEO_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_GALILEO_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64360	0x6460		/* MV6436x System Controller */

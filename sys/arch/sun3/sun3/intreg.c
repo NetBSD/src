@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.20.6.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: intreg.c,v 1.20.6.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.20.6.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.20.6.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,9 @@ struct intreg_softc {
 	volatile u_char *sc_reg;
 };
 
-static int  intreg_match __P((struct device *, struct cfdata *, void *));
-static void intreg_attach __P((struct device *, struct device *, void *));
-static int soft1intr __P((void *));
+static int  intreg_match(struct device *, struct cfdata *, void *);
+static void intreg_attach(struct device *, struct device *, void *);
+static int soft1intr(void *);
 
 CFATTACH_DECL(intreg, sizeof(struct intreg_softc),
     intreg_match, intreg_attach, NULL, NULL);
@@ -76,8 +76,8 @@ volatile u_char *interrupt_reg;
 int intreg_attached;
 
 /* called early (by internal_configure) */
-void
-intreg_init()
+void 
+intreg_init(void)
 {
 	interrupt_reg = obio_find_mapping(IREG_ADDR, 1);
 	if (!interrupt_reg) {
@@ -89,11 +89,8 @@ intreg_init()
 }
 
 
-static int
-intreg_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+intreg_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -109,11 +106,8 @@ intreg_match(parent, cf, args)
 }
 
 
-static void
-intreg_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+intreg_attach(struct device *parent, struct device *self, void *args)
 {
 	struct intreg_softc *sc = (void *)self;
 
@@ -133,9 +127,8 @@ intreg_attach(parent, self, args)
  *	Network software interrupt
  *	Soft clock interrupt
  */
-static int
-soft1intr(arg)
-	void *arg;
+static int 
+soft1intr(void *arg)
 {
 	union sun3sir sir;
 	int s;
@@ -170,8 +163,8 @@ soft1intr(arg)
 }
 
 
-void isr_soft_request(level)
-	int level;
+void 
+isr_soft_request(int level)
 {
 	u_char bit;
 
@@ -182,8 +175,8 @@ void isr_soft_request(level)
 	single_inst_bset_b(*interrupt_reg, bit);
 }
 
-void isr_soft_clear(level)
-	int level;
+void 
+isr_soft_clear(int level)
 {
 	u_char bit;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2.6.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.6.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matthew Fredette
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.6.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.6.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,12 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.6.3 2004/09/21 13:23:07 skrll Exp $
 
 #include <sun2/dev/cons.h>
 
-static void prom_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void prom_cnpollc __P((dev_t, int));
-static void prom_cnputc __P((dev_t, int));
+static void prom_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void prom_cnpollc(dev_t, int);
+static void prom_cnputc(dev_t, int);
 
 #ifdef	PROM_OBP_V2
 /*    
@@ -102,9 +102,8 @@ struct consdev consdev_prom = {
  */
 struct consdev *cn_tab = &consdev_prom;
 
-void
-prom_cnprobe(cd)
-	struct consdev *cd;
+void 
+prom_cnprobe(struct consdev *cd)
 {
 #if NPCONS > 0
 	extern const struct cdevsw pcons_cdevsw;
@@ -114,9 +113,8 @@ prom_cnprobe(cd)
 #endif
 }
 
-int
-prom_cngetc(dev)
-	dev_t dev;
+int 
+prom_cngetc(dev_t dev)
 {
 	int ch;
 #ifdef DDB
@@ -132,19 +130,16 @@ prom_cngetc(dev)
 	return ch;
 }
 
-static void
-prom_cninit(cn)
-	struct consdev *cn;
+static void 
+prom_cninit(struct consdev *cn)
 {
 }
 
 /*
  * PROM console output putchar.
  */
-static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+static void 
+prom_cnputc(dev_t dev, int c)
 {
 	int s;
 
@@ -153,10 +148,8 @@ prom_cnputc(dev, c)
 	splx(s);
 }
 
-void
-prom_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+void 
+prom_cnpollc(dev_t dev, int on)
 {
 	if (on) {
                 /* Entering debugger. */
@@ -180,13 +173,9 @@ prom_cnpollc(dev, on)
 #endif
 
 #ifdef notyet /* PROM_OBP_V2 */
-void
-prom_get_device_args(prop, dev, dev_sz, args, args_sz)
-	const char *prop;
-	char *dev;
-	unsigned int dev_sz;
-	char *args;
-	unsigned int args_sz;
+void 
+prom_get_device_args(const char *prop, char *dev, unsigned int dev_sz,
+    char *args, unsigned int args_sz)
 {
 	char *cp, buffer[128];
                 
@@ -213,8 +202,8 @@ prom_get_device_args(prop, dev, dev_sz, args, args_sz)
  * Determine which device is the console using
  * the PROM "input source" and "output sink".
  */
-void
-consinit()
+void 
+consinit(void)
 {
 #ifdef	notyet /* PROM_OBP_V2 */
 	char buffer[128];

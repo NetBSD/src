@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.17.6.4 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: par.c,v 1.17.6.5 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.17.6.4 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.17.6.5 2005/01/24 08:35:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,14 +83,14 @@ struct	par_softc {
 #define PARF_OWRITE	0x80
 
 
-void partimo __P((void *));
-void parstart __P((void *);)
-void parintr __P((void *));
-int parrw __P((dev_t, struct uio *));
-int parhztoms __P((int));
-int parmstohz __P((int));
-int parsendch __P((struct par_softc*, u_char));
-int parsend __P((struct par_softc*, u_char *, int));
+void partimo(void *);
+void parstart(void *);
+void parintr(void *);
+int parrw(dev_t, struct uio *);
+int parhztoms(int);
+int parmstohz(int);
+int parsendch(struct par_softc *, u_char);
+int parsend(struct par_softc *, u_char *, int);
 
 static struct callout intr_callout = CALLOUT_INITIALIZER;
 
@@ -108,8 +108,8 @@ int	pardebug = 0;
 #endif
 #endif
 
-int parmatch __P((struct device *, struct cfdata *, void *));
-void parattach __P((struct device *, struct device *, void *));
+int parmatch(struct device *, struct cfdata *, void *);
+void parattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(par, sizeof(struct par_softc),
     parmatch, parattach, NULL, NULL);
@@ -128,11 +128,8 @@ const struct cdevsw par_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-int
-parmatch(pdp, cfp, aux)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *aux;
+int 
+parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -155,10 +152,8 @@ parmatch(pdp, cfp, aux)
 	return 1;
 }
 
-void
-parattach(pdp, dp, aux)
-	struct device *pdp, *dp;
-	void *aux;
+void 
+parattach(struct device *pdp, struct device *dp, void *aux)
 {
 	struct par_softc *sc = (struct par_softc *)dp;
 	struct intio_attach_args *ia = aux;
@@ -194,11 +189,8 @@ parattach(pdp, dp, aux)
 	callout_init(&sc->sc_start_ch);
 }
 
-int
-paropen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+paropen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc;
@@ -223,11 +215,8 @@ paropen(dev, flags, mode, p)
 	return(0);
 }
 
-int
-parclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+parclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = UNIT(dev);
 	int s;
@@ -244,9 +233,8 @@ parclose(dev, flags, mode, p)
 	return (0);
 }
 
-void
-parstart(arg)
-	void *arg;
+void 
+parstart(void *arg)
 {
 	struct par_softc *sc = arg;
 #ifdef DEBUG
@@ -257,9 +245,8 @@ parstart(arg)
 	wakeup(sc);
 }
 
-void
-partimo(arg)
-	void *arg;
+void 
+partimo(void *arg)
 {
 	struct par_softc *sc = arg;
 #ifdef DEBUG
@@ -270,11 +257,8 @@ partimo(arg)
 	wakeup(sc);
 }
 
-int
-parwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+int 
+parwrite(dev_t dev, struct uio *uio, int flag)
 {
 	
 #ifdef DEBUG
@@ -284,10 +268,8 @@ parwrite(dev, uio, flag)
 	return (parrw(dev, uio));
 }
 
-int
-parrw(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+int 
+parrw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc = par_cd.cd_devs[unit];
@@ -418,13 +400,8 @@ parrw(dev, uio)
 	return (error);
 }
 
-int
-parioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int 
+parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
 	struct parparam *pp, *upp;
@@ -456,9 +433,8 @@ parioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
-int
-parhztoms(h)
-	int h;
+int 
+parhztoms(int h)
 {
 	extern int hz;
 	int m = h;
@@ -468,9 +444,8 @@ parhztoms(h)
 	return(m);
 }
 
-int
-parmstohz(m)
-	int m;
+int 
+parmstohz(int m)
 {
 	extern int hz;
 	int h = m;
@@ -489,9 +464,8 @@ parmstohz(m)
 int partimeout_pending;
 int parsend_pending;
 
-void
-parintr(arg)
-	void *arg;
+void 
+parintr(void *arg)
 {
 	int s, mask;
 
@@ -524,9 +498,7 @@ parintr(arg)
 }
 
 int
-parsendch(sc, ch)
-	struct par_softc *sc;
-	u_char ch;
+parsendch(struct par_softc *sc, u_char ch)
 {
 	int error = 0;
 	int s;
@@ -584,10 +556,7 @@ parsendch(sc, ch)
 
 
 int
-parsend(sc, buf, len)
-	struct par_softc *sc;
-	u_char *buf;
-	int len;
+parsend(struct par_softc *sc, u_char *buf, int len)
 {
 	int err, orig_len = len;
 	

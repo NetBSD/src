@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,24 +56,18 @@ CFATTACH_DECL(osiop_jazzio, sizeof(struct osiop_softc),
     osiop_jazzio_match, osiop_jazzio_attach, NULL, NULL);
 
 int
-osiop_jazzio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+osiop_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
 	if (strcmp(ja->ja_name, "NCRC710") != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-osiop_jazzio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+osiop_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	struct osiop_softc *sc = (void *)self;
@@ -123,20 +117,19 @@ osiop_jazzio_attach(parent, self, aux)
  * interrupt handler
  */
 int
-osiop_jazzio_intr(arg)
-	void *arg;
+osiop_jazzio_intr(void *arg)
 {
 	struct osiop_softc *sc = arg;
-	u_int8_t istat;
+	uint8_t istat;
 
 	/* This is potentially nasty, since the IRQ is level triggered... */
 	if (sc->sc_flags & OSIOP_INTSOFF)
-		return (0);
+		return 0;
 
 	istat = osiop_read_1(sc, OSIOP_ISTAT);
 
 	if ((istat & (OSIOP_ISTAT_SIP | OSIOP_ISTAT_DIP)) == 0)
-		return (0);
+		return 0;
 
 	/* Save interrupt details for the back-end interrupt handler */
 	sc->sc_sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
@@ -146,5 +139,5 @@ osiop_jazzio_intr(arg)
 	/* Deal with the interrupt */
 	osiop_intr(sc);
 
-	return (1);
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.7.2.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.7.2.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.7.2.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.7.2.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -109,7 +109,7 @@ struct ec_softc {
 
 	u_char sc_jammed;	/* nonzero if the net is jammed */
 	u_char sc_colliding;	/* nonzero if the net is colliding */
-	u_int32_t sc_backoff_seed;	/* seed for the backoff PRNG */
+	uint32_t sc_backoff_seed;	/* seed for the backoff PRNG */
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
@@ -135,23 +135,23 @@ struct ec_softc {
 /*
  * Prototypes
  */
-int ec_intr __P((void *));
-void ec_reset __P((struct ifnet *));
-int ec_init __P((struct ifnet *));
-int ec_ioctl __P((struct ifnet *, u_long, caddr_t));
-void ec_watchdog __P((struct ifnet *));
-void ec_start __P((struct ifnet *));
+int ec_intr(void *);
+void ec_reset(struct ifnet *);
+int ec_init(struct ifnet *);
+int ec_ioctl(struct ifnet *, u_long, caddr_t);
+void ec_watchdog(struct ifnet *);
+void ec_start(struct ifnet *);
 
-void ec_recv __P((struct ec_softc *, int));
-void ec_coll __P((struct ec_softc *));
-void ec_copyin __P((struct ec_softc *, void *, int, size_t));
-void ec_copyout __P((struct ec_softc *, const void *, int, size_t));
+void ec_recv(struct ec_softc *, int);
+void ec_coll(struct ec_softc *);
+void ec_copyin(struct ec_softc *, void *, int, size_t);
+void ec_copyout(struct ec_softc *, const void *, int, size_t);
 
-int ec_mediachange __P((struct ifnet *));
-void ec_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int ec_mediachange(struct ifnet *);
+void ec_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int ec_match __P((struct device *, struct cfdata *, void *));
-void ec_attach __P((struct device *, struct device *, void *));
+int ec_match(struct device *, struct cfdata *, void *);
+void ec_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ec, sizeof(struct ec_softc),
     ec_match, ec_attach, NULL, NULL);
@@ -159,12 +159,8 @@ CFATTACH_DECL(ec, sizeof(struct ec_softc),
 /*
  * Copy board memory to kernel.
  */
-void
-ec_copyin(sc, p, offset, size)
-	struct ec_softc *sc;
-	void *p;
-	int offset;
-	size_t size;
+void 
+ec_copyin(struct ec_softc *sc, void *p, int offset, size_t size)
 {
 	bus_space_copyin(sc->sc_iot, sc->sc_ioh, offset, p, size);
 }
@@ -172,21 +168,14 @@ ec_copyin(sc, p, offset, size)
 /*
  * Copy from kernel space to board memory.
  */
-void
-ec_copyout(sc, p, offset, size)
-	struct ec_softc *sc;
-	const void *p;
-	int offset;
-	size_t size;
+void 
+ec_copyout(struct ec_softc *sc, const void *p, int offset, size_t size)
 {
 	bus_space_copyout(sc->sc_iot, sc->sc_ioh, offset, p, size);
 }
 
-int
-ec_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+int 
+ec_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
 	bus_space_handle_t bh;
@@ -212,15 +201,13 @@ ec_match(parent, match, aux)
 	return (1);
 }
 
-void
-ec_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void 
+ec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ec_softc *sc = (void *) self;
 	struct mbmem_attach_args *mbma = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
 
@@ -275,9 +262,8 @@ ec_attach(parent, self, aux)
 /*
  * Reset interface.
  */     
-void    
-ec_reset(ifp)
-        struct ifnet *ifp;
+void 
+ec_reset(struct ifnet *ifp)
 {
         int s;
 
@@ -290,9 +276,8 @@ ec_reset(ifp)
 /*
  * Initialize interface.
  */
-int
-ec_init(ifp)
-	struct ifnet *ifp;
+int 
+ec_init(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
 
@@ -321,16 +306,15 @@ ec_init(ifp)
 /*
  * Start output on interface.
  */
-void
-ec_start(ifp)
-	struct ifnet *ifp;
+void 
+ec_start(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
 	int s;
 	u_int count, realcount;
 	bus_size_t off;
-	static u_int8_t padding[ETHER_MIN_LEN - ETHER_CRC_LEN] = {0};
+	static uint8_t padding[ETHER_MIN_LEN - ETHER_CRC_LEN] = {0};
 
 	s = splnet();
 
@@ -359,7 +343,7 @@ ec_start(ifp)
 	realcount = MIN(count, EC_PKT_MAXTDOFF);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ECREG_TBUF, realcount);
 	for (off = realcount, m = m0; m != 0; off += m->m_len, m = m->m_next)
-		ec_copyout(sc, mtod(m, u_int8_t *), ECREG_TBUF + off, m->m_len);
+		ec_copyout(sc, mtod(m, uint8_t *), ECREG_TBUF + off, m->m_len);
 	m_freem(m0);
 	if (count - realcount)
 		ec_copyout(sc, padding, ECREG_TBUF + off, count - realcount);
@@ -375,9 +359,8 @@ ec_start(ifp)
 /*
  * Controller interrupt.
  */
-int
-ec_intr(arg)
-	void *arg;
+int 
+ec_intr(void *arg)
 {
 	struct ec_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -476,16 +459,14 @@ ec_intr(arg)
 /*
  * Read in a packet from the board.
  */
-void
-ec_recv(sc, intbit)
-	struct ec_softc *sc;
-	int intbit;
+void 
+ec_recv(struct ec_softc *sc, int intbit)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m0, *m, *newm;
 	bus_size_t buf;
-	u_int16_t status;
-	u_int16_t doff;
+	uint16_t status;
+	uint16_t doff;
 	int length, total_length;
 
 	buf = EC_CSR_INT_BUF(intbit);
@@ -534,7 +515,7 @@ ec_recv(sc, intbit)
 				length = MCLBYTES;
 			}
 			m->m_len = length = min(total_length, length);
-			ec_copyin(sc, mtod(m, u_int8_t *), buf, length);
+			ec_copyin(sc, mtod(m, uint8_t *), buf, length);
 			total_length -= length;
 			buf += length;
 
@@ -577,17 +558,14 @@ ec_recv(sc, intbit)
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_INTPA) | EC_CSR_INT_BSW(intbit) | intbit);
 }
 
-int
-ec_mediachange(ifp)
-	struct ifnet *ifp;
+int 
+ec_mediachange(struct ifnet *ifp)
 {               
 	return (0);
 }
 
-void    
-ec_mediastatus(ifp, ifmr) 
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+void 
+ec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {  
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return;
@@ -598,11 +576,8 @@ ec_mediastatus(ifp, ifmr)
 /*
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
-int
-ec_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+int 
+ec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -688,8 +663,7 @@ ec_ioctl(ifp, cmd, data)
  * Collision routine.
  */
 void 
-ec_coll(sc)
-	struct ec_softc *sc;
+ec_coll(struct ec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short jams;
@@ -717,9 +691,8 @@ ec_coll(sc)
 /*
  * Device timeout routine.
  */
-void
-ec_watchdog(ifp)
-	struct ifnet *ifp;
+void 
+ec_watchdog(struct ifnet *ifp)
 {
 	struct ec_softc *sc = ifp->if_softc;
 

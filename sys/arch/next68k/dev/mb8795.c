@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.32.2.4 2004/11/02 07:50:46 skrll Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.32.2.5 2005/01/24 08:34:18 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.4 2004/11/02 07:50:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.5 2005/01/24 08:34:18 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -117,18 +117,16 @@ extern int turbo;
  * and the Fujitsu Manchester Encoder/Decoder (MB502).
  */
 
-void mb8795_shutdown __P((void *));
+void mb8795_shutdown(void *);
 
-bus_dmamap_t mb8795_txdma_restart __P((bus_dmamap_t,void *));
-void mb8795_start_dma __P((struct mb8795_softc *));
+bus_dmamap_t mb8795_txdma_restart(bus_dmamap_t, void *);
+void mb8795_start_dma(struct mb8795_softc *);
 
-int	mb8795_mediachange __P((struct ifnet *));
-void	mb8795_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	mb8795_mediachange(struct ifnet *);
+void	mb8795_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void
-mb8795_config(sc, media, nmedia, defmedia)
-	struct mb8795_softc *sc;
-	int *media, nmedia, defmedia;
+mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -176,8 +174,7 @@ mb8795_config(sc, media, nmedia, defmedia)
  * Media change callback.
  */
 int
-mb8795_mediachange(ifp)
-	struct ifnet *ifp;
+mb8795_mediachange(struct ifnet *ifp)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 	int data;
@@ -221,9 +218,7 @@ mb8795_mediachange(ifp)
  * Media status callback.
  */
 void
-mb8795_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+mb8795_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 	
@@ -277,8 +272,7 @@ mb8795_hex_dump(unsigned char *pkt, size_t len)
  * Controller receive interrupt.
  */
 void
-mb8795_rint(sc)
-	struct mb8795_softc *sc;
+mb8795_rint(struct mb8795_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int error = 0;
@@ -404,8 +398,7 @@ mb8795_rint(sc)
  * Controller transmit interrupt.
  */
 void
-mb8795_tint(sc)
-	struct mb8795_softc *sc;
+mb8795_tint(struct mb8795_softc *sc)
 {
 	u_char txstat;
 	u_char txmask;
@@ -423,7 +416,7 @@ mb8795_tint(sc)
 		/* MB_WRITE_REG(sc, MB8795_TXMASK, txmask & ~MB8795_TXMASK_TXRXIE); */
 		MB_WRITE_REG(sc, MB8795_TXMASK, 0);
 		if ((ifp->if_flags & IFF_RUNNING) && !IF_IS_EMPTY(&sc->sc_tx_snd)) {
-			void mb8795_start_dma __P((struct mb8795_softc *)); /* XXXX */
+			void mb8795_start_dma(struct mb8795_softc *); /* XXXX */
 			/* printf ("Z"); */
 			mb8795_start_dma(sc);
 		}
@@ -467,8 +460,7 @@ mb8795_tint(sc)
 /****************************************************************/
 
 void
-mb8795_reset(sc)
-	struct mb8795_softc *sc;
+mb8795_reset(struct mb8795_softc *sc)
 {
 	int s;
 	int i;
@@ -524,8 +516,7 @@ mb8795_reset(sc)
 }
 
 void
-mb8795_watchdog(ifp)
-	struct ifnet *ifp;
+mb8795_watchdog(struct ifnet *ifp)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 
@@ -544,8 +535,7 @@ mb8795_watchdog(ifp)
  * and transmit/receive descriptor rings.
  */
 void
-mb8795_init(sc)
-	struct mb8795_softc *sc;
+mb8795_init(struct mb8795_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
@@ -596,8 +586,7 @@ mb8795_init(sc)
 }
 
 void
-mb8795_shutdown(arg)
-	void *arg;
+mb8795_shutdown(void *arg)
 {
 	struct mb8795_softc *sc = (struct mb8795_softc *)arg;
 
@@ -608,12 +597,9 @@ mb8795_shutdown(arg)
 
 /****************************************************************/
 int
-mb8795_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+mb8795_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	register struct mb8795_softc *sc = ifp->if_softc;
+	struct mb8795_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -638,7 +624,7 @@ mb8795_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -747,8 +733,7 @@ mb8795_ioctl(ifp, cmd, data)
  * Called only at splnet or interrupt level.
  */
 void
-mb8795_start(ifp)
-	struct ifnet *ifp;
+mb8795_start(struct ifnet *ifp)
 {
 	struct mb8795_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -800,8 +785,7 @@ mb8795_start(ifp)
 }
 
 void
-mb8795_start_dma(sc)
-	struct mb8795_softc *sc;
+mb8795_start_dma(struct mb8795_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;

@@ -1,11 +1,11 @@
-# $NetBSD: MVME1600,v 1.10.6.3 2004/09/21 13:19:17 skrll Exp $
+# $NetBSD: MVME1600,v 1.10.6.4 2005/01/24 08:34:18 skrll Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.10.6.3 $"
+#ident		"MVME1600-$Revision: 1.10.6.4 $"
 
 maxusers	8
 
@@ -228,6 +228,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f

@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.56.2.5 2004/11/29 07:24:02 skrll Exp $
+# $NetBSD: ATARITT,v 1.56.2.6 2005/01/24 08:34:05 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -122,6 +122,7 @@ pseudo-device md 3 # Boot memory disk
 
 pseudo-device bpfilter 2 # berkeley packet filters
 pseudo-device tun 2 # network tunnel
+pseudo-device tap # virtual Ethernet
 
 pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.23.6.3 2004/09/21 13:23:19 skrll Exp $	*/
+/*	$NetBSD: bw2.c,v 1.23.6.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.23.6.3 2004/09/21 13:23:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.23.6.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ struct bw2_softc {
 };
 
 /* autoconfiguration driver */
-static void	bw2attach __P((struct device *, struct device *, void *));
-static int	bw2match __P((struct device *, struct cfdata *, void *));
+static void	bw2attach(struct device *, struct device *, void *);
+static int	bw2match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(bwtwo, sizeof(struct bw2_softc),
     bw2match, bw2attach, NULL, NULL);
@@ -101,8 +101,8 @@ const struct cdevsw bwtwo_cdevsw = {
 
 /* XXX we do not handle frame buffer interrupts */
 
-static int bw2gvideo __P((struct fbdevice *, void *));
-static int bw2svideo __P((struct fbdevice *, void *));
+static int bw2gvideo(struct fbdevice *, void *);
+static int bw2svideo(struct fbdevice *, void *);
 
 static struct fbdriver bw2fbdriver = {
 	bw2open, nullclose, bw2mmap, nokqfilter,
@@ -110,11 +110,8 @@ static struct fbdriver bw2fbdriver = {
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };
 
-static int
-bw2match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+bw2match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 	int mid, p4id, peekval;
@@ -183,10 +180,8 @@ bw2match(parent, cf, args)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-static void
-bw2attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+static void 
+bw2attach(struct device *parent, struct device *self, void *args)
 {
 	struct bw2_softc *sc = (struct bw2_softc *)self;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -289,11 +284,8 @@ bw2attach(parent, self, args)
 	fb_attach(fb, 1);
 }
 
-int
-bw2open(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+bw2open(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -302,13 +294,8 @@ bw2open(dev, flags, mode, p)
 	return (0);
 }
 
-int
-bw2ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+int 
+bw2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
@@ -319,11 +306,8 @@ bw2ioctl(dev, cmd, data, flags, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t
-bw2mmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+paddr_t 
+bw2mmap(dev_t dev, off_t off, int prot)
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 	int size = sc->sc_fb.fb_fbtype.fb_size;
@@ -342,9 +326,8 @@ bw2mmap(dev, off, prot)
 }
 
 /* FBIOGVIDEO: */
-static int bw2gvideo(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+bw2gvideo(struct fbdevice *fb, void *data)
 {
 	struct bw2_softc *sc = fb->fb_private;
 	int *on = data;
@@ -354,9 +337,8 @@ static int bw2gvideo(fb, data)
 }
 
 /* FBIOSVIDEO: */
-static int bw2svideo(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+bw2svideo(struct fbdevice *fb, void *data)
 {
 	struct bw2_softc *sc = fb->fb_private;
 	int *on = data;

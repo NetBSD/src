@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.3 2002/06/03 00:18:27 fredette Exp $	*/
+/*	$NetBSD: libsa.h,v 1.3.6.1 2005/01/24 08:35:03 skrll Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -13,24 +13,24 @@
 #define KERN_LOADADDR	0x4000
 
 /* SRT0.S */
-void	ICIA __P((void));
-void **	getvbr __P((void));
+void	ICIA(void);
+void **	getvbr(void);
 
 /* SRT1.c */
 extern int _is3x;
 extern int _is2;
-void _start __P((void));
-void breakpoint __P((void));
-void chain_to __P((void *func));
+void _start(void);
+void breakpoint(void);
+void chain_to(void *);
 
 /* clock.c */
 extern int hz;
-long getsecs __P((void));
-long getticks __P((void));
+long getsecs(void);
+long getticks(void);
 
 /* exec_sun.c */
-int exec_sun __P((char *file, char *loadaddr));
-int load_sun __P((int io, char *loadaddr, char **entry));
+int exec_sun(char *, char *);
+int load_sun(int, char *, char **);
 
 /* promboot.c */
 extern int debug;
@@ -39,12 +39,12 @@ extern char *prom_bootfile;
 extern int prom_boothow;
 
 /* sun2.c */
-void sun2_getidprom __P((u_char *ea));
-u_long sun2_map_mem_load __P((void));
-void *sun2_map_mem_run __P((void *));
+void sun2_getidprom(u_char *);
+u_long sun2_map_mem_load(void);
+void *sun2_map_mem_run(void *);
 
 /* sun3.c */
-void sun3_getidprom __P((u_char *ea));
+void sun3_getidprom(u_char *);
 
 /* vers.c */
 extern const char bootprog_rev[];

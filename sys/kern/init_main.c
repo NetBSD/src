@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221.2.7 2005/01/17 19:32:25 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.8 2005/01/24 08:35:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.7 2005/01/17 19:32:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.8 2005/01/24 08:35:36 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -250,9 +250,6 @@ main(void)
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
-
-	/* Initialise pools. */
-	link_pool_init();
 
 	/* Initialize callouts. */
 	callout_startup();

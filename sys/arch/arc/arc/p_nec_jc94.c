@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_jc94.c,v 1.2.2.4 2005/01/17 19:29:12 skrll Exp $	*/
+/*	$NetBSD: p_nec_jc94.c,v 1.2.2.5 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.4 2005/01/17 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.5 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.4 2005/01/17 19:29:12 skrll Exp
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
 
-void p_nec_jc94_init __P((void));
+void p_nec_jc94_init(void);
 
 struct platform platform_nec_jc94 = {
 	"NEC-JC94",
@@ -78,8 +78,9 @@ struct pica_dev nec_jc94_cpu[] = {
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_nec_jc94_init()
+p_nec_jc94_init(void)
 {
+
 	c_nec_pci_init();
 
 	/* chipset-dependent jazzio bus configuration */

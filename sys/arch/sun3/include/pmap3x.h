@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.18 2002/09/22 07:53:50 chs Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.18.6.1 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ extern	struct pmap 	kernel_pmap;
 #define	pmap_kernel()	(&kernel_pmap)
 
 /* Common function for pmap_resident_count(), pmap_wired_count() */
-segsz_t pmap_count __P((pmap_t, int));
+segsz_t pmap_count(pmap_t, int);
 
 /* This needs to be a macro for kern_sysctl.c */
 #define	pmap_resident_count(pmap)	(pmap_count((pmap), 0))
@@ -68,7 +68,7 @@ segsz_t pmap_count __P((pmap_t, int));
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
-vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 
 static __inline void
 pmap_remove_all(struct pmap *pmap)

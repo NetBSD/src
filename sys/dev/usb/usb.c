@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.79.2.4 2004/09/21 13:33:49 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.79.2.5 2005/01/24 08:35:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.79.2.4 2004/09/21 13:33:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.79.2.5 2005/01/24 08:35:36 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -674,6 +674,15 @@ void
 usb_needs_explore(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_explore\n"));
+	dev->bus->needs_explore = 1;
+	wakeup(&dev->bus->needs_explore);
+}
+
+void
+usb_needs_reattach(usbd_device_handle dev)
+{
+	DPRINTFN(2,("usb_needs_reattach\n"));
+	dev->powersrc->reattach = 1;
 	dev->bus->needs_explore = 1;
 	wakeup(&dev->bus->needs_explore);
 }

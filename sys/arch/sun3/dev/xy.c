@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.46.2.4 2004/11/02 07:50:57 skrll Exp $	*/
+/*	$NetBSD: xy.c,v 1.46.2.5 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.4 2004/11/02 07:50:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.5 2005/01/24 08:34:47 skrll Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -158,43 +158,41 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.4 2004/11/02 07:50:57 skrll Exp $");
  */
 
 /* internals */
-struct xy_iopb *xyc_chain __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_cmd __P((struct xyc_softc *, int, int, int, int, int, char *, int));
-char   *xyc_e2str __P((int));
-int	xyc_entoact __P((int));
-int	xyc_error __P((struct xyc_softc *, struct xy_iorq *,
-		   struct xy_iopb *, int));
-int	xyc_ioctlcmd __P((struct xy_softc *, dev_t dev, struct xd_iocmd *));
-void	xyc_perror __P((struct xy_iorq *, struct xy_iopb *, int));
-int	xyc_piodriver __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_remove_iorq __P((struct xyc_softc *));
-int	xyc_reset __P((struct xyc_softc *, int, struct xy_iorq *, int,
-			struct xy_softc *));
-inline void xyc_rqinit __P((struct xy_iorq *, struct xyc_softc *,
-			    struct xy_softc *, int, u_long, int,
-			    caddr_t, struct buf *));
-void	xyc_rqtopb __P((struct xy_iorq *, struct xy_iopb *, int, int));
-void	xyc_start __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_startbuf __P((struct xyc_softc *, struct xy_softc *, struct buf *));
-int	xyc_submit_iorq __P((struct xyc_softc *, struct xy_iorq *, int));
-void	xyc_tick __P((void *));
-int	xyc_unbusy __P((struct xyc *, int));
-void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
+struct xy_iopb *xyc_chain(struct xyc_softc *, struct xy_iorq *);
+int	xyc_cmd(struct xyc_softc *, int, int, int, int, int, char *, int);
+char   *xyc_e2str(int);
+int	xyc_entoact(int);
+int	xyc_error(struct xyc_softc *, struct xy_iorq *, struct xy_iopb *, int);
+int	xyc_ioctlcmd(struct xy_softc *, dev_t dev, struct xd_iocmd *);
+void	xyc_perror(struct xy_iorq *, struct xy_iopb *, int);
+int	xyc_piodriver(struct xyc_softc *, struct xy_iorq *);
+int	xyc_remove_iorq(struct xyc_softc *);
+int	xyc_reset(struct xyc_softc *, int, struct xy_iorq *, int,
+	    struct xy_softc *);
+inline void xyc_rqinit(struct xy_iorq *, struct xyc_softc *, struct xy_softc *,
+	    int, u_long, int, caddr_t, struct buf *);
+void	xyc_rqtopb(struct xy_iorq *, struct xy_iopb *, int, int);
+void	xyc_start(struct xyc_softc *, struct xy_iorq *);
+int	xyc_startbuf(struct xyc_softc *, struct xy_softc *, struct buf *);
+int	xyc_submit_iorq(struct xyc_softc *, struct xy_iorq *, int);
+void	xyc_tick(void *);
+int	xyc_unbusy(struct xyc *, int);
+void	xyc_xyreset(struct xyc_softc *, struct xy_softc *);
 
 /* machine interrupt hook */
-int	xycintr __P((void *));
+int	xycintr(void *);
 
 /* autoconf */
-static int	xycmatch __P((struct device *, struct cfdata *, void *));
-static void	xycattach __P((struct device *, struct device *, void *));
-static int  xyc_print __P((void *, const char *name));
+static int	xycmatch(struct device *, struct cfdata *, void *);
+static void	xycattach(struct device *, struct device *, void *);
+static int	xyc_print(void *, const char *);
 
-static int	xymatch __P((struct device *, struct cfdata *, void *));
-static void	xyattach __P((struct device *, struct device *, void *));
-static void xy_init __P((struct xy_softc *));
+static int	xymatch(struct device *, struct cfdata *, void *);
+static void	xyattach(struct device *, struct device *, void *);
+static void	xy_init(struct xy_softc *);
 
-static	void xydummystrat __P((struct buf *));
-int	xygetdisklabel __P((struct xy_softc *, void *));
+static	void xydummystrat(struct buf *);
+int	xygetdisklabel(struct xy_softc *, void *);
 
 /*
  * cfattach's: device driver interface to autoconfig
@@ -242,9 +240,8 @@ struct dkdriver xydkdriver = { xystrategy };
 
 static void *xy_labeldata;
 
-static void
-xydummystrat(bp)
-	struct buf *bp;
+static void 
+xydummystrat(struct buf *bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
@@ -253,10 +250,8 @@ xydummystrat(bp)
 	bp->b_flags &= ~B_BUSY;
 }
 
-int
-xygetdisklabel(xy, b)
-	struct xy_softc *xy;
-	void *b;
+int 
+xygetdisklabel(struct xy_softc *xy, void *b)
 {
 	const char *err;
 	struct sun_disklabel *sdl;
@@ -310,11 +305,8 @@ xygetdisklabel(xy, b)
  * xycmatch: determine if xyc is present or not.   we do a
  * soft reset to detect the xyc.
  */
-static int
-xycmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+xycmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -337,9 +329,7 @@ xycmatch(parent, cf, aux)
  * xycattach: attach controller
  */
 static void 
-xycattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+xycattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xyc_softc *xyc = (void *) self;
 	struct confargs *ca = aux;
@@ -453,10 +443,8 @@ xycattach(parent, self, aux)
 	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
 }
 
-static int
-xyc_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+xyc_print(void *aux, const char *name)
 {
 	struct xyc_attach_args *xa = aux;
 
@@ -478,10 +466,7 @@ xyc_print(aux, name)
  * xy* and xyc* devices, to simplify boot device identification.
  */
 static int 
-xymatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+xymatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
 	int xy_unit;
@@ -498,9 +483,7 @@ xymatch(parent, cf, aux)
  * xyattach: attach a disk.
  */
 static void 
-xyattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+xyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xy_softc *xy = (void *) self;
 	struct xyc_softc *xyc = (void *) parent;
@@ -539,9 +522,8 @@ xyattach(parent, self, aux)
  * Initialize a disk.  This can be called from both autoconf and
  * also from xyopen/xystrategy.
  */
-static void
-xy_init(xy)
-	struct xy_softc *xy;
+static void 
+xy_init(struct xy_softc *xy)
 {
 	struct xyc_softc *xyc;
 	struct dkbad *dkb;
@@ -709,11 +691,8 @@ done:
 /*
  * xyclose: close device
  */
-int
-xyclose(dev, flag, fmt, p)
-	dev_t   dev;
-	int     flag, fmt;
-	struct proc *p;
+int 
+xyclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -736,12 +715,8 @@ xyclose(dev, flag, fmt, p)
 /*
  * xydump: crash dump system
  */
-int
-xydump(dev, blkno, va, sz)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t sz;
+int 
+xydump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -775,14 +750,8 @@ xydump(dev, blkno, va, sz)
 /*
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
-int
-xyioctl(dev, command, addr, flag, p)
-	dev_t   dev;
-	u_long  command;
-	caddr_t addr;
-	int     flag;
-	struct proc *p;
-
+int 
+xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -869,11 +838,8 @@ xyioctl(dev, command, addr, flag, p)
 /*
  * xyopen: open drive
  */
-int
-xyopen(dev, flag, fmt, p)
-	dev_t   dev;
-	int     flag, fmt;
-	struct proc *p;
+int 
+xyopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int err, unit, part, s;
 	struct xy_softc *xy;
@@ -930,21 +896,15 @@ done:
 	return (err);
 }
 
-int
-xyread(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+int 
+xyread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_READ, minphys, uio));
 }
 
-int
-xywrite(dev, uio, flags)
-	dev_t   dev;
-	struct uio *uio;
-	int flags;
+int 
+xywrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(xystrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -955,10 +915,8 @@ xywrite(dev, uio, flags)
  * xysize: return size of a partition for a dump
  */
 
-int
-xysize(dev)
-	dev_t   dev;
-
+int 
+xysize(dev_t dev)
 {
 	struct xy_softc *xysc;
 	int     unit, part, size, omask;
@@ -988,10 +946,8 @@ xysize(dev)
 /*
  * xystrategy: buffering system interface to xy.
  */
-void
-xystrategy(bp)
-	struct buf *bp;
-
+void 
+xystrategy(struct buf *bp)
 {
 	struct xy_softc *xy;
 	int     s, unit;
@@ -1079,10 +1035,8 @@ done:				/* tells upper layers we are done with this
  *
  * xycintr: hardware interrupt.
  */
-int
-xycintr(v)
-	void   *v;
-
+int 
+xycintr(void *v)
 {
 	struct xyc_softc *xycsc = v;
 
@@ -1109,16 +1063,9 @@ xycintr(v)
  * xyc_rqinit: fill out the fields of an I/O request
  */
 
-inline void
-xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
-	struct xy_iorq *rq;
-	struct xyc_softc *xyc;
-	struct xy_softc *xy;
-	int     md;
-	u_long  blk;
-	int     cnt;
-	caddr_t db;
-	struct buf *bp;
+inline void 
+xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy,
+    int md, u_long blk, int cnt, caddr_t db, struct buf *bp)
 {
 	rq->xyc = xyc;
 	rq->xy = xy;
@@ -1135,12 +1082,8 @@ xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
  * xyc_rqtopb: load up an IOPB based on an iorq
  */
 
-void
-xyc_rqtopb(iorq, iopb, cmd, subfun)
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     cmd, subfun;
-
+void 
+xyc_rqtopb(struct xy_iorq *iorq, struct xy_iopb *iopb, int cmd, int subfun)
 {
 	u_long  block, dp;
 
@@ -1186,12 +1129,8 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
  * xyc_unbusy: wait for the xyc to go unbusy, or timeout.
  */
 
-int
-xyc_unbusy(xyc, del)
-
-struct xyc *xyc;
-int del;
-
+int 
+xyc_unbusy(struct xyc *xyc, int del)
 {
 	while (del-- > 0) {
 		if ((xyc->xyc_csr & XYC_GBSY) == 0)
@@ -1205,12 +1144,9 @@ int del;
  * xyc_cmd: front end for POLL'd and WAIT'd commands.  Returns 0 or error.
  * note that NORM requests are handled separately.
  */
-int
-xyc_cmd(xycsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
-	struct xyc_softc *xycsc;
-	int     cmd, subfn, unit, block, scnt;
-	char   *dptr;
-	int     fullmode;
+int 
+xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
+    int scnt, char *dptr, int fullmode)
 {
 	struct xy_iorq *iorq = xycsc->ciorq;
 	struct xy_iopb *iopb = xycsc->ciopb;
@@ -1254,12 +1190,8 @@ start:
  * start a buffer for running
  */
 
-int
-xyc_startbuf(xycsc, xysc, bp)
-	struct xyc_softc *xycsc;
-	struct xy_softc *xysc;
-	struct buf *bp;
-
+int 
+xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
 	int     partno;
 	struct xy_iorq *iorq;
@@ -1361,13 +1293,8 @@ xyc_startbuf(xycsc, xysc, bp)
  * on the iorq free list until some iopbs are available.
  */
 
-
-int
-xyc_submit_iorq(xycsc, iorq, type)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-	int     type;
-
+int 
+xyc_submit_iorq(struct xyc_softc *xycsc, struct xy_iorq *iorq, int type)
 {
 	struct xy_iopb *iopb;
 	u_long  iopbaddr;
@@ -1440,12 +1367,11 @@ xyc_submit_iorq(xycsc, iorq, type)
  */
 
 struct xy_iopb *
-xyc_chain(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
+xyc_chain(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int togo, chain, hand;
 	struct xy_iopb *iopb, *prev_iopb;
+
 	memset(xycsc->xy_chain, 0, sizeof(xycsc->xy_chain));
 
 	/*
@@ -1457,6 +1383,7 @@ xyc_chain(xycsc, iorq)
 			xycsc->iopbase[XYC_CTLIOPB].done == 0)
 		  iorq = &xycsc->reqs[XYC_CTLIOPB];
 	}
+
 	/*
 	 * special case: if iorq != NULL then we have a POLL or WAIT request.
 	 * we let these take priority and do them first.
@@ -1508,11 +1435,8 @@ xyc_chain(xycsc, iorq)
  * and drains off the polled i/o request.   it returns the status of the iorq
  * the caller is interesting in.
  */
-int
-xyc_piodriver(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq  *iorq;
-
+int 
+xyc_piodriver(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int     nreset = 0;
 	int     retval = 0;
@@ -1570,11 +1494,8 @@ xyc_piodriver(xycsc, iorq)
  * xyc_xyreset: reset one drive.   NOTE: assumes xyc was just reset.
  * we steal iopb[XYC_CTLIOPB] for this, but we put it back when we are done.
  */
-void
-xyc_xyreset(xycsc, xysc)
-	struct xyc_softc *xycsc;
-	struct xy_softc *xysc;
-
+void 
+xyc_xyreset(struct xyc_softc *xycsc, struct xy_softc *xysc)
 {
 	struct xy_iopb tmpiopb;
 	u_long  addr;
@@ -1612,13 +1533,9 @@ xyc_xyreset(xycsc, xysc)
  * xyc_reset: reset everything: requests are marked as errors except
  * a polled request (which is resubmitted)
  */
-int
-xyc_reset(xycsc, quiet, blastmode, error, xysc)
-	struct xyc_softc *xycsc;
-	int     quiet, error;
-	struct xy_iorq *blastmode;
-	struct xy_softc *xysc;
-
+int 
+xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
+    int error, struct xy_softc *xysc)
 {
 	int     del = 0, lcv, retval = XY_ERR_AOK;
 	struct xy_iorq *iorq;
@@ -1695,11 +1612,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
  * xyc_start: start waiting buffers
  */
 
-void
-xyc_start(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-
+void 
+xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int lcv;
 	struct xy_softc *xy;
@@ -1719,10 +1633,8 @@ xyc_start(xycsc, iorq)
  * xyc_remove_iorq: remove "done" IOPB's.
  */
 
-int
-xyc_remove_iorq(xycsc)
-	struct xyc_softc *xycsc;
-
+int 
+xyc_remove_iorq(struct xyc_softc *xycsc)
 {
 	int     errno, rq, comm, errs;
 	struct xyc *xyc = xycsc->xyc;
@@ -1868,12 +1780,8 @@ xyc_remove_iorq(xycsc)
  *   is in lasterror. also, if iorq->errno == 0, then we recovered
  *   from that error (otherwise iorq->errno == iorq->lasterror).
  */
-void
-xyc_perror(iorq, iopb, still_trying)
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     still_trying;
-
+void 
+xyc_perror(struct xy_iorq *iorq, struct xy_iopb *iopb, int still_trying)
 {
 
 	int     error = iorq->lasterror;
@@ -1901,13 +1809,9 @@ xyc_perror(iorq, iopb, still_trying)
  * xyc_error: non-fatal error encountered... recover.
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
-int
-xyc_error(xycsc, iorq, iopb, comm)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     comm;
-
+int 
+xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
+    int comm)
 {
 	int     errno = iorq->errno;
 	int     erract = xyc_entoact(errno);
@@ -1969,10 +1873,8 @@ xyc_error(xycsc, iorq, iopb, comm)
 /*
  * xyc_tick: make sure xy is still alive and ticking (err, kicking).
  */
-void
-xyc_tick(arg)
-	void   *arg;
-
+void 
+xyc_tick(void *arg)
 {
 	struct xyc_softc *xycsc = arg;
 	int     lcv, s, reset = 0;
@@ -2006,12 +1908,8 @@ xyc_tick(arg)
  *
  * XXX missing a few commands (see the 7053 driver for ideas)
  */
-int
-xyc_ioctlcmd(xy, dev, xio)
-	struct xy_softc *xy;
-	dev_t   dev;
-	struct xd_iocmd *xio;
-
+int 
+xyc_ioctlcmd(struct xy_softc *xy, dev_t dev, struct xd_iocmd *xio)
 {
 	int     s, err, rqno;
 	void * dvmabuf = NULL;
@@ -2084,8 +1982,7 @@ done:
  * xyc_e2str: convert error code number into an error string
  */
 char *
-xyc_e2str(no)
-	int     no;
+xyc_e2str(int no)
 {
 	switch (no) {
 	case XY_ERR_FAIL:
@@ -2149,39 +2046,36 @@ xyc_e2str(no)
 	}
 }
 
-int
-xyc_entoact(errno)
-
-int errno;
-
+int 
+xyc_entoact(int errno)
 {
-  switch (errno) {
-    case XY_ERR_FAIL:	case XY_ERR_DERR:	case XY_ERR_IPEN:
-    case XY_ERR_BCFL:	case XY_ERR_ICYL:	case XY_ERR_ISEC:
-    case XY_ERR_UIMP:	case XY_ERR_SZER:	case XY_ERR_ISSZ:
-    case XY_ERR_SLTA:	case XY_ERR_SLTB:	case XY_ERR_SLTC:
-    case XY_ERR_IHED:	case XY_ERR_SACK:	case XY_ERR_SMAL:
+	switch (errno) {
+	case XY_ERR_FAIL:	case XY_ERR_DERR:	case XY_ERR_IPEN:
+	case XY_ERR_BCFL:	case XY_ERR_ICYL:	case XY_ERR_ISEC:
+	case XY_ERR_UIMP:	case XY_ERR_SZER:	case XY_ERR_ISSZ:
+	case XY_ERR_SLTA:	case XY_ERR_SLTB:	case XY_ERR_SLTC:
+	case XY_ERR_IHED:	case XY_ERR_SACK:	case XY_ERR_SMAL:
 
-	return(XY_ERA_PROG); /* program error ! */
+		return(XY_ERA_PROG); /* program error ! */
 
-    case XY_ERR_TIMO:	case XY_ERR_NHDR:	case XY_ERR_HARD:
-    case XY_ERR_DNRY:	case XY_ERR_CHER:	case XY_ERR_SEEK:
-    case XY_ERR_SOFT:
+	case XY_ERR_TIMO:	case XY_ERR_NHDR:	case XY_ERR_HARD:
+	case XY_ERR_DNRY:	case XY_ERR_CHER:	case XY_ERR_SEEK:
+	case XY_ERR_SOFT:
 
-	return(XY_ERA_HARD); /* hard error, retry */
+		return(XY_ERA_HARD); /* hard error, retry */
 
-    case XY_ERR_DFLT:	case XY_ERR_DSEQ:
+	case XY_ERR_DFLT:	case XY_ERR_DSEQ:
 
-	return(XY_ERA_RSET); /* hard error reset */
+		return(XY_ERA_RSET); /* hard error reset */
 
-    case XY_ERR_SRTR:	case XY_ERR_SFOK:	case XY_ERR_AOK:
+	case XY_ERR_SRTR:	case XY_ERR_SFOK:	case XY_ERR_AOK:
 
-	return(XY_ERA_SOFT); /* an FYI error */
+		return(XY_ERA_SOFT); /* an FYI error */
 
-    case XY_ERR_WPRO:
+	case XY_ERR_WPRO:
 
-	return(XY_ERA_WPRO); /* write protect */
-  }
+		return(XY_ERA_WPRO); /* write protect */
+	}
 
-  return(XY_ERA_PROG); /* ??? */
+	return(XY_ERA_PROG); /* ??? */
 }

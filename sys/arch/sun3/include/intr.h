@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/12/16 20:58:25 gmcgarry Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.16.1 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  * (See the GCC extensions info document.)
  */
 
-static __inline int _getsr __P((void));
+static __inline int _getsr(void);
 
 /* Get current sr value. */
 static __inline int

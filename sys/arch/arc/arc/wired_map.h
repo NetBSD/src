@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.1 2000/06/09 05:17:26 soda Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.1.30.1 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -30,9 +30,8 @@
 #define ARC_THRESHOLD_TO_USE_WIRED_TLB	(256*1024)
 #endif
 
-void	arc_init_wired_map __P((void));
-void	arc_enter_wired __P((vaddr_t va, paddr_t pa0, paddr_t pa1,
-	    u_int32_t pg_size));
-vaddr_t	arc_contiguously_wired_mapped __P((paddr_t pa, int size));
-vaddr_t	arc_map_wired __P((paddr_t pa, int size));
-boolean_t arc_wired_map_extract __P((vaddr_t va, paddr_t *pap));
+void	arc_init_wired_map(void);
+void	arc_enter_wired(vaddr_t va, paddr_t pa0, paddr_t pa1, uint32_t pg_size);
+vaddr_t	arc_contiguously_wired_mapped(paddr_t pa, int size);
+vaddr_t	arc_map_wired(paddr_t pa, int size);
+boolean_t arc_wired_map_extract(vaddr_t va, paddr_t *pap);

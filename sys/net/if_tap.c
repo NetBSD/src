@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.1.4.2 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.1.4.3 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,9 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.4.2 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.4.3 2005/01/24 08:35:53 skrll Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bpfilter.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1.4.2 2005/01/17 19:32:38 skrll Exp $")
  */
 static int tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
+SYSCTL_SETUP_PROTO(sysctl_tap_setup);
 
 /*
  * Since we're an Ethernet device, we need the 3 following
@@ -131,19 +134,19 @@ extern struct cfdriver tap_cd;
 static int	tap_dev_close(struct tap_softc *);
 static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
-static int	tap_dev_ioctl(int, u_long, caddr_t, struct proc *);
-static int	tap_dev_poll(int, int, struct proc *);
+static int	tap_dev_ioctl(int, u_long, caddr_t, struct lwp *);
+static int	tap_dev_poll(int, int, struct lwp *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
 /* Fileops access routines */
-static int	tap_fops_close(struct file *, struct proc *);
+static int	tap_fops_close(struct file *, struct lwp *);
 static int	tap_fops_read(struct file *, off_t *, struct uio *,
     struct ucred *, int);
 static int	tap_fops_write(struct file *, off_t *, struct uio *,
     struct ucred *, int);
 static int	tap_fops_ioctl(struct file *, u_long, void *,
-    struct proc *);
-static int	tap_fops_poll(struct file *, int, struct proc *);
+    struct lwp *);
+static int	tap_fops_poll(struct file *, int, struct lwp *);
 static int	tap_fops_kqfilter(struct file *, struct knote *);
 
 static const struct fileops tap_fileops = {
@@ -158,15 +161,15 @@ static const struct fileops tap_fileops = {
 };
 
 /* Helper for cloning open() */
-static int	tap_dev_cloner(struct proc *);
+static int	tap_dev_cloner(struct lwp *);
 
 /* Character device routines */
-static int	tap_cdev_open(dev_t, int, int, struct proc *);
-static int	tap_cdev_close(dev_t, int, int, struct proc *);
+static int	tap_cdev_open(dev_t, int, int, struct lwp *);
+static int	tap_cdev_close(dev_t, int, int, struct lwp *);
 static int	tap_cdev_read(dev_t, struct uio *, int);
 static int	tap_cdev_write(dev_t, struct uio *, int);
-static int	tap_cdev_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
-static int	tap_cdev_poll(dev_t, int, struct proc *);
+static int	tap_cdev_ioctl(dev_t, u_long, caddr_t, int, struct lwp *);
+static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
 const struct cdevsw tap_cdevsw = {
@@ -322,7 +325,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    tap_sysctl_handler, 0, sc, 18,
-	    CTL_NET, PF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 
@@ -375,7 +378,7 @@ tap_detach(struct device* self, int flags)
 	 * sysctl_destroyv.  One should be sure to always end the path with
 	 * CTL_EOL.
 	 */
-	if ((error = sysctl_destroyv(NULL, CTL_NET, PF_LINK, tap_node,
+	if ((error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, tap_node,
 	    sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
@@ -648,12 +651,12 @@ tap_clone_destroyer(struct device *dev)
  */
 
 static int
-tap_cdev_open(dev_t dev, int flags, int fmt, struct proc *p)
+tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct tap_softc *sc;
 
 	if (minor(dev) == TAP_CLONER)
-		return tap_dev_cloner(p);
+		return tap_dev_cloner(l);
 
 	sc = (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
 	if (sc == NULL)
@@ -689,24 +692,24 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct proc *p)
  */
 
 static int
-tap_dev_cloner(struct proc *p)
+tap_dev_cloner(struct lwp *l)
 {
 	struct tap_softc *sc;
 	struct file *fp;
 	int error, fd;
 
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
 		return (error);
 
 	if ((sc = tap_clone_creator(DVUNIT_ANY)) == NULL) {
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		ffree(fp);
 		return (ENXIO);
 	}
 
 	sc->sc_flags |= TAP_INUSE;
 
-	return fdclone(p, fp, fd, &tap_fileops, (void *)(intptr_t)sc->sc_dev.dv_unit);
+	return fdclone(l, fp, fd, &tap_fileops, (void *)(intptr_t)sc->sc_dev.dv_unit);
 }
 
 /*
@@ -720,7 +723,7 @@ tap_dev_cloner(struct proc *p)
  * created it closes it.
  */
 static int
-tap_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
+tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
@@ -738,7 +741,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
  * would dead lock.  TAP_GOING ensures that this situation doesn't happen.
  */
 static int
-tap_fops_close(struct file *fp, struct proc *p)
+tap_fops_close(struct file *fp, struct lwp *l)
 {
 	int unit = (intptr_t)fp->f_data;
 	struct tap_softc *sc;
@@ -962,19 +965,19 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 
 static int
 tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-    struct proc *p)
+    struct lwp *l)
 {
-	return tap_dev_ioctl(minor(dev), cmd, data, p);
+	return tap_dev_ioctl(minor(dev), cmd, data, l);
 }
 
 static int
-tap_fops_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+tap_fops_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (caddr_t)data, p);
+	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (caddr_t)data, l);
 }
 
 static int
-tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct proc *p)
+tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);
@@ -1001,11 +1004,11 @@ tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct proc *p)
 		} break;
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		error = fsetown(p, &sc->sc_pgid, cmd, data);
+		error = fsetown(l->l_proc, &sc->sc_pgid, cmd, data);
 		break;
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(p, sc->sc_pgid, cmd, data);
+		error = fgetown(l->l_proc, sc->sc_pgid, cmd, data);
 		break;
 	case FIOASYNC:
 		if (*(int *)data)
@@ -1035,19 +1038,19 @@ tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct proc *p)
 }
 
 static int
-tap_cdev_poll(dev_t dev, int events, struct proc *p)
+tap_cdev_poll(dev_t dev, int events, struct lwp *l)
 {
-	return tap_dev_poll(minor(dev), events, p);
+	return tap_dev_poll(minor(dev), events, l);
 }
 
 static int
-tap_fops_poll(struct file *fp, int events, struct proc *p)
+tap_fops_poll(struct file *fp, int events, struct lwp *l)
 {
-	return tap_dev_poll((intptr_t)fp->f_data, events, p);
+	return tap_dev_poll((intptr_t)fp->f_data, events, l);
 }
 
 static int
-tap_dev_poll(int unit, int events, struct proc *p)
+tap_dev_poll(int unit, int events, struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);
@@ -1069,7 +1072,7 @@ tap_dev_poll(int unit, int events, struct proc *p)
 			revents |= events & (POLLIN|POLLRDNORM);
 		else {
 			(void)simple_lock(&sc->sc_kqlock);
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 			simple_unlock(&sc->sc_kqlock);
 		}
 	}
@@ -1195,7 +1198,7 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "link", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_NET, PF_LINK, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, CTL_EOL)) != 0)
 		return;
 
 	/*
@@ -1215,7 +1218,7 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "tap", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_NET, PF_LINK, CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, CTL_CREATE, CTL_EOL)) != 0)
 		return;
 	tap_node = node->sysctl_num;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.64.6.4 2004/11/21 13:54:34 skrll Exp $ */
+/*	$NetBSD: ite.c,v 1.64.6.5 2005/01/24 08:33:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64.6.4 2004/11/21 13:54:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64.6.5 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,8 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64.6.4 2004/11/21 13:54:34 skrll Exp $");
 #define SUBR_CLEAR(ip,sy,sx,h,w)	(ip)->grf->g_iteclear(ip,sy,sx,h,w)
 #define SUBR_SCROLL(ip,sy,sx,count,dir)	\
     (ip)->grf->g_itescroll(ip,sy,sx,count,dir)
-
-u_int	ite_confunits;			/* configured units */
 
 int	start_repeat_timeo = 30;	/* first repeat after x s/100 */
 int	next_repeat_timeo = 10;		/* next repeat after x s/100 */
@@ -211,12 +209,7 @@ itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	int maj;
 
 	gp = auxp;
-	/*
-	 * all that our mask allows (more than enough no one
-	 * has > 32 monitors for text consoles on one machine)
-	 */
-	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
-		return(0);
+
 	/*
 	 * XXX
 	 * normally this would be done in attach, however
@@ -236,12 +229,6 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 	int s;
 
 	gp = (struct grf_softc *)auxp;
-
-	/*
-	 * mark unit as attached (XXX see itematch)
-	 */
-	ite_confunits |= 1 << ITEUNIT(gp->g_itedev);
-
 	if (dp) {
 		ip = (struct ite_softc *)dp;
 
@@ -271,6 +258,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 		if (kbd_ite == ip)
 			printf(" has keyboard");
 		printf("\n");
+		ip->flags |= ITE_ATTACHED;
 	} else {
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gp->g_conpri)
@@ -408,7 +396,7 @@ itecnputc(dev_t dev, int c)
 
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE | ITE_INGRF)) != ITE_ACTIVE) {
-		(void)ite_on(dev, 3);
+		ite_on(dev, 3);
 		paniced = 1;
 	}
 	iteputchar(ch, ip);
@@ -462,10 +450,11 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	unit = ITEUNIT(dev);
 	first = 0;
 
-	if (((1 << unit) & ite_confunits) == 0)
-		return (ENXIO);
-
+	if (unit >= ite_cd.cd_ndevs)
+		return ENXIO;
 	ip = getitesp(dev);
+	if ((ip->flags & ITE_ATTACHED) == 0)
+		return ENXIO;
 
 	if (ip->tp == NULL) {
 		tp = ip->tp = ttymalloc();
@@ -476,9 +465,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	    && l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
-		error = ite_on(dev, 0);
-		if (error)
-			return (error);
+		ite_on(dev, 0);
 		first = 1;
 	}
 	tp->t_oproc = itestart;
@@ -682,16 +669,13 @@ itestart(struct tty *tp)
 	splx(s);
 }
 
-int
+void
 ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *ip;
 	int unit;
 
 	unit = ITEUNIT(dev);
-	if (((1 << unit) & ite_confunits) == 0)
-		return (ENXIO);
-
 	ip = getitesp(dev);
 
 	/* force ite active, overriding graphics mode */
@@ -703,13 +687,12 @@ ite_on(dev_t dev, int flag)
 	if (flag & 2) {
 		ip->flags &= ~ITE_INGRF;
 		if ((ip->flags & ITE_ACTIVE) == 0)
-			return (0);
+			return;
 	}
 	ip->flags |= ITE_ACTIVE;
 	if (ip->flags & ITE_INGRF)
-		return (0);
+		return;
 	iteinit(dev);
-	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.2.6 2004/11/14 08:15:33 skrll Exp $
+# $NetBSD: GENERIC,v 1.14.2.7 2005/01/24 08:35:18 skrll Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14.2.6 $"
+#ident 		"GENERIC-$Revision: 1.14.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -300,6 +300,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

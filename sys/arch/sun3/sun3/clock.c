@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.6.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.6.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.6.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.6.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ extern int intrcnt[];
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
-void _isr_clock __P((void));	/* in locore.s */
-void clock_intr __P((struct clockframe));
+void _isr_clock(void);	/* in locore.s */
+void clock_intr(struct clockframe);
 
 static volatile void *intersil_va;
 
@@ -124,17 +124,14 @@ static volatile void *intersil_va;
 
 #define intersil_clear() (void)intersil_clock->clk_intr_reg
 
-static int  clock_match __P((struct device *, struct cfdata *, void *args));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int  clock_match(struct device *, struct cfdata *, void *);
+static void clock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct device),
     clock_match, clock_attach, NULL, NULL);
 
-static int
-clock_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+clock_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -153,11 +150,8 @@ clock_match(parent, cf, args)
 	return (1);
 }
 
-static void
-clock_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+clock_attach(struct device *parent, struct device *self, void *args)
 {
 	struct confargs *ca = args;
 	caddr_t va;
@@ -200,9 +194,7 @@ clock_attach(parent, self, args)
  * XXX:  Watch out!  It's really easy to break this!
  */
 void
-set_clk_mode(on, off, enable_clk)
-	u_char on, off;
-	int enable_clk;
+set_clk_mode(u_char on, u_char off, int enable_clk)
 {
 	u_char interreg;
 
@@ -287,9 +279,8 @@ cpu_initclocks(void)
  * This doesn't need to do anything, as we have only one timer and
  * profhz==stathz==hz.
  */
-void
-setstatclockrate(newhz)
-	int newhz;
+void 
+setstatclockrate(int newhz)
 {
 
 	/* nothing */
@@ -303,8 +294,7 @@ setstatclockrate(newhz)
  * the interrupt register atomically.
  */
 void
-clock_intr(cf)
-	struct clockframe cf;
+clock_intr(struct clockframe cf)
 {
 
 	/* Read the clock interrupt register. */
@@ -345,8 +335,7 @@ clock_intr(cf)
  * obtained by a previous call.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s;
 	static struct timeval lasttime;
@@ -378,15 +367,15 @@ microtime(tvp)
  * Resettodr restores the time of day hardware after a time change.
  */
 
-static long clk_get_secs __P((void));
-static void clk_set_secs __P((long));
+static long clk_get_secs(void);
+static void clk_set_secs(long);
 
 /*
  * Initialize the time of day register, based on the time base
  * which is, e.g. from a filesystem.
  */
-void inittodr(fs_time)
-	time_t fs_time;
+void 
+inittodr(time_t fs_time)
 {
 	long diff, clk_time;
 	long long_ago = (5 * SECYR);
@@ -435,7 +424,8 @@ void inittodr(fs_time)
 /*
  * Resettodr restores the time of day hardware after a time change.
  */
-void resettodr()
+void 
+resettodr(void)
 {
 
 	clk_set_secs(time.tv_sec);
@@ -447,11 +437,11 @@ void resettodr()
  * Our clock keeps "years since 1/1/1968".
  */
 #define	CLOCK_BASE_YEAR 1968
-static void intersil_get_dt __P((struct clock_ymdhms *));
-static void intersil_set_dt __P((struct clock_ymdhms *));
+static void intersil_get_dt(struct clock_ymdhms *);
+static void intersil_set_dt(struct clock_ymdhms *);
 
-static long
-clk_get_secs()
+static long 
+clk_get_secs(void)
 {
 	struct clock_ymdhms dt;
 	long secs;
@@ -468,9 +458,8 @@ clk_get_secs()
 	return (secs);
 }
 
-static void
-clk_set_secs(secs)
-	long secs;
+static void 
+clk_set_secs(long secs)
 {
 	struct clock_ymdhms dt;
 
