@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.21 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.22 2004/03/18 15:14:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.21 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.22 2004/03/18 15:14:33 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -240,6 +240,20 @@ openpromioctl(dev, cmd, data, flags, p)
 		node = firstchild(node);
 		splx(s);
 		*(int *)data = lastnode = node;
+		break;
+
+	case OPIOCFINDDEVICE:
+		if ((flags & FREAD) == 0)
+			return (EBADF);
+		error = openpromgetstr(op->op_namelen, op->op_name, &name);
+		if (error)
+			break;
+		node = prom_finddevice(name);
+		if (node == 0 || node == -1) {
+			error = ENOENT;
+			break;
+		}
+		op->op_nodeid = lastnode = node;
 		break;
 
 	default:
