@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.42.4.2 2000/10/18 00:10:42 tv Exp $	*/
+/*	$NetBSD: sd.c,v 1.42.4.3 2001/06/07 15:43:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -363,6 +363,7 @@ sdgetcapacity(sc, dev)
 		bp->b_flags = B_READ | B_BUSY;
 		bp->b_data = (caddr_t)capbuf;
 		bp->b_bcount = capbufsize;
+		LIST_INIT(&bp->b_dep);
 		sdstrategy(bp);
 		i = biowait(bp) ? sc->sc_sensestore.status : 0;
 		free(bp, M_DEVBUF);
@@ -657,6 +658,7 @@ sdlblkstrat(bp, bsize)
 			cbp->b_blkno = bn - btodb(boff);
 			cbp->b_data = cbuf;
 			cbp->b_bcount = bsize;
+			LIST_INIT(&cbp->b_dep);
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
 				printf(" readahead: bn %x cnt %x off %x addr %p\n",
@@ -691,6 +693,7 @@ sdlblkstrat(bp, bsize)
 #endif
 		}
 		cbp->b_flags = B_BUSY | B_PHYS | (bp->b_flags & B_READ);
+		LIST_INIT(&cbp->b_dep);
 		sdstrategy(cbp);
 		biowait(cbp);
 		if (cbp->b_flags & B_ERROR) {
