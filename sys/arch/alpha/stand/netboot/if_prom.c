@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.18 2003/03/13 13:35:55 drochner Exp $ */
+/* $NetBSD: if_prom.c,v 1.19 2003/03/13 14:15:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -53,8 +53,9 @@ struct netif_dif prom_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
 {	0,		1,		&prom_stats[0],	0,		},
 };
+#define NPROM_IFS (sizeof(prom_ifs) / sizeof(prom_ifs[0]))
 
-struct netif_stats prom_stats[sizeof(prom_ifs) / sizeof(prom_ifs[0])];
+struct netif_stats prom_stats[NPROM_IFS];
 
 struct netbbinfo netbbinfo = {
 	0xfeedbabedeadbeef,			/* magic number */
@@ -220,5 +221,5 @@ struct netif_driver prom_netif_driver = {
 	prom_put,		/* netif_put */
 	prom_end,		/* netif_end */
 	prom_ifs,		/* netif_ifs */
-	NENTS(prom_ifs)		/* netif_nifs */
+	NPROM_IFS		/* netif_nifs */
 };
