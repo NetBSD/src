@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.15 1998/05/24 22:37:23 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.16 1998/05/27 01:17:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -711,6 +711,14 @@ pdq_os_descriptor_block_sync(
     int ops)
 {
     bus_dmamap_sync(sc->sc_dmatag, sc->sc_dbmap, offset, length, ops);
+}
+
+extern void
+pdq_os_consumer_block_sync(
+    pdq_os_ctx_t *sc,
+    int ops)
+{
+    bus_dmamap_sync(sc->sc_dmatag, sc->sc_cbmap, 0, sizeof(pdq_consumer_block_t), ops);
 }
 
 extern void
