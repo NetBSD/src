@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.61 2003/10/10 09:03:23 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.62 2003/11/01 17:43:03 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd October 10, 2003
+.Dd November 1, 2003
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd construct a new file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl FINVZ
+.Op Fl FINZ
 .Op Fl a Ar maxcontig
 .Op Fl B Ar byte-order
 .Op Fl b Ar block-size
@@ -239,22 +239,22 @@ except that the number is converted into sectors by dividing by the
 sector size (as specified by
 .Fl S Ar secsize )
 after suffix interpretation.
-Negative size values indicate an amount to be reserved
-at the end of the partition by subtracting that value from the size
-specified in the disklabel.
+.Pp
+If no
+.Fl s Ar size
+is specified then the filesystem size defaults to that of the partition, or,
+if
+.Fl F
+is specified, the existing file.
+.Pp
+If
+.Ar size
+is negative the specified size is subtracted from the default size
+(reserving space at the end of the partition).
 .It Fl T Ar disk-type
 Uses information for the specified disk from
 .Pa /etc/disktab
 instead of trying to get the information from the disk label.
-.It Fl V
-Tell
-.Nm
-not to interpret the name of the device in any special manner.  This
-is intended for synthetic devices like Vinum volumes, which are not
-subpartitioned.  Without this option,
-.Nm
-may succeed or fail depending on the last character of the device
-name.
 .It Fl v Ar volname
 This specifies that an Apple UFS filesystem should be created
 with the given volume name.
@@ -309,7 +309,18 @@ is used.
 To create and populate a filesystem image within a file use the
 .Xr makefs 8
 utility.
+.Pp
+The partition size is found using
+.Xr fstat 2
+not by inspecting the disklabel.
+The block size and fragment size will be written back to the disklabel
+only if the last character of
+.Ar special
+references the same partition as the minor device number.
+This is true for normal disk devices, but not for certain other drivers
+(eg vinum) that provide disk like block and character devices.
 .Sh SEE ALSO
+.Xr fstat 2 ,
 .Xr disktab 5 ,
 .Xr fs 5 ,
 .Xr disklabel 8 ,
