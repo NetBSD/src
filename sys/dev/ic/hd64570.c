@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.12 2000/12/12 18:00:23 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.13 2000/12/18 20:32:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -797,8 +797,10 @@ sca_output(ifp, m, dst, rt0)
 	struct hdlc_llc_header *llc;
 #endif
 	struct hdlc_header *hdlc;
-	struct ifqueue *ifq;
-	int s, error;
+	struct ifqueue *ifq = NULL;
+	int s, error, len;
+	short mflags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	error = 0;
 	ifp->if_lastchange = time;
@@ -808,7 +810,11 @@ sca_output(ifp, m, dst, rt0)
 		goto bad;
 	}
 
-	ifq = &ifp->if_snd;
+	/*
+	 * If the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	/*
 	 * determine address family, and priority for this packet
@@ -864,21 +870,27 @@ sca_output(ifp, m, dst, rt0)
 	/*
 	 * queue the packet.  If interactive, use the fast queue.
 	 */
+	mflags = m->m_flags;
+	len = m->m_pkthdr.len;
 	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	if (ifq != NULL) {
+		if (IF_QFULL(ifq)) {
+			IF_DROP(ifq);
+			m_freem(m);
+			error = ENOBUFS;
+		} else
+			IF_ENQUEUE(ifq, m);
+	} else
+		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error != 0) {
+		splx(s);
 		ifp->if_oerrors++;
 		ifp->if_collisions++;
-		error = ENOBUFS;
-		splx(s);
-		goto bad;
+		return (error);
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(ifq, m);
-
+	ifp->if_obytes += len;
 	ifp->if_lastchange = time;
-
-	if (m->m_flags & M_MCAST)
+	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 
 	sca_start(ifp);
