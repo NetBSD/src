@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.21 2003/04/24 20:13:05 ragge Exp $	*/
+/*	$NetBSD: paths.h,v 1.22 2003/05/03 03:24:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -76,6 +76,7 @@
 #define	_PATH_MIXER	"/dev/mixer"
 #define	_PATH_MIXER0	"/dev/mixer0"
 #define	_PATH_NOLOGIN	"/etc/nologin"
+#define	_PATH_RANDOM	"/dev/random"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
 #define	_PATH_SKEYKEYS	"/etc/skeykeys"
@@ -84,6 +85,7 @@
 #define	_PATH_SYSMON	"/dev/sysmon"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
+#define	_PATH_URANDOM	"/dev/urandom"
 #define	_PATH_VI	"/usr/bin/vi"
 
 /*
