@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.66 2002/06/18 13:18:37 tshiozak Exp $	*/
+/*	$NetBSD: pci.c,v 1.67 2002/06/20 23:02:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.66 2002/06/18 13:18:37 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.67 2002/06/20 23:02:06 itojun Exp $");
 
 #include "opt_pci.h"
 
@@ -463,7 +463,7 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int newstate)
 		return (EOPNOTSUPP);
 
 	cap = value >> 16;
-	value = pci_conf_read(pc, tag, offset+PCI_PMCSR);
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now    = value & PCI_PMCSR_STATE_MASK;
 	value &= ~PCI_PMCSR_STATE_MASK;
 	switch (newstate) {
@@ -498,7 +498,7 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int newstate)
 	default:
 		return (EINVAL);
 	}
-	pci_conf_write(pc, tag, offset+PCI_PMCSR, value);
+	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 
 	return (0);
@@ -512,7 +512,7 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return (PCI_PWR_D0);
-	value = pci_conf_read(pc, tag, offset+PCI_PMCSR);
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	value &= PCI_PMCSR_STATE_MASK;
 	switch (value) {
 	case PCI_PMCSR_STATE_D0:
