@@ -855,7 +855,7 @@
 ;; This reload would clobber the value in r0 we are trying to store.
 ;; If we let reload allocate r0, then this problem can never happen.
 
-(define_insn ""
+(define_insn "udivsi3_i1"
   [(set (match_operand:SI 0 "register_operand" "=z")
 	(udiv:SI (reg:SI 4) (reg:SI 5)))
    (clobber (reg:SI 18))
@@ -903,9 +903,9 @@
    (set_attr "needs_delay_slot" "yes")])
 
 (define_expand "udivsi3"
-  [(set (reg:SI 4) (match_operand:SI 1 "general_operand" ""))
+  [(set (match_dup 3) (symbol_ref:SI "__udivsi3"))
+   (set (reg:SI 4) (match_operand:SI 1 "general_operand" ""))
    (set (reg:SI 5) (match_operand:SI 2 "general_operand" ""))
-   (set (match_dup 3) (symbol_ref:SI "__udivsi3"))
    (parallel [(set (match_operand:SI 0 "register_operand" "")
 		   (udiv:SI (reg:SI 4)
 			    (reg:SI 5)))
@@ -916,22 +916,36 @@
   ""
   "
 {
+  rtx first, last;
+
   operands[3] = gen_reg_rtx(SImode);
-  if (TARGET_HARD_SH4)
+  /* Emit the move of the address to a pseudo outside of the libcall.  */
+  if (TARGET_HARD_SH4 && TARGET_SH3E)
     {
-      emit_move_insn (gen_rtx (REG, SImode, 4), operands[1]);
-      emit_move_insn (gen_rtx (REG, SImode, 5), operands[2]);
       emit_move_insn (operands[3],
 		      gen_rtx_SYMBOL_REF (SImode, \"__udivsi3_i4\"));
       if (TARGET_FPU_SINGLE)
-	emit_insn (gen_udivsi3_i4_single (operands[0], operands[3]));
+	last = gen_udivsi3_i4_single (operands[0], operands[3]);
       else
-	emit_insn (gen_udivsi3_i4 (operands[0], operands[3]));
-      DONE;
+	last = gen_udivsi3_i4 (operands[0], operands[3]);
     }
+  else
+    {
+      emit_move_insn (operands[3],
+		      gen_rtx_SYMBOL_REF (SImode, \"__udivsi3\"));
+      last = gen_udivsi3_i1 (operands[0], operands[3]);
+    }
+  first = emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
+  emit_move_insn (gen_rtx_REG (SImode, 5), operands[2]);
+  last = emit_insn (last);
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  DONE;
 }")
 
-(define_insn ""
+(define_insn "divsi3_i1"
   [(set (match_operand:SI 0 "register_operand" "=z")
 	(div:SI (reg:SI 4) (reg:SI 5)))
    (clobber (reg:SI 18))
@@ -972,9 +986,9 @@
    (set_attr "needs_delay_slot" "yes")])
 
 (define_expand "divsi3"
-  [(set (reg:SI 4) (match_operand:SI 1 "general_operand" ""))
+  [(set (match_dup 3) (symbol_ref:SI "__sdivsi3"))
+   (set (reg:SI 4) (match_operand:SI 1 "general_operand" ""))
    (set (reg:SI 5) (match_operand:SI 2 "general_operand" ""))
-   (set (match_dup 3) (symbol_ref:SI "__sdivsi3"))
    (parallel [(set (match_operand:SI 0 "register_operand" "")
 		   (div:SI (reg:SI 4)
 			   (reg:SI 5)))
@@ -987,26 +1001,39 @@
   ""
   "
 {
+  rtx first, last;
+
   operands[3] = gen_reg_rtx(SImode);
-  if (TARGET_HARD_SH4)
+  /* Emit the move of the address to a pseudo outside of the libcall.  */
+  if (TARGET_HARD_SH4 && TARGET_SH3E)
     {
-      emit_move_insn (gen_rtx (REG, SImode, 4), operands[1]);
-      emit_move_insn (gen_rtx (REG, SImode, 5), operands[2]);
       emit_move_insn (operands[3],
 		      gen_rtx_SYMBOL_REF (SImode, \"__sdivsi3_i4\"));
       if (TARGET_FPU_SINGLE)
-	emit_insn (gen_divsi3_i4_single (operands[0], operands[3]));
+	last = gen_divsi3_i4_single (operands[0], operands[3]);
       else
-	emit_insn (gen_divsi3_i4 (operands[0], operands[3]));
-      DONE;
+	last = gen_divsi3_i4 (operands[0], operands[3]);
     }
+  else
+    {
+      emit_move_insn (operands[3], gen_rtx_SYMBOL_REF (SImode, \"__sdivsi3\"));
+      last = gen_divsi3_i1 (operands[0], operands[3]);
+    }
+  first = emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
+  emit_move_insn (gen_rtx_REG (SImode, 5), operands[2]);
+  last = emit_insn (last);
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  DONE;
 }")
 
 ;; -------------------------------------------------------------------------
 ;; Multiplication instructions
 ;; -------------------------------------------------------------------------
 
-(define_insn ""
+(define_insn "umulhisi3_i"
   [(set (reg:SI 21)
 	(mult:SI (zero_extend:SI (match_operand:HI 0 "arith_reg_operand" "r"))
 		 (zero_extend:SI (match_operand:HI 1 "arith_reg_operand" "r"))))]
@@ -1014,7 +1041,7 @@
   "mulu	%1,%0"
   [(set_attr "type" "smpy")])
 
-(define_insn ""
+(define_insn "mulhisi3_i"
   [(set (reg:SI 21)
 	(mult:SI (sign_extend:SI
 		  (match_operand:HI 0 "arith_reg_operand" "r"))
@@ -1033,7 +1060,18 @@
    (set (match_operand:SI 0 "arith_reg_operand" "")
 	(reg:SI 21))]
   ""
-  "")
+  "
+{
+  rtx first, last;
+
+  first = emit_insn (gen_mulhisi3_i (operands[1], operands[2]));
+  last = emit_move_insn (operands[0], gen_rtx_REG (SImode, MACL_REG));
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  DONE;
+}")
 
 (define_expand "umulhisi3"
   [(set (reg:SI 21)
@@ -1044,7 +1082,18 @@
    (set (match_operand:SI 0 "arith_reg_operand" "")
 	(reg:SI 21))]
   ""
-  "")
+  "
+{
+  rtx first, last;
+
+  first = emit_insn (gen_umulhisi3_i (operands[1], operands[2]));
+  last = emit_move_insn (operands[0], gen_rtx_REG (SImode, MACL_REG));
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  DONE;
+}")
 
 ;; mulsi3 on the SH2 can be done in one instruction, on the SH1 we generate
 ;; a call to a routine which clobbers known registers.
@@ -1118,13 +1167,6 @@
       /* consec_sets_giv can only recognize the first insn that sets a
 	 giv as the giv insn.  So we must tag this also with a REG_EQUAL
 	 note.  */
-      giv_insn = emit_insn (gen_movsi_i ((operands[0]), macl));
-      REG_NOTES (giv_insn)
-	= gen_rtx_EXPR_LIST (REG_EQUAL,
-			     gen_rtx_MULT (SImode, operands[1], operands[2]),
-					   REG_NOTES (giv_insn));
-      /* The sequence must end in a no-op move, lest cse puts macl in its
-	 tables and does invalid substitutions.  */
       last = emit_insn (gen_movsi_i ((operands[0]), operands[0]));
     }
   /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
@@ -1135,72 +1177,101 @@
 }")
 
 (define_insn "mulsidi3_i"
-  [(set (reg:DI 20)
-	(mult:DI (sign_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
-		 (sign_extend:DI (match_operand:SI 1 "arith_reg_operand" "r"))))]
+  [(set (reg:SI 20)
+	(truncate:SI
+	 (lshiftrt:DI
+	  (mult:DI
+	   (sign_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
+	   (sign_extend:DI (match_operand:SI 1 "arith_reg_operand" "r")))
+	  (const_int 32))))
+   (set (reg:SI 21)
+	(mult:SI (match_dup 0)
+		 (match_dup 1)))]
   "TARGET_SH2"
   "dmuls.l	%1,%0"
   [(set_attr "type" "dmpy")])
 
-(define_expand "mulsidi3"
-  [(set (reg:DI 20)
-	(mult:DI (sign_extend:DI (match_operand:SI 1 "arith_reg_operand" ""))
-		 (sign_extend:DI (match_operand:SI 2 "arith_reg_operand" ""))))
-   (set (match_operand:DI 0 "arith_reg_operand" "")
-	(reg:DI 20))]
+(define_insn "mulsidi3"
+  [(set (match_operand:DI 0 "arith_reg_operand" "=r")
+	(mult:DI
+	 (sign_extend:DI (match_operand:SI 1 "arith_reg_operand" "r"))
+	 (sign_extend:DI (match_operand:SI 2 "arith_reg_operand" "r"))))
+   (clobber (reg:SI MACH_REG))
+   (clobber (reg:SI MACL_REG))]
   "TARGET_SH2"
+  "#")
+
+(define_split
+  [(set (match_operand:DI 0 "arith_reg_operand" "")
+	(mult:DI
+	 (sign_extend:DI (match_operand:SI 1 "arith_reg_operand" ""))
+	 (sign_extend:DI (match_operand:SI 2 "arith_reg_operand" ""))))
+   (clobber (reg:SI MACH_REG))
+   (clobber (reg:SI MACL_REG))]
+  "TARGET_SH2"
+  [(const_int 0)]
   "
 {
-  /* We must swap the two words when copying them from MACH/MACL to the
-     output register.  */
-  if (TARGET_LITTLE_ENDIAN)
-    {
-      rtx low_dst = operand_subword (operands[0], 0, 1, DImode);
-      rtx high_dst = operand_subword (operands[0], 1, 1, DImode);
+  rtx low_dst = gen_lowpart (SImode, operands[0]);
+  rtx high_dst = gen_highpart (SImode, operands[0]);
 
-      emit_insn (gen_mulsidi3_i (operands[1], operands[2]));
+  emit_insn (gen_mulsidi3_i (operands[1], operands[2]));
 
-      emit_insn (gen_rtx (CLOBBER, VOIDmode, operands[0]));
-      emit_move_insn (low_dst, gen_rtx (REG, SImode, 21));
-      emit_move_insn (high_dst, gen_rtx (REG, SImode, 20));
-      DONE;
-    }
+  emit_move_insn (low_dst, gen_rtx_REG (SImode, 21));
+  emit_move_insn (high_dst, gen_rtx_REG (SImode, 20));
+  /* We need something to tag the possible REG_EQUAL notes on to.  */
+  emit_move_insn (operands[0], operands[0]);
+  DONE;
 }")
 
 (define_insn "umulsidi3_i"
-  [(set (reg:DI 20)
-	(mult:DI (zero_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
-		 (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" "r"))))]
+  [(set (reg:SI 20)
+	(truncate:SI
+	 (lshiftrt:DI
+	  (mult:DI
+	   (zero_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
+	   (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" "r")))
+	  (const_int 32))))
+   (set (reg:SI 21)
+	(mult:SI (match_dup 0)
+		 (match_dup 1)))]
   "TARGET_SH2"
   "dmulu.l	%1,%0"
   [(set_attr "type" "dmpy")])
 
-(define_expand "umulsidi3"
-  [(set (reg:DI 20)
+(define_insn "umulsidi3"
+  [(set (match_operand:DI 0 "arith_reg_operand" "=r")
+	(mult:DI
+	 (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" "r"))
+	 (zero_extend:DI (match_operand:SI 2 "arith_reg_operand" "r"))))
+   (clobber (reg:SI 20))
+   (clobber (reg:SI 21))]
+  "TARGET_SH2"
+  "#")
+
+(define_split
+  [(set (match_operand:DI 0 "arith_reg_operand" "")
 	(mult:DI (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" ""))
 		 (zero_extend:DI (match_operand:SI 2 "arith_reg_operand" ""))))
-   (set (match_operand:DI 0 "arith_reg_operand" "")
-	(reg:DI 20))]
+   (clobber (reg:SI 20))
+   (clobber (reg:SI 21))]
   "TARGET_SH2"
+  [(const_int 0)]
   "
 {
-  /* We must swap the two words when copying them from MACH/MACL to the
-     output register.  */
-  if (TARGET_LITTLE_ENDIAN)
-    {
-      rtx low_dst = operand_subword (operands[0], 0, 1, DImode);
-      rtx high_dst = operand_subword (operands[0], 1, 1, DImode);
+  rtx low_dst = gen_lowpart (SImode, operands[0]);
+  rtx high_dst = gen_highpart (SImode, operands[0]);
 
-      emit_insn (gen_umulsidi3_i (operands[1], operands[2]));
+  emit_insn (gen_umulsidi3_i (operands[1], operands[2]));
 
-      emit_insn (gen_rtx (CLOBBER, VOIDmode, operands[0]));
-      emit_move_insn (low_dst, gen_rtx (REG, SImode, 21));
-      emit_move_insn (high_dst, gen_rtx (REG, SImode, 20));
-      DONE;
-    }
+  emit_move_insn (low_dst, gen_rtx_REG (SImode, 21));
+  emit_move_insn (high_dst, gen_rtx_REG (SImode, 20));
+  /* We need something to tag the possible REG_EQUAL notes on to.  */
+  emit_move_insn (operands[0], operands[0]);
+  DONE;
 }")
 
-(define_insn ""
+(define_insn "smulsi3_highpart_i"
   [(set (reg:SI 20)
 	(truncate:SI
 	 (lshiftrt:DI (mult:DI (sign_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
@@ -1221,9 +1292,27 @@
    (set (match_operand:SI 0 "arith_reg_operand" "")
 	(reg:SI 20))]
   "TARGET_SH2"
-  "")
+  "
+{
+  rtx first, last;
 
-(define_insn ""
+  first = emit_insn (gen_smulsi3_highpart_i (operands[1], operands[2]));
+  last = emit_move_insn (operands[0], gen_rtx_REG (SImode, 20));
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  /* expand_binop can't find a suitable code in mul_highpart_optab to
+     make a REG_EQUAL note from, so make one here.
+     ??? Alternatively, we could put this at the calling site of expand_binop,
+     i.e. expand_mult_highpart.  */
+  REG_NOTES (last)
+    = gen_rtx_EXPR_LIST (REG_EQUAL, copy_rtx (SET_SRC (single_set (first))),
+			 REG_NOTES (last));
+  DONE;
+}")
+
+(define_insn "umulsi3_highpart_i"
   [(set (reg:SI 20)
 	(truncate:SI
 	 (lshiftrt:DI (mult:DI (zero_extend:DI (match_operand:SI 0 "arith_reg_operand" "r"))
@@ -1237,14 +1326,28 @@
 (define_expand "umulsi3_highpart"
   [(parallel [(set (reg:SI 20)
 		   (truncate:SI
-		    (lshiftrt:DI (mult:DI (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" ""))
-					  (zero_extend:DI (match_operand:SI 2 "arith_reg_operand" "")))
+		    (lshiftrt:DI
+	             (mult:DI
+	              (zero_extend:DI (match_operand:SI 1 "arith_reg_operand" ""))
+		      (zero_extend:DI (match_operand:SI 2 "arith_reg_operand" "")))
 				 (const_int 32))))
 	      (clobber (reg:SI 21))])
    (set (match_operand:SI 0 "arith_reg_operand" "")
 	(reg:SI 20))]
   "TARGET_SH2"
-  "")
+  "
+{
+  rtx first, last;
+
+  first = emit_insn (gen_umulsi3_highpart_i (operands[1], operands[2]));
+  last = emit_move_insn (operands[0], gen_rtx_REG (SImode, 20));
+  /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
+     invariant code motion can move it.  */
+  REG_NOTES (first) = gen_rtx_INSN_LIST (REG_LIBCALL, last, REG_NOTES (first));
+  REG_NOTES (last) = gen_rtx_INSN_LIST (REG_RETVAL, first, REG_NOTES (last));
+  DONE;
+}")
+
 
 ;; -------------------------------------------------------------------------
 ;; Logical operations
@@ -2996,7 +3099,7 @@
 ;; This one has the additional purpose to record a possible scratch register
 ;; for the following branch.
 (define_insn "indirect_jump_scratch"
-  [(set (match_operand 0 "register_operand" "r")
+  [(set (match_operand 0 "register_operand" "=r")
 	(unspec [(match_operand 1 "const_int_operand" "")] 4))]
   ""
   ""
