@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.59 2000/09/09 21:03:31 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.60 2000/11/12 02:13:51 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -818,11 +818,19 @@ lfs_writeinode(fs, sp, ip)
 	}
 	
 	/*
-	 * No need to update segment usage if there was no former inode
-	 * address or if the last inode address is in the current
-	 * partial segment.
+	 * Account the inode: it no longer belongs to its former segment,
+	 * though it will not belong to the new segment until that segment
+	 * is actually written.
 	 */
 #ifdef DEBUG
+	/*
+	 * The inode's last address should not be in the current partial
+	 * segment, except under exceptional circumstances (lfs_writevnodes
+	 * had to start over, and in the meantime more blocks were written
+	 * to a vnode).  Although the previous inode won't be accounted in
+	 * su_nbytes until lfs_writeseg, this shouldn't be a problem as we
+	 * have more data blocks in the current partial segment.
+	 */
 	if (daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)
 		printf("lfs_writeinode: last inode addr in current pseg "
 		       "(ino %d daddr 0x%x)\n", ino, daddr);
