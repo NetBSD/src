@@ -1,8 +1,8 @@
 Important things to make ACPI useful on more machines:
 
-* Add support for attaching acpiec devices using the ECDT.  Some systems
-  need this because otherwise their _INI methods try to access regions in
-  the EC space before it's initialized.
+* Add support for attaching acpiec devices early using the ECDT.  Some
+  systems need this because otherwise their _INI methods try to access
+  regions in the EC space before it's initialized.
 
 * Fix the locking protocol in acpiec.
 
