@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.35 2004/08/10 23:09:38 mycroft Exp $      */
+/*      $NetBSD: ata.c,v 1.36 2004/08/12 04:57:19 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.35 2004/08/10 23:09:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.36 2004/08/12 04:57:19 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -376,7 +376,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
@@ -387,38 +387,38 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
-		wdc_c.r_command = WDCC_IDENTIFY;
-		wdc_c.r_st_bmask = WDCS_DRDY;
-		wdc_c.r_st_pmask = 0;
-		wdc_c.timeout = 3000; /* 3s */
+		ata_c.r_command = WDCC_IDENTIFY;
+		ata_c.r_st_bmask = WDCS_DRDY;
+		ata_c.r_st_pmask = 0;
+		ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
-		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
-		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = 0;
-		wdc_c.timeout = 10000; /* 10s */
+		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
+		ata_c.r_st_bmask = 0;
+		ata_c.r_st_pmask = 0;
+		ata_c.timeout = 10000; /* 10s */
 	} else {
 		WDCDEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
-	wdc_c.flags = AT_READ | flags;
-	wdc_c.data = tb;
-	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+	ata_c.flags = AT_READ | flags;
+	ata_c.data = tb;
+	ata_c.bcount = DEV_BSIZE;
+	if (wdc_exec_command(drvp, &ata_c) != WDC_COMPLETE) {
 		WDCDEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
 	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("ata_get_parms: wdc_c.flags=0x%x\n",
-		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		WDCDEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
+		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* if we didn't read any data something is wrong */
-		if ((wdc_c.flags & AT_XFDONE) == 0)
+		if ((ata_c.flags & AT_XFDONE) == 0)
 			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
@@ -454,21 +454,21 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 int
 ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 
-	wdc_c.r_command = SET_FEATURES;
-	wdc_c.r_st_bmask = 0;
-	wdc_c.r_st_pmask = 0;
-	wdc_c.r_features = WDSF_SET_MODE;
-	wdc_c.r_count = mode;
-	wdc_c.flags = flags;
-	wdc_c.timeout = 1000; /* 1s */
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
+	ata_c.r_command = SET_FEATURES;
+	ata_c.r_st_bmask = 0;
+	ata_c.r_st_pmask = 0;
+	ata_c.r_features = WDSF_SET_MODE;
+	ata_c.r_count = mode;
+	ata_c.flags = flags;
+	ata_c.timeout = 1000; /* 1s */
+	if (wdc_exec_command(drvp, &ata_c) != WDC_COMPLETE)
 		return CMD_AGAIN;
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
 	}
 	return CMD_OK;
