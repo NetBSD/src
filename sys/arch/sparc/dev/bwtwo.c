@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.12 1995/10/04 23:35:13 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.13 1995/10/05 00:33:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,7 +127,6 @@ bwtwomatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
-	ra->ra_len = NBPG;
 
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
@@ -226,12 +225,6 @@ bwtwoattach(parent, self, args)
 	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
-	/*
-	 * When the ROM has mapped in a bwtwo display, the address
-	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
-	 */
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -249,9 +242,15 @@ bwtwoattach(parent, self, args)
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
 		isconsole = node == fbnode && fbconstty != NULL;
 #endif
+	/*
+	 * When the ROM has mapped in a bwtwo display, the address
+	 * maps only the video RAM, so in any case we have to map the
+	 * registers ourselves.  We only need the video RAM if we are
+	 * going to print characters via rconsole.
+	 */
 	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
-		/* this probably cannot happen, but what the heck */
+		/* this probably cannot happen (on sun4c), but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize, ca->ca_bustype);
 	}
 	sc->sc_reg = (volatile struct bwtworeg *)
