@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.15 2001/05/22 01:23:26 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.16 2001/05/22 16:05:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -316,8 +316,14 @@ fxp_pci_attach(parent, self, aux)
 	    {
 		const char *chipname = NULL;
 
-		if (sc->sc_rev >= FXP_REV_82558_A4)
+		if (sc->sc_rev >= FXP_REV_82558_A4) {
 			chipname = "i82558 Ethernet";
+			/*
+			 * Enable the MWI command for memory writes.
+			 */
+			if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+				sc->sc_flags |= FXPF_MWI;
+		}
 		if (sc->sc_rev >= FXP_REV_82559_A0)
 			chipname = "i82559 Ethernet";
 		if (sc->sc_rev >= FXP_REV_82559S_A)
