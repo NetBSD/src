@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.60 2001/04/19 00:50:22 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.61 2001/04/26 03:59:32 enami Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -276,7 +276,7 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	    product == USB_PRODUCT_YANO_U640MO) {
 #if CBI_I
 		sc->wire_proto = WPROTO_CBI_I;
-		sc->cmd_proto = PROTO_ATAPI;
+		sc->cmd_proto = CPROTO_ATAPI;
 #else
 		sc->wire_proto = WPROTO_CBI;
 		sc->cmd_proto = CPROTO_ATAPI;
