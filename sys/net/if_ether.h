@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.17 2000/06/17 20:57:20 matt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.17.2.1 2000/12/31 20:14:25 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,6 +49,11 @@
 #define	ETHER_MAX_LEN	1518	/* maximum frame length, including CRC */
 
 /*
+ * Some Ethernet extensions.
+ */
+#define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+
+/*
  * Ethernet address - 6 octets
  * this is only used by the ethers(3) functions.
  */
@@ -71,6 +76,15 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+/*
+ * Compute the maximum frame size based on ethertype (i.e. possible
+ * encapsulation) and whether or not an FCS is present.
+ */
+#define	ETHER_MAX_FRAME(etype, hasfcs)					\
+	(ETHERMTU + ETHER_HDR_LEN +					\
+	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
+	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).
@@ -127,9 +141,20 @@ struct	ether_header {
  */
 struct	ethercom {
 	struct	 ifnet ec_if;			/* network-visible interface */
-	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast addrs */
-	int	 ec_multicnt;			/* length of ec_multiaddrs list */
+	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast
+						   addrs */
+	int	 ec_multicnt;			/* length of ec_multiaddrs
+						   list */
+	int	 ec_capabilities;		/* capabilities, provided by
+						   driver */
+	int	 ec_capenable;			/* tells hardware which
+						   capabilities to enable */
+
+	int	 ec_nvlans;			/* # VLANs on this interface */
 };
+
+#define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
+#define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 
 #ifdef	_KERNEL
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
@@ -139,6 +164,7 @@ extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 int	ether_addmulti (struct ifreq *, struct ethercom *);
 int	ether_delmulti (struct ifreq *, struct ethercom *);
 int	ether_changeaddr (struct ifreq *, struct ethercom *);
+int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 #endif /* _KERNEL */
 
 /*
