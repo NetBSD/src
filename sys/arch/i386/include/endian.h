@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.11 1994/07/15 21:10:21 mycroft Exp $
+ *	$Id: endian.h,v 1.12 1994/09/10 01:07:08 jtc Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -70,14 +70,14 @@ __END_DECLS
 #if defined(KERNEL) && !defined(I386_CPU)
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
-   asm ("bswap %1" \
+   __asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #else
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
-   asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
+   __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
@@ -85,7 +85,7 @@ __END_DECLS
 
 #define __byte_swap_word(x) \
 ({ register unsigned short __x = (x); \
-   asm ("rorw $8, %w1" \
+   __asm ("rorw $8, %w1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
