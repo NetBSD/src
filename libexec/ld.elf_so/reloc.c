@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.65 2002/09/06 15:17:53 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.66 2002/09/12 22:56:28 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,8 +53,7 @@
 #include "rtld.h"
 
 #ifndef RTLD_INHIBIT_COPY_RELOCS
-static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *,
-    bool));
+static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *));
 
 /*
  * XXX: These don't work for the alpha and i386; don't know about powerpc
@@ -66,10 +65,9 @@ static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *,
  *		  not an indirect call.
  */
 static int
-_rtld_do_copy_relocation(dstobj, rela, dodebug)
+_rtld_do_copy_relocation(dstobj, rela)
 	const Obj_Entry *dstobj;
 	const Elf_Rela *rela;
-	bool dodebug;
 {
 	void           *dstaddr = (void *)(dstobj->relocbase + rela->r_offset);
 	const Elf_Sym  *dstsym = dstobj->symtab + ELF_R_SYM(rela->r_info);
@@ -92,7 +90,7 @@ _rtld_do_copy_relocation(dstobj, rela, dodebug)
 	}
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
-	rdbg(dodebug, ("COPY %s %s %s --> src=%p dst=%p *dst= %p size %ld",
+	rdbg(("COPY %s %s %s --> src=%p dst=%p *dst= %p size %ld",
 	    dstobj->path, srcobj->path, name, (void *)srcaddr,
 	    (void *)dstaddr, (void *)*(long *)dstaddr, (long)size));
 	return (0);
@@ -108,9 +106,8 @@ _rtld_do_copy_relocation(dstobj, rela, dodebug)
  * Returns 0 on success, -1 on failure.
  */
 int
-_rtld_do_copy_relocations(dstobj, dodebug)
+_rtld_do_copy_relocations(dstobj)
 	const Obj_Entry *dstobj;
-	bool dodebug;
 {
 #ifndef RTLD_INHIBIT_COPY_RELOCS
 
@@ -126,7 +123,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 				ourrela.r_offset = rel->r_offset;
 				ourrela.r_addend = 0;
 				if (_rtld_do_copy_relocation(dstobj,
-				    &ourrela, dodebug) < 0)
+				    &ourrela) < 0)
 					return (-1);
 			}
 		}
@@ -135,8 +132,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 		const Elf_Rela *rela;
 		for (rela = dstobj->rela; rela < dstobj->relalim; ++rela) {
 			if (ELF_R_TYPE(rela->r_info) == R_TYPE(COPY)) {
-				if (_rtld_do_copy_relocation(dstobj, rela,
-				    dodebug) < 0)
+				if (_rtld_do_copy_relocation(dstobj, rela) < 0)
 					return (-1);
 			}
 		}
@@ -190,7 +186,7 @@ _rtld_bind(obj, reloff)
 #endif
 	}
 
-	if (_rtld_relocate_plt_object(obj, rela, &addr, true) < 0)
+	if (_rtld_relocate_plt_object(obj, rela, &addr) < 0)
 		_rtld_die();
 
 	return addr;
@@ -203,11 +199,10 @@ _rtld_bind(obj, reloff)
  * or -1 on failure.
  */
 int
-_rtld_relocate_objects(first, bind_now, self, dodebug)
+_rtld_relocate_objects(first, bind_now, self)
 	Obj_Entry *first;
 	bool bind_now;
 	bool self;
-	bool dodebug;
 {
 	Obj_Entry *obj;
 	int ok = 1;
@@ -220,8 +215,7 @@ _rtld_relocate_objects(first, bind_now, self, dodebug)
 			    " symbol table", obj->path);
 			return -1;
 		}
-		rdbg(dodebug, (" relocating %s (%ld/%ld rel/rela, "
-		    "%ld/%ld plt rel/rela)",
+		rdbg((" relocating %s (%ld/%ld rel/rela, %ld/%ld plt rel/rela)",
 		    obj->path,
 		    (long)(obj->rellim - obj->rel),
 		    (long)(obj->relalim - obj->rela),
@@ -240,7 +234,7 @@ _rtld_relocate_objects(first, bind_now, self, dodebug)
 				return -1;
 			}
 		}
-		if (_rtld_relocate_nonplt_objects(obj, self, dodebug) < 0)
+		if (_rtld_relocate_nonplt_objects(obj, self) < 0)
 			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,
@@ -250,11 +244,11 @@ _rtld_relocate_objects(first, bind_now, self, dodebug)
 				return -1;
 			}
 		}
-		if (_rtld_relocate_plt_lazy(obj, dodebug) < 0)
+		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
 #if 0
 		if (bind_now)
-			if (_rtld_relocate_plt_object(obj, dodebug) < 0)
+			if (_rtld_relocate_plt_object(obj) < 0)
 				ok = 0;
 #endif
 		if (!ok)
