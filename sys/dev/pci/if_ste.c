@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.17.4.1 2004/07/23 22:57:25 he Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.17.4.1.2.1 2005/01/24 21:41:43 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.4.1 2004/07/23 22:57:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.4.1.2.1 2005/01/24 21:41:43 he Exp $");
 
 #include "bpfilter.h"
 
@@ -832,7 +832,8 @@ ste_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ste_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ste_set_filter(sc);
 			error = 0;
 		}
 		break;
