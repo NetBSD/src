@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.20 1994/08/26 10:57:27 deraadt Exp $
+ * $Id: trap.c,v 1.21 1994/09/27 01:34:04 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -692,7 +692,7 @@ syscall(code, tf, pc)
 		panic("syscall");
 	if (cpcb != &p->p_addr->u_pcb)
 		panic("syscall cpcb/ppcb");
-	if (tf != (struct trapframe *)((caddr_t)cpcb + UPAGES * NBPG) - 1)
+	if (tf != (struct trapframe *)((caddr_t)cpcb + USPACE) - 1)
 		panic("syscall trapframe");
 #endif
 	sticks = p->p_sticks;
@@ -779,7 +779,7 @@ syscall(code, tf, pc)
 		 */
 		p = curproc;
 		tf = (struct trapframe *)
-		    ((caddr_t)p->p_addr + UPAGES * NBPG - sizeof(*tf));
+		    ((caddr_t)p->p_addr + USPACE - sizeof(*tf));
 /* this is done earlier: */
 /*		p->p_md.md_tf = tf; */
 		tf->tf_out[0] = rval[0];
