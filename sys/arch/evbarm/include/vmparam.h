@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2002/03/03 11:23:00 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2002/03/03 21:22:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -48,10 +48,10 @@
  * The line between user space and kernel space
  * Mappings >= KERNEL_SPACE_START are constant across all processes
  */
-#define	KERNEL_SPACE_START	0xa0000000
+#define	KERNEL_SPACE_START	0xc0000000
 
 /* Various constants used by the MD code*/
-#define	KERNEL_BASE		0xa0000000
+#define	KERNEL_BASE		0xc0000000
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 #define	ALT_PAGE_TBLS_BASE	(KERNEL_BASE + 0x00c00000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
@@ -65,7 +65,7 @@
  * buffers is being limited due to lack of VA space.
  */
 /*
- * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
+ * The range 0xc1000000 - 0xccffffff is available for kernel VM space
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
