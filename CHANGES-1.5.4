@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.77 2002/11/10 19:58:04 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.78 2002/11/10 20:00:45 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1775,3 +1775,8 @@ sys/netinet/ip_input.c				1.60 via patch
 
   Always create PMTUD timeout queue, as PMTUD can be turned on via
   sysctl at runtime.  From lha@stacken.kth.se.
+
+sbin/sysctl/sysctl.c				1.59
+
+  When printing out nodes of type "string", don't print anything if
+  sysctl() reports that 0 bytes were returned.  Reported by Matt Green.
