@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.465 2004/01/14 19:45:35 wiz Exp $
+# $NetBSD: mi,v 1.466 2004/01/30 08:44:10 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -62,6 +62,7 @@
 ./etc/kerberosV					base-krb5-root
 ./etc/mail					base-sendmail-root
 ./etc/mtree					base-sys-root
+./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
 ./etc/obsolete					base-obsolete		obsolete
 ./etc/openssl					base-crypto-root

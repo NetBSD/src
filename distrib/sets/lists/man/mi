@@ -1,4 +1,5 @@
-# $NetBSD: mi,v 1.656 2004/01/25 14:06:55 bjh21 Exp $
+# $NetBSD: mi,v 1.657 2004/01/30 08:44:11 lukem Exp $
+./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
 ./usr/share/info/awk.info			man-util-info		info

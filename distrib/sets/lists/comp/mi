@@ -1,4 +1,5 @@
-#	$NetBSD: mi,v 1.668 2004/01/29 02:00:02 tsarna Exp $
+#	$NetBSD: mi,v 1.669 2004/01/30 08:44:10 lukem Exp $
+./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
