@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.2 1999/10/19 21:04:27 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.3 1999/10/20 20:38:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -440,6 +440,61 @@ scsipi_put_xs(xs)
 }
 
 /*
+ * scsipi_channel_freeze:
+ *
+ *	Freeze a channel's xfer queue.
+ */
+void
+scsipi_channel_freeze(chan, count)
+	struct scsipi_channel *chan;
+	int count;
+{
+	int s;
+
+	s = splbio();
+	chan->chan_qfreeze += count;
+	splx(s);
+}
+
+/*
+ * scsipi_channel_thaw:
+ *
+ *	Thaw a channel's xfer queue.
+ */
+void
+scsipi_channel_thaw(chan, count)
+	struct scsipi_channel *chan;
+	int count;
+{
+	int s;
+
+	s = splbio();
+	chan->chan_qfreeze -= count;
+	splx(s);
+}
+
+/*
+ * scsipi_channel_timed_thaw:
+ *
+ *	Thaw a channel after some time has expired.
+ */
+void
+scsipi_channel_timed_thaw(arg)
+	void *arg;
+{
+	struct scsipi_channel *chan = arg;
+
+	scsipi_channel_thaw(chan, 1);
+
+	/*
+	 * Kick the channel's queue here.  Note, we're running in
+	 * interrupt context (softclock), so the adapter driver
+	 * had better not sleep.
+	 */
+	scsipi_run_queue(chan);
+}
+
+/*
  * scsipi_periph_freeze:
  *
  *	Freeze a device's xfer queue.
@@ -489,9 +544,12 @@ scsipi_periph_timed_thaw(arg)
 
 	scsipi_periph_thaw(periph, 1);
 
-	/* XXX XXX XXX */
-	scsipi_printaddr(periph);
-	printf("timed thaw: should kick channel's queue here.\n");
+	/*
+	 * Kick the channel's queue here.  Note, we're running in
+	 * interrupt context (softclock), so the adapter driver
+	 * had better not sleep.
+	 */
+	scsipi_run_queue(periph->periph_channel);
 }
 
 /*
@@ -1260,6 +1318,16 @@ scsipi_run_queue(chan)
 
 	for (;;) {
 		s = splbio();
+
+		/*
+		 * If the channel is frozen, we can't do any work right
+		 * now.
+		 */
+		if (chan->chan_qfreeze != 0) {
+			splx(s);
+			return;
+		}
+
 		/*
 		 * Look for work to do, and make sure we can do it.
 		 */
