@@ -82,7 +82,29 @@ extern u_long rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers, rpc_auth_unix,
 	rpc_msgaccepted, rpc_call;
 extern u_long nfs_prog, nfs_vers;
 /* Maybe these should be bits in a u_long ?? */
-extern int nonidempotent[NFS_NPROCS];
+/*
+ * Static array that defines which nfs rpc's are nonidempotent
+ */
+int nonidempotent[NFS_NPROCS] = {
+	FALSE,
+	FALSE,
+	TRUE,
+	FALSE,
+	FALSE,
+	FALSE,
+	FALSE,
+	FALSE,
+	TRUE,
+	TRUE,
+	TRUE,
+	TRUE,
+	TRUE,
+	TRUE,
+	TRUE,
+	TRUE,
+	FALSE,
+	FALSE,
+};
 static int compressrequest[NFS_NPROCS] = {
 	FALSE,
 	TRUE,
@@ -107,44 +129,6 @@ int	nfs_sbwait();
 void	nfs_disconnect();
 struct mbuf *nfs_compress(), *nfs_uncompress();
 
-int	nfsrv_null(),
-	nfsrv_getattr(),
-	nfsrv_setattr(),
-	nfsrv_lookup(),
-	nfsrv_readlink(),
-	nfsrv_read(),
-	nfsrv_write(),
-	nfsrv_create(),
-	nfsrv_remove(),
-	nfsrv_rename(),
-	nfsrv_link(),
-	nfsrv_symlink(),
-	nfsrv_mkdir(),
-	nfsrv_rmdir(),
-	nfsrv_readdir(),
-	nfsrv_statfs(),
-	nfsrv_noop();
-
-int (*nfsrv_procs[NFS_NPROCS])() = {
-	nfsrv_null,
-	nfsrv_getattr,
-	nfsrv_setattr,
-	nfsrv_noop,
-	nfsrv_lookup,
-	nfsrv_readlink,
-	nfsrv_read,
-	nfsrv_noop,
-	nfsrv_write,
-	nfsrv_create,
-	nfsrv_remove,
-	nfsrv_rename,
-	nfsrv_link,
-	nfsrv_symlink,
-	nfsrv_mkdir,
-	nfsrv_rmdir,
-	nfsrv_readdir,
-	nfsrv_statfs,
-};
 
 struct nfsreq nfsreqh;
 int nfsrexmtthresh = NFS_FISHY;
