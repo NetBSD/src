@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.16 1999/05/04 02:44:43 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.17 1999/05/05 00:57:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -387,7 +387,7 @@ struct osf1_rlimit {
 };
 
 
-/* signal.h */
+/* signal.h (some in machine/signal.h) */
 
 struct osf1_sigaction {
 	osf1_fcn_ptr	sa_handler;
@@ -417,6 +417,12 @@ struct osf1_sigaltstack {
 #define OSF1_SS_DISABLE		0x00000002
 #define OSF1_SS_NOMASK		0x00000004
 #define OSF1_SS_UCONTEXT	0x00000008
+
+/* signal set manipulation macros */
+#define osf1_sigmask(n)		((osf1_sigset_t)1 << ((n) - 1))
+#define osf1_sigemptyset(s)	(*(s) = (osf1_sigset_t)0)
+#define osf1_sigismember(s, n)	(*(s) & osf1_sigmask(n))
+#define osf1_sigaddset(s, n)	(*(s) |= osf1_sigmask(n))
 
 
 /* socket.h */
