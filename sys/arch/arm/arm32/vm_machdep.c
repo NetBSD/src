@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2002/04/03 23:33:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2002/08/06 17:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -72,7 +72,7 @@ extern pv_addr_t systempage;
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
-void	switch_exit	__P((struct proc *p));
+void	switch_exit	__P((struct proc *p, struct proc *p0));
 extern void proc_trampoline	__P((void));
 
 /*
@@ -218,7 +218,7 @@ cpu_exit(p)
 	}
 #endif	/* STACKCHECKS */
 	uvmexp.swtch++;
-	switch_exit(p);
+	switch_exit(p, &proc0);
 }
 
 
