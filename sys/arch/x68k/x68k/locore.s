@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.4 1999/02/10 16:05:13 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.5 1999/02/13 18:01:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,6 @@
 #include "opt_uvm.h"
 
 #include "ite.h"
-#include "spc.h"
 #include "mha.h"
 #include "fd.h"
 #include "par.h"
@@ -560,37 +559,6 @@ _fdcdmaerrtrap:
 	jra	rei
 #endif
 
-#ifdef SCSIDMA
-_spcdmatrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(spcdmaintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-
-_spcdmaerrtrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(spcdmaerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-#endif
-
 _audiotrap:
 #if 0
 #if NADPCM > 0
@@ -637,22 +605,6 @@ _audioerrtrap:
 #endif
 	jra	rei
 
-_spctrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	movel	#0,sp@-
-	jbsr	_spcintr		| handle interrupt
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+44
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
 _exspctrap:
 	INTERRUPT_SAVEREG
 #if NMHA > 0
@@ -660,7 +612,7 @@ _exspctrap:
 	jbsr	_mhaintr		| handle interrupt
 	addql	#4,sp
 #endif
-#if NSPC > 1
+#if 0				/* XXX: NSPC > 1 */
 	movel	#1,sp@-
 	jbsr	_spcintr		| handle interrupt
 	addql	#4,sp
@@ -724,7 +676,9 @@ _com1trap:
 
 _intiotrap:
 	INTERRUPT_SAVEREG
+#if 0
 	movw	#PSL_HIGHIPL,sr		| XXX
+#endif
 	pea	sp@(16-(FR_HW))		| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,sp
