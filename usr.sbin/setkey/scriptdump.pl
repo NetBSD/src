@@ -1,4 +1,7 @@
 #! @LOCALPREFIX@/bin/perl
+#
+#	$NetBSD: scriptdump.pl,v 1.2 1999/07/06 13:13:03 itojun Exp $
+#
 
 if ($< != 0) {
 	print STDERR "must be root to invoke this\n";
