@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/07/05 18:45:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/07/11 21:50:22 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,7 +113,7 @@ struct mvmeppc_bootinfo bootinfo;
 
 vaddr_t mvmeppc_intr_reg;	/* PReP-compatible  interrupt vector register */
 
-struct mem_region physmemr, availmemr;
+struct mem_region physmemr[2], availmemr[2];
 
 paddr_t avail_end;			/* XXX temporary */
 
@@ -149,11 +149,11 @@ initppc(startkernel, endkernel, btinfo)
 	/*
 	 * Set memory region
 	 */
-	physmemr.start = 0;
-	physmemr.size = bootinfo.bi_memsize & ~PGOFSET;
-	availmemr.start = (endkernel + PGOFSET) & ~PGOFSET;
-	availmemr.size = bootinfo.bi_memsize - availmemr.start;
-	avail_end = physmemr.start + physmemr.size;    /* XXX temporary */
+	physmemr[0].start = 0;
+	physmemr[0].size = bootinfo.bi_memsize & ~PGOFSET;
+	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+	availmemr[0].size = bootinfo.bi_memsize - availmemr[0].start;
+	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
 	 * Set CPU clock
@@ -209,8 +209,8 @@ mem_regions(mem, avail)
 	struct mem_region **mem, **avail;
 {
 
-	*mem = &physmemr;
-	*avail = &availmemr;
+	*mem = physmemr;
+	*avail = availmemr;
 }
 
 /*
