@@ -26,10 +26,11 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#if !defined(lint) && defined(SCCSIDS)
-/*static char sccsid[] = "from: @(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";*/
-/*static char sccsid[] = "from: @(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: svc_auth_unix.c,v 1.2 1993/08/01 18:33:15 mycroft Exp $";
+
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char *sccsid = "from: @(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";*/
+/*static char *sccsid = "from: @(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";*/
+static char *rcsid = "$Id: svc_auth_unix.c,v 1.3 1993/08/26 00:53:39 jtc Exp $";
 #endif
 
 /*
