@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.8 1998/12/08 13:41:42 drochner Exp $	*/
+/*	$NetBSD: regex2.h,v 1.9 1998/12/13 12:21:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -165,7 +165,7 @@ struct re_guts {
 	cat_t *categories;	/* ->catspace[-CHAR_MIN] */
 	char *must;		/* match must contain this string */
 	int mlen;		/* length of must */
-	size_t nsub;		/* copy of re_nsub */
+	sopno nsub;		/* copy of re_nsub */
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */
 	/* catspace must be last */
