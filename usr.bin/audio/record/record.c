@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.24 2002/02/05 00:17:27 augustss Exp $	*/
+/*	$NetBSD: record.c,v 1.25 2002/02/10 13:16:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -321,35 +321,61 @@ write_header_sun(hdrp, lenp, leftp)
 	static sun_audioheader auh;
 	int sunenc, oencoding = encoding;
 
-	if (encoding == AUDIO_ENCODING_ULINEAR_LE) {
+	switch (encoding) {
+	case AUDIO_ENCODING_ULINEAR_LE:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
 		if (precision == 16)
 			conv_func = swap_bytes;
 		else if (precision == 32)
 			conv_func = swap_bytes32;
 		if (conv_func)
 			encoding = AUDIO_ENCODING_SLINEAR_BE;
-	} else if (encoding == AUDIO_ENCODING_ULINEAR_BE) {
+		break;
+
+	case AUDIO_ENCODING_ULINEAR_BE:
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
 		if (precision == 16)
 			conv_func = change_sign16_be;
 		else if (precision == 32)
 			conv_func = change_sign32_be;
 		if (conv_func)
 			encoding = AUDIO_ENCODING_SLINEAR_BE;
-	} else if (encoding == AUDIO_ENCODING_SLINEAR_LE) {
+		break;
+
+	case AUDIO_ENCODING_SLINEAR_LE:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+#endif
 		if (precision == 16)
 			conv_func = change_sign16_swap_bytes_le;
 		else if (precision == 32)
 			conv_func = change_sign32_swap_bytes_le;
 		if (conv_func)
 			encoding = AUDIO_ENCODING_SLINEAR_BE;
+		break;
+
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+		encoding = AUDIO_ENCODING_SLINEAR_BE;
+		break;
+#endif
 	}
 	
 	/* if we can't express this as a Sun header, don't write any */
 	if (audio_encoding_to_sun(encoding, precision, &sunenc) != 0) {
-		if (!qflag && !warned)
-			warnx("failed to convert to sun encoding from %d:%d; "
-			      "Sun audio header not written",
-			      oencoding, precision);
+		if (!qflag && !warned) {
+			const char *s = audio_enc_from_val(oencoding);
+
+			if (s == NULL)
+				s = "(unknown)";
+			warnx("failed to convert to sun encoding from %s "
+			      "(precision %d);\nSun audio header not written",
+			      s, precision);
+		}
 		conv_func = 0;
 		warned = 1;
 		return -1;
