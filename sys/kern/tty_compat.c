@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.12 1994/04/12 17:18:59 mycroft Exp $
+ *	from: @(#)tty_compat.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tty_compat.c,v 1.13 1994/05/12 03:42:23 cgd Exp $
  */
 
 /* 
@@ -54,37 +54,32 @@ int ttydebug = 0;
 
 static struct speedtab compatspeeds[] = {
 #define MAX_SPEED	17
-	115200,	17,
-	57600,	16,
-	38400,	15,
-	19200,	14,
-	9600,	13,
-	4800,	12,
-	2400,	11,
-	1800,	10,
-	1200,	9,
-	600,	8,
-	300,	7,
-	200,	6,
-	150,	5,
-	134,	4,
-	110,	3,
-	75,	2,
-	50,	1,
-	0,	0,
-	-1,	-1,
+	{ 115200, 17 },
+	{ 57600, 16 },
+	{ 38400, 15 },
+	{ 19200, 14 },
+	{ 9600,	13 },
+	{ 4800,	12 },
+	{ 2400,	11 },
+	{ 1800,	10 },
+	{ 1200,	9 },
+	{ 600,	8 },
+	{ 300,	7 },
+	{ 200,	6 },
+	{ 150,	5 },
+	{ 134,	4 },
+	{ 110,	3 },
+	{ 75,	2 },
+	{ 50,	1 },
+	{ 0,	0 },
+	{ -1,	-1 },
 };
 static int compatspcodes[] = { 
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
-int ttcompatgetflags __P((struct tty *tp));
-void ttcompatsetflags __P((struct tty *tp, struct termios *t));
-void ttcompatsetlflags __P((struct tty *tp, struct termios *t));
-
 /*ARGSUSED*/
-int
 ttcompat(tp, com, data, flag, p)
 	register struct tty *tp;
 	int com;
@@ -133,7 +128,7 @@ ttcompat(tp, com, data, flag, p)
 		tp->t_flags = tp->t_flags&0xffff0000 | sg->sg_flags&0xffff;
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA, 
-			(caddr_t)&term, flag, p));
+			&term, flag, p));
 	}
 
 	case TIOCGETC: {
@@ -195,7 +190,7 @@ ttcompat(tp, com, data, flag, p)
 		if (com == TIOCLSET)
 			tp->t_flags = (tp->t_flags&0xffff) | *(int *)data<<16;
 		else {
-			tp->t_flags =
+			tp->t_flags = 
 			 (ttcompatgetflags(tp)&0xffff0000)|(tp->t_flags&0xffff);
 			if (com == TIOCLBIS)
 				tp->t_flags |= *(int *)data<<16;
@@ -203,7 +198,7 @@ ttcompat(tp, com, data, flag, p)
 				tp->t_flags &= ~(*(int *)data<<16);
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
+		return (ttioctl(tp, TIOCSETA, &term, flag, p));
 	}
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
@@ -237,7 +232,6 @@ ttcompat(tp, com, data, flag, p)
 	return (0);
 }
 
-int
 ttcompatgetflags(tp)
 	register struct tty *tp;
 {
@@ -265,7 +259,7 @@ ttcompatgetflags(tp)
 		if (tp->t_flags&PASS8)
 			flags |= PASS8;
 	}
-
+	
 	if ((lflag&ICANON) == 0) {	
 		/* fudge */
 		if (iflag&IXON || lflag&ISIG || lflag&IEXTEN || cflag&PARENB)
@@ -295,7 +289,6 @@ ttcompatgetflags(tp)
 	return (flags);
 }
 
-void
 ttcompatsetflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -367,7 +360,6 @@ ttcompatsetflags(tp, t)
 	t->c_cflag = cflag;
 }
 
-void
 ttcompatsetlflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -395,9 +387,9 @@ ttcompatsetlflags(tp, t)
 	else
 		lflag &= ~ECHOCTL;
 	if ((flags&DECCTQ) == 0)
-		lflag |= IXANY;
+		iflag |= IXANY;
 	else
-		lflag &= ~IXANY;
+		iflag &= ~IXANY;
 	if (flags & MDMBUF)
 		cflag |= MDMBUF;
 	else
@@ -415,7 +407,7 @@ ttcompatsetlflags(tp, t)
 		if (flags&LITOUT)
 			oflag &= ~OPOST;
 		if ((flags&(PASS8|RAW)) == 0)
-  			iflag |= ISTRIP;
+			iflag |= ISTRIP;
 	} else if ((flags&RAW) == 0) {
 		cflag &= ~CSIZE;
 		cflag |= CS7|PARENB;
@@ -426,4 +418,4 @@ ttcompatsetlflags(tp, t)
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
 }
-#endif	/* COMPAT_43 */
+#endif	/* COMPAT_43 || COMPAT_SUNOS */
