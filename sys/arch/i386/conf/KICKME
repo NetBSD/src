@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.27 1995/08/22 19:43:19 jtc Exp $
+#	$NetBSD: KICKME,v 1.28 1996/03/04 03:26:01 cgd Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -44,7 +44,9 @@ options		INET		# IP + ICMP + TCP + UDP
 
 config		netbsd	root on sd0 swap on sd0 and sd1
 
-isa0	at root
+mainbus0 at root
+
+isa0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 

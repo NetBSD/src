@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.53 1996/02/28 02:02:29 cgd Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.54 1996/03/04 03:25:48 cgd Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -75,9 +75,11 @@ options		PCVT_24LINESDEF
 config		netbsd	root on wd0 swap on wd0
 #options	GENERIC
 
-isa0	at root
-#eisa0	at root
-#pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+#eisa0	at mainbus0
+#pci0	at mainbus0 bus ?
 
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1996/02/28 01:54:44 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1996/03/04 03:26:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,14 +58,6 @@
 
 #include <machine/pte.h>
 
-#if 0 /* XXX eisavar.h includes isavar.h, which is not idempotent */
-#include <dev/isa/isavar.h>
-#endif
-#include <dev/eisa/eisavar.h>
-#include <dev/pci/pcivar.h>
-
-#include "pci.h"
-
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -78,38 +70,11 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  */
 configure()
 {
-	struct isabus_attach_args iba;
-	struct eisabus_attach_args eba;
-#if NPCI > 0
-	struct pcibus_attach_args pba;
-#endif
 
 	startrtclock();
 
-	/*
-	 * XXX These should only 'find' busses if they are actually
-	 * XXX present.  However, there's currently no way to check
-	 * XXX whether or not isa and eisa are present.  Until there
-	 * XXX is, the old way of always configuring them will have to
-	 * XXX do.  Note also that the presence of a PCI bus should
-	 * XXX _always_ be checked, and if present the bus should be
-	 * XXX 'found'.  However, because of the structure of the code,
-	 * XXX that's not currently possible.
-	 */
-	iba.iba_busname = "isa";
-	config_rootfound("isa", &iba);
-
-	eba.eba_busname = "eisa";
-	config_rootfound("eisa", &eba);
-
-#if NPCI > 0
-	if (pci_mode_detect() != 0) {
-		pba.pba_busname = "pci";
-		pba.pba_bus = 0;
-		pba.pba_maxndevs = pci_mode == 2 ? 16 : 32;
-		config_rootfound("pci", &pba);
-	}
-#endif
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
 	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
