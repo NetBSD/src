@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: Ovfork.s,v 1.1 1994/05/24 07:13:04 glass Exp $")
+	ASMSTR("$Id: Ovfork.s,v 1.2 1994/11/14 23:49:34 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,7 +48,7 @@
  * v0 == pid of child in parent, v0 == pid of parent in child.
  */
 
-LEAF(vfork)
+LEAF(_vfork)
 	li	v0, SYS_vfork		# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
@@ -58,4 +58,4 @@ LEAF(vfork)
 	move	v0, zero		# return zero in child
 2:
 	j	ra
-END(vfork)
+END(_vfork)

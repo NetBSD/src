@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: modf.s,v 1.1 1994/05/24 07:12:36 glass Exp $")
+	ASMSTR("$Id: modf.s,v 1.2 1994/11/14 23:49:02 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,7 +46,7 @@
  *	double val, *iptr;
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
-LEAF(modf)
+LEAF(_modf)
 	cfc1	t0, $31			# get the control register
 	cfc1	t0, $31			# get the control register
 	or	t1, t0, 0x3		# set rounding mode to round to zero
@@ -58,4 +58,4 @@ LEAF(modf)
 	s.d	$f0, 0(a2)		# save the integer part
 	sub.d	$f0, $f12, $f0		# subtract val - integer part
 	j	ra
-END(modf)
+END(_modf)
