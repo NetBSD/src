@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.34 1997/11/30 01:02:45 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.35 1997/12/03 03:05:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -61,6 +61,7 @@
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146
+#define    NUBUS_DRHW_SPECTRM8	0x017b	/* SuperMac Spectrum/8  Series III */
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
