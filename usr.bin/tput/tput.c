@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $	*/
+/*	$NetBSD: tput.c,v 1.9 1997/10/14 01:46:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -33,30 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $";
+__RCSID("$NetBSD: tput.c,v 1.9 1997/10/14 01:46:38 lukem Exp $");
 #endif /* not lint */
 
 #include <termios.h>
 
 #include <err.h>
-#include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termcap.h>
 #include <unistd.h>
 
+	int   main __P((int, char **));
+static void   outc __P((int));
 static void   prlongname __P((char *));
 static void   setospeed __P((void));
-static void   outc __P((int));
 static void   usage __P((void));
 static char **process __P((char *, char *, char **));
 

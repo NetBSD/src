@@ -1,4 +1,4 @@
-.\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
+.\"	$NetBSD: tput.1,v 1.5 1997/10/14 01:46:35 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,13 +40,13 @@
 .Nm tput
 .Nd terminal capability interface
 .Sh SYNOPSIS
-.Nm tput
+.Nm
 .Op Fl T Ar term
 .Ar attribute
 .Op Ar attribute-args
 .Ar ...
 .Sh DESCRIPTION
-.Nm Tput
+.Nm
 makes terminal-dependent information available to users or shell
 applications.
 The options are as follows:
@@ -56,18 +56,18 @@ The terminal name as specified in the
 .Xr termcap
 database, for example, ``vt100'' or ``xterm''.
 If not specified,
-.Nm tput
+.Nm
 retrieves the
 .Dq Ev TERM
 variable from the environment.
 .El
 .Pp
-.Nm Tput
+.Nm
 outputs a string if the
 .Ar attribute
 is of type string; a number if it is of type integer.
 Otherwise,
-.Nm tput
+.Nm
 exits 0 if the terminal has the capability and 1 if it does not,
 without further action.
 .Pp
@@ -97,16 +97,16 @@ Reset the terminal (the
 ``rs'' sequence).
 .Sh DIAGNOSTICS
 The exit value of
-.Nm tput
+.Nm
 is based on the last attribute specified.
 If the attribute is of type string or of type integer,
-.Nm tput
+.Nm
 exits 0 if the attribute is defined for this terminal type and 1
 if it is not.
 If the attribute is of type boolean,
-.Nm tput
+.Nm
 exits 0 if the terminal has this attribute, and 1 if it does not.
-.Nm Tput
+.Nm
 exits 2 if any error occurred.
 .Sh EXAMPLES
 .Bl -tag -width "tput cm 6 11 DC 6" -compact
@@ -119,7 +119,7 @@ goto line 6 column 11 and delete 6 characters
 .Xr termcap 3 ,
 .Xr termcap 5
 .Sh BUGS
-.Nm Tput
+.Nm
 can't really distinguish between different types of attributes.
 .Sh HISTORY
 The
