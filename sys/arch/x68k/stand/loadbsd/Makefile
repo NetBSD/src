@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/16 16:30:21 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2001/06/12 16:57:28 minoura Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -31,5 +31,5 @@ ${PROG}: ${BASE}1 ${BASE}2
 
 .for i in 1 2
 ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
-	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-T${i}${i}000 ${OBJS} ${LDLIBS}
+	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-Ttext -Wl,${i}${i}000 ${OBJS} ${LDLIBS}
 .endfor

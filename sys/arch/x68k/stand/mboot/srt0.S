@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 1999/07/04 04:38:54 minoura Exp $	*/
+/*	$NetBSD: srt0.S,v 1.2 2001/06/12 16:57:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <m68k/asm.h>	
 
-ASENTRY(start)
+ENTRY_NOPROFILE(_start)
 	bra		start0
 	.ascii		BOOT
 	.byte		0x20
@@ -46,8 +46,8 @@ ASENTRY(start)
 	.even
 
 start0:
-	lea		pc@(start),a7
-	movl		d4,sp@-
+	lea		%pc@(_C_LABEL(_start)),%a7
+	movl		%d4,%sp@-
 	bsr		_C_LABEL(bootmain)
-	addql		#4,a7
+	addql		#4,%a7
 	rts
