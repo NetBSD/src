@@ -1,7 +1,7 @@
 #ifndef INTERWAVEREG_H
 #define INTERWAVEREG_H
 
-/*	$NetBSD: interwavereg.h,v 1.3 1997/10/19 07:42:09 augustss Exp $	*/
+/*	$NetBSD: interwavereg.h,v 1.4 2001/04/30 01:34:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -238,11 +238,11 @@
 #define DMA_UPLOAD        0x02  /* From LM to PC */
 #define DMA_ENABLE        0x01
 
-#define GUS_MODE          0x00           // SGMI[0]=0
-#define ENH_MODE          0x01           // SGMI[0]=1
-#define ENABLE_LFOS       0x02           // SGMI[1]
-#define NO_WAVETABLE      0x04           // SGMI[2]
-#define RAM_TEST          0x08           // SGMI[3]
+#define GUS_MODE          0x00  /* SGMI[0]=0 */
+#define ENH_MODE          0x01  /* SGMI[0]=1 */
+#define ENABLE_LFOS       0x02  /* SGMI[1] */
+#define NO_WAVETABLE      0x04  /* SGMI[2] */
+#define RAM_TEST          0x08  /* SGMI[3] */
 
 #define DMA_SET_MASK      0x04
 
