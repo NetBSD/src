@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 2001/02/09 21:47:46 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 2001/03/17 20:56:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,9 @@
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 #include "opt_lockdebug.h"
+#include "kbd.h"
+#include "ncrscsi.h"
+#include "zs.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -567,6 +570,7 @@ ASENTRY_NOPROFILE(mfp_timc)
 	jra	_ASM_LABEL(rei)		|  all done
 #endif /* STATCLOCK */
 
+#if NKBD > 0
 	/* MFP ACIA handler --- keyboard/midi --- */
 ASENTRY_NOPROFILE(mfp_kbd)
 	addql	#1,_C_LABEL(intrcnt)+8	|  add another kbd/mouse interrupt
@@ -579,7 +583,9 @@ ASENTRY_NOPROFILE(mfp_kbd)
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
+#endif /* NKBD */
 
+#if NNCRSCSI > 0
 	/* MFP2 SCSI DMA handler --- NCR5380 --- */
 ASENTRY_NOPROFILE(mfp2_5380dm)
 	addql	#1,_C_LABEL(intrcnt)+24	|  add another 5380-DMA interrupt
@@ -605,7 +611,9 @@ ASENTRY_NOPROFILE(mfp2_5380)
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
+#endif /* NNCRSCSI > 0 */
 
+#if NZS > 0
 	/* SCC Interrupt --- modem2/serial2 --- */
 ASENTRY_NOPROFILE(sccint)
 	addql	#1,_C_LABEL(intrcnt)+32	|  add another SCC interrupt
@@ -618,6 +626,7 @@ ASENTRY_NOPROFILE(sccint)
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
+#endif /* NZS > 0 */
 
 	/* Level 1 (Software) interrupt handler */
 ENTRY_NOPROFILE(lev1intr)

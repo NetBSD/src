@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.73 2001/03/16 21:31:55 leo Exp $
+#	$NetBSD: files.atari,v 1.74 2001/03/17 20:56:32 leo Exp $
 
 maxpartitions 16
 
@@ -179,7 +179,7 @@ major   {cd = 6}
 # ncr 5380 controller
 device	ncrscsi: scsi
 attach	ncrscsi at mainbus
-file	arch/atari/dev/atari5380.c	ncrscsi
+file	arch/atari/dev/atari5380.c	ncrscsi needs-flag
 
 # list of standard files...
 file	dev/cons.c				ite | ser
