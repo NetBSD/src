@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2000/04/13 23:00:42 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2000/04/20 14:02:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -861,6 +861,14 @@ tlb_handler(p1, p2, p3, p4, frame)
 	}
 
  nogo:
+	if (p != NULL) {
+		struct pcb *pcb = &p->p_addr->u_pcb;
+		if (pcb->pcb_onfault != 0) {
+			frame.tf_spc = (int)pcb->pcb_onfault;
+			return;
+		}
+	}
+
 #ifdef	DEBUG
 	if (trapdebug) {
 		printf("tlb_handler#NOGO:va(0x%lx),spc=%x\n",
