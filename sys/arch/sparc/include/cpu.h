@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1998/08/21 14:10:42 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.27 1998/08/23 10:07:09 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,7 +162,6 @@ extern struct intrhand {
 } *intrhand[15];
 
 void	intr_establish __P((int level, struct intrhand *));
-void	vmeintr_establish __P((int vec, int level, struct intrhand *));
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
