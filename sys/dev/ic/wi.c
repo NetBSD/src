@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.91 2002/09/30 15:48:44 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.92 2002/10/01 03:24:35 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.91 2002/09/30 15:48:44 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.92 2002/10/01 03:24:35 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -616,6 +616,7 @@ wi_init(struct ifnet *ifp)
 		    sc->sc_txd[i].d_fid));
 		sc->sc_txd[i].d_len = 0;
 	}
+	sc->sc_txcur = sc->sc_txnext = 0;
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		ic->ic_flags |= IEEE80211_F_IBSSON;
 	else
