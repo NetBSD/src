@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.261 1999/10/06 08:13:17 itohy Exp $
+#	$NetBSD: GENERIC,v 1.262 1999/10/06 12:21:43 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -331,8 +331,9 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
-nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
-nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
+# The "nca" probe might give false hits or hang your machine.
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+#nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
