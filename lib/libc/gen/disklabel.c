@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.9 1995/02/27 15:47:03 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10 1995/05/13 06:58:20 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.9 1995/02/27 15:47:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.10 1995/05/13 06:58:20 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.9 1995/02/27 15:47:03 cgd Exp $"
 #include <sys/disklabel.h>
 #include <ufs/ffs/fs.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
