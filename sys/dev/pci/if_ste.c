@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.4 2001/07/19 16:36:15 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.5 2001/07/23 17:23:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1154,6 +1154,7 @@ ste_reset(struct ste_softc *sc)
 	delay(50000);
 
 	for (i = 0; i < STE_TIMEOUT; i++) {
+		delay(1000);
 		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, STE_AsicCtrl) &
 		     AC_ResetBusy) == 0)
 			break;
@@ -1391,10 +1392,10 @@ ste_eeprom_wait(struct ste_softc *sc)
 	int i;
 
 	for (i = 0; i < STE_TIMEOUT; i++) {
+		delay(1000);
 		if ((bus_space_read_2(sc->sc_st, sc->sc_sh, STE_EepromCtrl) &
 		     EC_EepromBusy) == 0)
 			return (0);
-		delay(2);
 	}
 	return (1);
 }
