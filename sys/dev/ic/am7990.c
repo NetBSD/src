@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.3 1995/07/24 04:34:51 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.4 1995/11/25 01:23:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -960,49 +960,27 @@ allmulti:
 }
 
 
-#if 0	/* USE OF THE FOLLOWING IS MACHINE-SPECIFIC */
 /*
- * Routines for accessing the transmit and receive buffers. Unfortunately,
- * CPU addressing of these buffers is done in one of 3 ways:
- * - contiguous (for the 3max and turbochannel option card)
- * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the pmax)
- * - gap16, which means 16bytes interspersed with 16byte spaces
- *   for buffers which must begin on a 32byte boundary (for 3min and maxine)
- * The buffer offset is the logical byte offset, assuming contiguous storage.
+ * Routines for accessing the transmit and receive buffers.
+ * The various CPU and adapter configurations supported by this
+ * driver require three different access methods for buffers
+ * and descriptors:
+ *	(1) contig (contiguous data; no padding),
+ *	(2) gap2 (two bytes of data followed by two bytes of padding),
+ *	(3) gap16 (16 bytes of data followed by 16 bytes of padding).
  */
-void
-copytodesc_contig(sc, from, boff, len)
-	struct le_softc *sc;
-	caddr_t from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
 
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
+#ifdef LE_NEED_BUF_CONTIG
+/*
+ * contig: contiguous data with no padding.
+ *
+ * Buffers may have any alignment.
+ */
 
-void
-copyfromdesc_contig(sc, to, boff, len)
-	struct le_softc *sc;
-	caddr_t to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(buf + boff, to, len);
-}
-
-void
+integrate void
 copytobuf_contig(sc, from, boff, len)
 	struct le_softc *sc;
-	caddr_t from;
+	void *from;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
@@ -1013,10 +991,10 @@ copytobuf_contig(sc, from, boff, len)
 	bcopy(from, buf + boff, len);
 }
 
-void
+integrate void
 copyfrombuf_contig(sc, to, boff, len)
 	struct le_softc *sc;
-	caddr_t to;
+	void *to;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
@@ -1027,7 +1005,7 @@ copyfrombuf_contig(sc, to, boff, len)
 	bcopy(buf + boff, to, len);
 }
 
-void
+integrate void
 zerobuf_contig(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
@@ -1039,123 +1017,116 @@ zerobuf_contig(sc, boff, len)
 	 */
 	bzero(buf + boff, len);
 }
+#endif /* LE_NEED_BUF_CONTIG */
 
+#ifdef LE_NEED_BUF_GAP2
 /*
- * For the pmax the buffer consists of shorts (2 bytes) interspersed with
- * short (2 byte) spaces and must be accessed with halfword load/stores.
- * (don't worry about doing an extra byte)
+ * gap2: two bytes of data followed by two bytes of pad.
+ *
+ * Buffers must be 4-byte aligned.  The code doesn't worry about
+ * doing an extra byte.
  */
-void
-copytobuf_gap2(sc, from, boff, len)
+
+integrate void
+copytobuf_gap2(sc, fromv, boff, len)
 	struct le_softc *sc;
-	register caddr_t from;
+	void *fromv;
 	int boff;
 	register int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
+	register caddr_t from = fromv;
+	register volatile u_int16_t *bptr;
 	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	if ((unsigned)from & 0x1) {
-		while (len > 1) {
-			*bptr = (from[1] << 8) | (from[0] & 0xff);
-			bptr += 2;
-			from += 2;
-			len -= 2;
-		}
-	} else {
-		/* optimize for aligned transfers */
-		xfer = (int)((unsigned)len & ~0x1);
-		CopyToBuffer((u_short *)from, bptr, xfer);
-		bptr += xfer;
-		from += xfer;
-		len -= xfer;
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		*bptr = (from[1] << 8) | (from[0] & 0xff);
+		bptr += 2;
+		from += 2;
+		len -= 2;
 	}
 	if (len == 1)
-		*bptr = (u_short)*from;
+		*bptr = (u_int16_t)*from;
 }
 
-void
-copyfrombuf_gap2(sc, to, boff, len)
+integrate void
+copyfrombuf_gap2(sc, tov, boff, len)
 	struct le_softc *sc;
-	register caddr_t to;
+	void *tov;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
-	register u_short tmp;
+	register caddr_t to = tov;
+	register volatile u_int16_t *bptr;
+	register u_int16_t tmp;
 	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*to++ = (*bptr >> 8) & 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	if ((unsigned)to & 0x1) {
-		while (len > 1) {
-			tmp = *bptr;
-			*to++ = tmp & 0xff;
-			*to++ = (tmp >> 8) & 0xff;
-			bptr += 2;
-			len -= 2;
-		}
-	} else {
-		/* optimize for aligned transfers */
-		xfer = (int)((unsigned)len & ~0x1);
-		CopyFromBuffer(bptr, to, xfer);
-		bptr += xfer;
-		to += xfer;
-		len -= xfer;
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		tmp = *bptr;
+		*to++ = tmp & 0xff;
+		*to++ = (tmp >> 8) & 0xff;
+		bptr += 2;
+		len -= 2;
 	}
 	if (len == 1)
 		*to = *bptr & 0xff;
 }
 
-void
+integrate void
 zerobuf_gap2(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_short *bptr;
+	register volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
-		bptr = ((volatile u_short *)buf) + (boff - 1);
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr &= 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_short *)buf) + boff;
+		bptr = ((volatile u_int16_t *)buf) + boff;
 	while (len > 0) {
 		*bptr = 0;
 		bptr += 2;
 		len -= 2;
 	}
 }
+#endif /* LE_NEED_BUF_GAP2 */
 
+#ifdef LE_NEED_BUF_GAP16
 /*
- * For the 3min and maxine, the buffers are in main memory filled in with
- * 16byte blocks interspersed with 16byte spaces.
+ * gap16: 16 bytes of data followed by 16 bytes of pad.
+ *
+ * Buffers must be 32-byte aligned.
  */
-void
-copytobuf_gap16(sc, from, boff, len)
+
+integrate void
+copytobuf_gap16(sc, fromv, boff, len)
 	struct le_softc *sc;
-	register caddr_t from;
+	void *fromv;
 	int boff;
 	register int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t from = fromv;
 	register caddr_t bptr;
 	register int xfer;
 
@@ -1172,13 +1143,14 @@ copytobuf_gap16(sc, from, boff, len)
 	}
 }
 
-void
-copyfrombuf_gap16(sc, to, boff, len)
+integrate void
+copyfrombuf_gap16(sc, tov, boff, len)
 	struct le_softc *sc;
-	register caddr_t to;
+	void *tov;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t to = tov;
 	register caddr_t bptr;
 	register int xfer;
 
@@ -1195,7 +1167,7 @@ copyfrombuf_gap16(sc, to, boff, len)
 	}
 }
 
-void
+integrate void
 zerobuf_gap16(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
@@ -1215,4 +1187,4 @@ zerobuf_gap16(sc, boff, len)
 		xfer = min(len, 16);
 	}
 }
-#endif
+#endif /* LE_NEED_BUF_GAP16 */
