@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ftpusers.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+/*	$NetBSD: pam_ftpusers.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ftpusers/pam_ftpusers.c,v 1.1 2002/05/08 00:30:10 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ftpusers.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+__RCSID("$NetBSD: pam_ftpusers.c,v 1.2.2.1 2005/04/04 17:55:19 tron Exp $");
 #endif
 
 #include <ctype.h>
@@ -60,18 +60,20 @@ PAM_EXTERN int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct group *grp;
 	const char *user;
 	int pam_err, found, allow;
 	char *line, *name, **mem;
 	size_t len, ulen;
 	FILE *f;
+	char pwbuf[1024];
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	if (user == NULL || (pwd = getpwnam(user)) == NULL)
+	if (user == NULL ||
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_SERVICE_ERR);
 
 	found = 0;
