@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.59 2002/11/30 00:20:02 pooka Exp $	*/
+/*	$NetBSD: eap.c,v 1.60 2002/12/05 11:26:26 pooka Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.59 2002/11/30 00:20:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.60 2002/12/05 11:26:26 pooka Exp $");
 
 #include "midi.h"
 
@@ -589,15 +589,21 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	ct5880 = 0;
 	if (sc->sc_1371) {
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880)
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880) {
 			ct5880 = 1;
-		switch (revision) {
-		case EAP_EV1938_A: revstr = "EV1938A "; break;
-		case EAP_CT5880_C: revstr = "CT5880C "; ct5880 = 1; break;
-		case EAP_ES1373_A: revstr = "ES1373A "; break;
-		case EAP_ES1373_B: revstr = "ES1373B "; break;
-		case EAP_CT5880_A: revstr = "CT5880A "; ct5880 = 1; break;
-		case EAP_ES1371_B: revstr = "ES1371B "; break;
+			switch (revision) {
+			case EAP_CT5880_C: revstr = "CT5880C "; break;
+			case EAP_CT5880_D: revstr = "CT5880D "; break;
+			case EAP_CT5880_E: revstr = "CT5880E "; break;
+			case EAP_CT5880_A: revstr = "CT5880A "; break;
+			}
+		} else {
+			switch (revision) {
+			case EAP_EV1938_A: revstr = "EV1938A "; break;
+			case EAP_ES1373_A: revstr = "ES1373A "; break;
+			case EAP_ES1373_B: revstr = "ES1373B "; break;
+			case EAP_ES1371_B: revstr = "ES1371B "; break;
+			}
 		}
 	}
 	printf(": %s %s(rev. 0x%02x)\n", devinfo, revstr, revision);
