@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.1.2.2 1997/07/01 18:23:48 bouyer Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.1.2.3 1997/07/01 21:49:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -90,6 +90,18 @@ struct scsipi_inquiry_pattern scsicd_patterns[] = {
 #endif
 };
 
+int	scsi_cd_setchan __P((struct cd_softc *, int, int, int, int));
+int	scsi_cd_getvol __P((struct cd_softc *, struct ioc_vol *));
+int	scsi_cd_setvol __P((struct cd_softc *, const struct ioc_vol *));
+int	scsi_cd_set_pa_immed __P((struct cd_softc *));
+
+const struct cd_ops cd_scsi_ops = {
+	scsi_cd_setchan,
+	scsi_cd_getvol,
+	scsi_cd_setvol,
+	scsi_cd_set_pa_immed,
+};
+
 int
 scsicdmatch(parent, match, aux)
 	struct device *parent;
@@ -128,7 +140,7 @@ scsicdattach(parent, self, aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsicdattach: "));
 
-	cdattach(parent, cd, sc_link);
+	cdattach(parent, cd, sc_link, &cd_scsi_ops);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
@@ -187,7 +199,7 @@ scsi_cd_set_mode(cd, data)
 
 int
 scsi_cd_set_pa_immed(cd)
-struct cd_softc *cd;
+	struct cd_softc *cd;
 {
 	struct scsi_cd_mode_data data;
 	int error;
@@ -201,8 +213,8 @@ struct cd_softc *cd;
 
 int
 scsi_cd_setchan(cd, p0, p1, p2, p3)
-struct cd_softc *cd;
-int p0, p1, p2, p3;
+	struct cd_softc *cd;
+	int p0, p1, p2, p3;
 {
 	struct scsi_cd_mode_data data;
 	int error;
@@ -216,7 +228,8 @@ int p0, p1, p2, p3;
 	return scsi_cd_set_mode(cd, &data);
 }
 
-int scsi_cd_getvol(cd, arg)
+int
+scsi_cd_getvol(cd, arg)
 	struct cd_softc *cd;
 	struct ioc_vol *arg;
 {
@@ -233,9 +246,10 @@ int scsi_cd_getvol(cd, arg)
 	return 0;
 }
 
-int scsi_cd_setvol(cd, arg)
+int
+scsi_cd_setvol(cd, arg)
 	struct cd_softc *cd;
-	struct ioc_vol *arg;
+	const struct ioc_vol *arg;
 {
 	struct scsi_cd_mode_data data;
 	int error;
@@ -250,4 +264,3 @@ int scsi_cd_setvol(cd, arg)
 	data.page.audio.port[3].volume = arg->vol[3];
 	return scsi_cd_set_mode(cd, &data);
 }
-
