@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1997/02/08 01:06:58 cgd Exp $
+#	$NetBSD: GENERIC,v 1.40 1997/02/27 01:21:42 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -86,8 +86,8 @@ le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
+asc0	at	tcds? slot ?
+asc1	at	tcds? slot ?
 cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
@@ -138,7 +138,7 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # SCSI bus support
-scsibus* at	esp?
+scsibus* at	asc?
 scsibus* at	ncr?
 
 # SCSI devices
