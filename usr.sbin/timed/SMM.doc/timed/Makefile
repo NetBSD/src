@@ -5,6 +5,6 @@ SRCS=	timed.ms
 MACROS=	-ms
 
 paper.ps: ${SRCS}
-	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
 
 .include <bsd.doc.mk>
