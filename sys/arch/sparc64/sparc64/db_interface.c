@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.34 2000/06/19 23:30:35 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.35 2000/06/23 19:52:57 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -262,7 +262,7 @@ db_read_bytes(addr, size, data)
 	src = (char *)addr;
 	while (size-- > 0) {
 		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
-			*data++ = *src++;
+			*data++ = probeget((paddr_t)(long)src++, ASI_P, 1);
 		else
 			*data++ = fubyte(src++);
 	}
