@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.10 2002/01/25 19:19:24 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11 2002/03/24 16:10:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.10 2002/01/25 19:19:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2002/03/24 16:10:11 bjh21 Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.10 2002/01/25 19:19:24 thorpej Exp
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#ifndef arm26
+#ifndef acorn26
 #include <arm/cpufunc.h>
 #endif
 
@@ -162,7 +162,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_r3 = (int)frame.sf_handler;
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
-#ifndef arm26
+#ifndef acorn26
 	/* XXX This should not be needed. */
 	cpu_icache_sync_all();
 #endif
