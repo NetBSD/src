@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1997/08/27 11:23:56 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 1997/09/10 04:22:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,6 @@ configure()
 {
 	extern int	cold;
 
-	VIA_initialize();	/* Init VIA hardware */
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before adb_init() */
 	adb_init();		/* ADB device subsystem & driver */
