@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.1.1.1 2002/04/12 21:15:52 leo Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.2 2002/04/20 20:35:00 leo Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,22 +63,25 @@ menu editfsparts, y=13, exit;
 	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
  
 
-menu md_distcustom, y=3, exit, title "Selection toggles inclusion";
+menu md_distcustom, y=2, x=28, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Base",			 action { toggle_getit (1); };
-	option	"System (/etc)",	 action { toggle_getit (2); };
-	option  "Compiler Tools", 	 action { toggle_getit (3); };
-	option  "Games", 		 action { toggle_getit (4); };
-	option  "Online Manual Pages", 	 action { toggle_getit (5); };
-	option  "Miscellaneous", 	 action { toggle_getit (6); };
-	option  "Text Processing Tools", action { toggle_getit (7); };
-	option  "X11 base and clients",	 action { toggle_getit (8); };
-	option  "X11 fonts",		 action { toggle_getit (9); };
-	option  "X11 servers",		 action { toggle_getit (10); };
-	option  "X contrib clients",	 action { toggle_getit (11); };
-	option  "X11 programming",	 action { toggle_getit (12); };
-	option	"X11 Misc.",		 action { toggle_getit (13); };
+	option	"Kernel (TT030/Falcon)", action { toggle_getit (0); };
+	option	"Kernel (Hades)",	 action { toggle_getit (1); };
+	option	"Kernel (Milan)",	 action { toggle_getit (2); };
+	option	"Kernel (Milan)",	 action { toggle_getit (3); };
+	option	"Base",			 action { toggle_getit (4); };
+	option	"System (/etc)",	 action { toggle_getit (5); };
+	option  "Compiler Tools", 	 action { toggle_getit (6); };
+	option  "Games", 		 action { toggle_getit (7); };
+	option  "Online Manual Pages", 	 action { toggle_getit (8); };
+	option  "Miscellaneous", 	 action { toggle_getit (9); };
+	option  "Text Processing Tools", action { toggle_getit (10); };
+	option  "X11 base and clients",	 action { toggle_getit (11); };
+	option  "X11 fonts",		 action { toggle_getit (12); };
+	option  "X11 servers",		 action { toggle_getit (13); };
+	option  "X contrib clients",	 action { toggle_getit (14); };
+	option  "X11 programming",	 action { toggle_getit (15); };
+	option	"X11 Misc.",		 action { toggle_getit (16); };
 
 menu md_layout, y=16, title  "Choose your installation";
 	option "Standard", 	  exit, action { layoutkind = 1; md_set_no_x(); };
