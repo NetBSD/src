@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: c++rt0.c,v 1.2 1994/01/29 01:58:31 jtc Exp $
+ *	$Id: c++rt0.c,v 1.3 1995/06/02 15:55:27 pk Exp $
  */
 
 /*
@@ -38,11 +38,16 @@
  * number of pointers in each.
  * The tables are also null-terminated.
  */
-void (*__CTOR_LIST__[0])(void);
-void (*__DTOR_LIST__[0])(void);
+#include <stdlib.h>
+
+void (*__CTOR_LIST__[0]) __P((void));
+void (*__DTOR_LIST__[0]) __P((void));
+
+static void	__dtors __P((void));
+static void	__ctors __P((void));
 
 static void
-__dtors(void)
+__dtors()
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
 	void (**p)(void) = __DTOR_LIST__ + i;
@@ -52,7 +57,7 @@ __dtors(void)
 }
 
 static void
-__ctors(void)
+__ctors()
 {
 	void (**p)(void) = __CTOR_LIST__ + 1;
 
@@ -60,10 +65,10 @@ __ctors(void)
 		(**p++)();
 }
 
-extern void __init() asm(".init");
+extern void __init __P((void)) asm(".init");
 
 void
-__init(void)
+__init()
 {
 	static int initialized = 0;
 
