@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.1.2.3 1999/01/30 15:07:41 minoura Exp $	*/
 
 /*
  *
@@ -67,6 +67,7 @@ struct intio_softc {
 	bus_space_tag_t	sc_bst;
 	bus_dma_tag_t	sc_dmat;
 	struct extent	*sc_map;
+	struct device	*sc_dmac;
 };
 
 enum intio_map_flag {
@@ -131,5 +132,37 @@ extern u_int8_t *intiobase;
 	(intio_sysport[sysport_waitctrl])
 #define intio_get_sysport_mpustat() \
 	(intio_sysport[sysport_mpustat])
+
+struct intio_dma_cookie {
+	int	id_flags;		/* flags; see below */
+
+	/*
+	 * Information about the original buffer used during
+	 * DMA map syncs.  Note that origibuflen is only used
+	 * for ID_BUFTYPE_LINEAR.
+	 */
+	void	*id_origbuf;		/* pointer to orig buffer if
+					   bouncing */
+	bus_size_t id_origbuflen;	/* ...and size */
+	int	id_buftype;		/* type of buffer */
+
+	void	*id_bouncebuf;		/* pointer to the bounce buffer */
+	bus_size_t id_bouncebuflen;	/* ...and size */
+	int	id_nbouncesegs;		/* number of valid bounce segs */
+	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
+					       physical memory segments */
+};
+
+/* id_flags */
+#define	ID_MIGHT_NEED_BOUNCE	0x01	/* map could need bounce buffers */
+#define	ID_HAS_BOUNCE		0x02	/* map currently has bounce buffers */
+#define	ID_IS_BOUNCING		0x04	/* map is bouncing current xfer */
+
+/* id_buftype */
+#define	ID_BUFTYPE_INVALID	0
+#define	ID_BUFTYPE_LINEAR	1
+#define	ID_BUFTYPE_MBUF		2
+#define	ID_BUFTYPE_UIO		3
+#define	ID_BUFTYPE_RAW		4
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.1 1998/12/23 16:47:34 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.2 1999/01/30 15:07:41 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,6 @@
 #include "mha.h"
 #include "fd.h"
 #include "par.h"
-#include "adpcm.h"
 #include "assym.h"
 
 #include <machine/asm.h>
@@ -591,10 +590,12 @@ _spcdmaerrtrap:
 #endif
 
 _audiotrap:
+#if 0
 #if NADPCM > 0
 	INTERRUPT_SAVEREG
 	jbsr	_audiointr
 	INTERRUPT_RESTOREREG
+#endif
 #endif
 	addql	#1,_C_LABEL(intrcnt)+52
 #if defined(UVM)

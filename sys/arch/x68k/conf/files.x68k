@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.2 1998/12/27 15:16:56 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.3 1999/01/30 15:07:40 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -129,6 +129,10 @@ device rtc
 attach	rtc at intio
 file	arch/x68k/dev/rtclock.c		rtc
 
+device dmac
+attach	dmac at intio
+file	arch/x68k/dev/intio_dmac.c	dmac needs-flag
+
 defopt	opt_zsc.h	ZSCONSOLE ZSCN_SPEED
 device zsc {channel = -1}
 attach zsc at intio
@@ -154,15 +158,11 @@ pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
 file	arch/x68k/dev/opm.c		bell|fdc
 
-device	adpcm: audio
-attach	adpcm at mainbus
-file	arch/x68k/dev/bsd_audio.c	adpcm needs-flag
-file	arch/x68k/dev/adpcm.c		adpcm
 pseudo-device sram
 file	arch/x68k/dev/sram.c		sram needs-flag
 pseudo-device pow
 file	arch/x68k/dev/pow.c		pow needs-count
-file	arch/x68k/dev/dma.c		fdc|adpcm
+file	arch/x68k/dev/dma.c		fdc
 
 # memory disk
 file	arch/x68k/dev/md_root.c		memory_disk_hooks

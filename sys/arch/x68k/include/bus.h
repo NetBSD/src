@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.2.1 1998/12/23 16:47:32 minoura Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.2 1999/01/30 15:07:41 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -448,6 +448,7 @@ struct x68k_bus_dmamap {
 	int		x68k_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	x68k_dm_maxsegsz; /* largest possible segment */
 	bus_size_t	x68k_dm_boundary; /* don't cross this */
+	bus_addr_t	x68k_dm_bounce_thresh; /* bounce threshold */
 	int		x68k_dm_flags;	/* misc. flags */
 
 	void		*x68k_dm_cookie; /* cookie for bus-specific functions */
@@ -459,6 +460,40 @@ struct x68k_bus_dmamap {
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
+
+int	x68k_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *));
+void	x68k_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+int	x68k_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int));
+int	x68k_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int));
+int	x68k_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int));
+int	x68k_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int));
+void	x68k_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	x68k_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int));
+
+int	x68k_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+void	x68k_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs));
+int	x68k_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags));
+void	x68k_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
+	    size_t size));
+int	x68k_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, int off, int prot, int flags));
+
+int	x68k_bus_dmamap_load_buffer __P((bus_dmamap_t, void *,
+	    bus_size_t buflen, struct proc *, int, paddr_t *, int *, int));
+int	x68k_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    paddr_t low, paddr_t high));
 
 #define	bus_dmamap_create(t,s,n,m,b,f,p) \
 	((*((t)->x68k_dmamap_create)) ((t),(s),(n),(m),(b),(f),(p)))
