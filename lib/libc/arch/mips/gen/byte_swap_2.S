@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:19 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2 2001/02/27 18:59:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,15 +40,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htons.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:19 bouyer Exp $")
+	ASMSTR("$NetBSD: byte_swap_2.S,v 1.2 2001/02/27 18:59:16 cgd Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#define _LOCORE		/* XXX not really, just assembly-code source */
+#include <machine/endian.h>
 
 #ifdef ABICALLS
 	.abicalls
 #endif
 
 NLEAF(__bswap16)
-#ifdef MIPSEL
+#if BYTE_ORDER == LITTLE_ENDIAN
 ALEAF(htons)
 ALEAF(ntohs)
 #endif
@@ -59,7 +62,8 @@ ALEAF(ntohs)
 	or	v0, v0, v1
 	j	ra
 END(__bswap16)
-#ifdef MIPSEB
+
+#if BYTE_ORDER == BIG_ENDIAN
 NLEAF(htons)
 ALEAF(ntohs)
 	move	v0, a0
