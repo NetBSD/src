@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.84 2001/12/11 05:54:56 uwe Exp $ */
+/*	$NetBSD: clock.c,v 1.85 2002/02/23 17:18:55 scw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -584,7 +584,8 @@ clockattach(node, bt, bh)
 		panic("clockattach: node == 0");
 
 	/* Our TOD clock year 0 represents 1968 */
-	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+	todr_handle = mk48txx_attach(bt, bh, model, 1968, NULL, NULL);
+	if (todr_handle == NULL)
 		panic("Cannot attach %s tod clock", model);
 
 	/*
