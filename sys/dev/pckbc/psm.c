@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.17 2002/03/17 19:41:00 atatat Exp $ */
+/* $NetBSD: psm.c,v 1.18 2002/03/20 17:06:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.17 2002/03/17 19:41:00 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.18 2002/03/20 17:06:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,13 +41,28 @@ __KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.17 2002/03/17 19:41:00 atatat Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-enum pms_protocol { PMS_UNKNOWN, PMS_STANDARD, PMS_SCROLL3, PMS_SCROLL5 };
+#ifdef PMSDEBUG
+int pmsdebug = 1;
+#define DPRINTF(x)      if (pmsdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
 
-static const char *pms_protocol_name[] = {
-	"unknown",
-	"standard (no scroll wheel)",
-	"scroll wheel (3 buttons)",
-	"scroll wheel (5 buttons)",
+enum pms_type { PMS_UNKNOWN, PMS_STANDARD, PMS_SCROLL3, PMS_SCROLL5 };
+
+struct pms_protocol {
+	int rates[3];
+	int response;
+	const char *name;
+} pms_protocols[] = {
+	{ { 0, 0, 0 }, 0, "unknown protocol" },
+	{ { 0, 0, 0 }, 0, "no scroll wheel (3 buttons)" },
+	{ { 200, 100, 80 }, 3, "scroll wheel (3 buttons)" },
+	{ { 200, 200, 80 }, 4, "scroll wheel (5 buttons)" }
+};
+
+enum pms_type tries[] = {
+	PMS_SCROLL5, PMS_SCROLL3, PMS_STANDARD, PMS_UNKNOWN
 };
 
 struct pms_softc {		/* driver status information */
@@ -61,16 +76,14 @@ struct pms_softc {		/* driver status information */
 	void *sc_powerhook;	/* cookie from power hook */
 #endif /* !PMS_DISABLE_POWERHOOK */
 	int inputstate;
-	u_int buttons, oldbuttons;	/* mouse button status */
-	signed char dx, dy, dz;
-	enum pms_protocol protocol;
-	char inbuf[4];
+	u_int buttons;		/* mouse button status */
+	enum pms_type protocol;
+	unsigned char packet[4];
+	struct timeval last, current;
 
 	struct device *sc_wsmousedev;
 	struct proc *sc_event_thread;
 	int sc_reset_flag;
-	unsigned long packet;
-	struct timeval last, current;
 };
 
 int pmsprobe __P((struct device *, struct cfdata *, void *));
@@ -106,38 +119,31 @@ pms_protocol(tag, slot)
 {
 	u_char cmd[2], resp[1];
 	int i, j, res;
-	static const struct {
-		int rates[3], response;
-		enum pms_protocol p;
-	} protocols[] = {
-		{ { 200, 200, 80 }, 4, PMS_SCROLL5 },
-		{ { 200, 100, 80 }, 3, PMS_SCROLL3 },
-		{ { 0, 0, 0 }, 0, PMS_STANDARD },
-	};
+	struct pms_protocol *p;
 
-	for (j = 0; protocols[j].rates[0]; ++j) {
+	for (j = 0; j < sizeof(tries) / sizeof(tries[0]); ++j) {
+		p = &pms_protocols[tries[j]];
+		if (!p->rates[0])
+			break;
 		cmd[0] = PMS_SET_SAMPLE;
 		for (i = 0; i < 3; i++) {
-			cmd[1] = protocols[j].rates[i];
+			cmd[1] = p->rates[i];
 			res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, 0, 0);
 			if (res)
-				return 0;
+				return PMS_STANDARD;
 		}
 
 		cmd[0] = PMS_SEND_DEV_ID;
 		res = pckbc_poll_cmd(tag, slot, cmd, 1, 1, resp, 0);
 		if (res)
 			return 0;
-		if (resp[0] == protocols[j].response) {
-#ifdef PS2DEBUG
-			printf("returning protocol %d\n", protocols[j].p);
-#endif
-			return protocols[j].p;
+		if (resp[0] == p->response) {
+			DPRINTF(("pms_protocol: found mouse protocol %d\n",
+				tries[j]));
+			return tries[j];
 		}
 	}
-#ifdef PS2DEBUG
-	printf("standard protocol\n");
-#endif
+	DPRINTF(("pms_protocol: standard PS/2 protocol (no scroll wheel)\n"));
 	return PMS_STANDARD;
 }
 
@@ -196,9 +202,7 @@ pmsattach(parent, self, aux)
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
-	sc->last.tv_sec = sc->current.tv_sec = 0;
-	sc->last.tv_usec = sc->current.tv_usec = 0;
-	sc->packet = 0;
+	printf("\n");
 
 	/* Flush any garbage. */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
@@ -212,19 +216,8 @@ pmsattach(parent, self, aux)
 		return;
 	}
 #endif
-	res = pms_protocol(pa->pa_tag, pa->pa_slot);
-	if (!res) {
-#ifdef DEBUG
-		printf("pmsattach: error setting protocol\n");
-#endif
-		sc->protocol = PMS_STANDARD;
-	} else {
-		sc->protocol = res;
-	}
-	printf(" %s\n", pms_protocol_name[sc->protocol]);
-
 	sc->inputstate = 0;
-	sc->oldbuttons = 0;
+	sc->buttons = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 			       pmsinput, sc, sc->sc_dev.dv_xname);
@@ -262,28 +255,23 @@ do_enable(sc)
 {
 	u_char cmd[1];
 	int res;
+#ifdef PMS_PREFER_PROTOCOL
+	int i;
+#endif
 
 	sc->inputstate = 0;
-	sc->oldbuttons = 0;
+	sc->buttons = 0;
 
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
 	cmd[0] = PMS_DEV_ENABLE;
 	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
-		printf("pms_enable: command error\n");
+		printf("pms_enable: command error %d\n", res);
 
-	res = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
-	if (res) {
-		sc->protocol = res;
-#ifdef DEBUG
-		printf("psm_enable: using %s protocol\n",
-		    pms_protocol_name[sc->protocol]);
-	} else {
-		printf("psm_enable: couldn't verify protocol\n");
-
-#endif
-	}
+	sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
+	DPRINTF(("pms_enable: using %s protocol\n",
+	    pms_protocols[sc->protocol].name));
 #if 0
 	{
 		u_char scmd[2];
@@ -435,24 +423,28 @@ pms_reset_thread(arg)
 	struct pms_softc *sc = arg;
 	for (;;) {
 		tsleep(&sc->sc_reset_flag, PWAIT, "pmsreset", 0);
-		do_disable(sc);
-		do_enable(sc);
+		printf("pms: resetting mouse interface\n");
+		pms_disable(sc);
+		pms_enable(sc);
 	}
 }
 
 /* Masks for the first byte of a packet */
-#define PS2LBUTMASK 0x01
-#define PS2RBUTMASK 0x02
-#define PS2MBUTMASK 0x04
-#define PS24BUTMASK 0x10
-#define PS25BUTMASK 0x20
+#define PMS_LBUTMASK 0x01
+#define PMS_RBUTMASK 0x02
+#define PMS_MBUTMASK 0x04
+#define PMS_4BUTMASK 0x10
+#define PMS_5BUTMASK 0x20
 
-void pmsinput(vsc, data)
-void *vsc;
-int data;
+void
+pmsinput(vsc, data)
+	void *vsc;
+	int data;
 {
 	struct pms_softc *sc = vsc;
 	u_int changed;
+	int dx, dy, dz = 0;
+	int newbuttons = 0;
 
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
@@ -464,89 +456,120 @@ int data;
 		struct timeval diff;
 
 		timersub(&sc->current, &sc->last, &diff);
+		/*
+		 * Empirically, the delay should be about 1700us on a standard
+		 * PS/2 port.  I have seen delays as large as 4500us (rarely)
+		 * in regular use.  When using a confused mouse, I generally
+		 * see delays at least as large as 30,000us.  This serves as
+		 * a rough geometric compromise. -seebs
+		 */
 		if (diff.tv_sec > 0 || diff.tv_usec > 10000) {
-#if DEBUG
-			printf("psm_input: unusual delay, spawning reset thread\n");
-#endif
-			wakeup(&sc->sc_reset_flag);
+			DPRINTF(("psm_input: unusual delay, "
+			    "spawning reset thread\n"));
 			sc->inputstate = 0;
+			sc->sc_enabled = 0;
+			wakeup(&sc->sc_reset_flag);
 			return;
 		}
 	}
 	sc->last = sc->current;
+	sc->packet[sc->inputstate++] = data & 0xff;
 	switch (sc->inputstate) {
 	case 0:
-		sc->packet = (data & 0xff) << 24;
-		if ((data & 0xc0) == 0) { /* no ovfl, bit 3 == 1 too? */
-			sc->buttons = ((data & PS2LBUTMASK) ? 0x1 : 0) |
-			    ((data & PS2MBUTMASK) ? 0x2 : 0) |
-			    ((data & PS2RBUTMASK) ? 0x4 : 0);
-			++sc->inputstate;
-#ifdef PS2DEBUG
-		} else {
-  			printf("got data 0x%x\n", data);
-#endif
-  		}
+		/* no useful processing can be done yet */
 		break;
 
 	case 1:
-		sc->packet |= (data & 0xff) << 16;
-		sc->dx = data;
-		/* Bounding at -127 avoids a bug in XFree86. */
-		sc->dx = (sc->dx == -128) ? -127 : sc->dx;
-		++sc->inputstate;
+		if (!(sc->packet[0] & 0x8)) {
+			DPRINTF(("pmsinput: 0x8 not set in first byte "
+			    "[0x%02x], resetting\n", sc->packet[0]));
+			sc->inputstate = 0;
+			sc->sc_enabled = 0;
+			wakeup(&sc->sc_reset_flag);
+			return;
+		}
 		break;
 
 	case 2:
-		sc->packet |= (data & 0xff) << 8;
-		sc->dy = data;
-		sc->dy = (sc->dy == -128) ? -127 : sc->dy;
-
-		if (sc->protocol == PMS_STANDARD) {
-#ifdef PS2DEBUG
-			printf("packet: 0x%08lx\n", packet);
-#endif
-			sc->inputstate = 0;
-			changed = (sc->buttons ^ sc->oldbuttons);
-			sc->oldbuttons = sc->buttons;
-
-			if (sc->dx || sc->dy || changed) {
-				wsmouse_input(sc->sc_wsmousedev,
-				    sc->buttons, sc->dx, sc->dy, 0,
-				    WSMOUSE_INPUT_DELTA);
-			}
-		} else
-			++sc->inputstate;
 		break;
 
-	case 3:
-		sc->packet |= (data & 0xff);
-		sc->inputstate = 0;
-		if (sc->protocol == PMS_SCROLL5) {
-			sc->dz = data & 0xf;
-			if (sc->dz & 0x8)
-				sc->dz -= 16;
-			if (data & PS24BUTMASK)
-				sc->buttons |= 0x8;
-			if (data & PS25BUTMASK)
-				sc->buttons |= 0x10;
+	case 4:
+		/* Case 4 is a superset of case 3. This is *not* an accident. */
+		if (sc->protocol == PMS_SCROLL3) {
+			dz = sc->packet[3];
+			if (dz >= 128)
+				dz -= 256;
+			if (dz == -128)
+				dz = -127;
+		} else if (sc->protocol == PMS_SCROLL5) {
+			dz = sc->packet[3] & 0xf;
+			if (dz >= 8)
+				dz -= 16;
+                	if (sc->packet[3] & PMS_4BUTMASK)
+				newbuttons |= 0x8;
+                	if (sc->packet[3] & PMS_5BUTMASK)
+				newbuttons |= 0x10;
 		} else {
-			sc->dz = data;
-			if (sc->dz == -128)
-				sc->dz = -127;
+			DPRINTF(("pmsinput: why am I looking at this byte?\n"));
+			dz = 0;
 		}
-#ifdef PS2DEBUG
-		printf("packet: 0x%08lx\n", packet);
+		/* FALLTHROUGH */
+	case 3:
+		/*
+		 * This is only an endpoint for scroll protocols with 4
+		 * bytes, or the standard protocol with 3.
+		 */
+		if (sc->protocol != PMS_STANDARD && sc->inputstate == 3)
+			break;
+
+		newbuttons |= ((sc->packet[0] & PMS_LBUTMASK) ? 0x1 : 0) |
+		    ((sc->packet[0] & PMS_MBUTMASK) ? 0x2 : 0) |
+		    ((sc->packet[0] & PMS_RBUTMASK) ? 0x4 : 0);
+
+		dx = sc->packet[1];
+		if (dx >= 128)
+			dx -= 256;
+		if (dx == -128)
+			dx = -127;
+
+		dy = sc->packet[2];
+		if (dy >= 128)
+			dy -= 256;
+		if (dy == -128)
+			dy = -127;
+		
+		sc->inputstate = 0;
+		changed = (sc->buttons ^ newbuttons);
+		sc->buttons = newbuttons;
+
+#ifdef PMSDEBUG
+		if (sc->protocol == PMS_STANDARD) {
+			DPRINTF(("pms: packet: 0x%02x%02x%02x\n",
+			    sc->packet[0], sc->packet[1], sc->packet[2]));
+		} else {
+			DPRINTFN(("pms: packet: 0x%02x%02x%02x%02x\n",
+			    sc->packet[0], sc->packet[1], sc->packet[2],
+			    sc->packet[3]));
+		}
 #endif
-
-		changed = (sc->buttons ^ sc->oldbuttons);
-		sc->oldbuttons = sc->buttons;
-
-		if (sc->dx || sc->dy || sc->dz || changed) {
+		if (dx || dy || dz || changed) {
+#ifdef PMSDEBUG
+			DPRINTFN(("pms: x %+03d y %+03d z %+03d "
+			    "buttons 0x%02x\n",	dx, dy, dz, sc->buttons));
+#endif
 			wsmouse_input(sc->sc_wsmousedev,
-			    sc->buttons, sc->dx, sc->dy, sc->dz,
+			    sc->buttons, dx, dy, dz,
 			    WSMOUSE_INPUT_DELTA);
 		}
+		memset(sc->packet, 0, 4);
 		break;
+
+	/* If we get here, we have problems. */
+	default:
+		printf("pmsinput: very confused.  resetting.\n");
+		sc->inputstate = 0;
+		sc->sc_enabled = 0;
+		wakeup(&sc->sc_reset_flag);
+		return;
 	}
 }
