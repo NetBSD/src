@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.4 2001/06/21 11:59:00 wiz Exp $
+.\"	$NetBSD: cons.9,v 1.5 2001/07/05 18:49:20 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,10 +120,6 @@ Switch the console driver to polling mode if
 is nonzero, or back to interrupt driven mode if
 .Fa on
 is zero.
-.\" The system priority level has to be raised to splhigh before
-.\" he polling mode could be switched on, so that the polled console device would
-.\" ot be disturbed by interrupts. The system priority level has to be
-.\" estored to previous level once the polling mode is switched back off.
 .Fn cnpollc
 should be used during kernel startup only.
 .It Fn cnputc
@@ -135,10 +131,8 @@ rather than using this low-level interface.
 This waits until a <Enter> key is pressed:
 .Pp
 .Bd -literal -compact
-.\" int s, c;
 int c;
 
-.\" s = splhigh();
 cnpollc(1);
 for(;;) {
 	c = cngetc();
@@ -148,7 +142,6 @@ for(;;) {
 	}
 }
 cnpollc(0);
-.\" splx(s);
 .Ed
 .Sh SEE ALSO
 .Xr pckbd 4 ,
