@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wwinit.c	3.40 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: wwinit.c,v 1.4 1993/12/02 22:34:42 mycroft Exp $";
+static char rcsid[] = "$Id: wwinit.c,v 1.5 1994/01/04 02:41:08 mycroft Exp $";
 #endif /* not lint */
 
 #include "ww.h"
@@ -105,6 +105,8 @@ wwinit()
 	wwnewtty.ww_termios.c_lflag = 0;
 	for (i = 0; i < NCCS; i++)
 		wwnewtty.ww_termios.c_cc[i] = _POSIX_VDISABLE;
+	wwnewtty.ww_termios.c_cc[VMIN] = 1;
+	wwnewtty.ww_termios.c_cc[VTIME] = 0;
 #endif
 	wwnewtty.ww_fflags = wwoldtty.ww_fflags | FASYNC;
 	if (wwsettty(0, &wwnewtty) < 0)
