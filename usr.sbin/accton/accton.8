@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: accton.8,v 1.4 1997/03/06 05:41:37 mikel Exp $
+.\"	$NetBSD: accton.8,v 1.5 1997/10/16 23:41:32 lukem Exp $
 .\"
 .Dd October 18, 1993
 .Dt ACCTON 8
@@ -33,12 +33,12 @@
 .Nm accton
 .Nd enable/disable system accounting
 .Sh SYNOPSIS
-.Nm accton
+.Nm
 .Op Ar file
 .Sh DESCRIPTION
 With an argument naming an existing
 .Ar file ,
-.Nm accton
+.Nm
 causes system accounting information for every process executed
 to be placed at the end of the file.  If no argument is given,
 accounting is turned off.
@@ -47,5 +47,5 @@ accounting is turned off.
 .Xr acct 5
 .Sh HISTORY
 The
-.Nm accton
+.Nm
 command has existed nearly forever, but this man page is new.
