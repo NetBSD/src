@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.97 1998/09/26 16:38:43 dante Exp $
+#	$NetBSD: INSTALL,v 1.98 1998/10/10 21:58:22 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -223,6 +223,9 @@ com*	at isapnp?			# Modems and serial boards
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
+
+pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+com*	at pcmcom? slave ?		# ...and the slave devices
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
