@@ -1,6 +1,6 @@
 #
 # GENERIC DEC Station
-# $Id: AMSTEL,v 1.1.1.1 1993/10/12 03:22:21 deraadt Exp $
+# $Id: AMSTEL,v 1.2 1994/01/14 04:57:44 deraadt Exp $
 machine		pmax
 
 cpu		"DS3100"
@@ -34,8 +34,8 @@ options		"NKMEMCLUSTERS=512"
 #options	EON
 
 
-#config		vmunix swap generic
-config		vmunix root on rz0e swap on rz0b dumps on rz0b
+#config		netbsd swap generic
+config		netbsd root on rz0e swap on rz0b dumps on rz0b
 
 controller	pm0	at nexus0 csr 0x8fc00000
 controller	dc0	at nexus0 csr 0xbc000000 priority 2

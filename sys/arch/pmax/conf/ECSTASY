@@ -1,6 +1,6 @@
 #
 # GENERIC DECstation 3100
-# $Id: ECSTASY,v 1.1.1.1 1993/10/12 03:22:20 deraadt Exp $
+# $Id: ECSTASY,v 1.2 1994/01/14 04:57:46 deraadt Exp $
 machine		pmax
 
 cpu		"DS3100"
@@ -33,8 +33,8 @@ options		"NKMEMCLUSTERS=512"
 #options	EON
 
 
-#config		vmunix swap generic
-config		vmunix root on rz3a swap on rz3b dumps on rz3b
+#config		netbsd swap generic
+config		netbsd root on rz3a swap on rz3b dumps on rz3b
 
 controller	pm0	at nexus0 csr 0x8fc00000
 controller	dc0	at nexus0 csr 0xbc000000 priority 2

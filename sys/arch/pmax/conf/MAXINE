@@ -1,6 +1,6 @@
 #
 # GENERIC DECstation 5000
-# $Id: MAXINE,v 1.1.1.1 1993/10/12 03:22:21 deraadt Exp $
+# $Id: MAXINE,v 1.2 1994/01/14 04:58:50 deraadt Exp $
 machine		pmax
 
 cpu		"DS5000"
@@ -33,8 +33,8 @@ options		"NKMEMCLUSTERS=512"
 #options	EON
 
 
-#config		vmunix swap generic
-config		vmunix root on rz0e swap on rz0b dumps on rz0b
+#config		netbsd swap generic
+config		netbsd root on rz0e swap on rz0b dumps on rz0b
 
 controller	dtop0	at nexus0 csr ?
 controller	dc0	at nexus0 csr ?
