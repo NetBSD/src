@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,10 +156,8 @@ pckbc_acpi_attach(struct device *parent,
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dv, aa->aa_node, &res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK) {
-		printf("%s: unable to parse resources\n", sc->sc_dv.dv_xname);
+	if (rv != AE_OK)
 		return;
-	}
 
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);

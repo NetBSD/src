@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.54 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.55 2003/11/03 17:24:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.54 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.55 2003/11/03 17:24:22 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -192,7 +192,8 @@ acpi_probe(void)
 
 	rv = AcpiInitializeSubsystem();
 	if (rv != AE_OK) {
-		printf("ACPI: unable to initialize ACPICA: %d\n", rv);
+		printf("ACPI: unable to initialize ACPICA: %s\n",
+		    AcpiFormatException(rv));
 		return (0);
 	}
 
@@ -203,7 +204,8 @@ acpi_probe(void)
 
 	rv = AcpiLoadTables();
 	if (rv != AE_OK) {
-		printf("ACPI: unable to load tables: %d\n", rv);
+		printf("ACPI: unable to load tables: %s\n",
+		    AcpiFormatException(rv));
 		return (0);
 	}
 
@@ -287,14 +289,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiEnableSubsystem(0);
 	if (rv != AE_OK) {
-		printf("%s: unable to enable ACPI: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: unable to enable ACPI: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 	rv = AcpiInitializeObjects(0);
 	if (rv != AE_OK) {
-		printf("%s: unable to initialize ACPI objects: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: unable to initialize ACPI objects: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 	acpi_active = 1;
@@ -533,8 +535,8 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 		rv = AcpiGetObjectInfo(handle, &buf);
 		if (rv != AE_OK) {
 #ifdef ACPI_DEBUG
-			printf("%s: AcpiGetObjectInfo failed\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: AcpiGetObjectInfo failed: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 #endif
 			goto out; /* XXX why return OK */
 		}
@@ -739,7 +741,8 @@ acpi_fixed_button_handler(void *context)
 	    acpi_fixed_button_pressed, smpsw);
 	if (rv != AE_OK)
 		printf("%s: WARNING: unable to queue fixed button pressed "
-		    "callback: %d\n", smpsw->smpsw_name, rv);
+		    "callback: %s\n", smpsw->smpsw_name,
+		    AcpiFormatException(rv));
 
 	return (ACPI_INTERRUPT_HANDLED);
 }
