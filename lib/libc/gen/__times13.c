@@ -1,13 +1,8 @@
-/*	$NetBSD: times.h,v 1.9 2002/06/30 09:45:40 bjh21 Exp $	*/
+/*	$NetBSD: __times13.c,v 1.1 2002/06/30 09:45:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,36 +31,70 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)times.h	8.4 (Berkeley) 1/21/94
  */
 
-#ifndef	_SYS_TIMES_H_
-#define	_SYS_TIMES_H_
-
-#include <machine/ansi.h>
-
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
-#endif
-
-struct tms {
-	clock_t tms_utime;	/* User CPU time */
-	clock_t tms_stime;	/* System CPU time */
-	clock_t tms_cutime;	/* User CPU time of terminated child procs */
-	clock_t tms_cstime;	/* System CPU time of terminated child procs */
-};
-
-#ifndef _KERNEL
 #include <sys/cdefs.h>
-
-__BEGIN_DECLS
-#ifdef __LIBC12_SOURCE__
-clock_t	times __P((struct tms *));
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-clock_t times __P((struct tms *)) __RENAME(__times13);
+__RCSID("$NetBSD: __times13.c,v 1.1 2002/06/30 09:45:39 bjh21 Exp $");
 #endif
-__END_DECLS
+#endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/resource.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <time.h>
+
+#ifdef __weak_alias
+#ifdef __LIBC12_SOURCE__
+__weak_alias(times,_times)
 #endif
-#endif /* !_SYS_TIMES_H_ */
+#endif
+
+#ifdef __LIBC12_SOURCE__
+__warn_references(times,
+    "warning: reference to compatibility times(); include <sys/times.h> for correct reference")
+#endif
+
+/*
+ * Convert usec to clock ticks; could do (usec * CLK_TCK) / 1000000,
+ * but this would overflow if we switch to nanosec.
+ */
+#define	CONVTCK(r)	(r.tv_sec * clk_tck + r.tv_usec / (1000000 / clk_tck))
+
+clock_t
+times(tp)
+	struct tms *tp;
+{
+	struct rusage ru;
+	struct timeval t;
+	static long clk_tck;
+	
+	_DIAGASSERT(tp != NULL);
+
+	/*
+	 * we use a local copy of CLK_TCK because it expands to a
+	 * moderately expensive function call.
+	 */
+	if (clk_tck == 0)
+		clk_tck = CLK_TCK;
+
+	if (getrusage(RUSAGE_SELF, &ru) < 0)
+		return ((clock_t)-1);
+	tp->tms_utime = CONVTCK(ru.ru_utime);
+	tp->tms_stime = CONVTCK(ru.ru_stime);
+	if (getrusage(RUSAGE_CHILDREN, &ru) < 0)
+		return ((clock_t)-1);
+	tp->tms_cutime = CONVTCK(ru.ru_utime);
+	tp->tms_cstime = CONVTCK(ru.ru_stime);
+	if (gettimeofday(&t, (struct timezone *)0))
+		return ((clock_t)-1);
+	return ((clock_t)(CONVTCK(t)));
+}
