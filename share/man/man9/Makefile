@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.127 2002/10/05 05:39:35 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.128 2002/10/14 04:56:48 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -29,7 +29,7 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
 	tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
-	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
+	vattr.9 vfs.9 vfsops.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
 MAN+=	dmover.9
@@ -497,22 +497,24 @@ MLINKS+=vnodeops.9 VOP_LOOKUP.9 \
 	vnodeops.9 VOP_PUTPAGES.9 \
 	vnodeops.9 VOP_STRATEGY.9 \
 	vnodeops.9 VOP_BWRITE.9
+MLINKS+=vnfileops.9 vn_closefile.9 \
+	vnfileops.9 vn_fcntl.9 \
+	vnfileops.9 vn_ioctl.9 \
+	vnfileops.9 vn_read.9 \
+	vnfileops.9 vn_poll.9 \
+	vnfileops.9 vn_statfile.9 \
+	vnfileops.9 vn_write.9
 MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_close.9 \
-	vnsubr.9 vn_closefile.9 \
 	vnsubr.9 vn_default_error.9 \
-	vnsubr.9 vn_fcntl.9 \
-	vnsubr.9 vn_ioctl.9 \
 	vnsubr.9 vn_isunder.9 \
 	vnsubr.9 vn_lock.9 \
 	vnsubr.9 vn_markexec.9 \
-	vnsubr.9 vn_setrecurse.9 \
+	vnsubr.9 vn_marktext.9 \
 	vnsubr.9 vn_restorerecurse.9 \
-	vnsubr.9 vn_open.9 \
-	vnsubr.9 vn_read.9 \
-	vnsubr.9 vn_poll.9 \
+	vnsubr.9 vn_setrecurse.9 \
 	vnsubr.9 vn_stat.9 \
-	vnsubr.9 vn_write.9 \
+	vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_writechk.9
 MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
 	wsdisplay.9 wsdisplay_cnattach.9 \
