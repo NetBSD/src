@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2000/03/14 22:42:52 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2000/09/26 23:12:46 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -360,4 +360,10 @@ void
 md_cleanup_install()
 {
 
+}
+
+int
+md_pre_update()
+{
+	return 1;
 }

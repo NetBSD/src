@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2000/08/19 13:22:40 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2000/09/26 23:12:46 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -207,4 +207,10 @@ md_cleanup_install(void)
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+}
+
+int
+md_pre_update()
+{
+	return 1;
 }

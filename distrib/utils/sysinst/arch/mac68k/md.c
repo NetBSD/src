@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1999/09/12 15:29:38 briggs Exp $ */
+/*	$NetBSD: md.c,v 1.13 2000/09/26 23:12:45 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -887,3 +887,8 @@ md_cleanup_install(void)
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
+int
+md_pre_update()
+{
+	return 1;
+}
