@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.7 2001/01/01 12:13:58 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.8 2001/03/17 11:32:15 pooka Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -18,7 +18,7 @@
 #  Written by Christos Zoulas July 17, 1997 for file-3.26
 #
 
-$version = "3.33";
+$version = "3.34";
 
 # definitions ...
 
@@ -352,4 +352,4 @@ magic:
 #define PACKAGE "file"
 
 /* Version number of package */
-#define VERSION "3.33"
+#define VERSION "3.34"
