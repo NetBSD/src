@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.14 2003/07/15 05:09:34 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.15 2003/07/15 10:14:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.14 2003/07/15 05:09:34 itojun Exp $");
+__RCSID("$NetBSD: auth.c,v 1.15 2003/07/15 10:14:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -602,8 +602,9 @@ auth_intr(sig)
 }
 
 	int
-auth_wait(name)
+auth_wait(name, l)
 	char *name;
+	size_t l;
 {
 	if (auth_debug_mode)
 		printf(">>>%s: in auth_wait.\r\n", Name);
@@ -630,7 +631,7 @@ auth_wait(name)
 
 	if (authenticated->status)
 		validuser = (*authenticated->status)(authenticated,
-						     name, validuser);
+						     name, l, validuser);
 	return(validuser);
 }
 
