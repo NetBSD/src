@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.74 2004/01/14 08:25:30 agc Exp $ */
+/* $NetBSD: user.c,v 1.75 2004/01/14 09:35:33 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.74 2004/01/14 08:25:30 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.75 2004/01/14 09:35:33 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,6 +90,7 @@ typedef struct user_t {
 	range_t	       *u_rv;			/* the ranges */
 	unsigned	u_defrc;		/* # of ranges in defaults */
 	int		u_preserve;		/* preserve uids on deletion */
+	int		u_allow_samba;		/* allow trailing '$' for samba login names */
 } user_t;
 
 /* flags for which fields of the user_t replace the passwd entry */
@@ -634,7 +635,7 @@ append_group(char *user, int ngroups, const char **groups)
 
 /* return 1 if `login' is a valid login name */
 static int
-valid_login(char *login_name)
+valid_login(char *login_name, int allow_samba)
 {
 	unsigned char	*cp;
 
@@ -643,6 +644,12 @@ valid_login(char *login_name)
 	}
 	for (cp = login_name ; *cp ; cp++) {
 		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
+#ifdef EXTENSIONS
+			/* check for a trailing '$' in a Samba user name */
+			if (allow_samba && *cp == '$' && *(cp + 1) == 0x0) {
+				return 1;
+			}	
+#endif
 			return 0;
 		}
 	}
@@ -961,7 +968,7 @@ adduser(char *login_name, user_t *up)
 	int		cc;
 	int		i;
 
-	if (!valid_login(login_name)) {
+	if (!valid_login(login_name, up->u_allow_samba)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
 	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
@@ -1216,22 +1223,17 @@ rm_user_from_groups(char *login_name)
 static int
 is_local(char *name, const char *file)
 {
-	regmatch_t	matchv[10];
-	regex_t		r;
 	FILE	       *fp;
 	char		buf[MaxEntryLen];
-	char		re[MaxEntryLen];
+	int		len;
 	int		ret;
 
-	(void) snprintf(re, sizeof(re), "^%s:", name);
-	if (regcomp(&r, re, REG_EXTENDED) != 0) {
-		errx(EXIT_FAILURE, "can't compile regular expression `%s'", re);
-	}
 	if ((fp = fopen(file, "r")) == NULL) {
 		err(EXIT_FAILURE, "can't open `%s'", file);
 	}
+	len = strlen(name);
 	for (ret = 0 ; fgets(buf, sizeof(buf), fp) != NULL ; ) {
-		if (regexec(&r, buf, 10, matchv, 0) == 0) {
+		if (strncmp(buf, name, len) == 0 && buf[len] == ':') {
 			ret = 1;
 			break;
 		}
@@ -1242,7 +1244,7 @@ is_local(char *name, const char *file)
 
 /* modify a user */
 static int
-moduser(char *login_name, char *newlogin, user_t *up)
+moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 {
 	struct passwd  *pwp;
 	struct group   *grp;
@@ -1253,13 +1255,13 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	size_t		cc;
 	FILE	       *master;
 	char		newdir[MaxFileNameLen];
-	char	       *buf;
+	char	        buf[MaxEntryLen];
 	char	       *colon;
 	int		masterfd;
 	int		ptmpfd;
 	int		error;
 
-	if (!valid_login(newlogin)) {
+	if (!valid_login(newlogin, allow_samba)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
 	if ((pwp = getpwnam(login_name)) == NULL) {
@@ -1401,7 +1403,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 					pw_abort();
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
-				(void) free(buf);
 			}
 		} else {
 			len = strlen(buf);
@@ -1539,7 +1540,7 @@ usermgmt_usage(const char *prog)
 }
 
 #ifdef EXTENSIONS
-#define ADD_OPT_EXTENSIONS	"p:r:vL:"
+#define ADD_OPT_EXTENSIONS	"p:r:vL:S"
 #else
 #define ADD_OPT_EXTENSIONS	
 #endif
@@ -1575,6 +1576,11 @@ useradd(int argc, char **argv)
 				warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX);
 			}
 			break;
+#ifdef EXTENSIONS
+		case 'S':
+			u.u_allow_samba = 1;
+			break;
+#endif
 		case 'b':
 			defaultfield = 1;
 			memsave(&u.u_basedir, optarg, strlen(optarg));
@@ -1677,7 +1683,7 @@ useradd(int argc, char **argv)
 }
 
 #ifdef EXTENSIONS
-#define MOD_OPT_EXTENSIONS	"p:vL:"
+#define MOD_OPT_EXTENSIONS	"p:vL:S"
 #else
 #define MOD_OPT_EXTENSIONS	
 #endif
@@ -1707,6 +1713,11 @@ usermod(int argc, char **argv)
 			}
 			u.u_flags |= F_SECGROUP;
 			break;
+#ifdef EXTENSIONS
+		case 'S':
+			u.u_allow_samba = 1;
+			break;
+#endif
 		case 'c':
 			memsave(&u.u_comment, optarg, strlen(optarg));
 			u.u_flags |= F_COMMENT;
@@ -1783,11 +1794,11 @@ usermod(int argc, char **argv)
 	}
 	checkeuid();
 	openlog("usermod", LOG_PID, LOG_USER);
-	return moduser(*argv, (have_new_user) ? newuser : *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(*argv, (have_new_user) ? newuser : *argv, &u, u.u_allow_samba) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS
-#define DEL_OPT_EXTENSIONS	"Dp:v"
+#define DEL_OPT_EXTENSIONS	"Dp:vS"
 #else
 #define DEL_OPT_EXTENSIONS	
 #endif
@@ -1811,6 +1822,11 @@ userdel(int argc, char **argv)
 #ifdef EXTENSIONS
 		case 'D':
 			bigD = 1;
+			break;
+#endif
+#ifdef EXTENSIONS
+		case 'S':
+			u.u_allow_samba = 1;
 			break;
 #endif
 #ifdef EXTENSIONS
@@ -1864,13 +1880,13 @@ userdel(int argc, char **argv)
 		memsave(&u.u_password, password, strlen(password));
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
-		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+		return moduser(*argv, *argv, &u, u.u_allow_samba) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 	if (!rm_user_from_groups(*argv)) {
 		return 0;
 	}
 	openlog("userdel", LOG_PID, LOG_USER);
-	return moduser(*argv, *argv, NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(*argv, *argv, NULL, u.u_allow_samba) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS

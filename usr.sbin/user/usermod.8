@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.18 2003/09/04 08:38:00 wiz Exp $ */
+.\" $NetBSD: usermod.8,v 1.19 2004/01/14 09:35:33 agc Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm
-.Op Fl mov
+.Op Fl Smov
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
@@ -72,6 +72,9 @@ the following command line options are processed:
 is the secondary group to which the user will be added in the
 .Pa /etc/group
 file.
+.It Fl S
+allows samba user names with a trailing dollar sign to be
+modified.
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
