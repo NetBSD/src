@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1995/02/01 12:37:55 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.32 1995/02/09 10:28:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1112,11 +1112,9 @@ if(pm==NULL)panic("pv_changepte 1");
 				setcontext(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
 				tpte = getpte(va);
-#ifdef notdef
 				if (vactype != VAC_NONE)
-#endif
-				if (tpte & PG_M)
-					cache_flush_page(va);
+					if (tpte & PG_M)
+						cache_flush_page(va);
 			} else {
 				/* XXX per-cpu va? */
 				setcontext(0);
