@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.95 1999/11/13 00:32:14 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.96 1999/11/27 14:54:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -413,12 +413,12 @@ extern void cpu_hatch __P((void));
 	}
 	printf("CPU did not spin up\n");
 #endif
-	return;
 }
 
 void
 mp_pause_cpus()
 {
+#ifdef SUN4M
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -430,11 +430,13 @@ mp_pause_cpus()
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		raise_ipi(cpi);
 	}
+#endif
 }
 
 void
 mp_resume_cpus()
 {
+#ifdef SUN4M
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -446,6 +448,7 @@ mp_resume_cpus()
 		cpi->msg.tag = XPMSG_RESUMECPU;
 		raise_ipi(cpi);
 	}
+#endif
 }
 
 /*
