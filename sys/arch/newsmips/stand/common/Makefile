@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile,v 1.6 2002/05/05 15:57:15 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7 2002/11/22 16:38:23 tsutsui Exp $
 
+WARNS?= 1
 S= ${.CURDIR}/../../../..
 
 OBJS= romcalls.o
 
-CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
+CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -I. -I${S}
 
-AFLAGS= -D_LOCORE
+AFLAGS= -D_LOCORE -mno-abicalls
 
 ### find out what to use for libkern
 .include "${S}/lib/libkern/Makefile.inc"
