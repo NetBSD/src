@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.67 2001/11/30 01:54:21 enami Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.68 2001/12/04 20:13:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.67 2001/11/30 01:54:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.68 2001/12/04 20:13:19 jdolecek Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -279,7 +279,7 @@ malloc(size, type, flags)
 			 * are completely free and which are in buckets
 			 * with too many free elements.)
 			 */
-			if ((flags & M_NOWAIT) == 0)
+			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
 			splx(s);
 			return ((void *) NULL);
