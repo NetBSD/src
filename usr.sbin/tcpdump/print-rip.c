@@ -1,6 +1,8 @@
+/*	$NetBSD: print-rip.c,v 1.3 1995/03/06 19:11:28 mycroft Exp $	*/
+
 /*
- * Copyright (c) 1988-1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1990, 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code distributions
@@ -17,46 +19,46 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- * 
- * $Id: print-rip.c,v 1.2 1994/12/23 17:06:28 cgd Exp $
  */
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-rip.c,v 1.12 91/04/19 10:46:46 mccanne Exp (LBL)";
+    "@(#) Header: print-rip.c,v 1.20 94/06/14 20:18:47 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+
 #include <protocols/routed.h>
 
 #include <errno.h>
+#include <stdio.h>
 
 #include "interface.h"
 #include "addrtoname.h"
 
 static void
-rip_entry_print(ni)
-	register struct netinfo *ni;
+rip_entry_print(register const struct netinfo *ni)
 {
 	if (ntohs(ni->rip_dst.sa_family) != AF_INET) {
 		register int i;
 
 		printf(" [family %d:", ntohs(ni->rip_dst.sa_family));
 		for (i = 0; i < 14; i += 2)
-			printf(" %02x%02x", ni->rip_dst.sa_data[i],
-				ni->rip_dst.sa_data[i+1]);
+			printf(" %02x%02x", (u_char)ni->rip_dst.sa_data[i],
+				(u_char)ni->rip_dst.sa_data[i+1]);
 		printf("]");
 	} else {
-		register struct sockaddr_in *sin = 
+		register struct sockaddr_in *sin =
 				(struct sockaddr_in *)&ni->rip_dst;
 		printf(" %s", ipaddr_string(&sin->sin_addr));
 		if (sin->sin_port)
@@ -66,18 +68,16 @@ rip_entry_print(ni)
 }
 
 void
-rip_print(dat, length)
-	u_char *dat;
-	int length;
+rip_print(const u_char *dat, int length)
 {
-	register struct rip *rp = (struct rip *)dat;
-	register struct netinfo *ni;
-	register int amt = (u_char *)snapend - dat;
+	register const struct rip *rp = (struct rip *)dat;
+	register const struct netinfo *ni;
+	register int amt = snapend - dat;
 	register int i = min(length, amt) -
 			 (sizeof(struct rip) - sizeof(struct netinfo));
 	int j;
 	int trunc;
-	
+
 	if (i < 0)
 		return;
 
