@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 4/27/91
-#	$Id: Makefile,v 1.5 1993/07/31 15:21:40 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/01/07 12:35:30 deraadt Exp $
 
 PROG=	kdump
-CFLAGS+=-I/sys -I${.CURDIR}/../ktrace
+CFLAGS+=-I${.CURDIR}/../../../sys -I${.CURDIR}/../ktrace
 SRCS=	kdump.c ioctl.c subr.c
 .PATH:	${.CURDIR}/../ktrace
 CLEANFILES+=ioctl.c
