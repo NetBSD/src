@@ -1,7 +1,7 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.2 1998/06/06 22:28:16 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.3 1998/06/07 00:29:29 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -406,6 +406,7 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 	printf("mem: allocated 0x%lx to 0x%lx\n", memaddr, memaddr + size - 1);
 #endif
 
+	*addrp = memaddr;
 	*bshp = ALPHA_PHYS_TO_K0SEG(CHIP_MEM_SYS_START(v)) + memaddr;
 
 	return (0);
