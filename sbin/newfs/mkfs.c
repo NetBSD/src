@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.79 2003/09/06 12:48:53 itojun Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.80 2003/09/10 17:25:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.79 2003/09/06 12:48:53 itojun Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.80 2003/09/10 17:25:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.79 2003/09/06 12:48:53 itojun Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #ifndef STANDALONE
 #include <stdio.h>
@@ -116,6 +117,7 @@ static int isblock(struct fs *, unsigned char *, int);
 static void clrblock(struct fs *, unsigned char *, int);
 static void setblock(struct fs *, unsigned char *, int);
 static int ilog2(int);
+static void zap_old_sblock(int);
 #ifdef MFS
 static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
@@ -192,22 +194,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		    MAXSYMLINKLEN_UFS2);
 		sblock.fs_old_flags = FS_FLAGS_UPDATED;
 		sblock.fs_flags = 0;
-	}
-	/*
-	 * Validate the given file system size.
-	 * Verify that its last block can actually be accessed.
-	 * Convert to file system fragment sized units.
-	 */
-	if (fssize <= 0) {
-		printf("preposterous size %lld\n", (long long)fssize);
-		exit(13);
-	}
-	wtfs(fssize - 1, sectorsize, &sblock);
-
-	if (isappleufs) {
-		struct appleufslabel appleufs;
-		ffs_appleufs_set(&appleufs,appleufs_volname,tv.tv_sec);
-		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,APPLEUFS_LABEL_SIZE,&appleufs);
 	}
 
 	/*
@@ -557,6 +543,48 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		exit(38);
 	}
 	memset(iobuf, 0, iobufsize);
+
+	/*
+	 * We now start writing to the filesystem
+	 */
+
+	/*
+	 * Validate the given file system size.
+	 * Verify that its last block can actually be accessed.
+	 * Convert to file system fragment sized units.
+	 */
+	if (fssize <= 0) {
+		printf("preposterous size %lld\n", (long long)fssize);
+		exit(13);
+	}
+	wtfs(fssize - 1, sectorsize, iobuf);
+
+	/*
+	 * Ensure there is nothing that looks like a filesystem
+	 * superbock anywhere other than where ours will be.
+	 * If fsck finds the wrong one all hell breaks loose!
+	 */
+	for (i = 0; ; i++) {
+		static const int sblocklist[] = SBLOCKSEARCH;
+		int sblkoff = sblocklist[i];
+		int sz;
+		if (sblkoff == -1)
+			break;
+		/* Remove main superblock */
+		zap_old_sblock(sblkoff);
+		/* and all possible locations for the first alternate */
+		sblkoff += SBLOCKSIZE;
+		for (sz = SBLOCKSIZE; sz <= 0x10000; sz <<= 1)
+			zap_old_sblock(roundup(sblkoff, sz));
+	}
+
+	if (isappleufs) {
+		struct appleufslabel appleufs;
+		ffs_appleufs_set(&appleufs, appleufs_volname, tv.tv_sec);
+		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
+		    &appleufs);
+	}
+
 	/*
 	 * Make a copy of the superblock into the buffer that we will be
 	 * writing out in each cylinder group.
@@ -1320,6 +1348,57 @@ ilog2(int val)
 		if (1 << n == val)
 			return (n);
 	errx(1, "ilog2: %d is not a power of 2\n", val);
+}
+
+static void
+zap_old_sblock(int sblkoff)
+{
+	static int cg0_data;
+	uint32_t oldfs[SBLOCKSIZE / 4];
+	static const struct fsm {
+		uint32_t	offset;
+		uint32_t	magic;
+		uint32_t	mask;
+	} fs_magics[] = {
+		{offsetof(struct fs, fs_magic)/4, FS_UFS1_MAGIC, ~0u},
+		{offsetof(struct fs, fs_magic)/4, FS_UFS2_MAGIC, ~0u},
+		{0, 0x70162, ~0u},		/* LFS_MAGIC */
+		{14, 0xef53, 0xffff},		/* EXT2FS (little) */
+		{14, 0xef530000, 0xffff0000},	/* EXT2FS (big) */
+		{~0u},
+	};
+	const struct fsm *fsm;
+
+	if (cg0_data == 0)
+		/* For FFSv1 this could include all the inodes. */
+		cg0_data = cgsblock(&sblock, 0) * sblock.fs_fsize + iobufsize;
+
+	/* Ignore anything that is beyond our filesystem */
+	if ((sblkoff + SBLOCKSIZE)/sectorsize >= fssize)
+		return;
+	/* Zero anything inside our filesystem... */
+	if (sblkoff >= sblock.fs_sblockloc) {
+		/* ...unless we will write that area anyway */
+		if (sblkoff >= cg0_data)
+			wtfs(sblkoff/sectorsize, sizeof sblock, iobuf);
+		return;
+	}
+
+	/* The sector might contain boot code, so we must validate it */
+	rdfs(sblkoff/sectorsize, sizeof oldfs, &oldfs);
+	for (fsm = fs_magics; ; fsm++) {
+		uint32_t v;
+		if (fsm->mask == 0)
+			return;
+		v = oldfs[fsm->offset];
+		if ((v & fsm->mask) == fsm->magic ||
+		    (bswap32(v) & fsm->mask) == fsm->magic)
+			break;
+	}
+
+	/* Just zap the magic number */
+	oldfs[fsm->offset] = 0;
+	wtfs(sblkoff/sectorsize, sizeof oldfs, &oldfs);
 }
 
 
