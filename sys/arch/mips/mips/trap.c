@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1996/10/13 07:09:33 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 1996/10/13 09:29:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,8 +108,10 @@ extern void mips_r2000_UserGenException __P((void));
 extern void mips_r2000_KernIntr __P((void));
 extern void mips_r2000_UserIntr __P((void));
 extern void mips_r2000_TLBModException  __P((void));
+
 extern void mips_r2000_TLBMissException __P((void));
 /* marks end of vector code */
+extern void mips_R2000_UTLBMiss	__P((void));
 extern void mips1_exceptionentry_end __P((void));
 
 extern void mips_r4000_KernGenException __P((void));
@@ -118,7 +120,9 @@ extern void mips_r4000_KernIntr __P((void));
 extern void mips_r4000_UserIntr __P((void));
 extern void mips_r4000_TLBModException  __P((void));
 extern void mips_r4000_TLBMissException __P((void));
+
 /* marks end of vector code */
+extern void mips_r4000_TLBMiss	__P((void));
 extern void mips3_exceptionentry_end __P((void));
 
 
@@ -454,7 +458,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			pte->pt_entry = entry;
 			vadr &= ~PGOFSET;
 			MachTLBUpdate(vadr, entry);
-			pa = entry & PG_FRAME;
+			pa = PTE_TO_PADDR(entry);
 #ifdef ATTR
 			pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
 #else
@@ -492,7 +496,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		vadr = (vadr & ~PGOFSET) |
 			(pmap->pm_tlbpid << VMMACH_TLB_PID_SHIFT);
 		MachTLBUpdate(vadr, entry);
-		pa = entry & PG_FRAME;
+		pa = PTE_TO_PADDR(entry);
 #ifdef ATTR
 		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
 #else
@@ -1556,7 +1560,7 @@ specialframe:
 
 	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
 		subr = (unsigned) mips_r2000_UserIntr;
-	else if (pcbetween(mips_r2000_UTLBMiss, mips1_exceptionentry_end) {
+	else if (pcBetween(mips_R2000_UTLBMiss, mips1_exceptionentry_end)) {
 		(*printfn)("<<mips1 locore>>");
 		goto done;
 	}
@@ -1576,7 +1580,7 @@ specialframe:
 
 	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
 		subr = (unsigned) mips_r4000_UserIntr;
-	else if (pcbetween(mips_r4000_UTLBMiss, mips3_exceptionentry_end) {
+	else if (pcBetween(mips_R4000_TLBMiss, mips3_exceptionentry_end)) {
 		(*printfn)("<<mips3 locore>>");
 		goto done;
 	} else
