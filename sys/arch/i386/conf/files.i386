@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.156 2000/04/07 16:35:20 thorpej Exp $
+#	$NetBSD: files.i386,v 1.157 2000/04/23 16:47:46 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -230,11 +230,14 @@ device sysbeep
 attach sysbeep at pcppi
 
 # Floppy disk controller
-device	fdc {drive = -1}
-attach	fdc at isa
-device	fd: disk, isadma
-attach	fd at fdc
+device	fdc {drive = -1}: isadma
 file	dev/isa/fd.c			fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c		fdc_isa
+
+device	fd: disk
+attach	fd at fdc
 major	{fd = 2}
 
 attach	joy at isa with joy_isa
