@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.33 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.34 2004/03/21 22:14:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.33 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.34 2004/03/21 22:14:09 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,32 +343,42 @@ chkquota(type, fsname, mntpt, v, pid)
 		return 1;
 	}
 
-	for (i = 0; sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1) {
+			warnx("%s: superblock not found", fsname);
+			free(cgp);
+			if (pid != NULL)
+				exit(1);
+			return 1;
+		}
 		bread(sblock_try[i], (char *)&sblock, SBLOCKSIZE);
 		switch (sblock.fs_magic) {
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			goto found;
+			ffs_sb_swap(&sblock, &sblock);
+			break;
 		default:
 			continue;
 		}
+
+		if (sblock.fs_old_flags & FS_FLAGS_UPDATED) {
+			if (sblock.fs_sblockloc != sblock_try[i])
+				continue;
+		} else {
+			if (sblock_try[i] == SBLOCK_UFS2)
+				continue;
+		}
+		break;
 	}
-	warnx("%s: superblock not found", fsname);
-	free(cgp);
-	if (pid != NULL)
-		exit(1);
-	return 1;
- found:;
-	if (needswap)
-		ffs_sb_swap(&sblock, &sblock);
+
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	for (ino = 0, cg = 0; cg < sblock.fs_ncg; cg++) {
