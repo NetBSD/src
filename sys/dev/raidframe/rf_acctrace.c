@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.14 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.15 2004/02/29 20:47:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.14 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.15 2004/02/29 20:47:37 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -62,8 +62,8 @@ rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 
 	return (0);
 }
-/* install a trace record.  cause a flush to disk or to the trace collector daemon
- * if the trace buffer is at least 1/2 full.
+/* install a trace record.  cause a flush to disk or to the trace
+ * collector daemon if the trace buffer is at least 1/2 full.  
  */
 void 
 rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
