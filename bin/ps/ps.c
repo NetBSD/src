@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.19 1997/07/20 20:37:57 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.20 1997/09/14 08:57:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.19 1997/07/20 20:37:57 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.20 1997/09/14 08:57:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != EOF)
+	    "acCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != -1)
 		switch((char)ch) {
 		case 'a':
 			all = 1;
