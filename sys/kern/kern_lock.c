@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.22 1999/07/28 01:59:46 mellon Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.23 1999/07/28 19:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,10 +117,12 @@ do {									\
 /*
  * Acquire a resource.
  */
-#define ACQUIRE(lkp, error, extflags, wanted)				\
+#define ACQUIRE(lkp, error, extflags, drain, wanted)			\
 	if ((extflags) & LK_SPIN) {					\
 		int interlocked;					\
 									\
+		if ((drain) == 0)					\
+			(lkp)->lk_waitcount++;				\
 		for (interlocked = 1;;) {				\
 			if (wanted) {					\
 				if (interlocked) {			\
@@ -134,16 +136,24 @@ do {									\
 				interlocked = 1;			\
 			}						\
 		}							\
+		if ((drain) == 0)					\
+			(lkp)->lk_waitcount--;				\
 		KASSERT((wanted) == 0);					\
 		error = 0;	/* sanity */				\
 	} else {							\
 		for (error = 0; wanted; ) {				\
-			(lkp)->lk_waitcount++;				\
+			if ((drain))					\
+				(lkp)->lk_flags |= LK_WAITDRAIN;	\
+			else						\
+				(lkp)->lk_waitcount++;			\
 			simple_unlock(&(lkp)->lk_interlock);		\
-			error = tsleep((void *)lkp, (lkp)->lk_prio,	\
+			/* XXX Cast away volatile. */			\
+			error = tsleep((drain) ? &(lkp)->lk_flags :	\
+			    (void *)(lkp), (lkp)->lk_prio,		\
 			    (lkp)->lk_wmesg, (lkp)->lk_timo);		\
 			simple_lock(&(lkp)->lk_interlock);		\
-			(lkp)->lk_waitcount--;				\
+			if ((drain) == 0)				\
+				(lkp)->lk_waitcount--;			\
 			if (error)					\
 				break;					\
 			if ((extflags) & LK_SLEEPFAIL) {		\
@@ -164,6 +174,14 @@ do {									\
 #define	WEHOLDIT(lkp, pid, cpu_id)					\
 	(((lkp)->lk_flags & LK_SPIN) != 0 ?				\
 	 ((lkp)->lk_cpu == (cpu_id)) : ((lkp)->lk_lockholder == (pid)))
+
+#define	WAKEUP_WAITER(lkp)						\
+do {									\
+	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
+		/* XXX Cast away volatile. */				\
+		wakeup_one((void *)(lkp));				\
+	}								\
+} while (0)
 
 #if defined(LOCKDEBUG) /* { */
 #if defined(MULTIPROCESSOR) /* { */
@@ -341,7 +359,7 @@ lockmgr(lkp, flags, interlkp)
 			/*
 			 * Wait for exclusive locks and upgrades to clear.
 			 */
-			ACQUIRE(lkp, error, extflags, lkp->lk_flags &
+			ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
 			    (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE));
 			if (error)
 				break;
@@ -367,8 +385,7 @@ lockmgr(lkp, flags, interlkp)
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
 		DONTHAVEIT(lkp);
-		if (lkp->lk_waitcount)
-			wakeup_one((void *)lkp);
+		WAKEUP_WAITER(lkp);
 		break;
 
 	case LK_EXCLUPGRADE:
@@ -414,7 +431,7 @@ lockmgr(lkp, flags, interlkp)
 			 * drop to zero, then take exclusive lock.
 			 */
 			lkp->lk_flags |= LK_WANT_UPGRADE;
-			ACQUIRE(lkp, error, extflags, lkp->lk_sharecount);
+			ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
 			if (error)
 				break;
@@ -434,8 +451,8 @@ lockmgr(lkp, flags, interlkp)
 		 * lock, awaken upgrade requestor if we are the last shared
 		 * lock, then request an exclusive lock.
 		 */
-		if (lkp->lk_sharecount == 0 && lkp->lk_waitcount)
-			wakeup_one((void *)lkp);
+		if (lkp->lk_sharecount == 0)
+			WAKEUP_WAITER(lkp);
 		/* fall into exclusive request */
 
 	case LK_EXCLUSIVE:
@@ -470,7 +487,7 @@ lockmgr(lkp, flags, interlkp)
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		ACQUIRE(lkp, error, extflags, lkp->lk_flags &
+		ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
 		    (LK_HAVE_EXCL | LK_WANT_EXCL));
 		if (error)
 			break;
@@ -478,7 +495,7 @@ lockmgr(lkp, flags, interlkp)
 		/*
 		 * Wait for shared locks and upgrades to finish.
 		 */
-		ACQUIRE(lkp, error, extflags, lkp->lk_sharecount != 0 ||
+		ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount != 0 ||
 		       (lkp->lk_flags & LK_WANT_UPGRADE));
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error)
@@ -521,8 +538,7 @@ lockmgr(lkp, flags, interlkp)
 			lkp->lk_sharecount--;
 			COUNT(lkp, p, cpu_id, -1);
 		}
-		if (lkp->lk_waitcount)
-			wakeup_one((void *)lkp);
+		WAKEUP_WAITER(lkp);
 		break;
 
 	case LK_DRAIN:
@@ -543,32 +559,13 @@ lockmgr(lkp, flags, interlkp)
 			error = EBUSY;
 			break;
 		}
-		if (lkp->lk_flags & LK_SPIN) {
-			ACQUIRE(lkp, error, extflags,
-			    ((lkp->lk_flags &
-			     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-			     lkp->lk_sharecount != 0 ||
-			     lkp->lk_waitcount != 0));
-		} else {
-			/*
-			 * This is just a special cause of the sleep case
-			 * in ACQUIRE().  We set WANTDRAIN instead of
-			 * incrementing waitcount.
-			 */
-			for (error = 0; ((lkp->lk_flags &
-			     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-			     lkp->lk_sharecount != 0 ||
-			     lkp->lk_waitcount != 0); ) {
-				lkp->lk_flags |= LK_WAITDRAIN;
-				simple_unlock(&lkp->lk_interlock);
-				if ((error = tsleep((void *)&lkp->lk_flags,
-				    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo)))
-					return (error);
-				if ((extflags) & LK_SLEEPFAIL)
-					return (ENOLCK);
-				simple_lock(&lkp->lk_interlock);
-			}
-		}
+		ACQUIRE(lkp, error, extflags, 1,
+		    ((lkp->lk_flags &
+		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
+		     lkp->lk_sharecount != 0 ||
+		     lkp->lk_waitcount != 0));
+		if (error)
+			break;
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
 		SETHOLDER(lkp, pid, cpu_id);
 		HAVEIT(lkp);
@@ -585,8 +582,9 @@ lockmgr(lkp, flags, interlkp)
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
 	}
-	if ((lkp->lk_flags & LK_WAITDRAIN) && ((lkp->lk_flags &
-	     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
+	if ((lkp->lk_flags & (LK_WAITDRAIN|LK_SPIN)) == LK_WAITDRAIN &&
+	    ((lkp->lk_flags &
+	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
 		wakeup_one((void *)&lkp->lk_flags);
