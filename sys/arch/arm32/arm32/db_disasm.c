@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 1997/10/14 10:18:02 mark Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 1998/04/01 23:04:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -32,21 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * db_disasm.c
- *
- * Kernel disassembler
- *
- * Created      : 10/02/96
- *
- * Structured after the sparc/sparc/db_disasm.c by David S. Miller &
- * Paul Kranenburg
- *
- * This code is not complete. Not all instructions are disassembled.
- * Current LDF, STF and CDT are not supported but these are low priority
- * as FP is not used in the kernel.
  */
 
 #include <sys/param.h>
