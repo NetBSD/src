@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.7 1997/10/30 16:10:12 mrg Exp $	*/
+/*	$NetBSD: ipt.c,v 1.8 1997/11/14 12:58:06 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -31,12 +31,13 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
 #if __FreeBSD_version >= 300000
 # include <net/if_var.h>
@@ -47,13 +48,14 @@
 #include <resolv.h>
 #include <ctype.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipt.c,v 2.0.2.12 1997/10/19 15:39:27 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipt.c,v 2.0.2.12.2.1 1997/11/12 10:58:10 darrenr Exp ";
 #endif
 
 extern	char	*optarg;
@@ -70,10 +72,10 @@ int argc;
 char *argv[];
 {
 	struct	ipread	*r = &iptext;
-	struct	ip	*ip;
 	u_long	buf[64];
 	struct	ifnet	*ifp;
 	char	*rules = NULL, *datain = NULL, *iface = NULL;
+	ip_t	*ip;
 	int	fd, i, dir = 0, c;
 
 	while ((c = getopt(argc, argv, "bdEHi:I:oPr:STvX")) != -1)
@@ -180,7 +182,7 @@ char *argv[];
 	if (fd < 0)
 		exit(-1);
 
-	ip = (struct ip *)buf;
+	ip = (ip_t *)buf;
 	while ((i = (*r->r_readip)((char *)buf, sizeof(buf),
 				    &iface, &dir)) > 0) {
 		ifp = iface ? get_unit(iface) : NULL;
@@ -203,14 +205,16 @@ char *argv[];
 		}
 		if (!(opts & OPT_BRIEF)) {
 			putchar(' ');
-			printpacket((struct ip *)buf);
+			printpacket((ip_t *)buf);
 			printf("--------------");
 		}
+#ifndef	linux
 		if (dir && ifp && ip->ip_v)
-#ifdef __sgi
+# ifdef __sgi
 			(*ifp->if_output)(ifp, (void *)buf, NULL);
-#else
+# else
 			(*ifp->if_output)(ifp, (void *)buf, NULL, 0);
+# endif
 #endif
 		putchar('\n');
 		dir = 0;

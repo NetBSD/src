@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.2 1997/11/01 09:12:21 enami Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.3 1997/11/14 12:58:21 mrg Exp $	*/
 
 %e 1500
 %p 4000
@@ -12,7 +12,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_l.l,v 2.0.2.15 1997/09/28 07:13:08 darrenr Exp 
+ * Id: iplang_l.l,v 2.0.2.15.2.1 1997/11/05 11:04:04 darrenr Exp 
  */
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +40,7 @@ extern int opts;
 int lineNum = 0, proto = 0, oldproto = 0, next = -1, laststate = 0;
 int *prstack = NULL, numpr = 0, state = 0, token = 0;
 
+void    yyerror __P((char *));
 void	push_proto __P((void));
 void	pop_proto __P((void));
 int	next_state __P((int, int));
