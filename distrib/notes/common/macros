@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.12 2001/11/26 00:19:57 jhawk Exp $
+.\"	$NetBSD: macros,v 1.13 2001/11/26 01:16:22 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -315,24 +315,22 @@
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
 .if dTOC \{
-.rn Sh Sh-toc
-.de Sh
-.Sh-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-..
 .rn Ss Ss-toc
 .de Ss
 .Ss-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 ..
 .rn Ss2 Ss2-toc
 .de Ss2
 .Ss2-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 2 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 ..
 .\}
 .de Ti
-\h'3n*\\$1u' \\$3\a\\$2
+.ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
+\h'3n*\\$1u' <a href="#\\$3">\\$3</a>\a\\$2
+.\}
+.el \h'3n*\\$1u' \\$3\a\\$2
 ..
 .de Tc
 .Bd -literal
