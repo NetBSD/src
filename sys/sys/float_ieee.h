@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee.h,v 1.1 2003/04/19 23:06:33 christos Exp $ */
+/*	$NetBSD: float_ieee.h,v 1.2 2003/04/21 00:07:25 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,9 +83,7 @@ __END_DECLS
 #define LDBL_EPSILON	1.0842021724855044340E-19L
 #define LDBL_DIG	18
 #define LDBL_MIN_EXP	(-16381)
-#ifdef __i386__ /* XXX: Is this right? */
-#define LDBL_MIN	3.3621031431120935063E-4932L
-#else
+#ifndef LDBL_MIN
 #define LDBL_MIN	1.6810515715560467531E-4932L
 #endif
 #define LDBL_MIN_10_EXP	(-4931)
