@@ -29,6 +29,7 @@ SECTIONS
   {
     *(.text)
     *(.rodata)
+    *(.rodata.*)
     *(.rodata1)
     *(.got1)
   }
