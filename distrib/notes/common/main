@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.230 2003/05/25 05:30:11 grant Exp $
+.\"	$NetBSD: main,v 1.231 2003/06/01 17:37:23 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,19 +132,19 @@ if installing on a laptop.
 files necessary to boot your system.
 The files depend on what model you
 are using and how you plan to boot your machine.
-For systems with built-in floppy drives, fetch the bootloader
-.Pa installation/ofwboot.xcf
-and the installation kernel
-.Pa binary/kernel/netbsd-INSTALL.gz .
-For systems without floppy drives, fetch the bootloader
+For systems with built-in floppy drives (Open Firmware 1 or 2), 
+fetch the pair of boot floppy images
+.Pa installation/floppy/boot1.fs
+and
+.Pa installation/floppy/boot2.fs ,
+which include the bootloader and installation kernel.
+For systems without floppy drives (most are Open Firmware 3), fetch the
+bootloader
 .Pa installation/ofwboot.xcf
 and the installation kernel
 .Pa binary/kernel/netbsd-GENERIC_MD.gz .
-Alternatively, you can fetch the CD image,
-.Pa macppccd.iso
-or the boot floppy image
-.Pa installation/floppy/boot.fs
-which include the bootloader and installation kernel.
+If you have a CD-R, you can fetch the CD image,
+.Pa macppccd.iso .
 .\}
 .if \n[sparc] \{\
 CD image,
@@ -154,10 +154,8 @@ or the floppy disk images,
 You need either the pair of floppies or the CD to boot your system.
 .\}
 .if \n[macppc]:\n[sparc] \{\
-Alternatively, you may netboot the installation kernel, which requires
-several local netboot services.
-The details are not covered here, as setting up a netboot server is hardly
-.Dq quick .
+Alternatively, you may netboot the installation kernel.  This process is
+covered below, in detail.
 .\}
 .It
 The actual binary distribution is in the
@@ -165,7 +163,7 @@ The actual binary distribution is in the
 directory.
 When you boot the install
 .if \n[i386] floppies,
-.if \n[macppc] kernel from floppy, hard drive, or CD-ROM,
+.if \n[macppc] kernel from floppies, hard drive, or CD-ROM,
 .if \n[sparc] floppies or CD-ROM,
 the installation program
 can fetch these files for you (using e.g. ftp),
@@ -205,14 +203,18 @@ directory may be of help.
 .\}
 .if \n[macppc] \{
 .It
-If your mac has a floppy drive, copy
-.Pa ofwboot.xcf No and Pa netbsd-INSTALL.gz
-to an MS-DOS formatted floppy disk and rename
-.Pa netbsd-INSTALL.gz No to Pa netbsd.gz .
-Otherwise, drag
+If your \*M has a floppy drive, create the pair of boot floppies using 
+.Ic suntar
+(MacOS 9),
+.Ic rawrite
+(Windows), or
+.Ic dd
+(any
+.Ul
+system with floppy support).  If your system has Open Firmware 3, drag
 .Pa ofwboot.xcf No and Pa netbsd-GENERIC_MD.gz
 to your hard drive icon (the top level of the drive, not the desktop).
-If you are making a CD, burn it now.
+If you are using the CD image, burn it now.
 .\}
 .if \n[sparc] \{
 .It
@@ -236,18 +238,15 @@ At present,
 .Nx*M
 cannot exist on the same hard drive as
 .Tn Mac OS
-unless you partition your disk using a
-.Tn Mac OS
-partitioning utility.
+unless you partition your disk before running the installer.
 Open Firmware versions prior to 3 cannot boot into
 .Nx
-on a drive partitioned this way \(em you must use the entire disk,
+on a drive partitioned in advance \(em you must use the entire disk,
 partitioned with the installation tools.
 Open Firmware version 3 cannot boot into
 .Nx
-on a drive partitioned with the installation tools, you must use a
-.Tn Mac OS
-partitioning utility and the
+on a drive partitioned with the installation tools, you must partition
+your disk before running the installer, then select the
 .Dq Me "Re-install sets or install additional sets"
 option in the installer (selecting the
 .Dq Me "Install NetBSD to hard disk"
@@ -262,7 +261,7 @@ Apple's System Disk utility to enter Open Firmware and use your screen and
 keyboard.
 To enter Open Firmware, hold down the
 .Key COMMAND-OPTION-O-F
-keys after the boot chime starts, but before it ends.
+keys after the boot chime starts, but before the chime ends.
 Entering Open Firmware versions prior to 3 is usually the most frustrating
 part of installation \(em you may want to read the section below on
 .Sx Older Open Firmware System Preparation
@@ -275,11 +274,11 @@ prompt on your screen before attempting to boot
 .if \n[macppc] \{\
 .It
 At the Open Firmware prompt, type the command to boot.
-To boot from a floppy, the command is
-.Dq Ic "boot fd:,\eofwboot.xcf netbsd.gz" .
+To boot from the installation floppies, the command is
+.Dq Ic "boot fd:0" .
 For the install kernel and bootloader on your hard drive (Open Firmware
 3), the command is
-.Dq Ic "boot hd:\e,ofwboot.xcf netbsd-GENERIC_MD.gz" .
+.Dq Ic "boot hd:,\eofwboot.xcf netbsd-GENERIC_MD.gz" .
 .Pp
 For boot CDs, the command is something like
 .Dq Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
@@ -301,6 +300,8 @@ command to confirm that the
 .Nx*M
 kernel is called
 .Pa NETBSD.MACPPC .
+You may want to read the section below on
+.Sx Open Firmware boot syntax
 .\}
 .if \n[sparc] \{\
 .It
