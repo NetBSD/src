@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.24 1998/04/18 19:00:18 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.25 1998/07/27 22:34:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@
 
 #include <machine/bus.h>
 #include <sparc/dev/sbusreg.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/xboxvar.h>
+#include <dev/sbus/sbusvar.h>
+#include <dev/sbus/xboxvar.h>
 
 #include <sparc/sparc/iommuvar.h>
 #include <machine/autoconf.h>
