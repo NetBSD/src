@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33.2.1 2003/07/13 09:45:23 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.33.2.2 2003/07/25 11:54:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33.2.1 2003/07/13 09:45:23 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.33.2.2 2003/07/25 11:54:01 jlam Exp $");
 #endif
 #endif
 
@@ -140,6 +140,9 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	}
 	if (Preserve) {
 		(void) fprintf(totar, "%s\n", PRESERVE_FNAME);
+	}
+	if (create_views) {
+		(void) fprintf(totar, "%s\n", VIEWS_FNAME);
 	}
 
 	for (p = plist->head; p; p = p->next) {
@@ -389,6 +392,11 @@ pkg_perform(lpkg_head_t *pkgs)
 		copy_file(Home, Preserve, PRESERVE_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, PRESERVE_FNAME);
+	}
+	if (create_views) {
+		write_file(VIEWS_FNAME, (char *)NULL);
+		add_plist(&plist, PLIST_IGNORE, NULL);
+		add_plist(&plist, PLIST_FILE, VIEWS_FNAME);
 	}
 
 	/* Finally, write out the packing list */

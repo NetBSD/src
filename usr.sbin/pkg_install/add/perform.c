@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.2 2003/07/23 20:48:00 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.3 2003/07/25 11:53:59 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.2 2003/07/23 20:48:00 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.3 2003/07/25 11:53:59 jlam Exp $");
 #endif
 #endif
 
@@ -682,6 +682,8 @@ ignore_replace_depends_check:
 			move_file(".", DISPLAY_FNAME, LogDir);
 		if (fexists(PRESERVE_FNAME))
 			move_file(".", PRESERVE_FNAME, LogDir);
+		if (fexists(VIEWS_FNAME))
+			move_file(".", VIEWS_FNAME, LogDir);
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we

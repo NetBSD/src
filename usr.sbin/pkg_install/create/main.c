@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.21.2.2 2003/07/23 20:48:01 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.21.2.3 2003/07/25 11:54:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.21.2.2 2003/07/23 20:48:01 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.2.3 2003/07/25 11:54:01 jlam Exp $");
 #endif
 #endif
 
@@ -48,6 +48,7 @@ char   *realprefix = NULL;
 char    PlayPen[FILENAME_MAX];
 size_t  PlayPenSize = sizeof(PlayPen);
 int	update_pkgdb = 1;
+int	create_views = 0;
 int     Dereference = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
@@ -58,7 +59,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n",
-	    "usage: pkg_create [-ORUhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+	    "usage: pkg_create [-ORUEhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
 	    "                  [-b build-version-file] [-B build-info-file]",
@@ -79,6 +80,10 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'v':
 			Verbose = TRUE;
+			break;
+
+		case 'E':
+			create_views = 1;
 			break;
 
 		case 'I':
