@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.14 1995/10/10 01:26:50 mycroft Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.15 1995/11/28 08:07:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -76,6 +76,10 @@
 #include <compat/freebsd/freebsd_exec.h>
 #endif
 
+#ifdef COMPAT_HPUX
+#include <compat/hpux/hpux_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -105,6 +109,9 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_FREEBSD
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* a.out */
+#endif
+#ifdef COMPAT_HPUX
+	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, },	/* HP-UX a.out */
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
