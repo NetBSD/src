@@ -1,4 +1,4 @@
-/*      $Id: userptr.c,v 1.4 1999/12/16 12:08:12 blymn Exp $ */
+/*	$NetBSD: userptr.c,v 1.5 1999/12/22 14:38:13 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)

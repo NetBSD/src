@@ -1,4 +1,4 @@
-/*      $Id: driver.c,v 1.3 1999/12/16 12:08:07 blymn Exp $ */
+/*	$NetBSD: driver.c,v 1.4 1999/12/22 14:38:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
