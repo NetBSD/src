@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 1995/02/05 01:41:33 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.111 1995/02/05 13:13:42 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -313,14 +313,14 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
-	.byte	0x0f,0xa2		# cpuid 0
+	cpuid
 	movl	%ebx,_cpu_vendor-KERNBASE	# store vendor string
 	movl	%edx,_cpu_vendor-KERNBASE+4
 	movl	%ecx,_cpu_vendor-KERNBASE+8
 	movb	$0,_cpu_vendor-KERNBASE+12
 
 	movl	$1,%eax
-	.byte	0x0f,0xa2		# cpuid 1
+	cpuid
 	rorl	$8,%eax			# extract family type
 	andl	$15,%eax
 	cmpl	$5,%eax
@@ -1880,12 +1880,10 @@ IDTVEC(dbg)
 #endif /* BDB */
 	subl	$4,%esp
 	pushl	%eax
-/*	movl	%dr6,%eax		# XXX stupid assembler! */
-	.byte	0x0f, 0x21, 0xf0
+	movl	%dr6,%eax
 	movl	%eax,4(%esp)
-	andb	$~15,%al
-/*	movl	%eax,%dr6		# XXX stupid assembler! */
-	.byte	0x0f, 0x23, 0xf0
+	andb	$~0xf,%al
+	movl	%eax,%dr6
 	popl	%eax
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(nmi)
