@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.6 2002/08/14 23:30:21 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.7 2002/08/17 01:02:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -224,7 +224,7 @@ ENTRY(sa1_cache_cleanD_rng)
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -241,7 +241,7 @@ ENTRY(sa1_cache_purgeID_rng)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
@@ -259,7 +259,7 @@ ENTRY(sa1_cache_purgeD_rng)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -275,7 +275,7 @@ ENTRY(sa1_cache_syncI_rng)
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
