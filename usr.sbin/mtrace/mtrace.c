@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.20 2002/07/14 01:10:56 wiz Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.21 2002/08/09 02:04:03 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.20 2002/07/14 01:10:56 wiz Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.21 2002/08/09 02:04:03 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -463,6 +463,8 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	 */
 	while (TRUE) {
 	    FD_ZERO(&fds);
+	    if (igmp_socket >= FD_SETSIZE)
+		    log(LOG_ERR, 0, "descriptor too big");
 	    FD_SET(igmp_socket, &fds);
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
@@ -630,8 +632,6 @@ passive_mode(void)
     int ipdatalen, iphdrlen, igmpdatalen;
     int len, recvlen, dummy = 0;
     u_int32_t smask;
-
-    init_igmp();
 
     if (raddr) {
 	if (IN_MULTICAST(ntohl(raddr))) k_join(raddr, INADDR_ANY);
@@ -1163,6 +1163,9 @@ main(int argc, char **argv)
 	fprintf(stderr, "mtrace: must be root\n");
 	exit(1);
     }
+    init_igmp();
+    if (setuid(getuid()) == -1)
+	    log(LOG_ERR, errno, "setuid");
 
     argv++, argc--;
     if (argc == 0) goto usage;
@@ -1299,8 +1302,6 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
               [-S statint] [-t ttl] [-r resp_dest] [-i if_addr] source [receiver] [group]\n");
 	exit(1);
     }
-
-    init_igmp();
 
     /*
      * Set useful defaults for as many parameters as possible.
@@ -1682,17 +1683,13 @@ void
 log(int severity, int syserr, const char *format, ...)
 {
     va_list ap;
-    char    fmt[100];
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
 	case 1: if (severity > LOG_NOTICE) return;
 	case 2: if (severity > LOG_INFO  ) return;
 	default:
-	    fmt[0] = '\0';
-	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
-	    strncat(fmt, format, 80);
-	    format = fmt;
+	    if (severity == LOG_WARNING) fprintf(stderr, "warning - ");
 	    va_start(ap, format);
 	    vfprintf(stderr, format, ap);
 	    va_end(ap);
