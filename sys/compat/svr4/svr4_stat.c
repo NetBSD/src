@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.37 2000/04/07 07:02:11 chs Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.37.4.1 2000/07/14 18:27:33 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -570,7 +570,7 @@ svr4_sys_systeminfo(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_systeminfo_args *uap = v;
-	char *str = NULL;
+	const char *str = NULL;
 	int name;
 	int error;
 	size_t len;
