@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.13 2000/03/26 18:55:37 mycroft Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.14 2000/03/26 19:11:04 mycroft Exp $	*/
 /*	$KAME: ah_input.c,v 1.22 2000/03/09 21:51:39 itojun Exp $	*/
 
 /*
@@ -75,6 +75,8 @@
 #include <machine/stdarg.h>
 
 #include <net/net_osdep.h>
+
+#define IPLEN_FLIPPED
 
 #ifdef INET
 void
