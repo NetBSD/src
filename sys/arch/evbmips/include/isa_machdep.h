@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2002/03/07 14:44:00 simonb Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2002/03/18 01:21:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ struct evbmips_isa_chipset {
 #define	isa_intr_string(c, i)						\
     (*(c)->ic_intr_string)((c)->ic_v, (i))
 
-#ifdef _EVBMIPS_BUS_DMA_PRIVATE
+#ifdef _MIPS_BUS_DMA_PRIVATE
 int	isadma_bounce_dmamap_create(bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 void	isadma_bounce_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -169,4 +169,4 @@ void	isadma_bounce_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 
 int	isadma_bounce_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int);
-#endif /* _EVBMIPS_BUS_DMA_PRIVATE */
+#endif /* _MIPS_BUS_DMA_PRIVATE */
