@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.17 2003/01/15 16:04:09 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.18 2003/01/17 03:22:18 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -71,6 +71,7 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S \
 	_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
 	_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
+	_lwp_getprivate.S _lwp_setprivate.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
 	sa_preempt.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
