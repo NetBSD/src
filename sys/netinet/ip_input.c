@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.195 2003/12/14 01:14:24 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.196 2004/01/15 05:13:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.195 2003/12/14 01:14:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.196 2004/01/15 05:13:17 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1519,7 +1519,7 @@ ip_dooptions(m)
 			bcopy((caddr_t)(cp + off), (caddr_t)&ipaddr.sin_addr,
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR)
-				ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)));
+				ia = ifatoia(ifa_ifwithladdr(sintosa(&ipaddr)));
 			else
 				ia = ip_rtaddr(ipaddr.sin_addr);
 			if (ia == 0) {
