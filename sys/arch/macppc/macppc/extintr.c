@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.30 2001/04/26 14:40:19 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.31 2001/06/08 00:32:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -54,12 +54,13 @@
 
 #include <powerpc/openpic.h>
 
+#include <dev/ofw/openfirm.h>
+
 #define NIRQ 32
 #define HWIRQ_MAX (NIRQ - 4 - 1)
 #define HWIRQ_MASK 0x0fffffff
 
 void intr_calculatemasks __P((void));
-char *intr_typename __P((int));
 int fakeintr __P((void *));
 
 static inline int cntlzw __P((int));
@@ -69,6 +70,8 @@ static void gc_enable_irq __P((int));
 static void gc_disable_irq __P((int));
 
 static void do_pending_int __P((void));
+static void ext_intr_openpic __P((void));
+static void legacy_int_init __P((void));
 
 int imask[NIPL];
 
@@ -372,7 +375,7 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: can't malloc handler info");
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
-		panic("intr_establish: bogus irq (%d) or type (%d), irq, type");
+		panic("intr_establish: bogus irq (%d) or type (%d)", irq, type);
 
 	switch (intrtype[irq]) {
 	case IST_NONE:
