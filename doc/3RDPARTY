@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.72 2003/03/08 20:35:43 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.73 2003/03/10 13:16:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -50,7 +50,7 @@ How to import:
 	    INTEL acpica-unix-YYYYMMDD
 
 Package:	am-utils [amd]
-Version:	6.1b1
+Version:	6.1b2
 Current Vers:	6.1b2
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
