@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.45 1998/06/02 02:24:03 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.45.8.1 1999/11/01 06:19:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

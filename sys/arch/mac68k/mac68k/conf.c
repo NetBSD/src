@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.4 1999/05/22 09:39:26 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.5 1999/11/01 06:19:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,6 +113,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+#include "wsmux.h"
 #include "zsc.h"
 #include "zstty.h"
 #include "scsibus.h"
@@ -150,6 +151,7 @@ cdev_decl(uk);
 cdev_decl(vnd);
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
+cdev_decl(wsmux);
 cdev_decl(wsdisplay);
 cdev_decl(zs);
 cdev_decl(zsc);
@@ -204,7 +206,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
-	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 45: frame buffers, etc. */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -289,6 +292,8 @@ static int chrtoblktab[] = {
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
 	/* 42 */	20,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
 };
 
 dev_t

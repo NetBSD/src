@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 1999/02/18 07:32:56 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50.2.1 1999/11/01 06:19:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,21 +85,18 @@ struct devnametobdevmaj mac68k_nam2blk[] = {
 };
 
 /*
- * configure:
+ * cpu_configure:
  * called at boot time, configure all devices on the system
  */
 void
-configure()
+cpu_configure()
 {
-	extern int	cold;
 
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before ADB attached */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
-
-	cold = 0;
 }
 
 void

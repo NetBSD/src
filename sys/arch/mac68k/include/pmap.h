@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 1999/02/25 23:13:41 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.2.1 1999/11/01 06:19:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -167,7 +167,7 @@ struct pv_page {
 };
 
 #ifdef	_KERNEL
-struct pmap	kernel_pmap_store;
+extern struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define active_pmap(pm) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.2.1 1999/05/16 22:38:10 scottr Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.2 1999/11/01 06:19:13 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -205,7 +205,8 @@ bus_space_unmap(t, bsh, size)
 		panic("bus_space_unmap: overflow");
 #endif
 
-	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+	(void) pmap_extract(pmap_kernel(), va, &bpa);
+	bpa += (bsh & PGOFSET);
 
 	/*
 	 * Free the kernel virtual mapping.
