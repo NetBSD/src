@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.24 1998/12/28 04:54:01 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.25 1999/02/05 21:40:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.24 1998/12/28 04:54:01 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.25 1999/02/05 21:40:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,9 @@ extern	jmp_buf		errcatch;
 	MKD	PWD	LIST	NLST	SITE	SYST
 	STAT	HELP	NOOP
 
+	AUTH	ADAT	PROT	PBSZ	CCC	MIC
+	CONF	ENC
+
 	FEAT	OPTS
 
 	SIZE	MDTM
@@ -121,8 +124,9 @@ extern	jmp_buf		errcatch;
 %token	<i> NUMBER
 
 %type	<i> check_login check_modify octal_number byte_size
-%type	<i> struct_code mode_code type_code form_code
+%type	<i> struct_code mode_code type_code form_code decimal_integer
 %type	<s> pathstring pathname password username
+%type	<s> mechanism_name base64data prot_code
 
 %start	cmd_list
 
@@ -508,6 +512,50 @@ cmd
 			reply(200, "NOOP command successful.");
 		}
 
+						/* RFC 2228 */
+	| AUTH SP mechanism_name CRLF
+		{
+			reply(502, "RFC 2228 authentication not implemented.");
+		}
+
+	| ADAT SP base64data CRLF
+		{
+			reply(503,
+			    "Please set authentication state with AUTH.");
+		}
+
+	| PROT SP prot_code CRLF
+		{
+			reply(503,
+			    "Please set protection buffer size with PBSZ.");
+		}
+
+	| PBSZ SP decimal_integer CRLF
+		{
+			reply(503,
+			    "Please set authentication state with AUTH.");
+		}
+
+	| CCC CRLF
+		{
+			reply(533, "No protection enabled.");
+		}
+
+	| MIC SP base64data CRLF
+		{
+			reply(502, "RFC 2228 authentication not implemented.");
+		}
+
+	| CONF SP base64data CRLF
+		{
+			reply(502, "RFC 2228 authentication not implemented.");
+		}
+
+	| ENC SP base64data CRLF
+		{
+			reply(502, "RFC 2228 authentication not implemented.");
+		}
+
 						/* RFC 2389 */
 	| FEAT CRLF
 		{
@@ -794,6 +842,22 @@ octal_number
 		}
 	;
 
+mechanism_name
+	: STRING
+	;
+
+base64data
+	: STRING
+	;
+
+prot_code
+	: STRING
+	;
+
+decimal_integer
+	: NUMBER
+	;
+
 check_login
 	: /* empty */
 		{
@@ -885,7 +949,17 @@ struct tab cmdtab[] = {
 	{ "HELP", HELP, OSTR,	1, 0,	"[ <sp> <string> ]" },
 	{ "NOOP", NOOP, NOARGS,	1, 1,	"" },
 
-				/* From RFC-2389, in order defined */
+				/* From RFC 2228, in order defined */
+	{ "AUTH", AUTH, STR1,	1, 0,	"<sp> mechanism-name" },
+	{ "ADAT", ADAT, STR1,	1, 0,	"<sp> base-64-data" },
+	{ "PROT", PROT, STR1,	1, 0,	"<sp> prot-code" },
+	{ "PBSZ", PBSZ, ARGS,	1, 0,	"<sp> decimal-integer" },
+	{ "CCC",  CCC,  NOARGS,	1, 0,	"(Disable data protection)" },
+	{ "MIC",  MIC,  STR1,	1, 0,	"<sp> base64data" },
+	{ "CONF", CONF, STR1,	1, 0,	"<sp> base64data" },
+	{ "ENC",  ENC,  STR1,	1, 0,	"<sp> base64data" },
+
+				/* From RFC 2389, in order defined */
 	{ "FEAT", FEAT, NOARGS,	1, 0,	"(display extended features)" },
 	{ "OPTS", OPTS, STR1,	1, 0,	"<sp> command [ <sp> options ]" },
 
@@ -1302,7 +1376,8 @@ help(ctab, s)
 		int columns, lines;
 
 		lreply(214, "The following %scommands are recognized.", type);
-		lreply(214, "(`-' = not implemented, `+' = supports options)");
+		printf(
+		    "    (`-' = not implemented, `+' = supports options)\r\n");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
