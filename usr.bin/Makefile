@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 1997/11/10 09:06:48 fair Exp $
+#	$NetBSD: Makefile,v 1.79 1997/11/11 00:13:10 scottr Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -48,7 +48,7 @@ SUBDIR+= ldd
 .endif
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE} == "atari" || \
-     ${MACHINE_ARCH} == "arm32") || ${MACHINE_ARCH} == "sparc")
+     ${MACHINE_ARCH} == "arm32" || ${MACHINE_ARCH} == "sparc")
 SUBDIR+= fdformat
 .endif
 
