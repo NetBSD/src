@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.16 1999/05/20 23:00:58 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.17 1999/08/27 17:49:41 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -146,10 +146,15 @@ smg_match(parent, match, aux)
 	void *aux;
 {
 	struct vsbus_attach_args *va = aux;
-	volatile short *curcmd = (short *)va->va_addr;
-	volatile short *cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
+	volatile short *curcmd;
+	volatile short *cfgtst;
 	short tmp, tmp2;
 
+	if (vax_boardtype == VAX_BTYP_49)
+		return 0;
+
+	curcmd = (short *)va->va_addr;
+	cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
 	/*
 	 * Try to find the cursor chip by testing the flip-flop.
 	 * If nonexistent, no glass tty.

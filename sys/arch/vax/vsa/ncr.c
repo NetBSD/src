@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.20 1999/06/19 15:46:05 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.21 1999/08/27 17:49:42 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 
 #include <machine/vsbus.h>
 #include <machine/bus.h>
+#include <machine/sid.h>
 
 #include "ioconf.h"
 
@@ -126,6 +127,8 @@ si_match(parent, cf, aux)
 	struct vsbus_attach_args *va = aux;
 	volatile char *si_csr = (char *) va->va_addr;
 
+	if (vax_boardtype == VAX_BTYP_49)
+		return 0;
 	/* This is the way Linux autoprobes the interrupt MK-990321 */
 	si_csr[12] = 0;
 	si_csr[16] = 0x80;
