@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.14 1999/07/01 18:40:36 itojun Exp $	*/
+/*	$NetBSD: netstat.h,v 1.15 1999/09/15 20:12:18 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@ int	dflag;		/* show i/f dropped packets */
 int	gflag;		/* show group (multicast) routing or stats */
 #endif
 int	iflag;		/* show interfaces */
+int	Lflag;		/* don't show LLINFO entries */
 int	lflag;		/* show routing table with use and ref */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */

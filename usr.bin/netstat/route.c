@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.39 1999/09/03 04:26:31 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.40 1999/09/15 20:12:18 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.39 1999/09/03 04:26:31 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.40 1999/09/15 20:12:18 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,6 +373,8 @@ np_rtentry(rtm)
 	static int old_af;
 	int af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST;
 
+	if (Lflag && (rtm->rtm_flags & RTF_LLINFO))
+		return;
 #ifdef notdef
 	/* for the moment, netmasks are skipped over */
 	if (!banner_printed) {
@@ -561,6 +563,9 @@ p_rtentry(rt)
 	static struct ifnet ifnet, *lastif;
 	union sockaddr_union addr_un, mask_un;
 	struct sockaddr *addr, *mask;
+
+	if (Lflag && (rt->rt_flags & RTF_LLINFO))
+		return;
 
 	memset(&addr_un, 0, sizeof(addr_un));
 	memset(&mask_un, 0, sizeof(mask_un));
