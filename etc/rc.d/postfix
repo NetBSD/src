@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.1 2000/04/26 05:28:04 thorpej Exp $
+# $NetBSD: postfix,v 1.2 2000/04/27 20:58:26 veego Exp $
 #
 
 # PROVIDE: mail
@@ -19,8 +19,10 @@ postfix_start_precmd() {
 }
 start_precmd="postfix_start_precmd"
 
+stop_precmd="checkyesno postfix"
 stop_cmd="postfix stop"
 
+reload_precmd="checkyesno postfix"
 reload_cmd="postfix reload"
 
 name="postfix"
