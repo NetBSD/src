@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.16 2000/07/18 20:51:07 jeffs Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.17 2000/12/20 15:42:37 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,11 +69,13 @@ db_trap(type, code)
 	    }
 	    if (curproc != NULL) {
 		if (bkpt)
-		    db_printf("Breakpoint in %s at\t", curproc->p_comm);
+			db_printf("Breakpoint");
 		else if (watchpt)
-		    db_printf("Watchpoint in %s at\t", curproc->p_comm);
+			db_printf("Watchpoint");
 		else
-		    db_printf("Stopped in %s at\t", curproc->p_comm);
+			db_printf("Stopped");
+		db_printf(" in pid %d (%s) at\t", curproc->p_pid,
+		    curproc->p_comm);
 	    } else if (bkpt)
 		db_printf("Breakpoint at\t");
 	    else if (watchpt)
