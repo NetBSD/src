@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.10 2003/05/07 16:39:45 dsl Exp $	*/
+/*	$NetBSD: parse.y,v 1.11 2003/05/08 16:20:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@ static optn_info *cur_optn;
 		 SCROLLABLE SHORTCUT
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
-%type <s_value> init_code system helpstr
+%type <s_value> init_code system helpstr text
 %type <optn_value> option option_list
 %type <i_value> act_opt
 %type <a_value> action exitact
@@ -128,6 +128,8 @@ opt_list  : "," opt
 	  | opt_list "," opt
 	  ;
 
+text	  : NAME | STRING
+
 opt	  : NO EXIT		{ cur_menu->info->mopt |= NOEXITOPT; }
 	  | EXIT		{ cur_menu->info->mopt &= ~NOEXITOPT; }
 	  | NO BOX		{ cur_menu->info->mopt |= NOBOX; }
@@ -140,8 +142,8 @@ opt	  : NO EXIT		{ cur_menu->info->mopt |= NOEXITOPT; }
 	  | Y "=" INT_CONST	{ cur_menu->info->y = atoi($3); }
 	  | W "=" INT_CONST	{ cur_menu->info->w = atoi($3); }
 	  | H "=" INT_CONST	{ cur_menu->info->h = atoi($3); }
-	  | TITLE STRING 	{ cur_menu->info->title = $2; }
-	  | EXITSTRING STRING	{ cur_menu->info->exitstr = $2;
+	  | TITLE text	 	{ cur_menu->info->title = $2; }
+	  | EXITSTRING text	{ cur_menu->info->exitstr = $2;
 				  cur_menu->info->mopt &= ~NOEXITOPT; }
 	  ;
 
@@ -149,7 +151,7 @@ option_list : option
 	  | option_list option  { $2->next = $1; $$ = $2; }
 	  ;
 
-option	  : OPTION STRING ","
+option	  : OPTION text ","
 		{ cur_optn = (optn_info *) malloc (sizeof(optn_info));
 		  cur_optn->name = $2;
 		  cur_optn->menu = -1;
