@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.1.1.2 1995/06/01 20:37:57 gwr Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.2 1995/06/09 22:21:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <machine/mon.h>
 
-extern char edata[], end[];
+extern int edata[], end[];
 extern int * getvbr();
 extern volatile void abort();
 
@@ -56,9 +56,9 @@ _start()
 	register int *p;
 
 	/* Clear BSS */
-	p = (int *) edata;
+	p = edata;
 	do *p++ = 0;
-	while (((char*)p) < end);
+	while (p < end);
 
 	/* Set the vector for trap 0 used by abort. */
 	p = getvbr();
