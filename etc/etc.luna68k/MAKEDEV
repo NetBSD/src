@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.3 2000/01/21 12:28:25 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.4 2000/02/26 05:39:51 tsutsui Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -74,7 +74,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md};	blk=7; chr=16;;
+	unit=${i#md};	blk=7; chr=16;
 	rm -rf md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}c  b $blk $(($unit * 8 + 2))
