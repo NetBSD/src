@@ -1,5 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.13 1997/03/29 03:16:18 briggs Exp $	*/
-/*	$NetBSD: grf_iv.c,v 1.18 1997/04/01 05:41:59 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.19 1997/04/01 13:31:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
