@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.49 2000/02/16 01:10:44 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.50 2000/02/21 23:33:45 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -318,6 +318,8 @@ raidattach(num)
 	}
 	/* This is where all the initialization stuff gets done. */
 
+	numraid = num;
+
 	/* Make some space for requested number of units... */
 
 	RF_Calloc(raidPtrs, num, sizeof(RF_Raid_t *), (RF_Raid_t **));
@@ -350,7 +352,7 @@ raidattach(num)
 		printf("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
-	numraid = num;
+
 	bzero(raid_softc, num * sizeof(struct raid_softc));
 
 	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
