@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.9.3.4 1993/11/24 20:33:44 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.9.3.5 1993/11/24 23:00:01 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -334,8 +334,7 @@ scsi_probe_bus(bus, targ, lun)
 					sc_link = NULL;	/* it's been used */
 				} else
 					printf("No matching config entry.\n");
-			} else
-				printf("No matching driver.\n");
+			}
 			if (!maybe_more)/* nothing suggests we'll find more */
 				break;	/* nothing here, skip to next targ */
 			/* otherwise something says we should look further */
@@ -622,5 +621,7 @@ selectdev(qualifier, type, remov, manu, model, rev)
 	if (!bestmatch)
 		bestmatch = &unknowndev;
 #endif
+	if (!bestmatch)
+		printf("No matching driver.\n");
 	return bestmatch;
 }
