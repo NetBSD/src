@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: cpu-i386.c,v 1.1 1994/01/28 12:38:19 pk Exp $
+	$Id: cpu-i386.c,v 1.2 1994/02/04 17:58:40 mycroft Exp $
 */
 
 #include "bfd.h"
@@ -33,7 +33,7 @@ static bfd_arch_info_type arch_info_struct =
     0,	/* only 1 machine */
     "i386",
     "i386",
-    3,
+    2,
     true, /* the one and only */
     bfd_default_compatible, 
     bfd_default_scan ,
