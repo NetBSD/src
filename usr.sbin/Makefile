@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.167 2001/12/09 00:49:09 ross Exp $
+#	$NetBSD: Makefile,v 1.168 2001/12/15 03:23:11 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
-	chown chroot chrtbl cnwctl config cron dbsym dev_mkdb \
+	chown chroot chrtbl cnwctl config cron dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig greconfig grfconfig \
 	grfinfo gspa hilinfo ifwatchd inetd iopctl iostat ipf \
@@ -21,7 +21,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	wsfontload wsmuxctl ypbind yppoll ypserv ypset zdump zic
 
 .if !defined(USE_NEW_TOOLCHAIN)
-SUBDIR+= mdsetimage
+SUBDIR+= dbsym mdsetimage
 .endif
 
 # IPv6
