@@ -7,52 +7,52 @@ host=`hostname -s`
 echo "Subject: $host daily run output"
 bak=/var/backups
 
-echo ""
-echo "Removing scratch and junk files:"
-if [ -d /tmp ]; then
-	cd /tmp && {
-	find . -type f -atime +3 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
+# IF YOU WANT SCRATCH AND JUNK FILES REMOVED, uncomment the following lines.
+#echo ""
+#echo "Removing scratch and junk files:"
+#if [ -d /tmp ]; then
+#	cd /tmp && {
+#	find . -type f -atime +3 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
+#
+#if [ -d /var/tmp ]; then
+#	cd /var/tmp && {
+#	find . ! -name . -atime +7 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
+#
+#if [ -d /scratch ]; then
+#	cd /scratch && {
+#	find . ! -name . -atime +1 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
+#
+#if [ -d /var/preserve ]; then
+#	cd /var/preserve && {
+#	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
+#fi
+#
+#if [ -d /var/rwho ] ; then
+#	cd /var/rwho && {
+#	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
+#fi
+#
+#cd /tmp
+#find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a -prune -o \
+#	\( -name '[#,]*' -o -name '.#*' -o -name a.out -o -name core \
+#	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
+#		-a -atime +3 -exec rm -f -- {} \;
 
-if [ -d /var/tmp ]; then
-	cd /var/tmp && {
-	find . ! -name . -atime +7 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
-
-if [ -d /scratch ]; then
-	cd /scratch && {
-	find . ! -name . -atime +1 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
-
-if [ -d /var/preserve ]; then
-	cd /var/preserve && {
-	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
-fi
-
-if [ -d /var/rwho ] ; then
-	cd /var/rwho && {
-	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
-fi
-
-cd /tmp
-find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a -prune -o \
-	\( -name '[#,]*' -o -name '.#*' -o -name a.out -o -name core \
-	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
-		-a -atime +3 -exec rm -f -- {} \;
 #msgs -c
+
 if [ -f /etc/news.expire ]; then
 	/etc/news.expire
 fi
 
-# Rotation of accounting log now handled automatically by cron and 'newsyslog'
-# eventually might want to replace "sa" though...
-#
 #if [ -f /var/account ]; then
 #	echo "" ;
 #	echo "Purging accounting records:" ;
