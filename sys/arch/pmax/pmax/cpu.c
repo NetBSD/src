@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 1996/04/10 17:38:21 jonathan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 1996/06/16 17:05:33 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -71,8 +71,6 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-
-	printf("\n");
 
 	printf(": ");
 
