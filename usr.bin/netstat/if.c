@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.29 1998/08/25 20:59:39 ross Exp $	*/
+/*	$NetBSD: if.c,v 1.30 1999/01/11 12:31:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.29 1998/08/25 20:59:39 ross Exp $");
+__RCSID("$NetBSD: if.c,v 1.30 1999/01/11 12:31:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,7 @@ intpr(interval, ifnetaddr)
 					}
 				}
 				break;
+#ifndef SMALL
 			case AF_APPLETALK:
 				printf("atalk:%-7.7s ",
 				       atalk_print(sa,0x10));
@@ -223,6 +224,7 @@ intpr(interval, ifnetaddr)
 				    ns_phost((struct sockaddr *)sns));
 				}
 				break;
+#endif
 			case AF_LINK:
 				{
 				struct sockaddr_dl *sdl =
