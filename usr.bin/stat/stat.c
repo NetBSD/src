@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.10 2003/05/08 13:05:38 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.11 2003/07/20 14:12:13 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.10 2003/05/08 13:05:38 atatat Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: stat.c,v 1.11 2003/07/20 14:12:13 lukem Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h" 
+#else 
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
 
 #include <sys/types.h>
@@ -669,6 +675,7 @@ format1(const struct stat *st,
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	case SHOW_st_flags:
 		small = (sizeof(st->st_flags) == 4);
 		data = st->st_flags;
@@ -677,6 +684,7 @@ format1(const struct stat *st,
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
+#endif
 	case SHOW_st_gen:
 		small = (sizeof(st->st_gen) == 4);
 		data = st->st_gen;
