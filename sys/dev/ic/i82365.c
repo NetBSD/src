@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.45 2000/02/05 04:34:36 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.46 2000/02/05 20:02:42 nathanw Exp $	*/
 
 #define	PCICDEBUG
 
@@ -361,8 +361,8 @@ pcic_attach_socket_finish(h)
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int reg;
 
-	DPRINTF(("%s: attach finish socket %d\n", h->ph_parent->dv_xname,
-	    h - &sc->handle[0]));
+	DPRINTF(("%s: attach finish socket %ld\n", h->ph_parent->dv_xname,
+	    (long) (h - &sc->handle[0])));
 	/*
 	 * Set up a powerhook to ensure it continues to interrupt on
 	 * card detect even after suspend.

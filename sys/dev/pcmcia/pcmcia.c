@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.16 2000/02/04 01:27:14 cgd Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.17 2000/02/05 20:02:43 nathanw Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -334,7 +334,8 @@ pcmcia_product_lookup(pa, tab, ent_size, matchfn)
 
 #ifdef DIAGNOSTIC
 	if (sizeof *ent > ent_size)
-		panic("pcmcia_product_lookup: bogus ent_size %d", ent_size);
+		panic("pcmcia_product_lookup: bogus ent_size %ld", 
+		      (long) ent_size);
 #endif
 
         for (ent = tab;
