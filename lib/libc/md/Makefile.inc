@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 1999/02/13 02:54:29 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/02/24 15:05:21 drochner Exp $
 
 .include <bsd.own.mk>
 
 # MD4/MD5 sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/md ${.CURDIR}/md
+.PATH: ${ARCHDIR}/md ${.CURDIR}/md
 
 SRCS+=	md4c.c md5c.c md4hl.c md5hl.c
 

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.40 1999/02/22 10:33:15 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.41 1999/02/24 15:05:21 drochner Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
+.PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	_rand48.c _strtoq.c _strtouq.c a64l.c abort.c atexit.c atof.c \
 	atoi.c atol.c bsearch.c calloc.c drand48.c erand48.c exit.c \
@@ -17,7 +17,7 @@ SRCS+=	_rand48.c _strtoq.c _strtouq.c a64l.c abort.c atexit.c atof.c \
 # m-d Makefile.inc must include sources for:
 #       abs() div() labs() ldiv()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/stdlib/Makefile.inc"
+.include "${ARCHDIR}/stdlib/Makefile.inc"
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 	calloc.3 div.3 exit.3 free.3 getenv.3 getopt.3 getsubopt.3 \
