@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.28 2004/08/03 12:11:54 yamt Exp $	*/
+/*	$NetBSD: err.c,v 1.29 2005/01/02 10:40:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.28 2004/08/03 12:11:54 yamt Exp $");
+__RCSID("$NetBSD: err.c,v 1.29 2005/01/02 10:40:49 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ const	char *msgs[] = {
 	"expression has null effect",				      /* 129 */
 	"enum type mismatch, op %s",				      /* 130 */
 	"conversion to '%s' may sign-extend incorrectly",	      /* 131 */
-	"conversion from '%s' may lose accuracy",		      /* 132 */
+	"conversion from '%s' to '%s' may lose accuracy",	      /* 132 */
 	"conversion of pointer to '%s' loses bits",		      /* 133 */
 	"conversion of pointer to '%s' may lose bits",		      /* 134 */
 	"possible pointer alignment problem",			      /* 135 */
@@ -357,7 +357,7 @@ const	char *msgs[] = {
 	"conversion of '%s' to '%s' is out of range, arg #%d",	      /* 295 */
 	"conversion of negative constant to unsigned type, arg #%d",  /* 296 */
 	"conversion to '%s' may sign-extend incorrectly, arg #%d",    /* 297 */
-	"conversion from '%s' may lose accuracy, arg #%d",	      /* 298 */
+	"conversion from '%s' to '%s' may lose accuracy, arg #%d",    /* 298 */
 	"prototype does not match old style definition, arg #%d",     /* 299 */
 	"old style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */

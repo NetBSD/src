@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.38 2004/09/12 08:58:52 yamt Exp $	*/
+/*	$NetBSD: tree.c,v 1.39 2005/01/02 10:40:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.38 2004/09/12 08:58:52 yamt Exp $");
+__RCSID("$NetBSD: tree.c,v 1.39 2005/01/02 10:40:49 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1774,7 +1774,7 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 static void
 iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
-	char buf[64];
+	char lbuf[64], rbuf[64];
 	if (tn->tn_op == CON)
 		return;
 
@@ -1786,9 +1786,10 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		/* conversion to %s may sign-extend incorrectly (, arg #%d) */
 		if (aflag && pflag) {
 			if (op == FARG) {
-				warning(297, tyname(buf, sizeof(buf), tp), arg);
+				warning(297, tyname(lbuf, sizeof(lbuf), tp),
+				    arg);
 			} else {
-				warning(131, tyname(buf, sizeof(buf), tp));
+				warning(131, tyname(lbuf, sizeof(lbuf), tp));
 			}
 		}
 	}
@@ -1800,9 +1801,14 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		/* conversion from '%s' may lose accuracy */
 		if (aflag) {
 			if (op == FARG) {
-				warning(298, tyname(buf, sizeof(buf), tn->tn_type), arg);
+				warning(298,
+				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
+				    tyname(lbuf, sizeof(lbuf), tp),
+				    arg);
 			} else {
-				warning(132, tyname(buf, sizeof(buf), tn->tn_type));
+				warning(132,
+				    tyname(rbuf, sizeof(rbuf), tn->tn_type),
+				    tyname(lbuf, sizeof(lbuf), tp));
 			}
 		}
 	}
