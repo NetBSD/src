@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.4 1999/07/04 01:36:13 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.5 1999/09/16 04:20:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -34,7 +34,7 @@ static char *rcsid = "@(#) pfkey.c KAME Revision: 1.1.4.11";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfkey.c,v 1.4 1999/07/04 01:36:13 itojun Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.5 1999/09/16 04:20:03 itojun Exp $");
 #endif
 #endif
 
@@ -1040,11 +1040,19 @@ static int pfkey_send_x3(int so, u_int type, u_int satype)
 int pfkey_open(void)
 {
 	int so;
+	const int bufsiz = 128 * 1024;	/*is 128K enough?*/
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
+
+	/*
+	 * This is a temporary workaround for KAME PR 154.
+	 * Don't really care even if it fails.
+	 */
+	(void)setsockopt(so, SOL_SOCKET, SO_SNDBUF, &bufsiz, sizeof(bufsiz));
+	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
 
 	ipsec_errcode = EIPSEC_NO_ERROR;
 	return so;
