@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.7 2002/09/23 05:51:23 simonb Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.8 2003/02/11 00:02:45 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -217,6 +217,8 @@ struct ucom_methods uvscom_methods = {
 };
 
 static const struct usb_devno uvscom_devs [] = {
+	/* SUNTAC U-Cable type D2 */
+	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_DS96L },
 	/* SUNTAC U-Cable type P1 */
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_PS64P1 },
 	/* SUNTAC Slipper U  */
