@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.65.2.1 2002/06/10 16:07:11 tv Exp $	*/
+/*	$NetBSD: i82557.c,v 1.65.2.2 2003/06/17 10:41:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.65.2.1 2002/06/10 16:07:11 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.65.2.2 2003/06/17 10:41:21 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1195,7 +1195,7 @@ fxp_rxintr(struct fxp_softc *sc)
 		 */
 		if (fxp_copy_small != 0 && len <= MHLEN) {
 			MGETHDR(m0, M_DONTWAIT, MT_DATA);
-			if (m == NULL)
+			if (m0 == NULL)
 				goto dropit;
 			memcpy(mtod(m0, caddr_t),
 			    mtod(m, caddr_t), len);
