@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $	*/
+/*	$NetBSD: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $
+ * $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $
  */
 
 /* 
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $ */
+/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -293,7 +293,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $ */
+/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -655,7 +655,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $ */
+/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
 
 /* #include "deflate.h" */
 
@@ -797,6 +797,7 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
     zmemzero((Bytef *)s->head, (unsigned)(s->hash_size-1)*sizeof(*s->head));
 
 /* ========================================================================= */
+#if 0
 int ZEXPORT deflateInit_(strm, level, version, stream_size)
     z_streamp strm;
     int level;
@@ -807,6 +808,7 @@ int ZEXPORT deflateInit_(strm, level, version, stream_size)
 			 Z_DEFAULT_STRATEGY, version, stream_size);
     /* To do: ignore strm->next_in if we use it as window */
 }
+#endif
 
 /* ========================================================================= */
 int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
@@ -901,6 +903,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
 }
 
 /* ========================================================================= */
+#if 0
 int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
     z_streamp strm;
     const Bytef *dictionary;
@@ -942,6 +945,7 @@ int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
     if (hash_head) hash_head = 0;  /* to make compiler happy */
     return Z_OK;
 }
+#endif
 
 /* ========================================================================= */
 int ZEXPORT deflateReset (strm)
@@ -974,6 +978,7 @@ int ZEXPORT deflateReset (strm)
 }
 
 /* ========================================================================= */
+#if 0
 int ZEXPORT deflateParams(strm, level, strategy)
     z_streamp strm;
     int level;
@@ -1008,6 +1013,7 @@ int ZEXPORT deflateParams(strm, level, strategy)
     s->strategy = strategy;
     return err;
 }
+#endif
 
 /* =========================================================================
  * Put a short in the pending buffer. The 16-bit value is put in MSB order.
@@ -1220,6 +1226,7 @@ int ZEXPORT deflateEnd (strm)
  * To simplify the source, this is not supported for 16-bit MSDOS (which
  * doesn't have enough memory anyway to duplicate compression states).
  */
+#if 0
 int ZEXPORT deflateCopy (dest, source)
     z_streamp dest;
     z_streamp source;
@@ -1275,11 +1282,13 @@ int ZEXPORT deflateCopy (dest, source)
     return Z_OK;
 #endif
 }
+#endif
 
 /* ===========================================================================
  * Return the number of bytes of output which are immediately available
  * for output from the decompressor.
  */
+#if 0
 int deflateOutputPending (strm)
     z_streamp strm;
 {
@@ -1287,6 +1296,7 @@ int deflateOutputPending (strm)
     
     return ((deflate_state *)(strm->state))->pending;
 }
+#endif
 
 /* ===========================================================================
  * Read a new buffer from the current input stream, update the adler32
@@ -2019,7 +2029,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $ */
+/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3147,6 +3157,7 @@ void _tr_flush_block(s, buf, stored_len, eof)
  * Save the match info and tally the frequency counts. Return true if
  * the current block must be flushed.
  */
+#if 0
 int _tr_tally (s, dist, lc)
     deflate_state *s;
     unsigned dist;  /* distance of matched string */
@@ -3193,6 +3204,7 @@ int _tr_tally (s, dist, lc)
      * 64K-1 bytes.
      */
 }
+#endif
 
 /* ===========================================================================
  * Send the block data compressed using the given Huffman trees
@@ -3535,6 +3547,7 @@ int stream_size;
 }
 
 
+#if 0
 int ZEXPORT inflateInit_(z, version, stream_size)
 z_streamp z;
 const char *version;
@@ -3542,6 +3555,7 @@ int stream_size;
 {
   return inflateInit2_(z, DEF_WBITS, version, stream_size);
 }
+#endif
 
 
 #define NEEDBYTE {if(z->avail_in==0)goto empty;r=Z_OK;}
@@ -3681,6 +3695,7 @@ int f;
 }
 
 
+#if 0
 int ZEXPORT inflateSetDictionary(z, dictionary, dictLength)
 z_streamp z;
 const Bytef *dictionary;
@@ -3703,6 +3718,7 @@ uInt  dictLength;
   z->state->mode = BLOCKS;
   return Z_OK;
 }
+#endif
 
 /*
  * This subroutine adds the data at next_in/avail_in to the output history
@@ -3721,6 +3737,7 @@ z_stream *z;
     return inflate_addhistory(z->state->blocks, z);
 }
 
+#if 0
 int ZEXPORT inflateSync(z)
 z_streamp z;
 {
@@ -3770,6 +3787,7 @@ z_streamp z;
   z->state->mode = BLOCKS;
   return Z_OK;
 }
+#endif
 
 
 /* Returns true if inflate is currently at the end of a block generated
@@ -3779,6 +3797,7 @@ z_streamp z;
  * decompressing, PPP checks that at the end of input packet, inflate is
  * waiting for these length bytes.
  */
+#if 0
 int ZEXPORT inflateSyncPoint(z)
 z_streamp z;
 {
@@ -3786,6 +3805,7 @@ z_streamp z;
     return Z_STREAM_ERROR;
   return inflate_blocks_sync_point(z->state->blocks);
 }
+#endif
 #undef NEEDBYTE
 #undef NEXTBYTE
 /* --- inflate.c */
@@ -4372,6 +4392,7 @@ z_streamp z;
 }
 
 
+#if 0
 void inflate_set_dictionary(s, d, n)
 inflate_blocks_statef *s;
 const Bytef *d;
@@ -4380,6 +4401,7 @@ uInt  n;
   zmemcpy(s->window, d, n);
   s->read = s->write = s->window + n;
 }
+#endif
 
 /*
  * This subroutine adds the data at next_in/avail_in to the output history
@@ -4452,11 +4474,13 @@ int inflate_packet_flush(s)
  * by Z_SYNC_FLUSH or Z_FULL_FLUSH. 
  * IN assertion: s != Z_NULL
  */
+#if 0
 int inflate_blocks_sync_point(s)
 inflate_blocks_statef *s;
 {
   return s->mode == LENS;
 }
+#endif
 /* --- infblock.c */
 
 
@@ -5672,10 +5696,12 @@ const char *z_errmsg[10] = {
 ""};
 
 
+#if 0
 const char * ZEXPORT zlibVersion()
 {
     return ZLIB_VERSION;
 }
+#endif
 
 #ifdef DEBUG_ZLIB
 
@@ -5695,11 +5721,13 @@ void z_error (m)
 /* exported to allow conversion of error code to string for compress() and
  * uncompress()
  */
+#if 0
 const char * ZEXPORT zError(err)
     int err;
 {
     return ERR_MSG(err);
 }
+#endif
 
 
 #ifndef HAVE_MEMCPY
@@ -5877,7 +5905,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: zlib.c,v 1.18 2002/05/07 09:14:20 tron Exp $ */
+/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
 
 /* #include "zlib.h" */
 
