@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.24 1995/06/04 05:07:08 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.25 1995/06/04 05:58:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -191,7 +191,7 @@ ip_output(m0, opt, ro, flags, imo)
 
 			for (ia = in_ifaddr; ia; ia = ia->ia_next)
 				if (ia->ia_ifp == ifp) {
-					ip->ip_src = IA_SIN(ia)->sin_addr;
+					ip->ip_src = ia->ia_addr.sin_addr;
 					break;
 				}
 		}
@@ -251,7 +251,7 @@ ip_output(m0, opt, ro, flags, imo)
 	 * of outgoing interface.
 	 */
 	if (ip->ip_src.s_addr == INADDR_ANY)
-		ip->ip_src = IA_SIN(ia)->sin_addr;
+		ip->ip_src = ia->ia_addr.sin_addr;
 #endif
 	/*
 	 * Look for broadcast address and
@@ -991,7 +991,7 @@ ip_getmoptions(optname, imo, mp)
 		else {
 			IFP_TO_IA(imo->imo_multicast_ifp, ia);
 			addr->s_addr = (ia == NULL) ? INADDR_ANY
-					: IA_SIN(ia)->sin_addr.s_addr;
+					: ia->ia_addr.sin_addr.s_addr;
 		}
 		return (0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.13 1995/06/01 21:36:16 mycroft Exp $	*/
+/*	$NetBSD: in_var.h,v 1.14 1995/06/04 05:58:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -62,8 +62,8 @@ struct in_ifaddr {
 struct	in_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr_in ifra_addr;
-	struct	sockaddr_in ifra_broadaddr;
-#define ifra_dstaddr ifra_broadaddr
+	struct	sockaddr_in ifra_dstaddr;
+#define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr_in ifra_mask;
 };
 /*
@@ -90,7 +90,7 @@ void	in_socktrim __P((struct sockaddr_in *));
 	register struct in_ifaddr *ia; \
 \
 	for (ia = in_ifaddr; \
-	    ia != NULL && IA_SIN(ia)->sin_addr.s_addr != (addr).s_addr; \
+	    ia != NULL && ia->ia_addr.sin_addr.s_addr != (addr).s_addr; \
 	    ia = ia->ia_next) \
 		 continue; \
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
