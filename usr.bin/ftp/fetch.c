@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.74 1999/09/24 06:57:37 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.75 1999/09/24 14:28:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.74 1999/09/24 06:57:37 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.75 1999/09/24 14:28:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -237,7 +237,7 @@ url_decode(url)
 
 	if (EMPTYSTRING(url))
 		return;
-	p = q = url;
+	p = q = (unsigned char *)url;
 
 #define HEXTOINT(x) (x - (isdigit(x) ? '0' : (islower(x) ? 'a' : 'A') - 10))
 	while (*p) {
@@ -853,7 +853,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				if (debug)
 					fprintf(ttyout,
 #ifndef NO_QUAD
-					    "parsed length as: %qd\n",
+					    "parsed length as: %lld\n",
 					    (long long)filesize);
 #else
 					    "parsed length as: %ld\n",
@@ -1082,7 +1082,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			if (debug)
 				fprintf(ttyout,
 #ifndef NO_QUAD
-				    "got chunksize of %qd\n",
+				    "got chunksize of %lld\n",
 				    (long long)chunksize);
 #else
 				    "got chunksize of %ld\n",

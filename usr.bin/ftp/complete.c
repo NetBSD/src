@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.28 1999/09/24 05:35:09 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.29 1999/09/24 14:28:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.28 1999/09/24 05:35:09 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.29 1999/09/24 14:28:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -411,8 +411,7 @@ complete(el, ch)
 		default:
 			return (CC_ERROR);
 	}
-
-	return (CC_ERROR);
+	/* NOTREACHED */
 }
 
 #endif /* !NO_EDITCOMPLETE */

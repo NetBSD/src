@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.59 1999/09/24 00:48:24 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.60 1999/09/24 14:28:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.59 1999/09/24 00:48:24 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.60 1999/09/24 14:28:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -893,7 +893,7 @@ progressmeter(flag)
 		abbrevsize >>= 10;
 	len += sprintf(buf + len,
 #ifndef NO_QUAD
-	    " %5qd %c%c ", (long long)abbrevsize,
+	    " %5lld %c%c ", (long long)abbrevsize,
 #else
 	    " %5ld %c%c ", (long)abbrevsize,
 #endif
@@ -913,7 +913,7 @@ progressmeter(flag)
 		bytespersec >>= 10;
 	len += sprintf(buf + len,
 #ifndef NO_QUAD
-	    " %3qd.%02d %cB/s ", (long long)bytespersec / 1024,
+	    " %3lld.%02d %cB/s ", (long long)bytespersec / 1024,
 #else
 	    " %3ld.%02d %cB/s ", (long)bytespersec / 1024,
 #endif
@@ -995,7 +995,7 @@ ptransfer(siginfo)
 	len = 0;
 	len += sprintf(buf + len,
 #ifndef NO_QUAD
-	    "%qd byte%s %s in ", (long long)bytes,
+	    "%lld byte%s %s in ", (long long)bytes,
 #else
 	    "%ld byte%s %s in ", (long)bytes,
 #endif
@@ -1019,7 +1019,7 @@ ptransfer(siginfo)
 		bytespersec >>= 10;
 	len += sprintf(buf + len,
 #ifndef NO_QUAD
-	    "(%qd.%02d %cB/s)", (long long)bytespersec / 1024,
+	    "(%lld.%02d %cB/s)", (long long)bytespersec / 1024,
 #else
 	    "(%ld.%02d %cB/s)", (long)bytespersec / 1024,
 #endif
