@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2001/10/11 15:02:07 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2001/11/10 19:43:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -426,6 +426,10 @@ resettodr()
 #define NUM_BBC_REGS	13
 #define BBC_BASE_YEAR	1900
 
+#define BBC_REG5_HOUR	0x3
+#define BBC_REG5_PM	0x4
+#define BBC_REG5_24HR	0x8
+
 void
 bbc_init(void)
 {
@@ -472,8 +476,7 @@ bbc_gettime(handle, tv)
 
 	dt.dt_sec  = bbc_to_decimal(1, 0);
 	dt.dt_min  = bbc_to_decimal(3, 2);
-	/* Hours are different for some reason. Makes no sense really. */
-	dt.dt_hour = ((bbc_registers[5] & 0x03) * 10) + bbc_registers[4];
+	dt.dt_hour = (bbc_registers[5] & BBC_REG5_HOUR) * 10 + bbc_registers[4];
 	dt.dt_day  = bbc_to_decimal(8, 7);
 	dt.dt_mon  = bbc_to_decimal(10, 9);
 
@@ -521,16 +524,15 @@ bbc_settime(handle, tv)
 	decimal_to_bbc(9, 10, dt.dt_mon);
 	decimal_to_bbc(11, 12, year);
 
-	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
 	bbc_registers[4] = dt.dt_hour % 10;
-	bbc_registers[5] = ((dt.dt_hour / 10) & 0x03) | 0x08;
+	bbc_registers[5] = ((dt.dt_hour / 10) & BBC_REG5_HOUR) | BBC_REG5_24HR;
 
 	bbc_registers[6] = 0;
 
 #undef	decimal_to_bbc
 
 	/* write bbc registers */
-	write_bbc_reg(bbcaddr, 15, 13);	/* reset prescalar */
+	write_bbc_reg(bbcaddr, 15, 13);	/* reset prescaler */
 	for (i = 0; i < NUM_BBC_REGS; i++)
 		if (bbc_registers[i] !=
 		    write_bbc_reg(bbcaddr, i, bbc_registers[i]))
