@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.23 2003/01/10 10:17:23 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2003/01/10 10:55:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2003/01/10 10:17:23 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2003/01/10 10:55:26 agc Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.23 2003/01/10 10:17:23 agc Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hVvDdnfFp:OrR";
+static char Options[] = "DFORVdfhnp:rv";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
