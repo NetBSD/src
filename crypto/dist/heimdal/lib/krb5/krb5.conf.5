@@ -1,5 +1,5 @@
 .\" $Heimdal: krb5.conf.5,v 1.25 2002/08/28 15:33:59 nectar Exp $
-.\" $NetBSD: krb5.conf.5,v 1.12 2003/01/02 00:22:30 jschauma Exp $
+.\" $NetBSD: krb5.conf.5,v 1.13 2003/01/02 12:57:31 wiz Exp $
 .\"
 .Dd April 11, 1999
 .Dt KRB5.CONF 5
@@ -141,7 +141,7 @@ This option is also valid in the [realms] section.
 If enabled, failure to verify credentials against a local key is a
 fatal error. The application has to be able to read the corresponding
 service key for this to work. Some applications, like
-.Xr su 8 ,
+.Xr su 1 ,
 enable this option unconditionally.
 .It Li warn_pwexpire = Va time
 How soon to warn for expiring password. Default is seven days.
@@ -316,7 +316,7 @@ and is only left for backwards compatibility.
 .Sh ENVIRONMENT
 .Ev KRB5_CONFIG
 points to the configuration file to read.
-.Sh EXAMPLE
+.Sh EXAMPLES
 .Bd -literal -offset indent
 [libdefaults]
 	default_realm = FOO.SE
