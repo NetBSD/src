@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: countmail,v 1.4 2002/07/02 15:25:47 dbj Exp $
+#	$NetBSD: countmail,v 1.5 2002/07/02 17:18:21 mycroft Exp $
 
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -61,125 +61,103 @@ v=$1
 #done
 #exec 0<&-
 
-result=
+set --
 g=0
+v=000$v
 
 while :; do
 
   case $v in
-    0 | '') break ;;
-    ?) v=00$v ;;
-    ??) v=0$v ;;
-  esac
-
-  case $v in
+    '' | 0 | 00) break ;;
     *000) ;;
     *)
       case $g in
-	0) ;;
-	1) val=THOUSAND ;;
-	2) val=MILLION ;;
-	3) val=BILLION ;;
-	4) val=TRILLION ;;
-	5) val=QUADRILLION ;;
-	6) val=QUINTILLION ;;
-	7) val=SEXTILLION ;;
-	8) val=SEPTILLION ;;
+	0) x= ;;
+	1) x=THOUSAND ;;
+	2) x=MILLION ;;
+	3) x=BILLION ;;
+	4) x=TRILLION ;;
+	5) x=QUADRILLION ;;
+	6) x=QUINTILLION ;;
+	7) x=SEXTILLION ;;
+	8) x=SEPTILLION ;;
 	*)
 	  echo "YOU HAVE TOO MUCH MAIL!" 1>&2
 	  exit 1
 	  ;;
       esac
 
-      case $g in
-	0) ;;
-	*) result="$val $result" ;;
+      case $v in
+	*10) y=TEN ;;
+	*11) y=ELEVEN ;;
+	*12) y=TWELVE ;;
+	*13) y=THIRTEEN ;;
+	*14) y=FOURTEEN ;;
+	*15) y=FIFTEEN ;;
+	*16) y=SIXTEEN ;;
+	*17) y=SEVENTEEN ;;
+	*18) y=EIGHTEEN ;;
+	*19) y=NINETEEN ;;
+	*2?) y=TWENTY ;;
+	*3?) y=THIRTY ;;
+	*4?) y=FORTY ;;
+	*5?) y=FIFTY ;;
+	*6?) y=SIXTY ;;
+	*7?) y=SEVENTY ;;
+	*8?) y=EIGHTY ;;
+	*9?) y=NINETY ;;
+	*) y= ;;
       esac
+
+      case $v in
+	*[01]? | *?0) ;;
+	*) y=$y- ;;
+      esac
+
+      case $v in
+	*1?) ;;
+	*1) y=${y}ONE ;;
+	*2) y=${y}TWO ;;
+	*3) y=${y}THREE ;;
+	*4) y=${y}FOUR ;;
+	*5) y=${y}FIVE ;;
+	*6) y=${y}SIX ;;
+	*7) y=${y}SEVEN ;;
+	*8) y=${y}EIGHT ;;
+	*9) y=${y}NINE ;;
+      esac
+
+      case $v in
+	*1??) z=ONE ;;
+	*2??) z=TWO ;;
+	*3??) z=THREE ;;
+	*4??) z=FOUR ;;
+	*5??) z=FIVE ;;
+	*6??) z=SIX ;;
+	*7??) z=SEVEN ;;
+	*8??) z=EIGHT ;;
+	*9??) z=NINE ;;
+	*) z= ;;
+      esac
+
+      set $z ${z:+HUNDRED} $y $x $*
       ;;
   esac
 
   g=$(($g + 1))
-
-  case $v in
-    *?10) val=TEN ;;
-    *?11) val=ELEVEN ;;
-    *?12) val=TWELVE ;;
-    *?13) val=THIRTEEN ;;
-    *?14) val=FOURTEEN ;;
-    *?15) val=FIFTEEN ;;
-    *?16) val=SIXTEEN ;;
-    *?17) val=SEVENTEEN ;;
-    *?18) val=EIGHTEEN ;;
-    *?19) val=NINETEEN ;;
-    *)
-      case $v in
-	*?2?) val=TWENTY ;;
-	*?3?) val=THIRTY ;;
-	*?4?) val=FORTY ;;
-	*?5?) val=FIFTY ;;
-	*?6?) val=SIXTY ;;
-	*?7?) val=SEVENTY ;;
-	*?8?) val=EIGHTY ;;
-	*?9?) val=NINETY ;;
-	*) val= ;;
-      esac
-
-      case $v in
-	*?0? | *??0) ;;
-	*) val=${val}- ;;
-      esac
-
-      case $v in
-	*??1) val=${val}ONE ;;
-	*??2) val=${val}TWO ;;
-	*??3) val=${val}THREE ;;
-	*??4) val=${val}FOUR ;;
-	*??5) val=${val}FIVE ;;
-	*??6) val=${val}SIX ;;
-	*??7) val=${val}SEVEN ;;
-	*??8) val=${val}EIGHT ;;
-	*??9) val=${val}NINE ;;
-      esac
-      ;;
-  esac
-
-  case $v in
-    *?00) ;;
-    *) result="$val $result" ;;
-  esac
-
-  case $v in
-    *1??) val=ONE ;;
-    *2??) val=TWO ;;
-    *3??) val=THREE ;;
-    *4??) val=FOUR ;;
-    *5??) val=FIVE ;;
-    *6??) val=SIX ;;
-    *7??) val=SEVEN ;;
-    *8??) val=EIGHT ;;
-    *9??) val=NINE ;;
-  esac
-
-  case $v in
-    *0??) ;;
-    *) result="$val HUNDRED $result" ;;
-  esac
-
   v=${v%%???}
 
 done
 
-plural=S
+p=S
 
-case "$result" in
-  "") result=ZERO ;;
-  "ONE ") plural= ;;
+case "$*" in
+  "") set ZERO ;;
+  ONE) p= ;;
 esac
-
-set -- $result
 
 echo "$*!
 
-$* NEW MAIL MESSAGE$plural!
+$* NEW MAIL MESSAGE$p!
 
 HAHAHAHAHA!"
