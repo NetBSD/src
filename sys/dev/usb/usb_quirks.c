@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.12 1999/09/05 21:22:39 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.13 1999/09/15 12:30:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct usbd_quirk_entry {
  { USB_VENDOR_ADS, USB_PRODUCT_ADS_ENET,	    0x002, { UQ_NO_STRINGS }},
  { USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1, 0x101, { UQ_NO_STRINGS }},
  { USB_VENDOR_JAZZ, USB_PRODUCT_JAZZ_J6502,	    0x0a2, { UQ_BAD_ADC }},
- { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_USBPS2,0x110, { UQ_MS_REVZ }},
+ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_N48,   0x110, { UQ_MS_REVZ }},
  { 0, 0, 0, { 0 } }
 };
 
