@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.9 2004/03/01 23:30:58 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.10 2004/03/04 00:54:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,10 +57,6 @@ struct RF_PropHeader_s {	/* structure for propagation of results */
 };
 
 typedef enum RF_NodeStatus_e {
-	rf_bwd1,		/* node is ready for undo logging (backward
-				 * error recovery only) */
-	rf_bwd2,		/* node has completed undo logging (backward
-				 * error recovery only) */
 	rf_wait,		/* node is waiting to be executed */
 	rf_fired,		/* node is currently executing its do function */
 	rf_good,		/* node successfully completed execution of
