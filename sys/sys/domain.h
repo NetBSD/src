@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.17 2004/04/22 01:01:42 matt Exp $	*/
+/*	$NetBSD: domain.h,v 1.18 2004/04/22 01:34:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,8 +68,8 @@ struct	domain {
 };
 
 #ifdef _KERNEL
-extern	struct	domain *domains;
-void domaininit (void);
+extern struct domain *domains;
+void domaininit(void);
 #endif
 
 #endif /* !_SYS_DOMAIN_H_ */

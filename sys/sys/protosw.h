@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.34 2004/04/22 01:01:42 matt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.35 2004/04/22 01:34:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -256,11 +256,11 @@ extern	u_int pffasttimo_now;
 #define	PRT_FAST_ISEXPIRED(t)	(PRT_FAST_ISARMED((t)) && (t) <= pffasttimo_now)
 
 struct sockaddr;
-const struct protosw *pffindproto (int, int, int);
-const struct protosw *pffindtype (int, int);
-struct domain *pffinddomain (int);
-void pfctlinput (int, struct sockaddr *);
-void pfctlinput2 (int, struct sockaddr *, void *);
+const struct protosw *pffindproto(int, int, int);
+const struct protosw *pffindtype(int, int);
+struct domain *pffinddomain(int);
+void pfctlinput(int, struct sockaddr *);
+void pfctlinput2(int, struct sockaddr *, void *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */
