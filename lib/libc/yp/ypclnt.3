@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.14 2000/07/03 10:06:26 enami Exp $
+.\"	$NetBSD: ypclnt.3,v 1.15 2001/04/09 12:09:11 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,7 @@ require a
 .Tn YP
 domain name and a
 .Tn YP
-map name.  The default domain name may be 
+map name.  The default domain name may be
 obtained by calling
 .Fn yp_get_default_domain ,
 and should thus be used before all other
@@ -359,11 +359,11 @@ return 0 upon success or one of the following error codes upon failure:
 .It Bq Er YPERR_BADARGS
 The passed arguments to the function are invalid
 .It Bq Er YPERR_BADDB
-The 
+The
 .Tn YP
 map that was polled is defective.
 .It Bq Er YPERR_DOMAIN
-Client process cannot bind to server on this 
+Client process cannot bind to server on this
 .Tn YP
 domain.
 .It Bq Er YPERR_KEY
@@ -371,21 +371,21 @@ The key passed does not exist.
 .It Bq Er YPERR_MAP
 There is no such map in the server's domain.
 .It Bq Er YPERR_DOM
-The local 
+The local
 .Tn YP
 domain is not set.
 .It Bq Er YPERR_NOMORE
 There are no more records in the queried map.
 .It Bq Er YPERR_PMAP
 Cannot communicate with portmapper (see
-.Xr rcpbind 8 ).
+.Xr rpcbind 8 ) .
 .It Bq Er YPERR_RESRC
 A resource allocation failure occurred.
 .It Bq Er YPERR_RPC
 An RPC failure has occurred.  The domain has been marked unbound.
 .It Bq Er YPERR_VERS
 Client/server version mismatch.  If the server is running version 1
-of the 
+of the
 .Tn YP
 protocol,
 .Fn yp_all
@@ -396,7 +396,7 @@ Cannot communicate with
 .It Bq Er YPERR_YPERR
 An internal server or client error has occurred.
 .It Bq Er YPERR_YPSERV
-The client cannot communicate with the 
+The client cannot communicate with the
 .Tn YP
 server process.
 .El
