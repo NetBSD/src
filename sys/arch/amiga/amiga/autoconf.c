@@ -450,6 +450,17 @@ find_busslaves(ac, maxslaves)
 				else
 					ad->amiga_dk = -1;
 				rescan = 1;
+				/*
+				 * The init on this unit suceeded, so we need to
+				 * mark the same device/unit on other hardware
+				 * controllers as "alive" since we can't reuse
+				 * the same unit for that device driver. mlh
+				 */
+				for (ad = amiga_dinit; ad->amiga_driver; ad++) {
+					if (ad->amiga_driver == match_s->amiga_driver &&
+					    ad->amiga_unit == match_s->amiga_unit)
+						ad->amiga_alive = 2;
+				}
 			} else {
 #ifdef DEBUG
 				if (acdebug)
