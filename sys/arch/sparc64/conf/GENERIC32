@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.69 2003/06/20 03:15:06 nakayama Exp $
+# 	$NetBSD: GENERIC32,v 1.70 2003/08/07 17:17:58 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	64
 
@@ -283,7 +283,8 @@ esp*	at dma? flags 0x00ff0000		# SBus
 esp*	at sbus? slot ? offset ? flags 0x00ff0000
 isp*	at sbus? slot ? offset ?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-siop*	at pci? 			# 53C875 "glm" compatible
+siop*	at pci? 			# 53C8xx ("glm" compatible)
+esiop*	at pci? 			# 53C875 and newer ("glm" compatible)
 
 # PCI SCSI controllers
 # 	UT marks untested.
