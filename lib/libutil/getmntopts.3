@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.1 2003/03/22 12:44:04 jdolecek Exp $
+.\"	$NetBSD: getmntopts.3,v 1.2 2003/03/22 15:46:47 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,29 +47,29 @@
 .Fn getmntopts "const char *options" "const struct mntopt *mopts" "int *flagp" "int *altflagp"
 .Sh DESCRIPTION
 The
-.Nm getmntopts
+.Fn getmntopts
 function takes a comma separated option list and a list
 of valid option names, and computes the bitmask
 corresponding to the requested set of options.
 .Pp
 The string
-.Dv options
+.Ar options
 is broken down into a sequence of comma separated tokens.
 Each token is looked up in the table described by
-.Dv mopts
+.Ar mopts
 and the bits in
 the word referenced by either
-.Dv flagp
+.Ar flagp
 or
-.Dv altflagp
+.Ar altflagp
 (depending on the
 .Dv m_altloc
 field of the option's table entry)
 are updated.
 The flag words are not initialized by
-.Nm getmntopt .
+.Fn getmntopt .
 The table,
-.Dv mopts ,
+.Ar mopts ,
 has the following format:
 .Bd -literal
 struct mntopt {
@@ -88,17 +88,15 @@ for example
 .Dq suid .
 .It Fa m_inverse
 tells
-.Nm getmntopts
-that the name has the inverse meaning of the
-bit.
+.Fn getmntopts
+that the name has the inverse meaning of the bit.
 For example,
 .Dq suid
-is the string, whereas the
-mount flag is
+is the string, whereas the mount flag is
 .Dv MNT_NOSUID .
 In this case, the sense of the string and the flag
 are inverted, so the
-.Dv m_inverse
+.Fa m_inverse
 flag should be set.
 .It Fa m_flag
 the value of the bit to be set or cleared in
@@ -108,13 +106,13 @@ but cleared if the option name was preceded
 by the letters
 .Dq no .
 The
-.Dv m_inverse
+.Fa m_inverse
 flag causes these two operations to be reversed.
 .It Fa m_altloc
 the bit should be set or cleared in
-.Dv altflagp
+.Ar altflagp
 rather than
-.Dv flagp .
+.Ar flagp .
 .El
 .Pp
 Each of the user visible
@@ -127,8 +125,7 @@ entry.
 To simplify the program interface and ensure consistency across all
 programs, a general purpose macro,
 .Dv MOPT_STDOPTS ,
-is defined which
-contains an entry for all the generic VFS options.
+is defined which contains an entry for all the generic VFS options.
 In addition, the macros
 .Dv MOPT_FORCE
 and
@@ -138,7 +135,8 @@ exist to enable the
 and
 .Dv MNT_UPDATE
 flags to be set.
-Finally, the table must be terminated by an entry with a NULL
+Finally, the table must be terminated by an entry with a
+.Dv NULL
 first element.
 .Sh EXAMPLES
 Most commands will use the standard option set.
@@ -149,7 +147,7 @@ flag, would also have an
 entry.
 This can be declared and used as follows:
 .Bd -literal
-#include <mntopts.h>
+#include \*[Lt]mntopts.h\*[Gt]
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -167,7 +165,7 @@ static const struct mntopt mopts[] = {
 If the external integer variable
 .Dv getmnt_silent
 is non-zero then the
-.Nm getmntopts
+.Fn getmntopts
 function displays an error message and exits if an
 unrecognized option is encountered.
 By default
@@ -181,5 +179,5 @@ The
 .Fn getmntopts
 function appeared in
 .Bx 4.4 .
-It was moved to utilities library in
+It was moved to the utilities library in
 .Nx 2.0 .
