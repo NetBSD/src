@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.4 1998/10/12 21:17:28 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.5 1999/02/15 18:59:36 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,22 +50,27 @@ struct promdata {
 	int	(*recv) __P((struct promdata *, void *, size_t));
 };
 
-#define LOADADDR	((caddr_t)0x4000)
 #define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
 #define DDB_MAGIC1	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('1') )
 
-
-extern struct promvec	*promvec;
+extern time_t	getsecs __P((void));
+extern void	prom_getether __P((int, u_char *));
 extern char	*prom_bootdevice;
-extern char	*prom_bootfile;
-extern int	prom_boothow;
-extern int	hz;
 extern int	cputyp, nbpg, pgofset, pgshift;
 extern int	debug;
 
-extern void	prom_init __P((void));
-
 /* Note: dvma_*() routines are for "oldmon" machines only */
+extern void	dvma_init __P((void));
 extern char	*dvma_mapin __P((char *, size_t));
 extern char	*dvma_mapout __P((char *, size_t));
 extern char	*dvma_alloc __P((int));
+extern void	dvma_free __P((char *, int));
+
+/* In net.c: */
+extern int	net_open __P((struct promdata *));
+extern int	net_close __P((struct promdata *));
+extern int	net_mountroot __P((void));
+
+/* In str0.S: */
+extern void	sparc_noop __P((void));
+extern void	*romp;
