@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.98 2003/05/10 23:12:43 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.99 2003/05/17 16:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.98 2003/05/10 23:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.99 2003/05/17 16:11:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -282,9 +282,11 @@ vndopen(dev, flags, mode, p)
 	/*
 	 * If we're initialized, check to see if there are any other
 	 * open partitions.  If not, then it's safe to update the
-	 * in-core disklabel.
+	 * in-core disklabel.  Only read the disklabel if it is
+	 * not realdy valid.
 	 */
-	if ((sc->sc_flags & VNF_INITED) && (sc->sc_dkdev.dk_openmask == 0))
+	if ((sc->sc_flags & (VNF_INITED|VNF_VLABEL)) == VNF_INITED &&
+	    sc->sc_dkdev.dk_openmask == 0)
 		vndgetdisklabel(dev);
 
 	/* Check that the partitions exists. */
@@ -351,6 +353,11 @@ vndclose(dev, flags, mode, p)
 	}
 	sc->sc_dkdev.dk_openmask =
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+
+	if (sc->sc_dkdev.dk_openmask == 0) {
+		if ((sc->sc_flags & VNF_KLABEL) == 0)
+			sc->sc_flags &= ~VNF_VLABEL;
+	}
 
 	vndunlock(sc);
 	return (0);
@@ -768,6 +775,7 @@ vndioctl(dev, cmd, data, flag, p)
 	case ODIOCSDINFO:
 	case ODIOCWDINFO:
 #endif
+	case DIOCKLABEL:
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -780,6 +788,7 @@ vndioctl(dev, cmd, data, flag, p)
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
+	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1046,6 +1055,13 @@ unlock_and_exit:
 		break;
 	}
 
+	case DIOCKLABEL:
+		if (*(int *)data != 0)
+			vnd->sc_flags |= VNF_KLABEL;
+		else
+			vnd->sc_flags &= ~VNF_KLABEL;
+		break;
+
 	case DIOCWLABEL:
 		if (*(int *)data != 0)
 			vnd->sc_flags |= VNF_WLABEL;
@@ -1181,7 +1197,7 @@ vndclear(vnd, myminor)
 
 	if ((vnd->sc_flags & VNF_READONLY) == 0)
 		fflags |= FWRITE;
-	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY);
+	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY | VNF_VLABEL);
 	if (vp == (struct vnode *)0)
 		panic("vndioctl: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred, p);
@@ -1326,6 +1342,9 @@ vndgetdisklabel(dev)
 		lp->d_npartitions = MAXPARTITIONS;
 		lp->d_checksum = dkcksum(lp);
 	}
+
+	/* In-core label now valid. */
+	sc->sc_flags |= VNF_VLABEL;
 }
 
 /*

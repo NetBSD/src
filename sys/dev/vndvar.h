@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.10 2003/04/11 16:11:49 drochner Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.11 2003/05/17 16:11:52 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,13 +131,15 @@ struct vnd_softc {
 #endif
 
 /* sc_flags */
-#define	VNF_INITED	0x01	/* unit has been initialized */
-#define	VNF_WLABEL	0x02	/* label area is writable */
-#define	VNF_LABELLING	0x04	/* unit is currently being labelled */
-#define	VNF_WANTED	0x08	/* someone is waiting to obtain a lock */
-#define	VNF_LOCKED	0x10	/* unit is locked */
-#define	VNF_BUSY	0x20	/* unit is busy */
-#define	VNF_READONLY	0x40	/* unit is read-only */
+#define	VNF_INITED	0x001	/* unit has been initialized */
+#define	VNF_WLABEL	0x002	/* label area is writable */
+#define	VNF_LABELLING	0x004	/* unit is currently being labelled */
+#define	VNF_WANTED	0x008	/* someone is waiting to obtain a lock */
+#define	VNF_LOCKED	0x010	/* unit is locked */
+#define	VNF_BUSY	0x020	/* unit is busy */
+#define	VNF_READONLY	0x040	/* unit is read-only */
+#define	VNF_KLABEL	0x080	/* keep label on close */
+#define	VNF_VLABEL	0x100	/* label is valid */
 
 /*
  * A simple structure for describing which vnd units are in use.
