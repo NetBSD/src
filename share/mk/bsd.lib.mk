@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.255 2004/07/29 03:14:04 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.256 2004/08/04 08:00:27 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -19,6 +19,18 @@ CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
 LDADD+=     ${LDADD.lib${LIB}}
 LDFLAGS+=   ${LDFLAGS.lib${LIB}}
 LDSTATIC+=  ${LDSTATIC.lib${LIB}}
+
+##### Libraries that this may depend upon.
+.if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
+.for _lib _dir in ${LIBDPLIBS}
+.if !defined(LIBDO.${_lib})
+LIBDO.${_lib}!=	cd ${_dir} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.${_lib}
+.endif
+LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
+DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
+.endfor
+.endif									# }
 
 ##### Build and install rules
 MKDEP_SUFFIXES?=	.o .po .so .ln
