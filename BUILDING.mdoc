@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.6 2001/11/01 00:14:45 thorpej Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.7 2001/11/01 16:34:21 tv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -772,8 +772,11 @@ before building (provides a clean starting point).  This will skip deleting
 if building on a native system to the root directory.
 .
 .It Sy -t
-Build and install tools only.  This option implies
+Build and install the host tools from
+.Sy src/tools
+only.  This option implies
 .Sy -b .
+.
 .It Sy -u
 Set the
 .Sy UPDATE
