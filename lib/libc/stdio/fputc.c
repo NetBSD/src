@@ -1,4 +1,4 @@
-/*	$NetBSD: fputc.c,v 1.7 1998/01/19 07:38:46 jtc Exp $	*/
+/*	$NetBSD: fputc.c,v 1.8 1998/02/03 18:41:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fputc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputc.c,v 1.7 1998/01/19 07:38:46 jtc Exp $");
+__RCSID("$NetBSD: fputc.c,v 1.8 1998/02/03 18:41:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: fputc.c,v 1.7 1998/01/19 07:38:46 jtc Exp $");
 int
 fputc(c, fp)
 	int c;
-	register FILE *fp;
+	FILE *fp;
 {
 	int r;
 

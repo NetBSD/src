@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.8 1997/07/21 14:08:51 jtc Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.9 1998/02/03 18:44:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.8 1997/07/21 14:08:51 jtc Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.9 1998/02/03 18:44:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -155,8 +155,8 @@ heapsort(vbase, nmemb, size, compar)
 	size_t nmemb, size;
 	int (*compar) __P((const void *, const void *));
 {
-	register int cnt, i, j, l;
-	register char tmp, *tmp1, *tmp2;
+	int cnt, i, j, l;
+	char tmp, *tmp1, *tmp2;
 	char *base, *k, *p, *t;
 
 	if (nmemb <= 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.5 1997/07/13 20:14:59 christos Exp $	*/
+/*	$NetBSD: fopen.c,v 1.6 1998/02/03 18:41:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.5 1997/07/13 20:14:59 christos Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.6 1998/02/03 18:41:11 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,8 @@ fopen(file, mode)
 	const char *file;
 	const char *mode;
 {
-	register FILE *fp;
-	register int f;
+	FILE *fp;
+	int f;
 	int flags, oflags;
 
 	if ((flags = __sflags(mode, &oflags)) == 0)

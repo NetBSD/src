@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.8 1998/01/22 08:21:47 jtc Exp $	*/
+/*	$NetBSD: findfp.c,v 1.9 1998/02/03 18:41:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.8 1998/01/22 08:21:47 jtc Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.9 1998/02/03 18:41:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,10 +83,10 @@ rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
 
 static struct glue *
 moreglue(n)
-	register int n;
+	int n;
 {
-	register struct glue *g;
-	register FILE *p;
+	struct glue *g;
+	FILE *p;
 	static FILE empty;
 
 	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE));
@@ -107,9 +107,9 @@ moreglue(n)
 FILE *
 __sfp()
 {
-	register FILE *fp;
-	register int n;
-	register struct glue *g;
+	FILE *fp;
+	int n;
+	struct glue *g;
 
 	if (!__sdidinit)
 		__sinit();
@@ -149,7 +149,7 @@ found:
 void
 f_prealloc()
 {
-	register struct glue *g;
+	struct glue *g;
 	int n;
 
 	n = getdtablesize() - FOPEN_MAX + 20;		/* 20 for slop. */

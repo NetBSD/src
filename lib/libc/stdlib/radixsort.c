@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.10 1998/01/30 23:38:02 perry Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.11 1998/02/03 18:44:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.10 1998/01/30 23:38:02 perry Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.11 1998/02/03 18:44:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,8 +152,8 @@ r_sort_a(a, n, i, tr, endch)
 	u_int endch;
 {
 	static int count[256], nc, bmin;
-	register int c;
-	register const u_char **ak, *r;
+	int c;
+	const u_char **ak, *r;
 	stack s[SIZE], *sp, *sp0, *sp1, temp;
 	int *cp, bigc;
 	const u_char **an, *t, **aj, **top[256];
@@ -243,8 +243,8 @@ r_sort_b(a, ta, n, i, tr, endch)
 	u_int endch;
 {
 	static int count[256], nc, bmin;
-	register int c;
-	register const u_char **ak, **ai;
+	int c;
+	const u_char **ak, **ai;
 	stack s[512], *sp, *sp0, *sp1, temp;
 	const u_char **top[256];
 	int *cp, bigc;
@@ -309,12 +309,12 @@ r_sort_b(a, ta, n, i, tr, endch)
 		
 static __inline void
 simplesort(a, n, b, tr, endch)	/* insertion sort */
-	register const u_char **a;
+	const u_char **a;
 	int n, b;
-	register const u_char *tr;
+	const u_char *tr;
 	u_int endch;
 {
-	register u_char ch;
+	u_char ch;
 	const u_char  **ak, **ai, *s, *t;
 
 	for (ak = a+1; --n >= 1; ak++)

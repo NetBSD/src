@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.6 1997/07/13 20:14:50 christos Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.7 1998/02/03 18:41:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.6 1997/07/13 20:14:50 christos Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.7 1998/02/03 18:41:07 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ fdopen(fd, mode)
 	int fd;
 	const char *mode;
 {
-	register FILE *fp;
+	FILE *fp;
 	int flags, oflags, fdflags, tmp;
 
 	if ((flags = __sflags(mode, &oflags)) == 0)

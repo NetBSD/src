@@ -1,4 +1,4 @@
-/*	$NetBSD: rget.c,v 1.6 1997/07/13 20:15:24 christos Exp $	*/
+/*	$NetBSD: rget.c,v 1.7 1998/02/03 18:41:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rget.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rget.c,v 1.6 1997/07/13 20:15:24 christos Exp $");
+__RCSID("$NetBSD: rget.c,v 1.7 1998/02/03 18:41:20 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: rget.c,v 1.6 1997/07/13 20:15:24 christos Exp $");
  */
 int
 __srget(fp)
-	register FILE *fp;
+	FILE *fp;
 {
 	if (__srefill(fp) == 0) {
 		fp->_r--;

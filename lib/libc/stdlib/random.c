@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.7 1998/01/30 23:38:04 perry Exp $	*/
+/*	$NetBSD: random.c,v 1.8 1998/02/03 18:44:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.7 1998/01/30 23:38:04 perry Exp $");
+__RCSID("$NetBSD: random.c,v 1.8 1998/02/03 18:44:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -226,7 +226,7 @@ void
 srandom(x)
 	unsigned long x;
 {
-	register long i;
+	long i;
 
 	if (rand_type == TYPE_0)
 		state[0] = x;
@@ -270,8 +270,8 @@ initstate(seed, arg_state, n)
 	char *arg_state;		/* pointer to state array */
 	long n;				/* # bytes of state info */
 {
-	register char *ostate = (char *)(&state[-1]);
-	register long *long_arg_state = (long *) arg_state;
+	char *ostate = (char *)(&state[-1]);
+	long *long_arg_state = (long *) arg_state;
 
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
@@ -336,9 +336,9 @@ char *
 setstate(arg_state)
 	char *arg_state;		/* pointer to state array */
 {
-	register long *new_state = (long *) arg_state;
-	register long type = new_state[0] % MAX_TYPES;
-	register long rear = new_state[0] / MAX_TYPES;
+	long *new_state = (long *) arg_state;
+	long type = new_state[0] % MAX_TYPES;
+	long rear = new_state[0] / MAX_TYPES;
 	char *ostate = (char *)(&state[-1]);
 
 	if (rand_type == TYPE_0)
@@ -388,8 +388,8 @@ setstate(arg_state)
 long
 random()
 {
-	register long i;
-	register long *f, *r;
+	long i;
+	long *f, *r;
 
 	if (rand_type == TYPE_0) {
 		i = state[0];

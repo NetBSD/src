@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtouq.c,v 1.3 1997/11/04 23:53:08 thorpej Exp $	*/
+/*	$NetBSD: _strtouq.c,v 1.4 1998/02/03 18:44:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -41,7 +41,7 @@ u_quad_t
 strtouq(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
 
 	return _strtouq(nptr, endptr, base);

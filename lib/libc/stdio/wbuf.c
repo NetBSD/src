@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.7 1997/07/13 20:15:39 christos Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.8 1998/02/03 18:41:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wbuf.c,v 1.7 1997/07/13 20:15:39 christos Exp $");
+__RCSID("$NetBSD: wbuf.c,v 1.8 1998/02/03 18:41:24 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,10 +56,10 @@ __RCSID("$NetBSD: wbuf.c,v 1.7 1997/07/13 20:15:39 christos Exp $");
  */
 int
 __swbuf(c, fp)
-	register int c;
-	register FILE *fp;
+	int c;
+	FILE *fp;
 {
-	register int n;
+	int n;
 
 	/*
 	 * In case we cannot write, or longjmp takes us out early,

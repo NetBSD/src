@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.6 1997/07/13 20:15:30 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.7 1998/02/03 18:41:22 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.6 1997/07/13 20:15:30 christos Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.7 1998/02/03 18:41:22 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +60,8 @@ __sread(cookie, buf, n)
 	char *buf;
 	int n;
 {
-	register FILE *fp = cookie;
-	register int ret;
+	FILE *fp = cookie;
+	int ret;
 	
 	ret = read(fp->_file, buf, n);
 	/* if the read succeeded, update the current offset */
@@ -78,7 +78,7 @@ __swrite(cookie, buf, n)
 	char const *buf;
 	int n;
 {
-	register FILE *fp = cookie;
+	FILE *fp = cookie;
 
 	if (fp->_flags & __SAPP)
 		(void) lseek(fp->_file, (off_t)0, SEEK_END);
@@ -92,8 +92,8 @@ __sseek(cookie, offset, whence)
 	fpos_t offset;
 	int whence;
 {
-	register FILE *fp = cookie;
-	register off_t ret;
+	FILE *fp = cookie;
+	off_t ret;
 	
 	ret = lseek(fp->_file, (off_t)offset, whence);
 	if (ret == -1L)

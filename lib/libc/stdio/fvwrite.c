@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.7 1997/07/13 20:15:08 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.8 1998/02/03 18:41:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.7 1997/07/13 20:15:08 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.8 1998/02/03 18:41:15 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,13 +59,13 @@ __RCSID("$NetBSD: fvwrite.c,v 1.7 1997/07/13 20:15:08 christos Exp $");
  */
 int
 __sfvwrite(fp, uio)
-	register FILE *fp;
-	register struct __suio *uio;
+	FILE *fp;
+	struct __suio *uio;
 {
-	register size_t len;
-	register char *p;
-	register struct __siov *iov;
-	register int w, s;
+	size_t len;
+	char *p;
+	struct __siov *iov;
+	int w, s;
 	char *nl;
 	int nlknown, nldist;
 

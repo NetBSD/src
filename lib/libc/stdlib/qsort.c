@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.8 1997/07/13 20:16:51 christos Exp $	*/
+/*	$NetBSD: qsort.c,v 1.9 1998/02/03 18:44:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.8 1997/07/13 20:16:51 christos Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.9 1998/02/03 18:44:18 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,10 +56,10 @@ static __inline void	 swapfunc __P((char *, char *, int, int));
  */
 #define swapcode(TYPE, parmi, parmj, n) { 		\
 	long i = (n) / sizeof (TYPE); 			\
-	register TYPE *pi = (TYPE *) (parmi); 		\
-	register TYPE *pj = (TYPE *) (parmj); 		\
+	TYPE *pi = (TYPE *) (parmi); 		\
+	TYPE *pj = (TYPE *) (parmj); 		\
 	do { 						\
-		register TYPE	t = *pi;		\
+		TYPE	t = *pi;		\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
         } while (--i > 0);				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.4 1998/01/19 07:38:44 jtc Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.5 1998/02/03 18:41:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.4 1998/01/19 07:38:44 jtc Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.5 1998/02/03 18:41:08 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,11 +88,11 @@ __slbexpand(fp, newsize)
  */
 char *
 fgetln(fp, lenp)
-	register FILE *fp;
+	FILE *fp;
 	size_t *lenp;
 {
-	register unsigned char *p;
-	register size_t len;
+	unsigned char *p;
+	size_t len;
 	size_t off;
 
 	FLOCKFILE(fp);
@@ -106,7 +106,7 @@ fgetln(fp, lenp)
 
 	/* look for a newline in the input */
 	if ((p = memchr((void *)fp->_p, '\n', fp->_r)) != NULL) {
-		register char *ret;
+		char *ret;
 
 		/*
 		 * Found one.  Flag buffer as modified to keep fseek from
@@ -134,7 +134,7 @@ fgetln(fp, lenp)
 #define OPTIMISTIC 80
 
 	for (len = fp->_r, off = 0;; len += fp->_r) {
-		register size_t diff;
+		size_t diff;
 
 		/*
 		 * Make sure there is room for more bytes.  Copy data from

@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.6 1997/07/13 20:15:33 christos Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.7 1998/02/03 18:41:22 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.6 1997/07/13 20:15:33 christos Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.7 1998/02/03 18:41:22 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,10 +59,10 @@ static int __submore __P((FILE *));
  */
 static int
 __submore(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register int i;
-	register unsigned char *p;
+	int i;
+	unsigned char *p;
 
 	if (fp->_ub._base == fp->_ubuf) {
 		/*
@@ -93,7 +93,7 @@ __submore(fp)
 int
 ungetc(c, fp)
 	int c;
-	register FILE *fp;
+	FILE *fp;
 {
 	if (c == EOF)
 		return (EOF);

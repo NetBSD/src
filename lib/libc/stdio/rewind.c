@@ -1,4 +1,4 @@
-/*	$NetBSD: rewind.c,v 1.5 1997/07/13 20:15:23 christos Exp $	*/
+/*	$NetBSD: rewind.c,v 1.6 1998/02/03 18:41:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rewind.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rewind.c,v 1.5 1997/07/13 20:15:23 christos Exp $");
+__RCSID("$NetBSD: rewind.c,v 1.6 1998/02/03 18:41:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: rewind.c,v 1.5 1997/07/13 20:15:23 christos Exp $");
 
 void
 rewind(fp)
-	register FILE *fp;
+	FILE *fp;
 {
 	(void) fseek(fp, 0L, SEEK_SET);
 	clearerr(fp);

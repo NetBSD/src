@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.17 1997/12/19 14:08:45 kleink Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.18 1998/02/03 18:41:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.17 1997/12/19 14:08:45 kleink Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.18 1998/02/03 18:41:24 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,17 +106,17 @@ static u_char *__sccl __P((char *, u_char *));
  */
 int
 __svfscanf(fp, fmt0, ap)
-	register FILE *fp;
+	FILE *fp;
 	char const *fmt0;
 	_BSD_VA_LIST_ ap;
 {
-	register u_char *fmt = (u_char *)fmt0;
-	register int c;		/* character from format, or conversion */
-	register size_t width;	/* field width, or 0 */
-	register char *p;	/* points into all kinds of strings */
-	register int n;		/* handy integer */
-	register int flags;	/* flags as defined above */
-	register char *p0;	/* saves original value of p when necessary */
+	u_char *fmt = (u_char *)fmt0;
+	int c;		/* character from format, or conversion */
+	size_t width;	/* field width, or 0 */
+	char *p;	/* points into all kinds of strings */
+	int n;		/* handy integer */
+	int flags;	/* flags as defined above */
+	char *p0;	/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
 	int base;		/* base argument to strtoq/strtouq */
@@ -680,10 +680,10 @@ match_failure:
  */
 static u_char *
 __sccl(tab, fmt)
-	register char *tab;
-	register u_char *fmt;
+	char *tab;
+	u_char *fmt;
 {
-	register int c, n, v;
+	int c, n, v;
 
 	/* first `clear' the whole table */
 	c = *fmt++;		/* first char hat => negated scanset */

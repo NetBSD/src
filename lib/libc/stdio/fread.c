@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.8 1998/01/19 07:38:47 jtc Exp $	*/
+/*	$NetBSD: fread.c,v 1.9 1998/02/03 18:41:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.8 1998/01/19 07:38:47 jtc Exp $");
+__RCSID("$NetBSD: fread.c,v 1.9 1998/02/03 18:41:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,11 +54,11 @@ size_t
 fread(buf, size, count, fp)
 	void *buf;
 	size_t size, count;
-	register FILE *fp;
+	FILE *fp;
 {
-	register size_t resid;
-	register char *p;
-	register int r;
+	size_t resid;
+	char *p;
+	int r;
 	size_t total;
 
 	/*

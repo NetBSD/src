@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.6 1998/01/30 23:37:53 perry Exp $	*/
+/*	$NetBSD: exit.c,v 1.7 1998/02/03 18:44:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exit.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: exit.c,v 1.6 1998/01/30 23:37:53 perry Exp $");
+__RCSID("$NetBSD: exit.c,v 1.7 1998/02/03 18:44:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,8 +55,8 @@ void
 exit(status)
 	int status;
 {
-	register struct atexit *p;
-	register int n;
+	struct atexit *p;
+	int n;
 
 	for (p = __atexit; p; p = p->next)
 		for (n = p->ind; --n >= 0;)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.6 1998/01/19 07:38:45 jtc Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.7 1998/02/03 18:41:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fpurge.c,v 1.6 1998/01/19 07:38:45 jtc Exp $");
+__RCSID("$NetBSD: fpurge.c,v 1.7 1998/02/03 18:41:11 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: fpurge.c,v 1.6 1998/01/19 07:38:45 jtc Exp $");
  */
 int
 fpurge(fp)
-	register FILE *fp;
+	FILE *fp;
 {
 	FLOCKFILE(fp);
 	if (!fp->_flags) {

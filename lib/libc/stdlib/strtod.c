@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.25 1997/07/13 20:16:58 christos Exp $	*/
+/*	$NetBSD: strtod.c,v 1.26 1998/02/03 18:44:21 perry Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.25 1997/07/13 20:16:58 christos Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.26 1998/02/03 18:44:21 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -510,12 +510,12 @@ s2b
  static int
 hi0bits
 #ifdef KR_headers
-	(x) register ULong x;
+	(x) ULong x;
 #else
-	(register ULong x)
+	(ULong x)
 #endif
 {
-	register int k = 0;
+	int k = 0;
 
 	if (!(x & 0xffff0000)) {
 		k = 16;
@@ -549,8 +549,8 @@ lo0bits
 	(ULong *y)
 #endif
 {
-	register int k;
-	register ULong x = *y;
+	int k;
+	ULong x = *y;
 
 	if (x & 7) {
 		if (x & 1)
@@ -918,7 +918,7 @@ ulp
 	(double x)
 #endif
 {
-	register Long L;
+	Long L;
 	double a;
 
 	L = (word0(x) & Exp_mask) - (P-1)*Exp_msk1;
