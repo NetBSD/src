@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.74 2000/03/30 12:45:40 augustss Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.75 2000/03/31 01:20:43 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2794,6 +2794,8 @@ rf_print_component_label(clabel)
 	       (char) clabel->parityConfig, clabel->blockSize, 
 	       clabel->numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No" );
+	printf("   Contains root partition: %s\n",  
+	       clabel->root_partition ? "Yes" : "No" );
 	printf("   Last configured as: raid%d\n", clabel->last_unit );
 #if 0
 	   printf("   Config order: %d\n", clabel->config_order);
