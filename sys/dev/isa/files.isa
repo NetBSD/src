@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.31 1997/07/13 19:09:51 hpeyerl Exp $
+#	$NetBSD: files.isa,v 1.32 1997/07/14 21:09:07 kleink Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -248,4 +248,4 @@ file	dev/isa/gus.c			gus needs-flag
 #
 device satlink: isadma
 attach satlink at isa
-file dev/isa/satlink.c	satlink
+file dev/isa/satlink.c			satlink	needs-flag
