@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclone_boot.h,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: cyclone_boot.h,v 1.1 2001/06/20 22:14:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.

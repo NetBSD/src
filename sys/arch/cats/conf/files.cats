@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.6 2001/06/18 22:26:17 bjh21 Exp $
+#	$NetBSD: files.cats,v 1.7 2001/06/20 22:14:34 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -19,7 +19,6 @@ defopt	XSERVER
 #defopt	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
-defopt	EBSA285
 defopt	NETWINDER
 
 define todservice {}
@@ -74,6 +73,7 @@ major   {cd = 26}
 # Generic MD files
 file	arch/cats/cats/autoconf.c
 file	arch/cats/cats/conf.c
+file	arch/cats/cats/cats_machdep.c
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/exception.S
@@ -108,7 +108,7 @@ file	arch/arm32/isa/isa_io.c				isa
 file	arch/arm32/isa/isa_io_asm.S			isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
-file	arch/cats/isa/isa_machdep.c			isa & ebsa285
+file	arch/cats/isa/isa_machdep.c			isa
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
