@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.15 1998/04/27 19:07:03 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.16 1998/05/19 00:20:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,13 +129,22 @@ typedef struct pv_entry {
 struct pv_head {
 	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
+	int pvh_usage;				/* page usage */
 	int pvh_ptref;				/* ref count if PT page */
 };
 
 /* pvh_attrs */
 #define	PMAP_ATTR_MOD		0x01		/* modified */
 #define	PMAP_ATTR_REF		0x02		/* referenced */
-#define	PMAP_ATTR_PTPAGE	0x04		/* is a page table page */
+
+/* pvh_usage */
+#define	PGU_NORMAL		0		/* free or normal use */
+#define	PGU_PVENT		1		/* PV entries */
+#define	PGU_L1PT		2		/* level 1 page table */
+#define	PGU_L2PT		3		/* level 2 page table */
+#define	PGU_L3PT		4		/* level 3 page table */
+
+#define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
 
 struct pv_page_info {
 	TAILQ_ENTRY(pv_page) pgi_list;
