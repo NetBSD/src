@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1998/02/11 01:50:36 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.105 1998/02/11 03:11:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1695,11 +1695,11 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 */
 	oversize = size + align - PAGE_SIZE;
 #if defined(UVM)
-	r = uvm_map(kmem_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
+	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0));
 #else
-	r = vm_map_find(kmem_map, NULL, (vm_offset_t)0, &sva, oversize, TRUE);
+	r = vm_map_find(kernel_map, NULL, (vm_offset_t)0, &sva, oversize, TRUE);
 #endif
 	if (r != KERN_SUCCESS)
 		return (ENOMEM);
@@ -1711,15 +1711,15 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	/* Return excess virtual addresses */
 	if (va != sva)
 #if defined(UVM)
-		(void)uvm_unmap(kmem_map, sva, va, 0);
+		(void)uvm_unmap(kernel_map, sva, va, 0);
 #else
-		vm_map_remove(kmem_map, sva, va);
+		vm_map_remove(kernel_map, sva, va);
 #endif
 	if (va + size != sva + oversize)
 #if defined(UVM)
-		(void)uvm_unmap(kmem_map, va + size, sva + oversize, 0);
+		(void)uvm_unmap(kernel_map, va + size, sva + oversize, 0);
 #else
-		vm_map_remove(kmem_map, va + size, sva + oversize);
+		vm_map_remove(kernel_map, va + size, sva + oversize);
 #endif
 
 
@@ -1763,12 +1763,12 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 #if defined(UVM)
-	uvm_unmap(kmem_map, (vm_offset_t)kva, (vm_offset_t)kva + size, 0);
+	uvm_unmap(kernel_map, (vm_offset_t)kva, (vm_offset_t)kva + size, 0);
 #else
-	vm_map_remove(kmem_map, (vm_offset_t)kva, (vm_offset_t)kva + size);
+	vm_map_remove(kernel_map, (vm_offset_t)kva, (vm_offset_t)kva + size);
 #endif
 #if 0
-	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vm_offset_t)kva, size);
 #endif
 }
 

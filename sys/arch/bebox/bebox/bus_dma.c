@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 1998/02/11 01:41:07 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 1998/02/11 03:09:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -413,7 +413,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = kmem_alloc_pageable(kmem_map, size);
+	va = kmem_alloc_pageable(kernel_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -456,7 +456,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vm_offset_t)kva, size);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.14 1998/02/11 01:37:51 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.15 1998/02/11 03:08:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 1998/02/11 01:37:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 1998/02/11 03:08:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	size = round_page(size);
 
 	s = splimp();
-	va = kmem_alloc_pageable(kmem_map, size);
+	va = kmem_alloc_pageable(kernel_map, size);
 	splx(s);
 
 	if (va == 0)
@@ -535,7 +535,7 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 	s = splimp();
-	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vm_offset_t)kva, size);
 	splx(s);
 }
 
