@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.10 2003/08/07 16:30:54 agc Exp $	*/
+/*	$NetBSD: dz.c,v 1.11 2003/10/18 12:10:53 ragge Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.10 2003/08/07 16:30:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.11 2003/10/18 12:10:53 ragge Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.10 2003/08/07 16:30:54 agc Exp $");
 
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
+
+#include <dev/cons.h>
 
 #define	DZ_READ_BYTE(adr) \
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
@@ -155,6 +157,7 @@ const struct cdevsw dz_cdevsw = {
  */
 int	dz_timer;	/* true if timer started */
 struct callout dzscan_ch;
+static struct cnm_state dz_cnm_state;
 
 void
 dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
@@ -181,6 +184,11 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 		sc->sc_dev.dv_xname, "rintr");
 	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
 		sc->sc_dev.dv_xname, "tintr");
+
+	/* Console magic keys */
+	cn_init_magic(&dz_cnm_state);
+	cn_set_magic("\047\001"); /* default magic is BREAK */
+				  /* VAX will change it in MD code */
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 
@@ -214,6 +222,8 @@ dzrint(void *arg)
 		if (sc->sc_dz[line].dz_catch &&
 		    (*sc->sc_dz[line].dz_catch)(sc->sc_dz[line].dz_private, cc))
 			continue;
+
+		cn_check_magic(tp->t_dev, cc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
