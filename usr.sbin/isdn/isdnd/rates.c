@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.5 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: rates.c,v 1.6 2004/10/30 08:19:30 dsl Exp $ 
  *
  * $FreeBSD$
  *
@@ -128,14 +128,14 @@ readrates(char *filename)
 
 		/* rate type */
 
-		if (*bp == 'r' && *(bp+1) == 'a' && isdigit(*(bp+2)))
+		if (*bp == 'r' && *(bp+1) == 'a' && isdigit((unsigned char)*(bp+2)))
 		{
 				rateindx = *(bp+2) - '0';
 				bp += 3;
 
 				/* eat space delimiter */
 
-				while(isspace(*bp))
+				while(isspace((unsigned char)*bp))
 					bp++;
 		}
 		else
@@ -151,7 +151,7 @@ readrates(char *filename)
 
 		/* day */
 		
-		if (isdigit(*bp) && *bp >= '0' && *bp <= '6')
+		if (isdigit((unsigned char)*bp) && *bp >= '0' && *bp <= '6')
 		{
 			indx = *bp - '0';
 
@@ -179,14 +179,14 @@ readrates(char *filename)
 		
 		/* eat space delimiter */
 
-		while(isspace(*bp))
+		while(isspace((unsigned char)*bp))
 			bp++;
 
 		/* now loop to get the rates entries */
 
 		first = 1;
 		
-		while(*bp && isdigit(*bp))
+		while(*bp && isdigit((unsigned char)*bp))
 		{
 			int hour = 0;
 			int min = 0;
@@ -211,7 +211,7 @@ readrates(char *filename)
 			
 			/* start hour */
 			
-			if (isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit((unsigned char)*bp) && isdigit((unsigned char)*(bp+1)))
 			{
 				hour = atoi(bp);
 				bp += 2;
@@ -236,7 +236,7 @@ readrates(char *filename)
 		  	
 			/* start minute */
 			
-			if (isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit((unsigned char)*bp) && isdigit((unsigned char)*(bp+1)))
 			{
 				min = atoi(bp);
 				bp += 2;
@@ -263,7 +263,7 @@ readrates(char *filename)
 
 			/* end hour */
 			
-			if (isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit((unsigned char)*bp) && isdigit((unsigned char)*(bp+1)))
 			{
 				hour = atoi(bp);
 				bp += 2;
@@ -288,7 +288,7 @@ readrates(char *filename)
 		  	
 			/* end minute */
 			
-			if (isdigit(*bp) && isdigit(*(bp+1)))
+			if (isdigit((unsigned char)*bp) && isdigit((unsigned char)*(bp+1)))
 			{
 				min = atoi(bp);
 				bp += 2;
@@ -324,10 +324,10 @@ readrates(char *filename)
 
 			/* time */
 			
-			if (isdigit(*bp))
+			if (isdigit((unsigned char)*bp))
 			{
 				rt->rate = atoi(bp);
-				while(!isspace(*bp))
+				while(!isspace((unsigned char)*bp))
 					bp++;
 			}
 		  	else
@@ -338,7 +338,7 @@ readrates(char *filename)
 
 			/* eat space delimiter */
 
-			while(isspace(*bp))
+			while(isspace((unsigned char)*bp))
 				bp++;
 		}
 	}
