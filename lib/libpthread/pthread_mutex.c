@@ -9,15 +9,11 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
-#include "pthread_mutex.h"
-
-
 
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 {
-	pthread_mutex_t newmutex;
 
 	assert(mutex != NULL);
 
@@ -26,15 +22,12 @@ pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 		return EINVAL;
 
 	/* Allocate. */
-	newmutex = pthread__malloc(sizeof(struct pthread_mutex_st));
-	if (newmutex == NULL)
-		return ENOMEM;
 
-	newmutex->ptm_magic = PT_MUTEX_MAGIC;
-	newmutex->ptm_owner = NULL;
-	SIMPLEQ_INIT(&newmutex->ptm_blocked);
-
-	*mutex = newmutex;
+	mutex->ptm_magic = PT_MUTEX_MAGIC;
+	mutex->ptm_owner = NULL;
+	pthread_lockinit(&mutex->ptm_lock);
+	pthread_lockinit(&mutex->ptm_interlock);
+	PTQ_INIT(&mutex->ptm_blocked);
 
 	return 0;
 }
@@ -44,49 +37,64 @@ int
 pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
 
-	if ((mutex == NULL) || (*mutex == NULL) ||
-	    (*mutex)->ptm_magic != PT_MUTEX_MAGIC)
-		return EINVAL;
+	assert(mutex != NULL);
+	assert(mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
 
-	(*mutex)->ptm_magic = PT_MUTEX_DEAD;
-	pthread__free(*mutex);
+	mutex->ptm_magic = PT_MUTEX_DEAD;
 
 	return 0;
 }
 
 
+/*
+ * Note regarding memory visibility: Pthreads has rules about memory
+ * visibility and mutexes. Very roughly: Memory a thread can see when
+ * it unlocks a mutex can be seen by another thread that locks the
+ * same mutex.
+ * 
+ * A memory barrier after a lock and before an unlock will provide
+ * this behavior. This code relies on __cpu_simple_lock_try() to issue
+ * a barrier after obtaining a lock, and on __cpu_simple_unlock() to
+ * issue a barrier before releasing a lock.
+ */
+
 int
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
 	pthread_t self;
-
-	if ((mutex == NULL) || (*mutex == NULL) ||
-	    (*mutex)->ptm_magic != PT_MUTEX_MAGIC)
+#ifdef ERRORCHECK
+	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
 		return EINVAL;
+#endif
 
-	self = pthread__self();
-
-	pthread_spinlock(self, &(*mutex)->ptm_interlock);
-
-	while ((*mutex)->ptm_locked == PT_MUTEX_LOCKED) {
-		/* Put ourselves on the queue and go to sleep. */
-		SIMPLEQ_INSERT_TAIL(&(*mutex)->ptm_blocked, self, pt_sleep);
-
-		self->pt_state = PT_STATE_BLOCKED;
-		pthread__block(self, &(*mutex)->ptm_interlock);
+	while (/*CONSTCOND*/1) {
+		if (__cpu_simple_lock_try(&mutex->ptm_lock))
+		    break; /* got it! */
 		
-		/* We're back. Try again. */
-		pthread_spinlock(self, &(*mutex)->ptm_interlock);
+		self = pthread__self();
+		/* Okay, didn't look free. Get the interlock... */
+		pthread_spinlock(self, &mutex->ptm_interlock);
+		/* The mutex_unlock routine will get the interlock
+		 * before looking at the list of sleepers, so if the
+		 * lock is held we can safely put ourselves on the
+		 * sleep queue. If it's not held, we can try taking it
+		 * again.
+		 */
+		if (mutex->ptm_lock == __SIMPLELOCK_LOCKED) {
+			PTQ_INSERT_TAIL(&mutex->ptm_blocked, self, pt_sleep);
+			self->pt_state = PT_STATE_BLOCKED;
+			pthread__block(self, &mutex->ptm_interlock);
+			/* interlock is not held when we return */
+		} else {
+			pthread_spinunlock(self, &mutex->ptm_interlock);
+		}
+		/* Go around for another try. */
 	}
 
-	assert((*mutex)->ptm_locked == PT_MUTEX_UNLOCKED);
-	
-	/* We have the interlock; go for the real thing. */
-	(*mutex)->ptm_locked = PT_MUTEX_LOCKED;
-	(*mutex)->ptm_owner = self;
-	
-	pthread_spinunlock(self, &(*mutex)->ptm_interlock);
-
+	/* We have the lock! */
+#ifdef ERRORCHECK
+	mutex->ptm_owner = self;
+#endif	
 	return 0;
 }
 
@@ -94,31 +102,18 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 int
 pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	pthread_t self;
 
-	if ((mutex == NULL) || (*mutex == NULL) ||
-	    (*mutex)->ptm_magic != PT_MUTEX_MAGIC)
+#ifdef ERRORCHECK
+	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
 		return EINVAL;
+#endif
 
-	if ((*mutex)->ptm_locked == PT_MUTEX_LOCKED)
+	if (__cpu_simple_lock_try(&mutex->ptm_lock) == 0)
 		return EBUSY;
 
-	self = pthread__self();
-
-	pthread_spinlock(self, &(*mutex)->ptm_interlock);
-	if ((*mutex)->ptm_locked == PT_MUTEX_LOCKED) {
-		pthread_spinunlock(self, &(*mutex)->ptm_interlock);
-		return EBUSY;
-	}
-
-	assert((*mutex)->ptm_locked == PT_MUTEX_UNLOCKED);
-	
-	/* We have the interlock; go for the real thing. */
-	(*mutex)->ptm_locked = PT_MUTEX_LOCKED;
-	(*mutex)->ptm_owner = self;
-	
-	pthread_spinunlock(self, &(*mutex)->ptm_interlock);
-
+#ifdef ERRORCHECK
+	mutex->ptm_owner = pthread__self();
+#endif
 	return 0;
 }
 
@@ -127,32 +122,32 @@ int
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	pthread_t self, blocked; 
+	struct pt_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
 
-	if ((mutex == NULL) || (*mutex == NULL) ||
-	    (*mutex)->ptm_magic != PT_MUTEX_MAGIC)
+#ifdef ERRORCHECK
+	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
 		return EINVAL;
 
-	if ((*mutex)->ptm_locked == PT_MUTEX_UNLOCKED)
+	if (mutex->ptm_lock != __SIMPLELOCK_LOCKED)
 		return EPERM; /* Not exactly the right error. */
 
-	assert((*mutex)->ptm_locked == PT_MUTEX_LOCKED);
-
 	/* One is only permitted to unlock one's own mutexes. */
-	self = pthread__self();
-	if ((*mutex)->ptm_owner != self)
+	if (mutex->ptm_owner != self)
 		return EPERM; 
-	
-	pthread_spinlock(self, &(*mutex)->ptm_interlock);
-	(*mutex)->ptm_locked = PT_MUTEX_UNLOCKED;
-	(*mutex)->ptm_owner = NULL;
-	
-	blocked = SIMPLEQ_FIRST(&(*mutex)->ptm_blocked);
-	if (blocked)
-		SIMPLEQ_REMOVE_HEAD(&(*mutex)->ptm_blocked, blocked, pt_sleep);
+#endif
 
-	pthread_spinunlock(self, &(*mutex)->ptm_interlock);
+	self = pthread__self();
+	pthread_spinlock(self, &mutex->ptm_interlock);
+       	blockedq = mutex->ptm_blocked;
+	mutex->ptm_blocked = nullq;
+#ifdef ERRORCHECK
+	mutex->ptm_owner = NULL;
+#endif
+	__cpu_simple_unlock(&mutex->ptm_lock);
+	pthread_spinunlock(self, &mutex->ptm_interlock);
 
-	if (blocked)
+	/* Give everyone on the sleep queue another chance at the lock. */
+	PTQ_FOREACH(blocked, &blockedq, pt_sleep) 
 		pthread__sched(self, blocked);
 
 	return 0;
