@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2005/02/20 11:12:46 cube Exp $
+#	$NetBSD: Makefile,v 1.17 2005/02/21 06:41:20 cube Exp $
+
+.include <bsd.own.mk>
 
 .PATH: ${NETBSDSRCDIR}/dist/pppd/pppstats
 
