@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.59 2003/02/26 12:50:25 kanaoka Exp $
+#	$NetBSD: 3RDPARTY,v 1.60 2003/02/28 17:48:09 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -759,8 +759,8 @@ Only change between 1.06.1 and 1.06.2 is that uucp-doc-1.06.tar.gz
 is included in the latter.
 
 Package:	XFree86
-Version:	3.3.6/4.2.1
-Current Vers:	3.3.6/4.2.1
+Version:	3.3.6/4.3.0
+Current Vers:	3.3.6/4.3.0
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Mailing List:	
@@ -771,7 +771,7 @@ Notes:
 - Fix 01-08 from the xfree86 fixes directory are merged into the tree.
 - imported changes from 3.3.6 branch on 2001-03-05
 4.x:
- Only X4??src-1 and X4??src-2 were imported. X4??src-3 contains postscript
+ Only X4??src-1 to X4??src-6 were imported. X4??src-7 contains postscript
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
  be sent to patch@XFree86.org.
