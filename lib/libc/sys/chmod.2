@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.2,v 1.11 1997/07/14 23:19:51 kleink Exp $
+.\"	$NetBSD: chmod.2,v 1.12 1997/10/06 01:12:04 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@
 .Os BSD 4
 .Sh NAME
 .Nm chmod ,
+.Nm lchmod ,
 .Nm fchmod
 .Nd change mode of file
 .Sh SYNOPSIS
@@ -45,6 +46,8 @@
 .Fd #include <sys/stat.h>
 .Ft int
 .Fn chmod "const char *path" "mode_t mode"
+.Ft int
+.Fn lchmod "const char *path" "mode_t mode"
 .Ft int
 .Fn fchmod "int fd" "mode_t mode"
 .Sh DESCRIPTION
@@ -60,6 +63,16 @@ to
 sets the permission bits of the specified
 file descriptor
 .Fa fd .
+.Fn Lchmod
+is like
+.Fn chmod
+except in the case where the named file is a symbolic link,
+in which case
+.Fn lchmod
+sets the permission bits of the link,
+while
+.Fn chmod
+sets the bits of the file the link references.
 .Fn Chmod
 verifies that the process owner (user) either owns
 the file specified by
@@ -165,6 +178,12 @@ and
 does not refer to a directory.
 .El
 .Pp
+.Fn Lchmod
+is like
+.Fn chmod
+except that it doesn't return
+.Er ELOOP .
+.Pp
 .Fn Fchmod
 will fail if:
 .Bl -tag -width Er
@@ -203,3 +222,7 @@ The
 function call
 appeared in
 .Bx 4.2 .
+The
+.Fn lchmod
+function call appeared in
+.Nx 1.3 .
