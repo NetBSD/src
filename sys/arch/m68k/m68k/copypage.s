@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.3 1997/05/30 01:20:23 jtc Exp $	*/
+/*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,14 +105,14 @@ ENTRY(zeropage)
 	movl	d1,a1
 	lea	a0@(NBPG),a0
 Lzloop:
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
-	movml	d2-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
+	movml	d1-d7/a1,a0@-
 	dbf	d0,Lzloop
 	movml	sp@+,d2-d7
 	rts
