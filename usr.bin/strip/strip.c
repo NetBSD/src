@@ -1,8 +1,8 @@
-/*	$NetBSD: strip.c,v 1.16 1997/05/17 20:15:03 pk Exp $	*/
+/*	$NetBSD: strip.c,v 1.17 1997/10/18 15:05:05 mrg Exp $	*/
 
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,30 +34,32 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)strip.c	5.8 (Berkeley) 11/6/91";*/
+static char sccsid[] = "@(#)strip.c	8.3 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: strip.c,v 1.16 1997/05/17 20:15:03 pk Exp $";
+static char rcsid[] = "$NetBSD: strip.c,v 1.17 1997/10/18 15:05:05 mrg Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
+
 #include <a.out.h>
-#include <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 
 typedef struct exec EXEC;
 typedef struct nlist NLIST;
@@ -313,6 +315,7 @@ static void
 usage()
 {
 	extern char *__progname;
+
 	(void)fprintf(stderr, "Usage: %s [-dxX] file ...\n", __progname);
 	exit(1);
 }
