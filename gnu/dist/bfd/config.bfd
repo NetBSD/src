@@ -52,6 +52,7 @@ case "${targ}" in
   alpha-*-netbsd*)
     targ_defvec=bfd_elf64_alpha_vec
     targ_selvecs=ecoffalpha_little_vec
+    ;;
   alpha-*-netware*)
     targ_defvec=ecoffalpha_little_vec
     targ_selvecs=nlm32_alpha_vec
