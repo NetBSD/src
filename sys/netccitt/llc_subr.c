@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.8 1998/02/14 19:34:14 kleink Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.9 1998/09/09 04:33:27 thorpej Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -1154,7 +1154,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 
 	switch (frame_kind + cmdrsp) {
 	case NL_DATA_REQUEST:
-		if (LLC_GETFLAG(linkp,REMOTE_BUSY) == 0)
+		if (LLC_GETFLAG(linkp,REMOTE_BUSY) == 0) {
 			if (LLC_GETFLAG(linkp,P) == 0) {
 				llc_send(linkp, LLCFT_INFO, LLC_CMD, 1);
 				LLC_START_P_TIMER(linkp);
@@ -1169,6 +1169,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 					LLC_START_ACK_TIMER(linkp);
 				action = 0;
 			}
+		}
 		break;
 	case LLC_LOCAL_BUSY_CLEARED:{
 			register int    p = LLC_GETFLAG(linkp,P);
@@ -1374,7 +1375,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 		break;
 	case LLC_REJ_TIMER_EXPIRED:
-		if (linkp->llcl_retry < llc_n2)
+		if (linkp->llcl_retry < llc_n2) {
 			if (LLC_GETFLAG(linkp,P) == 0) {
 				/* multiple possibilities */
 				llc_send(linkp, LLCFT_RNR, LLC_CMD, 1);
@@ -1388,6 +1389,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 				LLC_NEWSTATE(linkp,BUSY);
 				action = 0;
 			}
+		}
 
 		break;
 	}
