@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.4 2002/05/19 13:55:18 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.5 2002/05/31 01:45:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,7 +364,6 @@ struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
-struct	hashtab *alldevmtab;	/* all devm lookup */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 
