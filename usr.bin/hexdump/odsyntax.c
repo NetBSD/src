@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.12 2001/12/05 17:46:15 bjh21 Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.13 2001/12/05 18:07:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.12 2001/12/05 17:46:15 bjh21 Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.13 2001/12/05 18:07:50 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,8 @@ oldsyntax(argc, argvp)
 
 	deprecated = 1;
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIij:LlOoPpst:wvXx")) != -1)
+	while ((ch = getopt(argc, argv,
+	    "aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
 		switch (ch) {
 		case 'a':
 			odprecede();
@@ -167,6 +168,10 @@ oldsyntax(argc, argvp)
 				skip *= 1048576;
 				break;
 			}
+			break;
+		case 'N':
+			if ((length = atoi(optarg)) < 0)
+				errx(1, "%s: bad length value", optarg);
 			break;
 		case 'O':
 			odprecede();
