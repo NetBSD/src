@@ -1,0 +1,147 @@
+#
+# Configuration for nuts RiscPC
+#
+
+include	"std.arm32"
+
+options	TIMEZONE=0, DST=0		# obsolete timezone spec
+
+# Standard system options
+options	SWAPPAGER, VNODEPAGER, DEVPAGER
+
+# estimated number of users
+maxusers	8
+
+# CPU options
+
+options		CPU_ARM6
+options		CPU_LATE_ABORT	# ARM7XX compatibility
+options		FPE
+
+# File system options
+options		FFS		# FFS
+options		KERNFS		# KERNFS
+options		PROCFS		# PROCFS
+options		MSDOSFS		# MSDOSFS
+options         CD9660		# ISO 9660 CD file system
+options		FIFO		# FIFOs
+#options	FDESC		# FDESC
+#options        PORTAL          # PORTAL
+#options        UNION           # union file system
+
+# Networking options
+
+options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+options         INET            # IP + ICMP + TCP + UDP
+options		NFSCLIENT
+options		NFSSERVER
+options		PLIP
+options		GATEWAY
+
+# Development options
+
+options		KSHELL
+options		DEBUGTERM
+options		DIAGNOSTIC
+options		IRQSTATS
+options		POSTMORTEM
+
+options		LKM
+#options	KGDB
+#makeoptions	DEBUG="-g"
+#options	PROF
+#makeoptions	PROF="-pg"
+
+config	netbsd	swap generic
+options		GENERIC
+
+# The main bus device
+mainbus0 at root
+
+# generic VT console device
+vt0     at mainbus?
+vt1     at mainbus?
+vt2     at mainbus?
+vt3     at mainbus?
+vt4	at mainbus?
+vt5	at mainbus?
+
+# raw vidc virtual consoles
+vidcvideo0	at mainbus?
+
+# IDE Subsystem
+
+# Care.  For the moment do not configure wd1 if you configure atapi and wcd
+# This is due to the wd driver not being included as part of the atapi
+# system.  It soon will be.
+
+# IDE Hard disc system
+wdc0    at mainbus? base 0x002107c0
+wd0     at wdc? drive ?
+#wd1     at wdc? drive ?
+
+# Atapi driver
+atapi0	at mainbus? base 0x002107c0
+
+# IDE CDROM driver (dummy driver to give me a flag file)
+wcd0    at mainbus? base 0x002107c0
+
+# Floppy disk controller
+#fdc0    at mainbus? base 0x00210fc0 dack 0x00002000
+#fd0     at fdc? drive ?
+
+# Ramdisk
+#rd0	at mainbus?
+
+# kbd via IOMD
+kbd0	at mainbus? base 0x00000000
+
+# quadrature mouse
+quadmouse0	at mainbus? base 0x00000000
+
+# Serial ports
+com0    at mainbus? base 0x00210fe0
+#com1    at mainbus? base 0x00210be0
+
+# Parallel ports
+lpt0    at mainbus? base 0x002109e0 irq 0
+
+# Crude sound device
+beep0	at mainbus? base 0x00000000
+
+# Podule bus device
+podulebus0	at root
+
+# Example podule device
+#podule0	at podulebus?
+
+#asc0	at podulebus?			# Acorn SCSI card
+#scsibus* at asc?
+
+#cum0	at podulebus?
+#scsibus* at cum?
+
+#sd*	at scsibus? target ? lun ?	# SCSI disk drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI auto-changers
+
+#kie*	at podulebus? slot ? offset ?
+
+eb0	at podulebus?
+#ea0	at podulebus?
+ie0	at podulebus?
+
+pseudo-device	loop	2               # network loopback
+pseudo-device   bpfilter 8              # packet filter
+pseudo-device   pty     32              # pseudo-terminals
+pseudo-device   vnd     4               # paging to files
+#pseudo-device	ppp	2		# PPP
+#pseudo-device	sl	2               # CSLIP
+
+makeoptions MONITOR="AKF60"
+makeoptions MODES="640,480,60 1024,768,70 1024,768,60 800,600,60 1280,1024 1152,900"
+
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_43
