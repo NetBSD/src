@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.15 2004/03/29 20:30:03 hubertf Exp $	*/
+/*	$NetBSD: worms.c,v 1.16 2004/09/12 04:51:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.15 2004/03/29 20:30:03 hubertf Exp $");
+__RCSID("$NetBSD: worms.c,v 1.16 2004/09/12 04:51:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,6 @@ main(argc, argv)
 	(void)signal(SIGHUP, onsig);
 	(void)signal(SIGINT, onsig);
 	(void)signal(SIGQUIT, onsig);
-	(void)signal(SIGSTOP, onsig);
 	(void)signal(SIGTSTP, onsig);
 	(void)signal(SIGTERM, onsig);
 
