@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/06/13 08:07:03 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/08/12 14:01:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -53,9 +53,12 @@
 /*
  * Utility macro to switch to the stack of another thread.
  */
-#define STACK_SWITCH(pt,tmp)		\
-	LDPTR	pt, PT_UC, tmp		;\
-	addi	tmp, -STACKSPACE, r15
+#define STACK_SWITCH(pt,tmp,tmp2)	\
+	LDPTR	pt, PT_TRAPUC, tmp	;\
+	LDPTR	pt, PT_UC, tmp2		;\
+	cmveq	tmp, tmp2, tmp		;\
+	addi	tmp, -STACKSPACE, r15	;\
+	STPTR	pt, PT_TRAPUC, r63
 
 
 /*
@@ -94,9 +97,8 @@ ENTRY(pthread__switch)
 
 	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
 
-	STACK_SWITCH(r29, r2)		/* r2 = next->pt_uc */
-
 	STPTR	r28, PT_UC, r3		/* self->pt_uc = ctx */
+	STACK_SWITCH(r29, r2, r0)	/* r2 = next->pt_uc */
 
 	/*
 	 * Restore 'next's context
@@ -161,7 +163,7 @@ ENTRY(pthread__locked_switch)
 	or	r15, r63 ,r3
 
 	pta/l	Llocked_no_old_preempt, tr0
-	STACK_SWITCH(r29, r2)		/* r2 = next->pt_uc */
+	STACK_SWITCH(r29, r2, r0)	/* r2 = next->pt_uc */
 
 	/* Now running on `next's stack. */
 
@@ -187,14 +189,8 @@ ENTRY(pthread__locked_switch)
 	addi	r0, -1, r0
 	st.l	r28, PT_SPINLOCKS, r0
 
-	/* Save the context we previously stored in self->pt_uc
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere. 
-	 */
-	STPTR	r28, PT_SLEEPUC, r3
-
 	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
-	STACK_SWITCH(r1, r2)
+	STACK_SWITCH(r1, r2, r0)
 
 	/* If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch or pthread__upcall_switch, there
@@ -233,7 +229,7 @@ Llocked_no_old_preempt:
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	STPTR	r29, PT_SWITCHTOUC, r2
 	STPTR	r29, PT_SWITCHTO, r29	/* next->pt_switchto = next */
-	STACK_SWITCH(r1, r2)
+	STACK_SWITCH(r1, r2, r0)
 	blink	tr0, r63
 	/* NOTREACHED */
 
@@ -265,7 +261,7 @@ ENTRY(pthread__upcall_switch)
 	addi	r0, 1, r0
 	st.l	r3, PT_SPINLOCKS, r0
 
-	STACK_SWITCH(r3, r28)		/* r28 = next->pt_uc */
+	STACK_SWITCH(r3, r28, r0)	/* r28 = next->pt_uc */
 
 	/* Check if the upcall was preempted and continued. */
 	PIC_PTAL(_C_LABEL(pthread__sa_recycle), r0, tr1)
@@ -280,7 +276,7 @@ ENTRY(pthread__upcall_switch)
 	STPTR	r2, PT_SWITCHTOUC, r28
 	STPTR	r2, PT_SWITCHTO, r3
 	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
-	STACK_SWITCH(r1, r2)
+	STACK_SWITCH(r1, r2, r0)
 	ld.l	r3, PT_SPINLOCKS, r0
 	addi	r0, -1, r0
 	st.l	r3, PT_SPINLOCKS, r0
@@ -305,5 +301,5 @@ Lupcall_no_old_preempt:
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	STPTR	r29, PT_SWITCHTOUC, r2
 	STPTR	r29, PT_SWITCHTO, r29
-	STACK_SWITCH(r1, r2)
+	STACK_SWITCH(r1, r2, r0)
 	blink	tr0, r63
