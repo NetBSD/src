@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.4 2001/02/20 22:24:31 martin Exp $ */
+/* $NetBSD: isic_supio.c,v 1.5 2001/03/24 12:45:15 martin Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -276,7 +276,6 @@ supio_isicattach(struct l1_softc *sc)
 		"Unknown Version"
 	};
 
-	l1_sc[sc->sc_unit] = sc;		
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
@@ -351,7 +350,8 @@ supio_isicattach(struct l1_softc *sc)
 
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);	
+	/* MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp); */
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 
 	/* announce chip versions */
 	
