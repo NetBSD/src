@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.9 2000/01/22 15:10:35 wiz Exp $
+.\"     $NetBSD: raid.4,v 1.10 2000/01/23 02:04:10 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,10 +212,6 @@ to the kernel configuration file.  The
 argument (
 .Sq 4 ,
 in this case), specifies the number of RAIDframe drivers to configure.
-At the time of this writing, 4 is the MAXIMUM of 
-.Nm
-devices which are supported.  This will change as soon as kernel threads
-are available.
 .Pp
 In all cases the
 .Sq raw
@@ -228,7 +224,8 @@ disklabel for the
 .Nm
 device.
 As well, all component partitions must be of the type
-.Dv FS_BSDFFS .
+.Dv FS_BSDFFS 
+(e.g. 4.2BSD).
 .Pp
 A more detailed treatment of actually using a 
 .Nm
