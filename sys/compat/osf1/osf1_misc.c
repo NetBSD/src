@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.45 1999/05/01 05:25:37 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.46 1999/05/01 05:34:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -225,136 +225,6 @@ osf1_sys_usleep_thread(p, v, retval)
 	return (error);
 }
 
-/*
- * Return status information about a file descriptor.
- */
-int
-osf1_sys_fstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_fstat_args *uap = v;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct stat ub;
-	struct osf1_stat oub;
-	int error;
-
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
-	osf1_cvt_stat_from_native(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
-	return (error);
-}
-
-int
-osf1_sys_fcntl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_fcntl_args *uap = v;
-	struct sys_fcntl_args a;
-	unsigned long xfl, leftovers;
-	int error;
-
-	SCARG(&a, fd) = SCARG(uap, fd);
-
-	leftovers = 0;
-	switch (SCARG(uap, cmd)) {
-	case OSF1_F_DUPFD:
-		SCARG(&a, cmd) = F_DUPFD;
-		SCARG(&a, arg) = SCARG(uap, arg);
-		break;
-
-	case OSF1_F_GETFD:
-		SCARG(&a, cmd) = F_GETFD;
-		SCARG(&a, arg) = 0;		/* ignored */
-		break;
-
-	case OSF1_F_SETFD:
-		SCARG(&a, cmd) = F_SETFD;
-		SCARG(&a, arg) = (void *)emul_flags_translate(
-		    osf1_fcntl_getsetfd_flags_xtab,
-		    (unsigned long)SCARG(uap, arg), &leftovers);
-		break;
-
-	case OSF1_F_GETFL:
-		SCARG(&a, cmd) = F_GETFL;
-		SCARG(&a, arg) = 0;		/* ignored */
-		break;
-
-	case OSF1_F_SETFL:
-		SCARG(&a, cmd) = F_SETFL;
-		xfl = emul_flags_translate(osf1_open_flags_xtab,
-		    (unsigned long)SCARG(uap, arg), &leftovers);
-		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_xtab,
-		    leftovers, &leftovers);
-		SCARG(&a, arg) = (void *)xfl;
-		break;
-
-	case OSF1_F_GETOWN:		/* XXX not yet supported */
-	case OSF1_F_SETOWN:		/* XXX not yet supported */
-	case OSF1_F_GETLK:		/* XXX not yet supported */
-	case OSF1_F_SETLK:		/* XXX not yet supported */
-	case OSF1_F_SETLKW:		/* XXX not yet supported */
-		/* XXX translate. */
-		return (EINVAL);
-		
-	case OSF1_F_RGETLK:		/* [lock mgr op] XXX not supported */
-	case OSF1_F_RSETLK:		/* [lock mgr op] XXX not supported */
-	case OSF1_F_CNVT:		/* [lock mgr op] XXX not supported */
-	case OSF1_F_RSETLKW:		/* [lock mgr op] XXX not supported */
-	case OSF1_F_PURGEFS:		/* [lock mgr op] XXX not supported */
-	case OSF1_F_PURGENFS:		/* [DECsafe op] XXX not supported */
-	default:
-		/* XXX syslog? */
-		return (EINVAL);
-	}
-	if (leftovers != 0)
-		return (EINVAL);
-
-	error = sys_fcntl(p, &a, retval);
-
-	if (error)
-		return error;
-
-	switch (SCARG(uap, cmd)) {
-	case OSF1_F_GETFD:
-		retval[0] = emul_flags_translate(
-		    osf1_fcntl_getsetfd_flags_rxtab, retval[0], NULL);
-		break;
-
-	case OSF1_F_GETFL:
-		xfl = emul_flags_translate(osf1_open_flags_rxtab,
-		    retval[0], &leftovers);
-		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_rxtab,
-		    leftovers, NULL);
-		retval[0] = xfl;
-		break;
-	}
-
-	return error;
-}
-
 int
 osf1_sys_reboot(p, v, retval)
 	struct proc *p;
@@ -374,23 +244,6 @@ osf1_sys_reboot(p, v, retval)
 	SCARG(&a, bootstr) = NULL;
 
 	return sys_reboot(p, &a, retval);
-}
-
-int
-osf1_sys_lseek(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_lseek_args *uap = v;
-	struct sys_lseek_args a;
-
-	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
-	SCARG(&a, offset) = SCARG(uap, offset);
-	SCARG(&a, whence) = SCARG(uap, whence);
-
-	return sys_lseek(p, &a, retval);
 }
 
 /*
@@ -467,22 +320,6 @@ osf1_sys_setgid(p, v, retval)
 }
 
 int
-osf1_sys_ftruncate(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_ftruncate_args *uap = v;
-	struct sys_ftruncate_args a;
-
-	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
-	SCARG(&a, length) = SCARG(uap, length);
-
-	return sys_ftruncate(p, &a, retval);
-}
-
-int
 osf1_sys_getrusage(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -554,51 +391,6 @@ osf1_sys_uname(p, v, retval)
         *dp = '\0';
         strncpy(u.machine, MACHINE, sizeof(u.machine));
         return (copyout((caddr_t)&u, (caddr_t)SCARG(uap, name), sizeof u));
-}
-
-int
-osf1_sys_utimes(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_utimes_args *uap = v;
-	struct sys_utimes_args a;
-	struct osf1_timeval otv;
-	struct timeval tv;
-	caddr_t sg;
-	int error;
-
-	sg = stackgap_init(p->p_emul);
-
-	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	SCARG(&a, path) = SCARG(uap, path);
-
-	error = 0;
-	if (SCARG(uap, tptr) == NULL)
-		SCARG(&a, tptr) = NULL;
-	else {
-		SCARG(&a, tptr) = stackgap_alloc(&sg, sizeof tv);
-
-		/* get the OSF/1 timeval argument */
-		error = copyin((caddr_t)SCARG(uap, tptr),
-		    (caddr_t)&otv, sizeof otv);
-		if (error == 0) {
-
-			/* fill in and copy out the NetBSD timeval */
-			memset(&tv, 0, sizeof tv);
-			tv.tv_sec = otv.tv_sec;
-			tv.tv_usec = otv.tv_usec;
-
-			error = copyout((caddr_t)&tv,
-			    (caddr_t)SCARG(&a, tptr), sizeof tv);
-		}
-	}
-
-	if (error == 0)
-		error = sys_utimes(p, &a, retval);
-
-	return (error);
 }
 
 int
