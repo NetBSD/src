@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.755 2005/01/09 19:55:26 matt Exp $
+#	$NetBSD: mi,v 1.756 2005/01/10 00:20:21 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1240,13 +1240,13 @@
 ./usr/include/sa.h				comp-c-include
 ./usr/include/sched.h				comp-c-include
 ./usr/include/search.h				comp-c-include
-./usr/include/security/openpam.h		comp-c-include
-./usr/include/security/openpam_version.h	comp-c-include
-./usr/include/security/pam_appl.h		comp-c-include
-./usr/include/security/pam_constants.h		comp-c-include
-./usr/include/security/pam_mod_misc.h		comp-c-include
-./usr/include/security/pam_modules.h		comp-c-include
-./usr/include/security/pam_types.h		comp-c-include
+./usr/include/security/openpam.h		comp-c-include		pam
+./usr/include/security/openpam_version.h	comp-c-include		pam
+./usr/include/security/pam_appl.h		comp-c-include		pam
+./usr/include/security/pam_constants.h		comp-c-include		pam
+./usr/include/security/pam_mod_misc.h		comp-c-include		pam
+./usr/include/security/pam_modules.h		comp-c-include		pam
+./usr/include/security/pam_types.h		comp-c-include		pam
 ./usr/include/semaphore.h			comp-c-include
 ./usr/include/setjmp.h				comp-c-include
 ./usr/include/sgtty.h				comp-c-include
@@ -1637,7 +1637,7 @@
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
 ./usr/lib/libossaudio.a				comp-c-lib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
-./usr/lib/libpam.a				comp-c-lib
+./usr/lib/libpam.a				comp-c-lib		pam
 ./usr/lib/libpcap.a				comp-c-lib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
 ./usr/lib/libpci.a				comp-c-lib
@@ -1715,7 +1715,7 @@
 ./usr/libdata/lint/llib-lmilter.ln		comp-sendmail-lintlib	lint,sendmail
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
@@ -3831,16 +3831,16 @@
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
-./usr/share/man/cat3/openpam.0			comp-c-catman		.cat
-./usr/share/man/cat3/openpam_borrow_cred.0	comp-c-catman		.cat
-./usr/share/man/cat3/openpam_free_data.0	comp-c-catman		.cat
-./usr/share/man/cat3/openpam_get_option.0	comp-c-catman		.cat
-./usr/share/man/cat3/openpam_log.0		comp-c-catman		.cat
-./usr/share/man/cat3/openpam_nullconv.0		comp-c-catman		.cat
-./usr/share/man/cat3/openpam_readline.0		comp-c-catman		.cat
-./usr/share/man/cat3/openpam_restore_cred.0	comp-c-catman		.cat
-./usr/share/man/cat3/openpam_set_option.0	comp-c-catman		.cat
-./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat
+./usr/share/man/cat3/openpam.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_borrow_cred.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_free_data.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_get_option.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_log.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_nullconv.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_readline.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_restore_cred.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_set_option.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_bio.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_blowfish.0		comp-c-catman		crypto,.cat
@@ -3872,39 +3872,39 @@
 ./usr/share/man/cat3/overlay.0			comp-c-catman		.cat
 ./usr/share/man/cat3/overwrite.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pair_content.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_acct_mgmt.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_authenticate.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_chauthtok.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_close_session.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_conv.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_end.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_error.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_get_authtok.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_get_data.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_get_item.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_get_user.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_getenvlist.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_info.0			comp-c-catman		.cat
-./usr/share/man/cat3/pam_open_session.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_prompt.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_putenv.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_set_data.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_set_item.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_setcred.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_setenv.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_acct_mgmt.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_authenticate.0	comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_chauthtok.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_close_session.0	comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_open_session.0	comp-c-catman		.cat
-./usr/share/man/cat3/pam_sm_setcred.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_start.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_strerror.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_verror.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_vinfo.0		comp-c-catman		.cat
-./usr/share/man/cat3/pam_vprompt.0		comp-c-catman		.cat
+./usr/share/man/cat3/pam.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_acct_mgmt.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_authenticate.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_chauthtok.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_close_session.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_conv.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_end.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_error.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_get_authtok.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_get_data.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_get_item.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_get_user.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_getenvlist.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_info.0			comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_open_session.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_prompt.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_putenv.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_set_data.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_set_item.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_setcred.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_setenv.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_acct_mgmt.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_authenticate.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_chauthtok.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_close_session.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_open_session.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_sm_setcred.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_start.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_strerror.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_verror.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_vinfo.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/pam_vprompt.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pause.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pcap.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pci.0			comp-c-catman		.cat
@@ -7667,16 +7667,16 @@
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
-./usr/share/man/man3/openpam.3			comp-c-man		.man
-./usr/share/man/man3/openpam_borrow_cred.3	comp-c-man		.man
-./usr/share/man/man3/openpam_free_data.3	comp-c-man		.man
-./usr/share/man/man3/openpam_get_option.3	comp-c-man		.man
-./usr/share/man/man3/openpam_log.3		comp-c-man		.man
-./usr/share/man/man3/openpam_nullconv.3		comp-c-man		.man
-./usr/share/man/man3/openpam_readline.3		comp-c-man		.man
-./usr/share/man/man3/openpam_restore_cred.3	comp-c-man		.man
-./usr/share/man/man3/openpam_set_option.3	comp-c-man		.man
-./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man
+./usr/share/man/man3/openpam.3			comp-c-man		.man,pam
+./usr/share/man/man3/openpam_borrow_cred.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_free_data.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_get_option.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_log.3		comp-c-man		.man,pam
+./usr/share/man/man3/openpam_nullconv.3		comp-c-man		.man,pam
+./usr/share/man/man3/openpam_readline.3		comp-c-man		.man,pam
+./usr/share/man/man3/openpam_restore_cred.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_set_option.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
 ./usr/share/man/man3/openssl_bio.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_blowfish.3		comp-c-man		crypto,.man
@@ -7708,39 +7708,39 @@
 ./usr/share/man/man3/overlay.3			comp-c-man		.man
 ./usr/share/man/man3/overwrite.3		comp-c-man		.man
 ./usr/share/man/man3/pair_content.3		comp-c-man		.man
-./usr/share/man/man3/pam.3			comp-c-man		.man
-./usr/share/man/man3/pam_acct_mgmt.3		comp-c-man		.man
-./usr/share/man/man3/pam_authenticate.3		comp-c-man		.man
-./usr/share/man/man3/pam_chauthtok.3		comp-c-man		.man
-./usr/share/man/man3/pam_close_session.3	comp-c-man		.man
-./usr/share/man/man3/pam_conv.3			comp-c-man		.man
-./usr/share/man/man3/pam_end.3			comp-c-man		.man
-./usr/share/man/man3/pam_error.3		comp-c-man		.man
-./usr/share/man/man3/pam_get_authtok.3		comp-c-man		.man
-./usr/share/man/man3/pam_get_data.3		comp-c-man		.man
-./usr/share/man/man3/pam_get_item.3		comp-c-man		.man
-./usr/share/man/man3/pam_get_user.3		comp-c-man		.man
-./usr/share/man/man3/pam_getenv.3		comp-c-man		.man
-./usr/share/man/man3/pam_getenvlist.3		comp-c-man		.man
-./usr/share/man/man3/pam_info.3			comp-c-man		.man
-./usr/share/man/man3/pam_open_session.3		comp-c-man		.man
-./usr/share/man/man3/pam_prompt.3		comp-c-man		.man
-./usr/share/man/man3/pam_putenv.3		comp-c-man		.man
-./usr/share/man/man3/pam_set_data.3		comp-c-man		.man
-./usr/share/man/man3/pam_set_item.3		comp-c-man		.man
-./usr/share/man/man3/pam_setcred.3		comp-c-man		.man
-./usr/share/man/man3/pam_setenv.3		comp-c-man		.man
-./usr/share/man/man3/pam_sm_acct_mgmt.3		comp-c-man		.man
-./usr/share/man/man3/pam_sm_authenticate.3	comp-c-man		.man
-./usr/share/man/man3/pam_sm_chauthtok.3		comp-c-man		.man
-./usr/share/man/man3/pam_sm_close_session.3	comp-c-man		.man
-./usr/share/man/man3/pam_sm_open_session.3	comp-c-man		.man
-./usr/share/man/man3/pam_sm_setcred.3		comp-c-man		.man
-./usr/share/man/man3/pam_start.3		comp-c-man		.man
-./usr/share/man/man3/pam_strerror.3		comp-c-man		.man
-./usr/share/man/man3/pam_verror.3		comp-c-man		.man
-./usr/share/man/man3/pam_vinfo.3		comp-c-man		.man
-./usr/share/man/man3/pam_vprompt.3		comp-c-man		.man
+./usr/share/man/man3/pam.3			comp-c-man		.man,pam
+./usr/share/man/man3/pam_acct_mgmt.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_authenticate.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_chauthtok.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_close_session.3	comp-c-man		.man,pam
+./usr/share/man/man3/pam_conv.3			comp-c-man		.man,pam
+./usr/share/man/man3/pam_end.3			comp-c-man		.man,pam
+./usr/share/man/man3/pam_error.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_get_authtok.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_get_data.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_get_item.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_get_user.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_getenv.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_getenvlist.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_info.3			comp-c-man		.man,pam
+./usr/share/man/man3/pam_open_session.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_prompt.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_putenv.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_set_data.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_set_item.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_setcred.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_setenv.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_acct_mgmt.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_authenticate.3	comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_chauthtok.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_close_session.3	comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_open_session.3	comp-c-man		.man,pam
+./usr/share/man/man3/pam_sm_setcred.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_start.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_strerror.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_verror.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_vinfo.3		comp-c-man		.man,pam
+./usr/share/man/man3/pam_vprompt.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pause.3			comp-c-man		.man
 ./usr/share/man/man3/pcap.3			comp-c-man		.man
 ./usr/share/man/man3/pci.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.36 2005/01/09 22:24:04 matt Exp $
+#	$NetBSD: sets.subr,v 1.37 2005/01/10 00:20:21 he Exp $
 #
 
 #
@@ -44,6 +44,7 @@ MKVARS="\
 	MKMANPAGES	\
 	MKMANZ		\
 	MKNLS		\
+	MKPAM		\
 	MKPIC		\
 	MKPOSTFIX	\
 	MKPROFILE	\
@@ -119,7 +120,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.36 2005/01/09 22:24:04 matt Exp $
+# 	# $NetBSD: sets.subr,v 1.37 2005/01/10 00:20:21 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -157,6 +158,7 @@ fi
 #	man			${MKMAN} != no
 #	manz			${MKMANZ} != no
 #	nls			${MKNLS} != no
+#	pam			${MKPAM} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
 #	sendmail		${MKSENDMAIL} != no
