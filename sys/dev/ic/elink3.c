@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.91 2001/05/14 08:01:23 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.92 2001/05/14 09:28:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1400,7 +1400,6 @@ epintr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int16_t status;
 	int ret = 0;
-	int addrandom = 0;
 
 	if (sc->enabled == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -1452,12 +1451,10 @@ epintr(arg)
 
 		if (status & S_RX_COMPLETE) {
 			epread(sc);
-			addrandom = 1;
 		}
 		if (status & S_TX_AVAIL) {
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 			epstart(&sc->sc_ethercom.ec_if);
-			addrandom = 1;
 		}
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
@@ -1472,7 +1469,6 @@ epintr(arg)
 		if (status & S_TX_COMPLETE) {
 			eptxstat(sc);
 			epstart(ifp);
-			addrandom = 1;
 		}
 
 #if NRND > 0
