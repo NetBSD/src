@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.19 2000/05/27 00:40:48 sommerfeld Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.20 2000/12/17 16:04:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -141,6 +141,12 @@ struct ktr_csw {
 	/* record contains emulation name */
 
 /*
+ * KTR_USER - user record
+ */
+#define	KTR_USER	8
+	/* record contains some user data */
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -151,6 +157,7 @@ struct ktr_csw {
 #define	KTRFAC_PSIG	(1<<KTR_PSIG)
 #define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
+#define	KTRFAC_USER	(1<<KTR_USER)
 /*
  * trace flags (also in p_traceflags)
  */
