@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.7 1997/01/09 20:19:36 tls Exp $	*/
+/*	$NetBSD: domacro.c,v 1.8 1997/01/19 14:19:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: domacro.c,v 1.7 1997/01/09 20:19:36 tls Exp $";
+static char rcsid[] = "$NetBSD: domacro.c,v 1.8 1997/01/19 14:19:08 lukem Exp $";
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 #include "ftp_var.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.20 1997/01/09 20:19:38 tls Exp $	*/
+/*	$NetBSD: ftp.c,v 1.21 1997/01/19 14:19:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,16 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.20 1997/01/09 20:19:38 tls Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.21 1997/01/19 14:19:13 lukem Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/file.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -58,10 +55,8 @@ static char rcsid[] = "$NetBSD: ftp.c,v 1.20 1997/01/09 20:19:38 tls Exp $";
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,10 +76,6 @@ int	ptabflg;
 int	ptflag = 0;
 struct	sockaddr_in myctladdr;
 off_t	restart_point = 0;
-char   *direction;
-struct	timeval start;
-off_t	bytes;
-off_t	filesize;
 
 
 FILE	*cin, *cout;
@@ -597,6 +588,7 @@ sendrequest(cmd, local, remote, printnames)
 	    (strcmp(cmd, "STOR") == 0 || strcmp(cmd, "APPE") == 0)) {
 		int rc;
 
+		rc = -1;
 		switch (curtype) {
 		case TYPE_A:
 			rc = fseek(fin, (long) restart_point, SEEK_SET);
@@ -646,7 +638,6 @@ sendrequest(cmd, local, remote, printnames)
 	dout = dataconn(lmode);
 	if (dout == NULL)
 		goto abort;
-	(void) gettimeofday(&start, (struct timezone *)0);
 	progressmeter(-1);
 	oldintp = signal(SIGPIPE, SIG_IGN);
 	switch (curtype) {
@@ -935,7 +926,6 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		}
 		bufsize = st.st_blksize;
 	}
-	(void) gettimeofday(&start, (struct timezone *)0);
 	progressmeter(-1);
 	switch (curtype) {
 
@@ -1126,7 +1116,7 @@ initconn()
 		data = socket(AF_INET, SOCK_STREAM, 0);
 		if (data < 0) {
 			warn("socket");
-			return(1);
+			return (1);
 		}
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
@@ -1174,7 +1164,7 @@ initconn()
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 #endif
-		return(0);
+		return (0);
 	}
 
 noport:
@@ -1265,121 +1255,6 @@ dataconn(lmode)
 		warn("setsockopt TOS (ignored)");
 #endif
 	return (fdopen(data, lmode));
-}
-
-/*
- * Display a transfer progress bar if progress is non-zero.
- * Initialise with flag < 0, run with flag = 0, and the
- * finish with flag > 0.
- */
-void
-progressmeter(flag)
-	int flag;
-{
-	static struct timeval before;
-	static int ttywidth;
-	struct winsize winsize;
-	struct timeval now, td;
-	off_t cursize, abbrevsize;
-	double elapsed;
-	int ratio, barlength, i, remaining;
-	char prefixes[] = " KMGTP";	/* `P' because 2^64 = 16384 Petabytes */
-
-	if (!progress || filesize < 0)
-		return;
-	if (flag < 0) {
-		before.tv_sec = -1;
-		if (ioctl(fileno(stdin), TIOCGWINSZ, &winsize) < 0)
-			ttywidth = 80;
-		else
-			ttywidth = winsize.ws_col;
-	} else if (flag == 0) {
-		(void) gettimeofday(&now, (struct timezone *)0);
-		if (now.tv_sec <= before.tv_sec)
-			return;
-	}
-	before = now;
-	cursize = bytes + restart_point;
-
-	ratio = cursize * 100 / filesize;
-	ratio = MAX(ratio, 0);
-	ratio = MIN(ratio, 100);
-	printf("\r%3d%% ", ratio);
-
-	barlength = ttywidth - 32;
-	if (barlength > 0) {
-		i = barlength * ratio / 100;
-		printf("%.*s%*s", i, 
-"*****************************************************************************"
-"*****************************************************************************",
-		    barlength - i, "");
-	}
-
-	i = 0;
-	abbrevsize = cursize;
-	while (abbrevsize >= 100000 && i < sizeof(prefixes)) {
-		i++;
-		abbrevsize >>= 10;
-	}
-	printf(" %5qd %c%c  ", abbrevsize, prefixes[i],
-	    prefixes[i] == ' ' ? ' ' : 'B');
-
-	timersub(&now, &start, &td);
-	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
-	if (bytes <= 0 || elapsed <= 0.0) {
-		printf("   --:--");
-	} else {
-		remaining = (int)((filesize - restart_point) /
-				  (bytes / elapsed) - elapsed);
-		i = remaining / 3600;
-		if (i)
-			printf("%2d:", i);
-		else
-			printf("   ");
-		i = remaining % 3600;
-		printf("%02d:%02d", i / 60, i % 60);
-	}
-	printf(" ETA");
-
-	if (flag > 0)
-		(void) putchar('\n');
-	fflush(stdout);
-}
-
-void
-ptransfer(siginfo)
-	int siginfo;
-{
-	struct timeval now, td;
-	double elapsed;
-	off_t bs;
-	int meg, remaining, hh;
-	char buf[100];
-
-	if (!verbose && !siginfo)
-		return;
-
-	(void) gettimeofday(&now, (struct timezone *)0);
-	timersub(&now, &start, &td);
-	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
-	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
-	meg = 0;
-	if (bs > (1024 * 1024))
-		meg = 1;
-	(void)snprintf(buf, sizeof(buf),
-	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
-	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-	if (siginfo && bytes > 0 && elapsed > 0.0) {
-		remaining = (int)((filesize - restart_point) /
-				  (bytes / elapsed) - elapsed);
-		hh = remaining / 3600;
-		remaining %= 3600;
-		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
-		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
-		    remaining % 60);
-	}
-	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, strlen(buf));
 }
 
 void

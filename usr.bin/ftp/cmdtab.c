@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.11 1997/01/09 20:19:35 tls Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.12 1997/01/19 14:19:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.11 1997/01/09 20:19:35 tls Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.12 1997/01/19 14:19:05 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ char	beephelp[] =	"beep when command completed";
 char	binaryhelp[] =	"set binary transfer type";
 char	casehelp[] =	"toggle mget upper/lower case id mapping";
 char	cdhelp[] =	"change remote working directory";
-char	cduphelp[] = 	"change remote working directory to parent directory";
+char	cduphelp[] =	"change remote working directory to parent directory";
 char	chmodhelp[] =	"change file permissions of remote file";
 char	connecthelp[] =	"connect to remote ftp server";
 char	crhelp[] =	"toggle carriage return stripping on ascii gets";
@@ -63,7 +63,10 @@ char	debughelp[] =	"toggle/set debugging mode";
 char	deletehelp[] =	"delete remote file";
 char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
-char	domachelp[] = 	"execute macro";
+char	domachelp[] =	"execute macro";
+#ifndef SMALLFTP
+char	edithelp[] =	"toggle command line editing";
+#endif /* !SMALLFTP */
 char	formhelp[] =	"set file transfer format";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
 char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
@@ -121,85 +124,96 @@ char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 
+#ifdef SMALLFTP
+#define CMPL(x)
+#define CMPL0
+#else  /* !SMALLFTP */
+#define CMPL(x)	__STRING(x), 
+#define CMPL0	"",
+#endif /* !SMALLFTP */
+
 struct cmd cmdtab[] = {
-	{ "!",		shellhelp,	0,	0,	0,	shell },
-	{ "$",		domachelp,	1,	0,	0,	domacro },
-	{ "account",	accounthelp,	0,	1,	1,	account},
-	{ "append",	appendhelp,	1,	1,	1,	put },
-	{ "ascii",	asciihelp,	0,	1,	1,	setascii },
-	{ "bell",	beephelp,	0,	0,	0,	setbell },
-	{ "binary",	binaryhelp,	0,	1,	1,	setbinary },
-	{ "bye",	quithelp,	0,	0,	0,	quit },
-	{ "case",	casehelp,	0,	0,	1,	setcase },
-	{ "cd",		cdhelp,		0,	1,	1,	cd },
-	{ "cdup",	cduphelp,	0,	1,	1,	cdup },
-	{ "chmod",	chmodhelp,	0,	1,	1,	do_chmod },
-	{ "close",	disconhelp,	0,	1,	1,	disconnect },
-	{ "cr",		crhelp,		0,	0,	0,	setcr },
-	{ "debug",	debughelp,	0,	0,	0,	setdebug },
-	{ "delete",	deletehelp,	0,	1,	1,	delete },
-	{ "dir",	dirhelp,	1,	1,	1,	ls },
-	{ "disconnect",	disconhelp,	0,	1,	1,	disconnect },
-	{ "exit",	quithelp,	0,	0,	0,	quit },
-	{ "form",	formhelp,	0,	1,	1,	setform },
-	{ "ftp",	connecthelp,	0,	0,	1,	setpeer },
-	{ "get",	receivehelp,	1,	1,	1,	get },
-	{ "glob",	globhelp,	0,	0,	0,	setglob },
-	{ "hash",	hashhelp,	0,	0,	0,	sethash },
-	{ "help",	helphelp,	0,	0,	1,	help },
-	{ "idle",	idlehelp,	0,	1,	1,	idle },
-	{ "image",	binaryhelp,	0,	1,	1,	setbinary },
-	{ "lcd",	lcdhelp,	0,	0,	0,	lcd },
-	{ "lpwd",	lpwdhelp,	0,	0,	0,	lpwd },
-	{ "ls",		lshelp,		1,	1,	1,	ls },
-	{ "macdef",	macdefhelp,	0,	0,	0,	macdef },
-	{ "mdelete",	mdeletehelp,	1,	1,	1,	mdelete },
-	{ "mdir",	mdirhelp,	1,	1,	1,	mls },
-	{ "mget",	mgethelp,	1,	1,	1,	mget },
-	{ "mkdir",	mkdirhelp,	0,	1,	1,	makedir },
-	{ "mls",	mlshelp,	1,	1,	1,	mls },
-	{ "mode",	modehelp,	0,	1,	1,	setftmode },
-	{ "modtime",	modtimehelp,	0,	1,	1,	modtime },
-	{ "mput",	mputhelp,	1,	1,	1,	mput },
-	{ "msend",	mputhelp,	1,	1,	1,	mput },
-	{ "newer",	newerhelp,	1,	1,	1,	newer },
-	{ "nlist",	nlisthelp,	1,	1,	1,	ls },
-	{ "nmap",	nmaphelp,	0,	0,	1,	setnmap },
-	{ "ntrans",	ntranshelp,	0,	0,	1,	setntrans },
-	{ "open",	connecthelp,	0,	0,	1,	setpeer },
-	{ "passive",	passivehelp,	0,	0,	0,	setpassive },
-	{ "preserve",	preservehelp,	0,	0,	0,	setpreserve },
-	{ "progress",	progresshelp,	0,	0,	0,	setprogress },
-	{ "prompt",	prompthelp,	0,	0,	0,	setprompt },
-	{ "proxy",	proxyhelp,	0,	0,	1,	doproxy },
-	{ "put",	sendhelp,	1,	1,	1,	put },
-	{ "pwd",	pwdhelp,	0,	1,	1,	pwd },
-	{ "quit",	quithelp,	0,	0,	0,	quit },
-	{ "quote",	quotehelp,	1,	1,	1,	quote },
-	{ "recv",	receivehelp,	1,	1,	1,	get },
-	{ "reget",	regethelp,	1,	1,	1,	reget },
-	{ "rename",	renamehelp,	0,	1,	1,	renamefile },
-	{ "reset",	resethelp,	0,	1,	1,	reset },
-	{ "restart",	restarthelp,	1,	1,	1,	restart },
-	{ "rhelp",	remotehelp,	0,	1,	1,	rmthelp },
-	{ "rmdir",	rmdirhelp,	0,	1,	1,	removedir },
-	{ "rstatus",	rmtstatushelp,	0,	1,	1,	rmtstatus },
-	{ "runique",	runiquehelp,	0,	0,	1,	setrunique },
-	{ "send",	sendhelp,	1,	1,	1,	put },
-	{ "sendport",	porthelp,	0,	0,	0,	setport },
-	{ "site",	sitehelp,	0,	1,	1,	site },
-	{ "size",	sizecmdhelp,	1,	1,	1,	sizecmd },
-	{ "status",	statushelp,	0,	0,	1,	status },
-	{ "struct",	structhelp,	0,	1,	1,	setstruct },
-	{ "sunique",	suniquehelp,	0,	0,	1,	setsunique },
-	{ "system",	systemhelp,	0,	1,	1,	syst },
-	{ "tenex",	tenexhelp,	0,	1,	1,	settenex },
-	{ "trace",	tracehelp,	0,	0,	0,	settrace },
-	{ "type",	typehelp,	0,	1,	1,	settype },
-	{ "umask",	umaskhelp,	0,	1,	1,	do_umask },
-	{ "user",	userhelp,	0,	1,	1,	user },
-	{ "verbose",	verbosehelp,	0,	0,	0,	setverbose },
-	{ "?",		helphelp,	0,	0,	1,	help },
+	{ "!",		shellhelp,	0, 0, 0, CMPL0		shell },
+	{ "$",		domachelp,	1, 0, 0, CMPL0		domacro },
+	{ "account",	accounthelp,	0, 1, 1, CMPL0		account},
+	{ "append",	appendhelp,	1, 1, 1, CMPL(lr)	put },
+	{ "ascii",	asciihelp,	0, 1, 1, CMPL0		setascii },
+	{ "bell",	beephelp,	0, 0, 0, CMPL0		setbell },
+	{ "binary",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
+	{ "bye",	quithelp,	0, 0, 0, CMPL0		quit },
+	{ "case",	casehelp,	0, 0, 1, CMPL0		setcase },
+	{ "cd",		cdhelp,		0, 1, 1, CMPL(r)	cd },
+	{ "cdup",	cduphelp,	0, 1, 1, CMPL0		cdup },
+	{ "chmod",	chmodhelp,	0, 1, 1, CMPL(nr)	do_chmod },
+	{ "close",	disconhelp,	0, 1, 1, CMPL0		disconnect },
+	{ "cr",		crhelp,		0, 0, 0, CMPL0		setcr },
+	{ "debug",	debughelp,	0, 0, 0, CMPL0		setdebug },
+	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
+	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
+#ifndef SMALLFTP
+	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
+#endif /* !SMALLFTP */
+	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
+	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
+	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
+	{ "get",	receivehelp,	1, 1, 1, CMPL(rl)	get },
+	{ "glob",	globhelp,	0, 0, 0, CMPL0		setglob },
+	{ "hash",	hashhelp,	0, 0, 0, CMPL0		sethash },
+	{ "help",	helphelp,	0, 0, 1, CMPL(C)	help },
+	{ "idle",	idlehelp,	0, 1, 1, CMPL0		idle },
+	{ "image",	binaryhelp,	0, 1, 1, CMPL0		setbinary },
+	{ "lcd",	lcdhelp,	0, 0, 0, CMPL(l)	lcd },
+	{ "lpwd",	lpwdhelp,	0, 0, 0, CMPL0		lpwd },
+	{ "ls",		lshelp,		1, 1, 1, CMPL(rl)	ls },
+	{ "macdef",	macdefhelp,	0, 0, 0, CMPL0		macdef },
+	{ "mdelete",	mdeletehelp,	1, 1, 1, CMPL(R)	mdelete },
+	{ "mdir",	mdirhelp,	1, 1, 1, CMPL(R)	mls },
+	{ "mget",	mgethelp,	1, 1, 1, CMPL(R)	mget },
+	{ "mkdir",	mkdirhelp,	0, 1, 1, CMPL(r)	makedir },
+	{ "mls",	mlshelp,	1, 1, 1, CMPL(R)	mls },
+	{ "mode",	modehelp,	0, 1, 1, CMPL0		setftmode },
+	{ "modtime",	modtimehelp,	0, 1, 1, CMPL(r)	modtime },
+	{ "mput",	mputhelp,	1, 1, 1, CMPL(L)	mput },
+	{ "msend",	mputhelp,	1, 1, 1, CMPL(L)	mput },
+	{ "newer",	newerhelp,	1, 1, 1, CMPL(r)	newer },
+	{ "nlist",	nlisthelp,	1, 1, 1, CMPL(rl)	ls },
+	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
+	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
+	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
+	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
+	{ "preserve",	preservehelp,	0, 0, 0, CMPL0		setpreserve },
+	{ "progress",	progresshelp,	0, 0, 0, CMPL0		setprogress },
+	{ "prompt",	prompthelp,	0, 0, 0, CMPL0		setprompt },
+	{ "proxy",	proxyhelp,	0, 0, 1, CMPL(c)	doproxy },
+	{ "put",	sendhelp,	1, 1, 1, CMPL(lr)	put },
+	{ "pwd",	pwdhelp,	0, 1, 1, CMPL0		pwd },
+	{ "quit",	quithelp,	0, 0, 0, CMPL0		quit },
+	{ "quote",	quotehelp,	1, 1, 1, CMPL0		quote },
+	{ "recv",	receivehelp,	1, 1, 1, CMPL(rl)	get },
+	{ "reget",	regethelp,	1, 1, 1, CMPL(rl)	reget },
+	{ "rename",	renamehelp,	0, 1, 1, CMPL(rr)	renamefile },
+	{ "reset",	resethelp,	0, 1, 1, CMPL0		reset },
+	{ "restart",	restarthelp,	1, 1, 1, CMPL0		restart },
+	{ "rhelp",	remotehelp,	0, 1, 1, CMPL0		rmthelp },
+	{ "rmdir",	rmdirhelp,	0, 1, 1, CMPL(r)	removedir },
+	{ "rstatus",	rmtstatushelp,	0, 1, 1, CMPL(r)	rmtstatus },
+	{ "runique",	runiquehelp,	0, 0, 1, CMPL0		setrunique },
+	{ "send",	sendhelp,	1, 1, 1, CMPL(lr)	put },
+	{ "sendport",	porthelp,	0, 0, 0, CMPL0		setport },
+	{ "site",	sitehelp,	0, 1, 1, CMPL0		site },
+	{ "size",	sizecmdhelp,	1, 1, 1, CMPL(r)	sizecmd },
+	{ "status",	statushelp,	0, 0, 1, CMPL0		status },
+	{ "struct",	structhelp,	0, 1, 1, CMPL0		setstruct },
+	{ "sunique",	suniquehelp,	0, 0, 1, CMPL0		setsunique },
+	{ "system",	systemhelp,	0, 1, 1, CMPL0		syst },
+	{ "tenex",	tenexhelp,	0, 1, 1, CMPL0		settenex },
+	{ "trace",	tracehelp,	0, 0, 0, CMPL0		settrace },
+	{ "type",	typehelp,	0, 1, 1, CMPL0		settype },
+	{ "umask",	umaskhelp,	0, 1, 1, CMPL0		do_umask },
+	{ "user",	userhelp,	0, 1, 1, CMPL0		user },
+	{ "verbose",	verbosehelp,	0, 0, 0, CMPL0		setverbose },
+	{ "?",		helphelp,	0, 0, 1, CMPL(C)	help },
 	{ 0 },
 };
 
