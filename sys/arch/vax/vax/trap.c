@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.29 1997/09/11 23:02:26 mycroft Exp $     */
+/*      $NetBSD: trap.c,v 1.30 1997/10/19 12:32:52 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -70,9 +70,7 @@ static	void userret __P((struct proc *, u_int, u_int));
 void	arithflt __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
 void	showregs __P((struct trapframe *));
-void	showstate __P((struct proc *));
 void	stray __P((int, int));
-void	printstack __P((u_int *, u_int *));
 
 void
 userret(p, pc, psl)
@@ -126,20 +124,27 @@ char *traptypes[]={
 };
 int no_traps = 18;
 
+#define USERMODE(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
+#define FAULTCHK                                                \
+        if (p->p_addr->u_pcb.iftrap) {                          \
+                frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;  \
+                return;                                         \
+        }
+
 void
 arithflt(frame)
 	struct trapframe *frame;
 {
 	u_int	sig, type=frame->trap,trapsig=1,s;
-	u_int	rv, addr;
+	u_int	rv, addr, umode;
 	struct	proc *p=curproc;
 	struct	pmap *pm;
 	vm_map_t map;
 	vm_prot_t ftype;
 	extern vm_map_t	pte_map;
 	
-	if((frame->psl & PSL_U) == PSL_U) {
-		type|=T_USER;
+	if ((umode = USERMODE(frame))) {
+		type |= T_USER;
 		p->p_addr->u_pcb.framep = frame; 
 	}
 
@@ -253,8 +258,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 				trapsig = 0;
 		}
 		addr=(frame->code& ~PAGE_MASK);
-		if((frame->pc>(unsigned)0x80000000)&&
-			(frame->code>(unsigned)0x80000000)){
+		if ((umode == 0) && (frame->code < 0)) {
 			map=kernel_map;
 		} else {
 			map= &p->p_vmspace->vm_map;
@@ -264,16 +268,13 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 
 		rv = vm_fault(map, addr, ftype, FALSE);
 		if (rv != KERN_SUCCESS) {
-			if(frame->pc>(u_int)0x80000000){
-				if(p->p_addr->u_pcb.iftrap){
-					frame->pc=(int)p->p_addr->u_pcb.iftrap;
-					return;
-				}
-				printf("Segv in kernel mode: rv %d\n",rv);
-				goto faulter;
+			if (umode == 0) {
+				FAULTCHK; 
+				panic("Segv in kernel mode: rv %d\n",rv);
 			}
 			sig=SIGSEGV;
-		} else trapsig=0;
+		} else
+			trapsig=0;
 		break;
 
 	case T_PTELEN:
@@ -295,15 +296,20 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 				pmap_expandp0(pm, i << 1);
 				trapsig = 0;
 			} else {
+				FAULTCHK;
 				sig = SIGSEGV;
 			}
 		} else if ((u_int)frame->code > (u_int)0x7fffffff){ /* System, segv */
+			FAULTCHK;
+			if (umode == 0)
+				panic("ptelen");
 			sig = SIGSEGV;
 		} else { /* P1 */
 			int i;
 
 			i = (u_int)(p->p_vmspace->vm_maxsaddr);
 			if (frame->code < i){
+				FAULTCHK;
 				sig = SIGSEGV;
 			} else {
 				pmap_expandp1(pm);
@@ -347,31 +353,9 @@ bad:
 	if (trapsig)
 		trapsignal(curproc, sig, frame->code);
 uret:
-	userret(curproc, frame->pc, frame->psl);
+	if (umode)
+		userret(curproc, frame->pc, frame->psl);
 };
-
-void
-showstate(p)
-	struct proc *p;
-{
-if(p){
-	printf("\npid %d, command %s\n",p->p_pid, p->p_comm);
-	printf("text size %x, data size %x, stack size %x\n",
-		p->p_vmspace->vm_tsize, p->p_vmspace->vm_dsize,p->p_vmspace->
-		vm_ssize);
-	printf("virt text %x, virt data %x, max stack %x\n",
-		(u_int)p->p_vmspace->vm_taddr, (u_int)p->p_vmspace->vm_daddr,
-		(u_int)p->p_vmspace->vm_maxsaddr);
-	printf("kernel uarea %x, end uarea %x\n",(u_int)p->p_addr, 
-		(u_int)p->p_addr + USPACE);
-} else {
-	printf("No process\n");
-}
-	printf("kernel stack: %x, interrupt stack %x\n",
-		mfpr(PR_KSP),mfpr(PR_ISP));
-	printf("P0BR %x, P0LR %x, P1BR %x, P1LR %x\n",
-		mfpr(PR_P0BR),mfpr(PR_P0LR),mfpr(PR_P1BR),mfpr(PR_P1LR));
-}
 
 void
 setregs(p, pack, stack)
@@ -458,7 +442,7 @@ bad:
 		return;
 
 	case ERESTART:
-		exptr->pc = exptr->pc-2;
+		exptr->pc -= (exptr->code > 63 ? 4 : 2);
 		break;
 
 	default:
@@ -478,19 +462,6 @@ stray(scb, vec)
 	int scb, vec;
 {
 	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
-}
-
-void
-printstack(loaddr, highaddr)
-	u_int *loaddr, *highaddr;
-{
-	u_int *tmp;
-
-	(u_int)tmp = 0xfffffffc & (u_int)loaddr; /* Easy align */
-
-	for (;tmp < highaddr;tmp += 4)
-		printf("%8x:  %8x  %8x  %8x  %8x\n",
-		    (int)tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
 }
 
 void
