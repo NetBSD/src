@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2001/01/12 15:24:15 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.98 2001/01/15 19:27:07 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1226,8 +1226,48 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
+#if 1
+	int i;
+	size_t len;
 
-	panic("_bus_dmamap_load: not implemented");
+	i = 0;
+	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_len = 0;
+	len = 0;
+	while (m) {
+		vaddr_t vaddr = mtod(m, vaddr_t);
+		bus_size_t buflen = m->m_len;
+
+		len += buflen;
+		while (buflen > 0 && i < map->_dm_segcnt) {
+			paddr_t pa;
+
+			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
+			buflen -= NBPG;
+			vaddr += NBPG;
+
+			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
+			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+				/* Hey, waddyaknow, they're contiguous */
+				map->dm_segs[i].ds_len += NBPG;
+				continue;
+			}
+			map->dm_segs[++i].ds_addr = pa;
+			map->dm_segs[i].ds_len = NBPG;
+		}
+		if (i >= map->_dm_segcnt) 
+			/* Exceeded the size of our dmamap */
+			return E2BIG;
+
+		m = m->m_next;
+	}
+	map->dm_nsegs = i;
+	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
+			    (bus_size_t)len, flags);
+#else
+	panic("_bus_dmamap_load_mbuf: not implemented");
+#endif
+	return 0;
 }
 
 /*
@@ -1240,27 +1280,52 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-#if 0
-	int i;
+#if 1
+	int i, j;
+	size_t len;
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
 	if (uio->uio_segflg == UIO_USERSPACE) 
-		pm = uio->uio_procp->p_vmspace.vm_map.pmap;
+		pm = p->p_vmspace->vm_map.pmap;
 	else
 		pm = pmap_kernel();
 
-	for (i=0; i<uio->uio_iovcnt; i++) {
-		struct iovec *iov = &uio->uio_iov[i];
-		void *buf = iov->iov_base;
+	i = 0;
+	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_len = 0;
+	len = 0;
+	for (j=0; j<uio->uio_iovcnt; j++) {
+		struct iovec *iov = &uio->uio_iov[j];
+		vaddr_t vaddr = (vaddr_t)iov->iov_base;
 		bus_size_t buflen = iov->iov_len;
 
-		bus_dmamap_load(t, map, buf, buflen, p, flags);
+		len += buflen;
+		while (buflen > 0 && i < map->_dm_segcnt) {
+			paddr_t pa;
+
+			(void) pmap_extract(pm, vaddr, &pa);
+			buflen -= NBPG;
+			vaddr += NBPG;
+
+			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
+			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+				/* Hey, waddyaknow, they're contiguous */
+				map->dm_segs[i].ds_len += NBPG;
+				continue;
+			}
+			map->dm_segs[++i].ds_addr = pa;
+			map->dm_segs[i].ds_len = NBPG;
+		}
+		if (i >= map->_dm_segcnt) 
+			/* Exceeded the size of our dmamap */
+			return E2BIG;
 	}
-	panic("_bus_dmamap_load_uio: not implemented");
-#else
-	return 0;
+	map->dm_nsegs = i;
+	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
+			    (bus_size_t)len, flags);
 #endif
+	return 0;
 }
 
 /*
