@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.7 2001/10/24 17:27:18 tron Exp $	*/
+/*	$NetBSD: rs.c,v 1.8 2002/06/11 06:06:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.7 2001/10/24 17:27:18 tron Exp $");
+__RCSID("$NetBSD: rs.c,v 1.8 2002/06/11 06:06:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ prepfile()
 	else if (orows == 0 && ocols == 0) {	/* decide rows and cols */
 		ocols = owidth / colw;
 		if (ocols == 0) {
-			warnx("Display width %d is less than column width %d\n", owidth, colw);
+			warnx("Display width %d is less than column width %d", owidth, colw);
 			ocols = 1;
 		}
 		if (ocols > nelem)

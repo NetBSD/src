@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2001/10/18 09:26:16 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2002/06/11 06:06:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2001/10/18 09:26:16 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2002/06/11 06:06:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,7 +649,7 @@ kread(addr, buf, size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
-		warnx("%s\n", kvm_geterr(kvmd));
+		warnx("%s", kvm_geterr(kvmd));
 		return (-1);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.14 2002/05/12 21:28:50 wiz Exp $	*/
+/*	$NetBSD: cut.c,v 1.15 2002/06/11 06:06:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.14 2002/05/12 21:28:50 wiz Exp $");
+__RCSID("$NetBSD: cut.c,v 1.15 2002/06/11 06:06:18 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -175,11 +175,11 @@ get_list(list)
 			}
 		}
 		if (*p)
-			errx(1, "[-cf] list: illegal list value\n");
+			errx(1, "[-cf] list: illegal list value");
 		if (!stop || !start)
-			errx(1, "[-cf] list: values may not include zero\n");
+			errx(1, "[-cf] list: values may not include zero");
 		if (stop > _POSIX2_LINE_MAX)
-			errx(1, "[-cf] list: %d too large (max %d)\n",
+			errx(1, "[-cf] list: %d too large (max %d)",
 			    stop, _POSIX2_LINE_MAX);
 		if (maxval < stop)
 			maxval = stop;
@@ -240,7 +240,7 @@ f_cut(fp, fname)
 		output = 0;
 		for (isdelim = 0, p = lbuf;; ++p) {
 			if (!(ch = *p))
-				errx(1, "%s: line too long.\n", fname);
+				errx(1, "%s: line too long.", fname);
 			/* this should work if newline is delimiter */
 			if (ch == sep)
 				isdelim = 1;
