@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: history.c,v 1.8 2004/07/16 18:39:18 christos Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: history.c,v 1.8 2004/07/16 18:39:18 christos Exp $");
 #endif
 
 
@@ -91,6 +91,11 @@ c_fc(wp)
 	int optc;
 	char *first = (char *) 0, *last = (char *) 0;
 	char **hfirst, **hlast, **hp;
+
+	if (hist_source == NULL) {
+		bi_errorf("not interactive");
+		return 1;
+	}
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
 		switch (optc) {
