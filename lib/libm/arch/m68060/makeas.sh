@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.3 1999/08/22 08:25:43 is Exp $
+# $NetBSD: makeas.sh,v 1.4 1999/11/10 16:32:45 thorpej Exp $
 
 # Copyright (c) 1999 Ignatios Souvatzis
 # All rights reserved.
@@ -69,12 +69,12 @@ ENTRY($NAME)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP$OFFS
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP$OFFS
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 EOJ
@@ -92,10 +92,10 @@ ENTRY($NAME)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP$OFFS
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP$OFFS
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 EOJ
