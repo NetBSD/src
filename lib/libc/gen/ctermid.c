@@ -1,4 +1,4 @@
-/*	$NetBSD: ctermid.c,v 1.7 1997/07/21 14:06:51 jtc Exp $	*/
+/*	$NetBSD: ctermid.c,v 1.8 1998/07/26 19:30:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctermid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ctermid.c,v 1.7 1997/07/21 14:06:51 jtc Exp $");
+__RCSID("$NetBSD: ctermid.c,v 1.8 1998/07/26 19:30:00 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ ctermid(s)
 	static char def[] = _PATH_TTY;
 
 	if (s) {
-		bcopy(def, s, sizeof(_PATH_TTY));
+		(void)strncpy(s, def, L_ctermid);
 		return (s);
 	}
 	return (def);
