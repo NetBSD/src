@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.9 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.10 1999/07/25 06:30:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -95,7 +95,7 @@ uvm_loadav(avg)
 	int i, nrun;
 	struct proc *p;
 
-	proclist_lock_read(LK_NOWAIT);
+	proclist_lock_read();
 	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		switch (p->p_stat) {
 		case SSLEEP:
@@ -172,7 +172,7 @@ uvm_total(totalp)
 	 * calculate process statistics
 	 */
 
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_flag & P_SYSTEM)
 			continue;
