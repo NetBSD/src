@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.21 1999/08/02 01:42:08 sommerfeld Exp $	*/
+/*	$NetBSD: mv.c,v 1.22 1999/08/16 07:49:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.21 1999/08/02 01:42:08 sommerfeld Exp $");
+__RCSID("$NetBSD: mv.c,v 1.22 1999/08/16 07:49:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,9 +284,15 @@ err:		if (unlink(to))
 		return (1);
 	}
 	(void)close(from_fd);
-
+#ifdef BSD4_4
 	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tval[1], &sbp->st_mtimespec);
+#else
+	tval[0].tv_sec = sbp->st_atime;
+	tval[1].tv_sec = sbp->st_mtime;
+	tval[0].tv_usec = 0;
+	tval[1].tv_usec = 0;
+#endif
 #ifdef __SVR4
 	if (utimes(to, tval))
 #else
