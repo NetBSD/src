@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.278 2003/04/16 22:32:15 thorpej Exp $
+#	$NetBSD: Makefile,v 1.279 2003/04/17 10:17:03 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
@@ -21,7 +21,7 @@ MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
 	mk48txx.4 mlx.4 mly.4 mpt.4 mpu.4 mtd.4 mtio.4 \
 	ne.4 neo.4 netintro.4 ns.4 nsclpcsio.4 nsip.4 \
 	nsphy.4 nsphyter.4 ntwoc.4 null.4 \
-	oosiop.4 opl.4 options.4 osiop.4 pas.4 \
+	oak.4 oosiop.4 opl.4 options.4 osiop.4 pas.4 \
 	pcdisplay.4 pciide.4 pckbc.4 pckbd.4 pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
 	pms.4 pnaphy.4 ppp.4 pppoe.4 pty.4 puc.4 px.4 pxg.4 qsphy.4 \
 	raid.4 ray.4 rcons.4 rnd.4 route.4 \
@@ -119,7 +119,7 @@ MLINKS+=icp.4 icpsp.4
 # This is a hack
 MLINKS+=edc.4 i386/ed.4
 
-SUBDIR= man4.acorn26 man4.alpha man4.amiga man4.arm32 man4.atari \
+SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.atari \
 	man4.dreamcast man4.evbarm man4.hp300 man4.i386 man4.mac68k \
 	man4.macppc man4.mvme68k man4.pc532 man4.pmax man4.pmppc man4.sgimips \
 	man4.sparc man4.sun2 man4.sun3 man4.vax man4.x68k
