@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.29 1996/02/06 00:13:04 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.30 1996/03/17 22:12:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -929,9 +929,9 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	register volatile struct chiptime *c = Mach_clock_addr;
 	struct clockframe cf;
 	int temp;
-	extern struct cfdriver siicd;
-	extern struct cfdriver lecd;
-	extern struct cfdriver dccd;
+	extern struct cfdriver sii_cd;
+	extern struct cfdriver le_cd;
+	extern struct cfdriver dc_cd;
 
 	/* handle clock interrupts ASAP */
 	if (mask & MACH_INT_MASK_3) {
@@ -949,7 +949,7 @@ kn01_intr(mask, pc, statusReg, causeReg)
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
 		intrcnt[SCSI_INTR]++;
-		siiintr(siicd.cd_devs[0]);
+		siiintr(sii_cd.cd_devs[0]);
 	}
 #endif
 #if NLE > 0
@@ -961,13 +961,13 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MACH_INT_MASK_1.
 		 */
-		leintr(lecd.cd_devs[0]);
+		leintr(le_cd.cd_devs[0]);
 		intrcnt[LANCE_INTR]++;
 	}
 #endif
 #if NDC > 0
 	if (mask & MACH_INT_MASK_2) {
-		dcintr(dccd.cd_devs[0]);
+		dcintr(dc_cd.cd_devs[0]);
 		intrcnt[SERIAL0_INTR]++;
 	}
 #endif
