@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.6 1995/02/25 13:41:34 cgd Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.7 1995/06/16 07:12:41 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,11 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getbsize.c,v 1.6 1995/02/25 13:41:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: getbsize.c,v 1.7 1995/06/16 07:12:41 jtc Exp $";
 #endif
 #endif /* not lint */
 
