@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.49 2001/01/14 02:06:21 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.50 2001/01/29 02:38:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct pool_cache_group {
 static void	pool_cache_reclaim(struct pool_cache *);
 
 static int	pool_catchup(struct pool *);
-static void	pool_prime_page(struct pool *, caddr_t);
+static int	pool_prime_page(struct pool *, caddr_t, int);
 static void	*pool_page_alloc(unsigned long, int, int);
 static void	pool_page_free(void *, unsigned long, int);
 
@@ -714,8 +714,18 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 		}
 
 		/* We have more memory; add it to the pool */
+		if (pool_prime_page(pp, v, flags & PR_WAITOK) != 0) {
+			/*
+			 * Probably, we don't allowed to wait and
+			 * couldn't allocate a page header.
+			 */
+			(*pp->pr_free)(v, pp->pr_pagesz, pp->pr_mtype);
+			pp->pr_nfail++;
+			pr_leave(pp);
+			simple_unlock(&pp->pr_slock);
+			return (NULL);
+		}
 		pp->pr_npagealloc++;
-		pool_prime_page(pp, v);
 
 		/* Start the allocation process over. */
 		goto startover;
@@ -962,7 +972,7 @@ int
 pool_prime(struct pool *pp, int n, caddr_t storage)
 {
 	caddr_t cp;
-	int newnitems, newpages;
+	int error, newnitems, newpages;
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(storage && !(pp->pr_roflags & PR_STATIC)))
@@ -992,8 +1002,14 @@ pool_prime(struct pool *pp, int n, caddr_t storage)
 			return (ENOMEM);
 		}
 
+		if ((error = pool_prime_page(pp, cp, PR_NOWAIT)) != 0) {
+			if ((pp->pr_roflags & PR_STATIC) == 0)
+				(*pp->pr_free)(cp, pp->pr_pagesz,
+				    pp->pr_mtype);
+			simple_unlock(&pp->pr_slock);
+			return (error);
+		}
 		pp->pr_npagealloc++;
-		pool_prime_page(pp, cp);
 		pp->pr_minpages++;
 	}
 
@@ -1011,8 +1027,8 @@ pool_prime(struct pool *pp, int n, caddr_t storage)
  *
  * Note, we must be called with the pool descriptor LOCKED.
  */
-static void
-pool_prime_page(struct pool *pp, caddr_t storage)
+static int
+pool_prime_page(struct pool *pp, caddr_t storage, int flags)
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
@@ -1028,8 +1044,10 @@ pool_prime_page(struct pool *pp, caddr_t storage)
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
 	} else {
 		s = splhigh();
-		ph = pool_get(&phpool, PR_URGENT);
+		ph = pool_get(&phpool, flags);
 		splx(s);
+		if (ph == NULL)
+			return (ENOMEM);
 		LIST_INSERT_HEAD(&pp->pr_hashtab[PR_HASH_INDEX(pp, cp)],
 				 ph, ph_hashlist);
 	}
@@ -1083,6 +1101,8 @@ pool_prime_page(struct pool *pp, caddr_t storage)
 
 	if (++pp->pr_npages > pp->pr_hiwat)
 		pp->pr_hiwat = pp->pr_npages;
+
+	return (0);
 }
 
 /*
@@ -1129,8 +1149,11 @@ pool_catchup(struct pool *pp)
 			error = ENOMEM;
 			break;
 		}
+		if ((error = pool_prime_page(pp, cp, PR_NOWAIT)) != 0) {
+			(*pp->pr_free)(cp, pp->pr_pagesz, pp->pr_mtype);
+			break;
+		}
 		pp->pr_npagealloc++;
-		pool_prime_page(pp, cp);
 	}
 
 	return (error);
