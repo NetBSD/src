@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.6 1993/04/15 07:57:57 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.7 1993/05/04 02:37:27 cgd Exp $";
 
 /*
  * code to manage AT bus
@@ -105,6 +105,16 @@ isa_configure() {
 	netmask |= ttymask;
 	ttymask |= netmask;
 #endif
+
+	/* and the problem is... if netmask == 0, then the loopback
+	 * code can do some really ugly things.
+	 * workaround for this: if netmask == 0, set it to 0x8000, which
+	 * is the value used by splsoftclock.  this is nasty, but it
+	 * should work until this interrupt system goes away. -- cgd
+	 */
+	if (netmask == 0)
+		netmask = 0x8000;	/* same as for softclock.  XXX */
+
 	/* biomask |= ttymask ;  can some tty devices use buffers? */
 	/* printf("biomask %x ttymask %x netmask %x\n", biomask, ttymask, netmask); */
 	splnone();
