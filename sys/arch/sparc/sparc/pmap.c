@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1996/05/27 01:12:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.62 1996/05/29 20:58:38 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1015,18 +1015,18 @@ mmu_reservemon4m(kpmap, kmemtop)
 
 	te = lda(ctxtblptr, ASI_BYPASS);
 	switch (te & SRMMU_TETYPE) {
-	    case SRMMU_TEINVALID:
+	case SRMMU_TEINVALID:
 		ctx_phys_tbl[0] = SRMMU_TEINVALID;
 		panic("mmu_reservemon4m: no existing L0 mapping! (How are we running?");
 		break;
-	    case SRMMU_TEPTE:
+	case SRMMU_TEPTE:
 #ifdef DEBUG
 		printf("mmu_reservemon4m: trying to remap 4G segment!\n");
 #endif
 		panic("mmu_reservemon4m: can't handle ROM 4G page size");
 		/* XXX: Should make this work, however stupid it is */
 		break;
-	    case SRMMU_TEPTD:
+	case SRMMU_TEPTD:
 		tableptr = (caddr_t) roundup((u_int) *kmemtop,
 					     SRMMU_L1SIZE * sizeof(long));
 		*kmemtop = tableptr + (SRMMU_L1SIZE * sizeof(long));
@@ -1037,7 +1037,7 @@ mmu_reservemon4m(kpmap, kmemtop)
 		kpmap->pm_reg_ptps_pa = VA2PA(tableptr);
 		mmu_setup4m_L1(te, tableptr, kpmap, kmemtop);
 		break;
-	    default:
+	default:
 		panic("mmu_reservemon4m: unknown pagetable entry type");
 	}
 
@@ -1076,10 +1076,10 @@ mmu_setup4m_L1(regtblptd, newtableptr, kpmap, kmemtop)
 	     i++, regtblrover += sizeof(long)) {
 		te = lda(regtblrover, ASI_BYPASS);
 		switch(te & SRMMU_TETYPE) {
-		    case SRMMU_TEINVALID:
+		case SRMMU_TEINVALID:
 			((int *)newtableptr)[i] = SRMMU_TEINVALID;
 			break;
-		    case SRMMU_TEPTE:
+		case SRMMU_TEPTE:
 #ifdef DEBUG
 			printf("mmu_reservemon4m: converting region 0x%x from L1->L3\n",i);
 #endif
@@ -1124,7 +1124,7 @@ mmu_setup4m_L1(regtblptd, newtableptr, kpmap, kmemtop)
 				}
 			}
 			break;
-		    case SRMMU_TEPTD:
+		case SRMMU_TEPTD:
 			thisregmap = &kpmap->pm_regmap[i];
 			bzero(thisregmap, sizeof(struct regmap));
 			segtblptr = (caddr_t) roundup((u_int)*kmemtop,
@@ -1140,7 +1140,7 @@ mmu_setup4m_L1(regtblptd, newtableptr, kpmap, kmemtop)
 						       SRMMU_TEPTD;
 			mmu_setup4m_L2(te, segtblptr, thisregmap, kmemtop, segmaps);
 			break;
-		    default:
+		default:
 			panic("mmu_setup4m_L1: unknown pagetable entry type");
 		}
 	}
@@ -1164,10 +1164,10 @@ mmu_setup4m_L2(segtblptd, newtableptr, pregmap, kmemtop, segmaps)
 	for (i = 0; i < SRMMU_L2SIZE; i++, segtblrover += sizeof(long)) {
 		te = lda(segtblrover, ASI_BYPASS);
 		switch(te & SRMMU_TETYPE) {
-		    case SRMMU_TEINVALID:
+		case SRMMU_TEINVALID:
 			((int *)newtableptr)[i] = SRMMU_TEINVALID;
 			break;
-		    case SRMMU_TEPTE:
+		case SRMMU_TEPTE:
 #ifdef DEBUG
 			printf("mmu_reservemon4m: converting L2 entry at segment 0x%x to L3\n",i);
 #endif
@@ -1195,7 +1195,7 @@ mmu_setup4m_L2(segtblptd, newtableptr, pregmap, kmemtop, segmaps)
 				    SRMMU_TEPTE;
 			}
 			break;
-		    case SRMMU_TEPTD:
+		case SRMMU_TEPTD:
 			pregmap->rg_nsegmap++;
 			thissegmap = &segmaps[i];
 			pagtblptr = (caddr_t) roundup((u_int) *kmemtop,
@@ -1208,7 +1208,7 @@ mmu_setup4m_L2(segtblptd, newtableptr, pregmap, kmemtop, segmaps)
 			thissegmap->sg_pte = (int *) pagtblptr;
 			thissegmap->sg_npte += mmu_setup4m_L3(te, pagtblptr);
 			break;
-		    default:
+		default:
 			panic("mmu_setup4m_L2: unknown pagetable entry type");
 		}
 	}
@@ -1227,16 +1227,16 @@ mmu_setup4m_L3(pagtblptd, newtableptr)
 	for (i = 0; i < SRMMU_L3SIZE; i++, pagtblrover += sizeof(long)) {
 		te = lda(pagtblrover, ASI_BYPASS);
 		switch(te & SRMMU_TETYPE) {
-		    case SRMMU_TEINVALID:
+		case SRMMU_TEINVALID:
 			((int *)newtableptr)[i] = SRMMU_TEINVALID;
 			break;
-		    case SRMMU_TEPTE:
+		case SRMMU_TEPTE:
 			((int *)newtableptr)[i] = te | PPROT_U2S_OMASK;
 			n++;
 			break;
-		    case SRMMU_TEPTD:
+		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
-		    default:
+		default:
 			panic("mmu_setup4m_L3: unknown pagetable entry type");
 		}
 	}
@@ -2404,22 +2404,26 @@ pv_syncflags4m(pv0)
 		if (sp->sg_pte == NULL)	/* invalid */
 			continue;
 
-		tpte = getptesw4m(pm, va);
+		/*
+		 * We need the PTE from memory as the TLB version will
+		 * always have the SRMMU_PG_R bit on.
+		 */
 		if (CTX_USABLE(pm,rp)) {
 			setcontext(pm->pm_ctxnum);
-			if (vactype != VAC_NONE && (tpte & SRMMU_PG_M))
-				cache_flush_page(va); /* XXX: do we need this?*/
 			tlb_flush_page(va);
 		}
+		tpte = getptesw4m(pm, va);
+
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
 		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
 			flags |= (tpte >> PG_M_SHIFT4M) &
 				 (PV_MOD4M|PV_REF4M|PV_C4M);
 			tpte &= ~(SRMMU_PG_M | SRMMU_PG_R);
-			if (CTX_USABLE(pm,rp))
-				setpte4m(va, tpte); /* flushes cache too */
-			else
-				setptesw4m(pm, va, tpte);
+			/* TLB has been invalidated, so just update memory */
+			setptesw4m(pm, va, tpte);
+			if (vactype != VAC_NONE &&
+			    CTX_USABLE(pm,rp) && (tpte & SRMMU_PG_M))
+				cache_flush_page(va); /* XXX: do we need this?*/
 		}
 	}
 	pv0->pv_flags = flags;
@@ -4849,6 +4853,8 @@ pmap_page_protect4m(pa, prot)
 				/* if we're done with a region, leave it */
 
 			} else { 	/* User mode mapping */
+				if (CTX_USABLE(pm,rp))
+					tlb_flush_segment(vr, vs);
 				rp->rg_seg_ptps[vs] = SRMMU_TEINVALID;
 				free(sp->sg_pte, M_VMPMAP);
 				sp->sg_pte = NULL;
