@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.15 2002/10/06 18:49:12 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.16 2003/12/21 07:53:59 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.15 2002/10/06 18:49:12 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.16 2003/12/21 07:53:59 simonb Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -110,7 +110,7 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 
 	
 	pool_init(&p->elem_pool, sizeof(RF_ReconMapListElem_t), 0,
-	    0, RF_NUM_RECON_POOL_ELEM, "raidreconpl", NULL);
+	    0, 0, "raidreconpl", NULL);
 
 	rc = rf_mutex_init(&p->mutex);
 	if (rc) {
