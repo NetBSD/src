@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1994/11/14 23:50:41 dean Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1994/11/23 22:33:46 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,9 +100,30 @@ bdev_decl(vn);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NRZ,rz),	/* 0: SCSI disk */
-	bdev_swap_init(),	/* 1: swap pseudo-device */
+	bdev_notdef(),		/* 0: SCSI disk */
+	bdev_notdef(),		/* 1: vax ht */
 	bdev_disk_init(NVN,vn),	/* 2: vnode disk driver (swap to files) */
+	bdev_notdef(),		/* 3: vax rk*/
+	bdev_swap_init(),	/* 4: swap pseudo-device*/
+	bdev_notdef(),		/* 5: vax tm */
+	bdev_notdef(),		/* 6: vax ts */
+	bdev_notdef(),		/* 7: vax mt */
+	bdev_notdef(),		/* 8: vax tu */
+	bdev_notdef(),		/* 9: ?? */
+	bdev_notdef(),		/*10: ut */
+	bdev_notdef(),		/*11: 11/730 idc */
+	bdev_notdef(),		/*12: rx */
+	bdev_notdef(),		/*13: uu */
+	bdev_notdef(),		/*14: rl */
+	bdev_notdef(),		/*15: tmscp */
+	bdev_notdef(),		/*16: cs */
+	bdev_notdef(),		/*17: md */
+	bdev_notdef(),		/*18: st */
+	bdev_notdef(),		/*19: sd */
+	bdev_notdef(),		/*20: tz */
+	bdev_disk_init(NRZ,rz),	/*21: SCSI disk */
+	bdev_notdef(),		/*22: ?? */
+	bdev_notdef(),		/*23: mscp */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -268,15 +289,15 @@ cdev_decl(dc);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
-	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
-	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
+	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
+	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
+	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
+        cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
+        cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
 	cdev_pm_init(NPM,pm),		/* 8: frame buffer */
-	cdev_disk_init(NRZ,rz),		/* 9: SCSI disk */
+	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
 	cdev_vn_init(NVN,vn),		/* 11: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 12: berkeley packet filter */
@@ -286,6 +307,74 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
 	cdev_pm_init(NMFB,mfb),		/* 18: mono frame buffer */
+        cdev_notdef(),		        /* 19: mt */
+	cdev_tty_init(NPTY,pts),	/* 20: pty slave  */
+        cdev_ptc_init(NPTY,ptc),        /* 21: pty master */
+	cdev_notdef(),			/* 22: dmf */
+	cdev_notdef(),			/* 23: vax 730 idc */
+	cdev_notdef(),			/* 24: dn-11 */
+
+		/* 25-28 CSRG reserved to local sites, DEC sez: */
+	cdev_notdef(),		/* 25: gpib */
+	cdev_notdef(),		/* 26: lpa */
+	cdev_notdef(),		/* 27: psi */
+	cdev_notdef(),		/* 28: ib */
+	cdev_notdef(),		/* 29: ad */
+	cdev_notdef(),		/* 30: rx */
+	cdev_notdef(),		/* 31: ik */
+	cdev_notdef(),		/* 32: rl-11 */
+	cdev_notdef(),		/* 33: dhu/dhv */
+	cdev_notdef(),		/* 34: Vax Able dmz, mips dc  */
+	cdev_notdef(),		/* 35: qv */
+	cdev_notdef(),		/* 36: tmscp */
+	cdev_notdef(),		/* 37: vs */
+	cdev_notdef(),		/* 38: vax cn console */
+	cdev_notdef(),		/* 39: lta */
+	cdev_notdef(),		/* 40: crl (Venus, aka 8600 aka 11/790 console RL02) */
+	cdev_notdef(),		/* 41: cs */
+	cdev_notdef(),		/* 42: qd, Qdss, vcb02 */
+	cdev_mm_init(1,mm),	/* 43: errlog (VMS-lookalike puke) */
+	cdev_notdef(),		/* 44: dmb */
+	cdev_notdef(),		/* 45:  vax ss, mips scc */
+	cdev_notdef(),		/* 46: st */
+	cdev_notdef(),		/* 47: sd */
+	cdev_notdef(),		/* 48: Ultrix /dev/trace */
+	cdev_notdef(),		/* 49: sm (sysV shm?) */
+	cdev_notdef(),		/* 50 sg */
+	cdev_notdef(),		/* 51: sh tty */
+	cdev_notdef(),		/* 52: its */
+	cdev_notdef(),		/* 53: nodev */
+	cdev_notdef(),		/* 54: nodev */
+	cdev_notdef(),		/* 55: tz */
+	cdev_disk_init(NRZ,rz), /* 56: rz scsi, Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 57: nodev */
+	cdev_notdef(),		/* 58: fc */
+	cdev_notdef(),		/* 59: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 60: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 61: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 62: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 63: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 64: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 65: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 66: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 67: mscp, again Ultrix gross coupling to PrestoServe driver */
+	cdev_notdef(),		/* 68: ld */
+	cdev_notdef(),		/* 69: /dev/audit */
+	cdev_notdef(),		/* 70: Mogul (nee' CMU) packetfilter */
+	cdev_notdef(),		/* 71: xcons, mips Ultrix /dev/xcons virtual console nightmare */
+	cdev_notdef(),		/* 72: xa */
+	cdev_notdef(),		/* 73: utx */
+	cdev_notdef(),		/* 74: sp */
+	cdev_notdef(),		/* 75: pr Ultrix PrestoServe NVRAM pseudo-device control device */
+	cdev_notdef(),		/* 76: ultrix disk shadowing */
+	cdev_notdef(),		/* 77: ek */
+	cdev_notdef(),		/* 78: msdup ? */
+	cdev_notdef(),		/* 79: so-called multimedia audio A */
+	cdev_notdef(),		/* 80: so-called multimedia audio B */
+	cdev_notdef(),		/* 81: so-called multimedia video in */
+	cdev_notdef(),		/* 82: so-called multimedia video out */
+	cdev_notdef(),		/* 83: fd */
+	cdev_notdef(),		/* 84: DTi */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -350,7 +439,7 @@ isdisk(dev, type)
 	/* NOTREACHED */
 }
 
-#define MAXDEV	19
+#define MAXDEV	60
 static int chrtoblktbl[MAXDEV] =  {
       /* VCHR */      /* VBLK */
 	/* 0 */		NODEV,
@@ -364,7 +453,7 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 8 */		NODEV,
 	/* 9 */		0,
 	/* 10 */	NODEV,
-	/* 11 */	2,
+	/* 11 */	NODEV,
 	/* 12 */	NODEV,
 	/* 13 */	NODEV,
 	/* 14 */	NODEV,
@@ -372,6 +461,47 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
 	/* 18 */	NODEV,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	21,
+	/* 57 */	NODEV,
+	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 /*
  * Routine to convert from character to block device number.
