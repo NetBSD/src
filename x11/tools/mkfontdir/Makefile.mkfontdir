@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.mkfontdir,v 1.1 2004/02/09 04:30:05 lukem Exp $
+
+MKFONTDIRDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontdir && ${PRINTOBJDIR}
+MKFONTDIR=	${MKFONTDIRDIR}/mkfontdir
+
+${MKFONTDIR}:
+	(cd ${NETBSDSRCDIR}/x11/tools/mkfontdir && ${MAKE})
