@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.2 2001/09/13 18:01:34 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.3 2001/09/13 19:19:21 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.2 2001/09/13 18:01:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.3 2001/09/13 19:19:21 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -368,8 +368,7 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		if (memcmp(eh->eco_dhost, eco_broadcastaddr,
 		    ECO_ADDR_LEN) == 0) {
 			/* Broadcast */
-			/* XXX eco_input(ifp, m) */
-			m_freem(m);
+			eco_input(ifp, m);
 		} else if (memcmp(eh->eco_dhost, LLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN) == 0) {
 			/* Unicast for us */
