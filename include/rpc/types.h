@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 2000/06/02 22:57:57 fvdl Exp $	*/
+/*	$NetBSD: types.h,v 1.13 2000/06/13 01:02:44 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -62,7 +62,7 @@ typedef   int32_t rpc_inline_t;
 #	define NULL	0
 #endif
 
-#define mem_alloc(bsize)	malloc(bsize)
+#define mem_alloc(bsize)	calloc(1, bsize)
 #define mem_free(ptr, bsize)	free(ptr)
 
 #include <sys/time.h>
