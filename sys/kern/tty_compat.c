@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.19 1994/11/17 20:27:15 christos Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.20 1995/03/31 03:07:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -228,6 +228,16 @@ ttcompat(tp, com, data, flag, p)
 
 	case TIOCHPCL:
 		tp->t_cflag |= HUPCL;
+		break;
+
+	case TIOCGSID:
+		if (tp->t_session == NULL)
+			return ENOTTY;
+
+		if (tp->t_session->s_leader == NULL)
+			return ENOTTY;
+
+		*(int *) data =  tp->t_session->s_leader->p_pid;
 		break;
 
 	default:
