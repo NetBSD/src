@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.7 1993/11/20 22:20:57 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.8 1993/11/25 01:07:48 paulus Exp $";
 #endif
 
 #include "as.h"
@@ -1007,11 +1007,6 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 				
 				add_symbolP = NULL;
 				fixP->fx_addsy = NULL;
-#ifdef PIC
-				add_symbolP = fixP->fx_addsy = fixP->fx_gotsy;
-				if (add_symbolP)
-					add_symbol_segment = S_GET_SEGMENT(add_symbolP);
-#endif
 			} else {
 				/* Different segments in subtraction. */
 				know(!(S_IS_EXTERNAL(sub_symbolP) && (S_GET_SEGMENT(sub_symbolP) == SEG_ABSOLUTE)));
@@ -1026,6 +1021,13 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 			}
 		} /* if sub_symbolP */
 		
+#ifdef	PIC
+		if (add_symbolP == NULL && fixP->fx_gotsy != NULL) {
+		    add_symbolP = fixP->fx_addsy = fixP->fx_gotsy;
+		    add_symbol_segment = S_GET_SEGMENT(add_symbolP);
+		}
+#endif	/* PIC */
+
 		if (add_symbolP) {
 			if (add_symbol_segment == this_segment_type && pcrel) {
 				/*
