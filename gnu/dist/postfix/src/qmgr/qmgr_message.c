@@ -498,6 +498,12 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * result address may differ from the one specified by the sender.
 	 */
 	resolve_clnt_query(recipient->address, &reply);
+	if (reply.flags & RESOLVE_FLAG_ERROR) {
+	    qmgr_bounce_recipient(message, recipient,
+				  "bad address syntax: \"%s\"",
+				  recipient->address);
+	    continue;
+	}
 	if (message->filter_xport) {
 	    vstring_strcpy(reply.transport, message->filter_xport);
 	    if ((nexthop = split_at(STR(reply.transport), ':')) == 0
