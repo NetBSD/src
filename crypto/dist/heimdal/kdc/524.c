@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: 524.c,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $");
+RCSID("$Id: 524.c,v 1.1.1.1.2.1 2000/10/17 23:11:27 tv Exp $");
 
 #ifdef KRB4
 
@@ -64,7 +64,7 @@ do_524(Ticket *t, krb5_data *reply, const char *from, struct sockaddr *addr)
     ret = hdb_enctype2key(context, server, t->enc_part.etype, &skey);
     if(ret){
 	kdc_log(0, "No suitable key found for server (%s) "
-		"when converting ticket from ", spn, from);
+		"when converting ticket from %s", spn, from);
 	goto out;
     }
     krb5_crypto_init(context, &skey->key, 0, &crypto);
