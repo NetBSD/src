@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.27 2001/03/05 18:12:49 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.28 2001/03/06 10:29:11 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.27 2001/03/05 18:12:49 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.28 2001/03/06 10:29:11 wiz Exp $");
 #endif
 #endif
 
@@ -305,7 +305,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		return -1;
 	}
 
-	/* chop off any possible suffix off 'pattern' and
+	/* chop any possible suffix off of 'pattern' and
 	 * store it in pat_sfx
 	 */
 	strcpy(tmp_pattern, pattern);
@@ -337,7 +337,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
 
-		/* chop off any possible suffix off 'tmp_file' and
+		/* chop any possible suffix off of 'tmp_file' and
 		 * store it in file_sfx
 		 */
 		strcpy(tmp_file, dp->d_name);
@@ -361,9 +361,9 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 			*file_tbgz = '\0';
 		}
 
-		/* we need to match pattern and suffix seperately, in case
+		/* we need to match pattern and suffix separately, in case
 		 * each is a different pattern class (e.g. dewey and
-		 * character class (.t[bg]z) */
+		 * character class (.t[bg]z)) */
 		if (pmatch(tmp_pattern, tmp_file)
 		    && pmatch(pat_sfx, file_sfx)) {
 			if (match) {
@@ -402,7 +402,7 @@ findbestmatchingname_fn(const char *found, char *best)
 	char best_no_sfx[255];
 
 	/* The same suffix-hack-off again, but we can't do it
-	 * otherwise without chaning the function call interface
+	 * otherwise without changing the function call interface
 	 */
 	found_version = strrchr(found, '-');
 	if (found_version) {
