@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.13 2003/04/16 10:09:47 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.14 2003/06/27 23:02:16 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,25 +41,25 @@
 .Nm cgdconfig
 .Nd configuration utility for the cryptographic disk driver
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl nv
 .Ar cgd dev
 .Op Ar paramsfile
-.Nm ""
+.Nm
 .Fl C
 .Op Fl nv
 .Op Fl f Ar configfile
-.Nm ""
+.Nm
 .Fl U
 .Op Fl nv
 .Op Fl f Ar configfile
-.Nm ""
+.Nm
 .Fl G
 .Op Fl nv
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
 .Ar paramsfile
-.Nm ""
+.Nm
 .Fl g
 .Op Fl nv
 .Op Fl i Ar ivmeth
@@ -67,7 +67,7 @@
 .Op Fl o Ar outfile
 .Ar alg
 .Op Ar keylen
-.Nm ""
+.Nm
 .Fl s
 .Op Fl nv
 .Op Fl i Ar ivmeth
@@ -75,7 +75,7 @@
 .Ar dev
 .Ar alg
 .Op Ar keylen
-.Nm ""
+.Nm
 .Fl u
 .Op Fl nv
 .Ar cgd
