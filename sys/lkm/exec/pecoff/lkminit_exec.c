@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2002/03/12 07:47:36 oki Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2002/03/18 08:16:08 oki Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1 2002/03/12 07:47:36 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.2 2002/03/18 08:16:08 oki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1 2002/03/12 07:47:36 oki Exp $")
 
 int exec_pecoff_lkmentry __P((struct lkm_table *, int, int));
 
-extern const struct emul emul_netbsd;	/* XXX */
-
 static struct execsw exec_pecoff =
 	/* Win32/WinCE PE/COFF (native word size) */
 	{ sizeof(struct exec),
 	  exec_pecoff_makecmds,
 	  { NULL },
-	  &emul_netbsd,		/* XXX emul_pecoff once it's different */
+	  NULL, /* will be set by exec_add() */
 	  EXECSW_PRIO_ANY,
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
 	  pecoff_copyargs,
