@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1 1999/03/19 23:34:49 thorpej Exp $	*/
+/*	$NetBSD: common.c,v 1.1.2.1 1999/06/21 14:30:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -121,7 +121,7 @@ dlerror()
 {
 
 	if (__mainprog_obj == NULL)
-		return NULL;
+		return ("Dynamic linker interface not available");
 	return (__mainprog_obj->dlerror)();
 }
 #endif /* DYNAMIC */
