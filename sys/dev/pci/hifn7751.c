@@ -1,6 +1,6 @@
-/*	$NetBSD: hifn7751.c,v 1.16 2003/08/28 01:53:06 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.17 2003/08/28 15:05:10 thorpej Exp $	*/
 /* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
-/*	$OpenBSD: hifn7751.c,v 1.139 2003/03/13 20:08:06 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.16 2003/08/28 01:53:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.17 2003/08/28 15:05:10 thorpej Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -225,14 +225,7 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 int
-hifn_probe(parent, match, aux)
-	struct device *parent;
-#ifdef	__OpenBSD__
-	void *match;
-#else
-	struct cfdata *match;
-#endif
-	void *aux;
+hifn_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -243,9 +236,7 @@ hifn_probe(parent, match, aux)
 }
 
 void 
-hifn_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hifn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hifn_softc *sc = (struct hifn_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -468,8 +459,7 @@ fail_io0:
 }
 
 int
-hifn_init_pubrng(sc)
-	struct hifn_softc *sc;
+hifn_init_pubrng(struct hifn_softc *sc)
 {
 	u_int32_t r;
 	int i;
@@ -538,8 +528,7 @@ hifn_init_pubrng(sc)
 
 #ifndef HIFN_NO_RNG
 static void
-hifn_rng(vsc)
-	void *vsc;
+hifn_rng(void *vsc)
 {
 #ifndef	__NetBSD__
 	struct hifn_softc *sc = vsc;
@@ -589,8 +578,7 @@ hifn_rng(vsc)
 #endif
 
 void
-hifn_puc_wait(sc)
-	struct hifn_softc *sc;
+hifn_puc_wait(struct hifn_softc *sc)
 {
 	int i;
 
@@ -607,8 +595,7 @@ hifn_puc_wait(sc)
  * Reset the processing unit.
  */
 void
-hifn_reset_puc(sc)
-	struct hifn_softc *sc;
+hifn_reset_puc(struct hifn_softc *sc)
 {
 	/* Reset processing unit */
 	WRITE_REG_0(sc, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
@@ -616,8 +603,7 @@ hifn_reset_puc(sc)
 }
 
 void
-hifn_set_retry(sc)
-	struct hifn_softc *sc;
+hifn_set_retry(struct hifn_softc *sc)
 {
 	u_int32_t r;
 
@@ -681,9 +667,7 @@ hifn_reset_board(struct hifn_softc *sc, int full)
 }
 
 u_int32_t
-hifn_next_signature(a, cnt)
-	u_int32_t a;
-	u_int cnt;
+hifn_next_signature(u_int32_t a, u_int cnt)
 {
 	int i;
 	u_int32_t v;
@@ -748,9 +732,7 @@ struct pci2id {
  * as enabling crypto twice will lock the board.
  */
 const char *
-hifn_enable_crypto(sc, pciid)
-	struct hifn_softc *sc;
-	pcireg_t pciid;
+hifn_enable_crypto(struct hifn_softc *sc, pcireg_t pciid)
 {
 	u_int32_t dmacfg, ramcfg, encl, addr, i;
 	char *offtbl = NULL;
@@ -851,8 +833,7 @@ report:
  * section of the HIFN Software Development reference manual.
  */
 void 
-hifn_init_pci_registers(sc)
-	struct hifn_softc *sc;
+hifn_init_pci_registers(struct hifn_softc *sc)
 {
 	/* write fixed values needed by the Initialization registers */
 	WRITE_REG_0(sc, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
@@ -920,8 +901,7 @@ hifn_init_pci_registers(sc)
  * routine is called.
  */
 void
-hifn_sessions(sc)
-	struct hifn_softc *sc;
+hifn_sessions(struct hifn_softc *sc)
 {
 	u_int32_t pucnfg;
 	int ctxsize;
@@ -948,8 +928,7 @@ hifn_sessions(sc)
  * state when this is called.
  */
 int
-hifn_ramtype(sc)
-	struct hifn_softc *sc;
+hifn_ramtype(struct hifn_softc *sc)
 {
 	u_int8_t data[8], dataexpect[8];
 	int i;
@@ -984,8 +963,7 @@ hifn_ramtype(sc)
 #define	HIFN_SRAM_GRANULARITY	(HIFN_SRAM_MAX / HIFN_SRAM_STEP_SIZE)
 
 int
-hifn_sramsize(sc)
-	struct hifn_softc *sc;
+hifn_sramsize(struct hifn_softc *sc)
 {
 	u_int32_t a;
 	u_int8_t data[8];
@@ -1020,8 +998,7 @@ hifn_sramsize(sc)
  * is already set up correctly.
  */
 int
-hifn_dramsize(sc)
-	struct hifn_softc *sc;
+hifn_dramsize(struct hifn_softc *sc)
 {
 	u_int32_t cnfg;
 
@@ -1032,9 +1009,8 @@ hifn_dramsize(sc)
 }
 
 void
-hifn_alloc_slot(sc, cmdp, srcp, dstp, resp)
-	struct hifn_softc *sc;
-	int *cmdp, *srcp, *dstp, *resp;
+hifn_alloc_slot(struct hifn_softc *sc, int *cmdp, int *srcp, int *dstp,
+    int *resp)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 
@@ -1080,10 +1056,7 @@ hifn_alloc_slot(sc, cmdp, srcp, dstp, resp)
 }
 
 int
-hifn_writeramaddr(sc, addr, data)
-	struct hifn_softc *sc;
-	int addr;
-	u_int8_t *data;
+hifn_writeramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	struct hifn_base_command wc;
@@ -1148,10 +1121,7 @@ hifn_writeramaddr(sc, addr, data)
 }
 
 int
-hifn_readramaddr(sc, addr, data)
-	struct hifn_softc *sc;
-	int addr;
-	u_int8_t *data;
+hifn_readramaddr(struct hifn_softc *sc, int addr, u_int8_t *data)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	struct hifn_base_command rc;
@@ -1219,8 +1189,7 @@ hifn_readramaddr(sc, addr, data)
  * Initialize the descriptor rings.
  */
 void 
-hifn_init_dma(sc)
-	struct hifn_softc *sc;
+hifn_init_dma(struct hifn_softc *sc)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	int i;
@@ -1258,9 +1227,7 @@ hifn_init_dma(sc)
  * command buffer size.
  */
 u_int
-hifn_write_command(cmd, buf)
-	struct hifn_command *cmd;
-	u_int8_t *buf;
+hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 {
 	u_int8_t *buf_pos;
 	struct hifn_base_command *base_cmd;
@@ -1374,8 +1341,7 @@ hifn_write_command(cmd, buf)
 }
 
 int
-hifn_dmamap_aligned(map)
-	bus_dmamap_t map;
+hifn_dmamap_aligned(bus_dmamap_t map)
 {
 	int i;
 
@@ -1390,9 +1356,7 @@ hifn_dmamap_aligned(map)
 }
 
 int
-hifn_dmamap_load_dst(sc, cmd)
-	struct hifn_softc *sc;
-	struct hifn_command *cmd;
+hifn_dmamap_load_dst(struct hifn_softc *sc, struct hifn_command *cmd)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	bus_dmamap_t map = cmd->dst_map;
@@ -1464,9 +1428,7 @@ hifn_dmamap_load_dst(sc, cmd)
 }
 
 int
-hifn_dmamap_load_src(sc, cmd)
-	struct hifn_softc *sc;
-	struct hifn_command *cmd;
+hifn_dmamap_load_src(struct hifn_softc *sc, struct hifn_command *cmd)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	bus_dmamap_t map = cmd->src_map;
@@ -1498,12 +1460,8 @@ hifn_dmamap_load_src(sc, cmd)
 }
 
 int 
-hifn_crypto(
-	struct hifn_softc *sc,
-	struct hifn_command *cmd,
-	struct cryptop *crp,
-	int hint)
-
+hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
+    struct cryptop *crp, int hint)
 {
 	struct	hifn_dma *dma = sc->sc_dma;
 	u_int32_t cmdlen;
@@ -1766,8 +1724,7 @@ err_srcmap1:
 }
 
 void
-hifn_tick(vsc)
-	void *vsc;
+hifn_tick(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 	int s;
@@ -2367,10 +2324,7 @@ hifn_abort(struct hifn_softc *sc)
 }
 
 void
-hifn_callback(sc, cmd, resbuf)
-	struct hifn_softc *sc;
-	struct hifn_command *cmd;
-	u_int8_t *resbuf;
+hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	struct cryptop *crp = cmd->crp;
@@ -2914,11 +2868,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 #endif	/* HAVE_CRYPTO_LSZ */
 
 void
-hifn_write_4(sc, reggrp, reg, val)
-	struct hifn_softc *sc;
-	int reggrp;
-	bus_size_t reg;
-	u_int32_t val;
+hifn_write_4(struct hifn_softc *sc, int reggrp, bus_size_t reg, u_int32_t val)
 {
 	/*
 	 * 7811 PB3 rev/2 parts lock-up on burst writes to Group 0
@@ -2941,10 +2891,7 @@ hifn_write_4(sc, reggrp, reg, val)
 }
 
 u_int32_t
-hifn_read_4(sc, reggrp, reg)
-	struct hifn_softc *sc;
-	int reggrp;
-	bus_size_t reg;
+hifn_read_4(struct hifn_softc *sc, int reggrp, bus_size_t reg)
 {
 	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
 		sc->sc_waw_lastgroup = -1;
