@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.74.2.1 2002/03/12 07:53:25 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74.2.1 2002/03/12 07:53:25 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -871,6 +871,7 @@ pool_get(struct pool *pp, int flags)
 
 	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
+	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
 	return (v);
 }
 
@@ -1090,8 +1091,9 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
 	caddr_t cp = storage;
-	unsigned int align = pp->pr_align;
-	unsigned int ioff = pp->pr_itemoffset;
+	const unsigned int align = pp->pr_align;
+	const unsigned int ioff = pp->pr_itemoffset;
+	const unsigned int alignsize = roundup(pp->pr_size, align);
 	int n;
 
 #ifdef DIAGNOSTIC
@@ -1127,6 +1129,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	if (ioff != 0)
 		cp = (caddr_t)(cp + (align - ioff));
 
+	KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
+
 	/*
 	 * Insert remaining chunks on the bucket list.
 	 */
@@ -1141,7 +1145,9 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 #ifdef DIAGNOSTIC
 		pi->pi_magic = PI_MAGIC;
 #endif
-		cp = (caddr_t)(cp + pp->pr_size);
+		cp = (caddr_t)(cp + alignsize);
+
+		KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 	}
 
 	/*
@@ -1697,6 +1703,8 @@ pool_cache_get(struct pool_cache *pc, int flags)
 				return (NULL);
 			}
 		}
+		KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+		    (pc->pc_pool->pr_align - 1)) == 0);
 		return (object);
 	}
 
@@ -1710,6 +1718,8 @@ pool_cache_get(struct pool_cache *pc, int flags)
 
 	simple_unlock(&pc->pc_slock);
 
+	KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+	    (pc->pc_pool->pr_align - 1)) == 0);
 	return (object);
 }
 
