@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.2 1995/09/02 03:19:37 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.3 1995/09/02 05:36:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -232,8 +232,8 @@ pdma_cleanup(void)
 	run_main(cur_softc);
 }
 
-void
-ncr5380_irq_intr(void)
+static int
+scsi_main_irq()
 {
 	if (pdma_xfer_fun) {
 #if DEBUG
@@ -244,7 +244,7 @@ ncr5380_irq_intr(void)
 		 * here.  It does happen, though.
 		 */
 		if (!(GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET)) {
-			return;
+			return 0;
 		}
 		/*
 		 * For a phase mis-match, ATN is a "don't care," IRQ is 1 and
@@ -257,11 +257,20 @@ ncr5380_irq_intr(void)
 			== SC_IRQ_SET)
 		    && (GET_5380_REG(NCR5380_IDSTAT) & (SC_S_BSY|SC_S_REQ))) {
 			pdma_cleanup();
-			return;
+			return 1;
 		} else {
 			scsi_show();
 			panic("Spurious interrupt during PDMA xfer.\n");
 		}
+	}
+	return 0;
+}
+
+void
+ncr5380_irq_intr(void)
+{
+	if (scsi_main_irq()) {
+		return;
 	}
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
