@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 1997/03/16 11:26:23 veego Exp $
+#	$NetBSD: Makefile,v 1.12 1997/05/10 15:42:54 lukem Exp $
 
 .include <bsd.own.mk>
 
-# Revision is 1.2D
-# all these private copies of the version number really lose.
-REV=		12D
+REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
