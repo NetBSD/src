@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.4 1994/06/29 06:29:27 cgd Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.5 1994/07/11 05:07:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,6 +65,8 @@ struct anode {
 	u_long extb;		/* (f/e) extension block number */
 	u_long linkto;		/* (hd/hf) header this link points at */
 	u_long linknext;	/* (d/f/hd/hf) next link (or head) in chain */
+	u_long lastlindblk;	/* (f/hf) last logical indirect block */
+	u_long lastindblk;	/* (f/hf) last indirect block read */
 	u_long *tab;		/* (r/d) hash table */
 	int *tabi;		/* (r/d) table info */
 	int ntabent;		/* (r/d) number of entries in table */
