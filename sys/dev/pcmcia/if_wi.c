@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.20 2000/05/23 08:41:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -30,8 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $
  */
 
 /*
@@ -114,11 +112,6 @@
 
 #include <dev/pcmcia/if_wi_ieee.h>
 #include <dev/pcmcia/if_wivar.h>
-
-#if !defined(lint)
-static const char rcsid[] =
-	"$Id: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $";
-#endif
 
 #ifdef foo
 static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };

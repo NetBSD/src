@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.8 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.9 2000/05/23 08:41:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -30,8 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_wivar.h,v 1.8 2000/03/23 07:01:42 thorpej Exp $
  */
 
 

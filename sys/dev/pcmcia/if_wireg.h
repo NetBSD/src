@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.5 2000/02/04 07:48:29 explorer Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.6 2000/05/23 08:41:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -30,8 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_wireg.h,v 1.5 2000/02/04 07:48:29 explorer Exp $
  */
 
 /*
