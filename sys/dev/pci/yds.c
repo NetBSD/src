@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.2 2001/03/30 15:53:25 minoura Exp $	*/
+/*	$NetBSD: yds.c,v 1.3 2001/04/05 12:36:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -402,19 +402,19 @@ yds_allocate_slots(sc)
 	ws = WORK_SIZE;
 	YWRITE4(sc, YDS_WORK_SIZE, ws / sizeof(u_int32_t));
 
-	DPRINTF(("play control size : %d\n", (int)pcs));
-	DPRINTF(("rec control size : %d\n", (int)rcs));
-	DPRINTF(("eff control size : %d\n", (int)ecs));
-	DPRINTF(("work size : %d\n", (int)ws));
+	DPRINTF(("play control size : %d\n", (unsigned int)pcs));
+	DPRINTF(("rec control size : %d\n", (unsigned int)rcs));
+	DPRINTF(("eff control size : %d\n", (unsigned int)ecs));
+	DPRINTF(("work size : %d\n", (unsigned int)ws));
 #ifdef DIAGNOSTIC
 	if (pcs != sizeof(struct play_slot_ctrl_bank)) {
 		printf("%s: invalid play slot ctrldata %d != %d\n",
-		       sc->sc_dev.dv_xname, pcs,
-		       sizeof(struct play_slot_ctrl_bank));
+		       sc->sc_dev.dv_xname, (unsigned int)pcs,
+		       (unsigned int)sizeof(struct play_slot_ctrl_bank));
 	if (rcs != sizeof(struct rec_slot_ctrl_bank))
 		printf("%s: invalid rec slot ctrldata %d != %d\n",
-		       sc->sc_dev.dv_xname, rcs,
-		       sizeof(struct rec_slot_ctrl_bank));
+		       sc->sc_dev.dv_xname, (unsigned int)rcs,
+		       (unsigned int)sizeof(struct rec_slot_ctrl_bank));
 	}
 #endif
 
