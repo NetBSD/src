@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.26 2001/11/16 10:25:44 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.27 2002/01/13 08:02:14 fair Exp $
 .\"
 .Dd December 19, 2000
 .Dt FDISK 8
@@ -74,8 +74,11 @@ An example follows:
 .Ed
 .Pp
 This example disk is divided into three partitions that happen to fill the
-disk.  The second partition overlaps the end of the first.
-(Used for debugging purposes.)
+disk.
+The second partition overlaps the end of the first
+.Po
+used for debugging purposes
+.Pc .
 .Pp
 The various fields in each partition are:
 .Bl -tag -width "cylinder"
@@ -261,6 +264,7 @@ Default location of i386 bootselect code
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
+.Xr mbr 8 ,
 .Xr mbrlabel 8
 .Sh BUGS
 There are subtleties that the program detects that are not explained in
