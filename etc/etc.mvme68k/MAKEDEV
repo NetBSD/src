@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 2002/03/04 14:02:35 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2002/03/13 01:26:59 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,11 +99,11 @@ case $i in
 all)
 	makedev std fd sd0 sd1 sd2 pty0
 	makedev ttyZ1 ttyZ2 ttyZ3 ttyC1 ttyC2 ttyC3
-	makedev st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1 
+	makedev st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
-	makedev ipl random local 
+	makedev ipl random local
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
@@ -142,12 +142,12 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=9; chr=32;
+	unit=${i#md}; blk=9; chr=32
 	rm -f md${unit} md${unit}c rmd${unit}
 	mknod md${unit}  b $blk $((($unit +  0) * 8))
 	mknod md${unit}c b $blk $((($unit + 16) * 8))
 #	mknod rmd${unit} c $chr $((($unit + 16) * 8))
-	chgrp operator md${unit} md${unit}c #rmd${unit}     
+	chgrp operator md${unit} md${unit}c #rmd${unit}
 	chmod 640 md${unit} md${unit}c #rmd${unit}
 	;;
 
@@ -221,7 +221,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -257,7 +257,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=20;	blk=7;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -267,9 +267,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -339,7 +339,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 36 $unit
 	chmod 644 scsibus$unit
