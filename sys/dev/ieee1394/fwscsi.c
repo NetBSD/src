@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.1 2001/04/30 09:06:27 jmc Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.2 2001/05/03 04:37:43 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,11 +53,11 @@ static void fwscsi_attach(struct device *, struct device *, void *);
 static int fwscsi_detach(struct device *, int);
 
 struct fwscsi_softc {
-    struct device sc_dev;
+	struct device sc_dev;
 };
 
 struct cfattach fwscsi_ca = {
-    sizeof(struct fwscsi_softc), fwscsi_match, fwscsi_attach, fwscsi_detach
+	sizeof(struct fwscsi_softc), fwscsi_match, fwscsi_attach, fwscsi_detach
 };
 
 /* Place holders for the moment. */
@@ -65,7 +65,7 @@ struct cfattach fwscsi_ca = {
 static int
 fwscsi_match(struct device *parent, struct cfdata *match, void *aux)
 {
-    return 0;
+	return 0;
 }
 
 static void
@@ -76,5 +76,5 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 static int
 fwscsi_detach(struct device *self, int flags)
 {
-    return 0;
+	return 0;
 }

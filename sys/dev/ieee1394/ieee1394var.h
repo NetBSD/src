@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.6 2001/05/01 06:15:43 enami Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.7 2001/05/03 04:38:33 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,11 +74,11 @@ struct ieee1394_attach_args {
 	void *output;
 	void *inreg;
 };    
- 
+
 struct ieee1394_softc {
 	struct device sc1394_dev;
 	struct device *sc1394_if;
-
+	
 	const struct ieee1394_callbacks sc1394_callback;
 	u_int32_t *sc1394_configrom;
 	u_int32_t sc1394_configrom_len;  /* quadlets. */
@@ -86,18 +86,18 @@ struct ieee1394_softc {
 	u_int8_t sc1394_guid[8];
 	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
 	u_int16_t sc1394_node_id;	/* my node id in network order */
-
+	
 	int (*sc1394_ifoutput)(struct device *, struct mbuf *,
 	    void (*)(struct device *, struct mbuf *));
 	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
 	    void (*)(struct device *, struct mbuf *));
-    
+	
 	LIST_ENTRY(ieee1394_softc) sc1394_node;
 };
 
 struct ieee1394_node {
 	struct device node_dev;
-
+	
 	struct ieee1394_softc *node_sc;	/* owning bus */
 	u_int32_t *node_configrom;
 	size_t node_configrom_len;

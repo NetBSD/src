@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.10 2001/05/01 06:15:43 enami Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.11 2001/05/03 04:37:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct fwohci_handler {
 	u_int32_t	fh_key1;	/* addrhi / srcid  / chan */
 	u_int32_t	fh_key2;	/* addrlo / tlabel / tag  */
 	int		(*fh_handler)(struct fwohci_softc *, void *,
-			    struct fwohci_pkt *);
+	    struct fwohci_pkt *);
 	void		*fh_handarg;
 };
 
@@ -161,7 +161,7 @@ struct fwohci_softc {
 	u_int8_t sc_rootid;			/* Phy ID of Root */
 	u_int8_t sc_irmid;			/* Phy ID of IRM */
 	u_int8_t sc_tlabel;			/* Transaction Label */
-
+	
 	LIST_HEAD(, ieee1394_softc) sc_nodelist;
 };
 
