@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.76 2004/04/30 06:27:59 dsl Exp $	*/
+/*	$NetBSD: eval.c,v 1.77 2004/06/26 14:09:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.76 2004/04/30 06:27:59 dsl Exp $");
+__RCSID("$NetBSD: eval.c,v 1.77 2004/06/26 14:09:58 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ evalfor(union node *n, int flags)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next) {
-		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE | EXP_RECORD);
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE | EXP_IFS_SPLIT);
 		if (evalskip)
 			goto out;
 	}
