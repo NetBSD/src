@@ -1,0 +1,30 @@
+.\"	$NetBSD: prep,v 1.1 2002/05/18 17:31:43 pooka Exp $
+.
+First and foremost, before beginning the installation process,
+.Em make sure you have a reliable backup
+of any data (e.g., an old IRIX installation) you wish to preserve.
+.Pp
+Booting
+.Nx*M
+for the first time is most commonly done from the network. You must
+set up DHCP, TFTP, and NFS for the installation procedure to be
+successful. Some SGI bootproms, such as the ones found on O2s, can read
+ELF kernels directly from the network, others require that you boot
+an ECOFF version of the kernel. You can convert the standard ELF
+format kernel into an ECOFF kernel using the
+.Pa elf2ecoff
+tool.
+.Pp
+Note that some older bootproms have an interesting bug in reading the
+kernel via TFTP. They handle the port number as a signed entity, and
+can thus not connect to ports >32767. You can work around this problem
+on the TFTP server (given that it is a NetBSD host) by using
+.Dq sysctl
+to set
+.Dq net.inet.ip.anonportmin
+and
+.Dq net.inet.ip.anonportmax
+to more suitable values.
+.Pp
+The O2 internal MACE Ethernet chip isn't supported yet, so to boot the O2
+and mount nfsroot, you will need an external NIC in the PCI slot.
