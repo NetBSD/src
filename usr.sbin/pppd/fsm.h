@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.5 1995/07/04 23:47:40 paulus Exp $
+ * $Id: fsm.h,v 1.6 1996/03/15 03:03:45 paulus Exp $
  */
 
 /*
@@ -74,6 +74,8 @@ typedef struct fsm {
     int nakloops;		/* Number of nak loops since last ack */
     int maxnakloops;		/* Maximum number of nak loops tolerated */
     fsm_callbacks *callbacks;	/* Callback routines */
+    char *term_reason;		/* Reason for closing protocol */
+    int term_reason_len;	/* Length of term_reason */
 } fsm;
 
 
@@ -116,7 +118,7 @@ void fsm_init __P((fsm *));
 void fsm_lowerup __P((fsm *));
 void fsm_lowerdown __P((fsm *));
 void fsm_open __P((fsm *));
-void fsm_close __P((fsm *));
+void fsm_close __P((fsm *, char *));
 void fsm_input __P((fsm *, u_char *, int));
 void fsm_protreject __P((fsm *));
 void fsm_sdata __P((fsm *, int, int, u_char *, int));
