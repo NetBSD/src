@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.17 2002/09/12 17:08:32 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.18 2002/09/12 18:21:18 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -62,65 +62,6 @@ void
 _rtld_setup_pltgot(obj)
 	const Obj_Entry *obj;
 {
-	Elf_Addr *got = obj->pltgot;
-	const Elf_Sym *sym = obj->symtab;
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	int i;
-
-	i = (got[1] & 0x80000000) ? 2 : 1;
-	/* Relocate the local GOT entries */
-	while (i < obj->local_gotno)
-		got[i++] += (Elf_Word)obj->relocbase;
-	got += obj->local_gotno;
-	sym += obj->gotsym;
-	/* Now do the global GOT entries */
-	for (i = obj->gotsym; i < obj->symtabno; i++) {
-		rdbg(1, (" doing got %d sym %p (%s, %x)", i - obj->gotsym, 
-		    sym, sym->st_name + obj->strtab, *got));
-
-		def = _rtld_find_symdef(i, obj, &defobj, true);
-		if (def == NULL)
-			_rtld_error(
-	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
-			    obj->path, sym->st_name + obj->strtab,
-			    (u_long) ELF_ST_TYPE(sym->st_info), (u_long) i);
-		else {
-			if (sym->st_shndx == SHN_UNDEF) {
-#if 0	/* These don't seem to work? */
-
-				if (ELF_ST_TYPE(sym->st_info) == STT_FUNC) {
-					if (sym->st_value)
-						*got = sym->st_value +
-						    (Elf_Word)obj->relocbase;
-					else
-						*got = def->st_value +
-						    (Elf_Word)defobj->relocbase;
-				} else
-#endif
-					*got = def->st_value +
-					    (Elf_Word)defobj->relocbase;
-			} else if (sym->st_shndx == SHN_COMMON) {
-				*got = def->st_value +
-				    (Elf_Word)defobj->relocbase;
-			} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-			    *got != sym->st_value) {
-				*got += (Elf_Word)obj->relocbase;
-			} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
-			    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-				if (sym->st_shndx == SHN_ABS)
-					*got = sym->st_value +
-					    (Elf_Word)obj->relocbase;
-				/* else SGI stuff ignored */
-			} else
-				*got = def->st_value +
-				    (Elf_Word)defobj->relocbase;
-		}
-
-		++sym;
-		++got;
-	}
-
 	obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
 	/* XXX only if obj->pltgot[1] & 0x80000000 ?? */
 	obj->pltgot[1] |= (Elf_Addr) obj;
@@ -134,7 +75,10 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 	const Elf_Rel *rel = 0, *rellim;
 	Elf_Addr relsz = 0;
 	Elf_Addr *where;
-	const Elf_Sym *def, *symtab;
+	const Elf_Sym *symtab, *sym;
+	Elf_Addr *got;
+	Elf_Word local_gotno, symtabno, gotsym;
+	int i;
 
 	for (; dynp->d_tag != DT_NULL; dynp++) {
 		switch (dynp->d_tag) {
@@ -147,6 +91,18 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 		case DT_SYMTAB:
 			symtab = (const Elf_Sym *)(relocbase + dynp->d_un.d_ptr);
 			break;
+		case DT_PLTGOT:
+			got = (Elf_Addr *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_MIPS_LOCAL_GOTNO:
+			local_gotno = dynp->d_un.d_val;
+			break;
+		case DT_MIPS_SYMTABNO:
+			symtabno = dynp->d_un.d_val;
+			break;
+		case DT_MIPS_GOTSYM:
+			gotsym = dynp->d_un.d_val;
+			break;
 		}
 	}
 	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
@@ -158,18 +114,42 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 			break;
 
 		case R_TYPE(REL32):
-			def = symtab + ELF_R_SYM(rel->r_info);
-			if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
-			    ELF_ST_TYPE(def->st_info) == STT_SECTION) {
-				*where += (Elf_Addr)def->st_value;
-				*where += (Elf_Addr)relocbase;
-			} else
+			sym = symtab + ELF_R_SYM(rel->r_info);
+			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    ELF_ST_TYPE(sym->st_info) == STT_SECTION)
+				*where += (Elf_Addr)(sym->st_value + relocbase);
+			else
 				abort();
 			break;
 
 		default:
 			abort();
 		}
+	}
+
+	i = (got[1] & 0x80000000) ? 2 : 1;
+	/* Relocate the local GOT entries */
+	while (i < local_gotno)
+		got[i++] += relocbase;
+	got += local_gotno;
+	sym = symtab + gotsym;
+	/* Now do the global GOT entries */
+	for (i = gotsym; i < symtabno; i++) {
+		if (sym->st_shndx == SHN_UNDEF ||
+		    sym->st_shndx == SHN_COMMON) {
+			*got = sym->st_value + relocbase;
+		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    *got != sym->st_value) {
+			*got += relocbase;
+		} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
+		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			if (sym->st_shndx == SHN_ABS)
+				*got = sym->st_value + relocbase;
+			/* else SGI stuff ignored */
+		} else
+			*got = sym->st_value + relocbase;
+		++sym;
+		++got;
 	}
 }
 
@@ -180,6 +160,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	bool dodebug;
 {
 	const Elf_Rel *rel;
+	Elf_Addr *got = obj->pltgot;
+	const Elf_Sym *sym = obj->symtab;
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	int i;
 
 	if (self)
 		return 0;
@@ -259,6 +244,60 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			return -1;
 		}
 	}
+
+	i = (got[1] & 0x80000000) ? 2 : 1;
+	/* Relocate the local GOT entries */
+	while (i < obj->local_gotno)
+		got[i++] += (Elf_Word)obj->relocbase;
+	got += obj->local_gotno;
+	sym += obj->gotsym;
+	/* Now do the global GOT entries */
+	for (i = obj->gotsym; i < obj->symtabno; i++) {
+		rdbg(1, (" doing got %d sym %p (%s, %x)", i - obj->gotsym, 
+		    sym, sym->st_name + obj->strtab, *got));
+
+		def = _rtld_find_symdef(i, obj, &defobj, true);
+		if (def == NULL)
+			_rtld_error(
+	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
+			    obj->path, sym->st_name + obj->strtab,
+			    (u_long) ELF_ST_TYPE(sym->st_info), (u_long) i);
+		else {
+			if (sym->st_shndx == SHN_UNDEF) {
+#if 0	/* These don't seem to work? */
+
+				if (ELF_ST_TYPE(sym->st_info) == STT_FUNC) {
+					if (sym->st_value)
+						*got = sym->st_value +
+						    (Elf_Word)obj->relocbase;
+					else
+						*got = def->st_value +
+						    (Elf_Word)defobj->relocbase;
+				} else
+#endif
+					*got = def->st_value +
+					    (Elf_Word)defobj->relocbase;
+			} else if (sym->st_shndx == SHN_COMMON) {
+				*got = def->st_value +
+				    (Elf_Word)defobj->relocbase;
+			} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+			    *got != sym->st_value) {
+				*got += (Elf_Word)obj->relocbase;
+			} else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
+			    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+				if (sym->st_shndx == SHN_ABS)
+					*got = sym->st_value +
+					    (Elf_Word)obj->relocbase;
+				/* else SGI stuff ignored */
+			} else
+				*got = def->st_value +
+				    (Elf_Word)defobj->relocbase;
+		}
+
+		++sym;
+		++got;
+	}
+
 	return 0;
 }
 
