@@ -1,7 +1,0 @@
-This package contains the sushi(8) menu-based system administration
-tool.
-
-The sushi tool gives the user a menu of various system administration
-tasks that may be performed on the system.  It is designed to be
-simple enough for a novice to use, and quick enough to help seasoned
-users perform more complex tasks with ease.
