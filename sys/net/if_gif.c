@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.7 2000/01/17 06:29:07 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.8 2000/03/30 09:45:35 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,8 +92,8 @@ void
 gifattach(dummy)
 	int dummy;
 {
-	register struct gif_softc *sc;
-	register int i;
+	struct gif_softc *sc;
+	int i;
 
 	gif = sc = malloc (ngif * sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
 	bzero(sc, ngif * sizeof(struct gif_softc));
@@ -118,7 +118,7 @@ gif_output(ifp, m, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;	/* added in net2 */
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
 	int calllimit = 10;	/* XXX: adhoc */
@@ -210,7 +210,7 @@ gif_input(m, af, gifp)
 	struct ifnet *gifp;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if (gifp == NULL) {
 		/* just in case */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.38 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.39 2000/03/30 09:45:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -82,7 +82,7 @@ void
 tunattach(unused)
 	int unused;
 {
-	register int i;
+	int i;
 	struct ifnet *ifp;
 
 	for (i = 0; i < NTUN; i++) {
@@ -120,7 +120,7 @@ tunopen(dev, flag, mode, p)
 {
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
-	register int	unit, error;
+	int	unit, error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -147,7 +147,7 @@ tunclose(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	register int	unit = minor(dev), s;
+	int	unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m;
@@ -170,7 +170,7 @@ tunclose(dev, flag, mode, p)
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
-			register struct ifaddr *ifa;
+			struct ifaddr *ifa;
 			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 			    ifa = ifa->ifa_list.tqe_next) {
 #ifdef INET
@@ -197,7 +197,7 @@ tuninit(tp)
 	struct tun_softc *tp;
 {
 	struct ifnet	*ifp = &tp->tun_if;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
 

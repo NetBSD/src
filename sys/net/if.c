@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.60 2000/03/30 02:31:59 simonb Exp $	*/
+/*	$NetBSD: if.c,v 1.61 2000/03/30 09:45:34 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -242,8 +242,8 @@ if_attach(ifp)
 {
 	unsigned socksize, ifasize;
 	int namelen, masklen;
-	register struct sockaddr_dl *sdl;
-	register struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
+	struct ifaddr *ifa;
 	static size_t if_indexlim = 8;
 
 	if (if_index == 0)
@@ -485,10 +485,10 @@ if_rt_walktree(rn, v)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithaddr(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 #define	equal(a1, a2) \
   (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
@@ -520,10 +520,10 @@ ifa_ifwithaddr(addr)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithdstaddr(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -552,9 +552,9 @@ struct ifaddr *
 ifa_ifwithnet(addr)
 	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
@@ -584,7 +584,7 @@ ifa_ifwithnet(addr)
 			continue;
 		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
-			register char *cp, *cp2, *cp3;
+			char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
@@ -629,10 +629,10 @@ ifa_ifwithladdr(addr)
  */
 struct ifaddr *
 ifa_ifwithaf(af)
-	register int af;
+	int af;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -654,11 +654,11 @@ ifa_ifwithaf(af)
 struct ifaddr *
 ifaof_ifpforaddr(addr, ifp)
 	struct sockaddr *addr;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register char *cp, *cp2, *cp3;
-	register char *cplim;
+	struct ifaddr *ifa;
+	char *cp, *cp2, *cp3;
+	char *cplim;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
@@ -702,10 +702,10 @@ ifaof_ifpforaddr(addr, ifp)
 void
 link_rtrequest(cmd, rt, sa)
 	int cmd;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct sockaddr *sa;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	struct sockaddr *dst;
 	struct ifnet *ifp;
 
@@ -728,9 +728,9 @@ link_rtrequest(cmd, rt, sa)
  */
 void
 if_down(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
@@ -747,10 +747,10 @@ if_down(ifp)
  */
 void
 if_up(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 #ifdef notyet
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 #endif
 
 	ifp->if_flags |= IFF_UP;
@@ -771,9 +771,9 @@ if_up(ifp)
  */
 void
 if_qflush(ifq)
-	register struct ifqueue *ifq;
+	struct ifqueue *ifq;
 {
-	register struct mbuf *m, *n;
+	struct mbuf *m, *n;
 
 	n = ifq->ifq_head;
 	while ((m = n) != NULL) {
@@ -794,7 +794,7 @@ void
 if_slowtimo(arg)
 	void *arg;
 {
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	int s = splimp();
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
@@ -817,7 +817,7 @@ struct ifnet *
 ifunit(name)
 	const char *name;
 {
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -839,8 +839,8 @@ ifioctl(so, cmd, data, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct ifnet *ifp;
-	register struct ifreq *ifr;
+	struct ifnet *ifp;
+	struct ifreq *ifr;
 	int error = 0;
 	short oif_flags;
 
@@ -1018,9 +1018,9 @@ ifconf(cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifconf *ifc = (struct ifconf *)data;
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifconf *ifc = (struct ifconf *)data;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
 
@@ -1037,7 +1037,7 @@ ifconf(cmd, data)
 			space -= sizeof (ifr), ifrp++;
 		} else 
 		    for (; space >= sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-			register struct sockaddr *sa = ifa->ifa_addr;
+			struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =

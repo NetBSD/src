@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.57 2000/03/23 07:03:25 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.58 2000/03/30 09:45:36 augustss Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -196,8 +196,8 @@ struct compressor *ppp_compressors[8] = {
 void
 pppattach()
 {
-    register struct ppp_softc *sc;
-    register int i = 0;
+    struct ppp_softc *sc;
+    int i = 0;
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
@@ -584,14 +584,14 @@ pppioctl(sc, cmd, data, flag, p)
  */
 static int
 pppsioctl(ifp, cmd, data)
-    register struct ifnet *ifp;
+    struct ifnet *ifp;
     u_long cmd;
     caddr_t data;
 {
-    register struct proc *p = curproc;	/* XXX */
-    register struct ppp_softc *sc = ifp->if_softc;
-    register struct ifaddr *ifa = (struct ifaddr *)data;
-    register struct ifreq *ifr = (struct ifreq *)data;
+    struct proc *p = curproc;	/* XXX */
+    struct ppp_softc *sc = ifp->if_softc;
+    struct ifaddr *ifa = (struct ifaddr *)data;
+    struct ifreq *ifr = (struct ifreq *)data;
     struct ppp_stats *psp;
 #ifdef	PPP_COMPRESS
     struct ppp_comp_stats *pcp;
@@ -714,7 +714,7 @@ pppoutput(ifp, m0, dst, rtp)
     struct sockaddr *dst;
     struct rtentry *rtp;
 {
-    register struct ppp_softc *sc = ifp->if_softc;
+    struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;
     u_char *cp;
     int s, error;

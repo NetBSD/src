@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.4 2000/03/06 20:51:27 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.5 2000/03/30 09:45:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -164,7 +164,7 @@ hippi_output(ifp, m0, dst, rt0)
 	}
 
 	if (htype != 0) {
-		register struct llc *l;
+		struct llc *l;
 		M_PREPEND(m, sizeof (struct llc), M_DONTWAIT);
 		if (m == 0)
 			senderr(ENOBUFS);
@@ -238,8 +238,8 @@ hippi_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
-	register struct llc *l;
+	struct ifqueue *inq;
+	struct llc *l;
 	u_int16_t htype;
 	struct hippi_header *hh;
 	int s;
@@ -309,7 +309,7 @@ hippi_ip_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	int s;
 	u_int32_t *ip;
     
@@ -333,10 +333,10 @@ hippi_ip_input(ifp, m)
  */
 void
 hippi_ifattach(ifp, lla)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	caddr_t lla;
 {
-	register struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_HIPPI;
 	ifp->if_addrlen = 6;  /* regular 802.3 MAC address */

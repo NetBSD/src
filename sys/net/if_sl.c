@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.56 2000/03/29 03:43:33 simonb Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.57 2000/03/30 09:45:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -198,8 +198,8 @@ static struct mbuf *sl_btom __P((struct sl_softc *, int));
 void
 slattach()
 {
-	register struct sl_softc *sc;
-	register int i = 0;
+	struct sl_softc *sc;
+	int i = 0;
 
 	for (sc = sl_softc; i < NSL; sc++) {
 		sc->sc_unit = i;		/* XXX */
@@ -222,7 +222,7 @@ slattach()
 
 static int
 slinit(sc)
-	register struct sl_softc *sc;
+	struct sl_softc *sc;
 {
 
 	if (sc->sc_ep == NULL) {
@@ -252,11 +252,11 @@ slinit(sc)
 int
 slopen(dev, tp)
 	dev_t dev;
-	register struct tty *tp;
+	struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct sl_softc *sc;
-	register int nsl;
+	struct sl_softc *sc;
+	int nsl;
 	int error;
 	int s;
 
@@ -314,7 +314,7 @@ void
 slclose(tp)
 	struct tty *tp;
 {
-	register struct sl_softc *sc;
+	struct sl_softc *sc;
 	int s;
 
 	ttywflush(tp);
@@ -375,13 +375,13 @@ sltioctl(tp, cmd, data, flag)
 int
 sloutput(ifp, m, dst, rtp)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
 	struct rtentry *rtp;
 {
-	register struct sl_softc *sc = ifp->if_softc;
-	register struct ip *ip;
-	register struct ifqueue *ifq;
+	struct sl_softc *sc = ifp->if_softc;
+	struct ip *ip;
+	struct ifqueue *ifq;
 	int s;
 
 	/*
@@ -447,17 +447,17 @@ sloutput(ifp, m, dst, rtp)
  */
 void
 slstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
-	register struct mbuf *m;
-	register u_char *cp;
-	register struct ip *ip;
+	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
+	struct mbuf *m;
+	u_char *cp;
+	struct ip *ip;
 	int s;
 	struct mbuf *m2;
 #if NBPFILTER > 0
 	u_char *bpfbuf;
-	register int len = 0;
+	int len = 0;
 #endif
 #ifndef __NetBSD__					/* XXX - cgd */
 	extern int cfreecount;
@@ -539,12 +539,12 @@ slstart(tp)
 			 * and/or the copy should be negligible cost compared
 			 * to the packet transmission time).
 			 */
-			register struct mbuf *m1 = m;
-			register u_char *cp = bpfbuf + SLIP_HDRLEN;
+			struct mbuf *m1 = m;
+			u_char *cp = bpfbuf + SLIP_HDRLEN;
 
 			len = 0;
 			do {
-				register int mlen = m1->m_len;
+				int mlen = m1->m_len;
 
 				bcopy(mtod(m1, caddr_t), cp, mlen);
 				cp += mlen;
@@ -594,7 +594,7 @@ slstart(tp)
 		}
 
 		while (m) {
-			register u_char *ep;
+			u_char *ep;
 
 			cp = mtod(m, u_char *); ep = cp + m->m_len;
 			while (cp < ep) {
@@ -602,7 +602,7 @@ slstart(tp)
 				 * Find out how many bytes in the string we can
 				 * handle without doing something special.
 				 */
-				register u_char *bp = cp;
+				u_char *bp = cp;
 
 				while (cp < ep) {
 					switch (*cp++) {
@@ -671,11 +671,11 @@ slstart(tp)
  */
 static struct mbuf *
 sl_btom(sc, len)
-	register struct sl_softc *sc;
-	register int len;
+	struct sl_softc *sc;
+	int len;
 {
-	register struct mbuf *m;
-	register u_char *p;
+	struct mbuf *m;
+	u_char *p;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -720,12 +720,12 @@ sl_btom(sc, len)
  */
 void
 slinput(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
-	register struct sl_softc *sc;
-	register struct mbuf *m;
-	register int len;
+	struct sl_softc *sc;
+	struct mbuf *m;
+	int len;
 	int s;
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
@@ -845,7 +845,7 @@ slinput(c, tp)
 			 * decompression probably moved the buffer
 			 * pointer.  Then, invoke BPF.
 			 */
-			register u_char *hp = sc->sc_buf - SLIP_HDRLEN;
+			u_char *hp = sc->sc_buf - SLIP_HDRLEN;
 
 			hp[SLX_DIR] = SLIPDIR_IN;
 			bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
@@ -892,14 +892,14 @@ newpack:
  */
 int
 slioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register int s = splimp(), error = 0;
-	register struct sl_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int s = splimp(), error = 0;
+	struct sl_softc *sc = ifp->if_softc;
 
 	switch (cmd) {
 
