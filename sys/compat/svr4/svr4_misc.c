@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.68 1998/10/03 19:43:27 eeh Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.69 1998/10/03 21:29:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1270,19 +1270,36 @@ loop:
 			}
 
 			/*
-			 * If we got the child via a ptrace 'attach',
-			 * we need to give it back to the old parent.
+			 * If we got the child via ptrace(2) or procfs, and
+			 * the parent is different (meaning the process was
+			 * attached, rather than run as a child), then we need
+			 * to give it back to the old parent, and send the
+			 * parent a SIGCHLD.  The rest of the cleanup will be
+			 * done when the old parent waits on the child.
 			 */
-			if (q->p_oppid && (t = pfind(q->p_oppid))) {
+			if ((q->p_flag & P_TRACED) &&
+			    q->p_oppid != q->p_pptr->p_pid) {
+				t = pfind(q->p_oppid);
+				proc_reparent(q, t ? t : initproc);
 				q->p_oppid = 0;
-				proc_reparent(q, t);
-				psignal(t, SIGCHLD);
-				wakeup((caddr_t)t);
-				return 0;
+				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+				psignal(q->p_pptr, SIGCHLD);
+				wakeup((caddr_t)q->p_pptr);
+				return (0);
 			}
 			q->p_xstat = 0;
 			ruadd(&p->p_stats->p_cru, q->p_ru);
 			pool_put(&rusage_pool, q->p_ru);
+
+			/*
+			 * Finally finished with old proc entry.
+			 * Unlink it from its process group and free it.
+			 */
+			leavepgrp(q);
+
+			LIST_REMOVE(q, p_list);	/* off zombproc */
+
+			LIST_REMOVE(q, p_sibling);
 
 			/*
 			 * Decrement the count of procs running with this uid.
@@ -1294,7 +1311,7 @@ loop:
 			 */
 			if (--q->p_cred->p_refcnt == 0) {
 				crfree(q->p_cred->pc_ucred);
-				pool_put(&pcred_pool, p->p_cred);
+				pool_put(&pcred_pool, q->p_cred);
 			}
 
 			/*
@@ -1302,14 +1319,6 @@ loop:
 			 */
 			if (q->p_textvp)
 				vrele(q->p_textvp);
-
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(q);
-			LIST_REMOVE(q, p_list);	/* off zombproc */
-			LIST_REMOVE(q, p_sibling);
 
 			/*
 			 * Give machine-dependent layer a chance
