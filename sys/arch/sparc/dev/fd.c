@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.86 2001/04/19 14:53:36 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.87 2001/07/08 18:06:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -240,8 +240,8 @@ struct fd_softc {
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
 	int sc_skip;		/* bytes already transferred */
-	int sc_nblks;		/* number of blocks currently tranferring */
-	int sc_nbytes;		/* number of bytes currently tranferring */
+	int sc_nblks;		/* number of blocks currently transferring */
+	int sc_nbytes;		/* number of bytes currently transferring */
 
 	int sc_drive;		/* physical unit number */
 	int sc_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.42 2001/07/07 16:13:49 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.43 2001/07/08 18:06:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -113,7 +113,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
 void	ncr5380_abort __P((struct ncr5380_softc *));
 void	ncr5380_cmd_timeout __P((void *));
 /*
- * Action flags returned by the info_tranfer functions:
+ * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */
