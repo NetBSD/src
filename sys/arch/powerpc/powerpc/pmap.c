@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1999/01/12 11:03:04 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1999/01/16 20:41:24 chuck Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -189,7 +189,6 @@ ptematch(ptp, sr, va, which)
 		    | which);
 }
 
-#if defined(MACHINE_NEW_NONCONTIG)
 static __inline struct pv_entry *
 pa_to_pv(pa)
 	paddr_t pa;
@@ -213,7 +212,6 @@ pa_to_attr(pa)
 		return NULL;
 	return &vm_physmem[bank].pmseg.attrs[pg];
 }
-#endif
 
 /*
  * Try to insert page table entry *pt into the ptable at idx.
@@ -488,7 +486,6 @@ pmap_bootstrap(kernelstart, kernelend)
 		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (mp = avail; mp->size; mp++)
 #if defined(UVM)
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
@@ -497,7 +494,6 @@ pmap_bootstrap(kernelstart, kernelend)
 #else
 		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size));
-#endif
 #endif
 
 	/*
@@ -557,10 +553,8 @@ pmap_init()
 	vsize_t sz;
 	vaddr_t addr;
 	int i, s;
-#if defined(MACHINE_NEW_NONCONTIG)
 	int bank;
 	char *attr;
-#endif
 
 	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
@@ -579,7 +573,6 @@ pmap_init()
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	pv = pv_table;
 	attr = pmap_attrib;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
@@ -589,33 +582,10 @@ pmap_init()
 		pv += sz;
 		attr += sz;
 	}
-#endif
 
 	pmap_initialized = 1;
 	splx(s);
 }
-
-/*
- * Return the index of the given page in terms of pmap_next_page() calls.
- */
-#if !defined(MACHINE_NEW_NONCONTIG)
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-	struct mem_region *mp;
-	psize_t pre;
-	
-	pa &= ~PGOFSET;
-	for (pre = 0, mp = avail; mp->size; mp++) {
-		if (pa >= mp->start
-		    && pa < mp->start + mp->size)
-			return btoc(pre + (pa - mp->start));
-		pre += mp->size;
-	}
-	return -1;
-}
-#endif
 
 /*
  * How much virtual space is available to the kernel?
@@ -630,40 +600,6 @@ pmap_virtual_space(start, end)
 	*start = (vaddr_t)(KERNEL_SR << ADDR_SR_SHFT);
 	*end = *start + SEGMENT_LENGTH;
 }
-
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * Return the number of possible page indices returned
- * from pmap_page_index for any page provided by pmap_next_page.
- */
-u_int
-pmap_free_pages()
-{
-	return npgs;
-}
-
-/*
- * If there are still physical pages available, put the address of
- * the next available one at paddr and return TRUE.  Otherwise,
- * return FALSE to indicate that there are no more free pages.
- */
-int
-pmap_next_page(paddr)
-	paddr_t *paddr;
-{
-	static int lastidx = -1;
-	
-	if (lastidx < 0
-	    || nextavail >= avail[lastidx].start + avail[lastidx].size) {
-		if (avail[++lastidx].size == 0)
-			return FALSE;
-		nextavail = avail[lastidx].start;
-	}
-	*paddr = nextavail;
-	nextavail += NBPG;
-	return TRUE;
-}
-#endif
 
 /*
  * Create and return a physical map.
@@ -1092,13 +1028,8 @@ pmap_enter(pm, va, pa, prot, wired)
 	pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
 
 	managed = 0;
-#if defined(MACHINE_NEW_NONCONTIG)
 	if (vm_physseg_find(atop(pa), NULL) != -1)
 		managed = 1;
-#else
-	if (pmap_page_index(pa) != -1)
-		managed = 1;
-#endif
 	for (mp = mem; mp->size; mp++) {
 		if (pa >= mp->start && pa < mp->start + mp->size) {
 			pte.pte_lo &= ~(PTE_I | PTE_G);
