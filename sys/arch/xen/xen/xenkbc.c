@@ -1,4 +1,4 @@
-/* $NetBSD: xenkbc.c,v 1.1 2004/04/24 21:33:32 cl Exp $ */
+/* $NetBSD: xenkbc.c,v 1.2 2004/04/25 00:24:08 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.1 2004/04/24 21:33:32 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.2 2004/04/25 00:24:08 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,6 +135,9 @@ xenkbc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct xenkbc_attach_args *xa = aux;
 
+	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+		return 0;
+
 	if (strcmp(xa->xa_device, "xenkbc"))
 		return 0;
 
@@ -154,7 +157,7 @@ xenkbc_attach(struct device *parent, struct device *self, void *aux)
 		xi = malloc(sizeof(struct xenkbc_internal), M_DEVBUF,
 		    M_NOWAIT | M_ZERO);
 		if (xi == NULL) {
-			aprint_error(": no memory");
+			aprint_error(": no memory\n");
 			return;
 		}
 		xi->xi_slot = PCKBPORT_KBD_SLOT;

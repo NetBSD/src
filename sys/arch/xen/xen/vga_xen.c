@@ -1,4 +1,4 @@
-/* $NetBSD: vga_xen.c,v 1.1 2004/04/24 20:58:59 cl Exp $ */
+/* $NetBSD: vga_xen.c,v 1.2 2004/04/25 00:24:08 cl Exp $ */
 
 /*
  *
@@ -33,13 +33,16 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_xen.c,v 1.1 2004/04/24 20:58:59 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_xen.c,v 1.2 2004/04/25 00:24:08 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <machine/xen.h>
+#include <machine/hypervisor.h>
 
 #include <machine/bus.h>
 
@@ -75,6 +78,9 @@ int
 vga_xen_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct xen_vga_attach_args *xa = aux;
+
+	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+		return 0;
 
 	if (strcmp(xa->xa_device, "vga_xen"))
 		return 0;
