@@ -1628,7 +1628,7 @@ msdosfs_strategy(bp)
 	return 0;
 }
 
-int
+void
 msdosfs_print(vp)
 	struct vnode *vp;
 {
