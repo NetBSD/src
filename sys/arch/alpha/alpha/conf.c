@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.46 2000/04/28 13:50:25 ad Exp $ */
+/* $NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.46 2000/04/28 13:50:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,11 @@ cdev_decl(music);
 #include "a12dc.h"
 #include "scc.h"
 #include "zstty.h"
+
+#include "cy.h"
+cdev_decl(cy);
+#include "cz.h"
+cdev_decl(cztty);
 
 #include "se.h"
 #include "rnd.h"
@@ -326,6 +331,8 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
 	cdev_disk_init(NCA,ca),		/* 59: Compaq array */
+	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
+	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -427,6 +434,8 @@ static int chrtoblktbl[] = {
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	17,
+	/* 60 */	NODEV,
+	/* 61 */	NODEV,
 };
 
 /*
