@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.48 2001/03/16 12:01:30 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.49 2001/03/16 13:02:51 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -474,7 +474,7 @@ struct iy_softc *sc;
 
 	temp = bus_space_read_1(iot, ioh, REG1);
 	bus_space_write_1(iot, ioh, REG1,
-	    temp | /* XXX XMT_CHAIN_INT | */ XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
+	    temp | /* XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | */ RCV_DISCARD_BAD);
 	
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
@@ -1140,23 +1140,9 @@ struct iy_softc *sc;
 		else
 			ifp->if_collisions += txstat2 & 0x000f;
 
-		if ((txstat2 & 0x2000) == 0) {
+		if ((txstat2 & 0x2000) == 0)
 			++ifp->if_oerrors;
-			sc->tx_start = sc->tx_end;
-			break;	/* Fatal errors stop chaining, too */
-		}
 	}
-#if 0
-	if (sc->tx_start != sc->tx_end) {
-		/*
-		 * This happens when a chain is interupted because of a
-		 * fatal transmission error. Start transmission of the
-		 * remaining part of the chain. 
-		 */
-		bus_space_write_2(iot, ioh, XMT_ADDR_REG, sc->tx_start);
-		bus_space_write_1(iot, ioh, 0, XMT_CMD);
-	}
-#endif
 	/* Nearly done. Tell feeders we may be able to accept more data... */
 	ifp->if_flags &= ~IFF_OACTIVE;
 
