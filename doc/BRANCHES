@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.42 2005/03/20 15:26:54 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.43 2005/03/20 15:28:32 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -785,7 +785,6 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 
 		not tested at all:
 			pdp10
-			playstation2
 
 
 Branch:		bouyer-xen2
