@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33 2001/07/16 13:50:41 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.34 2002/02/15 12:42:34 drochner Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33 2001/07/16 13:50:41 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.34 2002/02/15 12:42:34 drochner Exp $");
 #endif
 #endif
 
@@ -623,8 +623,8 @@ pkg_do(char *pkg)
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 		if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
 			warnx(
-			    "couldn't entirely delete package (perhaps the packing list is\n"
-			    "incorrectly specified?)");
+		"couldn't entirely delete package `%s'\n"
+		"(perhaps the packing list is incorrectly specified?)", pkg);
 	}
 	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
 	for (p = Plist.head; p; p = p->next) {
