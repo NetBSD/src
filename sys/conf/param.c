@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.46 2004/07/01 12:44:26 yamt Exp $	*/
+/*	$NetBSD: param.c,v 1.47 2004/07/01 12:57:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.46 2004/07/01 12:44:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.47 2004/07/01 12:57:37 yamt Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -102,7 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.46 2004/07/01 12:44:26 yamt Exp $");
 
 int	hz = HZ;
 int	tick = 1000000 / HZ;
-int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
+/* can adjust 240ms in 60s */
+int	tickadj = (240000 / (60 * HZ)) ? (240000 / (60 * HZ)) : 1;
 int	rtc_offset = RTC_OFFSET;
 int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
