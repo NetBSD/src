@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1997/03/06 00:15:56 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1997/03/06 05:16:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -234,15 +234,15 @@ static vm_offset_t  	kernAphys;
 static mmu_long_dte_t	*kernAbase;
 static mmu_short_dte_t	*kernBbase;
 static mmu_short_pte_t	*kernCbase;
-static mmu_long_dte_t	*mmuAbase;
-static mmu_short_dte_t	*mmuBbase;
 static mmu_short_pte_t	*mmuCbase;
+static mmu_short_dte_t	*mmuBbase;
+static mmu_long_dte_t	*mmuAbase;
 static a_tmgr_t		*Atmgrbase;
 static b_tmgr_t		*Btmgrbase;
 static c_tmgr_t		*Ctmgrbase;
-static pv_t		*pvbase;
+static pv_t 		*pvbase;
 static pv_elem_t	*pvebase;
-struct pmap		kernel_pmap;
+struct pmap 		kernel_pmap;
 
 /*
  * This holds the CRP currently loaded into the MMU.
@@ -338,7 +338,18 @@ u_int total_phys_mem;
  * Yes, it is a FIXED value so we can pre-allocate.
  */
 #define NUM_USER_PTES	(NUM_C_TABLES * MMU_C_TBL_SIZE)
-#define	NUM_KERN_PTES	(sun3x_btop(KERN_END - KERNBASE))
+
+/*
+ * The size of the Kernel Virtual Address Space (KVAS)
+ * for purposes of MMU table allocation is -KERNBASE
+ * (length from KERNBASE to 0xFFFFffff)
+ */
+#define	KVAS_SIZE		(-KERNBASE)
+
+/* Numbers of kernel MMU tables to support KVAS_SIZE. */
+#define KERN_B_TABLES	(KVAS_SIZE >> MMU_TIA_SHIFT)
+#define KERN_C_TABLES	(KVAS_SIZE >> MMU_TIB_SHIFT)
+#define	NUM_KERN_PTES	(KVAS_SIZE >> MMU_TIC_SHIFT)
 
 /*************************** MISCELANEOUS MACROS *************************/
 #define PMAP_LOCK()	;	/* Nothing, for now */
@@ -687,58 +698,42 @@ pmap_bootstrap(nextva)
 	avail_end = sun3x_trunc_page(avail_end);
 
 	/*
-	 * The first step is to allocate MMU tables.
+	 * First allocate enough kernel MMU tables to map all
+	 * of kernel virtual space from KERNBASE to 0xFFFFFFFF.
 	 * Note: All must be aligned on 256 byte boundaries.
-	 *
-	 * Start with the top level, or 'A' table.
+	 * Start with the level-A table (one of those).
 	 */
-	size = sizeof(mmu_long_dte_t) * MMU_A_TBL_SIZE;
+	size = sizeof(mmu_long_dte_t)  * MMU_A_TBL_SIZE;
 	kernAbase = pmap_bootstrap_alloc(size);
 	bzero(kernAbase, size);
 
-	/*
-	 * Allocate enough B tables to map from KERNBASE to
-	 * the end of VM.
-	 */
-	size = sizeof(mmu_short_dte_t) *
-		(MMU_A_TBL_SIZE - MMU_TIA(KERNBASE)) * MMU_B_TBL_SIZE;
+	/* Now the level-B kernel tables... */
+	size = sizeof(mmu_short_dte_t) * MMU_B_TBL_SIZE * KERN_B_TABLES;
 	kernBbase = pmap_bootstrap_alloc(size);
 	bzero(kernBbase, size);
 
+	/* Now the level-C kernel tables... */
+	size = sizeof(mmu_short_pte_t) * MMU_C_TBL_SIZE * KERN_C_TABLES;
+	kernCbase = pmap_bootstrap_alloc(size);
+	bzero(kernCbase, size);
 	/*
-	 * Allocate enough C tables.
 	 * Note: In order for the PV system to work correctly, the kernel
 	 * and user-level C tables must be allocated contiguously.
 	 * Nothing should be allocated between here and the allocation of
 	 * mmuCbase below.  XXX: Should do this as one allocation, and
 	 * then compute a pointer for mmuCbase instead of this...
-	 */
-	size = sizeof (mmu_short_pte_t) *
-		(MMU_A_TBL_SIZE - MMU_TIA(KERNBASE))
-		* MMU_B_TBL_SIZE * MMU_C_TBL_SIZE;
-	kernCbase = pmap_bootstrap_alloc(size);
-	bzero(kernCbase, size);
-
-	/*
-	 * Allocate user MMU tables. 
-	 * These must be aligned on 256 byte boundaries.
 	 *
-	 * As noted in the comment preceding the allocation of the kernel
-	 * C tables in pmap_bootstrap(), user-level C tables must be the
-	 * flush with (up against) the kernel-level C tables.
+	 * Allocate user MMU tables. 
+	 * These must be contiguous with the preceeding.
 	 */
-	mmuCbase = (mmu_short_pte_t *)
-		pmap_bootstrap_alloc(sizeof(mmu_short_pte_t)
-		* MMU_C_TBL_SIZE
-		* NUM_C_TABLES);
-	mmuAbase = (mmu_long_dte_t *)
-		pmap_bootstrap_alloc(sizeof(mmu_long_dte_t)
-		* MMU_A_TBL_SIZE
-		* NUM_A_TABLES);
-	mmuBbase = (mmu_short_dte_t *)
-		pmap_bootstrap_alloc(sizeof(mmu_short_dte_t)
-		* MMU_B_TBL_SIZE
-		* NUM_B_TABLES);
+	size = sizeof(mmu_short_pte_t) * MMU_C_TBL_SIZE	* NUM_C_TABLES;
+	mmuCbase = pmap_bootstrap_alloc(size);
+
+	size = sizeof(mmu_short_dte_t) * MMU_B_TBL_SIZE	* NUM_B_TABLES;
+	mmuBbase = pmap_bootstrap_alloc(size);
+
+	size = sizeof(mmu_long_dte_t)  * MMU_A_TBL_SIZE * NUM_A_TABLES;
+	mmuAbase = pmap_bootstrap_alloc(size);
 
 	/*
 	 * Fill in the never-changing part of the kernel tables.
