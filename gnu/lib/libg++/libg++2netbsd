@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.6 1996/04/08 02:45:57 phil Exp $
+#	$NetBSD: libg++2netbsd,v 1.7 1996/04/25 01:16:10 jtc Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -433,7 +433,7 @@ HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
          iterator memory numeric
 
 
-beforeinstall:
+includes:
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/g++
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
