@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2000/05/02 13:06:27 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.163 2000/05/29 22:23:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -89,11 +89,6 @@
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-
-#ifdef DEBUG
-#define PTE_BITS "\20\40V\37W\36S\35NC\33IO\32U\31M"
-#define PTE_BITS4M "\20\10C\7M\6R\5ACC3\4ACC2\3ACC1\2TYP2\1TYP1"
-#endif
 
 /*
  * The SPARCstation offers us the following challenges:
@@ -342,9 +337,6 @@ u_int 	*kernel_regtable_store;		/* 1k of storage to map the kernel */
 u_int	*kernel_segtable_store;		/* 2k of storage to map the kernel */
 u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 
-u_int	*kernel_iopte_table;		/* 64k of storage for iommu */
-u_int 	kernel_iopte_table_pa;
-
 /*
  * Memory pools and back-end supplier for SRMMU page tables.
  * Share a pool between the level 2 and level 3 page tables,
@@ -363,8 +355,6 @@ struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 /*static*/ paddr_t	avail_start;	/* first free physical page */
 /*static*/ paddr_t	avail_end;	/* last free physical page */
-/*static*/ paddr_t	unavail_gap_start;/* first stolen free phys page */
-/*static*/ paddr_t	unavail_gap_end;/* last stolen free physical page */
 /*static*/ vaddr_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
 
@@ -787,28 +777,14 @@ static void
 pmap_page_upload()
 {
 	int	n = 0;
-	paddr_t	start, end, avail_next;
-
-	avail_next = avail_start;
-	if (unavail_gap_start != 0) {
-		/* First, the gap we created in pmap_bootstrap() */
-		if (avail_next != unavail_gap_start)
-			/* Avoid empty ranges */
-			uvm_page_physload(
-				atop(avail_next),
-				atop(unavail_gap_start),
-				atop(avail_next),
-				atop(unavail_gap_start),
-				VM_FREELIST_DEFAULT);
-		avail_next = unavail_gap_end;
-	}
+	paddr_t	start, end;
 
 	for (n = 0; n < npmemarr; n++) {
 		/*
-		 * Assume `avail_next' is always in the first segment; we
+		 * Assume `avail_start' is always in the first segment; we
 		 * already made that assumption in pmap_bootstrap()..
 		 */
-		start = (n == 0) ? avail_next : pmemarr[n].addr;
+		start = (n == 0) ? avail_start : pmemarr[n].addr;
 		end = pmemarr[n].addr + pmemarr[n].len;
 		if (start == end)
 			continue;
@@ -819,43 +795,7 @@ pmap_page_upload()
 			atop(start),
 			atop(end), VM_FREELIST_DEFAULT);
 	}
-
 }
-
-#if 0
-/*
- * pmap_page_index()
- *
- * Given a physical address, return a page index.
- *
- * There can be some values that we never return (i.e. a hole)
- * as long as the range of indices returned by this function
- * is smaller than the value returned by pmap_free_pages().
- * The returned index does NOT need to start at zero.
- *
- */
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-	paddr_t idx;
-	int nmem;
-	struct memarr *mp;
-
-#ifdef  DIAGNOSTIC
-	if (pa < avail_start || pa >= avail_end)
-		panic("pmap_page_index: pa=0x%lx", pa);
-#endif
-
-	for (idx = 0, mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		if (pa >= mp->addr && pa < mp->addr + mp->len)
-			break;
-		idx += atop(mp->len);
-	}
-
-	return (int)(idx + atop(pa - mp->addr));
-}
-#endif
 
 int
 pmap_pa_exists(pa)
@@ -3214,37 +3154,15 @@ pmap_bootstrap4m(void)
 
 	/* Allocate physical memory for pv_table[] */
 	p += pv_table_map((paddr_t)p - KERNBASE, 0);
-	avail_start = (paddr_t)p - KERNBASE;
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
 	 * alignment restrictions. We allocate in a sequence that
 	 * minimizes alignment gaps.
-	 * The amount of physical memory that becomes unavailable for
-	 * general VM use is marked by [unavail_gap_start, unavail_gap_end>.
 	 */
-
-	/*
-	 * Reserve memory for I/O pagetables. This takes 64k of memory
-	 * since we want to have 64M of dvma space (this actually depends
-	 * on the definition of IOMMU_DVMA_BASE...we may drop it back to 32M).
-	 * The table must be aligned on a (-IOMMU_DVMA_BASE/NBPG) boundary
-	 * (i.e. 64K for 64M of dvma space).
-	 */
-#ifdef DEBUG
-	if ((0 - IOMMU_DVMA_BASE) % (16*1024*1024))
-	    panic("pmap_bootstrap4m: invalid IOMMU_DVMA_BASE of 0x%x",
-		  IOMMU_DVMA_BASE);
-#endif
-
-	p = (caddr_t) roundup((u_int)p, (0 - IOMMU_DVMA_BASE) / 1024);
-	unavail_gap_start = (paddr_t)p - KERNBASE;
-
-	kernel_iopte_table = (u_int *)p;
-	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
-	p += (0 - IOMMU_DVMA_BASE) / 1024;
 
 	pagetables_start = p;
+
 	/*
 	 * Allocate context table.
 	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
@@ -3256,14 +3174,9 @@ pmap_bootstrap4m(void)
 
 	/*
 	 * Reserve memory for segment and page tables needed to map the entire
-	 * kernel. This takes (2k + NKREG * 16k) of space, but
-	 * unfortunately is necessary since pmap_enk *must* be able to enter
-	 * a kernel mapping without resorting to malloc, or else the
-	 * possibility of deadlock arises (pmap_enk4m is called to enter a
-	 * mapping; it needs to malloc a page table; malloc then calls
-	 * pmap_enk4m to enter the new malloc'd page; pmap_enk4m needs to
-	 * malloc a page table to enter _that_ mapping; malloc deadlocks since
-	 * it is already allocating that object).
+	 * kernel. This takes (2K + NKREG * 16K) of space, but unfortunately
+	 * is necessary since pmap_enter() *must* be able to enter a kernel
+	 * mapping without delay.
 	 */
 	p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(u_int));
 	qzero(p, SRMMU_L1SIZE * sizeof(u_int));
@@ -3281,19 +3194,14 @@ pmap_bootstrap4m(void)
 	kernel_pagtable_store = (u_int *)p;
 	p += ((SRMMU_L3SIZE * sizeof(u_int)) * NKREG) * NSEGRG;
 
-	/* Round to next page and mark end of stolen pages */
+	/* Round to next page and mark end of pre-wired kernel space */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
-	unavail_gap_end = (paddr_t)p - KERNBASE;
+	avail_start = (paddr_t)p - KERNBASE;
 
 	/*
-	 * Since we've statically allocated space to map the entire kernel,
-	 * we might as well pre-wire the mappings to save time in pmap_enter.
-	 * This also gets around nasty problems with caching of L1/L2 ptp's.
-	 *
-	 * XXX WHY DO WE HAVE THIS CACHING PROBLEM WITH L1/L2 PTPS????? %%%
+	 * Now wire the region and segment tables of the kernel map.
 	 */
-
 	pmap_kernel()->pm_reg_ptps[0] = (int *) kernel_regtable_store;
 	pmap_kernel()->pm_reg_ptps_pa[0] =
 		VA2PA((caddr_t)pmap_kernel()->pm_reg_ptps[0]);
@@ -3319,12 +3227,6 @@ pmap_bootstrap4m(void)
 			 (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
-
-
-		if (rp->rg_segmap == NULL) {
-			printf("rp->rg_segmap == NULL!\n");
-			rp->rg_segmap = &kernel_segmap_store[reg * NSEGRG];
-		}
 
 		for (seg = 0; seg < NSEGRG; seg++) {
 			struct segmap *sp;
@@ -3409,11 +3311,6 @@ pmap_bootstrap4m(void)
 		struct regmap *rp;
 		struct segmap *sp;
 		int pte;
-
-		if ((int)q >= KERNBASE + avail_start &&
-		    (int)q < KERNBASE + unavail_gap_start)
-			/* This gap is part of VM-managed pages */
-			continue;
 
 		/*
 		 * Now install entry for current page.
