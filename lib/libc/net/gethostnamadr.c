@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.4 1994/01/28 03:10:25 deraadt Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.5 1994/02/27 10:09:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -521,7 +521,7 @@ nextline:
 		if (host.h_name == NULL)
 			return (NULL);
 		else
-			return (&host);
+			goto done;
 	}
 	*cp++ = '\0';
 
@@ -539,6 +539,8 @@ nextline:
 	}
 	if (!host.h_name)
 		host.h_name = p;
+	else if (strcmp(host.h_name, p)==0)
+		;
 	else if (q < &host_aliases[MAXALIASES - 1])
 		*q++ = p;
 	p = cp;
@@ -560,6 +562,7 @@ nextline:
 		if (cp != NULL)
 			*cp++ = '\0';
 	}
+done:
 	*q = NULL;
 #if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
 	*hap = NULL;
