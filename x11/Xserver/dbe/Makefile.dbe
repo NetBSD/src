@@ -1,0 +1,19 @@
+#	$NetBSD: Makefile.dbe,v 1.1 2003/09/23 23:21:10 lukem Exp $
+
+.include <bsd.own.mk>
+
+LIB=		dbe
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
+
+SRCS+=		dbe.c midbe.c
+
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}/${X11INCDIR}/X11 \
+		-I${DESTDIR}/${X11INCDIR}/X11/extensions
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

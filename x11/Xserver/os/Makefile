@@ -1,21 +1,18 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:54:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:13 lukem Exp $
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
 LIB=		os
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/os
 .PATH:		${X11SRCDIR.xc}/lib/xtrans
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared
 
 SRCS=		WaitFor.c access.c connection.c io.c oscolor.c osinit.c \
 		utils.c auth.c mitauth.c secauth.c xdmauth.c xdmcp.c \
 		decompress.c transport.c lbxio.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
-
-# XXX not part of library in normal build
-SRCS+=		libc_wrapper.c
-CPPFLAGS.libc_wrapper.c=-DSELF_CONTAINED_WRAPPER
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR} \
@@ -44,5 +41,11 @@ CPPFLAGS.xdmauth.c=	-DXDMCP
 COPTS.xdmauth.c=	-Wno-error	# XXX
 CPPFLAGS.xdmcp.c=	-DXDMCP -DBSD44SOCKETS
 
-.include <bsd.lib.mk>
+BUILDOBJS=		libc_wrapper.o
+.PATH:			${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared
+CPPFLAGS.libc_wrapper.c=-DSELF_CONTAINED_WRAPPER
+CLEANFILES+=		${BUILDOBJS}
+realall: ${BUILDOBJS}
+
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

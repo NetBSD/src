@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.record,v 1.1 2003/09/23 23:21:15 lukem Exp $
+
+.include <bsd.own.mk>
+
+LIB=		record
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
+
+SRCS+=		record.c set.c
+
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}/${X11INCDIR}/X11 \
+		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+		-I${X11SRCDIR.xc}/programs/Xserver/Xext
+
+CPPFLAGS+=	-DNDEBUG
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:54:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:12 lukem Exp $
+
+.include "../../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -29,5 +31,5 @@ CPPFLAGS+=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR -DDDXOSVERRORF \
 
 CPPFLAGS.miinitext.c=	-UDPMSExtension
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
