@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.22 1999/09/10 19:28:26 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.23 1999/09/11 10:40:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -424,7 +424,7 @@ ulpt_do_write(sc, uio, flags)
 {
 	u_int32_t n;
 	int error = 0;
-	char buf[ULPT_BSIZE];
+	void *bufp;
 	usbd_request_handle reqh;
 	usbd_status r;
 
@@ -432,9 +432,14 @@ ulpt_do_write(sc, uio, flags)
 	reqh = usbd_alloc_request(sc->sc_udev);
 	if (reqh == 0)
 		return (ENOMEM);
+	bufp = usbd_alloc_buffer(reqh, ULPT_BSIZE);
+	if (bufp == 0) {
+		usbd_free_request(reqh);
+		return (ENOMEM);
+	}
 	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		ulpt_statusmsg(ulpt_status(sc), sc);
-		error = uiomove(buf, n, uio);
+		error = uiomove(bufp, n, uio);
 		if (error)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
