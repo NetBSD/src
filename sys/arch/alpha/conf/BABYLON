@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.7 1998/05/11 00:34:24 thorpej Exp $
+# $NetBSD: BABYLON,v 1.8 1998/05/13 22:03:08 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -123,7 +123,7 @@ cpu*	at	mainbus0
 #kft*	at	tlsb? node ? offset ?
 
 # Gbus Devices
-#mcclock* at	gbus? offset 0x20000000
+#mcclock* at	gbus? offset ?
 
 # TurboChannel host bus adapter support
 #tcasic*	at	mainbus0
