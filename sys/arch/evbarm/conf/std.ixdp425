@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixdp425,v 1.1 2003/05/23 00:57:27 ichiro Exp $
+#	$NetBSD: std.ixdp425,v 1.2 2003/05/23 09:38:05 ichiro Exp $
 #
 # standard NetBSD/evbarm for IXDP425 options
 
@@ -14,8 +14,6 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 makeoptions	LOADADDRESS="0xc0200000"
