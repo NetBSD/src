@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.134 2005/01/09 06:30:08 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.135 2005/01/09 19:58:55 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -192,7 +192,7 @@ or 's' sector at the end of input, sizes and offsets are in %s.
 
 message ptnsizes
 {You can now change the sizes for the system partitions.  The default is
-to allocate all the space to the root filesystem, however you may wish
+to allocate all the space to the root file system, however you may wish
 to have separate /usr (additional system files), /var (log files etc)
 or /home (users' home directories).
 
@@ -746,7 +746,7 @@ message rootmissing
 }
 
 message badroot
-{The completed new root filesystem failed a basic sanity check.
+{The completed new root file system failed a basic sanity check.
  Are you sure you installed all the required sets?
 }
 
