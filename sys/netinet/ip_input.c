@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.203 2004/05/25 04:34:00 atatat Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.204 2004/09/29 21:28:34 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.203 2004/05/25 04:34:00 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.204 2004/09/29 21:28:34 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -575,7 +575,7 @@ ip_input(struct mbuf *m)
 		/* Must compute it ourselves. */
 		INET_CSUM_COUNTER_INCR(&ip_swcsum);
 		if (in_cksum(m, hlen) != 0)
-			goto bad;
+			goto badcsum;
 		break;
 	}
 
