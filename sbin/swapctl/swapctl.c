@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.7 1997/10/10 05:39:53 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.8 1998/02/10 03:14:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -348,6 +348,7 @@ do_fstab()
 	long	priority;
 	struct	stat st;
 	int	isblk;
+	int	gotone = 0;
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
@@ -423,13 +424,17 @@ do_fstab()
 
 		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
 			warn("%s", spec);
-		else
+		else {
+			gotone = 1;
 			printf("%s: adding %s as swap device at priority %d\n",
 			    __progname, fp->fs_spec, (int)priority);
+		}
 
 		if (spec != fp->fs_spec)
 			free(spec);
 	}
+	if (gotone == 0)
+		exit(1);
 }
 
 void
