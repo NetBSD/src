@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.22 1995/09/18 03:09:05 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.23 1995/09/20 00:25:44 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -144,11 +144,6 @@ file	dev/cons.c
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
 
-file	compat/ultrix/ultrix_misc.c		compat_ultrix
-file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
-file	compat/ultrix/ultrix_sysent.c		compat_ultrix
-
-
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
 file	arch/pmax/dev/lk201.c		pm or cfb or sfb or mfb or xcfb
 file	arch/pmax/dev/qvss_compat.c	fb
@@ -181,8 +176,10 @@ file	arch/sparc/rcons/rcons_subr.c		rcons
 file	arch/sparc/rcons/raster_text.c		rcons
 file	arch/pmax/dev/font.c			rcons
 
-
 # Glue for old-style config
 file	arch/pmax/pmax/conf-glue.c
+
+# Ultrix Binary Compatibility (COMPAT_ULTRIX)
+include "../../../compat/ultrix/files.ultrix"
 
 # Configs
