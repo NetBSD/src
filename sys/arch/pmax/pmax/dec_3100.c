@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.24 2000/02/03 04:09:04 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.25 2000/02/29 04:41:50 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -90,9 +90,6 @@
 
 #include "rasterconsole.h"
 #include "pm.h"
-#include "dc.h"
-#include "le_pmax.h"
-#include "sii.h"
 
 void		dec_3100_init __P((void));		/* XXX */
 static void	dec_3100_bus_reset __P((void));
@@ -101,7 +98,6 @@ static void	dec_3100_cons_init __P((void));
 static void	dec_3100_device_register __P((struct device *, void *));
 static void	dec_3100_errintr __P((void));
 static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3100_intr_disestablish __P((struct device *, void *));
 static void	dec_3100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -116,7 +112,6 @@ dec_3100_init()
 	platform.device_register = dec_3100_device_register;
 	platform.iointr = dec_3100_intr;
 	platform.intr_establish = dec_3100_intr_establish;
-	platform.intr_disestablish = dec_3100_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -184,18 +179,23 @@ dec_3100_device_register(dev, aux)
 }
 
 
-/*
- * Handle pmax (DECstation 2100/3100) interrupts.
- */
+#define CALLINTR(vvv, cp0)					\
+    do {							\
+	if (cpumask & (cp0)) {					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
+
 static int
-dec_3100_intr(mask, pc, status, cause)
-	unsigned mask;
+dec_3100_intr(cpumask, pc, status, cause)
+	unsigned cpumask;
 	unsigned pc;
 	unsigned status;
 	unsigned cause;
 {
 	/* handle clock interrupts ASAP */
-	if (mask & MIPS_INT_MASK_3) {
+	if (cpumask & MIPS_INT_MASK_3) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -212,39 +212,17 @@ dec_3100_intr(mask, pc, status, cause)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
 
-#if NSII > 0
-	if (mask & MIPS_INT_MASK_0) {
-		intrcnt[SCSI_INTR]++;
-		(*intrtab[3].ih_func)(intrtab[3].ih_arg);
-	}
-#endif /* NSII */
+	CALLINTR(SYS_DEV_SCSI, MIPS_INT_MASK_0);
+	CALLINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
+	CALLINTR(SYS_DEV_SCC0, MIPS_INT_MASK_2);
 
-#if NLE_PMAX > 0
-	if (mask & MIPS_INT_MASK_1) {
-		/*
-		 * tty interrupts were disabled by the splx() call
-		 * that re-enables clock interrupts.  A slip or ppp driver
-		 * manipulating if queues should have called splimp(),
-		 * which would mask out MIPS_INT_MASK_1.
-		 */
-		(*intrtab[2].ih_func)(intrtab[2].ih_arg);
-		intrcnt[LANCE_INTR]++;
-	}
-#endif /* NLE_PMAX */
-
-#if NDC > 0
-	if (mask & MIPS_INT_MASK_2) {
-		(*intrtab[1].ih_func)(intrtab[1].ih_arg);
-		intrcnt[SERIAL0_INTR]++;
-	}
-#endif /* NDC */
-
-	if (mask & MIPS_INT_MASK_4) {
+	if (cpumask & MIPS_INT_MASK_4) {
 		dec_3100_errintr();
 		intrcnt[ERROR_INTR]++;
 	}
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
+
 
 static void
 dec_3100_intr_establish(dev, cookie, level, handler, arg)
@@ -254,19 +232,9 @@ dec_3100_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
 
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
-}
-
-
-static void
-dec_3100_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_3100_intr_distestablish: not implemented\n");
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 }
 
 
@@ -276,16 +244,15 @@ dec_3100_intr_disestablish(dev, arg)
 static void
 dec_3100_errintr()
 {
-	volatile u_short *sysCSRPtr =
-		(u_short *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
-	u_short csr;
+	u_int16_t csr;
 
-	csr = *sysCSRPtr;
+	csr = *(u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
+			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
+	csr = (csr & ~KN01_CSR_MBZ) | 0xff;
+	*(volatile u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR) = csr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.6 2000/01/14 15:52:00 ad Exp $	*/
+/*	$NetBSD: ibus.c,v 1.7 2000/02/29 04:41:48 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,34 +31,29 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.6 2000/01/14 15:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.7 2000/02/29 04:41:48 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/sysconf.h>
 #include <pmax/ibus/ibusvar.h>
 
 #include "locators.h"
-
-extern struct cfdriver ibus_cd;
 
 static int	ibussubmatch __P((struct device *, struct cfdata *, void *));
 
 void
 ibusattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
-        struct ibus_softc *sc = (struct ibus_softc *)self;
 	struct ibus_dev_attach_args *ida = aux;
 	struct ibus_attach_args *ia;
-        int i;
+	int i;
 
-        printf("\n");
-
-        sc->sc_intr_establish = ida->ida_establish;
-        sc->sc_intr_disestablish = ida->ida_disestablish;
+	printf("\n");
 
 	/*
 	 * Loop through the devices and attach them.  If a probe-size
@@ -115,17 +110,5 @@ ibus_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	struct ibus_softc *sc = ibus_cd.cd_devs[0];
-
-	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
-}
-
-void
-ibus_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	struct ibus_softc *sc = ibus_cd.cd_devs[0];
-
-	(*sc->sc_intr_disestablish)(dev, arg);
+	(*platform.intr_establish)(dev, cookie, level, handler, arg);
 }
