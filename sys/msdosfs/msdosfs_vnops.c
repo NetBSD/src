@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.108 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109 2001/06/12 14:59:29 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -88,7 +88,7 @@
  * that when a directory is actually read/written (via read, write, or
  * readdir, or seek) we must use the vnode for the filesystem instead of
  * the vnode for the directory as would happen in ufs. This is to insure we
- * retreive the correct block from the buffer cache since the hash value is
+ * retrieve the correct block from the buffer cache since the hash value is
  * based upon the vnode address and the desired block number.
  */
 
