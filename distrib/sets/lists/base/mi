@@ -1457,7 +1457,6 @@
 ./var/games/hackdir/save
 ./var/games/larn
 ./var/games/phantasia
-./var/games/save
 ./var/log
 ./var/log/rdist
 ./var/mail
