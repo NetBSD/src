@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.43 2000/07/06 02:59:20 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.44 2000/07/07 08:03:39 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.43 2000/07/06 02:59:20 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.44 2000/07/07 08:03:39 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -798,7 +798,8 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 			continue;
 		}
 		while (*p != '\n' && *p != ' ' && *p != '\t' && *p != '\0') {
-			*p = isupper((unsigned char)*p) ? tolower(*p) : *p;
+			*p = isupper((unsigned char)*p) ?
+			    tolower((unsigned char)*p) : *p;
 			p++;
 		}
 		if (*p == ' ' || *p == '\t') {

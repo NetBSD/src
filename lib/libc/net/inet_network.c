@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.12 2000/07/06 02:57:23 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.13 2000/07/07 08:03:39 itohy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.12 2000/07/06 02:57:23 christos Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.13 2000/07/07 08:03:39 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,7 +65,7 @@ inet_network(cp)
 {
 	u_long val, base;
 	size_t i, n;
-	char c;
+	u_char c;
 	u_long parts[4], *pp = parts;
 	int digit;
 
@@ -102,7 +102,7 @@ again:
 		*pp++ = val, cp++;
 		goto again;
 	}
-	if (*cp && !isspace(*cp))
+	if (*cp && !isspace((u_char) *cp))
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
