@@ -1,15 +1,22 @@
-/* get generic alpha definitions. */
+/* Get generic alpha definitions. */
 
 #include <alpha/alpha.h>
 
+/* Get generic alpha ELF definitions. */
+
+#include <alpha/elf.h>
+
 /* Get generic NetBSD definitions. */
 
+#define NETBSD_ELF
 #include <netbsd.h>
 
-/* Names to predefine in the preprocessor for this target machine.  */
+/* Names to predefine in the preprocessor for this target machine.
+   XXX NetBSD, by convention, shouldn't do __alpha, but lots of applications
+   expect it because that's what OSF/1 does. */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__alpha__ -D__alpha -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(alpha) -Amachine(alpha)"
+#define CPP_PREDEFINES "-D__alpha__ -D__alpha -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(alpha) -Amachine(alpha)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -18,18 +25,6 @@
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
-
-/* Under NetBSD, the normal location of the `ld' and `as' programs is the
-   /usr/bin directory.  */
-    
-#undef MD_EXEC_PREFIX
-#define MD_EXEC_PREFIX "/usr/bin/"
-
-/* Under NetBSD, the normal location of the various *crt*.o files is the
-   /usr/lib directory.  */
-
-#undef MD_STARTFILE_PREFIX
-#define MD_STARTFILE_PREFIX "/usr/lib/"
 
 /* This is BSD, so it wants DBX format.  */
 #define DBX_DEBUGGING_INFO
@@ -41,6 +36,12 @@
 
 /* Name the port */
 #define	TARGET_NAME	"alpha-netbsd"
+
+/* XXX Override this back to the default; <alpha/elf.h> mucks with it
+   for Linux/Alpha. */
+
+#undef TARGET_VERSION
+#define	TARGET_VERSION	fprintf (stderr, " (%s)", TARGET_NAME)
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  Under NetBSD/Alpha, the assembler does
@@ -59,3 +60,27 @@ fputs ("\tjsr $28,_mcount\n", (FILE)); /* at */
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
+/* Provide an ASM_SPEC appropriate for a NetBSD/alpha target.  This differs
+   from the generic NetBSD ASM_SPEC in that no special handling of PIC is
+   necessary on the Alpha. */
+
+#undef ASM_SPEC
+#define	ASM_SPEC " %|"
+
+/* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  Only
+   the linker emulation and -O options are Alpha-specific.  The rest are
+   common to all ELF targets, except for the name of the start function. */
+
+#undef LINK_SPEC
+#define	LINK_SPEC \
+ "-m elf64alpha \
+  %{O*:-O3} %{!O*:-O1} \
+  %{assert*} \
+  %{shared:-shared} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static:
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
