@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.66 2001/02/12 23:25:20 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.67 2001/03/07 23:07:16 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -874,8 +874,8 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		}
 	}
 	error = bus_dmamap_load(pcs->pci_dmat, dmap, xs->data, xs->datalen,
-	    NULL, xs->xs_control & XS_CTL_NOSLEEP ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 	if (error) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12 2001/03/04 17:50:51 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.13 2001/03/07 23:07:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -834,7 +834,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	 * Map the data buffer into bus space and build the S/G list.
 	 */
 	rv = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer, data,
-	    ccb->ccb_datasize, NULL, BUS_DMA_NOWAIT);
+	    ccb->ccb_datasize, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 	if (rv != 0) {
 		if (ccb->ccb_abuf != (vaddr_t)0) {
 			s = splvm();
