@@ -25,11 +25,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: jtc $
+ *      $Author: pk $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.9 1995/01/21 21:53:46 jtc Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.10 1996/01/07 00:48:24 pk Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -180,7 +180,7 @@ PRS(argc,argv)
         progname = argv[0];
         timenow = time((time_t *) 0);
         daytime = ctime(&timenow) + 4;
-        daytime[16] = '\0';
+        daytime[15] = '\0';
 
         /* Let's find the pid of syslogd */
         syslog_pid = 0;
