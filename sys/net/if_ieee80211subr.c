@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.22 2002/10/16 11:29:30 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.23 2003/01/19 23:17:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.22 2002/10/16 11:29:30 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.23 2003/01/19 23:17:21 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2983,11 +2983,11 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_READ_CACHE:
 		i = 0;
 		TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
-			if (i == MAXCACHE)
+			if (i == MAXWICACHE)
 				break;
 			IEEE80211_ADDR_COPY(wsc.macsrc, ni->ni_macaddr);
 			memset(&wsc.ipsrc, 0, sizeof(wsc.ipsrc));
-			wsc.signal = ni->rssi;
+			wsc.signal = ni->ni_rssi;
 			wsc.noise = 0;
 			wsc.quality = 0;
 			memcpy((caddr_t)wreq.wi_val + sizeof(wsc) * i,
@@ -3131,7 +3131,6 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_CUR_TX_RATE:
 		return EPERM;
-		break;
 	case WI_RID_RTS_THRESH:
 		if (wreq.wi_len != 1)
 			return EINVAL;
