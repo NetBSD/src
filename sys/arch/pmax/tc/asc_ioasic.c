@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.4 1999/03/02 01:57:05 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.4 1999/03/02 01:57:05 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -14,14 +14,11 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner 
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/locore.h>	/* XXX pmax XXX */
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <pmax/tc/ascvar.h>	/* XXX pmax XXX */
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -29,8 +26,38 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner 
 int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	asc_ioasic_attach __P((struct device *, struct device *, void *));
 
+struct asc_softc {
+	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_dma_tag_t sc_dma;
+	void	*sc_cookie;			/* intr. handling cookie */
+	int	sc_active;			/* DMA active ? */
+	int	sc_iswrite;			/* DMA into main memory? */
+	int	sc_datain;
+	size_t	sc_dmasize;
+	caddr_t *sc_dmaaddr;
+	size_t	*sc_dmalen;
+
+	vaddr_t	sc_base;			/* XXX XXX XXX */
+	caddr_t sc_reg;
+	volatile u_int32_t *sc_ssr;
+	volatile u_int32_t *sc_scsi_scr;
+	volatile u_int32_t *sc_scsi_dmaptr;
+	volatile u_int32_t *sc_scsi_nextptr;
+	volatile u_int32_t *sc_scsi_sdr0;
+	volatile u_int32_t *sc_scsi_sdr1;
+};
+
 struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
+};
+
+struct scsipi_device asc_ioasic_dev = {
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
 };
 
 void	asc_ioasic_reset __P((struct ncr53c9x_softc *));
@@ -39,6 +66,12 @@ int	asc_ioasic_setup __P((struct ncr53c9x_softc *,
 				caddr_t *, size_t *, int, size_t *));
 void	asc_ioasic_go __P((struct ncr53c9x_softc *));
 void	asc_ioasic_stop __P((struct ncr53c9x_softc *));
+
+static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
+static void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+static int	asc_dma_isintr __P((struct ncr53c9x_softc *sc));
+static int	asc_dma_isactive __P((struct ncr53c9x_softc *));
+static void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
 
 struct ncr53c9x_glue asc_ioasic_glue = {
 	asc_read_reg,
@@ -77,11 +110,10 @@ asc_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	struct asc_softc *asc = (struct asc_softc *)self;	
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
-#ifdef __pmax__
-	extern int slot_in_progress;	/* XXX TC slot being probed */
-
-	slot_in_progress = 3;	/* IOASIC always resides in TC slot 3 */
-#endif
+/* XXX */
+	extern int slot_in_progress;	/* TC slot being probed */
+	slot_in_progress = 3;		/* IOASIC always resides in TC slot 3 */
+/* XXX */
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
@@ -92,19 +124,16 @@ asc_ioasic_attach(parent, self, aux)
 	asc->sc_bsh = /* bus space handle */ 0;
 	asc->sc_dma = /* bus dma */ 0;
 #endif
-	asc->sc_base = (void *)MIPS_PHYS_TO_KSEG1(d->iada_addr);/* useless */
-	asc->sc_base = (void *)ioasic_base; /* XXX */ /* TC slot 3 */	
+	asc->sc_base = (vaddr_t)ioasic_base; /* TC slot 3 */	
 	asc->sc_cookie = d->iada_cookie;
 
-	asc->sc_reg = (char *)asc->sc_base + IOASIC_SLOT_12_START;
-	asc->sc_ssr = (void *)((char *)asc->sc_base + IOASIC_CSR);
-	asc->sc_scsi_dmaptr = (void *)((char *)asc->sc_base
-				       + IOASIC_SCSI_DMAPTR);
-	asc->sc_scsi_nextptr = (void *)((char *)asc->sc_base
-					+ IOASIC_SCSI_NEXTPTR);
-	asc->sc_scsi_scr = (void *)((char *)asc->sc_base + IOASIC_SCSI_SCR);
-	asc->sc_scsi_sdr0 = (void *)((char *)asc->sc_base + IOASIC_SCSI_SDR0);
-	asc->sc_scsi_sdr1 = (void *)((char *)asc->sc_base + IOASIC_SCSI_SDR1);
+	asc->sc_reg =	(void *)(asc->sc_base + IOASIC_SLOT_12_START);
+	asc->sc_ssr =	(void *)(asc->sc_base + IOASIC_CSR);
+	asc->sc_scsi_dmaptr =	(void *)(asc->sc_base + IOASIC_SCSI_DMAPTR);
+	asc->sc_scsi_nextptr =	(void *)(asc->sc_base + IOASIC_SCSI_NEXTPTR);
+	asc->sc_scsi_scr =  (void *)(asc->sc_base + IOASIC_SCSI_SCR);
+	asc->sc_scsi_sdr0 = (void *)(asc->sc_base + IOASIC_SCSI_SDR0);
+	asc->sc_scsi_sdr1 = (void *)(asc->sc_base + IOASIC_SCSI_SDR1);
 
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
@@ -148,9 +177,9 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
 	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_dev);
+	ncr53c9x_attach(sc, &asc_ioasic_dev);
 }
 
 void
@@ -338,4 +367,53 @@ asc_ioasic_stop(sc)
 	}
 	asc->sc_active = 0;
 #endif
+}
+
+/*
+ * Glue functions.
+ */
+static u_char
+asc_read_reg(sc, reg)
+	struct ncr53c9x_softc *sc;
+	int reg;
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+	u_char v;
+
+	v = asc->sc_reg[reg * 4] /*& 0xff*/;
+	return (v);
+}
+
+static void
+asc_write_reg(sc, reg, val)
+	struct ncr53c9x_softc *sc;
+	int reg;
+	u_char val;
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+
+	asc->sc_reg[reg * 4] = val;
+	wbflush();
+}
+
+static int
+asc_dma_isintr(sc)
+	struct ncr53c9x_softc *sc;
+{
+	return !!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT);
+}
+
+static int
+asc_dma_isactive(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct asc_softc *asc = (struct asc_softc *)sc;
+
+	return (asc->sc_active);
+}
+
+static void
+asc_clear_latched_intr(sc)
+	struct ncr53c9x_softc *sc;
+{
 }
