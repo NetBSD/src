@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.33 2001/01/14 05:34:06 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.34 2001/06/01 20:33:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -385,6 +385,7 @@ extern int debug;
 #define	DEBUG_TARG	0x0100
 #define	DEBUG_VAR	0x0200
 #define DEBUG_FOR	0x0400
+#define DEBUG_SHELL	0x0800
 
 #ifdef __STDC__
 #define CONCAT(a,b)	a##b
@@ -411,5 +412,6 @@ void Make_DoAllVar __P((GNode *));
 Boolean Make_Run __P((Lst));
 char * Check_Cwd_Cmd __P((char *));
 void Check_Cwd __P((char **));
+void PrintOnError __P((char *));
 
 #endif /* _MAKE_H_ */
