@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dol.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: dol.c,v 1.5 1994/09/21 00:10:45 mycroft Exp $";
+static char *rcsid = "$Id: dol.c,v 1.6 1994/09/23 11:16:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -847,16 +847,9 @@ heredoc(term)
     bool    quoted;
     char   *tmp;
 
-    if (creat(tmp = short2str(shtemp), 0600) < 0)
+    tmp = short2str(shtemp);
+    if (open(tmp, O_RDWR | O_CREAT | O_TRUNC, 0600) < 0)
 	stderror(ERR_SYSTEM, tmp, strerror(errno));
-    (void) close(0);
-    if (open(tmp, O_RDWR) < 0) {
-	int     oerrno = errno;
-
-	(void) unlink(tmp);
-	errno = oerrno;
-	stderror(ERR_SYSTEM, tmp, strerror(errno));
-    }
     (void) unlink(tmp);		/* 0 0 inode! */
     Dv[0] = term;
     Dv[1] = NULL;
