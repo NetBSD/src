@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.15 1999/09/29 15:58:28 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.16 1999/10/09 14:27:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -877,6 +877,7 @@ ntfs_vgetex(
 	struct ntnode *ip;
 	struct fnode *fp;
 	struct vnode *vp;
+	enum vtype f_type;
 
 	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
 		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
@@ -913,13 +914,13 @@ ntfs_vgetex(
 	if (!(flags & VG_DONTVALIDFN) && !(fp->f_flag & FN_VALID)) {
 		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
 		    (fp->f_attrtype == 0x80 && fp->f_attrname == NULL)) {
-			fp->f_type = VDIR;
+			f_type = VDIR;
 		} else if(flags & VG_EXT) {
-			fp->f_type = VNON;
+			f_type = VNON;
 
 			fp->f_size =fp->f_allocated = 0;
 		} else {
-			fp->f_type = VREG;	
+			f_type = VREG;	
 
 			error = ntfs_filesize(ntmp, fp, 
 					      &fp->f_size, &fp->f_allocated);
@@ -952,7 +953,7 @@ ntfs_vgetex(
 #endif
 	fp->f_vp = vp;
 	vp->v_data = fp;
-	vp->v_type = fp->f_type;
+	vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_flag |= VROOT;
@@ -967,7 +968,7 @@ ntfs_vgetex(
 		}
 	}
 
-	VREF(fp->f_devvp);
+	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);
 	
