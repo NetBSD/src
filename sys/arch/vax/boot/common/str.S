@@ -1,4 +1,4 @@
-/*	$NetBSD: str.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
+/*	$NetBSD: str.S,v 1.2 2003/09/04 10:40:44 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,15 +71,22 @@ ENTRY(index, 0)
 /*
  * cmpc3 is emulated on MVII.
  */
+ENTRY(memcmp, 0)
+	brb	10f
 ENTRY(bcmp, 0)
-	movl	4(%ap), %r2
+10:	movl	4(%ap), %r2
 	movl	8(%ap), %r1
 	movl	12(%ap), %r0
 2:	cmpb	(%r2)+, (%r1)+
 	bneq	1f
 	decl	%r0
 	bneq	2b
-1:	ret
+3:	ret
+1:	bgtru	5f
+	movl	$-1, %r0
+	brb	3b
+5:	movl    $1, %r0
+	ret
 
 /*
  * Is movc3/movc5 emulated on any CPU? I dont think so; use them here.
@@ -92,6 +99,16 @@ ENTRY(bcopy,0)
 	movc3	12(%ap), *4(%ap), *8(%ap)
 	ret
 
+ENTRY(memset,0)
+	movc5	$0,*4(%ap),8(%ap),12(%ap),*4(%ap)
+	movl    4(%ap), %r0
+	ret
+
+ENTRY(memcpy,0)
+	movc3	12(%ap), *8(%ap), *4(%ap)
+	movl    4(%ap), %r0
+	ret
+
 ENTRY(strlen, 0)
 	movl	4(%ap), %r0
 1:	tstb	(%r0)+
@@ -102,7 +119,8 @@ ENTRY(strlen, 0)
 
 ENTRY(strncmp, 0)
 	movl	12(%ap), %r3
-	brb	5f
+	bneq	5f
+	brb	4f
 
 ENTRY(strcmp, 0)
 	movl	$250, %r3	# max string len to compare
@@ -120,7 +138,7 @@ ENTRY(strcmp, 0)
 4:	clrl	%r0		# We are done, strings equal.
 	ret
 
-1:	bgtr	3f
+1:	bgtru	3f
 	mnegl	%r0, %r0
 3:	ret
 
