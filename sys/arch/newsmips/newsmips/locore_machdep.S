@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8 2002/06/01 12:27:07 simonb Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.9 2003/04/26 18:40:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -175,6 +175,7 @@ checkromwork:
 	li	k1, 0xfff00000			# NEWS5000 ROM Work: 0xFFF00000~0xFFFFFFFF (1Mbyte)
 	sltu	k1, k0, k1
 	bne	k1, zero, outofworld
+	nop
 
 	li	k1, 0x000fe000			# XXX (depend on 4k page)
 	and	k1, k0, k1			# k1 = (VADDR - 0xFFF00000) & 0xffffe000
