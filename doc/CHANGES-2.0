@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.343 2004/07/19 10:05:31 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.344 2004/07/19 18:00:15 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5875,4 +5875,10 @@ usr.bin/gzip/gzip.c				1.52-1.62
 	Fix various bugs in "gzip" including PRs 26234, 26233, 26240, 26251,
 	26241 and 26246.
 	[mrg, ticket #678]
+
+lib/libm/arch/i387/s_ceilf.S			1.8
+lib/libm/arch/i387/s_floorf.S			1.7
+
+	amd64: stack sanity, leave the return PC alone
+	[drochner, ticket #679]
 
