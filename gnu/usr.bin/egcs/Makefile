@@ -1,13 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/03/30 04:15:35 mrg Exp $
 
-.if	(${MACHINE_ARCH} == "sparc") || \
-	(${MACHINE_ARCH} == "mips")
 SUBDIR+=	common cc1 cc1plus cc1obj libgcc libobjc
+SUBDIR+=	cc cpp g++
 
 all-cc1 all-cc1plus all-cc1obj: all-common
-
-.endif
-
-SUBDIR+=	cc cpp g++
 
 .include <bsd.subdir.mk>

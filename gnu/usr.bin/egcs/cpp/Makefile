@@ -1,8 +1,6 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.2 1998/03/30 03:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/30 04:15:36 mrg Exp $
 
-.if	(${MACHINE_ARCH} == "sparc") || \
-	(${MACHINE_ARCH} == "mips")
 PROG=	cpp
 BINDIR=	/usr/libexec
 SRCS=	cccp.c cexp.c obstack.c version.c 
@@ -13,7 +11,6 @@ CPPFLAGS+= \
 YFLAGS=
 
 CLEANFILES+= cexp.c
-.endif
 
 LINKS=	/usr/bin/cpp /usr/bin/gcpp
 FILES=usr.bin.cpp.sh
