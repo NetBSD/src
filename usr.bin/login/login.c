@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.14 1996/09/18 21:23:37 explorer Exp $	*/
+/*	$NetBSD: login.c,v 1.15 1996/11/14 19:28:29 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.14 1996/09/18 21:23:37 explorer Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.15 1996/11/14 19:28:29 gwr Exp $";
 #endif /* not lint */
 
 /*
@@ -379,6 +379,10 @@ main(argc, argv)
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+
+	if (ttyaction(ttyn, "login", pwd->pw_name))
+		(void)printf("Warning: ttyaction failed.\n");
+
 #if defined(KERBEROS) || defined(KERBEROS5)
 	/* Fork so that we can call kdestroy */
 	if (krbtkfile_env)
