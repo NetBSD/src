@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2000/05/22 02:35:24 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.18 2000/06/12 23:32:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,8 +120,8 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#define	KERNBASE	0xf1000000	/* start of kernel virtual space */
-#define	KERNEND		0xfe000000	/* start of kernel virtual space */
+#define	KERNBASE	0x0f1000000	/* start of kernel virtual space */
+#define	KERNEND		0x0fe000000	/* end of kernel virtual space */
 #define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
 #define	DEV_BSIZE	512
@@ -131,11 +131,17 @@ extern int nbpg, pgofset, pgshift;
 
 #ifdef __arch64__
 /* We get stack overflows w/8K stacks in 64-bit mode */
-#define	SSIZE		2		/* initial stack size in pages */
+#define	SSIZE		1		/* initial stack size in pages */
 #else
 #define	SSIZE		1
 #endif
 #define	USPACE		(SSIZE*8192)
+
+/*
+ * Here's the location of the interrupt stack and CPU structure.
+ */
+#define	INTSTACK	(KERNEND)
+#define	EINTSTACK	(INTSTACK+USPACE
 
 /*
  * Constants related to network buffer management.
@@ -202,6 +208,7 @@ extern int nbpg, pgofset, pgshift;
  */
 #ifdef _KERNEL
 #ifndef _LOCORE
+#if 0
 extern vaddr_t	dvma_base;
 extern vaddr_t	dvma_end;
 extern struct map	*dvmamap;
@@ -215,6 +222,7 @@ extern struct map	*dvmamap;
 extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
 extern caddr_t	dvma_malloc __P((size_t, void *, int));
 extern void	dvma_free __P((caddr_t, size_t, void *));
+#endif
 
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
