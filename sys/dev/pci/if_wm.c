@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.34 2003/04/05 13:23:17 kent Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.35 2003/04/15 21:12:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1016,6 +1016,11 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	case ETHERTYPE_IP:
 		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN;
+		break;
+
+	case ETHERTYPE_VLAN:
+		iphl = sizeof(struct ip);
+		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 
 	default:
