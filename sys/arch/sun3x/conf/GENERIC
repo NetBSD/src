@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7.4.1 1997/08/23 07:12:23 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.7.4.2 1997/08/27 22:55:45 thorpej Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -22,7 +22,7 @@ options 	DDB
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Filesystem options
 file-system	FFS		# ufs file system
