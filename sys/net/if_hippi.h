@@ -1,11 +1,11 @@
-/*	$NetBSD: if_hippi.h,v 1.6 1999/11/19 20:41:19 thorpej Exp $	*/
+/*	$NetBSD: if_hippi.h,v 1.7 2005/02/26 22:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
- * of the Numerical Aerospace Simulation Facility, NASA Ames Research 
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research
  * Center.
  *
  * Redistribution and use in source and binary forms, with or without

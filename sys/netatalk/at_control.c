@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.9 2004/04/18 18:55:57 matt Exp $	 */
+/*	$NetBSD: at_control.c,v 1.10 2005/02/26 22:45:09 perry Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.9 2004/04/18 18:55:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.10 2005/02/26 22:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ at_control(cmd, data, ifp, p)
 		 */
 		if (aa == (struct at_ifaddr *) 0) {
 			aa = (struct at_ifaddr *)
-			    malloc(sizeof(struct at_ifaddr), M_IFADDR, 
+			    malloc(sizeof(struct at_ifaddr), M_IFADDR,
 			    M_WAITOK|M_ZERO);
 
 			if (aa == NULL)
@@ -298,7 +298,7 @@ at_control(cmd, data, ifp, p)
 		break;
 
 	case SIOCSIFADDR:
-		return (at_ifinit(ifp, aa, 
+		return (at_ifinit(ifp, aa,
 		    (struct sockaddr_at *) &ifr->ifr_addr));
 
 	case SIOCAIFADDR:
@@ -870,7 +870,7 @@ aa_clean()
 				ifa = ifa->ifa_next;
 			}
 			if (ifa->ifa_next) {
-				ifa->ifa_next = 
+				ifa->ifa_next =
 				    ((struct ifaddr *) aa)->ifa_next;
 			} else {
 				panic("at_entry");

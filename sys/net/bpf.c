@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.106 2005/02/12 23:14:03 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.107 2005/02/26 22:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.106 2005/02/12 23:14:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.107 2005/02/26 22:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1296,7 +1296,7 @@ void
 bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
-	
+
 	m0.m_flags = 0;
 	m0.m_next = m;
 	m0.m_len = 4;

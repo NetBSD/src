@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.32 2005/02/03 22:45:28 perry Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.33 2005/02/26 22:45:12 perry Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.32 2005/02/03 22:45:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.33 2005/02/26 22:45:12 perry Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -125,7 +125,7 @@ gre_input(struct mbuf *m, ...)
 
 	ret = gre_input2(m, off, proto);
 	/*
-	 * ret == 0 : packet not processed, meaning that 
+	 * ret == 0 : packet not processed, meaning that
 	 * no matching tunnel that is up is found.
 	 * we inject it to raw ip socket to see if anyone picks it up.
 	 */

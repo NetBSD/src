@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.43 2005/02/21 21:37:22 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.44 2005/02/26 22:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.43 2005/02/21 21:37:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.44 2005/02/26 22:45:09 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -779,7 +779,7 @@ vlan_start(struct ifnet *ifp)
 				 * Ethernet header with 802.1Q encapsulation.
 				 */
 				memmove(mtod(m, caddr_t),
-				    mtod(m, caddr_t) + ifv->ifv_encaplen, 
+				    mtod(m, caddr_t) + ifv->ifv_encaplen,
 				    sizeof(struct ether_header));
 				evl = mtod(m, struct ether_vlan_header *);
 				evl->evl_proto = evl->evl_encap_proto;
@@ -835,7 +835,7 @@ vlan_start(struct ifnet *ifp)
 
 /*
  * Given an Ethernet frame, find a valid vlan interface corresponding to the
- * given source interface and tag, then run the real packet through the 
+ * given source interface and tag, then run the real packet through the
  * parent's input routine.
  */
 void

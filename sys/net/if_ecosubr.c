@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.15 2005/02/26 22:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.15 2005/02/26 22:45:09 perry Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.14 2004/04/21 18:40:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.15 2005/02/26 22:45:09 perry Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -199,7 +199,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				if (rt->rt_ifp != ifp)
 					return (*rt->rt_ifp->if_output)
 							(ifp, m0, dst, rt);
-			} else 
+			} else
 				senderr(EHOSTUNREACH);
 		}
 		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
@@ -333,7 +333,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (m == NULL)
 		return (0);
 #endif
-	
+
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -838,7 +838,7 @@ eco_sprintf(const u_int8_t *ea)
 		snprintf(buf, sizeof(buf), "%d.%d", ea[1], ea[0]);
 	return buf;
 }
-		    
+
 /*
  * Econet retry handling.
  */

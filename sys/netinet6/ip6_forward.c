@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.43 2004/07/16 01:12:02 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.44 2005/02/26 22:45:12 perry Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.43 2004/07/16 01:12:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.44 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -261,7 +261,7 @@ ip6_forward(m, srcrt)
 	 */
 	if (!isr)
 		goto skip_ipsec;
-	
+
     doipsectunnel:
 	/*
 	 * All the extension headers will become inaccessible
@@ -312,7 +312,7 @@ ip6_forward(m, srcrt)
 	if (ip6 != mtod(m, struct ip6_hdr *)) {
 		/*
 		 * now tunnel mode headers are added.  we are originating
-		 * packet instead of forwarding the packet.  
+		 * packet instead of forwarding the packet.
 		 */
 		ip6_output(m, NULL, NULL, IPV6_FORWARDING/*XXX*/, NULL, NULL,
 		    NULL);

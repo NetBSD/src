@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.9 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: if_token.h,v 1.10 2005/02/26 22:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,7 @@ struct token_rif {
 #define TOKEN_RCF_BROADCAST_MASK	0xe000
 #define	TOKEN_RCF_BROADCAST_ALL		0x8000  /* all routes broadcast */
 #define	TOKEN_RCF_BROADCAST_SINGLE	0xc000  /* single route broadcast */
-				
+
 /*
  * A Token-ring frame consists of
  * header +      rif      + llcinfo + fcs

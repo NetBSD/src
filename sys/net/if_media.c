@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.23 2004/12/08 20:37:43 dyoung Exp $	*/
+/*	$NetBSD: if_media.c,v 1.24 2005/02/26 22:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.23 2004/12/08 20:37:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.24 2005/02/26 22:45:09 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
 }
 
 /*
- * Set the default active media. 
+ * Set the default active media.
  *
  * Called by device-specific code which is assumed to have already
  * selected the default media in hardware.  We do _not_ call the
@@ -254,7 +254,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
 				printf(
-				    "ifmedia_ioctl: no media found for 0x%x\n", 
+				    "ifmedia_ioctl: no media found for 0x%x\n",
 				    newmedia);
 			}
 #endif
@@ -299,7 +299,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	/*
 	 * Get list of available media and current media on interface.
 	 */
-	case SIOCGIFMEDIA: 
+	case SIOCGIFMEDIA:
 	{
 		struct ifmedia_entry *ep;
 		size_t nwords;
@@ -323,7 +323,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 
 		if (ifmr->ifm_count != 0) {
 			size_t count;
-			size_t minwords = nwords > (size_t)ifmr->ifm_count 
+			size_t minwords = nwords > (size_t)ifmr->ifm_count
 			    ? (size_t)ifmr->ifm_count
 			    : nwords;
 			int *kptr = (int *)malloc(minwords * sizeof(int),

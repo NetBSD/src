@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.5 2004/05/07 00:55:15 jonathan Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.6 2005/02/26 22:45:13 perry Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.5 2004/05/07 00:55:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.6 2005/02/26 22:45:13 perry Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -181,7 +181,7 @@ m_clone(struct mbuf *m0)
 			n->m_len = cc;
 			if (mlast != NULL)
 				mlast->m_next = n;
-			mlast = n;	
+			mlast = n;
 			newipsecstat.ips_clcopied++;
 
 			len -= cc;
@@ -196,7 +196,7 @@ m_clone(struct mbuf *m0)
 				return (NULL);
 			}
 		}
-		n->m_next = m->m_next; 
+		n->m_next = m->m_next;
 		if (mprev == NULL)
 			m0 = mfirst;		/* new head of chain */
 		else

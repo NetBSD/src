@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.24 2004/09/04 23:30:07 manu Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.25 2005/02/26 22:45:12 perry Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -130,7 +130,7 @@ struct mfcctl2 {
  *
  * Measurement works as follows:
  *
- * For >= measurements: 
+ * For >= measurements:
  * The first packet marks the start of a measurement interval.
  * During an interval we count packets and bytes, and when we
  * pass the threshold we deliver an upcall and we are done.

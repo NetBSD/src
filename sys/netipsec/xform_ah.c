@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.7 2004/05/01 03:00:42 jonathan Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.8 2005/02/26 22:45:13 perry Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.7 2004/05/01 03:00:42 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.8 2005/02/26 22:45:13 perry Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.7 2004/05/01 03:00:42 jonathan Exp $"
 #define HDRSIZE(sav) \
 	(((sav)->flags & SADB_X_EXT_OLD) ? \
 		sizeof (struct ah) : sizeof (struct ah) + sizeof (u_int32_t))
-/* 
+/*
  * Return authenticator size in bytes.  The old protocol is known
  * to use a fixed 16-byte authenticator.  The new algorithm gets
  * this size from the xform but is (currently) always 12.
@@ -872,8 +872,8 @@ ah_input_cb(struct cryptop *crp)
 			    "over %d bytes " \
 			    "for packet in SA %s/%08lx:\n" \
 		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x, " \
-		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", 
-			    authsize, 
+		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
+			    authsize,
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi),
 				 calc[0], calc[1], calc[2], calc[3],

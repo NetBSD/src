@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.14 2004/10/27 23:10:13 jonathan Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.15 2005/02/26 22:45:13 perry Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.14 2004/10/27 23:10:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.15 2005/02/26 22:45:13 perry Exp $");
 
 /*
  * IPsec controller part.
@@ -1858,7 +1858,7 @@ ipsec6_hdrsiz(m, dir, in6p)
 	if (in6p == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir, 
+		sp = ipsec_getpolicybysock(m, dir,
 			IN6PCB_TO_PCB(in6p),
 			&error);
 
