@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.20 1997/08/27 11:23:17 bouyer Exp $	*/
+/*	$NetBSD: sci.c,v 1.21 1999/09/30 22:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -130,12 +130,12 @@ sci_scsicmd(xs)
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
-	if (flags & SCSI_DATA_UIO)
+	if (flags & XS_CTL_DATA_UIO)
 		panic("sci: scsi data uio requested");
 
-	if (dev->sc_xs && flags & SCSI_POLL)
+	if (dev->sc_xs && flags & XS_CTL_POLL)
 		panic("sci_scsicmd: busy");
 
 	s = splbio();
@@ -160,7 +160,7 @@ sci_scsicmd(xs)
 	 */
 	sci_donextcmd(dev);
 
-	if (flags & SCSI_POLL)
+	if (flags & XS_CTL_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -178,21 +178,21 @@ sci_donextcmd(dev)
 
 	xs = dev->sc_xs;
 	slp = xs->sc_link;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
-	if (flags & SCSI_DATA_IN)
+	if (flags & XS_CTL_DATA_IN)
 		phase = DATA_IN_PHASE;
-	else if (flags & SCSI_DATA_OUT)
+	else if (flags & XS_CTL_DATA_OUT)
 		phase = DATA_OUT_PHASE;
 	else
 		phase = STATUS_PHASE;
 
-	if (flags & SCSI_RESET)
+	if (flags & XS_CTL_RESET)
 		scireset(dev);
 
 	dev->sc_stat[0] = -1;
 	xs->cmd->bytes[0] |= slp->scsipi_scsi.lun << 5;
-	if (phase == STATUS_PHASE || flags & SCSI_POLL)
+	if (phase == STATUS_PHASE || flags & XS_CTL_POLL)
 		stat = sciicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen, phase);
 	else if (scigo(dev, xs) == 0)
@@ -242,7 +242,8 @@ sci_scsidone(dev, stat)
 			break;
 		}
 	}
-	xs->flags |= ITSDONE;
+
+	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * grab next command before scsipi_done()
@@ -391,7 +392,7 @@ scierror(dev, csr)
 	if (xs == NULL)
 		panic("scierror");
 #endif
-	if (xs->flags & SCSI_SILENT)
+	if (xs->xs_control & XS_CTL_SILENT)
 		return;
 
 	printf("%s: ", dev->sc_dev.dv_xname);
@@ -653,7 +654,7 @@ scigo(dev, xs)
 	if (sci_no_dma)	{
 		sciicmd (dev, target, (u_char *) xs->cmd, xs->cmdlen,
 		  addr, count,
-		  xs->flags & SCSI_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE);
+		  xs->xs_control & XS_CTL_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE);
 
 		return (1);
 	}
@@ -682,7 +683,7 @@ scigo(dev, xs)
 		case CMD_PHASE:
 			if (sci_ixfer_out (dev, xs->cmdlen, (u_char *) xs->cmd, phase))
 				goto abort;
-			phase = xs->flags & SCSI_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE;
+			phase = xs->xs_control & XS_CTL_DATA_IN ? DATA_IN_PHASE : DATA_OUT_PHASE;
 			break;
 
 		case DATA_IN_PHASE:
