@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.7 1997/09/18 01:47:10 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.7.4.1 1998/01/27 02:35:33 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,13 +36,11 @@
  */
 
 #include <sys/param.h>
-#include <machine/mon.h>
-#include <a.out.h>
+#include <sys/exec_aout.h>
 
-#include "stand.h"
+#include <stand.h>
+#include "libsa.h"
 
-extern void ICIA();
-extern int debug;
 int errno;
 
 /*ARGSUSED*/
@@ -54,7 +52,7 @@ exec_sun(file, loadaddr)
 	register int io;
 	struct exec x;
 	int cc, magic;
-	void (*entry)();
+	void *entry;
 	register char *cp;
 	register int *ip;
 
@@ -80,7 +78,7 @@ exec_sun(file, loadaddr)
 	magic = N_GETMAGIC(x);
 	if (magic == ZMAGIC)
 		cp += sizeof(x);
-	entry = (void (*)())cp;
+	entry = cp;
 
 	/*
 	 * Leave a copy of the exec header before the text.
@@ -166,10 +164,8 @@ exec_sun(file, loadaddr)
 	close(io);
 
 	printf("Starting program at 0x%x\n", (int)entry);
-	asm("_exec_sun_call_entry:");
-	ICIA();
-	(*entry)();
-	panic("exec returned");
+	chain_to(entry);
+	/* not reached */
 
 shread:
 	printf("exec: short read\n");
