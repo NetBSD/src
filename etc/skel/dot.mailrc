@@ -1,0 +1,9 @@
+#	$NetBSD: dot.mailrc,v 1.1.4.2 2000/10/25 16:58:50 he Exp $
+
+ignore message-id received date fcc status resent-date resent-message-id resent-from in-reply-to
+set append ask autoprint 
+set indentprefix="> "
+set PAGER=more
+set EDITOR=vi
+set VISUAL=vi
+retain bcc cc date from subject to
