@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cc1,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: Makefile.cc1,v 1.2 1996/03/05 01:03:19 jtc Exp $
 
 NOMAN=
 
@@ -7,7 +7,7 @@ BINDIR=	/usr/libexec
 XXXX!= cd $(.CURDIR)/../common; \
 	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
 
 YFLAGS=
