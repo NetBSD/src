@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.2.3 2001/11/10 16:26:16 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.2.4 2001/11/12 02:08:03 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -255,6 +255,7 @@ mips_config_cache(void)
 	case MIPS_R4300:
 		mips_picache_ways = 1;
 		mips_pdcache_ways = 1;
+		mips_sdcache_ways = 1;
 
 		mips3_get_cache_config(csizebase);
 
@@ -456,6 +457,21 @@ mips_config_cache(void)
 				    r4k_sdcache_wb_range_32;
 				break;
 
+			case 16:
+			case 64:
+			case 128:
+				mips_cache_ops.mco_sdcache_wbinv_all =
+				    r4k_sdcache_wbinv_all_generic;
+				mips_cache_ops.mco_sdcache_wbinv_range =
+				    r4k_sdcache_wbinv_range_generic;
+				mips_cache_ops.mco_sdcache_wbinv_range_index =
+				    r4k_sdcache_wbinv_range_index_generic;
+				mips_cache_ops.mco_sdcache_inv_range =
+				    r4k_sdcache_inv_range_generic;
+				mips_cache_ops.mco_sdcache_wb_range =
+				    r4k_sdcache_wb_range_generic;
+				break;
+
 			default:
 				panic("r4k sdcache %d way line size %d\n",
 				    mips_sdcache_ways, mips_sdcache_line_size);
@@ -466,6 +482,7 @@ mips_config_cache(void)
 			panic("r4k sdcache %d way line size %d\n",
 			    mips_sdcache_ways, mips_sdcache_line_size);
 		}
+		break;
 #endif /* MIPS3 */
 
 	default:
