@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.24 1997/03/24 22:56:37 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.25 1997/03/27 16:02:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,21 +133,28 @@ ms1_cache_enable()
 void
 viking_cache_enable()
 {
+	int pcr;
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
-	/* We "flash-clear" the I/D caches. */
-	sta(0x80000000, ASI_ICACHECLR, 0); /* Unlock */
-	sta(0, ASI_ICACHECLR, 0);	/* clear */
-	sta(0x80000000, ASI_DCACHECLR, 0);
-	sta(0, ASI_DCACHECLR, 0);
+	pcr = lda(SRMMU_PCR,ASI_SRMMU);
+
+	if ((pcr & VIKING_PCR_ICE) == 0) {
+		/* I-cache not on; "flash-clear" it now. */
+		sta(0x80000000, ASI_ICACHECLR, 0);	/* Unlock */
+		sta(0, ASI_ICACHECLR, 0);		/* clear */
+	}
+	if ((pcr & VIKING_PCR_DCE) == 0) {
+		/* D-cache not on: "flash-clear" it. */
+		sta(0x80000000, ASI_DCACHECLR, 0);
+		sta(0, ASI_DCACHECLR, 0);
+	}
 
 	/* Turn on caches via MMU */
-	sta(SRMMU_PCR, ASI_SRMMU,
-	    lda(SRMMU_PCR,ASI_SRMMU) | VIKING_PCR_DCE | VIKING_PCR_ICE);
+	sta(SRMMU_PCR, ASI_SRMMU, pcr | VIKING_PCR_DCE | VIKING_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
@@ -647,21 +654,26 @@ viking_pcache_flush_line(va, pa)
 	 * Flush cache line corresponding to virtual address `va'
 	 * which is mapped at physical address `pa'.
 	 */
+	extern char *etext;
 	static char *base;
 	static int cmask, cshift;
 	int i;
 	char *v;
 
 	if (CACHEINFO.c_enabled == 0) {
-		/* In bootstrap; flash-clear entire cache */
-		sta(0x80000000, ASI_DCACHECLR, 0);	/* Unlock */
-		sta(0, ASI_DCACHECLR, 0);
-		return;
+		/*XXX - consult PROM early in autoconf? */
+		cshift = 5;
+		cmask = (4096 << cshift) - 1;
+		v = (char *)roundup((int)etext, NBPG) +
+		    (((va & cmask) >> cshift) << cshift);
+		i = 5;
+		while (i--) {
+			(*(volatile int *)v);
+			v += NBPG;
+		}
 	}
 
 	if (base == 0) {
-		extern char *etext;
-
 		cshift = CACHEINFO.ic_l2linesize;
 		cmask = (CACHEINFO.ic_nlines << cshift) - 1;
 		base = (char *)roundup((int)etext, NBPG);
@@ -693,6 +705,6 @@ cypress_pcache_flush_line(va, pa)
 	 */
 
 	/* NOT YET IMPLEMENTED */
-	srmmu_vcache_flush_page(va & ~(NBPG - 1));
+	/*srmmu_vcache_flush_page(va & ~(NBPG - 1));*/
 }
 #endif /* SUN4M */
