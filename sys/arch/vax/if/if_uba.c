@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.10 1996/02/11 13:48:01 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.11 1996/03/17 22:56:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -112,7 +112,7 @@ if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
 		}
 		ifu->iff_hlen = hlen;
 		ifu->iff_uban = uban;
-		ubasc = ubacd.cd_devs[uban];
+		ubasc = uba_cd.cd_devs[uban];
 		ifu->iff_uba = ubasc->uh_uba;
 		ifu->iff_ubamr = ubasc->uh_mr;
 	}

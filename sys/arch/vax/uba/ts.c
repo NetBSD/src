@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.4 1996/03/02 14:06:03 ragge Exp $ */
+/*      $NetBSD: ts.c,v 1.5 1996/03/17 22:56:44 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -163,8 +163,12 @@ int	ts_match __P((struct device *, void *, void *));
 void	ts_attach __P((struct device *, struct device *, void *));
 void	tsstrategy __P((struct buf *));
 
-struct	cfdriver tscd = {
-	NULL, "ts", ts_match, ts_attach, DV_DULL, sizeof(struct device)
+struct	cfdriver ts_cd = {
+	NULL, "ts", DV_DULL
+};
+
+struct	cfattach ts_ca = {
+	sizeof(struct device), ts_match, ts_attach
 };
 
 /*
@@ -737,7 +741,7 @@ tsreset (ctlr)
 	return (tswchar (ctlr));
 }
 
-extern	struct cfdriver ubacd;
+extern	struct cfdriver uba_cd;
 /*
  * probe for device. If found, try to raise an interrupt.
  */
@@ -768,7 +772,7 @@ tsprobe (reg, ctlr, um)
          * The device is not really initialized at this point, this is just to
          * find out if the device exists. 
          */
-	ubasc = ubacd.cd_devs[0]; /* XXX */
+	ubasc = uba_cd.cd_devs[0]; /* XXX */
         sc->sc_ivec = (ubasc->uh_lastiv -= 4);
 
 	count = 0;

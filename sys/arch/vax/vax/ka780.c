@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.1 1996/03/02 13:45:41 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.2 1996/03/17 22:56:22 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -131,16 +131,16 @@ ka780_memenable(sa, sc)
 /* log crd errors */
 ka780_memerr()
 {
-	extern	struct cfdriver memcd;
+	extern	struct cfdriver mem_cd;
 	struct	mem_softc *sc;
 	register struct mcr780 *mcr;
 	register int m;
 
-	for (m = 0; m < memcd.cd_ndevs; m++) {
-		if (memcd.cd_devs[m] == 0)
+	for (m = 0; m < mem_cd.cd_ndevs; m++) {
+		if (mem_cd.cd_devs[m] == 0)
 			continue;
 
-		sc = (void *)memcd.cd_devs[m];
+		sc = (void *)mem_cd.cd_devs[m];
 		mcr = (struct mcr780 *)sc->sc_memaddr;
 		switch (sc->sc_memtype) {
 

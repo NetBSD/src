@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 1996/03/07 23:27:58 ragge Exp $
+#	$NetBSD: GENERIC,v 1.12 1996/03/17 22:56:29 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -68,7 +68,7 @@ config          netbsd          swap generic
 # Devices directly attached to backplane.
 cpu0		at backplane0	# Only one CPU so far.
 sbi*		at backplane0	# SBI's are always at backplane (Abus).
-mem0		at backplane0	# Some machines have memory at backplane.
+mem*		at backplane0	# Some machines have memory at backplane.
 
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems

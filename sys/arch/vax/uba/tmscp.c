@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.10 1996/03/02 14:06:05 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.11 1996/03/17 22:56:42 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -197,8 +197,12 @@ int	tmscp_match __P((struct device *, void *, void *));
 void	tmscp_attach __P((struct device *, struct device *, void *));
 void	tmscpstrategy __P((struct buf *));
 
-struct	cfdriver tmscpcd = {
-	NULL, "tmscp", tmscp_match, tmscp_attach, DV_DULL, sizeof(struct device)
+struct	cfdriver tmscp_cd = {
+	NULL, "tmscp", DV_DULL
+};
+
+struct	cfattach tmscp_ca = {
+	sizeof(struct device), tmscp_match, tmscp_attach
 };
 
 /* Software state per controller */
@@ -321,7 +325,7 @@ struct  uba_driver tmscpdriver =
 /*************************************************************************/
 
 #define DELAYTEN 1000
-extern	struct cfdriver ubacd;
+extern	struct cfdriver uba_cd;
 
 /*
  * Unfortunately qbgetpri can't be used because the TK50 doesn't flip the
@@ -354,7 +358,7 @@ tmscpprobe(reg, ctlr, um)
 	 * The device is not really initialized at this point, this is just to
 	 * find out if the device exists.
 	 */
-	ubasc = ubacd.cd_devs[0]; /* XXX */
+	ubasc = uba_cd.cd_devs[0]; /* XXX */
 	sc->sc_ivec = (ubasc->uh_lastiv -= 4);
 	tmscpaddr->tmscpip = 0;
 
@@ -1555,7 +1559,7 @@ tmscprsp(um, tm, sc, i)
 			panic("tmscp: don't work2!");
 		dp->b_actf = bp->b_actf;
 #		if defined(VAX750)
-		ubasc = ubacd.cd_devs[um->um_ubanum];
+		ubasc = uba_cd.cd_devs[um->um_ubanum];
 		if (cpunumber == VAX_750) { 
 		    if ((tmscpwtab[um->um_ctlr].b_actf == NULL) &&
 					(um->um_ubinfo != 0)) {
