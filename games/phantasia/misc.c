@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2003/01/20 05:29:55 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2003/05/08 13:03:49 wiz Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -937,7 +937,7 @@ void
 error(whichfile)
 	const char   *whichfile;
 {
-	int     (*funcp) __P((const char *,...));
+	int     (*funcp)(const char *,...);
 
 	if (Windows) {
 		funcp = printw;
