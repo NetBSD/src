@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 1995/08/16 04:48:34 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.47 1995/09/02 05:44:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -617,8 +617,7 @@ _rtclock_intr:
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 
 	movl	#1, d0			| clock taken care of
-	rts				| go back to lev1intr...
-	|jra	rei			| all done
+	rts				| go back from whence we came
 
 _lev7intr:
 	addql	#1, _intrcnt+16
