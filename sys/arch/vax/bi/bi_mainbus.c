@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.1 1999/08/07 10:36:43 ragge Exp $	   */
+/*	$NetBSD: bi_mainbus.c,v 1.2 2000/03/26 11:41:25 ragge Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
+#include <machine/scb.h>
+#include <machine/cpu.h>
 
 #include <dev/bi/bivar.h>
 
@@ -71,8 +73,16 @@ bi_mainbus_attach(parent, self, aux)
 	/*
 	 * Fill in bus specific data.
 	 */
+	sc->sc_addr = (bus_addr_t)0x20000000; /* XXX */
 	sc->sc_iot = &vax_mem_bus_space; /* No special I/O handling */
 	sc->sc_dmat = &vax_bus_dma_tag;	/* No special DMA handling either */
+	sc->sc_intcpu = 1 << mastercpu;
 
 	bi_attach(sc);
+}
+
+void
+bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg)
+{
+	scb_vecalloc(vec, func, arg, SCB_ISTACK);
 }
