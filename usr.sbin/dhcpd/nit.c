@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.1 1996/10/03 06:33:25 mrg Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.2 1996/10/03 06:57:20 mrg Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -59,9 +59,15 @@ static char copyright[] =
 #include <net/packetfilt.h>
 
 #include <netinet/in_systm.h>
+#ifdef __NetBSD__
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#incldue <netinet/if_ether.h>
+#else
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
 #include "includes/netinet/if_ether.h"
+#endif
 
 /* Called by get_interface_list for each interface that's discovered.
    Opens a packet filter for each interface and adds it to the select
