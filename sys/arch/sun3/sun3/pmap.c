@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 1997/11/24 22:09:58 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 1997/12/02 20:42:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -751,25 +751,30 @@ pmeg_mon_init(sva, eva, keep)
 	int pte, valid;
 	unsigned char sme;
 
+#ifdef	PMAP_DEBUG
+	if (pmap_debug & PMD_SEGMAP)
+		mon_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
+		           sva, eva, keep);
+#endif
+
 	sva &= ~(NBSG-1);
 
 	while (sva < eva) {
 		sme = get_segmap(sva);
 		if (sme != SEGINV) {
-#ifdef	DEBUG
-			mon_printf("mon va=0x%x seg=0x%x\n", sva, sme);
-#endif
 			valid = 0;
 			endseg = sva + NBSG;
 			for (pgva = sva; pgva < endseg; pgva += NBPG) {
 				pte = get_pte(pgva);
 				if (pte & PG_VALID) {
 					valid++;
-#ifdef	DEBUG
-					mon_printf("mon va=0x%x pte=0x%x\n", pgva, pte);
-#endif
 				}
 			}
+#ifdef	PMAP_DEBUG
+			if (pmap_debug & PMD_SEGMAP)
+				mon_printf(" sva=0x%x seg=0x%x valid=%d\n",
+				           sva, sme, valid);
+#endif
 			if (keep && valid)
 				pmeg_reserve(sme);
 			else set_segmap(sva, SEGINV);
@@ -1790,7 +1795,7 @@ pmap_bootstrap(nextva)
 	 */
 	temp_seg_va = virtual_avail;
 	virtual_avail += NBSG;
-#ifdef	DEBUG
+#ifdef	DIAGNOSTIC
 	if (temp_seg_va & SEGOFSET) {
 		mon_printf("pmap_bootstrap: temp_seg_va\n");
 		sunmon_abort();
