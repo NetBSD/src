@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.1 2004/07/08 22:30:53 sekiya Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.2 2004/07/20 04:43:44 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.1 2004/07/08 22:30:53 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.2 2004/07/20 04:43:44 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,9 +184,9 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	cs->cs_ops = &zskbd_zsops;
 	cs->cs_private = sc;
 
+	sc->txq_head = 0;
 	sc->txq_tail = 0;
-	sc->txq_tail = 0;
-	sc->rxq_tail = 0;
+	sc->rxq_head = 0;
 	sc->rxq_tail = 0;
 	sc->state = TX_READY;
 	sc->dip = 0;
