@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 2003/12/03 20:23:41 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.105 2003/12/05 21:49:00 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2003/12/03 20:23:41 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2003/12/05 21:49:00 petrov Exp $");
 
 #define NEW_FPSTATE
 
@@ -2072,19 +2072,8 @@ syscall(tf, code, pc)
 			*argp++ = *ap++;
 
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL)) {
-#if defined(__arch64__)
-			register_t temp[8];
-			
-			/* Need to xlate 32-bit->64-bit */
-			i = callp->sy_narg;
-			for (j = 0; j < i; j++) 
-				temp[j] = args.i[j];
-			ktrsyscall(p, code, code, NULL, (register_t *)temp);
-#else
-			ktrsyscall(p, code, code, NULL, (register_t *)&args.i);
-#endif
-		}
+		if (KTRPOINT(p, KTR_SYSCALL))
+			ktrsyscall(p, code, code, NULL, (register_t *)&args);
 #endif /* KTRACE */
 		if (error)
 			goto bad;
