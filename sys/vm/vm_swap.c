@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.2 1997/05/05 22:21:02 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.3 1997/05/06 13:18:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -531,6 +531,12 @@ swap_alloc(size)
 	if (nswapdev < 1)
 		return NULL;
 	
+	/*
+	 * XXX
+	 * should we lock the swap_priority list and each swap device
+	 * in turn while doing this search ?
+	 */
+
 	/* XXX THIS IS BUSTED XXX */
 	for (spp = swap_priority.lh_first; spp != NULL;
 	    spp = spp->spi_swappri.le_next) {
@@ -539,8 +545,14 @@ swap_alloc(size)
 			/* if it's not enabled, then, we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
-			    EX_NOBOUNDARY, 0, &result) != 0)
+			    EX_NOBOUNDARY, 0, &result) != 0) {
+				/*
+				 * XXX
+				 * do something smart to note this partition
+				 * as being full, yadda yadda yadda...
+				 */
 				continue;
+			}
 			addr = swap_ptov_addr(sdp, (daddr_t)result);
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
@@ -569,8 +581,9 @@ swap_free(size, addr)
 
 /*
  * We have a physical -> virtual mapping to address here.  There
- * are several different physical address spaces that are to be
- * mapped onto a single virtual address space.
+ * are several different physical address spaces (one for each
+ * swap partition) that are to be mapped onto a single virtual
+ * address space.
  */
 #define ADDR_IN_MAP(addr, sdp) \
 	(((addr) >= (sdp)->swd_mapoffset) && \
@@ -584,14 +597,15 @@ swap_getdevfromaddr(addr)
 	struct swappri *spp;
 	
 	for (spp = swap_priority.lh_first; spp != NULL;
-				    spp = spp->spi_swappri.le_next)
+	     spp = spp->spi_swappri.le_next)
 		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-				    sdp = sdp->swd_next.cqe_next)
+		     sdp = sdp->swd_next.cqe_next)
 			if (ADDR_IN_MAP(addr, sdp))
 				return sdp;
 	return NULL;
 }
 
+/* XXX make this a macro or an inline? */
 static daddr_t
 swap_ptov_addr(sdp, addr)
 	struct swapdev *sdp;
@@ -601,6 +615,7 @@ swap_ptov_addr(sdp, addr)
 	return (addr + sdp->swd_mapoffset);
 }
 
+/* XXX make this a macro or an inline? */
 static daddr_t
 swap_vtop_addr(addr)
 	daddr_t addr;
@@ -649,6 +664,9 @@ swwrite(dev, uio, ioflag)
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
+/*
+ * XXX pk says this causes recursion with spec_strategy() at the moment
+ */
 void
 swstrategy(bp)
 	struct buf *bp;
@@ -694,12 +712,22 @@ swapinit()
 	nswapdev = 0;
 
 	LIST_INIT(&swap_priority);
-	/* XXX this 4 is simply a default starting point */
+	/*
+	 * XXX
+	 * this 4 is simply a default starting point, as most people
+	 * will not have more than 4 swap devices.
+	 */
 	ssize = EXTENT_FIXED_STORAGE_SIZE(4);
 	storage = malloc(ssize , M_VMSWAP, M_WAITOK);
 	if (storage == 0)
 		panic("swapinit: can't malloc storage");
 	nswapmap = maxproc / 2;
+	/*
+	 * XXX
+	 * this is really just wanting to create a Large Address Space
+	 * that we can map each swap devive into.  if VM_{MIN,MAX}_ADDRESS
+	 * are bad things to use here, change it!
+	 */
 	size = VM_MAX_ADDRESS - VM_MIN_ADDRESS;
 	addr = VM_MIN_ADDRESS;
 	/* XXX make this based on ram as well. */
