@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.10 2001/12/18 07:51:16 chs Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko

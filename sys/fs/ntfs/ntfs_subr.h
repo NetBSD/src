@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.9 2001/02/13 19:53:52 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko

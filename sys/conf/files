@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.584 2002/12/23 17:30:36 jdolecek Exp $
+#	$NetBSD: files,v 1.585 2002/12/23 17:38:19 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -978,7 +978,7 @@ include "miscfs/umapfs/files.umapfs"
 include "miscfs/union/files.union"
 include "msdosfs/files.msdosfs"
 include "nfs/files.nfs"
-include "ntfs/files.ntfs"
+include "fs/ntfs/files.ntfs"
 include "ufs/files.ufs"
 
 #
