@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.9 2000/09/20 20:21:10 hubertf Exp $
+# $NetBSD: mi,v 1.253.2.10 2000/09/29 05:50:49 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -270,6 +270,7 @@
 ./usr/share/man/cat1/rusers.0
 ./usr/share/man/cat1/rwall.0
 ./usr/share/man/cat1/rwho.0
+./usr/share/man/cat1/scp.0
 ./usr/share/man/cat1/screenblank.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
@@ -284,9 +285,14 @@
 ./usr/share/man/cat1/skeyinfo.0
 ./usr/share/man/cat1/skeyinit.0
 ./usr/share/man/cat1/sleep.0
+./usr/share/man/cat1/slogin.0
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/split.0
+./usr/share/man/cat1/ssh.0
+./usr/share/man/cat1/ssh-add.0
+./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh-agent.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/stty.0
 ./usr/share/man/cat1/su.0
@@ -998,6 +1004,7 @@
 ./usr/share/man/cat8/smtpd.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
+./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat8/statd.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
@@ -1303,6 +1310,7 @@
 ./usr/share/man/man1/rusers.1
 ./usr/share/man/man1/rwall.1
 ./usr/share/man/man1/rwho.1
+./usr/share/man/man1/scp.1
 ./usr/share/man/man1/screenblank.1
 ./usr/share/man/man1/script.1
 ./usr/share/man/man1/sdiff.1
@@ -1317,9 +1325,14 @@
 ./usr/share/man/man1/skeyinfo.1
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
+./usr/share/man/man1/slogin.1
 ./usr/share/man/man1/sort.1
 ./usr/share/man/man1/source.1
 ./usr/share/man/man1/split.1
+./usr/share/man/man1/ssh.1
+./usr/share/man/man1/ssh-add.1
+./usr/share/man/man1/ssh-keygen.1
+./usr/share/man/man1/ssh-agent.1
 ./usr/share/man/man1/stop.1
 ./usr/share/man/man1/stty.1
 ./usr/share/man/man1/su.1
@@ -2031,6 +2044,7 @@
 ./usr/share/man/man8/smtpd.8
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8
+./usr/share/man/man8/sshd.8
 ./usr/share/man/man8/statd.8
 ./usr/share/man/man8/stdethers.8
 ./usr/share/man/man8/stdhosts.8
