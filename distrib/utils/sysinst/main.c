@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/11/04 01:39:05 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/11/09 15:54:16 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,6 +101,6 @@ int main(int argc, char **argv)
 void
 usage(void)
 {
-	(void)fprintf (stderr, "usage: sysinst [-r release]\n");
+	(void)fprintf (stderr, msg_string(MSG_usage));
 	exit(1);
 }
