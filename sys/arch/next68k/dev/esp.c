@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23 1999/03/14 10:31:05 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.24 1999/03/23 08:42:39 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -188,15 +188,20 @@ esp_hex_dump(unsigned char *pkt, size_t len)
 {
 	size_t i, j;
 
-	printf("0000: ");
+	printf("00000000 ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
+		if ((i+1) % 16 == 8) {
+			printf(" ");
+		}
 		if ((i+1) % 16 == 0) {
-			printf("  %c", '"');
-			for(j=0; j<16; j++)
+			printf(" %c", '|');
+			for(j=0; j<16; j++) {
 				printf("%c", pkt[i-15+j]>=32 && pkt[i-15+j]<127?pkt[i-15+j]:'.');
-			printf("%c\n%c%c%c%c: ", '"', XCHR((i+1)>>12),
-				XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
+			}
+			printf("%c\n%c%c%c%c%c%c%c%c  ", '|', 
+					XCHR((i+1)>>28),XCHR((i+1)>>24),XCHR((i+1)>>20),XCHR((i+1)>>16),
+					XCHR((i+1)>>12), XCHR((i+1)>>8), XCHR((i+1)>>4), XCHR(i+1));
 		}
 	}
 	printf("\n");
@@ -660,12 +665,14 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
 
+#if 0
 #ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
 									 * and then remove this check
 									 */
 	if (*len != *dmasize) {
 		panic("esp dmalen 0x%lx != size 0x%lx",*len,*dmasize);
 	}
+#endif
 #endif
 
 #ifdef DIAGNOSTIC
@@ -683,7 +690,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #endif
 
 	/* we are sometimes asked to dma zero  bytes, that's easy */
-	if (*len <= 0) {
+	if (*dmasize <= 0) {
 		return(0);
 	}
 
@@ -722,7 +729,11 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		 * end up in its own segment.
 		 */
 		if (!esc->sc_datain) {
+#if 0
 			slop_end_size += ESP_DMA_MAXTAIL;
+#else
+			slop_end_size += 0x10;
+#endif
 		}
 
 		/* Check to make sure we haven't counted extra slop
@@ -914,8 +925,8 @@ esp_dma_go(sc)
 		DPRINTF(("%s: FIFO read of %d bytes:",
 				sc->sc_dev.dv_xname,esc->sc_begin_size));
 		for(i=0;i<esc->sc_begin_size;i++) {
-			esc->sc_begin[i]=NCR_READ_REG(sc, NCR_FIFO)&0xff;
-			DPRINTF((" %02x",esc->sc_begin[i]));
+			esc->sc_begin[i]=NCR_READ_REG(sc, NCR_FIFO);
+			DPRINTF((" %02x",esc->sc_begin[i]&0xff));
 		}
 		DPRINTF(("\n"));
 	} else {
@@ -924,7 +935,7 @@ esp_dma_go(sc)
 				sc->sc_dev.dv_xname,esc->sc_begin_size));
 		for(i=0;i<esc->sc_begin_size;i++) {
 			NCR_WRITE_REG(sc, NCR_FIFO, esc->sc_begin[i]);
-			DPRINTF((" %02x",esc->sc_begin[i]));
+			DPRINTF((" %02x",esc->sc_begin[i]&0xff));
 		}
 		DPRINTF(("\n"));
 	}
@@ -1167,11 +1178,13 @@ esp_dmacb_shutdown(arg)
 		printf("%s: dma_shutdown: addr=0x%08lx,len=0x%08lx,size=0x%08lx\n",
 				sc->sc_dev.dv_xname,
 				*esc->sc_dmaaddr, *esc->sc_dmalen, esc->sc_dmasize);
-		esp_hex_dump(*(esc->sc_dmaaddr),(esc->sc_dmasize<=1200)?esc->sc_dmasize:1200);
-		printf("%s: tail=0x%08lx,tailbuf=0x%08lx,tail_size=0x%08lx\n",
-				sc->sc_dev.dv_xname,
-				esc->sc_tail, &(esc->sc_tailbuf[0]), esc->sc_tail_size);
-		esp_hex_dump(&(esc->sc_tailbuf[0]),sizeof(esc->sc_tailbuf));
+		if (esp_debug > 10) {
+			esp_hex_dump(*(esc->sc_dmaaddr),esc->sc_dmasize);
+			printf("%s: tail=0x%08lx,tailbuf=0x%08lx,tail_size=0x%08lx\n",
+					sc->sc_dev.dv_xname,
+					esc->sc_tail, &(esc->sc_tailbuf[0]), esc->sc_tail_size);
+			esp_hex_dump(&(esc->sc_tailbuf[0]),sizeof(esc->sc_tailbuf));
+		}
 	}
 #endif
 
