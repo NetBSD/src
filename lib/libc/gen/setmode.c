@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.28 2000/01/25 15:43:43 enami Exp $	*/
+/*	$NetBSD: setmode.c,v 1.28.6.1 2003/01/17 05:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.28 2000/01/25 15:43:43 enami Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.28.6.1 2003/01/17 05:12:59 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,7 +189,7 @@ setmode(p)
 	int perm, who;
 	char op, *ep;
 	BITCMD *set, *saveset, *endset;
-	sigset_t sigset, sigoset;
+	sigset_t signset, sigoset;
 	mode_t mask;
 	int equalopdone = 0;	/* pacify gcc */
 	int permXbits, setlen;
@@ -203,8 +203,8 @@ setmode(p)
 	 * the caller is opening files inside a signal handler, protect them
 	 * as best we can.
 	 */
-	sigfillset(&sigset);
-	(void)sigprocmask(SIG_BLOCK, &sigset, &sigoset);
+	sigfillset(&signset);
+	(void)sigprocmask(SIG_BLOCK, &signset, &sigoset);
 	(void)umask(mask = umask(0));
 	mask = ~mask;
 	(void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
