@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.48 2004/07/29 16:53:15 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.49 2004/08/17 23:20:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.48 2004/07/29 16:53:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.49 2004/08/17 23:20:10 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.48 2004/07/29 16:53:15 drochner Ex
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
 #include <sparc64/sparc64/cache.h>
+
+#include "locators.h"
 
 #ifdef DEBUG
 #define SPDB_CONF	0x01
@@ -265,7 +267,7 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 }
 
 int
-sparc64_pci_enumerate_bus(struct pci_softc *sc,
+sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	struct ofw_pci_register reg;
@@ -331,6 +333,12 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 			"(%d/%d/%d)\n", sc->sc_dev.dv_xname, name, b, d, f);
 			continue;
 		}
+                if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
+                    (locators[PCICF_DEV] != d))
+                        continue;
+		if ((locators[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT) &&
+		    (locators[PCICF_FUNCTION] != f))
+			continue;
 
 		tag = ofpci_make_tag(pc, node, b, d, f);
 
