@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.4 2000/12/02 08:35:45 sato Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.5 2001/01/08 09:50:08 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -55,6 +55,7 @@ struct vrpiu_softc {
 
 	enum vrpiu_tpstat sc_tpstat;
 	enum vrpiu_adstat sc_adstat;
+	u_int16_t sc_interval;
 
 	struct device *sc_wsmousedev;
 
