@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1995/04/22 20:27:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1995/04/23 00:37:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -517,14 +517,6 @@ sendsig(catcher, sig, mask, code)
 	ft = frame->f_format;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
-
-		/*
-		 * build the short SunOS frame instead
-		 */
-		sunos_sendsig(catcher, sig, mask, code);
-		return;
-	}
-#endif
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
