@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.9 1996/06/13 04:53:48 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.10 1996/06/14 20:38:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -93,9 +93,6 @@ dec_2100_a50_consinit()
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
 	switch (ctb->ctb_term_type) {
 	case 2: 
 		/* serial console ... */
@@ -110,6 +107,9 @@ dec_2100_a50_consinit()
 			extern void comcnpollc __P((dev_t, int));
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
+
+			/* Delay to allow PROM putchars to complete */
+			DELAY(10000);
 
 			comconsaddr = 0x3f8;
 			comconsinit = 0;
@@ -134,6 +134,9 @@ dec_2100_a50_consinit()
 		break;
 
 	default:
+		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
