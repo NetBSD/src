@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.117 2003/03/28 22:39:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.118 2003/04/01 14:58:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.117 2003/03/28 22:39:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.118 2003/04/01 14:58:43 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1338,8 +1338,13 @@ lfs_updatemeta(struct segment *sp)
 			break;
 		}
 		num = howmany(sp->start_bpp[i]->b_bcount, fs->lfs_bsize);
+		KASSERT(sp->start_bpp[i]->b_lblkno >= 0 || num == 1);
 		nblocks -= num - 1;
 	}
+
+	KASSERT(vp->v_type == VREG ||
+	   nblocks == &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp);
+	KASSERT(nblocks == sp->cbpp - sp->start_bpp);
 	
 	/*
 	 * Sort the blocks.
@@ -1372,6 +1377,7 @@ lfs_updatemeta(struct segment *sp)
 	for (i = nblocks; i--; ++sp->start_bpp) {
 		sbp = *sp->start_bpp;
 		lbn = *sp->start_lbp;
+		KASSERT(sbp->b_lblkno == lbn);
 
 		sbp->b_blkno = fsbtodb(fs, fs->lfs_offset);
 
@@ -2329,6 +2335,36 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 	static int __rsshell_increments[] = { 4, 1, 0 };
 	int incr, *incrp, t1, t2;
 	struct buf *bp_temp;
+
+#ifdef DEBUG
+	incr = 0;
+	for (t1 = 0; t1 < nmemb; t1++) {
+		for (t2 = 0; t2 * size < bp_array[t1]->b_bcount; t2++) {
+			if (lb_array[incr++] != bp_array[t1]->b_lblkno + t2) {
+				/* dump before panic */
+				printf("lfs_shellsort: nmemb=%d, size=%d\n",
+				    nmemb, size);
+				incr = 0;
+				for (t1 = 0; t1 < nmemb; t1++) {
+					const struct buf *bp = bp_array[t1];
+
+					printf("bp[%d]: lbn=%" PRIu64 ", size=%"
+					    PRIu64 "\n", t1,
+					    (uint64_t)bp->b_bcount,
+					    (uint64_t)bp->b_lblkno);
+					printf("lbns:");
+					for (t2 = 0; t2 * size < bp->b_bcount;
+					    t2++) {
+						printf(" %" PRId32,
+						    lb_array[incr++]);
+					}
+					printf("\n");
+				}
+				panic("lfs_shellsort: inconsistent input");
+			}
+		}
+	}
+#endif
 
 	for (incrp = __rsshell_increments; (incr = *incrp++) != 0;)
 		for (t1 = incr; t1 < nmemb; ++t1)
