@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.3 1998/08/15 03:02:45 mycroft Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.4 1998/10/19 22:27:38 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
