@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.4 1996/05/21 00:10:57 pk Exp $
+#	$NetBSD: install.sh,v 1.5 1996/05/21 18:53:54 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,11 +58,21 @@ MODE="install"
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+#	md_native_fstype()	- native filesystem type for disk installs
+#	md_native_fsopts()	- native filesystem options for disk installs
 . install.md
 
 # include common subroutines
 . install.sub
 
+# decide upon an editor
+if [ X$EDITOR = X ]; then
+	if [ -x /usr/bin/vi ]; then
+		EDITOR=vi
+	else
+		EDITOR=ed
+	fi
+fi
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -140,9 +150,7 @@ echo -n	"Do you wish to edit the root disklabel? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		md_prep_disklabel
-		disklabel -W ${ROOTDISK}
-		disklabel -e ${ROOTDISK}
+		md_prep_disklabel ${ROOTDISK}
 		;;
 
 	*)
@@ -223,7 +231,7 @@ echo -n	"mistakes, you may edit this now.  Edit? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi ${FILESYSTEMS}
+		${EDITOR} ${FILESYSTEMS}
 		;;
 	*)
 		;;
@@ -311,7 +319,7 @@ case "$resp" in
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
-				vi /tmp/hosts
+				${EDITOR} /tmp/hosts
 				;;
 
 			*)
@@ -377,7 +385,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
