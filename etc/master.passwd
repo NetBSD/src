@@ -6,9 +6,5 @@ bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/dev/null
 games:*:7:13::0:0:Games pseudo-user:/usr/games:
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/lib/uucp/uucico
 nobody:*:32767:9999::0:0:Unprivileged user:/nonexistent:/dev/null
-dmr:*:10:31::0:0:Dennis Ritchie:/usr/guest/dmr:
-ken:*:11:31::0:0:& Thompson:/usr/guest/ken:
-bill::12:10::0:0:& Jolitz:/usr/bill:/bin/csh
-lynne::14:10::0:0:& Jolitz:/usr/lynne:/bin/csh
 ingres:*:267:74::0:0:& Group:/usr/ingres:/bin/csh
 falcon:*:32766:31::0:0:Prof. Steven &:/usr/games:/usr/games/wargames
