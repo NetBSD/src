@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.65 2001/06/14 05:12:56 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.66 2001/06/26 17:27:31 thorpej Exp $	*/
 
 /*
  *
@@ -549,6 +549,7 @@ uvmfault_anonget(ufi, amap, anon)
  *	gets a write lock, sets it recusive, and then calls us (c.f.
  *	uvm_map_pageable).   this should be avoided because it keeps
  *	the map locked off during I/O.
+ * => MUST NEVER BE CALLED IN INTERRUPT CONTEXT
  */
 
 #define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
