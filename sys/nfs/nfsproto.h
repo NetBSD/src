@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.4 1997/10/12 23:13:39 fvdl Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.5 1997/10/17 00:02:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -233,7 +233,7 @@
 		txdr_unsigned(((t) == VFIFO) ? MAKEIMODE(VCHR, (m)) : \
 				MAKEIMODE((t), (m)))
 #define vtonfsv3_mode(m)	txdr_unsigned((m) & ALLPERMS)
-#define	nfstov_mode(a)		(fxdr_unsigned(u_int16_t, (a)) & ALLPERMS)
+#define	nfstov_mode(a)		(fxdr_unsigned(u_int32_t, (a)) & ALLPERMS)
 #define	vtonfsv2_type(a)	txdr_unsigned(nfsv2_type[((int32_t)(a))])
 #define	vtonfsv3_type(a)	txdr_unsigned(nfsv3_type[((int32_t)(a))])
 #define	nfsv2tov_type(a)	nv2tov_type[fxdr_unsigned(u_int32_t,(a))&0x7]
@@ -252,7 +252,7 @@ typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5,
  * NFS_SMALLFH should be in the range of 32 to 64 and be divisible by 4.
  */
 #ifndef NFS_SMALLFH
-#define NFS_SMALLFH	44
+#define NFS_SMALLFH	38
 #endif
 union nfsfh {
 	fhandle_t fh_generic;
