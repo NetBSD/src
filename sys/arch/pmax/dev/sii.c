@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.39 2000/01/10 03:24:34 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.40 2000/03/04 06:05:36 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,8 +41,6 @@
  *	v 9.2 89/09/14 13:37:41 jhh Exp $ SPRITE (DECWRL)";
  */
 
-#include "sii.h"
-#if NSII > 0
 /*
  * SCSI interface driver
  */
@@ -1792,5 +1790,3 @@ sii_DumpLog()
 	} while (lp != sii_logp);
 }
 #endif
-#endif
-
