@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.27 1997/02/01 05:33:32 cgd Exp $	*/
+/*	$NetBSD: malloc.h,v 1.28 1997/02/02 21:20:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
+
+#ifdef _KERNEL
+#include "opt_kmemstats.h"
+#endif
 
 /*
  * flags to malloc
