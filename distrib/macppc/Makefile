@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/09 20:28:22 tsubai Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/14 00:58:49 tv Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -15,8 +15,8 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-BOOTFLOPOBJ != cd ${.CURDIR}/floppies/bootfloppy; ${MAKE} print-objdir
-BOOTOBJ != cd ${.CURDIR}/../../sys/arch/macppc/stand/ofwboot; ${MAKE} print-objdir
+BOOTFLOPOBJ != cd ${.CURDIR}/floppies/bootfloppy && ${PRINTOBJDIR}
+BOOTOBJ != cd ${.CURDIR}/../../sys/arch/macppc/stand/ofwboot && ${PRINTOBJDIR}
 
 release:
 	${IINST} ${BOOTOBJ}/ofwboot.elf ${ITARGET}/

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 2001/04/09 20:23:00 tsubai Exp $
+#	$NetBSD: Makefile,v 1.14 2001/11/14 00:58:48 tv Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 .include <bsd.kernobj.mk>
 
 IMAGE=		boot.fs
@@ -16,7 +17,7 @@ FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
 MDEC=		${DESTDIR}/usr/mdec
 
-KERNDIR!=	cd ${.CURDIR}/../md-kernel; ${MAKE} print-objdir
+KERNDIR!=	cd ${.CURDIR}/../md-kernel && ${PRINTOBJDIR}
 
 DISKTYPE=	floppy
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/09/22 03:34:19 tv Exp $
+#	$NetBSD: Makefile,v 1.23 2001/11/14 00:58:50 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -20,15 +20,15 @@ STRIPFLAG=
 BINMODE=	444
 
 .if !defined(FIXCOFF)
-.ifnmake(print-objdir)
-FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff; ${MAKE} print-objdir
+.include <bsd.own.mk>
+
+FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
 FIXCOFF=	${FIXCOFFDIR}/fixcoff
 FIXCOFFTARG=	${FIXCOFF}
 
 ${FIXCOFF}:
 	(cd ${.CURDIR}/../fixcoff; ${MAKE})
 
-.endif
 .else
 FIXCOFFTARG=
 .endif

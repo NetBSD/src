@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/08/30 23:51:54 jhawk Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/14 00:58:50 tv Exp $
 
 PROG=	setnetimage
 MKMAN=	no
@@ -18,7 +18,9 @@ kernel:
 	@echo set KERNEL first!
 	@false
 .else
-SNDIR!=	cd ${.CURDIR}/.. ; ${MAKE} print-objdir
+.include <bsd.own.mk>
+
+SNDIR!=	cd ${.CURDIR}/.. && ${PRINTOBJDIR}
 
 smallnet.elf: ${SNDIR}/smallnet
 	cp -p ${.ALLSRC} ${.TARGET}

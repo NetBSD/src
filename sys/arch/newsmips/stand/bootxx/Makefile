@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/12 05:34:29 onoe Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/14 00:58:50 tv Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -7,7 +7,9 @@ STRIPFLAG=
 BINMODE= 444
 SIZE?= size
 
-COMMON!=  cd ${.CURDIR}/../common && ${MAKE} print-objdir
+.include <bsd.own.mk>
+
+COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 LDFLAGS= -x -N -Ttext a0004000 -e _start
 CFLAGS= -Os -mno-abicalls -G 0 -Wall
