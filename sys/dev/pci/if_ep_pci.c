@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.40 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.41 2004/08/21 23:48:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.40 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.41 2004/08/21 23:48:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.40 2003/01/31 00:07:42 thorpej Exp $
  */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
-int ep_pci_match __P((struct device *, struct cfdata *, void *));
-void ep_pci_attach __P((struct device *, struct device *, void *));
+static int	ep_pci_match(struct device *, struct cfdata *, void *);
+static void	ep_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ep_pci, sizeof(struct ep_softc),
     ep_pci_match, ep_pci_attach, NULL, NULL);
 
-struct ep_pci_product {
+static struct ep_pci_product {
 	u_int32_t	epp_prodid;	/* PCI product ID */
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
@@ -153,12 +153,8 @@ struct ep_pci_product {
 	  0,				NULL },
 };
 
-const struct ep_pci_product *ep_pci_lookup
-    __P((const struct pci_attach_args *));
-
-const struct ep_pci_product *
-ep_pci_lookup(pa)
-	const struct pci_attach_args *pa;
+static const struct ep_pci_product *
+ep_pci_lookup(const struct pci_attach_args *pa)
 {
 	struct ep_pci_product *epp;
 
@@ -172,11 +168,8 @@ ep_pci_lookup(pa)
 	return (NULL);
 }
 
-int
-ep_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ep_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -186,10 +179,8 @@ ep_pci_match(parent, match, aux)
 	return (0);
 }
 
-void
-ep_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ep_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;

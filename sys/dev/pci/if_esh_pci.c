@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.14 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.15 2004/08/21 23:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.14 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.15 2004/08/21 23:48:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,20 +79,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.14 2003/01/31 00:07:42 thorpej Exp 
 
 #define MEM_MAP_REG	0x10
 
-int esh_pci_match __P((struct device *, struct cfdata *, void *));
-void esh_pci_attach __P((struct device *, struct device *, void *));
-static u_int8_t esh_pci_bist_read __P((struct esh_softc *));
-static void esh_pci_bist_write __P((struct esh_softc *, u_int8_t));
+static int	esh_pci_match(struct device *, struct cfdata *, void *);
+static void	esh_pci_attach(struct device *, struct device *, void *);
+static u_int8_t	esh_pci_bist_read(struct esh_softc *);
+static void	esh_pci_bist_write(struct esh_softc *, u_int8_t);
 
 
 CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
     esh_pci_match, esh_pci_attach, NULL, NULL);
 
-int
-esh_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+esh_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -109,10 +106,8 @@ esh_pci_match(parent, match, aux)
 	return 1;
 }
 
-void
-esh_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+esh_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct esh_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -175,32 +170,28 @@ esh_pci_attach(parent, self, aux)
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 
-u_int8_t
-esh_pci_bist_read(sc)
-    struct esh_softc *sc;
+static u_int8_t
+esh_pci_bist_read(struct esh_softc *sc)
 {
-    bus_space_tag_t iot = sc->sc_iot;
-    bus_space_handle_t ioh = sc->sc_ioh;
-    u_int32_t pci_bist;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t pci_bist;
 
-    pci_bist = bus_space_read_4(iot, ioh, RR_PCI_BIST);
+	pci_bist = bus_space_read_4(iot, ioh, RR_PCI_BIST);
 
-    return ((u_int8_t) (pci_bist >> 24));
+	return ((u_int8_t) (pci_bist >> 24));
 }
 
-void
-esh_pci_bist_write(sc, value)
-    struct esh_softc *sc;
-    u_int8_t value;
+static void
+esh_pci_bist_write(struct esh_softc *sc, u_int8_t value)
 {
-    bus_space_tag_t iot = sc->sc_iot;
-    bus_space_handle_t ioh = sc->sc_ioh;
-    u_int32_t pci_bist;
-    u_int32_t new_bist;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t pci_bist;
+	u_int32_t new_bist;
 
-    pci_bist = bus_space_read_4(iot, ioh, RR_PCI_BIST);
-    new_bist = ((u_int32_t) value << 24) | (pci_bist & 0x00ffffff);
+	pci_bist = bus_space_read_4(iot, ioh, RR_PCI_BIST);
+	new_bist = ((u_int32_t) value << 24) | (pci_bist & 0x00ffffff);
 
-    bus_space_write_4(iot, ioh, RR_PCI_BIST, new_bist);
+	bus_space_write_4(iot, ioh, RR_PCI_BIST, new_bist);
 }
-
