@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.9 2001/01/08 18:00:31 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.10 2001/01/08 18:35:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.9 2001/01/08 18:00:31 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.10 2001/01/08 18:35:49 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -84,9 +84,9 @@ extern int ncols;
  */
 int stable_sort = 1;
 
-char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
-const char *tmpdir = _PATH_TMP;
+
+const char *tmpdir;	/* where temporary files should be put */
 
 static void cleanup __P((void));
 static void onsignal __P((int));
@@ -99,8 +99,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
 	int ch, i, stdinflag = 0, tmp = 0;
@@ -109,17 +107,20 @@ main(argc, argv)
 	struct field fldtab[ND+2], *ftpos;
 	union f_handle filelist;
 	FILE *outfp = NULL;
+
 	memset(fldtab, 0, (ND+2)*sizeof(struct field));
 	memset(d_mask, 0, NBINS);
 	d_mask[REC_D = '\n'] = REC_D_F;
 	SINGL_FLD = SEP_FLAG = 0;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
 	ftpos = fldtab;
+
 	fixit(&argc, argv);
-	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:ux")) != EOF) {
-	if ((outfile = getenv("TMPDIR")))
-		tmpdir = outfile;
-	switch (ch) {
+	if (!(tmpdir = getenv("TMPDIR")))
+		tmpdir = _PATH_TMP;
+
+	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:ux")) != -1) {
+		switch (ch) {
 		case 'b': fldtab->flags |= BI | BT;
 			break;
 		case 'd':
@@ -179,7 +180,8 @@ main(argc, argv)
 			PANIC = 0;
 			break;
 		case '?':
-		default: usage("");
+		default:
+			usage("");
 		}
 	}
 	if (cflag && argc > optind+1)
@@ -192,14 +194,12 @@ main(argc, argv)
 		errx(2, "too many input files for -m option");
 	for (i = optind; i < argc; i++) {
 		/* allow one occurrence of /dev/stdin */
-		if (!strcmp(argv[i], "-") || !strcmp(argv[i], devstdin)) {
+		if (!strcmp(argv[i], "-") || !strcmp(argv[i], _PATH_STDIN)) {
 			if (stdinflag)
 				warnx("ignoring extra \"%s\" in file list",
 				    argv[i]);
-			else {
+			else
 				stdinflag = 1;
-				argv[i] = devstdin;
-			}
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, "%s", argv[i]);
 	}
@@ -218,14 +218,12 @@ main(argc, argv)
 	num_init();
 	fldtab->weights = gweights;
 	if (optind == argc) {
-		static char *names[2];
+		static const char * const names[] = { _PATH_STDIN, NULL };
 
-		names[0] = devstdin;
-		names[1] = NULL;
 		filelist.names = names;
 		optind--;
 	} else
-		filelist.names = argv+optind;
+		filelist.names = (const char * const *) &argv[optind];
 	if (SINGL_FLD)
 		get = makeline;
 	else
