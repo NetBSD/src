@@ -1,4 +1,4 @@
-/*	$NetBSD: hertz.c,v 1.5 1995/04/19 07:16:03 cgd Exp $	*/
+/*	$NetBSD: hertz.c,v 1.6 1998/02/22 12:55:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hertz.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: hertz.c,v 1.5 1995/04/19 07:16:03 cgd Exp $";
+__RCSID("$NetBSD: hertz.c,v 1.6 1998/02/22 12:55:45 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/time.h>
+#include "gprof.h"
 
     /*
      *	discover the tick frequency of the machine
@@ -49,6 +51,7 @@ static char rcsid[] = "$NetBSD: hertz.c,v 1.5 1995/04/19 07:16:03 cgd Exp $";
      */
 #define	HZ_WRONG	0
 
+int
 hertz()
 {
 	struct itimerval tim;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.5 1995/04/19 07:16:06 cgd Exp $	*/
+/*	$NetBSD: lookup.c,v 1.6 1998/02/22 12:55:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lookup.c,v 1.5 1995/04/19 07:16:06 cgd Exp $";
+__RCSID("$NetBSD: lookup.c,v 1.6 1998/02/22 12:55:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,22 +56,22 @@ nllookup( address )
     register long	low;
     register long	middle;
     register long	high;
-#   ifdef DEBUG
+#ifdef DEBUG
 	register int	probes;
 
 	probes = 0;
-#   endif DEBUG
+#endif /* DEBUG */
     for ( low = 0 , high = nname - 1 ; low != high ; ) {
-#	ifdef DEBUG
+#ifdef DEBUG
 	    probes += 1;
-#	endif DEBUG
+#endif /* DEBUG */
 	middle = ( high + low ) >> 1;
 	if ( nl[ middle ].value <= address && nl[ middle+1 ].value > address ) {
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & LOOKUPDEBUG ) {
 		    printf( "[nllookup] %d (%d) probes\n" , probes , nname-1 );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	    return &nl[ middle ];
 	}
 	if ( nl[ middle ].value > address ) {
@@ -79,12 +80,12 @@ nllookup( address )
 	    low = middle + 1;
 	}
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & LOOKUPDEBUG ) {
 	    fprintf( stderr , "[nllookup] (%d) binary search fails\n" ,
 		nname-1 );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     return 0;
 }
 
@@ -99,20 +100,20 @@ arclookup( parentp , childp )
 	fprintf( stderr, "[arclookup] parentp == 0 || childp == 0\n" );
 	return 0;
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & LOOKUPDEBUG ) {
 	    printf( "[arclookup] parent %s child %s\n" ,
 		    parentp -> name , childp -> name );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     for ( arcp = parentp -> children ; arcp ; arcp = arcp -> arc_childlist ) {
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & LOOKUPDEBUG ) {
 		printf( "[arclookup]\t arc_parent %s arc_child %s\n" ,
 			arcp -> arc_parentp -> name ,
 			arcp -> arc_childp -> name );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	if ( arcp -> arc_childp == childp ) {
 	    return arcp;
 	}

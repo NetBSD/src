@@ -1,27 +1,26 @@
-/*	$NetBSD: pch.h,v 1.3 1996/09/19 06:27:15 thorpej Exp $	*/
+/*	$NetBSD: pch.h,v 1.4 1998/02/22 13:33:50 christos Exp $	*/
 
 EXT FILE *pfp INIT(Nullfp);		/* patch file pointer */
 
-void re_patch();
-void open_patch_file();
-void set_hunkmax();
-void grow_hunkmax();
-bool there_is_another_patch();
-int intuit_diff_type();
-void next_intuit_at();
-void skip_to();
-bool another_hunk();
-bool pch_swap();
-char *pfetch();
-short pch_line_len();
-LINENUM pch_first();
-LINENUM pch_ptrn_lines();
-LINENUM pch_newfirst();
-LINENUM pch_repl_lines();
-LINENUM pch_end();
-LINENUM pch_context();
-LINENUM pch_hunk_beg();
-char pch_char();
-char *pfetch();
-char *pgets();
-void do_ed_script();
+void re_patch __P((void));
+void open_patch_file __P((char *));
+void set_hunkmax __P((void));
+void grow_hunkmax __P((void));
+bool there_is_another_patch __P((void));
+int intuit_diff_type __P((void));
+void next_intuit_at __P((long, long));
+void skip_to __P((long, long));
+bool another_hunk __P((void));
+char *pgets __P((char *, int, FILE *));
+bool pch_swap __P((void));
+LINENUM pch_first __P((void));
+LINENUM pch_ptrn_lines __P((void));
+LINENUM pch_newfirst __P((void));
+LINENUM pch_repl_lines __P((void));
+LINENUM pch_end __P((void));
+LINENUM pch_context __P((void));
+short pch_line_len __P((LINENUM));
+char pch_char __P((LINENUM));
+char *pfetch __P((LINENUM));
+LINENUM pch_hunk_beg __P((void));
+void do_ed_script __P((void));

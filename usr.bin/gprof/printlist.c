@@ -1,4 +1,4 @@
-/*	$NetBSD: printlist.c,v 1.5 1995/04/19 07:16:23 cgd Exp $	*/
+/*	$NetBSD: printlist.c,v 1.6 1998/02/22 12:55:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)printlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: printlist.c,v 1.5 1995/04/19 07:16:23 cgd Exp $";
+__RCSID("$NetBSD: printlist.c,v 1.6 1998/02/22 12:55:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +63,7 @@ struct stringlist	*elist = &ehead;
 struct stringlist	Ehead = { 0 , 0 };
 struct stringlist	*Elist = &Ehead;
 
+void
 addlist( listp , funcname )
     struct stringlist	*listp;
     char		*funcname;

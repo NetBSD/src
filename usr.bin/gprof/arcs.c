@@ -1,4 +1,4 @@
-/*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
+/*	$NetBSD: arcs.c,v 1.7 1998/02/22 12:55:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $";
+__RCSID("$NetBSD: arcs.c,v 1.7 1998/02/22 12:55:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,11 +49,12 @@ int visited;
 int viable;
 int newcycle;
 int oldcycle;
-#endif DEBUG
+#endif /* DEBUG */
 
     /*
      *	add (or just increment) an arc
      */
+void
 addarc( parentp , childp , count )
     nltype	*parentp;
     nltype	*childp;
@@ -60,23 +62,23 @@ addarc( parentp , childp , count )
 {
     arctype		*arcp;
 
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & TALLYDEBUG ) {
 	    printf( "[addarc] %d arcs from %s to %s\n" ,
 		    count , parentp -> name , childp -> name );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     arcp = arclookup( parentp , childp );
     if ( arcp != 0 ) {
 	    /*
 	     *	a hit:  just increment the count.
 	     */
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & TALLYDEBUG ) {
 		printf( "[tally] hit %d += %d\n" ,
 			arcp -> arc_count , count );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	arcp -> arc_count += count;
 	return;
     }
@@ -106,10 +108,12 @@ addarc( parentp , childp , count )
      */
 nltype	**topsortnlp;
 
-topcmp( npp1 , npp2 )
-    nltype	**npp1;
-    nltype	**npp2;
+int
+topcmp( v1 , v2 )
+    const void *v1, *v2;
 {
+    const nltype	*const *npp1 = v1;
+    const nltype	*const *npp2 = v2;
     return (*npp1) -> toporder - (*npp2) -> toporder;
 }
 
@@ -172,11 +176,11 @@ doarcs()
 	    /*
 	     *	analyze cycles to determine breakup
 	     */
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & BREAKCYCLE ) {
 		printf("[doarcs] pass %d, cycle(s) %d\n" , pass , ncycle );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	if ( pass == 1 ) {
 	    printf( "\n\n%s %s\n%s %d:\n" ,
 		"The following arcs were deleted" ,
@@ -210,7 +214,7 @@ doarcs()
 	topsortnlp[ index ] = &nl[ index ];
     }
     qsort( topsortnlp , nname , sizeof(nltype *) , topcmp );
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[doarcs] topological sort listing\n" );
 	    for ( index = 0 ; index < nname ; index += 1 ) {
@@ -220,7 +224,7 @@ doarcs()
 		printf( "\n" );
 	    }
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 	/*
 	 *	starting from the topological top,
 	 *	propagate print flags to children.
@@ -256,6 +260,7 @@ doarcs()
     return( timesortnlp );
 }
 
+void
 dotime()
 {
     int	index;
@@ -266,6 +271,7 @@ dotime()
     }
 }
 
+void
 timepropagate( parentp )
     nltype	*parentp;
 {
@@ -339,7 +345,7 @@ timepropagate( parentp )
 	    parentp -> cyclehead -> childtime += share;
 	    parentp -> cyclehead -> propchild += propshare;
 	}
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & PROPDEBUG ) {
 		printf( "[dotime] child \t" );
 		printname( childp );
@@ -350,10 +356,11 @@ timepropagate( parentp )
 		printname( parentp );
 		printf( "\n[dotime] share %f\n" , share );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
     }
 }
 
+void
 cyclelink()
 {
     register nltype	*nlp;
@@ -412,13 +419,13 @@ cyclelink()
 	cyclenlp -> cnext = nlp;	/* pointer to next member of cycle */
 	cyclenlp -> parents = 0;	/* list of caller arcs */
 	cyclenlp -> children = 0;	/* list of callee arcs */
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & CYCLEDEBUG ) {
 		printf( "[cyclelink] " );
 		printname( nlp );
 		printf( " is the head of cycle %d\n" , cycle );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	    /*
 	     *	link members to cycle header
 	     */
@@ -448,6 +455,7 @@ cyclelink()
     /*
      *	analyze cycles to determine breakup
      */
+bool
 cycleanalyze()
 {
     arctype	**cyclestack;
@@ -486,14 +494,14 @@ cycleanalyze()
 	if ( cyclestack == 0 ) {
 	    fprintf( stderr , "%s: No room for %d bytes of cycle stack\n" ,
 		whoami , ( size + 1 ) * sizeof( arctype * ) );
-	    return;
+	    return done;
 	}
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & BREAKCYCLE ) {
 		printf( "[cycleanalyze] starting cycle %d of %d, size %d\n" ,
 		    cycleno , ncycle , size );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	for ( nlp = cyclenl[ cycleno ] . cnext ; nlp ; nlp = nlp -> cnext ) {
 	    stkp = &cyclestack[0];
 	    nlp -> flags |= CYCLEHEAD;
@@ -516,15 +524,16 @@ cycleanalyze()
 	    cyclehead = 0;
 	}
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & BREAKCYCLE ) {
 	    printf("%s visited %d, viable %d, newcycle %d, oldcycle %d\n",
 		"[doarcs]" , visited , viable , newcycle , oldcycle);
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     return( done );
 }
 
+bool
 descend( node , stkstart , stkp )
     nltype	*node;
     arctype	**stkstart;
@@ -534,16 +543,16 @@ descend( node , stkstart , stkp )
     bool	ret;
 
     for ( arcp = node -> children ; arcp ; arcp = arcp -> arc_childlist ) {
-#	ifdef DEBUG
+#ifdef DEBUG
 	    visited++;
-#	endif DEBUG
+#endif /* DEBUG */
 	if ( arcp -> arc_childp -> cycleno != node -> cycleno
 	    || ( arcp -> arc_childp -> flags & VISITED )
 	    || ( arcp -> arc_flags & DEADARC ) )
 	    continue;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    viable++;
-#	endif DEBUG
+#endif /* DEBUG */
 	*stkp = arcp;
 	if ( arcp -> arc_childp -> flags & CYCLEHEAD ) {
 	    if ( addcycle( stkstart , stkp ) == FALSE )
@@ -556,14 +565,16 @@ descend( node , stkstart , stkp )
 	if ( ret == FALSE )
 	    return( FALSE );
     }
+    return TRUE;
 }
 
+bool
 addcycle( stkstart , stkend )
     arctype	**stkstart;
     arctype	**stkend;
 {
     arctype	**arcpp;
-    arctype	**stkloc;
+    arctype	**stkloc = NULL;
     arctype	**stkp;
     arctype	**endlist;
     arctype	*minarc;
@@ -592,9 +603,9 @@ addcycle( stkstart , stkend )
 		stkp = stkstart;
 	}
 	if ( arcpp == endlist ) {
-#	    ifdef DEBUG
+#ifdef DEBUG
 		oldcycle++;
-#	    endif DEBUG
+#endif /* DEBUG */
 	    return( TRUE );
 	}
     }
@@ -621,18 +632,19 @@ addcycle( stkstart , stkend )
     clp -> size = size;
     clp -> next = cyclehead;
     cyclehead = clp;
-#   ifdef DEBUG
+#ifdef DEBUG
 	newcycle++;
 	if ( debug & SUBCYCLELIST ) {
 	    printsubcycle( clp );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     cyclecnt++;
     if ( cyclecnt >= CYCLEMAX )
 	return( FALSE );
     return( TRUE );
 }
 
+void
 compresslist()
 {
     cltype	*clp;
@@ -641,13 +653,15 @@ compresslist()
     arctype	**endlist;
     arctype	*arcp;
     arctype	*maxarcp;
-    arctype	*maxexitarcp;
-    arctype	*maxwithparentarcp;
-    arctype	*maxnoparentarcp;
+    arctype	*maxexitarcp = NULL;
+    arctype	*maxwithparentarcp = NULL;
+    arctype	*maxnoparentarcp = NULL;
     int		maxexitcnt;
     int		maxwithparentcnt;
     int		maxnoparentcnt;
+#ifdef DEBUG
     char	*type;
+#	endif /* DEBUG */
 
     maxexitcnt = 0;
     maxwithparentcnt = 0;
@@ -690,40 +704,40 @@ compresslist()
 	 *	first choice is edge leading to node with out-of-cycle parent
 	 */
 	maxarcp = maxexitarcp;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    type = "exit";
-#	endif DEBUG
+#endif /* DEBUG */
     } else if ( maxwithparentcnt > 0 ) {
 	/*
 	 *	second choice is edge leading to node with at least one
 	 *	other in-cycle parent
 	 */
 	maxarcp = maxwithparentarcp;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    type = "internal";
-#	endif DEBUG
+#endif /* DEBUG */
     } else {
 	/*
 	 *	last choice is edge leading to node with only this arc as
 	 *	a parent (as it will now be orphaned)
 	 */
 	maxarcp = maxnoparentarcp;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    type = "orphan";
-#	endif DEBUG
+#endif /* DEBUG */
     }
     maxarcp -> arc_flags |= DEADARC;
     maxarcp -> arc_childp -> parentcnt -= 1;
     maxarcp -> arc_childp -> npropcall -= maxarcp -> arc_count;
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & BREAKCYCLE ) {
 	    printf( "%s delete %s arc: %s (%d) -> %s from %d cycle(s)\n" ,
 		"[compresslist]" , type , maxarcp -> arc_parentp -> name ,
 		maxarcp -> arc_count , maxarcp -> arc_childp -> name ,
 		maxarcp -> arc_cyclecnt );
 	}
-#   endif DEBUG
-    printf( "\t%s to %s with %d calls\n" , maxarcp -> arc_parentp -> name ,
+#endif /* DEBUG */
+    printf( "\t%s to %s with %ld calls\n" , maxarcp -> arc_parentp -> name ,
 	maxarcp -> arc_childp -> name , maxarcp -> arc_count );
     prev = &cyclehead;
     for ( clp = cyclehead ; clp ; ) {
@@ -746,6 +760,7 @@ compresslist()
 }
 
 #ifdef DEBUG
+void
 printsubcycle( clp )
     cltype	*clp;
 {
@@ -759,8 +774,9 @@ printsubcycle( clp )
 	printf( "\t(%d) -> %s\n" , (*arcpp) -> arc_count ,
 	    (*arcpp) -> arc_childp -> name ) ;
 }
-#endif DEBUG
+#endif /* DEBUG */
 
+void
 cycletime()
 {
     int			cycle;
@@ -790,6 +806,7 @@ cycletime()
      *		propfraction as the sum of fractional parents' propfractions
      *	and while we're here, sum time for functions.
      */
+void
 doflags()
 {
     int		index;
@@ -810,14 +827,14 @@ doflags()
 	    oldhead = childp -> cyclehead;
 	    inheritflags( childp );
 	}
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & PROPDEBUG ) {
 		printf( "[doflags] " );
 		printname( childp );
 		printf( " inherits printflag %d and propfraction %f\n" ,
 			childp -> printflag , childp -> propfraction );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	if ( ! childp -> printflag ) {
 		/*
 		 *	printflag is off
@@ -864,7 +881,7 @@ doflags()
 	}
 	childp -> propself = childp -> time * childp -> propfraction;
 	printtime += childp -> propself;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & PROPDEBUG ) {
 		printf( "[doflags] " );
 		printname( childp );
@@ -873,7 +890,7 @@ doflags()
 		printf( "time %f propself %f printtime %f\n" ,
 			childp -> time , childp -> propself , printtime );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
     }
 }
 
@@ -884,6 +901,7 @@ doflags()
      *	print flag of the child (cycle) appropriately.
      *	similarly, deal with propagation fractions from parents.
      */
+void
 inheritflags( childp )
     nltype	*childp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc.c,v 1.4 1995/04/19 07:16:24 cgd Exp $	*/
+/*	$NetBSD: sparc.c,v 1.5 1998/02/22 12:55:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sparc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: sparc.c,v 1.4 1995/04/19 07:16:24 cgd Exp $";
+__RCSID("$NetBSD: sparc.c,v 1.5 1998/02/22 12:55:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +75,7 @@ nltype	indirectchild = {
 	(arctype *) 0 			/* list of callee arcs */
 };
 
+void
 findcall(parentp, p_lowpc, p_highpc)
 	nltype		*parentp;
 	unsigned long	p_lowpc;
