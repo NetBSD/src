@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42 2001/04/12 18:22:55 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.1 2001/09/09 04:15:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -814,6 +814,71 @@ hilpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_hilrdetach(struct knote *kn)
+{
+	dev_t dev = (u_long) kn->kn_hook;
+	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	dptr = &hilp->hl_device[HILUNIT(dev)];
+	int s;
+
+	s = splhil();
+	SLIST_REMOVE(&dptr->hd_selr.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_hilread(struct knote *kn, long hint)
+{
+	dev_t dev = (u_long) kn->kn_hook;
+	int device = HILUNIT(dev);
+	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	dptr = &hilp->hl_device[device];
+	struct hiliqueue *qp;
+	int mask;
+
+	if (dptr->hd_flags & HIL_READIN) {
+		kn->kn_data = dptr->hd_queue.c_cc;
+		return (kn->kn_data > 0);
+	}
+
+	/*
+	 * Make sure device is alive and real (or the loop device).
+	 * Note that we do not do this for the read interface.
+	 * This is primarily to be consistant with HP-UX.
+	 */
+	if (device && (dptr->hd_flags & (HIL_ALIVE|HIL_PSEUDO)) != HIL_ALIVE) {
+		kn->kn_data = 0; /* XXXLUKEM (thorpej): what goes here? */
+		return (1);
+	}
+
+	/*
+	 * Select on loop device is special.
+	 * Check to see if there are any data for any loop device
+	 * provided it is associated with a queue belonging to this user.
+	 */
+	if (device == 0)
+		mask = -1;
+	else
+		mask = hildevmask(device);
+	/*
+	 * Must check everybody with interrupts blocked to prevent races.
+	 * (Interrupts are already blocked.)
+	 */
+	for (qp = hilp->hl_queue; qp < &hilp->hl_queue[NHILQ]; qp++) {
+		/* XXXLUKEM (thorpej): PROCESS CHECK! */
+		if (/*qp->hq_procp == p &&*/ (mask & qp->hq_devmask) &&
+		    qp->hq_eventqueue->hil_evqueue.head !=
+		    qp->hq_eventqueue->hil_evqueue.tail) {
+			/* XXXLUKEM (thorpej): what does here? */
+			kn->kn_data = 0;
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
 /*ARGSUSED*/
 void
 hilint(unit)
@@ -1006,9 +1071,9 @@ hilevent(hilp)
 	/*
 	 * Wake up anyone selecting on this device or the loop itself
 	 */
-	selwakeup(&dptr->hd_selr);
+	selnotify(&dptr->hd_selr, 0);
 	dptr = &hilp->hl_device[HILLOOPDEV];
-	selwakeup(&dptr->hd_selr);
+	selnotify(&dptr->hd_selr, 0);
 }
 
 #undef HQFULL
@@ -1051,7 +1116,7 @@ hpuxhilevent(hilp, dptr)
 		dptr->hd_flags &= ~HIL_ASLEEP;
 		wakeup((caddr_t)dptr);
 	}
-	selwakeup(&dptr->hd_selr);
+	selnotify(&dptr->hd_selr, 0);
 }
 
 /*
