@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: yppasswdd,v 1.7 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: yppasswdd,v 1.8 2004/10/11 14:11:43 lukem Exp $
 #
 
 # PROVIDE: yppasswdd
-# REQUIRE: ypserv ypbind
+# REQUIRE: rpcbind ypserv ypbind
 # BEFORE:  LOGIN
 
 $_rc_subr_loaded . /etc/rc.subr
