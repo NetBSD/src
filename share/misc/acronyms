@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.104 2002/05/21 12:01:09 lukem Exp $
+$NetBSD: acronyms,v 1.105 2002/06/06 20:28:40 tron Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -154,6 +154,7 @@ TLA	three letter acronym
 TLB	translation lookaside buffer
 TMA	too many abbreviations
 TMI	too much information
+TOEFL	test of english as a foreign language
 TTFN	ta ta for now
 TTYL	talk to you later
 TYVM	thank you very much
