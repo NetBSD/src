@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.27 1997/07/01 19:04:18 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.28 1997/07/15 15:45:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -56,6 +56,7 @@
 #define    NUBUS_DRHW_SE30	0x0009
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
+#define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
