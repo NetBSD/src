@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.44 1998/01/19 22:18:25 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -141,6 +141,7 @@ static int ad1848_init_values[] = {
     MONO_INPUT_MUTE|ATTEN_6,		/* mute mic by default */
     0,			/* unused */
     0,			/* record format */
+    0,			/* Crystal Clock Select */
     0,			/* upper record count */
     0			/* lower record count */
 };
@@ -199,7 +200,7 @@ static void
 wait_for_calibration(sc)
     struct ad1848_softc *sc;
 {
-    int timeout = 100000;
+    int timeout;
 
     DPRINTF(("ad1848: Auto calibration started.\n"));
     /*
@@ -208,6 +209,7 @@ wait_for_calibration(sc)
      * 1) Wait until the chip becomes ready (reads don't return 0x80).
      * 2) Wait until the ACI bit of I11 gets on and then off.
      */
+    timeout = 100000;
     while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 	timeout--;
 
@@ -511,6 +513,7 @@ ad1848_attach(sc)
     struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
     struct audio_params pparams, rparams;
+    int timeout;
     
     sc->sc_locked = 0;
     sc->sc_playrun = NOTRUNNING;
@@ -534,14 +537,23 @@ ad1848_attach(sc)
     }
 
     /* Initialize the ad1848... */
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 0x10; i++) {
 	ad_write(sc, i, ad1848_init_values[i]);
+        timeout = 100000;
+        while (timeout > 0 && ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+	    timeout--;
+    }
     /* ...and additional CS4231 stuff too */
     if (sc->mode == 2) {
 	    ad_write(sc, SP_INTERFACE_CONFIG, 0); /* disable SINGLE_DMA */
-	    for (i = 0x10; i <= 0x1f; i++)
-		    if (ad1848_init_values[i] != 0)
+	    for (i = 0x10; i < 0x20; i++)
+		    if (ad1848_init_values[i] != 0) {
 			    ad_write(sc, i, ad1848_init_values[i]);
+			    timeout = 100000;
+    			    while (timeout > 0 && 
+				   ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+				timeout--;
+		    }
     }
     ad1848_reset(sc);
 
@@ -566,6 +578,7 @@ ad1848_attach(sc)
     (void) ad1848_set_rec_port(sc, MIC_IN_PORT);
 
     printf(": %s", sc->chip_name);
+#undef WAITREADY
 }
 
 /*
