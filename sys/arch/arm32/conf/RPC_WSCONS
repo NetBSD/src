@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.4 2001/04/14 19:22:43 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.5 2001/06/02 10:48:55 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -261,6 +261,9 @@ scsibus* at oak?
 
 csa*	at podulebus?			# Cumana SCSI I adpater
 scsibus* at csa?
+
+hcsc*	at podulebus0 slot ?	# HCCS 8-bit SCSI interface
+scsibus* at hcsc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
