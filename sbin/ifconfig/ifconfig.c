@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.23 1996/09/08 14:37:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.23 1996/09/08 14:37:39 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,6 @@ static char rcsid[] = "$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $";
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
-struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
 char	name[30];
@@ -175,7 +174,7 @@ struct afswtch {
 	{ "ns", AF_NS, xns_status, xns_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 	{ "iso", AF_ISO, iso_status, iso_getaddr,
-	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, C(iso_ridreq), C(iso_addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(iso_addreq) },
 #endif	/* INET_ONLY */
 	{ 0,	0,	    0,		0 }
 };
@@ -594,7 +593,6 @@ iso_status(force)
 	int force;
 {
 	struct sockaddr_iso *siso;
-	struct iso_ifreq ifr;
 
 	getsock(AF_ISO);
 	if (s < 0) {
@@ -604,34 +602,34 @@ iso_status(force)
 	}
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		} else
-			warn("SIOCGIFADDR_ISO");
+			warn("SIOCGIFADDR");
 	}
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
-	siso = &ifr.ifr_Addr;
+	siso = (struct sockaddr_iso *)&ifr.ifr_addr;
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
-	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL)
-			memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		else
-			warn("SIOCGIFNETMASK_ISO");
+			warn("SIOCGIFNETMASK");
 	} else {
 		printf(" netmask %s ", iso_ntoa(&siso->siso_addr));
 	}
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
-			    warn("SIOCGIFDSTADDR_ISO");
+			    warn("SIOCGIFDSTADDR");
 		}
 		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-		siso = &ifr.ifr_Addr;
+		siso = (struct sockaddr_iso *)&ifr.ifr_addr;
 		printf("--> %s ", iso_ntoa(&siso->siso_addr));
 	}
 	putchar('\n');
@@ -727,7 +725,7 @@ xns_getaddr(addr, which)
 
 #define SISO(x) ((struct sockaddr_iso *) &(x))
 struct sockaddr_iso *sisotab[] = {
-SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
+SISO(ridreq.ifr_addr), SISO(iso_addreq.ifra_addr),
 SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
 
 void
