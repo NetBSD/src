@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.20 2001/06/18 02:31:09 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.21 2001/06/18 02:43:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.20 2001/06/18 02:31:09 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.21 2001/06/18 02:43:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 		for (passno = 0; passno < maxrun; ++passno) {
 			if ((ret = startdisk(nextdisk, checkit)) != 0)
 				return ret;
-			nextdisk = nextdisk->d_entries.tqe_next;
+			nextdisk = TAILQ_NEXT(nextdisk, d_entries);
 		}
 
 		while ((pid = wait(&status)) != -1) {
@@ -230,13 +230,13 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 
 		(void) fprintf(stderr,
 			"THE FOLLOWING FILE SYSTEM%s HAD AN %s\n\t",
-			p->p_entries.tqe_next ? "S" : "",
+			TAILQ_NEXT(p, p_entries) ? "S" : "",
 			"UNEXPECTED INCONSISTENCY:");
 
-		for (; p; p = p->p_entries.tqe_next)
+		TAILQ_FOREACH(p, &badh, p_entries)
 			(void) fprintf(stderr,
 			    "%s: %s (%s)%s", p->p_type, p->p_devname,
-			    p->p_mntpt, p->p_entries.tqe_next ? ", " : "\n");
+			    p->p_mntpt, TAILQ_NEXT(p, p_entries) ? ", " : "\n");
 
 		return sumstatus;
 	}
