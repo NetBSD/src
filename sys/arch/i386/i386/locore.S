@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 2004/01/04 11:44:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2028,7 +2028,7 @@ ENTRY(cpu_switchto)
 	jmp	switch_resume
 
 /*
- * void switch_exit(struct lwp *l, void (*exit)(struct lwp *));
+ * void cpu_exit(struct lwp *l)
  * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's 
  * if multiprocessor) and deallocate the address space and kernel stack for p. 
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
@@ -2038,10 +2038,9 @@ ENTRY(cpu_switchto)
 #endif
 	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-/* LINTSTUB: Func: void switch_exit(struct lwp *l, void (*exit)(struct lwp *)) */
-ENTRY(switch_exit)
+/* LINTSTUB: Func: void cpu_exit(struct lwp *l) */
+ENTRY(cpu_exit)
 	movl	4(%esp),%edi		# old process
-	movl	8(%esp),%eax		# exit func
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(lwp0),%ebx
 	movl	L_ADDR(%ebx),%esi
@@ -2059,9 +2058,6 @@ ENTRY(switch_exit)
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-
-	/* Save exit func. */
-	pushl	%eax
 
 	/* Load TSS info. */
 #ifdef MULTIPROCESSOR
@@ -2092,11 +2088,10 @@ ENTRY(switch_exit)
 	sti
 
 	/*
-	 * Schedule the dead process's vmspace and stack to be freed.
+	 * Schedule the dead LWP's stack to be freed.
 	 */
-	movl	0(%esp),%eax		/* %eax = exit func */
-	movl	%edi,0(%esp)		/* {lwp_}exit2(l) */
-	call	*%eax
+	pushl	%edi
+	call	_C_LABEL(lwp_exit2)
 	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
