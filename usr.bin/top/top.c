@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.4 1999/04/12 06:02:26 ross Exp $	*/
+/*	$NetBSD: top.c,v 1.5 2000/10/04 17:58:44 itojun Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -755,7 +755,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				{
 				    if ((errmsg = kill_procs(tempbuf2)) != NULL)
 				    {
-					new_message(MT_standout, errmsg);
+					new_message(MT_standout, "%s", errmsg);
 					putchar('\r');
 					no_command = Yes;
 				    }
@@ -772,7 +772,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				{
 				    if ((errmsg = renice_procs(tempbuf2)) != NULL)
 				    {
-					new_message(MT_standout, errmsg);
+					new_message(MT_standout, "%s", errmsg);
 					putchar('\r');
 					no_command = Yes;
 				    }
