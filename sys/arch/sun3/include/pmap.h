@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1996/12/17 21:11:10 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1997/01/27 17:02:14 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,22 +55,25 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
-struct pmap	kernel_pmap_store;
-struct pcb;
-void   pmap_activate __P((pmap_t pmap, struct pcb *pcbp));
-void pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
-
+extern struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 
-#define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
-	pmap_activate(pmap, pcbp)
-#define PMAP_DEACTIVATE(pmap, pcbp) \
-	pmap_deactivate(pmap, pcbp)
+/* This is called from locore.s:cpu_switch() */
+void	pmap_activate __P((pmap_t pmap));
 
+/*
+ * We give the pmap code a chance to resolve faults by
+ * reloading translations that it was forced to unload.
+ * This function does that, and calls vm_fault if it
+ * could not resolve the fault by reloading the MMU.
+ */
+int _pmap_fault __P((vm_map_t, vm_offset_t, vm_prot_t));
+
+/* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vm_offset_t, vm_offset_t *);
 #define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
 
-/* XXX - Need a (silly) #define get code in kern_sysctl.c */
+/* This needs to be a macro to get code in kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);
 #define	pmap_resident_count(pmap)	pmap_resident_pages(pmap)
 
