@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.8 2003/07/15 02:43:35 lukem Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.9 2003/11/08 05:05:14 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.8 2003/07/15 02:43:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.9 2003/11/08 05:05:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,6 +104,7 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
 	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
+	sc->sc_type = COM_TYPE_AU1x00;
 	sc->enable = aucom_aubus_enable;
 	sc->disable = aucom_aubus_disable;
 
