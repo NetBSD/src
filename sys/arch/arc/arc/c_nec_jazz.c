@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.1 2001/06/13 15:21:52 soda Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -42,48 +42,9 @@
 
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
-#include <arc/dev/mcclockvar.h>
-#include <arc/jazz/mcclock_jazziovar.h>
 #include <arc/jazz/timer_jazziovar.h>
 
 extern int cpu_int_mask;
-
-/*
- * chipset-dependent mcclock routines.
- */
-
-u_int	mc_nec_jazz_read __P((struct mcclock_softc *, u_int));
-void	mc_nec_jazz_write __P((struct mcclock_softc *, u_int, u_int));
-
-struct mcclock_jazzio_config mcclock_nec_jazz_conf = {
-	0x80004000, 2,
-	{ mc_nec_jazz_read, mc_nec_jazz_write }
-};
-
-u_int
-mc_nec_jazz_read(sc, reg)
-	struct mcclock_softc *sc;
-	u_int reg;
-{
-	int i, as;
-
-	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
-	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
-	return (i);
-}
-
-void
-mc_nec_jazz_write(sc, reg, datum)
-	struct mcclock_softc *sc;
-	u_int reg, datum;
-{
-	int as;
-
-	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
-}
 
 /*
  * chipset-dependent timer routine.
@@ -166,8 +127,6 @@ c_nec_jazz_set_intr(mask, int_hand, prio)
 void
 c_nec_jazz_init()
 {
-	/* chipset-dependent mcclock configuration */
-	mcclock_jazzio_conf = &mcclock_nec_jazz_conf;
 
 	/* chipset-dependent timer configuration */
 	timer_jazzio_conf = &timer_nec_jazz_conf;
