@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.6 1997/01/18 00:34:01 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.7 1997/01/18 01:49:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -186,7 +186,7 @@ prom_init(desc, machdep_hint)
 	for (i = 0; i < 8; i++) {
 		enet_addr = strchr(enet_addr, ' ');
 		if (enet_addr == NULL) {
-			printf("\nBoot device name does not contain ethernet address.\n");
+			printf("boot: boot device name does not contain ethernet address.\n");
 			goto punt;
 		}
 		enet_addr++;
@@ -204,7 +204,7 @@ prom_init(desc, machdep_hint)
 			enet_addr++;
 
 			if (hv == -1 || lv == -1) {
-				printf("\nBoot device name contains bogus ethernet address.\n");
+				printf("boot: boot device name contains bogus ethernet address.\n");
 				goto punt;
 			}
 
@@ -214,7 +214,7 @@ prom_init(desc, machdep_hint)
 	}
 
 	if (netbbinfovalid && netbbinfo.force) {
-		printf("\nUsing hard-coded ethernet address (forced).\n\n");
+		printf("boot: using hard-coded ethernet address (forced).\n");
 		bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
 	}
 
@@ -232,12 +232,13 @@ gotit:
 punt:
 	broken_firmware = 1;
         if (netbbinfovalid) {
-                printf("Using hard-coded ethernet address.\n\n");
+                printf("boot: using hard-coded ethernet address.\n");
                 bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
                 goto gotit;
         }
 
 reallypunt:
+	printf("\n");
 	printf("Boot device name was: \"%s\"\n", devname);
 	printf("\n");
 	printf("Your firmware may be too old to network-boot NetBSD/Alpha,\n");
