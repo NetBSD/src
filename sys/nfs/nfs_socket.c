@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.61 2000/09/19 23:26:26 bjh21 Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.62 2000/09/27 18:36:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -901,17 +901,20 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	int i;
 	struct nfsmount *nmp;
 	struct mbuf *md, *mheadend;
-	struct nfsnode *np;
 	char nickv[RPCX_NICKVERF];
 	time_t reqtime, waituntil;
 	caddr_t dpos, cp2;
-	int t1, nqlflag, cachable, s, error = 0, mrest_len, auth_len, auth_type;
+	int t1, s, error = 0, mrest_len, auth_len, auth_type;
 	int trylater_delay = NQ_TRYLATERDEL, trylater_cnt = 0, failed_auth = 0;
 	int verf_len, verf_type;
 	u_int32_t xid;
-	u_quad_t frev;
 	char *auth_str, *verf_str;
 	NFSKERBKEY_T key;		/* save session key */
+#ifndef NFS_V2_ONLY
+	int nqlflag, cachable;
+	u_quad_t frev;
+	struct nfsnode *np;
+#endif
 
 	nmp = VFSTONFS(vp->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.85 2000/09/24 06:59:21 enami Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.86 2000/09/27 18:36:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -591,11 +591,13 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	caddr_t *bposp;
 {
 	struct mbuf *mb;
-	u_int32_t *tl;
 	caddr_t bpos;
-	struct mbuf *mb2;
 	struct nfsmount *nmp;
+#ifndef NFS_V2_ONLY
+	u_int32_t *tl;
+	struct mbuf *mb2;
 	int nqflag;
+#endif
 
 	MGET(mb, M_WAIT, MT_DATA);
 	if (hsiz >= MINCLSIZE)
