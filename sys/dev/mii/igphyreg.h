@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.1 2003/10/28 00:15:40 fvdl Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.2 2004/10/05 20:20:00 thorpej Exp $	*/
 
 /*******************************************************************************
 
@@ -162,4 +162,5 @@
 	PHY_WRITE(sc, (reg) & 0x1f, val); \
     } while (/*CONSTCOND*/0)
 
-#define IGPHY_TICK_DOWNSHIFT	3
+#define	IGPHY_TICK_DOWNSHIFT	3
+#define	IGPHY_TICK_MAX		15
