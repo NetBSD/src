@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 1996/07/12 13:12:40 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 1996/09/10 08:58:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -604,6 +604,8 @@ sccint:
 _lev1intr:
 	moveb	#0, SOFTINT_ADDR	|  Turn off software interrupt
 	moveml	d0-d1/a0-a1,sp@-
+	movl	_stio_addr, a0		|  get KVA of ST-IO area
+	moveb	#0, a0@(SCU_SOFTINT)	|  Turn off software interrupt
 	addql	#1,_intrcnt+16		|  add another software interrupt
 	jbsr	_softint		|  handle software interrupts
 	moveml	sp@+,d0-d1/a0-a1
@@ -621,10 +623,13 @@ _lev7intr:
 	 * Note that the nmi has to be turned off while handling it because
 	 * the hardware modification has no de-bouncing logic....
 	 */
-	movb	SYSMASK_ADDR, sp@-	|  save current sysmask
-	movb	#0, SYSMASK_ADDR	|  disable all interrupts
+	movl	a0, sp@-		|  save a0
+	movl	_stio_addr, a0		|  get KVA of ST-IO area
+	movb	a0@(SCU_SYSMASK), sp@-	|  save current sysmask
+	movb	#0, a0@(SCU_SYSMASK)	|  disable all interrupts
 	trap	#15			|  drop into the debugger
-	movb	sp@+, SYSMASK_ADDR	|  restore sysmask
+	movb	sp@+, a0@(SCU_SYSMASK)	|  restore sysmask
+	movl	sp@+, a0		|  restore a0
 #endif
 	addql	#1,_intrcnt+28		|  add another nmi interrupt
 	rte				|  all done
@@ -1359,6 +1364,34 @@ ENTRY(savectx)
 Lsavedone:
 	moveq	#0,d0			|  return 0 
 	rts
+
+#if defined(M68040)
+ENTRY(suline)
+	movl	sp@(4),a0		| address to write
+	movl	_curpcb,a1		| current pcb
+	movl	#Lslerr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	sp@(8),a1		| address of line
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	moveq	#0,d0			| indicate no fault
+	jra	Lsldone
+Lslerr:
+	moveq	#-1,d0
+Lsldone:
+	movl	_curpcb,a1		| current pcb
+	clrl	a1@(PCB_ONFAULT)	| clear fault address
+	rts
+#endif /* defined(M68040) */
 
 /*
  * Copy 1 relocation unit (NBPG bytes)
