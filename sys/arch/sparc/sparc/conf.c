@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.50 1997/10/16 23:43:16 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.51 1997/10/18 00:01:55 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,10 @@
 #include "cd.h"
 #include "uk.h"
 
-#include "zs.h"
+#include "kbd.h"
+#include "ms.h"
+#include "zstty.h"
+
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
 #include "cgtwo.h"
@@ -116,20 +119,20 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_notdef(),			/* 1 */
+	cdev_tty_init(NKBD,kd), 	/* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4 */
-	cdev_notdef(),			/* 5 */
-	cdev_notdef(),			/* 6 */
+	cdev_notdef(),			/* 5: tapemaster tape */
+	cdev_notdef(),			/* 6: systech/versatec */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
-	cdev_notdef(),			/* 8 */
-	cdev_disk_init(NXY,xy),		/* 9: SMD disk */
-	cdev_notdef(),			/* 10 */
-	cdev_notdef(),			/* 11 */
-	cdev_tty_init(NZS,zs),		/* 12: zs serial */
-	cdev_gen_init(1,ms),		/* 13: /dev/mouse */
-	cdev_notdef(),			/* 14 */
+	cdev_notdef(),			/* 8: Archive QIC-11 tape */
+	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
+	cdev_notdef(),			/* 10: systech multi-terminal board */
+	cdev_notdef(),			/* 11: DES encryption chip */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_mouse_init(NMS,ms),	/* 13: /dev/mouse */
+	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
 	cdev_disk_init(NSD,sd),		/* 17: SCSI disk */
@@ -143,9 +146,9 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 25: ip-filter device */
 	cdev_notdef(),			/* 26 */
 	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
-	cdev_notdef(),			/* 28 */
-	cdev_gen_init(1,kbd),		/* 29: /dev/kbd */
-	cdev_notdef(),			/* 30 */
+	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
+	cdev_mouse_init(NKBD,kbd),	/* 29: /dev/kbd */
+	cdev_notdef(),			/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cgtwo),	/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */

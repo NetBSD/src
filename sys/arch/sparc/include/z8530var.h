@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.7 1997/10/18 00:01:15 gwr Exp $ */
+/*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,54 +41,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbd.h	8.1 (Berkeley) 6/11/93
+ *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-/*
- * Keyboard `registers'.  (This should be called kbd_reg.h but we need to
- * be compatible.)
- */
+#include <dev/ic/z8530sc.h>
+
+struct zsc_softc {
+	struct	device zsc_dev;		/* required first: base device */
+	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	/* Machine-dependent part follows... */
+	struct	evcnt zsc_intrcnt;		/* count interrupts */
+	struct zs_chanstate  zsc_cs_store[2];
+};
 
 /*
- * Control codes sent from type 2, 3, and 4 keyboards.
+ * Functions to read and write individual registers in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses.
+ * On the SparcStation the recovery time is handled in hardware.
+ * On the older Sun4 machine it isn't, and software must do it.
  *
- * Note that KBD_RESET is followed by a keyboard ID, while KBD_IDLE is not.
- * KBD_IDLE does not take the place of any `up' transitions (it merely occurs
- * after them).
+ * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
+ * Thus we leave in the delay (done in the functions below).
+ * XXX: (ABB) Think about this more.
+ *
+ * The functions below could be macros instead if we are concerned
+ * about the function call overhead where ZS_DELAY does nothing.
  */
-#define	KBD_RESET	0xff		/* `reset' response (ID follows) */
-#define	KBD_LAYOUT	0xfe		/* Indicates that `layout' follows */
-#define	KBD_IDLE	0x7f		/* keyboard `all keys are up' code */
-#define	KBD_ERROR	0x7e		/* keyboard detected an error */
-#define KBD_SPECIAL(c) (((c) & 0x7e) == 0x7e)
 
-/* Keyboard IDs */
-#define	KB_SUN2		2		/* type 2 keyboard */
-#define	KB_SUN3		3		/* type 3 keyboard */
-#define	KB_SUN4		4		/* type 4 keyboard */
+u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
+u_char zs_read_csr __P((struct zs_chanstate *cs));
+u_char zs_read_data __P((struct zs_chanstate *cs));
 
-/* Key codes are in 0x00..0x7e; KBD_UP is set if the key goes up */
-#define	KBD_KEYMASK	0x7f		/* keyboard key mask */
-#define	KBD_UP		0x80		/* keyboard `up' transition */
+void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
+void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
-/* Keyboard codes needed to recognize the L1-A sequence */
-#define	KBD_L1		1		/* keyboard code for `L1' key */
-#define	KBD_A		77		/* keyboard code for `A' key */
+/* The sparc has splzs() in psl.h */
 
-/* Control codes sent to the various keyboards */
-#define	KBD_CMD_RESET	1		/* reset keyboard */
-#define	KBD_CMD_BELL	2		/* turn bell on */
-#define	KBD_CMD_NOBELL	3		/* turn bell off */
-#define	KBD_CMD_CLICK	10		/* turn keyclick on */
-#define	KBD_CMD_NOCLICK	11		/* turn keyclick off */
-#define	KBD_CMD_SETLED	14		/* set LED state (type 4 kbd) */
-#define	KBD_CMD_GETLAYOUT	15		/* get DIP switch (type 4 kbd) */
-
-#define	LED_NUM_LOCK	0x1
-#define	LED_COMPOSE	0x2
-#define	LED_SCROLL_LOCK	0x4
-#define	LED_CAPS_LOCK	0x8
-
-#ifdef _KERNEL
-int	kbd_docmd __P((int, int));
+/* We want to call it "zs" instead of "zsc" (sigh). */
+#ifndef ZSCCF_CHANNEL
+#define ZSCCF_CHANNEL 0
+#define ZSCCF_CHANNEL_DEFAULT -1
 #endif
