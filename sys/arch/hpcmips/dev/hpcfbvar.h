@@ -1,8 +1,10 @@
-/*	$NetBSD: hpcfbvar.h,v 1.1 2000/03/12 05:04:46 takemura Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.2 2000/04/03 03:35:37 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
+ * Copyright (c) 2000
+ *         SATO Kazumi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,12 +37,21 @@
  */
 
 /*
- * video access functions (must be provided by all keyboards).
+ * video access functions (must be provided by all video).
  */
 struct hpcfb_accessops {
 	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
 		    struct proc *p));
 	int	(*mmap) __P((void *v, off_t off, int prot));
+	void	(*cursor) __P((void *v, int on, int xoff, int yoff, \
+			int curwidth, int curheiht));
+	void	(*bitblit) __P((void *v, int srcxoff, int srcyoff, \
+			int dstxoff, int dstyoff, int height, int width));
+	void	(*erase) __P((void *v, int xoff, int yoff, \
+			int height, int width, int attr));
+	void	(*putchar) __P((void *v, int xoff, int yoff, \
+			struct wsdisplay_font *font, int fclr, int uclr, \
+			u_int uc, int attr));
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.5 2000/03/25 15:08:26 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.6 2000/04/03 03:35:37 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -46,6 +46,7 @@
 #include <machine/bootinfo.h>
 
 #if NHPCFB > 0
+#include <dev/wscons/wsconsio.h>
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
 #include <arch/hpcmips/dev/bivideovar.h>
