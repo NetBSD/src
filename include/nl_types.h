@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.8 1997/07/30 23:00:02 jtc Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.9 2000/10/03 19:53:32 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,8 @@ typedef long	nl_item;
 
 __BEGIN_DECLS
 nl_catd  catopen __P((const char *, int));
-char    *catgets __P((nl_catd, int, int, const char *));
+char    *catgets __P((nl_catd, int, int, const char *))
+	__attribute__((__format_arg__(4)));
 int	 catclose __P((nl_catd));
 __END_DECLS
 
