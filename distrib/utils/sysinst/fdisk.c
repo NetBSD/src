@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.3 1997/11/25 20:35:05 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.4 1997/11/29 21:49:13 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -103,23 +103,30 @@ int partsoverlap(int i, int j)
 }
 
 
-void disp_cur_part (int sel, int disp)
+void disp_cur_part(int sel, int disp)
 {
-	int i, j, start, stop;
+	int i, j, start, stop, rsize, rend;
 
 	if (disp < 0)
 		start = 0, stop = 4;
 	else
 		start = disp, stop = disp+1;
-	msg_display_add (MSG_part_head, multname, multname);
+	msg_display_add (MSG_part_head, multname, multname, multname);
 	for (i=start; i<stop; i++) {
 		if (sel == i) msg_standout();
 		if (part[i][SIZE] == 0 && part[i][START] == 0)
-			msg_printf_add ("%d %24s  ", i, "");
-		else
-			msg_printf_add ("%d %12d%12d  ", i,
+			msg_printf_add ("%d %36s  ", i, "");
+		else {
+			rsize = part[i][SIZE] / sizemult;
+			if (part[i][SIZE] % sizemult)
+				rsize++;
+			rend = (part[i][START] + part[i][SIZE]) / sizemult;
+			if ((part[i][SIZE] + part[i][SIZE]) % sizemult)
+				rend++;
+			msg_printf_add("%d %12d%12d%12d  ", i,
 					part[i][START] / sizemult,
-					part[i][SIZE] / sizemult);
+					rsize, rend);
+		}
 		for (j = 0; part_ids[j].id != -1 &&
 			    part_ids[j].id != part[i][ID]; j++);
 		msg_printf_add ("%s\n", part_ids[j].name);
@@ -129,14 +136,14 @@ void disp_cur_part (int sel, int disp)
 
 int check_geom (void)
 {
-	return bcyl < 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
+	return bcyl <= 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
 }
 
 
 void set_fdisk_geom (void)
 {
 	char res[80];
-	msg_display_add (MSG_setfdiskgeom);
+	msg_display_add(MSG_setbiosgeom);
 	disp_cur_geom();
 	msg_printf_add ("\n");
 	msg_prompt_add (MSG_cylinders, NULL, res, 80);
@@ -150,8 +157,8 @@ void set_fdisk_geom (void)
 
 void disp_cur_geom (void)
 {
-	msg_display_add (MSG_realgeom, dlcyl, dlhead, dlsec);
-	msg_display_add (MSG_fdiskgeom, bcyl, bhead, bsec);
+	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
+	msg_display_add(MSG_biosgeom, bcyl, bhead, bsec);
 }
 
 void get_fdisk_info (void)
@@ -174,9 +181,14 @@ void get_fdisk_info (void)
 	/* A common failure of fdisk is to get the number of cylinders
 	   wrong and the number of sectors and heads right.  This makes
 	   a disk look very big.  In this case, we can just recompute
-	   the number of cylinders and things should work just fine. */
+	   the number of cylinders and things should work just fine.
+	   Also, fdisk may correctly indentify the settings to include
+	   a cylinder total > 1024, because translation mode is not used.
+	   Check for it. */
 
-	if (bcyl > 1023 && bsec < 64) {
+	if (bcyl > 1024 && disk->geom[1] == bhead && disk->geom[2] == bsec)
+		bcyl = 1024;
+	else if (bcyl > 1024 && bsec < 64) {
 		t1 = disk->geom[0] * disk->geom[1] * disk->geom[2];
 		t2 = bhead * bsec;
 		if (bcyl * t2 > t1) {
@@ -186,4 +198,3 @@ void get_fdisk_info (void)
 		}
 	}
 }
-
