@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.7 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.8 2003/12/05 00:51:08 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.7 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.8 2003/12/05 00:51:08 bjh21 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.7 2003/12/04 19:38:23 atatat E
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -740,7 +741,7 @@ SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "union", NULL,
+		       CTLTYPE_NODE, "filecore", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 19, CTL_EOL);
 	/*
