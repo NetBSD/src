@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.67 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: bpf.c,v 1.68 2002/09/11 05:36:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.67 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.68 2002/09/11 05:36:26 itojun Exp $");
 
 #include "bpfilter.h"
 
@@ -1114,7 +1114,7 @@ bpf_mcpy(dst_arg, src_arg, len)
 		dst += count;
 		len -= count;
 	}
-	return(dst_arg);
+	return (dst_arg);
 }
 
 /*
