@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.14.2.1 2002/11/18 01:35:32 he Exp $
+.\"	$NetBSD: pmap.9,v 1.14.2.2 2002/11/18 01:37:16 he Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 16, 2001
+.Dd August 14, 2002
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -310,7 +310,8 @@ and
 .Fn pmap_clear_reference
 functions.  These functions must also change any internal state
 necessary to detect the page being modified or referenced again
-after the modified or referenced state is cleared.  (Prior to NetBSD 1.6,
+after the modified or referenced state is cleared.  (Prior to
+.Nx 1.6 ,
 .Nm
 implementations could get away without this because UVM (and Mach VM
 before that) always called
@@ -556,7 +557,7 @@ into the kernel physical map.  Mappings of this type are always
 .Dq wired ,
 and are unaffected by routines that alter the protection of pages
 (such as
-.Fn pmap_page_protect ) Ns .
+.Fn pmap_page_protect ) .
 Such mappings are also not included in the gathering of modified/referenced
 information about a page.  Mappings entered with
 .Fn pmap_kenter_pa
@@ -735,7 +736,7 @@ copy-on-write (called with VM_PROT_READ set in
 .Fa prot )
 and to revoke all mappings when cleaning a page (called with
 no bits set in
-.Fa prot ) Ns .
+.Fa prot ) .
 Access permissions must never be added to a page as a result of
 this call.
 .It boolean_t Fn "pmap_clear_modify" "struct vm_page *pg"
