@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.7 1999/10/05 03:35:12 itohy Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.8 1999/10/12 00:16:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1140,8 +1140,10 @@ ad1848_commit_settings(addr)
 	 * Write to I8 starts resyncronization. Wait until it completes.
 	 */
 	timeout = 100000;
-	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
+	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT) {
+		delay(10);
 		timeout--;
+	}
 
 	if (ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 		printf("ad1848_commit: Auto calibration timed out\n");
