@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.32 2001/12/12 01:48:58 tv Exp $
+#	$NetBSD: Makefile,v 1.33 2001/12/12 08:58:45 lukem Exp $
 
 REQUIRETOOLS=	yes
 
-.include <bsd.own.mk>
-
 LIB=		gcc
 NOLINT=		# defined
+
+.include <bsd.own.mk>
 
 .cc: # disable .cc->NULL transform
 
