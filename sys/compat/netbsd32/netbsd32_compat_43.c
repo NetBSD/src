@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.8 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.9 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -45,7 +45,13 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-static void
+static void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
+int compat_43_netbsd32_sethostid __P((struct proc *, void *, register_t *));
+int compat_43_netbsd32_killpg __P((struct proc *, void *, register_t *retval));
+int compat_43_netbsd32_sigblock __P((struct proc *, void *, register_t *retval));
+int compat_43_netbsd32_sigblock __P((struct proc *, void *, register_t *retval));
+
+static void 
 netbsd32_from_stat43(sp43, sp32)
 	struct stat43 *sp43;
 	struct netbsd32_stat43 *sp32;
