@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.17 2002/01/16 01:47:37 eeh Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.18 2002/06/21 11:22:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #ifndef _DEV_IEEE1394_FWOHCIVAR_H_
 #define	_DEV_IEEE1394_FWOHCIVAR_H_
 
-#include <sys/mbuf.h>
 #include <sys/callout.h>
 #include <sys/queue.h>
 
@@ -61,6 +60,7 @@
 
 struct fwohci_softc;
 struct fwohci_pkt;
+struct mbuf;
 
 struct fwohci_buf {
 	TAILQ_ENTRY(fwohci_buf) fb_list;
