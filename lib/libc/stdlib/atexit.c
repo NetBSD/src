@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.9 1998/02/03 18:44:13 perry Exp $	*/
+/*	$NetBSD: atexit.c,v 1.10 1998/10/18 14:36:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,14 +41,19 @@
 #if 0
 static char sccsid[] = "@(#)atexit.c	8.2 (Berkeley) 7/3/94";
 #else
-__RCSID("$NetBSD: atexit.c,v 1.9 1998/02/03 18:44:13 perry Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.10 1998/10/18 14:36:30 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
+#include "reentrant.h"
 #include "atexit.h"
 
 struct atexit *__atexit;	/* points to head of LIFO stack */
+
+#ifdef _REENT
+mutex_t __atexit_mutex = MUTEX_INITIALIZER;
+#endif
 
 /*
  * Register a function to be performed at exit.
@@ -60,15 +65,19 @@ atexit(fn)
 	static struct atexit __atexit0;	/* one guaranteed table */
 	struct atexit *p;
 
+	mutex_lock(&__atexit_mutex);
 	if ((p = __atexit) == NULL)
 		__atexit = p = &__atexit0;
 	else if (p->ind >= ATEXIT_SIZE) {
-		if ((p = malloc(sizeof(*p))) == NULL)
+		if ((p = malloc(sizeof(*p))) == NULL) {
+			mutex_unlock(&__atexit_mutex);
 			return (-1);
+		}
 		p->ind = 0;
 		p->next = __atexit;
 		__atexit = p;
 	}
 	p->fns[p->ind++] = fn;
+	mutex_unlock(&__atexit_mutex);
 	return (0);
 }
