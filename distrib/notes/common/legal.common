@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.10 2000/08/31 16:26:42 itojun Exp $	
+.\"	$NetBSD: legal.common,v 1.11 2000/09/01 22:27:38 msaitoh Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,3 +243,5 @@ This product includes software developed by the University of Oregon.
 
 This product includes software developed by the University of Southern
 California and/or Information Sciences Institute.
+
+This product includes software developed by Internet Initiative Japan Inc.
