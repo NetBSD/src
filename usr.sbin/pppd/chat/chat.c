@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.16 1999/05/06 08:59:21 jeremy Exp $	*/
+/*	$NetBSD: chat.c,v 1.17 1999/08/25 02:52:15 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -16,6 +16,9 @@
  *	This software is in the public domain.
  *
  * -----------------
+ *	12-May-99 added a feature to read data to be sent from a file,
+ *	if the send string starts with @.  Idea from gpk <gpk@onramp.net>.
+ *
  *	added -T and -U option and \T and \U substitution to pass a phone
  *	number into chat script. Two are needed for some ISDN TA applications.
  *	Keith Dart <kdart@cisco.com>
@@ -76,16 +79,17 @@
  *		Columbus, OH  43221
  *		(614)451-1883
  *
- *
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp ";
+static char rcsid[] = "Id: chat.c,v 1.24 1999/08/13 06:46:09 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.16 1999/05/06 08:59:21 jeremy Exp $");
+__RCSID("$NetBSD: chat.c,v 1.17 1999/08/25 02:52:15 christos Exp $");
 #endif
+#ifndef __STDC__
+#define const
 #endif
 
 #include <stdio.h>
@@ -600,27 +604,32 @@ void break_sequence()
 void terminate(status)
 int status;
 {
+    static int terminating = 0;
+
+    if (terminating)
+	exit(status);
+    terminating = 1;
     echo_stderr(-1);
-    if (report_file != (char *) 0 && report_fp != (FILE *) NULL) {
 /*
  * Allow the last of the report string to be gathered before we terminate.
  */
-	if (report_gathering) {
-	    int c, rep_len;
+    if (report_gathering) {
+	int c, rep_len;
 
-	    rep_len = strlen(report_buffer);
-	    while (rep_len + 1 <= sizeof(report_buffer)) {
-		alarm(1);
-		c = get_char();
-		alarm(0);
-		if (c < 0 || iscntrl(c))
-		    break;
-		report_buffer[rep_len] = c;
-		++rep_len;
-	    }
-	    report_buffer[rep_len] = 0;
-	    fprintf (report_fp, "chat:  %s\n", report_buffer);
+	rep_len = strlen(report_buffer);
+	while (rep_len + 1 <= sizeof(report_buffer)) {
+	    alarm(1);
+	    c = get_char();
+	    alarm(0);
+	    if (c < 0 || iscntrl(c))
+		break;
+	    report_buffer[rep_len] = c;
+	    ++rep_len;
 	}
+	report_buffer[rep_len] = 0;
+	fprintf (report_fp, "chat:  %s\n", report_buffer);
+    }
+    if (report_file != (char *) 0 && report_fp != (FILE *) NULL) {
 	if (verbose)
 	    fprintf (report_fp, "Closing \"%s\".\n", report_file);
 	fclose (report_fp);
@@ -960,6 +969,8 @@ int c;
 void chat_send (s)
 register char *s;
 {
+    char file_data[STR_LEN];
+
     if (say_next) {
 	say_next = 0;
 	s = clean(s,0);
@@ -1096,6 +1107,43 @@ register char *s;
 	    logf("timeout set to %d seconds", timeout);
 
 	return;
+    }
+
+    /*
+     * The syntax @filename means read the string to send from the
+     * file `filename'.
+     */
+    if (s[0] == '@') {
+	/* skip the @ and any following white-space */
+	char *fn = s;
+	while (*++fn == ' ' || *fn == '\t')
+	    ;
+
+	if (*fn != 0) {
+	    FILE *f;
+	    int n = 0;
+
+	    /* open the file and read until STR_LEN-1 bytes or end-of-file */
+	    f = fopen(fn, "r");
+	    if (f == NULL)
+		fatal(1, "%s -- open failed: %m", fn);
+	    while (n < STR_LEN - 1) {
+		int nr = fread(&file_data[n], 1, STR_LEN - 1 - n, f);
+		if (nr < 0)
+		    fatal(1, "%s -- read error", fn);
+		if (nr == 0)
+		    break;
+		n += nr;
+	    }
+	    fclose(f);
+
+	    /* use the string we got as the string to send,
+	       but trim off the final newline if any. */
+	    if (n > 0 && file_data[n-1] == '\n')
+		--n;
+	    file_data[n] = 0;
+	    s = file_data;
+	}
     }
 
     if (strcmp(s, "EOT") == 0)
