@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.12 2001/08/01 23:33:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.13 2001/08/01 23:35:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct	pthread_st {
 	ucontext_t*	pt_switchtouc;
 
 	/* The context we saved in pthread__locked_switch but which
-	 * was trashed when we were new_preempted.
+	 * was trashed when we were preempted before switching stacks.
 	 */
 	ucontext_t*	pt_sleepuc;
 
