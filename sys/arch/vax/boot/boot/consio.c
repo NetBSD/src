@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.8 2000/05/09 20:53:51 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.9 2000/05/20 13:35:07 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,19 +45,15 @@
 
 void setup __P((void));
 
-unsigned       *bootregs;
-struct rpb     *rpb;
-struct bqo     *bqo;
-
-static int (*put_fp) __P((int))  = NULL;
+static void (*put_fp) __P((int))  = NULL;
 static int (*get_fp) __P((void)) = NULL;
 static int (*test_fp) __P((void)) = NULL;
 
-int pr_putchar __P((int c));	/* putchar() using mtpr/mfpr */
+void pr_putchar __P((int c));	/* putchar() using mtpr/mfpr */
 int pr_getchar __P((void));
 int pr_testchar __P((void));
 
-int rom_putchar __P((int c));	/* putchar() using ROM routines */
+void rom_putchar __P((int c));	/* putchar() using ROM routines */
 int rom_getchar __P((void));
 int rom_testchar __P((void));
 
@@ -81,25 +77,31 @@ unsigned char  *ka630_conspage;
 /* Function that initializes things for KA630 ROM console I/O */
 void ka630_consinit __P((void));
 /* Functions that use KA630 ROM for console I/O */
-int ka630_rom_putchar __P((int c));
+void ka630_rom_putchar __P((int c));
 int ka630_rom_getchar __P((void));
 int ka630_rom_testchar __P((void));
 /* Also added such a thing for KA53 - MK-991208 */
 unsigned char  *ka53_conspage;
 void ka53_consinit(void);
-int ka53_rom_putchar(int c);
+void ka53_rom_putchar(int c);
 int ka53_rom_getchar(void);
 int ka53_rom_testchar(void);
 
+void putchar(int);
+int getchar(void);
+int testkey(void);
+void consinit(void);
+void _rtt(void);
 
-putchar(c)
-	int c;
+void
+putchar(int c)
 {
 	(*put_fp)(c);
 	if (c == 10)
 		(*put_fp)(13);		/* CR/LF */
 }
 
+int
 getchar() 
 {
 	int c;
@@ -112,6 +114,7 @@ getchar()
 	return c;
 }
 
+int
 testkey()
 {
 	return (*test_fp)();
@@ -127,8 +130,6 @@ consinit()
 	put_fp = pr_putchar; /* Default */
 	get_fp = pr_getchar;
 	test_fp = pr_testchar;
-
-	rpb = (struct rpb *)XXRPB;
 
 	/*
 	 * According to the vax_boardtype (vax_cputype is not specific
@@ -193,8 +194,8 @@ consinit()
 /*
  * putchar() using MTPR
  */
-pr_putchar(c)
-        int     c;
+void
+pr_putchar(int c)
 {
 	int     timeout = 1<<15;	/* don't hang the machine! */
         while ((mfpr(PR_TXCS) & GC_RDY) == 0)  /* Wait until xmit ready */
@@ -206,12 +207,14 @@ pr_putchar(c)
 /*
  * getchar() using MFPR
  */
+int
 pr_getchar()
 {
 	while ((mfpr(PR_RXCS) & GC_DON) == 0);	/* wait for char */
 	return (mfpr(PR_RXDB));			/* now get it */
 }
 
+int
 pr_testchar()
 {
 	if (mfpr(PR_RXCS) & GC_DON)
@@ -256,6 +259,7 @@ asm("
 	1:	ret
 ");
 
+void
 _rtt()
 {
 	asm("halt");
