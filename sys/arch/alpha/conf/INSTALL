@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.49 2000/12/21 23:05:47 thorpej Exp $
+# $NetBSD: INSTALL,v 1.50 2001/02/04 17:05:16 ad Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -177,6 +177,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
@@ -280,6 +281,7 @@ fd*	at	fdc? drive ?
 
 # Hardware RAID devices
 ld*	at	cac? unit ?
+ld*	at	mlx? unix ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?
