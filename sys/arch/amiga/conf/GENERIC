@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.10 1994/05/21 10:06:31 chopps Exp $
+#	$Id: GENERIC,v 1.11 1994/05/22 07:22:24 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -36,7 +36,7 @@ atzsc0		at ztwobus0
 zssc0		at ztwobus0		# Zeus scsi
 mgnsc0		at ztwobus0		# Magnum scsi
 wesc0		at zthreebus0		# Warp Engine scsi
-#idesc0		at mainbus0		# A4000(A1200?) IDE
+idesc0		at mainbus0		# A4000(A1200?) IDE
 
 scsibus0	at gtsc0
 scsibus1	at ahsc0
@@ -48,7 +48,7 @@ scsibus2	at atzsc0
 scsibus6	at zssc0
 scsibus7	at mgnsc0
 scsibus8	at wesc0
-#scsibus9	at idesc0
+scsibus9	at idesc0
 
 # any drives on configured controllers.
 sd0	at scsibus? target 0 lun 0
