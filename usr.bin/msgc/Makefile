@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2002/01/31 22:43:56 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2002/09/19 11:31:22 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=		msgc
 SRCS=		msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
-.PATH:		${.CURDIR}/../menuc
+.PATH:		${NETBSDSRCDIR}/usr.bin/menuc
 CPPFLAGS+=	-I. -I${.CURDIR}
 YHEADER=
 
