@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.10 2003/02/25 11:17:37 dsl Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.1 2003/10/09 10:56:13 dsl Exp $	*/
 	
 /*
  * ROM startup
