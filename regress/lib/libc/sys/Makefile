@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/20 16:56:52 atatat Exp $
+#	$NetBSD: Makefile,v 1.2 2003/02/07 21:00:43 cgd Exp $
 
-SUBDIR+= ttyio
+SUBDIR+= cerror ttyio
 
 .include <bsd.subdir.mk>
