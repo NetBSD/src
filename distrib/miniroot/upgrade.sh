@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.16 1998/01/24 19:16:25 veego Exp $
+#	$NetBSD: upgrade.sh,v 1.17 1999/04/12 22:17:21 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,7 +66,7 @@ MODE="upgrade"
 . install.sub
 
 # which sets?
-THESETS="$UPGRSETS"
+THESETS="$UPGRSETS $MDSETS"
 
 # Files that moved between 1.2 and 1.3
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/dumpfs /usr/sbin/dumpfs"
