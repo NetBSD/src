@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.8 1994/04/05 02:26:19 cgd Exp $
+ *	$Id: crt0.c,v 1.9 1994/04/18 20:02:58 pk Exp $
  */
 
 
@@ -102,12 +102,13 @@ char			*__progname = empty;
 #define write(fd, s, n)		__syscall(SYS_write, (fd), (s), (n))
 #define dup(fd)			__syscall(SYS_dup, (fd))
 #define dup2(fd, fdnew)		__syscall(SYS_dup2, (fd), (fdnew))
+
 #ifdef sun
 #define mmap(addr, len, prot, flags, fd, off)	\
     __syscall(SYS_mmap, (addr), (len), (prot), _MAP_NEW|(flags), (fd), (off))
 #else
 #define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
+    __syscall2((quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
 	(fd), 0, (off_t)(off))
 #endif
 
@@ -166,6 +167,25 @@ asm ("	mov	%l2,%o2");
 
 asm ("	call	_exit");
 asm ("	nop");
+
+#ifdef DYNAMIC
+/* System call entry */
+asm("	.set	SYSCALL_G2RFLAG, 0x400");
+asm("	.set	SYS___syscall, 198");
+asm("___syscall2:");
+asm("	sethi	%hi(SYS___syscall), %g1");	/* `SYS___syscall' */
+asm("	ba	1f");
+asm("	or	%g1, %lo(SYS___syscall), %g1");
+asm("___syscall:");
+asm("	clr	%g1");				/* `SYS_syscall' */
+asm("1:");
+asm("	or	%g1, SYSCALL_G2RFLAG, %g1");	/* Use quick return */
+asm("	add	%o7, 8, %g2");
+asm("	ta	%g0");
+asm("	mov	-0x1, %o0");			/* Note: no `errno' */
+asm("	jmp	%o7 + 0x8");
+asm("	mov	-0x1, %o1");
+#endif
 
 #ifdef MCRT0
 static void
@@ -408,19 +428,6 @@ _getenv(name)
 			}
 	return (char *)0;
 }
-
-#ifdef sparc
-	/* System call entry */
-	asm("___syscall:");
-	asm("clr	%g1");
-	asm("ta		%g0");
-	asm("bgeu	Lsyscallx");		/* good result ? */
-	asm("nop");
-	asm("mov	-0x1, %o0");		/* Note: no `errno' */
-	asm("Lsyscallx:");
-	asm("jmp	%o7 + 0x8");
-	asm("nop");
-#endif /* sparc */
 
 #endif /* DYNAMIC */
 
