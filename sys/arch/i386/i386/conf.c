@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.124 2000/05/08 16:42:36 joda Exp $	*/
+/*	$NetBSD: conf.c,v 1.125 2000/05/17 18:08:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -195,6 +195,8 @@ cdev_decl(lms);
 cdev_decl(pms);
 #include "cy.h"
 cdev_decl(cy);
+#include "cz.h"
+cdev_decl(cztty);
 cdev_decl(mcd);
 #include "tun.h"
 cdev_decl(tun);
@@ -396,6 +398,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
 	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
 	cdev_viaenv_init(NVIAENV, viaenv_),/* 72: VIA VT82C686A hwmon */
+	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -509,6 +512,8 @@ static int chrtoblktbl[] = {
 	/* 69 */	19,
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
+	/* 72 */	NODEV,
+	/* 73 */	NODEV,
 };
 
 /*
