@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.31 2003/04/16 07:10:00 itojun Exp $	*/
+/*	$NetBSD: rcp.c,v 1.32 2003/07/23 21:10:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.31 2003/04/16 07:10:00 itojun Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.32 2003/07/23 21:10:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: rcp.c,v 1.31 2003/04/16 07:10:00 itojun Exp $");
 #include "extern.h"
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include "krb.h"
 
