@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.7 2000/10/16 13:46:48 simonb Exp $
+# $NetBSD: Makefile,v 1.8 2001/10/22 11:00:05 agc Exp $
 #
 .include <bsd.own.mk>
 
-CPPFLAGS+= -DEXTENSIONS
+CPPFLAGS+= -DEXTENSIONS -DPW_MKDB_ARGC=2
 WARNS= 1
 
 PROG= user
