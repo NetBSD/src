@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.5 2002/05/21 14:22:06 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.6 2002/05/21 14:29:53 itojun Exp $	*/
 /*	$KAME: timer.c,v 1.6 2002/05/15 08:53:07 jinmei Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ rtadvd_check_timer()
 
 	timer_head.tm = tm_max;
 
-	while(tm != &timer_head) {
+	while (tm != &timer_head) {
 		if (TIMEVAL_LEQ(tm->tm, now)) {
 			(*tm->expire)(tm->expire_data);
 			(*tm->update)(tm->update_data, &tm->tm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.11 2002/05/21 14:22:05 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.12 2002/05/21 14:29:52 itojun Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ if_getflags(int ifindex, int oifflags)
 int
 lladdropt_length(struct sockaddr_dl *sdl)
 {
-	switch(sdl->sdl_type) {
+	switch (sdl->sdl_type) {
 	case IFT_ETHER:
 		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
 	default:
@@ -230,7 +230,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 
 	ndopt->nd_opt_type = ND_OPT_SOURCE_LINKADDR; /* fixed */
 
-	switch(sdl->sdl_type) {
+	switch (sdl->sdl_type) {
 	case IFT_ETHER:
 		ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
 		addr = (char *)(ndopt + 1);
