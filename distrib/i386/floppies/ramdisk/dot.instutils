@@ -1,4 +1,4 @@
-#	$NetBSD: dot.instutils,v 1.2 1997/08/04 22:33:58 phil Exp $
+#	$NetBSD: dot.instutils,v 1.3 1997/08/15 23:03:57 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -33,13 +33,88 @@
 # reasonably once it is installed on the hard disk.  These are meant to be
 # invoked from the shell prompt, by people installing NetBSD.
 
+config_int()
+{
+	local intf resp ifname ifaddr ifflags
+	intf=$1
+	case "$intf" in
+		""|lo*|ppp*|sl*|tun*)
+			return 0;
+			;;
+		*)
+			;;
+	esac
+		
+	echo -n "Configure" $intf "? [y]"
+	read resp
+	case "$resp" in
+	n*|N*)
+		return 0;
+		;;
+	*)
+		;;
+	esac
+
+	echo -n "What is the hostname for this interface? [$hname] "
+	read ifname
+	if [ "$ifname" = "" ]; then
+		ifname=$hname
+	fi
+	ifaddr=
+	while [ "$ifaddr" = "" ]; do
+		echo -n "What is the IP address associated with "
+		echo -n "interface ${intf}? "
+		read ifaddr
+	done
+	echo "$ifaddr	$ifname `echo $ifname | sed -e s/\.$dname//`" \
+	    >> ${ETC}/hosts
+
+	echo -n "Does this interface have a special netmask? [n] "
+	read resp
+	case "$resp" in
+		y*)
+			echo -n "What is the netmask? [0xffffff00] "
+			read ifnetmask
+			if [ "$ifnetmask" = "" ]; then
+				ifnetmask=0xffffff00
+			fi
+			ifnetmask_arg="netmask $ifnetmask"
+			;;
+		*)
+			ifnetmask=
+			ifnetmask_arg=
+			;;
+	esac
+
+	echo -n "Does this interface need a special media type? [n] "
+	read resp
+	case "$resp" in
+		y*)
+			echo -n "What media type? [10baseT/UTP] "
+			read ifflags
+			if [ "$ifflags" = "" ]; then
+				ifflags="10baseT/UTP"
+			fi
+			ifflags_arg="media $ifflags"
+			;;
+		*)
+			ifflags=
+			ifflags_arg=
+			;;
+	esac
+	echo "inet $ifname $ifnetmask_arg $ifflags_arg" > ${ETC}/ifconfig.$intf
+}
+
+
 Configure()
 {
 	DEV=/dev
 	ETC=/etc
+	ROOT=/
 	if [ ! -f /etc/fstab ]; then
 		DEV=/mnt/dev
 		ETC=/mnt/etc
+		ROOT=/mnt
 	fi
 
 	echo	"You will now be prompted for information about this"
@@ -76,70 +151,19 @@ Configure()
 	echo	"127.0.0.1	localhost localhost.$dname" > ${ETC}/hosts
 
 	echo	""
-	echo -n	"Does this machine have an ethernet interface? [y] "
+	echo -n	"Configure network interfaces? [y] "
         read resp
         case "$resp" in
 	n*)
 		;;
 	*)
-		intf=
-		while [ "$intf" = "" ]; do
-			echo -n "What is the primary interface name "
-			echo -n "(e.g. ed0, ep0, etc)? "
-			read intf
+		for if in `ifconfig -l`
+		do
+			config_int $if
 		done
-		echo -n "What is the hostname for this interface? [$hname] "
-		read ifname
-		if [ "$ifname" = "" ]; then
- 			ifname=$hname
-		fi
-		ifaddr=
-		while [ "$ifaddr" = "" ]; do
-			echo -n "What is the IP address associated with "
-			echo -n "interface ${intf}? "
-			read ifaddr
-		done
-		echo "$ifaddr	$ifname `echo $ifname | sed -e s/\.$dname//`" \
-		    >> ${ETC}/hosts
-
-		echo -n "Does this interface have a special netmask? [n] "
-		read resp
-		case "$resp" in
-			y*)
-				echo -n "What is the netmask? [0xffffff00] "
-				read ifnetmask
-				if [ "$ifnetmask" = "" ]; then
-					ifnetmask=0xffffff00
-				fi
-				;;
-			*)
-				ifnetmask=
-				;;
-		esac
-
-		echo -n "Does this interface need additional flags? [n] "
-		read resp
-		case "$resp" in
-			y*)
-				echo -n "What flags? [link0] "
-				read ifflags
-				if [ "$ifflags" = "" ]; then
-					ifflags=link0
-				fi
-				;;
-			*)
-				ifflags=
-				;;
-		esac
-		echo "inet $ifname $ifnetmask $ifflags" > ${ETC}/ifconfig.$intf
-
-		echo    ""
-		echo -n	"WARNING: if you have any more ethernet interfaces, "
-		echo	"you will have to configure"
-		echo -n "them by hand.  Read the comments in /etc/netstart to "
-		echo	"learn how to do this."
 		;;
 	esac
+
 	
 	echo	""
 	echo -n	"Making device nodes (may take a while)..."
@@ -149,11 +173,11 @@ Configure()
 
 	sync
 
-	echo	""
-	echo	"If you haven't already installed a kernel on the hard drive"
-	echo	"using your kernel-copy floppy, do so now.  Kernel"
-	echo 	"installation instructions can be found in the"
-	echo 	"installation notes."	
+	if [ ! -f ${ROOT}/netbsd ]
+	then
+		echo "You have not unpacked the kernel installation"
+		echo "set. You must do so before you reboot."
+	fi
 }
 
 # Upgrade cleanup utilities (functions), to make sure a recently-upgraded
