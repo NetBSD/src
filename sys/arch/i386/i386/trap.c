@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 1998/10/01 15:53:33 erh Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 1998/10/27 18:04:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -657,12 +657,15 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
+#ifdef COMPAT_LINUX
+	int linux;
+#endif /* COMPAT_LINUX */
 
 #if defined(UVM)
 	uvmexp.syscalls++;
 #else
 	cnt.v_syscall++;
-#endif
+#endif /* UVM */
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
 	p = curproc;
@@ -674,12 +677,25 @@ syscall(frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
+#ifdef COMPAT_LINUX
+	linux = 0
+# ifdef EXEC_AOUT
+	    || (p->p_emul == &emul_linux_aout)
+# endif /* EXEC_AOUT */
+# ifdef EXEC_ELF32
+	    || (p->p_emul == &emul_linux_elf32)
+# endif /* EXEC_ELF32 */
+# ifdef EXEC_ELF64
+	    || (p->p_emul == &emul_linux_elf64)
+# endif /* EXEC_ELF64 */
+	    ;
+#endif /* COMPAT_LINUX */
 #ifdef COMPAT_IBCS2
 	if (p->p_emul == &emul_ibcs2_coff || p->p_emul == &emul_ibcs2_elf ||
 	    p->p_emul == &emul_ibcs2_xout)
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
-#endif
+#endif /* COMPAT_IBCS2 */
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -691,25 +707,15 @@ syscall(frame)
 	if (frame.tf_eflags & PSL_VM)
 		code = -1;
 	else
-#endif
+#endif /* VM86 */
 
 	switch (code) {
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (0
-#ifdef EXEC_AOUT
-		    || (p->p_emul == &emul_linux_aout)
-#endif
-#ifdef EXEC_ELF32
-		    || (p->p_emul == &emul_linux_elf32)
-#endif
-#ifdef EXEC_ELF64
-		    || (p->p_emul == &emul_linux_elf64)
-#endif
-		)
+		if (linux)
 			break;
-#endif
+#endif /* COMPAT_LINUX */
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -724,10 +730,11 @@ syscall(frame)
 #ifdef COMPAT_FREEBSD
 		/* FreeBSD has a same function in SYS___syscall */
 		if (callp != sysent && p->p_emul != &emul_freebsd)
+			break;
 #else
 		if (callp != sysent)
-#endif
 			break;
+#endif /* COMPAT_FREEBSD */
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
@@ -741,18 +748,7 @@ syscall(frame)
 	argsize = callp->sy_argsize;
 	if (argsize) {
 #ifdef COMPAT_LINUX
-		/* XXX extra if() for every emul type.. */
-		if (0
-#ifdef EXEC_AOUT
-		    || (p->p_emul == &emul_linux_aout)
-#endif
-#ifdef EXEC_ELF32
-		    || (p->p_emul == &emul_linux_elf32)
-#endif
-#ifdef EXEC_ELF64
-		    || (p->p_emul == &emul_linux_elf64)
-#endif
-		    ) {
+		if (linux) {
 			/*
 			 * Linux passes the args in ebx, ecx, edx, esi, edi, in
 			 * increasing order.
@@ -776,7 +772,7 @@ syscall(frame)
 			}
 		}
 		else
-#endif /* !COMPAT_LINUX */
+#endif /* COMPAT_LINUX */
 		{
 			error = copyin(params, (caddr_t)args, argsize);
 			if (error)
@@ -785,11 +781,11 @@ syscall(frame)
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
-#endif
+#endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, argsize, args);
-#endif
+#endif /* KTRACE */
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
@@ -801,7 +797,10 @@ syscall(frame)
 		 */
 		p = curproc;
 		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
+#ifdef COMPAT_LINUX
+		if (!linux)
+#endif /* COMPAT_LINUX */
+			frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -826,12 +825,12 @@ syscall(frame)
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
-#endif
+#endif /* SYSCALL_DEBUG */
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
-#endif
+#endif /* KTRACE */
 }
 
 void
