@@ -20,6 +20,7 @@ $set 1 errors
 19 No menu hierchy found.
 20 Bad keybinding
 21 Bad keyword in config file
+22 Null filename in escript argument
 $set 2 labels
 1 F1=Help
 2 F2=Refresh
