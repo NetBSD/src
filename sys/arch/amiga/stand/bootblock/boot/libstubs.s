@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.6 2001/03/02 16:43:26 mhitch Exp $ */
+/* $NetBSD: libstubs.s,v 1.7 2001/03/11 20:15:02 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ ENTRY_NOPROFILE(OpenLibrary)
 	movl	%sp@(12),%d0
 	jsr	%a6@(-0x228)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 #ifdef notyet
 ENTRY_NOPROFILE(CloseLibrary)
@@ -66,6 +67,7 @@ ENTRY_NOPROFILE(CreateIORequest)
 	movl	%sp@(12),%d0
 	jsr	%a6@(-0x28e)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 
 ENTRY_NOPROFILE(CreateMsgPort)
@@ -73,6 +75,7 @@ ENTRY_NOPROFILE(CreateMsgPort)
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
 	jsr	%a6@(-0x29a)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 	
 #ifdef notyet
@@ -118,6 +121,7 @@ ENTRY_NOPROFILE(CheckIO)
 	movl	%sp@(8),%a1
 	jsr	%a6@(-0x1d4)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 #endif
 ENTRY_NOPROFILE(WaitIO)
@@ -150,6 +154,7 @@ ENTRY_NOPROFILE(WaitPort)
 	movl	%sp@(8),%a0
 	jsr	%a6@(-0x180)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 
 #ifndef DOINLINES
@@ -176,6 +181,7 @@ ENTRY_NOPROFILE(FindResident)
 	movl	%sp@(8),%a1
 	jsr	%a6@(-0x60)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 
 ENTRY_NOPROFILE(OpenResource)
@@ -184,6 +190,7 @@ ENTRY_NOPROFILE(OpenResource)
 	movl	%sp@(8),%a1
 	jsr	%a6@(-0x1f2)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 #ifdef notyet
 ENTRY_NOPROFILE(Forbid)
@@ -214,6 +221,7 @@ ENTRY_NOPROFILE(OpenScreenTagList)
 	movl	%sp@(12),%a1
 	jsr	%a6@(-0x264)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 
 ENTRY_NOPROFILE(OpenWindowTagList)
@@ -223,6 +231,7 @@ ENTRY_NOPROFILE(OpenWindowTagList)
 	movl	%sp@(12),%a1
 	jsr	%a6@(-0x25e)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 #ifdef nomore
 ENTRY_NOPROFILE(mytime)
@@ -240,10 +249,11 @@ ENTRY_NOPROFILE(mytime)
 	.comm _C_LABEL(ExpansionBase),4
 ENTRY_NOPROFILE(FindConfigDev)
 	movl	%a6,%sp@-
-	movl	_C_LABEL(ExpansionBase),%a6
+	movl	%pc@(_C_LABEL(ExpansionBase):w),%a6
 	movl	%sp@(8),%a0
 	movl	%sp@(12),%d0
 	movl	%sp@(16),%d1
 	jsr	%a6@(-0x48)
 	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
 	rts
