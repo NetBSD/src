@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.3 1995/09/18 21:19:28 pk Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.4 1995/09/23 03:31:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -42,10 +42,10 @@
 #define __SYS_LIBNETBOOT_IODESC_H
 
 struct iodesc {
-	struct	in_addr destip;		/* destination ip address */
-	struct	in_addr myip;		/* my ip address */
-	u_short	destport;		/* destination port */
-	u_short	myport;			/* destination port */
+	struct	in_addr destip;		/* dest. ip addr, net order */
+	struct	in_addr myip;		/* local ip addr, net order */
+	u_short	destport;		/* dest. port, net order */
+	u_short	myport;			/* local port, net order */
 	u_long	xid;			/* transaction identification */
 	u_char	myea[6];		/* my ethernet address */
 	struct netif *io_netif;
