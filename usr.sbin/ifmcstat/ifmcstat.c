@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.6 2000/02/02 05:04:17 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.7 2000/02/02 05:18:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -327,7 +327,7 @@ if6_addrlist(ifap)
 	for (mkp = in6_mk.lh_first; mkp; mkp = mk.mk_entry.le_next) {
 		KREAD(mkp, &mk, struct multi6_kludge);
 		if (strcmp(nam, ifname(mk.mk_ifp)) == 0 && mk.mk_head.lh_first) {
-			printf("    (on kludge entry for %s)\n", nam);
+			printf("\t(on kludge entry for %s)\n", nam);
 			in6_multilist(mk.mk_head.lh_first);
 		}
 	}
