@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2000/10/09 13:43:29 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2000/10/20 21:58:40 tv Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -39,6 +39,7 @@ netbsd.INSTALL_LAPTOP.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd ${RAMDISK
 
 netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
+	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
 	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
 	${STRIP} netbsd.tmp
