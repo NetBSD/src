@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104.2.1 1997/11/13 19:00:15 mellon Exp $	*/
+/*	$NetBSD: trap.c,v 1.104.2.2 1997/12/09 19:59:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -417,6 +417,19 @@ trap(frame)
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
+
+			/*
+			 * If this is a pagefault for a PT page,
+			 * wire it. Normally we fault them in
+			 * ourselves, but this can still happen on
+			 * a 386 in copyout & friends.
+			 */
+			if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
+			    va < UPT_MAX_ADDRESS) {
+				va = trunc_page(va);
+				vm_map_pageable(map, va, va + NBPG, FALSE);
+			}
+
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
