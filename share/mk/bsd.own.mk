@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.280 2002/03/31 14:59:04 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.281 2002/03/31 15:01:39 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -105,6 +105,7 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 
 ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
 CAP_MKDB=	${TOOLDIR}/bin/nbcap_mkdb
+CKSUM=		${TOOLDIR}/bin/nbcksum
 COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
 CONFIG=		${TOOLDIR}/bin/nbconfig
 CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen

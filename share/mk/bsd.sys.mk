@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.71 2002/03/31 11:48:45 bjh21 Exp $
+#	$NetBSD: bsd.sys.mk,v 1.72 2002/03/31 15:01:40 bjh21 Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -61,6 +61,7 @@ HOST_LDFLAGS?=
 HOST_AR?=	ar
 HOST_RANLIB?=	ranlib
 
+CKSUM?=		cksum
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
 GROFF?=		groff
