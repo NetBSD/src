@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 2004/08/09 12:56:47 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 2004/12/11 18:37:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.52 2004/08/09 12:56:47 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.53 2004/12/11 18:37:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,7 +109,7 @@ init_curclass(void)
 	curclass.maxrateget =	0;
 	curclass.maxrateput =	0;
 	curclass.maxtimeout =	DEFAULT_MAXTIMEOUT;
-	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
+	REASSIGN(curclass.motd, xstrdup(_NAME_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
 	curclass.portmin =	0;
 	curclass.portmax =	0;
@@ -159,7 +159,7 @@ parse_conf(const char *findclass)
 		curclass.umask = 0707;
 	}
 
-	infile = conffilename(_PATH_FTPDCONF);
+	infile = conffilename(_NAME_FTPDCONF);
 	if ((f = fopen(infile, "r")) == NULL)
 		return;
 
