@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2001/04/24 04:30:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2001/05/13 13:44:35 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -739,85 +739,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-/* 
- * Function to identify and process different types of boot argument
- */
-
-int
-get_bootconf_option(opts, opt, type, result)
-	char *opts;
-	char *opt;
-	int type;
-	void *result;
-{
-	char *ptr;
-	char *optstart;
-	int not;
-
-	ptr = opts;
-
-	while (*ptr) {
-		/* Find start of option */
-		while (*ptr == ' ' || *ptr == '\t')
-			++ptr;
-
-		if (*ptr == 0)
-			break;
-
-		not = 0;
-
-		/* Is it a negate option */
-		if ((type & BOOTOPT_TYPE_MASK) == BOOTOPT_TYPE_BOOLEAN && *ptr == '!') {
-			not = 1;
-			++ptr;
-		}
-
-		/* Find the end of option */
-		optstart = ptr;
-		while (*ptr != 0 && *ptr != ' ' && *ptr != '\t' && *ptr != '=')
-			++ptr;
-
-		if ((*ptr == '=')
-		    || (*ptr != '=' && ((type & BOOTOPT_TYPE_MASK) == BOOTOPT_TYPE_BOOLEAN))) {
-			/* compare the option */
-			if (strncmp(optstart, opt, (ptr - optstart)) == 0) {
-				/* found */
-
-				if (*ptr == '=')
-					++ptr;
-
-				switch(type & BOOTOPT_TYPE_MASK) {
-				case BOOTOPT_TYPE_BOOLEAN :
-					if (*(ptr - 1) == '=')
-						*((int *)result) = ((u_int)strtoul(ptr, NULL, 10) != 0);
-					else
-						*((int *)result) = !not;
-					break;
-				case BOOTOPT_TYPE_STRING :
-					*((char **)result) = ptr;
-					break;			
-				case BOOTOPT_TYPE_INT :
-					*((int *)result) = (u_int)strtoul(ptr, NULL, 10);
-					break;
-				case BOOTOPT_TYPE_BININT :
-					*((int *)result) = (u_int)strtoul(ptr, NULL, 2);
-					break;
-				case BOOTOPT_TYPE_HEXINT :
-					*((int *)result) = (u_int)strtoul(ptr, NULL, 16);
-					break;
-				default:
-					return(0);
-				}
-				return(1);
-			}
-		}
-		/* skip to next option */
-		while (*ptr != ' ' && *ptr != '\t' && *ptr != 0)
-			++ptr;
-	}
-	return(0);
 }
 
 void
