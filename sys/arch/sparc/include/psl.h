@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.28 2001/06/06 13:45:18 uwe Exp $ */
+/*	$NetBSD: psl.h,v 1.29 2001/06/08 01:33:32 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
 #define PIL_NET		7
 #define PIL_CLOCK	10
 #define PIL_FD		11
-#define PIL_SER		12
+#define PIL_SER		13
 #define	PIL_AUD		13
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
