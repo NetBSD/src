@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.56 1999/11/20 00:57:09 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.57 1999/12/01 23:19:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -800,8 +800,12 @@ ohci_intr(p)
 	ohci_softc_t *sc = p;
 
 	/* If we get an interrupt while polling, then just ignore it. */
-	if (sc->sc_bus.use_polling)
+	if (sc->sc_bus.use_polling) {
+#ifdef DIAGNOSTIC
+		printf("ohci_intr: ignored interrupt while polling\n");
+#endif
 		return (0);
+	}
 
 	return (ohci_intr1(sc)); 
 }
