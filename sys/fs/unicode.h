@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.1 2004/11/21 16:28:40 jdolecek Exp $ */
+/* $NetBSD: unicode.h,v 1.2 2004/12/27 18:14:36 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -39,11 +39,11 @@
  */
 
 /*
- * Read one wide character off the string, shift the string pointer
+ * Read one UTF8-encoded character off the string, shift the string pointer
  * and return the character.
  */
 static u_int16_t
-wget_utf8(const char **str)
+wget_utf8(const char **str, size_t *sz)
 {
 	int c;
 	u_int16_t rune = 0;
@@ -53,9 +53,11 @@ wget_utf8(const char **str)
 		0, 0, 0, 0, 2, 2, 3, 0,
 	};
 
+	/* must be called with at least one byte remaining */
+	KASSERT(*sz > 0);
 
 	c = _utf_count[(s[0] & 0xf0) >> 4];
-	if (c == 0) {
+	if (c == 0 || c > *sz) {
     decoding_error:
 		/*
 		 * The first character is in range 128-255 and doesn't
@@ -72,15 +74,11 @@ wget_utf8(const char **str)
 		rune = s[0] & 0xff;
 		break;
 	case 2:
-		if (!s[0] || !s[1])
-			goto decoding_error;
 		if ((s[1] & 0xc0) != 0x80)
 			goto decoding_error;
 		rune = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
 		break;
 	case 3:
-		if (!s[0] || !s[1] || !s[2])
-			goto decoding_error;
 		if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80)
 			goto decoding_error;
 		rune = ((s[0] & 0x1F) << 12) | ((s[1] & 0x3F) << 6)
@@ -88,7 +86,8 @@ wget_utf8(const char **str)
 		break;
 	}
 
-	*str = *str + c;
+	*str += c;
+	*sz -= c;
 	return rune;
 }
 
