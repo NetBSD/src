@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.10 1996/05/17 15:12:34 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.11 1996/05/18 23:56:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -55,7 +55,7 @@
  * Inline version of fhpibwait to be used in places where
  * we don't worry about getting hung.
  */
-#define	FHPIBWAIT(hd, m)	while (((hd)->hpib_intr & (m)) == 0) DELAY(5)
+#define	FHPIBWAIT(hd, m)	while (((hd)->hpib_intr & (m)) == 0) DELAY(1)
 
 #ifdef DEBUG
 int	fhpibdebugunit = -1;
@@ -211,7 +211,7 @@ fhpibsend(unit, slave, sec, ptr, origcnt)
 			while ((hd->hpib_intr & IM_ROOM) == 0) {
 				if (--timo <= 0)
 					goto senderr;
-				DELAY(5);
+				DELAY(1);
 			}
 		}
 		hd->hpib_stat = ST_EOI;
@@ -278,7 +278,7 @@ fhpibrecv(unit, slave, sec, ptr, origcnt)
 			while ((hd->hpib_intr & IM_BYTE) == 0) {
 				if (--timo == 0)
 					goto recvbyteserror;
-				DELAY(5);
+				DELAY(1);
 			}
 			*addr++ = hd->hpib_data;
 		}
@@ -578,7 +578,7 @@ fhpibwait(hd, x)
 	register int timo = hpibtimeout;
 
 	while ((hd->hpib_intr & x) == 0 && --timo)
-		DELAY(5);
+		DELAY(1);
 	if (timo == 0) {
 #ifdef DEBUG
 		if (fhpibdebug & FDB_FAIL)
