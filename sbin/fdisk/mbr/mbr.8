@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbr.8,v 1.9 2003/05/01 08:40:17 dsl Exp $
+.\"	$NetBSD: mbr.8,v 1.10 2003/05/01 10:43:14 wiz Exp $
 .Dd April 30, 2003
 .Dt MBR 8
 .Os
@@ -50,7 +50,7 @@ The configurable items of the bootselector are:
 .It timeout
 The number of seconds that the bootcode will wait for the user to
 press a key, selecting a menu item.
-Must be in the range 0-3600, or -1 when it will wait forever.
+Must be in the range 0-3600, or \-1 when it will wait forever.
 .It default
 The default partition or disk to boot from, should the timeout
 expire.
@@ -59,7 +59,7 @@ expire.
 The bootselector will output a menu of the
 .Em bootmenu
 names for each partition (as configured by
-.Sx fdisk 8 ) .
+.Xr fdisk 8 ) .
 The user can then select the partition
 or drive to boot from via the keyboard.
 .Pp
@@ -83,7 +83,7 @@ key will cause the bootcode to find the active partition, and boot from it.
 If no key is pressed, the (configurable) default selection is picked.
 .Sh DIAGNOSTICS
 The following error are detected:
-.Bl -column Code "No active partition" 
+.Bl -column Code "No active partition"
 .It Em Code Ta Em "Text message" Ta Em Explanation
 .It 1 Ta "No active partition" Ta
 The MBR has a partition table without an active partition.
@@ -91,7 +91,7 @@ The MBR has a partition table without an active partition.
 There was an error reading the bootsector for the partition or
 drive selected.
 .It 3 Ta "No operating system" Ta
-The bootsector was loaded successfully, but it was not valid (ie
+The bootsector was loaded successfully, but it was not valid (i.e.,
 the magic number check failed, or it contained no code).
 .It L Ta "Invalid CHS read" Ta
 The boot partition cannot be read using a CHS read and the system BIOS
@@ -103,11 +103,11 @@ Unknown key.
 The standard boot code will output the text message and stop.
 It may be necessary to reset to the system to continue.
 .Pp
-The bootselect code will output 'Error <code>' and await further input.
+The bootselect code will output 'Error \*[Lt]code\*[Gt]' and await further input.
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr fdisk 8 ,
 .Xr disklabel 8 ,
+.Xr fdisk 8 ,
 .Xr installboot 8 ,
 .Xr mbrlabel 8
 .Sh BUGS
