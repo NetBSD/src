@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.16 1999/01/03 10:56:33 augustss Exp $
+$NetBSD: usbdevs,v 1.17 1999/01/03 23:55:01 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ vendor CHERRY		0x046a	Cherry
 vendor BTC		0x046e	BTC
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix
+vendor ACER		0x04a5	Acer Peripherals
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor 3COM		0x04c1	3Com
 vendor SHUTTLE		0x04e6	Shuttle Technology
@@ -112,6 +113,9 @@ product PHILIPS HUB		0x0201	hub
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
+
+/* Acer products */
+product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
 /* Cypress Semiconduuctor products */
 product CYPRESS MOUSE		0x0001	mouse
