@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.75 2000/01/17 01:01:07 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.76 2000/01/18 20:11:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -195,6 +195,9 @@ static usbd_status	uhci_allocm __P((struct usbd_bus *, usb_dma_t *,
 			    u_int32_t));
 static void		uhci_freem __P((struct usbd_bus *, usb_dma_t *));
 
+static usbd_xfer_handle	uhci_allocx __P((struct usbd_bus *));
+static void		uhci_freex __P((struct usbd_bus *, usbd_xfer_handle));
+
 static usbd_status	uhci_device_ctrl_transfer __P((usbd_xfer_handle));
 static usbd_status	uhci_device_ctrl_start __P((usbd_xfer_handle));
 static void		uhci_device_ctrl_abort __P((usbd_xfer_handle));
@@ -273,6 +276,8 @@ struct usbd_bus_methods uhci_bus_methods = {
 	uhci_poll,
 	uhci_allocm,
 	uhci_freem,
+	uhci_allocx,
+	uhci_freex,
 };
 
 struct usbd_pipe_methods uhci_root_ctrl_methods = {	
@@ -417,6 +422,8 @@ uhci_init(sc)
 
 	LIST_INIT(&sc->sc_intrhead);
 
+	SIMPLEQ_INIT(&sc->sc_free_xfers);
+
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
@@ -462,6 +469,7 @@ uhci_detach(sc, flags)
 	struct uhci_softc *sc;
 	int flags;
 {
+	usbd_xfer_handle xfer;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -473,7 +481,16 @@ uhci_detach(sc, flags)
 	powerhook_disestablish(sc->sc_powerhook);
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 
-	/* free data structures XXX */
+	/* Free all xfers associated with this HC. */
+	for (;;) {
+		xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+		if (xfer == NULL)
+			break;
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+		free(xfer, M_USB);
+	}			
+
+	/* XXX free other data structures XXX */
 
 	return (rv);
 }
@@ -495,6 +512,31 @@ uhci_freem(bus, dma)
 	usb_dma_t *dma;
 {
 	usb_freemem(&((struct uhci_softc *)bus)->sc_bus, dma);
+}
+
+usbd_xfer_handle
+uhci_allocx(bus)
+	struct usbd_bus *bus;
+{
+	struct uhci_softc *sc = (struct uhci_softc *)bus;
+	usbd_xfer_handle xfer;
+
+	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	if (xfer != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+	else
+		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+	return (xfer);
+}
+
+void
+uhci_freex(bus, xfer)
+	struct usbd_bus *bus;
+	usbd_xfer_handle xfer;
+{
+	struct uhci_softc *sc = (struct uhci_softc *)bus;
+
+	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.43 2000/01/16 09:43:43 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.44 2000/01/18 20:11:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -55,6 +55,9 @@ struct usbd_bus_methods {
 	usbd_status	      (*allocm)__P((struct usbd_bus *, usb_dma_t *,
 					    u_int32_t bufsize));
 	void		      (*freem)__P((struct usbd_bus *, usb_dma_t *));
+	struct usbd_xfer *    (*allocx)__P((struct usbd_bus *));
+	void		      (*freex)__P((struct usbd_bus *,
+					   struct usbd_xfer *));
 };
 
 struct usbd_pipe_methods {
