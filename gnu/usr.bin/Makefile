@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2003/07/25 16:57:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.115 2003/08/27 16:03:17 mrg Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SUBDIR+=	gettext
 
 SUBDIR+=	sim .WAIT gdb
 
-.if ${USE_TOOLS_TOOLCHAIN} != "no"
+.if ${HAVE_GCC3} == "no"
 SUBDIR+=	gcc
 .else
 SUBDIR+=	gcc3
