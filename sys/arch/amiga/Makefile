@@ -1,22 +1,22 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.4 1994/01/26 21:00:13 mw Exp $
-
-COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
-	../netiso/*.[ch] ../netccitt/*.[ch] \
-	../kern/*.c ../ufs/*.[ch] ../nfs/*.[ch] ../vm/*.[ch] ../sys/*.h
+#	$Id: Makefile,v 1.5 1994/02/23 20:23:30 chopps Exp $
+S=../..
+COMM=	$S/net/*.[ch] $S/netimp/*.[ch] $S/netinet/*.[ch] $S/netns/*.[ch] \
+	$S/netiso/*.[ch] $S/netccitt/*.[ch] \
+	$S/kern/*.c $S/ufs/*.[ch] $S/nfs/*.[ch] $S/vm/*.[ch] $S/sys/*.h
 
 # Makefile for amiga tags file
 
 all:
 	@echo "make tags or links only"
 
-TAMIGA=	../amiga/tags
-SAMIGA=	../amiga/amiga/*.[ch] ../amiga/include/*.h \
-	../amiga/dev/*.[ch]
-AAMIGA=	../amiga/amiga/*.s
+TAMIGA=	$S/arch/amiga/tags
+SAMIGA=	$S/arch/amiga/amiga/*.[ch] $S/arch/amiga/include/*.h \
+	$S/arch/amiga/dev/*.[ch]
+AAMIGA=	$S/arch/amiga/amiga/*.s
 
 # Directories in which to place amiga tags links
-DAMIGA=	dev include
+DAMIGA=	amiga dev include
 
 tags:
 	-ctags -dtf ${TAMIGA} ${COMM} ${SAMIGA}
@@ -27,4 +27,6 @@ tags:
 
 links:
 	-for i in ${DAMIGA}; do \
-	    cd ../$$i && rm -f tags; ln -s ../tags tags; done
+	    rm -f $$i/tags; ln -s ../tags $$i/tags; done
+install:
+
