@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.26 2003/09/06 22:08:15 christos Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.26 2003/09/06 22:08:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.26 2003/09/06 22:08:15 christos E
 #define PST(x) ((const temp_real *) __st((x)))
 #define	math_abort(tfp, ksi, signo, code) 	\
     do {					\
-	    (void)memset(ksi, 0, sizeof(*ksi));	\
+	    KSI_INIT_TRAP(ksi);			\
 	    ksi->ksi_signo = signo;		\
 	    ksi->ksi_code = code;		\
 	    ksi->ksi_addr = (void *)info->tf_eip;\

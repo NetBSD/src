@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.188 2003/09/16 13:57:47 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.189 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188 2003/09/16 13:57:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.189 2003/10/08 00:28:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -405,7 +405,7 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -430,7 +430,7 @@ copyfault:
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -470,7 +470,7 @@ copyfault:
 		ksi.ksi_trap = type & ~T_USER;
 		goto trapsignal;
 #else
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGKILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_eip;
@@ -483,7 +483,7 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_eip;
@@ -502,7 +502,7 @@ copyfault:
 		goto trapsignal;
 
 	case T_ARITHTRAP|T_USER:
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = frame->tf_err & ~TC_FLAGMASK;
 		ksi.ksi_addr = (void *)frame->tf_eip;
@@ -614,7 +614,7 @@ copyfault:
 			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)cr2;
 		if (error == EACCES) {
@@ -672,7 +672,7 @@ copyfault:
 		 */
 		if ((p->p_nras == 0) ||
 		    (ras_lookup(p, (caddr_t)frame->tf_eip) == (caddr_t)-1)) {
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
 			if (type == (T_BPTFLT|T_USER))

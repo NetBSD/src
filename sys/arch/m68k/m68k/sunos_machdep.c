@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.26 2003/09/25 22:04:17 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.26 2003/09/25 22:04:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ struct sunos_sigframe {
 void
 sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

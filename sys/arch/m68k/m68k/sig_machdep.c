@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.23 2003/09/25 22:04:17 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23 2003/09/25 22:04:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -201,7 +201,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.sf_signum = sig;
 	kf.sf_sip = &fp->sf_si;
 	kf.sf_ucp = &fp->sf_uc;
-	kf.sf_si._info = *ksi;
+	kf.sf_si._info = ksi->ksi_info;
 	kf.sf_uc.uc_flags = _UC_SIGMASK;
 	kf.sf_uc.uc_sigmask = *mask;
 	kf.sf_uc.uc_link = NULL;

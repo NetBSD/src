@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.4 2003/09/16 12:04:58 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.5 2003/10/08 00:28:42 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ typedef union sigval {
 	void	*sival_ptr;
 } sigval_t;
 
-struct ksiginfo {
+struct _ksiginfo {
 	int	_signo;
 	int	_code;
 	int	_errno;
@@ -80,12 +80,43 @@ struct ksiginfo {
 			int	_fd;
 		} _poll;
 	} _reason;
-	CIRCLEQ_ENTRY(ksiginfo)	_list;
 };
+
+#ifdef _KERNEL
+typedef struct ksiginfo {
+	u_long		ksi_flags;	/* 4 or 8 bytes, depending on LP64 */
+	CIRCLEQ_ENTRY(ksiginfo) ksi_list;
+	struct _ksiginfo ksi_info;
+} ksiginfo_t;
+
+#define	KSI_TRAP	0x01	/* signal caused by trap */
+
+/* Macros to initialize a ksiginfo_t. */
+#define	KSI_INIT(ksi)							\
+do {									\
+	memset((ksi), 0, sizeof(*(ksi)));				\
+} while (/*CONSTCOND*/0)
+
+#define	KSI_INIT_TRAP(ksi)						\
+do {									\
+	KSI_INIT((ksi));						\
+	(ksi)->ksi_flags |= KSI_TRAP;					\
+} while (/*CONSTCOND*/0)
+
+/*
+ * Old-style signal handler "code" arguments were only non-zero for
+ * signals caused by traps.
+ */
+#define	KSI_TRAPCODE(ksi)	(((ksi)->ksi_flags & KSI_TRAP) ? 	\
+							ksi->ksi_trap : 0)
+
+/* Predicate macros to test how a ksiginfo_t was generated. */
+#define	KSI_TRAP_P(ksi)		(((ksi)->ksi_flags & KSI_TRAP) != 0)
+#endif /* _KERNEL */
 
 typedef union siginfo {
 	char	si_pad[128];	/* Total size; for future expansion */
-	struct ksiginfo _info;
+	struct _ksiginfo _info;
 } siginfo_t;
 
 /** Field access macros */
@@ -107,27 +138,24 @@ typedef union siginfo {
 #define	si_fd		_info._reason._poll._fd
 
 #ifdef _KERNEL
-typedef struct ksiginfo ksiginfo_t;
 /** Field access macros */
-#define	ksi_signo	_signo
-#define	ksi_code	_code
-#define	ksi_errno	_errno
+#define	ksi_signo	ksi_info._signo
+#define	ksi_code	ksi_info._code
+#define	ksi_errno	ksi_info._errno
 
-#define	ksi_sigval	_reason._rt._sigval
-#define	ksi_pid		_reason._child._pid
-#define	ksi_uid		_reason._child._uid
-#define	ksi_status	_reason._child._status
-#define	ksi_utime	_reason._child._utime
-#define	ksi_stime	_reason._child._stime
+#define	ksi_sigval	ksi_info._reason._rt._sigval
+#define	ksi_pid		ksi_info._reason._child._pid
+#define	ksi_uid		ksi_info._reason._child._uid
+#define	ksi_status	ksi_info._reason._child._status
+#define	ksi_utime	ksi_info._reason._child._utime
+#define	ksi_stime	ksi_info._reason._child._stime
 
-#define	ksi_addr	_reason._fault._addr
-#define	ksi_trap	_reason._fault._trap
+#define	ksi_addr	ksi_info._reason._fault._addr
+#define	ksi_trap	ksi_info._reason._fault._trap
 
-#define	ksi_band	_reason._poll._band
-#define	ksi_fd		_reason._poll._fd
-
-#define	ksi_list	_list
-#endif
+#define	ksi_band	ksi_info._reason._poll._band
+#define	ksi_fd		ksi_info._reason._poll._fd
+#endif /* _KERNEL */
 
 /** si_code */
 /* SIGILL */
