@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.18 2000/11/14 17:15:51 wiz Exp $
+.\"	$NetBSD: sysinst,v 1.19 2001/04/07 14:56:48 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -194,11 +194,11 @@ in order to enter
 command to alter the variable values:
 .Pp
 .Dl db> Ic "write pcic_isa_intr_alloc_mask 0x0a00"
-.Dl pcic_isa_intr_alloc_mask		0xff5f = 0xa00
+.Dl "pcic_isa_intr_alloc_mask            0xff5f = 0xa00"
 .Dl db> Ic "write pcic_isa_alloc_iobase 0x330"
-.Dl pcic_isa_alloc_iobase		0x400 = 0x330
+.Dl "pcic_isa_alloc_iobase               0x400 = 0x330"
 .Dl db> Ic "write pcic_isa_alloc_iosize 0x0bf"
-.Dl pcic_isa_alloc_iosize		0xbff = 0xbf
+.Dl "pcic_isa_alloc_iosize               0xbff = 0xbf"
 .Dl db> Ic "continue"
 .Pp
 Note that, since some floppy images may not have symbol information in
