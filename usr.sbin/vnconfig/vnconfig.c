@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.12 1997/09/29 05:24:25 enami Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.13 1997/09/29 05:44:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ config(dev, file, geom, action)
 
 	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0);
 	if (fd < 0) {
-		warn(rdev);
+		warn("%s", dev);
 		return (1);
 	}
 
