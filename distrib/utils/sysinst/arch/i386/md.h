@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.28 2001/06/16 14:33:08 jdolecek Exp $	*/
+/*	$NetBSD: md.h,v 1.29 2001/09/13 18:09:19 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,6 +94,7 @@ EXTERN distinfo special_kernel_list[]
 = {
     {"kern-laptop",	1, "ah", "Laptop Kernel : "},
     {"kern-tiny",	1, "ac", "Small Kernel  : "},
+    {"kern-ps2tiny",	1, "af", "IBM PS/2 Kern : "},
 }
 #endif
 ;
@@ -102,7 +103,7 @@ EXTERN distinfo special_kernel_list[]
  * Disk names accepted as valid targets for a from-scratch installation.
  *
  * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
- * disks.
+ * disks, "ed" IBM ESDI disks
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
