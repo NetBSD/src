@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.26 1996/10/13 04:11:08 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.27 1996/11/17 13:38:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -611,6 +611,7 @@ main_exit:
 	if (scsi_ipending()) {
 		if ((itype = check_intr(sc)) != INTR_SPURIOUS) {
 			scsi_idisable();
+			scsi_clr_ipend();
 			splx(sps);
 
 			if (itype == INTR_RESEL)
@@ -624,7 +625,6 @@ main_exit:
 				panic("Got DMA interrupt without DMA");
 			}
 #endif
-			scsi_clr_ipend();
 			goto connected;
 		}
 	}
