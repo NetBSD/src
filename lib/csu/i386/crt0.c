@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.17 1995/05/16 16:25:19 mycroft Exp $
+ *	$Id: crt0.c,v 1.18 1995/05/17 15:55:26 mycroft Exp $
  */
 
 
@@ -123,7 +123,7 @@ start()
 	 *	ALL REGISTER VARIABLES!!!
 	 */
 	register struct kframe *kfp;
-	register char **argv;
+	register char **argv, *ap;
 	extern void _mcleanup();
 #ifdef DYNAMIC
 	volatile caddr_t x;
@@ -139,9 +139,9 @@ start()
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if (argv[0])
-		if ((__progname = _strrchr(argv[0], '/')) == NULL)
-			__progname = argv[0];
+	if (ap = argv[0])
+		if ((__progname = _strrchr(ap, '/')) == NULL)
+			__progname = ap;
 		else
 			++__progname;
 
