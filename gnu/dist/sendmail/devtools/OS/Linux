@@ -1,4 +1,4 @@
-#	Id: Linux,v 8.18.4.2 2000/07/17 22:04:11 gshapiro Exp
+#	Id: Linux,v 8.18.4.3 2000/12/14 01:04:46 rand Exp
 define(`confDEPEND_TYPE', `CC-M')
 define(`confMANROOT', `/usr/man/man')
 define(`confLIBS', `-ldl')
@@ -14,7 +14,7 @@ define(`confSONAME',`-soname')
 ifelse(confBLDVARIANT, `DEBUG',
 dnl Debug build
 `
-	define(`confOPTIMIZE',`-g')
+	define(`confOPTIMIZE',`-g -Wall')
 ',
 dnl Optimized build
 confBLDVARIANT, `OPTIMIZED',
@@ -24,7 +24,7 @@ confBLDVARIANT, `OPTIMIZED',
 dnl Purify build
 confBLDVARIANT, `PURIFY',
 `
-	define(`confOPTIMIZE',`-g')
+	define(`confOPTIMIZE',`-g -Wall')
 ',
 dnl default
 `
