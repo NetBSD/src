@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2003/08/03 09:23:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.59 2003/10/01 01:37:13 christos Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -13,7 +13,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	float_ieee754.h gmon.h hash.h \
 	inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
-	kcore.h kernel.h kgdb.h ksem.h ksyms.h ktrace.h \
+	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
 	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h \
@@ -38,6 +38,9 @@ INCSYMLINKS=\
 	sys/poll.h /usr/include/poll.h \
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
-	sys/termios.h /usr/include/termios.h
+	sys/termios.h /usr/include/termios.h \
+	sys/sha1.h /usr/include/sha1.h \
+	sys/md4.h /usr/include/md4.h \
+	sys/md5.h /usr/include/md5.h
 
 .include <bsd.kinc.mk>
