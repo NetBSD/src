@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.114 1997/10/14 23:04:19 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.115 1997/10/14 23:06:30 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -13,8 +13,7 @@
  * the author assume any responsibility for damages incurred with its use.
  *
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the SMC
- * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
- * similar clones.
+ * Elite Ultra (8216), and the 3Com 3c503.
  */
 
 #include "bpfilter.h"
