@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.157 1999/09/08 21:39:55 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.158 1999/09/08 22:25:56 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.153 1999/09/08 22:25:19 thorpej Exp 
  */
 
 /*
@@ -482,6 +482,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Addtron Technology",
 	    "8139 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
+	    0,
+	    "ADMtek",
+	    "ADMtek AL981 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -1160,6 +1166,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compex",
 	    "RL100-ATX 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100TX,
+	    0,
+	    "Compex",
+	    "RL100-TX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -1940,6 +1952,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lite-On Communications",
 	    "82C168/82C169 (PNIC) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C115,
+	    0,
+	    "Lite-On Communications",
+	    "82C115 (PNIC II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -6211,6 +6229,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADMTEK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ADMtek",
 	    NULL,
 	},
 	{
