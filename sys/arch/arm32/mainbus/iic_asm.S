@@ -1,4 +1,4 @@
-/* $NetBSD: iic_asm.S,v 1.1 1996/04/19 19:49:04 mark Exp $ */
+/* $NetBSD: iic_asm.S,v 1.2 1996/10/15 20:40:31 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -95,7 +95,11 @@ _iic_set_state:
 /* Preserve non-IIC bits */
 
 	bic	r3, r3, #0x00000003
-	orr	r3, r3, #0x000000c0
+#ifdef RC7500
+	and	r3, r3, #0x000000ff
+#else
+/*	orr	r3, r3, #0x000000c0*/
+#endif
 
 /* Set the IIC clock and data bits */
 
@@ -160,7 +164,11 @@ _iic_set_state_and_ack:
 /* Preserve non-IIC bits */
 
 	bic	r3, r3, #0x00000003
-	orr	r3, r3, #0x000000c0
+#ifdef RC7500
+	and	r3, r3, #0x000000ff
+#else
+/*	orr	r3, r3, #0x000000c0*/
+#endif
 
 /* Set the IIC clock and data bits */
 
