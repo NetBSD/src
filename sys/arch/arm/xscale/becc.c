@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.7 2003/07/15 00:24:52 lukem Exp $	*/
+/*	$NetBSD: becc.c,v 1.8 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.7 2003/07/15 00:24:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.8 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,6 @@ const char *becc_revisions[] = {
  * BECC without having to have a handle on the softc itself.
  */
 struct becc_softc *becc_softc;
-
-static int becc_pcibus_print(void *, const char *);
 
 static int becc_search(struct device *, struct cfdata *, void *);
 static int becc_print(void *, const char *);
@@ -200,7 +198,6 @@ becc_attach(struct becc_softc *sc)
 	/*
 	 * Attach the PCI bus.
 	 */
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
@@ -212,26 +209,7 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found(&sc->sc_dev, &pba, becc_pcibus_print);
-}
-
-/*
- * becc_pcibus_print:
- *
- *	Autoconfiguration cfprint routine when attaching
- *	to the "pcibus" attribute.
- */
-static int
-becc_pcibus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 /*

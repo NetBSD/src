@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.6 2003/07/15 02:29:32 lukem Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.7 2004/08/30 15:05:17 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.6 2003/07/15 02:29:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.7 2004/08/30 15:05:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +125,11 @@ plumisabattach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, ioh, 0x400);
 	}
 
-	iba.iba_busname = "isa";
 	iba.iba_ic	= sc;
 	/* Plum ISA-bus don't have memory space! */
 	/* Plum ISA port space */
 	iba.iba_iot     = sc->sc_iot;
-	config_found(self, &iba, plumisabprint);
+	config_found_ia(self, "isabus", &iba, plumisabprint);
 }
 
 int

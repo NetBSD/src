@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.117 2004/08/18 11:54:47 drochner Exp $	*/
+/*	$NetBSD: isa.c,v 1.118 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.117 2004/08/18 11:54:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.118 2004/08/30 15:05:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,6 @@ int	isasearch(struct device *, struct cfdata *, const locdesc_t *, void *);
 int
 isamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct isabus_attach_args *iba = aux;
-
-	if (strcmp(iba->iba_busname, cf->cf_name))
-		return (0);
-
 	/* XXX check other indicators */
 
         return (1);

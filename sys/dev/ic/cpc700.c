@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.7 2003/11/07 17:06:42 augustss Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.8 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.7 2003/11/07 17:06:42 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.8 2004/08/30 15:05:19 drochner Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.7 2003/11/07 17:06:42 augustss Exp $");
 #include <dev/ic/cpc700uic.h>
 
 union attach_args {
-	const char *busname;		/* first elem of all */
 	struct pcibus_attach_args pba;
 	struct cpcbus_attach_args cba;
 };
@@ -112,18 +111,8 @@ cpc_print(void *aux, const char *pnp)
 }
 
 static int
-cpcpci_print(void *aux, const char *pnp)
-{
-	union attach_args *aa = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", aa->busname, pnp);
-
-	return (UNCONF);
-}
-
-static int
-cpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
+cpc_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
@@ -182,12 +171,12 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 		aa.cba.cpca_name = devs[i].name;
 		aa.cba.cpca_addr = devs[i].addr;
 		aa.cba.cpca_irq = devs[i].irq;
-		config_found_sm(self, &aa.cba, cpc_print, cpc_submatch);
+		config_found_sm_loc(self, "cpcbus", NULL, &aa.cba,
+				    cpc_print, cpc_submatch);
 	}
 
 	tag = pci_make_tag(pc, 0, 0, 0);
 
-	aa.pba.pba_busname = "pci";
 	aa.pba.pba_iot = pciio;
 	aa.pba.pba_memt = mem;
 	aa.pba.pba_dmat = dma;
@@ -219,7 +208,7 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	extent_destroy(memext);
 #endif
 
-	config_found(self, &aa.pba, cpcpci_print);
+	config_found_ia(self, "pcibus", &aa.pba, pcibusprint);
 
 	/* Restore error triggers, and clear errors */
 	pci_conf_write(pc, tag, CPC_PCI_BRDGERR, erren | CPC_PCI_CLEARERR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.83 2004/07/03 22:29:13 mycroft Exp $ */
+/*	$NetBSD: apm.c,v 1.84 2004/08/30 15:05:17 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.83 2004/07/03 22:29:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.84 2004/08/30 15:05:17 drochner Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1090,12 +1090,6 @@ apmmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct apm_attach_args *aaa = aux;
-
-	/* These are not the droids you're looking for. */
-	if (strcmp(aaa->aaa_busname, "apm") != 0)
-		return (0);
-
 	/* There can be only one! */
 	if (apm_inited)
 		return 0;
