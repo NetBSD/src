@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.77 2002/10/09 02:59:55 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.78 2002/10/20 02:27:00 isaki Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.77 2002/10/09 02:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.78 2002/10/20 02:27:00 isaki Exp $");
 
 #include "opt_ddb.h"
 
@@ -309,7 +309,7 @@ config_cfdriver_detach(struct cfdriver *cd)
 /*
  * Look up a cfdriver by name.
  */
-static struct cfdriver *
+struct cfdriver *
 config_cfdriver_lookup(const char *name)
 {
 	struct cfdriver *cd;
