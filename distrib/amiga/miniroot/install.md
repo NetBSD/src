@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1 1997/09/09 23:07:05 is Exp $
+#	$NetBSD: install.md,v 1.2 1997/09/23 13:48:33 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,14 +84,6 @@ md_get_cddevs() {
 	# return available CDROM devices
 	__mount_kernfs
 	sed -n -e '/^cd[0-9] /s/ .*//p' \
-		< /kern/msgbuf | sort -u
-}
-
-md_get_ifdevs() {
-	# return available network devices
-	__mount_kernfs
-	sed -n -e '/^ie[0-9] /s/ .*//p' \
-	       -e '/^le[0-9] /s/ .*//p' \
 		< /kern/msgbuf | sort -u
 }
 
