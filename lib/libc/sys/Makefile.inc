@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.19 1994/04/09 22:57:32 cgd Exp $
+#	$Id: Makefile.inc,v 1.20 1994/04/15 22:48:01 jtc Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -91,7 +91,7 @@ MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
 	lseek.0 mkdir.0 mkfifo.0 mknod.0 madvise.0 mincore.0 mmap.0 mount.0 \
 	mprotect.0 msync.0 munmap.0 nfssvc.0 open.0 pipe.0 \
 	quotactl.0 read.0 readlink.0 reboot.0 recv.0 rename.0 \
-	rmdir.0 select.0 send.0 setgroups.0 setpgid.0 setregid.0 setreuid.0 \
+	rmdir.0 select.0 send.0 setgroups.0 setpgid.0 setsid.0 \
 	setuid.0 shutdown.0 sigaction.0 sigprocmask.0 sigreturn.0 sigstack.0 \
 	sigsuspend.0 socket.0 socketpair.0 stat.0 statfs.0 swapon.0 \
 	symlink.0 sync.0 sysarch.0 syscall.0 truncate.0 umask.0 uname.0 \
