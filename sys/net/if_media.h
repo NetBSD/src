@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.15 1999/11/03 23:06:35 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.16 2000/01/23 23:49:48 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,6 +194,17 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
 #define IFM_FDDI_DA	0x00000100	/* Dual attach / single attach */
 
 /*
+ * IEEE 802.11 Wireless
+ */
+#define	IFM_IEEE80211	0x00000080
+#define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 2Mbps */
+#define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
+#define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
+#define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
+#define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
+#define	IFM_IEEE80211_ADHOC	0x00000100	/* Operate in Adhoc mode */
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -270,6 +281,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"TokenRing" },			\
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
+	{ IFM_IEEE80211,		"IEEE802.11" },			\
 	{ 0, NULL },							\
 }
 
@@ -335,6 +347,15 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10_T|IFM_FDX,	"10baseT-FDX" },		\
 	{ IFM_ETHER|IFM_100_TX|IFM_FDX,	"100baseTX-FDX" },		\
 									\
+	/*								\
+	 * IEEE 802.11							\
+	 */								\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11"	},		\
+									\
 	{ 0, NULL },							\
 }
 
@@ -359,6 +380,8 @@ struct ifmedia_description {
 									\
 	{ IFM_FDDI|IFM_FDDI_DA,		"dual-attach" },		\
 	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
+									\
+	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
 									\
 	{ 0, NULL },							\
 }
