@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.1 1998/08/07 00:00:58 augustss Exp $	*/
+/*	$NetBSD: midivar.h,v 1.2 1998/08/12 18:11:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  */
 
 #define MIDI_BUFSIZE 4096
+
+#include "sequencer.h"
 
 struct midi_buffer {
 	u_char	*inp;
@@ -83,5 +85,6 @@ struct midi_softc {
 
 #define MIDIUNIT(d) ((d) & 0xff)
 
-int midi_unit_count __P((void));
-void midi_getinfo __P((dev_t, struct midi_info *));
+int	midi_unit_count __P((void));
+void	midi_getinfo __P((dev_t, struct midi_info *));
+void	midi_attach __P((struct midi_softc *, struct device *));

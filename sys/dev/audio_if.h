@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.28 1998/08/09 20:28:07 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.29 1998/08/12 18:11:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -136,7 +136,7 @@ struct midi_hw_if {
 	void	(*close)__P((void *));		/* close hardware */
 	int	(*output)__P((void *, int));	/* output a byte */
 	void	(*getinfo)__P((void *, struct midi_info *));
-	int	(*ioctl)__P((u_long, caddr_t, int, struct proc *));
+	int	(*ioctl)__P((void *, u_long, caddr_t, int, struct proc *));
 };
 
 struct audio_attach_args {
