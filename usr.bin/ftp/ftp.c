@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.99 2000/06/11 02:12:05 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.100 2000/06/11 15:15:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.99 2000/06/11 02:12:05 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.100 2000/06/11 15:15:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1498,6 +1498,7 @@ reinit:
 #define	pack4(var, off) \
 	(((var[(off) + 0] & 0xff) << 24) | ((var[(off) + 1] & 0xff) << 16) | \
 	 ((var[(off) + 2] & 0xff) << 8) | ((var[(off) + 3] & 0xff) << 0))
+#define	UC(b)	(((int)b)&0xff)
 
 		/*
 		 * What we've got at this point is a string of comma separated
@@ -1596,12 +1597,11 @@ reinit:
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
 			    {
-				in_addr_t *p32;
-				p32 = (in_addr_t *)&data_addr.su_sin6.sin6_addr;
-				p32[0] = htonl(pack4(addr, 0));
-				p32[1] = htonl(pack4(addr, 4));
-				p32[2] = htonl(pack4(addr, 8));
-				p32[3] = htonl(pack4(addr, 12));
+				int i;
+				for (i = 0; i < sizeof(struct in6_addr); i++) {
+					data_addr.su_sin6.sin6_addr.s6_addr[i] =
+					    UC(addr[i]);
+				}
 			    }
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
@@ -1698,8 +1698,6 @@ noport:
 	}
 	if (xlisten(data, 1) < 0)
 		warn("listen");
-
-#define	UC(b)	(((int)b)&0xff)
 
 	if (sendport) {
 #ifdef INET6
