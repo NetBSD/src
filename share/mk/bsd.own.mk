@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.301 2002/07/11 15:00:57 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.302 2002/07/11 15:30:03 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -305,6 +305,7 @@ NOPROFILE=	# defined
 NOLINT=		# defined
 NOGCCERROR=	# defined - The SuperH Gnu C compiler is too pedantic in places
 MKGDB:=	no
+MKBFD:=	no
 MKGCC:=	no
 .endif
 
