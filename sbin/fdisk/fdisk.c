@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.30 1998/10/15 15:23:23 ws Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.31 1998/11/08 00:29:08 jonathan Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.30 1998/10/15 15:23:23 ws Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.31 1998/11/08 00:29:08 jonathan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -771,8 +771,8 @@ print_params()
 {
 
 	if (sh_flag) {
-		printf ("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\n",
-			cylinders, heads, sectors);
+		printf ("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\nDLSIZE=%d\n",
+			cylinders, heads, sectors, disksectors);
 		printf ("BCYL=%d\nBHEAD=%d\nBSEC=%d\n",
 			dos_cylinders, dos_heads, dos_sectors);
 		return;
@@ -949,7 +949,7 @@ get_params()
 	dos_heads = heads = disklabel.d_ntracks;
 	dos_sectors = sectors = disklabel.d_nsectors;
 	dos_cylindersectors = cylindersectors = heads * sectors;
-	disksectors = cylinders * heads * sectors;
+	disksectors = disklabel.d_secperunit;
 
 	return (0);
 }
