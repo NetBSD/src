@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.10 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.11 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -118,3 +118,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		See PR 17345 [dbj 20020928]
 	Change /bin/sh to use vfork(2) rather than fork(2) where appropriate.
 		See PR 5475 [christos,elric 20020928]
+	Remove umask setting from /etc/skel/.{cshrc,profile} so that
+		user files are not created group writable by default.
+		[grant 20020929]
