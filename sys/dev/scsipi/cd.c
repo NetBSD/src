@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.82 1996/02/14 21:46:52 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.83 1996/03/17 00:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -117,8 +117,12 @@ int	cd_read_toc __P((struct cd_softc *, int, int, struct cd_toc_entry *,
 			 int ));
 int	cd_get_parms __P((struct cd_softc *, int));
 
-struct cfdriver cdcd = {
-	NULL, "cd", cdmatch, cdattach, DV_DISK, sizeof(struct cd_softc)
+struct cfattach cd_ca = {
+	sizeof(struct cd_softc), cdmatch, cdattach
+};
+
+struct cfdriver cd_cd = {
+	NULL, "cd", DV_DISK
 };
 
 struct dkdriver cddkdriver = { cdstrategy };
@@ -242,9 +246,9 @@ cdopen(dev, flag, fmt, p)
 	int error;
 
 	unit = CDUNIT(dev);
-	if (unit >= cdcd.cd_ndevs)
+	if (unit >= cd_cd.cd_ndevs)
 		return ENXIO;
-	cd = cdcd.cd_devs[unit];
+	cd = cd_cd.cd_devs[unit];
 	if (!cd)
 		return ENXIO;
 
@@ -252,7 +256,7 @@ cdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    cdcd.cd_ndevs, part));
+	    cd_cd.cd_ndevs, part));
 
 	if ((error = cdlock(cd)) != 0)
 		return error;
@@ -357,7 +361,7 @@ cdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	int part = CDPART(dev);
 	int error;
 
@@ -395,7 +399,7 @@ void
 cdstrategy(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
 	int opri;
 
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
@@ -606,7 +610,7 @@ cdread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_READ,
 		       cd->sc_link->adapter->scsi_minphys, uio));
@@ -618,7 +622,7 @@ cdwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_WRITE,
 		       cd->sc_link->adapter->scsi_minphys, uio));
@@ -636,7 +640,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	int error;
 
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));

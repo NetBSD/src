@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.3 1996/02/19 04:36:15 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.4 1996/03/17 00:57:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,9 +142,12 @@ struct zsops zsops_ms;
 static int	ms_match(struct device *, void *, void *);
 static void	ms_attach(struct device *, struct device *, void *);
 
-struct cfdriver mscd = {
-	NULL, "ms", ms_match, ms_attach,
-	DV_DULL, sizeof(struct ms_softc), NULL,
+struct cfattach ms_ca = {
+	sizeof(struct ms_softc), ms_match, ms_attach
+};
+
+struct cfdriver ms_cd = {
+	NULL, "ms", DV_DULL
 };
 
 
@@ -223,9 +226,9 @@ msopen(dev, flags, mode, p)
 	int error, s, unit;
 
 	unit = minor(dev);
-	if (unit >= mscd.cd_ndevs)
+	if (unit >= ms_cd.cd_ndevs)
 		return (ENXIO);
-	ms = mscd.cd_devs[unit];
+	ms = ms_cd.cd_devs[unit];
 	if (ms == NULL)
 		return (ENXIO);
 
@@ -247,7 +250,7 @@ msclose(dev, flags, mode, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	ms->ms_ready = 0;		/* stop accepting events */
 	ev_fini(&ms->ms_events);
 
@@ -263,7 +266,7 @@ msread(dev, uio, flags)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_read(&ms->ms_events, uio, flags));
 }
 
@@ -288,7 +291,7 @@ msioctl(dev, cmd, data, flag, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 
@@ -325,7 +328,7 @@ msselect(dev, rw, p)
 {
 	struct ms_softc *ms;
 
-	ms = mscd.cd_devs[minor(dev)];
+	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_select(&ms->ms_events, rw, p));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.16 1996/03/05 00:15:09 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.17 1996/03/17 00:59:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -80,8 +80,12 @@ int	ch_move __P((struct ch_softc *, short *, int, int , int , int ));
 int	ch_position __P((struct ch_softc *, short *, int, int , int ));
 int	ch_mode_sense __P((struct ch_softc *, int));
 
-struct cfdriver chcd = {
-	NULL, "ch", chmatch, chattach, DV_DULL, sizeof(struct ch_softc)
+struct cfattach ch_ca = {
+	sizeof(struct ch_softc), chmatch, chattach
+};
+
+struct cfdriver ch_cd = {
+	NULL, "ch", DV_DULL
 };
 
 /*
@@ -166,16 +170,16 @@ chopen(dev, flags, mode, p)
 	struct scsi_link *sc_link;
 
 	unit = CHUNIT(dev);
-	if (unit >= chcd.cd_ndevs)
+	if (unit >= ch_cd.cd_ndevs)
 		return ENXIO;
-	ch = chcd.cd_devs[unit];
+	ch = ch_cd.cd_devs[unit];
 	if (!ch)
 		return ENXIO;
 
 	sc_link = ch->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("chopen: dev=0x%x (unit %d (of %d))\n", dev, unit, chcd.cd_ndevs));
+	    ("chopen: dev=0x%x (unit %d (of %d))\n", dev, unit, ch_cd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
@@ -221,7 +225,7 @@ chclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *ch = ch_cd.cd_devs[CHUNIT(dev)];
 
 	SC_DEBUG(ch->sc_link, SDEV_DB1, ("closing\n"));
 	ch->sc_link->flags &= ~SDEV_OPEN;
@@ -241,7 +245,7 @@ chioctl(dev, cmd, arg, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *ch = ch_cd.cd_devs[CHUNIT(dev)];
 	struct scsi_link *sc_link = ch->sc_link;
 	int flags;
 
