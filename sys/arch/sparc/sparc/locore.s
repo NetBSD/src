@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 1999/05/03 20:56:11 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.121 1999/05/04 17:29:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1203,9 +1203,9 @@ Lpanic_red:
 	st	%g0, [t1 + %lo(_redzone)]; \
 	set	_redstack + REDSTACK - 96, %sp; \
 	/* prevent panic() from lowering ipl */ \
-	sethi	%hi(_panicstr), t2; \
+	sethi	%hi(_C_LABEL(panicstr)), t2; \
 	set	Lpanic_red, t2; \
-	st	t2, [t1 + %lo(_panicstr)]; \
+	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; \
 	rd	%psr, t1;		/* t1 = splhigh() */ \
 	or	t1, PSR_PIL, t2; \
 	wr	t2, 0, %psr; \
@@ -1213,7 +1213,7 @@ Lpanic_red:
 	nop; nop; nop; \
 	save	%sp, -CCFSZ, %sp;	/* preserve current window */ \
 	sethi	%hi(Lpanic_red), %o0; \
-	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
+	call	_C_LABEL(panic); or %o0, %lo(Lpanic_red), %o0; \
 7:
 
 #else
