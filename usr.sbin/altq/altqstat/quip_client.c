@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.6 2002/03/05 04:11:52 itojun Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.7 2003/05/17 14:54:53 itojun Exp $	*/
 /*	$KAME: quip_client.c,v 1.7 2001/12/28 00:50:28 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -209,7 +209,8 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 				if (buf[0] == '\n') {
 					/* ignore blank lines */
 				}
-				else if (sscanf(buf, "%s %d",
+				/* sizeof(version) == 1024 */
+				else if (sscanf(buf, "%1023s %d",
 						version, &code) != 2) {
 					/* can't get result code */
 					fpurge(fp);
@@ -319,7 +320,7 @@ quip_selectinterface(char *ifname)
 
 	cp = buf;
 	while (1) {
-		if (sscanf(cp, "%x %s", &if_index, interface) != 2)
+		if (sscanf(cp, "%x %63s", &if_index, interface) != 2)
 			break;
 		if (ifname == NULL) {
 			/* if name isn't specified, return the 1st entry */
@@ -357,7 +358,7 @@ quip_selectqdisc(char *ifname, char *qdisc_name)
 	if (result_code != 200)
 		errx(1, "can't get qdisc info");
 
-	if (sscanf(buf, "%s", qdisc) != 1)
+	if (sscanf(buf, "%63s", qdisc) != 1)
 		errx(1, "can't get qdisc name");
 
 	if (qdisc_name != NULL && strcmp(qdisc, qdisc_name) != 0)
@@ -473,7 +474,7 @@ quip_printconfig(void)
 
 	cp = buf;
 	while (1) {
-		if (sscanf(cp, "%lx %s", &handle, name) != 2)
+		if (sscanf(cp, "%lx %255s", &handle, name) != 2)
 			break;
 
 		if ((p = strchr(name, ':')) == NULL)
