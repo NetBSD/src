@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.c,v 1.4 1999/09/20 04:39:08 lukem Exp $	*/
+/*	$NetBSD: ctypeio.c,v 1.4.8.1 2000/07/03 22:39:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define _CTYPE_PRIVATE
 #include <ctype.h>
 #include "ctypeio.h"
