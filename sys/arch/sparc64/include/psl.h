@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.20.12.1 2002/03/19 02:11:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -356,6 +356,22 @@ static __inline int name() \
 	return (oldpil); \
 }
 #endif
+
+static __inline int __attribute__((__unused__))
+splraiseipl(int newpil)
+{
+	int oldpil;
+
+	/*
+	 * NetBSD/sparc64's IPL_* constants equate directly to the
+	 * corresponding PIL_* names; no need to map them here.
+	 */
+	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil));
+	if (newpil <= oldpil)
+		return (oldpil);
+	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil));
+	return (oldpil);
+}
 
 SPL(spl0, 0)
 
