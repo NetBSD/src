@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,16 +43,12 @@
 	WEAK_ALIAS(clone, __clone)
 #endif
 
-	.import errno, data
-
+	.import	__cerror, code
 /*
  * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
 /* XXX - this is unimplemented at this time. */
 ENTRY(__clone, 0)
 	ldi	EINVAL, %t1
-	__SYSCALL_ERRNO
-        ldi     -1, %ret0
-        bv      %r0(%rp)
-        ldi     -1, %ret1
+	b,n	__cerror
 EXIT(__clone)

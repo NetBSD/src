@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.5 2004/07/01 06:50:04 skrll Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -39,64 +39,38 @@
 #define _LOCORE
 #include <machine/frame.h>
 
-#define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x),0)
-#define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
+#define	SYSENTRY(x,n)	ENTRY(x,n)
+#define	SYSEXIT(x)	EXIT(x)
 
-#define	__SYSCALL_NOERROR(p,x)			!\
+#define	SYSCALL(x)				!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
 	ble	4(%sr7, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %t1		!\
-	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
+	.import __cerror, code			!\
+	comb,<>	%r0, %t1, __cerror		!\
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	
 
-#ifdef PIC
-#define	__SYSCALL_ERRNO				!\
-	addil	LT%errno, %r19			!\
-	ldw	RT%errno(%r1), %r1		!\
-	stw	%t1, 0(%r1)
-#else
-#define	__SYSCALL_ERRNO				!\
-	ldil	L%errno, %r1			!\
-	stw	%t1, R%errno(%r1)
-#endif
-
-#define	__SYSCALL(p,x)				!\
-	.import	errno, data			!\
-	__SYSCALL_NOERROR(p,x)			!\
-	comb,=,n %r0, %t1, __CONCAT(x,$noerr)	!\
-	__SYSCALL_ERRNO				!\
-	ldi	-1, %ret0			!\
-	bv	%r0(%rp)				!\
-	ldi	-1, %ret1			!\
-	.label	__CONCAT(x,$noerr)
-
-#define	__RSYSCALL(p,x)			!\
-__ENTRY(p,x)				!\
-	__SYSCALL(p,x)			!\
+#define	PSEUDO(x,y)				!\
+SYSENTRY(x,0)					!\
+	SYSCALL(y)				!\
 	bv	%r0(%rp)			!\
-	nop				!\
-__EXIT(p,x)
+	nop					!\
+SYSEXIT(x)
 
-#define	__RSYSCALL_NOERROR(p,x)		!\
-__ENTRY(p,x)				!\
-	__SYSCALL_NOERROR(p,x)		!\
-	bv	%r0(%rp)		!\
-	nop				!\
-__EXIT(p,x)
+#define	PSEUDO_NOERROR(x,y)			!\
+SYSENTRY(x,0)					!\
+	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
+	ldil	L%SYSCALLGATE, %r1		!\
+	ble	4(%sr7, %r1)			!\
+	ldi	__CONCAT(SYS_,y), %t1		!\
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	!\
+	bv	%r0(%rp)			!\
+	nop					!\
+SYSEXIT(x)
 
-#define	__PSEUDO(p,x,y)			!\
-__ENTRY(p,x)				!\
-	__SYSCALL(p,y)			!\
-	bv	%r0(%rp)		!\
-	nop				!\
-__EXIT(p,x)
-
-#define	__PSEUDO_NOERROR(p,x,y)		!\
-__ENTRY(p,x)				!\
-	__SYSCALL_NOERROR(p,y)		!\
-	bv	%r0(%rp)		!\
-	nop				!\
-__EXIT(p,x)
+#define RSYSCALL(x)		PSEUDO(x,x)
+#define	RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)	
 
 #ifdef WEAK_ALIAS
 #define WSYSCALL(weak,strong)		!\
@@ -106,10 +80,3 @@ __EXIT(p,x)
 #define WSYSCALL(weak,strong)		!\
 	PSEUDO(weak,weak)
 #endif
-
-#define SYSCALL(x)		__SYSCALL(,x)
-#define RSYSCALL(x)		__RSYSCALL(,x)
-#define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(,x)
-#define PSEUDO(x,y)		__PSEUDO(,x,y)
-#define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
-/*#define SYSENTRY(x)		__ENTRY(,x)*/

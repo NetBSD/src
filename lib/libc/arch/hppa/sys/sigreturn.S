@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/errno.h>
 #include "SYS.h"
 
-	.import errno, data
+	.import __cerror, code
 
 WARN_REFERENCES(sigreturn, \
     "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
@@ -50,7 +50,5 @@ ENTRY(sigreturn, 0)
 	 * we shouldn't have to supply the compatability sigreturn.
 	 */
 	ldi	EINVAL, %t1
-	__SYSCALL_ERRNO
-	bv	%r0(%rp)
-	ldi	-1, %ret0
+	b,n	__cerror
 EXIT(sigreturn)
