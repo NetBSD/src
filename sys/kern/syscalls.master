@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.109 2001/04/10 11:03:56 kleink Exp $
+	$NetBSD: syscalls.master,v 1.110 2001/07/01 18:06:11 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -559,7 +559,7 @@
 285	STD		{ int sys___posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 286	STD		{ pid_t sys_getsid(pid_t pid); }
-287	UNIMPL
+287	STD		{ pid_t sys___clone(int flags, void *stack); }
 #if defined(KTRACE) || !defined(_KERNEL)
 288	STD		{ int sys_fktrace(const int fd, int ops, \
 			    int facs, int pid); }
