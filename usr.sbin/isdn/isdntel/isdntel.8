@@ -1,3 +1,4 @@
+.\" $NetBSD: isdntel.8,v 1.2 2001/04/09 13:43:47 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,10 +24,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	last edit-date: [Mon Dec 13 23:05:59 1999]
-.\"	
+.\"
 .\" $FreeBSD$
 .\"
-.\"	$Id: isdntel.8,v 1.1.1.1 2001/01/06 13:00:35 martin Exp $
+.\"	$Id: isdntel.8,v 1.2 2001/04/09 13:43:47 wiz Exp $
 .\"
 .Dd July 11, 1998
 .Dt ISDNTEL 8
@@ -42,28 +43,32 @@
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
-is used to provide an "answering machine" functionality for incoming
-telephone voice messages.
+is used to provide an
+.Dq answering machine
+functionality for incoming telephone voice messages.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
 .It Fl a
-Use 
+Use
 .Ar aliasfile
 as the pathname for an aliasfile containing aliases for phone numbers. The
 default path is
-.Em /etc/isdn/isdntel.alias .
+.Pa /etc/isdn/isdntel.alias .
 The format of an alias entry is the number string followed by one or more
 spaces or tabs. The rest of the line is taken as the alias string. Comments
-are introduced by a leading blank, tab or "#" character.
+are introduced by a leading blank, tab or
+.Dq #
+character.
 .It Fl d
 Use
 .Ar spooldir
 as the directory where the incoming voice messages are stored by the
-"answ" script called by 
+.Dq answ
+script called by
 .Xr isdnd 8 .
 This defaults to the directory
-.Em /var/isdn .
+.Pa /var/isdn .
 The format of a voice message filename is:
 .Pp
 .Dl YYMMDDhhmmss-dest_number-source_number-length_in_secs
@@ -84,15 +89,13 @@ when there is no keyboard activity.
 .Pp
 The screen output should be obvious. If in doubt, consult the source.
 .Sh SEE ALSO
+.Xr i4btel 4 ,
+.Xr isdnd.rc 5 ,
 .Xr isdnd 8
-.Xr isdnd.rc 5
-.Xr i4btel 4
-
 .Sh BUGS
 Still two or more left.
-
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
-utility and this manual page were written by 
+utility and this manual page were written by
 .An Hellmuth Michaelis Aq hm@kts.org .
