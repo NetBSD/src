@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.4 2002/06/30 08:13:30 lukem Exp $
+# $NetBSD: mi,v 1.478.2.5 2002/07/09 02:16:00 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -472,10 +472,12 @@
 ./usr/share/man/cat4/alpha/kft.0		man-sys-catman
 ./usr/share/man/cat4/alpha/lca.0		man-sys-catman
 ./usr/share/man/cat4/alpha/mcbus.0		man-sys-catman
+./usr/share/man/cat4/alpha/mcmem.0		man-sys-catman
 ./usr/share/man/cat4/alpha/mcpcia.0		man-sys-catman
 ./usr/share/man/cat4/alpha/sableio.0		man-sys-catman
 ./usr/share/man/cat4/alpha/tcasic.0		man-sys-catman
 ./usr/share/man/cat4/alpha/tlsb.0		man-sys-catman
+./usr/share/man/cat4/alpha/tlsbmem.0		man-sys-catman
 ./usr/share/man/cat4/alpha/tsc.0		man-sys-catman
 ./usr/share/man/cat4/alpha/tsp.0		man-sys-catman
 ./usr/share/man/cat4/alpha/ttwoga.0		man-sys-catman
@@ -2178,10 +2180,12 @@
 ./usr/share/man/man4/alpha/kft.4		man-sys-man
 ./usr/share/man/man4/alpha/lca.4		man-sys-man
 ./usr/share/man/man4/alpha/mcbus.4		man-sys-man
+./usr/share/man/man4/alpha/mcmem.4		man-sys-man
 ./usr/share/man/man4/alpha/mcpcia.4		man-sys-man
 ./usr/share/man/man4/alpha/sableio.4		man-sys-man
 ./usr/share/man/man4/alpha/tcasic.4		man-sys-man
 ./usr/share/man/man4/alpha/tlsb.4		man-sys-man
+./usr/share/man/man4/alpha/tlsbmem.4		man-sys-man
 ./usr/share/man/man4/alpha/tsc.4		man-sys-man
 ./usr/share/man/man4/alpha/tsp.4		man-sys-man
 ./usr/share/man/man4/alpha/ttwoga.4		man-sys-man
