@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.6 1999/01/30 00:40:38 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.7 1999/02/22 11:01:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,28 @@
 #include <machine/dec_prom.h>
 
 /*
+ * Boot block that starts in sector 0
+ */
+
+Dec_Diskboot:
+	.word	0, 0			/* pad */
+	.word	0x0002757a		/* DEC_BOOT_MAGIC */
+	.word	0			/* mode = single sequence of blocks */
+	.word	Dec_Diskboot		/* loadAddr */
+	.word	start			/* execAddr */
+	.word	16, 0			/* map[0] numBlocks, startBlock */
+	.word	0,0, 0,0, 0,0, 0,0
+	.word	0,0, 0,0, 0,0, 0,0
+
+Label_goes_here:
+	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
+	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
+	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
+	.word	0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0
+	.word	0,0, 0,0, 0
+
+	.extern callv, 4		/* XXX SNARK XXX */
+/*
  * Amount to take off of the stack for the benefit of the debugger.
  */
 #define START_FRAME	((4 * 4) + 4 + 4)
@@ -76,30 +98,21 @@ start:
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
-#	move	s3, a3				# save call vector
 	beq	a2, DEC_REX_MAGIC, 1f		# jump if boot from DS5000
 	move	s3, a3				# BDslot: save call vector
-#	nop
 	la	s3, _C_LABEL(callvec)		# init call vector
 1:
-	la	a0, _C_LABEL (edata)			# clear BSS
-	la	a1, _C_LABEL (end)
-	jal	_C_LABEL(bzero)			# bzero(edata, end - edata)
-	subu	a1, a1, a0
+	la	a0, _C_LABEL (edata)		# clear BSS
+	move	a1, zero
+	la	a2, _C_LABEL (end)
+	jal	_C_LABEL(memset)		# memset(edata, 0, end - edata)
+	subu	a2, a2, a0
 	sw	s3, _C_LABEL(callv)		# save call vector
 	move	a0, s0				# restore argc
 	jal	_C_LABEL(_main)			# main(argc, argv)
 	move	a1, s1				# restore argv
 	j	_C_LABEL(prom_restart)		# restart...
 	nop
-
-#if 0
-/* dummy routine for gcc2 */
-	.globl	_C_LABEL(__main)
-_C_LABEL(__main):
-	j	ra
-	nop
-#endif
 
 LEAF(prom_restart)
 	lw	v0, _C_LABEL (callv)
@@ -109,7 +122,6 @@ LEAF(prom_restart)
 	move	a1, zero
 END(prom_restart)
 
-#if 1
 LEAF(prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
@@ -127,15 +139,3 @@ LEAF(prom_read)
 	j	v0
 	nop
 END(prom_read)
-#endif
-
-#if 0
-LEAF(printf)
-	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
-	sw	a1, 4(sp)	# store args on stack for printf
-	lw	v0, 48(v0)	# offset for callv->printf
-	sw	a2, 8(sp)
-	j	v0		# call PROM printf
-	sw	a3, 12(sp)
-END(printf)
-#endif
