@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.22 1997/11/19 15:35:36 mjacob Exp $ */
+/* $NetBSD: interrupt.c,v 1.23 1998/02/24 07:38:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,14 +32,21 @@
  * notice.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.22 1997/11/19 15:35:36 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.23 1998/02/24 07:38:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/reg.h>
@@ -67,7 +74,11 @@ interrupt(a0, a1, a2, framep)
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
+#if defined(UVM)
+		uvmexp.intrs++;
+#else
 		cnt.v_intr++;
+#endif
 #ifdef EVCNT_COUNTERS
 		clock_intr_evcnt.ev_count++;
 #else
@@ -86,7 +97,11 @@ interrupt(a0, a1, a2, framep)
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+#if defined(UVM)
+		uvmexp.intrs++;
+#else
 		cnt.v_intr++;
+#endif
 		if (platform.iointr)
 			(*platform.iointr)(framep, a1);
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.29 1997/11/17 00:52:49 ross Exp $ */
+/* $NetBSD: trap.c,v 1.30 1998/02/24 07:38:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,10 +28,11 @@
  */
 
 #include "opt_fix_unaligned_vax_fp.h"
+#include "opt_uvm.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 1997/11/17 00:52:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 1998/02/24 07:38:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 1997/11/17 00:52:49 ross Exp $");
 #include <sys/buf.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
 #endif
 
 #include <machine/cpu.h>
@@ -187,7 +192,11 @@ trap(a0, a1, a2, entry, framep)
 	u_quad_t sticks;
 	int user;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
@@ -431,7 +440,11 @@ trap(a0, a1, a2, entry, framep)
 #ifdef NEW_PMAP
 			printf("mmfault going to vm_fault\n");
 #endif
+#if defined(UVM)
+			rv = uvm_fault(map, va, 0, ftype);
+#else
 			rv = vm_fault(map, va, ftype, FALSE);
+#endif
 #ifdef NEW_PMAP
 			printf("mmfault back from vm_fault\n");
 #endif
@@ -561,7 +574,11 @@ syscall(code, framep)
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0) {
 		panic("syscall");
 #endif
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	p = curproc;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
@@ -714,7 +731,11 @@ ast(framep)
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("ast and not user");
 
+#if defined(UVM)
+	uvmexp.softs++;
+#else
 	cnt.v_soft++;
+#endif
 
 	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
@@ -964,10 +985,17 @@ unaligned_fixup(va, opcode, reg, p)
 	 * Even if it's an unknown opcode, SEGV if the access
 	 * should have failed.
 	 */
+#if defined(UVM)
+	if (!uvm_useracc((caddr_t)va, size ? size : 1, B_WRITE)) {
+		signal = SIGSEGV;
+		goto out;
+	}
+#else
 	if (!useracc((caddr_t)va, size ? size : 1, B_WRITE)) {
 		signal = SIGSEGV;
 		goto out;
 	}
+#endif
 
 	/*
 	 * If we're supposed to be noisy, squawk now.

@@ -1,4 +1,4 @@
-/* $NetBSD: tga_bt485.c,v 1.7 1997/09/02 13:19:58 thorpej Exp $ */
+/* $NetBSD: tga_bt485.c,v 1.8 1998/02/24 07:38:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga_bt485.c,v 1.7 1997/09/02 13:19:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga_bt485.c,v 1.8 1998/02/24 07:38:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,10 +211,17 @@ tga_bt485_set_cmap(dc, fbc)
 	if ((u_int)fbc->index >= 256 ||
 	    ((u_int)fbc->index + (u_int)fbc->count) > 256)
 		return (EINVAL);
+#if defined(UVM)
+	if (!uvm_useracc(fbc->red, fbc->count, B_READ) ||
+	    !uvm_useracc(fbc->green, fbc->count, B_READ) ||
+	    !uvm_useracc(fbc->blue, fbc->count, B_READ))
+		return (EFAULT);
+#else
 	if (!useracc(fbc->red, fbc->count, B_READ) ||
 	    !useracc(fbc->green, fbc->count, B_READ) ||
 	    !useracc(fbc->blue, fbc->count, B_READ))
 		return (EFAULT);
+#endif
 
 	s = spltty();
 
@@ -274,19 +283,32 @@ tga_bt485_set_cursor(dc, fbc)
 		    ((u_int)fbc->cmap.index + (u_int)fbc->cmap.count) > 2)
 			return (EINVAL);
 		count = fbc->cmap.count;
+#if defined(UVM)
+		if (!uvm_useracc(fbc->cmap.red, count, B_READ) ||
+		    !uvm_useracc(fbc->cmap.green, count, B_READ) ||
+		    !uvm_useracc(fbc->cmap.blue, count, B_READ))
+			return (EFAULT);
+#else
 		if (!useracc(fbc->cmap.red, count, B_READ) ||
 		    !useracc(fbc->cmap.green, count, B_READ) ||
 		    !useracc(fbc->cmap.blue, count, B_READ))
 			return (EFAULT);
+#endif
 	}
 	if (v & FB_CUR_SETSHAPE) {
 		if ((u_int)fbc->size.x > CURSOR_MAX_SIZE ||
 		    (u_int)fbc->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
+#if defined(UVM)
+		if (!uvm_useracc(fbc->image, count, B_READ) ||
+		    !uvm_useracc(fbc->mask, count, B_READ))
+			return (EFAULT);
+#else
 		if (!useracc(fbc->image, count, B_READ) ||
 		    !useracc(fbc->mask, count, B_READ))
 			return (EFAULT);
+#endif
 	}
 
 	if (v & (FB_CUR_SETPOS | FB_CUR_SETCUR)) {

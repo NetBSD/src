@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.39 1998/02/12 01:53:19 cgd Exp $ */
+/* $NetBSD: locore.s,v 1.40 1998/02/24 07:38:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,9 +29,11 @@
 
 .stabs	__FILE__,100,0,0,kernel_text
 
+#include "opt_uvm.h"
+
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.39 1998/02/12 01:53:19 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.40 1998/02/24 07:38:01 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -799,7 +801,11 @@ LEAF(switch_exit, 1)
 	ldq	a0, kernel_map
 	ldq	a1, P_ADDR(s2)
 	ldiq	a2, (UPAGES * NBPG)
+#if defined(UVM)
+	CALL(uvm_km_free)
+#else
 	CALL(kmem_free)
+#endif
 
 	/* and jump into the middle of cpu_switch. */
 #ifdef NEW_PMAP
@@ -1133,6 +1139,30 @@ bcopy_ov_short:
 	br	zero,bcopy_da_finish
 
 	END(bcopy)
+
+#if defined(UVM)
+NESTED(kcopy, 3, 16, ra, 0, 0)
+	LDGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	v0, U_PCB_ONFAULT(at_reg)
+	.set at
+	CALL(bcopy)				/* do the copy.		     */
+	.set noat
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	mov	zero, v0			/* return 0. */
+	RET
+	END(kcopy)
+#endif /* UVM */
 
 NESTED(copyin, 3, 16, ra, 0, 0)
 	LDGP(pv)

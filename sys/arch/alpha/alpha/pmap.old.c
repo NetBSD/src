@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.34 1998/02/18 01:44:32 cgd Exp $ */
+/* $NetBSD: pmap.old.c,v 1.35 1998/02/24 07:38:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,9 +133,11 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.34 1998/02/18 01:44:32 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.35 1998/02/24 07:38:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +152,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.34 1998/02/18 01:44:32 cgd Exp $");
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/cpu.h>
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -225,7 +231,9 @@ struct chgstats {
 
 int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
+#if !defined(UVM)
 extern vm_offset_t pager_sva, pager_eva;
+#endif
 #endif
 
 /*
@@ -288,6 +296,9 @@ pt_entry_t	*Segtabzero, Segtabzeropte;
 
 struct pmap	kernel_pmap_store;
 vm_map_t	st_map, pt_map;
+#if defined(UVM)
+struct vm_map	st_map_store, pt_map_store;
+#endif
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -666,13 +677,23 @@ pmap_init()
 	 * Allocate the segment table map
 	 */
 	s = maxproc * ALPHA_STSIZE;
+#if defined(UVM)
+	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	    FALSE, &st_map_store);
+#else
 	st_map = kmem_suballoc(kernel_map, &addr, &addr2, s, TRUE);
+#endif
 
 	/*
 	 * Allocate the page table map
 	 */
 	s = maxproc * ALPHA_MAX_PTSIZE;			/* XXX limit it */
+#if defined(UVM)
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	    FALSE, &pt_map_store);
+#else
 	pt_map = kmem_suballoc(kernel_map, &addr, &addr2, s, TRUE);
+#endif
 
 	/*
 	 * Memory for the pv entry heads and page attributes has
@@ -824,11 +845,21 @@ pmap_release(pmap)
 		panic("pmap_release count");
 #endif
 	if (pmap->pm_ptab)
+#if defined(UVM)
+		uvm_km_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
+				   ALPHA_MAX_PTSIZE);
+#else
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 ALPHA_MAX_PTSIZE);
+#endif
 	if (pmap->pm_stab != Segtabzero)
+#if defined(UVM)
+		uvm_km_free_wakeup(st_map, (vm_offset_t)pmap->pm_stab,
+				   ALPHA_STSIZE);
+#else
 		kmem_free_wakeup(st_map, (vm_offset_t)pmap->pm_stab,
 				 ALPHA_STSIZE);
+#endif
 }
 
 /*
@@ -1107,8 +1138,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
 	if (pmap->pm_ptab == NULL)
+#if defined(UVM)
+		pmap->pm_ptab = (pt_entry_t *)
+			uvm_km_valloc_wait(pt_map, ALPHA_MAX_PTSIZE);
+#else
 		pmap->pm_ptab = (pt_entry_t *)
 			kmem_alloc_wait(pt_map, ALPHA_MAX_PTSIZE);
+#endif
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
@@ -1184,8 +1220,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
+#if defined(UVM)
+		(void) uvm_map_pageable(pt_map, trunc_page(pte),
+				       round_page(pte+1), FALSE);
+#else
 		(void) vm_map_pageable(pt_map, trunc_page(pte),
 				       round_page(pte+1), FALSE);
+#endif
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1950,8 +1991,13 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * PT page.
 	 */
 	if (pmap != pmap_kernel()) {
+#if defined(UVM)
+		(void) uvm_map_pageable(pt_map, trunc_page(pte),
+				       round_page(pte+1), TRUE);
+#else
 		(void) vm_map_pageable(pt_map, trunc_page(pte),
 				       round_page(pte+1), TRUE);
+#endif
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("remove", trunc_page(pte));
@@ -2041,9 +2087,15 @@ pmap_remove_mapping(pmap, va, pte, flags)
 					printf("remove: free stab %p\n",
 					       ptpmap->pm_stab);
 #endif
+#if defined(UVM)
+				uvm_km_free_wakeup(st_map,
+						   (vm_offset_t)ptpmap->pm_stab,
+						   ALPHA_STSIZE);
+#else
 				kmem_free_wakeup(st_map,
 						 (vm_offset_t)ptpmap->pm_stab,
 						 ALPHA_STSIZE);
+#endif
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpte = Segtabzeropte;
 				/*
@@ -2126,10 +2178,15 @@ pmap_changebit(pa, bit, setem)
 			 * XXX don't write protect pager mappings
 			 */
 /* XXX */		if (bit == (PG_UWE | PG_KWE)) {
+#if defined(UVM)
+				if (va >= uvm.pager_sva && va < uvm.pager_eva)
+					continue;
+#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				if (va >= pager_sva && va < pager_eva)
 					continue;
+#endif
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
@@ -2187,8 +2244,13 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
+#if defined(UVM)
+		pmap->pm_stab = (pt_entry_t *)
+			uvm_km_zalloc(st_map, ALPHA_STSIZE);
+#else
 		pmap->pm_stab = (pt_entry_t *)
 			kmem_alloc(st_map, ALPHA_STSIZE);
+#endif
 		pmap->pm_stpte = *kvtopte(pmap->pm_stab);
 		/*
 		 * XXX may have changed segment table pointer for current
@@ -2262,11 +2324,20 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter: about to fault UPT pg at %lx\n", va);
 #endif
+#if defined(UVM)
+		s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE); 
+		if (s != KERN_SUCCESS) {
+			printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
+			    va, s);
+			panic("pmap_enter: uvm_fault failed");
+		}
+#else
 		s = vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE);
 		if (s != KERN_SUCCESS) {
 			printf("vm_fault(pt_map, %lx, RW, 0) -> %d\n", va, s);
 			panic("pmap_enter: vm_fault failed");
 		}
+#endif
 		ptpa = pmap_extract(pmap_kernel(), va);
 		/*
 		 * Mark the page clean now to avoid its pageout (and
@@ -2513,9 +2584,15 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
+#if defined(UVM)
+		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
+		if (pvp == 0)
+			 panic("pmap_alloc_pv: uvm_km_zalloc() failed");
+#else
 		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
+#endif
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
@@ -2557,7 +2634,11 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+#if defined(UVM)
+		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
@@ -2624,7 +2705,11 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+#if defined(UVM)
+		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 	}
 }
 #endif /* notyet */
