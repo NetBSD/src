@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.4 1998/05/20 17:12:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.5 1998/05/23 12:52:27 matthias Exp $	*/
 
 /*
  *
@@ -245,7 +245,7 @@
  * locking data structures
  */
 
-#if NCPU > 1
+#if NCPU > 1 || defined(LOCKDEBUG)
 struct lock pmap_main_lock;
 simple_lock_data_t pvalloc_lock;
 simple_lock_data_t pmaps_lock;
@@ -254,14 +254,14 @@ simple_lock_data_t pmap_zero_page_lock;
 simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
-     lockmgr(&pmap_main_lock, LK_SHARED, (void *) 0, curproc)
+     lockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
 #define PMAP_MAP_TO_HEAD_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0, curproc)
+     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #define PMAP_HEAD_TO_MAP_LOCK() \
-     lockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *)0, curproc)
+     lockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
 #define PMAP_HEAD_TO_MAP_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0, curproc)
+     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #else
 
@@ -802,8 +802,8 @@ vm_offset_t kva_start;
    * init the static-global locks and global lists.
    */
 
-#if NCPU > 1
-  lock_init(&pmap_main_lock, FALSE);
+#if NCPU > 1 || defined(LOCKDEBUG)
+  lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
   simple_lock_init(&pvalloc_lock);
   simple_lock_init(&pmaps_lock);
   simple_lock_init(&pmap_copy_page_lock);
@@ -1059,7 +1059,7 @@ int mode;
   if (pg)
     pg->flags &= ~PG_BUSY;	/* never busy */
 
-  simple_unlock(&uvm.kmem_object->vmobjlock);
+  simple_unlock(&uvmexp.kmem_object->vmobjlock);
   splx(s);
   /* splimp now dropped */
   
@@ -1403,7 +1403,7 @@ struct vm_page *ptp;	/* PTP in pmap that maps this VA */
   simple_lock(&pvh->pvh_lock);		/* lock pv_head */
   pve->pv_next = pvh->pvh_list;		/* add to ... */
   pvh->pvh_list = pve;			/* ... locked list */
-  simple_unlock(&pvh->pvh_list);	/* unlock, done! */
+  simple_unlock(&pvh->pvh_lock);	/* unlock, done! */
 }
 
 /*
@@ -1501,7 +1501,7 @@ struct uvm_object *obj;
 vm_offset_t offset;
 
 {
-  struct vm_page *ptp;
+  struct vm_page *ptp = NULL;
   struct pmap *firstpmap;
   int idx, lcv;
   pt_entry_t *ptes;
@@ -1517,7 +1517,7 @@ vm_offset_t offset;
   
   do { /* while we haven't looped back around to firstpmap */
 
-    if (simple_lock_try(pmaps_hand->pm_obj.vmobjlock)) {
+    if (simple_lock_try(&pmaps_hand->pm_obj.vmobjlock)) {
 
       ptp = pmaps_hand->pm_obj.memq.tqh_first;
 
@@ -1558,7 +1558,7 @@ vm_offset_t offset;
 	break;	/* break out of "for" loop */
       }
 
-      simple_unlock(pmaps_hand->pm_obj.vmobjlock);
+      simple_unlock(&pmaps_hand->pm_obj.vmobjlock);
     }
 
     /* advance the pmaps_hand */
