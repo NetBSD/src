@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.7 2001/03/21 17:42:37 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.8 2001/04/17 17:12:40 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -179,8 +179,8 @@ sa11x0_attach(parent, self, aux)
 	/* Route all bits to IRQ */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAIPIC_LR, 0);
 
-	/* Clear idle mask */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAIPIC_CR, 0);
+	/* Exit idle mode only when unmasked intr is received */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAIPIC_CR, 1);
 
 	/* diable all DMAC channels */
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR0_CLR, 1);
