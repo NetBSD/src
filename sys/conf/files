@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.441 2001/05/18 19:59:03 matt Exp $
+#	$NetBSD: files,v 1.442 2001/05/26 17:46:11 sommerfeld Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -55,7 +55,7 @@ defopt	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
-defopt	opt_inet.h	INET INET6
+defopt	opt_inet.h	INET INET6 INET6_MD_CKSUM
 defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
@@ -1039,7 +1039,7 @@ file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
 file	netinet6/frag6.c		inet6
 file	netinet6/icmp6.c		inet6
 file	netinet6/in6.c			inet6
-file	netinet6/in6_cksum.c		inet6
+file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_pcb.c		inet6
