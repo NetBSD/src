@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.24 2004/08/10 19:12:25 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.25 2004/08/10 20:47:17 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.24 2004/08/10 19:12:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.25 2004/08/10 20:47:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.24 2004/08/10 19:12:25 mycroft Ex
 #include <dev/pcmcia/pcmciadevs.h>
 
 static int an_pcmcia_match __P((struct device *, struct cfdata *, void *));
+static int an_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 static void an_pcmcia_attach __P((struct device *, struct device *, void *));
 static int an_pcmcia_detach __P((struct device *, int));
 static int an_pcmcia_enable __P((struct an_softc *));
@@ -84,6 +85,9 @@ struct an_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
 	void *sc_powerhook;			/* power hook descriptor */
+
+	int sc_state;
+#define	AN_PCMCIA_ATTACHED	3
 };
 
 CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
@@ -101,41 +105,6 @@ static const size_t an_pcmcia_nproducts =
     sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
-an_pcmcia_enable(sc)
-	struct an_softc *sc;
-{
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-
-	/* establish the interrupt. */
-	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, an_intr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
-
-	if (pcmcia_function_enable(pf)) {
-		pcmcia_intr_disestablish(pf, psc->sc_ih);
-		return (1);
-	}
-	DELAY(1000);
-
-	return (0);
-}
-
-static void
-an_pcmcia_disable(sc)
-	struct an_softc *sc;
-{
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-
-	pcmcia_function_disable(pf);
-	pcmcia_intr_disestablish(pf, psc->sc_ih);
-}
-
-static int
 an_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -149,6 +118,16 @@ an_pcmcia_match(parent, match, aux)
 	return (0);
 }
 
+static int
+an_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1)
+		return (EINVAL);
+	return (0);
+}
+
 static void
 an_pcmcia_attach(parent, self, aux)
 	struct device  *parent, *self;
@@ -158,61 +137,48 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int error;
 
 	psc->sc_pf = pa->pf;
-	if ((cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head)) == NULL) {
-		printf("%s: no suitable CIS info found\n", sc->sc_dev.dv_xname);
-		goto fail1;
+
+	error = pcmcia_function_configure(pa->pf, an_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, AN_IOSIZ, &psc->sc_pcioh) != 0) {
-		printf("%s: failed to allocate io space\n",
-		    sc->sc_dev.dv_xname);
-		goto fail1;
-	}
+	cfe = pa->pf->cfe;
+	sc->sc_iot = cfe->iospace[0].handle.iot;
+	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window) != 0) {
-		printf("%s: failed to map io space\n", sc->sc_dev.dv_xname);
-		goto fail2;
-	}
-
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
-
-	pcmcia_function_init(psc->sc_pf, cfe);
-
-	if (an_pcmcia_enable(sc)) {
-		printf("%s: enable failed\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
+	error = an_pcmcia_enable(sc);
+	if (error)
+		goto fail;
 
 	sc->sc_enabled = 1;
 	sc->sc_enable = an_pcmcia_enable;
 	sc->sc_disable = an_pcmcia_disable;
 
-	if (an_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
+	error = an_attach(sc);
+	if (error) {
+		aprint_error("%s: failed to attach controller\n",
+		    self->dv_xname);
+		goto fail2;
 	}
+
 	psc->sc_powerhook = powerhook_establish(an_power, sc);
 
-	/* disable device and disestablish the interrupt */
-	sc->sc_enabled = 0;
 	an_pcmcia_disable(sc);
+	sc->sc_enabled = 0;
+	psc->sc_state = AN_PCMCIA_ATTACHED;
 	return;
 
-fail4:
-	sc->sc_enabled = 0;
-	an_pcmcia_disable(sc);
-fail3:
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 fail2:
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-fail1:
-	psc->sc_io_window = -1;
+	an_pcmcia_disable(sc);
+	sc->sc_enabled = 0;
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 
@@ -221,24 +187,52 @@ an_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)self;
+	struct an_pcmcia_softc *psc = (void *)self;
 	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != AN_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook != NULL)
+	if (psc->sc_powerhook)
 		powerhook_disestablish(psc->sc_powerhook);
 
 	error = an_detach(&psc->sc_an);
-	if (error != 0)
+	if (error)
 		return (error);
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	return (0);
+}
+
+static int
+an_pcmcia_enable(sc)
+	struct an_softc *sc;
+{
+	struct an_pcmcia_softc *psc = (void *)sc;
+	int error;
+
+	/* establish the interrupt. */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc);
+	if (!psc->sc_ih)
+		return (EIO);
+
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = 0;
+	}
+
+	return (error);
+}
+
+static void
+an_pcmcia_disable(sc)
+	struct an_softc *sc;
+{
+	struct an_pcmcia_softc *psc = (void *)sc;
+
+	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.9 2004/08/10 18:43:49 mycroft Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.10 2004/08/10 20:47:17 mycroft Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.9 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.10 2004/08/10 20:47:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.9 2004/08/10 18:43:49 mycroft Exp
 struct cs_pcmcia_softc;
 
 static int cs_pcmcia_match(struct device *, struct cfdata *, void *);
+static int cs_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void cs_pcmcia_attach(struct device *, struct device *, void *);
 static int cs_pcmcia_detach(struct device *, int);
 static int cs_pcmcia_enable(struct cs_softc *);
@@ -67,14 +68,11 @@ static void cs_pcmcia_disable(struct cs_softc *);
 struct cs_pcmcia_softc {
 	struct cs_softc sc_cs; /* real "cs" softc */
 
-	struct pcmcia_io_handle sc_pcioh;
 	struct pcmcia_function *sc_pf;
-	int sc_io_window;
-	int sc_flags;
-};
 
-#define CS_PCMCIA_FLAGS_IO_ALLOCATED 1
-#define CS_PCMCIA_FLAGS_IO_MAPPED 2
+	int sc_state;
+#define	CS_PCMCIA_ATTACHED	3
+};
 
 CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
     cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
@@ -84,11 +82,21 @@ cs_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->card->manufacturer == PCMCIA_VENDOR_IBM
-		&& pa->card->product == PCMCIA_PRODUCT_IBM_ETHERJET)
-		return 1;
+	if (pa->manufacturer == PCMCIA_VENDOR_IBM &&
+	    pa->product == PCMCIA_PRODUCT_IBM_ETHERJET)
+		return (1);
+	return (0);
+}
 
-	return 0;
+static int
+cs_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1 ||
+	    cfe->iospace[0].length < CS8900_IOSIZE)
+		return (EINVAL);
+	return (0);
 }
 
 static void
@@ -99,40 +107,20 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf;
+	int error;
 
 	pf = psc->sc_pf = pa->pf;
 
-	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
-
-	if (cfe->num_iospace != 1) {
-		printf("%s: unexpected number of iospace(%d)\n",
-			DEVNAME(sc), cfe->num_iospace);
-		goto fail;
+	error = pcmcia_function_configure(pa->pf, cs_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (cfe->iospace[0].length < CS8900_IOSIZE) {
-		printf("%s: unexpected iosize(%lu)\n",
-			DEVNAME(sc), cfe->iospace[0].length);
-		goto fail;
-	}
-
-	if (cfe->num_memspace != 0) {
-		printf("%s: unexpected number of memspace(%d)\n",
-			DEVNAME(sc), cfe->num_memspace);
-		goto fail;
-	}
-
-	if (pcmcia_io_alloc(pf, cfe->iospace[0].start,
-		cfe->iospace[0].length, cfe->iospace[0].length,
-		&psc->sc_pcioh) != 0) {
-		printf("%s: can't allocate i/o space %lx:%lx\n", DEVNAME(sc),
-			cfe->iospace[0].start, cfe->iospace[0].length);
-		goto fail;
-	}
-	psc->sc_flags |= CS_PCMCIA_FLAGS_IO_ALLOCATED;
-
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
+	cfe = pf->cfe;
+	sc->sc_iot = cfe->iospace[0].handle.iot;
+	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 	sc->sc_irq = -1;
 #define CS_PCMCIA_HACK_FOR_CARDBUS
 #ifdef CS_PCMCIA_HACK_FOR_CARDBUS
@@ -141,24 +129,27 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_cfgflags |= CFGFLG_CARDBUS_HACK;
 #endif
+
+	error = cs_pcmcia_enable(sc);
+	if (error)
+		goto fail;
+
 	sc->sc_enable = cs_pcmcia_enable;
 	sc->sc_disable = cs_pcmcia_disable;
 
-	pcmcia_function_init(pa->pf, cfe);
-
-	if (cs_pcmcia_enable(sc))
-		goto fail;
-
 	/* chip attach */
-	if (cs_attach(sc, 0, 0, 0, 0))
-		goto fail;
+	error = cs_attach(sc, 0, 0, 0, 0);
+	if (error)
+		goto fail2;
 
 	cs_pcmcia_disable(sc);
+	psc->sc_state = CS_PCMCIA_ATTACHED;
 	return;
 
+fail2:
+	cs_pcmcia_disable(sc);
 fail:
-	cs_pcmcia_detach((struct device *)psc, 0);
-	return;
+	pcmcia_function_unconfigure(pf);
 }
 
 static int
@@ -166,69 +157,45 @@ cs_pcmcia_detach(struct device *self, int flags)
 {
 	struct cs_pcmcia_softc *psc = (void *)self;
 	struct cs_softc *sc = &psc->sc_cs;
-	struct pcmcia_function *pf = psc->sc_pf;
-	int rv;
+	int error;
 
-	rv = cs_detach(sc);
-	if (rv)
-		return rv;
+	if (psc->sc_state != CS_PCMCIA_ATTACHED)
+		return (0);
+
+	error = cs_detach(sc);
+	if (error)
+		return (error);
 	
-	cs_pcmcia_disable(sc);
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	if (psc->sc_flags & CS_PCMCIA_FLAGS_IO_ALLOCATED) {
-		pcmcia_io_free(pf, &psc->sc_pcioh);
-		psc->sc_flags &= ~CS_PCMCIA_FLAGS_IO_ALLOCATED;
-	}
-
-	return 0;
+	return (0);
 }
 
 static int
 cs_pcmcia_enable(struct cs_softc *sc)
 {
 	struct cs_pcmcia_softc *psc = (void *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
 
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window) != 0) {
-		printf("%s: can't map i/o space\n", DEVNAME(sc));
-		goto fail;
-	}
-	psc->sc_flags |= CS_PCMCIA_FLAGS_IO_MAPPED;
+	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, cs_intr, sc);
+	if (!sc->sc_ih)
+		return (EIO);
 
-	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, cs_intr, sc);
-	if (sc->sc_ih == 0) {
-		printf("%s: can't establish interrupt\n", DEVNAME(sc));
-		goto fail;
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
 
-	if (pcmcia_function_enable(pf)) {
-		printf("%s: can't enable function\n", DEVNAME(sc));
-		pcmcia_intr_disestablish(pf, sc->sc_ih);
-		goto fail;
-	}
-
-	return 0;
-
-fail:
-	return EIO;
+	return (error);
 }
 
 static void
 cs_pcmcia_disable(struct cs_softc *sc)
 {
 	struct cs_pcmcia_softc *psc = (void *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
 
-	pcmcia_function_disable(pf);
-	
-	if (sc->sc_ih != 0) {
-		pcmcia_intr_disestablish(pf, sc->sc_ih);
-		sc->sc_ih = 0;
-	}
-
-	if (psc->sc_flags & CS_PCMCIA_FLAGS_IO_MAPPED) {
-		pcmcia_io_unmap(pf, psc->sc_io_window);
-		psc->sc_flags &= ~CS_PCMCIA_FLAGS_IO_MAPPED;
-	}
+	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
