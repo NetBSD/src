@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigreturn.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $"
+	.asciz "$NetBSD: sigreturn.S,v 1.6 2000/06/28 19:20:18 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -44,8 +44,7 @@
 #ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x, y) \
-	.globl _ ## x; .align 2; _ ## x ## : .word 0; pushr $0x3f; \
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount; popr $0x3f;
+	_ENTRY(x, y); pushr $0x3f; _PROF_PROLOGUE; popr $0x3f;
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \

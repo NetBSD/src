@@ -33,13 +33,10 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigprocmask.S,v 1.4 1998/12/02 01:01:05 thorpej Exp $"
+	.asciz "$NetBSD: sigprocmask.S,v 1.5 2000/06/28 19:20:18 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
-
-err:
-	jmp	cerror
 
 WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
@@ -52,8 +49,10 @@ ENTRY(sigprocmask, 0)
 	jbr	2f
 1:	movl	*8(ap),8(ap)		# indirect to new mask arg
 2:	chmk	$ SYS_compat_13_sigprocmask13
-	jcs	err
-	tstl	12(ap)			# test if old mask requested
+	jcc	3f
+	jmp	CERROR
+
+3:	tstl	12(ap)			# test if old mask requested
 	beql	out
 	movl	r0,*12(ap)		# store old mask
 out:

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "$NetBSD: sigsetjmp.S,v 1.1 1995/12/09 13:26:46 ragge Exp $"
+	.asciz "$NetBSD: sigsetjmp.S,v 1.2 2000/06/28 19:20:17 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,14 +55,14 @@ ENTRY(sigsetjmp, R6)
 	movl	8(ap),(_JBLEN*4)(r0)	# save "savemask"
 	tstl	8(ap)			# do saving of signal mask?
 	beql	L1
-	jmp	_setjmp+2		# yep, do full setjmp
-L1:	jmp	__setjmp+2		# nope, skip to _setjmp
+	jmp	_C_LABEL(setjmp)+2	# yep, do full setjmp
+L1:	jmp	_C_LABEL(_setjmp)+2	# nope, skip to _setjmp
 
 ENTRY(siglongjmp, 0)
 	movl	4(ap),r0		# get env pointer
 	tstl	(_JBLEN*4)(r0)		# test if "savemask" was set
 	beql	L2
-	jmp	_longjmp+2		# yep, do full longjmp
-L2:	jmp	__longjmp+2		# nope, skip to _longjmp
+	jmp	_C_LABEL(longjmp)+2	# yep, do full longjmp
+L2:	jmp	_C_LABEL(_longjmp)+2	# nope, skip to _longjmp
 
 
