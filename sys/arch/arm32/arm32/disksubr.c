@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.1 1996/01/31 23:15:45 mark Exp $ */
+/* $NetBSD: disksubr.c,v 1.2 1996/03/06 22:43:11 mark Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.1 1996/01/31 23:15:45 mark Exp $
  */
 
 #include <sys/param.h>
@@ -46,13 +45,7 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-/*#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))*/
-
 #define	b_cylin	b_resid
-
 
 /* int filecore_checksum(char *bootblock)
  *
@@ -198,21 +191,64 @@ readdisklabel(dev, strat, lp, osdep)
 			goto readlabel;
 		}
 
-/* Do we have a RiscBSD partition table ? */
-
-		if (bb->partition_type != PARTITION_FORMAT_RISCBSD) {
-			msg = "Invalid partition format";
-			goto done;
-		}
+/* Get some information from the boot block */
 
 		cyl = bb->partition_cyl_low + (bb->partition_cyl_high << 8);
 
 		heads = bb->heads;
 		sectors = bb->secspertrack;
                         
-/*		printf("heads = %d nsectors = %d\n", heads, sectors);*/
+/* Do we have a RiscBSD partition table ? */
 
-		riscbsdpartoff = cyl * heads * sectors;
+		if (bb->partition_type == PARTITION_FORMAT_RISCBSD) {
+/*			printf("heads = %d nsectors = %d\n", heads, sectors);*/
+
+			riscbsdpartoff = cyl * heads * sectors;
+		} else if (bb->partition_type == PARTITION_FORMAT_RISCIX) {
+			struct riscix_partition_table *rpt;
+			int loop;
+			
+/* We have a RISCiX partition table :-( groan */
+
+/* Ok read the RISCiX partition table and see if there is a RiscBSD partition */
+
+			bp->b_blkno = cyl * heads * sectors;
+			printf("Found RiscIX partition table @ %08x\n", bp->b_blkno);
+			bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+			bp->b_bcount = lp->d_secsize;
+			bp->b_flags = B_BUSY | B_READ;
+			(*strat)(bp);
+
+/* if successful, locate disk label within block and validate */
+
+			if (biowait(bp)) {
+				msg = "disk label I/O error";
+				goto done;
+			}
+
+			rpt = (struct riscix_partition_table *)bp->b_data;
+/*			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop)
+				printf("p%d: %16s %08x %08x %08x\n", loop,
+				    rpt->partitions[loop].rp_name,
+				    rpt->partitions[loop].rp_start,
+				    rpt->partitions[loop].rp_length,
+				    rpt->partitions[loop].rp_type);
+*/
+			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
+				if (strcmp(rpt->partitions[loop].rp_name, "RiscBSD") == 0
+				    || strcmp(rpt->partitions[loop].rp_name, "NetBSD") == 0) {
+					riscbsdpartoff = rpt->partitions[loop].rp_start;
+					break;
+				}
+			}
+			if (loop == NRISCIX_PARTITIONS) {
+				msg = "RiscBSD partition identifier string not found.";
+				goto done;
+			}
+		} else {
+			msg = "Invalid partition format";
+			goto done;
+		}
 	}
 
 /* next, dig out disk label */
