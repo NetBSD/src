@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.20 2002/09/18 02:44:03 lukem Exp $
+#	$NetBSD: MMTAROMNEW,v 1.21 2003/04/10 22:07:00 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -29,7 +29,6 @@ options 	INITTODR_ALWAYS_USE_RTC
 
 # Standard system options
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

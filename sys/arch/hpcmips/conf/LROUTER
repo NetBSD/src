@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.9 2002/11/27 07:33:02 shin Exp $
+# 	$NetBSD: LROUTER,v 1.10 2003/04/10 22:06:56 christos Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -47,7 +47,6 @@ options 	EPOCHYEAR=1970
 					# In NO RTC_OFFSET , inherit RTC_OFFSET
 					# from Windows CE.
 options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 #options 	DUMP_GIU_LEVEL2_INTR	# Debugging use

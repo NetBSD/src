@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.13 2002/09/18 02:44:02 lukem Exp $
+#	$NetBSD: INSTALLSBC,v 1.14 2003/04/10 22:06:59 christos Exp $
 #
 # INSTALLSBC
 
@@ -26,7 +26,6 @@ options 	FPU_EMULATE
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

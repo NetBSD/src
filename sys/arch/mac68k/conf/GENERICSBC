@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.23 2002/10/14 18:39:33 elric Exp $
+#	$NetBSD: GENERICSBC,v 1.24 2003/04/10 22:06:59 christos Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.23 $"
+#ident 		"GENERICSBC-$Revision: 1.24 $"
 
 maxusers	16		# estimated number of users
 
@@ -21,7 +21,6 @@ options 	FPU_EMULATE
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

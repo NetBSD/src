@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2003/02/27 19:22:43 perseant Exp $
+# $NetBSD: GENERIC,v 1.28 2003/04/10 22:07:00 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -39,7 +39,6 @@ options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 options 	HZ=25
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

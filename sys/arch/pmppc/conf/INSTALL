@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2003/02/02 20:43:21 matt Exp $
+#	$NetBSD: INSTALL,v 1.7 2003/04/10 22:07:03 christos Exp $
 #
 #	INSTALL
 #
@@ -21,7 +21,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=5120	# size of memory disk, in blocks
 
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)

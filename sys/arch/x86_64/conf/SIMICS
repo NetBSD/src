@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.15 2003/01/26 00:05:36 fvdl Exp $
+#	$NetBSD: SIMICS,v 1.16 2003/04/10 22:07:06 christos Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -33,7 +33,6 @@ maxusers	2		# estimated number of users
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

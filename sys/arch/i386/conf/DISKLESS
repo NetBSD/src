@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.92 2003/04/08 18:58:20 abs Exp $
+#	$NetBSD: DISKLESS,v 1.93 2003/04/10 22:06:57 christos Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -26,7 +26,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	REALEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
-options 	XSERVER,UCONSOLE
+options 	XSERVER
 options 	INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users

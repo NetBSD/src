@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 2003/02/27 19:22:47 perseant Exp $
+#	$NetBSD: GENERIC,v 1.18 2003/04/10 22:07:03 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.17 $"
+#ident		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -41,7 +41,6 @@ options 	MIPS3		# MIPS3 support
 options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 
 #options 	NTP		# NTP phase/frequence locked loop

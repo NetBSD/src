@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.12 2003/02/16 17:35:13 augustss Exp $
+#	$NetBSD: P6032,v 1.13 2003/04/10 22:06:52 christos Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.12 $"
+#ident 		"P6032-$Revision: 1.13 $"
 
 maxusers 32
 
@@ -84,7 +84,6 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2003/04/06 10:09:18 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.14 2003/04/10 22:06:56 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp700/conf/std.hp700"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,6 @@ options 	USELEDS		# blink 'em
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	NTP		# NTP phase/frequency locked loop

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.605 2003/04/06 09:48:41 tsutsui Exp $
+#	$NetBSD: files,v 1.606 2003/04/10 22:06:51 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -21,7 +21,6 @@ defflag				SYSTRACE
 defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
-defflag				UCONSOLE
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag	opt_bufq.h		NEW_BUFQ_STRATEGY

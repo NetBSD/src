@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.36 2003/04/08 18:58:21 abs Exp $
+#	$NetBSD: IOPENER,v 1.37 2003/04/10 22:06:58 christos Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.36 $"
+#ident 		"IOPENER-$Revision: 1.37 $"
 
 maxusers	32		# estimated number of users
 
@@ -32,7 +32,6 @@ options 	DUMMY_NOPS
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

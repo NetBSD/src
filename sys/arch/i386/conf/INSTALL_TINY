@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.67 2003/04/08 18:58:21 abs Exp $
+#	$NetBSD: INSTALL_TINY,v 1.68 2003/04/10 22:06:58 christos Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -55,7 +55,6 @@ options 	NOREDZONE
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

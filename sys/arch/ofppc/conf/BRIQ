@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.9 2002/09/18 02:44:05 lukem Exp $
+#	$NetBSD: BRIQ,v 1.10 2003/04/10 22:07:02 christos Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -19,7 +19,6 @@ makeoptions	TEXTADDR=0x10000
 options 	FIRMWORKSBUGS
 
 # Standard system options
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security checks
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)

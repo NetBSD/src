@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.55 2003/02/02 18:26:22 thomas Exp $
+# $NetBSD: ATARITT,v 1.56 2003/04/10 22:06:54 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -22,10 +22,6 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	16
 
 options 	HZ=64		# Set the clock-rate (48/64/96)
-
-#X11R6 related options
-
-options 	UCONSOLE	# Allow xconsole to work
 
 #Standard system options
 options 	INSECURE	# disable kernel security levels

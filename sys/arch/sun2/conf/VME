@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.7 2002/09/18 02:44:09 lukem Exp $
+# $NetBSD: VME,v 1.8 2003/04/10 22:07:05 christos Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.7 $"
+#ident 		"VME-$Revision: 1.8 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -27,7 +27,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
-#options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 

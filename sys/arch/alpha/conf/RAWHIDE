@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.17 2002/09/18 02:43:54 lukem Exp $
+# $NetBSD: RAWHIDE,v 1.18 2003/04/10 22:06:52 christos Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -41,7 +41,6 @@ options 	EISAVERBOSE
 options 	PCIVERBOSE
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE
-options 	UCONSOLE
 
 config		netbsd	root on ? type ?
 

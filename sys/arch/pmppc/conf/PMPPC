@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.14 2003/02/16 17:35:17 augustss Exp $
+#	$NetBSD: PMPPC,v 1.15 2003/04/10 22:07:03 christos Exp $
 #
 #	PMPPC
 #
@@ -15,7 +15,6 @@ options 	MSGBUFSIZE=0x10000
 
 maxusers	32
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)

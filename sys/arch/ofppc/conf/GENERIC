@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2003/02/27 19:22:45 perseant Exp $
+# $NetBSD: GENERIC,v 1.61 2003/04/10 22:07:02 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 maxusers	32
 
@@ -30,7 +30,6 @@ maxusers	32
 options 	FIRMWORKSBUGS
 
 # Standard system options
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security checks
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)

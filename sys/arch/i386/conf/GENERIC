@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.553 2003/04/08 18:58:20 abs Exp $
+# $NetBSD: GENERIC,v 1.554 2003/04/10 22:06:57 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.553 $"
+#ident 		"GENERIC-$Revision: 1.554 $"
 
 maxusers	32		# estimated number of users
 
@@ -63,7 +63,6 @@ options 	MTRR		# memory-type range register syscall support
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

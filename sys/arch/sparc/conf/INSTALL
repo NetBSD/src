@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2003/03/08 00:04:36 lukem Exp $
+#	$NetBSD: INSTALL,v 1.39 2003/04/10 22:07:04 christos Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -125,10 +125,6 @@ options 	NFS_BOOT_DHCP
 ## and other insecurities good only for development work.  Do not use this
 ## option on a production machine.
 options 	INSECURE
-
-## Allow non-root users to grab /dev/console with programs such as xconsole.
-## `xconsole' therefore does not need setuid root with this option enabled.
-#options 	UCONSOLE
 
 ## `FDSCRIPTS' allows non-readable but executable scripts by providing a
 ## pre-opened opaque file to the script interpreter.  `SETUIDSCRIPTS',

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.19 2002/09/18 02:44:10 lukem Exp $
+# $NetBSD: INSTALL3X,v 1.20 2003/04/10 22:07:05 christos Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -28,7 +28,6 @@ maxusers	2
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
-#options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory

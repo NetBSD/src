@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.19 2003/04/08 18:58:21 abs Exp $
+# $NetBSD: NET4501,v 1.20 2003/04/10 22:06:59 christos Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.19 $"
+#ident 		"NET4501-$Revision: 1.20 $"
 
 maxusers	32		# estimated number of users
 
@@ -56,7 +56,6 @@ options 	DUMMY_NOPS
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

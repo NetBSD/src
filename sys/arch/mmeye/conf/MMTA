@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.19 2002/07/22 15:21:06 tsutsui Exp $
+#	$NetBSD: MMTA,v 1.20 2003/04/10 22:07:00 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -21,7 +21,6 @@ options 	SH7708R			# 100MHz
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.41 2003/04/08 18:58:21 abs Exp $
+#	$NetBSD: SWINGER,v 1.42 2003/04/10 22:06:59 christos Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.41 $"
+#ident 		"SWINGER-$Revision: 1.42 $"
 
 maxusers	64		# estimated number of users
 
@@ -49,7 +49,6 @@ options 	XSERVER		# X server support in console drivers
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

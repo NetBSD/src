@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.20 2002/09/18 02:44:04 lukem Exp $
+# 	$NetBSD: NEWS1200,v 1.21 2003/04/10 22:07:01 christos Exp $
 
 #	news1200 config file
 #
@@ -20,7 +20,6 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
-#options 	UCONSOLE		# users can redirect console (unsafe)
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 

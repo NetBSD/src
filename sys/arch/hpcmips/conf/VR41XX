@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.12 2003/02/16 17:35:15 augustss Exp $
+# $NetBSD: VR41XX,v 1.13 2003/04/10 22:06:57 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -60,7 +60,6 @@ options		KLOADER_DEBUG
 					# In NO RTC_OFFSET , inherit RTC_OFFSET
 					# from Windows CE.
 options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 
