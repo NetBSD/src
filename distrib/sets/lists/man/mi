@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.719 2004/08/15 20:33:28 rumble Exp $
+# $NetBSD: mi,v 1.720 2004/08/19 09:54:06 drochner Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1639,6 +1639,7 @@
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dreamcast/makedev.0	man-obsolete		obsolete
+./usr/share/man/cat8/drvctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dump.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dumpfs.0			man-sysutil-catman	.cat
@@ -3764,6 +3765,7 @@
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete
+./usr/share/man/man8/drvctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dump.8			man-sysutil-man		.man
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man		.man
