@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.h,v 1.3 1993/11/10 01:34:14 paulus Exp $
+ * $Id: ipcp.h,v 1.4 1994/02/22 00:11:59 paulus Exp $
  */
 
 /*
@@ -45,6 +45,8 @@ typedef struct ipcp_options {
     int proxy_arp : 1;		/* Make proxy ARP entry for peer? */
     int neg_vj : 1;		/* Van Jacobson Compression? */
     int old_vj : 1;		/* use old (short) form of VJ option? */
+    int accept_local : 1;	/* accept peer's value for ouraddr */
+    int accept_remote : 1;	/* accept peer's value for hisaddr */
     u_short vj_protocol;	/* protocol value to use in VJ option */
     u_char maxslotindex, cflag;	/* values for RFC1332 VJ compression neg. */
     u_long ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
