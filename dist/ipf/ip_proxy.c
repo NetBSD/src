@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.2 2000/05/03 10:55:42 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.3 2000/05/11 19:49:16 veego Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9 2000/03/16 01:42:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 darrenr Exp";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -222,6 +222,7 @@ nat_t *nat;
 	aproxy_t *apr;
 	tcphdr_t *tcp = NULL;
 	u_32_t sum;
+	short rv;
 	int err;
 
 	if (nat->nat_aps == NULL)
@@ -256,8 +257,12 @@ nat_t *nat;
 				err = (*apr->apr_inpkt)(fin, ip, aps, nat);
 		}
 
+		rv = APR_EXIT(err);
+		if (rv == -1)
+			return rv;
+
 		if (tcp != NULL) {
-			err = appr_fixseqack(fin, ip, aps, err);
+			err = appr_fixseqack(fin, ip, aps, APR_INC(err));
 #if SOLARIS && defined(_KERNEL)
 			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip, tcp);
 #else
@@ -266,9 +271,9 @@ nat_t *nat;
 		}
 		aps->aps_bytes += ip->ip_len;
 		aps->aps_pkts++;
-		return 2;
+		return 1;
 	}
-	return -1;
+	return 0;
 }
 
 

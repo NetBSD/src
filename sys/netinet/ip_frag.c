@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.1.1.13 2000/05/03 10:58:27 veego Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.1.1.14 2000/05/11 19:39:22 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.1 2000/04/28 14:56:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.3 2000/05/05 15:10:23 darrenr Exp";
 #endif
 
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -86,6 +86,10 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.1 2000/04/28 14:56:51 da
 # endif
 extern struct callout_handle ipfr_slowtimer_ch;
 # endif
+#endif
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 104230000)
+# include <sys/callout.h>
+extern struct callout ipfr_slowtimer_ch;
 #endif
 
 
@@ -527,20 +531,22 @@ int ipfr_slowtimer()
 	fr_timeoutstate();
 	ip_natexpire();
 	fr_authexpire();
-# if	SOLARIS
+# if    SOLARIS
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
+	RWLOCK_EXIT(&ipf_solaris);
 # else
-#  ifndef linux
+#  if defined(__NetBSD__) && (__NetBSD_Version__ >= 104240000)
+	callout_reset(&ipfr_slowtimer_ch, hz / 2, ipfr_slowtimer, NULL);
+#  else
 #   if (__FreeBSD_version >= 300000)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
 #   else
 	timeout(ipfr_slowtimer, NULL, hz/2);
 #   endif
-#  endif
-#  if (BSD < 199306) && !defined(__sgi)
+#   if (BSD < 199306) && !defined(__sgi)
 	return 0;
-#  endif
-# endif
-	RWLOCK_EXIT(&ipf_solaris);
+#   endif /* FreeBSD */
+#  endif /* NetBSD */
+# endif /* SOLARIS */
 }
 #endif /* defined(_KERNEL) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.1 2000/05/03 10:55:47 veego Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.1.1.2 2000/05/11 19:49:17 veego Exp $	*/
 
 /*
  * Copyright (C) 1999 by Darren Reed.
@@ -43,7 +43,7 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6 2000/02/26 07:42:20 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.1 2000/05/06 00:11:18 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -429,7 +429,7 @@ char *file;
 			break;
 		if (i != sizeof(ips)) {
 			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				sizeof(ips));
+				(int)sizeof(ips));
 			close(sfd);
 			return 1;
 		}
@@ -522,7 +522,7 @@ char *file;
 			break;
 		if (i != sizeof(ipn)) {
 			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				sizeof(ipn));
+				(int)sizeof(ipn));
 			close(nfd);
 			return 1;
 		}

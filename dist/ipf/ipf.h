@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.2 2000/05/03 10:55:47 veego Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.3 2000/05/11 19:49:17 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.9.2.1 2000/04/28 15:27:40 darrenr Exp
+ * Id: ipf.h,v 2.9.2.2 2000/05/06 11:20:20 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -96,6 +96,7 @@ extern	u_32_t	optname __P((char ***, u_short *, int));
 extern	void	printpacket __P((ip_t *));
 extern	void	printportcmp __P((int, struct frpcmp *));
 extern	void	printhostmask __P((int, u_32_t *, u_32_t *));
+extern	void	printbuf __P((char *, int, int));
 #if SOLARIS
 extern	int	inet_aton __P((const char *, struct in_addr *));
 extern	int	gethostname __P((char *, int ));

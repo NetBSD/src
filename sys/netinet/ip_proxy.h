@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.11 2000/05/03 10:58:33 veego Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.12 2000/05/11 19:39:24 veego Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_proxy.h,v 2.8.2.1 2000/04/07 12:31:01 darrenr Exp
+ * Id: ip_proxy.h,v 2.8.2.3 2000/05/06 12:32:43 darrenr Exp
  */
 
 #ifndef	__IP_PROXY_H__
@@ -86,14 +86,25 @@ typedef	struct	aproxy	{
 
 #define	APR_DELETE	1
 
+#define	APR_ERR(x)	(((x) & 0xffff) << 16)
+#define	APR_EXIT(x)	(((x) >> 16) & 0xffff)
+#define	APR_INC(x)	((x) & 0xffff)
 
+#define	FTP_BUFSZ	160
 /*
  * For the ftp proxy.
  */
+typedef struct  ftpside {
+	char	*ftps_rptr;
+	char	*ftps_wptr;
+	u_32_t	ftps_seq;
+	int	ftps_junk;
+	char	ftps_buf[FTP_BUFSZ];
+} ftpside_t;
+
 typedef struct  ftpinfo {
-	u_int   ftp_passok;
-	u_char	ftp_eol[2][2];
-	u_32_t	ftp_seq[2][2];
+	u_int   	ftp_passok;
+	ftpside_t	ftp_side[2];
 } ftpinfo_t;
 
 /*

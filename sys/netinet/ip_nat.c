@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.16 2000/05/03 10:58:31 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.17 2000/05/11 19:39:23 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.2 2000/04/30 05:10:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.4 2000/05/06 12:29:48 darrenr Exp";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -1168,7 +1168,7 @@ int direction;
 					port += MAPBLK_MINPORT;
 					port = htons(port);
 				}
-			} else if (!in.s_addr &&
+			} else if (!np->in_nip &&
 				   (np->in_outmsk == 0xffffffff)) {
 				/*
 				 * 0/32 - use the interface's IP address.
@@ -1177,7 +1177,7 @@ int direction;
 				    fr_ifpaddr(4, fin->fin_ifp, &in) == -1)
 					goto badnat;
 				in.s_addr = ntohl(in.s_addr);
-			} else if (!in.s_addr && !np->in_outmsk) {
+			} else if (!np->in_nip && !np->in_outmsk) {
 				/*
 				 * 0/0 - use the original source address/port.
 				 */
@@ -1919,12 +1919,17 @@ maskloop:
 						     ip->ip_len);
 			}
 		}
+
 		if ((np->in_apr != NULL) && (np->in_dport == 0 ||
-		     (tcp != NULL && dport == np->in_dport)))
-			(void) appr_check(ip, fin, nat);
+		     (tcp != NULL && dport == np->in_dport))) {
+			i = appr_check(ip, fin, nat);
+			if (i == 0)
+				i = 1;
+		} else
+			i = 1;
 		ATOMIC_INCL(nat_stats.ns_mapped[1]);
 		RWLOCK_EXIT(&ipf_nat);	/* READ */
-		return 1;
+		return i;
 	}
 	RWLOCK_EXIT(&ipf_nat);			/* READ/WRITE */
 	return 0;
@@ -2040,8 +2045,13 @@ maskloop:
 		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
 			ipfr_nat_newfrag(ip, fin, 0, nat);
 		if ((np->in_apr != NULL) && (np->in_dport == 0 ||
-		    (tcp != NULL && sport == np->in_dport)))
-			(void) appr_check(ip, fin, nat);
+		    (tcp != NULL && sport == np->in_dport))) {
+			i = appr_check(ip, fin, nat);
+			if (i == -1) {
+				RWLOCK_EXIT(&ipf_nat);
+				return i;
+			}
+		}
 
 		MUTEX_ENTER(&nat->nat_lock);
 		if (nflags != IPN_ICMPERR)
@@ -2102,9 +2112,11 @@ maskloop:
 
 			if (csump) {
 				if (nat->nat_dir == NAT_OUTBOUND)
-					fix_incksum(csump, nat->nat_sumd[0], 0);
+					fix_incksum(csump, nat->nat_sumd[0],
+						    0);
 				else
-					fix_outcksum(csump, nat->nat_sumd[0], 0);
+					fix_outcksum(csump, nat->nat_sumd[0],
+						     0);
 			}
 		}
 		ATOMIC_INCL(nat_stats.ns_mapped[0]);

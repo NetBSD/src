@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.3 2000/05/03 10:55:34 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.4 2000/05/11 19:49:15 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.2 2000/04/28 14:56:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.4 2000/05/09 22:43:31 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -169,6 +169,10 @@ int	fr_running = 0;
 #if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 struct callout_handle ipfr_slowtimer_ch;
 #endif
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 104230000)
+# include <sys/callout.h>
+struct callout ipfr_slowtimer_ch;
+#endif
 
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
 # include <sys/device.h>
@@ -311,11 +315,16 @@ pfil_error:
 # else
 		"disabled");
 # endif
-#ifdef	_KERNEL
-# if (__FreeBSD_version >= 300000) && defined(_KERNEL)
-	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
+#ifdef  _KERNEL
+# if defined(__NetBSD__) && (__NetBSD_Version__ >= 104230000)
+	callout_init(&ipfr_slowtimer_ch);
+	callout_reset(&ipfr_slowtimer_ch, hz / 2, ipfr_slowtimer, NULL);
 # else
+#  if (__FreeBSD_version >= 300000) && defined(_KERNEL)
+	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
+#  else
 	timeout(ipfr_slowtimer, NULL, hz/2);
+#  endif
 # endif
 #endif
 	return 0;
@@ -333,16 +342,20 @@ int ipldetach()
 	int error = 0;
 #endif
 
-#ifdef	_KERNEL
-# if (__FreeBSD_version >= 300000)
-	untimeout(ipfr_slowtimer, NULL, ipfr_slowtimer_ch);
+#ifdef  _KERNEL
+# if defined(__NetBSD__) && (__NetBSD_Version__ >= 104230000)
+	callout_stop(&ipfr_slowtimer_ch);
 # else
+#  if (__FreeBSD_version >= 300000)
+	untimeout(ipfr_slowtimer, NULL, ipfr_slowtimer_ch);
+#  else
 #  ifdef __sgi
 	untimeout(ipfr_slowtimer);
-#  else
+#   else
 	untimeout(ipfr_slowtimer, NULL);
-#  endif
-# endif
+#   endif
+#  endif /* FreeBSD */
+# endif /* NetBSD */
 #endif
 	SPL_NET(s);
 	if (!fr_running)
@@ -1344,6 +1357,9 @@ frdest_t *fdp;
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
+# if	BSD >= 199306
+		int i = m->m_flags & M_EXT;
+# endif
 # ifndef sparc
 		ip->ip_id = htons(ip->ip_id);
 		ip->ip_len = htons(ip->ip_len);
@@ -1354,6 +1370,11 @@ frdest_t *fdp;
 # if	BSD >= 199306
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
+		if (i) {
+			ip->ip_id = ntohs(ip->ip_id);
+			ip->ip_len = ntohs(ip->ip_len);
+			ip->ip_off = ntohs(ip->ip_off);
+		}
 # else
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst);
 # endif

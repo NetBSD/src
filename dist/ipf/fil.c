@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.3 2000/05/03 10:55:29 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.4 2000/05/11 19:49:13 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.4 2000/04/28 15:38:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp";
 #endif
 
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
@@ -332,13 +332,19 @@ getports:
 	}
 #endif
 
-	for (s = (u_char *)(ip + 1), hlen -= (int)sizeof(*ip); hlen; ) {
+	for (s = (u_char *)(ip + 1), hlen -= (int)sizeof(*ip); hlen > 0; ) {
 		opt = *s;
 		if (opt == '\0')
 			break;
-		ol = (opt == IPOPT_NOP) ? 1 : (int)*(s+1);
-		if (opt > 1 && (ol < 2 || ol > hlen))
-			break;
+		else if (opt == IPOPT_NOP)
+			ol = 1;
+		else {
+			if (hlen < 2)
+				break;
+			ol = (int)*(s + 1);
+			if (ol < 2 || ol > hlen)
+				break;
+		}
 		for (i = 9, mv = 4; mv >= 0; ) {
 			op = ipopts + i;
 			if (opt == (u_char)op->ol_val) {
@@ -1064,6 +1070,10 @@ logit:
 	 * Once we're finished return to our caller, freeing the packet if
 	 * we are dropping it (* BSD ONLY *).
 	 */
+	if ((changed == -1) && (pass & FR_PASS)) {
+		pass &= ~FR_PASS;
+		pass |= FR_BLOCK;
+	}
 #if defined(_KERNEL)
 # if !SOLARIS
 #  if !defined(linux)
@@ -1327,7 +1337,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.4 2000/04/28 15:38:32 darrenr Exp
+ * Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

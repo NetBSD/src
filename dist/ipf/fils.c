@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.1.1.3 2000/05/03 10:55:31 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.1.1.4 2000/05/11 19:49:14 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -67,7 +67,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.1 2000/04/28 17:03:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.3 2000/05/08 12:35:51 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -157,7 +157,11 @@ void *ip;
 static void Usage(name)
 char *name;
 {
+#ifdef  USE_INET6
+	fprintf(stderr, "Usage: %s [-6aAfhIinosv] [-d <device>]\n", name);
+#else
 	fprintf(stderr, "Usage: %s [-aAfhIinosv] [-d <device>]\n", name);
+#endif
 	fprintf(stderr, "       %s -t [-S source address] [-D destination address] [-P protocol] [-T refreshtime] [-C] [-d <device>]\n", name);
 	exit(1);
 }
@@ -451,15 +455,15 @@ frentry_t *fp;
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_hits);
+			PRINTF("%qu ", (unsigned long long) fp->fr_hits);
 #else
-			PRINTF("%ld ", fp->fr_hits);
+			PRINTF("%lu ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_bytes);
+			PRINTF("%qu ", (unsigned long long) fp->fr_bytes);
 #else
-			PRINTF("%ld ", fp->fr_bytes);
+			PRINTF("%lu ", fp->fr_bytes);
 #endif
 		if (opts & OPT_SHOWLINENO)
 			PRINTF("@%d ", n);
@@ -559,7 +563,9 @@ ips_stat_t *ipsp;
 			ips.is_age, ips.is_pass, ips.is_p,
 			ips.is_state[0], ips.is_state[1]);
 #ifdef	USE_QUAD_T
-		PRINTF("\tpkts %qd bytes %qd", ips.is_pkts, ips.is_bytes);
+		PRINTF("\tpkts %qu bytes %qu",
+			(unsigned long long) ips.is_pkts,
+			(unsigned long long) ips.is_bytes);
 #else
 		PRINTF("\tpkts %ld bytes %ld", ips.is_pkts, ips.is_bytes);
 #endif
@@ -902,9 +908,10 @@ int topclosed;
 			printw(" %4s", str1);
 				/* print #pkt/#bytes */
 #ifdef	USE_QUAD_T
-			printw(" %7qu %9qu", tp->st_pkts, tp->st_bytes);
+			printw(" %7qu %9qu", (unsigned long long) tp->st_pkts,
+				(unsigned long long) tp->st_bytes);
 #else
-			printw(" %7ld %9ld", tp->st_pkts, tp->st_bytes);
+			printw(" %7lu %9lu", tp->st_pkts, tp->st_bytes);
 #endif
 			printw(" %9s", ttl_to_string(tp->st_age));
 
@@ -998,8 +1005,9 @@ fr_authstat_t *asp;
 	frauthent_t *frap, fra;
 
 #ifdef	USE_QUAD_T
-	printf("Authorisation hits: %qd\tmisses %qd\n", asp->fas_hits,
-		asp->fas_miss);
+	printf("Authorisation hits: %qu\tmisses %qu\n",
+		(unsigned long long) asp->fas_hits,
+		(unsigned long long) asp->fas_miss);
 #else
 	printf("Authorisation hits: %ld\tmisses %ld\n", asp->fas_hits,
 		asp->fas_miss);
