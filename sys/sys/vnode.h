@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.119 2004/01/10 17:16:38 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.120 2004/01/14 11:28:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -289,9 +289,12 @@ extern struct simplelock vnode_free_list_slock;
 #define	ilstatic static
 #endif
 
-ilstatic void holdrele(struct vnode *);
-ilstatic void vhold(struct vnode *);
+ilstatic void holdrelel(struct vnode *);
+ilstatic void vholdl(struct vnode *);
 ilstatic void vref(struct vnode *);
+
+static __inline void holdrele(struct vnode *) __attribute__((__unused__));
+static __inline void vhold(struct vnode *) __attribute__((__unused__));
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
@@ -300,12 +303,13 @@ ilstatic void vref(struct vnode *);
 
 /*
  * decrease buf or page ref
+ *
+ * called with v_interlock held
  */
 static __inline void
-holdrele(struct vnode *vp)
+holdrelel(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
 	vp->v_holdcnt--;
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
@@ -314,17 +318,17 @@ holdrele(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 		simple_unlock(&vnode_free_list_slock);
 	}
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
  * increase buf or page ref
+ *
+ * called with v_interlock held
  */
 static __inline void
-vhold(struct vnode *vp)
+vholdl(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
@@ -333,7 +337,6 @@ vhold(struct vnode *vp)
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
@@ -348,6 +351,30 @@ vref(struct vnode *vp)
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
+
+/*
+ * decrease buf or page ref
+ */
+static __inline void
+holdrele(struct vnode *vp)
+{
+
+	simple_lock(&vp->v_interlock);
+	holdrelel(vp);
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * increase buf or page ref
+ */
+static __inline void
+vhold(struct vnode *vp)
+{
+
+	simple_lock(&vp->v_interlock);
+	vholdl(vp);
+	simple_unlock(&vp->v_interlock);
+}
 
 #define	NULLVP	((struct vnode *)NULL)
 
