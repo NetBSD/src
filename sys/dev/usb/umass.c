@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.38.2.1 2000/07/13 01:14:08 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.38.2.2 2000/10/04 02:38:55 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -3402,6 +3402,9 @@ umass_atapi_probedev(struct atapibus_softc *atapi, int target)
 
 	DPRINTF(UDMASS_SCSI,("umass_atapi_probedev: atapi=%p target=%d\n",
 			     atapi, target));
+
+	if (target != 0)	/* only probe drive 0 */
+		return;
 
 	if (atapi->sc_link[target])
 		return;
