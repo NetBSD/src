@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.7.2.3 2004/09/21 13:19:32 skrll Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.7.2.4 2005/01/27 09:02:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.7.2.3 2004/09/21 13:19:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.7.2.4 2005/01/27 09:02:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ void ms_hb_attach(struct device *, struct device *, void *);
 int ms_hb_intr(void *);
 
 int ms_hb_enable(void *);
-int ms_hb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int ms_hb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void ms_hb_disable(void *);
 
 CFATTACH_DECL(ms_hb, sizeof(struct ms_hb_softc),
@@ -204,12 +204,12 @@ ms_hb_disable(v)
 }
 
 int
-ms_hb_ioctl(v, cmd, data, flag, p)
+ms_hb_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	return EPASSTHROUGH;
 }
