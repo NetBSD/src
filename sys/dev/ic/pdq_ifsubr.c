@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.3 1996/05/07 01:43:15 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.4 1996/05/14 00:16:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -328,7 +328,9 @@ pdq_ifioctl(
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET: {
+#if !defined(__NetBSD__)
 		    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+#endif
 		    pdq_ifinit(sc);
 #if !defined(__bsdi__)
 		    arp_ifinit(&sc->sc_ac, ifa);
