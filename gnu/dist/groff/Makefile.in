@@ -97,7 +97,7 @@ libprogramdir=$(libdir)/groff
 # `datasubdir' says where to install platform-independent data files.
 datadir=@datadir@
 dataprogramdir=$(datadir)/groff
-datasubdir=$(dataprogramdir)/$(version)$(revision)
+datasubdir=$(dataprogramdir)
 
 # `infodir' says where to install info files.
 infodir=@infodir@
