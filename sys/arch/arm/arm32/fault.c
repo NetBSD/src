@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.13 2002/08/28 20:14:24 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.14 2002/09/26 19:12:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.13 2002/08/28 20:14:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.14 2002/09/26 19:12:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,9 +514,11 @@ copyfault:
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
 		pcb->pcb_onfault = onfault;
-		if (rv == 0)
+		if (rv == 0) {
+			if (user != 0) /* Record any stack growth... */
+				uvm_grow(p, trunc_page(va));
 			goto out;
-
+		}
 		if (user == 0) {
 			if (pcb->pcb_onfault) {
 				frame->tf_r0 = rv;
