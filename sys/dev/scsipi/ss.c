@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.13 1996/10/12 23:23:21 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.14 1996/11/29 19:53:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -94,6 +94,8 @@ struct scsi_inquiry_pattern ss_patterns[] = {
 	 "HP      ", "C1750A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C2500A          ", ""},
+	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "C1130A          ", ""},
 };
 
 int
