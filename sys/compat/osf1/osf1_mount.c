@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.9 1999/04/24 07:09:49 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.10 1999/04/24 07:13:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -210,11 +210,7 @@ osf1_sys_statfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_statfs_args /* {
-		syscallarg(char *) path;
-		syscallarg(struct osf1_statfs *) buf;
-		syscallarg(int) len;
-	} */ *uap = v;
+	struct osf1_sys_statfs_args *uap = v;
 	struct mount *mp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -241,11 +237,7 @@ osf1_sys_fstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_fstatfs_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct osf1_statfs *) buf;   
-		syscallarg(int) len;
-	} */ *uap = v;
+	struct osf1_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -270,11 +262,7 @@ osf1_sys_getfsstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_getfsstat_args /* {
-		syscallarg(struct osf1_statfs *) buf;
-		syscallarg(long) bufsize;
-		syscallarg(int) flags;
-	} */ *uap = v;
+	struct osf1_sys_getfsstat_args *uap = v;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -322,10 +310,7 @@ osf1_sys_unmount(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_unmount_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) flags;
-	} */ *uap = v;
+	struct osf1_sys_unmount_args *uap = v;
 	struct sys_unmount_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -346,12 +331,7 @@ osf1_sys_mount(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_mount_args /* {
-		syscallarg(int) type;
-		syscallarg(char *) path;
-		syscallarg(int) flags;
-		syscallarg(caddr_t) data;
-	} */ *uap = v;
+	struct osf1_sys_mount_args *uap = v;
 	struct sys_mount_args a;
 	int error;
 
