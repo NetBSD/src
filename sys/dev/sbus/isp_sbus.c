@@ -1,4 +1,33 @@
-/* $NetBSD: isp_sbus.c,v 1.29 2000/08/01 23:55:14 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.30 2000/08/14 07:00:08 mjacob Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -47,6 +76,7 @@
 #include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
 
+static int isp_sbus_intr __P((void *));
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
 static int isp_sbus_mbxdma __P((struct ispsoftc *));
@@ -230,7 +260,7 @@ isp_sbus_attach(parent, self, aux)
 	}
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
-	    (int(*)__P((void*)))isp_intr, sbc);
+	    isp_sbus_intr, sbc);
 	ENABLE_INTS(isp);
 	ISP_UNLOCK(isp);
 
@@ -241,6 +271,20 @@ isp_sbus_attach(parent, self, aux)
 	if (isp->isp_state != ISP_RUNSTATE) {
 		isp_uninit(isp);
 	}
+}
+
+static int
+isp_sbus_intr(arg)
+	void *arg;
+{
+	int rv;
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *)arg;
+	bus_dmamap_sync(sbc->sbus_dmatag, sbc->sbus_result_dmamap, 0,
+	    sbc->sbus_result_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	sbc->sbus_isp.isp_osinfo.onintstack = 1;
+	rv = isp_intr(arg);
+	sbc->sbus_isp.isp_osinfo.onintstack = 0;
+	return (rv);
 }
 
 static u_int16_t
