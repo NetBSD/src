@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.38 2003/09/02 07:34:53 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.39 2004/04/09 18:27:48 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.38 2003/09/02 07:34:53 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.39 2004/04/09 18:27:48 tv Exp $");
 #endif
 #endif
 
@@ -326,7 +326,7 @@ pkg_perform(lpkg_head_t *pkgs)
 
 	/* Make first "real contents" pass over it */
 	check_list(Home, &plist, basename_of(pkg));
-	(void) umask(022);	/* make sure gen'ed directories, files
+	(void) umask(DEF_UMASK);/* make sure gen'ed directories, files
 				 * don't have group or other write bits. */
 
 	/* Now put the release specific items in */
