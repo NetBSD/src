@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.14 2001/11/29 21:20:00 christos Exp $	*/
+/*	$NetBSD: ucred.h,v 1.15 2003/02/18 08:37:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,12 +66,12 @@ struct ucred {
 #define	crhold(cr)	(cr)->cr_ref++
 
 
-struct ucred	*crcopy __P((struct ucred *));
-struct ucred	*crdup __P((struct ucred *));
-void		crfree __P((struct ucred *));
-struct ucred	*crget __P((void));
-int		suser __P((struct ucred *, u_short *));
-void		crcvt __P((struct ucred *, const struct uucred *));
+struct ucred	*crcopy(struct ucred *);
+struct ucred	*crdup(const struct ucred *);
+void		crfree(struct ucred *);
+struct ucred	*crget(void);
+int		suser(const struct ucred *, u_short *);
+void		crcvt(struct ucred *, const struct uucred *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
