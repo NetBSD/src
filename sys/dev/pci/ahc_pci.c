@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.24 2000/05/10 17:07:52 thorpej Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.24.4.1 2000/09/05 01:00:25 soren Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -132,6 +132,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AHA_3944AU		0x7895900478949004ull
 
 #define ID_AIC7890		0x001F9005000F9005ull
+#define ID_AAA_131U2		0x0013900500039005ull
 #define ID_AHA_2930U2		0x0011900501819005ull
 #define ID_AHA_2940U2B		0x00109005A1009005ull
 #define ID_AHA_2940U2_OEM	0x0010900521809005ull
@@ -156,7 +157,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AHA_3960D_CPQ	0x00C09005F6200E11ull
 
 #define ID_AIC7810		0x1078900400000000ull
-#define ID_AIC7815		0x1578900400000000ull
+#define ID_AIC7815		0x7815900400000000ull
 
 typedef int (ahc_device_setup_t)(struct pci_attach_args *, char *,
 				 ahc_chip *, ahc_feature *, ahc_flag *);
@@ -344,6 +345,12 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		"Adaptec 2950 Ultra2 SCSI adapter",
 		ahc_aic7890_setup
 	},
+	{
+		ID_AAA_131U2,
+		ID_ALL_MASK,
+		"Adaptec AAA-131 Ultra2 RAID adapter",
+		ahc_aic7890_setup
+	}, 
 	/* aic7892 based controllers */
 	{
 		ID_AHA_29160,
@@ -1229,7 +1236,7 @@ static int
 ahc_raid_setup(struct pci_attach_args *pa, char *channel,
 	       ahc_chip *chip, ahc_feature *features, ahc_flag *flags)
 {
-	printf("RAID functionality unsupported\n");
+	printf(": RAID functionality unsupported\n");
 	return (ENXIO);
 }
 
