@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.19 1999/02/01 19:05:09 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.20 1999/07/22 01:14:22 hubertf Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -118,10 +118,7 @@ $version = "6.0.1s3";
 @wiretestef = ();
 
 
-@docf = ("am-utils.info", "am-utils.info-1", "am-utils.info-2",
-	 "am-utils.info-3", "am-utils.info-4", "am-utils.info-5",
-	 "am-utils.info-6", "am-utils.texi", "hlfsd.ps", "texinfo.tex",
-	 "version.texi");
+@docf = ("am-utils.texi", "hlfsd.ps", "texinfo.tex", "version.texi");
 
 @docdf = ();
 
@@ -156,6 +153,18 @@ sub fixrcs
     elsif ($t =~ /.*\.[yl]/) {
 	$hdr = 1;
     }
+    elsif ($t =~ /am-utils\.texi/) {
+	$hdr = 2;
+    }
+    elsif ($t =~ /.*\.texi/) {
+	print OFILE '@c', "\t", '$', 'NetBSD', '$', "\n";
+    }
+    elsif ($t =~ /.*\.tex$/) {
+	print OFILE "%\t", '$', 'NetBSD', '$', "\n";
+    }
+    elsif ($t =~ /.*\.ps/) {
+	$hdr = 3;
+    }
     else {
 	print OFILE '$', 'NetBSD', '$', "\n";
     }
@@ -166,6 +175,21 @@ sub fixrcs
 		$hdr = 0;
 		next;
 	    }
+	}
+	elsif ($hdr == 2) {
+	    if (/\\input[ \t]+texinfo/) {
+		print OFILE $_;
+		print OFILE '@c', "\t", '$', 'NetBSD', '$', "\n";
+		$hdr = 0;
+		next;
+	    }
+	}
+	elsif ($hdr == 3) {
+	    # First line is magic.  Insert Id between lines 1 and 2.
+	    print OFILE $_;
+	    print OFILE "%\t", '$', 'NetBSD', '$', "\n";
+	    $hdr = 0;
+	    next;
 	}
 	if ($state == 2) {
 	    if (/#endif/) {
@@ -398,7 +422,7 @@ foreach $n (keys(%sedlist)) {
 __END__
 %% file usr.sbin/amd/Makefile
 %% NetBSD #
-SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map pawd wire-test
+SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map pawd wire-test doc
 
 all-amd all-amq all-hlfsd all-fixmount all-fsinfo all-mk-amd-map all-pawd \
     all-wire-test: all-libamu
@@ -560,19 +584,10 @@ __EOF
 %% file usr.sbin/amd/doc/Makefile
 %% NetBSD #
 
-PROG = am-utils
-SRCS = am-utils.texinfo
+TEXINFO = am-utils.info
+INFOFLAGS = -I${.CURDIR}
 
-${PROG}: am-utils.dvi
-
-am-utils.dvi: ${SRCS}
-	-tex am-utils.texinfo; tex am-utils.texinfo
-
-clean:
-	-rm -f am-utils.aux am-utils.cp am-utils.cps am-utils.dvi am-utils.fn \
-	 am-utils.fns am-utils.ky am-utils.kys am-utils.log am-utils.pg \
-	 am-utils.pgs am-utils.toc am-utils.tp am-utils.tps am-utils.vr \
-	 am-utils.vrs
+.include <bsd.info.mk>
 %% file usr.sbin/amd/include/config.h
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
