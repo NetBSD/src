@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.16 2000/05/13 18:26:51 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.17 2000/05/22 22:24:14 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -363,3 +363,67 @@ sys/dev/pci/if_fxp.c				patch
   Fix the fxp driver so that it works after a warm-boot from windows
   and across an APM suspend/resume or hibernate/resume cycle.  Fixes
   PR#9370, PR#9548, PR#9571 and PR#9573.
+
+sys/dev/isa/i82365_isasubr.c			1.21
+sys/arch/i386/conf/INSTALL			patch
+distrib/notes/common/main			patch
+distrib/notes/common/sysinst			patch
+
+  Revert 12-bit iospace for PCMCIA to 0x400-0xfff.  Mask out a
+  superset of the PCMCIA IRQs from GENERIC in INSTALL (5, 7 and
+  10).  Rework the text explaining the PCMCIA workarounds; explain
+  both the IO space and IRQ workarounds.
+
+sys/dev/ic/smc83c170.c				1.31 via patch
+
+  Use the lower bits of the crc32 for the multicast address filter,
+  not the upper bits.  Fixes PR#8268.
+
+sys/dev/pci/pcidevs				1.198
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+
+  Add product IDs for some VIA Technologies devices.
+
+etc/etc.i386/MAKEDEV				1.107
+
+  Create tty03 by default for pcmcia modems.
+
+etc/group					1.7
+
+  Create ``users'' group for the benefit of useradd.
+
+bin/ps/ps.c					1.37
+
+  Only check the terminal size via STDOUT, not STDERR or STDIN.
+
+sbin/dmesg/dmesg.8				1.11
+
+  Mention /var/run/dmesg.boot.
+
+gnu/dist/gcc/config/arm/arm.md			1.5
+
+  Add clobber of the condition code register in negdi2.  Fixes
+  PR#9613.
+
+sys/arch/i386/pci/pcib.c			1.26
+
+  Do not handle the VIA Technologies VT82C688A SMBus Controller
+  as a PCI/ISA bridge.  Fixes PR#10093.
+
+libexec/getty/ttys.5				1.13
+
+  Fix documentation regarding rtscts/mdmbuf/dtrcts.  Fixes PR#9427.
+
+sbin/mknod/mknod.8				1.18
+
+  Document -F flag.  Fixes PR#9451.
+
+usr.bin/vmstat/vmstat.8				1.17
+
+  Fix typo in manual page.  Fixes PR#10036.
+
+lib/libc/stdio/fopen.3				1.11
+
+  Correct inconsistency between implementation and documentation.
+  Fixes PR#6072.
