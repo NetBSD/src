@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.44 2002/06/01 11:40:31 itojun Exp $	*/
+/*	$NetBSD: stand.h,v 1.45 2003/04/01 21:09:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -185,11 +185,11 @@ int	DEV_IOCTL(unused) __P((struct open_file *f, u_long cmd, void *data));
 struct open_file {
 	int		f_flags;	/* see F_* below */
 #if !defined(LIBSA_SINGLE_DEVICE)
-	struct devsw	*f_dev;		/* pointer to device operations */
+	const struct devsw	*f_dev;	/* pointer to device operations */
 #endif
 	void		*f_devdata;	/* device specific data */
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
-	struct fs_ops	*f_ops;		/* pointer to file system operations */
+	const struct fs_ops	*f_ops;	/* pointer to file system operations */
 #endif
 	void		*f_fsdata;	/* file system specific data */
 #if !defined(LIBSA_NO_RAW_ACCESS)
