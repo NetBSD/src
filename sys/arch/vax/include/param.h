@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.26 1997/10/19 20:48:47 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.27 1997/11/02 14:25:19 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -142,7 +142,7 @@
 
 /* clicks to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
