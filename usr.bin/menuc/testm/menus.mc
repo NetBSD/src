@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.4 1998/06/25 09:58:58 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.5 1998/06/29 08:46:37 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,11 @@ menu root, title "  Main Menu of Test System";
 	option  "A scrollable menu",
 		sub menu  scrollit
 	;
+	option  "Another scrollable menu",
+		sub menu scrollit2
+	;
+	option  "Big non-scrollable menu, bombs on small screens",
+		sub menu  bigscroll;
 	option  "Run a shell...",
 		action (endwin) { system ("/bin/sh"); }
 	;
@@ -146,7 +151,7 @@ Now this tests lines for scrolling:
 
 menu submenu, title "  submenu test";
 	option  "upper right", sub menu  upperright;
-	option  "lower right", sub menu  lowerleft;
+	option  "lower left", sub menu  lowerleft;
 	option  "middle, no title", sub menu middle;
 
 menu upperright, title "upper right", y=2, x=60, no exit;
@@ -165,3 +170,78 @@ menu scrollit, scrollable, h=4, title "  Scrollable Menu";
 	option "option 4", action {};
 	option "option 5", action {};
 	option "option 6", action {};
+
+menu bigscroll, no scrollable, title "  Non-scrollable Menu";
+	option "option 1", action {};
+	option "option 2", action {};
+	option "option 3", action {};
+	option "option 4", action {};
+	option "option 5", action {};
+	option "option 6", action {};
+	option "option 7", action {};
+	option "option 8", action {};
+	option "option 9", action {};
+	option "option 10", action {};
+	option "option 11", action {};
+	option "option 12", action {};
+	option "option 13", action {};
+	option "option 14", action {};
+	option "option 15", action {};
+	option "option 16", action {};
+	option "option 17", action {};
+	option "option 18", action {};
+	option "option 19", action {};
+	option "option 20", action {};
+
+menu scrollit2, scrollable, title "  Non-scrollable Menu";
+	option "option 1", action {};
+	option "option 2", action {};
+	option "option 3", action {};
+	option "option 4", action {};
+	option "option 5", action {};
+	option "option 6", action {};
+	option "option 7", action {};
+	option "option 8", action {};
+	option "option 9", action {};
+	option "option 10", action {};
+	option "option 11", action {};
+	option "option 12", action {};
+	option "option 13", action {};
+	option "option 14", action {};
+	option "option 15", action {};
+	option "option 16", action {};
+	option "option 17", action {};
+	option "option 18", action {};
+	option "option 19", action {};
+	option "option 20", action {};
+	option "option 21", action {};
+	option "option 22", action {};
+	option "option 23", action {};
+	option "option 24", action {};
+	option "option 25", action {};
+	option "option 26", action {};
+	option "option 27", action {};
+	option "option 28", action {};
+	option "option 29", action {};
+	option "option 30", action {};
+	option "option 31", action {};
+	option "option 32", action {};
+	option "option 33", action {};
+	option "option 34", action {};
+	option "option 35", action {};
+	option "option 36", action {};
+	option "option 37", action {};
+	option "option 38", action {};
+	option "option 39", action {};
+	option "option 40", action {};
+	option "option 41", action {};
+	option "option 42", action {};
+	option "option 43", action {};
+	option "option 44", action {};
+	option "option 45", action {};
+	option "option 46", action {};
+	option "option 47", action {};
+	option "option 48", action {};
+	option "option 49", action {};
+	option "option 50", action {};
+	option "option 51", action {};
