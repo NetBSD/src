@@ -617,7 +617,11 @@ rtx
 gen_exception_label ()
 {
   rtx lab;
+
+  push_obstacks_nochange ();
+  end_temporary_allocation ();
   lab = gen_label_rtx ();
+  pop_obstacks ();
   return lab;
 }
 
