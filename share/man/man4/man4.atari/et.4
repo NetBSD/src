@@ -1,4 +1,4 @@
-.\"     $NetBSD: et.4,v 1.4 1999/03/10 09:31:17 erh Exp $
+.\"     $NetBSD: et.4,v 1.5 1999/03/31 10:45:36 leo Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,8 @@ The
 device driver supports the Crazy Dots II VME graphics card, which is based
 on the Tseng ET4000 chipset.  It supports the minimal ioctl's needed to run
 X11.  The 8Kb control registers are mapped from offset 0x0 to offset 0x1fff
-and the 1MB frame buffer is mapped from offset 0x100000 to offset 0x1fffff.
+and the 1MB frame buffer is mapped from offset 0x400000 to offset 0x4fffff.
+VGA compatible memory is mapped from offset 0xa0000 to offset 0xc0000.
 .Pp
 The clock generator on the Crazy Dots card is an ICS 1394M.  Setting the
 clock is done by writing to a register at offset 0x0.  This address cannot
