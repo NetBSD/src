@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.3 2001/12/02 20:06:00 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.4 2001/12/03 23:32:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "irframe.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -57,6 +59,13 @@ int irframe_match(struct device *parent, struct cfdata *match, void *aux);
 void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
 int irframe_detach(struct device *self, int flags);
+
+#if NIRFRAME == 0
+/* In case we just have tty attachment. */
+struct cfdriver irframe_cd = {
+	NULL, "irframe", DV_DULL
+};
+#endif
 
 struct cfattach irframe_ca = {
 	sizeof(struct irframe_softc), irframe_match, irframe_attach,
@@ -90,6 +99,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
+	    sc->sc_methods->im_poll == NULL ||
 	    sc->sc_methods->im_set_params == NULL ||
 	    sc->sc_methods->im_reset_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
@@ -270,10 +280,7 @@ irframepoll(dev_t dev, int events, struct proc *p)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
 
-	if (sc->sc_methods->im_poll != NULL)
-		return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
-	else
-		return (0);
+	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
 }
 
 /*********/
@@ -284,6 +291,7 @@ irframe_alloc(size_t size, struct irframe_methods *m, void *h)
 {
 	struct cfdriver *cd = &irframe_cd;
 	struct device *dev;
+	struct ir_attach_args ia;
 	int unit;
 
 	for (unit = 0; unit < cd->cd_ndevs; unit++)
@@ -297,6 +305,10 @@ irframe_alloc(size_t size, struct irframe_methods *m, void *h)
 
 	config_makeroom(unit, cd);
 	cd->cd_devs[unit] = dev;
+
+	ia.ia_methods = m;
+	ia.ia_handle = h;
+	irframe_attach(NULL, dev, &ia);
 
 	return (dev);
 }
