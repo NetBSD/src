@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.29 1999/11/04 00:24:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.30 1999/11/04 01:20:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1375,11 +1375,31 @@ tlp_init(sc)
 
 	/*
 	 * Initialize the BUSMODE register.
-	 *
-	 * XXX What about read-multiple/read-line/write-line on
-	 * XXX the 21140 and up?
 	 */
 	sc->sc_busmode = BUSMODE_BAR;
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21140:
+	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/*
+		 * If we're allowed to do so, use Memory Read Line
+		 * and Memory Read Multiple.
+		 *
+		 * XXX Should we use Memory Write and Invalidate?
+		 */
+		if (sc->sc_flags & TULIPF_MRL)
+			sc->sc_busmode |= BUSMODE_RLE;
+		if (sc->sc_flags & TULIPF_MRM)
+			sc->sc_busmode |= BUSMODE_RME;
+#if 0
+		if (sc->sc_flags & TULIPF_MWI)
+			sc->sc_busmode |= BUSMODE_WLE;
+#endif
+
+	default:
+		/* Nothing. */
+	}
 	switch (sc->sc_cacheline) {
 	default:
 		/*

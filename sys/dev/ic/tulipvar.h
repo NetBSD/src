@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.19 1999/11/03 22:25:09 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.20 1999/11/04 01:20:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -370,9 +370,12 @@ struct tulip_softc {
 #define	TULIPF_DOING_SETUP	0x00000002	/* doing multicast setup */
 #define	TULIPF_HAS_MII		0x00000004	/* has media on MII */
 #define	TULIPF_IC_FS		0x00000008	/* IC bit on first tx seg */
-#define	TULIPF_LINK_UP		0x00000010	/* link is up (non-MII) */
-#define	TULIPF_LINK_VALID	0x00000020	/* link state valid */
-#define	TULIPF_DOINGAUTO	0x00000040	/* doing autoneg (non-MII) */
+#define	TULIPF_MRL		0x00000010	/* memory read line okay */
+#define	TULIPF_MRM		0x00000020	/* memory read multi okay */
+#define	TULIPF_MWI		0x00000040	/* memory write inval okay */
+#define	TULIPF_LINK_UP		0x00000100	/* link is up (non-MII) */
+#define	TULIPF_LINK_VALID	0x00000200	/* link state valid */
+#define	TULIPF_DOINGAUTO	0x00000400	/* doing autoneg (non-MII) */
 
 /*
  * This macro returns the current media entry for *non-MII* media.
