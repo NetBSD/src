@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.16 1999/12/29 04:41:13 castor Exp $	*/
+/*	$NetBSD: fp.S,v 1.17 2000/04/11 16:28:05 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -215,10 +215,17 @@ func_single_tbl:
 	.word	ill		# func 9
 	.word	ill		# func 10
 	.word	ill		# func 11
+#ifdef MIPS3
+	.word	round_w_s	# func 12 /* MIPS2 FP instructions */
+	.word	trunc_w_s	# func 13
+	.word	ceil_w_s	# func 14
+	.word	floor_w_s	# func 15
+#else
 	.word	ill		# func 12
 	.word	ill		# func 13
 	.word	ill		# func 14
 	.word	ill		# func 15
+#endif
 	.word	ill		# func 16
 	.word	ill		# func 17
 	.word	ill		# func 18
@@ -281,10 +288,17 @@ func_double_tbl:
 	.word	ill		# func 9
 	.word	ill		# func 10
 	.word	ill		# func 11
+#ifdef MIPS3
+	.word	round_w_d	# func 12 /* MIPS2 FP instructions */
+	.word	trunc_w_d	# func 13
+	.word	ceil_w_d	# func 14
+	.word	floor_w_d	# func 15
+#else
 	.word	ill		# func 12
 	.word	ill		# func 13
 	.word	ill		# func 14
 	.word	ill		# func 15
+#endif
 	.word	ill		# func 16
 	.word	ill		# func 17
 	.word	ill		# func 18
@@ -1296,6 +1310,38 @@ neg_d:
 	b	result_fs_d
 
 /*
+ * Single precision mips2 rounding.  Explicit case of cvt_w_s.
+ */
+round_w_s:
+	li	v1,0
+	b	_cvt_w_s
+trunc_w_s:
+	li	v1,1
+	b	_cvt_w_s
+ceil_w_s:
+	li	v1,2
+	b	_cvt_w_s
+floor_w_s:
+	li	v1,3
+	b	_cvt_w_s
+
+/*
+ * Double precision mips2 rounding.  Explicit case of cvt_w_d.
+ */
+round_w_d:
+	li	v1,0
+	b	_cvt_w_d
+trunc_w_d:
+	li	v1,1
+	b	_cvt_w_d
+ceil_w_d:
+	li	v1,2
+	b	_cvt_w_d
+floor_w_d:
+	li	v1,3
+	b	_cvt_w_d
+
+/*
  * Convert double to single.
  */
 cvt_s_d:
@@ -1471,6 +1517,8 @@ cvt_d_w:
  * Convert single to integer.
  */
 cvt_w_s:
+	and	v1, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+_cvt_w_s:
 	jal	_C_LABEL(get_fs_s)
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, invalid_w		# invalid conversion
@@ -1490,6 +1538,8 @@ cvt_w_s:
  * Convert double to integer.
  */
 cvt_w_d:
+	and	v1, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+_cvt_w_d:
 	jal	_C_LABEL(get_fs_d)
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	bne	t2, zero, invalid_w		# invalid conversion
@@ -1509,9 +1559,8 @@ cvt_w:
 	blt	t1, WEXP_MIN, underflow_w	# is exponent too small?
 #else
 	bge	t1, WEXP_MIN, 3f		# is exponent too small?
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
-	beq	v0, MIPS_FPU_ROUND_RM, 2f	# round to -infinity
+	beq	v1, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	beq	v1, MIPS_FPU_ROUND_RM, 2f	# round to -infinity
 
 	move	t2, zero
 	b	result_fs_w
@@ -2333,7 +2382,18 @@ fpe_trap:
 	lw	v0, P_ADDR(v0)			# get pointer to pcb for proc
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	/*
+	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
+	 */
+	sw	a2, CALLFRAME_SIZ + 12(sp)
+	lw	a0, _C_LABEL(fpcurproc)
+	jal	_C_LABEL(savefpregs)	# on RM5231
+
+	lw	a2, CALLFRAME_SIZ + 12(sp)
+
+	lw	v0, _C_LABEL(curproc)
+	lw	v0, P_ADDR(v0)
+	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #endif
 	lw	a2, CALLFRAME_SIZ + 8(sp)
 	lw	ra, CALLFRAME_RA(sp)
