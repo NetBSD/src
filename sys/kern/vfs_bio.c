@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.93 2003/08/07 16:32:01 agc Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.94 2003/09/07 11:57:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.93 2003/08/07 16:32:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.94 2003/09/07 11:57:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,8 @@ bremfree(bp)
 	struct buf *bp;
 {
 	struct bqueues *dp = NULL;
+
+	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
 	/*
 	 * We only calculate the head of the freelist when removing
