@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.100 2000/05/31 11:23:21 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.101 2000/05/31 12:26:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -312,6 +312,7 @@ static	int cpu_instance;
 	} else {
 #if defined(MULTIPROCESSOR)
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
+		cpi->ci_self = cpi;
 		cpi->curpcb = cpi->idle_u;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
 #else
@@ -471,7 +472,7 @@ mp_pause_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		if (cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
 		simple_lock(&cpi->msg.lock);
@@ -489,7 +490,7 @@ mp_resume_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		if (cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
 		simple_lock(&cpi->msg.lock);
