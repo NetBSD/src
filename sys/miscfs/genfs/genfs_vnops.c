@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.64 2002/05/29 11:04:40 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.65 2002/10/21 15:21:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.64 2002/05/29 11:04:40 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.65 2002/10/21 15:21:35 fvdl Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -651,7 +651,7 @@ genfs_getpages(void *v)
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL : 0);
+	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL|B_ASYNC : 0);
 	mbp->b_iodone = (async ? uvm_aio_biodone : 0);
 	mbp->b_vp = vp;
 	LIST_INIT(&mbp->b_dep);
