@@ -65,6 +65,6 @@ $set 4 menu titles and stuff
 6 Enter the field data below, and hit enter to return to the form.
 7 Data Entry: 
 8 Form Page:
-9 PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do.
+9 PGUP/PGDN to change page, UP/DOWN switch field, ENTER submit.
 10 Log ended at
 11 Script ended at
