@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.21 1999/01/18 20:06:25 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -83,6 +83,7 @@
  * Error bits.
  */
 #define	WDCE_BBK	0x80	/* bad block detected */
+#define	WDCE_CRC	0x80	/* CRC error (Ultra-DMA only) */
 #define	WDCE_UNC	0x40	/* uncorrectable data error */
 #define	WDCE_MC		0x20	/* media changed */
 #define	WDCE_IDNF	0x10	/* id not found */
@@ -90,7 +91,6 @@
 #define	WDCE_ABRT	0x04	/* aborted command */
 #define	WDCE_TK0NF	0x02	/* track 0 not found */
 #define	WDCE_AMNF	0x01	/* address mark not found */
-#define WDERR_BITS	"\020\010bbk\007unc\006mc\005idnf\004mcr\003abrt\002tk0nf\001amnf"
 
 /*
  * Commands for Disk Controller.
