@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/10/18 06:23:43 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/24 21:59:59 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 PROG=	vfontedpr
@@ -7,19 +7,17 @@ MAN=	vgrind.1 vgrindefs.5
 BINDIR=	/usr/libexec
 CLEANFILES+=vgrindefs.src.db
 
+FILES=				tmac.vgrind vgrindefs.src vgrindefs.src.db
+FILESNAME_vgrindefs.src=	vgrindefs
+FILESNAME_vgrindefs.src.db=	vgrindefs.db
+FILESDIR=			/usr/share/misc
+FILESDIR_tmac.vgrind=		/usr/share/tmac
+
+SCRIPTS=vgrind.sh
+
 all: vfontedpr vgrindefs.src.db
 
 vgrindefs.src.db: vgrindefs.src
 	cap_mkdb -f vgrindefs.src ${.CURDIR}/vgrindefs.src
-
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/vgrind.sh ${DESTDIR}/usr/bin/vgrind
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    ${.CURDIR}/vgrindefs.src ${DESTDIR}/usr/share/misc/vgrindefs
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    vgrindefs.src.db ${DESTDIR}/usr/share/misc/vgrindefs.db
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac.vgrind \
-	    ${DESTDIR}/usr/share/tmac
 
 .include <bsd.prog.mk>

@@ -29,8 +29,5 @@ Title.ps: ${FILES}
 contents.ps: ${FILES}
 	groff -ms 00.contents > ${.TARGET}
 
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
-	    ${DESTDIR}${BINDIR}
-
+.include <bsd.prog.mk>
 .include <bsd.subdir.mk>

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1996/10/18 06:19:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1997/03/24 21:59:48 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN=	shar.1
+SCRIPTS=shar.sh
 
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/shar.sh ${DESTDIR}/usr/bin/shar
 
 .include <bsd.prog.mk>

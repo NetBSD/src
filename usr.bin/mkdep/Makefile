@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1996/10/18 06:18:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1997/03/24 21:59:45 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN=	mkdep.1
 
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/mkdep.gcc.sh ${DESTDIR}/usr/bin/mkdep
+SCRIPTS=mkdep.gcc.sh
+SCRIPTSINSTALL_mkdep.gcc.sh=mkdep
 
 .include <bsd.prog.mk>

@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:23:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 21:59:57 christos Exp $
 
 PROG=	units
-
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    ${.CURDIR}/units.lib ${DESTDIR}/usr/share/misc
+FILES=  units.lib
+FILESDIR=/usr/share/misc
 
 .include <bsd.prog.mk>
