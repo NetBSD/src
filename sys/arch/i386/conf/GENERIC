@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.63 1996/11/28 03:15:19 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.64 1996/12/07 00:26:02 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -14,7 +14,7 @@ options		MATH_EMULATE	# floating point emulation
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=...	# size of extended memory
+#options	BIOSEXTMEM=...	# size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
