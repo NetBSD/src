@@ -1,4 +1,4 @@
-/*	$NetBSD: epereg.h,v 1.1 2004/12/22 19:11:10 joff Exp $ */
+/*	$NetBSD: epereg.h,v 1.2 2005/01/17 02:32:29 joff Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -35,6 +35,7 @@
 #ifndef _EPEREG_H_
 #define _EPEREG_H_
 
+#define EP93XX_AHB_EPE	0x00010000UL
 #define EPE_SIZE	0x000000f0UL
 #define EPE_RXCtl	0x00000000UL	/* Receiver Control */
 #define  RXCtl_IA0	0x00000001UL
@@ -69,6 +70,7 @@
 #define EPE_IntEn	0x00000024UL	/* Interrupt Enable */
 #define  IntEn_TSQIE	0x00000008UL
 #define  IntEn_REOFIE	0x00000004UL
+#define  IntEn_ECIE	0x02000000UL
 #define EPE_IntStsP	0x00000028UL	/* Interrupt Status Preserve */
 #define EPE_IntStsC	0x0000002cUL	/* Interrupt Status Clear */
 #define  IntSts_RxSQ	0x00000004UL
