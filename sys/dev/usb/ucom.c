@@ -1,7 +1,7 @@
-/*	$NetBSD: ucom.c,v 1.21 2000/04/08 01:22:26 itojun Exp $	*/
+/*	$NetBSD: ucom.c,v 1.22 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,6 +35,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * This code is very heavily based on the 16550 driver, com.c.
  */
 
 #include <sys/param.h>
@@ -91,12 +94,14 @@ struct ucom_softc {
 	usbd_xfer_handle	sc_ixfer;	/* read request */
 	u_char			*sc_ibuf;	/* read buffer */
 	u_int			sc_ibufsize;	/* read buffer size */
+	u_int			sc_ibufsizepad;	/* read buffer size padded */
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
 	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
 	usbd_xfer_handle	sc_oxfer;	/* write request */
 	u_char			*sc_obuf;	/* write buffer */
 	u_int			sc_obufsize;	/* write buffer size */
+	u_int			sc_obufsizepad;	/* write buffer size padded */
 
 	struct ucom_methods     *sc_methods;
 	void                    *sc_parent;
@@ -125,7 +130,6 @@ Static int	ucom_do_ioctl	__P((struct ucom_softc *, u_long, caddr_t,
 				     int, struct proc *));
 Static void	ucom_dtr	__P((struct ucom_softc *, int));
 Static void	ucom_rts	__P((struct ucom_softc *, int));
-Static void	ucom_status_change __P((struct ucom_softc *));
 Static void	ucom_break	__P((struct ucom_softc *, int));
 Static usbd_status ucomstartread __P((struct ucom_softc *));
 Static void	ucomreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
@@ -157,7 +161,9 @@ USB_ATTACH(ucom)
 	sc->sc_bulkout_no = uca->bulkout;
 	sc->sc_bulkin_no = uca->bulkin;
 	sc->sc_ibufsize = uca->ibufsize;
+	sc->sc_ibufsizepad = uca->ibufsizepad;
 	sc->sc_obufsize = uca->obufsize;
+	sc->sc_obufsizepad = uca->obufsizepad;
 	sc->sc_methods = uca->methods;
 	sc->sc_parent = uca->arg;
 	sc->sc_portno = uca->portno;
@@ -208,8 +214,8 @@ USB_DETACH(ucom)
 	mn = self->dv_unit;
 	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
-	vdevgone(maj, mn, mn | UCOMDIALOUT_MASK, VCHR);
-	vdevgone(maj, mn, mn | UCOMCALLUNIT_MASK, VCHR);
+	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
+	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
@@ -310,6 +316,15 @@ ucomopen(dev, flag, mode, p)
 
 		tp->t_dev = dev;
 
+		if (sc->sc_methods->ucom_open != NULL) {
+			error = sc->sc_methods->ucom_open(sc->sc_parent,
+							  sc->sc_portno);
+			if (error) {
+				ucom_cleanup(sc);
+				return (error);
+			}
+		}
+
 		ucom_status_change(sc);
 
 		/*
@@ -375,7 +390,8 @@ ucomopen(dev, flag, mode, p)
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer, sc->sc_ibufsize);
+		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer,
+						sc->sc_ibufsizepad);
 		if (sc->sc_ibuf == NULL) {
 			usbd_free_xfer(sc->sc_ixfer);
 			usbd_close_pipe(sc->sc_bulkin_pipe);
@@ -390,7 +406,8 @@ ucomopen(dev, flag, mode, p)
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer, sc->sc_obufsize);
+		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer,
+						sc->sc_obufsizepad);
 		if (sc->sc_obuf == NULL) {
 			usbd_free_xfer(sc->sc_oxfer);
 			usbd_free_xfer(sc->sc_ixfer);
@@ -398,9 +415,6 @@ ucomopen(dev, flag, mode, p)
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			return (ENOMEM);
 		}
-
-		if (sc->sc_methods->ucom_open != NULL)
-			sc->sc_methods->ucom_open(sc->sc_parent, sc->sc_portno);
 
 		ucomstartread(sc);
 	}
@@ -719,7 +733,7 @@ ucom_rts(sc, onoff)
 		    UCOM_SET_RTS, onoff);
 }
 
-Static void
+void
 ucom_status_change(sc)
 	struct ucom_softc *sc;
 {
@@ -875,7 +889,11 @@ ucomstart(tp)
 		DPRINTF(("ucomstart: big buffer %d chars\n", cnt));
 		cnt = sc->sc_obufsize;
 	}
-	memcpy(sc->sc_obuf, data, cnt);
+	if (sc->sc_methods->ucom_write != NULL)
+		sc->sc_methods->ucom_write(sc->sc_parent, sc->sc_portno,
+					   sc->sc_obuf, data, &cnt);
+	else
+		memcpy(sc->sc_obuf, data, cnt);
 
 	DPRINTFN(4,("ucomstart: %d chars\n", cnt));
 	usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe, 
@@ -995,6 +1013,10 @@ ucomreadcb(xfer, p, status)
 
 	usbd_get_xfer_status(xfer, NULL, (void **)&cp, &cc, NULL);
 	DPRINTFN(5,("ucomreadcb: got %d chars, tp=%p\n", cc, tp));
+	if (sc->sc_methods->ucom_read != NULL)
+		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
+					  &cp, &cc);
+
 	s = spltty();
 	/* Give characters to tty layer. */
 	while (cc-- > 0) {
