@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.5 1998/11/04 23:59:51 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.6 1998/11/05 00:19:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@ struct mii_softc {
 
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
+	int mii_ticks;			/* MII_TICK counter */
+	int mii_active;			/* last active media */
 };
 typedef struct mii_softc mii_softc_t;
 
