@@ -106,3 +106,8 @@ int	want_resched;		/* resched() was called */
 #define	CPU_486SX	2
 #define	CPU_486		3
 #define	CPU_586		4
+
+#define CPU_MINTYPE	CPU_386SX
+#define CPU_MAXTYPE	CPU_586
+
+extern char *cpu_typenames[];

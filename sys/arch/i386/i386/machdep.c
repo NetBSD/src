@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.13 1993/05/20 01:42:26 cgd Exp $
+ *	$Id: machdep.c,v 1.14 1993/05/20 02:05:39 cgd Exp $
  */
 
 #include "param.h"
@@ -100,6 +100,15 @@ extern int forcemaxmem;
 int biosmem;
 
 extern cyloffset;
+
+char *cpu_typenames[] = {
+	"i386SX",	/* CPU_386SX */
+	"i386",		/* CPU_386 */
+	"i486SX",	/* CPU_486SX */
+	"i486",		/* CPU_486 */
+	"Pentium",	/* CPU_586 */
+	0,
+};
 
 cpu_startup()
 {
