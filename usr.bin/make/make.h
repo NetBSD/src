@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.32 2001/01/10 15:54:00 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.33 2001/01/14 05:34:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -171,6 +171,8 @@ typedef struct GNode {
     struct _Suff    *suffix;	/* Suffix for the node (determined by
 				 * Suff_FindDeps and opaque to everyone
 				 * but the Suff module) */
+    char	    *fname;	/* filename where the GNode got defined */
+    int		     lineno;	/* line number where the GNode got defined */
 } GNode;
 
 /*
