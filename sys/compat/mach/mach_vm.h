@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.18 2003/11/09 23:17:15 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.19 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -321,18 +321,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_copy_reply_t;
 
-
-int mach_vm_map(struct mach_trap_args *);
-int mach_vm_allocate(struct mach_trap_args *);
-int mach_vm_deallocate(struct mach_trap_args *);
-int mach_vm_wire(struct mach_trap_args *);
-int mach_vm_protect(struct mach_trap_args *);
-int mach_vm_inherit(struct mach_trap_args *);
-int mach_vm_make_memory_entry(struct mach_trap_args *);
-int mach_vm_region(struct mach_trap_args *);
-int mach_vm_region_64(struct mach_trap_args *);
-int mach_vm_msync(struct mach_trap_args *);
-int mach_vm_copy(struct mach_trap_args *);
+/* Kernel-private structures */
 
 struct mach_memory_entry {
 	vaddr_t	mme_offset;

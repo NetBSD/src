@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.43 2003/11/09 23:05:29 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.44 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -17,7 +17,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
@@ -39,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.43 2003/11/09 23:05:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.44 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.43 2003/11/09 23:05:29 manu Exp $");
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef COMPAT_DARWIN
@@ -335,6 +335,12 @@ mach_port_set_attributes(args)
 	mach_port_set_attributes_request_t *req = args->smsg;
 	mach_port_set_attributes_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int end_offset;
+
+	/* Sanity check req->req_count */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_port_info[end_offset]))
+		 return mach_msg_error(args, EINVAL);
 
 	switch(req->req_flavor) {
 	case MACH_PORT_LIMITS_INFO:
@@ -369,6 +375,10 @@ mach_port_get_attributes(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 
+	/* Sanity check req_count */
+	if (req->req_count > 10)
+		return mach_msg_error(args, EINVAL);
+
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EPERM);
@@ -377,7 +387,7 @@ mach_port_get_attributes(args)
 	case MACH_PORT_LIMITS_INFO: {
 		struct mach_port_limits *mpl;
 
-		if (req->req_count < sizeof(*mpl))
+		if (req->req_count < (sizeof(*mpl) / sizeof(rep->rep_info[0])))
 			return mach_msg_error(args, EINVAL);
 
 		mpl = (struct mach_port_limits *)&rep->rep_info[0];
@@ -392,7 +402,7 @@ mach_port_get_attributes(args)
 		struct mach_port_status *mps;
 		struct mach_port *mp;
 
-		if (req->req_count < sizeof(*mps))
+		if (req->req_count < (sizeof(*mps) / sizeof(rep->rep_info[0])))
 			return mach_msg_error(args, EINVAL);
 
 		mps = (struct mach_port_status *)&rep->rep_info[0];

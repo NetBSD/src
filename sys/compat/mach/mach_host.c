@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.23 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.23 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $");
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_services.h>
 
 int 
 mach_host_info(args)

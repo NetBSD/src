@@ -1,0 +1,98 @@
+ $NetBSD: mach_services.master,v 1.1 2003/11/13 13:40:39 manu Exp $
+;
+; Mach services list. 
+;
+
+#include <sys/types.h>
+#include <sys/param.h>
+
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_bootstrap.h>
+#include <compat/mach/mach_iokit.h>
+#include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_host.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_task.h>
+#include <compat/mach/mach_thread.h>
+#include <compat/mach/mach_semaphore.h>
+#include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_services.h>
+
+%%
+
+65	UNIMPL	notify_port_deleted
+69	UNIMPL	notify_port_destroyed
+70	UNIMPL	notify_no_senders
+71	UNIMPL	notify_send_once
+72	UNIMPL	notify_dead_name
+200	STD	host_info
+202	STD	host_page_size
+205	STD	host_get_io_master
+206	STD	host_get_clock_service
+403	UNIMPL	boostrap_register
+404	STD	bootstrap_look_up
+1000	STD	clock_get_time
+2800	STD	io_object_get_class
+2801	STD	io_object_conforms_to
+2802	STD	io_iterator_next
+2803	STD	io_iterator_reset
+2804	STD	io_service_get_matching_services 
+2805	STD	io_registry_entry_get_property
+2809	STD	io_registry_entry_from_path 
+2811	STD	io_registry_entry_get_properties
+2813	STD	io_registry_entry_get_child_iterator
+2814	STD	io_registry_entry_get_parent_iterator
+2815	STD	io_service_open
+2816	STD	io_service_close
+2817	STD	io_connect_get_service
+2818	STD	io_connect_set_notification_port
+2819	STD	io_connect_map_memory
+2820	STD	io_connect_add_client
+2821	STD	io_connect_set_properties
+2822	STD	io_connect_method_scalari_scalaro
+2823	STD	io_connect_method_scalari_structo
+2824	STD	io_connect_method_scalari_structi 
+2825	STD	io_connect_method_structi_structo
+2826	STD	io_registry_entry_get_path
+2827	STD	io_registry_get_root_entry
+2833	STD	io_registry_entry_create_iterator
+2843	STD	io_registry_entry_get_name_in_plane
+2850	STD	io_service_add_interest_notification
+2854	STD	io_registry_entry_get_location_in_plane
+3201	STD	port_type
+3204	STD	port_allocate
+3205	STD	port_destroy
+3206	STD	port_deallocate
+3212	STD	port_move_member
+3213	STD	port_request_notification
+3214	STD	port_insert_right
+3217	STD	port_get_attributes
+3218	STD	port_set_attributes
+3226	STD	port_insert_member
+3402	STD	task_threads
+3404	STD	ports_lookup
+3405	STD	task_info
+3407	STD	task_suspend
+3408	STD	task_resume
+3409	STD	task_get_special_port
+3410	STD	task_set_special_port
+3412	STD	thread_create_running
+3413	STD	task_set_exception_ports
+3414	STD	task_get_exception_ports
+3418	STD	semaphore_create
+3419	STD	semaphore_destroy
+3603	STD	thread_get_state
+3604	STD	thread_set_state
+3612	STD	thread_info
+3616	STD	thread_policy
+3800	STD	vm_region
+3801	STD	vm_allocate
+3802	STD	vm_deallocate
+3803	STD	vm_protect
+3804	STD	vm_inherit
+3808	STD	vm_copy
+3810	STD	vm_msync
+3812	STD	vm_map
+3824	STD	vm_region_64
+3825	STD	vm_make_memory_entry

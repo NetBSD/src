@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.31 2003/11/12 00:00:28 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.32 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.31 2003/11/12 00:00:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.32 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.31 2003/11/12 00:00:28 manu Exp $");
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_task.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef COMPAT_DARWIN
@@ -405,7 +406,7 @@ mach_task_info(args)
 		struct mach_task_basic_info *mtbi;
 		struct rusage *ru;
 
-		count = sizeof(*mtbi) / sizeof(mach_integer_t);
+		count = sizeof(*mtbi) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
@@ -421,7 +422,7 @@ mach_task_info(args)
 		mtbi->mtbi_system_time.microseconds = ru->ru_stime.tv_usec;
 		mtbi->mtbi_policy = 0;
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mtbi);
 		break;
 	}
 
@@ -430,7 +431,7 @@ mach_task_info(args)
 		struct mach_task_thread_times_info *mttti;
 		struct rusage *ru;
 
-		count = sizeof(*mttti) / sizeof(mach_integer_t);
+		count = sizeof(*mttti) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
@@ -442,7 +443,7 @@ mach_task_info(args)
 		mttti->mttti_system_time.seconds = ru->ru_stime.tv_sec;
 		mttti->mttti_system_time.microseconds = ru->ru_stime.tv_usec;
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mttti);
 		break;
 	}
 
@@ -451,7 +452,7 @@ mach_task_info(args)
 		struct mach_task_events_info *mtei;
 		struct rusage *ru;
 
-		count = sizeof(*mtei) / sizeof(mach_integer_t);
+		count = sizeof(*mtei) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
@@ -467,7 +468,7 @@ mach_task_info(args)
 		mtei->mtei_syscalls_unix = 0; /* XXX */
 		mtei->mtei_csw = 0; /* XXX */
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mtei);
 		break;
 	}
 
