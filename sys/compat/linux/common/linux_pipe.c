@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.10 1995/08/13 17:51:40 mycroft Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.11 1995/08/14 01:27:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -71,6 +71,7 @@
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_fcntl.h>
 #include <compat/linux/linux_mmap.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_dirent.h>
