@@ -1,8 +1,8 @@
 =========================================================================
-    This is the distribution of less, version 332, released 22 Apr 97
-    Please report any problems to the author at markn@fog.net.
+    This is the distribution of less, version 335, released 03 Apr 1999
+    Please report any problems to the author at marknu@flash.net.
         (Please note change of email address.)
-    See http://www.fog.net/markn/less for the latest info.
+    See http://www.flash.net/~marknu/less for the latest info.
 =========================================================================
 
 This is the distribution of "less", a paginator similar to "more" or "pg".
@@ -10,16 +10,6 @@ This is the distribution of "less", a paginator similar to "more" or "pg".
 The formatted manual page is in less.man.
 The manual page nroff source is in less.nro.
 Major changes made since the last posted version are in NEWS.
-
-===================
-===== WARNING =====
-===================
-	The Microsoft C port for MS-DOS and the Ultra C port 
-		for OS-9 are not currently working.  
-	Until these are fixed, for MS-DOS use Borland C or DJGPP, 
-		and for OS-9 use Microware C.
-	If you have fixes for either of these ports, 
-		send them to markn@fog.net.
 
 =======================================================================
 INSTALLATION (Unix systems only):
@@ -61,7 +51,7 @@ INSTALLATION (Unix systems only):
    bindir and/or mandir to the appropriate directories.
 
 If you have any problems building or running "less", suggestions, 
-complaints, etc., you may mail to the author at markn@fog.net.
+complaints, etc., you may mail to the author at marknu@flash.net.
 
 Note to hackers: comments noting possible improvements are enclosed
 in double curly brackets {{ like this }}.
@@ -108,7 +98,7 @@ INSTALLATION (MS-DOS systems only,
 
 
 =======================================================================
-INSTALLATION (Windows-95 and Windows-NT systems only,
+INSTALLATION (Windows-95, Windows-98 and Windows-NT systems only,
               with Borland C or Microsoft Visual C++)
 
 1. Move the distributed source to its own directory.
