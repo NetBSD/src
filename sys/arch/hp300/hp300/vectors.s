@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.13 1998/09/30 22:14:12 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.14 1998/09/30 23:13:58 thorpej Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -86,8 +86,12 @@ GLOBAL(vectab)
 	VECTOR(lev6intr)	/* 30: level 6 interrupt autovector */
 	VECTOR(lev7intr)	/* 31: level 7 interrupt autovector */
 	VECTOR(trap0)		/* 32: syscalls */
-	VECTOR(trap1)		/* 33: compat_13_sigreturn or breakpoint */
-	VECTOR(trap2)		/* 34: breakpoint or compat_13_sigreturn */
+#ifdef COMPAT_13
+	VECTOR(trap1)		/* 33: compat_13_sigreturn */
+#else
+	VECTOR(illinst)
+#endif
+	VECTOR(trap2)		/* 34: trace */
 	VECTOR(trap3)		/* 35: special handling syscalls */
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */
