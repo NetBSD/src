@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2003/01/06 13:10:27 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2003/01/19 19:49:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -83,6 +83,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,29 +107,33 @@ int sh5_trap_debug;
 #endif
 
 void
-userret(struct proc *p)
+userret(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (curcpu()->ci_want_resched) {
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
 
-	p->p_md.md_flags &= ~MDP_FPSAVED;
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	l->l_md.md_flags &= ~MDP_FPSAVED;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
  * Handle synchronous exceptions
  */
 void
-trap(struct proc *p, struct trapframe *tf)
+trap(struct lwp *l, struct trapframe *tf)
 {
+	struct proc *p;
 	u_int traptype;
 	vaddr_t vaddr;
 	vm_prot_t ftype;
@@ -143,13 +149,14 @@ trap(struct proc *p, struct trapframe *tf)
 
 	traptype = tf->tf_state.sf_expevt;
 	if (USERMODE(tf)) {
-		KDASSERT(p != NULL);
+		KDASSERT(l != NULL);
 		traptype |= T_USER;
-		p->p_md.md_regs = tf;
+		l->l_md.md_regs = tf;
 	} else
-	if (p == NULL)
-		p = &proc0;
+	if (l == NULL)
+		l = &lwp0;
 
+	p = l->l_proc;
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
 #ifdef DEBUG
@@ -190,11 +197,8 @@ trap(struct proc *p, struct trapframe *tf)
 			(uintptr_t)tf->tf_state.sf_spc,
 			(uintptr_t)tf->tf_state.sf_tea,
 			(u_int)tf->tf_state.sf_tra);
-		if (p != NULL)
-			printf("pid=%d cmd=%s, usp=0x%lx ",
-			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
-		else
-			printf("no process context ");
+		printf("pid=%d cmd=%s, usp=0x%lx ", p->p_pid, p->p_comm,
+		    (uintptr_t)tf->tf_caller.r15);
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
 #if defined(DDB)
 		kdb_trap(traptype, tf);
@@ -226,9 +230,9 @@ trap(struct proc *p, struct trapframe *tf)
 		 * status, where managed read/write pages are initially
 		 * mapped read-only in the pmap module.
 		 */
-		if (pmap_write_trap(USERMODE(tf), vaddr)) {
+		if (pmap_write_trap(p, USERMODE(tf), vaddr)) {
 			if (traptype & T_USER)
-				userret(p);
+				userret(l);
 			return;
 		}
 
@@ -245,7 +249,7 @@ trap(struct proc *p, struct trapframe *tf)
 		 * outside of copyin/copyout and friends.
 		 */
 		if ((traptype & T_USER) == 0 &&
-		    p->p_addr->u_pcb.pcb_onfault == NULL)
+		    l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		goto pagefault;
 
@@ -256,7 +260,7 @@ trap(struct proc *p, struct trapframe *tf)
 		if (vaddr >= VM_MIN_KERNEL_ADDRESS)
 			goto kernelfault;
 
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		goto pagefault;
 
@@ -301,7 +305,7 @@ trap(struct proc *p, struct trapframe *tf)
 
 		if (rv == 0) {
 			if (traptype & T_USER)
-				userret(p);
+				userret(l);
 			return;
 		}
 
@@ -340,10 +344,10 @@ trap(struct proc *p, struct trapframe *tf)
 		/*FALLTHROUGH*/
 
 	copyfault:
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		tf->tf_state.sf_spc =
-		    (register_t)(uintptr_t)p->p_addr->u_pcb.pcb_onfault;
+		    (register_t)(uintptr_t)l->l_addr->u_pcb.pcb_onfault;
 		return;
 
 	case T_BREAK|T_USER:
@@ -359,9 +363,9 @@ trap(struct proc *p, struct trapframe *tf)
 		sig = SIGFPE;
 		ucode = vaddr;	/* XXX: "code" should probably be FPSCR */
 #ifdef DEBUG
-		sh5_fpsave((u_int)tf->tf_state.sf_usr, &p->p_addr->u_pcb);
+		sh5_fpsave((u_int)tf->tf_state.sf_usr, &l->l_addr->u_pcb);
 		printf("trap: FPUEXC - fpscr = 0x%x\n",
-		    (u_int)p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
+		    (u_int)l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
 #endif
 		break;
 
@@ -370,7 +374,9 @@ trap(struct proc *p, struct trapframe *tf)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
-		userret(p);
+		if (curcpu()->ci_want_resched)
+			preempt(NULL);
+		userret(l);
 		return;
 
 	case T_NMI:
@@ -385,16 +391,17 @@ trap(struct proc *p, struct trapframe *tf)
 		goto dopanic;
 	}
 
-	trapsignal(p, sig, ucode);
-	userret(p);
+	trapsignal(l, sig, ucode);
+	userret(l);
 }
 
 /*
  * Handle "TRAPA"-induced synchronous exceptions
  */
 void
-trapa(struct proc *p, struct trapframe *tf)
+trapa(struct lwp *l, struct trapframe *tf)
 {
+	struct proc *p;
 	u_int trapcode;
 #ifdef DIAGNOSTIC
 	const char *pstr;
@@ -417,11 +424,12 @@ trapa(struct proc *p, struct trapframe *tf)
 	if (sh5_syscall_debug) {
 		printf("trapa: TRAPA in %s mode ",
 		    USERMODE(tf) ? "user" : "kernel");
-		if (p != NULL)
+		if (l != NULL)
 			printf("pid=%d cmd=%s, usp=0x%lx\n",
-			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
+			    l->l_proc->p_pid, l->l_proc->p_comm,
+			    (uintptr_t)tf->tf_caller.r15);
 		else
-			printf("curproc == NULL ");
+			printf("curlwp == NULL ");
 		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x, R0=%d\n",
 		    (uintptr_t)tf->tf_state.sf_spc, (u_int)tf->tf_state.sf_ssr,
 		    (u_int)tf->tf_state.sf_tra, (u_int)tf->tf_caller.r0);
@@ -432,11 +440,12 @@ trapa(struct proc *p, struct trapframe *tf)
 	if (!USERMODE(tf)) {
 		pstr = "trapa: TRAPA in kernel mode!";
 trapa_panic:
-		if (p != NULL)
+		if (l != NULL)
 			printf("pid=%d cmd=%s, usp=0x%lx ",
-			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
+			    l->l_proc->p_pid, l->l_proc->p_comm,
+			    (uintptr_t)tf->tf_caller.r15);
 		else
-			printf("curproc == NULL ");
+			printf("curlwp == NULL ");
 		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n",
 		    (uintptr_t)tf->tf_state.sf_spc,
 		    (u_int)tf->tf_state.sf_ssr, (u_int)tf->tf_state.sf_tra);
@@ -445,29 +454,30 @@ trapa_panic:
 		/*NOTREACHED*/
 	}
 
-	if (p == NULL) {
-		pstr = "trapa: NULL process!";
+	if (l == NULL) {
+		pstr = "trapa: NULL lwp!";
 		goto trapa_panic;
 	}
 #endif
 
 	uvmexp.traps++;
 
-	p->p_md.md_regs = tf;
+	p = l->l_proc;
+	l->l_md.md_regs = tf;
 	trapcode = tf->tf_state.sf_tra;
 
 	switch (trapcode) {
 	case TRAPA_SYSCALL:
 		tf->tf_state.sf_spc += 4;	/* Skip over the trapa */
-		(p->p_md.md_syscall)(p, tf);
+		(p->p_md.md_syscall)(l, tf);
 		break;
 
 	default:
-		trapsignal(p, SIGILL, (u_long) tf->tf_state.sf_spc);
+		trapsignal(l, SIGILL, (u_long) tf->tf_state.sf_spc);
 		break;
 	}
 
-	userret(p);
+	userret(l);
 }
 
 void
