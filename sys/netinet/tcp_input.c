@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.19 1997/06/29 03:57:31 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.20 1997/06/30 18:35:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -469,17 +469,45 @@ findpcb:
 				else if (tiflags & TH_ACK) {
 					so = syn_cache_get(so, m);
 					if (so == NULL) {
+						/*
+						 * We don't have a SYN for
+						 * this ACK; send an RST.
+						 */
 						tcpstat.tcps_badsyn++;
 						tp = NULL;
 						goto dropwithreset;
-					} else if (so == (struct socket *)(-1))
+					} else if (so ==
+					    (struct socket *)(-1)) {
+						/*
+						 * We were unable to create
+						 * the socket for this
+						 * connection and we have
+						 * aborted by sending ACK,RST
+						 * to the peer.  mbuf is being
+						 * used to send the response
+						 * so do not free it.
+						 */
 						m = NULL;
-					else {
+					} else if (so !=
+					    (struct socket *)(-2)) {
+						/*
+						 * We have created a
+						 * full-blown connection.
+						 */
 						inp = sotoinpcb(so);
 						tp = intotcpcb(inp);
 						tiwin <<= tp->snd_scale;
 						goto after_listen;
 					}
+					/*
+					 * Remaining case is a return value
+					 * of -2.  This indicates that there
+					 * was some error in the creation of
+					 * the connection.  However, we were
+					 * able to create the socket, so
+					 * we just drop the data and let the
+					 * peer send another ACK.
+					 */
   				}
   			} else {
 				/*
@@ -1888,6 +1916,27 @@ syn_cache_lookup(ti, prevp, headp)
  * in the syn cache, and if its there, we pull it out of
  * the cache and turn it into a full-blown connection in
  * the SYN-RECEIVED state.
+ *
+ * The return values may not be immediately obvious, and their effects
+ * can be subtle, so here they are:
+ *
+ *	NULL	SYN was not found in cache; caller should drop the
+ *		packet and send an RST.
+ *
+ *	-1	We were unable to create a new socket, and are aborting
+ *		the connection, and sending ACK,RST to the peer.  Do not
+ *		free the mbuf, since it is being used to send the packet
+ *		to the peer.
+ *
+ *	-2	We have a resource shortage or other error, and have
+ *		aborted the connection.  However, we _were_ able to
+ *		create a new socket, so, even though we are aborting,
+ *		we are going to let the peer send another ACK to try
+ *		again.  Since we are not sending a response, the caller
+ *		should free the mbuf.
+ *
+ *	Otherwise, the return value is a pointer to the new socket
+ *	associated with the connection.
  */
 struct socket *
 syn_cache_get(so, m)
@@ -1954,11 +2003,8 @@ syn_cache_get(so, m)
 #endif
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL) {
-		soabort(so);
-		so = (struct socket *)(-1);
-		goto done;
-	}
+	if (am == NULL)
+		goto abortandretry;
 	am->m_len = sizeof(struct sockaddr_in);
 	sin = mtod(am, struct sockaddr_in *);
 	sin->sin_family = AF_INET;
@@ -1968,9 +2014,7 @@ syn_cache_get(so, m)
 	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
 	if (in_pcbconnect(inp, am)) {
 		(void) m_free(am);
-		soabort(so);
-		so = (struct socket *)(-1);
-		goto done;
+		goto abortandretry;
 	}
 	(void) m_free(am);
 
@@ -2021,6 +2065,11 @@ syn_cache_get(so, m)
 done:
 	FREE(sc, M_PCB);
 	return (so);
+
+abortandretry:
+	(void) soabort(so);
+	syn_cache_insert(sc, &sc_prev, &head);
+	return ((struct socket *)(-2));
 }
 
 /*
