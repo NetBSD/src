@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.47 1994/04/20 23:39:19 mycroft Exp $
+#	$Id: ALL,v 1.48 1994/05/05 00:03:45 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -207,7 +207,7 @@ device		sb0	at isa? port 0x220 irq 7 drq 1
 #ethernet
 device ed0 at isa? port 0x300 irq 10 iomem 0xcc000
 device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
-device hp0 at isa? port 0x300 irq 5
+#device hp0 at isa? port 0x300 irq 5
 device is0 at isa? port 0x280 irq 10 drq 7
 device ep0 at isa? port ? irq ?
 
