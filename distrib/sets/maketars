@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.29 2002/12/17 01:59:32 lukem Exp $
+# $NetBSD: maketars,v 1.30 2002/12/19 06:21:45 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -22,6 +22,7 @@ tars=$RELEASEDIR
 dest=$DESTDIR
 metalog=
 installdir=
+etcdir=
 
 # handle args
 while : ; do
@@ -44,6 +45,9 @@ while : ; do
 	-m*)
 		machine=$2; shift
 		;;
+	-N*)
+		etcdir=$2; shift
+		;;
 	-s*)
 		setd=$2; shift
 		;;
@@ -55,15 +59,16 @@ while : ; do
 		;;
 	-*)
 		cat 1>&2 <<USAGE
-Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [-M metalog]
-		[-d dest] [-t tars] [setname ...]
+Usage: $0 [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
+	    [-M metalog] [-N etcdir] [-d dest] [-t tars] [setname ...]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
-	-i targdir	install sets to targdir instead of creating tar files
+	-i idir		install sets to idir instead of creating tar files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$machine_arch]
 	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
 	-s setsdir	directory to find sets [$setd]
 	-M metalog	metalog file
+	-N etcdir	etc dir for metalog use [$dest/etc]
 	-d dest		\$DESTDIR	[$dest]
 	-t tars		\$RELEASEDIR	[$tars]
 	[setname ...]	sets to build 	[$lists]
@@ -92,6 +97,7 @@ if [ -z "$dest" ]; then
 	echo \$DESTDIR must be set
 	exit 1
 fi
+: ${etcdir:=${dest}/etc}
 
 # Make sure we don't loop forever if mkdir will always fail.
 
@@ -119,10 +125,10 @@ trap "/bin/rm -rf $SDIR ; exit 0" 0 2 3 13		# EXIT INT QUIT PIPE
 if [ -n "$metalog" ]; then
 	echo "Parsing $metalog"
 	(
-		cat ${dest}/etc/mtree/NetBSD.dist
+		cat ${etcdir}/mtree/NetBSD.dist
 		echo "/unset all"
 		sed -e "s,^\.$dest,.," < $metalog
-	) | ${MTREE} -D -k all -N ${dest}/etc | \
+	) | ${MTREE} -D -k all -N ${etcdir} | \
 	    sed -e 's,\(.*\) \(\..*\),\2 \1,' > $SDIR/metalog
 fi
 
@@ -152,11 +158,11 @@ for setname in $lists; do
 
 	if [ -n "$installdir" ]; then
 		( cd $dest ; \
-		    ${PAX} -rwpe -d ${metalog:+-N$dest/etc} ${metalog:+-M} \
+		    ${PAX} -rwpe -d ${metalog:+-N${etcdir}} ${metalog:+-M} \
 		    $installdir < ${SDIR}/plist.$setname )
 	else
 		( cd $dest ; \
-		    ${PAX} -w -d -z ${metalog:+-N$dest/etc} ${metalog:+-M} \
+		    ${PAX} -w -d -z ${metalog:+-N${etcdir}} ${metalog:+-M} \
 		    < ${SDIR}/plist.$setname ) > ${tars}/$out
 	fi
 	es=$(($es + $?))
