@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2004/11/11 22:21:53 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2005/01/18 12:30:21 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -28,7 +28,7 @@ MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\"
 
-.if defined(SMALLPROG_INET6)
+.if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
