@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.7 1997/10/18 11:37:45 lukem Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.8 1998/05/14 21:49:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.7 1997/10/18 11:37:45 lukem Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.8 1998/05/14 21:49:13 is Exp $");
 #endif
 
 #include <sys/types.h>
@@ -287,8 +287,11 @@ cvt_arg(arg, tvp)
 	struct timeval *tvp;
 {
 	char *cp;
-	double seconds = 0.0, exponent = -1.0;
+	int seconds, microseconds, factor;
 	int period = 0;
+	factor = 1000000;
+	microseconds = 0;
+	seconds = 0;
 
 	for (cp = arg; *cp != '\0'; ++cp) {
 		if (*cp == '.') {
@@ -302,14 +305,19 @@ cvt_arg(arg, tvp)
 			errx(1, "invalid argument: %s", arg);
 
 		if (period) {
-			seconds = seconds + ((*cp - '0') * pow(10.0, exponent));
-			exponent -= 1.0;
+			if (factor > 1) {
+				microseconds = microseconds * 10 + (*cp - '0');
+				factor /= 10;
+			}
 		} else
-			seconds = (seconds * 10.0) + (*cp - '0');
+			seconds = (seconds * 10) + (*cp - '0');
 	}
 
-	tvp->tv_sec = (long)seconds;
-	tvp->tv_usec = (long)((seconds - tvp->tv_sec) * 1000000);
+	tvp->tv_sec = seconds;
+	if (factor > 1)
+		microseconds *= factor;
+		
+	tvp->tv_usec = microseconds;
 }
 
 static void
