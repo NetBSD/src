@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.7 2003/09/05 22:43:02 itojun Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.8 2003/10/07 21:22:11 mycroft Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.7 2003/09/05 22:43:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.8 2003/10/07 21:22:11 mycroft Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -812,7 +812,7 @@ drop_early(fp_len, fp_probd, count)
 	 * drop probability = (avg - TH_MIN) / d
 	 */
 
-	if ((arc4random() % d) < fp_len) {
+	if ((random() % d) < fp_len) {
 		/* drop or mark */
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.6 2003/09/05 22:43:01 itojun Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.7 2003/10/07 21:22:11 mycroft Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.6 2003/09/05 22:43:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.7 2003/10/07 21:22:11 mycroft Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -511,7 +511,7 @@ static int
 drop_early(rp)
 	blue_t *rp;
 {
-	if ((arc4random() % rp->blue_max_pmark) < rp->blue_pmark) {
+	if ((random() % rp->blue_max_pmark) < rp->blue_pmark) {
 		/* drop or mark */
 		return (1);
 	}
