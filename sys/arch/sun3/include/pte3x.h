@@ -1,4 +1,4 @@
-/*	$NetBSD: pte3x.h,v 1.6 1997/06/10 19:48:33 veego Exp $	*/
+/*	$NetBSD: pte3x.h,v 1.6.4.1 1998/01/27 02:15:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,8 +43,8 @@
  * in the translation structure) should go here.
  */
 
-#ifndef _MACHINE_PTE_H
-#define _MACHINE_PTE_H
+#ifndef _MACHINE_PTE3X_H
+#define _MACHINE_PTE3X_H
 
 #include <machine/mc68851.h>
 
@@ -116,36 +116,10 @@
 #define	MMU_ROUND_UP_C(pa)\
 	((unsigned long) (pa + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
 
-/* Bus space tags */
-#define OBMEM	0
-#define OBIO 	1
-#define VME_D16	2
-#define VME_D32	3
-#define PG_TYPE_SHIFT 26
+/* Compatibility... */
+#define PG_FRAME MMU_SHORT_PTE_BASEADDR
+#define PG_PA(pte)  	((pte) & PG_FRAME)
+#define PG_PFNUM(pte)	(PG_PA(pte) >> PGSHIFT)
+#define PG_VALID    	MMU_DT_PAGE
 
-#define MAKE_PGTYPE(x) ((x) << PG_TYPE_SHIFT)
-#define PG_PGNUM(pte) (pte & PG_FRAME)
-#define PG_PA(pte) ((pte & PG_FRAME) <<PGSHIFT)
-
-#define	PGT_MASK	MAKE_PGTYPE(3)
-#define	PGT_OBMEM	MAKE_PGTYPE(OBMEM)		/* onboard memory */
-#define	PGT_OBIO	MAKE_PGTYPE(OBIO)		/* onboard I/O */
-#define	PGT_VME_D16	MAKE_PGTYPE(VME_D16)	/* VMEbus 16-bit data */
-#define	PGT_VME_D32	MAKE_PGTYPE(VME_D32)	/* VMEbus 32-bit data */
-
-#define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
-
-#define VA_PTE_NUM_SHIFT  13
-#define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)
-#define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
-
-#define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
-
-#ifdef	_KERNEL
-
-/* defined in pmap.c */
-vm_offset_t get_pte __P((vm_offset_t va));
-void set_pte __P((vm_offset_t, vm_offset_t));
-
-#endif	/* _KERNEL */
-#endif	/* !_MACHINE_PTE_H*/
+#endif	/* _MACHINE_PTE3X_H */
