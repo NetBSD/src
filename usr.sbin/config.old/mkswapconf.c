@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.7 1994/04/25 23:30:52 cgd Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.8 1994/06/13 02:32:50 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -106,10 +106,8 @@ do_swap(fl)
 	} while (swap && swap->f_type == SWAPSPEC);
 	fprintf(fp, "\t{ NODEV, 0, 0 }\n");
 	fprintf(fp, "};\n\n");
-	fprintf(fp, "extern int ufs_mountroot();\n");
-	fprintf(fp, "int (*mountroot)() = ufs_mountroot;\n\n");
-	/* to support boot via net: */
-	fprintf(fp, "int nfs_diskless = -1;\n");
+	fprintf(fp, "extern int ffs_mountroot();\n");
+	fprintf(fp, "int (*mountroot)() = ffs_mountroot;\n");
 	fclose(fp);
 	return (swap);
 }
