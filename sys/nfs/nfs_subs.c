@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.39 1997/02/22 03:03:03 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.40 1997/03/23 20:55:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1723,6 +1723,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	register int i;
 	struct ucred *credanon;
 	int error, exflags;
+	struct sockaddr_in *saddr;
 
 	*vpp = (struct vnode *)0;
 #ifdef Lite2_integrated
@@ -1735,6 +1736,15 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon);
 	if (error)
 		return (error);
+
+	if (!(exflags & MNT_EXNORESPORT)) {
+		saddr = mtod(nam, struct sockaddr_in *);
+		if (saddr->sin_family == AF_INET &&
+		    ntohs(saddr->sin_port) >= IPPORT_RESERVED) {
+			vput(*vpp);
+			return (NFSERR_AUTHERR | AUTH_TOOWEAK);
+		}
+	}
 	/*
 	 * Check/setup credentials.
 	 */
