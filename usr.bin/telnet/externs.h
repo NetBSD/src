@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.24 2002/06/14 09:55:08 wiz Exp $	*/
+/*	$NetBSD: externs.h,v 1.25 2002/08/23 08:14:20 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -119,6 +119,7 @@ extern int
     autologin,		/* Autologin enabled */
     skiprc,		/* Don't process the ~/.telnetrc file */
     eight,		/* use eight bit mode (binary in and/or out */
+    family,		/* address family of peer */
     flushout,		/* flush output */
     connected,		/* Are we connected to the other side? */
     globalmode,		/* Mode tty should be in */
