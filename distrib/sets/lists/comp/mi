@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.720 2004/07/24 18:15:01 cube Exp $
+#	$NetBSD: mi,v 1.721 2004/08/12 16:07:07 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1615,7 +1615,6 @@
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
 ./usr/lib/libmilter.a				comp-sendmail-lib	sendmail
 ./usr/lib/libntp.a				comp-obsolete		obsolete
-./usr/lib/libntp.so				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libobjc.a				comp-objc-lib

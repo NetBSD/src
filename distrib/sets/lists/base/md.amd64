@@ -1,8 +1,9 @@
-# $NetBSD: md.amd64,v 1.7 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: md.amd64,v 1.8 2004/08/12 16:07:07 lukem Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./sbin/fdisk					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
+./usr/lib/libx86_64.so				base-sys-shlib
 ./usr/lib/libx86_64.so.0			base-sys-shlib
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib
 ./usr/mdec/biosboot				base-obsolete		obsolete

@@ -1,3 +1,2 @@
-# $NetBSD: ad.m68k.shl,v 1.5 2004/01/11 10:13:42 lukem Exp $
-./usr/lib/libm68k.so				comp-c-lib
+# $NetBSD: ad.m68k.shl,v 1.6 2004/08/12 16:07:07 lukem Exp $
 ./usr/lib/libm68k_pic.a				comp-c-piclib

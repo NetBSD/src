@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.106 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: md.i386,v 1.107 2004/08/12 16:07:07 lukem Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -10,6 +10,7 @@
 ./dev/ttyv6					base-obsolete		obsolete
 ./dev/ttyv7					base-obsolete		obsolete
 ./dev/vga					base-obsolete		obsolete
+./lib/libm387.so				base-sys-shlib
 ./lib/libm387.so.0				base-sys-shlib
 ./lib/libm387.so.0.0				base-sys-shlib
 ./sbin/fdisk					base-sysutil-root
@@ -18,10 +19,13 @@
 ./usr/bin/fontedit				base-obsolete		obsolete
 ./usr/bin/pmc					base-util-bin
 ./usr/bin/vttest				base-obsolete		obsolete
+./usr/lib/libi386.so				base-sys-shlib
 ./usr/lib/libi386.so.1				base-sys-shlib
 ./usr/lib/libi386.so.1.0			base-sys-shlib
+./usr/lib/libm387.so				base-sys-shlib
 ./usr/lib/libm387.so.0				base-sys-shlib
 ./usr/lib/libm387.so.0.0			base-sys-shlib
+./usr/lib/libpmc.so				base-sys-shlib
 ./usr/lib/libpmc.so.0				base-sys-shlib
 ./usr/lib/libpmc.so.0.0				base-sys-shlib
 ./usr/libexec/ld.so				base-sys-shlib
