@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.11 1998/01/22 01:47:43 cgd Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.12 1998/01/27 23:55:18 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -226,6 +226,22 @@ ofnread(of)
 				}
 				l = MCLBYTES;
 			}
+
+			/*
+			 * Make sure the data after the Ethernet header
+			 * is aligned.
+			 *
+			 * XXX Assumes the device is an ethernet, but
+			 * XXX then so does other code in this driver.
+			 */
+			if (head == NULL) {
+				caddr_t newdata = (caddr_t)ALIGN(m->m_data +
+				      sizeof(struct ether_header)) -
+				    sizeof(struct ether_header);
+				l -= newdata - m->m_data;
+				m->m_data = newdata;
+			}
+
 			m->m_len = l = min(len, l);
 			bcopy(bufp, mtod(m, char *), l);
 			bufp += l;
