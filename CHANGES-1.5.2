@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.7 2001/08/08 18:19:55 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.8 2001/08/16 13:33:14 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -164,3 +164,8 @@ sbin/dump/main.c				1.37 via patch
   Temporarily drop setgid (for setgid tty) privileges, but restore them
   if we fork to perform an operator notification. Generalize pre-existing
   #ifdef RDUMP code.
+
+sys/arch/mips/mips/locore_mips3.S		1.70
+sys/arch/mips/mips/vm_machdep.c			1.77-1.78
+
+  Fix bugs in handling of SR on mips3 machines, causing TLB miss panics.
