@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.4 2001/11/22 02:47:26 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.5 2001/12/05 11:08:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.4 2001/11/22 02:47:26 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.5 2001/12/05 11:08:53 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -518,14 +518,16 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 			assert(strcmp(node->name, ".") == 0);
 			ADDDIRENT("..");
 		}
-		if (node->dup == NULL) { /* don't count duplicate names */
+		if ((node->inode->flags & FI_SIZED) == 0) {
+				/* don't count duplicate names */
+			node->inode->flags |= FI_SIZED;
 			if (debug & DEBUG_FS_SIZE_DIR_NODE)
 				printf("ffs_size_dir: %s size %lld\n",
 				    node->name,
-				    (long long)node->statbuf.st_size);
+				    (long long)node->inode->st.st_size);
 			fsopts->inodes++;
 			if (node->type == S_IFREG)
-				ADDSIZE(node->statbuf.st_size);
+				ADDSIZE(node->inode->st.st_size);
 			if (node->type == S_IFLNK) {
 				int	slen;
 
@@ -567,23 +569,23 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		 * pass 1: allocate inode numbers, build directory `file'
 		 */
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (cur->dup == NULL) {
-			if (cur == root && cur->parent)
-				cur->ino = cur->parent->ino;
+		if ((cur->inode->flags & FI_ALLOCATED) == 0) {
+			cur->inode->flags |= FI_ALLOCATED;
+			if (cur == root && cur->parent != NULL)
+				cur->inode->ino = cur->parent->inode->ino;
 			else {
-				cur->ino = fsopts->curinode;
+				cur->inode->ino = fsopts->curinode;
 				fsopts->curinode++;
 			}
-		} else
-			cur->ino = cur->dup->ino;
+		}
 		ffs_make_dirbuf(&dirbuf, cur->name, cur, fsopts->needswap);
 		if (cur == root) {		/* we're at "."; add ".." */
 			ffs_make_dirbuf(&dirbuf, "..",
 			    cur->parent == NULL ? cur : cur->parent->first,
 			    fsopts->needswap);
-			root->nlink++;		/* count my parent's link */
+			root->inode->nlink++;	/* count my parent's link */
 		} else if (cur->child != NULL)
-			root->nlink++;		/* count my child's link */
+			root->inode->nlink++;	/* count my child's link */
 
 		/*
 		 * XXX	possibly write file and long symlinks here,
@@ -601,8 +603,9 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_POPULATE)
 		printf("ffs_populate_dir: PASS 2  dir %s\n", dir);
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (cur->dup != NULL)
+		if (cur->inode->flags & FI_WRITTEN)
 			continue;		/* skip hard-linked entries */
+		cur->inode->flags |= FI_WRITTEN;
 
 		if (snprintf(path, sizeof(path), "%s/%s", dir, cur->name)
 		    >= sizeof(path))
@@ -613,19 +616,19 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 				/* build on-disk inode */
 		memset(&din, 0, sizeof(din));
-		din.di_mode = cur->statbuf.st_mode;
-		din.di_nlink = cur->nlink;
-		din.di_size = cur->statbuf.st_size;
-		din.di_atime = cur->statbuf.st_atime;
-		din.di_atimensec = cur->statbuf.st_atimensec;
-		din.di_mtime = cur->statbuf.st_mtime;
-		din.di_mtimensec = cur->statbuf.st_mtimensec;
-		din.di_ctime = cur->statbuf.st_ctime;
-		din.di_ctimensec = cur->statbuf.st_ctimensec;
-		din.di_flags = cur->statbuf.st_flags;
-		din.di_gen = cur->statbuf.st_gen;
-		din.di_uid = cur->statbuf.st_uid;
-		din.di_gid = cur->statbuf.st_gid;
+		din.di_mode = cur->inode->st.st_mode;
+		din.di_nlink = cur->inode->nlink;
+		din.di_size = cur->inode->st.st_size;
+		din.di_atime = cur->inode->st.st_atime;
+		din.di_atimensec = cur->inode->st.st_atimensec;
+		din.di_mtime = cur->inode->st.st_mtime;
+		din.di_mtimensec = cur->inode->st.st_mtimensec;
+		din.di_ctime = cur->inode->st.st_ctime;
+		din.di_ctimensec = cur->inode->st.st_ctimensec;
+		din.di_flags = cur->inode->st.st_flags;
+		din.di_gen = cur->inode->st.st_gen;
+		din.di_uid = cur->inode->st.st_uid;
+		din.di_gid = cur->inode->st.st_gid;
 			/* not set: di_db, di_ib, di_blocks, di_spare */
 
 		membuf = NULL;
@@ -635,7 +638,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		} else if (S_ISBLK(cur->type) || S_ISCHR(cur->type)) {
 			din.di_size = 0;	/* a device */
 			din.di_rdev =
-			    ufs_rw32(cur->statbuf.st_rdev, fsopts->needswap);
+			    ufs_rw32(cur->inode->st.st_rdev, fsopts->needswap);
 		} else if (S_ISLNK(cur->type)) {	/* symlink */
 			int slen;
 
@@ -649,19 +652,19 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		if (debug & DEBUG_FS_POPULATE_NODE) {
 			printf("ffs_populate_dir: writing ino %d, %s",
-			    cur->ino, inode_type(cur->type));
-			if (cur->nlink > 1)
-				printf(", nlink %d", cur->nlink);
+			    cur->inode->ino, inode_type(cur->type));
+			if (cur->inode->nlink > 1)
+				printf(", nlink %d", cur->inode->nlink);
 			putchar('\n');
 		}
 
 		if (membuf != NULL) {
-			ffs_write_file(&din, cur->ino, membuf, fsopts);
+			ffs_write_file(&din, cur->inode->ino, membuf, fsopts);
 		} else if (S_ISREG(cur->type)) {
-			ffs_write_file(&din, cur->ino, path, fsopts);
+			ffs_write_file(&din, cur->inode->ino, path, fsopts);
 		} else {
 			assert (! S_ISDIR(cur->type));
-			ffs_write_inode(&din, cur->ino, fsopts);
+			ffs_write_inode(&din, cur->inode->ino, fsopts);
 		}
 	}
 
@@ -788,7 +791,7 @@ ffs_dump_dirbuf(dirbuf_t *dbuf, const char *dir, int needswap)
 {
 	doff_t		i;
 	struct direct	*de;
-	u_int16_t	reclen;
+	uint16_t	reclen;
 
 	assert (dbuf != NULL);
 	assert (dir != NULL);
@@ -812,16 +815,16 @@ static void
 ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 {
 	struct direct	de, *dp;
-	u_int16_t	llen, reclen;
+	uint16_t	llen, reclen;
 
 	assert (dbuf != NULL);
 	assert (name != NULL);
 	assert (node != NULL);
 					/* create direct entry */
 	(void)memset(&de, 0, sizeof(de));
-	de.d_ino = ufs_rw32(node->ino, needswap);
+	de.d_ino = ufs_rw32(node->inode->ino, needswap);
 	de.d_type = IFTODT(node->type);
-	de.d_namlen = (u_int8_t)strlen(name);
+	de.d_namlen = (uint8_t)strlen(name);
 	assert (de.d_namlen < (sizeof(de.d_name)));
 	strcpy(de.d_name, name);
 	reclen = DIRSIZ(0, &de, needswap);
