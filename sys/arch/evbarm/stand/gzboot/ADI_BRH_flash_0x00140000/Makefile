@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2003/03/25 23:38:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/29 05:36:20 thorpej Exp $
 
 S=	${.CURDIR}/../../../../..
 
 PLATFORM= ADI_BRH
 RELOC= 0x00140000
-MAXIMAGESIZE= 2097152	# 2M
+MAXIMAGESIZE= 0		# concatenate
 LOADADDR= 0xc0200000
 
 CPPFLAGS+= -DBECC_SUPPORT_V7
