@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52 2001/01/22 13:18:29 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.53 2001/03/23 21:10:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -902,8 +902,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
+			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vput(vp);
+			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
