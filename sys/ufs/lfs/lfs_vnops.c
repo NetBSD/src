@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.115 2003/09/20 17:51:55 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.116 2003/09/23 05:26:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.115 2003/09/20 17:51:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.116 2003/09/23 05:26:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,6 @@ lfs_inactive(void *v)
 #define	SET_DIROP(vp)		SET_DIROP2((vp), NULL)
 #define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
 static int lfs_set_dirop(struct vnode *, struct vnode *);
-extern int lfs_do_flush;
 
 #define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
 
