@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.1 1999/05/01 05:18:01 cgd Exp $ */
+/* $NetBSD: osf1_file.c,v 1.2 1999/05/01 05:33:36 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -276,4 +276,49 @@ osf1_sys_access(p, v, retval)
 		return (EINVAL);
 
 	return sys_access(p, &a, retval);
+}
+
+int
+osf1_sys_utimes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_utimes_args *uap = v;
+	struct sys_utimes_args a;
+	struct osf1_timeval otv;
+	struct timeval tv;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SCARG(&a, path) = SCARG(uap, path);
+
+	error = 0;
+	if (SCARG(uap, tptr) == NULL)
+		SCARG(&a, tptr) = NULL;
+	else {
+		SCARG(&a, tptr) = stackgap_alloc(&sg, sizeof tv);
+
+		/* get the OSF/1 timeval argument */
+		error = copyin((caddr_t)SCARG(uap, tptr),
+		    (caddr_t)&otv, sizeof otv);
+		if (error == 0) {
+
+			/* fill in and copy out the NetBSD timeval */
+			memset(&tv, 0, sizeof tv);
+			tv.tv_sec = otv.tv_sec;
+			tv.tv_usec = otv.tv_usec;
+
+			error = copyout((caddr_t)&tv,
+			    (caddr_t)SCARG(&a, tptr), sizeof tv);
+		}
+	}
+
+	if (error == 0)
+		error = sys_utimes(p, &a, retval);
+
+	return (error);
 }
