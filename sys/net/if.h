@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.7 1994/02/10 17:16:33 mycroft Exp $
+ *	$Id: if.h,v 1.8 1994/02/16 20:12:50 mycroft Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -136,7 +136,7 @@ struct ifnet {
 /* flags set internally only: */
 #define IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE| \
-	IFF_SIMPLEX|IFF_MULTICAST)
+	IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
