@@ -42,7 +42,7 @@
  *	@(#)asm.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: asm.h,v 1.5 92/11/26 03:04:42 torek Exp 
- * $Id: asm.h,v 1.1 1993/10/02 10:24:00 deraadt Exp $
+ * $Id: asm.h,v 1.2 1994/08/12 09:52:40 deraadt Exp $
  */
 
 /*
@@ -70,6 +70,14 @@
 	_lduba_v; \
 })
 
+/* load half-word from alternate address space */
+#define	lduha(loc, asi) ({ \
+	register int _lduha_v; \
+	__asm __volatile("lduha [%1]%2,%0" : "=r" (_lduha_v) : \
+	    "r" ((int)(loc)), "n" (asi)); \
+	_lduha_v; \
+})
+
 /* load int from alternate address space */
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
@@ -81,6 +89,12 @@
 /* store byte to alternate address space */
 #define	stba(loc, asi, value) ({ \
 	__asm __volatile("stba %0,[%1]%2" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
+})
+
+/* store half-word to alternate address space */
+#define	stha(loc, asi, value) ({ \
+	__asm __volatile("stha %0,[%1]%2" : : \
 	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
 })
 
