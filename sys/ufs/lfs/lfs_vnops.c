@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.81 2003/01/25 23:00:10 kleink Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.82 2003/01/30 14:18:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.81 2003/01/25 23:00:10 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.82 2003/01/30 14:18:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
 	{ &vop_create_desc, lfs_create },		/* create */
-	{ &vop_whiteout_desc, lfs_whiteout },		/* whiteout */
+	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, lfs_mknod },			/* mknod */
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
@@ -589,26 +589,6 @@ lfs_create(void *v)
         if (*(ap->a_vpp))
                 UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
-	return (error);
-}
-
-int
-lfs_whiteout(void *v)
-{
-	struct vop_whiteout_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-		int a_flags;
-	} */ *ap = v;
-	int error;
-
-	if ((error = SET_DIROP(ap->a_dvp)) != 0)
-		/* XXX no unlock here? */
-		return error;
-	MARK_VNODE(ap->a_dvp);
-	error = ufs_whiteout(ap);
-	UNMARK_VNODE(ap->a_dvp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"whiteout");
 	return (error);
 }
 
