@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.11 1997/05/23 22:09:48 cjs Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.12 1997/06/14 08:43:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.11 1997/05/23 22:09:48 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.12 1997/06/14 08:43:29 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,14 +80,13 @@ extern	int logging;
 extern	int type;
 extern	int form;
 extern	int debug;
-extern	int timeout;
-extern	int maxtimeout;
 extern  int pdata;
 extern	char hostname[], remotehost[];
 extern	char proctitle[];
 extern	int usedefault;
 extern  int transflag;
 extern  char tmpline[];
+extern	struct ftpclass curclass;
 
 off_t	restart_point;
 
@@ -125,7 +124,7 @@ char	*fromname;
 %token	<s> STRING
 %token	<i> NUMBER
 
-%type	<i> check_login check_login_noguest octal_number byte_size
+%type	<i> check_login check_modify octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code
 %type	<s> pathstring pathname password username
 
@@ -290,7 +289,7 @@ cmd
 		{
 			statcmd();
 		}
-	| DELE check_login_noguest SP pathname CRLF
+	| DELE check_modify SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				delete($4);
@@ -347,14 +346,14 @@ cmd
 		{
 			reply(200, "NOOP command successful.");
 		}
-	| MKD check_login_noguest SP pathname CRLF
+	| MKD check_modify SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				makedir($4);
 			if ($4 != NULL)
 				free($4);
 		}
-	| RMD check_login_noguest SP pathname CRLF
+	| RMD check_modify SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				removedir($4);
@@ -389,7 +388,7 @@ cmd
 				reply(200, "Current UMASK is %03o", oldmask);
 			}
 		}
-	| SITE SP UMASK check_login_noguest SP octal_number CRLF
+	| SITE SP UMASK check_modify SP octal_number CRLF
 		{
 			int oldmask;
 
@@ -404,7 +403,7 @@ cmd
 				}
 			}
 		}
-	| SITE SP CHMOD check_login_noguest SP octal_number SP pathname CRLF
+	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
 		{
 			if ($4 && ($8 != NULL)) {
 				if ($6 > 0777)
@@ -422,20 +421,20 @@ cmd
 		{
 			reply(200,
 			    "Current IDLE time limit is %d seconds; max %d",
-				timeout, maxtimeout);
+				curclass.timeout, curclass.maxtimeout);
 		}
 	| SITE SP IDLE SP NUMBER CRLF
 		{
-			if ($5 < 30 || $5 > maxtimeout) {
+			if ($5 < 30 || $5 > curclass.maxtimeout) {
 				reply(501,
-			"Maximum IDLE time must be between 30 and %d seconds",
-				    maxtimeout);
+			"IDLE time limit must be between 30 and %d seconds",
+				    curclass.maxtimeout);
 			} else {
-				timeout = $5;
-				(void) alarm((unsigned) timeout);
+				curclass.timeout = $5;
+				(void) alarm(curclass.timeout);
 				reply(200,
-				    "Maximum IDLE time set to %d seconds",
-				    timeout);
+				    "IDLE time limit set to %d seconds",
+				    curclass.timeout);
 			}
 		}
 	| STOU check_login SP pathname CRLF
@@ -730,18 +729,16 @@ check_login
 			}
 		}
 	;
-check_login_noguest
+check_modify
 	: /* empty */
 		{
 			if (logged_in)  {
-#ifndef INSECURE_GUEST
-				if (guest)  {
-					reply(502,
-				    "Guest users may not use this command.");
-					$$ = 0;
+				if (curclass.modify) {
+					$$ = 1;
 				} else
-#endif
-				$$ = 1;
+					reply(502,
+					"No permission to use this command.");
+					$$ = 0;
 			} else {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
@@ -936,10 +933,11 @@ toolong(signo)
 {
 
 	reply(421,
-	    "Timeout (%d seconds): closing control connection.", timeout);
+	    "Timeout (%d seconds): closing control connection.",
+	    curclass.timeout);
 	if (logging)
 		syslog(LOG_INFO, "User %s timed out after %d seconds",
-		    (pw ? pw -> pw_name : "unknown"), timeout);
+		    (pw ? pw -> pw_name : "unknown"), curclass.timeout);
 	dologout(1);
 }
 
@@ -957,7 +955,7 @@ yylex()
 
 		case CMD:
 			(void) signal(SIGALRM, toolong);
-			(void) alarm((unsigned) timeout);
+			(void) alarm(curclass.timeout);
 			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
