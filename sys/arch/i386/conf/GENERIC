@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.83 1997/07/02 02:44:10 cjs Exp $
+#	$NetBSD: GENERIC,v 1.84 1997/07/13 19:33:29 hpeyerl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -175,7 +175,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
@@ -203,22 +203,25 @@ ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+#pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+#sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+#wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+#pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+#gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
+
 # PnP bus and devices should be declared last 
 isapnp0	at isa? 
 ep*	at isapnp?
-sb*	at isapnp?
+#sb*	at isapnp?
 joy*	at isapnp?
 
 include	"arch/i386/conf/GENERIC.local"
