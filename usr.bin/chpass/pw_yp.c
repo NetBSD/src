@@ -32,7 +32,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pw_yp.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: pw_yp.c,v 1.2 1993/08/01 18:17:53 mycroft Exp $";
+static char rcsid[] = "$Id: pw_yp.c,v 1.3 1994/06/29 21:40:21 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -49,101 +49,110 @@ static char rcsid[] = "$Id: pw_yp.c,v 1.2 1993/08/01 18:17:53 mycroft Exp $";
 #define passwd yp_passwd_rec
 #include <rpcsvc/yppasswd.h>
 #undef passwd
-        
+
 extern char *progname;
 
 static char *domain;
 
 pw_yp(pw, uid)
-        struct passwd *pw;
-        uid_t uid;
+	struct passwd *pw;
+	uid_t uid;
 {
-        char *master;
-        char *pp;
-        int r, rpcport, status;
-        struct yppasswd yppasswd;
+	char *master;
+	char *pp;
+	int r, rpcport, status;
+	struct yppasswd yppasswd;
 	struct timeval tv;
 	CLIENT *client;
-        extern char *getpass();
-        
-        /*
-         * Get local domain
-         */
-        if (!domain && (r = yp_get_default_domain(&domain))) {
-                (void)fprintf(stderr, "%s: can't get local NIS domain. Reason: %s\n", progname, yperr_string(r));
-                return(0);
-        }
+	extern char *getpass();
+	
+	/*
+	 * Get local domain
+	 */
+	if (!domain && (r = yp_get_default_domain(&domain))) {
+		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
+		    progname, yperr_string(r));
+		return(0);
+	}
 
-        /*
-         * Find the host for the passwd map; it should be running
-         * the daemon.
-         */
-        if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
-                (void)fprintf(stderr, "%s: can't find the master NIS server. Reason: %s\n", progname, yperr_string(r));
-                return(0);
-        }
+	/*
+	 * Find the host for the passwd map; it should be running
+	 * the daemon.
+	 */
+	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
+		fprintf(stderr,
+		    "%s: can't find the master YP server. Reason: %s\n",
+		    progname, yperr_string(r));
+		return(0);
+	}
 
-        /*
-         * Ask the portmapper for the port of the daemon.
-         */
-        if ((rpcport = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
-                (void)fprintf(stderr, "%s: master NIS server not running yppasswd daemon.\n\tCan't change password.\n", progname);
-                return(0);
-        }
+	/*
+	 * Ask the portmapper for the port of the daemon.
+	 */
+	if ((rpcport = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE,
+	    IPPROTO_UDP)) == 0) {
+		fprintf(stderr,
+		    "%s: master YP server not running yppasswd daemon.\n",
+		    progname);
+		fprintf(stderr,	"\tCan't change password.\n");
+		return(0);
+	}
 
-        /*
-         * Be sure the port is priviledged
-         */
-        if (rpcport >= IPPORT_RESERVED) {
-                (void)fprintf(stderr, "%s: yppasswd daemon running on an invalid port.\n", progname);
-                return(0);
-        }
+	/*
+	 * Be sure the port is priviledged
+	 */
+	if (rpcport >= IPPORT_RESERVED) {
+		(void)fprintf(stderr,
+		    "%s: yppasswd daemon running on an invalid port.\n",
+		    progname);
+		return(0);
+	}
 
-        /* prompt for old password */
-        yppasswd.oldpass = "none";
-        if (uid)
-                yppasswd.oldpass = getpass("Old password:");
-        if (!yppasswd.oldpass) {
-                (void)fprintf(stderr, "Cancelled.\n");
-                return(0);
-        }
-        
-        /* tell rpc.yppasswdd */
-        yppasswd.newpw.pw_name	= pw->pw_name;
-        yppasswd.newpw.pw_passwd= pw->pw_passwd;
-        yppasswd.newpw.pw_uid 	= pw->pw_uid;
-        yppasswd.newpw.pw_gid	= pw->pw_gid;
-        yppasswd.newpw.pw_gecos = pw->pw_gecos;
-        yppasswd.newpw.pw_dir	= pw->pw_dir;
-        yppasswd.newpw.pw_shell	= pw->pw_shell;
-        
-        client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
-        if (client==NULL) {
-                fprintf(stderr, "can't contact yppasswdd on %s: Reason: %s\n",
-                        master, yperr_string(YPERR_YPBIND));
-                return(0);
-        }
-        client->cl_auth = authunix_create_default();
-        tv.tv_sec = 2;
-        tv.tv_usec = 0;
-        r = clnt_call(client, YPPASSWDPROC_UPDATE,
-                      xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
-        if (r) {
-                fprintf(stderr, "%s: rpc to yppasswdd failed.\n");
-                return(0);
-        }
-        else if (status) {
-                printf("Couldn't change NIS password information.\n");
-                return(0);
-        }
-        else
-                printf("The NIS password information has been changed on %s, the master NIS passwd server.\n", master);
+	/* prompt for old password */
+	bzero(&yppasswd, sizeof yppasswd);
+	yppasswd.oldpass = "none";
+	if (uid)
+		yppasswd.oldpass = getpass("Old password:");
+	if (!yppasswd.oldpass) {
+		(void)fprintf(stderr, "Cancelled.\n");
+		return(0);
+	}
+	
+	/* tell rpc.yppasswdd */
+	yppasswd.newpw.pw_name	= pw->pw_name;
+	yppasswd.newpw.pw_passwd= pw->pw_passwd;
+	yppasswd.newpw.pw_uid 	= pw->pw_uid;
+	yppasswd.newpw.pw_gid	= pw->pw_gid;
+	yppasswd.newpw.pw_gecos = pw->pw_gecos;
+	yppasswd.newpw.pw_dir	= pw->pw_dir;
+	yppasswd.newpw.pw_shell	= pw->pw_shell;
+	
+	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
+	if (client==NULL) {
+		fprintf(stderr, "can't contact yppasswdd on %s: Reason: %s\n",
+		    master, yperr_string(YPERR_YPBIND));
+		return(0);
+	}
+	client->cl_auth = authunix_create_default();
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	r = clnt_call(client, YPPASSWDPROC_UPDATE,
+	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	if (r) {
+		fprintf(stderr, "%s: rpc to yppasswdd failed. %d\n", progname, r);
+		return(0);
+	} else if (status) {
+		printf("Couldn't change YP password information.\n");
+		return(0);
+	}
+	printf("The YP password information has been changed on %s, the master YP passwd server.\n", master);
 
-        return(1);
+	return(1);
 }
 
 static char *
-pwskip(register char *p)
+pwskip(p)
+	register char *p;
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -153,24 +162,26 @@ pwskip(register char *p)
 }
 
 static struct passwd *
-interpret(struct passwd *pwent, char *line)
+interpret(pwent, line)
+	struct passwd *pwent;
+	char *line;
 {
 	register char	*p = line;
 	register int	c;
 
-        pwent->pw_passwd = "*";
-        pwent->pw_uid = 0;
-        pwent->pw_gid = 0;
-        pwent->pw_gecos = "";
-        pwent->pw_dir = "";
-        pwent->pw_shell = "";
+	pwent->pw_passwd = "*";
+	pwent->pw_uid = 0;
+	pwent->pw_gid = 0;
+	pwent->pw_gecos = "";
+	pwent->pw_dir = "";
+	pwent->pw_shell = "";
 	pwent->pw_change = 0;
 	pwent->pw_expire = 0;
 	pwent->pw_class = "";
-        
-        /* line without colon separators is no good, so ignore it */
-        if(!strchr(p,':'))
-                return(NULL);
+	
+	/* line without colon separators is no good, so ignore it */
+	if(!strchr(p,':'))
+		return(NULL);
 
 	pwent->pw_name = p;
 	p = pwskip(p);
@@ -193,67 +204,69 @@ interpret(struct passwd *pwent, char *line)
 
 struct passwd *
 ypgetpwnam(nam)
-        char *nam;
+	char *nam;
 {
-        static struct passwd pwent;
-        static char line[1024];
-        char *val;
-        int reason, vallen;
-        
-        /*
-         * Get local domain
-         */
-        if (!domain && (reason = yp_get_default_domain(&domain))) {
-                (void)fprintf(stderr, "%s: can't get local NIS domain. Reason: %s\n", progname, yperr_string(reason));
-                exit(1);
-        }
+	static struct passwd pwent;
+	static char line[1024];
+	char *val;
+	int reason, vallen;
+	
+	/*
+	 * Get local domain
+	 */
+	if (!domain && (reason = yp_get_default_domain(&domain))) {
+		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
+		    progname, yperr_string(reason));
+		exit(1);
+	}
 
-        reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
-                          &val, &vallen);
-        switch(reason) {
-        case 0:
-                break;
-        default:
-                return (NULL);
-                break;
-        }
-        val[vallen] = '\0';
-        strcpy(line, val);
-        free(val);
+	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
+	    &val, &vallen);
+	switch(reason) {
+	case 0:
+		break;
+	default:
+		return (NULL);
+		break;
+	}
+	val[vallen] = '\0';
+	strcpy(line, val);
+	free(val);
 
-        return(interpret(&pwent, line));
+	return(interpret(&pwent, line));
 }
 
 struct passwd *
 ypgetpwuid(uid)
-        uid_t uid;
+	uid_t uid;
 {
-        static struct passwd pwent;
-        static char line[1024];
-        char *val;
-        int reason, vallen;
-        char namebuf[16];
-        
-        if (!domain && (reason = yp_get_default_domain(&domain))) {
-                (void)fprintf(stderr, "%s: can't get local NIS domain. Reason: %s\n", progname, yperr_string(reason));
-                exit(1);
-        }
+	static struct passwd pwent;
+	static char line[1024];
+	char *val;
+	int reason, vallen;
+	char namebuf[16];
+	
+	if (!domain && (reason = yp_get_default_domain(&domain))) {
+		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
+		    progname, yperr_string(reason));
+		exit(1);
+	}
 
-        sprintf(namebuf, "%d", uid);
-        reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
-                          &val, &vallen);
-        switch(reason) {
-        case 0:
-                break;
-        default:
-                return (NULL);
-                break;
-        }
-        val[vallen] = '\0';
-        strcpy(line, val);
-        free(val);
+	sprintf(namebuf, "%d", uid);
+	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
+	    &val, &vallen);
+	switch(reason) {
+	case 0:
+		break;
+	default:
+		return (NULL);
+		break;
+	}
+	val[vallen] = '\0';
+	strcpy(line, val);
+	free(val);
 
-        return(interpret(&pwent, line));
+	return(interpret(&pwent, line));
 }
 
 #endif	/* YP */
