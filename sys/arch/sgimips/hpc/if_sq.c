@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.11 2002/05/02 20:31:19 rafal Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.11.4.1 2003/01/27 05:34:52 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -148,6 +148,8 @@ void sq_trace_dump(struct sq_softc* sc);
 struct cfattach sq_ca = {
 	sizeof(struct sq_softc), sq_match, sq_attach
 };
+
+#define        ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 static int
 sq_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -512,8 +514,15 @@ sq_start(struct ifnet *ifp)
 		 * didn't fit in the alloted number of segments, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
+		 * Also copy it if we need to pad, so that we are sure there
+		 * is room for the pad buffer.
+		 * XXX the right way of doing this is to use a static buffer
+		 * for padding and adding it to the transmit descriptor (see
+		 * sys/dev/pci/if_tl.c for example). We can't do this here yet
+		 * because we can't send packets with more than one fragment.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		if (m0->m_pkthdr.len < ETHER_PAD_LEN ||
+		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 						      BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
@@ -532,7 +541,12 @@ sq_start(struct ifnet *ifp)
 			}
 
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+			if (m0->m_pkthdr.len < ETHER_PAD_LEN) {
+				memset(mtod(m, char *) + m0->m_pkthdr.len, 0,
+				    ETHER_PAD_LEN - m0->m_pkthdr.len);
+				m->m_pkthdr.len = m->m_len = ETHER_PAD_LEN;
+			} else 
+				m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 
 			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 						m, BUS_DMA_NOWAIT)) != 0) {
@@ -565,6 +579,13 @@ sq_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+#if NBPFILTER > 0
+		/*
+		 * Pass the packet to any BPF listeners.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
+#endif /* NBPFILTER > 0 */
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;
@@ -596,12 +617,6 @@ sq_start(struct ifnet *ifp)
 
 		/* Last descriptor gets end-of-packet */
 		sc->sc_txdesc[lasttx].hdd_ctl |= HDD_CTL_EOPACKET;
-
-		/* XXXrkb: if not EDLC, pad to min len manually */
-		if (totlen < ETHER_MIN_LEN) {
-		    sc->sc_txdesc[lasttx].hdd_ctl += (ETHER_MIN_LEN - totlen);
-		    totlen = ETHER_MIN_LEN;
-		}
 
 #if 0
 		printf("%s: transmit %d-%d, len %d\n", sc->sc_dev.dv_xname,
@@ -636,13 +651,6 @@ sq_start(struct ifnet *ifp)
 		sc->sc_nfreetx -= dmamap->dm_nsegs;
 		sc->sc_nexttx = nexttx;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass the packet to any BPF listeners.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
 	}
 
 	/* All transmit descriptors used up, let upper layers know */
