@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.8 2003/07/13 02:11:58 igy Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.9 2003/07/13 07:15:22 igy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.8 2003/07/13 02:11:58 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.9 2003/07/13 07:15:22 igy Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -133,15 +133,6 @@ struct bus_space ixp12x0_bs_tag = {
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
-
-void
-ixp12x0_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
-{
-	*bs = ixp12x0_bs_tag;
-	bs->bs_cookie = cookie;
-}
 
 /* Common routines */
 
