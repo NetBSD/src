@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.91 2003/09/08 10:54:14 itojun Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.92 2003/09/10 00:45:22 dan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.91 2003/09/08 10:54:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.92 2003/09/10 00:45:22 dan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -650,11 +650,17 @@ kernfs_getattr(v)
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
 	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
+	 * Make all times be current TOD, except for the "boottime" node.
+         * Avoid microtime(9), it's slow.
 	 * We don't guard the read from time(9) with splclock(9) since we
 	 * don't actually need to be THAT sure the access is atomic. 
 	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	if (kfs->kfs_kt->kt_namlen == 8 && 
+	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
+		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_ctime);
+	} else {
+		TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	}
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
