@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.12 1998/06/13 16:26:22 kleink Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.13 1998/07/28 17:30:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,10 @@
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 #endif
+
+/* in ffs_tables.c */
+extern int inside[], around[];
+extern u_char *fragtbl[];
 
 #ifdef _KERNEL
 #include <sys/vnode.h>
