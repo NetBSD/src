@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.16 2005/01/31 16:54:34 hannken Exp $
+#	$NetBSD: HPW650PA,v 1.17 2005/02/18 21:05:52 dsl Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -41,6 +41,7 @@ options 	EXEC_ELF32	# 32-bit ELF executables
 file-system 	FFS		# UFS
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
