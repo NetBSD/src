@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.11 1994/08/24 07:54:51 mycroft Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.12 1994/08/24 16:39:24 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -167,7 +167,7 @@ setchars()
 		if (p && *p)
 			*charvars[i] = *p;
 		else
-			*charvars[i] = '\377';
+			*charvars[i] = _POSIX_VDISABLE;
 	}
 }
 
