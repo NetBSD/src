@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.3 1997/02/03 21:51:15 oki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.4 1997/10/12 14:52:25 oki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -86,6 +86,8 @@ void tv_cursor	__P((struct ite_softc *, int));
 void tv_clear	__P((struct ite_softc *, int, int, int, int));
 void tv_scroll	__P((struct ite_softc *, int, int, int, int));
 
+__inline static int expbits __P((int));
+__inline static void txrascpy __P((u_char, u_char, short, signed short));
 
 static __inline void
 txrascpy (src, dst, size, mode)
@@ -371,7 +373,7 @@ tv_putc_bd(ip, ch, p)
 	}
 }
 
-static __inline int
+__inline static int
 expbits (data)
 	int data;
 {
