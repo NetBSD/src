@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.2 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.3 2001/07/24 21:28:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,8 +85,8 @@ struct	pthread_mutex_st {
 	struct pt_queue_t	ptm_blocked;
 };
 
-#define	PT_MUTEX_MAGIC	0xCAFEFEED
-#define	PT_MUTEX_DEAD	0xFEEDDEAD
+#define	_PT_MUTEX_MAGIC	0xCAFEFEED
+#define	_PT_MUTEX_DEAD	0xFEEDDEAD
 
 #define PTHREAD_MUTEX_INITIALIZER { PT_MUTEX_MAGIC, 			\
 				    __SIMPLELOCK_UNLOCKED,		\
