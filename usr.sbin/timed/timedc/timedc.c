@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.5 1997/10/17 14:20:19 lukem Exp $	*/
+/*	$NetBSD: timedc.c,v 1.6 1997/10/18 07:13:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,22 +44,22 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.5 1997/10/17 14:20:19 lukem Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.6 1997/10/18 07:13:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include "timedc.h"
-#include <strings.h>
-#include <signal.h>
 #include <ctype.h>
 #include <setjmp.h>
-#include <unistd.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 int trace = 0;
 FILE *fd = 0;
