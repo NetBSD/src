@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.12 1995/11/02 23:55:12 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.13 1996/05/28 23:34:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.12 1995/11/02 23:55:12 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.13 1996/05/28 23:34:49 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,9 @@ static Boolean VarTail __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarSuffix __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarRoot __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarMatch __P((char *, Boolean, Buffer, ClientData));
+#ifdef SYSVVARSUB
 static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, ClientData));
+#endif
 static Boolean VarNoMatch __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarSubstitute __P((char *, Boolean, Buffer, ClientData));
 static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
@@ -782,8 +784,7 @@ VarMatch (word, addSpace, buf, pattern)
     return(addSpace);
 }
 
-
-
+#ifdef SYSVVARSUB
 /*-
  *-----------------------------------------------------------------------
  * VarSYSVMatch --
@@ -825,6 +826,7 @@ VarSYSVMatch (word, addSpace, buf, patp)
 
     return(addSpace);
 }
+#endif
 
 
 /*-
@@ -1633,7 +1635,22 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			break;
 		    }
 		    /*FALLTHRU*/
-		default: {
+#ifdef SUNSHCMD
+		case 's':
+		    if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
+			char *err;
+			newStr = Cmd_Exec (str, &err);
+			if (err)
+			    Error (err, str);
+			cp = tstr + 2;
+			termc = *cp;
+			break;
+		    }
+		    /*FALLTHRU*/
+#endif
+		default:
+		{
+#ifdef SYSVVARSUB
 		    /*
 		     * This can either be a bogus modifier or a System-V
 		     * substitution command.
@@ -1700,7 +1717,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			pattern.lhs[pattern.leftLen] = '=';
 			pattern.rhs[pattern.rightLen] = endc;
 			termc = endc;
-		    } else {
+		    } else
+#endif
+		    {
 			Error ("Unknown modifier '%c'\n", *tstr);
 			for (cp = tstr+1;
 			     *cp != ':' && *cp != endc && *cp != '\0';

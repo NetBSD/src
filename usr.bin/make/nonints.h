@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.9 1996/03/31 21:30:07 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.10 1996/05/28 23:34:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -65,6 +65,7 @@ void For_Run  __P((void));
 /* main.c */
 void Main_ParseArgLine __P((char *));
 int main __P((int, char **));
+char *Cmd_Exec __P((char *, char **));
 void Error __P((char *, ...));
 void Fatal __P((char *, ...));
 void Punt __P((char *, ...));
