@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1995/04/10 07:01:31 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1995/04/13 20:24:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -238,8 +238,13 @@ fdcmatch(parent, match, aux)
 	/* Sun PROMs call the controller an "fd" */
 	if (strcmp("fd", ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_MAIN)
+	if (ca->ca_bustype == BUS_MAIN) {
+		if (ca->ca_ra.ra_vaddr &&
+		    probeget(ca->ca_ra.ra_vaddr, 1) == -1) {
+			return (0);
+		}
 		return (1);
+	}
 
 	return (0);
 }
@@ -339,8 +344,11 @@ fdcattach(parent, self, aux)
 	fdc->sc_sih.ih_arg = fdc;
 	intr_establish(PIL_FDSOFT, &fdc->sc_sih);
 
-	if (out_fdc(fdc, NE7CMD_VERSION))
+	if (out_fdc(fdc, NE7CMD_VERSION)) {
+		printf(" misconfigured\n");
 		return;
+	}
+
 	n = fdcresult(fdc);
 	if (n == 1 && fdc->sc_status[0] == 0x90) {
 		fdc->sc_flags |= FDC_82077;
