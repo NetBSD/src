@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.7 2003/10/08 11:11:06 bouyer Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.8 2003/12/14 15:31:23 fredb Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.7 2003/10/08 11:11:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8 2003/12/14 15:31:23 fredb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.7 2003/10/08 11:11:06 bouyer Exp $");
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-#define	WDC_OBIO_REG_NPORTS	(8<<3)
+#define	WDC_OBIO_REG_NPORTS	0x40
 #define	WDC_OBIO_AUXREG_OFFSET	0x38
 #define	WDC_OBIO_AUXREG_NPORTS	1
 #define	WDC_OBIO_ISR_OFFSET	0x101
@@ -71,13 +71,9 @@ struct wdc_obio_softc {
 	void    *sc_ih;
 };
 
-int	wdc_obio_match	__P((struct device *, struct cfdata *, void *));
-void	wdc_obio_attach	__P((struct device *, struct device *, void *));
-void	wdc_obio_intr __P((void *));
-void	mac68k_bsh_wdc_set_stride __P((bus_space_tag_t t,
-	bus_space_handle_t *h, int stride));
-u_int16_t	mac68k_bsr2_wdc_gen __P((bus_space_tag_t t,
-		bus_space_handle_t *bsh, bus_size_t offset));
+int	wdc_obio_match	(struct device *, struct cfdata *, void *);
+void	wdc_obio_attach	(struct device *, struct device *, void *);
+void	wdc_obio_intr (void *);
 
 CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_match, wdc_obio_attach, NULL, NULL);
@@ -91,7 +87,7 @@ wdc_obio_match(parent, match, aux)
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
 	struct channel_softc ch;
 	static int wdc_matched = 0;
-	int result = 0;
+	int i, result = 0;
 
 	memset(&ch, 0, sizeof(ch));
 
@@ -104,19 +100,27 @@ wdc_obio_match(parent, match, aux)
 		ch.cmd_iot = ch.ctl_iot = oa->oa_tag;
 
 		if (bus_space_map(ch.cmd_iot, IDEBase, WDC_OBIO_REG_NPORTS,
-				  0, &ch.cmd_ioh))
+				0, &ch.cmd_baseioh))
 			return 0;
 
-		mac68k_bsh_wdc_set_stride(ch.cmd_iot, &ch.cmd_ioh, 4);
+		mac68k_bus_space_handle_swapped(ch.cmd_iot, &ch.cmd_baseioh);
 
-		if (bus_space_subregion(ch.cmd_iot, ch.cmd_ioh,
+		for (i = 0; i < WDC_NREG; i++) {
+			if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh,
+					    4 * i, 4, &ch.cmd_iohs[i]) != 0) {
+				return 0;
+			}
+		}
+
+
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh,
 				        WDC_OBIO_AUXREG_OFFSET,
 					WDC_OBIO_AUXREG_NPORTS, &ch.ctl_ioh))
 			return 0;
 
 		result = wdcprobe(&ch);
 
-		bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_OBIO_REG_NPORTS);
+		bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_OBIO_REG_NPORTS);
 
 		if (result)
 			wdc_matched = 1;
@@ -153,25 +157,39 @@ wdc_obio_attach(parent, self, aux)
 	struct wdc_obio_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
 	struct channel_softc *chp = &sc->wdc_channel;
+	int i;
 
 	oa->oa_addr = IDEBase;
 	sc->wdc_channel.cmd_iot = sc->wdc_channel.ctl_iot = oa->oa_tag;
 
 	if (bus_space_map(sc->wdc_channel.cmd_iot, oa->oa_addr,
-			  WDC_OBIO_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh)) {
+		      WDC_OBIO_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
 
-	mac68k_bsh_wdc_set_stride(sc->wdc_channel.cmd_iot,
-				  &sc->wdc_channel.cmd_ioh, 4);
+	mac68k_bus_space_handle_swapped(sc->wdc_channel.cmd_iot,
+				  &sc->wdc_channel.cmd_baseioh);
+
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+				    sc->wdc_channel.cmd_baseioh, 4 * i, 4,
+				    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf("%s: unable to subregion control register\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-				sc->wdc_channel.cmd_ioh, WDC_OBIO_AUXREG_OFFSET,
-				WDC_OBIO_AUXREG_NPORTS,
-				&sc->wdc_channel.ctl_ioh))
+				sc->wdc_channel.cmd_baseioh,
+				WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
+				&sc->wdc_channel.ctl_ioh)) {
+		printf("%s: unable to subregion aux register\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
+	}
 
     	wdc_obio_isr_tag = oa->oa_tag;
 
@@ -228,51 +246,4 @@ wdc_obio_attach(parent, self, aux)
 	printf("\n");
 
 	wdcattach(chp);
-}
-
-u_int16_t
-mac68k_bsr2_wdc_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
-{
-	return (*(volatile u_int16_t *) (bsh->base + offset * bsh->stride));
-}
-
-void
-mac68k_bsh_wdc_set_stride(bus_space_tag_t t, bus_space_handle_t *h, int stride)
-{
-	h->stride = stride;
-	h->bsr1 = mac68k_bsr1_gen;
-	h->bsr2 = mac68k_bsr2_wdc_gen;
-	h->bsr4 = mac68k_bsr4_gen;
-	h->bsrs2 = mac68k_bsrs2_gen;
-	h->bsrs4 = mac68k_bsrs4_gen;
-	h->bsrm1 = mac68k_bsrm1_gen;
-	h->bsrm2 = mac68k_bsrm2_swap;
-	h->bsrm4 = mac68k_bsrm4_swap;
-	h->bsrms2 = mac68k_bsrm2;
-	h->bsrms4 = mac68k_bsrm4;
-	h->bsrr1 = mac68k_bsrr1_gen;
-	h->bsrr2 = mac68k_bsrr2_gen;
-	h->bsrr4 = mac68k_bsrr4_gen;
-	h->bsrrs2 = mac68k_bsrrs2_gen;
-	h->bsrrs4 = mac68k_bsrrs4_gen;
-	h->bsw1 = mac68k_bsw1_gen;
-	h->bsw2 = mac68k_bsw2_gen;
-	h->bsw4 = mac68k_bsw4_gen;
-	h->bsws2 = mac68k_bsws2_gen;
-	h->bsws4 = mac68k_bsws4_gen;
-	h->bswm2 = mac68k_bswm2_swap;
-	h->bswm4 = mac68k_bswm4_swap;
-	h->bswms2 = mac68k_bswm2;
-	h->bswms4 = mac68k_bswm4;
-	h->bswr1 = mac68k_bswr1_gen;
-	h->bswr2 = mac68k_bswr2_gen;
-	h->bswr4 = mac68k_bswr4_gen;
-	h->bswrs2 = mac68k_bswrs2_gen;
-	h->bswrs4 = mac68k_bswrs4_gen;
-	h->bssm1 = mac68k_bssm1_gen;
-	h->bssm2 = mac68k_bssm2_gen;
-	h->bssm4 = mac68k_bssm4_gen;
-	h->bssr1 = mac68k_bssr1_gen;
-	h->bssr2 = mac68k_bssr2_gen;
-	h->bssr4 = mac68k_bssr4_gen;
 }
