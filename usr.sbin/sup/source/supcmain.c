@@ -174,6 +174,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.4  1995/09/16 19:01:25  glass
+ * if the function returns nothing, declare it void
+ *
  * Revision 1.3  1993/08/04 17:46:17  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -444,7 +447,7 @@ char **argv;
 #define Twant	Tuid
 #define Tcount	Tgid
 
-doswitch (argp,collTp,oflagsp,aflagsp)
+void doswitch (argp,collTp,oflagsp,aflagsp)
 char *argp;
 register TREE **collTp;
 int *oflagsp,*aflagsp;
