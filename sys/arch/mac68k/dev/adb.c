@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.34 2000/02/14 07:01:45 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.35 2000/03/19 06:07:05 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -125,15 +125,6 @@ adb_config_interrupts(self)
 	adb_polling = 1;
 
 #ifdef MRG_ADB
-	/* 
-	 * Even if serial console only, some models require the
-	 * ADB in order to get the date/time and do soft power.
-	 */
-	if ((mac68k_machine.serial_console & 0x03)) {
-		printf(": using serial console\n");
-		return;
-	}
-
 	if (!mrg_romready()) {
 		printf(": no ROM ADB driver in this kernel for this machine\n");
 		return;
