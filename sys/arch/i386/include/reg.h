@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.14 1995/10/11 04:20:24 mycroft Exp $	*/
+/*	$NetBSD: reg.h,v 1.15 1997/10/16 02:31:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,10 @@
  * Location of the users' stored
  * registers within appropriate frame of 'trap' and 'syscall', relative to
  * base of stack frame.
- * Normal usage is u.u_ar0[XX] in kernel.
+ *
+ * XXX
+ * The #defines aren't used in the kernel, but some user-level code still
+ * expects them.
  */
 
 /* When referenced during a trap/exception, registers are at these offsets */
