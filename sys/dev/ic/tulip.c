@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.75 2000/10/05 07:22:43 bouyer Exp $	*/
+/*	$NetBSD: tulip.c,v 1.76 2000/10/09 12:54:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -61,6 +62,10 @@
 
 #include <uvm/uvm_extern.h>
  
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -516,6 +521,10 @@ tlp_attach(sc, enaddr)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -626,6 +635,9 @@ tlp_detach(sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
+#if NRND > 0
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -1278,6 +1290,10 @@ tlp_intr(arg)
 	/* Try to get more packets going. */
 	tlp_start(ifp);
 
+#if NRND > 0
+	if (handled)
+		rnd_add_uint32(&sc->sc_rnd_source, status);
+#endif
 	return (handled);
 }
 

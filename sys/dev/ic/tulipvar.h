@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.38 2000/10/03 04:32:01 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.39 2000/10/09 12:54:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -443,6 +443,10 @@ struct tulip_softc {
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
+
+#if NRND > 0
+	rndsource_element_t sc_rnd_source; /* random source */
+#endif
 };
 #endif
 
