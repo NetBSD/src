@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.12 1997/05/13 19:27:22 jtc Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.13 1997/05/15 16:07:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.12 1997/05/13 19:27:22 jtc Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.13 1997/05/15 16:07:31 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ Lbcfalgndl:
 	/* copy by 8 longwords */
 	movel	d1,d0
 	lsrl	#5,d0		| cnt = len / 32
-	jeq	Lbcflong		| if (cnt)
+	jeq	Lbcflong	| if (cnt)
 	andl	#31,d1		|	len %= 32
 	subql	#1,d0		|	set up for dbf
 Lbcf32loop:
@@ -149,7 +149,7 @@ Lbcflong:
 	/* copy by longwords */
 	movel	d1,d0
 	lsrl	#2,d0		| cnt = len / 4
-	jeq	Lbcfbyte		| if (cnt)
+	jeq	Lbcfbyte	| if (cnt)
 	subql	#1,d0		|	set up for dbf
 Lbcflloop:
 	movl	a0@+,a1@+	|	copy longwords
@@ -196,7 +196,7 @@ Lbcbalgndl:
 	/* copy by 8 longwords */
 	movel	d1,d0
 	lsrl	#5,d0		| cnt = len / 32
-	jeq	Lbcblong		| if (cnt)
+	jeq	Lbcblong	| if (cnt)
 	andl	#31,d1		|	len %= 32
 	subql	#1,d0		|	set up for dbf
 Lbcb32loop:
@@ -217,7 +217,8 @@ Lbcblong:
 	/* copy by longwords */
 	movel	d1,d0
 	lsrl	#2,d0		| cnt = len / 4
-	jeq	Lbcbbyte		| if (cnt)
+	jeq	Lbcbbyte	| if (cnt)
+	subql	#1,d0		|	set up for dbf
 Lbcblloop:
 	movl	a0@-,a1@-	|	copy longwords
 	dbf	d0,Lbcblloop	|	til done
