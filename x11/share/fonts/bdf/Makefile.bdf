@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bdf,v 1.4 2004/02/09 04:30:05 lukem Exp $
+#	$NetBSD: Makefile.bdf,v 1.5 2004/03/06 03:13:06 rtr Exp $
 
 FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
@@ -38,4 +38,4 @@ FILES+=		fonts.alias
 realall:	${PCFFILES}
 
 
-.include "../Makefile.mkfontdir"
+.include "../Makefile.mkfontscale"
