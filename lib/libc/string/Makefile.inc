@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.17 1993/12/05 15:46:29 briggs Exp $
+#	$Id: Makefile.inc,v 1.18 1993/12/06 03:10:35 cgd Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -50,6 +50,10 @@ memmove.po: bcopy.c
 	${CC} -DMEMMOVE ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+memmove.so: bcopy.c
+	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} -c -p ${.ALLSRC} \
+		-o ${.TARGET}
 .endif
 
 # if no machine specific memcpy(3), build one out of bcopy(3).
@@ -67,6 +71,10 @@ memcpy.po: bcopy.c
 	${CC} -DMEMCOPY ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+memcpy.so: bcopy.c
+	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} -c -p ${.ALLSRC} \
+		-o ${.TARGET}
 .endif
 .endif
 
@@ -82,6 +90,10 @@ strchr.po: index.c
 	${CC} -DSTRCHR ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+strchr.so: index.c
+	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} -c -p ${.ALLSRC} \
+	    -o ${.TARGET}
 .endif
 
 # if no machine specific strrchr(3), build one out of rindex(3).
@@ -96,6 +108,10 @@ strrchr.po: rindex.c
 	${CC} -DSTRRCHR ${CFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+strrchr.so: rindex.c
+	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} -c -p ${.ALLSRC} \
+	    -o ${.TARGET}
 .endif
 
 MAN3+=	bcmp.0 bcopy.0 bstring.0 bzero.0 ffs.0 index.0 memccpy.0 memchr.0 \
