@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.16 1998/07/27 09:47:45 mycroft Exp $	*/
+/*	$NetBSD: localtime.c,v 1.17 1998/07/28 20:28:04 mycroft Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.64";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.16 1998/07/27 09:47:45 mycroft Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.17 1998/07/28 20:28:04 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -257,7 +257,7 @@ settzname P((void))
 #endif /* defined ALTZONE */
 #ifdef ALL_STATE
 	if (sp == NULL) {
-		tzname[0] = tzname[1] = gmt;
+		tzname[0] = tzname[1] = (__aconst char *)gmt;
 		return;
 	}
 #endif /* defined ALL_STATE */
@@ -1111,7 +1111,7 @@ struct tm * const	tmp;
 	else {
 #ifdef ALL_STATE
 		if (gmtptr == NULL)
-			tmp->TM_ZONE = gmt;
+			tmp->TM_ZONE = (__aconst char *)gmt;
 		else	tmp->TM_ZONE = gmtptr->chars;
 #endif /* defined ALL_STATE */
 #ifndef ALL_STATE
