@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.531 2003/06/07 04:29:49 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.532 2003/06/07 05:08:45 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp 
  */
 
 /*
@@ -1354,10 +1354,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Asustek ISDN",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_A3,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility A3",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    0,
 	    "ATI Technologies",
 	    "Mach32",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP_320M,
+	    0,
+	    "ATI Technologies",
+	    "Radeon IGP 320M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_U2,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility M6",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -1387,13 +1405,31 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_B,
 	    0,
 	    "ATI Technologies",
-	    "3D Rage Pro",
+	    "3D Rage Pro Turbo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI66,
+	    0,
+	    "ATI Technologies",
+	    "Rage XC (PCI66)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP,
 	    0,
 	    "ATI Technologies",
 	    "Rage XL (AGP)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_AGP,
+	    0,
+	    "ATI Technologies",
+	    "Rage XC (AGP)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI66,
+	    0,
+	    "ATI Technologies",
+	    "Rage XL (PCI66)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_P,
@@ -1412,6 +1448,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Rage XL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage XC",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_II,
@@ -1444,6 +1486,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GX",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC,
+	    0,
+	    "ATI Technologies",
+	    "3D Rage IIC",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_P,
 	    0,
 	    "ATI Technologies",
@@ -1453,7 +1501,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP,
 	    0,
 	    "ATI Technologies",
-	    "3D Rage LT Pro (AGP)",
+	    "3D Rage LT Pro (AGP 133MHz)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP66,
+	    0,
+	    "ATI Technologies",
+	    "3D Rage LT Pro (AGP 66MHz)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI,
@@ -1486,7 +1540,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Rage Mobility",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOBILITY,
+	    0,
+	    "ATI Technologies",
+	    "Rage L Mobility",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO,
+	    0,
+	    "ATI Technologies",
+	    "3D Rage LT Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO2,
 	    0,
 	    "ATI Technologies",
 	    "3D Rage LT Pro",
@@ -1495,19 +1561,61 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Rage Mobility M1",
+	    "Rage Mobility M1 (PCI)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEON_M7_AGP,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage L Mobility (PCI)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M7_AGP,
 	    0,
 	    "ATI Technologies",
 	    "Radeon Mobility M7 LW (AGP)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_MOB,
+	    0,
+	    "ATI Technologies",
+	    "FireGL Mobility",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_AGP,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility M6 LY (AGP)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_LZ,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility M6 LZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9_GL,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility M9 GL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9,
 	    0,
 	    "ATI Technologies",
 	    "Radeon Mobility M9",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP4X,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility 128 AGP 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP2X,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility 128 AGP 2x",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
@@ -4268,6 +4376,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801DB IDE Controller (UltraATA/100)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA,
+	    0,
+	    "Intel",
+	    "82801DB ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
