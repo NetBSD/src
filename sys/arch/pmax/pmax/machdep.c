@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 1999/06/26 17:03:48 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149 1999/09/09 06:33:38 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,13 +43,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 1999/06/26 17:03:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 1999/09/09 06:33:38 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
-#include "le_ioasic.h"		/* XXX will go XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +136,6 @@ unsigned nullclkread __P((void));
 int	initcpu __P((void));
 
 /* XXX XXX XXX */
-u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
 
@@ -577,31 +575,6 @@ cpu_startup()
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-
-	/*
-	 * XXX THE FOLLOWING SECTION NEEDS TO BE REPLACED
-	 * XXX WITH BUS_DMA(9).
-	 * XXXXXX Huh?  BUS_DMA(9)  doesnt support  gap16 lance copy buffers.
-	 * XXXXXX We use the copy suport  in am7990 instead.
-	 */
-
-#if NLE_IOASIC > 0
-	/*
-	 * Steal 128k of memory for the LANCE chip on machine where
-	 * it does DMA through the IOCTL ASIC.  It must be physically
-	 * contiguous and aligned on a 128k boundary.
-	 */
-	{
-		extern paddr_t avail_start, avail_end;
-		struct pglist mlist;
-
-		TAILQ_INIT(&mlist);
-		if (uvm_pglistalloc(128 * 1024, avail_start,
-		    avail_end - PAGE_SIZE, 128 * 1024, 0, &mlist, 1, FALSE))
-			panic("startup: unable to steal LANCE DMA area");
-		le_iomem = VM_PAGE_TO_PHYS(mlist.tqh_first);
-	}
-#endif /* NLE_IOASIC */
 }
 
 
