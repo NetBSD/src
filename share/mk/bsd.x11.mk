@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.26 2004/01/25 02:15:51 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.27 2004/01/29 00:02:04 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -102,7 +102,7 @@ LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 realall: ${CPPSCRIPTS}
 
 clean: cleancppscripts
-cleancppscripts:
+cleancppscripts: .PHONY
 	rm -f ${CPPSCRIPTS}
 .endif								# }
 
@@ -111,8 +111,8 @@ cleancppscripts:
 # APPDEFS (app defaults) handling
 #
 .if defined(APPDEFS)						# {
-appdefsinstall:: ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
-.PRECIOUS:       ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
+appdefsinstall:: .PHONY .PRECIOUS \
+		${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
 
 __appdefinstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
@@ -131,7 +131,7 @@ realinstall: appdefsinstall
 #
 .if (${MKMAN} != "no" && (${MAN:U} != "" || ${PROG:U} != ""))	# {
 cleandir: cleanx11man
-cleanx11man:
+cleanx11man: .PHONY
 	rm -f ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
