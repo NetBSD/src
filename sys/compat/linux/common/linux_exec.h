@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.26 2003/01/18 08:02:51 thorpej Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.27 2003/04/09 00:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #define LINUX_N_TXTADDR(x,m) ((m) == QMAGIC ? PAGE_SIZE : 0)
 
-#define LINUX__N_SEGMENT_ROUND(x) (((x) + NBPG - 1) & ~(NBPG - 1))
+#define LINUX__N_SEGMENT_ROUND(x) (((x) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
 #define LINUX__N_TXTENDADDR(x,m) (LINUX_N_TXTADDR(x,m)+(x).a_text)
 
