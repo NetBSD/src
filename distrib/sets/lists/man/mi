@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.443 2002/01/09 22:33:54 thorpej Exp $
+# $NetBSD: mi,v 1.444 2002/01/24 14:49:16 martti Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1107,6 +1107,7 @@
 ./usr/share/man/cat5/intro.0			man-sys-catman
 ./usr/share/man/cat5/ipf.0			man-ipf-catman
 ./usr/share/man/cat5/ipf.conf.0			man-ipf-catman
+./usr/share/man/cat5/ipf6.conf.0		man-ipf-catman
 ./usr/share/man/cat5/ipnat.0			man-ipf-catman
 ./usr/share/man/cat5/ipnat.conf.0		man-ipf-catman
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman
@@ -2774,6 +2775,7 @@
 ./usr/share/man/man5/intro.5			man-sys-man
 ./usr/share/man/man5/ipf.5			man-ipf-man
 ./usr/share/man/man5/ipf.conf.5			man-ipf-man
+./usr/share/man/man5/ipf6.conf.5		man-ipf-man
 ./usr/share/man/man5/ipnat.5			man-ipf-man
 ./usr/share/man/man5/ipnat.conf.5		man-ipf-man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man
