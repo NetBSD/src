@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 1997/03/12 05:50:00 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 1997/04/01 03:38:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -72,7 +72,9 @@ cpuattach(parent, dev, aux)
 {
 	struct confargs *ca = aux;
         struct pcs *p;
+#ifdef DEBUG
 	int needcomma;
+#endif
 	u_int32_t major, minor;
 
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
