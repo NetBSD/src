@@ -479,6 +479,8 @@ BUILDING
 
      -D dest   Set the value of DESTDIR to dest.
 
+     -M obj    Set MAKEOBJDIRPREFIX to obj.
+
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
                place the built object files under obj.  For instance, a set-
                ting of /usr/obj will place build-time files files under
