@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.7 2001/05/15 22:01:07 christos Exp $ */
+/* $NetBSD: pckbc.c,v 1.8 2001/05/17 10:48:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -371,39 +371,22 @@ pckbc_attach(sc)
 	}
 	bus_space_write_1(iot, ioh_d, 0, 0x5a); /* a random value */
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
-	if (res == 0x5a) {
+	if (res != -1) {
+		/*
+		 * In most cases, the 0x5a gets echoed.
+		 * Some older controllers (Gateway 2000 circa 1993)
+		 * return 0xfe here.
+		 * We are satisfied if there is anything in the
+		 * aux output buffer.
+		 */
 		t->t_haveaux = 1;
-	} else {
-		/*
-		 * Some old controllers (Gateway 2000 circa 1993)
-		 * return 0xfe here. So we have no choice and we try
-		 * the auxtest. Hopefully this will not affect the
-		 * old controllers where auxtest fails, since they
-		 * will be handled in the case above.
-		 */
-#ifdef PCKBCDEBUG
-		printf("kbc: aux echo: %x\n", res);
-#endif
-		/*
-		 * check aux port ok
-		 */
-		if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXTEST))
-			return;
-		res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
-
-		if (res == 0 || res == 0xfa || res == 0x01) {
-#ifdef PCKBCDEBUG
-			if (res != 0)
-				printf("kbc: returned %x on aux slot test\n",
-				    res);
-#endif
-			t->t_haveaux = 1;
-		}
-	}
-	if (t->t_haveaux == 1) {
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
 	}
+#ifdef PCKBCDEBUG
+	  else
+		printf("kbc: aux echo test failed\n");
+#endif
 
 nomouse:
 	/* enable needed interrupts */
