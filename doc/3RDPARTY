@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.57 2003/02/20 15:19:14 fredb Exp $
+#	$NetBSD: 3RDPARTY,v 1.58 2003/02/21 11:08:56 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -577,7 +577,7 @@ and more.
 
 Package:	postfix
 Version:	2.0.0.1
-Current Vers:	2.0.3
+Current Vers:	2.0.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Mailing List:	postfix-users@postfix.org
