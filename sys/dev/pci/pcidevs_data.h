@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.238 2000/06/12 22:33:41 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.239 2000/06/13 22:44:52 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.233 2000/06/12 21:25:01 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.235 2000/06/13 22:44:19 tron Exp 
  */
 
 /*
@@ -1178,6 +1178,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "PCI0647",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648,
+	    0,
+	    "CMD Technology",
+	    "PCI0648",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,
