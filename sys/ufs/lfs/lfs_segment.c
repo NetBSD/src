@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.1 1999/06/21 01:31:11 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.2 1999/06/21 15:27:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1578,7 +1578,7 @@ lfs_vunref(vp)
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if(vp->v_usecount<=0) {
-		printf("lfs_vunref: flags are 0x%lx\n", vp->v_flag);
+		printf("lfs_vunref: flags are 0x%x\n", vp->v_flag);
 		printf("lfs_vunref: usecount = %d\n", vp->v_usecount);
 		panic("lfs_vunref: v_usecount<0");
 	}
