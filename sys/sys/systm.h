@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.92 1999/06/26 08:25:26 augustss Exp $	*/
+/*	$NetBSD: systm.h,v 1.93 1999/09/10 00:02:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -191,12 +191,6 @@ int	humanize_number __P((char *, size_t, u_int64_t, const char *));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *));
-
-void	*memchr __P((const void *, int, size_t));
-int      memcmp __P((const void *, const void *, size_t));
-void    *memcpy __P((void *, const void *, size_t));
-void    *memmove __P((void *, const void *, size_t));
-void    *memset __P((void *, int, size_t));
 
 /* XXX b*() are now macros. should remove these prototypes soon */
 #if 0
