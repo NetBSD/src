@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 2001/05/12 22:35:30 chs Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -29,99 +29,99 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /*
  * Startup code for standalone system
  */
 
-    .globl _mg			| struct prominfo
-    .globl _end
-    .globl _edata
-    .globl _main
-
-    .text
-    .globl start
-
-start:	
-    || clear bss (this shouldn't hurt us i.e. cause an exception)
-    movel #_edata,a2		| start of BSS
-    movel #_end,a3		| end
+	.text
+ASENTRY_NOPROFILE(start)
+	|| clear bss (this should not hurt us i.e. cause an exception)
+	movel	#_C_LABEL(edata),%a2	| start of BSS
+	movel	#_C_LABEL(end),%a3	| end
 Lclr:
-    clrb a2@+			| clear BSS
-    cmpl a2,a3			| done?
-    bne Lclr			| no, keep going
+	clrb	%a2@+			| clear BSS
+	cmpl	%a2,%a3			| done?
+	bne	Lclr			| no, keep going
 
-    movl	#0x0808,d0
-    movc	d0,cacr         | clear and disable on-chip cache(s)
+	movl	#0x0808,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
-    || catch exceptions myself
-    movec vbr, a3
-    movel a3, save_vbr		| save register for restoration
-    lea vectbl, a4
-    movel a3@(4),a4@(4)		| copy mg, just for sure
-    movel a3@(180),a4@(180)	| copy vector for trap #13
-    movel a3@(124),a4@(124)	| copy vector for int 7
-    movec a4,vbr		| use the new table
+	|| catch exceptions myself
+	movec	%vbr,%a3
+	movel	%a3,save_vbr		| save register for restoration
+	lea	vectbl,%a4
+	movel	%a3@(4),%a4@(4)		| copy mg, just for sure
+	movel	%a3@(180),%a4@(180)	| copy vector for trap #13
+	movel	%a3@(124),%a4@(124)	| copy vector for int 7
+	movec	%a4,%vbr		| use the new table
 
-    || save mg as pi
-    movel a3@(4),_mg
+	|| save mg as pi
+	movel	%a3@(4),_C_LABEL(mg)
 
-    || make sure we disallow interrupts
-    movew #0x2600,sr
+	|| make sure we disallow interrupts
+	movew	#0x2600,%sr
 
-    || let's go
-    movel sp@(4),sp@-		| copy the argument we got
-    jsr _main			| call C
-    addql #4,sp
+	|| away we go
+	movel	%sp@(4),%sp@-		| copy the argument we got
+	jsr	_C_LABEL(main)		| call C
+	addql	#4,%sp
 
-    || restore prom vectors
-    movel save_vbr, a0
-    movec a0,vbr
-    
-    || return kernel start address (still in d0)
-    rts
+	|| restore prom vectors
+	movel	save_vbr,%a0
+	movec	%a0,%vbr
+	
+	|| return kernel start address (still in d0)
+	rts
 
-    .globl __halt
-__halt:
-    movel save_vbr, a0
-    movec a0,vbr		| restore prom vbr
+ENTRY(_halt)
+	movel	save_vbr,%a0
+	movec	%a0,%vbr		| restore prom vbr
 hloop:
-    movel #halt, d0
-    trap #13			| halt the system
-    bra hloop			| and don't allow continuation
-    
-    .globl _trap
-trap:
-    moveml d0-d7/a0-a7,sp@-	| save all registers
+	movel	#halt,%d0
+	trap	#13			| halt the system
+	bra	hloop			| and do not allow continuation
+	
+ASENTRY_NOPROFILE(astrap)
+	moveml	%d0-%d7/%a0-%a7,%sp@-	| save all registers
 
-    movel sp,sp@-		| push pointer to registers
-    jsr _trap			| call C to handle things (dump regs)
-    addql   #4,sp
-    tstl    d0
-    jeq     Lstop
-    moveml  sp@+,d0-d7/a0-a7
-    rte
+	movel	%sp,%sp@-		| push pointer to registers
+	jsr	_C_LABEL(trap)		| call C to handle things (dump regs)
+	addql   #4,%sp
+	tstl    %d0
+	jeq     Lstop
+	moveml  %sp@+,%d0-%d7/%a0-%a7
+	rte
 Lstop:
-    bra Lstop			| don't move
-    
-    .data
+	bra	Lstop			| stay here
+
+	.data
 save_vbr:
-    .long 0
+	.long 0
 halt:
-    .asciz "-h"
-vectbl:				| copy of vector table (can't use .fill)
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
-    .long trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap,trap
+	.asciz "-h"
+
+#define TRAP16 \
+	VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); \
+	VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); \
+	VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); \
+	VECTOR(astrap); VECTOR(astrap); VECTOR(astrap); VECTOR(astrap);
+
+vectbl:
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
+	TRAP16
