@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.23 2000/07/12 23:14:09 soren Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.24 2000/12/09 20:35:31 matt Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -96,7 +96,7 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
 int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
 
 #ifndef	PCIC_IRQ_PROBE
-#ifdef __hpcmips__
+#ifdef hpcmips
 /*
  * The irq probing doesn't work with current vrisab implementation.
  * The irq is just an key to find matching GPIO port to use and is fixed.
