@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.73 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.74 2005/03/29 02:42:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,6 @@ static int emitloc(FILE *);
 static int emitpseudo(FILE *);
 static int emitparents(FILE *);
 static int emitroots(FILE *);
-static int emitvfslist(FILE *);
 static int emitname2blk(FILE *);
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
@@ -94,7 +93,6 @@ mkioconf(void)
 	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) ||
 	    emitcfattachinit(fp) || emitloc(fp) || emitparents(fp) ||
 	    emitcfdata(fp) || emitroots(fp) || emitpseudo(fp) ||
-	    emitvfslist(fp) ||
 	    (do_devsw ? 0 : emitname2blk(fp))) {
 		if (v >= 0)
 			(void)fprintf(stderr,
@@ -533,43 +531,6 @@ emitpseudo(FILE *fp)
 			return (1);
 	}
 	return (fputs("\t{ 0, 0 }\n};\n", fp) < 0);
-}
-
-/*
- * Emit the initial VFS list.
- */
-static int
-emitvfslist(FILE *fp)
-{
-	struct nvlist *nv;
-
-	if (fputs("\n/* file systems */\n", fp) < 0)
-		return (1);
-
-	/*
-	 * Walk the list twice, once to emit the externs,
-	 * and again to actually emit the vfs_list_initial[]
-	 * array.
-	 */
-
-	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
-		if (fprintf(fp, "extern struct vfsops %s_vfsops;\n",
-		    nv->nv_str) < 0)
-			return (1);
-	}
-
-	if (fputs("\nstruct vfsops * const vfs_list_initial[] = {\n", fp) < 0)
-		return (1);
-
-	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
-		if (fprintf(fp, "\t&%s_vfsops,\n", nv->nv_str) < 0)
-			return (1);
-	}
-
-	if (fputs("\tNULL,\n};\n", fp) < 0)
-		return (1);
-
-	return (0);
 }
 
 /*
