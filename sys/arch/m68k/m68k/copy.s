@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.10 1994/02/28 00:27:26 chopps Exp $
+ *	$Id: copy.s,v 1.11 1994/05/06 17:37:37 briggs Exp $
  */
 
 #include <sys/errno.h>
@@ -318,6 +318,15 @@ ENTRY(fusword)
 	movsw	a0@,d0			| do read from user space
 	jra	Lfdone
 
+ENTRY(fuswintr)
+	SETUP_SFC
+	movl	sp@(4),a0
+	movl	_curpcb,a1		| current pcb
+	movl	#_fubail,a1@(PCB_ONFAULT) | where to return to on a fault
+	moveq	#0,d0
+	movsw	a0@,d0			| do read from user space
+	jra	Lfdone
+
 ALTENTRY(fuibyte, _fubyte)
 ENTRY(fubyte)
 	SETUP_SFC
@@ -326,6 +335,14 @@ ENTRY(fubyte)
 	movl	#Lferr,a1@(PCB_ONFAULT) | where to return to on a fault
 	moveq	#0,d0
 	movsb	a0@,d0			| do read from user space
+	jra	Lfdone
+
+/*
+ * error routine for fuswintr.  Fails before page faulting.  Otherwise
+ * it's the same as Lferr.  Needs to be external for trap.c.
+ */
+ENTRY(fubail)
+	moveq	#-1,d0			| error indicator
 	jra	Lfdone
 
 Lferr:
@@ -356,6 +373,16 @@ ENTRY(susword)
 	moveq	#0,d0			| indicate no fault
 	jra	Lsdone
 
+ENTRY(suswintr)
+	SETUP_DFC
+	movl	sp@(4),a0		| address to write
+	movw	sp@(10),d0		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#_subail,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsw	d0,a0@			| do write to user space
+	moveq	#0,d0			| indicate no fault
+	jra	Lsdone
+
 ALTENTRY(suibyte, _subyte)
 ENTRY(subyte)
 	SETUP_DFC
@@ -365,6 +392,14 @@ ENTRY(subyte)
 	movl	#Lserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
+	jra	Lsdone
+
+/*
+ * error routine for suswintr.  Fails before page faulting.  Otherwise
+ * it's the same as Lferr.  Needs to be external for trap.c.
+ */
+ENTRY(subail)
+	moveq	#-1,d0			| error indicator
 	jra	Lsdone
 
 Lserr:
