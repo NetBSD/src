@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.158 1999/09/08 22:25:56 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.159 1999/09/10 19:56:51 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.153 1999/09/08 22:25:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.154 1999/09/10 19:55:54 augustss Exp 
  */
 
 /*
@@ -2866,6 +2866,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1221 PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450,
+	    0,
+	    "Texas Instruments",
+	    "PCI1450 PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
 	    0,
 	    "Texas Instruments",
@@ -2884,10 +2890,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1211 PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B,
+	    0,
+	    "Texas Instruments",
+	    "PCI1251B PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
+	    0,
+	    "Texas Instruments",
+	    "PCI1420 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
