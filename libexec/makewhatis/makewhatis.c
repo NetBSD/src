@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.11 2000/07/13 06:29:43 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.12 2000/07/13 06:45:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.11 2000/07/13 06:29:43 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.12 2000/07/13 06:45:22 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -516,7 +516,7 @@ nroff(gzFile *in)
 			(void)dup2(devnull, STDERR_FILENO);
 			(void)close(devnull);
 		}
-		(void)execlp("nroff", "nroff", "-mandoc", NULL);
+		(void)execlp("nroff", "nroff", "-S", "-man", NULL);
 		_exit(EXIT_FAILURE);
 	default:
 		(void)close(pipefd[1]);
