@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.61 1996/10/27 20:31:48 gwr Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.62 1996/10/27 20:51:18 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -603,13 +603,9 @@ int indent = 0;
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
  * ANSI and traditional C compilers.  (Same as subr_prf.c does.)
+ * XXX: This requires that stdarg.h defines: va_alist, va_dcl
  */
 #include <machine/stdarg.h>
-/* XXX - This is a total hack! */
-#ifndef	va_alist
-#define	va_alist	__builtin_va_alist
-#define	va_dcl		long va_alist; ...
-#endif
 
 /*ARGSUSED2*/
 void
