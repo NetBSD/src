@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.6 2002/04/01 07:39:07 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.7 2002/04/11 07:00:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -324,8 +324,8 @@ copyfault:
 	/* check if this was a failed fixup */
 	if (error == ABORT_FIXUP_FAILED) {
 		if (user) {
-			trapsignal(p, SIGSEGV, TRAP_CODE);
-			userret(p);
+			trapsignal(l, SIGSEGV, TRAP_CODE);
+			userret(l);
 			return;
 		};
 		panic("Data abort fixup failed in kernel - we're dead\n");
