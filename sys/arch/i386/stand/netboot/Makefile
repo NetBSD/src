@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/03/15 22:16:35 perry Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/07 16:15:03 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -30,7 +30,7 @@ CPPFLAGS+= -I${.CURDIR}/../libsa
 ${PROG}: ${PROG}.rom
 	@# do nothing
 
-install:
+proginstall::
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG}.rom ${DESTDIR}${BINDIR}
 
