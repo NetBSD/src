@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.25 2000/04/08 04:17:31 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.26 2000/04/10 13:34:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -791,7 +791,9 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 #ifdef DEBUG
 	{ 
 		printf("sbus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+#ifdef DDB
 		Debugger();
+#endif
 		return (EINVAL);
 	}		
 #else	
@@ -815,7 +817,9 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (dvmaddr == (bus_addr_t)-1)	
 	{ 
 		printf("sbus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
+#ifdef DDB
 		Debugger();
+#endif
 	}		
 #endif	
 	if (dvmaddr == (bus_addr_t)-1)
