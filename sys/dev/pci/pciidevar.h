@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.25 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.26 2004/11/24 19:52:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,7 @@ struct pciide_softc {
 	/* for SiS */
 	u_int8_t sis_type;
 
-	/* For Silicon Image SATALink */
+	/* For Silicon Image SATALink, and Promise SATA */
 	bus_space_tag_t sc_ba5_st;
 	bus_space_handle_t sc_ba5_sh;
 	int sc_ba5_en;
@@ -199,6 +199,8 @@ void sata_setup_channel __P((struct ata_channel*));
 
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
+int  pciide_dma_dmamap_setup __P((struct pciide_softc *, int, int,
+				void *, size_t, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
 void pciide_dma_start __P((void*, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
