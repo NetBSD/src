@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 1998/07/08 04:43:20 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.121 1998/07/23 21:42:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,6 +66,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#include <sys/pool.h>
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -347,6 +348,18 @@ u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 
 u_int	*kernel_iopte_table;		/* 64k of storage for iommu */
 u_int 	kernel_iopte_table_pa;
+
+/*
+ * Memory pools and back-end supplier for SRMMU page tables.
+ * Share a pool between the level 2 and level 3 page tables,
+ * since these are equal in size.
+ */
+static struct pool L1_pool;
+static struct pool L23_pool;
+
+static void *pgt_page_alloc __P((unsigned long, int, int));
+static void  pgt_page_free __P((void *, unsigned long, int));
+
 #endif
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
@@ -618,7 +631,7 @@ setpgt4m(ptep, pte)
 {
 	*ptep = pte;
 #if 1
-	/* XXX - uncaching in pgtalloc() below is not yet quite Okay */
+	/* XXX - uncaching in pgt_page_alloc() below is not yet quite Okay */
 	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
 #endif
@@ -702,76 +715,35 @@ pcache_flush(va, pa, n)
 		(*f)((u_int)va+n, (u_int)pa+n);
 }
 
-
 /*
- * Private pagetable storage allocator.
- *
- * Takes advantage of the fact that the SRMMU only ever needs
- * chunks in one of two sizes: 1024 (for region level tables)
- * and 256 (for segment and page level tables).
- *
- * Storage is taken from the system pool as needed, one page at a
- * time, uncached if appropriate and split in chunks. The chunks
- * form a linked list by using the first word in each as a pointer.
+ * Page table pool back-end.
  */
-caddr_t pgt256_head;
-caddr_t pgt1024_head;
-int	pgtstat;
-void	*pgtalloc __P((size_t));
-void	pgtfree __P((void *, size_t));
-
 void *
-pgtalloc(size)
-	size_t	size;
+pgt_page_alloc(sz, flags, mtype)
+	unsigned long sz;
+	int flags;
+	int mtype;
 {
-	caddr_t p, *head;
+	caddr_t p;
 
-#ifdef DEBUG
-	if (size != 256 && size != 1024)
-		panic("pgtalloc: size = %d", size);
-#endif
+	p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
+				      (vm_size_t)sz, UVM_KMF_NOWAIT);
 
-	head = size == 256 ? &pgt256_head : &pgt1024_head;
-	p = *head;
-
-	if (p == NULL) {
-		int i;
-		p = (caddr_t)malloc(NBPG, M_VMPMAP, M_WAITOK);
-		pgtstat++;
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
-			pcache_flush(p, (caddr_t)VA2PA(p), NBPG);
-			kvm_uncache(p, 1);
-		}
-		/* Turn the (NBPG/size) chunks into a linked list */
-		i = NBPG - size;
-		*((caddr_t *)(p + i)) = NULL;
-		for (; (i -= size) >= 0; )
-			*((caddr_t *)(p + i)) = p + i + size;
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+		pcache_flush(p, (caddr_t)VA2PA(p), sz);
+		kvm_uncache(p, sz/NBPG);
 	}
-
-	*head = *((caddr_t *)p);
 	return (p);
-}
-
+}       
+   
 void
-pgtfree(p, size)
-	void	*p;
-	size_t	size;
+pgt_page_free(v, sz, mtype)
+	void *v;
+	unsigned long sz;
+	int mtype;
 {
-	caddr_t *head;
-
-#ifdef DEBUG
-	if (size != 256 && size != 1024)
-		panic("pgtfree: size = %d", size);
-#endif
-
-	head = size == 256 ? &pgt256_head : &pgt1024_head;
-
-	/* Return to the list; we never give anything back... */
-	*((caddr_t *)p) = *head;
-	*head = p;
+	uvm_km_free(kernel_map, (vm_offset_t)v, sz);
 }
-
 #endif /* 4m only */
 
 /*----------------------------------------------------------------*/
@@ -3664,6 +3636,30 @@ pass2:
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
+
+#if notyet
+	pool_init(&pv_pool, sizeof(pv_entry), 0, 0, 0, "pvtable", 0,
+		  NULL, NULL, 0);
+#endif
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		/*
+		 * The SRMMU only ever needs chunks in one of two sizes:
+		 * 1024 (for region level tables) and 256 (for segment
+		 * and page level tables).
+		 */
+		int n;
+
+		n = SRMMU_L1SIZE * sizeof(int);
+		pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable", 0,
+			  pgt_page_alloc, pgt_page_free, 0);
+
+		n = SRMMU_L2SIZE * sizeof(int);
+		pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable", 0,
+			  pgt_page_alloc, pgt_page_free, 0);
+	}
+#endif
 }
 
 
@@ -3759,7 +3755,7 @@ pmap_pinit(pm)
 		 * need to explicitly mark them as invalid (a null
 		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
-		urp = pgtalloc(SRMMU_L1SIZE * sizeof(int));
+		urp = pool_get(&L1_pool, PR_WAITOK);
 		pm->pm_reg_ptps = urp;
 		pm->pm_reg_ptps_pa = VA2PA(urp);
 		for (i = 0; i < NUREG; i++)
@@ -3839,7 +3835,7 @@ pmap_release(pm)
 				panic("pmap_release: releasing kernel");
 			ctx_free(pm);
 		}
-		pgtfree(pm->pm_reg_ptps, SRMMU_L1SIZE * sizeof(int));
+		pool_put(&L1_pool, pm->pm_reg_ptps);
 		pm->pm_reg_ptps = NULL;
 		pm->pm_reg_ptps_pa = 0;
 	}
@@ -4440,7 +4436,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
 		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-		pgtfree(pte0, SRMMU_L3SIZE * sizeof(int));
+		pool_put(&L23_pool, pte0);
 		sp->sg_pte = NULL;
 
 		if (--rp->rg_nsegmap == 0) {
@@ -4449,7 +4445,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
-			pgtfree(rp->rg_seg_ptps, SRMMU_L2SIZE * sizeof(int));
+			pool_put(&L23_pool, rp->rg_seg_ptps);
 		}
 	}
 }
@@ -4960,7 +4956,7 @@ pmap_page_protect4m(pa, prot)
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
 			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-			pgtfree(sp->sg_pte, SRMMU_L3SIZE * sizeof(int));
+			pool_put(&L23_pool, sp->sg_pte);
 			sp->sg_pte = NULL;
 
 			if (--rp->rg_nsegmap == 0) {
@@ -4969,8 +4965,7 @@ pmap_page_protect4m(pa, prot)
 				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
-				pgtfree(rp->rg_seg_ptps,
-					SRMMU_L2SIZE * sizeof(int));
+				pool_put(&L23_pool, rp->rg_seg_ptps);
 			}
 		}
 
@@ -5728,12 +5723,12 @@ rgretry:
 		/* Need a segment table */
 		int i, *ptd;
 
-		ptd = (int *)pgtalloc(SRMMU_L2SIZE * sizeof(int));
+		ptd = pool_get(&L23_pool, PR_WAITOK);
 		if (rp->rg_seg_ptps != NULL) {
 #ifdef DEBUG
 printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 #endif
-			pgtfree((caddr_t)ptd, SRMMU_L2SIZE * sizeof(int));
+			pool_put(&L23_pool, ptd);
 			goto rgretry;
 		}
 
@@ -5751,10 +5746,10 @@ sretry:
 		/* definitely a new mapping */
 		int i;
 
-		pte = (int *)pgtalloc(SRMMU_L3SIZE * sizeof(*pte));
+		pte = pool_get(&L23_pool, PR_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			pgtfree((caddr_t)pte, SRMMU_L3SIZE * sizeof(int));
+			pool_put(&L23_pool, pte);
 			goto sretry;
 		}
 
