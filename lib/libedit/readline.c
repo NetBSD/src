@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.4 1998/05/20 01:03:06 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.5 1998/12/12 19:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.4 1998/05/20 01:03:06 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.5 1998/12/12 19:54:16 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -97,7 +97,7 @@ static unsigned char _el_rl_complete __P((EditLine *, int));
 static char *_get_prompt __P((EditLine *));
 static HIST_ENTRY *_move_history __P((int));
 static int _history_search_gen __P((const char *, int, int));
-static int _history_expand_command __P((const char *, int, char **));
+static int _history_expand_command __P((const char *, size_t, char **));
 static char *_rl_compat_sub __P((const char *, const char *,
      const char *, int));
 static int rl_complete_internal __P((int));
@@ -106,6 +106,8 @@ static int rl_complete_internal __P((int));
  * needed for easy prompt switching
  */
 static char    *el_rl_prompt = NULL;
+
+/* ARGSUSED */
 static char *
 _get_prompt(el)
 	EditLine *el;
@@ -187,6 +189,7 @@ rl_initialize()
 
 	/* some readline apps do use this */
 	li = el_line(e);
+	/* LINTED const cast */
 	rl_line_buffer = (char *) li->buffer;
 	rl_point = rl_end = 0;
 
@@ -217,7 +220,7 @@ readline(const char *prompt)
 
 	if (ret && count > 0) {
 		char *foo;
-		off_t lastidx;
+		int lastidx;
 
 		foo = strdup(ret);
 		lastidx = count - 1;
@@ -231,6 +234,7 @@ readline(const char *prompt)
 	history(h, &ev, H_GETSIZE);
 	history_length = ev.num;
 
+	/* LINTED const cast */
 	return (char *) ret;
 }
 
@@ -254,6 +258,7 @@ using_history()
  * globally == 1, substitutes all occurences of what, otherwise only the
  * first one
  */
+/* ARGSUSED */
 static char    *
 _rl_compat_sub(str, what, with, globally)
 	const char     *str, *what, *with;
@@ -261,7 +266,8 @@ _rl_compat_sub(str, what, with, globally)
 {
 	char           *result;
 	const char     *temp, *new;
-	int             size, len, i, with_len, what_len, add;
+	int             len, with_len, what_len, add;
+	size_t		size, i;
 
 	result = malloc((size = 16));
 	temp = str;
@@ -310,24 +316,25 @@ _rl_compat_sub(str, what, with, globally)
  * it's callers responsibility to free() string returned in *result
  */
 static int
-_history_expand_command(command, len, result)
+_history_expand_command(command, cmdlen, result)
 	const char     *command;
-	int             len;
+	size_t          cmdlen;
 	char          **result;
 {
-	char          **arr, *temp, *line, *search = NULL, *cmd;
+	char          **arr, *tempcmd, *line, *search = NULL, *cmd;
 	const char     *event_data = NULL;
-	static const char *from = NULL, *to = NULL;
-	int             start = -1, end = -1, max, i, size, idx;
+	static char    *from = NULL, *to = NULL;
+	int             start = -1, end = -1, max, i, idx;
 	int             h_on = 0, t_on = 0, r_on = 0, e_on = 0, p_on = 0,
 	                g_on = 0;
 	int             event_num = 0, retval;
+	size_t		cmdsize;
 
 	*result = NULL;
 
-	cmd = alloca(len + 1);
-	(void)strncpy(cmd, command, len);
-	cmd[len] = 0;
+	cmd = alloca(cmdlen + 1);
+	(void)strncpy(cmd, command, cmdlen);
+	cmd[cmdlen] = 0;
 
 	idx = 1;
 	/* find out which event to take */
@@ -335,7 +342,8 @@ _history_expand_command(command, len, result)
 		event_num = history_length;
 		idx++;
 	} else {
-		int             off, len, num;
+		int    off, num;
+		size_t len;
 		off = idx;
 		while (cmd[off] && !strchr(":^$*-%", cmd[off]))
 			off++;
@@ -446,15 +454,16 @@ _history_expand_command(command, len, result)
 		else if (*cmd == 'g')
 			g_on = 2;
 		else if (*cmd == 's' || *cmd == '&') {
-			char           *what, *with, delim;
-			int             len, size, from_len;
+			char  *what, *with, delim;
+			int    len, from_len;
+			size_t size;
 
 			if (*cmd == '&' && (from == NULL || to == NULL))
 				continue;
 			else if (*cmd == 's') {
 				delim = *(++cmd), cmd++;
 				size = 16;
-				what = realloc((void *) from, size);
+				what = realloc(from, size);
 				len = 0;
 				for (; *cmd && *cmd != delim; cmd++) {
 					if (*cmd == '\\'
@@ -481,7 +490,7 @@ _history_expand_command(command, len, result)
 					continue;
 
 				size = 16;
-				with = realloc((void *) to, size);
+				with = realloc(to, size);
 				len = 0;
 				from_len = strlen(from);
 				for (; *cmd && *cmd != delim; cmd++) {
@@ -504,10 +513,10 @@ _history_expand_command(command, len, result)
 				with[len] = '\0';
 				to = with;
 
-				temp = _rl_compat_sub(line, from, to, 
+				tempcmd = _rl_compat_sub(line, from, to, 
 				    (g_on) ? 1 : 0);
 				free(line);
-				line = temp;
+				line = tempcmd;
 				g_on = 0;
 			}
 		}
@@ -552,25 +561,25 @@ _history_expand_command(command, len, result)
 			(void)strcpy(arr[i], temp);
 	}
 
-	size = 1, len = 0;
-	temp = malloc(size);
+	cmdsize = 1, cmdlen = 0;
+	tempcmd = malloc(cmdsize);
 	for (i = start; start <= i && i <= end; i++) {
 		int             arr_len;
 
 		arr_len = strlen(arr[i]);
-		if (len + arr_len + 1 >= size) {
-			size += arr_len + 1;
-			temp = realloc(temp, size);
+		if (cmdlen + arr_len + 1 >= cmdsize) {
+			cmdsize += arr_len + 1;
+			tempcmd = realloc(tempcmd, cmdsize);
 		}
-		(void)strcpy(&temp[len], arr[i]);	/* safe */
-		len += arr_len;
-		temp[len++] = ' ';	/* add a space */
+		(void)strcpy(&tempcmd[cmdlen], arr[i]);	/* safe */
+		cmdlen += arr_len;
+		tempcmd[cmdlen++] = ' ';	/* add a space */
 	}
-	while (len > 0 && isspace((unsigned char) temp[len - 1]))
-		len--;
-	temp[len] = '\0';
+	while (cmdlen > 0 && isspace((unsigned char) tempcmd[cmdlen - 1]))
+		cmdlen--;
+	tempcmd[cmdlen] = '\0';
 
-	*result = temp;
+	*result = tempcmd;
 
 	for (i = 0; i <= max; i++)
 		free(arr[i]);
@@ -586,7 +595,8 @@ history_expand(str, output)
 	char           *str;
 	char          **output;
 {
-	int             i, retval = 0, size, idx;
+	int             i, retval = 0, idx;
+	size_t		size;
 	char           *temp, *result;
 
 	if (h == NULL || e == NULL)
@@ -615,7 +625,8 @@ history_expand(str, output)
 	result = NULL;
 	size = idx = 0;
 	for (i = 0; str[i];) {
-		int start, j, len, loop_again;
+		int start, j, loop_again;
+		size_t len;
 
 		loop_again = 1;
 		start = j = i;
@@ -664,7 +675,8 @@ loop:
 				retval = 1;
 			break;
 		}
-		retval = _history_expand_command(&str[i], j - i, &temp);
+		retval = _history_expand_command(&str[i], (size_t)(j - i),
+						 &temp);
 		if (retval != -1) {
 			len = strlen(temp);
 			ADD_STRING(temp, len);
@@ -695,7 +707,8 @@ char **
 history_tokenize(str)
 	const char     *str;
 {
-	int  size = 1, result_idx = 0, i, start, len;
+	int  size = 1, result_idx = 0, i, start;
+	size_t len;
 	char **result = NULL, *temp, delim = '\0';
 
 	for (i = 0; str[i]; i++) {
@@ -1018,6 +1031,7 @@ history_search_prefix(str, direction)
  * search for event in history containing str, starting at offset
  * abs(pos); continue backward, if pos<0, forward otherwise
  */
+/* ARGSUSED */
 int
 history_search_pos(str, direction, pos)
 	const char     *str;
@@ -1151,7 +1165,7 @@ filename_completion_function(text, state)
 			return NULL;	/* cannot open the directory */
 	}
 	/* find the match */
-	while ((entry = readdir(dir))) {
+	while ((entry = readdir(dir)) != NULL) {
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
@@ -1223,6 +1237,7 @@ username_completion_function(text, state)
 /*
  * el-compatible wrapper around rl_complete; needed for key binding
  */
+/* ARGSUSED */
 static unsigned char
 _el_rl_complete(el, ch)
 	EditLine       *el;
@@ -1240,15 +1255,15 @@ completion_matches(text, genfunc)
 	CPFunction     *genfunc;
 {
 	char          **match_list = NULL, *retstr, *prevstr;
-	size_t          matches, math_list_len, max_equal, len, which,
-	                i;
+	size_t          math_list_len, max_equal, which, i;
+	int		matches;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
 	matches = 0;
 	math_list_len = 1;
-	while ((retstr = (*genfunc) (text, matches))) {
+	while ((retstr = (*genfunc) (text, matches)) != NULL) {
 		if (matches + 1 >= math_list_len) {
 			math_list_len <<= 1;
 			match_list = realloc(match_list,
@@ -1263,7 +1278,7 @@ completion_matches(text, genfunc)
 	/* find least denominator and insert it to match_list[0] */
 	which = 2;
 	prevstr = match_list[1];
-	len = max_equal = strlen(prevstr);
+	max_equal = strlen(prevstr);
 	for (; which < matches; which++) {
 		for (i = 0; i < max_equal &&
 		    prevstr[i] == match_list[which][i]; i++)
@@ -1288,6 +1303,7 @@ completion_matches(text, genfunc)
 /*
  * called by rl_complete()
  */
+/* ARGSUSED */
 static int
 rl_complete_internal(what_to_do)
 	int             what_to_do;
@@ -1295,7 +1311,7 @@ rl_complete_internal(what_to_do)
 	CPFunction     *complet_func;
 	const LineInfo *li;
 	char           *temp, *temp2, **arr;
-	int             len;
+	size_t          len;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
@@ -1305,6 +1321,7 @@ rl_complete_internal(what_to_do)
 		complet_func = filename_completion_function;
 
 	li = el_line(e);
+	/* LINTED const cast */
 	temp = (char *) li->cursor;
 	while (temp > li->buffer &&
 	    !strchr(rl_basic_word_break_characters, *(temp - 1)))
@@ -1325,23 +1342,23 @@ rl_complete_internal(what_to_do)
 		arr = completion_matches(temp, complet_func);
 	else {
 		int             end = li->cursor - li->buffer;
-		arr = (*rl_attempted_completion_function) (temp,
-							   end - len, end);
+		arr = (*rl_attempted_completion_function) (temp, (int)
+							   (end - len), end);
 	}
 	free(temp);		/* no more needed */
 
 	if (arr) {
 		int             i;
 
-		el_deletestr(e, len);
+		el_deletestr(e, (int)len);
 		el_insertstr(e, arr[0]);
 		if (strcmp(arr[0], arr[1]) == 0) {
 			/* lcd is valid object, so add a space to mark it */
 			/* in case of filename completition, add a space  */
 			/* only if object found is not directory	  */
-			int             len = strlen(arr[0]);
+			size_t alen = strlen(arr[0]);
 			if (complet_func != filename_completion_function
-			    || (len > 0 && (arr[0])[len - 1] != '/'))
+			    || (alen > 0 && (arr[0])[alen - 1] != '/'))
 				el_insertstr(e, " ");
 		} else
 			/* lcd is not a valid object - further specification */
@@ -1373,8 +1390,6 @@ rl_complete(ignore, invoking_key)
 		return CC_REFRESH;
 	} else
 		return rl_complete_internal(invoking_key);
-
-	return CC_REFRESH;
 }
 
 /*
@@ -1420,6 +1435,7 @@ rl_read_key()
 /*
  * reset the terminal
  */
+/* ARGSUSED */
 void
 rl_reset_terminal(p)
 	const char     *p;
