@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.17 1998/08/25 01:16:03 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.18 1998/08/27 23:37:35 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.17 1998/08/25 01:16:03 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.18 1998/08/27 23:37:35 hubertf Exp $");
 #endif
 #endif
 
@@ -155,7 +155,7 @@ pkg_do(char *pkg)
 		    printf("Doing in-place extraction for %s\n", pkg_fullname);
 		p = find_plist(&Plist, PLIST_CWD);
 		if (p) {
-		    if (!isdir(p->name) && !Fake) {
+		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 			if (Verbose)
 			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
 			vsystem("mkdir -p %s", p->name);
@@ -228,7 +228,7 @@ pkg_do(char *pkg)
 
     /* See if we're already registered */
     sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
-    if (isdir(LogDir) && !Force) {
+    if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 	warnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
 	goto success;	/* close enough for government work */

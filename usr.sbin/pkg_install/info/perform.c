@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.10 1998/08/27 20:11:31 ross Exp $	*/
+/*	$NetBSD: perform.c,v 1.11 1998/08/27 23:37:36 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.10 1998/08/27 20:11:31 ross Exp $");
+__RCSID("$NetBSD: perform.c,v 1.11 1998/08/27 23:37:36 hubertf Exp $");
 #endif
 #endif
 
@@ -367,7 +367,7 @@ pkg_perform(char **pkgs)
 		struct dirent  *dp;
 		DIR            *dirp;
 
-		if (!isdir(tmp))
+		if (!(isdir(tmp) || islinktodir(tmp)))
 			return 1;
 		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
 			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
