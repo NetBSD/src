@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.16 1999/11/15 15:59:24 mjl Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.17 1999/12/30 09:10:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,6 +283,7 @@ onalrm(signo)
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
+	struct utmp *nutmp;
 	int cc;
 
 	now = time(NULL);
@@ -295,14 +296,17 @@ onalrm(signo)
 		if (stb.st_size > utmpsize) {
 			utmpsize = stb.st_size + 10 * sizeof(struct utmp);
 			if (utmp)
-				utmp = (struct utmp *)realloc(utmp, utmpsize);
+				nutmp = (struct utmp *)realloc(utmp, utmpsize);
 			else
-				utmp = (struct utmp *)malloc(utmpsize);
-			if (! utmp) {
+				nutmp = (struct utmp *)malloc(utmpsize);
+			if (! nutmp) {
 				warn("malloc failed");
+				if (utmp)
+					free(utmp);
 				utmpsize = 0;
 				goto done;
 			}
+			utmp = nutmp;
 		}
 		(void)lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
