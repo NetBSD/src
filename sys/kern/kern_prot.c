@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.58.4.1 2000/10/18 03:41:36 tv Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.58.4.2 2002/02/09 19:20:17 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -695,6 +695,21 @@ crdup(cr)
 	*newcr = *cr;
 	newcr->cr_ref = 1;
 	return (newcr);
+}
+
+/*
+ * convert from userland credentials to kernel one
+ */
+void
+crcvt(uc, uuc)
+	struct ucred *uc;
+	const struct uucred *uuc;
+{
+	uc->cr_ref = 0;
+	uc->cr_uid = uuc->cr_uid;
+	uc->cr_gid = uuc->cr_gid;
+	uc->cr_ngroups = uuc->cr_ngroups;
+	(void)memcpy(uc->cr_groups, uuc->cr_groups, sizeof(uuc->cr_groups));
 }
 
 /*
