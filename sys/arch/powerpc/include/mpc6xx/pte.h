@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2001/06/15 18:26:06 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2001/06/19 07:14:24 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,29 +77,4 @@ typedef	struct pte pte_t;
 #define	ADDR_API_SHFT	22
 #define	ADDR_POFF	0x00000fff
 
-/*
- * Bits in DSISR:
- */
-#define	DSISR_DIRECT	0x80000000
-#define	DSISR_NOTFOUND	0x40000000
-#define	DSISR_PROTECT	0x08000000
-#define	DSISR_INVRX	0x04000000
-#define	DSISR_STORE	0x02000000
-#define	DSISR_DABR	0x00400000
-#define	DSISR_SEGMENT	0x00200000
-#define	DSISR_EAR	0x00100000
-
-/*
- * Bits in SRR1 on ISI:
- */
-#define	ISSRR1_NOTFOUND	0x40000000
-#define	ISSRR1_DIRECT	0x10000000
-#define	ISSRR1_PROTECT	0x08000000
-#define	ISSRR1_SEGMENT	0x00200000
-
-#ifdef	_KERNEL
-#ifndef	_LOCORE
-extern u_int dsisr __P((void));
-#endif	/* _KERNEL */
-#endif	/* _LOCORE */
 #endif	/* _MPC6XX_PTE_H_ */
