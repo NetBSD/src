@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.48 2002/03/16 14:00:01 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.49 2002/03/20 18:54:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -365,7 +365,8 @@ clockattach(node, bt, bh)
 		panic("Can't attach %s tod clock", model);
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
-	idp = (struct idprom *)((u_long)bh + IDPROM_OFFSET);
+	idp = (struct idprom *)((vaddr_t)bus_space_vaddr(bt, bh) + 
+		IDPROM_OFFSET);
 
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.44 2002/03/15 07:06:24 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.45 2002/03/20 18:54:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -229,7 +229,7 @@ psycho_attach(parent, self, aux)
 	bus_space_handle_t bh;
 	u_int64_t csr;
 	int psycho_br[2], n, i;
-	struct pci_ctl *pci_ctl;
+	bus_space_handle_t pci_ctl;
 	char *model = PROM_getpropstring(ma->ma_node, "model");
 
 	printf("\n");
@@ -239,7 +239,7 @@ psycho_attach(parent, self, aux)
 	sc->sc_dmatag = ma->ma_dmatag;
 
 	/*
-	 * call the model-specific initialisation routine.
+	 * Identify the device.
 	 */
 	for (i=0; psycho_names[i].p_name; i++)
 		if (strcmp(model, psycho_names[i].p_name) == 0) {
@@ -263,8 +263,6 @@ found:
 	 * (1) per-PBM PCI configuration space, containing only the
 	 *     PBM 256-byte PCI header
 	 * (2) the shared psycho configuration registers (struct psychoreg)
-	 *
-	 * XXX use the prom address for the psycho registers?  we do so far.
 	 */
 
 	/* Register layouts are different.  stuupid. */
@@ -272,27 +270,29 @@ found:
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[2].ur_paddr;
 
 		if (ma->ma_naddress > 2) {
+			sparc_promaddr_to_handle(sc->sc_bustag,
+				ma->ma_address[2], &sc->sc_bh);
+			sparc_promaddr_to_handle(sc->sc_bustag,
+				ma->ma_address[0], &pci_ctl);
+
 			sc->sc_regs = (struct psychoreg *)
-				(u_long)ma->ma_address[2];
-			pci_ctl = (struct pci_ctl *)
-				(u_long)ma->ma_address[0];
+				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 		} else if (ma->ma_nreg > 2) {
-			bus_space_handle_t handle;
 
 			/* We need to map this in ourselves. */
 			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[2].ur_paddr,
-				ma->ma_reg[2].ur_len, 0, &handle))
+				ma->ma_reg[2].ur_len, BUS_SPACE_MAP_LINEAR,
+				&sc->sc_bh))
 				panic("psycho_attach: cannot map regs");
-			sc->sc_regs = (struct psychoreg *)(u_long)handle;
+			sc->sc_regs = (struct psychoreg *)
+				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 
 			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[0].ur_paddr,
-				ma->ma_reg[0].ur_len, 0, &handle))
+				ma->ma_reg[0].ur_len, BUS_SPACE_MAP_LINEAR,
+				&pci_ctl))
 				panic("psycho_attach: cannot map ctl");
-/* XXX -- this is lost but never unmapped */
-			pci_ctl = (struct pci_ctl *)(u_long)handle;
-
 		} else
 			panic("psycho_attach: %d not enough registers",
 				ma->ma_nreg);
@@ -300,25 +300,35 @@ found:
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
 
 		if (ma->ma_naddress) {
+			sparc_promaddr_to_handle(sc->sc_bustag,
+				ma->ma_address[0], &sc->sc_bh);
 			sc->sc_regs = (struct psychoreg *)
-				(u_long)ma->ma_address[0];
-			pci_ctl = (struct pci_ctl *)&sc->sc_regs->psy_pcictl[0];
+				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
+			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+				offsetof(struct psychoreg,  psy_pcictl),
+				sizeof(struct pci_ctl), &pci_ctl);
 		} else if (ma->ma_nreg) {
-			bus_space_handle_t handle;
 
 			/* We need to map this in ourselves. */
 			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[0].ur_paddr,
-				ma->ma_reg[0].ur_len, 0, &handle))
+				ma->ma_reg[0].ur_len, BUS_SPACE_MAP_LINEAR, 
+				&sc->sc_bh))
 				panic("psycho_attach: cannot map regs");
-			sc->sc_regs = (struct psychoreg *)(u_long)handle;
-			pci_ctl = (struct pci_ctl *)&sc->sc_regs->psy_pcictl[0];
+			sc->sc_regs = (struct psychoreg *)
+				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
+
+			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+				offsetof(struct psychoreg,  psy_pcictl),
+				sizeof(struct pci_ctl), &pci_ctl);
 		} else
 			panic("psycho_attach: %d not enough registers",
 				ma->ma_nreg);
 	}
 
-	csr = sc->sc_regs->psy_csr;
+
+	csr = bus_space_read_8(sc->sc_bustag, sc->sc_bh, 
+		offsetof(struct psychoreg, psy_csr));
 	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
@@ -355,8 +365,8 @@ found:
 	/*
 	 * Setup the PCI control register
 	 */
-	csr = bus_space_read_8(sc->sc_bustag,
-			(bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
+	csr = bus_space_read_8(sc->sc_bustag, pci_ctl, 
+		offsetof(struct pci_ctl, pci_csr));
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
 	       PCICTL_ERRINTEN |
@@ -365,8 +375,8 @@ found:
 		 PCICTL_CPU_PRIO |
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag,
-			(bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0, csr);
+	bus_space_write_8(sc->sc_bustag, pci_ctl,
+		offsetof(struct pci_ctl, pci_csr), csr);
 
 
 	/*
@@ -391,7 +401,7 @@ found:
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
 
-	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
+	pp->pp_pcictl = pci_ctl; 
 
 	/* allocate our tags */
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
@@ -451,18 +461,13 @@ found:
 		 * a retry of 3-6 usec (which is what sysio is set to) for the
 		 * moment, which seems to help alleviate this problem.
 		 */
-		timeo = bus_space_read_8(sc->sc_bustag,
-			(bus_space_handle_t)
-			(u_long)&sc->sc_regs->intr_retry_timer, 0);
+		timeo = sc->sc_regs->intr_retry_timer;
 		if (timeo > 0xfff) {
 #ifdef DEBUG
 			printf("decreasing interrupt retry timeout "
 				"from %lx to 0xff\n", (long)timeo);
 #endif
-			bus_space_write_8(sc->sc_bustag,
-				(bus_space_handle_t)
-				(u_long)&sc->sc_regs->intr_retry_timer, 0,
-				0xff);
+			sc->sc_regs->intr_retry_timer = 0xff;
 		}
 
 		/*
@@ -479,12 +484,16 @@ found:
 			M_DEVBUF, M_NOWAIT);
 		if (sc->sc_is == NULL)
 			panic("psycho_attach: malloc iommu_state");
+		sc->sc_is->is_sbvalid[0] = sc->sc_is->is_sbvalid[1] = 0;
 
 
-		sc->sc_is->is_sb[0] = 0;
-		sc->sc_is->is_sb[1] = 0;
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
-			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+				offsetof(struct pci_ctl, pci_strbuf),
+				sizeof (struct iommu_strbuf), 
+				&sc->sc_is->is_sb[0]);
+			sc->sc_is->is_sbvalid[0] = 1;
+		}
 
 		psycho_iommu_init(sc, 2);
 
@@ -500,15 +509,20 @@ found:
 			0x0100000, 0, &bh))
 			panic("could not map psycho PCI configuration space");
 		sc->sc_bustag->type = i;
-		sc->sc_configaddr = (off_t)bh;
+		sc->sc_configaddr = bh;
 	} else {
 		/* Just copy IOMMU state, config tag and address */
 		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 
-		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
-			sc->sc_is->is_sb[1] = &pci_ctl->pci_strbuf;
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+				offsetof(struct pci_ctl, pci_strbuf),
+				sizeof (struct iommu_strbuf), 
+				&sc->sc_is->is_sb[1]);
+			sc->sc_is->is_sbvalid[1] = 1;
+		}
 		iommu_reset(sc->sc_is);
 	}
 
@@ -744,7 +758,10 @@ psycho_iommu_init(sc, tsbsize)
 
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
-	is->is_iommu = &sc->sc_regs->psy_iommu;
+	bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+		offsetof(struct psychoreg, psy_iommu), 
+		sizeof (struct iommureg),
+		&is->is_iommu);
 
 	/*
 	 * Separate the men from the boys.  Get the `virtual-dma'
