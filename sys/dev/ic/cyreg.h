@@ -1,4 +1,4 @@
-/*	$NetBSD: cyreg.h,v 1.2 1999/09/09 21:52:11 tron Exp $	*/
+/*	$NetBSD: cyreg.h,v 1.3 2000/05/29 12:05:42 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Bruce Evans.
@@ -54,6 +54,13 @@
 
 /* I/O location for enabling interrupts on PCI Cyclom cards */
 #define CY_PCI_INTENA           0x68
+#define CY_PCI_INTENA_9050      0x4c
+
+/* Cyclom-Y Custom Register for PLX ID (PCI only) */
+#define CY_PLX_VER		0x3400		/* PLX version */
+#define CY_PLX_9050		0x0b
+#define CY_PLX_9060		0x0c
+#define CY_PLX_9080		0x0d
 
 #define	CY_CLOCK		25000000	/* baud rate clock */
 #define	CY_CLOCK_60		60000000	/* new CD14000 */
