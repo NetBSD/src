@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2000/04/29 03:31:54 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2000/05/02 04:41:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 
 #ifndef _POWERPC_LOCK_H_
 #define	_POWERPC_LOCK_H_
+
+typedef	__volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.26 2000/04/29 03:31:45 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.27 2000/05/02 04:41:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  * order for it to work on the widest range of processor types.
  */
 struct simplelock {
-	int lock_data;
+	__cpu_simple_lock_t lock_data;
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	const char *unlock_file;
