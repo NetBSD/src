@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.15 2002/10/08 12:12:57 dan Exp $        */
+/*      $NetBSD: rndpool.c,v 1.16 2002/10/09 14:48:58 dan Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.15 2002/10/08 12:12:57 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.16 2002/10/09 14:48:58 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ rndpool_init(rndpool_t *rp)
 {
 
 	rp->cursor = 0;
-	rp->rotate = 0;
+	rp->rotate = 1;
 
 	memset(&rp->stats, 0, sizeof(rp->stats));
 
@@ -114,19 +114,50 @@ rndpool_get_poolsize(void)
 }
 
 /*
- * Add one word to the pool, rotating the input as needed.
+ * The input function treats the contents of the pool as an array of
+ * 32 LFSR's of length RND_POOLWORDS, one per bit-plane.  The LFSR's
+ * are clocked once in parallel, using 32-bit xor operations, for each
+ * word to be added.
+ *
+ * Each word to be added is xor'd with the output word of the LFSR
+ * array (one tap at a time).
+ * 
+ * In order to facilitate distribution of entropy between the
+ * bit-planes, a 32-bit rotate of this result is performed prior to
+ * feedback. The rotation distance is incremented every RND_POOLWORDS
+ * clocks, by a value that is relativly prime to the word size to try
+ * to spread the bits throughout the pool quickly when the pool is
+ * empty.
+ *
+ * Each LFSR thus takes its feedback from another LFSR, and is
+ * effectively re-keyed by both that LFSR and the new data.  Feedback
+ * occurs with another XOR into the new LFSR, rather than assignment,
+ * to avoid destroying any entropy in the destination.
+ *
+ * Even with zeros as input, the LFSR output data are never visible;
+ * the contents of the pool are never divulged except via a hash of
+ * the entire pool, so there is no information for correlation
+ * attacks. With rotation-based rekeying, each LFSR runs at most a few
+ * cycles before being permuted.  However, beware of initial
+ * conditions when no entropy has been added.
+ *
+ * The output function also stirs the generated hash back into the
+ * pool, further permuting the LFSRs and spreading entropy through the
+ * pool.  Any unknown bits anywhere in the pool are thus reflected
+ * across all the LFSRs after output.
+ * 
+ * (The final XOR assignment into the pool for feedback is equivalent
+ * to an additional LFSR tap of the MSB before shifting, in the case
+ * where no rotation is done, once every 32 cycles. This LFSR runs for
+ * at most one length.)
  */
 static inline void
 rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
 {
-
-	/*
-	 * Steal some values out of the pool, and xor them into the
-	 * word we were given.
-	 *
-	 * Mix the new value into the pool using xor.  This will
-	 * prevent the actual values from being known to the caller
-	 * since the previous values are assumed to be unknown as well.
+  	/*
+	 * Shifting is implemented using a cursor and taps as offsets,
+	 * added mod the size of the pool. For this reason,
+	 * RND_POOLWORDS must be a power of two.
 	 */
 	val ^= rp->pool[(rp->cursor + TAP1) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP2) & (RND_POOLWORDS - 1)];
@@ -141,9 +172,6 @@ rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
 	 * If we have looped around the pool, increment the rotate
 	 * variable so the next value will get xored in rotated to
 	 * a different position.
-	 * Increment by a value that is relativly prime to the word size
-	 * to try to spread the bits throughout the pool quickly when the
-	 * pool is empty.
 	 */
 	if (rp->cursor == RND_POOLWORDS) {
 		rp->cursor = 0;
@@ -215,9 +243,10 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
  * Extract some number of bytes from the random pool, decreasing the
  * estimate of randomness as each byte is extracted.
  *
- * Do this by stiring the pool and returning a part of hash as randomness.
- * Note that no secrets are given away here since parts of the hash are
- * xored together before returned.
+ * Do this by hashing the pool and returning a part of the hash as
+ * randomness.  Stir the hash back into the pool.  Note that no
+ * secrets going back into the pool are given away here since parts of
+ * the hash are xored together before being returned.
  *
  * Honor the request from the caller to only return good data, any data,
  * etc.  Note that we must have at least 64 bits of entropy in the pool

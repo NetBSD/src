@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.34 2002/10/08 12:12:56 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.35 2002/10/09 14:48:58 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.34 2002/10/08 12:12:56 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.35 2002/10/09 14:48:58 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -295,7 +295,7 @@ rndattach(int num)
 
 	/* mix in another counter */
 	c = rnd_counter();
-	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 }
 
 /*
@@ -331,9 +331,9 @@ rnd_init(void)
 	 * XXX more things to add would be nice.
 	 */ 
 	if (c) {
-		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 		c = rnd_counter();
-		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 	}
 
 	rnd_ready = 1;
@@ -805,7 +805,7 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 	 * Again, put some more initial junk in the pool.
 	 * XXX Bogus, but harder to guess than zeros.
 	 */
-	rndpool_add_data(&rnd_pool, &ts, sizeof(u_int32_t), 0);
+	rndpool_add_data(&rnd_pool, &ts, sizeof(u_int32_t), 1);
 }
 
 /*
@@ -1019,18 +1019,15 @@ rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 	int retval, s;
 	u_int32_t c;
 
+	s = splsoftclock();
 	if (!rnd_have_entropy) {
-		/* Try once again to put something in the pool */
-		c = rnd_counter();
 #ifdef RND_VERBOSE
 		printf("rnd: WARNING! initial entropy low (%u).\n",
 		       rndpool_get_entropy_count(&rnd_pool));
 #endif
-	}
-
-	s = splsoftclock();
-	if (!rnd_have_entropy) {
-		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+		/* Try once again to put something in the pool */
+		c = rnd_counter();
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 	}
 	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 	splx(s);
