@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.22 2003/09/23 11:33:50 cl Exp $	*/
+/*	$NetBSD: frame.h,v 1.23 2003/09/25 22:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -252,7 +252,7 @@ extern struct fpframe m68k_cached_fpu_idle_frame;
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
-void sendsig_sigcontext(ksiginfo_t *, sigset_t *);
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.4 2003/09/22 14:36:42 cl Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.5 2003/09/25 22:04:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.4 2003/09/22 14:36:42 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5 2003/09/25 22:04:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.4 2003/09/22 14:36:42 cl Exp $");
 #include <compat/linux/common/linux_exec.h>
 
 void
-linux_trapsignal(struct lwp *l, ksiginfo_t *ksi) {
+linux_trapsignal(struct lwp *l, const ksiginfo_t *ksi) {
 	trapsignal(l, ksi);
 }
