@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.172 2000/06/06 18:26:35 soren Exp $	*/
+/*	$NetBSD: init_main.c,v 1.173 2000/06/25 13:49:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -102,8 +102,6 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#include <vm/vm_pageout.h>
-
 #include <uvm/uvm.h>
 
 #include <net/if.h>

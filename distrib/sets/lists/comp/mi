@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.233 2000/06/25 13:37:56 mrg Exp $
+#	$NetBSD: mi,v 1.234 2000/06/25 13:49:36 mrg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1136,7 +1136,6 @@
 ./usr/include/vm/vm_map.h		comp-c-include
 ./usr/include/vm/vm_object.h		comp-c-include
 ./usr/include/vm/vm_page.h		comp-c-include
-./usr/include/vm/vm_pageout.h		comp-c-include
 ./usr/include/vm/vm_pager.h		comp-c-include
 ./usr/include/vm/vm_param.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
