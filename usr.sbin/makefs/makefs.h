@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.5 2002/01/07 05:07:50 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.6 2002/01/26 13:22:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -128,6 +128,7 @@ typedef struct {
 	int	bsize;		/* block size */
 	int	fsize;		/* fragment size */
 	int	cpg;		/* cylinders per group */
+	int	cpgflg;		/* cpg was specified by user */
 	int	density;	/* bytes per inode */
 	int	ntracks;	/* number of tracks */
 	int	nsectors;	/* number of sectors */

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.11 2002/01/24 03:21:07 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.12 2002/01/26 13:22:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.11 2002/01/24 03:21:07 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.12 2002/01/26 13:22:16 lukem Exp $");
 #endif	/* !__lint */
 
 #ifdef HAVE_CONFIG_H
@@ -257,8 +257,8 @@ main(int argc, char *argv[])
 	}
 
 	if (debug & DEBUG_DUMP_FSNODES) {
-		putchar('\n');
-		dump_fsnodes(argv[1], root);
+		printf("\nparent: %s\n", argv[1]);
+		dump_fsnodes(".", root);
 		putchar('\n');
 	}
 
