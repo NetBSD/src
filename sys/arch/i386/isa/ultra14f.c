@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.10 1994/02/02 19:21:38 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.11 1994/03/25 10:19:43 mycroft Exp $
  */
 
 #include "uha.h"
@@ -263,8 +263,7 @@ struct cfdriver uhacd = {
 	sizeof(struct uha_softc)
 };
 
-struct scsi_adapter uha_switch =
-{
+struct scsi_adapter uha_switch = {
 	uha_scsi_cmd,
 	uhaminphys,
 	0,
@@ -274,8 +273,7 @@ struct scsi_adapter uha_switch =
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device uha_dev =
-{
+struct scsi_device uha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */

@@ -14,7 +14,7 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.6 1994/02/02 19:21:31 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.7 1994/03/25 10:19:35 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -300,8 +300,7 @@ struct cfdriver ahbcd = {
 	sizeof(struct ahb_softc)
 };
 
-struct scsi_adapter ahb_switch =
-{
+struct scsi_adapter ahb_switch = {
 	ahb_scsi_cmd,
 	ahbminphys,
 	0,
@@ -311,8 +310,7 @@ struct scsi_adapter ahb_switch =
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device ahb_dev =
-{
+struct scsi_device ahb_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
