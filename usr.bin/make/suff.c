@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.42 2003/08/07 11:14:57 agc Exp $	*/
+/*	$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.42 2003/08/07 11:14:57 agc Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.42 2003/08/07 11:14:57 agc Exp $");
+__RCSID("$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1417,7 +1417,12 @@ SuffFindCmds(Src *targ, Lst slst)
     (void) Lst_Open (t->children);
     prefLen = strlen (targ->pref);
 
-    while ((ln = Lst_Next (t->children)) != NILLNODE) {
+    for (;;) {
+	ln = Lst_Next(t->children);
+	if (ln == NILLNODE) {
+	    Lst_Close (t->children);
+	    return NULL;
+	}
 	s = (GNode *)Lst_Datum (ln);
 
 	cp = strrchr (s->name, '/');
@@ -1426,56 +1431,53 @@ SuffFindCmds(Src *targ, Lst slst)
 	} else {
 	    cp++;
 	}
-	if (strncmp (cp, targ->pref, prefLen) == 0) {
-	    /*
-	     * The node matches the prefix ok, see if it has a known
-	     * suffix.
-	     */
-	    ln = Lst_Find (sufflist, (ClientData)&cp[prefLen],
-			   SuffSuffHasNameP);
-	    if (ln != NILLNODE) {
-		/*
-		 * It even has a known suffix, see if there's a transformation
-		 * defined between the node's suffix and the target's suffix.
-		 *
-		 * XXX: Handle multi-stage transformations here, too.
-		 */
-		suff = (Suff *)Lst_Datum (ln);
+	if (strncmp (cp, targ->pref, prefLen) != 0)
+	    continue;
+	/*
+	 * The node matches the prefix ok, see if it has a known
+	 * suffix.
+	 */
+	ln = Lst_Find (sufflist, (ClientData)&cp[prefLen],
+		       SuffSuffHasNameP);
+	if (ln == NILLNODE)
+	    continue;
+	/*
+	 * It even has a known suffix, see if there's a transformation
+	 * defined between the node's suffix and the target's suffix.
+	 *
+	 * XXX: Handle multi-stage transformations here, too.
+	 */
+	suff = (Suff *)Lst_Datum (ln);
 
-		if (Lst_Member (suff->parents,
-				(ClientData)targ->suff) != NILLNODE)
-		{
-		    /*
-		     * Hot Damn! Create a new Src structure to describe
-		     * this transformation (making sure to duplicate the
-		     * source node's name so Suff_FindDeps can free it
-		     * again (ick)), and return the new structure.
-		     */
-		    ret = (Src *)emalloc (sizeof (Src));
-		    ret->file = estrdup(s->name);
-		    ret->pref = targ->pref;
-		    ret->suff = suff;
-		    suff->refCount++;
-		    ret->parent = targ;
-		    ret->node = s;
-		    ret->children = 0;
-		    targ->children += 1;
-#ifdef DEBUG_SRC
-		    ret->cp = Lst_Init(FALSE);
-		    printf("3 add %x %x\n", targ, ret);
-		    Lst_AtEnd(targ->cp, (ClientData) ret);
-#endif
-		    Lst_AtEnd(slst, (ClientData) ret);
-		    if (DEBUG(SUFF)) {
-			printf ("\tusing existing source %s\n", s->name);
-		    }
-		    return (ret);
-		}
-	    }
-	}
+	if (Lst_Member(suff->parents, (ClientData)targ->suff) != NILLNODE)
+	    break;
     }
-    Lst_Close (t->children);
-    return ((Src *)NULL);
+
+    /*
+     * Hot Damn! Create a new Src structure to describe
+     * this transformation (making sure to duplicate the
+     * source node's name so Suff_FindDeps can free it
+     * again (ick)), and return the new structure.
+     */
+    ret = (Src *)emalloc (sizeof (Src));
+    ret->file = estrdup(s->name);
+    ret->pref = targ->pref;
+    ret->suff = suff;
+    suff->refCount++;
+    ret->parent = targ;
+    ret->node = s;
+    ret->children = 0;
+    targ->children += 1;
+#ifdef DEBUG_SRC
+    ret->cp = Lst_Init(FALSE);
+    printf("3 add %x %x\n", targ, ret);
+    Lst_AtEnd(targ->cp, (ClientData) ret);
+#endif
+    Lst_AtEnd(slst, (ClientData) ret);
+    if (DEBUG(SUFF)) {
+	printf ("\tusing existing source %s\n", s->name);
+    }
+    return (ret);
 }
 
 /*-
