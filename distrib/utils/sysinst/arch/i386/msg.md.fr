@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.35 2004/03/28 19:06:49 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.36 2004/03/29 16:08:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
