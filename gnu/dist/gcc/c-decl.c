@@ -552,6 +552,7 @@ int warn_nested_externs = 0;
 
 int warn_format;
 int warn_format_y2k;
+int warn_format_extra_args;
 
 /* Warn about a subscript that has type char.  */
 
@@ -756,9 +757,11 @@ c_decode_option (argc, argv)
   else if (!strcmp (p, "-Wnetbsd-format-audit"))
     warn_format = 2;
   else if (!strcmp (p, "-Wformat"))
-    warn_format = warn_format_y2k = 1;
+    warn_format = warn_format_y2k = warn_format_extra_args = 1;
   else if (!strcmp (p, "-Wno-format"))
     warn_format = warn_format_y2k = 0;
+  else if (!strcmp (p, "-Wno-format-extra-args"))
+    warn_format_extra_args = 0;
   else if (!strcmp (p, "-Wno-format-y2k"))
     warn_format_y2k = 0;
   else if (!strcmp (p, "-Wchar-subscripts"))
