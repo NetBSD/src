@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.73 2002/01/31 00:32:47 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.73.4.1 2002/03/11 18:28:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -697,7 +697,7 @@ int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 void	sysctl_init(void);
 
 #ifdef __SYSCTL_PRIVATE
-extern struct lock sysctl_memlock;
+extern kmutex_t sysctl_memlock;
 #endif
 
 #else	/* !_KERNEL */

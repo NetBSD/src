@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.5 2002/02/14 07:08:20 chs Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.5.4.1 2002/03/11 18:28:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.5 2002/02/14 07:08:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.5.4.1 2002/03/11 18:28:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.5 2002/02/14 07:08:20 chs Exp 
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 #define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 
@@ -242,13 +243,11 @@ netbsd32___sysctl(p, v, retval)
 	     sizeof(savelen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
-		if (error)
-			return (error);
+		mutex_enter(&sysctl_memlock);
 		error = uvm_vslock(p, (void *)(vaddr_t)SCARG(uap, old), savelen,
 		    VM_PROT_WRITE);
 		if (error) {
-			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
+			mutex_exit(&sysctl_memlock);
 			return error;
 		}
 		oldlen = savelen;
@@ -258,7 +257,7 @@ netbsd32___sysctl(p, v, retval)
 		      (void *)(u_long)SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, (void *)(u_long)SCARG(uap, old), savelen);
-		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
+		mutex_exit(&sysctl_memlock);
 	}
 	savelen = oldlen;
 	if (error)
