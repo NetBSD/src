@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.4 1998/06/25 23:19:00 thorpej Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.5 1998/06/26 00:07:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -29,6 +29,7 @@
  */
 
 #include "opt_compat_linux.h"
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
