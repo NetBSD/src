@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.20 1997/09/07 19:31:52 pk Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.21 1998/01/08 11:36:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,7 +45,7 @@
 struct	loadavg averunnable;		/* load average, of runnable procs */
 
 int	maxslp = MAXSLP;
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 int	saferss = SAFERSS;
 #endif /* MACHINE_NONCONTIG */
 

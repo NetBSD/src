@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.32 1998/01/06 08:36:26 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.33 1998/01/08 11:36:23 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -139,8 +139,16 @@
  *	maps and requires map entries.
  */
 
+#if defined(MACHINE_NEW_NONCONTIG)
+u_int8_t	kentry_data_store[MAX_KMAP*sizeof(struct vm_map) +
+			MAX_KMAPENT*sizeof(struct vm_map_entry)];
+vm_offset_t	kentry_data = (vm_offset_t) kentry_data_store;
+vm_size_t	kentry_data_size = sizeof(kentry_data_store);
+#else
+/* NUKE NUKE NUKE */
 vm_offset_t	kentry_data;
 vm_size_t	kentry_data_size;
+#endif
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
@@ -153,6 +161,12 @@ vm_map_startup()
 	register int i;
 	register vm_map_entry_t mep;
 	vm_map_t mp;
+
+	/*
+	 * zero kentry area
+	 * XXX necessary?
+	 */
+	bzero((caddr_t)kentry_data, kentry_data_size);
 
 	/*
 	 * Static map structures for allocation before initialization of
