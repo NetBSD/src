@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.1 2001/09/20 11:11:54 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.2 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.1 2001/09/20 11:11:54 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.2 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -106,7 +106,7 @@ wresize(WINDOW *win, int nlines, int ncols)
 		lp->hash = __hash((char *)(void *)lp->line,
 				  (int) (ncols * __LDATASIZE));
 	}
-	
+
 	return OK;
 }
 
@@ -120,7 +120,7 @@ resizeterm(int nlines, int ncols)
 	WINDOW *win;
 	struct __winlist *list;
 	int newlines, newcols, ldelta, cdelta;
-	
+
 	  /* don't worry if things have not changed... we would like to
 	     do this but some bastard programs update LINES and COLS before
 	     calling resizeterm thus negating it's effect.
@@ -133,7 +133,7 @@ resizeterm(int nlines, int ncols)
 
 	ldelta = nlines - __virtscr->maxy;
 	cdelta = ncols - __virtscr->maxx;
-	
+
 	for (list = __winlistp; list != NULL; list = list->nextp) {
 		win = list->winp;
 		newlines = win->maxy;
@@ -209,13 +209,13 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		return ERR;
 	}
 	win->lines = newlines;
-	
+
 	if ((newlspace = realloc(win->lspace,
 				 nlines * sizeof(__LINE))) == NULL) {
 		return ERR;
 	}
 	win->lspace = newlspace;
-	
+
 	/* Don't allocate window and line space if it's a subwindow */
 	if (win->orig == NULL) {
 		/*
@@ -258,14 +258,14 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			lp->flags = __ISDIRTY;
 		}
 	}
-	
+
 
 	win->cury = win->curx = 0;
 	win->maxy = nlines;
 	win->maxx = ncols;
 	win->scr_b = win->maxy - 1;
 	__swflags(win);
-	
+
 #ifdef DEBUG
 	__CTRACE("resize: win->wattr = %0.2o\n", win->wattr);
 	__CTRACE("resize: win->flags = %0.2o\n", win->flags);

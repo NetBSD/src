@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.19 2001/12/31 14:23:11 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.20 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -200,7 +200,7 @@ struct __screen {
 	struct __color colours[MAX_COLORS];
 	struct __pair  colour_pairs[MAX_PAIRS];
 	attr_t	nca;
-	
+
 /* Style of colour manipulation */
 #define COLOR_NONE	0
 #define COLOR_ANSI	1	/* ANSI/DEC-style colour manipulation */
@@ -208,7 +208,7 @@ struct __screen {
 #define COLOR_TEK	3	/* Tektronix-style colour manipulation */
 #define COLOR_OTHER	4	/* None of the others but can set fore/back */
 	int color_type;
-	
+
 	attr_t mask_op;
 	attr_t mask_me;
 	attr_t mask_ue;

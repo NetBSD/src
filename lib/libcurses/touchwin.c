@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.16 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.16 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,10 +54,10 @@ is_linetouched(WINDOW *win, int line)
 {
 	if (line > win->maxy)
 		return FALSE;
-	
+
 	return ((win->lines[line]->flags & __ISDIRTY) != 0);
 }
-	
+
 
 /*
  * Touch count lines starting at start.  This is the SUS v2 compliant
