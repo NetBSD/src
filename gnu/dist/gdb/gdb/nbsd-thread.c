@@ -285,8 +285,8 @@ static void
 nbsd_thread_fetch_registers (int regno)
 {
   td_thread_t *thread;
-  struct reg gregs;
-  struct fpreg fpregs;
+  gregset_t gregs;
+  fpregset_t fpregs;
   int val;
   struct cleanup *old_chain;
 
@@ -325,8 +325,8 @@ static void
 nbsd_thread_store_registers (int regno)
 {
   td_thread_t *thread;
-  struct reg gregs;
-  struct fpreg fpregs;
+  gregset_t gregs;
+  fpregset_t fpregs;
   int val;
 
   if (nbsd_thread_active && IS_THREAD (inferior_ptid))
@@ -982,10 +982,10 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
   switch (regset)
     {
     case 0:
-      *size = sizeof (struct reg);
+      *size = sizeof (gregset_t);
       break;
     case 1:
-      *size = sizeof (struct fpreg);
+      *size = sizeof (fpregset_t);
       break;
     default:
       return TD_ERR_INVAL;
@@ -1022,10 +1022,10 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
   switch (regset)
     {
     case 0:
-      fill_gregset ((struct reg *)buf, -1);
+      fill_gregset ((gregset_t *)buf, -1);
       break;
     case 1:
-      fill_fpregset ((struct fpreg *)buf, -1);
+      fill_fpregset ((fpregset_t *)buf, -1);
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1048,10 +1048,10 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
   switch (regset)
     {
     case 0:
-      supply_gregset((struct reg *)buf);
+      supply_gregset((gregset_t *)buf);
       break;
     case 1:
-      supply_fpregset((struct fpreg *)buf);
+      supply_fpregset((fpregset_t *)buf);
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
