@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.26 2003/10/20 04:49:35 cyber Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.27 2004/03/15 05:42:06 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.428.2.30 2003/10/20 04:49:34 cyber Exp 
  */
 
 /*
@@ -1028,6 +1028,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD768 USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 AC97 Audio",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
@@ -5494,10 +5500,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 MCP-T AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
 	    0,
 	    "Nvidia Corporation",
 	    "Aladdin TNT2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 MCP-T AC-97",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256,
@@ -5546,6 +5564,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "Quadro2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce MCP AC-97",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
@@ -6482,6 +6506,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7012 AC-97 Sound",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
