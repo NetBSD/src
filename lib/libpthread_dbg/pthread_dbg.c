@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.23 2004/06/10 01:38:29 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.24 2004/06/10 18:06:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.23 2004/06/10 01:38:29 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.24 2004/06/10 18:06:19 martin Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -45,11 +45,12 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.23 2004/06/10 01:38:29 nathanw Exp $");
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <machine/reg.h>
+
 #include <pthread.h>
 #include <pthread_int.h>
 #include <pthread_dbg.h>
 #include <pthread_dbg_int.h>
-#include <machine/reg.h>
 
 #define MIN(a,b)	((a)<(b) ? (a) : (b))
 
