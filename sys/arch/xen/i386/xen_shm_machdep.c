@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.4 2005/03/11 15:47:27 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5 2005/03/15 23:37:58 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -119,7 +119,7 @@ xen_shm_init()
 int
 xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 {
-	int i;
+	int i, s;
 	vaddr_t new_va;
 	u_long new_va_pg;
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
@@ -131,18 +131,26 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 		panic("xen_shm_map");
 	}
 #endif
+	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	/*
 	 * if a driver is waiting for ressources, don't try to allocate
 	 * yet. This is to avoid a flood of small requests stalling large
 	 * ones.
 	 */
 	if (__predict_false(SIMPLEQ_FIRST(&xen_shm_callbacks) != NULL) &&
-	    (flags & XSHM_CALLBACK) == 0)
+	    (flags & XSHM_CALLBACK) == 0) {
+		splx(s);
+		printf("xen_shm_map: ENOMEM1\n");
 		return ENOMEM;
+	}
 	/* allocate the needed virtual space */
 	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
-	    != 0)
+	    != 0) {
+		splx(s);
+		printf("xen_shm_map: ENOMEM\n");
 		return ENOMEM;
+	}
+	splx(s);
 
 	new_va = new_va_pg << PAGE_SHIFT;
 	for (i = 0; i < nentries; i++, new_va_pg++) {
@@ -159,6 +167,12 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 			    "xen_shm_base_address_pg 0x%lx\n",
 			    new_va_pg, xen_shm_base_address_pg);
 			panic("xen_shm_map: out of _xen_shm_vaddr2ma\n");
+		}
+		if (_xen_shm_vaddr2ma[new_va_pg - xen_shm_base_address_pg]
+		    != -1) {
+			printf("new new_va_pg 0x%lx not free\n", new_va_pg);
+			extent_print(xen_shm_ex);
+			panic("xen_shm_map: new_va_pg not free");
 		}
 #endif
 		_xen_shm_vaddr2ma[new_va_pg - xen_shm_base_address_pg] = 
@@ -213,9 +227,9 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
 	if (HYPERVISOR_multicall(mcl, nentries) != 0)
 		panic("xen_shm_unmap");
+	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
 		panic("xen_shm_unmap: extent_free");
-	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
 	    != NULL)) {
 		/*
@@ -245,12 +259,14 @@ xen_shm_callback(int (*callback)(void *), void *arg)
 	int s;
 	printf("xen_shm_callback\n"); /* XXX */
 
+	s = splvm();
 	xshmc = pool_get(&xen_shm_callback_pool, PR_NOWAIT);
-	if (xshmc == NULL)
+	if (xshmc == NULL) {
+		splx(s);
 		return ENOMEM;
+	}
 	xshmc->xshmc_arg = arg;
 	xshmc->xshmc_callback = callback;
-	s = splvm();
 	SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc, xshmc_entries);
 	splx(s);
 	return 0;
@@ -269,13 +285,19 @@ xen_shm_vaddr2ma(vaddr_t va, paddr_t *map)
 		return -1;
 
 #ifdef DIAGNOSTIC
-		if (((va >> PAGE_SHIFT) - xen_shm_base_address_pg) >=
-		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
-		    ((va >> PAGE_SHIFT) - xen_shm_base_address_pg) < 0) {
-			printf("va 0x%lx xen_shm_base_address_pg 0x%lx\n",
-			    (va >> PAGE_SHIFT), xen_shm_base_address_pg);
-			panic("xen_shm_vaddr2ma: out of _xen_shm_vaddr2ma\n");
-		}
+	if (((va >> PAGE_SHIFT) - xen_shm_base_address_pg) >=
+	    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
+	    ((va >> PAGE_SHIFT) - xen_shm_base_address_pg) < 0) {
+		printf("va 0x%lx xen_shm_base_address_pg 0x%lx\n",
+		    (va >> PAGE_SHIFT), xen_shm_base_address_pg);
+		panic("xen_shm_vaddr2ma: out of _xen_shm_vaddr2ma\n");
+	}
+	if (_xen_shm_vaddr2ma[(va >> PAGE_SHIFT) - xen_shm_base_address_pg]
+	    == -1) {
+		printf("xen_shm_vaddr2ma: request for unmapped va 0x%lx\n",
+		    va);
+		panic("xen_shm_vaddr2ma: unmapped va");
+	}
 #endif
 	*map = _xen_shm_vaddr2ma[(va >> PAGE_SHIFT) - xen_shm_base_address_pg];
 	*map |= (va & PAGE_MASK);
