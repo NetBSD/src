@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.51 2003/02/26 06:31:15 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.52 2003/06/15 02:49:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -208,6 +208,7 @@ extern struct mowner ip_tx_mowner;
 #ifdef GATEWAY
 extern int ip_maxflows;
 #endif
+extern struct pool inmulti_pool;
 extern struct pool ipqent_pool;
 struct	 inpcb;
 
