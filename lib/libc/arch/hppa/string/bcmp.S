@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.1 2002/06/06 20:31:22 fredette Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
 
 /*	$OpenBSD: bcmp.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -61,24 +61,24 @@
 /*
  * int
  * bcmp(src, dst, count)
- *	vm_offset_t	src;
- *	vm_offset_t	dst;
- *	int		count;
+ *	vaddr_t	src;
+ *	vaddr_t	dst;
+ *	size_t	count;
  */
 LEAF_ENTRY(bcmp)
-        comb,>= r0,arg2,$bcmp_exit
-	copy	t1,t2
+        comb,>= %r0,%arg2,$bcmp_exit
+	copy	%t1,%t2
 
-$bcmp_loop
-	ldbs,ma	1(arg0),t1
-	ldbs,ma	1(arg1),t2
-	comb,<>,n t1,t2,$bcmp_exit
-	addib,<> -1,arg2,$bcmp_loop
+$bcmp_loop:
+	ldbs,ma	1(%arg0),%t1
+	ldbs,ma	1(%arg1),%t2
+	comb,<>,n %t1,%t2,$bcmp_exit
+	addib,<> -1,%arg2,$bcmp_loop
 	nop
 
-$bcmp_exit
-	bv	0(r2)
-	sub	t1,t2,ret0
+$bcmp_exit:
+	bv	0(%r2)
+	sub	%t1,%t2,%ret0
 
 EXIT(bcmp)
 
