@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.5 1996/10/13 02:59:47 christos Exp $	*/
+/*	$NetBSD: md_root.c,v 1.6 1996/12/28 23:13:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,24 +45,24 @@ extern int boothowto;
 /*
  * This array will be patched to contain a file-system image.
  */
-u_int32_t rd_root_size = ROOTBYTES;
-char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+u_int32_t md_root_size = ROOTBYTES;
+char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
  * This is called during autoconfig.
  */
 void
-rd_attach_hook(unit, rd)
+md_attach_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 
 	if (unit == 0) {
 		/* Setup root ramdisk */
-		rd->rd_addr = (caddr_t)rd_root_image;
-		rd->rd_size = (size_t)rd_root_size;
-		rd->rd_type = RD_KMEM_FIXED;
-		printf("rd%d: internal %dK image area\n", unit,
+		md->md_addr = (caddr_t)md_root_image;
+		md->md_size = (size_t)md_root_size;
+		md->md_type = MD_KMEM_FIXED;
+		printf("md%d: internal %dK image area\n", unit,
 		    ROOTBYTES / 1024);
 	}
 }
@@ -71,9 +71,9 @@ rd_attach_hook(unit, rd)
  * This is called during open (i.e. mountroot)
  */
 void
-rd_open_hook(unit, rd)
+md_open_hook(unit, md)
 	int unit;
-	struct rd_conf *rd;
+	struct md_conf *md;
 {
 
 	if (unit == 0) {

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.9 1996/12/16 21:24:19 leo Exp $
+#	$NetBSD: BOOTX,v 1.10 1996/12/28 23:15:10 pk Exp $
 #
 # BOOTX
 #
@@ -78,7 +78,7 @@ options		TT_SCSI			# SCSI-support for TT
 options		FALCON_SCSI		# SCSI-support for Falcon
 options		TT_VIDEO		# Graphics support for TT
 options		FALCON_VIDEO		# Graphics support for FALCON
-options		RAMDISK_HOOKS		# Boot RAM-disk
+options		MEMORY_DISK_HOOKS	# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
@@ -94,7 +94,7 @@ pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
-pseudo-device	rd	1	# Boot ramdisk
+pseudo-device	md	1	# Boot memory disk
 
 #
 #The following sections describe various hardware options.

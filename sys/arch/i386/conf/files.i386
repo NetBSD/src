@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.78 1996/11/28 03:15:39 thorpej Exp $
+#	$NetBSD: files.i386,v 1.79 1996/12/28 23:20:15 pk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -40,11 +40,11 @@ major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
 
-# RAM Disk for install floppy
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
-file arch/i386/i386/rd_root.c		ramdisk_hooks
-major	{rd = 17}
+# Memory Disk for install floppy
+pseudo-device md
+file dev/md.c			md needs-flag
+file arch/i386/i386/md_root.c	memory_disk_hooks
+major	{md = 17}
 
 #
 # System bus types
