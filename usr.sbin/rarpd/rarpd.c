@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.6 1994/05/14 21:57:56 cgd Exp $";
+"@(#) $Id: rarpd.c,v 1.7 1994/05/25 20:01:15 mycroft Exp $";
 #endif
 
 
@@ -49,6 +49,8 @@ static char rcsid[] =
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <sys/errno.h>
@@ -188,8 +190,7 @@ init_one(ifname)
 {
 	struct if_info *p;
 
-
-	p = (struct if_info *) malloc(sizeof(*p));
+	p = (struct if_info *)malloc(sizeof(*p));
 	if (p == 0) {
 		err(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
@@ -209,36 +210,37 @@ init_one(ifname)
 void
 init_all()
 {
-	int     fd;
-	int     i, len;
-	struct ifreq ibuf[8], *ifrp;
+	char inbuf[8192];
 	struct ifconf ifc;
+	struct ifreq *ifr;
+	int fd;
+	int i, len;
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		err(FATAL, "socket: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	ifc.ifc_len = sizeof ibuf;
-	ifc.ifc_buf = (caddr_t) ibuf;
-	if (ioctl(fd, SIOCGIFCONF, (char *) &ifc) < 0 ||
+
+	ifc.ifc_len = sizeof(inbuf);
+	ifc.ifc_buf = inbuf;
+	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
-		err(FATAL, "SIOCGIFCONF: %s", strerror(errno));
+		err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	ifrp = ibuf;
-	ifrp = ifc.ifc_req;
-	for(i=0; i<ifc.ifc_len; i+=len, ifrp=(struct ifreq *)((caddr_t)ifrp+len)) {
-		len = sizeof ifrp->ifr_name + ifrp->ifr_addr.sa_len;
-
-		if (ioctl(fd, SIOCGIFFLAGS, (char *) ifrp) < 0) {
-			err(FATAL, "SIOCGIFFLAGS: %s", strerror(errno));
+	ifr = ifc.ifc_req;
+	for (i = 0; i < ifc.ifc_len;
+	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
+			err(FATAL, "init_all: SIOCGIFFLAGS: %s",
+			    strerror(errno));
 			/* NOTREACHED */
 		}
-		if ((ifrp->ifr_flags & IFF_UP) == 0 ||
-		    ifrp->ifr_flags & IFF_LOOPBACK ||
-		    ifrp->ifr_flags & IFF_POINTOPOINT)
+		if ((ifr->ifr_flags &
+		    (IFF_UP | IFF_LOOPBACK | IFF_POINTOPOINT)) != IFF_UP)
 			continue;
-		init_one(ifrp->ifr_name);
+		init_one(ifr->ifr_name);
 	}
 	(void) close(fd);
 }
@@ -551,7 +553,7 @@ lookup_eaddr(ifname, eaddr)
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq *ifr;
-	struct in_addr in;
+	struct sockaddr_dl *sdl;
 	int fd;
 	int i, len;
 
@@ -565,18 +567,27 @@ lookup_eaddr(ifname, eaddr)
 		/* NOTREACHED */
 	}
 
-	ifc.ifc_len = sizeof inbuf;
+	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
-	if (ioctl(fd, SIOCGIFCONF, &ifc) < 0) {
-		err(FATAL, "lookup_eaddr: SIOGIFCONF: %s", strerror (errno));
+	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
+	    ifc.ifc_len < sizeof(struct ifreq)) {
+		err(FATAL, "lookup_eaddr: SIOGIFCONF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	ifr = ifc.ifc_req;
-	for(i=0; i<ifc.ifc_len; i+=len, ifr=(struct ifreq *)((caddr_t)ifr+len)) {
-		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
-		if (!strncmp (ifr->ifr_name, ifname, sizeof (ifr->ifr_name))) {
-			bcopy((char *) &ifr->ifr_addr.sa_data[0],
-			      (char *) eaddr, 6);
+	for (i = 0; i < ifc.ifc_len;
+	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
+		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
+		    sdl->sdl_alen != 6)
+			continue;
+		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
+			bcopy((caddr_t)LLADDR(sdl), (caddr_t)eaddr, 6);
+			if (dflag)
+				fprintf(stderr, "%s: %x:%x:%x:%x:%x:%x\n",
+				    ifr->ifr_name, eaddr[0], eaddr[1],
+				    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
 			return;
 		}
 	}
@@ -644,11 +655,13 @@ update_arptab(ep, ipaddr)
 	request.arp_ha.sa_len = 16; /* XXX */
 	bcopy((char *) ep, (char *) request.arp_ha.sa_data, 6);
 
+#if 0
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
 		err(NONFATAL, "SIOCSARP: %s", strerror(errno));
 	}
 	(void) close(s);
+#endif
 }
 /*
  * Build a reverse ARP packet and sent it out on the interface.
