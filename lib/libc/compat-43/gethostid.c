@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostid.c,v 1.5 2003/08/07 16:42:39 agc Exp $	*/
+/*	$NetBSD: gethostid.c,v 1.6 2004/04/19 13:16:42 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)gethostid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: gethostid.c,v 1.5 2003/08/07 16:42:39 agc Exp $");
+__RCSID("$NetBSD: gethostid.c,v 1.6 2004/04/19 13:16:42 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,14 +46,13 @@ __RCSID("$NetBSD: gethostid.c,v 1.5 2003/08/07 16:42:39 agc Exp $");
 long
 gethostid(void)
 {
-	int mib[2];
+	int mib[2], value;
 	size_t size;
-	long value;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_HOSTID;
-	size = sizeof value;
-	if (sysctl(mib, 2, &value, &size, NULL, 0) == -1)
+	size = sizeof(value);
+	if (sysctl(mib, 2, &value, &size, NULL, (size_t)0) == -1)
 		return (-1);
 	return (value);
 }
