@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 1997/12/25 09:10:49 matthias Exp $	*/
+/*	$NetBSD: md.h,v 1.6.2.1 1999/06/24 22:52:44 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -70,7 +70,7 @@ EXTERN	char *disk_names[]
 /* Legal start character for a disk for checking input. */
 #define ISDISKSTART(dn)	(dn == 's')
 
-/* Definition of files to retreive from ftp. */
+/* Definition of files to retrieve from ftp. */
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
