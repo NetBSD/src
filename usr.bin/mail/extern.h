@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2000/02/10 12:34:43 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2001/02/05 02:07:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.11 2000/02/10 12:34:43 tron Exp $
+ *	$NetBSD: extern.h,v 1.12 2001/02/05 02:07:53 christos Exp $
  */
 
 struct name;
@@ -203,7 +203,7 @@ int	 putline __P((FILE *, char *, int));
 int	 pversion __P((void *));
 void	 quit __P((void));
 int	 quitcmd __P((void *));
-int	 raise __P((int));
+int	 upcase __P((int));
 int	 readline __P((FILE *, char *, int));
 void	 register_file __P((FILE *, int, int));
 void	 regret __P((int));

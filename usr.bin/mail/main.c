@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2000/09/19 01:12:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2001/02/05 02:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2000/09/19 01:12:48 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2001/02/05 02:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: main.c,v 1.11 2000/09/19 01:12:48 christos Exp $");
 #undef EXTERN
 
 #include "extern.h"
+
+extern char *version;
 
 int	main __P((int, char **));
 
@@ -250,8 +252,6 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	if (setfile(ef) < 0)
 		exit(1);		/* error already reported */
 	if (setjmp(hdrjmp) == 0) {
-		extern char *version;
-
 		if ((prevint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 			signal(SIGINT, hdrstop);
 		if (value("quiet") == NOSTR)
