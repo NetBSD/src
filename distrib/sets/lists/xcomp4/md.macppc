@@ -1,0 +1,6 @@
+# $NetBSD: md.macppc,v 1.1.2.2 2002/11/03 14:17:18 he Exp $
+./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0
+./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
+./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
