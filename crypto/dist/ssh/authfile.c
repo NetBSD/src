@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.17 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: authfile.c,v 1.18 2003/09/18 08:16:15 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: authfile.c,v 1.53 2003/05/11 16:56:48 markus Exp $");
-__RCSID("$NetBSD: authfile.c,v 1.17 2003/07/10 01:09:43 lukem Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.18 2003/09/18 08:16:15 itojun Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -145,6 +145,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (fd < 0) {
 		error("open %s failed: %s.", filename, strerror(errno));
+		buffer_free(&encrypted);
 		return 0;
 	}
 	if (write(fd, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
