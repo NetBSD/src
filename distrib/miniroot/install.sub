@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.12 1996/06/26 19:09:31 pk Exp $
+#	$NetBSD: install.sub,v 1.13 1996/06/27 13:45:46 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,6 +44,10 @@ export VERSION
 
 ALLSETS="base comp etc games man misc text"	# default install sets
 UPGRSETS="base comp games man misc text"	# default upgrade sets
+THESETS=					# one of the above
+
+local_sets_dir=""			# Path searched for sets by install_sets
+					# on the local filesystems
 
 # decide upon an editor
 if [ X$EDITOR = X ]; then
@@ -153,6 +157,10 @@ dir_has_sets() {
 		if [ -f $_dir/${_file}.tar.gz ]; then
 			return 0
 		fi
+		# Try for stupid msdos convention
+		if [ -f $_dir/${_file}.tgz ]; then
+			return 0
+		fi
 	done
 	return 1
 }
@@ -183,6 +191,55 @@ __mfs_failed_1
 
 	# Bleh.  Give mount_mfs a chance to DTRT.
 	sleep 2
+}
+
+get_localdir() {
+	# $1 is relative mountpoint
+	local _mp
+	local _dir
+
+	_mp=$1
+	_dir=
+	while : ; do
+	    echo -n "Enter the pathname where the sets are stored [$_dir] "
+	    getresp "$_dir"
+	    _dir=$resp
+
+	    # Allow break-out with empty response
+	    if [ -z "$_dir" ]; then
+		echo -n "Are you sure you don't want to set the pathname? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				break
+				;;
+			*)
+				continue
+				;;
+		esac
+	    fi
+
+	    if dir_has_sets "$_mp/$_dir" $THESETS
+	    then
+		local_sets_dir="$_mp/$_dir"
+		break
+	    else
+		cat << __get_reldir_1
+The directory \"$local_sets_dir\" does not exist, or does not hold any of the
+upgrade sets.
+__get_reldir_1
+		echo -n "Re-enter pathname? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				;;
+			*)
+				local_sets_dir=""
+				break
+				;;
+		esac
+	    fi
+	done
 }
 
 getrootdisk() {
@@ -544,24 +601,26 @@ __install_ftp_2
 }
 
 install_from_mounted_fs() {
-	# expects filesystem to be installed to be mounted on `/mnt2'
-	# $1 - directory containing file (within /mnt2)
+	# $1 - directory containing installation sets
 	local _filename
-	local _setsdone
+	local _sets
 	local _next
 	local _f
 
-	_sets=`(cd /mnt2/$1; ls *.tar.gz 2> /dev/null)`
-	if [ -z "$_sets" ]; then
-		# Try for stupid msdos convention
-		_sets=`(cd /mnt2/$1; ls *.tgz 2> /dev/null)`
-	fi
-	if [ -z "$_sets" ]; then
+	_sets=""
+	if dir_has_sets $1 $THESETS; then
+		for _f in $THESETS ; do
+			if [ -f $1/${_f}.tar.gz ]; then
+				_sets="$_sets ${_f}.tar.gz"
+			elif [ -f $1/${_f}.tgz ]; then
+				_sets="$_sets ${_f}.tgz"
+			fi
+		done
+	else
 		echo "There are no NetBSD install sets available in \"$1\""
 		return
 	fi
 
-	_setsdone=""
 	while : ; do
 		echo "The following sets are available for extraction:"
 		echo "(marked sets have already been extracted)"
@@ -591,7 +650,7 @@ install_from_mounted_fs() {
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		_f=$resp
-		_filename="/mnt2/$1/$_f"
+		_filename="/$1/$_f"
 
 		# Ensure file exists
 		if [ ! -f $_filename ]; then
@@ -703,7 +762,7 @@ __install_cdrom_2
 	done
 	_directory=$resp
 
-	install_from_mounted_fs ${_directory}
+	install_from_mounted_fs /mnt2/${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -814,7 +873,7 @@ __install_disk_2
 	done
 	_directory=$resp
 
-	install_from_mounted_fs ${_directory}
+	install_from_mounted_fs /mnt2/${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -865,7 +924,7 @@ install_nfs() {
 	done
 	_nfs_directory=$resp
 
-	install_from_mounted_fs ${_nfs_directory}
+	install_from_mounted_fs /mnt2/${_nfs_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -992,7 +1051,7 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/localtime 2>/dev/null | cutlast`
+		TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
 		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
@@ -1036,100 +1095,74 @@ __get_timezone_1
 
 install_sets()
 {
-# arguments: the base names of the distribution sets to consider
-# Ask the user which media to load the distribution from.
-cat << \__install_sets_1
+	local _yup
+	_yup="FALSE"
+
+	# Ask the user which media to load the distribution from.
+	cat << \__install_sets_1
 
 It is now time to extract the installation sets onto the hard disk.
 Make sure the sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-if dir_has_sets "/mnt/$RELDIR" $* ; then
-	echo -n "Are you sure to install sets from $RELDIR ? [y] "
-	getresp "y"
-	case "$resp" in
-	y*|Y*)
-		for _f do
-			if [ ! -f /mnt/$RELDIR/${_f}.tar.gz ]; then
-				continue
-			fi
-			echo -n "Install \"$_f\" ? [y]"
-			getresp "y"
+
+	if [ "X$local_sets_dir" != "X" ]; then
+		install_from_mounted_fs ${local_sets_dir}
+		if [ X"$_setsdone" != X ]; then
+			_yup="TRUE"
+		fi
+	fi
+
+	# Go on prodding for alternate locations
+	resp=""		# force at least one iteration
+	while [ X"${resp}" = X ]; do
+		# If _yup is not FALSE, it means that we extracted sets above.
+		# If that's the case, bypass the menu the first time.
+		if [ X"$_yup" = X"FALSE" ]; then
+			echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, (N)FS"
+			echo -n " or local (d)isk? "
+			getresp ""
 			case "$resp" in
-			y*|Y*)
-			     cat /mnt/$RELDIR/${_f}.tar.gz |
-					(cd /mnt; tar --unlink -zxvpf -)
-				_yup="TRUE"
-				echo "Extraction complete."
+			d*|D*)
+				install_disk
+				;;
+			f*|F*)
+				install_ftp
+				;;
+			t*|T*)
+				install_tape
+				;;
+			c*|C*)
+				install_cdrom
+				;;
+			n*|N*)
+				install_nfs
 				;;
 			*)
-				echo "Skipping \"$_f\"."
+				echo "Invalid response: $resp"
+				resp=""
 				;;
 			esac
-		done
-		;;
-	*)
-		_yup="FALSE"
-		;;
-	esac
-else
-	_yup="FALSE"
-fi
+		else
+			_yup="FALSE"	# So we'll ask next time
+		fi
 
-# Go on prodding for alternate locations
-resp=""		# force at least one iteration
-while [ "X${resp}" = X"" ]; do
-	# If _yup is not FALSE, it means that we extracted sets above.
-	# If that's the case, bypass the menu the first time.
-	if [ X"$_yup" = X"FALSE" ]; then
-		echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, (N)FS"
-		echo -n " or local (d)isk? "
-		getresp ""
+		# Give the user the opportunity to extract more sets. They
+		# don't necessarily have to come from the same media.
+		echo	""
+		echo -n	"Extract more sets? [n] "
+		getresp "n"
 		case "$resp" in
-		d*|D*)
-			install_disk
-			;;
-		f*|F*)
-			install_ftp
-			;;
-
-		t*|T*)
-			install_tape
-			;;
-
-		c*|C*)
-			install_cdrom
-			;;
-
-		n*|N*)
-			install_nfs
+		y*|Y*)
+			# Force loop to repeat
+			resp=""
 			;;
 
 		*)
-			echo "Invalid response: $resp"
-			resp=""
 			;;
 		esac
-	else
-		_yup="FALSE"	# So we'll ask next time
-	fi
-
-	# Give the user the opportunity to extract more sets.  They don't
-	# necessarily have to come from the same media.
-	echo	""
-	echo -n	"Extract more sets? [n] "
-	getresp "n"
-	case "$resp" in
-	y*|Y*)
-		# Force loop to repeat
-		resp=""
-		;;
-
-	*)
-		;;
-	esac
-done
+	done
 }
 
 munge_fstab()
@@ -1209,16 +1242,31 @@ __mount_filesystems_1
 unmount_fs()
 {
 	# Unmount all filesystems and check their integrity.
-	# $1 is a file in fstab format
+	# Usage: [-fast] <fstab file>
+	local _fast
 	local _fstab
+	local _pid
 
-	_fstab=$1
+	if [ "$1" = "-fast" ]; then
+		_fast=1
+		_fstab=$2
+	else
+		_fast=0
+		_fstab=$1
+	fi
 
-	echo -n	"Syncing disks..."
-	pid=`twiddle`
-	sync; sleep 4; sync; sleep 2; sync; sleep 2
-	kill $pid
-	echo	"done."
+	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
+		echo "fstab empty" > /dev/tty
+		return
+	fi
+
+	if [ $_fast = 0 ]; then
+		echo -n	"Syncing disks..."
+		_pid=`twiddle`
+		sync; sleep 4; sync; sleep 2; sync; sleep 2
+		kill $_pid
+		echo	"done."
+	fi
 
 	(
 		_devs=""
@@ -1236,6 +1284,9 @@ unmount_fs()
 		done
 		echo "Done."
 
+		if [ $_fast = 0 ]; then
+			exit
+		fi
 		echo "Checking filesystem integrity..."
 		for _dev in ${_devs}; do
 			echo  "${_dev}"

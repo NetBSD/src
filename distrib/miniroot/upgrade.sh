@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.5 1996/05/30 06:57:17 leo Exp $
+#	$NetBSD: upgrade.sh,v 1.6 1996/06/27 13:45:48 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,10 +41,8 @@
 #	user interface.
 
 ROOTDISK=""				# filled in below
-RELDIR=""				# Path searched for sets by install_sets
-export RELDIR				# on the local filesystems
 
-trap "umount -a > /dev/null 2>&1" 0
+trap "unmount_fs -fast /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
 
 MODE="upgrade"
 
@@ -56,7 +54,6 @@ MODE="upgrade"
 #	md_get_ifdevs()		- return available network interfaces
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
@@ -67,46 +64,6 @@ MODE="upgrade"
 
 # include common subroutines
 . install.sub
-
-get_reldir() {
-	while : ; do
-	    echo -n "Enter the pathname where the sets are stored [$RELDIR] "
-	    getresp "$RELDIR"
-	    RELDIR=$resp
-
-	    # Allow break-out with empty response
-	    if [ -z "$RELDIR" ]; then
-		echo -n "Are you sure you don't want to set the pathname? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				break
-				;;
-			*)
-				continue
-				;;
-		esac
-	    fi
-	    if dir_has_sets "/mnt/$RELDIR" $UPGRSETS
-	    then
-		break
-	    else
-		cat << \__get_reldir_1
-The directory $RELDIR does not exist, or does not hold any of the
-upgrade sets."
-__get_reldir_1
-		echo -n "Re-enter pathname? [y] "
-		getresp "y"
-		case "$resp" in
-			y*|Y*)
-				;;
-			*)
-				break
-				;;
-		esac
-	    fi
-	done
-}
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -134,34 +91,6 @@ do_mfs_mount "/tmp" "2048"
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
-
-# Make sure there's a disklabel there.  If there isn't, puke after
-# disklabel prints the error message.
-md_checkfordisklabel ${ROOTDISK}
-case $rval in
-	1)
-		cat << \__disklabel_not_present_1
-
-FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
-
-__disklabel_not_present_1
-		exit
-		;;
-
-	2)
-		cat << \__disklabel_corrupted_1
-
-FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
-
-__disklabel_corrupted_1
-		exit
-		;;
-
-	*)
-		;;
-esac
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
 # this with the user.  Check and mount the root filesystem.
@@ -304,19 +233,19 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
-
-echo -n	"Are the upgrade sets on one of your normally mounted filesystems? [y] "
+THESETS="$UPGRSETS"
+echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		get_reldir
+		get_localdir /mnt
 		;;
 	*)
 		;;
 esac
 
 # Install sets.
-install_sets $UPGRSETS
+install_sets
 
 # Get timezone info
 get_timezone
@@ -366,10 +295,10 @@ esac
 	echo "done."
 
 	echo -n "Making devices..."
-	pid=`twiddle`
+	_pid=`twiddle`
 	cd /mnt/dev
 	sh MAKEDEV all
-	kill $pid
+	kill $_pid
 	echo "done."
 
 	md_copy_kernel
