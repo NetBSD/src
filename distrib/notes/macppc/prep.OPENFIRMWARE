@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.2 2003/09/02 07:47:48 mbw Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.3 2003/09/07 00:06:05 mbw Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -869,6 +869,9 @@ Such as the boot floppy, or an installed
 .Nx
 partition.
 .\}
+.
+.It
+.Em "MacOS X UFS file system"
 .if \*[OF_VERSION_3] \{\
 .
 .It
@@ -1106,13 +1109,20 @@ If would like to create such a partition, then see the Partitioning HOW-TO.
 .Lk http://www.netbsd.org/Ports/macppc/partitioning.html#msdos
 .It Em UFS
 Any size.
-This file system type is not currently supported by
-.Nx*M
-although it will be in the next major release.
 .Em UFS
 partitions are not readable from
 .Tn MacOS
 versions prior to X 10.0.0.
+If you use an
+.Em UFS
+partition as your root, then it may not be recognized by the
+.Nx
+kernel as the first partition
+.No ( Ns Em a No Ns )
+on the disk.  You will need to compile a new kernel with the 
+root partition explicitly defined to be the
+.Em UFS
+partition.
 .tag)
 .Pp
 Now would be a good time to use
@@ -1356,7 +1366,7 @@ distribution sets on the
 .if \*[OF_VERSION_3] ISO9660 partition (not only on the HFS partition).
 .Pp
 .(bullet
-.Em From an UNIX-likel machine
+.Em From an UNIX-like machine
 .Pp
 Get and install mkhybrid.
 This is now part of the cdrecord package.
