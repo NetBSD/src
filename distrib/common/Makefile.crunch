@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.4 2002/03/14 22:26:09 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.5 2002/03/17 21:33:45 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -34,7 +34,7 @@ ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
 ${CRUNCHBIN}.conf: ${LISTS} ${_PARSELIST}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	${PARSELISTENV} awk -f ${_PARSELIST} -v mode=crunch \
-	    ${LISTS} > ${.TARGET}.tmp
+	    ${LISTS} > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+=	${CRUNCHBIN} ${CRUNCHBIN}.conf ${CRUNCHBIN}.conf.tmp \
