@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.14 2003/10/25 12:27:08 fredb Exp $
+.\"	$NetBSD: ntpq.8,v 1.15 2003/10/25 12:32:55 fredb Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -46,16 +46,24 @@ makes one attempt to retransmit requests, and will
 time requests out if the remote host is not heard from within a suitable
 timeout time.
 .Pp
-Command line options are described following. Specifying a command line
-option other than -i or -n will cause the specified query (queries) to
-be sent to the indicated host(s) immediately. Otherwise,
+Command line options are described following.
+Specifying a command line option other than
+.Fl i
+or
+.Fl n
+will cause the specified query (queries) to be sent to the indicated
+.Ar host(s)
+immediately.
+Otherwise,
 .Pa ntpq
 will attempt to read interactive format commands from the standard input.
 .Bl -tag -width indent
 .It Fl c
 The following argument is interpreted as an interactive format command
 and is added to the list of commands to be executed on the specified host(s).
-Multiple -c options may be given.
+Multiple
+.Fl c
+options may be given.
 .It Fl d
 Set debug mode.
 Most useful with
