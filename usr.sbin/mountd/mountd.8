@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.18 1998/07/15 22:00:59 fvdl Exp $
+.\"	$NetBSD: mountd.8,v 1.19 1998/10/07 14:51:36 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,12 @@ After sending the SIGHUP
 check the syslog output to see if
 .Nm
 logged any parsing errors in the exports file.
+.Pp
+After receiving SIGTERM,
+.Nm
+sends a broadcast request to remove the mount list from all the clients.
+This can take a long time, since the broadcast request waits for each
+client to respond.
 .Sh FILES
 .Bl -tag -width /var/run/mountd.pid -compact
 .It Pa /etc/exports
