@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 1998/01/03 00:34:02 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.43 1998/01/18 22:07:52 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -136,6 +136,7 @@ pmap_bootstrap()
 	virtual_avail = avail_end + KERNBASE;
 	virtual_end = KERNBASE + sysptsize * NBPG;
 	blkclr(Sysmap, sysptsize * 4); /* clear SPT before using it */
+
 	/*
 	 * The first part of Kernel Virtual memory is the physical
 	 * memory mapped in. This makes some mm routines both simpler
@@ -175,6 +176,10 @@ pmap_bootstrap()
 
 	/* zero all mapped physical memory from Sysmap to here */
 	blkclr((void *)istack, (avail_start + KERNBASE) - istack);
+
+	/* Set logical page size */
+	PAGE_SIZE = CLBYTES;
+	vm_set_page_size();
 
 	/*
 	 * We move SCB here from physical address 0 to an address
