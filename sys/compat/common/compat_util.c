@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.13 1999/04/27 11:36:47 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.14 1999/04/27 15:42:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  *	allocated in user space (in the stackgap). Otherwise the path
  *	is already in kernel space and a kernel buffer gets allocated
  *	and returned in pbuf, that must be freed by the user.
- * In case of error, the error number is returned and *pbuf = NULL.
+ * In case of error, the error number is returned and *pbuf = path.
  */
 int
 emul_find(p, sgp, prefix, path, pbuf, cflag)
@@ -188,7 +188,7 @@ good:
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
 		if ((error = copyout(buf, (void *)*pbuf, sz)) != 0) {
-			*pbuf = NULL;
+			*pbuf = path;
 			return error;
 		}
 		free(buf, M_TEMP);
@@ -201,7 +201,6 @@ bad2:
 	vrele(nd.ni_vp);
 bad:
 	free(buf, M_TEMP);
-	*pbuf = NULL;
 	return error;
 }
 
