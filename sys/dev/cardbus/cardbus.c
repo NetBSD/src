@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.23 2000/03/22 09:35:06 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -366,6 +366,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 		    DPRINTF(("%s: unknown network id type (len = %d)\n", 
 			     __func__, tuple[3]));
 		} else {
+		    cis->funce.network.netid_present = 1;
 		    memcpy(cis->funce.network.netid, 
 			   tuple + 4, tuple[3]);
 		}
