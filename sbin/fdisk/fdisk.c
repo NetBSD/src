@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.68 2003/08/10 10:20:08 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.69 2003/08/29 16:31:30 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.68 2003/08/10 10:20:08 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.69 2003/08/29 16:31:30 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: fdisk.c,v 1.68 2003/08/10 10:20:08 dsl Exp $");
 
 #define LBUF 100
 static char lbuf[LBUF];
+
+#ifndef PRIdaddr
+#define PRIdaddr PRId64
+#endif
 
 #ifndef _PATH_DEFDISK
 #define _PATH_DEFDISK	"/dev/rwd0d"
@@ -659,8 +663,8 @@ print_part(mbr_sector_t *boot, int part, daddr_t offset)
 
 	printf("PART%s%dID=%d\n", e, part, partp->mbrp_typ);
 	printf("PART%s%dSIZE=%u\n", e, part, le32toh(partp->mbrp_size));
-	printf("PART%s%dSTART=%llu\n", e, part,
-	    (uintmax_t)(offset + le32toh(partp->mbrp_start)));
+	printf("PART%s%dSTART=%"PRIdaddr"\n", e, part,
+	    offset + le32toh(partp->mbrp_start));
 	printf("PART%s%dFLAG=0x%x\n", e, part, partp->mbrp_flag);
 	printf("PART%s%dBCYL=%d\n", e, part,
 	    MBR_PCYL(partp->mbrp_scyl, partp->mbrp_ssect));
@@ -718,8 +722,8 @@ print_mbr_partition(mbr_sector_t *boot, int part,
 		    boot->mbr_bootsel.mbrb_nametab[part]);
 #endif
 
-	printf("%*s    start %llu, size %llu",
-	    indent, "", (uintmax_t)start, (uintmax_t)size);
+	printf("%*s    start %"PRIdaddr", size %"PRIdaddr,
+	    indent, "", start, size);
 	if (size != 0) {
 		printf(" (%u MB, Cyls ", SEC_TO_MB(size));
 		if (v_flag == 0 && le32toh(partp->mbrp_start) == dos_sectors)
@@ -2008,11 +2012,10 @@ print_params(void)
 {
 
 	if (sh_flag) {
-		printf("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\nDLSIZE=%llu\n",
-			cylinders, heads, sectors, (uintmax_t)disksectors);
-		printf("BCYL=%d\nBHEAD=%d\nBSEC=%d\nBDLSIZE=%llu\n",
-			dos_cylinders, dos_heads, dos_sectors,
-			(uintmax_t)dos_disksectors);
+		printf("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\nDLSIZE=%"PRIdaddr"\n",
+			cylinders, heads, sectors, disksectors);
+		printf("BCYL=%d\nBHEAD=%d\nBSEC=%d\nBDLSIZE=%"PRIdaddr"\n",
+			dos_cylinders, dos_heads, dos_sectors, dos_disksectors);
 		printf("NUMEXTPTN=%d\n", ext.num_ptn);
 		return;
 	}
@@ -2021,14 +2024,13 @@ print_params(void)
 	printf("Disk: %s\n", disk);
 	printf("NetBSD disklabel disk geometry:\n");
 	printf("cylinders: %d, heads: %d, sectors/track: %d "
-	    "(%d sectors/cylinder)\ntotal sectors: %llu\n\n",
-	    cylinders, heads, sectors, cylindersectors,
-	    (uintmax_t)disksectors);
+	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr"\n\n",
+	    cylinders, heads, sectors, cylindersectors, disksectors);
 	printf("BIOS disk geometry:\n");
 	printf("cylinders: %d, heads: %d, sectors/track: %d "
-	    "(%d sectors/cylinder)\ntotal sectors: %llu\n\n",
+	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr"\n\n",
 	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors,
-	    (uintmax_t)dos_disksectors);
+	    dos_disksectors);
 }
 
 void
@@ -2092,10 +2094,9 @@ get_params_to_use(void)
 				printf("\nGeometries of known disks:\n");
 			bip = &dl->dl_biosdisks[i];
 			printf("Disk %d: cylinders %u, heads %u, sectors %u"
-				" (%lld sectors, %dMB)\n",
+				" (%"PRIdaddr" sectors, %dMB)\n",
 			    i, bip->bi_cyl, bip->bi_head, bip->bi_sec,
-			    (uintmax_t)bip->bi_lbasecs,
-			    SEC_TO_MB(bip->bi_lbasecs));
+			    bip->bi_lbasecs, SEC_TO_MB(bip->bi_lbasecs));
 				
 		}
 		printf("\n");
@@ -2236,8 +2237,8 @@ read_s0(daddr_t offset, mbr_sector_t *boot)
 		return -1;
 	}
 	if (le16toh(boot->mbr_signature) != MBR_MAGIC) {
-		warnx("%spartition table invalid, no magic in sector %lld",
-		    offset ? "extended " : "", (long long)offset);
+		warnx("%spartition table invalid, no magic in sector %"PRIdaddr,
+		    offset ? "extended " : "", offset);
 		return -1;
 	}
 	return (0);
