@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2003/01/13 01:35:45 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.218 2003/01/13 15:50:52 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -711,17 +711,20 @@ sys___sigreturn14(p, v, retval)
 
 #if defined(MULTIPROCESSOR)
 /*
- * stop routine for CPUs not running cpu_reboot.
+ * xcall function to stop this cpu completely; used by cpu_reboot and DDB.
  */
-static void cpu_halt(void)
+static void
+cpu_halt(void)
 {
-	/* XXX - Acknowledge receipt */
+
+	/*
+	 * This CPU is no longer available, mark it so.  We do this before
+	 * posting GOTMSG so that we can never ever get another xcall().
+	 */
+	cpuinfo.flags &= ~CPUFLG_READY;
 	cpuinfo.flags |= CPUFLG_GOTMSG;
 
 	printf("cpu%d halted\n", cpu_number());
-
-	/* This CPU is no longer available */
-	cpuinfo.flags &= ~CPUFLG_READY;
 
 	spl0();
 	prom_cpustop(0);
