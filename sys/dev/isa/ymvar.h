@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.2 1998/08/25 22:34:32 pk Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.3 1999/02/23 21:16:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -73,7 +73,7 @@
 struct ym_softc {
 	struct  ad1848_isa_softc sc_ad1848;
 #define ym_irq    sc_ad1848.sc_irq
-#define ym_drq    sc_ad1848.sc_drq
+#define ym_playdrq    sc_ad1848.sc_playdrq
 #define ym_recdrq sc_ad1848.sc_recdrq
 
 	bus_space_tag_t sc_iot;		/* tag */
