@@ -10,6 +10,6 @@ struct confargs {
 	/* bus_space_tag_t ca_tag; */
 };
 
-extern void * mapiodev __P((vm_offset_t, vm_size_t));
+extern void * mapiodev __P((paddr_t, psize_t));
 extern int kvtop __P((caddr_t));
 

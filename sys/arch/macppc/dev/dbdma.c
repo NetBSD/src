@@ -1,5 +1,7 @@
+/*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
+
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc. 1997 1996 1995 1994 1993 1992 1991  
+ * Copyright 1991-1998 by Open Software Foundation, Inc. 
  *              All Rights Reserved 
  *  
  * Permission to use, copy, modify, and distribute this software and 
@@ -22,6 +24,9 @@
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
+
+#include <vm/vm.h>
 
 #include <machine/pio.h>
 #include <macppc/dev/dbdma.h>
@@ -37,7 +42,7 @@ dbdma_start(dmap, commands)
 	dbdma_regmap_t *dmap;
 	dbdma_command_t *commands;
 {
-	unsigned long addr = kvtop((vm_offset_t) commands);
+	unsigned long addr = vtophys((vaddr_t)commands);
 
 	if (addr & 0xf)
 		panic("dbdma_start command structure not 16-byte aligned");
