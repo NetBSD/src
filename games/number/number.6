@@ -1,4 +1,4 @@
-.\"	$NetBSD: number.6,v 1.4 1995/03/23 08:35:29 cgd Exp $
+.\"	$NetBSD: number.6,v 1.5 1997/10/10 16:41:37 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,15 +40,15 @@
 .Nm number
 .Nd convert Arabic numerals to English
 .Sh SYNOPSIS
-.Nm number
+.Nm
 .Op #
 .Sh DESCRIPTION
 The
-.Nm number
+.Nm
 utility prints the English equivalent of the number to the standard
 output, with each 10^3 magnitude displayed on a separate line.
 If no argument is specified,
-.Nm number
+.Nm
 reads lines from the standard input.
 .Pp
 The options are as follows:
@@ -58,5 +58,5 @@ Display the number on a single line.
 .El
 .Sh BUGS
 Although
-.Nm number
+.Nm
 understand fractions, it doesn't understand exponents.
