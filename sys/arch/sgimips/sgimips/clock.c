@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2004/10/01 07:16:57 sekiya Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2004/12/17 22:59:49 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2004/10/01 07:16:57 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2004/12/17 22:59:49 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,7 +155,7 @@ cpu_initclocks()
 	if (clockfns == NULL)
 		panic("cpu_initclocks: clock device not attached");
 
-#if defined(MIPS3) || defined(MIPS64)
+#if defined(MIPS3)
 	if (mach_type != MACH_SGI_IP12) {
 		next_clk_intr = mips3_cp0_count_read()
 		    + curcpu()->ci_cycles_per_hz;
@@ -172,7 +172,7 @@ cpu_initclocks()
 			tickfixinterval = hz >> (ftp - 1);
 		}
 	}
-#endif /* MIPS3 || MIPS64 */
+#endif /* MIPS3 */
 
 	(*clockfns->cf_init)(clockdev);
 }
@@ -285,7 +285,7 @@ mips1_clkread()
 	return 0;
 }
 
-#if defined(MIPS3) || defined(MIPS64)
+#if defined(MIPS3)
 void
 mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		 u_int32_t ipending)
@@ -325,4 +325,4 @@ mips3_clkread()
 	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
 	return (res);
 }
-#endif /* MIPS3 || MIPS64 */
+#endif /* MIPS3 */
