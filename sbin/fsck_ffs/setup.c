@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.49 2001/09/06 02:16:00 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.50 2001/09/18 08:38:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.49 2001/09/06 02:16:00 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.50 2001/09/18 08:38:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,6 +577,13 @@ int
 cmpsblks(const struct fs *sb, struct fs *asb)
 {
 
+	/*
+	 * Copy fields which we don't care if they're different in the
+	 * alternate superblocks, as they're either likely to be
+	 * different because they're per-cylinder-group specific, or
+	 * because they're transient details which are only maintained
+	 * in the primary superblock.
+	 */
 	asb->fs_firstfield = sb->fs_firstfield;
 	asb->fs_unused_1 = sb->fs_unused_1;
 	asb->fs_time = sb->fs_time;
@@ -603,7 +610,7 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 	memmove(asb->fs_sparecon,
 		sb->fs_sparecon, sizeof sb->fs_sparecon);
 	/*
-	 * The following should not have to be copied.
+	 * The following should not have to be copied, but need to be.
 	 */
 	asb->fs_fsbtodb = sb->fs_fsbtodb;
 	asb->fs_interleave = sb->fs_interleave;
@@ -614,6 +621,10 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 	asb->fs_state = sb->fs_state;
 	asb->fs_maxfilesize = sb->fs_maxfilesize;
 
+	/*
+	 * Compare the superblocks, effectively checking every other
+	 * field to see if they differ.
+	 */
 	return (memcmp(sb, asb, (int)sb->fs_sbsize));
 }
 
