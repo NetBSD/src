@@ -2806,7 +2806,7 @@ EOF
 
 fi
 
-for ac_header in bstring.h errno.h fcntl.h ieeefp.h memory.h netdb.h poll.h
+for ac_header in bstring.h errno.h fcntl.h memory.h netdb.h poll.h
 do
 ac_ac_Header=`echo "ac_cv_header_$ac_header" | $ac_tr_sh`
 echo $ac_n "checking for $ac_header... $ac_c" 1>&6
