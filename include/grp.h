@@ -36,13 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)grp.h	8.2 (Berkeley) 1/21/94
- *	$Id: grp.h,v 1.4 1994/05/16 10:58:57 cgd Exp $
+ *	$Id: grp.h,v 1.5 1994/05/16 23:43:17 cgd Exp $
  */
 
 #ifndef _GRP_H_
 #define	_GRP_H_
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	_PATH_GROUP		"/etc/group"
 #endif
 
@@ -60,11 +60,13 @@ struct group *getgrgid __P((gid_t));
 struct group *getgrnam __P((const char *));
 #ifndef _POSIX_SOURCE
 struct group *getgrent __P((void));
-int setgrent __P((void));
+void setgrent __P((void));
 void endgrent __P((void));
 void setgrfile __P((const char *));
+#ifndef _XOPEN_SOURCE
 int setgroupent __P((int));
-#endif
+#endif /* !_XOPEN_SOURCE */
+#endif /* !_POSIX_SOURCE */
 __END_DECLS
 
 #endif /* !_GRP_H_ */
