@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.2.4.2 1993/10/22 02:29:34 mycroft Exp $
+ *	$Id: ns_ip.c,v 1.2.4.3 1993/11/14 18:47:34 mycroft Exp $
  */
 
 /*
@@ -71,7 +71,8 @@ struct ifnet_en {
 	struct ifnet_en *ifen_next;
 };
 
-int	nsipoutput(), nsipioctl(), nsipstart();
+int	nsipoutput(), nsipioctl();
+void	nsipstart();
 #define LOMTU	(1024+512);
 
 struct ifnet nsipif;
@@ -299,6 +300,7 @@ bad:
 	return (ENETUNREACH);
 }
 
+void
 nsipstart(ifp)
 struct ifnet *ifp;
 {
