@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.19 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.20 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,6 +59,6 @@ typedef _BSD_VA_LIST_	va_list;
 	((dest) = (src))
 #endif
 
-#define	va_end(ap)	
+#define	va_end(ap)
 
 #endif /* !_PC532_STDARG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ extern struct cpu_info cpu_info_store;
  * clockframe; for now, use generic intrframe.
  */
 
-#define	clockframe intrframe 
+#define	clockframe intrframe
 
 #define	CLKF_USERMODE(framep)	USERMODE((framep)->if_regs.r_psr)
 #define	CLKF_BASEPRI(framep)	((framep)->if_pl == imask[IPL_ZERO])
@@ -137,7 +137,7 @@ int	kvtop __P((caddr_t));
 
 #endif /* _KERNEL */
 
-/* 
+/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */

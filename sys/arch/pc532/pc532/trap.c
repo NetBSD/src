@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2004/01/02 18:52:17 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2004/01/02 18:52:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2004/01/23 04:12:39 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -175,11 +175,11 @@ userret(l, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) { 
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
+	}
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
@@ -532,7 +532,7 @@ trap(frame)
 		break;
 
 	case T_NMI:		/* non-maskable interrupt */
-	case T_NMI | T_USER: 
+	case T_NMI | T_USER:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
