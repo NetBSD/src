@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.20 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.21 1999/07/08 01:02:44 thorpej Exp $	*/
 
 /*
  *
@@ -583,15 +583,14 @@ ReTry:
  *		[only meaningful if swap-backed (uobj == NULL)]
  */
 
-
-void uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
-
-struct uvm_object *uobj;	/* IN */
-struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
-int *npages;			/* IN/OUT */
-int flags;
-int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
-
+void
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+	struct uvm_object *uobj;	/* IN */
+	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
+	int *npages;			/* IN/OUT */
+	int flags;
+	int swblk;			/* valid if
+					   (uobj == NULL && PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
