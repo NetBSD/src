@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.39 1999/08/19 19:51:37 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.40 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1110,54 +1110,6 @@ usbd_bus_print_child(device_t bus, device_t dev)
 	 */
 }
 #endif
-
-usbd_status
-usb_insert_transfer(reqh)
-	usbd_request_handle reqh;
-{
-	usbd_pipe_handle pipe = reqh->pipe;
-
-	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
-	if (pipe->running)
-		return (USBD_IN_PROGRESS);
-	pipe->running = 1;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-void
-usb_start_next(pipe)
-	usbd_pipe_handle pipe;
-{
-	usbd_request_handle reqh;
-	usbd_status r;
-
-	DPRINTFN(10, ("usb_start_next: pipe=%p\n", pipe));
-	
-#ifdef DIAGNOSTIC
-	if (!pipe) {
-		printf("usb_start_next: pipe == 0\n");
-		return;
-	}
-	if (!pipe->methods || !pipe->methods->start) {
-		printf("usb_start_next:  no start method\n");
-		return;
-	}
-#endif
-
-	/* Get next request in queue. */
-	reqh = SIMPLEQ_FIRST(&pipe->queue);
-	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
-	if (!reqh)
-		pipe->running = 0;
-	else {
-		r = pipe->methods->start(reqh);
-		if (r != USBD_IN_PROGRESS) {
-			printf("usb_start_next: error=%d\n", r);
-			pipe->running = 0;
-			/* XXX do what? */
-		}
-	}
-}
 
 void
 usbd_fill_deviceinfo(dev, di)
