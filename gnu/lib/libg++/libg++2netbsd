@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.14 1996/12/20 01:04:17 cgd Exp $
+#	$NetBSD: libg++2netbsd,v 1.15 1996/12/22 13:37:30 pk Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -562,6 +562,11 @@ NOMAN=	    noman
 NOLINT=	    nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
+
+.if (${MACHINE} != "alpha")
+LDADD=	${DESTDIR}/usr/lib/c++rt0.o
+DPADD=	${DESTDIR}/usr/lib/c++rt0.o
+.endif
 
 .include <bsd.lib.mk>
 
