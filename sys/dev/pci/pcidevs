@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp $
+$NetBSD: pcidevs,v 1.349 2001/08/27 14:04:47 enami Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1180,6 +1180,7 @@ product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
 product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
 product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
 product INTEL PRO_100_VM_0	0x1033	PRO/100 VM Network Controller
@@ -1198,16 +1199,6 @@ product INTEL 82815_NOGRAPH_AGP	0x1121	82815 AGP
 product INTEL 82815_FULL_HUB	0x1130	82815 Hub
 product INTEL 82815_FULL_AGP	0x1131	82815 AGP
 product INTEL 82815_FULL_GRAPH	0x1132	82815 Graphics
-product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
-product INTEL 82815_01		0x1101	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_02		0x1102	82815 (Solano) Internal GUI Accelerator
-product INTEL 82815_10		0x1110	82815 (Solano) Host to Hub Bridge, AGP Not Implemented
-product INTEL 82815_12		0x1112	82815 (Solano) Internal GUI Accelerator
-product INTEL 82815_20		0x1120	82815 (Solano) Host to Hub Bridge, AGP Implemented
-product INTEL 82815_21		0x1121	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_30		0x1130	82815 (Solano) Host to Hub Bridge (Fully featured chipset)
-product INTEL 82815_31		0x1131	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_32		0x1132	82815 (Solano) Interal GUI Accelerator
 product INTEL 82806AA		0x1161	82806AA PCI64 Hub Advanced Programmable Interrupt Controller
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
