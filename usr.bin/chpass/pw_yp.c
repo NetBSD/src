@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.9 1997/05/21 02:19:06 lukem Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.10 1997/05/21 02:20:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.9 1997/05/21 02:19:06 lukem Exp $";
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.10 1997/05/21 02:20:15 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ pw_yp(pw, uid)
 
 static char *
 pwskip(p)
-	register char *p;
+	char *p;
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -205,8 +205,8 @@ interpret(pwent, line)
 	struct passwd *pwent;
 	char *line;
 {
-	register char	*p = line;
-	register int	c;
+	char	*p = line;
+	int	c;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;
