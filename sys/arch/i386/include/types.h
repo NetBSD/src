@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24.4.6 2002/08/19 01:22:37 sommerfeld Exp $	*/
+/*	$NetBSD: types.h,v 1.24.4.7 2002/08/31 20:31:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
