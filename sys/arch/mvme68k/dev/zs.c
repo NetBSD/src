@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 2000/09/06 19:51:44 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.23 2000/11/18 22:34:25 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -324,8 +324,8 @@ zs_set_speed(cs, bps)
 	/* Convert back to make sure we can do it. */
 	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 
-	/* XXX - Allow some tolerance here? */
-	if (real_bps != bps)
+	/* Allow 2% tolerance WRT the required bps */
+	if (((abs(real_bps - bps) * 1000) / bps) != bps)
 		return (EINVAL);
 
 	cs->cs_preg[12] = tconst;
