@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ void tmu1_oneshot(void);
 int tmu1_intr(void *);
 void tmu2_oneshot(void);
 int tmu2_intr(void *);
-/* 
+/*
  * EVTCODE to intc_intrhand mapper.
  * max #60 is SH7709_INTEVT2_ADC_ADI (0x980)
  */
@@ -93,7 +93,7 @@ intc_init()
 		_reg_write_2(SH3_IPRB, 0);
 		break;
 	case CPU_PRODUCT_7750S:
-		_reg_write_2(SH4_IPRD, 0);		
+		_reg_write_2(SH4_IPRD, 0);
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7750:
 		_reg_write_2(SH4_IPRA, 0);
@@ -133,7 +133,7 @@ intc_intr_disestablish(void *arg)
 {
 	struct intc_intrhand *ih = arg;
 	int evtcode = ih->ih_evtcode;
-	
+
 	/* Mask interrupt if IPR can manage it. if not, cascated ICU will do */
 	intc_intr_priority(evtcode, 0);
 
@@ -152,18 +152,18 @@ intc_intr_disestablish(void *arg)
 void
 intc_intr_priority(int evtcode, int level)
 {
-#define SET_LEVEL(r, pos, level)					\
+#define	SET_LEVEL(r, pos, level)					\
 	r = (r & ~(0xf << (pos))) | (level << (pos))
-#define __SH_IPR(sh, x, pos, level)					\
+#define	__SH_IPR(sh, x, pos, level)					\
 do {									\
 	r = _reg_read_2(SH ## sh ## _IPR ## x);				\
 	SET_LEVEL(r, pos, level);					\
 	_reg_write_2(SH ## sh ## _IPR ## x, r);				\
 } while (/*CONSTCOND*/0)
-#define SH3_IPR(x, pos, level)		__SH_IPR(3, x, pos, level)
-#define SH4_IPR(x, pos, level)		__SH_IPR(4, x, pos, level)
-#define SH7709_IPR(x, pos, level)	__SH_IPR(7709, x, pos, level)
-#define SH_IPR(x, pos, level)						\
+#define	SH3_IPR(x, pos, level)		__SH_IPR(3, x, pos, level)
+#define	SH4_IPR(x, pos, level)		__SH_IPR(4, x, pos, level)
+#define	SH7709_IPR(x, pos, level)	__SH_IPR(7709, x, pos, level)
+#define	SH_IPR(x, pos, level)						\
 do {									\
 	if (CPU_IS_SH3)							\
 		SH3_IPR(x, pos, level);					\
@@ -232,13 +232,13 @@ intc_free_ih(struct intc_intrhand *ih)
 {
 
 	memset(ih, 0, sizeof(*ih));
-}	
+}
 
 /* Place-holder for debugging */
 int
 intc_unknown_intr(void *arg)
 {
-	
+
 	printf("INTEVT=0x%x", _reg_read_4(SH_(INTEVT)));
 	if (cpu_product == CPU_PRODUCT_7709 || cpu_product == CPU_PRODUCT_7709A)
 		printf(" INTEVT2=0x%x", _reg_read_4(SH7709_INTEVT2));
@@ -293,7 +293,7 @@ softintr_dispatch(int ipl)
 
 	if (TAILQ_FIRST(&asi->softintr_q) != NULL)
 		asi->softintr_evcnt.ev_count++;
-	
+
 	while ((sih = TAILQ_FIRST(&asi->softintr_q)) != NULL) {
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
@@ -369,7 +369,7 @@ softintr_disestablish(void *arg)
 void
 netintr()
 {
-#define DONETISR(bit, fn)						\
+#define	DONETISR(bit, fn)						\
 	do {								\
 		if (n & (1 << bit))					\
 			fn();						\
@@ -392,7 +392,7 @@ netintr()
 void
 tmu1_oneshot()
 {
-	
+
 	_reg_write_4(SH_(TCNT1), 0);
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR1);
 }
@@ -421,7 +421,7 @@ tmu2_oneshot()
 int
 tmu2_intr(void *arg)
 {
-	
+
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR2);
 	_reg_write_2(SH_(TCR2), _reg_read_2(SH_(TCR2)) & ~TCR_UNF);
 

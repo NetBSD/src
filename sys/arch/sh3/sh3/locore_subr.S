@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.8 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.9 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
 #include "opt_kgdb.h"
 #include "opt_cputype.h"
 
-#include "assym.h"	
+#include "assym.h"
 
-#include <sys/syscall.h>	/* SYS___sigreturn14, SYS_exit */	
+#include <sys/syscall.h>	/* SYS___sigreturn14, SYS_exit */
 #include <sh3/asm.h>
 #include <sh3/locore.h>
 #include <sh3/mmu_sh3.h>	/* TTB */
@@ -57,7 +57,7 @@ ENTRY(cpu_switch)
 	mov.l	_L.P_ADDR, r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
-	stc.l	sr,	@-r1	
+	stc.l	sr,	@-r1
 	stc.l	r6_bank,@-r1
 	sts.l	pr,	@-r1
 	mov.l	r8,	@-r1
@@ -115,7 +115,7 @@ ENTRY(cpu_switch)
 	rts
 	 nop
 	.align	2
-_L.P_ADDR:		.long	P_ADDR	
+_L.P_ADDR:		.long	P_ADDR
 _L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 _L.curpcb:		.long	_C_LABEL(curpcb)
 REG_SYMBOL(TTB)
@@ -124,25 +124,25 @@ FUNC_SYMBOL(switch_resume)
 #ifdef SH3
 /*
  * void sh3_switch_resume(sturct proc *p)
- *	Zero clear all TLB. and 
+ *	Zero clear all TLB. and
  *	Set current kernel stack PTE table.
  */
 NENTRY(sh3_switch_resume)
 	mov.l	_L.UPTE, r0
 	add	r4,	r0
 	mov.l	_L.curupte, r1
-	mov.l	r0,	@r1	
-	
-	mov.l	_L.MMUAA, r7	
-	mov.l	_L.MMUDA, r6	
+	mov.l	r0,	@r1
+
+	mov.l	_L.MMUAA, r7
+	mov.l	_L.MMUDA, r6
 	mov	#3,	r5	/* max way # */
 2:	mov	r5,	r3
 	shll8	r3
-	mov	#31,	r4	/* max entry # */	
+	mov	#31,	r4	/* max entry # */
 1:	mov	r4,	r2
 	shll8	r2
 	shll2	r2
-	shll2	r2	
+	shll2	r2
 	or	r3,	r2	/* r2 = way|entry */
 	mov	r7,	r1
 	or	r2,	r1	/* Address array */
@@ -155,7 +155,7 @@ NENTRY(sh3_switch_resume)
 	bt/s	1b
 	 add	#-1,	r4
 	cmp/gt	r0,	r5
-	bt/s	2b	
+	bt/s	2b
 	 add	#-1,	r5
 	rts
 	 nop
@@ -165,7 +165,7 @@ _L.MMUAA:		.long	SH3_MMUAA
 _L.MMUDA:		.long	SH3_MMUDA
 _L.curupte:		.long	_C_LABEL(curupte)
 #endif /* SH3 */
-	
+
 #ifdef SH4
 /*
  * void sh4_switch_resume(sturct proc *p)
@@ -185,7 +185,7 @@ NENTRY(sh4_switch_resume)
 	mov.l	r1,	@r0
 	add	r2,	r0
 	mov.l	r1,	@r0
-	
+
 	/* Invalidate UTLB */
 	mov.l	_L.4_MMUCR, r0
 	mov.l	@r0,	r1
@@ -194,8 +194,8 @@ NENTRY(sh4_switch_resume)
 	mov	#4,	r2	/* SH4_MMUCR_TI */
 	or	r2,	r1
 	mov.l	r1,	@r0
-	
-	/* 
+
+	/*
 	 * Wire u-area
 	 * for (i = 0; i < UPAGES * 2; i++)
 	 *	_reg_write_4(p->p_md.md_upte[i].addr, p->p_md.md_upte[i].data);
@@ -227,8 +227,8 @@ _L.4_MMUCR:		.long	SH4_MMUCR
 _L.4_MMUCR_MASK:	.long	SH4_MMUCR_MASK
 #endif /* SH4 */
 _L.UPTE:		.long	(P_MD + MD_UPTE)
-	
-/*	
+
+/*
  * int _cpu_intr_raise(int s):
  *	raise SR.IMASK to 's'. if current SR.IMASK is greater equal 's',
  *	nothing to do. returns previous SR.IMASK.
@@ -265,7 +265,7 @@ NENTRY(_cpu_intr_suspend)
 /*
  * int _cpu_intr_resume(int s):
  *	Set 's' to SR.IMASK. Returns previous SR.IMASK.
- */	 	
+ */
 NENTRY(_cpu_intr_resume)
 	stc	sr,	r0	/* r0 = SR */
 	mov	#0x78,	r2
@@ -277,12 +277,12 @@ NENTRY(_cpu_intr_resume)
 	rts
 	 and	r2,	r0	/* return (SR & 0xf0) */
 
-/*	
+/*
  * u_int32_t _cpu_exception_suspend(void):
  *	Block exception (SR.BL). if external interrupt raise, pending interrupt.
  *	if exception occur, jump to 0xa0000000 (hard reset).
- */	
-NENTRY(_cpu_exception_suspend)	
+ */
+NENTRY(_cpu_exception_suspend)
 	stc	sr,	r0	/* r0 = SR */
 	mov	#0x10,	r1
 	swap.b	r1,	r1
@@ -297,15 +297,15 @@ NENTRY(_cpu_exception_suspend)
  * void _cpu_exception_resume(u_int32_t s):
  *	restore 's' exception mask. (SR.BL)
  */
-NENTRY(_cpu_exception_resume)	
-	stc	sr,	r0	/* r0 = SR */	
+NENTRY(_cpu_exception_resume)
+	stc	sr,	r0	/* r0 = SR */
 	mov	#0x10,	r1
 	swap.b	r1,	r1
 	swap.w	r1,	r1
 	not	r1,	r1	/* r1 = ~0x10000000 */
 	and	r1,	r0	/* r0 &= ~0x10000000 */
 	or	r4,	r0	/* r0 |= old SR.BL */
-	ldc	r0,	sr	/* SR = r0 (don't move to delay slot) */	
+	ldc	r0,	sr	/* SR = r0 (don't move to delay slot) */
 	rts
 	 nop
 
@@ -327,7 +327,7 @@ NENTRY(_cpu_exception_resume)
  * nop                                           IF ID EX MA -  - WB
  * bt                                               IF ID EX .  . MA
  * [...]
- */		
+ */
 	.align 5	/* align cache line size (32B) */
 NENTRY(_cpu_spin)
 1:	nop			/* 1 */
@@ -341,8 +341,8 @@ NENTRY(_cpu_spin)
 	rts
 	 nop
 
-/* 	
- * proc_trapmpoline:	
+/*
+ * proc_trapmpoline:
  *	Call the service funciton with one argument specified by the r12 and r11
  *	respectively.
  */
@@ -381,7 +381,7 @@ _C_LABEL(esigcode):
  */
 ENTRY(savectx)
 	add	#SF_SIZE, r4
-	stc.l	sr,	@-r4	
+	stc.l	sr,	@-r4
 	stc.l	r6_bank,@-r4
 	sts.l	pr,	@-r4
 	mov.l	r8,	@-r4
@@ -396,9 +396,9 @@ ENTRY(savectx)
 	 nop
 
 #if defined(DDB) || defined(KGDB)
-/*	
+/*
  * int setjmp(label_t *):
- */		
+ */
 ENTRY(setjmp)
 	add	#4*9,	r4
 	mov.l	r8,	@-r4
@@ -414,7 +414,7 @@ ENTRY(setjmp)
 	 xor	r0, r0
 /*
  * void longjmp(label_t *):
- */		
+ */
 ENTRY(longjmp)
 	lds.l	@r4+,	pr
 	mov.l	@r4+,	r15

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.2 2001/04/26 16:25:25 kleink Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.3 2002/04/28 17:10:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _SH3_INT_FMTIO_H_
-#define _SH3_INT_FMTIO_H_
+#define	_SH3_INT_FMTIO_H_
 
 /*
  * 7.8.1 Macros for format specifiers

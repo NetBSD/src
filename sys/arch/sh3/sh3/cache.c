@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 2002/04/28 17:10:37 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct sh_cache_ops sh_cache_ops = {
 };
 
 int sh_cache_enable_icache;
-int sh_cache_enable_dcache;    
+int sh_cache_enable_dcache;
 int sh_cache_write_through;
 int sh_cache_write_through_p0_u0_p3;
 int sh_cache_write_through_p1;
@@ -83,11 +83,11 @@ sh_cache_init()
 #endif
 #ifdef SH3
 	if (CPU_IS_SH3)
-		sh3_cache_config();		
+		sh3_cache_config();
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4)
-		sh4_cache_config();		
+		sh4_cache_config();
 #endif
 }
 
@@ -136,7 +136,7 @@ sh_cache_information()
 			printf("INDEX-mode ");
 		printf("\n");
 	}
-		
+
 	/* Write-through/back */
 	printf("P0, U0, P3 write-%s P1 write-%s\n",
 	    sh_cache_write_through_p0_u0_p3 ? "through" : "back",
@@ -154,7 +154,7 @@ __cache_flush()
 	int d;
 
 	/* Flush D-Cache */
-	/* 
+	/*
 	 * Access address range [13:4].
 	 * max:
 	 * 16KB line-size 16B 4-way ... [11:4]  * 4
@@ -166,7 +166,7 @@ __cache_flush()
 	}
 
 	/* Flush I-Cache */
-	/* 
+	/*
 	 * this code flush I-cache. but can't compile..
 	 *  __asm__ __volatile__(".space 8192");
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.6 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.7 2002/04/28 17:10:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ void
 sh_mmu_init()
 {
 
-	/* 
+	/*
 	 * Assing function hook. but if only defined SH3 or SH4, it is called
 	 * directly. see sh3/mmu.h
 	 */
@@ -128,7 +128,7 @@ sh_mmu_information()
 void
 sh_tlb_set_asid(int asid)
 {
-	
+
 	_reg_write_4(SH_(PTEH), 0);
 }
 

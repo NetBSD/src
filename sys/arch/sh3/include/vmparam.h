@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2002/04/28 17:10:37 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  */
 
 #ifndef _SH3_VMPARAM_H_
-#define _SH3_VMPARAM_H_
+#define	_SH3_VMPARAM_H_
 
 /*
  * Machine dependent constants for NetBSD/sh3.
@@ -74,7 +74,7 @@
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
+#define	SHMMAXPGS	1024
 #endif
 
 /*
@@ -87,27 +87,27 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
 /* PTDPTDI<<PDSHIFT - UPAGES*NBPG */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0x7fffe000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0x7fffe000)
 /* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vaddr_t)0xcffbf000)
+#define	VM_MAX_ADDRESS		((vaddr_t)0xcffbf000)
 /* KPTDI<<PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xd0000000)
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xd0000000)
 /* APTDPTDI<<PDSHIFT */
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xdfc00000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xdfc00000)
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF						\
+#define	VM_MAX_KERNEL_BUF						\
 	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define	VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD		/* no more after vm_mem_init */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD		/* no more after vm_mem_init */
 
 #define	__HAVE_PMAP_PHYSSEG
 
