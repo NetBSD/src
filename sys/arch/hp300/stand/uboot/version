@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 1997/03/10 08:02:24 thorpej Exp $
+$NetBSD: version,v 1.8 1997/04/27 21:18:32 thorpej Exp $
 
 1.1:		Initial version
 1.2:		Added support for network booting
@@ -7,3 +7,4 @@ $NetBSD: version,v 1.7 1997/03/10 08:02:24 thorpej Exp $
 1.5:		Reorganization of boot block code
 1.6:		Add support for booting gzip'd kernels
 1.7:		Round load address to 8k boundary
+1.8:		Better SPU detection code
