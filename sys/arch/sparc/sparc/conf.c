@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1995/09/24 20:45:27 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.36 1995/09/25 20:27:32 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@ bdev_decl(sw);
 bdev_decl(sd);
 #include "xd.h"
 bdev_decl(xd);
+#include "xy.h"
+bdev_decl(xy);
 #include "st.h"
 bdev_decl(st);
 #include "cd.h"
@@ -83,7 +85,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
-	bdev_notdef(),			/* 3 */
+	bdev_disk_init(NXY,xy),		/* 3: SMD disk */
 	bdev_swap_init(1,sw),		/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_notdef(),			/* 6 */
@@ -136,6 +138,7 @@ cdev_decl(log);
 cdev_decl(sd);
 cdev_decl(st);
 cdev_decl(xd);
+cdev_decl(xy);
 #include "ch.h"
 cdev_decl(ch);
 #include "pty.h"
@@ -186,7 +189,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 6 */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
 	cdev_notdef(),			/* 8 */
-	cdev_notdef(),			/* 9 */
+	cdev_disk_init(NXY,xy),		/* 9: SMD disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
 	cdev_tty_init(NZS,zs),		/* 12: zs serial */
@@ -348,7 +351,7 @@ static int chrtoblktbl[] = {
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
 	/*  8 */	NODEV,
-	/*  9 */	NODEV,
+	/*  9 */	3,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
