@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.9 2003/12/09 01:52:07 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.10 2003/12/10 14:16:12 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -512,7 +512,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_READER_WRITER_LOCKS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_READER_WRITER_LOCKS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "dump_on_panic", NULL,
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
