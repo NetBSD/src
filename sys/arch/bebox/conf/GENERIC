@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 1999/11/21 14:00:39 itojun Exp $
+#	$NetBSD: GENERIC,v 1.22 2000/01/20 19:12:30 wrstuden Exp $
 #
 # First try for BEBOX config file
 #
@@ -38,6 +38,7 @@ file-system 	MSDOSFS
 file-system 	FDESC
 file-system 	KERNFS
 file-system 	NULLFS
+file-system 	OVERLAY
 file-system 	PORTAL
 file-system 	PROCFS
 file-system 	UMAPFS

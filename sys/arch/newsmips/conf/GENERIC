@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.14 1999/12/22 05:55:25 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.15 2000/01/20 19:12:33 wrstuden Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
@@ -45,6 +45,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
+file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
