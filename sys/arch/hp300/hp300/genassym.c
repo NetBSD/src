@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.7 1994/05/05 10:11:14 mycroft Exp $
+ *	$Id: genassym.c,v 1.8 1994/05/21 09:22:33 cgd Exp $
  */
 
 #include "sys/param.h"
 #include "sys/buf.h"
-#include "sys/vmmeter.h"
 #include "sys/proc.h"
 #include "sys/mbuf.h"
 #include "sys/msgbuf.h"
