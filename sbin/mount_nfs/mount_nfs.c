@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.4 1994/09/05 02:21:06 mycroft Exp $";
+static char *rcsid = "$Id: mount_nfs.c,v 1.5 1994/09/17 05:27:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -454,15 +454,19 @@ getnfsargs(spec, nfsargsp)
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PMAPPORT);
 		if ((tport = pmap_getport(&saddr, RPCPROG_NFS,
-		    NFS_VER2, IPPROTO_UDP)) == 0) {
+		    NFS_VER2, nfsargsp->sotype == SOCK_STREAM ? IPPROTO_TCP :
+		    IPPROTO_UDP)) == 0) {
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror("NFS Portmap");
 		} else {
 			saddr.sin_port = 0;
 			pertry.tv_sec = 10;
 			pertry.tv_usec = 0;
-			if ((clp = clntudp_create(&saddr, RPCPROG_MNT,
-			    RPCMNT_VER1, pertry, &so)) == NULL) {
+			if ((clp = (nfsargsp->sotype == SOCK_STREAM ?
+			    clnttcp_create(&saddr, RPCPROG_MNT, RPCMNT_VER1,
+					   &so, 0, 0) :
+			    clntudp_create(&saddr, RPCPROG_MNT, RPCMNT_VER1,
+					   pertry, &so))) == NULL) {
 				if ((opflags & ISBGRND) == 0)
 					clnt_pcreateerror("Cannot MNT PRC");
 			} else {
