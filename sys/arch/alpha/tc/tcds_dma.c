@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.14 1996/11/13 21:13:37 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.15 1996/12/04 22:35:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -66,10 +66,7 @@ tcds_dma_isintr(sc)
 {
 	int x;
 
-	x = tcds_scsi_isintr(sc, 0);
-
-	/* Clear the TCDS interrupt bit. */
-	(void)tcds_scsi_isintr(sc, 1);
+	x = tcds_scsi_isintr(sc, 1);
 
 	/* XXX */
 	return x;
@@ -115,7 +112,6 @@ tcds_dma_intr(sc)
 
 	if (!sc->sc_iswrite &&
 	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		printf("empty FIFO of %d ", resid);
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 		DELAY(1);
 	}
