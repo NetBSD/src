@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.5 2003/02/14 14:39:24 dsl Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.6 2003/11/07 11:34:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -56,23 +56,28 @@ ENTRY(getextmem2)
 	xorl	%ebx, %ebx
 	movl	$0xe801, %eax
 	int	$0x15
-	jc	err2
+	pushf
 
-	movl	$0, %ecx
-	jmp ok2
-err2:
-	movl	$-1, %ecx
-ok2:
-	movl	%eax, %edx
+	movw	%si, %ax
+	orw	%si, %bx
+	jz	1f		/* if zero use configured values */
+	movw	%cx, %ax	/* k below 16M (max 0x3c00 = 15MB) */
+	movw	%dx, %bx	/* 64k above 16M */
+1:
+	popf
+	setc	%bl
 
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movl	8(%ebp), %eax
-	movl	%edx, (%eax)
-	movl	%ebx, 4(%eax)
-
-	movl	%ecx, %eax
+	movl	8(%ebp), %edi
+	xorl	%eax, %eax
+	movw	%cx, %ax
+	stosl
+	movw	%dx, %ax
+	stosl
+	movb	%bl, %al
+	cbw
 
 	pop	%edi
 	pop	%esi
@@ -98,10 +103,10 @@ ENTRY(getmementry)
 	push	%edi
 
 	movl	8(%ebp), %eax
-	movl	0(%eax), %ebx
-	movl	$20, %ecx
-	movl	$0x534d4150, %edx	# "SMAP"
-	movl	12(%ebp), %edi
+	movl	0(%eax), %ebx		/* index */
+	movl	$20, %ecx		/* Buffer size */
+	movl	$0x534d4150, %edx	/* "SMAP" */
+	movl	12(%ebp), %edi		/* buffer address */
 
 	call	_C_LABEL(prot_to_real)
 	.code16
@@ -112,9 +117,9 @@ ENTRY(getmementry)
 	add	%di, %ax
 	mov	%ax, %es
 	pop	%di
-	and	$0xf, %di
+	and	$0xf, %di		/* buffer addres now in ES:DI */
 
-	movw	$0xe820, %ax
+	movl	$0xe820, %eax		/* Some BIOS check EAX value */
 	int	$0x15
 
 	setc	%cl
@@ -123,7 +128,7 @@ ENTRY(getmementry)
 	.code32
 
 	movl	8(%ebp), %eax
-	movl	%ebx, 0(%eax)
+	movl	%ebx, 0(%eax)		/* updated index */
 	xorl	%eax, %eax
 	movb	%cl, %al
 
