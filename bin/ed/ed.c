@@ -489,9 +489,9 @@ doglob(gflag)
 			else if (n == 0) {
 				sprintf(errmsg, "unexpected end-of-file");
 				return ERR;
-			} else if (!strcmp(ibuf, "\n"))
+			} else if (n == 1 && !strcmp(ibuf, "\n"))
 				continue;
-			else if (!strcmp(ibuf, "&\n")) {
+			else if (n == 2 && !strcmp(ibuf, "&\n")) {
 				if (cmd == NULL) {
 					sprintf(errmsg, "no previous command");
 					return ERR;
@@ -1991,9 +1991,11 @@ getcmdv(sizep, nonl)
 	int nonl;
 {
 	int l, n;
-	char *t = strchr(ibufp, '\n');
+	char *t = ibufp;
 
-	if ((l = t - ibufp + 1) < 2 || !oddesc(ibufp, ibufp + l - 1)) {
+	while (*t++ != '\n')
+		;
+	if ((l = t - ibufp) < 2 || !oddesc(ibufp, ibufp + l - 1)) {
 		*sizep = l;	
 		return ibufp;
 	}
