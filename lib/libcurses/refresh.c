@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.41 2000/12/19 21:34:25 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.42 2001/09/20 11:11:54 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.41 2000/12/19 21:34:25 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.42 2001/09/20 11:11:54 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -415,6 +415,8 @@ makech(wy)
 			if (cp-- <= win->lines[wy]->line)
 				break;
 		nlsp = cp - win->lines[wy]->line;
+		if (nlsp < 0)
+			nlsp = 0;
 	}
 	if (!curwin)
 		ce = __tc_ce;
