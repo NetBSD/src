@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.36 2002/02/23 13:58:10 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.37 2002/03/03 11:23:01 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -155,7 +155,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -505,6 +505,9 @@ initarm(argc, argv, bi)
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    &kernel_ptpt);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 #define SAIPIO_BASE		0xd0000000		/* XXX XXX */
 	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
 	    &kernel_pt_table[KERNEL_PT_IO]);

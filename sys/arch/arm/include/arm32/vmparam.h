@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2002/02/06 17:41:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2002/03/03 11:22:59 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -102,7 +102,6 @@
 					    (KERNEL_SPACE_START >> PGSHIFT) * \
 					    sizeof(pt_entry_t)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
-#define	VM_MAXKERN_ADDRESS	((vaddr_t) KERNEL_VM_BASE + KERNEL_VM_SIZE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.24 2002/02/22 18:25:08 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.25 2002/03/03 11:22:58 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.24 2002/02/22 18:25:08 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.25 2002/03/03 11:22:58 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -170,7 +170,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
 #define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
 #define	KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */	
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -696,6 +696,8 @@ initarm(void *cookie)
 	pmap_link_l2pt(l1pagetable, VMEM_VBASE,
 	    &kernel_pt_table[KERNEL_PT_VMEM]);
 
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
