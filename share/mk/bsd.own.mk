@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.344 2003/07/23 08:01:46 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.345 2003/07/25 16:24:08 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -412,6 +412,16 @@ NOPIC=		# defined
 #
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
 MKPICLIB:=	no
+.endif
+
+#
+# Transitional for toolchain upgrade
+#
+USE_TOOLS_TOOLCHAIN=	yes
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "sparc"
+USE_TOOLS_TOOLCHAIN?=	no
+.else
+USE_TOOLS_TOOLCHAIN?=	yes
 .endif
 
 #
