@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 1999/03/27 05:57:03 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 1999/03/30 00:12:32 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1299,6 +1299,20 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			}
 #endif
 		}
+
+		/*
+		 * Speed pmap_is_referenced() or pmap_is_modified() based
+		 * on the hint provided in access_type.
+		 */
+#ifdef DIAGNOSTIC
+		if (access_type & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
+#endif
+		if (access_type & VM_PROT_WRITE)
+			*pa_to_attribute(pa) |= (PG_U|PG_M);
+		else if (access_type & VM_PROT_ALL)
+			*pa_to_attribute(pa) |= PG_U;
+
 		splx(s);
 	}
 	/*
