@@ -1,13 +1,11 @@
-#	$NetBSD: INDY,v 1.9 2001/11/22 00:59:23 thorpej Exp $
+#	$NetBSD: INDY,v 1.10 2001/11/22 01:11:51 soren Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
 # XXX _LOW _HOW og/eller TEXTADDR
 
-makeoptions	TEXTADDR=0x80080000	# O2
-#makeoptions	TEXTADDR=0x80069000	# O2 Symmon
-#makeoptions	TEXTADDR=0x88002000	# Indy
-#makeoptions	TEXTADDR=0x88069000	# Indy Symmon
+makeoptions	TEXTADDR=0x80069000	# O2
+#makeoptions	TEXTADDR=0x88069000	# Indy
 #makeoptions	TEXTADDR=0x8001c000	# IP27
 #makeoptions	TEXTADDR=0x80300000	# IP27 Symmon
 

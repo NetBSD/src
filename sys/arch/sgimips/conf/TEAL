@@ -1,9 +1,8 @@
-#	$NetBSD: TEAL,v 1.8 2001/11/22 00:59:23 thorpej Exp $
+#	$NetBSD: TEAL,v 1.9 2001/11/22 01:11:51 soren Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
-makeoptions	TEXTADDR=0x88080000	# Indy/Indigo2
-#makeoptions	TEXTADDR=0x88069000	# Indy/Indigo2 Symmon
+makeoptions	TEXTADDR=0x88069000	# Indy/Indigo2
 
 maxusers	32
 
