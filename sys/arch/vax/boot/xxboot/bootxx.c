@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.9 2000/06/04 19:58:17 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.9.2.1 2000/07/27 16:48:26 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #include "sys/param.h"
 #include "sys/reboot.h"
 #include "sys/disklabel.h"
+#include "sys/exec.h"
+#include "sys/exec_elf.h"
 
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
@@ -44,11 +46,12 @@
 
 #include "lib/libkern/libkern.h"
 
-#include "../include/pte.h"
-#include "../include/sid.h"
-#include "../include/mtpr.h"
-#include "../include/reg.h"
-#include "../include/rpb.h"
+#include "machine/pte.h"
+#include "machine/sid.h"
+#include "machine/mtpr.h"
+#include "machine/reg.h"
+#include "machine/rpb.h"
+#include "../vax/gencons.h"
 
 #include "../mba/mbareg.h"
 #include "../mba/hpreg.h"
@@ -74,6 +77,7 @@ unsigned *bootregs;
 struct	rpb *rpb;
 struct	bqo *bqo;
 int	vax_cputype;
+int	vax_load_failure;
 struct udadevice {u_short udaip;u_short udasa;};
 volatile struct udadevice *csr;
 
@@ -89,7 +93,12 @@ extern int from;
 void
 Xmain()
 {
+	union {
+		struct exec aout;
+		Elf32_Ehdr elf;
+	} hdr;
 	int io;
+	u_long entry;
 
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 
@@ -125,9 +134,47 @@ Xmain()
 	if (io < 0)
 		asm("halt");
 
-	read(io, (void *)0x10000, 0x10000);
-	bcopy((void *) 0x10000, 0, 0xffff);
-	hoppabort(32);
+	read(io, (void *)&hdr.aout, sizeof(hdr.aout));
+	if (N_GETMAGIC(hdr.aout) == OMAGIC && N_GETMID(hdr.aout) == MID_VAX) {
+		vax_load_failure++;
+		entry = hdr.aout.a_entry;
+		if (entry < sizeof(hdr.aout))
+			entry = sizeof(hdr.aout);
+		read(io, (void *) entry, hdr.aout.a_text + hdr.aout.a_data);
+		memset((void *) (entry + hdr.aout.a_text + hdr.aout.a_data),
+		       0, hdr.aout.a_bss);
+	} else if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0) {
+		Elf32_Phdr ph;
+		size_t off = sizeof(hdr.elf);
+		vax_load_failure += 2;
+		read(io, (caddr_t)(&hdr.elf) + sizeof(hdr.aout),
+		     sizeof(hdr.elf) - sizeof(hdr.aout));
+		if (hdr.elf.e_machine != EM_VAX || hdr.elf.e_type != ET_EXEC
+		    || hdr.elf.e_phnum != 1)
+			goto die;
+		vax_load_failure++;
+		entry = hdr.elf.e_entry;
+		if (hdr.elf.e_phoff != sizeof(hdr.elf)) 
+			goto die;
+		vax_load_failure++;
+		read(io, &ph, sizeof(ph));
+		off += sizeof(ph);
+		if (ph.p_type != PT_LOAD)
+			goto die;
+		vax_load_failure++;
+		while (off < ph.p_offset) {
+			u_int32_t tmp;
+			read(io, &tmp, sizeof(tmp));
+			off += sizeof(tmp);
+		}
+		read(io, (void *) ph.p_paddr, ph.p_filesz);
+		memset((void *) (ph.p_paddr + ph.p_filesz), 0,
+		       ph.p_memsz - ph.p_filesz);
+	} else {
+		goto die;
+	}
+	hoppabort(entry);
+die:
 	asm("halt");
 }
 
