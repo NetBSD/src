@@ -27,7 +27,7 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.2 2001/03/24 12:40:29 martin Exp $
+ *	$Id: isic_bchan.c,v 1.3 2001/03/25 14:38:23 is Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -101,7 +101,7 @@ isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	/* general part */
 
 	chan->unit = sc->sc_unit;	/* unit number */
-	chan->channel = h_chan;	/* B channel */
+	chan->channel = h_chan;		/* B channel */
 	chan->bprot = bprot;		/* B channel protocol */
 	chan->state = HSCX_IDLE;	/* B channel state */
 
@@ -186,7 +186,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 
 	if(chan->bprot == BPROT_NONE)
 	{
-		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data,
+		    chan->out_mbuf_cur->m_len)))
 			activity = ACT_TX;
 	}
 	else
@@ -194,7 +195,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		activity = ACT_TX;
 	}
 
-	chan->state |= HSCX_TX_ACTIVE;		/* we start transmitting */
+	chan->state |= HSCX_TX_ACTIVE;	/* we start transmitting */
 	
 	if(sc->sc_trace & TRACE_B_TX)	/* if trace, send mbuf to trace dev */
 	{
@@ -202,7 +203,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+			chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
 	len = 0;	/* # of chars put into HSCX tx fifo this time */
@@ -267,10 +269,13 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 			if(sc->sc_trace & TRACE_B_TX)
 			{
 				i4b_trace_hdr hdr;
-				hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
+				hdr.type = (h_chan == HSCX_CH_A ?
+					TRC_CH_B1 : TRC_CH_B2);
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_bcount;
-				isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+				isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+					chan->out_mbuf_cur->m_len,
+					chan->out_mbuf_cur->m_data);
 			}			
 		}
 	}
@@ -314,7 +319,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit,
+			activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
