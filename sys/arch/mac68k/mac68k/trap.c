@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1996/05/05 06:19:01 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1996/05/05 06:54:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,10 +135,6 @@ void	syscall __P((register_t, struct frame));
 static inline void userret __P((register struct proc *,
 				register struct frame *,
 				u_quad_t, u_int, int));
-
-void DCFL __P((vm_offset_t));
-int suline __P((caddr_t, caddr_t));
-int susword __P((caddr_t, u_int));
 
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
