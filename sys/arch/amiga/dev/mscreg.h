@@ -1,4 +1,4 @@
-/*	$NetBSD: mscreg.h,v 1.3 1995/10/07 18:18:35 chopps Exp $ */
+/*	$NetBSD: mscreg.h,v 1.4 1995/10/07 18:22:14 chopps Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -133,7 +133,7 @@ struct mscdevice {
 #define	MSCCMD_CMask		0xf	/* command mask */
 #define	MSCCMD_RTSOff		0x0  	/* turn off RTS */
 #define	MSCCMD_RTSOn		0x8	/* turn on RTS */
-#define	MSCCMD_Break		0xc	/* transmit a break */
+#define	MSCCMD_Break		0xd	/* transmit a break */
 #define	MSCCMD_RTSMask		0xc	/* mask for RTS stuff */
 #define	MSCCMD_NoParity		0x00	/* don't use parity */
 #define	MSCCMD_OddParity	0x20	/* odd parity */
