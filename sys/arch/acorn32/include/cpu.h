@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2002/10/05 13:46:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2002/10/06 18:28:48 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -37,9 +37,21 @@ void	cpu_boot_secondary_processors(void);
 	int ci_cpunum;							\
 	struct proc *ci_curproc;
 
+#define CPU_MAXNUM 8
+
+extern struct cpu_info *cpu_info[];
+
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpunum == 0)
 extern cpuid_t cpu_number(void);
-extern struct cpu_info *curcpu();
+#define curcpu()		(cpu_info[cpu_number()])
+
+extern cpuid_t cpu_next(cpuid_t);
+
+#define CPU_INFO_ITERATOR cpuid_t
+#define CPU_INFO_FOREACH(cii, ci)					\
+	cii = 0, ci = cpu_info[0];					\
+	cii < CPU_MAXNUM;						\
+	cii = cpu_next(cii), ci = cpu_info[cii]
 
 #endif /* MULTIPROCESSOR */
 #endif /* _KERNEL && _KERNEL_OPT && !_LOCORE */
