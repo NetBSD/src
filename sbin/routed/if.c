@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.15 1998/08/26 17:50:33 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.16 1998/10/25 14:56:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.15 1998/08/26 17:50:33 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.16 1998/10/25 14:56:07 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -338,7 +338,7 @@ ripv1_mask_net(naddr addr,		/* in network byte order */
 		for (r1p = r1nets; r1p != 0; r1p = r1p->r1net_next) {
 			if (on_net(addr, r1p->r1net_net, r1p->r1net_match)
 			    && r1p->r1net_mask > mask)
-				r1p->r1net_mask = mask;
+				mask = r1p->r1net_mask;
 		}
 
 		/* Otherwise, make the classic A/B/C guess.
@@ -701,7 +701,7 @@ ifinit(void)
 					    ? CHECK_ACT_INTERVAL
 					    : CHECK_QUIET_INTERVAL);
 
-	/* mark all interfaces so we can get rid of thost that disappear */
+	/* mark all interfaces so we can get rid of those that disappear */
 	for (ifp = ifnet; 0 != ifp; ifp = ifp->int_next)
 		ifp->int_state &= ~(IS_CHECKED | IS_DUP);
 
@@ -776,7 +776,7 @@ ifinit(void)
 		 * will be an alias.
 		 * Do not output RIP or Router-Discovery packets via aliases.
 		 */
-		memmove(&ifs, &ifs0, sizeof(ifs));
+		memcpy(&ifs, &ifs0, sizeof(ifs));
 		ifs0.int_state |= (IS_ALIAS | IS_NO_RIP_OUT | IS_NO_RDISC);
 
 		if (INFO_IFA(&info) == 0) {
@@ -1011,7 +1011,7 @@ ifinit(void)
 			}
 			ifp->int_data = ifs.int_data;
 
-			/* Withhold judgement when the short error
+			/* Withhold judgment when the short error
 			 * counters wrap or the interface is reset.
 			 */
 			if (ierr < 0 || in < 0 || oerr < 0 || out < 0) {
@@ -1111,7 +1111,7 @@ ifinit(void)
 		/* It is new and ok.   Add it to the list of interfaces
 		 */
 		ifp = (struct interface *)rtmalloc(sizeof(*ifp), "ifinit ifp");
-		memmove(ifp, &ifs, sizeof(*ifp));
+		memcpy(ifp, &ifs, sizeof(*ifp));
 		get_parms(ifp);
 		if_link(ifp);
 		trace_if("Add", ifp);

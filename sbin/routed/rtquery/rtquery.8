@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtquery.8,v 1.11 1998/08/18 18:03:28 msaitoh Exp $
+.\"	$NetBSD: rtquery.8,v 1.12 1998/10/25 14:56:09 christos Exp $
 .\"
 .Dd June 1, 1996
 .Dt RTQUERY 8
@@ -65,35 +65,31 @@ and so answers completely.
 is also used to turn tracing on or off in
 .Xr routed 8 .
 .Pp
-Options supported by
-.Nm "" :
-.Bl -tag -width Ds
+The following options are available:
+.Bl -tag -width indent
 .It Fl n
-Normally network and host numbers are displayed both symbolically
-and numerically.
-The
-.Fl n
-option displays only the numeric network and host numbers.
+displays only the numeric network and host numbers instead of both
+numeric and and symbolic.
 .It Fl p
-Uses the
+uses the
 .Em poll
 command to request full routing information from
 .Xr gated 8 .
 This is an undocumented extension RIP protocol supported only by
 .Xr gated 8 .
 .It Fl 1
-query using RIP version 1 instead of RIP version 2.
+queries using RIP version 1 instead of RIP version 2.
 .It Fl w Ar timeout
 changes the delay for an answer from each host.
 By default, each host is given 15 seconds to respond.
 .It Fl r Ar addr
-ask about the route to destination
+asks about the route to destination
 .Em addr .
 .It Fl a Ar passwd=XXX
 .It Fl a Ar md5_passwd=XXX|KeyID
-cause the query to be sent with the indicated cleartext or MD5 password.
+causes the query to be sent with the indicated cleartext or MD5 password.
 .It Fl t Ar op
-change tracing, where
+changes tracing, where
 .Em op
 is one of the following.
 Requests from processes not running with UID 0 or on distant networks
@@ -103,7 +99,7 @@ is likely to ignore these debugging requests.
 .El
 .Bl -tag -width Ds -offset indent-two
 .It Em on=tracefile
-turn tracing on into the specified file.
+turns tracing on into the specified file.
 That file must usually have been specified when the daemon was
 started or be the same as a fixed name, often
 .Pa /etc/routed.trace .
