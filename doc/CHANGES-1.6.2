@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.33 2003/06/16 21:52:40 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.34 2003/06/16 21:56:29 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -475,3 +475,11 @@ crypto/dist/kame/racoon/crypto_openssl.c	1.6
 
 	fix "round up to 8" code.  from kame
 	[itojun, ticket #1270]
+
+sys/arch/newsmips/newsmips/cpu_cons.c		1.7
+
+	Fix unexpected fallthrough in switch statement.
+
+	This should fix boot failure of the INSTALL kernel
+	on news3400 with serial console.
+	[tsutsui, ticket #1276]
