@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.20 1993/10/13 15:49:55 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.21 1993/12/05 00:33:30 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ static char rcsid[] = "$Id: kvm.c,v 1.20 1993/10/13 15:49:55 mycroft Exp $";
 #include <vm/vm_page.h>
 #include <vm/swap_pager.h>
 #include <sys/kinfo_proc.h>
-#if defined(hp300) || defined(amiga)
+#if defined(m68k)
 #include <machine/pte.h>
 #define	btos(x)		(((unsigned)(x)) >> SEGSHIFT)	/* XXX */
 #endif
@@ -105,7 +105,7 @@ static	long	vm_page_hash_mask;
 static	long	vm_page_buckets;
 static	long	page_shift;
 static	char	*tmp;
-#if defined(hp300) || defined(amiga)
+#if defined(m68k)
 static	int	lowram;
 static	struct ste *Sysseg;
 #endif
@@ -152,7 +152,7 @@ static struct nlist nl[] = {
 	{ "_nproc" },
 #define	X_NPROC		12
 #define	X_LAST		12
-#if defined(hp300) || defined(amiga)
+#if defined(m68k)
 	{ "_Sysseg" },
 #define	X_SYSSEG	(X_LAST+1)
 	{ "_lowram" },
@@ -852,7 +852,7 @@ getkvars()
 		/* We must do the sys map first because klseek uses it */
 		long	addr;
 
-#if defined(hp300) || defined(amiga)
+#if defined(m68k)
 		addr = (long) nl[X_LOWRAM].n_value;
 		(void) lseek(kmem, addr, 0);
 		if (read(kmem, (char *) &lowram, sizeof (lowram))
@@ -955,7 +955,7 @@ Vtophys(loc)
 	u_long	loc;
 {
 	off_t newloc = (off_t) -1;
-#if defined(hp300) || defined(amiga)
+#if defined(m68k)
 	int p, ste, pte;
 
 	ste = *(int *)&Sysseg[btos(loc)];
