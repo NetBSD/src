@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 1998/06/25 22:19:50 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.26 1998/09/26 16:24:14 drochner Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -164,7 +164,8 @@
 			    int flags); }
 102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); }
-103	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+103	STD			{ int ultrix_sys_sigreturn(struct sigcontext * \
+							sigcntxp); }
 104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	STD		{ int ultrix_sys_setsockopt(int s, int level, \
 			    int name, caddr_t val, int valsize); }
@@ -174,7 +175,7 @@
 			    struct sigvec *nsv, struct sigvec *osv); }
 109	NOARGS		{ int compat_43_sys_sigblock(int mask); }
 110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); }
-111	NOARGS		{ int sys_sigsuspend(int mask); }
+111	STD			{ int ultrix_sys_sigsuspend(int mask); }
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
