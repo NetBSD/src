@@ -7061,7 +7061,7 @@ elf_reloc_link_order (bfd *output_bfd,
   if (bed->s->arch_size == 32)
     irel[0].r_info = ELF32_R_INFO (indx, howto->type);
   else
-#ifdef BFD_HOST_64_BIT
+#ifdef BFD64
     {
       bfd_uint64_t indx64 = indx;
       irel[0].r_info = ELF64_R_INFO (indx64, howto->type);
