@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.40 2004/08/10 06:10:38 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.41 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.40 2004/08/10 06:10:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.41 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,11 +170,8 @@ sm_pcmcia_attach(parent, self, aux)
 	sc->sc_bsh = cfe->iospace[0].handle.ioh;
 
 	error = sm_pcmcia_enable(sc);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	sc->sc_enable = sm_pcmcia_enable;
 	sc->sc_disable = sm_pcmcia_disable;
@@ -270,11 +267,8 @@ sm_pcmcia_enable(sc)
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
 	    sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
+	if (!psc->sc_ih)
+		return (EIO);
 
 	error = pcmcia_function_enable(psc->sc_pf);
 	if (error)
