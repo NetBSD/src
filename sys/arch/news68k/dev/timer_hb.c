@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.8 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.9 2004/12/11 03:32:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.8 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.9 2004/12/11 03:32:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ extern void _isr_clock(void);	/* locore.s */
 CFATTACH_DECL(timer_hb, sizeof(struct device),
     timer_hb_match, timer_hb_attach, NULL, NULL);
 
-static volatile u_int8_t *ctrl_timer; /* XXX */
+static volatile uint8_t *ctrl_timer; /* XXX */
 
 extern volatile u_char *ctrl_led; /* XXX */
 
@@ -112,7 +112,7 @@ timer_hb_attach(struct device *parent, struct device *self, void *aux)
 	if (ha->ha_ipl != TIMER_LEVEL)
 		panic("clock_hb_attach: wrong interrupt level");
 
-	ctrl_timer = (u_int8_t *)IIOV(ha->ha_address); /* XXX needs bus_space */
+	ctrl_timer = (uint8_t *)IIOV(ha->ha_address); /* XXX needs bus_space */
 
 	printf("\n");
 
