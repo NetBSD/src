@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.1 2004/12/24 18:33:06 christos Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.2 2004/12/28 20:47:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, Ales Krenek
@@ -61,8 +61,8 @@ static int pms_synaptics_send_command(pckbport_tag_t, pckbport_slot_t, u_char);
 static void pms_synaptics_spawn_thread(void *);
 static void pms_synaptics_input(void *, int);
 static void pms_synaptics_thread(void *);
+static void pms_sysctl_synaptics(struct sysctllog **);
 static int pms_sysctl_synaptics_verify(SYSCTLFN_ARGS);
-static long sicnt,tppack,ptpack;
 
 /* Controled by sysctl. */
 static int synaptics_slow_limit = SYNAPTICS_SLOW_LIMIT;
@@ -86,6 +86,7 @@ pms_synaptics_probe_init(void *vsc)
 	u_char cmd[2], resp[3];
 	int res;
 	int ver_minor, ver_major;
+	struct sysctllog *clog = NULL;
 
 	res = pms_synaptics_send_command(sc->sc_kbctag, sc->sc_kbcslot,
 	    SYNAPTICS_IDENTIFY_TOUCHPAD);
@@ -169,6 +170,7 @@ pms_synaptics_probe_init(void *vsc)
 	}
 
 done:
+	pms_sysctl_synaptics(&clog);
 	syn_sc->buf_full = 0;
 	kthread_create(pms_synaptics_spawn_thread, sc);
 	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
@@ -209,7 +211,8 @@ pms_synaptics_resume(void *vsc)
 	    sc->sc_dev.dv_xname,res,resp[0],resp[1]);
 }
 
-SYSCTL_SETUP(pms_sysctl_synaptics, "sysctl synaptics subtree setup")
+static
+void pms_sysctl_synaptics(struct sysctllog **clog)
 {
 	int rc, root_num;
 	struct sysctlnode *node;
@@ -361,7 +364,6 @@ pms_synaptics_input(void *vsc, int data)
 	struct synaptics_softc	*syn_sc = &sc->u.synaptics;
 	int	s;
 
-	sicnt++;
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
@@ -390,13 +392,17 @@ pms_synaptics_input(void *vsc, int data)
 	switch (sc->inputstate) {
 		case 0:
 		if ((data & 0xc8) != 0x80) {
+#ifdef SYNAPTICSDEBUG
 			printf("pms_input: 0x%02x out of sync\n",data);
+#endif
 			return;	/* not in sync yet, discard input */
 		}
 		/* fallthrough */
 		case 3:
 		if ((data & 8) == 8) { 
+#ifdef SYNAPTICS_DEBUG
 			printf("pms_input: dropped in relative mode, reset\n");
+#endif
 			sc->inputstate = 0;
 			sc->sc_enabled = 0;
 			wakeup(&sc->sc_enabled);
@@ -427,8 +433,6 @@ pms_synaptics_input(void *vsc, int data)
 			wakeup(&syn_sc->buf_full);
 		}
 	}
-
-/*	if (sicnt % 500 == 0) printf("syninput: invocations %ld, tppack %ld, ptpack %ld\n",sicnt,tppack,ptpack); */
 }
 
 /* Masks for the first byte of a packet */
@@ -447,11 +451,11 @@ pms_synaptics_thread(void *va)
 	int newbuttons = 0;
 	int s;
 	int tap = 0, tapdrag = 0;
-	struct timeval	tap_start = { -1, 0 };
-	int	tap_x = -1, tap_y = -1, moving = 0;
+	struct timeval tap_start = { -1, 0 };
+	int tap_x = -1, tap_y = -1, moving = 0;
 	
 	for (;;) {
-		int	ret;
+		int ret;
 		tap = 0;
 		changed = 0;
 
@@ -459,7 +463,7 @@ pms_synaptics_thread(void *va)
 			struct timeval	tap_len;
 			do {
 				ret = tsleep(&syn_sc->buf_full, PWAIT, "tap",
-						synaptics_tap_length*hz/1000000);
+				    synaptics_tap_length * hz / 1000000);
 				/* XXX: should measure the time */
 			} while (ret != EWOULDBLOCK && !syn_sc->buf_full);
 
@@ -479,7 +483,6 @@ pms_synaptics_thread(void *va)
 			((syn_sc->buf[3] & 0xcc) == 0xc4))
 		{ 
 			/* pass through port */
-			ptpack++;
 			if (!syn_sc->enable_passthrough)
 				goto done;
 
@@ -497,14 +500,12 @@ pms_synaptics_thread(void *va)
 				((syn_sc->buf[0] & 0x30)>>2); */
 			int z = syn_sc->buf[2];
 
-		/* ???: seems to return somwhat random numbers :-(
+#ifdef notdef
 			if (sc->palm_detect && w > 10) {
 				z = 0;
 				printf("palm detect %d\n",w);
 			}
-		*/
-
-			tppack++;
+#endif
 
 			/* Basic button handling. */
 			left = (syn_sc->buf[0] & PMS_LBUTMASK);
@@ -556,17 +557,20 @@ pms_synaptics_thread(void *va)
 				if (z < SYNAPTICS_NOTOUCH) {
 					moving = 0;
 
-					timersub(&sc->current, &tap_start, &tap_len);
+					timersub(&sc->current, &tap_start,
+					    &tap_len);
 					dx = x-tap_x; dx *= dx;
 					dy = y-tap_y; dy *= dy;
 
 					if ((synaptics_tap_enable) &&
 						(tap_len.tv_sec == 0) &&
-						(tap_len.tv_usec < synaptics_tap_length) &&
-						(dx+dy < synaptics_tap_tolerance * synaptics_tap_tolerance)) {
+						(tap_len.tv_usec <
+						synaptics_tap_length) &&
+						(dx+dy <
+						synaptics_tap_tolerance *
+						synaptics_tap_tolerance)) {
 						tap = 1;
 					}
-/* 	printf("tap: %d %d %ld -> %d\n",dx,dy,tap_len.tv_usec,tap); */
 					tap_start.tv_sec = -1;
 					tap_x = tap_y = -1;
 
@@ -618,7 +622,6 @@ pms_synaptics_thread(void *va)
 				    sc->buttons | 1, 0,0,0,
 				    WSMOUSE_INPUT_DELTA);
 
-				/* printf("wsmouse_input: %d\n", sc->buttons | 1); */
 				tapdrag = 1;
 				tap_start = sc->current;
 			}
@@ -626,7 +629,6 @@ pms_synaptics_thread(void *va)
 			    sc->buttons | (tapdrag == 2 ? 1 : 0),
 			    dx, dy, dz,
 			    WSMOUSE_INPUT_DELTA);
-			/* printf("wsmouse_input: %d\n", sc->buttons); */
 		}
 
 done:
