@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.11 1995/04/13 06:30:32 cgd Exp $	*/
+/*	$NetBSD: in_var.h,v 1.12 1995/05/31 06:08:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -115,6 +115,16 @@ void	in_socktrim __P((struct sockaddr_in *));
 #endif
 
 /*
+ * Per-interface router version information.
+ */
+struct router_info {
+	struct	ifnet *rti_ifp;
+	int	rti_type;	/* type of router on this interface */
+	int	rti_age;	/* time since last v1 query */
+	struct	router_info *rti_next;
+};
+
+/*
  * Internet multicast address structure.  There is one of these for each IP
  * multicast group to which this host belongs on a given network interface.
  * They are kept in a linked list, rooted in the interface's in_ifaddr
@@ -127,6 +137,8 @@ struct in_multi {
 	u_int	inm_refcount;		/* no. membership claims by sockets */
 	u_int	inm_timer;		/* IGMP membership report timer */
 	struct	in_multi *inm_next;	/* ptr to next multicast address */
+	u_int	inm_state;		/* state of membership */
+	struct	router_info *inm_rti;	/* router version info */
 };
 
 #ifdef _KERNEL

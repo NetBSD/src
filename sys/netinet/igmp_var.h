@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.7 1995/03/26 20:32:22 jtc Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.8 1995/05/31 06:08:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -44,8 +44,10 @@
  * implementation-specific definitions.
  *
  * Written by Steve Deering, Stanford, May 1988.
+ * Modified by Rosen Sharma, Stanford, Aug 1994.
+ * Modified by Bill Fenner, Xerox PARC, Feb 1995.
  *
- * MULTICAST 1.1
+ * MULTICAST 1.3
  */
 
 struct igmpstat {
@@ -68,13 +70,12 @@ struct igmpstat igmpstat;
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define	IGMP_RANDOM_DELAY(multiaddr)					\
-	/* struct in_addr multiaddr; */					\
-	(random() % (IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ) + 1)
+#define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
 
 void	igmp_init __P((void));
 void	igmp_input __P((struct mbuf *, int));
 void	igmp_joingroup __P((struct in_multi *));
 void	igmp_leavegroup __P((struct in_multi *));
 void	igmp_fasttimo __P((void));
+void	igmp_slowtimo __P((void));
 #endif
