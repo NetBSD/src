@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.40 2002/05/09 12:28:09 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41 2002/05/10 15:25:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -427,16 +427,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
