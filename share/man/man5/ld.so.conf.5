@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.so.conf.5,v 1.1 1997/01/05 11:50:15 mrg Exp $
+.\"	$NetBSD: ld.so.conf.5,v 1.2 1997/01/05 12:10:10 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -48,6 +48,11 @@ is treated as a directory to be added to the hints.
 .Sh FILES
 .Xr ldconfig 8
 .Pa /etc/ld.so.conf
+.Sh BUGS
+The
+.Nm
+file should allow comments with # symbol, but the current implmentation
+does now allow this.
 .Sh HISTORY
 The
 .Nm
