@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.24 1999/01/08 19:26:14 augustss Exp $
+#	$NetBSD: Makefile.pica,v 1.25 1999/01/15 23:37:07 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -46,14 +46,14 @@ MIPS=	$S/arch/mips
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dpica -D__NetBSD__ ${GP}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpica
 CWARNFLAGS?=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
+		-mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext 80080000  -e start ${GP}
 STRIPFLAGS=	-g -X -x

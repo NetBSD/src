@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.10 1999/01/08 19:26:12 augustss Exp $
+#	$NetBSD: Makefile.bebox,v 1.11 1999/01/15 23:37:06 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -45,8 +45,7 @@ POWERPC= $S/arch/powerpc
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dbebox
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dbebox
 CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
