@@ -3419,7 +3419,7 @@ fold_truthop (code, truth_type, lhs, rhs)
   tree ll_mask, lr_mask, rl_mask, rr_mask;
   tree ll_and_mask, lr_and_mask, rl_and_mask, rr_and_mask;
   tree l_const, r_const;
-  tree type, result;
+  tree lntype, rntype, result;
   int first_bit, end_bit;
   int volatilep;
 
@@ -3557,7 +3557,7 @@ fold_truthop (code, truth_type, lhs, rhs)
 
   lnbitsize = GET_MODE_BITSIZE (lnmode);
   lnbitpos = first_bit & ~ (lnbitsize - 1);
-  type = type_for_size (lnbitsize, 1);
+  lntype = type_for_size (lnbitsize, 1);
   xll_bitpos = ll_bitpos - lnbitpos, xrl_bitpos = rl_bitpos - lnbitpos;
 
   if (BYTES_BIG_ENDIAN)
@@ -3566,19 +3566,19 @@ fold_truthop (code, truth_type, lhs, rhs)
       xrl_bitpos = lnbitsize - xrl_bitpos - rl_bitsize;
     }
 
-  ll_mask = const_binop (LSHIFT_EXPR, convert (type, ll_mask),
+  ll_mask = const_binop (LSHIFT_EXPR, convert (lntype, ll_mask),
 			 size_int (xll_bitpos), 0);
-  rl_mask = const_binop (LSHIFT_EXPR, convert (type, rl_mask),
+  rl_mask = const_binop (LSHIFT_EXPR, convert (lntype, rl_mask),
 			 size_int (xrl_bitpos), 0);
 
   if (l_const)
     {
-      l_const = convert (type, l_const);
+      l_const = convert (lntype, l_const);
       l_const = unextend (l_const,  ll_bitsize, ll_unsignedp, ll_and_mask);
       l_const = const_binop (LSHIFT_EXPR, l_const, size_int (xll_bitpos), 0);
       if (! integer_zerop (const_binop (BIT_AND_EXPR, l_const,
 					fold (build1 (BIT_NOT_EXPR,
-						      type, ll_mask)),
+						      lntype, ll_mask)),
 					0)))
 	{
 	  warning ("comparison is always %s",
@@ -3591,12 +3591,12 @@ fold_truthop (code, truth_type, lhs, rhs)
     }
   if (r_const)
     {
-      r_const = convert (type, r_const);
+      r_const = convert (lntype, r_const);
       r_const = unextend (r_const, rl_bitsize, rl_unsignedp, rl_and_mask);
       r_const = const_binop (LSHIFT_EXPR, r_const, size_int (xrl_bitpos), 0);
       if (! integer_zerop (const_binop (BIT_AND_EXPR, r_const,
 					fold (build1 (BIT_NOT_EXPR,
-						      type, rl_mask)),
+						      lntype, rl_mask)),
 					0)))
 	{
 	  warning ("comparison is always %s",
@@ -3630,6 +3630,7 @@ fold_truthop (code, truth_type, lhs, rhs)
 
       rnbitsize = GET_MODE_BITSIZE (rnmode);
       rnbitpos = first_bit & ~ (rnbitsize - 1);
+      rntype = type_for_size (rnbitsize, 1);
       xlr_bitpos = lr_bitpos - rnbitpos, xrr_bitpos = rr_bitpos - rnbitpos;
 
       if (BYTES_BIG_ENDIAN)
@@ -3638,9 +3639,9 @@ fold_truthop (code, truth_type, lhs, rhs)
 	  xrr_bitpos = rnbitsize - xrr_bitpos - rr_bitsize;
 	}
 
-      lr_mask = const_binop (LSHIFT_EXPR, convert (type, lr_mask),
+      lr_mask = const_binop (LSHIFT_EXPR, convert (rntype, lr_mask),
 			     size_int (xlr_bitpos), 0);
-      rr_mask = const_binop (LSHIFT_EXPR, convert (type, rr_mask),
+      rr_mask = const_binop (LSHIFT_EXPR, convert (rntype, rr_mask),
 			     size_int (xrr_bitpos), 0);
 
       /* Make a mask that corresponds to both fields being compared.
@@ -3653,15 +3654,15 @@ fold_truthop (code, truth_type, lhs, rhs)
 	 the bitfield extraction, rather than shifting.  */
       if (lnbitsize == rnbitsize && xll_bitpos == xlr_bitpos)
 	{
-	  lhs = make_bit_field_ref (ll_inner, type, lnbitsize, lnbitpos,
+	  lhs = make_bit_field_ref (ll_inner, lntype, lnbitsize, lnbitpos,
 				    ll_unsignedp || rl_unsignedp);
 	  if (! all_ones_mask_p (ll_mask, lnbitsize))
-	    lhs = build (BIT_AND_EXPR, type, lhs, ll_mask);
+	    lhs = build (BIT_AND_EXPR, lntype, lhs, ll_mask);
 
-	  rhs = make_bit_field_ref (lr_inner, type, rnbitsize, rnbitpos,
+	  rhs = make_bit_field_ref (lr_inner, rntype, rnbitsize, rnbitpos,
 				    lr_unsignedp || rr_unsignedp);
 	  if (! all_ones_mask_p (lr_mask, rnbitsize))
-	    rhs = build (BIT_AND_EXPR, type, rhs, lr_mask);
+	    rhs = build (BIT_AND_EXPR, rntype, rhs, lr_mask);
 
 	  return build (wanted_code, truth_type, lhs, rhs);
 	}
@@ -3674,17 +3675,37 @@ fold_truthop (code, truth_type, lhs, rhs)
 	  || (ll_bitpos == rl_bitpos + rl_bitsize
 	      && lr_bitpos == rr_bitpos + rr_bitsize))
 	{
-	  lhs = make_bit_field_ref (ll_inner, type, ll_bitsize + rl_bitsize,
+	  tree type;
+
+	  lhs = make_bit_field_ref (ll_inner, lntype, ll_bitsize + rl_bitsize,
 				    MIN (ll_bitpos, rl_bitpos), ll_unsignedp);
+	  rhs = make_bit_field_ref (lr_inner, rntype, lr_bitsize + rr_bitsize,
+				    MIN (lr_bitpos, rr_bitpos), lr_unsignedp);
+
 	  ll_mask = const_binop (RSHIFT_EXPR, ll_mask,
 				 size_int (MIN (xll_bitpos, xrl_bitpos)), 0);
-	  if (! all_ones_mask_p (ll_mask, ll_bitsize + rl_bitsize))
-	    lhs = build (BIT_AND_EXPR, type, lhs, ll_mask);
-
-	  rhs = make_bit_field_ref (lr_inner, type, lr_bitsize + rr_bitsize,
-				    MIN (lr_bitpos, rr_bitpos), lr_unsignedp);
 	  lr_mask = const_binop (RSHIFT_EXPR, lr_mask,
 				 size_int (MIN (xlr_bitpos, xrr_bitpos)), 0);
+
+	  type = lntype;
+	  if (lntype != rntype)
+	    {
+	      if (lnbitsize > rnbitsize)
+		{
+		  lhs = convert (rntype, lhs);
+		  ll_mask = convert (rntype, ll_mask);
+		  type = rntype;
+		}
+	      else if (lnbitsize < rnbitsize)
+		{
+		  rhs = convert (lntype, rhs);
+		  lr_mask = convert (lntype, lr_mask);
+		  type = lntype;
+		}
+	    }
+
+	  if (! all_ones_mask_p (ll_mask, ll_bitsize + rl_bitsize))
+	    lhs = build (BIT_AND_EXPR, type, lhs, ll_mask);
 	  if (! all_ones_mask_p (lr_mask, lr_bitsize + rr_bitsize))
 	    rhs = build (BIT_AND_EXPR, type, rhs, lr_mask);
 
@@ -3719,12 +3740,12 @@ fold_truthop (code, truth_type, lhs, rhs)
      reference we will make.  Unless the mask is all ones the width of
      that field, perform the mask operation.  Then compare with the
      merged constant.  */
-  result = make_bit_field_ref (ll_inner, type, lnbitsize, lnbitpos,
+  result = make_bit_field_ref (ll_inner, lntype, lnbitsize, lnbitpos,
 			       ll_unsignedp || rl_unsignedp);
 
   ll_mask = const_binop (BIT_IOR_EXPR, ll_mask, rl_mask, 0);
   if (! all_ones_mask_p (ll_mask, lnbitsize))
-    result = build (BIT_AND_EXPR, type, result, ll_mask);
+    result = build (BIT_AND_EXPR, lntype, result, ll_mask);
 
   return build (wanted_code, truth_type, result,
 		const_binop (BIT_IOR_EXPR, l_const, r_const, 0));
