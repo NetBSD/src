@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 1996/05/29 01:58:09 mrg Exp $ */
+/*	$NetBSD: zs.c,v 1.40 1996/05/29 21:45:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,7 +288,6 @@ zsattach(parent, dev, aux)
 	sc->sc_zs = addr;
 	unit = zs * 2;
 	cs = sc->sc_cs;
-	cs->cs_ttyp = tp = ttymalloc();
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
@@ -300,9 +299,8 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
-	tp->t_dev = makedev(ZSMAJOR, unit);
 	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
-		cs->cs_ttyp = tp = ctp;
+		tp = ctp;
 	else {
 		tp = ttymalloc();
 		tp->t_dev = makedev(ZSMAJOR, unit);
@@ -328,10 +326,12 @@ zsattach(parent, dev, aux)
 			tty_attach(tp);
 		ringsize = 4096;
 	}
+	cs->cs_ringmask = ringsize - 1;
+	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
+			      M_DEVBUF, M_NOWAIT);
 
 	unit++;
 	cs++;
-	cs->cs_ttyp = tp = ttymalloc();
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
