@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1 1996/06/17 04:14:16 oki Exp $
+#	$NetBSD: list,v 1.2 1996/08/30 20:04:02 thorpej Exp $
 
 # copy the kernel
 COPY	${CURDIR}/../../../../sys/arch/x68k/compile/GENERIC/netbsd	netbsd

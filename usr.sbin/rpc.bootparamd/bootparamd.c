@@ -1,3 +1,5 @@
+/*	$NetBSD: bootparamd.c,v 1.7 1996/08/30 20:10:26 thorpej Exp $	*/
+
 /*
  * This code is not copyright, and is placed in the public domain.
  * Feel free to use and modify. Please send modifications and/or
@@ -5,8 +7,6 @@
  *
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
- *
- * $Id: bootparamd.c,v 1.6 1996/03/30 23:53:51 mark Exp $
  */
 
 #include <sys/types.h>

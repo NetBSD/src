@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1996/04/08 21:08:07 jtc Exp $
+#	$NetBSD: Makefile,v 1.4 1996/08/30 20:12:17 thorpej Exp $
 
 PROG=	spray
 MAN=	spray.8

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1996/08/11 15:38:43 oki Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1996/08/30 20:03:56 thorpej Exp $
 
 # Revision is 1.2
 # all these private copies of the version number really lose.

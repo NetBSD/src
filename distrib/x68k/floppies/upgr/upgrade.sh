@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: upgrade.sh,v 1.3 1996/08/30 20:04:18 thorpej Exp $
+#
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 #
@@ -28,7 +30,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.2 1996/07/08 19:33:40 oki Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable

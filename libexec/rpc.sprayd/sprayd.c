@@ -1,3 +1,5 @@
+/*	$NetBSD: sprayd.c,v 1.8 1996/08/30 20:13:42 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -26,12 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: sprayd.c,v 1.7 1995/03/26 23:36:44 mycroft Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.7 1995/03/26 23:36:44 mycroft Exp $";
+static char rcsid[] = "$NetBSD: sprayd.c,v 1.8 1996/08/30 20:13:42 thorpej Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
