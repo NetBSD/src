@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscall.h,v 1.5 2003/01/18 23:41:13 thorpej Exp $ */
+/* $NetBSD: pecoff_syscall.h,v 1.6 2003/04/08 10:58:55 oki Exp $ */
 
 /*
  * System call numbers.
@@ -535,6 +535,21 @@
 /* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct timespec *" */
 #define	PECOFF_SYS_clock_getres	234
 
+/* syscall: "timer_create" ret: "int" args: "clockid_t" "struct sigevent *" "timer_t *" */
+#define	PECOFF_SYS_timer_create	235
+
+/* syscall: "timer_delete" ret: "int" args: "timer_t" */
+#define	PECOFF_SYS_timer_delete	236
+
+/* syscall: "timer_settime" ret: "int" args: "timer_t" "int" "const struct itimerspec *" "struct itimerspec *" */
+#define	PECOFF_SYS_timer_settime	237
+
+/* syscall: "timer_gettime" ret: "int" args: "timer_t" "struct itimerspec *" */
+#define	PECOFF_SYS_timer_gettime	238
+
+/* syscall: "timer_getoverrun" ret: "int" args: "timer_t" */
+#define	PECOFF_SYS_timer_getoverrun	239
+
 /* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
 #define	PECOFF_SYS_nanosleep	240
 
@@ -547,6 +562,45 @@
 /* syscall: "munlockall" ret: "int" args: */
 #define	PECOFF_SYS_munlockall	243
 
+/* syscall: "__sigtimedwait" ret: "int" args: "const sigset_t *" "siginfo_t *" "struct timespec *" */
+#define	PECOFF_SYS___sigtimedwait	244
+
+/* syscall: "_ksem_init" ret: "int" args: "unsigned int" "semid_t *" */
+#define	PECOFF_SYS__ksem_init	247
+
+/* syscall: "_ksem_open" ret: "int" args: "const char *" "int" "mode_t" "unsigned int" "semid_t *" */
+#define	PECOFF_SYS__ksem_open	248
+
+/* syscall: "_ksem_unlink" ret: "int" args: "const char *" */
+#define	PECOFF_SYS__ksem_unlink	249
+
+/* syscall: "_ksem_close" ret: "int" args: "semid_t" */
+#define	PECOFF_SYS__ksem_close	250
+
+/* syscall: "_ksem_post" ret: "int" args: "semid_t" */
+#define	PECOFF_SYS__ksem_post	251
+
+/* syscall: "_ksem_wait" ret: "int" args: "semid_t" */
+#define	PECOFF_SYS__ksem_wait	252
+
+/* syscall: "_ksem_trywait" ret: "int" args: "semid_t" */
+#define	PECOFF_SYS__ksem_trywait	253
+
+/* syscall: "_ksem_getvalue" ret: "int" args: "semid_t" "unsigned int *" */
+#define	PECOFF_SYS__ksem_getvalue	254
+
+/* syscall: "_ksem_destroy" ret: "int" args: "semid_t" */
+#define	PECOFF_SYS__ksem_destroy	255
+
+				/* 247 is excluded sys__ksem_init */
+				/* 248 is excluded sys__ksem_open */
+				/* 249 is excluded sys__ksem_unlink */
+				/* 250 is excluded sys__ksem_close */
+				/* 251 is excluded sys__ksem_post */
+				/* 252 is excluded sys__ksem_wait */
+				/* 253 is excluded sys__ksem_trywait */
+				/* 254 is excluded sys__ksem_getvalue */
+				/* 255 is excluded sys__ksem_destroy */
 /* syscall: "__posix_rename" ret: "int" args: "const char *" "const char *" */
 #define	PECOFF_SYS___posix_rename	270
 
@@ -662,5 +716,74 @@
 /* syscall: "utrace" ret: "int" args: "const char *" "void *" "size_t" */
 #define	PECOFF_SYS_utrace	306
 
-#define	PECOFF_SYS_MAXSYSCALL	340
+/* syscall: "getcontext" ret: "int" args: "struct __ucontext *" */
+#define	PECOFF_SYS_getcontext	307
+
+/* syscall: "setcontext" ret: "int" args: "const struct __ucontext *" */
+#define	PECOFF_SYS_setcontext	308
+
+/* syscall: "_lwp_create" ret: "int" args: "const struct __ucontext *" "u_long" "lwpid_t *" */
+#define	PECOFF_SYS__lwp_create	309
+
+/* syscall: "_lwp_exit" ret: "int" args: */
+#define	PECOFF_SYS__lwp_exit	310
+
+/* syscall: "_lwp_self" ret: "lwpid_t" args: */
+#define	PECOFF_SYS__lwp_self	311
+
+/* syscall: "_lwp_wait" ret: "int" args: "lwpid_t" "lwpid_t *" */
+#define	PECOFF_SYS__lwp_wait	312
+
+/* syscall: "_lwp_suspend" ret: "int" args: "lwpid_t" */
+#define	PECOFF_SYS__lwp_suspend	313
+
+/* syscall: "_lwp_continue" ret: "int" args: "lwpid_t" */
+#define	PECOFF_SYS__lwp_continue	314
+
+/* syscall: "_lwp_wakeup" ret: "int" args: "lwpid_t" */
+#define	PECOFF_SYS__lwp_wakeup	315
+
+/* syscall: "_lwp_getprivate" ret: "void *" args: */
+#define	PECOFF_SYS__lwp_getprivate	316
+
+/* syscall: "_lwp_setprivate" ret: "void" args: "void *" */
+#define	PECOFF_SYS__lwp_setprivate	317
+
+/* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" */
+#define	PECOFF_SYS_sa_register	330
+
+/* syscall: "sa_stacks" ret: "int" args: "int" "stack_t *" */
+#define	PECOFF_SYS_sa_stacks	331
+
+/* syscall: "sa_enable" ret: "int" args: */
+#define	PECOFF_SYS_sa_enable	332
+
+/* syscall: "sa_setconcurrency" ret: "int" args: "int" */
+#define	PECOFF_SYS_sa_setconcurrency	333
+
+/* syscall: "sa_yield" ret: "int" args: */
+#define	PECOFF_SYS_sa_yield	334
+
+/* syscall: "sa_preempt" ret: "int" args: "int" */
+#define	PECOFF_SYS_sa_preempt	335
+
+/* syscall: "__sigaction_sigtramp" ret: "int" args: "int" "const struct sigaction *" "struct sigaction *" "void *" "int" */
+#define	PECOFF_SYS___sigaction_sigtramp	340
+
+/* syscall: "pmc_get_info" ret: "int" args: "int" "int" "void *" */
+#define	PECOFF_SYS_pmc_get_info	341
+
+/* syscall: "pmc_control" ret: "int" args: "int" "int" "void *" */
+#define	PECOFF_SYS_pmc_control	342
+
+/* syscall: "rasctl" ret: "int" args: "caddr_t" "size_t" "int" */
+#define	PECOFF_SYS_rasctl	343
+
+/* syscall: "kqueue" ret: "int" args: */
+#define	PECOFF_SYS_kqueue	344
+
+/* syscall: "kevent" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
+#define	PECOFF_SYS_kevent	345
+
+#define	PECOFF_SYS_MAXSYSCALL	354
 #define	PECOFF_SYS_NSYSENT	512
