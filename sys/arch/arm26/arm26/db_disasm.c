@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 2000/05/25 19:57:32 jhawk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 2000/06/28 15:18:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2000/06/28 15:18:16 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -52,8 +52,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
-
-static int nil;
 
 int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
@@ -222,6 +220,7 @@ struct db_command arm26_db_command_table[] = {
 	{ NULL, 	NULL, 			0, NULL }
 };
 
+#if 0 /* unused? */
 int
 db_trapper(addr, inst, frame, fault_code)
 	u_int		addr;
@@ -238,6 +237,7 @@ db_trapper(addr, inst, frame, fault_code)
 		return 1;
 	return 0;
 }
+#endif
 
 extern u_int esym;
 extern u_int end;
