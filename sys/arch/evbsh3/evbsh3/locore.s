@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17.2.1 2000/08/08 19:05:51 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.17.2.2 2000/08/12 19:06:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -51,7 +51,7 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 
-#define INIT_STACK	IOM_RAM_BEGIN + 0x003ff000
+#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
 
 #ifdef SH4
 #define SHREG_EXPEVT	0xff000024
@@ -398,7 +398,9 @@ main_label:
 		.align	2
 
 	.globl	_C_LABEL(ram_start)
+#ifndef	DONT_INIT_BSC
 XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
+#endif
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
