@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 1996, 1997 Jonathan Stone.
+.\" Copyright (c) 1997 Jonathan Stone.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,42 +27,60 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: tc.4,v 1.3 1997/11/08 07:27:55 jonathan Exp $
+.\"	$NetBSD: px.4,v 1.1 1997/11/08 07:27:56 jonathan Exp $
 .\"
-.Dd August 6, 1996
-.Dt TC 4 pmax
-.Os NetBSD 1.2
+.Dd November 11, 1997
+.Dt PX 4 pmax
+.Os NetBSD 1.3
 .Sh NAME
-.Nm tc
+.Nm px
 .Nd
-turbochannel SCSI adaptor
+TURBOChannel PMAG-C   2-D accelerated graphics board
 .Sh SYNOPSIS
-.Cd "tc? at mainbus"
+.Cd "px* at tc?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provies support for the DEC TURBOchannel expansion
-bus on Decstation 5000 series machines. Turbochannel is a 32-bit wide
-synchronous DMA-capable bus, running at 25 Mhz on higher-end machines
-and at 12.5MHz on lower-end machines.
+driver provides minimal support for a
+.Tn DEC
+.Tn PMAG-C
+video display option card.
+The
+.Nm
+driver does nothing except remove the requirement to remove
+.Tn PMAG-C 
+cards in order to boot
+.Nx . 
+It offers no support for either raster consoles
+or X11 servers.
+To do either requires using the undocumented packet 
+protocol used to talk to the on-board blitter chip.
+.Pp
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr asc 4 ,
-.Xr ioasic 4 ,
-.Xr le 4 ,
-.Xr cfb 4 ,
-.Xr sfb 4 ,
-.Xr mfb 4 ,
-.Xr px 4 .
+.Xr rcons 4 ,
+.Xr tc 4 ,
+.Xr ws 4 .
+.Sh BUGS
+.Pp
+Console output support and X11 server support should be implemented.
+They are not.
+.Pp
+The
+.Nm rcons
+glass-tty raster framebuffer console driver assumes
+direct bit read/write access to a framebuffer. The
+.Nm
+hardware does not provide this.
+.Nm rcons 
+should be replaced with a driver that allows a character-painting
+interface as well as direct blitting.
+.Pp
+The only known X
+server is an Ultrix binary which requires emulation of the Ultrix Xws
+ABI. Work on this is in progress.
 .Sh HISTORY
 The
 .Nm
-driver
+driver 
 first appeared in
-.Nx 1.1 .
-.Sh BUGS
-.Pp
-The
-.Nm
-driver makes poor use of interrupt priority on the 5000/1xx
-series.
+.Nx 1.3 .
