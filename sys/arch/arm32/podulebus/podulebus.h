@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.7 1997/01/03 23:27:31 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.8 1997/01/17 01:04:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,6 +42,7 @@
  */
 
 #include <sys/param.h>
+#include <machine/bus.h>
 
 /* Define the structures used to describe the "known" podules */
 
@@ -107,6 +108,7 @@ struct podule_attach_args {
 	podule_t *pa_podule;		/* podule descriptor */
 	int pa_podule_number;		/* podule number */
 	int pa_slottype;		/* podule slot type */
+	bus_space_tag_t pa_iot;		/* bus space tag */
 };
 
 /* Useful macros */
