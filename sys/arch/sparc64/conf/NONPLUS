@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.47 2005/02/25 13:46:51 simonb Exp $
+# 	$NetBSD: NONPLUS,v 1.48 2005/02/25 19:16:45 martin Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -16,14 +16,6 @@ options 	SUN4U		# sun4u - UltraSPARC
 options 	__ELF__		# we use elf
 #options 	__SWAP_BROKEN
 makeoptions	SPARC_BINARIES=1
-
-## System options specific to the sparc machine type
-
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
