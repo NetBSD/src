@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.4 1996/05/03 21:43:44 cgd Exp $
+#	$NetBSD: README,v 1.5 1999/02/16 17:59:18 kleink Exp $
 #	@(#)README	8.1 (Berkeley) 6/4/93
 
 This package implements a superset of the hsearch and dbm/ndbm libraries.
@@ -44,10 +44,6 @@ Test Programs:
 		correct.
 
 NOTES:
-
-The file search.h is provided for using the hsearch compatible interface
-on BSD systems.  On System V derived systems, search.h should appear in 
-/usr/include.
 
 The man page ../man/db.3 explains the interface to the hashing system.
 The file hash.ps is a postscript copy of a paper explaining
