@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.16 2000/02/04 14:34:27 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.17 2000/02/06 12:49:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,11 +61,11 @@
 #include <netinet/if_inarp.h>
 #include <net/if_fddi.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include "loop.h"
 extern struct ifnet loif[NLOOP];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.9 2000/01/31 14:19:06 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.10 2000/02/06 12:49:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
 #include "opt_inet.h"
 #endif
 
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 
 #ifdef _KERNEL

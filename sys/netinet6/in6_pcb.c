@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.18 2000/02/03 13:17:39 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.19 2000/02/06 12:49:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -86,7 +86,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>

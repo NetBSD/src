@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.12 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.13 2000/02/06 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,9 +88,9 @@
 #ifndef TCP6
 #include <netinet/in_pcb.h>
 #endif
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/in6_pcb.h>
 
 #ifndef TCP6

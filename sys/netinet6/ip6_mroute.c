@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.9 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.10 2000/02/06 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -72,7 +72,7 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/pim6.h>

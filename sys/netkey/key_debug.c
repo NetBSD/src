@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.8 2000/01/31 14:19:12 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.9 2000/02/06 12:49:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,7 +49,6 @@
 #include <netkey/key_debug.h>
 
 #include <netinet/in.h>
-#include <netinet6/in6.h>
 #include <netinet6/ipsec.h>
 
 #ifndef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.15 2000/02/04 08:54:04 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.16 2000/02/06 12:49:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
 #include <net/if_ether.h>
 
 #include <netinet6/nd6.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/mld6_var.h>
 #include <netinet6/ip6_mroute.h>

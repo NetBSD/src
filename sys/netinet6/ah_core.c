@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.15 2000/01/31 14:19:01 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.16 2000/02/06 12:49:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,9 +64,9 @@
 #include <netinet/in_var.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 #endif
 
 #include <netinet6/ipsec.h>
@@ -74,7 +74,7 @@
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>
 #endif
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #ifdef HAVE_MD5
 #include <sys/md5.h>
@@ -130,7 +130,7 @@ static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 static void ah_hmac_sha1_result __P((struct ah_algorithm_state *, caddr_t));
 
 /* checksum algorithms */
-/* NOTE: The order depends on SADB_AALG_x in netkey/keyv2.h */
+/* NOTE: The order depends on SADB_AALG_x in net/pfkeyv2.h.h */
 struct ah_algorithm ah_algorithms[] = {
 	{ 0, 0, 0, 0, 0, 0, },
 	{ ah_sumsiz_1216, ah_hmac_md5_mature, 128, 128,

@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.1 2000/01/31 14:19:13 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.2 2000/02/06 12:49:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,7 +48,7 @@
 
 #include <netinet/in.h>
 
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netinet6/ipsec.h>
 

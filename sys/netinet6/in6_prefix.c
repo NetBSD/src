@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.7 2000/02/04 14:34:25 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.8 2000/02/06 12:49:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/in6_prefix.h>
 #include <netinet6/ip6_var.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.12 2000/01/31 14:19:09 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.13 2000/02/06 12:49:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
 #include <netinet/in_var.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
@@ -80,7 +80,7 @@
 #endif
 #endif /* INET6 */
 
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key.h>
 #include <netkey/keysock.h>
@@ -2975,7 +2975,6 @@ key_ismyaddr(family, addr)
  * 0: other
  * NOTE: derived ip6_input() in KAME. This is necessary to modify more.
  */
-#include <netinet6/in6.h>
 #include <netinet6/in6_var.h>
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.9 2000/01/06 15:46:07 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.10 2000/02/06 12:49:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,7 +74,7 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #include "bpfilter.h"

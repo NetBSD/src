@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.8 2000/01/31 14:19:05 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.9 2000/02/06 12:49:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
