@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.122 2002/07/13 17:04:09 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.123 2002/07/13 17:24:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.122 2002/07/13 17:04:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.123 2002/07/13 17:24:41 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -787,6 +787,7 @@ raidioctl(dev, cmd, data, flag, p)
 	int retcode = 0;
 	int row;
 	int column;
+	int raidid;
 	struct rf_recon_req *rrcopy, *rr;
 	RF_ComponentLabel_t *clabel;
 	RF_ComponentLabel_t ci_label;
@@ -1035,16 +1036,17 @@ raidioctl(dev, cmd, data, flag, p)
 		   trying to patch things.
 		   */
 
-		printf("Got component label:\n");
-		printf("Version: %d\n",clabel->version);
-		printf("Serial Number: %d\n",clabel->serial_number);
-		printf("Mod counter: %d\n",clabel->mod_counter);
-		printf("Row: %d\n", clabel->row);
-		printf("Column: %d\n", clabel->column);
-		printf("Num Rows: %d\n", clabel->num_rows);
-		printf("Num Columns: %d\n", clabel->num_columns);
-		printf("Clean: %d\n", clabel->clean);
-		printf("Status: %d\n", clabel->status);
+		raidid = raidPtr->raidid;
+		printf("raid%d: Got component label:\n", raidid);
+		printf("raid%d: Version: %d\n", raidid, clabel->version);
+		printf("raid%d: Serial Number: %d\n", raidid, clabel->serial_number);
+		printf("raid%d: Mod counter: %d\n", raidid, clabel->mod_counter);
+		printf("raid%d: Row: %d\n", raidid, clabel->row);
+		printf("raid%d: Column: %d\n", raidid, clabel->column);
+		printf("raid%d: Num Rows: %d\n", raidid, clabel->num_rows);
+		printf("raid%d: Num Columns: %d\n", raidid, clabel->num_columns);
+		printf("raid%d: Clean: %d\n", raidid, clabel->clean);
+		printf("raid%d: Status: %d\n", raidid, clabel->status);
 
 		row = clabel->row;
 		column = clabel->column;
@@ -1098,13 +1100,15 @@ raidioctl(dev, cmd, data, flag, p)
 		return (retcode);
 	case RAIDFRAME_SET_AUTOCONFIG:
 		d = rf_set_autoconfig(raidPtr, *(int *) data);
-		printf("New autoconfig value is: %d\n", d);
+		printf("raid%d: New autoconfig value is: %d\n", 
+		       raidPtr->raidid, d);
 		*(int *) data = d;
 		return (retcode);
 
 	case RAIDFRAME_SET_ROOT:
 		d = rf_set_rootpartition(raidPtr, *(int *) data);
-		printf("New rootpartition value is: %d\n", d);
+		printf("raid%d: New rootpartition value is: %d\n", 
+		       raidPtr->raidid, d);
 		*(int *) data = d;
 		return (retcode);
 
@@ -1168,7 +1172,8 @@ raidioctl(dev, cmd, data, flag, p)
 			sizeof(RF_SingleComponent_t));
 		row = component.row;
 		column = component.column;
-		printf("Rebuild: %d %d\n",row, column);
+		printf("raid%d: Rebuild: %d %d\n", raidPtr->raidid, 
+		       row, column);
 		if ((row < 0) || (row >= raidPtr->numRow) ||
 		    (column < 0) || (column >= raidPtr->numCol)) {
 			return(EINVAL);
@@ -2057,16 +2062,16 @@ raidgetdisklabel(dev)
 		 * if that is found.
 		 */
 		if (lp->d_secperunit != rs->sc_size)
-			printf("WARNING: %s: "
+			printf("raid%d: WARNING: %s: "
 			    "total sector size in disklabel (%d) != "
-			    "the size of raid (%ld)\n", rs->sc_xname,
+			    "the size of raid (%ld)\n", unit, rs->sc_xname,
 			    lp->d_secperunit, (long) rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
-				printf("WARNING: %s: end of partition `%c' "
-				    "exceeds the size of raid (%ld)\n",
-				    rs->sc_xname, 'a' + i, (long) rs->sc_size);
+				printf("raid%d: WARNING: %s: end of partition `%c' "
+				       "exceeds the size of raid (%ld)\n", 
+				       unit, rs->sc_xname, 'a' + i, (long) rs->sc_size);
 		}
 	}
 
@@ -2112,7 +2117,7 @@ raidlookup(path, p, vpp)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
-#ifdef DEBUG
+#if 0
 		printf("RAIDframe: vn_open returned %d\n", error);
 #endif
 		return (error);
@@ -2508,7 +2513,9 @@ rf_close_component(raidPtr, vp, auto_configured)
 			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		}
 	} else {
+#if 0
 		printf("vnode was NULL\n");
+#endif
 	}
 }
 
@@ -2529,7 +2536,10 @@ rf_UnconfigureVnodes(raidPtr)
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
-			printf("Closing vnode for row: %d col: %d\n", r, c);
+#if 0
+			printf("raid%d: Closing vnode for row: %d col: %d\n", 
+			       raidPtr->raidid, r, c);
+#endif
 			vp = raidPtr->raid_cinfo[r][c].ci_vp;
 			acd = raidPtr->Disks[r][c].auto_configured;
 			rf_close_component(raidPtr, vp, acd);
@@ -2538,7 +2548,10 @@ rf_UnconfigureVnodes(raidPtr)
 		}
 	}
 	for (r = 0; r < raidPtr->numSpare; r++) {
-		printf("Closing vnode for spare: %d\n", r);
+#if 0
+		printf("raid%d: Closing vnode for spare: %d\n", 
+		       raidPtr->raidid, r);
+#endif
 		vp = raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp;
 		acd = raidPtr->Disks[0][raidPtr->numCol + r].auto_configured;
 		rf_close_component(raidPtr, vp, acd);
