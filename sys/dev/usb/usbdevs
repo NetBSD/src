@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.129 2000/11/26 21:04:20 augustss Exp $
+$NetBSD: usbdevs,v 1.130 2000/12/04 03:36:42 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -266,6 +266,7 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor BELKIN2		0x1293	Belkin Components (2nd)
+vendor SILICONPORTALS	0x1527	Silicon Portals Inc.
 vendor UMAX		0x1606	UMAX Data Systems, Inc.
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -710,6 +711,9 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+
+/* Silicon Portals Inc. */
+product SILICONPORTALS YAPPHONE	0x0200	YAP Phone
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
