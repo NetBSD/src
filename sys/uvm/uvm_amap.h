@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.19 2002/11/14 17:58:48 atatat Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.20 2002/11/30 18:28:05 bouyer Exp $	*/
 
 /*
  *
@@ -137,10 +137,11 @@ void		amap_wipeout	/* remove all anons from amap */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
 
 /*
- * amap_extend directions
+ * amap_extend flags
  */
-#define AMAP_EXTEND_BACKWARDS	0	/* add "size" to start of map */
-#define AMAP_EXTEND_FORWARDS	1	/* add "size" to end of map */
+#define AMAP_EXTEND_BACKWARDS	0x00	/* add "size" to start of map */
+#define AMAP_EXTEND_FORWARDS	0x01	/* add "size" to end of map */
+#define AMAP_EXTEND_NOWAIT	0x02	/* not allowed to sleep */
 
 #endif /* _KERNEL */
 
