@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.43 1995/06/09 21:58:32 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.44 1995/06/13 22:21:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -564,13 +564,13 @@ void sun3_vm_init(kehp)
 	sun3_context_equiv();
 }
 
+
+/* XXX - Should just estimate this instead... */
+int cpuspeed = 25;	/* initial guess */
 void sun3_verify_hardware()
 {
 	unsigned char machtype;
 	int cpu_match = 0;
-
-	/* XXX - Should just measure this instead... */
-	extern int cpuspeed;
 
 	if (idprom_init())
 		mon_panic("idprom_init failed\n");
@@ -599,31 +599,31 @@ void sun3_verify_hardware()
 	case SUN3_MACH_110:
 		cpu_match++;
 		cpu_string = "110";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpuspeed = 17; /* MHz */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_160:
 		cpu_match++;
 		cpu_string = "160";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpuspeed = 17; /* MHz */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_260:
 		cpu_match++;
 		cpu_string = "260";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		cpuspeed = 25; /* MHz */
 		cpu_has_vme = TRUE;
-#if 0	/* def	HAVECACHE */
-		cache_size = 0x10000;	/* XXX: not tested yet... */
+#ifdef	HAVECACHE
+		cache_size = 0x10000;	/* 64K */
 #endif
 		break;
 
 	case SUN3_MACH_E  :
 		cpu_match++;
 		cpu_string = "E";
-		cpuspeed = 30; /* MHz */	/* XXX - Correct? */
+		cpuspeed = 20; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
 		break;
 
