@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.27 1994/01/11 17:52:05 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.28 1994/01/14 03:06:36 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -194,10 +194,8 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if 0 /* XXX not currently used */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				16*NCARGS, TRUE);
-#endif
+				 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
@@ -275,15 +273,17 @@ allocsys(v)
 #endif
 
 	/*
-	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16).
-	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 * Determine how many buffers to allocate.  We use 10% of the
+	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
+	 * buffers.  We allocate 1/2 as many swap buffer headers as file
+	 * i/o buffers.
 	 */
 	if (bufpages == 0)
-	    if (physmem < btoc(2 * 1024 * 1024))
-		bufpages = (physmem / 10) / CLSIZE;
-	    else
-		bufpages = (physmem / 20) / CLSIZE;
+		if (physmem < btoc(2 * 1024 * 1024))
+			bufpages = physmem / (10 * CLSIZE);
+		else
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			    (20 * CLSIZE);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -516,7 +516,33 @@ sigreturn(p, uap, retval)
 	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
 		return(EINVAL);
 
-	/* XXXXXX NEED TO VALIDATE SEGMENT REGISTERS */
+	/*
+	 * Sanity check the user's selectors and error if they
+	 * are suspect.
+	 */
+#define max_ldt_sel(pcb) \
+	((pcb)->pcb_ldt ? (pcb)->pcb_ldt_len : (sizeof(ldt) / sizeof(ldt[0])))
+
+#define valid_ldt_sel(sel) \
+	(ISLDT(sel) && ISPL(sel) == SEL_UPL && \
+	 IDXSEL(sel) < max_ldt_sel(&p->p_addr->u_pcb))
+
+#define null_sel(sel) \
+	(!ISLDT(sel) && IDXSEL(sel) == 0)
+
+	if ((scp->sc_cs&0xffff != _ucodesel && !valid_ldt_sel(scp->sc_cs)) ||
+	    (scp->sc_ss&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ss)) ||
+	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
+	     !null_sel(scp->sc_ds)) ||
+	    (scp->sc_es&0xffff != _udatasel && !valid_ldt_sel(scp->sc_es) &&
+	     !null_sel(scp->sc_es))) {
+		trapsignal(p, SIGBUS, T_PROTFLT);
+		return(EINVAL);
+	}
+
+#undef max_ldt_sel
+#undef valid_ldt_sel
+#undef null_sel
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~
