@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.150 1999/08/16 21:36:39 mcr Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.151 1999/08/17 09:42:14 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.144 1999/08/12 09:42:11 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.146 1999/08/17 09:40:25 drochner Exp 
  */
 
 /*
@@ -506,6 +506,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
+	    0,
+	    "Alteon",
+	    "ACEnic Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -6031,6 +6037,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_KOFAX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Kofax Image Products",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ALTEON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Alteon",
 	    NULL,
 	},
 	{
