@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.25 2002/10/06 12:09:34 lukem Exp $	*/
+/*	$NetBSD: config.h.in,v 1.26 2002/11/29 13:00:23 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -78,6 +78,7 @@
 #undef HAVE_STRLCAT
 #undef HAVE_STRLCPY
 #undef HAVE_STRSEP
+#undef HAVE_STRSUFTOULL
 #undef HAVE_STRTOLL
 #undef HAVE_USER_FROM_UID
 #undef HAVE_VASPRINTF
