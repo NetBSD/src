@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_8.S,v 1.2 2002/07/10 11:29:32 scw Exp $	*/
+/*	$NetBSD: byte_swap_8.S,v 1.3 2002/07/10 12:42:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__bswap64)
+ENTRY(bswap64)
 	ptabs/l	r18, tr0
 	byterev	r2, r2
 	blink	tr0, r63
