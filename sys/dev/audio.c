@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.109 1998/12/27 22:52:23 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.110 1998/12/27 23:25:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1058,16 +1058,16 @@ audio_read(dev, uio, ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while (cb->used <= 0) {
-			if (ioflag & IO_NDELAY) {
-				splx(s);
-				return (EWOULDBLOCK);
-			}
 			if (!sc->sc_rbus) {
 				error = audiostartr(sc);
 				if (error) {
 					splx(s);
 					return (error);
 				}
+			}
+			if (ioflag & IO_NDELAY) {
+				splx(s);
+				return (EWOULDBLOCK);
 			}
 			DPRINTFN(2, ("audio_read: sleep used=%d\n", cb->used));
 			error = audio_sleep(&sc->sc_rchan, "aud_rd");
