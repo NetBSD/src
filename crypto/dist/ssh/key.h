@@ -1,3 +1,4 @@
+/*	$NetBSD: key.h,v 1.1.1.5 2001/04/10 07:13:56 itojun Exp $	*/
 /*	$OpenBSD: key.h,v 1.11 2001/03/12 22:02:01 markus Exp $	*/
 
 /*
