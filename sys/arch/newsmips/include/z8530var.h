@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.6 2003/08/07 16:28:53 agc Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,18 +101,18 @@ struct zsc_softc {
  * These could be inlines, but with the delay, speed is moot.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
-int zs_print __P((void *, const char *));
-int zshard __P((void *));
-void zssoft __P((void*));
-int zs_get_speed __P((struct zs_chanstate *));
-void (*zs_delay) __P((void));
+int zs_print(void *, const char *);
+int zshard(void *);
+void zssoft(void*);
+int zs_get_speed(struct zs_chanstate *);
+void (*zs_delay)(void);
 
 #define splzs()		splserial()

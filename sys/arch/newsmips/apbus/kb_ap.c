@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.5 2003/07/15 02:59:28 lukem Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.5 2003/07/15 02:59:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,7 @@ struct wskbd_mapdata kb_ap_keymapdata = {
 };
 
 int
-kb_ap_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+kb_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -117,9 +114,7 @@ kb_ap_match(parent, cf, aux)
 }
 
 void
-kb_ap_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+kb_ap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kb_ap_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -159,8 +154,7 @@ kb_ap_attach(parent, self, aux)
 }
 
 int
-kb_ap_intr(v)
-	void *v;
+kb_ap_intr(void *v)
 {
 	struct kb_ap_softc *sc = v;
 	volatile struct kbreg *reg = sc->sc_reg;
@@ -183,16 +177,14 @@ kb_ap_intr(v)
 }
 
 void
-kb_ap_cnattach()
+kb_ap_cnattach(void)
 {
+
 	wskbd_cnattach(&kb_ap_consops, (void *)0xbf900000, &kb_ap_keymapdata);
 }
 
 void
-kb_ap_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+kb_ap_cngetc(void *v, u_int *type, int *data)
 {
 	volatile struct kbreg *reg = v;
 	int key, release, ointr;
@@ -213,35 +205,26 @@ kb_ap_cngetc(v, type, data)
 }
 
 void
-kb_ap_cnpollc(v, on)
-	void *v;
-	int on;
+kb_ap_cnpollc(void *v, int on)
 {
 }
 
 int
-kb_ap_enable(v, on)
-	void *v;
-	int on;
+kb_ap_enable(void *v, int on)
 {
+
 	return 0;
 }
 
 void
-kb_ap_setleds(v, on)
-	void *v;
-	int on;
+kb_ap_setleds(void *v, int on)
 {
 }
 
 int
-kb_ap_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+kb_ap_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = 0;	/* XXX */

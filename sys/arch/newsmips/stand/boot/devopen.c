@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2003/11/21 19:44:53 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2005/02/06 02:18:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -43,11 +43,11 @@
 # define DPRINTF while (0) printf
 #endif
 
-int dkopen __P((struct open_file *, ...));
-int dkclose __P((struct open_file *));
-int dkstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int dkopen(struct open_file *, ...);
+int dkclose(struct open_file *);
+int dkstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 #ifdef HAVE_CHANGEDISK_HOOK
-void changedisk_hook __P((struct open_file *));
+void changedisk_hook(struct open_file *);
 #endif
 
 struct devsw devsw[] = {
@@ -77,10 +77,7 @@ struct romdev romdev;
 extern int apbus;
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;	/* out */
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int fd;
 	char *cp;
@@ -135,13 +132,13 @@ devopen(f, fname, file)
 int
 dkopen(struct open_file *f, ...)
 {
+
 	DPRINTF("dkopen\n");
 	return 0;
 }
 
 int
-dkclose(f)
-	struct open_file *f;
+dkclose(struct open_file *f)
 {
 	struct romdev *dev = f->f_devdata;
 
@@ -155,13 +152,8 @@ dkclose(f)
 }
 
 int
-dkstrategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;	/* out: number of bytes transfered */
+dkstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct romdev *dev = devdata;
 
@@ -180,8 +172,7 @@ dkstrategy(devdata, rw, blk, size, buf, rsize)
 
 #ifdef HAVE_CHANGEDISK_HOOK
 void
-changedisk_hook(f)
-	struct open_file *f;
+changedisk_hook(struct open_file *f)
 {
 	struct romdev *dev = f->f_devdata;
 
@@ -196,6 +187,5 @@ changedisk_hook(f)
 		getchar();
 		dev->fd = rom_open(dev->devname, 2);
 	}
-
 }
 #endif
