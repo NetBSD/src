@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.25 2003/02/17 11:07:19 dsl Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.26 2003/06/26 10:22:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.25 2003/02/17 11:07:19 dsl Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.26 2003/06/26 10:22:33 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -140,8 +140,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 
 			lp = win->lines[y];
 			if (lp->flags & __ISPASTEOL) {
+		newline:
 				lp->flags &= ~__ISPASTEOL;
-		newline:	if (y == win->scr_b) {
+				if (y == win->scr_b) {
 #ifdef DEBUG
 			__CTRACE("ADDBYTES - on bottom of scrolling region\n");
 #endif
@@ -209,9 +210,11 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 #endif
 			break;
 		case '\n':
-			SYNCH_OUT;
-			wclrtoeol(win);
-			SYNCH_IN;
+			if (!(lp->flags & __ISPASTEOL)) {
+				SYNCH_OUT;
+				wclrtoeol(win);
+				SYNCH_IN;
+			}
 			if (!__NONL)
 				x = 0;
 			goto newline;
