@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.24 2004/03/27 22:33:43 tsutsui Exp $	*/
+/*	$NetBSD: gzip.c,v 1.25 2004/03/28 03:47:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.24 2004/03/27 22:33:43 tsutsui Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.25 2004/03/28 03:47:18 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -110,12 +110,16 @@ static	const char	gzip_version[] = "NetBSD gzip 2.1";
 static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
-static	int	fflag;			/* force mode */
 static	int	lflag;			/* list mode */
+#ifndef SMALL
+static	int	fflag;			/* force mode */
 static	int	nflag;			/* don't save name/timestamp */
 static	int	Nflag;			/* don't restore name/timestamp */
 static	int	qflag;			/* quiet mode */
 static	int	rflag;			/* recursive mode */
+#else
+#define		qflag	0
+#endif
 static	int	tflag;			/* test */
 static	int	vflag;			/* verbose mode */
 static	char	*Sflag;
@@ -129,7 +133,9 @@ static	void	maybe_err(int rv, const char *fmt, ...);
 static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
+#ifndef SMALL
 static	void	prepend_gzip(char *, int *, char ***);
+#endif
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
 static	void	copymodes(const char *, struct stat *);
@@ -137,7 +143,9 @@ static	ssize_t	file_compress(char *);
 static	ssize_t	file_uncompress(char *);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
+#ifndef SMALL
 static	void	handle_dir(char *, struct stat *);
+#endif
 static	void	handle_stdin(void);
 static	void	handle_stdout(void);
 static	void	print_ratio(off_t, off_t, FILE *);
@@ -192,8 +200,10 @@ static const struct option longopts[] = {
 int
 main(int argc, char **argv)
 {
+#ifndef SMALL
 	const char *progname = getprogname();
 	char *gzip;
+#endif
 	int ch;
 
 	/* XXX set up signals */
@@ -203,6 +213,7 @@ main(int argc, char **argv)
 
 	suffix = GZ_SUFFIX;;
 
+#ifndef SMALL
 	if ((gzip = getenv("GZIP")) != NULL)
 		prepend_gzip(gzip, &argc, &argv);
 
@@ -215,6 +226,13 @@ main(int argc, char **argv)
 	else if (strcmp(progname, "zcat") == 0 ||
 		 strcmp(progname, "gzcat") == 0)
 		dflag = cflag = 1;
+#endif
+
+#ifdef SMALL
+#define OPTIONS_LIST "cdfhHlS:tvV123456789"
+#else
+#define OPTIONS_LIST "cdfhHlnNqrS:tvV123456789"
+#endif
 
 	while ((ch = getopt_long(argc, argv, "cdfhHlnNqrS:tvV123456789",
 				 longopts, NULL)) != -1)
@@ -225,13 +243,14 @@ main(int argc, char **argv)
 		case 'd':
 			dflag = 1;
 			break;
-		case 'f':
-			fflag = 1;
-			break;
 		case 'l':
 			lflag = 1;
 			tflag = 1;
 			dflag = 1;
+			break;
+#ifndef SMALL
+		case 'f':
+			fflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
@@ -247,6 +266,7 @@ main(int argc, char **argv)
 		case 'r':
 			rflag = 1;
 			break;
+#endif
 		case 'S':
 			Sflag = optarg;
 			break;
@@ -344,6 +364,7 @@ maybe_errx(int rv, const char *fmt, ...)
 	exit(rv);
 }
 
+#ifndef SMALL
 /* split up $GZIP and prepend it to the argument list */
 static void
 prepend_gzip(char *gzip, int *argc, char ***argv)
@@ -400,6 +421,7 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 		nargv[i++] = *(ac++);
 	nargv[i] = NULL;
 }
+#endif
 
 /* compress input to output then close both files */
 static void
@@ -518,13 +540,16 @@ file_compress(char *file)
 	struct stat isb, osb;
 	char outfile[MAXPATHLEN];
 	ssize_t size;
+#ifndef SMALL
 	u_int32_t mtime = 0;
+#endif
 
 	if (cflag == 0) {
 		(void)strncpy(outfile, file, MAXPATHLEN - suffix_len);
 		outfile[MAXPATHLEN - suffix_len] = '\0';
 		(void)strlcat(outfile, suffix, sizeof(outfile));
 
+#ifndef SMALL
 		if (fflag == 0) {
 			if (stat(outfile, &osb) == 0) {
 				maybe_warnx("%s already exists -- skipping",
@@ -532,6 +557,7 @@ file_compress(char *file)
 				goto lose;
 			}
 		}
+#endif
 		if (stat(file, &isb) == 0) {
 			if (isb.st_nlink > 1) {
 				maybe_warnx("%s has %d other link%s -- "
@@ -539,8 +565,10 @@ file_compress(char *file)
 					    isb.st_nlink == 1 ? "" : "s");
 				goto lose;
 			}
+#ifndef SMALL
 			if (nflag == 0)
 				mtime = (u_int32_t)isb.st_mtime;
+#endif
 		}
 	}
 	in = fopen(file, "r");
@@ -548,7 +576,7 @@ file_compress(char *file)
 		maybe_err(1, "can't fopen %s", file);
 
 	if (cflag == 0) {
-#if HAVE_ZLIB_GZOPENFULL
+#if HAVE_ZLIB_GZOPENFULL && !defined(SMALL)
 		char *savename;
 
 		if (nflag == 0)
@@ -618,8 +646,10 @@ file_uncompress(char *file)
 		maybe_err(1, "can't open %s", file);
 	if (read(fd, header1, 10) != 10) {
 		/* we don't want to fail here. */
+#ifndef SMALL
 		if (fflag)
 			goto close_it;
+#endif
 		maybe_err(1, "can't read %s", file);
 	}
 
@@ -644,8 +674,10 @@ file_uncompress(char *file)
 #endif
 		method = FT_UNKNOWN;
 
+#ifndef SMALL
 	if (fflag == 0 && method == FT_UNKNOWN)
 		maybe_errx(1, "%s: not in gzip format", file);
+#endif
 
 	if (cflag == 0 || lflag) {
 		s = &file[len - suffix_len + 1];
@@ -656,7 +688,12 @@ file_uncompress(char *file)
 			maybe_errx(1, "unknown suffix %s", s);
 	}
 
-	if (method == FT_GZIP && (Nflag || lflag)) {
+#ifdef SMALL
+	if (method == FT_GZIP && lflag)
+#else
+	if (method == FT_GZIP && (Nflag || lflag))
+#endif
+	{
 		if (header1[3] & ORIG_NAME) {
 			size_t rbytes;
 			int i;
@@ -680,9 +717,12 @@ file_uncompress(char *file)
 			}
 		}
 	}
+#ifndef SMALL
 close_it:
+#endif
 	close(fd);
 
+#ifndef SMALL
 	if ((cflag == 0 || lflag) && fflag == 0) {
 		if (lflag == 0 && stat(outfile, &osb) == 0) {
 			maybe_warnx("%s already exists -- skipping", outfile);
@@ -697,6 +737,7 @@ close_it:
 		} else
 			goto lose;
 	}
+#endif
 
 #ifndef NO_BZIP2_SUPPORT
 	if (method == FT_BZIP2) {
@@ -826,10 +867,12 @@ handle_stdin(void)
 {
 	gzFile *file;
 
+#ifndef SMALL
 	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
 		maybe_warnx("standard input is a terminal -- ignoring");
 		return;
 	}
+#endif
 
 	if (lflag) {
 		struct stat isb;
@@ -851,10 +894,12 @@ handle_stdout(void)
 {
 	gzFile *file;
 
+#ifndef SMALL
 	if (fflag == 0 && isatty(STDOUT_FILENO)) {
 		maybe_warnx("standard output is a terminal -- ignoring");
 		return;
 	}
+#endif
 	file = gzdopen(STDOUT_FILENO, gzipflags);
 	if (file == NULL)
 		maybe_err(1, "can't gzdopen stdout");
@@ -895,9 +940,11 @@ retry:
 	}
 
 	if (S_ISDIR(sb.st_mode)) {
+#ifndef SMALL
 		if (rflag)
 			handle_dir(path, &sb);
 		else
+#endif
 			maybe_warn("%s is a directory", path);
 		goto out;
 	}
@@ -933,6 +980,7 @@ handle_file(char *file, struct stat *sbp)
 		print_verbage(file, cflag == 0 ? newfile : 0, usize, gsize);
 }
 
+#ifndef SMALL
 /* this is used with -r to recursively decend directories */
 static void
 handle_dir(char *dir, struct stat *sbp)
@@ -966,6 +1014,7 @@ handle_dir(char *dir, struct stat *sbp)
 	}
 	(void)fts_close(fts);
 }
+#endif
 
 /* print a ratio */
 static void
