@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2005/02/11 06:21:21 simonb Exp $");
 #endif
 
 
@@ -872,7 +872,7 @@ qsort1(base, lim, f)
 	for (;;) {
 		if (i < lptr) {
 			if ((c = (*f)(*i, *lptr)) == 0) {
-				lptr --;
+				lptr--;
 				swap2(i, lptr);
 				continue;
 			}
@@ -885,13 +885,13 @@ qsort1(base, lim, f)
 	  begin:
 		if (j > hptr) {
 			if ((c = (*f)(*hptr, *j)) == 0) {
-				hptr ++;
+				hptr++;
 				swap2(hptr, j);
 				goto begin;
 			}
 			if (c > 0) {
 				if (i == lptr) {
-					hptr ++;
+					hptr++;
 					swap3(i, hptr, j);
 					i = lptr += 1;
 					goto begin;

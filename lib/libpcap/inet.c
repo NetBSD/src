@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.10 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: inet.c,v 1.11 2005/02/11 06:21:21 simonb Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -40,7 +40,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/inet.c,v 1.58.2.1 2003/11/15 23:26:41 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: inet.c,v 1.10 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: inet.c,v 1.11 2005/02/11 06:21:21 simonb Exp $");
 #endif
 #endif
 
@@ -636,7 +636,7 @@ pcap_lookupdev(errbuf)
 		{
 			tAstr += strlen(tAstr) + 1;
 			tUstr += wcslen(tUstr) + 1;
-			NAdapts ++;
+			NAdapts++;
 		}
 
 		tAstr++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.6 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: avl.c,v 1.7 2005/02/11 06:21:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Philip A. Nelson.
@@ -53,7 +53,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: avl.c,v 1.6 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: avl.c,v 1.7 2005/02/11 06:21:22 simonb Exp $");
 #endif
 
 
@@ -110,7 +110,7 @@ int insert_id (id_rec **root, id_rec *new_id)
       if (insert_id (&((*root)->left), new_id))
 	{
 	  /* The height increased. */
-	  (*root)->balance --;
+	  (*root)->balance--;
 	  
 	  switch ((*root)->balance)
 	    {
@@ -164,7 +164,7 @@ int insert_id (id_rec **root, id_rec *new_id)
       if (insert_id (&((*root)->right), new_id))
 	{
 	  /* The height increased. */
-	  (*root)->balance ++;
+	  (*root)->balance++;
 	  switch ((*root)->balance)
 	    {
 	    case 0:  /* no height increase. */

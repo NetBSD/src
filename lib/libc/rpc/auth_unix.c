@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.19 2003/01/18 11:29:03 thorpej Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.20 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.19 2003/01/18 11:29:03 thorpej Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.20 2005/02/11 06:21:21 simonb Exp $");
 #endif
 #endif
 
@@ -286,7 +286,7 @@ authunix_refresh(auth)
 		/* there is no hope.  Punt */
 		return (FALSE);
 	}
-	au->au_shfaults ++;
+	au->au_shfaults++;
 
 	/* first deserialize the creds back into a struct authunix_parms */
 	aup.aup_machname = NULL;

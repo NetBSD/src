@@ -1,4 +1,4 @@
-/*	$NetBSD: xebec.bnf,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: xebec.bnf,v 1.6 2005/02/11 06:21:21 simonb Exp $	*/
 
 #include "main.h"
 #include "sets.h"
@@ -219,7 +219,7 @@ translist		::=	 transition  translisttail
 translisttail	::= translist
 	::=	
 ;
-transition ::=  newstate { transno ++; } LANGLE EQUAL EQUAL oldstate  
+transition ::=  newstate { transno++; } LANGLE EQUAL EQUAL oldstate  
 	event 
 	{ 
 	 	CurrentEvent /* GAG! */ = $event.object; 

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5 2003/08/07 11:16:32 agc Exp $	*/
+/*	$NetBSD: options.c,v 1.6 2005/02/11 06:21:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: options.c,v 1.5 2003/08/07 11:16:32 agc Exp $");
+__RCSID("$NetBSD: options.c,v 1.6 2005/02/11 06:21:22 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ int control;
 		break;
 	    }
 	    OptColTabs[j] = 1;
-	    i --;
+	    i--;
 	    pointer++;
 	    count--;
 	}
