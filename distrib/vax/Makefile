@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/08/30 23:51:52 jhawk Exp $
+#	$NetBSD: Makefile,v 1.7 2000/09/12 16:06:55 matt Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -15,7 +15,7 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-INSTKERNOBJ != cd ramdisk-kernel; ${MAKE} print-objdir
+INSTKERNOBJ != cd ${.CURDIR}/ramdisk-kernel; ${MAKE} print-objdir
 BOOTOBJ != cd ${.CURDIR}/../../sys/arch/vax/boot/boot; ${MAKE} print-objdir
 
 release:
