@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.115 2000/06/28 03:01:16 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.116 2000/07/06 12:51:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -147,7 +147,6 @@
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif
 
 #ifndef	IPFORWARDING
