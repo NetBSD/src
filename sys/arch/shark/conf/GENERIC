@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 2004/02/13 11:36:17 wiz Exp $
+#	$NetBSD: GENERIC,v 1.24 2004/03/13 18:51:43 matt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 # estimated number of users
 maxusers	32
@@ -51,7 +51,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
+file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
@@ -100,6 +100,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_LINUX	# Linux compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
