@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.70 2003/02/28 12:37:04 fvdl Exp $
+# $NetBSD: md.i386,v 1.71 2003/03/01 18:49:43 fvdl Exp $
 ./lib/libm387.so			base-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
@@ -76,6 +76,7 @@
 ./usr/include/x86/aout_machdep.h	comp-c-include
 ./usr/include/x86/bootinfo.h		comp-c-include
 ./usr/include/x86/bus.h		comp-c-include
+./usr/include/x86/cpuvar.h	comp-c-include
 ./usr/include/x86/float.h	comp-c-include
 ./usr/include/x86/ieee.h	comp-c-include
 ./usr/include/x86/ieeefp.h	comp-c-include
