@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.15 1997/03/15 18:09:59 is Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.16 1997/04/29 04:40:25 scottr Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -11,43 +11,8 @@
  */
 
 /*
- * The following is a structure that we should be pulling from
- * dev/ic/dp8390reg.h, but since we have the card in x86 mode and
- * the std. include file assumes that big-endian processors will
- * have the card in m68k mode, we're hosed for the moment.
- * Fix this.  --  XXX
+ * Memory offsets from slot base PA
  */
-struct ae_ring {
-	u_char  rsr;		/* receiver status */
-	u_char  next_packet;	/* pointer to next packet */
-	u_short count;		/* bytes in packet (length + 4) */
-};
-/*
- * Vendor types
- */
-#define AE_VENDOR_UNKNOWN	0xff	/* Unknown network card */
-#define AE_VENDOR_APPLE		0x00	/* Apple Ethernet card */
-#define AE_VENDOR_INTERLAN	0x01	/* Interlan A310 card (GatorCard) */
-#define AE_VENDOR_DAYNA		0x02	/* DaynaPORT E/30s (and others?) */
-#define AE_VENDOR_ASANTE	0x03	/* Asante MacCon II/E */
-#define AE_VENDOR_FARALLON	0x04	/* Farallon EtherMac II-TP */
-#define AE_VENDOR_FOCUS		0x05	/* FOCUS Enhancements EtherLAN */
-#define AE_VENDOR_KINETICS	0x06	/* Kinetics EtherPort SE/30 */
-
-/*
- * Compile-time config flags
- */
-/*
- * This sets the default for enabling/disablng the tranceiver.
- */
-#define AE_FLAGS_DISABLE_TRANCEIVER	0x0001
-
-/*
- * This disables the use of double transmit buffers.
- */
-#define AE_FLAGS_NO_DOUBLE_BUFFERING	0x0008
-
-/* */
 #define	GC_RESET_OFFSET		0x000c0000	/* writes here reset NIC */
 #define	GC_ROM_OFFSET		0x000c0000	/* address prom */
 #define GC_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
