@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.598 2003/07/24 07:51:01 wiz Exp $
+#	$NetBSD: mi,v 1.599 2003/07/24 13:04:19 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -293,6 +293,9 @@
 ./usr/include/langinfo.h		comp-c-include
 ./usr/include/libgen.h			comp-c-include
 ./usr/include/libintl.h			comp-c-include
+./usr/include/libmilter			comp-sendmail-include
+./usr/include/libmilter/mfapi.h		comp-sendmail-include
+./usr/include/libmilter/mfdef.h		comp-sendmail-include
 ./usr/include/limits.h			comp-c-include
 ./usr/include/link.h			comp-c-include
 ./usr/include/link_aout.h		comp-c-include
@@ -308,9 +311,6 @@
 ./usr/include/md5.h			comp-c-include
 ./usr/include/memory.h			comp-c-include
 ./usr/include/menu.h			comp-c-include
-./usr/include/libmilter			comp-sendmail-include
-./usr/include/libmilter/mfapi.h		comp-sendmail-include
-./usr/include/libmilter/mfdef.h		comp-sendmail-include
 ./usr/include/miscfs			comp-c-include
 ./usr/include/miscfs/fdesc		comp-c-include
 ./usr/include/miscfs/fdesc/fdesc.h	comp-c-include
