@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.98 2000/05/21 11:53:00 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.99 2000/05/26 00:36:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -375,6 +375,8 @@ cpu_switch_queuescan:
 /*
  * Switch to new context.
  */
+	li	v1, SONPROC			# p->p_stat = SONPROC
+	sb	v1, P_STAT(a0)
 	lw      t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
 	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2

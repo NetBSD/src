@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 1999/12/30 16:35:25 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.14 2000/05/26 00:36:50 thorpej Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_PID		offsetof(struct proc, p_pid)
 define	P_FPSTATE	offsetof(struct proc, p_md.md_fpstate)
 define	SRUN		SRUN
+define	SONPROC		SONPROC
 
 # user structure fields
 define	USIZ		sizeof(struct user)

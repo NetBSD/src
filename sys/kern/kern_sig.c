@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.98 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.99 2000/05/26 00:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -924,14 +924,18 @@ psignal(p, signum)
 			unsleep(p);
 		goto out;
 
+	case SONPROC:
+		/*
+		 * We're running; notice the signal.
+		 */
+		signotify(p);
+		goto out;
+
 	default:
 		/*
-		 * SRUN, SIDL, SDEAD, SZOMB do nothing with the signal,
-		 * other than kicking ourselves if we are running.
+		 * SRUN, SIDL, SDEAD, SZOMB do nothing with the signal.
 		 * It will either never be noticed, or noticed very soon.
 		 */
-		if (p == curproc)
-			signotify(p);
 		goto out;
 	}
 	/*NOTREACHED*/

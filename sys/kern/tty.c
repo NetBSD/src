@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.118 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: tty.c,v 1.119 2000/05/26 00:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1963,7 +1963,8 @@ ttyinfo(tp)
 				pick = p;
 
 		ttyprintf(tp, " cmd: %s %d [%s] ", pick->p_comm, pick->p_pid,
-		    pick->p_stat == SRUN ? "running" :
+		    pick->p_stat == SONPROC ? "running" :
+		    pick->p_stat == SRUN ? "runnable" :
 		    pick->p_wmesg ? pick->p_wmesg : "iowait");
 
 		calcru(pick, &utime, &stime, NULL);
@@ -2016,7 +2017,8 @@ ttyinfo(tp)
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
  *	4) Further ties are broken by picking the highest pid.
  */
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL))
+#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
+			 ((p)->p_stat == SONPROC))
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1

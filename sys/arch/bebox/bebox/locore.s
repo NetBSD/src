@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2000/03/24 17:05:32 ws Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 2000/05/26 00:36:45 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -279,6 +279,10 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+	/* Process now running on a processor. */
+	li	3,SONPROC		/* p->p_stat = SONPROC */
+	stb	3,P_STAT(31)
 
 	/* record new process */
 	lis	4,_C_LABEL(curproc)@ha

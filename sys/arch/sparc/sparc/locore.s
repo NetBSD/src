@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.128 2000/04/30 21:32:44 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.129 2000/05/26 00:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4676,6 +4676,9 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
+	mov	SONPROC, %o0			! p->p_stat = SONPROC;
+	stb	%o0, [%g3 + P_STAT]
+
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;

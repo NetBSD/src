@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 2000/02/24 19:42:37 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 2000/05/26 00:36:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -768,6 +768,18 @@ XL_switch_error:
 	/* Isolate process.  XXX Is this necessary? */
 	xor	r0, r0
 	mov.l	r0, @(P_BACK, r8)	/* r8->p_back = 0 */
+
+	/* Process now running on a processor. */
+	mov	r8, r4
+	mov	#P_STAT, r2
+	add	r2, r4
+
+	mov.l	XL_ConvVtoP, r0
+	jsr	@r0
+	nop
+
+	mov	#SONPROC, r1		/* p->p_stat = SONPROC */
+	mov.b	r1, @r0
 
 	/* Record new process. */
 	mov.l	XXLcurproc, r0
