@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.9 2001/03/16 22:14:45 tron Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.10 2002/07/06 00:42:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.9 2001/03/16 22:14:45 tron Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.10 2002/07/06 00:42:27 wiz Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -82,9 +82,7 @@ securecheck(struct sockaddr *caller)
 }
 
 void *
-ypproc_null_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_null_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static char result;
 
@@ -95,9 +93,7 @@ ypproc_null_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_domain_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_domain_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static bool_t result;		/* is domain_served? */
 	char *domain = *(char **)argp;
@@ -123,9 +119,7 @@ ypproc_domain_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_domain_nonack_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_domain_nonack_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static bool_t result;		/* is domain served? */
 	char *domain = *(char **)argp;
@@ -154,9 +148,7 @@ ypproc_domain_nonack_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_match_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_match_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_val res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -184,9 +176,7 @@ ypproc_match_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_first_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_first_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_key_val res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -213,9 +203,7 @@ ypproc_first_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_next_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_next_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_key_val res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -243,9 +231,7 @@ ypproc_next_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_xfr_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_xfr_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_xfr res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -295,9 +281,7 @@ ypproc_xfr_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_clear_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_clear_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -325,9 +309,7 @@ ypproc_clear_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_all_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_all_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_all res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -373,9 +355,7 @@ ypproc_all_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_master_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_master_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_master res;
 	static char *nopeer = "";
@@ -417,9 +397,7 @@ ypproc_master_2_svc(argp, rqstp)
 
 
 void *
-ypproc_order_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_order_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_order res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
@@ -448,9 +426,7 @@ ypproc_order_2_svc(argp, rqstp)
 }
 
 void *
-ypproc_maplist_2_svc(argp, rqstp)
-	void *argp;
-        struct svc_req *rqstp;
+ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static struct ypresp_maplist res;
 	char domain_path[MAXPATHLEN];
