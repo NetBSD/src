@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1998/02/19 00:42:15 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.10 1998/05/20 16:34:29 chs Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -93,7 +93,7 @@
 46	OBSOL		sigaction
 47	NOARGS		{ gid_t sys_getgid(void); }
 48	NOARGS		{ int sys_sigprocmask(int how, sigset_t mask); }
-49	NOARGS		{ int sys_getlogin(char *namebuf, u_int namelen); }
+49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
 50	NOARGS		{ int sys_setlogin(char *namebuf); }
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL		sigpending
@@ -195,13 +195,14 @@
 			    int *fromlenaddr); }
 126	UNIMPL		setreuid
 127	UNIMPL		setregid
-128	NOARGS		{ int sys_posix___posix_rename(char *from, char *to); }
+128	NOARGS		{ int sys___posix_rename(const char *from, \
+			    const char *to); }
 129	STD		{ int osf1_sys_truncate(char *path, off_t length); }
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
 131	UNIMPL		flock
 132	STD		{ int osf1_sys_setgid(gid_t gid); }
 133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+			    int flags, struct sockaddr *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	UNIMPL		socketpair
 136	NOARGS		{ int sys_mkdir(char *path, int mode); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.3 1998/01/05 17:51:33 perry Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.4 1998/05/20 16:35:01 chs Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ osf1_sys_sigaltstack(p, v, retval)
 	} */ *uap = v;
 	struct osf1_sigaltstack *noss, *ooss, tmposs;
 	struct sigaltstack *nbss, *obss, tmpbss;
-	struct sys_sigaltstack_args sa;
+	struct sys___sigaltstack14_args sa;
 	caddr_t sg;
 	int error;
 
@@ -306,7 +306,7 @@ osf1_sys_sigaltstack(p, v, retval)
 	SCARG(&sa, nss) = nbss;
 	SCARG(&sa, oss) = obss;
 
-	if ((error = sys_sigaltstack(p, &sa, retval)) != 0)
+	if ((error = sys___sigaltstack14(p, &sa, retval)) != 0)
 		return error;
 
 	if (obss != NULL) {
