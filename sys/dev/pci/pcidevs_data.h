@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.107 1999/01/28 04:34:32 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.108 1999/02/05 22:55:40 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.102 1999/01/28 04:31:33 augustss Exp 
+ *	NetBSD: pcidevs,v 1.103 1999/02/05 22:55:19 thorpej Exp 
  */
 
 /*
@@ -1538,6 +1538,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "National Semiconductor",
 	    "NS87410",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2183/2185 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2325 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
+	    0,
+	    "Olicom",
+	    "Olicom OC-2326 10/100-TX Ethernet",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
