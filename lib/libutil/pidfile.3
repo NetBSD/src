@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.1 1999/06/06 01:50:00 thorpej Exp $
+.\"	$NetBSD: pidfile.3,v 1.2 2001/04/12 22:34:31 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@ argument is NULL,
 will determine the program name and use that instead.
 .Pp
 The pid file can be used as a quick reference if
-the process needs to be sent a signal.  When the program exists,
+the process needs to be sent a signal.  When the program exits,
 the pid file will be removed automatically, unless the program
 receives a fatal signal.
 .Pp
