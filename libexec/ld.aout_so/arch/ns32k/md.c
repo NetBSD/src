@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1998/12/17 20:14:44 pk Exp $  */
+/*	$NetBSD: md.c,v 1.12 1999/01/15 07:48:07 matthias Exp $  */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,12 +44,21 @@
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
+#include <err.h>
 
 #include "ld.h"
 #ifndef RTLD
 /* Pull in the ld(1) bits as well */
 #include "ld_i.h"
 #endif
+
+static void put_num __P((unsigned char *, long, char));
+static void put_imm __P((unsigned char *, unsigned long, char));
+static void put_disp __P((unsigned char *, long, char));
+static unsigned long get_num __P((unsigned char *, int));
+static unsigned long get_imm __P((unsigned char	*, int));
+static unsigned long get_disp __P((unsigned char *, int));
+static long sign_extend __P((int, int));
 
 /*
  * Put little endian VAL of size N at ADDR
@@ -150,13 +159,13 @@ put_disp(addr, val, n)
 	switch (n) {
 	case 1:
 		if (val < -64 || val > 63)
-			warnx("Byte displacement %d, out of range.", val);
+			warnx("Byte displacement %ld, out of range.", val);
 		val &= 0x7f;
 		*addr++ = val;
 		break;
 	case 2:
 		if (val < -8192 || val > 8191)
-			warnx("Word displacement %d, out of range.", val);
+			warnx("Word displacement %ld, out of range.", val);
 		val &= 0x3fff;
 		val |= 0x8000;
 		*addr++ = (val >> 8);
@@ -168,7 +177,7 @@ put_disp(addr, val, n)
 #else
 		if (val < -0x20000000 || val >= 0x20000000)
 #endif
-			warnx("Double word displacement %d, out of range", val);
+			warnx("Double word displacement %ld, out of range", val);
 		val |= 0xc0000000;
 		*addr++ = (val >> 24);
 		*addr++ = (val >> 16);
@@ -240,6 +249,7 @@ md_get_addend(rp, addr)
 	case 2:
 		return get_num(addr, bytes);
 	}
+	errx(1, "internal error: md_get_addend: disp = %d", rp->r_disp);
 }
 
 /*
@@ -295,6 +305,9 @@ md_set_breakpoint(where, savep)
 {
 	*savep = *(long *)where;
 	*(short *)where = BPT;
+#ifdef RTLD
+	_cachectl ((void *)where, 2);	/* maintain cache coherency */
+#endif
 }
 
 
@@ -354,8 +367,6 @@ md_make_jmpreloc(rp, r, type)
 	struct relocation_info	*rp, *r;
 	int			type;
 {
-	jmpslot_t	*sp;
-
 	/*
 	 * Fix relocation address to point to the correct
 	 * location within this jmpslot.
