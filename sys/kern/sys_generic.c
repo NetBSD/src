@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.24.4.1 1996/12/10 04:33:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,8 +59,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-int selscan __P((struct proc *, fd_set *, fd_set *, int, register_t *));
-int seltrue __P((dev_t, int, struct proc *));
+int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
 
 /*
  * Read system call.
@@ -537,25 +536,29 @@ sys_select(p, v, retval)
 		syscallarg(fd_set *) ex;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
-	fd_set ibits[3], obits[3];
+	caddr_t bits;
+	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
-	u_int ni;
+	size_t ni;
 
-	bzero((caddr_t)ibits, sizeof(ibits));
-	bzero((caddr_t)obits, sizeof(obits));
-	if (SCARG(uap, nd) > FD_SETSIZE)
-		return (EINVAL);
 	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		SCARG(uap, nd) = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
+	if (ni * 6 > sizeof(smallbits))
+		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
+	else
+		bits = smallbits;
 
 #define	getbits(name, x) \
-	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, name), \
-	    (caddr_t)&ibits[x], ni))) \
-		goto done;
+	if (SCARG(uap, name)) { \
+		error = copyin((caddr_t)SCARG(uap, name), bits + ni * x, ni); \
+		if (error) \
+			goto done; \
+	} else \
+		bzero(bits + ni * x, ni);
 	getbits(in, 0);
 	getbits(ou, 1);
 	getbits(ex, 2);
@@ -584,13 +587,12 @@ sys_select(p, v, retval)
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
-	error = selscan(p, ibits, obits, SCARG(uap, nd), retval);
+	error = selscan(p, (fd_mask *)(bits + ni * 0),
+			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
 	s = splhigh();
-	/* this should be timercmp(&time, &atv, >=) */
-	if (SCARG(uap, tv) && (time.tv_sec > atv.tv_sec ||
-	    (time.tv_sec == atv.tv_sec && time.tv_usec >= atv.tv_usec))) {
+	if (timo && timercmp(&time, &atv, >=)) {
 		splx(s);
 		goto done;
 	}
@@ -610,48 +612,53 @@ done:
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
-#define	putbits(name, x) \
-	if (SCARG(uap, name) && (error2 = copyout((caddr_t)&obits[x], \
-	    (caddr_t)SCARG(uap, name), ni))) \
-		error = error2;
 	if (error == 0) {
-		int error2;
-
-		putbits(in, 0);
-		putbits(ou, 1);
-		putbits(ex, 2);
+#define	putbits(name, x) \
+		if (SCARG(uap, name)) { \
+			error = copyout(bits + ni * x, (caddr_t)SCARG(uap, name), ni); \
+			if (error) \
+				goto out; \
+		}
+		putbits(in, 3);
+		putbits(ou, 4);
+		putbits(ex, 5);
 #undef putbits
 	}
+out:
+	if (ni * 6 > sizeof(smallbits))
+		free(bits, M_TEMP);
 	return (error);
 }
 
 int
-selscan(p, ibits, obits, nfd, retval)
+selscan(p, ibitp, obitp, nfd, retval)
 	struct proc *p;
-	fd_set *ibits, *obits;
+	fd_mask *ibitp, *obitp;
 	int nfd;
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register int msk, i, j, fd;
-	register fd_mask bits;
+	register fd_mask ibits, obits;
 	struct file *fp;
 	int n = 0;
 	static int flag[3] = { FREAD, FWRITE, 0 };
 
 	for (msk = 0; msk < 3; msk++) {
 		for (i = 0; i < nfd; i += NFDBITS) {
-			bits = ibits[msk].fds_bits[i/NFDBITS];
-			while ((j = ffs(bits)) && (fd = i + --j) < nfd) {
-				bits &= ~(1 << j);
+			ibits = *ibitp++;
+			obits = 0;
+			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
+				ibits &= ~(1 << j);
 				fp = fdp->fd_ofiles[fd];
 				if (fp == NULL)
 					return (EBADF);
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
-					FD_SET(fd, &obits[msk]);
+					obits |= (1 << j);
 					n++;
 				}
 			}
+			*obitp++ = obits;
 		}
 	}
 	*retval = n;
