@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.6 1997/05/09 13:25:55 mycroft Exp $
+#	$NetBSD: bsd.links.mk,v 1.7 1997/05/10 10:55:19 mycroft Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -13,18 +13,12 @@ linksinstall::
 		shift; \
 		echo ".include <bsd.own.mk>"; \
 		echo "all:: $$t"; \
-		echo ".if !defined(BUILD)"; \
-		echo "$$t: .MADE"; \
-		echo ".endif"; \
-		echo ".if !defined(UPDATE)"; \
 		echo ".PHONY: $$t"; \
-		echo ".endif"; \
-		echo ".PRECIOUS: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
 		echo "	@ln -s $$l $$t"; \
-	done | make -f -
+	done | make -f-
 .endif
 .if defined(LINKS) && !empty(LINKS)
 linksinstall::
@@ -36,18 +30,12 @@ linksinstall::
 		shift; \
 		echo ".include <bsd.own.mk>"; \
 		echo "all:: $$t"; \
-		echo ".if !defined(BUILD)"; \
-		echo "$$t: .MADE"; \
-		echo ".endif"; \
-		echo ".if !defined(UPDATE)"; \
 		echo ".PHONY: $$t"; \
-		echo ".endif"; \
-		echo ".PRECIOUS: $$t"; \
-		echo "$$t: $$l"; \
+		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
 		echo "	@ln $$l $$t"; \
-	done | make -f -
+	done | make -f-
 .endif
 
 .if !target(linksinstall)
