@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 1999/01/16 20:43:21 chuck Exp $ */
+/*	$NetBSD: vmparam.h,v 1.19 1999/04/18 10:54:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,11 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 
-#define VM_PHYSSEG_MAX          32       /* we only have one "hole" */
-#define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
+#define MACHINE_NEW_NONCONTIG
+
+#define VM_PHYSSEG_MAX		32       /* up to 32 segments */
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
