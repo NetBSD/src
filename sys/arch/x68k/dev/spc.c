@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.12 1997/10/19 20:45:11 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.12.2.1 1998/10/13 21:26:22 cgd Exp $	*/
 
 #define	integrate	__inline static
 
@@ -1008,14 +1008,28 @@ spc_done(sc, acb)
 			xs->error = XS_DRIVER_STUFFUP;
 		} else if (acb->flags & ACB_SENSE) {
 			xs->error = XS_SENSE;
-		} else if (acb->target_stat == SCSI_CHECK) {
-			/* First, save the return values */
-			xs->resid = acb->data_length;
-			xs->status = acb->target_stat;
-			spc_sense(sc, acb);
-			return;
 		} else {
-			xs->resid = acb->data_length;
+			switch (acb->target_stat) {
+			case SCSI_CHECK:
+				/* First, save the return values */
+				xs->resid = acb->data_length;
+				xs->status = acb->target_stat;
+				spc_sense(sc, acb);
+				return;
+			case SCSI_BUSY:
+				xs->error = XS_BUSY;
+				break;
+			case SCSI_OK:
+				xs->resid = acb->data_length;
+				break;
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+#if SPC_DEBUG
+				printf("%s: spc_done: bad stat 0x%x\n",
+					sc->sc_dev.dv_xname, acb->target_stat);
+#endif
+				break;
+			}
 		}
 	}
 
@@ -2176,7 +2190,7 @@ spc_timeout(arg)
 	splx(s);
 }
 
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 /*
  * The following functions are mostly used for debugging purposes, either
  * directly called from the driver or from the kernel debugger.
