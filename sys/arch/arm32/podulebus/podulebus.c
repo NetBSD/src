@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.43 2001/07/02 23:18:35 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.44 2001/07/03 20:47:23 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -67,16 +67,12 @@
 /* Array of podule structures, one per possible podule */
 
 podule_t podules[MAX_PODULES + MAX_NETSLOTS];
-irqhandler_t poduleirq;
-extern u_int actual_mask;
-extern irqhandler_t *irqhandlers[NIRQS];
 
 extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
-int poduleirqhandler __P((void *arg));
 u_int poduleread __P((u_int, int));
 
 
@@ -470,18 +466,6 @@ podulebusattach(parent, self, aux)
 	 * mapped when the IOMD and COMBO we mapped in for the RPC
 	 */
 
-	/* Install an podule IRQ handler */
-
-	poduleirq.ih_func = poduleirqhandler;
-	poduleirq.ih_arg = NULL;
-	poduleirq.ih_level = IPL_NONE;
-	poduleirq.ih_name = "podule";
-
-/*
-	if (irq_claim(IRQ_PODULE, &poduleirq))
-		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
-*/
-
 	/* Find out what hardware is bolted on */
 
 	podulescan(self); 
@@ -539,45 +523,6 @@ podulebusattach(parent, self, aux)
 	}
 }
 
-
-/*
- * int podule_irqhandler(void *arg)
- *
- * text irq handler to service expansion card IRQ's
- *
- * There is currently a problem here.
- * The spl_mask may mask out certain expansion card IRQ's e.g. SCSI
- * but allow others e.g. Ethernet.
- */
-
-int
-poduleirqhandler(arg)
-	void *arg;
-{
-	int loop;
-	irqhandler_t *handler;
-
-	printf("eek ! Unknown podule IRQ received - Blocking all podule interrupts\n");
-	disable_irq(IRQ_PODULE);
-/*	return(1);*/
-
-	/* Loop round the expansion card handlers */
-
-	for (loop = IRQ_EXPCARD0; loop <= IRQ_EXPCARD7; ++loop) {
-
-	/* Is the IRQ currently allowable */
-
-		if (actual_mask & (1 << loop)) {
-			handler = irqhandlers[loop];
-        
-			if (handler && handler->ih_maskaddr) {
-				if (ReadByte(handler->ih_maskaddr) & handler->ih_maskbits)
-					handler->ih_func(handler->ih_arg);
-			}
-		}
-	}
-	return(1);      
-}
 
 struct cfattach podulebus_ca = {
 	sizeof(struct device), podulebusmatch, podulebusattach
