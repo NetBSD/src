@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2001/12/31 16:26:10 matt Exp $ */
+/*	$NetBSD: cpu.c,v 1.18.10.1 2003/06/24 09:32:48 grant Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -239,7 +239,6 @@ cpu_attach(parent, dev, aux)
 	register int i, l;
 	u_int64_t ver;
 	int bigcache, cachesize;
-	extern u_int64_t cpu_clockrate[];
 
 	/* This needs to be 64-bit aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
