@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.38 1999/08/05 18:48:55 thorpej Exp $    */
+/*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -208,10 +208,8 @@
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
 
-#if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
-#endif
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE

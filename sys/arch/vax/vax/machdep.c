@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.87 1999/09/17 20:07:20 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.88 1999/10/22 21:14:34 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -134,7 +134,6 @@ static	struct map iomap[IOMAPSZ];
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
@@ -238,13 +237,6 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-#if VAX410 || VAX43
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
-#endif
 	/*
 	 * Initialize callouts
 	 */
