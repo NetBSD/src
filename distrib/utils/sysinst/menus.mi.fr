@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.12 1999/03/31 00:44:48 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.12.2.1 1999/04/08 15:16:35 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,8 @@
 
 default x=20, y=12, no exit, scrollable;
 
+allow dynamic menus;
+
 menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	display action  { toplevel(); };
 	option "Installation de NetBSD sur disque dur",
@@ -66,7 +68,7 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	option "Réinstaller ou installer de nouveaux composants",
 		action { do_reinstall_sets(); };
 	option "Redémarrer l'ordinateur", exit,
-		action (endwin) { run_prog("/sbin/reboot"); };
+		action (endwin) { run_prog(0, 0, "/sbin/reboot"); };
 	option "Menu utilitaire", sub menu utility;
 	option "Quitter le programme d'installation", exit;
 
@@ -81,8 +83,9 @@ menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
 			config_network();
 		};
 /*	option "Partitioner un disque"; XXX add later.  */
+	option "Traces", action { do_logging(); };
 	option "Arrêter le système", exit,
-		action (endwin) { run_prog("/sbin/halt"); };
+		action (endwin) { run_prog(0, 0, "/sbin/halt"); };
 
 menu yesno, title "  oui ou non?  ";
 	option "Oui", exit, action  {yesno = 1;};

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.12 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.12.2.1 1999/04/08 15:16:37 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -192,3 +192,46 @@ menu md_distcustom, x=30, y=3, exit, title " Sélection des composants";
 	option  "X11 serveurs",		 action { toggle_getit (10); };
 	option  "X11 clients contribués",	 action { toggle_getit (11); };
 	option  "X11 développement",	 action { toggle_getit (12); };
+
+menu biosonematch;
+	option "C'est le bon disque", exit, action {
+		extern struct disklist *disklist;
+		extern struct nativedisk_info *nativedisk;
+		struct biosdisk_info *bip;
+		extern struct biosdisk_info *biosdisk;
+
+		bip = &disklist->dl_biosdisks[nativedisk->ni_biosmatches[0]];
+		bcyl = bip->bi_cyl;
+		bhead = bip->bi_head;
+		bsec = bip->bi_sec;
+		biosdisk = bip;
+	};
+	option "Entrer la géométrie", exit, action {
+		set_bios_geom(dlcyl, dlhead, dlsec);
+		biosdisk = NULL;
+	};
+
+menu biosmultmatch;
+	option "Utiliser l'un de ces disques", exit, action {
+		extern struct disklist *disklist;
+		extern struct nativedisk_info *nativedisk;
+		struct biosdisk_info *bip;
+		extern struct biosdisk_info *biosdisk;
+		int sel;
+		char res[80];
+
+		do {
+			strcpy(res, "0");
+			msg_prompt(MSG_pickdisk, res, res, 80);
+			sel = atoi(res);
+		} while (sel < 0 || sel >= nativedisk->ni_nmatches);
+		bip = &disklist->dl_biosdisks[nativedisk->ni_biosmatches[0]];
+		bcyl = bip->bi_cyl;
+		bhead = bip->bi_head;
+		bsec = bip->bi_sec;
+		biosdisk = bip;
+	};
+	option "Entrer la géométrie", exit, action {
+		set_bios_geom(dlcyl, dlhead, dlsec);
+		biosdisk = NULL;
+	};
