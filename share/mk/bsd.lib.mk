@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.168 2000/06/06 09:22:01 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.169 2000/06/19 19:35:05 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -30,8 +30,19 @@ checkver:
 .else
 checkver:
 .endif
+print-shlib-major:
+	@echo ${SHLIB_MAJOR}
+
+print-shlib-minor:
+	@echo ${SHLIB_MINOR}
 .else
 checkver:
+
+print-shlib-major:
+	@false
+
+print-shlib-minor:
+	@false
 .endif
 
 # add additional suffixes not exported.
