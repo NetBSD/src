@@ -1,9 +1,5 @@
 /*
- * functions and pseudo-device for loadable kernel modules
- *
- * 05 Jun 93	Terry Lambert		Release cleanup
- * 10 Feb 93	Terry Lambert		Original
- *
+ * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1992 Terrence R. Lambert.
  * All rights reserved.
  *
@@ -34,7 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.15 1994/03/31 20:31:19 ws Exp $
+ *	$Id: kern_lkm.c,v 1.16 1994/04/14 04:05:28 cgd Exp $
+ */
+
+/*
+ * XXX it's not really safe to unload *any* of the types which are
+ * currently loadable; e.g. you could unload a syscall which was being
+ * blocked in, etc.  In the long term, a solution should be come up
+ * with, but "not right now." -- cgd
  */
 
 #include <sys/param.h>
@@ -561,25 +564,20 @@ _lkm_vfs(lkmtp, cmd)
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
 			return(EEXIST);
-		/*
-		 * Currently, the VFS and mount code in 386BSD is malformed;
-		 * this means that the per volume file system identifier is
-		 * the index into the table rather than the name; this means
-		 * that only the file systems already known to 386BSD are
-		 * allowable, since all others don't have fixed offsets.
-		 * Interestingly, Dell UNIX has this same bug with their VFS
-		 * implementation, but generic AT&T SVR4 does not.
-		 *
-		 * I will correct the VFS code when I get a chance.
-		 */
-		i = args->lkm_offset;
-		if (i < 0 || i > MOUNT_MAXTYPE) {
-			err = EINVAL;
-			break;
-		}
 
-		if (vfssw[i] != (struct vfsops *)0) {
-			err = EEXIST;
+		/* make sure there's no VFS in the table with this name */
+		for (i = 0; i < nvfssw; i++)
+			if (vfssw[i] != (struct vfsops *)0 &&
+			    strncmp(vfssw[i]->vfs_name,
+			    args->lkm_vfsops->vfs_name, MFSNAMELEN) == 0)
+				return (EEXIST);
+
+		/* pick the last available empty slot */
+		for (i = nvfssw - 1; i >= 0; i--)
+			if (vfssw[i] == (struct vfsops *)0)
+				break;
+		if (i == -1) {		/* or if none, punt */
+			err = EINVAL;
 			break;
 		}
 
@@ -594,17 +592,20 @@ _lkm_vfs(lkmtp, cmd)
 	 	(*(vfssw[i]->vfs_init))(args->lkm_flags);
 
 		/* done! */
-		args->lkm_offset = i;	/* slot in sysent[] */
-
+		args->lkm_offset = i;	/* slot in vfssw[] */
 		break;
 
 	case LKM_E_UNLOAD:
+#ifdef notyet
 		/* current slot... */
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents */
 		vfssw[i] = (struct vfsops *)0;
-
+#else
+		/* it's not safe to remove a vfs */
+		err = EBUSY;
+#endif
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
