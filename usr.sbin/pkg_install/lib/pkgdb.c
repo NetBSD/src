@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.9.2.1 2003/02/08 07:53:53 jmc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.9.2.2 2003/09/21 10:32:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.9.2.1 2003/02/08 07:53:53 jmc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.9.2.2 2003/09/21 10:32:47 tron Exp $");
 #endif
 
 /*
@@ -46,22 +46,31 @@ __RCSID("$NetBSD: pkgdb.c,v 1.9.2.1 2003/02/08 07:53:53 jmc Exp $");
 
 #define PKGDB_FILE	"pkgdb.byfile.db"	/* indexed by filename */
 
-static DB *pkgdbp;
-static int pkgdb_iter_flag;
+/*
+ * Where we put logging information by default if PKG_DBDIR is unset.
+ */
+#ifndef DEF_LOG_DIR
+#define DEF_LOG_DIR		"/var/db/pkg"
+#endif
+
+/* just in case we change the environment variable name */
+#define PKG_DBDIR		"PKG_DBDIR"
+
+static DB   *pkgdbp;
+static char *pkgdb_dir = NULL;
+static char  pkgdb_cache[FILENAME_MAX];
 
 /*
  *  Open the pkg-database
  *  Return value:
- *   0: everything ok
- *  -1: error, see errno
+ *   1: everything ok
+ *   0: error
  */
 int
 pkgdb_open(int mode)
 {
 	BTREEINFO info;
 	char	cachename[FILENAME_MAX];
-
-	pkgdb_iter_flag = 0;	/* used in pkgdb_iter() */
 
 	/* try our btree format first */
 	info.flags = 0;
@@ -146,6 +155,25 @@ pkgdb_retrieve(const char *key)
 	return vald.data;
 }
 
+/* dump contents of the database to stdout */
+void
+pkgdb_dump(void)
+{
+	DBT     key;
+	DBT	val;
+	int	type;
+
+	if (pkgdb_open(ReadOnly)) {
+		for (type = R_FIRST ; (*pkgdbp->seq)(pkgdbp, &key, &val, type) == 0 ; type = R_NEXT) {
+			printf("file: %.*s pkg: %.*s\n",
+				(int) key.size, (char *) key.data,
+				(int) val.size, (char *) val.data);
+		}
+		pkgdb_close();
+	}
+
+}
+
 /*
  *  Remove data set from pkgdb
  *  Return value as ypdb_delete:
@@ -169,7 +197,12 @@ pkgdb_remove(const char *key)
 	return (*pkgdbp->del) (pkgdbp, &keyd, 0);
 }
 
-/* remove any entry from the cache which has a data field of `pkg' */
+/*
+ *  Remove any entry from the cache which has a data field of `pkg'.
+ *  Return value:
+ *   1: everything ok
+ *   0: error
+ */
 int
 pkgdb_remove_pkg(const char *pkg)
 {
@@ -178,23 +211,25 @@ pkgdb_remove_pkg(const char *pkg)
 	int	type;
 	int	ret;
 	int	cc;
+	char	cachename[FILENAME_MAX];
 
 	if (pkgdbp == NULL) {
 		return 0;
 	}
+	(void) _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename));
 	cc = strlen(pkg);
 	for (ret = 1, type = R_FIRST; (*pkgdbp->seq)(pkgdbp, &key, &data, type) == 0 ; type = R_NEXT) {
-		if (cc == data.size && strncmp(data.data, pkg, cc) == 0) {
+		if ((cc + 1) == data.size && strncmp(data.data, pkg, cc) == 0) {
 			if (Verbose) {
-				printf("Removing file %s from pkgdb\n", (char *)key.data);
+				printf("Removing file `%s' from %s\n", (char *)key.data, cachename);
 			}
 			switch ((*pkgdbp->del)(pkgdbp, &key, 0)) {
 			case -1:
-				warn("Error removing %s from pkgdb", (char *) key.data);
+				warn("Error removing `%s' from %s", (char *)key.data, cachename);
 				ret = 0;
 				break;
 			case 1:
-				warn("Key %s not present in pkgdb", (char *) key.data);
+				warn("Key `%s' not present in %s", (char *)key.data, cachename);
 				ret = 0;
 				break;
 
@@ -202,31 +237,6 @@ pkgdb_remove_pkg(const char *pkg)
 		}
 	}
 	return ret;
-}
-
-/*
- *  Iterate all pkgdb keys (which can then be handled to pkgdb_retrieve())
- *  Return value:
- *    NULL if no more data is available
- *   !NULL else
- */
-char   *
-pkgdb_iter(void)
-{
-	DBT     key, val;
-	int	type;
-
-	if (pkgdb_iter_flag == 0) {
-		pkgdb_iter_flag = 1;
-		type = R_FIRST;
-	} else
-		type = R_NEXT;
-
-	if ((*pkgdbp->seq)(pkgdbp, &key, &val, type) != 0) {
-		key.data = NULL;
-	}
-
-	return (char *) key.data;
 }
 
 /*
@@ -245,11 +255,24 @@ _pkgdb_getPKGDB_FILE(char *buf, unsigned size)
 char *
 _pkgdb_getPKGDB_DIR(void)
 {
-	char   *tmp;
-	static char *cache = NULL;
+	char *tmp;
 
-	if (cache == NULL)
-		cache = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+	if (pkgdb_dir == NULL) {
+		if ((tmp = getenv(PKG_DBDIR)))
+			_pkgdb_setPKGDB_DIR(tmp);
+		else
+			_pkgdb_setPKGDB_DIR(DEF_LOG_DIR);
+	}
 
-	return cache;
+	return pkgdb_dir;
+}
+
+/*
+ *  Set the first place we look for where pkgdb is stored.
+ */
+void
+_pkgdb_setPKGDB_DIR(const char *dir)
+{
+	(void) snprintf(pkgdb_cache, sizeof(pkgdb_cache), "%s", dir);
+	pkgdb_dir = pkgdb_cache;
 }

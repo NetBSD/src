@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17.2.2 2003/02/08 07:51:39 jmc Exp $
+# $NetBSD: Makefile,v 1.17.2.3 2003/09/21 10:32:47 tron Exp $
 # Original from FreeBSD, no rcs id.
 
 NOLINT=		# defined
@@ -8,7 +8,7 @@ NOPROFILE=	# defined
 
 LIB+=		install
 SRCS+=		exec.c file.c ftpio.c global.c lpkg.c pen.c pkgdb.c \
-		plist.c str.c version.c path.c
+		plist.c str.c version.c path.c fexec.c
 
 # only needed during build - prevent installation of library
 libinstall::

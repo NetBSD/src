@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.32.2.3 2003/02/08 07:48:48 jmc Exp $
+.\" $NetBSD: pkg_create.1,v 1.32.2.4 2003/09/21 10:32:44 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd January 10, 2003
+.Dd September 2, 2003
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -32,9 +32,12 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl hlORUVv
+.Op Fl EhlORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
+.Ek
+.Bk -words
+.Op Fl b Ar build-version-file
 .Ek
 .Bk -words
 .Op Fl C Ar cpkgs
@@ -43,22 +46,13 @@
 .Op Fl D Ar displayfile
 .Ek
 .Bk -words
-.Op Fl P Ar dpkgs
-.Ek
-.Bk -words
-.Op Fl X Ar excludefile
-.Ek
-.Bk -words
-.Op Fl b Ar build-version-file
-.Ek
-.Bk -words
-.Op Fl f Ar contents
+.Op Fl I Ar realprefix
 .Ek
 .Bk -words
 .Op Fl i Ar iscript
 .Ek
 .Bk -words
-.Op Fl I Ar realprefix
+.Op Fl K Ar pkg_dbdir
 .Ek
 .Bk -words
 .Op Fl k Ar dscript
@@ -70,22 +64,28 @@
 .Op Fl m Ar mtreefile
 .Ek
 .Bk -words
+.Op Fl n Ar preserve-file
+.Ek
+.Bk -words
+.Op Fl P Ar dpkgs
+.Ek
+.Bk -words
 .Op Fl p Ar prefix
 .Ek
 .Bk -words
 .Op Fl r Ar rscript
 .Ek
 .Bk -words
-.Op Fl s Ar size-pkg-file
-.Ek
-.Bk -words
 .Op Fl S Ar size-all-file
 .Ek
 .Bk -words
-.Op Fl n Ar preserve-file
+.Op Fl s Ar size-pkg-file
 .Ek
 .Bk -words
 .Op Fl t Ar template
+.Ek
+.Bk -words
+.Op Fl X Ar excludefile
 .Ek
 .Bk -words
 .Fl c Ar comment
@@ -140,7 +140,9 @@ and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgcfl
 directives in the packing list (see PACKING LIST DETAILS section below).
 .It Fl c Ar [-]desc
-Fetch package ``one line description'' from file
+Fetch package
+.Pq one line description
+from file
 .Ar desc
 or, if preceded by
 .Cm - ,
@@ -156,13 +158,17 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
-.It Fl f Ar packinglist
-Fetch ``packing list'' for package from the file
-.Ar packinglist
+.It Fl E
+Add an empty views file to the package.
+.It Fl f Ar packlist
+Fetch
+.Pq packing list
+for package from the file
+.Ar packlist
 or
 .Cm stdin
 if
-.Ar packinglist
+.Ar packlist
 is a
 .Cm -
 (dash).
@@ -178,6 +184,15 @@ Set
 to be the install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically when the package is later installed.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl k Ar dscript
 Set
 .Ar dscript
@@ -215,9 +230,17 @@ where
 is the name of the first directory named by a
 .Cm @cwd
 directive.
+.It Fl n Ar preserve-file
+The file is used to denote that the package should not be deleted.
+This is intended for use where the deletion of packages may present
+a bootstrap problem.
 .It Fl O
-Go into a `packing list Only' mode.
-This is used to do `fake pkg_add' operations when a package is installed.
+Go into a
+.Pq packing list only
+mode.
+This is used to do
+.Pq fake pkg_add
+operations when a package is installed.
 In such cases, it is necessary to know what the final, adjusted packing
 list will look like.
 .It Fl P Ar dpkgs
@@ -235,7 +258,9 @@ directives.
 .It Fl p Ar prefix
 Set
 .Ar prefix
-as the initial directory ``base'' to start from in selecting files for
+as the initial directory
+.Pq base
+to start from in selecting files for
 the package.
 .It Fl R
 Re-order any directories in the pkg/PLIST file into reverse alphabetic
@@ -244,26 +269,24 @@ parent directories.
 .It Fl r Ar rscript
 Set
 .Ar rscript
-to be the ``requirements'' procedure for the package.
+to be the
+.Pq requirements
+procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically at installation/deinstallation time to
 determine whether or not installation/deinstallation should proceed.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
 .Xr pkg_info 1
-.Ar -S
+.Fl S
 flag.
 The file is expected to contain the size (in bytes) of all files of
 this package plus any required packages added up and stored as a
 ASCII string, terminated by a newline.
-.It Fl n Ar preserve-file
-The file is used to denote that the package should not be deleted.
-This is intended for use where the deletion of packages may present
-a bootstrap problem.
 .It Fl s Ar size-pkg-file
 Store the given file for later querying with the
 .Xr pkg_info 1
-.Ar -s
+.Fl s
 flag.
 The file is expected to contain the the size (in bytes) of all files of
 this package added up and stored as a ASCII string, terminated by a newline.
@@ -278,7 +301,9 @@ but it may be necessary to override it in the situation where
 space in your
 .Pa /tmp
 directory is limited.
-Be sure to leave some number of `X' characters for
+Be sure to leave some number of
+.Sq X
+characters for
 .Xr mktemp 3
 to fill in with a unique ID.
 .It Fl U
@@ -296,15 +321,13 @@ argument to
 .Cm tar
 when creating final package.
 See
-.Cm tar
-man page (or run
-.Cm tar
-with
-.Fl -help
-flag) for further information on using this flag.
+.Xr tar 1
+for further information on using this flag.
 .El
 .Sh PACKING LIST DETAILS
-The ``packing list'' format (see
+The
+.Pq packing list
+format (see
 .Fl f )
 is fairly simple, being
 nothing more than a single column of filenames to include in the
@@ -346,24 +369,28 @@ is set to
 and the last extracted file was
 .Pa bin/emacs .
 .Bl -tag -width indent -compact
-.It Cm "%F"
+.It Cm "\&%F"
 Expands to the last filename extracted (as specified), in the example case
 .Pa bin/emacs
-.It Cm "%D"
+.It Cm "\&%D"
 Expand to the current directory prefix, as set with
 .Cm @cwd ,
 in the example case
 .Pa /usr/local .
-.It Cm "%B"
-Expand to the ``basename'' of the fully qualified filename, that
+.It Cm "\&%B"
+Expand to the
+.Pq basename
+of the fully qualified filename, that
 is the current directory prefix, plus the last filespec, minus
 the trailing filename.
 In the example case, that would be
 .Pa /usr/local/bin .
-.It Cm "%f"
-Expand to the ``filename'' part of the fully qualified name, or
+.It Cm "\&%f"
+Expand to the
+.Pq filename
+part of the fully qualified name, or
 the converse of
-.Cm %B ,
+.Cm \&%B ,
 being in the example case,
 .Pa emacs .
 .El
@@ -372,7 +399,7 @@ Execute
 .Ar command
 as part of the deinstallation process.
 Expansion of special
-.Cm %
+.Cm \&%
 sequences is the same as for
 .Cm @exec .
 This command is not executed during the package add, as
@@ -383,8 +410,9 @@ as a result of adding the package, but not directly known to the package's
 table of contents (and hence not automatically removable).
 The advantage of using
 .Cm @unexec
-over a deinstallation script is that you can use the ``special
-sequence expansion'' to get at files regardless of where they've
+over a deinstallation script is that you can use the
+.Pq special sequence expansion
+to get at files regardless of where they've
 been potentially redirected (see
 .Fl p ) .
 .It Cm @mode Ar mode
@@ -514,12 +542,12 @@ command first appeared in
 .Fx .
 .Sh AUTHORS
 .Bl -tag -width indent -compact
-.It "Jordan Hubbard"
+.It Jordan Hubbard
 most of the work
-.It "John Kohl"
+.It John Kohl
 refined it for
 .Nx
-.It "Hubert Feyrer"
+.It Hubert Feyrer
 .Nx
 wildcard dependency processing, pkgdb, pkg size recording etc.
 .El
