@@ -1,9 +1,20 @@
-#	$NetBSD: GENERIC.v6,v 1.1 1999/07/01 07:00:15 itojun Exp $
+#	$NetBSD: GENERIC.v6,v 1.2 1999/07/09 18:55:35 thorpej Exp $
 #
 #	GENERIC.v6 -- IPv6 variant of GENERIC.  should be in GENERIC.
 #
 
 include "arch/newsmips/conf/GENERIC"
+
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
 
 # IPv6 options
 options 	INET6		# IPV6
