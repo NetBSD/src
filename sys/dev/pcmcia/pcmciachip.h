@@ -93,7 +93,8 @@ struct pcmciabus_attach_args {
 
 /* interfaces for the chipset to call pcmcia */
 
-int pcmcia_attach_card __P((struct device *, int *));
-void pcmcia_detach_card __P((struct device *));
+int pcmcia_card_attach __P((struct device *));
+void pcmcia_card_detach __P((struct device *));
+int pcmcia_card_gettype __P((struct device *));
 
 #endif /* _PCMCIA_PCMCIACHIP_H_ */
