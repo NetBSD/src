@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.7 1997/10/17 12:52:25 lukem Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.8 1997/10/18 11:23:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.7 1997/10/17 12:52:25 lukem Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.8 1997/10/18 11:23:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ main(argc, argv)
 void
 DoTimeout()
 {
-	register RMPCONN *rtmp;
+	RMPCONN *rtmp;
 	struct timeval now;
 
 	(void) gettimeofday(&now, (struct timezone *)0);
@@ -341,12 +341,12 @@ DoTimeout()
 
 CLIENT *
 FindClient(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
-	register CLIENT *ctmp;
+	CLIENT *ctmp;
 
 	for (ctmp = Clients; ctmp != NULL; ctmp = ctmp->next)
-		if (bcmp((char *)&rconn->rmp.hp_hdr.saddr[0],
+		if (memcmp((char *)&rconn->rmp.hp_hdr.saddr[0],
 		         (char *)&ctmp->addr[0], RMP_ADDRLEN) == 0)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.5 1997/07/28 05:39:19 thorpej Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.6 1997/10/18 11:23:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.5 1997/07/28 05:39:19 thorpej Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.6 1997/10/18 11:23:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,8 @@ ParseConfig()
 	CLIENT *client;
 	u_int8_t *addr;
 	char line[C_LINELEN];
-	register char *cp, *bcp;
-	register int i, j;
+	char *cp, *bcp;
+	int i, j;
 	int omask, linecnt = 0;
 
 	if (BootAny)				/* ignore config file */
@@ -134,7 +134,7 @@ ParseConfig()
 		if (*line == '\0' || *line == '#')	/* ignore comment */
 			continue;
 
-		if ((cp = index(line,'#')) != NULL)	/* trash comments */
+		if ((cp = strchr(line,'#')) != NULL)	/* trash comments */
 			*cp = '\0';
 
 		cp = line;				/* init `cp' */
@@ -254,11 +254,11 @@ ParseAddr(str)
 	char *str;
 {
 	static u_int8_t addr[RMP_ADDRLEN];
-	register char *cp;
-	register unsigned i;
-	register int part, subpart;
+	char *cp;
+	unsigned i;
+	int part, subpart;
 
-	bzero((char *)&addr[0], RMP_ADDRLEN);	/* zero static buffer */
+	memset((char *)&addr[0], 0, RMP_ADDRLEN);	/* zero static buffer */
 
 	part = subpart = 0;
 	for (cp = str; *cp; cp++) {
@@ -318,8 +318,8 @@ GetBootFiles()
 {
 	DIR *dfd;
 	struct stat statb;
-	register struct dirent *dp;
-	register int i;
+	struct dirent *dp;
+	int i;
 
 	/*
 	 *  Free the current list of boot files.
