@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.84 2005/02/18 01:10:44 heas Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.85 2005/02/20 15:48:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.84 2005/02/18 01:10:44 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.85 2005/02/20 15:48:35 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2743,8 +2743,6 @@ bge_rxeof(sc)
 {
 	struct ifnet *ifp;
 	int stdcnt = 0, jumbocnt = 0;
-	int have_tag = 0;
-	u_int16_t vlan_tag = 0;
 	bus_dmamap_t dmamap;
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
@@ -2786,11 +2784,6 @@ bge_rxeof(sc)
 
 		rxidx = cur_rx->bge_idx;
 		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
-
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			vlan_tag = cur_rx->bge_vlan_tag;
-		}
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
 			BGE_INC(sc->bge_jumbo, BGE_JUMBO_RX_RING_CNT);
@@ -2876,22 +2869,9 @@ bge_rxeof(sc)
 		 * If we received a packet with a vlan tag, pass it
 		 * to vlan_input() instead of ether_input().
 		 */
-		if (have_tag) {
-			struct m_tag *mtag;
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG)
+			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
 
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag != NULL) {
-				*(u_int *)(mtag + 1) = vlan_tag;
-				m_tag_prepend(m, mtag);
-				have_tag = vlan_tag = 0;
-			} else {
-				printf("%s: no mbuf for tag\n", ifp->if_xname);
-				m_freem(m);
-				have_tag = vlan_tag = 0;
-				continue;
-			}
-		}
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -3423,8 +3403,7 @@ doit:
 	    BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
-	mtag = sc->ethercom.ec_nvlans ?
-	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
+	mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head);
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
@@ -3436,7 +3415,7 @@ doit:
 
 		if (mtag != NULL) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = *(u_int *)(mtag + 1);
+			f->bge_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->bge_vlan_tag = 0;
 		}
