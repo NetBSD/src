@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.7 1997/07/20 16:24:00 pk Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.8 1997/07/30 11:48:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -227,6 +227,8 @@ struct ncr53c9x_softc {
 	struct scsi_link sc_link;		/* scsi lint struct */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
+
+	int	sc_cfflags;			/* Copy of config flags */
 
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
