@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.3 1998/12/03 14:06:17 bouyer Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.4 1998/12/03 17:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -43,7 +43,7 @@
 #define SIS_TIM_REC_OFF(drive) (16 * (drive))
 #define SIS_TIM_ACT_OFF(drive) (8 + 16 * (drive))
 #define SIS_TIM_UDMA_TIME_OFF(drive) (13 + 16 * (drive))
-#define SIS_TIM_UDMA_EN(drive) (15 + 16 * (drive))
+#define SIS_TIM_UDMA_EN(drive) (1 << (15 + 16 * (drive)))
 
 /* IDE general control register 0 (8 bits) */
 #define SIS_CTRL0 0x4a
