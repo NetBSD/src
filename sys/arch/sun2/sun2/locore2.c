@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.4 2001/05/14 15:00:28 fredette Exp $	*/
+/*	$NetBSD: locore2.c,v 1.5 2001/06/15 00:32:38 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
-#include <sun2/sun2/vector.h>
+#include <sun68k/sun68k/vector.h>
 
 /* This is defined in locore.s */
 extern char kernel_text[];
@@ -262,6 +262,7 @@ _verify_hardware()
 void
 _bootstrap()
 {
+	vm_offset_t va;
 
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
@@ -284,6 +285,12 @@ _bootstrap()
 	 */
 	setvbr((void **)vector_table);
 	/* Interrupts are enabled later, after autoconfig. */
+
+	/*
+ 	* Now unmap the PROM's physical/virtual pages zero through three.
+ 	*/
+	for(va = 0; va < NBPG * 4; va += NBPG)
+		set_pte(va, PG_INVAL);
 
 	/*
 	 * Turn on the LEDs so we know power is on.
