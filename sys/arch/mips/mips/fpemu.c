@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.9 2002/01/12 01:40:37 enami Exp $ */
+/*	$NetBSD: fpemu.c,v 1.10 2002/03/05 15:46:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -37,42 +37,37 @@
 #include <machine/cpu.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-static __inline void	send_sigsegv __P((u_int32_t vaddr, u_int32_t exccode,
-					struct frame *frame, u_int32_t cause));
-static __inline void	update_pc __P((struct frame *frame, u_int32_t cause));
+static __inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
+			    u_int32_t);
+static __inline void	update_pc(struct frame *, u_int32_t);
 
-void	MachEmulateLWC1 __P((u_int32_t inst, struct frame *frame,
-				u_int32_t cause));
-void	MachEmulateLDC1 __P((u_int32_t inst, struct frame *frame,
-				u_int32_t cause));
-void	MachEmulateSWC1 __P((u_int32_t inst, struct frame *frame,
-				u_int32_t cause));
-void	MachEmulateSDC1 __P((u_int32_t inst, struct frame *frame,
-				u_int32_t cause));
-void	bcemul_lb __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lbu __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lh __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lhu __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lw __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lwl __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_lwr __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_sb __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_sh __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_sw __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_swl __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
-void	bcemul_swr __P((u_int32_t inst, struct frame *frame, u_int32_t cause));
+void	MachEmulateLWC1(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateLDC1(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateSWC1(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateSDC1(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lb(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lbu(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lh(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lhu(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lw(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lwl(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_lwr(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_sb(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_sh(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_sw(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_swl(u_int32_t inst, struct frame *, u_int32_t);
+void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
 
-vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
+vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
 
 static __inline void
-send_sigsegv(vaddr, exccode, frame, cause)
-	u_int32_t vaddr;
-	u_int32_t exccode;
-	struct frame *frame;
-	u_int32_t cause;
+send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
+    u_int32_t cause)
 {
+
 	cause = (cause & 0xFFFFFF00) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
 
 	frame->f_regs[CAUSE] = cause;
@@ -81,9 +76,7 @@ send_sigsegv(vaddr, exccode, frame, cause)
 }
 
 static __inline void
-update_pc(frame, cause)
-	struct frame *frame;
-	u_int32_t cause;
+update_pc(struct frame *frame, u_int32_t cause)
 {
 
 	if (cause & MIPS_CR_BR_DELAY)
@@ -96,10 +89,7 @@ update_pc(frame, cause)
 #define LWSWC1_MAXLOOP	12
 
 void
-MachEmulateLWC1(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -111,7 +101,7 @@ MachEmulateLWC1(inst, frame, cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003) {
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -133,7 +123,8 @@ MachEmulateLWC1(inst, frame, cause)
 		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
 			return;
 
-		inst = fuiword((u_int32_t *)frame->f_regs[PC]);
+		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		inst = fuiword((u_int32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_LWC1)
 			return;
 
@@ -141,7 +132,7 @@ MachEmulateLWC1(inst, frame, cause)
 		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 		/* segment and alignment check */
-		if (vaddr & 0x80000003) {
+		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 			send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 			return;
 		}
@@ -159,10 +150,7 @@ MachEmulateLWC1(inst, frame, cause)
 }
 
 void
-MachEmulateLDC1(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+MachEmulateLDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -188,10 +176,7 @@ MachEmulateLDC1(inst, frame, cause)
 }
 
 void
-MachEmulateSWC1(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -203,7 +188,7 @@ MachEmulateSWC1(inst, frame, cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003) {
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
@@ -225,7 +210,8 @@ MachEmulateSWC1(inst, frame, cause)
 		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
 			return;
 
-		inst = fuiword((u_int32_t *)frame->f_regs[PC]);
+		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		inst = fuiword((u_int32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_SWC1)
 			return;
 
@@ -233,7 +219,7 @@ MachEmulateSWC1(inst, frame, cause)
 		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 		/* segment and alignment check */
-		if (vaddr & 0x80000003) {
+		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 			send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 			return;
 		}
@@ -251,10 +237,7 @@ MachEmulateSWC1(inst, frame, cause)
 }
 
 void
-MachEmulateSDC1(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+MachEmulateSDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -280,10 +263,7 @@ MachEmulateSDC1(inst, frame, cause)
 }
 
 void
-bcemul_lb(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -309,10 +289,7 @@ bcemul_lb(inst, frame, cause)
 }
 
 void
-bcemul_lbu(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lbu(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -338,10 +315,7 @@ bcemul_lbu(inst, frame, cause)
 }
 
 void
-bcemul_lh(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lh(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -367,10 +341,7 @@ bcemul_lh(inst, frame, cause)
 }
 
 void
-bcemul_lhu(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lhu(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -396,10 +367,7 @@ bcemul_lhu(inst, frame, cause)
 }
 
 void
-bcemul_lw(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lw(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -408,7 +376,7 @@ bcemul_lw(inst, frame, cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003) {
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -422,10 +390,7 @@ bcemul_lw(inst, frame, cause)
 }
 
 void
-bcemul_lwl(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lwl(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr, a, x, shift;
 	int16_t		offset;
@@ -457,10 +422,7 @@ bcemul_lwl(inst, frame, cause)
 }
 
 void
-bcemul_lwr(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_lwr(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr, a, x, shift;
 	int16_t		offset;
@@ -492,10 +454,7 @@ bcemul_lwr(inst, frame, cause)
 }
 
 void
-bcemul_sb(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_sb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -518,10 +477,7 @@ bcemul_sb(inst, frame, cause)
 }
 
 void
-bcemul_sh(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_sh(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -544,10 +500,7 @@ bcemul_sh(inst, frame, cause)
 }
 
 void
-bcemul_sw(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_sw(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr;
 	int16_t		offset;
@@ -556,7 +509,7 @@ bcemul_sw(inst, frame, cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000003) {
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
@@ -570,10 +523,7 @@ bcemul_sw(inst, frame, cause)
 }
 
 void
-bcemul_swl(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_swl(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr, a, x, shift;
 	int16_t		offset;
@@ -608,10 +558,7 @@ bcemul_swl(inst, frame, cause)
 }
 
 void
-bcemul_swr(inst, frame, cause)
-	u_int32_t inst;
-	struct frame *frame;
-	u_int32_t cause;
+bcemul_swr(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
 	u_int32_t	vaddr, a, x, shift;
 	int16_t		offset;
