@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.20 2001/05/15 11:49:25 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.20.2.1 2002/10/01 23:53:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.20 2001/05/15 11:49:25 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.20.2.1 2002/10/01 23:53:11 lukem Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -204,7 +204,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 
 					fstack[base + ntfiles].fp = ftmp();
 					fmerge(0, MSTART, filelist,
-					    mfct, geteasy, fstack[base].fp,
+					    mfct, geteasy,
+					    fstack[base + ntfiles].fp,
 					    putrec, ftbl);
 					ntfiles++;
 					mfct = 0;
