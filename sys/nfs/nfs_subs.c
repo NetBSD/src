@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.138 2004/10/26 04:34:46 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.139 2005/01/06 11:52:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.138 2004/10/26 04:34:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.139 2005/01/06 11:52:44 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1672,6 +1672,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	enum vtype vtyp;
 	u_short vmode;
 	struct timespec mtime;
+	struct timespec ctime;
 	struct vnode *nvp;
 	int32_t rdev;
 	struct nfsnode *np;
@@ -1685,6 +1686,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		rdev = makedev(fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata1),
 			fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata2));
 		fxdr_nfsv3time(&fp->fa3_mtime, &mtime);
+		fxdr_nfsv3time(&fp->fa3_ctime, &ctime);
 	} else {
 		vtyp = nfsv2tov_type(fp->fa_type);
 		vmode = fxdr_unsigned(u_short, fp->fa_mode);
@@ -1692,6 +1694,9 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			vtyp = IFTOVT(vmode);
 		rdev = fxdr_unsigned(int32_t, fp->fa2_rdev);
 		fxdr_nfsv2time(&fp->fa2_mtime, &mtime);
+		ctime.tv_sec = fxdr_unsigned(u_int32_t,
+		    fp->fa2_ctime.nfsv2_sec);
+		ctime.tv_nsec = 0;
 
 		/*
 		 * Really ugly NFSv2 kludge.
@@ -1753,16 +1758,18 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	vap = np->n_vattr;
 
 	/*
-	 * Invalidate access cache if uid, gid or mode changed.
+	 * Invalidate access cache if uid, gid, mode or ctime changed.
 	 */
 	if (np->n_accstamp != -1 &&
-	    (gid != vap->va_gid || uid != vap->va_uid || vmode != vap->va_mode))
+	    (gid != vap->va_gid || uid != vap->va_uid || vmode != vap->va_mode
+	    || timespeccmp(&ctime, &vap->va_ctime, !=)))
 		np->n_accstamp = -1;
 
 	vap->va_type = vtyp;
 	vap->va_mode = vmode;
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
+	vap->va_ctime = ctime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	switch (vtyp) {
 	case VDIR:
@@ -1788,7 +1795,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_fileid = fxdr_unsigned(int32_t,
 		    fp->fa3_fileid.nfsuquad[1]);
 		fxdr_nfsv3time(&fp->fa3_atime, &vap->va_atime);
-		fxdr_nfsv3time(&fp->fa3_ctime, &vap->va_ctime);
 		vap->va_flags = 0;
 		vap->va_filerev = 0;
 	} else {
@@ -1801,9 +1807,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa2_fileid);
 		fxdr_nfsv2time(&fp->fa2_atime, &vap->va_atime);
 		vap->va_flags = 0;
-		vap->va_ctime.tv_sec = fxdr_unsigned(u_int32_t,
-		    fp->fa2_ctime.nfsv2_sec);
-		vap->va_ctime.tv_nsec = 0;
 		vap->va_gen = fxdr_unsigned(u_int32_t,fp->fa2_ctime.nfsv2_usec);
 		vap->va_filerev = 0;
 	}
