@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.6 2001/03/04 14:26:26 bjh21 Exp $	*/
+/*	$NetBSD: armreg.h,v 1.7 2001/03/10 16:19:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -118,8 +118,8 @@
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
 
 /* How to decide what format the CPUID is in. */
-#define CPU_ID_ISOLD(x)		((x) & 0x0000f000 == 0x00000000)
-#define CPU_ID_IS7(x)		((x) & 0x0000f000 == 0x00007000)
+#define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
+#define CPU_ID_IS7(x)		(((x) & 0x0000f000) == 0x00007000)
 #define CPU_ID_ISNEW(x)		(!CPU_ID_ISOLD(x) && !CPU_ID_IS7(x))
 
 /* On ARM3 and ARM6, this byte holds the foundry ID. */
