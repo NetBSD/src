@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2001/11/29 23:24:23 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2002/03/23 03:24:34 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,6 @@ EXTERN distinfo dist_list[]
 = {
     {"kern-GENERIC",	0, "ag", "Kernel       : "},
     {"kern-TX3912",	0, "ag", "Kernel       : "},
-    {"kern-TX3922",	0, "ag", "Kernel       : "},
     {"base",		1, "bw", "Base         : "},
     {"etc",		1, "aa", "System (/etc): "},
     {"comp",		1, "bl", "Compiler     : "},
