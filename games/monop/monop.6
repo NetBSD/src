@@ -1,4 +1,4 @@
-.\"	$NetBSD: monop.6,v 1.13 2002/09/26 18:32:03 wiz Exp $
+.\"	$NetBSD: monop.6,v 1.14 2003/04/26 21:30:23 wiz Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -55,8 +55,7 @@ The game, in effect, lends the player money,
 so it is possible to buy something which you cannot afford.
 However, as soon as a person goes into debt, he must
 .Dq fix the problem ,
-.Em i.e. ,
-make himself solvent, before play can continue.
+i.e., make himself solvent, before play can continue.
 If this is not possible, the player's property reverts to his debtee,
 either a player or the bank.
 A player can resign at any time to any person or the bank,
@@ -78,24 +77,24 @@ It asks you if you're sure.
 print board: This prints out the current board.
 The columns have the following meanings (column headings are the same for the
 .Ic where ,
-.Ic own holdings  ,
+.Ic own holdings ,
 and
 .Ic holdings
 commands):
 .Pp
 .Bl -tag -width indent -compact
 .It Name
-The first ten characters of the name of the square
+The first ten characters of the name of the square.
 .It Own
 The
 .Em number
 of the owner of the property.
 .It Price
-The cost of the property (if any)
+The cost of the property (if any).
 .It Mg
 This field has a
 .Sq *
-in it if the property is mortgaged
+in it if the property is mortgaged.
 .It \&#
 If the property is a Utility or Railroad, this is the number
 of such owned by the owner.
@@ -111,8 +110,7 @@ A
 indicates the current player.
 .It Ic own holdings
 List your own holdings,
-.Em i.e. ,
-money, get-out-of-jail-free cards, and property.
+i.e., money, get-out-of-jail-free cards, and property.
 .It Ic holdings
 holdings list: Look at anyone's holdings.
 It will ask you whose holdings you wish to look at.
@@ -155,7 +153,7 @@ it asks for confirmation of the trade before doing it.
 .It Ic resign
 Resign to another player or the bank.
 If you resign to the bank, all property reverts to its virgin state,
-and get-out-of-jail free cards revert to the deck.
+and get-out-of-jail-free cards revert to the deck.
 .It Ic save
 save game:
 Save the current game in a file for later play.
