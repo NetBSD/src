@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $	*/
+/*	$NetBSD: cksum.c,v 1.16.2.1 2003/12/21 08:13:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.16.2.1 2003/12/21 08:13:20 tron Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -115,11 +115,12 @@ main(argc, argv)
 	char **argv;
 {
 	register int ch, fd, rval, dosum, pflag, nohashstdin;
-	u_int32_t len, val;
+	u_int32_t val;
+	off_t len;
 	char *fn;
 	const char *progname;
-	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
-	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
+	int (*cfncn) __P((int, u_int32_t *, off_t *));
+	void (*pfncn) __P((char *, u_int32_t, off_t));
 	struct hash *hash;
 
 	cfncn = NULL;
