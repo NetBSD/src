@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.3 2003/01/19 11:17:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ int	pthread_condattr_destroy(pthread_condattr_t *attr);
 
 int	pthread_once(pthread_once_t *once_control, void (*routine)(void));
 
-int	pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
+int	pthread_key_create(pthread_key_t *key, void (*destruct)(void *));
 int	pthread_key_delete(pthread_key_t key);
 int	pthread_setspecific(pthread_key_t key, const void *value);
 void*	pthread_getspecific(pthread_key_t key);
