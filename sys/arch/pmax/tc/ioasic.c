@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.11 1999/08/13 09:01:51 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.12 1999/09/09 07:09:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.11 1999/08/13 09:01:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.12 1999/09/09 07:09:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,6 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < ioasic_ndevs; i++)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-
-	(void)ioasic_lance_dma_setup(sc);
 #endif
 
 	/*
@@ -195,28 +193,6 @@ ioasic_lance_ether_address()
 
 	return (char *)(ioasic_base + IOASIC_SLOT_2_START);
 }
-
-#if 1
-void	ioasic_lance_dma_setup __P((void *));
-
-void
-ioasic_lance_dma_setup(v)
-	void *v;
-{
-	tc_addr_t tca;
-	u_int32_t ldp, csr;
-
-	tca = (tc_addr_t)v;
-	ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
-	*(u_int32_t *)IOASIC_REG_LANCE_DMAPTR(ioasic_base) = ldp;
-	tc_wmb();
-
-	csr = *(u_int32_t *)IOASIC_REG_CSR(ioasic_base);
-	csr |= IOASIC_CSR_DMAEN_LANCE;
-	*(u_int32_t *)IOASIC_REG_CSR(ioasic_base) = csr;
-	tc_wmb();
-}
-#endif
 
 /*
  * spl(9) for IOASIC DECstations
