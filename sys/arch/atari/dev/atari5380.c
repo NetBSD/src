@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.16 1996/07/05 19:35:35 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.17 1996/08/16 08:25:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -70,7 +70,7 @@
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
 #define	DBG_PID		15	/* Keep track of driver			*/
 #define	REAL_DMA		/* Use DMA if sensible			*/
-#if defined(notdef) && defined(FALCON_SCSI)
+#if defined(FALCON_SCSI)
 #define	REAL_DMA_POLL	1	/* 1: Poll for end of DMA-transfer	*/
 #else
 #define	REAL_DMA_POLL	0	/* 1: Poll for end of DMA-transfer	*/
