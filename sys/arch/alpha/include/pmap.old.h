@@ -1,4 +1,41 @@
-/* $NetBSD: pmap.old.h,v 1.21 1998/03/01 08:17:37 ross Exp $ */
+/* $NetBSD: pmap.old.h,v 1.22 1998/03/06 23:19:27 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center and by Chris G. Demetriou.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -148,6 +185,40 @@ void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int	pmap_uses_prom_console __P((void));
 #endif
+
+#define	pmap_l1pte(pmap, v)						\
+	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
+
+#define	pmap_ste(pmap, v)						\
+	(&(pmap)->pm_stab[l2pte_index((vm_offset_t)(v))])
+
+#define	pmap_pte(pmap, v)						\
+	(&(pmap)->pm_ptab[NPTEPG * l2pte_index((vm_offset_t)(v)) +	\
+	    l3pte_index((vm_offset_t)(v))])
+
+#define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
+#define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
+#define	pmap_pte_w(pte)		(*(pte) & PG_WIRED)
+#define	pmap_pte_v(pte)		(*(pte) & PG_V)
+
+#define	pmap_pte_set_w(pte, v)						\
+do {									\
+	if (v)								\
+		*(pte) |= PG_WIRED;					\
+	else								\
+		*(pte) &= ~PG_WIRED;					\
+} while (0)
+
+#define	pmap_pte_w_chg(pte, nw)	((nw) ^ pmap_pte_w(pte))
+
+#define	pmap_pte_set_prot(pte, np)					\
+do {									\
+	*(pte) &= ~PG_PROT;						\
+	*(pte) |= (np);							\
+} while (0)
+
+#define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
+
 #endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */
