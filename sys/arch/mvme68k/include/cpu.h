@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.2 2001/11/17 13:07:54 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.3 2001/11/17 19:32:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -202,7 +202,6 @@ paddr_t	kvtop __P((caddr_t));
 void	loadustp __P((paddr_t));
 
 /* Prototypes from sys_machdep.c: */
-struct lwp;
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
