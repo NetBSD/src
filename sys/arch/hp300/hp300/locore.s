@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 2002/05/30 18:30:17 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 2002/06/27 08:45:25 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -113,6 +113,9 @@ ASLOCAL(tmpstk)
  * must be disabled when this is invoked.
  */
 #define DOREBOOT						\
+	/* Reset Vector Base Register to what PROM expects. */  \
+	movl	#0,%d0;						\
+	movc	%d0,%vbr;					\
 	/* Jump to REQ_REBOOT */				\
 	jmp	0x1A4;
 
