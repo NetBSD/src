@@ -1,4 +1,4 @@
-/*	$NetBSD: macho_machdep.h,v 1.1 2001/07/14 02:04:26 christos Exp $	*/
+/*	$NetBSD: macho_machdep.h,v 1.2 2001/07/14 03:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,5 +91,8 @@ struct exec_macho_i386_saved_state {
 	unsigned int	argv[MACHO_I386_SAVED_ARGV_COUNT];
 };
 
+#define MACHO_MACHDEP_CASES		\
+	case MACHO_CPU_TYPE_I386:	\
+		goto done;
 
 #endif /* !_I386_MACHO_MACHDEP_H_ */
