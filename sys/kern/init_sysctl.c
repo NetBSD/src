@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.14 2003/12/26 23:49:39 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.15 2003/12/28 14:39:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
+static int sysctl_kern_hostname(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_kern_file(SYSCTLFN_PROTO);
 static int sysctl_kern_autonice(SYSCTLFN_PROTO);
@@ -266,7 +267,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_STRING, "hostname", NULL,
-		       NULL, 0, &hostname, MAXHOSTNAMELEN,
+		       sysctl_kern_hostname, 0, &hostname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "hostid", NULL,
@@ -859,6 +860,25 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 
 	hostid = inthostid;
 
+	return (0);
+}
+
+/*
+ * sysctl helper function for kern.hostname.
+ * we have to adjust hostnamelen after changes.
+ */
+static int
+sysctl_kern_hostname(SYSCTLFN_ARGS)
+{
+	int error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	hostnamelen = strlen(hostname);
 	return (0);
 }
 
