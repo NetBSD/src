@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2003/04/28 23:16:18 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -52,6 +52,8 @@
 typedef int sig_atomic_t;
 #endif
 
+#define __HAVE_SIGINFO
+
 #if defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
 /*
@@ -88,6 +90,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#ifdef COMPAT_16
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
@@ -113,6 +116,7 @@ struct sigcontext {
 	
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif
 
 /*
  * The following macros are used to convert from a ucontext to sigcontext,
