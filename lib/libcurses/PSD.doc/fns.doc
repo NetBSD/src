@@ -451,6 +451,13 @@ Creates an exact copy of the window
 .De
 Sets the terminal to echo characters.
 .Ds
+.Fn echochar "const chtype ch" \(dg
+.De
+Add the character
+.Vn ch
+on the window
+at the current \*y and immediately refresh the window.
+.Ds
 .Fn endwin ""
 .De
 Finish up window routines before exit.
@@ -1255,6 +1262,13 @@ become blank on
 .De
 Get the foreground and background colors of pair
 .Vn pair .
+.Ds
+.Fn pechochar "const chtype ch" \(dg
+.De
+Add the character
+.Vn ch
+on the pad
+at the current \*y and immediately refresh the pad.
 .Ds 
 .Fn pnoutrefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
 .De    
@@ -1688,6 +1702,7 @@ specification of a window, rather than the use of the default
 .Fn wclrtoeol "WINDOW *win"
 .Fn wdelch "WINDOW *win"
 .Fn wdeleteln "WINDOW *win"
+.Fn wechochar "WINDOW *win" "chtype ch"
 .Fn werase "WINDOW *win"
 .Fn wgetch "WINDOW *win"
 .Fn wgetnstr "WINDOW *win" "char *str" "int len"

@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.41 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.42 2004/03/28 08:58:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.41 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.42 2004/03/28 08:58:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -348,9 +348,15 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		win->battr = 0;
 	win->scr_t = 0;
 	win->scr_b = win->maxy - 1;
-	if (ispad)
+	if (ispad) {
 		win->flags |= __ISPAD;
-	else
+		win->pbegy = 0;
+		win->pbegx = 0;
+		win->sbegy = 0;
+		win->sbegx = 0;
+		win->smaxy = 0;
+		win->smaxx = 0;
+	} else
 		__swflags(win);
 #ifdef DEBUG
 	__CTRACE("makenew: win->wattr = %08x\n", win->wattr);
