@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.24 2001/11/13 06:17:47 lukem Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.25 2001/11/19 00:37:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.24 2001/11/13 06:17:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.25 2001/11/19 00:37:22 augustss Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -410,8 +410,11 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		DPRINTF(("%s: inject\n", sc->sc_base.me_dv.dv_xname));
 
 		evar = sc->sc_base.me_evp;
-		if (evar == NULL) /* XXX is this an error? */
-			return (EACCES);
+		if (evar == NULL) {
+			/* No event sink, so ignore it. */
+			DPRINTF(("wsmux_do_ioctl: event ignored\n"));
+			return (0);
+		}
 
 		s = spltty();
 		get = evar->get;
