@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.23 2003/02/17 11:07:19 dsl Exp $	*/
+/*	$NetBSD: color.c,v 1.24 2003/04/06 07:22:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.23 2003/02/17 11:07:19 dsl Exp $");
+__RCSID("$NetBSD: color.c,v 1.24 2003/04/06 07:22:13 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -283,6 +283,9 @@ start_color(void)
 /*
  * init_pair --
  *	Set pair foreground and background colors.
+ *	Our default colour ordering is ANSI - 1 = red, 4 = blue, 3 = yellow,
+ *	6 = cyan.  The older style (Sb/Sf) uses 1 = blue, 4 = red, 3 = cyan,
+ *	6 = yellow, so we swap them here and in pair_content().
  */
 int
 init_pair(short pair, short fore, short back)
@@ -299,6 +302,38 @@ init_pair(short pair, short fore, short back)
 		return (ERR);
 	if (back < -1 || back >= COLORS)
 		return (ERR);
+
+	/* Swap red/blue and yellow/cyan */
+	if (_cursesi_screen->color_type == COLOR_OTHER) {
+		switch (fore) {
+		case COLOR_RED:
+			fore = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			fore = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			fore = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			fore = COLOR_YELLOW;
+			break;
+		}
+		switch (back) {
+		case COLOR_RED:
+			back = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			back = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			back = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			back = COLOR_YELLOW;
+			break;
+		}
+	}
 
 	if ((_cursesi_screen->colour_pairs[pair].flags & __USED) &&
 	    (fore != _cursesi_screen->colour_pairs[pair].fore ||
@@ -330,6 +365,38 @@ pair_content(short pair, short *forep, short *backp)
 
 	*forep = _cursesi_screen->colour_pairs[pair].fore;
 	*backp = _cursesi_screen->colour_pairs[pair].back;
+
+	/* Swap red/blue and yellow/cyan */
+	if (_cursesi_screen->color_type == COLOR_OTHER) {
+		switch (*forep) {
+		case COLOR_RED:
+			*forep = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			*forep = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			*forep = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			*forep = COLOR_YELLOW;
+			break;
+		}
+		switch (*backp) {
+		case COLOR_RED:
+			*backp = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			*backp = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			*backp = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			*backp = COLOR_YELLOW;
+			break;
+		}
+	}
 	return(OK);
 }
 
