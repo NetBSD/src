@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -423,13 +423,13 @@ foreach $n (keys(%sedlist)) {
 
 __END__
 %% file Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 SUBDIR=	common cc cpp cc1 cc1plus cc1obj g++ libgcc libobjc
 
 .include <bsd.subdir.mk>
 %% file Makefile.cc1
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 NOMAN=
 
@@ -451,7 +451,7 @@ DPADD+= /usr/lib/libgnumalloc.a
 
 .include <bsd.prog.mk>
 %% file common/Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 LIB=	cc1
 
@@ -481,7 +481,7 @@ install:
 
 %% file cc/Makefile
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=           gcc
 %% srcs cc
@@ -503,7 +503,7 @@ MLINKS=		gcc.1 cc.1
 .include <bsd.prog.mk>
 %% file cc1/Makefile
 #	from: @(#)Makefile	6.2 (Berkeley) 2/2/91
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=		cc1
 
@@ -511,7 +511,7 @@ PROG=		cc1
 
 .include <../Makefile.cc1>
 %% file cc1plus/Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=	cc1plus
 
@@ -519,7 +519,7 @@ PROG=	cc1plus
 
 .include <../Makefile.cc1>
 %% file cc1obj/Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=           cc1obj
 
@@ -530,7 +530,7 @@ PROG=           cc1obj
 .include <../Makefile.cc1>
 %% file cpp/Makefile
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
@@ -558,7 +558,7 @@ afterinstall:
 .include <bsd.prog.mk>
 %% file g++/Makefile
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 PROG=           g++
 %% srcs g++
@@ -576,7 +576,7 @@ MLINKS=	g++.1 c++.1
 
 .include <bsd.prog.mk>
 %% file libgcc/Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 LIB=	gcc
 NOPROFILE=
@@ -629,7 +629,7 @@ ${LIB2SOBJS}: libgcc2.c
 
 .include <bsd.lib.mk>
 %% file libobjc/Makefile
-#	$NetBSD: gcc2netbsd,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.2 1995/12/15 08:05:11 phil Exp $
 
 LIB=	objc
 NOPROFILE=
@@ -747,5 +747,5 @@ exit 0
 %% file common/options.h
 #include "lang-options.h"
 %% file arch/mips/xm-netbsd.h
-#include "mips/xm-mips.h"
-#include "xm-netbsd.h"
+#include <mips/xm-mips.h>
+#include <xm-netbsd.h>
