@@ -156,7 +156,7 @@ usysdep_initialize (puuconf,iflags)
      int iflags;
 {
   int iuuconf;
-  char *z;
+  const char *z;
   struct passwd *q;
 
   ulog_id (getpid ());
