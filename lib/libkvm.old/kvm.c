@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
+#else
+static char rcsid[] = "$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
