@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/07/14 12:59:36 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/07/14 13:02:13 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -339,19 +339,18 @@ install_extint(void (*handler)(void))
 	extern int extint, extsize;
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
+	int msr;
 
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
+	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
+	asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*
