@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.72 2002/06/26 20:01:07 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.73 2002/06/28 13:48:17 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2911,7 +2911,7 @@ lib/libc/net/gethnamaddr.c			1.45-1.46
 lib/libc/net/getnetnamadr.c			1.22
 
   Fix remote buffer overrun on hostbuf[].  Also fix up logic of
-  buffer handling.
+  buffer handling.  Fixes SA#2002-006.
 
 lib/libc/net/gethnamaddr.c			1.47
 
@@ -2992,4 +2992,5 @@ crypto/dist/ssh/auth2-chall.c			patch
 crypto/dist/ssh/version.h			patch
 
   Pull in a point patch for the preauth security vulnerability,
-  taken from http://www.openssh.com/txt/preauth.adv.
+  taken from http://www.openssh.com/txt/preauth.adv.  Fixes
+  SA#2002-005.
