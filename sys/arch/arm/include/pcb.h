@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 2002/10/18 21:32:59 bjh21 Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 2002/10/19 00:10:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -45,6 +45,9 @@ struct trapframe;
 
 struct pcb_arm32 {
 	pd_entry_t *pcb32_pagedir;		/* PT hooks */
+	u_int	pcb32_r8;			/* used */
+	u_int	pcb32_r9;			/* used */
+	u_int	pcb32_r10;			/* used */
 	u_int	pcb32_r11;			/* used */
 	u_int	pcb32_r12;			/* used */
 	u_int	pcb32_sp;			/* used */
