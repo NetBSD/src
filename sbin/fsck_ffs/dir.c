@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.26 1999/11/15 19:18:24 fvdl Exp $	*/
+/*	$NetBSD: dir.c,v 1.27 2000/08/03 14:52:39 castor Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.26 1999/11/15 19:18:24 fvdl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.27 2000/08/03 14:52:39 castor Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,13 @@ propagate()
 	 * Create a list of children for each directory.
 	 */
 	inpend = &inpsort[inplast];
+	for (inpp = inpsort; inpp < inpend; inpp++) {
+		inp = *inpp;
+		inp->i_child = inp->i_sibling = inp->i_parentp = 0;
+		if (statemap[inp->i_number] == DFOUND)
+			statemap[inp->i_number] = DSTATE;
+	}
+
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
 		if (inp->i_parent == 0 ||
@@ -687,6 +694,7 @@ allocdir(parent, request, mode)
 	ino_t parent, request;
 	int mode;
 {
+	struct inoinfo *inp;
 	ino_t ino;
 	char *cp;
 	struct dinode *dp;
@@ -731,6 +739,8 @@ allocdir(parent, request, mode)
 		return (0);
 	}
 	cacheino(dp, ino);
+	inp = getinoinfo(ino);
+	inp->i_parent = inp->i_dotdot = parent;
 	statemap[ino] = statemap[parent];
 	if (statemap[ino] == DSTATE) {
 		lncntp[ino] = iswap16(dp->di_nlink);
