@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.36.4.4 2000/07/21 14:30:54 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.36.4.5 2001/03/16 19:44:04 he Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -468,7 +468,7 @@ struct iy_softc *sc;
 
 	temp = bus_space_read_1(iot, ioh, REG1);
 	bus_space_write_1(iot, ioh, REG1,
-	    temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
+	    temp | /* XXX XMT_CHAIN_INT | */ XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
 	
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
@@ -545,11 +545,10 @@ struct iy_softc *sc;
 	    temp, "\020\4BAD IRQ\010flash/boot present");
 #endif
 
-
 	bus_space_write_1(iot, ioh, RCV_LOWER_LIMIT_REG, 0);
-	bus_space_write_1(iot, ioh, RCV_UPPER_LIMIT_REG, (sc->rx_size - 2) >> 8);
-	bus_space_write_1(iot, ioh, XMT_LOWER_LIMIT_REG, sc->rx_size >> 8);
-	bus_space_write_1(iot, ioh, XMT_UPPER_LIMIT_REG, sc->sram >> 8);
+	bus_space_write_1(iot, ioh, RCV_UPPER_LIMIT_REG, (sc->rx_size -2) >>8);
+	bus_space_write_1(iot, ioh, XMT_LOWER_LIMIT_REG, sc->rx_size >>8);
+	bus_space_write_1(iot, ioh, XMT_UPPER_LIMIT_REG, (sc->sram - 2) >>8);
 
 	temp = bus_space_read_1(iot, ioh, REG1);
 #ifdef IYDEBUG
@@ -1095,12 +1094,33 @@ struct iy_softc *sc;
 			sc->tx_start = sc->tx_end;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		
-		if ((txstat2 & 0x2000) == 0)
+		if (txstat2 & 0x0020)
+			ifp->if_collisions += 16;
+		else
+			ifp->if_collisions += txstat2 & 0x000f;
+
+		if ((txstat2 & 0x2000) == 0) {
 			++ifp->if_oerrors;
-		if (txstat2 & 0x000f)
-			ifp->if_oerrors += txstat2 & 0x000f;
+			sc->tx_start = sc->tx_end;
+			break;	/* Fatal errors stop chaining, too */
+		}
 	}
+#if 0
+	if (sc->tx_start != sc->tx_end) {
+		/*
+		 * This happens when a chain is interupted because of a
+		 * fatal transmission error. Start transmission of the
+		 * remaining part of the chain. 
+		 */
+		bus_space_write_2(iot, ioh, XMT_ADDR_REG, sc->tx_start);
+		bus_space_write_1(iot, ioh, 0, XMT_CMD);
+	}
+#endif
+	/* Nearly done. Tell feeders we may be able to accept more data... */
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* and get more data. */
+	iystart(ifp);
 }
 
 int
