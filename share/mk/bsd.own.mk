@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.181 2001/09/25 01:04:35 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.182 2001/09/25 01:43:36 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -47,7 +47,7 @@ GENCAT=		${TOOLDIR}/bin/gencat
 #GRIND=		${TOOLDIR}/bin/vgrind -f
 #GROFF=		${TOOLDIR}/bin/groff -Tascii
 #INDXBIB=	${TOOLDIR}/bin/indxbib
-INSTALL=	${TOOLDIR}/bin/binstall
+INSTALL=	STRIP=${STRIP} ${TOOLDIR}/bin/binstall
 INSTALL_INFO=	${TOOLDIR}/bin/install-info
 LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/lex
