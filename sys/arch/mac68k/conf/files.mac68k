@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.17 1994/11/27 20:07:38 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.18 1994/11/27 22:10:28 briggs Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -75,9 +75,9 @@ file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
 
-file	compat/sunos/sun_misc.c		compat_sunos
-file	compat/sunos/sun_sysent.c	compat_sunos
-file	compat/sunos/sun_ioctl.c	compat_sunos
-file	compat/sunos/sun_exec.c		compat_sunos
+file	compat/sunos/sunos_misc.c	compat_sunos
+file	compat/sunos/sunos_sysent.c	compat_sunos
+file	compat/sunos/sunos_ioctl.c	compat_sunos
+file	compat/sunos/sunos_exec.c	compat_sunos
 
 file	dev/cons.c
