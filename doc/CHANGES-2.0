@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.362 2004/07/28 11:35:48 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.363 2004/07/28 21:34:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6256,3 +6256,10 @@ bin/ps/keyword.c				1.41
 	From Nicolas Joly in PR bin/26452.
 	[simonb, ticket #723]
 
+
+sys/dev/pci/pccbb.c				1.99
+
+	Add entries for TI CardBus bridges 1520 and 4520Yenta, as found in
+	IBM ThinkPad 40p and 41p respectively, so that the CardBus probes and
+	works on those machines. PR#26380.
+	[he, ticket #724]
