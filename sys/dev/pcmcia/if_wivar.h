@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.9 2000/05/23 08:41:49 enami Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.10 2000/07/05 02:35:55 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -38,14 +38,6 @@
  * Oslo IETF plenary meeting.
  */
 
-/*
- * Service set identifier.
- */
-struct wi_ssid {
-	int ws_len;
-	u_int8_t ws_id[IEEE80211_NWID_LEN];
-};
-
 struct wi_softc	{
 	struct device sc_dev;
 	struct ethercom sc_ethercom;
@@ -79,9 +71,9 @@ struct wi_softc	{
 	u_int16_t		wi_pm_enabled;
 	u_int16_t		wi_max_sleep;
 
-	struct wi_ssid		wi_nodeid;
-	struct wi_ssid		wi_netid;
-	struct wi_ssid		wi_ibssid;
+	struct ieee80211_nwid	wi_nodeid;
+	struct ieee80211_nwid	wi_netid;
+	struct ieee80211_nwid	wi_ibssid;
 
 	u_int8_t		wi_txbuf[1596];
 	int                     wi_has_wep;
