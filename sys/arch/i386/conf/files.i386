@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.209 2002/07/03 02:46:11 yamt Exp $
+#	$NetBSD: files.i386,v 1.210 2002/07/07 13:03:47 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -12,6 +12,7 @@ maxusers 2 16 128
 defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
 			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
+			APM_USE_KVM86
 defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
@@ -22,6 +23,7 @@ defparam		CPURESET_DELAY
 
 # VM86 emulation
 defflag			VM86
+defflag			KVM86
 
 # Floating point emulation
 defflag			MATH_EMULATE
@@ -318,6 +320,10 @@ file	arch/i386/i386/apmcall.s	apm
 # VM86 mode
 file	arch/i386/i386/vm86.c			vm86
 
+# VM86 in kernel
+file	arch/i386/i386/kvm86.c			kvm86
+file	arch/i386/i386/kvm86call.s		kvm86
+
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
 
@@ -444,3 +450,7 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpi with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
+
+device	vesabios
+attach vesabios at mainbus
+file	arch/i386/bios/vesabios.c		vesabios needs-flag
