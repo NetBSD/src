@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.21 2002/09/28 21:48:35 is Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.22 2003/01/30 21:23:57 is Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.21 2002/09/28 21:48:35 is Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.22 2003/01/30 21:23:57 is Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: cdplay.c,v 1.21 2002/09/28 21:48:35 is Exp $");
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/cdio.h>
+
+#include <assert.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -147,6 +149,10 @@ void	sig_timer(int, int, struct sigcontext *);
 int	skip(int, int);
 const char	*strstatus(int);
 void 	usage(void);
+
+void	toc2msf(u_int, u_int *, u_int *, u_int *);
+int	toc2lba(u_int);
+void	addmsf(u_int *, u_int *, u_int *, u_int, u_int, u_int);
 
 int
 main(int argc, char **argv)
@@ -451,7 +457,7 @@ run(int cmd, const char *arg)
 int
 play(const char *arg, int fromuser)
 {
-	int rv, n, start, end, istart, iend, blk, len;
+	int rv, n, start, end, istart, iend, blk, len, relend;
 	u_int tr1, tr2, m1, m2, s1, s2, f1, f2, tm, ts, tf;
 	struct ioc_toc_header h;
 
@@ -486,12 +492,7 @@ play(const char *arg, int fromuser)
 			goto Clean_up;
 
 		if (len == 0) {
-			if (msf)
-				len = msf2lba(toc_buffer[n].addr.msf.minute,
-				    toc_buffer[n].addr.msf.second,
-				    toc_buffer[n].addr.msf.frame) - blk;
-			else
-				len = be32toh(toc_buffer[n].addr.lba) - blk;
+			len = toc2lba(n);
 		}
 		return (play_blocks(blk, len));
 	}
@@ -505,6 +506,7 @@ play(const char *arg, int fromuser)
 		 *
 		 *      tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]
 		 */
+		relend = 1;
 		tr2 = m2 = s2 = f2 = f1 = 0;
 		if (8 == sscanf(arg, "%d %d:%d.%d %d %d:%d.%d", &tr1, &m1,
 		    &s1, &f1, &tr2, &m2, &s2, &f2))
@@ -541,6 +543,11 @@ play(const char *arg, int fromuser)
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
+		if (6 == sscanf(arg, "%d %d:%d %d %d:%d", &tr1, &m1, &s1, &tr2,
+		    &m2, &s2))
+			goto Play_Relative_Addresses;
+
+		tr2 = m2 = s2 = f2 = f1 = 0;
 		if (5 == sscanf(arg, "%d %d:%d %d:%d", &tr1, &m1, &s1, &m2,
 		    &s2))
 			goto Play_Relative_Addresses;
@@ -550,6 +557,7 @@ play(const char *arg, int fromuser)
 		    &m2))
 			goto Play_Relative_Addresses;
 
+		relend=0;
 		tr2 = m2 = s2 = f2 = f1 = 0;
 		if (5 == sscanf(arg, "%d %d:%d.%d %d", &tr1, &m1, &s1, &f1,
 		    &tr2))
@@ -576,93 +584,43 @@ Play_Relative_Addresses:
 		else if (tr1 > n)
 			tr1 = n;
 
-		if (msf) {
-			tm = toc_buffer[tr1].addr.msf.minute;
-			ts = toc_buffer[tr1].addr.msf.second;
-			tf = toc_buffer[tr1].addr.msf.frame;
-		} else
-			lba2msf(be32toh(toc_buffer[tr1].addr.lba), &tm, &ts, &tf);
+		toc2msf(tr1-1, &tm, &ts, &tf);
+		addmsf(&m1, &s1, &f1, tm, ts, tf);
+
+		toc2msf(tr1, &tm, &ts, &tf);
+
 		if ((m1 > tm) || ((m1 == tm) && ((s1 > ts) || ((s1 == ts) &&
 		    (f1 > tf))))) {
 			warnx("Track %d is not that long.", tr1);
 			return (0);
 		}
-		tr1--;
+		tr1--;	/* XXXXX ???? */
 
-		f1 += tf;
-		if (f1 >= 75) {
-			s1 += f1 / 75;
-			f1 %= 75;
-		}
-		s1 += ts;
-		if (s1 >= 60) {
-			m1 += s1 / 60;
-			s1 %= 60;
-		}
-		m1 += tm;
 
 		if (!tr2) {
-			if (m2 || s2 || f2) {
+			if (relend) {
 				tr2 = tr1;
-				f2 += f1;
-				if (f2 >= 75) {
-					s2 += f2 / 75;
-					f2 %= 75;
-				}
-				s2 += s1;
-				if (s2 > 60) {
-					m2 += s2 / 60;
-					s2 %= 60;
-				}
-				m2 += m1;
+
+				addmsf(&m2, &s2, &f2, m1, s1, f1);
 			} else {
 				tr2 = n;
-				if (msf) {
-					m2 = toc_buffer[n].addr.msf.minute;
-					s2 = toc_buffer[n].addr.msf.second;
-					f2 = toc_buffer[n].addr.msf.frame;
-				} else {
-					lba2msf(be32toh(toc_buffer[n].addr.lba),
-					    &tm, &ts, &tf);
-					m2 = tm;
-					s2 = ts;
-					f2 = tf;
-				}
+
+				toc2msf(n, &m2, &s2, &f2);
 			}
 		} else {
 			if (tr2 > n) {
 				tr2 = n;
 				m2 = s2 = f2 = 0;
 			} else {
-				if (m2 || s2 || f2)
+				if (relend)
 					tr2--;
-				if (msf) {
-					tm = toc_buffer[tr2].addr.msf.minute;
-					ts = toc_buffer[tr2].addr.msf.second;
-					tf = toc_buffer[tr2].addr.msf.frame;
-				} else
-					lba2msf(be32toh(toc_buffer[tr2].addr.lba),
-					    &tm, &ts, &tf);
-				f2 += tf;
-				if (f2 >= 75) {
-					s2 += f2 / 75;
-					f2 %= 75;
-				}
-				s2 += ts;
-				if (s2 > 60) {
-					m2 += s2 / 60;
-					s2 %= 60;
-				}
-				m2 += tm;
+
+				toc2msf(tr2, &tm, &ts, &tf);
+				addmsf(&m2, &s2, &f2, tm, ts, tf);
 			}
 		}
 
-		if (msf) {
-			tm = toc_buffer[n].addr.msf.minute;
-			ts = toc_buffer[n].addr.msf.second;
-			tf = toc_buffer[n].addr.msf.frame;
-		} else
-			lba2msf(be32toh(toc_buffer[n].addr.lba), &tm, &ts, &tf);
+		toc2msf(n, &tm, &ts, &tf);
 
 		if ((tr2 < n) && ((m2 > tm) || ((m2 == tm) && ((s2 > ts) ||
 		    ((s2 == ts) && (f2 > tf)))))) {
@@ -1136,4 +1094,61 @@ opencd(void)
 	}
 
 	return (1);
+}
+
+void
+toc2msf(u_int i, u_int *m, u_int *s, u_int *f)
+{
+	struct cd_toc_entry *ctep;
+
+	assert(i >= 0);
+	assert(i < 100);
+
+	ctep = &toc_buffer[i];
+
+	if (msf) {
+		*m = ctep->addr.msf.minute;
+		*s = ctep->addr.msf.second;
+		*f = ctep->addr.msf.frame;
+	} else {
+		lba2msf(be32toh(ctep->addr.lba), m, s, f);
+	}
+}
+
+int
+toc2lba(u_int i)
+{
+	struct cd_toc_entry *ctep;
+
+	assert(i > 0);
+	assert(i < 100);
+
+	ctep = &toc_buffer[i-1];
+
+	if (msf) {
+		return msf2lba(
+		    ctep->addr.msf.minute,
+		    ctep->addr.msf.second,
+		    ctep->addr.msf.frame);
+	} else {
+		return be32toh(ctep->addr.lba);
+	}
+}
+
+void
+addmsf(u_int *m, u_int *s, u_int *f, u_int m2, u_int s2, u_int f2)
+{
+	*f += f2;
+	if (*f > 75) {
+		*s += *f / 75;
+		*f %= 75;
+	}
+
+	*s += s2;
+	if (*s > 60) {
+		*m += *s / 60;
+		*s %= 60;
+	}
+
+	*m += m2;
 }
