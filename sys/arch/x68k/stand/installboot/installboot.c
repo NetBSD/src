@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 2001/11/24 16:26:56 minoura Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2 2001/11/24 16:38:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -75,7 +75,6 @@ usage(void)
 int
 checkbootprog(const char *name)
 {
-#if 0
 	struct stat st;
 
 	if (access(name, R_OK) < 0)
@@ -85,19 +84,6 @@ checkbootprog(const char *name)
 	bootprogsize = st.st_size;
 
 	return 0;
-#else
-	int fd;
-
-	if (access(name, R_OK) < 0)
-		err(1, "%s", name);
-	fd = open(name, O_RDONLY);
-	if (fd < 0)
-		err(1, "%s", name);
-	bootprogsize = lseek(fd, 0, SEEK_END);
-	close(fd);
-
-	return 0;
-#endif
 }
 
 int
@@ -114,13 +100,10 @@ checktargetdev(const char *name)
 	if (DISKPART(st.st_rdev) > MAXPARTITIONS)
 		errx(1, "%s: invalid device", name);
 	strcpy(rawname, name);
-	if (strncmp(name + strlen(name) - 4, "fd", 2) == 1) {
-		printf("floppy\n"); /* XXX */
+	if (strncmp(name + strlen(name) - 4, "fd", 2) == 0)
 		floppy = 1;
-	} else {
-		printf("not floppy\n");
+	else
 		rawname[strlen(name) - 1] = RAW_PART+'a';
-	}
 	if (!floppy && DISKPART(st.st_rdev) == RAW_PART)
 		errx(1, "%s is the raw device", name);
 
