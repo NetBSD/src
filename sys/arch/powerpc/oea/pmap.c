@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2003/10/27 23:35:41 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2003/11/21 18:09:27 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2003/10/27 23:35:41 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2003/11/21 18:09:27 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"
@@ -2101,6 +2101,15 @@ pmap_activate(struct lwp *l)
 	 * XXX Normally performed in cpu_fork().
 	 */
 	pcb->pcb_pm = pmap;
+
+	/*
+	* In theory, the SR registers need only be valid on return
+	* to user space wait to do them there.
+	*/
+	if (l == curlwp) {
+		/* Store pointer to new current pmap. */
+		curpm = pmap;
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2003/08/27 20:20:07 matt Exp $
+#	$NetBSD: genassym.cf,v 1.7 2003/11/21 18:07:29 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -170,6 +170,7 @@ define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
+define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
 define	CI_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
