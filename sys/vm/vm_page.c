@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.34 1998/01/08 23:03:24 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.35 1998/01/08 23:28:06 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -354,6 +354,22 @@ vm_offset_t
 vm_bootstrap_steal_memory(size)
 	vm_size_t size;
 {
+#if defined(PMAP_STEAL_MEMORY)
+	vm_offset_t addr;
+
+	/*
+	 * Defer this to machine-dependent code; we may need to allocate
+	 * from a direct-mapped segment.
+	 */
+	addr = pmap_steal_memory(size, &virtual_space_start,
+	    &virtual_space_end);
+
+	/* round it the way we like it */
+	virtual_space_start = round_page(virtual_space_start);
+	virtual_space_end = trunc_page(virtual_space_end);
+
+	return (addr);
+#else /* ! PMAP_STEAL_MEMORY */
 	vm_offset_t addr, vaddr, paddr;
 
 	/* round the size to an integer multiple */
@@ -391,6 +407,7 @@ vm_bootstrap_steal_memory(size)
 		    VM_PROT_READ|VM_PROT_WRITE, FALSE);
 	}
 	return(addr);
+#endif /* PMAP_STEAL_MEMORY */
 }
 
 /*
