@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.9 2000/05/08 07:56:03 mycroft Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.10 2000/07/03 03:57:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.9 2000/05/08 07:56:03 mycroft Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.10 2000/07/03 03:57:40 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: cfscores.c,v 1.9 2000/05/08 07:56:03 mycroft Exp $");
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
 
