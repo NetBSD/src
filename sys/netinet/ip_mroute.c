@@ -62,7 +62,6 @@ int	ip_mrtproto;				/* for netstat only */
 #include <sys/socketvar.h>
 #include <sys/time.h>
 
-#include <net/af.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>

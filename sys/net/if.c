@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.10 1994/02/02 01:21:38 hpeyerl Exp $
+ *	$Id: if.c,v 1.11 1994/02/10 17:25:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -45,7 +45,6 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
-#include <net/af.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.6 1994/01/16 02:22:56 cgd Exp $
+ *	$Id: route.c,v 1.7 1994/02/10 17:25:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -45,7 +45,6 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
-#include <net/af.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
 #include <net/netisr.h>

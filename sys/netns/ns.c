@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns.c	7.8 (Berkeley) 6/27/91
- *	$Id: ns.c,v 1.3 1993/12/18 00:44:23 mycroft Exp $
+ *	$Id: ns.c,v 1.4 1994/02/10 17:25:24 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -44,7 +44,6 @@
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/af.h>
 
 #include <netns/ns.h>
 #include <netns/ns_if.h>
