@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.h,v 1.4 1998/08/15 02:59:01 thorpej Exp $	*/
+/*	$NetBSD: ofisa_machdep.h,v 1.5 1998/08/17 20:40:53 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -52,10 +52,13 @@ int	com_ofisa_md_intr_fixup __P((struct device *, struct device*, void *,
 	    struct ofisa_intr_desc *, int, int));
 
 #define	_CS_OFISA_MD_MATCH
+#define	_CS_OFISA_MD_REG_FIXUP
 #define	_CS_OFISA_MD_INTR_FIXUP
 #define	_CS_OFISA_MD_DMA_FIXUP
 #define	_CS_OFISA_MD_MEDIA_FIXUP
 int	cs_ofisa_md_match __P((struct device *, struct cfdata *, void *));
+int	cs_ofisa_md_reg_fixup __P((struct device *, struct device *, void *,
+	    struct ofisa_reg_desc *, int, int));
 int	cs_ofisa_md_intr_fixup __P((struct device *, struct device *, void *,
 	    struct ofisa_intr_desc *, int, int));
 int	cs_ofisa_md_dma_fixup __P((struct device *, struct device *, void *,
