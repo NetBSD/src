@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.86 2003/09/03 11:13:14 ragge Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.87 2003/09/23 16:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.86 2003/09/03 11:13:14 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.87 2003/09/23 16:36:59 thorpej Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -274,7 +274,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		simple_lock_only_held(NULL, "malloc");
 #endif
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, ksp, flags, (void **) &va))
+	if (debug_malloc(size, ksp, flags, (void *) &va))
 		return ((void *) va);
 #endif
 	indx = BUCKETINDX(size);
