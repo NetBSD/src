@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.14 1999/08/13 09:01:51 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.15 1999/09/05 09:48:48 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.14 1999/08/13 09:01:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.15 1999/09/05 09:48:48 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -96,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.14 1999/08/13 09:01:51 nisimu
 #include <pmax/tc/zs_ioasicvar.h>	/* console */
 
 #include "wsdisplay.h"
-
-/* XXX XXX XXX */
-#define	IOASIC_INTR_SCSI 0x00000200
-/* XXX XXX XXX */
 
 void dec_3maxplus_init __P((void));
 void dec_3maxplus_bus_reset __P((void));
@@ -316,7 +312,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	 */
 	if ((cpumask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
 		extern int msgbufmapped;
-  		if(msgbufmapped && 0)
+  		if (msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}

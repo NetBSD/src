@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.1.2.1 1998/10/15 02:49:00 nisimura Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.1.2.2 1999/09/05 09:48:46 nisimura Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -156,12 +156,13 @@
 #define	IOASIC_INTR_SCSI_READ_E		0x00020000	/* rz */
 #define	IOASIC_INTR_LANCE_READ_E	0x00010000	/* rz */
 #define	IOASIC_INTR_ISDN		0x00002000	/* ro */
-#define	IOASIC_INTR_SEC_CON		0x00000200	/* ro */
+#define	IOASIC_INTR_SCSI		0x00000200	/* ro */
 #define IOASIC_INTR_LANCE		0x00000100	/* ro */
 #define	IOASIC_INTR_SCC_1		0x00000080	/* ro */
 #define	IOASIC_INTR_SCC_0		0x00000040	/* ro */
+#define	IOASIC_INTR_SEC_CON		0x00000200	/* ro - 3000/x00 */
 #define	IOASIC_INTR_ALT_CON		0x00000008	/* ro - 3000/500 */
-#define	IOASIC_INTR_300_OPT1		IOASIC_INTR_ALT_CON /* ro - 3000/300 */
+#define	IOASIC_INTR_300_OPT1		0x00000008	/* ro - 3000/300 */
 #define	IOASIC_INTR_300_OPT0		0x00000004	/* ro - 3000/300 */
 
 /* DMA pointer registers (SCSI, Comm, ...) */
@@ -185,43 +186,3 @@
 
 #define	IOASIC_DECODE_HW_ADDRESS	0x000003f0
 #define	IOASIC_DECODE_CHIP_SELECT	0x0000000f
-
-/*
- * Asic register addresses at offset from base.
- */
-#define	IOASIC_REG_SCSI_DMAPTR(base)	((base) + IOASIC_SCSI_DMAPTR)
-#define	IOASIC_REG_SCSI_DMANPTR(base)	((base) + IOASIC_SCSI_NEXTPTR)
-#define	IOASIC_REG_LANCE_DMAPTR(base)	((base) + IOASIC_LANCE_DMAPTR)
-#define	IOASIC_REG_SCC_T1_DMAPTR(base)	((base) + IOASIC_SCC_T1_DMAPTR)
-#define	IOASIC_REG_SCC_R1_DMAPTR(base)	((base) + IOASIC_SCC_R1_DMAPTR)
-#define	IOASIC_REG_SCC_T2_DMAPTR(base)	((base) + IOASIC_SCC_T2_DMAPTR)
-#define	IOASIC_REG_SCC_R2_DMAPTR(base)	((base) + IOASIC_SCC_R2_DMAPTR)
-#define	IOASIC_REG_FLOPPY_DMAPTR(base)	((base) + IOASIC_FLOPPY_DMAPTR)
-#define	IOASIC_REG_ISDN_X_DMAPTR(base)	((base) + IOASIC_ISDN_X_DMAPTR)
-#define	IOASIC_REG_ISDN_X_NEXTPTR(base)	((base) + IOASIC_ISDN_X_NEXTPTR)
-#define	IOASIC_REG_ISDN_R_DMAPTR(base)	((base) + IOASIC_ISDN_R_DMAPTR)
-#define	IOASIC_REG_ISDN_R_NEXTPTR(base)	((base) + IOASIC_ISDN_R_NEXTPTR)
-#define	IOASIC_REG_BUFF0(base)		((base) + IOASIC_BUFF0)
-#define	IOASIC_REG_BUFF1(base)		((base) + IOASIC_BUFF1)
-#define	IOASIC_REG_BUFF2(base)		((base) + IOASIC_BUFF2)
-#define	IOASIC_REG_BUFF3(base)		((base) + IOASIC_BUFF3)
-#define	IOASIC_REG_CSR(base)		((base) + IOASIC_CSR)
-#define	IOASIC_REG_INTR(base)		((base) + IOASIC_INTR)
-#define	IOASIC_REG_IMSK(base)		((base) + IOASIC_IMSK)
-#define	IOASIC_REG_CURADDR(base)	((base) + IOASIC_CURADDR)
-#define	IOASIC_REG_ISDN_X_DATA(base)	((base) + IOASIC_ISDN_X_DATA)
-#define	IOASIC_REG_ISDN_R_DATA(base)	((base) + IOASIC_ISDN_R_DATA)
-#define	IOASIC_REG_LANCE_DECODE(base)	((base) + IOASIC_LANCE_DECODE)
-#define	IOASIC_REG_SCSI_DECODE(base)	((base) + IOASIC_SCSI_DECODE)
-#define	IOASIC_REG_SCC0_DECODE(base)	((base) + IOASIC_SCC0_DECODE)
-#define	IOASIC_REG_SCC1_DECODE(base)	((base) + IOASIC_SCC1_DECODE)
-#define	IOASIC_REG_FLOPPY_DECODE(base)	((base) + IOASIC_FLOPPY_DECODE)
-#define	IOASIC_REG_SCSI_SCR(base)	((base) + IOASIC_SCSI_SCR)
-#define	IOASIC_REG_SCSI_SDR0(base)	((base) + IOASIC_SCSI_SDR0)
-#define	IOASIC_REG_SCSI_SDR1(base)	((base) + IOASIC_SCSI_SDR1)
-
-/*
- * And slot assignments.
- */
-#define	IOASIC_SYS_ETHER_ADDRESS(base)	((base) + IOASIC_SLOT_2_START)
-#define	IOASIC_SYS_LANCE(base)		((base) + IOASIC_SLOT_3_START)
