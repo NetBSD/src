@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.c,v 1.6 2002/03/11 23:40:18 fvdl Exp $ */
+/* $NetBSD: infblock.c,v 1.7 2002/05/29 18:15:18 christos Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
@@ -402,4 +402,70 @@ int inflate_blocks_sync_point(s)
 inflate_blocks_statef *s;
 {
   return s->mode == LENS;
+}
+
+/*
+ * This subroutine adds the data at next_in/avail_in to the output history
+ * without performing any output.  The output buffer must be "caught up";
+ * i.e. no pending output (hence s->read equals s->write), and the state must
+ * be BLOCKS (i.e. we should be willing to see the start of a series of
+ * BLOCKS).  On exit, the output will also be caught up, and the checksum
+ * will have been updated if need be.
+ */
+int inflate_addhistory(s, z)
+inflate_blocks_statef *s;
+z_stream *z;
+{
+    uLong b;              /* bit buffer */  /* NOT USED HERE */
+    uInt k;               /* bits in bit buffer */ /* NOT USED HERE */
+    uInt t;               /* temporary storage */
+    Bytef *p;             /* input data pointer */
+    uInt n;               /* bytes available there */
+    Bytef *q;             /* output window write pointer */
+    uInt m;               /* bytes to end of window or read pointer */
+
+    if (s->read != s->write)
+	return Z_STREAM_ERROR;
+    if (s->mode != TYPE)
+	return Z_DATA_ERROR;
+
+    /* we're ready to rock */
+    LOAD
+    /* while there is input ready, copy to output buffer, moving
+     * pointers as needed.
+     */
+    while (n) {
+	t = n;  /* how many to do */
+	/* is there room until end of buffer? */
+	if (t > m) t = m;
+	/* update check information */
+	if (s->checkfn != Z_NULL)
+	    s->check = (*s->checkfn)(s->check, q, t);
+	zmemcpy(q, p, t);
+	q += t;
+	p += t;
+	n -= t;
+	z->total_out += t;
+	s->read = q;    /* drag read pointer forward */
+/*      WWRAP  */ 	/* expand WWRAP macro by hand to handle s->read */
+	if (q == s->end) {
+	    s->read = q = s->window;
+	    m = WAVAIL;
+	}
+    }
+    UPDATE
+    return Z_OK;
+}
+
+/*
+ * At the end of a Deflate-compressed PPP packet, we expect to have seen
+ * a `stored' block type value but not the (zero) length bytes.
+ */
+int inflate_packet_flush(s)
+inflate_blocks_statef *s;
+{
+  if (s->mode != LENS)
+    return Z_DATA_ERROR;
+  s->mode = TYPE;
+  return Z_OK;
 }

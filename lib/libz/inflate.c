@@ -1,4 +1,4 @@
-/* $NetBSD: inflate.c,v 1.6 2002/03/11 23:40:20 fvdl Exp $ */
+/* $NetBSD: inflate.c,v 1.7 2002/05/29 18:15:18 christos Exp $ */
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-2002 Mark Adler
@@ -146,7 +146,7 @@ int stream_size;
 }
 
 
-#define NEEDBYTE {if(z->avail_in==0)return r;r=f;}
+#define NEEDBYTE {if(z->avail_in==0)goto empty;r=f;}
 #define NEXTBYTE (z->avail_in--,z->total_in++,*z->next_in++)
 
 int ZEXPORT inflate(z, f)
@@ -221,6 +221,8 @@ int f;
       return Z_STREAM_ERROR;
     case BLOCKS:
       r = inflate_blocks(z->state->blocks, z, r);
+      if (f == Z_PACKET_FLUSH && z->avail_in == 0 && z->avail_out != 0)
+	  r = inflate_packet_flush(z->state->blocks);
       if (r == Z_DATA_ERROR)
       {
         z->state->mode = BAD;
@@ -274,6 +276,13 @@ int f;
 #ifdef NEED_DUMMY_RETURN
   return Z_STREAM_ERROR;  /* Some dumb compilers complain without this */
 #endif
+empty:
+  if (f != Z_PACKET_FLUSH)
+    return r;
+  z->state->mode = BAD;
+  z->msg = (char *)"need more for packet flush";
+  z->state->sub.marker = 0;       /* can try inflateSync */
+  return Z_DATA_ERROR;
 }
 
 
@@ -300,6 +309,22 @@ uInt  dictLength;
   return Z_OK;
 }
 
+/*
+ * This subroutine adds the data at next_in/avail_in to the output history
+ * without performing any output.  The output buffer must be "caught up";
+ * i.e. no pending output (hence s->read equals s->write), and the state must
+ * be BLOCKS (i.e. we should be willing to see the start of a series of
+ * BLOCKS).  On exit, the output will also be caught up, and the checksum
+ * will have been updated if need be.
+ */
+
+int inflateIncomp(z)
+z_stream *z;
+{
+    if (z->state->mode != BLOCKS)
+	return Z_DATA_ERROR;
+    return inflate_addhistory(z->state->blocks, z);
+}
 
 int ZEXPORT inflateSync(z)
 z_streamp z;

@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.8 2002/03/11 23:40:22 fvdl Exp $ */
+/* $NetBSD: trees.c,v 1.9 2002/05/29 18:15:18 christos Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -31,7 +31,7 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.8 2002/03/11 23:40:22 fvdl Exp $ */
+/* @(#) $Id: trees.c,v 1.9 2002/05/29 18:15:18 christos Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -879,6 +879,19 @@ void _tr_stored_block(s, buf, stored_len, eof)
 #endif
     copy_block(s, buf, (unsigned)stored_len, 1); /* with header */
 }
+
+/* Send just the `stored block' type code without any length bytes or data.
+ */
+void _tr_stored_type_only(s)
+    deflate_state *s;
+{
+    send_bits(s, (STORED_BLOCK << 1), 3);
+    bi_windup(s);
+#ifdef DEBUG
+    s->compressed_len = (s->compressed_len + 3) & ~7L;
+#endif
+}
+
 
 /* ===========================================================================
  * Send one empty static block to give enough lookahead for inflate.
