@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.46 2003/06/26 00:43:32 itojun Exp $	*/
+/*	$NetBSD: in_var.h,v 1.47 2003/07/14 16:39:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,6 @@ struct	in_aliasreq {
 LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
 LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
-LIST_HEAD(in_multihead, in_multi);		/* Type of the list head */
 
 
 extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
@@ -151,7 +150,6 @@ extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
 extern	u_long in_multihash;			/* size of hash table - 1 */
 extern	int	in_multientries;		/* total number of addrs */
 extern  struct in_multihashhead *in_multihashtbl;	/* Hash table head */
-extern  struct in_multihead in_multi;		/* List head (in ip_input) */
 
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 extern	const	int	inetctlerrmap[];
@@ -255,6 +253,7 @@ struct in_multi {
  * all of the in_multi records.
  */
 struct in_multistep {
+	int i_n;
 	struct in_multi *i_inm;
 };
 
@@ -285,6 +284,8 @@ struct in_multistep {
 	/* struct in_multistep  step; */ \
 	/* struct in_multi *inm; */ \
 { \
+	while ((step).i_inm == NULL && (step).i_n < IN_MULTI_HASH_SIZE) \
+		(step).i_inm = LIST_FIRST(&in_multihashtbl[++(step).i_n]); \
 	if (((inm) = (step).i_inm) != NULL) \
 		(step).i_inm = LIST_NEXT((inm), inm_list); \
 }
@@ -293,7 +294,8 @@ struct in_multistep {
 	/* struct in_multistep step; */ \
 	/* struct in_multi *inm; */ \
 { \
-	(step).i_inm = LIST_FIRST(&in_multi); \
+	(step).i_n = 0; \
+	(step).i_inm = LIST_FIRST(&in_multihashtbl[0]); \
 	IN_NEXT_MULTI((step), (inm)); \
 }
 
