@@ -1,5 +1,3 @@
-/*	$NetBSD: dh.c,v 1.1.1.1 2001/01/14 04:51:06 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -24,29 +22,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: dh.c,v 1.3 2000/11/16 17:55:43 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: dh.c,v 1.1.1.1 2001/01/14 04:51:06 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: dh.c,v 1.6 2001/01/21 19:05:49 markus Exp $");
 
 #include "xmalloc.h"
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 
-#include "ssh.h"
-#include "pathnames.h"
 #include "buffer.h"
+#include "cipher.h"
 #include "kex.h"
 #include "dh.h"
+#include "pathnames.h"
+#include "log.h"
+#include "misc.h"
 
-static int
+int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)
 {
 	char *cp, *arg;
@@ -97,7 +90,7 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 
 	return (1);
  fail:
-	fprintf(stderr, "Bad prime description in line %d\n", linenum);
+	error("Bad prime description in line %d\n", linenum);
 	return (0);
 }
 
@@ -146,9 +139,7 @@ choose_dh(int minbits)
 	}
 
 	linenum = 0;
-	/* XXXthorpej */
-	RAND_pseudo_bytes((u_char *)&which, sizeof(which));
-	which %= bestcount;
+	which = arc4random() % bestcount;
 	while (fgets(line, sizeof(line), f)) {
 		if (!parse_prime(linenum, line, &dhg))
 			continue;

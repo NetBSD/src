@@ -1,5 +1,3 @@
-/*	$NetBSD: sshconnect.c,v 1.1.1.2 2001/01/14 04:50:53 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,30 +12,25 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: sshconnect.c,v 1.89 2001/01/04 22:41:03 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: sshconnect.c,v 1.1.1.2 2001/01/14 04:50:53 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: sshconnect.c,v 1.93 2001/02/04 15:32:26 stevesk Exp $");
 
 #include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 
+#include "ssh.h"
 #include "xmalloc.h"
 #include "rsa.h"
-#include "ssh.h"
 #include "buffer.h"
 #include "packet.h"
 #include "uidswap.h"
 #include "compat.h"
-#include "readconf.h"
 #include "key.h"
 #include "sshconnect.h"
 #include "hostfile.h"
+#include "log.h"
+#include "readconf.h"
+#include "atomicio.h"
+#include "misc.h"
 
 char *client_version_string = NULL;
 char *server_version_string = NULL;
@@ -45,10 +38,13 @@ char *server_version_string = NULL;
 extern Options options;
 extern char *__progname;
 
+/* AF_UNSPEC or AF_INET or AF_INET6 */
+extern int IPv4or6;
+
 /*
  * Connect to the given ssh server using a proxy command.
  */
-static int
+int
 ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 		  const char *proxy_command)
 {
@@ -148,7 +144,7 @@ ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 /*
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
-static int
+int
 ssh_create_socket(uid_t original_real_uid, int privileged, int family)
 {
 	int sock;
@@ -195,12 +191,13 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	    int anonymous, uid_t original_real_uid,
 	    const char *proxy_command)
 {
-	int sock = -1, attempt;
-	struct servent *sp;
-	struct addrinfo hints, *ai, *aitop;
-	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
 	int gaierr;
+	int on = 1;
+	int sock = -1, attempt;
+	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
+	struct addrinfo hints, *ai, *aitop;
 	struct linger linger;
+	struct servent *sp;
 
 	debug("ssh_connect: getuid %u geteuid %u anon %d",
 	      (u_int) getuid(), (u_int) geteuid(), anonymous);
@@ -302,7 +299,13 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	/* setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on, sizeof(on)); */
 	linger.l_onoff = 1;
 	linger.l_linger = 5;
-	setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *) &linger, sizeof(linger));
+	setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&linger, sizeof(linger));
+
+	/* Set keepalives if requested. */
+	if (options.keepalives &&
+	    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
+	    sizeof(on)) < 0)
+		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
 	/* Set the connection. */
 	packet_set_connection(sock, sock);
@@ -314,19 +317,19 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
  * Waits for the server identification string, and sends our own
  * identification string.
  */
-static void
-ssh_exchange_identification(void)
+void
+ssh_exchange_identification()
 {
 	char buf[256], remote_version[256];	/* must be same size! */
 	int remote_major, remote_minor, i, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
-	int minor1 = PROTOCOL_MINOR_1; 
+	int minor1 = PROTOCOL_MINOR_1;
 
 	/* Read other side\'s version identification. */
 	for (;;) {
 		for (i = 0; i < sizeof(buf) - 1; i++) {
-			int len = atomic_read(connection_in, &buf[i], 1);
+			int len = atomicio(read, connection_in, &buf[i], 1);
 			if (len < 0)
 				fatal("ssh_exchange_identification: read: %.100s", strerror(errno));
 			if (len != 1)
@@ -406,7 +409,7 @@ ssh_exchange_identification(void)
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 	    compat20 ? PROTOCOL_MINOR_2 : minor1,
 	    SSH_VERSION);
-	if (atomic_write(connection_out, buf, strlen(buf)) != strlen(buf))
+	if (atomicio(write, connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
 	client_version_string = xstrdup(buf);
 	chop(client_version_string);
@@ -414,7 +417,7 @@ ssh_exchange_identification(void)
 	debug("Local version string %.100s", client_version_string);
 }
 
-static int
+int
 read_yes_or_no(const char *prompt, int defval)
 {
 	char buf[1024];
@@ -424,7 +427,7 @@ read_yes_or_no(const char *prompt, int defval)
 	if (isatty(STDIN_FILENO))
 		f = stdin;
 	else
-		f = fopen(_PATH_TTY, "rw");
+		f = fopen("/dev/tty", "rw");
 
 	if (f == NULL)
 		return 0;
@@ -677,7 +680,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			error("X11 forwarding is disabled to avoid trojan horses.");
 			options.forward_x11 = 0;
 		}
-	        if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
+		if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
 			error("Port forwarding is disabled to avoid trojan horses.");
 			options.num_local_forwards = options.num_remote_forwards = 0;
 		}
@@ -702,7 +705,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		if (options.strict_host_key_checking == 1) {
 			fatal("Exiting, you have requested strict checking.");
 		} else if (options.strict_host_key_checking == 2) {
-			if (!read_yes_or_no("Continue?", -1))
+			if (!read_yes_or_no("Are you sure you want " \
+			    "to continue connecting (yes/no)? ", -1))
 				fatal("Aborted by user!\n");
 		}
 	}

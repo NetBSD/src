@@ -1,5 +1,3 @@
-/*	$NetBSD: readconf.h,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: readconf.h,v 1.24 2000/12/27 12:30:20 markus Exp */
+/* RCSID("$OpenBSD: readconf.h,v 1.25 2001/01/22 23:06:39 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -38,7 +36,8 @@ typedef struct {
 						 * authentication. */
 	int     rsa_authentication;	/* Try RSA authentication. */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
-	int     skey_authentication;	/* Try S/Key or TIS authentication. */
+	int     challenge_reponse_authentication;
+					/* Try S/Key or TIS, authentication. */
 #ifdef KRB4
 	int     kerberos_authentication;	/* Try Kerberos
 						 * authentication. */

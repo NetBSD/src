@@ -1,5 +1,3 @@
-/*	$NetBSD: login.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,18 +38,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: login.c,v 1.16 2000/12/19 23:17:57 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: login.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: login.c,v 1.17 2001/01/21 19:05:51 markus Exp $");
 
 #include <util.h>
 #include <utmp.h>
-#include "ssh.h"
+#include "login.h"
+#include "log.h"
 
 /*
  * Returns the time when the user last logged in.  Returns 0 if the

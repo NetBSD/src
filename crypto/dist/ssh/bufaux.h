@@ -1,5 +1,3 @@
-/*	$NetBSD: bufaux.h,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,12 +10,13 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: bufaux.h,v 1.8 2000/09/07 20:27:50 deraadt Exp */
+/* RCSID("$OpenBSD: bufaux.h,v 1.11 2001/01/21 19:05:45 markus Exp $"); */
 
 #ifndef BUFAUX_H
 #define BUFAUX_H
 
 #include "buffer.h"
+#include <openssl/bn.h>
 
 /*
  * Stores an BIGNUM in the buffer with a 2-byte msb first bit count, followed
@@ -32,9 +31,11 @@ int	buffer_get_bignum2(Buffer *buffer, BIGNUM * value);
 
 /* Returns an integer from the buffer (4 bytes, msb first). */
 u_int buffer_get_int(Buffer * buffer);
+u_int64_t buffer_get_int64(Buffer *buffer);
 
 /* Stores an integer in the buffer in 4 bytes, msb first. */
 void    buffer_put_int(Buffer * buffer, u_int value);
+void	buffer_put_int64(Buffer *buffer, u_int64_t value);
 
 /* Returns a character from the buffer (0 - 255). */
 int     buffer_get_char(Buffer * buffer);

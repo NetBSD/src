@@ -1,5 +1,3 @@
-/*	$NetBSD: compress.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,18 +11,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: compress.c,v 1.11 2000/12/20 19:37:21 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: compress.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: compress.c,v 1.12 2001/01/21 19:05:48 markus Exp $");
 
-#include "ssh.h"
+#include "log.h"
 #include "buffer.h"
-#include "compress.h"
 #include "zlib.h"
 
 static z_stream incoming_stream;

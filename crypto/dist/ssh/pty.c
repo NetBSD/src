@@ -1,5 +1,3 @@
-/*	$NetBSD: pty.c,v 1.1.1.2 2001/01/14 04:50:29 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,18 +11,12 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: pty.c,v 1.19 2000/12/20 20:00:34 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: pty.c,v 1.1.1.2 2001/01/14 04:50:29 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: pty.c,v 1.21 2001/02/04 15:32:24 stevesk Exp $");
 
 #include <util.h>
 #include "pty.h"
-#include "ssh.h"
+#include "log.h"
 
 /* Pty allocated with _getpty gets broken if we do I_PUSH:es to it. */
 #if defined(HAVE__GETPTY) || defined(HAVE_OPENPTY)
@@ -159,7 +151,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 		*ptyfd = open(buf, O_RDWR | O_NOCTTY);
 		if (*ptyfd < 0)
 			continue;
-		snprintf(namebuf, namebuflen, _PATH_TTY "%c%c",
+		snprintf(namebuf, namebuflen, "/dev/tty%c%c",
 		    ptymajors[i / num_minors], ptyminors[i % num_minors]);
 
 		/* Open the slave side. */
@@ -198,7 +190,7 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 
 	/* First disconnect from the old controlling tty. */
 #ifdef TIOCNOTTY
-	fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
+	fd = open("/dev/tty", O_RDWR | O_NOCTTY);
 	if (fd >= 0) {
 		(void) ioctl(fd, TIOCNOTTY, NULL);
 		close(fd);
@@ -211,7 +203,7 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	 * Verify that we are successfully disconnected from the controlling
 	 * tty.
 	 */
-	fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
+	fd = open("/dev/tty", O_RDWR | O_NOCTTY);
 	if (fd >= 0) {
 		error("Failed to disconnect from controlling tty.");
 		close(fd);
@@ -229,9 +221,9 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 		close(fd);
 
 	/* Verify that we now have a controlling tty. */
-	fd = open(_PATH_TTY, O_WRONLY);
+	fd = open("/dev/tty", O_WRONLY);
 	if (fd < 0)
-		error("open " _PATH_TTY " failed - could not set controlling tty: %.100s",
+		error("open /dev/tty failed - could not set controlling tty: %.100s",
 		      strerror(errno));
 	else {
 		close(fd);
@@ -282,11 +274,11 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 		if (chown(ttyname, pw->pw_uid, gid) < 0) {
 			if (errno == EROFS && st.st_uid == pw->pw_uid)
 				error("chown(%.100s, %d, %d) failed: %.100s",
-				      ttyname, pw->pw_uid, gid, 
+				      ttyname, pw->pw_uid, gid,
 				      strerror(errno));
 			else
 				fatal("chown(%.100s, %d, %d) failed: %.100s",
-				      ttyname, pw->pw_uid, gid, 
+				      ttyname, pw->pw_uid, gid,
 				      strerror(errno));
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: match.h,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
+/*	$OpenBSD: match.h,v 1.6 2001/01/29 01:58:17 niklas Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,6 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-
 #ifndef MATCH_H
 #define MATCH_H
 

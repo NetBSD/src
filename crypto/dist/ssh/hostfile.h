@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.h,v 1.1.1.2 2001/01/14 04:50:20 itojun Exp $	*/
+/*	$OpenBSD: hostfile.h,v 1.6 2001/01/29 01:58:16 niklas Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -11,7 +11,6 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-
 #ifndef HOSTFILE_H
 #define HOSTFILE_H
 
