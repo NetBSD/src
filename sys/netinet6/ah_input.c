@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.42 2003/09/28 04:45:14 mycroft Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.43 2003/10/25 08:26:14 christos Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.42 2003/09/28 04:45:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.43 2003/10/25 08:26:14 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -929,6 +929,7 @@ ah6_ctlinput(cmd, sa, d)
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		off = 0;
 	}
 
 	if (ip6) {
