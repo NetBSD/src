@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.h,v 1.15.2.1 2000/07/16 05:56:27 itojun Exp $	*/
-/*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.15.2.2 2000/08/27 01:25:07 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -523,8 +523,14 @@ struct in6_pktinfo {
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
 #define IPV6CTL_BINDV6ONLY	24
+/* 25 to 27: reserved */
+#define IPV6CTL_ANONPORTMIN	28	/* minimum ephemeral port */
+#define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */
+#define IPV6CTL_LOWPORTMIN	30	/* minimum reserved port */
+#define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
-#define IPV6CTL_MAXID		25
+/* to define items, should talk with KAME guys first, for *BSD compatibility */
+#define IPV6CTL_MAXID		32
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -552,6 +558,13 @@ struct in6_pktinfo {
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "bindv6only", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "anonportmin", CTLTYPE_INT }, \
+	{ "anonportmax", CTLTYPE_INT }, \
+	{ "lowportmin", CTLTYPE_INT }, \
+	{ "lowportmax", CTLTYPE_INT }, \
 }
 
 #endif /* !_XOPEN_SOURCE */
