@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.92 1997/05/20 13:11:33 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.93 1997/05/22 17:35:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -918,7 +918,9 @@ ttioctl(tp, cmd, data, flag, p)
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		else if (pgrp == NULL || pgrp->pg_session != p->p_session)
+		else if (pgrp == NULL)
+			return (EINVAL);
+		else if (pgrp->pg_session != p->p_session)
 			return (EPERM);
 		tp->t_pgrp = pgrp;
 		break;
