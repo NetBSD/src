@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.97 2003/10/08 19:10:30 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.98 2003/10/19 17:45:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.97 2003/10/08 19:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.98 2003/10/19 17:45:35 cl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -729,7 +729,6 @@ npxsave_lwp(struct lwp *l, int save)
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & L_INMEM);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)

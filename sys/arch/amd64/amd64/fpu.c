@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 2003/10/08 19:55:39 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 2003/10/19 17:45:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2003/10/08 19:55:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2003/10/19 17:45:35 cl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -321,7 +321,6 @@ fpusave_lwp(struct lwp *l, int save)
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & L_INMEM);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.276 2003/10/13 22:19:15 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.277 2003/10/19 17:45:35 cl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2003/10/13 22:19:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2003/10/19 17:45:35 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1835,7 +1835,6 @@ fpusave_proc(struct lwp *l, int save)
 #endif
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & L_INMEM);
 
 	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
