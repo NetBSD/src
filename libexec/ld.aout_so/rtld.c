@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.70 1998/12/15 21:35:17 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.71 1998/12/17 11:34:10 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
 #ifndef MAP_COPY
@@ -50,7 +49,6 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <a.out.h>
-#include <stab.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,6 +59,7 @@
 #include <varargs.h>
 #endif
 
+#include "shlib.h"
 #include "ld.h"
 
 #ifdef __m68k__
