@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.36 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.36 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,20 +90,20 @@ __KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $");
 
 #include <dev/mii/inphyreg.h>
 
-int	inphymatch(struct device *, struct cfdata *, void *);
-void	inphyattach(struct device *, struct device *, void *);
+static int	inphymatch(struct device *, struct cfdata *, void *);
+static void	inphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(inphy, sizeof(struct mii_softc),
     inphymatch, inphyattach, mii_phy_detach, mii_phy_activate);
 
-int	inphy_service(struct mii_softc *, struct mii_data *, int);
-void	inphy_status(struct mii_softc *);
+static int	inphy_service(struct mii_softc *, struct mii_data *, int);
+static void	inphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs inphy_funcs = {
+static const struct mii_phy_funcs inphy_funcs = {
 	inphy_service, inphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc inphys[] = {
+static const struct mii_phydesc inphys[] = {
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82555,
 	  MII_STR_yyINTEL_I82555 },
 
@@ -120,7 +120,7 @@ const struct mii_phydesc inphys[] = {
 	  NULL },
 };
 
-int
+static int
 inphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -131,7 +131,7 @@ inphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 inphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -162,7 +162,7 @@ inphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 inphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -224,7 +224,7 @@ inphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 inphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

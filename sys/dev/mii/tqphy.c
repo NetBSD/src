@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.23 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.23 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,20 +90,20 @@ __KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.23 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <dev/mii/tqphyreg.h>
 
-int	tqphymatch(struct device *, struct cfdata *, void *);
-void	tqphyattach(struct device *, struct device *, void *);
+static int	tqphymatch(struct device *, struct cfdata *, void *);
+static void	tqphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tqphy, sizeof(struct mii_softc),
     tqphymatch, tqphyattach, mii_phy_detach, mii_phy_activate);
 
-int	tqphy_service(struct mii_softc *, struct mii_data *, int);
-void	tqphy_status(struct mii_softc *);
+static int	tqphy_service(struct mii_softc *, struct mii_data *, int);
+static void	tqphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs tqphy_funcs = {
+static const struct mii_phy_funcs tqphy_funcs = {
 	tqphy_service, tqphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc tqphys[] = {
+static const struct mii_phydesc tqphys[] = {
 	{ MII_OUI_xxTSC,		MII_MODEL_xxTSC_78Q2120,
 	  MII_STR_xxTSC_78Q2120 },
 #if 0
@@ -114,7 +114,7 @@ const struct mii_phydesc tqphys[] = {
 	  NULL },
 };
 
-int
+static int
 tqphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -130,7 +130,7 @@ tqphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 tqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -166,7 +166,7 @@ tqphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 tqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -228,7 +228,7 @@ tqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 tqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.34 2004/08/20 15:21:24 yamt Exp $	*/
+/*	$NetBSD: mii.c,v 1.35 2004/08/23 06:18:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.34 2004/08/20 15:21:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.35 2004/08/23 06:18:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.34 2004/08/20 15:21:24 yamt Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-int	mii_print(void *, const char *);
-int	mii_submatch(struct device *, struct cfdata *, void *);
+static int	mii_print(void *, const char *);
+static int	mii_submatch(struct device *, struct cfdata *, void *);
 
 /*
  * Helper function used by network interface drivers, attaches PHYs
@@ -214,7 +214,7 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 	}
 }
 
-int
+static int
 mii_print(void *aux, const char *pnp)
 {
 	struct mii_attach_args *ma = aux;
@@ -228,7 +228,7 @@ mii_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 mii_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mii_attach_args *ma = aux;
