@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2002/02/03 20:04:31 wormey Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.1 2002/06/29 23:23:46 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,51 +43,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/utsname.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
 MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}};
-
-/* prototypes */
-
-/*
- * Define the known partition type table that we use to
- *  classify what we find on disk.  The ParType fields here could use
- *  the predefined strings that exist in the NetBSD/mac68k disklabel.h
- *  file, but there they are all in uppercase.  Apple really defined
- *  these to be in mixed case, something not all 3rd party disk formatters
- *  honored.  Just to be a purist we'll use the original Apple definitions
- *  here, not that it makes a lot of difference since we always do a
- *  case insensitive string match anyway.
- *
- * Note also that the "Apple_Unix_SVR2" type is initially classified as
- *  an unknown BSD type partition. This will change to a "4.2BSD" type
- *  classification if the appropiate flags are found in the BootArgs
- *  block.  Not all 3rd party disk formatters properly set these flags
- *  so this could be an important tip-off that the disk is not properly
- *  configured for use by NetBSD.
- */
-PTYPES ptypes[] = {
-	{ TYP_RSRVD, "Apple_partition_map", "reserved"},
-	{ TYP_RSRVD, "Apple_Driver", "reserved"},
-	{ TYP_RSRVD, "Apple_Driver43", "reserved"},
-	{ TYP_RSRVD, "Apple_Driver_ATA", "reserved"},
-	{ TYP_RSRVD, "Apple_Patches", "reserved"},
-	{ TYP_AVAIL, "Apple_MFS", "MFS"},
-	{ TYP_HFS,   "Apple_HFS", "HFS"},
-	{ TYP_BSD,   "Apple_Unix_SVR2", "?BSD?"},
-	{ TYP_AVAIL, "Apple_PRODOS", "PRODOS"},
-	{ TYP_AVAIL, "Apple_Free", "free"},
-	{ TYP_AVAIL, "Apple_Scratch", "scratch"},
-	{ TYP_AVAIL,  NULL, NULL}};
-
-/*
- * Order of the BSD disk parts as they are assigned in the mac68k port
- */
-char bsd_order[] = {'g', 'd', 'e', 'f', 'h'};
-char macos_order[] = {'a', 'd', 'e', 'f', 'g', 'h'};
 
 /*
  * Define a default Disk Partition Map that can be used for an uninitialized
@@ -96,24 +58,258 @@ char macos_order[] = {'a', 'd', 'e', 'f', 'g', 'h'};
 Block0 new_block0 = {0x4552, 512, 0};
  
 /*
- * Compare lexigraphically two strings up to a max length
+ * Compare lexigraphically two strings
  */
 int
-strnicmp(s1, s2, n)
+stricmp(s1, s2)
 	const char *s1;
 	const char *s2;
-	int n;
 {
-    int i;
-    char c1, c2;
-    for (i=0; i<n; i++) {
-        c1 = tolower(*s1++);
-        c2 = tolower(*s2++);
-        if (c1 < c2) return -1;
-        if (c1 > c2) return 1;
-        if (!c1) return 0;
-    }
-    return 0;
+	char c1, c2;
+
+	while (1) {
+	    c1 = tolower(*s1++);
+	    c2 = tolower(*s2++);
+	    if (c1 < c2) return -1;
+	    if (c1 > c2) return 1;
+	    if (c1 == 0) return 0;
+	}
+}
+
+void
+setpartition(part, in_use, slot)
+	struct part_map_entry *part;
+	char in_use[];
+	int slot;
+{
+	EBZB *bzb;
+
+	bzb = (EBZB *)&part->pmBootArgs[0];
+	in_use[slot] = 1;
+	bzb->flags.used = 1;
+	bzb->flags.part = 'a' + slot;
+}
+
+/*
+ * Find an entry in a use array that is unused and return it or
+ *  -1 if no entry is available
+ */
+int
+getFreeLabelEntry(slots)
+	char *slots;
+{
+	int i;
+
+	for ( i = 0; i < MAXPARTITIONS; i++) {
+		if (i != RAW_PART && slots[i] == 0)
+			return i;
+	}
+	return -1;
+}
+
+/*
+ * Figure out what type type of the given partition is and return it.
+ */
+int
+whichType(part)
+	struct part_map_entry *part;
+{
+	EBZB *bzb;
+	char partyp[32];
+	int type, maxsiz;
+
+	bzb = (EBZB *)&part->pmBootArgs[0];
+	if (part->pmSig != PART_ENTRY_MAGIC)
+	    return 0;
+	maxsiz = sizeof(part->pmPartType);
+	if (maxsiz > sizeof(partyp))
+	    maxsiz = sizeof(partyp);
+	strncpy(partyp, part->pmPartType, maxsiz);
+	partyp[maxsiz-1] = '\0';
+
+	if (stricmp(PART_TYPE_DRIVER, partyp) == 0 ||
+	    stricmp(PART_TYPE_DRIVER43, partyp) == 0 ||
+	    stricmp(PART_TYPE_DRIVERATA, partyp) == 0 ||
+	    stricmp(PART_TYPE_FWB_COMPONENT, partyp) == 0 ||
+	    stricmp(PART_TYPE_PARTMAP, partyp) == 0)
+		type = 0;
+	else if (stricmp(PART_TYPE_UNIX, partyp) == 0) {
+	    if (bzb->magic != BZB_MAGIC)
+		type = 0;
+	    else if (bzb->type == BZB_TYPEFS) {
+		if (bzb->flags.root)
+		    type = ROOT_PART;
+		else if (bzb->flags.usr)
+		    type = UFS_PART;
+		else
+		    type = SCRATCH_PART;
+	    } else if (bzb->type == BZB_TYPESWAP)
+		type = SWAP_PART;
+	    else
+		type = SCRATCH_PART;
+	} else if (stricmp(PART_TYPE_MAC, partyp) == 0)
+	    type = HFS_PART;
+	else
+	    type = SCRATCH_PART;
+	return type;
+}
+
+char *
+getFstype(part, len_type, type)
+	struct part_map_entry *part;
+	int len_type;
+	char *type;
+{
+	*type = '\0';
+	switch(whichType(part)) {
+	    case ROOT_PART:
+	    case UFS_PART:
+		strncpy(type, "4.2BSD", len_type);
+		break;
+	    case SWAP_PART:
+		strncpy(type, "swap", len_type);
+		break;
+	    case HFS_PART:
+		strncpy(type, "HFS", len_type);
+		break;
+	    case SCRATCH_PART:
+	    default:
+		break;
+	}
+	return (type);
+}
+
+char *
+getUse(part, len_use, use)
+	struct part_map_entry *part;
+	int len_use;
+	char *use;
+{
+	EBZB *bzb;
+	char partyp[32];
+
+	*use = '\0';
+	bzb = (EBZB *)&part->pmBootArgs[0];
+	switch(whichType(part)) {
+	    case ROOT_PART:
+		if (bzb->flags.usr)
+		    strncpy(use, "Root&Usr", len_use);
+		else
+		    strncpy(use, "Root", len_use);
+		break;
+	    case UFS_PART:
+		strncpy(use, "Usr", len_use);
+		break;
+	    case SWAP_PART:
+		break;
+	    case HFS_PART:
+		strncpy(use, "MacOS", len_use);
+		break;
+	    case SCRATCH_PART:
+		strncpy(partyp, part->pmPartType, sizeof(partyp));
+		partyp[sizeof(partyp)-1] = '\0';
+		if (stricmp("Apple_Free", partyp) == 0)
+		    strncpy(use, "Free", len_use);
+		else if (stricmp("Apple_Scratch", partyp) == 0)
+		    strncpy(use, "Scratch", len_use);
+		else if (stricmp("Apple_MFS", partyp) == 0)
+		    strncpy(use, "MFS", len_use);
+		else if (stricmp("Apple_PRODOS", partyp) == 0)
+		    strncpy(use, "PRODOS", len_use);
+		else
+		    strncpy(use, "unknown", len_use);
+	    default:
+		break;
+	}
+	return(use);
+}
+
+char *
+getName(part, len_name, name)
+	struct part_map_entry *part;
+	int len_name;
+	char *name;
+{
+	EBZB *bzb;
+	int fd;
+	off_t seek;
+	char devname[100], macosblk[512];
+
+	*name = '\0';
+	bzb = (EBZB *)&part->pmBootArgs[0];
+	switch(whichType(part)) {
+	    case SCRATCH_PART:
+	    case ROOT_PART:
+	    case UFS_PART:
+		strncpy(name, bzb->mount_point, len_name);
+		break;
+	    case SWAP_PART:
+		break;
+	    case HFS_PART:
+		/*
+		 * OK, this is stupid but it's damn nice to know!
+		 */
+		snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
+		/*
+		 * Open the disk as a raw device
+		 */
+		if ((fd = open(devname, O_RDONLY, 0)) >= 0) {
+		    seek = (off_t)part->pmPyPartStart + (off_t)2;
+		    seek *= (off_t)bsize;
+		    lseek(fd, seek, SEEK_SET);
+		    read(fd, &macosblk, sizeof(macosblk));
+		    macosblk[37+32] = '\0';
+		    strncpy(name, bzb->mount_point, len_name);
+		    strncat(name, " (", len_name-strlen(name));
+		    strncat(name, &macosblk[37], len_name-strlen(name));
+		    strncat(name, ")", len_name-strlen(name));
+		}
+		break;
+	    default:
+		break;
+	}
+	return(name);
+}
+
+/*
+ * Find the first occurance of a Standard Type partition and
+ *  mark it for use along with the default mount slot.
+ */
+int
+findStdType(num_parts, in_use, type, count, alt)
+	int num_parts;
+	char in_use[];
+	int type;
+	int *count;
+	int alt;
+{
+	EBZB *bzb;
+	int i;
+
+	for (i = 0; i < num_parts; i++) {
+		bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
+		if (whichType(&map.blk[i]) != type || bzb->flags.used)
+			continue;
+		if (type == ROOT_PART) {
+			if (alt >= 0 && alt != bzb->cluster)
+				continue;
+			setpartition(&map.blk[i], in_use, 0);
+			strcpy (bzb->mount_point, "/");
+			*count += 1;
+		} else if (type == UFS_PART) {
+			if (alt >= 0 && alt != bzb->cluster)
+				continue;
+			setpartition(&map.blk[i], in_use, 6);
+			if (bzb->mount_point[0] == '\0')
+				strcpy (bzb->mount_point, "/usr");
+			*count += 1;
+		} else if (type == SWAP_PART) {
+			setpartition(&map.blk[i], in_use, 1);
+			*count += 1;
+		}
+		return 0;
+	}
+	return -1;
 }
 
 /*
@@ -129,38 +325,39 @@ strnicmp(s1, s2, n)
  */
 void
 reset_part_flags (part)
-	int part;
+	struct part_map_entry *part;
 {
-    EBZB *bzb;
+	EBZB *bzb;
 
-    /*
-     * Clear out the MacOS fields that might be used for booting just
-     *  in case we've clobbered the boot code.
-     */
-    map.blk[part].pmLgDataStart = 0;
-    map.blk[part].pmPartStatus = 0x7f;  /* make sure the partition shows up */
-    map.blk[part].pmLgBootStart = 0;
-    map.blk[part].pmBootSize = 0;
-    map.blk[part].pmBootLoad = 0;
-    map.blk[part].pmBootLoad2 = 0;
-    map.blk[part].pmBootEntry = 0;
-    map.blk[part].pmBootEntry2 = 0;
-    map.blk[part].pmBootCksum = 0;
+	/*
+	 * Clear out the MacOS fields that might be used for booting just
+	 *  in case we've clobbered the boot code.
+	 */
+	part->pmLgDataStart = 0;
+	part->pmPartStatus = 0x7f;  /* make sure the partition shows up */
+	part->pmLgBootStart = 0;
+	part->pmBootSize = 0;
+	part->pmBootLoad = 0;
+	part->pmBootLoad2 = 0;
+	part->pmBootEntry = 0;
+	part->pmBootEntry2 = 0;
+	part->pmBootCksum = 0;
 
-    /*
-     * Clear out all the NetBSD fields too.  We only clear out the ones
-     *  that should get reset during our processing.
-     */
-    bzb = (EBZB *)&map.blk[part].pmBootArgs[0];
-    bzb->magic = 0;
-    bzb->cluster = 0;
-    bzb->inode = 0;
-    bzb->type = 0;
-    bzb->flags.root = 0;
-    bzb->flags.usr = 0;
-    bzb->flags.crit = 0;
-    bzb->flags.slice = 0;
-    return;
+	/*
+	 * Clear out all the NetBSD fields too.  We only clear out the ones
+	 *  that should get reset during our processing.
+	 */
+	bzb = (EBZB *)&part->pmBootArgs[0];
+	bzb->magic = 0;
+	bzb->cluster = 0;
+	bzb->inode = 0;
+	bzb->type = 0;
+	bzb->flags.root = 0;
+	bzb->flags.usr = 0;
+	bzb->flags.crit = 0;
+	bzb->flags.slice = 0;
+	bzb->flags.used = 0;
+	return;
 }
 
 /*
@@ -177,22 +374,35 @@ void
 sortmerge(void)
 {
     struct part_map_entry tmp_blk;
-    char fstyp[16], use[16], name[64];
-    int i, j, k;
+    char in_use[MAXPARTITIONS];
+    int i, j;
     EBZB *bzb;
 
     /*
-     * Step 1, squeeze out the holes
+     * Step 1, squeeze out the holes that some disk formatters leave in
+     *  the Map.  Also convert any "old" Map entries to the new entry
+     *  type. Also clear out our used flag which is used to indicte
+     *  we've mapped the partition.
      */
+    map.in_use_cnt = 0;
     for (i=0;i<map.size-1;i++) {
-	if (map.blk[i].pmSig != PART_ENTRY_MAGIC && map.blk[i].pmSig != 0x5453) {
+	if (map.blk[i].pmSig == 0x5453)
+	    map.blk[i].pmSig = PART_ENTRY_MAGIC;
+	if (map.blk[i].pmSig != PART_ENTRY_MAGIC) {
 	    for (j=i+1;j<map.size;j++) {
-		if (map.blk[j].pmSig == PART_ENTRY_MAGIC || map.blk[j].pmSig == 0x5453) {
+		if (map.blk[j].pmSig == 0x5453)
+		    map.blk[j].pmSig = PART_ENTRY_MAGIC;
+		if (map.blk[j].pmSig == PART_ENTRY_MAGIC) {
 		    memcpy (&map.blk[i], &map.blk[j], sizeof(struct part_map_entry));
 		    map.blk[j].pmSig = 0;
 		    break;
 		}
 	    }
+	} else {
+	    map.in_use_cnt += 1;
+	    bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
+	    bzb->flags.used = 0;
+	    bzb->flags.part = 0;
 	}
     }
 
@@ -215,10 +425,8 @@ sortmerge(void)
      * Step 3, merge adjacent free space
      */
     for (i=0;i<map.in_use_cnt-1;i++) {
-        if (strnicmp("Apple_Free", map.blk[i].pmPartType,
-		sizeof(map.blk[i].pmPartType)) == 0 &&
-	    strnicmp("Apple_Free", map.blk[i+1].pmPartType,
-		sizeof(map.blk[i+1].pmPartType)) == 0) {
+        if (stricmp("Apple_Free", map.blk[i].pmPartType) == 0 &&
+	    stricmp("Apple_Free", map.blk[i+1].pmPartType) == 0) {
 	    map.blk[i].pmPartBlkCnt += map.blk[i+1].pmPartBlkCnt;
 	    map.blk[i].pmDataCnt += map.blk[i+1].pmDataCnt;
 	    map.blk[i+1].pmSig = 0;
@@ -232,188 +440,103 @@ sortmerge(void)
 
     /*
      * Step 4, try to identify the mount points for the partitions
-     *         Also, force use of PART_ENTRY_MAGIC in place of the old
-     *         0x5453 pmSig value, and adjust the pmMapBlkCnt in
-     *         each Map entry.  Set up the display array for the
-     *         non-reserved partitions, and count the number of
-     *         NetBSD usable partitions
+     *         and adjust the pmMapBlkCnt in each Map entry.  Set
+     *         up the display array for the non-reserved partitions,
+     *         and count the number of NetBSD usable partitions
      */
     map.hfs_cnt = 0;
     map.root_cnt = 0;
     map.swap_cnt = 0;
     map.usr_cnt = 0;
     map.usable_cnt = 0;
+    /*
+     * Clear out record of partition slots already in use
+     */
+    memset(&in_use, 0, sizeof(in_use));
     for (i=0,j=0;i<map.in_use_cnt;i++) {
         map.blk[i].pmSig = PART_ENTRY_MAGIC;
         map.blk[i].pmMapBlkCnt = map.in_use_cnt;
-        if ((part_type(i, fstyp, use, name) != TYP_RSRVD) &&
-	    (j < MAXPARTITIONS)) {
+        if (whichType(&map.blk[i]) && (j < MAXPARTITIONS)) {
 		map.mblk[j++] = i;
 		map.usable_cnt += 1;
 	}
-	if (strnicmp("Apple_Unix_SVR2", map.blk[i].pmPartType,
-		sizeof(map.blk[i].pmPartType)) == 0) {
-	   bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
-	   bzb->flags.part = '?';
-	   if (bzb->magic == BZB_MAGIC) {
-		switch (bzb->type) {
-		    case BZB_TYPEFS:
-			if (bzb->flags.root && !map.root_cnt) {
-			    map.root_cnt = 1;
-			    bzb->flags.part = 'a';
-                            strcpy (bzb->mount_point, "/");
-			}
-			else if (bzb->flags.root || bzb->flags.usr)
-			    bzb->flags.part = bsd_order[map.usr_cnt++];
-			break;
-		    case BZB_TYPESWAP:
-			if (!map.swap_cnt)
-			    bzb->flags.part = 'b';
-			map.swap_cnt += 1;
-			break;
-		    default:
-			break;
-		}
-	   }
-	}
-    } 
-
-    /*
-     * Map any remaining slots and partitions to any other non-reserved
-     *  partition type on the disk. This picks up the MacOS HFS parts.
-     */
-    if (map.root_cnt+map.usr_cnt+map.swap_cnt < MAXPARTITIONS) {
-	for (i=0,k=map.root_cnt;i<map.in_use_cnt;i++) {
-	    j = part_type(i, fstyp, use, name);
-	    if (j == TYP_AVAIL || j == TYP_HFS) {
-		bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
-		bzb->flags.part = macos_order[k++];
-                if (j == TYP_HFS)
-                   map.hfs_cnt += 1;
-	    }
-	}
     }
-    return;
-}
+    /*
+     * Fill in standard partitions.  Look for a Cluster "0" first and use
+     *  it, otherwise take any Cluster value.
+     */
+    if (findStdType(map.in_use_cnt, in_use, ROOT_PART, &map.root_cnt, 0))
+	findStdType(map.in_use_cnt, in_use, ROOT_PART, &map.root_cnt, -1);
+    if (findStdType(map.in_use_cnt, in_use, UFS_PART, &map.usr_cnt, 0))
+	findStdType(map.in_use_cnt, in_use, UFS_PART, &map.usr_cnt, -1);
+    if (findStdType(map.in_use_cnt, in_use, SWAP_PART, &map.swap_cnt, 0))
+	findStdType(map.in_use_cnt, in_use, SWAP_PART, &map.swap_cnt, -1);
 
-/*
- * Identify the Partition Map entry by Filesystem type, Use and
- *  assigned name.  For MacOS partitions we try to pull up the
- *  disk partition name; for BSD type partitions we attempt to
- *  pull up the mount_point which will be assigned by the user.
- */
-int
-part_type(entry, fstyp, use, name)
-	int entry;
-	char *fstyp;
-	char *use;
-	char *name;
-{
-    PTYPES *ptr = (PTYPES *)&ptypes;
-    EBZB *bzb;
-    int fd;
-    off_t seek;
-    char devname[100], macosblk[512];
-
-    while (ptr->partype) {
-	if (strnicmp(ptr->partype, map.blk[entry].pmPartType,
-	    sizeof(map.blk[entry].pmPartType)) == 0) {
-	    strcpy(fstyp, ptr->fstyp);
-	    strncpy(name, map.blk[entry].pmPartType,
-		sizeof(map.blk[entry].pmPartType));
-	    name[sizeof(map.blk[entry].pmPartType)] = '\0';
-	    strcpy(use, "unknown");
-	    switch (ptr->usable) {
-		case 2:  /* MacOS HFS */
-		    /*
-		     * OK, this is stupid but it's damn nice to know!
-		     */
-	 	    snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
-		    /*
-	 	     * Open the disk as a raw device
-	 	     */
-		    if ((fd = open(devname, O_RDONLY, 0)) >= 0) {
-			seek = (off_t)map.blk[entry].pmPyPartStart + (off_t)2;
-			seek *= (off_t)bsize;
-			lseek(fd, seek, SEEK_SET);
-			read(fd, &macosblk, sizeof(macosblk));
-			macosblk[37+32] = '\0';
-			bzb = (EBZB *)&map.blk[entry].pmBootArgs[0];
-			sprintf(name, "%s (%s)", bzb->mount_point,
-			    &macosblk[37]);
-		    }
-		    strcpy (use, "MacOS");
+#if 0
+	md_debug_dump("After marking Standard Types");
+#endif
+    /*
+     * Now fill in the remaining partitions counting them by type and
+     *  assigning them the slot the where the kernel should map them.
+     * This will be where they are displayed in the Edit Map.
+     */
+    for (i=0; i < map.in_use_cnt; i++) {
+	bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
+	if (bzb->flags.used == 0) {
+	    if ((j = getFreeLabelEntry(in_use)) < 0)
+		break;
+	    switch (whichType(&map.blk[i])) {
+		case ROOT_PART:
+		    map.root_cnt += 1;
+		    setpartition(&map.blk[i], in_use, j);
 		    break;
-		case 3:  /* Unix */
-		    bzb = (EBZB *)&map.blk[entry].pmBootArgs[0];
-		    if (bzb->magic == BZB_MAGIC) {
-			switch (bzb->type) {
-			    case BZB_TYPEFS:
-				strcpy (fstyp, "4.2BSD");
-				if (bzb->flags.root && bzb->flags.usr) {
-				   strcpy(use, "Root&Usr");
-				   sprintf(name, "%s", bzb->mount_point);
-				}
-				else if (bzb->flags.root) {
-				   strcpy(use, "Root");
-				   sprintf(name, "%s", bzb->mount_point);
-				}
-				else if (bzb->flags.usr) {
-				   strcpy(use, "Usr");
-				   sprintf(name, "%s", bzb->mount_point);
-				}
-				else {
-				   strcpy (use, "unknown");
-				   *name = '\0';
-				}
-				break;
-			    case BZB_TYPESWAP:
-				strcpy (fstyp, "4.2BSD");
-				strcpy (use, "swap");
-				*name = '\0';
-				break;
-			    default:
-				break;
-			}
-		    }
-		    else {
-			strcpy (use, "unknown");
-			*name = '\0';
-		    }
+		case UFS_PART:
+		    map.usr_cnt += 1;
+		    setpartition(&map.blk[i], in_use, j);
 		    break;
+		case SWAP_PART:
+		    map.swap_cnt += 1;
+		    setpartition(&map.blk[i], in_use, j);
+		    break;
+		case HFS_PART:
+		    map.hfs_cnt += 1;
+		    setpartition(&map.blk[i], in_use, j);
+		    break;
+		case SCRATCH_PART:
+		    setpartition(&map.blk[i], in_use, j);
 		default:
 		    break;
 	    }
-	    return (ptr->usable);
 	}
-	ptr++;
     }
-    *fstyp = '\0';
-    *name = '\0';
-    *use = '\0';
-    return (0);
+#if 0
+	md_debug_dump("After sort merge");
+#endif
+    return;
 }
 
 void
 disp_selected_part(sel)
 	int sel;
 {
-    int i,j;
-    char name[64], use[16], fstyp[16];
-    EBZB *bzb;
+	int i,j;
+	char fstyp[16], use[16], name[32];
+	EBZB *bzb;
 
-    msg_table_add(MSG_part_header);
-    for (i=0;i<map.usable_cnt;i++) {
-        if (i == sel) msg_standout();
-        j = map.mblk[i];
-        part_type(j, fstyp, use, name);
-        bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-        msg_table_add(MSG_part_row, diskdev,
-            bzb->flags.part, map.blk[j].pmPartBlkCnt,
-            map.blk[j].pmPyPartStart, fstyp, use, name);
-        if (i == sel) msg_standend();
-    }
-    return;
+	msg_table_add(MSG_part_header);
+	for (i=0;i<map.usable_cnt;i++) {
+	    if (i == sel) msg_standout();
+	    j = map.mblk[i];
+	    getFstype(&map.blk[j], sizeof(fstyp), fstyp);
+	    getUse(&map.blk[j], sizeof(use), use);
+	    getName(&map.blk[j], sizeof(name), name);
+	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+	    msg_table_add(MSG_part_row, diskdev,
+		bzb->flags.part, map.blk[j].pmPartBlkCnt,
+		 map.blk[j].pmPyPartStart, fstyp, use, name);
+	    if (i == sel) msg_standend();
+	}
+	return;
 }
 
 /*
@@ -488,7 +611,6 @@ int
 edit_diskmap(void)
 {
     int i;
-    char fstyp[16], use[16], name[64];
 
 	/* Ask full/part */
 	msg_display (MSG_fullpart, diskdev);
@@ -513,7 +635,7 @@ edit_diskmap(void)
 	     *  then sort and merge the map into something sensible
 	     */
 	    for (i=0;i<map.size;i++)
-		if (part_type(i, fstyp, use, name))
+		if (whichType(&map.blk[i]))
 		    strcpy (map.blk[i].pmPartType, "Apple_Free");
 	    sortmerge();
 	}
@@ -561,7 +683,7 @@ md_get_info()
 	 * Just in case, initialize the structures we'll need if we
 	 *  need to completely initialize the disk.
 	 */
-	dlsize = dlsec*dlhead*dlcyl;
+	dlsize = disklabel.d_secperunit;
 	new_block0.sbBlkCount = dlsize;
 	for (i=0;i<NEW_MAP_SIZE;i++) {
 	   if (i > 0)
@@ -575,11 +697,12 @@ md_get_info()
 	   }
 	   dlsize -= new_map[i].pmPartBlkCnt;
 	}
-	dlsize = dlsec*dlhead*dlcyl;
+	dlsize = disklabel.d_secperunit;
 #if 0
 	msg_display(MSG_dldebug, bsize, dlcyl, dlhead, dlsec, dlsize);
 	process_menu(MENU_ok);
 #endif
+	map.size = 0;
 	/*
 	 * Verify the disk has been initialized for MacOS use by checking
 	 *  to see if the disk have a Boot Block
@@ -598,8 +721,7 @@ md_get_info()
 	   for (i=0;i<MAXMAXPARTITIONS;i++) {
 		lseek(fd, (off_t)(i+1) * bsize, SEEK_SET);
 		read(fd, &block, sizeof(struct part_map_entry));
-		if (strnicmp("Apple_partition_map", block.pmPartType,
-		    sizeof(block.pmPartType)) == 0) {
+		if (stricmp("Apple_partition_map", block.pmPartType) == 0) {
 		    map.size = block.pmPartBlkCnt;
 		    map.in_use_cnt = block.pmMapBlkCnt;
 		    map.blk = (struct part_map_entry *)malloc(map.size * bsize);
@@ -610,7 +732,6 @@ md_get_info()
 	    read(fd, map.blk, map.size * bsize);
 	}
 	close(fd);
-
 	/*
 	 * Setup the disktype so /etc/disktab gets proper info
 	 */
@@ -634,14 +755,10 @@ md_pre_disklabel()
     /*
      * Danger Will Robinson!  We're about to turn that nice MacOS disk
      *  into an expensive doorstop...
-     *
-     * Always remember that this code was written in a town called
-     *  Murphy, so anything that can go wrong will.
      */
     printf ("%s", msg_string (MSG_dodiskmap));
 
     snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
-
     /*
      * Open the disk as a raw device
      */
@@ -651,9 +768,9 @@ md_pre_disklabel()
 	exit (1);
     }
     /*
-     * OK boys and girls, here we go.  First check the pmSigPad field of
-     *  the first block in the incore Partition Map.  It should be zero,
-     *  but if it's 0xa5a5 that means we need to write out Block0 too.
+     *  First check the pmSigPad field of the first block in the incore
+     *  Partition Map.  It should be zero, but if it's 0xa5a5 that means
+     *  we need to write out Block0 too.
      */
     if (map.blk[0].pmSigPad == 0xa5a5) {
 	if (lseek (fd, (off_t)0 * bsize, SEEK_SET) < 0) {
@@ -682,6 +799,7 @@ md_pre_disklabel()
 	close (fd);
 	exit (1);
     }
+    fsync(fd);
     /*
      * Well, if we get here the dirty deed has been done.
      *
@@ -714,12 +832,102 @@ md_pre_disklabel()
 int
 md_post_disklabel(void)
 {
-	return 0;
+    struct disklabel updated_label;
+    int fd, i, no_match;
+    char devname[100], buf[80];
+    char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
+                   " v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
+                   "9660", "boot", "ados", "hfs ", "fcor", "ex2f",
+                   "ntfs", "raid", "ccd "};
+  
+    snprintf(devname, sizeof(devname), "/dev/r%sc", diskdev);
+    /*
+     * Open the disk as a raw device
+     */
+    if ((fd = open(devname, O_RDONLY, 0)) < 0)
+       return 0;
+    /*
+     * Get the "new" label to see if we were successful.  If we aren't
+     *  we'll return an error to keep from destroying the user's disk.
+     */
+    ioctl(fd, DIOCGDINFO, &updated_label);
+    close(fd);
+    /*
+     * Make sure the in-core label matches the on-disk one
+     */
+    no_match = 0;
+    for (i=0;i<MAXPARTITIONS;i++) {
+        if (i > updated_label.d_npartitions)
+           break;
+        if (bsdlabel[i].pi_size != updated_label.d_partitions[i].p_size)
+           no_match = 1;
+        if (bsdlabel[i].pi_size) {
+           if (bsdlabel[i].pi_offset != updated_label.d_partitions[i].p_offset)
+               no_match = 1;
+           if (bsdlabel[i].pi_fstype != updated_label.d_partitions[i].p_fstype)
+               no_match = 1;
+        }
+        if (no_match)
+           break;
+    }
+    /*
+     * If the labels don't match, tell the user why
+     */
+    if (no_match) {
+       msg_clear();
+       msg_display(MSG_label_error);
+       msg_table_add(MSG_dump_line,
+           " in-core: offset      size type on-disk: offset      size type");
+       for (i=0;i<MAXPARTITIONS;i++) {
+           sprintf(buf, " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
+              bsdlabel[i].pi_offset, bsdlabel[i].pi_size,
+              fst[bsdlabel[i].pi_fstype],
+              updated_label.d_partitions[i].p_offset,
+              updated_label.d_partitions[i].p_size,
+              fst[updated_label.d_partitions[i].p_fstype]);
+           msg_table_add(MSG_dump_line, buf);
+       }
+       process_menu(MENU_ok2);
+    }
+    return no_match;
+}
+
+int
+md_debug_dump(title)
+	char *title;
+{
+	char buf[96], type;
+	char fstyp[16], use[16], name[64];
+	int i, j;
+	EBZB *bzb;
+
+	msg_clear();
+	sprintf(buf, "Apple Disk Partition Map: %s", title);
+	msg_table_add(MSG_dump_line, buf);
+	msg_table_add(MSG_dump_line,
+           "slot      base   fstype        use name");
+	for (i=0;i<map.in_use_cnt;i++) {
+	   j = whichType(&map.blk[i]);
+	   getFstype(&map.blk[i], sizeof(fstyp), fstyp);
+	   getUse(&map.blk[i], sizeof(use), use);
+	   getName(&map.blk[i], sizeof(name), name);
+	   bzb = (EBZB *) &map.blk[i].pmBootArgs[0];
+	   type = bzb->flags.part;
+	   if (type < 'a' || type > 'h') type = '?';
+	   if (j == 0) strcpy (name, "reserved for Apple");
+           sprintf(buf, " %02d:%c %08x %8s %10s %s", i+1,  type,
+		map.blk[i].pmPyPartStart, fstyp, use, name);
+           msg_table_add(MSG_dump_line, buf);
+	}
+	process_menu(MENU_okabort);
+	msg_clear();
+	return(yesno);
 }
 
 int
 md_post_newfs(void)
 {
+	md_select_kernel();
 	return 0;
 }
 
@@ -730,15 +938,7 @@ md_copy_filesystem(void)
 		return 1;
 	}
 
-	/* Copy the instbin(s) to the disk */
-	msg_display(MSG_dotar);
-	if (run_prog (0, NULL, "pax -X -r -w -pe / /mnt") != 0)
-		return 1;
-
-	/* Copy next-stage install profile into target /.profile. */
-	if (cp_to_target ("/tmp/.hdprofile", "/.profile") != 0)
-		return 1;
-	return cp_to_target ("/usr/share/misc/termcap", "/.termcap");
+	return 0;
 }
 
 
@@ -748,7 +948,6 @@ md_make_bsd_partitions(void)
 {
 	FILE *f;
 	int i, j, pl;
-	char fstyp[16], use[16], name[64];
 	EBZB *bzb;
 
 	/*
@@ -773,17 +972,18 @@ md_make_bsd_partitions(void)
 	emptylabel(bsdlabel);
 
 	/*
-	 * The mac68k port has no predefined partitions, so we'll
-	 *  start by setting everything to unused.
+	 * The mac68k port has a predefined partition for "c" which
+	 *  is the size of the disk, everything else is unused.
 	 */
 	for (i=0;i<MAXPARTITIONS;i++) {
-	    bsdlabel[i].pi_size = 0;
-	    bsdlabel[i].pi_offset = 0;
-	    bsdlabel[i].pi_fstype = FS_UNUSED;
-	    bsdlabel[i].pi_bsize = 0;
-	    bsdlabel[i].pi_fsize = 0;
-	    fsmount[i][0] = '\0';
+		bsdlabel[i].pi_size = 0;
+		bsdlabel[i].pi_offset = 0;
+		bsdlabel[i].pi_fstype = FS_UNUSED;
+		bsdlabel[i].pi_bsize = 0;
+		bsdlabel[i].pi_fsize = 0;
+		fsmount[i][0] = '\0';
 	}
+	bsdlabel[RAW_PART].pi_size = new_block0.sbBlkCount;
 	/*
 	 * Now, scan through the Disk Partition Map and transfer the
 	 *  information into the incore disklabel.
@@ -793,24 +993,22 @@ md_make_bsd_partitions(void)
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 	    if (bzb->flags.part) {
 		pl = bzb->flags.part - 'a';
-		switch (part_type(j, fstyp, use, name)) {
-		    case TYP_HFS:
+		switch (whichType(&map.blk[j])) {
+		    case HFS_PART:
 			bsdlabel[pl].pi_fstype = FS_HFS; 
 			strcpy (fsmount[pl], bzb->mount_point);
 			break;
-		    case TYP_BSD:
-			switch (bzb->type) {
-			    case BZB_TYPEFS:
-				bsdlabel[pl].pi_fstype = FS_BSDFFS;
-				strcpy (fsmount[pl], bzb->mount_point);
-				break;
-			    case BZB_TYPESWAP:
-				bsdlabel[pl].pi_fstype = FS_SWAP;
-				break;
-			    default:
-				break;
-			}
+		    case ROOT_PART:
+		    case UFS_PART:
+			bsdlabel[pl].pi_fstype = FS_BSDFFS;
+			strcpy (fsmount[pl], bzb->mount_point);
 			break;
+		    case SWAP_PART:
+			bsdlabel[pl].pi_fstype = FS_SWAP;
+			break;
+		    case SCRATCH_PART:
+			bsdlabel[pl].pi_fstype = FS_OTHER;
+			strcpy (fsmount[pl], bzb->mount_point);
 		    default:
 			break;
 		}
@@ -877,6 +1075,7 @@ int
 md_update (void)
 {
 	endwin();
+	move_aout_libs();
 	md_copy_filesystem ();
 	md_post_newfs();
 	wrefresh(curscr);
@@ -908,9 +1107,35 @@ md_cleanup_install(void)
 	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
+void
+md_select_kernel()
+{
+       struct utsname instsys;
+
+        /*
+         * Get the name of the Install Kernel we are running under.
+	 *
+	 * Note:  In md.h the two kernels are disabled.  If they are
+	 *        enabled there the logic here needs to be switched.
+         */
+        uname(&instsys);
+        if (strstr(instsys.version, "(INSTALLSBC)"))
+            /*
+             * Running the SBC Installation Kernel, so enable GENERICSBC
+             */
+            toggle_getit (1);
+        else
+            /*
+             * Running the GENERIC Installation Kernel, so enable GENERIC
+             */
+            toggle_getit (0);
+	return;
+}
+
 int
 md_pre_update()
 {
+	md_select_kernel();
 	return 1;
 }
 
