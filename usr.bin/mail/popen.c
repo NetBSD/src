@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.11 2002/03/02 15:27:52 wiz Exp $	*/
+/*	$NetBSD: popen.c,v 1.12 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.11 2002/03/02 15:27:52 wiz Exp $");
+__RCSID("$NetBSD: popen.c,v 1.12 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ Popen(char *cmd, char *mode)
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	if ((pid = start_command(cmd, &nset, fd0, fd1, NOSTR, NOSTR, NOSTR)) < 0) {
+	if ((pid = start_command(cmd, &nset, fd0, fd1, NULL, NULL, NULL)) < 0) {
 		close(p[READ]);
 		close(p[WRITE]);
 		return NULL;
@@ -236,10 +236,10 @@ start_command(char *cmd, sigset_t *mask, int infd, int outfd,
 		char *argv[100];
 		int i = getrawlist(cmd, argv, sizeof argv / sizeof *argv);
 
-		if ((argv[i++] = a0) != NOSTR &&
-		    (argv[i++] = a1) != NOSTR &&
-		    (argv[i++] = a2) != NOSTR)
-			argv[i] = NOSTR;
+		if ((argv[i++] = a0) != NULL &&
+		    (argv[i++] = a1) != NULL &&
+		    (argv[i++] = a2) != NULL)
+			argv[i] = NULL;
 		prepare_child(mask, infd, outfd);
 		execvp(argv[0], argv);
 		perror(argv[0]);

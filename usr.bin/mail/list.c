@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.11 2002/03/02 14:59:37 wiz Exp $	*/
+/*	$NetBSD: list.c,v 1.12 2002/03/04 03:07:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.11 2002/03/02 14:59:37 wiz Exp $");
+__RCSID("$NetBSD: list.c,v 1.12 2002/03/04 03:07:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ number:
 		tok = scan(&bufp);
 	}
 	lastcolmod = colmod;
-	*np = NOSTR;
+	*np = NULL;
 	mc = 0;
 	if (star) {
 		for (i = 0; i < msgCount; i++)
@@ -271,7 +271,7 @@ number:
 
 	if (np > namelist) {
 		for (i = 1; i <= msgCount; i++) {
-			for (mc = 0, np = &namelist[0]; *np != NOSTR; np++)
+			for (mc = 0, np = &namelist[0]; *np != NULL; np++)
 				if (**np == '/') {
 					if (matchsubj(*np, i)) {
 						mc++;
@@ -301,7 +301,7 @@ number:
 		if (mc == 0) {
 			printf("No applicable messages from {%s",
 				namelist[0]);
-			for (np = &namelist[1]; *np != NOSTR; np++)
+			for (np = &namelist[1]; *np != NULL; np++)
 				printf(", %s", *np);
 			printf("}\n");
 			return(-1);
@@ -471,7 +471,7 @@ getrawlist(char line[], char **argv, int argc)
 		*cp2 = '\0';
 		argv[argn++] = savestr(linebuf);
 	}
-	argv[argn] = NOSTR;
+	argv[argn] = NULL;
 	return argn;
 }
 
@@ -687,7 +687,7 @@ matchto(char *str, int mesg)
 	for (to = to_fields; *to; to++) {
 		cp = str;
 		cp2 = hfield(*to, mp);
-		if (cp2 != NOSTR) {
+		if (cp2 != NULL) {
 			backup = cp2;
 			while (*cp2) {
 				if (*cp == 0)
@@ -745,7 +745,7 @@ matchsubj(char *str, int mesg)
 		cp = str;
 		cp2 = hfield("subject", mp);
 	}
-	if (cp2 == NOSTR)
+	if (cp2 == NULL)
 		return(0);
 	backup = cp2;
 	while (*cp2) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.13 2002/03/02 15:27:51 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.14 2002/03/04 03:07:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.13 2002/03/02 15:27:51 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.14 2002/03/04 03:07:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,9 @@ shell(void *v)
 	(void) strcpy(cmd, str);
 	if (bangexp(cmd) < 0)
 		return 1;
-	if ((shellcmd = value("SHELL")) == NOSTR)
+	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	(void) run_command(shellcmd, 0, -1, -1, "-c", cmd, NOSTR);
+	(void) run_command(shellcmd, 0, -1, -1, "-c", cmd, NULL);
 	(void) signal(SIGINT, sigint);
 	printf("!\n");
 	return 0;
@@ -85,9 +85,9 @@ dosh(void *v)
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shellcmd;
 
-	if ((shellcmd = value("SHELL")) == NOSTR)
+	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	(void) run_command(shellcmd, 0, -1, -1, NOSTR, NOSTR, NOSTR);
+	(void) run_command(shellcmd, 0, -1, -1, NULL, NULL, NULL);
 	(void) signal(SIGINT, sigint);
 	putchar('\n');
 	return 0;
@@ -176,10 +176,10 @@ schdir(void *v)
 	char **arglist = v;
 	char *cp;
 
-	if (*arglist == NOSTR)
+	if (*arglist == NULL)
 		cp = homedir;
 	else
-		if ((cp = expand(*arglist)) == NOSTR)
+		if ((cp = expand(*arglist)) == NULL)
 			return(1);
 	if (chdir(cp) < 0) {
 		perror(cp);
@@ -192,7 +192,7 @@ int
 respond(void *v)
 {
 	int *msgvec = v;
-	if (value("Replyall") == NOSTR)
+	if (value("Replyall") == NULL)
 		return (_respond(msgvec));
 	else
 		return (_Respond(msgvec));
@@ -218,11 +218,11 @@ _respond(int *msgvec)
 	mp = &message[msgvec[0] - 1];
 	touch(mp);
 	dot = mp;
-	if ((rcv = skin(hfield("from", mp))) == NOSTR)
+	if ((rcv = skin(hfield("from", mp))) == NULL)
 		rcv = skin(nameof(mp, 1));
-	if ((replyto = skin(hfield("reply-to", mp))) != NOSTR)
+	if ((replyto = skin(hfield("reply-to", mp))) != NULL)
 		np = extract(replyto, GTO);
-	else if ((cp = skin(hfield("to", mp))) != NOSTR)
+	else if ((cp = skin(hfield("to", mp))) != NULL)
 		np = extract(cp, GTO);
 	else
 		np = NIL;
@@ -235,18 +235,18 @@ _respond(int *msgvec)
 	if (altnames)
 		for (ap = altnames; *ap; ap++)
 			np = delname(np, *ap);
-	if (np != NIL && replyto == NOSTR)
+	if (np != NIL && replyto == NULL)
 		np = cat(np, extract(rcv, GTO));
 	else if (np == NIL) {
-		if (replyto != NOSTR)
+		if (replyto != NULL)
 			printf("Empty reply-to field -- replying to author\n");
 		np = extract(rcv, GTO);
 	}
 	head.h_to = np;
-	if ((head.h_subject = hfield("subject", mp)) == NOSTR)
+	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
 	head.h_subject = reedit(head.h_subject);
-	if (replyto == NOSTR && (cp = skin(hfield("cc", mp))) != NOSTR) {
+	if (replyto == NULL && (cp = skin(hfield("cc", mp))) != NULL) {
 		np = elide(extract(cp, GCC));
 		np = delname(np, myname);
 		if (altnames != 0)
@@ -270,8 +270,8 @@ reedit(char *subj)
 {
 	char *newsubj;
 
-	if (subj == NOSTR)
-		return NOSTR;
+	if (subj == NULL)
+		return NULL;
 	if ((subj[0] == 'r' || subj[0] == 'R') &&
 	    (subj[1] == 'e' || subj[1] == 'E') &&
 	    subj[2] == ':')
@@ -368,7 +368,7 @@ set(void *v)
 	char varbuf[BUFSIZ], **ap, **p;
 	int errs, h, s;
 
-	if (*arglist == NOSTR) {
+	if (*arglist == NULL) {
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				s++;
@@ -376,14 +376,14 @@ set(void *v)
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				*p++ = vp->v_name;
-		*p = NOSTR;
+		*p = NULL;
 		sort(ap);
-		for (p = ap; *p != NOSTR; p++)
+		for (p = ap; *p != NULL; p++)
 			printf("%s\t%s\n", *p, value(*p));
 		return(0);
 	}
 	errs = 0;
-	for (ap = arglist; *ap != NOSTR; ap++) {
+	for (ap = arglist; *ap != NULL; ap++) {
 		cp = *ap;
 		cp2 = varbuf;
 		while (*cp != '=' && *cp != '\0')
@@ -415,7 +415,7 @@ unset(void *v)
 	char **ap;
 
 	errs = 0;
-	for (ap = arglist; *ap != NOSTR; ap++) {
+	for (ap = arglist; *ap != NULL; ap++) {
 		if ((vp2 = lookup(*ap)) == NOVAR) {
 			if (getenv(*ap)) {
 				unsetenv(*ap);
@@ -456,7 +456,7 @@ group(void *v)
 	int s;
 	char **ap, *gname, **p;
 
-	if (*argv == NOSTR) {
+	if (*argv == NULL) {
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				s++;
@@ -464,13 +464,13 @@ group(void *v)
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				*p++ = gh->g_name;
-		*p = NOSTR;
+		*p = NULL;
 		sort(ap);
-		for (p = ap; *p != NOSTR; p++)
+		for (p = ap; *p != NULL; p++)
 			printgroup(*p);
 		return(0);
 	}
-	if (argv[1] == NOSTR) {
+	if (argv[1] == NULL) {
 		printgroup(*argv);
 		return(0);
 	}
@@ -490,7 +490,7 @@ group(void *v)
 	 * later anyway.
 	 */
 
-	for (ap = argv+1; *ap != NOSTR; ap++) {
+	for (ap = argv+1; *ap != NULL; ap++) {
 		gp = (struct group *) calloc(sizeof *gp, 1);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
@@ -508,7 +508,7 @@ sort(char **list)
 {
 	char **ap;
 
-	for (ap = list; *ap != NOSTR; ap++)
+	for (ap = list; *ap != NULL; ap++)
 		;
 	if (ap-list < 2)
 		return;
@@ -545,7 +545,7 @@ file(void *v)
 {
 	char **argv = v;
 
-	if (argv[0] == NOSTR) {
+	if (argv[0] == NULL) {
 		newfileinfo(0);
 		return 0;
 	}
@@ -565,9 +565,9 @@ echo(void *v)
 	char **ap;
 	char *cp;
 
-	for (ap = argv; *ap != NOSTR; ap++) {
+	for (ap = argv; *ap != NULL; ap++) {
 		cp = *ap;
-		if ((cp = expand(cp)) != NOSTR) {
+		if ((cp = expand(cp)) != NULL) {
 			if (ap != argv)
 				putchar(' ');
 			printf("%s", cp);
@@ -581,7 +581,7 @@ int
 Respond(void *v)
 {
 	int *msgvec = v;
-	if (value("Replyall") == NOSTR)
+	if (value("Replyall") == NULL)
 		return (_Respond(msgvec));
 	else
 		return (_respond(msgvec));
@@ -605,14 +605,14 @@ _Respond(int msgvec[])
 		mp = &message[*ap - 1];
 		touch(mp);
 		dot = mp;
-		if ((cp = skin(hfield("from", mp))) == NOSTR)
+		if ((cp = skin(hfield("from", mp))) == NULL)
 			cp = skin(nameof(mp, 2));
 		head.h_to = cat(head.h_to, extract(cp, GTO));
 	}
 	if (head.h_to == NIL)
 		return 0;
 	mp = &message[msgvec[0] - 1];
-	if ((head.h_subject = hfield("subject", mp)) == NOSTR)
+	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
 	head.h_subject = reedit(head.h_subject);
 	head.h_cc = NIL;

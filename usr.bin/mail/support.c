@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.3 2002/03/02 15:27:52 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.4 2002/03/04 03:07:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.3 2002/03/02 15:27:52 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.4 2002/03/04 03:07:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ savestr(const char *str)
 	char *new;
 	int size = strlen(str) + 1;
 
-	if ((new = salloc(size)) != NOSTR)
+	if ((new = salloc(size)) != NULL)
 		memmove(new, str, size);
 	return new;
 }
@@ -76,7 +76,7 @@ save2str(char *str, char *old)
 	int newsize = strlen(str) + 1;
 	int oldsize = old ? strlen(old) + 1 : 0;
 
-	if ((new = salloc(newsize + oldsize)) != NOSTR) {
+	if ((new = salloc(newsize + oldsize)) != NULL) {
 		if (oldsize) {
 			memmove(new, old, oldsize);
 			new[oldsize - 1] = ' ';
@@ -122,14 +122,14 @@ argcount(char **argv)
 {
 	char **ap;
 
-	for (ap = argv; *ap++ != NOSTR;)
+	for (ap = argv; *ap++ != NULL;)
 		;	
 	return ap - argv - 1;
 }
 
 /*
  * Return the desired header line from the passed message
- * pointer (or NOSTR if the desired header field is not available).
+ * pointer (or NULL if the desired header field is not available).
  */
 char *
 hfield(char field[], struct message *mp)
@@ -138,13 +138,13 @@ hfield(char field[], struct message *mp)
 	char linebuf[LINESIZE];
 	int lc;
 	char *headerfield;
-	char *colon, *oldhfield = NOSTR;
+	char *colon, *oldhfield = NULL;
 
 	ibuf = setinput(mp);
 	if ((lc = mp->m_lines - 1) < 0)
-		return NOSTR;
+		return NULL;
 	if (readline(ibuf, linebuf, LINESIZE) < 0)
-		return NOSTR;
+		return NULL;
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
 			return oldhfield;
@@ -273,7 +273,7 @@ source(void *v)
 	FILE *fi;
 	char *cp;
 
-	if ((cp = expand(*arglist)) == NOSTR)
+	if ((cp = expand(*arglist)) == NULL)
 		return(1);
 	if ((fi = Fopen(cp, "r")) == NULL) {
 		perror(cp);
@@ -413,10 +413,10 @@ skin(char *name)
 	int gotlt, lastsp;
 	char nbuf[BUFSIZ];
 
-	if (name == NOSTR)
-		return(NOSTR);
-	if (strchr(name, '(') == NOSTR && strchr(name, '<') == NOSTR
-	    && strchr(name, ' ') == NOSTR)
+	if (name == NULL)
+		return(NULL);
+	if (strchr(name, '(') == NULL && strchr(name, '<') == NULL
+	    && strchr(name, ' ') == NULL)
 		return(name);
 	gotlt = 0;
 	lastsp = 0;
@@ -520,9 +520,9 @@ name1(struct message *mp, int reptype)
 	FILE *ibuf;
 	int firstrun = 1;
 
-	if ((cp = hfield("from", mp)) != NOSTR)
+	if ((cp = hfield("from", mp)) != NULL)
 		return cp;
-	if (reptype == 0 && (cp = hfield("sender", mp)) != NOSTR)
+	if (reptype == 0 && (cp = hfield("sender", mp)) != NULL)
 		return cp;
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
