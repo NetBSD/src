@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.501 2003/01/24 05:34:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.502 2003/01/24 17:47:18 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.500 2003/01/24 05:33:12 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.501 2003/01/24 17:46:51 thorpej Exp 
  */
 
 /*
@@ -5683,7 +5683,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_MBULTRA133,
 	    0,
 	    "Promise Technology",
-	    "MBUltra133/ATA Bus Master IDE Accelerator",
+	    "Ultra133/ATA Bus Master IDE Accelerator (MB)",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
