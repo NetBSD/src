@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 2001/02/21 23:53:00 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 2001/03/07 01:47:02 eeh Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6254,7 +6254,7 @@ _C_LABEL(blast_icache):
 	.proc 1
 	FTYPE(dcache_flush_page)
 _C_LABEL(dcache_flush_page):
-#ifdef _LP64
+#ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
 
