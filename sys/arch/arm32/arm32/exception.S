@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.2 1996/02/02 02:35:38 mycroft Exp $ */
+/* $NetBSD: exception.S,v 1.3 1996/02/05 22:43:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  *
  * Based on kate/display/abort.s
  *
- *    $Id: exception.S,v 1.2 1996/02/02 02:35:38 mycroft Exp $
+ *    $Id: exception.S,v 1.3 1996/02/05 22:43:53 mark Exp $
  */
 
 #include <machine/cpu.h>
@@ -241,6 +241,16 @@ abortprefetchmsg:
  * swi_entry
  *
  * Main entry point for the SWI vector
+ */
+
+/*
+ * Ok there is a lot of debugging in the function. This dates from the
+ * time of the "syscall in kernel mode" bug caused a trash kstack.
+ * Since fixing that bug this error has never occurred, as expected, and
+ * thus this debugging code is now redundant and will be removed soonish
+ *
+ * I am always hesitant to remove debugging code because as soon as I do
+ * a new bug shows up and I need it again :-)
  */
 
 	.global	swi_entry
