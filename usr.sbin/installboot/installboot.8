@@ -1,0 +1,206 @@
+.\"	$NetBSD: installboot.8,v 1.1 2002/04/03 05:21:17 lukem Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn of Wasabi Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 3, 2002
+.Dt INSTALLBOOT 8
+.Os
+.Sh NAME
+.Nm installboot
+.Nd install disk bootstrap software
+.
+.Sh SYNOPSIS
+.Nm ""
+.Fl nv
+.Bk -words
+.Op Fl b Ar bno
+.Ek
+.ig
+.Bk -words
+.Oo
+.Fl B
+.Sm off
+.Ar bno Op , Ar ...
+.Sm on
+.Oc
+.Ek
+..
+.Bk -words
+.Op Fl m Ar machine
+.Ek
+.Bk -words
+.Op Fl o Ar options
+.Ek
+.Bk -words
+.Op Fl t Ar fstype
+.Ek
+.Ar filesystem
+.Ar bootstrap
+.Nm ""
+.Fl c
+.Fl nv
+.Bk -words
+.Op Fl m Ar machine
+.Ek
+.Bk -words
+.Op Fl o Ar options
+.Ek
+.Bk -words
+.Op Fl t Ar fstype
+.Ek
+.Ar filesystem
+.
+.Sh DESCRIPTION
+The
+.Nm
+utility installs and removes disk bootstrap software.
+.Nm
+can install
+.Ar bootstrap
+into
+.Ar filesystem ,
+or disable an existing bootstrap in
+.Ar filesystem .
+.Pp
+(XXX: flesh out description of primary & secondary bootstrap, ...)
+.Pp
+The options recognized by
+.Nm
+are as follows:
+.
+.Bl -tag -width "foobar"
+.
+.It Fl b Ar bno
+Install
+.Ar bootstrap
+at block number
+.Ar bno
+instead of the default location for the machine and file system type.
+.
+.It Fl c
+Clear (remove) any existing bootstrap instead of installing one.
+.
+.It Fl m Ar machine
+Use
+.Ar machine
+as the target machine type.
+The default machine is determined from
+.Xr uname 3
+and then
+.Ev MACHINE .
+.Pp
+The following machines are currently supported by
+.Nm "" :
+.Bd -ragged -offset indent
+.Sy vax
+.Ed
+.
+.
+.It Fl n
+Do not write to
+.Ar filesystem .
+.
+.It Fl o Ar options
+Machine specific
+.Nm
+options, comma separated.
+.Pp
+Supported options are (with the machines for they are valid in brackets):
+.
+.Bl -tag -offset indent -width append
+.
+.It Sy append
+.Em [ pmax ,
+.Em vax ]
+Append
+.Ar bootstrap
+to the end of
+.Ar filesystem ,
+which much be a regular file in this case.
+.
+.It Sy sunsum
+.Em [ pmax ,
+.Em vax ]
+Recalculate and restore the Sun and
+.Nx Ns Tn /sparc
+compatible checksum.
+.Em Note : No The existing
+.Nx Ns Tn /sparc
+disklabel should use no more than 4 partitions.
+.El
+.
+.It Fl t Ar fstype
+Use
+.Ar fstype
+as the type of
+.Ar filesystem .
+The default operation is to attempt to auto-detect this setting.
+.
+.It Fl v
+Verbose operation.
+.El
+.
+.Sh ENVIRONMENT
+.Nm
+uses the following environment variables:
+.
+.Bl -tag -width "MACHINE"
+.
+.It Ev MACHINE
+Default value for
+.Ar machine ,
+overriding the result from
+.Xr uname 3 .
+.
+.El
+.
+.Sh FILES
+XXX
+.
+.Sh SEE ALSO
+.Xr uname 3 ,
+.Xr boot 8 ,
+.Xr disklabel 8 ,
+.Xr init 8
+.
+.Sh HISTORY
+The
+.Nm
+utility first appeared the depths of time (XXX).
+This version appeared in
+.Nx 1.6 .
+.
+.Sh BUGS
+XXX
