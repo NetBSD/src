@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.6 1999/03/24 21:15:17 drochner Exp $	*/
+/*	$NetBSD: regdef.h,v 1.7 1999/03/30 14:22:58 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,8 +39,11 @@
  *	@(#)regdef.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_REGDEF_H
+#define _MIPS_REGDEF_H
+
 #define zero	$0	/* always zero */
-#define AT	$at	/* assembler temp */
+#define AT	$at	/* assembler temporary */
 #define v0	$2	/* return value */
 #define v1	$3
 #define a0	$4	/* argument registers */
@@ -63,7 +66,7 @@
 #define s5	$21
 #define s6	$22
 #define s7	$23
-#define t8	$24	/* two more temp registers */
+#define t8	$24	/* two more temporary registers */
 #define t9	$25
 #define k0	$26	/* kernel temporary */
 #define k1	$27
@@ -71,3 +74,5 @@
 #define sp	$29	/* stack pointer */
 #define s8	$30	/* one more callee saved */
 #define ra	$31	/* return address */
+
+#endif /* _MIPS_REGDEF_H */
