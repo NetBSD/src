@@ -1,7 +1,7 @@
-/*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.1 2003/03/02 22:18:14 tshiozak Exp $	*/
 
 /*-
- * Copyright (c) 2000 Citrus Project,
+ * Copyright (c)2003 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,32 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _RUNE_LOCAL_H_
-#define _RUNE_LOCAL_H_
+#ifndef _WCTRANS_LOCAL_H_
+#define _WCTRANS_LOCAL_H_
 
-/* rune.c */
-extern _RuneLocale *_Read_RuneMagi __P((FILE *fp));
-extern _RuneLocale *_Read_CTypeAsRune __P((FILE *fp));
-extern void _NukeRune __P((_RuneLocale *));
+wint_t	_towctrans_ext(wint_t, _WCTransEntry *);
+void	_wctrans_init(_RuneLocale *);
 
-/* setrunelocale.c */
-extern int _xpg4_setrunelocale __P((char *));
-extern _RuneLocale *_findrunelocale __P((char *));
-extern int _newrunelocale __P((char *));
+static __inline wint_t
+_towctrans(wint_t c, _WCTransEntry *te)
+{
+	return (_RUNE_ISCACHED(c) ? te->te_cached[c]:_towctrans_ext(c, te));
+}
 
-/* runeglue.c */
-extern int __runetable_to_netbsd_ctype __P((const char *));
+static __inline struct _WCTransEntry *
+_wctrans_lower(_RuneLocale *rl)
+{
+	if (rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name==NULL)
+		_wctrans_init(rl);
+	return (&rl->rl_wctrans[_WCTRANS_INDEX_LOWER]);
+}
 
-/* ___runetype_mb.c */
-extern _RuneType ___runetype_mb __P((wint_t));
-
-/* ___tolower_mb.c */
-extern wint_t ___tolower_mb __P((wint_t));
-
-/* ___toupper_mb.c */
-extern wint_t ___toupper_mb __P((wint_t));
+static __inline struct _WCTransEntry *
+_wctrans_upper(_RuneLocale *rl)
+{
+	if (rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name==NULL)
+		_wctrans_init(rl);
+	return (&rl->rl_wctrans[_WCTRANS_INDEX_UPPER]);
+}
 
 #endif

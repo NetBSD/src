@@ -1,7 +1,7 @@
-/*	$NetBSD: rune_local.h,v 1.7 2003/03/02 22:18:15 tshiozak Exp $	*/
+/*	$NetBSD: wcscoll.c,v 1.1 2003/03/02 22:18:16 tshiozak Exp $	*/
 
 /*-
- * Copyright (c) 2000 Citrus Project,
+ * Copyright (c)2003 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,23 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _RUNE_LOCAL_H_
-#define _RUNE_LOCAL_H_
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: wcscoll.c,v 1.1 2003/03/02 22:18:16 tshiozak Exp $");
+#endif /* LIBC_SCCS and not lint */
 
-/* rune.c */
-extern _RuneLocale *_Read_RuneMagi __P((FILE *fp));
-extern _RuneLocale *_Read_CTypeAsRune __P((FILE *fp));
-extern void _NukeRune __P((_RuneLocale *));
+#include "namespace.h"
 
-/* setrunelocale.c */
-extern int _xpg4_setrunelocale __P((char *));
-extern _RuneLocale *_findrunelocale __P((char *));
-extern int _newrunelocale __P((char *));
+#include <assert.h>
+#include <wchar.h>
 
-/* runeglue.c */
-extern int __runetable_to_netbsd_ctype __P((const char *));
-
-/* ___runetype_mb.c */
-extern _RuneType ___runetype_mb __P((wint_t));
-
-/* ___tolower_mb.c */
-extern wint_t ___tolower_mb __P((wint_t));
-
-/* ___toupper_mb.c */
-extern wint_t ___toupper_mb __P((wint_t));
-
-#endif
+/*
+ * Compare strings with using collating information.
+ */
+int
+wcscoll(s1, s2)
+	const wchar_t *s1, *s2;
+{
+	/* XXX: LC_COLLATE should be implemented. */
+	return (wcscmp(s1, s2));
+}

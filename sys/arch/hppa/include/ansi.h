@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 2003/03/02 22:18:18 tshiozak Exp $	*/
 
 /*	$OpenBSD: ansi.h,v 1.4 2000/02/22 17:29:12 millert Exp $	*/
 
@@ -77,6 +77,8 @@
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define	_BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+#define _BSD_WCTRANS_T_	void *			/* wctrans_t */
+#define _BSD_WCTYPE_T_	void *			/* wctype_t */
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte

@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.9 2002/03/17 22:14:28 tshiozak Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,49 +40,58 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.9 2002/03/17 22:14:28 tshiozak Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <wchar.h>
 #include <wctype.h>
 #include <ctype.h>
+#include <errno.h>
 #include "rune.h"
 #include "runetype.h"
 #include "rune_local.h"
+#include "_wctrans_local.h"
 
 #ifdef lint
 #define __inline
 #endif
 
-static __inline int __maskrune_w __P((wint_t, unsigned long));
+static __inline _RuneType __runetype_w __P((wint_t));
+static __inline int __isctype_w __P((wint_t, _RuneType));
 static __inline wint_t __toupper_w __P((wint_t));
 static __inline wint_t __tolower_w __P((wint_t));
 
-#define	__isctype_w(c,f)	(!!__maskrune_w((c),(f)))
+static __inline _RuneType
+__runetype_w(c)
+	wint_t c;
+{
+	_RuneLocale *rl = _CurrentRuneLocale;
+
+	return (_RUNE_ISCACHED(c) ? rl->rl_runetype[c] : ___runetype_mb(c));
+}
 
 static __inline int
-__maskrune_w(c, f)
+__isctype_w(c, f)
 	wint_t c;
-	unsigned long f;
+	_RuneType f;
 {
-	return (int)(((c < 0 || c >= _CACHED_RUNES) ? ___runetype_mb(c) :
-		_CurrentRuneLocale->rl_runetype[c]) & f);
+	return (!!(__runetype_w(c) & f));
 }
 
 static __inline wint_t
 __toupper_w(c)
 	wint_t c;
 {
-	return (c < 0 || c >= _CACHED_RUNES) ? ___toupper_mb(c) :
-	       _CurrentRuneLocale->rl_mapupper[c];
+	return (_towctrans(c, _wctrans_upper(_CurrentRuneLocale)));
 }
 
 static __inline wint_t
 __tolower_w(c)
 	wint_t c;
 {
-	return (c < 0 || c >= _CACHED_RUNES) ? ___tolower_mb(c) :
-	       _CurrentRuneLocale->rl_maplower[c];
+	return (_towctrans(c, _wctrans_lower(_CurrentRuneLocale)));
 }
 
 #undef iswalnum
@@ -90,7 +99,7 @@ int
 iswalnum(c)
 	wint_t c;
 {
-	return (__isctype_w((c), _CTYPE_A)|__isctype_w((c), _CTYPE_D));
+	return (__isctype_w((c), _CTYPE_A|_CTYPE_D));
 }
 
 #undef iswalpha
@@ -202,6 +211,60 @@ int
 wcwidth(c)
 	wchar_t c;
 {
-        return ((unsigned)__maskrune_w((c), _CTYPE_SWM) >> _CTYPE_SWS);
+        return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
 }
 
+#undef wctrans
+wctrans_t
+wctrans(charclass)
+	const char *charclass;
+{
+	int i;
+	_RuneLocale *rl = _CurrentRuneLocale;
+
+	if (rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name==NULL)
+		_wctrans_init(rl);
+
+	for (i=0; i<_WCTRANS_NINDEXES; i++)
+		if (!strcmp(rl->rl_wctrans[i].te_name, charclass))
+			return ((wctrans_t)&rl->rl_wctrans[i]);
+
+	return ((wctrans_t)NULL);
+}
+
+#undef towctrans
+wint_t
+towctrans(c, desc)
+	wint_t c;
+	wctrans_t desc;
+{
+	if (desc==NULL) {
+		errno = EINVAL;
+		return (c);
+	}
+	return (_towctrans(c, (_WCTransEntry *)desc));
+}
+
+#undef wctype
+wctype_t
+wctype(const char *property)
+{
+	int i;
+	_RuneLocale *rl = _CurrentRuneLocale;
+
+	for (i=0; i<_WCTYPE_NINDEXES; i++)
+		if (!strcmp(rl->rl_wctype[i].te_name, property))
+			return ((wctype_t)&rl->rl_wctype[i]);
+	return ((wctype_t)NULL);
+}
+
+#undef iswctype
+int
+iswctype(wint_t c, wctype_t charclass)
+{
+	if (charclass==NULL) {
+		errno = EINVAL;
+		return (c);
+	}
+	return (__isctype_w(c, ((_WCTypeEntry *)charclass)->te_mask));
+}

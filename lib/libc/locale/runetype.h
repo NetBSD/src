@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.10 2002/08/03 11:10:51 yamt Exp $	*/
+/*	$NetBSD: runetype.h,v 1.11 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -55,33 +55,34 @@ extern size_t __mb_len_max_runtime;
 #define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
 
-#define	_CACHED_RUNES	(1 << 8)	/* Must be a power of 2 */
+#define	_CACHED_RUNES		(1 << 8)	/* Must be a power of 2 */
+#define _RUNE_ISCACHED(c)	((c)>=0 || (c)<_CACHED_RUNES)
 
 
 /*
  * The lower 8 bits of runetype[] contain the digit value of the rune.
  */
 typedef uint32_t _RuneType;
-#define	_CTYPE_A	0x00000100L	/* Alpha */
-#define	_CTYPE_C	0x00000200L	/* Control */
-#define	_CTYPE_D	0x00000400L	/* Digit */
-#define	_CTYPE_G	0x00000800L	/* Graph */
-#define	_CTYPE_L	0x00001000L	/* Lower */
-#define	_CTYPE_P	0x00002000L	/* Punct */
-#define	_CTYPE_S	0x00004000L	/* Space */
-#define	_CTYPE_U	0x00008000L	/* Upper */
-#define	_CTYPE_X	0x00010000L	/* X digit */
-#define	_CTYPE_B	0x00020000L	/* Blank */
-#define	_CTYPE_R	0x00040000L	/* Print */
-#define	_CTYPE_I	0x00080000L	/* Ideogram */
-#define	_CTYPE_T	0x00100000L	/* Special */
-#define	_CTYPE_Q	0x00200000L	/* Phonogram */
-#define	_CTYPE_SWM	0xc0000000L	/* Mask to get screen width data */
+#define	_CTYPE_A	0x00000100U	/* Alpha */
+#define	_CTYPE_C	0x00000200U	/* Control */
+#define	_CTYPE_D	0x00000400U	/* Digit */
+#define	_CTYPE_G	0x00000800U	/* Graph */
+#define	_CTYPE_L	0x00001000U	/* Lower */
+#define	_CTYPE_P	0x00002000U	/* Punct */
+#define	_CTYPE_S	0x00004000U	/* Space */
+#define	_CTYPE_U	0x00008000U	/* Upper */
+#define	_CTYPE_X	0x00010000U	/* X digit */
+#define	_CTYPE_B	0x00020000U	/* Blank */
+#define	_CTYPE_R	0x00040000U	/* Print */
+#define	_CTYPE_I	0x00080000U	/* Ideogram */
+#define	_CTYPE_T	0x00100000U	/* Special */
+#define	_CTYPE_Q	0x00200000U	/* Phonogram */
+#define	_CTYPE_SWM	0xc0000000U	/* Mask to get screen width data */
 #define	_CTYPE_SWS	30		/* Bits to shift to get width */
-#define	_CTYPE_SW0	0x00000000L	/* 0 width character */
-#define	_CTYPE_SW1	0x40000000L	/* 1 width character */
-#define	_CTYPE_SW2	0x80000000L	/* 2 width character */
-#define	_CTYPE_SW3	0xc0000000L	/* 3 width character */
+#define	_CTYPE_SW0	0x00000000U	/* 0 width character */
+#define	_CTYPE_SW1	0x40000000U	/* 1 width character */
+#define	_CTYPE_SW2	0x80000000U	/* 2 width character */
+#define	_CTYPE_SW3	0xc0000000U	/* 3 width character */
 
 
 /*
@@ -151,6 +152,39 @@ typedef struct {
 
 
 /*
+ * wctrans stuffs.
+ */
+typedef struct _WCTransEntry {
+	char		*te_name;
+	rune_t		*te_cached;
+	_RuneRange	*te_extmap;
+} _WCTransEntry;
+#define _WCTRANS_INDEX_LOWER	0
+#define _WCTRANS_INDEX_UPPER	1
+#define _WCTRANS_NINDEXES	2
+
+/*
+ * wctype stuffs.
+ */
+typedef struct _WCTypeEntry {
+	char		*te_name;
+	_RuneType	te_mask;
+} _WCTypeEntry;
+#define _WCTYPE_INDEX_ALNUM	0
+#define _WCTYPE_INDEX_ALPHA	1
+#define _WCTYPE_INDEX_BLANK	2
+#define _WCTYPE_INDEX_CNTRL	3
+#define _WCTYPE_INDEX_DIGIT	4
+#define _WCTYPE_INDEX_GRAPH	5
+#define _WCTYPE_INDEX_LOWER	6
+#define _WCTYPE_INDEX_PRINT	7
+#define _WCTYPE_INDEX_PUNCT	8
+#define _WCTYPE_INDEX_SPACE	9
+#define _WCTYPE_INDEX_UPPER	10
+#define _WCTYPE_INDEX_XDIGIT	11
+#define _WCTYPE_NINDEXES	12
+
+/*
  * ctype stuffs
  */
 
@@ -176,6 +210,8 @@ typedef struct _RuneLocale {
 	 */
 	char				*rl_codeset;
 	struct _citrus_ctype_rec	*rl_citrus_ctype;
+	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
+	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
 } _RuneLocale;
 
 

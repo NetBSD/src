@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.17 2002/11/17 20:40:59 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.18 2003/03/02 22:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.17 2002/11/17 20:40:59 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.18 2003/03/02 22:18:15 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -210,6 +210,14 @@ _freeentry(_RuneRange *rr)
 	}
 }
 
+void
+_wctype_init(_RuneLocale *rl)
+{
+	memcpy(&rl->rl_wctype, &_DefaultRuneLocale.rl_wctype,
+	       sizeof(rl->rl_wctype));
+}
+
+
 _RuneLocale *
 _Read_RuneMagi(fp)
 	FILE *fp;
@@ -303,6 +311,7 @@ _Read_RuneMagi(fp)
 		return NULL;
 	}
 	find_codeset(rl);
+	_wctype_init(rl);
 
 	/* error if we have junk at the tail */
 	if (ftell(fp) != sb.st_size) {
@@ -455,6 +464,8 @@ _Read_CTypeAsRune(fp)
 		rl->rl_mapupper[x] = ntohs(new_toupper[1 + x]);
 		rl->rl_maplower[x] = ntohs(new_tolower[1 + x]);
 	}
+
+	_wctype_init(rl);
 
 	/*
 	 * __runetable_to_netbsd_ctype() will be called from
