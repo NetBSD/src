@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 1999/03/10 20:54:17 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 1999/03/23 12:30:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2239,11 +2239,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 		panic("oopss: *pte = 0 in pmap_enter() npte=%08x\n", npte);
 
 	if (pv) {
-		int flags = 0;
+		int flags;
          
-		if (wired) flags |= PT_W;
-			flags |= npte & (PT_Wr | PT_Us);
-		pmap_modify_pv(pmap, va, pv, ~(PT_Wr | PT_Us | PT_W), flags);
+		flags = npte & (PT_Wr | PT_Us);
+		if (wired)
+			flags |= PT_W;
+		pmap_modify_pv(pmap, va, pv, PT_Wr | PT_Us | PT_W, flags);
 	}
 
 	/*
