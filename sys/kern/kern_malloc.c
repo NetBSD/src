@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.84 2003/08/30 07:54:32 ragge Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.85 2003/08/31 12:59:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.84 2003/08/30 07:54:32 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.85 2003/08/31 12:59:05 fvdl Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -853,6 +853,7 @@ kmeminit(void)
 
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
+	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
 	    &kml, (vsize_t)(nkmempages << PAGE_SHIFT), 
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
