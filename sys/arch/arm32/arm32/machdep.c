@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1999/04/01 00:17:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65.2.1 1999/04/16 16:15:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -451,7 +451,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
