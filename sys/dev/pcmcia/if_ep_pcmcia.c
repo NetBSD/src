@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.2 1997/10/16 23:27:22 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.2.2.1 1998/02/07 00:47:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -108,7 +108,7 @@ ep_pcmcia_match(parent, match, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
-	struct cfdata *cf;
+	struct cfdata *match;
 #endif
 	void *aux;
 {
@@ -201,8 +201,11 @@ ep_pcmcia_attach(parent, self, aux)
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
 
-		for (i = roundup(pa->pf->sc->iobase, 0x100); i < maxaddr;
-		    i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
+		for (i = ((pa->pf->sc->iobase % 0x100) <= 0x70)?
+			     pa->pf->sc->iobase:
+			     roundup(pa->pf->sc->iobase, 0x100);
+		     i < maxaddr;
+		     i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
 				break;
