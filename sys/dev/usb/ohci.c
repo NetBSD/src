@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.130 2002/09/29 20:59:30 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.131 2002/09/30 16:36:19 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.130 2002/09/29 20:59:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.131 2002/09/30 16:36:19 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1411,10 +1411,12 @@ ohci_softintr(void *v)
 		}
 	}
 
+#ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
+#endif /* USB_USE_SOFTINTR */
 
 	sc->sc_bus.intr_context--;
 	DPRINTFN(10,("ohci_softintr: done:\n"));
@@ -2156,9 +2158,13 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	usb_delay_ms(opipe->pipe.device->bus, 20); /* Hardware finishes in 1ms */
 	s = splusb();
+#ifdef USB_USE_SOFTINTR
 	sc->sc_softwake = 1;
+#endif /* USB_USE_SOFTINTR */
 	usb_schedsoftintr(&sc->sc_bus);
+#ifdef USB_USE_SOFTINTR
 	tsleep(&sc->sc_softwake, PZERO, "ohciab", 0);
+#endif /* USB_USE_SOFTINTR */
 	splx(s);
 
 	/*
