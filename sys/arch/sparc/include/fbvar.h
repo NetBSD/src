@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.10 1998/03/21 19:42:00 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.11 1999/04/13 18:45:41 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,8 @@
 
 #ifdef RASTERCONSOLE
 #include <dev/rcons/rcons.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 #endif
 
 struct fbdriver {
@@ -62,6 +64,10 @@ struct fbdriver {
 	int	(*fbd_poll) __P((dev_t, int, struct proc *));
 	int	(*fbd_mmap) __P((dev_t, int, int));
 #ifdef notyet
+	/* 
+	 * XXX redundant idea? these can hook into rasops on a per-device 
+	 * basis like: fb_rinfo.ri_ops.copycols = ....;
+	 */
 	void	(*fbd_wrrop)();		/* `write region' rasterop */
 	void	(*fbd_cprop)();		/* `copy region' rasterop */
 	void	(*fbd_clrop)();		/* `clear region' rasterop */
@@ -87,6 +93,7 @@ struct fbdevice {
 #ifdef RASTERCONSOLE
 	/* Raster console emulator state */
 	struct	rconsole fb_rcons;
+	struct	rasops_info fb_rinfo;
 #endif
 };
 
