@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.14 2001/09/08 03:49:44 mason Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.15 2001/11/16 10:25:48 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,12 +47,12 @@
 .Nm
 builds a log-structured file system on the specified special
 device basing its defaults on the information in the disk label.
-Before running 
+Before running
 .Nm
-the disk must be labeled using 
+the disk must be labeled using
 .Xr disklabel 8 ,
 the proper fstype is 4.4LFS.  Reasonable values for the
-.Li fsize, 
+.Li fsize,
 .Li bsize,
 and
 .Li sgs
@@ -63,7 +63,7 @@ The following options define the general layout policies.
 .It Fl A
 Attempt to compute the appropriate segment size using the formula
 \fB4 * bandwidth * access time\fR.  The disk is tested for twenty seconds
-to discover its bandwidth and seek time. 
+to discover its bandwidth and seek time.
 .It Fl B Ar logical-segment-size
 The logical segment size of the file system in bytes.  If not specified,
 the segment size is computed by left-shifting the partition label's block
@@ -147,7 +147,7 @@ are 1 or 2 (the default).
 A \fBnewlfs\fR
 command appeared in
 .Bx 4.4 ,
-and was renamed to 
+and was renamed to
 .Nm
 for
 .Nx 1.4.
