@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.134 2002/09/22 03:44:42 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.135 2002/09/22 03:46:40 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.134 2002/09/22 03:44:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.135 2002/09/22 03:46:40 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -206,7 +206,6 @@ const struct cdevsw raid_cdevsw = {
 struct raidbuf {
 	struct buf rf_buf;	/* new I/O buf.  MUST BE FIRST!!! */
 	struct buf *rf_obp;	/* ptr. to original I/O buf */
-	int     rf_flags;	/* misc. flags */
 	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
@@ -1790,8 +1789,6 @@ rf_DispatchKernelIO(queue, req)
 	}
 #endif
 	raidbp = RAIDGETBUF(rs);
-
-	raidbp->rf_flags = 0;	/* XXX not really used anywhere... */
 
 	/*
 	 * context for raidiodone
