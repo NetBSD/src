@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.1 2004/12/22 19:10:25 joff Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.2 2004/12/29 06:31:32 joff Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *
@@ -61,7 +61,7 @@ struct epcom_softc {
 	u_char			*sc_rbuf, *sc_ebuf;
 
  	u_char			*sc_tba;
- 	u_int			sc_tbc, sc_heldtbc;
+ 	u_int			sc_tbc;
 
 	u_char			*volatile sc_rbget,
 				*volatile sc_rbput;
@@ -76,7 +76,6 @@ struct epcom_softc {
 				sc_tx_stopped,
 				sc_st_check,
 				sc_rx_ready;
-	volatile int		sc_heldchange;
 
 	/* control registers */
 	u_int			sc_lcrlo;
