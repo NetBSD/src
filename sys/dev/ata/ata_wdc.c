@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.11 1998/09/20 17:08:01 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.12 1998/10/02 19:37:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -330,8 +330,8 @@ again:
 		}
 		if ((chp->wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip,
 				    ata_bio->nbytes >> 2);
 			} else {
@@ -342,8 +342,8 @@ again:
 			}
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_stream_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip,
 				    ata_bio->nbytes >> 2);
 			} else {
@@ -444,12 +444,13 @@ wdc_ata_bio_intr(chp, xfer)
 			}
 		}
 		if (chp->ch_status & WDCS_DRQ) {
-			printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
-			    chp->wdc->sc_dev.dv_xname, chp->channel,
-			    xfer->drive, chp->ch_status);
-			ata_bio->error = TIMEOUT;
-			wdc_ata_bio_done(chp, xfer);
-			return 1;
+			if (drv_err != WDC_ATA_ERR) {
+				printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
+				    chp->wdc->sc_dev.dv_xname, chp->channel,
+				    xfer->drive, chp->ch_status);
+				ata_bio->error = TIMEOUT;
+				drv_err = WDC_ATA_ERR;
+			}
 		}
 		if ((*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 		    chp->channel, xfer->drive, dma_flags) != 0) {
@@ -482,8 +483,8 @@ wdc_ata_bio_intr(chp, xfer)
 		}
 		if ((chp->wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_read_multi_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_read_multi_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip,
 				    ata_bio->nbytes >> 2);
 			} else {
@@ -494,8 +495,8 @@ wdc_ata_bio_intr(chp, xfer)
 			}
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_read_multi_stream_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_read_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip,
 				    ata_bio->nbytes >> 2);
 			} else {

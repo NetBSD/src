@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.15 1998/09/21 17:30:17 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.16 1998/10/02 19:37:20 bouyer Exp $ */
 
 
 /*
@@ -308,6 +308,11 @@ wdcattach(chp)
 	for (i = 0; i < 2; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
+		/* If controller can't do 16bit flag the drives as 32bit */
+		if ((chp->wdc->cap &
+		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
+		    WDC_CAPABILITY_DATA32)
+			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
 	}
 
 	if (wdcprobe(chp) == 0)
@@ -316,16 +321,6 @@ wdcattach(chp)
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
 	channel_flags = (ctrl_flags >> (NBBY * chp->channel)) & 0xff;
-#if 0
-	for (drv = 0; drv < 2; drv++) {
-		if ((channel_flags & (0x01 << drv)) &&
-		    (chp->ch_drives_mask & DRIVE(drv))) {
-			chp->ch_drives_mask |= CAP32(drv);
-			printf("%s:%d:%d: unsing 32-bits pio transfer\n",
-			    chp->wdc->sc_dev.dv_xname, chp->channel, drv);
-		}
-	}
-#endif
 
 	WDCDEBUG_PRINT(("wdcattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
@@ -367,7 +362,7 @@ wdcattach(chp)
 		if (config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint))
 			wdc_probe_caps(&chp->ch_drive[i]);
 	}
-#if 0
+
 	/*
 	 * Reset channel. The probe, with some combinations of ATA/ATAPI
 	 * devices keep it in a mostly working, but strange state (with busy
@@ -389,7 +384,6 @@ wdcattach(chp)
 			}
 		}
 	}
-#endif
 }
 
 /*
@@ -511,7 +505,6 @@ wdcreset(chp, verb)
 	struct channel_softc *chp;
 	int verb;
 {
-	u_int8_t st0, st1;
 	int drv_mask1, drv_mask2;
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
@@ -521,27 +514,11 @@ wdcreset(chp, verb)
 	delay(1000);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_IDS);
-	/* Device(s) should assert BSY - see comment in wdcprobe */
-	st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | 0x10); /* slave */
-	DELAY(10);
-	st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 	delay(1000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_4BIT);
 
-	if (((chp->ch_drive[0].drive_flags & DRIVE_ATA) != 0 && 
-	    (st0 & WDCS_BSY) == 0) ||
-	    ((chp->ch_drive[1].drive_flags & DRIVE_ATA) != 0 &&
-	    (st1 & WDCS_BSY) == 0)) {
-		if (verb)
-			printf("%s channel %d: device doesn't respond to "
-			    "reset\n", chp->wdc->sc_dev.dv_xname,
-			    chp->channel);
-		return 1;
-	}
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
 	drv_mask2 = __wdcwait_reset(chp, drv_mask1);
@@ -704,11 +681,13 @@ wdc_probe_caps(drvp)
 	int i, printed;
 	char *sep = "";
 
-	/*
-	 * Probe for 32-bit transfers. Do 2 IDENTIFY cmds, one with 16-bit
-	 * and one with 32-bit, and compare results.
-	 */
-	if (wdc->cap & WDC_CAPABILITY_DATA32) {
+	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
+	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
+		/*
+		 * Controller claims 16 and 32 bit transferts.
+		 * Do 2 IDENTIFY cmds, one with 16-bit
+		 * and one with 32-bit, and compare results.
+		 */
 		if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
 			/* IDENTIFY failed. Can't tell more about the device */
 			return;
@@ -723,7 +702,8 @@ wdc_probe_caps(drvp)
 			printf("%s: using 32-bits pio transfers\n",
 			    drv_dev->dv_xname);
 		}
-	}
+	} 
+
 	/*
 	 * It's not in the specs, but it seems that some drive 
 	 * returns 0xffff in atap_extensions when this field is invalid
@@ -913,8 +893,8 @@ __wdccommand_intr(chp, xfer)
 	}
 	if (wdc_c->flags & AT_READ) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
-			bus_space_read_multi_4(chp->cmd_iot, chp->cmd_ioh,
-			    wd_data, (u_int32_t*)data, bcount >> 2);
+			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
+			    0, (u_int32_t*)data, bcount >> 2);
 			data += bcount & 0xfffffffc;
 			bcount = bcount & 0x03;
 		}
@@ -923,8 +903,8 @@ __wdccommand_intr(chp, xfer)
 			    wd_data, (u_int16_t *)data, bcount >> 1);
 	} else if (wdc_c->flags & AT_WRITE) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_4(chp->cmd_iot, chp->cmd_ioh,
-			    wd_data, (u_int32_t*)data, bcount >> 2);
+			bus_space_write_multi_4(chp->data32iot, chp->data32ioh,
+			    0, (u_int32_t*)data, bcount >> 2);
 			data += bcount & 0xfffffffc;
 			bcount = bcount & 0x03;
 		}
