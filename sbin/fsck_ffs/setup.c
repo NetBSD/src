@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.35 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.36 1999/05/01 20:04:14 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.35 1998/11/12 16:19:48 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.36 1999/05/01 20:04:14 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,10 +472,10 @@ readsb(listerr)
 		if (nflag)
 			errx(EEXIT, "incompatible options -B and -n");
 		if (endian == LITTLE_ENDIAN) {
-			if (!reply("CONVERTING TO LITTLE ENDIAN"))
+			if (!reply("CONVERT TO LITTLE ENDIAN"))
 				return 0;
 		} else if (endian == BIG_ENDIAN) {
-			if (!reply("CONVERTING TO BIG ENDIAN"))
+			if (!reply("CONVERT TO BIG ENDIAN"))
 				return 0;
 		} else
 			pfatal("INTERNAL ERROR: unknown endian");
