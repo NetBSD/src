@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.8 1994/06/13 19:15:19 cgd Exp $
+ *	$Id: sys.c,v 1.9 1994/07/21 18:06:26 mycroft Exp $
  */
 
 #include "boot.h"
@@ -114,6 +114,10 @@ loop:
 			devread();
 		}
 		dp = (struct dirent *)(iodest + off);
+		if (dp->d_reclen < 8) {
+			printf("directory corrupted\n");
+			return 0;
+		}
 		loc += dp->d_reclen;
 	} while (!dp->d_fileno || strcmp(path, dp->d_name));
 	ino = dp->d_fileno;
