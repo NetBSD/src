@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2002/09/27 02:14:38 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2002/09/27 02:46:05 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -67,16 +67,8 @@ ALTENTRY(_rtld_bind_start)
 	pushl	(%r1)		/* push relocation index */
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
-	movpsl	-(%sp)		/* flush the instruction cache */
-	pushab	1f		/*   by issuing an */
-	rei			/*   rei. */
-1:	movl	%r0,36(%sp)	/* save return address onto stack */
-2:	bicw3	6(%fp),(%r0),%r0	/* does the entry mask save any additional regs */
+	movl	%r0,36(%sp)	/* save return address onto stack */
 	popr	$0xff		/* restore R0-R7 (cond flags not modified) */
-	bneq	4f		/* yes? do it the hard way */
-3:	addl2	$4,%sp		/* no? skip past plt.got on stack */
-	addl2	$2,(%sp)		/*    skip past the mask */
-	rsb			/*    and jump to it */
-4:	addl2	$4,%sp
+	addl2	$4,%sp
 	callg	(%ap),*(%sp)+	/* return value from _rtld_bind() == actual */
 	ret
