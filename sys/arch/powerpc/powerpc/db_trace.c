@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.4 2002/02/28 04:11:27 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.5 2002/02/28 23:56:13 nathanw Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -131,6 +131,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	if (have_addr) {
 		if (trace_thread) {
 			struct proc *p;
+			struct lwp *l;
 			struct user *u;
 
 			(*pr)("trace: pid %d ", (int)addr);
@@ -139,11 +140,12 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("not found\n");
 				return;
 			}	
-			if (!(p->p_flag&P_INMEM)) {
+			l = proc_representative_lwp(p); /* XXX NJWLWP */
+			if ((l->l_flag & L_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			u = p->p_addr;
+			u = l->l_addr;
 			frame = (db_addr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else
