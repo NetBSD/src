@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.3 2000/01/16 03:07:26 takemura Exp $	*/
+/*	$NetBSD: winblk.c,v 1.4 2000/08/29 15:10:17 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,11 +38,9 @@
 #define STANDALONE_WINDOWS_SIDE
 #include <stand.h>
 #include <winblk.h>
-
 #include <winioctl.h>
-#include <diskio.h>
-
 #include <sys/disklabel.h>
+#include "diskio.h"
 
 /*
  * BOOL
