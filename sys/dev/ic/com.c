@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.105 1997/08/16 08:33:10 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.106 1997/08/23 14:01:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -96,6 +96,7 @@
 #include <dev/ic/hayespreg.h>
 #endif
 #define	com_lcr	com_cfcr
+#include <dev/cons.h>
 
 #include "com.h"
 
@@ -109,6 +110,7 @@ static void com_enable_debugport __P((struct com_softc *));
 void	com_attach_subr	__P((struct com_softc *sc));
 void	comdiag		__P((void *));
 int	comspeed	__P((long));
+static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
 void	comstop		__P((struct tty *, int));
@@ -136,9 +138,6 @@ void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
 cdev_decl(com);
 bdev_decl(com);
 
-struct consdev;
-void	comcnprobe	__P((struct consdev *));
-void	comcninit	__P((struct consdev *));
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
@@ -153,20 +152,12 @@ struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
 
-void cominitcons 	__P((bus_space_tag_t, bus_space_handle_t, int));
-
-#ifdef CONSPEED
-int	comconsrate = CONSPEED;
-#else
-int	comconsrate = TTYDEF_SPEED;
-#endif
-int	comconsaddr;
-bus_space_tag_t comconstag;
-bus_space_handle_t comconsioh;
-tcflag_t comconscflag = TTYDEF_CFLAG;
-int	comconsattached;
-
-int	commajor;
+static int	comconsaddr;
+static bus_space_tag_t comconstag;
+static bus_space_handle_t comconsioh;
+static int	comconsattached;
+static int comconsrate;
+static tcflag_t comconscflag;
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef alpha
@@ -176,13 +167,11 @@ volatile int	com_softintr_scheduled;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-extern int kgdb_dev;
-extern int kgdb_rate;
-extern int kgdb_debug_init;
 
-int com_kgdb_addr;
-bus_space_tag_t com_kgdb_iot;
-bus_space_handle_t com_kgdb_ioh;
+static int com_kgdb_addr;
+static bus_space_tag_t com_kgdb_iot;
+static bus_space_handle_t com_kgdb_ioh;
+static int com_kgdb_attached;
 
 int	com_kgdb_getc __P((void *));
 void	com_kgdb_putc __P((void *, int));
@@ -327,27 +316,6 @@ comprobeHAYESP(hayespioh, sc)
 }
 #endif
 
-#ifdef KGDB
-/* ARGSUSED */
-int
-com_kgdb_getc(arg)
-	void *arg;
-{
-
-	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
-}
-
-/* ARGSUSED */
-void
-com_kgdb_putc(arg, c)
-	void *arg;
-	int c;
-{
-
-	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
-}
-#endif /* KGDB */
-
 #if defined(DDB) || defined(KGDB)
 static void
 com_enable_debugport(sc)
@@ -377,7 +345,7 @@ com_attach_subr(sc)
 	int	*hayespp;
 #endif
 
-	if (iobase == comconsaddr) {
+	if (iot == comconstag && iobase == comconsaddr) {
 		comconsattached = 1;
 
 		/* Make sure the console is always "hardwired". */
@@ -453,6 +421,14 @@ com_attach_subr(sc)
 		SET(sc->sc_mcr, MCR_IENABLE);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		int maj;
+
+		/* locate the major number */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == comopen)
+				break;
+
+		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 #ifdef DDB
 		com_enable_debugport(sc);
 #endif
@@ -464,7 +440,9 @@ com_attach_subr(sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if (iobase == com_kgdb_addr) {
+	if (iot == com_kgdb_iot && iobase == com_kgdb_addr) {
+		com_kgdb_attached = 1;
+
 		SET(sc->sc_hwflags, COM_HW_KGDB);
 		com_enable_debugport(sc);
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
@@ -832,6 +810,37 @@ com_modem(sc, onoff)
 	splx(s);
 }
 
+static u_char
+cflag2lcr(cflag)
+tcflag_t cflag;
+{
+	u_char lcr = 0;
+
+	switch (ISSET(cflag, CSIZE)) {
+	    case CS5:
+		SET(lcr, LCR_5BITS);
+		break;
+	    case CS6:
+		SET(lcr, LCR_6BITS);
+		break;
+	    case CS7:
+		SET(lcr, LCR_7BITS);
+		break;
+	    case CS8:
+		SET(lcr, LCR_8BITS);
+		break;
+	}
+	if (ISSET(cflag, PARENB)) {
+		SET(lcr, LCR_PENAB);
+		if (!ISSET(cflag, PARODD))
+			SET(lcr, LCR_PEVEN);
+	}
+	if (ISSET(cflag, CSTOPB))
+		SET(lcr, LCR_STOPB);
+
+	return(lcr);
+}
+
 int
 comparam(tp, t)
 	struct tty *tp;
@@ -848,29 +857,7 @@ comparam(tp, t)
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return (EINVAL);
 
-	lcr = ISSET(sc->sc_lcr, LCR_SBREAK);
-
-	switch (ISSET(t->c_cflag, CSIZE)) {
-	case CS5:
-		SET(lcr, LCR_5BITS);
-		break;
-	case CS6:
-		SET(lcr, LCR_6BITS);
-		break;
-	case CS7:
-		SET(lcr, LCR_7BITS);
-		break;
-	case CS8:
-		SET(lcr, LCR_8BITS);
-		break;
-	}
-	if (ISSET(t->c_cflag, PARENB)) {
-		SET(lcr, LCR_PENAB);
-		if (!ISSET(t->c_cflag, PARODD))
-			SET(lcr, LCR_PEVEN);
-	}
-	if (ISSET(t->c_cflag, CSTOPB))
-		SET(lcr, LCR_STOPB);
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 
 	s = splserial();
 
@@ -1622,99 +1609,61 @@ com_common_putc(iot, ioh, c)
 }
 
 /*
- * Following are all routines needed for COM to act as console
- */
-#include <dev/cons.h>
-
-void
-comcnprobe(cp)
-	struct consdev *cp;
-{
-	/* XXX NEEDS TO BE FIXED XXX */
-	bus_space_tag_t iot = 0;
-	bus_space_handle_t ioh;
-	int found;
-
-	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-	found = comprobe1(iot, ioh, CONADDR);
-	bus_space_unmap(iot, ioh, COM_NPORTS);
-	if (!found) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	/* locate the major number */
-	for (commajor = 0; commajor < nchrdev; commajor++)
-		if (cdevsw[commajor].d_open == comopen)
-			break;
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(commajor, CONUNIT);
-#ifdef	COMCONSOLE
-	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif
-}
-
-void
-comcninit(cp)
-	struct consdev *cp;
-{
-
-#if 0
-	XXX NEEDS TO BE FIXED XXX
-	comconstag = ???;
-#endif
-	if (bus_space_map(comconstag, CONADDR, COM_NPORTS, 0, &comconsioh))
-		panic("comcninit: mapping failed");
-
-	cominitcons(comconstag, comconsioh, comconsrate);
-	comconsaddr = CONADDR;
-}
-
-/*
  * Initialize UART to known state.
  */
-void
-cominit(iot, ioh, rate)
+int
+cominit(iot, iobase, rate, cflag, iohp)
 	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+	int iobase;
 	int rate;
+	tcflag_t cflag;
+	bus_space_handle_t *iohp;
 {
+	bus_space_handle_t ioh;
+
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
+		return(ENOMEM); /* ??? */
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
 	rate = comspeed(rate);
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
-	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
+	bus_space_write_1(iot, ioh, com_lcr, cflag2lcr(cflag));
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	bus_space_write_1(iot, ioh, com_ier, 0);
+
+	*iohp = ioh;
+	return(0);
 }
 
 /*
- * Set UART for console use. Do normal init, then enable interrupts.
+ * Following are all routines needed for COM to act as console
  */
-void
-cominitcons(iot, ioh, rate)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rate;
-{
-	int s = splserial();
-	u_char stat;
 
-	cominit(iot, ioh, rate);
-	bus_space_write_1(iot, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
-	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
-	DELAY(100);
-	stat = bus_space_read_1(iot, ioh, com_iir);
-	splx(s);
+int
+comcnattach(iot, iobase, rate, cflag)
+	bus_space_tag_t iot;
+	int iobase;
+	int rate;
+	tcflag_t cflag;
+{
+	int res;
+	static struct consdev comcons = { NULL, NULL,
+	comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL};
+
+	res = cominit(iot, iobase, rate, cflag, &comconsioh);
+	if(res) return(res);
+
+	cn_tab = &comcons;
+
+	comconstag = iot;
+	comconsaddr = iobase;
+	comconsrate = rate;
+	comconscflag = cflag;
+
+	return(0);
 }
 
 int
@@ -1743,4 +1692,71 @@ comcnpollc(dev, on)
 	int on;
 {
 
+}
+
+#ifdef KGDB
+int
+com_kgdb_attach(iot, iobase, rate, cflag)
+	bus_space_tag_t iot;
+	int iobase;
+	int rate;
+	tcflag_t cflag;
+{
+	int res;
+
+	res = cominit(iot, iobase, rate, cflag, &com_kgdb_ioh);
+	if(res) return(res);
+
+	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
+
+	com_kgdb_iot = iot;
+	com_kgdb_addr = iobase;
+
+	return(0);
+}
+
+/* ARGSUSED */
+int
+com_kgdb_getc(arg)
+	void *arg;
+{
+
+	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
+}
+
+/* ARGSUSED */
+void
+com_kgdb_putc(arg, c)
+	void *arg;
+	int c;
+{
+
+	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
+}
+#endif /* KGDB */
+
+/* helper function to identify the com ports used by
+ console or KGDB (and not yet autoconf attached) */
+int
+com_is_console(iot, iobase, ioh)
+bus_space_tag_t iot;
+int iobase;
+bus_space_handle_t *ioh;
+{
+	bus_space_handle_t help;
+
+	if (!comconsattached
+	    && iot == comconstag && iobase == comconsaddr)
+		help = comconsioh;
+#ifdef KGDB
+	else if (!com_kgdb_attached
+		 && iot == com_kgdb_iot && iobase == com_kgdb_addr)
+		help = com_kgdb_ioh;
+#endif
+	else
+		return(0);
+
+	if(ioh) *ioh = help;
+	return(1);
 }
