@@ -32,15 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)perror.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: perror.c,v 1.4 1993/10/07 19:28:49 jtc Exp $";
+/*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
+static char *rcsid = "$Id: strerror.c,v 1.1 1993/10/07 19:27:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <string.h>
 
 /*
@@ -49,29 +44,43 @@ static char *rcsid = "$Id: perror.c,v 1.4 1993/10/07 19:28:49 jtc Exp $";
  * internal function _strerror().
  */
 
-extern char *_strerror __P((int , char *));
-
-void
-perror(s)
-	const char *s;
+char *
+_strerror(num, buf)
+	int num;
+	char *buf;
 {
-	register struct iovec *v;
-	struct iovec iov[4];
-	static char buf[40];
+#define	UPREFIX	"Unknown error: "
+	extern char *sys_errlist[];
+	extern int sys_nerr;
+	register unsigned int errnum;
+	register char *p, *t;
+	char tmp[40];
 
-	v = iov;
-	if (s && *s) {
-		v->iov_base = (char *)s;
-		v->iov_len = strlen(s);
-		v++;
-		v->iov_base = ": ";
-		v->iov_len = 2;
-		v++;
+	errnum = num;				/* convert to unsigned */
+	if (errnum < sys_nerr)
+		return(sys_errlist[errnum]);
+
+	/* Do this by hand, so we don't include stdio(3). */
+	t = tmp;
+	do {
+		*t++ = "0123456789"[errnum % 10];
+	} while (errnum /= 10);
+
+	strcpy (buf, UPREFIX);
+	for (p = buf + sizeof(UPREFIX) -1;;) {
+		*p++ = *--t;
+		if (t <= tmp)
+			break;
 	}
-	v->iov_base = _strerror(errno, buf);
-	v->iov_len = strlen(v->iov_base);
-	v++;
-	v->iov_base = "\n";
-	v->iov_len = 1;
-	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
+
+	return buf;
+}
+
+
+char *
+strerror(num)
+	int num;
+{
+	static char buf[40];			/* 64-bit number + slop */
+	return _strerror(num, buf);
 }
