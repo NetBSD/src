@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.8 2002/09/07 11:56:33 gehenna Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.8 2002/09/07 11:56:33 gehenna Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -158,7 +158,12 @@ static struct altqsw altqsw[] = {				/* minor */
  */
 int	naltqsw = sizeof (altqsw) / sizeof (altqsw[0]);
 
-#if !defined(__NetBSD__) && defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(altqopen);
+dev_type_close(altqclose);
+dev_type_ioctl(altqioctl);
+#endif
+#if defined(__OpenBSD__)
 static	d_open_t	altqopen;
 static	d_close_t	altqclose;
 static	d_ioctl_t	altqioctl;
@@ -198,7 +203,7 @@ static struct cdevsw altq_cdevsw =
 #if defined(__NetBSD__)
 const struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, noread, nowrite, altqioctl,
-	nostop, notty, nopoll, nommap, D_DULL
+	nostop, notty, nopoll, nommap,
 };
 #endif
 
