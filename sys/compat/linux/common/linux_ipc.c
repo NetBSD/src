@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.11 1996/11/15 09:51:25 fvdl Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.12 1997/05/08 14:33:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -683,7 +683,7 @@ linux_shmctl(p, uap, retval)
 		SCARG(&bsa, buf) = bsp;
 		if ((error = sys_shmctl(p, &bsa, retval)))
 			return error;
-		if ((error = copyin((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
+		if ((error = copyin((caddr_t) bsp, (caddr_t) &bs, sizeof bs)))
 			return error;
 		bsd_to_linux_shmid_ds(&bs, &lseg);
 		return copyout((caddr_t) &lseg, SCARG(uap, ptr), sizeof lseg);
