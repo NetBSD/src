@@ -1,7 +1,7 @@
-/*	$NetBSD: syscall.c,v 1.19 1998/08/27 04:00:53 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.20 1998/09/05 01:18:19 mark Exp $	*/
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,15 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,11 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
- * syscall.c
- *
- * High level syscall handling
+ * syscall entry handling
  *
  * Created      : 09/11/94
  */
@@ -175,7 +172,6 @@ syscall(frame, code)
 	 * If the instruction that caused the exception is not a SWI
 	 * then we hit the bug.
 	 */
-
 	if ((ReadWord(frame->tf_pc - INSN_SIZE) & 0x0f000000) != 0x0f000000) {
 #ifdef ARM700BUGTRACK
 		/* Verbose bug tracking */
@@ -216,17 +212,18 @@ syscall(frame, code)
 	/*
 	 * Support for architecture dependant SWIs
 	 */
-
 	if (code > 0x00f00000) {
 		/*
 		 * Support for the Architecture defined SWI's in case the
 		 * processor does not support them.
 		 */
-
 		switch (code) {
 		case 0x00f00000 :	/* IMB */
 		case 0x00f00001 :	/* IMB_range */
-			/* Do nothing as there is no prefetch unit that needs flushing */
+			/*
+			 * Do nothing as there is no prefetch unit that needs
+			 * flushing
+			 */
 			break;
 		default:
 			/* Undefined so illegal instruction */
@@ -252,66 +249,14 @@ syscall(frame, code)
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
-	/* REALLY NASTY development hacks */
-	/* Someone should shoot me for ever doing this */
-
-#if defined(PORTMASTER) && defined(I_KNOW_WHAT_I_AM_DOING)
-#if NHYDRABUS > 0
-	case 0x1014:
-		frame->tf_r0 = hydrascratch.physical;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1015:
-		frame->tf_r0 = hydrascratch.virtual;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1016:
-		frame->tf_r0 = (u_int)proc0.p_addr->u_pcb.pcb_pagedir;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1017:
-#if defined(UVM)
-		frame->tf_r0 = uvm_km_zalloc(kernel_map, round_page(frame->tf_r0));
-#else
-		frame->tf_r0 = kmem_alloc(kernel_map, round_page(frame->tf_r0));
-#endif
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1018:
-#if defined(UVM)
-		uvm_km_free(kernel_map, frame->tf_r0, frame->tf_r1);
-#else
-		kmem_free(kernel_map, frame->tf_r0, frame->tf_r1);
-#endif
-		SYSCALL_SPECIAL_RETURN;
-		break;
-#endif	/* NHYDRABUS */
-	case 0x102a:
-		usertraceback = frame->tf_r0;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-#ifndef CPU_ARM7500
-	case 0x102b:
-		frame->tf_r0 = vmem_mapdram();
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-	case 0x102c:
-		frame->tf_r0 = vmem_mapvram();
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-	case 0x102d:
-		frame->tf_r0 = vmem_cachectl(frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-#endif /* CPU_ARM7500 */
-#endif	/* PORTMASTER && I_KNOW_WHAT_I_AM_DOING */
-
 #if defined(DDB) && defined(PORTMASTER)
 	/* Sometimes I want to enter the debugger outside of the interrupt handler */
 	case 0x102e:
+		if (securelevel > 0) {
+			frame->tf_r0 = EPERM;
+			frame->tf_spsr |= PSR_C_bit;	/* carry bit */
+			SYSCALL_SPECIAL_RETURN;
+		}
 		Debugger();
 		SYSCALL_SPECIAL_RETURN;
 		break;
@@ -409,11 +354,11 @@ syscall(frame, code)
 		break;
 
 	default:
-	bad:
+bad:
 		frame->tf_r0 = error;
 		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
 		break;
-      }
+	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval[0]);
