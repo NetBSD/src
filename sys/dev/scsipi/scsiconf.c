@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.169 2001/11/19 16:54:20 soren Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.170 2001/11/19 22:50:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.169 2001/11/19 16:54:20 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.170 2001/11/19 22:50:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,6 +562,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST19171",          ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST32430N",         ""},     PQUIRK_CAP_SYNC},
+	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST34501FC       ", ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
@@ -838,6 +840,9 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
+	} else {
+		if (quirks & PQUIRK_CAP_SYNC)
+			periph->periph_cap |= PERIPH_CAP_SYNC;
 	}
 
 	/*
