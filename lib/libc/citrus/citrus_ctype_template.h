@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.6 2002/03/25 20:29:30 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.7 2002/03/26 07:53:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -278,6 +278,11 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 	char buf[MB_LEN_MAX];
 	size_t siz;
 	const wchar_t* pwcs0;
+#if _ENCODING_IS_STATE_DEPENDENT
+	_ENCODING_STATE state;
+
+	state = *psenc;
+#endif
 
 	pwcs0 = *pwcs;
 
@@ -293,8 +298,12 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 		}
 
 		if (s) {
-			if (n < siz)
-				break; /* XXX should restore state */
+			if (n < siz) {
+#if _ENCODING_IS_STATE_DEPENDENT
+				*psenc = state;
+#endif
+				break;
+			}
 			memcpy(s, buf, siz);
 			s += siz;
 			n -= siz;
