@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.5 2004/05/30 11:25:35 tron Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.6 2004/05/30 11:26:36 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -695,8 +695,6 @@ fr_info_t *fin;
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
-		return ENOBUFS;
-	if (m == NULL)
 		return -1;
 
 	tlen = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
@@ -718,23 +716,32 @@ fr_info_t *fin;
 #endif
 	bzero((char *)ip, sizeof(*tcp2) + hlen);
 	tcp2 = (struct tcphdr *)((char *)ip + hlen);
-
 	tcp2->th_sport = tcp->th_dport;
 	tcp2->th_dport = tcp->th_sport;
+
 	if (tcp->th_flags & TH_ACK) {
 		tcp2->th_seq = tcp->th_ack;
 		tcp2->th_flags = TH_RST;
+		tcp2->th_ack = 0;
 	} else {
+		tcp2->th_seq = 0;
 		tcp2->th_ack = ntohl(tcp->th_seq);
 		tcp2->th_ack += tlen;
 		tcp2->th_ack = htonl(tcp2->th_ack);
 		tcp2->th_flags = TH_RST|TH_ACK;
 	}
+	tcp2->th_x2 = 0;
 	TCP_OFF_A(tcp2, sizeof(*tcp2) >> 2);
+	tcp2->th_win = tcp->th_win;
+	tcp2->th_sum = 0;
+	tcp2->th_urp = 0;
+
 #ifdef USE_INET6
 	if (fin->fin_v == 6) {
+		ip6->ip6_flow = 0;
 		ip6->ip6_plen = htons(sizeof(struct tcphdr));
 		ip6->ip6_nxt = IPPROTO_TCP;
+		ip6->ip6_hlim = 0;
 		ip6->ip6_src = fin->fin_dst6;
 		ip6->ip6_dst = fin->fin_src6;
 		tcp2->th_sum = in6_cksum(m, IPPROTO_TCP,
@@ -752,6 +759,26 @@ fr_info_t *fin;
 }
 
 
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_nextipid                                                 */
+/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
+/* Parameters:  fin(I) - pointer to packet information                      */
+/*                                                                          */
+/* Returns the next IPv4 ID to use for this packet.                         */
+/* ------------------------------------------------------------------------ */
+INLINE u_short fr_nextipid(fin)
+fr_info_t *fin;
+{
+	static u_short ipid = 0;
+	u_short id;
+
+	MUTEX_ENTER(&ipf_rw);
+	id = ipid++;
+	MUTEX_EXIT(&ipf_rw);
+
+	return id;
+}
+
 static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
 mb_t *m, **mpp;
@@ -767,7 +794,7 @@ mb_t *m, **mpp;
 		oip = fin->fin_ip;
 		IP_HL_A(ip, sizeof(*oip) >> 2);
 		ip->ip_tos = oip->ip_tos;
-		ip->ip_id = fin->fin_ip->ip_id;
+		ip->ip_id = fr_nextipid(fin);
 		ip->ip_off = ip_mtudisc ? IP_DF : 0;
 		ip->ip_ttl = ip_defttl;
 		ip->ip_sum = 0;
@@ -777,7 +804,10 @@ mb_t *m, **mpp;
 	{
 		ip6_t *ip6 = (ip6_t *)ip;
 
+		ip6->ip6_vfc = 0x60;
 		ip6->ip6_hlim = IPDEFTTL;
+
+		break;
 	}
 #endif
 	default :
@@ -795,7 +825,7 @@ int type;
 fr_info_t *fin;
 int dst;
 {
-	int err, hlen, xtra, ohlen, iclen, avail, code;
+	int err, hlen, xtra, iclen, ohlen, avail, code;
 	struct in_addr dst4;
 	struct icmp *icmp;
 	struct mbuf *m;
@@ -843,7 +873,7 @@ int dst;
 		avail = MHLEN;
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
-			return ENOBUFS;
+			return -1;
 
 		if (dst == 0) {
 			if (fr_ifpaddr(4, FRI_NORMAL, ifp,
@@ -855,6 +885,7 @@ int dst;
 			dst4.s_addr = fin->fin_daddr;
 
 		hlen = sizeof(ip_t);
+		ohlen = fin->fin_hlen;
 		if (fin->fin_hlen < fin->fin_plen)
 			xtra = MIN(fin->fin_dlen, 8);
 		else
@@ -871,13 +902,13 @@ int dst;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
-			return ENOBUFS;
+			return -1;
 
 		MCLGET(m, M_DONTWAIT);
 		if (m == NULL)
-			return ENOBUFS;
+			return -1;
 		avail = (m->m_flags & M_EXT) ? MCLBYTES : MHLEN;
-		xtra = MIN(fin->fin_plen + sizeof(ip6_t),
+		xtra = MIN(fin->fin_plen,
 			   avail - hlen - sizeof(*icmp) - max_linkhdr);
 		if (dst == 0) {
 			if (fr_ifpaddr(6, FRI_NORMAL, ifp,
@@ -889,6 +920,8 @@ int dst;
 			dst6 = fin->fin_dst6;
 	}
 #endif
+	else
+		return -1;
 
 	iclen = hlen + sizeof(*icmp) + xtra;
 	avail -= (max_linkhdr + iclen);
@@ -900,13 +933,12 @@ int dst;
 	m->m_pkthdr.len = iclen;
 	if (avail < 0) {
 		m_freem(m);
-		return ENOBUFS;
+		return -1;
 	}
 	m->m_len = iclen;
 	ip = mtod(m, ip_t *);
 	icmp = (struct icmp *)((char *)ip + hlen);
 	ip2 = (ip_t *)&icmp->icmp_ip;
-	bzero((char *)ip, iclen);
 
 	icmp->icmp_type = type;
 	icmp->icmp_code = fin->fin_icode;
@@ -917,7 +949,7 @@ int dst;
 		icmp->icmp_nextmtu = htons(((struct ifnet *)ifp)->if_mtu);
 #endif
 
-	bcopy((char *)fin->fin_ip, (char *)ip2, fin->fin_hlen);
+	bcopy((char *)fin->fin_ip, (char *)ip2, ohlen);
 
 #if defined(M_CSUM_IPv4)
 	/*
@@ -930,7 +962,6 @@ int dst;
 	ip6 = (ip6_t *)ip;
 	if (fin->fin_v == 6) {
 		ip62 = (ip6_t *)ip2;
-		ip62->ip6_plen = htons(ip62->ip6_plen);
 
 		ip6->ip6_flow = 0;
 		ip6->ip6_plen = htons(iclen - hlen);
@@ -946,15 +977,13 @@ int dst;
 	} else
 #endif
 	{
-		ip2->ip_len = htons(ip2->ip_len);
-
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_src.s_addr = dst4.s_addr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
 
 		if (xtra > 0)
-			bcopy(fin->fin_dp,
-			      (char *)&icmp->icmp_ip + fin->fin_hlen, xtra);
+			bcopy((char *)fin->fin_ip + ohlen,
+			      (char *)&icmp->icmp_ip + ohlen, xtra);
 		icmp->icmp_cksum = ipf_cksum((u_short *)icmp,
 					     sizeof(*icmp) + 8);
 		ip->ip_len = iclen;
@@ -1028,7 +1057,7 @@ frdest_t *fdp;
 	dst->sin_addr = ip->ip_dst;
 
 	fr = fin->fin_fr;
-	if (fdp)
+	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
 	else
 		ifp = fin->fin_ifp;
@@ -1084,8 +1113,22 @@ frdest_t *fdp;
 
 			(void) fr_checkstate(fin, &pass);
 		}
-		(void) fr_checknatout(fin, NULL);
+
+		switch (fr_checknatout(fin, NULL))
+		{
+		case 0 :
+			break;
+		case 1 :
+			ip->ip_sum = 0;
+			break;
+		case -1 :
+			error = -1;
+			goto done;
+			break;
+		}
+
 		fin->fin_ifp = sifp;
+		fin->fin_out = 0;
 	} else
 		ip->ip_sum = 0;
 	/*
@@ -1240,7 +1283,7 @@ frdest_t *fdp;
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);
-	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
+	dst6->sin6_addr = fin->fin_fi.fi_src.in6;
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
@@ -1254,43 +1297,44 @@ frdest_t *fdp;
 		if (IP6_NOTZERO(&fdp->fd_ip6))
 			dst6->sin6_addr = fdp->fd_ip6.in6;
 	}
-	if (ifp == NULL)
-		return EHOSTUNREACH;
 
-	/* KAME */
-	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
-		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	rtalloc((struct route *)ro);
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
 
-	if ((ro->ro_rt == NULL) || (ifp == NULL) ||
-	    (ifp != ro->ro_rt->rt_ifp)) {
+	if ((ro->ro_rt == NULL) || (ifp == NULL)) {
 		error = EHOSTUNREACH;
-	} else {
+		goto bad;
+	}
+
+	/* KAME */
+	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
+		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+
+	{
 #if (__NetBSD_Version__ >= 106010000)
-		struct in6_addr finaldst = fin->fin_dst6;
+		struct in6_addr finaldst = fin->fin_src6;
 		int frag;
+		/* Determine path MTU. */
+		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
+		if (error)
+			goto bad;
+#else
+		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 #endif
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-#if (__NetBSD_Version__ <= 106009999)
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-#else
-		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
-			
-#endif
-		if ((error == 0) && (m0->m_pkthdr.len <= mtu))
+		if (m0->m_pkthdr.len <= mtu)
 			error = nd6_output(ifp, fin->fin_ifp, m0,
 						   dst6, ro->ro_rt);
 		else
 			error = EMSGSIZE;
 	}
 
+bad:
 	if (ro->ro_rt != NULL) {
 		RTFREE(ro->ro_rt);
 	}
@@ -1332,6 +1376,9 @@ struct in_addr *inp, *inpmask;
 	struct sockaddr_in *sin;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
+
+	if ((ifptr == NULL) || (ifptr == (void *)-1))
+		return -1;
 
 	ifp = ifptr;
 	mask = NULL;
@@ -1432,25 +1479,6 @@ fr_info_t *fin;
 }
 
 
-/* ------------------------------------------------------------------------ */
-/* Function:    fr_nextipid                                                 */
-/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*                                                                          */
-/* Returns the next IPv4 ID to use for this packet.                         */
-/* ------------------------------------------------------------------------ */
-INLINE u_short fr_nextipid(fin)
-fr_info_t *fin;
-{
-	static u_short ipid = 0;
-	u_short id;
-
-	MUTEX_ENTER(&ipf_rw);
-	id = ipid++;
-	MUTEX_EXIT(&ipf_rw);
-
-	return id;
-}
 
 
 INLINE void fr_checkv4sum(fin)
