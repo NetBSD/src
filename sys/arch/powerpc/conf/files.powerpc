@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.53 2003/08/12 05:15:45 matt Exp $
+#	$NetBSD: files.powerpc,v 1.54 2003/09/25 18:42:18 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -52,6 +52,7 @@ file	arch/powerpc/powerpc/trap.c			ppc_oea
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
+file	arch/powerpc/powerpc/compat_16_machdep.c	compat_16
 
 # MACH binary compatibility (COMPAT_MACH)
 include "compat/mach/files.mach"
