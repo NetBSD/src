@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.14 1998/09/18 19:28:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -479,7 +479,7 @@ uao_create(size, flags)
 {
 	static struct uvm_aobj kernel_object_store;	/* home of kernel_object */
 	static int kobj_alloced = 0;			/* not allocated yet */
-	int pages = round_page(size) / PAGE_SIZE;
+	int pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 
 	/*
@@ -678,8 +678,9 @@ uao_detach(uobj)
 		/* zap the mappings, free the swap slot, free the page */
 		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
 
-		swslot = uao_set_swslot(&aobj->u_obj, pg->offset / PAGE_SIZE, 0);
-		if (swslot)	{
+		swslot = uao_set_swslot(&aobj->u_obj,
+					pg->offset >> PAGE_SHIFT, 0);
+		if (swslot) {
 			uvm_swap_free(swslot, 1);
 		}
 
@@ -796,7 +797,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			 * zero-fill it.
  			 */
 			if (ptmp == NULL && uao_find_swslot(aobj,
-			    current_offset / PAGE_SIZE) == 0) {
+			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
 				    NULL);
 				if (ptmp) {
@@ -949,7 +950,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  		 * we have a "fake/busy/clean" page that we just allocated.  
  		 * do the needed "i/o", either reading from swap or zeroing.
  		 */
-		swslot = uao_find_swslot(aobj, current_offset / PAGE_SIZE);
+		swslot = uao_find_swslot(aobj, current_offset >> PAGE_SHIFT);
 
 		/*
  		 * just zero the page if there's nothing in swap.
@@ -1052,7 +1053,7 @@ static boolean_t uao_releasepg(pg, nextpgp)
  	 * dispose of the page [caller handles PG_WANTED] and swap slot.
  	 */
 	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
-	slot = uao_set_swslot(&aobj->u_obj, pg->offset / PAGE_SIZE, 0);
+	slot = uao_set_swslot(&aobj->u_obj, pg->offset >> PAGE_SHIFT, 0);
 	if (slot)
 		uvm_swap_free(slot, 1);
 	uvm_lock_pageq();

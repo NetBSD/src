@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.15 1998/10/08 19:47:50 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.16 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -310,8 +310,8 @@ amap_extend(entry, addsize)
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 			if ((slotoff + slotmapped) < amap->am_nslot)
 				amap_pp_adjref(amap, slotoff + slotmapped, 
-				    (amap->am_nslot - (slotoff + slotmapped)) *
-				    PAGE_SIZE, 1);
+				    (amap->am_nslot - (slotoff + slotmapped)) <<
+				    PAGE_SHIFT, 1);
 			pp_setreflen(amap->am_ppref, amap->am_nslot, 1, 
 			   slotneed - amap->am_nslot);
 		}
@@ -395,8 +395,8 @@ amap_extend(entry, addsize)
 		amap->am_ppref = newppref;
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped, 
-			    (amap->am_nslot - (slotoff + slotmapped)) *
-			    PAGE_SIZE, 1);
+			    (amap->am_nslot - (slotoff + slotmapped)) <<
+			    PAGE_SHIFT, 1);
 		pp_setreflen(newppref, amap->am_nslot, 1, slotadded);
 	}
 #endif
@@ -565,7 +565,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 		if (canchunk && atop(entry->end - entry->start) >=
 		    UVM_AMAP_LARGE) {
 			/* convert slots to bytes */
-			chunksize = UVM_AMAP_CHUNK * PAGE_SIZE;
+			chunksize = UVM_AMAP_CHUNK << PAGE_SHIFT;
 			startva = (startva / chunksize) * chunksize;
 			endva = roundup(endva, chunksize);
 			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"

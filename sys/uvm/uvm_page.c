@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.14 1998/08/13 02:11:02 eeh Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.15 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -279,7 +279,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * pages).
 	 */
 	 
-	pagecount = (PAGE_SIZE * (freepages + 1)) /
+	pagecount = ((freepages + 1) << PAGE_SHIFT) /
 	    (PAGE_SIZE + sizeof(struct vm_page));
 	pagearray = (vm_page_t)uvm_pageboot_alloc(pagecount *
 	    sizeof(struct vm_page));
