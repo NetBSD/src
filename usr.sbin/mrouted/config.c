@@ -8,11 +8,11 @@
  *
  *
  * from: Id: config.c,v 1.3 1993/05/30 01:36:38 deering Exp
- *      $Id: config.c,v 1.1 1994/01/11 20:15:48 brezak Exp $
+ *      $Id: config.c,v 1.2 1994/05/16 15:17:37 brezak Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.1 1994/01/11 20:15:48 brezak Exp $";
+static char rcsid[] = "$Id: config.c,v 1.2 1994/05/16 15:17:37 brezak Exp $";
 #endif
 
 #include "defs.h"
@@ -305,7 +305,7 @@ void config_vifs_from_file()
 
 	else if (EQUAL(w, "tunnel")) {
 	    /*
-	     * tunnel <local-addr> <remote-addr> [srcrt] [metric <m>] [threshold <t>]
+	     * tunnel <local-addr> <remote-addr> [metric <m>] [threshold <t>]
 	     */
 
 	    /*
@@ -462,16 +462,12 @@ void config_vifs_from_file()
 		    }
 		    v->uv_threshold = n;
 		}
-		else if (EQUAL(w, "srcrt") || EQUAL(w, "sourceroute")) {
-		    v->uv_flags |= VIFF_SRCRT;
-		}
 		else break;
 	    }
 	    if (!EQUAL(w, "")) continue;
 
 	    log(LOG_INFO, 0,
-		"installing %stunnel from %s to %s as vif #%u",
-		v->uv_flags & VIFF_SRCRT? "srcrt " : "",
+		"installing tunnel from %s to %s as vif #%u",
 		inet_fmt(lcl_addr, s1), inet_fmt(rmt_addr, s2), numvifs);
 
 	    ++numvifs;

@@ -8,11 +8,11 @@
  *
  *
  * from: Id: vif.c,v 1.5 1993/06/24 05:11:16 deering Exp
- *      $Id: vif.c,v 1.1 1994/01/11 20:16:05 brezak Exp $
+ *      $Id: vif.c,v 1.2 1994/05/16 15:17:39 brezak Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: vif.c,v 1.1 1994/01/11 20:16:05 brezak Exp $";
+static char rcsid[] = "$Id: vif.c,v 1.2 1994/05/16 15:17:39 brezak Exp $";
 #endif
 
 #include "defs.h"
@@ -495,8 +495,6 @@ void accept_neighbor_request2(src, dst)
 	register u_char rflags = 0;
 	if (vflags & VIFF_TUNNEL)
 	    rflags |= DVMRP_NF_TUNNEL;
-	if (vflags & VIFF_SRCRT)
-	    rflags |= DVMRP_NF_SRCRT;
 	if (vflags & VIFF_DOWN)
 	    rflags |= DVMRP_NF_DOWN;
 	if (vflags & VIFF_DISABLED)
@@ -761,7 +759,6 @@ void dump_vifs(fp)
 	if (v->uv_flags & VIFF_DOWN)     fprintf(fp, " down");
 	if (v->uv_flags & VIFF_DISABLED) fprintf(fp, " disabled");
 	if (v->uv_flags & VIFF_QUERIER)  fprintf(fp, " querier");
-	if (v->uv_flags & VIFF_SRCRT)    fprintf(fp, " src-rt");
 	fprintf(fp, "\n");
 
 	if (v->uv_neighbors != NULL) {
