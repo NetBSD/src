@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 1996/06/15 08:57:54 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 1996/06/16 17:01:46 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -131,14 +131,7 @@ mbattach(parent, self, aux)
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
 	nca.ca_addr = 0;
-#ifdef notyet
 	config_found(mb, &nca, mbprint);
-#else
-	{
-	  extern void cpu_identify __P((void));
-	  cpu_identify();
-	}
-#endif
 
 #if NTC > 0
 	if (cputype == DS_3MAXPLUS || cputype == DS_3MAX ||
@@ -271,6 +264,7 @@ mb_intr_disestablish(ca)
 	panic("can never mb_intr_disestablish");
 }
 
+#ifdef DS3100
 void
 kn01_intr_establish(parent, cookie, level, handler, arg)
 	struct device *parent;
@@ -290,6 +284,7 @@ kn01_intr_disestablish(ca)
 {
 	printf("(kn01: ignoring intr_disestablish) ");
 }
+#endif /* DS3100 */
 
 /*
  * An  interrupt-establish method.  This should somehow be folded
@@ -321,10 +316,14 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 		tc_intr_establish(parent, cookie, level, handler, arg);
 	} else
 #endif
+#ifdef DS3100
 	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		kn01_intr_establish(parent, cookie, level, handler, arg);
 	}
 	else {
+#else
+	{
+#endif
 		printf("intr_establish: unknown parent bustype for %s\n",
 			dev->dv_xname);
 	}
