@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.5 2003/11/09 11:09:11 scw Exp $ */
+/*	$NetBSD: crypto.c,v 1.6 2003/11/19 03:18:33 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.5 2003/11/09 11:09:11 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.6 2003/11/19 03:18:33 jonathan Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -105,7 +105,20 @@ static void deferred_crypto_thread(void *arg);
 
 int	crypto_usercrypto = 1;		/* userland may open /dev/crypto */
 int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
-int	crypto_devallowsoft = 0;	/* only use hardware crypto for asym */
+/* 
+ * cryptodevallowsoft is (intended to be) sysctl'able, controlling
+ * access to hardware versus software transforms as below:
+ *
+ * crypto_devallowsoft < 0:  Force userlevel requests to use software
+ *                              transforms, always
+ * crypto_devallowsoft = 0:  Use hardware if present, grant userlevel
+ *                              requests for non-accelerated transforms
+ *                              (handling the latter in software)
+ * crypto_devallowsoft > 0:  Allow user requests only for transforms which
+ *                               are hardware-accelerated.
+ */
+int	crypto_devallowsoft = 1;	/* only use hardware crypto for asym */
+
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern, OID_AUTO, usercrypto, CTLFLAG_RW,
 	   &crypto_usercrypto, 0,
@@ -1013,7 +1026,7 @@ crypto_getfeat(int *featp)
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    !crypto_devallowsoft) {
+		    crypto_devallowsoft = 0) {
 			continue;
 		}
 		if (crypto_drivers[hid].cc_kprocess == NULL)
