@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 1998/08/22 10:55:36 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13 1999/01/19 18:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,7 +45,6 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/mount.h>

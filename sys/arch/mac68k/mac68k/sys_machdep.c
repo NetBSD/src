@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1998/02/25 21:41:56 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1999/01/19 18:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,6 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/mount.h>
