@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mobile.c,v 1.2 1998/09/30 08:57:01 hwr Exp $ */
+/*	$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $ */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mobile.c,v 1.2 1998/09/30 08:57:01 hwr Exp $");
+__RCSID("$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,15 +60,15 @@ __RCSID("$NetBSD: print-mobile.c,v 1.2 1998/09/30 08:57:01 hwr Exp $");
 #define MOBILE_SIZE (8)
 
 struct mobile_ip {
-	u_short proto;
-	u_short hcheck;
+	u_int16_t proto;
+	u_int16_t hcheck;
 	u_int32_t odst;
 	u_int32_t osrc;
 };
 
 #define OSRC_PRES	0x0080	/* old source is present */
 
-static u_short mob_in_cksum(u_short *p, int len);
+static u_int16_t mob_in_cksum(u_short *p, int len);
 
 /*
  * Deencapsulate and print a mobile-tunneled IP datagram
@@ -113,9 +113,9 @@ mobile_print(const u_char *bp, u_int length)
 	return;
 }
 
-static u_short mob_in_cksum(u_short *p, int len)
+static u_int16_t mob_in_cksum(u_short *p, int len)
 {
-	u_int sum = 0; 
+	u_int32_t sum = 0; 
 	int nwords = len >> 1;
   
 	while (nwords-- != 0)
@@ -123,8 +123,8 @@ static u_short mob_in_cksum(u_short *p, int len)
   
 	if (len & 1) {
 		union {
-			u_short w;
-			u_char c[2]; 
+			u_int16_t w;
+			u_int32_t c[2]; 
 		} u;
 		u.c[0] = *(u_char *)p;
 		u.c[1] = 0;
