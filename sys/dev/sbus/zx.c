@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.9 2003/08/24 17:32:05 uwe Exp $	*/
+/*	$NetBSD: zx.c,v 1.10 2003/08/25 17:50:29 uwe Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,9 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.9 2003/08/24 17:32:05 uwe Exp $");
-
-#include "opt_rcons.h"
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.10 2003/08/25 17:50:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
