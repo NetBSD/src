@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.77 1998/10/08 22:14:44 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.78 1998/10/09 10:08:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -283,16 +283,7 @@ static	int cpu_number;
 		return;
 	}
 
-	cpuinfo.cache_flush = cpi->cache_flush = smp_cache_flush;
-	cpuinfo.vcache_flush_page = cpi->vcache_flush_page =
-		smp_vcache_flush_page;
-	cpuinfo.vcache_flush_segment = cpi->vcache_flush_segment =
-		smp_vcache_flush_segment;
-	cpuinfo.vcache_flush_region = cpi->vcache_flush_region =
-		smp_vcache_flush_region;
-	cpuinfo.vcache_flush_context = cpi->vcache_flush_context =
-		smp_vcache_flush_context;
-
+#if defined(MULTIPROCESSOR)
 	/* for now use the fixed virtual addresses setup in autoconf.c */
 	cpi->intreg_4m = (struct icr_pi *)
 		(PI_INTR_VA + (_MAXNBPG * CPU_MID2CPUNO(mid)));
@@ -300,11 +291,23 @@ static	int cpu_number;
 	/* Now start this CPU */
 	cpu_spinup(sc);
 
+	if (cpu_number == ncpu) {
+		/* Install MP cache flush functions on boot cpu */
+		cpuinfo.cache_flush = smp_cache_flush;
+		cpuinfo.vcache_flush_page = smp_vcache_flush_page;
+		cpuinfo.vcache_flush_segment = smp_vcache_flush_segment;
+		cpuinfo.vcache_flush_region = smp_vcache_flush_region;
+		cpuinfo.vcache_flush_context = smp_vcache_flush_context;
+	}
+
 #ifdef DEBUG
 	printf("***\n");
 	if (ncpu >= 4)
 		callrom();
 #endif
+#else
+	printf(": no SMP support in kernel\n");
+#endif /* MULTIPROCESSOR */
 }
 
 
@@ -1127,7 +1130,7 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
-	srmmu_cache_flush_all,
+	cypress_cache_flush_all,
 	memerr4m
 };
 
@@ -1377,21 +1380,23 @@ getcpuinfo(sc, node)
 		MPCOPY(memerr);
 #undef MPCOPY
 		/*
-		 * Initialize both SP and MP versions of the
-		 * cache flush functions.
+		 * On the boot cpu we use the single-processor cache flush
+		 * functions until all CPUs are initialized.
 		 */
-		if (ncpu > 1) {
-			sc->cache_flush = smp_cache_flush;
-			sc->vcache_flush_page = smp_vcache_flush_page;
-			sc->vcache_flush_segment = smp_vcache_flush_segment;
-			sc->vcache_flush_region = smp_vcache_flush_region;
-			sc->vcache_flush_context = smp_vcache_flush_context;
-		} else {
+		if (sc->master) {
 			sc->cache_flush = sc->sp_cache_flush;
 			sc->vcache_flush_page = sc->sp_vcache_flush_page;
 			sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
 			sc->vcache_flush_region = sc->sp_vcache_flush_region;
 			sc->vcache_flush_context = sc->sp_vcache_flush_context;
+		} else {
+#if defined(MULTIPROCESSOR)
+			sc->cache_flush = smp_cache_flush;
+			sc->vcache_flush_page = smp_vcache_flush_page;
+			sc->vcache_flush_segment = smp_vcache_flush_segment;
+			sc->vcache_flush_region = smp_vcache_flush_region;
+			sc->vcache_flush_context = smp_vcache_flush_context;
+#endif
 		}
 		return;
 	}
