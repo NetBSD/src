@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.52 2000/03/24 21:56:04 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.53 2000/06/18 23:50:02 cyber Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,6 +90,8 @@ typedef struct _partinfo {
 } partinfo;	/* Single partition from a disklabel */
 
 /* variables */
+
+EXTERN char m_continue[STRSIZE] INIT("");
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
 EXTERN char machine[SSTRSIZE] INIT(MACH);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.61 2000/06/17 17:40:32 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62 2000/06/18 23:50:03 cyber Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -744,3 +744,7 @@ message upgradeparttype
 {The only suitable partition that was found for NetBSD installation is of
 the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
 of this partition to the new NetBSD-only partition type?}
+
+message continue
+{Continue?}
+

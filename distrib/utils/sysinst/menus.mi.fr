@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.27 2000/03/14 22:42:49 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.28 2000/06/18 23:50:03 cyber Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -390,3 +390,7 @@ menu namesrv6, title "  Choisissez un serveur de noms IPv6 :";
 menu ip6autoconf, title "Faire la configuration automatique IPv6 ?";
 	option "Yes", exit, action  {yesno = 1;};
 	option "No",  exit, action  {yesno = 0;};
+
+menu dhcpautoconf, title "Exécutez la configuration automatique de DHCP?";
+        option "Yes", exit, action  {yesno = 1;};
+        option "No",  exit, action  {yesno = 0;};
