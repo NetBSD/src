@@ -6881,6 +6881,15 @@
 {
   if (operands[2] == const1_rtx)
     return "add\t%1, %1, %0";
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+      if ((unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 32)
+        {
+          if (TARGET_ARCH64)
+            return "sllx\t%1, %2, %0";
+          operands[2] = GEN_INT (INTVAL (operands[2]) & 0x1f);
+        }
+    }
   return "sll\t%1, %2, %0";
 }
   [(set (attr "type")
@@ -6969,7 +6978,18 @@
 	(ashiftrt:SI (match_operand:SI 1 "register_operand" "r")
 		     (match_operand:SI 2 "arith_operand" "rI")))]
   ""
-  "sra\t%1, %2, %0"
+{
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+      if ((unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 32)
+        {
+          if (TARGET_ARCH64)
+            return "srax\t%1, %2, %0";
+          operands[2] = GEN_INT (INTVAL (operands[2]) & 0x1f);
+        }
+    }
+  return "sra\t%1, %2, %0";
+}
   [(set_attr "type" "shift")])
 
 (define_insn "*ashrsi3_extend"
@@ -7040,7 +7060,18 @@
 	(lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
 		     (match_operand:SI 2 "arith_operand" "rI")))]
   ""
-  "srl\t%1, %2, %0"
+{
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+      if ((unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 32)
+        {
+          if (TARGET_ARCH64)
+            return "srlx\t%1, %2, %0";
+          operands[2] = GEN_INT (INTVAL (operands[2]) & 0x1f);
+        }
+    }
+  return "srl\t%1, %2, %0";
+}
   [(set_attr "type" "shift")])
 
 ;; This handles the case where
