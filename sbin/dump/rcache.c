@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.18 2003/02/06 23:00:08 enami Exp $	*/
+/*	$NetBSD: rcache.c,v 1.19 2003/02/06 23:25:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.18 2003/02/06 23:00:08 enami Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.19 2003/02/06 23:25:02 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -250,9 +250,8 @@ err:
 			continue;
 		if (cnt == -1) {
 			msg("read error from %s: %s: [sector %lld]: "
-			    "count=%ld: %s\n", disk, strerror(errno),
-			    (long long)blkno,
-			    dev_bsize, strerror(errno));
+			    "count=%ld\n", disk, strerror(errno),
+			    (long long)blkno, dev_bsize);
 			continue;
 		}
 		msg("short read error from %s: [sector %lld]: "
