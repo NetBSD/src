@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
+/*	$NetBSD: lpc.c,v 1.12 2002/05/19 17:38:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.12 2002/05/19 17:38:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,8 +303,9 @@ ingroup(grname)
 {
 	static struct group *gptr=NULL;
 	static gid_t groups[NGROUPS];
+	static int ngroups;
 	gid_t gid;
-	int i, ngroups;
+	int i;
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
