@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1998/08/13 06:21:38 tsubai Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1998/09/03 14:10:56 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -131,9 +131,6 @@
 /*
  * Some system constants
  */
-#ifndef	HTABENTS
-#define	HTABENTS	1024	/* Number of hashslots in HTAB */
-#endif
 #ifndef	NPMAPS
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif
