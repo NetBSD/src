@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 1997/01/31 06:03:38 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.10 1997/05/08 16:39:36 oki Exp $
 
 #
 #	GENERIC
@@ -7,12 +7,12 @@
 # architecture type and name of kernel; REQUIRED
 machine		x68k m68k
 
-options		EXEC_SCRIPT		# Support #!
-options		EXEC_AOUT		# a.out format executables
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
-options		M68030
-options		M68040
+options 	M68030
+options 	M68040
 
 # set to indicate RTC is offset from GMT
 options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
@@ -28,7 +28,7 @@ options 	DEVPAGER		# device pager (mapped devices)
 #options 	DIAGNOSTIC		# internal consistency checking
 
 options 	KTRACE			# system call tracing, a la ktrace(1)
-options		FIFO			# FIFOs; RECOMMENDED
+options 	FIFO			# FIFOs; RECOMMENDED
 options 	SYSVMSG			# System V-like message queues
 options 	SYSVSEM			# System V-like semaphores
 options 	SYSVSHM			# System V-like memory sharing
@@ -42,10 +42,10 @@ options 	SHMMAXPGS=1024		# 1024 pages in the defualt
 options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options		COMPAT_12
+options 	COMPAT_12
 options 	TCP_COMPAT_42		# 4.2 networking ABI
 #options 	COMPAT_SUNOS		# SunOS binaries
-#options	COMPAT_HPUX		# HP-UX binaries; VERY EXPERIMENTAL
+#options 	COMPAT_HPUX		# HP-UX binaries; VERY EXPERIMENTAL
 #options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 
 # file system options
@@ -65,13 +65,13 @@ file-system 	NULLFS			# Loop-back filesystem
 #file-system 	UNION			# union mount
 
 #options 	QUOTA			# file system quotas
-options		FASTLINKS		# fast symbolic links in FFS
+options 	FASTLINKS		# fast symbolic links in FFS
 #options 	NFSSERVER		# Network File System server
 
 # networking options
 #options 	GATEWAY			# IP packet forwarding
 options 	INET			# Internet protocols
-#options	NS			# XNS
+#options 	NS			# XNS
 #options 	CCITT,LLC,HDLC		# X.25
 #options 	ISO,TPIP		# OSI networking
 #options 	EON			# OSI tunneling over IP
@@ -82,7 +82,7 @@ options 	INET			# Internet protocols
 options 	DEBUG
 options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPSP			# '40 Floating Point Software
-options		ITEKANJI		# Kanji display for console
+options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	EIOMAPSIZE=0		# do not map PCI address space
 #options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
