@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.15 2000/05/08 13:49:46 augustss Exp $
+#	$NetBSD: CATSINST,v 1.16 2000/05/13 14:54:51 tsutsui Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -215,10 +215,10 @@ scsibus* at ahc?
 #scsibus* at bha?
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
 scsibus* at isp?
-#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-#scsibus* at ncr?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+scsibus* at siop?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
