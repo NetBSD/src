@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.8 2001/08/22 15:39:04 hubertf Exp $
+# $NetBSD: YEAH-BABY,v 1.9 2001/11/20 12:46:15 lukem Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -217,7 +217,7 @@ pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 #tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
-options TLP_MATCH_21040
+options 	TLP_MATCH_21040
 tlp*	at	pci? dev ? function ?		# DEC 21x4x Ethernet and clones
 #vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
@@ -229,7 +229,7 @@ ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #exphy*	at	mii? phy ?
 #inphy*	at	mii? phy ?
 #nsphy*	at	mii? phy ?
-#qsphy*	at	mii? phy ? 
+#qsphy*	at	mii? phy ?
 #tlphy*	at	mii? phy ?
 
 # ISA/EISA bus support
@@ -364,7 +364,8 @@ ulpt*	at	uhub? port ?
 
 pseudo-device	bpfilter	32
 #pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1
