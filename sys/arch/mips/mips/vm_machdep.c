@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.78 2001/05/15 06:01:23 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.79 2001/05/31 19:41:57 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,10 @@
  *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2001/05/15 06:01:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2001/05/31 19:41:57 soda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2001/05/15 06:01:23 nisimura Exp
 #include <mips/pte.h>
 #include <mips/psl.h>
 #include <machine/cpu.h>
-
-#include "opt_ddb.h"
 
 paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
