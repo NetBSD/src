@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.18 2000/06/27 17:55:39 mrg Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.19 2000/07/05 16:29:25 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -234,6 +234,7 @@ db_set_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 	db_expr_t	value;
+	db_expr_t	old_value;
 	struct db_variable *vp;
 	int	t;
 
@@ -260,5 +261,8 @@ db_set_cmd(addr, have_addr, count, modif)
 	    /*NOTREACHED*/
 	}
 
+	db_read_variable(vp, &old_value);
+	db_printf("$%s\t\t%s = ", vp->name, db_num_to_str(old_value));
+	db_printf("%s\n", db_num_to_str(value));
 	db_write_variable(vp, &value);
 }
