@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.20 1999/01/25 14:20:56 mycroft Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.21 1999/02/23 01:50:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.20 1999/01/25 14:20:56 mycroft Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.21 1999/02/23 01:50:26 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,6 +297,16 @@ init()
 {
 	filltable("CWORD");
 	syntax[0] = "CEOF";
+#ifdef TARGET_CHAR
+	syntax[base + (TARGET_CHAR)CTLESC] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLVAR] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLENDVAR] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLBACKQ] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLBACKQ + (TARGET_CHAR)CTLQUOTE] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLARI] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLENDARI] = "CCTL";
+	syntax[base + (TARGET_CHAR)CTLQUOTEMARK] = "CCTL";
+#else
 	syntax[base + CTLESC] = "CCTL";
 	syntax[base + CTLVAR] = "CCTL";
 	syntax[base + CTLENDVAR] = "CCTL";
@@ -305,6 +315,7 @@ init()
 	syntax[base + CTLARI] = "CCTL";
 	syntax[base + CTLENDARI] = "CCTL";
 	syntax[base + CTLQUOTEMARK] = "CCTL";
+#endif /* TARGET_CHAR */
 }
 
 
