@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.20 1997/11/22 03:39:20 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.21 1997/11/22 04:20:49 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -423,8 +423,8 @@ MAKE_PROGRAM=		${GMAKE}
 MAKE_PROGRAM=		${MAKE}
 .endif
 .if defined(USE_PERL5)
-BUILD_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
-RUN_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
+BUILD_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
+RUN_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
 .endif
 
 .if exists(${PORTSDIR}/../Makefile.inc)
