@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.17 1999/09/30 16:56:40 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.18 1999/10/01 20:01:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -248,7 +248,7 @@ ntfs_ntvattrget(
 
 	dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: " \
 	       "ino: %d, type: 0x%x, name: %.*s, vcn: %d\n", \
-	       ip->i_number, type, namelen, name, (u_int32_t) vcn));
+	       ip->i_number, type, (int) namelen, name, (u_int32_t) vcn));
 out:
 	FREE(alpool, M_TEMP);
 	return (error);
