@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/12 20:53:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/12 02:36:18 jtk Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -9,7 +9,7 @@ RSRCDIR= ${.CURDIR}/../../../usr.sbin/dhcp
 .PATH: ${RSRCDIR}/client ${RSRCDIR}/common ${RSRCDIR}/minires ${RSRCDIR}/omapip
 .NOPATH: ${PROG}
 
-SRCS=	dhclient.c clparse.c omapi.c
+SRCS=	dhclient.c clparse.c
 
 .include "Src-minires"
 MINIOBJS+= ${MINISRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}

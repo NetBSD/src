@@ -1,5 +1,6 @@
-#	$NetBSD: Src-common,v 1.2 2000/05/29 03:13:24 matt Exp $
+#	$NetBSD: Src-common,v 1.3 2000/06/12 02:36:19 jtk Exp $
 
 COMSRCS= parse.c dispatch.c conflex.c bpf.c socket.c packet.c \
 	 ethernet.c memory.c print.c options.c inet.c convert.c \
-	 tree.c tables.c hash.c alloc.c dns.c execute.c discover.c fddi.c
+	 tree.c tables.c hash.c alloc.c dns.c execute.c discover.c fddi.c \
+	 comapi.c
