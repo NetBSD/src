@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.3 2001/06/21 19:25:33 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.4 2001/07/09 22:37:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1636,6 +1636,10 @@ cpu_stashcontext(struct lwp *l)
 
 	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
+#ifdef DIAGNOSTIC
+		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -1643,49 +1647,98 @@ cpu_stashcontext(struct lwp *l)
 	return up;
 }
 
-
 void 
-cpu_upcall(struct lwp *l, stack_t *st, int type, int events, int interrupted, 
-    struct sa_t *sas[])
+cpu_upcall(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	
 	struct sadata *sd = p->p_sa;
 	struct saframe *sf, frame;
 	struct sa_t **sapp, *sap;
+	struct sa_t self_sa, e_sa, int_sa;
+	struct sa_t *sas[3];
+	struct sadata_upcall *sau;
 	struct trapframe *tf;
 	void *stack;
 	ucontext_t u, *up;
-	int i, nsas;
-	
+	int i, nsas, nevents, nint;
+	int x,y;
+
 	extern char sigcode[], upcallcode[];
 
 	tf = l->l_md.md_regs;
-	
-	stack = (char *)st->ss_sp + st->ss_size;
 
-	/* First, copy out the activation's ucontext */
-	u.uc_stack = *st;
+	KDASSERT(LIST_EMPTY(&sd->sa_upcalls) == 0);
+
+	sau = LIST_FIRST(&sd->sa_upcalls);
+
+	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
+
+	self_sa.sa_id = l->l_lid;
+	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
+	self_sa.sa_sig = sau->sau_sig;
+	self_sa.sa_code = sau->sau_code;
+	sas[0] = &self_sa;
+	nsas = 1;
+
+	nevents = 0;
+	if (sau->sau_event) {
+		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
+		e_sa.sa_id = sau->sau_event->l_lid;
+		e_sa.sa_cpu = 0; /* XXX event->l_cpu; */
+		e_sa.sa_sig = 0;
+		e_sa.sa_code = 0;
+		sas[nsas++] = &e_sa;
+		nevents = 1;
+	}
+
+	nint = 0;
+	if (sau->sau_interrupted) {
+		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
+		int_sa.sa_id = sau->sau_interrupted->l_lid;
+		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
+		int_sa.sa_sig = 0;
+		int_sa.sa_code = 0;
+		sas[nsas++] = &int_sa;
+		nint = 1;
+	}
+
+	LIST_REMOVE(sau, sau_next);
+	if (LIST_EMPTY(&sd->sa_upcalls))
+		l->l_flag &= ~L_SA_UPCALL;
+
+	/* Copy out the activation's ucontext */
+	u.uc_stack = sau->sau_stack;
 	u.uc_flags = _UC_STACK;
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
+		pool_put(&saupcall_pool, sau);
+#ifdef DIAGNOSTIC
+		printf("cpu_upcall: couldn't copyout activation ucontext" 
+		    " for %d.%d\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
-	stack = up;
 	sas[0]->sa_context = up;
 
 	/* Next, copy out the sa_t's and pointers to them. */
-	sap = stack;
-	nsas = events + interrupted;
-	sapp = (struct sa_t **)(sap - (nsas + 1));
-	for (i = nsas; i >= 0; i--) {
+	sap = (struct sa_t *) up;
+	sapp = (struct sa_t **) (sap - nsas);
+	for (i = nsas - 1; i >= 0; i--) {
 		sap--;
 		sapp--;
-		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
-		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
+		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
+		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
 			/* Copying onto the stack didn't work. Die. */
+			pool_put(&saupcall_pool, sau);
+#ifdef DIAGNOSTIC
+		printf("cpu_upcall: couldn't copyout sa_t %d" 
+		    " for %d.%d (x=%d, y=%d)\n",
+		    i, l->l_proc->p_pid, l->l_lid, x, y);
+#endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1693,11 +1746,14 @@ cpu_upcall(struct lwp *l, stack_t *st, int type, int events, int interrupted,
 
 	/* Finally, copy out the rest of the frame. */
 	sf = (struct saframe *)sapp - 1;
-	frame.sa_type = type;
+
+	frame.sa_type = sau->sau_type;
 	frame.sa_sas = sapp;
-	frame.sa_events = events;
-	frame.sa_interrupted = interrupted;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = nint;
 	frame.sa_upcall = sd->sa_upcall;
+
+	pool_put(&saupcall_pool, sau);
 
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
