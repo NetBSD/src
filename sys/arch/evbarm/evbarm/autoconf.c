@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/05/17 22:18:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2003/06/30 15:17:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@ void
 cpu_configure(void)
 {
 	struct mainbus_attach_args maa;
+
+	(void) splhigh();
 
 #ifndef __OLD_INTERRUPT_CODE
 	/* Initialize software interrupts. */
