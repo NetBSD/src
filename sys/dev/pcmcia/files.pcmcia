@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
+#	$NetBSD: files.pcmcia,v 1.10 1998/10/10 21:27:21 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -49,3 +49,9 @@ file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
 # PCMCIA Floppy controller
 attach	fdc at pcmcia with fdc_pcmcia
 file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
+
+# PCMCIA multi-port serial cards
+device	pcmcom {[slave = -1]}
+attach	pcmcom at pcmcia
+attach	com at pcmcom with com_pcmcom
+file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
