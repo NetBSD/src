@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.14 1994/01/29 02:03:39 jtc Exp $
+ *	$Id: rtld.c,v 1.15 1994/02/15 22:51:23 pk Exp $
  */
 
 #include <sys/param.h>
@@ -1073,12 +1073,16 @@ rtfindlib(name, major, minor, usehints)
 			if (hint)
 				return hint;
 		}
-	} else {
-		/* No LD_LIBRARY_PATH, check default */
-		hint = findhint(name, major, minor, NULL);
+		/* Not found in hints, try directory search */
+		hint = (char *)findshlib(name, &major, &minor, 0);
 		if (hint)
 			return hint;
 	}
+
+	/* No LD_LIBRARY_PATH or lib not found in there; check default */
+	hint = findhint(name, major, minor, NULL);
+	if (hint)
+		return hint;
 
 	/* No hints available for name */
 	*usehints = 0;
