@@ -1,5 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.4 1995/07/05 08:31:38 ragge Exp $	*/
-
+/*	$NetBSD: mscp.c,v 1.5 1995/11/10 19:09:56 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -653,7 +652,7 @@ mscp_requeue(mi)
 		dp = &md->md_utab[minor(bp->b_dev) >> md->md_unitshift];
 		bp->b_actf = dp->b_actf;
 		if (dp->b_actf == NULL)
-			dp->b_actb = bp;
+			dp->b_actb = (void *)bp;
 		dp->b_actf = bp;
 	}
 	mi->mi_wtab.b_actf = *mi->mi_wtab.b_actb = &mi->mi_wtab;
