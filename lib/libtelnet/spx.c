@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.3 2003/07/15 05:09:35 itojun Exp $ */
+/*	$NetBSD: spx.c,v 1.4 2003/07/15 10:14:55 itojun Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.3 2003/07/15 05:09:35 itojun Exp $");
+__RCSID("$NetBSD: spx.c,v 1.4 2003/07/15 10:14:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,9 +481,10 @@ spx_reply(ap, data, cnt)
 }
 
 	int
-spx_status(ap, name, level)
+spx_status(ap, name, l, level)
 	Authenticator *ap;
 	char *name;
+	size_t l;
 	int level;
 {
 
@@ -521,7 +522,7 @@ spx_status(ap, name, level)
 					&acl_file_buffer);
 
 	if (major_status == GSS_S_COMPLETE) {
-	  strcpy(name, UserNameRequested);
+	  strlcpy(name, UserNameRequested, l);
 	  return(AUTH_VALID);
 	} else {
 	   return(AUTH_USER);
