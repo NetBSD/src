@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.5 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.6 2001/12/06 03:54:05 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexgex.c,v 1.9 2001/09/17 19:27:15 stevesk Exp $");
+RCSID("$OpenBSD: kexgex.c,v 1.10 2001/12/05 10:06:12 deraadt Exp $");
 
 #include <openssl/bn.h>
 
@@ -271,7 +271,7 @@ kexgex_server(Kex *kex)
 		fatal("Unsupported hostkey type %d", kex->hostkey_type);
 
 	type = packet_read(&plen);
-	switch(type){
+	switch (type) {
 	case SSH2_MSG_KEX_DH_GEX_REQUEST:
 		debug("SSH2_MSG_KEX_DH_GEX_REQUEST received");
 		min = packet_get_int();
