@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.5 2005/03/17 15:26:06 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.5 2005/03/17 15:26:06 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -112,8 +112,10 @@ stipending()
 	 * we're only called after STIC, so we know that we'll have to
 	 * STI at the end
 	 */
-	cli();
 	while (s->vcpu_data[0].evtchn_upcall_pending) {
+		__insn_barrier();
+		cli();
+		__insn_barrier();
 		s->vcpu_data[0].evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
@@ -141,8 +143,9 @@ stipending()
 #endif
 			}
 		}
+		__insn_barrier();
+		sti();
 	}
-	sti();
 
 #if 0
 	if (ci->ci_ipending & 0x1)
