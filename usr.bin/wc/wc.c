@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wc.c,v 1.5 1993/08/27 22:31:06 jtc Exp $";
+static char rcsid[] = "$Id: wc.c,v 1.6 1993/10/12 22:39:43 jtc Exp $";
 #endif /* not lint */
 
 /* wc line, word and char count */
@@ -54,14 +54,10 @@ static char rcsid[] = "$Id: wc.c,v 1.5 1993/08/27 22:31:06 jtc Exp $";
 #include <errno.h>
 #include <unistd.h>
 
-#define DEL	0177			/* del char */
-#define NL	012			/* newline char */
-#define SPACE	040			/* space char */
-#define TAB	011			/* tab char */
-
 static void	cnt();
 static long	tlinect, twordct, tcharct;
 static int	doline, doword, dochar;
+static int 	rval = 0;
 
 int
 main(argc, argv)
@@ -71,7 +67,7 @@ main(argc, argv)
 	extern int optind;
 	register int ch;
 
-	while ((ch = getopt(argc, argv, "lwcm")) != EOF)
+	while ((ch = getopt(argc, argv, "lwcm")) != -1)
 		switch((char)ch) {
 		case 'l':
 			doline = 1;
@@ -85,7 +81,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fputs("usage: wc [-lwc] [files]\n", stderr);
+			fprintf(stderr, "usage: wc [-c | -m] [-lw] [files]\n");
 			exit(1);
 		}
 	argv += optind;
@@ -122,7 +118,7 @@ main(argc, argv)
 		}
 	}
 
-	exit(0);
+	exit(rval);
 }
 
 static void
@@ -141,7 +137,8 @@ cnt(file)
 	if (file) {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 			fprintf (stderr, "wc: %s: %s\n", file, strerror(errno));
-			exit(1);
+			rval = 1;
+			return;
 		}
 		if (!doword) {
 			/*
@@ -154,7 +151,9 @@ cnt(file)
 					if (len == -1) {
 						fprintf (stderr, "wc: %s: %s\n",
 							file, strerror(errno));
-						exit(1);
+						rval = 1;
+						close (fd);
+						return;	
 					}
 					charct += len;
 					for (C = buf; len--; ++C)
@@ -183,7 +182,9 @@ cnt(file)
 				if (fstat(fd, &sbuf)) {
 					fprintf (stderr, "wc: %s: %s\n",
 						file, strerror(errno));
-					exit(1);
+					rval = 1;
+					close (fd);
+					return;
 				}
 
 				ifmt = sbuf.st_mode & S_IFMT;
@@ -199,36 +200,21 @@ cnt(file)
 	}
 	else
 		fd = 0;
+
 	/* do it the hard way... */
 	for (gotsp = 1; (len = read(fd, buf, MAXBSIZE));) {
 		if (len == -1) {
 			fprintf (stderr, "wc: %s: %s\n", file, strerror(errno));
-			exit(1);
+			break;
 		}
 		charct += len;
 		for (C = buf; len--; ++C) {
 			if (isspace (*C)) {
 				gotsp = 1;
-				if (*C == NL) {
+				if (*C == '\n') {
 					++linect;
 				}
 			} else {
-#if 0
-				/*
-				 * This line of code implements the
-				 * original V7 wc algorithm, i.e.
-				 * a non-printing character doesn't
-				 * toggle the "word" count, so that
-				 * "  ^D^F  " counts as 6 spaces,
-				 * while "foo^D^Fbar" counts as 8
-				 * characters.
-				 *
-				 * test order is important -- gotsp
-				 * will normally be NO, so test it
-				 * first
-				 */
-				if (gotsp && *C > SPACE && *C < DEL) ...
-#endif
 				/*
 				 * This line implements the POSIX
 				 * spec, i.e. a word is a "maximal
