@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.7 2001/07/10 00:52:32 bjh21 Exp $
+#	$NetBSD: RPC_WSCONS,v 1.8 2001/07/10 20:43:59 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -15,8 +15,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-
-# For standard RiscPC's
 options 	CPU_SA110	# Support the SA110 core
 options 	CPU_ARM6	# Support the ARM6 core
 options 	CPU_ARM7	# Support the ARM7 core
@@ -25,10 +23,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # For StrongARM only kernels
 #makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
-
-# For A7000, Stork and other ARM7500 machines
-#options 	CPU_ARM7	# Support the ARM7 core
-#options 	CPU_ARM7500	# We are actually an ARM7500
 
 # Architecture options
 options 	RISCPC		# We are a RiscPC

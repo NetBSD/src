@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.6 2001/07/10 00:52:31 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.7 2001/07/10 20:43:58 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -15,17 +15,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-
-# For standard RiscPC's
 #options 	CPU_SA110	# Support the SA110 core
 #options 	CPU_ARM6	# Support the ARM6 core
-#options 	CPU_ARM7	# Support the ARM7 core
+options 	CPU_ARM7	# Support the ARM7 core
 #options 	CPU_ARM8	# Support the ARM8 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
-
-# For A7000, Stork and other ARM7500 machines
-options 	CPU_ARM7	# Support the ARM7 core
-options 	CPU_ARM7500	# We are actually an ARM7500
 
 # Architecture options
 options 	RISCPC		# We are a RiscPC

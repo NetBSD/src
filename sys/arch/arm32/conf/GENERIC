@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.83 2001/07/10 00:52:30 bjh21 Exp $
+#	$NetBSD: GENERIC,v 1.84 2001/07/10 20:43:58 bjh21 Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.83 $"
+#ident 		"GENERIC-$Revision: 1.84 $"
 
 # estimated number of users
 maxusers	32
@@ -16,17 +16,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-
-# For standard RiscPC's
 options 	CPU_SA110	# Support the SA110 core
 options 	CPU_ARM6	# Support the ARM6 core
 options 	CPU_ARM7	# Support the ARM7 core
 options 	CPU_ARM8	# Support the ARM8 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
-
-# For A7000, Stork and other ARM7500 machines
-#options 	CPU_ARM7	# Support the ARM7 core
-#options 	CPU_ARM7500	# We are actually an ARM7500
 
 # Architecture options
 options 	RISCPC		# We are a RiscPC
