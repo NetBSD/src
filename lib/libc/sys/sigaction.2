@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.12 1997/11/01 07:29:50 mycroft Exp $
+.\"	$NetBSD: sigaction.2,v 1.13 1997/11/01 07:44:32 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd April 3, 1994
+.Dd November 1, 1997
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ no action; stopping the process; or continuing the process.
 See the signal list below for each signal's default action.
 If
 .Fa sa_handler
-is
+is set to
 .Dv SIG_DFL ,
 the default action for the signal is to discard the signal,
 and if a signal is pending,
@@ -156,7 +156,7 @@ the pending signal is discarded even if the signal is masked.
 If
 .Fa sa_handler
 is set to
-.Dv SIG_IGN
+.Dv SIG_IGN ,
 current and pending instances
 of the signal are ignored and discarded.
 .Pp
