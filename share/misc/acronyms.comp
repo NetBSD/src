@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.35 2004/01/15 03:31:04 grant Exp $
+$NetBSD: acronyms.comp,v 1.36 2004/01/15 03:31:41 grant Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -118,7 +118,7 @@ MTA	mail transfer agent
 MTU	maximum transmission unit
 MUA	mail user agent
 NAT	network address translation
-NFS	networking file system
+NFS	network file system
 NIC	network interface card
 NIS	network information service
 NUMA	non uniform memory access
