@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $	*/
+/*	$NetBSD: arch.c,v 1.37 2003/07/14 18:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.37 2003/07/14 18:19:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $");
+__RCSID("$NetBSD: arch.c,v 1.37 2003/07/14 18:19:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -140,7 +140,7 @@ static int ArchFindArchive(ClientData, ClientData);
 static void ArchFree(ClientData);
 #endif
 static struct ar_hdr *ArchStatMember(char *, char *, Boolean);
-static FILE *ArchFindMember(char *, char *, struct ar_hdr *, char *);
+static FILE *ArchFindMember(char *, char *, struct ar_hdr *, const char *);
 #if defined(__svr4__) || defined(__SVR4) || defined(__ELF__)
 #define SVR4ARCHIVES
 static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
@@ -817,7 +817,8 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
  *-----------------------------------------------------------------------
  */
 static FILE *
-ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr, char *mode)
+ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
+    const char *mode)
 {
     FILE *	  arch;	      /* Stream to archive */
     int		  size;       /* Size of archive member */

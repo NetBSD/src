@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.6 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: hash.h,v 1.7 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -109,8 +109,8 @@ typedef struct Hash_Search {
 
 void Hash_InitTable(Hash_Table *, int);
 void Hash_DeleteTable(Hash_Table *);
-Hash_Entry *Hash_FindEntry(Hash_Table *, char *);
-Hash_Entry *Hash_CreateEntry(Hash_Table *, char *, Boolean *);
+Hash_Entry *Hash_FindEntry(Hash_Table *, const char *);
+Hash_Entry *Hash_CreateEntry(Hash_Table *, const char *, Boolean *);
 void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
 Hash_Entry *Hash_EnumFirst(Hash_Table *, Hash_Search *);
 Hash_Entry *Hash_EnumNext(Hash_Search *);

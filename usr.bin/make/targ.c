@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $	*/
+/*	$NetBSD: targ.c,v 1.29 2003/07/14 18:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.29 2003/07/14 18:19:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.28 2002/06/15 18:24:58 wiz Exp $");
+__RCSID("$NetBSD: targ.c,v 1.29 2003/07/14 18:19:13 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -195,14 +195,14 @@ Targ_List(void)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_NewGN(char *name)
+Targ_NewGN(const char *name)
 {
     GNode *gn;
 
     gn = (GNode *) emalloc (sizeof (GNode));
     gn->name = estrdup (name);
     gn->uname = NULL;
-    gn->path = (char *) 0;
+    gn->path = NULL;
     if (name[0] == '-' && name[1] == 'l') {
 	gn->type = OP_LIB;
     } else {
@@ -296,7 +296,7 @@ TargFreeGN(ClientData gnp)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_FindNode(char *name, int flags)
+Targ_FindNode(const char *name, int flags)
 {
     GNode         *gn;	      /* node in that element */
     Hash_Entry	  *he;	      /* New or used hash entry for node */

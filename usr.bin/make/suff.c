@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.40 2002/12/05 15:56:52 scw Exp $	*/
+/*	$NetBSD: suff.c,v 1.41 2003/07/14 18:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.40 2002/12/05 15:56:52 scw Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.41 2003/07/14 18:19:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.40 2002/12/05 15:56:52 scw Exp $");
+__RCSID("$NetBSD: suff.c,v 1.41 2003/07/14 18:19:13 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1796,7 +1796,8 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     char    	*eoarch;    /* End of archive portion */
     char    	*eoname;    /* End of member portion */
     GNode   	*mem;	    /* Node for member */
-    static char	*copy[] = { /* Variables to be copied from the member node */
+    static const char	*copy[] = {
+	/* Variables to be copied from the member node */
 	TARGET,	    	    /* Must be first */
 	PREFIX,	    	    /* Must be second */
     };
@@ -2359,7 +2360,8 @@ SuffFindDeps(GNode *gn, Lst slst)
 	LstNode	ln;
 	Suff	*s;
 
-	ln = Lst_Find (sufflist, (ClientData)LIBSUFF, SuffSuffHasNameP);
+	ln = Lst_Find (sufflist, (ClientData)UNCONST(LIBSUFF),
+	    SuffSuffHasNameP);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
 	if (ln != NILLNODE) {

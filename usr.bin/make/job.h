@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.17 2002/11/16 22:22:23 gson Exp $	*/
+/*	$NetBSD: job.h,v 1.18 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -207,28 +207,28 @@ typedef struct Job {
  * anyway as is and if it causes an error, so be it.
  */
 typedef struct Shell {
-    char	  *name;	/* the name of the shell. For Bourne and C
+    const char	 *name;		/* the name of the shell. For Bourne and C
 				 * shells, this is used only to find the
 				 * shell description when used as the single
 				 * source of a .SHELL target. For user-defined
 				 * shells, this is the full path of the shell.
 				 */
     Boolean 	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
-    char          *echoOff;	/* command to turn off echo */
-    char          *echoOn;	/* command to turn it back on again */
-    char          *noPrint;	/* command to skip when printing output from
+    const char   *echoOff;	/* command to turn off echo */
+    const char   *echoOn;	/* command to turn it back on again */
+    const char   *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
     int           noPLen;	/* length of noPrint command */
     Boolean	  hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
-    char	  *errCheck;	/* string to turn error checking on */
-    char	  *ignErr;	/* string to turn off error checking */
+    const char	 *errCheck;	/* string to turn error checking on */
+    const char	 *ignErr;	/* string to turn off error checking */
     /*
      * command-line flags
      */
-    char          *echo;	/* echo commands */
-    char          *exit;	/* exit on error */
+    const char   *echo;		/* echo commands */
+    const char   *exit;		/* exit on error */
 }               Shell;
 
 extern int	job_pipe[2];	/* token pipe for jobs. */
@@ -252,7 +252,7 @@ extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
 #endif
 
 void Job_Touch(GNode *, Boolean);
-Boolean Job_CheckCommands(GNode *, void (*abortProc )(char *, ...));
+Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 void Job_CatchChildren(Boolean);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
