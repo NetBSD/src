@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.22 2001/12/20 16:22:14 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.23 2001/12/20 17:45:31 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -373,11 +373,11 @@ ENTRY_NP(set_r15)
 	bic	r2, r3, r0
 	eor	r2, r2, r1
 	mov	r0, r3			/* return old IRQ state */
-	movs	r15, r3
+	movs	r15, r2			/* set new state and return */
 
 ENTRY_NP(get_r15)
 	mov	r0, r14
-	movs	r15, lr
+	mov	r15, lr
 
 	/*
 	 * Low-level context-switch operation.  cpu_switch() is in C -- this
@@ -453,4 +453,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.22 2001/12/20 16:22:14 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.23 2001/12/20 17:45:31 bjh21 Exp $")
