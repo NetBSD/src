@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2 1996/10/17 04:26:22 cgd Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.3 1999/01/15 13:31:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,16 +29,14 @@
 
 #include <machine/asm.h>
 
-#ifndef NAME
-#define	NAME byte_swap_4
-#endif
-
 /*
  * Byte-swap a 4-byte quantity.  (Convert 0x01234567 to 0x67452301.)
  *
  * Argument is an unsigned 4-byte integer (u_int32_t).
  */
-LEAF(NAME, 1)			/* a0 contains 0x01234567 */
+LEAF(bswap32, 1			/* a0 contains 0x01234567 */
+XLEAF(htonl, 1)
+XLEAF(ntohl, 1)
 	extbl	a0, 0, t0	/* t0 = 0x      67 */
 	extbl	a0, 1, t1	/* t1 = 0x      45 */
 	extbl	a0, 2, t2	/* t2 = 0x      23 */
@@ -50,4 +48,4 @@ LEAF(NAME, 1)			/* a0 contains 0x01234567 */
 	or	t1, t2, t1	/* t1 = 0x  4523   */
 	or	t1, v0, v0	/* v0 = 0x67452301 */
 	RET
-END(NAME)
+END(bswap32)

@@ -1,25 +1,26 @@
-/*	$NetBSD: bswap32.c,v 1.1 1997/10/09 15:42:33 bouyer Exp $	*/
+/*  $NetBSD: bswap32.c,v 1.2 1999/01/15 13:31:28 bouyer Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@netbsd.org>.
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: bswap32.c,v 1.1 1997/10/09 15:42:33 bouyer Exp $";
-#endif
+__RCSID("$NetBSD: bswap32.c,v 1.2 1999/01/15 13:31:28 bouyer Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <machine/bswap.h>
 
 #undef bswap32
 
 u_int32_t
 bswap32(x)
-    u_int32_t x;
+	u_int32_t x;
 {
-	return  ((x << 24) & 0xff000000 ) |
-			((x <<  8) & 0x00ff0000 ) |
-			((x >>  8) & 0x0000ff00 ) |
-			((x >> 24) & 0x000000ff );
+	return	((x << 24) & 0xff000000 ) |
+		((x <<  8) & 0x00ff0000 ) |
+		((x >>  8) & 0x0000ff00 ) |
+		((x >> 24) & 0x000000ff );
 }
-
