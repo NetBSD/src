@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/10/26 19:15:59 christos Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2003/10/27 00:16:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/10/26 19:15:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2003/10/27 00:16:24 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -221,7 +221,10 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		sigexit(l, SIGILL);
 	}
 
-	buildcontext(l, catcher, addr, newsp);
+	tf->tf_global[1] = (vaddr_t)catcher;
+	tf->tf_pc = (const vaddr_t)addr;
+	tf->tf_npc = (const vaddr_t)addr + 4;
+	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
