@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.17 2003/10/29 21:56:02 mycroft Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.18 2004/04/30 22:59:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -119,15 +119,24 @@
 #define	__link_set_make_entry(set, sym)					\
 	static void const * const __link_set_##set##_sym_##sym		\
 	    __section("link_set_" #set) __unused = &sym
+#define	__link_set_make_entry2(set, sym, n)				\
+	static void const * const __link_set_##set##_sym_##sym##_##n	\
+	    __section("link_set_" #set) __unused = &sym[n]
 #else
 #define	__link_set_make_entry(set, sym)					\
 	extern void const * const __link_set_##set##_sym_##sym
+#define	__link_set_make_entry2(set, sym, n)				\
+	extern void const * const __link_set_##set##_sym_##sym##_##n
 #endif /* __lint__ */
 
 #define	__link_set_add_text(set, sym)	__link_set_make_entry(set, sym)
 #define	__link_set_add_rodata(set, sym)	__link_set_make_entry(set, sym)
 #define	__link_set_add_data(set, sym)	__link_set_make_entry(set, sym)
 #define	__link_set_add_bss(set, sym)	__link_set_make_entry(set, sym)
+#define	__link_set_add_text2(set, sym, n)   __link_set_make_entry2(set, sym, n)
+#define	__link_set_add_rodata2(set, sym, n) __link_set_make_entry2(set, sym, n)
+#define	__link_set_add_data2(set, sym, n)   __link_set_make_entry2(set, sym, n)
+#define	__link_set_add_bss2(set, sym, n)    __link_set_make_entry2(set, sym, n)
 
 #define	__link_set_decl(set, ptype)					\
 	extern ptype *__start_link_set_##set;				\
