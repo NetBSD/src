@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.10 1994/02/10 17:25:16 mycroft Exp $
+ *	$Id: in.c,v 1.11 1994/03/14 07:49:44 glass Exp $
  */
 
 #include <sys/param.h>
@@ -501,6 +501,7 @@ in_ifinit(ifp, ia, sin, scrub)
 	register struct ifnet *ifp;
 	register struct in_ifaddr *ia;
 	struct sockaddr_in *sin;
+        int scrub;
 {
 	register u_long i = ntohl(sin->sin_addr.s_addr);
 	struct sockaddr_in oldaddr;
