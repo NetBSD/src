@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.9 2000/10/14 23:47:47 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.10 2000/12/20 22:17:31 bjh21 Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -136,7 +136,8 @@ podulebus0	at ioc0 bank 4		# Expansion card bus
 unixbp0		at ioc0 bank 6		# Unix Backplane (interrupt routing)
 
 ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
-ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
+ea*		at podulebus0 slot ?	# Atomwide Ether3
+eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
