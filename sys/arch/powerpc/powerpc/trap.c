@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 2001/10/18 01:33:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -385,7 +385,7 @@ syscall_bad:
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		if (frame->srr1 & 0x0002000)
+		if (frame->srr1 & 0x00020000)	/* Bit 14 is set if trap */
 			trapsignal(p, SIGTRAP, EXC_PGM);
 		else
 			trapsignal(p, SIGILL, EXC_PGM);
