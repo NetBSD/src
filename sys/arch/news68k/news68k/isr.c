@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6 2000/11/09 13:32:06 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.7 2001/07/07 06:24:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,7 +195,8 @@ isrunlink_vectored(vec)
 		panic("isrunlink_vectored: not vectored interrupt");
 
 	vectab[vec] = badtrap;
-	bzero(&isr_vectored[vec - ISRVECTORED], sizeof(struct isr_vectored));
+	memset(&isr_vectored[vec - ISRVECTORED], 0,
+	    sizeof(struct isr_vectored));
 }
 
 /*
