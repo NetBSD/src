@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/01/12 21:49:52 christos Exp $ */
+/*	$NetBSD: md.c,v 1.7 2003/05/07 10:20:24 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 
 int mbr_present;
 int c1024_resp;
-char mbr[512];
+mbr_sector_t mbr;
 
 /* prototypes */
 
@@ -58,9 +58,9 @@ char mbr[512];
 int md_get_info()
 {
 
-	read_mbr(diskdev, mbr, sizeof mbr);
+	read_mbr(diskdev, &mbr, sizeof mbr);
 	md_bios_info(diskdev);
-	return edit_mbr((struct mbr_partition *) &mbr[MBR_PARTOFF]);
+	return edit_mbr(&mbr);
 }
 
 int md_pre_disklabel()
@@ -68,7 +68,7 @@ int md_pre_disklabel()
 	printf ("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 		return 1;
@@ -280,7 +280,7 @@ editlab:
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
 		case 1:
-			edit_mbr((struct mbr_partition *) &mbr[MBR_PARTOFF]);
+			edit_mbr(&mbr);
 			/*FALLTHROUGH*/
 		case 2:
 			goto editlab;
@@ -382,7 +382,7 @@ md_bios_info(dev)
 	int cyl, head, sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 		set_bios_geom(cyl, head, sec);
 	} else

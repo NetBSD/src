@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/01/12 21:49:52 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2003/05/07 10:20:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,7 @@
 #include "menu_defs.h"
 #include "endian.h"
 
-char mbr[512];
+mbr_sector_t mbr;
 
 int mbr_present, mbr_len;
 int c1024_resp;
@@ -69,17 +69,16 @@ int
 md_get_info(void)
 {
 
-	read_mbr(diskdev, mbr, sizeof mbr);
-	if (!valid_mbr(mbr)) {
-		memset(&mbr[MBR_PARTOFF], 0,
-		    NMBRPART * sizeof (struct mbr_partition));
+	read_mbr(diskdev, &mbr, sizeof mbr);
+	if (!valid_mbr(&mbr)) {
+		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
 		/* XXX check result and give up if < 0 */
-		*((u_int16_t *)&mbr[MBR_MAGICOFF]) = le_to_native16(MBR_MAGIC);
+		mbr.mbr_signature = le_to_native16(MBR_MAGIC);
 		netbsd_mbr_installed = 1;
 	} else
 		mbr_len = MBR_SECSIZE;
 
-	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+	edit_mbr(&mbr);
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
@@ -94,7 +93,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 		return 1;

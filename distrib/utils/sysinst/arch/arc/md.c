@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/01/12 21:49:50 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.7 2003/05/07 10:20:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,9 +54,8 @@
 #include "menu_defs.h"
 
 
-char mbr[512] __attribute__((aligned(4)));
-char kernstr[STRSIZE];
-int mbr_present, mbr_len;
+mbr_sector_t mbr;
+int mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
@@ -70,18 +69,17 @@ static void md_upgrade_mbrtype (void);
 int
 md_get_info()
 {
-	read_mbr(diskdev, mbr, sizeof mbr);
-	if (!valid_mbr(mbr)) {
-		memset(&mbr[MBR_PARTOFF], 0,
-		    NMBRPART * sizeof (struct mbr_partition));
+	read_mbr(diskdev, &mbr, sizeof mbr);
+	if (!valid_mbr(&mbr)) {
+		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
 		/* XXX check result and give up if < 0 */
-		*((uint16_t *)&mbr[MBR_MAGICOFF]) = MBR_MAGIC;
+		mbr->mbr_signature = MBR_MAGIC;
 		mbr_len = MBR_SECSIZE;
 	} else
 		mbr_len = MBR_SECSIZE;
 	md_bios_info(diskdev);
 
-	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+	edit_mbr(&mbr);
 
 	return 1;
 }
@@ -92,7 +90,7 @@ md_pre_disklabel()
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 		return 1;
@@ -301,10 +299,10 @@ md_upgrade_mbrtype()
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
 
-	if (read_mbr(diskdev, mbr, sizeof mbr) < 0)
+	if (read_mbr(diskdev, &mbr, sizeof mbr) < 0)
 		return;
 
-	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	mbrp = &mbr.mbr_parts[0];
 
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
@@ -316,7 +314,7 @@ md_upgrade_mbrtype()
 
 	if (netbsdpart == -1 && oldbsdcount == 1) {
 		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, mbr, sizeof mbr, 0);
+		write_mbr(diskdev, &mbr, sizeof mbr, 0);
 	}
 }
 
@@ -351,7 +349,7 @@ md_bios_info(dev)
 	int cyl, head, sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 		set_bios_geom(cyl, head, sec);
 	} else

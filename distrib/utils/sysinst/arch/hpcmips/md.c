@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2003/05/07 08:45:43 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.21 2003/05/07 10:20:21 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,9 @@
 
 
 #ifdef __mips__
-extern char mbr[512];
+extern mbr_sector_t mbr;
 #else
-char mbr[512];
+mbr_sector_t mbr;
 #endif
 int mbr_present, mbr_len;
 int c1024_resp;
@@ -75,18 +75,17 @@ int defbootselpart, defbootseldisk;
 int
 md_get_info()
 {
-	read_mbr(diskdev, mbr, sizeof mbr);
-	if (!valid_mbr(mbr)) {
-		memset(&mbr[MBR_PARTOFF], 0,
-		    NMBRPART * sizeof (struct mbr_partition));
+	read_mbr(diskdev, &mbr, sizeof mbr);
+	if (!valid_mbr(&mbr)) {
+		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
 		/* XXX check result and give up if < 0 */
-		*((u_int16_t *)&mbr[MBR_MAGICOFF]) = le_to_native16(MBR_MAGIC);
+		mbr.mbr_signature = le_to_native16(MBR_MAGIC);
 		netbsd_mbr_installed = 1;
 	} else
 		mbr_len = MBR_SECSIZE;
 	md_bios_info(diskdev);
 
-	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+	edit_mbr(&mbr);
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
@@ -101,7 +100,7 @@ md_pre_disklabel()
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 		return 1;
@@ -362,10 +361,10 @@ md_upgrade_mbrtype()
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
 
-	if (read_mbr(diskdev, mbr, sizeof mbr) < 0)
+	if (read_mbr(diskdev, &mbr, sizeof mbr) < 0)
 		return;
 
-	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	mbrp = &mbr/mbr_parts[0];
 
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
@@ -377,7 +376,7 @@ md_upgrade_mbrtype()
 
 	if (netbsdpart == -1 && oldbsdcount == 1) {
 		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, mbr, sizeof mbr, 0);
+		write_mbr(diskdev, &mbr, sizeof mbr, 0);
 	}
 }
 
@@ -411,7 +410,7 @@ md_bios_info(dev)
 	int cyl, head, sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 		set_bios_geom(cyl, head, sec);
 	} else
