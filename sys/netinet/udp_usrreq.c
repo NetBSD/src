@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.60 2000/02/02 23:28:09 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.61 2000/02/11 10:43:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -305,11 +305,11 @@ udp_input(m, va_alist)
 #endif
 
 	if (n == 0) {
-		udpstat.udps_noport++;
 		if (m->m_flags & (M_BCAST | M_MCAST)) {
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
+		udpstat.udps_noport++;
 #if NIPKDB > 0
 		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
 				m, iphlen + sizeof(struct udphdr),
@@ -433,11 +433,11 @@ udp6_input(mp, offp, proto)
 	dst.sin6_port = uh->uh_dport;
 
 	if (udp6_realinput(AF_INET6, &src, &dst, m, off) == 0) {
-		udp6stat.udp6s_noport++;
 		if (m->m_flags & M_MCAST) {
 			udp6stat.udp6s_noportmcast++;
 			goto bad;
 		}
+		udp6stat.udp6s_noport++;
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT, 0);
 		m = NULL;
 	}
@@ -638,7 +638,6 @@ udp4_realinput(src, dst, m, off)
 			 * (No need to send an ICMP Port Unreachable
 			 * for a broadcast or multicast datgram.)
 			 */
-			udpstat.udps_noport++;
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
@@ -655,11 +654,11 @@ udp4_realinput(src, dst, m, off)
 #if 0
 				struct mbuf *n;
 
-				udpstat.udps_noport++;
 				if (m->m_flags & (M_BCAST | M_MCAST)) {
 					udpstat.udps_noportbcast++;
 					goto bad;
 				}
+				udpstat.udps_noport++;
 #if NIPKDB > 0
 				if (checkipkdb(src4, *sport, *dport, m, off,
 					       m->m_pkthdr.len - off)) {
@@ -821,11 +820,9 @@ udp6_realinput(af, src, dst, m, off)
 			 */
 			switch (af) {
 			case AF_INET:
-				udpstat.udps_noport++;
 				udpstat.udps_noportbcast++;
 				break;
 			case AF_INET6:
-				udp6stat.udp6s_noport++;
 				udp6stat.udp6s_noportmcast++;
 				break;
 			}
@@ -847,21 +844,21 @@ udp6_realinput(af, src, dst, m, off)
 				n = m_copy(m, 0, M_COPYALL);
 				switch (af) {
 				case AF_INET:
-					udpstat.udps_noport++;
 					if (m->m_flags & (M_BCAST | M_MCAST)) {
 						udpstat.udps_noportbcast++;
 						goto bad;
 					}
+					udpstat.udps_noport++;
 					if (n != NULL)
 						icmp_error(n, ICMP_UNREACH,
 						    ICMP_UNREACH_PORT, 0, 0);
 					break;
 				case AF_INET6:
-					udp6stat.udp6s_noport++;
 					if (m->m_flags & M_MCAST) {
 						udp6stat.udp6s_noportmcast++;
 						goto bad;
 					}
+					udp6stat.udp6s_noport++;
 					if (n != NULL)
 						icmp6_error(n, ICMP6_DST_UNREACH,
 						    ICMP6_DST_UNREACH_NOPORT, 0);
@@ -1075,7 +1072,6 @@ udp_input(m, va_alist)
 			 * (No need to send an ICMP Port Unreachable
 			 * for a broadcast or multicast datgram.)
 			 */
-			udpstat.udps_noport++;
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
@@ -1109,11 +1105,11 @@ udp_input(m, va_alist)
 		++udpstat.udps_pcbhashmiss;
 		inp = in_pcblookup_bind(&udbtable, ip->ip_dst, uh->uh_dport);
 		if (inp == 0) {
-			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
 				udpstat.udps_noportbcast++;
 				goto bad;
 			}
+			udpstat.udps_noport++;
 			*ip = save_ip;
 #if NIPKDB > 0
 			if (checkipkdb(&ip->ip_src,
