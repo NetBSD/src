@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.4 2001/09/15 12:47:08 uch Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.5 2002/01/29 18:53:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * Device driver for PHILIPS UCB1200 Advanced modem/audio analog front-end
  *	General Purpose I/O part.
  */
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +56,8 @@
 #include <hpcmips/dev/ucb1200reg.h>
 
 #include <dev/hpc/hpciovar.h>	/* I/O manager */
+
+#include <machine/debug.h>
 
 int ucbio_match(struct device*, struct cfdata *, void *);
 void ucbio_attach(struct device*, struct device *, void *);
@@ -189,16 +190,16 @@ betty_update(hpcio_chip_t hc)
 static void
 betty_dump(hpcio_chip_t hc)
 {
-#ifdef DEBUG
+#ifdef UCBIO_DEBUG
 	struct ucbio_softc *sc = hc->hc_sc;
 	struct betty_port_status *stat = &sc->sc_stat;
 
 	printf("[BETTY I/O]\n");
 	printf("IN  ");
-	bitdisp(stat->in);
+	dbg_bit_print(stat->in);
 	printf("OUT ");
-	bitdisp(stat->out);
+	dbg_bit_print(stat->out);
 	printf("DIR ");
-	bitdisp(stat->dir);
-#endif /* DEBUG */
+	dbg_bit_print(stat->dir);
+#endif /* UCBIO_DEBUG */
 }

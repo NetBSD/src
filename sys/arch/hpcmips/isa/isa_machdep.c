@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22 2002/01/27 14:18:11 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.23 2002/01/29 18:53:14 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include <machine/platid_mask.h>
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
-#include <machine/bitdisp.h>
+#include <machine/debug.h>
 
 #include <dev/hpc/hpciovar.h>
 
@@ -66,11 +66,11 @@
 #endif /* VRISADEBUG_CONF */
 int vrisa_debug = VRISADEBUG_CONF;
 #define DPRINTF(arg) if (vrisa_debug) printf arg;
-#define DBITDISP32(mask) if (vrisa_debug) bitdisp32(mask);
+#define DBITDISP(mask) if (vrisa_debug) dbg_bit_print(mask);
 #define VPRINTF(arg) if (bootverbose || vrisa_debug) printf arg;
 #else /* VRISADEBUG */
 #define DPRINTF(arg)
-#define DBITDISP32(mask)
+#define DBITDISP(mask)
 #define VPRINTF(arg) if (bootverbose) printf arg;
 #endif /* VRISADEBUG */
 
@@ -279,7 +279,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	/* XXX not coded yet. this is temporary XXX */
 	DPRINTF(("isa_intr_alloc:"));
-	DBITDISP32(mask);
+	DBITDISP(mask);
 	*irq = (ffs(mask) -1); /* XXX */
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.30 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.31 2002/01/29 18:53:22 uch Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -43,7 +43,7 @@
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 #include <machine/config_hook.h>
-#include <machine/bitdisp.h>
+#include <machine/debug.h>
 
 #include <dev/hpc/hpciovar.h>
 
@@ -341,12 +341,9 @@ vrgiu_diff_iosetting()
 void
 vrgiu_dump_io(struct vrgiu_softc *sc)
 {
-	u_int32_t preg[2];
 
-	preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
-	preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
-
-	bitdisp64(preg);
+	dbg_bit_print(vrgiu_regread_4(sc, GIUPIOD_REG));
+	dbg_bit_print(vrgiu_regread_4(sc, GIUPODAT_REG));
 }
 
 void
@@ -361,7 +358,8 @@ vrgiu_diff_io()
 
 	if (opreg[0] != preg[0] || opreg[1] != preg[1]) {
 		printf("giu data: ");
-		bitdisp64(preg);
+		dbg_bit_print(preg[0]);
+		dbg_bit_print(preg[1]);
 	}
 	opreg[0] = preg[0];
 	opreg[1] = preg[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.2 2001/09/15 12:47:05 uch Exp $ */
+/*	$NetBSD: plum.c,v 1.3 2002/01/29 18:53:10 uch Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
