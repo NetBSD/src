@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $	*/
+/*	$NetBSD: date.c,v 1.15.2.1 1998/01/29 11:04:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $");
+__RCSID("$NetBSD: date.c,v 1.15.2.1 1998/01/29 11:04:50 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $");
 #include <string.h>
 #include <locale.h>
 #include <syslog.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -82,7 +83,7 @@ main(argc, argv)
 	int ch, rflag;
 	char *format, buf[1024];
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	rflag = 0;
 	while ((ch = getopt(argc, argv, "nr:u")) != -1)
@@ -125,9 +126,11 @@ main(argc, argv)
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
 	(void)printf("%s\n", buf);
 	exit(retval);
+	/* NOTREACHED */
 }
 
-#define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
 void
 setthetime(p)
 	char *p;
@@ -135,6 +138,7 @@ setthetime(p)
 	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
+	int yearset;
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit(*t))
@@ -153,37 +157,38 @@ setthetime(p)
 		if (strlen(dot) != 2)
 			badformat();
 		lt->tm_sec = ATOI2(dot);
-		if (lt->tm_sec > 61)
-			badformat();
 	} else
 		lt->tm_sec = 0;
 
+	yearset = 0;
 	switch (strlen(p)) {
+	case 12:				/* cc */
+		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
+		yearset = 1;
+		/* FALLTHROUGH */
 	case 10:				/* yy */
-		lt->tm_year = ATOI2(p);
-		if (lt->tm_year < 69)		/* hack for 2000 ;-} */
-			lt->tm_year += 100;
+		if (yearset) {
+			lt->tm_year += ATOI2(p);
+		} else {
+			yearset = ATOI2(p);
+			if (yearset < 69)
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
+			else
+				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
+		}
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
-		if (lt->tm_mon > 12)
-			badformat();
 		--lt->tm_mon;			/* time struct is 0 - 11 */
 		/* FALLTHROUGH */
 	case 6:					/* dd */
 		lt->tm_mday = ATOI2(p);
-		if (lt->tm_mday > 31)
-			badformat();
 		/* FALLTHROUGH */
 	case 4:					/* hh */
 		lt->tm_hour = ATOI2(p);
-		if (lt->tm_hour > 23)
-			badformat();
 		/* FALLTHROUGH */
 	case 2:					/* mm */
 		lt->tm_min = ATOI2(p);
-		if (lt->tm_min > 59)
-			badformat();
 		break;
 	default:
 		badformat();
@@ -222,6 +227,6 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: date [-nu] [-r seconds] [+format]\n");
-	(void)fprintf(stderr, "            [yy[mm[dd[hh]]]]mm[.ss]]\n");
+	(void)fprintf(stderr, "       date [[[[[cc]yy]mm]dd]hh]mm[.ss]\n");
 	exit(1);
 }
