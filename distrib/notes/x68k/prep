@@ -1,4 +1,4 @@
-.\" $NetBSD: prep,v 1.4 1999/01/13 07:30:10 ross Exp $	
+.\" $NetBSD: prep,v 1.5 2000/08/22 15:34:00 minoura Exp $	
 .
 .(Note
 Currently NetBSD/x68k requires a dedicated disk when you install
@@ -11,5 +11,7 @@ in the next release.
 .Pp
 What you have to do to prepare the disk is only to physically format
 your hard disk by using FORMAT.x utility of Human68k to install the
-master boot program on your disk.  You can now proceed with the
-installation instructions.
+master boot program on your disk.  If you are not planning to use
+the disk from Human68k, this step is optional.
+.Pp
+You can now proceed with the installation instructions.
