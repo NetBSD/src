@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/06/16 00:38:33 wiz Exp $
+#	$NetBSD: Makefile,v 1.29 2002/06/17 20:32:21 augustss Exp $
 #
 
 TARGETS+=	release
@@ -30,6 +30,7 @@ SUBDIR+= newsmips
 SUBDIR+= next68k
 SUBDIR+= pc532
 SUBDIR+= pmax
+SUBDIR+= pmppc
 SUBDIR+= sandpoint
 SUBDIR+= sgimips
 SUBDIR+= shark
