@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.24 2003/03/15 20:54:25 hubertf Exp $	*/
+/*	$NetBSD: pen.c,v 1.25 2003/04/10 23:31:26 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.24 2003/03/15 20:54:25 hubertf Exp $");
+__RCSID("$NetBSD: pen.c,v 1.25 2003/04/10 23:31:26 grant Exp $");
 #endif
 #endif
 
@@ -197,9 +197,11 @@ leave_playpen(char *save)
 }
 
 /*
- * Return free disk space (in bytes) on given file system
+ * Return free disk space (in bytes) on given file system. We use
+ * Returns size in a uint64_t since off_t isn't 64 bits on all
+ * operating systems.
  */
-off_t
+uint64_t
 min_free(char *tmpdir)
 {
 	struct statfs buf;
@@ -208,5 +210,5 @@ min_free(char *tmpdir)
 		warn("statfs");
 		return -1;
 	}
-	return (off_t) buf.f_bavail * (off_t) buf.f_bsize;
+	return (uint64_t) buf.f_bavail * (uint64_t) buf.f_bsize;
 }
