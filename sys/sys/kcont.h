@@ -81,7 +81,7 @@ typedef struct kc {
 					 */
 
 #define KC_IPL_DEFER_SOFTCLOCK	0x01
-#define KC_IPL_DEFER_SOFTNET	0x02	/* run continatiuon in an
+#define KC_IPL_DEFER_SOFTNET	0x02	/* run continuation in an
 					 * IPL_SOFTNET software callout. */
 #define KC_IPL_DEFER_SOFTSERIAL	0x03
 
@@ -142,7 +142,7 @@ void  kcont_defer_malloc(int, /* mallocflags */
  * When the operation completes, or the  object otherwise decides to
  * invoke a  wakeup() on itself, all continuations on the object's
  * kcqueue will be called, either immediately or if a  continuation 
- * requested it) after deferring to a kc_queue * servied at
+ * requested it) after deferring to a kc_queue * served at
  *  software-interrupt priority.
  */
 void	kcont_enqueue(kcq_t * /*kcqueue*/, struct kc * /*kc*/);
@@ -152,7 +152,7 @@ void	kcont_enqueue(kcq_t * /*kcqueue*/, struct kc * /*kc*/);
  * Execute (or defer) all continuations on an object's kcqueue
  * when  an asynchronous operation completes. Runs through the
  * struct kc_queue * of struct kcs, either running the continuations
- * with the given objcet and status; or saving the object and status
+ * with the given object and status; or saving the object and status
  * and deferring the kconts to a software-interrupt priority kc_queue.
  */
 void	kcont_run __P((kcq_t * /*kcq*/, void * /*obj*/,
