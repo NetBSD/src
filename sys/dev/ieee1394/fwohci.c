@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16 2001/03/03 02:04:54 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.17 2001/03/12 23:22:37 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ static int  fwohci_if_output(struct device *, struct mbuf *,
 		void (*)(struct device *, struct mbuf *));
 
 #ifdef FW_DEBUG
-int fw_verbose = 0;
+int fw_verbose = 1;
 int fw_dump = 0;
 #endif
 
@@ -302,7 +302,7 @@ fwohci_intr(void *arg)
 		OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
 		    intmask & ~OHCI_Int_BusReset);
 #ifdef FW_DEBUG
-		if (fw_verbose) {
+		if (fw_verbose > 1) {
 			printf("%s: intmask=0x%08x:",
 			    sc->sc_sc1394.sc1394_dev.dv_xname, intmask);
 			if (intmask & OHCI_Int_CycleTooLong)
@@ -677,7 +677,7 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 		if (val == 0 && ((*pkt->fp_trail & 0x001f0000) >> 16) ==
 		    OHCI_CTXCTL_EVENT_BUS_RESET) {
 #ifdef FW_DEBUG
-			if (fw_verbose)
+			if (fw_verbose > 1)
 				printf("fwohci_phy_input: BusReset: 0x%08x\n",
 				    pkt->fp_hdr[2]);
 #endif
@@ -693,7 +693,7 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 	switch (key) {
 	case 0:
 #ifdef FW_DEBUG
-		if (fw_verbose) {
+		if (fw_verbose > 1) {
 			printf("fwohci_phy_input: PHY Config from %d:", phyid);
 			if (val & 0x00800000)
 				printf(" ForceRoot");
@@ -705,13 +705,13 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 		break;
 	case 1:
 #ifdef FW_DEBUG
-		if (fw_verbose) 
+		if (fw_verbose > 1) 
 			printf("fwohci_phy_input: Link-on from %d\n", phyid);
 #endif
 		break;
 	case 2:
 #ifdef FW_DEBUG
-		if (fw_verbose) {
+		if (fw_verbose > 1) {
 			printf("fwohci_phy_input: SelfID from %d:", phyid);
 			if (val & 0x00800000) {
 				printf(" #%d", (val & 0x00700000) >> 20);
@@ -1096,7 +1096,7 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
   again:
 	fd = fb->fb_desc;
 #ifdef FW_DEBUG
-	if (fw_verbose)
+	if (fw_verbose > 1)
 		printf("fwohci_buf_pktget: desc %ld, off %d, req %d, res %d,"
 		    " len %d, avail %d\n",
 		    (long)(fd - sc->sc_desc), fb->fb_off, fd->fd_reqcount,
@@ -1147,7 +1147,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
 #ifdef FW_DEBUG
-			if (fw_verbose)
+			if (fw_verbose > 1)
 				printf("fwohci_buf_input: no input for is#%d\n",
 				    fc->fc_ctx);
 #endif
@@ -1159,7 +1159,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	len = fwohci_buf_pktget(sc, fc, &p, count);
 	if (len <= 0) {
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf("fwohci_buf_input: no input for %d\n",
 			    fc->fc_ctx);
 #endif
@@ -1203,7 +1203,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (pkt->fp_hlen == 16)
 		pkt->fp_dlen = pkt->fp_hdr[3] >> 16;
 #ifdef FW_DEBUG
-	if (fw_verbose)
+	if (fw_verbose > 1)
 		printf("fwohci_buf_input: tcode=0x%x, hlen=%d, dlen=%d\n",
 		    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen);
 #endif
@@ -1333,7 +1333,7 @@ fwohci_handler_set(struct fwohci_softc *sc,
 	fh->fh_handler = handler;
 	fh->fh_handarg = arg;
 #ifdef FW_DEBUG
-	if (fw_verbose)
+	if (fw_verbose > 1)
 		printf("fwohci_handler_set: ctx %d, tcode %x, key 0x%x, 0x%x\n",
 		    fc->fc_ctx, tcode, key1, key2);
 #endif
@@ -1341,7 +1341,7 @@ fwohci_handler_set(struct fwohci_softc *sc,
 	if (tcode == IEEE1394_TCODE_STREAM_DATA) {
 		fwohci_ctx_init(sc, fc);
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf("fwohci_handler_set: SYNC desc %ld\n",
 			    (long)(TAILQ_FIRST(&fc->fc_buf)->fb_desc -
 			    sc->sc_desc));
@@ -1388,7 +1388,7 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		if (fh == NULL) {
 			rcode = IEEE1394_RCODE_ADDRESS_ERROR;
 #ifdef FW_DEBUG
-			if (fw_verbose)
+			if (fw_verbose > 1)
 				printf("fwohci_arrq_input: no listener:"
 				    " tcode 0x%x, addr=0x%04x %08x\n",
 				    pkt.fp_tcode, key1, key2);
@@ -1421,7 +1421,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		rcode = (pkt.fp_hdr[1] & 0x0000f000) >> 12;
 		tlabel = (pkt.fp_hdr[0] & 0x0000fc00) >> 10;
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf("fwohci_arrs_input: tcode 0x%x, from 0x%04x,"
 			    " tlabel 0x%x, rcode 0x%x, hlen %d, dlen %d\n",
 			    pkt.fp_tcode, srcid, tlabel, rcode, pkt.fp_hlen,
@@ -1439,7 +1439,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			}
 		}
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			if (fh == NULL)
 				printf("fwohci_arrs_input: no lister\n");
 #endif
@@ -1464,7 +1464,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		chan = (pkt.fp_hdr[0] & 0x00003f00) >> 8;
 		tag  = (pkt.fp_hdr[0] & 0x0000c000) >> 14;
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf("fwohci_ir_input: hdr 0x%08x, tcode %d,"
 			    " hlen %d, dlen %d\n", pkt.fp_hdr[0],
 			    pkt.fp_tcode, pkt.fp_hlen, pkt.fp_dlen);
@@ -1495,7 +1495,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			}
 		}
 #ifdef FW_DEBUG
-		if (fw_verbose) {
+		if (fw_verbose > 1) {
 			if (fh == NULL)
 				printf("fwohci_ir_input: no handler\n");
 			else
@@ -1526,7 +1526,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		return EAGAIN;
 	}
 #ifdef FW_DEBUG
-	if (fw_verbose) {
+	if (fw_verbose > 1) {
 		struct iovec *iov;
 		printf("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
 		    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen);
@@ -1652,7 +1652,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
 
 #ifdef FW_DEBUG
-	if (fw_verbose) {
+	if (fw_verbose > 1) {
 		printf("fwohci_at_output: desc %ld",
 		    (long)(fb->fb_desc - sc->sc_desc));
 		for (i = 0; i < ndesc * 4; i++)
@@ -1699,7 +1699,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 	while ((fb = TAILQ_FIRST(&fc->fc_buf)) != NULL) {
 		fd = fb->fb_desc;
 #ifdef FW_DEBUG
-		if (fw_verbose) {
+		if (fw_verbose > 1) {
 			printf("fwohci_at_done: %sdesc %ld (%d)",
 			    force ? "force " : "",
 			    (long)(fd - sc->sc_desc), fb->fb_nseg);
@@ -2078,7 +2078,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	}
 
 #ifdef FW_DEBUG
-	if (fw_verbose) {
+	if (fw_verbose > 1) {
 		printf("%s: SelfID: 0x%08x", sc->sc_sc1394.sc1394_dev.dv_xname,
 		    val);
 		for (i = 0; i < count; i++)
@@ -2179,13 +2179,13 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		return IEEE1394_RCODE_ADDRESS_ERROR;
 	}
 #ifdef FW_DEBUG
-	if (fw_verbose)
+	if (fw_verbose > 1)
 		printf("fwohci_csr_input: CSR[0x%04x]: 0x%08x",
 		    reg, *(u_int32_t *)(&sc->sc_csr[reg]));
 #endif
 	if (pkt->fp_tcode == IEEE1394_TCODE_WRITE_REQ_QUAD) {
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf(" -> 0x%08x\n",
 			    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base));
 #endif
@@ -2193,7 +2193,7 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base);
 	} else {
 #ifdef FW_DEBUG
-		if (fw_verbose)
+		if (fw_verbose > 1)
 			printf("\n");
 #endif
 		res.fp_hdr[3] = htonl(*(u_int32_t *)&sc->sc_csr[reg]);
@@ -2339,7 +2339,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
 #ifdef FW_DEBUG
-	if (fw_verbose) {
+	if (fw_verbose > 1) {
 		int i;
 		printf("fwohci_if_input: tcode=0x%x, dlen=%d",
 		    pkt->fp_tcode, pkt->fp_dlen);
