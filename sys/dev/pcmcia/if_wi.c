@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.34 2000/08/28 13:25:22 joda Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.35 2000/09/28 06:24:48 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1125,16 +1125,12 @@ allmulti:
 	i = 0;
 	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
+		/* Punt on ranges or too many multicast addresses. */
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0 ||
 		    i >= 16)
 			goto allmulti;
-#if 0
-		/* Punt on ranges. */
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0)
-			break;
-#endif
+
 		bcopy(enm->enm_addrlo,
 		    (char *)&mcast.wi_mcast[i], ETHER_ADDR_LEN);
 		i++;
