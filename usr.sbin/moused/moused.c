@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.7 2002/08/09 02:17:28 itojun Exp $ */
+/* $NetBSD: moused.c,v 1.8 2002/09/19 16:45:58 mycroft Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.7 2002/08/09 02:17:28 itojun Exp $");
+__RCSID("$NetBSD: moused.c,v 1.8 2002/09/19 16:45:58 mycroft Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: moused.c,v 1.7 2002/08/09 02:17:28 itojun Exp $");
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/poll.h>
 #include <unistd.h>
 
 #define MAX_CLICKTHRESHOLD	2000	/* 2 seconds */
@@ -858,8 +859,7 @@ moused(char *wsm)
     mousestatus_t action2;		/* mapped action */
     int lastbutton = 0;
     int button;
-    struct timeval timeout;
-    fd_set fds;
+    struct pollfd set[3];
     u_char b;
     FILE *fp;
     int flags;
@@ -899,27 +899,16 @@ moused(char *wsm)
     }
 
     /* process mouse data */
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 20000;		/* 20 msec */
     for (;;) {
 
-	FD_ZERO(&fds);
-	if (rodent.mfd >= FD_SETSIZE)
-	    logerr(1, "descriptor too big");
-	FD_SET(rodent.mfd, &fds);
-	if (rodent.mremsfd >= 0) {
-	    if (rodent.mremsfd >= FD_SETSIZE)
-		logerr(1, "descriptor too big");
-	    FD_SET(rodent.mremsfd, &fds);
-	}
-	if (rodent.mremcfd >= 0) {
-	    if (rodent.mremcfd >= FD_SETSIZE)
-		logerr(1, "descriptor too big");
-	    FD_SET(rodent.mremcfd, &fds);
-	}
+	set[0].fd = rodent.mfd;
+	set[0].events = POLLIN;
+	set[1].fd = rodent.mremsfd;
+	set[1].events = rodent.mremsfd < 0 ? 0 : POLLIN;
+	set[2].fd = rodent.mremcfd;
+	set[2].events = rodent.mremcfd < 0 ? 0 : POLLIN;
 
-	c = select(FD_SETSIZE, &fds, NULL, NULL,
-		   (rodent.flags & Emulate3Button) ? &timeout : NULL);
+	c = poll(set, 3, (rodent.flags & Emulate3Button) ? 20 : INFTIM);
 	if (c < 0) {                    /* error */
 	    logwarn("failed to read from mouse");
 	    continue;
@@ -939,30 +928,28 @@ moused(char *wsm)
 	} else {
 #if 0
 	    /*  MouseRemote client connect/disconnect  */
-	    if ((rodent.mremsfd >= 0) && FD_ISSET(rodent.mremsfd, &fds)) {
+	    if (set[1].revents & POLLIN) {
 		mremote_clientchg(TRUE);
 		continue;
 	    }
-	    if ((rodent.mremcfd >= 0) && FD_ISSET(rodent.mremcfd, &fds)) {
+	    if (set[2].revents & POLLIN) {
 		mremote_clientchg(FALSE);
 		continue;
 	    }
 #endif
 	    /* mouse movement */
-	    if (read(rodent.mfd, &b, 1) == -1) {
-		if (errno == EWOULDBLOCK)
-		    continue;
-		else
+	    if (set[0].revents & POLLIN) {
+		if (read(rodent.mfd, &b, 1) == -1)
 		    return;
+		if ((flags = r_protocol(b, &action0)) == 0)
+		    continue;
+		r_timestamp(&action0);
+		r_statetrans(&action0, &action, 
+	    		     A(action0.button & MOUSE_BUTTON1DOWN,
+	    		       action0.button & MOUSE_BUTTON3DOWN));
+		debug("flags:%08x buttons:%08x obuttons:%08x", action.flags,
+		      action.button, action.obutton);
 	    }
-	    if ((flags = r_protocol(b, &action0)) == 0)
-		continue;
-	    r_timestamp(&action0);
-	    r_statetrans(&action0, &action, 
-	    		 A(action0.button & MOUSE_BUTTON1DOWN,
-	    		   action0.button & MOUSE_BUTTON3DOWN));
-	    debug("flags:%08x buttons:%08x obuttons:%08x", action.flags,
-		  action.button, action.obutton);
 	}
 	action0.obutton = action0.button;
 	flags &= MOUSE_POSCHANGED;
@@ -1223,7 +1210,7 @@ static void
 r_init(void)
 {
     unsigned char buf[16];	/* scrach buffer */
-    fd_set fds;
+    struct pollfd set[1];
     char *s;
     char c;
     int i;
@@ -1351,11 +1338,11 @@ r_init(void)
 	i = FREAD;
 	ioctl(rodent.mfd, TIOCFLUSH, &i);
 	/* send the command to initialize the beast */
+	set[0].fd = rodent.mfd;
+	set[0].events = POLLIN;
 	for (s = "E5E5"; *s; ++s) {
 	    write(rodent.mfd, s, 1);
-	    FD_ZERO(&fds);
-	    FD_SET(rodent.mfd, &fds);
-	    if (select(FD_SETSIZE, &fds, NULL, NULL, NULL) <= 0)
+	    if (poll(set, 1, INFTIM) <= 0)
 		break;
 	    read(rodent.mfd, &c, 1);
 	    debug("%c", c);
@@ -1405,10 +1392,10 @@ r_init(void)
 	tcsendbreak(rodent.mfd, 0);	/* send break for 400 msec */
 	i = FREAD;
 	ioctl(rodent.mfd, TIOCFLUSH, &i);
+	set[0].fd = rodent.mfd;
+	set[0].events = POLLIN;
 	for (i = 0; i < 7; ++i) {
-	    FD_ZERO(&fds);
-	    FD_SET(rodent.mfd, &fds);
-	    if (select(FD_SETSIZE, &fds, NULL, NULL, NULL) <= 0)
+	    if (poll(set, 1, INFTIM) <= 0)
 		break;
 	    read(rodent.mfd, &c, 1);
 	    buf[i] = c;
@@ -1419,9 +1406,7 @@ r_init(void)
 	setmousespeed(9600, rodent.baudrate, rodentcflags[rodent.rtype]);
 	tcsendbreak(rodent.mfd, 0);	/* send break for 400 msec again */
 	for (i = 0; i < 7; ++i) {
-	    FD_ZERO(&fds);
-	    FD_SET(rodent.mfd, &fds);
-	    if (select(FD_SETSIZE, &fds, NULL, NULL, NULL) <= 0)
+	    if (poll(set, 1, INFTIM) <= 0)
 		break;
 	    read(rodent.mfd, &c, 1);
 	    debug("%c", c);
@@ -2362,8 +2347,7 @@ setmousespeed(int old, int new, unsigned cflag)
 static int
 pnpwakeup1(void)
 {
-    struct timeval timeout;
-    fd_set fds;
+    struct pollfd set[1];
     int i;
 
     /* 
@@ -2407,11 +2391,9 @@ pnpwakeup1(void)
     ioctl(rodent.mfd, TIOCMBIS, &i);
 
     /* try to read something */
-    FD_ZERO(&fds);
-    FD_SET(rodent.mfd, &fds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 240000;
-    if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
+    set[0].fd = rodent.mfd;
+    set[0].events = POLLIN;
+    if (poll(set, 1, 240) > 0) {
 	debug("pnpwakeup1(): valid response in first phase.");
 	return TRUE;
     }
@@ -2428,11 +2410,7 @@ pnpwakeup1(void)
     ioctl(rodent.mfd, TIOCMBIS, &i);
 
     /* try to read something */
-    FD_ZERO(&fds);
-    FD_SET(rodent.mfd, &fds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 240000;
-    if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
+    if (poll(set, 1, 240) > 0) {
 	debug("pnpwakeup1(): valid response in second phase.");
 	return TRUE;
     }
@@ -2443,8 +2421,7 @@ pnpwakeup1(void)
 static int
 pnpwakeup2(void)
 {
-    struct timeval timeout;
-    fd_set fds;
+    struct pollfd set[1];
     int i;
 
     /*
@@ -2467,11 +2444,9 @@ pnpwakeup2(void)
     ioctl(rodent.mfd, TIOCMBIS, &i);
 
     /* try to read something */
-    FD_ZERO(&fds);
-    FD_SET(rodent.mfd, &fds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 240000;
-    if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
+    set[0].fd = rodent.mfd;
+    set[0].events = POLLIN;
+    if (poll(set, 1, 240) > 0) {
 	debug("pnpwakeup2(): valid response.");
 	return TRUE;
     }
@@ -2482,8 +2457,7 @@ pnpwakeup2(void)
 static int
 pnpgets(char *buf)
 {
-    struct timeval timeout;
-    fd_set fds;
+    struct pollfd set[1];
     int begin;
     int i;
     char c;
@@ -2522,12 +2496,10 @@ pnpgets(char *buf)
     }
 
     ++c;			/* make it `End ID' */
+    set[0].fd = rodent.mfd;
+    set[0].events = POLLIN;
     for (;;) {
-        FD_ZERO(&fds);
-        FD_SET(rodent.mfd, &fds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 240000;
-        if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) <= 0)
+        if (poll(set, 1, 240) <= 0)
 	    break;
 
 	read(rodent.mfd, &buf[i], 1);
