@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2003/01/17 22:48:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2003/01/30 07:46:28 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -177,6 +177,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	int exc;
 	extern char _edata, _end;
 	struct cpu_info * const ci = &cpu_info_store;
+
+	/* Set the curcpu() pointer */
+	mtspr(SPR_SPRG0, ci);
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_ER, 0);
