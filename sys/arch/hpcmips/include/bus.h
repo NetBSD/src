@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.2 2000/01/25 22:13:21 drochner Exp $   */
+/*     $NetBSD: bus.h,v 1.3 2000/03/05 05:22:13 takemura Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@
  * Bus address and size types
  */
 
-typedef u_int32_t bus_addr_t;
-typedef u_int32_t bus_size_t;
+typedef u_long bus_addr_t;
+typedef u_long bus_size_t;
 
 /*
  * Access methods for bus resources and address space.
