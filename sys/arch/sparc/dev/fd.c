@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 1998/01/12 20:23:49 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.56 1998/02/05 07:57:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -60,6 +60,11 @@
 #include <sys/conf.h>
 
 #include <dev/cons.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
