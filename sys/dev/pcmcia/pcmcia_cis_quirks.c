@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.16 2001/12/16 06:07:50 ichiro Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.17 2001/12/23 09:25:19 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.16 2001/12/16 06:07:50 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.17 2001/12/23 09:25:19 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,22 +256,22 @@ static const struct pcmcia_config_entry pcmcia_emtac_a2424i_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static const struct pcmcia_function pcmcia_fujitsu_j182a_func0 = {
+static const struct pcmcia_function pcmcia_fujitsu_j181_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
-	0x3d,			/* last cfe number */
-	0x3f0,			/* ccr_base */
+	0x21,			/* last cfe number */
+	0xfe0,			/* ccr_base */
 	0xf,			/* ccr_mask */
-};      
+};
 
-static const struct pcmcia_config_entry pcmcia_fujitsu_j182a_func0_cfe0 = {
-	0x31,			/* cfe number */
-	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 |
-	PCMCIA_CFE_IRQLEVEL | PCMCIA_CFE_POWERDOWN,
+static const struct pcmcia_config_entry pcmcia_fujitsu_j181_func0_cfe0 = {
+	0xc,			/* cfe number */
+	PCMCIA_CFE_MWAIT_REQUIRED | PCMCIA_CFE_WP_ACTIVE | PCMCIA_CFE_IO8 |
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL | PCMCIA_CFE_IRQPULSE,
 	PCMCIA_IFTYPE_IO,
 	1,			/* num_iospace */
 	10,			/* iomask */
-	{ { 0x20, 0x220 } },	/* iospace */
+	{ { 0x20, 0x140 } },	/* iospace */
 	0xffff,			/* irqmask */
 	0,			/* num_memspace */
 	{ { 0 } },		/* memspace */
@@ -311,8 +311,9 @@ static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  &pcmcia_ndc_nd5100_func0, &pcmcia_ndc_nd5100_func0_cfe0 },
 	{ PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN, PCMCIA_CIS_INVALID,
 	  &pcmcia_emtac_a2424i_func0, &pcmcia_emtac_a2424i_func0_cfe0 },
-	{ PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A, PCMCIA_CIS_INVALID,
-	  &pcmcia_fujitsu_j182a_func0, &pcmcia_fujitsu_j182a_func0_cfe0 },
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_FUJITSU_FMV_J181,
+	  &pcmcia_fujitsu_j181_func0, &pcmcia_fujitsu_j181_func0_cfe0 },
 };
 	
 static int n_pcmcia_cis_quirks =
