@@ -1,4 +1,4 @@
-/*	$NetBSD: nq80c03reg.h,v 1.1 2000/05/01 08:06:17 soren Exp $	*/
+/*	$NetBSD: seeq8003reg.h,v 1.1 2000/09/22 05:48:50 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
