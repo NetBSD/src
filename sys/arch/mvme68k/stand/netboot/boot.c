@@ -1,6 +1,6 @@
-/*	$NetBSD: boot.c,v 1.2 1995/10/12 20:39:49 chuck Exp $ */
+/*	$NetBSD: boot.c,v 1.3 1996/05/17 21:08:34 chuck Exp $ */
 
-/*-
+/*
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,41 +37,42 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <machine/prom.h>
 
 #include "stand.h"
-
-/*
- * Boot device is derived from ROM provided information.
- */
-#define LOADADDR	0x8000
+#include "libsa.h"
 
 extern	char *version;
-extern	char *cmd_parse();
-char	defname[32] = "netbsd";
 char	line[80];
-int 	boothowto;
 
-
-main(cline)
-char *cline;
+main()
 {
 	char *cp, *file;
-	int	io;
+	int ask = 0, howto;
 
-	printf(">> NetBSD netboot [%s]\n", version);
-	file = cmd_parse(cline, &boothowto);
-	if (file == NULL)
-		file = defname;
+	printf(">> BSD MVME%x netboot [%s]\n", bugargs.cputyp, version);
+	/* cycle in the correct args */
+	bugargs.arg_start = bugargs.nbarg_start;
+	bugargs.arg_end   = bugargs.nbarg_end;
+	*bugargs.arg_end = 0; /* ensure */
+
+	parse_args(&file, &howto);
 
 	for (;;) {
-		if (boothowto & RB_ASKNAME) {
+		if (ask) {
 			printf("boot: ");
 			gets(line);
-			if (line[0])
-				file = line;
+			if (line[0]) {
+				bugargs.arg_start = line;
+				cp = line;
+				while (cp < (line + sizeof(line) - 1) && *cp) 
+					cp++;
+				bugargs.arg_end = cp;
+				parse_args(&file, &howto);
+			}
 		}
-		exec_mvme(file, LOADADDR, boothowto);
+		exec_mvme(file, howto);
 		printf("boot: %s: %s\n", file, strerror(errno));
-		boothowto |= RB_ASKNAME;
+		ask = 1;
 	}
 }
