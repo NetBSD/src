@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.40 2003/06/10 17:19:04 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.41 2003/06/16 20:57:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -401,23 +401,41 @@ process_req(menudesc *m, void *arg, int num, int req)
 		return;
 
 	case REQ_NEXT_ITEM:
-		if (m->cursel >= m->numopts + hasexit - 1) {
-			mbeep();
-			return;
+		ch = m->cursel;
+		for (;;) {
+			ch++;
+			if (ch >= m->numopts + hasexit) {
+				mbeep();
+				return;
+			}
+			if (hasexit && ch == m->numopts)
+				break;
+			if (m->opts[ch].opt_flags & OPT_EXIT
+			    || m->opts[ch].opt_menu != -1
+			    || m->opts[ch].opt_action != NULL)
+				break;
 		}
-		m->cursel++;
+		m->cursel = ch;
 		if (m->mopt & MC_SCROLL && m->cursel >= m->topline + m->h)
-			m->topline += 1;
+			m->topline = m->cursel - m->h + 1;
 		break;
 
 	case REQ_PREV_ITEM:
-		if (m->cursel <= 0) {
-			mbeep();
-			return;
+		ch = m->cursel;
+		for (;;) {
+			if (ch <= 0) {
+				mbeep();
+				return;
+			}
+			ch--;
+			if (m->opts[ch].opt_flags & OPT_EXIT
+			    || m->opts[ch].opt_menu != -1
+			    || m->opts[ch].opt_action != NULL)
+				break;
 		}
-		m->cursel--;
+		m->cursel = ch;
 		if (m->cursel < m->topline)
-			m->topline -= 1;
+			m->topline = m->cursel;
 		break;
 
 	case REQ_HELP:
@@ -471,6 +489,12 @@ process_req(menudesc *m, void *arg, int num, int req)
 		} else
 			ch = 25 + ch - 'A';
 		if (ch < 0 || ch >= m->numopts) {
+			mbeep();
+			return;
+		}
+		if (!(m->opts[ch].opt_flags & OPT_EXIT)
+		    && m->opts[ch].opt_menu == -1
+		    && m->opts[ch].opt_action == NULL) {
 			mbeep();
 			return;
 		}
