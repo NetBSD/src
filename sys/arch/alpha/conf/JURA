@@ -1,4 +1,4 @@
-# $NetBSD: JURA,v 1.16 1997/08/19 23:49:36 augustss Exp $
+# $NetBSD: JURA,v 1.17 1997/08/24 06:37:17 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -11,37 +11,37 @@ maxusers 8
 # CPU Support
 options         DEC_2000_300    # "Jensen":     2000/300 (DECpc AXP 150)
 
-options		BOOTKEY			# ask for keyhit before halt/reboot 
+options 	BOOTKEY			# ask for keyhit before halt/reboot 
 
 # Standard system options
-options		KTRACE			# System call tracing support
+options 	KTRACE			# System call tracing support
 
 # Diagnostic/debugging support options
-options		DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# Expensive debugging checks/support
+options 	DIAGNOSTIC		# Cheap kernel consistency checks
+options 	DEBUG			# Expensive debugging checks/support
 
 # File systems
-file-system 	FFS		# Fast file system
-file-system 	MFS		# Memory-based file system
-file-system 	NFS		# Sun NFS-compatible file system client
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	NFS		# Sun NFS-compatible file system client
 
 # File system options
-options		FIFO		# POSIX fifo support (in all file systems)
+options 	FIFO		# POSIX fifo support (in all file systems)
 
 # Networking options
-options		INET		# Internet protocol suite
+options 	INET		# Internet protocol suite
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
-options		COMPAT_43
+options 	COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
-#options	COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_12
+#options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
 
 # Loadable Kernel Modules
-options		LKM
+options 	LKM
 
 config		netbsd	root on ? type nfs
 

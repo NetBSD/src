@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.17 1997/08/19 23:49:34 augustss Exp $
+# $NetBSD: BUNNY,v 1.18 1997/08/24 06:37:13 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -10,48 +10,48 @@ include	"arch/alpha/conf/std.alpha"
 maxusers 8
 
 # bump up the number of buffers, for quicker compiles
-options		BUFPAGES=2048	# 16M of buffer cache
+options 	BUFPAGES=2048	# 16M of buffer cache
 
 # CPU Support
-options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 
 # Standard system options
-options		KTRACE			# System call tracing support
+options 	KTRACE			# System call tracing support
 
 # Diagnostic/debugging support options
-options		DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# Expensive debugging checks/support
+options 	DIAGNOSTIC		# Cheap kernel consistency checks
+options 	DEBUG			# Expensive debugging checks/support
 
 # File systems
-file-system 	FFS		# Fast file system
-file-system 	MFS		# Memory-based file system
-file-system 	NFS		# Sun NFS-compatible file system client
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	NFS		# Sun NFS-compatible file system client
 
 # File system options
-options		FIFO		# POSIX fifo support (in all file systems)
-options		NFSSERVER	# Sun NFS-compatible file system server
+options 	FIFO		# POSIX fifo support (in all file systems)
+options 	NFSSERVER	# Sun NFS-compatible file system server
 
 # Networking options
-options		INET		# Internet protocol suite
+options 	INET		# Internet protocol suite
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
-options		COMPAT_43
+options 	COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
-#options	COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_12
+#options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
 
 # Loadable Kernel Modules
-options		LKM
+options 	LKM
 
 # Disable kernel security.
-#options	INSECURE
+#options 	INSECURE
 
 # Misc. options
-options		PCIVERBOSE		# recognize "unknown" PCI devices
-options		UCONSOLE		# users can use TIOCCONS (for xconsole)
+options 	PCIVERBOSE		# recognize "unknown" PCI devices
+options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	root on ? type ?
 
