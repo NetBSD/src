@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.7 1997/10/11 02:07:25 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.8 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.7 1997/10/11 02:07:25 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.8 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,7 +48,7 @@ void
 initialize(startup)
 	char    startup;
 {
-	struct objs *p;
+	const struct objs *p;
 
 	puts("Version 4.2, fall 1984.");
 	puts("First Adventure game written by His Lordship, the honorable");
@@ -83,7 +83,7 @@ getutmp(uname)
 	strcpy(uname, ptr ? ptr->pw_name : "");
 }
 
-char   *list[] = {		/* hereditary wizards */
+const char   *const list[] = {		/* hereditary wizards */
 	"riggle",
 	"chris",
 	"edward",
@@ -94,7 +94,7 @@ char   *list[] = {		/* hereditary wizards */
 	0
 };
 
-char   *badguys[] = {
+const char   *const badguys[] = {
 	"wnj",
 	"root",
 	"ted",
@@ -103,7 +103,7 @@ char   *badguys[] = {
 
 int
 wizard(uname)
-	char   *uname;
+	const char   *uname;
 {
 	int     flag;
 
@@ -114,9 +114,9 @@ wizard(uname)
 
 int
 checkout(uname)
-	char   *uname;
+	const char   *uname;
 {
-	char  **ptr;
+	const char  *const *ptr;
 
 	for (ptr = list; *ptr; ptr++)
 		if (strcmp(*ptr, uname) == 0)
