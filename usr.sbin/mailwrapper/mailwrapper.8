@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.8 2000/09/04 07:37:21 kleink Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.9 2002/01/19 03:26:04 wiz Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -75,7 +75,7 @@ is
 .Dq mailq
 or
 .Dq newaliases
-and behaves appropriately. Typically, replacement MTAs provide similar 
+and behaves appropriately. Typically, replacement MTAs provide similar
 functionality, either through a program that also switches behavior
 based on calling name, or through a set of programs that provide
 similar functionality.
@@ -89,7 +89,7 @@ This leads to configuration problems for many administrators, since
 they may wish to install a new MTA without altering the system
 provided
 .Pa /usr .
-(This may be, for example, to avoid having upgrade problems when a new 
+(This may be, for example, to avoid having upgrade problems when a new
 version of the system is installed over the old.)
 They may also have a shared
 .Pa /usr
@@ -107,19 +107,19 @@ and to invoke an appropriate MTA instead of
 based on configuration information placed in
 .Pa /etc/mailer.conf .
 This permits the administrator to configure which MTA is to be invoked on
-the system at run time. 
+the system at run time.
+.Sh EXIT STATUS
+.Nm
+exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 Configuration for
 .Nm
 is kept in
 .Pa /etc/mailer.conf .
-.Pa /usr/sbin/sendmail 
+.Pa /usr/sbin/sendmail
 is typically set up as a symlink to
 .Nm
 which is not usually invoked on its own.
-.Sh EXIT STATUS
-.Nm
-exits 0 on success, and >0 if an error occurs.
 .Sh DIAGNOSTICS
 .Nm
 will print a diagnostic if its configuration file is missing or malformed,
@@ -127,15 +127,15 @@ or does not contain a mapping for the name under which it was invoked.
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,
-.Xr mailer.conf 5 ,
 .Xr newaliases 1 ,
+.Xr mailer.conf 5 ,
 .Xr sendmail 8
 .Sh HISTORY
 .Nm
 appeared in
 .Nx 1.4 .
 .Sh AUTHORS
-Perry E. Metzger <perry@piermont.com>
+.An Perry E. Metzger Aq perry@piermont.com
 .Sh BUGS
 The entire reason this program exists is a crock. Instead, a command
 for how to submit mail should be standardized, and all the "behave
