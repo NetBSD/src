@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.16 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.17 1996/08/10 09:08:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -57,7 +57,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
