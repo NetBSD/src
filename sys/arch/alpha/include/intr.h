@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.14 1998/07/18 21:27:26 is Exp $ */
+/* $NetBSD: intr.h,v 1.15 1998/08/01 18:52:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -94,6 +94,7 @@ struct alpha_shared_intrhand {
 	int	(*ih_fn) __P((void *));
 	void	*ih_arg;
 	int	ih_level;
+	unsigned int ih_num;
 };
 
 struct alpha_shared_intr {
@@ -114,6 +115,8 @@ int	alpha_shared_intr_dispatch __P((struct alpha_shared_intr *,
 	    unsigned int));
 void	*alpha_shared_intr_establish __P((struct alpha_shared_intr *,
 	    unsigned int, int, int, int (*)(void *), void *, const char *));
+void	alpha_shared_intr_disestablish __P((struct alpha_shared_intr *,
+	    void *, const char *));
 int	alpha_shared_intr_get_sharetype __P((struct alpha_shared_intr *,
 	    unsigned int));
 int	alpha_shared_intr_isactive __P((struct alpha_shared_intr *,

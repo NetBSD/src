@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.5 1998/07/07 22:06:29 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.6 1998/08/01 18:52:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.5 1998/07/07 22:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.6 1998/08/01 18:52:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,11 +173,28 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 	ih->ih_fn = fn;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
+	ih->ih_num = num;
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);
 
 	return (ih);
+}
+
+void
+alpha_shared_intr_disestablish(intr, cookie, basename)
+	struct alpha_shared_intr *intr;
+	void *cookie;
+	const char *basename;
+{
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int num = ih->ih_num;
+
+	/*
+	 * Just remove it from the list and free the entry.  We let
+	 * the caller deal with resetting the share type, if appropriate.
+	 */
+	TAILQ_REMOVE(&intr[num].intr_q, ih, ih_q);
 }
 
 int
