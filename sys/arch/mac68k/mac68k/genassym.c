@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 1995/05/17 00:37:33 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.14 1995/06/21 03:20:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,7 @@
 main()
 {
 	register struct proc *p = (struct proc *)0;
+	register struct mdproc *mdproc = (struct mdproc *)0;
 	register struct vmmeter *vm = (struct vmmeter *)0;
 	register struct user *up = (struct user *)0;
 	register struct rusage *rup = (struct rusage *)0;
@@ -66,12 +67,18 @@ main()
 	printf("#define\tP_BACK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
+	printf("#define\tP_MD %d\n", &p->p_md);
+	printf("#define\tP_PID %d\n", &p->p_pid);
 	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tP_FLAG %d\n", &p->p_flag);
+	printf("#define\tP_MD_REGS %d\n", &p->p_md.md_regs);
+	printf("#define\tP_MD_FLAGS %d\n", &p->p_md.md_flags);
 	printf("#define\tSSLEEP %d\n", SSLEEP);
 	printf("#define\tSRUN %d\n", SRUN);
+
+	printf("#define\tMD_REGS %d\n", &mdproc->md_regs);
 
 	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
 
@@ -83,7 +90,7 @@ main()
 	printf("#define\tV_SOFT %d\n", &vm->v_soft);
 
 	printf("#define\tUPAGES %d\n", UPAGES);
-	printf("#define\tHIGHPAGES %d\n", HIGHPAGES);
+	printf("#define\tUSPACE %d\n", USPACE);
 	printf("#define\tP1PAGES %d\n", P1PAGES);
 	printf("#define\tCLSIZE %d\n", CLSIZE);
 	printf("#define\tNBPG %d\n", NBPG);
@@ -142,24 +149,11 @@ main()
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
-	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
-	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
+	printf("#define\tCACHE4_OFF %d\n", CACHE4_OFF);
 	printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
 
-	printf("#define\tPG_V %d\n", PG_V);
-	printf("#define\tPG_NV %d\n", PG_NV);
-	printf("#define\tPG_RO %d\n", PG_RO);
-	printf("#define\tPG_RW %d\n", PG_RW);
-	printf("#define\tPG_CI %d\n", PG_CI);
-	printf("#define\tPG_PROT %d\n", PG_PROT);
 	printf("#define\tPG_FRAME %d\n", PG_FRAME);
-	printf("#define\tSG_V %d\n", SG_V);
-	printf("#define\tSG_NV %d\n", SG_NV);
-	printf("#define\tSG_RW %d\n", SG_RW);
-	printf("#define\tSG_FRAME %d\n", SG_FRAME);
-	printf("#define\tSG_ISHIFT %d\n", SG_ISHIFT);
-	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);
 
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
@@ -167,7 +161,6 @@ main()
 	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
 	printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
 	printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
-	printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
 	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
 	printf("#define\tPCB_TRCB %d\n", 5);
