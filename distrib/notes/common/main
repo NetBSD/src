@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.51 2000/03/12 19:18:50 martin Exp $
+.\" $NetBSD: main,v 1.52 2000/04/13 17:53:58 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -860,6 +860,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@NetBSD.ORG
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.ORG
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.ORG
+.It Ta John Hawkinson Ta Mt jhawk@NetBSD.ORG
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.ORG
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.ORG
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.ORG
