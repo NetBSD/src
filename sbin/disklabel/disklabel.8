@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.15 1997/07/02 03:19:09 mikel Exp $
+.\"	$NetBSD: disklabel.8,v 1.16 1997/09/14 08:50:16 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,31 +43,31 @@
 .Nm disklabel
 .Nd read and write disk pack label
 .Sh SYNOPSIS
-.Nm disklabel
+.Nm
 .Op Fl rt
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl w
 .Op Fl r
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm disklabel
+.Nm
 .Fl e
 .Op Fl r
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl i
 .Op Fl r
 .Ar disk
-.Nm disklabel
+.Nm
 .Fl R
 .Op Fl r
 .Ar disk Ar protofile
-.Nm disklabel
+.Nm
 .Op Fl NW
 .Ar disk
 .sp
-.Nm disklabel
+.Nm
 .Fl B
 .Oo
 .Fl b Ar boot1
@@ -75,7 +75,7 @@
 .Oc
 .Ar disk
 .Oo Ar disktype Oc
-.Nm disklabel
+.Nm
 .Fl w
 .Fl B
 .Oo
@@ -84,7 +84,7 @@
 .Oc
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm disklabel
+.Nm
 .Fl R
 .Fl B
 .Oo
@@ -94,14 +94,14 @@
 .Ar disk Ar protofile
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
-.Nm Disklabel
+.Nm
 can be used to install, examine or modify the label on a disk drive or pack.
 When writing the label, it can be used
 to change the drive identification,
 the disk partitions on the drive,
 or to replace a damaged label.
 On some systems,
-.Nm disklabel
+.Nm
 can be used to install bootstrap code as well.
 There are several forms of the command that read (display), install or edit
 the label on a disk.
@@ -144,7 +144,7 @@ The second form of the command, with the
 .Fl w
 flag, is used to write a standard label on the designated drive.
 The required arguments to
-.Nm disklabel
+.Nm
 are the drive to be labelled (e.g. sd0), and
 the drive type as described in the
 .Xr disktab 5
@@ -208,7 +208,7 @@ on input with either the
 With the
 .Fl R
 flag,
-.Nm disklabel
+.Nm
 is capable of restoring a disk label that was formatted
 in a prior operation and saved in an ascii file.
 The prototype file used to create the label should be in the same format
@@ -225,12 +225,12 @@ is specified and will be unaffected otherwise.
 The
 .Fl NW
 flags for
-.Nm disklabel
+.Nm
 explicitly disallow and
 allow, respectively, writing of the pack label area on the selected disk.
 .Pp
 The final three forms of
-.Nm disklabel
+.Nm
 are used to install boostrap code on machines where the bootstrap is part
 of the label.
 The bootstrap code is comprised of one or two boot programs depending on
@@ -357,7 +357,8 @@ prototype file by dumping some other disk's label to a file and editing
 it appropriately (total size, partition offsets, types, etc.)
 .Sh SEE ALSO
 .Xr disktab 5 ,
-.Xr disklabel 5
+.Xr disklabel 5 ,
+.Xr installboot 8
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while it is open.
@@ -374,7 +375,7 @@ allocated for it by some filesystems.
 As a result, it may not be possible to have filesystems on some partitions
 of a ``bootable'' disk.
 When installing bootstrap code,
-.Nm disklabel
+.Nm
 checks for these cases.
 If the installed boot code would overlap a partition of type FS_UNUSED
 it is marked as type FS_BOOT.
@@ -382,12 +383,12 @@ The
 .Xr newfs 8
 utility will disallow creation of filesystems on FS_BOOT partitions.
 Conversely, if a partition has a type other than FS_UNUSED or FS_BOOT,
-.Nm disklabel
+.Nm
 will not install bootstrap code that overlaps it.
 .Sh BUGS
 If the disk partition is not specified in the disk name
 (i.e. ``xy0'' instead of ``/dev/rxy0c''),
-.Nm disklabel
+.Nm
 will construct the full pathname of the disk and use
 the ``a'' partition on the tahoe,
 the ``d'' partition on the i386 or its successors, and the ``c''
