@@ -34,21 +34,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"
- *	$Id: sigsetjmp.S,v 1.6 1994/01/27 06:34:07 mycroft Exp $
+ *	$Id: sigsetjmp.S,v 1.7 1994/12/24 01:05:44 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: sigsetjmp.S,v 1.6 1994/01/27 06:34:07 mycroft Exp $"
+	.asciz "$Id: sigsetjmp.S,v 1.7 1994/12/24 01:05:44 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 #include "SYS.h"
 
 ENTRY(sigsetjmp)
-	movl	8(%esp),%eax
 	movl	4(%esp),%ecx
-	movl	%eax,24(%ecx)
+	movl	8(%esp),%eax
+	movl	%eax,28(%ecx)
 	testl	%eax,%eax
 	jz	1f
 	pushl	$0
@@ -59,7 +59,7 @@ ENTRY(sigsetjmp)
 #endif
 	addl	$4,%esp
 	movl	4(%esp),%ecx
-	movl	%eax,28(%ecx)
+	movl	%eax,24(%ecx)
 1:	movl	0(%esp),%edx
 	movl	%edx, 0(%ecx)
 	movl	%ebx, 4(%ecx)
@@ -72,9 +72,9 @@ ENTRY(sigsetjmp)
 
 ENTRY(siglongjmp)
 	movl	4(%esp),%edx
-	cmpl	$0,24(%edx)
+	cmpl	$0,28(%edx)
 	jz	1f
-	pushl	28(%edx)
+	pushl	24(%edx)
 #ifdef PIC
 	call	PIC_PLT(_sigsetmask)
 #else
@@ -90,7 +90,7 @@ ENTRY(siglongjmp)
 	movl	16(%edx),%esi
 	movl	20(%edx),%edi
 	testl	%eax,%eax
-	jne	2f
+	jnz	2f
 	incl	%eax
 2:	movl	%ecx,0(%esp)
 	ret
