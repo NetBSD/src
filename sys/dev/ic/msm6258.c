@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.9 2002/04/07 14:51:40 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.10 2002/04/13 12:40:50 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.9 2002/04/07 14:51:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.10 2002/04/13 12:40:50 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ static int adpcm_estim[49] = {
 	 41,  45,  50,  55,  60,  66,  73,  80,  88,  97,
 	107, 118, 130, 143, 157, 173, 190, 209, 230, 253,
 	279, 307, 337, 371, 408, 449, 494, 544, 598, 658,
-	724, 796, 875, 963, 1060, 1166, 1282, 1411, 1552
+	724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552
 };
 
 static int adpcm_estimstep[16] = {
