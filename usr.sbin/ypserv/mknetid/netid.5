@@ -1,4 +1,4 @@
-.\"	$NetBSD: netid.5,v 1.4 2002/01/19 11:45:05 wiz Exp $
+.\"	$NetBSD: netid.5,v 1.5 2002/02/02 02:20:31 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -60,21 +60,20 @@ unix.<hostname>@<yp-domain> 0:<hostname>
 The third type is records from a
 .Xr netid 5
 file other than the two types above.
-.Sh EXAMPLES
-.Pp
-A configuration file might appear as follows:
-.Bd -literal
-unix.10714@kaka 10714:400,10
-unix.jodie@kaka 0:jodie
-.Ed
 .Sh FILES
 .Bl -tag -width /etc/netid -compact
 .It Pa /etc/netid
 A file for lines not generated automatically by
 .Xr mknetid 8 .
 .El
+.Sh EXAMPLES
+A configuration file might appear as follows:
+.Bd -literal
+unix.10714@kaka 10714:400,10
+unix.jodie@kaka 0:jodie
+.Ed
 .Sh SEE ALSO
 .Xr mknetid 8 ,
 .Xr yp 8
-.Sh AUTHOR
-Mats O Jansson <moj@stacken.kth.se>
+.Sh AUTHORS
+.An Mats O Jansson Aq moj@stacken.kth.se
