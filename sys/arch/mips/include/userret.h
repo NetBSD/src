@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.5 2001/01/18 17:48:01 tv Exp $	*/
+/*	$NetBSD: userret.h,v 1.5.8.1 2001/11/17 23:43:41 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,10 +46,24 @@
 #define	_MIPS_USERRET_H_
 
 static __inline void
-userret(struct proc *p)
+userret(struct lwp *l)
 {
+	int sig;
+	struct proc *p = l->l_proc;
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Take pending signals. */
+	while ((sig = CURSIG(l)) != 0)
+		postsig(sig);
+
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	if (l->l_flag & L_SA_UPCALL)
+		cpu_upcall(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 #endif /* _MIPS_USERRET_H_ */
