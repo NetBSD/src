@@ -1,7 +1,7 @@
-#   $Id: Makefile,v 1.1 1994/04/05 01:56:43 chopps Exp $	
+#   $Id: Makefile,v 1.2 1994/12/22 11:34:57 cgd Exp $	
 
 PROG=iteconfig
-MAN8=iteconfig.0
+MAN=iteconfig.8
 CFLAGS+=-I${.CURDIR}/../../sys/arch
 
 .include <bsd.prog.mk>

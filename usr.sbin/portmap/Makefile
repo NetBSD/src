@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 9/27/90
-#	$Id: Makefile,v 1.4 1994/01/28 00:53:00 cgd Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 11:37:41 cgd Exp $
 
 PROG=	portmap
-MAN8=	portmap.0
+MAN=	portmap.8
 
 .include <bsd.prog.mk>
