@@ -41,8 +41,8 @@
  *
  *    @(#)cgthreereg.h        8.1 (Berkeley) 6/11/93
  *
- * from: $Header: /cvsroot/src/sys/arch/sparc/dev/Attic/cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
- * $Id: cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
+ * from: Header: cgthreereg.h,v 1.7 93/10/31 05:09:28 torek Exp
+ * $Id: cgthreereg.h,v 1.3 1994/03/03 12:22:04 deraadt Exp $
  */
 
 /*
