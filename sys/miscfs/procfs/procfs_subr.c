@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.36.2.5 2002/01/08 00:33:42 nathanw Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.36.2.6 2002/01/09 02:53:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.5 2002/01/08 00:33:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.6 2002/01/09 02:53:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,24 +219,7 @@ procfs_rw(v)
 	 * a process with multiple LWPs. For the moment, we'll 
 	 * just kluge this and fail on others.
 	 */
-
-	if (p->p_nlwps > 1)
-		switch (pfs->pfs_type) {
-		case Pnote: 
-		case Pnotepg:
-		case Pstatus:
-		case Pmap:
-		case Pmem:
-		case Pcmdline:
-			break;
-		case Pregs:
-		case Pfpregs:
-		case Pctl:
-		default:
-			return (EOPNOTSUPP);
-		}
-
-	l = LIST_FIRST(&p->p_lwps);
+	l = proc_representative_lwp(p);
 	
 	switch (pfs->pfs_type) {
 	case Pregs:
@@ -295,7 +278,7 @@ procfs_rw(v)
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
-		return (procfs_machdep_rw(curp, p, pfs, uio));
+		return (procfs_machdep_rw(curp, l, pfs, uio));
 #endif
 
 	default:
