@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.36 2003/12/31 18:53:45 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.37 2003/12/31 19:19:39 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -202,8 +202,7 @@ struct csum_total {
 	int64_t cs_nbfree;		/* number of free blocks */
 	int64_t cs_nifree;		/* number of free inodes */
 	int64_t cs_nffree;		/* number of free frags */
-	int64_t cs_numclusters;		/* number of free clusters */
-	int64_t cs_spare[3];		/* future expansion */
+	int64_t cs_spare[4];		/* future expansion */
 };
 
 

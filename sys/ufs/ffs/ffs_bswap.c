@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.25 2003/12/31 18:40:23 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.26 2003/12/31 19:19:39 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.25 2003/12/31 18:40:23 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.26 2003/12/31 19:19:39 dbj Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -180,7 +180,6 @@ ffs_csumtotal_swap(struct csum_total *o, struct csum_total *n)
 	n->cs_nbfree = bswap64(o->cs_nbfree);
 	n->cs_nifree = bswap64(o->cs_nifree);
 	n->cs_nffree = bswap64(o->cs_nffree);
-	n->cs_numclusters = bswap64(o->cs_numclusters);
 }
 
 /*
