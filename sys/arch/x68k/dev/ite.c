@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.26 2001/10/21 03:46:30 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.27 2001/12/27 02:23:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,7 +221,7 @@ iteattach(pdp, dp, auxp)
 			 * console reinit copy params over.
 			 * and console always gets keyboard
 			 */
-			bcopy(&con_itesoftc.grf, &ip->grf,
+			memcpy(&ip->grf, &con_itesoftc.grf,
 			    (char *)&ip[1] - (char *)&ip->grf);
 			con_itesoftc.grf = NULL;
 			kbd_ite = ip;
@@ -264,7 +264,7 @@ iteinit(dev)
 
 	if (ip->flags & ITE_INITED)
 		return;
-	bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
+	memcpy(&kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 
 	ip->curx = 0;
 	ip->cury = 0;
@@ -497,13 +497,13 @@ iteioctl(dev, cmd, addr, flag, p)
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
-		bcopy(addr, &kbdmap, sizeof(struct kbdmap));
+		memcpy(&kbdmap, addr, sizeof(struct kbdmap));
 		return(0);
 
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		bcopy(&kbdmap, addr, sizeof(struct kbdmap));
+		memcpy(addr, &kbdmap, sizeof(struct kbdmap));
 		return(0);
 
 	case ITEIOCGREPT:
@@ -520,7 +520,7 @@ iteioctl(dev, cmd, addr, flag, p)
 #if x68k
 	case ITELOADFONT:
 		if (addr) {
-			bcopy(addr, kern_font, 4096 /*sizeof (kernel_font)*/);
+			memcpy(kern_font, addr, 4096 /*sizeof (kernel_font)*/);
 			ite_set_glyph();
 			return 0;
 		} else
@@ -863,7 +863,7 @@ ite_filter(c)
 	 * this should probably be configurable..
 	 */
 	if (mod == (KBD_MOD_LALT|KBD_MOD_LMETA) && c == 0x63) {
-		bcopy (&ascii_kbdmap, &kbdmap, sizeof (struct kbdmap));
+		memcpy(&kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		splx (s);
 		return;
 	}
@@ -931,7 +931,7 @@ ite_filter(c)
 		 * to the above table. This is *nasty* !
 		 */
 		if (c >= 0x3b && c <= 0x3e && kbd_ite->cursor_appmode
-		    && !bcmp(str, "\x03\x1b[", 3) &&
+		    && !memcmp(str, "\x03\x1b[", 3) &&
 		    index("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
