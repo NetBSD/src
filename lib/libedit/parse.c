@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.13 2000/09/04 22:06:31 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.14 2001/01/23 15:55:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.13 2000/09/04 22:06:31 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.14 2001/01/23 15:55:30 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: parse.c,v 1.13 2000/09/04 22:06:31 lukem Exp $");
 #include "tokenizer.h"
 #include <stdlib.h>
 
-private struct {
+private const struct {
 	char *name;
 	int (*func)(EditLine *, int, char **);
 } cmds[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.10 2001/01/04 15:56:32 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.11 2001/01/23 15:55:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.10 2001/01/04 15:56:32 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.11 2001/01/23 15:55:31 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -203,11 +203,12 @@ c_setpat(EditLine *el)
 protected el_action_t
 ce_inc_search(EditLine *el, int dir)
 {
-	static char STRfwd[] = {'f', 'w', 'd', '\0'},
+	static const char STRfwd[] = {'f', 'w', 'd', '\0'},
 	     STRbck[] = {'b', 'c', 'k', '\0'};
 	static char pchar = ':';/* ':' = normal, '?' = failed */
 	static char endcmd[2] = {'\0', '\0'};
-	char ch, *cp, *ocursor = el->el_line.cursor, oldpchar = pchar;
+	char ch, *ocursor = el->el_line.cursor, oldpchar = pchar;
+	const char *cp;
 
 	el_action_t ret = CC_NORM;
 
@@ -231,7 +232,7 @@ ce_inc_search(EditLine *el, int dir)
 		}
 		done = redo = 0;
 		*el->el_line.lastchar++ = '\n';
-		for (cp = newdir == ED_SEARCH_PREV_HISTORY ? STRbck : STRfwd;
+		for (cp = (newdir == ED_SEARCH_PREV_HISTORY) ? STRbck : STRfwd;
 		    *cp; *el->el_line.lastchar++ = *cp++)
 			continue;
 		*el->el_line.lastchar++ = pchar;
