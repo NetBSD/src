@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.161 2000/06/04 22:36:28 gmcgarry Exp $
+#	$NetBSD: files.i386,v 1.162 2000/06/11 02:41:11 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -193,16 +193,6 @@ attach	pc at isa
 device	pcconskbd
 attach	pcconskbd at pckbc
 file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
-
-# PC console support a la "pcvt"
-device	vt: tty, pckbcport
-attach	vt at isa
-file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	olms

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.351 2000/06/11 00:21:01 augustss Exp $
+#	$NetBSD: GENERIC,v 1.352 2000/06/11 02:41:10 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.351 $"
+#ident 		"GENERIC-$Revision: 1.352 $"
 
 maxusers	32		# estimated number of users
 
@@ -298,17 +298,15 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific option:
+# pccons-specific options:
 #options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-# pccons/pcvt -specific option:
 #options 	XSERVER		# X server support
 
 
@@ -797,7 +795,6 @@ wsmouse*	at mms? mux 0
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

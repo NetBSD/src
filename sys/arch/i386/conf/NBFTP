@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.21 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: NBFTP,v 1.22 2000/06/11 02:41:10 mycroft Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -219,9 +219,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -590,7 +589,6 @@ ugen*	at uhub? port ? configuration ? interface ?
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.70 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: DISKLESS,v 1.71 2000/06/11 02:41:10 mycroft Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -120,7 +120,6 @@ isa*	at mainbus0			# all other ISA
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
