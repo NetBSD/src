@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2001/08/14 20:16:38 eeh Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -80,7 +80,7 @@ _rtld_start:
 
 	/*
 	 * We have two separate entry points to the runtime linker.
-	 * I'm implementing this following the SPARC
+	 * I'm implementing this following the SPARC v9 ABI spec.
 	 *
 	 * _rtld_bind_start_0(x, y) is called from .PLT0, and is used for
 	 * PLT entries above 32768.
@@ -111,7 +111,7 @@ _rtld_start:
 	.align	4
 	.global	_rtld_bind_start_0
 	.type	_rtld_bind_start_0,@function
-_rtld_bind_start_0:	# (obj, reloff)
+_rtld_bind_start_0:	# (x, y)
 #if 0
 	call	_rtld_bind_start_0_stub
 	 ldx     [%o1 + (10*4)], %l7
@@ -160,7 +160,7 @@ _rtld_bind_start_0:	# (obj, reloff)
 	.align	4
 	.global	_rtld_bind_start_1
 	.type	_rtld_bind_start_1,@function
-_rtld_bind_start_1:	# (obj, reloff)
+_rtld_bind_start_1:	# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
 	
 	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
