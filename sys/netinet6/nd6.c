@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.87 2003/08/22 22:11:46 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.87 2003/08/22 22:11:46 itojun Exp $");
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86 2003/06/27 08:41:08 itojun Exp $");
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#endif
 
 #include "loop.h"
 extern struct ifnet loif[NLOOP];
