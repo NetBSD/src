@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2000/09/21 17:44:34 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.22 2000/09/23 19:23:58 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -227,6 +227,9 @@
 #define MAXWEIGHT	60
 #define MAXCUMBER	10
 
+/* Flags for objects.  */
+#define OBJ_PLURAL	1
+
 struct room {
 	const char   *name;
 	int     link[8];
@@ -251,6 +254,8 @@ extern const char   *const objsht[NUMOFOBJECTS];
 extern const char   *const ouch[NUMOFINJURIES];
 extern const int     objwt[NUMOFOBJECTS];
 extern const int     objcumber[NUMOFOBJECTS];
+extern const int     objflags[NUMOFOBJECTS];
+#define is_plural_object(n)	(objflags[(n)] & OBJ_PLURAL)
 
  /* current input line */
 #define WORDLEN	15

@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.14 2000/09/22 08:19:21 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.15 2000/09/23 19:23:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.14 2000/09/22 08:19:21 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.15 2000/09/23 19:23:57 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: com2.c,v 1.14 2000/09/22 08:19:21 jsm Exp $");
 int
 wearit()
 {				/* synonyms = {sheathe, sheath} */
-	int     n;
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
@@ -57,7 +56,6 @@ wearit()
 		value = wordvalue[wordnumber];
 		if (objsht[value] == NULL)
 			break;
-		for (n = 0; objsht[value][n]; n++);
 		switch (value) {
 
 		case -1:
@@ -65,7 +63,7 @@ wearit()
 			return (firstnumber);
 
 		default:
-			printf("You can't wear%s%s!\n", (objsht[value][n - 1] == 's' ? " " : " a "), objsht[value]);
+			printf("You can't wear%s%s!\n", (is_plural_object(value) ? " " : " a "), objsht[value]);
 			return (firstnumber);
 
 		case KNIFE:
@@ -94,7 +92,7 @@ wearit()
 				encumber -= objcumber[value];
 				ourtime++;
 				printf("You are now wearing %s %s.\n",
-				    (objsht[value][n - 1] == 's' ? "the"
+				    (is_plural_object(value) ? "the"
 					: "a"), objsht[value]);
 			} else
 				if (testbit(wear, value))
