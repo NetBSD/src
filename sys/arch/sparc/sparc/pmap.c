@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 1998/01/02 22:57:56 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.105 1998/01/08 11:39:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3026,6 +3026,37 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte4(p, getpte4(p) & mask);
 	}
+#if defined(MACHINE_NEW_NONCONTIG)
+	while (1) {
+		if (avail_next >=
+		    pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
+			if (++cpmemarr == npmemarr)
+				break;   /* DONE */
+
+			if (avail_next < pmemarr[cpmemarr].addr)
+				avail_next = pmemarr[cpmemarr].addr;
+			continue;
+		} 
+
+		if (avail_next == unavail_start) {
+			avail_next = unavail_end;
+			continue;
+		}
+
+#if defined(DIAGNOSTIC)
+		if (avail_next >= avail_end)
+			panic("pmap: too much memory!?");
+#endif
+
+		vm_page_physload(
+		    atop(avail_next),
+		    atop(pmemarr[cpmemarr].addr) + atop(pmemarr[cpmemarr].len),
+		    atop(avail_next),
+		    atop(pmemarr[cpmemarr].addr) + atop(pmemarr[cpmemarr].len));
+
+		avail_next = pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len;
+	}
+#endif
 }
 #endif
 
@@ -5055,7 +5086,6 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
 		 (pte & ~SRMMU_PROT_MASK) | newprot);
-
 out:
 	setcontext4m(ctx);
 	splx(s);
