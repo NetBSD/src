@@ -1,4 +1,4 @@
-/*	$Id: utilities.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: utilities.c,v 1.1.2.1 2000/10/10 22:24:55 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -546,7 +546,7 @@ dofix(idesc, msg)
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else
-			pwarn(msg);
+			pwarn("%s", msg);
 		if (preen) {
 			printf(" (SALVAGED)\n");
 			idesc->id_fix = FIX;
