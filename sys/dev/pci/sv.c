@@ -1,5 +1,41 @@
-/*      $NetBSD: sv.c,v 1.2 1999/02/17 02:37:42 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.3 1999/02/18 00:54:19 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
+
+/*
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -103,12 +139,12 @@ void	sv_close __P((void *));
 int	sv_query_encoding __P((void *, struct audio_encoding *));
 int	sv_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	sv_round_blocksize __P((void *, int));
-int	sv_dma_init_output __P((void *, void *, int));
-int	sv_dma_init_input __P((void *, void *, int));
-int	sv_dma_output __P((void *, void *, int, void (*)(void *), void*));
-int	sv_dma_input __P((void *, void *, int, void (*)(void *), void*));
-int	sv_halt_in_dma __P((void *));
-int	sv_halt_out_dma __P((void *));
+int	sv_trigger_output __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
+int	sv_trigger_input __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
+int	sv_halt_output __P((void *));
+int	sv_halt_input __P((void *));
 int	sv_getdev __P((void *, struct audio_device *));
 int	sv_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	sv_mixer_get_port __P((void *, mixer_ctrl_t *));
@@ -131,12 +167,12 @@ struct audio_hw_if sv_hw_if = {
 	sv_set_params,
 	sv_round_blocksize,
 	NULL,
-	sv_dma_init_output,
-	sv_dma_init_input,
-	sv_dma_output,
-	sv_dma_input,
-	sv_halt_out_dma,
-	sv_halt_in_dma,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	sv_halt_output,
+	sv_halt_input,
 	NULL,
 	sv_getdev,
 	NULL,
@@ -148,6 +184,8 @@ struct audio_hw_if sv_hw_if = {
 	sv_round_buffersize,
 	sv_mappage,
 	sv_get_props,
+	sv_trigger_output,
+	sv_trigger_input,
 };
 
 
@@ -545,8 +583,8 @@ sv_close(addr)
 	struct sv_softc *sc = addr;
     
 	DPRINTF(("sv_close\n"));
-        sv_halt_in_dma(sc);
-        sv_halt_out_dma(sc);
+        sv_halt_output(sc);
+        sv_halt_input(sc);
 
         sc->sc_pintr = 0;
         sc->sc_rintr = 0;
@@ -612,77 +650,91 @@ sv_query_encoding(addr, fp)
 }
 
 int
-sv_set_params(addr, setmode, usemode, p, r)
+sv_set_params(addr, setmode, usemode, play, rec)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *p, *r;
+	struct audio_params *play, *rec;
 {
 	struct sv_softc *sc = addr;
-	void (*pswcode) __P((void *, u_char *buf, int cnt));
-	void (*rswcode) __P((void *, u_char *buf, int cnt));
-        u_int32_t mode, val;
-        u_int8_t reg;
+	struct audio_params *p;
+	int mode;
+        u_int32_t val;
 	
-	DPRINTF(("sv_set_params\n"));
-        pswcode = rswcode = 0;
-        switch (p->encoding) {
-        case AUDIO_ENCODING_SLINEAR_BE:
-        	if (p->precision == 16)
-                	rswcode = pswcode = swap_bytes;
-		else
-			pswcode = rswcode = change_sign8;
-		break;
-        case AUDIO_ENCODING_SLINEAR_LE:
-        	if (p->precision != 16)
-			pswcode = rswcode = change_sign8;
-        	break;
-        case AUDIO_ENCODING_ULINEAR_BE:
-        	if (p->precision == 16) {
-			pswcode = swap_bytes_change_sign16;
-			rswcode = change_sign16_swap_bytes;
+	/*
+	 * This device only has one clock, so make the sample rates match.
+	 */
+	if (play->sample_rate != rec->sample_rate &&
+	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+		if (setmode == AUMODE_PLAY) {
+			rec->sample_rate = play->sample_rate;
+			setmode |= AUMODE_RECORD;
+		} else if (setmode == AUMODE_RECORD) {
+			play->sample_rate = rec->sample_rate;
+			setmode |= AUMODE_PLAY;
+		} else
+			return (EINVAL);
+	}
+
+	for (mode = AUMODE_RECORD; mode != -1; 
+	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+		if ((setmode & mode) == 0)
+			continue;
+
+		p = mode == AUMODE_PLAY ? play : rec;
+
+		if (p->sample_rate < 2000 || p->sample_rate > 48000 ||
+		    (p->precision != 8 && p->precision != 16) ||
+		    (p->channels != 1 && p->channels != 2))
+			return (EINVAL);
+
+		p->factor = 1;
+		p->sw_code = 0;
+		switch (p->encoding) {
+		case AUDIO_ENCODING_SLINEAR_BE:
+			if (p->precision == 16)
+				p->sw_code = swap_bytes;
+			else
+				p->sw_code = change_sign8;
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			if (p->precision != 16)
+				p->sw_code = change_sign8;
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision == 16) {
+				if (mode == AUMODE_PLAY)
+					p->sw_code = swap_bytes_change_sign16;
+				else
+					p->sw_code = change_sign16_swap_bytes;
+			}
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			if (p->precision == 16)
+				p->sw_code = change_sign16;
+			break;
+		case AUDIO_ENCODING_ULAW:
+			if (mode == AUMODE_PLAY) {
+				p->factor = 2;
+				p->sw_code = mulaw_to_slinear16;
+			} else
+				p->sw_code = ulinear8_to_mulaw;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			if (mode == AUMODE_PLAY) {
+				p->factor = 2;
+				p->sw_code = alaw_to_slinear16;
+			} else
+				p->sw_code = ulinear8_to_alaw;
+			break;
+		default:
+			return (EINVAL);
 		}
-		break;
-        case AUDIO_ENCODING_ULINEAR_LE:
-        	if (p->precision == 16)
-			pswcode = rswcode = change_sign16;
-        	break;
-        case AUDIO_ENCODING_ULAW:
-        	pswcode = mulaw_to_ulinear8;
-                rswcode = ulinear8_to_mulaw;
-                break;
-        case AUDIO_ENCODING_ALAW:
-                pswcode = alaw_to_ulinear8;
-                rswcode = ulinear8_to_alaw;
-                break;
-        default:
-        	return (EINVAL);
-        }
-
-	if (p->precision == 16)
-		mode = SV_DMAA_FORMAT16 | SV_DMAC_FORMAT16;
-	else
-		mode = 0;
-        if (p->channels == 2)
-        	mode |= SV_DMAA_STEREO | SV_DMAC_STEREO;
-	else if (p->channels != 1)
-		return (EINVAL);
-        if (p->sample_rate < 2000 || p->sample_rate > 48000)
-        	return (EINVAL);
-
-        p->sw_code = pswcode;
-        r->sw_code = rswcode;
-
-        /* Set the encoding */
-	reg = sv_read_indirect(sc, SV_DMA_DATA_FORMAT);
-	reg &= ~(SV_DMAA_FORMAT16 | SV_DMAC_FORMAT16 | SV_DMAA_STEREO |
-		 SV_DMAC_STEREO);
-	reg |= mode;
-	sv_write_indirect(sc, SV_DMA_DATA_FORMAT, reg);
-
+	}
+	
 	val = p->sample_rate * 65536 / 48000;
 
-	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_0, (val & 0xff));
-	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_1, (val >> 8));
+	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_0, val & 0xff);
+	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_1, val >> 8);
 
 #define F_REF 24576000
 
@@ -702,7 +754,7 @@ sv_set_params(addr, setmode, usemode, p, r)
 		   and n, m >= 1
 		*/
 
-		int  goal_f_out = 512 * r->sample_rate;
+		int  goal_f_out = 512 * rec->sample_rate;
 		int  a, n, m, best_n = 0, best_m = 0, best_error = 10000000;
 		int  pll_sample;
 		int  error;
@@ -716,13 +768,14 @@ sv_set_params(addr, setmode, usemode, p, r)
 
 		for (n = 33; n > 2; n--) {
 			m = (goal_f_out * n * (1 << a)) / F_REF;
-			if ((m > 257) || (m < 3)) continue;
+			if ((m > 257) || (m < 3))
+				continue;
  
 			pll_sample = (m * F_REF) / (n * (1 << a));
 			pll_sample /= 512;
 
 			/* Threshold might be good here */
-			error = pll_sample - r->sample_rate;
+			error = pll_sample - rec->sample_rate;
 			error = ABS(error);
 	    
 			if (error < best_error) {
@@ -740,7 +793,8 @@ sv_set_params(addr, setmode, usemode, p, r)
 		sv_write_indirect(sc, SV_ADC_PLL_N, 
 				  best_n | (a << SV_PLL_R_SHIFT));
 	}
-        return (0);
+
+	return (0);
 }
 
 int
@@ -752,25 +806,98 @@ sv_round_blocksize(addr, blk)
 }
 
 int
-sv_dma_init_input(addr, buf, cc)
+sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
-	void *buf;
-	int cc;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
+	u_int8_t mode;
 	int dma_count;
 
-	DPRINTF(("sv_dma_init_input: dma start loop input addr=%p cc=%d\n", 
-		 buf, cc));
-        for (p = sc->sc_dmas; p && KERNADDR(p) != buf; p = p->next)
+	DPRINTFN(1, ("sv_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n", 
+	    addr, start, end, blksize, intr, arg));
+	sc->sc_pintr = intr;
+	sc->sc_parg = arg;
+
+	mode = sv_read_indirect(sc, SV_DMA_DATA_FORMAT);
+	mode &= ~(SV_DMAA_FORMAT16 | SV_DMAA_STEREO);
+	if (param->precision * param->factor == 16)
+		mode |= SV_DMAA_FORMAT16;
+	if (param->channels == 2)
+		mode |= SV_DMAA_STEREO;
+	sv_write_indirect(sc, SV_DMA_DATA_FORMAT, mode);
+
+        for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
-		printf("sv_dma_init_input: bad addr %p\n", buf);
+		printf("sv_trigger_output: bad addr %p\n", start);
 		return (EINVAL);
 	}
 
-	dma_count = (cc >> 1) - 1;
+	dma_count = ((char *)end - (char *)start) - 1;
+	DPRINTF(("sv_trigger_output: dma start loop input addr=%p cc=%d\n", 
+		 DMAADDR(p), dma_count));
+
+	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
+			  DMAADDR(p));
+	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_COUNT0,
+			  dma_count);
+	bus_space_write_1(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_MODE,
+			  DMA37MD_READ | DMA37MD_LOOP);
+
+	dma_count = blksize - 1;
+
+	sv_write_indirect(sc, SV_DMAA_COUNT1, dma_count >> 8);
+	sv_write_indirect(sc, SV_DMAA_COUNT0, dma_count & 0xFF);
+
+	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
+	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode | SV_PLAY_ENABLE);
+
+	return (0);
+}
+
+int
+sv_trigger_input(addr, start, end, blksize, intr, arg, param)
+	void *addr;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
+{
+	struct sv_softc *sc = addr;
+	struct sv_dma *p;
+	u_int8_t mode;
+	int dma_count;
+
+	DPRINTFN(1, ("sv_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n", 
+	    addr, start, end, blksize, intr, arg));
+	sc->sc_rintr = intr;
+	sc->sc_rarg = arg;
+
+	mode = sv_read_indirect(sc, SV_DMA_DATA_FORMAT);
+	mode &= ~(SV_DMAC_FORMAT16 | SV_DMAC_STEREO);
+	if (param->precision * param->factor == 16)
+		mode |= SV_DMAC_FORMAT16;
+	if (param->channels == 2)
+		mode |= SV_DMAC_STEREO;
+	sv_write_indirect(sc, SV_DMA_DATA_FORMAT, mode);
+
+        for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+		;
+	if (!p) {
+		printf("sv_trigger_input: bad addr %p\n", start);
+		return (EINVAL);
+	}
+
+	dma_count = (((char *)end - (char *)start) >> 1) - 1;
+	DPRINTF(("sv_trigger_input: dma start loop input addr=%p cc=%d\n", 
+		 DMAADDR(p), dma_count));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_ADDR0,
 			  DMAADDR(p));
@@ -779,129 +906,41 @@ sv_dma_init_input(addr, buf, cc)
 	bus_space_write_1(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_MODE,
 			  DMA37MD_WRITE | DMA37MD_LOOP);
 
-	return (0);
-}
+	dma_count = (blksize >> 1) - 1;
 
-int
-sv_dma_init_output(addr, buf, cc)
-	void *addr;
-	void *buf;
-	int cc;
-{
-	struct sv_softc *sc = addr;
-	struct sv_dma *p;
-	int dma_count;
+	sv_write_indirect(sc, SV_DMAC_COUNT1, dma_count >> 8);
+	sv_write_indirect(sc, SV_DMAC_COUNT0, dma_count & 0xFF);
 
-	DPRINTF(("sv_dma_init_output: start loop output buf=%p cc=%d\n", buf, cc));
-        for (p = sc->sc_dmas; p && KERNADDR(p) != buf; p = p->next)
-		;
-	if (!p) {
-		printf("sv_dma_init_output: bad addr %p\n", buf);
-		return (EINVAL);
-	}
-
-	dma_count = cc - 1;
-
-	DPRINTF(("sv_dma_init_output: addr0=0x%08lx count0=0x%08x mode=0x%02x\n",
-		 (u_long)DMAADDR(p), dma_count, DMA37MD_READ | DMA37MD_LOOP));
-	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
-			  DMAADDR(p));
-	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_COUNT0,
-			  dma_count);
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_MODE,
-			  DMA37MD_READ | DMA37MD_LOOP);
+	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
+	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode | SV_RECORD_ENABLE);
 
 	return (0);
 }
 
 int
-sv_dma_output(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
-{
-	struct sv_softc *sc = addr;
-	u_int8_t mode;
-
-	DPRINTFN(1, ("sv_dma_output: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
-		     addr, p, cc, intr, arg));
-
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
-	if (!(sc->sc_enable & SV_PLAY_ENABLE)) {
-	        int dma_count = cc - 1;
-
-		DPRINTF(("sv_dma_output: set count=%d\n", dma_count));
-		sv_write_indirect(sc, SV_DMAA_COUNT1, dma_count >> 8);
-		sv_write_indirect(sc, SV_DMAA_COUNT0, (dma_count & 0xFF));
-
-		mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
-		mode |= SV_PLAY_ENABLE;
-		sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
-		sc->sc_enable |= SV_PLAY_ENABLE;
-	}
-        return (0);
-}
-
-int
-sv_dma_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
-{
-	struct sv_softc *sc = addr;
-	u_int8_t mode;
-
-	DPRINTFN(1, ("sv_dma_input: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
-		     addr, p, cc, intr, arg));
-	sc->sc_rintr = intr;
-	sc->sc_rarg = arg;
-	if (!(sc->sc_enable & SV_RECORD_ENABLE)) {
-	        int dma_count = (cc >> 1) - 1;
-
-		sv_write_indirect(sc, SV_DMAC_COUNT1, dma_count >> 8);
-		sv_write_indirect(sc, SV_DMAC_COUNT0, (dma_count & 0xFF));
-
-		mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
-		mode |= SV_RECORD_ENABLE;
-		sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
-		sc->sc_enable |= SV_RECORD_ENABLE;
-	}
-        return (0);
-}
-
-int
-sv_halt_out_dma(addr)
+sv_halt_output(addr)
 	void *addr;
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
 	
-        DPRINTF(("sv: sv_halt_out_dma\n"));
+        DPRINTF(("sv: sv_halt_output\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
-	mode &= ~SV_PLAY_ENABLE;
-	sc->sc_enable &= ~SV_PLAY_ENABLE;
-	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
+	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_PLAY_ENABLE);
 
         return (0);
 }
 
 int
-sv_halt_in_dma(addr)
+sv_halt_input(addr)
 	void *addr;
 {
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
     
-        DPRINTF(("sv: sv_halt_in_dma\n"));
+        DPRINTF(("sv: sv_halt_input\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
-	mode &= ~SV_RECORD_ENABLE;
-	sc->sc_enable &= ~SV_RECORD_ENABLE;
-	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
+	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_RECORD_ENABLE);
 
         return (0);
 }
@@ -1428,6 +1467,8 @@ sv_mappage(addr, mem, off, prot)
 	struct sv_softc *sc = addr;
         struct sv_dma *p;
 
+	if (off < 0)
+		return (-1);
         for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
 		;
 	if (!p)
@@ -1440,5 +1481,5 @@ int
 sv_get_props(addr)
 	void *addr;
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
 }
