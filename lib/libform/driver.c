@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.4 2001/01/30 06:44:42 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.5 2001/02/03 12:33:17 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -146,6 +146,7 @@ form_driver(FORM *form, int c)
 				if (status != E_OK)
 					return status;
 				old_field = form->cur_field;
+				fieldp = form->fields[form->cur_field];
 				goto next_field;
 			}
 			
@@ -412,6 +413,14 @@ form_driver(FORM *form, int c)
 		   */
 		if (status != E_OK)
 			return status;
+
+		  /* if we have no error, reset the various offsets */
+		fieldp = form->fields[form->cur_field];
+		fieldp->start_char = 0;
+		fieldp->start_line = 0;
+		fieldp->hscroll = 0;
+		fieldp->cursor_xpos = 0;
+		fieldp->cursor_ypos = 0;
 	}
 	
 	if (update_field < 0)
