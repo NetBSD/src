@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.17 1997/07/21 14:09:24 jtc Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.18 1997/10/16 23:22:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.17 1997/07/21 14:09:24 jtc Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.18 1997/10/16 23:22:31 christos Exp $");
 #endif
 
 /*
@@ -93,39 +93,6 @@ static	bool_t xdr_ypbind_binding __P((XDR *, struct ypbind_binding *));
 static	bool_t xdr_ypbind_resptype __P((XDR *, enum ypbind_resptype *));
 static	bool_t xdr_ypstat __P((XDR *, enum ypbind_resptype *));
 static	bool_t xdr_ypmaplist_str __P((XDR *, char *));
-
-__warn_references(xdr_domainname,
-    "warning: this program uses xdr_domainname(), which is deprecated and buggy.");
-
-bool_t
-xdr_domainname(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXDOMAIN);
-}
-
-__warn_references(xdr_peername,
-    "warning: this program uses xdr_peername(), which is deprecated and buggy.");
-
-bool_t
-xdr_peername(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXPEER);
-}
-
-__warn_references(xdr_mapname,
-    "warning: this program uses xdr_mapname(), which is deprecated and buggy.");
-
-bool_t
-xdr_mapname(xdrs, objp)
-	XDR *xdrs;
-	char *objp;
-{
-	return xdr_string(xdrs, &objp, YPMAXMAP);
-}
 
 bool_t
 xdr_ypdomain_wrap_string(xdrs, objp)
