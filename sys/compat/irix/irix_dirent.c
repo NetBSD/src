@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.8 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.9 2003/05/16 14:36:32 itojun Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.8 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.9 2003/05/16 14:36:32 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -171,7 +171,7 @@ again:
 		idb.d_ino = (irix_ino_t)bdp->d_fileno;
 		idb.d_off = (irix_off_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
@@ -324,7 +324,7 @@ again:
 		idb.d_ino = (irix_ino64_t)bdp->d_fileno;
 		idb.d_off = (irix_off64_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */

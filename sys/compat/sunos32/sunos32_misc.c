@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.17 2003/01/29 07:00:38 atatat Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.18 2003/05/16 14:36:34 itojun Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.17 2003/01/29 07:00:38 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.18 2003/05/16 14:36:34 itojun Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -795,7 +795,7 @@ again:
 		idb.d_off = off;
 		idb.d_reclen = sunos_reclen;
 		idb.d_namlen = bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, sunos_reclen)) != 0)
 			goto out;
 		/* advance past this real entry */
