@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.5 2000/01/09 23:12:31 ad Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.6 2000/02/29 07:20:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.5 2000/01/09 23:12:31 ad Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.6 2000/02/29 07:20:21 nisimura Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,20 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.5 2000/01/09 23:12:31 ad Exp $ ");
  * contains RTC and serial chip, forms 3MAX system base.
  */
 static struct tc_slotdesc tc_kn02_slots [8] = {
-       	{ TC_KV(KN02_PHYS_TC_0_START), TC_C(0), },	/* tc option slot 0 */
-	{ TC_KV(KN02_PHYS_TC_1_START), TC_C(1), },	/* tc option slot 1 */
-	{ TC_KV(KN02_PHYS_TC_2_START), TC_C(2), },	/* tc option slot 2 */
-	{ TC_KV(KN02_PHYS_TC_3_START), TC_C(3), },	/*  - reserved */
-	{ TC_KV(KN02_PHYS_TC_4_START), TC_C(4), },	/*  - reserved */
-	{ TC_KV(KN02_PHYS_TC_5_START), TC_C(5), },	/* b`board SCSI */
-	{ TC_KV(KN02_PHYS_TC_6_START), TC_C(6), },	/* b'board Ether */
-	{ TC_KV(KN02_PHYS_TC_7_START), TC_C(7), }	/* system CSR, etc. */
+    { KV(KN02_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(KN02_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(KN02_PHYS_TC_2_START), C(SYS_DEV_OPT2),  },	/* 2 - opt slot 2 */
+    { KV(KN02_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - unused */
+    { KV(KN02_PHYS_TC_4_START), C(SYS_DEV_BOGUS), },	/* 4 - unused */
+    { KV(KN02_PHYS_TC_5_START), C(SYS_DEV_SCSI),  },	/* 5 - b`board SCSI */
+    { KV(KN02_PHYS_TC_6_START), C(SYS_DEV_LANCE), },	/* 6 - b`board LANCE */
+    { KV(KN02_PHYS_TC_7_START), C(SYS_DEV_BOGUS), },	/* 7 - system CSRs */
 };
 
 const struct tc_builtin tc_kn02_builtins[] = {
-	{ "KN02SYS ",	7, 0x0, TC_C(7), },
-	{ "PMAD-AA ",	6, 0x0, TC_C(6), },
-	{ "PMAZ-AA ",	5, 0x0, TC_C(5), }
+        { "KN02SYS ",   7, 0x0, C(SYS_DEV_BOGUS), },
+        { "PMAD-AA ",   6, 0x0, C(SYS_DEV_LANCE), },
+        { "PMAZ-AA ",   5, 0x0, C(SYS_DEV_SCSI), },
 };
 
 struct tcbus_attach_args kn02_tc_desc = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.8 2000/02/03 04:09:07 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.9 2000/02/29 07:20:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.8 2000/02/03 04:09:07 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.9 2000/02/29 07:20:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,18 +162,6 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
         int (*handler) __P((void *));
 	void *val;
 {
-
-#ifdef DEBUG
-	printf("tc_ds_intr_establish: slot %d level %d handler %p sc %p on\n",
-		(int) cookie, (int) level, handler,  val);
-#endif
-
-	 /*
-	  * Enable the interrupt from tc (or ioctl asic) slot with NetBSD/pmax
-	  * sw-convention name ``cookie'' on this CPU.
-	  * XXX store the level somewhere for selective enabling of
-	  * interrupts from TC option slots.
-	  */
 	 (*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
@@ -182,8 +170,7 @@ tc_ds_intr_disestablish(dev, arg)
 	struct device *dev;
 	void *arg;
 {
-	/*(*platform.intr_disestablish)(dev, cookie, level, handler, val);*/
-    	printf("cannot dis-establish IOASIC interrupts\n");
+    	printf("cannot dis-establish TC interrupts\n");
 }
 
 #include "rasterconsole.h"
