@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.28 2000/06/26 14:20:37 mrg Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.29 2001/02/21 00:55:34 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -185,8 +185,8 @@ extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void console_flush	__P((void));
-extern void vidcconsole_reinit	__P((void));
-extern int vidcconsole_blank	__P((struct vconsole *vc, int type));
+extern void vidcrender_reinit	__P((void));
+extern int vidcrender_blank	__P((struct vconsole *vc, int type));
 
 extern void parse_mi_bootargs		__P((char *args));
 void parse_rc7500_bootargs		__P((char *args));
