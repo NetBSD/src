@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.441 2002/06/10 08:38:27 cjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.442 2002/06/17 14:08:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.438 2002/06/10 08:30:29 cjs Exp 
+ *	NetBSD: pcidevs,v 1.439 2002/06/17 14:07:14 jdolecek Exp 
  */
 
 /*
@@ -6826,6 +6826,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT6102 (Rhine II) 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A MC-97 Modem Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233,
 	    0,
 	    "VIA Technologies",
@@ -6838,10 +6844,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT8366 (Apollo KT266) CPU-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8653,
 	    0,
 	    "VIA Technologies",
-	    "VT82C686A MC-97 Modem Controller",
+	    "VT8653 (Apollo Pro 266T) CPU-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
@@ -6896,6 +6902,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8605 (Apollo ProMedia 133) Host-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8633 (Apollo Pro 266) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
