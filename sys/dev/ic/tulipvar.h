@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.1 1999/09/01 00:32:42 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.2 1999/09/01 05:07:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -251,6 +251,7 @@ struct tulip_softc {
 /* sc_flags */
 #define	TULIPF_WANT_SETUP	0x00000001	/* want filter setup */
 #define	TULIPF_HAS_MII		0x00000002	/* has media on MII */
+#define	TULIPF_IC_FS		0x00000004	/* IC bit on first tx seg */
 
 #define	TULIP_CDTXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDTXOFF((x)))
 #define	TULIP_CDRXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDRXOFF((x)))
