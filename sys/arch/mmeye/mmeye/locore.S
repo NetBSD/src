@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2002/03/24 18:21:19 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2002/05/09 12:35:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -40,6 +40,7 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include "opt_cputype.h"
 #include "opt_memsize.h"	
 #include "assym.h"
 
@@ -55,7 +56,8 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-#define INIT_STACK	0x8c3ff000
+#define	INIT_STACK							\
+	((IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000) | 0x80000000)
 
 NENTRY(start)
 	/* Set SP to initial position */

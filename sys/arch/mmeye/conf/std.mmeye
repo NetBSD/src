@@ -1,4 +1,4 @@
-# $NetBSD: std.mmeye,v 1.7 2001/11/20 12:56:33 lukem Exp $
+# $NetBSD: std.mmeye,v 1.8 2002/05/09 12:35:44 uch Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
@@ -6,7 +6,7 @@ machine mmeye sh3
 
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_RAM_SIZE=0x01000000		# 16MB
-options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_ROM_SIZE=0x00200000		# 2MB
 
 options 	EXEC_SCRIPT			# exec #! scripts
