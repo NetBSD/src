@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1995/04/10 13:15:17 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1995/04/19 14:01:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -984,6 +984,12 @@ boot(howto)
 #endif
 #endif
 		sync(&proc0, (void *)NULL, (int *)NULL);
+
+		/*
+		 * Unmount filesystems
+		 */
+		if (panicstr == 0)
+			vfs_unmountall();
 
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
