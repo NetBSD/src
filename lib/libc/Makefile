@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.23 1994/01/27 19:21:55 pk Exp $
+#	$Id: Makefile,v 1.24 1994/05/14 06:25:56 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -22,16 +22,17 @@ AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
+.include "${.CURDIR}/gmon/Makefile.inc"
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
+.include "${.CURDIR}/quad/Makefile.inc"
+.include "${.CURDIR}/regex/Makefile.inc"
+.include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
 .include "${.CURDIR}/string/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/yp/Makefile.inc"
-.include "${.CURDIR}/rpc/Makefile.inc"
-.include "${.CURDIR}/quad/Makefile.inc"
-.include "${.CURDIR}/regex/Makefile.inc"
 
 LIBKERN=	/sys/lib/libkern
 
