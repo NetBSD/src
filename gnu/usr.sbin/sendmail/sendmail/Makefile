@@ -1,32 +1,30 @@
-#	$NetBSD: Makefile,v 1.2 2000/02/26 18:41:43 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/03 10:51:00 itojun Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../../dist
-.PATH: ${DIST}/sendmail/src
+.PATH: ${DIST}/sendmail/sendmail
 
+BINDIR=		/usr/libexec/sendmail
 PROG=		sendmail
 
-CPPFLAGS+=	${DBMDEF} -DMAP_REGEX -DTCPWRAPPERS
-LDADD+=		-lwrap
-DPADD+=		${LIBWRAP}
+LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; make print-objdir
 
-SRCS=		alias.c arpadate.c clock.c collect.c conf.c control.c \
-		convtime.c daemon.c deliver.c domain.c envelope.c err.c \
-		headers.c macro.c main.c map.c mci.c mime.c parseaddr.c \
-		queue.c readcf.c recipient.c safefile.c savemail.c snprintf.c \
-		srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
-		util.c version.c
+LDADD+=		-lwrap -L${LIBSMUTILDIR} -lsmutil
+DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a
+
+SRCS=		alias.c arpadate.c bf_torek.c clock.c collect.c \
+		conf.c control.c convtime.c daemon.c deliver.c \
+		domain.c envelope.c err.c headers.c macro.c main.c \
+		map.c mci.c milter.c mime.c parseaddr.c queue.c \
+		readcf.c recipient.c savemail.c sfsasl.c shmticklib.c \
+		srvrsmtp.c stab.c stats.c sysexits.c timers.c trace.c \
+		udb.c usersmtp.c util.c version.c
+
 MAN=		aliases.5 mailq.1 newaliases.1 sendmail.8
 
-BINDIR= /usr/libexec/sendmail
-BINOWN= root
-BINGRP= kmem
-BINMODE=6555
-.if ${MKSHARE} != "no"
-FILES=sendmail.hf
-FILESGRP=wheel
-FILESDIR=/usr/share/misc
-.endif
+afterinstall:
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		${DIST}/sendmail/sendmail/helpfile ${DESTDIR}/etc/mail
 
 .include <bsd.prog.mk>
