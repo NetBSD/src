@@ -61,44 +61,6 @@
   ""
   "tstf %0")
 
-(define_expand "cmpdi"
-  [(parallel
-    [(set (cc0)
-	  (compare (match_operand:DI 0 "nonimmediate_operand" "")
-		   (match_operand:DI 1 "general_operand" "")))
-     (clobber (match_dup 2))])]
-  ""
-  "operands[2] = gen_reg_rtx (DImode);")
-
-(define_insn "*cmpdi2"
-  [(set (cc0)
-	(compare (match_operand:DI 1 "nonimmediate_operand" "0,For>")
-		 (match_operand:DI 2 "general_operand" "For>,0")))
-   (clobber (match_operand:DI 0 "register_operand" "=r,r"))]
-  ""
-  "*
-{
-  rtx low[3];
-  const char *low_pattern, *high_pattern;
-
-  split_quadword_operands (operands, low, 3);
-
-  /* Subtract low parts.  */
-  if (rtx_equal_p (operands[0], operands[1]))
-    {
-	low_pattern  = \"subl2 %2,%0\";
-	high_pattern = \"sbwc %2,%0\";
-    }
-  else
-    {
-        cc_status.flags |= CC_REVERSED;
-	low_pattern  = \"subl2 %1,%0\";
-	high_pattern = \"sbwc %1,%0\";
-    }
-  output_asm_insn (low_pattern, low);
-  return high_pattern;
-}")
-
 (define_insn "cmpsi"
   [(set (cc0)
 	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
@@ -1666,7 +1628,9 @@
 		      (label_ref (match_operand 0 "" ""))
 		      (pc)))]
   ""
-  "jgtru %l0")
+  "*
+  OUTPUT_JUMP(\"jgtru %l0\", 0, \"jneq %l0\");
+  ")
 
 (define_insn "blt"
   [(set (pc)
@@ -1684,7 +1648,9 @@
 		      (label_ref (match_operand 0 "" ""))
 		      (pc)))]
   ""
-  "jlssu %l0")
+  "*
+  OUTPUT_JUMP(\"jlssu %l0\", 0, 0);
+  ")
 
 (define_insn "bge"
   [(set (pc)
@@ -1702,7 +1668,9 @@
 		      (label_ref (match_operand 0 "" ""))
 		      (pc)))]
   ""
-  "jgequ %l0")
+  "*
+  OUTPUT_JUMP(\"jgequ %l0\", 0, 0);
+  ")
 
 (define_insn "ble"
   [(set (pc)
@@ -1720,10 +1688,12 @@
 		      (label_ref (match_operand 0 "" ""))
 		      (pc)))]
   ""
-  "jlequ %l0")
+  "*
+  OUTPUT_JUMP(\"jlequ %l0\", NULL, \"jeql %l0\");
+  ")
 
 ;; Recognize reversed jumps.
-(define_insn ""
+(define_insn "*rbr"
   [(set (pc)
 	(if_then_else (match_operator 0 "comparison_operator"
 				      [(cc0)
@@ -1731,7 +1701,19 @@
 		      (pc)
 		      (label_ref (match_operand 1 "" ""))))]
   ""
-  "j%C0 %l1") ; %C0 negates condition
+  "*
+  if ((cc_status.flags & CC_NO_OVERFLOW) != 0)
+    {
+      if (GET_CODE (operands[0]) == LTU
+	  || GET_CODE (operands[0]) == GEU)
+	fatal (\"Cannot reverse branch\");
+      if (GET_CODE (operands[0]) == GTU)
+	return \"jeql %l0\";
+      if (GET_CODE (operands[0]) == LEU)
+	return \"jneq %l0\";
+    }
+  return \"j%C0 %l1\"; /* %C0 negates condition */
+  ")
 
 ;; Recognize jbs, jlbs, jbc and jlbc instructions.  Note that the operand
 ;; of jlbs and jlbc insns are SImode in the hardware.  However, if it is
