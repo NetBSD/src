@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.7 1999/02/05 15:16:33 kleink Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.8 1999/03/18 11:22:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,12 +105,21 @@
  * include all of endian.h because it contains a lot
  * junk symbols.  [augustss]
  */
-#define _POSIX_SOURCE		/* avoid dragging in a lot of junk */
+#ifndef _POSIX_SOURCE
+#define __SOUNDCARD_UNSET_POSIX_SOURCE
+#define _POSIX_SOURCE		/* make sure we don't get all the gunk */
+#endif
+
 #include <machine/endian.h>
 #if _QUAD_LOWWORD == 0
 #define  AFMT_S16_NE AFMT_S16_LE
 #else
 #define  AFMT_S16_NE AFMT_S16_BE
+#endif
+
+#ifdef __SOUNDCARD_UNSET_POSIX_SOURCE
+#undef _POSIX_SOURCE
+#undef __SOUNDCARD_UNSET_POSIX_SOURCE
 #endif
 
 
