@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.8 2000/06/03 08:00:43 takemura Exp $ */
+/* $Id: platid_name.c,v 1.9 2000/09/21 03:18:04 sato Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -88,6 +88,8 @@ struct platid_name platid_name_table[] = {
 	  "NEC MobileGearII for DoCoMo" },
 	{ &platid_mask_MACH_NEC_MCR_MPRO700,
 	  "NEC MobilePro 700" },
+	{ &platid_mask_MACH_NEC_MCR_330,
+	  "NEC MC-R330" },
 	{ &platid_mask_MACH_NEC_MCR_5XX,
 	  "NEC MC-R500 series" },
 	{ &platid_mask_MACH_NEC_MCR_500,
@@ -106,6 +108,8 @@ struct platid_name platid_name_table[] = {
 	  "NEC MC-R430" },
 	{ &platid_mask_MACH_NEC_MCR_530A,
 	  "NEC MobilePro 780" },
+	{ &platid_mask_MACH_NEC_MCR_SIGMARION,
+	  "DoCoMo sigmarion" },
 	{ &platid_mask_MACH_NEC_MCR_7XX,
 	  "NEC MC-R700 series" },
 	{ &platid_mask_MACH_NEC_MCR_700,
@@ -257,4 +261,4 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_VADEM_CLIO_C1050,
 	  "VADEM CLIO C-1050" },
 };
-int platid_name_table_size = 108;
+int platid_name_table_size = 110;
