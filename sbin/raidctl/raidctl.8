@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.14 2000/02/25 22:24:46 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.15 2000/02/25 22:38:51 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,7 +256,7 @@ There are 4 required sections of a configuration file, and 2
 optional sections.  Each section begins with a 
 .Sq START , 
 followed by
-the section name, and the confuration parameters associated with that
+the section name, and the configuration parameters associated with that
 section.  The first section is the 
 .Sq array
 section, and it specifies
@@ -372,7 +372,7 @@ START queue
 fifo 100
 .Ed
 .Pp
-where the queueing method is specified as fifo (first-in, first-out),
+where the queuing method is specified as fifo (first-in, first-out),
 and the size of the per-component queue is limited to 100 requests.  
 Other queuing methods may also be specified, but a discussion of them
 is beyond the scope of this document.
@@ -381,7 +381,7 @@ The final section, the
 .Sq debug
 section, is optional.  For more details
 on this the reader is referred to the RAIDframe documentation
-dissussed in the 
+discussed in the 
 .Sx HISTORY
 section.
 
@@ -533,7 +533,7 @@ This initialization includes ensuring that the parity (if any) on the
 RAID set is correct.  Since this initialization may be quite
 time-consuming, the 
 .Ar v
-option may be also used in conjuction with
+option may be also used in conjunction with
 .Ar i .  
 This will give more verbose output on the
 status of the initialization:
@@ -823,7 +823,41 @@ Components:
 No spares.
 .Ed
 .Pp
-
+RAID sets can also be auto-configured at boot.  To make a set
+auto-configurable, simply prepare the RAID set as above, and then do
+a:
+.Bd -unfilled -offset indent
+raidctl -A yes raid0
+.Ed
+.Pp
+to turn on auto-configuration for that set.  To turn off
+auto-configuration, use:
+.Bd -unfilled -offset indent
+raidctl -A no raid0
+.Ed
+.Pp
+Having a system's root filesystem (/) on a RAID set is also allowed.
+To mark a RAID set as being a root filesystem, simply use:
+.Bd -unfilled -offset indent
+raidctl -A root raid0
+.Ed
+.Pp
+Note that since kernels cannot (currently) be directly read from RAID
+components or RAID sets, some other mechanism must be used to get a
+kernel booting.  For example, a small partition containing only the
+secondary boot-blocks and an alternate kernel (or two) could be used.
+Once a kernel is booting however, and an auto-configuring RAID set is
+found that is eligible to be root, then that RAID set will be
+auto-configured and used as the root device.  If two or more RAID sets
+claim to be root devices, then the user will be prompted to select the
+root device.  At this time, RAID 0, 1, 4, and 5 are all supported as
+root devices.  Multi-layered RAID devices (such as a RAID 0 set made
+up of RAID 1 sets) are
+.Ar not
+supported as root devices or auto-configurable devices at this point.
+(Multi-layered RAID devices 
+.Ar are
+supported in general, however.)
 .Pp
 The final operation performed by 
 .Nm
