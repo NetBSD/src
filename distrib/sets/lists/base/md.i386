@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.73 2000/11/30 16:06:25 jdolecek Exp $
+# $NetBSD: md.i386,v 1.74 2000/12/11 13:51:49 jdolecek Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/bktr
@@ -20,6 +20,8 @@
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
+./usr/lkm/compat_linux.o
+./usr/lkm/exec_linux_elf.o
 ./usr/lkm/ext2fs.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
