@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.32 2004/02/19 19:30:30 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.33 2004/02/23 16:05:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -322,6 +322,8 @@ struct protoent_data {
 	char **aliases;
 	size_t maxaliases;
 	int stayopen;
+	char *line;
+	void *dummy;
 };
 
 struct protoent	*getprotoent_r __P((struct protoent *, struct protoent_data *));
@@ -339,6 +341,8 @@ struct servent_data {
 	char **aliases;
 	size_t maxaliases;
 	int stayopen;
+	char *line;
+	void *dummy;
 };
 
 struct servent	*getservent_r __P((struct servent *, struct servent_data *));
