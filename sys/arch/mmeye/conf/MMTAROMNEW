@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.18 2002/07/08 22:49:02 jdolecek Exp $
+#	$NetBSD: MMTAROMNEW,v 1.19 2002/07/22 15:21:06 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -62,6 +62,8 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options 	BSDDISKLABEL_EI	# endian independent disklabel support
+options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 
 # Executable format options
 #options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
