@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.1 2001/07/14 02:09:41 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2 2001/07/14 03:05:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,17 +86,17 @@ exec_macho_print_segment_command(struct exec_macho_segment_command *ls) {
 
 static void
 exec_macho_print_fat_header(struct exec_macho_fat_header *fat) {
-	printf("fat.magic 0x%x\n", bswap32(fat->magic));
-	printf("fat.nfat_arch %d\n", bswap32(fat->nfat_arch));
+	printf("fat.magic 0x%x\n", be32toh(fat->magic));
+	printf("fat.nfat_arch %d\n", be32toh(fat->nfat_arch));
 }
 
 static void
 exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch) {
-	printf("arch.cputype %x\n", bswap32(arch->cputype));
-	printf("arch.cpusubtype %d\n", bswap32(arch->cpusubtype));
-	printf("arch.offset 0x%lx\n", bswap32(arch->offset));
-	printf("arch.size %ld\n", bswap32(arch->size));
-	printf("arch.align 0x%lx\n", bswap32(arch->align));
+	printf("arch.cputype %x\n", be32toh(arch->cputype));
+	printf("arch.cpusubtype %d\n", be32toh(arch->cpusubtype));
+	printf("arch.offset 0x%x\n", be32toh(arch->offset));
+	printf("arch.size %d\n", be32toh(arch->size));
+	printf("arch.align 0x%x\n", be32toh(arch->align));
 }
 
 static void
@@ -358,7 +358,7 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 	size_t size;
 	void *buf = &lc;
 
-	if (bswap32(fat->magic) != MACHO_FAT_MAGIC) {
+	if (be32toh(fat->magic) != MACHO_FAT_MAGIC) {
 		DPRINTF(("bad exec_macho fat magic %x\n", fat->magic));
 		goto bad;
 	}
@@ -367,25 +367,22 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 	exec_macho_print_fat_header(fat);
 #endif
 
-	for (i = 0; i < bswap32(fat->nfat_arch); i++, arch) {
+	for (i = 0; i < be32toh(fat->nfat_arch); i++, arch) {
 		if ((error = exec_read_from(p, vp, sizeof(*fat) +
 		    sizeof(arch) * i, &arch, sizeof(arch))) != 0)
 			goto bad;
 #ifdef DEBUG_MACHO
 		exec_macho_print_fat_arch(&arch);
 #endif
-		switch (bswap32(arch.cputype)) {
-#ifdef __i386__
-		case MACHO_CPU_TYPE_I386:
-			goto done;
+		switch (be32toh(arch.cputype)) {
+		MACHO_MACHDEP_CASES
 		}
-#endif
 	}
 	DPRINTF(("This MACH-O binary does not support your cpu"));
 	goto bad;
 
 done:
-	if ((error = exec_read_from(p, vp, bswap32(arch.offset), &hdr,
+	if ((error = exec_read_from(p, vp, be32toh(arch.offset), &hdr,
 	    sizeof(hdr))) != 0)
 		goto bad;
 
@@ -410,7 +407,7 @@ done:
 	}
 
 		
-	aoffs = bswap32(arch.offset);
+	aoffs = be32toh(arch.offset);
 	offs = aoffs + sizeof(hdr);
 	size = sizeof(lc);
 	for (i = 0; i < hdr.ncmds; i++) {
