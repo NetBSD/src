@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.2 1998/07/25 15:22:11 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.3 1998/08/01 18:16:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,8 +89,6 @@ int usbpoll __P((dev_t, int, struct proc *));
 
 usbd_status usb_discover __P((struct usb_softc *));
 
-int usbd_use_polling;		/* use polling instead of interrupts */
-
 extern struct cfdriver usb_cd;
 
 struct cfattach usb_ca = {
@@ -123,7 +121,7 @@ usb_attach(parent, self, aux)
 
 	printf("\n");
 	sc->sc_running = 1;
-	usbd_use_polling = 1;
+	sc->sc_bus->use_polling = 1;
 	sc->sc_port.power = USB_MAX_POWER;
 	r = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0, 0, 0, &sc->sc_port);
 	if (r == USBD_NORMAL_COMPLETION) {
@@ -141,7 +139,7 @@ usb_attach(parent, self, aux)
 		       sc->sc_dev.dv_xname, r);
 		sc->sc_running = 0;
 	}
-	usbd_use_polling = 0;
+	sc->sc_bus->use_polling = 0;
 }
 
 int

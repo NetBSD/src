@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.2 1998/07/22 12:22:08 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.3 1998/08/01 18:16:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -243,8 +243,8 @@ uhub_init_port(port, uport, dev)
 			 port, UGETW(uport->status.wPortStatus),
 			 UGETW(uport->status.wPortChange)));
 		/* Wait for stable power. */
-		usbd_delay_ms(dev->hub->hubdesc.bPwrOn2PwrGood * 
-			      UHD_PWRON_FACTOR);
+		usbd_delay_ms(dev->bus, dev->hub->hubdesc.bPwrOn2PwrGood * 
+			                UHD_PWRON_FACTOR);
 	}
 	if (dev->self_powered)
 		/* Self powered hub, give ports maximum current. */
@@ -317,14 +317,14 @@ uhub_explore(parent, dev)
 
 		/* Connected */
 		/* Wait for maximum device power up time. */
-		usbd_delay_ms(USB_PORT_POWERUP_DELAY);
+		usbd_delay_ms(dev->bus, USB_PORT_POWERUP_DELAY);
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status) != 
 		    USBD_NORMAL_COMPLETION)
 			continue;
 
 		/* Wait for power to settle in device. */
-		usbd_delay_ms(USB_POWER_SETTLE);
+		usbd_delay_ms(dev->bus, USB_POWER_SETTLE);
 			
 		/* Get device info and set its address. */
 		r = usbd_new_device((struct device *)sc, dev->bus, 
