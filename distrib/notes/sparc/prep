@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8.8.2 2000/11/03 20:38:40 tv Exp $
+.\"	$NetBSD: prep,v 1.8.8.3 2000/11/09 22:44:57 tv Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -91,19 +91,14 @@ to SCSI target 0.
 .It \~\~\~6 Ta \~\~\~6 Ta \~\~\~cdrom
 .El
 .Pp
-Unfortunately, the
-.Nx
-kernel believes the 
-.Sq unit
-values returned by the OpenBoot PROM really are the SCSI target IDs.  The
+The
 .Nx*M
 .Li GENERIC 
-kernel does not by default wire things down as does
+kernel does not wire things down as does
 .Tn SunOS .
 It names the disks in the order
-that the targets (actually the PROM
-.Sq unit
-numbers) are probed (01234567). If you only have one disk, it is always
+that the SCSI targets are probed (01234567). If you only have one disk,
+it is always
 .Li sd0
 regardless of its SCSI target ID or its PROM
 .Sq unit
@@ -113,16 +108,16 @@ SCSI ID 2 (
 2) and SCSI ID 3 (
 .Sq unit
 0), then they are recognized as
-.Li sd1
-and
 .Li sd0
+and
+.Li sd1
 respectively. This can be a problem if you are not
 aware of it, particularly when creating an fstab.
 .Pp
 There are two approaches to fixing this problem: changing the
 mapping that OpenBoot PROM 1 does, and changing the
 .Nx
-kernel.
+kernel configuration.
 To get OpenBoot PROM 1 to number the SCSI 
 .Sq unit
 numbers the same as the SCSI target IDs, you need to run this command:
@@ -135,17 +130,17 @@ on this machine or if you reset the OpenBoot PROM variables.
 .Pp
 The other approach is to use a
 .Nx
-kernel that reverses this odd target mapping by treating
+kernel that matches the PROM's odd target mapping by treating
 .Sq unit
 0 (i.e. SCSI target ID 3) as
-.Li sd3
+.Li sd0
 and 
 .Sq unit
 3 (i.e. SCSI target ID 0) as
-.Li sd0 .
+.Li sd3 .
 The
 .Li GENERIC_SCSI3
-kernel performs this target remapping, but the
+kernel performs this target mapping, but the
 .Li GENERIC
 and
 .Li INSTALL
@@ -156,22 +151,44 @@ This is also a concern when you start building your own customised kernels.
 .Note)
 .Pp
 The machines with OpenBoot PROM 2 (SPARCstation/server 2,
-ELC, IPX, and all sun4m models) do not have this mapping problem.
-You should be aware, however, that the OpenBoot PROM
+ELC, IPX, and all sun4m models) have s similar SCSI target mapping in the
+form of a
 .Ic devalias
-entries are similarly reversed.  That is, 
-.Li disk0
-is the hard drive at SCSI ID 3, and
-.Li disk3
-is the hard drive at SCSI ID 3.  But don't worry, since
-it is only a device alias the
+entry.  That is, the device alias
+.Ic disk
+is shorthand for the disk at SCSI ID 3 on the internal SCSI controller.
+Normally, the
+.Ic disk
+device alias is what the PROM uses as the default boot device, i.e. in the
+absence of a
+.Ar device
+argument to the
+.Ic boot
+command.
+Note that there are also pre-configured device alias entries for
+.Ic disk0,
+.Ic disk1,
+.Ic disk2
+and
+.Ic disk3 ,
+which are in fact a one-to-one mapping to the SCSI targets
+.Ic 0
+to
+.Ic 3
+.Pq all on the internal SCSI controller .
+.Pp
+Again, it may be advantageous to use a fixed
+.Dq SCSI target
+to
+.Do
 .Nx
-kernel finds your SCSI device at the correct target ID.
-Some models have their internal hard
-drives fixed at SCSI ID 3, so it may still be advantageous to use the
+disk unit
+.Dc
+mapping in your kernel configuration file (such as is done in the
 .Li GENERIC_SCSI3
-kernel to ensure that your internal drive shows up as
-.Li sd0 .
+kernel) to ensure that your disks remain showing up at the same
+.Nx
+device unit numbers even if you add disks to your system at a later time.
 .
 .Ss2 Determining how to access your SCSI disk from the PROM
 .
