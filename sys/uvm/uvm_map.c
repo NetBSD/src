@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.30 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.31 1998/10/19 22:21:19 tron Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -73,6 +73,7 @@
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_pmap_new.h"
+#include "opt_sysv.h"
 
 /*
  * uvm_map.c: uvm map operations

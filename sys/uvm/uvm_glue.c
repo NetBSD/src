@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.14 1998/09/08 23:44:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.15 1998/10/19 22:21:19 tron Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -71,6 +71,7 @@
  */
 
 #include "opt_uvmhist.h"
+#include "opt_sysv.h"
 
 /*
  * uvm_glue.c: glue functions
