@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.696 2004/04/21 21:24:01 kleink Exp $
+#	$NetBSD: mi,v 1.697 2004/04/30 21:16:13 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2741,6 +2741,16 @@
 ./usr/share/man/cat3/data_behind.0		comp-c-catman		.cat
 ./usr/share/man/cat3/daylight.0			comp-c-catman		.cat
 ./usr/share/man/cat3/db.0			comp-c-catman		.cat
+./usr/share/man/cat3/dbm_clearerr.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_delete.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_dirfno.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_error.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_fetch.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_firstkey.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_nextkey.0		comp-c-catman		.cat
+./usr/share/man/cat3/dbm_open.0			comp-c-catman		.cat
+./usr/share/man/cat3/dbm_store.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dbopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dcgettext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dcngettext.0		comp-c-catman		.cat
@@ -3728,6 +3738,7 @@
 ./usr/share/man/cat3/napms.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nc_perror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nc_sperror.0		comp-c-catman		.cat
+./usr/share/man/cat3/ndbm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/network.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/new_fieldtype.0		comp-c-catman		.cat
@@ -6447,6 +6458,16 @@
 ./usr/share/man/man3/data_behind.3		comp-c-man		.man
 ./usr/share/man/man3/daylight.3			comp-c-man		.man
 ./usr/share/man/man3/db.3			comp-c-man		.man
+./usr/share/man/man3/dbm_clearerr.3		comp-c-man		.man
+./usr/share/man/man3/dbm_close.3		comp-c-man		.man
+./usr/share/man/man3/dbm_delete.3		comp-c-man		.man
+./usr/share/man/man3/dbm_dirfno.3		comp-c-man		.man
+./usr/share/man/man3/dbm_error.3		comp-c-man		.man
+./usr/share/man/man3/dbm_fetch.3		comp-c-man		.man
+./usr/share/man/man3/dbm_firstkey.3		comp-c-man		.man
+./usr/share/man/man3/dbm_nextkey.3		comp-c-man		.man
+./usr/share/man/man3/dbm_open.3			comp-c-man		.man
+./usr/share/man/man3/dbm_store.3		comp-c-man		.man
 ./usr/share/man/man3/dbopen.3			comp-c-man		.man
 ./usr/share/man/man3/dcgettext.3		comp-c-man		.man
 ./usr/share/man/man3/dcngettext.3		comp-c-man		.man
@@ -7434,6 +7455,7 @@
 ./usr/share/man/man3/napms.3			comp-c-man		.man
 ./usr/share/man/man3/nc_perror.3		comp-c-man		.man
 ./usr/share/man/man3/nc_sperror.3		comp-c-man		.man
+./usr/share/man/man3/ndbm.3			comp-c-man		.man
 ./usr/share/man/man3/network.3			comp-c-man		.man
 ./usr/share/man/man3/new_field.3		comp-c-man		.man
 ./usr/share/man/man3/new_fieldtype.3		comp-c-man		.man
