@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.10 1999/11/21 00:57:07 mjl Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.11 2000/05/27 16:32:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.10 1999/11/21 00:57:07 mjl Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.11 2000/05/27 16:32:08 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.10 1999/11/21 00:57:07 mjl Exp $");
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
+	{ "maplcase", 1, ISOFSMNT_NOCASETRANS, 1 },
 	{ NULL }
 };
 
@@ -86,7 +87,7 @@ main(argc, argv)
 	char *dev, *dir;
 
 	mntflags = opts = 0;
-	while ((ch = getopt(argc, argv, "egjo:r")) != -1)
+	while ((ch = getopt(argc, argv, "egijo:r")) != -1)
 		switch (ch) {
 		case 'e':
 			opts |= ISOFSMNT_EXTATT;
@@ -98,7 +99,7 @@ main(argc, argv)
 			opts |= ISOFSMNT_NOJOLIET;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			getmntopts(optarg, mopts, &mntflags, &opts);
 			break;
 		case 'r':
 			opts |= ISOFSMNT_NORRIP;
@@ -135,6 +136,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_cd9660 [-egjr] [-o options] special node\n");
+		"usage: mount_cd9660 [-egijr] [-o options] special node\n");
 	exit(1);
 }
