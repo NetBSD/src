@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.11 1996/10/10 17:21:31 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.12 1996/10/12 21:58:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -273,7 +273,7 @@ mfs_close(v)
 	 * vnode, so if we find any other uses, it is a panic.
 	 */
 	if (vp->v_usecount > 1)
-		kprintf("mfs_close: ref count %d > 1\n", vp->v_usecount);
+		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
 	if (vp->v_usecount > 1 || mfsp->mfs_buflist)
 		panic("mfs_close");
 	/*
@@ -332,7 +332,7 @@ mfs_print(v)
 	} */ *ap = v;
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	kprintf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
+	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }

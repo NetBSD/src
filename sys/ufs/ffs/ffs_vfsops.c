@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.20 1996/10/10 17:21:19 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.21 1996/10/12 21:58:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -272,7 +272,7 @@ ffs_mount(mp, path, data, ndp, p)
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
 		else
-			kprintf("%s: file system not clean; please fsck(8)\n",
+			printf("%s: file system not clean; please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname);
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
@@ -711,7 +711,7 @@ ffs_sync(mp, waitfor, cred, p)
 	 */
 	if (fs->fs_fmod != 0) {
 		if (fs->fs_ronly != 0) {		/* XXX */
-			kprintf("fs = %s\n", fs->fs_fsmnt);
+			printf("fs = %s\n", fs->fs_fsmnt);
 			panic("update: rofs mod");
 		}
 		fs->fs_fmod = 0;

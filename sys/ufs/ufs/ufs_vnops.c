@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.20 1996/10/10 17:21:36 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.21 1996/10/12 21:58:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1541,7 +1541,7 @@ start:
 	if (ip->i_lockholder != 0)
 		panic("lockholder (%d) != 0", ip->i_lockholder);
 	if (p && p->p_pid == 0)
-		kprintf("locking by process 0\n");
+		printf("locking by process 0\n");
 	if (p)
 		ip->i_lockholder = p->p_pid;
 	else
@@ -1656,19 +1656,19 @@ ufs_print(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 
-	kprintf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
+	printf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
 	    major(ip->i_dev), minor(ip->i_dev));
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 #endif /* FIFO */
-	kprintf("%s\n", (ip->i_flag & IN_LOCKED) ? " (LOCKED)" : "");
+	printf("%s\n", (ip->i_flag & IN_LOCKED) ? " (LOCKED)" : "");
 	if (ip->i_lockholder == 0)
 		return (0);
-	kprintf("\towner pid %d", ip->i_lockholder);
+	printf("\towner pid %d", ip->i_lockholder);
 	if (ip->i_lockwaiter)
-		kprintf(" waiting pid %d", ip->i_lockwaiter);
-	kprintf("\n");
+		printf(" waiting pid %d", ip->i_lockwaiter);
+	printf("\n");
 	return (0);
 }
 
