@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1997/01/27 22:24:03 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1997/02/12 16:00:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -82,7 +82,10 @@ struct cfdriver clock_cd = {
 };
 
 /*
- * XXX - Need to determine which type of clock we have!
+ * XXX  Need to determine which type of clock we have!
+ * XXX  The Sun3/80 always has the MK4802, while the
+ * XXX  Sun3/470 can (reportedly) have that or the old
+ * XXX  intersil7170.  Should have two clock drivers...
  */
 static int
 clock_match(parent, cf, args)
@@ -392,7 +395,6 @@ long dt_to_gmt __P((struct date_time *dt));
  * Routines to copy state into and out of the clock.
  * The clock CSR has to be set for read or write.
  */
-
 static void
 clk_get_dt(struct date_time *dt)
 {
@@ -400,6 +402,10 @@ clk_get_dt(struct date_time *dt)
 	int s;
 
 	s = splhigh();
+
+	/* XXX - Wait for the end of this second? */
+	dt->dt_csec = 0;
+
 	/* enable read (stop time) */
 	cl->cl_csr |= CLK_READ;
 
@@ -443,6 +449,12 @@ clk_set_dt(struct date_time *dt)
 
 
 /*
+ * BCD to decimal and decimal to BCD.
+ */
+#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
+#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
+
+/*
  * Now routines to get and set clock as POSIX time.
  * Our clock keeps "years since 1/1/1968", so we must
  * convert to/from "years since 1/1/1970" before the
@@ -456,10 +468,20 @@ clk_get_secs()
 	long gmt;
 
 	clk_get_dt(&dt);
+
+	/* Convert BCD values to binary. */
+	dt.dt_sec  = FROMBCD(dt.dt_sec);
+	dt.dt_min  = FROMBCD(dt.dt_min);
+	dt.dt_hour = FROMBCD(dt.dt_hour);
+	dt.dt_day  = FROMBCD(dt.dt_day);
+	dt.dt_mon  = FROMBCD(dt.dt_mon);
+	dt.dt_year = FROMBCD(dt.dt_year);
+
 	dt.dt_year -= CLOCK_YEAR_ADJUST;
 	gmt = dt_to_gmt(&dt);
 	return (gmt);
 }
+
 static void
 clk_set_secs(secs)
 	long secs;
@@ -470,6 +492,15 @@ clk_set_secs(secs)
 	gmt = secs;
 	gmt_to_dt(gmt, &dt);
 	dt.dt_year += CLOCK_YEAR_ADJUST;
+
+	/* Convert binary values to BCD. */
+	dt.dt_sec  = TOBCD(dt.dt_sec);
+	dt.dt_min  = TOBCD(dt.dt_min);
+	dt.dt_hour = TOBCD(dt.dt_hour);
+	dt.dt_day  = TOBCD(dt.dt_day);
+	dt.dt_mon  = TOBCD(dt.dt_mon);
+	dt.dt_year = TOBCD(dt.dt_year);
+
 	clk_set_dt(&dt);
 }
 
