@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.5 1997/04/10 23:12:18 cgd Exp $ */
+/* $NetBSD: dwlpx.c,v 1.5.2.1 1997/05/23 21:32:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.5 1997/04/10 23:12:18 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.5.2.1 1997/05/23 21:32:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,8 @@ dwlpxattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->dwlpx_cc.cc_iot;
 	pba.pba_memt = sc->dwlpx_cc.cc_memt;
+	pba.pba_dmat =	/* start with direct, may change... */
+	    alphabus_dma_get_tag(&sc->dwlpx_cc.cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &sc->dwlpx_cc.cc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
@@ -168,31 +170,9 @@ dwlpx_init(sc)
 	    (1LL					<< 39);
 
 	/*
-	 * Set up DMA windows for this DWLPX.
-	 *
-	 * Basically, we set up for a 1GB direct mapped window,
-	 * starting from PCI address 0x40000000. And that's it.
-	 *
-	 * Do this even for all HPCs- even for the nonexistent
-	 * one on hose zero of a KFTIA.
+	 * Set up DMA stuff for this DWLPX.
 	 */
-	for (i = 0; i < NHPC; i++) {
-		REGVAL(PCIA_WMASK_A(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_TBASE_A(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WBASE_A(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WMASK_B(i) + ccp->cc_sysbase) = 0x3fff0000;
-		REGVAL(PCIA_TBASE_B(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WBASE_B(i) + ccp->cc_sysbase) = 0x40000002;
-		REGVAL(PCIA_WMASK_C(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_TBASE_C(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WBASE_C(i) + ccp->cc_sysbase) = 0;
-	}
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	dwlpx_dma_init(ccp);
 
 	/*
 	 * Set up interrupt stuff for this DWLPX.
