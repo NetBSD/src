@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.3 2001/03/20 23:27:04 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.4 2001/07/04 13:58:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -58,5 +58,12 @@ struct podule_list {
 };
 
 #include <machine/podulebus_machdep.h>
+
+/* Podule loader functions. */
+extern int podulebus_initloader(struct podulebus_attach_args *);
+extern int podloader_readbyte(struct podulebus_attach_args *, u_int);
+extern void podloader_writebyte(struct podulebus_attach_args *, u_int, int);
+void podloader_reset(struct podulebus_attach_args *);
+int podloader_callloader(struct podulebus_attach_args *, u_int, u_int);
 
 #endif
