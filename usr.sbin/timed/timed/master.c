@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.11 2002/08/02 02:13:46 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.12 2003/05/16 18:28:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.11 2002/08/02 02:13:46 christos Exp $");
+__RCSID("$NetBSD: master.c,v 1.12 2003/05/16 18:28:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,8 @@ loop:
 				to.tsp_vers = TSPVERSION;
 				to.tsp_seq = sequence++;
 				to.tsp_hopcnt = MAX_HOPCNT;
-				(void)strcpy(to.tsp_name, hostname);
+				(void)strlcpy(to.tsp_name, hostname,
+					      sizeof(to.tsp_name));
 				bytenetorder(&to);
 				if (sendto(sock, (char *)&to,
 					   sizeof(struct tsp), 0,
@@ -176,7 +177,7 @@ loop:
 			 * XXX check to see it is from ourself
 			 */
 			tmpt = msg->tsp_time.tv_sec;
-			(void)strcpy(newdate, ctime(&tmpt));
+			(void)strlcpy(newdate, ctime(&tmpt), sizeof(newdate));
 			if (!good_host_name(msg->tsp_name)) {
 				syslog(LOG_NOTICE,
 				       "attempted date change by %s to %s",
@@ -194,7 +195,7 @@ loop:
 			if (!fromnet || fromnet->status != MASTER)
 				break;
 			tmpt = msg->tsp_time.tv_sec;
-			(void)strcpy(newdate, ctime(&tmpt));
+			(void)strlcpy(newdate, ctime(&tmpt), sizeof(newdate));
 
 			htp = findhost(msg->tsp_name);
 			if (htp == 0) {
@@ -242,9 +243,10 @@ loop:
 				(void)addmach(msg->tsp_name, &from,fromnet);
 			}
 			taddr = from;
-			(void)strcpy(tname, msg->tsp_name);
+			(void)strlcpy(tname, msg->tsp_name, sizeof(tname));
 			to.tsp_type = TSP_QUIT;
-			(void)strcpy(to.tsp_name, hostname);
+			(void)strlcpy(to.tsp_name, hostname,
+				      sizeof(to.tsp_name));
 			answer = acksend(&to, &taddr, tname,
 					 TSP_ACK, 0, 1);
 			if (answer == NULL) {
@@ -261,7 +263,8 @@ loop:
 			 */
 			if (!fromnet || fromnet->status != MASTER)
 				break;
-			(void)strcpy(to.tsp_name, hostname);
+			(void)strlcpy(to.tsp_name, hostname,
+			              sizeof(to.tsp_name));
 
 			/* The other master often gets into the same state,
 			 * with boring results if we stay at it forever.
@@ -269,7 +272,7 @@ loop:
 			ntp = fromnet;	/* (acksend() can leave fromnet=0 */
 			for (i = 0; i < 3; i++) {
 				to.tsp_type = TSP_RESOLVE;
-				(void)strcpy(to.tsp_name, hostname);
+				(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
 				answer = acksend(&to, &ntp->dest_addr,
 						 ANYADDR, TSP_MASTERACK,
 						 ntp, 0);
@@ -314,7 +317,8 @@ loop:
 			 */
 			htp = addmach(msg->tsp_name, &from,fromnet);
 			to.tsp_type = TSP_QUIT;
-			(void)strcpy(to.tsp_name, hostname);
+			(void)strlcpy(to.tsp_name, hostname,
+				      sizeof(to.tsp_name));
 			answer = acksend(&to, &htp->addr, htp->name,
 					 TSP_ACK, 0, 1);
 			if (!answer) {
@@ -357,11 +361,11 @@ mchgdate(struct tsp *msg)
 	char olddate[32];
 	struct timeval otime, ntime, tmptv;
 
-	(void)strcpy(tname, msg->tsp_name);
+	(void)strlcpy(tname, msg->tsp_name, sizeof(tname));
 
 	xmit(TSP_DATEACK, msg->tsp_seq, &from);
 
-	(void)strcpy(olddate, date());
+	(void)strlcpy(olddate, date(), sizeof(olddate));
 
 	/* adjust time for residence on the queue */
 	(void)gettimeofday(&otime, 0);
@@ -478,7 +482,7 @@ spreadtime(void)
 	dictate = 2;
 	for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 		to.tsp_type = TSP_SETTIME;
-		(void)strcpy(to.tsp_name, hostname);
+		(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
 		(void)gettimeofday(&tmptv, 0);
 		to.tsp_time.tv_sec = tmptv.tv_sec;
 		to.tsp_time.tv_usec = tmptv.tv_usec;
@@ -757,7 +761,7 @@ newslave(struct tsp *msg)
 	if (now.tv_sec >= fromnet->slvwait.tv_sec+3
 	    || now.tv_sec < fromnet->slvwait.tv_sec) {
 		to.tsp_type = TSP_SETTIME;
-		(void)strcpy(to.tsp_name, hostname);
+		(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
 		(void)gettimeofday(&tmptv, 0);
 		to.tsp_time.tv_sec = tmptv.tv_sec;
 		to.tsp_time.tv_usec = tmptv.tv_usec;
