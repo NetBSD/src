@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.27 1999/01/25 10:12:33 fvdl Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.28 1999/03/26 07:15:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.27 1999/01/25 10:12:33 fvdl Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.28 1999/03/26 07:15:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,10 +123,10 @@ void	usage __P((void));
  * 3 - create server socket(s)
  * 4 - register socket with portmap
  *
- * For connectionless protocols, just pass the socket into the kernel via.
+ * For connectionless protocols, just pass the socket into the kernel via
  * nfssvc().
  * For connection based sockets, loop doing accepts. When you get a new
- * socket from accept, pass the msgsock into the kernel via. nfssvc().
+ * socket from accept, pass the msgsock into the kernel via nfssvc().
  * The arguments are:
  *	-c - support iso cltp clients
  *	-r - reregister with portmapper
