@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
-#	$Id: Makefile,v 1.3 1997/10/11 08:22:34 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/13 08:51:57 mark Exp $
 
 MAN=	intro.4 asc.4 autoconf.4 beep.4 com.4
 MAN+=	cosc.4 csc.4 ea.4 eb.4 eh.4 es.4 ie.4 kbd.4 lpt.4
