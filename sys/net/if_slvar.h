@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.20 2000/07/12 23:02:38 thorpej Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.21 2001/01/09 04:42:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,8 +51,8 @@ struct sl_softc {
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
-	u_char	*sc_buf;		/* input buffer */
-	u_char	*sc_xxx;		/* XXX don't ask... */
+	u_char	*sc_pktstart;		/* pointer to beginning of packet */
+	struct mbuf *sc_mbuf;		/* input buffer */
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
 	long	sc_lasttime;		/* last time a char arrived */
