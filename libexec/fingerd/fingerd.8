@@ -1,4 +1,4 @@
-.\"	$NetBSD: fingerd.8,v 1.13 2002/09/10 03:29:01 kim Exp $
+.\"	$NetBSD: fingerd.8,v 1.14 2002/09/12 01:40:54 kim Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,16 +41,8 @@
 .Nd remote user information server
 .Sh SYNOPSIS
 .Nm
-.Op Fl s
-.Op Fl l
-.Op Fl u
-.Op Fl h
-.Op Fl m
-.Op Fl p
-.Op Fl S
-.Op Fl g
+.Op Fl sluhmpSg8
 .Op Fl P Ar filename
-.Op Fl i
 .Sh DESCRIPTION
 .Nm
 is a simple protocol based on
@@ -147,6 +139,8 @@ This overrides the
 that may be passed in from the remote client.
 .It Fl g
 Do not show any gecos information besides the users' real names.
+.It Fl 8
+Enable 8-bit output.
 .It Fl P
 Use an alternate program as the local information provider.
 The default local program
@@ -158,8 +152,6 @@ By specifying a customized local server,
 this option allows a system manager
 to have more control over what information is
 provided to remote sites.
-.It Fl i
-Enable 8-bit output.
 .El
 .Sh SEE ALSO
 .Xr finger 1 ,
