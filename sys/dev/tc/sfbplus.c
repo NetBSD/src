@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.9 2001/02/27 02:11:36 nisimura Exp $ */
+/* $NetBSD: sfbplus.c,v 1.10 2001/08/05 18:07:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.9 2001/02/27 02:11:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.10 2001/08/05 18:07:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -782,7 +782,7 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count, icount;
+	u_int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {

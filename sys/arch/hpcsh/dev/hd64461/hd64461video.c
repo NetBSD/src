@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.3 2001/07/22 09:56:40 takemura Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.4 2001/08/05 18:07:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -410,7 +410,8 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
 	u_int8_t *r, *g, *b;
-	int idx, cnt, error;
+	int error;
+	size_t idx, cnt;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
