@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.2 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.2 2002/04/12 06:50:41 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -182,8 +182,8 @@ vax_setboot(ib_params *params)
 	assert(params != NULL);
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
-	assert(params->bbfd != -1);
-	assert(params->bootblock != NULL);
+	assert(params->s1fd != -1);
+	assert(params->stage1 != NULL);
 	assert(sizeof(struct vax_boot_block) == VAX_BOOT_BLOCK_BLOCKSIZE);
 
 	retval = 0;
@@ -195,12 +195,12 @@ vax_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->bbfd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->bootblock);
+	if (fstat(params->s1fd, &bootstrapsb) == -1) {
+		warn("Examining `%s'", params->stage1);
 		goto done;
 	}
 	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->bootblock);
+		warnx("`%s' must be a regular file", params->stage1);
 		goto done;
 	}
 	if (! load_bootstrap(params, &bootstrapbuf, &bootstrapload,
@@ -226,7 +226,7 @@ vax_setboot(ib_params *params)
 		}
 		if (!S_ISREG(filesyssb.st_mode)) {
 			warnx(
-		    "`%s' must be a regular file to append a boot block",
+		    "`%s' must be a regular file to append a bootstrap",
 			    params->filesystem);
 			goto done;
 		}
@@ -322,13 +322,13 @@ load_bootstrap(ib_params *params, char **data,
 		return (0);
 	}
 
-	cc = pread(params->bbfd, *data, buflen, 0);
+	cc = pread(params->s1fd, *data, buflen, 0);
 	if (cc <= 0) {
-		warn("Reading `%s'", params->bootblock);
+		warn("Reading `%s'", params->stage1);
 		return (0);
 	}
 	if (cc > 512 * VAX_BOOT_SIZE) {
-		warnx("`%s': too large", params->bootblock);
+		warnx("`%s': too large", params->stage1);
 		return (0);
 	}
 

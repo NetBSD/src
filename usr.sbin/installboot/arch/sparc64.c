@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.5 2002/04/11 07:56:14 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.6 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.5 2002/04/11 07:56:14 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.6 2002/04/12 06:50:41 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -145,22 +145,22 @@ sparc64_setboot(ib_params *params)
 	assert(params != NULL);
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
-	assert(params->bbfd != -1);
-	assert(params->bootblock != NULL);
+	assert(params->s1fd != -1);
+	assert(params->stage1 != NULL);
 
 	retval = 0;
 
-	if (fstat(params->bbfd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->bootblock);
+	if (fstat(params->s1fd, &bootstrapsb) == -1) {
+		warn("Examining `%s'", params->stage1);
 		goto done;
 	}
 	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->bootblock);
+		warnx("`%s' must be a regular file", params->stage1);
 		goto done;
 	}
 
 	memset(&bb, 0, SPARC64_BOOT_BLOCK_MAX_SIZE);
-	rv = read(params->bbfd, &bb, sizeof bb);
+	rv = read(params->s1fd, &bb, sizeof bb);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		goto done;
