@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.8 1995/03/09 02:20:34 cgd Exp $	*/
+/*	$NetBSD: ccd.c,v 1.9 1995/06/26 05:34:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -746,8 +746,15 @@ ccdsize(dev)
 	return(cs->sc_size);
 }
 
-ccddump(dev)
+int
+ccddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	return(ENXIO);
+
+	/* Not implemented. */
+	return ENXIO;
 }
 #endif
