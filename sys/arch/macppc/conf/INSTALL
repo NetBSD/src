@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31.2.2 2000/11/10 03:30:25 tv Exp $
+#	$NetBSD: INSTALL,v 1.31.2.3 2001/05/26 21:47:38 he Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -75,7 +75,7 @@ siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
-#gm*	at pci? dev ? function ?	# gmac ethernet
+gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 options	TLP_MATCH_21040
