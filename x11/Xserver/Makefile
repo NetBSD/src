@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2004/11/15 09:12:38 rtr Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2004/11/21 11:57:47 rtr Exp $
 
 .include <bsd.own.mk>
 
 .include "Makefile.common"
 
-.if ${XSERVER_NEEDS_XFONT} != "no" && ${X11LOADABLE} != "no"
-SUBDIR.xfont=fontbase Xfont
+.if ${XSERVER_NEEDS_XFONT} != "no"
+.if ${X11LOADABLE} != "no"
+SUBDIR.xfont=Xfont
+.endif
+SUBDIR.xfont+=fontbase
 .else
 SUBDIR.xfont=
 .endif
