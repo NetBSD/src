@@ -1,0 +1,17 @@
+#	$NetBSD: files.hpcsh,v 1.1 2001/01/17 05:21:48 itojun Exp $
+#
+# new style config file for sh3 architecture
+#
+
+include "arch/hpcsh/conf/files.shbus"
+
+file	arch/hpcsh/hpcsh/conf.c
+file	arch/hpcsh/hpcsh/machdep.c
+file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
+
+defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+defopt  opt_led_addr.h	LED_ADDR
+defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
+			BSC_WCR3_VAL BSC_MCR_VAL BSC_SDMR2_VAL BSC_SDMR3_VAL
+			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
+			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL
