@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.23 1999/03/17 18:28:11 ross Exp $ */
+/* $NetBSD: ioasic.c,v 1.24 1999/04/10 01:21:38 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.23 1999/03/17 18:28:11 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.24 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -133,8 +133,6 @@ tc_addr_t ioasic_base;		/* XXX XXX XXX */
 
 /* There can be only one. */
 int ioasicfound;
-
-extern int cputype;
 
 /*
  * DMA area for IOASIC LANCE.
