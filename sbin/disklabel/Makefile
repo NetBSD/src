@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1997/10/18 07:28:47 mark Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 1998/11/23 08:11:42 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -7,10 +7,10 @@ MAN=	disklabel.5 disklabel.8
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
 
-# XXX new boot blocks don't need this; we'll leave it for a while. --pm
-#.if (${MACHINE} == "i386")
-#CPPFLAGS+= -DNUMBOOT=2
-#.endif
+# recognize old partition ID for a while
+.if (${MACHINE} == "i386")
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
+.endif
 
 .if (${MACHINE} == "hp300") || (${MACHINE} == "vax") \
 	|| (${MACHINE} == "arm32")
