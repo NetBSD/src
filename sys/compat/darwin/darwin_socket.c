@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.3 2004/07/21 23:43:25 manu Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.4 2004/07/24 15:45:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.3 2004/07/21 23:43:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.4 2004/07/24 15:45:27 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.3 2004/07/21 23:43:25 manu Exp $
 #include <sys/signal.h>
 #include <sys/lwp.h>
 #include <sys/sa.h>
+#include <sys/socketvar.h>
+#include <sys/un.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -165,6 +167,34 @@ darwin_to_native_sockaddr(dsa, nsa)
 	if ((len = dsa->sa_len) > _SS_MAXSIZE) {
 		printf("darwin_to_native_sockaddr: sa_len too big");
 		return;
+	}
+
+	if (len == 0) {
+		/* 	
+		 * It happens for AF_LOCAL sockets, where the
+		 * size must be computed by hand...
+		 */
+		switch (dsa->sa_family) {
+		case DARWIN_AF_LOCAL: {
+			struct sockaddr_un *sun = (struct sockaddr_un *)dsa;
+
+			len = sizeof(*sun) 
+			    - sizeof(sun->sun_path) 
+			    + strlen(sun->sun_path)
+			    + 1; /* For trailing \0 */
+			if (len > _SS_MAXSIZE) {
+				printf("darwin_to_native_sockaddr: "
+				    "sa_len too big");
+				return;
+			}
+			break;
+		}
+
+		default:
+			printf("darwin_to_native_sockaddr: sa_len not set");
+			return;
+			break;
+		}
 	}
 
 	memcpy(nsa, dsa, len);
@@ -444,7 +474,7 @@ darwin_sys_connect(l, v, retval)
 	SCARG(&cup, name) = (struct sockaddr *)nssp;
 	SCARG(&cup, namelen) = len;
 
-	return sys_connect(l, &cup, retval);
+	return bsd_sys_connect(l, &cup, retval);
 }
 
 int
