@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.114 2003/05/03 16:24:35 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.115 2003/06/12 18:50:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.114 2003/05/03 16:24:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.115 2003/06/12 18:50:43 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1037,6 +1037,13 @@ ffs_oldfscompat_write(fs, ump)
 {
 	if (fs->fs_magic != FS_UFS1_MAGIC)
 		return;
+
+	/*
+	 * OS X somehow still seems to use this field and panic.
+	 * Just set it to zero.
+	 */
+	if (ump->um_flags & UFS_ISAPPLEUFS)
+		fs->fs_old_nrpos = 0;
 	/*
 	 * Copy back UFS2 updated fields that UFS1 inspects.
 	 */
