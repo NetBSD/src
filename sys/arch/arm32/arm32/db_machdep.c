@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.7 1997/10/14 10:11:06 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.8 1998/02/21 02:42:42 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
@@ -41,29 +40,6 @@
 #include <ddb/db_output.h>
 
 #include <machine/irqhandler.h>
-
-void
-db_show_fs_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	struct vfsops **vfsp;
-	int s;
-	
-	s = splhigh();
-
-	db_printf("Registered filesystems (%d)\n", nvfssw);
-         
-	for (vfsp = &vfssw[0]; vfsp < &vfssw[nvfssw]; vfsp++) {
-		if (*vfsp == NULL)
-			continue;
-		db_printf("  %s\n", (*vfsp)->vfs_name);
-	}
-	(void)splx(s);
-}
-
 
 /*
  * Print out a description of a vnode.
