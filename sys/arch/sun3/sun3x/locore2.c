@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.19 1998/02/05 04:57:58 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.20 1998/06/12 20:07:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@ void _bootstrap __P((struct exec));
 
 static void _vm_init __P((struct exec *kehp));
 
-
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 static void _save_symtab __P((struct exec *kehp));
 
@@ -98,60 +97,57 @@ _save_symtab(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
 	int x, *symsz, *strsz;
-	char *endp;
-	char *errdesc = "?";
+	char *endp, *errdesc;
+
+	/* Initialize */
+	endp = end;
+	symsz = (int*)end;
 
 	/*
-	 * First, sanity-check the exec header.
+	 * Sanity-check the exec header.
 	 */
-	if ((kehp->a_midmag & 0xFFF0) != 0x0100) {
-		errdesc = "magic";
+	errdesc = "bad magic";
+	if ((kehp->a_midmag & 0xFFF0) != 0x0100)
 		goto err;
-	}
+
 	/* Boundary between text and data varries a little. */
+	errdesc = "bad header";
 	x = kehp->a_text + kehp->a_data;
-	if (x != (edata - kernel_text)) {
-		errdesc = "a_text+a_data";
+	if (x != (edata - kernel_text))
 		goto err;
-	}
-	if (kehp->a_bss != (end - edata)) {
-		errdesc = "a_bss";
+	if (kehp->a_bss != (end - edata))
 		goto err;
-	}
-	if (kehp->a_entry != (int)kernel_text) {
-		errdesc = "a_entry";
+	if (kehp->a_entry != (int)kernel_text)
 		goto err;
-	}
-	if (kehp->a_trsize || kehp->a_drsize) {
-		errdesc = "a_Xrsize";
+	if (kehp->a_trsize || kehp->a_drsize)
 		goto err;
-	}
 	/* The exec header looks OK... */
 
 	/* Check the symtab length word. */
-	endp = end;
-	symsz = (int*)endp;
-	if (kehp->a_syms != *symsz) {
-		errdesc = "a_syms";
+	errdesc = "bad symbols/strings";
+	if (kehp->a_syms != *symsz)
 		goto err;
-	}
 	endp += sizeof(int);	/* past length word */
 	endp += *symsz;			/* past nlist array */
 
 	/* Sanity-check the string table length. */
 	strsz = (int*)endp;
-	if ((*strsz < 4) || (*strsz > 0x80000)) {
-		errdesc = "strsize";
+	if ((*strsz < 4) || (*strsz > 0x80000))
 		goto err;
-	}
-
-	/* Success!  We have a valid symbol table! */
+	/* OK, we have a valid symbol table. */
 	endp += *strsz;			/* past strings */
+
+	/* Success!  Advance esym past the symbol data. */
 	esym = endp;
 	return;
 
  err:
-	mon_printf("_save_symtab: bad %s\n", errdesc);
+	/*
+	 * Make sure the later call to ddb_init()
+	 * will pass zero as the symbol table size.
+	 */
+	*symsz = 0;
+	mon_printf("_save_symtab: %s\n", errdesc);
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -175,7 +171,7 @@ _vm_init(kehp)
 	 * loaded after our BSS area by the boot loader.  However,
 	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
-	esym = end;
+	esym = end + 4;
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* This will advance esym past the symbols. */
 	_save_symtab(kehp);
@@ -204,10 +200,7 @@ _vm_init(kehp)
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/*
-	 * Call pmap_bootstrap() so that we may begin using
-	 * pmap_enter_kernel() and pmap_bootstrap_alloc().
-	 */
+	/* This does most of the real work. */
 	pmap_bootstrap(nextva);
 }
 
