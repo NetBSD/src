@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.383 2000/08/11 14:35:57 thorpej Exp $
+#	$NetBSD: files,v 1.384 2000/08/12 20:47:49 tv Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -817,7 +817,7 @@ file net/if_spppsubr.c			sppp
 file net/if_strip.c			strip			needs-count
 file net/if_tokensubr.c			token			needs-flag
 file net/if_tun.c			tun			needs-count
-file net/net_osdep.c
+#file net/net_osdep.c
 file net/pfil.c				pfil_hooks | ipfilter
 file net/ppp-deflate.c			ppp & ppp_deflate
 file net/ppp_tty.c			ppp
@@ -868,7 +868,7 @@ file netinet/ip_encap.c			inet | inet6
 file netinet/ip_fil.c			ipfilter
 file netinet/ip_flow.c			inet & gateway
 file netinet/ip_frag.c			ipfilter
-file netinet/ip_gre.c			inet
+file netinet/ip_gre.c			inet & gre
 file netinet/ip_icmp.c			inet
 file netinet/ip_input.c			inet
 file netinet/ip_ipip.c			ipip			needs-count
