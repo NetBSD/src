@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.29 2004/04/22 00:17:10 itojun Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.30 2004/04/24 09:07:50 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.29 2004/04/22 00:17:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.30 2004/04/24 09:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,8 +699,7 @@ EcGpeHandler(void *Context)
 	simple_lock(&sc->sc_slock);
 	if (sc->sc_flags & EC_F_TRANSACTION) {
 		csrvalue = EC_CSR_READ(sc);
-		if (csrvalue & EC_EVENT_SCI)
-			sc->sc_flags |= EC_F_PENDQUERY;
+		sc->sc_flags |= EC_F_PENDQUERY;
 
 		if ((csrvalue & EC_FLAG_OUTPUT_BUFFER) != 0 ||
 		    (csrvalue & EC_FLAG_INPUT_BUFFER) == 0) {
