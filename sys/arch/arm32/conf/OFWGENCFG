@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.1 1998/06/12 23:29:27 tv Exp $
+#	$NetBSD: OFWGENCFG,v 1.2 1998/06/18 22:32:33 mark Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -19,12 +19,12 @@ options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options	CPU_SA110		# Support the SA110 core
+options 	CPU_SA110	# Support the SA110 core
 
 # Architecture options
 
-options	OFW			# Enable common Open Firmware bits
-options	OFWGENCFG		# Enable Open Firmware bits specific to GENERIC configuration
+options 	OFW		# Enable common Open Firmware bits
+options 	OFWGENCFG	# Enable Open Firmware bits specific to GENERIC configuration
 
 # FPA options
 
@@ -37,7 +37,8 @@ file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS
-
+#file-system 	ADOSFS		# AmigaDOS-compatible file system
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
@@ -49,22 +50,22 @@ file-system	KERNFS		# /kern
 #file-system	UNION		# union file system
 
 # File system options
-#options		QUOTA		# UFS quotas
+#options 	QUOTA		# UFS quotas
 options		FIFO		# FIFOs; RECOMMENDED
-#options		NFSSERVER
+#options 	NFSSERVER
 options		NFS_BOOT_DHCP	# NFS booting via DHCP
 options		NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
 
 # Networking options
 
-#options		GATEWAY		# packet forwarding
+#options 	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 #options	MROUTING	# IP multicast routing
-#options		NS		# XNS
+#options 	NS		# XNS
 #options	NSIP		# XNS tunneling over IP
-#options		ISO,TPIP	# OSI
-#options		EON		# OSI tunneling over IP
-#options		CCITT,LLC,HDLC	# X.25
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
 #options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 
@@ -92,22 +93,16 @@ options		SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# manage IRQ statistics
-#options		LKM		# loadable kernel modules
+#options 	LKM		# loadable kernel modules
 options		KMEMSTATS	# kernel memory statistics
 
 # Development and Debugging options
 
 options		MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options	ARM700BUGTRACK	# track the ARM700 swi bug
-#options	HYDRA		# Experimental hydra support
-#options	MPSUPPORT	# Experimental MP support
 #options	PORTMASTER	# Enable PortMaster only options
-options		PROFILE_ASM	# when profiling, profile asm functions
 options		DIAGNOSTIC	# internally consistency checks
 options		POSTMORTEM	# perform postmortem on panic
-#options	ROTTEN_INNARDS	# show the gory bit of the postmortem
-#options		KSHELL		# kernel developemnt shell (debug)
-#options	DEBUGTERM	# create a debug console
 #options	IPKDB		# remote kernel debugging
 options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
