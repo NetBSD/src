@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.1 1998/06/20 19:17:47 drochner Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.2 1998/06/26 21:20:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -49,23 +49,35 @@ struct wsemul_vt100_emuldata {
 
 	u_int state;			/* processing state */
 	int flags;
-#define VTFL_LASTCHAR 1		/* printed last char on line (below cursor) */
-#define VTFL_INSERTMODE 2
-#define VTFL_APPLKEYPAD 4
-#define VTFL_APPLCURSOR 8
-#define VTFL_DECOM 16		/* origin mode */
-#define VTFL_DECAWM 32		/* auto wrap */
-#define VTFL_CURSORON 64
+#define VTFL_LASTCHAR	0x001	/* printed last char on line (below cursor) */
+#define VTFL_INSERTMODE	0x002
+#define VTFL_APPLKEYPAD	0x004
+#define VTFL_APPLCURSOR	0x008
+#define VTFL_DECOM	0x010	/* origin mode */
+#define VTFL_DECAWM	0x020	/* auto wrap */
+#define VTFL_CURSORON	0x040
+#define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
 	long curattr;			/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	int scrreg_startrow;
 	int scrreg_nrows;
 	char *tabs;
+	char *dblwid;
+	int dw;
+
+	int chartab0, chartab1;
+	u_int *chartab_G[4];
+	u_int *isolatin1tab, *decgraphtab, *dectechtab;
+	u_int *nrctab;
+	int sschartab; /* single shift */
 
 	int nargs;
 	u_int args[VT100_EMUL_NARGS];	/* command args */
 
-	char designating;	/* substate in VT100_EMUL_STATE_DESIGNATE */
+	char modif1;	/* {>?} in VT100_EMUL_STATE_CSI */
+	char modif2;	/* {!"$&} in VT100_EMUL_STATE_CSI */
+
+	int designating;	/* substate in VT100_EMUL_STATE_DESIGNATE */
 
 	int dcstype;		/* substate in VT100_EMUL_STATE_STRING */
 	char *dcsarg;
@@ -74,15 +86,32 @@ struct wsemul_vt100_emuldata {
 #define DCSTYPE_TABRESTORE 1 /* DCS2$t */
 
 	int savedcursor_row, savedcursor_col;
+	long savedattr;
+	int savedattrflags, savedfgcol, savedbgcol;
+	int savedchartab0, savedchartab1;
+	u_int *savedchartab_G[4];
 };
 
 /* some useful utility macros */
 #define	ARG(n)			(edp->args[(n)])
-#define	DEF1_ARG(n)	(ARG(n) ? ARG(n) : 1)
-#define	COLS_LEFT		(edp->ncols - edp->ccol - 1)
+#define	DEF1_ARG(n)		(ARG(n) ? ARG(n) : 1)
 #define ROWS_ABOVE		(edp->crow - edp->scrreg_startrow)
 #define	ROWS_BELOW		(edp->scrreg_startrow + edp->scrreg_nrows \
 					- edp->crow - 1)
+#define CHECK_DW do { \
+	if (edp->dblwid && edp->dblwid[edp->crow]) { \
+		edp->dw = 1; \
+		if (edp->ccol > (edp->ncols >> 1) - 1) \
+			edp->ccol = (edp->ncols >> 1) - 1; \
+	} else \
+		edp->dw = 0; \
+} while (0)
+#define NCOLS		(edp->ncols >> edp->dw)
+#define	COLS_LEFT	(NCOLS - edp->ccol - 1)
+#define COPYCOLS(f, t, n) (*edp->emulops->copycols)(edp->emulcookie, \
+	edp->crow, (f) << edp->dw, (t) << edp->dw, (n) << edp->dw)
+#define ERASECOLS(f, n, a) (*edp->emulops->erasecols)(edp->emulcookie, \
+	edp->crow, (f) << edp->dw, (n) << edp->dw, a)
 
 /*
  * response to primary DA request
@@ -106,11 +135,9 @@ void wsemul_vt100_scrolldown __P((struct wsemul_vt100_emuldata *, int));
 void wsemul_vt100_ed __P((struct wsemul_vt100_emuldata *, int));
 void wsemul_vt100_el __P((struct wsemul_vt100_emuldata *, int));
 void wsemul_vt100_handle_csi __P((struct wsemul_vt100_emuldata *, u_char));
-void wsemul_vt100_handle_csi_qm __P((struct wsemul_vt100_emuldata *,
-				     u_char));
 void wsemul_vt100_handle_dcs __P((struct wsemul_vt100_emuldata *));
-void vt100_setmode __P((struct wsemul_vt100_emuldata *, int, int));
-void vt100_resetmode __P((struct wsemul_vt100_emuldata *, int, int));
-void vt100_reportmode __P((struct wsemul_vt100_emuldata *, int, int));
 
-int	wsemul_vt100_translate __P((void *cookie, keysym_t, char **));
+int wsemul_vt100_translate __P((void *cookie, keysym_t, char **));
+
+void vt100_initchartables __P((struct wsemul_vt100_emuldata *));
+void vt100_setnrc __P((struct wsemul_vt100_emuldata *, int));
