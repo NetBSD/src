@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.63 2000/12/28 21:40:59 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.64 2000/12/28 21:42:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.63 2000/12/28 21:40:59 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.64 2000/12/28 21:42:49 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
@@ -273,7 +273,7 @@ int iplattach()
 #  if __NetBSD_Version__ >= 105150000
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #ifdef USE_INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
 #endif
 	if (ph_inet == NULL
 #ifdef USE_INET6
