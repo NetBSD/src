@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.12 1997/03/31 07:37:30 scottr Exp $	*/
+/*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -214,7 +214,7 @@ ppistart(arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppistart(%x)\n", unit);
+		printf("ppistart(%x)\n", sc->sc_dev.dv_unit);
 #endif
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -243,7 +243,7 @@ ppiread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiread(%x, %x)\n", dev, uio);
+		printf("ppiread(%x, %p)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -257,7 +257,7 @@ ppiwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiwrite(%x, %x)\n", dev, uio);
+		printf("ppiwrite(%x, %p)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -283,7 +283,7 @@ ppirw(dev, uio)
 
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
-		printf("ppirw(%x, %x, %c): burst %d, timo %d, resid %x\n",
+		printf("ppirw(%x, %p, %c): burst %d, timo %d, resid %x\n",
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
@@ -337,7 +337,7 @@ again:
 		hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
-			printf("ppirw: %s(%d, %d, %x, %x, %d) -> %d\n",
+			printf("ppirw: %s(%d, %d, %x, %p, %d) -> %d\n",
 			       uio->uio_rw == UIO_READ ? "recv" : "send",
 			       ctlr, slave, sc->sc_sec, cp, len, cnt);
 #endif
