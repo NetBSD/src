@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.19 2004/01/11 02:13:14 tls Exp $
+.\"	$NetBSD: rm.1,v 1.20 2004/01/11 09:40:36 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd January 30, 2003
+.Dd January 11, 2004
 .Dt RM 1
 .Os
 .Sh NAME
@@ -141,13 +141,15 @@ system.
 FFS is a fixed-block file system, LFS is not.
 In addition, only regular files are overwritten, other types of files
 are not.
-Recent research indicates that as many as 35 overwrite passes with carefully
-chosen data patterns may be necessary to actually prevent recovery of data
-from a magnetic disk.  Thus the
+Recent research indicates that as many as 35 overwrite passes with
+carefully chosen data patterns may be necessary to actually prevent
+recovery of data from a magnetic disk.
+Thus the
 .Fl P
-option is likely both insufficient for its design purpose and far too
-costly for default operation.  However, it will at least prevent the
-recovery of data from FFS volumes with
+option is likely both insufficient for its design purpose and far
+too costly for default operation.
+However, it will at least prevent the recovery of data from FFS
+volumes with
 .Xr fsdb 8 .
 .Sh COMPATIBILITY
 The
@@ -173,13 +175,14 @@ option is an extension.
 .Pp
 The
 .Fl P
-option attempts to conform to U.S. DoD 5220-22.M, "National
-Industrial Security Program Operating Manual" ("NISPOM") as updated by 
-Change 2 and the July 23, 2003 "Clearing & Sanitization Matrix".  However,
-unlike earlier revisions of NISPOM, the 2003 matrix imposes requirements
-which make it clear that the standard does not and can not apply to the
-erasure of individual files, in particular requirements relating to spare
-sector management for an entire magnetic disk.  
-.Em Because these requirements are not met, the 
-.Fl P 
-.Em option does not conform to the standard.
+option attempts to conform to U.S. DoD 5220-22.M, "National Industrial
+Security Program Operating Manual" ("NISPOM") as updated by Change
+2 and the July 23, 2003 "Clearing \*[Am] Sanitization Matrix".
+However, unlike earlier revisions of NISPOM, the 2003 matrix imposes
+requirements which make it clear that the standard does not and
+can not apply to the erasure of individual files, in particular
+requirements relating to spare sector management for an entire
+magnetic disk.
+.Em Because these requirements are not met, the
+.Fl P
+.Em option does not conform to the standard .
