@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.7 2004/05/18 00:03:57 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.8 2004/05/18 03:08:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -628,7 +628,7 @@ parse_args(int argc, char **argv) {
 				exit(1);
 			}
 			if (timeout == 0)
-				timeout = ULONG_MAX;
+				timeout = UINT_MAX;
 			break;
 		case 'u':
 			result = isc_parse_uint32(&udp_timeout,
@@ -638,7 +638,7 @@ parse_args(int argc, char **argv) {
 				exit(1);
 			}
 			if (udp_timeout == 0)
-				udp_timeout = ULONG_MAX;
+				udp_timeout = UINT_MAX;
 			break;
 		case 'r':
 			result = isc_parse_uint32(&udp_retries,
