@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.41 2000/05/28 05:49:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
  *
@@ -296,8 +296,6 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
-void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
-			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t, void (*)(void *), void *));
 void			uvm_exit __P((struct proc *));
