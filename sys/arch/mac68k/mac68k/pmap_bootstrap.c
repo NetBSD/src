@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.10 1995/07/18 04:10:51 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11 1995/07/19 16:39:03 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -582,13 +582,8 @@ bootstrap_mac68k(tc)
 	extern u_long	videoaddr, boothowto;
 	vm_offset_t	nextpa;
 
-	if (tc & 0x80000000) {
-		/* MMU enabled. */
-		if (mmutype == MMU_68030)
-			get_mapping();
-		else {
-			/* What do I do here? */
-		}
+	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
+		get_mapping();
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
 		nbnumranges = 0;
