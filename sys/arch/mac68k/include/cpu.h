@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.5 1994/02/22 01:00:44 briggs Exp $
+ *	$Id: cpu.h,v 1.6 1994/02/27 16:42:33 briggs Exp $
  */
 
 /*
@@ -160,6 +160,7 @@ extern unsigned char ssir;
 #define MACH_MACQ700		22
 #define MACH_MACCLASSIC2	23
 #define MACH_MACPB140		25
+#define MACH_MACLCII		37
 
 /* MF processor passed in */
 #define MACH_68020	0
