@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.16 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.17 2003/04/20 04:42:15 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,10 +130,10 @@
 .Fn VOP_WRITE "struct vnode *vp" "struct uio *uio" "int ioflag" \
 "struct ucred *cred"
 .Ft int
-.Fn VOP_IOCTL "struct vnode *vp" "u_long command" "caddr_t data" \
+.Fn VOP_IOCTL "struct vnode *vp" "u_long command" "void *data" \
 "int fflag" "struct ucred *cred" "struct proc *p"
 .Ft int
-.Fn VOP_FCNTL "struct vnode *vp" "u_int command" "caddr_t data" \
+.Fn VOP_FCNTL "struct vnode *vp" "u_int command" "void *data" \
 "int fflag" "struct ucred *cred" "struct proc *p"
 .Ft int
 .Fn VOP_POLL "struct vnode *vp" "int events" "struct proc *p"
@@ -192,7 +192,7 @@
 .Ft int
 .Fn VOP_PATHCONF "struct vnode *vp" "int name" "register_t *retval"
 .Ft int
-.Fn VOP_ADVLOCK "struct vnode *vp" "caddr_t id" "int op" \
+.Fn VOP_ADVLOCK "struct vnode *vp" "void *id" "int op" \
 "struct flock *fl" "int flags"
 .Ft int
 .Fn VOP_BLKATOFF "struct vnode *vp" "off_t offset" "char **res" \
