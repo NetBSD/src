@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_new.3,v 1.3 2001/02/26 01:26:06 blymn Exp $
+.\"	$NetBSD: menu_new.3,v 1.4 2001/04/29 19:07:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,13 +29,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENU_NEW 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm free_menu ,
 .Nm new_menu
-.Nd menu library
+.Nd create or delete a menu
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
@@ -59,27 +59,26 @@ new menu.
 .Sh RETURN VALUES
 The
 .Fn new_menu
-function returns NULL on error, all the other functions return one of
-the following error values:
+function returns NULL on error, while the
+.Fn free_menu
+function returns one of the following error values:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-E_POSTED		The menu is already posted.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_BAD_ARGUMENT -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
 The header
-.Xr <menu.h>
+.Pa <menu.h>
 automatically includes both
-.Xr <curses.h>
+.Pa <curses.h>
 and
-.Xr <eti.h>
+.Pa <eti.h> .
 
