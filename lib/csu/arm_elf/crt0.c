@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 2001/07/17 06:39:14 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 2001/08/05 00:01:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -40,14 +40,16 @@
 #include "common.h"
 
 extern	void		_start(void);
-	void		__start(int, char *[], char *[], struct ps_strings *,
+	void		___start(int, char *[], char *[], struct ps_strings *,
 				const Obj_Entry *, void (*)());
 
 __asm("
 	.text
 	.align	0
-	.global	_start
+	.globl	_start
+	.globl	__start
 _start:
+__start:
 	mov	r5, r2		/* cleanup */
 	mov	r4, r1		/* obj_main */
 	mov	r3, r0		/* ps_strings */
@@ -61,15 +63,15 @@ _start:
 	str	r5, [sp, #4]
 	str	r4, [sp, #0]
 
-	b	" ___STRING(_C_LABEL(__start)) "
+	b	" ___STRING(_C_LABEL(___start)) "
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 2001/07/17 06:39:14 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.3 2001/08/05 00:01:27 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
-__start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
+___start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 	const Obj_Entry *obj, void (*cleanup)(void))
 {
 	char *ap;
