@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 1998/07/08 04:43:22 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 1998/08/21 13:42:51 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@
  *
  */
 
-#define USRTEXT		0x400
+#define USRTEXT		0x1000
 #define USRSTACK	KERNBASE
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.4 1995/09/23 14:57:40 ragge Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.5 1998/08/21 13:42:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 #ifndef _VAX_EXEC_H_
 #define _VAX_EXEC_H_
 
-#define __LDPGSZ	1024
+#define __LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_vax {
