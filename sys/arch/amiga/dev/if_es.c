@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.23 1999/05/18 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.24 1999/12/10 05:44:58 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -188,8 +188,8 @@ esattach(parent, self, aux)
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
-	/* XXX IFF_MULTICAST */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	    IFF_MULTICAST;
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -279,8 +279,8 @@ esinit(sc)
 	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
 	smc->b0.mcr = SWAP(0x0020);	/* reserve 8K for transmit buffers */
 	smc->b0.tcr = TCR_PAD_EN | (TCR_TXENA + TCR_MON_CSN);
-	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN;
-	/* XXX add multicast/promiscuous flags */
+	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN | RCR_ALLMUL;
+	/* XXX add promiscuous flags */
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
 	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX;
 
