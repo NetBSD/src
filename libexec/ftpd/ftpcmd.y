@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.25 1999/02/05 21:40:49 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.26 1999/02/24 16:45:13 explorer Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.25 1999/02/05 21:40:49 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.26 1999/02/24 16:45:13 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,10 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.25 1999/02/05 21:40:49 lukem Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>
+#endif
 
 #include "extern.h"
 

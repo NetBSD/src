@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.12 1998/12/28 04:54:01 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.12 1998/12/28 04:54:01 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: popen.c,v 1.12 1998/12/28 04:54:01 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>
+#endif
 
 #include "extern.h"
 

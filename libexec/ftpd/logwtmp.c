@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.10 1998/12/28 04:54:01 lukem Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.11 1999/02/24 16:45:13 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.10 1998/12/28 04:54:01 lukem Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.11 1999/02/24 16:45:13 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,10 @@ __RCSID("$NetBSD: logwtmp.c,v 1.10 1998/12/28 04:54:01 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>
+#endif
 
 #include "extern.h"
 
