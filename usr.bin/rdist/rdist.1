@@ -351,8 +351,8 @@ FILES = ( /bin /lib /usr/bin /usr/games
 \t/usr/include/{*.h,{stand,sys,vax*,pascal,machine}/*.h}
 \t/usr/lib /usr/man/man? /usr/ucb /usr/local/rdist )
 
-EXLIB = ( Mail.rc aliases aliases.dir aliases.pag crontab dshrc
-\tsendmail.cf sendmail.fc sendmail.hf sendmail.st uucp vfont )
+EXLIB = ( Mail.rc aliases aliases.db crontab dshrc sendmail.cf
+\tsendmail.fc sendmail.hf sendmail.st uucp vfont )
 
 ${FILES} -> ${HOSTS}
 \tinstall -R ;
