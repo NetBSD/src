@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +32,27 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tee.c	5.11 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: tee.c,v 1.3 1993/12/31 19:31:52 jtc Exp $";
+/*static char sccsid[] = "from: @(#)tee.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: tee.c,v 1.4 1994/05/19 04:20:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <signal.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
 #include <err.h>
-
-void add	__P((int, char *));
 
 typedef struct _list {
 	struct _list *next;
@@ -62,16 +61,19 @@ typedef struct _list {
 } LIST;
 LIST *head;
 
+void add __P((int, char *));
+
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register LIST *p;
 	register int n, fd, rval, wval;
 	register char *bp;
 	int append, ch, exitval;
 	char *buf;
+#define	BSIZE (8 * 1024)
 
 	setlocale(LC_ALL, "");
 
@@ -92,21 +94,20 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 
-	if (!(buf = malloc((u_int)8 * 1024))) {
+	if ((buf = malloc((u_int)BSIZE)) == NULL)
 		err(1, NULL);
-		/* NOTREACHED */
-	}
 
 	add(STDOUT_FILENO, "stdout");
-	for (; *argv; ++argv)
+
+	for (exitval = 0; *argv; ++argv)
 		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
-		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0)
+		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
 			warn("%s", *argv);
-		else
+			exitval = 1;
+		} else
 			add(fd, *argv);
 
-	exitval = 0;
-	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+	while ((rval = read(STDIN_FILENO, buf, BSIZE)) > 0)
 		for (p = head; p; p = p->next) {
 			n = rval;
 			bp = buf;
@@ -119,14 +120,13 @@ main(argc, argv)
 				bp += wval;
 			} while (n -= wval);
 		}
-	}
 	if (rval < 0) {
 		warn("read");
 		exitval = 1;
 	}
 
 	for (p = head; p; p = p->next) {
-		if (close(p->fd)) {
+		if (close(p->fd) == -1) {
 			warn("%s", p->name);
 			exitval = 1;
 		}
@@ -142,10 +142,8 @@ add(fd, name)
 {
 	LIST *p;
 
-	if (!(p = malloc((u_int)sizeof(LIST)))) {
+	if ((p = malloc((u_int)sizeof(LIST))) == NULL)
 		err(1, NULL);
-		/* NOTREACHED */
-	}
 	p->fd = fd;
 	p->name = name;
 	p->next = head;
