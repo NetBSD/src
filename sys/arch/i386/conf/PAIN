@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.16 1993/10/20 23:04:56 cgd Exp $
+#	$Id: PAIN,v 1.17 1993/12/20 10:07:58 cgd Exp $
 #
 machine         "i386"
 cpu             "I486_CPU"
@@ -24,6 +24,7 @@ options		"COMPAT_NOMID"
 options		"MACHINE_NONCONTIG"
 
 options		DDB
+options		DIAGNOSTIC
 
 config          netbsd        root on sd0 swap on sd0
 
