@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.6 2002/07/25 12:34:09 jdolecek Exp $       */
+/*      $NetBSD: run.c,v 1.7 2002/09/19 00:45:47 mycroft Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/poll.h>
 
 #include "sushi.h"
 #include "run.h"
@@ -113,16 +114,16 @@ launch_subwin(actionwin, args, win, display)
 	int display;
 {
 	int xcor,ycor;
-	int i, j, x;
+	int j, x;
 	int selectfailed, multiloop, cols;
 	int status, master, slave;
-	fd_set active_fd_set, read_fd_set;
+	struct pollfd set[2];
 	int dataflow[2];
 	pid_t child, subchild, pid;
 	ssize_t n;
 	char ibuf[MAXBUF], obuf[MAXBUF];
 	char *command, *p, *argzero, **origargs;
-	struct termios rtt;
+	struct termios rtt, stt;
 	struct termios tt;
 
 	pipe(dataflow);
@@ -137,13 +138,20 @@ launch_subwin(actionwin, args, win, display)
 		strcat(command, p);
 		strcat(command, " ");
 	}
-	(void)tcgetattr(STDIN_FILENO, &tt);
-	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
-		bailout("openpty: %s", strerror(errno));
 
+	(void)tcgetattr(STDIN_FILENO, &tt);
 	rtt = tt;
 	rtt.c_lflag &= ~ECHO; 
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+
+	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
+		bailout("openpty: %s", strerror(errno));
+
+	(void)tcgetattr(slave, &stt);
+	stt.c_lflag |= ICANON|ISIG|IEXTEN|ECHO;
+	stt.c_iflag |= ICRNL;
+	stt.c_oflag |= OPOST;
+	(void)tcsetattr(slave, TCSAFLUSH, &stt);
 
 	/* ignore tty signals until we're done with subprocess setup */
 #if 0
@@ -213,9 +221,10 @@ launch_subwin(actionwin, args, win, display)
 	resetty();
 #endif
 	close(dataflow[1]);
-	FD_ZERO(&active_fd_set);
-	FD_SET(dataflow[0], &active_fd_set);
-	FD_SET(STDIN_FILENO, &active_fd_set);
+	set[0].fd = dataflow[0];
+	set[0].events = POLLIN;
+	set[1].fd = STDIN_FILENO;
+	set[1].events = POLLIN;
 
 	cols = 0;
 	for (selectfailed = 0,multiloop=0;;) {
@@ -229,66 +238,75 @@ again:
 				(void)fprintf(logfile, msg);
 			bailout(msg);
 		}
-		read_fd_set = active_fd_set;
-		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+		if (poll(set, 2, INFTIM) < 0) {
 			if (errno == EINTR)
 				goto loop;
-			perror("select");
+			perror("poll");
 			if (logging)
 				(void)fprintf(logfile, "%s: %s\n",
 				    catgets(catalog, 1, 17, "select failure"),
 				    strerror(errno));
 			++selectfailed;
-		} else for (i = 0; i < FD_SETSIZE; ++i) {
-			if (!FD_ISSET(i, &read_fd_set))
-				continue;
-			n = read(i, ibuf, MAXBUF);
-			if (n)
-				multiloop=0;
-			if (i == STDIN_FILENO)
-				(void)write(master, ibuf, (size_t)n);
-			if (!display) {
-				if(logging)
-					fflush(logfile);
-				continue;
-			}
-			for (j=0; j < n; j++) {
-				cols++;
-				if (cols == getmaxx(actionwin)
-				    && ibuf[j] != '\n') {
-					cols = 0;
-					getyx(actionwin, ycor, xcor);
-					x = handleoflow(actionwin, x,
-					    win.ws_col, xcor, ycor);
+		} else {
+			if (set[1].revents & POLLIN) {
+				n = read(STDIN_FILENO, ibuf, MAXBUF);
+#if 0
+				if (n < 0 && errno == EBADF)
+					set[1].revents = 0;
+#endif
+				if (n > 0) {
+					multiloop=0;
+					(void)write(master, ibuf, (size_t)n);
 				}
-				switch (ibuf[j]) {
-				case '\n':
-					cols = 0;
-					getyx(actionwin, ycor, xcor);
-					x = handleoflow(actionwin, x,
-					    win.ws_col, xcor, ycor);
-					break;
-				case '\r':
-					getyx(actionwin, ycor, xcor);
-					wmove(actionwin, ycor, 0);
-					break;
-				case '\b':
-					getyx(actionwin, ycor, xcor);
-					if (xcor <= 0)
-						break;
-					wmove(actionwin, ycor, xcor - 1);
-					break;
-				default:
-					waddch(actionwin, ibuf[j]);
-					break;
-				}
-				if (logging)
-					putc(ibuf[j], logfile);
 			}
-			if (display)
-				wrefresh(actionwin);
-			if(logging)
-				fflush(logfile);
+			if (set[0].revents & POLLIN) {
+				n = read(dataflow[0], ibuf, MAXBUF);
+#if 0
+				if (n < 0 && errno == EBADF)
+					set[0].revents = 0;
+#endif
+				if (n > 0) {
+					multiloop=0;
+					if (display) {
+						for (j=0; j < n; j++) {
+							cols++;
+							if (cols == getmaxx(actionwin)
+							    && ibuf[j] != '\n') {
+								cols = 0;
+								getyx(actionwin, ycor, xcor);
+								x = handleoflow(actionwin, x,
+								    win.ws_col, xcor, ycor);
+							}
+							switch (ibuf[j]) {
+							case '\n':
+								cols = 0;
+								getyx(actionwin, ycor, xcor);
+								x = handleoflow(actionwin, x,
+								    win.ws_col, xcor, ycor);
+								break;
+							case '\r':
+								getyx(actionwin, ycor, xcor);
+								wmove(actionwin, ycor, 0);
+								break;
+							case '\b':
+								getyx(actionwin, ycor, xcor);
+								if (xcor <= 0)
+									break;
+									wmove(actionwin, ycor, xcor - 1);
+									break;
+								default:
+								waddch(actionwin, ibuf[j]);
+								break;
+							}
+							if (logging)
+								putc(ibuf[j], logfile);
+						}
+						wrefresh(actionwin);
+					}
+					if(logging)
+						fflush(logfile);
+				}
+			}
 		}
 		multiloop++;
 		goto again;
