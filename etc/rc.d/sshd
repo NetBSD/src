@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# $NetBSD: sshd,v 1.5 2000/08/01 14:28:32 jwise Exp $
+#
 
 # PROVIDE: ssh
 # REQUIRE: NETWORK
@@ -32,7 +34,7 @@ sshd_keygen() {
 	fi
 }
 
-start_precmd() {
+sshd_precmd() {
 	if [ ! -f /etc/ssh_host_key -o ! -f /etc/ssh_host_dsa_key ]
 	then
 		/etc/rc.d/sshd keygen
@@ -40,7 +42,7 @@ start_precmd() {
 }
 
 keygen_cmd=sshd_keygen
-start_precmd=start_precmd
+start_precmd=sshd_precmd
 
 load_rc_config $name
 run_rc_command "$1"
