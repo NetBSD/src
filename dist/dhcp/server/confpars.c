@@ -3,7 +3,7 @@
    Parser for dhcpd config file... */
 
 /*
- * Copyright (c) 1995-2002 Internet Software Consortium.
+ * Copyright (c) 1995-2003 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.2 2002/06/11 12:24:42 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.3 2003/02/18 16:38:01 drochner Exp $ Copyright (c) 1995-2003 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -977,7 +977,19 @@ void parse_failover_peer (cfile, group, type)
 			return;
 		}
 	} while (token != RBRACE);
-		
+
+	/* me.address can be null; the failover link initiate code tries to
+	 * derive a reasonable address to use.
+	 */
+	if (!peer -> partner.address)
+		parse_warn (cfile, "peer address may not be omitted");
+
+	/* XXX - when/if we get a port number assigned, just set as default */
+	if (!peer -> me.port)
+		parse_warn (cfile, "local port may not be omitted");
+	if (!peer -> partner.port)
+		parse_warn (cfile, "peer port may not be omitted");
+
 	if (peer -> i_am == primary) {
 	    if (!peer -> hba) {
 		parse_warn (cfile,
@@ -1263,9 +1275,6 @@ void parse_pool_statement (cfile, group, type)
 		log_fatal ("no memory for pool: %s",
 			   isc_result_totext (status));
 
-	if (!clone_group (&pool -> group, group, MDL))
-		log_fatal ("can't clone pool group.");
-
 	if (type == SUBNET_DECL)
 		shared_network_reference (&pool -> shared_network,
 					  group -> subnet -> shared_network,
@@ -1273,6 +1282,9 @@ void parse_pool_statement (cfile, group, type)
 	else
 		shared_network_reference (&pool -> shared_network,
 					  group -> shared_network, MDL);
+
+	if (!clone_group (&pool -> group, pool -> shared_network -> group, MDL))
+		log_fatal ("can't clone pool group.");
 
 #if defined (FAILOVER_PROTOCOL)
 	/* Inherit the failover peer from the shared network. */
@@ -1918,7 +1930,7 @@ int parse_class_declaration (cp, cfile, group, type)
 			    !class_new_hash (&pc -> hash, 0, MDL))
 				log_fatal ("No memory for subclass hash.");
 			class_hash_add (pc -> hash,
-					class -> hash_string.data,
+					(const char *)class -> hash_string.data,
 					class -> hash_string.len,
 					(void *)class, MDL);
 		} else {
@@ -1994,15 +2006,15 @@ int parse_class_declaration (cp, cfile, group, type)
 				skip_to_semi (cfile);
 				break;
 			}
+			token = next_token (&val, (unsigned *)0, cfile);
+			token = peek_token (&val, (unsigned *)0, cfile);
+			if (token != IF)
+				goto submatch;
 			if (class -> expr) {
 				parse_warn (cfile, "can't override match.");
 				skip_to_semi (cfile);
 				break;
 			}
-			token = next_token (&val, (unsigned *)0, cfile);
-			token = peek_token (&val, (unsigned *)0, cfile);
-			if (token != IF)
-				goto submatch;
 			token = next_token (&val, (unsigned *)0, cfile);
 			if (!parse_boolean_expression (&class -> expr, cfile,
 						       &lose)) {
@@ -2248,9 +2260,13 @@ void parse_subnet_declaration (cfile, share)
 
 	/* Validate the network number/netmask pair. */
 	if (host_addr (subnet -> net, subnet -> netmask)) {
+		char *maskstr;
+
+		maskstr = strdup (piaddr (subnet -> netmask));
 		parse_warn (cfile,
-			    "subnet %s: bad subnet number/mask combination.",
-			    piaddr (subnet -> net));
+		   "subnet %s netmask %s: bad subnet number/mask combination.",
+			    piaddr (subnet -> net), maskstr);
+		free(maskstr);
 		subnet_dereference (&subnet, MDL);
 		skip_to_semi (cfile);
 		return;

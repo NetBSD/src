@@ -3,7 +3,7 @@
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1.1.2 2002/06/11 12:24:35 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.1.1.3 2003/02/18 16:37:55 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -423,7 +423,11 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 				       interface -> rbuf,
 				       (size_t)interface -> rbuf_max);
 			if (length <= 0) {
+#ifdef __FreeBSD__
+				if (errno == ENXIO) {
+#else
 				if (errno == EIO) {
+#endif
 					dhcp_interface_remove
 						((omapi_object_t *)interface,
 						 (omapi_object_t *)0);

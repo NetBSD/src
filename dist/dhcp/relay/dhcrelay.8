@@ -35,6 +35,9 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
+.\"
+.\" $Id: dhcrelay.8,v 1.1.1.3 2003/02/18 16:38:01 drochner Exp $
+.\"
 .TH dhcrelay 8
 .SH NAME
 dhcrelay - Dynamic Host Configuration Protocol Relay Agent
@@ -131,7 +134,7 @@ dhcrelay should use.  This is mostly useful for debugging purposes.
 .PP
 Dhcrelay will normally run in the foreground until it has configured
 an interface, and then will revert to running in the background.
-To run force dhcrelay to always run as a foreground process, the
+To force dhcrelay to always run as a foreground process, the
 .B -d
 flag should be specified.  This is useful when running dhcrelay under
 a debugger, or when running it out of inittab on System V systems.
@@ -240,7 +243,7 @@ has been written for the Internet Software Consortium
 by Ted Lemon in cooperation with Vixie
 Enterprises.  To learn more about the Internet Software Consortium,
 see
-.B http://www.vix.com.
+.B http://www.isc.org/isc.
 To learn more about Vixie
 Enterprises, see
 .B http://www.vix.com.

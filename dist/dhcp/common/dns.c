@@ -3,7 +3,7 @@
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2001 Internet Software Consortium.
+ * Copyright (c) 2001-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.2 2002/06/11 12:24:36 drochner Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.3 2003/02/18 16:37:56 drochner Exp $ Copyright (c) 2001-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995,1999 by Internet Software Consortium.
+ * Copyright (c) 1995,1999-2003 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_samedomain.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: ns_samedomain.c,v 1.1.1.2 2003/02/18 16:37:59 drochner Exp $";
 #endif
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ ns_makecanon(const char *src, char *dst, size_t dstsize) {
 	size_t n = strlen(src);
 
 	if (n + sizeof "." > dstsize) {
-		ISC_R_NOSPACE;
+		return ISC_R_NOSPACE;
 	}
 	strcpy(dst, src);
 	while (n > 0 && dst[n - 1] == '.')		/* Ends in "." */

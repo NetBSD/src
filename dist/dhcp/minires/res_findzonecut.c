@@ -1,9 +1,9 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.2 2003/02/18 16:37:59 drochner Exp $";
 #endif /* not lint */
 
 /*
- * Copyright (c) 1999 by Internet Software Consortium.
+ * Copyright (c) 1999-2003 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -355,7 +355,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 		while (*dname != '.') {
 			if (*dname == '\\')
 				if (*++dname == '\0') {
-					ISC_R_NOSPACE;
+					return ISC_R_NOSPACE;
 				}
 			dname++;
 		}

@@ -3,7 +3,7 @@
    Dynamic DNS updates. */
 
 /*
- * Copyright (c) 2000-2001 Internet Software Consortium.
+ * Copyright (c) 2000-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.1.1.2 2002/06/11 12:24:42 drochner Exp $ Copyright (c) 2000-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.1.1.3 2003/02/18 16:38:01 drochner Exp $ Copyright (c) 2000-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
