@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29.4.5 2002/02/23 18:13:56 he Exp $ */
+/* $NetBSD: lib.h,v 1.29.4.6 2002/06/26 16:50:14 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -67,7 +67,10 @@
 #endif
 
 /* Where we put logging information by default, else ${PKG_DBDIR} if set */
+#ifndef DEF_LOG_DIR
 #define DEF_LOG_DIR		"/var/db/pkg"
+#endif
+
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
 
@@ -90,6 +93,9 @@
 
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
+
+#define	PKG_PATTERN_MAX	FILENAME_MAX	/* max length of pattern, including nul */
+#define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
 
 /* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
 #ifndef TAILQ_FIRST
@@ -118,7 +124,8 @@ typedef enum pl_ent_t {
 	PLIST_DIR_RM,		/* 14 */
 	PLIST_IGNORE_INST,	/* 15 */
 	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL		/* 17 */
+	PLIST_PKGCFL,		/* 17 */
+	PLIST_BLDDEP		/* 18 */
 }       pl_ent_t;
 
 /* Types */
@@ -157,7 +164,7 @@ typedef struct _lpkg_head_t lpkg_head_t;
 
 /* Type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
-typedef int (*matchfn) (const char *found, char *data);
+typedef int (*matchfn) (const char *, void *);
 
 /* If URLlength()>0, then there is a ftp:// or http:// in the string,
  * and this must be an URL. Hide this behind a more obvious name. */
@@ -182,22 +189,27 @@ void    str_lowercase(char *);
 char   *basename_of(char *);
 char   *dirname_of(const char *);
 int     pmatch(const char *, const char *);
-int     findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong to "strings" */
-int	findbestmatchingname_fn(const char *pkg, char *data);	/* neither */
+int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
 void	strip_txz(char *buf, char *sfx, const char *fname);
 
+/* callback functions for findmatchingname */
+int     findbestmatchingname_fn(const char *, void *);	/* neither */
+int     note_whats_installed(const char *, void *);
+int     add_to_list_fn(const char *, void *);
+
+
 /* File */
-Boolean fexists(char *);
-Boolean isdir(char *);
-Boolean islinktodir(char *);
-Boolean isemptydir(char *fname);
-Boolean isemptyfile(char *fname);
-Boolean isfile(char *);
-Boolean isempty(char *);
-int     URLlength(char *);
+Boolean fexists(const char *);
+Boolean isdir(const char *);
+Boolean islinktodir(const char *);
+Boolean isemptydir(const char *);
+Boolean isemptyfile(const char *);
+Boolean isfile(const char *);
+Boolean isempty(const char *);
+int     URLlength(const char *);
 char   *fileGetURL(char *, char *);
 char   *fileURLFilename(char *, char *, int);
 char   *fileURLHost(char *, char *, int);
