@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/31 22:43:45 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2002/02/26 22:29:38 tv Exp $
 
 HOSTLIB=	nbcompat
 
@@ -33,7 +33,7 @@ _CURDIR:=	${.CURDIR}
 
 SRCS:=		${SRCS:Nndbm.c}
 
-defs.mk: include.stamp configure config.h.in defs.mk.in
+defs.mk: includes.stamp configure config.h.in defs.mk.in
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
 		sh ${.CURDIR}/configure --cache-file=config.cache
 	@touch $@
@@ -42,8 +42,8 @@ defs.mk: include.stamp configure config.h.in defs.mk.in
 regen:
 	cd ${.CURDIR} && ${TOOLDIR}/bin/nbautoconf
 
-include.stamp:
-	mkdir -p include/sys include/machine
+includes.stamp:
+	mkdir -p include/sys include/machine include/rpc
 	@touch $@
 
 cleandir: compat.clean
