@@ -1,4 +1,4 @@
-/*	$NetBSD*/
+/*	$NetBSD: tctrl.h,v 1.2 2000/03/14 21:23:45 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,19 @@ struct tctrl_req {
 };
 typedef struct tctrl_req tctrl_req_t;
 
-#define TCTRL_CMD_REQ   _IOWR('C', 0, struct tctrl_req)
+struct tctrl_pwr {
+	int	rw;
+	int	state;
+};
+typedef struct tctrl_pwr tctrl_pwr_t;
+
+/* Port power state */
+#define PORT_PWR_ON		0x00	/* Always on */
+#define PORT_PWR_STANDBY	0x01	/* On when open */
+#define PORT_PWR_OFF		0x02	/* Always off */
+
+#define TCTRL_CMD_REQ     _IOWR('C', 0, struct tctrl_req)
+#define TCTRL_SERIAL_PWR  _IOWR('C', 1, struct tctrl_pwr)
+#define TCTRL_MODEM_PWR   _IOWR('C', 2, struct tctrl_pwr)
 
 #endif /* _MACHINE_TCTRL_H */
