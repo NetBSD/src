@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.6 2002/06/14 00:30:56 wiz Exp $	*/
+/*	$NetBSD: defines.h,v 1.7 2003/07/14 15:56:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 
 #define	settimer(x)	clocks.x = clocks.system++
 
-#if	!defined(TN3270)
+#ifndef TN3270
 
 #define	SetIn3270()
 
