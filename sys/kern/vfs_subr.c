@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.238 2005/01/02 16:08:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.239 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.238 2005/01/02 16:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.239 2005/01/09 03:11:48 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2727,6 +2727,7 @@ int
 vfs_mountroot()
 {
 	struct vfsops *v;
+	int error = ENODEV;
 
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
@@ -2742,6 +2743,13 @@ vfs_mountroot()
 	case DV_DISK:
 		if (rootdev == NODEV)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
+	        if (bdevvp(rootdev, &rootvp))
+	                panic("vfs_mountroot: can't get vnode for rootdev");
+		error = VOP_OPEN(rootvp, FREAD, FSCRED, curproc);
+		if (error) {
+			printf("vfs_mountroot: can't open root device\n");
+			return (error);
+		}
 		break;
 
 	default:
@@ -2753,8 +2761,10 @@ vfs_mountroot()
 	/*
 	 * If user specified a file system, use it.
 	 */
-	if (mountroot != NULL)
-		return ((*mountroot)());
+	if (mountroot != NULL) {
+		error = (*mountroot)();
+		goto done;
+	}
 
 	/*
 	 * Try each file system currently configured into the kernel.
@@ -2765,7 +2775,8 @@ vfs_mountroot()
 #ifdef DEBUG
 		aprint_normal("mountroot: trying %s...\n", v->vfs_name);
 #endif
-		if ((*v->vfs_mountroot)() == 0) {
+		error = (*v->vfs_mountroot)();
+		if (!error) {
 			aprint_normal("root file system type: %s\n",
 			    v->vfs_name);
 			break;
@@ -2777,9 +2788,15 @@ vfs_mountroot()
 		if (root_device->dv_class == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
-		return (EFTYPE);
+		error = EFTYPE;
 	}
-	return (0);
+
+done:
+	if (error && root_device->dv_class == DV_DISK) {
+		VOP_CLOSE(rootvp, FREAD, FSCRED, curproc);
+		vrele(rootvp);
+	}
+	return (error);
 }
 
 /*
