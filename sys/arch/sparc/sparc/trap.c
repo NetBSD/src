@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2004/08/28 17:53:02 jdolecek Exp $ */
+/*	$NetBSD: trap.c,v 1.156 2005/02/03 16:15:06 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2004/08/28 17:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2005/02/03 16:15:06 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -947,6 +947,17 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		goto fault;
 	}
 	atype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
+	if ((ser & SER_PROT) && atype == VM_PROT_READ && type != T_TEXTFAULT) {
+
+		/*
+		 * The hardware reports faults by the atomic load/store
+		 * instructions as read faults, so if the faulting instruction
+		 * is one of those, relabel this fault as both read and write.
+		 */
+		if ((fuword((void *)pc) & 0xc1680000) == 0xc0680000) {
+			atype = VM_PROT_READ | VM_PROT_WRITE;
+		}
+	}
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
