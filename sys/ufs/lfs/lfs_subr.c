@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.9 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.10 2000/01/16 05:56:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,8 +177,48 @@ lfs_segunlock(fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	int s;
+	struct vnode *vp;
+	struct mount *mp;
+	extern int lfs_dirvcount;
 	
 	if (fs->lfs_seglock == 1) {
+
+		mp = fs->lfs_ivnode->v_mount;
+		/*
+		 * Go through and unmark all DIROP vnodes, possibly
+		 * calling VOP_INACTIVE (through vrele).  This is
+		 * delayed until now in order not to accidentally
+		 * write a DIROP node through lfs_flush.
+		 */
+#ifndef LFS_NO_BACKVP_HACK
+	/* BEGIN HACK */
+#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+	
+		/* Find last vnode. */
+	loop:	for (vp = mp->mnt_vnodelist.lh_first;
+		     vp && vp->v_mntvnodes.le_next != NULL;
+		     vp = vp->v_mntvnodes.le_next);
+		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+#else
+	loop:
+		for (vp = mp->mnt_vnodelist.lh_first;
+		     vp != NULL;
+		     vp = vp->v_mntvnodes.le_next) {
+#endif
+			if (vp->v_mount != mp)
+				goto loop;
+			if (vp->v_type == VNON)
+				continue;
+			if(vp->v_flag & VDIROP) {
+				/* No vref, it has one from before */
+				--lfs_dirvcount;
+				vp->v_flag &= ~VDIROP;
+				wakeup(&lfs_dirvcount);
+				vrele(vp);
+			}
+		}
 
 		sp = fs->lfs_sp;
 		sync = sp->seg_flags & SEGM_SYNC;
