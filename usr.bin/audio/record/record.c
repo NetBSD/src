@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.25 2002/02/10 13:16:08 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.26 2002/02/10 13:23:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -484,46 +484,69 @@ write_header_wav(hdrp, lenp, leftp)
 		fmtsz = 18;
 		align = channels;
 		break;
+
 	case AUDIO_ENCODING_ALAW:
 		fmttag = WAVE_FORMAT_ALAW;
 		fmtsz = 18;
 		align = channels;
 		break;
+
 	/*
 	 * we could try to support RIFX but it seems to be more portable
 	 * to output little-endian data for WAV files.
 	 */
 	case AUDIO_ENCODING_ULINEAR_BE:
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
 		if (bps == 16)
 			conv_func = change_sign16_swap_bytes_be;
 		else if (bps == 32)
 			conv_func = change_sign32_swap_bytes_be;
 		goto fmt_pcm;
+
 	case AUDIO_ENCODING_SLINEAR_BE:
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+#endif
 		if (bps == 16)
 			conv_func = swap_bytes;
 		else if (bps == 32)
 			conv_func = swap_bytes32;
 		goto fmt_pcm;
+
 	case AUDIO_ENCODING_ULINEAR_LE:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
 		if (bps == 16)
 			conv_func = change_sign16_le;
 		else if (bps == 32)
 			conv_func = change_sign32_le;
 		/* FALLTHROUGH */
+
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_PCM16:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+#endif
 fmt_pcm:
 		fmttag = WAVE_FORMAT_PCM;
 		fmtsz = 16;
 		align = channels * (bps / 8);
 		break;
+
 	default:
 		{
 			static int warned = 0;
 
 			if (warned == 0) {
-				warnx("can not support encoding of %s\n", wav_enc_from_val(encoding));
+				const char *s = wav_enc_from_val(encoding);
+
+				if (s == NULL)
+					warnx("can not support encoding of %s\n", s);
+				else
+					warnx("can not support encoding of %d\n", encoding);
 				warned = 1;
 			}
 		}
