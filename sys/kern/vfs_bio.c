@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.38 1995/07/12 07:56:31 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.39 1995/08/02 22:01:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -504,11 +504,9 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	daddr_t blkno;
 	int size, slpflag, slptimeo;
 {
+	struct bufhashhdr *bh;
 	struct buf *bp;
 	int s, err;
-
-start:
-	s = splbio();
 
 	/*
 	 * XXX
@@ -520,12 +518,14 @@ start:
 	 * case, we can't allow the system to allocate a new buffer for
 	 * the block until the write is finished.
 	 */
-loop:
-        bp = BUFHASH(vp, blkno)->lh_first;
+	bh = BUFHASH(vp, blkno);
+start:
+        bp = bh->lh_first;
         for (; bp != NULL; bp = bp->b_hash.le_next) {
                 if (bp->b_lblkno != blkno || bp->b_vp != vp)
 			continue;
 
+		s = splbio();
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			SET(bp->b_flags, B_WANTED);
 			err = tsleep(bp, slpflag | (PRIBIO + 1), "getblk",
@@ -536,26 +536,25 @@ loop:
 			goto start;
 		}
 
-		if (!ISSET(bp->b_flags, B_INVAL))
+		if (!ISSET(bp->b_flags, B_INVAL)) {
+			SET(bp->b_flags, (B_BUSY | B_CACHE));
+			bremfree(bp);
+			splx(s);
 			break;
+		}
+		splx(s);
         }
 
-	if (bp) {
-		SET(bp->b_flags, (B_BUSY | B_CACHE));
-		bremfree(bp);
-		splx(s);
-		allocbuf(bp, size);
-	} else {
-		splx(s);
+	if (bp == NULL) {
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
 			goto start;
-		binshash(bp, BUFHASH(vp, blkno));
-		allocbuf(bp, size);
+		binshash(bp, bh);
 		bp->b_blkno = bp->b_lblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
 		splx(s);
 	}
+	allocbuf(bp, size);
 	return (bp);
 }
 
@@ -693,16 +692,15 @@ start:
 
 	/* Buffer is no longer on free lists. */
 	SET(bp->b_flags, B_BUSY);
-	splx(s);
 
 	/* If buffer was a delayed write, start it, and go back to the top. */
 	if (ISSET(bp->b_flags, B_DELWRI)) {
+		splx(s);
 		bawrite (bp);
 		goto start;
 	}
 
 	/* disassociate us from our vnode, if we had one... */
-	s = splbio();
 	if (bp->b_vp)
 		brelvp(bp);
 	splx(s);
