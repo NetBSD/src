@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2000/02/03 19:27:45 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2000/02/04 18:29:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-void findroot __P((void));
+void canonicalize_bootpath __P((void));
 int OF_interpret __P((char *cmd, int nreturns, ...));
 
 extern char bootpath[256];
@@ -73,8 +73,6 @@ cpu_configure()
 {
 	int node, reg[5];
 	int msr;
-	int phandle;
-	char *p;
 
 	node = OF_finddevice("mac-io");
 	if (node == -1)
@@ -90,15 +88,7 @@ cpu_configure()
 	out32rb(INT_CLEAR_REG, 0xffffffff);	/* clear pending intr. */
 
 	calc_delayconst();
-
-	/* Canonicalize bootpath. */
-	strcpy(cbootpath, bootpath);
-	p = strchr(cbootpath, ':');
-	if (p)
-		*p = '\0';
-	phandle = OF_finddevice(cbootpath);
-	if (phandle != -1)
-		OF_package_to_path(phandle, cbootpath, sizeof(cbootpath) - 1);
+	canonicalize_bootpath();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -110,6 +100,77 @@ cpu_configure()
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 		      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
+}
+
+void
+canonicalize_bootpath()
+{
+	int node;
+	char *p;
+	char last[32];
+
+	/*
+	 * Strip kernel name.  bootpath contains "OF-path"/"kernel".
+	 *
+	 * for example:
+	 *   /bandit@F2000000/gc@10/53c94@10000/sd@0,0/netbsd	(OF-1.x)
+	 *   /pci/mac-io/ata-3@2000/disk@0:0/netbsd.new		(OF-3.x)
+	 */
+	strcpy(cbootpath, bootpath);
+	while ((node = OF_finddevice(cbootpath)) == -1) {
+		if ((p = strrchr(cbootpath, '/')) == NULL)
+			break;
+		*p = 0;
+	}
+
+	if (node == -1) {
+		/* Cannot canonicalize... use bootpath anyway. */
+		strcpy(cbootpath, bootpath);
+
+		return;
+	}
+
+	/*
+	 * cbootpath is a valid OF path.  Use package-to-path to
+	 * canonicalize pathname.
+	 */
+
+	/* Back up the last component for later use. */
+	if ((p = strrchr(cbootpath, '/')) != NULL)
+		strcpy(last, p + 1);
+	else
+		last[0] = 0;
+
+	bzero(cbootpath, sizeof(cbootpath));
+	OF_package_to_path(node, cbootpath, sizeof(cbootpath) - 1);
+
+	/*
+	 * OF_1.x (at least) always returns addr == 0 for
+	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
+	 */
+	if ((p = strrchr(cbootpath, '/')) != NULL) {
+		p++;
+		if (strncmp(p, "sd@", 3) == 0 && strncmp(last, "sd@", 3) == 0)
+			strcpy(p, last);
+	}
+
+	/*
+	 * At this point, cbootpath contains like:
+	 * "/pci@80000000/mac-io@10/ata-3@20000/disk"
+	 *
+	 * The last component may have no address... so append it.
+	 */
+	p = strrchr(cbootpath, '/');
+	if (p != NULL && strchr(p, '@') == NULL) {
+		/* Append it. */
+		if ((p = strrchr(last, '@')) != NULL)
+			strcat(cbootpath, p);
+	}
+
+	if ((p = strchr(cbootpath, ':')) != NULL) {
+		*p++ = 0;
+		/* booted_partition = *p - '0';		XXX correct? */
+	}
 }
 
 #define DEVICE_IS(dev, name) \
@@ -203,6 +264,11 @@ device_register(dev, aux)
 		if (!p++)
 			return;
 		if (strtoul(p, &p, 16) != aa->aa_drv_data->drive)
+			return;
+	} else if (DEVICE_IS(parent, "wdc")) {
+		struct ata_atapi_attach *aa = aux;
+
+		if (addr != aa->aa_channel)
 			return;
 	} else
 		return;
