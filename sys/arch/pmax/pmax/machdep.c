@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1995/05/12 23:27:27 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1995/08/02 06:44:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,6 +98,7 @@
 #include <cfb.h>
 #include <mfb.h>
 #include <xcfb.h>
+#include <sfb.h>
 #include <dc.h>
 #include <dtop.h>
 #include <scc.h>
@@ -1499,7 +1500,7 @@ struct drivers_map {
 	{ "PMAF-AA ",   "fza"},		/* slow FDDI */
 	{ "T3PKT   ",   "tt"},		/* DECWRL turbochannel T3 */
 	{ "T1D4PKT ",   "ds"},		/* DECWRL turbochannel T1 */
-	{ "FORE_ATM",   "fa"},		/* Fore t??-100 ATM */
+	{ "FORE_ATM",	"fa"},		/* Fore ATM */
 	{ "", 0}			/* list end */
 };
 
@@ -1677,16 +1678,6 @@ tc_find_all_options()
 			if (cp->pmax_addr == (char *)QUES) {
 				cp->pmax_addr = (char *)sl->k1seg_address;
 				cp->pmax_pri = i;
-				/* #ifdef this back in if it breaks */
-#if 0
-				if (pmax_boardtype == DS_3MIN ||
-				    pmax_boardtype == DS_MAXINE)
-					if (drp->d_intr) {
-					  printf("Enabling %s, slot %d\n",
-						 drp->d_name, i);
-					(*tc_enable_interrupt)(i, 1);
-				  }
-#endif
 				cp->pmax_alive = 1;
 				break;
 			}
@@ -1878,7 +1869,7 @@ kn03_enable_intr(slotno, on)
 {
 	register unsigned mask;
 
-#ifdef	DEBUG
+#ifdef	DIAGNOSTIC
 	printf("3MAX+ intr: mask %x, setting slot %d to %d\n",
 	       kn03_tc3_imask, slotno, on);
 #endif
