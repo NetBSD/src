@@ -1,4 +1,4 @@
-/*      $NetBSD: svvar.h,v 1.2 1999/02/18 00:54:20 mycroft Exp $ */
+/*      $NetBSD: svvar.h,v 1.3 1999/02/18 00:55:36 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -47,7 +47,7 @@ struct sv_softc {
 	bus_space_tag_t sc_midiiot;
 	bus_space_handle_t sc_midiioh;
 
-        struct sv_dma *sc_dmas;
+	struct sv_dma *sc_dmas;
 
 	void	(*sc_pintr)(void *);	/* dma completion intr handler */
 	void	*sc_parg;		/* arg for sc_intr() */
@@ -55,7 +55,7 @@ struct sv_softc {
 	void	(*sc_rintr)(void *);	/* dma completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
 
-        u_int	sc_record_source;	/* recording source mask */
+	u_int	sc_record_source;	/* recording source mask */
 
 	struct pci_attach_args sc_pa;
 	char	sc_dmaset;

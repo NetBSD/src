@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.3 1999/02/18 00:54:19 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.4 1999/02/18 00:55:36 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -109,11 +109,11 @@ int	sv_intr __P((void *));
 
 struct sv_dma {
 	bus_dmamap_t map;
-        caddr_t addr;
-        bus_dma_segment_t segs[1];
-        int nsegs;
-        size_t size;
-        struct sv_dma *next;
+	caddr_t addr;
+	bus_dma_segment_t segs[1];
+	int nsegs;
+	size_t size;
+	struct sv_dma *next;
 };
 #define DMAADDR(map) ((map)->segs[0].ds_addr)
 #define KERNADDR(map) ((void *)((map)->addr))
@@ -509,7 +509,7 @@ sv_allocmem(sc, size, align, p)
 	struct sv_softc *sc;
 	size_t size;
 	size_t align;
-        struct sv_dma *p;
+	struct sv_dma *p;
 {
 	int error;
 
@@ -548,7 +548,7 @@ free:
 int
 sv_freemem(sc, p)
 	struct sv_softc *sc;
-        struct sv_dma *p;
+	struct sv_dma *p;
 {
 	bus_dmamap_unload(sc->sc_dmatag, p->map);
 	bus_dmamap_destroy(sc->sc_dmatag, p->map);
@@ -583,11 +583,11 @@ sv_close(addr)
 	struct sv_softc *sc = addr;
     
 	DPRINTF(("sv_close\n"));
-        sv_halt_output(sc);
-        sv_halt_input(sc);
+	sv_halt_output(sc);
+	sv_halt_input(sc);
 
-        sc->sc_pintr = 0;
-        sc->sc_rintr = 0;
+	sc->sc_pintr = 0;
+	sc->sc_rintr = 0;
 }
 
 int
@@ -620,7 +620,7 @@ sv_query_encoding(addr, fp)
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
-        case 4:
+	case 4:
 		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
@@ -658,7 +658,7 @@ sv_set_params(addr, setmode, usemode, play, rec)
 	struct sv_softc *sc = addr;
 	struct audio_params *p;
 	int mode;
-        u_int32_t val;
+	u_int32_t val;
 	
 	/*
 	 * This device only has one clock, so make the sample rates match.
@@ -832,7 +832,7 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 		mode |= SV_DMAA_STEREO;
 	sv_write_indirect(sc, SV_DMA_DATA_FORMAT, mode);
 
-        for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
 		printf("sv_trigger_output: bad addr %p\n", start);
@@ -888,7 +888,7 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 		mode |= SV_DMAC_STEREO;
 	sv_write_indirect(sc, SV_DMA_DATA_FORMAT, mode);
 
-        for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
 		printf("sv_trigger_input: bad addr %p\n", start);
@@ -924,11 +924,11 @@ sv_halt_output(addr)
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
 	
-        DPRINTF(("sv: sv_halt_output\n"));
+	DPRINTF(("sv: sv_halt_output\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_PLAY_ENABLE);
 
-        return (0);
+	return (0);
 }
 
 int
@@ -938,20 +938,20 @@ sv_halt_input(addr)
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
     
-        DPRINTF(("sv: sv_halt_input\n"));
+	DPRINTF(("sv: sv_halt_input\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_RECORD_ENABLE);
 
-        return (0);
+	return (0);
 }
 
 int
 sv_getdev(addr, retp)
 	void *addr;
-        struct audio_device *retp;
+	struct audio_device *retp;
 {
 	*retp = sv_device;
-        return (0);
+	return (0);
 }
 
 
@@ -1413,19 +1413,19 @@ sv_malloc(addr, direction, size, pool, flags)
 	int pool, flags;
 {
 	struct sv_softc *sc = addr;
-        struct sv_dma *p;
-        int error;
+	struct sv_dma *p;
+	int error;
 
-        p = malloc(sizeof(*p), pool, flags);
-        if (!p)
-                return (0);
-        error = sv_allocmem(sc, size, 16, p);
-        if (error) {
-                free(p, pool);
-        	return (0);
-        }
-        p->next = sc->sc_dmas;
-        sc->sc_dmas = p;
+	p = malloc(sizeof(*p), pool, flags);
+	if (!p)
+		return (0);
+	error = sv_allocmem(sc, size, 16, p);
+	if (error) {
+		free(p, pool);
+		return (0);
+	}
+	p->next = sc->sc_dmas;
+	sc->sc_dmas = p;
 	return (KERNADDR(p));
 }
 
@@ -1436,16 +1436,16 @@ sv_free(addr, ptr, pool)
 	int pool;
 {
 	struct sv_softc *sc = addr;
-        struct sv_dma **p;
+	struct sv_dma **p;
 
-        for (p = &sc->sc_dmas; *p; p = &(*p)->next) {
-                if (KERNADDR(*p) == ptr) {
-                        sv_freemem(sc, *p);
-                        *p = (*p)->next;
-                        free(*p, pool);
-                        return;
-                }
-        }
+	for (p = &sc->sc_dmas; *p; p = &(*p)->next) {
+		if (KERNADDR(*p) == ptr) {
+			sv_freemem(sc, *p);
+			*p = (*p)->next;
+			free(*p, pool);
+			return;
+		}
+	}
 }
 
 size_t
@@ -1460,16 +1460,16 @@ sv_round_buffersize(addr, direction, size)
 int
 sv_mappage(addr, mem, off, prot)
 	void *addr;
-        void *mem;
-        int off;
+	void *mem;
+	int off;
 	int prot;
 {
 	struct sv_softc *sc = addr;
-        struct sv_dma *p;
+	struct sv_dma *p;
 
 	if (off < 0)
 		return (-1);
-        for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
+	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
 		;
 	if (!p)
 		return (-1);
