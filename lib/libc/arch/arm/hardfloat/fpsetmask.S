@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.S,v 1.1 2000/12/29 20:13:52 bjh21 Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,12 @@
  * Set the current FP exception enable mask
  */
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpsetmask, _fpsetmask)
+ENTRY(_fpsetmask)
+#else
 ENTRY(fpsetmask)
+#endif
 	rfs	r1
 	bic	r1, r1, #0x001f0000
 	and	r0, r0, #0x0000001f
