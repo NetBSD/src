@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.18 2000/06/10 14:12:04 mycroft Exp $
+#	$NetBSD: bsd.info.mk,v 1.19 2001/05/08 03:19:52 sommerfeld Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -50,7 +50,7 @@ __infoinstall: .USE
 	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
 	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
 
-.for F in ${INFOFILES}
+.for F in ${INFOFILES:O:u}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}: .MADE
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.60 2001/03/21 04:04:15 simonb Exp $
+#	$NetBSD: bsd.man.mk,v 1.61 2001/05/08 03:19:52 sommerfeld Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -102,7 +102,7 @@ catpages:: ${CATPAGES:@P@${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MC
 .PHONY: ${CATPAGES:@P@${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}@}
 .endif
 
-.   for P in ${CATPAGES}
+.   for P in ${CATPAGES:O:u}
 .	if !defined(BUILD) && !make(all) && !make(${P})
 ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: .MADE
 .	endif
@@ -120,7 +120,7 @@ manpages:: ${MANPAGES:@P@${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMP
 .PHONY: ${MANPAGES:@P@${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}@}
 .endif
 
-.   for P in ${MANPAGES}
+.   for P in ${MANPAGES:O:u}
 ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
 .   endfor
 .else
@@ -173,7 +173,7 @@ manlinks: manpages
 html: ${HTMLPAGES}
 
 .if defined(HTMLPAGES) && !empty(HTMLPAGES)
-.for P in ${HTMLPAGES} 
+.for P in ${HTMLPAGES:O:u} 
 ${HTMLDIR}/${P:T:E}/${P:T:R}.html: ${P}
 	${MINSTALL} ${.ALLSRC} ${.TARGET}
 .endfor

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.129 2001/02/19 07:56:14 jmc Exp $
+#	$NetBSD: bsd.prog.mk,v 1.130 2001/05/08 03:19:52 sommerfeld Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -197,7 +197,7 @@ __scriptinstall: .USE
 	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 
-.for S in ${SCRIPTS}
+.for S in ${SCRIPTS:O:u}
 .if !defined(BUILD) && !make(all) && !make(${S})
 ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: .MADE
 .endif

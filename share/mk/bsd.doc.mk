@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.48 2000/06/06 09:53:29 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.49 2001/05/08 03:19:51 sommerfeld Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -62,7 +62,7 @@ __docinstall: .USE
 	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
 	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
 
-.for F in ${ALLFILES}
+.for F in ${ALLFILES:O:u}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 .endif

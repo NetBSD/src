@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.14 2000/06/10 14:12:03 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.15 2001/05/08 03:19:52 sommerfeld Exp $
 
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
@@ -25,7 +25,7 @@ __fileinstall: .USE
 	    -m ${FILESMODE_${.ALLSRC:T}:U${FILESMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 
-.for F in ${FILES}
+.for F in ${FILES:O:u}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}: .MADE
 .endif
