@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.54 2004/08/05 22:06:48 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.54 2004/08/05 22:06:48 enami Exp $");
 
 #define SYSVSEM
 
@@ -583,7 +583,7 @@ sys_semop(l, v, retval)
 	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
-	int i, j, eval;
+	int i, eval;
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %lld)\n", semid, sops,
@@ -781,9 +781,9 @@ done:
 					panic("semop - can't undo undos");
 			}
 
-			for (j = 0; j < nsops; j++)
-				semaptr->_sem_base[sops[j].sem_num].semval -=
-				    sops[j].sem_op;
+			for (i = 0; i < nsops; i++)
+				semaptr->_sem_base[sops[i].sem_num].semval -=
+				    sops[i].sem_op;
 
 			SEM_PRINTF(("eval = %d from semundo_adjust\n", eval));
 			return (eval);
