@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.8 1997/05/17 20:09:26 pk Exp $	*/
+/*	$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: msgs.c,v 1.8 1997/05/17 20:09:26 pk Exp $";
+static char rcsid[] = "$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,8 @@ int argc; char *argv[];
 	bounds = fopen(fname, "r");
 
 	if (bounds != NULL) {
-		fscanf(bounds, "%d %d\n", &firstmsg, &lastmsg);
+		if (fscanf(bounds, "%d %d\n", &firstmsg, &lastmsg) < 2)
+			firstmsg = lastmsg = 0;
 		fclose(bounds);
 		blast = lastmsg;	/* save upper bound */
 	}
