@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.15 2002/08/10 03:08:15 yamt Exp $
+.\"	$NetBSD: exec.3,v 1.16 2002/08/10 09:14:59 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)exec.3	8.3 (Berkeley) 1/24/94
 .\"
-.Dd January 24, 1994
+.Dd August 10, 2002
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -146,10 +146,11 @@ The search path is the path specified in the environment by the
 .Ev PATH
 variable.
 If this variable isn't specified,
-.Va _PATH_DEFPATH from
+.Va _PATH_DEFPATH
+from
 .Pa <paths.h>
 is used instead, its value being:
-.Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+.Pa /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin .
 In addition, certain errors are treated specially.
 .Pp
 If permission is denied for a file (the attempted
@@ -184,7 +185,7 @@ executes a file with the program tracing facilities enabled (see
 .Xr ptrace 2 ) .
 .Sh RETURN VALUES
 If any of the
-.Xr exec 3
+.Nm exec
 functions returns, an error will have occurred.
 The return value is \-1, and the global variable
 .Va errno
