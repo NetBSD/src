@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.h,v 1.6 1996/10/29 23:14:34 mark Exp $ */
+/* $NetBSD: iomd.h,v 1.7 1996/11/23 03:21:43 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -198,9 +198,11 @@
 #define MOUSE_BUTTON_MIDDLE 0x20
 #define MOUSE_BUTTON_LEFT   0x40
 
+#define FREQCON	(IOMD_BASE + 0x40000)
+
 #define RPC600_IOMD_ID	0xd4e7
 #define ARM7500_IOC_ID	0x5b98
 
-#define FREQCON	(IOMD_BASE + 0x40000)
+#define IOMD_ID (ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8))
 
 /* End of iomd.h */
