@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2001/04/21 23:51:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2001/04/22 00:34:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -116,7 +116,7 @@ extern struct pmap kernel_pmap_store;
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 
-#define	pmap_update()		/* nothing (yet) */
+#define	pmap_update(pmap)	/* nothing (yet) */
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
