@@ -32,7 +32,7 @@
  */
 
 #include "kf_locl.h"
-RCSID("$Id: kf.c,v 1.1.1.3 2001/02/11 13:51:11 assar Exp $");
+RCSID("$Id: kf.c,v 1.1.1.4 2001/06/19 22:07:39 assar Exp $");
 
 krb5_context context;
 static int help_flag;
@@ -71,7 +71,7 @@ client_setup(krb5_context *context, int *argc, char **argv)
     int port = 0;
     int status;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
  
     status = krb5_init_context (context);
     if (status)

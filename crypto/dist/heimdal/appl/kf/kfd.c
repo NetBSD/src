@@ -32,7 +32,7 @@
  */
 
 #include "kf_locl.h"
-RCSID("$Id: kfd.c,v 1.1.1.3 2001/02/11 13:51:11 assar Exp $");
+RCSID("$Id: kfd.c,v 1.1.1.4 2001/06/19 22:07:39 assar Exp $");
 
 krb5_context context;
 char krb5_tkfile[MAXPATHLEN];
@@ -315,7 +315,7 @@ main(int argc, char **argv)
     int port;
     int ret;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     roken_openlog (argv[0], LOG_ODELAY | LOG_PID,LOG_AUTH);
     port = server_setup(&context, argc, argv);
     ret = doit (port, service);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: common.c,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $");
+RCSID("$Id: common.c,v 1.1.1.4 2001/06/19 22:07:44 assar Exp $");
 
 char x_socket[MaxPathLen];
 
@@ -405,7 +405,11 @@ create_and_write_cookie (char *xauthfile,
      auth.name_length = strlen(auth.name);
      auth.data_length = cookie_sz;
      auth.data = (char*)cookie;
+#ifdef HAVE_OPENSSL_DES_H
+     krb5_generate_random_block (cookie, cookie_sz);
+#else
      des_rand_data (cookie, cookie_sz);
+#endif
 
      strlcpy(xauthfile, "/tmp/AXXXXXX", xauthfile_size);
      fd = mkstemp(xauthfile);

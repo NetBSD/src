@@ -1,4 +1,4 @@
-@c $Id: misc.texi,v 1.1.1.3 2001/02/11 13:51:20 assar Exp $
+@c $Id: misc.texi,v 1.1.1.4 2001/06/19 22:07:47 assar Exp $
 
 @node Things in search for a better place, Kerberos 4 issues, Setting up a realm, Top
 @chapter Things in search for a better place
@@ -56,3 +56,9 @@ protocol.
 A working solution would be to hook up a machine with a real operating
 system to the console of the Cisco and then use it as a backwards
 terminal server.
+
+@section Making things work on Transarc AFS
+
+@subsection How to get a KeyFile
+
+@file{ktutil -k AFSKEYFILE:KeyFile get afs@@MY.REALM}

@@ -32,7 +32,7 @@
 
 #include <config.h>
 
-RCSID("$Id: su.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
+RCSID("$Id: su.c,v 1.1.1.4 2001/06/19 22:07:39 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +50,11 @@ RCSID("$Id: su.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
 
 #include <pwd.h>
 
+#ifdef HAVE_OPENSSL_DES_H
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb5.h>
 #include <kafs.h>
 #include <err.h>
@@ -274,7 +278,7 @@ main(int argc, char **argv)
     int ok = 0;
     int kerberos_error=1;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);

@@ -55,7 +55,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: kerberos.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
+RCSID("$Id: kerberos.c,v 1.1.1.4 2001/06/19 22:07:41 assar Exp $");
 
 #ifdef	KRB4
 #ifdef HAVE_SYS_TYPES_H
@@ -65,7 +65,6 @@ RCSID("$Id: kerberos.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
 #include <arpa/telnet.h>
 #endif
 #include <stdio.h>
-#include <des.h>	/* BSD wont include this in krb.h, so we do it here */
 #include <krb.h>
 #include <pwd.h>
 #include <stdlib.h>

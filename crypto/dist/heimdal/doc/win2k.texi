@@ -1,6 +1,6 @@
-@c $Id: win2k.texi,v 1.1.1.3 2001/02/11 13:51:20 assar Exp $
+@c $Id: win2k.texi,v 1.1.1.4 2001/06/19 22:07:47 assar Exp $
 
-@node Windows 2000 compatability, Acknowledgments, Migration, Top
+@node Windows 2000 compatability, Programming with Kerberos, Kerberos 4 issues, Top
 @comment  node-name,  next,  previous,  up
 @chapter Windows 2000 compatability
 

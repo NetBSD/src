@@ -38,7 +38,7 @@
 #endif
 #include "getarg.h"
 
-RCSID("$Id: ftpd.c,v 1.1.1.3 2001/02/11 13:51:19 assar Exp $");
+RCSID("$Id: ftpd.c,v 1.1.1.4 2001/06/19 22:07:46 assar Exp $");
 
 static char version[] = "Version 6.00";
 
@@ -262,7 +262,7 @@ main(int argc, char **argv)
 
     int optind = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     /* detach from any tickets and tokens */
     {
@@ -1187,18 +1187,22 @@ do_store(char *name, char *mode, int unique)
 		goto done;
 	set_buffer_size(fileno(din), 1);
 	if (receive_data(din, fout) == 0) {
+	    if((*closefunc)(fout) < 0)
+		perror_reply(552, name);
+	    else {
 		if (unique)
 			reply(226, "Transfer complete (unique file name:%s).",
 			    name);
 		else
 			reply(226, "Transfer complete.");
-	}
+	    }
+	} else
+	    (*closefunc)(fout);
 	fclose(din);
 	data = -1;
 	pdata = -1;
 done:
 	LOGBYTES(*mode == 'w' ? "put" : "append", name, byte_count);
-	(*closefunc)(fout);
 }
 
 static FILE *
@@ -2161,7 +2165,7 @@ send_file_list(char *whichf)
   char buf[MaxPathLen];
 
   if (strpbrk(whichf, "~{[*?") != NULL) {
-    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+    int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT;
 
     memset(&gl, 0, sizeof(gl));
     freeglob = 1;
