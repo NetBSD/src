@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.83 2003/02/09 09:14:58 jdolecek Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.84 2003/03/16 08:10:00 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.83 2003/02/09 09:14:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.84 2003/03/16 08:10:00 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.83 2003/02/09 09:14:58 jdolecek 
  * devices and drivers are found via these tables.
  */
 extern struct cfdata cfdata[];
-extern short cfroots[];
+extern const short cfroots[];
 
 /*
  * List of all cfdriver structures.  We use this to detect duplicates
@@ -587,7 +587,7 @@ struct cfdata *
 config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
 {
 	struct cfdata *cf;
-	short *p;
+	const short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
