@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.26 2004/07/08 18:08:58 kleink Exp $      */
+/*      $NetBSD: esm.c,v 1.27 2004/09/22 12:20:25 kent Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.26 2004/07/08 18:08:58 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.27 2004/09/22 12:20:25 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,9 +538,10 @@ esm_attach_codec(void *sc, struct ac97_codec_if *codec_if)
 	return 0;
 }
 
-void
+int
 esm_reset_codec(void *sc)
 {
+	return 0;
 }
 
 
