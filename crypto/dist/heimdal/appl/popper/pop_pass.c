@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_pass.c,v 1.1.1.2 2000/08/02 19:58:25 assar Exp $");
+__RCSID("$Heimdal: pop_pass.c,v 1.41 2000/04/12 15:37:46 assar Exp $"
+        "$NetBSD: pop_pass.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
 
 #ifdef KRB4
 static int

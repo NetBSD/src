@@ -1,13 +1,13 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:49 assar Exp $
+# $Heimdal: Makefile.am,v 1.13 2002/08/13 13:48:15 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 if do_roken_rename
-IS = -DROKEN_RENAME
 ES = snprintf.c strdup.c
 endif
 
-INCLUDES += $(IS)
+INCLUDES += $(ROKEN_RENAME)
 
 man_MANS = editline.3
 

@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_dropcopy.c,v 1.1.1.2 2000/08/02 19:58:24 assar Exp $");
+__RCSID("$Heimdal: pop_dropcopy.c,v 1.26 2002/07/04 14:10:11 joda Exp $"
+        "$NetBSD: pop_dropcopy.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
 
 /*
  * Run as the user in `pwd'
@@ -114,7 +115,8 @@ pop_dropcopy(POP *p, struct passwd *pwp)
     switch(errno) {
         case EWOULDBLOCK:
             return pop_msg(p,POP_FAILURE,
-                 "Maildrop lock busy!  Is another session active?");
+                 "%sMaildrop lock busy!  Is another session active?", 
+			   (p->flags & POP_FLAG_CAPA) ? "[IN-USE] " : "");
             /* NOTREACHED */
         default:
             return pop_msg(p,POP_FAILURE,"flock: '%s': %s", p->temp_drop,

@@ -1,4 +1,5 @@
-dnl $Id: have-struct-field.m4,v 1.1.1.2 2000/08/02 20:00:29 assar Exp $
+dnl $Heimdal: have-struct-field.m4,v 1.6 1999/07/29 01:44:32 assar Exp $
+dnl $NetBSD: have-struct-field.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 dnl check for fields in a structure
 dnl

@@ -33,7 +33,8 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen_copy.c,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $");
+__RCSID("$Heimdal: gen_copy.c,v 1.12 2001/09/25 13:39:26 assar Exp $"
+        "$NetBSD: gen_copy.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 static void
 copy_primitive (const char *typename, const char *from, const char *to)
@@ -55,10 +56,14 @@ copy_type (const char *from, const char *to, const Type *t)
       break;
   case TInteger:
   case TUInteger:
+  case TEnumerated :
       fprintf(codefile, "*(%s) = *(%s);\n", to, from);
       break;
   case TOctetString:
       copy_primitive ("octet_string", from, to);
+      break;
+  case TOID:
+      copy_primitive ("oid", from, to);
       break;
   case TBitString: {
       fprintf(codefile, "*(%s) = *(%s);\n", to, from);

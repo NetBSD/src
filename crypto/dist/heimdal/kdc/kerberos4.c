@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos4.c,v 1.1.1.4 2001/09/17 12:24:58 assar Exp $");
+__RCSID("$Heimdal: kerberos4.c,v 1.41 2002/04/18 16:08:24 joda Exp $"
+        "$NetBSD: kerberos4.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 #ifdef KRB4
 
@@ -78,18 +79,18 @@ valid_princ(krb5_context context, krb5_principal princ)
 
     ret = krb5_unparse_name(context, princ, &s);
     if (ret)
-	return 0;
+	return FALSE;
     ret = db_fetch(princ, &ent);
     if (ret) {
 	kdc_log(7, "Lookup %s failed: %s", s,
 		krb5_get_err_text (context, ret));
 	free(s);
-	return 0;
+	return FALSE;
     }
     kdc_log(7, "Lookup %s succeeded", s);
     free(s);
     free_ent(ent);
-    return 1;
+    return TRUE;
 }
 
 krb5_error_code
@@ -325,12 +326,12 @@ do_version4(unsigned char *buf,
 			      sname, sinst, skey->key.keyvalue.data);
 	
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
-			life, server->kvno, &ticket, kdc_time, 
+			life, server->kvno % 256, &ticket, kdc_time, 
 			ckey->key.keyvalue.data);
 	    memset(&session, 0, sizeof(session));
 	    r = create_auth_reply(name, inst, realm, req_time, 0, 
 				  client->pw_end ? *client->pw_end : 0, 
-				  client->kvno, &cipher);
+				  client->kvno % 256, &cipher);
 	    krb5_data_copy(reply, r->dat, r->length);
 	    memset(&cipher, 0, sizeof(cipher));
 	    memset(&ticket, 0, sizeof(ticket));
@@ -373,9 +374,9 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 	
-	if(tgt->kvno != kvno){
+	if(tgt->kvno % 256 != kvno){
 	    kdc_log(0, "tgs-req with old kvno %d (current %d) for "
-		    "krbtgt.%s@%s", kvno, tgt->kvno, realm, v4_realm);
+		    "krbtgt.%s@%s", kvno, tgt->kvno % 256, realm, v4_realm);
 	    make_err_reply(reply, KDC_AUTH_EXP,
 			   "old krbtgt kvno used");
 	    goto out2;
@@ -393,7 +394,7 @@ do_version4(unsigned char *buf,
 	RCHECK(krb5_ret_int8(sp, &ticket_len), out2);
 	RCHECK(krb5_ret_int8(sp, &req_len), out2);
 	
-	pos = sp->seek(sp, ticket_len + req_len, SEEK_CUR);
+	pos = krb5_storage_seek(sp, ticket_len + req_len, SEEK_CUR);
 	
 	memset(&auth, 0, sizeof(auth));
 	memcpy(&auth.dat, buf, pos);
@@ -499,7 +500,7 @@ do_version4(unsigned char *buf,
 			      sname, sinst, skey->key.keyvalue.data);
 	    
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
-			life, server->kvno, &ticket,
+			life, server->kvno % 256, &ticket,
 			kdc_time, &ad.session);
 
 	    memset(&session, 0, sizeof(session));
@@ -625,7 +626,7 @@ encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
 		    break;
 		}
 	}
-	sp->store(sp, tmp, sizeof(tmp));
+	krb5_storage_write(sp, tmp, sizeof(tmp));
     }
 
     if((et->key.keytype != ETYPE_DES_CBC_MD5 &&
@@ -633,7 +634,7 @@ encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
 	et->key.keytype != ETYPE_DES_CBC_CRC) || 
        et->key.keyvalue.length != 8)
 	return -1;
-    sp->store(sp, et->key.keyvalue.data, 8);
+    krb5_storage_write(sp, et->key.keyvalue.data, 8);
     
     {
 	time_t start = et->starttime ? *et->starttime : et->authtime;

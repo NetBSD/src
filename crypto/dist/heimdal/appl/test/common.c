@@ -33,7 +33,8 @@
 
 #include "test_locl.h"
 
-RCSID("$Id: common.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
+__RCSID("$Heimdal: common.c,v 1.11 2000/08/27 04:29:34 assar Exp $"
+        "$NetBSD: common.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 static int help_flag;
 static int version_flag;

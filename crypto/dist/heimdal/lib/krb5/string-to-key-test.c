@@ -32,7 +32,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: string-to-key-test.c,v 1.1.1.4 2001/06/19 22:08:23 assar Exp $");
+__RCSID("$Heimdal: string-to-key-test.c,v 1.7 2001/05/11 16:15:27 joda Exp $"
+        "$NetBSD: string-to-key-test.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
 
 enum { MAXSIZE = 24 };
 

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: verify.c,v 1.1.1.4 2001/09/17 12:25:12 assar Exp $");
+__RCSID("$Heimdal: verify.c,v 1.25 2001/06/18 13:11:33 assar Exp $"
+        "$NetBSD: verify.c,v 1.1.1.5 2002/09/12 12:41:43 joda Exp $");
 #endif
 #include <unistd.h>
 #include <sys/types.h>

@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: import_name.c,v 1.1.1.3 2001/06/19 22:08:15 assar Exp $");
+__RCSID("$Heimdal: import_name.c,v 1.11 2002/06/20 20:05:42 nectar Exp $"
+        "$NetBSD: import_name.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 static OM_uint32
 import_krb5_name (OM_uint32 *minor_status,
@@ -124,6 +125,17 @@ import_hostbased_name (OM_uint32 *minor_status,
     }
 }
 
+static int
+oid_equal(const gss_OID a, const gss_OID b)
+{
+	if (a == b)
+		return 1;
+	else if (a == GSS_C_NO_OID || b == GSS_C_NO_OID || a->length != b->length)
+		return 0;
+	else
+		return memcmp(a->elements, b->elements, a->length) == 0;
+}
+
 OM_uint32 gss_import_name
            (OM_uint32 * minor_status,
             const gss_buffer_t input_name_buffer,
@@ -133,13 +145,13 @@ OM_uint32 gss_import_name
 {
     gssapi_krb5_init ();
 
-    if (input_name_type == GSS_C_NT_HOSTBASED_SERVICE)
+    if (oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE))
 	return import_hostbased_name (minor_status,
 				      input_name_buffer,
 				      output_name);
     else if (input_name_type == GSS_C_NO_OID
-	     || input_name_type == GSS_C_NT_USER_NAME
-	     || input_name_type == GSS_KRB5_NT_PRINCIPAL_NAME)
+	     || oid_equal(input_name_type, GSS_C_NT_USER_NAME)
+	     || oid_equal(input_name_type, GSS_KRB5_NT_PRINCIPAL_NAME))
  	/* default printable syntax */
 	return import_krb5_name (minor_status,
 				 input_name_buffer,

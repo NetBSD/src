@@ -35,7 +35,8 @@
 #include <gssapi.h>
 #include <krb5.h>
 
-RCSID("$Id: gss_userok.c,v 1.1.1.4 2001/09/17 12:24:43 assar Exp $");
+__RCSID("$Heimdal: gss_userok.c,v 1.8 2001/08/05 06:38:57 assar Exp $"
+        "$NetBSD: gss_userok.c,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $");
 
 /* XXX a bit too much of krb5 dependency here... 
    What is the correct way to do this? 

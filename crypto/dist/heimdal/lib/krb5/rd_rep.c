@@ -33,7 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_rep.c,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $");
+__RCSID("$Heimdal: rd_rep.c,v 1.22 2001/06/18 02:46:53 assar Exp $"
+        "$NetBSD: rd_rep.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
 
 krb5_error_code
 krb5_rd_rep(krb5_context context,

@@ -1,7 +1,8 @@
 dnl 
 dnl See if there is any X11 present
 dnl
-dnl $Id: check-x.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
+dnl $Heimdal: check-x.m4,v 1.2 1999/11/05 04:25:23 assar Exp $
+dnl $NetBSD: check-x.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 
 AC_DEFUN(KRB_CHECK_X,[
 AC_PATH_XTRA

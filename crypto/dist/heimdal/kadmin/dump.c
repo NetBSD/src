@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <kadm5/private.h>
 
-RCSID("$Id: dump.c,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $");
+__RCSID("$Heimdal: dump.c,v 1.26 1999/12/02 17:04:58 joda Exp $"
+        "$NetBSD: dump.c,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $");
 
 int
 dump(int argc, char **argv)

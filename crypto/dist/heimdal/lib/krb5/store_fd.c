@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,10 @@
  */
 
 #include "krb5_locl.h"
+#include "store-int.h"
 
-RCSID("$Id: store_fd.c,v 1.1.1.4 2001/09/17 12:25:05 assar Exp $");
+__RCSID("$Heimdal: store_fd.c,v 1.10 2002/04/18 14:00:39 joda Exp $"
+        "$NetBSD: store_fd.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
 
 typedef struct fd_storage{
     int fd;
@@ -73,6 +75,7 @@ krb5_storage_from_fd(int fd)
 	return NULL;
     }
     sp->flags = 0;
+    sp->eof_code = HEIM_ERR_EOF;
     FD(sp) = fd;
     sp->fetch = fd_fetch;
     sp->store = fd_store;

@@ -33,7 +33,8 @@
 
 #include <config.h>
 
-RCSID("$Id: spx.c,v 1.1.1.2 2000/08/02 19:58:19 assar Exp $");
+__RCSID("$Heimdal: spx.c,v 1.17 1999/09/16 20:41:34 assar Exp $"
+        "$NetBSD: spx.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
 
 #ifdef	SPX
 /*

@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gen.h,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $ */
+/* $Heimdal: gen.h,v 1.4 1999/12/02 17:05:02 joda Exp $
+   $NetBSD: gen.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
 
 #include <stdio.h>
 #include "symbol.h"
