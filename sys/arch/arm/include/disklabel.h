@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/01/10 19:02:05 bjh21 Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,8 +43,8 @@
  * Created      : 04/10/94
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _ARM_DISKLABEL_H_
+#define _ARM_DISKLABEL_H_
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
@@ -52,15 +52,10 @@
 #define RAW_PART	2		/* raw partition: XX?c */
 
 #include <sys/dkbad.h>
-#include <machine/disklabel_acorn.h>
+#include <sys/disklabel_acorn.h>
 #include <sys/disklabel_mbr.h>
 
 struct cpu_disklabel {
-#if 0 /* XXX not actually used by anything */
-	u_int pad0;
-	u_int pad1;
-	struct riscbsd_partition partitions[NRISCBSD_PARTITIONS];
-#endif
 	struct mbr_partition mbrparts[NMBRPART];
 	struct dkbad bad;
 };
@@ -79,6 +74,4 @@ int	mbr_label_locate __P((dev_t, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif /* _KERNEL */
 
-#endif /* _MACHINE_DISKLABEL_H_ */
-
-/* End of disklabel.h */
+#endif /* _ARM_DISKLABEL_H_ */
