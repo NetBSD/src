@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.48 1995/12/09 04:28:19 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.49 1995/12/21 04:44:27 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -506,7 +506,7 @@ swapout(p)
 	register struct proc *p;
 {
 	vm_offset_t addr;
-	vm_size_t size;
+	int s;
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
@@ -524,19 +524,18 @@ swapout(p)
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
-	addr = (vm_offset_t) p->p_addr;
-	size = round_page(USPACE);
-	vm_map_pageable(kernel_map, addr, addr+size, TRUE);
+	addr = (vm_offset_t)p->p_addr;
+	vm_map_pageable(kernel_map, addr, addr + USPACE, TRUE);
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	(void) splhigh();
+	s = splstatclock();
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrq(p);
-	(void) spl0();
+	splx(s);
 	p->p_swtime = 0;
 }
 
