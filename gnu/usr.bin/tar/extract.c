@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: extract.c,v 1.4 1993/08/02 17:48:43 mycroft Exp $";
+static char rcsid[] = "$Id: extract.c,v 1.5 1993/08/07 07:42:51 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -314,6 +314,14 @@ extract_archive ()
 	  fd = 1;
 	  goto extract_file;
 	}
+
+      if (f_unlink && !f_keep) {
+	if (unlink(skipcrud + current_file_name) == -1)
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
+                      skipcrud + current_file_name);
+      }
+
 #ifdef O_CTG
       /*
 		  * Contiguous files (on the Masscomp) have to specify
@@ -560,6 +568,13 @@ extract_archive ()
       {
 	struct stat st1, st2;
 
+        if (f_unlink && !f_keep) {
+	  if (unlink(skipcrud + current_file_name) == -1)
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
+                      skipcrud + current_file_name);
+        }
+
 	check = link (current_link_name, skipcrud + current_file_name);
 
 	if (check == 0)
@@ -582,6 +597,13 @@ extract_archive ()
 #ifdef S_ISLNK
     case LF_SYMLINK:
     again_symlink:
+      if (f_unlink && !f_keep) {
+	  if (unlink(skipcrud + current_file_name) == -1)
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
+                      skipcrud + current_file_name);
+      }
+
       check = symlink (current_link_name,
 		       skipcrud + current_file_name);
       /* FIXME, don't worry uid, gid, etc... */
@@ -606,6 +628,13 @@ extract_archive ()
 #endif
 #if defined(S_IFCHR) || defined(S_IFBLK)
     make_node:
+      if (f_unlink && !f_keep) {
+	  if (unlink(skipcrud + current_file_name) == -1)
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
+                      skipcrud + current_file_name);
+      }
+
       check = mknod (current_file_name + skipcrud,
 		     (int) hstat.st_mode, (int) hstat.st_rdev);
       if (check != 0)
@@ -623,6 +652,13 @@ extract_archive ()
       /* If local system doesn't support FIFOs, use default case */
     case LF_FIFO:
     make_fifo:
+      if (f_unlink && !f_keep) {
+	  if (unlink(skipcrud + current_file_name) == -1)
+		if (errno != ENOENT)
+		   msg_perror ("Could not unlink %s",
+                      skipcrud + current_file_name);
+      }
+
       check = mkfifo (current_file_name + skipcrud,
 		      (int) hstat.st_mode);
       if (check != 0)

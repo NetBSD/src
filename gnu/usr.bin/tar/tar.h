@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tar.h,v 1.4 1993/08/02 17:49:07 mycroft Exp $
+	$Id: tar.h,v 1.5 1993/08/07 07:42:55 cgd Exp $
 */
 
 /* major() and minor() macros (among other things) defined here for hpux */
@@ -234,6 +234,8 @@ TAR_EXTERN char *f_volno_file;	/* --volno-file */
 TAR_EXTERN int f_force_local;	/* --force-local */
 TAR_EXTERN int f_atime_preserve;/* --atime-preserve */
 TAR_EXTERN int f_compress_block; /* --compress-block */
+TAR_EXTERN int f_norecurse;	/* --norecurse */
+TAR_EXTERN int f_unlink;	/* --unlink */
 
 /*
  * We default to Unix Standard format rather than 4.2BSD tar format.

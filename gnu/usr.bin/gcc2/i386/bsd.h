@@ -19,13 +19,13 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-	$Id: bsd.h,v 1.2 1993/08/02 17:36:51 mycroft Exp $
+	$Id: bsd.h,v 1.3 1993/08/07 07:42:25 cgd Exp $
 */
 
 /* Include common aspects of all 386 Unix assemblers.  */
 #include "i386/unix.h"
 
-/* Enable #pragma pack for building NetBSD and 386BSD kernels.  */
+/* Enable #pragma pack for building NetBSD kernels.  */
 #define HANDLE_SYSV_PRAGMA
 
 /* Use the Sequent Symmetry assembler syntax.  */
