@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.73 2002/03/29 17:01:49 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.74 2002/03/31 22:22:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.73 2002/03/29 17:01:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.74 2002/03/31 22:22:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -213,7 +213,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
-	frame.sf_sig = native_to_linux_sig[sig];
+	frame.sf_sig = native_to_linux_signo[sig];
 
 	/* Save register context. */
 #ifdef VM86
@@ -770,9 +770,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = native_to_linux_sig[lvt.relsig];
-		lvt.acqsig = native_to_linux_sig[lvt.acqsig];
-		lvt.frsig = native_to_linux_sig[lvt.frsig];
+		lvt.relsig = native_to_linux_signo[lvt.relsig];
+		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
+		lvt.frsig = native_to_linux_signo[lvt.frsig];
 		return copyout((caddr_t)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
 	case LINUX_VT_SETMODE:
@@ -780,9 +780,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = linux_to_native_sig[lvt.relsig];
-		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
-		lvt.frsig = linux_to_native_sig[lvt.frsig];
+		lvt.relsig = linux_to_native_signo[lvt.relsig];
+		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
+		lvt.frsig = linux_to_native_signo[lvt.frsig];
 		sg = stackgap_init(p, 0);
 		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))

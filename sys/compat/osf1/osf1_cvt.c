@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.12 2001/11/13 02:09:11 lukem Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.13 2002/03/31 22:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.12 2001/11/13 02:09:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.13 2002/03/31 22:22:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,7 @@ osf1_cvt_sigset_from_native(bss, oss)
 	osf1_sigemptyset(oss);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(bss, i)) {
-			newsig = osf1_signal_rxlist[i];
+			newsig = native_to_osf1_signo[i];
 			if (newsig)
 				osf1_sigaddset(oss, newsig);
 		}
@@ -612,7 +612,7 @@ osf1_cvt_sigset_to_native(oss, bss)
 	sigemptyset(bss);
 	for (i = 1; i < OSF1_NSIG; i++) {
 		if (osf1_sigismember(oss, i)) {
-			newsig = osf1_signal_xlist[i];
+			newsig = osf1_to_native_signo[i];
 			if (newsig)
 				sigaddset(bss, newsig);
 		}

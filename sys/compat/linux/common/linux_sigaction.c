@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.22 2002/02/15 16:48:03 christos Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.23 2002/03/31 22:22:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.22 2002/02/15 16:48:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.23 2002/03/31 22:22:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,13 +94,13 @@ linux_sys_sigaction(p, v, retval)
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
-	if (sig > 0 && !linux_to_native_sig[sig]) {
+	if (sig > 0 && !linux_to_native_signo[sig]) {
 		/* Pretend that we did something useful for unknown signals. */
 		obsa.sa_handler = SIG_IGN;
 		sigemptyset(&obsa.sa_mask);
 		obsa.sa_flags = 0;
 	} else {
-		error = sigaction1(p, linux_to_native_sig[sig],
+		error = sigaction1(p, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 		if (error)
 			return (error);

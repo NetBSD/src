@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.21 2001/11/13 02:08:15 lukem Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.22 2002/03/31 22:22:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.21 2001/11/13 02:08:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.22 2002/03/31 22:22:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,21 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.21 2001/11/13 02:08:15 lukem Exp $");
 #include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-/* indexed by HPUX signal number - 1 */
-char hpuxtobsdsigmap[NSIG] = {
-/*01*/	SIGHUP,  SIGINT, SIGQUIT, SIGILL,   SIGTRAP, SIGIOT,  SIGEMT,   SIGFPE,
-/*09*/  SIGKILL, SIGBUS, SIGSEGV, SIGSYS,   SIGPIPE, SIGALRM, SIGTERM,  SIGUSR1,
-/*17*/  SIGUSR2, SIGCHLD, 0,      SIGVTALRM,SIGPROF, SIGIO,   SIGWINCH, SIGSTOP,
-/*25*/	SIGTSTP, SIGCONT,SIGTTIN, SIGTTOU,  SIGURG,  0,       0,        0
-};
-
-/* indexed by BSD signal number - 1 */
-char bsdtohpuxsigmap[NSIG] = {
-/*01*/	 1,  2,  3,  4,  5,  6,  7,  8,
-/*09*/   9, 10, 11, 12, 13, 14, 15, 29,
-/*17*/  24, 25, 26, 18, 27, 28, 22,  0,
-/*25*/	 0, 20, 21, 23,  0, 16, 17,  0
-};
+extern const unsigned char native_to_hpux_signo[];
+extern const unsigned char hpux_to_native_signo[];
 
 /*
  * XXX: In addition to mapping the signal number we also have
@@ -406,9 +393,9 @@ int
 hpuxtobsdsig(sig)
 	int sig;
 {
-	if (--sig < 0 || sig >= NSIG)
+	if (sig < 0 || sig >= NSIG)
 		return(0);
-	return((int)hpuxtobsdsigmap[sig]);
+	return hpux_to_native_signo[sig];
 }
 
 /* signal numbers: convert from BSD to HPUX */
@@ -416,9 +403,9 @@ int
 bsdtohpuxsig(sig)
 	int sig;
 {
-	if (--sig < 0 || sig >= NSIG)
+	if (sig < 0 || sig >= NSIG)
 		return(0);
-	return((int)bsdtohpuxsigmap[sig]);
+	return native_to_hpux_signo[sig];
 }
 
 /* signal masks: convert from HPUX to BSD (not pretty or fast) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_cvt_signal.c,v 1.2 2001/11/13 02:09:11 lukem Exp $	*/
+/*	$NetBSD: osf1_signo.c,v 1.1 2002/03/31 22:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt_signal.c,v 1.2 2001/11/13 02:09:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signo.c,v 1.1 2002/03/31 22:22:48 christos Exp $");
+
+#include <sys/types.h>
+#include <sys/signal.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>
@@ -43,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_cvt_signal.c,v 1.2 2001/11/13 02:09:11 lukem Ex
  * XXX IT IS NOT UP TO DATE.
  */
 
-const int osf1_signal_rxlist[] = {
+const int native_to_osf1_signo[] = {
 	0,
 	OSF1_SIGHUP,
 	OSF1_SIGINT,
@@ -78,7 +81,7 @@ const int osf1_signal_rxlist[] = {
 	OSF1_SIGUSR2,
 };
 
-const int osf1_signal_xlist[] = {
+const int osf1_to_native_signo[] = {
 	0,
 	SIGHUP,
 	SIGINT,

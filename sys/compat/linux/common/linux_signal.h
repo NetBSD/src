@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.17 2002/02/18 22:24:18 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.18 2002/03/31 22:22:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
 #endif
 
 #ifdef _KERNEL
-extern const int native_to_linux_sig[];
-extern const int linux_to_native_sig[];
+extern const int native_to_linux_signo[];
+extern const int linux_to_native_signo[];
 __BEGIN_DECLS
 int linux_sigprocmask1 __P((struct proc *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11 2002/02/17 23:18:38 rafal Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2002/02/17 23:18:38 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	}
 
 	/* Set up the registers to return to sigcode. */
-	f->f_regs[A0] = native_to_linux_sig[sig];
+	f->f_regs[A0] = native_to_linux_signo[sig];
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = (unsigned long)&fp->lsf_sc;
 

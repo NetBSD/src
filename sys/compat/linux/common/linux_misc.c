@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.104 2002/03/22 17:14:18 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.105 2002/03/31 22:22:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.104 2002/03/22 17:14:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.105 2002/03/31 22:22:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,11 +185,12 @@ bsd_to_linux_wstat(st)
 	if (WIFSIGNALED(*st)) {
 		sig = WTERMSIG(*st);
 		if (sig >= 0 && sig < NSIG)
-			*st= (*st& ~0177) | native_to_linux_sig[sig];
+			*st= (*st& ~0177) | native_to_linux_signo[sig];
 	} else if (WIFSTOPPED(*st)) {
 		sig = WSTOPSIG(*st);
 		if (sig >= 0 && sig < NSIG)
-			*st = (*st & ~0xff00) | (native_to_linux_sig[sig] << 8);
+			*st = (*st & ~0xff00) |
+			    (native_to_linux_signo[sig] << 8);
 	}
 }
 

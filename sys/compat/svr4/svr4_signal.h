@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.20 2002/03/20 17:50:07 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.21 2002/03/31 22:22:49 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -133,8 +133,8 @@ struct svr4_sigaltstack {
 #define SVR4_SS_DISABLE		0x00000002
 #define SVR4_SS_ALLBITS		0x00000003
 
-extern const int native_to_svr4_sig[];
-extern const int svr4_to_native_sig[];
+extern const int native_to_svr4_signo[];
+extern const int svr4_to_native_signo[];
 void native_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
 void svr4_to_native_sigset __P((const svr4_sigset_t *, sigset_t *));
 void native_to_svr4_sigaltstack __P((const struct sigaltstack *, struct svr4_sigaltstack *));
