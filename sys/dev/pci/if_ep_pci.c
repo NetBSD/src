@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.29 1998/11/04 00:31:05 fvdl Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.30 1998/11/07 23:06:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,6 @@ struct ep_pci_product {
 	  0,				"3c595-T4" },
 	{ PCI_PRODUCT_3COM_3C595MII,	ELINK_CHIPSET_VORTEX,
 	  0,				"3c595-MII" },
-#ifdef EP_DRIVES_90X
 	{ PCI_PRODUCT_3COM_3C900TPO,	ELINK_CHIPSET_BOOMERANG,
 	  0,				"3c900-TPO" },
 	{ PCI_PRODUCT_3COM_3C900COMBO,	ELINK_CHIPSET_BOOMERANG,
@@ -159,7 +158,6 @@ struct ep_pci_product {
 	  ELINK_FLAGS_MII,			"3c905-TX" },
 	{ PCI_PRODUCT_3COM_3C905T4,	ELINK_CHIPSET_BOOMERANG,
 	  ELINK_FLAGS_MII,			"3c905-T4" },
-#endif
 
 	{ 0,				0,
 	  0,				NULL },
