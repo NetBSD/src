@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.10 1994/03/03 14:08:27 deraadt Exp $
+	$Id: syscalls.master,v 1.11 1994/03/27 08:35:52 cgd Exp $
 ;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -39,7 +39,7 @@
 16	STD	3 chown
 17	STD	1 obreak break
 18	COMPAT	2 sun_stat
-19	STD	3 lseek
+19	STD	3 olseek lseek
 20	STD	0 getpid
 21	OBSOL	1 sun_old_mount
 22	UNIMPL	1 System V umount
@@ -58,9 +58,9 @@
 35	COMPAT	1 sun_ftime
 36	STD	0 sync
 37	STD	2 kill
-38	STD	2 stat
+38	STD	2 ostat stat
 39	COMPAT	2 sun_setpgrp
-40	STD	2 lstat
+40	STD	2 olstat lstat
 41	STD	2 dup
 42	STD	0 pipe
 43	COMPAT	1 sun_times
@@ -82,7 +82,7 @@
 59	STD	3 execve
 60	STD	1 umask
 61	STD	1 chroot
-62	STD	2 fstat
+62	STD	2 ofstat
 63	UNIMPL	0 nosys
 64	STD	0 getpagesize
 65	STD	3 sun_omsync
@@ -149,8 +149,8 @@
 126	STD	2 osetreuid
 127	STD	2 osetregid
 128	STD	2 rename
-129	STD	2 truncate
-130	STD	2 ftruncate
+129	STD	2 otruncate truncate
+130	STD	2 oftruncate truncate
 131	STD	2 flock
 132	UNIMPL	0 nosys
 133	STD	6 sendto
