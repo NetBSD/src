@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.71 2003/08/15 02:59:32 simonb Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.72 2003/09/04 04:10:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.71 2003/08/15 02:59:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.72 2003/09/04 04:10:32 itojun Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -626,7 +626,9 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 
 /*
  * Concatenate mbuf chain n to m.
- * Both chains must be of the same type (e.g. MT_DATA).
+ * n might be copied into m (when n->m_len is small), therefore data portion of
+ * n could be copied into an mbuf of different mbuf type.
+ * Therefore both chains should be of the same type (e.g. MT_DATA).
  * Any m_pkthdr is not updated.
  */
 void
