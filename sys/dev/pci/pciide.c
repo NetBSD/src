@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.43 1999/09/01 15:17:07 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44 1999/09/02 23:23:03 ross Exp $	*/
 
 
 /*
@@ -543,7 +543,6 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
-	int rv = 1;
 
 	cp->compat = 1;
 	*cmdsizep = PCIIDE_COMPAT_CMD_SIZE;
