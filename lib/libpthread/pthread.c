@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.6 2003/01/25 00:37:01 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.7 2003/01/29 14:03:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	if (attr == NULL)
 		nattr = pthread_default_attr;
-	else if (((attr != NULL) && (attr->pta_magic == PT_ATTR_MAGIC)))
+	else if (attr->pta_magic == PT_ATTR_MAGIC)
 		nattr = *attr;
 	else
 		return EINVAL;
@@ -245,7 +245,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	pthread_spinlock(self, &pthread__deadqueue_lock);
 	if (!PTQ_EMPTY(&pthread__deadqueue)) {
-		newthread= PTQ_FIRST(&pthread__deadqueue);
+		newthread = PTQ_FIRST(&pthread__deadqueue);
 		PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
 		pthread_spinunlock(self, &pthread__deadqueue_lock);
 	} else {
