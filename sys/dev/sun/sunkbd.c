@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.2 2000/10/10 23:33:52 pk Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.3 2000/11/01 23:57:14 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,10 @@ struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), sunkbd_match, sunkbd_attach
 };
 
+struct  linesw sunkbd_disc =
+	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	  sunkbdinput, sunkbdstart, nullmodem };	/* 7- SUNKBDDISC */
+
 /*
  * sunkbd_match: how is this tty channel configured?
  */
@@ -128,14 +132,11 @@ sunkbd_attach(parent, self, aux)
 	struct cons_channel *cc;
 	int kbd_unit;
 
-	/* Remove tty from system */
-#if 0
-	tty_detach(tp);
-	callout_stop(&tp->t_outq_ch);
-	callout_stop(&tp->t_rstrt_ch);
-#endif
 	/* Set up the proper line discipline. */
-	tp->t_line = 7;
+	ttyldisc_init();
+	if (ttyldisc_add(&sunkbd_disc, -1) == -1)
+		panic("sunkbd_attach: sunkbd_disc");
+	tp->t_linesw = &sunkbd_disc;
 	tp->t_oflag &= ~OPOST;
 	tp->t_dev = args->kmta_dev;
 
