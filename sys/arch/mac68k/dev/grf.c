@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.62 1999/06/18 05:13:46 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.63 1999/06/28 04:21:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
