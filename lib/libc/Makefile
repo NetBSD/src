@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.33 1995/02/01 09:09:01 jtc Exp $
+#	$Id: Makefile,v 1.34 1995/02/10 17:45:39 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -33,7 +33,9 @@ AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
+.if (${MACHINE_ARCH} != "alpha")
 .include "${.CURDIR}/quad/Makefile.inc"
+.endif
 .include "${.CURDIR}/regex/Makefile.inc"
 .include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
