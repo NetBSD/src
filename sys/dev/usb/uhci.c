@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.167 2003/01/01 16:25:59 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.168 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,13 +43,13 @@
  * Handles e.g. PIIX3 and PIIX4.
  *
  * UHCI spec: http://developer.intel.com/design/USB/UHCI11D.htm
- * USB spec: http://www.usb.org/developers/data/usbspec.zip
+ * USB spec: http://www.usb.org/developers/docs/usbspec.zip
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.167 2003/01/01 16:25:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.168 2003/02/08 03:32:51 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
