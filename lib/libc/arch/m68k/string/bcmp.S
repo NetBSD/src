@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.8 1997/05/13 19:20:58 jtc Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.9 1997/05/13 19:27:21 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.8 1997/05/13 19:20:58 jtc Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.9 1997/05/13 19:27:21 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ ENTRY(bcmp)
 	 * if the string is too short.
 	 */
 	cmpl	#8,d1
-	blt	Lbcbyte			
+	jlt	Lbcbyte			
 
 	/* word align */
 	movl	a0,d0

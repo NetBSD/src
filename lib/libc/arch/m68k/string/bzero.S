@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.8 1997/05/13 19:21:00 jtc Exp $	*/
+/*	$NetBSD: bzero.S,v 1.9 1997/05/13 19:27:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.8 1997/05/13 19:21:00 jtc Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.9 1997/05/13 19:27:23 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,18 +95,18 @@ ENTRY(bzero)
 	 * if the string is too short.
 	 */
 	cmpl	#8,d1
-	blt	Lbzbyte
+	jlt	Lbzbyte
 
 	/* word align */
 	movl	a0,d0
 	btst	#0,d0			| if (dst & 1)
-	beq	Lbzalgndw		| 
+	jeq	Lbzalgndw		| 
 	movb	d2,a0@+			| 	*(char *)dst++ = 0
 	subql	#1,d1			|	len--
 Lbzalgndw:
 	/* long word align */
 	btst	#1,d0			| if (dst & 2)
-	beq	Lbzalgndl		|
+	jeq	Lbzalgndl		|
 	movw	d2,a0@+			|	*(short *)dst++ = 0
 	subql	#2,d1			|	len -= 2
 Lbzalgndl:
