@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2003/01/18 06:15:24 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2003/05/25 14:04:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
@@ -49,14 +48,12 @@
 #include <machine/sysconf.h>
 #include <machine/intr.h>
 
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
-
-struct pmax_soft_intr pmax_soft_intrs[_IPL_NSOFT];
 
 struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
@@ -77,10 +74,6 @@ cpu_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-
-	int i, s;
-	struct pmax_soft_intr *asi;
-	struct pmax_soft_intrhand *sih;
 
 	uvmexp.intrs++;
 
@@ -105,113 +98,9 @@ cpu_intr(status, cause, pc, ipending)
 
 	_clrsoftintr(ipending);
 
-	for (i = _IPL_NSOFT - 1; i >= 0; i--) {
-		if ((ipending & ipl_si_to_sr[i]) == 0)
-			continue;
+	softintr_dispatch(ipending);
 
-		asi = &pmax_soft_intrs[i];
-
-		if (TAILQ_FIRST(&asi->softintr_q) != NULL)
-			asi->softintr_evcnt.ev_count++;
-
-		for (;;) {
-			s = splhigh();
-
-			sih = TAILQ_FIRST(&asi->softintr_q);
-			if (sih != NULL) {
-				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-				sih->sih_pending = 0;
-			}
-
-			splx(s);
-
-			if (sih == NULL)
-				break;
-
-			uvmexp.softs++;
-			(*sih->sih_fn)(sih->sih_arg);
-		}
-	}
 	return;
 kerneltouchedFPU:
 	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
-}
-
-/* XXX For legacy software interrupts. */
-struct pmax_soft_intrhand *softnet_intrhand;
-
-/*
- * softintr_init:
- *
- *	Initialize the software interrupt system.
- */
-void
-softintr_init(void)
-{
-	static const char *softintr_names[] = IPL_SOFTNAMES;
-	struct pmax_soft_intr *asi;
-	int i;
-
-	for (i = 0; i < _IPL_NSOFT; i++) {
-		asi = &pmax_soft_intrs[i];
-		TAILQ_INIT(&asi->softintr_q);
-		asi->softintr_ipl = IPL_SOFT + i;
-		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-	}
-
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-
-	assert(softnet_intrhand != NULL);
-}
-
-/*
- * softintr_establish:		[interface]
- *
- *	Register a software interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct pmax_soft_intr *asi;
-	struct pmax_soft_intrhand *sih;
-
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	asi = &pmax_soft_intrs[ipl - IPL_SOFT];
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = asi;
-		sih->sih_fn = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	return (sih);
-}
-
-/*
- * softintr_disestablish:	[interface]
- *
- *	Unregister a software interrupt handler.
- */
-void
-softintr_disestablish(void *arg)
-{
-	struct pmax_soft_intrhand *sih = arg;
-	struct pmax_soft_intr *asi = sih->sih_intrhead;
-	int s;
-
-	s = splhigh();
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	splx(s);
-
-	free(sih, M_DEVBUF);
 }
