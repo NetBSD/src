@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.2 2001/07/23 17:04:27 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.3 2001/07/29 08:37:56 chris Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -34,6 +34,11 @@
 
 #ifndef _ARM_SYSARCH_H_
 #define _ARM_SYSARCH_H_
+
+/*
+ * Pickup definition of uintptr_t
+ */
+#include <sys/stdint.h>
 
 /*
  * Architecture specific syscalls (arm32)
