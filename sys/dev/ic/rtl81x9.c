@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.29 2001/02/01 04:45:17 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.30 2001/02/02 03:51:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -668,7 +668,7 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg,
-	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_cdata.rtk_rx_buf,
+	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map recv buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -684,7 +684,7 @@ rtk_attach(sc)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
-	    sc->rtk_cdata.rtk_rx_buf, RTK_RXBUFLEN + 16,
+	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
 	    NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -772,7 +772,7 @@ rtk_attach(sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
@@ -862,7 +862,7 @@ rtk_detach(sc)
 		if (sc->snd_dmamap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->snd_dmamap[i]);
 	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_cdata.rtk_rx_buf,
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
@@ -988,7 +988,7 @@ STATIC void rtk_rxeof(sc)
 		max_bytes = limit - cur_rx;
 
 	while((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_EMPTY_RXBUF) == 0) {
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf + cur_rx;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
 		    RTK_RXSTAT_LEN, BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(u_int32_t *)rxbufpos);
@@ -1052,7 +1052,7 @@ STATIC void rtk_rxeof(sc)
 		 * of the Rx area, if necessary.
 		 */
 		cur_rx = (cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN;
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf + cur_rx;
+		rxbufpos = sc->rtk_rx_buf + cur_rx;
 
 		/*
 		 * Compute the number of bytes at which the packet
@@ -1108,7 +1108,7 @@ STATIC void rtk_rxeof(sc)
 			bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
 			    cur_rx, wrap, BUS_DMASYNC_PREREAD);
 			cur_rx = 0;
-			rxbufpos = sc->rtk_cdata.rtk_rx_buf;
+			rxbufpos = sc->rtk_rx_buf;
 			total_len -= wrap;
 			dst += wrap;
 		}
