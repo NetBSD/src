@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.21 1995/11/30 00:59:57 jtc Exp $	*/
+/*	$NetBSD: ncr.c,v 1.22 1995/12/24 02:32:24 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1256,7 +1256,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.21 1995/11/30 00:59:57 jtc Exp $\n";
+	"\n$Id: ncr.c,v 1.22 1995/12/24 02:32:24 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3262,7 +3262,7 @@ ncr_attach(parent, self, aux)
 	if (retval)
 		return;
 
-	np->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_BIO, ncr_intr, np);
+	np->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ncr_intr, np);
 	if (np->sc_ih == NULL)
 		return;
 

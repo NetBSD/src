@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.18 1995/06/26 04:08:04 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.19 1995/12/24 02:31:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -139,8 +139,8 @@ astattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    astintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, astintr,
+	    sc);
 }
 
 int

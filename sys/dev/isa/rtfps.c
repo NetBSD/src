@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.13 1995/06/26 04:12:01 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.14 1995/12/24 02:31:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -147,8 +147,7 @@ rtfpsattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    rtfpsintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, rtfpsintr,	    sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.85 1995/07/25 05:11:11 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.86 1995/12/24 02:31:21 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1092,8 +1092,8 @@ edattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    edintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, edintr,
+	    sc);
 }
 
 /*
@@ -1105,7 +1105,7 @@ edreset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	edstop(sc);
 	edinit(sc);
 	splx(s);
@@ -1329,7 +1329,7 @@ ed_xmit(sc)
 /*
  * Start output on interface.
  * We make two assumptions here:
- *  1) that the current priority is set to splimp _before_ this code
+ *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
  *  2) that the IFF_OACTIVE flag is checked before this code is called
@@ -1766,7 +1766,7 @@ edioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

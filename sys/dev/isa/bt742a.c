@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.49 1995/10/03 20:58:58 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.50 1995/12/24 02:31:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -612,8 +612,8 @@ btattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&bt->sc_id, &bt->sc_dev);
 #endif
-	bt->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    btintr, bt);
+	bt->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, btintr,
+	    bt);
 
 	/*
 	 * ask the adapter what subunits are present

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.142 1995/08/05 23:50:23 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.143 1995/12/24 02:31:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -249,8 +249,8 @@ wdcattach(parent, self, aux)
 
 	printf("\n");
 
-	wdc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    wdcintr, wdc);
+	wdc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wdcintr,
+	    wdc);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);

@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.10 1995/12/23 06:22:46 tls Exp $       */
+/*    $NetBSD: if_de.c,v 1.11 1995/12/24 02:32:13 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -1919,7 +1919,7 @@ tulip_ioctl(
     struct ifreq *ifr = (struct ifreq *) data;
     int s, error = 0;
 
-    s = splimp();
+    s = splnet();
 
     switch (cmd) {
 	case SIOCSIFADDR: {
@@ -2569,7 +2569,7 @@ tulip_pci_attach(
 			   bit longer anyways) */
 #if defined(__NetBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
-	    sc->tulip_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, tulip_intr, sc);
+	    sc->tulip_ih = pci_map_int(pa->pa_tag, IPL_NET, tulip_intr, sc);
 	    if (sc->tulip_ih == NULL) {
 		printf("%s%d: couldn't map interrupt\n",
 		       sc->tulip_name, sc->tulip_unit);

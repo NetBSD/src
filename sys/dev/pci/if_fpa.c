@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.2 1995/08/19 04:35:25 cgd Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.3 1995/12/24 02:32:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -389,7 +389,7 @@ pdq_pci_attach(
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
     pdq_ifattach(sc, pdq_pci_ifinit, pdq_pci_ifwatchdog);
 
-    sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, pdq_pci_ifintr, sc);
+    sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc);
     if (sc->sc_ih == NULL) {
 	printf("fpa%d: error: couldn't map interrupt\n",  sc->sc_if.if_unit);
 	return;

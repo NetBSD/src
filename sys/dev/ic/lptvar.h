@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.30 1995/04/17 12:09:17 cgd Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.31 1995/12/24 02:31:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -238,8 +238,8 @@ lptattach(parent, self, aux)
 	outb(iobase + lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-		    ISA_IPL_NONE, lptintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
+		    lptintr, sc);
 }
 
 /*

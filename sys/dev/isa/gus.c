@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.3 1995/11/10 04:30:44 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.4 1995/12/24 02:31:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ken Hornstein.  All rights reserved.
@@ -911,10 +911,10 @@ gusattach(parent, self, aux)
 	 */
 
 	/* XXX we shouldn't have to use splgus == splclock, nor should
-	 * we use ISA_IPL_CLOCK.
+	 * we use IPL_CLOCK.
 	 */
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
-				       gusintr, sc /* sc->sc_gusdsp */);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, gusintr,
+	    sc /* sc->sc_gusdsp */);
 
 	/*
 	 * Set some default values

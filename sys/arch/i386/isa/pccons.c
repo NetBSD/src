@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.90 1995/10/11 04:20:33 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.91 1995/12/24 02:30:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -470,8 +470,8 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    pcintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
+	    sc);
 }
 
 int
