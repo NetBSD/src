@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.10 1997/10/22 00:55:33 fvdl Exp $	*/
+/*	$NetBSD: unvis.c,v 1.11 1997/10/22 06:37:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.10 1997/10/22 00:55:33 fvdl Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.11 1997/10/22 06:37:53 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: unvis.c,v 1.10 1997/10/22 00:55:33 fvdl Exp $");
 #ifdef __weak_alias
 __weak_alias(strunvis,_strunvis);
 __weak_alias(unvis,_unvis);
+#error "XXX THIS IS NOT CORRECT!"
 __weak_alias(__unvis13,___unvis13);
 #endif
 
