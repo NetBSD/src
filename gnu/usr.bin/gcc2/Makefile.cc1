@@ -1,4 +1,4 @@
-#	$Id: Makefile.cc1,v 1.5 1993/12/20 22:46:09 davidb Exp $
+#	$Id: Makefile.cc1,v 1.6 1993/12/28 11:11:23 davidb Exp $
 
 NOMAN=
 
@@ -8,15 +8,10 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common \
 	-I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE_ARCH}
 YFLAGS=
 
-.if exists(${.CURDIR}/../common/obj.${MACHINE})
-LDADD+=	${.CURDIR}/../common/obj.${MACHINE}/libcc1.a
-.elif exists(${.CURDIR}/../common/obj)
-LDADD+=	${.CURDIR}/../common/obj/libcc1.a
-.else
-LDADD+=	${.CURDIR}/../common/libcc1.a
-.endif
+LIBCC1!= cd $(.CURDIR)/../common; \
+	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | make -r -s -f - xxx
 
-LDADD+=	-lgnumalloc
+LDADD+=${LIBCC1} -lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
 
 .include <bsd.prog.mk>

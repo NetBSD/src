@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.14 1993/12/20 13:35:26 cgd Exp $
+#	$Id: Makefile,v 1.15 1993/12/28 11:02:55 davidb Exp $
 
 .include "config/Makefile.$(MACHINE_ARCH)"
 
@@ -13,11 +13,7 @@ gas_target=$(MACHINE_ARCH)
 gas_objformat=aout
 .endif
 
-.if exists(${.CURDIR}/obj.${MACHINE})
-ADDINCLUDE=-I${.CURDIR}/obj.${MACHINE}
-.elif exists(${.CURDIR}/obj)
-ADDINCLUDE=-I${.CURDIR}/obj
-.endif
+ADDINCLUDE=-I${.OBJDIR}
 
 PROG=		as
 SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
