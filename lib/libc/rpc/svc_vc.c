@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.4.2.1 2000/08/05 17:48:56 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.4.2.1 2000/08/05 17:48:56 fvdl Exp $");
 #endif
 #endif
 
@@ -252,6 +252,8 @@ makefd_xprt(fd, sendsize, recvsize)
 {
 	SVCXPRT *xprt;
 	struct cf_conn *cd;
+	const char *netid;
+	struct __rpc_sockinfo si;
  
 	_DIAGASSERT(fd != -1);
 
@@ -263,7 +265,7 @@ makefd_xprt(fd, sendsize, recvsize)
 	memset(xprt, 0, sizeof *xprt);
 	cd = (struct cf_conn *)mem_alloc(sizeof(struct cf_conn));
 	if (cd == (struct cf_conn *)NULL) {
-		warnx("svc_tcp: makefd_xprt: out of memory");
+		warnx("svc_vc: makefd_xprt: out of memory");
 		mem_free(xprt, sizeof(SVCXPRT));
 		xprt = (SVCXPRT *)NULL;
 		goto done;
@@ -276,6 +278,9 @@ makefd_xprt(fd, sendsize, recvsize)
 	svc_vc_ops(xprt);  /* truely deals with calls */
 	xprt->xp_port = 0;  /* this is a connection, not a rendezvouser */
 	xprt->xp_fd = fd;
+        if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
+		xprt->xp_netid = strdup(netid);
+
 	xprt_register(xprt);
 done:
 	return (xprt);
