@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.3 2001/09/13 16:14:16 drochner Exp $	*/
+/*	$NetBSD: agp.c,v 1.4 2001/09/14 12:09:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -438,11 +438,15 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		if (segs == NULL)
 			return NULL;
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
-		    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK) != 0)
+				     segs, nseg, &mem->am_nseg,
+				     BUS_DMA_WAITOK) != 0) {
+			free(segs, M_AGP);
 			continue;
+		}
 		if (bus_dmamem_map(sc->as_dmat, segs, mem->am_nseg,
 		    mem->am_size, &mem->am_virtual, BUS_DMA_WAITOK) != 0) {
 			bus_dmamem_free(sc->as_dmat, segs, mem->am_nseg);
+			free(segs, M_AGP);
 			continue;
 		}
 		if (bus_dmamap_load(sc->as_dmat, mem->am_dmamap,
@@ -450,6 +454,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 			bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,	
 			    mem->am_size);
 			bus_dmamem_free(sc->as_dmat, segs, mem->am_nseg);
+			free(segs, M_AGP);
 			continue;
 		}
 		mem->am_dmaseg = segs;
@@ -490,6 +495,12 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 				for (k = 0; k < done + j; k += AGP_PAGE_SIZE)
 					AGP_UNBIND_PAGE(sc, offset + k);
 
+				bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
+				bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,
+						 mem->am_size);
+				bus_dmamem_free(sc->as_dmat, mem->am_dmaseg,
+						mem->am_nseg);
+				free(mem->am_dmaseg, M_AGP);
 				lockmgr(&sc->as_lock, LK_RELEASE, 0);
 				return error;
 			}
@@ -580,10 +591,12 @@ agp_release_helper(struct agp_softc *sc, enum agp_acquire_state state)
 	/*
 	 * Clear out the aperture and free any outstanding memory blocks.
 	 */
-	while ((mem = TAILQ_FIRST(&sc->as_memory)) != 0) {
-		if (mem->am_is_bound)
+	TAILQ_FOREACH(mem, &sc->as_memory, am_link) {
+		if (mem->am_is_bound) {
+			printf("agp_release_helper: mem %d is bound\n",
+			       mem->am_id);
 			AGP_UNBIND_MEMORY(sc, mem);
-		AGP_FREE_MEMORY(sc, mem);
+		}
 	}
 
 	sc->as_state = AGP_ACQUIRE_FREE;
