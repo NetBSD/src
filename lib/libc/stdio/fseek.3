@@ -138,7 +138,11 @@ return 0,
 and
 .Fn ftell
 returns the current offset.
-Otherwise, a nonzero value is returned and the global variable errno is 
+Otherwise, 
+.Fn fseek
+returns \-1 and 
+the others
+return a nonzero value and the global variable errno is 
 set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
