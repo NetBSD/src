@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.77 1999/11/28 20:04:22 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.78 2000/01/17 00:01:01 bouyer Exp $ */
 
 
 /*
@@ -303,6 +303,12 @@ wdcattach(chp)
 	for (i = 0; i < 2; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
+		/*
+		 * Init error counter so that an error withing the first xfers
+		 * will trigger a downgrade
+		 */
+		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
+
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((chp->wdc->cap &
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
@@ -312,6 +318,7 @@ wdcattach(chp)
 			continue;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
+		ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
@@ -1116,10 +1123,12 @@ wdc_downgrade_mode(drvp)
 	/*
 	 * If we were using Ultra-DMA mode > 2, downgrade to mode 2 first.
 	 * Maybe we didn't properly notice the cable type
+	 * If we were using Ultra-DMA mode 2, downgrade to mode 1 first.
+	 * It helps in some cases.
 	 */
-	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode > 2) {
-		drvp->UDMA_mode = 2;
-		printf("%s: transfer error, downgrading to DMA mode %d\n",
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
+		drvp->UDMA_mode = (drvp->UDMA_mode == 2) ? 1 : 2;
+		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drv_dev->dv_xname, drvp->UDMA_mode);
 	}
 
@@ -1129,7 +1138,6 @@ wdc_downgrade_mode(drvp)
 	 * in ultra-DMA lead to silent data corruption in multiword DMA.
 	 * Data corruption is less likely to occur in PIO mode.
 	 */
-
 	else if ((drvp->drive_flags & DRIVE_UDMA) &&
 	    (drvp->drive_flags & DRIVE_DMAERR) == 0) {
 		drvp->drive_flags &= ~DRIVE_UDMA;

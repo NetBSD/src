@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.14 1999/10/20 15:22:25 enami Exp $	*/
+/*	$NetBSD: atavar.h,v 1.15 2000/01/17 00:01:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -68,10 +68,12 @@ struct ata_drive_datas {
      */
     u_int8_t state;
 
-    /* Number of DMA errors. Reset to 0 after every successful transfers. */
+    /* numbers of xfers and DMA errs. Used by ata_dmaerr() */
     u_int8_t n_dmaerrs;
-    /* downgrade mode after this many successive errors */
-#define NERRS_MAX 2
+    u_int32_t n_xfers;
+    /* Downgrade after NERRS_MAX errors in at most NXFER xfers */
+#define NERRS_MAX 4
+#define NXFER 4000
 
     struct device *drv_softc; /* ATA drives softc, if any */
     void* chnl_softc; /* channel softc */
@@ -164,4 +166,5 @@ int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
+void ata_dmaerr __P((struct ata_drive_datas *));
 void ata_perror __P((struct ata_drive_datas *, int, char *));
