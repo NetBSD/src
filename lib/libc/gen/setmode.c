@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.10 1995/02/27 05:50:40 cgd Exp $	*/
+/*	$NetBSD: setmode.c,v 1.11 1995/03/04 01:55:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: setmode.c,v 1.11 1995/03/04 01:55:58 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

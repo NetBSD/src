@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostname.c,v 1.2 1995/02/27 05:50:21 cgd Exp $	*/
+/*	$NetBSD: sethostname.c,v 1.3 1995/03/04 01:55:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: sethostname.c,v 1.3 1995/03/04 01:55:53 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
