@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.52 2000/01/18 13:58:07 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.53 2000/03/06 18:02:26 bouyer Exp $	*/
 
 
 /*
@@ -109,6 +109,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
+#include <dev/pci/pciide_amd_reg.h>
 #include <dev/pci/pciide_apollo_reg.h>
 #include <dev/pci/pciide_cmd_reg.h>
 #include <dev/pci/pciide_cy693_reg.h>
@@ -156,6 +157,9 @@ void piix3_4_setup_channel __P((struct channel_softc*));
 static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
+
+void amd756_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void amd756_setup_channel __P((struct channel_softc*));
 
 void apollo_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void apollo_setup_channel __P((struct channel_softc*));
@@ -237,6 +241,18 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  "Intel 82801AB IDE Controller (ICH0)",
 	  piix_chip_map,
+	},
+	{ 0,
+	  0,
+	  NULL,
+	}
+};
+
+const struct pciide_product_desc pciide_amd_products[] =  {
+	{ PCI_PRODUCT_AMD_PBC756_IDE,
+	  0,
+	  "Advanced Micro Devices AMD756 IDE Controller",
+	  amd756_chip_map
 	},
 	{ 0,
 	  0,
@@ -349,6 +365,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_SIS, pciide_sis_products },
 	{ PCI_VENDOR_ALI, pciide_acer_products },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products },
+	{ PCI_VENDOR_AMD, pciide_amd_products },
 	{ 0, NULL }
 };
 
@@ -1601,6 +1618,142 @@ piix_setup_sidetim_timings(mode, dma, channel)
 	else 
 		return PIIX_SIDETIM_ISP_SET(piix_isp_pio[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
+}
+
+void
+amd756_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
+				    sc->sc_tag, PCI_CLASS_REG));
+	int channel;
+	pcireg_t chanenable;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+	printf("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+	pciide_mapreg_dma(sc, pa);
+	printf("\n");
+	if (sc->sc_dma_ok)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 4;
+	sc->sc_wdcdev.set_modes = amd756_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN);
+
+	WDCDEBUG_PRINT(("amd756_chip_map: Channel enable=0x%x\n", chanenable),
+	    DEBUG_PROBE);
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+
+		if ((chanenable & AMD756_CHAN_EN(channel)) == 0) {
+			printf("%s: %s channel ignored (disabled)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			continue;
+		}
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+
+		if (pciiide_chan_candisable(cp))
+			chanenable &= ~AMD756_CHAN_EN(channel);
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+
+		amd756_setup_channel(&cp->wdc_channel);
+	}
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN,
+	    chanenable);
+	return;
+}
+
+void
+amd756_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	u_int32_t udmatim_reg, datatim_reg;
+	u_int8_t idedma_ctl;
+	int mode, drive;
+	struct ata_drive_datas *drvp;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	idedma_ctl = 0;
+	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
+	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_UDMA);
+	datatim_reg &= ~AMD756_DATATIM_MASK(chp->channel);
+	udmatim_reg &= ~AMD756_UDMA_MASK(chp->channel);
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		/* add timing values, setup DMA if needed */
+		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) == 0)) {
+			mode = drvp->PIO_mode;
+			goto pio;
+		}
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		    (drvp->drive_flags & DRIVE_UDMA)) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			udmatim_reg |= AMD756_UDMA_EN(chp->channel, drive) |
+			    AMD756_UDMA_EN_MTH(chp->channel, drive) |
+			    AMD756_UDMA_TIME(chp->channel, drive,
+				amd756_udma_tim[drvp->UDMA_mode]);
+			/* can use PIO timings, MW DMA unused */
+			mode = drvp->PIO_mode;
+		} else {
+			/* use Multiword DMA */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+			/* mode = min(pio, dma+2) */
+			if (drvp->PIO_mode <= (drvp->DMA_mode +2))
+				mode = drvp->PIO_mode;
+			else
+				mode = drvp->DMA_mode + 2;
+		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+pio:		/* setup PIO mode */
+		if (mode <= 2) {
+			drvp->DMA_mode = 0;
+			drvp->PIO_mode = 0;
+			mode = 0;
+		} else {
+			drvp->PIO_mode = mode;
+			drvp->DMA_mode = mode - 2;
+		}
+		datatim_reg |=
+		    AMD756_DATATIM_PULSE(chp->channel, drive,
+			amd756_pio_set[mode]) |
+		    AMD756_DATATIM_RECOV(chp->channel, drive,
+			amd756_pio_rec[mode]);
+	}
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
+	}
+	pciide_print_modes(cp);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_DATATIM, datatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_UDMA, udmatim_reg);
 }
 
 void
