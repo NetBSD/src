@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.35 2003/09/26 17:44:51 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.36 2003/10/09 00:42:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.35 2003/09/26 17:44:51 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.36 2003/10/09 00:42:28 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1845,16 +1845,24 @@ rl_add_defun(const char *name, Function *fun, int c)
 void
 rl_callback_read_char()
 {
-	int count = 0;
+	int count = 0, done = 0;
 	const char *buf = el_gets(e, &count);
 	char *wbuf;
 
 	if (buf == NULL || count-- <= 0)
 		return;
-	if ((buf[count] == '\n' || buf[count] == '\r') && rl_linefunc != NULL) {
+	if (count == 0 && buf[0] == CTRL('d'))
+		done = 1;
+	if (buf[count] == '\n' || buf[count] == '\r')
+		done = 2;
+
+	if (done && rl_linefunc != NULL) {
 		el_set(e, EL_UNBUFFERED, 0);
-		if ((wbuf = strdup(buf)) != NULL)
-		    wbuf[count] = '\0';
+		if (done == 2) {
+		    if ((wbuf = strdup(buf)) != NULL)
+			wbuf[count] = '\0';
+		} else
+			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
 	}
 }
