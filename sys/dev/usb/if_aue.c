@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.39 2000/04/23 19:03:45 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -182,6 +182,7 @@ Static struct aue_type aue_devs[] = {
 	{ USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_USB100 },
 	{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUATX },
 	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB100TX },
+	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10TA },
 	{ USB_VENDOR_ADMTEK, USB_PRODUCT_ADMTEK_PEGASUS },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX_PNA },
@@ -584,7 +585,8 @@ aue_miibus_statchg(dev)
 	 * register of the Broadcom PHY.
 	 */
 	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
+	     (sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX ||
+	      sc->aue_product == USB_PRODUCT_LINKSYS_USB10TA)) ||
 	    (sc->aue_vendor == USB_VENDOR_DLINK &&
 	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
 		u_int16_t               auxmode;
@@ -706,7 +708,8 @@ aue_reset(sc)
   
 	/* Grrr. LinkSys has to be different from everyone else. */
 	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
-	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
+	     (sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX ||
+	      sc->aue_product == USB_PRODUCT_LINKSYS_USB10TA)) ||
 	    (sc->aue_vendor == USB_VENDOR_DLINK &&
 	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
 		aue_csr_write_1(sc, AUE_GPIO0, 
@@ -1596,7 +1599,7 @@ aue_openpipes(sc)
 		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
 		return (EIO);
 	}
-	usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
+	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
