@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.21 2000/12/19 22:20:48 cgd Exp $	*/
+/*	$NetBSD: strptime.c,v 1.22 2000/12/20 20:56:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.21 2000/12/19 22:20:48 cgd Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.22 2000/12/20 20:56:34 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -76,7 +76,7 @@ strptime(buf, fmt, tm)
 	size_t len = 0;
 	int alt_format, i, split_year = 0;
 
-	bp = buf;
+	bp = (const u_char *)buf;
 
 	while ((c = *fmt) != '\0') {
 		/* Clear `alternate' modifier prior to new conversion. */
@@ -121,43 +121,50 @@ literal:
 		 */
 		case 'c':	/* Date and time, using the locale's format. */
 			LEGAL_ALT(ALT_E);
-			if (!(bp = strptime(bp, _ctloc(d_t_fmt), tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    _ctloc(d_t_fmt), tm)))
 				return (0);
 			break;
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%m/%d/%y", tm)))
+			if (!(bp = (const u_char *) strptime((const char *)bp,
+			    "%m/%d/%y", tm)))
 				return (0);
 			break;
 
 		case 'R':	/* The time as "%H:%M". */
 			LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%H:%M", tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    "%H:%M", tm)))
 				return (0);
 			break;
 
 		case 'r':	/* The time in 12-hour clock representation. */
 			LEGAL_ALT(0);
-			if (!(bp = strptime(bp, _ctloc(t_fmt_ampm), tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    _ctloc(t_fmt_ampm), tm)))
 				return (0);
 			break;
 
 		case 'T':	/* The time as "%H:%M:%S". */
 			LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%H:%M:%S", tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    "%H:%M:%S", tm)))
 				return (0);
 			break;
 
 		case 'X':	/* The time, using the locale's format. */
 			LEGAL_ALT(ALT_E);
-			if (!(bp = strptime(bp, _ctloc(t_fmt), tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    _ctloc(t_fmt), tm)))
 				return (0);
 			break;
 
 		case 'x':	/* The date, using the locale's format. */
 			LEGAL_ALT(ALT_E);
-			if (!(bp = strptime(bp, _ctloc(d_fmt), tm)))
+			if (!(bp = (const u_char *)strptime((const char *)bp,
+			    _ctloc(d_fmt), tm)))
 				return (0);
 			break;
 
@@ -170,12 +177,14 @@ literal:
 			for (i = 0; i < 7; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(day[i]));
-				if (strncasecmp(_ctloc(day[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(day[i]),
+				    (const char *)bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abday[i]));
-				if (strncasecmp(_ctloc(abday[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abday[i]),
+				    (const char *)bp, len) == 0)
 					break;
 			}
 
@@ -194,12 +203,14 @@ literal:
 			for (i = 0; i < 12; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(mon[i]));
-				if (strncasecmp(_ctloc(mon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(mon[i]),
+				    (const char *)bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abmon[i]));
-				if (strncasecmp(_ctloc(abmon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abmon[i]),
+				    (const char *)bp, len) == 0)
 					break;
 			}
 
@@ -274,7 +285,8 @@ literal:
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			LEGAL_ALT(0);
 			/* AM? */
-			if (strcasecmp(_ctloc(am_pm[0]), bp) == 0) {
+			if (strcasecmp(_ctloc(am_pm[0]),
+			    (const char *)bp) == 0) {
 				if (tm->tm_hour > 11)
 					return (0);
 
@@ -282,7 +294,8 @@ literal:
 				break;
 			}
 			/* PM? */
-			else if (strcasecmp(_ctloc(am_pm[1]), bp) == 0) {
+			else if (strcasecmp(_ctloc(am_pm[1]),
+			    (const char *)bp) == 0) {
 				if (tm->tm_hour > 11)
 					return (0);
 
