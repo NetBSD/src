@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.59 2001/02/18 10:44:22 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.60 2001/05/16 05:36:55 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -351,7 +351,7 @@ SCBENTRY(hardclock)
 	pushr	$0x3f
 	incl	_C_LABEL(clock_intrcnt)+EV_COUNT	# count the number of clock interrupts
 	adwc	$0,_C_LABEL(clock_intrcnt)+EV_COUNT+4
-#if VAX46
+#if VAX46 || VAXANY
 	cmpl	_C_LABEL(vax_boardtype),$VAX_BTYP_46
 	bneq	1f
 	movl	_C_LABEL(ka46_cpu),r0

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 2001/03/26 12:33:26 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.54 2001/05/16 05:36:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -68,7 +68,7 @@ bdev_decl(ts);
 #include "mu.h"
 bdev_decl(mu);
 
-#if VAX750
+#if VAX750 || VAXANY
 #define NCTU	1
 #else
 #define NCTU	0
@@ -181,16 +181,16 @@ cons_decl(smg);
 
 struct	consdev constab[]={
 #if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
-	VAX670 || VAX680 || VAX8800
+	VAX670 || VAX680 || VAX8800 || VAXANY
 #define NGEN	1
 	cons_init(gen), /* Generic console type; mtpr/mfpr */
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
 #endif
-#if VAX650 || VAX630
+#if VAX650 || VAX630 || VAXANY
 #if NQV
 	cons_init(qv),	/* QVSS/QDSS bit-mapped console driver */
 #endif
@@ -291,7 +291,7 @@ cdev_decl(dmf);
 #include "np.h"
 cdev_decl(np);
 
-#if VAX8600
+#if VAX8600 || VAXANY
 #define NCRL 1
 #else
 #define NCRL 0
@@ -300,7 +300,7 @@ cdev_decl(np);
 #define crlwrite crlrw
 cdev_decl(crl);
 
-#if VAX8200
+#if VAX8200 || VAXANY
 #define NCRX 1
 #else
 #define NCRX 0
@@ -309,7 +309,7 @@ cdev_decl(crl);
 #define crxwrite crxrw
 cdev_decl(crx);
 
-#if VAX780
+#if VAX780 || VAXANY
 #define NCFL 1
 #else
 #define NCFL 0

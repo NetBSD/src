@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.31 2001/02/04 20:36:34 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.32 2001/05/16 05:36:56 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -120,7 +120,7 @@ vsbus_match(parent, cf, aux)
 	struct cfdata	*cf;
 	void	*aux;
 {
-#if VAX53
+#if VAX53 || VAXANY
 	/* Kludge: VAX53 is... special */
 	if (vax_boardtype == VAX_BTYP_53 && (int)aux == 1)
 		return 1; /* Hack */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2001/02/04 20:36:31 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.40 2001/05/16 05:36:55 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -64,7 +64,7 @@ microtime(tvp)
 	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
 
 	switch (vax_boardtype) {
-#if VAX46
+#if VAX46 || VAXANY
 	case VAX_BTYP_46: {
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
@@ -72,7 +72,7 @@ microtime(tvp)
 		break;
 		}
 #endif
-#if VAX48
+#if VAX48 || VAXANY
 	case VAX_BTYP_48: {
 		/*
 		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
@@ -216,7 +216,7 @@ numtoyear(num)
 }
 
 #if VAX750 || VAX780 || VAX8600 || VAX650 || \
-    VAX660 || VAX670 || VAX680 || VAX53
+    VAX660 || VAX670 || VAX680 || VAX53 || VAXANY
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument
@@ -256,7 +256,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46 || VAX48 || VAX49
+#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46 || VAX48 || VAX49 || VAXANY
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */

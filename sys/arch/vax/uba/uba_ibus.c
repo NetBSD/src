@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_ibus.c,v 1.3 2001/05/13 15:24:18 ragge Exp $	   */
+/*	$NetBSD: uba_ibus.c,v 1.4 2001/05/16 05:36:54 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -114,7 +114,7 @@ qba_attach(parent, self, aux)
 	sc->uv_size = QBASIZE;	/* Size in bytes of Qbus space */
 	sc->uv_addr = QBAMAP;	/* Physical address of map registers */
 
-#if defined(VAX610)
+#if VAX610 || VAXANY
 	if (vax_boardtype == VAX_BTYP_610) {
 		sc->uv_sc.uh_dmat = &vax_bus_dma_tag;
 		sc->uv_sc.uh_beforescan = NULL;

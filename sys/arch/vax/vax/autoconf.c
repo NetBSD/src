@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 2001/04/25 17:53:25 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70 2001/05/16 05:36:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -151,7 +151,7 @@ mainbus_attach(parent, self, hej)
 	 */
 	config_found(self, NULL, mainbus_print);
 
-#if VAX53
+#if VAX53 || VAXANY
 	/* Kludge: To have two master buses */
 	if (vax_boardtype == VAX_BTYP_53)
 		config_found(self, (void *)1, mainbus_print);

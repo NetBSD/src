@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70 2001/04/24 04:31:15 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.71 2001/05/16 05:36:56 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -300,7 +300,7 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
@@ -340,7 +340,7 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49 || VAX53
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t addr, off;
 
 	if (vax_boardtype != VAX_BTYP_46

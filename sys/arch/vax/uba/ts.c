@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.17 2000/06/04 06:16:56 matt Exp $ */
+/*	$NetBSD: ts.c,v 1.18 2001/05/16 05:36:54 matt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -489,7 +489,7 @@ tsstart (sc, bp)
 			goto do_cmd;
 			return (-1);	/* ??? */
 		}
-#if VAX750
+#if VAX750 || VAXANY
 		if (vax_cputype == VAX_750)
 			itmp = i & 0xfffffff;		/* mask off bdp */
 		else
@@ -920,7 +920,7 @@ tsintr(ctlr)
 				ubarelse((struct uba_softc *)
 				    sc->sc_dev.dv_parent,
 				    (int *)&bp->b_ubinfo);
-#if VAX750
+#if VAX750 || VAXANY
 				if (vax_cputype == VAX_750 &&
 				    sc->sc_unit.uu_ubinfo != 0)
 					ubarelse((struct uba_softc *)
