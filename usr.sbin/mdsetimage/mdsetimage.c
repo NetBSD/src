@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.5 1997/09/30 06:20:18 scottr Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.6 1997/10/17 10:28:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,13 +30,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1996 Christopher G. Demetriou.\
+  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: mdsetimage.c,v 1.5 1997/09/30 06:20:18 scottr Exp $";
+__RCSID("$NetBSD: mdsetimage.c,v 1.6 1997/10/17 10:28:44 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +50,7 @@ static char *rcsid = "$NetBSD: mdsetimage.c,v 1.5 1997/09/30 06:20:18 scottr Exp
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "extern.h"
