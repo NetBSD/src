@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.36 1996/07/24 16:13:04 abrown Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.37 1996/11/15 23:51:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -1347,7 +1347,7 @@ void db_show_callout(addr, haddr, count, modif)
 	db_expr_t	offset;
 	char		*name;
 
-        db_printf("      cum     ticks      arg  func\n");
+	db_printf("      cum     ticks      arg  func\n");
 	s = splhigh();
 	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
 		register int t = p1->c_time;
@@ -1359,7 +1359,7 @@ void db_show_callout(addr, haddr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-                db_printf("%9d %9d %p  %s (%p)\n",
+		db_printf("%9d %9d %p  %s (%p)\n",
 			  cum, t, p1->c_arg, name, p1->c_func);
 	}
 	splx(s);
