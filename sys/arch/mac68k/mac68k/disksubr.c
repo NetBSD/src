@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.3 1993/12/15 03:27:53 briggs Exp $
+ *	$Id: disksubr.c,v 1.4 1994/01/21 00:20:57 briggs Exp $
  */
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -88,9 +88,9 @@ static char *mstr2upper(char *str);
  * Returns null on success and an error string on failure.
  */
 char *
-cpu_readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -271,7 +271,7 @@ netbsd puts the whole disk in d, go figure
  * Check new disk label for sensibility
  * before setting it.
  */
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -321,9 +321,9 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
  *  MF - 8-14-93 This function is never called.  It is here just in case
  *  we want to write dos disklabels some day. Really!
  */
-cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
