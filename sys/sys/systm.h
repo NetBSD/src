@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.76 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: systm.h,v 1.77 1998/06/14 20:18:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -275,8 +275,10 @@ void	domountroothook __P((void));
 
 int	uiomove __P((void *, int, struct uio *));
 
+#ifdef _KERNEL
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
+#endif
 
 void	consinit __P((void));
 
