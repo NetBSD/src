@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.191 2000/01/12 09:11:42 haya Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.192 2000/01/23 09:55:40 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.184 2000/01/12 09:08:36 haya Exp 
+ *	NetBSD: pcidevs,v 1.185 2000/01/23 09:54:28 tsubai Exp 
  */
 
 /*
@@ -685,6 +685,12 @@
 #define	PCI_PRODUCT_APPLE_BANDIT2	0x0008		/* Bandit Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* MAC-IO I/O Controller (Heathrow) */
 #define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* MAC-IO I/O Controller (Paddington) */
+#define	PCI_PRODUCT_APPLE_KEYLARGO_USB	0x0019		/* KeyLargo USB Controller */
+#define	PCI_PRODUCT_APPLE_UNINORTH1	0x001e		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH2	0x001f		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_UNINORTH_AGP	0x0020		/* UniNorth AGP Interface */
+#define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MAC-IO I/O Controller (KeyLargo) */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
