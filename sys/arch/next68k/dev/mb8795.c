@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.19 2000/11/15 01:02:13 thorpej Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.20 2001/01/14 17:33:48 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -452,7 +452,7 @@ mb8795_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	mb8795_init(sc);
 	splx(s);
 }
@@ -581,7 +581,7 @@ mb8795_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 
@@ -703,7 +703,7 @@ mb8795_ioctl(ifp, cmd, data)
  * Setup output on interface.
  * Get another datagram to send off of the interface queue, and map it to the
  * interface before starting the output.
- * Called only at splimp or interrupt level.
+ * Called only at splnet or interrupt level.
  */
 void
 mb8795_start(ifp)
