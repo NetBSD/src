@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2002/03/04 02:25:22 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2002/03/10 07:46:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <sh3/cpu.h>
-#include <sh3/mmu.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
 
@@ -121,16 +120,14 @@
 #include <nfs/nfsmount.h>
 #endif
 
-struct user *proc0paddr;
+/* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-
-paddr_t msgbuf_paddr;
-extern int nkpde;
 extern char cpu_model[];
-extern paddr_t avail_start, avail_end;	// XXX
+struct bootinfo *bootinfo;
 
-/* VM */
+/* Physical memory */
+extern paddr_t avail_start, avail_end;
 static int	mem_cluster_init(paddr_t);
 static void	mem_cluster_load(void);
 static void	__find_dram_shadow(paddr_t, paddr_t);
@@ -139,25 +136,21 @@ static int	__check_dram(paddr_t, paddr_t);
 #endif
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
-int		physmem;
+paddr_t msgbuf_paddr;
 
 void main(void) __attribute__((__noreturn__));
 void machine_startup(int, char *[], struct bootinfo *)
 	__attribute__((__noreturn__));
-struct bootinfo *bootinfo;
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char edata[], end[];
-	vaddr_t proc0_sp;
 	vaddr_t kernend;
-	psize_t sz;
-	pd_entry_t *pagedir;
-	pt_entry_t *pagetab, pte;
+	vsize_t sz;
+	size_t symbolsize;
 	int i;
 	char *p;
-	size_t symbolsize;
 	/* 
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
@@ -248,7 +241,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	if (boothowto & RB_MINIROOT) {
 		size_t fssz;
-		fssz = round_page(mfs_initminiroot((void *)kernend));
+		fssz = sh3_round_page(mfs_initminiroot((void *)kernend));
 #ifdef MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
 #endif
@@ -263,70 +256,31 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #ifdef HPC_DEBUG_LCD
 	dbg_lcd_test();
 #endif
-
 	/* copy boot parameter for kloader */
 	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
 
-	uvm_setpagesize(); /* default page size (4KB) */
-
-	/* find memory cluster (# of pages) */
+	/* 
+	 * Find memory cluster.
+	 */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
-	nkpde = ptoa(physmem) >> (PDSHIFT - 1);
-	_DPRINTF("physmem= %d, nkpde = %d\n", physmem, nkpde);
+	_DPRINTF("total memory = %dMbyte\n", (int)(sh3_ptob(physmem) >> 20));
 
-	/* steal page dir area, process0 stack, page table area */
-	sz = NBPG + USPACE + NBPG * (1 + nkpde);
-	p = (void *)SH3_PHYS_TO_P1SEG(sh3_round_page(mem_clusters[1].start));
+	/*
+	 * Initialize proc0 and enable MMU.
+	 */
+	sz = sh_proc0_init(kernend, mem_clusters[0].start,
+	    mem_clusters[1].start + mem_clusters[1].size - 1);
+	/* adjust heap size */
+	kernend += sz;
 	mem_clusters[1].start += sz;
 	mem_clusters[1].size -= sz;
-	memset(p, 0, sz);
+	_DPRINTF("proc0: steal %ld KB, stack: 0x%08x\n", sz >> 10,
+	    proc0.p_addr->u_pcb.kr15);
 
 	/* 
-	 *                     edata  end
-	 * +-------------+------+-----+----------+-------------+------------+
-	 * | kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
-	 * +-------------+------+-----+----------+-------------+------------+
-	 *                                NBPG       USPACE    (1+nkpde)*NBPG
-	 *                                           (= 4*NBPG)
-	 * Build initial page tables
+	 * Debugger.
 	 */
-	pagedir = (void *)p;
-	pagetab = (void *)(p + SYSMAP);
-	/*
-	 * Construct a page table directory
-	 * In SH3 H/W does not support PTD,
-	 * these structures are used by S/W.
-	 */
-	pte = (pt_entry_t)pagetab;
-	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
-
-	pagedir[(SH3_PHYS_TO_P1SEG(mem_clusters[0].start)) >> PDSHIFT] = pte;
-	/* make pde for
-	   0xd0000000, 0xd0400000, 0xd0800000,0xd0c00000,
-	   0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
-	pte += NBPG;
-	for (i = 0; i < nkpde; i++) {
-		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + i] = pte;
-		pte += NBPG;
-	}
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	pte = (u_int)pagedir;
-	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
-	pagedir[PDSLOT_PTE] = pte;
-
-	/* set PageDirReg */
-	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
-
-	/* enable MMU */
-	sh_mmu_start();
-
-	/* enable exception */
-	splraise(-1);
-	_cpu_exception_resume(0); /* SR.BL = 0 */
-
 #ifdef DDB
-	/* initialize debugger */
 	if (symbolsize) {
 		ddb_init(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);
@@ -344,30 +298,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		}
 	}
 #endif /* KGDB */
-
-	/* setup proc0 stack */
-	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
-	_DPRINTF("proc0 stack: 0x%08lx\n", proc0_sp);
-
-	/* Set proc0paddr */
-	proc0paddr = (void *)(p + NBPG);
-	/* Set pcb->PageDirReg of proc0 */
-	proc0paddr->u_pcb.pageDirReg = (int)pagedir;
-	/* Set page dir address */
-	proc0.p_addr = proc0paddr;
-	/* XXX: PMAP_NEW requires valid curpcb. also init'd in cpu_startup */
-	curpcb = &proc0.p_addr->u_pcb;
-	/* Load physical memory to VM */
+	/*
+	 * Load physical memory to VM 
+	 */
 	mem_cluster_load();
-	/* Call pmap initialization to make new kernel address space */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/* jump to main */
+	/* Jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(proc0_sp));
+		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
 	/* NOTREACHED */
 	while (1)
 		;
@@ -505,7 +447,7 @@ mem_cluster_init(paddr_t addr)
 		_DPRINTF("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
 		    (paddr_t)seg->start, (paddr_t)seg->size,
 		    (paddr_t)seg->start + (paddr_t)seg->size);
-		npages += atop(seg->size);
+		npages += sh3_btop(seg->size);
 #ifdef NARLY_MEMORY_PROBE
 		if (i == 0) {
 			_DPRINTF(" don't check.\n");
@@ -518,8 +460,6 @@ mem_cluster_init(paddr_t addr)
 		_DPRINTF("\n");
 #endif /* NARLY_MEMORY_PROBE */
 	}
-
-	_DPRINTF("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20));
 
 	return (npages);
 }

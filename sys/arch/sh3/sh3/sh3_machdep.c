@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.31 2002/03/06 13:10:23 tsutsui Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.32 2002/03/10 07:46:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,8 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-extern int physmem;
+int physmem;
+struct user *proc0paddr;
 
 #ifndef IOM_RAM_BEGIN
 #error "define IOM_RAM_BEGIN"
@@ -171,6 +172,82 @@ sh_cpu_init(int arch, int product)
 	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
 }
 
+/*
+ * vsize_t sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
+ *
+ *	kernend ... P1 address.
+ *	pstart  ... physical address of RAM start address.
+ *	pend    ... physical address of the last RAM address
+ *
+ *      Returns size of stealed memory.
+ *
+ *	Memory map
+ *	....|  proc0 stack  | Page Dir |    Page Table    |
+ *	    *    USPACE        NBPG     (1+nkpde)*NBPG
+ *       kernend
+ */
+vsize_t
+sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
+{
+	pd_entry_t *pagedir, *pagetab, pte;
+	vsize_t sz;
+	vaddr_t p0;
+	int i;
+
+	/* Set default page size (4KB) */
+	uvm_setpagesize();
+
+	/* # of pdes maps whole physical memory area. */
+	nkpde = sh3_btod(((pend - pstart + 1) + PDOFSET) & ~PDOFSET);
+
+	/* Steal page dir area, process0 stack, page table area */
+	sz = USPACE + NBPG + (1 + nkpde) * NBPG;
+	p0 = round_page(kernend);
+	memset((void *)p0, 0, sz);
+
+	/* Build initial page tables */
+	pagedir = (pt_entry_t *)(p0 + USPACE);
+	pagetab = (pt_entry_t *)(p0 + USPACE + NBPG);
+
+	/* Construct a page table directory */
+	pte = (pt_entry_t)pagetab;
+	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
+	pagedir[(SH3_PHYS_TO_P1SEG(pstart)) >> PDSHIFT] = pte;
+
+	/* Map whole physical memory space from VM_MIN_KERNEL_ADDRESS */
+	pte += NBPG;
+	for (i = 0; i < nkpde; i++, pte += NBPG)
+		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + i] = pte;
+
+	/* Install a PDE recursively mapping page directory as a page table. */
+	pte = (pt_entry_t)pagedir;
+	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
+	pagedir[PDSLOT_PTE] = pte;	/* 0xcfc00000 */
+
+	/* Set page directory base */
+	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
+
+	/* Setup proc0 */
+	proc0paddr = (struct user *)p0;
+	proc0.p_addr = proc0paddr;
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pageDirReg = (pt_entry_t)pagedir;
+	/* kernel stack */
+	curpcb->kr15 = p0 + USPACE - sizeof(struct trapframe);
+	curpcb->r15 = curpcb->kr15;
+	/* trap frame */
+	proc0.p_md.md_regs = (struct trapframe *)curpcb->kr15 - 1;
+
+	/* Enable MMU */
+	sh_mmu_start();
+
+	/* Enable exception */
+	splraise(-1);
+	_cpu_exception_resume(0); /* SR.BL = 0 */
+
+	return (p0 + sz - kernend);
+}
+
 void
 sh3_startup()
 {
@@ -180,7 +257,6 @@ sh3_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	struct pcb *pcb;
 	char pbuf[9];
 
 	printf(version);
@@ -285,11 +361,6 @@ sh3_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->r15 = (int)proc0.p_addr + USPACE - 16;
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->r15 - 1;
 }
 
 /*

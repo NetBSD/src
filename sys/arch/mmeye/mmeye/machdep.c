@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2002/03/08 13:22:14 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2002/03/10 07:46:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,82 +76,46 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_memsize.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/systm.h>
-#include <sys/termios.h>
-
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
-
-#include <dev/cons.h>
-
-#include <uvm/uvm_extern.h>
-
+#include <sys/kernel.h>
+#include <sys/user.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
-
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/mmeye.h>
-
-#include <sh3/bscreg.h>
-#include <sh3/cpgreg.h>
-#include <sh3/mmu.h>
-#include <sh3/cache_sh3.h>
-
+#include <sys/msgbuf.h>
+#include <uvm/uvm_extern.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
+#include <sh3/bscreg.h>
+#include <sh3/cpgreg.h>
+#include <sh3/cache_sh3.h>
+#include <dev/cons.h>
+#include <machine/bus.h>
+#include <machine/mmeye.h>
+
 /* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;		/* cpu "architecture" */
-char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
+char machine[] = MACHINE;		/* mmeye */
+char machine_arch[] = MACHINE_ARCH;	/* sh3eb */
 
-int physmem;
-int dumpmem_low;
-int dumpmem_high;
-vaddr_t atdevbase;	/* location of start of iomem in virtual */
 paddr_t msgbuf_paddr;
-struct user *proc0paddr;
-
-extern int boothowto;
 extern paddr_t avail_start, avail_end;
 
 #define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
-/*
- * Extent maps to manage I/O and ISA memory hole space.  Allocate
- * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
- * will indicate that it's safe to use malloc() to dynamically allocate
- * region descriptors.
- *
- * N.B. At least two regions are _always_ allocated from the iomem
- * extent map; (0 -> ISA hole) and (end of ISA hole -> end of RAM).
- *
- * The extent maps are not static!  Machine-dependent ISA and EISA
- * routines need access to them for bus address space allocation.
- */
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct	extent *iomem_ex;
-
 void initSH3 __P((void *));
-void sh3_cache_on __P((void));
-void InitializeBsc __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
+void consinit __P((void));
+void sh3_cache_on __P((void));
+void InitializeBsc(void);
+
+extern char start[], etext[], edata[], end[];
 
 /*
  * Machine-dependent startup code
@@ -161,18 +125,9 @@ void XLoadAndReset __P((char *));
 void
 cpu_startup()
 {
+
 	sh3_startup();
-
-#ifdef FORCE_RB_SINGLE
-	boothowto |= RB_SINGLE;
-#endif
 }
-
-/*
- * Info for CTL_HW
- */
-
-#define CPUDEBUG
 
 /*
  * machine dependent system variables.
@@ -219,7 +174,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int waittime = -1;
-struct pcb dumppcb;
 
 void
 cpu_reboot(howto, bootstr)
@@ -265,226 +219,63 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-/*
- * Initialize segments and descriptor tables
- */
-#define VBRINIT		((char *)IOM_RAM_BEGIN)
-#define Trap100Vec	(VBRINIT + 0x100)
-#define Trap600Vec	(VBRINIT + 0x600)
-#define TLBVECTOR	(VBRINIT + 0x400)
-#define VADDRSTART	VM_MIN_KERNEL_ADDRESS
-
-extern int nkpde;
-extern char start[], etext[], edata[], end[];
-
 void
-initSH3(pc)
-	void *pc;	/* XXX return address */
+initSH3(void *pc)	/* XXX return address */
 {
-	paddr_t avail;
-	pd_entry_t *pagedir;
-	pt_entry_t *pagetab, pte;
-	u_int sp;
-	int x;
-	char *p;
+	vaddr_t kernend;
+	vsize_t sz;
 
-	/* clear BSS */
-	memset(edata, 0, end - edata);
-
-	avail = sh3_round_page(end);
+	kernend = sh3_round_page(end);
 #ifdef DDB
 	/* XXX Currently symbol table size is not passed to the kernel. */
-	avail += 0x40000;					/* XXX */
+	kernend += 0x40000;					/* XXX */
 #endif
+	/* Clear bss */
+	memset(edata, 0, end - edata);
 
-	/*
-	 * clear .bss, .common area, page dir area,
-	 *	process0 stack, page table area
-	 */
-
-	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * 9;
-	memset((char *)avail, 0, p - (char *)avail);
-
-	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_UNKNOWN);	
-
-/*
- *                          edata  end
- *	+-------------+------+-----+----------+-------------+------------+
- *	| kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
- *	+-------------+------+-----+----------+-------------+------------+
- *                                     NBPG       USPACE        9*NBPG
- *                                                (= 4*NBPG)
- *	Build initial page tables
- */
-	pagedir = (void *)avail;
-	pagetab = (void *)(avail + SYSMAP);
-	nkpde = 8;	/* XXX nkpde = kernel page dir area (32 Mbyte) */
-
-	/*
-	 * Construct a page table directory
-	 * In SH3 H/W does not support PTD,
-	 * these structures are used by S/W.
-	 */
-	pte = (pt_entry_t)pagetab;
-	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
-	pagedir[KERNTEXTOFF >> PDSHIFT] = pte;
-
-	/* make pde for 0xd0000000, 0xd0400000, 0xd0800000,0xd0c00000,
-		0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
-	pte += NBPG;
-	for (x = 0; x < nkpde; x++) {
-		pagedir[(VADDRSTART >> PDSHIFT) + x] = pte;
-		pte += NBPG;
-	}
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	pte = (u_int)pagedir;
-	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
-	pagedir[PDSLOT_PTE] = pte;
-
-	/* set PageDirReg */
-	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
-
-	/*
-	 * Activate MMU
-	 */
-#ifndef ROMIMAGE
-	MMEYE_LED = 1;
+	/* Initilize CPU ops. */
+#if defined(SH7708R)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708R);
+#elif defined(SH7708)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708);
+#else
+#warning "unknown product"
 #endif
-	sh_mmu_start();
+	/* Initialize proc0 and enable MMU. */
+	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
 
-	/*
-	 * Now here is virtual address
-	 */
-#ifndef ROMIMAGE
-	MMEYE_LED = 0;
-#endif
-
-	/* Set proc0paddr */
-	proc0paddr = (void *)(avail + NBPG);
-
-	/* Set pcb->PageDirReg of proc0 */
-	proc0paddr->u_pcb.pageDirReg = (int)pagedir;
+	/* Number of pages of physmem addr space */
+	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
 
 	/* avail_start is first available physical memory address */
-	avail_start = avail + NBPG + USPACE + NBPG + NBPG * nkpde;
+	avail_start = kernend + sz;
+	avail_end = IOM_RAM_END + 1;
 
-	/* atdevbase is first available logical memory address */
-	atdevbase = VADDRSTART;
-
-	/* MMEYE_LED = 0x01; */
-
-	proc0.p_addr = proc0paddr; /* page dir address */
-
-	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
-	curpcb = &proc0.p_addr->u_pcb;
-
-	/*
-	 * Initialize the I/O port and I/O mem extent maps.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, the two
-	 * extents of RAM are allocated from the map (0 -> ISA hole
-	 * and end of ISA hole -> end of RAM).
-	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-
-	/* MMEYE_LED = 0x04; */
-
-	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-
+	consinit();
 #ifdef DDB
 	ddb_init(1, end, end + 0x40000);			/* XXX */
 #endif
 
-	/* MMEYE_LED = 0x00; */
-
-	splraise(-1);
-	_cpu_exception_resume(0);
-
-	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
-
-	printf("initSH3\r\n");
-
-	/*
-	 * Calculate check sum
-	 */
-    {
-	u_short *p, sum;
-	int size;
-
-	size = etext - start;
-	p = (u_short *)start;
-	sum = 0;
-	size >>= 1;
-	while (size--)
-		sum += *p++;
-	printf("Check Sum = 0x%x\r\n", sum);
-    }
-	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
-	 * page rounded just to make sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, IOM_RAM_BEGIN,
-				(IOM_RAM_END-IOM_RAM_BEGIN) + 1,
-				EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE RAM MEMORY FROM IOMEM EXTENT MAP!\n");
-	}
-
-	/* number of pages of physmem addr space */
-	physmem = btoc(IOM_RAM_END - IOM_RAM_BEGIN +1);
-#ifdef	TODO
-	dumpmem = physmem;
-#endif
-
-	/*
-	 * Initialize for pmap_free_pages and pmap_next_page.
-	 * These guys should be page-aligned.
-	 */
-	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("warning: too little memory available; "
-		       "have %d bytes, want %d bytes\n"
-		       "running in degraded mode\n"
-		       "press a key to confirm\n\n",
-		       ctob(physmem), 2*1024*1024);
-		cngetc();
-	}
-
 	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(atdevbase);
+	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-#if 0
-	sh3_cache_on();
-#endif
-
-	/* setup proc0 stack */
-	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
-
 	/*
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
-	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
+	__asm __volatile (
+		"jmp	@%0;"
+		"mov	%1, r15" :: "r"(pc), "r"(proc0.p_addr->u_pcb.kr15));
 }
-
 
 /*
  * consinit:
  * initialize the system console.
- * XXX - shouldn't deal with this initted thing, but then,
- * it shouldn't be called from init386 either.
  */
 void
 consinit()
