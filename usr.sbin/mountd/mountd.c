@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.41 1997/08/28 08:09:54 lukem Exp $	*/
+/*	$NetBSD: mountd.c,v 1.42 1998/02/21 23:32:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.41 1997/08/28 08:09:54 lukem Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.42 1998/02/21 23:32:19 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1940,13 +1940,14 @@ del_mlist(hostp, dirp, saddr)
 				   mlp->ml_host, mlp->ml_dirp,
 			 	   inet_ntoa(sin->sin_addr));
 				ret = -1;
-				continue;
+				goto cont;
 			}
 			fnd = 1;
 			mlp2 = mlp;
 			*mlpp = mlp = mlp->ml_next;
 			free((caddr_t)mlp2);
 		} else {
+cont:
 			mlpp = &mlp->ml_next;
 			mlp = mlp->ml_next;
 		}
