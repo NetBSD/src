@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.5 2003/10/18 15:37:29 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.6 2003/10/19 03:00:55 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -53,7 +53,7 @@ LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 .SUFFIXES:	.cpp
 
 .cpp:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	rm -f ${.TARGET}
 	${_MKCMD}\
@@ -101,7 +101,7 @@ cleanx11man:
 .SUFFIXES:	.man .1 .3 .7
 
 .man.1 .man.3 .man.7:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	rm -f ${.TARGET}
 	${_MKCMD}\
