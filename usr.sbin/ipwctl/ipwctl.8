@@ -1,4 +1,4 @@
-.\" $NetBSD: ipwctl.8,v 1.6 2004/08/27 00:05:04 lukem Exp $
+.\" $NetBSD: ipwctl.8,v 1.7 2004/08/27 06:01:28 lukem Exp $
 .\" Id: ipwctl.8,v 1.1.2.1 2004/08/19 16:24:50 damien Exp
 .\"
 .\" Copyright (c) 2004
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 31, 2004
+.Dd August 27, 2004
 .Os
 .Dt IPWCTL 8
 .Sh NAME
@@ -73,9 +73,10 @@ Display the radio switch state (on or off).
 .El
 .Sh FILES
 The firmware is not shipped with
-.Nx .
-A binary package is available at:
-.Pa http://damien.bergamini.free.fr/ipwfw/NetBSD/ipwfw-1.0.tgz .
+.Nx ;
+install the
+.Pa pkgsrc/sysutils/ipw-firmware
+package.
 The original archive is available from Intel at:
 .Pa http://ipw2100.sourceforge.net/firmware.php?fid=3 .
 .Pp
