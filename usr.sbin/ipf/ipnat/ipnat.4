@@ -1,3 +1,5 @@
+.\"	$NetBSD: ipnat.4,v 1.1.1.2.2.3 1998/07/23 00:57:18 mellon Exp $
+.\"
 .TH IPNAT 4
 .SH NAME
 ipnat \- Network Address Translation kernel interface
@@ -87,10 +89,10 @@ typedef struct  natstat {
         ipnat_t *ns_list;
 } natstat_t;
 .fi
+.SH BUGS
+It would be nice if there were more flexibility when adding and deleting
+filter rules.
 .SH FILES
 /dev/ipnat
 .SH SEE ALSO
 ipf(4), ipnat(5), ipf(8), ipnat(8), ipfstat(8)
-.SH BUGS
-It would be nice if there were more flexibility when adding and deleting
-filter rules.
