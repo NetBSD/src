@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.74 2002/01/04 02:45:33 deberg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.75 2002/01/07 00:21:56 deberg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -186,7 +186,11 @@
 #define	M_SMBTEMP	127	/* Temp netsmb data */
 #define	M_NSMBDEV	128	/* NET/SMB device */
 #define	M_ICONV		129	/* ICONV data */
-#define	M_LAST		130	/* Must be last type + 1 */
+#define	M_SMBNODE	130	/* SMBFS node */
+#define	M_SMBNODENAME	131	/* SMBFS node name */
+#define	M_SMBFSDATA	132	/* SMBFS private data */
+#define	M_SMBFSHASH	133	/* SMBFS hash table */
+#define	M_LAST		134	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -319,7 +323,11 @@
 	"smbtemp",	/* 127 M_SMBTEMP */ \
 	"nsmbdev",	/* 128 M_NSMBDEV */ \
 	"iconv",	/* 129 M_ICONV */ \
-	NULL,		/* 130 */ \
+	"smbnode",	/* 130 M_SMBNODE */ \
+	"smbnodename",	/* 131 M_SMBNODENAME */ \
+	"smbfsdata",	/* 132 M_SMBFSDATA */ \
+	"smbfshash",	/* 133 M_SMBFSHASH */ \
+	NULL,		/* 134 */ \
 }
 
 struct kmemstats {
