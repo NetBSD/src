@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.422 2000/12/11 17:36:03 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.423 2000/12/21 05:11:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -364,12 +364,17 @@ cpu_startup()
 		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
 	if (cpu_feature) {
 		char buf[1024];
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
+
+		if ((cpu_feature & CPUID_MASK1) != 0) {
+			bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
+			    buf, sizeof(buf));
+			printf("cpu0: features %s\n", buf);
+		}
+		if ((cpu_feature & CPUID_MASK2) != 0) {
+			bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+			    buf, sizeof(buf));
+			printf("cpu0: features %s\n", buf);
+		}
 	}
 
 	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {

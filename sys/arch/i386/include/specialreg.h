@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.14 2000/09/20 22:59:44 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15 2000/12/21 05:11:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -117,8 +117,13 @@
 #define CPUID_XMM	0x02000000	/* streaming SIMD extensions */
 /* bits 26->31 also reserved. */
 
-#define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
-#define CPUID_FLAGS2 "\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24B19\25B20\26B21\27B22\30MMX\31FXSR\32XMM\33B26\34B27\35B28\36B29\37B30\40B31"
+#define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
+			    "\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
+#define CPUID_MASK1	0x00001fff
+#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24B19" \
+			    "\25B20\26B21\27B22\30MMX\31FXSR\32XMM\33B26" \
+			    "\34B27\35B28\36B29\37B30\40B31"
+#define CPUID_MASK2	0xffffe000
 
 /*
  * Model-specific registers for the i386 family
