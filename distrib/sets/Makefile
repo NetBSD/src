@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2004/01/29 09:27:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.43 2004/01/30 08:43:15 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -8,10 +8,12 @@ all:
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-SETSENV=	DESTDIR=${DESTDIR:Q} \
+SETSCMD=	cd ${.CURDIR} && \
+		DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 		CKSUM=${TOOL_CKSUM:Q} MAKE=${MAKE:Q} MTREE=${TOOL_MTREE:Q} \
-		MKTEMP=${TOOL_MKTEMP:Q} PAX=${TOOL_PAX:Q} HOST_SH=${HOST_SH:Q}
+		MKTEMP=${TOOL_MKTEMP:Q} PAX=${TOOL_PAX:Q} HOST_SH=${HOST_SH:Q} \
+		${HOST_SH}
 
 .if ${MKX11} != "no"
 MAKEFLIST_FLAGS=	-b
@@ -20,7 +22,7 @@ MAKEFLIST_FLAGS=
 .endif
 
 .if !defined(MAKETARSETS)
-MAKETARSETS!= ${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist -l ${MAKEFLIST_FLAGS}
+MAKETARSETS!= ${SETSCMD} ./makeflist -l ${MAKEFLIST_FLAGS}
 .endif
 
 print_have_gcc3: .PHONY
@@ -49,11 +51,14 @@ print_x11_version: .PHONY
 
 # This target has debugging value only, really.
 makeflist: .PHONY check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist ${MAKEFLIST_FLAGS}
+	${SETSCMD} ./makeflist ${MAKEFLIST_FLAGS}
 
 #
 # SET BUILDING TARGETS
 #
+
+TARDIR=		${RELEASEDIR}/${MACHINE}/binary/sets
+SOURCETARDIR=	${RELEASEDIR}/source/sets
 
 .if ${MKUNPRIVED} == "no"
 METALOG.unpriv=
@@ -61,63 +66,72 @@ METALOG.unpriv=
 METALOG.unpriv=	-M ${METALOG}
 .endif
 
+
 checkflist: .PRECIOUS .PHONY check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist \
+	${SETSCMD} ./checkflist \
 	    ${MAKEFLIST_FLAGS} ${CHECKFLIST_FLAGS} ${METALOG.unpriv}
 
 checkflist-x11: .PHONY check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist -x ${CHECKFLIST_FLAGS}
+	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
+
 
 maketars: .PRECIOUS .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
 		maketarsetup .WAIT ${MAKETARSETS:@.TARS.@do-${.TARS.}@}
 	@true
 
-maketarsetup: .PHONY
+maketarsetup: .EXEC
 .if defined(DESTDIR) && ${DESTDIR} != ""
+	${_MKMSG} "execute  checkflist"
 	${MAKE} checkflist
 .endif
-	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/sets
+	mkdir -p ${TARDIR}
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
-		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; done
-	
+		rm -f ${TARDIR}/$$i ${TARDIR}/$$i.tmp; \
+	done
+
+makesetfiles: .PHONY
+	${_MKMSG_CREATE} "set lists"
+	${SETSCMD} ./maketars -S -d ${DESTDIR:S,^$,/,} ${METALOG.unpriv} \
+	    -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} -t ${TARDIR}
+
 .for tar in ${MAKETARSETS}
 do-${tar}: .PHONY
-	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
-	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar} \
-	|| rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz
+	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${METALOG.unpriv} \
+	    -N ${NETBSDSRCDIR}/etc -t ${TARDIR} ${tar} \
+	|| rm -f ${TARDIR}/${tar}.tgz
 .endfor
 
+
 makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
-	mkdir -p ${RELEASEDIR}/source/sets
-	${SETSENV} ${HOST_SH} ${.CURDIR}/makesrctars \
-	    ${NETBSDSRCDIR} ${RELEASEDIR}/source/sets
+	mkdir -p ${SOURCETARDIR}
+	${SETSCMD} ./makesrctars ${NETBSDSRCDIR} ${SOURCETARDIR}
+
 
 makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 		${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
-		mv ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp \
-			${RELEASEDIR}/${MACHINE}/binary/sets/$$i; done
+		mv ${TARDIR}/$$i.tmp ${TARDIR}/$$i; \
+	done
 
 .for tar in ${MAKETARSETS}
 do-sum-${tar}: .PHONY do-${tar}
-	${SETSENV} ${MAKESUMS} \
-	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}.tgz
+	${MAKESUMS} -t ${TARDIR} ${tar}.tgz
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
-		${TOOL_CAT} ${RELEASEDIR}/${MACHINE}/binary/sets/$$i \
-		    >> ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; \
+		${TOOL_CAT} ${TARDIR}/$$i >> ${TARDIR}/$$i.tmp; \
 	done
 .endfor
 .ORDER: ${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
+
 
 installsets: .PHONY check_DESTDIR
 .if !defined(INSTALLDIR)
 	@echo "setenv INSTALLDIR before doing that!"
 	@false
 .endif
-	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
+	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} \
 	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} \
 	    -i ${INSTALLDIR} ${INSTALLSETS}
+
 
 #
 # MAIN ENTRY POINTS
