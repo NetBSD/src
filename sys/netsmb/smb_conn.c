@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.11 2003/03/31 18:24:58 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.12 2003/04/02 15:03:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.11 2003/03/31 18:24:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.12 2003/04/02 15:03:37 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -400,7 +400,6 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	vcp->obj.co_free = smb_vc_free;
 	vcp->obj.co_gone = smb_vc_gone;
 	vcp->vc_number = smb_vcnext++;
-	vcp->vc_timo = SMB_DEFRQTIMO;
 	vcp->vc_smbuid = SMB_UID_UNKNOWN;
 	vcp->vc_mode = vcspec->rights & SMBM_MASK;
 	vcp->obj.co_flags = vcspec->flags & (SMBV_PRIVATE | SMBV_SINGLESHARE);
