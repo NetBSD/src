@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.4 1996/10/13 04:10:57 christos Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.5 1996/11/17 13:39:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -97,13 +97,13 @@ static struct grfvideo_mode hw_modes[] = {
     { 
 	0, "", 25175000,		/* num, descr, pix-clock	*/
 	640, 400, 4,			/* width, height, depth		*/
-	640/8, 672/8, 688/8, 752/8, 768/8,/* HBS, HBE, HSS, HSE, HT	*/
+	632/8, 672/8, 688/8, 808/8, 768/8,/* HBS, HBE, HSS, HSE, HT	*/
 	399, 450, 408, 413, 449		/* VBS, VBE, VSS, VSE, VT	*/
     },
     { 
 	0, "", 25175000,		/* num, descr, pix-clock	*/
 	640, 480, 4,			/* width, height, depth		*/
-	640/8, 672/8, 704/8, 752/8, 760/8,/* HBS, HBE, HSS, HSE, HT	*/
+	632/8, 672/8, 688/8, 752/8, 752/8,/* HBS, HBE, HSS, HSE, HT	*/
 	481, 522, 490, 498, 522		/* VBS, VBE, VSS, VSE, VT	*/
     }
 };
@@ -573,7 +573,7 @@ et_sv_reg_t		*regs;
 	 * Note: This seems to be some kind of a black art :-(
 	 */
 	tmp = regs->misc_output & 0x3f;
-#if 0 /* This is according to my BW monitor & Xfree... */
+#if 1 /* This is according to my BW monitor & Xfree... */
 	if (VDE < 400) 
 		tmp |= 0x40;	/* -hsync +vsync */
 	else if (VDE < 480)
