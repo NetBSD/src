@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.19 1996/05/07 02:17:18 thorpej Exp $       */
+/*    $NetBSD: if_de.c,v 1.20 1996/05/07 23:23:23 christos Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -2447,7 +2447,9 @@ tulip_pci_attach(
     bus_mem_addr_t membase;
     bus_mem_size_t memsize;
 #endif
+#if defined(__FreeBSD__)
     int unit = sc->tulip_dev.dv_unit;
+#endif
     const char *intrstr = NULL;
 #endif
     int retval, idx, revinfo, id;
