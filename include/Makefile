@@ -32,7 +32,7 @@ NOOBJ=	noobj
 SHARED= 	copies
 #SHARED= 	symlinks
 
-install: ${SHARED}
+install: _PROGSUBDIR ${SHARED}
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
