@@ -1,4 +1,4 @@
-/*	$NetBSD: setprogname.c,v 1.2 2002/01/10 05:35:42 lukem Exp $	*/
+/*	$NetBSD: setprogname.c,v 1.3 2002/01/31 19:21:58 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,14 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifndef HAVE_SETPROGNAME
+#if !HAVE_SETPROGNAME
 #include <string.h>
 
-static const char *__progname;
+static const char *__progname = "command line";
 
 void
 setprogname(const char *progname)
