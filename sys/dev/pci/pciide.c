@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.180 2003/01/27 18:21:23 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.181 2003/02/28 22:07:05 enami Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.180 2003/01/27 18:21:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.181 2003/02/28 22:07:05 enami Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -602,6 +602,11 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  "ServerWorks CSB5 IDE Controller",
 	  serverworks_chip_map,
 	},
+	{ PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
+	  0,
+	  "ServerWorks CSB6 RAID/IDE Controller",
+	  serverworks_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -732,7 +737,7 @@ pciide_match(parent, match, aux)
 	 * controllers. Let see if we can deal with it anyway.
 	 */
 	pp = pciide_lookup_product(pa->pa_id);
-	if (pp  && (pp->ide_flags & IDE_PCI_CLASS_OVERRIDE)) {
+	if (pp != NULL && (pp->ide_flags & IDE_PCI_CLASS_OVERRIDE)) {
 		return (1);
 	}
 
@@ -4828,6 +4833,9 @@ serverworks_chip_map(sc, pa)
 			sc->sc_wdcdev.UDMA_cap = 4;
 		else
 			sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+	case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	}
 
