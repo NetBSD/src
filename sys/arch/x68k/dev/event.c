@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.3 1996/11/23 09:44:53 oki Exp $ */
+/*	$NetBSD: event.c,v 1.4 1996/11/27 14:40:46 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,7 +149,7 @@ ev_read(ev, uio, flags)
 int
 ev_poll(ev, events, p)
 	register struct evvar *ev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	int s = splev(), revents = 0;
