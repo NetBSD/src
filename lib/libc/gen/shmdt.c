@@ -1,5 +1,5 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: shmdt.c,v 1.3 1993/11/19 03:18:32 mycroft Exp $";
+static char *rcsid = "$Id: shmdt.c,v 1.4 1994/05/28 23:37:56 hpeyerl Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -7,11 +7,11 @@ static char *rcsid = "$Id: shmdt.c,v 1.3 1993/11/19 03:18:32 mycroft Exp $";
 #include <sys/shm.h>
 
 #if __STDC__
-int shmdt(void *shmaddr)
+void shmdt(const void *shmaddr)
 #else
-int shmdt(shmaddr)
-	void *shmaddr;
+void shmdt(shmaddr)
+	const void *shmaddr;
 #endif
 {
-	return (shmsys(2, shmaddr));
+	return ((void) shmsys(2, shmaddr));
 }
