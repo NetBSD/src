@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.3 2000/12/09 18:04:05 bjh21 Exp $ */
+/* $NetBSD: ioeb.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.3 2000/12/09 18:04:05 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ static void ioeb_attach(struct device *, struct device *, void *);
 struct cfattach ioeb_ca = {
 	sizeof(struct ioeb_softc), ioeb_match, ioeb_attach
 };
+
+struct device *the_ioeb;
 
 /* IOEB is only four bits wide */
 #define ioeb_read(t, h, o) (bus_space_read_1(t, h, o) & 0xf)
@@ -77,6 +79,8 @@ ioeb_attach(struct device *parent, struct device *self, void *aux)
 	struct ioeb_softc *sc = (void *)self;
 	struct ioc_attach_args *ioc = aux;
 
+	if (the_ioeb == NULL)
+		the_ioeb = self;
 	sc->sc_iot = ioc->ioc_fast_t;
 	sc->sc_ioh = ioc->ioc_fast_h;
 	printf("\n");

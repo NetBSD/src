@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2001/01/23 22:07:58 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2001/01/23 23:58:31 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2001/01/23 22:07:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2001/01/23 23:58:31 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -70,11 +70,13 @@ struct cfattach cpu_ca = {
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001
 
+struct cpu_softc *the_cpu;
+
 static int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (cf->cf_unit == 0)
+	if (the_cpu == NULL)
 		return 1;
 	return 0;
 }
@@ -84,6 +86,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	int supported;
 
+	the_cpu = (struct cpu_softc *)self;
 	printf(": ");
 	cpu_type = cpu_identify();
 	supported = 0;
