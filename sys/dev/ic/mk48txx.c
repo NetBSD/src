@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.1 2000/07/25 22:33:03 pk Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.2 2000/09/01 19:04:49 eeh Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,7 +58,6 @@ struct mk48txx {
 					   by the chip's year counter at 0 */
 };
 
-static void clk_wenable __P((int));
 int mk48txx_gettime(todr_chip_handle_t, struct timeval *);
 int mk48txx_settime(todr_chip_handle_t, struct timeval *);
 int mk48txx_getcal(todr_chip_handle_t, int *);
@@ -115,6 +114,7 @@ mk48txx_attach(bt, bh, model, year0)
 	handle->todr_settime = mk48txx_settime;
 	handle->todr_getcal = mk48txx_getcal;
 	handle->todr_setcal = mk48txx_setcal;
+	handle->todr_setwen = NULL;
 	mk->mk_bt = bt;
 	mk->mk_bh = bh;
 	mk->mk_nvramsz = nvramsz;
@@ -122,32 +122,6 @@ mk48txx_attach(bt, bh, model, year0)
 	mk->mk_year0 = year0;
 
 	return (handle);
-}
-
-/*
- * Write en/dis-able clock registers.  We coordinate so that several
- * writers can run simultaneously.
- */
-void
-clk_wenable(onoff)
-	int onoff;
-{
-#if 0
-	register int s;
-	register vm_prot_t prot;/* nonzero => change prot */
-	static int writers;
-
-	s = splhigh();
-	if (onoff)
-		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
-	else
-		prot = --writers == 0 ? VM_PROT_READ : 0;
-	splx(s);
-	if (prot)
-		pmap_changeprot(pmap_kernel(),
-				(vaddr_t)clockreg & ~(NBPG-1),
-				prot, 1);
-#endif
 }
 
 /*
@@ -167,7 +141,7 @@ mk48txx_gettime(handle, tv)
 	int year;
 	u_int8_t csr;
 
-	clk_wenable(1);
+	todr_wenable(handle, 1);
 
 	/* enable read (stop time) */
 	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
@@ -192,7 +166,7 @@ mk48txx_gettime(handle, tv)
 	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_READ;
 	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
-	clk_wenable(0);
+	todr_wenable(handle, 0);
 
 #if 0
 	/* simple sanity checks */
@@ -228,7 +202,7 @@ mk48txx_settime(handle, tv)
 	if (year > 99 && mk48txx_auto_century_adjust != 0)
 		year -= 100;
 
-	clk_wenable(1);
+	todr_wenable(handle, 1);
 	/* enable write */
 	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
 	csr |= MK48TXX_CSR_WRITE;
@@ -246,7 +220,7 @@ mk48txx_settime(handle, tv)
 	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_WRITE;
 	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
-	clk_wenable(0);
+	todr_wenable(handle, 0);
 	return (0);
 }
 

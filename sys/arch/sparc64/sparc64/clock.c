@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2000/07/26 13:39:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.29 2000/09/01 19:04:50 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,8 +144,9 @@ struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
 };
 
+int sbus_wenable __P((struct todr_chip_handle *, int));
+int ebus_wenable __P((struct todr_chip_handle *, int));
 struct chiptime;
-void clk_wenable __P((int));
 void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
@@ -201,6 +202,14 @@ clockmatch_ebus(parent, cf, aux)
  * or not to write enable/disable the device registers.  This is
  * a non-trivial operation.  
  */
+
+/* Somewhere to keep info that sbus_wenable() needs */
+struct sbus_info {
+	bus_space_tag_t		si_bt;
+	bus_space_handle_t	si_bh;
+	struct sbus_reg		si_reg;
+};
+
 /* ARGSUSED */
 static void
 clockattach_sbus(parent, self, aux)
@@ -211,6 +220,7 @@ clockattach_sbus(parent, self, aux)
 	bus_space_tag_t bt = sa->sa_bustag;
 	bus_space_handle_t bh;
 	int sz;
+	static struct sbus_info sbi;
 
 	/* use sa->sa_regs[0].size? */
 	sz = 8192;
@@ -219,14 +229,57 @@ clockattach_sbus(parent, self, aux)
 			 sa->sa_slot,
 			 (sa->sa_offset & ~NBPG),
 			 sz,
-			 BUS_SPACE_MAP_LINEAR,
+			 BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY,
 			 0,
 			 &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
 	clockattach(sa->sa_node, bt, bh);
+
+	/* Save info for the clock wenable call. */
+	sbi.si_bt = bt;
+	sbi.si_reg = sa->sa_reg[0];
+	todr_handle->bus_cookie = &sbi;
+	todr_handle->todr_setwen = sbus_wenable;
 }
+
+/*
+ * Write en/dis-able clock registers.  We coordinate so that several
+ * writers can run simultaneously.
+ */
+int
+sbus_wenable(handle, onoff)
+	struct todr_chip_handle *handle;
+	int onoff;
+{
+	register int s, err = 0;
+	register int prot;/* nonzero => change prot */
+	static int writers;
+
+	s = splhigh();
+	if (onoff)
+		prot = writers++ == 0 ? BUS_SPACE_MAP_LINEAR : 0;
+	else
+		prot = --writers == 0 ? 
+			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY : 0;
+	splx(s);
+	if (prot) {
+		struct sbus_info *sbi = (struct sbus_info *)handle->bus_cookie;
+
+		err = sbus_bus_map(sbi->si_bt, sbi->si_reg.sbr_slot,
+			(sbi->si_reg.sbr_offset & ~NBPG),
+			8192, prot, 0, &sbi->si_bh);
+	}
+	return (err);
+}
+
+
+struct ebus_info {
+	bus_space_tag_t		ei_bt;
+	bus_space_handle_t	ei_bh;
+	struct ebus_regs	ei_reg;
+};
 
 /* ARGSUSED */
 static void
@@ -238,6 +291,7 @@ clockattach_ebus(parent, self, aux)
 	bus_space_tag_t bt = ea->ea_bustag;
 	bus_space_handle_t bh;
 	int sz;
+	static struct ebus_info ebi;
 
 	/* hard code to 8K? */
 	sz = ea->ea_regs[0].size;
@@ -253,6 +307,42 @@ clockattach_ebus(parent, self, aux)
 		return;
 	}
 	clockattach(ea->ea_node, bt, bh);
+
+	/* Save info for the clock wenable call. */
+	ebi.ei_bt = bt;
+	ebi.ei_reg = ea->ea_regs[0];
+	todr_handle->bus_cookie = &ebi;
+	todr_handle->todr_setwen = ebus_wenable;
+}
+
+/*
+ * Write en/dis-able clock registers.  We coordinate so that several
+ * writers can run simultaneously.
+ */
+int
+ebus_wenable(handle, onoff)
+	struct todr_chip_handle *handle;
+	int onoff;
+{
+	register int s, err = 0;
+	register int prot;/* nonzero => change prot */
+	static int writers;
+
+	s = splhigh();
+	if (onoff)
+		prot = writers++ == 0 ? BUS_SPACE_MAP_LINEAR : 0;
+	else
+		prot = --writers == 0 ? 
+			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY : 0;
+	splx(s);
+	if (prot) {
+		struct ebus_info *ebi = (struct ebus_info *)handle->bus_cookie;
+
+		err = sbus_bus_map(ebi->ei_bt, 0,
+			EBUS_PADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
+			0, &ebi->ei_bh);
+	}
+	return (err);
 }
 
 static void
@@ -378,35 +468,6 @@ timerattach(parent, self, aux)
 #endif
 	printf("\n");
 	timerok = 1;
-}
-
-/*
- * Write en/dis-able clock registers.  We coordinate so that several
- * writers can run simultaneously.
- */
-void
-clk_wenable(onoff)
-	int onoff;
-{
-	register int s;
-	register vm_prot_t prot;/* nonzero => change prot */
-	static int writers;
-
-	s = splhigh();
-	if (onoff)
-		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
-	else
-		prot = --writers == 0 ? VM_PROT_READ : 0;
-	splx(s);
-#if 0
-	if (prot) {
-		vaddr_t va = (vaddr_t)clockreg & ~(NBPG-1);
-		paddr_t pa;
-
-		(void) pmap_extract(pmap_kernel(), va, &pa);
-		pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
-	}
-#endif
 }
 
 void
