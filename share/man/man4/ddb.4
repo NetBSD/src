@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.72 2003/09/21 15:18:33 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.73 2003/10/26 01:44:22 lukem Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd September 20, 2003
+.Dd October 26, 2003
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -514,7 +514,17 @@ A synonym for
 .Ic "show all procs" .
 .It Ic reboot Op Ar flags
 Reboot, using the optionally supplied boot
-.Ar flags .
+.Ar flags ,
+which is a bitmask supporting the following values:
+.Bl -column "Value" "RB_AUTOBOOT" "Description"
+.It Sy "Value" Ta Sy "Name" Ta Sy "Description"
+.It 0x1 Ta RB_ASKNAME Ta Ask for file name to reboot from
+.It 0x2 Ta RB_SINGLE Ta Reboot to single user mode
+.It 0x4 Ta RB_NOSYNC Ta Don't sync before reboot
+.It 0x8 Ta RB_HALT Ta Halt instead of reboot
+.It 0x40 Ta RB_KDB Ta Boot into kernel debugger
+.It 0x808 Ta RB_POWERDOWN Ta Power off (or at least halt)
+.El
 .Pp
 Note: Limitations of the command line interface preclude
 specification of a boot string.
