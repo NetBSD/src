@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.4 2002/03/17 17:57:04 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.5 2002/03/19 05:11:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct mutex {
 	union {
 		/* Adaptive mutex */
-		__volatile unsigned long mtx_owner;
+		__volatile unsigned long mtx_owner;	/* 0-7 */
 
 		/* Spin mutex */
 		struct {
@@ -50,10 +50,10 @@ struct mutex {
 			 * We're little-endian, so mtx_dummy is
 			 * in the bottom-half of mtx_owner.
 			 */
-			unsigned int mtx_dummy;
-			__cpu_simple_lock_t mtx_lock;
-			int mtx_oldspl;
-			int mtx_minspl;
+			int mtx_dummy;			/* 0-3 */
+			__cpu_simple_lock_t mtx_lock;	/* 4-7 */
+			int mtx_oldspl;			/* 8-11 */
+			int mtx_minspl;			/* 12-15 */
 		} mtx_spin;
 	} mtx_un;
 };
