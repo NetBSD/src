@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2002/01/17 17:19:03 bjh21 Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.3 2002/11/13 15:16:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,12 +43,7 @@
 #define LINUX_MID_MACHINE	LINUX_M_ARM
 
 #define LINUX_ELF_AUX_ARGSIZ \
-	(howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
-#ifdef ELF32NAME
-#define LINUX_COPYARGS_FUNCTION	ELF32NAME(copyargs)
-#else
-#define LINUX_COPYARGS_FUNCTION	ELFNAME(copyargs)
-#endif
+	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
 
 #define LINUX_SYSCALL_FUNCTION linux_syscall
 
