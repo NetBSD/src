@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 1996/05/19 14:55:27 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 1996/05/21 18:22:13 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1360,9 +1360,11 @@ Lsw2:
 	jeq	Lswnofpsave		| yes, all done
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
-#endif
 #ifdef M68060
 	jra	Lswnofpsave
+#endif
+#endif
+#ifdef M68060
 Lsavfp60:
 	tstb	a2@(2)			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
@@ -1485,10 +1487,12 @@ ENTRY(savectx)
 	jeq	Lsavedone		| yes, all done
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
-#endif
 #ifdef	M68060
 	moveq	#0,d0
 	rts
+#endif
+#endif
+#ifdef	M68060
 Lsavctx60:
 	tstb	a0@(2)
 	jeq	Lsavedone
