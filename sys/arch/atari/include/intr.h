@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1997/10/09 07:39:10 jtc Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 1998/05/25 10:42:21 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
 #ifndef _ATARI_INTR_H_
 #define _ATARI_INTR_H_
 
-#define	IPL_NONE	0	/* disable no interrupts	*/
-#define	IPL_BIO		3	/* disable block I/O interrupts */
-#define	IPL_NET		3	/* disable network interrupts	*/
-#define	IPL_TTY		4	/* disable terminal interrupts	*/
-#define	IPL_CLOCK	6	/* disable clock interrupts	*/
-#define	IPL_HIGH	7	/* disable all interrupts	*/
+#define	IPL_NONE	0		    /* disable no interrupts	    */
+#define	IPL_BIO		(PSL_S|PSL_IPL3)    /* disable block I/O interrupts */
+#define	IPL_NET		(PSL_S|PSL_IPL3)    /* disable network interrupts   */
+#define	IPL_TTY		(PSL_S|PSL_IPL4)    /* disable terminal interrupts  */
+#define	IPL_CLOCK	(PSL_S|PSL_IPL6)    /* disable clock interrupts	    */
+#define	IPL_HIGH	(PSL_S|PSL_IPL7)    /* disable all interrupts	    */
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used	*/
 #define	IST_NONE	0	/* none (dummy)			*/
