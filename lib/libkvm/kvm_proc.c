@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.57 2004/02/19 04:13:28 atatat Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.58 2004/05/12 17:20:01 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.57 2004/02/19 04:13:28 atatat Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.58 2004/05/12 17:20:01 toshii Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -906,7 +906,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	char **argv;
 
 	/*
-	 * Check that there aren't an unreasonable number of agruments,
+	 * Check that there aren't an unreasonable number of arguments,
 	 * and that the address is in user space.
 	 */
 	if (narg > ARG_MAX || addr < kd->min_uva || addr >= kd->max_uva)
@@ -1130,7 +1130,7 @@ kvm_doargv2(kd, pid, type, nchr)
 	char **ap, *bp, *endp;
 
 	/*
-	 * Check that there aren't an unreasonable number of agruments.
+	 * Check that there aren't an unreasonable number of arguments.
 	 */
 	if (nchr > ARG_MAX)
 		return (NULL);
