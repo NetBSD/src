@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1997/04/19 21:28:53 pk Exp $ */
+/*	$NetBSD: mem.c,v 1.15 1998/02/05 07:57:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,9 +148,15 @@ mmrw(dev, uio, flags)
 				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+				if (!uvm_kernacc((caddr_t)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return (EFAULT);
+#else
 				if (!kernacc((caddr_t)v, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
+#endif
 			}
 			error = uiomove((caddr_t)v, c, uio);
 			break;

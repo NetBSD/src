@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1997/10/18 00:17:21 gwr Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.33 1998/02/05 07:58:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -316,7 +316,11 @@ vmapbuf(bp, len)
 	uva = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - uva;
 	len = round_page(off + len);
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(kernel_map, len);
+#else
 	kva = kmem_alloc_wait(kernel_map, len);
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	/*
@@ -361,7 +365,11 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 
 	/* This will call pmap_remove() for us. */
+#if defined(UVM)
+	uvm_km_free_wakeup(kernel_map, kva, len);
+#else
 	kmem_free_wakeup(kernel_map, kva, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 
@@ -516,7 +524,11 @@ cpu_exit(p)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
+#if defined(UVM)
+	uvmspace_free(p->p_vmspace);
+#else
 	vmspace_free(p->p_vmspace);
+#endif
 	switchexit(kernel_map, p->p_addr, USPACE);
 	/* NOTREACHED */
 }

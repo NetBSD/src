@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 1998/01/13 20:51:01 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 1998/02/05 07:57:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1700,7 +1700,11 @@ ctw_invalid:
 #if defined(SUN4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1765,7 +1769,11 @@ memfault_sun4:
 memfault_sun4c:
 #if defined(SUN4C)
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1863,7 +1871,11 @@ memfault_sun4c:
 #if defined(SUN4M)
 memfault_sun4m:
 	TRAP_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+#endif
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -2310,7 +2322,11 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2378,7 +2394,11 @@ _sparc_interrupt44c:
 _sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2474,7 +2494,11 @@ zshard:
 #if defined(SUN4)
 nmi_sun4:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2500,7 +2524,11 @@ nmi_sun4:
 #if defined(SUN4C)
 nmi_sun4c:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2555,7 +2583,11 @@ nmi_common:
 #if defined(SUN4M)
 nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
+#if defined(UVM)
+	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#else
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+#endif
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -4315,7 +4347,11 @@ ENTRY(switchexit)
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	mov	%g2, %o0		! now ready to call kmem_free
 	mov	%g3, %o1
+#if defined(UVM)
+	call	_uvm_km_free
+#else
 	call	_kmem_free
+#endif
 	 mov	%g4, %o2
 
 	/*
@@ -4335,7 +4371,11 @@ ENTRY(switchexit)
 	 */
 
 	INCR(_nswitchexit)		! nswitchexit++;
+#if defined(UVM)
+	INCR(_uvmexp+V_SWTCH)		! cnt.v_switch++;
+#else
 	INCR(_cnt+V_SWTCH)		! cnt.v_switch++;
+#endif
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_whichqs), %g2
@@ -5348,6 +5388,195 @@ Lback_mopb:
 	retl			!	dst[-1] = b;
 	stb	%o4, [%o1 - 1]	! }
 
+/*
+ * kcopy() is exactly like bcopy except that it set pcb_onfault such that
+ * when a fault occurs, it is able to return -1 to indicate this to the
+ * caller.
+ */
+ENTRY(kcopy)
+	sethi	%hi(_cpcb), %o5		! cpcb->pcb_onfault = Lkcerr;
+	ld	[%o5 + %lo(_cpcb)], %o5
+	set	Lkcerr, %o3
+	st	%o3, [%o5 + PCB_ONFAULT]
+
+	cmp	%o2, BCOPY_SMALL
+Lkcopy_start:
+	bge,a	Lkcopy_fancy	! if >= this many, go be fancy.
+	btst	7, %o0		! (part of being fancy)
+
+	/*
+	 * Not much to copy, just do it a byte at a time.
+	 */
+	deccc	%o2		! while (--len >= 0)
+	bl	1f
+	EMPTY
+0:
+	inc	%o0
+	ldsb	[%o0 - 1], %o4	!	(++dst)[-1] = *src++;
+	stb	%o4, [%o1]
+	deccc	%o2
+	bge	0b
+	inc	%o1
+1:
+	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	retl
+	mov	0, %o0		! delay slot: return success
+	/* NOTREACHED */
+
+	/*
+	 * Plenty of data to copy, so try to do it optimally.
+	 */
+Lkcopy_fancy:
+	! check for common case first: everything lines up.
+!	btst	7, %o0		! done already
+	bne	1f
+	EMPTY
+	btst	7, %o1
+	be,a	Lkcopy_doubles
+	dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
+
+	! If the low bits match, we can make these line up.
+1:
+	xor	%o0, %o1, %o3	! t = src ^ dst;
+	btst	1, %o3		! if (t & 1) {
+	be,a	1f
+	btst	1, %o0		! [delay slot: if (src & 1)]
+
+	! low bits do not match, must copy by bytes.
+0:
+	ldsb	[%o0], %o4	!	do {
+	inc	%o0		!		(++dst)[-1] = *src++;
+	inc	%o1
+	deccc	%o2
+	bnz	0b		!	} while (--len != 0);
+	stb	%o4, [%o1 - 1]
+	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	retl
+	mov	0, %o0		! delay slot: return success
+	/* NOTREACHED */
+
+	! lowest bit matches, so we can copy by words, if nothing else
+1:
+	be,a	1f		! if (src & 1) {
+	btst	2, %o3		! [delay slot: if (t & 2)]
+
+	! although low bits match, both are 1: must copy 1 byte to align
+	ldsb	[%o0], %o4	!	*dst++ = *src++;
+	stb	%o4, [%o1]
+	inc	%o0
+	inc	%o1
+	dec	%o2		!	len--;
+	btst	2, %o3		! } [if (t & 2)]
+1:
+	be,a	1f		! if (t & 2) {
+	btst	2, %o0		! [delay slot: if (src & 2)]
+	dec	2, %o2		!	len -= 2;
+0:
+	ldsh	[%o0], %o4	!	do {
+	sth	%o4, [%o1]	!		*(short *)dst = *(short *)src;
+	inc	2, %o0		!		dst += 2, src += 2;
+	deccc	2, %o2		!	} while ((len -= 2) >= 0);
+	bge	0b
+	inc	2, %o1
+	b	Lkcopy_mopb	!	goto mop_up_byte;
+	btst	1, %o2		! } [delay slot: if (len & 1)]
+	/* NOTREACHED */
+
+	! low two bits match, so we can copy by longwords
+1:
+	be,a	1f		! if (src & 2) {
+	btst	4, %o3		! [delay slot: if (t & 4)]
+
+	! although low 2 bits match, they are 10: must copy one short to align
+	ldsh	[%o0], %o4	!	(*short *)dst = *(short *)src;
+	sth	%o4, [%o1]
+	inc	2, %o0		!	dst += 2;
+	inc	2, %o1		!	src += 2;
+	dec	2, %o2		!	len -= 2;
+	btst	4, %o3		! } [if (t & 4)]
+1:
+	be,a	1f		! if (t & 4) {
+	btst	4, %o0		! [delay slot: if (src & 4)]
+	dec	4, %o2		!	len -= 4;
+0:
+	ld	[%o0], %o4	!	do {
+	st	%o4, [%o1]	!		*(int *)dst = *(int *)src;
+	inc	4, %o0		!		dst += 4, src += 4;
+	deccc	4, %o2		!	} while ((len -= 4) >= 0);
+	bge	0b
+	inc	4, %o1
+	b	Lkcopy_mopw	!	goto mop_up_word_and_byte;
+	btst	2, %o2		! } [delay slot: if (len & 2)]
+	/* NOTREACHED */
+
+	! low three bits match, so we can copy by doublewords
+1:
+	be	1f		! if (src & 4) {
+	dec	8, %o2		! [delay slot: len -= 8]
+	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
+	st	%o4, [%o1]
+	inc	4, %o0		!	dst += 4, src += 4, len -= 4;
+	inc	4, %o1
+	dec	4, %o2		! }
+1:
+Lkcopy_doubles:
+	! swap %o4 with %o2 during doubles copy, since %o5 is verboten
+	mov     %o2, %o4
+Lkcopy_doubles2:
+	ldd	[%o0], %o2	! do {
+	std	%o2, [%o1]	!	*(double *)dst = *(double *)src;
+	inc	8, %o0		!	dst += 8, src += 8;
+	deccc	8, %o4		! } while ((len -= 8) >= 0);
+	bge	Lkcopy_doubles2
+	 inc	8, %o1
+	mov	%o4, %o2	! restore len
+
+	! check for a usual case again (save work)
+	btst	7, %o2		! if ((len & 7) == 0)
+	be	Lkcopy_done	!	goto bcopy_done;
+
+	btst	4, %o2		! if ((len & 4)) == 0)
+	be,a	Lkcopy_mopw	!	goto mop_up_word_and_byte;
+	btst	2, %o2		! [delay slot: if (len & 2)]
+	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
+	st	%o4, [%o1]
+	inc	4, %o0		!	dst += 4;
+	inc	4, %o1		!	src += 4;
+	btst	2, %o2		! } [if (len & 2)]
+
+1:
+	! mop up trailing word (if present) and byte (if present).
+Lkcopy_mopw:
+	be	Lkcopy_mopb	! no word, go mop up byte
+	btst	1, %o2		! [delay slot: if (len & 1)]
+	ldsh	[%o0], %o4	! *(short *)dst = *(short *)src;
+	be	Lkcopy_done	! if ((len & 1) == 0) goto done;
+	sth	%o4, [%o1]
+	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
+	stb	%o4, [%o1 + 2]
+	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	retl
+	mov	0, %o0		! delay slot: return success
+	/* NOTREACHED */
+
+	! mop up trailing byte (if present).
+Lkcopy_mopb:
+	bne,a	1f
+	ldsb	[%o0], %o4
+
+Lkcopy_done:
+	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	retl
+	mov	0, %o0		! delay slot: return success
+
+1:
+	stb	%o4,[%o1]
+	mov	0, %o0		! delay slot: return success
+	retl
+Lkcerr:
+	st	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	retl				! and return error indicator
+	mov	-1, %o0
 
 /*
  * savefpstate(f) struct fpstate *f;

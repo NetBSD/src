@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.5 1996/03/14 19:44:32 christos Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.6 1998/02/05 07:57:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -78,10 +78,17 @@ bt_getcmap(p, cm, cmsize)
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
+#if defined(UVM)
+	if (!uvm_useracc(p->red, count, B_WRITE) ||
+	    !uvm_useracc(p->green, count, B_WRITE) ||
+	    !uvm_useracc(p->blue, count, B_WRITE))
+		return (EFAULT);
+#else
 	if (!useracc(p->red, count, B_WRITE) ||
 	    !useracc(p->green, count, B_WRITE) ||
 	    !useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
+#endif
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		p->red[i] = cp[0];
 		p->green[i] = cp[1];
@@ -106,10 +113,17 @@ bt_putcmap(p, cm, cmsize)
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
+#if defined(UVM)
+	if (!uvm_useracc(p->red, count, B_READ) ||
+	    !uvm_useracc(p->green, count, B_READ) ||
+	    !uvm_useracc(p->blue, count, B_READ))
+		return (EFAULT);
+#else
 	if (!useracc(p->red, count, B_READ) ||
 	    !useracc(p->green, count, B_READ) ||
 	    !useracc(p->blue, count, B_READ))
 		return (EFAULT);
+#endif
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		cp[0] = p->red[i];
 		cp[1] = p->green[i];

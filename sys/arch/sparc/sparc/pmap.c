@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 1998/01/17 15:02:17 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.110 1998/02/05 07:58:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,6 +71,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
@@ -878,11 +882,19 @@ pmap_page_upload()
 		/* First, the gap we created in pmap_bootstrap() */
 		if (avail_next != unavail_gap_start)
 			/* Avoid empty ranges */
+#if defined(UVM)
+			uvm_page_physload(
+				atop(avail_next),
+				atop(unavail_gap_start),
+				atop(avail_next),
+				atop(unavail_gap_start));
+#else
 			vm_page_physload(
 				atop(avail_next),
 				atop(unavail_gap_start),
 				atop(avail_next),
 				atop(unavail_gap_start));
+#endif
 		avail_next = unavail_gap_end;
 	}
 
@@ -896,11 +908,19 @@ pmap_page_upload()
 		if (start == end)
 			continue;
 
+#if defined(UVM)
+		uvm_page_physload(
+			atop(start),
+			atop(end),
+			atop(start),
+			atop(end));
+#else
 		vm_page_physload(
 			atop(start),
 			atop(end),
 			atop(start),
 			atop(end));
+#endif
 	}
 
 }
@@ -2051,6 +2071,15 @@ pv_changepte4_4c(pv0, bis, bic)
 
 			/* in hardware: fix hardware copy */
 			if (CTX_USABLE(pm,rp)) {
+#if defined(UVM)
+				/*
+				 * Bizarreness:  we never clear PG_W on
+				 * pager pages, nor PG_NC on DVMA pages.
+				 */
+				if (bic == PG_W &&
+				    va >= uvm.pager_sva && va < uvm.pager_eva)
+					continue;
+#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				/*
@@ -2060,6 +2089,7 @@ pv_changepte4_4c(pv0, bis, bic)
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
 					continue;
+#endif
 				if (bic == PG_NC &&
 				    va >= DVMA_BASE && va < DVMA_END)
 					continue;
@@ -2337,6 +2367,16 @@ pv_changepte4m(pv0, bis, bic)
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		if (pm->pm_ctx) {
+#if defined(UVM)
+			/*
+			 * Bizarreness:  we never clear PG_W on
+			 * pager pages, nor set PG_C on DVMA pages.
+			 */
+			if ((bic & PPROT_WRITE) &&
+			    va >= uvm.pager_sva && va < uvm.pager_eva)
+				continue;
+#else
+
 			extern vm_offset_t pager_sva, pager_eva;
 
 			/*
@@ -2346,6 +2386,7 @@ pv_changepte4m(pv0, bis, bic)
 			if ((bic & PPROT_WRITE) &&
 			    va >= pager_sva && va < pager_eva)
 				continue;
+#endif
 			if ((bis & SRMMU_PG_C) &&
 			    va >= DVMA_BASE && va < DVMA_END)
 				continue;
@@ -2626,8 +2667,13 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
 
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#else
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
+#endif
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
@@ -2686,8 +2732,13 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		}
 	}
 
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#else
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
+#endif
 
 #if defined(SUN4)
 	/*
@@ -3548,7 +3599,13 @@ pass2:
 	}
 
 	if (pass1) {
+#if defined(UVM)
+		/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_alloc() _CAN_
+			return 0 if out of VM */
+		pa = pmap_extract(pmap_kernel(), uvm_km_alloc(kernel_map, s));
+#else
 		pa = pmap_extract(pmap_kernel(), kmem_alloc(kernel_map, s));
+#endif
 		pass1 = 0;
 		goto pass2;
 	}
