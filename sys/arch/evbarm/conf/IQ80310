@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.19 2002/09/18 02:43:57 lukem Exp $
+#	$NetBSD: IQ80310,v 1.20 2002/10/03 20:14:58 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -145,7 +145,12 @@ cpu0		at mainbus?
 
 # On-board device support
 obio*		at mainbus?
-com*		at obio? addr ?		# on-board XR 16550 UARTs
+
+# On-board XR 16550 UARTs.
+# Order these so the first UART matches is the one at J9
+# and the second one is the one at J10.
+com0		at obio? addr 0xfe810000 xint3 3
+com1		at obio? addr 0xfe800000 xint3 2
 
 # i80312 Companion I/O support
 iopxs*		at mainbus?
