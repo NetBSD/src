@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.8 2003/01/06 21:02:18 matt Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.9 2003/09/17 23:33:43 mycroft Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -68,7 +68,7 @@ struct scsipi_rw_big {
 	u_int8_t reserved;
 	u_int8_t length[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define	READ_CAPACITY		0x25
 struct scsipi_read_capacity {
@@ -77,13 +77,40 @@ struct scsipi_read_capacity {
 	u_int8_t addr[4];
 	u_int8_t unused[3];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 /* DATAs definitions for the above commands */
 
 struct scsipi_read_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
-};
+} __attribute__((packed));
+
+#define READ_FORMAT_CAPACITIES	0x23
+struct scsipi_read_format_capacities {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved1[5];
+	u_int8_t length[2];
+	u_int8_t reserved2[3];
+} __attribute__((packed));
+
+struct scsipi_capacity_list_header {
+	u_int8_t reserved[3];
+	u_int8_t length;
+} __attribute__((packed));
+
+struct scsipi_capacity_descriptor {
+	u_int8_t nblks[4];
+	u_int8_t byte5;
+	u_int8_t blklen[3];
+} __attribute__((packed));
+
+/* codes only valid in the current/maximum capacity descriptor */
+#define	SCSIPI_CAP_DESC_CODE_MASK		0x3
+#define	SCSIPI_CAP_DESC_CODE_RESERVED		0x0
+#define	SCSIPI_CAP_DESC_CODE_UNFORMATTED	0x1
+#define	SCSIPI_CAP_DESC_CODE_FORMATTED		0x2
+#define	SCSIPI_CAP_DESC_CODE_NONE		0x3
 
 #endif /* _DEV_SCSIPI_SCSIPI_DISK_H_ */
