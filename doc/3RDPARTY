@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.7 2002/10/09 19:42:02 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.8 2002/10/10 08:23:51 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -644,7 +644,7 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	tar
-Version:	1.11.2
+Version:	1.13.25 + security fixes
 Current Vers:	1.13/1.13.25
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/tar/, ftp://alpha.gnu.org/gnu/tar/
