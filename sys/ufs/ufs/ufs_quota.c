@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.9 1997/06/11 10:10:14 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.10 1998/02/07 02:45:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -680,7 +680,7 @@ void
 dqinit()
 {
 
-	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, &dqhash);
+	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
 }
 
