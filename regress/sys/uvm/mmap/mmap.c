@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.10 2000/01/24 00:39:17 mycroft Exp $	*/
+/*	$NetBSD: mmap.c,v 1.11 2000/05/19 04:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -371,10 +371,22 @@ main(argc, argv)
 
 	printf("    CHECKING RESIDENCY\n");
 
-	if (check_residency(addr, npgs) != 0) {
-		printf("    RESIDENCY CHECK FAILED!\n");
-		ecode = 1;
-	}
+	/*
+	 * NOTE!  Even though we have MADV_FREE'd the range,
+	 * there is another reference (the kernel's) to the
+	 * object which owns the pages.  In this case, the
+	 * kernel does not simply free the pages, as haphazardly
+	 * freeing pages when there are still references to
+	 * an object can cause data corruption (say, the other
+	 * referencer doesn't expect the pages to be freed,
+	 * and is surprised by the subsequent ZFOD).
+	 *
+	 * Because of this, we simply report the number of
+	 * pages still resident, for information only.
+	 */
+
+	npgs = check_residency(addr, npgs);
+	printf("    RESIDENCY CHECK: %d pages still resident\n", npgs);
 
 	if (shmdt(addr) == -1)
 		warn("shmdt");
