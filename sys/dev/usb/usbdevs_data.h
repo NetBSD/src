@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.7 1998/12/02 17:14:53 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.8 1998/12/02 22:51:50 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.7 1998/12/02 17:11:51 augustss Exp 
+ *	NetBSD: usbdevs,v 1.8 1998/12/02 22:49:51 augustss Exp 
  */
 
 /*
@@ -59,7 +59,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_CATC, USB_PRODUCT_CATC_ANDROMEDA,
 	    0,
-	    "Computer Access Technology Corporation",
+	    "CATC",
 	    "Andromeda hub",
 	},
 	{
@@ -107,7 +107,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,
 	    0,
-	    "Behavior Technology Corporation",
+	    "BTC",
 	    "Keyboard with mouse port",
 	},
 	{
@@ -227,7 +227,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_CATC, 0,
 	    USB_KNOWNDEV_NOPROD,
-	    "Computer Access Technology Corporation",
+	    "CATC",
 	    NULL,
 	},
 	{
@@ -257,7 +257,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_BTC, 0,
 	    USB_KNOWNDEV_NOPROD,
-	    "Behavior Technology Corporation",
+	    "BTC",
 	    NULL,
 	},
 	{
