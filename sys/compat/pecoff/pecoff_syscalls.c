@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.5 2003/01/18 23:41:14 thorpej Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.6 2003/04/08 10:58:55 oki Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.5 2003/01/18 23:41:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.6 2003/04/08 10:58:55 oki Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -18,6 +18,7 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.5 2003/01/18 23:41:14 thorpej 
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_posix.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #endif
@@ -343,38 +344,51 @@ const char *const pecoff_syscallnames[] = {
 	"clock_gettime",			/* 232 = clock_gettime */
 	"clock_settime",			/* 233 = clock_settime */
 	"clock_getres",			/* 234 = clock_getres */
-	"#235 (unimplemented timer_create)",		/* 235 = unimplemented timer_create */
-	"#236 (unimplemented timer_delete)",		/* 236 = unimplemented timer_delete */
-	"#237 (unimplemented timer_settime)",		/* 237 = unimplemented timer_settime */
-	"#238 (unimplemented timer_gettime)",		/* 238 = unimplemented timer_gettime */
-	"#239 (unimplemented timer_getoverrun)",		/* 239 = unimplemented timer_getoverrun */
+	"timer_create",			/* 235 = timer_create */
+	"timer_delete",			/* 236 = timer_delete */
+	"timer_settime",			/* 237 = timer_settime */
+	"timer_gettime",			/* 238 = timer_gettime */
+	"timer_getoverrun",			/* 239 = timer_getoverrun */
 	"nanosleep",			/* 240 = nanosleep */
 	"fdatasync",			/* 241 = fdatasync */
 	"mlockall",			/* 242 = mlockall */
 	"munlockall",			/* 243 = munlockall */
-	"#244 (unimplemented)",		/* 244 = unimplemented */
-	"#245 (unimplemented)",		/* 245 = unimplemented */
+	"__sigtimedwait",			/* 244 = __sigtimedwait */
+	"#245 (unimplemented sys_sigqueue)",		/* 245 = unimplemented sys_sigqueue */
 	"#246 (unimplemented)",		/* 246 = unimplemented */
-	"#247 (unimplemented)",		/* 247 = unimplemented */
-	"#248 (unimplemented)",		/* 248 = unimplemented */
-	"#249 (unimplemented)",		/* 249 = unimplemented */
-	"#250 (unimplemented)",		/* 250 = unimplemented */
-	"#251 (unimplemented)",		/* 251 = unimplemented */
-	"#252 (unimplemented)",		/* 252 = unimplemented */
-	"#253 (unimplemented)",		/* 253 = unimplemented */
-	"#254 (unimplemented)",		/* 254 = unimplemented */
-	"#255 (unimplemented)",		/* 255 = unimplemented */
-	"#256 (unimplemented)",		/* 256 = unimplemented */
-	"#257 (unimplemented)",		/* 257 = unimplemented */
-	"#258 (unimplemented)",		/* 258 = unimplemented */
-	"#259 (unimplemented)",		/* 259 = unimplemented */
-	"#260 (unimplemented)",		/* 260 = unimplemented */
-	"#261 (unimplemented)",		/* 261 = unimplemented */
-	"#262 (unimplemented)",		/* 262 = unimplemented */
-	"#263 (unimplemented)",		/* 263 = unimplemented */
-	"#264 (unimplemented)",		/* 264 = unimplemented */
-	"#265 (unimplemented)",		/* 265 = unimplemented */
-	"#266 (unimplemented)",		/* 266 = unimplemented */
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+	"_ksem_init",			/* 247 = _ksem_init */
+	"_ksem_open",			/* 248 = _ksem_open */
+	"_ksem_unlink",			/* 249 = _ksem_unlink */
+	"_ksem_close",			/* 250 = _ksem_close */
+	"_ksem_post",			/* 251 = _ksem_post */
+	"_ksem_wait",			/* 252 = _ksem_wait */
+	"_ksem_trywait",			/* 253 = _ksem_trywait */
+	"_ksem_getvalue",			/* 254 = _ksem_getvalue */
+	"_ksem_destroy",			/* 255 = _ksem_destroy */
+	"#256 (unimplemented sys__ksem_timedwait)",		/* 256 = unimplemented sys__ksem_timedwait */
+#else
+	"#247 (excluded sys__ksem_init)",		/* 247 = excluded sys__ksem_init */
+	"#248 (excluded sys__ksem_open)",		/* 248 = excluded sys__ksem_open */
+	"#249 (excluded sys__ksem_unlink)",		/* 249 = excluded sys__ksem_unlink */
+	"#250 (excluded sys__ksem_close)",		/* 250 = excluded sys__ksem_close */
+	"#251 (excluded sys__ksem_post)",		/* 251 = excluded sys__ksem_post */
+	"#252 (excluded sys__ksem_wait)",		/* 252 = excluded sys__ksem_wait */
+	"#253 (excluded sys__ksem_trywait)",		/* 253 = excluded sys__ksem_trywait */
+	"#254 (excluded sys__ksem_getvalue)",		/* 254 = excluded sys__ksem_getvalue */
+	"#255 (excluded sys__ksem_destroy)",		/* 255 = excluded sys__ksem_destroy */
+	"#256 (unimplemented sys__ksem_timedwait)",		/* 256 = unimplemented sys__ksem_timedwait */
+#endif
+	"#257 (unimplemented sys_mq_open)",		/* 257 = unimplemented sys_mq_open */
+	"#258 (unimplemented sys_mq_close)",		/* 258 = unimplemented sys_mq_close */
+	"#259 (unimplemented sys_mq_unlink)",		/* 259 = unimplemented sys_mq_unlink */
+	"#260 (unimplemented sys_mq_getattr)",		/* 260 = unimplemented sys_mq_getattr */
+	"#261 (unimplemented sys_mq_setattr)",		/* 261 = unimplemented sys_mq_setattr */
+	"#262 (unimplemented sys_mq_notify)",		/* 262 = unimplemented sys_mq_notify */
+	"#263 (unimplemented sys_mq_send)",		/* 263 = unimplemented sys_mq_send */
+	"#264 (unimplemented sys_mq_receive)",		/* 264 = unimplemented sys_mq_receive */
+	"#265 (unimplemented sys_mq_timedsend)",		/* 265 = unimplemented sys_mq_timedsend */
+	"#266 (unimplemented sys_mq_timedreceive)",		/* 266 = unimplemented sys_mq_timedreceive */
 	"#267 (unimplemented)",		/* 267 = unimplemented */
 	"#268 (unimplemented)",		/* 268 = unimplemented */
 	"#269 (unimplemented)",		/* 269 = unimplemented */
@@ -431,17 +445,17 @@ const char *const pecoff_syscallnames[] = {
 	"lchflags",			/* 304 = lchflags */
 	"issetugid",			/* 305 = issetugid */
 	"utrace",			/* 306 = utrace */
-	"#307 (unimplemented)",		/* 307 = unimplemented */
-	"#308 (unimplemented)",		/* 308 = unimplemented */
-	"#309 (unimplemented)",		/* 309 = unimplemented */
-	"#310 (unimplemented)",		/* 310 = unimplemented */
-	"#311 (unimplemented)",		/* 311 = unimplemented */
-	"#312 (unimplemented)",		/* 312 = unimplemented */
-	"#313 (unimplemented)",		/* 313 = unimplemented */
-	"#314 (unimplemented)",		/* 314 = unimplemented */
-	"#315 (unimplemented)",		/* 315 = unimplemented */
-	"#316 (unimplemented)",		/* 316 = unimplemented */
-	"#317 (unimplemented)",		/* 317 = unimplemented */
+	"getcontext",			/* 307 = getcontext */
+	"setcontext",			/* 308 = setcontext */
+	"_lwp_create",			/* 309 = _lwp_create */
+	"_lwp_exit",			/* 310 = _lwp_exit */
+	"_lwp_self",			/* 311 = _lwp_self */
+	"_lwp_wait",			/* 312 = _lwp_wait */
+	"_lwp_suspend",			/* 313 = _lwp_suspend */
+	"_lwp_continue",			/* 314 = _lwp_continue */
+	"_lwp_wakeup",			/* 315 = _lwp_wakeup */
+	"_lwp_getprivate",			/* 316 = _lwp_getprivate */
+	"_lwp_setprivate",			/* 317 = _lwp_setprivate */
 	"#318 (unimplemented)",		/* 318 = unimplemented */
 	"#319 (unimplemented)",		/* 319 = unimplemented */
 	"#320 (unimplemented)",		/* 320 = unimplemented */
@@ -454,14 +468,28 @@ const char *const pecoff_syscallnames[] = {
 	"#327 (unimplemented)",		/* 327 = unimplemented */
 	"#328 (unimplemented)",		/* 328 = unimplemented */
 	"#329 (unimplemented)",		/* 329 = unimplemented */
-	"#330 (unimplemented)",		/* 330 = unimplemented */
-	"#331 (unimplemented)",		/* 331 = unimplemented */
-	"#332 (unimplemented)",		/* 332 = unimplemented */
-	"#333 (unimplemented)",		/* 333 = unimplemented */
-	"#334 (unimplemented)",		/* 334 = unimplemented */
-	"#335 (unimplemented)",		/* 335 = unimplemented */
+	"sa_register",			/* 330 = sa_register */
+	"sa_stacks",			/* 331 = sa_stacks */
+	"sa_enable",			/* 332 = sa_enable */
+	"sa_setconcurrency",			/* 333 = sa_setconcurrency */
+	"sa_yield",			/* 334 = sa_yield */
+	"sa_preempt",			/* 335 = sa_preempt */
 	"#336 (unimplemented)",		/* 336 = unimplemented */
 	"#337 (unimplemented)",		/* 337 = unimplemented */
 	"#338 (unimplemented)",		/* 338 = unimplemented */
 	"#339 (unimplemented)",		/* 339 = unimplemented */
+	"__sigaction_sigtramp",			/* 340 = __sigaction_sigtramp */
+	"pmc_get_info",			/* 341 = pmc_get_info */
+	"pmc_control",			/* 342 = pmc_control */
+	"rasctl",			/* 343 = rasctl */
+	"kqueue",			/* 344 = kqueue */
+	"kevent",			/* 345 = kevent */
+	"#346 (unimplemented sys_sched_setparam)",		/* 346 = unimplemented sys_sched_setparam */
+	"#347 (unimplemented sys_sched_getparam)",		/* 347 = unimplemented sys_sched_getparam */
+	"#348 (unimplemented sys_sched_setscheduler)",		/* 348 = unimplemented sys_sched_setscheduler */
+	"#349 (unimplemented sys_sched_getscheduler)",		/* 349 = unimplemented sys_sched_getscheduler */
+	"#350 (unimplemented sys_sched_yield)",		/* 350 = unimplemented sys_sched_yield */
+	"#351 (unimplemented sys_sched_get_priority_max)",		/* 351 = unimplemented sys_sched_get_priority_max */
+	"#352 (unimplemented sys_sched_get_priority_min)",		/* 352 = unimplemented sys_sched_get_priority_min */
+	"#353 (unimplemented sys_sched_rr_get_interval)",		/* 353 = unimplemented sys_sched_rr_get_interval */
 };
