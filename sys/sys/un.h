@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.33 2003/11/29 10:02:42 matt Exp $	*/
+/*	$NetBSD: un.h,v 1.34 2004/04/18 18:48:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,25 +63,25 @@ struct	sockaddr_un {
 struct unpcb;
 struct socket;
 
-int	unp_attach __P((struct socket *));
-int	unp_bind __P((struct unpcb *, struct mbuf *, struct proc *));
-int	unp_connect __P((struct socket *, struct mbuf *, struct proc *));
-int	unp_connect2 __P((struct socket *, struct socket *, int));
-void	unp_detach __P((struct unpcb *));
-void	unp_discard __P((struct file *));
-void	unp_disconnect __P((struct unpcb *));
-void	unp_drop __P((struct unpcb *, int));
-void	unp_gc __P((void));
-void	unp_mark __P((struct file *));
-void	unp_scan __P((struct mbuf *, void (*)(struct file *), int));
-void	unp_shutdown __P((struct unpcb *));
-int 	unp_externalize __P((struct mbuf *));
-int	unp_internalize __P((struct mbuf *, struct proc *));
-void 	unp_dispose __P((struct mbuf *));
-int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *,
-	    struct proc *));
-void	unp_setsockaddr __P((struct unpcb *, struct mbuf *));
-void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
+int	unp_attach (struct socket *);
+int	unp_bind (struct unpcb *, struct mbuf *, struct proc *);
+int	unp_connect (struct socket *, struct mbuf *, struct proc *);
+int	unp_connect2 (struct socket *, struct socket *, int);
+void	unp_detach (struct unpcb *);
+void	unp_discard (struct file *);
+void	unp_disconnect (struct unpcb *);
+void	unp_drop (struct unpcb *, int);
+void	unp_gc (void);
+void	unp_mark (struct file *);
+void	unp_scan (struct mbuf *, void (*)(struct file *), int);
+void	unp_shutdown (struct unpcb *);
+int 	unp_externalize (struct mbuf *);
+int	unp_internalize (struct mbuf *, struct proc *);
+void 	unp_dispose (struct mbuf *);
+int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
+	    struct proc *);
+void	unp_setsockaddr (struct unpcb *, struct mbuf *);
+void	unp_setpeeraddr (struct unpcb *, struct mbuf *);
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */
