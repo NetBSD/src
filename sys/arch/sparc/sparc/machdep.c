@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.27 1994/09/25 20:52:58 deraadt Exp $
+ * $Id: machdep.c,v 1.28 1994/10/15 05:51:21 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -861,21 +861,31 @@ dumpsys()
 	}
 }
 
+int bt2pmt[] = {
+	PMAP_OBIO,
+	PMAP_OBIO,
+	PMAP_VME16,
+	PMAP_VME32,
+	PMAP_OBIO
+};
+
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
- *	mydev = (struct mydev *)mapdev(myioaddr, 0, sizeof(struct mydev));
+ *	mydev = (struct mydev *)mapdev(myioaddr, 0, sizeof(struct mydev), pmtype);
  *
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, size)
+mapdev(phys, virt, size, bustype)
 	register void *phys;
 	register int virt, size;
+	register int bustype;
 {
 	register vm_offset_t v;
 	register void *ret;
 	static vm_offset_t iobase;
+	int pmtype = bt2pmt[bustype];
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -893,7 +903,7 @@ mapdev(phys, virt, size)
 	phys = (void *)trunc_page(phys);
 	do {
 		pmap_enter(kernel_pmap, v,
-		    (vm_offset_t)phys | PMAP_OBIO | PMAP_NC,
+		    (vm_offset_t)phys | pmtype | PMAP_NC,
 		    VM_PROT_READ | VM_PROT_WRITE, 1);
 		v += PAGE_SIZE;
 		phys += PAGE_SIZE;

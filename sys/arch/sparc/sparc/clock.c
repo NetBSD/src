@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.11 1994/10/02 22:00:42 deraadt Exp $
+ * $Id: clock.c,v 1.12 1994/10/15 05:51:19 deraadt Exp $
  */
 
 /*
@@ -146,7 +146,8 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T08 is 8K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_paddr, 2 * NBPG);
+		cl = (struct clockreg *)mapiodev(ra->ra_paddr, 2 * NBPG,
+		    ca->ca_bustype);
 		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
 		pmap_changeprot(kernel_pmap, (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
 		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
@@ -154,7 +155,8 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T02 is 2K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg);
+		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg,
+		    ca->ca_bustype);
 		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
 		idp = &cl->cl_idprom;
 	}
@@ -202,7 +204,8 @@ timerattach(parent, self, aux)
 	 * we have a fixed virtual address for the timer, to make
 	 * microtime() faster.
 	 */
-	(void)mapdev(ra->ra_paddr, TIMERREG_VA, sizeof(struct timerreg));
+	(void)mapdev(ra->ra_paddr, TIMERREG_VA, sizeof(struct timerreg),
+	    ca->ca_bustype);
 	timerok = 1;
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
