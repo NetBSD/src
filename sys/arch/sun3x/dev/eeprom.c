@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.2 1997/03/18 23:49:07 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.3 1997/04/25 18:57:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,12 +80,6 @@ struct cfdriver eeprom_cd = {
 	NULL, "eeprom", DV_DULL
 };
 
-/* Called very early by internal_configure. */
-void eeprom_init()
-{
-	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
-}
-
 static int
 eeprom_match(parent, cf, args)
     struct device *parent;
@@ -102,9 +96,6 @@ eeprom_match(parent, cf, args)
 	if (ca->ca_paddr != OBIO_EEPROM)
 		return (0);
 
-	if (eeprom_va == NULL)
-		return (0);
-
 	return (1);
 }
 
@@ -117,6 +108,10 @@ eeprom_attach(parent, self, args)
 	char *src, *dst, *lim;
 
 	printf("\n");
+
+	eeprom_va = obio_mapin(OBIO_EEPROM, OBIO_EEPROM_SIZE);
+	if (!eeprom_va)
+		panic("eeprom_attach");
 
 	/* Keep a "soft" copy of the EEPROM to make access simpler. */
 	ee_rambuf = malloc(sizeof(struct eeprom), M_DEVBUF, M_NOWAIT);
