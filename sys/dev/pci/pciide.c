@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.82 2000/08/01 21:02:55 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.83 2000/08/02 20:23:45 bouyer Exp $	*/
 
 
 /*
@@ -2201,6 +2201,21 @@ cmd0643_9_chip_map(sc, pa)
 			if (rev >= CMD0646U2_REV) {
 				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 				sc->sc_wdcdev.UDMA_cap = 2;
+			} else if (rev >= CMD0646U_REV) {
+			/*
+			 * Linux's driver claims that the 646U is broken
+			 * with UDMA. Only enable it if we know what we're
+			 * doing
+			 */
+#ifdef PCIIDE_CMD0646U_UDMA
+				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+				sc->sc_wdcdev.UDMA_cap = 2;
+#endif
+				/* explicitely disable UDMA */
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    CMD_UDMATIM(0), 0);
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    CMD_UDMATIM(1), 0);
 			}
 			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
