@@ -1,10 +1,10 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.8 2003/01/04 12:55:33 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.9 2003/01/23 16:24:08 lukem Exp $
 .\"
-.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Todd Vierling.
+.\" by Todd Vierling and Luke Mewburn.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd January 4, 2003
+.Dd January 24, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -95,7 +95,7 @@ build process.
 .Pp
 .Bd -ragged -offset indent
 .Em Note :
-A couple host toolchain components are not yet available in the tools
+A couple of host toolchain components are not yet available in the tools
 directory.
 Also, some tools use non-POSIX, non-ANSI C extensions
 and need to be standardized.
@@ -754,7 +754,13 @@ will be built in the proper order.
 Do a
 .Dq make build ,
 and then install a full distribution into
-.Sy DESTDIR .
+.Sy DESTDIR ,
+including files in
+.Pa /dev ,
+.Pa /etc ,
+.Pa /root
+and
+.Pa /var .
 .
 .It Sy buildworld
 As per
@@ -762,7 +768,6 @@ As per
 except that it ensures that
 .Sy DESTDIR
 is not the root directory.
-.
 .
 .It Sy installworld
 Install the distribution from
@@ -780,7 +785,8 @@ before performing this operation.
 .
 .It Sy release
 Do a
-.Dq make build ,
+.Dq make distribution ,
+build kernels, distribution media, and install sets, and
 then package the system into a standard release layout as described by
 .Xr release 7 .
 This requires that
@@ -829,9 +835,83 @@ process.
 In the list of options below, variables that are automatically set by
 .Sy build.sh
 are noted where applicable.
+.
 .Pp
-The following are available command line options that may be supplied to
+The following operations are supported by
 .Sy build.sh :
+.
+.Bl -tag -width "distribution"
+.
+.It Sy build
+Build the system as per
+.Dq make build .
+This option implies the
+.Sy obj
+and
+.Sy tools
+operations.
+.
+.It Sy distribution
+Build a full distribution as per
+.Dq make distribution .
+This option implies the
+.Sy build
+operation.
+.
+.It Sy release
+Build a full release as per
+.Dq make release .
+This option implies the
+.Sy distribution
+operation.
+.
+.It Sy obj
+Perform
+.Dq make obj .
+.It Sy tools
+Build and install the host tools from
+.Pa src/tools .
+.It Sy kernel Ns = Ns Ar kconf
+Build a new kernel.
+The
+.Ar kconf
+argument is the name of a configuration file suitable
+for use by
+.Xr config 8 .
+If
+.Ar kconf
+does not contain any
+.Sq /
+characters, the configuration file is expected to be found in the
+.Sy KERNCONFDIR
+directory, which is typically
+.Sy sys/arch/MACHINE/conf .
+The new kernel will be built in a subdirectory of
+.Sy KERNOBJDIR ,
+which is typically
+.Sy sys/arch/MACHINE/compile
+or an associated object directory.
+In order to ensure that the kernel is built using up-to-date tools,
+it is strongly recommended that the tools be rebuilt (using the
+.Sy tools
+operation).
+.
+.It Sy install Ns = Ns Ar idir
+Install the contents of
+.Dv DESTDIR
+to
+.Ar idir ,
+using
+.Dq make installworld .
+.
+.El
+.
+.Pp
+The following command line options alter the behaviour of the above
+operations:
+The following command line options alter the behaviour of the
+.Sy build.sh
+operations described above:
 .
 .Bl -tag -width "-T tools"
 .
@@ -851,33 +931,11 @@ This will also append the build idenfitier to the name of the
 wrapper script so that the resulting name is of the form
 .Dq Sy nbmake-MACHINE-BUILDID .
 .
-.It Fl b
-Bootstrap
-.Dq make
-and create a
-.Sy nbmake-MACHINE
-script (see below).
-.
 .It Fl D Ar dest
 Set the value of
 .Sy DESTDIR
 to
 .Ar dest .
-.
-.It Fl d
-Build a full distribution.
-This differs from a default build in that files will also be installed to
-.Pa /dev ,
-.Pa /etc ,
-.Pa /root
-and
-.Pa /var .
-Note this does not build a
-.Dq release ;
-no release sets are placed in ${RELEASEDIR}.
-.Fl d
-is implied by
-.Fl R .
 .
 .It Fl E
 Set
@@ -886,15 +944,6 @@ mode;
 .Sy DESTDIR
 does not have to be set to a non-root path for builds when this is set.
 .
-.It Fl i Ar installworlddir
-Install the contents of
-.Dv DESTDIR
-to
-.Ar installworlddir
-after all other operations have completed, using the top level
-.Dq installworld
-target.
-.
 .It Fl j Ar njob
 Passed through to 
 .Xr make 1 .
@@ -902,40 +951,6 @@ Makefiles should use .WAIT or have explicit dependancies
 as necessary to enforce build ordering.
 If you see build failures with -j, please save complete build logs 
 so the failures can be analyzed.
-.
-.It Fl k Em kernel
-Build a new kernel.
-The
-.Ar kernel
-argument is the name of a configuration file suitable
-for use by
-.Xr config 8 .
-If
-.Ar kernel
-does not contain any
-.Sq /
-characters, the configuration file is expected to be found in the
-.Sy KERNCONFDIR
-directory, which is typically
-.Sy sys/arch/MACHINE/conf .
-The new kernel will be built in a subdirectory of
-.Sy KERNOBJDIR ,
-which is typically
-.Sy sys/arch/MACHINE/compile
-or an associated object directory.
-In order to ensure that the kernel is built using up-to-date tools,
-it is strongly recommended that the tools be rebuilt (using the
-.Fl t 
-option) in a separate invocation of
-.Nm build.sh
-prior to using the
-.Fl k
-option, or that the
-.Fl t
-and
-.Fl k
-options be used together in a single invocation of
-.Nm build.sh .
 .
 .It Fl M Ar obj
 Set
@@ -989,12 +1004,6 @@ Set the value of
 .Sy RELEASEDIR
 to
 .Ar rel .
-Setting this option will cause
-.Sy build.sh
-to run
-.Dq make release
-instead of
-.Dq make build .
 .
 .It Fl r
 Remove the contents of
@@ -1016,13 +1025,6 @@ If set, the bootstrap
 will only be rebuilt as needed (when the source files for
 .Xr make 1
 change).
-.
-.It Fl t
-Build and install the host tools from
-.Pa src/tools
-only.
-This option implies
-.Fl b .
 .
 .It Fl U
 Set the
@@ -1094,22 +1096,41 @@ or called with an absolute path.
 .
 .Sh EXAMPLES
 .Bl -tag -width "build.sh"
-.It Li "./build.sh -t"
+.
+.It Li "./build.sh tools"
 Build a new toolchain.
+.
 .It Li "cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC"
 Use the new version of
 .Xr config 8
 to prepare to build a new GENERIC kernel.
+.
 .It Li "cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall"
 Use the new toolchain to build a new GENERIC kernel.
-.It Li "./build.sh -t -k GENERIC"
+.
+.It Li "./build.sh tools kernel=GENERIC"
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
-.It Li "./build.sh -U -d"
+This is a simpler way to achieve what the first three examples do.
+.
+.It Li "./build.sh -U distribution"
 Using unprivileged mode,
 build a complete distribution in
 .Sy DESTDIR .
-.It Li "./build.sh -U -R /some/dir/RELEASE"
+.
+.It Li "# ./build.sh -U installworld=/"
+As root, install the distribution that was built with unprivileged mode from
+.Sy DESTDIR
+to
+.Pa / .
+(Even though this is run as root,
+.Fl U
+is required so that the permissions stored in
+.Sy DESTDIR Ns Pa /METALOG
+are correctly applied to the files as they're copied to
+.Pa / ) .
+.
+.It Li "./build.sh -U -R /some/dir/RELEASE release"
 Using unprivileged mode,
 build a complete release in the specified release directory.
 .El
