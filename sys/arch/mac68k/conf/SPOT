@@ -1,12 +1,11 @@
-#	$NetBSD: PETE,v 1.1 1996/02/10 23:42:31 scottr Exp $
+#	$NetBSD: SPOT,v 1.1 1996/02/11 00:17:13 scottr Exp $
 #
-# Just like GENERIC, but uses the `sbc' driver instead of `ncrscsi'.
+# SPOT
 
 include	"std.mac68k"
 
 maxusers	16
 
-# obsolete timezone spec
 options         MAXFDESCS=2048
 
 # Standard system options
@@ -25,7 +24,7 @@ options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
 #options	NFSSERVER	# Sun NFS-compatible filesystem
 options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		NULLFS		# Null (formerly loop-back) filesystem
+#options	NULLFS		# Null (formerly loop-back) filesystem
 options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
@@ -46,7 +45,7 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 options		COMPAT_42
 options		COMPAT_43
-options		NS
+#options	NS
 options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
@@ -54,7 +53,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 options		M68040
 options		M68030		# Includes the 020+851
 options		FPSP
-options		FPU_EMULATE
+#options	FPU_EMULATE
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
@@ -68,7 +67,7 @@ ae*	at nubus0	slot -1   id ?   claimed 0
 
 #ncrscsi0	at mainbus?		# SCSI NCR 5380
 #ncr96scsi0	at mainbus?		# SCSI NCR 53C96
-sbc0		at mainbus?		# MI SCSI NCR 5380
+sbc0		at mainbus?		# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
@@ -76,9 +75,9 @@ st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 
-pseudo-device	pty		16
-pseudo-device	bpfilter	12
+pseudo-device	pty		32
+pseudo-device	bpfilter	16
 pseudo-device	vnd		2
 pseudo-device	ppp		2
 pseudo-device	loop
-pseudo-device	sl
+#pseudo-device	sl
