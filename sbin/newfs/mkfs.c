@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.35 1999/03/16 21:52:34 wrstuden Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.36 1999/05/14 22:36:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.35 1999/03/16 21:52:34 wrstuden Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.36 1999/05/14 22:36:50 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,8 @@ static void clrblock __P((struct fs *, unsigned char *, int));
 static void setblock __P((struct fs *, unsigned char *, int));
 static int32_t calcipg __P((int32_t, int32_t, off_t *));
 static void swap_cg __P((struct cg *, struct cg *));
+
+static int count_digits __P((int));
 
 /*
  * make file system for cylinder-group style file systems
@@ -162,6 +164,7 @@ mkfs(pp, fsys, fi, fo)
 	time_t utime;
 	quad_t sizepb;
 	char *writebuf2;		/* dynamic buffer */
+	int nprintcols, printcolwidth;
 
 #ifndef STANDALONE
 	time(&utime);
@@ -597,6 +600,13 @@ next:
 #undef B2MBFACTOR
 	}
 	/*
+	 * Now determine how wide each column will be, and calculate how
+	 * many columns will fit in an 80 char line.
+	 */
+	printcolwidth = count_digits(
+			fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
+	nprintcols = 80 / (printcolwidth + 2);
+	/*
 	 * Now build the cylinders group blocks and
 	 * then print out indices of cylinder groups.
 	 */
@@ -606,9 +616,10 @@ next:
 		initcg(cylno, utime);
 		if (mfs)
 			continue;
-		if (cylno % 8 == 0)
+		if (cylno % nprintcols == 0)
 			printf("\n");
-		printf(" %d,", fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		printf(" %*d,", printcolwidth,
+				fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
 	if (!mfs)
@@ -1409,4 +1420,16 @@ copy_dir(dir, dbuf)
 			((struct odirect*)dbuf)->d_namlen =
 				bswap16(((struct odirect*)dir)->d_namlen);
 	}
+}
+
+/* Determine how many digits are needed to print a given integer */
+static int
+count_digits(num)
+	int num;
+{
+	int ndig;
+
+	for(ndig = 1; num > 9; num /=10, ndig++);
+
+	return (ndig);
 }
