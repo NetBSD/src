@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1999/09/08 21:57:19 jsm Exp $	*/
+/*	$NetBSD: misc.c,v 1.6.6.1 2000/01/21 18:27:34 jdc Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -937,16 +937,16 @@ void
 error(whichfile)
 	const char   *whichfile;
 {
-	int     (*funcp) __P((const char *,...));
-
 	if (Windows) {
-		funcp = printw;
+		printw ("An unrecoverable error has occurred reading %s.
+		    (errno = %d)\n", whichfile, errno);
+		printw ("Please run 'setup' to determine the problem.\n");
 		clear();
 	} else
-		funcp = printf;
+		printf ("An unrecoverable error has occurred reading %s.
+		    (errno = %d)\n", whichfile, errno);
+		printf ("Please run 'setup' to determine the problem.\n");
 
-	(*funcp) ("An unrecoverable error has occurred reading %s.  (errno = %d)\n", whichfile, errno);
-	(*funcp) ("Please run 'setup' to determine the problem.\n");
 	cleanup(TRUE);
 	/* NOTREACHED */
 }
