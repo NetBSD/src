@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.50 1998/09/13 01:51:29 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.51 1998/09/24 23:28:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,11 +29,12 @@
 
 .stabs	__FILE__,100,0,0,kernel_text
 
+#include "opt_multiprocessor.h"
 #include "opt_uvm.h"
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.50 1998/09/13 01:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.51 1998/09/24 23:28:18 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -181,6 +182,17 @@ Lstart1: LDGP(pv)
  * XXX Eventually, we want to do these with inline __asm() statements.
  */
 #include <alpha/alpha/bwx.s>
+
+/**************************************************************************/
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Pull in the multiprocssor glue.
+ */
+#include <alpha/alpha/multiproc.s>
+#endif /* MULTIPROCESSOR */
+
+/**************************************************************************/
 
 /**************************************************************************/
 
