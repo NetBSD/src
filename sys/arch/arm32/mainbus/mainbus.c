@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.12 1998/01/13 02:10:19 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.13 1998/01/18 03:42:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -129,7 +129,6 @@ mainbussearch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)parent;
 	struct mainbus_attach_args mb;
 	int tryagain;
 
