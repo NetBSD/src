@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.36 2003/10/21 02:15:00 fvdl Exp $	*/
+/*	$NetBSD: record.c,v 1.37 2004/07/19 19:15:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.36 2003/10/21 02:15:00 fvdl Exp $");
+__RCSID("$NetBSD: record.c,v 1.37 2004/07/19 19:15:05 mycroft Exp $");
 #endif
 
 
@@ -77,7 +77,7 @@ int	channels;
 struct timeval record_time;
 struct timeval start_time;
 
-void (*conv_func) (u_char *, size_t);
+void (*conv_func) (u_char *, int);
 
 void usage (void);
 int main (int, char *[]);
