@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.38 2003/07/17 13:56:33 skrll Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.39 2003/07/24 10:12:28 skrll Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -42,8 +42,7 @@ void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 
 void
-_rtld_setup_pltgot(obj)
-	const Obj_Entry *obj;
+_rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
 	/* XXX only if obj->pltgot[1] & 0x80000000 ?? */
@@ -51,9 +50,7 @@ _rtld_setup_pltgot(obj)
 }
 
 void
-_rtld_relocate_nonplt_self(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rel *rel = 0, *rellim;
 	Elf_Addr relsz = 0;
@@ -149,8 +146,7 @@ store_ptr(void *where, Elf_Addr val)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
@@ -304,17 +300,14 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	/* PLT fixups were done above in the GOT relocation. */
 	return 0;
 }
 
 caddr_t
-_rtld_bind(a0, a1, a2, a3)
-	Elf_Word a0;
-	Elf_Addr a1, a2, a3;
+_rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 {
 	Elf_Addr *got = (Elf_Addr *)(a2 - 0x7ff0);
 	const Obj_Entry *obj = (Obj_Entry *)(got[1] & 0x7fffffff);
