@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41.4.1 2002/05/16 16:50:16 gehenna Exp $ */
+/*	$NetBSD: grf.c,v 1.41.4.2 2002/05/16 16:54:30 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.1 2002/05/16 16:50:16 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.2 2002/05/16 16:54:30 gehenna Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -270,8 +270,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * view code if the unit is 0
 		 * XXX
 		 */
-		if (GRFUNIT(dev) == 0)
-			return(viewioctl(dev, cmd, data, flag, p));
+		if (GRFUNIT(dev) == 0) {
+			extern const struct cdevsw view_cdevsw;
+
+			return((*view_cdevsw.d_ioctl)(dev, cmd, data, flag, p));
+		}
 #endif
 		error = EPASSTHROUGH;
 		break;
