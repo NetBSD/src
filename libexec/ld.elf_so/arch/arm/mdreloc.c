@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.16 2002/09/15 00:52:08 thorpej Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.17 2002/09/15 01:08:04 thorpej Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -93,17 +93,11 @@ _rtld_relocate_nonplt_objects(obj, self)
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC24): {	/* word32 S - P + A */
 			Elf32_Sword addend;
-			Elf_Addr val;
 
 			/*
 			 * Extract addend and sign-extend if needed.
 			 */
-			if (__predict_true(RELOC_ALIGNED_P(where)))
-				val = *where;
-			else
-				val = load_ptr(where);
-
-			addend = val;
+			addend = *where;
 			if (addend & 0x00800000)
 				addend |= 0xff000000;
 
@@ -123,14 +117,10 @@ _rtld_relocate_nonplt_objects(obj, self)
 				return -1;
 			}
 			tmp >>= 2;
-			val = (val & 0xff000000) | (tmp & 0x00ffffff);
-			if (__predict_true(RELOC_ALIGNED_P(where)))
-				*where = val;
-			else
-				store_ptr(where, val);
+			*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
 			rdbg(("PC24 %s in %s --> %p @ %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)val, where, defobj->path));
+			    obj->path, (void *)*where, where, defobj->path));
 			break;
 		}
 #endif
