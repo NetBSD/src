@@ -33,15 +33,11 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: context.c,v 1.1.1.1.2.1 2000/07/16 20:07:06 thorpej Exp $");
+RCSID("$Id: context.c,v 1.1.1.1.2.2 2001/04/05 23:23:12 he Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
 						"libdefaults", F, NULL)
-
-#ifdef KRB4
-extern krb5_kt_ops krb4_fkt_ops;
-#endif
 
 /*
  * Set the list of etypes `ret_etypes' from the configuration variable
@@ -89,27 +85,26 @@ init_context_from_config_file(krb5_context context)
     INIT_FIELD(context, time, kdc_timeout, 3, "kdc_timeout");
     INIT_FIELD(context, int, max_retries, 3, "max_retries");
 
-    context->http_proxy = krb5_config_get_string(context, NULL, "libdefaults", 
-					   "http_proxy", NULL);
+    INIT_FIELD(context, string, http_proxy, NULL, "http_proxy");
 
     set_etypes (context, "default_etypes", &context->etypes);
     set_etypes (context, "default_etypes_des", &context->etypes_des);
 
     /* default keytab name */
-    context->default_keytab = krb5_config_get_string(context, NULL, 
-					       "libdefaults", 
-					       "default_keytab_name", 
-					       NULL);
-    if(context->default_keytab == NULL)
-	context->default_keytab = KEYTAB_DEFAULT;
+    INIT_FIELD(context, string, default_keytab, 
+	       KEYTAB_DEFAULT, "default_keytab_name");
 
-    context->time_fmt = krb5_config_get_string(context, NULL, "libdefaults", 
-					 "time_format", NULL);
-    if(context->time_fmt == NULL)
-	context->time_fmt = "%Y-%m-%dT%H:%M:%S";
-    context->log_utc = krb5_config_get_bool(context, NULL, "libdefaults",
-					    "log_utc", NULL);
+    INIT_FIELD(context, string, time_fmt, 
+	       "%Y-%m-%dT%H:%M:%S", "time_format");
 
+    INIT_FIELD(context, string, date_fmt, 
+	       "%Y-%m-%d", "date_format");
+
+    INIT_FIELD(context, bool, log_utc, 
+	       FALSE, "log_utc");
+
+
+    
     /* init dns-proxy slime */
     tmp = krb5_config_get_string(context, NULL, "libdefaults", 
 				 "dns_proxy", NULL);
@@ -147,10 +142,8 @@ init_context_from_config_file(krb5_context context)
     context->kt_types     = NULL;
     krb5_kt_register (context, &krb5_fkt_ops);
     krb5_kt_register (context, &krb5_mkt_ops);
-#ifdef KRB4
-    krb5_kt_register (context, &krb4_fkt_ops);
-#endif
     krb5_kt_register (context, &krb5_akf_ops);
+    krb5_kt_register (context, &krb4_fkt_ops);
     return 0;
 }
 
@@ -189,8 +182,10 @@ krb5_init_context(krb5_context *context)
     }
 
     ret = init_context_from_config_file(p);
-    if(ret)
+    if(ret) {
+	krb5_free_context(p);
 	return ret;
+    }
 
     *context = p;
     return 0;
@@ -213,12 +208,17 @@ krb5_free_context(krb5_context context)
   free(context);
 }
 
+/*
+ * set `etype' to a malloced list of the default enctypes
+ */
+
 static krb5_error_code
 default_etypes(krb5_enctype **etype)
 {
     krb5_enctype p[] = {
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_DES3_CBC_MD5,
+	ETYPE_ARCFOUR_HMAC_MD5,
 	ETYPE_DES_CBC_MD5,
 	ETYPE_DES_CBC_MD4,
 	ETYPE_DES_CBC_CRC,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +37,7 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$Id: asn1_print.c,v 1.1.1.1 2000/06/16 18:32:38 thorpej Exp $");
+RCSID("$Id: asn1_print.c,v 1.1.1.1.2.1 2001/04/05 23:23:04 he Exp $");
 
 static struct et_list *et_list;
 
@@ -99,6 +99,9 @@ loop (unsigned char *buf, size_t len, int indent)
 	ret = der_get_tag (buf, len, &class, &type, &tag, &sz);
 	if (ret)
 	    errx (1, "der_get_tag: %s", com_right (et_list, ret));
+	if (sz > len)
+	    errx (1, "unreasonable length (%u) > %u",
+		  (unsigned)sz, (unsigned)len);
 	buf += sz;
 	len -= sz;
 	for (i = 0; i < indent; ++i)

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: sys_bsd.c,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $");
+RCSID("$Id: sys_bsd.c,v 1.1.1.1.2.1 2001/04/05 23:22:54 he Exp $");
 
 /*
  * The following routines try to encapsulate what is system dependent
@@ -314,10 +314,10 @@ TerminalRestoreState()
 
 
 #ifdef	SIGTSTP
-static RETSIGTYPE susp();
+static RETSIGTYPE susp(int);
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
-static RETSIGTYPE ayt();
+static RETSIGTYPE ayt(int);
 #endif
 
 void
@@ -495,7 +495,7 @@ TerminalNewMode(int f)
     } else {
         sigset_t sm;
 #ifdef	SIGINFO
-	RETSIGTYPE ayt_status();
+	RETSIGTYPE ayt_status(int);
 
 	signal(SIGINFO, ayt_status);
 #endif
@@ -774,6 +774,11 @@ process_rings(int netin,
     int returnValue = 0;
     static struct timeval TimeValue = { 0 };
 
+    if (net >= FD_SETSIZE
+	|| tout >= FD_SETSIZE
+	|| tin >= FD_SETSIZE)
+	errx (1, "fd too large");
+
     if (netout) {
 	FD_SET(net, &obits);
     }
@@ -791,7 +796,7 @@ process_rings(int netin,
 	FD_SET(net, &xbits);
     }
 #endif
-    if ((c = select(16, &ibits, &obits, &xbits,
+    if ((c = select(FD_SETSIZE, &ibits, &obits, &xbits,
 			(poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
 	if (c == -1) {
 		    /*

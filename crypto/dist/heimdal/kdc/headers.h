@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: headers.h,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $ 
+ * $Id: headers.h,v 1.1.1.1.2.1 2001/04/05 23:23:00 he Exp $ 
  */
 
 #ifndef __HEADERS_H__
@@ -74,6 +74,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
 #include <err.h>
 #include <roken.h>
 #include <getarg.h>
@@ -83,7 +86,6 @@
 #include <krb5.h>
 #include <krb5_locl.h>
 #include <hdb.h>
-#include <hdb-private.h>	/* XXX */
 #include <hdb_err.h>
 #include <der.h> /* copy_octet_string */
 
@@ -96,5 +98,8 @@
 
 #undef ALLOC
 #define ALLOC(X) ((X) = malloc(sizeof(*(X))))
+#undef ALLOC_SEQ
+#define ALLOC_SEQ(X, N) do { (X)->len = (N); \
+(X)->val = calloc((X)->len, sizeof(*(X)->val)); } while(0)
 
 #endif /* __HEADERS_H__ */

@@ -1,4 +1,4 @@
-dnl $Id: krb-find-db.m4,v 1.1.1.1 2000/06/16 18:32:17 thorpej Exp $
+dnl $Id: krb-find-db.m4,v 1.1.1.1.2.1 2001/04/05 23:22:57 he Exp $
 dnl
 dnl find a suitable database library
 dnl
@@ -28,6 +28,8 @@ for i in $1; do
 #include <fcntl.h>
 #if defined(HAVE_NDBM_H)
 #include <ndbm.h>
+#elif defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
 #elif defined(HAVE_DBM_H)
 #include <dbm.h>
 #elif defined(HAVE_RPCSVC_DBM_H)

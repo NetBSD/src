@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$Id: hdb_err.et,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $"
+id "$Id: hdb_err.et,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $"
 
 error_table hdb
 
@@ -22,5 +22,6 @@ error_code BADLOCKMODE,		"Invalid kdb lock mode"
 error_code CANT_LOCK_DB,	"Insufficient access to lock database"
 error_code EXISTS,		"Entry already exists in database"
 error_code BADVERSION,		"Wrong database version"
+error_code NO_MKEY,		"No correct master key"
 
 end

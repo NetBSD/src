@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,9 +33,9 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: db.c,v 1.1.1.1 2000/06/16 18:32:48 thorpej Exp $");
+RCSID("$Id: db.c,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $");
 
-#ifdef HAVE_DB_H
+#if defined(HAVE_DB_H) && DB_VERSION_MAJOR < 3
 
 static krb5_error_code
 DB_close(krb5_context context, HDB *db)
@@ -102,13 +102,21 @@ DB_seq(krb5_context context, HDB *db,
     data.length = value.size;
     if (hdb_value2entry(context, &data, entry))
 	return DB_seq(context, db, flags, entry, R_NEXT);
-    if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	hdb_unseal_keys (db, entry);
-    if (entry->principal == NULL) {
-	entry->principal = malloc(sizeof(*entry->principal));
-	hdb_key2principal(context, &key_data, entry->principal);
+    if (db->master_key_set && (flags & HDB_F_DECRYPT)) {
+	code = hdb_unseal_keys (context, db, entry);
+	if (code)
+	    hdb_free_entry (context, entry);
     }
-    return 0;
+    if (code == 0 && entry->principal == NULL) {
+	entry->principal = malloc(sizeof(*entry->principal));
+	if (entry->principal == NULL) {
+	    code = ENOMEM;
+	    hdb_free_entry (context, entry);
+	} else {
+	    hdb_key2principal(context, &key_data, entry->principal);
+	}
+    }
+    return code;
 }
 
 

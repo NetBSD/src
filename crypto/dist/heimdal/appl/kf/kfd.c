@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "kf_locl.h"
-RCSID("$Id: kfd.c,v 1.1.1.1 2000/06/16 18:31:52 thorpej Exp $");
+RCSID("$Id: kfd.c,v 1.1.1.1.2.1 2001/04/05 23:22:48 he Exp $");
 
 krb5_context context;
 char krb5_tkfile[MAXPATHLEN];
@@ -266,7 +266,7 @@ proto (int sock, const char *service)
 			krb5_get_err_text(context, status));
         goto out;
     }
-    status = krb5_rd_cred (context, auth_context, ccache, &data);
+    status = krb5_rd_cred2 (context, auth_context, ccache, &data);
     krb5_cc_close (context, ccache);
     if (status) {
 	syslog_and_cont("krb5_rd_cred: %s",

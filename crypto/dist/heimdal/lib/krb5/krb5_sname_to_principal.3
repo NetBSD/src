@@ -1,5 +1,5 @@
 .\" Copyright (c) 1997 Kungliga Tekniska Högskolan
-.\" $Id: krb5_sname_to_principal.3,v 1.1.1.1 2000/06/16 18:32:58 thorpej Exp $
+.\" $Id: krb5_sname_to_principal.3,v 1.1.1.1.2.1 2001/04/05 23:23:13 he Exp $
 .Dd August 8, 1997
 .Dt KRB5_PRINCIPAL 3
 .Os HEIMDAL
@@ -7,18 +7,13 @@
 .Nm krb5_sname_to_principal ,
 .Nm krb5_sock_to_principal
 .Nd Create a service principal
-
 .Sh SYNOPSIS
 .Fd #include <krb5.h>
-
 .Ft krb5_error_code
 .Fn krb5_sname_to_principal "krb5_context context" "const char *hostname" "const char *sname" "int32_t type" "krb5_principal *principal"
-
 .Ft krb5_error_code
 .Fn krb5_sock_to_principal "krb5_context context" "int socket" "const char *sname" "int32_t type" "krb5_principal *principal"
-
 .Sh DESCRIPTION
-
 These functions create a 
 .Dq service
 principal that can, for instance, be used to lookup a key in a keytab. For both these function the
@@ -49,7 +44,6 @@ of the passed
 which should be a bound
 .Dv AF_INET
 socket.
-
 .Sh SEE ALSO
 .Xr krb5_425_conv_principal 3 ,
 .Xr krb5_build_principal 3 ,

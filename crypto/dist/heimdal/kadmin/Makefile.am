@@ -1,12 +1,16 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.1.2.1 2001/04/05 23:22:59 he Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_readline) $(INCLUDE_krb4)
+INCLUDES += $(INCLUDE_readline) $(INCLUDE_krb4) -I$(srcdir)/../lib/krb5
 
 sbin_PROGRAMS = kadmin
 
 libexec_PROGRAMS = kadmind
+
+man_MANS = kadmin.8 kadmind.8
+
+noinst_PROGRAMS = add_random_users
 
 kadmin_SOURCES =				\
 	ank.c					\
@@ -30,21 +34,29 @@ KRB4LIB = $(LIB_krb4)
 version4_c = version4.c
 endif
 
-kadmind_SOURCES = kadmind.c server.c kadmin_locl.h $(version4_c)
+kadmind_SOURCES =				\
+	kadmind.c				\
+	server.c				\
+	kadmin_locl.h				\
+	$(version4_c)				\
+	kadm_conn.c
 
 EXTRA_kadmind_SOURCES = version4.c
+
+add_random_users_SOURCES = add-random-users.c
 
 COMMON_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DBLIB)
 
 kadmind_LDADD = $(KRB4LIB) $(top_builddir)/lib/kadm5/libkadm5srv.la \
 	$(COMMON_LDADD) \
+	$(LIB_pidfile) \
 	$(LIB_dlopen)
 
 kadmin_LDADD = \
@@ -52,5 +64,11 @@ kadmin_LDADD = \
 	$(top_builddir)/lib/kadm5/libkadm5srv.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(LIB_readline) \
+	$(COMMON_LDADD) \
+	$(LIB_dlopen)
+
+add_random_users_LDADD = \
+	$(top_builddir)/lib/kadm5/libkadm5clnt.la \
+	$(top_builddir)/lib/kadm5/libkadm5srv.la \
 	$(COMMON_LDADD) \
 	$(LIB_dlopen)

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: network.c,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $");
+RCSID("$Id: network.c,v 1.1.1.1.2.1 2001/04/05 23:22:54 he Exp $");
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
@@ -69,6 +69,8 @@ stilloob(void)
 
     do {
 	FD_ZERO(&excepts);
+	if (net >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(net, &excepts);
 	value = select(net+1, 0, 0, &excepts, &timeout);
     } while ((value == -1) && (errno == EINTR));

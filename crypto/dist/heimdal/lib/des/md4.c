@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: md4.c,v 1.1.1.1 2000/06/16 18:32:25 thorpej Exp $");
+RCSID("$Id: md4.c,v 1.1.1.1.2.1 2001/04/05 23:23:06 he Exp $");
 #endif
 
 #include "md4.h"
@@ -47,7 +47,7 @@ RCSID("$Id: md4.c,v 1.1.1.1 2000/06/16 18:32:25 thorpej Exp $");
 #define X data
 
 void
-MD4Init (struct md4 *m)
+MD4_Init (struct md4 *m)
 {
   m->sz[0] = 0;
   m->sz[1] = 0;
@@ -175,7 +175,7 @@ struct x32{
 };
 
 void
-MD4Update (struct md4 *m, const void *v, size_t len)
+MD4_Update (struct md4 *m, const void *v, size_t len)
 {
     const unsigned char *p = v;
     size_t old_sz = m->sz[0];
@@ -210,7 +210,7 @@ MD4Update (struct md4 *m, const void *v, size_t len)
 }
 
 void
-MD4Final (void *res, struct md4 *m)
+MD4_Final (void *res, struct md4 *m)
 {
   static unsigned char zeros[72];
   unsigned offset = (m->sz[0] / 8) % 64;
@@ -226,7 +226,7 @@ MD4Final (void *res, struct md4 *m)
   zeros[dstart+5] = (m->sz[1] >> 8) & 0xff;
   zeros[dstart+6] = (m->sz[1] >> 16) & 0xff;
   zeros[dstart+7] = (m->sz[1] >> 24) & 0xff;
-  MD4Update (m, zeros, dstart + 8);
+  MD4_Update (m, zeros, dstart + 8);
   {
       int i;
       unsigned char *r = (unsigned char *)res;

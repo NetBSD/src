@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: kxd.c,v 1.1.1.1 2000/06/16 18:31:43 thorpej Exp $");
+RCSID("$Id: kxd.c,v 1.1.1.1.2.1 2001/04/05 23:22:49 he Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -73,7 +73,7 @@ fatal (kx_context *kc, int fd, char *format, ...)
     p = msg;
     *p++ = ERROR;
     vsnprintf ((char *)p + 4, sizeof(msg) - 5, format, args);
-    syslog (LOG_ERR, (char *)p + 4);
+    syslog (LOG_ERR, "%s", (char *)p + 4);
     len = strlen ((char *)p + 4);
     p += KRB_PUT_INT (len, p, 4, 4);
     p += len;
@@ -112,7 +112,7 @@ recv_conn (int sock, kx_context *kc,
 {
      u_char msg[1024], *p;
      char user[256];
-     int addrlen;
+     socklen_t addrlen;
      struct passwd *passwd;
      struct sockaddr_in thisaddr, thataddr;
      char remotehost[MaxHostNameLen];
@@ -295,7 +295,7 @@ doit_conn (kx_context *kc,
     int sock, sock2;
     struct sockaddr_in addr;
     struct sockaddr_in thisaddr;
-    int addrlen;
+    socklen_t addrlen;
     u_char msg[1024], *p;
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
@@ -493,9 +493,21 @@ doit_passive (kx_context *kc,
 	int cookiesp = TRUE;
 	       
 	FD_ZERO(&fds);
+	if (sock >= FD_SETSIZE) {
+	    syslog (LOG_ERR, "fd too large");
+	    cleanup(nsockets, sockets);
+	    return 1;
+	}
+
 	FD_SET(sock, &fds);
-	for (i = 0; i < nsockets; ++i)
+	for (i = 0; i < nsockets; ++i) {
+	    if (sockets[i].fd >= FD_SETSIZE) {
+		syslog (LOG_ERR, "fd too large");
+		cleanup(nsockets, sockets);
+		return 1;
+	    }
 	    FD_SET(sockets[i].fd, &fds);
+	}
 	ret = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
 	if(ret <= 0)
 	    continue;
@@ -509,7 +521,7 @@ doit_passive (kx_context *kc,
 		if (FD_ISSET(sockets[i].fd, &fds)) {
 		    if (sockets[i].flags == TCP) {
 			struct sockaddr_in peer;
-			int len = sizeof(peer);
+			socklen_t len = sizeof(peer);
 
 			fd = accept (sockets[i].fd,
 				     (struct sockaddr *)&peer,
@@ -524,7 +536,7 @@ doit_passive (kx_context *kc,
 			    errno = EINTR;
 			}
 		    } else if(sockets[i].flags == UNIX_SOCKET) {
-			int zero = 0;
+			socklen_t zero = 0;
 
 			fd = accept (sockets[i].fd, NULL, &zero);
 

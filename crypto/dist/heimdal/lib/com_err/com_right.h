@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_right.h,v 1.1.1.1 2000/06/16 18:32:20 thorpej Exp $ */
+/* $Id: com_right.h,v 1.1.1.1.2.1 2001/04/05 23:23:06 he Exp $ */
 
 #ifndef __COM_RIGHT_H__
 #define __COM_RIGHT_H__
@@ -60,7 +60,7 @@ struct et_list {
 extern struct et_list *_et_list;
 
 const char *com_right __P((struct et_list *list, long code));
-void initialize_error_table_r __P((struct et_list **, const char **, int, long);)
+void initialize_error_table_r __P((struct et_list **, const char **, int, long));
 void free_error_table __P((struct et_list *));
 
 #endif /* __COM_RIGHT_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_priv.c,v 1.1.1.1 2000/06/16 18:33:00 thorpej Exp $");
+RCSID("$Id: mk_priv.c,v 1.1.1.1.2.1 2001/04/05 23:23:13 he Exp $");
 
 /*
  *
@@ -76,7 +76,7 @@ krb5_mk_priv(krb5_context context,
   usec2          = usec;
   part.usec      = &usec2;
   if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
-    tmp_seq = ++auth_context->local_seqnumber;
+    tmp_seq = auth_context->local_seqnumber;
     part.seq_number = &tmp_seq;
   } else {
     part.seq_number = NULL;
@@ -117,7 +117,11 @@ krb5_mk_priv(krb5_context context,
   s.enc_part.etype = key->keytype;
   s.enc_part.kvno = NULL;
 
-  krb5_crypto_init(context, key, 0, &crypto);
+  ret = krb5_crypto_init(context, key, 0, &crypto);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_encrypt (context, 
 		      crypto,
 		      KRB5_KU_KRB_PRIV,
@@ -159,6 +163,9 @@ krb5_mk_priv(krb5_context context,
   }
   memcpy (outbuf->data, buf + buf_size - len, len);
   free (buf);
+  if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE)
+      auth_context->local_seqnumber =
+	  (auth_context->local_seqnumber + 1) & 0xFFFFFFFF;
   return 0;
 
 fail:

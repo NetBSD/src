@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: sha.c,v 1.1.1.1 2000/06/16 18:32:30 thorpej Exp $");
+RCSID("$Id: sha.c,v 1.1.1.1.2.1 2001/04/05 23:23:07 he Exp $");
 #endif
 
 #include "sha.h"
@@ -48,7 +48,7 @@ RCSID("$Id: sha.c,v 1.1.1.1 2000/06/16 18:32:30 thorpej Exp $");
 #define X data
 
 void
-SHA1Init (struct sha1 *m)
+SHA1_Init (struct sha *m)
 {
   m->sz[0] = 0;
   m->sz[1] = 0;
@@ -83,7 +83,7 @@ do { \
 } while(0)
 
 static inline void
-calc (struct sha1 *m, u_int32_t *in)
+calc (struct sha *m, u_int32_t *in)
 {
   u_int32_t AA, BB, CC, DD, EE;
   u_int32_t data[80];
@@ -225,7 +225,7 @@ struct x32{
 };
 
 void
-SHA1Update (struct sha1 *m, const void *v, size_t len)
+SHA1_Update (struct sha *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
   size_t old_sz = m->sz[0];
@@ -260,7 +260,7 @@ SHA1Update (struct sha1 *m, const void *v, size_t len)
 }
 
 void
-SHA1Final (void *res, struct sha1 *m)
+SHA1_Final (void *res, struct sha *m)
 {
   static unsigned char zeros[72];
   unsigned offset = (m->sz[0] / 8) % 64;
@@ -276,7 +276,7 @@ SHA1Final (void *res, struct sha1 *m)
   zeros[dstart+2] = (m->sz[1] >> 8) & 0xff;
   zeros[dstart+1] = (m->sz[1] >> 16) & 0xff;
   zeros[dstart+0] = (m->sz[1] >> 24) & 0xff;
-  SHA1Update (m, zeros, dstart + 8);
+  SHA1_Update (m, zeros, dstart + 8);
   {
       int i;
       unsigned char *r = (unsigned char*)res;
