@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.13 1994/09/18 00:00:43 deraadt Exp $
+ * $Id: conf.c,v 1.14 1994/11/02 05:00:40 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, int, caddr_t, int, struct proc *))
+	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
 #define	dev_type_stop(n) 	int n __P((struct tty *, int))
 
 /* bdevsw-specific types */
