@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.74.4.2 2002/03/12 00:14:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.74.4.3 2002/03/12 02:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74.4.2 2002/03/12 00:14:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74.4.3 2002/03/12 02:28:44 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -170,9 +170,9 @@ uvm_pageinsert(pg)
 
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm.hash_mutex);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm.hash_mutex);
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
 	pg->flags |= PG_TABLED;
@@ -195,9 +195,9 @@ uvm_pageremove(pg)
 
 	KASSERT(pg->flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(uobj ,pg->offset)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm.hash_mutex);
 	TAILQ_REMOVE(buck, pg, hashq);
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm.hash_mutex);
 
 	if (UVM_OBJ_IS_VTEXT(uobj)) {
 		uvmexp.execpages--;
@@ -264,7 +264,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	uvm.page_hashmask = 0;			/* mask for hash function */
 	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
 	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-	simple_lock_init(&uvm.hashlock);	/* init hash table lock */
+	mutex_init(&uvm.hash_mutex, MUTEX_DEFAULT, 0);
 
 	/*
 	 * allocate vm_page structures.
@@ -829,7 +829,7 @@ uvm_page_rehash()
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm.hash_mutex);
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
 	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
@@ -843,7 +843,7 @@ uvm_page_rehash()
 			  pg, hashq);
 		}
 	}
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm.hash_mutex);
 
 	/*
 	 * free old bucket array if is not the boot-time table

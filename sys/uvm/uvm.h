@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.31.6.5 2002/03/12 00:39:04 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.31.6.6 2002/03/12 02:28:44 thorpej Exp $	*/
 
 /*
  *
@@ -104,7 +104,7 @@ struct uvm {
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
-	struct simplelock hashlock;	/* lock on page_hash array */
+	kmutex_t hash_mutex;		/* mutex on page_hash array */
 
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */

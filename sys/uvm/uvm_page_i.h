@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.20.6.1 2002/03/12 00:03:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.20.6.2 2002/03/12 02:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -95,13 +95,13 @@ uvm_pagelookup(obj, off)
 	struct pglist *buck;
 
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
-	simple_lock(&uvm.hashlock);
+	mutex_enter(&uvm.hash_mutex);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
 			break;
 		}
 	}
-	simple_unlock(&uvm.hashlock);
+	mutex_exit(&uvm.hash_mutex);
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
