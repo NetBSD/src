@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.12 1993/04/22 20:20:56 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.13 1993/04/26 19:12:06 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -137,7 +137,7 @@ static unsigned int addr_6845 = MONO_BASE;
 u_short *Crtat = (u_short *)MONO_BUF;
 static openf;
 
-static char *sgetc __P((int));
+char *sgetc __P((int));
 static sputc __P((u_char, u_char));
 
 static	char	*more_chars;
