@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.50.4.2 2002/09/04 04:21:40 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.50.4.3 2003/11/30 19:01:06 he Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -521,6 +521,33 @@ ip_mrouter_done()
 	return (0);
 }
 
+void
+ip_mrouter_detach(ifp)
+	struct ifnet *ifp;
+{
+	int vifi, i;
+	struct vif *vifp;
+	struct mfc *rt;
+	struct rtdetq *rte;
+
+	/* XXX not sure about sideeffect to userland routing daemon */
+	for (vifi = 0; vifi < numvifs; vifi++) {
+		vifp = &viftable[vifi];
+		if (vifp->v_ifp == ifp)
+			reset_vif(vifp);
+	}
+	for (i = 0; i < MFCTBLSIZ; i++) {
+		if (nexpire[i]) == 0)
+			continue;
+		for (rt = mfchashtbl[i].lh_first; rt; rt = rt->mfc_hash.le_next) {
+			for (rte = rt->mfc_stall; rte; rte = rte->next) {
+				if (rte->ifp == ifp)
+					rte->ifp = NULL;
+			}
+		}
+	}
+}
+
 static int
 get_version(m)
 	struct mbuf *m;
@@ -849,11 +876,13 @@ add_mfc(m)
 			/* free packets Qed at the end of this entry */
 			for (; rte != 0; rte = nrte) {
 				nrte = rte->next;
+				if (rte->ifp) {
 #ifdef RSVP_ISI
-				ip_mdq(rte->m, rte->ifp, rt, -1);
+					ip_mdq(rte->m, rte->ifp, rt, -1);
 #else
-				ip_mdq(rte->m, rte->ifp, rt);
+					ip_mdq(rte->m, rte->ifp, rt);
 #endif /* RSVP_ISI */
+				}
 				m_freem(rte->m);
 #ifdef UPCALL_TIMING
 				collate(&rte->t);
