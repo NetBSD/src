@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.80 1998/12/13 00:11:37 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.80.2.1 1999/09/18 01:04:43 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -166,7 +166,7 @@
 **    The calculation below is actually quite silly ...
 */
 
-#define MAX_START   (MAX_TARGET + 7 * SCSI_NCR_DFLT_TAGS)
+#define MAX_START   (256)
 
 /*
 **    The maximum number of segments a transfer is split into.
@@ -1482,7 +1482,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.80 1998/12/13 00:11:37 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.80.2.1 1999/09/18 01:04:43 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
