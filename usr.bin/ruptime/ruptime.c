@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$Id: ruptime.c,v 1.3 1993/12/04 01:49:05 jtc Exp $";
+static char rcsid[] = "$Id: ruptime.c,v 1.4 1994/04/05 02:18:43 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,8 +148,8 @@ main(argc, argv)
 		(void)printf("ruptime: no hosts in %s.\n", _PATH_RWHODIR);
 		exit(1);
 	}
-	qsort((char *)hs, nhosts, sizeof (hs[0]), cmp);
 	(void)time(&now);
+	qsort((char *)hs, nhosts, sizeof (hs[0]), cmp);
 	for (i = 0; i < nhosts; i++) {
 		hsp = &hs[i];
 		if (ISDOWN(hsp)) {
