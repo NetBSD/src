@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.68 2000/07/07 14:56:45 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.69 2000/07/08 01:55:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.68 2000/07/07 14:56:45 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.69 2000/07/08 01:55:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1350,7 +1350,11 @@ more:
 	hostdelim = strrchr(arg, ':');
 	if (hostdelim) {
 		*hostdelim = '\0';
-		sep->se_hostaddr = newstr(arg);
+		if (arg[0] == '[' && hostdelim > arg && hostdelim[-1] == ']') {
+			hostdelim[-1] = '\0';
+			sep->se_hostaddr = newstr(arg + 1);
+		} else
+			sep->se_hostaddr = newstr(arg);
 		arg = hostdelim + 1;
 		/*
 		 * If the line is of the form `host:', then just change the
