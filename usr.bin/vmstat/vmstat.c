@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.108 2002/12/12 20:03:32 atatat Exp $ */
+/* $NetBSD: vmstat.c,v 1.109 2003/02/01 06:29:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.108 2002/12/12 20:03:32 atatat Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.109 2003/02/01 06:29:14 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.108 2002/12/12 20:03:32 atatat Exp $");
 #include <sys/dkstat.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/mallocvar.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -160,7 +161,7 @@ struct nlist namelist[] =
 #define	X_EINTRCNT	7
 	{ "_eintrcnt" },
 #define	X_KMEMSTAT	8
-	{ "_kmemstats" },
+	{ "_kmemstatistics" },
 #define	X_KMEMBUCKETS	9
 	{ "_bucket" },
 #define	X_ALLEVENTS	10
@@ -908,21 +909,16 @@ doevcnt(int verbose)
 	}
 }
 
-/*
- * These names are defined in <sys/malloc.h>.
- */
-char *kmemnames[] = INITKMEMNAMES;
+static char memname[64];
 
 void
 domem(void)
 {
 	struct kmembuckets *kp;
-	struct kmemstats *ks;
+	struct malloc_type ks, *ksp;
 	int i, j;
 	int len, size, first;
 	long totuse = 0, totfree = 0, totreq = 0;
-	char *name;
-	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
 
 	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
@@ -953,7 +949,6 @@ domem(void)
 		return;
 	}
 
-	kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
 	(void)printf("\nMemory usage type by bucket size\n");
 	(void)printf("    Size  Type(s)\n");
 	kp = &buckets[MINBUCKET];
@@ -962,29 +957,26 @@ domem(void)
 			continue;
 		first = 1;
 		len = 8;
-		for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
-			if (ks->ks_calls == 0)
+		for (kread(X_KMEMSTAT, &ksp, sizeof(ksp));
+		     ksp != NULL; ksp = ks.ks_next) {
+			deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
+			if (ks.ks_calls == 0)
 				continue;
-			if ((ks->ks_size & j) == 0)
+			if ((ks.ks_size & j) == 0)
 				continue;
-			if (kmemnames[i] == 0) {
-				kmemnames[i] = malloc(10);
-						/* strlen("undef/")+3+1);*/
-				snprintf(kmemnames[i], 10, "undef/%d", i);
-						/* same 10 as above!!! */
-			}
-			name = kmemnames[i];
-			len += 2 + strlen(name);
+			deref_kptr(ks.ks_shortdesc, memname,
+			    sizeof(memname), "malloc type name");
+			len += 2 + strlen(memname);
 			if (first)
-				printf("%8d  %s", j, name);
+				printf("%8d  %s", j, memname);
 			else
 				printf(",");
 			if (len >= 80) {
 				printf("\n\t ");
-				len = 10 + strlen(name);
+				len = 10 + strlen(memname);
 			}
 			if (!first)
-				printf(" %s", name);
+				printf(" %s", memname);
 			first = 0;
 		}
 		putchar('\n');
@@ -994,18 +986,22 @@ domem(void)
 	    "\nMemory statistics by type                        Type  Kern\n");
 	(void)printf(
 "         Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
-	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
-		if (ks->ks_calls == 0)
+	for (kread(X_KMEMSTAT, &ksp, sizeof(ksp));
+	     ksp != NULL; ksp = ks.ks_next) {
+		deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
+		if (ks.ks_calls == 0)
 			continue;
+		deref_kptr(ks.ks_shortdesc, memname,
+		    sizeof(memname), "malloc type name");
 		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
-		    kmemnames[i] ? kmemnames[i] : "undefined",
-		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
-		    (ks->ks_maxused + 1023) / 1024,
-		    (ks->ks_limit + 1023) / 1024, ks->ks_calls,
-		    ks->ks_limblocks, ks->ks_mapblocks);
+		    memname,
+		    ks.ks_inuse, (ks.ks_memuse + 1023) / 1024,
+		    (ks.ks_maxused + 1023) / 1024,
+		    (ks.ks_limit + 1023) / 1024, ks.ks_calls,
+		    ks.ks_limblocks, ks.ks_mapblocks);
 		first = 1;
 		for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
-			if ((ks->ks_size & j) == 0)
+			if ((ks.ks_size & j) == 0)
 				continue;
 			if (first)
 				printf("  %d", j);
@@ -1014,8 +1010,8 @@ domem(void)
 			first = 0;
 		}
 		printf("\n");
-		totuse += ks->ks_memuse;
-		totreq += ks->ks_calls;
+		totuse += ks.ks_memuse;
+		totreq += ks.ks_calls;
 	}
 	(void)printf("\nMemory totals:  In Use    Free    Requests\n");
 	(void)printf("              %7ldK %6ldK    %8ld\n\n",
