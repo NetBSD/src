@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 1998/02/16 10:07:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.50 1998/02/20 01:39:38 mellon Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -42,10 +42,6 @@ beforeinstall:
 afterinstall:
 .ifndef NOMAN
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
-.endif
-.ifmake build
-	@echo -n "Build finished at: "
-	@date
 .endif
 
 build: beforeinstall
@@ -95,5 +91,7 @@ build: beforeinstall
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
+	@echo -n "Build finished at: "
+	@date
 
 .include <bsd.subdir.mk>
