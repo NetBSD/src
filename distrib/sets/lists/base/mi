@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.326 2002/05/29 19:15:15 christos Exp $
+# $NetBSD: mi,v 1.327 2002/05/31 12:21:09 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1183,6 +1183,7 @@
 ./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
+./usr/share/man/cat4/pmppc			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
 ./usr/share/man/cat4/sun2			base-man-share
@@ -1224,6 +1225,7 @@
 ./usr/share/man/cat8/pc532		base-man-share
 ./usr/share/man/cat8/playstation2	base-man-share
 ./usr/share/man/cat8/pmax		base-man-share
+./usr/share/man/cat8/pmppc		base-man-share
 ./usr/share/man/cat8/prep		base-man-share
 ./usr/share/man/cat8/sandpoint		base-man-share
 ./usr/share/man/cat8/sgimips		base-man-share
@@ -1269,6 +1271,7 @@
 ./usr/share/man/man4/mvme68k		base-man-share
 ./usr/share/man/man4/pc532		base-man-share
 ./usr/share/man/man4/pmax		base-man-share
+./usr/share/man/man4/pmppc		base-man-share
 ./usr/share/man/man4/sgimips		base-man-share
 ./usr/share/man/man4/sparc		base-man-share
 ./usr/share/man/man4/sun2		base-man-share
@@ -1310,6 +1313,7 @@
 ./usr/share/man/man8/pc532		base-man-share
 ./usr/share/man/man8/playstation2	base-man-share
 ./usr/share/man/man8/pmax		base-man-share
+./usr/share/man/man8/pmppc		base-man-share
 ./usr/share/man/man8/prep		base-man-share
 ./usr/share/man/man8/sandpoint		base-man-share
 ./usr/share/man/man8/sgimips		base-man-share
@@ -1354,6 +1358,7 @@
 ./usr/share/man/html4/mvme68k		base-man-share
 ./usr/share/man/html4/pc532		base-man-share
 ./usr/share/man/html4/pmax		base-man-share
+./usr/share/man/html4/pmppc		base-man-share
 ./usr/share/man/html4/sparc		base-man-share
 ./usr/share/man/html4/sun2		base-man-share
 ./usr/share/man/html4/sun3		base-man-share
@@ -1394,6 +1399,7 @@
 ./usr/share/man/html8/pc532		base-man-share
 ./usr/share/man/html8/playstation2	base-man-share
 ./usr/share/man/html8/pmax		base-man-share
+./usr/share/man/html8/pmppc		base-man-share
 ./usr/share/man/html8/prep		base-man-share
 ./usr/share/man/html8/sandpoint		base-man-share
 ./usr/share/man/html8/sgimips		base-man-share
