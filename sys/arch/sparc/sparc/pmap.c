@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.249 2003/03/03 22:43:58 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.250 2003/03/25 11:33:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2662,6 +2662,7 @@ pv_unlink4m(pg, pm, va)
 
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
 			if (npv == NULL) {
+				panic("pm %p is missing ", pm);
 				printf("pm %p is missing ", pm);
 				goto out;
 			}
@@ -5937,17 +5938,13 @@ pmap_kprotect4_4c(vaddr_t va, vsize_t size, vm_prot_t prot)
 {
 	int pte, newprot, ctx;
 
+	size = roundup(size,NBPG);
 	newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 
 	ctx = getcontext4();
 	setcontext4(0);
 	while (size > 0) {
 		pte = getpte4(va);
-
-		if ((pte & PG_PROT) == newprot) {
-			/* no change */
-			continue;
-		}
 
 		/*
 		 * Flush cache if page has been referenced to
@@ -5960,7 +5957,7 @@ pmap_kprotect4_4c(vaddr_t va, vsize_t size, vm_prot_t prot)
 		setpte4(va, pte);
 
 		va += NBPG;
-		size -= MIN(NBPG,size);
+		size -= NBPG;
 	}
 	setcontext4(ctx);
 }
@@ -6459,17 +6456,13 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
+	size = roundup(size,NBPG);
+	newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
 
 	while (size > 0) {
 		rp = &pm->pm_regmap[VA_VREG(va)];
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 		pte = sp->sg_pte[VA_SUN4M_VPG(va)];
-
-		if ((pte & SRMMU_PROT_MASK) == newprot) {
-			/* no change */
-			continue;
-		}
 
 		/*
 		 * Flush cache if page has been referenced to
@@ -6484,7 +6477,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 			 1, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
 		va += NBPG;
-		size -= MIN(NBPG,size);
+		size -= NBPG;
 	}
 }
 #endif /* SUN4M || SUN4D */
