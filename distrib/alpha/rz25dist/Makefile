@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/09/29 07:22:43 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/10/09 01:53:50 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -11,11 +11,10 @@ all:
 
 SECPERCYL=	558
 CYLS=		1476
-TARGET=		alphadist-rz25.gz
 
-all: ${TARGET}
+all: rz25-image.gz bin.tar.gz etc.tar.gz
 
-${TARGET}:
+rz25-image.gz:
 	disklabel -W ${DESTDISK}
 	-dd if=/dev/zero of=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS}
@@ -51,6 +50,15 @@ ${TARGET}:
 	/bin/rm -f $@
 	dd if=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS} | gzip -9 > $@
+
+bin.tar.gz: rz25-image.gz
+	(cd ${DESTDIR} ; find . | grep -v '^./etc' \
+	    | pax -w | gzip -9 > ${.CURDIR}/bin.tar.gz)
+
+etc.tar.gz: rz25-image.gz
+	(cd ${DESTDIR} ; find ./etc \
+	    | pax -w | gzip -9 > ${.CURDIR}/etc.tar.gz)
+
 .endif
 
 _SUBDIRUSE:
