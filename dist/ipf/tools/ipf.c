@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.1 2004/03/28 08:56:30 martti Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.1.2.1 2004/08/13 03:58:27 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -21,7 +21,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.1 2004/03/06 14:33:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 1.35.2.2 2004/04/16 23:58:25 darrenr Exp";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)
@@ -352,9 +352,22 @@ char	*arg;
 		rem = fl;
 
 		closedevice();
-		if (opendevice(IPSTATE_NAME, 1) != -2 &&
-		    ioctl(fd, SIOCIPFFL, &fl) == -1)
-			perror("ioctl(SIOCIPFFL)");
+		if (opendevice(IPSTATE_NAME, 1) == -2)
+			exit(1);
+
+		if (!(opts & OPT_DONOTHING)) {
+			if (use_inet6) {
+				if (ioctl(fd, SIOCIPFL6, &fl) == -1) {
+					perror("ioctl(SIOCIPFL6)");
+					exit(1);
+				}
+			} else {
+				if (ioctl(fd, SIOCIPFFL, &fl) == -1) {
+					perror("ioctl(SIOCIPFFL)");
+					exit(1);
+				}
+			}
+		}
 		if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 			printf("remove flags %s (%d)\n", arg, rem);
 			printf("removed %d filter rules\n", fl);
@@ -390,8 +403,23 @@ char	*arg;
 		fl |= FR_INACTIVE;
 	rem = fl;
 
-	if (opendevice(ipfname, 1) != -2 && ioctl(fd, SIOCIPFFL, &fl) == -1)
-		perror("ioctl(SIOCIPFFL)");
+	if (opendevice(ipfname, 1) == -2)
+		exit(1);
+
+	if (!(opts & OPT_DONOTHING)) {
+		if (use_inet6) {
+			if (ioctl(fd, SIOCIPFL6, &fl) == -1) {
+				perror("ioctl(SIOCIPFL6)");
+				exit(1);
+			}
+		} else {
+			if (ioctl(fd, SIOCIPFFL, &fl) == -1) {
+				perror("ioctl(SIOCIPFFL)");
+				exit(1);
+			}
+		}
+	}
+
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		printf("remove flags %s%s (%d)\n", (rem & FR_INQUE) ? "I" : "",
 			(rem & FR_OUTQUE) ? "O" : "", rem);

@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.1.1.1 2004/03/28 08:56:26 martti Exp $	*/
+/*	$NetBSD: relay.c,v 1.1.1.1.2.1 2004/08/13 03:57:46 jmc Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -21,6 +21,7 @@
 #include "ip_compat.h"
 #include "ip_fil.h"
 #include "ip_nat.h"
+#include "ipl.h"
 
 #define	RELAY_BUFSZ	8192
 
@@ -106,18 +107,25 @@ int argc;
 char *argv[];
 {
 	struct	sockaddr_in	sin;
+	ipfobj_t	obj;
 	natlookup_t	nl;
 	natlookup_t	*nlp = &nl;
 	int	fd, sl = sizeof(sl), se;
 
 	openlog(argv[0], LOG_PID|LOG_NDELAY, LOG_DAEMON);
-	if ((fd = open(IPL_NAT, O_RDONLY)) == -1) {
+	if ((fd = open(IPNAT_NAME, O_RDONLY)) == -1) {
 		se = errno;
 		perror("open");
 		errno = se;
 		syslog(LOG_ERR, "open: %m\n");
 		exit(-1);
 	}
+
+	bzero(&obj, sizeof(obj));
+	obj.ipfo_rev = IPFILTER_VERSION;
+	obj.ipfo_size = sizeof(nl);
+	obj.ipfo_ptr = &nl;
+	obj.ipfo_type = IPFOBJ_NATLOOKUP;
 
 	bzero(&nl, sizeof(nl));
 	nl.nl_flags = IPN_TCP;
@@ -150,7 +158,7 @@ char *argv[];
 		nl.nl_outport = sin.sin_port;
 	}
 
-	if (ioctl(fd, SIOCGNATL, &nlp) == -1) {
+	if (ioctl(fd, SIOCGNATL, &obj) == -1) {
 		se = errno;
 		perror("ioctl");
 		errno = se;

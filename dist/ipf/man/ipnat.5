@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.15 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.15.2.1 2004/08/13 03:57:27 jmc Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -9,8 +9,9 @@ The format for files accepted by ipnat is described by the following grammar:
 .nf
 ipmap :: = mapblock | redir | map .
 
-map ::= mapit ifname lhs "->" dstipmask [ mapport | mapproxy ] mapoptions.
-mapblock ::= "map-block" ifname lhs "->" ipmask [ ports ] mapoptions.
+map ::= mapit ifname lhs "->" dstipmask [ mapicmp | mapport | mapproxy ]
+        mapoptions .
+mapblock ::= "map-block" ifname lhs "->" ipmask [ ports ] mapoptions .
 redir ::= "rdr" ifname ipmask dport "->" ip [ "," ip ] rdrport rdroptions .
 
 lhs ::= ipmask | fromto .
@@ -21,6 +22,7 @@ mapit ::= "map" | "bimap" .
 fromto ::= "from" object "to" object .
 ipmask ::= ip "/" bits | ip "/" mask | ip "netmask" mask .
 dstipmask ::= ipmask | "range" ip "-" ip .
+mapicmp ::= "icmpidmap" "icmp" number ":" number .
 mapport ::= "portmap" tcpudp portspec .
 mapoptions ::= [ tcpudp ] [ "frag" ] [ age ] [ clamp ] .
 rdroptions ::= rdrproto [ rr ] [ "frag" ] [ age ] [ clamp ] [ rdrproxy ] .

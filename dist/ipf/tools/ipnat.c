@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.1 2004/03/28 08:56:34 martti Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.1.2.1 2004/08/13 03:58:51 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24 2003/11/12 09:34:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.1 2004/04/28 17:56:22 darrenr Exp";
 #endif
 
 
@@ -327,6 +327,8 @@ int opts;
 			if (kmemcpy((char *)&nat, (long)np, sizeof(nat)))
 				break;
 			printactivenat(&nat, opts);
+			if (nat.nat_aps)
+				printaps(nat.nat_aps, opts);
 		}
 
 		if (opts & OPT_VERBOSE)
