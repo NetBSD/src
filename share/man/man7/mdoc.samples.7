@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.18 1999/01/11 19:27:20 garbled Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.19 1999/01/12 02:20:33 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2242,8 +2242,10 @@ The
 display must be ended with the
 .Ql \&.Ed
 macro.
-Displays may be nested within displays and
-lists.
+Displays may be nested within lists, but may
+.Em not
+contain other displays; this also prohibits nesting
+of .D1 and .Dl one-line displays.
 .Ql \&.Bd
 has the following syntax:
 .Pp
@@ -2325,8 +2327,10 @@ item macro and
 each list must end with the
 .Ql ".El"
 macro.
-Lists may be nested within themselves and within displays.
-The use of columns inside or lists or lists inside of columns
+Lists other than
+.Li \-enum
+may be nested within themselves and within displays.
+The use of columns inside of lists or lists inside of columns
 is unproven.
 .Pp
 In addition, several list attributes may be specified such as
