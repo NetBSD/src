@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)dmesg.8	6.5 (Berkeley) 5/2/91
 .\"
-.\"	$Header: /cvsroot/src/sbin/dmesg/dmesg.8,v 1.4 1993/06/13 22:37:22 mycroft Exp $
+.\"	$Header: /cvsroot/src/sbin/dmesg/dmesg.8,v 1.5 1993/06/13 23:21:34 mycroft Exp $
 .\"
 .Dd May 2, 1991
 .Dt DMESG 8
@@ -55,6 +55,13 @@ instead of the default ``/dev/kmem''.
 .It Fl N
 Extract the name list from the specified system instead of the default
 ``/netbsd''.
+.El
+.Sh FILES
+.Bl -tag -width /dev/kmem -compact
+.It Pa /dev/kmem
+default kernel memory
+.It Pa /netbsd
+default system namelist
 .El
 .Sh SEE ALSO
 .Xr syslogd 8
