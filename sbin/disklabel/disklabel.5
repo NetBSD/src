@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.15.2.2 2003/09/09 20:02:30 tron Exp $
+.\"	$NetBSD: disklabel.5,v 1.15.2.3 2003/09/09 20:03:37 tron Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -259,6 +259,7 @@ struct disklabel {
 #define DTYPE_ATAPI	13	/* ATAPI */
 #define DTYPE_RAID	14	/* RAIDframe */
 #define DTYPE_LD	15	/* logical disk */
+#define DTYPE_JFS2	16	/* IBM JFS2 */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -278,6 +279,7 @@ static const char *const dktypenames[] = {
 	"ATAPI",
 	"RAID",
 	"ld",
+	"jfs",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -309,6 +311,7 @@ static const char *const dktypenames[] = {
 #define	FS_NTFS		18	/* Windows/NT file system */
 #define	FS_RAID		19	/* RAIDframe component */
 #define	FS_CCD		20	/* concatenated disk component */
+#define	FS_JFS2		21		/* IBM JFS2 */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -333,6 +336,7 @@ static const char *const fstypenames[] = {
 	"NTFS",
 	"RAID",
 	"ccd",
+	"jfs",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
