@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.2 2001/03/21 16:16:35 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.3 2001/03/21 17:43:39 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -304,8 +304,8 @@ sacpcic_intr_establish(so, level, ih_fun, ih_arg)
 	int irq;
 
 	irq = so->socket ? IRQ_S1_READY : IRQ_S0_READY;
-	return (sacc_intr_establish((sacc_chipset_tag_t)so->sacc_sc,
-				    irq, 1, level, ih_fun, ih_arg));
+	return (sacc_intr_establish((sacc_chipset_tag_t)so->sacc_sc, irq,
+				    IST_EDGE_FALL, level, ih_fun, ih_arg));
 }
 
 static void
