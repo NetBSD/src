@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2001/08/29 17:37:47 briggs Exp $
+#	$NetBSD: INSTALL,v 1.7 2001/09/05 11:54:43 tsutsui Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -168,9 +168,15 @@ fd*	at fdc? drive ?
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
@@ -187,6 +193,8 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 # MII/PHY support
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
