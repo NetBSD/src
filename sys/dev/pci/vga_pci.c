@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.4 2000/08/14 20:14:51 thorpej Exp $ */
+/* $NetBSD: vga_pci.c,v 1.5 2001/09/14 01:10:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -47,12 +47,9 @@
 #include <dev/wscons/wsdisplayvar.h>
 
 struct vga_pci_softc {
-	struct device sc_dev; 
- 
-	pcitag_t sc_pcitag;		/* PCI tag, in case we need it. */
-#if 0
-	struct vga_config *sc_vc;	/* VGA configuration */
-#endif
+	struct vga_softc sc_vga;
+
+	pcitag_t sc_pcitag;
 };
 
 int	vga_pci_match __P((struct device *, struct cfdata *, void *));
@@ -111,18 +108,19 @@ vga_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct vga_pci_softc *psc = (void *) self;
+	struct vga_softc *sc = &psc->sc_vga;
 	struct pci_attach_args *pa = aux;
-	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 	char devinfo[256];
 
-	sc->sc_pcitag = pa->pa_tag;
+	psc->sc_pcitag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
-			  WSDISPLAY_TYPE_PCIVGA, NULL);
+	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
+	    NULL);
 }
 
 int
