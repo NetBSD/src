@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2003/01/02 23:38:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2003/02/27 14:55:41 bsh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -63,6 +63,12 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
+
+#define IST_LEVEL_LOW	 IST_LEVEL
+#define IST_LEVEL_HIGH   4
+#define IST_EDGE_FALLING IST_EDGE
+#define IST_EDGE_RISING  5
+#define IST_EDGE_BOTH    6
 
 #ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
 
