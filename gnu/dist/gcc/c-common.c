@@ -1054,7 +1054,7 @@ static format_char_info time_char_table[] = {
   { "D", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2" },
   { "g", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2O-_0w" },
   { "cx", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "3E" },
-  { "%RTXnrt",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "" },
+  { "%FRTXnrt",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "" },
   { "P",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "G" },
   { "HIMSUWdemw",	0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Ow" },
   { "Vju",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Oow" },
