@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.6 2000/08/18 15:49:21 wiz Exp $ */
+.\" $NetBSD: userdel.8,v 1.7 2000/10/03 12:34:05 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -45,7 +45,7 @@
 .Op Fl p
 .Op Fl r
 .Op Fl v
-user
+.Ar user
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,13 +58,18 @@ sets and displays the defaults for the
 utility.
 .Bl -tag -width Ds
 .It Fl D
-without any further options, -D will show the current defaults which
-will be used by the
+without any further options,
+.Fl D
+will show the current defaults which will be used by the
 .Nm
 utility. Together with one of the options shown for the first version
-of the command, -D will set the default to be the new value.
+of the command,
+.Fl D
+will set the default to be the new value.
 .It Fl p Ar preserve-value
-sets the preservation value. If this value is one of "true", "yes",
+sets the preservation value. If this value is one of
+.Ql true ,
+.Ql yes ,
 or a non-zero number, then the user login information will be preserved.
 .El
 .Pp
@@ -73,7 +78,9 @@ The following command line options are recognised:
 .It Fl p
 preserve the user information in the password file,
 but do not allow the user to login, by switching the
-password to an "impossible" one, and by setting the
+password to an
+.Dq impossible
+one, and by setting the
 user's shell to the 
 .Xr false 1
 program. This option can be helpful in preserving a user's
@@ -81,9 +88,12 @@ files for later use by members of that person's
 group after the user has moved on.
 This value can also be set in the
 .Pa /etc/usermgmt.conf
-file, using the "preserve" field. If the field
-has any of the values "true", "yes", or a non-zero number,
-then user information preservation will take place.
+file, using the
+.Ql preserve
+field. If the field has any of the values
+.Ql true ,
+.Ql yes ,
+or a non-zero number, then user information preservation will take place.
 .It Fl r
 remove the user's home directory, any subdirectories,
 and any files and other entries in them.
