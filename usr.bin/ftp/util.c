@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.65 1999/09/28 06:47:42 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.66 1999/09/28 07:54:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.65 1999/09/28 06:47:42 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.66 1999/09/28 07:54:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -726,10 +726,6 @@ progressmeter(flag)
 	if (cursize > lastsize) {
 		lastupdate = now;
 		lastsize = cursize;
-		if (wait.tv_sec >= STALLTIME) {	/* fudge out stalled time */
-			start.tv_sec += wait.tv_sec;
-			start.tv_usec += wait.tv_usec;
-		}
 		wait.tv_sec = 0;
 	}
 
