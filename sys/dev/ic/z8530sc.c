@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.10 1998/03/22 02:36:02 mycroft Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.11 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -252,7 +252,7 @@ zsc_intr_hard(arg)
 		if (rr3 & ZSRR3_IP_A_RX)
 			(*cs->cs_ops->zsop_rxint)(cs);
 		if (rr3 & ZSRR3_IP_A_STAT)
-			(*cs->cs_ops->zsop_stint)(cs);
+			(*cs->cs_ops->zsop_stint)(cs, 0);
 		if (rr3 & ZSRR3_IP_A_TX)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
@@ -264,7 +264,7 @@ zsc_intr_hard(arg)
 		if (rr3 & ZSRR3_IP_B_RX)
 			(*cs->cs_ops->zsop_rxint)(cs);
 		if (rr3 & ZSRR3_IP_B_STAT)
-			(*cs->cs_ops->zsop_stint)(cs);
+			(*cs->cs_ops->zsop_stint)(cs, 0);
 		if (rr3 & ZSRR3_IP_B_TX)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
@@ -307,11 +307,30 @@ zsc_intr_soft(arg)
  * Provide a null zs "ops" vector.
  */
 
-static void zsnull_intr    __P((struct zs_chanstate *));
+static void zsnull_rxint   __P((struct zs_chanstate *));
+static void zsnull_stint   __P((struct zs_chanstate *, int));
+static void zsnull_txint   __P((struct zs_chanstate *));
 static void zsnull_softint __P((struct zs_chanstate *));
 
 static void
-zsnull_intr(cs)
+zsnull_rxint(cs)
+	struct zs_chanstate *cs;
+{
+	/* Ask for softint() call. */
+	cs->cs_softreq = 1;
+}
+
+static void
+zsnull_stint(cs, force)
+	struct zs_chanstate *cs;
+	int force;
+{
+	/* Ask for softint() call. */
+	cs->cs_softreq = 1;
+}
+
+static void
+zsnull_txint(cs)
 	struct zs_chanstate *cs;
 {
 	/* Ask for softint() call. */
@@ -327,8 +346,8 @@ zsnull_softint(cs)
 }
 
 struct zsops zsops_null = {
-	zsnull_intr,	/* receive char available */
-	zsnull_intr,	/* external/status */
-	zsnull_intr,	/* xmit buffer empty */
+	zsnull_rxint,	/* receive char available */
+	zsnull_stint,	/* external/status */
+	zsnull_txint,	/* xmit buffer empty */
 	zsnull_softint,	/* process software interrupt */
 };

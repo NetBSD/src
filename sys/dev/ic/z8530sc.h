@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.10 1998/03/30 02:41:22 mycroft Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.11 1999/02/03 20:22:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,12 +50,15 @@
  * Function vector - per channel
  */
 struct zs_chanstate;
-typedef void	(*zsop_t) __P((struct zs_chanstate *));
 struct zsops {
-	zsop_t	zsop_rxint; 	/* receive char available */
-	zsop_t	zsop_stint; 	/* external/status */
-	zsop_t	zsop_txint; 	/* xmit buffer empty */
-	zsop_t	zsop_softint;	/* process software interrupt */
+	void	(*zsop_rxint) __P((struct zs_chanstate *));
+					/* receive char available */
+	void	(*zsop_stint) __P((struct zs_chanstate *, int));
+					/* external/status */
+	void	(*zsop_txint) __P((struct zs_chanstate *));
+					/* xmit buffer empty */
+	void	(*zsop_softint) __P((struct zs_chanstate *));
+					/* process software interrupt */
 };
 
 extern struct zsops zsops_null;
