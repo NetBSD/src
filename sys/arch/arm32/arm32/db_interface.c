@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 1998/11/25 06:41:26 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.25 1998/11/25 13:09:14 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -56,7 +56,6 @@
 
 static int nil;
 
-int db_access_svc_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
@@ -78,13 +77,13 @@ struct db_variable db_regs[] = {
 	{ "r11", (long *)&DDB_TF->tf_r11, FCN_NULL, },
 	{ "r12", (long *)&DDB_TF->tf_r12, FCN_NULL, },
 	{ "usr_sp", (long *)&DDB_TF->tf_usr_sp, FCN_NULL, },
+	{ "usr_lr", (long *)&DDB_TF->tf_usr_lr, FCN_NULL, },
+	{ "svc_sp", (long *)&DDB_TF->tf_svc_sp, FCN_NULL, },
+	{ "svc_lr", (long *)&DDB_TF->tf_svc_lr, FCN_NULL, },
+	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "und_sp", (long *)&nil, db_access_und_sp, },
 	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
 	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
-	{ "svc_sp", (long *)&nil, db_access_svc_sp, },
-	{ "usr_lr", (long *)&DDB_TF->tf_usr_lr, FCN_NULL, },
-	{ "svc_lr", (long *)&DDB_TF->tf_svc_lr, FCN_NULL, },
-	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 };
 
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -92,16 +91,6 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 extern label_t	*db_recover;
 
 int	db_active = 0;
-
-int db_access_svc_sp(vp, valp, rw)
-	struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
-{
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_SVC32_MODE);
-	return(0);
-}
 
 int db_access_und_sp(vp, valp, rw)
 	struct db_variable *vp;
@@ -424,7 +413,7 @@ db_fetch_reg(reg, db_regs)
 	case 12:
 		return (db_regs->ddb_tf.tf_r12);
 	case 13:
-		return (get_stackptr(PSR_SVC32_MODE));
+		return (db_regs->ddb_tf.tf_svc_sp);
 	case 14:
 		return (db_regs->ddb_tf.tf_svc_lr);
 	case 15:
