@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.17 1999/11/29 11:12:14 uch Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.18 2000/02/18 00:15:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,10 +178,8 @@ mips1_SlowFault:
 NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	subu	sp, sp, KERNFRAME_SIZ
 #ifdef DDB
 	la	k0, _C_LABEL(kdbaux)
-	addu	k1, sp, KERNFRAME_SIZ	# Avoid violating conventions
 	sw	s0, SF_REG_S0(k0)
 	sw	s1, SF_REG_S1(k0)
 	sw	s2, SF_REG_S2(k0)
@@ -190,7 +188,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	sw	s5, SF_REG_S5(k0)
 	sw	s6, SF_REG_S6(k0)
 	sw	s7, SF_REG_S7(k0)
-	sw	k1, SF_REG_SP(k0)
+	sw	sp, SF_REG_SP(k0)
 	sw	s8, SF_REG_S8(k0)
 	sw	gp, SF_REG_RA(k0)
 #endif
@@ -199,6 +197,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
+	subu	sp, sp, KERNFRAME_SIZ
 	sw	AT, TF_BASE+TF_REG_AST(sp)
 	sw	v0, TF_BASE+TF_REG_V0(sp)
 	sw	v1, TF_BASE+TF_REG_V1(sp)
@@ -229,20 +228,26 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	sw	a3, TF_BASE+TF_REG_EPC(sp)
 	addu	v0, sp, TF_BASE
 	sw	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
+/*
+ * Call the trap handler.
+ */
 #if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
-	move	ra, a3
-	sw	ra, KERNFRAME_RA(sp)		# for debugging
+	addu	v0, sp, KERNFRAME_SIZ
+	sw	v0, KERNFRAME_SP(sp)
 #endif
 	jal	_C_LABEL(trap)
-	nop
+	sw	a3,	KERNFRAME_RA(sp)	# for debugging
 
+/*
+ * Restore registers and return from the exception.
+ */
 	lw	a0, TF_BASE+TF_REG_SR(sp)
 	lw	t0, TF_BASE+TF_REG_MULLO(sp)
 	lw	t1, TF_BASE+TF_REG_MULHI(sp)
+	lw	k0, TF_BASE+TF_REG_EPC(sp)
 	mtc0	a0, MIPS_COP_0_STATUS
 	mtlo	t0
 	mthi	t1
-	lw	k0, TF_BASE+TF_REG_EPC(sp)
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -262,6 +267,20 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	t9, TF_BASE+TF_REG_T9(sp)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
+#ifdef DDB
+	la	k0, _C_LABEL(kdbaux)
+	REG_L	s0, SF_REG_S0(k0)
+	REG_L	s1, SF_REG_S1(k0)
+	REG_L	s2, SF_REG_S2(k0)
+	REG_L	s3, SF_REG_S3(k0)
+	REG_L	s4, SF_REG_S4(k0)
+	REG_L	s5, SF_REG_S5(k0)
+	REG_L	s6, SF_REG_S6(k0)
+	REG_L	s7, SF_REG_S7(k0)
+	REG_L	sp, SF_REG_SP(k0)
+	REG_L	s8, SF_REG_S8(k0)
+	REG_L	gp, SF_REG_RA(k0)
+#endif
 	j	k0				# return to interrupted point
 	rfe
 	.set	at
