@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.28 2003/03/29 11:04:08 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.29 2003/04/06 17:58:49 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.28 2003/03/29 11:04:08 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.29 2003/04/06 17:58:49 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,7 @@ mach_e_proc_init(p, vmspace)
 	bzero(med->med_exc, sizeof(med->med_exc));
 
 	med->med_dirty_thid = 1;
+	med->med_suspend = 0;
 	return;
 }
 
