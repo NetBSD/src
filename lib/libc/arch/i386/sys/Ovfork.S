@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.12 1998/12/02 19:29:56 thorpej Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,16 +40,10 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.12 1998/12/02 19:29:56 thorpej Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
-
-#ifdef _REENTRANT
-	.globl	_C_LABEL(__errno)
-#else
-	.globl	_C_LABEL(errno)
-#endif
 
 WARN_REFERENCES(vfork, \
     "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
@@ -70,28 +64,12 @@ ENTRY(vfork)
 	andl	%edx,%eax
 	jmp	%ecx
 err:
-#ifdef _REENTRANT
 	pushl	%ecx
-	pushl	%eax
 #ifdef PIC
 	PIC_PROLOGUE
-	call	PIC_PLT(_C_LABEL(__errno))
+	mov	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE
-#else
-	call	_C_LABEL(__errno)
-#endif /* PIC */
-	popl	%ecx
-	movl	%ecx,(%eax)
-	popl	%ecx
-#else
-#ifdef PIC
-	PIC_PROLOGUE
-	movl	PIC_GOT(_C_LABEL(errno)),%edx
-	PIC_EPILOGUE
-	movl	%eax,(%edx)
-#else
-	movl	%eax,_C_LABEL(errno)
-#endif /* PIC */
-#endif /* _REENTRANT */
-	movl	$-1,%eax
 	jmp	%ecx
+#else
+	jmp	CERROR
+#endif

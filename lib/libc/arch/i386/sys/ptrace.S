@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.12 2000/04/03 03:13:07 mycroft Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,19 +40,14 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.12 2000/04/03 03:13:07 mycroft Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-#ifdef _REENTRANT
 	.globl	_C_LABEL(__errno)
-#else
-	.globl	_C_LABEL(errno)
-#endif
 
 ENTRY(ptrace)
-#ifdef _REENTRANT
 #ifdef PIC
 	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(__errno))
@@ -60,19 +55,8 @@ ENTRY(ptrace)
 #else
 	call	_C_LABEL(__errno)
 #endif /* PIC */
-	xorl	%ecx,%ecx
-	movl	%ecx,(%eax)
-#else
-#ifdef PIC
-	xorl	%eax,%eax
-	PIC_PROLOGUE
-	movl	PIC_GOT(_C_LABEL(errno)),%edx
-	PIC_EPILOGUE
-	movl	%eax,(%edx)
-#else
-	movl	$0,_C_LABEL(errno)
-#endif /* PIC */
-#endif /* _REENTRANT */
+	xorl	%edx,%edx
+	movl	%edx,(%eax)
 	movl	$(SYS_ptrace),%eax
 	int	$0x80
 	jc	err
