@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.22 1996/10/13 03:00:33 christos Exp $	*/
+/*	$NetBSD: scc.c,v 1.23 1996/10/16 00:03:02 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -111,6 +111,16 @@ extern void ttrstrt	__P((void *));
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */
 
+/*
+ * rcons glass-tty console (as used on pmax) needs lk-201 ASCII input
+ * support from the tty drivers. This is ugly and broken and won't
+ * compile on Alphas.
+ */
+#ifdef pmax
+#define HAVE_RCONS
+extern int pending_remcons;
+#endif
+
 #define	NSCCLINE 	(NSCC*2)
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
@@ -158,9 +168,13 @@ struct speedtab sccspeedtab[] = {
 	{ 1800,		126,	},
 	{ 2400,		94,	},
 	{ 4800,		46,	},
+	{ 7200,		30,	}, 	/* non-POSIX */
 	{ 9600,		22,	},
+	{ 14400,	14,	},	/* non-POSIX */
 	{ 19200,	10,	},
+	{ 28800,	6,	},	/* non-POSIX */
 	{ 38400,	4,	},
+	{ 57600,	2,	},
 	{ -1,		-1,	},
 };
 
@@ -173,9 +187,10 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int      sccmatch(struct device *, void *, void *);
-static void     sccattach(struct device *, struct device *, void *);
-
+static int	sccmatch  __P((struct device * parent, void *cfdata,
+			       void *aux)); 
+static void	sccattach __P((struct device *parent, struct device *self,
+			       void *aux)); 
 struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
 };
@@ -202,7 +217,7 @@ void	scc_alphaintr __P((int));
 
 /*
  * Test to see if device is present.
- * Return true if found and initialized ok.
+ * Return true if found.
  */
 int
 sccmatch(parent, cfdata, aux)
@@ -214,10 +229,16 @@ sccmatch(parent, cfdata, aux)
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
-	/* XXX BUS TYPE? */
+	if (parent->dv_cfdata->cf_driver != &ioasic_cd) {
+#ifdef DIAGNOSTIC
+		printf("Cannot attach scc on %s\n", parent->dv_xname);
+#endif
+		return (0);
+	}
 
 	/* Make sure that we're looking for this type of device. */
-	if (strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN))
+	if ((strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN) != 0) &&
+	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 		return (0);
 
 	/* XXX MATCH CFLOC */
@@ -235,6 +256,11 @@ sccmatch(parent, cfdata, aux)
 	return (1);
 }
 
+#ifdef alpha
+/*
+ * Enable ioasic SCC interrupts and scc DMA engine interrupts.
+ * XXX does not really belong here.
+ */
 void
 scc_alphaintr(onoff)
 	int onoff;
@@ -258,6 +284,7 @@ scc_alphaintr(onoff)
 	}
 	alpha_mb();
 }
+#endif /* alpha */
 
 void
 sccattach(parent, self, aux)
@@ -284,7 +311,7 @@ sccattach(parent, self, aux)
 
 	/* Register the interrupt handler. */
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
-	    sccintr, (void *)(long)sc->sc_dv.dv_unit);
+	    sccintr,  (void *)sc);
 
 	/*
 	 * For a remote console, wait a while for previous output to
@@ -325,8 +352,8 @@ sccattach(parent, self, aux)
                         if (sc->sc_dv.dv_unit == 1) {
                                 s = spltty();
                                 ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
-                                cterm.c_cflag = CS8;
-                                cterm.c_ospeed = cterm.c_ispeed = 4800;
+				cterm.c_cflag = CS8;
+				cterm.c_ospeed = cterm.c_ispeed = 4800;
                                 (void) sccparam(&ctty, &cterm);
                                 DELAY(10000);
 #ifdef notyet
@@ -741,7 +768,8 @@ sccparam(tp, t)
 
 #ifdef notdef
 	/* XXX */
-	{int otherline = (line + 1) & 1;
+	{
+	int otherline = (line + 1) & 1;
 	SCC_WRITE_REG(regs, otherline, SCC_WR5, sc->scc_wreg[otherline].wr5);
 	}
 #endif
@@ -785,18 +813,17 @@ sccparam(tp, t)
  * Check for interrupts from all devices.
  */
 int
-sccintr(xxxunit)
-	void *xxxunit;
+sccintr(xxxsc)
+	void *xxxsc;
 {
-	register int unit = (long)xxxunit;
+	register struct scc_softc *sc = (struct scc_softc *)xxxsc;
+	register int unit = (long)sc->sc_dv.dv_unit;
 	register scc_regmap_t *regs;
 	register struct tty *tp;
 	register struct pdma *dp;
-	register struct scc_softc *sc;
 	register int cc, chan, rr1, rr2, rr3;
 	int overrun = 0;
 
-	sc = scc_cd.cd_devs[unit];
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 	for (;;) {
@@ -888,38 +915,8 @@ sccintr(xxxunit)
 		 */
 		} else if (tp == scc_tty[SCCMOUSE_PORT] && sccMouseButtons) {
 #if 0
-			register MouseReport *mrp;
-			static MouseReport currentRep;
-
-			mrp = &currentRep;
-			mrp->byteCount++;
-			if (cc & MOUSE_START_FRAME) {
-				/*
-				 * The first mouse report byte (button state).
-				 */
-				mrp->state = cc;
-				if (mrp->byteCount > 1)
-					mrp->byteCount = 1;
-			} else if (mrp->byteCount == 2) {
-				/*
-				 * The second mouse report byte (delta x).
-				 */
-				mrp->dx = cc;
-			} else if (mrp->byteCount == 3) {
-				/*
-				 * The final mouse report byte (delta y).
-				 */
-				mrp->dy = cc;
-				mrp->byteCount = 0;
-				if (mrp->dx != 0 || mrp->dy != 0) {
-					/*
-					 * If the mouse moved,
-					 * post a motion event.
-					 */
-					(*sccMouseEvent)(mrp);
-				}
-				(*sccMouseButtons)(mrp);
-			}
+			/*XXX*/
+			mouseInput(cc);
 #endif
 			continue;
 		}
@@ -992,21 +989,8 @@ sccstart(tp)
 		}
 		goto out;
 	}
-#if 0
-	if (tp->t_flags & (RAW|LITOUT))
-		cc = ndqb(&tp->t_outq, 0);
-	else {
-		cc = ndqb(&tp->t_outq, 0200);
-		if (cc == 0) {
-			cc = getc(&tp->t_outq);
-			timeout(ttrstrt, (void *)tp, (cc & 0x7f) + 6);
-			tp->t_state |= TS_TIMEOUT;
-			goto out;
-		}
-	}
-#else
 	cc = ndqb(&tp->t_outq, 0);
-#endif
+
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
@@ -1147,6 +1131,12 @@ scc_modem_intr(dev)
 		SCC_READ_REG_ZERO(regs, chan, value);
 		car = value & ZSRR0_DCD;
 	}
+	/*
+	 * The pmax driver follows carrier-detect. The Alpha does not.
+	 * XXX Why doesn't the Alpha driver follow carrier-detect?
+	 * (in the Alpha driver, this is an "#ifdef notdef").
+	 * Is it related to  console handling?
+	 */
 #ifdef notdef
 	if (car) {
 		/* carrier present */
@@ -1154,7 +1144,7 @@ scc_modem_intr(dev)
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	} else if (tp->t_state & TS_CARR_ON)
 		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-#endif
+#endif /* notdef XXX */
 	splx(s);
 }
 
@@ -1282,5 +1272,5 @@ rr(msg, regs)
 	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
 	    r0, r1, r2, r10, r15);
 }
-#endif
+#endif	/* SCC_DEBUG */
 #endif /* NSCC */
