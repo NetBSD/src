@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 1997/02/04 07:15:48 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 1997/07/31 00:19:31 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -201,7 +201,7 @@ db_write_text(dst, ch)
 	*dst = (unsigned char)ch;
 
 	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI();
+	cpu_cache_syncI_rng(dst, 4);
 
 	WriteWord(ptep, pteo);
 	tlb_flush();
@@ -219,9 +219,11 @@ db_write_bytes(addr, size, data)
 {
 	extern char	etext[];
 	register char	*dst;
+	register int	loop;
 
 	dst = (char *)addr;
-	while (--size >= 0) {
+	loop = size;
+	while (--loop >= 0) {
 		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
 			db_write_text(dst, *data);
 		else
@@ -229,7 +231,7 @@ db_write_bytes(addr, size, data)
 		dst++, data++;
 	}
 	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI();
+	cpu_cache_syncI_rng(addr, size);
 }
 
 void
