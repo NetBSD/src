@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.2 1996/08/13 08:19:50 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.3 1996/10/07 02:17:37 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -33,11 +33,11 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
 extern void cpu_identify __P((void));
 extern void mips_vector_init __P((void));
 
-void r2000_vector_init __P((void));
-void r4000_vector_init __P((void));
+void mips1_vector_init __P((void));
+void mips3_vector_init __P((void));
 
 
-#ifdef CPU_R2000
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 /*
  * MIPS-I (r2000) locore-function vector.
  */
@@ -56,7 +56,7 @@ mips_locore_jumpvec_t R2000_locore_vec =
 };
 
 void
-r2000_vector_init()
+mips1_vector_init()
 {
 	extern char MachUTLBMiss[], MachUTLBMissEnd[];
 	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
@@ -83,10 +83,10 @@ r2000_vector_init()
 	mips_r2000_ConfigCache();
 	mips_r2000_FlushCache();
 }
-#endif /* CPU_R2000 */
+#endif /* MIPS1 */
 
 
-#ifdef CPU_R4000
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 /*
  * MIPS-III (r4000) locore-function vector.
  */
@@ -112,7 +112,7 @@ mips_locore_jumpvec_t R4000_locore_vec =
 };
 
 void
-r4000_vector_init()
+mips3_vector_init()
 {
 
 	/* TLB miss handler address and end */
@@ -144,7 +144,7 @@ r4000_vector_init()
 	mips_r4000_ConfigCache();
 	mips_r4000_FlushCache();
 }
-#endif	/* CPU_R4000 */
+#endif	/* MIPS3 */
 
 
 /*
@@ -179,19 +179,19 @@ void mips_vector_init()
 	/* Work out what kind of CPU and FPU are present. */
 	switch(cpu_id.cpu.cp_imp) {
 
-#ifdef CPU_R2000
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	case MIPS_R2000:
 	case MIPS_R3000:
-	  	r2000_vector_init();
+	  	mips1_vector_init();
 		break;
-#endif /* CPU_R2000 */
+#endif /* MIPS1 */
 
 
-#ifdef CPU_R4000
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	case MIPS_R4000:
-	  	r4000_vector_init();
+	  	mips3_vector_init();
 		break;
-#endif /* CPU_R4000 */
+#endif /* MIPS3 */
 
 	default:
 		panic("Unconfigured or unsupported MIPS cpu\n");
