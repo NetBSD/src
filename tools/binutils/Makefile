@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/12/04 09:29:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2003/12/04 14:38:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ MKNATIVE?=	${.CURDIR}/mknative-binutils
 
 native-binutils: .native/.configure_done
 	@echo 'Extracting GNU binutils configury for a native toolchain.'
-	@MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} binutils \
+	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} binutils \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
@@ -39,7 +39,7 @@ native-binutils: .native/.configure_done
 			ac_cv_prog_cc_cross=yes \
 			ac_cv_func_strcoll_works=yes \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
-			--build=`${.CURDIR}/../../gnu/dist/toolchain/config.guess` \
+			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
 		(cd .native && ${MAKE} configure-host) && \
