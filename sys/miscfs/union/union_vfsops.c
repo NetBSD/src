@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.15 1996/12/22 10:10:30 cgd Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.16 1997/05/05 07:19:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -54,6 +54,8 @@
 #include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
+
 #include <miscfs/union/union.h>
 
 int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
