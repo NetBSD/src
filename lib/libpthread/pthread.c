@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.36 2004/08/12 10:54:13 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.37 2005/01/06 17:38:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.36 2004/08/12 10:54:13 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.37 2005/01/06 17:38:29 mycroft Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -1076,6 +1076,8 @@ pthread__assertfunc(const char *file, int line, const char *function,
 {
 	char buf[1024];
 	int len;
+
+	SDPRINTF(("(af)\n"));
 
 	/*
 	 * snprintf should not acquire any locks, or we could
