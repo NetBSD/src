@@ -44,6 +44,7 @@
  * Machine dependent constants for amiga
  */
 #define	MACHINE		"amiga"
+#define MACHINE_ARCH	"m68k"
 #define MID_MACHINE	MID_M68K
 
 /*
@@ -51,6 +52,7 @@
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
  */
+#define ALIGNBYTES	(sizeof(int) - 1)
 #define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
 
 #define	NBPG		8192		/* bytes/page */
@@ -58,9 +60,9 @@
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof (struct pte)))
 
-#define NBSEG		(2048*NBPG)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	24		/* LOG2(NBSEG) */
+#define NBSEG		(cpu040 ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
+#define	SEGSHIFT	(cpu040 ? 18 : 24)		/* LOG2(NBSEG) */
 
 #define	KERNBASE	0x0		/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
