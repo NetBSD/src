@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.24 2002/04/09 11:08:57 bjh21 Exp $
+# $NetBSD: ad.m68k,v 1.25 2002/04/10 17:18:01 briggs Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
@@ -6,6 +6,7 @@
 ./usr/include/m68k/asm.h	comp-c-include
 ./usr/include/m68k/asm_single.h	comp-c-include
 ./usr/include/m68k/bswap.h	comp-c-include
+./usr/include/m68k/bus_dma.h	comp-c-include
 ./usr/include/m68k/byte_swap.h	comp-c-include
 ./usr/include/m68k/cacheops.h	comp-c-include
 ./usr/include/m68k/cacheops_20.h	comp-c-include
