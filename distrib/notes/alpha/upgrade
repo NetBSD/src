@@ -1,9 +1,8 @@
-The upgrade to NetBSD _VER is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the _VER sources, and
-it would be very difficult to even compile a set of instructions that
-allowed them to do so.  Because of the many changes to the system, it
-is difficult and impractical to upgrade by recompiling from the sources
-and installing.
+	$NetBSD: upgrade,v 1.1.2.4 1998/05/09 05:10:13 mycroft Exp $	
+
+The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
+to advance to a later version by recompiling from source due primarily
+to interdepencies in the various components.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
@@ -13,8 +12,8 @@ another operating system's partition, before beginning the upgrade
 process.
 
 The upgrade is done entirely `by hand.' You will need first to boot
-the new boot floppy or INSTALL kernel and use /usr/mdec/install to
-install new boot blocks. Then you may extract a new kernel and the
+the new boot floppy or INSTALL kernel and use /usr/mdec/installboot
+to install new boot blocks. Then you may extract a new kernel and the
 distribution sets as described in section 5 of the installation
 instructions.
 
