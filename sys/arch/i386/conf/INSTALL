@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 1998/02/06 07:21:45 mrg Exp $
+#	$NetBSD: INSTALL,v 1.75 1998/02/06 07:53:28 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -170,14 +170,17 @@ pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # EISA bus support
 eisa*	at mainbus?
+eisa*	at pceb?
 
 # ISA bus support
 isa*	at mainbus?
+isa*	at pceb?
 isa*	at pcib?
 
 # PCMCIA bus support
