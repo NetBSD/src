@@ -393,10 +393,12 @@ sopno stopst;
 			break;
 		case OLPAREN:
 			i = OPND(m->g->strip[ss]);
+			assert(0 < i && i <= m->g->nsub);
 			m->pmatch[i].rm_so = sp - m->offp;
 			break;
 		case ORPAREN:
 			i = OPND(m->g->strip[ss]);
+			assert(0 < i && i <= m->g->nsub);
 			m->pmatch[i].rm_eo = sp - m->offp;
 			break;
 		default:		/* uh oh */
@@ -522,6 +524,7 @@ sopno lev;			/* PLUS nesting level */
 	switch (OP(s)) {
 	case OBACK_:		/* the vilest depths */
 		i = OPND(s);
+		assert(0 < i && i <= m->g->nsub);
 		if (m->pmatch[i].rm_eo == -1)
 			return(NULL);
 		assert(m->pmatch[i].rm_so != -1);
@@ -582,6 +585,7 @@ sopno lev;			/* PLUS nesting level */
 		break;
 	case OLPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
+		assert(0 < i && i <= m->g->nsub);
 		offsave = m->pmatch[i].rm_so;
 		m->pmatch[i].rm_so = sp - m->offp;
 		dp = backref(m, sp, stop, ss+1, stopst, lev);
@@ -592,6 +596,7 @@ sopno lev;			/* PLUS nesting level */
 		break;
 	case ORPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
+		assert(0 < i && i <= m->g->nsub);
 		offsave = m->pmatch[i].rm_eo;
 		m->pmatch[i].rm_eo = sp - m->offp;
 		dp = backref(m, sp, stop, ss+1, stopst, lev);

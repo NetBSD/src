@@ -8,7 +8,7 @@
 
 /*
  - regfree - free everything
- = extern void regfree(regex_t *preg);
+ = extern void regfree(regex_t *);
  */
 void
 regfree(preg)

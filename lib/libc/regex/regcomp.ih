@@ -31,8 +31,8 @@ static void mcadd __P((register struct parse *p, register cset *cs, register cha
 static void mcsub __P((register cset *cs, register char *cp));
 static int mcin __P((register cset *cs, register char *cp));
 static char *mcfind __P((register cset *cs, register char *cp));
-static void mcinvert __P((register cset *cs));
-static void mccase __P((register cset *cs));
+static void mcinvert __P((register struct parse *p, register cset *cs));
+static void mccase __P((register struct parse *p, register cset *cs));
 static int isinsets __P((register struct re_guts *g, int c));
 static int samesets __P((register struct re_guts *g, int c1, int c2));
 static void categorize __P((struct parse *p, register struct re_guts *g));

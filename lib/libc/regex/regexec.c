@@ -96,8 +96,8 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 
 /*
  - regexec - interface for matching
- = extern int regexec(const regex_t *preg, const char *string, size_t nmatch, \
- =					regmatch_t pmatch[], int eflags);
+ = extern int regexec(const regex_t *, const char *, size_t, \
+ =					regmatch_t [], int);
  = #define	REG_NOTBOL	00001
  = #define	REG_NOTEOL	00002
  = #define	REG_STARTEND	00004
