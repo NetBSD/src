@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.22 2001/06/23 03:09:20 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.23 2001/06/24 17:40:07 nonaka Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.22 $"
+#ident		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -204,6 +204,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -212,6 +213,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
+scsibus* at ahc?
 scsibus* at aic?
 scsibus* at iha?
 scsibus* at pcscp?
@@ -259,8 +261,10 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
@@ -370,18 +374,17 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Audio device
 
 # ISA Plug-and-Play audio devices
-#wss*	at isapnp?		# CS4232
+#wss*	at isapnp?			# CS4232
 
 # Audio support
-#audio*	at wss?
 #audio*	at uaudio?
+#audio*	at wss?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?		# PC speaker
-
 
 # Joysticks
 
@@ -393,7 +396,7 @@ joy0	at isa? port 0x201
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
