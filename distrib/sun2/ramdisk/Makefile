@@ -1,88 +1,46 @@
-#	$NetBSD: Makefile,v 1.9 2002/04/06 18:16:12 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2002/04/22 21:17:58 fredette Exp $
 
 TOP=		${.CURDIR}/..
 
-# This include just sets DISTRIBREV=XX
-.include "${TOP}/Makefile.inc"
 .include <bsd.own.mk>
+.include <bsd.kernobj.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-DBG=	-Os
+IMG=		ramdisk
+IMAGE=		${IMG}.fs
+IMAGESIZE=	400k
+MAKEFS_FLAGS=	-f 15 -o minfree=0,optimization=space,density=4096,cpg=20
 
-IMAGE=	ramdisk
-CBIN=	rd_bin
+WARNS=		1
+DBG=		-Os
 
-TREE=	${TOP}/common/${IMAGE}.tree
-
-LISTS=	${TOP}/common/${CBIN}.list \
-	${TOP}/common/${IMAGE}.list
-
-KERNEL  = ${KERNOBJDIR}/RAMDISK/netbsd
-
-MOUNT_POINT?=	/mnt
-VND?=		vnd1
-VND_DEV?=	/dev/${VND}a
-VND_RDEV?=	/dev/r${VND}a
-
-# These are all the parameters for the root fs:
-DISKTYPE=	rdroot
-SIZE=		400k
-# bigendian, minfree, opt, b/i , cpg
-NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
-MDSETIMAGE?=	mdsetimage
-MTREE?=		mtree
-
-KERNELS= netbsd.RAMDISK 
-CLEANFILES= $(KERNELS) ${IMAGE}.fs netbsd-tmp
-
-all: $(KERNELS)
-
-netbsd.RAMDISK : ${IMAGE}.fs
-	cp ${KERNEL} netbsd-tmp
-	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
-	-mv -f netbsd-tmp $@
-
-${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
-	dd if=/dev/zero of=${IMAGE}.fs bs=${SIZE} count=1
-	vnconfig -f ${DESTDIR}/etc/disktab -t ${DISKTYPE} -v \
-	  -c ${VND} ${IMAGE}.fs
-	disklabel -rw -f ${DESTDIR}/etc/disktab ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
-	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
-	  sh ${TOP}/common/RunList.sh ${LISTS}
-	sync
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	dd if=${VND_DEV} of=${IMAGE}-tmp.fs bs=${SIZE} count=1
-	vnconfig -u ${VND}
-	mv ${IMAGE}-tmp.fs ${IMAGE}.fs
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}.fs
-
-# Do not delete this if I change my mind and kill make...
-.PRECIOUS: ${IMAGE}.fs
-
-# Rules for making ${CBIN} ...
-.include "${TOP}/common/Make.crunch"
-
+CRUNCHBIN=	rd_bin
+LISTS=		${.CURDIR}/${IMG}.list
+PARSELISTENV=	TOPDIR=${TOP}
+MTREECONF=	${TOP}/common/${IMG}.tree
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	__ramdisk std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
-HACKOBJS=	gethost.o
 .include	"${HACKSRC}/Makefile.inc"
-${CBIN}:	libhack.o
-CPPFLAGS+=-I${DESTDIR}/usr/include
+${CRUNCHBIN}:	libhack.o
 
-clean cleandir distclean:
-	-rm -f a.out core *.core *.o *.cro *.c
-	-rm -f ${CLEANFILES}
+MDSETIMAGE?=	mdsetimage
+KERNEL=		${KERNOBJDIR}/RAMDISK/netbsd
+KERNELS=	netbsd.RAMDISK
+CLEANFILES+=	${KERNELS}
+
+netbsd.RAMDISK : ${IMAGE} ${KERNEL}
+	cp ${KERNEL} netbsd-tmp
+	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}
+	-mv -f netbsd-tmp $@
+
+realall: ${IMAGE} ${KERNELS}
 
 .if !defined(RELEASEDIR)
 release:
@@ -96,7 +54,8 @@ release: $(KERNELS)
 .endfor # KERNELS
 .endif	# RELEASEDIR
 
-# Standard rules needed by the above...
-.include <bsd.obj.mk>
-.include <bsd.sys.mk>
-.include <bsd.subdir.mk>
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+.include <bsd.prog.mk>
