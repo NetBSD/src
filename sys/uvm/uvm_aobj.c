@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.60 2003/08/28 13:12:18 pk Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.61 2003/09/18 13:48:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.60 2003/08/28 13:12:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.61 2003/09/18 13:48:05 drochner Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -418,10 +418,9 @@ uao_free(aobj)
 					int slot = elt->slots[j];
 
 					if (slot > 0) {
-						continue;
+						uvm_swap_free(slot, 1);
+						swpgonlydelta++;
 					}
-					uvm_swap_free(slot, 1);
-					swpgonlydelta++;
 				}
 
 				next = LIST_NEXT(elt, list);
