@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.38 2003/07/06 08:21:41 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.39 2003/07/06 08:27:04 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.38 2003/07/06 08:21:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.39 2003/07/06 08:27:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1848,19 +1848,10 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		ni->ni_esslen = ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 		memcpy(ni->ni_essid, ssid + 2, ssid[1]);
-	} else {
-		if (ssid[1] != 0) {
-			/*
-			 * Update ESSID at probe response to adopt hidden AP by
-			 * Lucent/Cisco, which announces null ESSID in beacon.
-			 */
-			if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-			    IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
-				ni->ni_esslen = ssid[1];
-				memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
-				memcpy(ni->ni_essid, ssid + 2, ssid[1]);
-			}
-		}
+	} else if (ssid[1] != 0) {
+		ni->ni_esslen = ssid[1];
+		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
+		memcpy(ni->ni_essid, ssid + 2, ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
