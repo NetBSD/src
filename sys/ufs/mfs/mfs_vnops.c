@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.15 1998/08/10 08:11:13 matthias Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.16 1999/03/15 00:18:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -180,7 +180,6 @@ mfs_doio(bp, base)
 	register struct buf *bp;
 	caddr_t base;
 {
-
 	base += (bp->b_blkno << DEV_BSHIFT);
 	if (bp->b_flags & B_READ)
 		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
@@ -188,6 +187,8 @@ mfs_doio(bp, base)
 		bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
 	if (bp->b_error)
 		bp->b_flags |= B_ERROR;
+	else
+		bp->b_resid = 0;
 	biodone(bp);
 }
 
