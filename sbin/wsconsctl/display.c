@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.8 2004/07/30 15:22:42 jmmv Exp $ */
+/*	$NetBSD: display.c,v 1.9 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -73,8 +73,7 @@ int display_field_tab_len = sizeof(display_field_tab)/
 			     sizeof(display_field_tab[0]);
 
 void
-display_get_values(fd)
-	int fd;
+display_get_values(int fd)
 {
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)

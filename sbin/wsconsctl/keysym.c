@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.4 2000/07/03 03:38:02 matt Exp $ */
+/*	$NetBSD: keysym.c,v 1.5 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,47 +87,39 @@ static const u_char latin1_to_upper[256] = {
 	0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x00,		/* f */
 };
 
-static int qcmp_name __P((const void *, const void *));
-static int qcmp_ksym __P((const void *, const void *));
-static int bcmp_name __P((const void *, const void *));
-static int bcmp_ksym __P((const void *, const void *));
+static int qcmp_name(const void *, const void *);
+static int qcmp_ksym(const void *, const void *);
+static int bcmp_name(const void *, const void *);
+static int bcmp_ksym(const void *, const void *);
 
-static void sort_ksym_tab __P((void));
+static void sort_ksym_tab(void);
 
 static int
-qcmp_name(a, b)
-	const void *a;
-	const void *b;
+qcmp_name(const void *a, const void *b)
 {
 	return(strcmp(((struct ksym *) a)->name, ((struct ksym *) b)->name));
 }
 
 static int
-qcmp_ksym(a, b)
-	const void *a;
-	const void *b;
+qcmp_ksym(const void *a, const void *b)
 {
 	return(((struct ksym *) b)->value - ((struct ksym *) a)->value);
 }
 
 static int
-bcmp_name(a, b)
-	const void *a;
-	const void *b;
+bcmp_name(const void *a, const void *b)
 {
 	return(strcmp((char *) a, ((struct ksym *) b)->name));
 }
 
 static int
-bcmp_ksym(a, b)
-	const void *a;
-	const void *b;
+bcmp_ksym(const void *a, const void *b)
 {
 	return(((struct ksym *) b)->value - *((int *) a));
 }
 
 static void
-sort_ksym_tab()
+sort_ksym_tab(void)
 {
 	int i;
 
@@ -141,8 +133,7 @@ sort_ksym_tab()
 }
 
 char *
-ksym2name(k)
-	int k;
+ksym2name(int k)
 {
 	static char tmp[20];
 	struct ksym *r;
@@ -162,8 +153,7 @@ ksym2name(k)
 }
 
 int
-name2ksym(n)
-	char *n;
+name2ksym(char *n)
 {
 	int res;
 	struct ksym *r;
@@ -183,8 +173,7 @@ name2ksym(n)
 }
 
 keysym_t
-ksym_upcase(ksym)
-	keysym_t ksym;
+ksym_upcase(keysym_t ksym)
 {
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return(KS_F1 - KS_f1 + ksym);

@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.3 2004/06/27 02:09:47 itohy Exp $ */
+/*	$NetBSD: map_parse.y,v 1.4 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,11 +66,10 @@ static struct wscons_keymap mapdata[KS_NUMKEYCODES];
 struct wskbd_map_data newkbmap;		/* used in util.c */
 static struct wscons_keymap *cur_mp;
 
-static int ksym_lookup __P((keysym_t));
+static int ksym_lookup(keysym_t);
 
 static int
-ksym_lookup(ksym)
-	keysym_t ksym;
+ksym_lookup(keysym_t ksym)
 {
 	int i;
 	struct wscons_keymap *mp;
@@ -198,8 +197,7 @@ keysym_var	: T_KEYSYM_VAR = {
 %%
 
 void
-yyerror(msg)
-	char *msg;
+yyerror(char *msg)
 {
 	errx(1, "parse: %s", msg);
 }
