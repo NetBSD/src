@@ -1,8 +1,9 @@
-#	$NetBSD: airport,v 1.9 1999/01/06 02:40:16 cjs Exp $
+#	$NetBSD: airport,v 1.10 1999/01/06 04:04:02 hubertf Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
-# http://www.uni-karlsruhe.de/~un9v/atm/ase.html
+# http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
+# available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
 #
 # Airport Code : Airport
 ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
