@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.9 2002/06/01 06:28:06 grant Exp $
+# $NetBSD: Makefile,v 1.10 2002/07/08 22:17:47 agc Exp $
 #
 .include <bsd.own.mk>
 
 CPPFLAGS+= -DEXTENSIONS -DPW_MKDB_ARGC=2
-WARNS= 1
+WARNS= 3
 
 PROG= user
 SRCS+= user.c main.c
