@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 1999/02/04 11:20:40 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.32 1999/02/05 21:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 1999/02/04 11:20:40 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 1999/02/05 21:21:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,27 +194,19 @@ state2:
 state3:
 	state = 4;
 	if (minusc) {
-		static struct {
-			int   sig;
-			sig_t osig;
-			sig_t nsig;
-		} s[] = {
-			{ SIGINT, SIG_ERR, SIG_IGN },
-			{ SIGQUIT, SIG_ERR, SIG_IGN },
-			{ SIGHUP, SIG_ERR, SIG_IGN },
+		static int sigs[] =  {
+		    SIGINT, SIGQUIT, SIGHUP, 
 #ifdef SIGTSTP
-			{ SIGTSTP, SIG_ERR, SIG_DFL },
+		    SIGTSTP,
 #endif
-			{ SIGPIPE, SIG_ERR, SIG_DFL }
+		    SIGPIPE
 		};
-#define SIGSSIZE (sizeof(s)/sizeof(s[0]))
+#define SIGSSIZE (sizeof(sigs)/sizeof(sigs[0]))
 		int i;
 
 		for (i = 0; i < SIGSSIZE; i++)
-		    s[i].osig = signal(s[i].sig, s[i].nsig);
+		    setsignal(sigs[i]);
 		evalstring(minusc);
-		for (i = 0; i < SIGSSIZE; i++)
-		    (void)signal(s[i].sig, s[i].osig);
 	}
 	if (sflag || minusc == NULL) {
 state4:	/* XXX ??? - why isn't this before the "if" statement */
