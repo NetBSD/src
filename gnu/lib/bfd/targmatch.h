@@ -1,4 +1,4 @@
-/*	$NetBSD: targmatch.h,v 1.2 1998/07/12 19:09:29 thorpej Exp $	*/
+/*	$NetBSD: targmatch.h,v 1.3 1998/07/12 19:15:21 thorpej Exp $	*/
 
 /*
  * This file was copied by hand from the result of configure with a
@@ -6,7 +6,15 @@
  */
 
 #ifdef BFD64
+#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf64_alpha_vec)
+{ "alpha-*-netbsd*",
+&bfd_elf64_alpha_vec },
+#endif
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_ecoffalpha_little_vec)
+
 { "alpha-*-netware*",
 &ecoffalpha_little_vec },
 #endif
@@ -45,6 +53,14 @@
     
 #endif /* BFD64 */
 
+#if !defined (SELECT_VECS) || defined (HAVE_armnetbsd_vec)
+
+{ "arm-*-netbsd*",
+&armnetbsd_vec },
+#endif
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_riscix_vec)
 
 { "arm-*-riscix*",
@@ -918,6 +934,15 @@
 
     
 #endif
+
+#if !defined (SELECT_VECS) || defined (HAVE_vaxnetbsd_vec)
+
+{ "vax-*-netbsd*",
+&vaxnetbsd_vec },
+#endif
+
+
+    
 
 #if !defined (SELECT_VECS) || defined (HAVE_we32kcoff_vec)
 
