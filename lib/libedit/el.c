@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.20 2000/11/11 22:18:57 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.21 2001/01/05 22:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.20 2000/11/11 22:18:57 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.21 2001/01/05 22:45:30 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: el.c,v 1.20 2000/11/11 22:18:57 christos Exp $");
 public EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
-	extern char *rl_readline_name;
 
 	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
 #ifdef DEBUG
@@ -85,15 +84,6 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
          */
 	el->el_flags = 0;
 
-	/* readline compat hack to make xxgdb work */
-	if (prog == rl_readline_name) {
-		struct termios t;
-
-		if (tcgetattr(el->el_infd, &t) == 0) {
-			if ((t.c_lflag & ECHO) == 0)
-				el->el_flags |= EDIT_DISABLED;
-		}
-	}
 	(void) term_init(el);
 	(void) key_init(el);
 	(void) map_init(el);

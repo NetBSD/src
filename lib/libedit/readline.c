@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.17 2001/01/05 21:15:49 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.18 2001/01/05 22:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.17 2001/01/05 21:15:49 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.18 2001/01/05 22:45:30 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -181,6 +181,8 @@ rl_initialize(void)
 	HistEvent ev;
 	const LineInfo *li;
 	int i;
+	int editmode = 1;
+	struct termios t;
 
 	if (e != NULL)
 		el_end(e);
@@ -191,7 +193,17 @@ rl_initialize(void)
 		rl_instream = stdin;
 	if (!rl_outstream)
 		rl_outstream = stdout;
+
+	/*
+	 * See if we don't really want to run the editor
+	 */
+	if (tcgetattr(fileno(rl_instream), &t) != -1 && (t.c_lflag & ECHO) == 0)
+		editmode = 0;
+
 	e = el_init(rl_readline_name, rl_instream, rl_outstream, stderr);
+
+	if (!editmode)
+		el_set(e, EL_EDITMODE, 0);
 
 	h = history_init();
 	if (!e || !h)
