@@ -239,7 +239,7 @@ static struct core_fns m68knbsd_elfcore_fns =
   bfd_target_elf_flavour,               /* core_flavour */
   default_check_format,                 /* check_format */
   default_core_sniffer,                 /* core_sniffer */
-  fetch_core_registers,                 /* core_read_registers */
+  fetch_elfcore_registers,              /* core_read_registers */
   NULL                                  /* next */
 }; 
 

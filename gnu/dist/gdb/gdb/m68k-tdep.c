@@ -28,6 +28,7 @@
 #include "inferior.h"
 #include "regcache.h"
 #include "arch-utils.h"
+#include "osabi.h"
 
 
 #define P_LINKL_FP	0x480e
@@ -94,6 +95,12 @@ enum
 #if !defined (REMOTE_BPT_VECTOR)
 #define REMOTE_BPT_VECTOR 1
 #endif
+
+
+struct gdbarch_tdep
+  {
+    enum gdb_osabi osabi;
+  };
 
 
 void m68k_frame_init_saved_regs (struct frame_info *frame_info);
@@ -983,17 +990,29 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   };
   struct gdbarch_tdep *tdep = NULL;
   struct gdbarch *gdbarch;
+  enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
 
-  /* find a candidate among the list of pre-declared architectures. */
-  arches = gdbarch_list_lookup_by_info (arches, &info);
-  if (arches != NULL)
-    return (arches->gdbarch);
+  /* Try to determine the OS ABI of the object we are loading.  */
+  if (info.abfd != NULL)
+    {
+      osabi = gdbarch_lookup_osabi (info.abfd);
+    }
 
-#if 0
+  /* Find a candidate among extant architectures.  */
+  for (arches = gdbarch_list_lookup_by_info (arches, &info);
+       arches != NULL;
+       arches = gdbarch_list_lookup_by_info (arches->next, &info))
+    {
+      /* Make sure the ABI selection matches.  */
+      tdep = gdbarch_tdep (arches->gdbarch);
+      if (tdep && tdep->osabi == osabi)
+	return arches->gdbarch;
+    }
+
   tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
-#endif
- 
-  gdbarch = gdbarch_alloc (&info, 0);
+  gdbarch = gdbarch_alloc (&info, tdep);
+
+  tdep->osabi = osabi;
 
   set_gdbarch_long_double_format (gdbarch, &floatformat_m68881_ext);
   set_gdbarch_long_double_bit (gdbarch, 96);
@@ -1063,6 +1082,12 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_push_dummy_frame (gdbarch, m68k_push_dummy_frame);
   set_gdbarch_pop_frame (gdbarch, m68k_pop_frame);
 
+  /* Hook in OS ABI-specific overrides, if they have been registered.  */
+  if (osabi != GDB_OSABI_UNKNOWN)
+    {
+      gdbarch_init_osabi (info, gdbarch, osabi);
+    }
+
   return gdbarch;
 }
 
@@ -1097,7 +1122,13 @@ nbsd_in_sigtramp (pc)
 static void
 m68k_dump_tdep (struct gdbarch *current_gdbarch, struct ui_file *file)
 {
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
 
+  if (tdep == NULL)
+    return;
+
+  fprintf_unfiltered (file, "m68k_dump_tdep: OS ABI = %s\n",
+		      gdbarch_osabi_name (tdep->osabi));
 }
 
 void

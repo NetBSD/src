@@ -20,8 +20,16 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
-#include "gdbtypes.h"
+#include "gdbcore.h"
 #include "regcache.h"
+#include "target.h"
+#include "breakpoint.h"
+#include "value.h"
+#include "osabi.h"
+
+#include "nbsd-tdep.h"
+
+#include "solib-svr4.h"
 
 int
 m68knbsd_use_struct_convention (int gcc_p, struct type *type)
@@ -30,4 +38,31 @@ m68knbsd_use_struct_convention (int gcc_p, struct type *type)
 	   || TYPE_LENGTH (type) == 2
 	   || TYPE_LENGTH (type) == 4
 	   || TYPE_LENGTH (type) == 8);
+}
+
+static int
+m68knbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
+{
+  /* FIXME: Need to add support for kernel-provided signal trampolines.  */
+  return (nbsd_pc_in_sigtramp (pc, func_name));
+}
+
+static void
+m68knbsd_init_abi (struct gdbarch_info info,
+                   struct gdbarch *gdbarch)
+{
+  /* Stop at main.  */
+  set_gdbarch_frame_chain_valid (gdbarch, generic_func_frame_chain_valid);
+
+  set_gdbarch_pc_in_sigtramp (gdbarch, m68knbsd_pc_in_sigtramp);
+
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+                                nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
+}
+
+void
+_initialize_m68knbsd_tdep (void)
+{
+  gdbarch_register_osabi (bfd_arch_m68k, GDB_OSABI_NETBSD_ELF,
+			  m68knbsd_init_abi);
 }
