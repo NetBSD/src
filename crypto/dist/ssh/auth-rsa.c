@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.6 2001/06/23 16:36:24 itojun Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.1.1.7 2001/09/27 02:00:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.42 2001/06/22 21:55:48 markus Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.44 2001/07/23 18:14:58 stevesk Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -160,7 +160,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		return 0;
 	}
 	if (options.strict_modes &&
-	    secure_filename(f, file, pw->pw_uid, line, sizeof(line)) != 0) {
+	    secure_filename(f, file, pw, line, sizeof(line)) != 0) {
 		xfree(file);
 		fclose(f);
 		log("Authentication refused: %s", line);
@@ -224,7 +224,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 
 		/* check the real bits  */
 		if (bits != BN_num_bits(pk->n))
-			log("Warning: %s, line %ld: keysize mismatch: "
+			log("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(pk->n), bits);
 

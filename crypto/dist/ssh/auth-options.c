@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.7 2001/06/23 16:36:23 itojun Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.8 2001/09/27 02:00:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.18 2001/05/31 10:30:12 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.20 2001/08/30 20:36:34 stevesk Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -21,6 +21,7 @@ RCSID("$OpenBSD: auth-options.c,v 1.18 2001/05/31 10:30:12 markus Exp $");
 #include "channels.h"
 #include "auth-options.h"
 #include "servconf.h"
+#include "misc.h"
 
 /* Flags set authorized_keys flags */
 int no_port_forwarding_flag = 0;
@@ -168,7 +169,6 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		}
 		cp = "from=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
-			int mname, mip;
 			const char *remote_ip = get_remote_ipaddr();
 			const char *remote_host = get_canonical_hostname(
 			    options.reverse_mapping_check);
@@ -196,18 +196,9 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			}
 			patterns[i] = 0;
 			opts++;
-			/*
-			 * Deny access if we get a negative
-			 * match for the hostname or the ip
-			 * or if we get not match at all
-			 */
-			mname = match_hostname(remote_host, patterns,
-			    strlen(patterns));
-			mip = match_hostname(remote_ip, patterns,
-			    strlen(patterns));
-			xfree(patterns);
-			if (mname == -1 || mip == -1 ||
-			    (mname != 1 && mip != 1)) {
+			if (match_host_and_ip(remote_host, remote_ip,
+			    patterns) != 1) {
+				xfree(patterns);
 				log("Authentication tried for %.100s with "
 				    "correct key but not from a permitted "
 				    "host (host=%.200s, ip=%.200s).",
@@ -218,13 +209,14 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				/* deny access */
 				return 0;
 			}
+			xfree(patterns);
 			/* Host name matches. */
 			goto next_option;
 		}
 		cp = "permitopen=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
+			char host[256], sport[6];
 			u_short port;
-			char *c, *ep;
 			char *patterns = xmalloc(strlen(opts) + 1);
 
 			opts += strlen(cp);
@@ -249,28 +241,25 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			}
 			patterns[i] = 0;
 			opts++;
-			c = strchr(patterns, ':');
-			if (c == NULL) {
-				debug("%.100s, line %lu: permitopen: missing colon <%.100s>",
-				    file, linenum, patterns);
-				packet_send_debug("%.100s, line %lu: missing colon",
-				    file, linenum);
+			if (sscanf(patterns, "%255[^:]:%5[0-9]", host, sport) != 2 &&
+			    sscanf(patterns, "%255[^/]/%5[0-9]", host, sport) != 2) {
+				debug("%.100s, line %lu: Bad permitopen specification "
+				    "<%.100s>", file, linenum, patterns);
+				packet_send_debug("%.100s, line %lu: "
+				    "Bad permitopen specification", file, linenum);
 				xfree(patterns);
 				goto bad_option;
 			}
-			*c = 0;
-			c++;
-			port = strtol(c, &ep, 0);
-			if (c == ep) {
-				debug("%.100s, line %lu: permitopen: missing port <%.100s>",
-				    file, linenum, patterns);
-				packet_send_debug("%.100s, line %lu: missing port",
-				    file, linenum);
+			if ((port = a2port(sport)) == 0) {
+				debug("%.100s, line %lu: Bad permitopen port <%.100s>",
+				    file, linenum, sport);
+				packet_send_debug("%.100s, line %lu: "
+				    "Bad permitopen port", file, linenum);
 				xfree(patterns);
 				goto bad_option;
 			}
 			if (options.allow_tcp_forwarding)
-				channel_add_permitted_opens(patterns, port);
+				channel_add_permitted_opens(host, port);
 			xfree(patterns);
 			goto next_option;
 		}

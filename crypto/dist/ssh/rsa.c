@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.c,v 1.1.1.4 2001/04/10 07:14:00 itojun Exp $	*/
+/*	$NetBSD: rsa.c,v 1.1.1.5 2001/09/27 02:00:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: rsa.c,v 1.22 2001/03/26 23:23:23 markus Exp $");
+RCSID("$OpenBSD: rsa.c,v 1.23 2001/06/27 05:42:24 markus Exp $");
 
 #include "rsa.h"
 #include "log.h"
@@ -122,7 +122,7 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 }
 
 void
-generate_additional_parameters(RSA *rsa)
+rsa_generate_additional_parameters(RSA *rsa)
 {
 	BIGNUM *aux;
 	BN_CTX *ctx;

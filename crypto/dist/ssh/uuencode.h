@@ -1,8 +1,8 @@
-/*	$NetBSD: uuencode.h,v 1.1.1.4 2001/04/10 07:14:23 itojun Exp $	*/
-/*	$OpenBSD: uuencode.h,v 1.5 2001/01/29 01:58:19 niklas Exp $	*/
+/*	$NetBSD: uuencode.h,v 1.1.1.5 2001/09/27 02:01:02 itojun Exp $	*/
+/*	$OpenBSD: uuencode.h,v 1.8 2001/06/26 17:27:25 markus Exp $	*/
 
 /*
- * Copyright (c) 1999 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 
 #ifndef UUENCODE_H
 #define UUENCODE_H
-int	uuencode(u_char *src, u_int srclength, char *target, size_t targsize);
-int	uudecode(const char *src, u_char *target, size_t targsize);
-void	dump_base64(FILE *fp, u_char *data, int len);
+int	 uuencode(u_char *, u_int, char *, size_t);
+int	 uudecode(const char *, u_char *, size_t);
+void	 dump_base64(FILE *, u_char *, int);
 #endif

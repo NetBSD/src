@@ -1,6 +1,6 @@
-/*	$NetBSD: compat.c,v 1.1.1.7 2001/05/15 15:02:27 itojun Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.8 2001/09/27 02:00:42 itojun Exp $	*/
 /*
- * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.50 2001/04/30 16:02:49 markus Exp $");
+RCSID("$OpenBSD: compat.c,v 1.53 2001/09/20 13:50:40 markus Exp $");
 
 #include <regex.h>
 
@@ -86,21 +86,25 @@ compat_datafellows(const char *version)
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
 					SSH_BUG_PKOK|SSH_BUG_RSASIGMD5|
-					SSH_BUG_HBSERVICE|SSH_BUG_OPENFAILURE },
+					SSH_BUG_HBSERVICE|SSH_BUG_OPENFAILURE|
+					SSH_BUG_DUMMYCHAN },
 		{ "^2\\.0\\.1[1-2]",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
 					SSH_BUG_PKAUTH|SSH_BUG_PKOK|
-					SSH_BUG_RSASIGMD5|SSH_BUG_OPENFAILURE },
+					SSH_BUG_RSASIGMD5|SSH_BUG_OPENFAILURE|
+					SSH_BUG_DUMMYCHAN },
 		{ "^2\\.0\\.",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
 					SSH_BUG_PKAUTH|SSH_BUG_PKOK|
 					SSH_BUG_RSASIGMD5|SSH_BUG_OPENFAILURE|
-					SSH_BUG_DERIVEKEY },
-		{ "^2\\.[23]\\.0",	SSH_BUG_HMAC|SSH_BUG_RSASIGMD5 },
-		{ "^2\\.3\\.",		SSH_BUG_RSASIGMD5 },
-		{ "^2\\.[2-9]\\.",	0 },
+					SSH_BUG_DERIVEKEY|SSH_BUG_DUMMYCHAN },
+		{ "^2\\.[23]\\.0",	SSH_BUG_HMAC|SSH_BUG_DEBUG|
+					SSH_BUG_RSASIGMD5 },
+		{ "^2\\.3\\.",		SSH_BUG_DEBUG|SSH_BUG_RSASIGMD5 },
+		{ "^2\\.[2-9]\\.",	SSH_BUG_DEBUG },
+		{ "^3\\.0\\.",		SSH_BUG_DEBUG },
 		{ "^2\\.4$",		SSH_OLD_SESSIONID },	/* Van Dyke */
 		{ "^3\\.0 SecureCRT",	SSH_OLD_SESSIONID },
 		{ "^1\\.7 SecureFX",	SSH_OLD_SESSIONID },

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.5 2001/04/10 07:13:56 itojun Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.6 2001/09/27 02:00:44 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.17 2001/03/04 17:42:28 millert Exp $");
+RCSID("$OpenBSD: log.c,v 1.18 2001/06/26 17:27:23 markus Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
@@ -85,6 +85,8 @@ static struct {
 	{ "DEBUG3",	SYSLOG_LEVEL_DEBUG3 },
 	{ NULL, 0 }
 };
+
+static void	 do_log(LogLevel level, const char *fmt, va_list args);
 
 SyslogFacility
 log_facility_number(char *name)
@@ -319,7 +321,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 
 #define MSGBUFSIZ 1024
 
-void
+static void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
 	char msgbuf[MSGBUFSIZ];

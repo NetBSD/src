@@ -1,4 +1,4 @@
-/*	$NetBSD: mpaux.h,v 1.1.1.4 2001/04/10 07:13:57 itojun Exp $	*/
+/*	$NetBSD: mpaux.h,v 1.1.1.5 2001/09/27 02:00:44 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,20 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: mpaux.h,v 1.9 2000/12/19 23:17:57 markus Exp $"); */
+/* RCSID("$OpenBSD: mpaux.h,v 1.11 2001/06/26 17:27:24 markus Exp $"); */
 
 #ifndef MPAUX_H
 #define MPAUX_H
 
-/*
- * Computes a 16-byte session id in the global variable session_id. The
- * session id is computed by concatenating the linearized, msb first
- * representations of host_key_n, session_key_n, and the cookie.
- */
-void
-compute_session_id(u_char session_id[16],
-    u_char cookie[8],
-    BIGNUM * host_key_n,
-    BIGNUM * session_key_n);
+void	 compute_session_id(u_char[16], u_char[8], BIGNUM *, BIGNUM *);
 
 #endif				/* MPAUX_H */

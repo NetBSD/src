@@ -1,8 +1,6 @@
-/*	$NetBSD: key.h,v 1.1.1.7 2001/09/27 02:00:44 itojun Exp $	*/
-/*	$OpenBSD: key.h,v 1.17 2001/09/17 19:27:15 stevesk Exp $	*/
-
+/*	$NetBSD: scard.h,v 1.1.1.1 2001/09/27 02:00:48 itojun Exp $	*/
 /*
- * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,58 +22,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef KEY_H
-#define KEY_H
 
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
+/* $OpenBSD: scard.h,v 1.6 2001/08/01 22:03:33 markus Exp $ */
 
-typedef struct Key Key;
-enum types {
-	KEY_RSA1,
-	KEY_RSA,
-	KEY_DSA,
-	KEY_UNSPEC
-};
-enum fp_type {
-	SSH_FP_SHA1,
-	SSH_FP_MD5
-};
-enum fp_rep {
-	SSH_FP_HEX,
-	SSH_FP_BUBBLEBABBLE
-};
+#include <openssl/engine.h>
 
-/* key is stored in external hardware */
-#define KEY_FLAG_EXT		0x0001
+#ifndef SCARD_H
+#define SCARD_H
 
-struct Key {
-	int	 type;
-	int	 flags;
-	RSA	*rsa;
-	DSA	*dsa;
-};
+#define SCARD_ERROR_FAIL	-1
+#define SCARD_ERROR_NOCARD	-2
+#define SCARD_ERROR_APPLET	-3
 
-Key	*key_new(int);
-Key	*key_new_private(int);
-void	 key_free(Key *);
-int	 key_equal(Key *, Key *);
-char	*key_fingerprint(Key *, enum fp_type, enum fp_rep);
-char	*key_type(Key *);
-int	 key_write(Key *, FILE *);
-int	 key_read(Key *, char **);
-u_int	 key_size(Key *);
-
-Key	*key_generate(int, u_int);
-Key	*key_from_private(Key *);
-int	 key_type_from_name(char *);
-
-Key	*key_from_blob(u_char *, int);
-int	 key_to_blob(Key *, u_char **, u_int *);
-char	*key_ssh_name(Key *);
-int	 key_names_valid2(const char *);
-
-int	 key_sign(Key *, u_char **, int *, u_char *, int);
-int	 key_verify(Key *, u_char *, int, u_char *, int);
+Key	*sc_get_key(const char*);
+ENGINE	*sc_get_engine(void);
+void	 sc_close(void);
 
 #endif

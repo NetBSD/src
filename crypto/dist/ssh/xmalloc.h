@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.h,v 1.1.1.3 2001/04/10 07:14:23 itojun Exp $	*/
+/*	$NetBSD: xmalloc.h,v 1.1.1.4 2001/09/27 02:01:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,21 +15,14 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: xmalloc.h,v 1.5 2000/09/07 20:27:56 deraadt Exp $"); */
+/* RCSID("$OpenBSD: xmalloc.h,v 1.7 2001/06/26 17:27:25 markus Exp $"); */
 
 #ifndef XMALLOC_H
 #define XMALLOC_H
 
-/* Like malloc, but calls fatal() if out of memory. */
-void   *xmalloc(size_t size);
-
-/* Like realloc, but calls fatal() if out of memory. */
-void   *xrealloc(void *ptr, size_t new_size);
-
-/* Frees memory allocated using xmalloc or xrealloc. */
-void    xfree(void *ptr);
-
-/* Allocates memory using xmalloc, and copies the string into that memory. */
-char   *xstrdup(const char *str);
+void	*xmalloc(size_t);
+void	*xrealloc(void *, size_t);
+void     xfree(void *);
+char 	*xstrdup(const char *);
 
 #endif				/* XMALLOC_H */
