@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.527 2005/02/19 21:43:19 thorpej Exp $
+# $NetBSD: mi,v 1.528 2005/02/22 07:39:25 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -86,6 +86,7 @@
 ./etc/powerd					base-sysutil-bin
 ./etc/powerd/scripts				base-sysutil-bin
 ./etc/racoon					base-netutil-bin
+./etc/release					etc-sys-etc
 ./etc/rc.conf.d					base-sys-root
 ./etc/rc.d					base-sys-root
 ./etc/skel					base-sys-root
