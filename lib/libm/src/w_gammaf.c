@@ -15,13 +15,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_gammaf.c,v 1.6 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_gammaf.c,v 1.7 2001/01/06 00:15:00 christos Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
-
-extern int signgam;
 
 #ifdef __STDC__
 	float gammaf(float x)
