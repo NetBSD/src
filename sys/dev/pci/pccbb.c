@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.95 2003/12/19 19:00:00 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.95 2003/12/19 19:00:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $");
 
 /*
 #define CBB_DEBUG
@@ -304,7 +304,7 @@ const struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131), CB_TI113X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -312,9 +312,9 @@ const struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1211), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -322,7 +322,7 @@ const struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -826,6 +826,36 @@ pccbb_chipinit(sc)
 		break;
 
 	case CB_TI12XX:
+		/*
+		 * Some TI 12xx (and [14][45]xx) based pci cards
+		 * sometimes have issues with the MFUNC register not
+		 * being initialized due to a bad EEPROM on board.
+		 * Laptops that this matters on have this register
+		 * properly initialized.
+		 *
+		 * The TI125X parts have a different register.
+		 */
+		reg = pci_conf_read(pc, tag, PCI12XX_MFUNC);
+		if (reg == 0) {
+			reg &= ~PCI12XX_MFUNC_PIN0;
+			reg |= PCI12XX_MFUNC_PIN0_INTA;
+			if ((pci_conf_read(pc, tag, PCI_SYSCTRL) &
+			     PCI12XX_SYSCTRL_INTRTIE) == 0) {
+				reg &= ~PCI12XX_MFUNC_PIN1;
+				reg |= PCI12XX_MFUNC_PIN1_INTB;
+			}
+			pci_conf_write(pc, tag, PCI12XX_MFUNC, reg);
+		}
+		/* fallthrough */
+
+	case CB_TI125X:
+		/*
+		 * Disable zoom video.  Some machines initialize this
+		 * improperly and experience has shown that this helps
+		 * prevent strange behavior.
+		 */
+		pci_conf_write(pc, tag, PCI12XX_MMCTRL, 0);
+
 		reg = pci_conf_read(pc, tag, PCI_SYSCTRL);
 		reg |= PCI12XX_SYSCTRL_VCCPROT;
 		pci_conf_write(pc, tag, PCI_SYSCTRL, reg);
