@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.4 2001/08/07 22:39:04 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.5 2001/12/30 02:15:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
-	struct pt_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
+	struct pthread_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
 #ifdef ERRORCHECK
 	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
 		return EINVAL;
