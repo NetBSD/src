@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.204 2004/04/18 20:44:39 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.205 2004/04/19 10:01:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1316,7 +1316,7 @@ Lpanic_red:
  * fails (thanks to Chris Torek for finding this quirk).
  */
 #define CMP_PTE_USER_READ4M(pte, tmp) \
-	or	pte, ASI_SRMMUFP_L3, pte; \
+	/*or	pte, ASI_SRMMUFP_L3, pte; -- ASI_SRMMUFP_L3 == 0 */ \
 	lda	[pte] ASI_SRMMUFP, pte; \
 	set	SRMMU_SFSR, tmp; \
 	lda	[tmp] ASI_SRMMU, %g0; \
