@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.68 2003/08/01 01:18:47 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.69 2003/11/08 11:18:33 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -68,9 +68,8 @@ attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
 
 # Apollo APCI 8250-like UARTs
-device	apci: tty
-attach	apci at frodo
-file	arch/hp300/dev/apci.c		apci needs-flag
+attach	com at frodo with com_frodo
+file	arch/hp300/dev/com_frodo.c	com_frodo needs-flag
 
 # Frame buffer attribute
 define	grfdev { }
@@ -121,9 +120,8 @@ attach	rbox at dio with rbox_dio
 attach	topcat at dio with topcat_dio
 
 # DCA serial interface
-device	dca: tty
-attach	dca at dio
-file	arch/hp300/dev/dca.c		dca needs-flag
+attach	com at dio with com_dio
+file	arch/hp300/dev/com_dio.c	com_dio needs-flag
 
 # DCM serial interface
 device	dcm: tty
