@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.27 1999/07/25 22:50:29 ad Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.28 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,14 +91,9 @@ xcfb needs dtop device
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/mman.h>
-#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
