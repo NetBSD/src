@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.33 1999/03/22 09:38:58 mycroft Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.34 1999/04/12 19:31:27 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,6 +56,10 @@
 #include <dev/isapnp/isapnpdevs.h>
 
 #include "wss_isapnp.h"		/* XXX part of disgusting CS chip hack */
+
+#ifndef ISAPNP_ALLOC_INTR_MASK
+#define ISAPNP_ALLOC_INTR_MASK (~0)
+#endif
 
 static void isapnp_init __P((struct isapnp_softc *));
 static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
@@ -259,7 +263,8 @@ isapnp_alloc_irq(ic, i)
 		return 0;
 	}
 
-	if (isa_intr_alloc(ic, i->bits, i->type, &irq) == 0) {
+	if (isa_intr_alloc(ic, ISAPNP_ALLOC_INTR_MASK & i->bits,
+			   i->type, &irq) == 0) {
 		i->num = irq;
 		return 0;
 	}
