@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.12 1999/09/09 12:26:46 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.13 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,11 +82,8 @@ struct usb_frag_dma {
 	LIST_ENTRY(usb_frag_dma) next;
 };
 
-usbd_status	usb_block_allocmem 
-	__P((bus_dma_tag_t, size_t, size_t, usb_dma_block_t **));
-#if 0
-void		usb_block_real_freemem  __P((usb_dma_block_t *));
-#endif
+usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
+					usb_dma_block_t **));
 void		usb_block_freemem  __P((usb_dma_block_t *));
 
 LIST_HEAD(, usb_dma_block) usb_blk_freelist = 

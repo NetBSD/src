@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.29 1999/09/09 12:26:48 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.30 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,15 +38,7 @@
  */
 
 /* From usb_mem.h */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-struct usb_dma_block;
-typedef struct {
-	struct usb_dma_block *block;
-	u_int offs;
-} usb_dma_t;
-#elif defined(__FreeBSD__)
-typedef void * usb_dma_t;
-#endif
+DECLARE_USB_DMA_T;
 
 struct usbd_request;
 struct usbd_pipe;
@@ -176,13 +168,13 @@ struct usbd_request {
 	int			nframes;
 
 	/* For memory allocation */
-	struct usbd_device     *dev;
+	struct usbd_device     *device;
 	usb_dma_t		dmabuf;
 
 	int			rqflags;
 #define URQ_REQUEST	0x01
-#define URQ_SYSDMABUF	0x10
-#define URQ_USRDMABUF	0x20
+#define URQ_AUTO_DMABUF	0x10
+#define URQ_DEV_DMABUF	0x20
 
 	SIMPLEQ_ENTRY(usbd_request) next;
 

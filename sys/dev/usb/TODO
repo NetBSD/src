@@ -14,8 +14,6 @@ Throw out more USBDI gunk.
 Make hub driver notice transition between self and bus powered state.
 Handle overcurrent conditions.
 
-Move memory allocation and copying to HC independent code.
-
 Use a TD chain in ohci.c to allow transfers > 8K.
 
 Add an event mechanism to find out about attach and detach.
@@ -39,6 +37,8 @@ uaudio problems:
 	implement selector units
 	implement input
 	test with more devices
+
+Preallocate buffer in ulpt.
 
 Document device driver API.
 

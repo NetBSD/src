@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.10 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.11 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,13 @@ typedef struct device *device_ptr_t;
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
+
+#define DECLARE_USB_DMA_T \
+	struct usb_dma_block; \
+	typedef struct { \
+		struct usb_dma_block *block; \
+		u_int offs; \
+	} usb_dma_t
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
@@ -139,6 +146,13 @@ typedef struct device device_ptr_t;
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 
+#define DECLARE_USB_DMA_T \
+	struct usb_dma_block; \
+	typedef struct { \
+		struct usb_dma_block *block; \
+		u_int offs; \
+	} usb_dma_t
+
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
 
@@ -213,6 +227,8 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USBDEV(bdev) (bdev)
 #define USBDEVNAME(bdev) usbd_devname(bdev)
 #define USBDEVPTRNAME(bdev) usbd_devname(bdev)
+
+#define DECLARE_USB_DMA_T typedef void * usb_dma_t
 
 /* XXX Change this when FreeBSD has memset
  */
@@ -309,3 +325,8 @@ __CONCAT(dname,_attach)(device_t self)
 
 #undef NONE
 
+
+
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__)
+#endif
