@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1 2001/12/11 00:25:31 uwe Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.2 2002/01/31 11:51:25 uwe Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -223,11 +223,9 @@ ebus_attach(parent, self, aux)
 	int node, error;
 	char devinfo[256];
 
-	printf("\n");
-
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf("%s: %s, revision 0x%02x\n",
-	       self->dv_xname, devinfo, PCI_REVISION(pa->pa_class));
+	printf(": %s, revision 0x%02x\n",
+	       devinfo, PCI_REVISION(pa->pa_class));
 
 	node = PCITAG_NODE(pa->pa_tag);
 	if (node == -1)
