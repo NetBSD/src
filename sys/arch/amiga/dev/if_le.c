@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.1.1.1 1993/09/02 16:53:07 mw Exp $
+ *	$Id: if_le.c,v 1.2 1993/10/30 23:41:14 mw Exp $
  */
 
 #include "le.h"

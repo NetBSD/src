@@ -1,7 +1,5 @@
 /*
  * Driver for custom chips display.
- *
- *	$Id: grf_ccreg.h,v 1.3 1993/09/02 18:07:59 mw Exp $
  */
 
 /* this is a mere collection of data, the registers itself are in the
@@ -185,10 +183,19 @@ struct ccfb {
 #define DEF_SCREEN (60*5*60)	/* 5 minutes */
 
 /* these are the initial values for changeable parameters: */
+#ifdef BORING_DEFAULTS
 #define	DEF_DISP_WIDTH		640
 #define DEF_DISP_HEIGHT		400
 #define DEF_DISP_X		258	/* "" */
 #define DEF_DISP_Y		88	/* hardware preferred values.. */
+#else
+/* these make use of possible overscan, giving you a much larger
+   console */
+#define DEF_DISP_WIDTH		704
+#define DEF_DISP_HEIGHT		464
+#define DEF_DISP_X		194
+#define DEF_DISP_Y		44
+#endif
 #define DEF_FB_X		0
 #define DEF_FB_Y		0
 /* mtk: if it were up to me, I'd delete all of the above */

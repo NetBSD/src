@@ -7,12 +7,14 @@ maxusers	16
 
 # Standard options
 #options	QUOTA
+options		COMPAT_SUNOS
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
 options		NFS,NFSSERVER,NFSCLIENT
 options		MFS
 options		ISOFS
 options		FIFO
-options		MSDOSFS
+#options		MSDOSFS
 options		KERNFS
 options		FDESC
 #options		ISO
@@ -43,52 +45,52 @@ config		vmunix root on sd1a swap on sd1b and sd6b
 
 # manufacturer 1 is a pseudo and stands for `builtin'
 master		a3000scsi0	at manufacturer	1	product	1
-master		a2091scsi0	at manufacturer 514	product 3
-master		gvp11scsi0	at manufacturer 2017	product 11
+#master		a2091scsi0	at manufacturer 514	product 3
+#master		gvp11scsi0	at manufacturer 2017	product 11
 #master		floppy0	at manufacturer	1	product	2
 
 # further builtin devices
 device		ser0	at manufacturer	1	product	3
 #device		clock	at manufacturer	1	product 4
 #device		kbd	at manufacturer	1	product 5
-#device		par	at manufacturer	1	product	6
+device		par0	at manufacturer	1	product	6
 #device		mouse	at manufacturer	1	product	8
 
 disk		sd0	at a3000scsi0 slave 0
-disk		sd0	at a2091scsi0 slave 0
-disk		sd0	at gvp11scsi0 slave 0
+#disk		sd0	at a2091scsi0 slave 0
+#disk		sd0	at gvp11scsi0 slave 0
 
 disk		sd1	at a3000scsi0 slave 1
-disk		sd1	at a2091scsi0 slave 1
-disk		sd1	at gvp11scsi0 slave 1
+#disk		sd1	at a2091scsi0 slave 1
+#disk		sd1	at gvp11scsi0 slave 1
 
 disk		sd2	at a3000scsi0 slave 2
-disk		sd2	at a2091scsi0 slave 2
-disk		sd2	at gvp11scsi0 slave 2
+#disk		sd2	at a2091scsi0 slave 2
+#disk		sd2	at gvp11scsi0 slave 2
 
 disk		sd3	at a3000scsi0 slave 3
-disk		sd3	at a2091scsi0 slave 3
-disk		sd3	at gvp11scsi0 slave 3
+#disk		sd3	at a2091scsi0 slave 3
+#disk		sd3	at gvp11scsi0 slave 3
 
 disk		sd4	at a3000scsi0 slave 4
-disk		sd4	at a2091scsi0 slave 4
-disk		sd4	at gvp11scsi0 slave 4
+#disk		sd4	at a2091scsi0 slave 4
+#disk		sd4	at gvp11scsi0 slave 4
 
 disk		sd5	at a3000scsi0 slave 5
-disk		sd5	at a2091scsi0 slave 5
-disk		sd5	at gvp11scsi0 slave 5
+#disk		sd5	at a2091scsi0 slave 5
+#disk		sd5	at gvp11scsi0 slave 5
 
 disk		sd6	at a3000scsi0 slave 6
-disk		sd6	at a2091scsi0 slave 6
-disk		sd6	at gvp11scsi0 slave 6
+#disk		sd6	at a2091scsi0 slave 6
+#disk		sd6	at gvp11scsi0 slave 6
 
 tape		st0	at a3000scsi0 slave ?
-tape		st0	at a2091scsi0 slave ?
-tape		st0	at gvp11scsi0 slave ?
+#tape		st0	at a2091scsi0 slave ?
+#tape		st0	at gvp11scsi0 slave ?
 
 tape		st1	at a3000scsi0 slave ?
-tape		st1	at a2091scsi0 slave ?
-tape		st1	at gvp11scsi0 slave ?
+#tape		st1	at a2091scsi0 slave ?
+#tape		st1	at gvp11scsi0 slave ?
 
 device		grf0	at manufacturer	1	product	7
 device		grf1	at manufacturer	18260	product	6
@@ -104,15 +106,11 @@ device		le0	at manufacturer ?	product ?
 # my dear A2410
 #device		tiga0	at manufacturer 1030	product 0
 
-pseudo-device	sl	4
-pseudo-device	ppp	4
+pseudo-device	sl	1
+pseudo-device	ppp	1
 pseudo-device	bpfilter 16
 pseudo-device	ite	2
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	vn	10
-
-pseudo-device	devpager
-pseudo-device	swappager
-pseudo-device	vnodepager
+#pseudo-device	vn	10

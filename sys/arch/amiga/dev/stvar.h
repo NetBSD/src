@@ -35,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stvar.h	7.1 (Berkeley) 2/5/91
- *	$Id: stvar.h,v 1.2 1993/08/01 19:23:23 mycroft Exp $
+ *      @(#)stvar.h	7.1 (Berkeley) 2/5/91
  */
 
 /*
@@ -100,6 +99,16 @@ struct exb_xsense {
 
 struct  exb_inquiry { 
 	char	venderunique[16];
+};
+
+struct cpr_xsense {
+	u_char	b8;
+#define CPR_WP	0x10
+	u_char	b9;
+	u_char  b10;
+	u_char  b11;
+	u_char  b12;
+	u_char  b13;
 };
 
 struct	st_mode {
