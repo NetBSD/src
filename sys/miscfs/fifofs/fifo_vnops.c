@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.22 1996/10/13 02:21:29 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.23 1997/05/18 12:19:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -266,8 +266,12 @@ fifo_read(v)
 	 */
 	if (uio->uio_resid == startresid)
 		rso->so_state &= ~SS_CANTRCVMORE;
-	if (ap->a_ioflag & IO_NDELAY)
+	if (ap->a_ioflag & IO_NDELAY) {
 		rso->so_state &= ~SS_NBIO;
+		if (error == EWOULDBLOCK &&
+		    ap->a_vp->v_fifoinfo->fi_writers == 0)
+			error = 0;
+	}
 	return (error);
 }
 
