@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.43 1998/02/23 14:12:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -47,7 +47,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

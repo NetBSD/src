@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.1 1998/01/19 22:18:24 augustss Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.2 1998/02/23 14:12:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -51,7 +51,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -78,7 +77,11 @@ static void	madprobe __P((struct wss_softc *, int));
 static void	madunmap __P((struct wss_softc *));
 static int	detect_mad16 __P((struct wss_softc *, int));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int		wss_isa_probe __P((struct device *, void *, void *));
+#else
+int		wss_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void		wss_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach wss_isa_ca = {
