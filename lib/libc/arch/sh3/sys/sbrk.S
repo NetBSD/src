@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 2001/05/11 19:58:08 msaitoh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.7 2003/07/01 14:35:45 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.6 2001/05/11 19:58:08 msaitoh Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.7 2003/07/01 14:35:45 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -58,25 +58,49 @@ curbrk:	.long	_end
 
 ENTRY(_sbrk)
 	mov	r4, r2
+#ifdef PIC
+	mova	L_GOT, r0
+	mov.l	L_GOT, r3
+	add	r0, r3
 	mov.l	Lcurbrk, r0
+	mov.l	@(r0, r3), r0
+#else
+	mov.l	Lcurbrk, r0
+#endif
 	mov.l	@r0, r0
 	add	r0, r4
 	mov.l	LSYS_break, r0
 	trapa	#0x80
 	bf	err
+#ifdef PIC
+	mov.l	Lcurbrk, r0
+	mov.l	@(r0, r3), r1
+#else
 	mov.l	Lcurbrk, r1
+#endif
 	mov.l	@r1, r0
 	add	r0, r2
 	rts
 	mov.l	r2, @r1
 err:
 	mov.l	Lcerror, r1
+#ifdef PIC
+	braf	r1
+#else
 	jmp	@r1
+#endif
 	nop
+1:
 
 	.align	2
-Lcurbrk:	.long	curbrk
 LSYS_break:	.long	SYS_break
+#ifdef PIC
+L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
+Lcurbrk:	.long	curbrk@GOT
+Lcerror:	.long	cerror-1b
+#else
+Lcurbrk:	.long	curbrk
 Lcerror:	.long	cerror
+#endif
 
 
