@@ -128,7 +128,7 @@
 #define	ULTRIX_SYS_mkdir	136
 #define	ULTRIX_SYS_rmdir	137
 #define	ULTRIX_SYS_utimes	138
-#define	ULTRIX_SYS_sigreturn	139
+#define	ULTRIX_SYS_sigcleanup	139	/* From 4.2 longjmp; same as SYS_sigreturn */
 #define	ULTRIX_SYS_adjtime	140
 #define	ULTRIX_SYS_compat_43_getpeername	141
 #define	ULTRIX_SYS_compat_43_gethostid	142
