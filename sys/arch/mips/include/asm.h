@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.23 2000/06/12 23:42:10 castor Exp $	*/
+/*	$NetBSD: asm.h,v 1.24 2000/06/23 12:18:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,12 @@
 	.aent	x, 0
 #else
 #define AENT(x)
+#endif
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
 #endif
 
 /*

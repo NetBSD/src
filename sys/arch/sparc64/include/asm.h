@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1999/10/05 03:34:41 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.10 2000/06/23 12:18:50 kleink Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -111,6 +111,12 @@
 #define ASMSTR			.asciz
 
 #define RCSID(name)		.asciz name
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.

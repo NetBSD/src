@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
+/*	$NetBSD: asm.h,v 1.10 2000/06/23 12:18:50 kleink Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,6 +81,12 @@
 	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
 #define ALTENTRY(x) .globl _/**/x; _/**/x:
+#endif
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
 #endif
 
 #ifdef __STDC__
