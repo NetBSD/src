@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.90 2000/10/31 15:00:39 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.91 2000/11/04 20:09:46 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1875,3 +1875,32 @@ usr.sbin/tcpdump/util.c				1.8
 lib/libc/net/hesiod.c				1.15
 
   If setuid, ignore environment variables.
+
+bin/csh/dol.c					1.15-1.16
+
+  Avoid overwriting existing files when creating files used
+  for ``here'' documents, thereby closing a security hole.
+
+usr.sbin/user/user.c				1.30-1.33
+
+  Make usage message fit in 80 columns.  Remove some debugging code
+  in the removal of user home dirs (and enable the real code).
+  Error out if instructed to create the home directory but it
+  already exists.  Otherwise, recursively make files in new home
+  directory (i.e. newly copied skel files) writable by the owner.
+
+usr.bin/top/display.c				1.4
+
+  Avoid buffer overflow, closing a security hole.
+
+distrib/miniroot/Makefile			patch
+distrib/vax/bootfs/Makefile			patch
+distrib/vax/miniroot/Makefile			removed
+distrib/vax/miniroot/Makefile.inc		1.1 (new)
+distrib/vax/miniroot/list			patch
+distrib/vax/ramdisk/Makefile			patch
+etc/etc.vax/Makefile.inc			patch
+etc/etc.vax/disktab				patch
+
+  Bring VAX release building bits into shape.  Use the common method
+  for building miniroots, fix ramdisk, use INSTALL kernel.
