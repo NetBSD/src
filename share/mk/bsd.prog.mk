@@ -121,6 +121,7 @@ depend: .depend _PROGSUBDIR
 .if !target(install)
 .if !target(beforeinstall)
 beforeinstall:
+.if defined(DESTDIR) || defined(BINDIR)
 	@if [ ! -d "${DESTDIR}${BINDIR}" ]; then \
                 /bin/rm -f ${DESTDIR}${BINDIR} ; \
                 mkdir -p ${DESTDIR}${BINDIR} ; \
@@ -129,6 +130,7 @@ beforeinstall:
         else \
                 true ; \
         fi
+.endif
 .endif
 .if !target(afterinstall)
 afterinstall:
