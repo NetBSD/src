@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.22 1998/02/06 07:22:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -79,6 +79,9 @@ struct pcb {
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
 	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
+#if defined(PMAP_NEW)
+	struct pmap *pcb_pmap;		/* back pointer to our pmap */
+#endif
 };
 
 /*    

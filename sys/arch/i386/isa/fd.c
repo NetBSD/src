@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.116 1998/01/15 06:11:55 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.117 1998/02/06 07:22:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -77,6 +77,11 @@
 #include <sys/fdio.h>
 #if NRND > 0
 #include <sys/rnd.h>
+#endif
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #endif
 
 #include <dev/cons.h>

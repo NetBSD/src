@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 1998/01/24 15:50:42 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 1998/02/06 07:21:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -143,20 +143,31 @@
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
+#ifdef PMAP_NEW
+	.set	_PTmap,(PDSLOT_PTE << PDSHIFT)
+	.set	_PTD,(_PTmap + PDSLOT_PTE * NBPG)
+	.set	_PTDpde,(_PTD + PDSLOT_PTE * 4)		# XXX 4 == sizeof pde
+#else
+	.globl	_PTmap,_PTD,_PTDpde
 	.set	_PTmap,(PTDPTDI << PDSHIFT)
 	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
 	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
-	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
+#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
  */
+#ifdef PMAP_NEW
+	.set	_APTmap,(PDSLOT_APTE << PDSHIFT)
+	.set	_APTD,(_APTmap + PDSLOT_APTE * NBPG)
+	.set	_APTDpde,(_PTD + PDSLOT_APTE * 4)	# XXX 4 == sizeof pde
+#else
 	.globl	_APTmap,_APTD,_APTDpde
 	.set	_APTmap,(APTDPTDI << PDSHIFT)
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
+#endif
 
 
 /*
@@ -455,7 +466,7 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack | Sysmap
+ * text | data | bss | [syms] | page dir | proc0 kstack 
  *			      0          1       2      3
  */
 #define	PROC0PDIR	((0)              * NBPG)
@@ -489,6 +500,17 @@ try586:	/* Use the `cpuid' instruction. */
 	 * Calculate the size of the kernel page table directory, and
 	 * how many entries it will have.
 	 */
+#if defined(PMAP_NEW)
+	movl	RELOC(_nkpde),%ecx		# get nkpde
+	cmpl	$NKPTP_MIN,%ecx			# larger than min?
+	jge	1f
+	movl	$NKPTP_MIN,%ecx			# set at min
+	jmp	2f
+1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
+	jle	2f
+	movl	$NKPTP_MAX,%ecx
+2:
+#else
 	movl	RELOC(_nkpde),%ecx		# get nkpde
 	testl	%ecx,%ecx			# if it's non-zero, use as-is
 	jnz	2f
@@ -502,6 +524,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$NKPDE_MAX,%ecx
 1:	movl	%ecx,RELOC(_nkpde)
 2:
+#endif
 
 	/* Clear memory for bootstrap tables. */
 	shll	$PGSHIFT,%ecx
@@ -573,7 +596,11 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
 	/* Map kernel PDEs. */
 	movl	RELOC(_nkpde),%ecx			# for this many pde s,
+#if defined(PMAP_NEW)
+	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# kernel pde offset
+#else
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
+#endif
 	fillkpt
 
 #if NBIOSCALL > 0
@@ -588,7 +615,11 @@ try586:	/* Use the `cpuid' instruction. */
 	
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
+#ifdef PMAP_NEW
+	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
+#else
 	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
+#endif
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_PTDpaddr)
@@ -918,6 +949,67 @@ ENTRY(bcopy)
 	popl	%esi
 	cld
 	ret
+
+
+#if defined(UVM)
+/*
+ * kcopy(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes, abort on fault.
+ */
+ENTRY(kcopy)
+	pushl	%esi
+	pushl	%edi
+
+	movl	_curpcb,%eax	# load curpcb into eax and set on-fault
+	movl	$_copy_fault, PCB_ONFAULT(%eax)
+
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%ecx
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
+	cld				# nope, copy forward
+	shrl	$2,%ecx			# copy by 32-bit words
+	rep
+	movsl
+	movl	20(%esp),%ecx
+	andl	$3,%ecx			# any bytes left?
+	rep
+	movsb
+
+	xorl	%eax,%eax
+	popl	%edi
+	popl	%esi
+	movl    _curpcb,%edx
+	movl    %eax,PCB_ONFAULT(%edx)
+	ret
+
+	ALIGN_TEXT
+1:	addl	%ecx,%edi		# copy backward
+	addl	%ecx,%esi
+	std
+	andl	$3,%ecx			# any fractional bytes?
+	decl	%edi
+	decl	%esi
+	rep
+	movsb
+	movl	20(%esp),%ecx		# copy remainder by 32-bit words
+	shrl	$2,%ecx
+	subl	$3,%esi
+	subl	$3,%edi
+	rep
+	movsl
+
+	xorl	%eax,%eax
+	popl	%edi
+	popl	%esi
+	movl    _curpcb,%edx
+	movl    %eax,PCB_ONFAULT(%edx)
+	cld
+	ret
+#endif
 
 /*****************************************************************************/
 
@@ -1601,7 +1693,11 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
+#ifdef UVM
+	.globl	_whichqs,_qs,_uvmexp,_panic
+#else
 	.globl	_whichqs,_qs,_cnt,_panic
+#endif
 
 /*
  * setrunqueue(struct proc *p);
@@ -1890,7 +1986,11 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
+#if defined(UVM)
+	.globl	_proc0,_uvmspace_free,_kernel_map,_uvm_km_free,_tss_free
+#else
 	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free,_tss_free
+#endif
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
@@ -1939,11 +2039,19 @@ ENTRY(switch_exit)
 	pushl	P_ADDR(%edi)
 	call	_tss_free
 	pushl	P_VMSPACE(%edi)
+#if defined(UVM)
+	call	_uvmspace_free
+#else
 	call	_vmspace_free
+#endif
 	pushl	$USPACE
 	pushl	P_ADDR(%edi)
 	pushl	_kernel_map
+#if defined(UVM)
+	call	_uvm_km_free
+#else
 	call	_kmem_free
+#endif
 	addl	$20,%esp
 
 	/* Jump into cpu_switch() with the right state. */
@@ -2064,7 +2172,11 @@ IDTVEC(trap10)
 	INTRENTRY
 	pushl	_cpl
 	pushl	%esp
+#if defined(UVM)
+	incl	_uvmexp+V_TRAP
+#else
 	incl	_cnt+V_TRAP
+#endif
 	call	_npxintr
 	addl	$8,%esp
 	INTRFASTEXIT

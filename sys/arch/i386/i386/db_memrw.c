@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1997/07/05 20:46:38 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1998/02/06 07:21:52 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,7 +59,9 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
+#if !defined(PMAP_NEW)
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#endif
 
 /*
  * Write bytes to kernel address space for debugger.
@@ -81,14 +83,22 @@ db_write_bytes(addr, size, data)
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vm_offset_t)&etext) {
+#if defined(PMAP_NEW)
+		ptep0 = PTE_BASE + i386_btop(addr);
+#else
 		ptep0 = pmap_pte(pmap_kernel(), addr);
+#endif
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
 
 		addr1 = i386_trunc_page(addr + size - 1);
 		if (i386_trunc_page(addr) != addr1) {
 			/* data crosses a page boundary */
+#if defined(PMAP_NEW)
+			ptep1 = PTE_BASE + i386_btop(addr1);
+#else
 			ptep1 = pmap_pte(pmap_kernel(), addr1);
+#endif
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}

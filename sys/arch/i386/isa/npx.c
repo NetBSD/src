@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.63 1998/01/24 13:19:59 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.64 1998/02/06 07:22:06 mrg Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -52,6 +52,11 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -371,7 +376,11 @@ npxintr(arg)
 	struct intrframe *frame = arg;
 	int code;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	IPRINTF(("Intr"));
 
 	if (p == 0 || npx_type == NPX_NONE) {
