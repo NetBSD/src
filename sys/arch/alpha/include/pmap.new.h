@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.2 1996/07/10 03:17:09 cgd Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.3 1996/08/20 23:02:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
@@ -110,6 +110,7 @@ typedef	volatile long	cpu_set;	/* set of CPUs - must be <= 64 */
 
 struct pmap {
 	pt_entry_t	*dirbase;	/* page directory pointer register */
+	unsigned long	dirpfn;		/* cached dirbase physical PFN */
 	int		pid;		/* TLBPID when in use		*/
 	int		ref_count;	/* reference count */
 	decl_simple_lock_data(,lock)
@@ -152,6 +153,8 @@ boolean_t	cpu_update_needed[NCPUS];
  *	External declarations for PMAP_ACTIVATE.
  */
 
+void		pmap_activate __P((pmap_t, struct alpha_pcb *, int));
+void		pmap_deactivate __P((pmap_t, struct alpha_pcb *, int));
 void		process_pmap_updates();
 void		pmap_update_interrupt();
 extern	pmap_t	kernel_pmap;
