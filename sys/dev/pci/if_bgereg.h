@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.20 2004/05/15 21:58:40 thorpej Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.21 2004/05/15 22:19:27 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2337,6 +2337,18 @@ struct bge_softc {
 	int			bge_if_flags;
 	int			bge_flags;
 	int			bge_flowflags;
+#ifdef BGE_EVENT_COUNTERS
+	/*
+	 * Event counters.
+	 */
+	struct evcnt bge_ev_intr;	/* interrupts */
+	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
+	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
+	struct evcnt bge_ev_rx_xon;	/* receive PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_macctl;	/* receive MAC control packets */
+	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
+#endif /* BGE_EVENT_COUNTERS */
 	int			bge_txcnt;
 	int			bge_link;
 	struct callout		bge_timeout;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.71 2004/05/15 21:58:40 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.72 2004/05/15 22:19:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.71 2004/05/15 21:58:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.72 2004/05/15 22:19:27 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -254,6 +254,16 @@ int	bgedebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+#ifdef BGE_EVENT_COUNTERS
+#define	BGE_EVCNT_INCR(ev)	(ev).ev_count++
+#define	BGE_EVCNT_ADD(ev, val)	(ev).ev_count += (val)
+#define	BGE_EVCNT_UPD(ev, val)	(ev).ev_count = (val)
+#else
+#define	BGE_EVCNT_INCR(ev)	/* nothing */
+#define	BGE_EVCNT_ADD(ev, val)	/* nothing */
+#define	BGE_EVCNT_UPD(ev, val)	/* nothing */
 #endif
 
 /* Various chip quirks. */
@@ -2493,6 +2503,25 @@ bge_attach(parent, self, aux)
 	if_attach(ifp);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
+#ifdef BGE_EVENT_COUNTERS
+	/*
+	 * Attach event counters.
+	 */
+	evcnt_attach_dynamic(&sc->bge_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, sc->bge_dev.dv_xname, "intr");
+	evcnt_attach_dynamic(&sc->bge_ev_tx_xoff, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "tx_xoff");
+	evcnt_attach_dynamic(&sc->bge_ev_tx_xon, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "tx_xon");
+	evcnt_attach_dynamic(&sc->bge_ev_rx_xoff, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "rx_xoff");
+	evcnt_attach_dynamic(&sc->bge_ev_rx_xon, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "rx_xon");
+	evcnt_attach_dynamic(&sc->bge_ev_rx_macctl, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "rx_macctl");
+	evcnt_attach_dynamic(&sc->bge_ev_xoffentered, EVCNT_TYPE_MISC,
+	    NULL, sc->bge_dev.dv_xname, "xoffentered");
+#endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout);
 }
@@ -2867,6 +2896,8 @@ bge_intr(xsc)
 	/* Ack interrupt and stop others from occuring. */
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
 
+	BGE_EVCNT_INCR(sc->bge_ev_intr);
+
 	/*
 	 * Process link state changes.
 	 * Grrr. The link status word in the status block does
@@ -3002,6 +3033,19 @@ bge_stats_update(sc)
 		    READ_RSTAT(sc, rstats, dot3StatsMultipleCollisionFrames) +
 		    READ_RSTAT(sc, rstats, dot3StatsExcessiveCollisions) +
 		    READ_RSTAT(sc, rstats, dot3StatsLateCollisions);
+
+		BGE_EVCNT_ADD(sc->bge_ev_tx_xoff,
+			      READ_RSTAT(sc, rstats, outXoffSent));
+		BGE_EVCNT_ADD(sc->bge_ev_tx_xon,
+			      READ_RSTAT(sc, rstats, outXonSent));
+		BGE_EVCNT_ADD(sc->bge_ev_rx_xoff,
+			      READ_RSTAT(sc, rstats, xoffPauseFramesReceived));
+		BGE_EVCNT_ADD(sc->bge_ev_rx_xon,
+			      READ_RSTAT(sc, rstats, xonPauseFramesReceived));
+		BGE_EVCNT_ADD(sc->bge_ev_rx_macctl,
+			      READ_RSTAT(sc, rstats, macControlFramesReceived));
+		BGE_EVCNT_ADD(sc->bge_ev_xoffentered,
+			      READ_RSTAT(sc, rstats, xoffStateEntered));
 		return;
 	}
 
@@ -3015,6 +3059,21 @@ bge_stats_update(sc)
 	   READ_STAT(sc, stats, dot3StatsExcessiveCollisions.bge_addr_lo) +
 	   READ_STAT(sc, stats, dot3StatsLateCollisions.bge_addr_lo)) -
 	  ifp->if_collisions;
+
+	BGE_EVCNT_UPD(sc->bge_ev_tx_xoff,
+		      READ_STAT(sc, stats, outXoffSent.bge_addr_lo));
+	BGE_EVCNT_UPD(sc->bge_ev_tx_xon,
+		      READ_STAT(sc, stats, outXonSent.bge_addr_lo));
+	BGE_EVCNT_UPD(sc->bge_ev_rx_xoff,
+		      READ_STAT(sc, stats,
+		      		xoffPauseFramesReceived.bge_addr_lo));
+	BGE_EVCNT_UPD(sc->bge_ev_rx_xon,
+		      READ_STAT(sc, stats, xonPauseFramesReceived.bge_addr_lo));
+	BGE_EVCNT_UPD(sc->bge_ev_rx_macctl,
+		      READ_STAT(sc, stats,
+		      		macControlFramesReceived.bge_addr_lo));
+	BGE_EVCNT_UPD(sc->bge_ev_xoffentered,
+		      READ_STAT(sc, stats, xoffStateEntered.bge_addr_lo));
 
 #undef READ_STAT
 
