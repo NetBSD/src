@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.16 1996/10/09 00:14:39 thorpej Exp $
+#	$NetBSD: std.sun3,v 1.17 1996/10/23 16:14:23 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -26,6 +26,9 @@ memerr0 at obio? addr ?
 intreg0 at obio? addr ?
 
 # Standard defines
+
+options		EXEC_AOUT
+options		EXEC_SCRIPT
 
 # XXX - Still needed?
 options 	NEWCONFIG
