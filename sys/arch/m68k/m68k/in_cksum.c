@@ -1,3 +1,5 @@
+/*	$NetBSD: in_cksum.c,v 1.5 1994/10/26 07:51:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
  * All rights reserved.
@@ -30,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: in_cksum.c 1.1 90/07/09
- *	from: @(#)in_cksum.c	7.3 (Berkeley) 12/16/90
- *	$Id: in_cksum.c,v 1.4 1994/01/08 11:17:23 cgd Exp $
+ * from: Utah Hdr: in_cksum.c 1.1 90/07/09
+ *
+ *	@(#)in_cksum.c	7.3 (Berkeley) 12/16/90
  */
 
 /*

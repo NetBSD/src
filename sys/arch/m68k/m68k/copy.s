@@ -1,3 +1,5 @@
+/*	$NetBSD: copy.s,v 1.12 1994/10/26 07:51:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass.
  * Copyright (c) 1988 University of Utah.
@@ -36,9 +38,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: locore.s 1.58 91/04/22
- *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.11 1994/05/06 17:37:37 briggs Exp $
+ * from: Utah Hdr: locore.s 1.58 91/04/22
+ *
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
 #include <sys/errno.h>

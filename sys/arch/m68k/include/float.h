@@ -1,3 +1,5 @@
+/*	$NetBSD: float.h,v 1.7 1994/10/26 07:50:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)float.h	7.1 (Berkeley) 5/8/90
- *	$Id: float.h,v 1.6 1994/04/11 01:15:47 mycroft Exp $
+ *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
