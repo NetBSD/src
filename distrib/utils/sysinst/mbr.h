@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.11 2003/05/07 10:20:18 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.12 2003/05/07 19:02:53 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -86,3 +86,13 @@ void	set_bios_geom (int, int, int);
 int	otherpart (int);
 int	ourpart (int);
 char	*get_partname (int);
+void	edit_ptn_bounds(void);
+#if defined(__i386__) || defined(__x86_64__)
+#define BOOTSEL
+void	disp_bootsel(void);
+void	edit_bootsel_entry(int);
+void	edit_bootsel_timeout(void);
+void	edit_bootsel_default_ptn(int);
+void	edit_bootsel_default_disk(int);
+#endif
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.74 2003/05/07 11:36:10 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.75 2003/05/07 19:02:57 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,7 +85,7 @@ md_get_info(void)
 {
 	read_mbr(diskdev, &mbr, sizeof mbr);
 	if (!valid_mbr(&mbr)) {
-		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
+		memset(&mbr, 0, sizeof mbr);
 		/* XXX check result and give up if < 0 */
 		mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
 		netbsd_mbr_installed = 1;
@@ -630,7 +630,7 @@ configure_bootsel(void)
 	for (i = 0; i < NMBRPART; i++) {
 		if (parts[i].mbrp_typ != 0 && mbs->mbrb_nametab[i][0] == '\0')
 			snprintf(mbs->mbrb_nametab[i], sizeof(mbs->mbrb_nametab[0]),
-			    "entry %d", i+1);
+			    "entry %d", i);
 	}
 
 	process_menu(MENU_configbootsel);
@@ -642,20 +642,6 @@ configure_bootsel(void)
 			break;
 		}
 	}
-}
-
-void
-/*ARGSUSED*/
-disp_bootsel(mbr_partition_t *part, mbr_bootsel_t *mbsp)
-{
-	int i;
-
-	msg_table_add(MSG_bootsel_header);
-	for (i = 0; i < 4; i++) {
-		msg_table_add(MSG_bootsel_row,
-		    i, get_partname(i), mbs->mbrb_nametab[i]);
-	}
-	msg_display_add(MSG_newline);
 }
 
 char *
