@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	7.3 (Berkeley) 2/5/91
- *	$Id: dir.h,v 1.3 1993/05/20 16:21:59 cgd Exp $
+ *	$Id: dir.h,v 1.4 1993/12/15 00:47:19 jtc Exp $
  */
 
 #ifndef _SYS_DIR_H_
@@ -42,21 +42,6 @@
  * and is provided solely (and temporarily) for backward compatibility.
  */
 
-#include <dirent.h>
-
-/*
- * Backwards compatibility.
- */
-#define direct dirent
-
-/*
- * The DIRSIZ macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct direct
- * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
- */
-#undef DIRSIZ
-#define DIRSIZ(dp) \
-    ((sizeof (struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+#include "dirent.h"
 
 #endif /* !_SYS_DIR_H_ */
