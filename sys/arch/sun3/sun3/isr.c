@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.29 1997/01/27 20:54:14 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.30 1997/04/03 17:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ isr_add_custom(level, handler)
  */
 void arpintr __P((void));
 void ipintr __P((void));
+void atintr __P((void));
 void nsintr __P((void));
 void clnlintr __P((void));
 void ccittintr __P((void));
@@ -129,6 +130,11 @@ void netintr()
 	if (n & (1 << NETISR_IP))
 		ipintr();
 #endif
+#ifdef NETATALK
+	if (n & (1 << NETISR_ATALK))
+		atintr();
+#endif
+#ifdef ISO
 #ifdef NS
 	if (n & (1 << NETISR_NS))
 		nsintr();
