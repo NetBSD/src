@@ -618,7 +618,7 @@ pmap_init()
 		 * XXX We don't want to hang when we run out of page
 		 * tables, so we lower maxproc so that fork will fail
 		 * instead. Note that root could still raise this
-		 * value through sysctl(2).
+		 * value through sysctl(3).
 		 */
 		maxproc = ATARI_UPTMAXSIZE / ATARI_UPTSIZE;
 	}
