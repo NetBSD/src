@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2000/11/20 08:24:16 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38 2001/07/14 07:38:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -477,7 +477,6 @@ readdisklabel(dev, strat, lp, osdep)
 	return (msg);
 }
 
-
 /*
  * Check new disk label for sensibility before setting it.
  */
@@ -491,9 +490,26 @@ setdisklabel(olp, nlp, openmask, osdep)
 	int i;
 	struct partition *opp, *npp;
 
+	/* sanity clause */
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
+	    (nlp->d_secsize % DEV_BSIZE) != 0)
+		return(EINVAL);
+
+	/* special case to allow disklabel to be invalidated */
+	if (nlp->d_magic == 0xffffffff) {
+		*olp = *nlp;
+		return (0);
+	}
+
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
+
+	/*
+	 * XXX We are missing any sort of check if other partition types,
+	 * e.g. Macintosh or (PC) BIOS, will be overwritten.
+	 */
+
 	while ((i = ffs((long)openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
@@ -573,7 +589,16 @@ done:
 	brelse(bp);
 	return (error);
 #else
-	return 0;
+	/*
+	 * Re-analyze the ondisk Apple Disk Partition Map and recompute
+	 * the faked incore disk label. This is necessary for sysinst,
+	 * which may have modified the disk layout. We don't (yet)
+	 * support writing real BSD disk labels, so this hack instead
+	 * causes the DIOCWDINFO ioctl invoked by sysinst to update the
+	 * in-core disk label when it is "written" to disk.
+	 * This code was originally developed by Bob Nestor on 9/13/99.
+	 */
+	return (readdisklabel(dev, strat, lp, osdep) ? EINVAL : 0);
 #endif
 }
 
