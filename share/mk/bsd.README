@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.100 2002/08/09 00:21:22 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.101 2002/08/19 14:51:58 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -67,6 +67,8 @@ MKxxx		Can be set to `no' by a user to disable functionality.
 NOxxx		If defined, disables a feature.  Not intended for users,
 		it's to allow Makefiles to disable functionality that
 		they don't support (such as missing man pages).
+		NOxxx variables must be defined before <bsd.own.mk>
+		is included.
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
@@ -675,6 +677,7 @@ SHLIBDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 
 USE_SHLIBDIR	If "yes", use ${SHLIBDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
+		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 
 LINTLIBDIR	Target directory for lint libraries.
 
