@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.10 1998/02/10 00:25:28 perry Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.11 2000/05/29 11:35:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,12 +52,12 @@
 
 #define	DK_NDRIVE	8
 #ifdef _KERNEL
-long cp_time[CPUSTATES];
+u_int64_t cp_time[CPUSTATES];
 
-long tk_cancc;
-long tk_nin;
-long tk_nout;
-long tk_rawcc;
+u_int64_t tk_cancc;
+u_int64_t tk_nin;
+u_int64_t tk_nout;
+u_int64_t tk_rawcc;
 #endif
 
 #endif /* _SYS_DKSTAT_H_ */
