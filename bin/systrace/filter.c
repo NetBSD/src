@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.16 2003/03/25 22:48:43 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.17 2003/03/25 23:17:29 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.16 2003/03/25 22:48:43 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.17 2003/03/25 23:17:29 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -481,10 +481,9 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 	struct filter *filter;
 	struct policy *policy;
 	short action;
-	int first = 1, isalias;
+	int first = 1, isalias, isprompt = 0;
 
 	*pfuture = ICPOLICY_ASK;
-	icpid->uflags = 0;
 
 	isalias = systrace_find_reverse(emulation, name) != NULL;
 
@@ -532,6 +531,11 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 	}
 
 	while (1) {
+		/* Special policy active that allows only yes or no */
+		if (icpid->uflags & PROCESS_PROMPT) {
+			fprintf(stderr, "isprompt\n");
+			isprompt = 1;
+		}
 		filter = NULL;
 
 		if (!allow) {
@@ -596,6 +600,9 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 		}
 
 		if (filter_parse_simple(line, &action, pfuture) != -1) {
+			/* Yes or no, no in-kernel policy allowed */
+			if (isprompt)
+				*pfuture = ICPOLICY_ASK;
 			if (*pfuture == ICPOLICY_ASK)
 				goto out;
 			/* We have a policy decision */
@@ -609,6 +616,12 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			snprintf(line, sizeof(line), "true then %s", compose);
 		}
 
+		if (isprompt) {
+			printf("Answer only \"permit\" or \"deny\". "
+			    "This is a prompt.\n");
+			continue;
+		}
+
 		if (fls == NULL) {
 			printf("Syntax error.\n");
 			continue;
@@ -619,6 +632,14 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 
 		TAILQ_INSERT_TAIL(fls, filter, next);
 		action = filter_evaluate(tls, fls, icpid);
+
+		/* If we get a prompt flag here, we ask again */
+		if (icpid->uflags & PROCESS_PROMPT) {
+			filter_policyrecord(policy, filter, emulation, name, line);
+			printf("Answer only \"permit\" or \"deny\". "
+			    "This is a prompt.\n");
+			continue;
+		}
 		if (action == ICPOLICY_ASK) {
 			TAILQ_REMOVE(fls, filter, next);
 			printf("Filter unmatched. Freeing it\n");

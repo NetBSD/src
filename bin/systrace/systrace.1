@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.20 2003/03/25 23:00:05 provos Exp $
+.\"	$NetBSD: systrace.1,v 1.21 2003/03/25 23:17:30 provos Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -140,7 +140,7 @@ symbol = string typeoff "match" cmdstring |
     string typeoff "inpath" cmdstring | string typeoff "re" cmdstring |
     "true"
 typeoff = /* empty */ | "[" number "]"
-action = "permit" | "deny"
+action = "permit" | "deny" | "ask"
 errorcode = /* empty */ | "[" string "]"
 logcode = /* empty */ | "log"
 .Ed
@@ -183,6 +183,11 @@ completing
 the
 .Va execve
 system call.
+.Pp
+The
+.Va ask
+action specifies that the user should be prompted for a decision
+every time that the rule matches.
 .Pp
 The filter operations have the following meaning:
 .Bl -hang -width Dinpath -offset AAA
