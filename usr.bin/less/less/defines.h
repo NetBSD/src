@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
+/*	$NetBSD: defines.h,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
 
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -289,7 +289,7 @@
 /* #undef HAVE_SYS_STREAM_H */
 
 /* Define if you have the <termcap.h> header file.  */
-/* #undef HAVE_TERMCAP_H */
+#define HAVE_TERMCAP_H 1
 
 /* Define if you have the <termio.h> header file.  */
 /* #undef HAVE_TERMIO_H */
