@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script,v 1.1 2001/04/25 03:43:34 garbled Exp $
+# $NetBSD: script,v 1.2 2001/07/12 19:11:43 garbled Exp $
 
 IFFILE="/etc/ifconfig.$1"
 MTU=`echo "$12" | sed -e 's/^0*//'`
@@ -31,7 +31,7 @@ if [ "$2" = "boot" -o "$2" = "both" ]; then
 	fi
 	echo >> $IFFILE
 	if [ ! -z $10 ]; then
-		echo -n "nwid $10" >> $IFFILE
+		echo -n "nwid "\""$10"\""" >> $IFFILE
 	fi
 	if [ ! -z $11 ]; then
 		LINK=`echo "$11" | sed -e 's/,/ /'`
@@ -88,7 +88,7 @@ if [ "$2" = "now" ]; then
 		NET=`echo -n " $NET prefixlen $9"`
 	fi
 	if [ ! -z $10 ]; then
-		NET=`echo -n " $NET nwid $10"`
+		NET=`echo -n " $NET nwid "\""$10"\"""`
 	fi
 	if [ ! -z $11 ]; then
 		LINK=`echo "$11" | sed -e 's/,/ /'`
