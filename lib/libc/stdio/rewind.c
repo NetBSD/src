@@ -1,4 +1,4 @@
-/*	$NetBSD: rewind.c,v 1.6 1998/02/03 18:41:19 perry Exp $	*/
+/*	$NetBSD: rewind.c,v 1.7 1998/11/18 21:11:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,18 +41,21 @@
 #if 0
 static char sccsid[] = "@(#)rewind.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rewind.c,v 1.6 1998/02/03 18:41:19 perry Exp $");
+__RCSID("$NetBSD: rewind.c,v 1.7 1998/11/18 21:11:09 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
 
 void
 rewind(fp)
 	FILE *fp;
 {
+
+	FLOCKFILE(fp);
 	(void) fseek(fp, 0L, SEEK_SET);
 	clearerr(fp);
-	errno = 0;      /* not required, but seems reasonable */
+	FUNLOCKFILE(fp);
 }
