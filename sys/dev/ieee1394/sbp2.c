@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.18 2003/06/29 22:30:18 fvdl Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.18.4.1 2004/07/02 17:27:56 he Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.18 2003/06/29 22:30:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.18.4.1 2004/07/02 17:27:56 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -660,28 +660,16 @@ sbp2_free(struct sbp2 *sbp2)
 	struct sbp2_orb *orb;
 	struct sbp2_lun *lun;
 
-	/*
-	 * Try to send an abort for each active orb.
-	 * sbp2_abort won't remove the last one so stop and do the last
-	 * by hand
-	 */
-
-	while (CIRCLEQ_FIRST(&sbp2->orbs) != (void *)&sbp2->orbs) {
+	while (!CIRCLEQ_EMPTY(&sbp2->orbs)) {
 		orb = CIRCLEQ_FIRST(&sbp2->orbs);
 		(void)sbp2_abort(orb);
-		sbp2_free_orb(orb);
 	}
-	orb = CIRCLEQ_FIRST(&sbp2->orbs);
-	(void)sbp2_abort(orb);
-	CIRCLEQ_REMOVE(&sbp2->orbs, orb, orb_list);
-	sbp2_free_orb(orb);
-
 	while (TAILQ_FIRST(&sbp2->luns) != NULL) {
 		lun = TAILQ_FIRST(&sbp2->luns);
 		TAILQ_REMOVE(&sbp2->luns, lun, lun_list);
 		if (lun->login_flag)
 			sbp2_logout(sbp2, lun);
-		free (lun, M_1394DATA);
+		free(lun, M_1394DATA);
 	}
 	simple_lock(&sbp2_maps_lock);
 	if (!--sbp2->map->refcnt) {
@@ -690,7 +678,7 @@ sbp2_free(struct sbp2 *sbp2)
 	}
 	simple_unlock(&sbp2_maps_lock);
 	sbp2->sc->sc1394_callback.sc1394_unreg(&status_orb.cmd, 1);
-	free (status_orb.cmd.ab_data, M_1394DATA);
+	free(status_orb.cmd.ab_data, M_1394DATA);
 }
 
 #ifdef FW_DEBUG
@@ -1100,27 +1088,19 @@ sbp2_abort(void *handle)
 {
 	struct sbp2_orb *orb = handle;
 	void *arg;
-	int remove;
 
 	DPRINTF(("Called sbp2_abort\n"));
 
-	remove = 0;
 	simple_lock(&orb->sbp2->orblist_lock);
 	simple_lock(&orb->orb_lock);
+
 	arg = orb->cb_arg;
-	if (orb != CIRCLEQ_FIRST(&orb->sbp2->orbs)) {
-		remove = 1;
-		CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
-	} else {
-		orb->state = SBP2_ORB_INIT_STATE;
-		orb->cmd.ab_data[4] |= htonl(SBP2_ORB_FMT_DUMMY_MASK);
-	}
+	CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
 
 	simple_unlock(&orb->orb_lock);
 	simple_unlock(&orb->sbp2->orblist_lock);
 
-	if (remove)
-		sbp2_free_orb(orb);
+	sbp2_free_orb(orb);
 
 	return arg;
 }
