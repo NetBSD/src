@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.13 2003/10/27 16:52:01 thorpej Exp $
+.\"	$NetBSD: callout.9,v 1.14 2005/03/04 05:53:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 26, 2003
+.Dd March 4, 2005
 .Dt CALLOUT 9
 .Os
 .Sh NAME
@@ -66,6 +66,8 @@
 .Fn "callout_pending" "struct callout *c"
 .Ft int
 .Fn "callout_expired" "struct callout *c"
+.Ft int
+.Fn "callout_active" "struct callout *c"
 .Ft int
 .Fn "callout_invoking" "struct callout *c"
 .Ft void
@@ -190,6 +192,21 @@ The
 .Fn callout_expired
 function tests to see if the callout's timer has expired and its
 function called.
+.Pp
+The
+.Fn callout_active
+function returns true if a timer has been started but not explicitly stopped,
+even if it has already fired.
+.Fn callout_active foo
+is logically the same as
+.Fn callout_pending foo
+||
+.Fn callout_expired foo ;
+it is implemented as a separate function for compatibility with
+.Fx
+and for the special case of
+.Fn TCP_TIMER_ISARMED .
+Its use is not recommended.
 .Pp
 The
 .Fn callout_invoking
