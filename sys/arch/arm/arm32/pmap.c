@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2002/04/09 21:00:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2002/04/09 22:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2002/04/09 21:00:43 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2002/04/09 22:37:01 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -336,13 +336,6 @@ static void pmap_vac_me_kpmap __P((struct pmap *, struct vm_page *,
     pt_entry_t *, boolean_t));
 static void pmap_vac_me_user __P((struct pmap *, struct vm_page *,
     pt_entry_t *, boolean_t));
-
-/*
- * Cache enable bits in PTE to use on pages that are cacheable.
- * On most machines this is cacheable/bufferable, but on some, eg arm10, we
- * can chose between write-through and write-back cacheing.
- */
-pt_entry_t pte_cache_mode = (L2_C | L2_B);
 
 /*
  * real definition of pv_entry.
@@ -1758,7 +1751,7 @@ pmap_zero_page(paddr_t phys)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bzero_page(cdstp);
@@ -1791,7 +1784,7 @@ pmap_pageidlezero(paddr_t phys)
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
 	*cdst_pte = L2_S_PROTO | phys |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 
@@ -1854,9 +1847,9 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * as required.
 	 */
 	*csrc_pte = L2_S_PROTO | src |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	*cdst_pte = L2_S_PROTO | dst |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -2153,7 +2146,8 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if ((pmap == npv->pv_pmap ||
 			    (kpmap == npv->pv_pmap && other_writable == 0)) && 
 			    (npv->pv_flags & PVF_NC)) {
-				ptes[arm_btop(npv->pv_va)] |= pte_cache_mode;
+				ptes[arm_btop(npv->pv_va)] |=
+				    pte_l2_s_cache_mode;
 				npv->pv_flags &= ~PVF_NC;
 			}
 		}
@@ -2657,7 +2651,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
-		npte |= pte_cache_mode;
+		npte |= pte_l2_s_cache_mode;
 		if (flags & VM_PROT_WRITE) {
 			npte |= L2_S_PROTO | L2_S_PROT_W;
 			pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
@@ -2709,7 +2703,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/* XXX r/w! */
 	*pte = L2_S_PROTO | pa |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE) | pte_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE) |
+	    pte_l2_s_cache_mode;
 }
 
 void
@@ -3012,7 +3007,8 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 *
 				 */
 				if (maskbits & PVF_WRITE) {
-					ptes[arm_btop(va)] |= pte_cache_mode;
+					ptes[arm_btop(va)] |=
+					    pte_l2_s_cache_mode;
 					pv->pv_flags &= ~PVF_NC;
 				}
 			} else if (pmap_is_curpmap(pv->pv_pmap)) {
@@ -3461,7 +3457,7 @@ void
 pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pd_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+	pd_entry_t fl = (cache == PTE_CACHE) ? pte_l1_s_cache_mode : 0;
 
 	KASSERT(((va | pa) & L1_S_OFFSET) == 0);
 
@@ -3478,7 +3474,7 @@ void
 pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+	pt_entry_t fl = (cache == PTE_CACHE) ? pte_l2_s_cache_mode : 0;
 	pt_entry_t *pte;
 
 	KASSERT(((va | pa) & PGOFSET) == 0);
@@ -3529,8 +3525,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
     int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
-	pt_entry_t *pte;
+	pt_entry_t *pte, fl;
 	vsize_t resid;  
 	int i;
 
@@ -3550,6 +3545,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		/* See if we can use a section mapping. */
 		if (((pa | va) & L1_S_OFFSET) == 0 &&
 		    resid >= L1_S_SIZE) {
+			fl = (cache == PTE_CACHE) ? pte_l1_s_cache_mode : 0;
 #ifdef VERBOSE_INIT_ARM
 			printf("S");
 #endif
@@ -3578,6 +3574,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		/* See if we can use a L2 large page mapping. */
 		if (((pa | va) & L2_L_OFFSET) == 0 &&
 		    resid >= L2_L_SIZE) {
+			fl = (cache == PTE_CACHE) ? pte_l2_l_cache_mode : 0;
 #ifdef VERBOSE_INIT_ARM
 			printf("L");
 #endif
@@ -3593,6 +3590,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		}
 
 		/* Use a small page mapping. */
+		fl = (cache == PTE_CACHE) ? pte_l2_s_cache_mode : 0;
 #ifdef VERBOSE_INIT_ARM
 		printf("P");
 #endif
@@ -3618,8 +3616,14 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
  * them (though, they shouldn't).
  */
 
-pt_entry_t	pte_cache_mode;
-pt_entry_t	pte_cache_mask;
+pt_entry_t	pte_l1_s_cache_mode;
+pt_entry_t	pte_l1_s_cache_mask;
+
+pt_entry_t	pte_l2_l_cache_mode;
+pt_entry_t	pte_l2_l_cache_mask;
+
+pt_entry_t	pte_l2_s_cache_mode;
+pt_entry_t	pte_l2_s_cache_mask;
 
 pt_entry_t	pte_l2_s_prot_u;
 pt_entry_t	pte_l2_s_prot_w;
@@ -3634,8 +3638,14 @@ void
 pmap_pte_init_generic(void)
 {
 
-	pte_cache_mode = L2_B|L2_C;
-	pte_cache_mask = L2_CACHE_MASK_generic;
+	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_generic;
+
+	pte_l2_l_cache_mode = L2_B|L2_C;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_generic;
+
+	pte_l2_s_cache_mode = L2_B|L2_C;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_generic;
 
 	pte_l2_s_prot_u = L2_S_PROT_U_generic;
 	pte_l2_s_prot_w = L2_S_PROT_W_generic;
@@ -3656,7 +3666,10 @@ pmap_pte_init_arm9(void)
 	 * write-through caching for now.
 	 */
 	pmap_pte_init_generic();
-	pte_cache_mode = L2_C;
+
+	pte_l1_s_cache_mode = L1_S_C;
+	pte_l2_l_cache_mode = L2_C;
+	pte_l2_s_cache_mode = L2_C;
 }
 #endif /* CPU_ARM9 */
 #endif /* ARM_MMU_GENERIC == 1 */
@@ -3666,8 +3679,14 @@ void
 pmap_pte_init_xscale(void)
 {
 
-	pte_cache_mode = L2_B|L2_C;
-	pte_cache_mask = L2_CACHE_MASK_xscale;
+	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_xscale;
+
+	pte_l2_l_cache_mode = L2_B|L2_C;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_xscale;
+
+	pte_l2_s_cache_mode = L2_B|L2_C;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
 
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
@@ -3687,7 +3706,9 @@ pmap_pte_init_i80200(void)
 	 * Use write-through caching on the i80200.
 	 */
 	pmap_pte_init_xscale();
-	pte_cache_mode = L2_C;
+	pte_l1_s_cache_mode = L1_S_C;
+	pte_l2_l_cache_mode = L2_C;
+	pte_l2_s_cache_mode = L2_C;
 }
 #endif /* CPU_XSCALE_80200 */
 #endif /* ARM_MMU_XSCALE == 1 */

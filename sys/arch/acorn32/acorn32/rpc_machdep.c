@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.32 2002/04/09 19:37:14 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.33 2002/04/09 22:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.32 2002/04/09 19:37:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.33 2002/04/09 22:37:00 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1094,7 +1094,7 @@ rpc_sa110_cc_setup(void)
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
 		pte = vtopte(sa110_cc_base + loop);
 		*pte = L2_S_PROTO | kaddr |
-		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_cache_mode;
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	}
 	sa110_cache_clean_addr = sa110_cc_base;
 	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;

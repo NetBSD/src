@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.48 2002/04/09 21:23:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.49 2002/04/09 22:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -295,8 +295,14 @@ void	pmap_pte_init_i80200(void);
 #error ARM_NMMUS is 0
 #endif
 
-extern pt_entry_t		pte_cache_mode;
-extern pt_entry_t		pte_cache_mask;
+extern pt_entry_t		pte_l1_s_cache_mode;
+extern pt_entry_t		pte_l1_s_cache_mask;
+
+extern pt_entry_t		pte_l2_l_cache_mode;
+extern pt_entry_t		pte_l2_l_cache_mask;
+
+extern pt_entry_t		pte_l2_s_cache_mode;
+extern pt_entry_t		pte_l2_s_cache_mask;
 
 extern pt_entry_t		pte_l2_s_prot_u;
 extern pt_entry_t		pte_l2_s_prot_w;
@@ -323,11 +329,15 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L1_S_PROT_W		(L1_S_AP(AP_W))
 #define	L1_S_PROT_MASK		(L1_S_PROT_U|L1_S_PROT_W)
 
-#define	L1_S_CACHE_MASK		(L1_S_B|L1_S_C)
+#define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
+#define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
 
 #define	L2_L_PROT_U		(L2_AP(AP_U))
 #define	L2_L_PROT_W		(L2_AP(AP_W))
 #define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
+
+#define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
+#define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
@@ -337,9 +347,8 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_S_PROT_W_xscale	(L2_AP0(AP_W))
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
 
-#define	L2_CACHE_MASK_generic	(L2_B|L2_C)
-
-#define	L2_CACHE_MASK_xscale	(L2_B|L2_C)
+#define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
+#define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
@@ -362,6 +371,10 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_S_PROT_W		pte_l2_s_prot_w
 #define	L2_S_PROT_MASK		pte_l2_s_prot_mask
 
+#define	L1_S_CACHE_MASK		pte_l1_s_cache_mask
+#define	L2_L_CACHE_MASK		pte_l2_l_cache_mask
+#define	L2_S_CACHE_MASK		pte_l2_s_cache_mask
+
 #define	L1_S_PROTO		pte_l1_s_proto
 #define	L1_C_PROTO		pte_l1_c_proto
 #define	L2_S_PROTO		pte_l2_s_proto
@@ -370,6 +383,10 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_S_PROT_W		L2_S_PROT_W_generic
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_generic
 
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_generic
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
+#define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
+
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
 #define	L2_S_PROTO		L2_S_PROTO_generic
@@ -377,6 +394,10 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_S_PROT_U		L2_S_PROT_U_xscale
 #define	L2_S_PROT_W		L2_S_PROT_W_xscale
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_xscale
+
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_xscale
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_xscale
+#define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_xscale
 
 #define	L1_S_PROTO		L1_S_PROTO_xscale
 #define	L1_C_PROTO		L1_C_PROTO_xscale
