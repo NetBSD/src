@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.371 2001/09/12 04:59:13 enami Exp $
+#	$NetBSD: mi,v 1.372 2001/09/13 21:54:17 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -150,6 +150,10 @@
 ./usr/include/dev/pci/if_lmcioctl.h	comp-c-include
 ./usr/include/dev/pci/mlyio.h		comp-c-include
 ./usr/include/dev/pci/mlyreg.h		comp-c-include
+./usr/include/dev/pci/pcidevs.h		comp-c-include
+./usr/include/dev/pci/pcidevs_data.h	comp-c-include
+./usr/include/dev/pci/pciio.h		comp-c-include
+./usr/include/dev/pci/pcireg.h		comp-c-include
 ./usr/include/dev/pci/tgareg.h		comp-c-include
 ./usr/include/dev/pckbc			comp-c-include
 ./usr/include/dev/pckbc/pckbdreg.h	comp-c-include
