@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.3 1997/07/21 07:05:01 mrg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.4 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fetch.c,v 1.3 1997/07/21 07:05:01 mrg Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.4 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,6 @@ kvm_ckread(a, b, l)
 		if (verbose)
 			error("error reading kmem at %x\n", a);
 		return (0);
-	} 
-	else
+	} else
 		return (1);
 }

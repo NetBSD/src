@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.13 1998/02/09 15:29:52 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.14 1998/07/12 05:59:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.13 1998/02/09 15:29:52 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.14 1998/07/12 05:59:01 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -396,7 +396,6 @@ showkre()
 	int psiz, inttotal;
 	int i, l, c;
 	static int failcnt = 0;
-
 	
 	if (state == TIME)
 		dkswap();
@@ -661,7 +660,7 @@ putint(n, l, c, w)
 			addch(' ');
 		return;
 	}
-	sprintf(b, "%*d", w, n);
+	(void)snprintf(b, sizeof b, "%*d", w, n);
 	if (strlen(b) > w) {
 		while (w-- > 0)
 			addch('*');
@@ -683,7 +682,7 @@ putfloat(f, l, c, w, d, nz)
 			addch(' ');
 		return;
 	}
-	sprintf(b, "%*.*f", w, d, f);
+	(void)snprintf(b, sizeof b, "%*.*f", w, d, f);
 	if (strlen(b) > w) {
 		while (--w >= 0)
 			addch('*');

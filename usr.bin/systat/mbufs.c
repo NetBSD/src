@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.5 1997/10/19 23:36:27 lukem Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.6 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.5 1997/10/19 23:36:27 lukem Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.6 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ char *mtnames[] = {
 WINDOW *
 openmbufs()
 {
+
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
@@ -83,6 +84,7 @@ void
 closembufs(w)
 	WINDOW *w;
 {
+
 	if (w == NULL)
 		return;
 	wclear(w);
@@ -93,6 +95,7 @@ closembufs(w)
 void
 labelmbufs()
 {
+
 	wmove(wnd, 0, 0); wclrtoeol(wnd);
 	mvwaddstr(wnd, 0, 10,
 	    "/0   /5   /10  /15  /20  /25  /30  /35  /40  /45  /50  /55  /60");
@@ -121,7 +124,7 @@ showmbufs()
 			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[index]);
 		wmove(wnd, 1 + j, 10);
 		if (max > 60) {
-			sprintf(buf, " %d", max);
+			snprintf(buf, sizeof buf, " %d", max);
 			max = 60;
 			while (max--)
 				waddch(wnd, 'X');
@@ -145,6 +148,7 @@ static struct nlist namelist[] = {
 int
 initmbufs()
 {
+
 	if (namelist[X_MBSTAT].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
 			nlisterr(namelist);
@@ -163,6 +167,7 @@ initmbufs()
 void
 fetchmbufs()
 {
+
 	if (namelist[X_MBSTAT].n_type == 0)
 		return;
 	NREAD(X_MBSTAT, mb, sizeof (*mb));

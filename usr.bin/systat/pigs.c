@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.9 1998/05/17 18:18:18 mycroft Exp $	*/
+/*	$NetBSD: pigs.c,v 1.10 1998/07/12 05:59:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.9 1998/05/17 18:18:18 mycroft Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.10 1998/07/12 05:59:01 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -77,6 +77,7 @@ static double  lccpu;
 WINDOW *
 openpigs()
 {
+
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
@@ -84,6 +85,7 @@ void
 closepigs(w)
 	WINDOW *w;
 {
+
 	if (w == NULL)
 		return;
 	wclear(w);
@@ -132,7 +134,7 @@ showpigs()
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
 		mvwaddstr(wnd, y, 0, uname);
-		sprintf(pidname, "%10.10s", pname);
+		(void)snprintf(pidname, sizeof pidname, "%10.10s", pname);
 		mvwaddstr(wnd, y, 9, pidname);
 		wmove(wnd, y, 20);
 		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
