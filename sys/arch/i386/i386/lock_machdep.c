@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.8 2001/02/11 09:27:57 enami Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.9 2001/12/29 18:20:32 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -110,22 +110,25 @@ __cpu_simple_lock(lockp)
 	wantlock[cpu] = 0;
 	gotlock[cpu] = lockp;
 #endif
+	__lockbarrier();
 }
 
 int
 __cpu_simple_lock_try(lockp)
 	__cpu_simple_lock_t *lockp;
 {
+	int r;
 #ifdef DEBUG
 	__cpu_simple_lock_t v = *lockp;
 
 	KDASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
+	r = (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_UNLOCKED);
 
-	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
-	    __SIMPLELOCK_UNLOCKED)
-		return (1);
-	return (0);
+	__lockbarrier();
+
+	return (r);
 }
 
 void
@@ -137,7 +140,7 @@ __cpu_simple_unlock(lockp)
 
 	KDASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
-
+	__lockbarrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
