@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1995/01/11 20:39:22 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 1995/01/24 06:11:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -287,20 +287,13 @@ caddr_t dvma_vm_alloc(npages)
      int npages;
 {
     vm_size_t size;
-    vm_offset_t addr;
-    int result;
+    vm_offset_t va;
 
     if (npages <= 0)
 		panic("dvma_vm_alloc(0)");
 
-	/* XXX - Should this use kmem_alloc_wait() instead? -gwr */
-    size = npages*NBPG;
-    addr = vm_map_min(phys_map);
-    result = vm_map_find(phys_map, NULL, (vm_offset_t) 0, &addr, size, TRUE);
-    if (result != KERN_SUCCESS)
-		return NULL;
-    vm_map_remove(phys_map, addr, addr+size);
-    return (caddr_t) addr;
+	va = kmem_alloc_wait(phys_map, npages);
+    return (caddr_t) va;
 }
 
 /*
