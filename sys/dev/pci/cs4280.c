@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.4.4.6 2001/02/26 17:53:08 he Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4.4.7 2001/03/13 21:01:14 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -986,7 +986,8 @@ cs4280_reset_codec(sc_)
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
-	while (BA0READ4(sc, CS4280_ACISV) != (ACISV_ISV3 | ACISV_ISV4)) {
+	while ((BA0READ4(sc, CS4280_ACISV) & (ACISV_ISV3 | ACISV_ISV4)) != 
+	    (ACISV_ISV3 | ACISV_ISV4)) {
 		delay(1000);
 		if (++n > 1000) {
 			printf("reset_codec: AC97 inputs slot ready timeout\n");
@@ -1703,7 +1704,8 @@ cs4280_init(sc, init)
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
-	while (BA0READ4(sc, CS4280_ACISV) != (ACISV_ISV3 | ACISV_ISV4)) {
+	while ((BA0READ4(sc, CS4280_ACISV) & (ACISV_ISV3 | ACISV_ISV4)) !=
+	    (ACISV_ISV3 | ACISV_ISV4)) {
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
