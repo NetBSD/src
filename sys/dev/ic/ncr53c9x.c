@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.11 1997/06/26 00:27:25 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.12 1997/07/19 21:54:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -736,6 +736,7 @@ ncr53c9x_done(sc, ecb)
 	 * We don't support chk sense conditions for the request sense cmd.
 	 */
 	if (xs->error == XS_NOERROR) {
+		xs->status = ecb->stat;
 		if ((ecb->flags & ECB_ABORT) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 		} else if ((ecb->flags & ECB_SENSE) != 0) {
@@ -743,7 +744,6 @@ ncr53c9x_done(sc, ecb)
 		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
 			/* First, save the return values */
 			xs->resid = ecb->dleft;
-			xs->status = ecb->stat;
 			ncr53c9x_sense(sc, ecb);
 			return;
 		} else {
