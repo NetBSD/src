@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.11 2001/05/11 22:44:15 ross Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.12 2001/07/17 13:28:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ void
 _init()
 {
 	static int initialized = 0;
+
 	/*
 	 * Call global constructors.
 	 * Arrange to call global destructors at exit.
@@ -118,6 +119,7 @@ _init()
 void
 _fini()
 {
+
 	/*
 	 * Call global destructors.
 	 */
