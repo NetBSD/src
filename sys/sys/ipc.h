@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.21 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: ipc.h,v 1.22 1999/08/25 19:25:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,8 +48,11 @@
 /*
  * SVID compatible ipc.h file
  */
+
 #ifndef _SYS_IPC_H_
 #define _SYS_IPC_H_
+
+#include <sys/types.h>
 
 struct ipc_perm {
 	uid_t		uid;	/* user id */
