@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.4 2000/01/24 08:47:43 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.5 2000/02/01 22:53:14 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -708,17 +708,25 @@ USB_ATTACH(kue)
 USB_DETACH(kue)
 {
 	USB_DETACH_START(kue, sc);
-#if defined(__FreeBSD__)
 	struct ifnet		*ifp;
 	int			s;
 
 	s = splusb();
 
+#if defined(__FreeBSD__)
 	sc = device_get_softc(dev);
+#endif
 	ifp = GET_IFP(sc);
 
-	if (ifp != NULL)
+	if (ifp != NULL) {
+#if defined(__NetBSD__)
+#if NBPFILTER > 0
+		bpfdetach(ifp);
+#endif
+		ether_ifdetach(ifp);
+#endif /* __NetBSD__ */
 		if_detach(ifp);
+	}
 
 	if (sc->kue_ep[KUE_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->kue_ep[KUE_ENDPT_TX]);
@@ -733,21 +741,6 @@ USB_DETACH(kue)
 	splx(s);
 
 	return (0);
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	sc = sc;		/* XXX use sc */
-	/* XXX deallocate */
-
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our refernce
-	 * to the ifnet.
-	 */
-	if_delref(sc->kue_ec.ec_if);
-#else
-	return (0);
-#endif
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -766,10 +759,8 @@ kue_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->kue_ec.ec_if);
-#endif
+		/* Deactivate the interface. */
+		if_deactivate(&sc->kue_ec.ec_if);
 		sc->kue_dying = 1;
 		break;
 	}
