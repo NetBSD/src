@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2002/10/10 22:37:51 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2002/10/18 20:02:23 nathanw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1283,7 +1283,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 void
 pmap_pvo_check(const struct pvo_entry *pvo)
 {
-	struct pvo_tqhead *pvo_head;
+	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo0;
 	volatile pte_t *pt;
 	int failed = 0;
@@ -1297,17 +1297,17 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 		failed = 1;
 	}
 
-	if ((uintptr_t)pvo->pvo_olink.le_next >= SEGMENT_LENGTH ||
-	    (((uintptr_t)pvo->pvo_olink.le_next) & 0x1f) != 0) {
+	if ((uintptr_t)TAILQ_NEXT(pvo, pvo_olink) >= SEGMENT_LENGTH ||
+	    (((uintptr_t)TAILQ_NEXT(pvo, pvo_olink)) & 0x1f) != 0) {
 		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
-		    pvo, pvo->pvo_olink.le_next);
+		    pvo, TAILQ_NEXT(pvo, pvo_olink));
 		failed = 1;
 	}
 
-	if ((uintptr_t)pvo->pvo_vlink.le_next >= SEGMENT_LENGTH ||
-	    (((uintptr_t)pvo->pvo_vlink.le_next) & 0x1f) != 0) {
+	if ((uintptr_t)LIST_NEXT(pvo, pvo_vlink) >= SEGMENT_LENGTH ||
+	    (((uintptr_t)LIST_NEXT(pvo, pvo_vlink)) & 0x1f) != 0) {
 		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
-		    pvo, pvo->pvo_vlink.le_next);
+		    pvo, LIST_NEXT(pvo, pvo_vlink));
 		failed = 1;
 	}
 
