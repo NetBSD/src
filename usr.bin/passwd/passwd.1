@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
-.\"	$Id: passwd.1,v 1.2 1993/08/01 07:30:02 mycroft Exp $
+.\"	$Id: passwd.1,v 1.3 1994/01/05 11:21:14 deraadt Exp $
 .\"
 .Dd July 24, 1991
 .Dt PASSWD 1
@@ -41,11 +41,13 @@
 .Sh SYNOPSIS
 .Nm passwd
 .Op Fl l
+.Op Fl k
+.Op Fl y
 .Op Ar user
 .Sh DESCRIPTION
 .Nm Passwd
-changes the user's Kerberos password.  First, the user is prompted for their
-current password.
+changes the user's local, Kerberos, or YP password.  First, the user is prompted
+for their current password.
 If the current password is correctly typed, a new password is
 requested.
 The new password must be entered twice to avoid typing errors.
@@ -57,19 +59,33 @@ Its total length must be less than
 (currently 128 characters).
 Numbers, upper case letters and meta characters
 are encouraged.
-.Pp
+.Bl -tag -width flag
+.It Fl l
+This option causes the password to be updated only in the local
+password file.  When changing only the local password,
+.Xr pwd_mkdb  8
+is used to update the password databases.
+.It Fl k
+This option forces the change to affect the Kerberos database, even
+if the user has a password in the local database.
 Once the password has been verified,
 .Nm passwd
 communicates the new password information to
 the Kerberos authenticating host.
-.Bl -tag -width flag
-.It Fl l
-This option causes the password to be updated only in the local
-password file, and not with the Kerberos database.
-When changing only the local password,
-.Xr pwd_mkdb  8
-is used to update the password databases.
+.It Fl y
+This forces the YP password database entry to be changed, even if
+the user has an entry in the local database.  The
+.Xr rpc.yppasswdd 8
+daemon should be running on the YP master server.
 .El
+.Pp
+This is the behaviour if no flags are specified:
+if Kerberos is active then
+.Nm passwd
+will talk to the Kerberos server (even if the user has an entry
+in the local database.)
+If the password is not in the local password database, then
+an attempt is made to use the YP database.
 .Pp
 To change another user's Kerberos password, one must first
 run

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: passwd.c,v 1.4 1993/08/01 18:10:20 mycroft Exp $";
+static char rcsid[] = "$Id: passwd.c,v 1.5 1994/01/05 11:21:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,16 +51,12 @@ static char rcsid[] = "$Id: passwd.c,v 1.4 1993/08/01 18:10:20 mycroft Exp $";
  *      to maintain passwords.
  *
  */
-#ifdef KERBEROS
-int use_kerberos = 1;
-#else
-int use_kerberos = 0;
-#endif
-#ifdef YP
-int force_yp = 0;
+
+int use_kerberos;
 int use_yp;
-#else
-int use_yp = 0;
+
+#ifdef YP
+int force_yp;
 #endif
 
 main(argc, argv)
@@ -69,13 +65,16 @@ main(argc, argv)
 {
 	extern int optind;
 	register int ch;
-	char *uname;
-        int status;
-        
-#ifdef	YP
-        use_yp = _yp_check(NULL);
+	char *username;
+	int status = 0;
+	
+#ifdef KERBEROS
+	use_kerberos = 1;
 #endif
-        
+#ifdef	YP
+	use_yp = _yp_check(NULL);
+#endif
+	
 	while ((ch = getopt(argc, argv, "lky")) != EOF)
 		switch (ch) {
 		case 'l':		/* change local password file */
@@ -88,28 +87,24 @@ main(argc, argv)
 			use_yp = 0;
 			break;
 #else
-                        usage();
-                        exit(1);
+			fprintf(stderr, "passwd: Kerberos not compiled in\n");
+			exit(1);
 #endif
 		case 'y':		/* change YP password */
 #ifdef	YP
-                        if (!use_yp) {
-                                fprintf(stderr, "passwd: YP not in use.\n");
-                                usage();
-                                exit(1);
-                        }
-
-                        /* XXX Maybe just exec yppasswd ?? */
+			if (!use_yp) {
+				fprintf(stderr, "passwd: YP not in use.\n");
+				exit(1);
+			}
 			use_kerberos = 0;
 			use_yp = 1;
-                        force_yp = 1;
+			force_yp = 1;
 			break;
 #else
-                        usage();
-                        exit(1);
+			fprintf(stderr, "passwd: YP not compiled in\n");
+			exit(1);
 #endif
 		default:
-		case '?':
 			usage();
 			exit(1);
 		}
@@ -117,18 +112,18 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	uname = getlogin();
-        if (uname == NULL) {
-                fprintf(stderr, "passwd: who are you ??\n");
-                exit(1);
-        }
-        
+	username = getlogin();
+	if (username == NULL) {
+		fprintf(stderr, "passwd: who are you ??\n");
+		exit(1);
+	}
+	
 	switch(argc) {
 	case 0:
 		break;
 	case 1:
 #ifdef	KERBEROS
-		if (use_kerberos && strcmp(argv[1], uname)) {
+		if (use_kerberos && strcmp(argv[1], username)) {
 			(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
 "to change another user's Kerberos password, do",
 "\"kinit user; passwd; kdestroy\";",
@@ -136,7 +131,7 @@ main(argc, argv)
 			exit(1);
 		}
 #endif
-		uname = argv[0];
+		username = argv[0];
 		break;
 	default:
 		usage();
@@ -148,22 +143,14 @@ main(argc, argv)
 		exit(krb_passwd());
 #endif
 #ifdef	YP
-        if (force_yp || ((status = local_passwd(uname)) && use_yp))
-		exit(yp_passwd(uname));
-        exit(status);
+	if (force_yp || ((status = local_passwd(username)) && use_yp))
+		exit(yp_passwd(username));
+	exit(status);
 #endif
-	exit(local_passwd(uname));
+	exit(local_passwd(username));
 }
 
 usage()
 {
-#if	defined(KERBEROS) && defined(YP)
-	(void)fprintf(stderr, "usage: passwd [-l] [-k] [-y] user\n");
-#else	/* !(KERBEROS && YP) */
-#if	defined(KERBEROS) || defined(YP)
-	(void)fprintf(stderr, "usage: passwd [-l] user\n");
-#else
-	(void)fprintf(stderr, "usage: passwd user\n");
-#endif
-#endif	/* KERBEROS && YP */
+	fprintf(stderr, "usage: passwd [-l] [-k] [-y] user\n");
 }
