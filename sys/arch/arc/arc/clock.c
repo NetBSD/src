@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2000/03/03 12:50:19 soda Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2000/06/09 05:41:57 soda Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -100,7 +100,10 @@ clockmatch(parent, match, aux)
 
 	case ACER_PICA_61:
 	case MAGNUM:
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		/* make sure that we're looking for this type of device. */
 		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
 			return (0);
@@ -145,7 +148,10 @@ clockattach(parent, self, aux)
 
 	case ACER_PICA_61:
 	case ALGOR_P4032:
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
 		break;
