@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.6 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.6.10.1 2003/07/28 18:05:52 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.6 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.6.10.1 2003/07/28 18:05:52 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	mpi = mlx_pci_findmpi(aux);
 
 	mlx->mlx_dmat = pa->pa_dmat;
-	mlx->mlx_iftype = mpi->mpi_iftype;
+	mlx->mlx_ci.ci_iftype = mpi->mpi_iftype;
 
 	printf(": Mylex RAID (v%d interface)\n", mpi->mpi_iftype);
 
@@ -278,7 +278,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Select linkage based on controller interface type. */
-	switch (mlx->mlx_iftype) {
+	switch (mlx->mlx_ci.ci_iftype) {
 	case 2:
 	case 3:
 		mlx->mlx_submit = mlx_v3_submit;
@@ -326,9 +326,9 @@ mlx_v3_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inb(mlx, MLX_V3REG_IDB) & MLX_V3_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V3REG_MAILBOX, mc->mc_mbox, MLX_V3_MAILBOX_LEN);
+		    MLX_V3REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V3REG_MAILBOX, MLX_V3_MAILBOX_LEN,
+		    MLX_V3REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
@@ -474,9 +474,9 @@ mlx_v4_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inl(mlx, MLX_V4REG_IDB) & MLX_V4_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V4REG_MAILBOX, mc->mc_mbox, MLX_V4_MAILBOX_LEN);
+		    MLX_V4REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V4REG_MAILBOX, MLX_V4_MAILBOX_LEN,
+		    MLX_V4REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
@@ -585,9 +585,9 @@ mlx_v5_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inb(mlx, MLX_V5REG_IDB) & MLX_V5_IDB_EMPTY) != 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V5REG_MAILBOX, mc->mc_mbox, MLX_V5_MAILBOX_LEN);
+		    MLX_V5REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V5REG_MAILBOX, MLX_V5_MAILBOX_LEN,
+		    MLX_V5REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command */
