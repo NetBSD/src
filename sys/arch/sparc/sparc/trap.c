@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 1997/06/29 18:44:21 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.56 1997/07/06 21:34:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -191,6 +191,8 @@ void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
 void mem_access_fault4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
 
+int ignore_bogus_traps = 0;
+
 /*
  * Define the code needed before returning to user mode, for
  * trap, mem_access_fault, and syscall.
@@ -326,9 +328,7 @@ trap(type, psr, pc, tf)
 
 	default:
 		if (type < 0x80) {
-#ifdef SUSTAIN_BOGUS_TRAPS
-			if (0)
-#endif
+			if (!ignore_bogus_traps)
 				goto dopanic;
 			printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
