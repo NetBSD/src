@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.33 2003/09/14 19:20:19 jschauma Exp $	*/
+/*	$NetBSD: dd.c,v 1.34 2003/11/15 12:44:54 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.33 2003/09/14 19:20:19 jschauma Exp $");
+__RCSID("$NetBSD: dd.c,v 1.34 2003/11/15 12:44:54 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: dd.c,v 1.33 2003/09/14 19:20:19 jschauma Exp $");
 static void dd_close(void);
 static void dd_in(void);
 static void getfdtype(IO *);
+static int redup_clean_fd(int);
 static void setup(void);
 
 int main(int, char *[]);
@@ -129,6 +130,9 @@ setup(void)
 		if (in.fd < 0)
 			err(EXIT_FAILURE, "%s", in.name);
 			/* NOTREACHED */
+
+		/* Ensure in.fd is outside the stdio descriptor range */
+		in.fd = redup_clean_fd(in.fd);
 	}
 
 	getfdtype(&in);
@@ -159,6 +163,9 @@ setup(void)
 			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 		}
+
+		/* Ensure out.fd is outside the stdio descriptor range */
+		out.fd = redup_clean_fd(out.fd);
 	}
 
 	getfdtype(&out);
@@ -247,6 +254,39 @@ getfdtype(IO *io)
 		io->flags |= ioctl(io->fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
 	else if (lseek(io->fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
 		io->flags |= ISPIPE;		/* XXX fixed in 4.4BSD */
+}
+
+/*
+ * Move the parameter file descriptor to a descriptor that is outside the
+ * stdio descriptor range, if necessary.  This is required to avoid
+ * accidentally outputting completion or error messages into the
+ * output file that were intended for the tty.
+ */
+static int
+redup_clean_fd(int fd)
+{
+	int newfd;
+
+	if (fd != STDIN_FILENO && fd != STDOUT_FILENO &&
+	    fd != STDERR_FILENO)
+		/* File descriptor is ok, return immediately. */
+		return fd;
+
+	newfd = dup(fd);
+	if (newfd < 0) {
+		err(EXIT_FAILURE, "dup IO");
+		/* NOTREACHED */
+	}
+
+	/*
+	 * Recurse, to ensure that the new descriptor is clean.  Don't
+	 * free the old descriptor(s) until we've allocated a clean
+	 * one.
+	 */
+	newfd = redup_clean_fd(newfd);
+	close(fd);
+
+	return newfd;
 }
 
 static void
