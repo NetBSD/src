@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.31 2002/12/05 02:03:56 yamt Exp $	*/
+/*	$NetBSD: library.c,v 1.32 2003/01/24 21:55:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.31 2002/12/05 02:03:56 yamt Exp $");
+__RCSID("$NetBSD: library.c,v 1.32 2003/01/24 21:55:04 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ getdevfd(FS_INFO *fsp)
  * Read a block from disk.
  */
 int
-get_rawblock(FS_INFO *fsp, char *buf, size_t size, ufs_daddr_t daddr)
+get_rawblock(FS_INFO *fsp, char *buf, size_t size, daddr_t daddr)
 {
 	return pread(getdevfd(fsp), buf, size, fsbtob(&fsp->fi_lfs,
 	    (off_t)daddr));
@@ -433,13 +433,14 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 		if (fsbtob(lfsp, pseg_addr) < LFS_LABELPAD + LFS_SBPAD) {
 			pseg_addr = btofsb(lfsp, LFS_LABELPAD + LFS_SBPAD);
 			s = seg_buf + LFS_LABELPAD + LFS_SBPAD;
-			syslog(LOG_DEBUG, "adj segment 0 offset to 0x%x\n",
-			       pseg_addr);
+			syslog(LOG_DEBUG, "adj segment 0 offset to 0x%llx\n",
+			       (long long)pseg_addr);
 		}
 	}
 
         if(debug > 1)
-            syslog(LOG_DEBUG, "\tsegment buffer at: %p\tseg_addr 0x%x", s, seg_addr);
+            syslog(LOG_DEBUG, "\tsegment buffer at: %p\tseg_addr 0x%llx", s,
+		(long long)seg_addr);
 
 
 	*bcount = 0;
@@ -448,8 +449,8 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 
 		nblocks = pseg_valid(fsp, sp, pseg_addr);
 		if (nblocks <= 0) {
-                        syslog(LOG_DEBUG, "Warning: invalid segment summary at 0x%x",
-			    pseg_addr);
+                        syslog(LOG_DEBUG, "Warning: invalid segment summary at 0x%llx",
+			    (long long)pseg_addr);
 			goto err0;
 		}
 
@@ -525,7 +526,8 @@ add_blocks(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	IFILE	*ifp;
 	FINFO	*fip;
 	caddr_t	bp;
-	daddr_t	*dp, *iaddrp;
+	/* XXX ondisk32 */
+	int32_t	*dp, *iaddrp;
 	int fsb_per_block, fsb_per_iblock, i, j;
 	int fsb_frag, iblks_seen;
 	u_long iblk_size, blk_size;
@@ -542,7 +544,8 @@ add_blocks(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	bp = seg_buf + fsbtob(lfsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
 	bip += *countp;
 	psegaddr += btofsb(lfsp, lfsp->lfs_sumsize);
-	iaddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
+	/* XXX ondisk32 */
+	iaddrp = (int32_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--iaddrp;
 	if (lfsp->lfs_version == 1)
 		fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));

@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.5 2002/12/15 08:38:17 yamt Exp $  */
+/*      $NetBSD: coalesce.c,v 1.6 2003/01/24 21:55:04 fvdl Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	BLOCK_INFO_15 *bip = NULL, *tbip;
 	struct dinode *dip;
 	int nb, onb, noff;
-	ufs_daddr_t toff;
+	daddr_t toff;
 	struct lfs *lfsp;
 	int bps;
 	SEGUSE *sup;
@@ -204,7 +204,8 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		goto out;
 	} else if (debug)
 		syslog(LOG_DEBUG, "ino %d total discontinuity "
-			"%d (%d) for %d blocks", ino, noff, toff, nb);
+			"%d (%lld) for %d blocks", ino, noff,
+			(long long)toff, nb);
 
 	/* Search for blocks in active segments; don't move them. */
 	for (i = 0; i < nb; i++) {

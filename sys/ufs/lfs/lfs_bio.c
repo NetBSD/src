@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.55 2002/12/30 05:34:17 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.56 2003/01/24 21:55:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.55 2002/12/30 05:34:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.56 2003/01/24 21:55:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ lfs_flush(struct lfs *fs, int flags)
 #define INOBYTES(fs) ((fs)->lfs_uinodes * DINODE_SIZE)
 
 int
-lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
+lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 {
 	int error;
 	struct lfs *fs;
@@ -616,11 +616,11 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 #ifdef MALLOCLOG
 # define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
 struct buf *
-lfs_newbuf_malloclog(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size, char *file, int line)
+lfs_newbuf_malloclog(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, char *file, int line)
 #else
 # define DOMALLOC(S, T, F) malloc((S), (T), (F))
 struct buf *
-lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
+lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size)
 #endif
 {
 	struct buf *bp;

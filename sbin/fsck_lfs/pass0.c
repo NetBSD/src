@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.11 2002/02/04 23:41:28 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.12 2003/01/24 21:55:10 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -111,8 +111,8 @@ pass0()
 		daddr = ifp->if_daddr;
 		bp->b_flags &= ~B_INUSE;
 		if (daddr) {
-			pwarn("! Ino %d with daddr 0x%x is on the free list!\n",
-			       ino, daddr);
+			pwarn("! Ino %d with daddr 0x%llx is on the free list!\n",
+			       ino, (long long)daddr);
 			if (preen || reply("FIX") == 1) {
 				if (plastino == 0) {
 					sblock.lfs_free = nextino;
@@ -157,7 +157,7 @@ pass0()
 static void
 dump_segsum(SEGSUM * sump, daddr_t addr)
 {
-	printf("Dump partial summary block 0x%x\n", addr);
+	printf("Dump partial summary block 0x%llx\n", (long long)addr);
 	printf("\tsumsum:  %x (%d)\n", sump->ss_sumsum, sump->ss_sumsum);
 	printf("\tdatasum: %x (%d)\n", sump->ss_datasum, sump->ss_datasum);
 	printf("\tnext:    %x (%d)\n", sump->ss_next, sump->ss_next);
@@ -291,7 +291,9 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	FINFO          *fp;
 	int             bc;	/* Bytes in partial segment */
 	int             nblocks;
-	daddr_t         seg_addr, *dp, *idp, daddr;
+	daddr_t         seg_addr, daddr;
+	/* XXX ondisk32 */
+	int32_t		*dp, *idp;
 	struct bufarea *bp;
 	int             i, j, k, datac, len;
 	long            sn;
@@ -320,8 +322,9 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	datap = (u_long *)malloc(nblocks * sizeof(*datap));
 	datac = 0;
 
-	dp = (daddr_t *)sp;
-	dp += sblock.lfs_sumsize / sizeof(daddr_t);
+	/* XXX ondisk32 */
+	dp = (int32_t *)sp;
+	dp += sblock.lfs_sumsize / sizeof(int32_t);
 	dp--;
 
 	idp = dp;
@@ -330,11 +333,12 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	for (i = 0, j = 0; i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, INOPB(fs)); i++) {
 		/* printf("*idp=%x, daddr=%x\n", *idp, daddr); */
 		if (i >= sp->ss_nfinfo && *idp != daddr) {
-			pwarn("Not enough inode blocks in pseg at 0x%x: found %d, wanted %d\n",
-			    pseg_addr, j, howmany(sp->ss_ninos, INOPB(fs)));
-			pwarn("*idp=%x, daddr=%x\n", *idp, daddr);
+			pwarn("Not enough inode blocks in pseg at 0x%llx: found %d, wanted %d\n",
+			    (long long)pseg_addr, j, howmany(sp->ss_ninos, INOPB(fs)));
+			pwarn("*idp=%x, daddr=%llx\n", *idp, (long long)daddr);
 			break;
 		}
+		/* XXX ondisk32 */
 		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
 			bp = getddblk(daddr, fs->lfs_ibsize);
 			datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
@@ -358,14 +362,14 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 	}
 
 	if (datac != nblocks) {
-		pwarn("Partial segment at 0x%x expected %d blocks counted %d\n",
-		      pseg_addr, nblocks, datac);
+		pwarn("Partial segment at 0x%llx expected %d blocks counted %d\n",
+		      (long long)pseg_addr, nblocks, datac);
 	}
 	ccksum = cksum(datap, nblocks * sizeof(u_long));
 	/* Check the data checksum */
 	if (ccksum != sp->ss_datasum) {
-		pwarn("Partial segment at 0x%x data checksum mismatch: got 0x%x, expected 0x%x\n",
-		      pseg_addr, sp->ss_datasum, ccksum);
+		pwarn("Partial segment at 0x%llx data checksum mismatch: got 0x%x, expected 0x%x\n",
+		      (long long)pseg_addr, sp->ss_datasum, ccksum);
 		/* return 0; */
 	}
 	return bc;

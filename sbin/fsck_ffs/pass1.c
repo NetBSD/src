@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.25 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: pass1.c,v 1.26 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.25 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.26 2003/01/24 21:55:08 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,8 @@ __RCSID("$NetBSD: pass1.c,v 1.25 2002/09/28 20:11:06 dbj Exp $");
 #include "extern.h"
 #include "fsutil.h"
 
-static ufs_daddr_t badblk;
-static ufs_daddr_t dupblk;
+static daddr_t badblk;
+static daddr_t dupblk;
 static void checkinode __P((ino_t, struct inodesc *));
 
 void
@@ -128,10 +128,11 @@ checkinode(inumber, idesc)
 	mode = iswap16(dp->di_mode) & IFMT;
 	size = iswap64(dp->di_size);
 	if (mode == 0) {
+		/* XXX ondisk32 */
 		if (memcmp(dp->di_db, zino.di_db,
-			NDADDR * sizeof(ufs_daddr_t)) ||
+			NDADDR * sizeof(int32_t)) ||
 		    memcmp(dp->di_ib, zino.di_ib,
-			NIADDR * sizeof(ufs_daddr_t)) ||
+			NIADDR * sizeof(int32_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
@@ -201,7 +202,8 @@ checkinode(inumber, idesc)
 		if (size < sblock->fs_maxsymlinklen ||
 		    (isappleufs && (size < APPLEUFS_MAXSYMLINKLEN)) ||
 		    (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(size, sizeof(daddr_t));
+			/* XXX ondisk32 */
+			ndb = howmany(size, sizeof(int32_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)
@@ -300,7 +302,7 @@ pass1check(idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;
-	ufs_daddr_t blkno = idesc->id_blkno;
+	daddr_t blkno = idesc->id_blkno;
 	struct dups *dlp;
 	struct dups *new;
 

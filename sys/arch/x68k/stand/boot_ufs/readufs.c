@@ -18,8 +18,8 @@
 
 #define fs	ufs_info
 
-static void raw_read_queue __P((void *buf, ufs_daddr_t blkpos, size_t bytelen));
-static int ufs_read_indirect __P((ufs_daddr_t blk, int level, caddr_t *buf,
+static void raw_read_queue __P((void *buf, daddr_t blkpos, size_t bytelen));
+static int ufs_read_indirect __P((daddr_t blk, int level, caddr_t *buf,
 		unsigned *poff, size_t count));
 
 #ifdef DEBUG_WITH_STDIO
@@ -33,7 +33,7 @@ int fd;
 void
 RAW_READ(buf, blkpos, bytelen)
 	void *buf;
-	ufs_daddr_t blkpos;
+	daddr_t blkpos;
 	size_t bytelen;
 {
 	if (pread(fd, buf, bytelen, (off_t)dbtob(blkpos)) != (ssize_t) bytelen)
@@ -51,10 +51,10 @@ static size_t rq_len;
 static void
 raw_read_queue(buf, blkpos, bytelen)
 	void *buf;
-	ufs_daddr_t blkpos;
+	daddr_t blkpos;
 	size_t bytelen;		/* must be DEV_BSIZE aligned */
 {
-	static ufs_daddr_t rq_start;
+	static daddr_t rq_start;
 	static char *rq_buf;
 
 	if (rq_len) {
@@ -131,14 +131,15 @@ ufs_read(di, buf, off, count)
 
 static int
 ufs_read_indirect(blk, level, buf, poff, count)
-	ufs_daddr_t blk;
+	daddr_t blk;
 	int level;
 	caddr_t *buf;
 	unsigned *poff;	/* position in block */
 	size_t count;
 {
 	size_t bsize = fs.bsize;
-	ufs_daddr_t *idbuf = alloca(bsize);
+	/* XXX ondisk32 */
+	int32_t *idbuf = alloca(bsize);
 	unsigned off = *poff;
 	unsigned b;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.35 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.36 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.35 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.36 2003/01/24 21:55:08 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,8 @@ ckinode(dp, idesc)
 	struct dinode *dp;
 	struct inodesc *idesc;
 {
-	ufs_daddr_t *ap;
+	/* XXX ondisk32 */
+	int32_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
 	u_int64_t sizepb;
@@ -169,8 +170,9 @@ iblock(idesc, ilevel, isize)
 	long ilevel;
 	u_int64_t isize;
 {
-	ufs_daddr_t *ap;
-	ufs_daddr_t *aplim;
+	/* XXX ondisk32 */
+	int32_t *ap;
+	int32_t *aplim;
 	struct bufarea *bp;
 	int i, n, (*func) __P((struct inodesc *)), nif;
 	u_int64_t sizepb;
@@ -261,7 +263,7 @@ iblock(idesc, ilevel, isize)
  */
 int
 chkrange(blk, cnt)
-	ufs_daddr_t blk;
+	daddr_t blk;
 	int cnt;
 {
 	int c;
@@ -272,20 +274,23 @@ chkrange(blk, cnt)
 	if (blk < cgdmin(sblock, c)) {
 		if ((blk + cnt) > cgsblock(sblock, c)) {
 			if (debug) {
-				printf("blk %d < cgdmin %d;",
-				    blk, cgdmin(sblock, c));
-				printf(" blk + cnt %d > cgsbase %d\n",
-				    blk + cnt, cgsblock(sblock, c));
+				printf("blk %lld < cgdmin %lld;",
+				    (long long)blk,
+				    (long long)cgdmin(sblock, c));
+				printf(" blk + cnt %lld > cgsbase %lld\n",
+				    (long long)(blk + cnt),
+				    (long long)cgsblock(sblock, c));
 			}
 			return (1);
 		}
 	} else {
 		if ((blk + cnt) > cgbase(sblock, c+1)) {
 			if (debug)  {
-				printf("blk %d >= cgdmin %d;",
-				    blk, cgdmin(sblock, c));
-				printf(" blk + cnt %d > sblock->fs_fpg %d\n",
-				    blk+cnt, sblock->fs_fpg);
+				printf("blk %lld >= cgdmin %lld;",
+				    (long long)blk,
+				    (long long)cgdmin(sblock, c));
+				printf(" blk + cnt %lld > sblock->fs_fpg %d\n",
+				    (long long)(blk+cnt), sblock->fs_fpg);
 			}
 			return (1);
 		}
@@ -300,7 +305,7 @@ struct dinode *
 ginode(inumber)
 	ino_t inumber;
 {
-	ufs_daddr_t iblk;
+	daddr_t iblk;
 	int blkoff;
 
 	if (inumber < ROOTINO || inumber > maxino)
@@ -330,7 +335,7 @@ getnextinode(inumber)
 	ino_t inumber;
 {
 	long size;
-	ufs_daddr_t dblk;
+	daddr_t dblk;
 	static struct dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
@@ -419,8 +424,9 @@ cacheino(dp, inumber)
 	blks = howmany(iswap64(dp->di_size), sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
+	/* XXX ondisk32 */
 	if (blks > 0)
-		extra =  (blks - 1) * sizeof(ufs_daddr_t);
+		extra =  (blks - 1) * sizeof(int32_t);
 	else
 		extra = 0;
 	inp = (struct inoinfo *) malloc(sizeof(*inp) + extra);
@@ -437,7 +443,8 @@ cacheino(dp, inumber)
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
 	inp->i_isize = iswap64(dp->di_size);
-	inp->i_numblks = blks * sizeof(ufs_daddr_t);
+	/* XXX ondisk32 */
+	inp->i_numblks = blks * sizeof(int32_t);
 	memmove(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
@@ -578,10 +585,10 @@ void
 blkerror(ino, type, blk)
 	ino_t ino;
 	char *type;
-	ufs_daddr_t blk;
+	daddr_t blk;
 {
 
-	pfatal("%d %s I=%u", blk, type, ino);
+	pfatal("%lld %s I=%u", (long long)blk, type, ino);
 	printf("\n");
 	switch (statemap[ino]) {
 

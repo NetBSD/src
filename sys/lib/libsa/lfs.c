@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.7 2002/05/07 02:02:41 simonb Exp $ */
+/* $NetBSD: lfs.c,v 1.8 2003/01/24 21:55:18 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -133,7 +133,7 @@ struct file {
 };
 
 static int	find_inode_sector(ino_t inumber, struct open_file *f,
-		    ufs_daddr_t *ibp);
+		    daddr_t *ibp);
 static int	read_inode __P((ino_t, struct open_file *));
 static int	block_map __P((struct open_file *, daddr_t, daddr_t *));
 static int	buf_read_file __P((struct open_file *, char **, size_t *));
@@ -143,11 +143,11 @@ static int	search_directory __P((char *, struct open_file *, ino_t *));
  * Find an inode's block.  Look it up in the ifile.  Whee!
  */
 static int
-find_inode_sector(ino_t inumber, struct open_file *f, ufs_daddr_t *isp)
+find_inode_sector(ino_t inumber, struct open_file *f, daddr_t *isp)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	ufs_daddr_t ifileent_blkno;
+	daddr_t ifileent_blkno;
 	char *ent_in_buf;
 	size_t buf_after_ent;
 	int rc;
@@ -189,7 +189,7 @@ read_inode(inumber, f)
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
 	struct dinode *dip;
-	ufs_daddr_t inode_sector;
+	daddr_t inode_sector;
 	size_t rsize;
 	char *buf;
 	int rc, cnt;
@@ -259,7 +259,8 @@ block_map(f, file_block, disk_block_p)
 	int level;
 	int idx;
 	daddr_t ind_block_num;
-	daddr_t *ind_p;
+	/* XXX ondisk32 */
+	int32_t *ind_p;
 	int rc;
 
 	/*
@@ -340,7 +341,8 @@ block_map(f, file_block, disk_block_p)
 			fp->f_blkno[level] = ind_block_num;
 		}
 
-		ind_p = (daddr_t *)fp->f_blk[level];
+		/* XXX ondisk32 */
+		ind_p = (int32_t *)fp->f_blk[level];
 
 		if (level > 0) {
 			idx = file_block / fp->f_nindir[level - 1];

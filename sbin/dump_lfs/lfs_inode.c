@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.5 2002/05/25 23:45:13 wiz Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.6 2003/01/24 21:55:06 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.5 2002/05/25 23:45:13 wiz Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.6 2003/01/24 21:55:06 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,9 +189,9 @@ fs_maxino(void)
 #define T_UNITS (NINDIR(fs)*NINDIR(fs))
 
 static daddr_t
-lfs_bmap(struct lfs *fs, struct dinode *idinode, ufs_daddr_t lbn)
+lfs_bmap(struct lfs *fs, struct dinode *idinode, daddr_t lbn)
 {
-	ufs_daddr_t residue, up;
+	daddr_t residue, up;
 	int off=0;
 	char bp[MAXBSIZE];
 	
@@ -230,7 +230,8 @@ lfs_bmap(struct lfs *fs, struct dinode *idinode, ufs_daddr_t lbn)
 				return UNASSIGNED;
 			/* printf("lbn %d: parent is the triple\n", -lbn); */
 			bread(fsbtodb(sblock, up), bp, sblock->lfs_bsize);
-			return ((daddr_t *)bp)[off];
+			/* XXX ondisk32 */
+			return (daddr_t)((int32_t *)bp)[off];
 		} else /* residue == 0 */ {
 			/* Single indirect.  Two cases. */
 			if(lbn < BASE_TINDIR) {
@@ -262,7 +263,8 @@ lfs_bmap(struct lfs *fs, struct dinode *idinode, ufs_daddr_t lbn)
 	if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 		return UNASSIGNED;
 	bread(fsbtodb(sblock, up), bp, sblock->lfs_bsize);
-	return ((daddr_t *)bp)[off];
+	/* XXX ondisk32 */
+	return (daddr_t)((int32_t *)bp)[off];
 }
 
 static struct ifile *
@@ -270,7 +272,7 @@ lfs_ientry(ino_t ino)
 {
     static struct ifile ifileblock[MAXIFPB];
     static daddr_t ifblkno;
-    ufs_daddr_t lbn;
+    daddr_t lbn;
     daddr_t blkno;
     
     lbn = ino/sblock->lfs_ifpb + sblock->lfs_cleansz + sblock->lfs_segtabsz;

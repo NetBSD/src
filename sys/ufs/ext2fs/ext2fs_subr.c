@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.6 2001/11/08 02:39:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.7 2003/01/24 21:55:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.6 2001/11/08 02:39:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.7 2003/01/24 21:55:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ ext2fs_blkatoff(v)
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	int error;
 
 	ip = VTOI(ap->a_vp);
@@ -91,7 +91,7 @@ ext2fs_checkoverlap(bp, ip)
 	struct inode *ip;
 {
 	struct buf *ebp, *ep;
-	ufs_daddr_t start, last;
+	daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -101,7 +101,7 @@ ext2fs_checkoverlap(bp, ip)
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 			ep->b_vp == NULLVP)
 			continue;
-		if (VOP_BMAP(ep->b_vp, (ufs_daddr_t)0, &vp, (ufs_daddr_t)0, NULL))
+		if (VOP_BMAP(ep->b_vp, (daddr_t)0, &vp, (daddr_t)0, NULL))
 			continue;
 		if (vp != ip->i_devvp)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2001/02/19 22:56:19 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2003/01/24 21:55:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 2001/02/19 22:56:19 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2003/01/24 21:55:07 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -246,22 +246,22 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 */
 	n_bfree = sblock.e2fs.e2fs_fbcount;
 		
-	pwarn("%d files, %d used, %d free\n",
-	    n_files, n_blks, n_bfree);
+	pwarn("%lld files, %lld used, %lld free\n",
+	    (long long)n_files, (long long)n_blks, (long long)n_bfree);
 	if (debug &&
 		/* 9 reserved and unused inodes in FS */
 	    (n_files -= maxino - 9 - sblock.e2fs.e2fs_ficount))
-		printf("%d files missing\n", n_files);
+		printf("%lld files missing\n", (long long)n_files);
 	if (debug) {
 		for (i = 0; i < sblock.e2fs_ncg; i++)
 			n_blks +=  cgoverhead(i);
 		n_blks += sblock.e2fs.e2fs_first_dblock;
 		if (n_blks -= maxfsblock - n_bfree)
-			printf("%d blocks missing\n", n_blks);
+			printf("%lld blocks missing\n", (long long)n_blks);
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
 			for (dp = duplist; dp; dp = dp->next)
-				printf(" %d,", dp->dup);
+				printf(" %lld,", (long long)dp->dup);
 			printf("\n");
 		}
 		if (zlnhead != NULL) {

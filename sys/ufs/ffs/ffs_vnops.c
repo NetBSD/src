@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.51 2002/11/01 21:11:43 kristerw Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.52 2003/01/24 21:55:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.51 2002/11/01 21:11:43 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.52 2003/01/24 21:55:24 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ ffs_putpages(void *v)
 	struct fs *fs = ip->i_fs;
 	struct vm_page *pg;
 	off_t off;
-	ufs_lbn_t lbn;
+	daddr_t lbn;
 
 	if (!DOINGSOFTDEP(vp) || (ap->a_flags & PGO_CLEANIT) == 0) {
 		return genfs_putpages(v);
@@ -568,7 +568,7 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
 {
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
-	ufs_lbn_t olbn, nlbn;
+	daddr_t olbn, nlbn;
 
 	olbn = lblkno(fs, ip->i_ffs_size);
 	nlbn = lblkno(fs, size);
