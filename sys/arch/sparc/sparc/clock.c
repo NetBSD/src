@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 1996/05/02 18:17:44 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.43 1996/05/13 21:39:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1294,11 +1294,6 @@ eeprom_update(buf, off, cnt)
 	ep = eeprom_va + off;
 	bp = buf + off;
 
-	/*
-	 * XXX: I'm not totally sure if this is necessary, and I don't
-	 * know if there are any harmful side effects, either.
-	 *	--thorpej
-	 */
 	if (eeprom_nvram)
 		clk_wenable(1);
 
@@ -1328,7 +1323,6 @@ eeprom_update(buf, off, cnt)
 		--cnt;
 	}
  out:
-	/* XXX: see above. */
 	if (eeprom_nvram)
 		clk_wenable(0);
 
@@ -1340,6 +1334,7 @@ static int
 eeprom_take()
 {
 	int error = 0;
+
 	while (eeprom_busy) {
 		eeprom_wanted = 1;
 		error = tsleep(&eeprom_busy, PZERO | PCATCH, "eeprom", 0);
@@ -1356,6 +1351,7 @@ eeprom_take()
 static void
 eeprom_give()
 {
+
 	eeprom_busy = 0;
 	if (eeprom_wanted) {
 		eeprom_wanted = 0;
