@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.1 1996/02/15 21:54:30 mark Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2 1996/03/06 23:16:54 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -26,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: db_machdep.h,v 1.1 1996/02/15 21:54:30 mark Exp $
  */
 
 #ifndef	_ARM32_DB_MACHDEP_H_
@@ -62,8 +60,8 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	db_clear_single_step(regs)	(0)
-#define	db_set_single_step(regs)	(0)
+/*#define	db_clear_single_step(regs)	(0)
+#define	db_set_single_step(regs)	(0)*/
 
 #define T_BREAKPOINT			(1)
 
@@ -72,10 +70,16 @@ db_regs_t		ddb_regs;	/* register state */
 
 #define	inst_trap_return(ins)	((ins)&0)
 #define	inst_return(ins)	((ins)&0)
-#define	inst_call(ins)		((ins)&0)
+#define	inst_call(ins)		(((ins) & 0x0f000000) == 0x0b000000)
+#define	inst_branch(ins)	(((ins) & 0x0f000000) == 0x0a000000)
 #define inst_load(ins)		0
 #define inst_store(ins)		0
 
+#define getreg_val		(0)
+#define next_instr_address(pc, bd)	(pc + 4)
+
 #define DB_MACHINE_COMMANDS
+
+#define SOFTWARE_SSTEP
 
 #endif	/* _ARM32_DB_MACHDEP_H_ */
