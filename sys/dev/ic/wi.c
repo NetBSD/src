@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.117 2003/05/13 06:15:47 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.118 2003/05/13 06:33:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.117 2003/05/13 06:15:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.118 2003/05/13 06:33:40 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -655,8 +655,8 @@ wi_init(struct ifnet *ifp)
 	}
 	sc->sc_txcur = sc->sc_txnext = 0;
 
-	/* Enable port 0 */
-	wi_cmd(sc, WI_CMD_ENABLE | WI_PORT0, 0, 0, 0);
+	/* Enable desired port */
+	wi_cmd(sc, WI_CMD_ENABLE | sc->sc_portnum, 0, 0, 0);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
@@ -701,18 +701,28 @@ static void
 wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
+	int s;
+
+	s = splnet();
 
 	DPRINTF(("wi_stop: disable %d\n", disable));
-	ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
+	/* Writing registers of a detached wi provokes an
+	 * MCHK on PowerPC, but disabling keeps wi from writing
+	 * registers, so disable before doing anything else.
+	 */
+	if (sc->sc_attached)
+		ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
 	if (sc->sc_enabled) {
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
-		wi_cmd(sc, WI_CMD_DISABLE | WI_PORT0, 0, 0, 0);
+		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
 		if (disable) {
 			if (sc->sc_disable)
 				(*sc->sc_disable)(sc);
 			sc->sc_enabled = 0;
 		}
 	}
+	if (!sc->sc_attached)
+		ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
@@ -721,6 +731,8 @@ wi_stop(struct ifnet *ifp, int disable)
 	sc->sc_naps = 0;
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
+
+	splx(s);
 }
 
 static void
