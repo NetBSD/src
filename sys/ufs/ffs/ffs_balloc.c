@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13.2.4 1999/04/29 05:32:46 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.2.5 1999/05/30 15:01:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -69,7 +69,7 @@
  * the inode and the logical block number in a file.
  */
 int
-ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
+ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 	struct inode *ip;
 	ufs_daddr_t lbn;
 	int size;
@@ -77,7 +77,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 	struct buf **bpp;
 	daddr_t *blknop;
 	int flags;
-	boolean_t *alloced;
 {
 	struct fs *fs;
 	ufs_daddr_t nb;
@@ -93,9 +92,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 	}
 	if (blknop != NULL) {
 		*blknop = (daddr_t)-1;
-	}
-	if (alloced != NULL) {
-		*alloced = FALSE;
 	}
 
 	if (lbn < 0)
@@ -172,6 +168,9 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 				}
 				*bpp = bp;
 			}
+			if (blknop) {
+				*blknop = fsbtodb(fs, nb);
+			}
 			return (0);
 		}
 		if (nb != 0) {
@@ -196,6 +195,9 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 						return (error);
 					}
 					*bpp = bp;
+				}
+				if (blknop) {
+					*blknop = fsbtodb(fs, nb);
 				}
 				return 0;
 			} else {
@@ -242,14 +244,13 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 		if (blknop != NULL) {
 			*blknop = fsbtodb(fs, newb);
 		}
-		if (alloced != NULL) {
-			*alloced = TRUE;
-		}
 		return (0);
 	}
+
 	/*
 	 * Determine the number of levels of indirection.
 	 */
+
 	pref = 0;
 	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
 		return(error);
@@ -373,9 +374,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 		if (blknop != NULL) {
 			*blknop = fsbtodb(fs, nb);
 		}
-		if (alloced != NULL) {
-			*alloced = TRUE;
-		}
 		return (0);
 	}
 
@@ -423,20 +421,15 @@ fail:
 	return (error);
 }
 
-
-
 int
 ffs_balloc_range(ip, off, len, cred, flags)
 	struct inode *ip;
-	off_t off;
-	off_t len;
+	off_t off, len;
 	struct ucred *cred;
 	int flags;
 {
 	struct fs *fs = ip->i_fs;
 	int lbn, bsize, delta, error;
-	daddr_t blkno;
-	boolean_t alloced;
 	off_t pagestart, pageend;
 
 	/*
@@ -447,13 +440,20 @@ ffs_balloc_range(ip, off, len, cred, flags)
 	pagestart = round_page(off);
 	pageend = trunc_page(off + len);
 
+	/*
+	 * adjust off to be block-aligned.
+	 */
+
+	delta = off - lblktosize(fs, lblkno(fs, off));
+	off -= delta;
+	len += delta;
+
 	while (len > 0) {
 		lbn = lblkno(fs, off);
-		bsize = min(fs->fs_bsize, blkoff(fs, off) + len);
+		bsize = min(fs->fs_bsize, len);
 
-
-		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, &blkno,
-					flags, &alloced))) {
+		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, NULL,
+					flags))) {
 			return error;
 		}
 
@@ -467,20 +467,8 @@ ffs_balloc_range(ip, off, len, cred, flags)
 			uvm_vnp_setsize(ip->i_vnode, ip->i_ffs_size);
 		}
 
-		/*
-		 * if the block was freshly allocated then we can
-		 * allocate the pages now and set their blknos.
-		 */
-
-		if (alloced) {
-			uvm_vnp_setpageblknos(ITOV(ip), off, len, blkno,
-					      UFP_ALL, (off < pagestart ||
-							off + len > pageend));
-		}
-
-		delta = fs->fs_bsize - blkoff(fs, off);
-		len -= delta;
-		off += delta;
+		len -= bsize;
+		off += bsize;
 	}
 	return 0;
 }
