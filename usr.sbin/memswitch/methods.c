@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.1.1.1 1999/06/21 15:56:03 minoura Exp $	*/
+/*	$NetBSD: methods.c,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
 #include <sys/types.h>
 
 #include "memswitch.h"
-
+#include "methods.h"
 
 int
 atoi_ (p)
-	char **p;
+	 const char **p;
 {
-	char *p1 = *p;
+	const char *p1 = *p;
 	int v = 0;
 	int first = 1;
 
