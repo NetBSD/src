@@ -1,3 +1,4 @@
-# $NetBSD: obsolete.amiga,v 1.4 2002/11/17 02:54:50 lukem Exp $
+# $NetBSD: obsolete.amiga,v 1.5 2003/01/15 07:32:39 mhitch Exp $
 ./usr/mdec/fdboot
+./usr/mdec/installboot
 ./usr/mdec/xxboot
