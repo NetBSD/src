@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.16 1997/10/20 08:04:26 scottr Exp $	*/
+/*	$NetBSD: termios.h,v 1.17 1997/10/27 13:28:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -167,7 +167,9 @@
 #define ALTWERASE	0x00000200	/* use alternate WERASE algorithm */
 #endif  /*_POSIX_SOURCE */
 #define	IEXTEN		0x00000400	/* enable DISCARD and LNEXT */
+#ifndef _POSIX_SOURCE
 #define EXTPROC         0x00000800      /* external processing */
+#endif  /*_POSIX_SOURCE */
 #define TOSTOP		0x00400000	/* stop background jobs from output */
 #ifndef _POSIX_SOURCE
 #define FLUSHO		0x00800000	/* output being flushed (state) */
