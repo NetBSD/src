@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.12 2000/02/26 16:10:31 itojun Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -125,7 +125,7 @@ SOFTWARE.
 int
 tpcons_pcbconnect(v, nam)
 	void *v;
-	register struct mbuf *nam;
+	struct mbuf *nam;
 {
 	struct isopcb  *isop = v;
 	int             error;
@@ -162,7 +162,7 @@ tpcons_ctlinput(cmd, siso, v)
 	void *v;
 {
 	struct isopcb  *isop = v;
-	register struct tp_pcb *tpcb = 0;
+	struct tp_pcb *tpcb = 0;
 
 	/*XXX correct? */
 	if (siso->sa_family != AF_ISO)
@@ -183,7 +183,7 @@ tpcons_ctlinput(cmd, siso, v)
 				 * still in class negotiation
 				 */
 				/* fake an ack */
-				register SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
+				SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
 
 #ifdef TPPT
 				if(tp_traceflags[D_DATA])
@@ -282,7 +282,7 @@ tpcons_output(m0, va_alist)
 	struct isopcb  *isop;
 	int             datalen;
 	int             nochksum;
-	register struct mbuf *m = m0;
+	struct mbuf *m = m0;
 	int             error;
 	va_list		ap;
 

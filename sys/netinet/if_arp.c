@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.67 2000/03/23 07:03:28 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.68 2000/03/30 13:24:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ do {									\
 void
 arp_drain()
 {
-	register struct llinfo_arp *la, *nla;
+	struct llinfo_arp *la, *nla;
 	int count = 0;
 	struct mbuf *mold;
 	
@@ -329,7 +329,7 @@ arptimer(arg)
 	void *arg;
 {
 	int s;
-	register struct llinfo_arp *la, *nla;
+	struct llinfo_arp *la, *nla;
 
 	s = splsoftnet();
 
@@ -341,7 +341,7 @@ arptimer(arg)
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
 	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
-		register struct rtentry *rt = la->la_rt;
+		struct rtentry *rt = la->la_rt;
 
 		nla = la->la_list.le_next;
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
@@ -359,11 +359,11 @@ arptimer(arg)
 void
 arp_rtrequest(req, rt, sa)
 	int req;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct sockaddr *sa;
 {
-	register struct sockaddr *gate = rt->rt_gateway;
-	register struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct sockaddr *gate = rt->rt_gateway;
+	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	size_t allocsize;
 	struct mbuf *mold;
@@ -533,11 +533,11 @@ arp_rtrequest(req, rt, sa)
  */
 static void
 arprequest(ifp, sip, tip, enaddr)
-	register struct ifnet *ifp;
-	register struct in_addr *sip, *tip;
-	register u_int8_t *enaddr;
+	struct ifnet *ifp;
+	struct in_addr *sip, *tip;
+	u_int8_t *enaddr;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct arphdr *ah;
 	struct sockaddr sa;
 
@@ -574,13 +574,13 @@ arprequest(ifp, sip, tip, enaddr)
  */
 int
 arpresolve(ifp, rt, m, dst, desten)
-	register struct ifnet *ifp;
-	register struct rtentry *rt;
+	struct ifnet *ifp;
+	struct rtentry *rt;
 	struct mbuf *m;
-	register struct sockaddr *dst;
-	register u_char *desten;
+	struct sockaddr *dst;
+	u_char *desten;
 {
-	register struct llinfo_arp *la;
+	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
 	struct mbuf *mold;
 	int s;
@@ -659,8 +659,8 @@ arpresolve(ifp, rt, m, dst, desten)
 void
 arpintr()
 {
-	register struct mbuf *m;
-	register struct arphdr *ar;
+	struct mbuf *m;
+	struct arphdr *ar;
 	int s;
 
 	while (arpintrq.ifq_head) {
@@ -705,9 +705,9 @@ in_arpinput(m)
 	struct mbuf *m;
 {
 	struct arphdr *ah;
-	register struct ifnet *ifp = m->m_pkthdr.rcvif;
-	register struct llinfo_arp *la = 0;
-	register struct rtentry  *rt;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct llinfo_arp *la = 0;
+	struct rtentry  *rt;
 	struct in_ifaddr *ia;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
@@ -904,10 +904,10 @@ reply:
  */
 static void
 arptfree(la)
-	register struct llinfo_arp *la;
+	struct llinfo_arp *la;
 {
-	register struct rtentry *rt = la->la_rt;
-	register struct sockaddr_dl *sdl;
+	struct rtentry *rt = la->la_rt;
+	struct sockaddr_dl *sdl;
 
 	ARP_LOCK_CHECK();
 
@@ -932,7 +932,7 @@ arplookup(addr, create, proxy)
 	struct in_addr *addr;
 	int create, proxy;
 {
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	static struct sockaddr_inarp sin;
 	const char *why = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.11 1996/10/13 02:04:40 christos Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.12 2000/03/30 13:10:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -306,7 +306,7 @@ struct tp_vbp {
 bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type))
 
 #define ADDOPTION(type, DU, len, src)\
-{	register caddr_t P;\
+{	caddr_t P;\
 	P = (caddr_t)(DU) + (int)((DU)->tpdu_li);\
 	vbptr(P)->tpv_code = type;\
 	vbptr(P)->tpv_len = len;\
@@ -323,8 +323,8 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 #define LOCAL_CREDIT(tpcb) tp_local_credit(tpcb)
 #else
 #define LOCAL_CREDIT(tpcb) { if (tpcb->tp_rsycnt == 0) {\
-    register struct sockbuf *xxsb = &((tpcb)->tp_sock->so_rcv);\
-    register int xxi = sbspace(xxsb);\
+    struct sockbuf *xxsb = &((tpcb)->tp_sock->so_rcv);\
+    int xxi = sbspace(xxsb);\
     xxi = (xxi<0) ? 0 : ((xxi) / (tpcb)->tp_l_tpdusize);\
     xxi = min(xxi, (tpcb)->tp_maxlcredit); \
     if (!(tpcb->tp_cebit_off)) { \

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.8 1997/06/24 02:26:08 thorpej Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.9 2000/03/30 13:10:07 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ extern struct clnp_fragl *clnp_frags;
  */
 struct clnp_fragl *
 clnp_freefrags(cfh)
-	register struct clnp_fragl *cfh;	/* fragment header to delete */
+	struct clnp_fragl *cfh;	/* fragment header to delete */
 {
 	struct clnp_fragl *next = cfh->cfl_next;
 	struct clnp_frag *cf;
@@ -146,7 +146,7 @@ clnp_freefrags(cfh)
 void
 clnp_slowtimo()
 {
-	register struct clnp_fragl *cfh = clnp_frags;
+	struct clnp_fragl *cfh = clnp_frags;
 	int             s = splsoftnet();
 
 	while (cfh != NULL) {
@@ -175,7 +175,7 @@ clnp_slowtimo()
 void
 clnp_drain()
 {
-	register struct clnp_fragl *cfh = clnp_frags;
+	struct clnp_fragl *cfh = clnp_frags;
 
 	while (cfh != NULL)
 		cfh = clnp_freefrags(cfh);

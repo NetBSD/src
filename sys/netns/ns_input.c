@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.15 2000/03/30 13:02:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -110,10 +110,10 @@ int nsintr_swtch = 0;
 void
 nsintr()
 {
-	register struct idp *idp;
-	register struct mbuf *m;
-	register struct nspcb *nsp;
-	register int i;
+	struct idp *idp;
+	struct mbuf *m;
+	struct nspcb *nsp;
+	int i;
 	int len, s, error;
 	char oddpacketp;
 
@@ -317,8 +317,8 @@ void
 idp_forward(m)
 	struct mbuf *m;
 {
-	register struct idp *idp = mtod(m, struct idp *);
-	register int error, type, code;
+	struct idp *idp = mtod(m, struct idp *);
+	int error, type, code;
 	struct mbuf *mcopy = NULL;
 	int agedelta = 1;
 	int flags = NS_FORWARDING;
@@ -389,7 +389,7 @@ idp_forward(m)
 			u_int16_t s[2];
 			u_int32_t l;
 		} x;
-		register int shift;
+		int shift;
 		x.l = 0; x.c[0] = agedelta;
 		shift = (((((int)ntohs(idp->idp_len))+1)>>1)-2) & 0xf;
 		x.l = idp->idp_sum + (x.s[0] << shift);
@@ -458,7 +458,7 @@ idp_do_route(src, ro)
 
 void
 idp_undo_route(ro)
-	register struct route *ro;
+	struct route *ro;
 {
 	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
 }
@@ -468,15 +468,15 @@ ns_watch_output(m, ifp)
 	struct mbuf *m;
 	struct ifnet *ifp;
 {
-	register struct nspcb *nsp;
-	register struct ifaddr *ifa;
+	struct nspcb *nsp;
+	struct ifaddr *ifa;
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
 	for (nsp = nsrawpcb.nsp_next; nsp != &nsrawpcb; nsp = nsp->nsp_next) {
 		struct mbuf *m0 = m_copy(m, 0, (int)M_COPYALL);
 		if (m0) {
-			register struct idp *idp;
+			struct idp *idp;
 
 			M_PREPEND(m0, sizeof (*idp), M_DONTWAIT);
 			if (m0 == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.47 1999/11/23 23:52:41 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.48 2000/03/30 12:51:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,13 +72,13 @@ extern struct nfsstats nfsstats;
  */
 int
 nfs_bioread(vp, uio, ioflag, cred, cflag)
-	register struct vnode *vp;
-	register struct uio *uio;
+	struct vnode *vp;
+	struct uio *uio;
 	int ioflag, cflag;
 	struct ucred *cred;
 {
-	register struct nfsnode *np = VTONFS(vp);
-	register int biosize, diff;
+	struct nfsnode *np = VTONFS(vp);
+	int biosize, diff;
 	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
@@ -550,12 +550,12 @@ nfs_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register int biosize;
-	register struct uio *uio = ap->a_uio;
+	int biosize;
+	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	register struct ucred *cred = ap->a_cred;
+	struct ucred *cred = ap->a_cred;
 	int ioflag = ap->a_ioflag;
 	struct buf *bp;
 	struct vattr vattr;
@@ -768,7 +768,7 @@ nfs_getcacheblk(vp, bn, size, p)
 	int size;
 	struct proc *p;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	if (nmp->nm_flag & NFSMNT_INT) {
@@ -795,7 +795,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	struct proc *p;
 	int intrflg;
 {
-	register struct nfsnode *np = VTONFS(vp);
+	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, slpflag, slptimeo;
 
@@ -850,11 +850,11 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
  */
 int
 nfs_asyncio(bp, cred)
-	register struct buf *bp;
+	struct buf *bp;
 	struct ucred *cred;
 {
-	register int i;
-	register struct nfsmount *nmp;
+	int i;
+	struct nfsmount *nmp;
 	int gotiod, slpflag = 0, slptimeo = 0, error;
 
 	if (nfs_numasync == 0)
@@ -950,12 +950,12 @@ again:
  */
 int
 nfs_doio(bp, cr, p)
-	register struct buf *bp;
+	struct buf *bp;
 	struct ucred *cr;
 	struct proc *p;
 {
-	register struct uio *uiop;
-	register struct vnode *vp;
+	struct uio *uiop;
+	struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
 	int error = 0, diff, len, iomode, must_commit = 0, s;

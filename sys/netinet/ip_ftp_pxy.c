@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.12 1999/12/12 11:11:17 veego Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.13 2000/03/30 13:24:58 augustss Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -50,8 +50,8 @@ int ippr_ftp_init()
 u_short ipf_ftp_atoi(ptr)
 char **ptr;
 {
-	register char *s = *ptr, c;
-	register u_char i = 0, j = 0;
+	char *s = *ptr, c;
+	u_char i = 0, j = 0;
 
 	while ((c = *s++) && isdigit(c)) {
 		i *= 10;
@@ -203,7 +203,7 @@ nat_t *nat;
 #endif
 	if (inc != 0) {
 #if SOLARIS || defined(__sgi)
-		register u_32_t	sum1, sum2;
+		u_32_t	sum1, sum2;
 
 		sum1 = ip->ip_len;
 		sum2 = ip->ip_len + inc;
@@ -398,7 +398,7 @@ nat_t *nat;
 #endif
 	if (inc != 0) {
 #if SOLARIS || defined(__sgi)
-		register u_32_t	sum1, sum2;
+		u_32_t	sum1, sum2;
 
 		sum1 = ip->ip_len;
 		sum2 = ip->ip_len + inc;

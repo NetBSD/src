@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.108 2000/03/30 02:35:24 simonb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.109 2000/03/30 13:24:59 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -280,8 +280,8 @@ static void save_rte __P((u_char *, struct in_addr));
 void
 ip_init()
 {
-	register struct protosw *pr;
-	register int i;
+	struct protosw *pr;
+	int i;
 
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
 	    0, NULL, NULL, M_IPQ);
@@ -339,10 +339,10 @@ ipintr()
 void
 ip_input(struct mbuf *m)
 {
-	register struct ip *ip = NULL;
-	register struct ipq *fp;
-	register struct in_ifaddr *ia;
-	register struct ifaddr *ifa;
+	struct ip *ip = NULL;
+	struct ipq *fp;
+	struct in_ifaddr *ia;
+	struct ifaddr *ifa;
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len;
 	int downmatch;
@@ -708,11 +708,11 @@ bad:
  */
 struct mbuf *
 ip_reass(ipqe, fp)
-	register struct ipqent *ipqe;
-	register struct ipq *fp;
+	struct ipqent *ipqe;
+	struct ipq *fp;
 {
-	register struct mbuf *m = ipqe->ipqe_m;
-	register struct ipqent *nq, *p, *q;
+	struct mbuf *m = ipqe->ipqe_m;
+	struct ipqent *nq, *p, *q;
 	struct ip *ip;
 	struct mbuf *t;
 	int hlen = ipqe->ipqe_ip->ip_hl << 2;
@@ -850,7 +850,7 @@ insert:
 	m->m_data -= (ip->ip_hl << 2);
 	/* some debugging cruft by sklower, below, will go away soon */
 	if (m->m_flags & M_PKTHDR) { /* XXX this should be done elsewhere */
-		register int plen = 0;
+		int plen = 0;
 		for (t = m; t; t = t->m_next)
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
@@ -872,7 +872,7 @@ void
 ip_freef(fp)
 	struct ipq *fp;
 {
-	register struct ipqent *q, *p;
+	struct ipqent *q, *p;
 
 	IPQ_LOCK_CHECK();
 
@@ -894,7 +894,7 @@ ip_freef(fp)
 void
 ip_slowtimo()
 {
-	register struct ipq *fp, *nfp;
+	struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
 	IPQ_LOCK();
@@ -945,10 +945,10 @@ int
 ip_dooptions(m)
 	struct mbuf *m;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register u_char *cp, *cp0;
-	register struct ip_timestamp *ipt;
-	register struct in_ifaddr *ia;
+	struct ip *ip = mtod(m, struct ip *);
+	u_char *cp, *cp0;
+	struct ip_timestamp *ipt;
+	struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr dst;
 	n_time ntime;
@@ -1145,7 +1145,7 @@ struct in_ifaddr *
 ip_rtaddr(dst)
 	 struct in_addr dst;
 {
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
@@ -1196,8 +1196,8 @@ save_rte(option, dst)
 struct mbuf *
 ip_srcroute()
 {
-	register struct in_addr *p, *q;
-	register struct mbuf *m;
+	struct in_addr *p, *q;
+	struct mbuf *m;
 
 	if (ip_nhops == 0)
 		return ((struct mbuf *)0);
@@ -1266,12 +1266,12 @@ ip_srcroute()
  */
 void
 ip_stripoptions(m, mopt)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *mopt;
 {
-	register int i;
+	int i;
 	struct ip *ip = mtod(m, struct ip *);
-	register caddr_t opts;
+	caddr_t opts;
 	int olen;
 
 	olen = (ip->ip_hl << 2) - sizeof (struct ip);
@@ -1313,9 +1313,9 @@ ip_forward(m, srcrt)
 	struct mbuf *m;
 	int srcrt;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct sockaddr_in *sin;
-	register struct rtentry *rt;
+	struct ip *ip = mtod(m, struct ip *);
+	struct sockaddr_in *sin;
+	struct rtentry *rt;
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy;
 	n_long dest;
@@ -1513,10 +1513,10 @@ ip_forward(m, srcrt)
 
 void
 ip_savecontrol(inp, mp, ip, m)
-	register struct inpcb *inp;
-	register struct mbuf **mp;
-	register struct ip *ip;
-	register struct mbuf *m;
+	struct inpcb *inp;
+	struct mbuf **mp;
+	struct ip *ip;
+	struct mbuf *m;
 {
 
 	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
