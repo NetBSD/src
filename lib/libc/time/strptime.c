@@ -1,7 +1,7 @@
-/*	$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $	*/
+/*	$NetBSD: strptime.c,v 1.7.2.1 1998/01/29 11:19:09 mellon Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.7.2.1 1998/01/29 11:19:09 mellon Exp $");
 #endif
 
 #include "namespace.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $");
 #include <locale.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 
 #ifdef __weak_alias
 __weak_alias(strptime,_strptime);
@@ -317,13 +318,18 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, INT_MAX)))
 				return (0);
 
-			tm->tm_year = i - 1900;
+			tm->tm_year = i - TM_YEAR_BASE;
 			break;
 
-		case 'y':	/* The year within the 20th century. */
+		case 'y':	/* The year within 100 years of the epoch. */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_year, 0, 99)))
+			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
+
+			if (i <= 68)
+				tm->tm_year = i + 2000 - TM_YEAR_BASE;
+			else
+				tm->tm_year = i + 1900 - TM_YEAR_BASE;
 			break;
 
 		/*
