@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.18 1997/05/21 01:51:40 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.19 1997/05/22 03:14:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.18 1997/05/21 01:51:40 lukem Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.19 1997/05/22 03:14:42 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -218,7 +218,8 @@ __ypparse(pw, s)
 struct passwd *pw;
 char *s;
 {
-	char *bp, *cp;
+	char *bp, *cp, *ep;
+	unsigned long id;
 
 	/* since this is currently using strsep(), parse it first */
 	bp = s;
@@ -226,10 +227,16 @@ char *s;
 	pw->pw_passwd = strsep(&bp, ":\n");
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
-	pw->pw_uid = atoi(cp);
+	id = strtoul(cp, &ep, 10);
+	if (id > UID_MAX || *ep == '\0')
+		return 1;
+	pw->pw_uid = (uid_t)id;
 	if (!(cp = strsep(&bp, ":\n")))
 		return 1;
-	pw->pw_gid = atoi(cp);
+	id = strtoul(cp, &ep, 10);
+	if (id > GID_MAX || *ep == '\0')
+		return 1;
+	pw->pw_gid = (gid_t)id;
 	pw->pw_change = 0;
 	pw->pw_class = "";
 	pw->pw_gecos = strsep(&bp, ":\n");
@@ -657,7 +664,8 @@ getpwuid(uid)
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
-	int keyuid, rval;
+	uid_t keyuid;
+	int rval;
 
 	if (!_pw_db && !__initdb())
 		return((struct passwd *)NULL);
@@ -673,7 +681,7 @@ getpwuid(uid)
 		int s = -1;
 		const char *host, *user, *dom;
 
-		snprintf(uidbuf, sizeof uidbuf, "%d", uid);
+		snprintf(uidbuf, sizeof(uidbuf), "%u", uid);
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
 			bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));
