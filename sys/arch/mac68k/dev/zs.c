@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.4.2 1996/06/07 01:11:06 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.4.3 1996/06/07 12:28:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -407,9 +407,13 @@ void
 zsmd_setclock(cs)
 	struct zs_chanstate *cs;
 {
-	if (cs->cs_pclk_flag & ZSC_EXTERN) {
-	/* XXX need to set the via! */
-	}
+	if (cs->cs_channel != 0)
+		return;
+	/*
+	 * If the new clock has the external bit set, then select the
+	 * external source.
+	 */
+	via_set_modem((cs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);
 }
 
 int
