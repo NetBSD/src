@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.49 2000/04/04 21:47:17 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.50 2000/04/16 22:17:03 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ cg6_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 	fbc->fbc_clipmaxx = ri->ri_width - 1;
 	fbc->fbc_clipmaxy = ri->ri_height - 1;
 	fbc->fbc_alu = CG6_ALU_FILL;
-	fbc->fbc_fg = ri->ri_devcmap[0/*(attr>>16)&15*/];
+	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xf];
 	fbc->fbc_arecty = ri->ri_yorigin + row;
 	fbc->fbc_arectx = ri->ri_xorigin + col;
 	fbc->fbc_arecty = ri->ri_yorigin + row + ri->ri_font->fontheight - 1;
@@ -390,7 +390,7 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 	fbc->fbc_clipmaxx = ri->ri_width - 1;
 	fbc->fbc_clipmaxy = ri->ri_height - 1;
 	fbc->fbc_alu = CG6_ALU_FILL;
-	fbc->fbc_fg = ri->ri_devcmap[0/*(attr>>16)&15*/];
+	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xf];
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		fbc->fbc_arecty = 0;
 		fbc->fbc_arectx = 0;
@@ -467,10 +467,6 @@ cg6attach(sc, name, isconsole)
 	/* reset cursor & frame buffer controls */
 	cg6_reset(sc);
 
-	/* initialize to the default color map */
-	bt_initcmap(&sc->sc_cmap, 256);
-	cg6_loadcmap(sc, 0, 256);
-
 	/* enable video */
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
@@ -516,6 +512,11 @@ cgsixclose(dev, flags, mode, p)
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
 	cg6_reset(sc);
+
+	/* (re-)initialize the default color map */
+	bt_initcmap(&sc->sc_cmap, 256);
+	cg6_loadcmap(sc, 0, 256);
+
 	return (0);
 }
 
