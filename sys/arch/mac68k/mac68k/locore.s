@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 1997/01/09 07:24:39 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 1997/01/09 07:28:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1922,9 +1922,9 @@ Lget_phys1:
  *  search in "psr".  "pte" should be 2 longs in case it is
  *  a long-format entry.
  *
- *  One possible problem here is that setting the tt register
- *  may screw something up if, say, the address returned by ptest
- *  in a0 has msb of 0.
+ *  One possible problem here is that setting the TT register
+ *  may screw something up if we access user data space in a
+ *  called function or in an interrupt service routine.
  *
  *  Returns -1 on error, 0 if pte is a short-format pte, or
  *  1 if pte is a long-format pte.
@@ -1939,10 +1939,15 @@ Lget_phys1:
  */
 	.globl	_get_pte
 _get_pte:
-	addl	#-4,sp		| make temporary space
+	subql	#4,sp		| make temporary space
+
+	lea	longscratch,a0
+	movl	#0x00ff8710,a0@	| Set up FC 1 r/w access
+	.long	0xf0100800	| pmove a0@,tt0
+
 	movl	sp@(8),a0	| logical address to look up
 	movl	#0,a1		| clear in case of failure
-	ptestr	#1,a0@,#7,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#7,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	movl	sp@(16),a0	| where to store the psr
@@ -1952,18 +1957,12 @@ _get_pte:
 	tstl	a1		| check address we got back
 	jeq	get_pte_fail2	| if 0, then was not set -- fail
 
-	| enable tt0
 	movl	a1,d0
 	movl	d0,pte_tmp	| save for later
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xf0100800	| pmove a0@,tt0
 
 	| send first long back to user
 	movl	sp@(12),a0	| address of where to put pte
-	movl	a1@,d0		|
+	movsl	a1@,d0		|
 	movl	d0,a0@		| first long
 
 	andl	#3,d0		| dt bits of pte
@@ -2000,32 +1999,32 @@ pte_level_zero:
 	movl	a0@,d0		| load high long
 	jra	pte_got_parent
 pte_level_one:
-	ptestr	#1,a0@,#1,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#1,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_two:
-	ptestr	#1,a0@,#2,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#2,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_three:
-	ptestr	#1,a0@,#3,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#3,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_four:
-	ptestr	#1,a0@,#4,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#4,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_five:
-	ptestr	#1,a0@,#5,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#5,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_six:
-	ptestr	#1,a0@,#6,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#6,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 
@@ -2035,15 +2034,7 @@ pte_got_it:
 	tstl	a1		| check address we got back
 	jeq	get_pte_fail6	| if 0, then was not set -- fail
 
-	| change tt0
-	movl	a1,d0
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
-
-	movl	a1@,d0		| get pte of parent
+	movsl	a1@,d0		| get pte of parent
 	movl	d0,_macos_tt0	| XXX for later analysis (kill this line)
 pte_got_parent:
 	andl	#3,d0		| dt bits of pte
@@ -2057,36 +2048,29 @@ pte_got_parent:
 	|  is that the first long might have been the last long of RAM.
 
 	movl	pte_tmp,a1	| get address of our original pte
-	addl	#4,a1		| address of ite second long
+	addql	#4,a1		| address of ite second long
 
-	| change tt0 back
-	movl	a1,d0
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
+	| send second long back to user
+	movl	sp@(12),a0	| address of where to put pte
+	movsl	a1@,d0		|
+	movl	d0,a0@(4)	| write in second long
 
-	movl	sp@(12),a0	| address of return pte
-	movl	a1@,a0@(4)	| write in second long
-
-	movl	#1,d0		| return long-format
+	movql	#1,d0		| return long-format
 	jra	get_pte_success
 
 short_format:
-	movl	#0,d0		| return short-format
+	movql	#0,d0		| return short-format
 	jra	get_pte_success
 
 get_pte_fail:
-	movl	#-1,d0		| return failure
+	movql	#-1,d0		| return failure
 
 get_pte_success:
-	clrl	d1		| disable tt
-	movl	d1,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
+	lea	longscratch,a0	| disable tt
+	movl	#0,a0@
+	.long	0xf0100800	| pmove a0@,tt0
 
-	addl	#4,sp		| return temporary space
+	addql	#4,sp		| return temporary space
 	rts
 
 get_pte_fail1:
