@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)supradma.c
- *	$Id: supradma.c,v 1.2 1994/03/25 16:32:30 chopps Exp $
+ *	$Id: supradma.c,v 1.3 1994/03/28 06:16:23 chopps Exp $
  */
 
 /*
@@ -48,7 +48,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/scireg.h>
 
-int supradma_pseudo = 0;
+int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
 #ifdef DEBUG
 extern int sci_debug;
@@ -71,7 +71,7 @@ static int dma_xfer_out __P((struct sci_softc *dev, int len,
 static int dma_xfer_in2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
 static int dma_xfer_out2 __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
+    register u_short *buf, int phase));
 static int supra_intr __P((struct sci_softc *dev));
 
 void
@@ -104,8 +104,8 @@ dma_xfer_in (dev, len, buf, phase)
 	QPRINTF(("supradma_in %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
 	*dev->sci_tcmd = phase;
-	*dev->sci_mode |= SCI_MODE_DMA;
 	*dev->sci_icmd = 0;
+	*dev->sci_mode = SCI_MODE_DMA;
 	*dev->sci_irecv = 0;
 
 	while (len >= 128) {
@@ -121,139 +121,75 @@ dma_xfer_in (dev, len, buf, phase)
 					len, *dev->sci_bus_csr, wait);
 #endif
 				HIST(ixin_wait, wait)
-				*dev->sci_mode &= ~SCI_MODE_DMA;
+				*dev->sci_mode = 0;
 				return 0;
 			}
 		}
 
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
 		len -= 128;
 	}
 
@@ -270,7 +206,7 @@ dma_xfer_in (dev, len, buf, phase)
 					len, *dev->sci_bus_csr, wait);
 #endif
 				HIST(ixin_wait, wait)
-				*dev->sci_mode &= ~SCI_MODE_DMA;
+				*dev->sci_mode = 0;
 				return 0;
 			}
 		}
@@ -284,8 +220,7 @@ dma_xfer_in (dev, len, buf, phase)
 	  obp[6], obp[7], obp[8], obp[9]));
 
 	HIST(ixin_wait, wait)
-	*dev->sci_irecv = 0;
-	*dev->sci_mode &= ~SCI_MODE_DMA;
+	*dev->sci_mode = 0;
 	return 0;
 }
 
@@ -309,7 +244,7 @@ dma_xfer_out (dev, len, buf, phase)
 	 buf[6], buf[7], buf[8], buf[9]));
 
 	*dev->sci_tcmd = phase;
-	*dev->sci_mode |= SCI_MODE_DMA;
+	*dev->sci_mode = SCI_MODE_DMA;
 	*dev->sci_icmd = SCI_ICMD_DATA;
 	*dev->sci_dma_send = 0;
 	while (len > 0) {
@@ -325,7 +260,7 @@ dma_xfer_out (dev, len, buf, phase)
 					len, csr, wait);
 #endif
 				HIST(ixin_wait, wait)
-				*dev->sci_mode &= ~SCI_MODE_DMA;
+				*dev->sci_mode = 0;
 				return 0;
 			}
 		}
@@ -340,7 +275,8 @@ dma_xfer_out (dev, len, buf, phase)
 
 
 	HIST(ixin_wait, wait)
-	*dev->sci_mode &= ~SCI_MODE_DMA;
+	*dev->sci_mode = 0;
+	*dev->sci_icmd = 0;
 	return 0;
 }
 
@@ -361,11 +297,11 @@ dma_xfer_in2 (dev, len, buf, phase)
 	QPRINTF(("supradma_in2 %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
 	*dev->sci_tcmd = phase;
-	*dev->sci_mode |= SCI_MODE_DMA;
+	*dev->sci_mode = SCI_MODE_DMA;
 	*dev->sci_icmd = 0;
 	*(dev->sci_irecv + 16) = 0;
-#if 0
 	while (len >= 128) {
+#if 0
 		wait = sci_data_wait;
 		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
 		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
@@ -382,75 +318,47 @@ dma_xfer_in2 (dev, len, buf, phase)
 				return 0;
 			}
 		}
+#else
+		while (!(*sci_csr & SCI_CSR_DREQ))
+			;
+#endif
 
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
-		*buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
+		*buf++ = *sci_dma; *buf++ = *sci_dma;
 		len -= 128;
 	}
-#endif
 	while (len > 0) {
+#if 0
 		wait = sci_data_wait;
 		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
 		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
@@ -467,6 +375,10 @@ dma_xfer_in2 (dev, len, buf, phase)
 				return 0;
 			}
 		}
+#else
+		while (!(*sci_csr * SCI_CSR_DREQ))
+			;
+#endif
 
 		*buf++ = *sci_dma;
 		len -= 2;
@@ -478,7 +390,7 @@ dma_xfer_in2 (dev, len, buf, phase)
 
 	HIST(ixin_wait, wait)
 	*dev->sci_irecv = 0;
-	*dev->sci_mode &= ~SCI_MODE_DMA;
+	*dev->sci_mode = 0;
 	return 0;
 }
 
@@ -486,26 +398,27 @@ static int
 dma_xfer_out2 (dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
-	register u_char *buf;
+	register u_short *buf;
 	int phase;
 {
 	int wait = sci_data_wait;
 	u_char csr;
-	u_char *obp = buf;
-	volatile register u_char *sci_dma = dev->sci_data;
-	volatile register u_char *sci_csr = dev->sci_csr;
+	u_char *obp = (u_char *) buf;
+	volatile register u_short *sci_dma = (ushort *)(dev->sci_data + 0x10);
+	volatile register u_char *sci_bus_csr = dev->sci_bus_csr;
 
 	QPRINTF(("supradma_out2 %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
 	QPRINTF(("supradma_out2 {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
-  	 len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],
-	 buf[6], buf[7], buf[8], buf[9]));
+  	 len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
+	 obp[6], obp[7], obp[8], obp[9]));
 
 	*dev->sci_tcmd = phase;
-	*dev->sci_mode |= SCI_MODE_DMA;
+	*dev->sci_mode = SCI_MODE_DMA;
 	*dev->sci_icmd = SCI_ICMD_DATA;
 	*dev->sci_dma_send = 0;
 	while (len > 0) {
+#if 0
 		wait = sci_data_wait;
 		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
 		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
@@ -518,22 +431,52 @@ dma_xfer_out2 (dev, len, buf, phase)
 					len, csr, wait);
 #endif
 				HIST(ixin_wait, wait)
-				*dev->sci_mode &= ~SCI_MODE_DMA;
+				*dev->sci_mode = 0;
 				return 0;
 			}
 		}
+#else
+		*dev->sci_mode = 0;
+		*dev->sci_icmd &= ~SCI_ICMD_ACK;
+		while (!(*sci_bus_csr & SCI_BUS_REQ))
+			;
+		*dev->sci_mode = SCI_MODE_DMA;
+		*dev->sci_dma_send = 0;
+#endif
 
-		*sci_dma = *buf++;
-		len--;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++; *sci_dma = *buf++;
+		if (*(sci_bus_csr + 0x10) & SCI_BUS_REQ)
+			;
+		len -= 64;
 	}
 
+#if 0
 	wait = sci_data_wait;
 	while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) ==
 	  SCI_CSR_PHASE_MATCH && --wait);
+#endif
 
 
 	HIST(ixin_wait, wait)
-	*dev->sci_mode &= ~SCI_MODE_DMA;
+	*dev->sci_irecv = 0;
+	*dev->sci_icmd &= ~SCI_ICMD_ACK;
+	*dev->sci_mode = 0;
+	*dev->sci_icmd = 0;
 	return 0;
 }
 
@@ -543,7 +486,9 @@ supra_intr (dev)
 {
 	if (*(dev->sci_csr + 0x10) & SCI_CSR_INT) {
 		char dummy;
+#if 0
 printf ("supra_intr\n");
+#endif
 		dummy = *(dev->sci_iack + 0x10);
 		return (1);
 	}
