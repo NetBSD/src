@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1995/08/10 05:17:14 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1995/08/10 10:49:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -182,7 +182,7 @@ struct confargs kn01_devs[KN01_MAXDEVS] = {
 	/* name	      index   pri xxx */
 	{ "pm",		0,    3,   (u_int)KV(KN01_PHYS_FBUF_START) },
 	{ "dc",  	1,    2,   (u_int)KV(KN01_SYS_DZ)	},
-	{ "le", 	2,    1,   (u_int)KV(KN01_SYS_LANCE)	},
+	{ "lance", 	2,    1,   (u_int)KV(KN01_SYS_LANCE)	},
 	{ "sii",	3,    0,   (u_int)KV(KN01_SYS_SII)	},
 	{ "dallas_rtc",	4,    16,  (u_int)KV(KN01_SYS_CLOCK)	}
 };
