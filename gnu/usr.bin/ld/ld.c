@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.30.2.2 1994/07/24 01:39:14 cgd Exp $
+ *	$Id: ld.c,v 1.30.2.3 1994/08/14 08:01:32 mycroft Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1201,16 +1201,23 @@ read_file_symbols(entry)
 		if (N_IS_DYNAMIC(hdr) && !(entry->flags & E_JUST_SYMS)) {
 			if (relocatable_output) {
 				errx(1,
-			"%s: -r and shared objects currently not supported ",
+			"%s: -r and shared objects currently not supported",
 					get_file_name(entry));
 				return;
 			}
+#if notyet /* Compatibility */
+			if (!(N_GETFLAG(hdr) & EX_PIC))
+				warnx("%s: EX_PIC not set",
+				      get_file_name(entry));
+#endif
 			entry->flags |= E_DYNAMIC;
 			if (entry->superfile || rrs_add_shobj(entry))
 				read_shared_object(fd, entry);
 			else
 				entry->flags |= E_SCRAPPED;
 		} else {
+			if (N_GETFLAG(hdr) & EX_PIC)
+				pic_code_seen = 1;
 			read_entry_symbols(fd, entry);
 			entry->strings = (char *)alloca(entry->string_size);
 			read_entry_strings(fd, entry);
@@ -1908,7 +1915,7 @@ consider_relocation(entry, dataseg)
 		if (relocatable_output) {
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			if (RELOC_BASEREL_P(reloc)) {
-				pic_code_seen = 1;
+				pic_code_seen = 1; /* Compatibility */
 				if (!RELOC_EXTERN_P(reloc))
 					lsp->flags |= LS_RENAME;
 			}
@@ -2409,9 +2416,18 @@ static int	nsyms;
 void
 write_header()
 {
-	int flags = (rrs_section_type == RRS_FULL) ? EX_DYNAMIC : 0;
+	int	flags;
 
-	if (oldmagic && (flags & EX_DYNAMIC))
+	if (link_mode & SHAREABLE)
+		flags = EX_DYNAMIC | EX_PIC;
+	else if (pic_code_seen)
+		flags = EX_PIC;
+	else if (rrs_section_type == RRS_FULL)
+		flags = EX_DYNAMIC;
+	else
+		flags = 0;
+
+	if (oldmagic && (flags & EX_DPMASK))
 		warnx("Cannot set flag in old magic headers\n");
 
 	N_SET_FLAG (outheader, flags);
