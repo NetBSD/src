@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.185 2003/10/23 20:55:08 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.186 2003/10/24 10:25:40 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.185 2003/10/23 20:55:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.186 2003/10/24 10:25:40 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1476,8 +1476,6 @@ after_listen:
 			    SEQ_LEQ(th->th_ack, tp->snd_max) &&
 			    tp->snd_cwnd >= tp->snd_wnd &&
 			    tp->t_dupacks < tcprexmtthresh) {
-				int slen;
-
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
@@ -1494,14 +1492,10 @@ after_listen:
 				tcpstat.tcps_rcvackbyte += acked;
 				ND6_HINT(tp);
 
-				slen = tp->t_lastm->m_len;
+				if (acked > (tp->t_lastoff - tp->t_inoff))
+					tp->t_lastm = NULL;
 				sbdrop(&so->so_snd, acked);
-				if (so->so_snd.sb_cc != 0) {
-					tp->t_lastoff -= acked;
-					if (tp->t_lastm->m_len < slen)
-						tp->t_inoff -= 
-						    (slen - tp->t_lastm->m_len);
-				}
+				tp->t_lastoff -= acked;
 
 				/*
 				 * We want snd_recover to track snd_una to
@@ -2118,17 +2112,10 @@ after_listen:
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
 			ourfinisacked = 1;
 		} else {
-			int slen;
-
-			slen = tp->t_lastm->m_len;
+			if (acked > (tp->t_lastoff - tp->t_inoff))
+				tp->t_lastm = NULL;
 			sbdrop(&so->so_snd, acked);
-			tp->snd_wnd -= acked;
-			if (so->so_snd.sb_cc != 0) {
-				tp->t_lastoff -= acked;
-				if (tp->t_lastm->m_len != slen)
-					tp->t_inoff -=
-					    (slen - tp->t_lastm->m_len);
-			}
+			tp->t_lastoff -= acked;
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);

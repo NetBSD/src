@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.104 2003/10/24 03:12:53 enami Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.105 2003/10/24 10:25:40 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.104 2003/10/24 03:12:53 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.105 2003/10/24 10:25:40 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -451,7 +451,8 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	 */
 	if (
 #ifdef FAST_MBSEARCH
-	    off == 0 || (tp->t_lastoff + tp->t_lastlen) != off
+	    off == 0 || tp->t_lastm == NULL ||
+		(tp->t_lastoff + tp->t_lastlen) != off
 #else
 	    1
 #endif
