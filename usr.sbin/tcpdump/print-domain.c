@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.9 2001/01/28 07:51:34 itojun Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.10 2001/01/28 07:56:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-domain.c,v 1.39 97/06/13 12:56:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.9 2001/01/28 07:51:34 itojun Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.10 2001/01/28 07:56:56 itojun Exp $");
 #endif
 #endif
 
@@ -274,16 +274,16 @@ static struct tok type2str[] = {
 	{ T_PX,		"PX" },
 	{ T_GPOS,	"GPOS" },
 	{ T_AAAA,	"AAAA" },
-	{ T_LOC,	"LOC " },
-	{ T_NXT,	"NXT " },
-	{ T_EID,	"EID " },
-	{ T_NIMLOC,	"NIMLOC " },
-	{ T_SRV,	"SRV " },
-	{ T_ATMA,	"ATMA " },
-	{ T_NAPTR,	"NAPTR " },
-	{ T_A6,		"A6 " },
-	{ T_DNAME,	"DNAME " },
-	{ T_OPT,	"OPT " },
+	{ T_LOC,	"LOC" },
+	{ T_NXT,	"NXT" },
+	{ T_EID,	"EID" },
+	{ T_NIMLOC,	"NIMLOC" },
+	{ T_SRV,	"SRV" },
+	{ T_ATMA,	"ATMA" },
+	{ T_NAPTR,	"NAPTR" },
+	{ T_A6,		"A6" },
+	{ T_DNAME,	"DNAME" },
+	{ T_OPT,	"OPT" },
 	{ T_UINFO,	"UINFO" },
 	{ T_UID,	"UID" },
 	{ T_GID,	"GID" },
@@ -298,7 +298,7 @@ static struct tok type2str[] = {
 
 static struct tok class2str[] = {
 	{ C_IN,		"IN" },		/* Not used */
-	{ C_CHAOS,	"CHAOS)" },
+	{ C_CHAOS,	"CHAOS" },
 	{ C_HS,		"HS" },
 	{ C_ANY,	"ANY" },
 	{ 0,		NULL }
