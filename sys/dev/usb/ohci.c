@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.94 2000/11/10 14:11:49 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.95 2000/12/13 03:09:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -939,13 +939,29 @@ ohci_shutdown(void *v)
 void
 ohci_power(int why, void *v)
 {
-#ifdef OHCI_DEBUG
 	ohci_softc_t *sc = v;
+	int s;
 
+#ifdef OHCI_DEBUG
 	DPRINTF(("ohci_power: sc=%p, why=%d\n", sc, why));
-	/* XXX should suspend/resume */
 	ohci_dumpregs(sc);
 #endif
+
+	s = splusb();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_SUSPEND);
+		break;
+	case PWR_RESUME:
+		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESUME);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }
 
 #ifdef OHCI_DEBUG
