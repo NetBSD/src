@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.24 1999/09/12 08:23:42 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.25 1999/09/15 21:11:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #define	STEP		hz/4
 
 #define	LPTPRI		(PZERO+8)
-#define	ULPT_BSIZE	1024
+#define	ULPT_BSIZE	16384
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (ulptdebug) logprintf x
