@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2000/04/30 23:30:47 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2000/04/30 23:30:47 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1552,15 +1552,6 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx) nonphys\n", phys);
 #endif
 
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		/*XXX FIXME Not very sophisticated */
-		/* XXX Is this really necessary?  Can't we assure that
-		 * pages to be zeroed are already flushed?
-		 */
-		mips_flushcache_allpvh(phys);
-	}
-#endif
 	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	/* XXX blkclr()? */
@@ -1621,15 +1612,6 @@ pmap_zero_page_uncached(phys)
 		printf("pmap_zero_page_uncached(%lx) nonphys\n", phys);
 #endif
 
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		/*XXX FIXME Not very sophisticated */
-		/* XXX Is this really necessary?  Can't we assure that
-		 * pages to be zeroed are already flushed?
-		 */
-		mips_flushcache_allpvh(phys);
-	}
-#endif
 	p = (int *)MIPS_PHYS_TO_KSEG1(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	/* XXX blkclr()? */
@@ -2113,6 +2095,11 @@ pmap_remove_pv(pmap, va, pa)
 		}
 	}
 	splx(s);
+#ifdef MIPS1
+	if (CPUISMIPS3 == 0 && last != 0) {
+		MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
+	}
+#endif
 #ifdef MIPS3
 	if (CPUISMIPS3 && pv->pv_flags & PV_UNCACHED) {
 		/*
