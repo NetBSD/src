@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.42 1998/08/14 03:29:49 mark Exp $	*/
+/*	$NetBSD: malloc.h,v 1.43 1998/09/12 15:05:48 rvb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -139,7 +139,7 @@
 #define	M_USB		87	/* USB general */
 #define	M_USBDEV	88	/* USB permanent */
 #define	M_POOL		89	/* memory pool structs */
-#define	M_CFS		90	/* Coda file system structures and tables. */
+#define	M_CODA		90	/* Coda file system structures and tables. */
 #define	M_FILECOREMNT	91	/* Filcore FS mount structures */
 #define	M_FILECORENODE	92	/* Filcore FS vnode private part */
 #define	M_LAST		93	/* Must be last type + 1 */
@@ -235,7 +235,7 @@
 	"USB",		/* 87 M_USB */ \
 	"USB device",	/* 88 M_USBDEV */ \
 	"Pool",		/* 89 M_POOL */ \
-	"cfs",		/* 90 M_CFS */ \
+	"coda",		/* 90 M_CODA */ \
 	"filecore mount", /* 91 M_FILECOREMNT */ \
 	"filecore node", /* 92 M_FILECORENODE */ \
 	NULL,		/* 93 */ \

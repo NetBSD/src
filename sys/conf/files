@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.243 1998/09/08 17:19:03 rvb Exp $
+#	$NetBSD: files,v 1.244 1998/09/12 15:05:47 rvb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -79,13 +79,13 @@ deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
-deffs	fs_cfs.h CFS
+deffs	fs_coda.h CODA
 
 # file system options
 defopt	QUOTA
 
 # Not entirely MI, but present on multiple arch's
-defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
+defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
 
 # debugging options
 defopt	DDB
@@ -344,7 +344,7 @@ file	dev/usb/ohci.c			ohci
 pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device md: disk
-pseudo-device vcfs
+pseudo-device vcoda
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -365,12 +365,12 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file cfs/cfs_namecache.c		cfs
-file cfs/cfs_psdev.c			vcfs			needs-count
-file cfs/cfs_subr.c			cfs
-file cfs/cfs_venus.c			cfs
-file cfs/cfs_vfsops.c			cfs
-file cfs/cfs_vnodeops.c			cfs
+file cfs/cfs_namecache.c		coda
+file cfs/cfs_psdev.c			vcoda			needs-count
+file cfs/cfs_subr.c			coda
+file cfs/cfs_venus.c			coda
+file cfs/cfs_vfsops.c			coda
+file cfs/cfs_vnodeops.c			coda
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
