@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.18 2003/02/17 23:48:25 perseant Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.19 2003/08/07 11:25:40 agc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.18 2003/02/17 23:48:25 perseant Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.19 2003/08/07 11:25:40 agc Exp $");
 #endif
 #endif /* not lint */
 
