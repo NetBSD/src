@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.3 2004/04/24 17:35:27 cl Exp $
+# $NetBSD: GENERIC,v 1.4 2004/04/24 18:24:14 cl Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,7 @@ options 	I686_CPU
 #options 	CPURESET_DELAY=2000
 
 # force Xen console
-options		CONSDEVNAME="\"xen\""
+options		CONSDEVNAME="\"xencons\""
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
@@ -202,7 +202,7 @@ hypervisor*	at mainbus?		# Xen hypervisor
 
 npx0		at hypervisor?		# x86 math coprocessor
 
-xenc*		at hypervisor?		# Xen virtual console
+xencons*	at hypervisor?		# Xen virtual console
 xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device

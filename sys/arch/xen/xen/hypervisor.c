@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.1 2004/04/24 17:45:38 cl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $ */
 
 /*
  *
@@ -33,13 +33,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.1 2004/04/24 17:45:38 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include "xenc.h"
+#include "xencons.h"
 #include "xennet.h"
 #include "xbd.h"
 #include "npx.h"
@@ -73,8 +73,8 @@ int	hypervisor_print(void *, const char *);
 
 union hypervisor_attach_cookie {
 	const char *hac_device;		/* first elem of all */
-#if NXENC > 0
-	struct xenc_attach_args hac_xenc;
+#if NXENCONS > 0
+	struct xencons_attach_args hac_xencons;
 #endif
 #if NXENNET > 0
 	struct xennet_attach_args hac_xennet;
@@ -116,9 +116,9 @@ hypervisor_attach(parent, self, aux)
 
 	printf("\n");
 
-#if NXENC > 0
-	hac.hac_xenc.xa_device = "xenc";
-	config_found(self, &hac.hac_xenc, hypervisor_print);
+#if NXENCONS > 0
+	hac.hac_xencons.xa_device = "xencons";
+	config_found(self, &hac.hac_xencons, hypervisor_print);
 #endif
 #if NXENNET > 0
 	hac.hac_xennet.xa_device = "xennet";

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.3 2004/04/24 18:24:14 cl Exp $	*/
 
 /*
  *
@@ -30,6 +30,8 @@
 
 #ifndef _LOCORE
 
+void	xenconscn_attach(void);
+
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
@@ -38,8 +40,6 @@ typedef uint64_t u64;
 void printk(const char *, ...);
 #endif
 
-void xencn_attach(void);
-
 #endif
 
 #define hypervisor_asm_ack(num) \
@@ -47,7 +47,7 @@ void xencn_attach(void);
 	lock						;\
 	btsl	$num,EVENTS_MASK(%eax)
 
-#endif
+#endif /* _XEN_H */
 
 /******************************************************************************
  * os.h

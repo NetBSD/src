@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.5 2004/04/24 17:35:27 cl Exp $
+#	$NetBSD: files.xen,v 1.6 2004/04/24 18:24:14 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -116,9 +116,9 @@ attach	npx at hypervisor with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv
 
 # Xen console support
-device	xenc: tty
-attach	xenc at hypervisor
-file	arch/xen/xen/console.c		xenc needs-flag
+device	xencons: tty
+attach	xencons at hypervisor
+file	arch/xen/xen/xencons.c		xencons needs-flag
 
 #include	"dev/wscons/files.wscons"
 #include	"dev/wsfont/files.wsfont"
