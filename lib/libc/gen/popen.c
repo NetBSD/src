@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)popen.c	5.15 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: popen.c,v 1.5 1993/08/26 00:44:55 jtc Exp $";
+static char *rcsid = "$Id: popen.c,v 1.6 1993/11/11 19:04:30 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -113,7 +113,6 @@ pclose(iop)
 	FILE *iop;
 {
 	register int fdes;
-	int omask;
 	int pstat;
 	pid_t pid;
 

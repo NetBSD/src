@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sigsetops.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sigsetops.c,v 1.4 1993/08/26 00:45:10 jtc Exp $";
+static char *rcsid = "$Id: sigsetops.c,v 1.5 1993/11/11 19:04:33 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/signal.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: sigsetops.c,v 1.4 1993/08/26 00:45:10 jtc Exp $";
 #undef sigdelset
 #undef sigismember
 
+int
 sigemptyset(set)
 	sigset_t *set;
 {
@@ -51,6 +52,7 @@ sigemptyset(set)
 	return (0);
 }
 
+int
 sigfillset(set)
 	sigset_t *set;
 {
@@ -58,6 +60,7 @@ sigfillset(set)
 	return (0);
 }
 
+int
 sigaddset(set, signo)
 	sigset_t *set;
 	int signo;
@@ -66,6 +69,7 @@ sigaddset(set, signo)
 	return (0);
 }
 
+int
 sigdelset(set, signo)
 	sigset_t *set;
 	int signo;
@@ -74,6 +78,7 @@ sigdelset(set, signo)
 	return (0);
 }
 
+int
 sigismember(set, signo)
 	const sigset_t *set;
 	int signo;

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)mktemp.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: mktemp.c,v 1.3 1993/08/26 00:47:09 jtc Exp $";
+static char *rcsid = "$Id: mktemp.c,v 1.4 1993/11/11 19:04:43 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,9 +41,12 @@ static char *rcsid = "$Id: mktemp.c,v 1.3 1993/08/26 00:47:09 jtc Exp $";
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <unistd.h>
 
 static int _gettemp();
 
+int
 mkstemp(path)
 	char *path;
 {
@@ -59,7 +62,7 @@ mktemp(path)
 	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
 }
 
-static
+static int
 _gettemp(path, doopen)
 	char *path;
 	register int *doopen;
