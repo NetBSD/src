@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.12 2000/03/19 17:24:28 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2000/05/08 22:48:42 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2000/03/19 17:24:28 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2000/05/08 22:48:42 hubertf Exp $");
 #endif
 
 /*
@@ -332,6 +332,14 @@ checkpattern_fn(const char *pkg, char *data)
 	return 0;
 }
 
+static int
+lspattern_fn(const char *pkg, char *data)
+{
+	printf("%s/%s\n", data, pkg);
+	
+	return 0;
+}
+
 int 
 main(int argc, char *argv[])
 {
@@ -341,6 +349,7 @@ main(int argc, char *argv[])
 	if (strcasecmp(argv[1], "rebuild") == 0) {
 
 		rebuild();
+		printf("Done.\n");
 
 	} else if (strcasecmp(argv[1], "check") == 0) {
 
@@ -396,6 +405,84 @@ main(int argc, char *argv[])
 		} else {
 			checkall();
 		}
+		printf("Done.\n");
+
+	} else if (strcasecmp(argv[1], "lsall") == 0) {
+		int saved_wd;
+
+		argv++;		/* argv[0] */
+		argv++;		/* "check" */
+
+		/* preserve cwd */
+		saved_wd=open(".", O_RDONLY);
+		if (saved_wd == -1)
+			err(1, "Cannot save working dir");
+
+		while (*argv != NULL) {
+			/* args specified */
+			int     rc;
+			char *basep, *dir;
+			char *cwd;
+			char base[FILENAME_MAX];
+
+			dir = dirname_of(*argv);
+			basep = basename_of(*argv);
+			snprintf(base, sizeof(base), "%s.tgz", basep);
+
+			fchdir(saved_wd);
+			rc = chdir(dir);
+			if (rc == -1)
+				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+
+			cwd = getwd(NULL);
+			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
+				errx(1, "Error in findmatchingname(\"%s\", \"%s\", ...)",
+				     cwd, base);
+			free(cwd);
+			
+			argv++;
+		}
+
+		close(saved_wd);
+
+	} else if (strcasecmp(argv[1], "lsbest") == 0) {
+		int saved_wd;
+
+		argv++;		/* argv[0] */
+		argv++;		/* "check" */
+
+		/* preserve cwd */
+		saved_wd=open(".", O_RDONLY);
+		if (saved_wd == -1)
+			err(1, "Cannot save working dir");
+
+		while (*argv != NULL) {
+			/* args specified */
+			int     rc;
+			char *basep, *dir;
+			char *cwd;
+			char base[FILENAME_MAX];
+			char *p;
+
+			dir = dirname_of(*argv);
+			basep = basename_of(*argv);
+			snprintf(base, sizeof(base), "%s.tgz", basep);
+
+			fchdir(saved_wd);
+			rc = chdir(dir);
+			if (rc == -1)
+				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+
+			cwd = getwd(NULL);
+			p = findbestmatchingname(cwd, base);
+			if (p)
+				printf("%s/%s\n", cwd, p);
+			free(cwd);
+			
+			argv++;
+		}
+
+		close(saved_wd);
 
 	} else if (strcasecmp(argv[1], "list") == 0 ||
 	    strcasecmp(argv[1], "dump") == 0) {
@@ -462,8 +549,6 @@ main(int argc, char *argv[])
 	else {
 		usage();
 	}
-
-	printf("Done.\n");
 
 	return 0;
 }
