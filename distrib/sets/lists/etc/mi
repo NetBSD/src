@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2000/03/12 21:47:16 jlam Exp $
+# $NetBSD: mi,v 1.45 2000/03/14 08:49:22 shin Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -56,6 +56,9 @@
 ./etc/rbootd.conf
 ./etc/rc
 ./etc/rc.conf
+./etc/rc.d/DAEMON
+./etc/rc.d/LOGIN
+./etc/rc.d/SERVERS
 ./etc/rc.d/accounting
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
@@ -64,7 +67,6 @@
 ./etc/rc.d/ccd
 ./etc/rc.d/cleartmp
 ./etc/rc.d/cron
-./etc/rc.d/daemon
 ./etc/rc.d/dhclient
 ./etc/rc.d/dhcpd
 ./etc/rc.d/dhcrelay
@@ -81,7 +83,6 @@
 ./etc/rc.d/lkm2
 ./etc/rc.d/lkm3
 ./etc/rc.d/local
-./etc/rc.d/login
 ./etc/rc.d/lpd
 ./etc/rc.d/mopd
 ./etc/rc.d/motd
@@ -112,8 +113,6 @@
 ./etc/rc.d/savecore
 ./etc/rc.d/screenblank
 ./etc/rc.d/sendmail
-./etc/rc.d/servers
-./etc/rc.d/sshd
 ./etc/rc.d/swap1
 ./etc/rc.d/swap2
 ./etc/rc.d/sysdb
