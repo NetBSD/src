@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.5 2000/04/19 06:30:53 itojun Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.6 2000/07/02 00:21:42 thorpej Exp $	*/
 /*	$KAME: if_gif.h,v 1.12 2000/04/19 06:20:11 itojun Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #ifndef _NET_IF_GIF_H_
 #define _NET_IF_GIF_H_
 
+#include <sys/queue.h>
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
@@ -62,6 +63,7 @@ struct gif_softc {
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
+	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 };
 
 #define gif_ro gifsc_gifscr.gifscr_ro
