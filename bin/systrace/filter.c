@@ -1,6 +1,5 @@
-/*	$NetBSD: filter.c,v 1.2 2002/06/18 02:49:08 thorpej Exp $	*/
-/*	$OpenBSD: filter.c,v 1.11 2002/06/11 05:30:28 provos Exp $	*/
-
+/*	$NetBSD: filter.c,v 1.3 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.15 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,12 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.2 2002/06/18 02:49:08 thorpej Exp $");
+__RCSID("$NetBSD: filter.c,v 1.3 2002/07/30 16:29:30 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -48,9 +48,9 @@ __RCSID("$NetBSD: filter.c,v 1.2 2002/06/18 02:49:08 thorpej Exp $");
 #include "intercept.h"
 #include "systrace.h"
 #include "filter.h"
-#include "util.h"
 
 extern int allow;
+extern int noalias;
 extern int connected;
 extern char cwd[];
 
@@ -219,11 +219,13 @@ filter_parse(char *line, struct filter **pfilter)
 int
 filter_parse_simple(char *rule, short *paction, short *pfuture)
 {
-	char buf[1024];
+	char buf[_POSIX2_LINE_MAX];
 	int isfuture = 1;
 	char *line, *p;
 
-	strlcpy(buf, rule, sizeof(buf));
+	if (strlcpy(buf, rule, sizeof(buf)) >= sizeof(buf))
+		return (-1);
+
 	line = buf;
 
 	if (!strcmp("permit", line)) {
@@ -266,6 +268,34 @@ filter_parse_simple(char *rule, short *paction, short *pfuture)
 	return (NULL);
 }
 
+void
+filter_modifypolicy(int fd, int policynr, const char *emulation,
+    const char *name, short future)
+{
+	struct systrace_revalias *reverse = NULL;
+
+	if (!noalias)
+		reverse = systrace_find_reverse(emulation, name);
+	if (reverse == NULL) {
+		if (systrace_modifypolicy(fd, policynr, name, future) == -1)
+			errx(1, "%s:%d: modify policy for %s-%s",
+			    __func__, __LINE__, emulation, name);
+	} else {
+		struct systrace_alias *alias; 
+
+		/* For every system call associated with this alias
+		 * set the permanent in-kernel policy.
+		 */
+		TAILQ_FOREACH(alias, &reverse->revl, next) {
+			if(systrace_modifypolicy(fd, policynr,
+			       alias->name, future) == -1)
+				errx(1, "%s:%d: modify policy for %s-%s",
+				    __func__, __LINE__,
+				    emulation, alias->name);
+		}
+	}
+}
+
 int
 filter_prepolicy(int fd, struct policy *policy)
 {
@@ -295,11 +325,8 @@ filter_prepolicy(int fd, struct policy *policy)
 			    filter->name);
 			TAILQ_INSERT_TAIL(fls, parsed, next);
 		} else {
-			res = systrace_modifypolicy(fd, policy->policynr,
-			    filter->name, future);
-			if (res == -1)
-				errx(1, "%s:%d: modify policy for \"%s\"",
-				    __func__, __LINE__, filter->rule);
+			filter_modifypolicy(fd, policy->policynr,
+			    policy->emulation, filter->name, future);
 		}
 		filter_policyrecord(policy, parsed, policy->emulation,
 		    filter->name, filter->rule);
@@ -338,9 +365,9 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 		if (tls != NULL) {
 			struct intercept_translate *tl;
 			char compose[2*MAXPATHLEN], *l;
-			const char *lst = NULL;
+			char *lst = NULL;
 			int set = 0;
-			
+
 			/* Explicitly match every component */
 			line[0] = '\0';
 			TAILQ_FOREACH(tl, tls, next) {
@@ -349,7 +376,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 				l = intercept_translate_print(tl);
 				if (l == NULL)
 					continue;
-					
+
 				snprintf(compose, sizeof(compose),
 				    "%s%s eq \"%s\"",
 				    tl->name,

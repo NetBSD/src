@@ -1,5 +1,5 @@
-/*	$NetBSD: filter.h,v 1.1 2002/06/17 16:29:08 christos Exp $	*/
-/*	$OpenBSD: parse.y,v 1.4 2002/06/05 17:22:38 mickey Exp $	*/
+/*	$NetBSD: filter.h,v 1.2 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: filter.h,v 1.1 2002/07/19 14:38:57 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

@@ -1,6 +1,5 @@
-/*	$NetBSD: intercept-translate.c,v 1.3 2002/06/18 21:21:17 thorpej Exp $	*/
-/*	$OpenBSD: intercept-translate.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
-
+/*	$NetBSD: intercept-translate.c,v 1.4 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.8 2002/07/20 04:19:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,12 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.3 2002/06/18 21:21:17 thorpej Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.4 2002/07/30 16:29:30 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,7 @@ intercept_translate(struct intercept_translate *trans,
 char *
 intercept_translate_print(struct intercept_translate *trans)
 {
-	char line[1024];
+	char line[_POSIX2_LINE_MAX];
 
 	if (trans->trans_print == NULL) {
 		if (trans->print(line, sizeof(line), trans) == -1)
@@ -132,26 +133,20 @@ static int
 ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
     void *addr)
 {
-	char buf[MAXPATHLEN];
-	char *path, *name;
+	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr);
+	name = intercept_filename(fd, pid, addr, 1);
 	if (name == NULL)
 		return (-1);
 
-	/* If realpath fails then the filename does not exist */
-	path = buf;
-	if (realpath(name, path) == NULL)
-		path = "<non-existant filename>";
-
-	len = strlen(path) + 1;
+	len = strlen(name) + 1;
 	trans->trans_data = malloc(len);
 	if (trans->trans_data == NULL)
 		return (-1);
 
 	trans->trans_size = len;
-	memcpy(trans->trans_data, path, len);
+	memcpy(trans->trans_data, name, len);
 
 	return (0);
 }
@@ -161,6 +156,9 @@ ic_get_string(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *name;
 	int len;
+
+	if (addr == NULL)
+		return (-1);
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
@@ -184,7 +182,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr);
+	name = intercept_filename(fd, pid, addr, 0);
 	if (name == NULL)
 		return (-1);
 
@@ -206,7 +204,7 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 	struct sockaddr_storage sa;
 	socklen_t len;
 
-	len = (size_t) trans->trans_addr2;
+	len = (intptr_t)trans->trans_addr2;
 	if (len == 0 || len > sizeof(struct sockaddr_storage))
 		return (-1);
 
@@ -223,6 +221,10 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 	return (0);
 }
 
+#ifndef offsetof
+#define offsetof(s, e)	((size_t)&((s *)0)->e)
+#endif
+
 static int
 ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 {
@@ -235,8 +237,9 @@ ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	switch (sa->sa_family) {
 	case PF_LOCAL:
-		if (sa->sa_len < len)
-			len = sa->sa_len;
+		if (len <= offsetof(struct sockaddr, sa_data))
+			return (-1);
+		len -= offsetof(struct sockaddr, sa_data);
 		if (buflen < len + 1)
 			len = buflen - 1;
 		memcpy(buf, sa->sa_data, len);

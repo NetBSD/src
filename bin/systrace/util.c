@@ -1,6 +1,5 @@
-/*	$NetBSD: util.c,v 1.1 2002/06/17 16:29:12 christos Exp $	*/
-/*	$OpenBSD: util.c,v 1.5 2002/06/09 05:27:50 todd Exp $	*/
-
+/*	$NetBSD: util.c,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.1 2002/06/17 16:29:12 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.2 2002/07/30 16:29:31 itojun Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -80,9 +79,9 @@ uid_to_name(uid_t uid)
 {
 	static char buf[128];
 	struct passwd *pw;
-   
+
 	if ((pw = getpwuid(uid)) == NULL)
-		snprintf(buf, sizeof(buf), "uid %d", uid);
+		snprintf(buf, sizeof(buf), "uid %u", uid);
 	else
 		snprintf(buf, sizeof(buf), "%s", pw->pw_name);
 

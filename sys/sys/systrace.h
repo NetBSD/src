@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.2 2002/06/18 01:24:16 thorpej Exp $	*/
+/*	$NetBSD: systrace.h,v 1.3 2002/07/30 16:29:29 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SYSTRACE_H_
 #define _SYSTRACE_H_
 
@@ -69,8 +70,8 @@ struct str_msg_child {
 struct str_message {
 	int32_t msg_type;
 	pid_t msg_pid;
+	u_int16_t msg_seqnr;	/* answer has to match seqnr */
 	int16_t msg_policy;
-	int16_t reserved;
 	union {
 		struct str_msg_emul msg_emul;
 		struct str_msg_ask msg_ask;
@@ -80,6 +81,8 @@ struct str_message {
 
 struct systrace_answer {
 	pid_t stra_pid;
+	u_int16_t stra_seqnr;
+	int16_t reserved;
 	int32_t stra_policy;
 	int32_t stra_error;
 	int32_t stra_flags;
@@ -118,6 +121,16 @@ struct systrace_policy {
 #define strp_code	strp_data.assign.code
 #define strp_policy	strp_data.assign.policy
 
+struct systrace_replace {
+	pid_t strr_pid;
+	int32_t strr_nrepl;
+	caddr_t	strr_base;	/* Base memory */
+	size_t strr_len;	/* Length of memory */
+	int32_t strr_argind[SYSTR_MAXARGS];
+	size_t strr_off[SYSTR_MAXARGS];
+	size_t strr_offlen[SYSTR_MAXARGS];
+};
+
 #define STRIOCATTACH	_IOW('s', 101, pid_t)
 #define STRIOCDETACH	_IOW('s', 102, pid_t)
 #define STRIOCANSWER	_IOW('s', 103, struct systrace_answer)
@@ -126,6 +139,7 @@ struct systrace_policy {
 #define STRIOCGETCWD	_IOW('s', 106, pid_t)
 #define STRIOCRESCWD	_IO('s', 107)
 #define STRIOCREPORT	_IOW('s', 108, pid_t)
+#define STRIOCREPLACE	_IOW('s', 109, struct systrace_replace)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
@@ -155,6 +169,8 @@ struct fsystrace {
 	size_t npolicies;
 
 	int issuser;
+	uid_t p_ruid;
+	gid_t p_rgid;
 
 	/* cwd magic */
 	pid_t fd_pid;

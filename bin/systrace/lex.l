@@ -1,5 +1,5 @@
-/*	$NetBSD: lex.l,v 1.1 2002/06/17 16:29:09 christos Exp $	*/
-/*	$OpenBSD: lex.l,v 1.6 2002/06/05 17:34:56 mickey Exp $	*/
+/*	$NetBSD: lex.l,v 1.2 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: lex.l,v 1.8 2002/07/30 05:39:31 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -34,7 +34,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.1 2002/06/17 16:29:09 christos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.2 2002/07/30 16:29:30 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: lex.l,v 1.1 2002/06/17 16:29:09 christos Exp $");
 #include "y.tab.h"
 #endif
 
-int yyerror(const char *fmt, ...);
+extern int yyerror(const char *fmt, ...);
 int yylex(void);
 
 char *mystring;
