@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.7 1998/03/01 02:24:39 fvdl Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.8 1999/01/14 01:28:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -96,7 +96,7 @@ struct protosw nssw[] = {
 };
 
 struct domain nsdomain =
-    { AF_NS, "network systems", 0, 0, 0, 
+    { PF_NS, "network systems", 0, 0, 0, 
       nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])], 0,
       rn_inithead, 16, sizeof(struct sockaddr_ns)};
 
