@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.19 2001/03/29 20:49:44 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.20 2001/04/02 22:25:17 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -39,6 +39,8 @@
 /*
  * This driver currently supports the following chip:
  * SEEQ 8005 Advanced Ethernet Data Link Controller
+ * SEEQ 80C04 Ethernet Data Link Controller
+ * SEEQ 80C04A AutoDUPLEX CMOS Ethernet Data Link Controller
  */
 /*
  * More information on the 8004 and 8005 AEDLC controllers can be found in
@@ -64,7 +66,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.19 2001/03/29 20:49:44 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.20 2001/04/02 22:25:17 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -145,7 +147,8 @@ static void ea_select_buffer(struct seeq8005_softc *, int);
 static void ea_set_address(struct seeq8005_softc *, int, const u_int8_t *);
 static void ea_read(struct seeq8005_softc *, int, int);
 static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
-static void ea_getpackets(struct seeq8005_softc *);
+static void ea_txint(struct seeq8005_softc *);
+static void ea_rxint(struct seeq8005_softc *);
 static void eatxpacket(struct seeq8005_softc *);
 static int ea_writembuf(struct seeq8005_softc *, struct mbuf *, int);
 static void ea_mc_reset(struct seeq8005_softc *);
@@ -181,26 +184,24 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	switch (id & SEEQ_PRODUCTID_MASK) {
 	case SEEQ_PRODUCTID_8004:
 		sc->sc_variant = SEEQ_8004;
+		switch (id & SEEQ_PRODUCTID_REV_MASK) {
+		case SEEQ_PRODUCTID_REV_80C04:
+			printf(", SEEQ 80C04\n");
+			break;
+		case SEEQ_PRODUCTID_REV_80C04A:
+			printf(", SEEQ 80C04A\n");
+			break;
+		default:
+			/* Unknown SEEQ 8004 variants */
+			printf(", SEEQ 8004 rev %x\n",
+			    id & SEEQ_PRODUCTID_REV_MASK);
+			break;
+		}
 		break;
 	default:	/* XXX */
 		sc->sc_variant = SEEQ_8005;
+		printf(", SEEQ 8005\n");
 		break;
-	}
-
-	switch (sc->sc_variant) {
-	case SEEQ_8004:
-		printf(", SEEQ80C04 rev %x\n",
-		    id & SEEQ_PRODUCTID_REV_MASK);
-		break;
-	case SEEQ_8005:
-		if (id != 0xff)
-			printf(", SEEQ8005 rev %x\n", id);
-		else
-			printf(", SEEQ8005\n");
-		break;
-	default:
-		printf(", Unknown ethernet controller\n");
-		return;
 	}
 
 	/* Both the 8004 and 8005 are designed for 64K Buffer memory */
@@ -930,10 +931,7 @@ seeq8005intr(void *arg)
 	struct seeq8005_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int status, handled;
-	u_int8_t txhdr[4];
-	u_int txstatus;
 
 	handled = 0;
 
@@ -948,76 +946,7 @@ seeq8005intr(void *arg)
 		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
 				  sc->sc_command | SEEQ_CMD_TX_INTACK);
 
-		ea_readbuf(sc, txhdr, 0x0000, 4);
-
-		DPRINTF(SEEQ_DEBUG_TX, ("txstatus=%02x %02x %02x %02x\n",
-			 txhdr[0], txhdr[1], txhdr[2], txhdr[3]));
-		txstatus = txhdr[3];
-
-		/*
-		 * If SEEQ_TXSTAT_COLLISION is set then we received at least
-		 * one collision. On the 8004 we can find out exactly how many
-		 * collisions occurred.
-		 *
-		 * The SEEQ_PKTSTAT_DONE will be set if the transmission has
-		 * completed.
-		 *
-		 * If SEEQ_TXSTAT_COLLISION16 is set then 16 collisions
-		 * occurred and the packet transmission was aborted.
-		 * This situation is untested as present.
-		 *
-		 * The SEEQ_TXSTAT_BABBLE should never be set and is untested
-		 * as we should never xmit oversized packets.
-		 */
-		if (txstatus & SEEQ_TXSTAT_COLLISION) {
-			switch (sc->sc_variant) {
-			case SEEQ_8004: {
-				int colls;
-
-				/*
-				 * The 8004 contains a 4 bit collision count
-				 * in the status register.
-				 */
-
-				/* This appears to be broken on 80C04.AE */
-/*				ifp->if_collisions +=
-				    (txstatus >> SEEQ_TXSTAT_COLLISIONS_SHIFT)
-				    & SEEQ_TXSTAT_COLLISION_MASK;*/
-				    
-				/* Use the TX Collision register */
-				ea_select_buffer(sc, SEEQ_BUFCODE_TX_COLLS);
-				colls = bus_space_read_1(iot, ioh,
-				    SEEQ_BUFWIN);
-				ifp->if_collisions += colls;
-				break;
-			}
-			case SEEQ_8005:
-				/* We known there was at least 1 collision */
-				ifp->if_collisions++;
-				break;
-			}
-		} else if (txstatus & SEEQ_TXSTAT_COLLISION16) {
-			printf("seeq_intr: col16 %x\n", txstatus);
-			ifp->if_collisions += 16;
-			ifp->if_oerrors++;
-		} else if (txstatus & SEEQ_TXSTAT_BABBLE) {
-			ifp->if_oerrors++;
-		}
-
-		/* Have we completed transmission on the packet ? */
-		if (txstatus & SEEQ_PKTSTAT_DONE) {
-			/* Clear watchdog timer. */
-			ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
-
-			/* Update stats */
-			ifp->if_opackets++;
-
-			/* Tx next packet */
-
-			eatxpacket(sc);
-		}
-
+		ea_txint(sc);
 	}
 
 
@@ -1030,25 +959,93 @@ seeq8005intr(void *arg)
 				  sc->sc_command | SEEQ_CMD_RX_INTACK);
 
 		/* Processes the received packets */
-		ea_getpackets(sc);
-
-
-#if 0
-		/* Make sure the receiver is on */
-		if ((status & SEEQ_STATUS_RX_ON) == 0) {
-			bus_space_write_2(iot, ioh, SEEQ_COMMAND,
-					  sc->sc_command | SEEQ_CMD_RX_ON);
-			printf("rxintr: rx is off st=%04x\n",status);
-		}
-#endif
+		ea_rxint(sc);
 	}
 
 	return handled;
 }
 
+static void
+ea_txint(struct seeq8005_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t txhdr[4];
+	u_int txstatus;
+
+	ea_readbuf(sc, txhdr, 0x0000, 4);
+
+	DPRINTF(SEEQ_DEBUG_TX, ("txstatus=%02x %02x %02x %02x\n",
+	    txhdr[0], txhdr[1], txhdr[2], txhdr[3]));
+	txstatus = txhdr[3];
+
+	/*
+	 * If SEEQ_TXSTAT_COLLISION is set then we received at least
+	 * one collision. On the 8004 we can find out exactly how many
+	 * collisions occurred.
+	 *
+	 * The SEEQ_PKTSTAT_DONE will be set if the transmission has
+	 * completed.
+	 *
+	 * If SEEQ_TXSTAT_COLLISION16 is set then 16 collisions
+	 * occurred and the packet transmission was aborted.
+	 * This situation is untested as present.
+	 *
+	 * The SEEQ_TXSTAT_BABBLE should never be set and is untested
+	 * as we should never xmit oversized packets.
+	 */
+	if (txstatus & SEEQ_TXSTAT_COLLISION) {
+		switch (sc->sc_variant) {
+		case SEEQ_8004: {
+			int colls;
+
+			/*
+			 * The 8004 contains a 4 bit collision count
+			 * in the status register.
+			 */
+
+			/* This appears to be broken on 80C04.AE */
+/*			ifp->if_collisions +=
+			    (txstatus >> SEEQ_TXSTAT_COLLISIONS_SHIFT)
+			    & SEEQ_TXSTAT_COLLISION_MASK;*/
+				    
+			/* Use the TX Collision register */
+			ea_select_buffer(sc, SEEQ_BUFCODE_TX_COLLS);
+			colls = bus_space_read_1(iot, ioh, SEEQ_BUFWIN);
+			ifp->if_collisions += colls;
+			break;
+		}
+		case SEEQ_8005:
+			/* We known there was at least 1 collision */
+			ifp->if_collisions++;
+			break;
+		}
+	} else if (txstatus & SEEQ_TXSTAT_COLLISION16) {
+		printf("seeq_intr: col16 %x\n", txstatus);
+		ifp->if_collisions += 16;
+		ifp->if_oerrors++;
+	} else if (txstatus & SEEQ_TXSTAT_BABBLE) {
+		ifp->if_oerrors++;
+	}
+
+	/* Have we completed transmission on the packet ? */
+	if (txstatus & SEEQ_PKTSTAT_DONE) {
+		/* Clear watchdog timer. */
+		ifp->if_timer = 0;
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+		/* Update stats */
+		ifp->if_opackets++;
+
+		/* Tx next packet */
+
+		eatxpacket(sc);
+	}
+}
 
 void
-ea_getpackets(struct seeq8005_softc *sc)
+ea_rxint(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
