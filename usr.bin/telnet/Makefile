@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/07/12 22:11:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 1999/07/20 09:35:21 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,7 +55,7 @@ CRYPT_SRC+= ring.c ring.h telnet.c terminal.c utilities.c Makefile
 NOCRYPT_DIR=${.CURDIR}/Nocrypt
 
 .if defined(CRYPTOPATH)
-.include "${CRYPTOPATH}/usr.bin/telnet/Makefile.frag"
+.sinclude "${CRYPTOPATH}/usr.bin/telnet/Makefile.frag"
 .endif
 
 CPPFLAGS+=-DIPSEC
