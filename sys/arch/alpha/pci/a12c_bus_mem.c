@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.4 1999/03/12 22:56:21 perry Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.5 2000/04/17 17:30:48 drochner Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -46,7 +46,7 @@
 
 #define	A12C_BUS_MEM()	/* Generate ctags(1) key */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.4 1999/03/12 22:56:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.5 2000/04/17 17:30:48 drochner Exp $");
 
 /* Memory barrier */
 void		pci_a12c_mem_barrier __P((void *, bus_space_handle_t,
@@ -159,6 +159,9 @@ int		pci_a12c_mem_alloc __P((void *, bus_addr_t, bus_addr_t,
 void		pci_a12c_mem_free __P((void *, bus_space_handle_t,
 		    bus_size_t));
 
+/* get kernel virtual address*/
+void		*pci_a12c_mem_vaddr __P((void *, bus_space_handle_t));
+
 static struct alpha_bus_space pci_a12c_mem_space = {
 	/* cookie */
 	NULL,
@@ -171,6 +174,9 @@ static struct alpha_bus_space pci_a12c_mem_space = {
 	/* allocation/deallocation */
 	pci_a12c_mem_alloc,
 	pci_a12c_mem_free,
+
+	/* get kernel virtual address */
+	pci_a12c_mem_vaddr,
 
 	/* barrier */
 	pci_a12c_mem_barrier,
@@ -297,6 +303,14 @@ pci_a12c_mem_free(v, bsh, size)
 {
 }
 
+void *
+pci_a12c_mem_vaddr(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/* not supported (could panic() if pci_a12c_mem_map() caught it) */
+	return (0);
+}
 
 void
 pci_a12c_mem_barrier(v, h, o, l, f)

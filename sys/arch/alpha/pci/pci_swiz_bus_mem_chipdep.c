@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.34 2000/02/26 18:53:13 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.35 2000/04/17 17:30:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,6 +115,9 @@ int		__C(CHIP,_mem_alloc) __P((void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *));
 void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
+
+/* get kernel virtual address */
+void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -262,6 +265,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
 	t->abs_free = 		__C(CHIP,_mem_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
@@ -895,6 +901,22 @@ __C(CHIP,_mem_free)(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("%s not implemented", __S(__C(CHIP,_mem_free)));
+}
+
+void *
+__C(CHIP,_mem_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+#ifdef CHIP_D_MEM_W1_SYS_START
+	/*
+	 * XXX should check that the range was mapped
+	 * with BUS_SPACE_MAP_LINEAR for sanity
+	 */
+	if ((bsh >> 63) != 0)
+		return ((void *)bsh);
+#endif
+	return (0);
 }
 
 inline void
