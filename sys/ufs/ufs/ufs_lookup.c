@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.58 2004/08/15 07:19:58 mycroft Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.59 2004/08/15 21:44:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.58 2004/08/15 07:19:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.59 2004/08/15 21:44:11 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -958,15 +958,13 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	int flags;
 	int isrmdir;
 {
-	struct inode *dp;
+	struct inode *dp = VTOI(dvp);
 	struct direct *ep;
 	struct buf *bp;
 	int error;
 #ifdef FFS_EI
-	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(dp->i_ump);
 #endif
-
-	dp = VTOI(dvp);
 
 	if (flags & DOWHITEOUT) {
 		/*
@@ -1048,7 +1046,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
 	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error)
 		return (error);
-	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(vdp->v_mount));
+	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
 	if (!FSFMT(vdp))
 		ep->d_type = newtype;
 	oip->i_ffs_effnlink--;
@@ -1157,7 +1155,7 @@ ufs_checkpath(source, target, cred)
 	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;
 	struct dirtemplate dirbuf;
-	const int needswap = UFS_MPNEEDSWAP(vp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(target->i_ump);
 
 	vp = ITOV(target);
 	if (target->i_number == source->i_number) {
