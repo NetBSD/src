@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.9 1997/07/02 13:59:15 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.10 1998/03/12 05:45:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
  * functions for the keyboard and mouse.
  */
 
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +76,11 @@
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #include <miscfs/specfs/specdev.h>
 
 #include <machine/pmioctl.h>
@@ -486,9 +492,15 @@ fbmmap_fb(fi, dev, data, p)
 	 * Map the all the data the user needs access to into
 	 * user space.
 	 */
+#if defined(UVM)
+	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, len,
+		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
+		(vm_offset_t)0);
+#else
 	error = vm_mmap(&p->p_vmspace->vm_map, &addr, len,
 		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
 		(vm_offset_t)0);
+#endif
 	if (error)
 		return (error);
 	fbp = (struct fbuaccess *)(addr + ((vm_offset_t)fbu & PGOFSET));

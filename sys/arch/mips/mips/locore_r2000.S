@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.42 1998/03/06 13:54:02 tsubai Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.43 1998/03/12 05:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1655,7 +1655,11 @@ LEAF(mips1_switch_exit)
 	lw	a1, P_ADDR(a0)
 	lw	a0, kernel_map
 	la	ra, sw1				# goto cpu_switch()
+#if defined(UVM)
+	j	uvm_km_free			# free exiting USPACE
+#else
 	j	kmem_free			# free exiting USPACE
+#endif
 END(mips1_switch_exit)
 
 /*

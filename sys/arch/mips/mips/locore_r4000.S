@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.41 1997/08/09 03:41:07 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.42 1998/03/12 05:45:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2145,7 +2145,11 @@ LEAF(mips3_switch_exit)
 	lw	a1, P_ADDR(a0)
 	lw	a0, kernel_map
 	la	ra, sw1				# goto cpu_switch()
+#if defined(UVM)
+	j	uvm_km_free			# free exiting USPACE
+#else
 	j	kmem_free			# free exiting USPACE
+#endif
 	nop					# XXX schedule better
 END(mips3_switch_exit)
 

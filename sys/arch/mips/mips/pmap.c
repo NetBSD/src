@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1998/03/12 05:45:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 1998/03/12 05:45:06 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -106,6 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $");
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -120,6 +122,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $");
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
@@ -220,9 +226,12 @@ int	pmap_alloc_tlbpid __P((register struct proc *p));
 void	pmap_zero_page __P((vm_offset_t phys));
 void pmap_zero_page __P((vm_offset_t));
 void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t, u_int *));
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+
+#if !defined(UVM)
 vm_page_t vm_page_alloc1 __P((void));
 void vm_page_free1 __P((vm_page_t));
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+#endif
 
 #ifdef MIPS3
 void pmap_page_cache __P((vm_offset_t, int));
@@ -507,11 +516,22 @@ pmap_pinit(pmap)
 		vm_page_t mem;
 
 		do {
+#if defined(UVM)
+			mem = uvm_pagealloc(NULL, 0, NULL);
+			if (mem == NULL) {
+				/*
+				 * XXX What else can we do?  Could we
+				 * XXX deadlock here?
+				 */
+				uvm_wait("pmap_pinit");
+			}
+#else
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
 				vm_wait("pmap_pinit");
 						/* XXX What else can we do */
 			}			/* XXX Deadlock situations? */
+#endif
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -620,8 +640,12 @@ pmap_release(pmap)
 				mips3_HitFlushDCache(
 				    (vm_offset_t)pte, PAGE_SIZE);
 #endif
+#if defined(UVM)
+			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
+#else
 			vm_page_free1(
 			    PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
+#endif
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -823,6 +847,15 @@ pmap_page_protect(pa, prot)
 		 */
 		if (pv->pv_pmap != NULL) {
 			for (; pv; pv = pv->pv_next) {
+#if defined(UVM)
+				va = pv->pv_va;
+
+				/*
+				 * XXX don't write protect pager mappings
+				 */
+				if (va >= uvm.pager_sva && va < uvm.pager_eva)
+					continue;
+#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				va = pv->pv_va;
@@ -832,6 +865,7 @@ pmap_page_protect(pa, prot)
 				 */
 				if (va >= pager_sva && va < pager_eva)
 					continue;
+#endif /* UVM */
 				pmap_protect(pv->pv_pmap, va, va + PAGE_SIZE,
 					prot);
 			}
@@ -1178,11 +1212,22 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	if (!(pte = pmap_segmap(pmap, va))) {
 		do {
+#if defined(UVM)
+			mem = uvm_pagealloc(NULL, 0, NULL);
+			if (mem == NULL) {
+				/*
+				 * XXX What else can we do?  Could we
+				 * XXX deadlock here?
+				 */
+				uvm_wait("pmap_enter");
+			}
+#else
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
 				vm_wait("pmap_enter");
 						/* XXX What else can we do */
 			}			/* XXX Deadlock situations? */
+#endif
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -1921,6 +1966,7 @@ pmap_remove_pv(pmap, va, pa)
 	return(last);
 }
 
+#if !defined(UVM)
 /*
  *	vm_page_alloc1:
  *
@@ -2005,6 +2051,7 @@ vm_page_free1(mem)
 		splx(spl);
 	}
 }
+#endif /* ! UVM */
 
 pt_entry_t *
 pmap_pte(pmap, va)
