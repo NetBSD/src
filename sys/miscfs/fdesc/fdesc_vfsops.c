@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.2 1993/03/25 06:00:18 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.3 1993/06/07 04:56:35 cgd Exp $
  */
 
 /*
@@ -92,7 +92,7 @@ fdesc_mount(mp, path, data, ndp, p)
 		return (error);
 
 	fmp = (struct fdescmount *) malloc(sizeof(struct fdescmount),
-				 M_UFSMNT, M_WAITOK);	/* XXX */
+				 M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	/*VTOFDESC(rvp)->f_isroot = 1;*/
@@ -179,7 +179,7 @@ fdesc_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the fdescmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return 0;
 }
