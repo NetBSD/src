@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.30 2000/11/13 01:22:39 hubertf Exp $
+.\"	$NetBSD: contents,v 1.31 2000/11/15 00:00:26 is Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,17 @@ A gzipped
 kernel containing code for everything supported in this release.
 .if r_hpcmips \{\
 This kernel runs on Vr41xx CPU only.
+.\}
+.
+.if r_amiga \{\
+.			It Pa netbsd.INSTALL.gz
+A somewhat smaller kernel, which you can use to boot the system
+using loadbsd for installation on memory-tight systems. This is the
+same kernel as present on the miniroot.
+.			It Pa netbsd.INSTWDCPCM.gz
+As above, but with the (still somewhat experimental) PCMCIA support, and
+with the wdc driver instead of the older idesc driver. If you install using
+this kernel on an A1200, you have to use it lateron, too!
 .\}
 .
 .if r_arm26 \{\
