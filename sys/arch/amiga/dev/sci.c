@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.29 2003/08/07 16:26:43 agc Exp $ */
+/*	$NetBSD: sci.c,v 1.30 2003/10/31 14:38:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.29 2003/08/07 16:26:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.30 2003/10/31 14:38:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,8 @@ sci_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		if (flags & XS_CTL_DATA_UIO)
 		panic("sci: scsi data uio requested");
+
+		s = splbio();
 
 		if (dev->sc_xs && flags & XS_CTL_POLL)
 			panic("sci_scsicmd: busy");
