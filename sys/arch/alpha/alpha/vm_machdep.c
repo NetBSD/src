@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.28 1998/02/24 07:38:02 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.29 1998/03/07 01:11:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 1998/02/24 07:38:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/03/07 01:11:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ cpu_fork(p1, p2)
 	 * swap to it easily.
 	 */
 #ifndef NEW_PMAP
-	ptep = kvtopte(up);
+	ptep = pmap_l3pte(pmap_kernel(), up);
 	p2->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
 #else
@@ -297,7 +297,7 @@ cpu_swapin(p)
 	 * it easily.
 	 */
 #ifndef NEW_PMAP
-	ptep = kvtopte(up);
+	ptep = pmap_l3pte(pmap_kernel(), up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
 #else
@@ -351,24 +351,32 @@ pagemove(from, to, size)
 	ssize_t todo;
 
 	if (size % CLBYTES)
-		panic("pagemove");
-#ifndef NEW_PMAP
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-#else
-	fpte = pmap_pte(kernel_pmap, (vm_offset_t)from);
-	tpte = pmap_pte(kernel_pmap, (vm_offset_t)to);
-#endif
+		goto die;
+
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
 		ALPHA_TBIS((vm_offset_t)from);
-		*tpte++ = *fpte;
+		fpte = pmap_l3pte(pmap_kernel(), (vm_offset_t)from);
+		tpte = pmap_l3pte(pmap_kernel(), (vm_offset_t)to);
+#ifdef DIAGNOSTIC
+		if (fpte == NULL) {
+			printf("pagemove: no PT page for %p (from)\n", from);
+			goto die;
+		}
+		if (tpte == NULL) {
+			printf("pagemove: no PT page for %p (to)\n", to);
+			goto die;
+		}
+#endif
+		*tpte = *fpte;
 		*fpte = 0;
-		fpte++;
 		todo -= NBPG;
 		from += NBPG;
 		to += NBPG;
 	}
+	return;
+ die:
+	panic("pagemove");
 }
 
 extern vm_map_t phys_map;
