@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.17 2000/05/24 16:48:35 thorpej Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.18 2000/05/26 21:19:32 thorpej Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -217,7 +217,7 @@ arm_fpe_postproc(fpframe, frame)
 		addupc_task(p, pc, (int)(p->p_sticks - p->p_sticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 

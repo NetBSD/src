@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.23 2000/04/30 21:09:46 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.24 2000/05/26 21:20:17 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,8 +39,14 @@
 #ifndef _sparc_cpuvar_h
 #define _sparc_cpuvar_h
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 #include <sys/device.h>
 #include <sys/lock.h>
+#include <sys/sched.h>
 
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
@@ -128,6 +134,12 @@ struct xpmsg {
  */
 
 struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+
 	int		node;		/* PROM node for this CPU */
 
 	/* CPU information */
@@ -200,8 +212,7 @@ struct cpu_info {
 	 * etc.
 	 */
 
-	struct	proc	*_curproc;		/* CPU owner */
-#define curproc	cpuinfo._curproc
+	struct	proc	*ci_curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
 
 	/*

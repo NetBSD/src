@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.15 2000/05/22 20:09:12 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.16 2000/05/26 21:19:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.15 2000/05/22 20:09:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.16 2000/05/26 21:19:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ kn300_mcheck(mces, type, logout, framep)
 	/*
 	 * If we expected a machine check, just go handle it in common code.
 	 */
-	mcp  = cpu_mchkinfo();
+	mcp = &curcpu()->ci_mcinfo;
 	if (mcp->mc_expected) {
 		machine_check(mces, framep, type, logout);
 		return;

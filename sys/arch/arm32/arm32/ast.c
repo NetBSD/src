@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.17 2000/05/24 16:48:34 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.18 2000/05/26 21:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -116,7 +116,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 
 #ifdef DIAGNOSTIC
 	if (current_spl_level != _SPL_0) {

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2000/05/26 00:36:49 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.28 2000/05/26 21:20:17 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
 define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
-define	CPUINFO_CURPROC		offsetof(struct cpu_info, _curproc)
+define	CPUINFO_CURPROC		offsetof(struct cpu_info, ci_curproc)
 
 # PTE bits and related information
 define	PG_W		PG_W

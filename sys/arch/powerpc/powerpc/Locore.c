@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1996/11/06 20:19:50 cgd Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 2000/05/26 21:20:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,8 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-
-int whichqs;
+#include <sys/sched.h>
 
 /*
  * Put process p on the run queue indicated by its priority.
@@ -57,8 +56,8 @@ setrunqueue(p)
 	if (p->p_back)
 		panic("setrunqueue");
 #endif
-	q = &qs[which];
-	whichqs |= 0x80000000 >> which;
+	q = &sched_qs[which];
+	sched_whichqs |= 0x80000000 >> which;
 	p->p_forw = (struct proc *)q;
 	p->p_back = oldlast = q->ph_rlink;
 	q->ph_rlink = p;
@@ -78,13 +77,13 @@ remrunqueue(p)
 	struct prochd *q;
 
 #ifdef	DIAGNOSTIC	
-	if (!(whichqs & (0x80000000 >> which)))
+	if (!(sched_whichqs & (0x80000000 >> which)))
 		panic("remrunqueue");
 #endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
-	q = &qs[which];
+	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(0x80000000 >> which);
+		sched_whichqs &= ~(0x80000000 >> which);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $"
 #include <sys/kernel.h>
 #include <sys/map.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
@@ -220,11 +221,6 @@ u_int64_t	cycles_per_usec;
 
 /* number of cpus in the box.  really! */
 int		ncpus;
-
-#if !defined(MULTIPROCESSOR)
-/* A single machine check info structure for single CPU configurations. */
-struct mchkinfo mchkinfo_store;
-#endif
 
 struct bootinfo_kernel bootinfo;
 
@@ -1903,11 +1899,11 @@ setrunqueue(p)
 		panic("setrunqueue");
 
 	bit = p->p_priority >> 2;
-	whichqs |= (1 << bit);
-	p->p_forw = (struct proc *)&qs[bit];
-	p->p_back = qs[bit].ph_rlink;
+	sched_whichqs |= (1 << bit);
+	p->p_forw = (struct proc *)&sched_qs[bit];
+	p->p_back = sched_qs[bit].ph_rlink;
 	p->p_back->p_forw = p;
-	qs[bit].ph_rlink = p;
+	sched_qs[bit].ph_rlink = p;
 }
 
 /*
@@ -1922,15 +1918,15 @@ remrunqueue(p)
 	int bit;
 
 	bit = p->p_priority >> 2;
-	if ((whichqs & (1 << bit)) == 0)
+	if ((sched_whichqs & (1 << bit)) == 0)
 		panic("remrunqueue");
 
 	p->p_back->p_forw = p->p_forw;
 	p->p_forw->p_back = p->p_back;
 	p->p_back = NULL;	/* for firewall checking. */
 
-	if ((struct proc *)&qs[bit] == qs[bit].ph_link)
-		whichqs &= ~(1 << bit);
+	if ((struct proc *)&sched_qs[bit] == sched_qs[bit].ph_link)
+		sched_whichqs &= ~(1 << bit);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.99 2000/05/26 00:36:47 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.100 2000/05/26 21:19:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,12 +209,12 @@ NESTED(setrunqueue, CALLFRAME_SIZ, ra)
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
 	sll	t1, t1, t0
-	lw	t2, _C_LABEL(whichqs)	# set corresponding bit
+	lw	t2, _C_LABEL(sched_whichqs)	# set corresponding bit
 	nop
 	or	t2, t2, t1
-	sw	t2, _C_LABEL(whichqs)
+	sw	t2, _C_LABEL(sched_whichqs)
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	t1, _C_LABEL(qs)
+	la	t1, _C_LABEL(sched_qs)
 	addu	t0, t0, t1		# t0 = qp = &qs[pri >> 2]
 	lw	t1, P_BACK(t0)		# t1 = qp->ph_rlink
 	sw	t0, P_FORW(a0)		# p->p_forw = qp
@@ -236,7 +236,7 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, _C_LABEL(whichqs)	# check corresponding bit
+	lw	t2, _C_LABEL(sched_whichqs)	# check corresponding bit
 	sll	t1, t1, t0
 	and	v0, t2, t1
 	sw	ra, CALLFRAME_RA(sp)
@@ -249,14 +249,14 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	sw	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
 	sw	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	v0, _C_LABEL(qs)
+	la	v0, _C_LABEL(sched_qs)
 	addu	t0, t0, v0		# t0 = qp = &qs[pri >> 2]
 	lw	v0, P_FORW(t0)		# check if queue empty
 	nop
 	bne	v0, t0, 2f		# No. qp->ph_link != qp
 	nop
 	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, _C_LABEL(whichqs)
+	sw	t2, _C_LABEL(sched_whichqs)
 2:
 	sw	zero, P_BACK(a0)	# for firewall checking
 	j	ra
@@ -283,7 +283,7 @@ LEAF(mips_idle)
 	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 1:
-	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
 	nop
@@ -317,7 +317,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 	lw	t0, uvmexp+UVMEXP_SWTCH
-	lw	t1, _C_LABEL(whichqs)
+	lw	t1, _C_LABEL(sched_whichqs)
 	addu	t0, t0, 1
 	sw	t0, uvmexp+UVMEXP_SWTCH
 	bne	t1, zero, 1f
@@ -337,7 +337,7 @@ cpu_switch_queuescan:
 	nop					# extra cycles on r4000
 	nop					# extra cycles on r4000
 
-	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	bne	t0, zero, 1f
 	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
@@ -355,7 +355,7 @@ cpu_switch_queuescan:
  * Remove process from queue.
  */
 	sll	t0, t2, 3
-	la	t1, _C_LABEL(qs)
+	la	t1, _C_LABEL(sched_qs)
 	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
 	lw	a0, P_FORW(t0)			# a0 = p = highest pri process
 	nop
@@ -370,7 +370,7 @@ cpu_switch_queuescan:
 	li	v1, 1				# compute bit in 'whichqs'
 	sll	v1, v1, t2
 	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, _C_LABEL(whichqs)
+	sw	t3, _C_LABEL(sched_whichqs)
 3:
 /*
  * Switch to new context.
