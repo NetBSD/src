@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_error.h	7.5 (Berkeley) 6/28/90
- *	$Id: ns_error.h,v 1.3 1993/05/20 04:35:53 cgd Exp $
+ *	from: @(#)ns_error.h	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_error.h,v 1.4 1994/05/13 06:11:15 mycroft Exp $
  */
-
-#ifndef _NETNS_NS_ERROR_H_
-#define _NETNS_NS_ERROR_H_
 
 /*
  * Xerox NS error messages
@@ -92,5 +89,3 @@ struct	ns_errstat {
 #ifdef KERNEL
 struct	ns_errstat ns_errstat;
 #endif
-
-#endif /* !_NETNS_NS_ERROR_H_ */

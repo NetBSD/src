@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)protosw.h	7.8 (Berkeley) 4/28/91
- *	$Id: protosw.h,v 1.3 1993/05/20 16:22:52 cgd Exp $
+ *	from: @(#)protosw.h	8.1 (Berkeley) 6/2/93
+ *	$Id: protosw.h,v 1.4 1994/05/13 06:12:08 mycroft Exp $
  */
-
-#ifndef _SYS_PROTOSW_H_
-#define _SYS_PROTOSW_H_
 
 /*
  * Protocol switch table.
@@ -65,17 +62,18 @@ struct protosw {
 	short	pr_protocol;		/* protocol number */
 	short	pr_flags;		/* see below */
 /* protocol-protocol hooks */
-	int	(*pr_input)();		/* input to protocol (from below) */
+	void	(*pr_input)();		/* input to protocol (from below) */
 	int	(*pr_output)();		/* output to protocol (from above) */
-	int	(*pr_ctlinput)();	/* control input (from below) */
+	void	(*pr_ctlinput)();	/* control input (from below) */
 	int	(*pr_ctloutput)();	/* control output (from above) */
 /* user-protocol hook */
 	int	(*pr_usrreq)();		/* user request: see list below */
 /* utility hooks */
-	int	(*pr_init)();		/* initialization hook */
-	int	(*pr_fasttimo)();	/* fast timeout (200ms) */
-	int	(*pr_slowtimo)();	/* slow timeout (500ms) */
-	int	(*pr_drain)();		/* flush any excess space possible */
+	void	(*pr_init)();		/* initialization hook */
+	void	(*pr_fasttimo)();	/* fast timeout (200ms) */
+	void	(*pr_slowtimo)();	/* slow timeout (500ms) */
+	void	(*pr_drain)();		/* flush any excess space possible */
+	int	(*pr_sysctl)();		/* sysctl for protocol */
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
@@ -211,5 +209,3 @@ char	*prcorequests[] = {
 #ifdef KERNEL
 extern	struct protosw *pffindproto(), *pffindtype();
 #endif
-
-#endif /* !_SYS_PROTOSW_H_ */

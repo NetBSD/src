@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.7 1994/02/20 03:19:45 mycroft Exp $
+ *	from: @(#)ns_ip.c	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_ip.c,v 1.8 1994/05/13 06:11:20 mycroft Exp $
  */
 
 /*
@@ -62,8 +62,6 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #include <netns/idp.h>
-
-#include <machine/cpu.h>
 
 struct ifnet_en {
 	struct ifnet ifen_ifnet;
@@ -182,7 +180,7 @@ idpip_input(m, ifp)
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_hl > (sizeof (struct ip) >> 2)) {
-		ip_stripoptions(ip, (struct mbuf *)0);
+		ip_stripoptions(m, (struct mbuf *)0);
 		if (m->m_len < s) {
 			if ((m = m_pullup(m, s)) == 0) {
 				nsipif.if_ierrors++;
@@ -290,7 +288,7 @@ nsipoutput(ifn, m, dst)
 	/*
 	 * Output final datagram.
 	 */
-	error =  ip_output(m, NULL, ro, SO_BROADCAST, NULL);	/* XXX */
+	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL));
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_if.h	7.6 (Berkeley) 6/28/90
- *	$Id: ns_if.h,v 1.3 1993/05/20 04:35:54 cgd Exp $
+ *	from: @(#)ns_if.h	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_if.h,v 1.4 1994/05/13 06:11:16 mycroft Exp $
  */
-
-#ifndef _NETNS_NS_IF_H_
-#define _NETNS_NS_IF_H_
 
 /*
  * Interface address, xerox version.  One of these structures
@@ -48,8 +45,6 @@ struct ns_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
 #define	ia_flags	ia_ifa.ifa_flags
-/*	union	ns_net	ia_net;		/* network number of interface */
-#define ia_net		ia_addr.sns_addr.x_net
 	struct	ns_ifaddr *ia_next;	/* next in list of xerox addresses */
 	struct	sockaddr_ns ia_addr;	/* reserve space for my address */
 	struct	sockaddr_ns ia_dstaddr;	/* space for my broadcast address */
@@ -86,5 +81,3 @@ struct	ns_ifaddr *ns_ifaddr;
 struct	ns_ifaddr *ns_iaonnetof();
 struct	ifqueue	nsintrq;	/* XNS input packet queue */
 #endif
-
-#endif /* !_NETNS_NS_IF_H_ */

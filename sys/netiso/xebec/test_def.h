@@ -1,4 +1,4 @@
-/* $Id: test_def.h,v 1.2 1993/05/20 05:28:37 cgd Exp $ */
+/* $Id: test_def.h,v 1.3 1994/05/13 06:10:42 mycroft Exp $ */
 
 struct blah {
 	unsigned int blahfield;

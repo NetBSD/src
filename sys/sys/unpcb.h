@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)unpcb.h	7.6 (Berkeley) 6/28/90
- *	$Id: unpcb.h,v 1.3 1993/05/20 16:23:43 cgd Exp $
+ *	from: @(#)unpcb.h	8.1 (Berkeley) 6/2/93
+ *	$Id: unpcb.h,v 1.4 1994/05/13 06:12:15 mycroft Exp $
  */
-
-#ifndef _SYS_UNPCB_H_
-#define _SYS_UNPCB_H_
 
 /*
  * Protocol control block for an active
@@ -75,5 +72,3 @@ struct	unpcb {
 };
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
-
-#endif /* !_SYS_UNPCB_H_ */

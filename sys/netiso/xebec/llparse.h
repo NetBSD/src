@@ -1,4 +1,4 @@
-/* $Id: llparse.h,v 1.2 1993/05/20 05:28:22 cgd Exp $ */
+/* $Id: llparse.h,v 1.3 1994/05/13 06:10:20 mycroft Exp $ */
 
 	/************************************************************
 		attributes stack garbage

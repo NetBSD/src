@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sp.h	7.4 (Berkeley) 6/28/90
- *	$Id: sp.h,v 1.3 1993/05/20 04:36:04 cgd Exp $
+ *	from: @(#)sp.h	8.1 (Berkeley) 6/10/93
+ *	$Id: sp.h,v 1.4 1994/05/13 06:11:29 mycroft Exp $
  */
-
-#ifndef _NETNS_SP_H_
-#define _NETNS_SP_H_
 
 /*
  * Definitions for Xerox NS style sequenced packet protocol
@@ -54,5 +51,3 @@ struct sphdr {
 	u_short	sp_ack;		/* acknowledge number */
 	u_short	sp_alo;		/* allocation number */
 };
-
-#endif /* !_NETNS_SP_H_ */

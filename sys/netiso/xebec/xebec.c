@@ -1,4 +1,4 @@
-/* $Id: xebec.c,v 1.2 1993/05/20 05:28:39 cgd Exp $ */
+/* $Id: xebec.c,v 1.3 1994/05/13 06:10:46 mycroft Exp $ */
 
 #include "xebec.h"
 #include "llparse.h"

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_proto.c	7.4 (Berkeley) 6/28/90
- *	$Id: ns_proto.c,v 1.3 1993/12/18 00:44:36 mycroft Exp $
+ *	from: @(#)ns_proto.c	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_proto.c,v 1.4 1994/05/13 06:11:28 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -40,18 +40,21 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 
+#include <net/radix.h>
+
 #include <netns/ns.h>
 
 /*
  * NS protocol family: IDP, ERR, PE, SPP, ROUTE.
  */
-int	ns_init();
-int	idp_input(), idp_output(), idp_ctlinput(), idp_usrreq();
+void	ns_init();
+int	idp_output(), idp_usrreq();
+void	idp_input(), idp_ctlinput();
 int	idp_raw_usrreq(), idp_ctloutput();
-int	spp_input(), spp_ctlinput();
+void	spp_input(), spp_ctlinput();
 int	spp_usrreq(), spp_usrreq_sp(), spp_ctloutput();
-int	spp_init(), spp_fasttimo(), spp_slowtimo();
-extern	int raw_usrreq();
+void	spp_init(), spp_fasttimo(), spp_slowtimo();
+int	raw_usrreq();
 
 extern	struct domain nsdomain;
 
@@ -90,5 +93,6 @@ struct protosw nssw[] = {
 
 struct domain nsdomain =
     { AF_NS, "network systems", 0, 0, 0, 
-      nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])] };
+      nssw, &nssw[sizeof(nssw)/sizeof(nssw[0])], 0,
+      rn_inithead, 16, sizeof(struct sockaddr_ns)};
 

@@ -1,3 +1,5 @@
+/* $Id: llparse.c,v 1.3 1994/05/13 06:10:18 mycroft Exp $ */
+
 /*
  * ************************* NOTICE *******************************
  * This code is in the public domain.  It cannot be copyrighted.
@@ -8,8 +10,6 @@
  * It was subsequently modified very slightly by Nancy Hall at the 
  * University of Wisconsin for the Crystal project.
  * ****************************************************************
- *
- *	$Id: llparse.c,v 1.2 1993/05/20 05:28:21 cgd Exp $
  */
 #include "xebec.h"
 #include "llparse.h"

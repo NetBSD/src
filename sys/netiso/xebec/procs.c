@@ -1,4 +1,5 @@
-/* $Id: procs.c,v 1.2 1993/05/20 05:28:29 cgd Exp $ */
+/* $Id: procs.c,v 1.3 1994/05/13 06:10:30 mycroft Exp $ */
+
 /*
  * This code is such a kludge that I don't want to put my name on it.
  * It was a ridiculously fast hack and needs rewriting.

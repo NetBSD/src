@@ -1,4 +1,5 @@
-/* $Id: sets.c,v 1.2 1993/05/20 05:28:32 cgd Exp $ */
+/* $Id: sets.c,v 1.3 1994/05/13 06:10:36 mycroft Exp $ */
+
 /*
  * This code is such a kludge that I don't want to put my name on it.
  * It was a ridiculously fast hack and needs rewriting.

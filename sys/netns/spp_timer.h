@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)spp_timer.h	7.3 (Berkeley) 6/28/90
- *	$Id: spp_timer.h,v 1.3 1993/05/20 04:36:08 cgd Exp $
+ *	from: @(#)spp_timer.h	8.1 (Berkeley) 6/10/93
+ *	$Id: spp_timer.h,v 1.4 1994/05/13 06:11:34 mycroft Exp $
  */
-
-#ifndef _NETNS_SPP_TIMER_H_
-#define _NETNS_SPP_TIMER_H_
 
 /*
  * Definitions of the SPP timers.  These timers are counted
@@ -124,5 +121,3 @@ char *spptimers[] =
 #ifdef KERNEL
 extern int spp_backoff[];
 #endif
-
-#endif /* !_NETNS_SPP_TIMER_H_ */

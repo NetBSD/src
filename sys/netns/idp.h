@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)idp.h	7.4 (Berkeley) 6/28/90
- *	$Id: idp.h,v 1.3 1993/05/20 04:35:46 cgd Exp $
+ *	from: @(#)idp.h	8.1 (Berkeley) 6/10/93
+ *	$Id: idp.h,v 1.4 1994/05/13 06:11:02 mycroft Exp $
  */
-
-#ifndef _NETNS_IDP_H_
-#define _NETNS_IDP_H_
 
 /*
  * Definitions for NS(tm) Internet Datagram Protocol
@@ -48,5 +45,3 @@ struct idp {
 	struct ns_addr	idp_dna;	/* Destination Network Address */
 	struct ns_addr	idp_sna;	/* Source Network Address */
 };
-
-#endif /* !_NETNS_IDP_H_ */
