@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.5 1999/01/07 02:22:50 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.6 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,6 +135,6 @@ ucom_detach(device_t self)
 #endif
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(ucom, usb, ucom_driver, ucom_devclass, usb_driver_load, 0);
+DRIVER_MODULE(ucom, usb, ucom_driver, ucom_devclass, usbd_driver_load, 0);
 #endif
 

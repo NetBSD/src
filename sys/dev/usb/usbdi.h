@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.15 1999/01/03 01:00:56 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.16 1999/01/08 11:58:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,7 +174,9 @@ usbd_status usbd_endpoint_count
 	__P((usbd_interface_handle dev, u_int8_t *count));
 usbd_status usbd_interface_count
 	__P((usbd_device_handle dev, u_int8_t *count));
+#if 0
 u_int8_t usbd_bus_count __P((void));
+#endif
 usbd_status usbd_get_bus_handle __P((u_int8_t index, usbd_bus_handle *bus));
 usbd_status usbd_get_root_hub 
 	__P((usbd_bus_handle bus, usbd_device_handle *dev));
@@ -325,6 +327,13 @@ struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
 void usbd_set_disco __P((usbd_pipe_handle, void (*)(void *), void *));
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
+
+#if defined(__FreeBSD__)
+int usbd_driver_load    __P((module_t mod, int what, void *arg));
+void usbd_device_set_desc __P((device_t device, char *devinfo));
+char *usbd_devname(bdevice *bdev);
+bus_print_child_t usbd_print_child;
+#endif
 
 /* XXX */
 #define splusb splbio

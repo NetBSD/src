@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.13 1998/12/30 18:06:25 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.14 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 /*void uhub_disco __P((void *));*/
 
-USB_DECLARE_DRIVER_NAME("usb", uhub);
+USB_DECLARE_DRIVER_NAME(usb, uhub);
 
 /* FIXME what does FreeBSD need? */
 #if defined(__NetBSD__)
@@ -458,7 +458,6 @@ uhub_disconnect(up)
 		}
 	}
 
-#if defined(__NetBSD__)
 	/* XXX Free all data structures and disable further I/O. */
 	if (dev->hub) {
 		struct usbd_port *rup;
@@ -476,10 +475,10 @@ uhub_disconnect(up)
 	dev->bus->devices[dev->address] = 0;
 	up->device = 0;
 	/* XXX free */
-#elif defined(__FreeBSD__)
-	/* XXX this doesn't work. */
-	/* clean up the kindergarten, get rid of the kids */
-	usbd_remove_device(dev, up);
+#if defined(__FreeBSD__)
+      device_delete_child(
+	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
+	  ((struct softc *)dev->softc)->sc_dev);
 #endif
 }
 
@@ -499,5 +498,5 @@ uhub_intr(reqh, addr, status)
 }
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(uhub, usb, uhub_driver, uhub_devclass, usb_driver_load, 0);
+DRIVER_MODULE(uhub, usb, uhub_driver, uhub_devclass, usbd_driver_load, 0);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.10 1999/01/03 01:00:56 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.11 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,10 +102,6 @@ int usbioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int usbpoll __P((dev_t, int, struct proc *));
 
 #elif defined(__FreeBSD__)
-static device_probe_t usb_match;
-static device_attach_t usb_attach;
-static bus_print_child_t usb_print_child;
-
 d_open_t  usbopen; 
 d_close_t usbclose;
 d_ioctl_t usbioctl;
@@ -121,7 +117,7 @@ struct cdevsw usb_cdevsw = {
 
 usbd_status usb_discover __P((struct usb_softc *));
 
-USB_DECLARE_DRIVER_INIT(usb, DEVMETHOD(bus_print_child, usb_print_child));
+USB_DECLARE_DRIVER_INIT(usb, DEVMETHOD(bus_print_child, usbd_print_child));
 
 USB_MATCH(usb)
 {
@@ -134,8 +130,8 @@ USB_ATTACH(usb)
 #if defined(__NetBSD__)
 	struct usb_softc *sc = (struct usb_softc *)self;
 #elif defined(__FreeBSD__)
-	struct usb_softc *sc = device_get_softc(device);
-	void *aux = device_get_ivars(device);
+	struct usb_softc *sc = device_get_softc(self);
+	void *aux = device_get_ivars(self);
 #endif
 	usbd_device_handle dev;
 	usbd_status r;
@@ -143,7 +139,7 @@ USB_ATTACH(usb)
 #if defined(__NetBSD__)
 	printf("\n");
 #elif defined(__FreeBSD__)
-	sc->sc_dev = device;
+	sc->sc_dev = self;
 #endif
 
 	DPRINTF(("usbd_attach\n"));
@@ -187,105 +183,6 @@ usbctlprint(aux, pnp)
 
 	return (UNCONF);
 }
-
-#elif defined(__FreeBSD__)
-static void
-usb_print_child(device_t parent, device_t child)
-{
-	struct usb_softc *sc = device_get_softc(child);
-
-	printf(" at %s%d", device_get_name(parent), device_get_unit(parent));
-
-	/* How do we get to the usbd_device_handle???
-	usbd_device_handle dev = invalidadosch;
-
-	printf(" addr %d", dev->addr);
-
-	if (bootverbose) {
-		if (dev->lowspeed)
-			printf(", lowspeed");
-		if (dev->self_powered)
-			printf(", self powered");
-		else
-			printf(", %dmA", dev->power);
-		printf(", config %d", dev->config);
-	}
-	 */
-}
-
-/* Reconfigure all the USB busses in the system. */
-int
-usb_driver_load(module_t mod, int what, void *arg)
-{
-	/* subroutine is there but inactive at the moment
-	 * the reconfiguration process has not been thought through yet.
-	 */
-	devclass_t ugen_devclass = devclass_find("ugen");
-	device_t *devlist;
-	int devcount;
-	int error;
-
-	switch (what) { 
-	case MOD_LOAD:
-	case MOD_UNLOAD:
-		if (!usb_devclass)
-			return 0;	/* just ignore call */
-
-		if (ugen_devclass) {
-			/* detach devices from generic driver if possible
-			 */
-			error = devclass_get_devices(ugen_devclass, &devlist,
-						     &devcount);
-			if (!error)
-				for (devcount--; devcount >= 0; devcount--)
-					(void)DEVICE_DETACH(devlist[devcount]);
-		}
-
-		error = devclass_get_devices(usb_devclass, &devlist, &devcount);
-		if (error)
-			return 0;	/* XXX maybe transient, or error? */
-
-		for (devcount--; devcount >= 0; devcount--)
-			USB_RECONFIGURE(devlist[devcount]);
-
-		free(devlist, M_TEMP);
-		return 0;
-	}
-
-	return 0;			/* nothing to do by us */
-}
-
-/* Set the description of the device including a malloc and copy. */
-void
-usb_device_set_desc(device_t device, char *devinfo)
-{
-	size_t l;
-	char *desc;
-
-	if ( devinfo ) {
-		l = strlen(devinfo);
-		desc = malloc(l+1, M_USB, M_NOWAIT);
-		if (desc)
-			memcpy(desc, devinfo, l+1);
-	} else
-		desc = NULL;
-
-	device_set_desc(device, desc);
-}
-
-/* 
- * A static buffer is a loss if this routine is used from an interrupt,
- * but it's not fatal.
- */
-char *
-usb_devname(struct device *bdev)
-{
-	static char buf[20];
-
-	sprintf(buf, "%s%d", device_get_name(*bdev), device_get_unit(*bdev));
-	return (buf);
-}
-
 #endif
 
 int
@@ -439,6 +336,7 @@ usbpoll(dev, events, p)
 	return (revents);
 }
 
+#if 0
 int
 usb_bus_count()
 {
@@ -449,6 +347,7 @@ usb_bus_count()
 			n++;
 	return (n);
 }
+#endif
 
 usbd_status
 usb_get_bus_handle(n, h)

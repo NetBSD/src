@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.10 1999/01/07 02:22:20 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.11 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,17 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#if defined(__NetBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#elif defined(__FreeBSD__)
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/ioccom.h>
+#include <sys/conf.h>
+#include <sys/fcntl.h>
+#include <sys/filio.h>
+#endif
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -83,7 +92,7 @@ struct ugen_endpoint {
 #define	UGEN_BBSIZE	1024
 
 struct ugen_softc {
-	struct device sc_dev;		/* base device */
+	bdevice sc_dev;		/* base device */
 	struct usbd_device *sc_udev;
 
 	struct ugen_endpoint sc_endpoints[USB_MAX_ENDPOINTS][2];
@@ -92,9 +101,6 @@ struct ugen_softc {
 
 	int sc_disconnected;		/* device is gone */
 };
-
-int ugen_match __P((struct device *, struct cfdata *, void *));
-void ugen_attach __P((struct device *, struct device *, void *));
 
 int ugenopen __P((dev_t, int, int, struct proc *));
 int ugenclose __P((dev_t, int, int, struct proc *p));
@@ -219,18 +225,13 @@ ugenopen(dev, flag, mode, p)
 	int unit = UGENUNIT(dev);
 	int endpt = UGENENDPOINT(dev);
 	usb_endpoint_descriptor_t *edesc;
-	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
 	int dir, isize;
 	usbd_status r;
 
-	DPRINTFN(5, ("ugenopen: flag=%d, mode=%d, unit=%d endpt=%d\n", 
+	USB_GET_SC_OPEN(ugen, unit, sc);
+ 	DPRINTFN(5, ("ugenopen: flag=%d, mode=%d, unit=%d endpt=%d\n", 
 		     flag, mode, unit, endpt));
-	if (unit >= ugen_cd.cd_ndevs)
-		return (ENXIO);
-	sc = ugen_cd.cd_devs[unit];
-	if (!sc)
-		return (ENXIO);
 
 	if (sc->sc_disconnected)
 		return (EIO);
@@ -268,15 +269,23 @@ ugenopen(dev, flag, mode, p)
 			sce->ibuf = malloc(isize, M_USB, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n", 
 				     endpt, isize));
-			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
-				return (ENOMEM);
+#if defined(__NetBSD__)
+                        if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
+                                return (ENOMEM);
+#elif defined(__FreeBSD__)
+			clist_alloc_cblocks(&sce->q, UGEN_IBSIZE, 0);
+#endif
 			r = usbd_open_pipe_intr(sce->iface, 
 				edesc->bEndpointAddress, 
 				USBD_SHORT_XFER_OK, &sce->pipeh, sce, 
 				sce->ibuf, isize, ugenintr);
 			if (r != USBD_NORMAL_COMPLETION) {
 				free(sce->ibuf, M_USB);
+#if defined(__NetBSD__)
 				clfree(&sce->q);
+#elif defined(__FreeBSD__)
+				clist_free_cblocks(&sce->q);
+#endif
 				return (EIO);
 			}
 			usbd_set_disco(sce->pipeh, ugen_disco, sc);
@@ -305,7 +314,7 @@ ugenclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_endpoint *sce;
 	int dir;
@@ -352,7 +361,7 @@ ugenread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
 	u_int32_t n, tn;
@@ -452,7 +461,7 @@ ugenwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	size_t n;
@@ -658,7 +667,7 @@ ugenioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_endpoint *sce;
 	usbd_status r;
@@ -910,7 +919,7 @@ ugenpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 	/* XXX */
 	struct ugen_endpoint *sce;
 	int revents = 0;
@@ -969,4 +978,6 @@ ugen_detach(device_t self)
 	}
 	return 0;
 }
+
+DRIVER_MODULE(ugen, usb, ugen_driver, ugen_devclass, usbd_driver_load, 0);
 #endif

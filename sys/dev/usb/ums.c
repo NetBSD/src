@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.18 1998/12/30 17:46:20 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.19 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,13 +153,13 @@ static d_read_t ums_read;
 static d_ioctl_t ums_ioctl;
 static d_poll_t ums_poll;
 
-#define UMS_CDEV_MAJOR	138	/* XXX NWH should be requested */
+#define UMS_CDEV_MAJOR	111
 
 static struct  cdevsw ums_cdevsw = {
 	ums_open,	ums_close,	ums_read,	nowrite,
 	ums_ioctl,	nostop,		nullreset,	nodevtotty,
 	ums_poll,	nommap,
-	NULL,		"ums_",		NULL,		-1
+	NULL,		"ums",		NULL,		-1
 };
 #endif
 
@@ -199,7 +199,9 @@ USB_ATTACH(ums)
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+#if defined(__NetBSD__)
 	struct wsmousedev_attach_args a;
+#endif
 	int size;
 	void *desc;
 	usbd_status r;
@@ -730,6 +732,6 @@ ums_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 #if defined(__FreeBSD__)
 CDEV_DRIVER_MODULE(ums, usb, ums_driver, ums_devclass,
-			UMS_CDEV_MAJOR, ums_cdevsw, usb_driver_load, 0);
+			UMS_CDEV_MAJOR, ums_cdevsw, usbd_driver_load, 0);
 #endif
 

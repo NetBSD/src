@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.21 1999/01/07 02:22:51 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.22 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
-#include "dev/usb/queue.addendum.h"
 
 #define delay(d)		DELAY(d)
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.15 1999/01/07 02:22:51 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.16 1999/01/08 11:58:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,17 +202,19 @@ int		usb_bus_count __P((void));
 usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
 void		usb_needs_explore __P((usbd_bus_handle));
 
-#if defined(__FreeBSD__)
-int 		usb_driver_load    __P((module_t mod, int what, void *arg));
-void		usb_device_set_desc __P((device_t device, char *devinfo));
-#endif
-
-extern	int usbd_use_polling;
-
 /* Locator stuff. */
 
 #if defined(__NetBSD__)
 #include "locators.h"
+#elif defined(__FreeBSD__)
+/* XXX these values are used to statically bind some elements in the USB tree
+ * to specific driver instances. This should be somehow emulated in FreeBSD
+ * but can be done later on.
+ * The values are copied from the files.usb file in the NetBSD sources.
+ */
+#define UHUBCF_PORT_DEFAULT -1
+#define UHUBCF_CONFIGURATION_DEFAULT -1
+#define UHUBCF_INTERFACE_DEFAULT -1
 #endif
 
 #define	uhubcf_port		cf_loc[UHUBCF_PORT]

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.20 1998/12/30 19:25:27 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.21 1999/01/08 11:58:25 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,10 @@
 
 #include "opt_pckbd_layout.h"
 #include "opt_wsdisplay_compat.h"
+
+#elif defined(__FreeBSD__)
+#include <machine/clock.h>
+#define delay(d)         DELAY(d)
 #endif
 
 #ifdef USB_DEBUG
@@ -225,7 +229,7 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
 	ukbd_set_leds,
 	ukbd_ioctl,
-#if 0
+#if 1
 	ukbd_cnattach,
 #endif
 };
@@ -673,5 +677,5 @@ ukbd_cnattach(v)
 #endif /* NetBSD */
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(ukbd, usb, ukbd_driver, ukbd_devclass, usb_driver_load, 0);
+DRIVER_MODULE(ukbd, usb, ukbd_driver, ukbd_devclass, usbd_driver_load, 0);
 #endif
