@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.27 2002/11/03 21:14:28 jdc Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.28 2003/07/10 18:18:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.27 2002/11/03 21:14:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.28 2003/07/10 18:18:41 martin Exp $");
 
 #include "rnd.h"
 
@@ -101,6 +101,7 @@ int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
 	    int));
 int	cd_scsibus_set_pa_immed __P((struct cd_softc *, int));
 int	cd_scsibus_load_unload __P((struct cd_softc *, int, int));
+int	cd_scsibus_setblksize __P((struct cd_softc *));
 
 const struct cd_ops cd_scsibus_ops = {
 	cd_scsibus_setchan,
@@ -108,6 +109,7 @@ const struct cd_ops cd_scsibus_ops = {
 	cd_scsibus_setvol,
 	cd_scsibus_set_pa_immed,
 	cd_scsibus_load_unload,
+	cd_scsibus_setblksize,
 };
 
 int
@@ -256,4 +258,26 @@ cd_scsibus_load_unload(cd, options, slot)
 	 * the hook here Just In Case).
 	 */
 	return (ENODEV);
+}
+
+int
+cd_scsibus_setblksize(cd)
+	struct cd_softc *cd;
+{
+	struct scsi_cd_mode_data data;
+	int error;
+
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, 0,
+	    &data.header, sizeof(struct scsipi_mode_header)
+	    + sizeof(struct scsi_blk_desc),
+	    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
+		return (error);
+
+	_lto3b(2048, data.blk_desc.blklen);
+	data.header.data_length = 0;
+
+	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
+	    &data.header, sizeof(struct scsipi_mode_header)
+	    + sizeof(struct scsi_blk_desc),
+	    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }

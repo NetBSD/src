@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.185 2003/06/29 22:30:37 fvdl Exp $	*/
+/*	$NetBSD: cd.c,v 1.186 2003/07/10 18:18:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185 2003/06/29 22:30:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.186 2003/07/10 18:18:40 martin Exp $");
 
 #include "rnd.h"
 
@@ -1592,6 +1592,16 @@ cd_size(cd, flags)
 	if ((blksize < 512) || ((blksize & 511) != 0))
 		blksize = 2048;	/* some drives lie ! */
 	cd->params.blksize = blksize;
+
+	if (cd->params.blksize != 2048 && cd->sc_ops->cdo_setblksize != NULL) {
+		(*cd->sc_ops->cdo_setblksize)(cd);
+		if (scsipi_command(cd->sc_periph,
+		    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+		    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
+		    flags | XS_CTL_DATA_IN | XS_CTL_DATA_IN) != 0)
+			return (0);
+		blksize = _4btol(rdcap.length);
+	}
 
 	size = _4btol(rdcap.addr) + 1;
 	if (size < 100)
