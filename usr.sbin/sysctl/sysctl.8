@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.6 1996/01/16 04:17:54 thorpej Exp $
+.\"	$NetBSD: sysctl.8,v 1.7 1996/07/17 21:38:46 explorer Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,6 +130,8 @@ privilege can change the value.
 .It kern.no_trunc	integer	no
 .It kern.vdisable	integer	no
 .It kern.boottime	struct	no
+.It kern.autonicetime	integer	yes
+.It kern.autoniceval	integer	yes
 .It vm.loadavg	struct	no
 .It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
