@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.1.2.2 2002/08/13 02:18:43 nathanw Exp $ */
+/* $NetBSD: com_opb.c,v 1.1.2.3 2002/08/27 23:45:07 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,8 +39,11 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/properties.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <machine/cpu.h>
 
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
@@ -59,8 +62,6 @@ struct cfattach com_opb_ca = {
 	sizeof(struct com_opb_softc), com_opb_probe, com_opb_attach
 };
 
-int comfound = 0;
-
 int
 com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -70,10 +71,8 @@ com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
-	return (comfound < 2);
+	return (1);
 }
-
-struct com_softc *com0; /* XXX */
 
 void
 com_opb_attach(struct device *parent, struct device *self, void *aux)
@@ -81,20 +80,20 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	struct com_opb_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct opb_attach_args *oaa = aux;
-	int addr = oaa->opb_addr;
-	int irq = oaa->opb_irq;
-	
-	sc->sc_iot = oaa->opb_bt;
-	sc->sc_iobase = sc->sc_ioh = addr;
-	/* UART is clocked externally @ 11.0592MHz == COM_FREQ*6 */
-	sc->sc_frequency = COM_FREQ * 6;
 
-	comfound++;
+	sc->sc_iot = oaa->opb_bt;
+	sc->sc_iobase = oaa->opb_addr;
+
+	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0,
+	    &sc->sc_ioh);
+
+	if (board_info_get("com-opb-frequency", &sc->sc_frequency,
+	    sizeof(sc->sc_frequency)) == -1)
+		panic("com_opb_attach: no com-opb-frequency property");
 
 	/* XXX console check */
-	/* XXX map */
 
 	com_attach_subr(sc);
 
-	intr_establish(irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
 }

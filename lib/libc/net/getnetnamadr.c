@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.20.2.2 2002/08/01 03:28:14 nathanw Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.20.2.3 2002/08/27 23:49:34 nathanw Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.20.2.2 2002/08/01 03:28:14 nathanw Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.20.2.3 2002/08/27 23:49:34 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,11 +87,7 @@ extern int _net_stayopen;
 #define BYNAME 1
 #define	MAXALIASES	35
 
-#if PACKETSZ > 1024
-#define	MAXPACKET	PACKETSZ
-#else
-#define	MAXPACKET	1024
-#endif
+#define	MAXPACKET	(64*1024)
 
 typedef union {
 	HEADER	hdr;
@@ -276,7 +272,7 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 {
 	unsigned int netbr[4];
 	int nn, anslen;
-	querybuf buf;
+	querybuf *buf;
 	char qbuf[MAXDNAME];
 	unsigned long net2;
 	struct netent *np;
@@ -297,30 +293,37 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 	default:
 		return NS_UNAVAIL;
 	case 3: 	/* Class A */
-		sprintf(qbuf, "0.0.0.%u.in-addr.arpa", netbr[3]);
+		snprintf(qbuf, sizeof(qbuf), "0.0.0.%u.in-addr.arpa", netbr[3]);
 		break;
 	case 2: 	/* Class B */
-		sprintf(qbuf, "0.0.%u.%u.in-addr.arpa", netbr[3], netbr[2]);
+		snprintf(qbuf, sizeof(qbuf), "0.0.%u.%u.in-addr.arpa",
+		    netbr[3], netbr[2]);
 		break;
 	case 1: 	/* Class C */
-		sprintf(qbuf, "0.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
-		    netbr[1]);
+		snprintf(qbuf, sizeof(qbuf), "0.%u.%u.%u.in-addr.arpa",
+		    netbr[3], netbr[2], netbr[1]);
 		break;
 	case 0: 	/* Class D - E */
-		sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
-		    netbr[1], netbr[0]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
+		    netbr[3], netbr[2], netbr[1], netbr[0]);
 		break;
 	}
-	anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
-	    sizeof(buf));
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	anslen = res_query(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
+		free(buf);
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
 			printf("res_query failed\n");
 #endif
 		return NS_NOTFOUND;
 	}
-	np = getnetanswer(&buf, anslen, BYADDR);
+	np = getnetanswer(buf, anslen, BYADDR);
+	free(buf);
 	if (np) {
 		/* maybe net should be unsigned? */
 		unsigned long u_net = net;
@@ -407,7 +410,7 @@ _dns_getnetbyname(rv, cb_data, ap)
 	va_list  ap;
 {
 	int anslen;
-	querybuf buf;
+	querybuf *buf;
 	char qbuf[MAXDNAME];
 	struct netent *np;
 	const char *net;
@@ -416,17 +419,22 @@ _dns_getnetbyname(rv, cb_data, ap)
 
 	net = va_arg(ap, const char *);
 	strcpy(&qbuf[0], net);
-	anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
-	    sizeof(buf));
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	anslen = res_search(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
+		free(buf);
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
+			printf("res_search failed\n");
 #endif
 		return NS_NOTFOUND;
 	}
-	np = getnetanswer(&buf, anslen, BYNAME);
-
+	np = getnetanswer(buf, anslen, BYNAME);
+	free(buf);
 	*((struct netent **)rv) = np;
 	if (np == NULL) {
 		h_errno = HOST_NOT_FOUND;
@@ -499,17 +507,18 @@ _yp_getnetbyaddr(rv, cb_data, ap)
 	default:
 		return NS_UNAVAIL;
 	case 3: 	/* Class A */
-		sprintf(qbuf, "%u", netbr[0]);
+		snprintf(qbuf, sizeof(qbuf), "%u", netbr[0]);
 		break;
 	case 2: 	/* Class B */
-		sprintf(qbuf, "%u.%u", netbr[0], netbr[1]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u", netbr[0], netbr[1]);
 		break;
 	case 1: 	/* Class C */
-		sprintf(qbuf, "%u.%u.%u", netbr[0], netbr[1], netbr[2]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u", netbr[0], netbr[1],
+		    netbr[2]);
 		break;
 	case 0: 	/* Class D - E */
-		sprintf(qbuf, "%u.%u.%u.%u", netbr[0], netbr[1], netbr[2],
-		    netbr[3]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u", netbr[0], netbr[1],
+		    netbr[2], netbr[3]);
 		break;
 	}
 	r = yp_match(__ypdomain, "networks.byaddr", qbuf, (int)strlen(qbuf),

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.4.7 2002/07/12 01:39:50 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.4.8 2002/08/27 23:45:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -248,9 +248,8 @@ void
 cpu_startup()
 {
 	caddr_t v;
-	int sz, i;
 	vsize_t size;
-	int base, residual;
+	u_int sz, i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -309,7 +308,7 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys(NULL, NULL);
+	sz = (u_int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -383,7 +382,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)

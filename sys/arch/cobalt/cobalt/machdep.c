@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.7 2002/08/13 02:18:05 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.8 2002/08/27 23:44:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -233,8 +233,7 @@ mach_init(memsize)
 void
 cpu_startup()
 {
-	unsigned i;
-	int base, residual;
+	int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -308,7 +307,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf(", %s free", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf(", %s in %d buffers\n", pbuf, nbuf);
+	printf(", %s in %u buffers\n", pbuf, nbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.1.2.2 2002/08/13 02:18:44 nathanw Exp $ */
+/* $NetBSD: plb.c,v 1.1.2.3 2002/08/27 23:45:13 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
@@ -82,6 +82,7 @@
  */
 const struct plb_dev plb_devs [] = {
 	{ "cpu", },
+	{ "ecc", },
 	{ "opb", },
 	{ "pchb", },
 	{ NULL }
@@ -128,16 +129,18 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; plb_devs[i].plb_name != NULL; i++) {
 		paa.plb_name = plb_devs[i].plb_name;
-		paa.plb_bt = galaxy_make_bus_space_tag(0, 0);
-		paa.plb_dmat = &galaxy_default_bus_dma_tag;
+		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
+		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
 		paa.plb_name = local_plb_devs->plb_name;
-		paa.plb_bt = galaxy_make_bus_space_tag(0, 0);
-		paa.plb_dmat = &galaxy_default_bus_dma_tag;
+		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
+		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
 		(void) config_found_sm(self, &paa, plb_print, plb_submatch);
 		local_plb_devs++;
@@ -151,6 +154,8 @@ plb_print(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("%s at %s", paa->plb_name, pnp);
+	if (paa->plb_irq != PLBCF_IRQ_DEFAULT)
+		printf(" irq %d", paa->plb_irq);
 
 	return (UNCONF);
 }

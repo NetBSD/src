@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.18 2002/08/13 02:19:42 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.19 2002/08/27 23:46:50 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1583,6 +1583,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* Lucent ORCA FPGA w/32-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* Lucent ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
+#define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 OHCI Controller */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
@@ -1795,6 +1796,8 @@
 #define	PCI_PRODUCT_PROMISE_ULTRA100TX2	0x4d68		/* Ultra100TX2/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA100TX2v2	0x6268		/* Ultra100TX2v2/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA133	0x4d69		/* Ultra133/ATA Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_ULTRA133TX2	0x5275		/* Ultra133TX2/ATA Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_ULTRA133TX2v2	0x6269		/* Ultra133TX2v2/ATA Bus Master IDE Accelerator */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */

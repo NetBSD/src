@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.20.2.3 2002/04/01 07:49:12 nathanw Exp $	*/
+/*	$NetBSD: pool.h,v 1.20.2.4 2002/08/27 23:48:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct pool_cache {
 struct pool_allocator {
 	void		*(*pa_alloc)(struct pool *, int);
 	void		(*pa_free)(struct pool *, void *);
-	int		pa_pagesz;
+	unsigned int	pa_pagesz;
 
 	/* The following fields are for internal use only. */
 	struct simplelock pa_slock;

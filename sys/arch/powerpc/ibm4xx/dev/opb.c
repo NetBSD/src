@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.2.2.2 2002/08/13 02:18:43 nathanw Exp $ */
+/* $NetBSD: opb.c,v 1.2.2.3 2002/08/27 23:45:11 nathanw Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -70,14 +70,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
-
-#define _GALAXY_BUS_DMA_PRIVATE
-#include <machine/walnut.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
 /*
@@ -89,12 +85,12 @@ const struct opb_dev {
 	bus_addr_t addr;
 	int irq;
 } opb_devs [] = {
-	{ IBM405GP,	"com",	UART0_BASE,	 0 },
-	{ IBM405GP,	"com",	UART1_BASE,	 1 },
-	{ IBM405GP,	"emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
-	{ IBM405GP,	"gpio",	GPIO0_BASE,	-1 },
-	{ IBM405GP,	"iic",	IIC0_BASE,	 2 },
-	{ IBM405GP,	"wdog",	-1,        	-1 },
+	{ IBM405GP,	"com",	IBM405GP_UART0_BASE,	 0 },
+	{ IBM405GP,	"com",	IBM405GP_UART1_BASE,	 1 },
+	{ IBM405GP,	"emac",	IBM405GP_EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ IBM405GP,	"gpio",	IBM405GP_GPIO0_BASE,	-1 },
+	{ IBM405GP,	"iic",	IBM405GP_IIC0_BASE,	 2 },
+	{ IBM405GP,	"wdog",	-1,	        	-1 },
 	{ 0,		 NULL }
 };
 
@@ -141,6 +137,7 @@ opb_submatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 opb_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct plb_attach_args *paa = aux;
 	struct opb_attach_args oaa;
 	int i, pvr;
 
@@ -153,8 +150,8 @@ opb_attach(struct device *parent, struct device *self, void *aux)
 		oaa.opb_name = opb_devs[i].name;
 		oaa.opb_addr = opb_devs[i].addr;
 		oaa.opb_irq = opb_devs[i].irq;
-		oaa.opb_bt = galaxy_make_bus_space_tag(0, 0);
-		oaa.opb_dmat = &galaxy_default_bus_dma_tag;
+		oaa.opb_bt = paa->plb_bt;
+		oaa.opb_dmat = paa->plb_dmat;
 
 		(void) config_found_sm(self, &oaa, opb_print, opb_submatch);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.2.6 2002/08/01 02:45:50 nathanw Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.2.7 2002/08/27 23:47:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.6 2002/08/01 02:45:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.7 2002/08/27 23:47:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1257,7 +1257,7 @@ stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	index = p->index;
 	count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -1280,7 +1280,7 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	index = p->index;
 	count = p->count;
 
-	if ((index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||

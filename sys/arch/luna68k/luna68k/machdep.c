@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.4.7 2002/07/12 01:39:34 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.19.4.8 2002/08/27 23:44:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.7 2002/07/12 01:39:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.8 2002/08/27 23:44:40 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,9 +242,8 @@ consinit()
 void
 cpu_startup()
 {
-	int i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -344,7 +343,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Tell the VM system that the area before the text segment

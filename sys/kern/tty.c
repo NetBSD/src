@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.12 2002/08/01 02:46:26 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.13 2002/08/27 23:47:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.12 2002/08/01 02:46:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.13 2002/08/27 23:47:34 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
@@ -924,7 +924,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSETD: {		/* set line discipline */
 		int t = *(int *)data;
 
-		if ((u_int)t >= nlinesw)
+		if (t < 0)
+			return (EINVAL);
+		if (t >= nlinesw)
 			return (ENXIO);
 		lp = linesw[t];
 		goto setldisc;
@@ -1542,7 +1544,8 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 {
 	u_char		*cp;
 	struct proc	*p;
-	int		cc, ce, i, hiwat, cnt, error, s;
+	int		cc, ce, i, hiwat, error, s;
+	size_t		cnt;
 	u_char		obuf[OBUFSIZ];
 
 	cp = NULL;

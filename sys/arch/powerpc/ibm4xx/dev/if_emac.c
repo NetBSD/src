@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.1.8.3 2002/08/13 02:18:43 nathanw Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.1.8.4 2002/08/27 23:45:10 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -60,6 +60,7 @@
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/mal405gp.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dev/emacreg.h>
 #include <powerpc/ibm4xx/dev/if_emacreg.h>
 
 #include <dev/mii/miivar.h>
@@ -296,7 +297,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int error, i, nseg;
 
-	sc->sc_st = galaxy_make_bus_space_tag(0, 0);
+	sc->sc_st = oaa->opb_bt;
 	sc->sc_sh = oaa->opb_addr;
 	sc->sc_dmat = oaa->opb_dmat;
 
@@ -655,7 +656,7 @@ emac_start(struct ifnet *ifp)
 		/*
 		 * Tell the EMAC that a new packet is available.
 		 */
-		EMAC_WRITE(sc, EMAC0_TMR0, TMR0_GNP0);
+		EMAC_WRITE(sc, EMAC_TMR0, TMR0_GNP0);
 
 		/* Advance the tx pointer. */
 		sc->sc_txfree -= txs->txs_ndesc;
@@ -757,8 +758,8 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Load the MAC address.
 	 */
-	EMAC_WRITE(sc, EMAC0_IAHR, enaddr[0] << 8 | enaddr[1]);
-	EMAC_WRITE(sc, EMAC0_IALR,
+	EMAC_WRITE(sc, EMAC_IAHR, enaddr[0] << 8 | enaddr[1]);
+	EMAC_WRITE(sc, EMAC_IALR,
 	    enaddr[2] << 24 | enaddr[3] << 16 | enaddr[4] << 8 | enaddr[5]);
 
 	/*
@@ -770,7 +771,7 @@ emac_init(struct ifnet *ifp)
 	mtdcr(DCR_MAL0_RCBS0, MCLBYTES / 16);
 
 	/* Set fifos, media modes. */
-	EMAC_WRITE(sc, EMAC0_MR1, sc->sc_mr1);
+	EMAC_WRITE(sc, EMAC_MR1, sc->sc_mr1);
 
 	/*
 	 * Enable Individual and (possibly) Broadcast Address modes,
@@ -779,35 +780,35 @@ emac_init(struct ifnet *ifp)
 	 * XXX:	promiscuous mode (and promiscuous multicast mode) need to be
 	 *	dealt with here!
 	 */
-	EMAC_WRITE(sc, EMAC0_RMR, RMR_IAE | RMR_RRP | RMR_SP |
+	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP |
 	    (ifp->if_flags & IFF_BROADCAST ? RMR_BAE : 0));
 
 	/*
 	 * Set low- and urgent-priority request thresholds.
 	 */
-	EMAC_WRITE(sc, EMAC0_TMR1,
+	EMAC_WRITE(sc, EMAC_TMR1,
 	    ((7 << TMR1_TLR_SHIFT) & TMR1_TLR_MASK) | /* 16 word burst */
 	    ((15 << TMR1_TUR_SHIFT) & TMR1_TUR_MASK));
 	/*
 	 * Set Transmit Request Threshold Register.
 	 */
-	EMAC_WRITE(sc, EMAC0_TRTR, TRTR_256);
+	EMAC_WRITE(sc, EMAC_TRTR, TRTR_256);
 
 	/*
 	 * Set high and low receive watermarks.
 	 */
-	EMAC_WRITE(sc, EMAC0_RWMR,
+	EMAC_WRITE(sc, EMAC_RWMR,
 	    30 << RWMR_RLWM_SHIFT | 64 << RWMR_RLWM_SHIFT);
 
 	/*
 	 * Set frame gap.
 	 */
-	EMAC_WRITE(sc, EMAC0_IPGVR, 8);
+	EMAC_WRITE(sc, EMAC_IPGVR, 8);
 
 	/*
 	 * Set interrupt status enable bits for EMAC and MAL.
 	 */
-	EMAC_WRITE(sc, EMAC0_ISER,
+	EMAC_WRITE(sc, EMAC_ISER,
 	    ISR_BP | ISR_SE | ISR_ALE | ISR_BFCS | ISR_PTLE | ISR_ORE | ISR_IRE);
 	mtdcr(DCR_MAL0_IER, MAL0_IER_DE | MAL0_IER_NWE | MAL0_IER_TO |
 	    MAL0_IER_OPB | MAL0_IER_PLB);
@@ -821,7 +822,7 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Enable the transmit and receive channel on the EMAC.
 	 */
-	EMAC_WRITE(sc, EMAC0_MR0, MR0_TXE | MR0_RXE);
+	EMAC_WRITE(sc, EMAC_MR0, MR0_TXE | MR0_RXE);
 
 	/*
 	 * Start the one second MII clock.
@@ -941,7 +942,7 @@ emac_stop(struct ifnet *ifp, int disable)
 
 	/* Disable interrupts. */
 #if 0	/* Can't disable MAL interrupts without a reset... */
-	EMAC_WRITE(sc, EMAC0_ISER, 0);
+	EMAC_WRITE(sc, EMAC_ISER, 0);
 #endif
 	mtdcr(DCR_MAL0_IER, 0);
 
@@ -950,8 +951,8 @@ emac_stop(struct ifnet *ifp, int disable)
 	mtdcr(DCR_MAL0_TXCARR, MAL0_TXCARR_CHAN0 | MAL0_TXCARR_CHAN1);
 
 	/* Disable the transmit enable and receive MACs. */
-	EMAC_WRITE(sc, EMAC0_MR0,
-	    EMAC_READ(sc, EMAC0_MR0) & ~(MR0_TXE | MR0_RXE));
+	EMAC_WRITE(sc, EMAC_MR0,
+	    EMAC_READ(sc, EMAC_MR0) & ~(MR0_TXE | MR0_RXE));
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < EMAC_TXQUEUELEN; i++) {
@@ -1019,13 +1020,13 @@ emac_reset(struct emac_softc *sc)
 	/* reset the MAL */
 	mtdcr(DCR_MAL0_CFG, MAL0_CFG_SR);
 
-	EMAC_WRITE(sc, EMAC0_MR0, MR0_SRST);
+	EMAC_WRITE(sc, EMAC_MR0, MR0_SRST);
 	delay(5);
 
 	/* XXX: check if MR0_SRST is clear until a timeout instead? */
-	EMAC_WRITE(sc, EMAC0_MR0, EMAC_READ(sc, EMAC0_MR0) & ~MR0_SRST);
+	EMAC_WRITE(sc, EMAC_MR0, EMAC_READ(sc, EMAC_MR0) & ~MR0_SRST);
 
-	/* XXX clear interrupts in EMAC0_ISR just to be sure?? */
+	/* XXX clear interrupts in EMAC_ISR just to be sure?? */
 
 	/* set the MAL config register */
 	mtdcr(DCR_MAL0_CFG, MAL0_CFG_PLBB | MAL0_CFG_OPBBL | MAL0_CFG_LEA |
@@ -1042,10 +1043,10 @@ emac_intr(void *arg)
 	uint32_t status;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_intr);
-	status = EMAC_READ(sc, EMAC0_ISR);
+	status = EMAC_READ(sc, EMAC_ISR);
 
 	/* Clear the interrupt status bits. */
-	EMAC_WRITE(sc, EMAC0_ISR, status);
+	EMAC_WRITE(sc, EMAC_ISR, status);
 
 	return (0);
 }
@@ -1369,7 +1370,7 @@ emac_mii_wait(struct emac_softc *sc)
 
 	/* wait for PHY data transfer to complete */
 	i = 0;
-	while ((reg = EMAC_READ(sc, EMAC0_STACR) & STACR_OC) == 0) {
+	while ((reg = EMAC_READ(sc, EMAC_STACR) & STACR_OC) == 0) {
 		delay(7);
 		if (i++ > 5) {
 			printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
@@ -1397,11 +1398,11 @@ emac_mii_readreg(struct device *self, int phy, int reg)
 	sta_reg |= STACR_OPBC_50MHZ;
 
 
-	EMAC_WRITE(sc, EMAC0_STACR, sta_reg);
+	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
 	if ((sta_reg = emac_mii_wait(sc)) == 0)
 		return (0);
-	sta_reg = EMAC_READ(sc, EMAC0_STACR);
+	sta_reg = EMAC_READ(sc, EMAC_STACR);
 	if ((sta_reg & STACR_PHYE) != 0)
 		return (0);
 	return (sta_reg >> STACR_PHYDSHIFT);
@@ -1426,7 +1427,7 @@ emac_mii_writereg(struct device *self, int phy, int reg, int val)
 
 	sta_reg |= val << STACR_PHYDSHIFT;
 
-	EMAC_WRITE(sc, EMAC0_STACR, sta_reg);
+	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
 	if ((sta_reg = emac_mii_wait(sc)) == 0)
 		return;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.2.2 2002/03/22 20:42:00 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.3 2002/08/27 23:49:29 nathanw Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
@@ -6,7 +6,7 @@
 CITRUS?=	yes
 
 .if ${CITRUS} == "yes"
-MODULE_SHLIB_MAJOR!= . ${.CURDIR}/../i18n_module/shlib_version ; echo $$major
+MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
 CPPFLAGS+= -DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
 
 SRCS+=	citrus_ctype.c citrus_module.c citrus_none.c

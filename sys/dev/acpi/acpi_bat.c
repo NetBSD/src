@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.1.2.3 2002/08/13 02:19:19 nathanw Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.1.2.4 2002/08/27 23:46:33 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.1.2.3 2002/08/13 02:19:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.1.2.4 2002/08/27 23:46:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.1.2.3 2002/08/13 02:19:19 nathanw Exp
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define	BAT_WORDS	13
 
 struct acpibat_softc {
 	struct device sc_dev;		/* base device glue */
@@ -73,6 +75,8 @@ struct acpibat_softc {
 	int sc_pred_capacity;		/* estimated current max */
 	int sc_warn_capacity;		/* warning level */
 	int sc_low_capacity;		/* low level */
+
+	ACPI_OBJECT sc_Ret[BAT_WORDS];	/* Return Buffer */
 };
 
 #define	ABAT_F_VERBOSE		0x01	/* verbose events */
@@ -238,16 +242,19 @@ acpibat_get_status(void *arg)
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
 
-	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
+	buf.Pointer = sc->sc_Ret;
+	buf.Length = sizeof(sc->sc_Ret);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_BST", NULL, &buf);
 	if (rv != AE_OK) {
-		printf("bat: failed to evaluate _BIF: %x\n", rv);
+		printf("bat: failed to evaluate _BST: %x\n", rv);
 		return;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
 
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
 		printf("bat: expected PACKAGE, got %d\n", p1->Type);
-		goto out;
+		return;
 	}
 	if (p1->Package.Count < 4)
 		printf("bat: expected 4 elts, got %d\n", p1->Package.Count);
@@ -266,11 +273,10 @@ acpibat_get_status(void *arg)
 		               (sc->sc_status & 2) ? "charging" : "idle"),
 		       ACM_SCALE(sc->sc_mv),
 		       ACM_SCALE(sc->sc_capacity), ACM_CAPUNIT(sc),
-		       (sc->sc_capacity * 100) / sc->sc_design_capacity,
+		       (sc->sc_design_capacity == 0) ? 0 : 
+			    (sc->sc_capacity * 100) / sc->sc_design_capacity,
 		       ACM_SCALE(sc->sc_rate), ACM_RATEUNIT(sc));
 	}
-out:
-	AcpiOsFree(buf.Pointer);
 }
 
 /*

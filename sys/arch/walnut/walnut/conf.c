@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.8.6 2002/08/13 02:19:06 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.8.7 2002/08/27 23:46:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,6 +125,9 @@ cdev_decl(com);
 #include "cy.h"
 cdev_decl(cy);
 
+#include "pci.h"
+cdev_decl(pci);
+
 #include "isdn.h"
 #include "isdnctl.h"
 #include "isdntrc.h"
@@ -211,6 +214,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev__oci_init(NKTTCP,kttcp),	/* 61: kernel ttcp helper */
 	cdev_sysmon_init(NSYSMON, sysmon), /* 62: System Monitor */
+	cdev_pci_init(NPCI,pci),	/* 63: PCI bus access device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -307,6 +311,7 @@ static int chrtoblktbl[] = {
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
 	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 /*

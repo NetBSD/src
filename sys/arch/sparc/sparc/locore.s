@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.12 2002/08/13 02:18:55 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.13 2002/08/27 23:45:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2480,10 +2480,10 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	bnz	sparc_interrupt_common
 	 nop
 
-#ifdef DIAGNOSTIC
 	! both softint pending and clear bits are in upper halfwords of
 	! their respective registers so shift the test bit in %l4 up there
 	sll	%l4, 16, %l4
+#ifdef DIAGNOSTIC
 	btst	%l4, %l5	! make sure softint pending bit is set
 	bnz	softintr_common
 	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
@@ -6065,7 +6065,7 @@ _ENTRY(_C_LABEL(cypress_get_syncflt))
 	jmp	%l7 + 8			! return to caller
 	 st	%l5, [%l4]		! => dump.sfsr
 
-#if defined(MULTIPROCESSOR) && 0 /* notyet *
+#if defined(MULTIPROCESSOR) && 0 /* notyet */
 /*
  * Read Synchronous Fault Status registers.
  * On entry: %o0 == &sfsr, %o1 == &sfar

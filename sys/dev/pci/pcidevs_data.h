@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.18 2002/08/13 02:19:43 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.19 2002/08/27 23:46:51 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4642,6 +4642,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
+	    0,
+	    "Lucent Technologies",
+	    "FW322/323 IEEE 1394 OHCI Controller",
+	},
+	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
 	    0,
 	    "Macronix",
@@ -5504,6 +5510,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Promise Technology",
 	    "Ultra133/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2,
+	    0,
+	    "Promise Technology",
+	    "Ultra133TX2/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
+	    0,
+	    "Promise Technology",
+	    "Ultra133TX2v2/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,

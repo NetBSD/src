@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2.2.1 2001/10/08 20:17:07 nathanw Exp $	*/
+/*	$NetBSD: brk.S,v 1.2.2.2 2002/08/27 23:49:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,13 +57,13 @@ _C_LABEL(__minbrk):
 ENTRY(_brk)
 #ifdef PIC
 	/* Setup the GOT */
-	ldr	r3, Lgot
+	ldr	r3, .Lgot
 	add	r3, pc, r3
 .L1:
-	ldr	r1, Lminbrk
+	ldr	r1, .Lminbrk
 	ldr	r1, [r3, r1]
 #else
-	ldr	r1, Lminbrk
+	ldr	r1, .Lminbrk
 #endif
 	/* Get the minimum allowable brk address */
 	ldr	r1, [r1]
@@ -79,10 +79,10 @@ ENTRY(_brk)
 	bcs	PIC_SYM(CERROR, PLT)
 
 #ifdef PIC
-	ldr	r1, Lcurbrk
+	ldr	r1, .Lcurbrk
 	ldr	r1, [r3, r1]
 #else
-	ldr	r1, Lcurbrk
+	ldr	r1, .Lcurbrk
 #endif
 	/* Store the new address in curbrk */
 	str	r2, [r1]
@@ -97,10 +97,10 @@ ENTRY(_brk)
 
 	.align	2
 #ifdef PIC
-Lgot:
+.Lgot:
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
-Lminbrk:
+.Lminbrk:
 	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
-Lcurbrk:
+.Lcurbrk:
 	.word	PIC_SYM(CURBRK, GOT)

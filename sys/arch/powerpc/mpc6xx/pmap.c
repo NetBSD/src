@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28.4.12 2002/08/08 20:19:57 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.4.13 2002/08/27 23:45:18 nathanw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,12 +67,14 @@
  */
 
 #include "opt_altivec.h"
+#include "opt_pmap.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/device.h>		/* for evcnt */
 #include <sys/systm.h>
 
 #if __NetBSD_Version__ < 105010000
@@ -91,8 +93,6 @@
 #else
 #include <powerpc/bat.h>
 #endif
-
-/*#define PMAPCHECK*/
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -117,16 +117,10 @@ paddr_t pmap_memlimit = -NBPG;		/* there is no limit */
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
 u_long pmap_pte_valid;
-u_long pmap_pte_overflow;
-u_long pmap_pte_replacements;
-u_long pmap_pvo_entries;
-u_long pmap_pvo_enter_calls;
-u_long pmap_pvo_remove_calls;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_remove_depth;
 #endif
-u_int64_t pmap_pte_spills = 0;
 
 int physmem;
 #ifndef MSGBUFADDR
@@ -250,11 +244,10 @@ static uint32_t pmap_vsid_bitmap[NPMAPS / VSID_NBPW];
 
 static int pmap_initialized;
 
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(PMAPDEBUG)
 #define	PMAPDEBUG_BOOT		0x0001
 #define	PMAPDEBUG_PTE		0x0002
-#define	PMAPDEBUG_PAMAP		0x0004
-#define	PMAPDEBUG_SYNCICACHE	0x0008
+#define	PMAPDEBUG_EXEC		0x0008
 #define	PMAPDEBUG_PVOENTER	0x0010
 #define	PMAPDEBUG_PVOREMOVE	0x0020
 #define	PMAPDEBUG_ACTIVATE	0x0100
@@ -269,6 +262,132 @@ unsigned int pmapdebug = 0;
 #else
 # define DPRINTF(x)
 # define DPRINTFN(n, x)
+#endif
+
+
+#ifdef PMAPCOUNTERS
+#define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)
+#define	PMAPCOUNT2(ev)	((ev).ev_count++)
+
+struct evcnt pmap_evcnt_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pages mapped");
+struct evcnt pmap_evcnt_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "pages unmapped");
+
+struct evcnt pmap_evcnt_kernel_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "kernel pages mapped");
+struct evcnt pmap_evcnt_kernel_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_kernel_mappings,
+	    "pmap", "kernel pages unmapped");
+
+struct evcnt pmap_evcnt_mappings_replaced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "page mappings replaced");
+
+struct evcnt pmap_evcnt_exec_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages mapped");
+struct evcnt pmap_evcnt_exec_cached =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages cached");
+
+struct evcnt pmap_evcnt_exec_synced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced");
+struct evcnt pmap_evcnt_exec_synced_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (CM)");
+
+struct evcnt pmap_evcnt_exec_uncached_page_protect =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PP)");
+struct evcnt pmap_evcnt_exec_uncached_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CM)");
+struct evcnt pmap_evcnt_exec_uncached_zero_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (ZP)");
+struct evcnt pmap_evcnt_exec_uncached_copy_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CP)");
+
+struct evcnt pmap_evcnt_updates =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "updates");
+struct evcnt pmap_evcnt_collects =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "collects");
+struct evcnt pmap_evcnt_copies =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "copies");
+
+struct evcnt pmap_evcnt_ptes_spilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes spilled from overflow");
+struct evcnt pmap_evcnt_ptes_unspilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes not spilled");
+struct evcnt pmap_evcnt_ptes_evicted =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes evicted");
+
+struct evcnt pmap_evcnt_ptes_primary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_secondary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_removed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes removed");
+struct evcnt pmap_evcnt_ptes_changed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes changed");
+
+/*
+ * From pmap_subr.c
+ */
+extern struct evcnt pmap_evcnt_zeroed_pages;
+extern struct evcnt pmap_evcnt_copied_pages;
+extern struct evcnt pmap_evcnt_idlezeroed_pages;
+#else
+#define	PMAPCOUNT(ev)	((void) 0)
+#define	PMAPCOUNT2(ev)	((void) 0)
 #endif
 
 #define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
@@ -633,8 +752,6 @@ pmap_pte_spill(vaddr_t addr)
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
 
-	pmap_pte_spills++;
-
 	sr = MFSRIN(addr);
 	ptegidx = va_to_pteg(sr, addr);
 
@@ -663,8 +780,11 @@ pmap_pte_spill(vaddr_t addr)
 			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
-				pmap_pte_overflow--;
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				PMAPCOUNT(ptes_spilled);
+				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+				    ? pmap_evcnt_ptes_secondary
+				    : pmap_evcnt_ptes_primary)[j]);
 				return 1;
 			}
 			source_pvo = pvo;
@@ -683,8 +803,10 @@ pmap_pte_spill(vaddr_t addr)
 		}
 	}
 
-	if (source_pvo == NULL)
+	if (source_pvo == NULL) {
+		PMAPCOUNT(ptes_unspilled);
 		return 0;
+	}
 
 	if (victim_pvo == NULL) {
 		if ((pt->pte_hi & PTE_HID) == 0)
@@ -724,7 +846,10 @@ pmap_pte_spill(vaddr_t addr)
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
-	pmap_pte_replacements++;
+	PMAPCOUNT2(pmap_evcnt_ptes_primary[i]);
+	PMAPCOUNT(ptes_spilled);
+	PMAPCOUNT(ptes_evicted);
+	PMAPCOUNT(ptes_removed);
 
 	PMAP_PVO_CHECK(victim_pvo);
 	PMAP_PVO_CHECK(source_pvo);
@@ -792,6 +917,55 @@ pmap_init(void)
 
 	pmap_initialized = 1;
 	splx(s);
+
+#ifdef PMAPCOUNTERS
+	evcnt_attach_static(&pmap_evcnt_mappings);
+	evcnt_attach_static(&pmap_evcnt_mappings_replaced);
+	evcnt_attach_static(&pmap_evcnt_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_kernel_mappings);
+	evcnt_attach_static(&pmap_evcnt_kernel_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_exec_mappings);
+	evcnt_attach_static(&pmap_evcnt_exec_cached);
+	evcnt_attach_static(&pmap_evcnt_exec_synced);
+	evcnt_attach_static(&pmap_evcnt_exec_synced_clear_modify);
+
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_page_protect);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_clear_modify);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_zero_page);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_copy_page);
+
+	evcnt_attach_static(&pmap_evcnt_zeroed_pages);
+	evcnt_attach_static(&pmap_evcnt_copied_pages);
+	evcnt_attach_static(&pmap_evcnt_idlezeroed_pages);
+
+	evcnt_attach_static(&pmap_evcnt_updates);
+	evcnt_attach_static(&pmap_evcnt_collects);
+	evcnt_attach_static(&pmap_evcnt_copies);
+
+	evcnt_attach_static(&pmap_evcnt_ptes_spilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_unspilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_evicted);
+	evcnt_attach_static(&pmap_evcnt_ptes_removed);
+	evcnt_attach_static(&pmap_evcnt_ptes_changed);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[7]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[7]);
+#endif
 }
 
 /*
@@ -930,6 +1104,7 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 	vsize_t len, vaddr_t src_addr)
 {
+	PMAPCOUNT(copies);
 }
 
 /*
@@ -939,9 +1114,8 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 void
 pmap_update(struct pmap *pmap)
 {
-#ifdef MULTIPROCESSOR
+	PMAPCOUNT(updates);
 	TLBSYNC();
-#endif
 }
 
 /*
@@ -955,6 +1129,7 @@ pmap_update(struct pmap *pmap)
 void
 pmap_collect(pmap_t pm)
 {
+	PMAPCOUNT(collects);
 }
 
 static __inline int
@@ -1149,7 +1324,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
 		}
-		if (pmap_pte_to_va(pt) != PVO_VADDR(pvo)) {
+		if ((pmap_pte_to_va(pt) ^ PVO_VADDR(pvo)) & 0x0fffffff) {
 			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#lx"
 			    " doesn't not match PVO's VA %#lx\n",
 			    pvo, pt, pmap_pte_to_va(pt), PVO_VADDR(pvo));
@@ -1185,7 +1360,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		panic("pmap_pvo_enter: called recursively!");
 #endif
 
-	pmap_pvo_enter_calls++;
 	/*
 	 * Compute the PTE Group index.
 	 */
@@ -1216,6 +1390,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			}
 #endif
+			PMAPCOUNT(mappings_replaced);
 			pmap_pvo_remove(pvo, -1);
 			break;
 		}
@@ -1243,17 +1418,22 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		}
 #endif
 	}
-	pmap_pvo_entries++;
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
 	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
-	if (flags & VM_PROT_EXECUTE)
+	if (flags & VM_PROT_EXECUTE) {
+		PMAPCOUNT(exec_mappings);
 		pvo->pvo_vaddr |= PVO_EXECUTABLE;
+	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
-	if (pvo_head != &pmap_pvo_kunmanaged)
+	if (pvo_head != &pmap_pvo_kunmanaged) {
 		pvo->pvo_vaddr |= PVO_MANAGED; 
+		PMAPCOUNT(mappings);
+	} else {
+		PMAPCOUNT(kernel_mappings);
+	}
 	pmap_pte_create(&pvo->pvo_pte, sr, va, pa | pte_lo);
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
@@ -1272,8 +1452,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
+		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 	} else {
-		pmap_pte_overflow++;
+		PMAPCOUNT(ptes_evicted);
 #if 0
 		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
 			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
@@ -1306,8 +1488,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PVO_PTEGIDX_CLR(pvo);
-	} else {
-		pmap_pte_overflow--;
+		PMAPCOUNT(ptes_removed);
 	}
 
 	/*
@@ -1337,12 +1518,14 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * ... if we aren't going to reuse it.
 	 */
 	LIST_REMOVE(pvo, pvo_olink);
+	if (pvo->pvo_vaddr & PVO_MANAGED)
+		PMAPCOUNT(unmappings);
+	else
+		PMAPCOUNT(kernel_unmappings);
 	pool_put(pvo->pvo_vaddr & PVO_MANAGED
 	    ? &pmap_mpvo_pool
 	    : &pmap_upvo_pool,
 	    pvo);
-	pmap_pvo_entries--;
-	pmap_pvo_remove_calls++;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
@@ -1384,11 +1567,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
 	 */
-#if !defined(MULTIPROCESSOR) && 0 /* disable for now */
-	/* XXX more is needed for MP */
 	if (pg != NULL)
 		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
-#endif
 
 	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
 
@@ -1411,6 +1591,15 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pte_lo |= PTE_BW;
 	else
 		pte_lo |= PTE_BR;
+
+	/*
+	 * If this was in response to a fault, "pre-fault" the PTE's
+	 * changed/referenced bit appropriately.
+	 */
+	if (flags & VM_PROT_WRITE)
+		pte_lo |= PTE_CHG;
+	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
+		pte_lo |= PTE_REF;
 
 #if 0
 	if (pm == pmap_kernel()) {
@@ -1446,12 +1635,23 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
             (pte_lo & PTE_I) == 0 &&
 	    was_exec == 0) {
 		DPRINTFN(ENTER, (" syncicache"));
+		PMAPCOUNT(exec_synced);
 		pmap_syncicache(pa, NBPG);
-		if (pg != NULL)
+		if (pg != NULL) {
 			pmap_attr_save(pg, PTE_EXEC);
+			PMAPCOUNT(exec_cached);
+#if defined(DEBUG) || defined(PMAPDEBUG)
+			if (pmapdebug & PMAPDEBUG_ENTER)
+				printf(" marked-as-exec");
+			else if (pmapdebug & PMAPDEBUG_EXEC)
+				printf("[pmap_enter: %#lx: marked-as-exec]\n",
+				    pg->phys_addr);
+				
+#endif
+		}
 	}
 
-	DPRINTFN(ENTER, (" error=%d\n", error));
+	DPRINTFN(ENTER, (": error=%d\n", error));
 
 	return error;
 }
@@ -1490,6 +1690,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	else
 		pte_lo |= PTE_BR;
 
+	/*
+	 * We don't care about REF/CHG on PVOs on the unmanaged list.
+	 */
 	s = splvm();
 	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
@@ -1500,19 +1703,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
 		      va, pa, error);
-
-	/* 
-	 * Flush the real memory from the instruction cache.
-	 * If it's writeable, clear the PTE_EXEC attribute.
-	 */
-	if (prot & VM_PROT_EXECUTE) {
-		if ((pte_lo & (PTE_IG)) == 0)
-			pmap_syncicache(pa, NBPG);
-	} else if (prot & VM_PROT_WRITE) {
-		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL)
-			pmap_attr_clear(pg, PTE_EXEC);
-	}
 }
 
 void
@@ -1586,15 +1776,12 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	int s;
 	int pteidx;
 
-#if 0
 	/*
-	 * Since this routine only downgrades protection, if the
-	 * maximal protection is desired, there isn't any change
-	 * to be made.
+	 * Since this routine only downgrades protection, we should
+	 * always be called without WRITE permisison.
 	 */
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
-		return;
-#endif
+	KASSERT((prot & VM_PROT_WRITE) == 0);
+
 	/*
 	 * If there is no protection, this is equivalent to
 	 * remove the pmap from the pmap.
@@ -1642,8 +1829,10 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * If the PVO is in the page table, update
 		 * that pte at well.
 		 */
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
@@ -1695,6 +1884,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 * maximal protection is desired, there isn't any change
 	 * to be made.
 	 */
+	KASSERT((prot & VM_PROT_WRITE) == 0);
 	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
 		return;
 
@@ -1706,8 +1896,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 * VM_PROT_NONE.  At that point, we can clear the exec flag
 	 * since we know the page will have different contents.
 	 */
-	if ((prot & VM_PROT_READ) == 0)
-		pmap_attr_clear(pg, PTE_EXEC);
+	if ((prot & VM_PROT_READ) == 0) {
+		DPRINTFN(EXEC, ("[pmap_page_protect: %#lx: clear-exec]\n",
+		    pg->phys_addr));
+		if (pmap_attr_fetch(pg) & PTE_EXEC) {
+			PMAPCOUNT(exec_uncached_page_protect);
+			pmap_attr_clear(pg, PTE_EXEC);
+		}
+	}
 
 	pvo_head = vm_page_to_pvoh(pg);
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
@@ -1746,8 +1942,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pt = pmap_pvo_to_pte(pvo, -1);
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
 		pvo->pvo_pte.pte_lo |= PTE_BR;
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 
@@ -1853,6 +2051,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 boolean_t
 pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
+	struct pvo_head *pvoh = vm_page_to_pvoh(pg);
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
 	u_int32_t msr;
@@ -1861,10 +2060,15 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 
 	s = splvm();
 	msr = pmap_interrupts_off();
+
+	/*
+	 * Fetch the cache value
+	 */
+	rv |= pmap_attr_fetch(pg);
+
 	/*
 	 * Clear the cached value.
 	 */
-	rv |= pmap_attr_fetch(pg);
 	pmap_attr_clear(pg, ptebit);
 
 	/*
@@ -1880,20 +2084,49 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 * For each pvo entry, clear pvo's ptebit.  If this pvo have a
 	 * valid PTE.  If so, clear the ptebit from the valid PTE.
 	 */
-	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
+	LIST_FOREACH(pvo, pvoh, pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
-			pmap_pte_synch(pt, &pvo->pvo_pte);
+			/*
+			 * Only sync the PTE if the bit we are looking
+			 * for is not already set.
+			 */
+			if ((pvo->pvo_pte.pte_lo & ptebit) == 0)
+				pmap_pte_synch(pt, &pvo->pvo_pte);
+			/*
+			 * If the bit we are looking for was already set,
+			 * clear that bit in the pte.
+			 */
 			if (pvo->pvo_pte.pte_lo & ptebit)
 				pmap_pte_clear(pt, PVO_VADDR(pvo), ptebit);
 		}
-		rv |= pvo->pvo_pte.pte_lo;
+		rv |= pvo->pvo_pte.pte_lo & (PTE_CHG|PTE_REF);
 		pvo->pvo_pte.pte_lo &= ~ptebit;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
 	splx(s);
+	/*
+	 * If we are clearing the modify bit and this page was marked EXEC
+	 * and the user of the page thinks the page was modified, then we
+	 * need to clean it from the icache if it's mapped or clear the EXEC
+	 * bit if it's not mapped.  The page itself might not have the CHG
+	 * bit set if the modification was done via DMA to the page.
+	 */
+	if ((ptebit & PTE_CHG) && (rv & PTE_EXEC)) {
+		if (LIST_EMPTY(pvoh)) {
+			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: clear-exec]\n",
+			    pg->phys_addr));
+			pmap_attr_clear(pg, PTE_EXEC);
+			PMAPCOUNT(exec_uncached_clear_modify);
+		} else {
+			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
+			    pg->phys_addr));
+			pmap_syncicache(pg->phys_addr, NBPG);
+			PMAPCOUNT(exec_synced_clear_modify);
+		}
+	}
 	return (rv & ptebit) != 0;
 }
 

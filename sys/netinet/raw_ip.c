@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.55.2.4 2002/06/20 03:48:53 nathanw Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.55.2.5 2002/08/27 23:48:03 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.55.2.4 2002/06/20 03:48:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.55.2.5 2002/08/27 23:48:03 nathanw Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -163,9 +163,11 @@ rip_input(m, va_alist)
 
 	/*
 	 * XXX Compatibility: programs using raw IP expect ip_len
-	 * XXX to have the header length subtracted.
+	 * XXX to have the header length subtracted, and in host order.
+	 * XXX ip_off is also expected to be host order.
 	 */
-	ip->ip_len -= ip->ip_hl << 2;
+	ip->ip_len = ntohs(ip->ip_len) - (ip->ip_hl << 2);
+	NTOHS(ip->ip_off);
 
 	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
@@ -335,9 +337,9 @@ rip_output(m, va_alist)
 		M_PREPEND(m, sizeof(struct ip), M_WAIT);
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
-		ip->ip_off = 0;
+		ip->ip_off = htons(0);
 		ip->ip_p = inp->inp_ip.ip_p;
-		ip->ip_len = m->m_pkthdr.len;
+		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_src = inp->inp_laddr;
 		ip->ip_dst = inp->inp_faddr;
 		ip->ip_ttl = MAXTTL;
@@ -348,10 +350,13 @@ rip_output(m, va_alist)
 			return (EMSGSIZE);
 		}
 		ip = mtod(m, struct ip *);
+		/* XXX userland passes ip_len and ip_off in host order */
 		if (m->m_pkthdr.len != ip->ip_len) {
 			m_freem(m);
 			return (EINVAL);
 		}
+		HTONS(ip->ip_len);
+		HTONS(ip->ip_off);
 		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_id++);
 		opts = NULL;
@@ -365,7 +370,8 @@ rip_output(m, va_alist)
 		return ENOBUFS;
 	}
 #endif /*IPSEC*/
-	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions, &inp->inp_errormtu));
+	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
+	    &inp->inp_errormtu));
 }
 
 /*

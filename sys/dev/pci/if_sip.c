@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.24.2.10 2002/08/13 02:19:38 nathanw Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24.2.11 2002/08/27 23:46:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,9 +80,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.10 2002/08/13 02:19:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.11 2002/08/27 23:46:48 nathanw Exp $");
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.10 2002/08/13 02:19:38 nathanw Exp
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -300,6 +305,10 @@ struct sip_softc {
 	struct mbuf *sc_rxtail;
 	struct mbuf **sc_rxtailp;
 #endif /* DP83820 */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 /* sc_flags */
@@ -579,6 +588,9 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 		/* Accton EN1407-T, Planex GN-1000TE */
 		{ 0x1113,	0x1407 },
 
+		/* Netgear GA-621 */
+		{ 0x1385,	0x621a },
+
 		{ 0, 0}
 	};
 	pcireg_t subsys;
@@ -852,6 +864,8 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_gpior = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_GPIOR);
+
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
 		printf("%s: 64-bit PCI slot detected", sc->sc_dev.dv_xname);
@@ -967,6 +981,10 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	/*
 	 * The number of bytes that must be available in
@@ -1485,6 +1503,11 @@ SIP_DECL(intr)(void *arg)
 		if ((isr & sc->sc_imr) == 0)
 			break;
 
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, isr);
+#endif
+
 		handled = 1;
 
 		if (isr & (ISR_RXORN|ISR_RXIDLE|ISR_RXDESC)) {
@@ -1565,9 +1588,10 @@ SIP_DECL(intr)(void *arg)
 
 #define	PRINTERR(bit, str)						\
 			do {						\
-				if (isr & (bit)) {			\
-					printf("%s: %s\n",		\
-					    sc->sc_dev.dv_xname, str);	\
+				if ((isr & (bit)) != 0) {		\
+					if ((ifp->if_flags & IFF_DEBUG) != 0) \
+						printf("%s: %s\n",	\
+						    sc->sc_dev.dv_xname, str); \
 					want_init = 1;			\
 				}					\
 			} while (/*CONSTCOND*/0)
@@ -1768,7 +1792,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 				    sc->sc_dev.dv_xname);
 			}
 #define	PRINTERR(bit, str)						\
-			if (cmdsts & (bit))				\
+			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
+			    (cmdsts & (bit)) != 0)			\
 				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
@@ -1947,7 +1972,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 				    sc->sc_dev.dv_xname);
 			}
 #define	PRINTERR(bit, str)						\
-			if (cmdsts & (bit))				\
+			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
+			    (cmdsts & (bit)) != 0)			\
 				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
@@ -2859,7 +2885,16 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 		case MII_ANAR:		tbireg = SIP_TANAR; break;
 		case MII_ANLPAR:	tbireg = SIP_TANLPAR; break;
 		case MII_ANER:		tbireg = SIP_TANER; break;
-		case MII_EXTSR:		tbireg = SIP_TESR; break;
+		case MII_EXTSR:
+			/*
+			 * Don't even bother reading the TESR register.
+			 * The manual documents that the device has
+			 * 1000baseX full/half capability, but the
+			 * register itself seems read back 0 on some
+			 * boards.  Just hard-code the result.
+			 */
+			return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+
 		default:
 			return (0);
 		}
@@ -2874,6 +2909,15 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 				rv |= BMSR_LINK;
 			if (val & TBISR_MR_AN_COMPLETE)
 				rv |= BMSR_ACOMP;
+
+			/*
+			 * The manual claims this register reads back 0
+			 * on hard and soft reset.  But we want to let
+			 * the gentbi driver know that we support auto-
+			 * negotiation, so hard-code this bit in the
+			 * result.
+			 */
+			rv |= BMSR_ANEG | BMSR_EXTSTAT;
 		}
 
 		return (rv);
@@ -3212,9 +3256,6 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 	enaddr[3] = eeprom_data[SIP_DP83820_EEPROM_PMATCH1 / 2] >> 8;
 	enaddr[4] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] & 0xff;
 	enaddr[5] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] >> 8;
-
-	/* Get the GPIOR bits. */
-	sc->sc_gpior = eeprom_data[0x04];
 }
 #else /* ! DP83820 */
 void

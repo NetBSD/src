@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.26.2.3 2001/11/14 19:16:32 nathanw Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.26.2.4 2002/08/27 23:47:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.26.2.3 2001/11/14 19:16:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.26.2.4 2002/08/27 23:47:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ void
 kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
-	int i;
+	u_int i;
 
 	if (evsp->evs_cnt == 0)
 		return;

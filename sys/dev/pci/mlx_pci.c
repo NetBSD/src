@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.2.2.3 2001/11/14 19:15:21 nathanw Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.2.2.4 2002/08/27 23:46:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.2.2.3 2001/11/14 19:15:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.2.2.4 2002/08/27 23:46:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	mpi = mlx_pci_findmpi(aux);
 
 	mlx->mlx_dmat = pa->pa_dmat;
-	mlx->mlx_iftype = mpi->mpi_iftype;
+	mlx->mlx_ci.ci_iftype = mpi->mpi_iftype;
 
 	printf(": Mylex RAID (v%d interface)\n", mpi->mpi_iftype);
 
@@ -278,7 +278,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Select linkage based on controller interface type. */
-	switch (mlx->mlx_iftype) {
+	switch (mlx->mlx_ci.ci_iftype) {
 	case 2:
 	case 3:
 		mlx->mlx_submit = mlx_v3_submit;

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_exec_alpha.c,v 1.2.2.2 2001/11/14 19:13:02 nathanw Exp $	*/
+/*	$NetBSD: linux_exec_alpha.c,v 1.2.2.3 2002/08/27 23:46:18 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_alpha.c,v 1.2.2.2 2001/11/14 19:13:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_alpha.c,v 1.2.2.3 2002/08/27 23:46:18 nathanw Exp $");
 
 #define ELFSIZE 64
 
@@ -23,15 +23,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_alpha.c,v 1.2.2.2 2001/11/14 19:13:02 nat
  * XXX included based on some define.
  */
 int
-ELFNAME2(linux,copyargs)(struct exec_package *pack, struct ps_strings *arginfo,	
-    char **stackp, void *argp)
+ELFNAME2(linux,copyargs)(struct proc *p, struct exec_package *pack,
+    struct ps_strings *arginfo,	char **stackp, void *argp)
 {
 	size_t len;
 	LinuxAuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 	int error;
 
-	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	memset(ai, 0, sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES);

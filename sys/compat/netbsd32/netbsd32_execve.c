@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.2.2.8 2002/08/23 02:37:10 petrov Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.2.2.9 2002/08/27 23:46:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.8 2002/08/23 02:37:10 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.9 2002/08/27 23:46:24 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.8 2002/08/23 02:37:10 petr
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* this is provided by kern/kern_exec.c */
-extern int exec_maxhdrsz;
+extern u_int exec_maxhdrsz;
 #if defined(LKM) || defined(_LKM)
 extern struct lock exec_lock;
 #endif
@@ -318,7 +318,7 @@ netbsd32_execve2(l, uap, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo,
+	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo,
 	    &stack, argp);
 	if (error) {
 #ifdef DEBUG

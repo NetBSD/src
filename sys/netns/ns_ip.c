@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.27.2.2 2001/11/14 19:18:38 nathanw Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.27.2.3 2002/08/27 23:48:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.27.2.2 2001/11/14 19:18:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.27.2.3 2002/08/27 23:48:20 nathanw Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -239,8 +239,8 @@ idpip_input(va_alist)
 	idp = mtod(m, struct idp *);
 	len = ntohs(idp->idp_len);
 	if (len & 1) len++;		/* Preserve Garbage Byte */
-	if (ip->ip_len != len) {
-		if (len > ip->ip_len) {
+	if (ntohs(ip->ip_len) != len) {
+		if (len > ntohs(ip->ip_len)) {
 			nsipif.if_ierrors++;
 			if (nsip_badlen) m_freem(nsip_badlen);
 			nsip_badlen = m;
@@ -323,13 +323,17 @@ nsipoutput(ifp, m, dst, rt)
 	ip->ip_p = IPPROTO_IDP;
 	ip->ip_src = ifn->ifen_src;
 	ip->ip_dst = ifn->ifen_dst;
-	ip->ip_len = (u_int16_t)len + sizeof (struct ip);
+	if (len + sizeof (struct ip) > IP_MAXPACKET) {
+		m_freem(m);
+		return (EMSGSIZE);
+	}
+	ip->ip_len = htons(len + sizeof (struct ip));
 	ip->ip_ttl = MAXTTL;
 
 	/*
 	 * Output final datagram.
 	 */
-	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL));
+	error = ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL);
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.9 2002/08/02 19:52:24 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.10 2002/08/27 23:46:03 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -129,7 +129,7 @@ void
 cpu_startup()
 {
 	caddr_t		v;
-	int		base, residual, i, sz;
+	u_int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
 	vsize_t		size;
 	extern unsigned int avail_end;
@@ -159,7 +159,7 @@ cpu_startup()
 	 * everything true virtual addresses.
 	 */
 
-	sz = (int) allocsys(NULL, NULL);
+	sz = (u_int) allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -232,7 +232,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.8 2002/08/10 15:49:30 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.9 2002/08/27 23:45:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ sh_proc0_init()
 void
 sh_startup()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -339,7 +339,7 @@ sh_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

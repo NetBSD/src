@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.8.4 2002/08/13 02:19:06 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.8.5 2002/08/27 23:46:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
-#include <walnut/dev/pbusvar.h>
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <machine/walnut.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -64,19 +64,19 @@ struct cfattach pchb_ca = {
 	sizeof(struct device), pchbmatch, pchbattach
 };
 
-int pcifound = 0;
+static int pcifound = 0;
 
 static int
 pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct pbus_attach_args *paa = aux;
+	struct plb_attach_args *paa = aux;
 	/* XXX chipset tag unused by walnut, so just pass 0 */
 	pci_chipset_tag_t pc = 0;
 	pcitag_t tag; 
 	int class, id;
 
 	/* match only pchb devices */
-	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
 	pci_machdep_init();
@@ -138,9 +138,9 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	    PCI_REVISION(class));
 
 	pci_machdep_init(); /* Redundant... */
-	galaxy_setup_pci();
+	ibm4xx_setup_pci();
 #ifdef PCI_CONFIGURE_VERBOSE
-	galaxy_show_pci_map();
+	ibm4xx_show_pci_map();
 #endif
 
 #ifdef PCI_NETBSD_CONFIGURE
@@ -158,10 +158,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #endif
 	pba.pba_busname = "pci";
 	/* IO window located @ e8000000 and maps to 0-0xffff */
-	pba.pba_iot = galaxy_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
+	pba.pba_iot = ibm4xx_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
 	/* PCI memory window is directly mapped */
-	pba.pba_memt = galaxy_make_bus_space_tag(0, 0);
-	pba.pba_dmat = &galaxy_default_bus_dma_tag;
+	pba.pba_memt = ibm4xx_make_bus_space_tag(0, 0);
+	pba.pba_dmat = &ibm4xx_default_bus_dma_tag;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;

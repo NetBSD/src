@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.2.4.6 2002/08/01 02:45:51 nathanw Exp $	*/
+/*	$NetBSD: ehci.c,v 1.2.4.7 2002/08/27 23:47:10 nathanw Exp $	*/
 
 /*
  * TODO
@@ -44,15 +44,15 @@
 /*
  * USB Enhanced Host Controller Driver, a.k.a. USB 2.0 controller.
  *
- * The EHCI 0.96 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
+ * The EHCI 1.0 spec can be found at
+ * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
  * and the USB 2.0 spec at
  * http://www.usb.org/developers/data/usb_20.zip
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.6 2002/08/01 02:45:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.7 2002/08/27 23:47:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,6 +326,11 @@ ehci_init(ehci_softc_t *sc)
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF(("ehci_init: cparams=0x%x\n", cparams));
 
+	if (EHCI_HCC_64BIT(cparams)) {
+		/* MUST clear segment register if 64 bit capable. */
+		EWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+	}
+
 	sc->sc_bus.usbrev = USBREV_2_0;
 
 	/* Reset the controller */
@@ -334,7 +339,7 @@ ehci_init(ehci_softc_t *sc)
 	usb_delay_ms(&sc->sc_bus, 1);
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
 	for (i = 0; i < 100; i++) {
-		delay(10);
+		usb_delay_ms(&sc->sc_bus, 1);
 		hcr = EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_HCRESET;
 		if (!hcr)
 			break;
@@ -413,7 +418,7 @@ ehci_init(ehci_softc_t *sc)
 	EOWRITE4(sc, EHCI_CONFIGFLAG, EHCI_CONF_CF);
 
 	for (i = 0; i < 100; i++) {
-		delay(10);
+		usb_delay_ms(&sc->sc_bus, 1);
 		hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
 		if (!hcr)
 			break;

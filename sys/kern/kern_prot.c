@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.63.2.7 2002/07/12 01:40:17 nathanw Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63.2.8 2002/08/27 23:47:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.7 2002/07/12 01:40:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.8 2002/08/27 23:47:25 nathanw Exp $");
 
 #include "opt_compat_43.h"
 
@@ -262,14 +262,15 @@ sys_getgroups(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
-	int ngrp;
+	u_int ngrp;
 	int error;
 
-	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp == 0) {
+	if (SCARG(uap, gidsetsize) == 0) {
 		*retval = pc->pc_ucred->cr_ngroups;
 		return (0);
-	}
+	} else if (SCARG(uap, gidsetsize) < 0)
+		return (EINVAL);
+	ngrp = SCARG(uap, gidsetsize);
 	if (ngrp < pc->pc_ucred->cr_ngroups)
 		return (EINVAL);
 	ngrp = pc->pc_ucred->cr_ngroups;
@@ -639,7 +640,7 @@ sys_setgroups(l, v, retval)
 	/*
 	 * Check if this is a no-op.
 	 */
-	if (pc->pc_ucred->cr_ngroups == ngrp &&
+	if (pc->pc_ucred->cr_ngroups == (u_int) ngrp &&
 	    memcmp(grp, pc->pc_ucred->cr_groups, grsize) == 0)
 		return (0);
 

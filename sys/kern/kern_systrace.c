@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.2.6 2002/08/13 02:20:06 nathanw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.2.7 2002/08/27 23:47:29 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.6 2002/08/13 02:20:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.7 2002/08/27 23:47:29 nathanw Exp $");
 
 #include "opt_systrace.h"
 
@@ -1219,7 +1219,7 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 		}
 
 		/* Replace the argument with the new address */
-		args[ind] = (register_t)udata;
+		args[ind] = (register_t)(intptr_t)udata;
 	}
 
  out:

@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.42.2.12 2002/08/13 02:19:28 nathanw Exp $ */
+/* $NetBSD: ispvar.h,v 1.42.2.13 2002/08/27 23:46:40 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -537,6 +537,8 @@ typedef struct ispsoftc {
 #define	ISP_FW_MAJORX(xp)		(xp[0])
 #define	ISP_FW_MINORX(xp)		(xp[1])
 #define	ISP_FW_MICROX(xp)		(xp[2])
+#define	ISP_FW_NEWER_THAN(i, major, minor, micro)		\
+ (ISP_FW_REVX((i)->isp_fwrev) > ISP_FW_REV(major, minor, micro))
 
 /*
  * Bus (implementation) types

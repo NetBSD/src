@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.14 2002/07/13 23:27:02 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.15 2002/08/27 23:47:22 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.14 2002/07/13 23:27:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.15 2002/08/27 23:47:22 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -88,7 +88,7 @@ extern int			nexecs_builtin;
 static const struct execsw	**execsw = NULL;
 static int			nexecs;
 
-int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
+u_int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
 
 #ifdef LKM
 /* list of supported emulations */
@@ -278,7 +278,8 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 		/* check limits */
 		if ((epp->ep_tsize > MAXTSIZ) ||
-		    (epp->ep_dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur))
+		    (epp->ep_dsize >
+		     (u_quad_t)p->p_rlimit[RLIMIT_DATA].rlim_cur))
 			error = ENOMEM;
 
 		if (!error)
@@ -324,7 +325,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
 	} */ *uap = v;
-	int			error, i;
+	int			error;
+	u_int			i;
 	struct exec_package	pack;
 	struct nameidata	nid;
 	struct vattr		attr;
@@ -577,7 +579,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo, &stack, argp);
+	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo, &stack, argp);
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -793,7 +795,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 
 int
-copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+copyargs(struct proc *p, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;

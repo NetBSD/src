@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.14.2.6 2002/06/20 03:46:31 nathanw Exp $	*/
+/*	$NetBSD: qe.c,v 1.14.2.7 2002/08/27 23:47:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.6 2002/06/20 03:46:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.7 2002/08/27 23:47:03 nathanw Exp $");
 
 #define QEDEBUG
 
@@ -226,9 +226,9 @@ qeattach(parent, self, aux)
 
 	if (bus_space_map(sa->sa_bustag,
 			  (bus_addr_t)BUS_ADDR(
-				sa->sa_reg[0].sbr_slot,
-				sa->sa_reg[0].sbr_offset),
-			  (bus_size_t)sa->sa_reg[0].sbr_size,
+				sa->sa_reg[0].oa_space,
+				sa->sa_reg[0].oa_base),
+			  (bus_size_t)sa->sa_reg[0].oa_size,
 			  0, &sc->sc_cr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
@@ -236,9 +236,9 @@ qeattach(parent, self, aux)
 
 	if (bus_space_map(sa->sa_bustag,
 			  (bus_addr_t)BUS_ADDR(
-				sa->sa_reg[1].sbr_slot,
-				sa->sa_reg[1].sbr_offset),
-			  (bus_size_t)sa->sa_reg[1].sbr_size,
+				sa->sa_reg[1].oa_space,
+				sa->sa_reg[1].oa_base),
+			  (bus_size_t)sa->sa_reg[1].oa_size,
 			  0, &sc->sc_mr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
