@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.36 2002/06/11 14:16:07 leo Exp $
+.\"	$NetBSD: sysinst,v 1.37 2002/06/12 11:21:35 leo Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -905,12 +905,12 @@ disk. Because NetBSD imposes a special ordering in disk partitions it uses
 for / (root) and swap. And because it wants to guard you against an unwanted
 demolition of partitions used by other systems, you have to tell it what
 partitions it is allowed to use. You have to mark the partition you want
-to use as swap NBS or SWP and the other partitions as NBD. Note that all
-the changes you make to the ID's are reversable as long as you remember
-the original value.  As of NetBSD 1.5 ahdilabel is capable of creating
-or changing an AHDI compatible partioning on the disk! In the partition-ID
-editor, the partitions are shown in the order that AHDI created them.
-When you leave this editor and continue with
+to use as swap SWP or (depricated!) NBS and the other partitions as NBD.
+Note that all the changes you make to the ID's are reversable as long as
+you remember the original value.  As of NetBSD 1.5 ahdilabel is capable of
+creating or changing an AHDI compatible partioning on the disk! In the
+partition-ID editor, the partitions are shown in the order that AHDI
+created them.  When you leave this editor and continue with
 .Ic sysinst,
 your changes to the ID's do have consequences to the partition order!
 They will show up as follows:
@@ -1023,8 +1023,10 @@ and
 .Ic Use Existing .
 The first two use a set of default
 values (that you can change) suitable for a normal
-installation, possibly including X. The last option
-lets you specify everything yourself.
+installation, possibly including X. With the
+.Ic Custom
+option you can specify everything yourself. The last option uses
+the partition info already present on the disk.
 .Pp
 .if r_atari \{\
 If you want to use
@@ -1119,12 +1121,24 @@ need to remember this name.
 .Em Preparing your hard disk
 .Pp
 .Em "You are now at the point of no return".
+.if r_atari \{\
+Apart from the changes you made with
+.Ic ahdilabel
+nothing has been modified on your disk yet. If you confirm that you want to
+install
+.Nx ,
+the partitions now assigned to
+.Nx
+will be actually written to.
+.\}
+.if !r_atari \{\ \" Why does .el not work???
 Nothing has been
 written to your disk yet, but if you confirm that you want to
 install
 .Nx ,
-your hard drive will be modified. If you are
-sure you want to proceed, enter
+your hard drive will be modified.
+.\}
+If you are sure you want to proceed, enter
 .Li yes
 at the prompt.
 .Pp
