@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.62 2003/04/02 10:39:46 fvdl Exp $	*/
+/*	$NetBSD: fstat.c,v 1.63 2003/07/15 05:56:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.62 2003/04/02 10:39:46 fvdl Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.63 2003/07/15 05:56:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -528,9 +528,9 @@ vtrans(vp, i, flag)
 	}
 	rw[0] = '\0';
 	if (flag & FREAD)
-		strcat(rw, "r");
+		strlcat(rw, "r", sizeof(rw));
 	if (flag & FWRITE)
-		strcat(rw, "w");
+		strlcat(rw, "w", sizeof(rw));
 	printf(" %-2s", rw);
 	if (filename && !fsflg)
 		printf("  %s", filename);
@@ -867,14 +867,14 @@ socktrans(sock, i)
 				goto bad;
 			}
 			printf(" %lx", (long)in6pcb.in6p_ppcb);
-			sprintf(xaddrbuf, "[%s]",
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
 			    inet6_addrstr(&in6pcb.in6p_laddr));
 			printf(" %s:%d",
 			    IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr) ? "*" :
 			    xaddrbuf,
 			    ntohs(in6pcb.in6p_lport));
 			if (in6pcb.in6p_fport) {
-				sprintf(xaddrbuf, "[%s]", 
+				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]", 
 				    inet6_addrstr(&in6pcb.in6p_faddr));
 				printf(" <-> %s:%d",
 			            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr) ? "*" :
@@ -890,14 +890,14 @@ socktrans(sock, i)
 				goto bad;
 			}
 			printf(" %lx", (long)so.so_pcb);
-			sprintf(xaddrbuf, "[%s]", 
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]", 
 			    inet6_addrstr(&in6pcb.in6p_laddr));
 			printf(" %s:%d",
 		            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr) ? "*" :
 			    xaddrbuf,
 			    ntohs(in6pcb.in6p_lport));
 			if (in6pcb.in6p_fport) {
-				sprintf(xaddrbuf, "[%s]", 
+				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]", 
 				    inet6_addrstr(&in6pcb.in6p_faddr));
 				printf(" <-> %s:%d",
 			            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr) ? "*" :
