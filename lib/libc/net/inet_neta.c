@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_neta.c,v 1.11 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: inet_neta.c,v 1.12 2002/08/16 12:03:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_neta.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_neta.c,v 1.11 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: inet_neta.c,v 1.12 2002/08/16 12:03:41 itojun Exp $");
 #endif
 #endif
 
@@ -39,12 +39,6 @@ __RCSID("$NetBSD: inet_neta.c,v 1.11 2000/01/22 22:19:15 mycroft Exp $");
 
 #ifdef __weak_alias
 __weak_alias(inet_neta,_inet_neta)
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
 /*
@@ -65,30 +59,36 @@ inet_neta(src, dst, size)
 	size_t size;
 {
 	char *odst = dst;
-	char *tp;
+	char *ep;
+	int advance;
 
 	_DIAGASSERT(dst != NULL);
 
+	if (src == 0x00000000) {
+		if (size < sizeof "0.0.0.0")
+			goto emsgsize;
+		strlcpy(dst, "0.0.0.0", size);
+		return dst;
+	}
+	ep = dst + size;
 	while (src & 0xffffffff) {
 		u_char b = (u_char)((src & 0xff000000) >> 24);
 
 		src <<= 8;
 		if (b) {
-			if (size < sizeof "255.")
+			if (ep - dst < sizeof "255.")
 				goto emsgsize;
-			tp = dst;
-			dst += SPRINTF((dst, "%u", b));
+			advance = snprintf(dst, (size_t)(ep - dst), "%u", b);
+			if (advance <= 0 || advance >= ep - dst)
+				goto emsgsize;
+			dst += advance;
 			if (src != 0L) {
+				if (dst + 1 >= ep)
+					goto emsgsize;
 				*dst++ = '.';
 				*dst = '\0';
 			}
-			size -= (size_t)(dst - tp);
 		}
-	}
-	if (dst == odst) {
-		if (size < sizeof "0.0.0.0")
-			goto emsgsize;
-		strcpy(dst, "0.0.0.0");
 	}
 	return (odst);
 
