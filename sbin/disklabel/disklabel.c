@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.35 1996/10/02 13:49:45 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.36 1996/10/20 21:59:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.35 1996/10/02 13:49:45 christos Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.36 1996/10/20 21:59:36 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -1571,7 +1571,7 @@ usage()
 	    "(to restore label and boot program)" },
 # else
 	{ "%s -B [ -b bootprog ] disk [ type ]",
-	    "(to install boot program with existing on-disk label)",
+	    "(to install boot program with existing on-disk label)" },
 	{ "%s -w -B [ -b bootprog ] disk type [ packid ]",
 	    "(to write label and install boot program)" },
 	{ "%s -R -B [ -b bootprog ] disk protofile [ type ]",
