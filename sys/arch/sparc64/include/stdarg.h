@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.6 1999/01/31 09:21:20 mrg Exp $ */
+/*	$NetBSD: stdarg.h,v 1.7 1999/05/03 16:21:28 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,18 +54,15 @@
  * For sparcv9 code.
  */
 #ifdef __lint__
+#define	__builtin_saveregs(t)		(0)
 #define	__builtin_classify_type(t)	(0)
+#define	__builtin_next_arg(t)		((t) ? 0 : 0)
 #endif
 
 typedef _BSD_VA_LIST_	va_list;
 
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 6
-#define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
-#else
 #define	va_start(ap, last) \
 	(__builtin_next_arg(), (ap) = (va_list)__builtin_saveregs())
-#endif
 
 #define	__va_arg(ap, type) \
 	((type)*(unsigned long *)((ap) += 8, (ap) - 8))
@@ -93,8 +90,9 @@ typedef _BSD_VA_LIST_	va_list;
  * For sparcv8 code.
  */
 #ifdef __lint__
-#define	__extension__(x)		(0)
+#define	__builtin_saveregs(t)		(0)
 #define	__builtin_classify_type(t)	(0)
+#define	__builtin_next_arg(t)		((t) ? 0 : 0)
 #endif
 
 typedef _BSD_VA_LIST_	va_list;
@@ -102,13 +100,8 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 6
 #define	va_start(ap, last) \
 	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
-#else
-#define	va_start(ap, last) \
-	(__builtin_next_arg(), (ap) = (va_list)__builtin_saveregs())
-#endif
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an
@@ -125,7 +118,7 @@ typedef _BSD_VA_LIST_	va_list;
  * Note: We don't declare __d with type `type', since in C++ the type might
  * have a constructor.
  */
-#if __GNUC__ == 1
+#if __GNUC__ < 2
 #define	__extension__
 #endif
 
