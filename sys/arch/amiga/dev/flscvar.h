@@ -1,4 +1,4 @@
-/*	$NetBSD: flscvar.h,v 1.3 1997/10/04 04:01:33 mhitch Exp $	*/
+/*	$NetBSD: flscvar.h,v 1.4 1997/10/24 01:50:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch.
@@ -49,8 +49,9 @@ struct flsc_softc {
 	size_t		*sc_pdmalen;
 	vm_offset_t	sc_pa;
 
-	u_char		sc_pad1[18];		/* XXX */
-	u_char		sc_alignbuf[256];
+	char		*sc_alignbuf;
+	u_char		sc_pad1[2];		/* XXX */
+	u_char		sc_unalignbuf[256];
 	u_char		sc_pad2[16];
 	u_char		sc_hardbits;
 	u_char		sc_portbits;
