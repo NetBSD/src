@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA3400 }, 0 },
 
   /* Visioneer */
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_3000 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_5300 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_7600 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6100 }, 0 },
