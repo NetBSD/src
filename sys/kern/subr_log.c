@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.29 2003/08/07 16:31:53 agc Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.30 2003/09/07 09:30:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.29 2003/08/07 16:31:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.30 2003/09/07 09:30:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,10 +283,10 @@ logwakeup()
 		return;
 	selnotify(&logsoftc.sc_selp, 0);
 	if (logsoftc.sc_state & LOG_ASYNC) {
-		if (logsoftc.sc_pgid > 0)
-			gsignal(logsoftc.sc_pgid, SIGIO); 
-		else if (logsoftc.sc_pgid < 0 &&
-		    (p = pfind(-logsoftc.sc_pgid)) != NULL)
+		if (logsoftc.sc_pgid < 0)
+			gsignal(-logsoftc.sc_pgid, SIGIO); 
+		else if (logsoftc.sc_pgid > 0 &&
+		    (p = pfind(logsoftc.sc_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
 	if (logsoftc.sc_state & LOG_RDWAIT) {
@@ -338,11 +338,11 @@ logioctl(dev, com, data, flag, p)
 			if (error)
 				return error;
 		}
-		logsoftc.sc_pgid = pgid;
+		logsoftc.sc_pgid = -pgid;
 		break;
 
 	case TIOCGPGRP:
-		*(int *)data = logsoftc.sc_pgid;
+		*(int *)data = -logsoftc.sc_pgid;
 		break;
 
 	default:
