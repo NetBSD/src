@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.17 2001/01/11 01:45:07 lukem Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.18 2002/11/16 04:29:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.17 2001/01/11 01:45:07 lukem Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.18 2002/11/16 04:29:01 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ findid(name)
 	char user[16];
 	int n;
 
-	(void)strncpy(loginname, name, sizeof(loginname) - 1);
+	(void)strlcpy(loginname, name, sizeof(loginname));
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
 		syslog(LOG_ERR, "%s: %m\n", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
@@ -153,7 +153,7 @@ findid(name)
 		(void)snprintf(loginfile, sizeof loginfile, "%s.%s",
 		    _PATH_LOGIN, name);
 		if (access(loginfile, R_OK|X_OK) != 0) {
-			(void)strncpy(loginfile, _PATH_LOGIN, sizeof(loginfile) - 1);
+			(void)strlcpy(loginfile, _PATH_LOGIN, sizeof(loginfile));
 			if (access(loginfile, R_OK|X_OK)) {
 				fputs("access denied - no login file\n",
 				      stderr);
@@ -196,7 +196,7 @@ hup_handler(s)
 	(void)snprintf(logoutfile, sizeof logoutfile, "%s.%s", _PATH_LOGOUT,
 	    loginname);
 	if (access(logoutfile, R_OK|X_OK) != 0)
-		(void)strncpy(logoutfile, _PATH_LOGOUT, sizeof(logoutfile) - 1);
+		(void)strlcpy(logoutfile, _PATH_LOGOUT, sizeof(logoutfile));
 	if (access(logoutfile, R_OK|X_OK) == 0) {
 		char logincmd[2*MAXPATHLEN+32];
 
