@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.137 2003/10/08 15:07:25 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.138 2003/10/14 12:51:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.137 2003/10/08 15:07:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.138 2003/10/14 12:51:31 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -144,8 +144,6 @@ struct lfs_stats lfs_stats;
 #define	VN_DIROP	1
 #define	VN_EMPTY	2
 #define VN_CLEAN	3
-
-#define LFS_MAX_ACTIVE		10
 
 /*
  * XXX KS - Set modification time on the Ifile, so the cleaner can
