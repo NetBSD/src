@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.28 1997/04/01 08:17:59 leo Exp $
+#	$NetBSD: GENERIC,v 1.29 1997/04/09 19:44:13 thorpej Exp $
 #
 # Generic atari
 #
@@ -91,7 +91,6 @@ options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 # Atari specific options
 #
 #options	KFONT_8x8		# Use 8x8 font instead of 8x16
-options		FPU_EMULATE		# Floating point emulation
 options		"ST_POOL_SIZE=22"	# smallest that allows TT-HIGH
 options		TT_SCSI			# SCSI-support for TT
 options		FALCON_SCSI		# SCSI-support for Falcon
