@@ -1,6 +1,7 @@
-/*	$NetBSD: bootconfig.h,v 1.2 2002/02/09 23:58:30 reinoud Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.3 2002/02/11 18:47:37 reinoud Exp $	*/
 
 /*
+ * Copyright (c) 2002 Reinoud Zandijk.
  * Copyright (c) 1994 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
@@ -37,20 +38,76 @@
  *
  * boot configuration structures
  *
- * Created      : 12/09/94
- *
- * Based on kate/boot/bootconfig.h
  */
-
-typedef struct _PhysMem {
-	u_int address;
-	u_int pages;
-} PhysMem;
 
 #if defined(_KERNEL)
 
-#define DRAM_BLOCKS	4
+
+/* get some spare blocks ;) */
+#define DRAM_BLOCKS	32
+#define VRAM_BLOCKS	16
+
+
+typedef struct {
+	u_int address;
+	u_int pages;
+	u_int flags;
+} phys_mem;
+
+
 typedef struct _BootConfig {
+	u_int magic;
+	u_int version;			/* version 2+ */
+
+	u_char machine_id[4];
+	char kernelname[80];
+	char args[512];			/* 512 bytes is better than 4096 */
+
+	u_int kernvirtualbase;		/* not used now */
+	u_int kernphysicalbase;		/* not used now */
+	u_int kernsize;
+	u_int scratchvirtualbase;
+	u_int scratchphysicalbase;
+	u_int scratchsize;
+
+	u_int ksym_start;
+	u_int ksym_end;
+
+	u_int MDFvirtualbase;		/* not used yet */
+	u_int MDFphysicalbase;		/* not used yet */
+	u_int MDFsize;			/* not used yet */
+
+	u_int display_phys;
+	u_int display_start;
+	u_int display_size;
+	u_int width;
+	u_int height;
+	u_int log2_bpp;
+	u_int framerate;
+
+	char reserved[512];		/* future expansion */
+
+	u_int pagesize;
+	u_int drampages;
+	u_int vrampages;
+	u_int dramblocks;
+	u_int vramblocks;
+
+	phys_mem dram[DRAM_BLOCKS];
+	phys_mem vram[VRAM_BLOCKS];
+
+} BootConfig;
+
+
+/************ compat stuff ************/
+
+typedef struct {
+	u_int address;
+	u_int pages;
+} phys_mem_v1;
+
+
+typedef struct {
 	u_int kernvirtualbase;
 	u_int kernphysicalbase;
 	u_int kernsize;
@@ -67,8 +124,8 @@ typedef struct _BootConfig {
 	u_int height;
 	u_int log2_bpp;
 
-	PhysMem dram[DRAM_BLOCKS];
-	PhysMem vram[1];
+	phys_mem_v1 dram[4];
+	phys_mem_v1 vram[1];
 
 	u_int dramblocks;
 	u_int vramblocks;
@@ -82,10 +139,12 @@ typedef struct _BootConfig {
 	u_char machine_id[4];
 	u_int magic;
 	u_int display_phys;
-} BootConfig;
+} BootConfig_v1;
 
-#define OLD_BOOTCONFIG_MAGIC 0x42301068
+/************ end compat stuff ***********/
+
 #define BOOTCONFIG_MAGIC     0x43112233
+#define BOOTCONFIG_VERSION   	    0x2
 
 extern BootConfig bootconfig;
 #endif	/* _KERNEL */
@@ -104,5 +163,6 @@ int get_bootconf_option __P((char *string, char *option, int type, void *result)
 extern char *boot_args;
 extern char *boot_file;
 #endif	/* _KERNEL */
+
 
 /* End of bootconfig.h */
