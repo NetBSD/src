@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.2 2001/01/16 01:02:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -123,6 +123,10 @@ form_driver(FORM *form, int c)
 			pos = fieldp->start_char + fieldp->cursor_xpos
 				+ fieldp->hscroll;
 
+			  /* check if we are allowed to edit this field */
+			if ((fieldp->opts & O_EDIT) != O_EDIT)
+				return E_REQUEST_DENIED;
+			
 			  /*
 			   * Need to check here if we want to autoskip.
 			   * we call the form driver recursively to pos

@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/17 12:04:30 blymn Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/16 01:02:47 blymn Exp $
 #
 
-DBG=-g
-CPPFLAGS+=-I${.CURDIR} #-DDEBUG
+CPPFLAGS+=-I${.CURDIR}
+.if defined(DEBUG_FORMS)
+CFLAGS+=-g
+CPPFLAGS+=-DDEBUG
+.endif
 LIB=	form
 SRCS=	driver.c field_types.c internals.c field.c form.c post.c type_alnum.c \
         type_alpha.c type_integer.c type_numeric.c type_enum.c type_regex.c \
