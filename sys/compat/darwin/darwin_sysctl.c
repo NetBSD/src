@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.16 2003/09/13 08:32:11 jdolecek Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.17 2003/09/14 09:48:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.16 2003/09/13 08:32:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.17 2003/09/14 09:48:43 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.16 2003/09/13 08:32:11 jdolecek 
 #include <compat/darwin/darwin_syscallargs.h>
 
 pid_t darwin_init_pid = 0;
+int darwin_ioframebuffer_unit = 0;
+int darwin_ioframebuffer_screen = 0;
+int darwin_iohidsystem_mux = 0;
 static char *darwin_sysctl_hw_machine = "Power Macintosh";
 
 static int darwin_kern_sysctl
@@ -409,6 +412,18 @@ darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	case EMUL_DARWIN_INIT_PID:
 		return sysctl_int(oldp, oldlenp, 
 		    newp, newlen, &darwin_init_pid);
+
+	case EMUL_DARWIN_IOFRAMEBUFFER_UNIT:
+		return sysctl_int(oldp, oldlenp, 
+		    newp, newlen, &darwin_ioframebuffer_unit);
+
+	case EMUL_DARWIN_IOFRAMEBUFFER_SCREEN:
+		return sysctl_int(oldp, oldlenp, 
+		    newp, newlen, &darwin_ioframebuffer_screen);
+
+	case EMUL_DARWIN_IOHIDSYSTEM_MUX:
+		return sysctl_int(oldp, oldlenp, 
+		    newp, newlen, &darwin_iohidsystem_mux);
 
 	default:
 		return EOPNOTSUPP;
