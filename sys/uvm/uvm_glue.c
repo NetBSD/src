@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.70 2003/11/01 10:43:27 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.71 2003/11/02 16:53:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.70 2003/11/01 10:43:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.71 2003/11/02 16:53:43 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
-#include "opt_sysv.h"
 #include "opt_uvmhist.h"
 
 /*
@@ -84,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.70 2003/11/01 10:43:27 yamt Exp $");
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <uvm/uvm.h>
 
@@ -358,8 +354,7 @@ uvm_proc_exit(p)
 }
 
 void
-uvm_lwp_exit(l)
-	struct lwp *l;
+uvm_lwp_exit(struct lwp *l)
 {
 	vaddr_t va = (vaddr_t)l->l_addr;
 
