@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.66 2003/05/18 09:04:52 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.67 2003/06/26 10:23:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,7 +205,7 @@ is taken to be 1 for printing commands, and infinity for stack traces.
 .Pp
 The syntax:
 .Bd -ragged -offset indent
-.Ic Cm , Ns Ar count
+.Cm , Ns Ar count
 .Ed
 .Pp
 repeats the previous command, just as a blank line does, but with
@@ -736,7 +736,7 @@ do the wrong thing.
 Force a crash dump, and then reboot.
 .It Xo
 .Ic trace
-.Ic Ns Op Cm /u Ns Op Cm l
+.Ns Op Cm /u Ns Op Cm l
 .Sm off
 .Op Ar frame-address
 .Op Cm , Ar count
