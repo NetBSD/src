@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.34 2001/11/07 04:21:26 enami Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.35 2001/11/07 04:55:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -93,8 +93,6 @@ int	nullfs_mount __P((struct mount *, const char *, void *,
 	    struct nameidata *, struct proc *));
 int	nullfs_unmount __P((struct mount *, int, struct proc *));
 
-#define	NNULLNODECACHE	16
-
 /*
  * Mount null layer
  */
@@ -173,7 +171,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->nullm_vnodeop_p = null_vnodeop_p;
 	simple_lock_init(&nmp->nullm_hashlock);
-	nmp->nullm_node_hashtbl = hashinit(NNULLNODECACHE, HASH_LIST, M_CACHE,
+	nmp->nullm_node_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_CACHE,
 	    M_WAITOK, &nmp->nullm_node_hash);
 
 	/*
