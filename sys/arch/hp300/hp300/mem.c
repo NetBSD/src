@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: mem.c 1.14 90/10/12
  *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.3 1993/08/01 19:24:47 mycroft Exp $
+ *	$Id: mem.c,v 1.4 1994/04/24 06:38:46 mycroft Exp $
  */
 
 /*
@@ -52,11 +52,7 @@
 
 #include "../include/cpu.h"
 
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include "vm/vm.h"
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
