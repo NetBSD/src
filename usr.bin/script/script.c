@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,61 +32,68 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)script.c	5.13 (Berkeley) 3/5/91";
+static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
-/*
- * script
- */
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
-#include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/file.h>
-#include <sys/signal.h>
-#include <stdio.h>
-#include <paths.h>
 
-char	*shell;
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <tzfile.h>
+#include <unistd.h>
+
 FILE	*fscript;
-int	master;
-int	slave;
-int	child;
-int	subchild;
+int	master, slave;
+int	child, subchild;
+int	outcc;
 char	*fname;
 
 struct	termios tt;
-struct	winsize win;
-int	lb;
-int	l;
-char	line[] = "/dev/ptyXX";
-int	aflg;
 
+__dead	void done __P((void));
+	void dooutput __P((void));
+	void doshell __P((void));
+	void err __P((const char *, ...));
+	void fail __P((void));
+	void finish __P((int));
+	void scriptflush __P((int));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	int ch;
-	void finish();
-	char *getenv();
+	register int cc;
+	struct termios rtt;
+	struct winsize win;
+	int aflg, ch;
+	char ibuf[BUFSIZ];
 
+	aflg = 0;
 	while ((ch = getopt(argc, argv, "a")) != EOF)
-		switch((char)ch) {
+		switch(ch) {
 		case 'a':
-			aflg++;
+			aflg = 1;
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: script [-a] [file]\n");
+			(void)fprintf(stderr, "usage: script [-a] [file]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -96,20 +103,22 @@ main(argc, argv)
 		fname = argv[0];
 	else
 		fname = "typescript";
-	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL) {
-		perror(fname);
-		fail();
-	}
 
-	shell = getenv("SHELL");
-	if (shell == NULL)
-		shell = _PATH_BSHELL;
+	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
+		err("%s: %s", fname, strerror(errno));
 
-	getmaster();
-	printf("Script started, file is %s\n", fname);
-	fixtty();
+	(void)tcgetattr(STDIN_FILENO, &tt);
+	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
+	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
+		err("openpty: %s", strerror(errno));
 
-	(void) signal(SIGCHLD, finish);
+	(void)printf("Script started, output file is %s\n", fname);
+	rtt = tt;
+	cfmakeraw(&rtt);
+	rtt.c_lflag &= ~ECHO;
+	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+
+	(void)signal(SIGCHLD, finish);
 	child = fork();
 	if (child < 0) {
 		perror("fork");
@@ -126,29 +135,21 @@ main(argc, argv)
 		else
 			doshell();
 	}
-	doinput();
-}
 
-doinput()
-{
-	register int cc;
-	char ibuf[BUFSIZ];
-
-	(void) fclose(fscript);
-	while ((cc = read(0, ibuf, BUFSIZ)) > 0)
-		(void) write(master, ibuf, cc);
+	(void)fclose(fscript);
+	while ((cc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0)
+		(void)write(master, ibuf, cc);
 	done();
 }
 
-#include <sys/wait.h>
-
 void
-finish()
+finish(signo)
+	int signo;
 {
+	register int die, pid;
 	union wait status;
-	register int pid;
-	register int die = 0;
 
+	die = 0;
 	while ((pid = wait3((int *)&status, WNOHANG, 0)) > 0)
 		if (pid == child)
 			die = 1;
@@ -157,129 +158,111 @@ finish()
 		done();
 }
 
+void
 dooutput()
 {
+	struct itimerval value;
 	register int cc;
-	time_t tvec, time();
-	char obuf[BUFSIZ], *ctime();
+	time_t tvec;
+	char obuf[BUFSIZ];
 
-	(void) close(0);
-	tvec = time((time_t *)NULL);
-	fprintf(fscript, "Script started on %s", ctime(&tvec));
+	(void)close(STDIN_FILENO);
+	tvec = time(NULL);
+	(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
+
+	(void)signal(SIGALRM, scriptflush);
+	value.it_interval.tv_sec = SECSPERMIN / 2;
+	value.it_interval.tv_usec = 0;
+	value.it_value = value.it_interval;
+	(void)setitimer(ITIMER_REAL, &value, NULL);
 	for (;;) {
 		cc = read(master, obuf, sizeof (obuf));
 		if (cc <= 0)
 			break;
-		(void) write(1, obuf, cc);
-		(void) fwrite(obuf, 1, cc, fscript);
+		(void)write(1, obuf, cc);
+		(void)fwrite(obuf, 1, cc, fscript);
+		outcc += cc;
 	}
 	done();
 }
 
+void
+scriptflush(signo)
+	int signo;
+{
+	if (outcc) {
+		(void)fflush(fscript);
+		outcc = 0;
+	}
+}
+
+void
 doshell()
 {
-	int t;
+	char *shell;
 
-	/***
-	t = open(_PATH_TTY, O_RDWR);
-	if (t >= 0) {
-		(void) ioctl(t, TIOCNOTTY, (char *)0);
-		(void) close(t);
-	}
-	***/
-	getslave();
-	(void) close(master);
-	(void) fclose(fscript);
-	(void) dup2(slave, 0);
-	(void) dup2(slave, 1);
-	(void) dup2(slave, 2);
-	(void) close(slave);
-	execl(shell, "sh", "-i", 0);
+	shell = getenv("SHELL");
+	if (shell == NULL)
+		shell = _PATH_BSHELL;
+
+	(void)close(master);
+	(void)fclose(fscript);
+	login_tty(slave);
+	execl(shell, "sh", "-i", NULL);
 	perror(shell);
 	fail();
 }
 
-fixtty()
-{
-	struct termios rtt;
-
-	rtt = tt;
-	cfmakeraw(&rtt);
-	rtt.c_lflag &= ~ECHO;
-	(void) tcsetattr(0, TCSAFLUSH, &rtt);
-}
-
+void
 fail()
 {
 
-	(void) kill(0, SIGTERM);
+	(void)kill(0, SIGTERM);
 	done();
 }
 
+void
 done()
 {
-	time_t tvec, time();
-	char *ctime();
+	time_t tvec;
 
 	if (subchild) {
-		tvec = time((time_t *)NULL);
-		fprintf(fscript,"\nScript done on %s", ctime(&tvec));
-		(void) fclose(fscript);
-		(void) close(master);
+		tvec = time(NULL);
+		(void)fprintf(fscript,"\nScript done on %s", ctime(&tvec));
+		(void)fclose(fscript);
+		(void)close(master);
 	} else {
-		(void) tcsetattr(0, TCSAFLUSH, &tt);
-		printf("Script done, file is %s\n", fname);
+		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
+		(void)printf("Script done, output file is %s\n", fname);
 	}
 	exit(0);
 }
 
-getmaster()
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#if __STDC__
+err(const char *fmt, ...)
+#else
+err(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
 {
-	char *pty, *bank, *cp;
-	struct stat stb;
-
-	pty = &line[strlen("/dev/ptyp")];
-	for (bank = "pqrs"; *bank; bank++) {
-		line[strlen("/dev/pty")] = *bank;
-		*pty = '0';
-		if (stat(line, &stb) < 0)
-			break;
-		for (cp = "0123456789abcdef"; *cp; cp++) {
-			*pty = *cp;
-			master = open(line, O_RDWR);
-			if (master >= 0) {
-				char *tp = &line[strlen("/dev/")];
-				int ok;
-
-				/* verify slave side is usable */
-				*tp = 't';
-				ok = access(line, R_OK|W_OK) == 0;
-				*tp = 'p';
-				if (ok) {
-					(void) tcgetattr(0, &tt);
-				    	(void) ioctl(0, TIOCGWINSZ, 
-						(char *)&win);
-					return;
-				}
-				(void) close(master);
-			}
-		}
-	}
-	fprintf(stderr, "Out of pty's\n");
-	fail();
-}
-
-getslave()
-{
-
-	line[strlen("/dev/")] = 't';
-	slave = open(line, O_RDWR);
-	if (slave < 0) {
-		perror(line);
-		fail();
-	}
-	(void) tcsetattr(slave, TCSAFLUSH, &tt);
-	(void) ioctl(slave, TIOCSWINSZ, (char *)&win);
-	(void) setsid();
-	(void) ioctl(slave, TIOCSCTTY, 0);
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "script: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	exit(1);
+	/* NOTREACHED */
 }
