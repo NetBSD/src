@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.4 1994/12/04 08:26:25 mycroft Exp $
+ *	$Id: mdprologue.S,v 1.5 1995/09/23 22:48:18 pk Exp $
  */
 
 /*
@@ -67,6 +67,7 @@ L.2B:
 	call	%g1			! rtld(version, crtp, dp)
 	mov	%i0, %o0		! arg #1: version
 
+	mov	%o0, %i0		! pass on rtld() return value
 	ret
 	restore
 	.seg	"data"			! [internal]
