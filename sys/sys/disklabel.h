@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.3 1993/05/20 16:22:01 cgd Exp $
+ *	$Id: disklabel.h,v 1.4 1993/05/20 23:14:55 deraadt Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -294,6 +294,7 @@ struct partinfo {
 	struct partition *part;
 };
 
+#ifdef i386
 /* DOS partition table -- located in boot block */
 
 #define	DOSBBSECTOR	0	/* DOS boot block relative sector number */
@@ -313,6 +314,18 @@ struct dos_partition {
 	unsigned long	dp_start;	/* absolute starting sector number */
 	unsigned long	dp_size;	/* partition size in sectors */
 } dos_partitions[NDOSPART];
+
+struct cpu_disklabel {
+	struct dos_partition dosparts[NDOSPART];
+	struct dkbad bad;
+};
+
+#endif /* i386 */
+
+#if defined(hp300) || defined(mac) || defined(vax)
+struct cpu_disklabel {
+};
+#endif
 
 #define	DPSECT(s) ((s) & 0x3f)		/* isolate relevant bits of sector */
 #define	DPCYL(c, s) ((c) + (((s) & 0xc0)<<2)) /* and those that are cylinder */
@@ -338,23 +351,29 @@ struct dos_partition {
 
 #if defined(KERNEL)
 
+#ifdef i386
+int bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+#endif
 
-void diskerr(struct buf *, char *, char *, int, int, struct disklabel *);
+void diskerr __P((struct buf *, char *, char *, int, int, struct disklabel *));
+void disksort __P((struct buf *, struct buf *));
+int dkcksum __P((struct disklabel *));
 
-int dkcksum(struct disklabel *);
+int setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
+	struct cpu_disklabel *));
+int cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
+	struct cpu_disklabel *));
 
-int setdisklabel(struct disklabel *, struct disklabel *, u_long,
-	struct dos_partition *);
+char *readdisklabel __P((int, int (*)(), struct disklabel *,
+	struct cpu_disklabel *));
+char *cpu_readdisklabel __P((int, int (*)(), struct disklabel *,
+	struct cpu_disklabel *));
 
-char *readdisklabel(int, int (*)(), struct disklabel *,
-	struct dos_partition *, struct dkbad *, struct buf **);
+int writedisklabel __P((int, int (*)(), struct disklabel *,
+	struct cpu_disklabel *));
+int cpu_writedisklabel __P((int, int (*)(), struct disklabel *,
+	struct cpu_disklabel *));
 
-void disksort(struct buf *, struct buf *);
-
-int writedisklabel(int, int (*)(), struct disklabel *,
-		struct dos_partition *);
-
-int bounds_check_with_label(struct buf *, struct disklabel *, int);
 #endif
 #endif LOCORE
 
