@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 2000/04/14 13:29:57 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 2000/06/09 16:56:51 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -120,6 +120,8 @@ cdev_decl(aed);
 cdev_decl(wd);
 cdev_decl(ofc);
 cdev_decl(nvram);
+#include "cz.h"
+cdev_decl(cztty);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -194,6 +196,7 @@ struct cdevsw cdevsw[] = {
 	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
 	cdev_tty_init(NUCOM,ucom),	/* 44: USB tty */
 	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
+	cdev_tty_init(NCZ,cztty),	/* 46: Cyclades-Z serial port */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
