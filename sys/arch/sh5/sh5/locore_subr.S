@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.6 2002/09/04 14:01:24 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.7 2002/09/06 15:41:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -417,15 +417,14 @@ ENTRY(copyoutstr)
 	pta/u	2f, tr2			/* Success path */
 	pta/l	1f, tr1			/* Loop */
 
-1:	beq/u	r4, r7, tr2		/* Oops, ENAMETOOLONG */
-	ldx.b	r2, r7, r0
+1:	ldx.b	r2, r7, r0
 	stx.b	r3, r7, r0
 	addi	r7, 1, r7
+	beq/u	r4, r7, tr2		/* Reached limit set by "len"? */
 	bne/l	r0, r63, tr1		/* Back until we find the NUL byte */
 
-2:	sub	r4, r7, r0
-	movi	ENAMETOOLONG, r6	/* Assume failed */
-	cmvne	r0, r63, r6		/* Success if we didn't exceed len */
+2:	movi	ENAMETOOLONG, r6	/* Assume failed */
+	cmveq	r0, r63, r6		/* Success if we didn't exceed len */
 	blink	tr3, r63
 
 
@@ -466,15 +465,14 @@ ENTRY(copyinstr)
 	pta/u	2f, tr2			/* Success path */
 	pta/l	1f, tr1			/* Loop */
 
-1:	beq/u	r4, r7, tr2		/* Oops, ENAMETOOLONG */
-	ldx.b	r2, r7, r0
+1:	ldx.b	r2, r7, r0
 	stx.b	r3, r7, r0
 	addi	r7, 1, r7
+	beq/u	r4, r7, tr2		/* Reached limit set by "len"? */
 	bne/l	r0, r63, tr1		/* Back until we find the NUL byte */
 
-2:	sub	r4, r7, r0
-	movi	ENAMETOOLONG, r6	/* Assume failed */
-	cmvne	r0, r63, r6		/* Success if we didn't exceed len */
+2:	movi	ENAMETOOLONG, r6	/* Assume failed */
+	cmveq	r0, r63, r6		/* Success if we didn't exceed len */
 
 Lcopystrerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
@@ -499,13 +497,12 @@ ENTRY(copystr)
 	movi	0, r1
 	pta/u	2f, tr2			/* Success path */
 	pta/l	1f, tr1			/* Loop */
-1:	beq/u	r4, r1, tr2		/* Oops, ENAMETOOLONG */
-	ldx.b	r2, r1, r0
+1:	ldx.b	r2, r1, r0
 	stx.b	r3, r1, r0
 	addi	r1, 1, r1
+	beq/u	r4, r1, tr2		/* Reached limit set by "len"? */
 	bne/l	r0, r63, tr1		/* Back until we find the NUL byte */
-2:	sub	r4, r1, r0
-	cmvne	r0, r63, r6		/* Success if we didn't exceed len */
+2:	cmveq	r0, r63, r6		/* Success if we didn't exceed len */
 	or	r6, r63, r2		/* Grab return code */
 	beq/u	r5, r63, tr0		/* Just return if "done" == NULL */
 	STPTR	r5, 0, r1		/* NOTE: sizeof(size_t) = sizeof(ptr) */
