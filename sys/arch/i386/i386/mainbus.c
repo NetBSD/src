@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 1996/11/28 02:43:58 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 1997/08/30 06:52:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -114,6 +114,8 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_pba.pba_flags =
+		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
