@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.1.1.2 2000/06/10 18:05:36 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.1.1.3 2000/06/24 06:38:45 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1585,10 +1585,6 @@ int dhcp_failover_queue_update (struct lease *lease, int immediate)
 		dhcp_failover_ack_queue_remove (state, lease);
 
 	if (state -> update_queue_head) {
-		if (state -> update_queue_tail -> next_pending)
-			lease_dereference
-				(&state -> update_queue_tail -> next_pending,
-				 MDL);
 		lease_reference (&state -> update_queue_tail -> next_pending,
 				 lease, MDL);
 		lease_dereference (&state -> update_queue_tail, MDL);
@@ -1606,6 +1602,9 @@ void dhcp_failover_ack_queue_remove (dhcp_failover_state_t *state,
 				     struct lease *lease)
 {
 	struct lease *lp;
+
+	if (!(lease -> flags & ON_ACK_QUEUE))
+		return;
 
 	if (state -> ack_queue_head == lease) {
 		lease_dereference (&state -> ack_queue_head, MDL);
@@ -2451,7 +2450,9 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 		break;
 	}
 
+#if defined DEBUG_FAILOVER_MESSAGES
 	failover_print (obuf, obufix, obufmax, ")");
+#endif
 
 	/* Now allocate a place to store what we just set up. */
 	op = dmalloc (sizeof (failover_option_t), MDL);
