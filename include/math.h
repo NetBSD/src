@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.18 1999/01/31 19:32:26 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.19 1999/08/16 18:57:57 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -235,6 +235,7 @@ extern float erff __P((float));
 extern float erfcf __P((float));
 extern float gammaf __P((float));
 extern float hypotf __P((float, float));
+extern int isinff __P((float));
 extern int isnanf __P((float));
 extern int finitef __P((float));
 extern float j0f __P((float));
