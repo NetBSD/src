@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1999/02/26 19:03:40 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 1999/02/26 19:03:40 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1220,7 +1220,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (CPUISMIPS3) {
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS3_PG_IOPAGE & ~MIPS3_PG_G) :
-			    (MIPS3_PG_IOPAGE & ~(MIPS3_PG_G | MIPS3_PG_M));
+			    ((MIPS3_PG_IOPAGE | MIPS3_PG_RO) &
+			    ~(MIPS3_PG_G | MIPS3_PG_M));
 		} else  {
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS1_PG_M | MIPS1_PG_N) :
@@ -1262,20 +1263,18 @@ pmap_enter(pmap, va, pa, prot, wired)
 		}
 		i = mipspagesperpage;
 		do {
-			if (!mips_pg_v(pte->pt_entry)) {
-				pmap->pm_stats.resident_count++;
-			} else {
 #ifdef DIAGNOSTIC
-				if (mips_pg_wired(pte->pt_entry))
-					panic("pmap_enter: kernel wired");
+			if (mips_pg_wired(pte->pt_entry))
+				panic("pmap_enter: kernel wired");
 #endif
-				if (pfn_to_vad(pte->pt_entry) !=  pa) {
-					pmap_remove(pmap, va, va  + NBPG);
+			if (pfn_to_vad(pte->pt_entry) !=  pa) {
+				pmap_remove(pmap, va, va  + NBPG);
 #ifdef DEBUG
-					enter_stats.mchange++;
+				enter_stats.mchange++;
 #endif
-				}
 			}
+			if (!mips_pg_v(pte->pt_entry))
+				pmap->pm_stats.resident_count++;
 			/*
 			 * Update the same virtual address entry.
 			 */
@@ -1344,14 +1343,14 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 	i = mipspagesperpage;
 	do {
-		if (!mips_pg_v(pte->pt_entry)) {
-			pmap->pm_stats.resident_count++;
-		} else if (pfn_to_vad(pte->pt_entry) != pa) {
+		if (pfn_to_vad(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va,  va + NBPG);
 #ifdef DEBUG
 			enter_stats.mchange++;
 #endif
 		}
+		if (!mips_pg_v(pte->pt_entry))
+			pmap->pm_stats.resident_count++;
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
 			MachTLBUpdate(va | (pmap->pm_tlbpid <<
