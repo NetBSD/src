@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.7 1998/04/22 07:14:32 ross Exp $
+.\"	$NetBSD: malloc.9,v 1.8 1998/07/29 22:07:14 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,7 +257,7 @@ Andrew File System.
 Adosfs bitmap.
 .It Dv M_NFSSRVDESC
 NFS server descriptor.
-.It Dv M_DIROFF
+.It Dv M_NFSDIROFF
 NFS directory cookies.
 .It Dv M_NFSBIGFH
 NFS big filehandle.
@@ -265,6 +265,29 @@ NFS big filehandle.
 EXT2FS vnode private part.
 .It Dv M_VMSWAP
 VM swap structures.
+.It Dv M_VMPAGE
+VM page structures.
+.It Dv M_VMPBUCKET
+VM page buckets.
+.It Dv M_UVMAMAP
+UVM amap and related structs.
+.It Dv M_UVMAOBJ
+UVM aobj and related structs.
+.It Dv M_DMAMAP
+.Xr bus_dma 9
+structures.
+.It Dv M_IPFLOW
+IP flow entries.
+.It Dv M_USB
+USB general.
+.It Dv M_USBDEV
+USB permanent.
+.It Dv M_POOL
+Memory
+.Xr pool 9
+structures.
+.It Dv M_CFS
+Coda file system structures and tables.
 .It Dv M_TEMP
 Misc temporary data buffers.
 .El
