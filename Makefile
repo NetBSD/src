@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2000/03/11 00:10:20 jlam Exp $
+#	$NetBSD: Makefile,v 1.111 2000/04/09 02:09:49 simonb Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -136,8 +136,8 @@ build: buildmsg beforeinstall
 	    ${MAKE} ${_J} MKMAN=no dependall && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} ${_J} MKMAN=no dependall && \
-	    ${MAKE} MKMAN=no install)
+	    ${MAKE} ${_J} MKMAN=no MKINFO=no dependall && \
+	    ${MAKE} MKMAN=no MKINFO=no install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} ${_J} MKMAN=no MKINFO=no dependall && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
