@@ -34,15 +34,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.6 1994/01/27 06:34:04 mycroft Exp $
+ *	$Id: fixunsdfsi.S,v 1.7 1995/12/28 20:03:57 jtc Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.6 1994/01/27 06:34:04 mycroft Exp $"
+	.asciz "$Id: fixunsdfsi.S,v 1.7 1995/12/28 20:03:57 jtc Exp $"
 #endif
 
-#include "DEFS.h"
 #include "SYS.h"
 
 ENTRY(__fixunsdfsi)
