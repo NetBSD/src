@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.4 2002/03/25 20:47:02 yamt Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.5 2002/05/24 04:04:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.4 2002/03/25 20:47:02 yamt Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.5 2002/05/24 04:04:30 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -178,7 +178,7 @@ _citrus_NONE_ctype_mbstowcs(void * __restrict cl, wchar_t * __restrict wcs,
 			    const char * __restrict s, size_t n,
 			    size_t * __restrict nresult)
 {
-	return (_citrus_NONE_ctype_mbsrtowcs(cl, wcs, &s, n, NULL, nresult));
+	return (_citrus_NONE_ctype_mbsrtowcs(cl, wcs, (const char **)&s, n, NULL, nresult));
 }
 
 static int
@@ -273,7 +273,7 @@ _citrus_NONE_ctype_wcstombs(void * __restrict cl, char * __restrict s,
 			    const wchar_t * __restrict pwcs, size_t n,
 			    size_t * __restrict nresult)
 {
-	return (_citrus_NONE_ctype_wcsrtombs(cl, s, &pwcs, n, NULL, nresult));
+	return (_citrus_NONE_ctype_wcsrtombs(cl, s, (const wchar_t **)&pwcs, n, NULL, nresult));
 }
 
 static int
