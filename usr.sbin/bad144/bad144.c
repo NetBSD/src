@@ -1,3 +1,5 @@
+/*	$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,8 @@ static char copyright[] =
 #endif not lint
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.9 1997/02/03 20:12:34 cgd Exp $";
+/* static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95"; */
+static char *rcsid = "$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $";
 #endif not lint
 
 /*
