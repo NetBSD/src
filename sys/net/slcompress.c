@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.23 2001/11/12 23:49:49 lukem Exp $   */
+/*	$NetBSD: slcompress.c,v 1.24 2003/05/02 03:15:25 itojun Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.23 2001/11/12 23:49:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.24 2003/05/02 03:15:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -334,7 +334,7 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		changes |= NEW_S;
 	}
 
-	switch(changes) {
+	switch (changes) {
 
 	case 0:
 		/*
