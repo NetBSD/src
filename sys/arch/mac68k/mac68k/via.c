@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.26 1995/07/30 21:30:57 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.27 1995/08/14 03:16:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -44,6 +44,9 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include "via.h"
+
+#include "ncrscsi.h"
+#include "ncr96scsi.h"
 
 static int	scsi_drq_intr(void), scsi_irq_intr(void);
 
@@ -231,14 +234,14 @@ rbv_intr(struct frame *fp)
 long
 via1_noint(int bitnum)
 {
-  /* printf("via1_noint(%d)\n", bitnum); */
+  printf("via1_noint(%d)\n", bitnum);
   return 1;
 }
 
 long
 via2_noint(int bitnum)
 {
-  /* printf("via2_noint(%d)\n", bitnum); */
+  printf("via2_noint(%d)\n", bitnum);
   return 1;
 }
 
@@ -367,12 +370,12 @@ scsi_irq_intr()
 {
 #if NNCR96SCSI
 	if (mac68k_machine.scsi96) {
-		if (ncr53c96_irq_intr()) return 1;
+		ncr53c96_irq_intr();
 	}
 #endif
 #if NNCRSCSI
 	if (mac68k_machine.scsi80) {
-		if (ncr5380_irq_intr()) return 1;
+		ncr5380_irq_intr();
 	}
 #endif
 	return 0;
@@ -383,12 +386,12 @@ scsi_drq_intr()
 {
 #if NNCR96SCSI
 	if (mac68k_machine.scsi96) {
-		if (ncr53c96_drq_intr()) return 1;
+		ncr53c96_drq_intr();
 	}
 #endif
 #if NNCRSCSI
 	if (mac68k_machine.scsi80) {
-		if (ncr5380_drq_intr()) return 1;
+		ncr5380_drq_intr();
 	}
 #endif
 	return 0;
