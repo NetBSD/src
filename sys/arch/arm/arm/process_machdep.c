@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 1998/09/06 04:20:38 mark Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.1 2001/02/11 17:03:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -66,14 +66,26 @@
  *	Set the process's program counter.
  */
 
+#ifdef arm32
 #include "opt_armfpe.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.1 2001/02/11 17:03:04 bjh21 Exp $");
+
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/systm.h>
+#include <sys/user.h>
 
+#include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/reg.h>
+
+#ifndef arm32
+#include <arm/armreg.h>
+#endif
 
 #ifdef ARMFPE
 #include <machine/cpus.h>
@@ -81,20 +93,22 @@
 #endif	/* ARMFPE */
 
 static __inline struct trapframe *
-process_frame(p)
-	struct proc *p;
+process_frame(struct proc *p)
 {
 
+#ifdef arm32
 	return (p->p_md.md_regs);
+#else /* arm26 */
+	return p->p_addr->u_pcb.pcb_tf;
+#endif
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
+	KASSERT(tf != NULL);
 	bcopy((caddr_t)&tf->tf_r0, (caddr_t)regs->r, sizeof(regs->r));
 	regs->r_sp = tf->tf_usr_sp;
 	regs->r_lr = tf->tf_usr_lr;
@@ -105,9 +119,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_getcontext(p, regs);
@@ -120,26 +132,30 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
+	KASSERT(tf != NULL);
 	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
+#ifdef arm32
 	tf->tf_pc = regs->r_pc;
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
+#else /* arm26 */
+	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+		return EPERM;
+
+	tf->tf_r15 = regs->r_pc;
+#endif
 
 	return(0);
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_setcontext(p, regs);
@@ -151,24 +167,19 @@ process_write_fpregs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
-{
-	if (sstep)
-	  	/* this is going to be fun, I'll start off with ipkdb_step ... */
-		return (EINVAL);
-	return (0);
-}
-
-int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *tf = process_frame(p);
 
+	KASSERT(tf != NULL);
+#ifdef arm32
 	tf->tf_pc = (int)addr;
+#else /* arm26 */
+	/* Only set the PC, not the PSR */
+	if (((register_t)addr & R15_PC) != (register_t)addr)
+		return EINVAL;
+	tf->tf_r15 = (tf->tf_r15 & ~R15_PC) | (register_t)addr;
+#endif
 
 	return (0);
 }

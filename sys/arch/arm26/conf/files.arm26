@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.18 2001/01/23 00:27:44 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.19 2001/02/11 17:03:05 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -230,7 +230,6 @@ file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c
 file	arch/arm26/arm26/mem.c
 file	arch/arm26/arm26/pmap.c
-file	arch/arm26/arm26/process_machdep.c
 file	arch/arm26/arm26/procfs_machdep.c	procfs
 #file	arch/arm26/arm26/rscons.c
 file 	arch/arm26/arm26/softintr.c
