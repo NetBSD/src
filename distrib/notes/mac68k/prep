@@ -1,8 +1,8 @@
-.\"	$NetBSD: prep,v 1.11 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: prep,v 1.12 2002/06/29 23:54:05 lukem Exp $
 .
-Find your favorite disk partitioning utility. Any formatter capable of
-partitioning a SCSI disk should work. Some of the ones that have been
-tried and seem to work are:
+Find your favorite disk partitioning utility.
+Any formatter capable of partitioning a SCSI disk should work.
+Some of the ones that have been tried and seem to work are:
 .Pp
 .(bullet -compact -offset indent
 Apple HD SC Setup
@@ -19,7 +19,8 @@ APS Disk Tools
 .bullet)
 .Pp
 Apple's HD SC Setup is probably the easiest to use and the most commonly
-available. Instructions for patching HD SC Setup so that it will recognize
+available.
+Instructions for patching HD SC Setup so that it will recognize
 non-Apple drives is available at:
 .Pp
 .Lk http://www.euronet.nl/users/ernstoud/patch.html
@@ -34,15 +35,16 @@ Be sure you have a reliable backup of any data which you may want to keep.
 Repartitioning your hard drive is an excellent way to destroy important data.
 .Note)
 .Pp
-Second, decide how you want to set up your partitions. At minimum, you
-need a partition to hold the
+Second, decide how you want to set up your partitions.
+At minimum, you need a partition to hold the
 .Nx
-installation (the root partition -
+installation (the root partition \(em
 .Pa / )
 and a
-partition to serve as swap. You may choose to use more than one partition
-to hold the installation. This allows you to separate the more vital
-portions of the file system (such as the kernel and the
+partition to serve as swap.
+You may choose to use more than one partition to hold the installation.
+This allows you to separate the more vital portions of the file system
+(such as the kernel and the
 .Pa /etc
 directory) from the more volatile parts of the file system.
 Typical setups place the
@@ -59,20 +61,22 @@ If you plan to use this machine as a server, you may also want a separate
 partition.
 .Pp
 Once you have decided how to lay out your partitions, you need to calculate
-how much space to allocate to each partition. A minimal install of
+how much space to allocate to each partition.
+A minimal install of
 .Nx
 (i.e.
 .Pa netbsd.tgz , base.tgz , No and
 .Pa etc.tgz )
 should just fit in a 32 MB partition.
 For a full installation, you should allocate at least 95 MB (150 MB if you
-wish to install the X sets as well). A general rule of thumb for sizing
-the swap partition is to allocate twice as much swap space as you have
-real memory. Having your swap + real memory total at least 20 MB is also
-a good idea. Systems that will be heavily used or that are low on real
-memory should have more swap space allocated. Systems that will be only
-lightly used or have a very large amount of real memory can get away
-with less.
+wish to install the X sets as well).
+A general rule of thumb for sizing the swap partition is to allocate
+twice as much swap space as you have real memory.
+Having your swap + real memory total at least 20 MB is also a good idea.
+Systems that will be heavily used or that are low on real
+memory should have more swap space allocated.
+Systems that will be only lightly used or have a very large amount
+of real memory can get away with less.
 .Pp
 Keep in mind that
 .Nx
@@ -82,18 +86,20 @@ in order to boot, so it is likely that you will
 want to keep at least a minimal install of
 .Tn MacOS
 around on an HFS
-partition for this purpose.  The size of this partition may vary depending
-on the size requirements for the version of
+partition for this purpose.
+The size of this partition may vary depending on the size requirements
+for the version of
 .Tn MacOS
-you are using.  Of
-course, if you have
+you are using.
+Of course, if you have
 .Tn MacOS
 on another hard drive or can boot from a floppy,
 feel free to dedicate the entire drive to
 .Nx .
 .Pp
 Next, use your favorite partitioning utility to make partitions of the
-necessary sizes. You can use any type of partition, but partitions of type
+necessary sizes.
+You can use any type of partition, but partitions of type
 .Li "Apple_Free"
 might save you some confusion in the future.
 .Pp
