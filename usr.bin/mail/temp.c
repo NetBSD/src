@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.12 2002/03/05 20:27:00 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.13 2002/03/05 21:11:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.12 2002/03/05 20:27:00 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.13 2002/03/05 21:11:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: temp.c,v 1.12 2002/03/05 20:27:00 wiz Exp $");
 
 char	*tempMail;
 char	*tempEdit;
-char	*tempResid;
 char	*tmpdir;
 
 void
@@ -76,7 +75,6 @@ tinit(void)
 	}
 
 	tempMail  = tempnam (tmpdir, "Rs");
-	tempResid = tempnam (tmpdir, "Rq");
 	tempEdit  = tempnam (tmpdir, "Re");
 
 	/*
