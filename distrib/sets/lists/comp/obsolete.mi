@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.42 2001/04/11 07:45:55 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.43 2001/04/11 09:09:04 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -47,7 +47,6 @@
 /usr/include/dev/ic/bt459reg.h
 /usr/include/dev/ic/bt463reg.h
 /usr/include/dev/ic/bt485reg.h
-/usr/include/dev/ic/bt8xx.h
 /usr/include/dev/ic/cacreg.h
 /usr/include/dev/ic/cacvar.h
 /usr/include/dev/ic/cd1190reg.h
