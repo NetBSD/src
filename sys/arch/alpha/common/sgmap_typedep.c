@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.18 2001/07/19 06:40:01 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.19 2001/07/19 14:26:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.18 2001/07/19 06:40:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.19 2001/07/19 14:26:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,7 +71,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_addr_t dmaoffset, sgva;
 	bus_size_t sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int pteidx, error, spill;
+	int s, pteidx, error, spill;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
@@ -126,8 +126,10 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    (endva - va), sgvalen, map->_dm_boundary, boundary);
 #endif
 
+	s = splvm();
 	error = extent_alloc(sgmap->aps_ex, sgvalen, alignment, boundary,
 	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &sgva);
+	splx(s);
 	if (error)
 		return (error);
 
@@ -301,7 +303,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	bus_addr_t osgva, sgva, esgva;
-	int spill, seg, pteidx;
+	int s, error, spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		/* XXX Always have a spill page for now... */
@@ -330,8 +332,11 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		alpha_mb();
 
 		/* Free the virtual address space used by the mapping. */
-		if (extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
-		    EX_NOWAIT) != 0)
+		s = splvm();
+		error = extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
+		    EX_NOWAIT);
+		splx(s);
+		if (error)
 			panic(__S(__C(SGMAP_TYPE,_unload)));
 	}
 
