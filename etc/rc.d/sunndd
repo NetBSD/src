@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# $NetBSD: sunndd,v 1.1 2001/05/17 23:19:06 fredette Exp $
+#
+
+# PROVIDE: sunndd
+# REQUIRE: DAEMON
+
+. /etc/rc.subr
+
+name="sunndd"
+rcvar=$name
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/ethers"
+
+load_rc_config $name
+run_rc_command "$1"
