@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.10 2001/12/08 19:46:39 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.11 2001/12/31 21:55:46 thorpej Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -176,8 +176,8 @@ struct sppp {
  * to a SIOCSIFGENERIC ioctl.
  */
 
-#define SPPPIOGDEFS  ((caddr_t)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
-#define SPPPIOSDEFS  ((caddr_t)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
+#define SPPPIOGDEFS  ((('S' << 24) + (1 << 16) + sizeof(struct sppp)))
+#define SPPPIOSDEFS  ((('S' << 24) + (2 << 16) + sizeof(struct sppp)))
 
 struct spppreq {
 	int	cmd;
