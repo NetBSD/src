@@ -1,5 +1,4 @@
-/* $Id: mmureg.h,v 1.1 1999/09/13 10:31:19 itojun Exp $ */
-/* $NetBSD: mmureg.h,v 1.1 1999/09/13 10:31:19 itojun Exp $ */
+/* $NetBSD: mmureg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
