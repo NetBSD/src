@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.66 2001/11/15 07:03:28 lukem Exp $ */
+/*	$NetBSD: apm.c,v 1.67 2002/07/07 13:06:56 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.66 2001/11/15 07:03:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.67 2002/07/07 13:06:56 drochner Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -86,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.66 2001/11/15 07:03:28 lukem Exp $");
 #include <i386/isa/nvram.h>
 
 #include <machine/bioscall.h>
+#ifdef APM_USE_KVM86
+#include <machine/kvm86.h>
+#endif
 #include <machine/apmvar.h>
 
 #if defined(APMDEBUG)
@@ -1030,15 +1033,25 @@ int
 apm_busprobe()
 {
 	struct bioscallregs regs;
+#ifdef APM_USE_KVM86
+	int res;
+#endif
 #ifdef APMDEBUG
 	char bits[128];
 #endif
 
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
 	regs.BX = APM_DEV_APM_BIOS;
-	regs.CX = regs.DX = 0;
-	regs.ESI = regs.EDI = regs.EFLAGS = 0;
+#ifdef APM_USE_KVM86
+	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+	if (res) {
+		printf("apm_busprobe: kvm86 error\n");
+		return (0);
+	}
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF(APMDEBUG_PROBE, ("apm: bioscall return: %x %x %x %x %s %x %x\n",
 	    regs.AX, regs.BX, regs.CX, regs.DX,
 	    bitmask_snprintf(regs.EFLAGS, I386_FLAGBITS, bits, sizeof(bits)),
@@ -1105,16 +1118,27 @@ apmattach(parent, self, aux)
 	u_int okbases[] = { 0, biosbasemem*1024 };
 	u_int oklimits[] = { PAGE_SIZE, IOM_END};
 	u_int i;
+#ifdef APM_USE_KVM86
+	int res;
+#endif
 #ifdef APMDEBUG
 	char bits[128];
 #endif
 
 	printf(": ");
 
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
 	regs.BX = APM_DEV_APM_BIOS;
-	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
+#ifdef APM_USE_KVM86
+	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+	if (res) {
+		printf("apm_attach: kvm86 error\n");
+		goto bail_disconnected;
+	}
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
@@ -1124,10 +1148,18 @@ apmattach(parent, self, aux)
 	 * call a disconnect in case it was already connected
 	 * by some previous code.
 	 */
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_DISCONNECT);
 	regs.BX = APM_DEV_APM_BIOS;
-	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
+#ifdef APM_USE_KVM86
+	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+	if (res) {
+		printf("apm_attach: kvm86 error\n");
+		goto bail_disconnected;
+	}
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
@@ -1139,11 +1171,18 @@ apmattach(parent, self, aux)
 	/*
 	 * And connect to it.
 	 */
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_32BIT_CONNECT);
 	regs.BX = APM_DEV_APM_BIOS;
-	regs.CX = regs.DX = regs.DI = regs.FLAGS = 0;
-	regs.ESI = 0;
+#ifdef APM_USE_KVM86
+	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+	if (res) {
+		printf("apm_attach: kvm86 error\n");
+		goto bail_disconnected;
+	}
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
@@ -1481,10 +1520,15 @@ bail:
 	/*
 	 * call a disconnect; we're punting.
 	 */
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_DISCONNECT);
 	regs.BX = APM_DEV_APM_BIOS;
 	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
+#ifdef APM_USE_KVM86
+	(void)kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 	DPRINTF_BIOSRETURN(regs, bits);
 bail_disconnected:
@@ -1508,10 +1552,14 @@ apm_create_thread(arg)
 	/*
 	 * We were unable to create the APM thread; bail out.
 	 */
+	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.AX = APM_BIOS_FN(APM_DISCONNECT);
 	regs.BX = APM_DEV_APM_BIOS;
-	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
+#ifdef APM_USE_KVM86
+	(void)kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
+#else
 	bioscall(APM_SYSTEM_BIOS, &regs);
+#endif
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 	DPRINTF_BIOSRETURN(regs, bits);
 	printf("%s: unable to create thread, kernel APM support disabled\n",
