@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.2 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.3 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -254,6 +254,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	rcp(1): Add support for specifying the rhost as an IPv6 address
 		string. [ginsbach 20050311]
 	stf(4): Add support for changing the MTU. [tron 20050311]
+	re(4): Add TCPv4 hardware transmit segment offload support.
+		[yamt 20050312]
 	sendmail(8): update to 8.13.3.  [atatat 20050315]
 	pkill(1): Add -i option to ignore case for both pgrep(1) and pkill(1).
 		[sketch 20050316]
