@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.27 1996/05/19 21:05:45 veego Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.28 1996/05/24 19:26:15 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -1459,12 +1459,12 @@ rt_blank(gp, on)
 	struct grf_softc *gp;
 	int *on;
 {
+	struct MonDef *md = (struct MonDef *)gp->g_data;
 	int r;
 
-	r = RSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE);
-	r &= 0xdf;	/* set Bit 5 to 0 */
+	r = 0x01 | ((md->FLG & MDF_CLKDIV2)/ MDF_CLKDIV2 * 8));  
 
-	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, r | (*on ? 0x00 : 0x20));
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? r : 0x21);
 
 	return(0);
 }       
