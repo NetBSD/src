@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.5 1997/12/01 02:58:41 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.6 1998/12/09 14:35:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.5 1997/12/01 02:58:41 lukem Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.6 1998/12/09 14:35:03 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: fparseln.c,v 1.5 1997/12/01 02:58:41 lukem Exp $");
 #include <stdlib.h>
 #include <util.h>
 
-static int isescaped __P((const char *, const char *, char));
+static int isescaped __P((const char *, const char *, int));
 
 /* isescaped():
  *	Return true if the character in *p that belongs to a string
@@ -48,7 +48,7 @@ static int isescaped __P((const char *, const char *, char));
 static int
 isescaped(sp, p, esc)
 	const char *sp, *p;
-	char esc;
+	int esc;
 {
 	const char     *cp;
 	size_t		ne;
