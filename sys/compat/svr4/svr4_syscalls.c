@@ -5,6 +5,7 @@
  * created from: NetBSD syscalls.master,v 1.2 1994/06/29 06:30:37
  */
 
+char *svr4_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */
