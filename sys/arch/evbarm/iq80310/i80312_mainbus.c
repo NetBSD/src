@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.9 2002/10/02 05:10:34 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.10 2002/10/03 01:35:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -61,8 +61,7 @@ int	i80312_mainbus_match(struct device *, struct cfdata *, void *);
 void	i80312_mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iopxs_mainbus, sizeof(struct i80312_softc),
-    i80312_mainbus_match, , NULL, NULL);
-};
+    i80312_mainbus_match, i80312_mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	i80312_mainbus_found;
