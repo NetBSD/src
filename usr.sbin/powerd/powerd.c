@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.2 2003/04/20 20:53:04 thorpej Exp $	*/
+/*	$NetBSD: powerd.c,v 1.3 2003/07/13 12:19:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ run_script(const char *argv[])
 	int i;
 
 	for (i = 0; i < A_CNT(script_paths); i++) {
-		sprintf(path, "%s/%s", script_paths[i], argv[0]);
+		snprintf(path, sizeof(path), "%s/%s", script_paths[i], argv[0]);
 		if (access(path, R_OK|X_OK) == 0) {
 			int status;
 			pid_t pid;
