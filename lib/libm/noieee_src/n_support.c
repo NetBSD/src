@@ -1,4 +1,4 @@
-/*      $NetBSD: n_support.c,v 1.3 1999/07/02 15:37:37 simonb Exp $ */
+/*      $NetBSD: n_support.c,v 1.4 2002/06/15 00:10:18 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,20 +75,21 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
  */
 
 #include "mathimpl.h"
+#include "trig.h"
 
 #if defined(__vax__)||defined(tahoe)      /* VAX D format */
 #include <errno.h>
     static const unsigned short msign=0x7fff , mexp =0x7f80 ;
     static const short  prep1=57, gap=7, bias=129           ;
-    static const double novf=1.7E38, nunf=3.0E-39, zero=0.0 ;
+    static const double novf=1.7E38, nunf=3.0E-39 ;
 #else	/* defined(__vax__)||defined(tahoe) */
     static const unsigned short msign=0x7fff, mexp =0x7ff0  ;
     static const short prep1=54, gap=4, bias=1023           ;
-    static const double novf=1.7E308, nunf=3.0E-308,zero=0.0;
+    static const double novf=1.7E308, nunf=3.0E-308;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-double scalb(x,N)
-double x; int N;
+double
+scalb(double x, int N)
 {
         int k;
 
@@ -98,7 +99,7 @@ double x; int N;
         unsigned short *px=(unsigned short *) &x;
 #endif	/* national */
 
-        if( x == zero )  return(x);
+        if( x == __zero )  return(x);
 
 #if defined(__vax__)||defined(tahoe)
         if( (k= *px & mexp ) != ~msign ) {
@@ -128,8 +129,8 @@ double x; int N;
 }
 
 
-double copysign(x,y)
-double x,y;
+double
+copysign(double x, double y)
 {
 #ifdef national
         unsigned short  *px=(unsigned short *) &x+3,
@@ -147,8 +148,8 @@ double x,y;
         return(x);
 }
 
-double logb(x)
-double x;
+double
+logb(double x)
 {
 
 #ifdef national
@@ -163,10 +164,10 @@ double x;
         if( (k= *px & mexp ) != mexp )
             if ( k != 0 )
                 return ( (k>>gap) - bias );
-            else if( x != zero)
+            else if( x != __zero)
                 return ( -1022.0 );
             else
-                return(-(1.0/zero));
+                return(-(1.0/__zero));
         else if(x != x)
             return(x);
         else
@@ -174,8 +175,8 @@ double x;
 #endif	/* defined(__vax__)||defined(tahoe) */
 }
 
-finite(x)
-double x;
+int
+finite(double x)
 {
 #if defined(__vax__)||defined(tahoe)
         return(1);
@@ -188,8 +189,8 @@ double x;
 #endif	/* defined(__vax__)||defined(tahoe) */
 }
 
-double drem(x,p)
-double x,p;
+double
+drem(double x, double p)
 {
         short sign;
         double hp,dp,tmp;
@@ -216,11 +217,11 @@ double x,p;
         if( ( *px & mexp ) == mexp )
 #endif	/* defined(__vax__)||defined(tahoe) */
 		return  (x-p)-(x-p);	/* create nan if x is inf */
-	if (p == zero) {
+	if (p == __zero) {
 #if defined(__vax__)||defined(tahoe)
 		return(infnan(EDOM));
 #else	/* defined(__vax__)||defined(tahoe) */
-		return zero/zero;
+		return __zero/__zero;
 #endif	/* defined(__vax__)||defined(tahoe) */
 	}
 
@@ -269,12 +270,11 @@ double x,p;
 }
 
 
-double sqrt(x)
-double x;
+double
+sqrt(double x)
 {
         double q,s,b,r;
         double t;
-	double const zero=0.0;
         int m,n,i;
 #if defined(__vax__)||defined(tahoe)
         int k=54;
@@ -283,14 +283,14 @@ double x;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
     /* sqrt(NaN) is NaN, sqrt(+-0) = +-0 */
-        if(x!=x||x==zero) return(x);
+        if(x!=x||x==__zero) return(x);
 
     /* sqrt(negative) is invalid */
-        if(x<zero) {
+        if(x<__zero) {
 #if defined(__vax__)||defined(tahoe)
 		return (infnan(EDOM));	/* NaN */
 #else	/* defined(__vax__)||defined(tahoe) */
-		return(zero/zero);
+		return(__zero/__zero);
 #endif	/* defined(__vax__)||defined(tahoe) */
 	}
 
@@ -317,7 +317,7 @@ double x;
 
     /* generate the last bit and determine the final rounding */
             r/=2; x *= 4;
-            if(x==zero) goto end; 100+r; /* trigger inexact flag */
+            if(x==__zero) goto end; 100+r; /* trigger inexact flag */
             if(s<x) {
                 q+=r; x -=s; s += 2; s *= 2; x *= 4;
                 t = (x-s)-5;
@@ -349,8 +349,8 @@ end:        return(scalb(q,n));
  *     swapENI(e): save inexact enable and reset it to "e"
  */
 
-double drem(x,y)
-double x,y;
+double
+drem(double x, double y)
 {
 
 #ifdef national		/* order of words in floating point number */
@@ -360,7 +360,6 @@ double x,y;
 #endif
 
     	static const unsigned short mexp =0x7ff0, m25 =0x0190, m57 =0x0390;
-	static const double zero=0.0;
 	double hy,y1,t,t1;
 	short k;
 	long n;
@@ -376,8 +375,8 @@ double x,y;
 
 /* return NaN if x is NaN, or y is NaN, or x is INF, or y is zero */
 	if(x!=x) return(x); if(y!=y) return(y);	     /* x or y is NaN */
-	if( xexp == mexp )   return(zero/zero);      /* x is INF */
-	if(y==zero) return(y/y);
+	if( xexp == mexp )   return(__zero/__zero);      /* x is INF */
+	if(y==__zero) return(y/y);
 
 /* save the inexact flag and inexact enable in i and e respectively
  * and reset them to zero
@@ -450,8 +449,8 @@ static const unsigned long table[] = {
 58733, 67158, 75992, 85215, 83599, 71378, 60428, 50647, 41945, 34246, 27478,
 21581, 16499, 12183, 8588, 5674, 3403, 1742, 661, 130, };
 
-double newsqrt(x)
-double x;
+double
+newsqrt(double x)
 {
         double y,z,t,addc(),subc()
 	double const b54=134217728.*134217728.; /* b54=2**54 */

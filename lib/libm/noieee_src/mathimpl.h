@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.4 1998/11/08 19:29:34 ragge Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.5 2002/06/15 00:10:17 matt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,8 @@
  *
  *	@(#)mathimpl.h	8.1 (Berkeley) 6/4/93
  */
+#ifndef _NOIEEE_SRC_MATHIMPL_H_
+#define _NOIEEE_SRC_MATHIMPL_H_
 
 #include <sys/cdefs.h>
 #include <math.h>
@@ -40,11 +42,7 @@
 #if defined(__vax__)||defined(tahoe)
 
 /* Deal with different ways to concatenate in cpp */
-#  ifdef __STDC__
-#    define	cat3(a,b,c) a ## b ## c
-#  else
-#    define	cat3(a,b,c) a/**/b/**/c
-#  endif
+#define cat3(a,b,c)	a ## b ## c
 
 /* Deal with vax/tahoe byte order issues */
 #  ifdef __vax__
@@ -53,7 +51,7 @@
 #    define	cat3t(a,b,c) cat3(a,c,b)
 #  endif
 
-#  define vccast(name) (*(const double *)(cat3(name,,x)))
+#  define vccast(name) (*(const double *)(cat3(__,name,x)))
 
    /*
     * Define a constant to high precision on a Vax or Tahoe.
@@ -71,9 +69,16 @@
     * since CPP cannot do this for them from inside another macro (sigh).
     * We define "vccast" if this needs doing.
     */
+#ifdef _LIBM_DECLARE
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	const static long cat3(name,,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
-
+	const long cat3(__,name,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
+#elif defined(_LIBM_STATIC)
+#  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
+	static const long cat3(__,name,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
+#else
+#  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
+	extern const long cat3(__,name,x)[];
+#endif
 #  define ic(name, value, bexp, xval) ;
 
 #else	/* __vax__ or tahoe */
@@ -82,8 +87,16 @@
 #  undef vccast
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) ;
 
+#ifdef _LIBM_DECLARE
 #  define ic(name, value, bexp, xval) \
-	const static double name = value;
+	const double __CONCAT(__,name) = value;
+#elif _LIBM_STATIC
+#  define ic(name, value, bexp, xval) \
+	static const double __CONCAT(__,name) = value;
+#else
+#  define ic(name, value, bexp, xval) \
+	extern const double __CONCAT(__,name);
+#endif
 
 #endif	/* defined(__vax__)||defined(tahoe) */
 
@@ -91,10 +104,12 @@
 /*
  * Functions internal to the math package, yet not static.
  */
-extern double	__exp__E __P((double, double));
-extern double	__log__L __P((double));
-extern int	infnan __P((int));
+extern double	__exp__E (double, double);
+extern double	__log__L (double);
+extern int	infnan (int);
 
 struct Double {double a, b;};
-double __exp__D __P((double, double));
-struct Double __log__D __P((double));
+double __exp__D (double, double);
+struct Double __log__D (double);
+
+#endif /* _NOIEEE_SRC_MATHIMPL_H_ */
