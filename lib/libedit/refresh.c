@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.3 1997/07/06 18:25:33 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.4 1998/05/20 01:03:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.3 1997/07/06 18:25:33 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.4 1998/05/20 01:03:30 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -893,14 +893,14 @@ re_refresh_cursor(el)
 		    h++;
 		}
 	    }
-	    else if (iscntrl(c)) {	/* if control char */
+	    else if (iscntrl((unsigned char) c)) {	/* if control char */
 		h++;
 		if (h > th) {	/* if overflow, compensate */
 		    h = 1;
 		    v++;
 		}
 	    }
-	    else if (!isprint(c)) {
+	    else if (!isprint((unsigned char) c)) {
 		h += 3;
 		if (h > th) {	/* if overflow, compensate */
 		    h = h - th;
@@ -960,12 +960,12 @@ re_fastaddc(el)
 	return;
     }				/* else (only do at end of line, no TAB) */
 
-    if (iscntrl(c)) {		/* if control char, do caret */
+    if (iscntrl((unsigned char) c)) {		/* if control char, do caret */
 	char mc = (c == '\177') ? '?' : (c | 0100);
 	re_fastputc(el, '^');
 	re_fastputc(el, mc);
     }
-    else if (isprint(c)) {	/* normal char */
+    else if (isprint((unsigned char) c)) {	/* normal char */
 	re_fastputc(el, c);
     }
     else {
