@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.388 2001/10/22 04:54:00 lukem Exp $
+#	$NetBSD: mi,v 1.389 2001/10/22 18:04:07 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2376,6 +2376,7 @@
 ./usr/share/man/cat3/sl_init.0	comp-c-catman
 ./usr/share/man/cat3/sleep.0	comp-c-catman
 ./usr/share/man/cat3/snprintf.0	comp-c-catman
+./usr/share/man/cat3/sockatmark.0	comp-c-catman
 ./usr/share/man/cat3/sprintf.0	comp-c-catman
 ./usr/share/man/cat3/sqrt.0	comp-c-catman
 ./usr/share/man/cat3/sqrtf.0	comp-c-catman
@@ -4711,6 +4712,7 @@
 ./usr/share/man/man3/sl_init.3		comp-c-man
 ./usr/share/man/man3/sleep.3		comp-c-man
 ./usr/share/man/man3/snprintf.3		comp-c-man
+./usr/share/man/man3/sockatmark.3		comp-c-man
 ./usr/share/man/man3/sprintf.3		comp-c-man
 ./usr/share/man/man3/sqrt.3		comp-c-man
 ./usr/share/man/man3/sqrtf.3		comp-c-man
