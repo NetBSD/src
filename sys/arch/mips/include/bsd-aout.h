@@ -1,11 +1,11 @@
-/*	$NetBSD: bsd-aout.h,v 1.4 1999/04/24 08:10:33 simonb Exp $	*/
+/*	$NetBSD: bsd-aout.h,v 1.5 2002/11/30 01:52:31 simonb Exp $	*/
 
 /* bsd-aout.h
 
    4.4bsd a.out format, for backwards compatibility...  */
 
-#ifndef __MACHINE_BSD_AOUT_H__
-#define __MACHINE_BSD_AOUT_H__
+#ifndef __MIPS_BSD_AOUT_H__
+#define __MIPS_BSD_AOUT_H__
 #define BSD_OMAGIC  0407            /* old impure format */
 #define BSD_NMAGIC  0410            /* read-only text */
 #define BSD_ZMAGIC  0413            /* demand load format */
@@ -32,4 +32,4 @@ struct bsd_aouthdr {
 #define _AOUT_INCLUDE_
 #include <nlist.h>
 #endif /* _KERNEL */
-#endif /* __MACHINE_BSD_AOUT_H__ */
+#endif /* __MIPS_BSD_AOUT_H__ */
