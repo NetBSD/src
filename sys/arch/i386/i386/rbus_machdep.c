@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.6 2000/06/06 08:17:37 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7 2000/06/09 10:31:07 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -148,7 +148,6 @@ rbus_pccbb_parent_mem(pa)
 
 	start = ex->ex_start;
 
-#ifndef PCIBIOS_ADDR_FIXUP
 	/*
 	 * XXX: unfortunately, iomem_ex cannot be used for the dynamic
 	 * bus_space allocatoin.  There are some hidden memory (or
@@ -159,10 +158,11 @@ rbus_pccbb_parent_mem(pa)
 	 * if defined PCIBIOS_ADDR_FIXUP, PCI device using area
 	 * which do not recognised by the kernel are already reserved.
 	 */
+
 	if (start < 0x40000000) {
 		start = 0x40000000;	/* 1GB */
 	}
-#endif
+
 	size = ex->ex_end - start;
 	offset = 0;
   
