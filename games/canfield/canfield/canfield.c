@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.16 2000/04/27 00:30:52 jdc Exp $	*/
+/*	$NetBSD: canfield.c,v 1.17 2000/05/08 07:56:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.16 2000/04/27 00:30:52 jdc Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.17 2000/05/08 07:56:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1686,7 +1686,7 @@ initall()
 	dbfd = open(_PATH_SCORE, O_RDWR);
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	if (dbfd < 0)
 		return;

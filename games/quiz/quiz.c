@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.17 1999/12/16 13:45:48 jsm Exp $	*/
+/*	$NetBSD: quiz.c,v 1.18 2000/05/08 07:56:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.17 1999/12/16 13:45:48 jsm Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.18 2000/05/08 07:56:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ main(argc, argv)
 	const char *indexfile;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	indexfile = _PATH_QUIZIDX;
 	while ((ch = getopt(argc, argv, "i:t")) != -1)

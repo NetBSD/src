@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.10 2000/01/09 17:17:20 jsm Exp $	*/
+/*	$NetBSD: caesar.c,v 1.11 2000/05/08 07:56:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.10 2000/01/09 17:17:20 jsm Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.11 2000/05/08 07:56:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ main(argc, argv)
 	int obs[26], try, winner;
 
 	/* revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	winnerdot = 0;
 	if (argc > 1)

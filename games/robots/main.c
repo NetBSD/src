@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2000/01/19 19:43:42 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2000/01/19 19:43:42 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ main(ac, av)
 		exit(1);
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	show_only = FALSE;
 	Num_games = 1;

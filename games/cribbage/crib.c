@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.12 1999/09/12 09:02:21 jsm Exp $	*/
+/*	$NetBSD: crib.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.12 1999/09/12 09:02:21 jsm Exp $");
+__RCSID("$NetBSD: crib.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 		exit(1);
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	/* Set close-on-exec flag on log file */
 	if (f != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.8 1999/09/12 09:02:20 jsm Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.9 2000/05/08 07:56:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.8 1999/09/12 09:02:20 jsm Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.9 2000/05/08 07:56:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 	int uid;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	if (argc > 2) {
 		printf("Usage: cfscores [user]\n");

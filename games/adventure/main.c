@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1999/07/16 01:38:20 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2000/05/08 07:55:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 1999/07/16 01:38:20 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2000/05/08 07:55:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(argc, argv)
 	struct text *kk;
 
 	/* revoke setgid privileges from dm */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	init();		/* Initialize everything */
 	signal(SIGINT, trapdel);
