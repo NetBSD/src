@@ -95,6 +95,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif /* KERNEL_U_ADDR_BSD.  */
 #endif /* !FETCH_INFERIOR_REGISTERS */
 
+#if !defined (CHILD_XFER_MEMORY)
+static void udot_info PARAMS ((char *, int));
+#endif
+
+#if !defined (FETCH_INFERIOR_REGISTERS)
+static void fetch_register PARAMS ((int));
+static void store_register PARAMS ((int));
+#endif
+
 
 /* This function simply calls ptrace with the given arguments.  
    It exists so that all calls to ptrace are isolated in this 
@@ -125,12 +134,15 @@ kill_inferior ()
 {
   if (inferior_pid == 0)
     return;
-  /* ptrace PT_KILL only works if process is stopped!!!  So stop it with
-     a real signal first, if we can.  FIXME: This is bogus.  When the inferior
-     is not stopped, GDB should just be waiting for it.  Either the following
-     line is unecessary, or there is some problem elsewhere in GDB which
-     causes us to get here when the inferior is not stopped.  */
-  kill (inferior_pid, SIGKILL);
+
+  /* This once used to call "kill" to kill the inferior just in case
+     the inferior was still running.  As others have noted in the past
+     (kingdon) there shouldn't be any way to get here if the inferior
+     is still running -- else there's a major problem elsewere in gdb
+     and it needs to be fixed.
+
+     The kill call causes problems under hpux10, so it's been removed;
+     if this causes problems we'll deal with them as they arise.  */
   ptrace (PT_KILL, inferior_pid, (PTRACE_ARG3_TYPE) 0, 0);
   wait ((int *)0);
   target_mourn_inferior ();
@@ -165,14 +177,16 @@ child_resume (pid, step, signal)
      continue request (by setting breakpoints on all possible successor
      instructions), so we don't have to worry about that here.  */
 
-  if (step) {
+  if (step)
+    {
 #ifdef NO_SINGLE_STEP
-    abort();	/* Make sure this doesn't happen. */
-#else	/* NO_SINGLE_STEP */
-    ptrace (PT_STEP,     pid, (PTRACE_ARG3_TYPE) 1,
-	    target_signal_to_host (signal));
-#endif	/* NO_SINGLE_STEP */
-  } else
+      abort();  /* Make sure this doesn't happen. */
+#else
+      ptrace (PT_STEP,     pid, (PTRACE_ARG3_TYPE) 1,
+	      target_signal_to_host (signal));
+#endif          /* NO_SINGLE_STEP */
+    }
+  else
     ptrace (PT_CONTINUE, pid, (PTRACE_ARG3_TYPE) 1,
 	    target_signal_to_host (signal));
 
@@ -266,12 +280,10 @@ fetch_register (regno)
 {
   /* This isn't really an address.  But ptrace thinks of it as one.  */
   CORE_ADDR regaddr;
-  char buf[MAX_REGISTER_RAW_SIZE];
   char mess[128];				/* For messages */
   register int i;
-
-  /* Offset of registers within the u area.  */
-  unsigned int offset;
+  unsigned int offset;  /* Offset of registers within the u area.  */
+  char buf[MAX_REGISTER_RAW_SIZE];
 
   if (CANNOT_FETCH_REGISTER (regno))
     {
@@ -299,22 +311,25 @@ fetch_register (regno)
 }
 
 
-/* Fetch all registers, or just one, from the child process.  */
+/* Fetch register values from the inferior.
+   If REGNO is negative, do this for all registers.
+   Otherwise, REGNO specifies which register (so we can save time). */
 
 void
 fetch_inferior_registers (regno)
      int regno;
 {
-  int numregs;
-
-  if (regno == -1)
+  if (regno >= 0)
     {
-      numregs = ARCH_NUM_REGS;
-      for (regno = 0; regno < numregs; regno++)
-        fetch_register (regno);
+      fetch_register (regno);
     }
   else
-    fetch_register (regno);
+    {
+      for (regno = 0; regno < ARCH_NUM_REGS; regno++)
+	{
+	  fetch_register (regno);
+	}
+    }
 }
 
 /* Registers we shouldn't try to store.  */
@@ -322,57 +337,57 @@ fetch_inferior_registers (regno)
 #define CANNOT_STORE_REGISTER(regno) 0
 #endif
 
+/* Store one register. */
+
+static void
+store_register (regno)
+     int regno;
+{
+  /* This isn't really an address.  But ptrace thinks of it as one.  */
+  CORE_ADDR regaddr;
+  char mess[128];				/* For messages */
+  register int i;
+  unsigned int offset;  /* Offset of registers within the u area.  */
+
+  if (CANNOT_STORE_REGISTER (regno))
+    {
+      return;
+    }
+
+  offset = U_REGS_OFFSET;
+
+  regaddr = register_addr (regno, offset);
+  for (i = 0; i < REGISTER_RAW_SIZE (regno); i += sizeof(PTRACE_XFER_TYPE))
+    {
+      errno = 0;
+      ptrace (PT_WRITE_U, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
+	      *(PTRACE_XFER_TYPE *) &registers[REGISTER_BYTE (regno) + i]);
+      regaddr += sizeof (PTRACE_XFER_TYPE);
+      if (errno != 0)
+	{
+	  sprintf (mess, "writing register %s (#%d)", reg_names[regno], regno);
+	  perror_with_name (mess);
+	}
+    }
+}
+
 /* Store our register values back into the inferior.
-   If REGNO is -1, do this for all registers.
+   If REGNO is negative, do this for all registers.
    Otherwise, REGNO specifies which register (so we can save time).  */
 
 void
 store_inferior_registers (regno)
      int regno;
 {
-  /* This isn't really an address.  But ptrace thinks of it as one.  */
-  CORE_ADDR regaddr;
-  char buf[80];
-  register int i, numregs;
-
-  unsigned int offset = U_REGS_OFFSET;
-
   if (regno >= 0)
     {
-      regaddr = register_addr (regno, offset);
-      for (i = 0; i < REGISTER_RAW_SIZE (regno); i += sizeof(PTRACE_XFER_TYPE))
-	{
-	  errno = 0;
-	  ptrace (PT_WRITE_U, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
-		  *(PTRACE_XFER_TYPE *) &registers[REGISTER_BYTE (regno) + i]);
-	  if (errno != 0)
-	    {
-	      sprintf (buf, "writing register number %d(%d)", regno, i);
-	      perror_with_name (buf);
-	    }
-	  regaddr += sizeof(PTRACE_XFER_TYPE);
-	}
+      store_register (regno);
     }
   else
     {
-      numregs = ARCH_NUM_REGS;
-      for (regno = 0; regno < numregs; regno++)
+      for (regno = 0; regno < ARCH_NUM_REGS; regno++)
 	{
-	  if (CANNOT_STORE_REGISTER (regno))
-	    continue;
-	  regaddr = register_addr (regno, offset);
-	  for (i = 0; i < REGISTER_RAW_SIZE (regno); i += sizeof(PTRACE_XFER_TYPE))
-	    {
-	      errno = 0;
-	      ptrace (PT_WRITE_U, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
-		      *(PTRACE_XFER_TYPE *) &registers[REGISTER_BYTE (regno) + i]);
-	      if (errno != 0)
-		{
-		  sprintf (buf, "writing register number %d(%d)", regno, i);
-		  perror_with_name (buf);
-		}
-	      regaddr += sizeof(PTRACE_XFER_TYPE);
-	    }
+	  store_register (regno);
 	}
     }
 }
@@ -457,6 +472,9 @@ child_xfer_memory (memaddr, myaddr, len, write, target)
 	  if (errno)
 	    return 0;
 	}
+#ifdef CLEAR_INSN_CACHE
+      CLEAR_INSN_CACHE();
+#endif
     }
   else
     {
@@ -481,11 +499,15 @@ child_xfer_memory (memaddr, myaddr, len, write, target)
 
 
 static void
-udot_info ()
+udot_info (dummy1, dummy2)
+     char *dummy1;
+     int dummy2;
 {
+#if defined (KERNEL_U_SIZE)
   int udot_off;		/* Offset into user struct */
   int udot_val;		/* Value from user struct at udot_off */
   char mess[128];	/* For messages */
+#endif
 
    if (!target_has_execution)
      {

@@ -11,8 +11,8 @@
  */
 
 /*
- * RCS $Revision: 1.1.1.1 $
- * Checkin $Date: 1999/02/10 22:09:20 $
+ * RCS $Revision: 1.2 $
+ * Checkin $Date: 1999/02/10 22:18:19 $
  */
 
 #ifndef Dbg_Conf__h

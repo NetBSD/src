@@ -29,8 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* On NetBSD, sigtramp is above the user stack and immediately below
    the user area. Using constants here allows for cross debugging. */
-#define SIGTRAMP_END	0xefbfe000	/* USRSTACK */
-#define SIGTRAMP_START	(SIGTRAMP_END - 64)
+#define SIGTRAMP_END(pc)	0xefbfe000	/* USRSTACK */
+#define SIGTRAMP_START(pc)	(SIGTRAMP_END(pc) - 64)
 
 /* Saved Pc.  Get it from sigcontext if within sigtramp.  */
 /* Offset to saved PC in sigcontext, from <sys/signal.h>.  */

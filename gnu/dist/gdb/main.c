@@ -33,12 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <ctype.h>
 
 #include "gdb_string.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifndef	NO_SYS_FILE
-#include <sys/file.h>
-#endif
 
 /* Temporary variable for SET_TOP_LEVEL.  */
 
@@ -49,8 +43,8 @@ static int top_level_val;
    ugly if it had to use catch_errors each time.  */
 
 #define SET_TOP_LEVEL() \
-  (((top_level_val = setjmp (error_return)) \
-    ? (PTR) 0 : (PTR) memcpy (quit_return, error_return, sizeof (jmp_buf))) \
+  (((top_level_val = SIGSETJMP (error_return)) \
+    ? (PTR) 0 : (PTR) memcpy (quit_return, error_return, sizeof (SIGJMP_BUF))) \
    , top_level_val)
 
 /* If nonzero, display time usage both at startup and for each command.  */
@@ -61,7 +55,8 @@ int display_time;
 
 int display_space;
 
-extern void gdb_init PARAMS ((void));
+static void print_gdb_help PARAMS ((GDB_FILE *));
+extern void gdb_init PARAMS ((char *));
 
 int
 main (argc, argv)
@@ -141,7 +136,6 @@ main (argc, argv)
   current_directory = gdb_dirbuf;
 
   /* Parse arguments and options.  */
-#ifndef WINGDB
   {
     int c;
     /* When var field is 0, use flag field to record the equivalent
@@ -286,6 +280,23 @@ main (argc, argv)
 	      else
 		baud_rate = i;
 	    }
+	  case 'l':
+	    {
+	      int i;
+	      char *p;
+
+	      i = strtol (optarg, &p, 0);
+	      if (i == 0 && p == optarg)
+
+		/* Don't use *_filtered or warning() (which relies on
+                   current_target) until after initialize_all_files(). */
+
+		fprintf_unfiltered
+		  (gdb_stderr,
+		   "warning: could not set timeout limit to `%s'.\n", optarg);
+	      else
+		remote_timeout = i;
+	    }
 	    break;
 
 #ifdef ADDITIONAL_OPTION_CASES
@@ -325,8 +336,7 @@ main (argc, argv)
       quiet = 1;
   }
 
-#endif
-  gdb_init ();
+  gdb_init (argv[0]);
 
   /* Do these (and anything which might call wrap_here or *_filtered)
      after initialize_all_files.  */
@@ -340,54 +350,8 @@ main (argc, argv)
 
   if (print_help)
     {
-      /* --version is intentionally not documented here, because we
-	 are printing the version here, and the help is long enough
-	 already.  */
-
-      print_gdb_version (gdb_stdout);
-      /* Make sure the output gets printed.  */
-      wrap_here ("");
-      printf_filtered ("\n");
-
-      /* But don't use *_filtered here.  We don't want to prompt for continue
-	 no matter how small the screen or how much we're going to print.  */
-      fputs_unfiltered ("\
-This is the GNU debugger.  Usage:\n\
-    gdb [options] [executable-file [core-file or process-id]]\n\
-Options:\n\
-  --help             Print this message.\n\
-  --quiet            Do not print version number on startup.\n\
-  --fullname         Output information used by emacs-GDB interface.\n\
-  --epoch            Output information used by epoch emacs-GDB interface.\n\
-", gdb_stdout);
-      fputs_unfiltered ("\
-  --batch            Exit after processing options.\n\
-  --nx               Do not read .gdbinit file.\n\
-  --tty=TTY          Use TTY for input/output by the program being debugged.\n\
-  --cd=DIR           Change current directory to DIR.\n\
-  --directory=DIR    Search for source files in DIR.\n\
-", gdb_stdout);
-      fputs_unfiltered ("\
-  --command=FILE     Execute GDB commands from FILE.\n\
-  --symbols=SYMFILE  Read symbols from SYMFILE.\n\
-  --exec=EXECFILE    Use EXECFILE as the executable.\n\
-  --se=FILE          Use FILE as symbol file and executable file.\n\
-", gdb_stdout);
-      fputs_unfiltered ("\
-  --core=COREFILE    Analyze the core dump COREFILE.\n\
-  -b BAUDRATE        Set serial port baud rate used for remote debugging.\n\
-  --mapped           Use mapped symbol files if supported on this system.\n\
-  --readnow          Fully read symbol files on first access.\n\
-  --nw		     Do not use a window interface.\n\
-  -w		     Use a window interface.\n\
-  --write            Set writing into executable and core files.\n\
-", gdb_stdout);
-#ifdef ADDITIONAL_OPTION_HELP
-      fputs_unfiltered (ADDITIONAL_OPTION_HELP, gdb_stdout);
-#endif
-      fputs_unfiltered ("\n\
-For more information, type \"help\" from within GDB, or consult the\n\
-GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
+      print_gdb_help (gdb_stdout);
+      fputs_unfiltered ("\n", gdb_stdout);
       exit (0);
     }
 
@@ -395,7 +359,6 @@ GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
     {
       /* Print all the junk at the top, with trailing "..." if we are about
 	 to read a symbol file (possibly slowly).  */
-      print_gnu_advertisement ();
       print_gdb_version (gdb_stdout);
       if (symarg)
 	printf_filtered ("..");
@@ -422,7 +385,7 @@ GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
       strcat (homeinit, "/");
       strcat (homeinit, gdbinit);
 
-      if (!inhibit_gdbinit && access (homeinit, R_OK) == 0)
+      if (!inhibit_gdbinit)
 	{
 	  if (!SET_TOP_LEVEL ())
 	    source_command (homeinit, 0);
@@ -516,7 +479,7 @@ GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
   
   if (!homedir
       || memcmp ((char *) &homebuf, (char *) &cwdbuf, sizeof (struct stat)))
-    if (!inhibit_gdbinit && access (gdbinit, R_OK) == 0)
+    if (!inhibit_gdbinit)
       {
 	if (!SET_TOP_LEVEL ())
 	  source_command (gdbinit, 0);
@@ -578,7 +541,7 @@ GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
   /* The default command loop. 
      The WIN32 Gui calls this main to set up gdb's state, and 
      has its own command loop. */
-#if !defined (WINGDB)
+#if !defined _WIN32 || defined __GNUC__
   while (1)
     {
       if (!SET_TOP_LEVEL ())
@@ -599,6 +562,58 @@ GDB manual (available as on-line info or a printed manual).\n", gdb_stdout);
 #endif
 
 }
+
+/* Don't use *_filtered for printing help.  We don't want to prompt
+   for continue no matter how small the screen or how much we're going
+   to print.  */
+
+static void
+print_gdb_help (stream)
+  GDB_FILE *stream;
+{
+      fputs_unfiltered ("\
+This is the GNU debugger.  Usage:\n\n\
+    gdb [options] [executable-file [core-file or process-id]]\n\n\
+Options:\n\n\
+", stream);
+      fputs_unfiltered ("\
+  -b BAUDRATE        Set serial port baud rate used for remote debugging.\n\
+  --batch            Exit after processing options.\n\
+  --cd=DIR           Change current directory to DIR.\n\
+  --command=FILE     Execute GDB commands from FILE.\n\
+  --core=COREFILE    Analyze the core dump COREFILE.\n\
+", stream);
+      fputs_unfiltered ("\
+  --directory=DIR    Search for source files in DIR.\n\
+  --epoch            Output information used by epoch emacs-GDB interface.\n\
+  --exec=EXECFILE    Use EXECFILE as the executable.\n\
+  --fullname         Output information used by emacs-GDB interface.\n\
+  --help             Print this message.\n\
+", stream);
+      fputs_unfiltered ("\
+  --mapped           Use mapped symbol files if supported on this system.\n\
+  --nw		     Do not use a window interface.\n\
+  --nx               Do not read .gdbinit file.\n\
+  --quiet            Do not print version number on startup.\n\
+  --readnow          Fully read symbol files on first access.\n\
+", stream);
+      fputs_unfiltered ("\
+  --se=FILE          Use FILE as symbol file and executable file.\n\
+  --symbols=SYMFILE  Read symbols from SYMFILE.\n\
+  --tty=TTY          Use TTY for input/output by the program being debugged.\n\
+  --write            Set writing into executable and core files.\n\
+  --version          Print version information and then exit.\n\
+", stream);
+#ifdef ADDITIONAL_OPTION_HELP
+      fputs_unfiltered (ADDITIONAL_OPTION_HELP, stream);
+#endif
+      fputs_unfiltered ("\n\
+For more information, type \"help\" from within GDB, or consult the\n\
+GDB manual (available as on-line info or a printed manual).\n\
+Report bugs to \"bug-gdb@prep.ai.mit.edu\".\
+", stream);
+}
+
 
 void
 init_proc ()
@@ -611,21 +626,21 @@ proc_remove_foreign (pid)
 {
 }
 
+/* All I/O sent to the *_filtered and *_unfiltered functions eventually ends up
+   here.  The fputs_unfiltered_hook is primarily used by GUIs to collect all
+   output and send it to the GUI, instead of the controlling terminal.  Only
+   output to gdb_stdout and gdb_stderr are sent to the hook.  Everything else
+   is sent on to fputs to allow file I/O to be handled appropriately.  */
+
 void
 fputs_unfiltered (linebuffer, stream)
      const char *linebuffer;
      FILE *stream;
 {
-  if (fputs_unfiltered_hook)
-    {
-      /* FIXME: I think we should only be doing this for stdout or stderr.
-	 Either that or we should be passing stream to the hook so it can
-	 deal with it.  If that is cleaned up, this function can go back
-	 into utils.c and the fputs_unfiltered_hook can replace the current
-	 ability to avoid this function by not linking with main.c.  */
-      fputs_unfiltered_hook (linebuffer, stream);
-      return;
-    }
-
-  fputs (linebuffer, stream);
+  if (fputs_unfiltered_hook
+      && (stream == gdb_stdout
+	  || stream == gdb_stderr))
+    fputs_unfiltered_hook (linebuffer, stream);
+  else
+    fputs (linebuffer, stream);
 }

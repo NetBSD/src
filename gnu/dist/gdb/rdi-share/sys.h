@@ -10,8 +10,8 @@
  ***********************************************************************
  * Angel C Libary support channel protocol definitions
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 1999/02/10 22:09:22 $
+ * $Revision: 1.2 $
+ *     $Date: 1999/02/10 22:18:24 $
  *
  *
  *
