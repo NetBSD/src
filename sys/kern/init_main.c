@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.169 2000/05/28 05:49:05 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.170 2000/05/28 18:52:32 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -240,6 +240,7 @@ main()
 	 */
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
 	proclist_unlock_write(s);
 
 	p->p_pgrp = &pgrp0;
