@@ -1,3 +1,5 @@
+/*	$NetBSD: ariareg.h,v 1.2 1998/07/21 07:48:36 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
  *
