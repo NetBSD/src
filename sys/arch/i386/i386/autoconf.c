@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56.4.1 2001/09/18 19:13:47 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.4.2 2001/09/26 15:28:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -216,6 +216,7 @@ matchbiosdisks()
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
+			vn_lock(tv, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0, NULL);
 			if (error) {
 				vput(tv);
@@ -229,6 +230,7 @@ matchbiosdisks()
 				printf("matchbiosdisks: %s: MBR read failure\n",
 				    dv->dv_xname);
 #endif
+				vput(tv);
 				continue;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61.4.1 2001/09/07 04:45:41 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.4.2 2001/09/26 15:28:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -339,14 +339,17 @@ bpfopen(devvp, flag, mode, p)
 	struct proc *p;
 {
 	struct bpf_d *d;
+	dev_t rdev;
 
-	if (minor(devvp->v_rdev) >= NBPFILTER)
+	rdev = vdev_rdev(devvp);
+
+	if (minor(rdev) >= NBPFILTER)
 		return (ENXIO);
 	/*
 	 * Each minor can be opened by only one process.  If the requested
 	 * minor is in use, return EBUSY.
 	 */
-	d = &bpf_dtab[minor(devvp->v_rdev)];
+	d = &bpf_dtab[minor(rdev)];
 	if (!D_ISFREE(d))
 		return (EBUSY);
 
@@ -354,7 +357,7 @@ bpfopen(devvp, flag, mode, p)
 	memset((char *)d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
 
-	devvp->v_devcookie = d;
+	vdev_setprivdata(devvp, d);
 
 	return (0);
 }
@@ -371,8 +374,10 @@ bpfclose(devvp, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct bpf_d *d = devvp->v_devcookie;
+	struct bpf_d *d;
 	int s;
+
+	d = vdev_privdata(devvp);
 
 	s = splnet();
 	if (d->bd_bif)
@@ -403,9 +408,11 @@ bpfread(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = devvp->v_devcookie;
+	struct bpf_d *d;
 	int error;
 	int s;
+
+	d = vdev_privdata(devvp);
 
 	/*
 	 * Restrict application to use a buffer the same size as
@@ -522,11 +529,13 @@ bpfwrite(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = devvp->v_devcookie;
+	struct bpf_d *d;
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
 	static struct sockaddr_storage dst;
+
+	d = vdev_privdata(devvp);
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -606,11 +615,13 @@ bpfioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct bpf_d *d = devvp->v_devcookie;
+	struct bpf_d *d;
 	int s, error = 0;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
+
+	d = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -993,9 +1004,13 @@ bpfpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct bpf_d *d = devvp->v_devcookie;
-	int revents = 0;
-	int s = splnet();
+	struct bpf_d *d;
+	int revents;
+	int s;
+
+	revents = 0;
+	d = vdev_privdata(devvp);
+	s = splnet();
 
 	/*
 	 * An imitation of the FIONREAD ioctl code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.37.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.37.2.2 2001/09/26 15:28:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -1170,14 +1170,14 @@ seopen(devvp, flag, fmt, p)
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
 
-	unit = SEUNIT(devvp->v_rdev);
+	unit = SEUNIT(vdev_rdev(devvp));
 	if (unit >= se_cd.cd_ndevs)
 		return (ENXIO);
 	sc = se_cd.cd_devs[unit];
 	if (sc == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	periph = sc->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -1205,9 +1205,13 @@ seclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct se_softc *sc = devvp->v_devcookie;
-	struct scsipi_periph *periph = sc->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+	struct se_softc *sc;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+
+	sc = vdev_privdata(devvp);
+	periph = sc->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(sc->sc_periph, SCSIPI_DB1, ("closing\n"));
 
@@ -1231,7 +1235,9 @@ seioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct se_softc *sc = devvp->v_devcookie;
+	struct se_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return (scsipi_do_ioctl(sc->sc_periph, devvp, cmd, addr, flag, p));
 }

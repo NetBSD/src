@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.47.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.47.2.2 2001/09/26 15:28:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -254,12 +254,12 @@ chopen(devvp, flags, fmt, p)
 	struct scsipi_adapter *adapt;
 	int unit, error;
 
-	unit = CHUNIT(devvp->v_rdev);
+	unit = CHUNIT(vdev_rdev(devvp));
 	if ((unit >= ch_cd.cd_ndevs) ||
 	    ((sc = ch_cd.cd_devs[unit]) == NULL))
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	periph = sc->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -307,9 +307,13 @@ chclose(devvp, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	struct ch_softc *sc = devvp->v_devcookie;
-	struct scsipi_periph *periph = sc->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+	struct ch_softc *sc;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+
+	sc = vdev_privdata(devvp);
+	periph = sc->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	scsipi_wait_drain(periph);
 
@@ -327,8 +331,10 @@ chread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct ch_softc *sc = devvp->v_devcookie;
+	struct ch_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (uio->uio_resid != CHANGER_EVENT_SIZE)
 		return (EINVAL);
@@ -351,8 +357,10 @@ chioctl(devvp, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct ch_softc *sc = devvp->v_devcookie;
+	struct ch_softc *sc;
 	int error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	/*
 	 * If this command can change the device's state, we must
@@ -454,8 +462,10 @@ chpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct ch_softc *sc = devvp->v_devcookie;
+	struct ch_softc *sc;
 	int revents;
+
+	sc = vdev_privdata(devvp);
 
 	revents = events & (POLLOUT | POLLWRNORM);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.4.1 2001/09/18 19:13:46 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.2 2001/09/26 15:28:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,6 +141,7 @@ match_harddisk(dv, bid)
 	 */
 	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
 		panic("findroot can't alloc vnode");
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0, NULL);
 	if (error) {
 #ifndef DEBUG
@@ -152,10 +153,12 @@ match_harddisk(dv, bid)
 #endif
 			printf("findroot: can't open dev %s%c (%d)\n",
 			       dv->dv_xname, 'a' + bid->partition, error);
-		vrele(tmpvn);
+		vput(tmpvn);
 		return(0);
 	}
+	VOP_UNLOCK(tmpvn, 0);
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0);
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	if (error) {
 		/*
 		 * XXX can't happen - open() would
@@ -174,7 +177,7 @@ match_harddisk(dv, bid)
 
 closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
-	vrele(tmpvn);
+	vput(tmpvn);
 
 	return(found);
 }

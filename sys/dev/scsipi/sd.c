@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.178.2.1 2001/09/07 04:45:32 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.178.2.2 2001/09/26 15:28:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ sdopen(devvp, flag, fmt, p)
 	int unit, part;
 	int error;
 
-	unit = SDUNIT(devvp->v_rdev);
+	unit = SDUNIT(vdev_rdev(devvp));
 	if (unit >= sd_cd.cd_ndevs)
 		return (ENXIO);
 	sd = sd_cd.cd_devs[unit];
@@ -364,15 +364,15 @@ sdopen(devvp, flag, fmt, p)
 	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
-	devvp->v_devcookie = sd;
+	vdev_setprivdata(devvp, sd);
 
 	periph = sd->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
-	part = SDPART(devvp->v_rdev);
+	part = SDPART(vdev_rdev(devvp));
 
 	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n",
-	    devvp->v_rdev, unit, sd_cd.cd_ndevs, part));
+	    vdev_rdev(devvp), unit, sd_cd.cd_ndevs, part));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -505,11 +505,15 @@ sdclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd = devvp->v_devcookie;
-	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
-	int part = SDPART(devvp->v_rdev);
+	struct sd_softc *sd;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+	int part = SDPART(vdev_rdev(devvp));
 	int error;
+
+	sd = vdev_privdata(devvp);
+	periph = sd->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	if ((error = sdlock(sd)) != 0)
 		return (error);
@@ -570,12 +574,17 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = bp->b_devvp->v_devcookie;
-	struct scsipi_periph *periph = sd->sc_periph;
+	struct sd_softc *sd;
+	struct scsipi_periph *periph;
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
 	boolean_t sector_aligned;
+	dev_t rdev;
+
+	sd = vdev_privdata(bp->b_devvp);
+	rdev = vdev_rdev(bp->b_devvp);
+	periph = sd->sc_periph;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,
@@ -617,7 +626,7 @@ sdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (SDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (SDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, lp,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
@@ -634,9 +643,9 @@ sdstrategy(bp)
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
-	if (SDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (SDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0)
-		blkno += lp->d_partitions[SDPART(bp->b_devvp->v_rdev)].p_offset;
+		blkno += lp->d_partitions[SDPART(rdev)].p_offset;
 
 	bp->b_rawblkno = blkno;
 
@@ -839,8 +848,10 @@ void
 sdminphys(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = bp->b_devvp->v_devcookie;
+	struct sd_softc *sd;
 	long max;
+
+	sd = vdev_privdata(bp->b_devvp);
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -897,13 +908,16 @@ sdioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sd_softc *sd = devvp->v_devcookie;
-	struct scsipi_periph *periph = sd->sc_periph;
-	int part = SDPART(devvp->v_rdev);
+	struct sd_softc *sd;
+	struct scsipi_periph *periph;
+	int part = SDPART(vdev_rdev(devvp));
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+
+	sd = vdev_privdata(devvp);
+	periph = sd->sc_periph;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdioctl 0x%lx ", cmd));
 
@@ -1116,9 +1130,12 @@ void
 sdgetdisklabel(devvp)
 	struct vnode *devvp;
 {
-	struct sd_softc *sd = devvp->v_devcookie;
-	struct disklabel *lp = sd->sc_dk.dk_label;
+	struct sd_softc *sd;
+	struct disklabel *lp;
 	char *errstring;
+
+	sd = vdev_privdata(devvp);
+	lp = sd->sc_dk.dk_label;
 
 	memset(sd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 

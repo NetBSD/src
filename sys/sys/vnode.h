@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91.4.1 2001/09/18 19:14:00 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.4.2 2001/09/26 15:28:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -155,8 +155,10 @@ struct vnode {
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
+#define VCLONED		0x10000 /* vnode created for cloning device */
 
 #define	VSIZENOTSET	((voff_t)-1)
+
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -213,6 +215,32 @@ struct vattr {
  */
 #define	VNOVAL	(-1)
 
+/*
+ * This structure defines the information maintained about
+ * special devices. It is allocated in checkalias and freed
+ * in vgone.
+ */
+struct specinfo {
+	struct	vnode **si_hashchain;
+	struct	vnode *si_specnext;
+	struct	mount *si_mountpoint;
+	dev_t	si_rdev;
+	struct	lockf *si_lockf;
+	void	*si_devcookie;
+	struct vattr *si_vattr;		/* attributes if VCLONED */
+};
+
+/*
+ * Exported shorthand
+ */
+#define v_rdev		v_specinfo->si_rdev
+#define v_hashchain	v_specinfo->si_hashchain
+#define v_specnext	v_specinfo->si_specnext
+#define v_speclockf	v_specinfo->si_lockf
+#define v_specmountpoint v_specinfo->si_mountpoint
+#define	v_devcookie	v_specinfo->si_devcookie
+#define v_cloneattr	v_specinfo->si_vattr
+
 #ifdef _KERNEL
 /*
  * Convert between vnode types and inode formats (since POSIX.1
@@ -236,7 +264,8 @@ extern const int	vttoif_tab[];
 /*
  * Flags to various vnode operations.
  */
-#define	REVOKEALL	0x0001		/* revoke: revoke all aliases */
+#define	REVOKEALIAS	0x0001		/* revoke: revoke all aliases */
+#define	REVOKECLONE	0x0001		/* revoke: revoke all clones */
 
 #define	FSYNC_WAIT	0x0001		/* fsync: wait for completion */
 #define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
@@ -319,6 +348,14 @@ vref(struct vnode *vp)
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
+
+/*
+ * Quick macros to retrieve device information from a vnode.
+ * These do not check the validity of a vnode.
+ */
+#define vdev_rdev(vp)		((vp)->v_rdev)
+#define vdev_privdata(vp)	((vp)->v_devcookie)
+#define vdev_setprivdata(vp,sc)	((vp)->v_devcookie = (sc))
 
 #define	NULLVP	((struct vnode *)NULL)
 
@@ -507,8 +544,11 @@ int	vflush(struct mount *mp, struct vnode *vp, int flags);
 void	vntblinit(void);
 void	vwakeup(struct buf *);
 void	vdevgone(int, int, int, enum vtype);
-void	vdevremhash(struct vnode *);
-void	vdevinshash(struct vnode *, dev_t);
+void	vdev_remhash(struct vnode *);
+void	vdev_inshash(struct vnode *, dev_t);
+int	vdev_setdevdata(struct vnode *, void *);
+int	vdev_getdevdata(struct vnode *, dev_t *, void **);
+int	vdev_reassignvp(struct vnode *, dev_t);
 int 	vget(struct vnode *vp, int lockflag);
 void 	vgone(struct vnode *vp);
 void	vgonel(struct vnode *vp, struct proc *p);

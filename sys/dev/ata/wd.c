@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.214.4.2 2001/09/18 19:13:49 fvdl Exp $ */
+/*	$NetBSD: wd.c,v 1.214.4.3 2001/09/26 15:28:10 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -435,10 +435,15 @@ void
 wdstrategy(bp)
 	struct buf *bp;
 {
-	struct wd_softc *wd = bp->b_devvp->v_devcookie;
-	struct disklabel *lp = wd->sc_dk.dk_label;
+	struct wd_softc *wd;
+	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
+	dev_t rdev;
+
+	wd = vdev_privdata(bp->b_devvp);
+	rdev = vdev_rdev(bp->b_devvp);
+	lp = wd->sc_dk.dk_label;
 
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
@@ -465,7 +470,7 @@ wdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (WDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (WDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
@@ -480,9 +485,9 @@ wdstrategy(bp)
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
-	if (WDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (WDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0)
-		blkno += lp->d_partitions[WDPART(bp->b_devvp->v_rdev)].p_offset;
+		blkno += lp->d_partitions[WDPART(rdev)].p_offset;
 
 	bp->b_rawblkno = blkno;
 
@@ -724,11 +729,11 @@ wdopen(devvp, flag, fmt, p)
 	int part, error;
 
 	WDCDEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
-	wd = device_lookup(&wd_cd, WDUNIT(devvp->v_rdev));
+	wd = device_lookup(&wd_cd, WDUNIT(vdev_rdev(devvp)));
 	if (wd == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = wd;
+	vdev_setprivdata(devvp, wd);
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -805,11 +810,14 @@ wdclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct wd_softc *wd = devvp->v_devcookie;
-	int part = WDPART(devvp->v_rdev);
-	int error;
-	
+	struct wd_softc *wd;
+	int part, error;
+
 	WDCDEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
+
+	wd = vdev_privdata(devvp);
+	part = WDPART(vdev_rdev(devvp));
+	
 	if ((error = wdlock(wd)) != 0)
 		return error;
 
@@ -883,11 +891,15 @@ void
 wdgetdisklabel(devvp)
 	struct vnode *devvp;
 {
-	struct wd_softc *wd = devvp->v_devcookie;
-	struct disklabel *lp = wd->sc_dk.dk_label;
+	struct wd_softc *wd;
+	struct disklabel *lp;
 	char *errstring;
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
+
+	wd = vdev_privdata(devvp);
+
+	lp = wd->sc_dk.dk_label;
 
 	memset(wd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -932,13 +944,17 @@ wdioctl(devvp, xfer, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct wd_softc *wd = devvp->v_devcookie;
+	struct wd_softc *wd;
 	int error;
+	dev_t rdev;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 
 	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
+
+	rdev = vdev_rdev(devvp);
+	wd = vdev_privdata(devvp);
 
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
@@ -969,7 +985,7 @@ wdioctl(devvp, xfer, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &wd->sc_dk.dk_label->d_partitions[WDPART(devvp->v_rdev)];
+		    &wd->sc_dk.dk_label->d_partitions[WDPART(rdev)];
 		return 0;
 	
 	case DIOCWDINFO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.16.2.1 2001/09/07 04:45:24 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.16.2.2 2001/09/26 15:28:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -2421,9 +2421,11 @@ iopopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
-	if ((sc = device_lookup(&iop_cd, minor(devvp->v_rdev))) == NULL)
+	if ((sc = device_lookup(&iop_cd, minor(vdev_rdev(devvp)))) == NULL)
 		return (ENXIO);
-	devvp->v_devcookie = sc;
+
+	vdev_setprivdata(devvp, sc);
+
 	if ((sc->sc_flags & IOP_ONLINE) == 0)
 		return (ENXIO);
 	if ((sc->sc_flags & IOP_OPEN) != 0)
@@ -2438,7 +2440,7 @@ iopclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 	sc->sc_flags &= ~IOP_OPEN;
 
 	return (0);
@@ -2455,7 +2457,7 @@ iopioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	if (securelevel >= 2)
 		return (EPERM);
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case IOPIOCPT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.13.2.1 2001/09/07 04:45:26 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.13.2.2 2001/09/26 15:28:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -693,14 +693,14 @@ mlxopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mlx_softc *mlx;
 
-	if ((mlx = device_lookup(&mlx_cd, minor(devvp->v_rdev))) == NULL)
+	if ((mlx = device_lookup(&mlx_cd, minor(vdev_rdev(devvp)))) == NULL)
 		return (ENXIO);
 	if ((mlx->mlx_flags & MLXF_INITOK) == 0)
 		return (ENXIO);
 	if ((mlx->mlx_flags & MLXF_OPEN) != 0)
 		return (EBUSY);
 
-	devvp->v_devcookie = mlx;
+	vdev_setprivdata(devvp, mlx);
 
 	mlx->mlx_flags |= MLXF_OPEN;
 	return (0);
@@ -712,8 +712,9 @@ mlxopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 int
 mlxclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct mlx_softc *mlx = devvp->v_devcookie;
+	struct mlx_softc *mlx;
 
+	mlx = vdev_privdata(devvp);
 	mlx->mlx_flags &= ~MLXF_OPEN;
 	return (0);
 }
@@ -725,7 +726,7 @@ int
 mlxioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct mlx_softc *mlx = devvp->v_devcookie;
+	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
 	struct mlx_rebuild_status *rs;
 	struct mlx_pause *mp;
@@ -734,6 +735,8 @@ mlxioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 
 	if (securelevel >= 2)
 		return (EPERM);
+
+	mlx = vdev_privdata(devvp);
 
 	rb = (struct mlx_rebuild_request *)data;
 	rs = (struct mlx_rebuild_status *)data;

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.42.2.1 2001/09/07 04:45:35 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.42.2.2 2001/09/26 15:28:20 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42.2.1 2001/09/07 04:45:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42.2.2 2001/09/26 15:28:20 fvdl Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -710,7 +710,7 @@ wskbdopen(devvp, flags, mode, p)
 	struct wskbd_softc *sc;
 	int unit;
 
-	unit = minor(devvp->v_rdev);
+	unit = minor(vdev_rdev(devvp));
 	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -731,7 +731,7 @@ wskbdopen(devvp, flags, mode, p)
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_events.io = p;
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
@@ -749,7 +749,7 @@ wskbdclose(devvp, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	return (wskbddoclose(devvp->v_devcookie, flags, mode, p));
+	return (wskbddoclose(vdev_privdata(devvp), flags, mode, p));
 }
 
 int
@@ -781,8 +781,10 @@ wskbdread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct wskbd_softc *sc = devvp->v_devcookie;
+	struct wskbd_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -804,7 +806,7 @@ wskbdioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return (wskbddoioctl(devvp->v_devcookie, cmd, data, flag,p));
+	return (wskbddoioctl(vdev_privdata(devvp), cmd, data, flag,p));
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
@@ -1067,7 +1069,9 @@ wskbdpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct wskbd_softc *sc = devvp->v_devcookie;
+	struct wskbd_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return (wsevent_poll(&sc->sc_events, events, p));
 }

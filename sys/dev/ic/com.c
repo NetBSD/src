@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.188.2.2 2001/09/18 19:13:50 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.188.2.3 2001/09/26 15:28:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -778,8 +778,10 @@ comopen(devvp, flag, mode, p)
 	struct tty *tp;
 	int s, s2;
 	int error;
+	dev_t rdev;
 
-	sc = device_lookup(&com_cd, COMUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	sc = device_lookup(&com_cd, COMUNIT(rdev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
@@ -802,7 +804,7 @@ comopen(devvp, flag, mode, p)
 		p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	s = spltty();
 
@@ -901,8 +903,7 @@ comopen(devvp, flag, mode, p)
 	
 	splx(s);
 
-	error = ttyopen(tp, COMDIALOUT(devvp->v_rdev),
-	    ISSET(flag, O_NONBLOCK));
+	error = ttyopen(tp, COMDIALOUT(rdev), ISSET(flag, O_NONBLOCK));
 	if (error)
 		goto bad;
 
@@ -933,7 +934,7 @@ comclose(devvp, flag, mode, p)
 	struct com_softc *sc;
 	struct tty *tp;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	/* XXX This is for cons.c. */
 	if (sc == NULL)
@@ -966,8 +967,11 @@ comread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -981,8 +985,11 @@ comwrite(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -996,8 +1003,11 @@ compoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -1009,8 +1019,11 @@ struct tty *
 comtty(devvp)
 	struct vnode *devvp;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return (tp);
 }
@@ -1023,10 +1036,13 @@ comioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
 	int error;
 	int s;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -1366,10 +1382,12 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = tp->t_devvp->v_devcookie;
+	struct com_softc *sc;
 	int ospeed;
 	u_char lcr;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -1623,8 +1641,10 @@ comhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct com_softc *sc = tp->t_devvp->v_devcookie;
+	struct com_softc *sc;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
@@ -1684,10 +1704,15 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = tp->t_devvp->v_devcookie;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct com_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
+
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 
 	if (COM_ISALIVE(sc) == 0)
 		return;
@@ -1757,8 +1782,10 @@ comstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct com_softc *sc = tp->t_devvp->v_devcookie;
+	struct com_softc *sc;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	s = splserial();
 	COM_LOCK(sc);
@@ -2030,9 +2057,15 @@ comintr(arg)
 	u_char *put, *end;
 	u_int cc;
 	u_char lsr, iir;
+	dev_t rdev;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
+
+	if (sc->sc_tty->t_devvp->v_type == VBAD)
+		return (0);
+
+	rdev = vdev_rdev(sc->sc_tty->t_devvp);
 
 	COM_LOCK(sc);
 	iir = bus_space_read_1(iot, ioh, com_iir);
@@ -2051,8 +2084,7 @@ comintr(arg)
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 		if (ISSET(lsr, LSR_BI)) {
 			int cn_trapped = 0;
-			cn_check_magic(sc->sc_tty->t_devvp->v_rdev,
-				       CNC_BREAK, com_cnm_state);
+			cn_check_magic(rdev, CNC_BREAK, com_cnm_state);
 			if (cn_trapped)
 				continue;
 #if defined(KGDB)
@@ -2069,8 +2101,7 @@ comintr(arg)
 				int cn_trapped = 0;
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
-				cn_check_magic(sc->sc_tty->t_devvp->v_rdev,
-					       put[0], com_cnm_state);
+				cn_check_magic(rdev, put[0], com_cnm_state);
 				if (cn_trapped) {
 					lsr = bus_space_read_1(iot, ioh, com_lsr);
 					if (!ISSET(lsr, LSR_RCV_MASK))
