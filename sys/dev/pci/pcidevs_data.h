@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.8 2002/08/01 06:10:22 lukem Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.9 2002/08/02 05:42:12 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.9 2002/08/01 05:59:09 lukem Exp 
+ *	NetBSD: pcidevs,v 1.428.2.10 2002/08/02 05:40:32 lukem Exp 
  */
 
 /*
@@ -6962,6 +6962,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C686A MC-97 Modem Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
+	    0,
+	    "VIA Technologies",
+	    "VT8233A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
