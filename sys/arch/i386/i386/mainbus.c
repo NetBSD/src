@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1996/03/08 20:26:59 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1996/03/08 21:55:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,13 @@ struct cfdriver mainbuscd =
 
 int	mainbus_print __P((void *, char *));
 
+union mainbus_attach_args {
+	const char *mba_busname;		/* first elem of all */
+	struct pcibus_attach_args mba_pba;
+	struct eisabus_attach_args mba_eba;
+	struct isabus_attach_args mba_iba;
+};
+
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -77,6 +84,7 @@ mainbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	union mainbus_attach_args mba;
 
 	printf("\n");
 
@@ -88,30 +96,24 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 	if (pci_mode_detect() != 0) {
-		struct pcibus_attach_args pba;
-
-		pba.pba_busname = "pci";
-		pba.pba_bc = NULL;
-		pba.pba_bus = 0;
-		pba.pba_maxndevs = pci_mode == 2 ? 16 : 32;
-		config_found(self, &pba, mainbus_print);
+		mba.mba_pba.pba_busname = "pci";
+		mba.mba_pba.pba_bc = NULL;
+		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_maxndevs = pci_mode == 2 ? 16 : 32;
+		config_found(self, &mba.mba_pba, mainbus_print);
 	}
 #endif
 
 	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
-		struct eisabus_attach_args eba;
-
-		eba.eba_busname = "eisa";
-		eba.eba_bc = NULL;
-		config_found(self, &eba, mainbus_print);
+		mba.mba_eba.eba_busname = "eisa";
+		mba.mba_eba.eba_bc = NULL;
+		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
 	if (1 /* XXX ISA NOT YET SEEN */) {
-		struct isabus_attach_args iba;
-
-		iba.iba_busname = "isa";
-		iba.iba_bc = NULL;
-		config_found(self, &iba, mainbus_print);
+		mba.mba_iba.iba_busname = "isa";
+		mba.mba_iba.iba_bc = NULL;
+		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 }
 
@@ -120,12 +122,11 @@ mainbus_print(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	char **busname = aux;		/* XXX should be common struct */
-	struct pcibus_attach_args *pba = aux;
+	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", *busname, pba);
-	if (!strcmp(*busname, "pci"))
-		printf(" bus %d", pba->pba_bus);
+		printf("%s at %s", mba->mba_busname, pnp);
+	if (!strcmp(mba->mba_busname, "pci"))
+		printf(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }
