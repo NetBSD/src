@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52 1997/07/29 09:41:58 fair Exp $ */
+/*	$NetBSD: cpu.c,v 1.53 1997/08/04 22:41:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -833,7 +833,7 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -843,11 +843,13 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
+	printf("warning: hypersparc support still under construction\n");
 }
 
 void
 hypersparc_mmu_enable()
 {
+#if 0
 	int pcr;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
@@ -855,6 +857,7 @@ hypersparc_mmu_enable()
 	pcr &= ~HYPERSPARC_PCR_CE;
 
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+#endif
 }
 
 /* Cypress 605 */
@@ -978,7 +981,8 @@ struct cpu_conf {
 	{ CPU_SUN4M, 1, 1, 1, 0xc, "CY7C601/605 (v.c)", &module_cypress },
 	{ CPU_SUN4M, 1, 1, 1, 0xf, "CY7C601/605 (v.f)", &module_cypress },
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
-	{ CPU_SUN4M, 1, 0xf, 1, 1, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 1, 0xe, 1, 7, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 1, 0xf, 1, 7, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
 	{ CPU_SUN4M, 4, 1, 0, ANY, "TMS390Z50 v1", &module_viking },
 	{ CPU_SUN4M, 4, 1, 4, ANY, "TMS390S10", &module_ms1 },
