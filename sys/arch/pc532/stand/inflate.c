@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inflate.c,v 1.2 1995/09/26 20:16:38 phil Exp $
+ *	$Id: inflate.c,v 1.3 1996/10/09 07:42:15 matthias Exp $
  */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ void nextstate()
 	printf(" start 0x%x\n", x.a_entry);
 #define	round_to_size(x,t) \
 	(((int)(x) + sizeof(t) - 1) & ~(sizeof(t) - 1))
-	esym = (char *)round_to_size(addr - load, int);
+	esym = (char *)round_to_size(addr, int);
 #undef round_to_size
 	state = -1;
 	break;
