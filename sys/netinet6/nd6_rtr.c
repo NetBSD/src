@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6_rtr.c,v 1.16 2000/06/13 02:54:11 itojun Exp $	*/
-/*	$KAME: nd6_rtr.c,v 1.39 2000/06/13 02:50:43 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.17 2000/06/13 04:35:29 itojun Exp $	*/
+/*	$KAME: nd6_rtr.c,v 1.40 2000/06/13 03:02:29 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1233,8 +1233,15 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		for( ; oia->ia_next; oia = oia->ia_next)
 			continue;
 		oia->ia_next = ia;
-	} else
+	} else {
+		/*
+		 * This should be impossible, since we have at least one
+		 * link-local address (see the beginning of this function).
+		 * XXX: should we rather panic here?
+		 */
+		printf("in6_ifadd: in6_ifaddr is NULL (impossible!)\n");
 		in6_ifaddr = ia;
+	}
 	/* gain a refcnt for the link from in6_ifaddr */
 	IFAREF((struct ifaddr *)ia);
 
