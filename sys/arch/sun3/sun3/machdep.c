@@ -35,10 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: machdep.c 1.63 91/04/24$
- *
+ *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
+ *	$Id: machdep.c,v 1.25 1994/05/05 01:11:29 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -61,8 +61,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#ifdef HPUXCOMPAT
-#include <../hpux/hpux.h>
+#ifdef COMPAT_HPUX
+#include <../../hp300/hpux/hpux.h>
 #endif
 
 #include <vm/vm.h>
@@ -960,8 +960,7 @@ int waittime = -1;
 void boot(howto)
      int howto;
 {
-
-    mon_printf("kernel ended deliberately\n");
+    printf("kernel ended deliberately\n");
 
     if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 	struct buf *bp;
