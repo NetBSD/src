@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.111 2003/08/07 16:34:09 agc Exp $	*/
+/*	$NetBSD: mount.h,v 1.112 2003/10/12 19:08:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -219,10 +219,6 @@ struct mount {
 
 /*
  * External filesystem control flags.
- *
- * MNT_MLOCK lock the mount entry so that name lookup cannot proceed
- * past the mount point.  This keeps the subtree stable during mounts
- * and unmounts.
  */
 #define	MNT_UPDATE	0x00010000	/* not a real mount, just an update */
 #define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
