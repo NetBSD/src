@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62 2003/01/16 07:23:06 matt Exp $
+# $NetBSD: GENERIC,v 1.63 2003/02/10 19:50:26 kleink Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.62 $"
+#ident		"GENERIC-$Revision: 1.63 $"
 
 maxusers	32
 
@@ -322,6 +322,7 @@ ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
 ne0	at isa? port 0x280 irq 9	# NE2000-compatible Ethernet
 ne1	at isa? port 0x300 irq 10
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at isa? port 0x300 iomem 0xe4000 irq 11
 
 # ISA Plug-and-Play network intefaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
