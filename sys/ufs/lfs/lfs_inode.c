@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.74 2003/04/23 07:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.75 2003/04/27 06:46:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.74 2003/04/23 07:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.75 2003/04/27 06:46:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -797,7 +797,7 @@ restart:
 		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1),
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
 			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
@@ -823,7 +823,7 @@ restart:
 		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1),
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
 			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
