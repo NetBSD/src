@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.29 2000/07/07 15:54:18 itojun Exp $	*/
-/*	$KAME: in6_pcb.c,v 1.57 2000/07/07 10:27:12 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.30 2000/08/26 11:03:46 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.63 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,11 @@ extern struct ifnet loif[NLOOP];
 #endif /* IPSEC */
 
 struct in6_addr zeroin6_addr;
+
+int ip6_anonportmin = IPV6PORT_ANONMIN;
+int ip6_anonportmax = IPV6PORT_ANONMAX;
+int ip6_lowportmin  = IPV6PORT_RESERVEDMIN;
+int ip6_lowportmax  = IPV6PORT_RESERVEDMAX;
 
 int
 in6_pcballoc(so, head)
