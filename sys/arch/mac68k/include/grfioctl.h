@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.7 1998/07/01 14:52:21 scottr Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.7.8.1 1999/03/11 19:27:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,18 +68,18 @@ struct grfmodes {
  */
 #define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
-#ifdef GRF_COMPAT
+#if defined(GRF_COMPAT) || defined(WSDISPLAY_COMPAT_GRF)
 #define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
 #define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
 #define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
-#endif /* GRF_COMPAT */
+#endif /* GRF_COMPAT || WSDISPLAY_COMPAT_GRF */
 
 #define GRFIOCLISTMODES	_IOWR('G', 16, struct grfmodes) /* Get list of modes */
 #define GRFIOCGETMODE	_IOR('G', 17, int)	/* Get list of modes */
 #define GRFIOCSETMODE	_IOW('G', 18, int)	/* Set to mode_id mode */
 #define GRFIOCGMODE	_IOR('G', 19, struct grfmode)	/* Get list of modes */
 
-#ifdef GRF_COMPAT
+#if defined(GRF_COMPAT) || defined(WSDISPLAY_COMPAT_GRF)
 /*
  * Obsolete structure.
  * Only used to return information to older programs that still
@@ -100,4 +100,4 @@ struct	grfinfo {
 	int	gd_dheight;		/* displayed part height */
 	int	gd_pad[6];		/* for future expansion */
 };
-#endif /* GRF_COMPAT */
+#endif /* GRF_COMPAT || WSDISPLAY_COMPAT_GRF */

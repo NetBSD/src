@@ -1,4 +1,4 @@
-/* $NetBSD: macfbvar.h,v 1.1.2.1 1999/03/08 02:06:14 scottr Exp $ */
+/* $NetBSD: macfbvar.h,v 1.1.2.2 1999/03/11 19:27:44 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -42,29 +42,28 @@ struct fbcursor;
 struct fbcurpos;
 
 struct macfb_devconfig {
-	int dc_type; /* WSCONS display type */
+	int	dc_type;	/* WSCONS display type */
 
-	vaddr_t dc_vaddr;		/* memory space virtual base address */
-	paddr_t dc_paddr;		/* memory space physical base address */
-	psize_t dc_size;		/* size of slot memory */
+	vaddr_t	dc_vaddr;	/* memory space virtual base address */
+	paddr_t	dc_paddr;	/* memory space physical base address */
+	psize_t	dc_size;	/* size of slot memory */
 
-	vaddr_t dc_videobase;	/* base of flat frame buffer */
+	int	dc_offset;	/* offset from dc_vaddr to base of flat fb */
 
-	int dc_wid; /* width of frame buffer */
-	int dc_ht; /* height of frame buffer */
-	int dc_depth; /* depth of frame buffer */
-	int dc_rowbytes; /* bytes in fb scan line */
+	int	dc_wid;		/* width of frame buffer */
+	int	dc_ht;		/* height of frame buffer */
+	int	dc_depth;	/* depth of frame buffer */
+	int	dc_rowbytes;	/* bytes in fb scan line */
 
 	struct raster dc_raster; /* raster description */
-	struct rcons dc_rcons; /* raster blitter control info */
+	struct rcons dc_rcons;	/* raster blitter control info */
 
-	int isconsole;
+	int isconsole;		/* console device */
 };
 
 struct macfb_softc {
 	struct device sc_dev;
-
-	struct macfb_devconfig *sc_dc;
 				
 	int nscreens;
+	struct macfb_devconfig *sc_dc;
 };

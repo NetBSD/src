@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.1 1999/03/08 02:06:13 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.2 1999/03/11 19:27:44 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_wsdisplay_compat.h"
+#ifdef WSDISPLAY_COMPAT_GRF
+#include "opt_uvm.h"
+#endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -37,15 +41,38 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#ifdef WSDISPLAY_COMPAT_GRF
+#include <sys/device.h>
+#include <sys/mman.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#ifdef WSDISPLAY_COMPAT_GRF
+#include <miscfs/specfs/specdev.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+#endif /* WSDISPLAY_COMPAT_GRF */
 
 #include <machine/grfioctl.h>
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/grfvar.h>
 #include <mac68k/dev/macfbvar.h>
 #include <dev/wscons/wsconsio.h>
+
+#ifdef WSDISPLAY_COMPAT_ITE
+#include <machine/iteioctl.h>
+#endif /* WSDISPLAY_COMPAT_ITE */
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
@@ -108,7 +135,13 @@ void macfb_init __P((struct macfb_devconfig *));
 
 paddr_t macfb_consaddr;
 static int macfb_is_console __P((paddr_t addr));
-static void	init_font __P((void));
+#ifdef WSDISPLAY_COMPAT_ITEFONT
+static void	init_itefont __P((void));
+#endif /* WSDISPLAY_COMPAT_ITEFONT */
+#ifdef WSDISPLAY_COMPAT_GRF
+int	macfb_grfmap __P((void *, caddr_t *, struct proc *));
+int	macfb_grfunmap __P((void *, caddr_t, struct proc *));
+#endif /* WSDISPLAY_COMPAT_GRF */
 
 static struct macfb_devconfig macfb_console_dc;
 
@@ -136,18 +169,21 @@ macfb_init(dc)
 	struct rcons *rcp;
 	int i;
 
-	/* clear the screen */
+	/* clear the display */
 	for (i = 0; i < (dc->dc_ht * dc->dc_rowbytes); i += dc->dc_rowbytes)
-		bzero((u_char *)dc->dc_videobase + i, dc->dc_rowbytes);
+		bzero((u_char *)dc->dc_vaddr + dc->dc_offset + i,
+		    dc->dc_rowbytes);
 
-	init_font();
+#ifdef WSDISPLAY_COMPAT_ITEFONT
+	init_itefont();
+#endif /* WSDISPLAY_COMPAT_ITEFONT */
 
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
 	rap->height = dc->dc_ht;
 	rap->depth = dc->dc_depth;
 	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_videobase;
+	rap->pixels = (u_int32_t *)dc->dc_vaddr + dc->dc_offset;
 
 	/* initialize the raster console blitter */
 	rcp = &dc->dc_rcons;
@@ -187,13 +223,12 @@ macfb_attach(parent, self, aux)
 	printf("\n");
 
 	isconsole = macfb_is_console(ga->ga_phys);
-				
+
 	if (isconsole) {
 		sc->sc_dc = &macfb_console_dc;
 		sc->nscreens = 1;
 	} else {
-		sc->sc_dc = (struct macfb_devconfig *)
-		    malloc(sizeof(struct macfb_devconfig), M_DEVBUF, M_WAITOK);
+		sc->sc_dc = malloc(sizeof(struct macfb_devconfig), M_DEVBUF, M_WAITOK);
 		sc->sc_dc->dc_vaddr = (vaddr_t)gm->fbbase;
 		sc->sc_dc->dc_paddr = ga->ga_phys;
 		sc->sc_dc->dc_size = gm->fbsize;
@@ -203,9 +238,11 @@ macfb_attach(parent, self, aux)
 		sc->sc_dc->dc_depth = gm->psize;
 		sc->sc_dc->dc_rowbytes = gm->rowbytes;
 
-		sc->sc_dc->dc_videobase = (u_int32_t)gm->fbbase + gm->fboff;
+		sc->sc_dc->dc_offset = gm->fboff;
 
 		macfb_init(sc->sc_dc);
+
+		sc->nscreens = 1;
 	}
 
 	/* initialize the raster */
@@ -229,6 +266,10 @@ macfb_ioctl(v, cmd, data, flag, p)
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;
 	struct wsdisplay_fbinfo *wdf;
+#ifdef WSDISPLAY_COMPAT_GRF
+	struct grfinfo *gd;
+	struct grfmode *gm;
+#endif /* WSDISPLAY_COMPAT_GRF */
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -236,10 +277,10 @@ macfb_ioctl(v, cmd, data, flag, p)
 		return 0;
 
 	case WSDISPLAYIO_GINFO:
-		wdf = (void *)data;
-		wdf->height = sc->sc_dc->dc_raster.height;
-		wdf->width = sc->sc_dc->dc_raster.width;
-		wdf->depth = sc->sc_dc->dc_raster.depth;
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->height = dc->dc_raster.height;
+		wdf->width = dc->dc_raster.width;
+		wdf->depth = dc->dc_raster.depth;
 		wdf->cmsize = 256;
 		return 0;
 
@@ -254,6 +295,59 @@ macfb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		/* NONE of these operations are supported. */
 		return ENOTTY;
+
+#ifdef WSDISPLAY_COMPAT_ITE
+	case ITEIOC_GETBELL:
+	case ITEIOC_SETBELL:
+	case ITEIOC_RINGBELL:
+		/* NONE of these operations are supported. */
+		return ENOTTY;
+
+#endif /* WSDISPLAY_COMPAT_ITE */
+#ifdef WSDISPLAY_COMPAT_GRF
+	case GRFIOCGINFO:
+		gd = (struct grfinfo *)data;
+		bzero(gd, sizeof(struct grfinfo));
+		gd->gd_fbaddr     = (caddr_t)dc->dc_paddr;
+		gd->gd_fbsize     = dc->dc_size;
+		gd->gd_colors     = (short)(1 << dc->dc_depth);
+		gd->gd_planes     = (short)dc->dc_depth;
+		gd->gd_fbwidth    = dc->dc_wid;
+		gd->gd_fbheight   = dc->dc_ht;
+		gd->gd_fbrowbytes = dc->dc_rowbytes;
+		gd->gd_dwidth     = dc->dc_raster.width;
+		gd->gd_dheight    = dc->dc_raster.height;
+		return 0;
+
+	case GRFIOCON:
+	case GRFIOCOFF:
+		/* Nothing to do */
+		return 0;
+
+	case GRFIOCMAP:
+		return macfb_grfmap(v, (caddr_t *)data, p);
+
+	case GRFIOCUNMAP:
+		return macfb_grfunmap(v, *(caddr_t *)data, p);
+
+	case GRFIOCGMODE:
+		gm = (struct grfmode *)data;
+		bzero(gm, sizeof(struct grfmode));
+		gm->fbbase   = (char *)dc->dc_vaddr;
+		gm->fbsize   = dc->dc_size;
+		gm->fboff    = dc->dc_offset;
+		gm->rowbytes = dc->dc_rowbytes;
+		gm->width    = dc->dc_wid;
+		gm->height   = dc->dc_ht;
+		gm->psize    = dc->dc_depth;
+		return 0;
+
+	case GRFIOCLISTMODES:
+	case GRFIOCGETMODE:
+	case GRFIOCSETMODE:
+		/* NONE of these operations are (or ever were) supported. */
+		return ENOTTY;
+#endif /* WSDISPLAY_COMPAT_GRF */
 	}
 
 	return -1;
@@ -265,9 +359,17 @@ macfb_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
+	struct macfb_softc *sc = v;
+	struct macfb_devconfig *dc = sc->sc_dc;
+	u_long addr;
 
-	/* XXX */
-	return -1;
+	if (offset >= 0 &&
+	    offset < m68k_round_page(dc->dc_rowbytes * dc->dc_ht))
+		addr = m68k_btop(dc->dc_paddr + dc->dc_offset + offset);
+	else
+		addr = (-1);	/* XXX bogus */
+
+	return (int)addr;
 }
 
 int
@@ -322,14 +424,15 @@ macfb_cnattach(addr)
 
 	dc->dc_vaddr = videoaddr;
 	dc->dc_paddr = mac68k_vidphys;
-	dc->dc_size = mac68k_vidlen;
 
 	dc->dc_wid = videosize & 0xffff;
 	dc->dc_ht = (videosize >> 16) & 0xffff;
 	dc->dc_depth = videobitdepth;
 	dc->dc_rowbytes = videorowbytes;
 
-	dc->dc_videobase = videoaddr;
+	dc->dc_size = (mac68k_vidlen > 0) ?
+	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
+	dc->dc_offset = 0;
 
 	/* set up the display */
 	macfb_init(&macfb_console_dc);
@@ -344,15 +447,20 @@ macfb_cnattach(addr)
 	return (0);
 }
 
-
+#ifdef WSDISPLAY_COMPAT_ITEFONT
 #include <mac68k/dev/6x10.h>
 
 void
-init_font()
+init_itefont()
 {
+	static int itefont_initted = 0;
 	int i, j;
 
 	extern struct raster_font gallant19;		/* XXX */
+
+	if (itefont_initted)
+		return;
+	itefont_initted = 1;
 
 	/* XXX but we cannot use malloc here... */
 	gallant19.width = 6;
@@ -373,3 +481,67 @@ init_font()
 			*p++ = Font6x10[i * 10 + j] << 26;
 	}
 }
+#endif /* WSDISPLAY_COMPAT_ITEFONT */
+
+#ifdef WSDISPLAY_COMPAT_GRF
+int
+macfb_grfmap(v, addrp, p)
+	void *v;
+	caddr_t *addrp;
+	struct proc *p;
+{
+	struct macfb_softc *sc = v;
+	struct specinfo si;
+	struct vnode vn;
+	u_long len;
+	int error, flags;
+
+	*addrp = (caddr_t)sc->sc_dc->dc_paddr;
+	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
+	flags = MAP_SHARED | MAP_FIXED;
+
+	vn.v_type = VCHR;				/* XXX */
+	vn.v_specinfo = &si;				/* XXX */
+	vn.v_rdev = makedev(44,sc->sc_dev.dv_unit);	/* XXX */
+
+#if defined(UVM)
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+#else
+	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+#endif
+
+	/* Offset into page: */
+	*addrp += sc->sc_dc->dc_offset;
+
+	return (error);
+}
+
+int
+macfb_grfunmap(v, addr, p)
+	void *v;
+	caddr_t addr;
+	struct proc *p;
+{
+	struct macfb_softc *sc = v;
+	vm_size_t size;
+	int     rv;
+
+	addr -= sc->sc_dc->dc_offset;
+
+	if (addr <= 0)
+		return (-1);
+
+	size = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
+
+#if defined(UVM)
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
+	    (vaddr_t)addr + size);
+#else
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
+#endif
+
+	return (rv == KERN_SUCCESS ? 0 : EINVAL);
+}
+#endif /* WSDISPLAY_COMPAT_GRF */
