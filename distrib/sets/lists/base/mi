@@ -102,6 +102,7 @@
 ./sbin/routed
 ./sbin/rrestore
 ./sbin/savecore
+./sbin/scsictl
 ./sbin/shutdown
 ./sbin/slattach
 ./sbin/swapctl
