@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.7 1994/03/22 00:15:23 phil Exp $
+ *	$Id: scn.c,v 1.8 1994/04/17 07:52:15 phil Exp $
  */
 
 #include "scn.h"
@@ -354,9 +354,11 @@ struct pc532_device *dp;
   WR_ADR (u_char, rs->cmd_port, CMD_MR1);
   WR_ADR (u_char, rs->mr_port, 0);	/* No receiver control of RTS. */
   WR_ADR (u_char, rs->mr_port, 0);
-#if 0
-  WR_ADR (u_char, rs->mr_port, 0x80);  /* Enable receiver control of RTS */
-  WR_ADR (u_char, rs->mr_port, 0x10);  /* Enable CTS transmitter control */
+#if 1
+  if (unit != 0) {
+    WR_ADR (u_char, rs->mr_port, 0x80);  /* Enable receiver control of RTS */
+    WR_ADR (u_char, rs->mr_port, 0x10);  /* Enable CTS transmitter control */
+  }
 #endif
 
   /* Initialize the uart structure if this is channel A. */
@@ -456,7 +458,7 @@ if (unit==1) printf ("scnopen 1\n");
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
-/* i386		if (sc->sc_swflags & COM_SW_CLOCAL)
+/* 386		if (sc->sc_swflags & COM_SW_CLOCAL)
 			tp->t_cflag |= CLOCAL;
 		if (sc->sc_swflags & COM_SW_CRTSCTS)
 			tp->t_cflag |= CRTSCTS;  */
@@ -548,6 +550,10 @@ scnwrite(dev, uio, flag)
 	register struct tty *tp = scn_tty[unit];
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+void cts_int (struct rs232_s *rs, struct tty *tp)
+{
 }
 
 #if 0 
@@ -689,9 +695,15 @@ if (line1==1)printf ("\n");
 #if 0
 	/* RTS/CTS stuff! */
 		if (rs_ipcr & IPCR_CTS)
-			cts_int(rs0);
+			cts_int(rs0, tp0);
 		if (rs_ipcr & (IPCR_CTS << 1))
-			cts_int(rs1);
+			cts_int(rs1, tp1);
+#endif
+#if 0
+		if (rs_ipcr & ACR_DCD)
+			dcd_int(rs0, tp0);
+		if (rs_ipcr & (ACR_DCD << 1))
+			dcd_int(rs1, tp1);
 #endif
 	}
   }
@@ -731,11 +743,13 @@ scnioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		WR_ADR(u_char, rs->opset_port, DTR_BIT << rs->a_or_b);
+		WR_ADR(u_char, rs->opset_port,
+			 (DTR_BIT | RTS_BIT) << rs->a_or_b);
 		break;
 
 	case TIOCCDTR:
-		WR_ADR(u_char, rs->opclr_port, DTR_BIT << rs->a_or_b);
+		WR_ADR(u_char, rs->opclr_port, 
+			 (DTR_BIT | RTS_BIT) << rs->a_or_b);
 		break;
 
 	case TIOCMSET:
@@ -758,8 +772,44 @@ scnioctl(dev, cmd, data, flag, p)
 		*(int *)data = rs->scn_bits;
 		break;
 
+/* 386	case TIOCGFLAGS: {
+		int bits = 0;
+
+		if (sc->sc_swflags & COM_SW_SOFTCAR)
+			bits |= TIOCFLAG_SOFTCAR;
+		if (sc->sc_swflags & COM_SW_CLOCAL)
+			bits |= TIOCFLAG_CLOCAL;
+		if (sc->sc_swflags & COM_SW_CRTSCTS)
+			bits |= TIOCFLAG_CRTSCTS;
+		if (sc->sc_swflags & COM_SW_MDMBUF)
+			bits |= TIOCFLAG_MDMBUF;
+
+		*(int *)data = bits;
+		break;
+	}
+	case TIOCSFLAGS: {
+		int userbits, driverbits = 0;
+
+		error = suser(p->p_ucred, &p->p_acflag); 
+		if (error != 0)
+			return(EPERM); 
+
+		userbits = *(int *)data;
+		if ((userbits & TIOCFLAG_SOFTCAR) ||
+		    (sc->sc_hwflags & COM_HW_CONSOLE))
+			driverbits |= COM_SW_SOFTCAR;
+		if (userbits & TIOCFLAG_CLOCAL)
+			driverbits |= COM_SW_CLOCAL;
+		if (userbits & TIOCFLAG_CRTSCTS)
+			driverbits |= COM_SW_CRTSCTS;
+		if (userbits & TIOCFLAG_MDMBUF)
+			driverbits |= COM_SW_MDMBUF;
+
+		sc->sc_swflags = driverbits;
+		break;
+	}
+*/
 	default:
-/*		printf ("scn.c: bad ioctl 0x%x\n", cmd); */
 		return (ENOTTY);
 	}
 	return (0);
