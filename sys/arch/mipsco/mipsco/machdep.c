@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2000/09/10 06:26:51 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2000/09/16 08:34:26 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2000/09/10 06:26:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2000/09/16 08:34:26 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -81,12 +81,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2000/09/10 06:26:51 nisimura Exp $")
 
 #ifdef DDB
 #include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 #endif
 
 #include <machine/intr.h>
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/prom.h>
 #include <dev/clock_subr.h>
 #include <dev/cons.h>
@@ -110,7 +112,8 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int physmem;			/* max supported memory, changes to actual */
+int		physmem;		/* max supported memory, changes to actual */
+char		*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -126,7 +129,7 @@ struct evcnt soft_evcnt[IPL_NSOFT];
 int initcpu __P((void));
 void configure __P((void));
 
-void mach_init __P((int, char *[], char*[]));
+void mach_init __P((int, char *[], char*[], u_int, char *));
 void softintr_init __P((void));
 int  memsize_scan __P((caddr_t));
 
@@ -147,7 +150,7 @@ extern struct user *proc0paddr;
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
 extern void prom_init  __P((void));
-void pizazz_init __P((void));
+extern void pizazz_init __P((void));
 
 /* platform-specific initialization vector */
 static void	unimpl_cons_init __P((void));
@@ -193,10 +196,12 @@ struct consdev consdev_prom = {
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, envp)
+mach_init(argc, argv, envp, bim, bip)
 	int    argc;
 	char   *argv[];
 	char   *envp[];
+	u_int  bim;
+	char   *bip;
 {
 	u_long first, last;
 	caddr_t kernend, v;
@@ -204,19 +209,54 @@ mach_init(argc, argv, envp)
 	char *cp;
 	int i;
 	extern char edata[], end[];
+	char *bi_msg;
+#ifdef DDB
+	int nsym = 0;
+	caddr_t ssym = 0;
+	caddr_t esym = 0;
+	struct btinfo_symtab *bi_syms;
+#endif
+
+
+	/* Check for valid bootinfo passed from bootstrap */
+	if (bim == BOOTINFO_MAGIC) {
+		struct btinfo_magic *bi_magic;
+
+		bootinfo = (char *)BOOTINFO_ADDR; /* XXX */
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bi_msg = "invalid bootinfo structure.\n";
+		else
+			bi_msg = NULL;
+	} else
+		bi_msg = "invalid bootinfo (standalone boot?)\n";
 
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
 	bzero(edata, kernend - edata);
 
+#ifdef DDB
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+
+	/* Load sysmbol table if present */
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (caddr_t)bi_syms->ssym;
+		esym = (caddr_t)bi_syms->esym;
+		kernend = (caddr_t)mips_round_page(esym);
+	}
+#endif
+
 	prom_init();
+	consinit();
+
+	if (bi_msg != NULL)
+		printf(bi_msg);
 
 	/*
 	 * Set the VM page size.
 	 */
 	uvm_setpagesize();
-
-	consinit();
 
 	/* Find out how much memory is available. */
 	physmem = memsize_scan(kernend);
@@ -279,7 +319,9 @@ mach_init(argc, argv, envp)
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
-
+	/* init symbols if present */
+	if (esym)
+		ddb_init(esym - ssym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -473,6 +515,31 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
 }
 
 int	waittime = -1;
