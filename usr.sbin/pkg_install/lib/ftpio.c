@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.7 2000/02/22 22:51:10 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.8 2000/02/28 18:58:33 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.7 2000/02/22 22:51:10 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.8 2000/02/28 18:58:33 he Exp $");
 #endif
 
 /*
@@ -122,7 +122,7 @@ expect(int fd, const char *str, int *ftprc)
 
     memset(buf, '\n', sizeof(buf));
 
-    timeout.tv_sec=5*60;
+    timeout.tv_sec=10*60;	/* seconds until next message from tar */
     timeout.tv_usec=0;
     done=0;
     retval=0;
@@ -139,8 +139,8 @@ expect(int fd, const char *str, int *ftprc)
 	    retval = -1;
 	    break;
 	case 0:
-	    warnx("expect: select() timeout!");
-	    done = 1; /* hope that's ok */
+	    warnx("expect: select() timeout");
+	    done = 1;	/* hope that's ok */
 	    retval = -1;
 	    break;
 	default:
@@ -190,26 +190,30 @@ expect(int fd, const char *str, int *ftprc)
 
 /*
  * send a certain ftp-command "cmd" to our FTP coprocess, and wait for
- * "expectstr" to be returned. Return numeric FTP return code. 
+ * "expectstr" to be returned. Return numeric FTP return code or -1
+ * in case of an error (usually expect() timeout) 
  */
 static int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
     int rc=0, verbose_ftp=0;
+    int len;
 
     if (Verbose)
 	    verbose_ftp=1;
     
     if (verbose_ftp)
-      fprintf(stderr, "\n[1mftp> %s[0m", cmd);
+	    fprintf(stderr, "\n[1mftp> %s[0m", cmd);
     
     fflush(stdout);
-    rc=write(ftpio.command, cmd, strlen(cmd));
-    if (rc == strlen(cmd)) {
+    len = write(ftpio.command, cmd, strlen(cmd));
+    if (len == strlen(cmd)) {
 	    if (expectstr) {
-		    expect(ftpio.answer, expectstr, &rc);
+		    /* set "rc" to the FTP error code: */
+		    if (expect(ftpio.answer, expectstr, &rc) == -1)
+			    rc = -1;	/* some error occured */
 	    }
-    } else {
+    } else {	
 	    if (Verbose)
 		    warn("short write");
     }
@@ -391,7 +395,7 @@ ftp_start(char *base)
 		}
 		
 		rc = ftp_cmd("prompt off\n", "\n(Interactive mode off|221).*\n");
-		if (rc == 221) {
+		if ((rc == 221) || (rc == -1)) {
 			/* something is wrong */
 			ftp_started=1; /* not really, but for ftp_stop() */
 			ftp_stop();
