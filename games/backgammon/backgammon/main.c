@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1999/02/10 12:29:47 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1999/07/14 22:46:21 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1999/02/10 12:29:47 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1999/07/14 22:46:21 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -471,15 +471,14 @@ main(argc, argv)
 		/* compute game value */
 		if (tflag)
 			curmove(20, 0);
-		if (*offopp == 15) {
+		if (*offopp == 15 && *offptr <= 0) {
 			if (mflag) {
 				writel(bgammon);
 				gvalue *= 3;
-			} else
-				if (*offptr <= 0) {
-					writel(gammon);
-					gvalue *= 2;
-				}
+			} else {
+				writel(gammon);
+				gvalue *= 2;
+			}
 		}
 		/* report situation */
 		if (cturn == -1) {
