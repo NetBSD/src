@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.24 1999/10/14 02:21:50 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.25 1999/10/17 01:37:34 mjacob Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -86,7 +86,7 @@ struct ispmdvec {
 #define	_ISP_FC_LUN(isp)	16
 #endif
 #define	_ISP_SCSI_LUN(isp)	\
- 	((ISP_FW_REVX(isp->isp_fwrev) >= ISP_FW_REV(7, 55, 0))? 32 : 8)
+	((ISP_FW_REVX(isp->isp_fwrev) >= ISP_FW_REV(7, 55, 0))? 32 : 8)
 #define	ISP_MAX_LUNS(isp)	\
 	(IS_FC(isp)? _ISP_FC_LUN(isp) : _ISP_SCSI_LUN(isp))
 
@@ -103,17 +103,17 @@ struct ispmdvec {
 #define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
 #define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
 #define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
-#define ISP_QAVAIL(in, out, qlen)	\
+#define	ISP_QAVAIL(in, out, qlen)	\
 	((in == out)? (qlen - 1) : ((in > out)? \
-		((qlen - 1) - (in - out)) : (out - in - 1)))
+	((qlen - 1) - (in - out)) : (out - in - 1)))
 /*
  * SCSI Specific Host Adapter Parameters- per bus, per target
  */
 
 typedef struct {
 	u_int		isp_gotdparms		: 1,
-        		isp_req_ack_active_neg	: 1,	
-	        	isp_data_line_active_neg: 1,
+			isp_req_ack_active_neg	: 1,
+			isp_data_line_active_neg: 1,
 			isp_cmd_dma_burst_enable: 1,
 			isp_data_dma_burst_enabl: 1,
 			isp_fifo_threshold	: 3,
@@ -122,13 +122,13 @@ typedef struct {
 			isp_lvdmode		: 1,
 						: 1,
 			isp_initiator_id	: 4,
-        		isp_async_data_setup	: 4;
-        u_int16_t	isp_selection_timeout;
-        u_int16_t	isp_max_queue_depth;
+			isp_async_data_setup	: 4;
+	u_int16_t	isp_selection_timeout;
+	u_int16_t	isp_max_queue_depth;
 	u_int8_t	isp_tag_aging;
-       	u_int8_t	isp_bus_reset_delay;
-        u_int8_t	isp_retry_count;
-        u_int8_t	isp_retry_delay;
+	u_int8_t	isp_bus_reset_delay;
+	u_int8_t	isp_retry_count;
+	u_int8_t	isp_retry_delay;
 	struct {
 		u_int	dev_enable	:	1,	/* ignored */
 					:	1,
@@ -163,11 +163,11 @@ typedef struct {
 
 /* technically, not really correct, as they need to be rated based upon clock */
 #define	ISP_40M_SYNCPARMS	0x080a
-#define ISP_20M_SYNCPARMS	0x080c
-#define ISP_10M_SYNCPARMS	0x0c19
-#define ISP_08M_SYNCPARMS	0x0c25
-#define ISP_05M_SYNCPARMS	0x0c32
-#define ISP_04M_SYNCPARMS	0x0c41
+#define	ISP_20M_SYNCPARMS	0x080c
+#define	ISP_10M_SYNCPARMS	0x0c19
+#define	ISP_08M_SYNCPARMS	0x0c25
+#define	ISP_05M_SYNCPARMS	0x0c32
+#define	ISP_04M_SYNCPARMS	0x0c41
 
 /*
  * Fibre Channel Specifics
@@ -177,7 +177,7 @@ typedef struct {
 #define	FC_SNS_ID		0x80	/* SNS Server Special ID */
 
 typedef struct {
-	u_int			isp_fwoptions	: 16,
+	u_int32_t		isp_fwoptions	: 16,
 						: 7,
 				loop_seen_once	: 1,
 				isp_loopstate	: 3,	/* Current Loop State */
@@ -186,10 +186,12 @@ typedef struct {
 				isp_onfabric	: 1;
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
+	volatile u_int16_t	isp_lipseq;	/* LIP sequence # */
 	u_int32_t		isp_portid;
 	u_int8_t		isp_execthrottle;
-        u_int8_t		isp_retry_delay;
-        u_int8_t		isp_retry_count;
+	u_int8_t		isp_retry_delay;
+	u_int8_t		isp_retry_count;
+	u_int8_t		isp_reserved;
 	u_int16_t		isp_maxalloc;
 	u_int16_t		isp_maxfrmlen;
 	u_int64_t		isp_nodewwn;
@@ -204,13 +206,13 @@ typedef struct {
 	 * to move around.
 	 */
 	struct lportdb {
-		u_int	
+		u_int
 					loopid	: 8,
 						: 4,
 					fabdev	: 1,
 					roles	: 2,
 					valid	: 1;
-		u_int32_t		portid;	
+		u_int32_t		portid;
 		u_int64_t		node_wwn;
 		u_int64_t		port_wwn;
 	} portdb[MAX_FC_TARG], tport[FL_PORT_ID];
@@ -319,7 +321,6 @@ struct ispsoftc {
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
 #define	ISP_FW_REVX(xp)	((xp[0]<<24) | (xp[1] << 16) | xp[2])
 
- 
 /*
  * Bus (implementation) types
  */
@@ -366,7 +367,7 @@ struct ispsoftc {
 
 #define	ISP_DMAFREE(isp, xs, hndl)	\
 	if ((isp)->isp_mdvec->dv_dmaclr) \
-		 (*(isp)->isp_mdvec->dv_dmaclr)((isp), (xs), (hndl))
+	    (*(isp)->isp_mdvec->dv_dmaclr)((isp), (xs), (hndl))
 
 #define	ISP_RESET0(isp)	\
 	if ((isp)->isp_mdvec->dv_reset0) (*(isp)->isp_mdvec->dv_reset0)((isp))
