@@ -33,6 +33,9 @@ man_MANS = \
 info_TEXINFOS = binutils.texi
 
 config.texi: Makefile
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config.text:
+	rm -f asconfig.texi
 	rm -f config.texi
 	echo '@set VERSION $(VERSION)' > config.texi
 
@@ -41,9 +44,12 @@ binutils_TEXI = $(srcdir)/binutils.texi
 binutils.dvi:  $(binutils_TEXI) config.texi
 
 binutils.info: $(binutils_TEXI) config.texi
+	@echo "NOT REBUILDING $@"
 
 # Man page generation from texinfo
 addr2line.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_addr2line.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Daddr2line < $< > addr2line.pod
 	-($(POD2MAN) addr2line.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -51,6 +57,8 @@ addr2line.1:	$(binutils_TEXI)
 	rm -f addr2line.pod
 
 ar.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_as.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dar < $< > ar.pod
 	-($(POD2MAN) ar.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -58,6 +66,8 @@ ar.1:	$(binutils_TEXI)
 	rm -f ar.pod
 
 dlltool.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_dlltool.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Ddlltool < $< > dlltool.pod
 	-($(POD2MAN) dlltool.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -65,6 +75,8 @@ dlltool.1:	$(binutils_TEXI)
 	rm -f dlltool.pod
 
 nlmconv.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_nlmconv.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dnlmconv < $< > nlmconv.pod
 	-($(POD2MAN) nlmconv.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -72,6 +84,8 @@ nlmconv.1:	$(binutils_TEXI)
 	rm -f nlmconv.pod
 
 nm.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_nm.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dnm < $< > nm.pod
 	-($(POD2MAN) nm.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -79,6 +93,8 @@ nm.1:	$(binutils_TEXI)
 	rm -f nm.pod
 
 objcopy.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_objcopy.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dobjcopy < $< > objcopy.pod
 	-($(POD2MAN) objcopy.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -86,6 +102,8 @@ objcopy.1:	$(binutils_TEXI)
 	rm -f objcopy.pod
 
 objdump.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_objdump.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dobjdump < $< > objdump.pod
 	-($(POD2MAN) objdump.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -93,6 +111,8 @@ objdump.1:	$(binutils_TEXI)
 	rm -f objdump.pod
 
 ranlib.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ranlib.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dranlib < $< > ranlib.pod
 	-($(POD2MAN) ranlib.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -100,6 +120,8 @@ ranlib.1:	$(binutils_TEXI)
 	rm -f ranlib.pod
 
 readelf.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_readelf.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dreadelf < $< > readelf.pod
 	-($(POD2MAN) readelf.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -107,6 +129,8 @@ readelf.1:	$(binutils_TEXI)
 	rm -f readelf.pod
 
 size.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_size.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dsize < $< > size.pod
 	-($(POD2MAN) size.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -114,6 +138,8 @@ size.1:	$(binutils_TEXI)
 	rm -f size.pod
 
 strings.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_strings.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dstrings < $< > strings.pod
 	-($(POD2MAN) strings.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -121,6 +147,8 @@ strings.1:	$(binutils_TEXI)
 	rm -f strings.pod
 
 strip.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_strip.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dstrip < $< > strip.pod
 	-($(POD2MAN) strip.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -128,6 +156,8 @@ strip.1:	$(binutils_TEXI)
 	rm -f strip.pod
 
 windres.1:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_windres.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dwindres < $< > windres.pod
 	-($(POD2MAN) windres.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
@@ -135,6 +165,8 @@ windres.1:	$(binutils_TEXI)
 	rm -f windres.pod
 
 cxxfilt.man:	$(binutils_TEXI)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_cxxfilt.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $< > $(DEMANGLER_NAME).pod
 	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
