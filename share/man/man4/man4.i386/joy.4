@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"     $NetBSD: joy.4,v 1.6 2000/03/14 20:17:46 nathanw Exp $
+.\"     $NetBSD: joy.4,v 1.7 2000/03/27 09:05:48 martin Exp $
 .\"
 .Dd January 7, 1996
 .Dt JOY 4 i386
@@ -39,6 +39,7 @@ Games adapter driver
 .Sh SYNOPSIS
 .Cd "joy0 at isa? port 0x201"
 .Cd "joy* at isapnp?"
+.Cd "joy* at pci?"
 .Sh DESCRIPTION
 This driver provides access to the games adapter. The lower bit in the
 minor device number selects the joystick: 0 is the first joystick and
