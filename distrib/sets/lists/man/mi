@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.315 2001/01/28 07:51:08 jwise Exp $
+# $NetBSD: mi,v 1.316 2001/01/29 03:50:20 dent Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -2559,7 +2559,7 @@
 ./usr/share/man/man8/bootpef.8			man-bootserver-man
 ./usr/share/man/man8/bootpgw.8			man-bootserver-man
 ./usr/share/man/man8/bootptest.8		man-bootserver-man
-./usr/share/man/cat8/bootselect.8		man-sys-man
+./usr/share/man/man8/bootselect.8		man-sys-man
 ./usr/share/man/man8/bounce.8			man-postfix-man
 ./usr/share/man/man8/catman.8			man-man-man
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
