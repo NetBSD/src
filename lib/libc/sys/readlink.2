@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.23 2004/05/11 17:39:36 kleink Exp $
+.\"	$NetBSD: readlink.2,v 1.24 2004/05/11 20:02:54 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,6 +59,22 @@ The call returns the count of characters placed in the buffer
 if it succeeds, or a -1 if an error occurs, placing the error
 code in the global variable
 .Va errno .
+.Sh EXAMPLES
+A typical use is illustrated in the following piece of code
+which reads the contents of a symbolic link named
+.Pa /symbolic/link
+and stores them as null-terminated string:
+.Bd -literal -offset indent
+#include \*[Lt]limits.h\*[Gt]
+#include \*[Lt]unistd.h\*[Gt]
+
+char buf[PATH_MAX];
+ssize_t len;
+
+if ((len = readlink("/symbolic/link", buf, sizeof(buf)-1)) == -1)
+	error handling;
+buf[len] = '\e0';
+.Ed
 .Sh ERRORS
 .Fn readlink
 will fail if:
@@ -85,22 +101,6 @@ An I/O error occurred while reading from the file system.
 .Fa buf
 extends outside the process's allocated address space.
 .El
-.Sh EXAMPLES
-A typical use is illustrated in the following piece of code
-which reads the contents of a symbolic link named
-.Pa /symbolic/link
-and stores them as null-terminated string:
-.Bd -literal -offset indent
-#include <limits.h>
-#include <unistd.h>
-
-char buf[PATH_MAX];
-ssize_t len;
-
-if ((len = readlink("/symbolic/link", buf, sizeof(buf)-1)) == -1)
-	error handling;
-buf[len] = '\e0';
-.Ed
 .Sh SEE ALSO
 .Xr lstat 2 ,
 .Xr stat 2 ,
