@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.134 1998/08/17 00:49:03 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.135 1998/08/17 19:30:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -644,7 +644,8 @@ sdstart(v)
 		 * Mark the disk dirty so that the cache will be
 		 * flushed on close.
 		 */
-		sd->flags |= SDF_DIRTY;
+		if ((bp->b_flags & B_READ) == 0)
+			sd->flags |= SDF_DIRTY;
 
 		/*
 		 * Call the routine that chats with the adapter.
