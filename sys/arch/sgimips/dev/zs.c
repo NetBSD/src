@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 2001/07/08 21:04:50 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.6 2001/11/18 08:16:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -190,7 +190,12 @@ zs_hpc_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
 }
 
 /*
@@ -215,9 +220,9 @@ zs_hpc_attach(parent, self, aux)
 
 	promconsdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 
-	zsc->zsc_bustag = haa->ha_iot;
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-				       HPC_PBUS_CH6_DEVREGS + 0x30, 0x10, 
+	zsc->zsc_bustag = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_devoff, 0x10, 
 				       &zsc->zsc_base)) != 0) {
 		printf(": unable to map 85c30 registers, error = %d\n", err);
 		return;
@@ -324,7 +329,7 @@ zs_hpc_attach(parent, self, aux)
 
 
 	zsc->sc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
-	cpu_intr_establish(29, IPL_TTY, zshard, NULL);
+	cpu_intr_establish(haa->ha_irq, IPL_TTY, zshard, NULL);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.

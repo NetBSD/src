@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.7 2001/07/08 21:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.8 2001/11/18 08:16:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -154,10 +154,14 @@ struct cfattach sq_ca = {
 };
 
 static int
-sq_match(struct device *parent, struct cfdata *match, void *aux)
+sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	/* XXX! */
-	return 1;
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -169,26 +173,25 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	struct hpc_attach_args *haa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
 
-	sc->sc_hpct = haa->ha_iot;
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-				       HPC_ENET_REGS, 
+	sc->sc_hpct = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_dmaoff, 
 				       HPC_ENET_REGS_SIZE,
 				       &sc->sc_hpch)) != 0) {
 		printf(": unable to map HPC DMA registers, error = %d\n", err);
 		goto fail_0;
 	}
 
-	sc->sc_regt = haa->ha_iot;
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-				       HPC_ENET_DEVREGS, 
+	sc->sc_regt = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_devoff, 
 				       HPC_ENET_DEVREGS_SIZE,
 				       &sc->sc_regh)) != 0) {
 		printf(": unable to map Seeq registers, error = %d\n", err);
 		goto fail_0;
 	}
 
-	/* XXXrkb: should be inherited from parent bus, but works for now */
-	sc->sc_dmat = &sgimips_default_bus_dma_tag;
+	sc->sc_dmat = haa->ha_dmat;
 
 	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control), 
 				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg, 
@@ -259,7 +262,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_6;
 	}
 
-	if ((cpu_intr_establish(3, IPL_NET, sq_intr, sc)) == NULL) {
+	if ((cpu_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		goto fail_6;
 	}
