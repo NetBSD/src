@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.15 1994/03/02 19:04:29 ws Exp $
+ *	$Id: isofs_vnops.c,v 1.16 1994/03/15 21:37:31 ws Exp $
  */
 
 #include <sys/param.h>
@@ -120,7 +120,23 @@ isofs_access(vp, mode, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	return (0);
+	register struct iso_node *ip = VTOI(vp);
+	register gid_t *gp;
+	int i;
+	
+	if (cred->cr_uid == 0)
+		return 0;
+	if (cred->cr_uid != ip->inode.iso_uid) {
+		mode >>= 3;
+		gp = cred->cr_groups;
+		for (i = 0; i < cred->cr_ngroups; i++, gp++)
+			if (ip->inode.iso_gid == *gp)
+				goto found;
+		mode >>= 3;
+found:
+		;
+	}
+	return (ip->inode.iso_mode & mode) == mode ? 0 : EACCES;
 }
 
 /* ARGSUSED */

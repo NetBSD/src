@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.15 1994/02/14 21:47:10 mycroft Exp $
+ *	$Id: isofs_lookup.c,v 1.16 1994/03/15 21:37:29 ws Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +125,9 @@ isofs_lookup(vdp, ndp, p)
 	 * Check accessiblity of directory.
 	 */
 	if (vdp->v_type != VDIR)
-	    return ENOTDIR;
+		return ENOTDIR;
+	if (error = isofs_access(vdp, VEXEC, ndp->ni_cred, p))
+		return error;
 	
 	/*
 	 * We now have a segment name to search for, and a directory to search.
