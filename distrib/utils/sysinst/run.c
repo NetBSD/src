@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.58 2004/10/16 12:52:30 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.59 2005/02/26 17:40:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -414,6 +414,11 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 		}
 	}
 
+	if (logging)
+		fflush(logfp);
+	if (scripting)
+		fflush(script);
+
 	child = fork();
 	switch (child) {
 	case -1:
@@ -434,27 +439,23 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 		(void)tcsetattr(slave, TCSANOW, &rtt);
 		login_tty(slave);
 		if (logging) {
-			fprintf(logfp, "executing:");
-			for (i = 0; args[i]; i++)
-				fprintf(logfp, " %s", args[i]);
-			fprintf(logfp, "\n");
+			fprintf(logfp, "executing: %s\n", scmd);
 			fclose(logfp);
 		}
 		if (scripting) {
-			for (i = 0; args[i]; i++)
-				fprintf(script, "%s ", args[i]);
-			fprintf(script, "\n");
+			fprintf(script, "%s\n", scmd);
 			fclose(script);
 		}
 		/*
 		 * If target_prefix == "", the chroot will fail, but
 		 * that's ok, since we don't need it then.
 		 */
-		if ((flags & RUN_CHROOT) != 0)
-			chroot(target_prefix());
-		execvp(*args, args);
-		/* The parent will see this as the output from the child */
-		warn("execvp %s", *args);
+		if ((flags & RUN_CHROOT) != 0 && chroot(target_prefix()) != 0)
+			warn("chroot(%s) for %s", target_prefix(), *args);
+		else {
+			execvp(*args, args);
+			warn("execvp %s", *args);
+		}
 		_exit(EXIT_FAILURE);
 		break; /* end of child */
 	default:
@@ -562,7 +563,6 @@ loop:
  *	RUN_CHROOT	chroot to target before the exec
  *	RUN_FULLSCREEN	display output only
  *	RUN_SILENT	do not display program output
- *	RUN_DISPLAY_ERR	display status if program fails
  *	RUN_ERROR_OK	don't wait for key if program fails
  *	RUN_PROGRESS	don't wait for key if program has output
  * If both RUN_DISPLAY and RUN_SILENT are clear then the program name will
@@ -614,7 +614,7 @@ run_program(int flags, const char *cmd, ...)
 	ret = launch_subwin(&actionwin, args, &win, flags, scmd, &errstr);
 
 	/* If the command failed, show command name */
-	if (ret != 0 && actionwin == NULL && !(flags & RUN_SILENT_ERR))
+	if (actionwin == NULL && ret != 0 && !(flags & RUN_ERROR_OK))
 		actionwin = show_cmd(scmd, &win);
 
 	if (actionwin != NULL) {
@@ -647,10 +647,11 @@ run_program(int flags, const char *cmd, ...)
 			refresh();
 			getchar();
 		} else {
-			if (y + x != 0)
+			if (y + x != 0) {
 				/* give user 1 second to see messages */
 				refresh();
 				sleep(1);
+			}
 		}
 	}
 

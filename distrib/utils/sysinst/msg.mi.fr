@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.82 2004/11/11 21:24:40 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.83 2005/02/26 17:40:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,7 @@ message ok {ok}
 message unchanged {non-modifié}
 message On {On}
 message Off {Off}
+message Delete {Supprimer ?}
 
 message install
 {installer}
@@ -652,7 +653,7 @@ message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
 message delete_dist_files
-{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ?
+{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ? 
 Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
 
 message verboseextract

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.44 2005/02/12 15:06:59 aymeric Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.45 2005/02/26 17:40:49 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -58,6 +58,7 @@ message OK {OK}
 message unchanged {niezmienione}
 message On {Wlaczone}
 message Off {Wylaczone}
+message Delete {Usunac?}
 
 message install
 {zainstalowac}
@@ -628,7 +629,7 @@ message distdir
 {Jakiego katalogu powinienem uzyc dla %s? }
 
 message delete_dist_files
-{Czy chcesz usunac pakiety NetBSD z %s?
+{Czy chcesz usunac pakiety NetBSD z %s? 
 (Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
 
 message verboseextract
