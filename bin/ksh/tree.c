@@ -46,8 +46,25 @@ ptree(t, indent, shf)
 			fptreef(shf, indent, "#no-args# ");
 		break;
 	  case TEXEC:
+#if 0 /* ?not useful - can't be called? */
+		/* Print original vars */
+		if (t->left->vars)
+			for (w = t->left->vars; *w != NULL; )
+				fptreef(shf, indent, "%S ", *w++);
+		else
+			fptreef(shf, indent, "#no-vars# ");
+		/* Print expanded vars */
+		if (t->args)
+			for (w = t->args; *w != NULL; )
+				fptreef(shf, indent, "%s ", *w++);
+		else
+			fptreef(shf, indent, "#no-args# ");
+		/* Print original io */
+		t = t->left;
+#else
 		t = t->left;
 		goto Chain;
+#endif
 	  case TPAREN:
 		fptreef(shf, indent + 2, "( %T) ", t->left);
 		break;
@@ -151,7 +168,9 @@ ptree(t, indent, shf)
 		fptreef(shf, indent, "%T& ", t->left);
 		break;
 	  case TFUNCT:
-		fptreef(shf, indent, "function %s %T", t->str, t->left);
+		fptreef(shf, indent,
+			t->u.ksh_func ? "function %s %T" : "%s() %T",
+				t->str, t->left);
 		break;
 	  case TTIME:
 		fptreef(shf, indent, "time %T", t->left);
@@ -169,22 +188,12 @@ ptree(t, indent, shf)
 		for (ioact = t->ioact; *ioact != NULL; ) {
 			struct ioword *iop = *ioact++;
 
-			/* name is 0 when tracing (set -x) */
-			if ((iop->flag & IOTYPE) == IOHERE && iop->name) {
-				struct shf *rshf;
-				char buf[1024];
-				int n;
-
+			/* heredoc is 0 when tracing (set -x) */
+			if ((iop->flag & IOTYPE) == IOHERE && iop->heredoc) {
 				tputc('\n', shf);
-				if ((rshf = shf_open(iop->name, O_RDONLY, 0, 0))) {
-					while ((n = shf_read(buf, sizeof(buf), rshf))
-										> 0)
-						shf_write(buf, n, shf);
-					shf_close(rshf);
-				} else
-					errorf("can't open %s - %s",
-						iop->name, strerror(errno));
-				fptreef(shf, indent, "%s", evalstr(iop->delim, 0));
+				shf_puts(iop->heredoc, shf);
+				fptreef(shf, indent, "%s",
+					evalstr(iop->delim, 0));
 				need_nl = 1;
 			}
 		}
@@ -280,6 +289,13 @@ tputS(wp, shf)
 {
 	register int c, quoted=0;
 
+	/* problems:
+	 *	`...` -> $(...)
+	 *	'foo' -> "foo"
+	 * could change encoding to:
+	 *	OQUOTE ["'] ... CQUOTE ["']
+	 * 	COMSUB [(`] ...\0	(handle $ ` \ and maybe " in `...` case)
+	 */
 	while (1)
 		switch ((c = *wp++)) {
 		  case EOS:
@@ -299,6 +315,7 @@ tputS(wp, shf)
 			while (*wp != 0)
 				tputC(*wp++, shf);
 			tputc(')', shf);
+			wp++;
 			break;
 		  case EXPRSUB:
 			tputc('$', shf);
@@ -308,6 +325,7 @@ tputS(wp, shf)
 				tputC(*wp++, shf);
 			tputc(')', shf);
 			tputc(')', shf);
+			wp++;
 			break;
 		  case OQUOTE:
 		  	quoted = 1;
@@ -319,12 +337,14 @@ tputS(wp, shf)
 			break;
 		  case OSUBST:
 			tputc('$', shf);
-			tputc('{', shf);
+			if (*wp++ == '{')
+				tputc('{', shf);
 			while ((c = *wp++) != 0)
 				tputC(c, shf);
 			break;
 		  case CSUBST:
-			tputc('}', shf);
+			if (*wp++ == '}')
+				tputc('}', shf);
 			break;
 #ifdef KSH
 		  case OPAT:
@@ -508,6 +528,7 @@ tcopy(t, ap)
 
 	r->left = tcopy(t->left, ap);
 	r->right = tcopy(t->right, ap);
+	r->lineno = t->lineno;
 
 	return r;
 }
@@ -551,6 +572,7 @@ wdscan(wp, c)
 				;
 			break;
 		  case CSUBST:
+			wp++;
 			if (c == CSUBST && nest == 0)
 				return (char *) wp;
 			nest--;
@@ -566,6 +588,82 @@ wdscan(wp, c)
 				return (char *) wp;
 			if (wp[-1] == CPAT)
 				nest--;
+			break;
+#endif /* KSH */
+		  default:
+			internal_errorf(0,
+				"wdscan: unknown char 0x%x (carrying on)",
+				wp[-1]);
+		}
+}
+
+/* return a copy of wp without any of the mark up characters and
+ * with quote characters (" ' \) stripped.
+ * (string is allocated from ATEMP)
+ */
+char *
+wdstrip(wp)
+	const char *wp;
+{
+	struct shf shf;
+	int c;
+
+	shf_sopen((char *) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+
+	/* problems:
+	 *	`...` -> $(...)
+	 *	x${foo:-"hi"} -> x${foo:-hi}
+	 *	x${foo:-'hi'} -> x${foo:-hi}
+	 */
+	while (1)
+		switch ((c = *wp++)) {
+		  case EOS:
+			return shf_sclose(&shf); /* null terminates */
+		  case CHAR:
+		  case QCHAR:
+			shf_putchar(*wp++, &shf);
+			break;
+		  case COMSUB:
+			shf_putchar('$', &shf);
+			shf_putchar('(', &shf);
+			while (*wp != 0)
+				shf_putchar(*wp++, &shf);
+			shf_putchar(')', &shf);
+			break;
+		  case EXPRSUB:
+			shf_putchar('$', &shf);
+			shf_putchar('(', &shf);
+			shf_putchar('(', &shf);
+			while (*wp != 0)
+				shf_putchar(*wp++, &shf);
+			shf_putchar(')', &shf);
+			shf_putchar(')', &shf);
+			break;
+		  case OQUOTE:
+			break;
+		  case CQUOTE:
+			break;
+		  case OSUBST:
+			shf_putchar('$', &shf);
+			if (*wp++ == '{')
+			    shf_putchar('{', &shf);
+			while ((c = *wp++) != 0)
+				shf_putchar(c, &shf);
+			break;
+		  case CSUBST:
+			if (*wp++ == '}')
+				shf_putchar('}', &shf);
+			break;
+#ifdef KSH
+		  case OPAT:
+			shf_putchar(*wp++, &shf);
+			shf_putchar('(', &shf);
+			break;
+		  case SPAT:
+			shf_putchar('|', &shf);
+			break;
+		  case CPAT:
+			shf_putchar(')', &shf);
 			break;
 #endif /* KSH */
 		}
@@ -594,6 +692,8 @@ iocopy(iow, ap)
 			q->name = wdcopy(p->name, ap);
 		if (p->delim != (char *) 0)
 			q->delim = wdcopy(p->delim, ap);
+		if (p->heredoc != (char *) 0)
+			q->heredoc = str_save(p->heredoc, ap);
 	}
 	ior[i] = NULL;
 
@@ -649,6 +749,10 @@ iofree(iow, ap)
 	for (iop = iow; (p = *iop++) != NULL; ) {
 		if (p->name != NULL)
 			afree((void*)p->name, ap);
+		if (p->delim != NULL)
+			afree((void*)p->delim, ap);
+		if (p->heredoc != NULL)
+			afree((void*)p->heredoc, ap);
 		afree((void*)p, ap);
 	}
 }

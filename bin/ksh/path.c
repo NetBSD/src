@@ -2,7 +2,7 @@
 #include "ksh_stat.h"
 
 /*
- *	Contains a routine to search a : seperated list of
+ *	Contains a routine to search a : separated list of
  *	paths (a la CDPATH) and make appropiate file names.
  *	Also contains a routine to simplify .'s and ..'s out of
  *	a path name.
@@ -12,8 +12,9 @@
 
 /*
  * $Log: path.c,v $
- * Revision 1.1.1.1  1996/09/21 23:35:15  jtc
- * import pdksh 5.2.8
+ * Revision 1.1.1.2  1999/10/20 14:27:30  hubertf
+ * Import pdksh V5.2.14.
+ * Includes lots of bugfixes.
  *
  * Revision 1.2  1994/05/19  18:32:40  michael
  * Merge complete, stdio replaced, various fixes. (pre autoconf)
@@ -70,7 +71,7 @@ int
 make_path(cwd, file, cdpathp, xsp, phys_pathp)
 	const char *cwd;
 	const char *file;
-	char	**cdpathp;	/* & of : seperated list */
+	char	**cdpathp;	/* & of : separated list */
 	XString	*xsp;
 	int	*phys_pathp;
 {
@@ -159,10 +160,10 @@ simplify_path(path)
 
 	if ((isrooted = ISROOTEDPATH(path)))
 		very_start++;
-#ifdef OS2
+#if defined (OS2) || defined (__CYGWIN__)
 	if (path[0] && path[1] == ':')	/* skip a: */
 		very_start += 2;
-#endif /* OS2 */
+#endif /* OS2 || __CYGWIN__ */
 
 	/* Before			After
 	 *  /foo/			/foo
@@ -172,12 +173,18 @@ simplify_path(path)
 	 *  ..				..
 	 *  ./foo			foo
 	 *  foo/../../../bar		../../bar
-	 * OS2:
+	 * OS2 and CYGWIN:
 	 *  a:/foo/../..		a:/
 	 *  a:.				a:
 	 *  a:..			a:..
 	 *  a:foo/../../blah		a:../blah
 	 */
+
+#ifdef __CYGWIN__
+       /* preserve leading double-slash on pathnames (for UNC paths) */
+       if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
+               very_start++;
+#endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {
 		/* treat multiple '/'s as one '/' */

@@ -39,7 +39,7 @@ typedef unsigned char Findex;
 
 struct x_defbindings {
 	Findex		xdb_func;	/* XFUNC_* */
-	char		xdb_tab;
+	unsigned char	xdb_tab;
 	unsigned char	xdb_char;
 };
 
@@ -56,14 +56,13 @@ struct x_defbindings {
    * changes increase memory usage from 9,216 bytes to 24,416 bytes...)
    */
 # define CHARMASK	0xFF		/* 8-bit ASCII character mask */
-# define X_TABSZ	256		/* size of keydef tables etc */
 # define X_NTABS	4		/* normal, meta1, meta2, meta3 */
 static int	x_prefix3 = 0xE0;
 #else /* OS2 */
-# define CHARMASK	0x7F		/* 7-bit ASCII character mask */
-# define X_TABSZ	128		/* size of keydef tables etc */
+# define CHARMASK	0xFF		/* 8-bit character mask */
 # define X_NTABS	3		/* normal, meta1, meta2 */
 #endif /* OS2 */
+#define X_TABSZ		(CHARMASK+1)	/* size of keydef tables etc */
 
 /* Arguments for do_complete()
  * 0 = enumerate  M-= complete as much as possible and then list
@@ -108,6 +107,7 @@ static	char	*xmp;		/* mark pointer */
 static	Findex   x_last_command;
 static	Findex (*x_tab)[X_TABSZ];	/* key definition */
 static	char    *(*x_atab)[X_TABSZ];	/* macro definitions */
+static	unsigned char	x_bound[(X_TABSZ * X_NTABS + 7) / 8];
 #define	KILLSIZE	20
 static	char    *killstack[KILLSIZE];
 static	int	killsp, killtp;
@@ -307,7 +307,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_mv_forw,		3,	'M'  },
 	{ XFUNC_next_com,		3,	'P'  },
 	{ XFUNC_prev_com,		3,	'H'  },
-#else /* OS2 */
+#endif /* OS2 */
 	/* These for ansi arrow keys: arguablely shouldn't be here by
 	 * default, but its simpler/faster/smaller than using termcap
 	 * entries.
@@ -317,7 +317,6 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_next_com,		2,	'B'  },
 	{ XFUNC_mv_forw,		2,	'C'  },
 	{ XFUNC_mv_back,		2,	'D'  },
-#endif /* OS2 */
 };
 
 int
@@ -677,7 +676,7 @@ static void
 x_bs(c)
 	int c;
 {
-	register i;
+	register int i;
 	i = x_size(c);
 	while (i--)
 		x_e_putc('\b');
@@ -687,7 +686,7 @@ static int
 x_size_str(cp)
 	register char *cp;
 {
-	register size = 0;
+	register int size = 0;
 	while (*cp)
 		size += x_size(*cp++);
 	return size;
@@ -699,7 +698,7 @@ x_size(c)
 {
 	if (c=='\t')
 		return 4;	/* Kludge, tabs are always four spaces. */
-	if (c < ' ' || c == 0x7F) /* ASCII control char */
+	if (iscntrl(c))		/* control char */
 		return 2;
 	return 1;
 }
@@ -722,7 +721,7 @@ x_zotc(c)
 	if (c == '\t')  {
 		/*  Kludge, tabs are always four spaces.  */
 		x_e_puts("    ");
-	} else if (c < ' ' || c == 0x7F)  { /* ASCII */
+	} else if (iscntrl(c))  {
 		x_e_putc('^');
 		x_e_putc(UNCTRL(c));
 	} else
@@ -1241,12 +1240,12 @@ x_meta_yank(c)
 	len = strlen(killstack[killtp]);
 	x_goto(xcp - len);
 	x_delete(len, FALSE);
-	do  {
+	do {
 		if (killtp == 0)
 			killtp = KILLSIZE - 1;
 		else
 			killtp--;
-	}  while (killstack[killtp] == 0);
+	} while (killstack[killtp] == 0);
 	x_ins(killstack[killtp]);
 	return KSTD;
 }
@@ -1340,14 +1339,15 @@ x_mapout(c)
 	static char buf[8];
 	register char *p = buf;
 
-	if (c < ' ' || c == 0x7F)  { /* ASCII */
-		*p++ = '^';
-		*p++ = (c == 0x7F) ? '?' : (c | 0x40);
 #ifdef OS2
-	} else if (c == 0xE0) {
+	if (c == 0xE0) {
 		*p++ = '^';
 		*p++ = '0';
+	} else
 #endif /* OS2 */
+	if (iscntrl(c))  {
+		*p++ = '^';
+		*p++ = UNCTRL(c);
 	} else
 		*p++ = c;
 	*p = 0;
@@ -1459,6 +1459,14 @@ x_bind(a1, a2, macro, list)
 	x_tab[prefix][key] = f;
 	x_atab[prefix][key] = sp;
 
+	/* Track what the user has bound so x_emacs_keys() won't toast things */
+	if (f == XFUNC_insert)
+		x_bound[(prefix * X_TABSZ + key) / 8] &=
+			~(1 << ((prefix * X_TABSZ + key) % 8));
+	else
+		x_bound[(prefix * X_TABSZ + key) / 8] |=
+			(1 << ((prefix * X_TABSZ + key) % 8));
+
 	return 0;
 }
 
@@ -1486,16 +1494,35 @@ x_init_emacs()
 			x_atab[i][j] = NULL;
 }
 
+static void
+bind_if_not_bound(p, k, func)
+	int p, k;
+	int func;
+{
+	/* Has user already bound this key?  If so, don't override it */
+	if (x_bound[((p) * X_TABSZ + (k)) / 8]
+	    & (1 << (((p) * X_TABSZ + (k)) % 8)))
+		return;
+
+	x_tab[p][k] = func;
+}
+
 void
 x_emacs_keys(ec)
 	X_chars *ec;
 {
-	x_tab[0][ec->erase] = XFUNC_del_back;
-	x_tab[0][ec->kill] = XFUNC_del_line;
-	x_tab[0][ec->werase] = XFUNC_del_bword;
-	x_tab[0][ec->intr] = XFUNC_abort;
-	x_tab[0][ec->quit] = XFUNC_noop;
-	x_tab[1][ec->erase] = XFUNC_del_bword;
+	if (ec->erase >= 0) {
+		bind_if_not_bound(0, ec->erase, XFUNC_del_back);
+		bind_if_not_bound(1, ec->erase, XFUNC_del_bword);
+	}
+	if (ec->kill >= 0)
+		bind_if_not_bound(0, ec->kill, XFUNC_del_line);
+	if (ec->werase >= 0)
+		bind_if_not_bound(0, ec->werase, XFUNC_del_bword);
+	if (ec->intr >= 0)
+		bind_if_not_bound(0, ec->intr, XFUNC_abort);
+	if (ec->quit >= 0)
+		bind_if_not_bound(0, ec->quit, XFUNC_noop);
 }
 
 static int
@@ -2009,16 +2036,11 @@ x_prev_histword(c)
 {
   register char *rcp;
   char *cp;
-  char **hp;
 
-  hp = x_histp-1;
-  if (hp < history || hp > histptr)
-  {
+  cp = *histptr;
+  if (!cp)
     x_e_putc(BEL);
-    return KSTD;
-  }
-  cp = *hp;
-  if (x_arg_defaulted) {
+  else if (x_arg_defaulted) {
     rcp = &cp[strlen(cp) - 1];
     /*
      * ignore white-space after the last word

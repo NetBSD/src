@@ -1,7 +1,10 @@
+#ifndef SHF_H
+# define SHF_H
+
 /*
  * Shell file I/O routines
  */
-/* $Id: shf.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $ */
+/* $Id: shf.h,v 1.1.1.2 1999/10/20 14:27:32 hubertf Exp $ */
 
 #define SHF_BSIZE	512
 
@@ -78,3 +81,5 @@ int	    shf_fprintf ARGS((struct shf *shf, const char *fmt, ...));
 int	    shf_snprintf ARGS((char *buf, int bsize, const char *fmt, ...));
 char	    *shf_smprintf ARGS((const char *fmt, ...));
 int	    shf_vfprintf ARGS((struct shf *, const char *fmt, va_list args));
+
+#endif /* SHF_H */

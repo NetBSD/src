@@ -2,7 +2,7 @@
  * command trees for compile/execute
  */
 
-/* $Id: tree.h,v 1.1.1.1 1996/09/21 23:35:17 jtc Exp $ */
+/* $Id: tree.h,v 1.1.1.2 1999/10/20 14:27:32 hubertf Exp $ */
 
 #define	NOBLOCK	((struct op *)NULL)
 #define	NOWORD	((char *)NULL)
@@ -23,8 +23,10 @@ struct op {
 	struct op *left, *right; 	/* descendents */
 	char   *str;			/* word for case; identifier for for,
 					 * select, and functions;
-					 * path to execute for TEXEC
+					 * path to execute for TEXEC;
+					 * time hook for TCOM.
 					 */
+	int	lineno;			/* TCOM/TFUNC: LINENO for this */
 };
 
 /* Tree.type values */
@@ -62,10 +64,10 @@ struct op {
 #define EXPRSUB	4		/* $(()) substitution (0 terminated) */
 #define	OQUOTE	5		/* opening " or ' */
 #define	CQUOTE	6		/* closing " or ' */
-#define	OSUBST	7		/* opening ${ substitution */
-#define	CSUBST	8		/* closing } of above */
+#define	OSUBST	7		/* opening ${ subst (followed by { or X) */
+#define	CSUBST	8		/* closing } of above (followed by } or X) */
 #define OPAT	9		/* open pattern: *(, @(, etc. */
-#define SPAT	10		/* seperate pattern: | */
+#define SPAT	10		/* separate pattern: | */
 #define CPAT	11		/* close pattern: ) */
 
 /*
@@ -74,8 +76,9 @@ struct op {
 struct ioword {
 	int	unit;	/* unit affected */
 	int	flag;	/* action (below) */
-	char	*name;	/* file name */
+	char	*name;	/* file name (unused if heredoc) */
 	char	*delim;	/* delimiter for <<,<<- */
+	char	*heredoc;/* content of heredoc */
 };
 
 /* ioword.flag - type of redirection */
@@ -104,6 +107,8 @@ struct ioword {
 #define	XCCLOSE	BIT(7)		/* exchild: close close_fd in child */
 #define XERROK	BIT(8)		/* non-zero exit ok (for set -e) */
 #define XCOPROC BIT(9)		/* starting a co-process */
+#define XTIME	BIT(10)		/* timeing TCOM command */
+#define XINTACT BIT(11)		/* OS2: proc started from interactive session */
 
 /*
  * flags to control expansion of words (assumed by t->evalflags to fit

@@ -25,7 +25,7 @@
 #   ifdef OS2
 #    define HISTFILE "history.ksh"
 #   else /* OS2 */
-#    define HISTFILE ".pdksh_hist"
+#    define HISTFILE ".pdksh_history"
 #   endif /* OS2 */
 #  endif
 
@@ -223,8 +223,7 @@ c_fc(wp)
 
 	/* Run editor on selected lines, then run resulting commands */
 
-	tf = maketemp(ATEMP);
-	tf->next = e->temps; e->temps = tf;
+	tf = maketemp(ATEMP, TT_HIST_EDIT, &e->temps);
 	if (!(shf = tf->shf)) {
 		bi_errorf("cannot create temp file %s - %s",
 			tf->name, strerror(errno));
@@ -238,7 +237,8 @@ c_fc(wp)
 		return 1;
 	}
 
-	setstr(local("_", FALSE), tf->name);
+	/* Ignore setstr errors here (arbitrary) */
+	setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
 
 	/* XXX: source should not get trashed by this.. */
 	{
@@ -483,7 +483,7 @@ histnum(n)
 		current = histptr;
 		curpos = last;
 		return last;
-	}  else {
+	} else {
 		current = &history[n];
 		curpos = n;
 		return n;
@@ -630,9 +630,9 @@ histsave(lno, cmd, dowrite)
  * commands
  */
 void
-histappend(cmd, nl_seperate)
+histappend(cmd, nl_separate)
 	const char *cmd;
-	int	nl_seperate;
+	int	nl_separate;
 {
 	int	hlen, clen;
 	char	*p;
@@ -643,7 +643,7 @@ histappend(cmd, nl_seperate)
 		clen--;
 	p = *histptr = (char *) aresize(*histptr, hlen + clen + 2, APERM);
 	p += hlen;
-	if (nl_seperate)
+	if (nl_separate)
 		*p++ = '\n';
 	memcpy(p, cmd, clen);
 	p[clen] = '\0';
