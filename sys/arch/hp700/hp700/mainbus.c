@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 2004/12/14 02:32:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2004/12/14 02:32:02 chs Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
