@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 1994/11/07 05:57:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 1994/11/14 08:53:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -1087,14 +1087,14 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern lgdt(), etext;
-	int x, *pi;
+	extern lgdt();
+	void consinit __P((void));
+	int x;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
-	extern char sigcode[], esigcode[];
+	extern char etext[], sigcode[], esigcode[];
 	/* table descriptors - used to load tables by microp */
 	struct region_descriptor r_gdt, r_idt;
-	void consinit __P((void));
 
 	proc0.p_addr = proc0paddr;
 
@@ -1104,7 +1104,6 @@ init386(first_avail)
 	/* set code segment limit to end of kernel text */
 	gdt_segs[GCODE_SEL].ssd_limit = i386_btop(i386_round_page(&etext)) - 1;
 #endif
-
 	for (x = 0; x < NGDT; x++)
 		ssdtosd(gdt_segs + x, gdt + x);
 
