@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_conf.h,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
-/*	$KAME: altq_conf.h,v 1.5 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_conf.h,v 1.3 2001/01/29 20:02:48 itojun Exp $	*/
+/*	$KAME: altq_conf.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998-2000
@@ -52,10 +52,9 @@
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-typedef int d_open_t __P((dev_t dev, int oflags, int devtype, struct proc *p));
-typedef int d_close_t __P((dev_t dev, int fflag, int devtype, struct proc *p));
-typedef int d_ioctl_t __P((dev_t dev, u_long cmd, caddr_t data,
-			   int fflag, struct proc *p));
+typedef int d_open_t __P((dev_t, int, int, struct proc *));
+typedef int d_close_t __P((dev_t, int, int, struct proc *));
+typedef int d_ioctl_t __P((dev_t, u_long, caddr_t, int, struct proc *));
 
 #define	noopen	(dev_type_open((*))) enodev
 #define	noclose	(dev_type_close((*))) enodev
@@ -63,10 +62,9 @@ typedef int d_ioctl_t __P((dev_t dev, u_long cmd, caddr_t data,
 #endif /* __NetBSD__ || __OpenBSD__ */
 
 #if defined(__OpenBSD__)
-int altqopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-int altqclose __P((dev_t dev, int fflag, int devtype, struct proc *p));
-int altqioctl __P((dev_t dev, u_long cmd, caddr_t data, int fflag,
-                           struct proc *p));
+int altqopen __P((dev_t, int, int, struct proc *));
+int altqclose __P((dev_t, int, int, struct proc *));
+int altqioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 #endif
 
 /*
