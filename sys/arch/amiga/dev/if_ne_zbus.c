@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.1 1998/11/11 22:26:27 veego Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.2 1999/11/25 21:53:01 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ struct cfattach ne_zbus_ca = {
 #define	NE_ARIADNE_II_ASICBASE	0x0310	/* 0x0620 */
 #define	NE_ARIADNE_II_ASICSIZE	0x20
 
-
 int
 ne_zbus_match(parent, cf, aux)
 	struct device *parent;
@@ -100,6 +99,10 @@ ne_zbus_match(parent, cf, aux)
 
 	/* Ariadne II ethernet card */
 	if (zap->manid == 2167 && zap->prodid == 202)
+		return (1);
+
+	/* X-serv ethernet card */
+	if (zap->manid == 4626 && zap->prodid == 23)
 		return (1);
 
 	return (0);
@@ -131,6 +134,9 @@ ne_zbus_attach(parent, self, aux)
 	dsc->init_card = rtl80x9_init_card;
 
 	zsc->sc_bst.base = (u_long)zap->va + 0;
+	if (zap->manid == 4626)
+		 zsc->sc_bst.base += 0x8000;
+
 	zsc->sc_bst.stride = 1;
 	zsc->sc_bst.absm = &amiga_interleaved_wordaccess_methods;
 
