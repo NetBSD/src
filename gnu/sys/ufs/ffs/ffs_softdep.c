@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.11 2000/05/30 17:26:08 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.12 2000/05/30 21:57:22 mycroft Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -3741,9 +3741,6 @@ softdep_fsync(vp)
 	struct fs *fs;
 	struct proc *p = CURPROC;		/* XXX */
 	int error, flushparent;
-#ifndef __FreeBSD__
-	struct timespec ts;
-#endif
 	ino_t parentino;
 	ufs_lbn_t lbn;
 
@@ -3807,8 +3804,7 @@ softdep_fsync(vp)
 #ifdef __FreeBSD__
 			error = UFS_UPDATE(pvp, 1);
 #else
-			TIMEVAL_TO_TIMESPEC(&time, &ts);
-			error = VOP_UPDATE(pvp, &ts, &ts, 1);
+			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 #endif
 			if (error) {
 				vput(pvp);
@@ -4254,9 +4250,6 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	struct inodedep *inodedep;
 	struct ufsmount *ump;
 	struct diradd *dap;
-#ifndef __FreeBSD__
-	struct timespec ts;
-#endif
 	struct vnode *vp;
 	int gotit, error = 0;
 	struct buf *bp;
@@ -4273,8 +4266,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 #ifdef __FreeBSD__
 			error = UFS_UPDATE(pvp, 1);
 #else
-			TIMEVAL_TO_TIMESPEC(&time, &ts);
-			error = VOP_UPDATE(pvp, &ts, &ts, 1);
+			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 #endif
 			if (error)
 				break;
