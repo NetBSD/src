@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.4 2003/07/15 02:43:26 lukem Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.5 2003/09/19 21:35:59 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.4 2003/07/15 02:43:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.5 2003/09/19 21:35:59 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,7 +227,7 @@ wdc_obio_attach(parent, self, aux)
 	
 	printf("\n");
 
-	wdcattach(chp);
+	config_interrupts(self, wdcattach);
 }
 
 u_int16_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.55 2003/03/30 02:06:29 matt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.56 2003/09/19 21:36:07 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55 2003/03/30 02:06:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.56 2003/09/19 21:36:07 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -360,7 +360,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
@@ -368,15 +367,17 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+#if 0
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
+#endif
 
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
-	wdcattach(&sc->wdc_channel);	/* should return an error XXX */
+	wdcattach(self);
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 	return;
 
@@ -443,30 +444,30 @@ wdc_pcmcia_enable(self, onoff)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
-		/* See the comment in aic_pcmcia_enable */
-		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    wdcintr, &sc->wdc_channel);
-			if (sc->sc_ih == NULL) {
-				printf("%s: "
-				    "couldn't establish interrupt handler\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				return (EIO);
-			}
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    wdcintr, &sc->wdc_channel);
+		if (sc->sc_ih == NULL) {
+			printf("%s: couldn't establish interrupt handler\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return (EIO);
+		}
 
+		/*
+		 * If attach is in progress, we know that card power is
+		 * enabled.
+		 */
+		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname);
 				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 				return (EIO);
 			}
-			wdcreset(&sc->wdc_channel, VERBOSE);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
-		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0)
-			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	}
 
 	return (0);

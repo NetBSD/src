@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.260 2003/08/03 17:53:04 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.261 2003/09/19 21:36:01 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.260 2003/08/03 17:53:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.261 2003/09/19 21:36:01 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -300,7 +300,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	/* read our drive info */
-	if (wd_get_params(wd, AT_POLL, &wd->sc_params) != 0) {
+	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
 		aprint_error("\n%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
 		return;
 	}
