@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/03/22 12:44:01 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2003/04/04 07:50:43 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -16,5 +16,11 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${SMBDIST}/include
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
+
+.if ${MKSHARE} != "no"
+.PATH:	${SMBDIST}/examples
+FILESDIR=	/usr/share/examples/smbfs
+FILES=		dot.nsmbrc
+.endif
 
 .include <bsd.prog.mk>
