@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 1997/11/02 23:43:11 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 1997/11/03 02:38:41 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -220,7 +220,7 @@ int	config_network __P((void));
 void	mnt_net_config __P((void));
 
 /* From run.c */
-int	collect __P((int kind, char **buffer, char *name, ...));
+int	collect __P((int kind, char **buffer, const char *name, ...));
 int	run_prog __P((char *, ...));
 void	run_prog_or_die __P((char *, ...));
 int	run_prog_or_continue __P((char *, ...));
@@ -253,6 +253,9 @@ void	trunc_target_file __P((const char *path));
 int	target_chdir __P(( const char *path));
 void	target_chdir_or_die __P((const char *dir));
 int	target_already_root __P((void));
+FILE*	target_fopen __P((const char *filename, const char *type));
+int	target_collect_file __P((int kind, char **buffer, char *name));
 int	is_active_rootpart __P((const char *partname));
 void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
+int	target_mount __P((const char *fstype, const char *from, const char* on));
