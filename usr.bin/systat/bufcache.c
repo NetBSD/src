@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.18 2004/11/23 03:11:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.18 2004/11/23 03:11:33 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <kvm.h>
 #include <math.h>
 #include <nlist.h>
@@ -64,6 +65,7 @@ __RCSID("$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $");
 #include "extern.h"
 
 #define VCACHE_SIZE	50
+#define	PAGEINFO_ROWS	 5
 
 struct vcache {
 	int vc_age;
@@ -122,14 +124,14 @@ closebufcache(WINDOW *w)
 void
 labelbufcache(void)
 {
-	wmove(wnd, 1, 0);
-	wclrtoeol(wnd);
-	wmove(wnd, 2, 0);
-	wclrtoeol(wnd);
-	wmove(wnd, 3, 0);
-	wclrtoeol(wnd);
-	mvwaddstr(wnd, 4, 0,
-"File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %");
+	int i;
+
+	for (i = 0; i <= PAGEINFO_ROWS; i++) {
+		wmove(wnd, i, 0);
+		wclrtoeol(wnd);
+	}
+	mvwaddstr(wnd, PAGEINFO_ROWS + 1, 0, "File System          Bufs used"
+	    "   %   kB in use   %  Bufsize kB   %  Util %");
 	wclrtoeol(wnd);
 }
 
@@ -143,18 +145,38 @@ showbufcache(void)
 	NREAD(X_BUFMEM, &bufmem, sizeof(bufmem));
 
 	mvwprintw(wnd, 0, 0,
-	    "There are %*d metadata buffers using           %*ld kBytes of memory.",
-	    pgwidth, nbuf, kbwidth, bufmem/1024);
+	    "   %*d metadata buffers using             %*ld kBytes of "
+	    "memory (%2.0f%%).",
+	    pgwidth, nbuf, kbwidth, bufmem / 1024,
+	    ((bufmem * 100.0) + 0.5) / getpagesize() / uvmexp.npages);
 	wclrtoeol(wnd);
 	mvwprintw(wnd, 1, 0,
-	    "There are %*llu pages for cached file data using %*llu kBytes of memory.",
-	    pgwidth, (long long)uvmexp.filepages,
-	    kbwidth, (long long) uvmexp.filepages * getpagesize() / 1024);
+	    "   %*" PRIu64 " pages for cached file data using   %*"
+	    PRIu64 " kBytes of memory (%2.0f%%).",
+	    pgwidth, uvmexp.filepages,
+	    kbwidth, uvmexp.filepages * getpagesize() / 1024,
+	    (uvmexp.filepages * 100 + 0.5) / uvmexp.npages);
 	wclrtoeol(wnd);
 	mvwprintw(wnd, 2, 0,
-	    "There are %*llu pages for executables using      %*llu kBytes of memory.",
-	    pgwidth, (long long)uvmexp.execpages,
-	    kbwidth, (long long) uvmexp.execpages * getpagesize() / 1024);
+	    "   %*" PRIu64 " pages for executables using        %*"
+	    PRIu64 " kBytes of memory (%2.0f%%).",
+	    pgwidth, uvmexp.execpages,
+	    kbwidth, uvmexp.execpages * getpagesize() / 1024,
+	    (uvmexp.execpages * 100 + 0.5) / uvmexp.npages);
+	wclrtoeol(wnd);
+	mvwprintw(wnd, 3, 0,
+	    "   %*" PRIu64 " pages for anon (non-file) data     %*"
+	    PRIu64 " kBytes of memory (%2.0f%%).",
+	    pgwidth, uvmexp.anonpages,
+	    kbwidth, uvmexp.anonpages * getpagesize() / 1024,
+	    (uvmexp.anonpages * 100 + 0.5) / uvmexp.npages);
+	wclrtoeol(wnd);
+	mvwprintw(wnd, 4, 0,
+	    "   %*" PRIu64 " free pages                         %*"
+	    PRIu64 " kBytes of memory (%2.0f%%).",
+	    pgwidth, uvmexp.free,
+	    kbwidth, uvmexp.free * getpagesize() / 1024,
+	    (uvmexp.free * 100 + 0.5) / uvmexp.npages);
 	wclrtoeol(wnd);
 
 	if (nbuf == 0 || bufmem == 0) {
@@ -164,7 +186,7 @@ showbufcache(void)
 
 	tbuf = 0;
 	tvalid = tsize = 0;
-	lastrow = 5;	/* Leave room for header. */
+	lastrow = PAGEINFO_ROWS + 2;	/* Leave room for header. */
 	for (i = lastrow, ml = LIST_FIRST(&mount_list); ml != NULL;
 	    i++, ml = LIST_NEXT(ml, ml_entries)) {
 
@@ -213,7 +235,8 @@ initbufcache(void)
 
 	fetchuvmexp();
 	pgwidth = (int)(floor(log10((double)uvmexp.npages)) + 1);
-	kbwidth = (int)(floor(log10(uvmexp.npages * getpagesize() / 1024.0)) + 1);
+	kbwidth = (int)(floor(log10(uvmexp.npages * getpagesize() / 1024.0)) +
+	    1);
 
 	return(1);
 }
