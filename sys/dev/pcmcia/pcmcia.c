@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.19 2000/02/08 12:51:30 enami Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.20 2000/02/22 21:29:36 chopps Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -206,20 +206,8 @@ pcmcia_card_attach(dev)
 		paa.pf = pf;
 
 		if ((pf->child = config_found_sm(&sc->dev, &paa, pcmcia_print,
-		    pcmcia_submatch)) != NULL) {
+		    pcmcia_submatch)) != NULL)
 			attached++;
-
-			DPRINTF(("%s: function %d CCR at %d "
-			     "offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
-			     sc->dev.dv_xname, pf->number,
-			     pf->pf_ccr_window,
-			     (unsigned long) pf->pf_ccr_offset,
-			     pcmcia_ccr_read(pf, 0x00),
-			pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
-			pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
-			pcmcia_ccr_read(pf, 0x0C), pcmcia_ccr_read(pf, 0x0E),
-			pcmcia_ccr_read(pf, 0x10), pcmcia_ccr_read(pf, 0x12)));
-		}
 	}
 
 	return (attached ? 0 : 1);
