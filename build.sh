@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.50 2002/03/06 23:32:52 simonb Exp $
+#  $NetBSD: build.sh,v 1.51 2002/03/07 14:59:04 simonb Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -35,7 +35,7 @@ getarch () {
 		mipsco|newsmips|sbmips|sgimips)
 			MACHINE_ARCH=mipseb;;
 
-		algor|arc|cobalt|hpcmips|playstation2|pmax)
+		algor|arc|cobalt|evbmips|hpcmips|playstation2|pmax)
 			MACHINE_ARCH=mipsel;;
 
 		pc532)
@@ -349,7 +349,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.50 2002/03/06 23:32:52 simonb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.51 2002/03/07 14:59:04 simonb Exp $
 #
 
 EOF
