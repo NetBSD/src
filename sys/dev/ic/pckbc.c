@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.3 2000/06/05 22:20:54 sommerfeld Exp $ */
+/* $NetBSD: pckbc.c,v 1.4 2000/06/06 16:21:22 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -293,8 +293,9 @@ pckbc_attach_slot(sc, slot)
 		pckbc_init_slotdata(t->t_slotdata[slot]);
 	}
 #if NRND > 0
-	rnd_attach_source(&t->t_slotdata[slot]->rnd_source, sc->subname[slot],
-	    RND_TYPE_TTY, 0);
+	if (found && (t->t_slotdata[slot] != NULL))
+		rnd_attach_source(&t->t_slotdata[slot]->rnd_source, sc->subname[slot],
+		    RND_TYPE_TTY, 0);
 #endif
 	return (found);
 }
