@@ -1,0 +1,444 @@
+#!/bin/sh
+#
+# $NetBSD: postinstall,v 1.1 2002/04/26 15:37:25 lukem Exp $
+#
+# Copyright (c) 2002 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Luke Mewburn.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# postinstall
+#	check for or fix configuration changes that occur
+#	over time as NetBSD evolves.
+#
+
+#
+# checks to add:
+#	- convert ssh to ssh{,d}_config, and deprecate sshd_conf_dir
+#	- obsolete rc.conf variables
+#		- critical_filesystems{_beforenet,}
+#		- defcorename
+#		- nfsiod_flags
+#		- amd_master
+#		- ip6forwarding
+#	- function to check ${DEST_ETC}/rc.conf and ${DEST_ETC}/rc.conf.d/*
+#	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
+#	  dhclient.conf, ...) ?
+#	- support quiet/verbose mode ?
+#
+
+#
+#	helper functions
+#
+
+err()
+{
+	exitval=$1
+	shift
+	echo 1>&2 "${PROGNAME}: $*"
+	exit ${exitval}
+}
+
+warn()
+{
+	echo 1>&2 "${PROGNAME}: $*"
+}
+
+msg()
+{
+	echo "	$*"
+}
+
+# additem item description
+#	add item to list of supported items to check/fix
+#
+additem()
+{
+	[ $# -eq 2 ] || err 2 "USAGE: additem item description"
+	items="${items}${items:+ }$1"
+	eval desc_$1=\"$2\"
+}
+
+# cmpdir op src dest file [file ...]
+#	perform op ("check" or "fix") on files in src/ against dest/
+#
+cmpdir()
+{
+	[ $# -ge 4 ] || err 2 "USAGE: cmpdir op src dest file [file ...]"
+	_op=$1
+	_src=$2
+	_dest=$3
+	shift 3
+	_files=$*
+
+	if [ ! -d "${_dest}" ]; then
+		if [ "${_op}" = "check" ]; then
+			msg "${_dest} is not a directory"
+			return 1
+		elif ! mkdir ${_dest} ; then
+			msg "Can't create missing ${_dest}"
+			return 1
+		else
+			msg "Missing ${_dest} created"
+		fi
+	fi
+
+	failed=0
+	for f in ${_files}; do
+		fs=${_src}/${f}
+		fd=${_dest}/${f}
+		error=""
+		if [ ! -f "${fd}" ]; then
+			error="${fd} does not exist"
+		elif ! cmp -s ${fs} ${fd} ; then
+			error="${fd} != ${fs}"
+		else
+			continue
+		fi
+		if [ "${_op}" = "check" ]; then
+			msg ${error}
+			failed=1
+		elif ! cp -p ${fs} ${fd}; then
+			msg "Can't copy ${fs} to ${fd}"
+			failed=1
+		else
+			msg "Copied ${fs} to ${fd}"
+		fi
+	done
+	return $failed
+}
+
+#
+#	items
+#	-----
+#
+
+#
+#	defaults
+#
+additem defaults "/etc/defaults being up to date"
+do_defaults()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
+
+	cmpdir $1 ${SRC_ETC}/defaults ${DEST_ETC}/defaults \
+		daily.conf monthly.conf rc.conf security.conf weekly.conf
+	return $?
+}
+
+#
+#	mtree
+#
+additem mtree "/etc/mtree being up to date"
+do_mtree()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
+
+	cmpdir $1 ${SRC_ETC}/mtree ${DEST_ETC}/mtree \
+		NetBSD.dist special
+	return $?
+}
+
+#
+#	rc
+#
+additem rc "/etc/rc* and /etc/rc.d/ being up to date"
+do_rc()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_rc  fix|check"
+
+	op=$1
+	rv=0
+
+	cmpdir ${op} ${SRC_ETC} ${DEST_ETC} \
+		rc rc.subr rc.shutdown
+	rv=$(( ${rv} + $? ))
+
+	cmpdir ${op} ${SRC_ETC}/rc.d ${DEST_ETC}/rc.d \
+		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
+		apmd bootparams bootconf.sh ccd cleartmp cron \
+		dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
+		ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
+		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
+		mountall mountcritlocal mountcritremote mountd moused \
+		mrouted named ndbootd network newsyslog nfsd \
+		nfslocking ntpd ntpdate poffd postfix ppp pwcheck \
+		quota racoon rpcbind raidframe rarpd rbootd root \
+		route6d routed rtadvd rtsold rwho savecore \
+		screenblank sendmail securelevel sshd swap1 swap2 \
+		sysdb sysctl syslogd timed ttys virecover wscons xdm \
+		xfs ypbind yppasswdd ypserv
+	rv=$(( ${rv} + $? ))
+
+	failed=0
+	for f in NETWORK gated; do
+		fd=${DEST_ETC}/rc.d/${f}
+		[ ! -e "${fd}" ] && continue
+		if [ "${op}" = "check" ]; then
+			msg "Remove ${fd}"
+			failed=1
+		elif ! rm ${fd}; then
+			msg "Can't remove ${fd}"
+			failed=1
+		else
+			msg "Removed ${fd}"
+		fi
+	done
+	rv=$(( ${rv} + ${failed} ))
+
+	return ${rv}
+}
+
+#
+#	periodic
+#
+additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
+do_periodic()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_periodic  fix|check"
+
+	cmpdir $1 ${SRC_ETC} ${DEST_ETC} daily weekly monthly security
+	return $?
+}
+
+
+#
+#	ssh
+#
+additem ssh "ssh configuration file relocation"
+do_ssh()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
+	op=$1
+
+	failed=0
+	_dest=${DEST_ETC}/ssh
+	if [ ! -d "${_dest}" ]; then
+		if [ "${op}" = "check" ]; then
+			msg "${_dest} is not a directory"
+			failed=1
+		elif ! mkdir ${_dest} ; then
+			msg "Can't create missing ${_dest}"
+			failed=1
+		else
+			msg "Missing ${_dest} created"
+		fi
+	fi
+
+	if [ $failed -eq 0 ]; then
+		for f in \
+			    sshd.conf ssh.conf \
+			    ssh_known_hosts ssh_known_hosts2 \
+			    ssh_host_dsa_key ssh_host_dsa_key.pub \
+			    ssh_host_rsa_key ssh_host_rsa_key.pub \
+			    ssh_host_key ssh_host_key.pub \
+		    ; do
+			fs=${DEST_ETC}/${f}
+			fd=${_dest}/${f}
+			if [ -f "${fs}" -a ! -f "${fd}" ]; then
+				if [ "${op}" = "check" ]; then
+					msg "Move ${fs} to ${fd}"
+					failed=1
+				elif ! mv ${fs} ${fd}; then
+					msg "Can't move ${fs} to ${fd}"
+					failed=1
+				else
+					msg "Moved ${fs} to ${fd}"
+				fi
+			fi
+		done
+	fi
+
+	if [ -f "${_dest}/sshd.conf" ]; then
+		sshdconf=${_dest}/sshd.conf
+	elif [ -f "${DEST_ETC}/sshd.conf" ]; then
+		sshdconf=${DEST_ETC}/sshd.conf
+	else
+		sshdconf=""
+	fi
+	if [ -n "${sshdconf}" ]; then
+		awk '
+			$1 ~ /^[Hh][Oo][Ss][Tt][Kk][Ee][Yy]$/ &&
+			$2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ {
+				sub(/\/etc\/+/, "/etc/ssh/");
+			}
+			{ print }
+		' < ${sshdconf} > ${SCRATCHDIR}/sshd_config
+		if ! cmp -s ${sshdconf} ${SCRATCHDIR}/sshd_config; then
+			diff ${sshdconf} ${SCRATCHDIR}/sshd_config > \
+				${SCRATCHDIR}/sshd_config.diffs
+			if [ "${op}" = "check" ]; then
+				msg "${sshdconf} needs the following changes:"
+				failed=1
+			elif ! cp -f ${SCRATCHDIR}/sshd_config ${sshdconf}; then
+				msg "${sshdconf} changes not applied:"
+				failed=1
+			else
+				msg "${sshdconf} changes applied:"
+			fi
+			while read _line; do
+				msg "	$_line"
+			done < ${SCRATCHDIR}/sshd_config.diffs
+		fi
+	fi
+
+	return ${failed}
+}
+
+
+
+#
+#	end of items
+#	------------
+#
+
+
+usage()
+{
+	cat 1>&2 << _USAGE_
+Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
+	Perform post-installation checks and/or fixes on a system's
+	configuration files.  If no items are provided, all checks
+	or fixes are applied.
+
+	Options:
+	-s srcdir	Source directory to compare from.  [${SRC_ETC}]
+	-d destdir	Destination directory to check.    [${DEST_ETC}]
+
+	Operation may be one of:
+		list	list available items
+		check	perform post-installation checks on items
+		fix	apply fixes that 'check' determines need to be applied
+		usage	display this usage
+_USAGE_
+	exit 1
+}
+
+
+list()
+{
+	echo "Source directory: ${SRC_ETC}"
+	echo "Target directory: ${DEST_ETC}"
+	echo "Supported items:"
+	echo "  Item          Description"
+	echo "  ----          -----------"
+	for i in ${items}; do
+		eval desc="\$desc_$i"
+		printf "  %-12s  %s\n" "${i}" "${desc}"
+	done
+}
+
+
+main()
+{
+	while getopts s:d: ch; do
+	case ${ch} in
+	s)
+		SRC_ETC=${OPTARG} ;;
+	d)
+		DEST_ETC=${OPTARG} ;;
+	*)
+		usage ;;
+	esac
+	done
+	shift $((${OPTIND} - 1))
+	[ $# -gt 0 ] || usage
+
+	[ -d "${SRC_ETC}" ] || err 1 "${SRC_ETC} is not a directory"
+	[ -d "${DEST_ETC}" ] || err 1 "${DEST_ETC} is not a directory"
+
+	op=$1
+	shift
+
+	case "${op}" in
+
+	list|usage)
+		eval ${op} $*
+		;;
+
+	check|fix)
+		todo=$*
+		: ${todo:=${items}}
+
+		# ensure that all supplied items are valid
+		#
+		for i in ${todo}; do
+			eval desc=\"\$desc_$i\"
+			[ -n "${desc}" ] || err 1 "Unsupported ${op} '"${i}"'"
+		done
+
+		# perform each check/fix
+		#
+		items_passed=
+		items_failed=
+		for i in ${todo}; do
+			echo "${i} ${op}:"
+			( eval do_${i} ${op} )
+			if [ $? -eq 0 ]; then
+				items_passed="${items_passed} ${i}"
+			else
+				items_failed="${items_failed} ${i}"
+			fi
+		done
+
+		if [ "${op}" = "fix" ]; then
+			plural="Fixes"
+		else
+			plural="Checks"
+		fi
+
+		echo "${plural} passed:${items_passed}"
+		echo "${plural} failed:${items_failed}"
+
+		;;
+		
+	*)
+		warn "Unknown operation '"${op}"'"
+		usage
+		;;
+
+	esac
+}
+
+
+# defaults
+#
+PROGNAME=${0##*/}
+SRC_ETC=/usr/src/etc
+DEST_ETC=/etc
+SCRATCHDIR=$( mktemp -d /tmp/_postinstall.XXXXXX ) ||
+    err 1 "Can't create scratch directory"
+trap "/bin/rm -rf $SCRATCHDIR ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+
+
+main $*
+exit 0
