@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	8.1 (Berkeley) 6/6/93
- *	$Id: names.c,v 1.14 1995/04/17 00:00:27 ragge Exp $
+ *	$Id: names.c,v 1.15 1995/04/24 07:43:17 cgd Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(luna68k) && !defined(mips)
@@ -67,6 +67,14 @@ int
 read_names()
 {
 	return(1);
+}
+#endif
+
+#if defined(__alpha__)
+int
+read_names()
+{
+	return 1;
 }
 #endif
 
