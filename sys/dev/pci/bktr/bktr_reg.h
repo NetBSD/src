@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.5 2000/07/01 01:39:02 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.6 2000/09/03 02:01:32 wiz Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.38 2000/06/26 09:41:32 roger Exp
@@ -94,10 +94,31 @@
 /*
  * Definitions for the Brooktree 848/878 video capture to pci interface.
  */
-#define BROOKTREE_848_PCI_ID            0x0350109E
-#define BROOKTREE_849_PCI_ID            0x0351109E
-#define BROOKTREE_878_PCI_ID            0x036E109E
-#define BROOKTREE_879_PCI_ID            0x036F109E
+#ifdef __NetBSD__
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
+#else
+#define PCI_VENDOR_SHIFT                        0
+#define PCI_VENDOR_MASK                         0xffff
+#define PCI_VENDOR(id) \
+            (((id) >> PCI_VENDOR_SHIFT) & PCI_VENDOR_MASK)
+
+#define PCI_PRODUCT_SHIFT                       16
+#define PCI_PRODUCT_MASK                        0xffff
+#define PCI_PRODUCT(id) \
+            (((id) >> PCI_PRODUCT_SHIFT) & PCI_PRODUCT_MASK)
+
+#define PCI_VENDOR_BROOKTREE    0x109e          /* Brooktree */
+/* Brooktree products */
+#define PCI_PRODUCT_BROOKTREE_BT848     0x0350          /* Bt848 Video
+							   Capture */ 
+#define PCI_PRODUCT_BROOKTREE_BT849     0x0351          /* Bt849 Video
+							   Capture */
+#define PCI_PRODUCT_BROOKTREE_BT878     0x036e          /* Bt878 Video
+							   Capture */
+#define PCI_PRODUCT_BROOKTREE_BT879     0x036f          /* Bt879 Video
+							   Capture */
+#endif
 
 #define BROOKTREE_848                   1
 #define BROOKTREE_848A                  2
