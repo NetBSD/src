@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.18 1997/11/19 16:41:21 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.19 1997/11/21 17:44:11 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1731,16 +1731,31 @@ readme:
 	@cd ${.CURDIR} && make README.html
 .endif
 
+HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
+
+.if (${OPSYS} == "NetBSD")
+README_NAME=	${TEMPLATES}/README.pkg
+.else
+README_NAME=	${TEMPLATES}/README.port
+.endif
+
 README.html:
 	@${ECHO_MSG} "===>  Creating README.html for ${PKGNAME}"
-	@${CAT} ${TEMPLATES}/README.port | \
-		${SED} -e 's%%PORT%%'`${ECHO} ${.CURDIR} | ${SED} -e 's.*/\([^/]*/[^/]*\)$$\1'`'g' \
-			-e 's%%PKG%%${PKGNAME}g' \
+	@${MAKE} print-depends-list | ${HTMLIFY} >> $@.tmp1
+	@${MAKE} print-package-depends | ${HTMLIFY} >> $@.tmp2
+	@${ECHO} ${PKGNAME} | ${HTMLIFY} >> $@.tmp3
+	@${CAT} ${README_NAME} | \
+		${SED} -e 's/%%PORT%%/'"`basename ${.CURDIR}`"'/g' \
+			-e '/%%PKG%%/r$@.tmp3' \
+			-e '/%%PKG%%/d' \
 			-e '/%%COMMENT%%/r${PKGDIR}/COMMENT' \
 			-e '/%%COMMENT%%/d' \
-			-e 's%%BUILD_DEPENDS%%'"`${MAKE} print-depends-list`"'' \
-			-e 's%%RUN_DEPENDS%%'"`${MAKE} print-package-depends`"'' \
+			-e '/%%BUILD_DEPENDS%%/r$@.tmp1' \
+			-e '/%%BUILD_DEPENDS%%/d' \
+			-e '/%%RUN_DEPENDS%%/r$@.tmp2' \
+			-e '/%%RUN_DEPENDS%%/d' \
 		>> $@
+	@rm -f $@.tmp1 $@.tmp2 $@.tmp3
 
 .if !target(print-depends-list)
 print-depends-list:
