@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.2 1997/09/21 12:45:04 mrg Exp $
+#	$NetBSD: less2netbsd,v 1.3 1999/03/24 09:23:52 mrg Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -13,10 +13,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#      This product includes software developed by Matthew R. Green for
-#      the NetBSD Project.
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
 #
@@ -59,7 +55,7 @@ esac
 echo preparing directory $d
 rm -rf $d
 mkdir -p $d; cd $d
-mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey
+mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey src/usr.bin/less/lessecho
 
 ### start less ###############################
 cd $r
@@ -85,11 +81,20 @@ mv lesskey.nro lesskey.1
 
 ### end lesskey ###############################
 
+### start lessecho ###############################
+cd $r
+echo lessecho:
+src='lessecho.c'
+
+pax -rvw $src $d/src/usr.bin/less/lessecho
+
+### end lesskey ###############################
+
 find $d -name '*.[ch]' -print | while read c; do
 	chmod u+w $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: less2netbsd,v 1.2 1997/09/21 12:45:04 mrg Exp $	*/
+/*	$NetBSD: less2netbsd,v 1.3 1999/03/24 09:23:52 mrg Exp $	*/
 
 __eof_header
 cat $c
