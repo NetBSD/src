@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.9 1996/09/06 05:06:01 mycroft Exp $	*/
+/*	$NetBSD: comreg.h,v 1.10 1997/10/15 21:13:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -110,15 +110,5 @@
 #define	MSR_DDSR	0x02	/* DSR has changed state */
 #define	MSR_DCTS	0x01	/* CTS has changed state */
 
+/* XXX ISA-specific. */
 #define	COM_NPORTS	8
-
-/*
- * WARNING: Serial console is assumed to be at COM1 address
- * and CONUNIT must be 0.
- */
-#ifndef CONADDR
-#define	CONADDR	(0x3f8)
-#endif
-#ifndef CONUNIT
-#define	CONUNIT	(0)
-#endif
