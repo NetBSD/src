@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.49 1996/10/12 21:50:11 christos Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.50 1997/07/04 20:22:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,7 +133,8 @@ sys_mmap(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
-	vm_offset_t addr, pos;
+	vm_offset_t addr;
+	off_t pos;
 	vm_size_t size, pageoff;
 	vm_prot_t prot, maxprot;
 	caddr_t handle;
@@ -145,13 +146,21 @@ sys_mmap(p, v, retval)
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
-	pos = (vm_offset_t) SCARG(uap, pos);
+	pos = SCARG(uap, pos);
 
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mmap(%d): addr %lx len %lx pro %x flg %x fd %d pos %lx\n",
+		printf("mmap(%d): addr %lx len %lx pro %x flg %x fd %d pos %qx\n",
 		       p->p_pid, addr, size, prot, flags, fd, pos);
 #endif
+
+	/* make sure mapping fits into numeric range */
+	if (pos + size > (vm_offset_t)-PAGE_SIZE) {
+#ifdef DEBUG
+		printf("mmap: pos=%qx, size=%lx too big\n", pos, size);
+#endif
+		return(EINVAL);
+	}
 
 	/*
 	 * Align the file position to a page boundary,

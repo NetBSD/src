@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.8 1997/06/11 10:09:53 bouyer Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.9 1997/07/04 20:22:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ lfs_valloc(v)
 		blkno = lblkno(fs, ip->i_ffs_size);
 		lfs_balloc(vp, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
-		vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
+		vnode_pager_setsize(vp, ip->i_ffs_size);
 		vnode_pager_uncache(vp);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.4 1997/06/11 10:09:41 bouyer Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.5 1997/07/04 20:22:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -94,7 +94,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			if (error)
 				return (error);
 			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
-			vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
+			vnode_pager_setsize(vp, ip->i_ffs_size);
 			ip->i_ffs_db[nb] = dbtofsb(fs, bp->b_blkno);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.43 1997/06/24 23:36:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.44 1997/07/04 20:22:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1361,7 +1361,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
-			vnode_pager_setsize(vp, (u_long)np->n_size);
+			vnode_pager_setsize(vp, np->n_size);
 		} else
 			np->n_size = vap->va_size;
 	}
@@ -1406,7 +1406,7 @@ nfs_getattrcache(vp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
-			vnode_pager_setsize(vp, (u_long)np->n_size);
+			vnode_pager_setsize(vp, np->n_size);
 		} else
 			np->n_size = vap->va_size;
 	}
