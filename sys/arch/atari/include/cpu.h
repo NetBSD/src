@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1997/06/02 12:06:38 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1997/10/26 21:41:38 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,8 +208,6 @@ struct pcb;
 
 void	clearseg __P((vm_offset_t));
 void	doboot __P((void));
-u_long	getdfc __P((void));
-u_long	getsfc __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));

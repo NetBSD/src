@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1997/10/12 18:38:01 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 1997/10/26 21:41:41 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,8 +141,6 @@ struct pcb;
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-u_long	getdfc __P((void));
-u_long	getsfc __P((void));
 void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));

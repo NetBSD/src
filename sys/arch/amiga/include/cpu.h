@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 1997/04/09 19:34:53 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 1997/10/26 21:41:34 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -186,8 +186,6 @@ struct pcb;
 
 void	clearseg __P((vm_offset_t));
 void	doboot __P((void)) __attribute__((__noreturn__));
-u_long	getdfc __P((void));
-u_long	getsfc __P((void));
 void	loadustp __P((int));
 #ifdef FPCOPROC
 void	m68881_save __P((struct fpframe *));

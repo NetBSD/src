@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1997/10/10 21:45:20 oki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 1997/10/26 21:41:46 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,8 +171,6 @@ struct fpframe;
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
-u_long	getdfc __P((void));
-u_long	getsfc __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
