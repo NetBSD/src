@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.31 2003/01/22 21:44:56 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.32 2003/01/22 22:15:06 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -614,7 +614,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
 	lwz	7,FRAME_CR+8(1);					\
-	RESTORE_MQ(1,8);							\
+	RESTORE_MQ(1,8);						\
 	RESTORE_VRSAVE(1,9);						\
 	stw	2,savearea(0);						\
 	stw	3,savearea+4(0);					\
