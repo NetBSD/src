@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.18 1994/12/28 09:12:39 chopps Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.19 1995/04/19 13:02:57 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -50,9 +50,9 @@
 #include "sd.h"
 #include "cd.h"
 
-/*
- * Only boot on ufs. (XXX?)
- */
+#if NCD > 0
+int cd9660_mountroot();
+#endif
 int ffs_mountroot();
 int (*mountroot)() = ffs_mountroot;
 
@@ -97,7 +97,7 @@ struct genericconf genericconf[] = {
 	{&sdcd,	makedev(4, 0)},
 #endif
 #if NCD > 0
-	{&cdcd,	makedev(6, 0)},
+	{&cdcd,	makedev(7, 0)},
 #endif
 	{ 0 },
 };
@@ -192,6 +192,10 @@ found:
 
 	gc->gc_root = MAKEDISKDEV(major(gc->gc_root), unit, 0);
 	rootdev = gc->gc_root;
+#if NCD > 0
+	if (major(rootdev) == 7)
+		mountroot = cd9660_mountroot;
+#endif
 
 justdoswap:
 	swdevt[0].sw_dev = dumpdev = MAKEDISKDEV(major(rootdev), 
