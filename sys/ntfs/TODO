@@ -12,12 +12,6 @@ NTFS - list of things to do in no particular order:
 
 - cleanup the mess with several *readattr*() functions if possible
 
-- ntfs_ntvattrget(): find out if it's worth the efford to use some hashing
-  for the list of ntnodes, so that it's not all scanned each time; it would
-  be fine to migrate the found ntnode towards the start of the list too;
-  the list search code is duplicated on two places, eliminate the duplicity
-  somehow
-  
 - convert the code to do caching in buffer cache indexed by
   file-vnode/file-offset so that NTFS would take advantage of UBC;
   it should also improve performance somewhat, because if it's necessary
