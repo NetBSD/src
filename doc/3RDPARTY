@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.160 2003/12/02 17:13:21 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.161 2003/12/03 10:36:56 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -85,28 +85,8 @@ BIND4 resolver API (res_init), and need to support BIND8 API.  we practically
 need to maintain both BIND4 _res and BIND8 _res.  (2) amount of local changes.
 nsswitch/nsdispatch need to be reimplemented.
 
-Package:	binutils/gas
-Version:	1.92.3/2.13.2.1
-Current Vers:	2.14
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	thorpej
-Notes:
-Version 1.92.3 still in-tree for historical reasons, but unused.
-
-Package:	binutils/ld
-Version:	???/2.13.2.1
-Current Vers:	2.14
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	thorpej
-Notes:
-Version ??? still in-tree for historical reasons, but unused.
-
-Package:	binutils/misc
-Version:	2.13.2.1
+Package:	binutils
+Version:	2.14
 Current Vers:	2.14
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
