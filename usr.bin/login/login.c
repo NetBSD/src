@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.55 2000/03/07 13:59:19 enami Exp $       */
+/*     $NetBSD: login.c,v 1.56 2000/03/07 14:11:22 enami Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.55 2000/03/07 13:59:19 enami Exp $");
+__RCSID("$NetBSD: login.c,v 1.56 2000/03/07 14:11:22 enami Exp $");
 #endif /* not lint */
 
 /*
@@ -450,7 +450,7 @@ main(argc, argv)
 
 	/* if user not super-user, check for disabled logins */
 #ifdef LOGIN_CAP
-        if (!rootlogin || login_getcapbool(lc, "ignorenologin", 0))
+        if (!login_getcapbool(lc, "ignorenologin", rootlogin))
 		checknologin(login_getcapstr(lc, "nologin", NULL, NULL));
 #else
         if (!rootlogin)
