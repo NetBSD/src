@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.247 2003/10/04 13:40:32 jdolecek Exp $
+#	$NetBSD: NetBSD.dist,v 1.248 2003/10/19 09:08:40 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -656,6 +656,7 @@
 ./usr/share/man/cat8/hpcmips
 ./usr/share/man/cat8/hpcsh
 ./usr/share/man/cat8/i386
+./usr/share/man/cat8/ibmnws
 ./usr/share/man/cat8/luna68k
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/macppc
@@ -755,6 +756,7 @@
 ./usr/share/man/man8/hpcmips
 ./usr/share/man/man8/hpcsh
 ./usr/share/man/man8/i386
+./usr/share/man/man8/ibmnws
 ./usr/share/man/man8/luna68k
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/macppc
@@ -854,6 +856,7 @@
 ./usr/share/man/html8/hpcmips
 ./usr/share/man/html8/hpcsh
 ./usr/share/man/html8/i386
+./usr/share/man/html8/ibmnws
 ./usr/share/man/html8/luna68k
 ./usr/share/man/html8/mac68k
 ./usr/share/man/html8/macppc
