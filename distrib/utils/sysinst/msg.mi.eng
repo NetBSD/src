@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.7 1997/11/13 05:53:30 simonb Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.8 1997/11/22 00:33:02 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -363,6 +363,11 @@ message cdrombadmount
 
 message localfsbadmount
 {%s could not be mounted on local device %s.}
+
+message nonet
+{I can not find any network interfaces for use by NetBSD.  You will be
+returned to the previous menu.
+}
 
 message asknetdev
 {I have found the following network interfaces: %s
