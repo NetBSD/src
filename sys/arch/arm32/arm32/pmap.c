@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1999/01/17 06:58:16 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1999/01/26 09:03:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2057,14 +2057,39 @@ pmap_enter(pmap, va, pa, prot, wired)
 		vm_offset_t l2pa;
 
 		/* Allocate a page table */
+		for (;;) {
 #if defined(UVM)
-		page = uvm_pagealloc(NULL, 0, NULL);
+			page = uvm_pagealloc(NULL, 0, NULL);
 #else
-		page = vm_page_alloc1();
+			page = vm_page_alloc1();
 #endif
-		/* XXX should try and free up memory if alloc fails */
-		if (page == NULL)
-			panic("pmap_enter: No more physical pages\n");
+			if (page != NULL)
+				break;
+			
+			/*
+			 * No page available.  If we're the kernel
+			 * pmap, we die, since we might not have
+			 * a valid thread context.  For user pmaps,
+			 * we assume that we _do_ have a valid thread
+			 * context, so we wait here for the pagedaemon
+			 * to free up some pages.
+			 *
+			 * XXX THE VM CODE IS PROBABLY HOLDING LOCKS
+			 * XXX RIGHT NOW, BUT ONLY ON OUR PARENT VM_MAP
+			 * XXX SO THIS IS PROBABLY SAFE.  In any case,
+			 * XXX other pmap modules claim it is safe to
+			 * XXX sleep here if it's a user pmap.
+			 */
+			if (pmap == pmap_kernel())
+				panic("pmap_enter: kernel pmap and no more free pages");
+			else {
+#if defined(UVM)
+				uvm_wait("pmap_enter");
+#else
+				vm_wait("pmap_enter");
+#endif
+			}
+		}
 
 		/* Wire this page table into the L1 */
 		l2pa = VM_PAGE_TO_PHYS(page);
