@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)stty.c	5.28 (Berkeley) 6/5/91";*/
-static char rcsid[] = "$Id: stty.c,v 1.7 1993/08/01 18:57:36 mycroft Exp $";
+static char rcsid[] = "$Id: stty.c,v 1.8 1994/01/18 18:10:56 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,8 +98,6 @@ args:	argc -= optind;
 		err("tcgetattr: %s", strerror(errno));
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ: %s\n", strerror(errno));
-
-	checkredirect();			/* conversion aid */
 
 	switch(fmt) {
 	case NOTSET:
