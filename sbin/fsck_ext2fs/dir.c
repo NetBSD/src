@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.4 2000/01/26 16:21:31 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.4 2000/01/26 16:21:31 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,8 @@ char	*lfname = "lost+found";
 int	lfmode = 01777;
 struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
 struct	ext2fs_dirtemplate dirhead = {
-	0, 12, 1, IFTODT(EXT2_IFDIR), ".",
-	0, DIRBLKSIZ - 12, 2, IFTODT(EXT2_IFDIR), ".."
+	0, 12, 1, EXT2_FT_DIR, ".",
+	0, DIRBLKSIZ - 12, 2, EXT2_FT_DIR, ".."
 };
 #undef DIRBLKSIZ
 
@@ -245,7 +245,7 @@ dircheck(idesc, dp)
 		return (0);
 	if (dp->e2d_ino == 0)
 		return (1);
-	if (sblock.e2fs.e2fs_rev < E2FS_REV0 ||
+	if (sblock.e2fs.e2fs_rev < E2FS_REV1 ||
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE) == 0)
 		if (dp->e2d_type != 0)
 			return (1);
@@ -335,7 +335,7 @@ mkentry(idesc)
 	newent.e2d_namlen = strlen(idesc->id_name);
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		newent.e2d_type = typemap[idesc->id_parent];
+		newent.e2d_type = inot2ext2dt(typemap[idesc->id_parent]);
 	newlen = EXT2FS_DIRSIZ(newent.e2d_namlen);
 	if (dirp->e2d_ino != 0)
 		oldlen = EXT2FS_DIRSIZ(dirp->e2d_namlen);
@@ -367,7 +367,7 @@ chgino(idesc)
 	dirp->e2d_ino = h2fs32(idesc->id_parent);
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		dirp->e2d_type = typemap[idesc->id_parent];
+		dirp->e2d_type = inot2ext2dt(typemap[idesc->id_parent]);
 	else
 		dirp->e2d_type = 0;
 	return (ALTERED|STOP);
@@ -615,13 +615,13 @@ allocdir(parent, request, mode)
 	dirhead.dot_namlen = 1;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		dirhead.dot_type = IFTODT(EXT2_IFDIR);
+		dirhead.dot_type = EXT2_FT_DIR;
 	else
 		dirhead.dot_type = 0;
 	dirhead.dotdot_namlen = 2;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		dirhead.dotdot_type = IFTODT(EXT2_IFDIR);
+		dirhead.dotdot_type = EXT2_FT_DIR;
 	else
 		dirhead.dotdot_type = 0;
 	dirp = &dirhead;
