@@ -1,10 +1,9 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.1 2002/07/31 23:05:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.2 2002/08/06 06:10:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
- 
  * Written by Nathan J. Williams for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
