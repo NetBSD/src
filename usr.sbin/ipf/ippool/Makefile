@@ -1,30 +1,35 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/29 02:30:09 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/29 04:40:04 lukem Exp $
 
 PROG=		ippool
 SRCS=		ippool_y.c ippool_l.c kmem.c ippool.c
 MAN=		ippool.8
-DPADD+=		${LIBL} ${LIBKVM}
-LDADD+=		-ll -lkvm -lipf
+DPADD+=		${LIBKVM}
+LDADD+=		-lkvm
 
 CLEANFILES+=	ippool_y.c ippool_y.h
 CLEANFILES+=	ippool_l.c ippool_l.h
 
-ippool_y.c ippool_y.h: ippool_y.y ippool_l.h
+ippool_y.c: ippool_y.y ippool_l.h
+	${_MKTARGET_CREATE}
 	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ippool_y.y
 	sed -e 's/yy/ippool_yy/g' \
 	    -e 's/"ippool_y.y"/"..\/tools\/ippool_y.y"/' \
-		y.tab.c > ippool_y.c
+		y.tab.c > ${.TARGET}
 	sed -e 's/yy/ippool_yy/g' \
-		y.tab.h > ippool_y.h
+		y.tab.h > ${.TARGET:.c=.h}
+
+ippool_y.h: ippool_y.c
 
 ippool_l.c: lexer.c ippool_l.h ippool_y.h
+	${_MKTARGET_CREATE}
 	sed -e 's/yy/ippool_yy/g' \
 	     -e 's/y.tab.h/ippool_y.h/' \
 	     -e 's/lexer.h/ippool_l.h/' \
-		${NETBSDSRCDIR}/dist/ipf/tools/lexer.c > ippool_l.c
+		${NETBSDSRCDIR}/dist/ipf/tools/lexer.c > ${.TARGET}
 
-ippool_l.h: lexer.c
+ippool_l.h: lexer.h
+	${_MKTARGET_CREATE}
 	sed -e 's/yy/ippool_yy/g' \
-		${NETBSDSRCDIR}/dist/ipf/tools/lexer.h > ippool_l.h
+	    ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>
