@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.1 2001/12/08 18:08:04 manu Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.2 2001/12/22 12:09:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.1 2001/12/08 18:08:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.2 2001/12/22 12:09:20 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -166,6 +166,119 @@ irix_sys_xstat(p, v, retval)
 	case IRIX__R3_STAT_VER:
 	default:
 		printf("Warning: unimplemented irix_sys_xstat() version %d\n",
+		    SCARG(uap, version));
+		return EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int
+irix_sys_lxstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_lxstat_args /* {
+		syscallarg(const int) version;
+		syscallarg(const char *) path;
+		syscallarg(struct stat *) buf;
+	} */ *uap = v;
+	struct sys___lstat13_args cup;
+	struct stat st;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error;
+
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SCARG(&cup, path) = SCARG(uap, path);
+
+	if ((error = sys___lstat13(p, &cup, retval)) != 0)
+		return error;
+
+	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
+		return error;
+
+	
+	switch (SCARG(uap, version)) {
+	case IRIX__STAT_VER: {
+		struct irix_stat ist;
+
+		bsd_to_irix_stat(&st, &ist);
+		if ((error = copyout(&ist, SCARG(uap, buf), 
+		    sizeof (struct irix_stat))) != 0)
+			return error;
+		break;
+	}
+	case IRIX__STAT64_VER: {
+		struct irix_stat64 ist;
+
+		bsd_to_irix_stat64(&st, &ist);
+		if ((error = copyout(&ist, SCARG(uap, buf), 
+		    sizeof (struct irix_stat64))) != 0)
+			return error;
+		break;
+	}
+	case IRIX__R3_STAT_VER:
+	default:
+		printf("Warning: unimplemented irix_sys_lxstat() version %d\n",
+		    SCARG(uap, version));
+		return EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int
+irix_sys_fxstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_fxstat_args /* {
+		syscallarg(const int) version;
+		syscallarg(const int) fd;
+		syscallarg(struct stat *) buf;
+	} */ *uap = v;
+	struct sys___fstat13_args cup;
+	struct stat st;
+	int error;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
+	SCARG(&cup, fd) = SCARG(uap, fd);
+
+	if ((error = sys___fstat13(p, &cup, retval)) != 0)
+		return error;
+
+	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
+		return error;
+
+	
+	switch (SCARG(uap, version)) {
+	case IRIX__STAT_VER: {
+		struct irix_stat ist;
+
+		bsd_to_irix_stat(&st, &ist);
+		if ((error = copyout(&ist, SCARG(uap, buf), 
+		    sizeof (struct irix_stat))) != 0)
+			return error;
+		break;
+	}
+	case IRIX__STAT64_VER: {
+		struct irix_stat64 ist;
+
+		bsd_to_irix_stat64(&st, &ist);
+		if ((error = copyout(&ist, SCARG(uap, buf), 
+		    sizeof (struct irix_stat64))) != 0)
+			return error;
+		break;
+	}
+	case IRIX__R3_STAT_VER:
+	default:
+		printf("Warning: unimplemented irix_sys_fxstat() version %d\n",
 		    SCARG(uap, version));
 		return EINVAL;
 		break;

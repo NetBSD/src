@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2001/12/08 18:08:04 manu Exp $
+	$NetBSD: syscalls.master,v 1.9 2001/12/22 12:09:21 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -241,8 +241,10 @@
 157	UNIMPL		uname
 158	STD		{ int irix_sys_xstat(const int version, \
 			    const char *path, struct stat *buf); }
-159	UNIMPL		lxstat
-160	UNIMPL		fxstat
+159	STD		{ int irix_sys_lxstat(const int version, \
+			    const char *path, struct stat *buf); }
+160	STD		{ int irix_sys_fxstat(const int version, \
+			    const int fd, struct stat *buf); }
 161	UNIMPL		xmknod
 162	STD		{ int svr4_sys_sigaction(int signum, \
 			    const struct svr4_sigaction *nsa, \
