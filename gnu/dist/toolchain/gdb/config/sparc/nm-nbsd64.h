@@ -23,6 +23,7 @@
 #define NM_NBSD_H
 
 #define SVR4_SHARED_LIBS
+#define TARGET_ELF64
 
 /* Get generic NetBSD native definitions. */
 
