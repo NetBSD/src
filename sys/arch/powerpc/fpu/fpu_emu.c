@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.9 2003/08/07 16:29:17 agc Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.10 2003/10/27 04:30:32 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.9 2003/08/07 16:29:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.10 2003/10/27 04:30:32 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -288,6 +288,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	type = FTYPE_DBL;
 	cond = instr.i_any.i_rc;
 	setcr = 0;
+	bf = 0;	/* XXX gcc */
 
 #if defined(DDB) && defined(DEBUG)
 	if (fpe_debug & FPE_EX) {
