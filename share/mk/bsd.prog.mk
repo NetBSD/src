@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.136 2001/09/25 02:19:26 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.137 2001/10/19 15:55:52 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -107,11 +107,8 @@ CLEANFILES+=strings
 .if defined(PROG)
 SRCS?=		${PROG}.c
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS}
-.if defined(YHEADER)
-CLEANFILES+=	${SRCS:M*.y:.y=.h}
-.endif
+DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
+CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh:N*.fth)
 OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
@@ -119,7 +116,8 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${PROG}
+.NOPATH: ${OBJS} ${PROG} ${SRCS:M*.[ly]:C/..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
