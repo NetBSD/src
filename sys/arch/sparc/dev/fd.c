@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 1996/01/16 19:35:06 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 1996/01/30 18:31:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1508,6 +1508,12 @@ fdioctl(dev, cmd, addr, flag)
 				       fd->sc_dk.dk_label,
 				       fd->sc_dk.dk_cpulabel);
 		return error;
+
+	case DIOCLOCK:
+		/*
+		 * Nothing to do here, really.
+		 */
+		return 0;
 
 	case DIOCEJECT:
 		fd_do_eject();
