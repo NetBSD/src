@@ -1,4 +1,4 @@
-/* $NetBSD: sigreturn.S,v 1.2 1996/05/12 19:55:35 mark Exp $ */
+/* $NetBSD: sigreturn.S,v 1.3 1996/11/30 02:31:49 jtc Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,12 +44,12 @@
 /* I must code this bit ... - mark */
 
 #if 0
-#ifdef PROF
+#ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
 	.globl _/**/x; .align 2; _/**/x:  pusha ; \
 	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
-#endif /* PROF */
+#endif /* GPROF */
 #endif
 
 SYSCALL(sigreturn)
