@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.33 2001/07/08 05:24:50 gmcgarry Exp $	*/
+/* $NetBSD: date.c,v 1.34 2001/09/13 10:06:40 wiz Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.33 2001/07/08 05:24:50 gmcgarry Exp $");
+__RCSID("$NetBSD: date.c,v 1.34 2001/09/13 10:06:40 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,10 @@ __RCSID("$NetBSD: date.c,v 1.33 2001/07/08 05:24:50 gmcgarry Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <syslog.h>
 #include <time.h>
 #include <tzfile.h>
@@ -69,19 +69,17 @@ __RCSID("$NetBSD: date.c,v 1.33 2001/07/08 05:24:50 gmcgarry Exp $");
 time_t tval;
 int retval, nflag;
 
-int main __P((int, char *[]));
-static void setthetime __P((const char *));
-static void badformat __P((void));
-static void badtime __P((void));
-static void usage __P((void));
+int main(int, char *[]);
+static void badformat(void);
+static void badtime(void);
+static void setthetime(const char *);
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
+	char buf[1024], *format;
 	int ch, rflag;
-	char *format, buf[1024];
 
 	(void)setlocale(LC_ALL, "");
 
@@ -129,16 +127,28 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+static void
+badformat(void)
+{
+	warnx("illegal time format");
+	usage();
+}
 
 static void
-setthetime(p)
-	const char *p;
+badtime(void)
 {
-	struct tm *lt;
+	errx(1, "illegal time");
+}
+
+#define ATOI2(s) ((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
+static void
+setthetime(const char *p)
+{
 	struct timeval tv;
+	struct tm *lt;
 	const char *dot, *t;
-	int yearset, len;
+	int len, yearset;
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit((unsigned char)*t))
@@ -221,24 +231,11 @@ setthetime(p)
 }
 
 static void
-badformat()
-{
-	warnx("illegal time format");
-	usage();
-}
-
-static void
-badtime()
-{
-	errx(1, "illegal time");
-}
-
-static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: date [-nu] [-r seconds] [+format]\n");
-	(void)fprintf(stderr, "       date [[[[[cc]yy]mm]dd]hh]mm[.ss]\n");
+	    "usage: %s [-nu] [-r seconds] [+format]\n", getprogname());
+	(void)fprintf(stderr, "       %s [[[[[cc]yy]mm]dd]hh]mm[.ss]\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
