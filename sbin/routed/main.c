@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.22.2.1 2000/10/10 22:25:17 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.22 1999/02/25 10:56:47 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.22.2.1 2000/10/10 22:25:17 he Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -898,7 +898,8 @@ msglim(struct msg_limit *lim, naddr addr, const char *p, ...)
 		trace_flush();
 		for (p1 = p; *p1 == ' '; p1++)
 			continue;
-		vsyslog(LOG_ERR, p1, args);
+		p = p1;
+		vsyslog(LOG_ERR, p, args);
 	}
 
 	/* always display the message if tracing */
