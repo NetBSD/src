@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 1996/04/23 19:25:25 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.40 1996/04/29 21:08:37 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
 
-static int timerblurb = 10; /* Guess a value; used before clock is attached */
+int timerblurb = 10; /* Guess a value; used before clock is attached */
 
 /*
  * old clock match routine
@@ -260,10 +260,15 @@ oclockattach(parent, self, aux)
 		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
 		intersil_enable(i7);		/* enable clock */
 		delay(10000);			/* Probe 1/100 sec delay */
-		intersil_disable(i7);		/* disable clock */
 		ireg = intersil_clear(i7);	/* clear interrupts */
+		intersil_disable(i7);		/* disable clock */
 		if (ireg & INTERSIL_INTER_PENDING)
 			break;
+		if (timerblurb > 10) {
+			printf("oclock: calibration failing; clamped at %d\n",
+			       timerblurb);
+			break;
+		}
 	}
 #else
 	/*
@@ -589,24 +594,6 @@ myetheraddr(cp)
 	cp[5] = idp->id_ether[5];
 }
 
-
-/*
- * Delay: wait for about n microseconds to pass.
- * (note: we want this to be a "leaf" routine, so we incur no
- * unpredictable delays by taking register window overflow traps).
- */
-void
-delay(n)
-	register unsigned int n;
-{
-	register int i;
-	volatile int dummy;
-
-	while (n-- > 0)
-		for (i = 0; i < timerblurb; i++)
-			dummy = i;
-}
-
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
@@ -733,6 +720,8 @@ forward:
 	hardclock((struct clockframe *)cap);
 	if (rom_console_input && cnrom())
 		setsoftint();
+
+}
 
 	return (1);
 }

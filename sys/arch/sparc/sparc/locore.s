@@ -5670,6 +5670,29 @@ ENTRY(microtime)
 	retl
 	 st	%o3, [%o0+4]
 
+
+/* 
+ * delay(n): wait for about n microseconds to pass.
+ */
+ENTRY(delay)
+	sethi	%hi(_timerblurb), %o1		! load calibration factor
+	ld	[%o1 + %lo(_timerblurb)], %o1	!  computed in clock.c
+
+1:
+	mov	%o1, %o2			! while (n-- != 0) {
+	tst	%o0				!   i = timerblurb;
+	be	3f				!
+	 sub	%o0, 1, %o0
+
+2:
+	tst	%o2				!    while (i-- != 0)
+	bne	2b				!         <do nothing>;
+	 sub	%o2, 1, %o2
+	ba,a	1b				! }
+3:
+	retl
+	 nop
+
 #if defined(KGDB) || defined(DDB)
 /*
  * Write all windows (user or otherwise), except the current one.
