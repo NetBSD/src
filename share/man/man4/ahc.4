@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.16 2000/05/13 15:27:17 mycroft Exp $
+.\"	$NetBSD: ahc.4,v 1.17 2001/06/12 14:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -403,7 +403,7 @@ SCB space to be augmented with external SRAM up to a maximum of 255 SCBs.
 Very few Adaptec controller configurations have external SRAM.
 .Pp
 If external SRAM is not available, SCBs are a limited resource.
-Using the SCBs in a straight forward manner would only allow the dirver to
+Using the SCBs in a straight forward manner would only allow the driver to
 handle as many concurrent transactions as there are physical SCBs.
 To fully utilize the SCSI bus and the devices on it,
 requires much more concurrency.
