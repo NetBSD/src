@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.53 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: GENERIC,v 1.54 1999/03/26 02:46:14 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -111,7 +111,7 @@ options 	KMEMSTATS	# kernel memory statistics
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
