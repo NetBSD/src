@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.514 2004/11/12 05:59:11 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.515 2004/11/12 06:00:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7935,3 +7935,8 @@ sys/netinet/ip_fil_netbsd.c			patch
 	the packet being sent out rather than the packet received (impacts both
 	return-rst and return-icmp features.) PR#27093
 	[darrenr, ticket #934]
+
+distrib/notes/common/contents			1.110
+
+	sparc64 X server no longer has problems with pixmaps.
+	[mbw, ticket #935]
