@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 1997/08/03 20:32:16 cjs Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 1997/10/25 06:20:35 cjs Exp $
 
 .include <bsd.own.mk>  # for BUILDDIR
 
@@ -17,7 +17,7 @@ CFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CFLAGS+= -DDEBUG -DRTLD_LOADER
 #CFLAGS+= -DRTLD_DEBUG
 
-LDADD+=	-L${LIBDIR} -non_shared -lc_pic
+LDADD+=	-L${BUILDDIR}/${LIBDIR} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
 
 # to be installed
