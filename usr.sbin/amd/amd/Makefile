@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/02/01 19:05:09 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2000/11/08 12:00:48 wiz Exp $
 
 PROG= amd
 SRCS=	conf_parse.c conf_tok.c srvr_nfs.c srvr_amfs_auto.c sched.c rpc_fwd.c \
@@ -10,7 +10,7 @@ info_file.c info_hesiod.c get_args.c conf.c clock.c autil.c \
 amq_svc.c amq_subr.c amfs_union.c amfs_toplvl.c amfs_root.c amfs_program.c \
 amfs_nfsx.c amfs_nfsl.c amfs_linkx.c amfs_link.c amfs_inherit.c amfs_host.c \
 amfs_error.c amfs_direct.c amfs_auto.c amd.c am_ops.c 
-MAN+= amd.8
+MAN+= amd.8 amd.conf.5
 YHEADER=1
 CLEANFILES+=conf_tok.c conf_parse.c conf_parse.h
 
