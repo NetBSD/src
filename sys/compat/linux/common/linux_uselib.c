@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.3 2001/07/22 13:34:09 wiz Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.4 2001/10/30 15:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ linux_sys_uselib(p, v, retval)
 		vrele(vp);
                 return ETXTBSY;
         }
-	vn_marktext(vp);
+	vp->v_flag |= VTEXT;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;

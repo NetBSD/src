@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.57 2001/10/29 23:06:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.58 2001/10/30 15:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1075,7 +1075,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC)
-				vn_marktext(vp);
+				vn_markexec(vp);
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.6 2000/11/21 00:37:54 jdolecek Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.7 2001/10/30 15:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -150,7 +150,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

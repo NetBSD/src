@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.6 2001/08/25 15:06:02 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.7 2001/10/30 15:32:02 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -153,7 +153,7 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.160 2001/10/04 05:46:45 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.161 2001/10/30 15:32:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1229,11 +1229,11 @@ vput(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
-	if (vp->v_flag & VTEXT) {
+	if (vp->v_flag & VEXECMAP) {
 		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
 		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~VTEXT;
+	vp->v_flag &= ~(VTEXT|VEXECMAP);
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, p);
 }
@@ -1273,11 +1273,11 @@ vrele(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
-	if (vp->v_flag & VTEXT) {
+	if (vp->v_flag & VEXECMAP) {
 		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
 		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~VTEXT;
+	vp->v_flag &= ~(VTEXT|VEXECMAP);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, p);
 }
@@ -1501,11 +1501,11 @@ vclean(vp, flags, p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_flag |= VXLOCK;
-	if (vp->v_flag & VTEXT) {
+	if (vp->v_flag & VEXECMAP) {
 		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
 		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~VTEXT;
+	vp->v_flag &= ~(VTEXT|VEXECMAP);
 
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
@@ -1809,7 +1809,7 @@ vprint(label, vp)
 	char *label;
 	struct vnode *vp;
 {
-	char buf[64];
+	char buf[96];
 
 	if (label != NULL)
 		printf("%s: ", label);
@@ -1821,6 +1821,8 @@ vprint(label, vp)
 		strcat(buf, "|VROOT");
 	if (vp->v_flag & VTEXT)
 		strcat(buf, "|VTEXT");
+	if (vp->v_flag & VEXECMAP)
+		strcat(buf, "|VEXECMAP");
 	if (vp->v_flag & VSYSTEM)
 		strcat(buf, "|VSYSTEM");
 	if (vp->v_flag & VXLOCK)
