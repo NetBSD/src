@@ -39,11 +39,13 @@
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/cons.h
+./usr/include/dev/ramdisk.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/ic
 ./usr/include/dev/ic/ad1848reg.h
+./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
