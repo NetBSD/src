@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.57 2002/07/11 21:14:33 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.58 2002/09/23 05:51:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.57 2002/07/11 21:14:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.58 2002/09/23 05:51:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,6 @@ ums_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_wsmousedev != NULL)
