@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.51 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.52 2000/03/26 06:51:46 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.51 2000/03/23 06:43:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.52 2000/03/26 06:51:46 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -158,6 +158,7 @@ struct dtop_softc {
 		int		(*handler) __P((dtop_device_t, dtop_message_t,
 				    int, int));
 		dtop_device	status;
+		struct callout repeat_ch;
 	} device[(DTOP_ADDR_DEFAULT - DTOP_ADDR_FIRST) >> 1];
 
 #	define	DTOP_DEVICE_NO(address)	(((address)-DTOP_ADDR_FIRST)>>1)
