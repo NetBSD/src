@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.28 1998/09/25 03:23:50 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.29 1998/09/26 00:00:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 1998/09/25 03:23:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 1998/09/26 00:00:33 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -206,6 +206,8 @@ cpuattach(parent, dev, aux)
 	p = LOCATE_PCS(hwrpb, ma->ma_slot);
 	major = PCS_CPU_MAJORTYPE(p);
 	minor = PCS_CPU_MINORTYPE(p);
+
+	simple_lock_init(&sc->sc_slock);
 
 	sc->sc_cpuid = ma->ma_slot;
 
@@ -367,6 +369,10 @@ cpu_run_spinup_queue()
 		pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
 		pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
 		memcpy(pcsp->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
+#if 1
+		printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
+		    pcb->pcb_hw.apcb_ksp);
+#endif
 
 		/*
 		 * Set up the HWRPB to restart the secondary processor
