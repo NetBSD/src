@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.15 2004/04/01 21:41:14 christos Exp $	*/
+/*	$NetBSD: whereis.c,v 1.16 2004/04/01 22:14:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.15 2004/04/01 21:41:14 christos Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.16 2004/04/01 22:14:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,14 @@ main(int argc, char *argv[])
 	const char *t;
 	int which = strcmp(getprogname(), "which") == 0;
 	int useenvpath = which, found = 0;
+	gid_t egid = getegid();
+	uid_t euid = geteuid();
+
+	/* To make access(2) do what we want */
+	if (setgid(egid) == -1)
+		err(1, "Can't set gid to %lu", (unsigned long)egid);
+	if (setuid(euid) == -1)
+		err(1, "Can't set uid to %lu", (unsigned long)euid);
 
 	while ((ch = getopt(argc, argv, "ap")) != -1)
 		switch (ch) {
@@ -112,7 +120,6 @@ main(int argc, char *argv[])
 					t = ".";
 			} else
 				if (strlen(t) == 0)
-/*###114 [cc] warning: assignment discards qualifiers from pointer target type%%%*/
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
 			if (stat(path, &sb) == -1)
