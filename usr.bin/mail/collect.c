@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.17 1997/11/25 17:58:15 bad Exp $	*/
+/*	$NetBSD: collect.c,v 1.18 1998/12/19 16:31:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.17 1997/11/25 17:58:15 bad Exp $");
+__RCSID("$NetBSD: collect.c,v 1.18 1998/12/19 16:31:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ cont:
 			 * Set the Subject list.
 			 */
 			cp = &linebuf[2];
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 			hp->h_subject = savestr(cp);
 			break;
@@ -286,7 +286,7 @@ cont:
 			 * then open it and copy the contents to collf.
 			 */
 			cp = &linebuf[2];
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 			if (*cp == '\0') {
 				printf("Interpolate what file?\n");
