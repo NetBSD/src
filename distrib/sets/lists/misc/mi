@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.63 2001/03/31 11:45:23 aymeric Exp $
+# $NetBSD: mi,v 1.64 2001/04/01 23:47:45 itojun Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -419,6 +419,8 @@
 ./usr/share/examples/postfix/sample-virtual.cf		misc-postfix-examples
 ./usr/share/examples/postfix/transport			misc-postfix-examples
 ./usr/share/examples/postfix/virtual			misc-postfix-examples
+./usr/share/examples/racoon/README.certificate		misc-netutil-examples
+./usr/share/examples/racoon/README.gssapi		misc-netutil-examples
 ./usr/share/examples/racoon/psk.txt.sample		misc-netutil-examples
 ./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples
