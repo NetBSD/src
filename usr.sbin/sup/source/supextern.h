@@ -1,5 +1,6 @@
-/*	$NetBSD: supextern.h,v 1.5 1997/10/17 14:16:38 lukem Exp $	*/
+/*	$NetBSD: supextern.h,v 1.5.2.1 1997/11/13 01:15:53 thorpej Exp $	*/
 
+struct stat;
 
 #ifndef __P
 #ifdef __STDC__
@@ -49,6 +50,9 @@ void path __P((char *, char *, char *));
 
 /* quit.c */
 void quit __P((int, char *, ...));
+
+/* read_line.c */
+char *read_line __P((FILE *, size_t *, int *));
 
 /* run.c */
 int run __P((char *, ...));
