@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.26 2004/12/07 23:16:40 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.27 2004/12/07 23:21:06 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -176,11 +176,22 @@ struct scsi_rw_6 {
 struct scsi_synchronize_cache_10 {
 	u_int8_t opcode;
 	u_int8_t flags;
-#define	SSC_RELADR	0x01
+#define	SSC_RELADR	0x01		/* obsolete */
 #define	SSC_IMMED	0x02
+#define	SSC_SYNC_NV	0x04
 	u_int8_t addr[4];
-	u_int8_t reserved;
+	u_int8_t byte7;
 	u_int8_t length[2];
+	u_int8_t control;
+};
+
+#define	SCSI_SYNCHRONIZE_CACHE_16	0x91
+struct scsi_synchronize_cache_16 {
+	u_int8_t opcode;
+	u_int8_t flags;			/* see SYNCHRONIZE CACHE (10) */
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t byte15;
 	u_int8_t control;
 };
 
