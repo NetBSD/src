@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/01/24 01:18:22 pk Exp $
+#	$NetBSD: Makefile,v 1.14 1997/05/07 17:29:05 mycroft Exp $
 
 SUBDIR= boot bootxx installboot
 
@@ -7,7 +7,7 @@ SUBDIR= boot bootxx installboot
 .include "$S/lib/libsa/Makefile.inc"
 .include "$S/lib/libkern/Makefile.inc"
 
-all: ${SALIB} ${KERNLIB} _SUBDIRUSE
+all: ${SALIB} ${KERNLIB}
 
 libdep:
 	@echo  ${SALIB} ${KERNLIB}
@@ -20,10 +20,6 @@ kernlibdir:
 
 salibdir:
 	@echo  ${SADST}
-
-clean: _SUBDIRUSE
-
-cleandir: _SUBDIRUSE
 
 BINDIR=/usr/mdec
 

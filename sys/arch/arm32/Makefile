@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/01/31 23:14:53 mark Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/07 17:28:52 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for arm32 tags file and boot blocks
@@ -26,7 +26,5 @@ tags:
 links:
 	-for i in ${DARM32}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
-obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>

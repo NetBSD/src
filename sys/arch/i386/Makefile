@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1994/10/27 04:14:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/07 17:28:57 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for i386 tags file and boot blocks
@@ -25,7 +25,5 @@ tags:
 links:
 	-for i in ${DI386}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
-obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
