@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2000/11/21 13:54:14 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.17 2001/04/24 06:17:22 leo Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #
 
 include "opt_compat_svr4.h"
+include "opt_mbtype.h"
 
 include <sys/param.h>
 include <sys/buf.h>
@@ -211,11 +212,13 @@ define	CPU_68030		CPU_68030
 define	CPU_68040		CPU_68040
 define	CPU_68060		CPU_68060
 
+ifdef _ATARIHW_
 # AD_SCU definition needs this...
 quote #define stio_addr		0
 
 define	SCU_SOFTINT		AD_SCU + offsetof(struct scu, sys_int)
 define	SCU_SYSMASK		AD_SCU + offsetof(struct scu, sys_mask)
+endif
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4
