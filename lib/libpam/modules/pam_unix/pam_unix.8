@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_unix.8,v 1.6 2005/02/26 15:39:23 wiz Exp $
+.\" $NetBSD: pam_unix.8,v 1.7 2005/02/26 15:39:50 wiz Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -123,7 +123,7 @@ will forgo password prompting,
 and silently allow authentication to succeed.
 .\" XXX This is not currently implemented.  It's debatable whether or not
 .\" XXX it should be.
-.\" .It Cm passwd_db Ns = Ns Ar name 
+.\" .It Cm passwd_db Ns = Ns Ar name
 .\" Use only the specified password database.
 .\" Valid password database names are:
 .\" .Bl -tag -width files
@@ -177,7 +177,7 @@ suppress warning messages to the user.
 These messages include
 reasons why the user's
 authentication attempt was declined.
-.It Cm passwd_db Ns = Ns Ar name 
+.It Cm passwd_db Ns = Ns Ar name
 Change the user's password only the specified password database.
 Valid password database names are:
 .Bl -tag -width files
