@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.21.2.4 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.21.2.5 2004/10/31 07:22:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.4 2004/09/21 13:38:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.5 2004/10/31 07:22:23 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,7 +662,6 @@ smb_iod_thread(void *arg)
 	 * Here we assume that the thread structure will be the same
 	 * for an entire kthread (kproc, to be more precise) life.
 	 */
-	iod->iod_l = curlwp;
 	KASSERT(iod->iod_l == curlwp);
 	smb_makescred(&iod->iod_scred, iod->iod_l, NULL);
 	s = splnet();
@@ -700,11 +699,8 @@ smb_iod_create(struct smb_vc *vcp)
 #ifdef __NetBSD__
 	error = kthread_create1(smb_iod_thread, iod, &p,
 				"smbiod%d", iod->iod_id);
-	if (error == 0) {
-		iod->iod_l = proc_representative_lwp(p);
-	}
 #else
-	error = kthread_create(smb_iod_thread, iod, &iod->iod_l,
+	error = kthread_create(smb_iod_thread, iod, &iod->iod_p,
 	    RFNOWAIT, "smbiod%d", iod->iod_id);
 #endif
 	if (error) {
@@ -712,6 +708,9 @@ smb_iod_create(struct smb_vc *vcp)
 		free(iod, M_SMBIOD);
 		return error;
 	}
+#ifdef __NetBSD__
+	iod->iod_l = LIST_FIRST(&p->p_lwps);
+#endif
 	return 0;
 }
 
