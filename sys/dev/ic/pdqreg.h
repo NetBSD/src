@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.12 1998/05/27 14:01:02 matt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.13 1999/12/23 18:14:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -1061,11 +1061,13 @@ typedef enum {
 typedef enum {
     PDQ_ENTITY_STATION=0,
     PDQ_ENTITY_LINK=1,
-    PDQ_ENTITY_PHY_PORT=2
+    PDQ_ENTITY_PHY_PORT=2,
+    PDQ_ENTITY_MAX=3
 } pdq_entity_t;
 
 typedef enum {
-    PDQ_STATION_EVENT_TRACE_RECEIVED=1
+    PDQ_STATION_EVENT_TRACE_RECEIVED=1,
+    PDQ_STATION_EVENT_MAX=2
 } pdq_station_event_t;
 
 typedef enum {
@@ -1089,7 +1091,8 @@ typedef enum {
     PDQ_LINK_EVENT_RING_PURGE_ERROR=15,
     PDQ_LINK_EVENT_FCI_STRIP_ERROR=16,
     PDQ_LINK_EVENT_TRACE_INITIATED=17,
-    PDQ_LINK_EVENT_DIRECTED_BEACON_RECEIVED=18
+    PDQ_LINK_EVENT_DIRECTED_BEACON_RECEIVED=18,
+    PDQ_LINK_EVENT_MAX=19
 } pdq_link_event_t;
 
 typedef enum {
@@ -1103,7 +1106,8 @@ typedef enum {
 typedef enum {
     PDQ_PHY_EVENT_LEM_ERROR_MONITOR_REJECT=0,
     PDQ_PHY_EVENT_ELASTICITY_BUFFER_ERROR=1,
-    PDQ_PHY_EVENT_LINK_CONFIDENCE_TEST_REJECT=2
+    PDQ_PHY_EVENT_LINK_CONFIDENCE_TEST_REJECT=2,
+    PDQ_PHY_EVENT_MAX=3
 } pdq_phy_event_t;
 
 typedef enum {
