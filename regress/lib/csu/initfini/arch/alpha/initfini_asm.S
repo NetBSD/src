@@ -1,4 +1,4 @@
-/*	$NetBSD: initfini_asm.S,v 1.1 2001/07/17 03:41:04 thorpej Exp $	*/
+/*	$NetBSD: initfini_asm.S,v 1.2 2002/11/22 17:25:46 thorpej Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -11,12 +11,12 @@
 	br	ra, 1f
 1:	LDGP(ra)
 	jsr	ra, i_am_init
-	.align	5
+	.align	3
 	.previous
 
 	.section .fini, "ax", @progbits
 	br	ra, 1f
 1:	LDGP(ra)
 	jsr	ra, i_am_fini
-	.align	5
+	.align	3
 	.previous
