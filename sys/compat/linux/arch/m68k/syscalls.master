@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14.4.1 2001/03/30 21:36:23 he Exp $
+	$NetBSD: syscalls.master,v 1.14.4.2 2001/05/01 08:56:18 he Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -51,7 +51,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 
-0	NOARGS		{ int sys_nosys(void); } syscall
+0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
