@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.34 1999/04/06 17:49:14 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.35 1999/04/28 00:18:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -78,6 +78,15 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
+
+#if BYTE_ORDER == BIG_ENDIAN
+#include <machine/bswap.h> 
+#define	htopci(x)	bswap32(x)
+#define	pcitoh(x)	bswap32(x)
+#else 
+#define	htopci(x)	(x)
+#define	pcitoh(x)	(x)
+#endif
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -882,17 +891,17 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		}
 #endif
 		dma_maps->dma_table[seg].base_addr =
-		    dma_maps->dmamap_xfer->dm_segs[seg].ds_addr;
+		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
 		dma_maps->dma_table[seg].byte_count =
-		    dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
-		    IDEDMA_BYTE_COUNT_MASK;
+		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
+		    IDEDMA_BYTE_COUNT_MASK);
 		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
-		   seg, dma_maps->dma_table[seg].byte_count,
-		   dma_maps->dma_table[seg].base_addr), DEBUG_DMA);
+		   seg, pcitoh(dma_maps->dma_table[seg].byte_count),
+		   pcitoh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
 	}
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
-		IDEDMA_BYTE_COUNT_EOT;
+	    htopci(IDEDMA_BYTE_COUNT_EOT);
 
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 0,
 	    dma_maps->dmamap_table->dm_mapsize,
