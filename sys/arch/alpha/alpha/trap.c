@@ -1,4 +1,34 @@
-/* $NetBSD: trap.c,v 1.47 1999/04/30 20:21:57 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.48 1999/05/09 19:43:58 cgd Exp $ */
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 1999/04/30 20:21:57 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 1999/05/09 19:43:58 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 1999/04/30 20:21:57 cgd Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+#include <alpha/alpha/db_instruction.h>		/* for handle_opdec() */
 
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_syscall.h>
@@ -73,6 +104,7 @@ unsigned long	Gfloat_reg_cvt __P((unsigned long));
 
 int		unaligned_fixup __P((unsigned long, unsigned long,
 		    unsigned long, struct proc *));
+int		handle_opdec(struct proc *p, u_int64_t *ucodep);
 
 static void printtrap __P((const unsigned long, const unsigned long,
       const unsigned long, const unsigned long, struct trapframe *, int, int));
@@ -327,8 +359,8 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			ucode = a0;		/* trap type */
-			i = SIGILL;
+			if ((i = handle_opdec(p, &ucode)) == 0)
+				goto out;
 			break;
 
 		case ALPHA_IF_CODE_FEN:
@@ -739,21 +771,20 @@ const static int reg_to_framereg[32] = {
 	}
 
 #define	unaligned_load(storage, ptrf, mod)				\
-	if (copyin((caddr_t)va, &(storage), sizeof (storage)) == 0 &&	\
-	    (regptr = ptrf(p, reg)) != NULL)				\
-		signal = 0;						\
-	else								\
+	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\
 		break;							\
-	*regptr = mod (storage);
+	signal = 0;							\
+	if ((regptr = ptrf(p, reg)) != NULL)				\
+		*regptr = mod (storage);
 
 #define	unaligned_store(storage, ptrf, mod)				\
-	if ((regptr = ptrf(p, reg)) == NULL)				\
-		break;							\
-	(storage) = mod (*regptr);					\
-	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) == 0)	\
-		signal = 0;						\
+	if ((regptr = ptrf(p, reg)) != NULL)				\
+		(storage) = mod (*regptr);				\
 	else								\
-		break;
+		(storage) = 0;						\
+	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) != 0)	\
+		break;							\
+	signal = 0;
 
 #define	unaligned_load_integer(storage)					\
 	unaligned_load(storage, irp, )
@@ -888,37 +919,53 @@ Gfloat_reg_cvt(input)
 extern int	alpha_unaligned_print, alpha_unaligned_fix;
 extern int	alpha_unaligned_sigbus;
 
+struct unaligned_fixup_data {
+	const char *type;	/* opcode name */
+	int fixable;		/* fixable, 0 if fixup not supported */
+	int size;		/* size, 0 if unknown */
+	int acc;		/* useracc type; B_READ or B_WRITE */
+};
+
+#define	UNKNOWN()	{ "0x%lx", 0, 0, 0 }
+#define	FIX_LD(n,s)	{ n, 1, s, B_READ }
+#define	FIX_ST(n,s)	{ n, 1, s, B_WRITE }
+#define	NOFIX_LD(n,s)	{ n, 0, s, B_READ }
+#define	NOFIX_ST(n,s)	{ n, 0, s, B_WRITE }
+
 int
 unaligned_fixup(va, opcode, reg, p)
 	unsigned long va, opcode, reg;
 	struct proc *p;
 {
-	int doprint, dofix, dosigbus;
-	int signal, size;
-	const char *type;
+	const struct unaligned_fixup_data tab_unknown[1] = {
+		UNKNOWN(),
+	};
+	const struct unaligned_fixup_data tab_0c[0x02] = {
+		FIX_LD("ldwu", 2),	FIX_ST("stw", 2),
+	};
+	const struct unaligned_fixup_data tab_20[0x10] = {
+#ifdef FIX_UNALIGNED_VAX_FP
+		FIX_LD("ldf", 4),	FIX_LD("ldg", 8),
+#else
+		NOFIX_LD("ldf", 4),	NOFIX_LD("ldg", 8),
+#endif
+		FIX_LD("lds", 4),	FIX_LD("ldt", 8),
+#ifdef FIX_UNALIGNED_VAX_FP
+		FIX_ST("stf", 4),	FIX_ST("stg", 8),
+#else
+		NOFIX_ST("stf", 4),	NOFIX_ST("stg", 8),
+#endif
+		FIX_ST("sts", 4),	FIX_ST("stt", 8),
+		FIX_LD("ldl", 4),	FIX_LD("ldq", 8),
+		NOFIX_LD("ldl_c", 4),	NOFIX_LD("ldq_c", 8),
+		FIX_ST("stl", 4),	FIX_ST("stq", 8),
+		NOFIX_ST("stl_c", 4),	NOFIX_ST("stq_c", 8),
+	};
+	const struct unaligned_fixup_data *selected_tab;
+	int doprint, dofix, dosigbus, signal;
 	unsigned long *regptr, longdata;
 	int intdata;		/* signed to get extension when storing */
-	struct {
-		const char *type;	/* opcode name */
-		int size;		/* size, 0 if fixup not supported */
-	} tab[0x10] = {
-#ifdef FIX_UNALIGNED_VAX_FP
-		{ "ldf",	4 },	{ "ldg",	8 },
-#else
-		{ "ldf",	0 },	{ "ldg",	0 },
-#endif
-		{ "lds",	4 },	{ "ldt",	8 },
-#ifdef FIX_UNALIGNED_VAX_FP
-		{ "stf",	4 },	{ "stg",	8 },
-#else
-		{ "stf",	0 },	{ "stg",	0 },
-#endif
-		{ "sts",	4 },	{ "stt",	8 },
-		{ "ldl",	4 },	{ "ldq",	8 },
-		{ "ldl_l",	0 },	{ "ldq_l",	0 },	/* can't fix */
-		{ "stl",	4 },	{ "stq",	8 },
-		{ "stl_c",	0 },	{ "stq_c",	0 },	/* can't fix */
-	};
+	u_int16_t worddata;	/* unsigned to _avoid_ extension */
 
 	/*
 	 * Figure out what actions to take.
@@ -934,20 +981,24 @@ unaligned_fixup(va, opcode, reg, p)
 	 * Find out which opcode it is.  Arrange to have the opcode
 	 * printed if it's an unknown opcode.
 	 */
-	if (opcode >= 0x20 && opcode <= 0x2f) {
-		type = tab[opcode - 0x20].type;
-		size = tab[opcode - 0x20].size;
-	} else {
-		type = "0x%lx";
-		size = 0;
-	}
+	if (opcode >= 0x0c && opcode <= 0x0d)
+		selected_tab = &tab_0c[opcode - 0x0c];
+	else if (opcode >= 0x20 && opcode <= 0x2f)
+		selected_tab = &tab_20[opcode - 0x20];
+	else
+		selected_tab = tab_unknown;
 
 	/*
 	 * See if the user can access the memory in question.
-	 * Even if it's an unknown opcode, SEGV if the access
-	 * should have failed.
+	 * If it's an unknown opcode, we don't know whether to
+	 * read or write, so we don't check.
+	 *
+	 * We adjust the PC backwards so that the instruction will
+	 * be re-run.
 	 */
-	if (!uvm_useracc((caddr_t)va, size ? size : 1, B_WRITE)) {
+	if (selected_tab->size != 0 &&
+	   !uvm_useracc((caddr_t)va, selected_tab->size, selected_tab->acc)) {
+		p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;
 		signal = SIGSEGV;
 		goto out;
 	}
@@ -958,9 +1009,10 @@ unaligned_fixup(va, opcode, reg, p)
 	if (doprint) {
 		uprintf(
 		"pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
-		    p->p_pid, p->p_comm, va, p->p_md.md_tf->tf_regs[FRAME_PC],
+		    p->p_pid, p->p_comm, va,
+		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
 		    p->p_md.md_tf->tf_regs[FRAME_RA]);
-		uprintf(type,opcode);
+		uprintf(selected_tab->type,opcode);
 		uprintf("\n");
 	}
 
@@ -977,8 +1029,18 @@ unaligned_fixup(va, opcode, reg, p)
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
 	signal = SIGBUS;
-	if (dofix && size != 0) {
+	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
+		case 0x0c:			/* ldwu */
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			unaligned_load_integer(worddata);
+			break;
+
+		case 0x0d:			/* stw */
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			unaligned_store_integer(worddata);
+			break;
+
 #ifdef FIX_UNALIGNED_VAX_FP
 		case 0x20:			/* ldf */
 			unaligned_load_floating(intdata, Ffloat_to_reg);
@@ -1046,4 +1108,152 @@ unaligned_fixup(va, opcode, reg, p)
 
 out:
 	return (signal);
+}
+
+/*
+ * Reserved/unimplemented instruction (opDec fault) handler
+ *
+ * Argument is the process that caused it.  No useful information
+ * is passed to the trap handler other than the fault type.  The
+ * address of the instruction that caused the fault is 4 less than
+ * the PC stored in the trap frame.
+ *
+ * If the instruction is emulated successfully, this function returns 0.
+ * Otherwise, this function returns the signal to deliver to the process,
+ * and fills in *ucodep with the code to be delivered.
+ */
+int
+handle_opdec(p, ucodep)
+	struct proc *p;
+	u_int64_t *ucodep;
+{
+	alpha_instruction inst;
+	register_t *regptr, memaddr;
+	u_int64_t inst_pc;
+	int sig;
+
+	inst_pc = memaddr = p->p_md.md_tf->tf_regs[FRAME_PC] - 4;
+	if (copyin((caddr_t)inst_pc, &inst, sizeof (inst)) != 0) {
+		/*
+		 * really, this should never happen, but in case it
+		 * does we handle it.
+		 */
+		printf("WARNING: handle_opdec() couldn't fetch instruction\n");
+		goto sigsegv;
+	}
+
+	switch (inst.generic_format.opcode) {
+	case op_ldbu:
+	case op_ldwu:
+	case op_stw:
+	case op_stb:
+		regptr = irp(p, inst.mem_format.rb);
+		if (regptr != NULL)
+			memaddr = *regptr;
+		else
+			memaddr = 0;
+		memaddr += inst.mem_format.displacement;
+
+		regptr = irp(p, inst.mem_format.ra);
+
+		if (inst.mem_format.opcode == op_ldwu ||
+		    inst.mem_format.opcode == op_stw) {
+			if (memaddr & 0x01) {
+				sig = unaligned_fixup(memaddr,
+				    inst.mem_format.opcode,
+				    inst.mem_format.ra, p);
+				if (sig)
+					goto unaligned_fixup_sig;
+				break;
+			}
+		}
+
+		if (inst.mem_format.opcode == op_ldbu) {
+			u_int8_t b;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			if (copyin((caddr_t)memaddr, &b, sizeof (b)) != 0)
+				goto sigsegv;
+			if (regptr != NULL)
+				*regptr = b;
+		} else if (inst.mem_format.opcode == op_ldwu) {
+			u_int16_t w;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			if (copyin((caddr_t)memaddr, &w, sizeof (w)) != 0)
+				goto sigsegv;
+			if (regptr != NULL)
+				*regptr = w;
+		} else if (inst.mem_format.opcode == op_stw) {
+			u_int16_t w;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			w = (regptr != NULL) ? *regptr : 0;
+			if (copyout(&w, (caddr_t)memaddr, sizeof (w)) != 0)
+				goto sigsegv;
+		} else if (inst.mem_format.opcode == op_stb) {
+			u_int8_t b;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			b = (regptr != NULL) ? *regptr : 0;
+			if (copyout(&b, (caddr_t)memaddr, sizeof (b)) != 0)
+				goto sigsegv;
+		}
+		break;
+
+	case op_intmisc:
+		if (inst.operate_generic_format.function == op_sextb &&
+		    inst.operate_generic_format.ra == 31) {
+			int8_t b;
+
+			if (inst.operate_generic_format.is_lit) {
+				b = inst.operate_lit_format.literal;
+			} else {
+				if (inst.operate_reg_format.sbz != 0)
+					goto sigill;
+				regptr = irp(p, inst.operate_reg_format.rb);
+				b = (regptr != NULL) ? *regptr : 0;
+			}
+
+			regptr = irp(p, inst.operate_generic_format.rc);
+			if (regptr != NULL)
+				*regptr = b;
+			break;
+		}
+		if (inst.operate_generic_format.function == op_sextw &&
+		    inst.operate_generic_format.ra == 31) {
+			int16_t w;
+
+			if (inst.operate_generic_format.is_lit) {
+				w = inst.operate_lit_format.literal;
+			} else {
+				if (inst.operate_reg_format.sbz != 0)
+					goto sigill;
+				regptr = irp(p, inst.operate_reg_format.rb);
+				w = (regptr != NULL) ? *regptr : 0;
+			}
+
+			regptr = irp(p, inst.operate_generic_format.rc);
+			if (regptr != NULL)
+				*regptr = w;
+			break;
+		}
+		goto sigill;
+
+	default:
+		goto sigill;
+	}
+
+	return (0);
+
+sigill:
+	*ucodep = ALPHA_IF_CODE_OPDEC;			/* trap type */
+	return (SIGILL);
+
+sigsegv:
+	sig = SIGSEGV;
+	p->p_md.md_tf->tf_regs[FRAME_PC] = inst_pc;	/* re-run instr. */
+unaligned_fixup_sig:
+	*ucodep = memaddr;				/* faulting address */
+	return (sig);
 }
