@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.11 1996/05/22 13:55:57 mycroft Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.12 1996/10/10 23:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -117,7 +117,7 @@ iso_pcballoc(so, v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcballoc(so %p)\n", so);
+		kprintf("iso_pcballoc(so %p)\n", so);
 	}
 #endif
 	MALLOC(isop, struct isopcb *, sizeof(*isop), M_PCB, M_NOWAIT);
@@ -167,7 +167,7 @@ iso_pcbbind(v, nam, p)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbbind(isop %p, nam %p)\n", isop, nam);
+		kprintf("iso_pcbbind(isop %p, nam %p)\n", isop, nam);
 	}
 #endif
 	suf.s = 0;
@@ -188,8 +188,8 @@ iso_pcbbind(v, nam, p)
 	siso = mtod(nam, struct sockaddr_iso *);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbbind(name len 0x%x)\n", nam->m_len);
-		printf("The address is %s\n", clnp_iso_addrp(&siso->siso_addr));
+		kprintf("iso_pcbbind(name len 0x%x)\n", nam->m_len);
+		kprintf("The address is %s\n", clnp_iso_addrp(&siso->siso_addr));
 	}
 #endif
 	/*
@@ -208,7 +208,7 @@ iso_pcbbind(v, nam, p)
 		/* non-zero net addr- better match one of our interfaces */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbbind: bind to NOT zeroisoaddr\n");
+			kprintf("iso_pcbbind: bind to NOT zeroisoaddr\n");
 		}
 #endif
 		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
@@ -242,7 +242,7 @@ noname:
 		cp = TSEL(isop->isop_laddr);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbbind noname\n");
+			kprintf("iso_pcbbind noname\n");
 		}
 #endif
 		do {
@@ -256,7 +256,7 @@ noname:
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbbind returns 0, suf 0x%x\n", suf.s);
+		kprintf("iso_pcbbind returns 0, suf 0x%x\n", suf.s);
 	}
 #endif
 	return 0;
@@ -294,9 +294,9 @@ iso_pcbconnect(v, nam)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbconnect(isop %p sock %p nam %p",
-		       isop, isop->isop_socket, nam);
-		printf("nam->m_len 0x%x), addr:\n", nam->m_len);
+		kprintf("iso_pcbconnect(isop %p sock %p nam %p",
+		    isop, isop->isop_socket, nam);
+		kprintf("nam->m_len 0x%x), addr:\n", nam->m_len);
 		dump_isoaddr(siso);
 	}
 #endif
@@ -327,7 +327,7 @@ iso_pcbconnect(v, nam)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbconnect localzero 1\n");
+			kprintf("iso_pcbconnect localzero 1\n");
 		}
 #endif
 		/*
@@ -341,15 +341,15 @@ iso_pcbconnect(v, nam)
 			return error;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbconnect localzero 2, ro->ro_rt %p",
+			kprintf("iso_pcbconnect localzero 2, ro->ro_rt %p",
 			       isop->isop_route.ro_rt);
-			printf(" ia %p\n", ia);
+			kprintf(" ia %p\n", ia);
 		}
 #endif
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("in iso_pcbconnect before lookup isop %p isop->sock %p\n",
+		kprintf("in iso_pcbconnect before lookup isop %p isop->sock %p\n",
 		       isop, isop->isop_socket);
 	}
 #endif
@@ -389,8 +389,8 @@ iso_pcbconnect(v, nam)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("in iso_pcbconnect before bcopy isop %p isop->sock %p\n",
-		       isop, isop->isop_socket);
+		kprintf("in iso_pcbconnect before bcopy isop %p isop->sock %p\n",
+		    isop, isop->isop_socket);
 	}
 #endif
 	/*
@@ -414,11 +414,11 @@ iso_pcbconnect(v, nam)
 	bcopy((caddr_t) siso, (caddr_t) isop->isop_faddr, siso->siso_len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("in iso_pcbconnect after bcopy isop %p isop->sock %p\n",
-		       isop, isop->isop_socket);
-		printf("iso_pcbconnect connected to addr:\n");
+		kprintf("in iso_pcbconnect after bcopy isop %p isop->sock %p\n",
+		    isop, isop->isop_socket);
+		kprintf("iso_pcbconnect connected to addr:\n");
 		dump_isoaddr(isop->isop_faddr);
-		printf("iso_pcbconnect end: src addr:\n");
+		kprintf("iso_pcbconnect end: src addr:\n");
 		dump_isoaddr(isop->isop_laddr);
 	}
 #endif
@@ -448,7 +448,7 @@ iso_pcbdisconnect(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdisconnect(isop %p)\n", isop);
+		kprintf("iso_pcbdisconnect(isop %p)\n", isop);
 	}
 #endif
 	/*
@@ -488,8 +488,8 @@ iso_pcbdetach(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach(isop %p socket %p so %p)\n",
-		       isop, isop->isop_socket, so);
+		kprintf("iso_pcbdetach(isop %p socket %p so %p)\n",
+		    isop, isop->isop_socket, so);
 	}
 #endif
 #ifdef TPCONS
@@ -512,21 +512,21 @@ iso_pcbdetach(v)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach 2 \n");
+		kprintf("iso_pcbdetach 2 \n");
 	}
 #endif
 	if (isop->isop_options)
 		(void) m_free(isop->isop_options);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach 3 \n");
+		kprintf("iso_pcbdetach 3 \n");
 	}
 #endif
 	if (isop->isop_route.ro_rt)
 		rtfree(isop->isop_route.ro_rt);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach 3.1\n");
+		kprintf("iso_pcbdetach 3.1\n");
 	}
 #endif
 	if (isop->isop_clnpcache != NULL) {
@@ -534,29 +534,29 @@ iso_pcbdetach(v)
 		mtod(isop->isop_clnpcache, struct clnp_cache *);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbdetach 3.2: clcp %p freeing clc_hdr %p\n",
-			       clcp, clcp->clc_hdr);
+			kprintf("iso_pcbdetach 3.2: clcp %p freeing clc_hdr %p\n",
+			    clcp, clcp->clc_hdr);
 		}
 #endif
 		if (clcp->clc_hdr != NULL)
 			m_free(clcp->clc_hdr);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbdetach 3.3: freeing cache %p\n",
-			       isop->isop_clnpcache);
+			kprintf("iso_pcbdetach 3.3: freeing cache %p\n",
+			    isop->isop_clnpcache);
 		}
 #endif
 		m_free(isop->isop_clnpcache);
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach 4 \n");
+		kprintf("iso_pcbdetach 4 \n");
 	}
 #endif
 	remque(isop);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbdetach 5 \n");
+		kprintf("iso_pcbdetach 5 \n");
 	}
 #endif
 	if (isop->isop_laddr && (isop->isop_laddr != &isop->isop_sladdr))
@@ -590,7 +590,7 @@ iso_pcbnotify(head, siso, errno, notify)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcbnotify(head %p, notify %p) dst:\n",
+		kprintf("iso_pcbnotify(head %p, notify %p) dst:\n",
 			head, notify);
 	}
 #endif
@@ -599,9 +599,9 @@ iso_pcbnotify(head, siso, errno, notify)
 		    !SAME_ISOADDR(siso, isop->isop_faddr)) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ISO]) {
-				printf("iso_pcbnotify: CONTINUE isop %p, sock %p\n",
-				       isop, isop->isop_socket);
-				printf("addrmatch cmp'd with (%p):\n",
+				kprintf("iso_pcbnotify: CONTINUE isop %p, sock %p\n",
+				    isop, isop->isop_socket);
+				kprintf("addrmatch cmp'd with (%p):\n",
 					isop->isop_faddr);
 				dump_isoaddr(isop->isop_faddr);
 			}
@@ -616,7 +616,7 @@ iso_pcbnotify(head, siso, errno, notify)
 	splx(s);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("END OF iso_pcbnotify\n");
+		kprintf("END OF iso_pcbnotify\n");
 	}
 #endif
 }
@@ -649,7 +649,7 @@ iso_pcblookup(head, fportlen, fport, laddr)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
-		printf("iso_pcblookup(head %p laddr %p fport %p)\n",
+		kprintf("iso_pcblookup(head %p laddr %p fport %p)\n",
 		       head, laddr, fport);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_driver.c,v 1.8 1996/03/16 23:13:45 christos Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.9 1996/10/10 23:22:07 christos Exp $	*/
 
 #include "tp_states.h"
 
@@ -65,7 +65,7 @@ _Xebec_action(a, e, p)
 	case 0x2:
 #ifdef TP_DEBUG
 		if (e->ev_number != AK_TPDU)
-			printf("TPDU 0x%x in REFWAIT!!!!\n", e->ev_number);
+			kprintf("TPDU 0x%x in REFWAIT!!!!\n", e->ev_number);
 #endif	/* TP_DEBUG */
 		break;
 	case 0x3:
@@ -93,7 +93,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("CR datalen 0x%x data %p",
+			kprintf("CR datalen 0x%x data %p",
 				e->ev_union.EV_CR_TPDU.e_datalen,
 				e->ev_union.EV_CR_TPDU.e_data);
 		}
@@ -117,7 +117,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 		    if (argo_debug[D_CONN]) {
-			printf("Confirming connection: p");
+			kprintf("Confirming connection: p");
 		}
 #endif
 		soisconnected(p->tp_sock);
@@ -132,7 +132,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("Confirming connection: p");
+			kprintf("Confirming connection: p");
 		}
 #endif
 		tp_getoptions(p);
@@ -145,7 +145,7 @@ _Xebec_action(a, e, p)
 	case 0x9:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("event: CR_TPDU emit CC failed done ");
+			kprintf("event: CR_TPDU emit CC failed done ");
 		}
 #endif
 		soisdisconnected(p->tp_sock);
@@ -163,7 +163,7 @@ _Xebec_action(a, e, p)
 		if (data) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("T_CONN_req.trans m_copy cc %p\n",
+				kprintf("T_CONN_req.trans m_copy cc %p\n",
 				       p->tp_ucddata);
 				dump_mbuf(data, "sosnd @ T_CONN_req");
 			}
@@ -271,7 +271,7 @@ _Xebec_action(a, e, p)
 	case 0x15:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("trans: CC_TPDU in CRSENT state flags 0x%x\n",
+			kprintf("trans: CC_TPDU in CRSENT state flags 0x%x\n",
 			       (int) p->tp_flags);
 		}
 #endif
@@ -286,7 +286,7 @@ _Xebec_action(a, e, p)
 		if (p->tp_ucddata) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("dropping user connect data cc 0x%x\n",
+				kprintf("dropping user connect data cc 0x%x\n",
 				       p->tp_ucddata->m_len);
 			}
 #endif
@@ -310,7 +310,7 @@ _Xebec_action(a, e, p)
 		if (p->tp_ucddata) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("TM_retrans.trans m_copy cc %p\n",
+				kprintf("TM_retrans.trans m_copy cc %p\n",
 					data);
 				dump_mbuf(p->tp_ucddata, "sosnd @ TM_retrans");
 			}
@@ -361,7 +361,7 @@ _Xebec_action(a, e, p)
 		doack = tp_stash(p, e);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
-			printf("tp_stash returns %d\n", doack);
+			kprintf("tp_stash returns %d\n", doack);
 		}
 #endif
 
@@ -373,7 +373,7 @@ _Xebec_action(a, e, p)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
-			printf("after stash calling sbwakeup\n");
+			kprintf("after stash calling sbwakeup\n");
 		}
 #endif
 		break;
@@ -383,7 +383,7 @@ _Xebec_action(a, e, p)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
-			printf("after stash calling sbwakeup\n");
+			kprintf("after stash calling sbwakeup\n");
 		}
 #endif
 		break;
@@ -394,7 +394,7 @@ _Xebec_action(a, e, p)
 		doack = tp_stash(p, e);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
-			printf("tp_stash returns %d\n", doack);
+			kprintf("tp_stash returns %d\n", doack);
 		}
 #endif
 
@@ -405,7 +405,7 @@ _Xebec_action(a, e, p)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DATA]) {
-			printf("after stash calling sbwakeup\n");
+			kprintf("after stash calling sbwakeup\n");
 		}
 #endif
 		break;
@@ -553,7 +553,7 @@ _Xebec_action(a, e, p)
 		if (data) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("T_DISC_req.trans tp_ucddata %p\n",
+				kprintf("T_DISC_req.trans tp_ucddata %p\n",
 				       p->tp_ucddata);
 				dump_mbuf(data, "ucddata @ T_DISC_req");
 			}
@@ -690,7 +690,7 @@ _Xebec_action(a, e, p)
 #endif
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_XPD]) {
-				printf("T_XPD_req: sb_cc 0x%lx\n", p->tp_Xsnd.sb_cc);
+				kprintf("T_XPD_req: sb_cc 0x%lx\n", p->tp_Xsnd.sb_cc);
 				dump_mbuf(m, "XPD req emitting M");
 			}
 #endif
@@ -709,7 +709,7 @@ _Xebec_action(a, e, p)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
-			printf("GOOD ACK seq 0x%x cdt 0x%x\n", e->ev_union.EV_AK_TPDU.e_seq, e->ev_union.EV_AK_TPDU.e_cdt);
+			kprintf("GOOD ACK seq 0x%x cdt 0x%x\n", e->ev_union.EV_AK_TPDU.e_seq, e->ev_union.EV_AK_TPDU.e_cdt);
 		}
 #endif
 		if (p->tp_class != TP_CLASS_0) {
@@ -718,7 +718,7 @@ _Xebec_action(a, e, p)
 		sbwakeup(sb);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
-			printf("GOOD ACK new sndnxt 0x%x\n", p->tp_sndnxt);
+			kprintf("GOOD ACK new sndnxt 0x%x\n", p->tp_sndnxt);
 		}
 #endif
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.9 1996/02/13 22:11:32 christos Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.10 1996/10/10 23:22:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -340,7 +340,7 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 #ifdef _KERNEL
 extern int      tp_rttadd, tp_rttdiv;
 #include <sys/syslog.h>
-#define printf logpri(LOG_DEBUG),addlog
+#define kprintf logpri(LOG_DEBUG),addlog
 
 #ifndef  tp_NSTATES
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.9 1996/03/16 23:13:51 christos Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.10 1996/10/10 23:22:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -129,7 +129,7 @@ tp_inputprep(m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_inputprep: m %p\n", m);
+		kprintf("tp_inputprep: m %p\n", m);
 	}
 #endif
 
@@ -179,7 +179,7 @@ tp_inputprep(m)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
-		printf(
+		kprintf(
 		       " at end: m %p hdr->tpdu_li 0x%x m_len 0x%x\n", m,
 		       hdrlen, m->m_len);
 	}
@@ -295,7 +295,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_NEWSOCK]) {
-		printf("tp_newsocket(channel %p)  after sonewconn so %p \n",
+		kprintf("tp_newsocket(channel %p)  after sonewconn so %p \n",
 		       cons_channel, so);
 		dump_addr(fname);
 		{
@@ -303,10 +303,10 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 
 			head = so->so_head;
 			t = so;
-			printf("so %p so_head %p so_q0 %p, q0len %d\n",
+			kprintf("so %p so_head %p so_q0 %p, q0len %d\n",
 			       t, t->so_head, t->so_q0, t->so_q0len);
 			while ((t = t->so_q0) && t != so && t != head)
-				printf("so %p so_head %p so_q0 %p, q0len %d\n",
+				kprintf("so %p so_head %p so_q0 %p, q0len %d\n",
 				       t, t->so_head, t->so_q0, t->so_q0len);
 		}
 	}
@@ -378,7 +378,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf("tp_route_to FAILED! detaching tpcb %p, so %p\n",
+			kprintf("tp_route_to FAILED! detaching tpcb %p, so %p\n",
 			       tpcb, so);
 		}
 #endif
@@ -388,7 +388,7 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 ok:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_newsocket returning so %p, sototpcb(so) %p\n",
+		kprintf("tp_newsocket returning so %p, sototpcb(so) %p\n",
 		       so, sototpcb(so));
 	}
 #endif
@@ -477,7 +477,7 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_input(%p, ... %p)\n", m, cons_channel);
+		kprintf("tp_input(%p, ... %p)\n", m, cons_channel);
 	}
 #endif
 
@@ -534,9 +534,9 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("input: dutype 0x%x cons_channel %p dref 0x%x\n",
+		kprintf("input: dutype 0x%x cons_channel %p dref 0x%x\n",
 		    dutype, cons_channel, dref);
-		printf("input: dref 0x%x sref 0x%x\n", dref, sref);
+		kprintf("input: dref 0x%x sref 0x%x\n", dref, sref);
 	}
 #endif
 #ifdef TPPT
@@ -549,7 +549,7 @@ again:
 
 #ifdef ARGO_DEBUG
 	if ((dutype < TP_MIN_TPDUTYPE) || (dutype > TP_MAX_TPDUTYPE)) {
-		printf("BAD dutype! 0x%x, channel %p dref 0x%x\n",
+		kprintf("BAD dutype! 0x%x, channel %p dref 0x%x\n",
 		       dutype, cons_channel, dref);
 		dump_buf(m, sizeof(struct mbuf));
 
@@ -584,7 +584,7 @@ again:
 			vb_getval(P, u_char, dusize);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CR dusize 0x%x\n", dusize);
+				kprintf("CR dusize 0x%x\n", dusize);
 			}
 #endif
 			/* COS tests: NBS IA (Dec. 1987) Sec. 4.5.2.1 */
@@ -602,7 +602,7 @@ again:
 			default:;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TPINPUT]) {
-					printf("malformed prefered TPDU option\n");
+					kprintf("malformed prefered TPDU option\n");
 				}
 #endif
 			}
@@ -619,13 +619,13 @@ again:
 			fsufxlen = vbptr(P)->tpv_len;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CR fsufx:");
+				kprintf("CR fsufx:");
 				{
 					register int    j;
 					for (j = 0; j < fsufxlen; j++) {
-						printf(" 0x%x. ", *((caddr_t) (fsufxloc + j)));
+						kprintf(" 0x%x. ", *((caddr_t) (fsufxloc + j)));
 					}
-					printf("\n");
+					kprintf("\n");
 				}
 			}
 #endif
@@ -639,13 +639,13 @@ again:
 			lsufxlen = vbptr(P)->tpv_len;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CR lsufx:");
+				kprintf("CR lsufx:");
 				{
 					register int    j;
 					for (j = 0; j < lsufxlen; j++) {
-						printf(" 0x%x. ", *((u_char *) (lsufxloc + j)));
+						kprintf(" 0x%x. ", *((u_char *) (lsufxloc + j)));
 					}
-					printf("\n");
+					kprintf("\n");
 				}
 			}
 #endif
@@ -679,7 +679,7 @@ again:
 						 * screw us up */
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CR acktime 0x%x\n", acktime);
+				kprintf("CR acktime 0x%x\n", acktime);
 			}
 #endif
 			break;
@@ -701,7 +701,7 @@ again:
 				      ((caddr_t) aclass) - (caddr_t) hdr);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TPINPUT]) {
-					printf("alt_classes 0x%x\n", alt_classes);
+					kprintf("alt_classes 0x%x\n", alt_classes);
 				}
 #endif
 			}
@@ -717,7 +717,7 @@ again:
 		default:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("param ignored CR_TPDU code= 0x%x\n",
+				kprintf("param ignored CR_TPDU code= 0x%x\n",
 				       vbptr(P)->tpv_code);
 			}
 #endif
@@ -727,7 +727,7 @@ again:
 		case TPP_checksum:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CR before cksum\n");
+				kprintf("CR before cksum\n");
 			}
 #endif
 
@@ -735,7 +735,7 @@ again:
 			      E_TP_INV_PVAL, ts_bad_csum, discard, 0)
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TPINPUT]) {
-				printf("CR before cksum\n");
+				kprintf("CR before cksum\n");
 			}
 #endif
 			break;
@@ -779,7 +779,7 @@ again:
 			 */
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TPINPUT]) {
-				printf("checking if dup CR\n");
+				kprintf("checking if dup CR\n");
 			}
 #endif
 			tpcb = t;
@@ -790,7 +790,7 @@ again:
 					   t->tp_npcb, faddr, TP_FOREIGN)) {
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_TPINPUT]) {
-						printf("duplicate CR discarded\n");
+						kprintf("duplicate CR discarded\n");
 					}
 #endif
 					goto discard;
@@ -812,12 +812,12 @@ again:
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("HAVE A TPCB 1: %p\n", tpcb);
+			kprintf("HAVE A TPCB 1: %p\n", tpcb);
 		}
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			printf(
+			kprintf(
 			       "CR: bef CHKS: flags 0x%x class_to_use 0x%x alt 0x%x opt 0x%x tp_class 0x%x\n",
 			       tpcb->tp_flags, class_to_use, alt_classes, opt, tpcb->tp_class);
 		}
@@ -869,7 +869,7 @@ again:
 			)
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-			printf("CR: after CRCCCHECKS: tpcb %p, flags 0x%x\n",
+			kprintf("CR: after CRCCCHECKS: tpcb %p, flags 0x%x\n",
 			       tpcb, tpcb->tp_flags);
 		}
 #endif
@@ -886,7 +886,7 @@ again:
 			 */
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				printf("abt to call tp_newsocket(%p, %p, %p, %p)\n",
+				kprintf("abt to call tp_newsocket(%p, %p, %p, %p)\n",
 				       so, laddr, faddr, cons_channel);
 			}
 #endif
@@ -903,7 +903,7 @@ again:
 				 */
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CONN]) {
-					printf("tp_newsocket returns 0\n");
+					kprintf("tp_newsocket returns 0\n");
 				}
 #endif
 				goto discard;
@@ -1016,7 +1016,7 @@ again:
 			    (tpcb->tp_class == TP_CLASS_0 /* || == CLASS_1 */ )) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TPINPUT]) {
-					printf("tpinput_dt: class 0 short circuit\n");
+					kprintf("tpinput_dt: class 0 short circuit\n");
 				}
 #endif
 				dref = tpcb->tp_lref;
@@ -1043,7 +1043,7 @@ again:
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("HAVE A TPCB 2: %p\n", tpcb);
+			kprintf("HAVE A TPCB 2: %p\n", tpcb);
 		}
 #endif
 
@@ -1054,7 +1054,7 @@ again:
 		      (1 + 2 + (caddr_t) & hdr->_tpduf - (caddr_t) hdr))
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("state of dref %d ok, tpcb %p\n", dref, tpcb);
+			kprintf("state of dref %d ok, tpcb %p\n", dref, tpcb);
 		}
 #endif
 		/*
@@ -1092,7 +1092,7 @@ again:
 				      (1 + (caddr_t) & vbptr(P)->tpv_val - (caddr_t) hdr))
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_TPINPUT]) {
-					printf("CC dusize 0x%x\n", dusize);
+					kprintf("CC dusize 0x%x\n", dusize);
 				}
 #endif
 			}
@@ -1110,7 +1110,7 @@ again:
 				default:;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_TPINPUT]) {
-						printf("malformed prefered TPDU option\n");
+						kprintf("malformed prefered TPDU option\n");
 					}
 #endif
 				}
@@ -1123,7 +1123,7 @@ again:
 	caseof(CC_TPDU_type, TPP_calling_sufx):
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CC calling (local) sufxlen 0x%x\n", lsufxlen);
+				kprintf("CC calling (local) sufxlen 0x%x\n", lsufxlen);
 			}
 #endif
 			lsufxloc = (caddr_t) & vbptr(P)->tpv_val;
@@ -1143,7 +1143,7 @@ again:
 			fsufxlen = vbptr(P)->tpv_len;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("CC called (foreign) sufx len %d\n", fsufxlen);
+				kprintf("CC called (foreign) sufx len %d\n", fsufxlen);
 			}
 #endif
 			break;
@@ -1187,7 +1187,7 @@ again:
 			subseq = ntohs(subseq);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ACKRECV]) {
-				printf("AK dref 0x%x Subseq 0x%x\n", dref, subseq);
+				kprintf("AK dref 0x%x Subseq 0x%x\n", dref, subseq);
 			}
 #endif
 			break;
@@ -1206,7 +1206,7 @@ again:
 				ycredit = ntohs(ycredit);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKRECV]) {
-					printf("%s%x, subseq 0x%x, cdt 0x%x dref 0x%x\n",
+					kprintf("%s%x, subseq 0x%x, cdt 0x%x dref 0x%x\n",
 					       "AK FCC lwe 0x", ylwe, ysubseq, ycredit, dref);
 				}
 #endif
@@ -1216,7 +1216,7 @@ again:
 		default:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("param ignored dutype 0x%x, code  0x%x\n",
+				kprintf("param ignored dutype 0x%x, code  0x%x\n",
 				       dutype, vbptr(P)->tpv_code);
 			}
 #endif
@@ -1327,7 +1327,7 @@ again:
 
 		case DC_TPDU_type:
 			if (sref != tpcb->tp_fref)
-				printf("INPUT: inv sufx DCsref 0x%x, tp_fref 0x%x\n",
+				kprintf("INPUT: inv sufx DCsref 0x%x, tp_fref 0x%x\n",
 				       sref, tpcb->tp_fref);
 
 			CHECK((sref != tpcb->tp_fref),
@@ -1344,7 +1344,7 @@ again:
 			}
 #endif
 				if (sref != tpcb->tp_fref) {
-				printf("INPUT: inv sufx DRsref 0x%x tp_fref 0x%x\n",
+				kprintf("INPUT: inv sufx DRsref 0x%x tp_fref 0x%x\n",
 				       sref, tpcb->tp_fref);
 			}
 			CHECK((sref != 0 && sref != tpcb->tp_fref &&
@@ -1495,7 +1495,7 @@ again:
 			error = E_TP_INV_TPDU;	/* causes an ER  */
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("INVALID dutype 0x%x\n", hdr->tpdu_type);
+				kprintf("INVALID dutype 0x%x\n", hdr->tpdu_type);
 			}
 #endif
 			IncStat(ts_inv_dutype);
@@ -1578,7 +1578,7 @@ again:
 			break;
 
 		default:
-			printf(
+			kprintf(
 			       "ERROR in tp_input! hdr->tpdu_type 0x%x takes_data 0x%x m %p\n",
 			       hdr->tpdu_type, takes_data, m);
 			break;
@@ -1593,10 +1593,10 @@ again:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_input: before driver, state 0x%x event 0x%x m %p",
+		kprintf("tp_input: before driver, state 0x%x event 0x%x m %p",
 		       tpcb->tp_state, e.ev_number, m);
-		printf(" e.e_data %p\n", e.TPDU_ATTR(DT).e_data);
-		printf("takes_data 0x%x m_len 0x%x, tpdu_len 0x%x\n",
+		kprintf(" e.e_data %p\n", e.TPDU_ATTR(DT).e_data);
+		kprintf("takes_data 0x%x m_len 0x%x, tpdu_len 0x%x\n",
 		       takes_data, (m == MNULL) ? 0 : m->m_len, tpdu_len);
 	}
 #endif
@@ -1621,7 +1621,7 @@ again:
 						 * dutypes */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("after driver, restoring m to %p, takes_data 0x%x\n",
+			kprintf("after driver, restoring m to %p, takes_data 0x%x\n",
 			       m, takes_data);
 		}
 #endif
@@ -1646,7 +1646,7 @@ again:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
 				hdr = mtod(m, struct tpdu *);
-				printf("tp_input @ separate: hdr %p size %d m %p\n",
+				kprintf("tp_input @ separate: hdr %p size %d m %p\n",
 				       hdr, (int) hdr->tpdu_li + 1, m);
 				dump_mbuf(m, "tp_input after driver, at separate");
 			}
@@ -1659,13 +1659,13 @@ again:
 	if (m != MNULL) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("tp_input : m_freem(%p)\n", m);
+			kprintf("tp_input : m_freem(%p)\n", m);
 		}
 #endif
 		m_freem(m);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
-			printf("tp_input : after m_freem %p\n", m);
+			kprintf("tp_input : after m_freem %p\n", m);
 		}
 #endif
 	}
@@ -1679,7 +1679,7 @@ discard:
 	 */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tp_input DISCARD\n");
+		kprintf("tp_input DISCARD\n");
 	}
 #endif
 #ifdef TPPT
@@ -1704,7 +1704,7 @@ nonx_dref:
 respond:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("RESPOND: error 0x%x, errlen 0x%x\n", error, errlen);
+		kprintf("RESPOND: error 0x%x, errlen 0x%x\n", error, errlen);
 	}
 #endif
 #ifdef TPPT
@@ -1719,12 +1719,12 @@ respond:
 			     cons_channel, dgout_routine);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ERROR_EMIT]) {
-		printf("tp_input after error_emit\n");
+		kprintf("tp_input after error_emit\n");
 	}
 #endif
 
 #ifdef lint
-	printf("", sref, opt);
+	kprintf("", sref, opt);
 #endif				/* lint */
 	IncStat(ts_recv_drop);
 }
@@ -1765,7 +1765,7 @@ tp_headersize(dutype, tpcb)
 		      (tpcb->tp_class == TP_CLASS_4) ||
 		      (dutype == DR_TPDU_type) ||
 		      (dutype == CR_TPDU_type))) {
-		printf("tp_headersize:dutype 0x%x, class 0x%x",
+		kprintf("tp_headersize:dutype 0x%x, class 0x%x",
 		       dutype, tpcb->tp_class);
 		/* TODO: identify this and GET RID OF IT */
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.7 1996/04/13 01:34:29 cgd Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.8 1996/10/10 23:21:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -105,7 +105,7 @@ clnp_update_srcrt(options, oidx)
 	if (CLNPSRCRT_TERM(oidx, options)) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_update_srcrt: src rt terminated\n");
+			kprintf("clnp_update_srcrt: src rt terminated\n");
 		}
 #endif
 		return;
@@ -116,15 +116,15 @@ clnp_update_srcrt(options, oidx)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OPTIONS]) {
-		printf("clnp_update_srcrt: current src rt: %s\n",
-		       clnp_iso_addrp(&isoa));
+		kprintf("clnp_update_srcrt: current src rt: %s\n",
+		    clnp_iso_addrp(&isoa));
 	}
 #endif
 
 	if (clnp_ours(&isoa)) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_update_srcrt: updating src rt\n");
+			kprintf("clnp_update_srcrt: updating src rt\n");
 		}
 #endif
 
@@ -171,11 +171,11 @@ clnp_dooptions(options, oidx, ifp, isoa)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_dooptions: record route: option %p for %d bytes\n",
-			       opt, oidx->cni_recrt_len);
-			printf("\tfree slot offset x%x\n", off);
-			printf("clnp_dooptions: recording %s\n", clnp_iso_addrp(isoa));
-			printf("clnp_dooptions: option dump:\n");
+			kprintf("clnp_dooptions: record route: option %p for %d bytes\n",
+			    opt, oidx->cni_recrt_len);
+			kprintf("\tfree slot offset x%x\n", off);
+			kprintf("clnp_dooptions: recording %s\n", clnp_iso_addrp(isoa));
+			kprintf("clnp_dooptions: option dump:\n");
 			dump_buf(opt, oidx->cni_recrt_len);
 		}
 #endif
@@ -193,7 +193,7 @@ clnp_dooptions(options, oidx, ifp, isoa)
 			} else {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OPTIONS]) {
-					printf("clnp_dooptions: new addr at %p for %d\n",
+					kprintf("clnp_dooptions: new addr at %p for %d\n",
 					       rec_start, new_addrlen);
 				}
 #endif
@@ -205,7 +205,7 @@ clnp_dooptions(options, oidx, ifp, isoa)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OPTIONS]) {
-					printf("clnp_dooptions: new option dump:\n");
+					kprintf("clnp_dooptions: new option dump:\n");
 					dump_buf(opt, oidx->cni_recrt_len);
 				}
 #endif
@@ -300,7 +300,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OPTIONS]) {
-		printf("clnp_opt_sanity: checking %d bytes of data:\n", len);
+		kprintf("clnp_opt_sanity: checking %d bytes of data:\n", len);
 		dump_buf(opts, len);
 	}
 #endif
@@ -326,34 +326,35 @@ clnp_opt_sanity(m, opts, len, oidx)
 		oplen = *opts++;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OPTIONS]) {
-			printf("clnp_opt_sanity: opcode is %x and oplen %d\n",
-			       opcode, oplen);
-			printf("clnp_opt_sanity: clnpoval_SRCRT is %x\n", CLNPOVAL_SRCRT);
+			kprintf("clnp_opt_sanity: opcode is %x and oplen %d\n",
+			    opcode, oplen);
+			kprintf("clnp_opt_sanity: clnpoval_SRCRT is %x\n", CLNPOVAL_SRCRT);
 
 			switch (opcode) {
-			case CLNPOVAL_PAD:{
-					printf("CLNPOVAL_PAD\n");
-				} break;
-			case CLNPOVAL_SECURE:{
-					printf("CLNPOVAL_SECURE\n");
-				} break;
-			case CLNPOVAL_SRCRT:{
-					printf("CLNPOVAL_SRCRT\n");
-				} break;
-			case CLNPOVAL_RECRT:{
-					printf("CLNPOVAL_RECRT\n");
-				} break;
-			case CLNPOVAL_QOS:{
-					printf("CLNPOVAL_QOS\n");
-				} break;
-			case CLNPOVAL_PRIOR:{
-					printf("CLNPOVAL_PRIOR\n");
-				} break;
-			case CLNPOVAL_ERREAS:{
-					printf("CLNPOVAL_ERREAS\n");
-				} break;
+			case CLNPOVAL_PAD:
+				kprintf("CLNPOVAL_PAD\n");
+				break;
+			case CLNPOVAL_SECURE:
+				kprintf("CLNPOVAL_SECURE\n");
+				break;
+			case CLNPOVAL_SRCRT:
+				kprintf("CLNPOVAL_SRCRT\n");
+				break;
+			case CLNPOVAL_RECRT:
+				kprintf("CLNPOVAL_RECRT\n");
+				break;
+			case CLNPOVAL_QOS:
+				kprintf("CLNPOVAL_QOS\n");
+				break;
+			case CLNPOVAL_PRIOR:
+				kprintf("CLNPOVAL_PRIOR\n");
+				break;
+			case CLNPOVAL_ERREAS:
+				kprintf("CLNPOVAL_ERREAS\n");
+				break;
 			default:
-				printf("UKNOWN option %x\n", opcode);
+				kprintf("UNKNOWN option %x\n", opcode);
+				break;
 			}
 		}
 #endif
@@ -400,7 +401,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OPTIONS]) {
-					printf("clnp_opt_sanity: SRC RT\n");
+					kprintf("clnp_opt_sanity: SRC RT\n");
 				}
 #endif
 
@@ -451,7 +452,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 					if (opts == route_end) {
 #ifdef ARGO_DEBUG
 						if (argo_debug[D_OPTIONS]) {
-							printf("clnp_opt_sanity: end of src route info\n");
+							kprintf("clnp_opt_sanity: end of src route info\n");
 						}
 #endif
 						break;
@@ -554,7 +555,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 		default:{
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OPTIONS]) {
-					printf("clnp_opt_sanity: UNKNOWN OPTION 0x%x\n", opcode);
+					kprintf("clnp_opt_sanity: UNKNOWN OPTION 0x%x\n", opcode);
 				}
 #endif
 				return (DISC_UNSUPPOPT);
@@ -563,7 +564,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OPTIONS]) {
-		printf("clnp_opt_sanity: return(0)\n");
+		kprintf("clnp_opt_sanity: return(0)\n");
 	}
 #endif
 	return (0);
