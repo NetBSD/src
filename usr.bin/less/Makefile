@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/01/22 03:14:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/24 09:15:20 mrg Exp $
 
-SUBDIR=less lesskey
+SUBDIR=less lesskey lessecho
 
 .include <bsd.subdir.mk>
