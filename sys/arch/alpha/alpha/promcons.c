@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $ */
+/* $NetBSD: promcons.c,v 1.10 1998/02/13 02:09:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.10 1998/02/13 02:09:10 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,9 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $")
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
 
 #include <machine/conf.h>
 #include <machine/prom.h>
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 
 static struct  tty *prom_tty[1];
 
@@ -67,7 +70,7 @@ promopen(dev, flag, mode, p)
 	int s;
 	int error = 0, setuptimeout = 0;
  
-	if (unit >= 1)
+	if (!pmap_uses_prom_console() || unit >= 1)
 		return ENXIO;
 
 	s = spltty();
@@ -237,3 +240,5 @@ promtty(dev)
 
 	return prom_tty[0];
 }
+
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
