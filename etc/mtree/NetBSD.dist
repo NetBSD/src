@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.187 2002/04/08 19:12:42 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.188 2002/05/02 17:03:58 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -467,7 +467,6 @@
 ./usr/share/man/cat9/acorn26
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
-./usr/share/man/cat9/arm32
 ./usr/share/man/cat9/atari
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/i386
@@ -552,7 +551,6 @@
 ./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
 ./usr/share/man/man9/amiga
-./usr/share/man/man9/arm32
 ./usr/share/man/man9/atari
 ./usr/share/man/man9/hp300
 ./usr/share/man/man9/i386
@@ -637,7 +635,6 @@
 ./usr/share/man/html9/acorn26
 ./usr/share/man/html9/alpha
 ./usr/share/man/html9/amiga
-./usr/share/man/html9/arm32
 ./usr/share/man/html9/atari
 ./usr/share/man/html9/hp300
 ./usr/share/man/html9/i386
