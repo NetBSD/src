@@ -3,6 +3,8 @@ The i386-specific portion of the NetBSD 1.0 release is found in the
 out as follows:
 
 .../NetBSD-1.0/i386/
+			INSTALL		Installation notes; this file.
+
 			binary/		i386 binary distribution sets;
 					see below.
 
