@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2001/01/25 09:21:57 itojun Exp $
+#	$NetBSD: Makefile,v 1.98 2001/02/06 18:47:09 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -23,9 +23,13 @@ LIB=		c
 CPPFLAGS+=	-D_LIBC -DNLS -DYP -DHESIOD -DLIBC_SCCS -DSYSLIBC_SCCS \
 		-D_REENTRANT -I${.CURDIR}/include
 CPPFLAGS+=	-DINET6
-# Set lint to exit on warnings and ignore 'empty translation unit' warnings.
-#LINTFLAGS+=	-w
-LINTFLAGS+=-X 272
+
+.if ${MACHINE_ARCH} == "i386"
+# Set lint to exit on warnings
+LINTFLAGS+=	-w
+.endif
+# ignore 'empty translation unit' warnings.
+LINTFLAGS+=	-X 272
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
