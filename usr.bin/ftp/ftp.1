@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ftp.1	8.2 (Berkeley) 12/30/93
-.\"	$Id: ftp.1,v 1.9 1994/08/29 03:09:13 mycroft Exp $
+.\"	$Id: ftp.1,v 1.10 1995/01/13 00:09:41 jtc Exp $
 .\"
 .Dd December 30, 1993
 .Dt FTP 1
@@ -42,11 +42,7 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl v
-.Op Fl d
-.Op Fl i
-.Op Fl n
-.Op Fl g
+.Op Fl dgintv
 .Op Ar host
 .Sh DESCRIPTION
 .Nm Ftp
@@ -59,14 +55,15 @@ remote network site.
 Options may be specified at the command line, or to the
 command interpreter.
 .Bl -tag -width flag
-.It Fl v
-Verbose option forces
-.Nm ftp
-to show all responses from the remote server, as well
-as report on data transfer statistics.
+.It Fl d
+Enables debugging.
+.It Fl g
+Disables file name globbing.
+.It Fl i
+Turns off interactive prompting during
+multiple file transfers.
 .It Fl n
 Restrains
-.Nm ftp
 from attempting \*(Lqauto-login\*(Rq upon initial connection.
 If auto-login is enabled,
 .Nm ftp
@@ -79,13 +76,13 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
-.It Fl i
-Turns off interactive prompting during
-multiple file transfers.
-.It Fl d
-Enables debugging.
-.It Fl g
-Disables file name globbing.
+.It Fl t
+Enables packet tracing.
+.It Fl v
+Verbose option forces
+.Nm ftp
+to show all responses from the remote server, as well
+as report on data transfer statistics.
 .El
 .Pp
 The client host with which
