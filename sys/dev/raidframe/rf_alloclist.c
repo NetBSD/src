@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.12 2003/07/01 23:36:01 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.13 2003/07/01 23:50:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.12 2003/07/01 23:36:01 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.13 2003/07/01 23:50:54 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.12 2003/07/01 23:36:01 oster Exp 
 #include "rf_general.h"
 #include "rf_shutdown.h"
 
-RF_DECLARE_STATIC_MUTEX(alist_mutex)
 static unsigned int fl_hit_count, fl_miss_count;
 
 static RF_AllocListElem_t *al_free_list = NULL;
@@ -71,7 +70,6 @@ static void rf_ShutdownAllocList(ignored)
 		p = p->next;
 		DO_FREE(pt, sizeof(*pt));
 	}
-	rf_mutex_destroy(&alist_mutex);
 	/*
         printf("Alloclist: Free list hit count %lu (%lu %%) miss count %lu (%lu %%)\n",
 	       fl_hit_count, (100*fl_hit_count)/(fl_hit_count+fl_miss_count),
@@ -85,17 +83,11 @@ rf_ConfigureAllocList(listp)
 {
 	int     rc;
 
-	rc = rf_mutex_init(&alist_mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
-		return (rc);
-	}
 	al_free_list = NULL;
 	fl_hit_count = fl_miss_count = al_free_list_count = 0;
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
-		rf_mutex_destroy(&alist_mutex);
 		return (rc);
 	}
 	return (0);
