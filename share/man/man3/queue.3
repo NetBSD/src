@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.17 2001/02/11 03:22:46 enami Exp $
+.\"	$NetBSD: queue.3,v 1.18 2001/05/12 16:04:51 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -616,11 +616,8 @@ macro.
 This structure contains a pair of pointers,
 one to the first element in the simple queue and the other to
 the last element in the simple queue.
-The elements are doubly linked so that an arbitrary element can be
-removed without traversing the simple queue.
 New elements can be added to the queue after an existing element,
-before an existing element, at the head of the queue, or at the end
-the queue.
+at the head of the queue, or at the end of the queue.
 A
 .Fa SIMPLEQ_HEAD
 structure is declared as follows:
