@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.6 2001/01/12 23:33:07 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.7 2001/01/13 16:44:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -48,6 +48,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: disassem.c,v 1.7 2001/01/13 16:44:25 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
 
@@ -241,20 +244,15 @@ static char const insn_fpaconstants[][8] = {
 #define insn_fpaimm(x)		insn_fpaconstants[x & 0x07]
 
 /* Local prototypes */
-static void disasm_register_shift __P((disasm_interface_t *di, u_int insn));
-static void disasm_print_reglist  __P((disasm_interface_t *di, u_int insn));
-static void disasm_insn_ldrstr    __P((disasm_interface_t *di, u_int insn,
-    u_int loc));
-static void disasm_insn_ldcstc    __P((disasm_interface_t *di, u_int insn,
-    u_int loc));
-static u_int disassemble_readword __P((u_int address));
-static void disassemble_printaddr __P((u_int address));
+static void disasm_register_shift(disasm_interface_t *di, u_int insn);
+static void disasm_print_reglist(disasm_interface_t *di, u_int insn);
+static void disasm_insn_ldrstr(disasm_interface_t *di, u_int insn, u_int loc);
+static void disasm_insn_ldcstc(disasm_interface_t *di, u_int insn, u_int loc);
+static u_int disassemble_readword(u_int address);
+static void disassemble_printaddr(u_int address);
 
 vm_offset_t
-disasm(di, loc, altfmt)
-	disasm_interface_t *di;
-	vm_offset_t loc;
-	int altfmt;
+disasm(disasm_interface_t *di, vm_offset_t loc, int altfmt)
 {
 	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
 
@@ -483,9 +481,7 @@ disasm(di, loc, altfmt)
 
 
 static void
-disasm_register_shift(di, insn)
-	disasm_interface_t *di;
-	u_int insn;
+disasm_register_shift(disasm_interface_t *di, u_int insn)
 {
 	di->di_printf("r%d", (insn & 0x0f));
 	if ((insn & 0x00000ff0) == 0)
@@ -504,9 +500,7 @@ disasm_register_shift(di, insn)
 
 
 static void
-disasm_print_reglist(di, insn)
-	disasm_interface_t *di;
-	u_int insn;
+disasm_print_reglist(disasm_interface_t *di, u_int insn)
 {
 	int loop;
 	int start;
@@ -541,10 +535,7 @@ disasm_print_reglist(di, insn)
 }
 
 static void
-disasm_insn_ldrstr(di, insn, loc)
-	disasm_interface_t *di;
-	u_int insn;
-	u_int loc;
+disasm_insn_ldrstr(disasm_interface_t *di, u_int insn, u_int loc)
 {
 	if ((((insn >> 16) & 0x0f) == 15) && ((insn & (1 << 21)) == 0)
 	    && ((insn & (1 << 24)) != 0) && ((insn & (1 << 25)) == 0)) {
@@ -570,10 +561,7 @@ disasm_insn_ldrstr(di, insn, loc)
 
 
 static void
-disasm_insn_ldcstc(di, insn, loc)
-	disasm_interface_t *di;
-	u_int insn;
-	u_int loc;
+disasm_insn_ldcstc(disasm_interface_t *di, u_int insn, u_int loc)
 {
 	if (((insn >> 8) & 0xf) == 1)
 		di->di_printf("f%d, ", (insn >> 12) & 0x07);
@@ -597,22 +585,19 @@ disasm_insn_ldcstc(di, insn, loc)
 }
 
 static u_int
-disassemble_readword(address)
-	u_int address;
+disassemble_readword(u_int address)
 {
 	return(*((u_int *)address));
 }
 
 static void
-disassemble_printaddr(address)
-	u_int address;
+disassemble_printaddr(u_int address)
 {
 	printf("0x%08x", address);
 }
 
 void
-disassemble(address)
-	u_int address;
+disassemble(u_int address)
 {
 	disasm_interface_t di;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.h,v 1.1 2001/01/12 13:43:11 bjh21 Exp $	*/
+/*	$NetBSD: disassem.h,v 1.2 2001/01/13 16:44:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,12 +37,12 @@
  */
 
 typedef struct {
-	u_int	(*di_readword) __P((u_int));
-	void	(*di_printaddr) __P((u_int));	
-	void	(*di_printf) __P((const char *, ...));
+	u_int	(*di_readword)(u_int);
+	void	(*di_printaddr)(u_int);	
+	void	(*di_printf)(const char *, ...);
 } disasm_interface_t;
 
 /* Prototypes for callable functions */
 
-vm_offset_t disasm __P((disasm_interface_t *di, vm_offset_t loc, int altfmt));
-void disassemble __P((u_int addr));
+vm_offset_t disasm(disasm_interface_t *, vm_offset_t, int);
+void disassemble(u_int);
