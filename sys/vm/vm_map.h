@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.28 1999/06/07 15:25:19 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.29 1999/06/07 16:34:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -264,10 +264,15 @@ do {									\
 #endif
 
 #define	vm_map_unlock(map)						\
-	(void) lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
+do {									\
+	if ((map)->flags & VM_MAP_INTRSAFE)				\
+		simple_unlock(&(map)->lock.lk_interlock);		\
+	else								\
+		(void) lockmgr(&(map)->lock, LK_RELEASE, NULL);		\
+} while (0)
 
 #define	vm_map_unlock_read(map)						\
-	(void) lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
+	(void) lockmgr(&(map)->lock, LK_RELEASE, NULL)
 #endif /* _KERNEL */
 
 /*
