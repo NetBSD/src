@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.50 2002/01/02 03:44:56 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.51 2002/01/03 18:57:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -82,6 +82,7 @@
 #define USSCANNER_DEBUG 1
 #define EHCI_DEBUG 1
 #define UIRDA_DEBUG 1
+#define USTIR_DEBUG 1
 #define UISDATA_DEBUG 1
 #define UDSBR_DEBUG 1
 #define Static
@@ -401,9 +402,8 @@ typedef struct proc *usb_proc_ptr;
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define usb_kthread_create1(function, sc, priv, string, name)
-#define usb_kthread_create(create_function, sc)
-#define usb_kthread_exit(err)
+#define kthread_create1(f, s, p, a0, a1) \
+		kthread_create((f), (s), (p), RFHIGHPID, (a0), (a1))
 
 typedef struct callout_handle usb_callout_t;
 #define usb_callout_init(h) callout_handle_init(&(h))
