@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/09/06 13:20:35 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2002/09/06 15:17:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -89,7 +89,10 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj, bool dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
+	const Obj_Entry *obj;
+	bool self;
+	bool dodebug;
 {
 	const Elf_Rela *rela;
 

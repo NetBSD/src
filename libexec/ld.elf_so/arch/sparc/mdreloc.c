@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.19 2002/09/06 03:12:07 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.20 2002/09/06 15:17:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -234,8 +234,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
+	bool self;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
@@ -275,7 +276,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		 * Handle relative relocs here, because we might not
 		 * be able to access globals yet.
 		 */
-		if (!dodebug && type == R_TYPE(RELATIVE)) {
+		if (self && type == R_TYPE(RELATIVE)) {
 			*where += (Elf_Addr)(obj->relocbase + value);
 			continue;
 		}

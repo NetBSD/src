@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.64 2002/09/06 13:20:30 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.65 2002/09/06 15:17:53 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -203,9 +203,10 @@ _rtld_bind(obj, reloff)
  * or -1 on failure.
  */
 int
-_rtld_relocate_objects(first, bind_now, dodebug)
+_rtld_relocate_objects(first, bind_now, self, dodebug)
 	Obj_Entry *first;
 	bool bind_now;
+	bool self;
 	bool dodebug;
 {
 	Obj_Entry *obj;
@@ -239,7 +240,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 				return -1;
 			}
 		}
-		if (_rtld_relocate_nonplt_objects(obj, dodebug) < 0)
+		if (_rtld_relocate_nonplt_objects(obj, self, dodebug) < 0)
 			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,

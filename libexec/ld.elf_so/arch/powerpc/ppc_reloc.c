@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.20 2002/09/06 13:20:33 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.21 2002/09/06 15:17:57 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -157,8 +157,9 @@ _rtld_setup_pltgot(obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
+	bool self;
 	bool dodebug;
 {
 	const Elf_Rela *rela;

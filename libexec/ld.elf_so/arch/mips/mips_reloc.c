@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.15 2002/09/06 13:20:33 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.16 2002/09/06 15:17:57 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -134,8 +134,9 @@ _rtld_setup_pltgot(obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
+	bool self;
 	bool dodebug;
 {
 	const Elf_Rel *rel;

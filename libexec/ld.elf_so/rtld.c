@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.55 2002/09/06 13:27:48 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.56 2002/09/06 15:17:53 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -212,7 +212,7 @@ _rtld_init(mapbase, pagesz)
 	assert(!objself.textrel);
 #endif
 
-	_rtld_relocate_objects(&objself, true, dodebug);
+	_rtld_relocate_objects(&objself, true, true, dodebug);
 
 	/*
 	 * Now that we relocated ourselves, we can use globals.
@@ -505,7 +505,7 @@ _rtld(sp)
 		_rtld_objlist_add(&_rtld_list_main, obj);
 
 	dbg(("relocating objects"));
-	if (_rtld_relocate_objects(_rtld_objmain, bind_now, true) == -1)
+	if (_rtld_relocate_objects(_rtld_objmain, bind_now, false, true) == -1)
 		_rtld_die();
 
 	dbg(("doing copy relocations"));
@@ -717,7 +717,7 @@ _rtld_dlopen(name, mode)
 			if (_rtld_load_needed_objects(obj, mode, true) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW), true)) == -1) {
+			    ((mode & 3) == RTLD_NOW), false, true)) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
