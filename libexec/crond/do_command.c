@@ -1,11 +1,16 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.4 1993/05/28 08:34:17 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.5 1993/05/28 09:19:08 cgd Exp $";
 #endif
 
 /* $Source: /cvsroot/src/libexec/crond/Attic/do_command.c,v $
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $Log: do_command.c,v $
- * Revision 1.4  1993/05/28 08:34:17  cgd
+ * Revision 1.5  1993/05/28 09:19:08  cgd
+ * it was putting EOF, rather than newline.  comments around
+ * change bogus; it will *always* be putting out newline because
+ * of the program logic.  the comments don't seem to indicate that.
+ *
+ * Revision 1.4  1993/05/28  08:34:17  cgd
  * update for newest version of vixie's cron, as of May 27 1993
  *
  * Revision 2.2  1992/12/18  18:46:57  vixie
@@ -484,7 +489,7 @@ child_process(cmd, u)
 			 */
 			if (mailto && (ch != '\n')) {
 				bytes++;
-				putc(ch, mail);
+				putc('\n', mail);
 			}
 
 			/* only close pipe if we opened it -- i.e., we're
