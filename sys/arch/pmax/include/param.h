@@ -37,14 +37,19 @@
  *
  * from: Utah Hdr: machparam.h 1.11 89/08/14
  * from: @(#)param.h	7.9 (Berkeley) 2/4/93
- * $Id: param.h,v 1.1.1.1 1993/10/12 03:22:39 deraadt Exp $
+ * $Id: param.h,v 1.2 1994/01/14 04:53:41 deraadt Exp $
  */
 
 /*
  * Machine dependent constants for DEC Station 3100.
  */
-#define	MACHINE	"mips"
-#define COFF
+#define	MACHINE		"pmax"
+#define	MACHINE_ARCH	"mips"
+#define	MID_MACHINE	MID_PMAX
+
+#ifdef KERNEL				/* XXX */
+#include <machine/cpu.h>		/* XXX */
+#endif					/* XXX */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -94,7 +99,7 @@
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
 #endif
 
