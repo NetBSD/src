@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/08/10 11:57:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2001/08/19 14:19:38 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
 
 CXXFLAGS+=	${G_XCXXFLAGS:M-f*}
 
+TEXINFO=	iostream.texi
+
 .PATH: ${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio ${DIST}/libiberty
 
 .for t in C
@@ -67,6 +69,7 @@ ${t}${v}.cc: Makefile ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk cinst.cc
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
+.include <bsd.info.mk>
 
 ${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 
