@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.71 1999/11/21 15:23:02 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.72 2000/02/12 12:51:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,11 +123,8 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-/* Saved PROM mappings */
-static struct zsdevice *zsaddr[NZS];
-
-/* Flags from cninit() */
-static int zs_hwflags[NZS][2];
+/* ZS channel used as the console device (if any) */
+void *zs_conschan;
 
 /* Default speed for each channel */
 static int zs_defspeed[NZS][2] = {
@@ -158,28 +155,6 @@ static u_char zs_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
-struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
-{
-	struct zsdevice	*addr;
-	struct zschan	*zc;
-
-	if (zs_unit >= NZS)
-		return (NULL);
-	addr = zsaddr[zs_unit];
-	if (addr == NULL)
-		addr = zsaddr[zs_unit] = findzs(zs_unit);
-	if (addr == NULL)
-		return (NULL);
-	if (channel == 0) {
-		zc = &addr->zs_chan_a;
-	} else {
-		zc = &addr->zs_chan_b;
-	}
-	return (zc);
-}
-
 
 /****************************************************************
  * Autoconfig
@@ -191,7 +166,7 @@ static int  zs_match_obio __P((struct device *, struct cfdata *, void *));
 static void zs_attach_mainbus __P((struct device *, struct device *, void *));
 static void zs_attach_obio __P((struct device *, struct device *, void *));
 
-static void zs_attach __P((struct zsc_softc *, int));
+static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
 struct cfattach zs_mainbus_ca = {
@@ -260,18 +235,15 @@ zs_attach_mainbus(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
-	int zs_unit = zsc->zsc_dev.dv_unit;
 
 	zsc->zsc_bustag = ma->ma_bustag;
 	zsc->zsc_dmatag = ma->ma_dmatag;
 
-	/* Use the mapping setup by the Sun PROM. */
-	if (zsaddr[zs_unit] == NULL)
-		zsaddr[zs_unit] = findzs(zs_unit);
-	if ((void*)zsaddr[zs_unit] != ma->ma_promvaddr)
-		panic("zsattach_mainbus");
-
-	zs_attach(zsc, ma->ma_pri);
+	/*
+	 * For machines with zs on mainbus (all sun4c models), we expect
+	 * the device registers to be mapped by the PROM.
+	 */
+	zs_attach(zsc, ma->ma_promvaddr, ma->ma_pri);
 }
 
 static void
@@ -282,23 +254,57 @@ zs_attach_obio(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	union obio_attach_args *uoba = aux;
-	int zs_unit = zsc->zsc_dev.dv_unit;
-
-	/* Use the mapping setup by the Sun PROM. */
-	if (zsaddr[zs_unit] == NULL)
-		zsaddr[zs_unit] = findzs(zs_unit);
 
 	if (uoba->uoba_isobio4 == 0) {
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
+		void *va;
+
+		if (sa->sa_nintr == 0) {
+			printf(" no interrupt lines\n");
+			return;
+		}
+
+		/*
+		 * Some sun4m models (Javastations) may not map the zs device.
+		 */
+		if (sa->sa_npromvaddrs > 0)
+			va = (void *)sa->sa_promvaddr;
+		else {
+			bus_space_handle_t bh;
+
+			if (sbus_bus_map(sa->sa_bustag,
+					  sa->sa_slot,
+					  sa->sa_offset,
+					  sa->sa_size,
+					  BUS_SPACE_MAP_LINEAR,
+					  0, &bh) != 0) {
+				printf(" cannot map zs registers\n");
+				return; 
+			}
+			va = (void *)bh;
+		}
+
 		zsc->zsc_bustag = sa->sa_bustag;
 		zsc->zsc_dmatag = sa->sa_dmatag;
-		if (sa->sa_nintr != 0)
-			zs_attach(zsc, sa->sa_pri);
+		zs_attach(zsc, va, sa->sa_pri);
 	} else {
 		struct obio4_attach_args *oba = &uoba->uoba_oba4;
+		bus_space_handle_t bh;
+
+		/*
+		 * As for zs on mainbus, we require a PROM mapping.
+		 */
+		if (bus_space_map(oba->oba_bustag,
+				  oba->oba_paddr,
+				  sizeof(struct zsdevice),
+				  BUS_SPACE_MAP_LINEAR | OBIO_BUS_MAP_USE_ROM,
+				  &bh) != 0) {
+			printf(" cannot map zs registers\n");
+			return; 
+		}
 		zsc->zsc_bustag = oba->oba_bustag;
 		zsc->zsc_dmatag = oba->oba_dmatag;
-		zs_attach(zsc, oba->oba_pri);
+		zs_attach(zsc, (void *)bh, oba->oba_pri);
 	}
 }
 /*
@@ -308,15 +314,20 @@ zs_attach_obio(parent, self, aux)
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
 static void
-zs_attach(zsc, pri)
+zs_attach(zsc, zsd, pri)
 	struct zsc_softc *zsc;
+	struct zsdevice *zsd;
 	int pri;
 {
 	struct zsc_attach_args zsc_args;
-	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
 	static int didintr, prevpri;
+
+	if (zsd == NULL) {
+		printf("configuration incomplete\n");
+		return;
+	}
 
 	printf(" softpri %d\n", PIL_TTY);
 
@@ -325,8 +336,10 @@ zs_attach(zsc, pri)
 	 */
 	zs_unit = zsc->zsc_dev.dv_unit;
 	for (channel = 0; channel < 2; channel++) {
+		volatile struct zschan *zc;
+
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
+		zsc_args.hwflags = 0;
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
@@ -335,7 +348,10 @@ zs_attach(zsc, pri)
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = PCLK / 16;
 
-		zc = zs_get_chan_addr(zs_unit, channel);
+		zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
+		if (zc == zs_conschan)
+			zsc_args.hwflags |= ZS_HWFLAG_CONSOLE;
+
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -682,9 +698,6 @@ void  zs_write_data(cs, val)
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
 
-extern void Debugger __P((void));
-void *zs_conschan;
-
 /*
  * Handle user request to enter kernel debugger.
  */
@@ -940,8 +953,9 @@ void
 consinit()
 {
 	struct zschan *zc;
+	struct zsdevice *zsd;
 	struct consdev *cn;
-	int channel, zs_unit, zstty_unit;
+	int channel, promzs_unit, zstty_unit;
 	int inSource, outSink;
 	int node;
 	char *devtype;
@@ -1020,7 +1034,7 @@ setup_console:
 
 	case 0:	/* keyboard/display */
 #if NKBD > 0
-		zs_unit = 1;	/* XXX - config info! */
+		promzs_unit = 1;	/* XXX - config info! */
 		channel = 0;
 		cn = &consdev_kd;
 		/* Set cn_dev, cn_pri in kd.c */
@@ -1035,7 +1049,7 @@ setup_console:
 	case PROMDEV_TTYA:
 	case PROMDEV_TTYB:
 		zstty_unit = inSource - PROMDEV_TTYA;
-		zs_unit = 0;	/* XXX - config info! */
+		promzs_unit = 0;	/* XXX - config info! */
 		channel = zstty_unit & 1;
 		cn = &consdev_tty;
 		cn->cn_dev = makedev(zs_major, zstty_unit);
@@ -1046,13 +1060,13 @@ setup_console:
 	/* Now that inSource has been validated, print it. */
 	printf("console is %s\n", prom_inSrc_name[inSource]);
 
-	zc = zs_get_chan_addr(zs_unit, channel);
-	if (zc == NULL) {
+	zsd = findzs(promzs_unit);
+	if (zsd == NULL) {
 		printf("cninit: zs not mapped.\n");
 		return;
 	}
+	zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
 	zs_conschan = zc;
-	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
 	cn_tab = cn;
 	(*cn->cn_init)(cn);
 #ifdef	KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.3 1999/02/03 20:25:07 mycroft Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.4 2000/02/12 12:51:04 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,11 @@ struct zschan {
 	volatile u_char	zc_data;	/* data */
 	u_char		zc_xxx1;
 };
+struct zsdevice {
+	/* Yes, they are backwards. */
+	struct	zschan zs_chan_b;
+	struct	zschan zs_chan_a;
+};
 
 static void zs_setparam __P((struct zs_chanstate *, int, int));
 struct zsops zsops_kgdb;
@@ -131,27 +136,28 @@ void
 zs_kgdb_init()
 {
 	struct zs_chanstate cs;
+	struct zsdevice *zsd;
 	volatile struct zschan *zc;
-	int channel, zs_unit;
+	int channel, promzs_unit;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
 	if (major(kgdb_dev) != zs_major)
 		return;
 
 	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
-	zs_unit = (kgdb_dev & 2) ? 2 : 0;	/* XXX - config info! */
+	promzs_unit = (kgdb_dev & 2) ? 2 : 0;
 	channel  =  kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
 		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
 	bzero((caddr_t)&cs, sizeof(cs));
-	zc = zs_get_chan_addr(zs_unit, channel);
-	if (zc == NULL) {
+	zsd = findzs(promzs_unit);
+	if (zsd == NULL) {
 		printf("zs_kgdb_init: zs not mapped.\n");
-		kgdb_dev = -1;
 		return;
 	}
+	zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
 
 	cs.cs_channel = channel;
 	cs.cs_brg_clk = PCLK / 16;
