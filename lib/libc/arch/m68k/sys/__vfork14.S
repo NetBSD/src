@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.6 1999/10/25 23:48:17 thorpej Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.7 2000/12/02 17:03:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __vfork14.S,v 1.6 1999/10/25 23:48:17 thorpej Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.7 2000/12/02 17:03:06 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,17 +64,17 @@
  */
 
 ENTRY(__vfork14)
-	movl	%sp@+,%a0
+	movl	%sp@+,%a1
 	movl	#SYS___vfork14,%d0
 	trap	#0
 	jcs	err
 	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
 	andl	%d1,%d0
-	jmp	%a0@
+	jmp	%a1@
 err:
 #ifdef	_REENTRANT
 	.globl	_C_LABEL(__errno)
-	movl	%a0,%sp@-
+	movl	%a1,%sp@-
 	movl	%d0,%sp@-
 #if defined(PIC) && !defined(__ELF__)
 	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a1
