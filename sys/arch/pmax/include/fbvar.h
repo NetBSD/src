@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.2 1997/05/24 05:49:22 jonathan Exp $ */
+/*	$NetBSD: fbvar.h,v 1.3 1999/04/13 03:14:03 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -143,6 +143,7 @@ struct fbdevice {
 	int	fb_font_ascent;		/* distance from font to char origin */
 };
 
+#ifndef FB_INESC
 #define FB_INESC	0x001		/* processing an escape sequence */
 #define FB_STANDOUT	0x002		/* standout mode */
 #ifdef notyet
@@ -155,6 +156,7 @@ struct fbdevice {
 #define FB_P1_DEFAULT	0x200		/* param 1 is defaulted */
 #define FB_P0		0x400		/* working on param 0 */
 #define FB_P1		0x800		/* working on param 1 */
+#endif /* !FB_INSEC */
 
 #define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
 #define romgetcursoraddr(xp, yp)	0

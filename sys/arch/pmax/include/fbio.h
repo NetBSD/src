@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.1 1995/09/11 08:17:04 jonathan Exp $ */
+/*	$NetBSD: fbio.h,v 1.2 1999/04/13 03:14:03 ad Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -46,6 +46,7 @@
 #define PMAX_FBTYPE_XCFB	4
 #define PMAX_FBTYPE_MFB		5
 #define PMAX_FBTYPE_SFB		6
+#define PMAX_FBTYPE_PX		7
 
 /*
  * Frame buffer ioctls (from Sprite, trimmed to essentials for X11).
