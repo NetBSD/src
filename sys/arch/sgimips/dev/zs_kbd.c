@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.3 2004/07/20 04:55:21 rumble Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.4 2004/07/20 05:19:23 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.3 2004/07/20 04:55:21 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.4 2004/07/20 05:19:23 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -174,6 +174,7 @@ static int			zskbd_is_console = 0;
 static int
 zskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
 		struct zsc_attach_args *args = aux;
 
@@ -187,12 +188,16 @@ zskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 zskbd_attach(struct device *parent, struct device *self, void *aux)
 {
-	int				s, channel;
-	struct zsc_softc      	       *zsc = (struct zsc_softc *)parent;
-	struct zskbd_softc	       *sc = (struct zskbd_softc *)self;
-	struct zsc_attach_args	       *args = aux;
+	struct zskbd_softc	       *sc;
 	struct zs_chanstate	       *cs;
+	struct zsc_softc      	       *zsc;
+	struct zsc_attach_args	       *args;
 	struct wskbddev_attach_args	wskaa;
+	int				s, channel;
+
+	zsc = (struct zsc_softc *)parent;
+	sc = (struct zskbd_softc *)self;
+	args = (struct zsc_attach_args *)aux;
 
 	/* Establish ourself with the MD z8530 driver */
 	channel = args->channel;
@@ -249,9 +254,12 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 static void
 zskbd_rxint(struct zs_chanstate *cs)
 {
-	u_char	c, r;
-	struct zskbd_softc     *sc = (struct zskbd_softc *)cs->cs_private;
-	struct zskbd_devconfig *dc = sc->sc_dc;
+	struct zskbd_softc     *sc;
+	struct zskbd_devconfig *dc;
+	u_char			c, r;
+
+	sc = (struct zskbd_softc *)cs->cs_private;
+	dc = sc->sc_dc;
 
 	/* clear errors */
 	r = zs_read_reg(cs, 1);
@@ -270,6 +278,7 @@ zskbd_rxint(struct zs_chanstate *cs)
 static void
 zskbd_stint(struct zs_chanstate *cs, int force)
 {
+
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 	cs->cs_softreq = 1;
 }
@@ -277,8 +286,9 @@ zskbd_stint(struct zs_chanstate *cs, int force)
 static void
 zskbd_txint(struct zs_chanstate *cs)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)cs->cs_private;
+	struct zskbd_softc *sc;
 
+	sc = (struct zskbd_softc *)cs->cs_private;
 	zs_write_reg(cs, 0, ZSWR0_RESET_TXINT);	
 	sc->sc_dc->state |= TX_READY;
 	cs->cs_softreq = 1;
@@ -287,8 +297,11 @@ zskbd_txint(struct zs_chanstate *cs)
 static void
 zskbd_softint(struct zs_chanstate *cs)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)cs->cs_private;
-	struct zskbd_devconfig	*dc = sc->sc_dc;
+	struct zskbd_softc	*sc;
+	struct zskbd_devconfig	*dc;
+
+	sc = (struct zskbd_softc *)cs->cs_private;
+	dc = sc->sc_dc;
 
 	/* handle pending transmissions */
 	if (dc->txq_head != dc->txq_tail && (dc->state & TX_READY)) {
@@ -332,8 +345,11 @@ static void
 zskbd_send(struct zs_chanstate *cs, u_char *c, u_int len)
 {
 	u_int			i;
-	struct zskbd_softc     *sc = (struct zskbd_softc *)cs->cs_private;
-	struct zskbd_devconfig *dc = sc->sc_dc;
+	struct zskbd_softc     *sc; 
+	struct zskbd_devconfig *dc;
+
+	sc = (struct zskbd_softc *)cs->cs_private; 
+	dc = sc->sc_dc;
 
 	for (i = 0; i < len; i++) {
 		if (dc->state & TX_READY) {
@@ -350,10 +366,13 @@ zskbd_send(struct zs_chanstate *cs, u_char *c, u_int len)
 /* expects to be in splzs() */
 static void
 zskbd_ctrl(struct zs_chanstate *cs, u_char a_on, u_char a_off,
-				    u_char b_on, u_char b_off)
+	   u_char b_on, u_char b_off)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)cs->cs_private;
-	struct zskbd_devconfig	*dc = sc->sc_dc;
+	struct zskbd_softc	*sc;
+	struct zskbd_devconfig	*dc;
+
+	sc = (struct zskbd_softc *)cs->cs_private;
+	dc = sc->sc_dc;
 
 	dc->kbd_conf[ZSKBD_CTRL_A] |=   a_on;
 	dc->kbd_conf[ZSKBD_CTRL_A] &= ~(a_off | ZSKBD_CTRL_B);
@@ -364,7 +383,7 @@ zskbd_ctrl(struct zs_chanstate *cs, u_char a_on, u_char a_off,
 	
 	/* make sure we don't resend these each time */
 	dc->kbd_conf[ZSKBD_CTRL_A] &= ~(ZSKBD_CTRL_A_RCB | ZSKBD_CTRL_A_SBEEP |
-							   ZSKBD_CTRL_A_LBEEP);
+	    ZSKBD_CTRL_A_LBEEP);
 }
 
 /******************************************************************************
@@ -374,8 +393,10 @@ zskbd_ctrl(struct zs_chanstate *cs, u_char a_on, u_char a_off,
 static void 
 zskbd_wskbd_input(struct zs_chanstate *cs, u_char key)
 {
+	struct zskbd_softc     *sc;
 	u_int			type;
-	struct zskbd_softc     *sc = (struct zskbd_softc *)cs->cs_private;
+
+	sc = (struct zskbd_softc *)cs->cs_private;
 
 	if (key & ZSKBD_KEY_UP)
 		type = WSCONS_EVENT_KEY_UP;
@@ -394,8 +415,10 @@ zskbd_wskbd_input(struct zs_chanstate *cs, u_char key)
 static int
 zskbd_wskbd_enable(void *cookie, int on)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)
-				((struct zs_chanstate *)cookie)->cs_private;
+	struct zskbd_softc *sc; 
+
+	sc = (struct zskbd_softc *)((struct zs_chanstate *)cookie)->cs_private;
+
 	if (on) {
 		if (sc->sc_dc->enabled)
 			return (EBUSY);
@@ -413,7 +436,9 @@ static void
 zskbd_wskbd_set_leds(void *cookie, int leds)
 {
 	int 	s;
-	u_char	a_on = 0, a_off = 0, b_on = 0, b_off = 0;	
+	u_char	a_on, a_off, b_on, b_off; 
+
+	a_on = a_off = b_on = b_off = 0;
 
 	if (leds & WSKBD_LED_CAPS) 
 		a_on |=  ZSKBD_CTRL_A_CAPSLK;
@@ -438,9 +463,11 @@ zskbd_wskbd_set_leds(void *cookie, int leds)
 static int
 zskbd_wskbd_get_leds(void *cookie)
 {
-	int		 	leds = 0;
-	struct zskbd_softc     *sc = (struct zskbd_softc *)
-				    ((struct zs_chanstate *)cookie)->cs_private;
+	struct zskbd_softc     *sc;
+	int		 	leds;
+
+	sc = (struct zskbd_softc *)((struct zs_chanstate *)cookie)->cs_private;
+	leds = 0;
 
 	if (sc->sc_dc->kbd_conf[ZSKBD_CTRL_A] & ZSKBD_CTRL_A_NUMLK) 
 		leds |= WSKBD_LED_NUM;
@@ -458,7 +485,9 @@ static void
 zskbd_wskbd_set_keyclick(void *cookie, int on)
 {
 	int			s;
-	struct zs_chanstate    *cs = (struct zs_chanstate *)cookie;
+	struct zs_chanstate    *cs; 
+	
+	cs = (struct zs_chanstate *)cookie;
 
 	if (on) {
 		if (!zskbd_wskbd_get_keyclick(cookie)) {
@@ -478,8 +507,9 @@ zskbd_wskbd_set_keyclick(void *cookie, int on)
 static int
 zskbd_wskbd_get_keyclick(void *cookie)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)
-				((struct zs_chanstate *)cookie)->cs_private;
+	struct zskbd_softc *sc;
+
+	sc = (struct zskbd_softc *)((struct zs_chanstate *)cookie)->cs_private;
 
 	if (sc->sc_dc->kbd_conf[ZSKBD_CTRL_A] & ZSKBD_CTRL_A_NOCLICK)
 		return (0);
@@ -491,6 +521,7 @@ static int
 zskbd_wskbd_ioctl(void *cookie, u_long cmd,
 		  caddr_t data, int flag, struct proc *p)
 {
+
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_SGI; 
@@ -547,15 +578,18 @@ zskbd_wskbd_ioctl(void *cookie, u_long cmd,
 void
 zskbd_cnattach(int zsunit, int zschan)
 {
+
 	wskbd_cnattach(&zskbd_wskbd_consops, zs_get_chan_addr(zsunit, zschan),
-						    &sgikbd_wskbd_keymapdata);
+	    &sgikbd_wskbd_keymapdata);
 	zskbd_is_console = 1;
 }
 
 static void
 zskbd_wskbd_getc(void *cookie, u_int *type, int *data)
 {
-	int key = zs_getc(cookie);
+	int key;
+
+	key = zs_getc(cookie);
 
 	if (key & ZSKBD_KEY_UP)
 		*type = WSCONS_EVENT_KEY_UP;
@@ -573,6 +607,7 @@ zskbd_wskbd_pollc(void *cookie, int on)
 static void
 zskbd_wskbd_bell(void *cookie, u_int pitch, u_int period, u_int volume)
 {
+
 	/*
 	 * Since we don't have any state, this'll nuke our lights,
 	 * key click, and other bits in ZSKBD_CTRL_A.
