@@ -1,10 +1,10 @@
-	$NetBSD: contents,v 1.5 1998/05/15 03:28:55 ross Exp $	
+	$NetBSD: contents,v 1.6 1998/05/15 18:52:54 ross Exp $	
 
 The alpha-specific portion of the NetBSD _VER release is found in the
-"alpha" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+"alpha" subdirectory of the distribution:
 
 .../NetBSD-_VER/alpha/
+
         INSTALL                 Installation notes; this file.
 
         binary/
