@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.15 1997/11/07 07:33:17 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.16 1997/11/11 17:31:11 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -129,7 +129,7 @@ pram_readtime(void)
 {
    unsigned long	timedata;
 
-#if MRG_ADB
+#ifdef MRG_ADB
    if (0 == jClkNoMem)
 	timedata = 0;	/* cause comparision of MacOS boottime */
 			/* and PRAM time to fail */
@@ -147,7 +147,7 @@ pram_readtime(void)
 void
 pram_settime(unsigned long time)
 {
-#if MRG_ADB
+#ifdef MRG_ADB
    if (0 == jClkNoMem)
 	return;
    else
