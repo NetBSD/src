@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.8 1999/04/28 23:24:42 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.9 1999/05/04 17:14:55 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -120,7 +120,7 @@ do_read(d, dblk, num, buf)
 		int64_t	sec;
 	}		ext;
 
-	if ((dblk + num) >= d->chs_sectors) {
+	if ((d->dev & 0x80) && (dblk + num) >= d->chs_sectors) {
 		if (!(d->flags & BIOSDISK_EXT13))
 			return -1;
 		ext.size = sizeof(ext);
