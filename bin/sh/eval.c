@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.31 1996/10/16 14:31:57 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.32 1996/11/06 01:17:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.31 1996/10/16 14:31:57 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.32 1996/11/06 01:17:10 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -744,6 +744,7 @@ evalcommand(cmd, flags, backcmd)
 		redirect(cmd->ncmd.redirect, REDIR_PUSH);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
+		shellparam.reset = 1;
 		shellparam.nparam = argc - 1;
 		shellparam.p = argv + 1;
 		shellparam.optnext = NULL;
