@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.5 2000/11/06 16:54:28 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.6 2000/11/09 13:32:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ netintr()
 	splx(s);
 
 #define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
+	if (isr & (1 << bit)) {		\
 		fn();			\
 	}				\
 } while (0)
