@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.17 2003/08/30 17:46:32 fvdl Exp $	*/
+/*	$NetBSD: machines.c,v 1.18 2003/10/27 16:51:05 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.17 2003/08/30 17:46:32 fvdl Exp $");
+__RCSID("$NetBSD: machines.c,v 1.18 2003/10/27 16:51:05 cl Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -59,6 +59,8 @@ struct ib_mach machines[] = {
 		IB_STAGE2START },
 	{ "news68k",	news68k_setboot, news68k_clearboot,
 		IB_STAGE2START },
+	{ "next68k",	next68k_setboot, no_clearboot,
+		0 },
 	{ "newsmips",	newsmips_setboot, newsmips_clearboot,
 		IB_STAGE2START },
 	{ "pmax",	pmax_setboot,	pmax_clearboot,
