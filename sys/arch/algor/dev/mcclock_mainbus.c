@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.2 2002/09/27 02:24:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.2 2002/09/27 02:24:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,7 +71,7 @@ mcclock_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

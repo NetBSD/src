@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.176 2002/09/25 22:21:20 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.177 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -156,7 +156,7 @@ matchbyname(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	printf("%s: WARNING: matchbyname\n", cf->cf_driver->cd_name);
+	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
 }
 
@@ -1703,7 +1703,7 @@ bus_class(dev)
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_driver->cd_name;
+	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
 		if (strcmp(name, bus_class_tab[i].name) == 0) {
 			class = bus_class_tab[i].class;
@@ -1865,7 +1865,7 @@ device_register(dev, aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
+	dvname = dev->dv_cfdata->cf_name;
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",

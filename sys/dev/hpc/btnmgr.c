@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.7 2002/09/27 02:24:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.7 2002/09/27 02:24:29 thorpej Exp $");
 
 #define BTNMGRDEBUG
 
@@ -176,7 +176,7 @@ btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
     
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, match->cf_name))
 		return 0;
 
 	return (1);

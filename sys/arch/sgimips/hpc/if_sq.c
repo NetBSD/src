@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.11 2002/05/02 20:31:19 rafal Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.12 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -154,7 +154,7 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

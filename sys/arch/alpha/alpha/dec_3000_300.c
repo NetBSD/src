@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.37 2002/09/26 19:05:00 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.38 2002/09/27 02:24:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.37 2002/09/26 19:05:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.38 2002/09/27 02:24:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ dec_3000_300_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -239,7 +239,7 @@ dec_3000_300_device_register(dev, aux)
 
 	if (netboot) {
                 if (b->slot == 5 && strcmp(name, "le") == 0 &&
-		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
+		    strcmp(parent->dv_cfdata->cf_name, "ioasic")
 		     == 0) {
 			/*
 			 * no need to check ioasic_attach_args, since only

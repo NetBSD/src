@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.10 2002/09/18 19:54:47 manu Exp $ */
+/* $NetBSD: j720ssp.c,v 1.11 2002/09/27 02:24:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ j720kbd_submatch(parent, cf, aux)
 	struct cfdata *cf; 
 	void *aux;
 {
-	if (strcmp(cf->cf_driver->cd_name, "wskbd") == 0)
+	if (strcmp(cf->cf_name, "wskbd") == 0)
 		return (1);
 	return (0);
 }
@@ -397,7 +397,7 @@ j720tp_submatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (strcmp(cf->cf_driver->cd_name, "wsmouse") == 0)
+	if (strcmp(cf->cf_name, "wsmouse") == 0)
 		return (1);
 	return (0);
 }
@@ -408,7 +408,7 @@ apm_submatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (strcmp(cf->cf_driver->cd_name, "apm") == 0)
+	if (strcmp(cf->cf_name, "apm") == 0)
 		return (1);
 	return (0);
 }

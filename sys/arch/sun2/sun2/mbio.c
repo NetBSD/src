@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.7 2001/12/15 22:13:11 fredette Exp $	*/
+/*	$NetBSD: mbio.c,v 1.8 2002/09/27 02:24:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ mbio_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0));
+	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
 static void

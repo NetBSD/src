@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.67 2002/08/25 16:02:53 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.68 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,7 +138,7 @@ iommu_match(parent, cf, aux)
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		return (0);
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*

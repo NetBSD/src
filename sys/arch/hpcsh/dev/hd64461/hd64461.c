@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.7 2002/03/28 15:26:59 uch Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.8 2002/09/27 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 		break;
 	}
 
-	if (strcmp("hd64461if", cf->cf_driver->cd_name))
+	if (strcmp("hd64461if", cf->cf_name))
 		return (0);
 
 	return (1);

@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.1 2000/12/21 20:51:57 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.1 2000/12/21 20:51:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -119,7 +119,7 @@ sableio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name) != 0)
+	if (strcmp(pba->pba_busname, cf->cf_name) != 0)
 		return (0);
 
 	/*
